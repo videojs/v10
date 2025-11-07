@@ -1,0 +1,36 @@
+{
+  "name": "@videojs/compiler",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Compile React components to web components",
+  "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/parser": "^7.23.0",
+    "@babel/traverse": "^7.23.0",
+    "@babel/types": "^7.23.0"
+  },
+  "devDependencies": {
+    "@types/babel__core": "^7.20.5",
+    "@types/babel__traverse": "^7.20.5",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@videojs/react": "workspace:*",
+    "jsdom": "^25.0.0",
+    "react": "^18.0.0",
+    "tsdown": "^0.15.9",
+    "typescript": "^5.9.2",
+    "vitest": "^1.0.0"
+  }
+}
