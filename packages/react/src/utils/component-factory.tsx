@@ -69,7 +69,7 @@ export function toContextComponent<
   TResultProps extends Record<string, any>,
   TRenderFn extends (props: TResultProps, context: any) => ReactElement,
 >(
-  usePropsHook: (props: TProps, context: any) => TResultProps,
+  usePropsHook: (props: TProps, context: ReturnType<StateHookFn<TProps>>) => TResultProps,
   defaultRender: TRenderFn,
   displayName: string,
 ): ContextComponent<TProps, TRenderFn> {
@@ -107,7 +107,7 @@ export function useCore<
     getState: () => any;
     setState: (state: any) => void;
   },
->(CoreClass: new () => T, state: any): T {
+>(CoreClass: new () => T, state: any): ReturnType<T['getState']> {
   const coreRef = useRef<T | null>(null);
   const snapshotRef = useRef<any>(null);
 
@@ -136,5 +136,5 @@ export function useCore<
     () => null, // server snapshot
   );
 
-  return coreRef.current;
+  return coreRef.current.getState();
 }

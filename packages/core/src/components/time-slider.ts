@@ -1,5 +1,6 @@
 import type { SliderState } from './slider';
 
+import { formatTime } from '@videojs/utils';
 import { Slider } from './slider';
 
 export interface TimeSliderState extends SliderState {
@@ -114,10 +115,4 @@ export class TimeSlider extends Slider {
     this.#seekingTime = _pointerRatio * duration;
     requestSeek(this.#seekingTime);
   }
-}
-
-function formatTime(time: number): string {
-  const minutes = Math.floor(time / 60);
-  const seconds = Math.floor(time % 60);
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
