@@ -1,5 +1,5 @@
-import type { PreviewTimeDisplayState } from '@videojs/core/store';
-import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
+import type { MediaStore, PreviewTimeDisplayState } from '@videojs/core/store';
+import type { ConnectedComponentConstructor, PropsHook } from '../utils/component-factory';
 
 import { previewTimeDisplayStateDefinition } from '@videojs/core/store';
 
@@ -54,15 +54,14 @@ export class PreviewTimeDisplay extends HTMLElement {
   }
 }
 
-export const usePreviewTimeDisplayState: StateHook<{
+export function getPreviewTimeDisplayState(mediaStore: MediaStore): {
   previewTime: number | undefined;
-}> = {
-  keys: [...previewTimeDisplayStateDefinition.keys],
-  transform: (rawState, _mediaStore) => ({
-    ...previewTimeDisplayStateDefinition.stateTransform(rawState),
+} {
+  return {
+    ...previewTimeDisplayStateDefinition.stateTransform(mediaStore.getState()),
     // Preview time display is read-only, so no request methods needed
-  }),
-};
+  };
+}
 
 export const getPreviewTimeDisplayProps: PropsHook<{
   previewTime: number | undefined;
@@ -73,7 +72,7 @@ export const getPreviewTimeDisplayProps: PropsHook<{
 
 export const PreviewTimeDisplayElement: ConnectedComponentConstructor<PreviewTimeDisplayState> = toConnectedHTMLComponent(
   PreviewTimeDisplay,
-  usePreviewTimeDisplayState,
+  getPreviewTimeDisplayState,
   getPreviewTimeDisplayProps,
   'PreviewTimeDisplay',
 );

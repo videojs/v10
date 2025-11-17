@@ -1,5 +1,6 @@
-import type { MuteButtonState } from '@videojs/core/store';
-import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
+import type { MediaStore, MuteButtonState } from '@videojs/core/store';
+import type { Prettify } from '../types';
+import type { ConnectedComponentConstructor, PropsHook } from '../utils/component-factory';
 
 import { muteButtonStateDefinition } from '@videojs/core/store';
 
@@ -49,16 +50,14 @@ export class MuteButton extends ButtonElement {
   }
 }
 
-export const getMuteButtonState: StateHook<{
-  muted: boolean;
-  volumeLevel: string;
-}> = {
-  keys: muteButtonStateDefinition.keys,
-  transform: (rawState, mediaStore) => ({
-    ...muteButtonStateDefinition.stateTransform(rawState),
+type MuteButtonStateWithMethods = Prettify<MuteButtonState & ReturnType<typeof muteButtonStateDefinition.createRequestMethods>>;
+
+export function getMuteButtonState(mediaStore: MediaStore): MuteButtonStateWithMethods {
+  return {
+    ...muteButtonStateDefinition.stateTransform(mediaStore.getState()),
     ...muteButtonStateDefinition.createRequestMethods(mediaStore.dispatch),
-  }),
-};
+  };
+}
 
 export const getMuteButtonProps: PropsHook<{
   muted: boolean;
@@ -83,7 +82,7 @@ export const getMuteButtonProps: PropsHook<{
   return baseProps;
 };
 
-export const MuteButtonElement: ConnectedComponentConstructor<MuteButtonState> = toConnectedHTMLComponent(
+export const MuteButtonElement: ConnectedComponentConstructor<MuteButtonStateWithMethods> = toConnectedHTMLComponent(
   MuteButton,
   getMuteButtonState,
   getMuteButtonProps,

@@ -1,5 +1,6 @@
-import type { PlayButtonState } from '@videojs/core/store';
-import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
+import type { MediaStore, PlayButtonState } from '@videojs/core/store';
+import type { Prettify } from '../types';
+import type { ConnectedComponentConstructor, PropsHook } from '../utils/component-factory';
 
 import { playButtonStateDefinition } from '@videojs/core/store';
 
@@ -35,13 +36,18 @@ export class PlayButton extends ButtonElement {
   }
 }
 
-export const getPlayButtonState: StateHook<{ paused: boolean }> = {
-  keys: playButtonStateDefinition.keys,
-  transform: (rawState, mediaStore) => ({
-    ...playButtonStateDefinition.stateTransform(rawState),
+type PlayButtonStateWithMethods = Prettify<PlayButtonState & ReturnType<typeof playButtonStateDefinition.createRequestMethods>>;
+
+/**
+ * PlayButton state hook - equivalent to React's usePlayButtonState
+ * Handles media store state subscription and transformation
+ */
+export function getPlayButtonState(mediaStore: MediaStore): PlayButtonStateWithMethods {
+  return {
+    ...playButtonStateDefinition.stateTransform(mediaStore.getState()),
     ...playButtonStateDefinition.createRequestMethods(mediaStore.dispatch),
-  }),
-};
+  };
+}
 
 export const getPlayButtonProps: PropsHook<{ paused: boolean }> = (state, _element) => {
   const baseProps: Record<string, any> = {
@@ -62,7 +68,7 @@ export const getPlayButtonProps: PropsHook<{ paused: boolean }> = (state, _eleme
   return baseProps;
 };
 
-export const PlayButtonElement: ConnectedComponentConstructor<PlayButtonState> = toConnectedHTMLComponent(
+export const PlayButtonElement: ConnectedComponentConstructor<PlayButtonStateWithMethods> = toConnectedHTMLComponent(
   PlayButton,
   getPlayButtonState,
   getPlayButtonProps,

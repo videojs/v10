@@ -1,19 +1,20 @@
+import type { MediaStore } from '@videojs/core/store';
 import { ConsumerMixin } from '@open-wc/context-protocol';
 
 /**
  * Generic types for HTML component hooks pattern
  * Mirrors the React hooks architecture for consistency
  */
-export interface StateHook<T = any> {
-  keys: string[];
-  transform: (rawState: any, mediaStore: any) => T;
-}
+export type StateHook<T = any> = (mediaStore: MediaStore) => T;
 
 export type PropsHook<T = any, P = any> = (state: T, element: HTMLElement) => P;
 
 export interface ConnectedComponentConstructor<State> {
   new (state: State): HTMLElement;
 }
+
+let coreInstances: any[];
+let getCoreStateCount: number;
 
 /**
  * Generic factory function to create connected HTML components using hooks pattern.
@@ -41,6 +42,7 @@ export function toConnectedHTMLComponent<State = any>(
     }
 
     _mediaStore: any;
+    _coreInstances = [];
 
     contexts = {
       mediaStore: (mediaStore: any) => {
@@ -48,12 +50,15 @@ export function toConnectedHTMLComponent<State = any>(
 
         // Subscribe to media store state changes
         // Split into two phases: state transformation, then props update
-        this._mediaStore.subscribeKeys(stateHook.keys, (rawState: any) => {
-          // Phase 1: Transform raw media store state (state concern)
-          const state = stateHook.transform(rawState, mediaStore);
+        this._mediaStore.subscribe(() => {
+          getCoreStateCount = 0;
+          coreInstances = this._coreInstances;
 
+          // Phase 1: Transform raw media store state (state concern)
+          const state = stateHook(mediaStore);
           // Phase 2: Update element attributes/properties (props concern)
           const props = propsHook(state ?? {} as State, this);
+
           // @ts-expect-error any
           this._update(props, state, mediaStore);
         });
@@ -80,4 +85,20 @@ export function toConnectedHTMLComponent<State = any>(
   }
 
   return ConnectedComponent;
+}
+
+export function getCoreState<T extends {
+  subscribe: (callback: (state: any) => void) => () => void;
+  getState: () => any;
+  setState: (state: any) => void;
+}>(CoreClass: new () => T, state: any): any {
+  let core = coreInstances[getCoreStateCount] as T;
+  if (!core) {
+    core = new CoreClass();
+    coreInstances[getCoreStateCount] = core;
+    getCoreStateCount++;
+  }
+
+  core.setState(state);
+  return core.getState();
 }
