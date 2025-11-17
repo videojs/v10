@@ -10,6 +10,10 @@ import { getCoreState, toConnectedHTMLComponent } from '../utils/component-facto
 
 type VolumeSliderState = Prettify<ReturnType<CoreVolumeSlider['getState']>>;
 
+// ============================================================================
+// ROOT COMPONENT
+// ============================================================================
+
 export function getVolumeSliderRootState(mediaStore: MediaStore): VolumeSliderState {
   const mediaState = volumeSliderStateDefinition.stateTransform(mediaStore.getState());
   const mediaMethods = volumeSliderStateDefinition.createRequestMethods(mediaStore.dispatch);
@@ -86,6 +90,25 @@ export class VolumeSliderRoot extends HTMLElement {
   }
 }
 
+export const VolumeSliderRootElement: ConnectedComponentConstructor<VolumeSliderState>
+  = toConnectedHTMLComponent(
+    VolumeSliderRoot,
+    getVolumeSliderRootState,
+    getVolumeSliderRootProps,
+    'VolumeSliderRoot',
+  );
+
+// ============================================================================
+// TRACK COMPONENT
+// ============================================================================
+
+export const getVolumeSliderTrackProps: PropsHook<Record<string, never>> = (_state, element) => {
+  const rootElement = element.closest('media-volume-slider') as any;
+  return {
+    'data-orientation': rootElement?.orientation || 'horizontal',
+  };
+};
+
 export class VolumeSliderTrack extends HTMLElement {
   connectedCallback(): void {
     const rootElement = this.closest('media-volume-slider') as any;
@@ -104,6 +127,24 @@ export class VolumeSliderTrack extends HTMLElement {
     }
   }
 }
+
+export const VolumeSliderTrackElement: ConnectedComponentConstructor<any> = toConnectedHTMLComponent(
+  VolumeSliderTrack,
+  undefined,
+  getVolumeSliderTrackProps,
+  'VolumeSliderTrack',
+);
+
+// ============================================================================
+// INDICATOR COMPONENT
+// ============================================================================
+
+export const getVolumeSliderIndicatorProps: PropsHook<Record<string, never>> = (_state, element) => {
+  const rootElement = element.closest('media-volume-slider') as any;
+  return {
+    'data-orientation': rootElement?.orientation || 'horizontal',
+  };
+};
 
 export class VolumeSliderIndicator extends HTMLElement {
   constructor() {
@@ -130,6 +171,24 @@ export class VolumeSliderIndicator extends HTMLElement {
   }
 }
 
+export const VolumeSliderIndicatorElement: ConnectedComponentConstructor<any> = toConnectedHTMLComponent(
+  VolumeSliderIndicator,
+  undefined,
+  getVolumeSliderIndicatorProps,
+  'VolumeSliderIndicator',
+);
+
+// ============================================================================
+// THUMB COMPONENT
+// ============================================================================
+
+export const getVolumeSliderThumbProps: PropsHook<Record<string, never>> = (_state, element) => {
+  const rootElement = element.closest('media-volume-slider') as any;
+  return {
+    'data-orientation': rootElement?.orientation || 'horizontal',
+  };
+};
+
 export class VolumeSliderThumb extends HTMLElement {
   constructor() {
     super();
@@ -152,55 +211,16 @@ export class VolumeSliderThumb extends HTMLElement {
   }
 }
 
-export const getVolumeSliderTrackProps: PropsHook<Record<string, never>> = (_state, element) => {
-  const rootElement = element.closest('media-volume-slider') as any;
-  return {
-    'data-orientation': rootElement?.orientation || 'horizontal',
-  };
-};
-
-export const getVolumeSliderIndicatorProps: PropsHook<Record<string, never>> = (_state, element) => {
-  const rootElement = element.closest('media-volume-slider') as any;
-  return {
-    'data-orientation': rootElement?.orientation || 'horizontal',
-  };
-};
-
-export const getVolumeSliderThumbProps: PropsHook<Record<string, never>> = (_state, element) => {
-  const rootElement = element.closest('media-volume-slider') as any;
-  return {
-    'data-orientation': rootElement?.orientation || 'horizontal',
-  };
-};
-
-export const VolumeSliderRootElement: ConnectedComponentConstructor<VolumeSliderState>
-  = toConnectedHTMLComponent(
-    VolumeSliderRoot,
-    getVolumeSliderRootState,
-    getVolumeSliderRootProps,
-    'VolumeSliderRoot',
-  );
-
-export const VolumeSliderTrackElement: ConnectedComponentConstructor<any> = toConnectedHTMLComponent(
-  VolumeSliderTrack,
-  () => ({}),
-  getVolumeSliderTrackProps,
-  'VolumeSliderTrack',
-);
-
-export const VolumeSliderIndicatorElement: ConnectedComponentConstructor<any> = toConnectedHTMLComponent(
-  VolumeSliderIndicator,
-  () => ({}),
-  getVolumeSliderIndicatorProps,
-  'VolumeSliderIndicator',
-);
-
 export const VolumeSliderThumbElement: ConnectedComponentConstructor<any> = toConnectedHTMLComponent(
   VolumeSliderThumb,
-  () => ({}),
+  undefined,
   getVolumeSliderThumbProps,
   'VolumeSliderThumb',
 );
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
 
 export const VolumeSliderElement = Object.assign(
   {},

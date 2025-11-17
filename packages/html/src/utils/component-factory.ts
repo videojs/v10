@@ -29,7 +29,7 @@ let getCoreStateCount: number;
  */
 export function toConnectedHTMLComponent<State = any>(
   BaseClass: CustomElementConstructor,
-  stateHook: StateHook<State>,
+  stateHook: StateHook<State> | undefined,
   propsHook: PropsHook<State>,
   displayName?: string,
 ): ConnectedComponentConstructor<State> {
@@ -55,7 +55,7 @@ export function toConnectedHTMLComponent<State = any>(
           coreInstances = this._coreInstances;
 
           // Phase 1: Transform raw media store state (state concern)
-          const state = stateHook(mediaStore);
+          const state = stateHook?.(mediaStore) ?? mediaStore.getState();
           // Phase 2: Update element attributes/properties (props concern)
           const props = propsHook(state ?? {} as State, this);
 
