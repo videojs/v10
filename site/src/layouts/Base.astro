@@ -16,8 +16,10 @@ interface Props {
   title: string | string[];
   description: string;
   image?: ImageMetadata;
+  canonical?: string;
 }
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const { canonical } = Astro.props;
+const canonicalURL = canonical || new URL(Astro.url.pathname, Astro.site);
 
 const { title, description, image } = Astro.props;
 

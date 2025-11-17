@@ -7,12 +7,13 @@ import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 interface Props {
   title: string | string[];
   description: string;
+  canonical?: string;
 }
 
-const { title, description } = Astro.props;
+const { title, description, canonical } = Astro.props;
 ---
 
-<Base title={title} description={description}>
+<Base title={title} description={description} canonical={canonical}>
   <slot name="head" slot="head" />
   <div class="min-h-screen flex flex-col">
     <NavBar />

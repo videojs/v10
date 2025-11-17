@@ -54,6 +54,7 @@ const blog = defineCollection({
       pubDate: z.date(),
       updatedDate: z.coerce.date().optional(),
       authors: z.array(reference('authors')),
+      canonical: z.string().url().optional(),
       devOnly: z.boolean().optional(), // only visible in development mode
     }),
 });

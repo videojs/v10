@@ -36,7 +36,7 @@ const jsonLdSchema = createBlogPostingSchema({
 });
 ---
 
-<Blog title={[post.data.title, 'Blog']} description={post.data.description}>
+<Blog title={[post.data.title, 'Blog']} description={post.data.description} canonical={post.data.canonical}>
   <JsonLd slot="head" schema={jsonLdSchema} />
   <article
     class="@container"
