@@ -45,7 +45,7 @@ export class TimeSlider extends Slider {
   setState(newState: Partial<TimeSliderState>): void {
     const state = this.getState();
     // When not dragging or keying, set pointer ratio to current time / duration.
-    if (!state._dragging && !state._keying && newState.currentTime && newState.duration) {
+    if (!state._hovering && !state._dragging && !state._keying && newState.currentTime && newState.duration) {
       super.setState({ ...newState, _pointerRatio: newState.currentTime / newState.duration });
       return;
     }

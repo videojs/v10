@@ -63,6 +63,18 @@ export function toConnectedHTMLComponent<State = any>(
 
           // @ts-expect-error any
           this._update(props, state, mediaStore);
+
+          for (const instance of currentCoreInstances) {
+            if (!instance.listening) {
+              instance.listening = true;
+              instance.core.subscribe(() => {
+                const state = instance.core.getState();
+                const props = propsHook(state ?? {} as State, this);
+                // @ts-expect-error any
+                this._update(props, state, mediaStore);
+              });
+            }
+          }
         });
       },
     };
@@ -94,12 +106,13 @@ export function getCoreState<T extends {
   getState: () => any;
   setState: (state: any) => void;
 }>(CoreClass: new () => T, state: any): any {
-  let core = currentCoreInstances[currentCoreIndex] as T;
+  let core = currentCoreInstances[currentCoreIndex]?.core as T;
   if (!core) {
     core = new CoreClass();
-    currentCoreInstances[currentCoreIndex] = core;
-    currentCoreIndex++;
+    currentCoreInstances[currentCoreIndex] = { core, listening: false };
   }
+
+  currentCoreIndex++;
 
   core.setState(state);
   return core.getState();

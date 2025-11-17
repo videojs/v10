@@ -78,8 +78,8 @@ export class TimeSliderRoot extends HTMLElement {
   _update(props: any, state: TimeSliderState): void {
     this._state = state;
 
-    this.style.setProperty('--slider-fill', `${Math.round(state._fillWidth)}%`);
-    this.style.setProperty('--slider-pointer', `${Math.round(state._pointerWidth)}%`);
+    this.style.setProperty('--slider-fill', `${state._fillWidth.toFixed(3)}%`);
+    this.style.setProperty('--slider-pointer', `${(state._pointerWidth * 100).toFixed(3)}%`);
 
     setAttributes(this, props);
   }
