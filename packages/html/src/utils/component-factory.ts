@@ -13,8 +13,10 @@ export interface ConnectedComponentConstructor<State> {
   new (state: State): HTMLElement;
 }
 
-let coreInstances: any[];
-let getCoreStateCount: number;
+let currentCoreInstances: any[];
+// There might be multiple getCoreState calls in a single state hook
+// which should create a different core instance.
+let currentCoreIndex: number;
 
 /**
  * Generic factory function to create connected HTML components using hooks pattern.
@@ -51,8 +53,8 @@ export function toConnectedHTMLComponent<State = any>(
         // Subscribe to media store state changes
         // Split into two phases: state transformation, then props update
         this._mediaStore.subscribe(() => {
-          getCoreStateCount = 0;
-          coreInstances = this._coreInstances;
+          currentCoreIndex = 0;
+          currentCoreInstances = this._coreInstances;
 
           // Phase 1: Transform raw media store state (state concern)
           const state = stateHook?.(mediaStore) ?? mediaStore.getState();
@@ -92,11 +94,11 @@ export function getCoreState<T extends {
   getState: () => any;
   setState: (state: any) => void;
 }>(CoreClass: new () => T, state: any): any {
-  let core = coreInstances[getCoreStateCount] as T;
+  let core = currentCoreInstances[currentCoreIndex] as T;
   if (!core) {
     core = new CoreClass();
-    coreInstances[getCoreStateCount] = core;
-    getCoreStateCount++;
+    currentCoreInstances[currentCoreIndex] = core;
+    currentCoreIndex++;
   }
 
   core.setState(state);
