@@ -1,7 +1,7 @@
 {
   "name": "@videojs/core",
   "type": "module",
-  "version": "0.1.0-preview.8",
+  "version": "0.1.0-preview.9",
   "description": "Core components and utilities for Video.js",
   "license": "Apache-2.0",
   "keywords": [
