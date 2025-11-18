@@ -4,8 +4,8 @@ declare module '*.module.css' {
 }
 
 declare global {
-  declare module 'react' {
-    interface Attributes {
+  namespace React {
+    interface HTMLAttributes<T> {
       popover?: 'auto' | 'manual' | string;
       commandfor?: string;
     }

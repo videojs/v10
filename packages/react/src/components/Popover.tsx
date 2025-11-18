@@ -28,6 +28,7 @@ interface PopoverContextType {
   transitionStatus: TransitionStatus;
   placement: Placement;
   sideOffset: number;
+  popupId: string | undefined;
 }
 
 interface PopoverRootProps {
@@ -50,6 +51,7 @@ interface PopoverPositionerProps {
 interface PopoverPopupProps {
   id?: string;
   className?: string;
+  style?: React.CSSProperties;
   children: ReactNode;
 }
 
@@ -72,6 +74,8 @@ function PopoverRoot({ openOnHover = false, delay = 0, closeDelay = 0, children 
   const triggerRef = useRef<HTMLElement | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pointerMoveHandlerRef = useRef<((event: MouseEvent) => void) | null>(null);
+  const uniqueId = useId();
+  const popupId = uniqueId.replace(/^:([^:]+):$/, '«$1»');
 
   const clearHoverTimeout = useCallback(() => {
     if (hoverTimeoutRef.current) {
@@ -214,11 +218,6 @@ function PopoverRoot({ openOnHover = false, delay = 0, closeDelay = 0, children 
     if (!popupRef.current || !triggerRef.current) return;
 
     const popup = popupRef.current;
-    const popupId = popup.id;
-    if (popupId) {
-      popup.style.setProperty('position-anchor', `--${popupId}`);
-    }
-
     const [side, alignment] = placement.split('-');
     popup.style.setProperty('top', `calc(anchor(${side}) - ${sideOffset}px)`);
     popup.style.setProperty('translate', `0 -100%`);
@@ -238,18 +237,27 @@ function PopoverRoot({ openOnHover = false, delay = 0, closeDelay = 0, children 
     transitionStatus,
     placement,
     sideOffset,
-  }), [open, setOpenState, updatePositioning, transitionStatus, placement, sideOffset]);
+    popupId,
+  }), [open, setOpenState, updatePositioning, transitionStatus, placement, sideOffset, popupId]);
 
   return <PopoverContext.Provider value={value}>{children}</PopoverContext.Provider>;
 }
 
 function PopoverTrigger({ children }: PopoverTriggerProps): JSX.Element {
-  const { triggerRef, open } = usePopoverContext();
+  const { triggerRef, open, popupId } = usePopoverContext();
 
-  // eslint-disable-next-line react/no-clone-element, react/no-children-only
-  return cloneElement(Children.only(children) as JSX.Element, {
+  const child = Children.only(children) as JSX.Element;
+  const existingStyle = (child.props as { style?: React.CSSProperties })?.style || {};
+
+  // eslint-disable-next-line react/no-clone-element
+  return cloneElement(child, {
     ref: triggerRef,
     'data-popup-open': open ? '' : undefined,
+    commandfor: popupId ?? undefined,
+    style: {
+      ...existingStyle,
+      ...(popupId ? { anchorName: `--${popupId}` as any } : {}),
+    },
   });
 }
 
@@ -263,23 +271,9 @@ function PopoverPositioner({ side = 'top', sideOffset = 5, children }: PopoverPo
   return <>{children}</>;
 }
 
-function PopoverPopup({ id, className, children }: PopoverPopupProps): JSX.Element {
-  const { popupRef, triggerRef, transitionStatus, placement } = usePopoverContext();
+function PopoverPopup({ className, style, children }: PopoverPopupProps): JSX.Element {
+  const { popupRef, triggerRef, transitionStatus, placement, popupId } = usePopoverContext();
   const triggerElement = triggerRef.current;
-
-  const uniqueId = useId();
-  const popupId = id ?? uniqueId.replace(/^:([^:]+):$/, '«$1»');
-
-  useEffect(() => {
-    if (!popupRef.current || !triggerRef.current) return;
-
-    const popup = popupRef.current;
-    const trigger = triggerRef.current;
-
-    popup.setAttribute('popover', 'manual');
-    trigger.setAttribute('commandfor', popupId);
-    trigger.style.setProperty('anchor-name', `--${popupId}`);
-  }, [popupId, popupRef, triggerRef]);
 
   // Copy data attributes from trigger element
   const dataAttributes = useMemo(() => {
@@ -296,6 +290,11 @@ function PopoverPopup({ id, className, children }: PopoverPopupProps): JSX.Eleme
       ref={popupRef as React.RefObject<HTMLDivElement>}
       id={popupId}
       className={className}
+      popover="manual"
+      style={{
+        ...(popupId ? { positionAnchor: `--${popupId}` as any } : {}),
+        ...style,
+      }}
       {...dataAttributes}
       data-side={placement}
       data-starting-style={transitionStatus === 'initial' ? '' : undefined}
