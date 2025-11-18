@@ -3,8 +3,13 @@ import type { ReactNode } from 'react';
 
 import { createMediaStore } from '@videojs/core/store';
 
+import { printConsoleBanner } from '@videojs/utils';
 import { useMemo } from 'react';
+
+import { version } from '../../package.json';
 import { MediaContext } from './context';
+
+printConsoleBanner(version);
 
 export function VideoProvider({ children }: { children: ReactNode }): JSX.Element {
   const value = useMemo(() => createMediaStore(), []);
