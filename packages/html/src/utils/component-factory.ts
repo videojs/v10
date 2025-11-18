@@ -13,10 +13,10 @@ export interface ConnectedComponentConstructor<State> {
   new (state: State): HTMLElement;
 }
 
-let currentCoreInstances: any[];
+let currentCoreInstances: any[] = [];
 // There might be multiple getCoreState calls in a single state hook
 // which should create a different core instance.
-let currentCoreIndex: number;
+let currentCoreIndex: number = 0;
 
 /**
  * Generic factory function to create connected HTML components using hooks pattern.
