@@ -288,7 +288,7 @@ function PopoverPopup({ className, style, children }: PopoverPopupProps): JSX.El
   return (
     <div
       ref={popupRef as React.RefObject<HTMLDivElement>}
-      id={popupId}
+      id={popupId ?? undefined}
       className={className}
       popover="manual"
       style={{
