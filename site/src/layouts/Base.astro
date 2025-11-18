@@ -46,6 +46,10 @@ const fullTitle = Array.isArray(title)
     {/* Important stuff */}
     <slot name="priority-head" />
 
+    {/* Preconnect to Mux for faster video/image loading */}
+    <link rel="preconnect" href="https://image.mux.com" crossorigin />
+    <link rel="preconnect" href="https://stream.mux.com" crossorigin />
+
     {/* Font preloads */}
     <Font cssVariable="--font-instrument-sans" preload />
     <Font cssVariable="--font-ibm-plex-mono" preload />
@@ -98,7 +102,7 @@ const fullTitle = Array.isArray(title)
         'bg-light-80 dark:bg-dark-100',
       ]}
     >
-      <PreferenceSync client:load />
+      <PreferenceSync client:idle />
       <FilmGrain currentPath={Astro.url.pathname} />
       <slot />
     </div>

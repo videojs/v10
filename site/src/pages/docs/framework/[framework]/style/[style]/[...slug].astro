@@ -115,7 +115,7 @@ const jsonLdSchema = createTechArticleSchema({
     "
   >
     <div class="lg:hidden" style="grid-area: selectors;">
-      <Selectors client:load currentFramework={framework} currentStyle={style} currentSlug={slug} />
+      <Selectors client:idle currentFramework={framework} currentStyle={style} currentSlug={slug} />
     </div>
     <div
       class="sticky overflow-y-auto z-30"
@@ -145,7 +145,7 @@ const jsonLdSchema = createTechArticleSchema({
             <H3 as="h1" class="mt-0 mb-2">{getDocTitle(doc, framework)}</H3>
             <p class="@lg:font-medium">{doc.data.description}</p>
           </div>
-          <CopyMarkdownButton client:load />
+          <CopyMarkdownButton client:idle />
         </header>
         <Content components={{ ...defaultMarkdownComponents }} />
       </article>

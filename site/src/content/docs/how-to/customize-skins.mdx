@@ -23,15 +23,15 @@ While eventually we'll have a CLI that'll eject skins in your preferred framewor
 
 <FrameworkCase frameworks={["react"]}>
 
-<TabsRoot client:load>
-  <TabsList client:load label="Frosted React implementation">
-    <Tab client:load value="component" initial>Component</Tab>
-    <Tab client:load value="css">CSS</Tab>
+<TabsRoot client:visible>
+  <TabsList client:visible label="Frosted React implementation">
+    <Tab client:visible value="component" initial>FrostedSkin.tsx</Tab>
+    <Tab client:visible value="css">frosted.css</Tab>
   </TabsList>
-  <TabsPanel client:load value="component" initial>
+  <TabsPanel client:visible value="component" initial>
     <ServerCode code={generateReactComponent('frosted')} lang="tsx" />
   </TabsPanel>
-  <TabsPanel client:load value="css">
+  <TabsPanel client:visible value="css">
     <ServerCode code={generateReactCSS('frosted')} lang="css" />
   </TabsPanel>
 </TabsRoot>
@@ -40,19 +40,19 @@ While eventually we'll have a CLI that'll eject skins in your preferred framewor
 
 <FrameworkCase frameworks={["html"]}>
 
-<TabsRoot client:load>
-  <TabsList client:load label="Frosted HTML implementation">
-    <Tab client:load value="markup" initial>HTML</Tab>
-    <Tab client:load value="js">JS</Tab>
-    <Tab client:load value="css">CSS</Tab>
+<TabsRoot client:visible>
+  <TabsList client:visible label="Frosted HTML implementation">
+    <Tab client:visible value="markup" initial>HTML</Tab>
+    <Tab client:visible value="js">JS</Tab>
+    <Tab client:visible value="css">CSS</Tab>
   </TabsList>
-  <TabsPanel client:load value="markup" initial>
+  <TabsPanel client:visible value="markup" initial>
     <ServerCode code={generateHTMLMarkup('frosted')} lang="html" />
   </TabsPanel>
-  <TabsPanel client:load value="js">
+  <TabsPanel client:visible value="js">
     <ServerCode code={generateHTMLJS('frosted')} lang="typescript" />
   </TabsPanel>
-  <TabsPanel client:load value="css">
+  <TabsPanel client:visible value="css">
     <ServerCode code={generateHTMLCSS('frosted')} lang="css" />
   </TabsPanel>
 </TabsRoot>
@@ -63,15 +63,15 @@ While eventually we'll have a CLI that'll eject skins in your preferred framewor
 
 <FrameworkCase frameworks={["react"]}>
 
-<TabsRoot client:load>
-  <TabsList client:load label="Minimal React implementation">
-    <Tab client:load value="react" initial>React</Tab>
-    <Tab client:load value="css">CSS</Tab>
+<TabsRoot client:visible>
+  <TabsList client:visible label="Minimal React implementation">
+    <Tab client:visible value="react" initial>MinimalSkin.tsx</Tab>
+    <Tab client:visible value="css">minimal.css</Tab>
   </TabsList>
-  <TabsPanel client:load value="react" initial>
+  <TabsPanel client:visible value="react" initial>
     <ServerCode code={generateReactComponent('minimal')} lang="tsx" />
   </TabsPanel>
-  <TabsPanel client:load value="css">
+  <TabsPanel client:visible value="css">
     <ServerCode code={generateReactCSS('minimal')} lang="css" />
   </TabsPanel>
 </TabsRoot>
@@ -80,19 +80,19 @@ While eventually we'll have a CLI that'll eject skins in your preferred framewor
 
 <FrameworkCase frameworks={["html"]}>
 
-<TabsRoot client:load>
-  <TabsList client:load label="Minimal HTML implementation">
-    <Tab client:load value="html" initial>HTML</Tab>
-    <Tab client:load value="js">JS</Tab>
-    <Tab client:load value="css">CSS</Tab>
+<TabsRoot client:visible>
+  <TabsList client:visible label="Minimal HTML implementation">
+    <Tab client:visible value="html" initial>HTML</Tab>
+    <Tab client:visible value="js">JS</Tab>
+    <Tab client:visible value="css">CSS</Tab>
   </TabsList>
-  <TabsPanel client:load value="html" initial>
+  <TabsPanel client:visible value="html" initial>
     <ServerCode code={generateHTMLMarkup('minimal')} lang="html" />
   </TabsPanel>
-  <TabsPanel client:load value="js">
+  <TabsPanel client:visible value="js">
     <ServerCode code={generateHTMLJS('minimal')} lang="typescript" />
   </TabsPanel>
-  <TabsPanel client:load value="css">
+  <TabsPanel client:visible value="css">
     <ServerCode code={generateHTMLCSS('minimal')} lang="css" />
   </TabsPanel>
 </TabsRoot>

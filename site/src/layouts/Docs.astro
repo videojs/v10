@@ -49,7 +49,7 @@ const docsSidebarId = 'docs-sidebar';
     >
       <FilmGrain currentPath={Astro.url.pathname} />
       <DocsSidebar framework={framework} style={style} docTitles={docTitles} class="flex-1">
-        <Selectors client:load currentFramework={framework} currentStyle={style} currentSlug={slug} />
+        <Selectors client:idle currentFramework={framework} currentStyle={style} currentSlug={slug} />
       </DocsSidebar>
     </aside>
     <div>

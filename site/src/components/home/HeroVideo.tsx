@@ -6,7 +6,6 @@ import '@videojs/react/skins/frosted.css';
 import '@videojs/react/skins/minimal.css';
 
 export default function HeroVideo({ className, poster }: { className?: string; poster: string }) {
-  // Subscribe to skin store for future skin switching functionality
   const $skin = useStore(skin);
   const SkinComponent = $skin === 'frosted' ? FrostedSkin : MinimalSkin;
 

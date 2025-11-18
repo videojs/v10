@@ -20,7 +20,7 @@ const shouldRender = !frameworks || frameworks.includes(framework as SupportedFr
     ```
 
     But I'm running into some crazy problems with hydration.
-    Putting client:load in one of these conditionals causes Astro to just give up hydrating the whole app for some reason.
+    Putting client:* in one of these conditionals causes Astro to just give up hydrating the whole app for some reason.
     TODO: fix this
 
     So, while I debug those... let's do this

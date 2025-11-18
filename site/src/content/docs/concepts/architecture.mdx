@@ -93,12 +93,12 @@ function Player() {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-<TabsRoot client:load>
-  <TabsList client:load label="HTML implementation">
-    <Tab client:load value="html" initial>HTML</Tab>
-    <Tab client:load value="javascript">JavaScript</Tab>
+<TabsRoot client:visible>
+  <TabsList client:visible label="HTML implementation">
+    <Tab client:visible value="html" initial>HTML</Tab>
+    <Tab client:visible value="javascript">JavaScript</Tab>
   </TabsList>
-  <TabsPanel client:load value="html" initial>
+  <TabsPanel client:visible value="html" initial>
 
 ```html
 <!-- Tier 1: State Management -->
@@ -112,7 +112,7 @@ function Player() {
 ```
 
   </TabsPanel>
-  <TabsPanel client:load value="javascript">
+  <TabsPanel client:visible value="javascript">
 
 ```ts
 import '@videojs/html/skins/frosted';

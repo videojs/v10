@@ -297,23 +297,23 @@ Use `<TabsRoot>`, `<TabsList>`, `<Tab>`, and `<TabsPanel>` to show multiple item
 
 <Aside type="note">
 - Set `initial` on your first `<Tab>` and first `<TabsPanel>` to make them active by default
-- All `<Tab* >` components require `client:load` directive so Astro knows to hydrate them
+- All `<Tab* >` components require a `client:*` directive (I'd suggest `client:visible`) so Astro knows to hydrate them
 - Use descriptive `label` prop on `<TabsList>` for accessibility
 </Aside>
 
 
 ````mdx
-<TabsRoot client:load>
-  <TabsList client:load label="Code examples">
-    <Tab client:load value="typescript" initial>TypeScript</Tab>
-    <Tab client:load value="javascript">JavaScript</Tab>
+<TabsRoot client:visible>
+  <TabsList client:visible label="Code examples">
+    <Tab client:visible value="typescript" initial>TypeScript</Tab>
+    <Tab client:visible value="javascript">JavaScript</Tab>
   </TabsList>
-  <TabsPanel client:load value="typescript" initial>
+  <TabsPanel client:visible value="typescript" initial>
     ```ts
     console.log('Hello, TypeScript!');
     ```
   </TabsPanel>
-  <TabsPanel client:load value="javascript">
+  <TabsPanel client:visible value="javascript">
     ```js
     console.log('Hello, JavaScript!');
     ```
@@ -322,17 +322,17 @@ Use `<TabsRoot>`, `<TabsList>`, `<Tab>`, and `<TabsPanel>` to show multiple item
 ````
 
 
-<TabsRoot client:load>
-  <TabsList client:load label="Code examples">
-    <Tab client:load value="typescript" initial>TypeScript</Tab>
-    <Tab client:load value="javascript">JavaScript</Tab>
+<TabsRoot client:visible>
+  <TabsList client:visible label="Code examples">
+    <Tab client:visible value="typescript" initial>TypeScript</Tab>
+    <Tab client:visible value="javascript">JavaScript</Tab>
   </TabsList>
-  <TabsPanel client:load value="typescript" initial>
+  <TabsPanel client:visible value="typescript" initial>
     ```ts
     console.log('Hello, TypeScript!');
     ```
   </TabsPanel>
-  <TabsPanel client:load value="javascript">
+  <TabsPanel client:visible value="javascript">
     ```js
     console.log('Hello, JavaScript!');
     ```
@@ -365,11 +365,11 @@ import componentCode from '@/examples/react/Component.tsx?raw';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs';
 import ServerCode from '@/components/Code/ServerCode.astro';
 
-<TabsRoot client:load>
-  <TabsList client:load label="Component implementation">
-    <Tab client:load value="component" initial>Component</Tab>
+<TabsRoot client:visible>
+  <TabsList client:visible label="Component implementation">
+    <Tab client:visible value="component" initial>Component</Tab>
   </TabsList>
-  <TabsPanel client:load value="component" initial>
+  <TabsPanel client:visible value="component" initial>
     <ServerCode code={componentCode} lang="tsx" />
   </TabsPanel>
 </TabsRoot>
@@ -377,11 +377,11 @@ import ServerCode from '@/components/Code/ServerCode.astro';
 
 Which will happily render
 
-<TabsRoot client:load>
-  <TabsList client:load label="Component implementation">
-    <Tab client:load value="component" initial>Component</Tab>
+<TabsRoot client:visible>
+  <TabsList client:visible label="Component implementation">
+    <Tab client:visible value="component" initial>Component</Tab>
   </TabsList>
-  <TabsPanel client:load value="component" initial>
+  <TabsPanel client:visible value="component" initial>
     <ServerCode code={`import React from 'react';
 
 function Component() {
@@ -403,7 +403,7 @@ Use the `<MinimalFrame>` frame component to wrap standalone demos with a styled 
 import { MyDemo } from '@/examples/react/MyDemo';
 import MinimalFrame from '@/components/frames/Minimal.astro';
 <MinimalFrame>
-  <MyDemo client:load />
+  <MyDemo client:visible />
 </MinimalFrame>
 ```
 
@@ -432,17 +432,17 @@ import cssCode from '@/examples/react/MyDemo.module.css?raw';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs';
 import ServerCode from '@/components/Code/ServerCode.astro';
 
-<TabsRoot client:load>
-  <TabsList client:load label="MyDemo implementation">
-    <Tab client:load value="component" initial>Component</Tab>
-    <Tab client:load value="css">CSS Module</Tab>
+<TabsRoot client:visible>
+  <TabsList client:visible label="MyDemo implementation">
+    <Tab client:visible value="component" initial>Component</Tab>
+    <Tab client:visible value="css">CSS Module</Tab>
   </TabsList>
-  <TabsPanel client:load value="component" initial>
+  <TabsPanel client:visible value="component" initial>
     <ServerCode code={componentCode} lang="tsx" />
   </TabsPanel>
-  <TabsPanel client:load value="css">
+  <TabsPanel client:visible value="css">
     <ServerCode code={cssCode} lang="css" />
   </TabsPanel>
-  <MyDemo client:load />
+  <MyDemo client:visible />
 </TabsRoot>
 ```

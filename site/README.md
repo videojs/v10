@@ -60,7 +60,7 @@ If you're in `site/`...
 Here are most of the technologies you should get to know when you're building this site:
 
 - [**Astro**](https://astro.build) - Mostly-static site generation with [island architecture](https://docs.astro.build/en/concepts/islands/)
-- [**React**](https://react.dev) - Most of our client-side interactivity is built with React components (each with `client:load` is an isolated React root)
+- [**React**](https://react.dev) - Most of our client-side interactivity is built with React components (each with `client:*` is an isolated React root)
 - [**Tailwind v4**](https://tailwindcss.com) - CSS utility class generator
 - [**Nanostores**](https://github.com/nanostores/nanostores) - Shared client-side state (React Context doesn't work across islands)
 - [**Base UI**](https://base-ui.com) - Headless accessible components

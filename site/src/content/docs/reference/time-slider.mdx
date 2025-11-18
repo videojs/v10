@@ -26,38 +26,38 @@ import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs';
 ## Example
 
 <FrameworkCase frameworks={["react"]}>
-  <TabsRoot client:load>
-    <TabsList client:load label="React implementation">
-      <Tab client:load value="component" initial>Component</Tab>
-      <Tab client:load value="css">CSS Module</Tab>
+  <TabsRoot client:visible>
+    <TabsList client:visible label="React implementation">
+      <Tab client:visible value="component" initial>Component</Tab>
+      <Tab client:visible value="css">CSS Module</Tab>
     </TabsList>
-    <TabsPanel client:load value="component" initial>
+    <TabsPanel client:visible value="component" initial>
       <ServerCode code={componentModuleStr} lang="tsx" />
     </TabsPanel>
-    <TabsPanel client:load value="css">
+    <TabsPanel client:visible value="css">
       <ServerCode code={cssModuleStr} lang="css" />
     </TabsPanel>
-    <TimeSliderDemo client:load />
+    <TimeSliderDemo client:visible />
   </TabsRoot>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-  <TabsRoot client:load>
-    <TabsList client:load label="HTML implementation">
-      <Tab client:load value="html-horizontal" initial>HTML (Horizontal)</Tab>
-      <Tab client:load value="html-vertical">HTML (Vertical)</Tab>
-      <Tab client:load value="css">CSS</Tab>
+  <TabsRoot client:visible>
+    <TabsList client:visible label="HTML implementation">
+      <Tab client:visible value="html-horizontal" initial>HTML (Horizontal)</Tab>
+      <Tab client:visible value="html-vertical">HTML (Vertical)</Tab>
+      <Tab client:visible value="css">CSS</Tab>
     </TabsList>
-    <TabsPanel client:load value="html-horizontal" initial>
+    <TabsPanel client:visible value="html-horizontal" initial>
       <ServerCode code={htmlHorizontalStr} lang="html" />
     </TabsPanel>
-    <TabsPanel client:load value="html-vertical">
+    <TabsPanel client:visible value="html-vertical">
       <ServerCode code={htmlVerticalStr} lang="html" />
     </TabsPanel>
-    <TabsPanel client:load value="css">
+    <TabsPanel client:visible value="css">
       <ServerCode code={htmlCssStr} lang="css" />
     </TabsPanel>
-    <TimeSliderDemo client:load />
+    <TimeSliderDemo client:visible />
   </TabsRoot>
 </FrameworkCase>
 

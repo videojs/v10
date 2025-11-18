@@ -83,7 +83,7 @@ const { class: className, dark = false } = Astro.props;
   </div>
 
   {/* Mobile nav */}
-  <MobileNav client:load navLinks={navLinks} currentPath={currentPath} dark={dark}>
+  <MobileNav client:idle navLinks={navLinks} currentPath={currentPath} dark={dark}>
     <slot name="mobile-nav" />
   </MobileNav>
 </nav>
