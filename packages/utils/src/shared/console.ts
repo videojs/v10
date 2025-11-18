@@ -1,4 +1,4 @@
-export function yieldConsoleBanner(version: string): void {
+export function printConsoleBanner(version: string): void {
   // eslint-disable-next-line no-console
   console.info(
     `%c Video.js %c v${version}`,

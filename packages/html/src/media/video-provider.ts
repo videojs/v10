@@ -4,10 +4,10 @@ import type { MediaStore } from '@videojs/core/store';
 import { ProviderMixin } from '@open-wc/context-protocol';
 import { createMediaStore } from '@videojs/core/store';
 
-import { yieldConsoleBanner } from '@videojs/utils';
+import { printConsoleBanner } from '@videojs/utils';
 import { version } from '../../package.json';
 
-yieldConsoleBanner(version);
+printConsoleBanner(version);
 
 const ProviderHTMLElement: Constructor<CustomElement & HTMLElement> = ProviderMixin(HTMLElement);
 
