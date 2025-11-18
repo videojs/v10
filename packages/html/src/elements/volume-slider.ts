@@ -104,17 +104,17 @@ export const VolumeSliderRootElement: ConnectedComponentConstructor<VolumeSlider
 
 export const getVolumeSliderTrackProps: PropsHook<Record<string, never>> = (_state, element) => {
   const rootElement = element.closest('media-volume-slider') as any;
+
+  if (rootElement._state?._trackElement !== element) {
+    rootElement._state?._setTrackElement?.(element);
+  }
+
   return {
     'data-orientation': rootElement?.orientation || 'horizontal',
   };
 };
 
 export class VolumeSliderTrack extends HTMLElement {
-  connectedCallback(): void {
-    const rootElement = this.closest('media-volume-slider') as any;
-    rootElement._state._setTrackElement(this);
-  }
-
   _update(props: any, _state: any): void {
     setAttributes(this, props);
 

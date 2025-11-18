@@ -99,17 +99,17 @@ export const TimeSliderRootElement: ConnectedComponentConstructor<TimeSliderStat
 
 export const getTimeSliderTrackProps: PropsHook<Record<string, never>> = (_state, element) => {
   const rootElement = element.closest('media-time-slider') as any;
+
+  if (rootElement._state?._trackElement !== element) {
+    rootElement._state?._setTrackElement?.(element);
+  }
+
   return {
     'data-orientation': rootElement?.orientation || 'horizontal',
   };
 };
 
 export class TimeSliderTrack extends HTMLElement {
-  connectedCallback(): void {
-    const rootElement = this.closest('media-time-slider') as any;
-    rootElement._state._setTrackElement(this);
-  }
-
   _update(props: any, _state: any): void {
     setAttributes(this, props);
 
