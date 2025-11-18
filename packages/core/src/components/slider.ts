@@ -3,6 +3,9 @@ import { shallowEqual } from '@videojs/utils';
 import { map } from 'nanostores';
 
 export interface SliderState {
+  _setRootElement: (element: HTMLElement | null) => void;
+  _rootElement: HTMLElement | null;
+  _setTrackElement: (element: HTMLElement | null) => void;
   _trackElement: HTMLElement | null;
   _pointerRatio: number;
   _hovering: boolean;
@@ -14,9 +17,11 @@ export interface SliderState {
 }
 
 export class Slider {
-  #element: HTMLElement | null = null;
   #abortController: AbortController | null = null;
   #state = map<SliderState>({
+    _setRootElement: this._setRootElement.bind(this),
+    _rootElement: null,
+    _setTrackElement: (element: HTMLElement | null) => this.setState({ _trackElement: element }),
     _trackElement: null,
     _pointerRatio: 0,
     _hovering: false,
@@ -27,25 +32,25 @@ export class Slider {
     _stepSize: 0.01,
   });
 
-  attach(target: HTMLElement): void {
-    this.#element = target;
+  _setRootElement(element: HTMLElement | null): void {
+    this.setState({ _rootElement: element });
+
+    if (!element) {
+      this.#abortController?.abort();
+      this.#abortController = null;
+      return;
+    }
 
     this.#abortController = new AbortController();
     const { signal } = this.#abortController;
 
-    this.#element.addEventListener('pointerdown', this, { signal });
-    this.#element.addEventListener('pointermove', this, { signal });
-    this.#element.addEventListener('pointerup', this, { signal });
-    this.#element.addEventListener('pointerenter', this, { signal });
-    this.#element.addEventListener('pointerleave', this, { signal });
-    this.#element.addEventListener('keydown', this, { signal });
-    this.#element.addEventListener('keyup', this, { signal });
-  }
-
-  detach(): void {
-    this.#element = null;
-    this.#abortController?.abort();
-    this.#abortController = null;
+    element.addEventListener('pointerdown', this, { signal });
+    element.addEventListener('pointermove', this, { signal });
+    element.addEventListener('pointerup', this, { signal });
+    element.addEventListener('pointerenter', this, { signal });
+    element.addEventListener('pointerleave', this, { signal });
+    element.addEventListener('keydown', this, { signal });
+    element.addEventListener('keyup', this, { signal });
   }
 
   subscribe(callback: (state: SliderState) => void): () => void {
@@ -109,8 +114,7 @@ export class Slider {
   }
 
   #handlePointerDown(event: PointerEvent) {
-    this.#element?.setPointerCapture(event.pointerId);
-
+    this.#state.get()._rootElement?.setPointerCapture(event.pointerId);
     this.setState({ _pointerRatio: this.getPointerRatio(event), _dragging: true });
   }
 
@@ -120,8 +124,7 @@ export class Slider {
 
   #handlePointerUp(event: PointerEvent) {
     this.setState({ _pointerRatio: this.getPointerRatio(event), _dragging: false });
-
-    this.#element?.releasePointerCapture(event.pointerId);
+    this.#state.get()._rootElement?.releasePointerCapture(event.pointerId);
   }
 
   #handlePointerEnter(_event: PointerEvent) {

@@ -1,5 +1,6 @@
 import type { SliderState } from './slider';
 
+import { formatTime } from '@videojs/utils';
 import { Slider } from './slider';
 
 export interface TimeSliderState extends SliderState {
@@ -44,7 +45,7 @@ export class TimeSlider extends Slider {
   setState(newState: Partial<TimeSliderState>): void {
     const state = this.getState();
     // When not dragging or keying, set pointer ratio to current time / duration.
-    if (!state._dragging && !state._keying && newState.currentTime && newState.duration) {
+    if (!state._hovering && !state._dragging && !state._keying && newState.currentTime && newState.duration) {
       super.setState({ ...newState, _pointerRatio: newState.currentTime / newState.duration });
       return;
     }
@@ -114,10 +115,4 @@ export class TimeSlider extends Slider {
     this.#seekingTime = _pointerRatio * duration;
     requestSeek(this.#seekingTime);
   }
-}
-
-function formatTime(time: number): string {
-  const minutes = Math.floor(time / 60);
-  const seconds = Math.floor(time % 60);
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }

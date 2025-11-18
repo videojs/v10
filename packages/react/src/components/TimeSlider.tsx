@@ -1,22 +1,17 @@
+import type { Prettify } from '../types';
 import type { ConnectedComponent } from '../utils/component-factory';
 
 import { TimeSlider as CoreTimeSlider } from '@videojs/core';
-
 import { timeSliderStateDefinition } from '@videojs/core/store';
 import { shallowEqual } from '@videojs/utils';
-import { useCallback, useMemo } from 'react';
-
+import { useMemo } from 'react';
 import { useMediaSelector, useMediaStore } from '@/store';
 import { toConnectedComponent, toContextComponent, useCore } from '../utils/component-factory';
 import { useComposedRefs } from '../utils/use-composed-refs';
 
-export interface TimeSliderState {
-  currentTime: number;
-  duration: number;
-  requestSeek: (time: number) => void;
-  core: CoreTimeSlider;
+export type TimeSliderState = Prettify<ReturnType<typeof useCore<CoreTimeSlider>>> & {
   orientation: 'horizontal' | 'vertical';
-}
+};
 
 export interface TimeSliderProps extends React.ComponentPropsWithRef<'div'> {
   orientation?: 'horizontal' | 'vertical';
@@ -37,27 +32,16 @@ export function useTimeSliderRootState(props: TimeSliderProps): TimeSliderState 
   const mediaStore = useMediaStore();
   const mediaState = useMediaSelector(timeSliderStateDefinition.stateTransform, shallowEqual);
   const mediaMethods = useMemo(() => timeSliderStateDefinition.createRequestMethods(mediaStore.dispatch), [mediaStore]);
-  const core = useCore(CoreTimeSlider, { ...mediaState, ...mediaMethods });
-
+  const coreState = useCore(CoreTimeSlider, { ...mediaState, ...mediaMethods });
   return {
-    ...mediaState,
-    ...mediaMethods,
+    ...coreState,
     orientation,
-    core,
   };
 }
 
 export function useTimeSliderRootProps(props: TimeSliderProps, state: TimeSliderState): TimeSliderRenderProps {
-  const { _fillWidth, _pointerWidth, _currentTimeText, _durationText } = state.core.getState();
-
   const { children, className, id, style, orientation = 'horizontal', ref } = props;
-
-  const internalRef = useCallback((el: HTMLDivElement) => {
-    if (!el) return;
-    state.core?.attach(el);
-  }, [state.core]);
-
-  const composedRef = useComposedRefs(ref, internalRef);
+  const composedRef = useComposedRefs(ref, state._setRootElement);
 
   return {
     ref: composedRef,
@@ -68,7 +52,7 @@ export function useTimeSliderRootProps(props: TimeSliderProps, state: TimeSlider
     'aria-valuemin': 0,
     'aria-valuemax': Math.round(state.duration),
     'aria-valuenow': Math.round(state.currentTime),
-    'aria-valuetext': `${_currentTimeText} of ${_durationText}`,
+    'aria-valuetext': `${state._currentTimeText} of ${state._durationText}`,
     'aria-orientation': orientation,
     'data-orientation': orientation,
     'data-current-time': state.currentTime,
@@ -76,8 +60,8 @@ export function useTimeSliderRootProps(props: TimeSliderProps, state: TimeSlider
     className,
     style: {
       ...style,
-      '--slider-fill': `${_fillWidth.toFixed(3)}%`,
-      '--slider-pointer': `${(_pointerWidth * 100).toFixed(3)}%`,
+      '--slider-fill': `${state._fillWidth.toFixed(3)}%`,
+      '--slider-pointer': `${(state._pointerWidth * 100).toFixed(3)}%`,
     } as React.CSSProperties,
     children,
   };
@@ -100,9 +84,7 @@ const TimeSliderRoot: ConnectedComponent<TimeSliderProps, typeof renderTimeSlide
 
 export function useTimeSliderTrackProps(props: React.ComponentProps<'div'>, context: TimeSliderState): TimeSliderRenderProps {
   return {
-    ref: useCallback((el: HTMLDivElement) => {
-      context.core?.setState({ _trackElement: el });
-    }, [context.core]),
+    ref: context._setTrackElement,
     'data-orientation': context.orientation,
     ...props,
     style: {

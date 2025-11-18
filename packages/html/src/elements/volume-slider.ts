@@ -1,25 +1,40 @@
-import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
+import type { MediaStore } from '@videojs/core/store';
+import type { Prettify } from '../types';
 
+import type { ConnectedComponentConstructor, PropsHook } from '../utils/component-factory';
 import { VolumeSlider as CoreVolumeSlider } from '@videojs/core';
 import { volumeSliderStateDefinition } from '@videojs/core/store';
 
 import { setAttributes } from '@videojs/utils/dom';
-import { toConnectedHTMLComponent } from '../utils/component-factory';
+import { getCoreState, toConnectedHTMLComponent } from '../utils/component-factory';
+
+type VolumeSliderState = Prettify<ReturnType<CoreVolumeSlider['getState']>>;
+
+// ============================================================================
+// ROOT COMPONENT
+// ============================================================================
+
+export function getVolumeSliderRootState(mediaStore: MediaStore): VolumeSliderState {
+  const mediaState = volumeSliderStateDefinition.stateTransform(mediaStore.getState());
+  const mediaMethods = volumeSliderStateDefinition.createRequestMethods(mediaStore.dispatch);
+  const coreState = getCoreState(CoreVolumeSlider, { ...mediaState, ...mediaMethods });
+  return {
+    ...coreState,
+  };
+}
 
 /**
  * VolumeSlider Root props hook - equivalent to React's useVolumeSliderRootProps
  * Handles element attributes and properties based on state
  */
-export const getVolumeSliderRootProps: PropsHook<{
-  volume: number;
-  muted: boolean;
-  volumeLevel: string;
-  requestVolumeChange: (volume: number) => void;
-  core: CoreVolumeSlider | null;
-}> = (state, element) => {
+export const getVolumeSliderRootProps: PropsHook<VolumeSliderState> = (state, element) => {
+  if (state._rootElement !== element) {
+    state._setRootElement(element);
+  }
+
   const volumeText = `${Math.round(state.muted ? 0 : state.volume * 100)}%`;
 
-  const baseProps: Record<string, any> = {
+  return {
     role: 'slider',
     tabindex: element.getAttribute('tabindex') ?? '0',
     'data-muted': state.muted.toString(),
@@ -28,32 +43,22 @@ export const getVolumeSliderRootProps: PropsHook<{
     'aria-label': 'Volume',
     'aria-valuemin': '0',
     'aria-valuemax': '100',
+    'aria-valuenow': Math.round(state.muted ? 0 : state.volume * 100).toString(),
     'aria-valuetext': volumeText,
     'aria-orientation': (element as any).orientation || 'horizontal',
   };
-
-  return baseProps;
 };
 
-/**
- * VolumeSlider Root component - Main container with pointer event handling
- */
-interface VolumeSliderRootState {
-  volume: number;
-  muted: boolean;
-  volumeLevel: string;
-  requestVolumeChange: (volume: number) => void;
-  core: CoreVolumeSlider | null;
-}
-
 export class VolumeSliderRoot extends HTMLElement {
-  static readonly observedAttributes: readonly string[] = ['orientation'];
+  static readonly observedAttributes: readonly string[] = [
+    'commandfor',
+    'orientation',
+  ];
 
-  _state: VolumeSliderRootState | undefined;
-  _core: CoreVolumeSlider | null = null;
+  _state: VolumeSliderState | undefined;
 
-  get volume(): number | undefined {
-    return this._state?.volume;
+  get volume(): number {
+    return this._state?.volume ?? 0;
   }
 
   get muted(): boolean {
@@ -68,54 +73,48 @@ export class VolumeSliderRoot extends HTMLElement {
     return (this.getAttribute('orientation') as 'horizontal' | 'vertical') || 'horizontal';
   }
 
-  attributeChangedCallback(name: string, _oldValue: string | null, _newValue: string | null): void {
+  attributeChangedCallback(name: string, _oldValue: string | null, newValue: string | null): void {
     if (name === 'orientation' && this._state) {
-      this._render(getVolumeSliderRootProps(this._state, this), this._state);
+      this._update(getVolumeSliderRootProps(this._state, this), this._state);
+    } else if (name === 'commandfor') {
+      this.style.setProperty('anchor-name', `--${newValue}`);
     }
   }
 
-  _update(_props: any, state: any): void {
+  _update(props: any, state: VolumeSliderState): void {
     this._state = state;
 
-    if (state && !this._core) {
-      this._core = new CoreVolumeSlider();
-      this._core.subscribe(() => this._render(getVolumeSliderRootProps(state, this), state));
-      this._core.attach(this);
-      state.core = this._core;
-    }
-
-    this._core?.setState(state);
-  }
-
-  _render(props: any, state: any): void {
-    const coreState = state?.core?.getState();
-    if (!coreState) return;
-
-    this.style.setProperty('--slider-fill', `${coreState._fillWidth.toFixed(3)}%`);
-    this.style.setProperty('--slider-pointer', `${coreState._pointerWidth.toFixed(3)}%`);
-
-    props['aria-valuenow'] = coreState._fillWidth.toString();
+    this.style.setProperty('--slider-fill', `${state._fillWidth.toFixed(3)}%`);
 
     setAttributes(this, props);
   }
 }
 
-/**
- * VolumeSlider Track component - Track element that captures pointer events
- */
+export const VolumeSliderRootElement: ConnectedComponentConstructor<VolumeSliderState>
+  = toConnectedHTMLComponent(
+    VolumeSliderRoot,
+    getVolumeSliderRootState,
+    getVolumeSliderRootProps,
+    'VolumeSliderRoot',
+  );
+
+// ============================================================================
+// TRACK COMPONENT
+// ============================================================================
+
+export const getVolumeSliderTrackProps: PropsHook<Record<string, never>> = (_state, element) => {
+  const rootElement = element.closest('media-volume-slider') as any;
+
+  if (rootElement._state?._trackElement !== element) {
+    rootElement._state?._setTrackElement?.(element);
+  }
+
+  return {
+    'data-orientation': rootElement?.orientation || 'horizontal',
+  };
+};
+
 export class VolumeSliderTrack extends HTMLElement {
-  constructor() {
-    super();
-  }
-
-  connectedCallback(): void {
-    // Set this element as the track element in the core VolumeSlider
-    const rootElement = this.closest('media-volume-slider') as any;
-    if (rootElement?._state?.core) {
-      rootElement._state.core.setState({ _trackElement: this });
-    }
-  }
-
   _update(props: any, _state: any): void {
     setAttributes(this, props);
 
@@ -129,9 +128,24 @@ export class VolumeSliderTrack extends HTMLElement {
   }
 }
 
-/**
- * VolumeSlider Progress component - Shows current progress
- */
+export const VolumeSliderTrackElement: ConnectedComponentConstructor<any> = toConnectedHTMLComponent(
+  VolumeSliderTrack,
+  undefined,
+  getVolumeSliderTrackProps,
+  'VolumeSliderTrack',
+);
+
+// ============================================================================
+// INDICATOR COMPONENT
+// ============================================================================
+
+export const getVolumeSliderIndicatorProps: PropsHook<Record<string, never>> = (_state, element) => {
+  const rootElement = element.closest('media-volume-slider') as any;
+  return {
+    'data-orientation': rootElement?.orientation || 'horizontal',
+  };
+};
+
 export class VolumeSliderIndicator extends HTMLElement {
   constructor() {
     super();
@@ -157,9 +171,24 @@ export class VolumeSliderIndicator extends HTMLElement {
   }
 }
 
-/**
- * VolumeSlider Thumb component - Draggable thumb element
- */
+export const VolumeSliderIndicatorElement: ConnectedComponentConstructor<any> = toConnectedHTMLComponent(
+  VolumeSliderIndicator,
+  undefined,
+  getVolumeSliderIndicatorProps,
+  'VolumeSliderIndicator',
+);
+
+// ============================================================================
+// THUMB COMPONENT
+// ============================================================================
+
+export const getVolumeSliderThumbProps: PropsHook<Record<string, never>> = (_state, element) => {
+  const rootElement = element.closest('media-volume-slider') as any;
+  return {
+    'data-orientation': rootElement?.orientation || 'horizontal',
+  };
+};
+
 export class VolumeSliderThumb extends HTMLElement {
   constructor() {
     super();
@@ -182,99 +211,17 @@ export class VolumeSliderThumb extends HTMLElement {
   }
 }
 
-/**
- * VolumeSlider Root state hook - equivalent to React's useVolumeSliderRootState
- * Handles media store state subscription and transformation
- */
-export const useVolumeSliderRootState: StateHook<{
-  volume: number;
-  muted: boolean;
-  volumeLevel: string;
-  requestVolumeChange: (volume: number) => void;
-  core: CoreVolumeSlider | null;
-}> = {
-  keys: volumeSliderStateDefinition.keys,
-  transform: (rawState, mediaStore) => ({
-    ...volumeSliderStateDefinition.stateTransform(rawState),
-    ...volumeSliderStateDefinition.createRequestMethods(mediaStore.dispatch),
-    core: null,
-  }),
-};
-
-/**
- * VolumeSlider Track props hook
- */
-export const getVolumeSliderTrackProps: PropsHook<Record<string, never>> = (_state, element) => {
-  const rootElement = element.closest('media-volume-slider') as any;
-  return {
-    'data-orientation': rootElement?.orientation || 'horizontal',
-  };
-};
-
-/**
- * VolumeSlider Progress props hook
- */
-export const getVolumeSliderProgressProps: PropsHook<Record<string, never>> = (_state, element) => {
-  const rootElement = element.closest('media-volume-slider') as any;
-  return {
-    'data-orientation': rootElement?.orientation || 'horizontal',
-  };
-};
-
-/**
- * VolumeSlider Thumb props hook
- */
-export const getVolumeSliderThumbProps: PropsHook<Record<string, never>> = (_state, element) => {
-  const rootElement = element.closest('media-volume-slider') as any;
-  return {
-    'data-orientation': rootElement?.orientation || 'horizontal',
-  };
-};
-
-/**
- * Connected VolumeSlider Root component using hook-style architecture
- */
-export const VolumeSliderRootElement: ConnectedComponentConstructor<{
-  volume: number;
-  muted: boolean;
-  volumeLevel: string;
-  requestVolumeChange: (volume: number) => void;
-  core: CoreVolumeSlider | null;
-}> = toConnectedHTMLComponent(VolumeSliderRoot, useVolumeSliderRootState, getVolumeSliderRootProps, 'VolumeSliderRoot');
-
-/**
- * Connected VolumeSlider Track component
- */
-export const VolumeSliderTrackElement: ConnectedComponentConstructor<any> = toConnectedHTMLComponent(
-  VolumeSliderTrack,
-  { keys: [], transform: () => ({}) },
-  getVolumeSliderTrackProps,
-  'VolumeSliderTrack',
-);
-
-/**
- * Connected VolumeSlider Progress component
- */
-export const VolumeSliderIndicatorElement: ConnectedComponentConstructor<any> = toConnectedHTMLComponent(
-  VolumeSliderIndicator,
-  { keys: [], transform: () => ({}) },
-  getVolumeSliderProgressProps,
-  'VolumeSliderProgress',
-);
-
-/**
- * Connected VolumeSlider Thumb component
- */
 export const VolumeSliderThumbElement: ConnectedComponentConstructor<any> = toConnectedHTMLComponent(
   VolumeSliderThumb,
-  { keys: [], transform: () => ({}) },
+  undefined,
   getVolumeSliderThumbProps,
   'VolumeSliderThumb',
 );
 
-/**
- * Compound VolumeSlider component object
- */
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
 export const VolumeSliderElement = Object.assign(
   {},
   {

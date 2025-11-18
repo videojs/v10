@@ -1,5 +1,5 @@
-import type { CurrentTimeDisplayState } from '@videojs/core/store';
-import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
+import type { CurrentTimeDisplayState, MediaStore } from '@videojs/core/store';
+import type { ConnectedComponentConstructor, PropsHook } from '../utils/component-factory';
 
 import { currentTimeDisplayStateDefinition } from '@videojs/core/store';
 
@@ -62,16 +62,15 @@ export class CurrentTimeDisplay extends HTMLElement {
   }
 }
 
-export const useCurrentTimeDisplayState: StateHook<{
+export function getCurrentTimeDisplayState(mediaStore: MediaStore): {
   currentTime: number | undefined;
   duration: number | undefined;
-}> = {
-  keys: [...currentTimeDisplayStateDefinition.keys],
-  transform: (rawState, _mediaStore) => ({
-    ...currentTimeDisplayStateDefinition.stateTransform(rawState),
+} {
+  return {
+    ...currentTimeDisplayStateDefinition.stateTransform(mediaStore.getState()),
     // Current time display is read-only, so no request methods needed
-  }),
-};
+  };
+}
 
 export const getCurrentTimeDisplayProps: PropsHook<{
   currentTime: number | undefined;
@@ -83,7 +82,7 @@ export const getCurrentTimeDisplayProps: PropsHook<{
 
 export const CurrentTimeDisplayElement: ConnectedComponentConstructor<CurrentTimeDisplayState> = toConnectedHTMLComponent(
   CurrentTimeDisplay,
-  useCurrentTimeDisplayState,
+  getCurrentTimeDisplayState,
   getCurrentTimeDisplayProps,
   'CurrentTimeDisplay',
 );

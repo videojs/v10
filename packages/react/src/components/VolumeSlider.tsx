@@ -1,24 +1,19 @@
+import type { Prettify } from '../types';
 import type { ConnectedComponent } from '../utils/component-factory';
 
 import { VolumeSlider as CoreVolumeSlider } from '@videojs/core';
-
 import { volumeSliderStateDefinition } from '@videojs/core/store';
 import { shallowEqual } from '@videojs/utils';
-import { useCallback, useMemo } from 'react';
-
+import { useMemo } from 'react';
 import { useMediaSelector, useMediaStore } from '@/store';
 import { toConnectedComponent, toContextComponent, useCore } from '../utils/component-factory';
+import { useComposedRefs } from '../utils/use-composed-refs';
 
-export interface VolumeSliderState {
-  volume: number;
-  muted: boolean;
-  volumeLevel: string;
-  requestVolumeChange: (volume: number) => void;
-  core: CoreVolumeSlider;
+export type VolumeSliderState = Prettify<ReturnType<typeof useCore<CoreVolumeSlider>>> & {
   orientation: 'horizontal' | 'vertical';
-}
+};
 
-export interface VolumeSliderProps extends React.ComponentProps<'div'> {
+export interface VolumeSliderProps extends React.ComponentPropsWithRef<'div'> {
   orientation?: 'horizontal' | 'vertical';
 }
 
@@ -26,6 +21,7 @@ interface VolumeSliderRenderProps extends React.ComponentProps<'div'> {
   'data-orientation'?: 'horizontal' | 'vertical';
   'data-muted'?: boolean;
   'data-volume-level'?: string;
+  'data-volume'?: number;
 }
 
 // ============================================================================
@@ -36,30 +32,20 @@ export function useVolumeSliderRootState(props: VolumeSliderProps): VolumeSlider
   const { orientation = 'horizontal' } = props;
   const mediaStore = useMediaStore();
   const mediaState = useMediaSelector(volumeSliderStateDefinition.stateTransform, shallowEqual);
-  const mediaMethods = useMemo(
-    () => volumeSliderStateDefinition.createRequestMethods(mediaStore.dispatch),
-    [mediaStore],
-  );
-  const core = useCore(CoreVolumeSlider, { ...mediaState, ...mediaMethods });
-
+  const mediaMethods = useMemo(() => volumeSliderStateDefinition.createRequestMethods(mediaStore.dispatch), [mediaStore]);
+  const coreState = useCore(CoreVolumeSlider, { ...mediaState, ...mediaMethods });
   return {
-    ...mediaState,
-    ...mediaMethods,
+    ...coreState,
     orientation,
-    core,
   };
 }
 
 export function useVolumeSliderRootProps(props: VolumeSliderProps, state: VolumeSliderState): VolumeSliderRenderProps {
-  const { _fillWidth, _pointerWidth, _volumeText } = state.core.getState();
-
-  const { children, className, id, style, orientation = 'horizontal' } = props;
+  const { children, className, id, style, orientation = 'horizontal', ref } = props;
+  const composedRef = useComposedRefs(ref, state._setRootElement);
 
   return {
-    ref: useCallback((el: HTMLDivElement) => {
-      if (!el) return;
-      state.core?.attach(el);
-    }, []),
+    ref: composedRef,
     id,
     role: 'slider',
     tabIndex: 0,
@@ -67,16 +53,17 @@ export function useVolumeSliderRootProps(props: VolumeSliderProps, state: Volume
     'aria-valuemin': 0,
     'aria-valuemax': 100,
     'aria-valuenow': Math.round(state.volume * 100),
-    'aria-valuetext': _volumeText,
+    'aria-valuetext': state._volumeText,
     'aria-orientation': orientation,
     'data-orientation': orientation,
     'data-muted': state.muted,
     'data-volume-level': state.volumeLevel,
+    'data-volume': state.volume,
     className,
     style: {
       ...style,
-      '--slider-fill': `${_fillWidth.toFixed(3)}%`,
-      '--slider-pointer': `${_pointerWidth.toFixed(3)}%`,
+      '--slider-fill': `${state._fillWidth.toFixed(3)}%`,
+      '--slider-pointer': `${(state._pointerWidth * 100).toFixed(3)}%`,
     } as React.CSSProperties,
     children,
   };
@@ -99,9 +86,7 @@ const VolumeSliderRoot: ConnectedComponent<VolumeSliderProps, typeof renderVolum
 
 export function useVolumeSliderTrackProps(props: React.ComponentProps<'div'>, context: VolumeSliderState): VolumeSliderRenderProps {
   return {
-    ref: useCallback((el: HTMLDivElement) => {
-      context.core?.setState({ _trackElement: el });
-    }, []),
+    ref: context._setTrackElement,
     'data-orientation': context.orientation,
     ...props,
     style: {

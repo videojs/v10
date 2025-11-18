@@ -1,5 +1,5 @@
-import type { DurationDisplayState } from '@videojs/core/store';
-import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
+import type { DurationDisplayState, MediaStore } from '@videojs/core/store';
+import type { ConnectedComponentConstructor, PropsHook } from '../utils/component-factory';
 
 import { durationDisplayStateDefinition } from '@videojs/core/store';
 
@@ -58,15 +58,14 @@ export class DurationDisplay extends HTMLElement {
   }
 }
 
-export const useDurationDisplayState: StateHook<{
+export function getDurationDisplayState(mediaStore: MediaStore): {
   duration: number | undefined;
-}> = {
-  keys: [...durationDisplayStateDefinition.keys],
-  transform: (rawState, _mediaStore) => ({
-    ...durationDisplayStateDefinition.stateTransform(rawState),
+} {
+  return {
+    ...durationDisplayStateDefinition.stateTransform(mediaStore.getState()),
     // Duration display is read-only, so no request methods needed
-  }),
-};
+  };
+}
 
 export const getDurationDisplayProps: PropsHook<{
   duration: number | undefined;
@@ -77,7 +76,7 @@ export const getDurationDisplayProps: PropsHook<{
 
 export const DurationDisplayElement: ConnectedComponentConstructor<DurationDisplayState> = toConnectedHTMLComponent(
   DurationDisplay,
-  useDurationDisplayState,
+  getDurationDisplayState,
   getDurationDisplayProps,
   'DurationDisplay',
 );
