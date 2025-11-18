@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.1.0-preview.9](https://github.com/videojs/v10/compare/@videojs/react@0.1.0-preview.8...@videojs/react@0.1.0-preview.9) (2025-11-18)
+
+
+### Bug Fixes
+
+* anchor name in popover and tooltip ([#194](https://github.com/videojs/v10/issues/194)) ([d965858](https://github.com/videojs/v10/commit/d9658582f12f9745548bcb9461a3e365adc16339))
+* clean up core, less seams in wrappers ([#197](https://github.com/videojs/v10/issues/197)) ([601a5a3](https://github.com/videojs/v10/commit/601a5a37939605ca38f81a825fd02934e7928c39))
+* fix CLS due to popover attribute not SSR ([#202](https://github.com/videojs/v10/issues/202)) ([0952673](https://github.com/videojs/v10/commit/09526731f7e4ee3bd58c45179d37f90dfc96d7a8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 0.1.0-preview.9
+    * @videojs/icons bumped to 0.1.0-preview.9
+    * @videojs/utils bumped to 0.1.0-preview.9
+
 ## [0.1.0-preview.8](https://github.com/videojs/v10/compare/@videojs/react@0.1.0-preview.7...@videojs/react@0.1.0-preview.8) (2025-11-12)
 
 
