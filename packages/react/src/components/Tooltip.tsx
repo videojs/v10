@@ -35,6 +35,7 @@ interface TooltipContextType {
   placement: Placement;
   sideOffset: number;
   collisionPadding: number;
+  popupId: string | undefined;
 }
 
 interface TooltipRootProps {
@@ -58,6 +59,7 @@ interface TooltipPositionerProps {
 interface TooltipPopupProps {
   id?: string;
   className?: string;
+  style?: React.CSSProperties;
   children: ReactNode;
 }
 
@@ -81,6 +83,8 @@ function TooltipRoot({ delay = 0, closeDelay = 0, trackCursorAxis, children }: T
   const triggerRef = useRef<HTMLElement | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pointerPositionRef = useRef({ x: 0, y: 0 });
+  const uniqueId = useId();
+  const popupId = uniqueId.replace(/^:([^:]+):$/, '«$1»');
 
   const updatePositioning = useCallback(({ side, sideOffset, collisionPadding }: UpdatePositioningProps) => {
     setPlacement(side);
@@ -230,11 +234,6 @@ function TooltipRoot({ delay = 0, closeDelay = 0, trackCursorAxis, children }: T
     if (!popupRef.current || !triggerRef.current) return;
 
     const popup = popupRef.current;
-    const popupId = popup.id;
-    if (popupId) {
-      popup.style.setProperty('position-anchor', `--${popupId}`);
-    }
-
     const [side, alignment] = placement.split('-');
     popup.style.setProperty('top', `calc(anchor(${side}) - ${sideOffset}px)`);
 
@@ -272,20 +271,29 @@ function TooltipRoot({ delay = 0, closeDelay = 0, trackCursorAxis, children }: T
       placement,
       sideOffset,
       collisionPadding,
+      popupId,
     }),
-    [open, transitionStatus, updatePositioning, trackCursorAxis, placement, sideOffset, collisionPadding],
+    [open, transitionStatus, updatePositioning, trackCursorAxis, placement, sideOffset, collisionPadding, popupId],
   );
 
   return <TooltipContext.Provider value={value}>{children}</TooltipContext.Provider>;
 }
 
 function TooltipTrigger({ children }: TooltipTriggerProps): JSX.Element {
-  const { triggerRef, open } = useTooltipContext();
+  const { triggerRef, open, popupId } = useTooltipContext();
 
-  // eslint-disable-next-line react/no-clone-element, react/no-children-only
-  return cloneElement(Children.only(children) as JSX.Element, {
+  const child = Children.only(children) as JSX.Element;
+  const existingStyle = (child.props as { style?: React.CSSProperties })?.style || {};
+
+  // eslint-disable-next-line react/no-clone-element
+  return cloneElement(child, {
     ref: triggerRef,
     'data-popup-open': open ? '' : undefined,
+    commandfor: popupId ?? undefined,
+    style: {
+      ...existingStyle,
+      ...(popupId ? { anchorName: `--${popupId}` as any } : {}),
+    },
   });
 }
 
@@ -304,23 +312,9 @@ function TooltipPositioner({
   return <>{children}</>;
 }
 
-function TooltipPopup({ id, className = '', children }: TooltipPopupProps): JSX.Element | null {
-  const { popupRef, triggerRef, transitionStatus, placement } = useTooltipContext();
+function TooltipPopup({ className = '', style, children }: TooltipPopupProps): JSX.Element | null {
+  const { popupRef, triggerRef, transitionStatus, placement, popupId } = useTooltipContext();
   const triggerElement = triggerRef.current;
-
-  const uniqueId = useId();
-  const popupId = id ?? uniqueId.replace(/^:([^:]+):$/, '«$1»');
-
-  useEffect(() => {
-    if (!popupRef.current || !triggerRef.current) return;
-
-    const popup = popupRef.current;
-    const trigger = triggerRef.current;
-
-    popup.setAttribute('popover', 'manual');
-    trigger.setAttribute('commandfor', popupId);
-    trigger.style.setProperty('anchor-name', `--${popupId}`);
-  }, [popupId, popupRef, triggerRef]);
 
   // Copy data attributes from trigger element
   const dataAttributes = useMemo(() => {
@@ -335,9 +329,14 @@ function TooltipPopup({ id, className = '', children }: TooltipPopupProps): JSX.
   return (
     <div
       ref={popupRef as RefObject<HTMLDivElement>}
-      id={popupId}
+      id={popupId ?? undefined}
       className={className}
       role="tooltip"
+      popover="manual"
+      style={{
+        ...(popupId ? { positionAnchor: `--${popupId}` as any } : {}),
+        ...style,
+      }}
       {...dataAttributes}
       data-side={placement}
       data-starting-style={transitionStatus === 'initial' ? '' : undefined}
