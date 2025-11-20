@@ -21,6 +21,8 @@ export function setAttributes(element: HTMLElement, attributes: Record<string, s
   for (const [key, value] of Object.entries(attributes)) {
     if (typeof value === 'boolean') {
       element.toggleAttribute(key, value);
+    } else if (value === undefined) {
+      element.removeAttribute(key);
     } else {
       element.setAttribute(key, value);
     }

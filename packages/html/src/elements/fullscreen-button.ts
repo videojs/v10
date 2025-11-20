@@ -4,6 +4,7 @@ import type { ConnectedComponentConstructor, PropsHook } from '../utils/componen
 
 import { fullscreenButtonStateDefinition } from '@videojs/core/store';
 
+import { memoize } from '@videojs/utils';
 import { setAttributes } from '@videojs/utils/dom';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 import { ButtonElement } from './button';
@@ -44,18 +45,20 @@ export class FullscreenButton extends ButtonElement {
 
 type FullscreenButtonStateWithMethods = Prettify<FullscreenButtonState & ReturnType<typeof fullscreenButtonStateDefinition.createRequestMethods>>;
 
+const fullscreenButtonCreateRequestMethods = memoize(fullscreenButtonStateDefinition.createRequestMethods);
+
 /**
  * FullscreenButton state hook - equivalent to React's useFullscreenButtonState
  * Handles media store state subscription and transformation
  */
-export function getFullscreenButtonState(mediaStore: MediaStore): FullscreenButtonStateWithMethods {
+export function getFullscreenButtonState(_element: HTMLElement, mediaStore: MediaStore): FullscreenButtonStateWithMethods {
   return {
     ...fullscreenButtonStateDefinition.stateTransform(mediaStore.getState()),
-    ...fullscreenButtonStateDefinition.createRequestMethods(mediaStore.dispatch),
+    ...fullscreenButtonCreateRequestMethods(mediaStore.dispatch),
   };
 }
 
-export const getFullscreenButtonProps: PropsHook<{ fullscreen: boolean }> = (state, _element) => {
+export const getFullscreenButtonProps: PropsHook<{ fullscreen: boolean }> = (_element, state) => {
   const baseProps: Record<string, any> = {
     /** data attributes/props */
     'data-fullscreen': state.fullscreen,

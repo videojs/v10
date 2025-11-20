@@ -1,13 +1,14 @@
 import type { MediaStore } from '@videojs/core/store';
 import { ConsumerMixin } from '@open-wc/context-protocol';
+import { shallowEqual, toCamelCase } from '@videojs/utils';
 
 /**
  * Generic types for HTML component hooks pattern
  * Mirrors the React hooks architecture for consistency
  */
-export type StateHook<T = any> = (mediaStore: MediaStore) => T;
+export type StateHook<T = any> = (element: HTMLElement, mediaStore: MediaStore) => T;
 
-export type PropsHook<T = any, P = any> = (state: T, element: HTMLElement) => P;
+export type PropsHook<T = any, P = any> = (element: HTMLElement, state: T) => P;
 
 export interface ConnectedComponentConstructor<State> {
   new (state: State): HTMLElement;
@@ -43,41 +44,44 @@ export function toConnectedHTMLComponent<State = any>(
       ];
     }
 
-    _mediaStore: any;
-    _coreInstances = [];
+    #mediaStore: MediaStore | undefined;
+    #coreInstances: { core: any; listening: boolean }[] = [];
 
     contexts = {
       mediaStore: (mediaStore: any) => {
-        this._mediaStore = mediaStore;
+        this.#mediaStore = mediaStore;
 
         // Subscribe to media store state changes
-        // Split into two phases: state transformation, then props update
-        this._mediaStore.subscribe(() => {
-          currentCoreIndex = 0;
-          currentCoreInstances = this._coreInstances;
+        mediaStore.subscribe(() => {
+          this.#render();
 
-          // Phase 1: Transform raw media store state (state concern)
-          const state = stateHook?.(mediaStore) ?? mediaStore.getState();
-          // Phase 2: Update element attributes/properties (props concern)
-          const props = propsHook(state ?? {} as State, this);
-
-          // @ts-expect-error any
-          this._update(props, state, mediaStore);
-
-          for (const instance of currentCoreInstances) {
+          for (const instance of this.#coreInstances) {
             if (!instance.listening) {
               instance.listening = true;
-              instance.core.subscribe(() => {
-                const state = instance.core.getState();
-                const props = propsHook(state ?? {} as State, this);
-                // @ts-expect-error any
-                this._update(props, state, mediaStore);
-              });
+              instance.core.subscribe(this.#render);
             }
           }
         });
       },
     };
+
+    #render = (): void => {
+      if (!this.#mediaStore) return;
+
+      currentCoreIndex = 0;
+      currentCoreInstances = this.#coreInstances;
+
+      // Split into two phases: state transformation, then props update
+      const state = stateHook?.(this, this.#mediaStore);
+      const props = propsHook(this, state ?? {} as State);
+      // @ts-expect-error any
+      this._update(props, state, this.#mediaStore);
+    };
+
+    attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
+      super.attributeChangedCallback?.(name, oldValue, newValue);
+      this.#render();
+    }
 
     connectedCallback(): void {
       super.connectedCallback?.();
@@ -114,6 +118,23 @@ export function getCoreState<T extends {
 
   currentCoreIndex++;
 
-  core.setState(state);
+  const coreState = core.getState();
+  const oldState: Record<string, any> = {};
+  for (const key in state) {
+    oldState[key] = coreState[key];
+  }
+  // Only set the state if it has changed
+  if (!shallowEqual(oldState, state)) {
+    core.setState(state);
+  }
+
   return core.getState();
+}
+
+export function getPropsFromAttrs(element: HTMLElement): Record<string, any> {
+  const props: Record<string, any> = {};
+  for (const attr of element.attributes) {
+    props[toCamelCase(attr.name)] = element[toCamelCase(attr.name) as keyof typeof element];
+  }
+  return props;
 }

@@ -62,7 +62,7 @@ export class CurrentTimeDisplay extends HTMLElement {
   }
 }
 
-export function getCurrentTimeDisplayState(mediaStore: MediaStore): {
+export function getCurrentTimeDisplayState(_element: HTMLElement, mediaStore: MediaStore): {
   currentTime: number | undefined;
   duration: number | undefined;
 } {
@@ -75,7 +75,7 @@ export function getCurrentTimeDisplayState(mediaStore: MediaStore): {
 export const getCurrentTimeDisplayProps: PropsHook<{
   currentTime: number | undefined;
   duration: number | undefined;
-}> = (_state, _element) => {
+}> = (_element, _state) => {
   const baseProps: Record<string, any> = {};
   return baseProps;
 };

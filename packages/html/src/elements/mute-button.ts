@@ -4,6 +4,7 @@ import type { ConnectedComponentConstructor, PropsHook } from '../utils/componen
 
 import { muteButtonStateDefinition } from '@videojs/core/store';
 
+import { memoize } from '@videojs/utils';
 import { setAttributes } from '@videojs/utils/dom';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 import { ButtonElement } from './button';
@@ -52,17 +53,19 @@ export class MuteButton extends ButtonElement {
 
 type MuteButtonStateWithMethods = Prettify<MuteButtonState & ReturnType<typeof muteButtonStateDefinition.createRequestMethods>>;
 
-export function getMuteButtonState(mediaStore: MediaStore): MuteButtonStateWithMethods {
+const muteButtonCreateRequestMethods = memoize(muteButtonStateDefinition.createRequestMethods);
+
+export function getMuteButtonState(_element: HTMLElement, mediaStore: MediaStore): MuteButtonStateWithMethods {
   return {
     ...muteButtonStateDefinition.stateTransform(mediaStore.getState()),
-    ...muteButtonStateDefinition.createRequestMethods(mediaStore.dispatch),
+    ...muteButtonCreateRequestMethods(mediaStore.dispatch),
   };
 }
 
 export const getMuteButtonProps: PropsHook<{
   muted: boolean;
   volumeLevel: string;
-}> = (state, _element) => {
+}> = (_element, state) => {
   const baseProps: Record<string, any> = {
     /** data attributes/props */
     'data-muted': state.muted,

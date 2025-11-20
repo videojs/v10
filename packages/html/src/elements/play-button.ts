@@ -4,6 +4,7 @@ import type { ConnectedComponentConstructor, PropsHook } from '../utils/componen
 
 import { playButtonStateDefinition } from '@videojs/core/store';
 
+import { memoize } from '@videojs/utils';
 import { setAttributes } from '@videojs/utils/dom';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 import { ButtonElement } from './button';
@@ -38,18 +39,20 @@ export class PlayButton extends ButtonElement {
 
 type PlayButtonStateWithMethods = Prettify<PlayButtonState & ReturnType<typeof playButtonStateDefinition.createRequestMethods>>;
 
+const playButtonCreateRequestMethods = memoize(playButtonStateDefinition.createRequestMethods);
+
 /**
  * PlayButton state hook - equivalent to React's usePlayButtonState
  * Handles media store state subscription and transformation
  */
-export function getPlayButtonState(mediaStore: MediaStore): PlayButtonStateWithMethods {
+export function getPlayButtonState(_element: HTMLElement, mediaStore: MediaStore): PlayButtonStateWithMethods {
   return {
     ...playButtonStateDefinition.stateTransform(mediaStore.getState()),
-    ...playButtonStateDefinition.createRequestMethods(mediaStore.dispatch),
+    ...playButtonCreateRequestMethods(mediaStore.dispatch),
   };
 }
 
-export const getPlayButtonProps: PropsHook<{ paused: boolean }> = (state, _element) => {
+export const getPlayButtonProps: PropsHook<{ paused: boolean }> = (_element, state) => {
   const baseProps: Record<string, any> = {
     /** data attributes/props */
     'data-paused': state.paused,

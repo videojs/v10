@@ -54,7 +54,7 @@ export class PreviewTimeDisplay extends HTMLElement {
   }
 }
 
-export function getPreviewTimeDisplayState(mediaStore: MediaStore): {
+export function getPreviewTimeDisplayState(_element: HTMLElement, mediaStore: MediaStore): {
   previewTime: number | undefined;
 } {
   return {
@@ -65,7 +65,7 @@ export function getPreviewTimeDisplayState(mediaStore: MediaStore): {
 
 export const getPreviewTimeDisplayProps: PropsHook<{
   previewTime: number | undefined;
-}> = (_state, _element) => {
+}> = (_element, _state) => {
   const baseProps: Record<string, any> = {};
   return baseProps;
 };

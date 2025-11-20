@@ -58,7 +58,7 @@ export class DurationDisplay extends HTMLElement {
   }
 }
 
-export function getDurationDisplayState(mediaStore: MediaStore): {
+export function getDurationDisplayState(_element: HTMLElement, mediaStore: MediaStore): {
   duration: number | undefined;
 } {
   return {
@@ -69,7 +69,7 @@ export function getDurationDisplayState(mediaStore: MediaStore): {
 
 export const getDurationDisplayProps: PropsHook<{
   duration: number | undefined;
-}> = (_state, _element) => {
+}> = (_element, _state) => {
   const baseProps: Record<string, any> = {};
   return baseProps;
 };
