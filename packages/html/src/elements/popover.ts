@@ -3,7 +3,7 @@ import type { Prettify } from '@/types';
 
 import { Popover as CorePopover } from '@videojs/core';
 
-import { getDocumentOrShadowRoot, setAttributes } from '@videojs/utils/dom';
+import { getDocumentOrShadowRoot } from '@videojs/utils/dom';
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
 
 type Placement = 'top' | 'top-start' | 'top-end';
@@ -66,10 +66,6 @@ export class Popover extends HTMLElement {
 
   get sideOffset(): number {
     return Number.parseInt(this.getAttribute('side-offset') ?? '0', 10);
-  }
-
-  _update(props: any, _state: PopoverState): void {
-    setAttributes(this, props);
   }
 }
 

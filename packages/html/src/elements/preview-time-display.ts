@@ -36,7 +36,7 @@ export class PreviewTimeDisplay extends HTMLElement {
     return this.hasAttribute('show-remaining');
   }
 
-  _update(_props: any, state: any): void {
+  _update(_props: any, state: PreviewTimeDisplayState): void {
     /** @TODO Should this live here or elsewhere? (CJP) */
     const timeLabel = formatDisplayTime(state.previewTime);
 

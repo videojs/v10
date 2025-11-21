@@ -1,6 +1,7 @@
 import type { MediaStore } from '@videojs/core/store';
 import { ConsumerMixin } from '@open-wc/context-protocol';
 import { shallowEqual, toCamelCase } from '@videojs/utils';
+import { setAttributes } from '@videojs/utils/dom';
 
 /**
  * Generic types for HTML component hooks pattern
@@ -43,6 +44,7 @@ export function toConnectedHTMLComponent<E extends HTMLElement, State = any>(
       ];
     }
 
+    _state: State | undefined;
     #mediaStore: MediaStore | undefined;
     #coreInstances: { core: any; listening: boolean }[] = [];
 
@@ -73,9 +75,15 @@ export function toConnectedHTMLComponent<E extends HTMLElement, State = any>(
       // Split into two phases: state transformation, then props update
       const state = stateHook?.(this as unknown as E, this.#mediaStore);
       const props = propsHook(this as unknown as E, state ?? {} as State);
-      // @ts-expect-error any
       this._update(props, state, this.#mediaStore);
     };
+
+    _update(props: any, state: State | undefined, _mediaStore: MediaStore): void {
+      this._state = state;
+      // @ts-expect-error any
+      super._update?.(props, state, _mediaStore);
+      setAttributes(this, props);
+    }
 
     attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
       super.attributeChangedCallback?.(name, oldValue, newValue);

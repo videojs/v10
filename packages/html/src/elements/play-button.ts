@@ -4,7 +4,6 @@ import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../uti
 
 import { playButtonStateDefinition } from '@videojs/core/store';
 import { memoize } from '@videojs/utils';
-import { setAttributes } from '@videojs/utils/dom';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 import { ButtonElement } from './button';
 
@@ -57,12 +56,6 @@ export class PlayButton extends ButtonElement {
         state.requestPause();
       }
     }
-  }
-
-  _update(props: any, state: any, _mediaStore?: any): void {
-    this._state = state;
-    /** @TODO Follow up with React vs. W.C. data-* attributes discrepancies (CJP)  */
-    setAttributes(this, props);
   }
 }
 

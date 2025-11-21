@@ -35,7 +35,7 @@ export class CurrentTimeDisplay extends HTMLElement {
     return this.hasAttribute('show-remaining');
   }
 
-  _update(_props: any, state: any): void {
+  _update(_props: any, state: CurrentTimeDisplayState): void {
     /** @TODO Should this live here or elsewhere? (CJP) */
     const timeLabel
       = this.showRemaining && state.duration != null && state.currentTime != null

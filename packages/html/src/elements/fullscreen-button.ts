@@ -5,7 +5,6 @@ import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../uti
 import { fullscreenButtonStateDefinition } from '@videojs/core/store';
 
 import { memoize } from '@videojs/utils';
-import { setAttributes } from '@videojs/utils/dom';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 import { ButtonElement } from './button';
 
@@ -57,11 +56,6 @@ export class FullscreenButton extends ButtonElement {
         state.requestEnterFullscreen();
       }
     }
-  }
-
-  _update(props: any, state: any, _mediaStore?: any): void {
-    this._state = state;
-    setAttributes(this, props);
   }
 }
 

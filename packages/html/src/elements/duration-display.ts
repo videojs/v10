@@ -37,7 +37,7 @@ export class DurationDisplay extends HTMLElement {
     }
   }
 
-  _update(_props: any, state: any): void {
+  _update(_props: any, state: DurationDisplayState): void {
     // Update the span content with formatted duration
     const spanElement = this.shadowRoot?.querySelector('span') as HTMLElement;
     if (spanElement) {
