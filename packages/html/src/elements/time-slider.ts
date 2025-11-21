@@ -1,33 +1,39 @@
-import type { MediaStore } from '@videojs/core/store';
 import type { Prettify } from '../types';
+import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
-import type { ConnectedComponentConstructor, PropsHook } from '../utils/component-factory';
 import { TimeSlider as CoreTimeSlider } from '@videojs/core';
 import { timeSliderStateDefinition } from '@videojs/core/store';
+import { memoize } from '@videojs/utils';
 
-import { setAttributes } from '@videojs/utils/dom';
-import { getCoreState, toConnectedHTMLComponent } from '../utils/component-factory';
-
-type TimeSliderState = Prettify<ReturnType<CoreTimeSlider['getState']>>;
+import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
 
 // ============================================================================
 // ROOT COMPONENT
 // ============================================================================
 
-export function getTimeSliderRootState(mediaStore: MediaStore): TimeSliderState {
+type TimeSliderState = Prettify<ReturnType<CoreTimeSlider['getState']>>;
+type TimeSliderStateWithMethods = Prettify<TimeSliderState & ReturnType<typeof timeSliderStateDefinition.createRequestMethods>>;
+
+const timeSliderCreateRequestMethods = memoize(timeSliderStateDefinition.createRequestMethods);
+
+export const getTimeSliderRootState: StateHook<TimeSliderRoot, TimeSliderStateWithMethods> = (element, mediaStore) => {
   const mediaState = timeSliderStateDefinition.stateTransform(mediaStore.getState());
-  const mediaMethods = timeSliderStateDefinition.createRequestMethods(mediaStore.dispatch);
-  const coreState = getCoreState(CoreTimeSlider, { ...mediaState, ...mediaMethods });
+  const mediaMethods = timeSliderCreateRequestMethods(mediaStore.dispatch);
+  const coreState = getCoreState(CoreTimeSlider, {
+    ...getPropsFromAttrs(element),
+    ...mediaState,
+    ...mediaMethods,
+  });
   return {
     ...coreState,
   };
-}
+};
 
 /**
  * TimeSlider Root props hook - equivalent to React's useTimeSliderRootProps
  * Handles element attributes and properties based on state
  */
-export const getTimeSliderRootProps: PropsHook<TimeSliderState> = (state, element) => {
+export const getTimeSliderRootProps: PropsHook<TimeSliderRoot, TimeSliderStateWithMethods> = (element, state) => {
   if (state._rootElement !== element) {
     state._setRootElement(element);
   }
@@ -37,93 +43,63 @@ export const getTimeSliderRootProps: PropsHook<TimeSliderState> = (state, elemen
     tabindex: element.getAttribute('tabindex') ?? '0',
     'data-current-time': state.currentTime.toString(),
     'data-duration': state.duration.toString(),
-    'data-orientation': (element as any).orientation || 'horizontal',
+    'data-orientation': element.orientation || 'horizontal',
     'aria-label': 'Seek',
     'aria-valuemin': '0',
     'aria-valuemax': Math.round(state.duration).toString(),
     'aria-valuenow': Math.round(state.currentTime).toString(),
     'aria-valuetext': `${state._currentTimeText} of ${state._durationText}`,
-    'aria-orientation': (element as any).orientation || 'horizontal',
+    'aria-orientation': element.orientation || 'horizontal',
+    style: {
+      ...(element.hasAttribute('commandfor') ? { 'anchor-name': `--${element.getAttribute('commandfor')}` } : {}),
+      '--slider-fill': `${state._fillWidth.toFixed(3)}%`,
+      '--slider-pointer': `${(state._pointerWidth * 100).toFixed(3)}%`,
+    },
   };
 };
 
 export class TimeSliderRoot extends HTMLElement {
-  static readonly observedAttributes: readonly string[] = [
-    'commandfor',
-    'orientation',
-  ];
+  static readonly observedAttributes: readonly string[] = ['commandfor', 'orientation'];
 
   _state: TimeSliderState | undefined;
-
-  get currentTime(): number {
-    return this._state?.currentTime ?? 0;
-  }
-
-  get duration(): number {
-    return this._state?.duration ?? 0;
-  }
 
   get orientation(): 'horizontal' | 'vertical' {
     return (this.getAttribute('orientation') as 'horizontal' | 'vertical') || 'horizontal';
   }
-
-  attributeChangedCallback(name: string, _oldValue: string | null, newValue: string | null): void {
-    if (name === 'orientation' && this._state) {
-      this._update(getTimeSliderRootProps(this._state, this), this._state);
-    } else if (name === 'commandfor') {
-      this.style.setProperty('anchor-name', `--${newValue}`);
-    }
-  }
-
-  _update(props: any, state: TimeSliderState): void {
-    this._state = state;
-
-    this.style.setProperty('--slider-fill', `${state._fillWidth.toFixed(3)}%`);
-    this.style.setProperty('--slider-pointer', `${(state._pointerWidth * 100).toFixed(3)}%`);
-
-    setAttributes(this, props);
-  }
 }
 
-export const TimeSliderRootElement: ConnectedComponentConstructor<TimeSliderState>
-  = toConnectedHTMLComponent(
-    TimeSliderRoot,
-    getTimeSliderRootState,
-    getTimeSliderRootProps,
-    'TimeSliderRoot',
-  );
+export const TimeSliderRootElement: ConnectedComponentConstructor<TimeSliderRoot, TimeSliderStateWithMethods> = toConnectedHTMLComponent(
+  TimeSliderRoot,
+  getTimeSliderRootState,
+  getTimeSliderRootProps,
+  'TimeSliderRoot',
+);
 
 // ============================================================================
 // TRACK COMPONENT
 // ============================================================================
 
-export const getTimeSliderTrackProps: PropsHook<Record<string, never>> = (_state, element) => {
-  const rootElement = element.closest('media-time-slider') as any;
+export const getTimeSliderTrackProps: PropsHook<TimeSliderTrack, undefined> = (element, _state) => {
+  const rootElement = element.closest('media-time-slider') as TimeSliderRoot;
 
   if (rootElement._state?._trackElement !== element) {
     rootElement._state?._setTrackElement?.(element);
   }
 
+  const orientation = rootElement?.orientation || 'horizontal';
+
   return {
-    'data-orientation': rootElement?.orientation || 'horizontal',
+    'data-orientation': orientation,
+    style: {
+      width: orientation === 'horizontal' ? '100%' : undefined,
+      height: orientation !== 'horizontal' ? '100%' : undefined,
+    },
   };
 };
 
-export class TimeSliderTrack extends HTMLElement {
-  _update(props: any, _state: any): void {
-    setAttributes(this, props);
+export class TimeSliderTrack extends HTMLElement {}
 
-    if (props['data-orientation'] === 'horizontal') {
-      this.style.width = '100%';
-      this.style.removeProperty('height');
-    } else {
-      this.style.height = '100%';
-      this.style.removeProperty('width');
-    }
-  }
-}
-
-export const TimeSliderTrackElement: ConnectedComponentConstructor<any> = toConnectedHTMLComponent(
+export const TimeSliderTrackElement: ConnectedComponentConstructor<TimeSliderTrack, undefined> = toConnectedHTMLComponent(
   TimeSliderTrack,
   undefined,
   getTimeSliderTrackProps,
@@ -134,39 +110,34 @@ export const TimeSliderTrackElement: ConnectedComponentConstructor<any> = toConn
 // PROGRESS COMPONENT
 // ============================================================================
 
-export const getTimeSliderProgressProps: PropsHook<Record<string, never>> = (_state, element) => {
-  const rootElement = element.closest('media-time-slider') as any;
+export const getTimeSliderProgressProps: PropsHook<TimeSliderProgress, undefined> = (element, _state) => {
+  const rootElement = element.closest('media-time-slider') as TimeSliderRoot;
+  const orientation = rootElement?.orientation || 'horizontal';
+  const style = orientation === 'horizontal'
+    ? {
+        position: 'absolute',
+        width: 'var(--slider-fill, 0%)',
+        height: '100%',
+        top: '0',
+        bottom: undefined,
+      }
+    : {
+        position: 'absolute',
+        height: 'var(--slider-fill, 0%)',
+        width: '100%',
+        bottom: '0',
+        top: undefined,
+      };
+
   return {
-    'data-orientation': rootElement?.orientation || 'horizontal',
+    'data-orientation': orientation,
+    style,
   };
 };
 
-export class TimeSliderProgress extends HTMLElement {
-  constructor() {
-    super();
-    this.style.position = 'absolute';
-    this.style.width = 'var(--slider-fill, 0%)';
-    this.style.height = '100%';
-  }
+export class TimeSliderProgress extends HTMLElement {}
 
-  _update(props: any, _state: any): void {
-    setAttributes(this, props);
-
-    if (props['data-orientation'] === 'horizontal') {
-      this.style.width = 'var(--slider-fill, 0%)';
-      this.style.height = '100%';
-      this.style.top = '0';
-      this.style.removeProperty('bottom');
-    } else {
-      this.style.height = 'var(--slider-fill, 0%)';
-      this.style.width = '100%';
-      this.style.bottom = '0';
-      this.style.removeProperty('top');
-    }
-  }
-}
-
-export const TimeSliderProgressElement: ConnectedComponentConstructor<any> = toConnectedHTMLComponent(
+export const TimeSliderProgressElement: ConnectedComponentConstructor<TimeSliderProgress, undefined> = toConnectedHTMLComponent(
   TimeSliderProgress,
   undefined,
   getTimeSliderProgressProps,
@@ -177,39 +148,34 @@ export const TimeSliderProgressElement: ConnectedComponentConstructor<any> = toC
 // POINTER COMPONENT
 // ============================================================================
 
-export const getTimeSliderPointerProps: PropsHook<Record<string, never>> = (_state, element) => {
-  const rootElement = element.closest('media-time-slider') as any;
+export const getTimeSliderPointerProps: PropsHook<TimeSliderPointer, undefined> = (element, _state) => {
+  const rootElement = element.closest('media-time-slider') as TimeSliderRoot;
+  const orientation = rootElement?.orientation || 'horizontal';
+  const style = orientation === 'horizontal'
+    ? {
+        position: 'absolute',
+        width: 'var(--slider-pointer, 0%)',
+        height: '100%',
+        top: '0',
+        bottom: undefined,
+      }
+    : {
+        position: 'absolute',
+        height: 'var(--slider-pointer, 0%)',
+        width: '100%',
+        bottom: '0',
+        top: undefined,
+      };
+
   return {
-    'data-orientation': rootElement?.orientation || 'horizontal',
+    'data-orientation': orientation,
+    style,
   };
 };
 
-export class TimeSliderPointer extends HTMLElement {
-  constructor() {
-    super();
-    this.style.position = 'absolute';
-    this.style.width = 'var(--slider-pointer, 0%)';
-    this.style.height = '100%';
-  }
+export class TimeSliderPointer extends HTMLElement {}
 
-  _update(props: any, _state: any): void {
-    setAttributes(this, props);
-
-    if (props['data-orientation'] === 'horizontal') {
-      this.style.width = 'var(--slider-pointer, 0%)';
-      this.style.height = '100%';
-      this.style.top = '0';
-      this.style.removeProperty('bottom');
-    } else {
-      this.style.height = 'var(--slider-pointer, 0%)';
-      this.style.width = '100%';
-      this.style.bottom = '0';
-      this.style.removeProperty('top');
-    }
-  }
-}
-
-export const TimeSliderPointerElement: ConnectedComponentConstructor<any> = toConnectedHTMLComponent(
+export const TimeSliderPointerElement: ConnectedComponentConstructor<TimeSliderPointer, undefined> = toConnectedHTMLComponent(
   TimeSliderPointer,
   undefined,
   getTimeSliderPointerProps,
@@ -220,36 +186,34 @@ export const TimeSliderPointerElement: ConnectedComponentConstructor<any> = toCo
 // THUMB COMPONENT
 // ============================================================================
 
-export const getTimeSliderThumbProps: PropsHook<Record<string, never>> = (_state, element) => {
-  const rootElement = element.closest('media-time-slider') as any;
+export const getTimeSliderThumbProps: PropsHook<TimeSliderThumb, undefined> = (element, _state) => {
+  const rootElement = element.closest('media-time-slider') as TimeSliderRoot;
+  const orientation = rootElement?.orientation || 'horizontal';
+  const style = orientation === 'horizontal'
+    ? {
+        position: 'absolute',
+        left: 'var(--slider-fill, 0%)',
+        top: '50%',
+        bottom: undefined,
+        translate: '-50% -50%',
+      }
+    : {
+        position: 'absolute',
+        bottom: 'var(--slider-fill, 0%)',
+        left: '50%',
+        top: undefined,
+        translate: '-50% 50%',
+      };
+
   return {
-    'data-orientation': rootElement?.orientation || 'horizontal',
+    'data-orientation': orientation,
+    style,
   };
 };
 
-export class TimeSliderThumb extends HTMLElement {
-  constructor() {
-    super();
-    this.style.position = 'absolute';
-  }
+export class TimeSliderThumb extends HTMLElement {}
 
-  _update(props: any, _state: any): void {
-    setAttributes(this, props);
-
-    // Set appropriate positioning based on orientation
-    if (props['data-orientation'] === 'horizontal') {
-      this.style.left = 'var(--slider-fill, 0%)';
-      this.style.top = '50%';
-      this.style.translate = '-50% -50%';
-    } else {
-      this.style.bottom = 'var(--slider-fill, 0%)';
-      this.style.left = '50%';
-      this.style.translate = '-50% 50%';
-    }
-  }
-}
-
-export const TimeSliderThumbElement: ConnectedComponentConstructor<any> = toConnectedHTMLComponent(
+export const TimeSliderThumbElement: ConnectedComponentConstructor<TimeSliderThumb, undefined> = toConnectedHTMLComponent(
   TimeSliderThumb,
   undefined,
   getTimeSliderThumbProps,

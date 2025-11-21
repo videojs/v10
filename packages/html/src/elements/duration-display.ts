@@ -1,5 +1,5 @@
-import type { DurationDisplayState, MediaStore } from '@videojs/core/store';
-import type { ConnectedComponentConstructor, PropsHook } from '../utils/component-factory';
+import type { DurationDisplayState } from '@videojs/core/store';
+import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
 import { durationDisplayStateDefinition } from '@videojs/core/store';
 
@@ -24,12 +24,6 @@ export class DurationDisplay extends HTMLElement {
 
   static getTemplateHTML: typeof getTemplateHTML = getTemplateHTML;
 
-  _state:
-    | {
-      duration: number | undefined;
-    }
-    | undefined;
-
   constructor() {
     super();
 
@@ -43,13 +37,7 @@ export class DurationDisplay extends HTMLElement {
     }
   }
 
-  get duration(): number {
-    return this._state?.duration ?? 0;
-  }
-
-  _update(_props: any, state: any): void {
-    this._state = state;
-
+  _update(_props: any, state: DurationDisplayState): void {
     // Update the span content with formatted duration
     const spanElement = this.shadowRoot?.querySelector('span') as HTMLElement;
     if (spanElement) {
@@ -58,23 +46,18 @@ export class DurationDisplay extends HTMLElement {
   }
 }
 
-export function getDurationDisplayState(mediaStore: MediaStore): {
-  duration: number | undefined;
-} {
+export const getDurationDisplayState: StateHook<DurationDisplay, DurationDisplayState> = (_element, mediaStore) => {
   return {
     ...durationDisplayStateDefinition.stateTransform(mediaStore.getState()),
     // Duration display is read-only, so no request methods needed
   };
-}
-
-export const getDurationDisplayProps: PropsHook<{
-  duration: number | undefined;
-}> = (_state, _element) => {
-  const baseProps: Record<string, any> = {};
-  return baseProps;
 };
 
-export const DurationDisplayElement: ConnectedComponentConstructor<DurationDisplayState> = toConnectedHTMLComponent(
+export const getDurationDisplayProps: PropsHook<DurationDisplay, DurationDisplayState> = (_element, _state) => {
+  return {};
+};
+
+export const DurationDisplayElement: ConnectedComponentConstructor<DurationDisplay, DurationDisplayState> = toConnectedHTMLComponent(
   DurationDisplay,
   getDurationDisplayState,
   getDurationDisplayProps,
