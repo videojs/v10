@@ -1,4 +1,4 @@
-import type { ConnectedComponentConstructor, PropsHook } from '../utils/component-factory';
+import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 import type { Prettify } from '@/types';
 
 import { Popover as CorePopover } from '@videojs/core';
@@ -10,14 +10,14 @@ type Placement = 'top' | 'top-start' | 'top-end';
 
 type PopoverState = Prettify<ReturnType<CorePopover['getState']>>;
 
-export function getPopoverState(element: HTMLElement, _mediaStore: unknown): PopoverState {
+export const getPopoverState: StateHook<Popover, PopoverState> = (element, _mediaStore) => {
   const coreState = getCoreState(CorePopover, getPropsFromAttrs(element));
   return {
     ...coreState,
   };
-}
+};
 
-export const getPopoverProps: PropsHook<PopoverState> = (element, state) => {
+export const getPopoverProps: PropsHook<Popover, PopoverState> = (element, state) => {
   if (state._popoverElement !== element) {
     state._setPopoverElement(element);
   }
@@ -27,11 +27,19 @@ export const getPopoverProps: PropsHook<PopoverState> = (element, state) => {
     state._setTriggerElement(triggerElement);
   }
 
+  const [side, alignment] = element.side.split('-');
+
   return {
     'data-starting-style': state._transitionStatus === 'initial',
     'data-open': state._transitionStatus === 'initial' || state._transitionStatus === 'open',
     'data-ending-style': state._transitionStatus === 'close' || state._transitionStatus === 'unmounted',
     'data-closed': state._transitionStatus === 'close' || state._transitionStatus === 'unmounted',
+    style: {
+      ...(element.id ? { 'position-anchor': `--${element.id}` } : {}),
+      top: `calc(anchor(${side}) - ${element.sideOffset}px)`,
+      translate: '0 -100%',
+      'justify-self': alignment === 'start' ? 'anchor-start' : alignment === 'end' ? 'anchor-end' : 'anchor-center',
+    },
   };
 };
 
@@ -61,21 +69,11 @@ export class Popover extends HTMLElement {
   }
 
   _update(props: any, _state: PopoverState): void {
-    this.style.setProperty('position-anchor', `--${this.id}`);
-
-    const [side, alignment] = this.side.split('-');
-    this.style.setProperty('top', `calc(anchor(${side}) - ${this.sideOffset}px)`);
-    this.style.setProperty('translate', `0 -100%`);
-    this.style.setProperty(
-      'justify-self',
-      alignment === 'start' ? 'anchor-start' : alignment === 'end' ? 'anchor-end' : 'anchor-center',
-    );
-
     setAttributes(this, props);
   }
 }
 
-export const PopoverElement: ConnectedComponentConstructor<PopoverState> = toConnectedHTMLComponent(
+export const PopoverElement: ConnectedComponentConstructor<Popover, PopoverState> = toConnectedHTMLComponent(
   Popover,
   getPopoverState,
   getPopoverProps,

@@ -6,12 +6,12 @@ import { shallowEqual, toCamelCase } from '@videojs/utils';
  * Generic types for HTML component hooks pattern
  * Mirrors the React hooks architecture for consistency
  */
-export type StateHook<T = any> = (element: HTMLElement, mediaStore: MediaStore) => T;
+export type StateHook<E extends HTMLElement, T = any> = (element: E, mediaStore: MediaStore) => T;
 
-export type PropsHook<T = any, P = any> = (element: HTMLElement, state: T) => P;
+export type PropsHook<E extends HTMLElement, T = any, P = any> = (element: E, state: T) => P;
 
-export interface ConnectedComponentConstructor<State> {
-  new (state: State): HTMLElement;
+export interface ConnectedComponentConstructor<E extends HTMLElement, State> {
+  new (state: State): E;
 }
 
 let currentCoreInstances: any[] = [];
@@ -26,16 +26,15 @@ let currentCoreIndex: number = 0;
  * @param BaseClass - Base custom element class to extend
  * @param stateHook - Hook that defines state keys and transformation logic
  * @param propsHook - Hook that handles element attributes and properties based on state
- * @param eventsHook - Hook that defines event handling logic
  * @param displayName - Display name for debugging
  * @returns Connected custom element class with media store integration
  */
-export function toConnectedHTMLComponent<State = any>(
+export function toConnectedHTMLComponent<E extends HTMLElement, State = any>(
   BaseClass: CustomElementConstructor,
-  stateHook: StateHook<State> | undefined,
-  propsHook: PropsHook<State>,
+  stateHook: StateHook<E, State> | undefined,
+  propsHook: PropsHook<E, State>,
   displayName?: string,
-): ConnectedComponentConstructor<State> {
+): ConnectedComponentConstructor<E, State> {
   const ConnectedComponent = class extends ConsumerMixin(BaseClass) {
     static get observedAttributes(): string[] {
       return [
@@ -72,8 +71,8 @@ export function toConnectedHTMLComponent<State = any>(
       currentCoreInstances = this.#coreInstances;
 
       // Split into two phases: state transformation, then props update
-      const state = stateHook?.(this, this.#mediaStore);
-      const props = propsHook(this, state ?? {} as State);
+      const state = stateHook?.(this as unknown as E, this.#mediaStore);
+      const props = propsHook(this as unknown as E, state ?? {} as State);
       // @ts-expect-error any
       this._update(props, state, this.#mediaStore);
     };
@@ -102,7 +101,7 @@ export function toConnectedHTMLComponent<State = any>(
     Object.defineProperty(ConnectedComponent, 'name', { value: displayName });
   }
 
-  return ConnectedComponent;
+  return ConnectedComponent as unknown as ConnectedComponentConstructor<E, State>;
 }
 
 export function getCoreState<T extends {

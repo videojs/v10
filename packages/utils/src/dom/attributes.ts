@@ -17,14 +17,24 @@ export function namedNodeMapToObject(namedNodeMap: NamedNodeMap): Record<string,
  * @param element - The element to set attributes on.
  * @param attributes - The attributes to set.
  */
-export function setAttributes(element: HTMLElement, attributes: Record<string, string>): void {
+export function setAttributes(element: HTMLElement, attributes: Record<string, any>): void {
   for (const [key, value] of Object.entries(attributes)) {
-    if (typeof value === 'boolean') {
-      element.toggleAttribute(key, value);
-    } else if (value === undefined) {
-      element.removeAttribute(key);
+    if (key === 'style' && typeof value === 'object') {
+      for (const [styleKey, styleValue] of Object.entries(value)) {
+        if (typeof styleValue === 'string') {
+          element.style.setProperty(styleKey, styleValue);
+        } else if (styleValue == null) {
+          element.style.removeProperty(styleKey);
+        }
+      }
     } else {
-      element.setAttribute(key, value);
+      if (typeof value === 'boolean') {
+        element.toggleAttribute(key, value);
+      } else if (value === undefined) {
+        element.removeAttribute(key);
+      } else {
+        element.setAttribute(key, value);
+      }
     }
   }
 }

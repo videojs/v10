@@ -1,41 +1,12 @@
-import type { MediaStore, PlayButtonState } from '@videojs/core/store';
+import type { PlayButtonState } from '@videojs/core/store';
 import type { Prettify } from '../types';
-import type { ConnectedComponentConstructor, PropsHook } from '../utils/component-factory';
+import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
 import { playButtonStateDefinition } from '@videojs/core/store';
-
 import { memoize } from '@videojs/utils';
 import { setAttributes } from '@videojs/utils/dom';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 import { ButtonElement } from './button';
-
-export class PlayButton extends ButtonElement {
-  _state: { paused: boolean; requestPlay: () => void; requestPause: () => void } | undefined;
-
-  handleEvent(event: Event): void {
-    super.handleEvent(event);
-
-    const { type } = event;
-    const state = this._state;
-    if (state && type === 'click') {
-      if (state.paused) {
-        state.requestPlay();
-      } else {
-        state.requestPause();
-      }
-    }
-  }
-
-  get paused(): boolean {
-    return this._state?.paused ?? true;
-  }
-
-  _update(props: any, state: any, _mediaStore?: any): void {
-    this._state = state;
-    /** @TODO Follow up with React vs. W.C. data-* attributes discrepancies (CJP)  */
-    setAttributes(this, props);
-  }
-}
 
 type PlayButtonStateWithMethods = Prettify<PlayButtonState & ReturnType<typeof playButtonStateDefinition.createRequestMethods>>;
 
@@ -45,14 +16,14 @@ const playButtonCreateRequestMethods = memoize(playButtonStateDefinition.createR
  * PlayButton state hook - equivalent to React's usePlayButtonState
  * Handles media store state subscription and transformation
  */
-export function getPlayButtonState(_element: HTMLElement, mediaStore: MediaStore): PlayButtonStateWithMethods {
+export const getPlayButtonState: StateHook<PlayButton, PlayButtonStateWithMethods> = (_element, mediaStore) => {
   return {
     ...playButtonStateDefinition.stateTransform(mediaStore.getState()),
     ...playButtonCreateRequestMethods(mediaStore.dispatch),
   };
-}
+};
 
-export const getPlayButtonProps: PropsHook<{ paused: boolean }> = (_element, state) => {
+export const getPlayButtonProps: PropsHook<PlayButton, PlayButtonStateWithMethods> = (_element, state) => {
   const baseProps: Record<string, any> = {
     /** data attributes/props */
     'data-paused': state.paused,
@@ -71,7 +42,31 @@ export const getPlayButtonProps: PropsHook<{ paused: boolean }> = (_element, sta
   return baseProps;
 };
 
-export const PlayButtonElement: ConnectedComponentConstructor<PlayButtonStateWithMethods> = toConnectedHTMLComponent(
+export class PlayButton extends ButtonElement {
+  _state: PlayButtonStateWithMethods | undefined;
+
+  handleEvent(event: Event): void {
+    super.handleEvent(event);
+
+    const { type } = event;
+    const state = this._state;
+    if (state && type === 'click') {
+      if (state.paused) {
+        state.requestPlay();
+      } else {
+        state.requestPause();
+      }
+    }
+  }
+
+  _update(props: any, state: any, _mediaStore?: any): void {
+    this._state = state;
+    /** @TODO Follow up with React vs. W.C. data-* attributes discrepancies (CJP)  */
+    setAttributes(this, props);
+  }
+}
+
+export const PlayButtonElement: ConnectedComponentConstructor<PlayButton, PlayButtonStateWithMethods> = toConnectedHTMLComponent(
   PlayButton,
   getPlayButtonState,
   getPlayButtonProps,

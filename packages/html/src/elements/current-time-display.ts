@@ -1,10 +1,20 @@
-import type { CurrentTimeDisplayState, MediaStore } from '@videojs/core/store';
-import type { ConnectedComponentConstructor, PropsHook } from '../utils/component-factory';
+import type { CurrentTimeDisplayState } from '@videojs/core/store';
+import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
 import { currentTimeDisplayStateDefinition } from '@videojs/core/store';
-
 import { formatDisplayTime } from '@videojs/utils';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
+
+export const getCurrentTimeDisplayState: StateHook<CurrentTimeDisplay, CurrentTimeDisplayState> = (_element, mediaStore) => {
+  return {
+    ...currentTimeDisplayStateDefinition.stateTransform(mediaStore.getState()),
+    // Current time display is read-only, so no request methods needed
+  };
+};
+
+export const getCurrentTimeDisplayProps: PropsHook<CurrentTimeDisplay, CurrentTimeDisplayState> = (_element, _state) => {
+  return {};
+};
 
 export class CurrentTimeDisplay extends HTMLElement {
   static shadowRootOptions = {
@@ -12,13 +22,6 @@ export class CurrentTimeDisplay extends HTMLElement {
   };
 
   static observedAttributes: string[] = ['show-remaining'];
-
-  _state:
-    | {
-      currentTime: number | undefined;
-      duration: number | undefined;
-    }
-    | undefined;
 
   constructor() {
     super();
@@ -28,28 +31,11 @@ export class CurrentTimeDisplay extends HTMLElement {
     }
   }
 
-  get currentTime(): number {
-    return this._state?.currentTime ?? 0;
-  }
-
-  get duration(): number {
-    return this._state?.duration ?? 0;
-  }
-
   get showRemaining(): boolean {
     return this.hasAttribute('show-remaining');
   }
 
-  attributeChangedCallback(name: string, _oldValue: string | null, _newValue: string | null): void {
-    if (name === 'show-remaining' && this._state) {
-      // Re-render with current state when show-remaining attribute changes
-      this._update({}, this._state);
-    }
-  }
-
   _update(_props: any, state: any): void {
-    this._state = state;
-
     /** @TODO Should this live here or elsewhere? (CJP) */
     const timeLabel
       = this.showRemaining && state.duration != null && state.currentTime != null
@@ -62,25 +48,7 @@ export class CurrentTimeDisplay extends HTMLElement {
   }
 }
 
-export function getCurrentTimeDisplayState(_element: HTMLElement, mediaStore: MediaStore): {
-  currentTime: number | undefined;
-  duration: number | undefined;
-} {
-  return {
-    ...currentTimeDisplayStateDefinition.stateTransform(mediaStore.getState()),
-    // Current time display is read-only, so no request methods needed
-  };
-}
-
-export const getCurrentTimeDisplayProps: PropsHook<{
-  currentTime: number | undefined;
-  duration: number | undefined;
-}> = (_element, _state) => {
-  const baseProps: Record<string, any> = {};
-  return baseProps;
-};
-
-export const CurrentTimeDisplayElement: ConnectedComponentConstructor<CurrentTimeDisplayState> = toConnectedHTMLComponent(
+export const CurrentTimeDisplayElement: ConnectedComponentConstructor<CurrentTimeDisplay, CurrentTimeDisplayState> = toConnectedHTMLComponent(
   CurrentTimeDisplay,
   getCurrentTimeDisplayState,
   getCurrentTimeDisplayProps,
