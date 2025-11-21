@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.0-preview.10](https://github.com/videojs/v10/compare/@videojs/utils@0.1.0-preview.9...@videojs/utils@0.1.0-preview.10) (2025-11-21)
+
+
+### Features
+
+* add console banner ([#186](https://github.com/videojs/v10/issues/186)) ([072b0de](https://github.com/videojs/v10/commit/072b0dece76289d7d4215907ce70b36debbb78bc))
+
+
+### Bug Fixes
+
+* add popover core, use in html and improve factory ([#204](https://github.com/videojs/v10/issues/204)) ([f3b1b19](https://github.com/videojs/v10/commit/f3b1b199173f3750bc05ad9063fcccbd4163b12b))
+
 ## [0.1.0-preview.9](https://github.com/videojs/v10/compare/@videojs/utils@0.1.0-preview.8...@videojs/utils@0.1.0-preview.9) (2025-11-18)
 
 
