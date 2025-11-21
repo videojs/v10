@@ -55,7 +55,7 @@ function memoizedIdFunc(x: unknown): unknown {
 }
 
 /**
- * Check if this is a plain obect.
+ * Check if this is a plain object.
  * @param {object} obj - The object to inspect.
  * @return {boolean}
  */
