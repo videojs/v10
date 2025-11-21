@@ -141,7 +141,8 @@ export function getCoreState<T extends {
 export function getPropsFromAttrs(element: HTMLElement): Record<string, any> {
   const props: Record<string, any> = {};
   for (const attr of element.attributes) {
-    props[toCamelCase(attr.name)] = element[toCamelCase(attr.name) as keyof typeof element];
+    const camelName = toCamelCase(attr.name);
+    props[camelName] = element[camelName as keyof typeof element];
   }
   return props;
 }
