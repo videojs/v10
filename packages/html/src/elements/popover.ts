@@ -1,5 +1,5 @@
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
-import type { Prettify } from '@/types';
+import type { Prettify } from '../types';
 
 import { Popover as CorePopover } from '@videojs/core';
 
