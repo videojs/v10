@@ -9,7 +9,7 @@ function generateHTMLCode(skin: Skin): string {
 
   return `<video-provider>
   <${skinTag}>
-    <video src="https://example.com/video.mp4"></video>
+    <video src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"></video>
   </${skinTag}>
 </video-provider>`;
 }
@@ -26,7 +26,7 @@ export const VideoPlayer = () => {
   return (
     <VideoProvider>
       <${skinComponent}>
-        <Video src="https://example.com/video.mp4" />
+        <Video src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4" />
       </${skinComponent}>
     </VideoProvider>
   );

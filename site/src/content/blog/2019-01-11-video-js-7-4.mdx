@@ -11,9 +11,6 @@ tags:
 authors: [gary-katsevman]
 ---
 
-
-
-
 It's time to have an overview of Video.js 7.4, first released early December. The big new feature for this release is a UI that allows you to seek during live streams. We updated focus-visible to work with our Menus, added more translations, added a replay option to the Play/Pause button, and many, many fixes, multiple of which are accessibility related.
 
 We also dropped our usage of Grunt from our build process. We owe a lot to Grunt as it has served us well but it was time to move on.
@@ -64,7 +61,7 @@ var player = videojs('my-id', {
 Or HTML:
 ```html
 <video-js id="my-id" data-setup='{"liveui": true}'}>
-  <source src="https://example.com/live.m3u8" type="application/x-mpegurl">
+  <source src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4" type="application/x-mpegurl">
 </video-js>
 ```
 
