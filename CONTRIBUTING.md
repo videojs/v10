@@ -25,7 +25,7 @@ You’ll need the following installed:
 > PNPM will automatically use the correct Node version when running scripts.
 > If you prefer NVM: after installing it, simply run `nvm use` in the repo root.
 
-### Fork & Clone
+### ⬇️ Fork & Clone
 
 1. [Fork on GitHub][vjs-gh].
 2. Clone your fork locally and set up upstream tracking:
@@ -47,7 +47,7 @@ git checkout main
 git pull upstream main
 ```
 
-### Install Dependencies
+### ⚙️ Setup
 
 ```sh
 pnpm install
@@ -214,14 +214,7 @@ Then, open a PR via the green **“Compare & Pull Request”** button. In the de
 
 [link-pr-issue]: https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword
 
-## Community
-
-To discuss larger ideas or prototypes, or to help out with ongoing discussions, open a thread in:
-
-- [Discord][discord]
-- [GitHub Discussions][gh-discussions]
-
-## Developer's Certificate of Origin 1.1
+### Developer's Certificate of Origin 1.1
 
 By making a contribution to this project, I certify that:
 
@@ -247,7 +240,13 @@ By making a contribution to this project, I certify that:
   maintained indefinitely and may be redistributed consistent with
   this project or the open source license(s) involved.
 
-[vjs-gh]: https://github.com/videojs/v10
+## Community
+
+To discuss larger ideas or prototypes, or to help out with ongoing discussions, open a thread in:
+
+- [Discord][discord]
+- [GitHub Discussions][gh-discussions]
+
 [conventional-commit-style]: https://www.conventionalcommits.org/en/v1.0.0/#summary
 [discord]: https://discord.gg/JBqHh485uF
 [gh-discussions]: https://github.com/videojs/v10/discussions
