@@ -120,7 +120,7 @@ pnpm test:core file.spec
 
 ### 📦 Dependencies
 
-To add a dependency to a specific package, you can use [`pnpm` Filtering](https://pnpm.io/filtering) from the workspace root:
+To add a dependency to a specific package, you can use [`pnpm` filtering][pnpm-filtering] from the workspace root:
 
 ```sh
 pnpm -F <scope> add <package>
@@ -137,6 +137,8 @@ pnpm up <package>@<version> -r
 > [!CAUTION]
 > We try to be very intentional with any dependencies we add to this project. This is true of both developer/tooling dependencies and especially package-level (source) dependencies. If you find yourself needing to add a dependency, we strongly encourage you to check in with the core maintainers before proceeding to avoid wasted time and effort for everyone involved (yourself included!).
 
+[pnpm-filtering]: https://pnpm.io/filtering
+
 ## Creating a Pull Request
 
 By submitting a pull request, you agree that your contribution is provided under the
@@ -144,7 +146,7 @@ By submitting a pull request, you agree that your contribution is provided under
 
 ### Step 1: Verify
 
-Whether you're adding something new, making something better, or fixing a bug, you'll first want to search the [GitHub issues](https://github.com/videojs/v10/issues) to make sure you're aware of any previous discussion or work. If an unclaimed issue exists, claim it via a comment. If no issue exists for your change, submit one, following the [issue filing guidelines](#filing-issues)
+Whether you're adding something new, making something better, or fixing a bug, you'll first want to search the [GitHub issues](https://github.com/videojs/v10/issues) to make sure you're aware of any previous discussion or work. If an unclaimed issue exists, claim it via a comment. If no issue exists for your change, [submit a new issue][vjs-issue-choose].
 
 ### Step 2: Update remote
 
@@ -157,7 +159,9 @@ git pull upstream main
 ```
 
 > [!NOTE]
-> If `git pull upstream main` fails, this means either you've committed changes to your local clone of `main` or there was a (rare) change in `upstream/main`'s commit history. In either case, if you simply want to base your local clone off of the latest in `upstream/main`, you can simply run: `git checkout -B main upstream/main` (assuming you've already `fetch`ed). For more on `git checkout -B`, check out the [git docs](https://git-scm.com/docs/git-checkout#Documentation/git-checkout.txt-gitcheckout-b-Bnew-branchstart-point).
+> If `git pull upstream main` fails, this means either you've committed changes to your local clone of `main` or there was a (rare) change in `upstream/main`'s commit history. In either case, if you simply want to base your local clone off of the latest in `upstream/main`, you can simply run: `git checkout -B main upstream/main` (assuming you've already `fetch`ed). For more on `git checkout -B`, check out the [git docs][git-docs].
+
+[git-docs]: https://git-scm.com/docs/git-checkout#Documentation/git-checkout.txt-gitcheckout-b-Bnew-branchstart-point
 
 ### Step 3: Branch
 
@@ -206,7 +210,8 @@ When ready, push your branch up to your fork (or upstream if you are a core cont
 git push --set-upstream origin fix/my-issue
 ```
 
-Then, open a PR via the green **“Compare & Pull Request”** button. In the description, make sure you thoroughly describe your changes and [link related issues or discussions][link-pr-issue].
+Then, open a PR via the green **“Compare & Pull Request”** button. In the description, make sure
+you thoroughly describe your changes and [link related issues or discussions][link-pr-issue].
 
 - Keep PRs focused and small when possible.
 - Give reviewers time to provide feedback.
@@ -244,9 +249,11 @@ By making a contribution to this project, I certify that:
 
 To discuss larger ideas or prototypes, or to help out with ongoing discussions, open a thread in:
 
-- [Discord][discord]
-- [GitHub Discussions][gh-discussions]
+- [Discord][vjs-discord]
+- [GitHub Discussions][vjs-gh-discussions]
 
+[vjs-gh]: https://github.com/videojs/v10
+[vjs-issue-choose]: https://github.com/videojs/v10/issues/new/choose
+[vjs-gh-discussions]: https://github.com/videojs/v10/discussions
+[vjs-discord]: https://discord.gg/JBqHh485uF
 [conventional-commit-style]: https://www.conventionalcommits.org/en/v1.0.0/#summary
-[discord]: https://discord.gg/JBqHh485uF
-[gh-discussions]: https://github.com/videojs/v10/discussions
