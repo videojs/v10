@@ -87,7 +87,7 @@ importers:
         specifier: ^5.9.2
         version: 5.9.2
 
-  examples/html-demo:
+  examples/html:
     dependencies:
       '@videojs/html':
         specifier: workspace:*
@@ -95,12 +95,12 @@ importers:
     devDependencies:
       typescript:
         specifier: ^5.9.2
-        version: 5.9.2
+        version: 5.9.3
       vite:
         specifier: ^7.1.6
         version: 7.1.6(@types/node@22.18.6)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.1)
 
-  examples/next-demo:
+  examples/next:
     dependencies:
       next:
         specifier: 16.0.1
@@ -135,12 +135,12 @@ importers:
         version: 16.0.1(@typescript-eslint/parser@8.46.2(eslint@9.37.0(jiti@2.6.1))(typescript@5.9.3))(eslint@9.37.0(jiti@2.6.1))(typescript@5.9.3)
       tailwindcss:
         specifier: ^4
-        version: 4.1.14
+        version: 4.1.16
       typescript:
         specifier: ^5
         version: 5.9.3
 
-  examples/react-demo:
+  examples/react:
     dependencies:
       '@videojs/react':
         specifier: workspace:*
@@ -156,7 +156,7 @@ importers:
         version: 18.3.1(react@18.3.1)
       tailwindcss:
         specifier: ^4.1.13
-        version: 4.1.14
+        version: 4.1.16
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.1.0
@@ -172,7 +172,7 @@ importers:
         version: 5.0.3(vite@7.1.6(@types/node@22.18.6)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.1))
       typescript:
         specifier: ^5.9.2
-        version: 5.9.2
+        version: 5.9.3
       vite:
         specifier: ^7.1.6
         version: 7.1.6(@types/node@22.18.6)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.1)

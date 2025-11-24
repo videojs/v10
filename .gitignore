@@ -3,6 +3,7 @@
 # -------------------------
 node_modules/
 logs/
+.yarn/*
 *.log
 *.pid
 *.seed
@@ -33,7 +34,7 @@ __tests__/coverage/
 # Environment
 # -------------------------
 .env
-.env.*
+.env*
 !.env.example
 
 # -------------------------
@@ -59,6 +60,7 @@ __tests__/coverage/
 # -------------------------
 # OS Generated
 # -------------------------
+*.pem
 .DS_Store
 .DS_Store?
 ._*
@@ -71,13 +73,17 @@ Desktop.ini
 # -------------------------
 # Framework / Tool Specific
 # -------------------------
-.next/
 .nuxt/
 .vuepress/dist/
 .serverless/
 .fusebox/
 .dynamodb/
 .react-devtools
+
+# Next.js
+.next/
+next-env.d.ts
+examples/next/build
 
 # React Native
 .expo/
@@ -110,6 +116,9 @@ Pods/
 
 # Linting
 .eslintcache
+
+# Vercel
+.vercel
 
 # -------------------------
 # Package Manager Locks
