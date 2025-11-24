@@ -1,0 +1,7 @@
+contact_links:
+  - name: ❓ Get Help
+    about: Having a hard time with something? Open a question in discussions to get help.
+    url: https://github.com/videojs/v10/discussions/new
+  - name: 💬 Chat
+    about: Like to chat with the community about something general? Join our Discord channel.
+    url: https://discord.gg/JBqHh485uF
