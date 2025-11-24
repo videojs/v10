@@ -11,9 +11,9 @@ Modern, modular, and composable media player framework for Web and React.
 Thanks for checking out the project! It's in its early stages and currently a mix of prototyping
 and early structure pointing in the direction we want to go with Video.js v10 (so be kind 🙏).
 
-- Read our early [architecture goals](./docs/ARCHITECTURE.md).
-- Read the [v10 discussion topic](https://github.com/videojs/video.js/discussions/9035)
-- Watch [Heff's recent presentation](https://players.brightcove.net/3737230800001/eyILA5XG7K_default/index.html?videoId=6379311036112)
+- Read our [early architecture goals][architecture].
+- Read the [v10 discussion topic][v10-discussion].
+- Watch [Heff's recent presentation][heff-presentation].
 
 ## Timeline
 
@@ -56,8 +56,13 @@ Please see our [contributing guide](./CONTRIBUTING.md) for getting setup locally
 
 ## Code of Conduct
 
-Please note that this project is released with a [Contributor Code of Conduct](https://github.com/videojs/video.js/blob/main/CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+Please note that this project is released with a [Contributor Code of Conduct][coc]. By
+participating in this project you agree to abide by its terms.
 
+[architecture]: ./docs/ARCHITECTURE.md
+[v10-discussion]: https://github.com/videojs/video.js/discussions/9035
+[heff-presentation]: https://players.brightcove.net/3737230800001/eyILA5XG7K_default/index.html?videoId=6379311036112
+[coc]: https://github.com/videojs/video.js/blob/main/CODE_OF_CONDUCT.md
 [site]: http://v10.videojs.org
 [docs]: http://v10.videojs.org/docs
 [package]: https://www.npmjs.com/package/@videojs/core
