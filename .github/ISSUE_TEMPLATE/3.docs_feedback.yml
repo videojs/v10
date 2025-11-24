@@ -1,6 +1,6 @@
 name: 📄 Docs Feedback
 description: Report a discrepancy in or an improvement to the docs.
-labels: [documentation]
+labels: [triage, docs]
 title: 'Docs: '
 body:
   - type: markdown

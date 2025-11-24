@@ -16,6 +16,7 @@ export default {
       'docs',
       'example/html',
       'example/react',
+      'example/next',
       'html',
       'icons',
       'packages',

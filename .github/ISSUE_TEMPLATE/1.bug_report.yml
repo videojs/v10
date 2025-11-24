@@ -1,7 +1,7 @@
 name: 🐛 Bug Report
 description: Report a reproducible bug or regression.
 type: bug
-labels: ['status: unconfirmed', bug]
+labels: [triage]
 title: 'Bug: '
 body:
   - type: markdown
@@ -33,9 +33,11 @@ body:
         - HTML (@videojs/html)
         - React (@videojs/react)
         - Utils (@videojs/utils)
+        - HTML Example
+        - React Example
+        - Next.js Example
         - Website
-        - Example / Demo Apps (html-demo, react-demo, next-demo)
-        - Other/unknown (please mention in description)
+        - Other (please mention in description)
   - type: textarea
     id: environment
     validations:
