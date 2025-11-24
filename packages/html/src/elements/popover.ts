@@ -2,7 +2,6 @@ import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
 import { Popover as CorePopover } from '@videojs/core';
-
 import { getDocumentOrShadowRoot } from '@videojs/utils/dom';
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
 

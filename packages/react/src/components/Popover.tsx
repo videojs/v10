@@ -49,8 +49,6 @@ export function usePopoverRootState(props: PopoverRootProps): PopoverState {
 
   return {
     ...coreState,
-    placement,
-    sideOffset,
     popupId,
     updatePositioning,
   };

@@ -132,6 +132,7 @@ export class Popover {
     } else {
       this.setState({ _transitionStatus: 'close' });
 
+      // This requestAnimationFrame is required for React because the data- attributes are not updated immediately.
       requestAnimationFrame(() => {
         const transitions = this.#popoverElement?.getAnimations().filter(anim => anim instanceof CSSTransition);
         if (transitions && transitions.length > 0) {
