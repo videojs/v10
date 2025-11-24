@@ -1,5 +1,5 @@
-import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 import type { Prettify } from '../types';
+import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
 import { Popover as CorePopover } from '@videojs/core';
 
@@ -8,7 +8,7 @@ import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../ut
 
 type Placement = 'top' | 'top-start' | 'top-end';
 
-type PopoverState = Prettify<ReturnType<CorePopover['getState']>>;
+export type PopoverState = Prettify<ReturnType<CorePopover['getState']>>;
 
 export const getPopoverState: StateHook<Popover, PopoverState> = (element, _mediaStore) => {
   const coreState = getCoreState(CorePopover, getPropsFromAttrs(element));
