@@ -5,12 +5,12 @@ import { map } from 'nanostores';
 type Placement = 'top' | 'top-start' | 'top-end';
 
 export interface PopoverState {
-  open: boolean;
   openOnHover: boolean;
   delay: number;
   closeDelay: number;
   placement: Placement;
   sideOffset: number;
+  _open: boolean;
   _setTriggerElement: (element: HTMLElement | null) => void;
   _triggerElement: HTMLElement | null;
   _setPopoverElement: (element: HTMLElement | null) => void;
@@ -21,7 +21,7 @@ export interface PopoverState {
 export class Popover {
   #hoverTimeout: ReturnType<typeof setTimeout> | null = null;
   #state = map<PopoverState>({
-    open: false,
+    _open: false,
     openOnHover: false,
     delay: 0,
     closeDelay: 0,
@@ -113,13 +113,13 @@ export class Popover {
   }
 
   get #open(): boolean {
-    return this.getState().open;
+    return this.getState()._open;
   }
 
   #setOpen(open: boolean): void {
     if (this.#open === open) return;
 
-    this.setState({ open });
+    this.setState({ _open: open });
 
     if (open) {
       this.setState({ _transitionStatus: 'initial' });
@@ -132,14 +132,17 @@ export class Popover {
     } else {
       this.setState({ _transitionStatus: 'close' });
 
-      const transitions = this.#popoverElement?.getAnimations().filter(anim => anim instanceof CSSTransition);
-      if (transitions && transitions.length > 0) {
-        Promise.all(transitions.map(t => t.finished))
-          .then(() => this.#popoverElement?.hidePopover())
-          .catch(() => this.#popoverElement?.hidePopover());
-      } else {
-        this.#popoverElement?.hidePopover();
-      }
+      // This requestAnimationFrame is required for React because the data- attributes are not updated immediately.
+      requestAnimationFrame(() => {
+        const transitions = this.#popoverElement?.getAnimations().filter(anim => anim instanceof CSSTransition);
+        if (transitions && transitions.length > 0) {
+          Promise.all(transitions.map(t => t.finished))
+            .then(() => this.#popoverElement?.hidePopover())
+            .catch(() => this.#popoverElement?.hidePopover());
+        } else {
+          this.#popoverElement?.hidePopover();
+        }
+      });
     }
   }
 
@@ -159,7 +162,7 @@ export class Popover {
       this.#addPointerMoveListener();
     }
 
-    if (this.getState().open) {
+    if (this.getState()._open) {
       return;
     }
 
