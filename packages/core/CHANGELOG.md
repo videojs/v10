@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.0-preview.10](https://github.com/videojs/v10/compare/@videojs/core@0.1.0-preview.9...@videojs/core@0.1.0-preview.10) (2025-11-25)
+
+
+### Bug Fixes
+
+* add popover core, use in html and improve factory ([#204](https://github.com/videojs/v10/issues/204)) ([f3b1b19](https://github.com/videojs/v10/commit/f3b1b199173f3750bc05ad9063fcccbd4163b12b))
+* use popover core in react popover ([#208](https://github.com/videojs/v10/issues/208)) ([99fef78](https://github.com/videojs/v10/commit/99fef78f63e8dd121513b9cd20696a7d35603837))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 0.1.0-preview.10
+
 ## [0.1.0-preview.9](https://github.com/videojs/v10/compare/@videojs/core@0.1.0-preview.8...@videojs/core@0.1.0-preview.9) (2025-11-18)
 
 

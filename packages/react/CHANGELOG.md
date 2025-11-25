@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.1.0-preview.10](https://github.com/videojs/v10/compare/@videojs/react@0.1.0-preview.9...@videojs/react@0.1.0-preview.10) (2025-11-25)
+
+
+### Features
+
+* add console banner ([#186](https://github.com/videojs/v10/issues/186)) ([072b0de](https://github.com/videojs/v10/commit/072b0dece76289d7d4215907ce70b36debbb78bc))
+
+
+### Bug Fixes
+
+* use popover core in react popover ([#208](https://github.com/videojs/v10/issues/208)) ([99fef78](https://github.com/videojs/v10/commit/99fef78f63e8dd121513b9cd20696a7d35603837))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 0.1.0-preview.10
+    * @videojs/icons bumped to 0.1.0-preview.10
+    * @videojs/utils bumped to 0.1.0-preview.10
+
 ## [0.1.0-preview.9](https://github.com/videojs/v10/compare/@videojs/react@0.1.0-preview.8...@videojs/react@0.1.0-preview.9) (2025-11-18)
 
 
