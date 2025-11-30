@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 import { useMediaSelector, useMediaStore } from '@/store';
 import { toConnectedComponent } from '../utils/component-factory';
 
-export function useMuteButtonState(_props: any): {
+export function useMuteButtonState(_props?: any): {
   volumeLevel: string;
   muted: boolean;
   requestMute: () => void;

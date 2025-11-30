@@ -7,7 +7,7 @@ import { formatDisplayTime, shallowEqual } from '@videojs/utils';
 import { useMediaSelector } from '@/store';
 import { toConnectedComponent } from '../utils/component-factory';
 
-export function useCurrentTimeDisplayState(_props: any): {
+export function useCurrentTimeDisplayState(_props?: any): {
   currentTime: number;
   duration: number;
 } {

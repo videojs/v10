@@ -64,15 +64,15 @@
     "@svgr/cli": "^8.1.0",
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
-    "@tailwindcss/cli": "^4.1.0",
+    "@tailwindcss/cli": "^4.1.17",
     "@types/postcss-prefix-selector": "^1.16.3",
     "@types/react": "^18.0.0",
     "postcss": "^8.4.49",
     "postcss-prefix-selector": "^1.16.1",
     "react": "^18.0.0",
-    "tailwindcss": "^4.1.13",
+    "tailwindcss": "^4.1.17",
     "tsdown": "^0.15.9",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   },
   "publishConfig": {
     "access": "public"

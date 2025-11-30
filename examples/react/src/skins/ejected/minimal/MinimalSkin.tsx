@@ -1,6 +1,18 @@
 import type { PropsWithChildren } from 'react';
 
-import { CurrentTimeDisplay, DurationDisplay, FullscreenButton, MediaContainer, MuteButton, PlayButton, Popover, PreviewTimeDisplay, TimeSlider, Tooltip, VolumeSlider } from '@videojs/react';
+import {
+  CurrentTimeDisplay,
+  DurationDisplay,
+  FullscreenButton,
+  MediaContainer,
+  MuteButton,
+  PlayButton,
+  Popover,
+  PreviewTimeDisplay,
+  TimeSlider,
+  Tooltip,
+  VolumeSlider,
+} from '@videojs/react';
 import {
   FullscreenEnterAltIcon,
   FullscreenExitAltIcon,
