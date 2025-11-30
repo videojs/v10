@@ -1,6 +1,18 @@
 import type { PropsWithChildren } from 'react';
 
-import { CurrentTimeDisplay, DurationDisplay, FullscreenButton, MediaContainer, MuteButton, PlayButton, Popover, PreviewTimeDisplay, TimeSlider, Tooltip, VolumeSlider } from '@videojs/react';
+import {
+  CurrentTimeDisplay,
+  DurationDisplay,
+  FullscreenButton,
+  MediaContainer,
+  MuteButton,
+  PlayButton,
+  Popover,
+  PreviewTimeDisplay,
+  TimeSlider,
+  Tooltip,
+  VolumeSlider,
+} from '@videojs/react';
 import {
   FullscreenEnterAltIcon,
   FullscreenExitAltIcon,
@@ -20,7 +32,8 @@ type SkinProps = PropsWithChildren<{
 export default function MinimalSkin({ children, className = '' }: SkinProps): JSX.Element {
   return (
     <MediaContainer className={`vjs-minimal-skin ${className}`}>
-      {children}
+      {/* FIXME: Mismatch between React 18 & 19 types */}
+      {children as any}
 
       <div className="overlay" />
 

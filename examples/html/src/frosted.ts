@@ -1,6 +1,6 @@
 import '@videojs/html/skins/frosted';
 
-document.getElementById('app').innerHTML = /* html */ `
+document.getElementById('app')!.innerHTML = /* html */ `
   <video-provider>
     <media-skin-frosted style="border-radius: 2rem; width: 100%; margin: 2rem auto; aspect-ratio: 16/9">
       <video

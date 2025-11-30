@@ -1,22 +1,21 @@
-export interface MinimalSkinStyles {
+export interface CustomNativeSkinStyles {
   readonly MediaContainer: string;
-  readonly Overlay: string;
   readonly Controls: string;
-  readonly Icon: string;
+  readonly ControlsRow: string;
   readonly Button: string;
-  readonly ButtonGroup: string;
   readonly IconButton: string;
   readonly PlayButton: string;
   readonly PlayIcon: string;
   readonly PauseIcon: string;
-  readonly MuteButton: string;
+  readonly VolumeControls: string;
+  readonly VolumeSlider: string;
+  readonly VolumeButton: string;
   readonly VolumeHighIcon: string;
   readonly VolumeLowIcon: string;
   readonly VolumeOffIcon: string;
-  readonly FullscreenButton: string;
-  readonly FullscreenEnterIcon: string;
-  readonly FullscreenExitIcon: string;
-  readonly TimeSliderRoot: string;
+  readonly FullScreenButton: string;
+  readonly FullScreenEnterIcon: string;
+  readonly FullScreenExitIcon: string;
   readonly TimeSliderThumb: string;
   readonly TimeDisplay: string;
   readonly SliderRoot: string;

@@ -21,7 +21,7 @@
     "@base-ui-components/react": "1.0.0-beta.4",
     "@nanostores/react": "^1.0.0",
     "@pagefind/default-ui": "^1.4.0",
-    "@tailwindcss/vite": "^4.1.14",
+    "@tailwindcss/vite": "^4.1.17",
     "@videojs/html": "workspace:*",
     "@videojs/react": "workspace:*",
     "astro": "^5.14.4",
@@ -40,7 +40,7 @@
     "shiki": "^3.13.0",
     "simple-git": "^3.28.0",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss": "^4.1.14",
+    "tailwindcss": "^4.1.17",
     "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {

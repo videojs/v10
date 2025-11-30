@@ -10,18 +10,24 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@base-ui-components/react": "^1.0.0-rc.0",
+    "@heroicons/react": "^2.2.0",
     "@videojs/react": "workspace:*",
+    "@videojs/utils": "workspace:*",
     "clsx": "^2.1.1",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "tailwindcss": "^4.1.13"
+    "motion": "^12.23.25",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "shiki": "^3.19.0",
+    "tailwindcss": "^4.1.17",
+    "wouter": "^3.8.1"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.1.0",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
-    "@vitejs/plugin-react": "^5.0.3",
-    "typescript": "^5.9.2",
-    "vite": "^7.1.6"
+    "@tailwindcss/vite": "^4.1.17",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.4"
   }
 }
