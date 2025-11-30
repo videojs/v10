@@ -8,3 +8,21 @@
 
 /* Make reduced-transparency variant */
 @custom-variant reduced-transparency @media (prefers-reduced-transparency: reduce);
+
+.bg-dots {
+  --dot-size: 1px;
+  --dot-gap: 10px;
+  --dot-color: rgba(0, 0, 0, 0.06);
+
+  background-image:
+    radial-gradient(circle, var(--dot-color) var(--dot-size), transparent var(--dot-size)),
+    radial-gradient(circle, var(--dot-color) var(--dot-size), transparent var(--dot-size));
+  background-size: var(--dot-gap) var(--dot-gap);
+  background-position:
+    0 0,
+    calc(var(--dot-gap) / 2) calc(var(--dot-gap) / 2);
+}
+
+.vjs {
+  font-family: var(--font-sans);
+}

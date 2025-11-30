@@ -27,8 +27,8 @@ interface TimeSliderRenderProps extends React.ComponentProps<'div'> {
 // ROOT COMPONENT
 // ============================================================================
 
-export function useTimeSliderRootState(props: TimeSliderProps): TimeSliderState {
-  const { orientation = 'horizontal' } = props;
+export function useTimeSliderRootState(props?: TimeSliderProps): TimeSliderState {
+  const { orientation = 'horizontal' } = props ?? {};
   const mediaStore = useMediaStore();
   const mediaState = useMediaSelector(timeSliderStateDefinition.stateTransform, shallowEqual);
   const mediaMethods = useMemo(() => timeSliderStateDefinition.createRequestMethods(mediaStore.dispatch), [mediaStore]);

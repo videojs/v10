@@ -24,7 +24,7 @@ const styles: MinimalSkinStyles = {
   ),
   Overlay: cn(
     'vjs:absolute vjs:inset-0 vjs:rounded-[inherit] vjs:pointer-events-none',
-    'vjs:bg-gradient-to-t vjs:from-black/70 vjs:via-black/50 vjs:via-[7.5rem] vjs:to-transparent',
+    'vjs:bg-linear-to-t vjs:from-black/70 vjs:via-black/50 vjs:via-[7.5rem] vjs:to-transparent',
     'vjs:opacity-0 vjs:delay-500 vjs:duration-300',
     // High contrast mode
     'vjs:contrast-more:from-black/75',
@@ -46,7 +46,7 @@ const styles: MinimalSkinStyles = {
     // ------------------------------------
     //  FIXME: Temporary hide/show logic
     'vjs:translate-y-full vjs:opacity-0 vjs:blur-sm vjs:delay-500 vjs:duration-300',
-    'vjs:has-[[data-paused]]:translate-y-0 vjs:has-[[data-paused]]:opacity-100 vjs:has-[[data-paused]]:blur-none vjs:has-[[data-paused]]:delay-0 vjs:has-[[data-paused]]:duration-75',
+    'vjs:has-data-paused:translate-y-0 vjs:has-data-paused:opacity-100 vjs:has-data-paused:blur-none vjs:has-data-paused:delay-0 vjs:has-data-paused:duration-75',
     'vjs:has-[[aria-expanded="true"]]:translate-y-0 vjs:has-[[aria-expanded="true"]]:opacity-100 vjs:has-[[aria-expanded="true"]]:blur-none vjs:has-[[aria-expanded="true"]]:delay-0 vjs:has-[[aria-expanded="true"]]:duration-75',
     'vjs:group-hover/root:translate-y-0 vjs:group-hover/root:opacity-100 vjs:group-hover/root:blur-none vjs:group-hover/root:delay-0 vjs:group-hover/root:duration-75',
     // ------------------------------------
@@ -112,8 +112,8 @@ const styles: MinimalSkinStyles = {
   ),
   SliderTrack: cn(
     'vjs:relative vjs:select-none vjs:rounded-[inherit] vjs:bg-white/10',
-    'vjs:data-[orientation=horizontal]:w-full vjs:data-[orientation=horizontal]:h-[0.1875rem]',
-    'vjs:data-[orientation=vertical]:w-[0.1875rem]',
+    'vjs:data-[orientation=horizontal]:w-full vjs:data-[orientation=horizontal]:h-0.75',
+    'vjs:data-[orientation=vertical]:w-0.75',
     'vjs:-outline-offset-2 vjs:group-focus-visible/slider:outline-2 vjs:group-focus-visible/slider:outline-offset-6 vjs:group-focus-visible/slider:outline-white',
   ),
   SliderProgress: cn('vjs:bg-white vjs:rounded-[inherit]'),

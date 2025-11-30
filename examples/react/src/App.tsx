@@ -1,166 +1,110 @@
-import type { ChangeEventHandler } from 'react';
+import type { PropsWithChildren } from 'react';
+import { VideoProvider } from '@videojs/react';
+import clsx from 'clsx';
+import { useMemo } from 'react';
+import { Link as LinkPrimitive, Redirect, Route, Switch } from 'wouter';
+import { VideoElement } from './components';
 
-import { FrostedSkin, HlsVideo, MinimalSkin, VideoProvider } from '@videojs/react';
-import { useCallback, useMemo, useState } from 'react';
+import CustomBaseUISkin from './skins/custom/base-ui/CustomBaseUISkin';
+import CustomNativeSkin from './skins/custom/native/CustomNativeSkin';
+import FrostedSkinEjected from './skins/ejected/frosted/FrostedSkin';
+import MinimalSkinEjected from './skins/ejected/minimal/MinimalSkin';
+import FrostedSkin from './skins/imported/FrostedSkin';
+import MinimalSkin from './skins/imported/MinimalSkin';
 
-// NOTE: Commented out imports are for testing locally/externally defined skins.
-// import { VideoProvider, Video } from '@videojs/react';
-// import FrostedSkin from './skins/frosted/FrostedSkin';
-// import MinimalSkin from './skins/toasted/MinimalSkin';
-
-import FrostedEjectedSkin from './skins/frosted-eject/FrostedSkin';
-import MinimalEjectedSkin from './skins/minimal-eject/MinimalSkin';
-import '@videojs/react/skins/frosted.css';
-import '@videojs/react/skins/minimal.css';
 import './globals.css';
 
-const skins = [
-  {
-    key: 'frosted',
-    name: 'Frosted (imported)',
-    component: FrostedSkin,
-  },
-  {
-    key: 'frosted-eject',
-    name: 'Frosted (ejected)',
-    component: FrostedEjectedSkin,
-  },
-  {
-    key: 'minimal',
-    name: 'Minimal (imported)',
-    component: MinimalSkin,
-  },
-  {
-    key: 'minimal-eject',
-    name: 'Minimal (ejected)',
-    component: MinimalEjectedSkin,
-  },
-] as const;
+type NavigationSectionProps = PropsWithChildren<{
+  title: string;
+}>;
 
-type SkinKey = (typeof skins)[number]['key'];
-
-const mediaSources = [
-  {
-    key: '1',
-    name: 'Mux 1 (HLS)',
-    value: 'https://stream.mux.com/fXNzVtmtWuyz00xnSrJg4OJH6PyNo6D02UzmgeKGkP5YQ.m3u8',
-  },
-  {
-    key: '2',
-    name: 'Mux 2 (HLS)',
-    value: 'https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M.m3u8',
-  },
-  {
-    key: '3',
-    name: 'Mux 3 (MP4)',
-    value: 'https://stream.mux.com/A3VXy02VoUinw01pwyomEO3bHnG4P32xzV7u1j1FSzjNg/high.mp4',
-  },
-  {
-    key: '4',
-    name: 'Mux 4 (HLS)',
-    value: 'https://stream.mux.com/lyrKpPcGfqyzeI00jZAfW6MvP6GNPrkML.m3u8',
-  },
-] as const;
-
-type MediaSourceKey = (typeof mediaSources)[number]['key'];
-
-function getParam<T>(key: string, defaultValue: T): T {
-  const params = new URLSearchParams(window.location.search);
-  return (params.get(key) as T) || defaultValue;
-}
-function setParam(key: string, value: string) {
-  const params = new URLSearchParams(window.location.search);
-  params.set(key, value);
-  const search = params.toString();
-  const url = window.location.pathname + (search ? `?${search}` : '');
-  window.history.replaceState(null, '', url);
+function NavigationSection(props: NavigationSectionProps): JSX.Element {
+  return (
+    <div className="space-y-1.5">
+      <div className="text-xs text-zinc-400 px-3.5">
+        {props.title}
+      </div>
+      <nav className="space-y-px">{props.children}</nav>
+    </div>
+  );
 }
 
-const DEFAULT_SKIN: SkinKey = 'frosted';
-const DEFAULT_MEDIA_SOURCE: MediaSourceKey = '1';
+type LinkProps = PropsWithChildren<{
+  to: string;
+}>;
+
+function Link(props: LinkProps): JSX.Element {
+  return (
+    <LinkPrimitive
+      {...props}
+      className={isActive => clsx('flex px-3.5 py-2 rounded-lg transition-colors text-sm', {
+        'text-zinc-600 hover:bg-zinc-200/60': !isActive,
+        'bg-zinc-200/60 text-zinc-900': isActive,
+      })}
+    />
+  );
+}
 
 export default function App(): JSX.Element {
-  const [skinKey, setSkinKey] = useState<SkinKey>(() => getParam('skin', DEFAULT_SKIN));
-  const [mediaSourceKey, setMediaSourceKey] = useState<MediaSourceKey>(() => getParam('source', DEFAULT_MEDIA_SOURCE));
-
-  const mediaSource = useMemo(() => {
-    let match = mediaSources.find(m => m.key === mediaSourceKey);
-    if (!match) {
-      match = mediaSources.find(m => m.key === DEFAULT_MEDIA_SOURCE)!;
-      setMediaSourceKey(match.key);
-    }
-    return match.value;
-  }, [mediaSourceKey]);
-
-  const Skin = useMemo(() => {
-    let match = skins.find(s => s.key === skinKey);
-    if (!match) {
-      match = skins.find(s => s.key === DEFAULT_SKIN)!;
-      setSkinKey(match.key);
-    }
-    return match.component;
-  }, [skinKey]);
-
-  const onChangeSkin: ChangeEventHandler<HTMLSelectElement> = useCallback((event) => {
-    const value = event.target.value as SkinKey;
-    setSkinKey(value);
-    setParam('skin', value);
-  }, []);
-  const onChangeMediaSource: ChangeEventHandler<HTMLSelectElement> = useCallback((event) => {
-    const value = event.target.value as MediaSourceKey;
-    setMediaSourceKey(value);
-    setParam('source', value);
-  }, []);
-
-  // Force a re-render on changes.
-  const key = `${skinKey}-${mediaSourceKey}`;
-
-  const playbackId = mediaSource.match(/stream\.mux\.com\/([^./]+)/)?.[1];
-  const poster = playbackId ? `https://image.mux.com/${playbackId}/thumbnail.webp` : undefined;
+  const skinProps = useMemo(() => ({
+    className: 'aspect-video shadow-lg shadow-black/15',
+    children: <VideoElement />,
+  }), []);
 
   return (
-    <div className="min-h-screen bg-white text-stone-700 dark:bg-stone-900 dark:text-stone-200">
-      <header className="fixed top-0 z-10 inset-x-0 bg-white dark:bg-stone-800 shadow shadow-black/10 after:h-px after:absolute after:inset-x-0 after:top-full after:bg-black/5 transition-transform">
-        <div className="grid grid-cols-5 h-2" aria-hidden="true">
-          <div className="bg-yellow-500"></div>
-          <div className="bg-orange-500"></div>
-          <div className="bg-red-500"></div>
-          <div className="bg-purple-500"></div>
-          <div className="bg-blue-500"></div>
-        </div>
+    <div className="min-h-screen text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 flex">
+      <header className="p-3 w-72 bg-zinc-50 space-y-8 border-r border-dashed border-zinc-200">
+        <h1 className="text-xl tracking-tight pt-6 px-3 flex items-center gap-2">
+          <span className="font-light text-zinc-700 dark:text-white">Video.js</span>
+          <span className="text-zinc-300 dark:text-zinc-700 font-extralight text-[80%]">/</span>
+          <span className="text-zinc-600 font-semibold">React</span>
+        </h1>
 
-        <div className="py-3 px-6 flex items-center justify-between">
-          <div className="space-y-1">
-            <h1 className="font-medium text-lg tracking-tight leading-tight dark:text-white">Playground</h1>
-            <small className="block text-stone-400 text-sm">Test out the various skins for Video.js.</small>
-          </div>
-
-          <nav className="flex items-center gap-3">
-            <select value={mediaSourceKey} onChange={onChangeMediaSource}>
-              {mediaSources.map(({ key, name }) => (
-                <option key={key} value={key}>
-                  {name}
-                </option>
-              ))}
-            </select>
-            <select value={skinKey} onChange={onChangeSkin}>
-              {skins.map(({ key, name }) => (
-                <option key={key} value={key}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </nav>
+        <div className="space-y-6">
+          <NavigationSection title="Imported skins">
+            <Link to="/imported/frosted">Frosted</Link>
+            <Link to="/imported/minimal">Minimal</Link>
+          </NavigationSection>
+          <NavigationSection title="Ejected skins">
+            <Link to="/ejected/frosted">Frosted</Link>
+            <Link to="/ejected/minimal">Minimal</Link>
+          </NavigationSection>
+          <NavigationSection title="Build your own">
+            <Link to="/custom/native">Native</Link>
+            <Link to="/custom/base-ui">Base UI</Link>
+          </NavigationSection>
         </div>
       </header>
 
-      <main className="min-h-screen flex justify-center items-center bg-radial bg-size-[16px_16px] from-stone-300 dark:from-stone-700 via-10% via-transparent to-transparent">
+      <main className="flex-1 flex justify-center items-center">
         <div className="w-full max-w-5xl mx-auto p-6">
-          <VideoProvider key={key}>
-            <Skin className="aspect-video shadow-lg shadow-black/15">
-              {/* @ts-expect-error -- types are incorrect */}
-              <HlsVideo src={mediaSource} poster={poster} playsInline />
-            </Skin>
+          <VideoProvider>
+            <Switch>
+              <Route path="/imported/frosted">
+                <FrostedSkin {...skinProps} />
+              </Route>
+              <Route path="/imported/minimal">
+                <MinimalSkin {...skinProps} />
+              </Route>
+
+              <Route path="/ejected/frosted">
+                <FrostedSkinEjected {...skinProps} />
+              </Route>
+              <Route path="/ejected/minimal">
+                <MinimalSkinEjected {...skinProps} />
+              </Route>
+
+              <Route path="/custom/native">
+                <CustomNativeSkin {...skinProps} />
+              </Route>
+              <Route path="/custom/base-ui">
+                <CustomBaseUISkin {...skinProps} />
+              </Route>
+
+              <Route>
+                <Redirect to="/imported/frosted" />
+              </Route>
+            </Switch>
           </VideoProvider>
         </div>
       </main>

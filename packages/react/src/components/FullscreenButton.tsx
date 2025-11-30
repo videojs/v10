@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 import { useMediaSelector, useMediaStore } from '@/store';
 import { toConnectedComponent } from '../utils/component-factory';
 
-export function useFullscreenButtonState(_props: any): {
+export function useFullscreenButtonState(_props?: any): {
   fullscreen: boolean;
   requestEnterFullscreen: () => void;
   requestExitFullscreen: () => void;
