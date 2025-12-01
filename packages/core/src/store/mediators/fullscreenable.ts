@@ -58,14 +58,21 @@ export const fullscreenable = {
       return false;
     },
     set(value: boolean, stateOwners: any): void {
-      const { container } = stateOwners;
+      const { container, media } = stateOwners;
       if (!container || !globalThis?.document) return;
+
+      const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isSafari = typeof navigator !== 'undefined' && navigator.userAgent.includes('Safari');
 
       try {
         if (value) {
           // Enter fullscreen
           if (container.requestFullscreen) {
             container.requestFullscreen();
+          } else if (isIOS && isSafari) {
+            // Safari (IOS Support)
+            const videoElement = media?._playbackEngine?.element || media;
+            (videoElement as any).webkitEnterFullscreen();
           } else if (container.webkitRequestFullscreen) {
             // Safari support
             container.webkitRequestFullscreen();
