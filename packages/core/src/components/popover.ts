@@ -186,11 +186,12 @@ export class Popover {
   }
 
   #handlePointerEnter(event: PointerEvent): void {
-    if (!this.getState().openOnHover) return;
+    const { openOnHover, trackCursorAxis } = this.getState();
+    if (!openOnHover) return;
 
     this.#clearHoverTimeout();
 
-    if (event.currentTarget === this.#popoverElement) {
+    if (event.currentTarget === this.#popoverElement || trackCursorAxis === 'x') {
       this.#addPointerMoveListener();
     }
 
@@ -204,9 +205,9 @@ export class Popover {
   }
 
   #handlePointerLeave(_event: PointerEvent): void {
-    const { disableHoverablePopover, closeDelay, trackCursorAxis } = this.getState();
+    const { disableHoverablePopover, closeDelay } = this.getState();
 
-    if (!disableHoverablePopover || trackCursorAxis === 'x') {
+    if (!disableHoverablePopover) {
       this.#addPointerMoveListener();
     }
 

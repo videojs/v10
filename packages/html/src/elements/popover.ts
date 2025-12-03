@@ -3,6 +3,7 @@ import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../uti
 
 import { Popover as CorePopover } from '@videojs/core';
 import { getDocumentOrShadowRoot } from '@videojs/utils/dom';
+
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
 
 type Placement = 'top' | 'top-start' | 'top-end';
@@ -21,7 +22,9 @@ export const getPopoverProps: PropsHook<Popover, PopoverState> = (element, state
     state._setPopoverElement(element);
   }
 
-  const triggerElement = getDocumentOrShadowRoot(element)?.querySelector(`[commandfor="${element.id}"]`) as HTMLElement | null;
+  const triggerElement = getDocumentOrShadowRoot(element)?.querySelector(
+    `[commandfor="${element.id}"]`,
+  ) as HTMLElement | null;
   if (state._triggerElement !== triggerElement) {
     state._setTriggerElement(triggerElement);
   }
