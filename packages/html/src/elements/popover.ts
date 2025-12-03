@@ -26,18 +26,14 @@ export const getPopoverProps: PropsHook<Popover, PopoverState> = (element, state
     state._setTriggerElement(triggerElement);
   }
 
-  const [side, alignment] = element.side.split('-');
-
   return {
+    'data-side': state.placement,
     'data-starting-style': state._transitionStatus === 'initial',
     'data-open': state._transitionStatus === 'initial' || state._transitionStatus === 'open',
     'data-ending-style': state._transitionStatus === 'close' || state._transitionStatus === 'unmounted',
     'data-closed': state._transitionStatus === 'close' || state._transitionStatus === 'unmounted',
     style: {
-      ...(element.id ? { 'position-anchor': `--${element.id}` } : {}),
-      top: `calc(anchor(${side}) - ${element.sideOffset}px)`,
-      translate: '0 -100%',
-      'justify-self': alignment === 'start' ? 'anchor-start' : alignment === 'end' ? 'anchor-end' : 'anchor-center',
+      ...state._popoverStyle,
     },
   };
 };

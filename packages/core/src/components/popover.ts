@@ -10,28 +10,37 @@ export interface PopoverState {
   closeDelay: number;
   placement: Placement;
   sideOffset: number;
+  trackCursorAxis: 'x' | undefined;
+  collisionPadding: number;
+  disableHoverablePopover: boolean;
   _open: boolean;
   _setTriggerElement: (element: HTMLElement | null) => void;
   _triggerElement: HTMLElement | null;
   _setPopoverElement: (element: HTMLElement | null) => void;
   _popoverElement: HTMLElement | null;
   _transitionStatus: 'initial' | 'open' | 'close' | 'unmounted';
+  _pointerPosition: { x: number };
+  _popoverStyle?: Partial<CSSStyleDeclaration>;
 }
 
 export class Popover {
   #hoverTimeout: ReturnType<typeof setTimeout> | null = null;
   #state = map<PopoverState>({
-    _open: false,
     openOnHover: false,
     delay: 0,
     closeDelay: 0,
     placement: 'top',
     sideOffset: 5,
+    trackCursorAxis: undefined,
+    collisionPadding: 0,
+    disableHoverablePopover: false,
+    _open: false,
     _setTriggerElement: this._setTriggerElement.bind(this),
     _triggerElement: null,
     _setPopoverElement: this._setPopoverElement.bind(this),
     _popoverElement: null,
     _transitionStatus: 'initial',
+    _pointerPosition: { x: 0 },
   });
 
   _setPopoverElement(element: HTMLElement | null): void {
@@ -79,7 +88,30 @@ export class Popover {
   }
 
   getState(): PopoverState {
-    return this.#state.get();
+    const baseState = this.#state.get();
+    const { placement, sideOffset, trackCursorAxis, _popoverElement, _pointerPosition } = baseState;
+    const [side, alignment] = placement.split('-');
+
+    const _popoverStyle: Partial<CSSStyleDeclaration> = {
+      ...(_popoverElement ? { positionAnchor: `--${_popoverElement.id}` } : {}),
+      top: `calc(anchor(${side}) - ${sideOffset}px)`,
+      translate: trackCursorAxis === 'x' ? '-50% -100%' : '0 -100%',
+    };
+
+    if (trackCursorAxis === 'x') {
+      _popoverStyle.left = `${_pointerPosition.x}px`;
+    } else {
+      _popoverStyle.justifySelf = alignment === 'start'
+        ? 'anchor-start'
+        : alignment === 'end'
+          ? 'anchor-end'
+          : 'anchor-center';
+    }
+
+    return {
+      ...baseState,
+      _popoverStyle,
+    };
   }
 
   handleEvent(event: Event): void {
@@ -172,7 +204,18 @@ export class Popover {
   }
 
   #handlePointerLeave(_event: PointerEvent): void {
-    this.#addPointerMoveListener();
+    const { disableHoverablePopover, closeDelay, trackCursorAxis } = this.getState();
+
+    if (!disableHoverablePopover || trackCursorAxis === 'x') {
+      this.#addPointerMoveListener();
+    }
+
+    if (disableHoverablePopover) {
+      this.#clearHoverTimeout();
+      this.#hoverTimeout = globalThis.setTimeout(() => {
+        this.#setOpen(false);
+      }, closeDelay);
+    }
   }
 
   #addPointerMoveListener(): void {
@@ -182,7 +225,16 @@ export class Popover {
   }
 
   #handlePointerMove(event: PointerEvent): void {
-    if (!this.getState().openOnHover || !this.#triggerElement || !this.#popoverElement) return;
+    const { disableHoverablePopover, openOnHover, trackCursorAxis } = this.getState();
+    if (!openOnHover || !this.#triggerElement || !this.#popoverElement) return;
+
+    if (trackCursorAxis === 'x') {
+      this.setState({ _pointerPosition: { x: event.clientX } });
+    }
+
+    if (disableHoverablePopover) {
+      return;
+    }
 
     const close = safePolygon({ blockPointerEvents: true })({
       placement: this.getState().placement,

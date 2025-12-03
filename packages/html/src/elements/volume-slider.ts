@@ -53,7 +53,7 @@ export const getVolumeSliderRootProps: PropsHook<VolumeSliderRoot, VolumeSliderS
     'aria-valuetext': volumeText,
     'aria-orientation': element.orientation || 'horizontal',
     style: {
-      ...(element.hasAttribute('commandfor') ? { 'anchor-name': `--${element.getAttribute('commandfor')}` } : {}),
+      ...(element.hasAttribute('commandfor') ? { anchorName: `--${element.getAttribute('commandfor')}` } : {}),
       '--slider-fill': `${state._fillWidth.toFixed(3)}%`,
     },
   };

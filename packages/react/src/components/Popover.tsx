@@ -167,8 +167,7 @@ interface PopoverPopupRenderProps extends React.ComponentProps<'div'> {
 
 export function usePopoverPopupProps(props: PopoverPopupProps, context: PopoverState): PopoverPopupRenderProps {
   const { className, style, children, id } = props;
-  const { _setPopoverElement, _transitionStatus, placement, popupId, sideOffset } = context;
-  const [side, alignment] = placement.split('-');
+  const { _setPopoverElement, _transitionStatus, placement, popupId, _popoverStyle } = context;
 
   return {
     ref: _setPopoverElement,
@@ -176,10 +175,7 @@ export function usePopoverPopupProps(props: PopoverPopupProps, context: PopoverS
     className,
     popover: 'manual' as const,
     style: {
-      ...(popupId ? { positionAnchor: `--${popupId}` as any } : {}),
-      top: `calc(anchor(${side}) - ${sideOffset}px)`,
-      translate: '0 -100%',
-      justifySelf: alignment === 'start' ? 'anchor-start' : alignment === 'end' ? 'anchor-end' : 'anchor-center',
+      ..._popoverStyle,
       ...style,
     } as React.CSSProperties,
     'data-side': placement,
