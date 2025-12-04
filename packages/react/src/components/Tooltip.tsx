@@ -1,6 +1,6 @@
 import type { ReactNode, RefObject } from 'react';
 
-import { contains, getBoundingClientRectWithoutTransform, getInBoundsAdjustments } from '@videojs/utils/dom';
+import { contains, getInBoundsAdjustments, getUntransformedBoundingRect } from '@videojs/utils/dom';
 
 import {
   Children,
@@ -105,8 +105,8 @@ function TooltipRoot({ delay = 0, closeDelay = 0, trackCursorAxis, children }: T
     const mediaContainer = popupRef.current.closest('[data-media-container]') as HTMLElement | null;
     if (!mediaContainer) return;
 
-    const popupRect = getBoundingClientRectWithoutTransform(popupRef.current);
-    const boundsRect = getBoundingClientRectWithoutTransform(mediaContainer);
+    const popupRect = getUntransformedBoundingRect(popupRef.current);
+    const boundsRect = getUntransformedBoundingRect(mediaContainer);
     const { x } = getInBoundsAdjustments(popupRect, boundsRect, collisionPadding);
 
     if (x !== 0) {

@@ -30,6 +30,11 @@ export const getTooltipProps: PropsHook<Tooltip, TooltipState> = (element, state
     state._setTriggerElement(triggerElement);
   }
 
+  const mediaContainer = element.closest('media-container') as HTMLElement | null;
+  if (state._boundingBoxElement !== mediaContainer) {
+    state._setBoundingBoxElement(mediaContainer);
+  }
+
   return {
     'data-side': state.placement,
     'data-starting-style': state._transitionStatus === 'initial',

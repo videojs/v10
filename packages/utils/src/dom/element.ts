@@ -26,7 +26,7 @@ export function getDocumentOrShadowRoot(node: Node): Document | ShadowRoot | nul
   return null;
 }
 
-export function getDocument(node: Element | null): Document {
+export function getDocument(node?: Element | null): Document {
   return node?.ownerDocument ?? document;
 }
 
@@ -111,7 +111,7 @@ export function getNodeChildren(
   return directChildren.flatMap(child => [child, ...getNodeChildren(nodes, child.id, onlyOpenChildren)]);
 }
 
-export function getBoundingClientRectWithoutTransform(element: HTMLElement): DOMRect {
+export function getUntransformedBoundingRect(element: HTMLElement): DOMRect {
   let el = element;
   let left = 0;
   let top = 0;
@@ -132,6 +132,38 @@ export function getBoundingClientRectWithoutTransform(element: HTMLElement): DOM
     width: element.offsetWidth,
     height: element.offsetHeight,
   } as DOMRect;
+}
+
+export function addTranslateToBoundingRect(rect: DOMRect, element: HTMLElement): DOMRect {
+  // Get translate from transform
+  const style = getWindow(element).getComputedStyle(element);
+  const translate = style.translate;
+  if (translate && translate !== 'none') {
+    const values = translate.split(' ');
+
+    // Parse translateX (can be px, %, etc)
+    const translateX = parseTranslateValue(values[0] ?? '0', element.offsetWidth);
+    const translateY = parseTranslateValue(values[1] ?? '0', element.offsetHeight);
+
+    return {
+      ...rect,
+      left: rect.left + translateX,
+      top: rect.top + translateY,
+    };
+  }
+
+  return rect;
+}
+
+function parseTranslateValue(value: string, referenceSize: number): number {
+  if (value.endsWith('%')) {
+    return (Number.parseFloat(value) / 100) * referenceSize;
+  }
+  if (value.endsWith('px')) {
+    return Number.parseFloat(value);
+  }
+  // Handle other units like em, rem, etc if needed
+  return Number.parseFloat(value) || 0;
 }
 
 export function getInBoundsAdjustments(
