@@ -58,7 +58,6 @@ export class Popover extends HTMLElement {
       'close-delay',
       'side',
       'side-offset',
-      'track-cursor-axis',
       'collision-padding',
       'collision-boundary',
     ];
@@ -82,11 +81,6 @@ export class Popover extends HTMLElement {
 
   get sideOffset(): number {
     return Number.parseInt(this.getAttribute('side-offset') ?? '0', 10);
-  }
-
-  get trackCursorAxis(): 'x' | null {
-    const value = this.getAttribute('track-cursor-axis');
-    return value === 'x' ? value : null;
   }
 
   get collisionPadding(): number {

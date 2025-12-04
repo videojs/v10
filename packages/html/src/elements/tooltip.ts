@@ -15,7 +15,19 @@ export const getTooltipState: StateHook<Tooltip, TooltipState> = (element, _medi
 
 export const getTooltipProps: PropsHook<Tooltip, TooltipState> = getPopoverProps;
 
-export class Tooltip extends Popover {}
+export class Tooltip extends Popover {
+  static get observedAttributes(): string[] {
+    return [
+      ...super.observedAttributes,
+      'track-cursor-axis',
+    ];
+  }
+
+  get trackCursorAxis(): 'x' | null {
+    const value = this.getAttribute('track-cursor-axis');
+    return value === 'x' ? value : null;
+  }
+}
 
 export const TooltipElement: ConnectedComponentConstructor<Tooltip, TooltipState> = toConnectedHTMLComponent(
   Tooltip,
