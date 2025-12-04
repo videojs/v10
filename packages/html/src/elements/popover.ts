@@ -29,6 +29,14 @@ export const getPopoverProps: PropsHook<Popover, PopoverState> = (element, state
     state._setTriggerElement(triggerElement);
   }
 
+  const mediaContainer = element.closest(element.collisionBoundary
+    ? `#${element.collisionBoundary}`
+    : 'media-container') as HTMLElement | null;
+
+  if (state._collisionBoundaryElement !== mediaContainer) {
+    state._setCollisionBoundaryElement(mediaContainer);
+  }
+
   return {
     'data-side': state.placement,
     'data-starting-style': state._transitionStatus === 'initial',
@@ -43,7 +51,17 @@ export const getPopoverProps: PropsHook<Popover, PopoverState> = (element, state
 
 export class Popover extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ['id', 'open-on-hover', 'delay', 'close-delay', 'side', 'side-offset'];
+    return [
+      'id',
+      'open-on-hover',
+      'delay',
+      'close-delay',
+      'side',
+      'side-offset',
+      'track-cursor-axis',
+      'collision-padding',
+      'collision-boundary',
+    ];
   }
 
   get openOnHover(): boolean {
@@ -64,6 +82,19 @@ export class Popover extends HTMLElement {
 
   get sideOffset(): number {
     return Number.parseInt(this.getAttribute('side-offset') ?? '0', 10);
+  }
+
+  get trackCursorAxis(): 'x' | null {
+    const value = this.getAttribute('track-cursor-axis');
+    return value === 'x' ? value : null;
+  }
+
+  get collisionPadding(): number {
+    return Number.parseInt(this.getAttribute('collision-padding') ?? '0', 10);
+  }
+
+  get collisionBoundary(): string | null {
+    return this.getAttribute('collision-boundary');
   }
 }
 

@@ -28,8 +28,8 @@ export interface PopoverState {
   _triggerElement?: HTMLElement | null;
   _setPopoverElement: (element: HTMLElement | null) => void;
   _popoverElement?: HTMLElement | null;
-  _setBoundingBoxElement: (element: HTMLElement | null) => void;
-  _boundingBoxElement?: HTMLElement | null;
+  _setCollisionBoundaryElement: (element: HTMLElement | null) => void;
+  _collisionBoundaryElement?: HTMLElement | null;
   _popoverStyle?: Partial<CSSStyleDeclaration>;
   _minLeft?: number;
   _maxLeft?: number;
@@ -52,7 +52,7 @@ export class Popover {
     _pointerPosition: { x: 0 },
     _setTriggerElement: this._setTriggerElement.bind(this),
     _setPopoverElement: this._setPopoverElement.bind(this),
-    _setBoundingBoxElement: this._setBoundingBoxElement.bind(this),
+    _setCollisionBoundaryElement: this._setCollisionBoundaryElement.bind(this),
   });
 
   _setPopoverElement(element: HTMLElement | null): void {
@@ -94,8 +94,8 @@ export class Popover {
     element.addEventListener('focusout', this);
   }
 
-  _setBoundingBoxElement(element: HTMLElement | null): void {
-    this.setState({ _boundingBoxElement: element });
+  _setCollisionBoundaryElement(element: HTMLElement | null): void {
+    this.setState({ _collisionBoundaryElement: element });
   }
 
   subscribe(callback: (state: PopoverState) => void): () => void {
@@ -302,12 +302,12 @@ export class Popover {
   }
 
   #checkCollision(): void {
-    const { _boundingBoxElement, _open, _popoverElement, collisionPadding } = this.getState();
+    const { _collisionBoundaryElement, _open, _popoverElement, collisionPadding } = this.getState();
 
-    if (!_open || !_boundingBoxElement || !_popoverElement) return;
+    if (!_open || !_collisionBoundaryElement || !_popoverElement) return;
 
     const popoverRect = getUntransformedBoundingRect(_popoverElement);
-    const boundsRect = getUntransformedBoundingRect(_boundingBoxElement);
+    const boundsRect = getUntransformedBoundingRect(_collisionBoundaryElement);
     const translatedPopoverRect = addTranslateToBoundingRect(popoverRect, _popoverElement);
 
     const _minLeft = boundsRect.left + translatedPopoverRect.width / 2 + collisionPadding;

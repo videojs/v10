@@ -12,7 +12,7 @@ type Placement = CorePopoverState['placement'];
 export type PopoverState = Prettify<
   CorePopoverState & {
     popupId: string | undefined;
-    updatePositioning: (placement: Placement, sideOffset: number) => void;
+    updatePositioning: (placement: Placement, sideOffset: number, collisionPadding: number) => void;
   }
 >;
 
@@ -31,6 +31,7 @@ export function usePopoverRootState(props: PopoverRootProps): PopoverState {
   const { openOnHover = false, delay = 0, closeDelay = 0 } = props;
   const [placement, setPlacement] = useState<Placement>('top');
   const [sideOffset, setSideOffset] = useState(5);
+  const [collisionPadding, setCollisionPadding] = useState(0);
   const uniqueId = useId();
   const popupId = uniqueId.replace(/^:([^:]+):$/, '«$1»');
 
@@ -40,12 +41,17 @@ export function usePopoverRootState(props: PopoverRootProps): PopoverState {
     closeDelay,
     placement,
     sideOffset,
+    collisionPadding,
   });
 
-  const updatePositioning = useCallback((newPlacement: Placement, newSideOffset: number) => {
-    setPlacement(newPlacement);
-    setSideOffset(newSideOffset);
-  }, []);
+  const updatePositioning = useCallback(
+    (newPlacement: Placement, newSideOffset: number, newCollisionPadding: number) => {
+      setPlacement(newPlacement);
+      setSideOffset(newSideOffset);
+      setCollisionPadding(newCollisionPadding);
+    },
+    [],
+  );
 
   return {
     ...coreState,
@@ -121,6 +127,8 @@ const PopoverTrigger: ConnectedComponent<PopoverTriggerProps, typeof renderPopov
 interface PopoverPositionerProps {
   side?: Placement;
   sideOffset?: number;
+  collisionPadding?: number;
+  collisionBoundary?: Element;
   children: ReactNode;
 }
 
@@ -128,12 +136,18 @@ export function usePopoverPositionerProps(
   props: PopoverPositionerProps,
   context: PopoverState,
 ): { children: ReactNode } {
-  const { side = 'top', sideOffset = 5, children } = props;
-  const { updatePositioning } = context;
+  const { side = 'top', sideOffset = 5, collisionPadding = 0, collisionBoundary, children } = props;
+  const { updatePositioning, _setCollisionBoundaryElement } = context;
 
   useEffect(() => {
-    updatePositioning(side, sideOffset);
-  }, [side, sideOffset, updatePositioning]);
+    updatePositioning(side, sideOffset, collisionPadding);
+  }, [side, sideOffset, collisionPadding, updatePositioning]);
+
+  useEffect(() => {
+    if (collisionBoundary) {
+      _setCollisionBoundaryElement(collisionBoundary as HTMLElement);
+    }
+  }, [collisionBoundary, _setCollisionBoundaryElement]);
 
   return { children };
 }

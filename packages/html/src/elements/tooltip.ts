@@ -29,9 +29,12 @@ export const getTooltipProps: PropsHook<Tooltip, TooltipState> = (element, state
     state._setTriggerElement(triggerElement);
   }
 
-  const mediaContainer = element.closest('media-container') as HTMLElement | null;
-  if (state._boundingBoxElement !== mediaContainer) {
-    state._setBoundingBoxElement(mediaContainer);
+  const mediaContainer = element.closest(element.collisionBoundary
+    ? `#${element.collisionBoundary}`
+    : 'media-container') as HTMLElement | null;
+
+  if (state._collisionBoundaryElement !== mediaContainer) {
+    state._setCollisionBoundaryElement(mediaContainer);
   }
 
   return {
@@ -57,6 +60,7 @@ export class Tooltip extends HTMLElement {
       'side-offset',
       'track-cursor-axis',
       'collision-padding',
+      'collision-boundary',
     ];
   }
 
@@ -87,6 +91,10 @@ export class Tooltip extends HTMLElement {
 
   get collisionPadding(): number {
     return Number.parseInt(this.getAttribute('collision-padding') ?? '0', 10);
+  }
+
+  get collisionBoundary(): string | null {
+    return this.getAttribute('collision-boundary');
   }
 }
 

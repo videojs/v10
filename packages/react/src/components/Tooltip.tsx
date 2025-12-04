@@ -26,14 +26,13 @@ interface TooltipRootProps {
   closeDelay?: number;
   children: ReactNode;
   trackCursorAxis?: 'x';
-  collisionPadding?: number;
 }
 
 export function useTooltipRootState(props: TooltipRootProps): TooltipState {
-  const { delay = 0, closeDelay = 0, trackCursorAxis, collisionPadding: initialCollisionPadding = 0 } = props;
+  const { delay = 0, closeDelay = 0, trackCursorAxis } = props;
   const [placement, setPlacement] = useState<Placement>('top');
   const [sideOffset, setSideOffset] = useState(0);
-  const [collisionPaddingState, setCollisionPadding] = useState(initialCollisionPadding);
+  const [collisionPadding, setCollisionPadding] = useState(0);
   const uniqueId = useId();
   const popupId = uniqueId.replace(/^:([^:]+):$/, '«$1»');
 
@@ -42,7 +41,7 @@ export function useTooltipRootState(props: TooltipRootProps): TooltipState {
     closeDelay,
     placement,
     sideOffset,
-    collisionPadding: collisionPaddingState,
+    collisionPadding,
     trackCursorAxis,
   });
 
@@ -130,6 +129,7 @@ interface TooltipPositionerProps {
   side?: Placement;
   sideOffset?: number;
   collisionPadding?: number;
+  collisionBoundary?: Element;
   children: ReactNode;
 }
 
@@ -137,12 +137,18 @@ export function useTooltipPositionerProps(
   props: TooltipPositionerProps,
   context: TooltipState,
 ): { children: ReactNode } {
-  const { side = 'top', sideOffset = 0, collisionPadding = 0, children } = props;
-  const { updatePositioning } = context;
+  const { side = 'top', sideOffset = 0, collisionPadding = 0, collisionBoundary, children } = props;
+  const { updatePositioning, _setCollisionBoundaryElement } = context;
 
   useEffect(() => {
     updatePositioning(side, sideOffset, collisionPadding);
   }, [side, sideOffset, collisionPadding, updatePositioning]);
+
+  useEffect(() => {
+    if (collisionBoundary) {
+      _setCollisionBoundaryElement(collisionBoundary as HTMLElement);
+    }
+  }, [collisionBoundary, _setCollisionBoundaryElement]);
 
   return { children };
 }
@@ -184,19 +190,20 @@ export function useTooltipPopupProps(props: TooltipPopupProps, context: TooltipS
     _popoverStyle,
     _triggerElement,
     _popoverElement,
-    _setBoundingBoxElement,
-    _boundingBoxElement,
+    _setCollisionBoundaryElement,
+    _collisionBoundaryElement,
   } = context;
 
   // Set bounding box element for collision detection
   useEffect(() => {
     if (!_popoverElement) return;
 
-    const mediaContainer = _popoverElement.closest('[data-media-container]') as HTMLElement | null;
-    if (_boundingBoxElement !== mediaContainer) {
-      _setBoundingBoxElement(mediaContainer);
+    // Only set bounding box if it's not already set (to allow collisionBoundary from Positioner to take precedence)
+    if (!_collisionBoundaryElement) {
+      const mediaContainer = _popoverElement.closest('[data-media-container]') as HTMLElement | null;
+      _setCollisionBoundaryElement(mediaContainer);
     }
-  }, [_popoverElement, _boundingBoxElement, _setBoundingBoxElement]);
+  }, [_popoverElement, _collisionBoundaryElement, _setCollisionBoundaryElement]);
 
   // Track data attributes from trigger element, updating when element or attributes change
   const [dataAttrs, setDataAttrs] = useState<Record<string, string> | undefined>(() =>
