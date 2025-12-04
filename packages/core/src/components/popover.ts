@@ -1,5 +1,4 @@
 import { shallowEqual } from '@videojs/utils';
-
 import {
   addTranslateToBoundingRect,
   contains,

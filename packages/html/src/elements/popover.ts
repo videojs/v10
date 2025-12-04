@@ -1,12 +1,11 @@
+import type { PopoverState as CorePopoverState } from '@videojs/core';
 import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
-
 import { Popover as CorePopover } from '@videojs/core';
 import { getDocumentOrShadowRoot } from '@videojs/utils/dom';
-
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
 
-type Placement = 'top' | 'top-start' | 'top-end';
+type Placement = CorePopoverState['placement'];
 
 export type PopoverState = Prettify<ReturnType<CorePopover['getState']>>;
 
@@ -25,6 +24,7 @@ export const getPopoverProps: PropsHook<Popover, PopoverState> = (element, state
   const triggerElement = getDocumentOrShadowRoot(element)?.querySelector(
     `[commandfor="${element.id}"]`,
   ) as HTMLElement | null;
+
   if (state._triggerElement !== triggerElement) {
     state._setTriggerElement(triggerElement);
   }

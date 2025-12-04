@@ -1,12 +1,11 @@
+import type { TooltipState as CoreTooltipState } from '@videojs/core';
 import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
-
 import { Tooltip as CoreTooltip } from '@videojs/core';
 import { getDocumentOrShadowRoot } from '@videojs/utils/dom';
-
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
 
-type Placement = 'top' | 'top-start' | 'top-end';
+type Placement = CoreTooltipState['placement'];
 
 export type TooltipState = Prettify<ReturnType<CoreTooltip['getState']>>;
 
