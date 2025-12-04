@@ -2,7 +2,7 @@ import type { TooltipState as CoreTooltipState } from '@videojs/core';
 import type { ReactNode } from 'react';
 import type { Prettify } from '../types';
 import type { ConnectedComponent } from '../utils/component-factory';
-import type { PopoverPopupProps, PopoverPositionerProps, PopoverRootProps } from './Popover';
+import type { PopoverPopupProps, PopoverPopupRenderProps, PopoverPositionerProps, PopoverRootProps } from './Popover';
 
 import { Tooltip as CoreTooltip } from '@videojs/core';
 import { cloneElement, useCallback, useId, useState } from 'react';
@@ -128,14 +128,7 @@ const TooltipPositioner: ConnectedComponent<TooltipPositionerProps, typeof rende
 
 interface TooltipPopupProps extends PopoverPopupProps {}
 
-interface TooltipPopupRenderProps extends React.ComponentProps<'div'> {
-  children: ReactNode;
-  'data-side': Placement;
-  'data-starting-style': string | undefined;
-  'data-open': string | undefined;
-  'data-ending-style': string | undefined;
-  'data-closed': string | undefined;
-}
+interface TooltipPopupRenderProps extends PopoverPopupRenderProps {}
 
 export function useTooltipPopupProps(props: TooltipPopupProps, context: TooltipState): TooltipPopupRenderProps {
   return usePopoverPopupProps(props, context);
