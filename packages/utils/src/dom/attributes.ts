@@ -1,3 +1,5 @@
+import { toKebabCase } from '@videojs/utils';
+
 /**
  * Converts a `NamedNodeMap` to a plain object.
  */
@@ -22,9 +24,9 @@ export function setAttributes(element: HTMLElement, attributes: Record<string, a
     if (key === 'style' && typeof value === 'object') {
       for (const [styleKey, styleValue] of Object.entries(value)) {
         if (typeof styleValue === 'string') {
-          element.style.setProperty(styleKey, styleValue);
+          element.style.setProperty(toKebabCase(styleKey), styleValue);
         } else if (styleValue == null) {
-          element.style.removeProperty(styleKey);
+          element.style.removeProperty(toKebabCase(styleKey));
         }
       }
     } else {

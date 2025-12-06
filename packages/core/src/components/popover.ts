@@ -1,5 +1,12 @@
 import { shallowEqual } from '@videojs/utils';
-import { contains, getDocument, safePolygon } from '@videojs/utils/dom';
+import {
+  addTranslateToBoundingRect,
+  contains,
+  getDocument,
+  getInBoundsAdjustments,
+  getUntransformedBoundingRect,
+  safePolygon,
+} from '@videojs/utils/dom';
 import { map } from 'nanostores';
 
 type Placement = 'top' | 'top-start' | 'top-end';
@@ -10,32 +17,47 @@ export interface PopoverState {
   closeDelay: number;
   placement: Placement;
   sideOffset: number;
+  collisionPadding: number;
+  disableHoverablePopover: boolean;
+  trackCursorAxis?: 'x';
   _open: boolean;
-  _setTriggerElement: (element: HTMLElement | null) => void;
-  _triggerElement: HTMLElement | null;
-  _setPopoverElement: (element: HTMLElement | null) => void;
-  _popoverElement: HTMLElement | null;
   _transitionStatus: 'initial' | 'open' | 'close' | 'unmounted';
+  _collisionOffset: { x: number };
+  _pointerPosition: { x: number };
+  _setTriggerElement: (element: HTMLElement | null) => void;
+  _triggerElement?: HTMLElement | null;
+  _setPopoverElement: (element: HTMLElement | null) => void;
+  _popoverElement?: HTMLElement | null;
+  _setCollisionBoundaryElement: (element: HTMLElement | null) => void;
+  _collisionBoundaryElement?: HTMLElement | null;
+  _popoverStyle?: Partial<CSSStyleDeclaration>;
+  _minLeft?: number;
+  _maxLeft?: number;
 }
 
 export class Popover {
   #hoverTimeout: ReturnType<typeof setTimeout> | null = null;
+  #resizeObserver: ResizeObserver | null = null;
   #state = map<PopoverState>({
-    _open: false,
     openOnHover: false,
     delay: 0,
     closeDelay: 0,
     placement: 'top',
     sideOffset: 5,
-    _setTriggerElement: this._setTriggerElement.bind(this),
-    _triggerElement: null,
-    _setPopoverElement: this._setPopoverElement.bind(this),
-    _popoverElement: null,
+    collisionPadding: 0,
+    disableHoverablePopover: false,
+    _open: false,
     _transitionStatus: 'initial',
+    _collisionOffset: { x: 0 },
+    _pointerPosition: { x: 0 },
+    _setTriggerElement: this._setTriggerElement.bind(this),
+    _setPopoverElement: this._setPopoverElement.bind(this),
+    _setCollisionBoundaryElement: this._setCollisionBoundaryElement.bind(this),
   });
 
   _setPopoverElement(element: HTMLElement | null): void {
     if (!element) {
+      this.#resizeObserver?.disconnect();
       this.#clearHoverTimeout();
       this.#popoverElement?.removeEventListener('pointerenter', this);
       this.#popoverElement?.removeEventListener('focusout', this);
@@ -44,6 +66,9 @@ export class Popover {
     }
 
     this.setState({ _popoverElement: element });
+
+    this.#resizeObserver = new ResizeObserver(() => this.#checkCollision());
+    this.#resizeObserver.observe(element);
 
     element.addEventListener('pointerenter', this);
     element.addEventListener('focusout', this);
@@ -69,6 +94,10 @@ export class Popover {
     element.addEventListener('focusout', this);
   }
 
+  _setCollisionBoundaryElement(element: HTMLElement | null): void {
+    this.setState({ _collisionBoundaryElement: element });
+  }
+
   subscribe(callback: (state: PopoverState) => void): () => void {
     return this.#state.subscribe(callback);
   }
@@ -79,7 +108,37 @@ export class Popover {
   }
 
   getState(): PopoverState {
-    return this.#state.get();
+    const baseState = this.#state.get();
+    const {
+      placement,
+      sideOffset,
+      trackCursorAxis,
+      _popoverElement,
+      _pointerPosition,
+      _collisionOffset,
+      _minLeft,
+      _maxLeft,
+    } = baseState;
+    const [side, alignment] = placement.split('-');
+
+    const _popoverStyle: Partial<CSSStyleDeclaration> = {
+      ...(_popoverElement ? { positionAnchor: `--${_popoverElement.id}` } : {}),
+      top: `calc(anchor(${side}) - ${sideOffset}px)`,
+    };
+
+    if (trackCursorAxis === 'x') {
+      _popoverStyle.translate = `-50% -100%`;
+      _popoverStyle.left = `clamp(${_minLeft}px, ${_pointerPosition.x}px, ${_maxLeft}px)`;
+    } else {
+      _popoverStyle.translate = `${_collisionOffset.x}px -100%`;
+      _popoverStyle.justifySelf
+        = alignment === 'start' ? 'anchor-start' : alignment === 'end' ? 'anchor-end' : 'anchor-center';
+    }
+
+    return {
+      ...baseState,
+      _popoverStyle,
+    };
   }
 
   handleEvent(event: Event): void {
@@ -104,11 +163,11 @@ export class Popover {
     }
   }
 
-  get #popoverElement(): HTMLElement | null {
+  get #popoverElement(): HTMLElement | undefined | null {
     return this.getState()._popoverElement;
   }
 
-  get #triggerElement(): HTMLElement | null {
+  get #triggerElement(): HTMLElement | undefined | null {
     return this.getState()._triggerElement;
   }
 
@@ -128,6 +187,9 @@ export class Popover {
 
       requestAnimationFrame(() => {
         this.setState({ _transitionStatus: 'open' });
+
+        // This requestAnimationFrame is required for React because it renders async.
+        requestAnimationFrame(() => this.#checkCollision());
       });
     } else {
       this.setState({ _transitionStatus: 'close' });
@@ -154,11 +216,12 @@ export class Popover {
   }
 
   #handlePointerEnter(event: PointerEvent): void {
-    if (!this.getState().openOnHover) return;
+    const { openOnHover, trackCursorAxis } = this.getState();
+    if (!openOnHover) return;
 
     this.#clearHoverTimeout();
 
-    if (event.currentTarget === this.#popoverElement) {
+    if (event.currentTarget === this.#popoverElement || trackCursorAxis === 'x') {
       this.#addPointerMoveListener();
     }
 
@@ -172,7 +235,18 @@ export class Popover {
   }
 
   #handlePointerLeave(_event: PointerEvent): void {
-    this.#addPointerMoveListener();
+    const { disableHoverablePopover, closeDelay } = this.getState();
+
+    if (!disableHoverablePopover) {
+      this.#addPointerMoveListener();
+    }
+
+    if (disableHoverablePopover) {
+      this.#clearHoverTimeout();
+      this.#hoverTimeout = globalThis.setTimeout(() => {
+        this.#setOpen(false);
+      }, closeDelay);
+    }
   }
 
   #addPointerMoveListener(): void {
@@ -182,7 +256,19 @@ export class Popover {
   }
 
   #handlePointerMove(event: PointerEvent): void {
-    if (!this.getState().openOnHover || !this.#triggerElement || !this.#popoverElement) return;
+    const { disableHoverablePopover, openOnHover, trackCursorAxis } = this.getState();
+    if (!openOnHover || !this.#triggerElement || !this.#popoverElement) return;
+
+    if (trackCursorAxis === 'x') {
+      this.setState({ _pointerPosition: { x: event.clientX } });
+
+      // This requestAnimationFrame is required for React because it renders async.
+      requestAnimationFrame(() => this.#checkCollision());
+    }
+
+    if (disableHoverablePopover) {
+      return;
+    }
 
     const close = safePolygon({ blockPointerEvents: true })({
       placement: this.getState().placement,
@@ -213,5 +299,21 @@ export class Popover {
     if (relatedTarget && contains(this.#popoverElement, relatedTarget)) return;
 
     this.#setOpen(false);
-  };
+  }
+
+  #checkCollision(): void {
+    const { _collisionBoundaryElement, _open, _popoverElement, collisionPadding } = this.getState();
+
+    if (!_open || !_collisionBoundaryElement || !_popoverElement) return;
+
+    const popoverRect = getUntransformedBoundingRect(_popoverElement);
+    const boundsRect = getUntransformedBoundingRect(_collisionBoundaryElement);
+    const translatedPopoverRect = addTranslateToBoundingRect(popoverRect, _popoverElement);
+
+    const _minLeft = boundsRect.left + translatedPopoverRect.width / 2 + collisionPadding;
+    const _maxLeft = boundsRect.right - translatedPopoverRect.width / 2 - collisionPadding;
+    const _collisionOffset = getInBoundsAdjustments(popoverRect, boundsRect, collisionPadding);
+
+    this.setState({ _minLeft, _maxLeft, _collisionOffset });
+  }
 }

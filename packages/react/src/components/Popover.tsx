@@ -6,13 +6,14 @@ import type { ConnectedComponent } from '../utils/component-factory';
 import { Popover as CorePopover } from '@videojs/core';
 import { Children, cloneElement, useCallback, useEffect, useId, useState } from 'react';
 import { toConnectedComponent, toContextComponent, useCore } from '../utils/component-factory';
+import { useMutationObserver } from '../utils/use-mutation-observer';
 
 type Placement = CorePopoverState['placement'];
 
 export type PopoverState = Prettify<
   CorePopoverState & {
     popupId: string | undefined;
-    updatePositioning: (placement: Placement, sideOffset: number) => void;
+    updatePositioning: (placement: Placement, sideOffset: number, collisionPadding: number) => void;
   }
 >;
 
@@ -20,7 +21,7 @@ export type PopoverState = Prettify<
 // ROOT COMPONENT
 // ============================================================================
 
-interface PopoverRootProps {
+export interface PopoverRootProps {
   openOnHover?: boolean;
   delay?: number;
   closeDelay?: number;
@@ -31,6 +32,7 @@ export function usePopoverRootState(props: PopoverRootProps): PopoverState {
   const { openOnHover = false, delay = 0, closeDelay = 0 } = props;
   const [placement, setPlacement] = useState<Placement>('top');
   const [sideOffset, setSideOffset] = useState(5);
+  const [collisionPadding, setCollisionPadding] = useState(0);
   const uniqueId = useId();
   const popupId = uniqueId.replace(/^:([^:]+):$/, '«$1»');
 
@@ -40,12 +42,17 @@ export function usePopoverRootState(props: PopoverRootProps): PopoverState {
     closeDelay,
     placement,
     sideOffset,
+    collisionPadding,
   });
 
-  const updatePositioning = useCallback((newPlacement: Placement, newSideOffset: number) => {
-    setPlacement(newPlacement);
-    setSideOffset(newSideOffset);
-  }, []);
+  const updatePositioning = useCallback(
+    (newPlacement: Placement, newSideOffset: number, newCollisionPadding: number) => {
+      setPlacement(newPlacement);
+      setSideOffset(newSideOffset);
+      setCollisionPadding(newCollisionPadding);
+    },
+    [],
+  );
 
   return {
     ...coreState,
@@ -75,7 +82,7 @@ const PopoverRoot: ConnectedComponent<PopoverRootProps, typeof renderPopoverRoot
 // TRIGGER COMPONENT
 // ============================================================================
 
-interface PopoverTriggerProps {
+export interface PopoverTriggerProps {
   children: ReactNode;
 }
 
@@ -118,9 +125,11 @@ const PopoverTrigger: ConnectedComponent<PopoverTriggerProps, typeof renderPopov
 // POSITIONER COMPONENT
 // ============================================================================
 
-interface PopoverPositionerProps {
+export interface PopoverPositionerProps {
   side?: Placement;
   sideOffset?: number;
+  collisionPadding?: number;
+  collisionBoundary?: Element;
   children: ReactNode;
 }
 
@@ -128,12 +137,18 @@ export function usePopoverPositionerProps(
   props: PopoverPositionerProps,
   context: PopoverState,
 ): { children: ReactNode } {
-  const { side = 'top', sideOffset = 5, children } = props;
-  const { updatePositioning } = context;
+  const { side = 'top', sideOffset = 5, collisionPadding = 0, collisionBoundary, children } = props;
+  const { updatePositioning, _setCollisionBoundaryElement } = context;
 
   useEffect(() => {
-    updatePositioning(side, sideOffset);
-  }, [side, sideOffset, updatePositioning]);
+    updatePositioning(side, sideOffset, collisionPadding);
+  }, [side, sideOffset, collisionPadding, updatePositioning]);
+
+  useEffect(() => {
+    if (collisionBoundary) {
+      _setCollisionBoundaryElement(collisionBoundary as HTMLElement);
+    }
+  }, [collisionBoundary, _setCollisionBoundaryElement]);
 
   return { children };
 }
@@ -149,14 +164,14 @@ const PopoverPositioner: ConnectedComponent<PopoverPositionerProps, typeof rende
 // POPUP COMPONENT
 // ============================================================================
 
-interface PopoverPopupProps {
+export interface PopoverPopupProps {
   id?: string;
   className?: string;
   style?: React.CSSProperties;
   children: ReactNode;
 }
 
-interface PopoverPopupRenderProps extends React.ComponentProps<'div'> {
+export interface PopoverPopupRenderProps extends React.ComponentProps<'div'> {
   children: ReactNode;
   'data-side': Placement;
   'data-starting-style': string | undefined;
@@ -167,8 +182,47 @@ interface PopoverPopupRenderProps extends React.ComponentProps<'div'> {
 
 export function usePopoverPopupProps(props: PopoverPopupProps, context: PopoverState): PopoverPopupRenderProps {
   const { className, style, children, id } = props;
-  const { _setPopoverElement, _transitionStatus, placement, popupId, sideOffset } = context;
-  const [side, alignment] = placement.split('-');
+  const {
+    _setPopoverElement,
+    _transitionStatus,
+    placement,
+    popupId,
+    _popoverStyle,
+    _triggerElement,
+    _popoverElement,
+    _setCollisionBoundaryElement,
+    _collisionBoundaryElement,
+  } = context;
+
+  // Set bounding box element for collision detection
+  useEffect(() => {
+    if (!_popoverElement) return;
+
+    // Only set bounding box if it's not already set (to allow collisionBoundary from Positioner to take precedence)
+    if (!_collisionBoundaryElement) {
+      const mediaContainer = _popoverElement.closest('[data-media-container]') as HTMLElement | null;
+      _setCollisionBoundaryElement(mediaContainer);
+    }
+  }, [_popoverElement, _collisionBoundaryElement, _setCollisionBoundaryElement]);
+
+  // Track data attributes from trigger element, updating when element or attributes change
+  const [dataAttrs, setDataAttrs] = useState<Record<string, string> | undefined>(() =>
+    getDataAttributes(_triggerElement),
+  );
+
+  // Update data attributes when trigger element changes
+  useEffect(() => {
+    setDataAttrs(getDataAttributes(_triggerElement));
+  }, [_triggerElement]);
+
+  // Update data attributes when attributes mutate
+  useMutationObserver(
+    _triggerElement,
+    () => {
+      setDataAttrs(getDataAttributes(_triggerElement));
+    },
+    { attributes: true },
+  );
 
   return {
     ref: _setPopoverElement,
@@ -176,12 +230,10 @@ export function usePopoverPopupProps(props: PopoverPopupProps, context: PopoverS
     className,
     popover: 'manual' as const,
     style: {
-      ...(popupId ? { positionAnchor: `--${popupId}` as any } : {}),
-      top: `calc(anchor(${side}) - ${sideOffset}px)`,
-      translate: '0 -100%',
-      justifySelf: alignment === 'start' ? 'anchor-start' : alignment === 'end' ? 'anchor-end' : 'anchor-center',
+      ..._popoverStyle,
       ...style,
     } as React.CSSProperties,
+    ...dataAttrs,
     'data-side': placement,
     'data-starting-style': _transitionStatus === 'initial' ? '' : undefined,
     'data-open': _transitionStatus === 'initial' || _transitionStatus === 'open' ? '' : undefined,
@@ -189,6 +241,15 @@ export function usePopoverPopupProps(props: PopoverPopupProps, context: PopoverS
     'data-closed': _transitionStatus === 'close' || _transitionStatus === 'unmounted' ? '' : undefined,
     children,
   };
+}
+
+function getDataAttributes(element?: HTMLElement | null): Record<string, string> | undefined {
+  if (!element) return undefined;
+  return Object.fromEntries(
+    Array.from(element.attributes)
+      .filter(attr => attr.name.startsWith('data-'))
+      .map(attr => [attr.name, attr.value]),
+  );
 }
 
 export function renderPopoverPopup(props: PopoverPopupRenderProps): JSX.Element {

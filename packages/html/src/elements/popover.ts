@@ -1,11 +1,11 @@
+import type { PopoverState as CorePopoverState } from '@videojs/core';
 import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
-
 import { Popover as CorePopover } from '@videojs/core';
 import { getDocumentOrShadowRoot } from '@videojs/utils/dom';
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
 
-type Placement = 'top' | 'top-start' | 'top-end';
+type Placement = CorePopoverState['placement'];
 
 export type PopoverState = Prettify<ReturnType<CorePopover['getState']>>;
 
@@ -21,30 +21,46 @@ export const getPopoverProps: PropsHook<Popover, PopoverState> = (element, state
     state._setPopoverElement(element);
   }
 
-  const triggerElement = getDocumentOrShadowRoot(element)?.querySelector(`[commandfor="${element.id}"]`) as HTMLElement | null;
+  const triggerElement = getDocumentOrShadowRoot(element)?.querySelector(
+    `[commandfor="${element.id}"]`,
+  ) as HTMLElement | null;
+
   if (state._triggerElement !== triggerElement) {
     state._setTriggerElement(triggerElement);
   }
 
-  const [side, alignment] = element.side.split('-');
+  const mediaContainer = element.closest(element.collisionBoundary
+    ? `#${element.collisionBoundary}`
+    : 'media-container') as HTMLElement | null;
+
+  if (state._collisionBoundaryElement !== mediaContainer) {
+    state._setCollisionBoundaryElement(mediaContainer);
+  }
 
   return {
+    'data-side': state.placement,
     'data-starting-style': state._transitionStatus === 'initial',
     'data-open': state._transitionStatus === 'initial' || state._transitionStatus === 'open',
     'data-ending-style': state._transitionStatus === 'close' || state._transitionStatus === 'unmounted',
     'data-closed': state._transitionStatus === 'close' || state._transitionStatus === 'unmounted',
     style: {
-      ...(element.id ? { 'position-anchor': `--${element.id}` } : {}),
-      top: `calc(anchor(${side}) - ${element.sideOffset}px)`,
-      translate: '0 -100%',
-      'justify-self': alignment === 'start' ? 'anchor-start' : alignment === 'end' ? 'anchor-end' : 'anchor-center',
+      ...state._popoverStyle,
     },
   };
 };
 
 export class Popover extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ['id', 'open-on-hover', 'delay', 'close-delay', 'side', 'side-offset'];
+    return [
+      'id',
+      'open-on-hover',
+      'delay',
+      'close-delay',
+      'side',
+      'side-offset',
+      'collision-padding',
+      'collision-boundary',
+    ];
   }
 
   get openOnHover(): boolean {
@@ -65,6 +81,14 @@ export class Popover extends HTMLElement {
 
   get sideOffset(): number {
     return Number.parseInt(this.getAttribute('side-offset') ?? '0', 10);
+  }
+
+  get collisionPadding(): number {
+    return Number.parseInt(this.getAttribute('collision-padding') ?? '0', 10);
+  }
+
+  get collisionBoundary(): string | null {
+    return this.getAttribute('collision-boundary');
   }
 }
 

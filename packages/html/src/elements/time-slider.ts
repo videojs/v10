@@ -51,7 +51,7 @@ export const getTimeSliderRootProps: PropsHook<TimeSliderRoot, TimeSliderStateWi
     'aria-valuetext': `${state._currentTimeText} of ${state._durationText}`,
     'aria-orientation': element.orientation || 'horizontal',
     style: {
-      ...(element.hasAttribute('commandfor') ? { 'anchor-name': `--${element.getAttribute('commandfor')}` } : {}),
+      ...(element.hasAttribute('commandfor') ? { anchorName: `--${element.getAttribute('commandfor')}` } : {}),
       '--slider-fill': `${state._fillWidth.toFixed(3)}%`,
       '--slider-pointer': `${(state._pointerWidth * 100).toFixed(3)}%`,
     },
