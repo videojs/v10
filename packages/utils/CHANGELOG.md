@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.0-preview.10](https://github.com/videojs/v10/compare/@videojs/utils@0.1.0-preview.9...@videojs/utils@0.1.0-preview.10) (2025-12-06)
+
+
+### Features
+
+* add console banner ([#186](https://github.com/videojs/v10/issues/186)) ([072b0de](https://github.com/videojs/v10/commit/072b0dece76289d7d4215907ce70b36debbb78bc))
+* add tooltip core ([#212](https://github.com/videojs/v10/issues/212)) ([cbf41ce](https://github.com/videojs/v10/commit/cbf41ce4c750cd5c3bb6cbf247bad91ccd578cd0))
+
+
+### Bug Fixes
+
+* add popover core, use in html and improve factory ([#204](https://github.com/videojs/v10/issues/204)) ([f3b1b19](https://github.com/videojs/v10/commit/f3b1b199173f3750bc05ad9063fcccbd4163b12b))
+* toKebabCase import issue ([c4f1012](https://github.com/videojs/v10/commit/c4f1012f4619bf41cc4e4deae08f882da1b56fc3))
+
 ## [0.1.0-preview.9](https://github.com/videojs/v10/compare/@videojs/utils@0.1.0-preview.8...@videojs/utils@0.1.0-preview.9) (2025-11-18)
 
 
