@@ -1,5 +1,3 @@
-import { toKebabCase } from '@videojs/utils';
-
 /**
  * Converts a `NamedNodeMap` to a plain object.
  */
@@ -39,4 +37,10 @@ export function setAttributes(element: HTMLElement, attributes: Record<string, a
       }
     }
   }
+}
+
+function toKebabCase(str: string): string {
+  return str
+    .replace(/([A-Z])/g, '-$1')
+    .toLowerCase();
 }
