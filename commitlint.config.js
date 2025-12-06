@@ -14,6 +14,8 @@ export default {
       'ci',
       'core',
       'docs',
+      'demo',
+      'example',
       'examples',
       'example/html',
       'example/react',
