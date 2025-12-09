@@ -29,8 +29,8 @@ export function getTemplateHTML() {
       <div class="control-bar surface">
         <!-- NOTE: We can decide if we further want to provide a further, "themed" media-play-button that comes with baked in default styles and icons. (CJP) -->
 
-        <media-play-button commandfor="play-tooltip" class="button">
-          <media-play-icon class="icon play-icon"></media-play-icon>
+        <media-play-button commandfor="play-tooltip" class="button icon-button">
+          <media-play-icon class="icon"></media-play-icon>
           <media-pause-icon class="icon pause-icon"></media-pause-icon>
         </media-play-button>
         <media-tooltip
