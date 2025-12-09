@@ -28,8 +28,8 @@ interface VolumeSliderRenderProps extends React.ComponentProps<'div'> {
 // ROOT COMPONENT
 // ============================================================================
 
-export function useVolumeSliderRootState(props: VolumeSliderProps): VolumeSliderState {
-  const { orientation = 'horizontal' } = props;
+export function useVolumeSliderRootState(props?: VolumeSliderProps): VolumeSliderState {
+  const { orientation = 'horizontal' } = props ?? {};
   const mediaStore = useMediaStore();
   const mediaState = useMediaSelector(volumeSliderStateDefinition.stateTransform, shallowEqual);
   const mediaMethods = useMemo(() => volumeSliderStateDefinition.createRequestMethods(mediaStore.dispatch), [mediaStore]);

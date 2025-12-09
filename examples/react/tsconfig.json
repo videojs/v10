@@ -4,7 +4,10 @@
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "vite-env.d.ts"]
 }

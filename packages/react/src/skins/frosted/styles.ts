@@ -24,7 +24,7 @@ const styles: FrostedSkinStyles = {
     'vjs:[&_video]:w-full vjs:[&_video]:h-full',
   ),
   Overlay: cn(
-    'vjs:opacity-0 vjs:delay-500 vjs:duration-300 vjs:rounded-[inherit] vjs:absolute vjs:inset-0 vjs:pointer-events-none vjs:bg-gradient-to-t vjs:from-black/50 vjs:via-black/20 vjs:to-transparent vjs:transition-opacity vjs:backdrop-saturate-150 vjs:backdrop-brightness-90',
+    'vjs:opacity-0 vjs:delay-500 vjs:duration-300 vjs:rounded-[inherit] vjs:absolute vjs:inset-0 vjs:pointer-events-none vjs:bg-linear-to-t vjs:from-black/50 vjs:via-black/20 vjs:to-transparent vjs:transition-opacity vjs:backdrop-saturate-150 vjs:backdrop-brightness-90',
     // ------------------------------------
     //  FIXME: This is crude temporary logic, we'll improve it later I guess with a [data-show-controls] attribute or something?
     'vjs:has-[+.controls_[data-paused]]:opacity-100 vjs:has-[+.controls_[data-paused]]:delay-0 vjs:has-[+.controls_[data-paused]]:duration-100',
@@ -55,7 +55,7 @@ const styles: FrostedSkinStyles = {
     // ------------------------------------
     //  FIXME: Temporary hide/show logic, related to above.
     'vjs:scale-90 vjs:opacity-0 vjs:blur-sm vjs:delay-500 vjs:duration-300',
-    'vjs:has-[[data-paused]]:scale-100 vjs:has-[[data-paused]]:opacity-100 vjs:has-[[data-paused]]:blur-none vjs:has-[[data-paused]]:delay-0 vjs:has-[[data-paused]]:duration-100',
+    'vjs:has-data-paused:scale-100 vjs:has-data-paused:opacity-100 vjs:has-data-paused:blur-none vjs:has-data-paused:delay-0 vjs:has-data-paused:duration-100',
     'vjs:has-[[aria-expanded="true"]]:scale-100 vjs:has-[[aria-expanded="true"]]:opacity-100 vjs:has-[[aria-expanded="true"]]:blur-none vjs:has-[[aria-expanded="true"]]:delay-0 vjs:has-[[aria-expanded="true"]]:duration-100',
     'vjs:group-hover/root:scale-100 vjs:group-hover/root:opacity-100 vjs:group-hover/root:blur-none vjs:group-hover/root:delay-0 vjs:group-hover/root:duration-100',
     // ------------------------------------

@@ -1,6 +1,18 @@
 import type { PropsWithChildren } from 'react';
 
-import { CurrentTimeDisplay, DurationDisplay, FullscreenButton, MediaContainer, MuteButton, PlayButton, Popover, PreviewTimeDisplay, TimeSlider, Tooltip, VolumeSlider } from '@videojs/react';
+import {
+  CurrentTimeDisplay,
+  DurationDisplay,
+  FullscreenButton,
+  MediaContainer,
+  MuteButton,
+  PlayButton,
+  Popover,
+  PreviewTimeDisplay,
+  TimeSlider,
+  Tooltip,
+  VolumeSlider,
+} from '@videojs/react';
 import {
   FullscreenEnterIcon,
   FullscreenExitIcon,
@@ -20,7 +32,8 @@ type SkinProps = PropsWithChildren<{
 export default function FrostedSkin({ children, className = '' }: SkinProps): JSX.Element {
   return (
     <MediaContainer className={`vjs-frosted-skin ${className}`}>
-      {children}
+      {/* FIXME: Mismatch between React 18 & 19 types */}
+      {children as any}
 
       <div className="overlay" />
 

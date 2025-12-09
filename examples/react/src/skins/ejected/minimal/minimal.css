@@ -7,7 +7,7 @@
   isolation: isolate;
   container: root / inline-size;
   overflow: clip;
-  border-radius: var(--minimal-border-radius, 2rem);
+  border-radius: var(--minimal-border-radius, 0.75rem);
   background: oklab(0 0 0);
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-size: 0.8125rem;

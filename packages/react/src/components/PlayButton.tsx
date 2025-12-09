@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 import { useMediaSelector, useMediaStore } from '@/store';
 import { toConnectedComponent } from '../utils/component-factory';
 
-export function usePlayButtonState(_props: any): {
+export function usePlayButtonState(_props?: any): {
   paused: boolean;
   requestPlay: () => void;
   requestPause: () => void;

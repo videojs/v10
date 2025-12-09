@@ -8,3 +8,38 @@
 
 /* Make reduced-transparency variant */
 @custom-variant reduced-transparency @media (prefers-reduced-transparency: reduce);
+
+.vjs {
+  font-family: var(--font-sans);
+}
+
+[popover].popover-from-left {
+  translate: -100% 0;
+}
+
+[popover] {
+  transition:
+    opacity 0.25s,
+    translate 0.25s,
+    overlay 0.25s allow-discrete,
+    display 0.25s allow-discrete;
+  opacity: 0;
+
+  &:popover-open {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@starting-style {
+  [popover] {
+    &:popover-open {
+      opacity: 0;
+    }
+  }
+  [popover].popover-from-left {
+    &:popover-open {
+      translate: -100% 0;
+    }
+  }
+}
