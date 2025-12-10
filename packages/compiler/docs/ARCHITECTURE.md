@@ -223,6 +223,24 @@ classNameProjectors: {
 
 These are called during the `html` projector to resolve `class` attributes for each element.
 
+### Current Limitation: CSS Compilation
+
+**What's implemented:** The compiler transforms JSX structure, imports, and className references. The `css` projector currently outputs a **placeholder reference** (`${styles}`) that expects pre-compiled CSS.
+
+**What's NOT implemented:** Compilation of Tailwind utility classes to vanilla CSS. React skins use `styles.ts` with Tailwind utilities (e.g., `vjs:relative vjs:isolate vjs:@container/root`), while HTML skins need vanilla CSS (e.g., `position: relative; isolation: isolate; container: root / inline-size;`).
+
+**Example comparison** (Frosted skin):
+- **React**: `styles.MediaContainer` → `"vjs:relative vjs:isolate vjs:@container/root vjs:bg-black ..."`
+- **HTML**: Needs vanilla CSS with proper selectors, media queries, pseudo-elements, etc.
+
+This transformation involves:
+- Processing Tailwind utilities through PostCSS/Tailwind compiler
+- Resolving CSS variables and theme values
+- Generating proper CSS with element/class selectors
+- Handling advanced features (container queries, `:has()`, `@media` queries, pseudo-elements)
+
+Pre-existing incomplete prototype implementations exist that can serve as reference points for potential approaches, but the final implementation is still being determined.
+
 ### Example: Import Projection
 
 ```typescript
@@ -343,7 +361,19 @@ All core functions are pure (string in, string out), making them easy to test wi
 
 ## Future Considerations
 
-The config-driven architecture makes future enhancements straightforward:
+### Priority: CSS Compilation
+
+The most critical missing piece is **Tailwind-to-vanilla-CSS compilation**. Currently, the compiler outputs a placeholder CSS reference, but production skins need actual compiled CSS.
+
+This requires:
+- Tailwind/PostCSS integration for processing utility classes
+- Selector generation (element selectors, class selectors, combinators)
+- Advanced CSS feature support (container queries, `:has()`, pseudo-elements)
+- CSS variable resolution and theme configuration
+
+### Other Enhancements
+
+The config-driven architecture makes other enhancements straightforward:
 
 - **New Frameworks**: Add Vue visitor/predicates/projectors in new config
 - **New Output Formats**: Add Lit projectors, keep same analysis/categorization

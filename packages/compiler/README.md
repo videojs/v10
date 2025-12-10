@@ -83,6 +83,8 @@ export class MediaSkinMinimalElement extends MediaSkinElement {
 defineCustomElement('media-skin-minimal', MediaSkinMinimalElement);
 ```
 
+**Note:** The compiler currently handles JSX/import transformation and generates a placeholder CSS reference (`${styles}`). Compilation of Tailwind utilities to vanilla CSS is not yet implemented.
+
 ## Documentation
 
 For detailed information on architecture and design, see [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md).
