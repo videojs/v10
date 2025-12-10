@@ -23,6 +23,7 @@ export default antfu(
     // https://github.com/antfu/eslint-config/blob/main/src/globs.ts#L56
     ignores: [
       '**/CLAUDE.md',
+      '**/ARCHITECTURE.md',
       '**/.astro/',
       '**/.vercel/',
       '**/dist/',
