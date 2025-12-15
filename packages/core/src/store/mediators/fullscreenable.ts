@@ -66,7 +66,7 @@ export const fullscreenable = {
           // Enter fullscreen
           if (container.requestFullscreen) {
             container.requestFullscreen();
-          } else if (media._playbackEngine.element.webkitEnterFullscreen) {
+          } else if (media._playbackEngine?.element?.webkitEnterFullscreen) {
             // Safari support (IOS)
             media._playbackEngine.element.webkitEnterFullscreen();
           } else if (container.webkitRequestFullscreen) {
