@@ -42,6 +42,7 @@ export function getMuteButtonProps(
     'aria-label': state.muted ? 'unmute' : 'mute',
     /** tooltip */
     'data-tooltip': state.muted ? 'Unmute' : 'Mute',
+    'data-button': 'mute',
     /** external props spread last to allow for overriding */
     ...props,
   };
