@@ -19,6 +19,7 @@
     "@astrojs/sitemap": "^3.6.0",
     "@astrojs/vercel": "^8.2.9",
     "@base-ui-components/react": "1.0.0-beta.4",
+    "@mux/mux-node": "^12.8.1",
     "@nanostores/react": "^1.0.0",
     "@pagefind/default-ui": "^1.4.0",
     "@sentry/astro": "^10.32.1",
