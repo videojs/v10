@@ -1,8 +1,8 @@
-import type { PopoverState as CorePopoverState } from '@videojs/core';
+import type { PopoverState as CorePopoverState } from '@videojs/core-preview';
 import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
-import { Popover as CorePopover } from '@videojs/core';
-import { getDocumentOrShadowRoot } from '@videojs/utils/dom';
+import { Popover as CorePopover } from '@videojs/core-preview';
+import { getDocumentOrShadowRoot } from '@videojs/utils-preview/dom';
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
 
 type Placement = CorePopoverState['placement'];

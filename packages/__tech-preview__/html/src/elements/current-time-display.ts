@@ -1,8 +1,8 @@
-import type { CurrentTimeDisplayState } from '@videojs/core/store';
+import type { CurrentTimeDisplayState } from '@videojs/core-preview/store';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
-import { currentTimeDisplayStateDefinition } from '@videojs/core/store';
-import { formatDisplayTime } from '@videojs/utils';
+import { currentTimeDisplayStateDefinition } from '@videojs/core-preview/store';
+import { formatDisplayTime } from '@videojs/utils-preview';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 
 export const getCurrentTimeDisplayState: StateHook<CurrentTimeDisplay, CurrentTimeDisplayState> = (_element, mediaStore) => {

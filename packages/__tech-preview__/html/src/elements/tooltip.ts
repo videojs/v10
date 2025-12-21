@@ -1,6 +1,6 @@
 import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
-import { Tooltip as CoreTooltip } from '@videojs/core';
+import { Tooltip as CoreTooltip } from '@videojs/core-preview';
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
 import { getPopoverProps, Popover } from './popover';
 

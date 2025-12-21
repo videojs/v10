@@ -1,4 +1,4 @@
-import { containsComposedNode } from '@videojs/utils/dom';
+import { containsComposedNode } from '@videojs/utils-preview/dom';
 
 /** @TODO This is implemented for web/browser only! We will need an alternative state mediator model for e.g. React Native. (CJP) */
 export const fullscreenable = {

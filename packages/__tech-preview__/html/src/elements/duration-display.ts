@@ -1,10 +1,10 @@
-import type { DurationDisplayState } from '@videojs/core/store';
+import type { DurationDisplayState } from '@videojs/core-preview/store';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
-import { durationDisplayStateDefinition } from '@videojs/core/store';
+import { durationDisplayStateDefinition } from '@videojs/core-preview/store';
 
-import { formatDisplayTime } from '@videojs/utils';
-import { namedNodeMapToObject } from '@videojs/utils/dom';
+import { formatDisplayTime } from '@videojs/utils-preview';
+import { namedNodeMapToObject } from '@videojs/utils-preview/dom';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 
 export function getTemplateHTML(

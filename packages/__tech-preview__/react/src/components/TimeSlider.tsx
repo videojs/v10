@@ -1,9 +1,9 @@
 import type { Prettify } from '../types';
 import type { ConnectedComponent } from '../utils/component-factory';
 
-import { TimeSlider as CoreTimeSlider } from '@videojs/core';
-import { timeSliderStateDefinition } from '@videojs/core/store';
-import { shallowEqual } from '@videojs/utils';
+import { TimeSlider as CoreTimeSlider } from '@videojs/core-preview';
+import { timeSliderStateDefinition } from '@videojs/core-preview/store';
+import { shallowEqual } from '@videojs/utils-preview';
 import { useMemo } from 'react';
 import { useMediaSelector, useMediaStore } from '@/store';
 import { toConnectedComponent, toContextComponent, useCore } from '../utils/component-factory';

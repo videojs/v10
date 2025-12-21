@@ -1,4 +1,4 @@
-import { shallowEqual } from '@videojs/utils';
+import { shallowEqual } from '@videojs/utils-preview';
 import {
   addTranslateToBoundingRect,
   contains,
@@ -6,7 +6,7 @@ import {
   getInBoundsAdjustments,
   getUntransformedBoundingRect,
   safePolygon,
-} from '@videojs/utils/dom';
+} from '@videojs/utils-preview/dom';
 import { map } from 'nanostores';
 
 type Placement = 'top' | 'top-start' | 'top-end';

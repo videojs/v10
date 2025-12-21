@@ -1,7 +1,7 @@
-import type { MediaStore } from '@videojs/core/store';
+import type { MediaStore } from '@videojs/core-preview/store';
 import { ConsumerMixin } from '@open-wc/context-protocol';
-import { shallowEqual, toCamelCase } from '@videojs/utils';
-import { setAttributes } from '@videojs/utils/dom';
+import { shallowEqual, toCamelCase } from '@videojs/utils-preview';
+import { setAttributes } from '@videojs/utils-preview/dom';
 
 /**
  * Generic types for HTML component hooks pattern

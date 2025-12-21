@@ -1,9 +1,9 @@
 import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
-import { TimeSlider as CoreTimeSlider } from '@videojs/core';
-import { timeSliderStateDefinition } from '@videojs/core/store';
-import { memoize } from '@videojs/utils';
+import { TimeSlider as CoreTimeSlider } from '@videojs/core-preview';
+import { timeSliderStateDefinition } from '@videojs/core-preview/store';
+import { memoize } from '@videojs/utils-preview';
 
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
 

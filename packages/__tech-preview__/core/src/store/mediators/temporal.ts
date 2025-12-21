@@ -1,4 +1,4 @@
-import { isValidNumber } from '@videojs/utils';
+import { isValidNumber } from '@videojs/utils-preview';
 
 export const temporal = {
   currentTime: {

@@ -1,9 +1,9 @@
-import type { PreviewTimeDisplayState } from '@videojs/core/store';
+import type { PreviewTimeDisplayState } from '@videojs/core-preview/store';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
-import { previewTimeDisplayStateDefinition } from '@videojs/core/store';
+import { previewTimeDisplayStateDefinition } from '@videojs/core-preview/store';
 
-import { formatDisplayTime } from '@videojs/utils';
+import { formatDisplayTime } from '@videojs/utils-preview';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 
 export const getPreviewTimeDisplayState: StateHook<PreviewTimeDisplay, PreviewTimeDisplayState> = (_element, mediaStore) => {

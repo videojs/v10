@@ -1,4 +1,4 @@
-import { SVG_ICONS } from '@videojs/icons';
+import { SVG_ICONS } from '@videojs/icons-preview';
 
 import { defineCustomElement } from '@/utils/custom-element';
 import { MediaChromeIcon } from './media-chrome-icon';

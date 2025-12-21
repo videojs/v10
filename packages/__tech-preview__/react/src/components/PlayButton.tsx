@@ -1,9 +1,9 @@
 import type { PropsWithChildren } from 'react';
 import type { ConnectedComponent } from '../utils/component-factory';
 
-import { playButtonStateDefinition } from '@videojs/core/store';
+import { playButtonStateDefinition } from '@videojs/core-preview/store';
 
-import { shallowEqual } from '@videojs/utils';
+import { shallowEqual } from '@videojs/utils-preview';
 import { useMemo } from 'react';
 
 import { useMediaSelector, useMediaStore } from '@/store';

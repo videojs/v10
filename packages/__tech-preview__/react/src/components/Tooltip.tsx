@@ -1,10 +1,10 @@
-import type { TooltipState as CoreTooltipState } from '@videojs/core';
+import type { TooltipState as CoreTooltipState } from '@videojs/core-preview';
 import type { ReactNode } from 'react';
 import type { Prettify } from '../types';
 import type { ConnectedComponent } from '../utils/component-factory';
 import type { PopoverPopupProps, PopoverPopupRenderProps, PopoverPositionerProps, PopoverRootProps } from './Popover';
 
-import { Tooltip as CoreTooltip } from '@videojs/core';
+import { Tooltip as CoreTooltip } from '@videojs/core-preview';
 import { cloneElement, useCallback, useId, useState } from 'react';
 import { toConnectedComponent, toContextComponent, useCore } from '../utils/component-factory';
 import { usePopoverPopupProps, usePopoverPositionerProps, usePopoverTriggerProps } from './Popover';

@@ -1,4 +1,4 @@
-import { getPointProgressOnLine, shallowEqual } from '@videojs/utils';
+import { getPointProgressOnLine, shallowEqual } from '@videojs/utils-preview';
 import { map } from 'nanostores';
 
 export interface SliderState {

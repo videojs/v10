@@ -1,4 +1,4 @@
-import { namedNodeMapToObject } from '@videojs/utils/dom';
+import { namedNodeMapToObject } from '@videojs/utils-preview/dom';
 
 export function getTemplateHTML(
   this: typeof ButtonElement,

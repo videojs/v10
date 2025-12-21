@@ -1,9 +1,9 @@
-import type { PopoverState as CorePopoverState } from '@videojs/core';
+import type { PopoverState as CorePopoverState } from '@videojs/core-preview';
 import type { ReactNode } from 'react';
 import type { Prettify } from '../types';
 import type { ConnectedComponent } from '../utils/component-factory';
 
-import { Popover as CorePopover } from '@videojs/core';
+import { Popover as CorePopover } from '@videojs/core-preview';
 import { Children, cloneElement, useCallback, useEffect, useId, useState } from 'react';
 import { toConnectedComponent, toContextComponent, useCore } from '../utils/component-factory';
 import { useMutationObserver } from '../utils/use-mutation-observer';

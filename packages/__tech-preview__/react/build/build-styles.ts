@@ -26,7 +26,7 @@
  *
  * Why concatenate?
  * - Users only need to import one CSS file per skin
- * - Simpler API: import '@videojs/react/skins/frosted.css'
+ * - Simpler API: import '@videojs/react-preview/skins/frosted.css'
  */
 
 import { execSync } from 'node:child_process';
