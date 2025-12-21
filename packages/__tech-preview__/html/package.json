@@ -1,0 +1,67 @@
+{
+  "name": "@videojs/html-preview",
+  "type": "module",
+  "version": "0.1.0-preview.10",
+  "description": "HTML library for building media players",
+  "license": "Apache-2.0",
+  "keywords": [
+    "media",
+    "player",
+    "html",
+    "ui",
+    "components",
+    "videojs"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./store": {
+      "types": "./dist/store.d.ts",
+      "default": "./dist/store.js"
+    },
+    "./icons": {
+      "types": "./dist/icons.d.ts",
+      "default": "./dist/icons.js"
+    },
+    "./skins/frosted": {
+      "types": "./dist/skins/frosted.d.ts",
+      "default": "./dist/skins/frosted.js"
+    },
+    "./skins/minimal": {
+      "types": "./dist/skins/minimal.d.ts",
+      "default": "./dist/skins/minimal.js"
+    },
+    "./define/*": {
+      "types": "./dist/define/*.d.ts",
+      "default": "./dist/define/*.js"
+    }
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch --silent",
+    "dev": "pnpm run build:watch",
+    "test": "echo \"No tests yet\"",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@open-wc/context-protocol": "^0.0.9",
+    "@videojs/core-preview": "workspace:*",
+    "@videojs/icons-preview": "workspace:*",
+    "@videojs/utils-preview": "workspace:*"
+  },
+  "devDependencies": {
+    "tsdown": "^0.15.9",
+    "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

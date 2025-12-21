@@ -1,16 +1,11 @@
 {
   "name": "@videojs/utils",
   "type": "module",
-  "version": "0.1.0-preview.10",
+  "version": "0.1.0-alpha.1",
   "description": "Utility functions and helpers for Video.js",
   "license": "Apache-2.0",
   "keywords": [
     "media",
-    "playback",
-    "engine",
-    "hls",
-    "dash",
-    "streaming",
     "utils",
     "videojs"
   ],
@@ -18,10 +13,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./dom": {
-      "types": "./dist/dom.d.ts",
-      "default": "./dist/dom.js"
     }
   },
   "main": "dist/index.js",

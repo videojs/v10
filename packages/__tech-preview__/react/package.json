@@ -1,0 +1,80 @@
+{
+  "name": "@videojs/react-preview",
+  "type": "module",
+  "version": "0.1.0-preview.10",
+  "description": "React library for building media players",
+  "license": "Apache-2.0",
+  "keywords": [
+    "media",
+    "player",
+    "react",
+    "components",
+    "hooks",
+    "videojs"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./store": {
+      "types": "./dist/store.d.ts",
+      "default": "./dist/store.js"
+    },
+    "./icons": {
+      "types": "./dist/icons.d.ts",
+      "default": "./dist/icons.js"
+    },
+    "./skins/frosted": {
+      "types": "./dist/skins/frosted.d.ts",
+      "default": "./dist/skins/frosted.js"
+    },
+    "./skins/minimal": {
+      "types": "./dist/skins/minimal.d.ts",
+      "default": "./dist/skins/minimal.js"
+    },
+    "./skins/frosted.css": "./dist/skins/frosted.css",
+    "./skins/minimal.css": "./dist/skins/minimal.css"
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch ./src --ignore-watch ./src/icons/generated-icons --silent",
+    "dev": "pnpm run build:watch",
+    "format:icons": "echo noop. Need to replace based on eslint vs. prettier decisions!",
+    "generate:icons": "svgr --config-file svgr.config.js --out-dir src/icons/generated-icons ../icons/assets && pnpm format:icons",
+    "test": "echo \"No tests yet\"",
+    "clean": "rm -rf dist src/icons/generated-icons"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0"
+  },
+  "dependencies": {
+    "@videojs/core-preview": "workspace:*",
+    "@videojs/icons-preview": "workspace:*",
+    "@videojs/utils-preview": "workspace:*"
+  },
+  "devDependencies": {
+    "@svgr/babel-plugin-add-jsx-attribute": "^8.0.0",
+    "@svgr/cli": "^8.1.0",
+    "@svgr/core": "^8.1.0",
+    "@svgr/plugin-jsx": "^8.1.0",
+    "@tailwindcss/cli": "^4.1.17",
+    "@types/postcss-prefix-selector": "^1.16.3",
+    "@types/react": "^18.0.0",
+    "postcss": "^8.4.49",
+    "postcss-prefix-selector": "^1.16.1",
+    "react": "^18.0.0",
+    "tailwindcss": "^4.1.17",
+    "tsdown": "^0.15.9",
+    "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
