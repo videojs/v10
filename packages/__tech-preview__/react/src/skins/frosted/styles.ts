@@ -24,18 +24,16 @@ const styles: FrostedSkinStyles = {
     'vjs:[&_video]:w-full vjs:[&_video]:h-full',
   ),
   Overlay: cn(
-    'vjs:opacity-0 vjs:delay-500 vjs:duration-300 vjs:rounded-[inherit] vjs:absolute vjs:inset-0 vjs:pointer-events-none vjs:bg-linear-to-t vjs:from-black/50 vjs:via-black/20 vjs:to-transparent vjs:transition-opacity vjs:backdrop-saturate-150 vjs:backdrop-brightness-90',
-    // ------------------------------------
-    //  FIXME: This is crude temporary logic, we'll improve it later I guess with a [data-show-controls] attribute or something?
-    'vjs:has-[+.controls_[data-paused]]:opacity-100 vjs:has-[+.controls_[data-paused]]:delay-0 vjs:has-[+.controls_[data-paused]]:duration-100',
-    'vjs:has-[+.controls_[aria-expanded="true"]]:opacity-100 vjs:has-[+.controls_[aria-expanded="true"]]:delay-0 vjs:has-[+.controls_[aria-expanded="true"]]:duration-100',
-    'vjs:group-hover/root:opacity-100 vjs:group-hover/root:delay-0 vjs:group-hover/root:duration-100',
-    // ------------------------------------
+    'vjs:rounded-[inherit] vjs:absolute vjs:inset-0 vjs:pointer-events-none vjs:bg-linear-to-t vjs:from-black/50 vjs:via-black/20 vjs:to-transparent vjs:transition-opacity vjs:backdrop-saturate-150 vjs:backdrop-brightness-90',
+    // No delay and faster duration when showing
+    'vjs:delay-0 vjs:duration-100',
+    // Hidden state
+    'vjs:group-data-[controls=hidden]/root:delay-500 vjs:group-data-[controls=hidden]/root:duration-300 vjs:group-data-[controls=hidden]/root:opacity-0',
   ),
   Surface: cn(
     'vjs:bg-white/10 vjs:backdrop-blur-3xl vjs:backdrop-saturate-150 vjs:backdrop-brightness-90',
     // Ring and shadow
-    'vjs:ring vjs:ring-white/10 vjs:ring-inset vjs:shadow-sm vjs:shadow-black/15',
+    'vjs:ring vjs:ring-white/5 vjs:ring-inset vjs:shadow-sm vjs:shadow-black/15',
     // Border to enhance contrast on lighter videos
     'vjs:after:absolute vjs:after:inset-0 vjs:after:ring vjs:after:rounded-[inherit] vjs:after:ring-black/15 vjs:after:pointer-events-none vjs:after:z-10',
     // Reduced transparency for users with preference
@@ -45,20 +43,13 @@ const styles: FrostedSkinStyles = {
     'vjs:contrast-more:bg-black/90 vjs:contrast-more:ring-black vjs:contrast-more:after:ring-white/20',
   ),
   Controls: cn(
-    // ------------------------------------
-    //  FIXME: Temporary className hook for above logic in the overlay. Can be removed once have a proper way to handle controls visibility.
-    'controls',
-    // ------------------------------------
     'vjs:@container/controls vjs:absolute vjs:inset-x-3 vjs:bottom-3 vjs:rounded-full vjs:flex vjs:items-center vjs:p-1 vjs:gap-0.5 vjs:text-white',
     // Animation
     'vjs:transition vjs:will-change-[transform,scale,filter,opacity] vjs:origin-bottom vjs:ease-out',
-    // ------------------------------------
-    //  FIXME: Temporary hide/show logic, related to above.
-    'vjs:scale-90 vjs:opacity-0 vjs:blur-sm vjs:delay-500 vjs:duration-300',
-    'vjs:has-data-paused:scale-100 vjs:has-data-paused:opacity-100 vjs:has-data-paused:blur-none vjs:has-data-paused:delay-0 vjs:has-data-paused:duration-100',
-    'vjs:has-[[aria-expanded="true"]]:scale-100 vjs:has-[[aria-expanded="true"]]:opacity-100 vjs:has-[[aria-expanded="true"]]:blur-none vjs:has-[[aria-expanded="true"]]:delay-0 vjs:has-[[aria-expanded="true"]]:duration-100',
-    'vjs:group-hover/root:scale-100 vjs:group-hover/root:opacity-100 vjs:group-hover/root:blur-none vjs:group-hover/root:delay-0 vjs:group-hover/root:duration-100',
-    // ------------------------------------
+    // No delay and faster duration when showing
+    'vjs:delay-0 vjs:duration-100',
+    // Hidden state
+    'vjs:group-data-[controls=hidden]/root:scale-90 vjs:group-data-[controls=hidden]/root:opacity-0 vjs:group-data-[controls=hidden]/root:blur-sm vjs:group-data-[controls=hidden]/root:delay-500 vjs:group-data-[controls=hidden]/root:duration-300 vjs:group-data-[controls=hidden]/root:pointer-events-none',
   ),
   Icon: cn('icon vjs:[&_path]:transition-transform vjs:[&_path]:ease-out'),
   Button: cn(

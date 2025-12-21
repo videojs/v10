@@ -57,15 +57,13 @@ media-container > .overlay {
   background-image: linear-gradient(to top, oklab(0 0 0 / 0.5), oklab(0 0 0 / 0.3), rgba(0, 0, 0, 0));
   backdrop-filter: saturate(1.5) brightness(0.9);
   transition: opacity 0.15s ease-out;
-  transition-delay: 500ms;
-  opacity: 0;
-}
-media-container:hover > .overlay,
-media-container:has([data-paused]) > .overlay,
-media-container:has([aria-expanded='true']) > .overlay {
-  opacity: 1;
   transition-duration: 100ms;
   transition-delay: 0ms;
+}
+media-container[data-controls='hidden'] > .overlay {
+  transition-delay: 500ms;
+  transition-duration: 300ms;
+  opacity: 0;
 }
 
 /* Common Surface Styles - e.g. tooltips, popovers, controls */
@@ -73,7 +71,7 @@ media-container:has([aria-expanded='true']) > .overlay {
   background-color: oklab(1 0 0 / 0.1);
   backdrop-filter: blur(64px) brightness(0.9) saturate(1.5);
   box-shadow:
-    inset 0 0 0 1px oklab(1 0 0 / 0.15),
+    inset 0 0 0 1px oklab(1 0 0 / 0.05),
     0 0 0 1px oklab(0 0 0 / 0.15),
     oklab(0 0 0 / 0.15) 0px 1px 3px 0px,
     oklab(0 0 0 / 0.15) 0px 1px 2px -1px;
@@ -106,24 +104,20 @@ media-container:has([aria-expanded='true']) > .overlay {
   gap: 0.125rem;
   border-radius: calc(infinity * 1px);
   will-change: scale, transform, filter, opacity;
-  scale: 0.9;
-  opacity: 0;
-  filter: blur(8px);
   transition-property: scale, transform, filter, opacity;
-  transition-delay: 500ms;
-  transition-duration: 300ms;
+  transition-delay: 0ms;
+  transition-duration: 100ms;
   transition-timing-function: ease-out;
   transform-origin: bottom;
   color: oklab(1 0 0);
 }
-media-container:hover > .control-bar,
-media-container:has([data-paused]) > .control-bar,
-media-container:has([aria-expanded='true']) > .control-bar {
-  opacity: 1;
-  scale: 1;
-  filter: blur(0px);
-  transition-delay: 0ms;
-  transition-duration: 100ms;
+media-container[data-controls='hidden'] > .control-bar {
+  opacity: 0;
+  scale: 0.9;
+  filter: blur(8px);
+  transition-delay: 500ms;
+  transition-duration: 300ms;
+  pointer-events: none;
 }
 
 /* Time Display Styling */

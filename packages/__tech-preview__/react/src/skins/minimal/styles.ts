@@ -25,31 +25,25 @@ const styles: MinimalSkinStyles = {
   Overlay: cn(
     'vjs:absolute vjs:inset-0 vjs:rounded-[inherit] vjs:pointer-events-none',
     'vjs:bg-linear-to-t vjs:from-black/70 vjs:via-black/50 vjs:via-[7.5rem] vjs:to-transparent',
-    'vjs:opacity-0 vjs:delay-500 vjs:duration-300',
     // High contrast mode
     'vjs:contrast-more:from-black/75',
-    // ------------------------------------
-    //  FIXME: Temporary hide/show logic
-    'vjs:has-[+.controls_[data-paused]]:opacity-100 vjs:has-[+.controls_[data-paused]]:delay-0 vjs:has-[+.controls_[data-paused]]:duration-75',
-    'vjs:has-[+.controls_[aria-expanded="true"]]:opacity-100 vjs:has-[+.controls_[aria-expanded="true"]]:delay-0 vjs:has-[+.controls_[aria-expanded="true"]]:duration-75',
-    'vjs:group-hover/root:opacity-100 vjs:group-hover/root:delay-0 vjs:group-hover/root:duration-75',
-    // ------------------------------------
+    // Animation
+    'vjs:transition vjs:will-change-[opacity] vjs:ease-out',
+    // No delay and faster duration when showing
+    'vjs:delay-0 vjs:duration-75',
+    // Hidden state
+    'vjs:group-data-[controls=hidden]/root:delay-500 vjs:group-data-[controls=hidden]/root:duration-500 vjs:group-data-[controls=hidden]/root:opacity-0',
   ),
   Controls: cn(
-    // ------------------------------------
-    //  FIXME: Temporary className hook for above logic in the overlay. Can be removed once have a proper way to handle controls visibility.
-    'controls',
-    // ------------------------------------
-    'vjs:@container/controls vjs:absolute vjs:inset-x-0 vjs:bottom-0 vjs:flex vjs:items-center vjs:gap-3.5 vjs:z-20 vjs:px-3 vjs:pb-3 vjs:pt-10 vjs:text-white',
+    'vjs:@container/controls vjs:absolute vjs:inset-x-0 vjs:bottom-0 vjs:flex vjs:items-center vjs:gap-2 vjs:z-20 vjs:px-1.5 vjs:pb-1.5 vjs:pt-8 vjs:text-white',
     // Animation
     'vjs:transition vjs:will-change-[transform,filter,opacity] vjs:ease-out',
-    // ------------------------------------
-    //  FIXME: Temporary hide/show logic
-    'vjs:translate-y-full vjs:opacity-0 vjs:blur-sm vjs:delay-500 vjs:duration-300',
-    'vjs:has-data-paused:translate-y-0 vjs:has-data-paused:opacity-100 vjs:has-data-paused:blur-none vjs:has-data-paused:delay-0 vjs:has-data-paused:duration-75',
-    'vjs:has-[[aria-expanded="true"]]:translate-y-0 vjs:has-[[aria-expanded="true"]]:opacity-100 vjs:has-[[aria-expanded="true"]]:blur-none vjs:has-[[aria-expanded="true"]]:delay-0 vjs:has-[[aria-expanded="true"]]:duration-75',
-    'vjs:group-hover/root:translate-y-0 vjs:group-hover/root:opacity-100 vjs:group-hover/root:blur-none vjs:group-hover/root:delay-0 vjs:group-hover/root:duration-75',
-    // ------------------------------------
+    // No delay and faster duration when showing
+    'vjs:delay-0 vjs:duration-75',
+    // Hidden state
+    'vjs:group-data-[controls=hidden]/root:translate-y-full vjs:group-data-[controls=hidden]/root:opacity-0 vjs:group-data-[controls=hidden]/root:blur-sm vjs:group-data-[controls=hidden]/root:delay-500 vjs:group-data-[controls=hidden]/root:duration-500 vjs:group-data-[controls=hidden]/root:pointer-events-none',
+    // Looser spacing on larger screens
+    'vjs:@sm/root:gap-3.5 vjs:@sm/root:px-3 vjs:@sm/root:pb-3 vjs:@sm/root:pt-10',
   ),
   Icon: cn('icon vjs:[&_path]:transition-transform vjs:[&_path]:ease-out'),
   TimeDisplayGroup: cn('flex items-center gap-1'),

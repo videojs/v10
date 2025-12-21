@@ -41,6 +41,7 @@ export function getFullscreenButtonProps(
     'aria-label': state.fullscreen ? 'exit fullscreen' : 'enter fullscreen',
     /** tooltip */
     'data-tooltip': state.fullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen',
+    'data-button': 'fullscreen',
     /** external props spread last to allow for overriding */
     ...props,
   };

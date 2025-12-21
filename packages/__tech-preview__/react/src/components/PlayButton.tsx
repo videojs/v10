@@ -38,6 +38,7 @@ export function getPlayButtonProps(
     'aria-label': state.paused ? 'play' : 'pause',
     /** tooltip */
     'data-tooltip': state.paused ? 'Play' : 'Pause',
+    'data-button': 'play',
     /** external props spread last to allow for overriding */
     ...props,
   };
