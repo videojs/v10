@@ -1,4 +1,4 @@
-import { TimeSlider } from '@videojs/react';
+import { TimeSlider } from '@videojs/react-preview';
 import styles from './TimeSlider.module.css';
 
 /**

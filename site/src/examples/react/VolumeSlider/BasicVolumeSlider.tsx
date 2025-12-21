@@ -1,4 +1,4 @@
-import { VolumeSlider } from '@videojs/react';
+import { VolumeSlider } from '@videojs/react-preview';
 import styles from './VolumeSlider.module.css';
 
 /**

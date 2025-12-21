@@ -2,7 +2,7 @@
 
 [![package-badge]][package]
 
-> **⚠️ Technical Preview - SUBJECT TO CHANGE** Not recommended for production use.
+> **⚠️ Alpha - SUBJECT TO CHANGE** Not recommended for production use.
 
 ## Overview
 

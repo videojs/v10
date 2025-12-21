@@ -1,0 +1,55 @@
+{
+  "name": "@videojs/core-preview",
+  "type": "module",
+  "version": "0.1.0-preview.10",
+  "description": "Core components and utilities for Video.js",
+  "license": "Apache-2.0",
+  "keywords": [
+    "core",
+    "components",
+    "media",
+    "player",
+    "ui",
+    "time-range",
+    "videojs"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./media": {
+      "types": "./dist/media.d.ts",
+      "default": "./dist/media.js"
+    },
+    "./store": {
+      "types": "./dist/store.d.ts",
+      "default": "./dist/store.js"
+    }
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch --silent",
+    "dev": "pnpm run build:watch",
+    "test": "echo \"No tests yet\"",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@videojs/utils-preview": "workspace:*",
+    "hls.js": "^1.6.7",
+    "nanostores": "^1.0.1"
+  },
+  "devDependencies": {
+    "tsdown": "^0.15.9",
+    "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

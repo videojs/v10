@@ -1,6 +1,6 @@
-import { FrostedSkin, Video, VideoProvider } from '@videojs/react';
+import { FrostedSkin, Video, VideoProvider } from '@videojs/react-preview';
 import { VJS8_DEMO_VIDEO } from '@/consts';
-import '@videojs/react/skins/frosted.css';
+import '@videojs/react-preview/skins/frosted.css';
 
 /**
  * Live demo of the FrostedSkin design.

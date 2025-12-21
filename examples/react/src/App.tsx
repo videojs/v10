@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from 'react';
-import { VideoProvider } from '@videojs/react';
+import { VideoProvider } from '@videojs/react-preview';
 import clsx from 'clsx';
 import { useEffect, useMemo, useRef } from 'react';
 import { Link as LinkPrimitive, Redirect, Route, Switch, useLocation } from 'wouter';

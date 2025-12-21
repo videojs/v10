@@ -25,8 +25,8 @@ import {
   usePlayButtonState,
   useTimeSliderRootState,
   useVolumeSliderRootState,
-} from '@videojs/react';
-import { formatDisplayTime } from '@videojs/utils';
+} from '@videojs/react-preview';
+import { formatDisplayTime } from '@videojs/utils-preview';
 
 import clsx from 'clsx';
 import { useCallback, useState } from 'react';

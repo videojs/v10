@@ -1,0 +1,40 @@
+{
+  "name": "@videojs/store",
+  "type": "module",
+  "version": "0.1.0-alpha.1",
+  "description": "Reactive state management for external systems.",
+  "license": "Apache-2.0",
+  "keywords": [
+    "store",
+    "media",
+    "player",
+    "videojs",
+    "reactive"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch --silent",
+    "dev": "pnpm run build:watch",
+    "test": "echo \"No tests yet\"",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "tsdown": "^0.15.9",
+    "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -16,7 +16,7 @@
   },
   "scripts": {
     "prepare": "simple-git-hooks",
-    "build:packages": "turbo run build --filter=./packages/**",
+    "build:packages": "turbo run build --filter=./packages/*",
     "build:site": "turbo run build --filter=site",
     "docs:update": "doctoc README.md CONTRIBUTING.md",
     "build": "turbo run build",

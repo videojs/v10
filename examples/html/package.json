@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@videojs/html": "workspace:*"
+    "@videojs/html-preview": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

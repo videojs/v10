@@ -86,9 +86,9 @@ importers:
 
   examples/html:
     dependencies:
-      '@videojs/html':
+      '@videojs/html-preview':
         specifier: workspace:*
-        version: link:../../packages/html
+        version: link:../../packages/__tech-preview__/html
     devDependencies:
       typescript:
         specifier: ^5.9.3
@@ -121,9 +121,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.7)
-      '@videojs/react':
+      '@videojs/react-preview':
         specifier: workspace:*
-        version: link:../../packages/react
+        version: link:../../packages/__tech-preview__/react
       eslint:
         specifier: ^9.39.1
         version: 9.39.2(jiti@2.6.1)
@@ -145,12 +145,12 @@ importers:
       '@heroicons/react':
         specifier: ^2.2.0
         version: 2.2.0(react@19.2.3)
-      '@videojs/react':
+      '@videojs/react-preview':
         specifier: workspace:*
-        version: link:../../packages/react
-      '@videojs/utils':
+        version: link:../../packages/__tech-preview__/react
+      '@videojs/utils-preview':
         specifier: workspace:*
-        version: link:../../packages/utils
+        version: link:../../packages/__tech-preview__/utils
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -192,9 +192,9 @@ importers:
         specifier: ^7.2.4
         version: 7.2.7(@types/node@22.19.3)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.2)
 
-  packages/core:
+  packages/__tech-preview__/core:
     dependencies:
-      '@videojs/utils':
+      '@videojs/utils-preview':
         specifier: workspace:*
         version: link:../utils
       hls.js:
@@ -211,18 +211,18 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  packages/html:
+  packages/__tech-preview__/html:
     dependencies:
       '@open-wc/context-protocol':
         specifier: ^0.0.9
         version: 0.0.9
-      '@videojs/core':
+      '@videojs/core-preview':
         specifier: workspace:*
         version: link:../core
-      '@videojs/icons':
+      '@videojs/icons-preview':
         specifier: workspace:*
         version: link:../icons
-      '@videojs/utils':
+      '@videojs/utils-preview':
         specifier: workspace:*
         version: link:../utils
     devDependencies:
@@ -233,7 +233,7 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  packages/icons:
+  packages/__tech-preview__/icons:
     devDependencies:
       tsdown:
         specifier: ^0.15.9
@@ -242,15 +242,15 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  packages/react:
+  packages/__tech-preview__/react:
     dependencies:
-      '@videojs/core':
+      '@videojs/core-preview':
         specifier: workspace:*
         version: link:../core
-      '@videojs/icons':
+      '@videojs/icons-preview':
         specifier: workspace:*
         version: link:../icons
-      '@videojs/utils':
+      '@videojs/utils-preview':
         specifier: workspace:*
         version: link:../utils
     devDependencies:
@@ -287,6 +287,100 @@ importers:
       tailwindcss:
         specifier: ^4.1.17
         version: 4.1.18
+      tsdown:
+        specifier: ^0.15.9
+        version: 0.15.12(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/__tech-preview__/utils:
+    devDependencies:
+      tsdown:
+        specifier: ^0.15.9
+        version: 0.15.12(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/core:
+    dependencies:
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      tsdown:
+        specifier: ^0.15.9
+        version: 0.15.12(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/dom:
+    dependencies:
+      '@videojs/core':
+        specifier: workspace:*
+        version: link:../core
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      tsdown:
+        specifier: ^0.15.9
+        version: 0.15.12(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/html:
+    dependencies:
+      '@videojs/dom':
+        specifier: workspace:*
+        version: link:../dom
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      tsdown:
+        specifier: ^0.15.9
+        version: 0.15.12(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/icons:
+    devDependencies:
+      tsdown:
+        specifier: ^0.15.9
+        version: 0.15.12(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/react:
+    dependencies:
+      '@videojs/dom':
+        specifier: workspace:*
+        version: link:../dom
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      '@types/react':
+        specifier: ^18.0.0
+        version: 18.3.27
+      react:
+        specifier: ^18.0.0
+        version: 18.3.1
+      tsdown:
+        specifier: ^0.15.9
+        version: 0.15.12(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/store:
+    devDependencies:
       tsdown:
         specifier: ^0.15.9
         version: 0.15.12(typescript@5.9.3)
@@ -332,12 +426,12 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.1.17
         version: 4.1.18(vite@7.2.7(@types/node@22.19.3)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.2))
-      '@videojs/html':
+      '@videojs/html-preview':
         specifier: workspace:*
-        version: link:../packages/html
-      '@videojs/react':
+        version: link:../packages/__tech-preview__/html
+      '@videojs/react-preview':
         specifier: workspace:*
-        version: link:../packages/react
+        version: link:../packages/__tech-preview__/react
       astro:
         specifier: ^5.14.4
         version: 5.16.5(@types/node@22.19.3)(@vercel/functions@2.2.13)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.53.3)(typescript@5.9.3)(yaml@2.8.2)

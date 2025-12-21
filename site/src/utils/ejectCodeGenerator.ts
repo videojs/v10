@@ -14,7 +14,7 @@ export function generateReactComponent(skin: Skin): string {
     return `// npm install @videojs/react@next
 import type { PropsWithChildren } from 'react';
 
-import { CurrentTimeDisplay, DurationDisplay, FullscreenButton, MediaContainer, MuteButton, PlayButton, Popover, PreviewTimeDisplay, TimeSlider, Tooltip, VolumeSlider } from '@videojs/react';
+import { CurrentTimeDisplay, DurationDisplay, FullscreenButton, MediaContainer, MuteButton, PlayButton, Popover, PreviewTimeDisplay, TimeSlider, Tooltip, VolumeSlider } from '@videojs/react-preview';
 import {
   FullscreenEnterIcon,
   FullscreenExitIcon,
@@ -23,7 +23,7 @@ import {
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
-} from '@videojs/react/icons';
+} from '@videojs/react-preview/icons';
 
 import './frosted.css';
 
@@ -123,7 +123,7 @@ export default function FrostedSkin({ children, className = '' }: SkinProps): JS
     return `// npm install @videojs/react@next
 import type { PropsWithChildren } from 'react';
 
-import { CurrentTimeDisplay, DurationDisplay, FullscreenButton, MediaContainer, MuteButton, PlayButton, Popover, PreviewTimeDisplay, TimeSlider, Tooltip, VolumeSlider } from '@videojs/react';
+import { CurrentTimeDisplay, DurationDisplay, FullscreenButton, MediaContainer, MuteButton, PlayButton, Popover, PreviewTimeDisplay, TimeSlider, Tooltip, VolumeSlider } from '@videojs/react-preview';
 import {
   FullscreenEnterAltIcon,
   FullscreenExitAltIcon,
@@ -132,7 +132,7 @@ import {
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
-} from '@videojs/react/icons';
+} from '@videojs/react-preview/icons';
 
 import './minimal.css';
 
@@ -1899,18 +1899,18 @@ export function generateHTMLJS(skin: Skin): string {
   return `import './${skin}.css';
 
 // npm install @videojs/html@next
-import '@videojs/html/icons';
+import '@videojs/html-preview/icons';
 // be sure to import video-provider first for proper context initialization
-import '@videojs/html/define/video-provider';
-import '@videojs/html/define/media-container';
-import '@videojs/html/define/media-play-button';
-import '@videojs/html/define/media-mute-button';
-import '@videojs/html/define/media-volume-slider';
-import '@videojs/html/define/media-time-slider';
-import '@videojs/html/define/media-fullscreen-button';
-import '@videojs/html/define/media-duration-display';
-import '@videojs/html/define/media-current-time-display';
-import '@videojs/html/define/media-preview-time-display';
-import '@videojs/html/define/media-popover';
-import '@videojs/html/define/media-tooltip';`;
+import '@videojs/html-preview/define/video-provider';
+import '@videojs/html-preview/define/media-container';
+import '@videojs/html-preview/define/media-play-button';
+import '@videojs/html-preview/define/media-mute-button';
+import '@videojs/html-preview/define/media-volume-slider';
+import '@videojs/html-preview/define/media-time-slider';
+import '@videojs/html-preview/define/media-fullscreen-button';
+import '@videojs/html-preview/define/media-duration-display';
+import '@videojs/html-preview/define/media-current-time-display';
+import '@videojs/html-preview/define/media-preview-time-display';
+import '@videojs/html-preview/define/media-popover';
+import '@videojs/html-preview/define/media-tooltip';`;
 }

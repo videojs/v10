@@ -18,7 +18,7 @@
     "@types/node": "^20.19.25",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "@videojs/react": "workspace:*",
+    "@videojs/react-preview": "workspace:*",
     "eslint": "^9.39.1",
     "eslint-config-next": "16.0.8",
     "tailwindcss": "^4.1.17",

@@ -1,5 +1,5 @@
-import { FullscreenButton } from '@videojs/react';
-import { FullscreenEnterIcon, FullscreenExitIcon } from '@videojs/react/icons';
+import { FullscreenButton } from '@videojs/react-preview';
+import { FullscreenEnterIcon, FullscreenExitIcon } from '@videojs/react-preview/icons';
 import styles from './FullscreenButton.module.css';
 
 /**
