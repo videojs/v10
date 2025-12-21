@@ -1,4 +1,4 @@
-import { HlsVideo } from '@videojs/react';
+import { HlsVideo } from '@videojs/react-preview';
 
 export function VideoElement(): JSX.Element {
   return (

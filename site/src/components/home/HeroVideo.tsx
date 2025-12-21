@@ -1,9 +1,9 @@
 import { useStore } from '@nanostores/react';
-import { FrostedSkin, HlsVideo, MinimalSkin, VideoProvider } from '@videojs/react';
+import { FrostedSkin, HlsVideo, MinimalSkin, VideoProvider } from '@videojs/react-preview';
 import { VJS8_DEMO_VIDEO } from '@/consts';
 import { skin } from '@/stores/homePageDemos';
-import '@videojs/react/skins/frosted.css';
-import '@videojs/react/skins/minimal.css';
+import '@videojs/react-preview/skins/frosted.css';
+import '@videojs/react-preview/skins/minimal.css';
 
 export default function HeroVideo({ className, poster }: { className?: string; poster: string }) {
   const $skin = useStore(skin);

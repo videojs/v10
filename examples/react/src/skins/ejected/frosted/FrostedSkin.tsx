@@ -12,7 +12,7 @@ import {
   TimeSlider,
   Tooltip,
   VolumeSlider,
-} from '@videojs/react';
+} from '@videojs/react-preview';
 import {
   FullscreenEnterIcon,
   FullscreenExitIcon,
@@ -21,7 +21,7 @@ import {
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
-} from '@videojs/react/icons';
+} from '@videojs/react-preview/icons';
 
 import './frosted.css';
 

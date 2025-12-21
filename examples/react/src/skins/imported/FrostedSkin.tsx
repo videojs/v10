@@ -1,3 +1,3 @@
-import '@videojs/react/skins/frosted.css';
+import '@videojs/react-preview/skins/frosted.css';
 
-export { FrostedSkin as default } from '@videojs/react';
+export { FrostedSkin as default } from '@videojs/react-preview';

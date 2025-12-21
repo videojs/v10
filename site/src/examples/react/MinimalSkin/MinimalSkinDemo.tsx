@@ -1,6 +1,6 @@
-import { MinimalSkin, Video, VideoProvider } from '@videojs/react';
+import { MinimalSkin, Video, VideoProvider } from '@videojs/react-preview';
 import { VJS8_DEMO_VIDEO } from '@/consts';
-import '@videojs/react/skins/minimal.css';
+import '@videojs/react-preview/skins/minimal.css';
 
 /**
  * Live demo of the MinimalSkin design.

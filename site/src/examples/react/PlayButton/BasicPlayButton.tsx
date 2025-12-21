@@ -1,5 +1,5 @@
-import { PlayButton } from '@videojs/react';
-import { PauseIcon, PlayIcon } from '@videojs/react/icons';
+import { PlayButton } from '@videojs/react-preview';
+import { PauseIcon, PlayIcon } from '@videojs/react-preview/icons';
 import styles from './PlayButton.module.css';
 
 /**

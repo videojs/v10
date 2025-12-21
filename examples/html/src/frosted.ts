@@ -1,4 +1,4 @@
-import '@videojs/html/skins/frosted';
+import '@videojs/html-preview/skins/frosted';
 
 document.getElementById('app')!.innerHTML = /* html */ `
   <video-provider>

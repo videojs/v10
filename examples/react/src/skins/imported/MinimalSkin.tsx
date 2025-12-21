@@ -1,3 +1,3 @@
-import '@videojs/react/skins/minimal.css';
+import '@videojs/react-preview/skins/minimal.css';
 
-export { MinimalSkin as default } from '@videojs/react';
+export { MinimalSkin as default } from '@videojs/react-preview';

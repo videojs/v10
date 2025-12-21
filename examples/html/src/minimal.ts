@@ -1,4 +1,4 @@
-import '@videojs/html/skins/minimal';
+import '@videojs/html-preview/skins/minimal';
 
 document.getElementById('app')!.innerHTML = /* html */ `
   <video-provider>

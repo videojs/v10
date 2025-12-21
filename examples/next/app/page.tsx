@@ -1,6 +1,6 @@
-import { FrostedSkin, HlsVideo, MinimalSkin, VideoProvider } from '@videojs/react';
-import '@videojs/react/skins/frosted.css';
-import '@videojs/react/skins/minimal.css';
+import { FrostedSkin, HlsVideo, MinimalSkin, VideoProvider } from '@videojs/react-preview';
+import '@videojs/react-preview/skins/frosted.css';
+import '@videojs/react-preview/skins/minimal.css';
 
 export default function Home() {
   return (
