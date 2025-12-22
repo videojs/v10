@@ -24,7 +24,14 @@ export class State<T> {
   }
 
   patch(partial: Partial<T>): void {
-    const changedKeys = Object.keys(partial) as (keyof T)[];
+    const changedKeys: (keyof T)[] = [];
+
+    for (const [key, value] of Object.entries(partial)) {
+      if (this.#state[key as keyof T] !== value) {
+        changedKeys.push(key as keyof T);
+      }
+    }
+
     if (changedKeys.length > 0) {
       this.#state = { ...this.#state, ...partial };
       this.#notify(changedKeys);
