@@ -1,9 +1,14 @@
-import { GuardTimeoutError, RequestCancelledError } from './errors';
+import { isBoolean } from '@videojs/utils';
+import { GuardTimeoutError } from './errors';
 
 /**
  * A guard gates request execution.
  *
- * Returns true if ready, false if it should be skipped, or a Promise that resolves when ready.
+ * - Truthy → proceed
+ * - Falsy → cancel
+ * - Promise resolves truthy → proceed
+ * - Promise resolves falsy → cancel
+ * - Promise rejects → cancel
  */
 export type Guard<Target> = (ctx: {
   target: Target;
@@ -11,26 +16,15 @@ export type Guard<Target> = (ctx: {
 }) => boolean | Promise<unknown>;
 
 /**
- * Combine guards: All must pass.
+ * Combine guards: All must pass (truthy).
  */
 export function all<Target>(
   ...guards: Guard<Target>[]
 ): Guard<Target> {
   return async (ctx) => {
     for (const guard of guards) {
-      const result = guard(ctx);
-
-      if (result === false) {
-        throw new RequestCancelledError('Guard skip');
-      }
-
-      if (result !== true) {
-        await result;
-      }
-
-      if (ctx.signal.aborted) {
-        throw new RequestCancelledError('Guard aborted');
-      }
+      const result = await guard(ctx);
+      if (!result) return false;
     }
 
     return true;
@@ -38,7 +32,7 @@ export function all<Target>(
 }
 
 /**
- * Combine guards: Any must pass.
+ * Combine guards: Any must pass (first truthy wins).
  */
 export function any<Target>(
   ...guards: Guard<Target>[]
@@ -46,13 +40,24 @@ export function any<Target>(
   return (ctx) => {
     const results = guards.map(g => g(ctx));
 
-    if (results.includes(true)) {
-      return true;
-    }
+    // Check sync results first
+    if (results.includes(true)) return true;
 
-    return Promise.race(
-      results.filter((r): r is Promise<void> => !isBoolean(r)),
-    );
+    // Filter to promises only
+    const promises = results.filter((r): r is Promise<unknown> => !isBoolean(r));
+
+    if (promises.length === 0) return false;
+
+    // Race: first truthy wins, all falsy = false
+    return new Promise((resolve, reject) => {
+      let pending = promises.length;
+      for (const p of promises) {
+        p.then((value) => {
+          if (value) resolve(value);
+          else if (--pending === 0) resolve(false);
+        }, reject);
+      }
+    });
   };
 }
 
@@ -64,23 +69,18 @@ export function timeout<Target>(
   ms: number,
   name = 'guard',
 ): Guard<Target> {
-  return (ctx) => {
+  return async (ctx) => {
     const result = guard(ctx);
 
-    if (result === true) {
-      return true;
+    if (isBoolean(result)) {
+      return result;
     }
 
     return Promise.race([
       result,
-      new Promise<void>((_, reject) => {
-        const timer = setTimeout(() => {
-          reject(new GuardTimeoutError(name));
-        }, ms);
-
-        ctx.signal.addEventListener('abort', () => {
-          clearTimeout(timer);
-        });
+      new Promise<never>((_, reject) => {
+        const timer = setTimeout(() => reject(new GuardTimeoutError(name)), ms);
+        ctx.signal.addEventListener('abort', () => clearTimeout(timer));
       }),
     ]);
   };

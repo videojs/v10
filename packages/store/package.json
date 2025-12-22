@@ -38,6 +38,9 @@
     "test": "echo \"No tests yet\"",
     "clean": "rm -rf dist"
   },
+  "dependencies": {
+    "@videojs/utils": "workspace:*"
+  },
   "devDependencies": {
     "tsdown": "^0.15.9",
     "typescript": "^5.9.3"

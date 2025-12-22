@@ -6,6 +6,10 @@
 
 A reactive store for managing state owned by external systems. Built for media players, streaming libraries, and real-time systems where you don't own the state.
 
+```bash
+npm install @videojs/store
+```
+
 ## Why?
 
 [Traditional state management](#how-its-different) assumes you own the state. But when working with a `<video>` element, Web Sockets, streaming libraries, and real-time systems, the external system is the authority. You observe it, send requests to it, and react to its changes.
@@ -14,8 +18,6 @@ A reactive store for managing state owned by external systems. Built for media p
 
 - **Read Path**: Observe external state, sync to reactive store
 - **Write Path**: Send requests, coordinate execution, handle failures
-
-Built on [nanostores](https://github.com/nanostores/nanostores) for efficient, framework-agnostic reactivity.
 
 ```ts
 import { createStore, createSlice, createQueue } from '@videojs/store';
@@ -189,6 +191,36 @@ store.subscribe(
 );
 ```
 
+### Keyed Subscriptions
+
+Subscribe to specific keys for high-frequency updates:
+
+```ts
+// Only fires when currentTime changes
+store.subscribe(['currentTime'], (state, changedKeys) => {
+  updatedTime(state.currentTime);
+});
+
+// Multiple keys
+store.subscribe(['volume', 'muted'], (state) => {
+  updatedVolume(state.volume, state.muted);
+});
+```
+
+Slices can push partial updates to avoid full syncs:
+
+```ts
+subscribe: ({ target, update, signal }) => {
+  // Partial - only update currentTime
+  target.addEventListener('timeupdate', () => {
+    update({ currentTime: target.currentTime });
+  }, { signal });
+
+  // Full sync
+  target.addEventListener('durationchange', update, { signal });
+}
+```
+
 ## Multiple Targets
 
 Targets can contain multiple references. Useful when adapting to different systems.
@@ -321,9 +353,24 @@ requests: {
 }
 ```
 
+### Cancels
+
+Requests can cancel other in-flight requests by key. Cancellation happens immediately when the
+request is enqueued, before guards or scheduling.
+
+```ts
+requests: {
+  stop: {
+    cancels: ['seek', 'preload'],
+    handler: ({ target }) => target.pause(),
+  },
+}
+```
+
 ### Schedule
 
-Schedule controls _when_ a request executes. The schedule function receives a `flush` callback and optionally returns a cancel function. Default schedule is microtask (executes at end of current tick).
+Schedule controls _when_ a request executes. The schedule function receives a `flush` callback and
+optionally returns a cancel function. Default schedule is microtask (executes at end of current tick).
 
 ```ts
 import { delay } from '@videojs/store';
@@ -361,18 +408,19 @@ requests: {
 
 ### Guards
 
-Guards gate request execution. Return `true` if ready, or a `Promise` that resolves when ready.
+Guards gate request execution. A guard returns truthy to proceed, falsy to cancel.
 
 ```ts
+import { all, any, timeout } from '@videojs/store';
+
 requests: {
   seek: {
     guard: [canMediaPlay, /* ... */],
     handler: (time, { target }) => {
-     target.media.currentTime = time;
-   },
+      target.media.currentTime = time;
+    },
   },
 
-  // With timeout
   play: {
     guard: timeout(canMediaPlay, 5000),
     handler: ({ target }) => target.media.play(),
@@ -380,28 +428,29 @@ requests: {
 }
 ```
 
-Compose guards:
-
-```ts
-import { all, any } from '@videojs/store';
-
-const canPlay = any(canMediaPlay, canMediaPlayThrough);
-const canSeek = all(hasMedia, canPlay);
-```
-
-Custom guard:
+**Custom guard:**
 
 ```ts
 import type { Guard } from '@videojs/store';
 
-const isReady: Guard<Target> = ({ target, signal }) => {
-  if (target.ready) return true;
-
-  return new Promise((resolve, reject) => {
-    target.on('ready', resolve);
-    signal.addEventListener('abort', reject);
-  });
+const canMediaPlay: Guard<HTMLMediaElement> = ({ target, signal }) => {
+  if (!target) return false;
+  if (target.readyState >= HAVE_ENOUGH_DATA) return true;
+  return onEvent(target, 'canplay', signal); // wait for canplay
 };
+```
+
+**Combinators:**
+
+```ts
+// All must be truthy
+const canSeek = all(hasMedia, canMediaPlay, notMediaSeeking);
+
+// First truthy wins
+const ready = any(canMediaPlay, canMediaPlayThrough);
+
+// Reject if guard doesn't resolve in time
+const timedPlay = timeout(canMediaPlay, 5000);
 ```
 
 ## Queue
@@ -523,12 +572,46 @@ function QualityMenu() {
 
 ## Advanced
 
+### Custom State
+
+The store uses a simple state container by default. Provide a custom factory for
+framework-native reactivity:
+
+```ts
+import { createStore, createQueue } from '@videojs/store';
+
+// Default
+const store = createStore({
+  slices: [/* ... */],
+  queue: createQueue(),
+});
+
+// Custom
+const store = createStore({
+  slices: [/* ... */],
+  queue: createQueue(),
+  state: initial => new VueStateAdapter(initial),
+});
+```
+
+Custom state must match the `State` class interface, where `K` is `keyof T`:
+
+```ts
+class State<T> {
+  get value(): T;
+  set(key: K, value: T[K]): void;
+  patch(partial: Partial<T>): void;
+  subscribe(listener: (state: T) => void): () => void;
+  subscribeKeys(keys: K[], listener: (state: Pick<T, K>) => void): () => void;
+}
+```
+
 ### Capability Checking
 
 Slices can expose capability via state. UI components check before rendering.
 
 ```ts
-const qualitySlice = createSlice<Player>({
+const qualitySlice = createSlice<Media>({
   initialState: {
    supported: false ,
    levels: [],
@@ -630,7 +713,7 @@ const playbackSlice = createSlice<RNPlayer>(playbackDef, {
 
 ```ts
 createSlice<Target>({
-  initialState: { ... },
+  initialState: { /* ... */ },
 
   getSnapshot: ({ target, initialState }) => State,
   subscribe: ({ target, update, signal }) => void,
@@ -639,7 +722,8 @@ createSlice<Target>({
     name: handler,
     // or
     name: {
-      key?: string | ((input) => string | symbol),
+      key?: QueueKey | ((input) => QueueKey),
+      cancels?: QueueKey | QueueKey[] | ((input) => QueueKey | QueueKey[]),
       schedule?: Schedule,
       guard?: Guard | Guard[],
       handler: (input, ctx) => result,
@@ -653,7 +737,8 @@ createSlice<Target>({
 ```ts
 createStore({
   slices: Slice[],
-  queue?: Queue,
+  queue: Queue,
+  state?: (initial) => State,  // ← add
   onSetup?: ({ store, signal }) => void,
   onAttach?: ({ store, target, signal }) => void,
   onError?: ({ error, store }) => void,
@@ -696,6 +781,7 @@ interface Store {
 interface Queue {
   readonly queued: Map<key, { name, key }>;
   readonly pending: Map<key, PendingRequest>;
+  readonly destroyed: true;
 
   enqueue(task: Task): Promise<T>;
   dequeue(key): boolean;
@@ -709,32 +795,6 @@ interface Queue {
   abortAll(): void;
 
   destroy(): void;
-}
-```
-
-### Types
-
-```ts
-type Schedule = (flush: () => void) => (() => void) | void;
-
-type Guard<Target> = (ctx: {
-  target: Target;
-  signal: AbortSignal;
-}) => boolean | Promise<void>;
-
-interface RequestMeta<Context = unknown> {
-  source: string;
-  timestamp: number;
-  reason?: string;
-  context?: Context;
-}
-
-interface QueueTask<T> {
-  name: string;
-  key: string | symbol;
-  input?: unknown;
-  schedule?: Schedule;
-  handler: (ctx: { signal: AbortSignal }) => Promise<T>;
 }
 ```
 

@@ -12,9 +12,9 @@ export class RequestCancelledError extends StoreError {
   }
 }
 
-export class RequestSupersededError extends StoreError {
+export class RequestSupersededError extends RequestCancelledError {
   constructor() {
-    super('Request superseded by newer request');
+    super('Request superseded');
     this.name = 'RequestSupersededError';
   }
 }
@@ -35,4 +35,8 @@ export class GuardTimeoutError extends StoreError {
 
 export function isStoreError(error: unknown): error is StoreError {
   return error instanceof StoreError;
+}
+
+export function isRequestCancelledError(error: unknown): error is RequestCancelledError {
+  return error instanceof RequestCancelledError;
 }
