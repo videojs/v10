@@ -7,5 +7,7 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src"]
+  "references": [{ "path": "./src/dom" }],
+  "include": ["src"],
+  "exclude": ["src/dom"]
 }

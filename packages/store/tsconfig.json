@@ -7,5 +7,7 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src"]
+  "references": [{ "path": "./src/dom" }, { "path": "./src/react" }],
+  "include": ["src"],
+  "exclude": ["src/dom", "src/react"]
 }
