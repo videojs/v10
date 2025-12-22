@@ -316,27 +316,14 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  packages/dom:
+  packages/html:
     dependencies:
       '@videojs/core':
         specifier: workspace:*
         version: link:../core
-      '@videojs/utils':
+      '@videojs/store':
         specifier: workspace:*
-        version: link:../utils
-    devDependencies:
-      tsdown:
-        specifier: ^0.15.9
-        version: 0.15.12(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  packages/html:
-    dependencies:
-      '@videojs/dom':
-        specifier: workspace:*
-        version: link:../dom
+        version: link:../store
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils
@@ -359,9 +346,12 @@ importers:
 
   packages/react:
     dependencies:
-      '@videojs/dom':
+      '@videojs/core':
         specifier: workspace:*
-        version: link:../dom
+        version: link:../core
+      '@videojs/store':
+        specifier: workspace:*
+        version: link:../store
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils

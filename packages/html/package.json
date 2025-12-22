@@ -32,7 +32,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@videojs/dom": "workspace:*",
+    "@videojs/core": "workspace:*",
+    "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {

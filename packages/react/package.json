@@ -35,7 +35,8 @@
     "react": ">=16.8.0"
   },
   "dependencies": {
-    "@videojs/dom": "workspace:*",
+    "@videojs/core": "workspace:*",
+    "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
