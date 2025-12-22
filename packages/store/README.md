@@ -385,7 +385,7 @@ Compose guards:
 ```ts
 import { all, any } from '@videojs/store';
 
-const canPlay = any(canMediaPlay, canPlayMediaThrough);
+const canPlay = any(canMediaPlay, canMediaPlayThrough);
 const canSeek = all(hasMedia, canPlay);
 ```
 
