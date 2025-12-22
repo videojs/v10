@@ -626,10 +626,10 @@ const playbackSlice = createSlice<RNPlayer>(playbackDef, {
 
 ## API Reference
 
-### `createSlice<Target>()(config)`
+### `createSlice<Target>(config)`
 
 ```ts
-createSlice<Player>({
+createSlice<Target>({
   initialState: { ... },
 
   getSnapshot: ({ target, initialState }) => State,
