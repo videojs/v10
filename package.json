@@ -27,6 +27,7 @@
     "dev:site": "turbo run dev --filter=site",
     "dev:next": "turbo run dev --filter=next-demo...",
     "dev": "turbo run dev --parallel",
+    "dev:packages": "turbo run dev --parallel --filter=./packages/*",
     "generate:icons": "turbo run generate:icons",
     "lint": "eslint . --cache",
     "lint:fix": "eslint . --fix --cache",
