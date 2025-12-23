@@ -35,6 +35,11 @@ function isGated(actionName: string | undefined) {
  * - Access tokens SHOULD only be available server-side (context.locals)
  */
 export const onRequest = defineMiddleware(async (context, next) => {
+  // Middleware runs during build AND runtime. We only care about running this at runtime.
+  if (context.isPrerendered) {
+    return next();
+  }
+
   const { action } = getActionContext(context);
 
   const cookie = context.cookies.get(SESSION_COOKIE_NAME);
