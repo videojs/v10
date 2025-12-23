@@ -5,8 +5,6 @@ import { exchangeAuthorizationCode, INACTIVITY_EXPIRY, seal, SESSION_COOKIE_NAME
 /** Disable static pre-rendering - this endpoint requires runtime request handling */
 export const prerender = false;
 
-const { OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_REDIRECT_URI, OAUTH_URL } = import.meta.env;
-
 /**
  * OAuth 2.0 callback endpoint - handles the redirect from the authorization server
  *
@@ -17,6 +15,8 @@ const { OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_REDIRECT_URI, OAUTH_URL } = 
  * 4. Redirects to success or error page
  */
 export const GET: APIRoute = async ({ request, cookies, redirect }) => {
+  const { OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_REDIRECT_URI, OAUTH_URL } = import.meta.env;
+
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');

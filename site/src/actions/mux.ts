@@ -13,7 +13,7 @@ import { z } from 'astro:schema';
  */
 function getMuxClient(token: string | undefined) {
   if (!token) {
-    throw new Error('Authorization token is missing');
+    throw new ActionError({ code: 'UNAUTHORIZED' });
   }
 
   return new Mux({ authorizationToken: token, baseURL: import.meta.env.MUX_API_URL });

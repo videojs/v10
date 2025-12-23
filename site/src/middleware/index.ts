@@ -1,5 +1,6 @@
 import type { JWTPayload } from 'jose';
 import type { OAuthResponse } from '@/utils/auth';
+import { getActionContext } from 'astro:actions';
 import { defineMiddleware } from 'astro:middleware';
 import { jwtVerify } from 'jose';
 import { INACTIVITY_EXPIRY, JWKS, refreshToken, seal, SESSION_COOKIE_NAME, unseal } from '@/utils/auth';
@@ -9,6 +10,13 @@ interface UserJWT extends JWTPayload {
   name: string;
   email: string;
   email_verified: boolean;
+}
+
+// Block access to actions without authentication
+// https://docs.astro.build/en/guides/actions/#gate-actions-from-middleware
+function isGated(actionName: string | undefined) {
+  // I don't love the magic string nature of this pattern but it's what is recommended in the docs
+  return actionName && actionName.startsWith('mux');
 }
 
 /**
@@ -27,11 +35,17 @@ interface UserJWT extends JWTPayload {
  * - Access tokens SHOULD only be available server-side (context.locals)
  */
 export const onRequest = defineMiddleware(async (context, next) => {
+  const { action } = getActionContext(context);
+
   const cookie = context.cookies.get(SESSION_COOKIE_NAME);
   let verifiedSession: OAuthResponse | null = null;
 
   // No session cookie - proceed as unauthenticated user
   if (!cookie) {
+    if (isGated(action?.name)) {
+      return new Response('Invalid session. Please log in', { status: 401 });
+    }
+
     return next();
   }
 
@@ -84,6 +98,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
     console.error('Session error:', error);
     // Clear corrupted or invalid session
     context.cookies.delete(SESSION_COOKIE_NAME, { path: '/' });
+
+    if (isGated(action?.name)) {
+      return new Response('Invalid session. Please log in', { status: 401 });
+    }
   }
 
   return next();
