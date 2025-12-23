@@ -1,0 +1,26 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "env": [
+        "OAUTH_CLIENT_ID",
+        "OAUTH_CLIENT_SECRET",
+        "OAUTH_REDIRECT_URI",
+        "OAUTH_URL",
+        "MUX_API_URL",
+        "SESSION_COOKIE_PASSWORD"
+      ]
+    },
+    "dev": {
+      "env": [
+        "OAUTH_CLIENT_ID",
+        "OAUTH_CLIENT_SECRET",
+        "OAUTH_REDIRECT_URI",
+        "OAUTH_URL",
+        "MUX_API_URL",
+        "SESSION_COOKIE_PASSWORD"
+      ]
+    }
+  }
+}
