@@ -2,6 +2,15 @@ import Mux from '@mux/mux-node';
 import { ActionError, defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
 
+/**
+ * Creates an authenticated Mux API client
+ *
+ * Uses the access token from the user's session (provided by middleware)
+ * to authenticate requests to the Mux API.
+ *
+ * @param token - OAuth access token from user session
+ * @throws {Error} If token is missing or invalid
+ */
 function getMuxClient(token: string | undefined) {
   if (!token) {
     throw new Error('Authorization token is missing');
@@ -11,7 +20,16 @@ function getMuxClient(token: string | undefined) {
 }
 
 export const mux = {
-  // List all video assets with pagination
+  /**
+   * List video assets with pagination
+   *
+   * Fetches a paginated list of video assets from Mux.
+   * Requires an authenticated session with valid access token.
+   *
+   * @param limit - Number of assets per page (default: 25)
+   * @param page - Page number to fetch (default: 1)
+   * @returns Array of video asset objects
+   */
   listAssets: defineAction({
     input: z.object({
       limit: z.number().optional().default(25),
@@ -36,7 +54,15 @@ export const mux = {
     },
   }),
 
-  // Get a single asset by ID
+  /**
+   * Retrieve a single video asset by ID
+   *
+   * Fetches detailed information about a specific video asset.
+   * Requires an authenticated session with valid access token.
+   *
+   * @param id - The unique Mux asset ID
+   * @returns Video asset object with full details
+   */
   getAsset: defineAction({
     input: z.object({
       id: z.string(),
