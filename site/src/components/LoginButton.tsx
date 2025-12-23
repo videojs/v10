@@ -1,4 +1,5 @@
 import { actions } from 'astro:actions';
+
 import { useState } from 'react';
 
 export default function LoginButton() {
@@ -30,19 +31,39 @@ export default function LoginButton() {
         `width=${width},height=${height},left=${left},top=${top}`,
       );
 
-      if (!popup) {
-        throw new Error('Popup blocked. Please allow popups for this site.');
-      }
+      if (popup) {
+        // Track the popup check interval
+        let checkPopup: NodeJS.Timeout;
 
-      // Listen for the popup to close (authentication complete)
-      const checkPopup = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkPopup);
-          setLoading(false);
-          // Optionally reload the page or fetch user data
-          window.location.reload();
-        }
-      }, 500);
+        // Listen for messages from the popup (success notification)
+        const handleMessage = (event: MessageEvent) => {
+          if (event.origin !== window.location.origin) return;
+
+          if (event.data?.type === 'success') {
+            window.removeEventListener('message', handleMessage);
+            clearInterval(checkPopup);
+            setLoading(false);
+            // Reload the page to reflect the authenticated state
+            window.location.reload();
+          }
+        };
+
+        window.addEventListener('message', handleMessage);
+
+        // Also listen for the popup to close as a fallback
+        checkPopup = setInterval(() => {
+          if (popup?.closed) {
+            clearInterval(checkPopup);
+            window.removeEventListener('message', handleMessage);
+            setLoading(false);
+            // Reload the page to fetch user data
+            window.location.reload();
+          }
+        }, 500);
+      } else {
+        // Sorry, have to redirect you manually
+        window.location.href = authorizationUrl;
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setLoading(false);
