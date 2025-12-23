@@ -5,10 +5,10 @@ export const REQUEST_META: unique symbol = Symbol.for('@videojs/request');
 
 export interface RequestMeta<Context = unknown> {
   [REQUEST_META]: true;
-  source: string;
+  source?: string;
   timestamp?: number;
   reason?: string;
-  context: Context | undefined;
+  context?: Context | undefined;
 }
 
 export function createRequestMeta<Context = unknown>(

@@ -35,11 +35,13 @@
     "build": "tsdown",
     "build:watch": "tsdown --watch --silent",
     "dev": "pnpm run build:watch",
-    "test": "echo \"No tests yet\"",
+    "test": "vitest --run",
+    "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@videojs/utils": "workspace:*"
+    "@videojs/utils": "workspace:*",
+    "vitest": "^3.2.4"
   },
   "devDependencies": {
     "tsdown": "^0.15.9",

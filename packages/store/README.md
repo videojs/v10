@@ -20,11 +20,10 @@ npm install @videojs/store
 - **Write Path**: Send requests, coordinate execution, handle failures
 
 ```ts
-import { createStore, createSlice, createQueue } from '@videojs/store';
+import { createStore, createSlice } from '@videojs/store';
 
 const store = createStore({
   slices: [playbackSlice, audioSlice],
-  queue: createQueue(),
 });
 
 store.attach(videoElement); // <video>
@@ -54,7 +53,8 @@ store.attach(videoElement);
 A slice defines state, how to sync it from the target, and requests to modify the target.
 
 ```ts
-const audioSlice = createSlice<HTMLVideoElement, AudioState, AudioRequests>({
+// createSlice<Target>()() - curried form enables full type inference
+const audioSlice = createSlice<HTMLMediaElement>()({
   initialState: { volume: 1, muted: false },
 
   getSnapshot: ({ target }) => ({
@@ -66,15 +66,40 @@ const audioSlice = createSlice<HTMLVideoElement, AudioState, AudioRequests>({
     target.addEventListener('volumechange', () => update(), { signal });
   },
 
-  requests: {
-    setVolume(volume, { target }) {
+  request: {
+    setVolume(volume, { target, meta, signal }) {
       target.volume = volume;
     },
 
-    setMuted(muted, { target }) {
+    setMuted(muted, { target, meta, signal }) {
       target.muted = muted;
     },
   },
+});
+```
+
+### Explicit Types
+
+For shared type definitions, use `Request<Input, Output>`:
+
+```ts
+import type { Request } from '@videojs/store';
+import { createSlice } from '@videojs/store';
+
+interface AudioState {
+  volume: number;
+  muted: boolean;
+}
+
+interface AudioRequests {
+  setVolume: Request<number>; // (volume: number) => void
+  setMuted: Request<boolean>; // (muted: boolean) => void
+  play: Request; // () => void
+  getDuration: Request; // () => number
+}
+
+const audioSlice = createSlice<HTMLMediaElement, AudioState, AudioRequests>({
+  // Types enforced from interfaces
 });
 ```
 
@@ -83,7 +108,7 @@ const audioSlice = createSlice<HTMLVideoElement, AudioState, AudioRequests>({
 Requests are operations against the target. Use function shorthand for simple cases, or full config for guards and scheduling.
 
 ```ts
-requests: {
+request: {
   // Shorthand - just the handler
   setVolume(volume, { target }) {
     target.volume = volume;
@@ -146,17 +171,16 @@ The store composes slices and manages the target connection.
 ```ts
 const store = createStore({
   slices: [playbackSlice, audioSlice],
-  queue: createQueue(),
 
-  onSetup: ({ store, signal }) => {
+  onSetup: ({ store, queue, signal }) => {
     // Called when store is created
   },
 
-  onAttach: ({ store, target, signal }) => {
+  onAttach: ({ store, queue, target, signal }) => {
     // Called when target is attached
   },
 
-  onError: ({ error, store }) => {
+  onError: ({ error, queue, store }) => {
     // Global error handler
   },
 });
@@ -230,7 +254,7 @@ subscribe: ({ target, update, signal }) => {
 Requests with the same key coordinate together. Default key is the request name.
 
 ```ts
-requests: {
+request: {
   play: {
     key: 'playback',
     handler: async ({ target }) => { ... },
@@ -258,7 +282,7 @@ store.request.play(); // pause dropped, play queued
 Dynamic keys for parallel execution:
 
 ```ts
-requests: {
+request: {
   // Each call gets unique key - no coordination
   logEvent: {
     key: () => Symbol(),
@@ -279,7 +303,7 @@ Requests can cancel other in-flight requests by key. Cancellation happens immedi
 request is enqueued, before guards or scheduling.
 
 ```ts
-requests: {
+request: {
   stop: {
     cancel: ['seek', 'preload'],
     handler: ({ target }) => target.pause(),
@@ -296,7 +320,7 @@ optionally returns a cancel function. Default schedule is microtask (executes at
 import { delay } from '@videojs/store';
 import { frame, idle } from '@videojs/store/dom';
 
-requests: {
+request: {
   // Debounce 100ms - good for sliders
   setVolume: {
     schedule: delay(100),
@@ -333,7 +357,7 @@ Guards gate request execution. A guard returns truthy to proceed, falsy to cance
 ```ts
 import { timeout } from '@videojs/store';
 
-requests: {
+request: {
   seek: {
     guard: [hasMetadata, /* ... */],
     handler: (time, { target }) => {
@@ -374,37 +398,38 @@ const timedPlay = timeout(canMediaPlay, 5000);
 
 ## Queue
 
-The queue manages request execution. It's separate from the store and passed in at creation.
+A default queue is created automatically. Provide a custom queue for lifecycle hooks or custom
+scheduling:
 
 ```ts
 import { createQueue } from '@videojs/store';
 
-const queue = createQueue({
-  // Default scheduler for requests without schedule
-  scheduler: (flush) => queueMicrotask(flush),
-
-  // Lifecycle hooks
-  onDispatch: (request) => {
-    console.log('Started:', request.name);
-  },
-
-  onSettled: (request, { status, duration }) => {
-    analytics.track(request.name, {
-      status,
-      duration,
-    });
-  },
-});
-
 const store = createStore({
-  slices: [...],
-  queue,
+  slices: [/* ... */],
+  queue: createQueue({
+    // Default scheduler for requests without schedule
+    scheduler: flush => queueMicrotask(flush),
+
+    // Lifecycle hooks
+    onDispatch: (request) => {
+      console.log('Started:', request.name);
+    },
+
+    onSettled: (request, { status, duration }) => {
+      analytics.track(request.name, {
+        status,
+        duration,
+      });
+    },
+  }),
 });
 ```
 
 ### Queue API
 
 ```ts
+const queue = store.queue; // accessed on the store
+
 queue.queued; // requests waiting to execute
 queue.pending; // requests currently executing
 
@@ -420,7 +445,7 @@ queue.abortAll(); // abort all executing
 
 ### Direct Queue Usage
 
-Use the queue directly without a store:
+You can use the queue directly without a store:
 
 ```ts
 await queue.enqueue({
@@ -497,18 +522,16 @@ The store uses a simple state container by default. Provide a custom factory for
 framework-native reactivity:
 
 ```ts
-import { createStore, createQueue } from '@videojs/store';
+import { createStore } from '@videojs/store';
 
 // Default
 const store = createStore({
   slices: [/* ... */],
-  queue: createQueue(),
 });
 
 // Custom
 const store = createStore({
   slices: [/* ... */],
-  queue: createQueue(),
   state: initial => new VueStateAdapter(initial),
 });
 ```
@@ -579,147 +602,10 @@ function QualityMenu() {
 }
 ```
 
-### Slice Definitions
-
-For cross-platform scenarios, define the slice contract separately from implementation:
-
-```ts
-// Shared definition
-const playbackDef = defineSlice({
-  initialState: {
-   paused: true,
-   ended: false
-  },
-  requests: {
-    play: { key: 'playback' },
-    pause: { key: 'playback' },
-  },
-});
-
-// Web implementation
-const playbackSlice = createSlice<HTMLMediaElement>(playbackDef, {
-  getSnapshot: ({ target, initialState }) => { ... },
-  subscribe: ({ target, update, signal }) => { ... },
-  requests: {
-    play: {
-      async handler({ target, signal }) { ... },
-    },
-    pause: {
-      async handler({ target, signal }) { ... },
-    },
-  },
-});
-
-// React Native implementation
-const playbackSlice = createSlice<RNPlayer>(playbackDef, {
-  getSnapshot: ({ target, initialState }) => { ... },
-  subscribe: ({ target, update, signal }) => { ... },
-  requests: {
-    play: {
-      async handler({ target, signal }) { ... },
-    },
-    pause: {
-      async handler({ target, signal }) { ... },
-    },
-  },
-});
-```
-
-## API Reference
-
-### `createSlice<Target>(config)`
-
-```ts
-createSlice<Target>({
-  initialState: { /* ... */ },
-
-  getSnapshot: ({ target, initialState }) => State,
-  subscribe: ({ target, update, signal }) => void,
-
-  requests: {
-    name: handler,
-    // or
-    name: {
-      key?: QueueKey | ((input) => QueueKey),
-      cancel?: QueueKey | QueueKey[] | ((input) => QueueKey | QueueKey[]),
-      schedule?: Schedule,
-      guard?: Guard | Guard[],
-      handler: (input, ctx) => result,
-    },
-  },
-})
-```
-
-### `createStore(config)`
-
-```ts
-createStore({
-  slices: Slice[],
-  queue: Queue,
-  state?: (initial) => State,  // ← add
-  onSetup?: ({ store, signal }) => void,
-  onAttach?: ({ store, target, signal }) => void,
-  onError?: ({ error, store }) => void,
-})
-```
-
-### `createQueue(config)`
-
-```ts
-createQueue({
-  scheduler?: Schedule,
-  onDispatch?: (request) => void,
-  onSettled?: (request, { status, duration }) => void,
-})
-```
-
-### `Store`
-
-```ts
-interface Store {
-  readonly target: Target | null;
-  readonly state: State;
-  readonly request: Requests;
-  readonly queue?: Queue;
-  readonly slices: Slice[];
-  readonly destroyed: boolean;
-
-  attach(target: Target): () => void;
-
-  subscribe(listener: (state) => void): () => void;
-  subscribe(selector, listener): () => void;
-
-  destroy(): void;
-}
-```
-
-### `Queue`
-
-```ts
-interface Queue {
-  readonly queued: Map<key, { name, key }>;
-  readonly pending: Map<key, PendingRequest>;
-  readonly destroyed: true;
-
-  enqueue(task: Task): Promise<T>;
-  dequeue(key): boolean;
-
-  clear(): void;
-
-  flush(): void;
-  flush(key): void;
-
-  abort(key): void;
-  abortAll(): void;
-
-  destroy(): void;
-}
-```
-
 ## Exports
 
 ```md
-@videojs/store          # Core: createStore, createSlice, createQueue
+@videojs/store          # Core: createStore, createSlice, createQueue, Request
 @videojs/store/dom      # Guards, frame(), idle(), onEvent()
 @videojs/store/react    # useStore, useSlice, useRequest, usePending
 ```

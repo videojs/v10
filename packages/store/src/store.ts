@@ -1,69 +1,13 @@
 import type { RequestMeta } from './meta';
-import type { Queue, TaskTypes } from './queue';
-import type { InferSliceRequests, InferSliceState, InferSliceTaskTypes, ResolvedRequestConfig, Slice } from './slice';
+import type { TaskTypes } from './queue';
+import type { InferSliceRequests, InferSliceState, InferSliceTarget, InferTaskTypes, ResolvedRequestConfig, Slice } from './slice';
 import type { StateFactory } from './state';
 import { isNull } from '@videojs/utils';
 import { NoTargetError, RequestCancelledError, StoreError } from './errors';
 import { createRequestMeta, isRequestMeta } from './meta';
+import { Queue } from './queue';
 import { resolveRequestCancelKeys, resolveRequestKey } from './slice';
 import { State } from './state';
-
-// ----------------------------------------
-// Types
-// ----------------------------------------
-
-export interface StoreConfig<
-  Target,
-  Slices extends Slice<Target, any, any>[],
-  Tasks extends TaskTypes = InferStoreTasks<Slices>,
-> {
-  slices: Slices;
-  queue: Queue<Tasks>;
-  state?: StateFactory<InferStoreState<Slices>>;
-  onSetup?: (ctx: StoreSetupContext<Target, Slices, Tasks>) => void;
-  onAttach?: (ctx: StoreAttachContext<Target, Slices, Tasks>) => void;
-  onError?: (ctx: StoreErrorContext<Target, Slices, Tasks>) => void;
-}
-
-export interface StoreSetupContext<Target, Slices extends Slice<Target, any, any>[], Tasks extends TaskTypes> {
-  store: Store<Target, Slices, Tasks>;
-  signal: AbortSignal;
-}
-
-export interface StoreAttachContext<Target, Slices extends Slice<Target, any, any>[], Tasks extends TaskTypes> {
-  store: Store<Target, Slices, Tasks>;
-  target: Target;
-  signal: AbortSignal;
-}
-
-export interface StoreErrorContext<Target, Slices extends Slice<Target, any, any>[], Tasks extends TaskTypes> {
-  error: unknown;
-  store: Store<Target, Slices, Tasks>;
-}
-
-// ----------------------------------------
-// Type Inference
-// ----------------------------------------
-
-type UnionToIntersection<U> = (U extends any ? (x: U) => void : never) extends (x: infer I) => void
-  ? I
-  : never;
-
-export type InferStoreState<Slices extends Slice<any, any, any>[]> = UnionToIntersection<
-  InferSliceState<Slices[number]>
->;
-
-export type InferStoreRequests<Slices extends Slice<any, any, any>[]> = UnionToIntersection<
-  InferSliceRequests<Slices[number]>
->;
-
-export type InferStoreTasks<Slices extends Slice<any, any, any>[]> = UnionToIntersection<
-  InferSliceTaskTypes<Slices[number]>
-> & TaskTypes;
-
-// ----------------------------------------
-// Implementation
-// ----------------------------------------
 
 export class Store<
   Target,
@@ -85,7 +29,7 @@ export class Store<
   constructor(config: StoreConfig<Target, Slices, Tasks>) {
     this.#config = config;
     this.#slices = config.slices;
-    this.#queue = config.queue;
+    this.#queue = config.queue ?? new Queue<Tasks>();
 
     // Merge initial state
 
@@ -97,7 +41,11 @@ export class Store<
     this.#request = this.#buildRequestProxy();
 
     try {
-      config.onSetup?.({ store: this, signal: this.#setupAbort.signal });
+      config.onSetup?.({
+        queue: this.#queue,
+        store: this,
+        signal: this.#setupAbort.signal,
+      });
     } catch (error) {
       this.#handleError(error);
     }
@@ -160,7 +108,12 @@ export class Store<
     this.#syncAllSlices();
 
     try {
-      this.#config.onAttach?.({ store: this, target: newTarget, signal });
+      this.#config.onAttach?.({
+        store: this,
+        queue: this.#queue,
+        target: newTarget,
+        signal,
+      });
     } catch (error) {
       this.#handleError(error);
     }
@@ -274,7 +227,7 @@ export class Store<
     const configs = new Map<string, ResolvedRequestConfig<Target>>();
 
     for (const slice of this.#slices) {
-      for (const [name, config] of Object.entries(slice.requests)) {
+      for (const [name, config] of Object.entries(slice.request)) {
         configs.set(name, config as ResolvedRequestConfig<Target>);
       }
     }
@@ -377,7 +330,11 @@ export class Store<
   #handleError(error: unknown): void {
     if (this.#config.onError) {
       try {
-        this.#config.onError({ error, store: this });
+        this.#config.onError({
+          error,
+          queue: this.#queue,
+          store: this,
+        });
       } catch {
         console.error('[Store Error]', error);
       }
@@ -391,8 +348,64 @@ export class Store<
 // Factory
 // ----------------------------------------
 
-export function createStore<Target, Slices extends Slice<Target, any, any>[]>(
-  config: StoreConfig<Target, Slices, InferStoreTasks<Slices>>,
-): Store<Target, Slices, InferStoreTasks<Slices>> {
+export function createStore<Slices extends Slice<any, any, any>[]>(
+  config: StoreConfig<InferSliceTarget<Slices[number]>, Slices, InferStoreTasks<Slices>>,
+): Store<InferSliceTarget<Slices[number]>, Slices, InferStoreTasks<Slices>> {
   return new Store(config);
 }
+
+// ----------------------------------------
+// Types
+// ----------------------------------------
+
+export interface StoreConfig<
+  Target,
+  Slices extends Slice<Target, any, any>[],
+  Tasks extends TaskTypes = InferStoreTasks<Slices>,
+> {
+  slices: Slices;
+  queue?: Queue<Tasks>;
+  state?: StateFactory<InferStoreState<Slices>>;
+  onSetup?: (ctx: StoreSetupContext<Target, Slices, Tasks>) => void;
+  onAttach?: (ctx: StoreAttachContext<Target, Slices, Tasks>) => void;
+  onError?: (ctx: StoreErrorContext<Target, Slices, Tasks>) => void;
+}
+
+export interface StoreSetupContext<Target, Slices extends Slice<Target, any, any>[], Tasks extends TaskTypes> {
+  queue: Queue<Tasks>;
+  store: Store<Target, Slices, Tasks>;
+  signal: AbortSignal;
+}
+
+export interface StoreAttachContext<Target, Slices extends Slice<Target, any, any>[], Tasks extends TaskTypes> {
+  queue: Queue<Tasks>;
+  store: Store<Target, Slices, Tasks>;
+  target: Target;
+  signal: AbortSignal;
+}
+
+export interface StoreErrorContext<Target, Slices extends Slice<Target, any, any>[], Tasks extends TaskTypes> {
+  queue: Queue<Tasks>;
+  error: unknown;
+  store: Store<Target, Slices, Tasks>;
+}
+
+// ----------------------------------------
+// Type Inference
+// ----------------------------------------
+
+type UnionToIntersection<U> = (U extends any ? (x: U) => void : never) extends (x: infer I) => void
+  ? I
+  : never;
+
+export type InferStoreState<Slices extends Slice<any, any, any>[]> = UnionToIntersection<
+  InferSliceState<Slices[number]>
+>;
+
+export type InferStoreRequests<Slices extends Slice<any, any, any>[]> = UnionToIntersection<
+  InferSliceRequests<Slices[number]>
+>;
+
+export type InferStoreTasks<Slices extends Slice<any, any, any>[]> = UnionToIntersection<
+  InferTaskTypes<Slices[number]>
+> & TaskTypes;
