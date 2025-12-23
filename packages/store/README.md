@@ -98,7 +98,9 @@ requests: {
   // Full config when needed
   play: {
     key: 'playback',
-    guard: canPlay,
+    guard: [],
+    cancel: [],
+    // ...
     async handler({ target, signal }) {
       target.play();
       await onEvent(target, 'play', signal);
@@ -361,7 +363,7 @@ request is enqueued, before guards or scheduling.
 ```ts
 requests: {
   stop: {
-    cancels: ['seek', 'preload'],
+    cancel: ['seek', 'preload'],
     handler: ({ target }) => target.pause(),
   },
 }
@@ -411,18 +413,18 @@ requests: {
 Guards gate request execution. A guard returns truthy to proceed, falsy to cancel.
 
 ```ts
-import { all, any, timeout } from '@videojs/store';
+import { timeout } from '@videojs/store';
 
 requests: {
   seek: {
-    guard: [canMediaPlay, /* ... */],
+    guard: [hasMetadata, /* ... */],
     handler: (time, { target }) => {
       target.media.currentTime = time;
     },
   },
 
   play: {
-    guard: timeout(canMediaPlay, 5000),
+    guard: timeout(isTargetReady, 5000),
     handler: ({ target }) => target.media.play(),
   },
 }
@@ -434,7 +436,6 @@ requests: {
 import type { Guard } from '@videojs/store';
 
 const canMediaPlay: Guard<HTMLMediaElement> = ({ target, signal }) => {
-  if (!target) return false;
   if (target.readyState >= HAVE_ENOUGH_DATA) return true;
   return onEvent(target, 'canplay', signal); // wait for canplay
 };
@@ -683,7 +684,6 @@ const playbackSlice = createSlice<HTMLMediaElement>(playbackDef, {
   subscribe: ({ target, update, signal }) => { ... },
   requests: {
     play: {
-      guard: canMediaPlay,
       async handler({ target, signal }) { ... },
     },
     pause: {
@@ -723,7 +723,7 @@ createSlice<Target>({
     // or
     name: {
       key?: QueueKey | ((input) => QueueKey),
-      cancels?: QueueKey | QueueKey[] | ((input) => QueueKey | QueueKey[]),
+      cancel?: QueueKey | QueueKey[] | ((input) => QueueKey | QueueKey[]),
       schedule?: Schedule,
       guard?: Guard | Guard[],
       handler: (input, ctx) => result,

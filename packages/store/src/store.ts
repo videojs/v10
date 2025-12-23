@@ -2,6 +2,7 @@ import type { RequestMeta } from './meta';
 import type { Queue, TaskTypes } from './queue';
 import type { InferSliceRequests, InferSliceState, InferSliceTaskTypes, ResolvedRequestConfig, Slice } from './slice';
 import type { StateFactory } from './state';
+import { isNull } from '@videojs/utils';
 import { NoTargetError, RequestCancelledError, StoreError } from './errors';
 import { createRequestMeta, isRequestMeta } from './meta';
 import { resolveRequestCancelKeys, resolveRequestKey } from './slice';
@@ -185,6 +186,7 @@ export class Store<
   }
 
   #detach(): void {
+    if (isNull(this.target)) return;
     this.#attachAbort?.abort();
     this.#attachAbort = null;
     this.#target = null;
