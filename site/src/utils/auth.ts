@@ -31,9 +31,6 @@ export const INACTIVITY_EXPIRY = 60 * 60 * 24 * 2;
 /** Cookie name for encrypted session storage */
 export const SESSION_COOKIE_NAME = 'session';
 
-/** JSON Web Key Set for verifying JWT tokens */
-export const JWKS = createRemoteJWKSet(new URL(`${OAUTH_URL}/oauth2/jwks`));
-
 // =============================================================================
 // OAuth Token Management
 // =============================================================================
@@ -88,6 +85,17 @@ export async function exchangeAuthorizationCode(code: string): Promise<OAuthResp
   }
 
   return response.json();
+}
+
+/**
+ *  JSON Web Key Set for verifying JWT tokens - lazily initialized
+ */
+let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+export function getJWKS() {
+  if (!_jwks) {
+    _jwks = createRemoteJWKSet(new URL(`${OAUTH_URL}/oauth2/jwks`));
+  }
+  return _jwks;
 }
 
 // =============================================================================

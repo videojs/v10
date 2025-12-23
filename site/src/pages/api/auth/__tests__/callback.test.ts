@@ -10,7 +10,6 @@ vi.mock('@/utils/auth', () => ({
   seal: vi.fn(),
   SESSION_COOKIE_NAME: 'session',
   INACTIVITY_EXPIRY: 300,
-  JWKS: 'https://auth.example.com',
 }));
 
 const mockOAuthResponse = {
