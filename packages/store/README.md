@@ -223,88 +223,6 @@ subscribe: ({ target, update, signal }) => {
 }
 ```
 
-## Multiple Targets
-
-Targets can contain multiple references. Useful when adapting to different systems.
-
-```ts
-interface Media {
-  media: HTMLMediaElement;
-  hls?: Hls;
-  dash?: DashJS;
-}
-
-// Attach based on source type
-function loadSource(source: Source) {
-  if (source.type === 'native') {
-    videoElement.src = source.url;
-    store.attach({ media: videoElement });
-  }
-
-  if (source.type === 'hls') {
-    const hls = new Hls();
-    hls.attachMedia(videoElement);
-    hls.loadSource(source.url);
-    store.attach({ media: videoElement, hls });
-  }
-
-  if (source.type === 'dash') {
-    const dash = dashjs.MediaPlayer().create();
-    dash.initialize(videoElement, source.url, false);
-    store.attach({ media: videoElement, dash });
-  }
-}
-```
-
-Slices adapt to what's available:
-
-```ts
-const qualitySlice = createSlice<Media, QualityState, QualityRequests>({
-  initialState: {
-    levels: [],
-    currentLevel: -1
-  },
-
-  getSnapshot: ({ target, initialState }) => {
-    if (target.hls) {
-      return {
-        levels: target.hls.levels,
-        currentLevel: target.hls.currentLevel,
-      };
-    }
-
-    if (target.dash) {
-      return {
-        levels: target.dash.getBitrateInfoListFor('video'),
-        currentLevel: target.dash.getQualityFor('video'),
-      };
-    }
-
-    return initialState;
-  },
-
-  subscribe: ({ target, update, signal }) => {
-    if (target.hls) {
-      target.hls.on(Hls.Events.LEVEL_SWITCHED, update);
-      signal.addEventListener('abort', () => {
-        target.hls?.off(Hls.Events.LEVEL_SWITCHED, update);
-      });
-    }
-
-    if (target.dash) {
-      // dash subscription...
-    }
-  },
-
-  requests: {
-    setLevel(level, { target }) {
-      if (target.hls) target.hls.currentLevel = level;
-      if (target.dash) target.dash.setQualityFor('video', level);
-    },
-  },
-});
-```
-
 ## Request Configuration
 
 ### Keys
@@ -620,15 +538,15 @@ const qualitySlice = createSlice<Media>({
  },
 
   getSnapshot: ({ target, initialState }) => {
-    if (target.hls) {
+    if (target.canSetVideoQuality) {
       return {
         supported: true,
-        levels: target.hls.levels,
-        currentLevel: target.hls.currentLevel,
+        levels: target.levels,
+        currentLevel: target.currentLevel,
       };
     }
 
-    return initialState;  // supported: false
+    return initialState; // supported: false
   },
 
   // ...
