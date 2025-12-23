@@ -3,7 +3,7 @@ import type { OAuthResponse } from '@/utils/auth';
 import { getActionContext } from 'astro:actions';
 import { defineMiddleware } from 'astro:middleware';
 import { jwtVerify } from 'jose';
-import { INACTIVITY_EXPIRY, JWKS, refreshToken, seal, SESSION_COOKIE_NAME, unseal } from '@/utils/auth';
+import { getJWKS, INACTIVITY_EXPIRY, refreshToken, seal, SESSION_COOKIE_NAME, unseal } from '@/utils/auth';
 
 /** JWT payload structure from the OAuth ID token */
 interface UserJWT extends JWTPayload {
@@ -55,19 +55,20 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   try {
+    const jwks = getJWKS();
     // Decrypt the session from the encrypted cookie
     const currentSession = await unseal<OAuthResponse>(cookie.value);
 
     try {
       // Verify the access token is still valid using JWKS
-      await jwtVerify(currentSession.access_token, JWKS);
+      await jwtVerify(currentSession.access_token, jwks);
       verifiedSession = currentSession;
     } catch {
       // Access token expired - refresh it using the refresh token
       const newSession = await refreshToken(currentSession.refresh_token);
 
       // Verify the new access token is valid
-      await jwtVerify(newSession.access_token, JWKS);
+      await jwtVerify(newSession.access_token, jwks);
 
       // Encrypt and store the new session
       const encryptedSession = await seal<OAuthResponse>(newSession);
@@ -86,7 +87,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // Verify ID token signature and extract user information
     const { payload: user } = await jwtVerify<UserJWT>(
       verifiedSession.id_token,
-      JWKS,
+      jwks,
     );
 
     // Populate Astro context with user information (safe for rendering)
