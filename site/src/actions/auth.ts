@@ -16,10 +16,8 @@ export const auth = {
    */
   initiateLogin: defineAction({
     handler: async (_input, ctx) => {
-      const redirectUri = OAUTH_REDIRECT_URI ?? `${import.meta.env.BASE_URL}/api/auth/callback`;
-
       // Validate required OAuth configuration
-      if (!OAUTH_CLIENT_ID || !redirectUri || !OAUTH_URL) {
+      if (!OAUTH_CLIENT_ID || !OAUTH_REDIRECT_URI || !OAUTH_URL) {
         throw new ActionError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'OAuth configuration missing',
@@ -32,7 +30,7 @@ export const auth = {
       // Build OAuth 2.0 authorization URL with required parameters
       const params = new URLSearchParams({
         client_id: OAUTH_CLIENT_ID,
-        redirect_uri: redirectUri,
+        redirect_uri: OAUTH_REDIRECT_URI,
         response_type: 'code',
         scope: 'openid profile email offline_access',
         state,
