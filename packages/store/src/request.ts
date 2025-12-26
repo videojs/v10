@@ -52,7 +52,7 @@ export type RequestCancel<Input = unknown>
 /**
  * Request handler function.
  */
-export type RequestHandler<Target, Input, Output>
+export type RequestHandler<Target, Input = unknown, Output = unknown>
   = (input: Input, ctx: RequestContext<Target>) => Output | Promise<Output>;
 
 /**

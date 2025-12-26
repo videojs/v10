@@ -1,4 +1,4 @@
-import type { RequestConfig, RequestConfigMap, RequestHandler, RequestRecord, ResolvedRequestConfigMap, ResolveRequestHandler, ResolveRequestMap } from './request';
+import type { Request, RequestConfig, RequestConfigMap, RequestHandler, RequestRecord, ResolvedRequestConfigMap, ResolveRequestHandler, ResolveRequestMap } from './request';
 import { resolveRequests } from './request';
 
 // ----------------------------------------
@@ -103,13 +103,13 @@ export function createSlice<Target>(): SliceFactory<Target>;
 export function createSlice<
   Target,
   State extends object,
-  Requests extends RequestRecord,
+  Requests extends { [K in keyof Requests]: Request<any, any> },
 >(config: SliceConfig<Target, State, Requests>): Slice<Target, State, Requests>;
 
 export function createSlice<
   Target,
   State extends object = any,
-  Requests extends RequestRecord = any,
+  Requests extends { [K in keyof Requests]: Request<any, any> } = any,
 >(
   config?: SliceConfig<Target, State, Requests>,
 ): Slice<Target, State, Requests> | SliceFactory<Target> {
