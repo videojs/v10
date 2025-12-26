@@ -362,6 +362,7 @@ describe('store', () => {
       expect(onError).toHaveBeenCalledWith({
         error: expect.any(Error),
         store,
+        queue: store.queue,
       });
     });
   });

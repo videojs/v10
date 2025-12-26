@@ -26,6 +26,13 @@ export class NoTargetError extends StoreError {
   }
 }
 
+export class GuardRejectedError extends StoreError {
+  constructor(public guard: string) {
+    super(`Guard rejected: ${guard}`);
+    this.name = 'GuardRejectedError';
+  }
+}
+
 export class GuardTimeoutError extends StoreError {
   constructor(public guard: string) {
     super(`Guard timed out: ${guard}`);

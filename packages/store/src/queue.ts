@@ -15,16 +15,6 @@ export type QueueKey<T = string | symbol> = T & (string | symbol);
 export type Schedule = (flush: () => void) => (() => void) | void;
 
 /**
- * Delay execution by ms. Resets on each new request.
- */
-export function delay(ms: number): Schedule {
-  return (flush) => {
-    const id = setTimeout(flush, ms);
-    return () => clearTimeout(id);
-  };
-}
-
-/**
  * Map of task key -> input/output types.
  */
 export type TaskTypes = {
@@ -87,7 +77,9 @@ export interface QueueConfig<Tasks extends TaskTypes = DefaultTaskTypes> {
   ) => void;
   onSettled?: <K extends keyof Tasks>(
     request: PendingRequest<QueueKey<K>, Tasks[K]['input']>,
-    result: { status: 'success' | 'error' | 'cancelled'; duration: number },
+    result: { status: 'success'; duration: number; result: Tasks[K]['output'] }
+      | { status: 'cancelled'; error: unknown; duration: number }
+      | { status: 'error'; error: unknown; duration: number },
   ) => void;
 }
 
@@ -115,15 +107,42 @@ export interface QueuedTask<Key extends QueueKey = QueueKey> {
 }
 
 // ----------------------------------------
-// Implementation
+// Schedulers
 // ----------------------------------------
 
 /**
- * Default scheduler.
+ * Default scheduler, delay to next microtask.
+ *
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide}
  */
-const microtask: Schedule = (flush) => {
-  queueMicrotask(flush);
+export const microtask: Schedule = (flush) => {
+  let cancelled = false;
+
+  queueMicrotask(() => {
+    if (!cancelled) flush();
+  });
+
+  return () => {
+    cancelled = true;
+  };
 };
+
+/**
+ * Delay execution by ms. Resets on each new request.
+ *
+ * @param ms - Milliseconds to delay
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout}
+ */
+export function delay(ms: number): Schedule {
+  return (flush) => {
+    const id = setTimeout(flush, ms);
+    return () => clearTimeout(id);
+  };
+}
+
+// ----------------------------------------
+// Implementation
+// ----------------------------------------
 
 export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
   readonly #scheduler: Schedule;
@@ -140,25 +159,19 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
     this.#scheduler = config.scheduler ?? microtask;
 
     // Wrap callbacks to catch errors and prevent breaking queue/scheduler
-    this.#onDispatch = config.onDispatch
-      ? (...args) => {
-          try {
-            config.onDispatch!(...args);
-          } catch (e) {
-            console.error(e);
-          }
+    const safeCallback = <Args extends [PendingRequest, ...unknown[]]>(callback: ((...args: Args) => unknown) | undefined) => {
+      if (!callback) return undefined;
+      return (...args: Args) => {
+        try {
+          callback(...args);
+        } catch (e) {
+          console.error('[vjs-queue]', e);
         }
-      : undefined;
+      };
+    };
 
-    this.#onSettled = config.onSettled
-      ? (...args) => {
-          try {
-            config.onSettled!(...args);
-          } catch (e) {
-            console.error(e);
-          }
-        }
-      : undefined;
+    this.#onDispatch = safeCallback(config.onDispatch);
+    this.#onSettled = safeCallback(config.onSettled);
   }
 
   get queued(): ReadonlyMap<QueueKey<keyof Tasks>, QueuedTask<QueueKey<keyof Tasks>>> {
@@ -201,10 +214,8 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
     this.#pending.get(key)?.abort.abort();
 
     return new Promise<Tasks[K]['output']>((resolve, reject) => {
-      let flushed = false;
-
       const request: QueuedRequest = {
-        id: Symbol('request'),
+        id: Symbol('@videojs/request'),
         name,
         key,
         input,
@@ -219,6 +230,8 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
 
       try {
         const scheduleFlush = schedule ?? this.#scheduler;
+
+        let flushed = false;
 
         // Guard against multiple flushes
         const safeFlush = () => {
@@ -242,7 +255,6 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
 
   dequeue<K extends QueueKey<keyof Tasks>>(key: K): boolean {
     const queued = this.#queued.get(key);
-
     if (!queued) return false;
 
     queued.invalidate?.();
@@ -261,19 +273,17 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
     this.#queued.clear();
   }
 
-  flush(): void;
-  flush<K extends QueueKey<keyof Tasks>>(key: K): void;
-  flush(key?: QueueKey): void {
+  flush(): Promise<void>;
+  flush<K extends QueueKey<keyof Tasks>>(key: K): Promise<void>;
+  async flush(key?: QueueKey): Promise<void> {
     if (!isUndefined(key)) {
-      this.#flushKey(key);
+      await this.#flushKey(key);
       return;
     }
 
     // Flush all
     const keys = [...this.#queued.keys()];
-    for (const k of keys) {
-      this.#flushKey(k);
-    }
+    await Promise.allSettled(keys.map(k => this.#flushKey(k)));
   }
 
   abort<K extends QueueKey<keyof Tasks>>(key: K, reason = 'Aborted'): void {
@@ -311,18 +321,25 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
     this.#epochs.clear();
   }
 
-  #flushKey(key: QueueKey): void {
+  async #flushKey(key: QueueKey): Promise<void> {
     if (this.#destroyed) return;
 
     const request = this.#queued.get(key);
     if (!request) return;
 
     this.#queued.delete(key);
-    this.#executeNow(request);
+
+    await this.#executeNow(request);
   }
 
   async #executeNow(request: QueuedRequest): Promise<void> {
     const { id, name, key, input, epoch, handler, resolve, reject } = request;
+
+    // Check if still valid (might have been superseded)
+    if (this.#epochs.get(key) !== epoch) {
+      reject(new RequestSupersededError());
+      return;
+    }
 
     const abort = new AbortController();
     const startedAt = Date.now();
@@ -337,20 +354,7 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
       abort,
     };
 
-    // Check if still valid (might have been superseded)
-    if (this.#epochs.get(key) !== epoch) {
-      reject(new RequestSupersededError());
-
-      this.#onSettled?.(pending, {
-        status: 'cancelled',
-        duration: Date.now() - startedAt,
-      });
-
-      return;
-    }
-
     this.#pending.set(key, pending);
-
     this.#onDispatch?.(pending);
 
     try {
@@ -361,21 +365,23 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
         throw new RequestSupersededError();
       }
 
+      resolve(result);
+
       this.#onSettled?.(pending, {
         status: 'success',
         duration: Date.now() - startedAt,
+        result,
       });
-
-      resolve(result);
     } catch (error) {
+      reject(error);
+
       const cancelled = abort.signal.aborted;
 
       this.#onSettled?.(pending, {
         status: cancelled ? 'cancelled' : 'error',
         duration: Date.now() - startedAt,
+        error,
       });
-
-      reject(error);
     } finally {
       // Only remove if we're still the pending request for this key
       if (this.#pending.get(key) === pending) {
@@ -389,6 +395,10 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
     }
   }
 }
+
+// ----------------------------------------
+// Factory
+// ----------------------------------------
 
 /**
  * Create a queue for managing request execution.

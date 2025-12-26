@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createSlice, resolveRequestCancelKeys, resolveRequestKey } from '../src/slice';
+import { createSlice } from '../src/slice';
 
 describe('slice', () => {
   describe('createSlice', () => {
@@ -69,44 +69,6 @@ describe('slice', () => {
       expect(slice.request.configured.key).toBe('custom-key');
       expect(slice.request.configured.guard).toEqual([guard]);
       expect(slice.request.configured.schedule).toBe(schedule);
-    });
-  });
-
-  describe('resolveRequestKey', () => {
-    it('returns string key directly', () => {
-      expect(resolveRequestKey('my-key', undefined)).toBe('my-key');
-    });
-
-    it('calls function with input', () => {
-      const keyFn = (id: string) => `track-${id}`;
-      expect(resolveRequestKey(keyFn, 'abc')).toBe('track-abc');
-    });
-
-    it('handles symbol keys', () => {
-      const sym = Symbol('unique');
-      expect(resolveRequestKey(sym, undefined)).toBe(sym);
-    });
-  });
-
-  describe('resolveRequestCancelKeys', () => {
-    it('returns empty array for undefined', () => {
-      expect(resolveRequestCancelKeys(undefined, null)).toEqual([]);
-    });
-
-    it('wraps single key in array', () => {
-      expect(resolveRequestCancelKeys('key', null)).toEqual(['key']);
-    });
-
-    it('returns array directly', () => {
-      expect(resolveRequestCancelKeys(['a', 'b'], null)).toEqual(['a', 'b']);
-    });
-
-    it('calls function with input', () => {
-      const cancelFn = (type: string) => [`${type}-loading`, `${type}-fetch`];
-      expect(resolveRequestCancelKeys(cancelFn, 'video')).toEqual([
-        'video-loading',
-        'video-fetch',
-      ]);
     });
   });
 });

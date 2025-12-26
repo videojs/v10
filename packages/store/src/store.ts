@@ -1,12 +1,11 @@
-import type { RequestMeta } from './meta';
-import type { TaskTypes } from './queue';
-import type { InferSliceRequests, InferSliceState, InferSliceTarget, InferTaskTypes, ResolvedRequestConfig, Slice } from './slice';
+import type { PendingRequest, TaskTypes } from './queue';
+import type { InferRequestHandler, Request, RequestMeta, ResolvedRequestConfig } from './request';
+import type { InferSliceState, InferSliceTarget, Slice } from './slice';
 import type { StateFactory } from './state';
 import { isNull } from '@videojs/utils';
-import { NoTargetError, RequestCancelledError, StoreError } from './errors';
-import { createRequestMeta, isRequestMeta } from './meta';
+import { GuardRejectedError, NoTargetError, RequestCancelledError, StoreError } from './errors';
 import { Queue } from './queue';
-import { resolveRequestCancelKeys, resolveRequestKey } from './slice';
+import { createRequestMeta, isRequestMeta, resolveRequestCancelKeys, resolveRequestKey } from './request';
 import { State } from './state';
 
 export class Store<
@@ -29,9 +28,14 @@ export class Store<
   constructor(config: StoreConfig<Target, Slices, Tasks>) {
     this.#config = config;
     this.#slices = config.slices;
-    this.#queue = config.queue ?? new Queue<Tasks>();
 
-    // Merge initial state
+    this.#queue = config.queue ?? new Queue<Tasks>({
+      onSettled: (request, result) => {
+        if (result.status === 'error') {
+          this.#handleError({ request, error: result.error });
+        }
+      },
+    });
 
     // Use provided factory or default
     const factory = config.state ?? (initial => new State(initial));
@@ -42,12 +46,11 @@ export class Store<
 
     try {
       config.onSetup?.({
-        queue: this.#queue,
         store: this,
         signal: this.#setupAbort.signal,
       });
     } catch (error) {
-      this.#handleError(error);
+      this.#handleError({ error });
     }
   }
 
@@ -101,7 +104,7 @@ export class Store<
         const update = this.#createUpdate(slice);
         slice.subscribe({ target: newTarget, update, signal });
       } catch (error) {
-        this.#handleError(error);
+        this.#handleError({ error });
       }
     }
 
@@ -110,12 +113,11 @@ export class Store<
     try {
       this.#config.onAttach?.({
         store: this,
-        queue: this.#queue,
         target: newTarget,
         signal,
       });
     } catch (error) {
-      this.#handleError(error);
+      this.#handleError({ error });
     }
 
     return () => this.#detach();
@@ -133,13 +135,13 @@ export class Store<
           this.#state.patch(partial as Partial<InferStoreState<Slices>>);
         }
       } catch (error) {
-        this.#handleError(error);
+        this.#handleError({ error });
       }
     };
   }
 
   #detach(): void {
-    if (isNull(this.target)) return;
+    if (isNull(this.#target)) return;
     this.#attachAbort?.abort();
     this.#attachAbort = null;
     this.#target = null;
@@ -201,7 +203,7 @@ export class Store<
 
       this.#state.patch(snapshot);
     } catch (error) {
-      this.#handleError(error);
+      this.#handleError({ error });
     }
   }
 
@@ -307,7 +309,7 @@ export class Store<
         const result = await guard({ target, signal });
 
         if (!result) {
-          throw new RequestCancelledError('Guard rejected');
+          throw new GuardRejectedError('Guard rejected');
         }
       }
 
@@ -327,19 +329,11 @@ export class Store<
   // Errors
   // ----------------------------------------
 
-  #handleError(error: unknown): void {
+  #handleError(context: Omit<StoreErrorContext<Target, Slices, Tasks>, 'store'>): void {
     if (this.#config.onError) {
-      try {
-        this.#config.onError({
-          error,
-          queue: this.#queue,
-          store: this,
-        });
-      } catch {
-        console.error('[Store Error]', error);
-      }
+      this.#config.onError({ ...context, store: this });
     } else {
-      console.error('[Store Error]', error);
+      console.error('[vjs-store]', context.error);
     }
   }
 }
@@ -372,20 +366,18 @@ export interface StoreConfig<
 }
 
 export interface StoreSetupContext<Target, Slices extends Slice<Target, any, any>[], Tasks extends TaskTypes> {
-  queue: Queue<Tasks>;
   store: Store<Target, Slices, Tasks>;
   signal: AbortSignal;
 }
 
 export interface StoreAttachContext<Target, Slices extends Slice<Target, any, any>[], Tasks extends TaskTypes> {
-  queue: Queue<Tasks>;
   store: Store<Target, Slices, Tasks>;
   target: Target;
   signal: AbortSignal;
 }
 
 export interface StoreErrorContext<Target, Slices extends Slice<Target, any, any>[], Tasks extends TaskTypes> {
-  queue: Queue<Tasks>;
+  request?: PendingRequest;
   error: unknown;
   store: Store<Target, Slices, Tasks>;
 }
@@ -402,10 +394,28 @@ export type InferStoreState<Slices extends Slice<any, any, any>[]> = UnionToInte
   InferSliceState<Slices[number]>
 >;
 
-export type InferStoreRequests<Slices extends Slice<any, any, any>[]> = UnionToIntersection<
-  InferSliceRequests<Slices[number]>
->;
+// Requests: merge by key, avoid intersecting functions
+export type InferStoreRequests<Slices extends Slice<any, any, any>[]> = {
+  [K in RequestNames<Slices[number]>]: RequestFnFor<Slices[number], K>;
+};
 
-export type InferStoreTasks<Slices extends Slice<any, any, any>[]> = UnionToIntersection<
-  InferTaskTypes<Slices[number]>
-> & TaskTypes;
+type RequestNames<S> = S extends Slice<any, any, infer R> ? keyof R & string : never;
+
+type RequestFnFor<S, K extends string> = S extends Slice<any, any, infer R>
+  ? K extends keyof R
+    ? InferRequestHandler<R[K]>
+    : never
+  : never;
+
+// Tasks: merge by key, avoid intersecting functions
+export type InferStoreTasks<Slices extends Slice<any, any, any>[]> = {
+  [K in RequestNames<Slices[number]>]: TaskTypeFor<Slices[number], K>;
+} & TaskTypes;
+
+type TaskTypeFor<S, K extends string> = S extends Slice<any, any, infer R>
+  ? K extends keyof R
+    ? R[K] extends Request<infer I, infer O>
+      ? { input: I; output: O }
+      : { input: unknown; output: unknown }
+    : never
+  : never;

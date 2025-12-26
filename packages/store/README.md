@@ -172,15 +172,15 @@ The store composes slices and manages the target connection.
 const store = createStore({
   slices: [playbackSlice, audioSlice],
 
-  onSetup: ({ store, queue, signal }) => {
+  onSetup: ({ store, signal }) => {
     // Called when store is created
   },
 
-  onAttach: ({ store, queue, target, signal }) => {
+  onAttach: ({ store, target, signal }) => {
     // Called when target is attached
   },
 
-  onError: ({ error, queue, store }) => {
+  onError: ({ error, store }) => {
     // Global error handler
   },
 });
@@ -223,7 +223,7 @@ Subscribe to specific keys for high-frequency updates:
 
 ```ts
 // Only fires when currentTime changes
-store.subscribe(['currentTime'], (state, changedKeys) => {
+store.subscribe(['currentTime'], (state) => {
   updatedTime(state.currentTime);
 });
 
@@ -394,6 +394,31 @@ const ready = any(canMediaPlay, canMediaPlayThrough);
 
 // Reject if guard doesn't resolve in time
 const timedPlay = timeout(canMediaPlay, 5000);
+```
+
+## Error Handling
+
+Catch errors locally via the promise, or globally via `onError`:
+
+```ts
+// 1. Global Error Handling
+const store = createStore({
+  slices: [playbackSlice],
+  onError: ({ error, request }) => {
+    if (request) {
+      console.error(`${request.name} failed`);
+    }
+
+    console.error(error);
+  },
+});
+
+// 2. Local Error Handling
+try {
+  await store.request.play();
+} catch (error) {
+  // ...
+}
 ```
 
 ## Queue
