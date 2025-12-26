@@ -6,25 +6,13 @@ import { createStore } from '../src/store';
 
 describe('store', () => {
   // Mock target that mimics HTMLVideoElement
-  interface MockMedia {
-    volume: number;
-    muted: boolean;
-    paused: boolean;
-    addEventListener: ReturnType<typeof vi.fn>;
-    removeEventListener: ReturnType<typeof vi.fn>;
-    play: ReturnType<typeof vi.fn>;
-    pause: ReturnType<typeof vi.fn>;
+  class MockMedia extends EventTarget {
+    volume = 1;
+    muted = false;
+    paused = true;
+    play = vi.fn();
+    pause = vi.fn();
   }
-
-  const createMockMedia = (): MockMedia => ({
-    volume: 1,
-    muted: false,
-    paused: true,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    play: vi.fn(),
-    pause: vi.fn(),
-  });
 
   const audioSlice = createSlice<MockMedia>()({
     initialState: { volume: 1, muted: false },
@@ -42,9 +30,11 @@ describe('store', () => {
     request: {
       setVolume: (volume: number, { target }) => {
         target.volume = volume;
+        target.dispatchEvent(new Event('volumechange'));
       },
       setMuted: (muted: boolean, { target }) => {
         target.muted = muted;
+        target.dispatchEvent(new Event('volumechange'));
       },
     },
   });
@@ -56,14 +46,14 @@ describe('store', () => {
     request: {
       play: {
         key: 'playback',
-        async handler({ target }) {
+        async handler(_, { target }) {
           target.play();
           target.paused = false;
         },
       },
       pause: {
         key: 'playback',
-        async handler({ target }) {
+        async handler(_, { target }) {
           target.pause();
           target.paused = true;
         },
@@ -123,7 +113,7 @@ describe('store', () => {
         slices: [audioSlice],
       });
 
-      const media = createMockMedia();
+      const media = new MockMedia();
       media.volume = 0.5;
       media.muted = true;
 
@@ -140,7 +130,7 @@ describe('store', () => {
         onAttach,
       });
 
-      const media = createMockMedia();
+      const media = new MockMedia();
       store.attach(media);
 
       expect(onAttach).toHaveBeenCalledWith({
@@ -155,10 +145,12 @@ describe('store', () => {
         slices: [audioSlice],
       });
 
-      const media = createMockMedia();
+      const media = new MockMedia();
+      const addListenerSpy = vi.spyOn(media, 'addEventListener');
+
       store.attach(media);
 
-      expect(media.addEventListener).toHaveBeenCalledWith(
+      expect(addListenerSpy).toHaveBeenCalledWith(
         'volumechange',
         expect.any(Function),
       );
@@ -169,12 +161,14 @@ describe('store', () => {
         slices: [audioSlice],
       });
 
-      const media = createMockMedia();
+      const media = new MockMedia();
+      const removeListenerSpy = vi.spyOn(media, 'removeEventListener');
+
       const detach = store.attach(media);
       detach();
 
       expect(store.target).toBeNull();
-      expect(media.removeEventListener).toHaveBeenCalled();
+      expect(removeListenerSpy).toHaveBeenCalled();
     });
 
     it('reattach cleans up previous', () => {
@@ -182,8 +176,11 @@ describe('store', () => {
         slices: [audioSlice],
       });
 
-      const media1 = createMockMedia();
-      const media2 = createMockMedia();
+      const media1 = new MockMedia();
+      const m1RemoveListenerSpy = vi.spyOn(media1, 'removeEventListener');
+
+      const media2 = new MockMedia();
+
       media2.volume = 0.3;
 
       store.attach(media1);
@@ -191,7 +188,7 @@ describe('store', () => {
 
       expect(store.target).toBe(media2);
       expect(store.state.volume).toBe(0.3);
-      expect(media1.removeEventListener).toHaveBeenCalled();
+      expect(m1RemoveListenerSpy).toHaveBeenCalled();
     });
   });
 
@@ -201,7 +198,7 @@ describe('store', () => {
         slices: [audioSlice],
       });
 
-      const media = createMockMedia();
+      const media = new MockMedia();
       store.attach(media);
 
       await store.request.setVolume(0.5);
@@ -212,6 +209,7 @@ describe('store', () => {
     it('throws NoTargetError without target', async () => {
       const store = createStore({
         slices: [audioSlice],
+        onError: () => {}, // silence errors
       });
 
       await expect(store.request.setVolume(0.5)).rejects.toThrow(NoTargetError);
@@ -220,9 +218,10 @@ describe('store', () => {
     it('coordinates requests with same key', async () => {
       const store = createStore({
         slices: [playbackSlice],
+        onError: () => {}, // silence errors
       });
 
-      const media = createMockMedia();
+      const media = new MockMedia();
       store.attach(media);
 
       const playPromise = store.request.play();
@@ -254,9 +253,12 @@ describe('store', () => {
         slices: [slice],
       });
 
-      store.attach(createMockMedia());
+      store.attach(new MockMedia());
 
-      await store.request.action({ source: 'user', reason: 'test' });
+      await store.request.action(null, {
+        source: 'user',
+        reason: 'test',
+      });
 
       expect(handlerSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -273,7 +275,7 @@ describe('store', () => {
         slices: [audioSlice],
       });
 
-      const media = createMockMedia();
+      const media = new MockMedia();
       store.attach(media);
 
       const listener = vi.fn();
@@ -291,7 +293,7 @@ describe('store', () => {
         slices: [audioSlice],
       });
 
-      const media = createMockMedia();
+      const media = new MockMedia();
       store.attach(media);
 
       const volumeListener = vi.fn();
@@ -314,7 +316,7 @@ describe('store', () => {
         slices: [audioSlice],
       });
 
-      const media = createMockMedia();
+      const media = new MockMedia();
       store.attach(media);
       store.destroy();
 
@@ -328,7 +330,7 @@ describe('store', () => {
         slices: [audioSlice],
       });
 
-      store.attach(createMockMedia());
+      store.attach(new MockMedia());
       store.destroy();
 
       await expect(store.request.setVolume(0.5)).rejects.toThrow();
@@ -355,14 +357,13 @@ describe('store', () => {
         onError,
       });
 
-      store.attach(createMockMedia());
+      store.attach(new MockMedia());
 
       await store.request.fail().catch(() => {});
 
       expect(onError).toHaveBeenCalledWith({
         error: expect.any(Error),
         store,
-        queue: store.queue,
       });
     });
   });

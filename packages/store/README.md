@@ -67,11 +67,11 @@ const audioSlice = createSlice<HTMLMediaElement>()({
   },
 
   request: {
-    setVolume(volume, { target, meta, signal }) {
+    setVolume(volume: number, { target, meta, signal }) {
       target.volume = volume;
     },
 
-    setMuted(muted, { target, meta, signal }) {
+    setMuted(muted: boolean, { target, meta, signal }) {
       target.muted = muted;
     },
   },
@@ -126,7 +126,7 @@ request: {
     guard: [],
     cancel: [],
     // ...
-    async handler({ target, signal }) {
+    async handler(_, { target, signal }) {
       target.play();
       await onEvent(target, 'play', signal);
     },
@@ -147,18 +147,18 @@ await store.request.seek(30);
 Every request accepts optional metadata as the last argument.
 
 ```ts
-store.request.play({ source: 'user', reason: 'play-button' });
+store.request.play(null, { source: 'user', reason: 'play-button' });
 store.request.seek(30, { source: 'user', reason: 'slider-scrub' });
-store.request.pause({ source: 'system', reason: 'ad-start' });
+store.request.pause(null, { source: 'system', reason: 'ad-start' });
 
 // Infer metadata from DOM event
-store.request.play(clickEvent); // MouseEvent
+store.request.play(null, createRequestMetaFromEvent(clickEvent)); // MouseEvent
 ```
 
 Handlers receive metadata:
 
 ```ts
-async handler({ target, signal, meta }) {
+async handler(_, { target, signal, meta }) {
   console.log(`[${meta.source}] play: ${meta.reason}`);
   // ...
 }
@@ -257,11 +257,11 @@ Requests with the same key coordinate together. Default key is the request name.
 request: {
   play: {
     key: 'playback',
-    handler: async ({ target }) => { ... },
+    handler: async (_, { target }) => { ... },
   },
   pause: {
     key: 'playback',  // same key - coordinates with play
-    handler: async ({ target }) => { ... },
+    handler: async (_, { target }) => { ... },
   },
 }
 ```
@@ -306,7 +306,7 @@ request is enqueued, before guards or scheduling.
 request: {
   stop: {
     cancel: ['seek', 'preload'],
-    handler: ({ target }) => target.pause(),
+    handler: (_, { target }) => target.pause(),
   },
 }
 ```
@@ -367,7 +367,7 @@ request: {
 
   play: {
     guard: timeout(isTargetReady, 5000),
-    handler: ({ target }) => target.media.play(),
+    handler: (_, { target }) => target.media.play(),
   },
 }
 ```

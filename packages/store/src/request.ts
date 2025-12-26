@@ -1,6 +1,6 @@
 import type { EventLike } from '@videojs/utils';
 import type { Guard } from './guard';
-import type { QueueKey, Schedule } from './queue';
+import type { TaskKey, TaskScheduler } from './queue';
 import { isFunction, isObject } from '@videojs/utils';
 
 // ----------------------------------------
@@ -13,18 +13,19 @@ export const REQUEST_META: unique symbol = Symbol.for('@videojs/request');
 // Types
 // ----------------------------------------
 
-/**
- * Request type definition tuple.
- */
 export interface Request<Input = void, Output = void> {
-  __input: Input;
-  __output: Output;
+  input: Input;
+  output: Output;
 }
 
+export type RequestRecord = {
+  [K in string]: Request<any, any>;
+};
+
 /**
- * Request schemas for a slice.
+ * Default loose request types.
  */
-export type RequestRecord = Record<string, Request<any, any>>;
+export type DefaultRequestRecord = Record<string, Request>;
 
 /**
  * Context passed to request handlers.
@@ -32,35 +33,34 @@ export type RequestRecord = Record<string, Request<any, any>>;
 export interface RequestContext<Target> {
   target: Target;
   signal: AbortSignal;
-  meta: RequestMeta;
+  meta: RequestMeta | null;
 }
 
 /**
  * Request key - static or derived from input.
  */
-export type RequestKey<Input = unknown> = QueueKey | ((input: Input) => QueueKey);
+export type RequestKey<Input = unknown> = TaskKey | ((input: Input) => TaskKey);
 
 /**
  * Request cancel config.
  */
 export type RequestCancel<Input = unknown>
-  = | QueueKey
-    | QueueKey[]
-    | ((input: Input) => QueueKey | QueueKey[]);
+  = | TaskKey
+    | TaskKey[]
+    | ((input: Input) => TaskKey | TaskKey[]);
 
 /**
  * Request handler function.
  */
-export type RequestHandler<Target, Input, Output> = [Input] extends [void]
-  ? (ctx: RequestContext<Target>) => Output | Promise<Output>
-  : (input: Input, ctx: RequestContext<Target>) => Output | Promise<Output>;
+export type RequestHandler<Target, Input, Output>
+  = (input: Input, ctx: RequestContext<Target>) => Output | Promise<Output>;
 
 /**
  * Full request config.
  */
 export interface RequestConfig<Target, Input = unknown, Output = unknown> {
   key?: RequestKey<Input>;
-  schedule?: Schedule;
+  schedule?: TaskScheduler;
   guard?: Guard<Target> | Guard<Target>[];
   cancel?: RequestCancel<Input>;
   handler: RequestHandler<Target, Input, Output>;
@@ -71,19 +71,30 @@ export interface RequestConfig<Target, Input = unknown, Output = unknown> {
  */
 export interface ResolvedRequestConfig<Target, Input = unknown, Output = unknown> {
   key: RequestKey<Input>;
-  schedule: Schedule | undefined;
+  schedule?: TaskScheduler | undefined;
   guard: Guard<Target>[];
-  cancel: RequestCancel<Input> | undefined;
+  cancel?: RequestCancel<Input> | undefined;
   handler: RequestHandler<Target, Input, Output>;
 }
 
-export type RequestsConfig<Target, Requests extends { [K in keyof Requests]: Request<any, any> }> = {
+export type RequestHandlerRecord = {
+  [K in string]: RequestHandler<any, any, any>;
+};
+
+/**
+ * Map of request names to handlers or configs. This is the config passed to `createSlice`.
+ */
+export type RequestConfigMap<Target, Requests extends RequestRecord> = {
   [K in keyof Requests]: Requests[K] extends Request<infer I, infer O>
     ? RequestHandler<Target, I, O> | RequestConfig<Target, I, O>
     : never;
 };
 
-export type ResolvedRequests<Target, Requests extends { [K in keyof Requests]: Request<any, any> }> = {
+/**
+ * Map of request config objects to resolved configs. This is the config stored internally in
+ * the store.
+ */
+export type ResolvedRequestConfigMap<Target, Requests extends RequestRecord> = {
   [K in keyof Requests]: Requests[K] extends Request<infer I, infer O>
     ? ResolvedRequestConfig<Target, I, O>
     : never;
@@ -93,41 +104,45 @@ export type ResolvedRequests<Target, Requests extends { [K in keyof Requests]: R
 // Type Inference
 // ----------------------------------------
 
-export type InferInput<Handler, Target> = Handler extends (ctx: RequestContext<Target>) => any
+/**
+ * Infer the input type of a RequestHandler.
+ */
+export type InferRequestHandlerInput<Handler> = Handler extends (() => any)
   ? void
-  : Handler extends (input: infer I, ctx: RequestContext<Target>) => any
+  : Handler extends (input: infer I, ctx: any) => any
     ? I
-    : Handler extends { handler: (ctx: RequestContext<Target>) => any }
-      ? void
-      : Handler extends { handler: (input: infer I, ctx: RequestContext<Target>) => any }
-        ? I
-        : unknown;
+    : void;
 
-export type InferOutput<Handler, Target> = Handler extends (ctx: RequestContext<Target>) => infer O
+/**
+ * Infer the output type of a RequestHandler.
+ */
+export type InferRequestHandlerOutput<Handler> = Handler extends RequestHandler<any, InferRequestHandlerInput<Handler>, infer O>
   ? Awaited<O>
-  : Handler extends (input: any, ctx: RequestContext<Target>) => infer O
-    ? Awaited<O>
-    : Handler extends { handler: (...args: any[]) => infer O }
-      ? Awaited<O>
-      : unknown;
+  : void;
 
-export type InferRequests<Target, Requests> = {
-  [K in keyof Requests]: Request<InferInput<Requests[K], Target>, InferOutput<Requests[K], Target>>;
+/**
+ * Resolve a RequestHandlerRecord to a RequestRecord.
+ */
+export type ResolveRequestMap<Requests> = {
+  [K in keyof Requests]: Request<InferRequestHandlerInput<Requests[K]>, InferRequestHandlerOutput<Requests[K]>>;
 };
 
-export type InferRequestHandler<R> = R extends Request<infer I, infer O>
+/**
+ * Resolve a Request (input/output) to its function signature.
+ */
+export type ResolveRequestHandler<R> = R extends Request<infer I, infer O>
   ? [I] extends [void]
-      ? (meta?: Omit<RequestMeta, symbol>) => Promise<O>
-      : (input: I, meta?: Omit<RequestMeta, symbol>) => Promise<O>
+      ? (input?: null, meta?: RequestMetaInit) => Promise<O>
+      : (input: I, meta?: RequestMetaInit) => Promise<O>
   : never;
 
 // ----------------------------------------
 // Utilities
 // ----------------------------------------
 
-export function resolveRequests<Target, Requests extends { [K in keyof Requests]: Request<any, any> }>(
-  requests: RequestsConfig<Target, Requests>,
-): ResolvedRequests<Target, Requests> {
+export function resolveRequests<Target, Requests extends RequestRecord>(
+  requests: RequestConfigMap<Target, Requests>,
+): ResolvedRequestConfigMap<Target, Requests> {
   const resolved: Record<string, ResolvedRequestConfig<Target>> = {};
 
   for (const [name, config] of Object.entries(requests)) {
@@ -135,33 +150,27 @@ export function resolveRequests<Target, Requests extends { [K in keyof Requests]
       resolved[name] = {
         key: name,
         guard: [],
-        cancel: undefined,
-        schedule: undefined,
         handler: config,
       };
     } else {
-      const cfg = config as RequestConfig<Target>;
       resolved[name] = {
-        key: cfg.key ?? name,
-        guard: cfg.guard ? (Array.isArray(cfg.guard) ? cfg.guard : [cfg.guard]) : [],
-        cancel: cfg.cancel,
-        schedule: cfg.schedule,
-        handler: cfg.handler,
+        ...config,
+        guard: config.guard ? (Array.isArray(config.guard) ? config.guard : [config.guard]) : [],
       };
     }
   }
 
-  return resolved as ResolvedRequests<Target, Requests>;
+  return resolved as ResolvedRequestConfigMap<Target, Requests>;
 }
 
-export function resolveRequestKey(keyConfig: RequestKey<any>, input: unknown): QueueKey {
+export function resolveRequestKey(keyConfig: RequestKey<any>, input: unknown): TaskKey {
   return isFunction(keyConfig) ? keyConfig(input) : keyConfig;
 }
 
 export function resolveRequestCancelKeys(
   cancel: RequestCancel<any> | undefined,
   input: unknown,
-): QueueKey[] {
+): TaskKey[] {
   if (!cancel) return [];
   const result = isFunction(cancel) ? cancel(input) : cancel;
   return Array.isArray(result) ? result : [result];
@@ -170,6 +179,8 @@ export function resolveRequestCancelKeys(
 // ----------------------------------------
 // Request Meta
 // ----------------------------------------
+
+export type RequestMetaInit<Context = unknown> = Omit<RequestMeta<Context>, typeof REQUEST_META>;
 
 export interface RequestMeta<Context = unknown> {
   [REQUEST_META]: true;
@@ -180,12 +191,12 @@ export interface RequestMeta<Context = unknown> {
 }
 
 export function createRequestMeta<Context = unknown>(
-  meta: Omit<RequestMeta<Context>, typeof REQUEST_META>,
+  init: RequestMetaInit<Context>,
 ): RequestMeta<Context> {
   return {
     [REQUEST_META]: true,
-    ...meta,
-    timestamp: meta.timestamp ?? Date.now(),
+    ...init,
+    timestamp: init.timestamp ?? Date.now(),
   };
 }
 

@@ -1,23 +1,23 @@
-import type { PendingRequest, TaskTypes } from './queue';
-import type { InferRequestHandler, Request, RequestMeta, ResolvedRequestConfig } from './request';
-import type { InferSliceState, InferSliceTarget, Slice } from './slice';
+import type { EnsureTaskRecord, PendingTask, TaskContext, TaskRecord } from './queue';
+import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
+import type { InferSliceRequests, InferSliceState, InferSliceTarget, ResolveSliceRequestHandlers, Slice } from './slice';
 import type { StateFactory } from './state';
 import { isNull } from '@videojs/utils';
 import { GuardRejectedError, NoTargetError, RequestCancelledError, StoreError } from './errors';
 import { Queue } from './queue';
-import { createRequestMeta, isRequestMeta, resolveRequestCancelKeys, resolveRequestKey } from './request';
+import { createRequestMeta, resolveRequestCancelKeys, resolveRequestKey } from './request';
 import { State } from './state';
 
 export class Store<
   Target,
   Slices extends Slice<Target, any, any>[] = Slice<Target, any, any>[],
-  Tasks extends TaskTypes = InferStoreTasks<Slices>,
+  Tasks extends TaskRecord = InferStoreTasks<Slices>,
 > {
   readonly #config: StoreConfig<Target, Slices, Tasks>;
   readonly #slices: Slices;
   readonly #queue: Queue<Tasks>;
   readonly #state: State<InferStoreState<Slices>>;
-  readonly #request: InferStoreRequests<Slices>;
+  readonly #request: InferStoreRequest<Slices>;
   readonly #requestConfigs: Map<string, ResolvedRequestConfig<Target>>;
   readonly #setupAbort = new AbortController();
 
@@ -29,13 +29,7 @@ export class Store<
     this.#config = config;
     this.#slices = config.slices;
 
-    this.#queue = config.queue ?? new Queue<Tasks>({
-      onSettled: (request, result) => {
-        if (result.status === 'error') {
-          this.#handleError({ request, error: result.error });
-        }
-      },
-    });
+    this.#queue = config.queue ?? new Queue<Tasks>();
 
     // Use provided factory or default
     const factory = config.state ?? (initial => new State(initial));
@@ -66,7 +60,7 @@ export class Store<
     return this.#state.value;
   }
 
-  get request(): InferStoreRequests<Slices> {
+  get request(): InferStoreRequest<Slices> {
     return this.#request;
   }
 
@@ -237,56 +231,32 @@ export class Store<
     return configs;
   }
 
-  #buildRequestProxy(): InferStoreRequests<Slices> {
+  #buildRequestProxy(): InferStoreRequest<Slices> {
     const proxy: Record<string, (...args: any[]) => Promise<unknown>> = {};
 
     for (const [name, config] of this.#requestConfigs) {
-      proxy[name] = (inputOrMeta?: unknown, maybeMeta?: Omit<RequestMeta, symbol>) => {
+      proxy[name] = (input?: unknown, meta?: RequestMetaInit) => {
         if (this.#destroyed) {
-          return Promise.reject(new StoreError('Store has been destroyed'));
+          return Promise.reject(new StoreError('Destroyed'));
         }
 
-        const { input, meta } = this.#parseArgs(inputOrMeta, maybeMeta);
-
-        return this.#execute(name, config, input, meta);
+        return this.#execute(
+          name,
+          config,
+          input,
+          meta ? createRequestMeta(meta) : null,
+        );
       };
     }
 
-    return proxy as InferStoreRequests<Slices>;
-  }
-
-  #parseArgs(
-    inputOrMeta: unknown,
-    maybeMeta: Omit<RequestMeta, symbol> | undefined,
-  ): { input: unknown; meta: RequestMeta } {
-    if (maybeMeta !== undefined) {
-      return {
-        input: inputOrMeta,
-        meta: createRequestMeta(maybeMeta),
-      };
-    }
-
-    if (isRequestMeta(inputOrMeta)) {
-      return {
-        input: undefined,
-        meta: createRequestMeta(inputOrMeta as Omit<RequestMeta, symbol>),
-      };
-    }
-
-    return {
-      input: inputOrMeta,
-      meta: createRequestMeta({
-        source: 'unknown',
-        context: undefined,
-      }),
-    };
+    return proxy as InferStoreRequest<Slices>;
   }
 
   async #execute(
     name: string,
     config: ResolvedRequestConfig<Target>,
     input: unknown,
-    meta: RequestMeta,
+    meta: RequestMeta | null,
   ): Promise<unknown> {
     const key = resolveRequestKey(config.key, input);
 
@@ -294,7 +264,7 @@ export class Store<
       this.#queue.abort(cancelKey, `Cancelled by ${name}`);
     }
 
-    const handler = async ({ signal }: { signal: AbortSignal }) => {
+    const handler = async ({ input, signal }: TaskContext) => {
       const target = this.#target;
 
       if (!target) {
@@ -316,13 +286,23 @@ export class Store<
       return config.handler(input, { target, signal, meta });
     };
 
-    return this.#queue.enqueue({
-      name,
-      key,
-      input,
-      schedule: config.schedule,
-      handler,
-    });
+    try {
+      return await this.#queue.enqueue({
+        name,
+        key,
+        input,
+        meta,
+        schedule: config.schedule,
+        handler,
+      });
+    } catch (error) {
+      this.#handleError({
+        request: this.#queue.pending.get(key),
+        error,
+      });
+
+      throw error;
+    }
   }
 
   // ----------------------------------------
@@ -355,7 +335,7 @@ export function createStore<Slices extends Slice<any, any, any>[]>(
 export interface StoreConfig<
   Target,
   Slices extends Slice<Target, any, any>[],
-  Tasks extends TaskTypes = InferStoreTasks<Slices>,
+  Tasks extends TaskRecord = InferStoreTasks<Slices>,
 > {
   slices: Slices;
   queue?: Queue<Tasks>;
@@ -365,19 +345,19 @@ export interface StoreConfig<
   onError?: (ctx: StoreErrorContext<Target, Slices, Tasks>) => void;
 }
 
-export interface StoreSetupContext<Target, Slices extends Slice<Target, any, any>[], Tasks extends TaskTypes> {
+export interface StoreSetupContext<Target, Slices extends Slice<Target, any, any>[], Tasks extends TaskRecord> {
   store: Store<Target, Slices, Tasks>;
   signal: AbortSignal;
 }
 
-export interface StoreAttachContext<Target, Slices extends Slice<Target, any, any>[], Tasks extends TaskTypes> {
+export interface StoreAttachContext<Target, Slices extends Slice<Target, any, any>[], Tasks extends TaskRecord> {
   store: Store<Target, Slices, Tasks>;
   target: Target;
   signal: AbortSignal;
 }
 
-export interface StoreErrorContext<Target, Slices extends Slice<Target, any, any>[], Tasks extends TaskTypes> {
-  request?: PendingRequest;
+export interface StoreErrorContext<Target, Slices extends Slice<Target, any, any>[], Tasks extends TaskRecord> {
+  request?: PendingTask | undefined;
   error: unknown;
   store: Store<Target, Slices, Tasks>;
 }
@@ -394,28 +374,8 @@ export type InferStoreState<Slices extends Slice<any, any, any>[]> = UnionToInte
   InferSliceState<Slices[number]>
 >;
 
-// Requests: merge by key, avoid intersecting functions
-export type InferStoreRequests<Slices extends Slice<any, any, any>[]> = {
-  [K in RequestNames<Slices[number]>]: RequestFnFor<Slices[number], K>;
-};
+export type InferStoreRequest<Slices extends Slice<any, any, any>[]>
+  = UnionToIntersection<ResolveSliceRequestHandlers<Slices[number]>>;
 
-type RequestNames<S> = S extends Slice<any, any, infer R> ? keyof R & string : never;
-
-type RequestFnFor<S, K extends string> = S extends Slice<any, any, infer R>
-  ? K extends keyof R
-    ? InferRequestHandler<R[K]>
-    : never
-  : never;
-
-// Tasks: merge by key, avoid intersecting functions
-export type InferStoreTasks<Slices extends Slice<any, any, any>[]> = {
-  [K in RequestNames<Slices[number]>]: TaskTypeFor<Slices[number], K>;
-} & TaskTypes;
-
-type TaskTypeFor<S, K extends string> = S extends Slice<any, any, infer R>
-  ? K extends keyof R
-    ? R[K] extends Request<infer I, infer O>
-      ? { input: I; output: O }
-      : { input: unknown; output: unknown }
-    : never
-  : never;
+export type InferStoreTasks<Slices extends Slice<any, any, any>[]>
+  = EnsureTaskRecord<UnionToIntersection<InferSliceRequests<Slices[number]>>>;

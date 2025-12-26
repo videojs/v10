@@ -1,3 +1,4 @@
+import type { Request, RequestMeta } from './request';
 import { isFunction, isUndefined } from '@videojs/utils';
 import { RequestCancelledError, RequestSupersededError } from './errors';
 
@@ -5,35 +6,37 @@ import { RequestCancelledError, RequestSupersededError } from './errors';
 // Types
 // ----------------------------------------
 
-export type QueueKey<T = string | symbol> = T & (string | symbol);
+export type TaskKey<T = string | symbol> = T & (string | symbol);
 
 /**
- * A schedule function controls when a request flushes.
+ * A task scheduler controls when a task flushes.
  *
  * Returns an optional cancel function.
  */
-export type Schedule = (flush: () => void) => (() => void) | void;
+export type TaskScheduler = (flush: () => void) => (() => void) | void;
 
 /**
  * Map of task key -> input/output types.
  */
-export type TaskTypes = {
-  [K in QueueKey]: {
-    input: unknown;
-    output: unknown;
-  };
+export type TaskRecord = {
+  [K in TaskKey]: Request<any, any>
 };
 
 /**
  * Default loose task types.
  */
-export type DefaultTaskTypes = Record<QueueKey, { input: unknown; output: unknown }>;
+export type DefaultTaskRecord = Record<TaskKey, Request<unknown, unknown>>;
 
 /**
- * Pending request info.
+ * Ensure T is a TaskRecord.
  */
-export interface PendingRequest<
-  Key extends QueueKey = QueueKey,
+export type EnsureTaskRecord<T> = T extends TaskRecord ? T : never;
+
+/**
+ * Pending task info.
+ */
+export interface PendingTask<
+  Key extends TaskKey = TaskKey,
   Input = unknown,
 > {
   id: symbol;
@@ -43,13 +46,24 @@ export interface PendingRequest<
   epoch: number;
   startedAt: number;
   abort: AbortController;
+  meta: RequestMeta | null;
 }
 
 /**
- * Queued request waiting to execute.
+ * Context passed to task handler.
  */
-interface QueuedRequest<
-  Key extends QueueKey = QueueKey,
+export interface TaskContext<
+  Input = unknown,
+> {
+  input: Input;
+  signal: AbortSignal;
+}
+
+/**
+ * Queued task waiting to execute.
+ */
+interface QueuedTask<
+  Key extends TaskKey = TaskKey,
   Input = unknown,
   Output = unknown,
 > {
@@ -58,8 +72,9 @@ interface QueuedRequest<
   key: Key;
   input: Input;
   epoch: number;
-  schedule: Schedule | undefined;
-  handler: (ctx: { signal: AbortSignal }) => Promise<Output>;
+  meta: RequestMeta | null;
+  schedule: TaskScheduler | undefined;
+  handler: (ctx: TaskContext<Input>) => Promise<Output>;
   resolve: (value: Output) => void;
   reject: (error: unknown) => void;
   /* Cancel scheduled execution. */
@@ -69,14 +84,14 @@ interface QueuedRequest<
 /**
  * Queue configuration.
  */
-export interface QueueConfig<Tasks extends TaskTypes = DefaultTaskTypes> {
-  /** Default scheduler when request has no schedule */
-  scheduler?: Schedule;
+export interface QueueConfig<Tasks extends TaskRecord = DefaultTaskRecord> {
+  /** Default scheduler when task has no schedule */
+  scheduler?: TaskScheduler;
   onDispatch?: <K extends keyof Tasks>(
-    request: PendingRequest<QueueKey<K>, Tasks[K]['input']>,
+    task: PendingTask<TaskKey<K>, Tasks[K]['input']>,
   ) => void;
   onSettled?: <K extends keyof Tasks>(
-    request: PendingRequest<QueueKey<K>, Tasks[K]['input']>,
+    task: PendingTask<TaskKey<K>, Tasks[K]['input']>,
     result: { status: 'success'; duration: number; result: Tasks[K]['output'] }
       | { status: 'cancelled'; error: unknown; duration: number }
       | { status: 'error'; error: unknown; duration: number },
@@ -87,21 +102,22 @@ export interface QueueConfig<Tasks extends TaskTypes = DefaultTaskTypes> {
  * Task to enqueue.
  */
 export interface QueueTask<
-  Key extends QueueKey = QueueKey,
+  Key extends TaskKey = TaskKey,
   Input = unknown,
   Output = unknown,
 > {
   name: string;
   key: Key;
   input?: Input;
-  schedule?: Schedule | undefined;
-  handler: (ctx: { signal: AbortSignal }) => Promise<Output>;
+  meta?: RequestMeta | null;
+  schedule?: TaskScheduler | undefined;
+  handler: (ctx: TaskContext<Input>) => Promise<Output>;
 }
 
 /**
  * Queued task info (public).
  */
-export interface QueuedTask<Key extends QueueKey = QueueKey> {
+export interface QueuedTaskInfo<Key extends TaskKey = TaskKey> {
   name: string;
   key: Key;
 }
@@ -115,7 +131,7 @@ export interface QueuedTask<Key extends QueueKey = QueueKey> {
  *
  * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide}
  */
-export const microtask: Schedule = (flush) => {
+export const microtask: TaskScheduler = (flush) => {
   let cancelled = false;
 
   queueMicrotask(() => {
@@ -128,12 +144,12 @@ export const microtask: Schedule = (flush) => {
 };
 
 /**
- * Delay execution by ms. Resets on each new request.
+ * Delay execution by ms. Resets on each new task.
  *
  * @param ms - Milliseconds to delay
  * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout}
  */
-export function delay(ms: number): Schedule {
+export function delay(ms: number): TaskScheduler {
   return (flush) => {
     const id = setTimeout(flush, ms);
     return () => clearTimeout(id);
@@ -144,14 +160,14 @@ export function delay(ms: number): Schedule {
 // Implementation
 // ----------------------------------------
 
-export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
-  readonly #scheduler: Schedule;
+export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
+  readonly #scheduler: TaskScheduler;
   readonly #onDispatch: QueueConfig<Tasks>['onDispatch'];
   readonly #onSettled: QueueConfig<Tasks>['onSettled'];
 
-  readonly #queued = new Map<QueueKey, QueuedRequest>();
-  readonly #pending = new Map<QueueKey, PendingRequest>();
-  readonly #epochs = new Map<QueueKey, number>();
+  readonly #queued = new Map<TaskKey, QueuedTask>();
+  readonly #pending = new Map<TaskKey, PendingTask>();
+  readonly #epochs = new Map<TaskKey, number>();
 
   #destroyed = false;
 
@@ -159,7 +175,7 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
     this.#scheduler = config.scheduler ?? microtask;
 
     // Wrap callbacks to catch errors and prevent breaking queue/scheduler
-    const safeCallback = <Args extends [PendingRequest, ...unknown[]]>(callback: ((...args: Args) => unknown) | undefined) => {
+    const safeCallback = <Args extends [PendingTask, ...unknown[]]>(callback: ((...args: Args) => unknown) | undefined) => {
       if (!callback) return undefined;
       return (...args: Args) => {
         try {
@@ -174,8 +190,8 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
     this.#onSettled = safeCallback(config.onSettled);
   }
 
-  get queued(): ReadonlyMap<QueueKey<keyof Tasks>, QueuedTask<QueueKey<keyof Tasks>>> {
-    const result = new Map<QueueKey, QueuedTask>();
+  get queued(): ReadonlyMap<TaskKey<keyof Tasks>, QueuedTaskInfo<TaskKey<keyof Tasks>>> {
+    const result = new Map<TaskKey, QueuedTaskInfo>();
 
     for (const [k, v] of this.#queued) {
       result.set(k, { name: v.name, key: v.key });
@@ -184,7 +200,7 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
     return result;
   }
 
-  get pending(): ReadonlyMap<QueueKey<keyof Tasks>, PendingRequest<QueueKey<keyof Tasks>>> {
+  get pending(): ReadonlyMap<TaskKey<keyof Tasks>, PendingTask<TaskKey<keyof Tasks>>> {
     return new Map(this.#pending);
   }
 
@@ -192,10 +208,10 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
     return this.#destroyed;
   }
 
-  enqueue<K extends QueueKey<keyof Tasks>>(
+  enqueue<K extends TaskKey<keyof Tasks>>(
     task: QueueTask<K, Tasks[K]['input'], Tasks[K]['output']>,
   ): Promise<Tasks[K]['output']> {
-    const { name, key, input, schedule, handler } = task;
+    const { name, key, input, schedule, meta = null, handler } = task;
 
     if (this.#destroyed) {
       return Promise.reject(new Error('Queue destroyed'));
@@ -205,28 +221,29 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
     const epoch = (this.#epochs.get(key) ?? 0) + 1;
     this.#epochs.set(key, epoch);
 
-    // Cancel any queued request with same key
+    // Cancel any queued task with same key
     const queued = this.#queued.get(key);
     queued?.invalidate?.();
     queued?.reject(new RequestCancelledError());
 
-    // Abort any pending request with same key
+    // Abort any pending task with same key
     this.#pending.get(key)?.abort.abort();
 
     return new Promise<Tasks[K]['output']>((resolve, reject) => {
-      const request: QueuedRequest = {
-        id: Symbol('@videojs/request'),
+      const task: QueuedTask = {
+        id: Symbol('@videojs/task'),
         name,
         key,
         input,
         epoch,
+        meta,
         schedule,
         handler,
         resolve,
         reject,
       };
 
-      this.#queued.set(key, request);
+      this.#queued.set(key, task);
 
       try {
         const scheduleFlush = schedule ?? this.#scheduler;
@@ -244,7 +261,7 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
 
         // Only set invalidate if we haven't already flushed
         if (!flushed && isFunction(cancel)) {
-          request.invalidate = cancel;
+          task.invalidate = cancel;
         }
       } catch (err) {
         this.#queued.delete(key);
@@ -253,7 +270,7 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
     });
   }
 
-  dequeue<K extends QueueKey<keyof Tasks>>(key: K): boolean {
+  dequeue<K extends TaskKey<keyof Tasks>>(key: K): boolean {
     const queued = this.#queued.get(key);
     if (!queued) return false;
 
@@ -274,8 +291,8 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
   }
 
   flush(): Promise<void>;
-  flush<K extends QueueKey<keyof Tasks>>(key: K): Promise<void>;
-  async flush(key?: QueueKey): Promise<void> {
+  flush<K extends TaskKey<keyof Tasks>>(key: K): Promise<void>;
+  async flush(key?: TaskKey): Promise<void> {
     if (!isUndefined(key)) {
       await this.#flushKey(key);
       return;
@@ -286,7 +303,7 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
     await Promise.allSettled(keys.map(k => this.#flushKey(k)));
   }
 
-  abort<K extends QueueKey<keyof Tasks>>(key: K, reason = 'Aborted'): void {
+  abort<K extends TaskKey<keyof Tasks>>(key: K, reason = 'Aborted'): void {
     // Reject queued
     const queued = this.#queued.get(key);
     queued?.invalidate?.();
@@ -321,19 +338,19 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
     this.#epochs.clear();
   }
 
-  async #flushKey(key: QueueKey): Promise<void> {
+  async #flushKey(key: TaskKey): Promise<void> {
     if (this.#destroyed) return;
 
-    const request = this.#queued.get(key);
-    if (!request) return;
+    const task = this.#queued.get(key);
+    if (!task) return;
 
     this.#queued.delete(key);
 
-    await this.#executeNow(request);
+    await this.#executeNow(task);
   }
 
-  async #executeNow(request: QueuedRequest): Promise<void> {
-    const { id, name, key, input, epoch, handler, resolve, reject } = request;
+  async #executeNow(task: QueuedTask): Promise<void> {
+    const { id, name, key, input, epoch, meta, handler, resolve, reject } = task;
 
     // Check if still valid (might have been superseded)
     if (this.#epochs.get(key) !== epoch) {
@@ -344,7 +361,7 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
     const abort = new AbortController();
     const startedAt = Date.now();
 
-    const pending: PendingRequest = {
+    const pending: PendingTask = {
       id,
       name,
       key,
@@ -352,13 +369,14 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
       epoch,
       startedAt,
       abort,
+      meta,
     };
 
     this.#pending.set(key, pending);
     this.#onDispatch?.(pending);
 
     try {
-      const result = await handler({ signal: abort.signal });
+      const result = await handler({ input, signal: abort.signal });
 
       // Check if superseded during execution
       if (this.#epochs.get(key) !== epoch) {
@@ -383,7 +401,7 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
         error,
       });
     } finally {
-      // Only remove if we're still the pending request for this key
+      // Only remove if we're still the pending task for this key
       if (this.#pending.get(key) === pending) {
         this.#pending.delete(key);
       }
@@ -401,10 +419,10 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
 // ----------------------------------------
 
 /**
- * Create a queue for managing request execution.
+ * Create a queue for managing task execution.
  *
  * - Same key = supersede previous (cancel queued, abort pending)
- * - Requests scheduled via schedule function (default: microtask)
+ * - Tasks scheduled via schedule function (default: microtask)
  *
  * @example
  * // Loose typing (default)
@@ -413,11 +431,11 @@ export class Queue<Tasks extends TaskTypes = DefaultTaskTypes> {
  * @example
  * // Strongly typed keys
  * const queue = createQueue<{
- *   'playback': { input: void; output: void };
- *   'volume': { input: number; output: void };
+ *   'playback': Request;
+ *   'volume': Request<number>;
  * }>();
  */
-export function createQueue<Tasks extends TaskTypes = DefaultTaskTypes>(
+export function createQueue<Tasks extends TaskRecord = DefaultTaskRecord>(
   config: QueueConfig<Tasks> = {},
 ): Queue<Tasks> {
   return new Queue<Tasks>(config);
