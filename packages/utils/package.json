@@ -33,6 +33,7 @@
     "clean": "rm -rf dist"
   },
   "devDependencies": {
+    "es-toolkit": "^1.43.0",
     "tsdown": "^0.15.9",
     "typescript": "^5.9.3"
   },

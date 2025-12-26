@@ -28,6 +28,7 @@ export default {
       'root',
       'site',
       'skins',
+      'store',
       'test',
       'utils',
     ]],
