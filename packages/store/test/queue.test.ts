@@ -358,7 +358,7 @@ describe('queue', () => {
         ).rejects.toThrow('Queue destroyed');
       });
 
-      it.only('aborts all pending on destroy', async () => {
+      it('aborts all pending on destroy', async () => {
         vi.useRealTimers();
 
         const queue = createQueue();
