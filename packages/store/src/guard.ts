@@ -1,5 +1,5 @@
 import { isBoolean } from '@videojs/utils';
-import { GuardTimeoutError } from './errors';
+import { StoreError } from './errors';
 
 /**
  * A guard gates request execution.
@@ -79,7 +79,7 @@ export function timeout<Target>(
     return Promise.race([
       result,
       new Promise<never>((_, reject) => {
-        const timer = setTimeout(() => reject(new GuardTimeoutError(name)), ms);
+        const timer = setTimeout(() => reject(new StoreError(`Timeout: ${name}`)), ms);
         ctx.signal.addEventListener('abort', () => clearTimeout(timer));
       }),
     ]);

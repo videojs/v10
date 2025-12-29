@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { GuardTimeoutError } from '../src/errors';
+import { StoreError } from '../src/errors';
 import { all, any, timeout } from '../src/guard';
 
 describe('guard', () => {
@@ -113,7 +113,7 @@ describe('guard', () => {
       expect(await guard(createContext())).toBe(true);
     });
 
-    it('throws GuardTimeoutError on timeout', async () => {
+    it('throws StoreError on timeout', async () => {
       vi.useFakeTimers();
 
       const guard = timeout(
@@ -125,9 +125,9 @@ describe('guard', () => {
       const promise = guard(createContext());
       vi.advanceTimersByTime(100);
 
-      await expect(promise).rejects.toThrow(GuardTimeoutError);
+      await expect(promise).rejects.toThrow(StoreError);
       await expect(promise).rejects.toMatchObject({
-        guard: 'waitForReady',
+        message: 'Timeout: waitForReady',
       });
 
       vi.useRealTimers();

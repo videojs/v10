@@ -1,6 +1,6 @@
 import type { Request, RequestMeta } from './request';
 import { isFunction, isUndefined } from '@videojs/utils';
-import { RequestCancelledError, RequestSupersededError } from './errors';
+import { StoreError } from './errors';
 
 // ----------------------------------------
 // Types
@@ -43,7 +43,6 @@ export interface PendingTask<
   name: string;
   key: Key;
   input: Input;
-  epoch: number;
   startedAt: number;
   abort: AbortController;
   meta: RequestMeta | null;
@@ -71,7 +70,6 @@ interface QueuedTask<
   name: string;
   key: Key;
   input: Input;
-  epoch: number;
   meta: RequestMeta | null;
   schedule: TaskScheduler | undefined;
   handler: (ctx: TaskContext<Input>) => Promise<Output>;
@@ -167,7 +165,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
   readonly #queued = new Map<TaskKey, QueuedTask>();
   readonly #pending = new Map<TaskKey, PendingTask>();
-  readonly #epochs = new Map<TaskKey, number>();
 
   #destroyed = false;
 
@@ -214,20 +211,17 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     const { name, key, input, schedule, meta = null, handler } = task;
 
     if (this.#destroyed) {
-      return Promise.reject(new Error('Queue destroyed'));
+      return Promise.reject(new StoreError('Queue destroyed'));
     }
-
-    // Increment epoch
-    const epoch = (this.#epochs.get(key) ?? 0) + 1;
-    this.#epochs.set(key, epoch);
 
     // Cancel any queued task with same key
     const queued = this.#queued.get(key);
     queued?.invalidate?.();
-    queued?.reject(new RequestCancelledError());
+    queued?.reject(new StoreError('Superseded'));
+    this.#queued.delete(key);
 
     // Abort any pending task with same key
-    this.#pending.get(key)?.abort.abort();
+    this.#pending.get(key)?.abort.abort(new StoreError('Superseded'));
 
     return new Promise<Tasks[K]['output']>((resolve, reject) => {
       const task: QueuedTask = {
@@ -235,7 +229,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
         name,
         key,
         input,
-        epoch,
         meta,
         schedule,
         handler,
@@ -245,10 +238,10 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
       this.#queued.set(key, task);
 
+      let flushed = false;
+
       try {
         const scheduleFlush = schedule ?? this.#scheduler;
-
-        let flushed = false;
 
         // Guard against multiple flushes
         const safeFlush = () => {
@@ -264,7 +257,9 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
           task.invalidate = cancel;
         }
       } catch (err) {
-        this.#queued.delete(key);
+        if (!flushed) {
+          this.#queued.delete(key);
+        }
         reject(err);
       }
     });
@@ -275,7 +270,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     if (!queued) return false;
 
     queued.invalidate?.();
-    queued.reject(new RequestCancelledError('Dequeued'));
+    queued.reject(new StoreError('Dequeued'));
     this.#queued.delete(key);
 
     return true;
@@ -284,7 +279,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   clear(): void {
     for (const queued of this.#queued.values()) {
       queued.invalidate?.();
-      queued.reject(new RequestCancelledError('Cleared'));
+      queued.reject(new StoreError('Cleared'));
     }
 
     this.#queued.clear();
@@ -307,25 +302,27 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     // Reject queued
     const queued = this.#queued.get(key);
     queued?.invalidate?.();
-    queued?.reject(new RequestCancelledError(reason));
+    queued?.reject(new StoreError(reason));
     this.#queued.delete(key);
 
-    // Abort pending
-    this.#pending.get(key)?.abort.abort();
+    // Abort pending with reason
+    this.#pending.get(key)?.abort.abort(new StoreError(reason));
   }
 
-  abortAll(reason = 'Aborted'): void {
+  abortAll(reason = 'All requests aborted'): void {
+    const error = new StoreError(reason);
+
     // Reject all queued
     for (const queued of this.#queued.values()) {
       queued.invalidate?.();
-      queued.reject(new RequestCancelledError(reason));
+      queued.reject(error);
     }
 
     this.#queued.clear();
 
-    // Abort all pending
+    // Abort all pending with reason
     for (const pending of this.#pending.values()) {
-      pending.abort.abort(reason);
+      pending.abort.abort(error);
     }
   }
 
@@ -334,8 +331,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
     this.#destroyed = true;
     this.abortAll('Queue destroyed');
-    this.#pending.clear();
-    this.#epochs.clear();
   }
 
   async #flushKey(key: TaskKey): Promise<void> {
@@ -350,13 +345,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   }
 
   async #executeNow(task: QueuedTask): Promise<void> {
-    const { id, name, key, input, epoch, meta, handler, resolve, reject } = task;
-
-    // Check if still valid (might have been superseded)
-    if (this.#epochs.get(key) !== epoch) {
-      reject(new RequestSupersededError());
-      return;
-    }
+    const { id, name, key, input, meta, handler, resolve, reject } = task;
 
     const abort = new AbortController();
     const startedAt = Date.now();
@@ -366,7 +355,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       name,
       key,
       input,
-      epoch,
       startedAt,
       abort,
       meta,
@@ -377,18 +365,13 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
     try {
       if (abort.signal.aborted) {
-        throw new RequestCancelledError();
+        throw abort.signal.reason || new StoreError('Aborted');
       }
 
       const result = await handler({ input, signal: abort.signal });
 
       if (abort.signal.aborted) {
-        throw new RequestCancelledError();
-      }
-
-      // Check if superseded during execution
-      if (this.#epochs.get(key) !== epoch) {
-        throw new RequestSupersededError();
+        throw abort.signal.reason || new StoreError('Aborted');
       }
 
       resolve(result);
@@ -412,11 +395,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       // Only remove if we're still the pending task for this key
       if (this.#pending.get(key) === pending) {
         this.#pending.delete(key);
-      }
-
-      // Clean up epoch if nothing else is queued/pending for this key
-      if (!this.#queued.has(key) && !this.#pending.has(key)) {
-        this.#epochs.delete(key);
       }
     }
   }

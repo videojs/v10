@@ -3,7 +3,7 @@ import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './requ
 import type { InferSliceRequests, InferSliceState, InferSliceTarget, ResolveSliceRequestHandlers, Slice } from './slice';
 import type { StateFactory } from './state';
 import { isNull } from '@videojs/utils';
-import { GuardRejectedError, NoTargetError, RequestCancelledError, StoreError } from './errors';
+import { StoreError } from './errors';
 import { Queue } from './queue';
 import { createRequestMeta, resolveRequestCancelKeys, resolveRequestKey } from './request';
 import { State } from './state';
@@ -82,7 +82,7 @@ export class Store<
 
   attach(newTarget: Target): () => void {
     if (this.#destroyed) {
-      throw new StoreError('Destroyed');
+      throw new StoreError('Store destroyed');
     }
 
     this.#attachAbort?.abort();
@@ -237,7 +237,7 @@ export class Store<
     for (const [name, config] of this.#requestConfigs) {
       proxy[name] = (input?: unknown, meta?: RequestMetaInit) => {
         if (this.#destroyed) {
-          return Promise.reject(new StoreError('Destroyed'));
+          return Promise.reject(new StoreError('Store destroyed'));
         }
 
         return this.#execute(
@@ -268,18 +268,18 @@ export class Store<
       const target = this.#target;
 
       if (!target) {
-        throw new NoTargetError();
+        throw new StoreError('No target attached');
       }
 
       for (const guard of config.guard) {
         if (signal.aborted) {
-          throw new RequestCancelledError('Aborted');
+          throw new StoreError('Aborted');
         }
 
         const result = await guard({ target, signal });
 
         if (!result) {
-          throw new GuardRejectedError('Guard rejected');
+          throw new StoreError('Rejected');
         }
       }
 

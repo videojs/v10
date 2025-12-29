@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { NoTargetError, RequestCancelledError } from '../src/errors';
+import { StoreError } from '../src/errors';
 import { createQueue } from '../src/queue';
 import { createSlice } from '../src/slice';
 import { createStore } from '../src/store';
@@ -206,13 +206,13 @@ describe('store', () => {
       expect(media.volume).toBe(0.5);
     });
 
-    it('throws NoTargetError without target', async () => {
+    it('throws StoreError without target', async () => {
       const store = createStore({
         slices: [audioSlice],
         onError: () => {}, // silence errors
       });
 
-      await expect(store.request.setVolume(0.5)).rejects.toThrow(NoTargetError);
+      await expect(store.request.setVolume(0.5)).rejects.toThrow(StoreError);
     });
 
     it('coordinates requests with same key', async () => {
@@ -227,7 +227,7 @@ describe('store', () => {
       const playPromise = store.request.play();
       const pausePromise = store.request.pause();
 
-      await expect(playPromise).rejects.toThrow(RequestCancelledError);
+      await expect(playPromise).rejects.toThrow(StoreError);
       await pausePromise;
 
       expect(media.paused).toBe(true);

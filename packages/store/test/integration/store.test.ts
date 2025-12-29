@@ -80,9 +80,9 @@ describe('store lifecycle integration', () => {
     store.attach({});
 
     // Test 1: Guard rejects when not ready
-    const failPromise = store.request.delayedAction();
+    const failPromise = store.request.delayedAction().catch(e => e);
     await vi.runAllTimersAsync();
-    await expect(failPromise).rejects.toThrow('Guard rejected');
+    await expect(failPromise).resolves.toMatchObject({ message: 'Rejected' });
 
     // Test 2: Guard passes when ready
     ready = true;
