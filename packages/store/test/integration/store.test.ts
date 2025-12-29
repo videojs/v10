@@ -1,297 +1,321 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createSlice, createStore, delay } from '../../src';
 
-it('', () => {});
+describe('store lifecycle integration', () => {
+  it('full lifecycle: create → attach → use → detach → destroy', async () => {
+    const events: string[] = [];
 
-// describe.skip('store lifecycle integration', () => {
-//   it('full lifecycle: create → attach → use → detach → destroy', async () => {
-//     const events: string[] = [];
+    class Target extends EventTarget {
+      value = 0;
+    }
 
-//     const slice = createSlice<{ value: number }>()({
-//       initialState: { count: 0 },
-//       getSnapshot: ({ target }) => ({ count: target.value }),
-//       subscribe: ({ signal }) => {
-//         events.push('subscribe');
-//         signal.addEventListener('abort', () => events.push('unsubscribe'));
-//       },
-//       request: {
-//         increment: ({ target }) => {
-//           target.value++;
-//           events.push('increment');
-//         },
-//       },
-//     });
+    const slice = createSlice<Target>()({
+      initialState: { count: 0 },
+      getSnapshot: ({ target }) => ({ count: target.value }),
+      subscribe: ({ target, update, signal }) => {
+        events.push('subscribe');
+        target.addEventListener('change', () => update(), { signal });
+        signal.addEventListener('abort', () => events.push('unsubscribe'));
+      },
+      request: {
+        increment: (_, { target }) => {
+          target.value++;
+          target.dispatchEvent(new Event('change'));
+          events.push('increment');
+        },
+      },
+    });
 
-//     const store = createStore({
-//       slices: [slice],
-//       onSetup: () => events.push('setup'),
-//       onAttach: () => events.push('attach'),
-//     });
+    const store = createStore({
+      slices: [slice],
+      onSetup: () => events.push('setup'),
+      onAttach: () => events.push('attach'),
+    });
 
-//     expect(events).toEqual(['setup']);
+    expect(events).toEqual(['setup']);
 
-//     const target = { value: 5 };
-//     const detach = store.attach(target);
+    const target = new Target();
+    target.value = 5;
+    const detach = store.attach(target);
 
-//     expect(events).toEqual(['setup', 'subscribe', 'attach']);
-//     expect(store.state.count).toBe(5);
+    expect(events).toEqual(['setup', 'subscribe', 'attach']);
+    expect(store.state.count).toBe(5);
 
-//     await store.request.increment();
-//     expect(store.state.count).toBe(6);
-//     expect(events).toContain('increment');
+    await store.request.increment();
+    expect(store.state.count).toBe(6);
+    expect(events).toContain('increment');
 
-//     detach();
-//     expect(events).toContain('unsubscribe');
-//     expect(store.target).toBeNull();
+    detach();
+    expect(events).toContain('unsubscribe');
+    expect(store.target).toBeNull();
 
-//     store.destroy();
-//     expect(store.destroyed).toBe(true);
-//   });
+    store.destroy();
+    expect(store.destroyed).toBe(true);
+  });
 
-//   it('request with guards and scheduling', async () => {
-//     vi.useFakeTimers();
+  it('request with guards and scheduling', async () => {
+    vi.useFakeTimers();
 
-//     let ready = false;
-//     const isReady = () => ready;
+    let ready = false;
+    const isReady = () => ready;
 
-//     const slice = createSlice<{}>()({
-//       initialState: {},
-//       getSnapshot: () => ({}),
-//       subscribe: () => {},
-//       request: {
-//         delayedAction: {
-//           schedule: delay(100),
-//           guard: [isReady],
-//           handler: () => 'completed',
-//         },
-//       },
-//     });
+    const slice = createSlice<unknown>()({
+      initialState: {},
+      getSnapshot: () => ({}),
+      subscribe: () => {},
+      request: {
+        delayedAction: {
+          schedule: delay(100),
+          guard: [isReady],
+          handler: (_, _ctx) => 'completed',
+        },
+      },
+    });
 
-//     const store = createStore({
-//       slices: [slice],
-//     });
+    const store = createStore({
+      slices: [slice],
+      onError: () => {},
+    });
 
-//     store.attach({});
+    store.attach({});
 
-//     const promise = store.request.delayedAction();
+    // Test 1: Guard rejects when not ready
+    const failPromise = store.request.delayedAction();
+    await vi.runAllTimersAsync();
+    await expect(failPromise).rejects.toThrow('Guard rejected');
 
-//     vi.advanceTimersByTime(50);
-//     ready = true;
-//     vi.advanceTimersByTime(50);
+    // Test 2: Guard passes when ready
+    ready = true;
+    const successPromise = store.request.delayedAction();
+    await vi.runAllTimersAsync();
+    await expect(successPromise).resolves.toBe('completed');
 
-//     await vi.runAllTimersAsync();
-//     // Guard should reject since ready was false when checked
-//     await expect(promise).rejects.toThrow();
+    vi.useRealTimers();
+  });
+});
 
-//     vi.useRealTimers();
-//   });
-// });
+describe('request coordination', () => {
+  it('cancel option aborts related requests', async () => {
+    const events: string[] = [];
 
-// describe('request Coordination', () => {
-//   it('cancel option aborts related requests', async () => {
-//     const events: string[] = [];
+    const slice = createSlice<unknown>()({
+      initialState: {},
+      getSnapshot: () => ({}),
+      subscribe: () => {},
+      request: {
+        load: {
+          key: 'load',
+          async handler(_, { signal }) {
+            events.push('load-start');
+            await new Promise((resolve, reject) => {
+              const timeout = setTimeout(() => {
+                events.push('load-complete');
+                resolve('loaded');
+              }, 100);
+              signal.addEventListener('abort', () => {
+                clearTimeout(timeout);
+                events.push('load-aborted');
+                reject(new Error('aborted'));
+              });
+            });
+          },
+        },
+        stop: {
+          cancel: ['load'],
+          handler: (_, _ctx) => {
+            events.push('stop');
+          },
+        },
+      },
+    });
 
-//     const slice = createSlice<{}>()({
-//       initialState: {},
-//       getSnapshot: () => ({}),
-//       subscribe: () => {},
-//       request: {
-//         load: {
-//           key: 'load',
-//           async handler({ signal }) {
-//             events.push('load-start');
-//             await new Promise((resolve, reject) => {
-//               const timeout = setTimeout(() => {
-//                 events.push('load-complete');
-//                 resolve('loaded');
-//               }, 100);
-//               signal.addEventListener('abort', () => {
-//                 clearTimeout(timeout);
-//                 events.push('load-aborted');
-//                 reject(new Error('aborted'));
-//               });
-//             });
-//           },
-//         },
-//         stop: {
-//           cancel: ['load'],
-//           handler: () => {
-//             events.push('stop');
-//           },
-//         },
-//       },
-//     });
+    const store = createStore({
+      slices: [slice],
+      onError: () => {},
+    });
 
-//     const store = createStore({
-//       slices: [slice],
-//     });
+    store.attach({});
 
-//     store.attach({});
+    const loadPromise = store.request.load();
+    await new Promise(r => setTimeout(r, 10));
 
-//     const loadPromise = store.request.load();
-//     await new Promise(r => setTimeout(r, 10));
+    await store.request.stop();
 
-//     await store.request.stop();
+    await loadPromise.catch(() => {});
 
-//     await loadPromise.catch(() => {});
+    expect(events).toContain('load-start');
+    expect(events).toContain('load-aborted');
+    expect(events).toContain('stop');
+    expect(events).not.toContain('load-complete');
+  });
 
-//     expect(events).toContain('load-start');
-//     expect(events).toContain('load-aborted');
-//     expect(events).toContain('stop');
-//     expect(events).not.toContain('load-complete');
-//   });
+  it('dynamic keys enable parallel execution', async () => {
+    const completionOrder: number[] = [];
 
-//   it('dynamic keys enable parallel execution', async () => {
-//     const completionOrder: number[] = [];
+    const slice = createSlice<unknown>()({
+      initialState: {},
+      getSnapshot: () => ({}),
+      subscribe: () => {},
+      request: {
+        fetchTrack: {
+          key: (id: number) => `track-${id}`,
+          async handler(id: number, _ctx) {
+            await new Promise(r => setTimeout(r, 10 * id));
+            completionOrder.push(id);
+            return id;
+          },
+        },
+      },
+    });
 
-//     const slice = createSlice<{}>()({
-//       initialState: {},
-//       getSnapshot: () => ({}),
-//       subscribe: () => {},
-//       request: {
-//         fetchTrack: {
-//           key: (id: number) => `track-${id}`,
-//           async handler(id: number) {
-//             await new Promise(r => setTimeout(r, 10 * id));
-//             completionOrder.push(id);
-//             return id;
-//           },
-//         },
-//       },
-//     });
+    const store = createStore({
+      slices: [slice],
+    });
 
-//     const store = createStore({
-//       slices: [slice],
-//     });
+    store.attach({});
 
-//     store.attach({});
+    // All should run in parallel with different keys
+    const [r3, r1, r2] = await Promise.all([
+      store.request.fetchTrack(3),
+      store.request.fetchTrack(1),
+      store.request.fetchTrack(2),
+    ]);
 
-//     // All should run in parallel with different keys
-//     const [r3, r1, r2] = await Promise.all([
-//       store.request.fetchTrack(3),
-//       store.request.fetchTrack(1),
-//       store.request.fetchTrack(2),
-//     ]);
+    expect(r1).toBe(1);
+    expect(r2).toBe(2);
+    expect(r3).toBe(3);
+    expect(completionOrder).toEqual([1, 2, 3]); // Complete in duration order
+  });
 
-//     expect(r1).toBe(1);
-//     expect(r2).toBe(2);
-//     expect(r3).toBe(3);
-//     expect(completionOrder).toEqual([1, 2, 3]); // Complete in duration order
-//   });
+  it('same key requests supersede each other', async () => {
+    const executed: string[] = [];
 
-//   it('same key requests supersede each other', async () => {
-//     const executed: string[] = [];
+    const slice = createSlice<unknown>()({
+      initialState: {},
+      getSnapshot: () => ({}),
+      subscribe: () => {},
+      request: {
+        action: {
+          key: 'shared',
+          async handler(name: string, _ctx) {
+            executed.push(`${name}-start`);
+            await new Promise(r => setTimeout(r, 50));
+            executed.push(`${name}-end`);
+            return name;
+          },
+        },
+      },
+    });
 
-//     const slice = createSlice<{}>()({
-//       initialState: {},
-//       getSnapshot: () => ({}),
-//       subscribe: () => {},
-//       request: {
-//         action: {
-//           key: 'shared',
-//           async handler(name: string) {
-//             executed.push(`${name}-start`);
-//             await new Promise(r => setTimeout(r, 50));
-//             executed.push(`${name}-end`);
-//             return name;
-//           },
-//         },
-//       },
-//     });
+    const store = createStore({
+      slices: [slice],
+      onError: () => {},
+    });
 
-//     const store = createStore({
-//       slices: [slice],
-//     });
+    store.attach({});
 
-//     store.attach({});
+    const p1 = store.request.action('first');
+    const p2 = store.request.action('second');
+    const p3 = store.request.action('third');
 
-//     const p1 = store.request.action('first');
-//     const p2 = store.request.action('second');
-//     const p3 = store.request.action('third');
+    await expect(p1).rejects.toThrow();
+    await expect(p2).rejects.toThrow();
+    await expect(p3).resolves.toBe('third');
 
-//     await expect(p1).rejects.toThrow();
-//     await expect(p2).rejects.toThrow();
-//     await expect(p3).resolves.toBe('third');
+    expect(executed).toContain('third-start');
+    expect(executed).toContain('third-end');
+    expect(executed).not.toContain('first-end');
+    expect(executed).not.toContain('second-end');
+  });
+});
 
-//     expect(executed).toContain('third-start');
-//     expect(executed).toContain('third-end');
-//     expect(executed).not.toContain('first-end');
-//     expect(executed).not.toContain('second-end');
-//   });
-// });
+describe('state syncing', () => {
+  it('partial updates only trigger relevant subscriptions', async () => {
+    const volumeUpdates: number[] = [];
+    const mutedUpdates: boolean[] = [];
 
-// describe('state Syncing', () => {
-//   it('partial updates only trigger relevant subscriptions', async () => {
-//     const volumeUpdates: number[] = [];
-//     const mutedUpdates: boolean[] = [];
+    class Target extends EventTarget {
+      volume = 1;
+      muted = false;
+    }
 
-//     const slice = createSlice<{ volume: number; muted: boolean }>()({
-//       initialState: { volume: 1, muted: false },
-//       getSnapshot: ({ target }) => ({
-//         volume: target.volume,
-//         muted: target.muted,
-//       }),
-//       subscribe: ({ target, update, signal }) => {
-//         // Simulate events
-//       },
-//       request: {
-//         setVolume: (volume: number, { target }) => {
-//           target.volume = volume;
-//         },
-//         setMuted: (muted: boolean, { target }) => {
-//           target.muted = muted;
-//         },
-//       },
-//     });
+    const slice = createSlice<Target>()({
+      initialState: {
+        volume: 1,
+        muted: false,
+      },
+      getSnapshot: ({ target }) => ({
+        volume: target.volume,
+        muted: target.muted,
+      }),
+      subscribe: ({ target, update, signal }) => {
+        target.addEventListener('volumechange', () => {
+          update({ volume: target.volume });
+        }, { signal });
 
-//     const store = createStore({
-//       slices: [slice],
-//     });
+        target.addEventListener('mutechange', () => {
+          update({ muted: target.muted });
+        }, { signal });
+      },
+      request: {
+        setVolume: (volume: number, { target }) => {
+          target.volume = volume;
+          target.dispatchEvent(new Event('volumechange'));
+        },
+        setMuted: (muted: boolean, { target }) => {
+          target.muted = muted;
+          target.dispatchEvent(new Event('mutechange'));
+        },
+      },
+    });
 
-//     const target = { volume: 1, muted: false };
-//     store.attach(target);
+    const store = createStore({
+      slices: [slice],
+    });
 
-//     store.subscribe(['volume'], (state) => {
-//       volumeUpdates.push(state.volume);
-//     });
+    store.attach(new Target());
 
-//     store.subscribe(['muted'], (state) => {
-//       mutedUpdates.push(state.muted);
-//     });
+    store.subscribe(['volume'], (state) => {
+      volumeUpdates.push(state.volume);
+    });
 
-//     await store.request.setVolume(0.5);
-//     await store.request.setMuted(true);
-//     await store.request.setVolume(0.8);
+    store.subscribe(['muted'], (state) => {
+      mutedUpdates.push(state.muted);
+    });
 
-//     expect(volumeUpdates).toEqual([0.5, 0.8]);
-//     expect(mutedUpdates).toEqual([true]);
-//   });
+    await store.request.setVolume(0.5);
+    await store.request.setMuted(true);
+    await store.request.setVolume(0.8);
 
-//   it('multiple slices merge state correctly', () => {
-//     const audioSlice = createSlice<{ volume: number; rate: number }>()({
-//       initialState: { volume: 1 },
-//       getSnapshot: ({ target }) => ({ volume: target.volume }),
-//       subscribe: () => {},
-//       request: {},
-//     });
+    expect(volumeUpdates).toEqual([0.5, 0.8]);
+    expect(mutedUpdates).toEqual([true]);
+  });
 
-//     const playbackSlice = createSlice<{ volume: number; rate: number }>()({
-//       initialState: { rate: 1 },
-//       getSnapshot: ({ target }) => ({ rate: target.rate }),
-//       subscribe: () => {},
-//       request: {},
-//     });
+  it('multiple slices merge state correctly', () => {
+    const audioSlice = createSlice<{ volume: number; rate: number }>()({
+      initialState: { volume: 1 },
+      getSnapshot: ({ target }) => ({ volume: target.volume }),
+      subscribe: () => {},
+      request: {},
+    });
 
-//     const store = createStore({
-//       slices: [audioSlice, playbackSlice],
-//     });
+    const playbackSlice = createSlice<{ volume: number; rate: number }>()({
+      initialState: { rate: 1 },
+      getSnapshot: ({ target }) => ({ rate: target.rate }),
+      subscribe: () => {},
+      request: {},
+    });
 
-//     const target = { volume: 0.5, rate: 1.5 };
-//     store.attach(target);
+    const store = createStore({
+      slices: [audioSlice, playbackSlice],
+    });
 
-//     expect(store.state).toEqual({
-//       volume: 0.5,
-//       rate: 1.5,
-//     });
-//   });
-// });
+    const target = { volume: 0.5, rate: 1.5 };
+    store.attach(target);
+
+    expect(store.state).toEqual({
+      volume: 0.5,
+      rate: 1.5,
+    });
+  });
+});

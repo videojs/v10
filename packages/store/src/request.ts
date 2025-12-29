@@ -109,16 +109,22 @@ export type ResolvedRequestConfigMap<Target, Requests extends RequestRecord> = {
  */
 export type InferRequestHandlerInput<Handler> = Handler extends (() => any)
   ? void
-  : Handler extends (input: infer I, ctx: any) => any
+  : Handler extends (input: infer I, ctx?: any) => any
     ? I
-    : void;
+    : Handler extends { handler: () => any }
+      ? void
+      : Handler extends { handler: (input: infer I, ctx?: any) => any }
+        ? I
+        : void;
 
 /**
  * Infer the output type of a RequestHandler.
  */
-export type InferRequestHandlerOutput<Handler> = Handler extends RequestHandler<any, InferRequestHandlerInput<Handler>, infer O>
+export type InferRequestHandlerOutput<Handler> = Handler extends ((...args: any[]) => infer O)
   ? Awaited<O>
-  : void;
+  : Handler extends { handler: (...args: any[]) => infer O }
+    ? Awaited<O>
+    : void;
 
 /**
  * Resolve a RequestHandlerRecord to a RequestRecord.

@@ -50,7 +50,7 @@ describe('errors', () => {
   describe('noTargetError', () => {
     it('has descriptive message', () => {
       const error = new NoTargetError();
-      expect(error.message).toBe('No target attached to store');
+      expect(error.message).toBe('No target attached');
     });
   });
 

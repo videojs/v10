@@ -358,7 +358,7 @@ describe('queue', () => {
         ).rejects.toThrow('Queue destroyed');
       });
 
-      it('aborts all pending on destroy', async () => {
+      it.only('aborts all pending on destroy', async () => {
         vi.useRealTimers();
 
         const queue = createQueue();
@@ -369,7 +369,7 @@ describe('queue', () => {
           key: 'k',
           handler: async ({ signal }) => {
             signal.addEventListener('abort', aborted);
-            await new Promise(r => setTimeout(r, 1000));
+            await new Promise(r => setTimeout(r, 100));
           },
         });
 

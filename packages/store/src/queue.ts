@@ -325,7 +325,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
     // Abort all pending
     for (const pending of this.#pending.values()) {
-      pending.abort.abort();
+      pending.abort.abort(reason);
     }
   }
 
@@ -376,7 +376,15 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     this.#onDispatch?.(pending);
 
     try {
+      if (abort.signal.aborted) {
+        throw new RequestCancelledError();
+      }
+
       const result = await handler({ input, signal: abort.signal });
+
+      if (abort.signal.aborted) {
+        throw new RequestCancelledError();
+      }
 
       // Check if superseded during execution
       if (this.#epochs.get(key) !== epoch) {

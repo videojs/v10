@@ -21,7 +21,7 @@ export class RequestSupersededError extends RequestCancelledError {
 
 export class NoTargetError extends StoreError {
   constructor() {
-    super('No target attached to store');
+    super('No target attached');
     this.name = 'NoTargetError';
   }
 }

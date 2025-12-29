@@ -13,16 +13,20 @@ export interface Slice<Target, State extends object, Requests extends RequestRec
   readonly request: ResolvedRequestConfigMap<Target, Requests>;
 }
 
-export type SliceGetSnapshot<Target, State> = (ctx: {
+export type SliceGetSnapshot<Target, State> = (ctx: SliceGetSnapshotContext<Target, State>) => State;
+
+export interface SliceGetSnapshotContext<Target, State> {
   target: Target;
   initialState: State;
-}) => State;
+}
 
-export type SliceSubscribe<Target, State extends object> = (ctx: {
+export type SliceSubscribe<Target, State extends object> = (ctx: SliceSubscribeContext<Target, State>) => void;
+
+export interface SliceSubscribeContext<Target, State extends object> {
   target: Target;
   update: SliceUpdate<State>;
   signal: AbortSignal;
-}) => void;
+}
 
 export interface SliceUpdate<State extends object> {
   (): void;
@@ -57,16 +61,15 @@ export type ResolveSliceRequestHandlers<S> = S extends Slice<any, any, infer R>
 // ----------------------------------------
 
 export interface SliceFactory<Target> {
-  <C extends {
-    initialState: object;
-    getSnapshot: (ctx: { target: Target; initialState: any }) => any;
-    subscribe: (ctx: { target: Target; update: any; signal: AbortSignal }) => void;
-    request: {
-      [K in string]:
-        | RequestHandler<Target, any, any>
-        | RequestConfig<Target, any, any>;
-    };
-  }>(config: C): SliceFactoryResult<Target, C>;
+  <
+    State extends object,
+    const Requests extends Record<string, RequestHandler<Target, any, any> | RequestConfig<Target, any, any>>,
+  >(config: {
+    initialState: State;
+    getSnapshot: (ctx: SliceGetSnapshotContext<Target, State>) => State;
+    subscribe: (ctx: SliceSubscribeContext<Target, State>) => void;
+    request: Requests;
+  }): Slice<Target, State, ResolveRequestMap<Requests>>;
 }
 
 export type SliceFactoryResult<Target, Config> = Config extends {
@@ -114,7 +117,15 @@ export function createSlice<
   config?: SliceConfig<Target, State, Requests>,
 ): Slice<Target, State, Requests> | SliceFactory<Target> {
   if (arguments.length === 0) {
-    return (config => _createSlice(config as any)) as SliceFactory<Target>;
+    return (<
+      S extends object,
+      const R extends Record<string, RequestHandler<Target, any, any> | RequestConfig<Target, any, any>>,
+    >(config: {
+      initialState: S;
+      getSnapshot: (ctx: SliceGetSnapshotContext<Target, S>) => S;
+      subscribe: (ctx: SliceSubscribeContext<Target, S>) => void;
+      request: R;
+    }) => _createSlice(config)) as SliceFactory<Target>;
   }
 
   return _createSlice(config!);
