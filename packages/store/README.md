@@ -20,7 +20,7 @@ npm install @videojs/store
 - **Write Path**: Send requests, coordinate execution, handle failures
 
 ```ts
-import { createStore, createSlice } from '@videojs/store';
+import { createSlice, createStore } from '@videojs/store';
 
 const store = createStore({
   slices: [playbackSlice, audioSlice],
@@ -84,6 +84,7 @@ For shared type definitions, use `Request<Input, Output>`:
 
 ```ts
 import type { Request } from '@videojs/store';
+
 import { createSlice } from '@videojs/store';
 
 interface AudioState {
@@ -117,7 +118,7 @@ request: {
   // Async shorthand
   async seek(time, { target, signal }) {
     target.currentTime = time;
-    await onEvent(target, 'seeked', signal);
+    await onEvent(target, 'seeked', { signal });
   },
 
   // Full config when needed
@@ -128,7 +129,7 @@ request: {
     // ...
     async handler(_, { target, signal }) {
       target.play();
-      await onEvent(target, 'play', signal);
+      await onEvent(target, 'play', { signal });
     },
   },
 }
@@ -212,8 +213,8 @@ const unsubscribe = store.subscribe((state) => {
 
 // Subscribe with selector
 store.subscribe(
-  state => state.volume,
-  volume => console.log('Volume:', volume)
+  (state) => state.volume,
+  (volume) => console.log('Volume:', volume)
 );
 ```
 
@@ -238,13 +239,17 @@ Slices can push partial updates to avoid full syncs:
 ```ts
 subscribe: ({ target, update, signal }) => {
   // Partial - only update currentTime
-  target.addEventListener('timeupdate', () => {
-    update({ currentTime: target.currentTime });
-  }, { signal });
+  target.addEventListener(
+    'timeupdate',
+    () => {
+      update({ currentTime: target.currentTime });
+    },
+    { signal }
+  );
 
   // Full sync
   target.addEventListener('durationchange', update, { signal });
-}
+};
 ```
 
 ## Request Configuration
@@ -318,7 +323,7 @@ optionally returns a cancel function. Default schedule is microtask (executes at
 
 ```ts
 import { delay } from '@videojs/store';
-import { frame, idle } from '@videojs/store/dom';
+import { raf, idle } from '@videojs/store/dom';
 
 request: {
   // Debounce 100ms - good for sliders
@@ -329,7 +334,7 @@ request: {
 
   // Sync with animation frame
   updateOverlay: {
-    schedule: frame(),
+    schedule: raf(),
     handler: () => { ... },
   },
 
@@ -379,7 +384,7 @@ import type { Guard } from '@videojs/store';
 
 const canMediaPlay: Guard<HTMLMediaElement> = ({ target, signal }) => {
   if (target.readyState >= HAVE_ENOUGH_DATA) return true;
-  return onEvent(target, 'canplay', signal); // wait for canplay
+  return onEvent(target, 'canplay', { signal }); // wait for canplay
 };
 ```
 
@@ -430,10 +435,12 @@ scheduling:
 import { createQueue } from '@videojs/store';
 
 const store = createStore({
-  slices: [/* ... */],
+  slices: [
+    /* ... */
+  ],
   queue: createQueue({
     // Default scheduler for requests without schedule
-    scheduler: flush => queueMicrotask(flush),
+    scheduler: (flush) => queueMicrotask(flush),
 
     // Lifecycle hooks
     onDispatch: (request) => {
@@ -551,13 +558,17 @@ import { createStore } from '@videojs/store';
 
 // Default
 const store = createStore({
-  slices: [/* ... */],
+  slices: [
+    /* ... */
+  ],
 });
 
 // Custom
 const store = createStore({
-  slices: [/* ... */],
-  state: initial => new VueStateAdapter(initial),
+  slices: [
+    /* ... */
+  ],
+  state: (initial) => new VueStateAdapter(initial),
 });
 ```
 
@@ -630,9 +641,9 @@ function QualityMenu() {
 ## Exports
 
 ```md
-@videojs/store          # Core: createStore, createSlice, createQueue, Request
-@videojs/store/dom      # Guards, frame(), idle(), onEvent()
-@videojs/store/react    # useStore, useSlice, useRequest, usePending
+@videojs/store # Core: createStore, createSlice, createQueue, Request
+@videojs/store/dom # raf(), idle() schedulers
+@videojs/store/react # useStore, useSlice, useRequest, usePending
 ```
 
 ## How It's Different

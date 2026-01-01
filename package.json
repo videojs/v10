@@ -58,6 +58,7 @@
     "react-compiler-runtime": "^1.0.0",
     "react-dom": "^18.0.0",
     "simple-git-hooks": "^2.13.1",
+    "tsx": "^4.21.0",
     "turbo": "^2.5.8",
     "typescript": "^5.9.3"
   },

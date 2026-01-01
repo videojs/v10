@@ -20,6 +20,10 @@
       "types": "./dist/dom.d.ts",
       "default": "./dist/dom.js"
     },
+    "./lit": {
+      "types": "./dist/lit.d.ts",
+      "default": "./dist/lit.js"
+    },
     "./react": {
       "types": "./dist/react.d.ts",
       "default": "./dist/react.js"
@@ -39,13 +43,22 @@
     "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
+  "peerDependencies": {
+    "@lit/reactive-element": "^2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@lit/reactive-element": {
+      "optional": true
+    }
+  },
   "dependencies": {
-    "@videojs/utils": "workspace:*",
-    "vitest": "^3.2.4"
+    "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
+    "@lit/reactive-element": "^2.1.0",
     "tsdown": "^0.15.9",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   },
   "publishConfig": {
     "access": "public"

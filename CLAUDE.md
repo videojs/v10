@@ -23,19 +23,23 @@ Refer to **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** for setup, development, and 
 ### Dependency Hierarchy
 
 ```text
-         utils ◄─────────────────────┐
-         utils/dom ◄─────────────────┤
-                                     │
-         core ◄──────────────────────┤
-         core/dom ◄──────────────────┤
-                                     │
-         store ◄─────────────────────┤
-         store/dom ◄─────────────────┤
-         store/react ◄───────────────┤
-                                     │
-         ┌───────────────────────────┘
-         ▼
-   html    react    react-native
+utils           ← shared utilities
+utils/dom       ← DOM-specific helpers
+
+store           ← state management
+store/dom       ← DOM platform APIs
+store/react     ← React bindings
+
+core            ← runtime-agnostic logic
+core/dom        ← DOM bindings
+
+html            ← Web player (DOM/Browser)
+react           ← React player
+react-native    ← React Native player
+```
+
+```text
+utils ← store ← core ← html / react / react-native
 ```
 
 ## Workspace

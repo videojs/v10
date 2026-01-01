@@ -29,13 +29,14 @@
     "build": "tsdown",
     "build:watch": "tsdown --watch --silent",
     "dev": "pnpm run build:watch",
-    "test": "echo \"No tests yet\"",
+    "test": "vitest --run",
+    "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
   "devDependencies": {
-    "es-toolkit": "^1.43.0",
     "tsdown": "^0.15.9",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   },
   "publishConfig": {
     "access": "public"

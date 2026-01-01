@@ -4,6 +4,7 @@ export default defineConfig({
   entry: {
     index: './src/index.ts',
     dom: './src/dom/index.ts',
+    lit: './src/lit/index.ts',
     react: './src/react/index.ts',
   },
   platform: 'neutral',
