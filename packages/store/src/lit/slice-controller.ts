@@ -1,5 +1,7 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 
+import { pick } from '@videojs/utils/object';
+
 /** Minimal slice interface for the controller. */
 interface ReadonlySlice<State extends object> {
   readonly id: symbol;
@@ -10,7 +12,7 @@ interface ReadonlySlice<State extends object> {
 interface ReadonlyStore<State extends object> {
   readonly state: State;
   readonly slices: ReadonlySlice<object>[];
-  subscribe: <K extends keyof State>(keys: K[], listener: (state: Pick<State, K>) => void) => () => void;
+  subscribe: <Selected>(selector: (state: State) => Selected, listener: (selected: Selected) => void) => () => void;
 }
 
 /**
@@ -38,7 +40,7 @@ export class SliceController<StoreState extends object, SliceState extends objec
   readonly #host: ReactiveControllerHost;
   readonly #store: ReadonlyStore<StoreState>;
   readonly #slice: ReadonlySlice<SliceState>;
-  readonly #keys: string[];
+  readonly #keys: (keyof SliceState)[];
 
   #unsubscribe: (() => void) | null = null;
   #value: SliceState;
@@ -47,7 +49,7 @@ export class SliceController<StoreState extends object, SliceState extends objec
     this.#host = host;
     this.#store = store;
     this.#slice = slice;
-    this.#keys = Object.keys(slice.initialState);
+    this.#keys = Object.keys(slice.initialState) as (keyof SliceState)[];
     this.#value = this.#pickSliceState(store.state);
 
     host.addController(this);
@@ -83,8 +85,12 @@ export class SliceController<StoreState extends object, SliceState extends objec
   }
 
   hostConnected(): void {
-    this.#unsubscribe = this.#store.subscribe(this.#keys as (keyof StoreState)[], () => {
-      this.#value = this.#pickSliceState(this.#store.state);
+    // Create a selector that picks the slice keys from store state
+    const selector = (state: StoreState) =>
+      pick(state as Record<string, unknown>, this.#keys as string[]) as SliceState;
+
+    this.#unsubscribe = this.#store.subscribe(selector, (next) => {
+      this.#value = next;
       this.#host.requestUpdate();
     });
   }
@@ -95,12 +101,6 @@ export class SliceController<StoreState extends object, SliceState extends objec
   }
 
   #pickSliceState(state: StoreState): SliceState {
-    const result: Record<string, unknown> = {};
-
-    for (const key of this.#keys) {
-      result[key] = state[key as keyof StoreState];
-    }
-
-    return result as SliceState;
+    return pick(state as Record<string, unknown>, this.#keys as string[]) as SliceState;
   }
 }

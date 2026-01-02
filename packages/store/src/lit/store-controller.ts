@@ -1,11 +1,9 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 
-import { isObject } from '@videojs/utils';
-
 /** Minimal store interface for the controller. */
 interface ReadonlyStore<State extends object> {
   readonly state: State;
-  subscribe: ((listener: (state: State) => void) => () => void) & (<K extends keyof State>(keys: K[], listener: (state: Pick<State, K>) => void) => () => void);
+  subscribe: ((listener: (state: State) => void) => () => void) & (<Selected>(selector: (state: State) => Selected, listener: (selected: Selected) => void) => () => void);
 }
 
 /**
@@ -44,18 +42,20 @@ interface ReadonlyStore<State extends object> {
 export class StoreController<State extends object, Selected = State> implements ReactiveController {
   readonly #host: ReactiveControllerHost;
   readonly #store: ReadonlyStore<State>;
-  readonly #selector: ((state: State) => Selected) | undefined;
-  readonly #keys: (keyof State)[] | null;
+  readonly #selector: (state: State) => Selected;
 
   #unsubscribe: (() => void) | null = null;
   #value: Selected;
 
-  constructor(host: ReactiveControllerHost, store: ReadonlyStore<State>, selector?: (state: State) => Selected) {
+  constructor(
+    host: ReactiveControllerHost,
+    store: ReadonlyStore<State>,
+    selector: (state: State) => Selected = s => s as unknown as Selected,
+  ) {
     this.#host = host;
     this.#store = store;
     this.#selector = selector;
-    this.#value = this.#select(store.state);
-    this.#keys = this.#extractKeys();
+    this.#value = this.#selector(store.state);
 
     host.addController(this);
   }
@@ -71,44 +71,16 @@ export class StoreController<State extends object, Selected = State> implements 
   }
 
   hostConnected(): void {
-    if (this.#keys) {
-      // Subscribe only to specific keys for efficiency
-      this.#unsubscribe = this.#store.subscribe(this.#keys, () => {
-        const next = this.#select(this.#store.state);
-
-        if (!Object.is(this.#value, next)) {
-          this.#value = next;
-          this.#host.requestUpdate();
-        }
-      });
-    } else {
-      // Subscribe to all state changes
-      this.#unsubscribe = this.#store.subscribe((state) => {
-        const next = this.#select(state);
-
-        if (!Object.is(this.#value, next)) {
-          this.#value = next;
-          this.#host.requestUpdate();
-        }
-      });
-    }
+    this.#unsubscribe = this.#store.subscribe(this.#selector, (next) => {
+      if (!Object.is(this.#value, next)) {
+        this.#value = next;
+        this.#host.requestUpdate();
+      }
+    });
   }
 
   hostDisconnected(): void {
     this.#unsubscribe?.();
     this.#unsubscribe = null;
-  }
-
-  #select(state: State): Selected {
-    return this.#selector ? this.#selector(state) : (state as unknown as Selected);
-  }
-
-  #extractKeys(): (keyof State)[] | null {
-    if (!this.#selector) return null;
-
-    const result = this.#selector(this.#store.state);
-    if (!isObject(result)) return null;
-
-    return Object.keys(result) as (keyof State)[];
   }
 }

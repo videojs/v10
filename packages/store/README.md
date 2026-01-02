@@ -211,27 +211,30 @@ const unsubscribe = store.subscribe((state) => {
   console.log('State changed:', state);
 });
 
-// Subscribe with selector
+// Single value - only fires when volume changes
 store.subscribe(
-  (state) => state.volume,
+  (s) => s.volume,
   (volume) => console.log('Volume:', volume)
 );
-```
 
-### Keyed Subscriptions
+// Multiple values - auto-optimized with key-based subscription
+store.subscribe(
+  (s) => ({ volume: s.volume, muted: s.muted }),
+  ({ volume, muted }) => updateAudioUI(volume, muted)
+);
 
-Subscribe to specific keys for high-frequency updates:
+// Derived value
+store.subscribe(
+  (s) => Math.round(s.volume * 100),
+  (percent) => console.log(`${percent}%`)
+);
 
-```ts
-// Only fires when currentTime changes
-store.subscribe(['currentTime'], (state) => {
-  updatedTime(state.currentTime);
-});
-
-// Multiple keys
-store.subscribe(['volume', 'muted'], (state) => {
-  updatedVolume(state.volume, state.muted);
-});
+// Custom equality function
+store.subscribe(
+  (s) => s.playlist,
+  (playlist) => renderPlaylist(playlist),
+  { equalityFn: shallowEqual }
+);
 ```
 
 Slices can push partial updates to avoid full syncs:

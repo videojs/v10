@@ -1,16 +1,10 @@
 import type { PendingTask, TaskContext, TaskRecord } from './queue';
 import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
-import type {
-  AnySlice,
-  InferSliceTarget,
-  Slice,
-  UnionSliceRequest,
-  UnionSliceState,
-  UnionSliceTasks,
-} from './slice';
+import type { AnySlice, InferSliceTarget, Slice, UnionSliceRequest, UnionSliceState, UnionSliceTasks } from './slice';
 import type { StateFactory } from './state';
 
 import { isNull } from '@videojs/utils';
+import { getSelectorKeys } from '@videojs/utils/object';
 
 import { StoreError } from './errors';
 import { Queue } from './queue';
@@ -157,19 +151,49 @@ export class Store<
   // ----------------------------------------
 
   subscribe(listener: (state: UnionSliceState<Slices>) => void): () => void;
-  subscribe<K extends keyof UnionSliceState<Slices>>(
-    keys: K[],
-    listener: (state: Pick<UnionSliceState<Slices>, K>) => void
+  subscribe<Selected>(
+    selector: Selector<UnionSliceState<Slices>, Selected>,
+    listener: (selected: Selected) => void,
+    options?: SubscribeOptions<Selected>
   ): () => void;
-  subscribe<K extends keyof UnionSliceState<Slices>>(
-    keysOrListener: ((state: UnionSliceState<Slices>) => void) | K[],
-    maybeListener?: (state: Pick<UnionSliceState<Slices>, K>) => void,
+  subscribe<Selected>(
+    selectorOrListener: ((state: UnionSliceState<Slices>) => void) | Selector<UnionSliceState<Slices>, Selected>,
+    maybeListener?: (selected: Selected) => void,
+    options?: SubscribeOptions<Selected>,
   ): () => void {
-    if (Array.isArray(keysOrListener)) {
-      return this.#state.subscribeKeys(keysOrListener, maybeListener!);
+    // Full state subscription (single argument)
+    if (!maybeListener) {
+      return this.#state.subscribe(selectorOrListener as (state: UnionSliceState<Slices>) => void);
     }
 
-    return this.#state.subscribe(keysOrListener);
+    // Selector-based subscription
+    const selector = selectorOrListener as Selector<UnionSliceState<Slices>, Selected>;
+    const listener = maybeListener;
+    const equalityFn = options?.equalityFn ?? Object.is;
+
+    let prev = selector(this.#state.value);
+
+    const handler = (state: UnionSliceState<Slices>) => {
+      const next = selector(state);
+
+      if (!equalityFn(prev, next)) {
+        prev = next;
+        listener(next);
+      }
+    };
+
+    // Optimization: use key-based subscription if selector returns object
+    const keys = getSelectorKeys(selector, this.#state.value);
+
+    if (keys) {
+      // Note: subscribeKeys listener receives full state at runtime, type is narrowed for safety
+      return this.#state.subscribeKeys(
+        keys as (keyof UnionSliceState<Slices>)[],
+        handler as (state: Pick<UnionSliceState<Slices>, keyof UnionSliceState<Slices>>) => void,
+      );
+    }
+
+    return this.#state.subscribe(handler);
   }
 
   // ----------------------------------------
@@ -344,6 +368,17 @@ export type AnyStore<Target = any> = Store<Target, any, any>;
  * A selector function that extracts a subset of state.
  */
 export type Selector<State, Selected> = (state: State) => Selected;
+
+/**
+ * Options for selector-based subscriptions.
+ */
+export interface SubscribeOptions<T> {
+  /**
+   * Custom equality function for comparing selected values.
+   * Defaults to `Object.is`.
+   */
+  equalityFn?: (a: T, b: T) => boolean;
+}
 
 export interface StoreConfig<
   Target,

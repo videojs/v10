@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+
 import { createSlice, createStore, delay } from '../../src';
 
 describe('store lifecycle integration', () => {
@@ -249,13 +250,21 @@ describe('state syncing', () => {
         muted: target.muted,
       }),
       subscribe: ({ target, update, signal }) => {
-        target.addEventListener('volumechange', () => {
-          update({ volume: target.volume });
-        }, { signal });
+        target.addEventListener(
+          'volumechange',
+          () => {
+            update({ volume: target.volume });
+          },
+          { signal },
+        );
 
-        target.addEventListener('mutechange', () => {
-          update({ muted: target.muted });
-        }, { signal });
+        target.addEventListener(
+          'mutechange',
+          () => {
+            update({ muted: target.muted });
+          },
+          { signal },
+        );
       },
       request: {
         setVolume: (volume: number, { target }) => {
@@ -275,13 +284,19 @@ describe('state syncing', () => {
 
     store.attach(new Target());
 
-    store.subscribe(['volume'], (state) => {
-      volumeUpdates.push(state.volume);
-    });
+    store.subscribe(
+      s => s.volume,
+      (volume) => {
+        volumeUpdates.push(volume);
+      },
+    );
 
-    store.subscribe(['muted'], (state) => {
-      mutedUpdates.push(state.muted);
-    });
+    store.subscribe(
+      s => s.muted,
+      (muted) => {
+        mutedUpdates.push(muted);
+      },
+    );
 
     await store.request.setVolume(0.5);
     await store.request.setMuted(true);

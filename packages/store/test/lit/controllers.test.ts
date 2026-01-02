@@ -281,7 +281,7 @@ describe('sliceController', () => {
     expect(host.updateCount).toBeGreaterThan(initialCount);
   });
 
-  it('subscribes only to slice keys', async () => {
+  it('subscribes with selector for slice keys', async () => {
     const _controller = new SliceController(host, store, audioSlice);
     host.connect();
 
@@ -291,8 +291,8 @@ describe('sliceController', () => {
     host.disconnect();
     host.connect();
 
-    // Should pass slice keys to subscribe
-    expect(subscribeSpy).toHaveBeenCalledWith(['volume', 'muted'], expect.any(Function));
+    // Should pass a selector function and listener to subscribe
+    expect(subscribeSpy).toHaveBeenCalledWith(expect.any(Function), expect.any(Function));
   });
 
   describe('isSupported method', () => {

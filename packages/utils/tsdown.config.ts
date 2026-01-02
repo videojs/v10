@@ -4,6 +4,7 @@ export default defineConfig({
   entry: {
     index: './src/index.ts',
     dom: './src/dom/index.ts',
+    object: './src/object/index.ts',
   },
   platform: 'neutral',
   format: 'es',

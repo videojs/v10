@@ -17,6 +17,10 @@
     "./dom": {
       "types": "./dist/dom.d.ts",
       "default": "./dist/dom.js"
+    },
+    "./object": {
+      "types": "./dist/object.d.ts",
+      "default": "./dist/object.js"
     }
   },
   "main": "dist/index.js",
