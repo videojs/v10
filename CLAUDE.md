@@ -9,21 +9,38 @@ Refer to **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** for setup, development, and 
 
 ## Package Layout
 
-| Package Path            | Purpose                                              |
-| ----------------------- | ---------------------------------------------------- |
-| `packages/core`         | Core runtime‑agnostic logic and state.               |
-| `packages/html`         | DOM/Browser‑specific implementations.                |
-| `packages/react`        | React package—adapts core state to React components. |
-| `packages/react-native` | React Native integration layer.                      |
-| `packages/utils`        | Shared utilities.                                    |
-| `examples/*`            | Demo apps for various runtimes.                      |
-| `site/`                 | Astro‑based docs and website.                        |
+| Package Path            | Purpose                                                            |
+| ----------------------- | ------------------------------------------------------------------ |
+| `packages/utils`        | Shared utilities (`/dom` subpath for DOM‑specific helpers).        |
+| `packages/core`         | Core runtime‑agnostic logic (`/dom` subpath for DOM bindings).     |
+| `packages/store`        | State management (`/dom` and `/react` subpaths for platform APIs). |
+| `packages/html`         | Web player—DOM/Browser‑specific implementation.                    |
+| `packages/react`        | React player—adapts core state to React components.                |
+| `packages/react-native` | React Native player integration layer.                             |
+| `examples/*`            | Demo apps for various runtimes.                                    |
+| `site/`                 | Astro‑based docs and website.                                      |
 
 ### Dependency Hierarchy
 
-- Core → (no internal deps)
-- HTML / React / React‑Native → depend only on Core
-- Prevents circular dependencies and maximizes reusability.
+```text
+utils           ← shared utilities
+utils/dom       ← DOM-specific helpers
+
+store           ← state management
+store/dom       ← DOM platform APIs
+store/react     ← React bindings
+
+core            ← runtime-agnostic logic
+core/dom        ← DOM bindings
+
+html            ← Web player (DOM/Browser)
+react           ← React player
+react-native    ← React Native player
+```
+
+```text
+utils ← store ← core ← html / react / react-native
+```
 
 ## Workspace
 
@@ -72,7 +89,7 @@ Examples:
 
 Breaking changes use `!`:
 
-```
+```text
 feat(core)!: remove deprecated playback API
 ```
 
