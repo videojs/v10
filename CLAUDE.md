@@ -42,6 +42,9 @@ react-native    ← React Native player
 utils ← store ← core ← html / react / react-native
 ```
 
+IGNORE `packages/__tech-preview__/` — it's legacy code from the Demuxed demo. Don't reference or 
+modify it when working in other packages.
+
 ## Workspace
 
 Uses **PNPM workspaces** + **Turbo** for task orchestration.

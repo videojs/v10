@@ -18,12 +18,13 @@ Study these before reviewing:
 - Zustand/nanostores — minimal reactive state
 - Base UI / Radix — headless component patterns, compound components
 - Zod — chainable configuration, inference-heavy APIs
+- es-toolkit - state of the art JS utilities
 
 ## JavaScript Ecosystem Alignment
 
 **Follow platform conventions first**: Before inventing, check how the web platform and established libraries solve it.
 
-- Event naming: `volumechange` not `onVolumeChange` in core
+- Event naming: `volume-change` not `onVolumeChange` in core
 - Method naming: `addEventListener`, `removeEventListener` patterns
 - Options objects: Web APIs use them (`fetch(url, options)`)
 - Promises: Standard async patterns, not callbacks
