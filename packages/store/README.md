@@ -462,8 +462,12 @@ const store = createStore({
 ```ts
 const queue = store.queue; // accessed on the store
 
-queue.queued; // requests waiting to execute
-queue.pending; // requests currently executing
+queue.queued; // object of requests waiting to execute
+queue.pending; // object of requests currently executing
+
+// Check if a task is pending or queued
+queue.isPending('playback'); // true if currently executing
+queue.isQueued('seek'); // true if waiting to execute
 
 queue.dequeue('seek'); // remove from queue without executing
 queue.clear(); // clear all queued

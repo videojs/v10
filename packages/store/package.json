@@ -44,9 +44,13 @@
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
+    "@lit/context": "^1.1.0",
     "@lit/reactive-element": "^2.0.0"
   },
   "peerDependenciesMeta": {
+    "@lit/context": {
+      "optional": true
+    },
     "@lit/reactive-element": {
       "optional": true
     }
@@ -55,6 +59,7 @@
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
+    "@lit/context": "^1.1.6",
     "@lit/reactive-element": "^2.1.0",
     "tsdown": "^0.15.9",
     "typescript": "^5.9.3",

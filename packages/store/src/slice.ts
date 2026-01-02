@@ -1,9 +1,22 @@
-import type { Request, RequestConfig, RequestConfigMap, RequestHandler, RequestRecord, ResolvedRequestConfigMap, ResolveRequestHandler, ResolveRequestMap } from './request';
+import type { UnionToIntersection } from '@videojs/utils';
+import type { EnsureTaskRecord } from './queue';
+import type {
+  Request,
+  RequestConfig,
+  RequestConfigMap,
+  RequestHandler,
+  RequestRecord,
+  ResolvedRequestConfigMap,
+  ResolveRequestHandler,
+  ResolveRequestMap,
+} from './request';
 import { resolveRequests } from './request';
 
 // ----------------------------------------
 // Types
 // ----------------------------------------
+
+export type AnySlice<Target = any> = Slice<Target, any, any>;
 
 export interface Slice<Target, State extends object, Requests extends RequestRecord> {
   readonly id: symbol;
@@ -55,6 +68,18 @@ export type InferSliceRequests<S> = S extends Slice<any, any, infer R>
 export type ResolveSliceRequestHandlers<S> = S extends Slice<any, any, infer R>
   ? { [K in keyof R]: ResolveRequestHandler<R[K]> }
   : never;
+
+export type UnionSliceState<Slices extends Slice<any, any, any>[]> = UnionToIntersection<
+  InferSliceState<Slices[number]>
+>;
+
+export type UnionSliceRequest<Slices extends Slice<any, any, any>[]> = UnionToIntersection<
+  ResolveSliceRequestHandlers<Slices[number]>
+>;
+
+export type UnionSliceTasks<Slices extends Slice<any, any, any>[]> = EnsureTaskRecord<
+  UnionToIntersection<InferSliceRequests<Slices[number]>>
+>;
 
 // ----------------------------------------
 // createSlice

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { StoreError } from '../src/errors';
 import { createQueue, delay } from '../src/queue';
 
@@ -193,7 +194,7 @@ describe('queue', () => {
 
         await expect(p1).rejects.toThrow(StoreError);
         await expect(p2).rejects.toThrow(StoreError);
-        expect(queue.queued.size).toBe(0);
+        expect(Reflect.ownKeys(queue.queued).length).toBe(0);
       });
     });
 
@@ -313,10 +314,7 @@ describe('queue', () => {
         });
 
         await expect(promise).rejects.toThrow('oops');
-        expect(onSettled).toHaveBeenCalledWith(
-          expect.anything(),
-          expect.objectContaining({ status: 'error' }),
-        );
+        expect(onSettled).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ status: 'error' }));
       });
 
       it('onSettled called with cancelled status', async () => {
@@ -353,9 +351,7 @@ describe('queue', () => {
         const queue = createQueue();
         queue.destroy();
 
-        await expect(
-          queue.enqueue({ name: 't', key: 'k', handler: vi.fn() }),
-        ).rejects.toThrow('Queue destroyed');
+        await expect(queue.enqueue({ name: 't', key: 'k', handler: vi.fn() })).rejects.toThrow('Queue destroyed');
       });
 
       it('aborts all pending on destroy', async () => {
@@ -394,8 +390,8 @@ describe('queue', () => {
         });
 
         // Queue should have the first task
-        expect(queue.queued.size).toBe(1);
-        expect(queue.queued.get('shared')?.name).toBe('task1');
+        expect(Reflect.ownKeys(queue.queued).length).toBe(1);
+        expect(queue.queued.shared?.name).toBe('task1');
 
         // Immediately enqueue second task with same key (supersedes first)
         const promise2 = queue.enqueue({
@@ -408,8 +404,8 @@ describe('queue', () => {
         await expect(promise1).rejects.toMatchObject({ message: 'Superseded' });
 
         // Queue should only have the second task (first was explicitly deleted)
-        expect(queue.queued.size).toBe(1);
-        expect(queue.queued.get('shared')?.name).toBe('task2');
+        expect(Reflect.ownKeys(queue.queued).length).toBe(1);
+        expect(queue.queued.shared?.name).toBe('task2');
 
         // Second should succeed
         await vi.runAllTimersAsync();
@@ -439,7 +435,7 @@ describe('queue', () => {
 
         // Wait for task to start
         await new Promise(r => setTimeout(r, 10));
-        expect(queue.pending.size).toBe(1);
+        expect(Reflect.ownKeys(queue.pending).length).toBe(1);
 
         // Destroy queue
         queue.destroy();
@@ -449,8 +445,8 @@ describe('queue', () => {
         expect(cleanupSpy).toHaveBeenCalledWith('aborted');
         expect(cleanupSpy).toHaveBeenCalledWith('cleanup');
 
-        // Pending map should be empty (self-cleaned)
-        expect(queue.pending.size).toBe(0);
+        // Pending object should be empty (self-cleaned)
+        expect(Reflect.ownKeys(queue.pending).length).toBe(0);
       });
 
       it('handles scheduler error without double-cleanup when already flushed', async () => {
@@ -477,8 +473,8 @@ describe('queue', () => {
         // Promise should reject with scheduler error
         await expect(promise).rejects.toThrow('Scheduler error');
 
-        // Task should not be in queued map (wasn't double-deleted)
-        expect(queue.queued.size).toBe(0);
+        // Task should not be in queued object (wasn't double-deleted)
+        expect(Reflect.ownKeys(queue.queued).length).toBe(0);
       });
 
       it('handles scheduler error with cleanup when not yet flushed', async () => {
@@ -500,7 +496,212 @@ describe('queue', () => {
         await expect(promise).rejects.toThrow('Scheduler error');
 
         // Task should be removed from queue
-        expect(queue.queued.size).toBe(0);
+        expect(Reflect.ownKeys(queue.queued).length).toBe(0);
+      });
+    });
+
+    describe('isPending and isQueued', () => {
+      it('isPending returns true when task is executing', async () => {
+        vi.useRealTimers();
+
+        const queue = createQueue();
+
+        const promise = queue.enqueue({
+          name: 'test',
+          key: 'test-key',
+          handler: async () => {
+            await new Promise(r => setTimeout(r, 50));
+            return 'result';
+          },
+        });
+
+        await new Promise(r => setTimeout(r, 10));
+
+        expect(queue.isPending('test-key')).toBe(true);
+        expect(queue.isPending('other-key')).toBe(false);
+
+        await promise;
+
+        expect(queue.isPending('test-key')).toBe(false);
+      });
+
+      it('isQueued returns true when task is waiting to execute', async () => {
+        const queue = createQueue({ scheduler: delay(100) });
+
+        queue.enqueue({
+          name: 'test',
+          key: 'test-key',
+          handler: vi.fn().mockResolvedValue('result'),
+        });
+
+        expect(queue.isQueued('test-key')).toBe(true);
+        expect(queue.isQueued('other-key')).toBe(false);
+
+        vi.advanceTimersByTime(100);
+        await vi.runAllTimersAsync();
+
+        expect(queue.isQueued('test-key')).toBe(false);
+      });
+    });
+
+    describe('subscribe', () => {
+      it('returns an unsubscribe function', () => {
+        const queue = createQueue();
+        const listener = vi.fn();
+
+        const unsubscribe = queue.subscribe(listener);
+
+        expect(unsubscribe).toBeTypeOf('function');
+      });
+
+      it('notifies when task becomes pending', async () => {
+        vi.useRealTimers();
+
+        const queue = createQueue();
+        const listener = vi.fn();
+
+        queue.subscribe(listener);
+
+        const promise = queue.enqueue({
+          name: 'test',
+          key: 'test-key',
+          handler: vi.fn().mockResolvedValue('result'),
+        });
+
+        await promise;
+
+        // Called when pending (dispatch) and when settled
+        expect(listener).toHaveBeenCalledTimes(2);
+      });
+
+      it('notifies with pending map when task dispatches', async () => {
+        vi.useRealTimers();
+
+        const queue = createQueue();
+        const listener = vi.fn();
+
+        queue.subscribe(listener);
+
+        let resolveHandler: () => void;
+        const handlerPromise = new Promise<void>((resolve) => {
+          resolveHandler = resolve;
+        });
+
+        const promise = queue.enqueue({
+          name: 'test',
+          key: 'test-key',
+          handler: async () => {
+            await handlerPromise;
+            return 'result';
+          },
+        });
+
+        // Wait for dispatch
+        await new Promise(r => setTimeout(r, 10));
+
+        // First call should have pending task
+        expect(listener).toHaveBeenCalledTimes(1);
+        const pendingObj = listener.mock.calls[0]![0] as Record<string, unknown>;
+        expect(Reflect.ownKeys(pendingObj).length).toBe(1);
+        expect('test-key' in pendingObj).toBe(true);
+
+        // Complete the handler
+        resolveHandler!();
+        await promise;
+
+        // Second call should have empty pending
+        expect(listener).toHaveBeenCalledTimes(2);
+        const settledObj = listener.mock.calls[1]![0] as Record<string, unknown>;
+        expect(Reflect.ownKeys(settledObj).length).toBe(0);
+      });
+
+      it('unsubscribe stops notifications', async () => {
+        vi.useRealTimers();
+
+        const queue = createQueue();
+        const listener = vi.fn();
+
+        const unsubscribe = queue.subscribe(listener);
+        unsubscribe();
+
+        await queue.enqueue({
+          name: 'test',
+          key: 'test-key',
+          handler: vi.fn().mockResolvedValue('result'),
+        });
+
+        expect(listener).not.toHaveBeenCalled();
+      });
+
+      it('supports multiple subscribers', async () => {
+        vi.useRealTimers();
+
+        const queue = createQueue();
+        const listener1 = vi.fn();
+        const listener2 = vi.fn();
+
+        queue.subscribe(listener1);
+        queue.subscribe(listener2);
+
+        await queue.enqueue({
+          name: 'test',
+          key: 'test-key',
+          handler: vi.fn().mockResolvedValue('result'),
+        });
+
+        expect(listener1).toHaveBeenCalledTimes(2);
+        expect(listener2).toHaveBeenCalledTimes(2);
+      });
+
+      it('catches and logs listener errors', async () => {
+        vi.useRealTimers();
+
+        const queue = createQueue();
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const errorListener = vi.fn(() => {
+          throw new Error('Listener error');
+        });
+        const successListener = vi.fn();
+
+        queue.subscribe(errorListener);
+        queue.subscribe(successListener);
+
+        await queue.enqueue({
+          name: 'test',
+          key: 'test-key',
+          handler: vi.fn().mockResolvedValue('result'),
+        });
+
+        // Both listeners were called despite error
+        expect(errorListener).toHaveBeenCalled();
+        expect(successListener).toHaveBeenCalled();
+
+        // Error was logged
+        expect(consoleSpy).toHaveBeenCalledWith('[vjs-queue]', expect.any(Error));
+
+        consoleSpy.mockRestore();
+      });
+
+      it('provides strongly typed pending object', async () => {
+        vi.useRealTimers();
+
+        // Use default queue - type safety is validated at compile time
+        const queue = createQueue();
+
+        queue.subscribe((pending) => {
+          // Pending is a frozen object
+          const task = pending.playback;
+          if (task) {
+            expect(task.key).toBe('playback');
+            expect(task.name).toBeDefined();
+          }
+        });
+
+        await queue.enqueue({
+          name: 'play',
+          key: 'playback',
+          handler: vi.fn().mockResolvedValue(undefined),
+        });
       });
     });
   });
