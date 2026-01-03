@@ -47,7 +47,7 @@ utils ← store ← core ← html / react / react-native
 
 ## Workspace
 
-- Uses **PNPM workspaces** + **Turbo** for task orchestration.  
+- Uses **PNPM workspaces** + **Turbo** for task orchestration.
 - Internal deps are linked with `workspace:*`.
 - Always use PNPM, do not use other package managers.
 
@@ -64,9 +64,9 @@ pnpm dev
 pnpm typecheck
 
 # Build all packages/apps
-pnpm build        
+pnpm build
 # Build all packages (no apps)
-pnpm build:packages        
+pnpm build:packages
 # Build specific package
 pnpm -F <pkg> build
 
@@ -93,7 +93,7 @@ pnpm clean
 ## Dev Workflow
 
 1. Make changes.
-2. Typecheck, resolve all issues.
+2. Typecheck, fix all issues.
 3. Run test/s, fix all issues. If there are no tests add them.
 4. Lint file/s, fix all issues.
 5. Run build/s, fix all errors.
@@ -101,27 +101,29 @@ pnpm clean
 
 Be efficient when running operations, see "Common Root Commands".
 
-## Git & Commits
+## Testing
 
-Follow **Conventional Commits** for automation compatibility:
+### File Organization
 
-```bash
-<type>(<scope>): <description>
-```
-
-Examples:
-
-- `chore(root): update typescript to 5.9.2`
-- `feat(core): add pause state management`
-- `fix(html): correct fullscreen API handling`
-
-Breaking changes use `!`:
+Tests live in a `tests/` directory next to the implementation they cover:
 
 ```text
-feat(core)!: remove deprecated playback API
+packages/utils/src/dom/
+├── listen.ts
+├── event.ts
+└── tests/
+    ├── listen.test.ts
+    └── event.test.ts
 ```
 
-See commitlint.config.js for allowed scopes.
+### Conventions
+
+- Use Vitest as the test runner.
+- Import test utilities from `vitest`: `describe`, `it`, `expect`, `vi`.
+- Name test files `<module>.test.ts` matching the source file.
+- Write or update matching tests for each new or modified behavior.
+- Follow the `act → assert` pattern.
+- Use `vi.fn()` for mocks and spies.
 
 ## Guidelines
 
@@ -151,11 +153,7 @@ When generating or editing code in this repository, follow these rules to ensure
    - Use data‑attributes and CSS variables for style hooks—no inline animation JS.
    - Ensure logic runs at 60 FPS; prefer CSS transitions over manual DOM mutations.
 
-6. **Testing Discipline**
-   - Write or update matching tests for each new or modified behavior.
-   - Follow the pattern: `act → assert`.
-   - Use Vitest and Testing Library idioms.
-
-7. **Commit Scope**
+6. **Commit Scope**
    - Use semantic commit messages (enforced by `commitlint`).
    - One focused change per commit—no mixed updates.
+   - Breaking changes use `!`.
