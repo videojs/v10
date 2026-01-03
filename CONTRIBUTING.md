@@ -112,10 +112,9 @@ Pre‑commit hooks automatically lint staged files via **simple-git-hooks** and 
 We use [Vitest](https://vitest.dev) for unit testing.
 
 ```sh
-pnpm test                 # all workspace tests
-pnpm test:core            # just core package
-pnpm test:core --watch
-pnpm test:core file.spec
+pnpm test                    # all workspace tests
+pnpm -F core test            # just core package
+pnpm -F core test:watch      # watch core package
 ```
 
 ### 📦 Dependencies

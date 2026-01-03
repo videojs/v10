@@ -211,27 +211,30 @@ const unsubscribe = store.subscribe((state) => {
   console.log('State changed:', state);
 });
 
-// Subscribe with selector
+// Single value - only fires when volume changes
 store.subscribe(
-  (state) => state.volume,
-  (volume) => console.log('Volume:', volume)
+  s => s.volume,
+  volume => console.log('Volume:', volume)
 );
-```
 
-### Keyed Subscriptions
+// Multiple values - auto-optimized with key-based subscription
+store.subscribe(
+  s => ({ volume: s.volume, muted: s.muted }),
+  ({ volume, muted }) => updateAudioUI(volume, muted)
+);
 
-Subscribe to specific keys for high-frequency updates:
+// Derived value
+store.subscribe(
+  s => Math.round(s.volume * 100),
+  percent => console.log(`${percent}%`)
+);
 
-```ts
-// Only fires when currentTime changes
-store.subscribe(['currentTime'], (state) => {
-  updatedTime(state.currentTime);
-});
-
-// Multiple keys
-store.subscribe(['volume', 'muted'], (state) => {
-  updatedVolume(state.volume, state.muted);
-});
+// Custom equality function
+store.subscribe(
+  s => s.playlist,
+  playlist => renderPlaylist(playlist),
+  { equalityFn: shallowEqual }
+);
 ```
 
 Slices can push partial updates to avoid full syncs:
@@ -440,7 +443,7 @@ const store = createStore({
   ],
   queue: createQueue({
     // Default scheduler for requests without schedule
-    scheduler: (flush) => queueMicrotask(flush),
+    scheduler: flush => queueMicrotask(flush),
 
     // Lifecycle hooks
     onDispatch: (request) => {
@@ -462,8 +465,12 @@ const store = createStore({
 ```ts
 const queue = store.queue; // accessed on the store
 
-queue.queued; // requests waiting to execute
-queue.pending; // requests currently executing
+queue.queued; // object of requests waiting to execute
+queue.pending; // object of requests currently executing
+
+// Check if a task is pending or queued
+queue.isPending('playback'); // true if currently executing
+queue.isQueued('seek'); // true if waiting to execute
 
 queue.dequeue('seek'); // remove from queue without executing
 queue.clear(); // clear all queued
@@ -568,7 +575,7 @@ const store = createStore({
   slices: [
     /* ... */
   ],
-  state: (initial) => new VueStateAdapter(initial),
+  state: initial => new VueStateAdapter(initial),
 });
 ```
 

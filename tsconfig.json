@@ -1,15 +1,22 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": "."
+    "noEmit": true
   },
   "references": [
-    { "path": "packages/core" },
-    { "path": "packages/html" },
-    { "path": "packages/react" },
+    { "path": "packages/utils" },
+    { "path": "packages/utils/src/dom" },
+
     { "path": "packages/store" },
-    { "path": "packages/utils" }
+    { "path": "packages/store/src/dom" },
+    { "path": "packages/store/src/lit" },
+    { "path": "packages/store/src/react" },
+
+    { "path": "packages/core" },
+    { "path": "packages/core/src/dom" },
+
+    { "path": "packages/html" },
+    { "path": "packages/react" }
   ],
-  "files": [],
-  "include": []
+  "files": []
 }

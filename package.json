@@ -28,11 +28,11 @@
     "dev:next": "turbo run dev --filter=next-demo...",
     "dev": "turbo run dev --parallel",
     "dev:packages": "turbo run dev --parallel --filter=./packages/*",
-    "generate:icons": "turbo run generate:icons",
     "lint": "eslint . --cache",
     "lint:fix": "eslint . --fix --cache",
+    "lint:fix:file": "eslint --fix --cache",
     "test": "turbo run test",
-    "typecheck": "pnpm run generate:icons && tsc --build --noEmit"
+    "typecheck": "tsc --build"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.2.0",

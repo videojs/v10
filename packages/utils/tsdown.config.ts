@@ -2,7 +2,10 @@ import { defineConfig } from 'tsdown';
 
 export default defineConfig({
   entry: {
-    index: './src/index.ts',
+    events: './src/events/index.ts',
+    predicate: './src/predicate/index.ts',
+    types: './src/types/index.ts',
+    object: './src/object/index.ts',
     dom: './src/dom/index.ts',
   },
   platform: 'neutral',
