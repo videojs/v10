@@ -1,4 +1,4 @@
-import type { PendingTask, TaskContext, TaskRecord } from './queue';
+import type { PendingTask, TaskContext } from './queue';
 import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
 import type { AnySlice, InferSliceTarget, Slice, UnionSliceRequest, UnionSliceState, UnionSliceTasks } from './slice';
 import type { StateFactory } from './state';
@@ -11,14 +11,10 @@ import { Queue } from './queue';
 import { createRequestMeta, resolveRequestCancelKeys, resolveRequestKey } from './request';
 import { State } from './state';
 
-export class Store<
-  Target,
-  Slices extends AnySlice<Target>[] = AnySlice<Target>[],
-  Tasks extends TaskRecord = UnionSliceTasks<Slices>,
-> {
-  readonly #config: StoreConfig<Target, Slices, Tasks>;
+export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[]> {
+  readonly #config: StoreConfig<Target, Slices>;
   readonly #slices: Slices;
-  readonly #queue: Queue<Tasks>;
+  readonly #queue: Queue<UnionSliceTasks<Slices>>;
   readonly #state: State<UnionSliceState<Slices>>;
   readonly #request: UnionSliceRequest<Slices>;
   readonly #requestConfigs: Map<string, ResolvedRequestConfig<Target>>;
@@ -28,11 +24,11 @@ export class Store<
   #attachAbort: AbortController | null = null;
   #destroyed = false;
 
-  constructor(config: StoreConfig<Target, Slices, Tasks>) {
+  constructor(config: StoreConfig<Target, Slices>) {
     this.#config = config;
     this.#slices = config.slices;
 
-    this.#queue = config.queue ?? new Queue<Tasks>();
+    this.#queue = config.queue ?? new Queue<UnionSliceTasks<Slices>>();
 
     // Use provided factory or default
     const factory = config.state ?? (initial => new State(initial));
@@ -67,7 +63,7 @@ export class Store<
     return this.#request;
   }
 
-  get queue(): Queue<Tasks> {
+  get queue(): Queue<UnionSliceTasks<Slices>> {
     return this.#queue;
   }
 
@@ -163,7 +159,7 @@ export class Store<
   ): () => void {
     // Full state subscription (single argument)
     if (!maybeListener) {
-      return this.#state.subscribe(selectorOrListener as (state: UnionSliceState<Slices>) => void);
+      return this.#state.subscribe(selectorOrListener);
     }
 
     // Selector-based subscription
@@ -172,10 +168,8 @@ export class Store<
     const equalityFn = options?.equalityFn ?? Object.is;
 
     let prev = selector(this.#state.value);
-
     const handler = (state: UnionSliceState<Slices>) => {
       const next = selector(state);
-
       if (!equalityFn(prev, next)) {
         prev = next;
         listener(next);
@@ -339,7 +333,7 @@ export class Store<
   // Errors
   // ----------------------------------------
 
-  #handleError(context: Omit<StoreErrorContext<this>, 'store'>): void {
+  #handleError(context: Omit<StoreErrorContext<Target, Slices>, 'store'>): void {
     if (this.#config.onError) {
       this.#config.onError({ ...context, store: this });
     } else {
@@ -353,8 +347,8 @@ export class Store<
 // ----------------------------------------
 
 export function createStore<Slices extends Slice<any, any, any>[]>(
-  config: StoreConfig<InferSliceTarget<Slices[number]>, Slices, UnionSliceTasks<Slices>>,
-): Store<InferSliceTarget<Slices[number]>, Slices, UnionSliceTasks<Slices>> {
+  config: StoreConfig<InferSliceTarget<Slices[number]>, Slices>,
+): Store<InferSliceTarget<Slices[number]>, Slices> {
   return new Store(config);
 }
 
@@ -362,7 +356,7 @@ export function createStore<Slices extends Slice<any, any, any>[]>(
 // Types
 // ----------------------------------------
 
-export type AnyStore<Target = any> = Store<Target, any, any>;
+export type AnyStore<Target = any> = Store<Target, any>;
 
 /**
  * A selector function that extracts a subset of state.
@@ -380,34 +374,29 @@ export interface SubscribeOptions<T> {
   equalityFn?: (a: T, b: T) => boolean;
 }
 
-export interface StoreConfig<
-  Target,
-  Slices extends AnySlice<Target>[],
-  Tasks extends TaskRecord = UnionSliceTasks<Slices>,
-  StoreType extends AnyStore = Store<Target, Slices, Tasks>,
-> {
+export interface StoreConfig<Target, Slices extends AnySlice<Target>[]> {
   slices: Slices;
-  queue?: Queue<Tasks>;
+  queue?: Queue<UnionSliceTasks<Slices>>;
   state?: StateFactory<UnionSliceState<Slices>>;
-  onSetup?: (ctx: StoreSetupContext<StoreType>) => void;
-  onAttach?: (ctx: StoreAttachContext<StoreType>) => void;
-  onError?: (ctx: StoreErrorContext<StoreType>) => void;
+  onSetup?: (ctx: StoreSetupContext<Target, Slices>) => void;
+  onAttach?: (ctx: StoreAttachContext<Target, Slices>) => void;
+  onError?: (ctx: StoreErrorContext<Target, Slices>) => void;
 }
 
-export interface StoreSetupContext<Store extends AnyStore> {
-  store: Store;
+export interface StoreSetupContext<Target, Slices extends AnySlice<Target>[]> {
+  store: Store<Target, Slices>;
   signal: AbortSignal;
 }
 
-export interface StoreAttachContext<Store extends AnyStore> {
-  store: Store;
-  target: InferStoreTarget<Store>;
+export interface StoreAttachContext<Target, Slices extends AnySlice<Target>[]> {
+  store: Store<Target, Slices>;
+  target: Target;
   signal: AbortSignal;
 }
 
-export interface StoreErrorContext<Store extends AnyStore> {
+export interface StoreErrorContext<Target, Slices extends AnySlice<Target>[]> {
   request?: PendingTask | undefined;
-  store: Store;
+  store: Store<Target, Slices>;
   error: unknown;
 }
 
@@ -415,4 +404,12 @@ export interface StoreErrorContext<Store extends AnyStore> {
 // Type Inference
 // ----------------------------------------
 
-export type InferStoreTarget<S extends AnyStore> = S extends Store<infer Target, any, any> ? Target : never;
+export type InferStoreTarget<S extends AnyStore> = S extends Store<infer Target> ? Target : never;
+
+export type InferStoreSlices<S extends AnyStore> = S extends Store<any, infer Slices> ? Slices : never;
+
+export type InferStoreState<S extends AnyStore> = UnionSliceState<InferStoreSlices<S>>;
+
+export type InferStoreRequests<S extends AnyStore> = UnionSliceRequest<InferStoreSlices<S>>;
+
+export type InferStoreTasks<S extends AnyStore> = UnionSliceTasks<InferStoreSlices<S>>;

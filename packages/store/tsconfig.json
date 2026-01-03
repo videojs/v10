@@ -8,6 +8,6 @@
     }
   },
   "references": [{ "path": "./src/dom" }, { "path": "./src/lit" }, { "path": "./src/react" }],
-  "include": ["src"],
+  "include": ["src", "test"],
   "exclude": ["src/dom", "src/lit", "src/react"]
 }

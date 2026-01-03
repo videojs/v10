@@ -19,7 +19,7 @@ export type Selector<State, Selected> = (state: State) => Selected;
  * const primitiveSelector = (s: State) => s.volume;
  * getSelectorKeys(primitiveSelector, state); // null
  */
-export function getSelectorKeys<State extends object, Selected>(
+export function getSelectorKeys<State, Selected>(
   selector: Selector<State, Selected>,
   state: State,
 ): (keyof State)[] | null {

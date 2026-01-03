@@ -10,6 +10,7 @@ export default defineConfig({
   platform: 'neutral',
   format: 'es',
   sourcemap: true,
+  tsconfig: './tsconfig.build.json',
   clean: true,
   alias: {
     '@': new URL('./src', import.meta.url).pathname,

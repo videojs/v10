@@ -1,7 +1,6 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import type { PendingRecord, PendingTask, TaskKey, TaskRecord } from '../queue';
-import type { AnySlice } from '../slice';
-import type { InferStoreTasks, Store } from '../store';
+import type { AnyStore, InferStoreTasks } from '../store';
 
 /**
  * A reactive controller that tracks pending requests in the queue.
@@ -24,20 +23,19 @@ import type { InferStoreTasks, Store } from '../store';
  * ```
  */
 export class PendingController<
-  Target,
-  Slices extends AnySlice<Target>[],
-  Tasks extends TaskRecord = InferStoreTasks<Slices>,
+  Store extends AnyStore,
+  Tasks extends TaskRecord = InferStoreTasks<Store>,
 > implements ReactiveController {
   readonly #host: ReactiveControllerHost;
-  readonly #store: Store<Target, Slices, Tasks>;
+  readonly #store: Store;
 
   #pending: PendingRecord<Tasks>;
   #unsubscribe: (() => void) | null = null;
 
-  constructor(host: ReactiveControllerHost, store: Store<Target, Slices, Tasks>) {
+  constructor(host: ReactiveControllerHost, store: Store) {
     this.#host = host;
     this.#store = store;
-    this.#pending = store.queue.pending;
+    this.#pending = store.queue.pending as PendingRecord<Tasks>;
 
     host.addController(this);
   }
@@ -66,7 +64,7 @@ export class PendingController<
   /**
    * The underlying store instance.
    */
-  get store(): Store<Target, Slices, Tasks> {
+  get store(): Store {
     return this.#store;
   }
 
@@ -92,7 +90,7 @@ export class PendingController<
 
   hostConnected(): void {
     this.#unsubscribe = this.#store.queue.subscribe((pending) => {
-      this.#pending = pending;
+      this.#pending = pending as PendingRecord<Tasks>;
       this.#host.requestUpdate();
     });
   }
