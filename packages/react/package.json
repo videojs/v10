@@ -29,7 +29,6 @@
     "build:watch": "tsdown --watch ./src",
     "dev": "pnpm run build:watch",
     "test": "echo \"No tests yet\"",
-    "typecheck": "tsc -p tsconfig.json",
     "clean": "rm -rf dist types"
   },
   "peerDependencies": {

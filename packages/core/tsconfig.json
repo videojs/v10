@@ -5,6 +5,5 @@
     "declarationDir": "types"
   },
   "references": [{ "path": "../utils" }, { "path": "../store" }],
-  "include": ["src/core/**/*.ts"],
-  "exclude": ["**/*.test.ts"]
+  "include": ["src/core/**/*.ts"]
 }

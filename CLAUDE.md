@@ -20,10 +20,13 @@ Refer to **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** for setup, development, and 
 | `examples/*`            | Demo apps for various runtimes.                                    |
 | `site/`                 | Astro‑based docs and website.                                      |
 
+IGNORE `packages/__tech-preview__/` — it's legacy code from the Demuxed demo. Don't reference or
+modify it when working in other packages.
+
 ### Dependency Hierarchy
 
 ```text
-utils           ← shared utilities
+utils/*         ← shared utilities
 utils/dom       ← DOM-specific helpers
 
 store           ← state management
@@ -42,39 +45,61 @@ react-native    ← React Native player
 utils ← store ← core ← html / react / react-native
 ```
 
-IGNORE `packages/__tech-preview__/` — it's legacy code from the Demuxed demo. Don't reference or 
-modify it when working in other packages.
-
 ## Workspace
 
-Uses **PNPM workspaces** + **Turbo** for task orchestration.
-Internal deps are linked with `workspace:*`.
+- Uses **PNPM workspaces** + **Turbo** for task orchestration.  
+- Internal deps are linked with `workspace:*`.
+- Always use PNPM, do not use other package managers.
 
 ### Common Root Commands
 
 ```bash
-pnpm install        # Install workspace deps
-pnpm build          # Build all packages/apps
-pnpm build:packages # Build library packages (no app)
-pnpm dev            # Run all demos/sites in parallel
-pnpm test           # Run tests across all packages
-pnpm lint           # Lint all workspace packages
-pnpm clean          # Remove all dist outputs
+# Install workspace deps
+pnpm install
+
+# Run all demos/sites in parallel
+pnpm dev
+
+# Typecheck across repo (fast)
+pnpm typecheck
+
+# Build all packages/apps
+pnpm build        
+# Build all packages (no apps)
+pnpm build:packages        
+# Build specific package
+pnpm -F <pkg> build
+
+# Run tests across all packages
+pnpm test
+# Run tests for specific package
+pnpm -F <pkg> test
+# Run tests matching a name or pattern
+pnpm -F <pkg> test -t "test name pattern"
+# Run tests for a specific file
+pnpm -F <pkg> test src/path/to/file.test.ts
+# Run tests matching a glob or filter
+pnpm -F <pkg> test src/core
+
+# Lint all workspace packages
+pnpm lint
+# Lint and fix a single file
+pnpm lint:file:fix <file>
+
+# Remove all dist and types outputs
+pnpm clean
 ```
 
-To build or test a specific package:
+## Dev Workflow
 
-```bash
-pnpm -F core build
-pnpm -F react test
-```
+1. Make changes.
+2. Typecheck, resolve all issues.
+3. Run test/s, fix all issues. If there are no tests add them.
+4. Lint file/s, fix all issues.
+5. Run build/s, fix all errors.
+6. Before creating a PR `pnpm test`.
 
-## TypeScript
-
-- Uses **project references** for incremental builds.
-- Strict mode enabled (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`).
-- Common base config: `tsconfig.base.json`.
-- `@videojs/*` path mappings resolve to each package’s `src` directory.
+Be efficient when running operations, see "Common Root Commands".
 
 ## Git & Commits
 
@@ -95,6 +120,8 @@ Breaking changes use `!`:
 ```text
 feat(core)!: remove deprecated playback API
 ```
+
+See commitlint.config.js for allowed scopes.
 
 ## Guidelines
 
@@ -117,7 +144,7 @@ When generating or editing code in this repository, follow these rules to ensure
 
 4. **Framework‑Agnostic Mindset**
    - Core modules must remain DOM‑ and framework‑independent.
-   - Place platform‑specific logic in the appropriate adapter (HTML, React, RN).
+   - Place platform‑specific logic in the appropriate directory or adapter (HTML, React, RN).
 
 5. **A11y, Styling & Performance**
    - Maintain accessibility: ARIA roles, keyboard interactions, focus management.
@@ -132,19 +159,3 @@ When generating or editing code in this repository, follow these rules to ensure
 7. **Commit Scope**
    - Use semantic commit messages (enforced by `commitlint`).
    - One focused change per commit—no mixed updates.
-
-8. **Before You Push**
-
-   ```bash
-   pnpm lint
-   pnpm test
-   pnpm typecheck
-   pnpm build:packages
-   ```
-
-   All must pass cleanly before creating a PR.
-
-## Notes
-
-- The Astro‑based docs site is standalone but integrated via Turborepo pipelines.
-- For contribution, testing, and PR flow details, see [`CONTRIBUTING.md`](./CONTRIBUTING.md).

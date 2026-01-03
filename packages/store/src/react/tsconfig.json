@@ -6,6 +6,5 @@
     "declarationDir": "../../types/react"
   },
   "references": [{ "path": "../.." }],
-  "include": ["./**/*.ts"],
-  "exclude": ["**/*.test.ts"]
+  "include": ["./**/*.ts"]
 }

@@ -30,6 +30,7 @@
     "dev:packages": "turbo run dev --parallel --filter=./packages/*",
     "lint": "eslint . --cache",
     "lint:fix": "eslint . --fix --cache",
+    "lint:fix:file": "eslint --fix --cache",
     "test": "turbo run test",
     "typecheck": "tsc --build"
   },

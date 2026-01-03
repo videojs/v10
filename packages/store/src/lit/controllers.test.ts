@@ -1,3 +1,4 @@
+/* eslint-disable no-new */
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -172,7 +173,7 @@ describe('storeController', () => {
   });
 
   it('unsubscribes on hostDisconnected', async () => {
-    const _controller = new StoreController(host, store);
+    new StoreController(host, store);
     host.connect();
     host.disconnect();
 
@@ -214,7 +215,7 @@ describe('storeController', () => {
     it('uses Object.is for equality', async () => {
       // Selector that returns same object reference
       const obj = { id: 1 };
-      const _controller = new StoreController(host, store, () => obj);
+      new StoreController(host, store, () => obj);
       host.connect();
 
       const initialCount = host.updateCount;
@@ -282,7 +283,7 @@ describe('sliceController', () => {
   });
 
   it('subscribes with selector for slice keys', async () => {
-    const _controller = new SliceController(host, store, audioSlice);
+    new SliceController(host, store, audioSlice);
     host.connect();
 
     const subscribeSpy = vi.spyOn(store, 'subscribe');
@@ -384,7 +385,7 @@ describe('pendingController', () => {
   });
 
   it('updates host when pending changes', async () => {
-    const _controller = new PendingController(host, store);
+    new PendingController(host, store);
     host.connect();
 
     const initialCount = host.updateCount;
@@ -418,7 +419,7 @@ describe('pendingController', () => {
   });
 
   it('unsubscribes on hostDisconnected', async () => {
-    const _controller = new PendingController(host, store);
+    new PendingController(host, store);
     host.connect();
     host.disconnect();
 

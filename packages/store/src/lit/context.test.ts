@@ -1,3 +1,4 @@
+/* eslint-disable no-new */
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import type { Store } from '../core/store';
 import type { StoreContext } from './context';
@@ -129,7 +130,7 @@ describe('provider', () => {
 
   it('registers controller with the host', () => {
     const { Provider } = createTestControllers();
-    const _provider = new Provider(host, store);
+    new Provider(host, store);
 
     expect(host.controllers.length).toBe(1);
   });
@@ -164,7 +165,7 @@ describe('consumer', () => {
 
   it('registers controller with the host', () => {
     const { Consumer } = createTestControllers();
-    const _consumer = new Consumer(consumerHost);
+    new Consumer(consumerHost);
 
     expect(consumerHost.controllers.length).toBe(1);
   });
@@ -179,7 +180,7 @@ describe('consumer', () => {
   it('receives store from provider on connect', () => {
     const { Provider, Consumer } = createTestControllers();
 
-    const _provider = new Provider(providerHost, store);
+    new Provider(providerHost, store);
     providerHost.connect();
 
     const consumer = new Consumer(consumerHost);
@@ -191,10 +192,10 @@ describe('consumer', () => {
   it('updates host when store is received', () => {
     const { Provider, Consumer } = createTestControllers();
 
-    const _provider = new Provider(providerHost, store);
+    new Provider(providerHost, store);
     providerHost.connect();
 
-    const _consumer = new Consumer(consumerHost);
+    new Consumer(consumerHost);
     const initialCount = consumerHost.updateCount;
     consumerHost.connect();
 
@@ -216,7 +217,7 @@ describe('provider/consumer integration', () => {
     const { Consumer } = createTestControllers(Symbol('context-2'));
 
     // Provider for context1
-    const _provider = new Provider(providerHost, store1);
+    new Provider(providerHost, store1);
     providerHost.connect();
 
     // Consumer for context2 (should not receive store1)
@@ -245,8 +246,8 @@ describe('provider/consumer integration', () => {
     const { Provider, Consumer } = createTestControllers(Symbol('shared'));
 
     // Both providers for same context
-    const _outerProvider = new Provider(outerHost, outerStore);
-    const _innerProvider = new Provider(innerHost, innerStore);
+    new Provider(outerHost, outerStore);
+    new Provider(innerHost, innerStore);
     outerHost.connect();
     innerHost.connect();
 
