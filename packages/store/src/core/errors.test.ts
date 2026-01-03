@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { isStoreError, StoreError } from '../src/errors';
+
+import { isStoreError, StoreError } from './errors';
 
 describe('errors', () => {
   describe('storeError', () => {

@@ -1,4 +1,4 @@
-import type { TaskScheduler } from '../queue';
+import type { TaskScheduler } from '../core/queue';
 
 import { animationFrame, idleCallback } from '@videojs/utils/dom';
 

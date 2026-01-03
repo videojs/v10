@@ -10,22 +10,27 @@
     "videojs"
   ],
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+    "./events": {
+      "types": "./dist/events.d.ts",
+      "default": "./dist/events.js"
     },
-    "./dom": {
-      "types": "./dist/dom.d.ts",
-      "default": "./dist/dom.js"
+    "./predicate": {
+      "types": "./dist/predicate.d.ts",
+      "default": "./dist/predicate.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "default": "./dist/types.js"
     },
     "./object": {
       "types": "./dist/object.d.ts",
       "default": "./dist/object.js"
+    },
+    "./dom": {
+      "types": "./dist/dom.d.ts",
+      "default": "./dist/dom.js"
     }
   },
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -35,7 +40,8 @@
     "dev": "pnpm run build:watch",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "clean": "rm -rf dist"
+    "typecheck": "tsc --build",
+    "clean": "rm -rf dist types"
   },
   "devDependencies": {
     "tsdown": "^0.15.9",

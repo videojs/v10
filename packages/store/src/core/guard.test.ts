@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { StoreError } from '../src/errors';
-import { all, any, timeout } from '../src/guard';
+
+import { StoreError } from './errors';
+import { all, any, timeout } from './guard';
 
 describe('guard', () => {
   const createContext = () => ({
@@ -106,10 +107,7 @@ describe('guard', () => {
     });
 
     it('passes async within timeout', async () => {
-      const guard = timeout(
-        () => new Promise(r => setTimeout(() => r(true), 10)),
-        1000,
-      );
+      const guard = timeout(() => new Promise(r => setTimeout(() => r(true), 10)), 1000);
       expect(await guard(createContext())).toBe(true);
     });
 
@@ -137,10 +135,7 @@ describe('guard', () => {
       vi.useFakeTimers();
 
       const controller = new AbortController();
-      const guard = timeout(
-        () => new Promise(() => {}),
-        100,
-      );
+      const guard = timeout(() => new Promise(() => {}), 100);
 
       guard({ target: {}, signal: controller.signal });
       controller.abort();

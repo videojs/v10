@@ -1,13 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["ES2020"],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "composite": true,
+    "declarationDir": "types"
   },
-  "references": [{ "path": "./src/dom" }, { "path": "./src/lit" }, { "path": "./src/react" }],
-  "include": ["src", "test"],
-  "exclude": ["src/dom", "src/lit", "src/react"]
+  "references": [{ "path": "../utils" }],
+  "include": ["src/core/**/*.ts"],
+  "exclude": ["**/*.test.ts"]
 }

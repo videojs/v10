@@ -1,13 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["ES2020"],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "composite": true,
+    "declarationDir": "types"
   },
-  "references": [{ "path": "./src/dom" }],
-  "include": ["src"],
-  "exclude": ["src/dom"]
+  "references": [{ "path": "../utils" }, { "path": "../store" }],
+  "include": ["src/core/**/*.ts"],
+  "exclude": ["**/*.test.ts"]
 }

@@ -1,4 +1,5 @@
-import { isBoolean } from '@videojs/utils';
+import { isBoolean } from '@videojs/utils/predicate';
+
 import { StoreError } from './errors';
 
 /**
@@ -10,17 +11,12 @@ import { StoreError } from './errors';
  * - Promise resolves falsy → cancel
  * - Promise rejects → cancel
  */
-export type Guard<Target> = (ctx: {
-  target: Target;
-  signal: AbortSignal;
-}) => boolean | Promise<unknown>;
+export type Guard<Target> = (ctx: { target: Target; signal: AbortSignal }) => boolean | Promise<unknown>;
 
 /**
  * Combine guards: All must pass (truthy).
  */
-export function all<Target>(
-  ...guards: Guard<Target>[]
-): Guard<Target> {
+export function all<Target>(...guards: Guard<Target>[]): Guard<Target> {
   return async (ctx) => {
     for (const guard of guards) {
       const result = await guard(ctx);
@@ -34,9 +30,7 @@ export function all<Target>(
 /**
  * Combine guards: Any must pass (first truthy wins).
  */
-export function any<Target>(
-  ...guards: Guard<Target>[]
-): Guard<Target> {
+export function any<Target>(...guards: Guard<Target>[]): Guard<Target> {
   return (ctx) => {
     const results = guards.map(g => g(ctx));
 
@@ -64,11 +58,7 @@ export function any<Target>(
 /**
  * Add timeout to a guard.
  */
-export function timeout<Target>(
-  guard: Guard<Target>,
-  ms: number,
-  name = 'guard',
-): Guard<Target> {
+export function timeout<Target>(guard: Guard<Target>, ms: number, name = 'guard'): Guard<Target> {
   return async (ctx) => {
     const result = guard(ctx);
 

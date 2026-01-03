@@ -41,7 +41,8 @@
     "dev": "pnpm run build:watch",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "clean": "rm -rf dist"
+    "typecheck": "tsc --build",
+    "clean": "rm -rf dist types"
   },
   "peerDependencies": {
     "@lit/context": "^1.1.0",

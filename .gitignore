@@ -20,6 +20,7 @@ lerna-debug.log*
 dist/
 lib/
 out/
+packages/*/types/
 *.tsbuildinfo
 .turbo/
 generated-icons/

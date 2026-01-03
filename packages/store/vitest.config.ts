@@ -7,15 +7,14 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'store',
-          include: ['test/**/*.test.ts'],
-          exclude: ['test/dom/**/*.test.ts', 'test/lit/**/*.test.ts'],
+          include: ['src/core/**/*.test.ts'],
         },
       },
       {
         extends: true,
         test: {
           name: 'store/dom',
-          include: ['test/dom/**/*.test.ts'],
+          include: ['src/dom/**/*.test.ts'],
           environment: 'jsdom',
         },
       },
@@ -23,7 +22,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'store/lit',
-          include: ['test/lit/**/*.test.ts'],
+          include: ['src/lit/**/*.test.ts'],
           environment: 'jsdom',
         },
       },

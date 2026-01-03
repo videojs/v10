@@ -2,7 +2,7 @@ import { defineConfig } from 'tsdown';
 
 export default defineConfig({
   entry: {
-    index: './src/index.ts',
+    index: './src/core/index.ts',
     dom: './src/dom/index.ts',
     lit: './src/lit/index.ts',
     react: './src/react/index.ts',
@@ -10,10 +10,9 @@ export default defineConfig({
   platform: 'neutral',
   format: 'es',
   sourcemap: true,
-  tsconfig: './tsconfig.build.json',
   clean: true,
   alias: {
-    '@': new URL('./src', import.meta.url).pathname,
+    '@': new URL('./src/core', import.meta.url).pathname,
   },
   dts: {
     oxc: true,

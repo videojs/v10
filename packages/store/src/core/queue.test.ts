@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { StoreError } from '../src/errors';
-import { createQueue, delay } from '../src/queue';
+import { StoreError } from './errors';
+import { createQueue, delay } from './queue';
 
 describe('queue', () => {
   beforeEach(() => {

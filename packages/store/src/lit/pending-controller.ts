@@ -1,6 +1,6 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
-import type { PendingRecord, PendingTask, TaskKey, TaskRecord } from '../queue';
-import type { AnyStore, InferStoreTasks } from '../store';
+import type { PendingRecord, PendingTask, TaskKey, TaskRecord } from '../core/queue';
+import type { AnyStore, InferStoreTasks } from '../core/store';
 
 /**
  * A reactive controller that tracks pending requests in the queue.

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
   createRequestMeta,
   createRequestMetaFromEvent,
@@ -6,7 +7,7 @@ import {
   REQUEST_META,
   resolveRequestCancelKeys,
   resolveRequestKey,
-} from '../src/request';
+} from './request';
 
 describe('request', () => {
   describe('meta', () => {
@@ -142,10 +143,7 @@ describe('request', () => {
 
     it('calls function with input', () => {
       const cancelFn = (type: string) => [`${type}-loading`, `${type}-fetch`];
-      expect(resolveRequestCancelKeys(cancelFn, 'video')).toEqual([
-        'video-loading',
-        'video-fetch',
-      ]);
+      expect(resolveRequestCancelKeys(cancelFn, 'video')).toEqual(['video-loading', 'video-fetch']);
     });
   });
 });

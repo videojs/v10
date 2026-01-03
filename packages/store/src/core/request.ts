@@ -1,7 +1,8 @@
-import type { EventLike } from '@videojs/utils';
+import type { EventLike } from '@videojs/utils/events';
 import type { Guard } from './guard';
 import type { TaskKey, TaskScheduler } from './queue';
-import { isFunction, isObject } from '@videojs/utils';
+
+import { isFunction, isObject } from '@videojs/utils/predicate';
 
 // ----------------------------------------
 // Symbols
@@ -44,16 +45,15 @@ export type RequestKey<Input = unknown> = TaskKey | ((input: Input) => TaskKey);
 /**
  * Request cancel config.
  */
-export type RequestCancel<Input = unknown>
-  = | TaskKey
-    | TaskKey[]
-    | ((input: Input) => TaskKey | TaskKey[]);
+export type RequestCancel<Input = unknown> = TaskKey | TaskKey[] | ((input: Input) => TaskKey | TaskKey[]);
 
 /**
  * Request handler function.
  */
-export type RequestHandler<Target, Input = unknown, Output = unknown>
-  = (input: Input, ctx: RequestContext<Target>) => Output | Promise<Output>;
+export type RequestHandler<Target, Input = unknown, Output = unknown> = (
+  input: Input,
+  ctx: RequestContext<Target>,
+) => Output | Promise<Output>;
 
 /**
  * Full request config.
@@ -95,9 +95,7 @@ export type RequestConfigMap<Target, Requests extends RequestRecord> = {
  * the store.
  */
 export type ResolvedRequestConfigMap<Target, Requests extends RequestRecord> = {
-  [K in keyof Requests]: Requests[K] extends Request<infer I, infer O>
-    ? ResolvedRequestConfig<Target, I, O>
-    : never;
+  [K in keyof Requests]: Requests[K] extends Request<infer I, infer O> ? ResolvedRequestConfig<Target, I, O> : never;
 };
 
 // ----------------------------------------
@@ -107,7 +105,7 @@ export type ResolvedRequestConfigMap<Target, Requests extends RequestRecord> = {
 /**
  * Infer the input type of a RequestHandler.
  */
-export type InferRequestHandlerInput<Handler> = Handler extends (() => any)
+export type InferRequestHandlerInput<Handler> = Handler extends () => any
   ? void
   : Handler extends (input: infer I, ctx?: any) => any
     ? I
@@ -120,7 +118,7 @@ export type InferRequestHandlerInput<Handler> = Handler extends (() => any)
 /**
  * Infer the output type of a RequestHandler.
  */
-export type InferRequestHandlerOutput<Handler> = Handler extends ((...args: any[]) => infer O)
+export type InferRequestHandlerOutput<Handler> = Handler extends (...args: any[]) => infer O
   ? Awaited<O>
   : Handler extends { handler: (...args: any[]) => infer O }
     ? Awaited<O>
@@ -136,11 +134,12 @@ export type ResolveRequestMap<Requests> = {
 /**
  * Resolve a Request (input/output) to its function signature.
  */
-export type ResolveRequestHandler<R> = R extends Request<infer I, infer O>
-  ? [I] extends [void]
-      ? (input?: null, meta?: RequestMetaInit) => Promise<O>
-      : (input: I, meta?: RequestMetaInit) => Promise<O>
-  : never;
+export type ResolveRequestHandler<R>
+  = R extends Request<infer I, infer O>
+    ? [I] extends [void]
+        ? (input?: null, meta?: RequestMetaInit) => Promise<O>
+        : (input: I, meta?: RequestMetaInit) => Promise<O>
+    : never;
 
 // ----------------------------------------
 // Utilities
@@ -173,10 +172,7 @@ export function resolveRequestKey(keyConfig: RequestKey<any>, input: unknown): T
   return isFunction(keyConfig) ? keyConfig(input) : keyConfig;
 }
 
-export function resolveRequestCancelKeys(
-  cancel: RequestCancel<any> | undefined,
-  input: unknown,
-): TaskKey[] {
+export function resolveRequestCancelKeys(cancel: RequestCancel<any> | undefined, input: unknown): TaskKey[] {
   if (!cancel) return [];
   const result = isFunction(cancel) ? cancel(input) : cancel;
   return Array.isArray(result) ? result : [result];
@@ -196,9 +192,7 @@ export interface RequestMeta<Context = unknown> {
   context?: Context | undefined;
 }
 
-export function createRequestMeta<Context = unknown>(
-  init: RequestMetaInit<Context>,
-): RequestMeta<Context> {
+export function createRequestMeta<Context = unknown>(init: RequestMetaInit<Context>): RequestMeta<Context> {
   return {
     [REQUEST_META]: true,
     ...init,

@@ -1,6 +1,6 @@
 import type { ReactiveControllerHost } from '@lit/reactive-element';
-import type { AnySlice, InferSliceState } from '../slice';
-import type { AnyStore } from '../store';
+import type { AnySlice, InferSliceState } from '../core/slice';
+import type { AnyStore } from '../core/store';
 import type { StoreContext } from './context';
 
 import { ContextConsumer, ContextProvider } from '@lit/context';

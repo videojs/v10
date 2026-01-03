@@ -3,8 +3,8 @@ import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './requ
 import type { AnySlice, InferSliceTarget, Slice, UnionSliceRequest, UnionSliceState, UnionSliceTasks } from './slice';
 import type { StateFactory } from './state';
 
-import { isNull } from '@videojs/utils';
 import { getSelectorKeys } from '@videojs/utils/object';
+import { isNull } from '@videojs/utils/predicate';
 
 import { StoreError } from './errors';
 import { Queue } from './queue';

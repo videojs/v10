@@ -1,6 +1,6 @@
 import type { Request, RequestMeta } from './request';
 
-import { isFunction, isUndefined } from '@videojs/utils';
+import { isFunction, isUndefined } from '@videojs/utils/predicate';
 
 import { StoreError } from './errors';
 

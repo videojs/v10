@@ -1,4 +1,4 @@
-import type { UnionToIntersection } from '@videojs/utils';
+import type { UnionToIntersection } from '@videojs/utils/types';
 import type { EnsureTaskRecord } from './queue';
 import type {
   Request,
@@ -10,6 +10,7 @@ import type {
   ResolveRequestHandler,
   ResolveRequestMap,
 } from './request';
+
 import { resolveRequests } from './request';
 
 // ----------------------------------------
@@ -61,13 +62,10 @@ export type InferSliceTarget<S> = S extends Slice<infer T, any, any> ? T : never
 
 export type InferSliceState<S> = S extends Slice<any, infer State, any> ? State : never;
 
-export type InferSliceRequests<S> = S extends Slice<any, any, infer R>
-  ? { [K in keyof R]: R[K] }
-  : never;
+export type InferSliceRequests<S> = S extends Slice<any, any, infer R> ? { [K in keyof R]: R[K] } : never;
 
-export type ResolveSliceRequestHandlers<S> = S extends Slice<any, any, infer R>
-  ? { [K in keyof R]: ResolveRequestHandler<R[K]> }
-  : never;
+export type ResolveSliceRequestHandlers<S>
+  = S extends Slice<any, any, infer R> ? { [K in keyof R]: ResolveRequestHandler<R[K]> } : never;
 
 export type UnionSliceState<Slices extends Slice<any, any, any>[]> = UnionToIntersection<
   InferSliceState<Slices[number]>
@@ -138,9 +136,7 @@ export function createSlice<
   Target,
   State extends object = any,
   Requests extends { [K in keyof Requests]: Request<any, any> } = any,
->(
-  config?: SliceConfig<Target, State, Requests>,
-): Slice<Target, State, Requests> | SliceFactory<Target> {
+>(config?: SliceConfig<Target, State, Requests>): Slice<Target, State, Requests> | SliceFactory<Target> {
   if (arguments.length === 0) {
     return (<
       S extends object,

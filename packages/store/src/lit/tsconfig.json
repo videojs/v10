@@ -1,8 +1,11 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"]
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "declarationDir": "../../types/lit"
   },
-  "include": ["./**/*.ts"]
+  "references": [{ "path": "../.." }],
+  "include": ["./**/*.ts"],
+  "exclude": ["**/*.test.ts"]
 }

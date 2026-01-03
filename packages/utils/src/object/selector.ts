@@ -1,4 +1,4 @@
-import { isObject } from '../predicate';
+import { isObject } from '../predicate/predicate';
 
 /**
  * A function that selects a subset of state.

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createSlice } from '../src/slice';
+
+import { createSlice } from './slice';
 
 describe('slice', () => {
   describe('createSlice', () => {

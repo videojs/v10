@@ -1,14 +1,14 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
-import type { StoreContext } from '../../src/lit/context';
-import type { Store } from '../../src/store';
+import type { Store } from '../core/store';
+import type { StoreContext } from './context';
 
 import { createContext } from '@lit/context';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createStoreControllers } from '../../src/lit/factory';
-import { createSlice } from '../../src/slice';
-import { createStore } from '../../src/store';
+import { createSlice } from '../core/slice';
+import { createStore } from '../core/store';
+import { createStoreControllers } from './factory';
 
 // ----------------------------------------
 // Mock Host (extends HTMLElement for context)
@@ -86,7 +86,10 @@ const counterSlice = createSlice<MockTarget>()({
 // Type aliases
 type TestSlices = [typeof counterSlice];
 type TestStore = Store<MockTarget, TestSlices>;
-interface TestState { count: number; enabled: boolean }
+interface TestState {
+  count: number;
+  enabled: boolean;
+}
 
 // Helper to create typed context and controllers
 function createTestControllers(key: symbol = Symbol('test-store')) {

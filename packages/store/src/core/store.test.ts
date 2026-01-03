@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { StoreError } from '../src/errors';
-import { createQueue } from '../src/queue';
-import { createSlice } from '../src/slice';
-import { createStore } from '../src/store';
+import { StoreError } from './errors';
+import { createQueue } from './queue';
+import { createSlice } from './slice';
+import { createStore } from './store';
 
 describe('store', () => {
   // Mock target that mimics HTMLVideoElement
@@ -282,7 +282,9 @@ describe('store', () => {
       await store.request.setVolume(0.5);
 
       const calls = listener.mock.calls;
-      const lastState = calls[calls.length - 1][0];
+      const lastCall = calls[calls.length - 1];
+      expect(lastCall).toBeDefined();
+      const lastState = lastCall![0];
       expect(lastState.volume).toBe(0.5);
     });
 

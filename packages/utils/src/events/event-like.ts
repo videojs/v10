@@ -1,4 +1,4 @@
-import { isNumber, isObject, isString } from './predicate';
+import { isNumber, isObject, isString } from '../predicate';
 
 export interface EventLike {
   type: string;
@@ -13,10 +13,6 @@ export interface EventLike {
  */
 export function isEventLike(value: unknown): value is EventLike {
   return (
-    isObject(value)
-    && 'type' in value
-    && isString(value.type)
-    && 'timeStamp' in value
-    && isNumber(value.timeStamp)
+    isObject(value) && 'type' in value && isString(value.type) && 'timeStamp' in value && isNumber(value.timeStamp)
   );
 }

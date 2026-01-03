@@ -31,7 +31,7 @@
     "lint": "eslint . --cache",
     "lint:fix": "eslint . --fix --cache",
     "test": "turbo run test",
-    "typecheck": "tsc --build --noEmit"
+    "typecheck": "tsc --build"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.2.0",

@@ -2,11 +2,11 @@ import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-e
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PendingController } from '../../src/lit/pending-controller';
-import { SliceController } from '../../src/lit/slice-controller';
-import { StoreController } from '../../src/lit/store-controller';
-import { createSlice } from '../../src/slice';
-import { createStore } from '../../src/store';
+import { createSlice } from '../core/slice';
+import { createStore } from '../core/store';
+import { PendingController } from './pending-controller';
+import { SliceController } from './slice-controller';
+import { StoreController } from './store-controller';
 
 // ----------------------------------------
 // Mock Host
@@ -371,14 +371,16 @@ describe('pendingController', () => {
     await new Promise(r => setTimeout(r, 5));
 
     expect(controller.any).toBe(true);
-    expect(controller.has('playback')).toBe(true);
+    // The 'play' request uses key: 'playback' - runtime key differs from request name
+    expect(controller.has('playback' as 'play')).toBe(true);
     expect(controller.size).toBe(1);
 
     // Wait for completion
     await playPromise;
 
     expect(controller.any).toBe(false);
-    expect(controller.has('playback')).toBe(false);
+    // The 'play' request uses key: 'playback' - runtime key differs from request name
+    expect(controller.has('playback' as 'play')).toBe(false);
   });
 
   it('updates host when pending changes', async () => {
@@ -405,7 +407,8 @@ describe('pendingController', () => {
     const playPromise = store.request.play();
     await new Promise(r => setTimeout(r, 5));
 
-    const task = controller.get('playback');
+    // The 'play' request uses key: 'playback' - runtime key differs from request name
+    const task = controller.get('playback' as 'play');
 
     expect(task).toBeDefined();
     expect(task?.name).toBe('play');

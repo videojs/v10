@@ -2,12 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "declarationDir": "types"
   },
-  "references": [{ "path": "./src/dom" }],
-  "include": ["src"],
-  "exclude": ["src/dom"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/dom/**/*.ts", "**/*.test.ts"]
 }

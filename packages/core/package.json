@@ -31,7 +31,8 @@
     "build:watch": "tsdown --watch --silent",
     "dev": "pnpm run build:watch",
     "test": "echo \"No tests yet\"",
-    "clean": "rm -rf dist"
+    "typecheck": "tsc --build",
+    "clean": "rm -rf dist types"
   },
   "dependencies": {
     "@videojs/utils": "workspace:*"
