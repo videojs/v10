@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { pick } from './pick';
+import { pick } from '../pick';
 
 describe('pick', () => {
   it('picks specified keys from object', () => {

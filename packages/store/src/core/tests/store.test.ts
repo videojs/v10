@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { StoreError } from './errors';
-import { createQueue } from './queue';
-import { createSlice } from './slice';
-import { createStore } from './store';
+import { StoreError } from '../errors';
+import { createQueue } from '../queue';
+import { createSlice } from '../slice';
+import { createStore } from '../store';
 
 describe('store', () => {
   // Mock target that mimics HTMLVideoElement

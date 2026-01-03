@@ -3,11 +3,11 @@ import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-e
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createSlice } from '../core/slice';
-import { createStore } from '../core/store';
-import { PendingController } from './pending-controller';
-import { SliceController } from './slice-controller';
-import { StoreController } from './store-controller';
+import { createSlice } from '../../core/slice';
+import { createStore } from '../../core/store';
+import { PendingController } from '../pending-controller';
+import { SliceController } from '../slice-controller';
+import { StoreController } from '../store-controller';
 
 // ----------------------------------------
 // Mock Host

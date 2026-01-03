@@ -11,7 +11,7 @@ import {
   isPromise,
   isString,
   isUndefined,
-} from './predicate';
+} from '../predicate';
 
 describe('predicate', () => {
   describe('isString', () => {

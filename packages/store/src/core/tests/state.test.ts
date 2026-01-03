@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { State } from './state';
+import { State } from '../state';
 
 describe('state', () => {
   interface TestState {

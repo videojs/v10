@@ -1,15 +1,15 @@
 /* eslint-disable no-new */
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
-import type { Store } from '../core/store';
-import type { StoreContext } from './context';
+import type { Store } from '../../core/store';
+import type { StoreContext } from '../context';
 
 import { createContext } from '@lit/context';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createSlice } from '../core/slice';
-import { createStore } from '../core/store';
-import { createStoreControllers } from './factory';
+import { createSlice } from '../../core/slice';
+import { createStore } from '../../core/store';
+import { createStoreControllers } from '../factory';
 
 // ----------------------------------------
 // Mock Host (extends HTMLElement for context)

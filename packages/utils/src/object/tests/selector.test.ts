@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getSelectorKeys } from './selector';
+import { getSelectorKeys } from '../selector';
 
 describe('getSelectorKeys', () => {
   interface State {

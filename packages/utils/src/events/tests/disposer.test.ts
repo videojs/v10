@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { Disposer } from './disposer';
+import { Disposer } from '../disposer';
 
 describe('disposer', () => {
   describe('constructor', () => {

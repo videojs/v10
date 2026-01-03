@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { onEvent } from './event';
+import { onEvent } from '../event';
 
 describe('onEvent', () => {
   it('returns a promise', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { supportsAnimationFrame, supportsIdleCallback } from './supports';
+import { supportsAnimationFrame, supportsIdleCallback } from '../supports';
 
 describe('supports', () => {
   describe('supportsAnimationFrame', () => {

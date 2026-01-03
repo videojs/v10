@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { StoreError } from './errors';
-import { all, any, timeout } from './guard';
+import { StoreError } from '../errors';
+import { all, any, timeout } from '../guard';
 
 describe('guard', () => {
   const createContext = () => ({

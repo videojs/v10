@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { listen } from './listen';
+import { listen } from '../listen';
 
 describe('listen', () => {
   it('adds an event listener', () => {

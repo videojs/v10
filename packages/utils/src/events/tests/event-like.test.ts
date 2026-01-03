@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isEventLike } from './event-like';
+import { isEventLike } from '../event-like';
 
 describe('event-like', () => {
   describe('isEventLike', () => {

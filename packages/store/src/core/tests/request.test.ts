@@ -7,7 +7,7 @@ import {
   REQUEST_META,
   resolveRequestCancelKeys,
   resolveRequestKey,
-} from './request';
+} from '../request';
 
 describe('request', () => {
   describe('meta', () => {

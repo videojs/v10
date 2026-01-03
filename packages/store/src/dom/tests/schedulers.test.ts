@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createQueue } from '../core/queue';
-import { idle, raf } from './schedulers';
+import { createQueue } from '../../core/queue';
+import { idle, raf } from '../schedulers';
 
 describe('dom schedulers', () => {
   beforeEach(() => {

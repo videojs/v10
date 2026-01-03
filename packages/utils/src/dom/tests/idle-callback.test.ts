@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { animationFrame } from './animation-frame';
+import { idleCallback } from '../idle-callback';
 
-describe('animationFrame', () => {
+describe('idleCallback', () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -11,10 +11,10 @@ describe('animationFrame', () => {
     vi.useRealTimers();
   });
 
-  it('calls the callback on next animation frame', async () => {
+  it('calls the callback when idle', async () => {
     const callback = vi.fn();
 
-    animationFrame(callback);
+    idleCallback(callback);
 
     expect(callback).not.toHaveBeenCalled();
 
@@ -23,19 +23,24 @@ describe('animationFrame', () => {
     expect(callback).toHaveBeenCalledOnce();
   });
 
-  it('passes timestamp to callback', async () => {
+  it('passes deadline object to callback', async () => {
     const callback = vi.fn();
 
-    animationFrame(callback);
+    idleCallback(callback);
     await vi.runAllTimersAsync();
 
-    expect(callback).toHaveBeenCalledWith(expect.any(Number));
+    expect(callback).toHaveBeenCalledWith(
+      expect.objectContaining({
+        didTimeout: expect.any(Boolean),
+        timeRemaining: expect.any(Function),
+      }),
+    );
   });
 
   it('returns a cleanup function', () => {
     const callback = vi.fn();
 
-    const cancel = animationFrame(callback);
+    const cancel = idleCallback(callback);
 
     expect(cancel).toBeTypeOf('function');
   });
@@ -43,7 +48,7 @@ describe('animationFrame', () => {
   it('cancel prevents callback from being called', async () => {
     const callback = vi.fn();
 
-    const cancel = animationFrame(callback);
+    const cancel = idleCallback(callback);
     cancel();
 
     await vi.runAllTimersAsync();
@@ -54,7 +59,7 @@ describe('animationFrame', () => {
   it('cancel can be called multiple times safely', async () => {
     const callback = vi.fn();
 
-    const cancel = animationFrame(callback);
+    const cancel = idleCallback(callback);
     cancel();
     cancel();
     cancel();
@@ -64,14 +69,14 @@ describe('animationFrame', () => {
     expect(callback).not.toHaveBeenCalled();
   });
 
-  it('allows multiple independent animation frames', async () => {
+  it('allows multiple independent idle callbacks', async () => {
     const callback1 = vi.fn();
     const callback2 = vi.fn();
     const callback3 = vi.fn();
 
-    animationFrame(callback1);
-    animationFrame(callback2);
-    const cancel3 = animationFrame(callback3);
+    idleCallback(callback1);
+    idleCallback(callback2);
+    const cancel3 = idleCallback(callback3);
 
     cancel3();
     await vi.runAllTimersAsync();
@@ -79,5 +84,14 @@ describe('animationFrame', () => {
     expect(callback1).toHaveBeenCalledOnce();
     expect(callback2).toHaveBeenCalledOnce();
     expect(callback3).not.toHaveBeenCalled();
+  });
+
+  it('accepts options parameter', async () => {
+    const callback = vi.fn();
+
+    idleCallback(callback, { timeout: 1000 });
+    await vi.runAllTimersAsync();
+
+    expect(callback).toHaveBeenCalledOnce();
   });
 });
