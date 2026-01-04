@@ -1,6 +1,6 @@
 import type { PendingTask, TaskContext } from './queue';
 import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
-import type { AnySlice, InferSliceTarget, Slice, UnionSliceRequest, UnionSliceState, UnionSliceTasks } from './slice';
+import type { AnySlice, InferSliceTarget, Slice, UnionSliceRequests, UnionSliceState, UnionSliceTasks } from './slice';
 import type { StateFactory } from './state';
 
 import { getSelectorKeys } from '@videojs/utils/object';
@@ -16,7 +16,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
   readonly #slices: Slices;
   readonly #queue: Queue<UnionSliceTasks<Slices>>;
   readonly #state: State<UnionSliceState<Slices>>;
-  readonly #request: UnionSliceRequest<Slices>;
+  readonly #request: UnionSliceRequests<Slices>;
   readonly #requestConfigs: Map<string, ResolvedRequestConfig<Target>>;
   readonly #setupAbort = new AbortController();
 
@@ -59,7 +59,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     return this.#state.value;
   }
 
-  get request(): UnionSliceRequest<Slices> {
+  get request(): UnionSliceRequests<Slices> {
     return this.#request;
   }
 
@@ -258,7 +258,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     return configs;
   }
 
-  #buildRequestProxy(): UnionSliceRequest<Slices> {
+  #buildRequestProxy(): UnionSliceRequests<Slices> {
     const proxy: Record<string, (...args: any[]) => Promise<unknown>> = {};
 
     for (const [name, config] of this.#requestConfigs) {
@@ -271,7 +271,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
       };
     }
 
-    return proxy as UnionSliceRequest<Slices>;
+    return proxy as UnionSliceRequests<Slices>;
   }
 
   async #execute(
@@ -410,6 +410,6 @@ export type InferStoreSlices<S extends AnyStore> = S extends Store<any, infer Sl
 
 export type InferStoreState<S extends AnyStore> = UnionSliceState<InferStoreSlices<S>>;
 
-export type InferStoreRequests<S extends AnyStore> = UnionSliceRequest<InferStoreSlices<S>>;
+export type InferStoreRequests<S extends AnyStore> = UnionSliceRequests<InferStoreSlices<S>>;
 
 export type InferStoreTasks<S extends AnyStore> = UnionSliceTasks<InferStoreSlices<S>>;

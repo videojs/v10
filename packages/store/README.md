@@ -78,9 +78,37 @@ const audioSlice = createSlice<HTMLMediaElement>()({
 });
 ```
 
-### Explicit Types
+### Slice Type Inference
 
-For shared type definitions, use `Request<Input, Output>`:
+State and request types are fully inferred from the slice config:
+
+```ts
+import type { InferSliceRequests, InferSliceState } from '@videojs/store';
+
+const audioSlice = createSlice<HTMLMediaElement>()({
+  initialState: { volume: 1, muted: false },
+  // ...
+});
+
+// Infer types from the slice
+type AudioState = InferSliceState<typeof audioSlice>;
+type AudioRequests = InferSliceRequests<typeof audioSlice>;
+```
+
+For stores with multiple slices:
+
+```ts
+import type { UnionSliceRequests, UnionSliceState } from '@videojs/store';
+
+const slices = [audioSlice, playbackSlice] as const;
+
+type MediaState = UnionSliceState<typeof slices>;
+type MediaRequests = UnionSliceRequests<typeof slices>;
+```
+
+### Explicit Slice Types
+
+For upfront type definitions, use `Request<Input, Output>`:
 
 ```ts
 import type { Request } from '@videojs/store';
@@ -93,10 +121,10 @@ interface AudioState {
 }
 
 interface AudioRequests {
-  setVolume: Request<number>; // (volume: number) => void
-  setMuted: Request<boolean>; // (muted: boolean) => void
-  play: Request; // () => void
-  getDuration: Request; // () => number
+  setVolume: Request<number>; // (volume: number) => Promise<void>
+  setMuted: Request<boolean>; // (muted: boolean) => Promise<void>
+  play: Request; // () => Promise<void>
+  getDuration: Request<void, number>; // () => Promise<number>
 }
 
 const audioSlice = createSlice<HTMLMediaElement, AudioState, AudioRequests>({
@@ -109,6 +137,8 @@ const audioSlice = createSlice<HTMLMediaElement, AudioState, AudioRequests>({
 Requests are operations against the target. Use function shorthand for simple cases, or full config for guards and scheduling.
 
 ```ts
+import { onEvent } from '@videojs/utils/events';
+
 request: {
   // Shorthand - just the handler
   setVolume(volume, { target }) {
@@ -187,6 +217,17 @@ const store = createStore({
 });
 ```
 
+### Type Inference
+
+```ts
+import type { InferStoreRequests, InferStoreState } from '@videojs/store';
+
+const store = createStore({ slices: [audioSlice, playbackSlice] });
+
+type State = InferStoreState<typeof store>;
+type Requests = InferStoreRequests<typeof store>;
+```
+
 ### Attaching a Target
 
 ```ts
@@ -201,6 +242,15 @@ store.request.play();
 
 // Detach when done
 detach();
+```
+
+### Destroying a Store
+
+Clean up when the store is no longer needed:
+
+```ts
+// Detaches target, aborts pending requests, clears queue
+store.destroy();
 ```
 
 ### Subscribing to State
@@ -325,14 +375,20 @@ Schedule controls _when_ a request executes. The schedule function receives a `f
 optionally returns a cancel function. Default schedule is microtask (executes at end of current tick).
 
 ```ts
-import { delay } from '@videojs/store';
+import { delay, microtask } from '@videojs/store';
 import { raf, idle } from '@videojs/store/dom';
 
 request: {
-  // Debounce 100ms - good for sliders
+  // Microtask - default, executes at end of current tick
   setVolume: {
+    schedule: microtask,
+    handler: (volume, { target }) => { target.volume = volume; },
+  },
+
+  // Debounce 100ms - good for sliders
+  seek: {
     schedule: delay(100),
-    handler: (volume, { target }) => { target.media.volume = volume; },
+    handler: (time, { target }) => { target.currentTime = time; },
   },
 
   // Sync with animation frame
@@ -384,6 +440,8 @@ request: {
 
 ```ts
 import type { Guard } from '@videojs/store';
+
+import { onEvent } from '@videojs/utils/events';
 
 const canMediaPlay: Guard<HTMLMediaElement> = ({ target, signal }) => {
   if (target.readyState >= HAVE_ENOUGH_DATA) return true;
@@ -499,60 +557,6 @@ await queue.enqueue({
 });
 ```
 
-## React
-
-```ts
-import { useStore, useSlice, useRequest, usePending } from '@videojs/store/react';
-
-// Full state - re-renders on any change
-function Player() {
-  const state = useStore(store);
-  return <div>{state.paused ? 'Paused' : 'Playing'}</div>;
-}
-
-// Selector - re-renders only when volume changes
-function VolumeDisplay() {
-  const volume = useStore(store, (s) => s.volume);
-  return <div>{Math.round(volume * 100)}%</div>;
-}
-
-// Multiple values
-function AudioControls() {
-  const { volume, muted } = useStore(store, (s) => ({
-    volume: s.volume,
-    muted: s.muted
-  }));
-
-  return <div>{volume} {muted ? '🔇' : '🔊'}</div>;
-}
-
-// Track request state
-function PlayButton() {
-  const { dispatch, isPending, error } = useRequest(store.request.play);
-
-  return (
-    <button onClick={dispatch} disabled={isPending}>
-      {isPending ? 'Starting...' : 'Play'}
-    </button>
-  );
-}
-
-// Check pending by key
-function SeekBar() {
-  const isSeeking = usePending(store, 'seek');
-  return <input type="range" disabled={isSeeking} />;
-}
-
-// Check if slice exists
-function QualityMenu() {
-  const quality = useSlice(store, qualitySlice);
-
-  if (!quality) return null;
-
-  return <Menu items={quality.state.levels} />;
-}
-```
-
 ## Advanced
 
 ### Custom State
@@ -643,14 +647,6 @@ function QualityMenu() {
 
   return <Menu items={quality.state.levels} />;
 }
-```
-
-## Exports
-
-```md
-@videojs/store # Core: createStore, createSlice, createQueue, Request
-@videojs/store/dom # raf(), idle() schedulers
-@videojs/store/react # useStore, useSlice, useRequest, usePending
 ```
 
 ## How It's Different

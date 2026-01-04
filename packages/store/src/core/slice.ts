@@ -71,7 +71,7 @@ export type UnionSliceState<Slices extends Slice<any, any, any>[]> = UnionToInte
   InferSliceState<Slices[number]>
 >;
 
-export type UnionSliceRequest<Slices extends Slice<any, any, any>[]> = UnionToIntersection<
+export type UnionSliceRequests<Slices extends Slice<any, any, any>[]> = UnionToIntersection<
   ResolveSliceRequestHandlers<Slices[number]>
 >;
 

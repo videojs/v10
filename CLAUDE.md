@@ -60,7 +60,8 @@ pnpm install
 # Run all demos/sites in parallel
 pnpm dev
 
-# Typecheck across repo (fast)
+# Typecheck across repo (fast - uses TypeScript project references)
+# Always run from root, not per-package
 pnpm typecheck
 
 # Build all packages/apps
@@ -84,7 +85,7 @@ pnpm -F <pkg> test src/core
 # Lint all workspace packages
 pnpm lint
 # Lint and fix a single file
-pnpm lint:file:fix <file>
+pnpm lint:fix:file <file>
 
 # Remove all dist and types outputs
 pnpm clean
