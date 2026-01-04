@@ -23,6 +23,7 @@ export default {
       'html',
       'icons',
       'packages',
+      'plan',
       'react-native',
       'react',
       'root',

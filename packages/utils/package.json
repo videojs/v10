@@ -10,9 +10,25 @@
     "videojs"
   ],
   "exports": {
+    "./array": {
+      "types": "./dist/array.d.ts",
+      "default": "./dist/array.js"
+    },
+    "./dom": {
+      "types": "./dist/dom.d.ts",
+      "default": "./dist/dom.js"
+    },
     "./events": {
       "types": "./dist/events.d.ts",
       "default": "./dist/events.js"
+    },
+    "./function": {
+      "types": "./dist/function.d.ts",
+      "default": "./dist/function.js"
+    },
+    "./object": {
+      "types": "./dist/object.d.ts",
+      "default": "./dist/object.js"
     },
     "./predicate": {
       "types": "./dist/predicate.d.ts",
@@ -21,14 +37,6 @@
     "./types": {
       "types": "./dist/types.d.ts",
       "default": "./dist/types.js"
-    },
-    "./object": {
-      "types": "./dist/object.d.ts",
-      "default": "./dist/object.js"
-    },
-    "./dom": {
-      "types": "./dist/dom.d.ts",
-      "default": "./dist/dom.js"
     }
   },
   "files": [
