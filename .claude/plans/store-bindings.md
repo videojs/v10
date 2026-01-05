@@ -191,8 +191,8 @@ export function StoreContextProvider({ store, children }: { store: AnyStore; chi
 **File:** `packages/store/src/react/create-store.ts`
 
 ```typescript
-import type { AnySlice, InferSliceTarget, StoreConfig } from '../core';
 import type { ReactNode } from 'react';
+import type { AnySlice, InferSliceTarget, StoreConfig } from '../core';
 
 import { useEffect, useState } from 'react';
 
@@ -241,9 +241,9 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
 **File:** `packages/store/src/react/types.ts`
 
 ```typescript
-export type SliceResult<S extends AnySlice> =
-  | { state: InferSliceState<S>; request: InferSliceRequests<S>; isAvailable: true }
-  | { state: null; request: null; isAvailable: false };
+export type SliceResult<S extends AnySlice>
+  = | { state: InferSliceState<S>; request: InferSliceRequests<S>; isAvailable: true }
+    | { state: null; request: null; isAvailable: false };
 
 export interface MutationResult<Request extends (...args: any[]) => any> {
   /** Trigger the request */
@@ -340,11 +340,11 @@ export function useOptimistic<S extends AnyStore, R extends (...args: any[]) => 
 **File:** `packages/store/src/react/index.ts`
 
 ```typescript
+// Internal hook for primitive UI components
+export { useStoreContext } from './context';
 export { createStore } from './create-store';
 // Base hooks for testing/advanced use (all take store as first arg)
 export { useMutation, useOptimistic, usePending, useRequest, useSelector } from './hooks';
-// Internal hook for primitive UI components
-export { useStoreContext } from './context';
 
 export type { CreateStoreConfig, CreateStoreResult, MutationResult, OptimisticResult, SliceResult } from './types';
 ```
@@ -389,9 +389,9 @@ class MySkin extends HTMLElement {
 **File:** `packages/store/src/lit/create-store.ts`
 
 ```typescript
-import type { AnySlice, InferSliceTarget, StoreConfig } from '../core';
 import type { Context } from '@lit/context';
 import type { ReactiveControllerHost } from '@lit/reactive-element';
+import type { AnySlice, InferSliceTarget, StoreConfig } from '../core';
 
 import { createContext } from '@lit/context';
 
@@ -497,7 +497,6 @@ export class OptimisticController<
 **File:** `packages/store/src/lit/index.ts`
 
 ```typescript
-export { createStore } from './create-store';
 export {
   MutationController,
   OptimisticController,
@@ -505,6 +504,7 @@ export {
   RequestController,
   SelectorController,
 } from './controllers';
+export { createStore } from './create-store';
 
 export type { CreateStoreConfig, CreateStoreResult, MutationResult, OptimisticResult } from './types';
 ```
@@ -928,16 +928,16 @@ function App() {
 }
 
 function MyCustomControls() {
-  const currentTime = useSelector((s) => s.currentTime);
-  const seek = useRequest((r) => r.seek);
+  const currentTime = useSelector(s => s.currentTime);
+  const seek = useRequest(r => r.seek);
   return <button onClick={() => seek(0)}>Restart ({currentTime}s)</button>;
 }
 
 // With mutation status tracking
 function PlayButton() {
-  const paused = useSelector((s) => s.paused);
-  const { mutate: play, isPending } = useMutation((r) => r.play);
-  const { mutate: pause } = useMutation((r) => r.pause);
+  const paused = useSelector(s => s.paused);
+  const { mutate: play, isPending } = useMutation(r => r.play);
+  const { mutate: pause } = useMutation(r => r.pause);
 
   return (
     <button onClick={() => (paused ? play() : pause())} disabled={isPending}>
@@ -949,8 +949,8 @@ function PlayButton() {
 // With optimistic updates
 function VolumeSlider() {
   const { value, setValue, isPending, isError } = useOptimistic(
-    (r) => r.changeVolume,
-    (s) => s.volume
+    r => r.changeVolume,
+    s => s.volume
   );
 
   return (
@@ -958,7 +958,7 @@ function VolumeSlider() {
       <input
         type="range"
         value={value}
-        onChange={(e) => setValue(Number(e.target.value))}
+        onChange={e => setValue(Number(e.target.value))}
         style={{ opacity: isPending ? 0.5 : 1 }}
       />
       {isError && <span>Failed to change volume</span>}
@@ -970,9 +970,9 @@ function VolumeSlider() {
 ### React: Pre-created store instance (imperative access)
 
 ```tsx
-import { useState } from 'react';
-
 import { createStore, media, Video } from '@videojs/react';
+
+import { useState } from 'react';
 
 const { Provider, create, useSelector } = createStore({
   slices: [media.playback],
@@ -1235,7 +1235,7 @@ import { readdirSync } from 'node:fs';
 
 // Dynamically gather define/ entries
 const defineEntries = readdirSync('src/define')
-  .filter((f) => f.endsWith('.ts'))
+  .filter(f => f.endsWith('.ts'))
   .reduce(
     (acc, f) => {
       const name = f.replace('.ts', '');
@@ -1354,11 +1354,6 @@ Use `types` + `default` format to match existing packages.
 | #230  | Lit Bindings        | Controllers, mixins, context            |
 | #239  | Playback Slice      | media.playback slice                    |
 | #231  | Skin Stores         | Skin store configuration                |
-
-### Existing PR
-
-- **PR #281** (`videojs-store-lit`) - Draft with WIP Lit controllers
-  - Action: **Completely override** with new API design from this plan
 
 ### PR Strategy
 
