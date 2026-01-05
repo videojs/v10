@@ -374,6 +374,8 @@ export interface SubscribeOptions<T> {
   equalityFn?: (a: T, b: T) => boolean;
 }
 
+export type AnyStoreConfig = StoreConfig<any, AnySlice[]>;
+
 export interface StoreConfig<Target, Slices extends AnySlice<Target>[]> {
   slices: Slices;
   queue?: Queue<UnionSliceTasks<Slices>>;
