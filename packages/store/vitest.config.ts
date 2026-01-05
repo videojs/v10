@@ -26,6 +26,14 @@ export default defineConfig({
           environment: 'jsdom',
         },
       },
+      {
+        extends: true,
+        test: {
+          name: 'store/react',
+          include: ['src/react/**/*.test.{ts,tsx}'],
+          environment: 'jsdom',
+        },
+      },
     ],
   },
 });
