@@ -67,6 +67,8 @@ export type InferSliceRequests<S> = S extends Slice<any, any, infer R> ? { [K in
 export type ResolveSliceRequestHandlers<S>
   = S extends Slice<any, any, infer R> ? { [K in keyof R]: ResolveRequestHandler<R[K]> } : never;
 
+export type UnionSliceTarget<Slices extends AnySlice[]> = InferSliceTarget<Slices[number]>;
+
 export type UnionSliceState<Slices extends Slice<any, any, any>[]> = UnionToIntersection<
   InferSliceState<Slices[number]>
 >;

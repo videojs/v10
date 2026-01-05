@@ -1,6 +1,6 @@
 import type { FC, ReactNode } from 'react';
 import type { TasksRecord } from '../core/queue';
-import type { AnySlice, InferSliceTarget, UnionSliceRequests, UnionSliceState, UnionSliceTasks } from '../core/slice';
+import type { AnySlice, UnionSliceRequests, UnionSliceState, UnionSliceTarget, UnionSliceTasks } from '../core/slice';
 import type { StoreConfig } from '../core/store';
 
 import { isNull, isUndefined } from '@videojs/utils/predicate';
@@ -18,10 +18,7 @@ import { useRequest as useRequestBase, useSelector as useSelectorBase, useTasks 
 /**
  * Configuration for `createStore`.
  */
-export interface CreateStoreConfig<Slices extends AnySlice[]> extends StoreConfig<
-  InferSliceTarget<Slices[number]>,
-  Slices
-> {
+export interface CreateStoreConfig<Slices extends AnySlice[]> extends StoreConfig<UnionSliceTarget<Slices>, Slices> {
   /**
    * Display name for React DevTools.
    */
@@ -38,7 +35,7 @@ export interface ProviderProps<Slices extends AnySlice[]> {
    * If provided, the Provider will use this store instead of creating one.
    * The Provider will NOT destroy this store on unmount.
    */
-  store?: Store<InferSliceTarget<Slices[number]>, Slices>;
+  store?: Store<UnionSliceTarget<Slices>, Slices>;
   /**
    * If true, inherits the store from a parent Provider context instead of creating a new one.
    * Useful when wrapping a skin with your own Provider to add custom hooks.
@@ -59,7 +56,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
   /**
    * Returns the typed store instance from context.
    */
-  useStore: () => Store<InferSliceTarget<Slices[number]>, Slices>;
+  useStore: () => Store<UnionSliceTarget<Slices>, Slices>;
 
   /**
    * Subscribes to a selected portion of state.
@@ -85,7 +82,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    * Creates a new store instance.
    * Useful for imperative access or creating a store before render.
    */
-  create: () => Store<InferSliceTarget<Slices[number]>, Slices>;
+  create: () => Store<UnionSliceTarget<Slices>, Slices>;
 }
 
 // ----------------------------------------
@@ -121,7 +118,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
  * ```
  */
 export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig<Slices>): CreateStoreResult<Slices> {
-  type Target = InferSliceTarget<Slices[number]>;
+  type Target = UnionSliceTarget<Slices>;
   type State = UnionSliceState<Slices>;
   type Requests = UnionSliceRequests<Slices>;
   type Tasks = UnionSliceTasks<Slices>;
