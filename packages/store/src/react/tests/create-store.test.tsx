@@ -214,4 +214,27 @@ describe('createStore', () => {
       expect(result.current).toEqual({});
     });
   });
+
+  describe('useMutation', () => {
+    it('returns mutation result from context store', async () => {
+      const { Provider, useMutation, create } = createStore({ slices: [audioSlice] });
+      const store = create();
+      const target = new MockMedia();
+      store.attach(target);
+
+      const { result } = renderHook(() => useMutation(r => r.setVolume), {
+        wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
+      });
+
+      expect(result.current.status).toBe('idle');
+      expect(typeof result.current.mutate).toBe('function');
+
+      await act(async () => {
+        await result.current.mutate(0.5);
+      });
+
+      expect(result.current.status).toBe('success');
+      expect(result.current.data).toBe(0.5);
+    });
+  });
 });

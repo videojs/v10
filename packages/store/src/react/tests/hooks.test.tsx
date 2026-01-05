@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createSlice } from '../../core/slice';
 import { createStore as createCoreStore } from '../../core/store';
-import { useRequest, useSelector, useTasks } from '../hooks';
+import { useMutation, useRequest, useSelector, useTasks } from '../hooks';
 
 describe('react hooks', () => {
   // Mock target
@@ -144,6 +144,169 @@ describe('react hooks', () => {
 
       expect(result.current.setVolume).toBeDefined();
       expect(result.current.setVolume?.status).toBe('success');
+    });
+  });
+
+  describe('useMutation', () => {
+    // Create a slice with async requests for testing pending states
+    class AsyncMockMedia extends EventTarget {
+      volume = 1;
+      muted = false;
+    }
+
+    const asyncAudioSlice = createSlice<AsyncMockMedia>()({
+      initialState: { volume: 1, muted: false },
+      getSnapshot: ({ target }) => ({
+        volume: target.volume,
+        muted: target.muted,
+      }),
+      subscribe: ({ target, update, signal }) => {
+        const handler = () => update();
+        target.addEventListener('volumechange', handler);
+        signal.addEventListener('abort', () => {
+          target.removeEventListener('volumechange', handler);
+        });
+      },
+      request: {
+        setVolume: {
+          handler: async (volume: number, { target }) => {
+            // Simulate async operation
+            await Promise.resolve();
+            target.volume = volume;
+            target.dispatchEvent(new Event('volumechange'));
+            return volume;
+          },
+        },
+        failingRequest: {
+          handler: async () => {
+            await Promise.resolve();
+            throw new Error('Request failed');
+          },
+        },
+      },
+    });
+
+    function createAsyncTestStore() {
+      const store = createCoreStore({ slices: [asyncAudioSlice] });
+      const target = new AsyncMockMedia();
+      store.attach(target);
+      return { store, target };
+    }
+
+    it('returns mutation result with idle status initially', () => {
+      const { store } = createAsyncTestStore();
+
+      const { result } = renderHook(() => useMutation(store, r => r.setVolume));
+
+      expect(result.current.status).toBe('idle');
+      expect(result.current.isPending).toBe(false);
+      expect(result.current.isSuccess).toBe(false);
+      expect(result.current.isError).toBe(false);
+      expect(result.current.data).toBeUndefined();
+      expect(result.current.error).toBeUndefined();
+      expect(typeof result.current.mutate).toBe('function');
+      expect(typeof result.current.reset).toBe('function');
+    });
+
+    it('updates to success status after successful mutation', async () => {
+      const { store } = createAsyncTestStore();
+
+      const { result } = renderHook(() => useMutation(store, r => r.setVolume));
+
+      await act(async () => {
+        await result.current.mutate(0.5);
+      });
+
+      expect(result.current.status).toBe('success');
+      expect(result.current.isPending).toBe(false);
+      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.isError).toBe(false);
+      expect(result.current.data).toBe(0.5);
+      expect(result.current.error).toBeUndefined();
+    });
+
+    it('updates to error status after failed mutation', async () => {
+      const { store } = createAsyncTestStore();
+
+      const { result } = renderHook(() => useMutation(store, r => r.failingRequest));
+
+      await act(async () => {
+        try {
+          await result.current.mutate();
+        } catch {
+          // Expected to throw
+        }
+      });
+
+      expect(result.current.status).toBe('error');
+      expect(result.current.isPending).toBe(false);
+      expect(result.current.isSuccess).toBe(false);
+      expect(result.current.isError).toBe(true);
+      expect(result.current.data).toBeUndefined();
+      expect(result.current.error).toBeInstanceOf(Error);
+      expect((result.current.error as Error).message).toBe('Request failed');
+    });
+
+    it('reset clears settled state', async () => {
+      const { store } = createAsyncTestStore();
+
+      const { result } = renderHook(() => useMutation(store, r => r.setVolume));
+
+      await act(async () => {
+        await result.current.mutate(0.5);
+      });
+
+      expect(result.current.status).toBe('success');
+
+      await act(async () => {
+        result.current.reset();
+      });
+
+      expect(result.current.status).toBe('idle');
+      expect(result.current.data).toBeUndefined();
+    });
+
+    it('re-renders only when task status changes', async () => {
+      const { store } = createAsyncTestStore();
+      const renderCount = vi.fn();
+
+      const { result } = renderHook(() => {
+        renderCount();
+        return useMutation(store, r => r.setVolume);
+      });
+
+      expect(renderCount).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        await result.current.mutate(0.5);
+      });
+
+      // Should have re-rendered for pending and success
+      expect(renderCount.mock.calls.length).toBeGreaterThan(1);
+    });
+
+    it('mutate function is stable across renders', () => {
+      const { store } = createAsyncTestStore();
+
+      const { result, rerender } = renderHook(() => useMutation(store, r => r.setVolume));
+
+      const firstMutate = result.current.mutate;
+      rerender();
+
+      expect(result.current.mutate).toBe(firstMutate);
+    });
+
+    it('works with synchronous requests', async () => {
+      const { store } = createTestStore();
+
+      const { result } = renderHook(() => useMutation(store, r => r.setVolume));
+
+      await act(async () => {
+        await result.current.mutate(0.5);
+      });
+
+      expect(result.current.status).toBe('success');
+      expect(result.current.data).toBe(0.5);
     });
   });
 });

@@ -2,6 +2,7 @@ import type { FC, ReactNode } from 'react';
 import type { TasksRecord } from '../core/queue';
 import type { AnySlice, UnionSliceRequests, UnionSliceState, UnionSliceTarget, UnionSliceTasks } from '../core/slice';
 import type { StoreConfig } from '../core/store';
+import type { MutationResult } from './hooks';
 
 import { isNull, isUndefined } from '@videojs/utils/predicate';
 
@@ -9,7 +10,12 @@ import { useEffect, useState } from 'react';
 
 import { Store } from '../core/store';
 import { StoreContextProvider, useParentStore, useStoreContext } from './context';
-import { useRequest as useRequestBase, useSelector as useSelectorBase, useTasks as useTasksBase } from './hooks';
+import {
+  useMutation as useMutationBase,
+  useRequest as useRequestBase,
+  useSelector as useSelectorBase,
+  useTasks as useTasksBase,
+} from './hooks';
 
 // ----------------------------------------
 // Types
@@ -68,6 +74,14 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    * Returns the current tasks map from the queue.
    */
   useTasks: () => TasksRecord<UnionSliceTasks<Slices>>;
+
+  /**
+   * Returns a mutation function with status tracking.
+   * Subscribes to the queue to track the status of the selected request.
+   */
+  useMutation: <Selector extends (requests: UnionSliceRequests<Slices>) => (...args: any[]) => any>(
+    selector: Selector,
+  ) => MutationResult<ReturnType<Selector>>;
 
   /**
    * Creates a new store instance.
@@ -174,12 +188,23 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
     return useTasksBase(store);
   }
 
+  /**
+   * Returns a mutation function with status tracking.
+   */
+  function useMutation<Selector extends (requests: Requests) => (...args: any[]) => any>(
+    selector: Selector,
+  ): MutationResult<ReturnType<Selector>> {
+    const store = useStore();
+    return useMutationBase(store, selector);
+  }
+
   return {
     Provider,
     useStore,
     useSelector,
     useRequest: useRequest as CreateStoreResult<Slices>['useRequest'],
     useTasks,
+    useMutation,
     create,
   };
 }
