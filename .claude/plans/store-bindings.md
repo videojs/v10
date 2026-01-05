@@ -865,7 +865,3 @@ PRs are sequential. PR #288, #289, #292 can technically parallel after PR #287, 
 
 - Testing utilities (`@videojs/store/testing`) - separate plan
 - Minimal skin implementation
-
-```
-
-```
