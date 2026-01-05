@@ -75,165 +75,20 @@ Types live next to implementations (no separate `types.ts`).
 
 ---
 
-## Phase 2: Lit Bindings (`@videojs/store/lit`)
+## Phase 2: Lit Bindings (`@videojs/store/lit`) [DONE]
 
-All DOM/Lit bindings live together since they all depend on `@lit/context`.
+> Refer to [PR #289](https://github.com/videojs/v10/pull/289) for implementation details.
 
-### 2.0 @lit/context Research
+Basic Lit bindings for the store:
 
-Key findings from analyzing `@lit/context@1.1.6`:
+- Controllers: `SelectorController`, `RequestController`, `TasksController` for reactive state
+- Mixins: `StoreProviderMixin`, `StoreAttachMixin`, `StoreMixin` (combined) for custom elements
+- `createStore()` factory returning typed mixins, context, and `create()` function
+- Auto-attach media elements via slot change observation
+- Proper cleanup on disconnect (slot listeners, subscriptions)
+- Sync controller values on reconnect to avoid stale state
 
-**Dynamic Value Updates:**
-
-- `ContextProvider.setValue(newValue, force?)` notifies all subscribed consumers
-- Uses `Object.is()` for equality - swapping store objects triggers updates automatically
-- `force = true` needed only for in-place mutations (same reference)
-
-**Subscription Model:**
-
-- Consumers must opt-in: `subscribe: true` in `@consume()` or `ContextConsumer`
-- Without subscription, consumers only receive initial value
-- Provider stores callbacks in `Map<ContextCallback, CallbackInfo>`
-- `updateObservers()` iterates all callbacks on value change
-
-**Store Swapping Pattern (validated):**
-
-```typescript
-class MySkin extends HTMLElement {
-  #provider = new ContextProvider(this, { context: storeContext });
-
-  set store(newStore: Store) {
-    this.#provider.setValue(newStore); // Notifies all subscribers
-  }
-}
-```
-
-### 2.1 `createStore`
-
-**File:** `packages/store/src/lit/create-store.ts`
-
-```typescript
-import type { Context } from '@lit/context';
-import type { ReactiveControllerHost } from '@lit/reactive-element';
-import type { AnySlice, InferSliceTarget, StoreConfig } from '../core';
-
-import { createContext } from '@lit/context';
-
-export interface CreateStoreConfig<Slices extends AnySlice[]> extends StoreConfig<
-  InferSliceTarget<Slices[number]>,
-  Slices
-> {}
-
-export interface CreateStoreResult<Slices extends AnySlice[]> {
-  /** Combined mixin: provides store via context AND auto-attaches slotted media */
-  StoreMixin: <T extends Constructor<HTMLElement>>(Base: T) => T;
-  /** Mixin that provides store via context (no auto-attach) */
-  StoreProviderMixin: <T extends Constructor<HTMLElement>>(Base: T) => T;
-  /** Mixin that auto-attaches slotted media elements (requires store from context) */
-  StoreAttachMixin: <T extends Constructor<HTMLElement>>(Base: T) => T;
-  /** Context for consuming store in controllers */
-  context: Context<Store<InferSliceTarget<Slices[number]>, Slices>>;
-  /** Creates a store instance for imperative access */
-  create: () => Store<InferSliceTarget<Slices[number]>, Slices>;
-}
-
-export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig<Slices>): CreateStoreResult<Slices>;
-```
-
-**Implementation details:**
-
-- Uses `@lit/context` for W3C Context Protocol
-- Context key auto-generated per `createStore()` call (unique Symbol)
-- `StoreMixin`: Combined mixin, equivalent to `StoreAttachMixin(StoreProviderMixin(Base))`
-- `StoreProviderMixin`: Mixin that:
-  - Creates store instance
-  - Uses `ContextProvider` internally
-  - Exposes `store` setter that calls `provider.setValue(newStore)`
-- `StoreAttachMixin`: Mixin that:
-  - Consumes store from context
-  - Observes slotted elements for `<video>` or `<audio>`
-  - Calls `store.attach(mediaElement)` when found
-  - Cleans up on disconnect
-- `create()`: Returns `new Store(config)` for imperative use
-
-### 2.2 Controllers
-
-**File:** `packages/store/src/lit/controllers.ts`
-
-Controllers mirror React hooks for consistency. All take `(host, store, ...)` pattern.
-
-```typescript
-import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
-
-// SelectorController - like useSelector(store, selector)
-export class SelectorController<S extends AnyStore, T> implements ReactiveController {
-  constructor(host: ReactiveControllerHost, store: S, selector: (state: InferStoreState<S>) => T);
-  get value(): T;
-}
-
-// RequestController - like useRequest(store) or useRequest(store, selector)
-export class RequestController<S extends AnyStore> implements ReactiveController {
-  constructor(host: ReactiveControllerHost, store: S);
-  get value(): InferStoreRequests<S>;
-}
-
-export class RequestController<S extends AnyStore, T> implements ReactiveController {
-  constructor(host: ReactiveControllerHost, store: S, selector: (requests: InferStoreRequests<S>) => T);
-  get value(): T;
-}
-
-// TasksController - like useTasks(store)
-export class TasksController<S extends AnyStore> implements ReactiveController {
-  constructor(host: ReactiveControllerHost, store: S);
-  get value(): TasksRecord<InferStoreTasks<S>>;
-}
-
-// MutationController - like useMutation(store, selector)
-export class MutationController<S extends AnyStore, R extends (...args: any[]) => any> implements ReactiveController {
-  constructor(host: ReactiveControllerHost, store: S, selector: (requests: InferStoreRequests<S>) => R);
-  get value(): MutationResult<R>;
-}
-
-// OptimisticController - like useOptimistic(store, requestSelector, stateSelector)
-export class OptimisticController<
-  S extends AnyStore,
-  R extends (...args: any[]) => any,
-  T,
-> implements ReactiveController {
-  constructor(
-    host: ReactiveControllerHost,
-    store: S,
-    requestSelector: (requests: InferStoreRequests<S>) => R,
-    stateSelector: (state: InferStoreState<S>) => T
-  );
-  get value(): OptimisticResult<T, R>;
-}
-```
-
-**Implementation details:**
-
-- Controllers take store explicitly (base pattern, like React base hooks)
-- Subscribe to store/queue changes, call `host.requestUpdate()` on change
-- Cleanup on `hostDisconnected`
-
-### 2.3 Exports
-
-**File:** `packages/store/src/lit/index.ts`
-
-```typescript
-export {
-  MutationController,
-  OptimisticController,
-  RequestController,
-  SelectorController,
-  TasksController,
-} from './controllers';
-export { createStore } from './create-store';
-
-export type { CreateStoreConfig, CreateStoreResult, MutationResult, OptimisticResult } from './types';
-```
-
-**Note:** Mixins (`StoreMixin`, `StoreProviderMixin`, `StoreAttachMixin`) are accessed via the `createStore()` return object, not exported directly. This ensures each store has its own typed mixins.
+**Note:** `MutationController` and `OptimisticController` are NOT in this phase - they are Phase 4 and 5.
 
 ---
 
@@ -503,16 +358,16 @@ function App() {
 }
 
 function MyCustomControls() {
-  const currentTime = useSelector(s => s.currentTime);
-  const seek = useRequest(r => r.seek);
+  const currentTime = useSelector((s) => s.currentTime);
+  const seek = useRequest((r) => r.seek);
   return <button onClick={() => seek(0)}>Restart ({currentTime}s)</button>;
 }
 
 // With mutation status tracking
 function PlayButton() {
-  const paused = useSelector(s => s.paused);
-  const { mutate: play, isPending } = useMutation(r => r.play);
-  const { mutate: pause } = useMutation(r => r.pause);
+  const paused = useSelector((s) => s.paused);
+  const { mutate: play, isPending } = useMutation((r) => r.play);
+  const { mutate: pause } = useMutation((r) => r.pause);
 
   return (
     <button onClick={() => (paused ? play() : pause())} disabled={isPending}>
@@ -524,8 +379,8 @@ function PlayButton() {
 // With optimistic updates
 function VolumeSlider() {
   const { value, setValue, isPending, isError } = useOptimistic(
-    r => r.changeVolume,
-    s => s.volume
+    (r) => r.changeVolume,
+    (s) => s.volume
   );
 
   return (
@@ -533,7 +388,7 @@ function VolumeSlider() {
       <input
         type="range"
         value={value}
-        onChange={e => setValue(Number(e.target.value))}
+        onChange={(e) => setValue(Number(e.target.value))}
         style={{ opacity: isPending ? 0.5 : 1 }}
       />
       {isError && <span>Failed to change volume</span>}
@@ -545,9 +400,9 @@ function VolumeSlider() {
 ### React: Pre-created store instance (imperative access)
 
 ```tsx
-import { createStore, media, Video } from '@videojs/react';
-
 import { useState } from 'react';
+
+import { createStore, media, Video } from '@videojs/react';
 
 const { Provider, create, useSelector } = createStore({
   slices: [media.playback],
@@ -780,10 +635,10 @@ packages/html/src/
    - `useStore`, `useSelector`, `useRequest`, `useTasks` ✓
    - Base hooks for testing/advanced use ✓
 
-4. **Phase 2**: Lit Bindings (basic)
-   - `createStore()` with mixins
-   - `SelectorController`, `RequestController`, `TasksController`
-   - `@lit/context` integration
+4. **Phase 2**: Lit Bindings (basic) **[DONE - PR #289]**
+   - `createStore()` with mixins ✓
+   - `SelectorController`, `RequestController`, `TasksController` ✓
+   - `@lit/context` integration ✓
 
 5. **Phase 3**: DOM Media Slices **[DONE - PR #292]**
    - Modular slices: `playbackSlice`, `timeSlice`, `bufferSlice`, `volumeSlice`, `sourceSlice` ✓
@@ -819,7 +674,7 @@ import { readdirSync } from 'node:fs';
 
 // Dynamically gather define/ entries
 const defineEntries = readdirSync('src/define')
-  .filter(f => f.endsWith('.ts'))
+  .filter((f) => f.endsWith('.ts'))
   .reduce(
     (acc, f) => {
       const name = f.replace('.ts', '');
@@ -962,16 +817,18 @@ PR #288: React Bindings (basic) [DONE]
 ├── References #218
 └── Closes #229
 
+PR #289: Lit Bindings (basic) [DONE]
+├── createStore with mixins ✓
+├── SelectorController, RequestController, TasksController ✓
+├── References #218
+└── Closes #230
+
 PR #292: DOM Media Slices [DONE]
 ├── Modular slices: playback, time, buffer, volume, source ✓
 ├── media namespace export ✓
 ├── Type guards and utilities ✓
 ├── References #218
 └── Closes #239
-
-PR C: Lit Bindings (basic)
-├── createStore with mixins
-├── SelectorController, RequestController, TasksController
 ├── References #218
 └── Closes #230
 
@@ -996,11 +853,11 @@ PR F: Skins
 
 ```
 PR #283 ───> PR #287 ───> PR #288 ───> PR D ───> PR E ───> PR F
-                     └──> PR #292 (done)                   │
-                     └──> PR C ────────────────────────────┘
+                     └──> PR #289 (done) ──────────────────┘
+                     └──> PR #292 (done) ──────────────────┘
 ```
 
-PRs are sequential. PR #288, C, #292 can technically parallel after PR #287, but we'll do them sequentially for easier review.
+PRs are sequential. PR #288, #289, #292 can technically parallel after PR #287, but we'll do them sequentially for easier review.
 
 ---
 
@@ -1008,3 +865,7 @@ PRs are sequential. PR #288, C, #292 can technically parallel after PR #287, but
 
 - Testing utilities (`@videojs/store/testing`) - separate plan
 - Minimal skin implementation
+
+```
+
+```
