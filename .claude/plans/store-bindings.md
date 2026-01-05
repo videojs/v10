@@ -1,5 +1,7 @@
 # Store React/DOM Bindings
 
+> **For AI agents:** When marking a phase as complete, remove detailed API specs and replace with a PR reference (e.g., "Refer to PR #XXX for implementation details"). The PR is the source of truth for completed work.
+
 ## Goal
 
 Implement React and DOM bindings for Video.js 10's store, enabling:
@@ -19,7 +21,11 @@ Implement React and DOM bindings for Video.js 10's store, enabling:
 | Selector hook       | `useSelector(selector)` - requires selector (Redux-style)                           |
 | Store hook          | `useStore()` - returns store instance                                               |
 | Request hook        | `useRequest()` or `useRequest(r => r.foo)` - full map or single request             |
+<<<<<<< Updated upstream
 | Tasks hook          | `useTasks()` - returns `store.queue.tasks` (reactive)                               |
+=======
+| Tasks hook          | `useTasks()` - returns `store.queue.tasks` (reactive, full lifecycle)               |
+>>>>>>> Stashed changes
 | Mutation hook       | `useMutation(r => r.foo)` - status tracking (isPending, isError, error)             |
 | Optimistic hook     | `useOptimistic(r => r.foo, s => s.bar)` - optimistic value + status                 |
 | Settled state       | Core Queue tracks last result/error per key, cleared on next request                |
@@ -43,101 +49,17 @@ Implement React and DOM bindings for Video.js 10's store, enabling:
 
 ## Phase 0: Core Utilities [DONE]
 
-> Implemented in PR #283.
+> Refer to [PR #283](https://github.com/videojs/v10/pull/283) for implementation details.
 
-- `uniqBy` - `packages/utils/src/array/uniq-by.ts`
-- `composeCallbacks` - `packages/utils/src/function/compose-callbacks.ts`
-- `extendConfig` - `packages/store/src/core/extend-config.ts`
+Added `uniqBy`, `composeCallbacks` utilities and `extendConfig` for store.
 
 ---
 
-## Phase 0.5: Queue Task Refactor
+## Phase 0.5: Queue Task Refactor [DONE]
 
-Refactor Queue to use a unified `tasks` map with status discriminator. This enables `useMutation` and `useOptimistic` hooks to track request lifecycle.
+> Refer to [PR #287](https://github.com/videojs/v10/pull/287) for implementation details.
 
-**File:** `packages/store/src/core/queue.ts`
-
-### Task Types (Discriminated Union)
-
-```typescript
-// Base fields shared by all task states
-interface TaskBase<Key, Input> {
-  id: symbol;
-  name: string;
-  key: Key;
-  input: Input;
-  startedAt: number;
-  meta: RequestMeta | null;
-}
-
-// Pending - request in flight
-interface PendingTask<Key, Input> extends TaskBase<Key, Input> {
-  status: 'pending';
-  abort: AbortController;
-}
-
-// Success - completed successfully
-interface SuccessTask<Key, Input, Output> extends TaskBase<Key, Input> {
-  status: 'success';
-  settledAt: number;
-  duration: number;
-  output: Output;
-}
-
-// Error - failed or cancelled
-interface ErrorTask<Key, Input> extends TaskBase<Key, Input> {
-  status: 'error';
-  settledAt: number;
-  duration: number;
-  error: unknown;
-  cancelled: boolean; // true if aborted, false if actual error
-}
-
-// Union types
-type Task<Key, Input, Output> = PendingTask<Key, Input> | SuccessTask<Key, Input, Output> | ErrorTask<Key, Input>;
-
-type SettledTask<Key, Input, Output> = SuccessTask<Key, Input, Output> | ErrorTask<Key, Input>;
-```
-
-### Queue API
-
-```typescript
-export class Queue<Tasks extends TaskRecord> {
-  // Single source of truth - one task per key (pending OR settled)
-  get tasks(): Readonly<TasksRecord<Tasks>>;
-
-  // Clear settled task for a key (no-op if pending)
-  reset(key: keyof Tasks): void;
-
-  // Subscribe to task changes
-  subscribe(listener: (tasks: TasksRecord<Tasks>) => void): () => void;
-}
-```
-
-### Lifecycle
-
-1. `enqueue()` → task added with `status: 'pending'`
-2. Task completes → same entry updated to `status: 'success'` or `status: 'error'`
-3. New request for same key → replaces previous (pending aborted, settled cleared)
-4. `reset(key)` → removes settled task
-
-### Usage
-
-```typescript
-const task = queue.tasks.changeVolume;
-
-// TypeScript narrows based on status
-if (task?.status === 'pending') {
-  task.abort; // available
-}
-if (task?.status === 'success') {
-  task.output; // available
-}
-if (task?.status === 'error') {
-  task.error; // available
-  task.cancelled; // true if aborted
-}
-```
+Refactored Queue to use unified `tasks` map with status discriminator (`PendingTask | SuccessTask | ErrorTask`). Added `tryCatch` utility to `@videojs/utils/function`.
 
 ---
 
@@ -1186,11 +1108,12 @@ packages/html/src/
    - `uniqBy`, `composeCallbacks` utilities ✓
    - `extendConfig` ✓
 
-2. **Phase 0.5**: Queue Task Refactor
-   - Unified `tasks` map with status discriminator
-   - `PendingTask`, `SuccessTask`, `ErrorTask` types
-   - `reset(key)` method
-   - Update existing tests
+2. **Phase 0.5**: Queue Task Refactor **[DONE - PR #287]**
+   - Unified `tasks` map with status discriminator ✓
+   - `PendingTask`, `SuccessTask`, `ErrorTask` types ✓
+   - `reset(key)` method ✓
+   - Update existing tests ✓
+   - Added `tryCatch` utility to `@videojs/utils/function` ✓
 
 3. **Phase 1**: React Bindings (basic)
    - Shared context, `useStoreContext`
@@ -1363,11 +1286,12 @@ PR #283: Core Utilities [DONE]
 ├── extendConfig (store/core) ✓
 └── Tests ✓
 
-PR A: Queue Task Refactor
-├── Unified Task type with status discriminator
-├── PendingTask, SuccessTask, ErrorTask
-├── Single `tasks` map, `reset(key)` method
-├── Update tests
+PR #287: Queue Task Refactor [DONE]
+├── Unified Task type with status discriminator ✓
+├── PendingTask, SuccessTask, ErrorTask ✓
+├── Single `tasks` map, `reset(key)` method ✓
+├── Update tests ✓
+├── Added tryCatch utility ✓
 └── Closes #285
 
 PR B: React Bindings (basic)
@@ -1409,9 +1333,9 @@ PR G: Skins
 ### Dependency Graph
 
 ```
-PR #283 ───> PR A ───> PR B ───> PR D ───> PR E ───> PR G
-                  └──> PR C ──────────────────────────┘
-                  └──> PR F ──────────────────────────┘
+PR #283 ───> PR #287 ───> PR B ───> PR D ───> PR E ───> PR G
+                     └──> PR C ──────────────────────────┘
+                     └──> PR F ──────────────────────────┘
 ```
 
 PRs are sequential. PR B, C, F can technically parallel after PR A, but we'll do them sequentially for easier review.
