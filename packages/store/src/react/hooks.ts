@@ -16,11 +16,11 @@ import { useCallback, useRef, useSyncExternalStore } from 'react';
 export function useSelector<S extends AnyStore, T>(store: S, selector: (state: InferStoreState<S>) => T): T {
   const subscribe = useCallback(
     (onStoreChange: () => void) =>
-      store.subscribe(selector as (state: object) => T, onStoreChange as (selected: T) => void),
+      store.subscribe(selector, onStoreChange),
     [store, selector],
   );
 
-  const getSnapshot = useCallback(() => selector(store.state as InferStoreState<S>), [store, selector]);
+  const getSnapshot = useCallback(() => selector(store.state), [store, selector]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
@@ -46,11 +46,13 @@ export function useRequest<S extends AnyStore, T>(
   store: S,
   selector?: (requests: InferStoreRequests<S>) => T,
 ): InferStoreRequests<S> | T {
+  const request = store.request as InferStoreRequests<S>;
+
   if (isUndefined(selector)) {
-    return store.request as InferStoreRequests<S>;
+    return request;
   }
 
-  return selector(store.request as InferStoreRequests<S>);
+  return selector(request);
 }
 
 /**

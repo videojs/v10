@@ -164,14 +164,21 @@ When generating or editing code in this repository, follow these rules to ensure
 
 ## Code Rules
 
+### File Organization
+
+- **Types live next to implementations** — Don't create separate `types.ts` files. Export types from the same file as their implementation.
+- **Tests in `tests/` directories** — See Testing section above.
+
+### Utilities
+
 Prefer existing utilities over inline implementations:
 
-| Instead of                | Use                                                    |
-| ------------------------- | ------------------------------------------------------ |
-| `x === undefined`         | `isUndefined(x)` from `@videojs/utils/predicate`       |
-| `x === null`              | `isNull(x)` from `@videojs/utils/predicate`            |
-| `typeof x === 'function'` | `isFunction(x)` from `@videojs/utils/predicate`        |
-| `typeof x === 'string'`   | `isString(x)` from `@videojs/utils/predicate`          |
+| Instead of                | Use                                              |
+| ------------------------- | ------------------------------------------------ |
+| `x === undefined`         | `isUndefined(x)` from `@videojs/utils/predicate` |
+| `x === null`              | `isNull(x)` from `@videojs/utils/predicate`      |
+| `typeof x === 'function'` | `isFunction(x)` from `@videojs/utils/predicate`  |
+| `typeof x === 'string'`   | `isString(x)` from `@videojs/utils/predicate`    |
 
 Before writing new helpers, check `@videojs/utils` for existing utilities.
 

@@ -357,7 +357,7 @@ export function createStore<Slices extends Slice<any, any, any>[]>(
 // Types
 // ----------------------------------------
 
-export type AnyStore<Target = any> = Store<Target, any>;
+export type AnyStore<Target = any> = Store<Target, AnySlice<Target>[]>;
 
 /**
  * A selector function that extracts a subset of state.
