@@ -263,26 +263,26 @@ const unsubscribe = store.subscribe((state) => {
 
 // Single value - only fires when volume changes
 store.subscribe(
-  s => s.volume,
-  volume => console.log('Volume:', volume)
+  (s) => s.volume,
+  (volume) => console.log('Volume:', volume)
 );
 
 // Multiple values - auto-optimized with key-based subscription
 store.subscribe(
-  s => ({ volume: s.volume, muted: s.muted }),
+  (s) => ({ volume: s.volume, muted: s.muted }),
   ({ volume, muted }) => updateAudioUI(volume, muted)
 );
 
 // Derived value
 store.subscribe(
-  s => Math.round(s.volume * 100),
-  percent => console.log(`${percent}%`)
+  (s) => Math.round(s.volume * 100),
+  (percent) => console.log(`${percent}%`)
 );
 
 // Custom equality function
 store.subscribe(
-  s => s.playlist,
-  playlist => renderPlaylist(playlist),
+  (s) => s.playlist,
+  (playlist) => renderPlaylist(playlist),
   { equalityFn: shallowEqual }
 );
 ```
@@ -542,17 +542,17 @@ const store = createStore({
   ],
   queue: createQueue({
     // Default scheduler for requests without schedule
-    scheduler: flush => queueMicrotask(flush),
+    scheduler: (flush) => queueMicrotask(flush),
 
     // Lifecycle hooks
     onDispatch: (request) => {
       console.log('Started:', request.name);
     },
 
-    onSettled: (request, { status, duration }) => {
-      analytics.track(request.name, {
-        status,
-        duration,
+    onSettled: (task) => {
+      analytics.track(task.name, {
+        status: task.status,
+        duration: task.settledAt - task.startedAt,
       });
     },
   }),
@@ -564,21 +564,29 @@ const store = createStore({
 ```ts
 const queue = store.queue; // accessed on the store
 
-queue.queued; // object of requests waiting to execute
-queue.pending; // object of requests currently executing
+queue.queued; // tasks waiting to execute
+queue.tasks; // task lifecycle map (pending/success/error)
 
-// Check if a task is pending or queued
+// Check task status
 queue.isPending('playback'); // true if currently executing
 queue.isQueued('seek'); // true if waiting to execute
+queue.isSettled('seek'); // true if completed (success or error)
 
-queue.dequeue('seek'); // remove from queue without executing
-queue.clear(); // clear all queued
+// Cancel queued tasks (waiting to execute)
+queue.cancel('seek'); // cancel specific
+queue.cancel(); // cancel all queued
 
+// Abort tasks (queued + executing)
+queue.abort('playback'); // abort specific
+queue.abort(); // abort all
+
+// Clear settled tasks (success/error results)
+queue.reset('seek'); // clear specific
+queue.reset(); // clear all settled
+
+// Execute queued tasks immediately
 queue.flush(); // execute all queued now
 queue.flush('playback'); // execute specific key now
-
-queue.abort('playback'); // abort executing request
-queue.abortAll(); // abort all executing
 ```
 
 ### Direct Queue Usage
@@ -620,7 +628,7 @@ const store = createStore({
   slices: [
     /* ... */
   ],
-  state: initial => new VueStateAdapter(initial),
+  state: (initial) => new VueStateAdapter(initial),
 });
 ```
 

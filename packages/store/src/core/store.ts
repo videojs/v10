@@ -1,4 +1,4 @@
-import type { PendingTask, TaskContext } from './queue';
+import type { PendingTask, Task, TaskContext } from './queue';
 import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
 import type { AnySlice, InferSliceTarget, Slice, UnionSliceRequests, UnionSliceState, UnionSliceTasks } from './slice';
 import type { StateFactory } from './state';
@@ -138,7 +138,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     this.#attachAbort?.abort();
     this.#attachAbort = null;
     this.#target = null;
-    this.#queue.abortAll();
+    this.#queue.abort();
     this.#resetState();
   }
 
@@ -318,10 +318,11 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
         handler,
       });
     } catch (error) {
-      const pending = this.#queue.pending as Record<string | symbol, PendingTask | undefined>;
+      const tasks = this.#queue.tasks as Record<string | symbol, Task | undefined>;
+      const task = tasks[key];
 
       this.#handleError({
-        request: pending[key],
+        request: task?.status === 'pending' ? task : undefined,
         error,
       });
 

@@ -1,5 +1,6 @@
 import type { Request, RequestMeta } from './request';
 
+import { tryCatch } from '@videojs/utils/function';
 import { isFunction, isUndefined } from '@videojs/utils/predicate';
 
 import { StoreError } from './errors';
@@ -37,17 +38,61 @@ export type DefaultTaskRecord = Record<TaskKey, Request<unknown, unknown>>;
 export type EnsureTaskRecord<T> = T extends TaskRecord ? T : never;
 
 /**
- * Pending task info.
+ * Base fields shared by all task states.
  */
-export interface PendingTask<Key extends TaskKey = TaskKey, Input = unknown> {
+export interface TaskBase<Key extends TaskKey = TaskKey, Input = unknown> {
   id: symbol;
   name: string;
   key: Key;
   input: Input;
   startedAt: number;
-  abort: AbortController;
   meta: RequestMeta | null;
 }
+
+/**
+ * Pending task - request in flight.
+ */
+export interface PendingTask<Key extends TaskKey = TaskKey, Input = unknown> extends TaskBase<Key, Input> {
+  status: 'pending';
+  abort: AbortController;
+}
+
+/**
+ * Success task - completed successfully.
+ */
+export interface SuccessTask<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown> extends TaskBase<
+  Key,
+  Input
+> {
+  status: 'success';
+  settledAt: number;
+  output: Output;
+}
+
+/**
+ * Error task - failed or cancelled.
+ */
+export interface ErrorTask<Key extends TaskKey = TaskKey, Input = unknown> extends TaskBase<Key, Input> {
+  status: 'error';
+  settledAt: number;
+  error: unknown;
+  cancelled: boolean;
+}
+
+/**
+ * Task with status discriminator.
+ */
+export type Task<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown>
+  = | PendingTask<Key, Input>
+    | SuccessTask<Key, Input, Output>
+    | ErrorTask<Key, Input>;
+
+/**
+ * Settled task (success or error).
+ */
+export type SettledTask<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown>
+  = | SuccessTask<Key, Input, Output>
+    | ErrorTask<Key, Input>;
 
 /**
  * Context passed to task handler.
@@ -90,13 +135,7 @@ export interface QueueConfig<Tasks extends TaskRecord = DefaultTaskRecord> {
   /** Default scheduler when task has no schedule */
   scheduler?: TaskScheduler;
   onDispatch?: <K extends keyof Tasks>(task: PendingTask<TaskKey<K>, Tasks[K]['input']>) => void;
-  onSettled?: <K extends keyof Tasks>(
-    task: PendingTask<TaskKey<K>, Tasks[K]['input']>,
-    result:
-      | { status: 'success'; duration: number; output: Tasks[K]['output'] }
-      | { status: 'cancelled'; error: unknown; duration: number }
-      | { status: 'error'; error: unknown; duration: number },
-  ) => void;
+  onSettled?: <K extends keyof Tasks>(task: SettledTask<TaskKey<K>, Tasks[K]['input'], Tasks[K]['output']>) => void;
 }
 
 export interface QueuedTaskId<Key extends TaskKey = TaskKey> {
@@ -112,16 +151,19 @@ export type QueuedRecord<Tasks extends TaskRecord> = {
   [K in keyof Tasks]?: QueuedTask<TaskKey<K>>;
 };
 
-export type PendingRecord<Tasks extends TaskRecord> = {
-  [K in keyof Tasks]?: PendingTask<TaskKey<K>, Tasks[K]['input']>;
+/**
+ * Map of task key -> task (pending, success, or error).
+ */
+export type TasksRecord<Tasks extends TaskRecord> = {
+  [K in keyof Tasks]?: Task<TaskKey<K>, Tasks[K]['input'], Tasks[K]['output']>;
 };
 
 /**
- * Listener callback for pending state changes.
+ * Listener callback for task state changes.
  *
- * Called when tasks are dispatched or settled.
+ * Called when tasks are dispatched, settled, or reset.
  */
-export type QueueListener<Tasks extends TaskRecord> = (pending: PendingRecord<Tasks>) => void;
+export type QueueListener<Tasks extends TaskRecord> = (tasks: TasksRecord<Tasks>) => void;
 
 // ----------------------------------------
 // Schedulers
@@ -168,36 +210,27 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   readonly #subscribers = new Set<QueueListener<Tasks>>();
 
   #queued: QueuedRecord<Tasks> = {};
-  #pending: PendingRecord<Tasks> = {};
+  #tasks: TasksRecord<Tasks> = {};
   #destroyed = false;
 
   constructor(config: QueueConfig<Tasks> = {}) {
     this.#scheduler = config.scheduler ?? microtask;
 
     // Wrap callbacks to catch errors and prevent breaking queue/scheduler
-    const safeCallback = <Args extends [PendingTask, ...unknown[]]>(
-      callback: ((...args: Args) => unknown) | undefined,
-    ) => {
-      if (!callback) return undefined;
-      return (...args: Args) => {
-        try {
-          callback(...args);
-        } catch (e) {
-          console.error('[vjs-queue]', e);
-        }
-      };
-    };
-
-    this.#onDispatch = safeCallback(config.onDispatch);
-    this.#onSettled = safeCallback(config.onSettled);
+    const logError = (e: unknown) => console.error('[vjs-queue]', e);
+    this.#onDispatch = tryCatch(config.onDispatch, logError);
+    this.#onSettled = tryCatch(config.onSettled, logError);
   }
 
   get queued(): Readonly<PublicQueuedRecord<Tasks>> {
     return Object.freeze({ ...this.#queued });
   }
 
-  get pending(): Readonly<PendingRecord<Tasks>> {
-    return Object.freeze({ ...this.#pending });
+  /**
+   * Map of task key -> task (pending, success, or error).
+   */
+  get tasks(): Readonly<TasksRecord<Tasks>> {
+    return Object.freeze({ ...this.#tasks });
   }
 
   get destroyed(): boolean {
@@ -208,7 +241,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
    * Check if a task with the given key is currently pending (executing).
    */
   isPending(key: keyof Tasks): boolean {
-    return key in this.#pending;
+    return this.#tasks[key]?.status === 'pending';
   }
 
   /**
@@ -219,11 +252,53 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   }
 
   /**
-   * Subscribe to pending state changes.
+   * Check if a task with the given key is settled (success or error).
+   */
+  isSettled(key: keyof Tasks): boolean {
+    const task = this.#tasks[key];
+    return task?.status === 'success' || task?.status === 'error';
+  }
+
+  /**
+   * Clear settled task(s).
    *
-   * Fires when tasks are dispatched or settled.
+   * - If key provided: clears that specific settled task (no-op if pending or doesn't exist)
+   * - If no key: clears all settled tasks (pending tasks are preserved)
    *
-   * @param listener - Callback receiving the current pending map
+   * @param key - Optional task key to reset. If omitted, resets all settled tasks.
+   */
+  reset(key?: keyof Tasks): void {
+    if (!isUndefined(key)) {
+      const task = this.#tasks[key];
+      if (!task || task.status === 'pending') return;
+
+      delete this.#tasks[key];
+      this.#notifySubscribers();
+
+      return;
+    }
+
+    // Reset all settled tasks
+    let cleared = false;
+    for (const key of Reflect.ownKeys(this.#tasks)) {
+      const task = this.#tasks[key];
+      if (task && task.status !== 'pending') {
+        delete this.#tasks[key];
+        cleared = true;
+      }
+    }
+
+    if (cleared) {
+      this.#notifySubscribers();
+    }
+  }
+
+  /**
+   * Subscribe to task state changes.
+   *
+   * Fires when tasks are dispatched, settled, or reset.
+   *
+   * @param listener - Callback receiving the current tasks map
    * @returns Unsubscribe function
    */
   subscribe(listener: QueueListener<Tasks>): () => void {
@@ -236,7 +311,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   #notifySubscribers(): void {
     if (this.#subscribers.size === 0) return;
 
-    const snapshot = this.pending;
+    const snapshot = this.tasks;
     for (const listener of this.#subscribers) {
       try {
         listener(snapshot);
@@ -262,7 +337,13 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     delete this.#queued[key];
 
     // Abort any pending task with same key
-    this.#pending[key]?.abort.abort(new StoreError('SUPERSEDED'));
+    const existing = this.#tasks[key];
+    if (existing?.status === 'pending') {
+      existing.abort.abort(new StoreError('SUPERSEDED'));
+    }
+
+    // Clear any settled task for this key (new request replaces it)
+    delete this.#tasks[key];
 
     return new Promise<Tasks[K]['output']>((resolve, reject) => {
       const task: QueuedTask = {
@@ -307,24 +388,37 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     });
   }
 
-  dequeue<K extends keyof Tasks>(key: K): boolean {
-    const queued = this.#queued[key];
-    if (!queued) return false;
+  /**
+   * Cancel queued task(s) waiting to execute.
+   *
+   * - If key provided: cancels that specific queued task
+   * - If no key: cancels all queued tasks
+   *
+   * @param key - Optional task key to cancel
+   * @returns true if any task was cancelled
+   */
+  cancel(key?: keyof Tasks): boolean {
+    if (!isUndefined(key)) {
+      const queued = this.#queued[key];
+      if (!queued) return false;
 
-    queued.invalidate?.();
-    queued.reject(new StoreError('REMOVED'));
-    delete this.#queued[key];
+      queued.invalidate?.();
+      queued.reject(new StoreError('REMOVED'));
+      delete this.#queued[key];
 
-    return true;
-  }
+      return true;
+    }
 
-  clear(): void {
+    // Cancel all queued
+    const hadQueued = Object.keys(this.#queued).length > 0;
     for (const queued of Object.values(this.#queued)) {
       queued.invalidate?.();
       queued.reject(new StoreError('REMOVED'));
     }
 
     this.#queued = {};
+
+    return hadQueued;
   }
 
   async flush(key?: keyof Tasks): Promise<void> {
@@ -338,18 +432,32 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     await Promise.allSettled(keys.map(k => this.#flushKey(k)));
   }
 
-  abort<K extends keyof Tasks>(key: K): void {
-    // Reject queued
-    const queued = this.#queued[key];
-    queued?.invalidate?.();
-    queued?.reject(new StoreError('ABORTED'));
-    delete this.#queued[key];
+  /**
+   * Abort task(s) - both queued (waiting) and pending (executing).
+   *
+   * - If key provided: aborts that specific task
+   * - If no key: aborts all tasks
+   *
+   * @param key - Optional task key to abort
+   */
+  abort(key?: keyof Tasks): void {
+    if (!isUndefined(key)) {
+      // Reject queued
+      const queued = this.#queued[key];
+      queued?.invalidate?.();
+      queued?.reject(new StoreError('ABORTED'));
+      delete this.#queued[key];
 
-    // Abort pending
-    this.#pending[key]?.abort.abort(new StoreError('ABORTED'));
-  }
+      // Abort pending task
+      const task = this.#tasks[key];
+      if (task?.status === 'pending') {
+        task.abort.abort(new StoreError('ABORTED'));
+      }
 
-  abortAll(): void {
+      return;
+    }
+
+    // Abort all
     const error = new StoreError('ABORTED');
 
     // Reject all queued
@@ -360,9 +468,11 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
     this.#queued = {};
 
-    // Abort all pending
-    for (const pending of Object.values(this.#pending)) {
-      pending.abort.abort(error);
+    // Abort all pending tasks
+    for (const task of Object.values(this.#tasks)) {
+      if (task?.status === 'pending') {
+        task.abort.abort(error);
+      }
     }
   }
 
@@ -370,8 +480,9 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     if (this.#destroyed) return;
 
     this.#destroyed = true;
-    this.abortAll();
+    this.abort();
     this.#subscribers.clear();
+    this.#tasks = {};
   }
 
   async #flushKey(key: keyof Tasks): Promise<void> {
@@ -393,7 +504,8 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     const abort = new AbortController();
     const startedAt = Date.now();
 
-    const pending: PendingTask = {
+    const pendingTask: PendingTask = {
+      status: 'pending',
       id,
       name,
       key,
@@ -403,9 +515,9 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       meta,
     };
 
-    this.#pending[key as keyof Tasks] = pending;
+    this.#tasks[key as keyof Tasks] = pendingTask;
     this.#notifySubscribers();
-    this.#onDispatch?.(pending);
+    this.#onDispatch?.(pendingTask);
 
     try {
       if (abort.signal.aborted) {
@@ -420,28 +532,38 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
       resolve(result);
 
-      this.#onSettled?.(pending, {
+      const successTask: SuccessTask = {
+        ...pendingTask,
         status: 'success',
-        duration: Date.now() - startedAt,
+        settledAt: Date.now(),
         output: result,
-      });
+      };
+
+      // Only update if we're still the current task for this key
+      if (this.#tasks[key as keyof Tasks] === pendingTask) {
+        this.#tasks[key as keyof Tasks] = successTask;
+        this.#notifySubscribers();
+      }
+
+      this.#onSettled?.(successTask);
     } catch (error) {
       reject(error);
 
-      const cancelled = abort.signal.aborted;
-
-      this.#onSettled?.(pending, {
-        status: cancelled ? 'cancelled' : 'error',
-        duration: Date.now() - startedAt,
+      const errorTask: ErrorTask = {
+        ...pendingTask,
+        status: 'error',
+        settledAt: Date.now(),
         error,
-      });
-    } finally {
-      const currentPending = this.#pending[key as keyof Tasks];
-      // Only remove if we're still the pending task for this key
-      if (currentPending === pending) {
-        delete this.#pending[key];
+        cancelled: abort.signal.aborted,
+      };
+
+      // Only update if we're still the current task for this key
+      if (this.#tasks[key as keyof Tasks] === pendingTask) {
+        this.#tasks[key as keyof Tasks] = errorTask;
         this.#notifySubscribers();
       }
+
+      this.#onSettled?.(errorTask);
     }
   }
 }
