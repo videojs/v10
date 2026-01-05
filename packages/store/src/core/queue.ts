@@ -252,17 +252,17 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     const { name, key, input, schedule, meta = null, handler } = task;
 
     if (this.#destroyed) {
-      return Promise.reject(new StoreError('Queue destroyed'));
+      return Promise.reject(new StoreError('DESTROYED'));
     }
 
     // Cancel any queued task with same key
     const queued = this.#queued[key];
     queued?.invalidate?.();
-    queued?.reject(new StoreError('Superseded'));
+    queued?.reject(new StoreError('SUPERSEDED'));
     delete this.#queued[key];
 
     // Abort any pending task with same key
-    this.#pending[key]?.abort.abort(new StoreError('Superseded'));
+    this.#pending[key]?.abort.abort(new StoreError('SUPERSEDED'));
 
     return new Promise<Tasks[K]['output']>((resolve, reject) => {
       const task: QueuedTask = {
@@ -312,7 +312,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     if (!queued) return false;
 
     queued.invalidate?.();
-    queued.reject(new StoreError('Dequeued'));
+    queued.reject(new StoreError('REMOVED'));
     delete this.#queued[key];
 
     return true;
@@ -321,7 +321,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   clear(): void {
     for (const queued of Object.values(this.#queued)) {
       queued.invalidate?.();
-      queued.reject(new StoreError('Cleared'));
+      queued.reject(new StoreError('REMOVED'));
     }
 
     this.#queued = {};
@@ -338,19 +338,19 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     await Promise.allSettled(keys.map(k => this.#flushKey(k)));
   }
 
-  abort<K extends keyof Tasks>(key: K, reason = 'Aborted'): void {
+  abort<K extends keyof Tasks>(key: K): void {
     // Reject queued
     const queued = this.#queued[key];
     queued?.invalidate?.();
-    queued?.reject(new StoreError(reason));
+    queued?.reject(new StoreError('ABORTED'));
     delete this.#queued[key];
 
-    // Abort pending with reason
-    this.#pending[key]?.abort.abort(new StoreError(reason));
+    // Abort pending
+    this.#pending[key]?.abort.abort(new StoreError('ABORTED'));
   }
 
-  abortAll(reason = 'All requests aborted'): void {
-    const error = new StoreError(reason);
+  abortAll(): void {
+    const error = new StoreError('ABORTED');
 
     // Reject all queued
     for (const queued of Object.values(this.#queued)) {
@@ -360,7 +360,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
     this.#queued = {};
 
-    // Abort all pending with reason
+    // Abort all pending
     for (const pending of Object.values(this.#pending)) {
       pending.abort.abort(error);
     }
@@ -370,7 +370,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     if (this.#destroyed) return;
 
     this.#destroyed = true;
-    this.abortAll('Queue destroyed');
+    this.abortAll();
     this.#subscribers.clear();
   }
 
@@ -409,13 +409,13 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
     try {
       if (abort.signal.aborted) {
-        throw abort.signal.reason || new StoreError('Aborted');
+        throw abort.signal.reason || new StoreError('ABORTED');
       }
 
       const result = await handler({ input, signal: abort.signal });
 
       if (abort.signal.aborted) {
-        throw abort.signal.reason || new StoreError('Aborted');
+        throw abort.signal.reason || new StoreError('ABORTED');
       }
 
       resolve(result);

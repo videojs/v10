@@ -416,7 +416,18 @@ request: {
 
 ### Guards
 
-Guards gate request execution. A guard returns truthy to proceed, falsy to cancel.
+Guards gate request execution. A guard returns a `GuardResult`:
+
+```ts
+import type { Guard, GuardResult } from '@videojs/store';
+
+// GuardResult = boolean | Promise<unknown>
+// - Truthy → proceed
+// - Falsy → cancel (throws REJECTED)
+// - Promise resolves truthy → proceed
+// - Promise resolves falsy → cancel
+// - Promise rejects → cancel
+```
 
 ```ts
 import { timeout } from '@videojs/store';
@@ -464,9 +475,25 @@ const timedPlay = timeout(canMediaPlay, 5000);
 
 ## Error Handling
 
+All store errors include a `code` for programmatic handling:
+
+| Code         | Description                  |
+| ------------ | ---------------------------- |
+| `ABORTED`    | Request aborted via signal   |
+| `CANCELLED`  | Cancelled by another request |
+| `DESTROYED`  | Store or queue destroyed     |
+| `DETACHED`   | Target detached              |
+| `NO_TARGET`  | No target attached           |
+| `REJECTED`   | Guard returned falsy         |
+| `REMOVED`    | Task dequeued or cleared     |
+| `SUPERSEDED` | Replaced by same-key request |
+| `TIMEOUT`    | Guard timed out              |
+
 Catch errors locally via the promise, or globally via `onError`:
 
 ```ts
+import { isStoreError } from '@videojs/store';
+
 // 1. Global Error Handling
 const store = createStore({
   slices: [playbackSlice],
@@ -483,7 +510,21 @@ const store = createStore({
 try {
   await store.request.play();
 } catch (error) {
-  // ...
+  if (isStoreError(error)) {
+    switch (error.code) {
+      case 'SUPERSEDED':
+        // Another play/pause request took over - expected
+        break;
+      case 'REJECTED':
+        // Guard failed - blocked
+        break;
+      case 'TIMEOUT':
+        // Guard timed out waiting
+        break;
+      default:
+        console.error(`[${error.code}]`, error.message);
+    }
+  }
 }
 ```
 
