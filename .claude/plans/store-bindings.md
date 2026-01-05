@@ -11,28 +11,33 @@ Implement React and DOM bindings for Video.js 10's store, enabling:
 
 ## Key Decisions
 
-| Decision               | Resolution                                                                 |
-| ---------------------- | -------------------------------------------------------------------------- |
-| Store creation         | `createStore({ slices, displayName? })` - types inferred from slices       |
-| Hook naming            | `useStore`, `useSelector`, `useRequest`, `usePending`, `useSlice`          |
-| Controller naming      | `StoreController`, `SelectorController`, `RequestController`, etc          |
-| Selector hook          | `useSelector(selector)` - requires selector (Redux-style)                  |
-| Store hook             | `useStore()` - returns store instance                                      |
-| Pending hook           | `usePending()` - returns `store.queue.pending` (reactive)                  |
-| Slice hook return      | `{ state, request, isAvailable }` - state/request null when unavailable    |
-| Skin exports           | `Provider`, `Skin`, `extendConfig`                                         |
-| Slice namespace        | `export * as media` → `media.playback`                                     |
-| Video component        | Generic, exported from `@videojs/react` (not from skins)                   |
-| Lit mixins             | `StoreMixin` (combined), `StoreProviderMixin`, `StoreAttachMixin`          |
-| Base hooks/controllers | Take store explicitly, for testing/advanced use                            |
-| Primitives context     | `useStoreContext()` internal hook for primitive UI components              |
-| displayName            | For React DevTools component naming                                        |
-| Component types        | Namespace pattern: `Skin.Props` via `namespace Skin { export type Props }` |
-| Element define         | `FrostedSkinElement.define(tagName, { mixins })` for declarative setup     |
-| Config extension       | `extendConfig()` uses `uniqBy` + `composeCallbacks` from utils             |
-| Provider resolution    | Isolated by default; `inherit` prop to use parent store from context       |
-| Store instance         | `create()` method for imperative store creation                            |
-| Package structure      | `store/react` and `store/lit` (no `store/dom`)                             |
+| Decision            | Resolution                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| Store creation      | `createStore({ slices, displayName? })` - types inferred from slices                  |
+| Hook naming         | `useStore`, `useSelector`, `useRequest`, `usePending`, `useMutation`, `useOptimistic` |
+| Controller naming   | `SelectorController`, `RequestController`, `PendingController`, etc                   |
+| Selector hook       | `useSelector(selector)` - requires selector (Redux-style)                             |
+| Store hook          | `useStore()` - returns store instance                                                 |
+| Request hook        | `useRequest()` or `useRequest(r => r.foo)` - full map or single request               |
+| Pending hook        | `usePending()` - returns `store.queue.pending` (reactive)                             |
+| Mutation hook       | `useMutation(r => r.foo)` - status tracking (isPending, isError, error)               |
+| Optimistic hook     | `useOptimistic(r => r.foo, s => s.bar)` - optimistic value + status                   |
+| Settled state       | Core Queue tracks last result/error per key, cleared on next request                  |
+| Base hooks          | All take store as first arg: `useSelector(store, sel)`, etc                           |
+| createStore hooks   | Returns all hooks including `useMutation` and `useOptimistic`                         |
+| Slice hook return   | `{ state, request, isAvailable }` - state/request null when unavailable               |
+| Skin exports        | `Provider`, `Skin`, `extendConfig`                                                    |
+| Slice namespace     | `export * as media` → `media.playback`                                                |
+| Video component     | Generic, exported from `@videojs/react` (not from skins)                              |
+| Lit mixins          | `StoreMixin` (combined), `StoreProviderMixin`, `StoreAttachMixin`                     |
+| Primitives context  | `useStoreContext()` internal hook for primitive UI components                         |
+| displayName         | For React DevTools component naming                                                   |
+| Component types     | Namespace pattern: `Skin.Props` via `namespace Skin { export type Props }`            |
+| Element define      | `FrostedSkinElement.define(tagName, { mixins })` for declarative setup                |
+| Config extension    | `extendConfig()` uses `uniqBy` + `composeCallbacks` from utils                        |
+| Provider resolution | Isolated by default; `inherit` prop to use parent store from context                  |
+| Store instance      | `create()` method for imperative store creation                                       |
+| Package structure   | `store/react` and `store/lit` (no `store/dom`)                                        |
 
 ---
 
@@ -43,6 +48,96 @@ Implement React and DOM bindings for Video.js 10's store, enabling:
 - `uniqBy` - `packages/utils/src/array/uniq-by.ts`
 - `composeCallbacks` - `packages/utils/src/function/compose-callbacks.ts`
 - `extendConfig` - `packages/store/src/core/extend-config.ts`
+
+---
+
+## Phase 0.5: Queue Task Refactor
+
+Refactor Queue to use a unified `tasks` map with status discriminator. This enables `useMutation` and `useOptimistic` hooks to track request lifecycle.
+
+**File:** `packages/store/src/core/queue.ts`
+
+### Task Types (Discriminated Union)
+
+```typescript
+// Base fields shared by all task states
+interface TaskBase<Key, Input> {
+  id: symbol;
+  name: string;
+  key: Key;
+  input: Input;
+  startedAt: number;
+  meta: RequestMeta | null;
+}
+
+// Pending - request in flight
+interface PendingTask<Key, Input> extends TaskBase<Key, Input> {
+  status: 'pending';
+  abort: AbortController;
+}
+
+// Success - completed successfully
+interface SuccessTask<Key, Input, Output> extends TaskBase<Key, Input> {
+  status: 'success';
+  settledAt: number;
+  duration: number;
+  output: Output;
+}
+
+// Error - failed or cancelled
+interface ErrorTask<Key, Input> extends TaskBase<Key, Input> {
+  status: 'error';
+  settledAt: number;
+  duration: number;
+  error: unknown;
+  cancelled: boolean; // true if aborted, false if actual error
+}
+
+// Union types
+type Task<Key, Input, Output> = PendingTask<Key, Input> | SuccessTask<Key, Input, Output> | ErrorTask<Key, Input>;
+
+type SettledTask<Key, Input, Output> = SuccessTask<Key, Input, Output> | ErrorTask<Key, Input>;
+```
+
+### Queue API
+
+```typescript
+export class Queue<Tasks extends TaskRecord> {
+  // Single source of truth - one task per key (pending OR settled)
+  get tasks(): Readonly<TasksRecord<Tasks>>;
+
+  // Clear settled task for a key (no-op if pending)
+  reset(key: keyof Tasks): void;
+
+  // Subscribe to task changes
+  subscribe(listener: (tasks: TasksRecord<Tasks>) => void): () => void;
+}
+```
+
+### Lifecycle
+
+1. `enqueue()` → task added with `status: 'pending'`
+2. Task completes → same entry updated to `status: 'success'` or `status: 'error'`
+3. New request for same key → replaces previous (pending aborted, settled cleared)
+4. `reset(key)` → removes settled task
+
+### Usage
+
+```typescript
+const task = queue.tasks.changeVolume;
+
+// TypeScript narrows based on status
+if (task?.status === 'pending') {
+  task.abort; // available
+}
+if (task?.status === 'success') {
+  task.output; // available
+}
+if (task?.status === 'error') {
+  task.error; // available
+  task.cancelled; // true if aborted
+}
+```
 
 ---
 
@@ -122,9 +217,18 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
   Provider: FC<ProviderProps>;
   useStore: () => Store<InferSliceTarget<Slices[number]>, Slices>;
   useSelector: <T>(selector: (state: UnionSliceState<Slices>) => T) => T;
-  useRequest: () => UnionSliceRequests<Slices>;
+  useRequest: {
+    (): UnionSliceRequests<Slices>;
+    <T>(selector: (requests: UnionSliceRequests<Slices>) => T): T;
+  };
   usePending: () => PendingRecord<UnionSliceTasks<Slices>>;
-  useSlice: <S extends Slices[number]>(slice: S) => SliceResult<S>;
+  useMutation: <K extends keyof UnionSliceRequests<Slices>>(
+    selector: (requests: UnionSliceRequests<Slices>) => UnionSliceRequests<Slices>[K]
+  ) => MutationResult<UnionSliceRequests<Slices>[K]>;
+  useOptimistic: <K extends keyof UnionSliceRequests<Slices>, T>(
+    requestSelector: (requests: UnionSliceRequests<Slices>) => UnionSliceRequests<Slices>[K],
+    stateSelector: (state: UnionSliceState<Slices>) => T
+  ) => OptimisticResult<T, UnionSliceRequests<Slices>[K]>;
   /** Creates a store instance for imperative access (e.g., attach before render, testing). */
   create: () => Store<InferSliceTarget<Slices[number]>, Slices>;
 }
@@ -140,6 +244,32 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
 export type SliceResult<S extends AnySlice> =
   | { state: InferSliceState<S>; request: InferSliceRequests<S>; isAvailable: true }
   | { state: null; request: null; isAvailable: false };
+
+export interface MutationResult<Request extends (...args: any[]) => any> {
+  /** Trigger the request */
+  mutate: Request;
+  /** Request is currently in flight */
+  isPending: boolean;
+  /** Last request failed */
+  isError: boolean;
+  /** Last request succeeded */
+  isSuccess: boolean;
+  /** No request has been made yet */
+  isIdle: boolean;
+  /** Current status */
+  status: 'idle' | 'pending' | 'success' | 'error';
+  /** Error from last failed request */
+  error: unknown;
+  /** Clear settled state (error/success) */
+  reset: () => void;
+}
+
+export interface OptimisticResult<Value, Request extends (...args: any[]) => any> extends MutationResult<Request> {
+  /** Current value (optimistic if pending, otherwise confirmed) */
+  value: Value;
+  /** Trigger request with optimistic update */
+  setValue: (value: Value) => void;
+}
 ```
 
 ### 1.4 Base hooks
@@ -148,13 +278,25 @@ export type SliceResult<S extends AnySlice> =
 
 ```typescript
 // Base hooks - take store explicitly (for testing/advanced use)
+// All hooks take store as first argument for consistency
+
 export function useSelector<S extends AnyStore, T>(store: S, selector: (state: InferStoreState<S>) => T): T;
 
 export function useRequest<S extends AnyStore>(store: S): InferStoreRequests<S>;
+export function useRequest<S extends AnyStore, T>(store: S, selector: (requests: InferStoreRequests<S>) => T): T;
 
 export function usePending<S extends AnyStore>(store: S): PendingRecord<InferStoreTasks<S>>;
 
-export function useSlice<S extends AnyStore, Slice extends AnySlice>(store: S, slice: Slice): SliceResult<Slice>;
+export function useMutation<S extends AnyStore, R extends (...args: any[]) => any>(
+  store: S,
+  selector: (requests: InferStoreRequests<S>) => R
+): MutationResult<R>;
+
+export function useOptimistic<S extends AnyStore, R extends (...args: any[]) => any, T>(
+  store: S,
+  requestSelector: (requests: InferStoreRequests<S>) => R,
+  stateSelector: (state: InferStoreState<S>) => T
+): OptimisticResult<T, R>;
 ```
 
 ### 1.5 Implementation Details
@@ -199,12 +341,12 @@ export function useSlice<S extends AnyStore, Slice extends AnySlice>(store: S, s
 
 ```typescript
 export { createStore } from './create-store';
-// Base hooks for testing/advanced use
-export { usePending, useRequest, useSelector, useSlice } from './hooks';
+// Base hooks for testing/advanced use (all take store as first arg)
+export { useMutation, useOptimistic, usePending, useRequest, useSelector } from './hooks';
 // Internal hook for primitive UI components
 export { useStoreContext } from './context';
 
-export type { CreateStoreConfig, CreateStoreResult, SliceResult } from './types';
+export type { CreateStoreConfig, CreateStoreResult, MutationResult, OptimisticResult, SliceResult } from './types';
 ```
 
 ---
@@ -294,38 +436,61 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
 
 **File:** `packages/store/src/lit/controllers.ts`
 
+Controllers mirror React hooks for consistency. All take `(host, store, ...)` pattern.
+
 ```typescript
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 
-// Base controllers - take store explicitly (for testing/advanced use)
+// SelectorController - like useSelector(store, selector)
 export class SelectorController<S extends AnyStore, T> implements ReactiveController {
   constructor(host: ReactiveControllerHost, store: S, selector: (state: InferStoreState<S>) => T);
   get value(): T;
 }
 
+// RequestController - like useRequest(store) or useRequest(store, selector)
 export class RequestController<S extends AnyStore> implements ReactiveController {
   constructor(host: ReactiveControllerHost, store: S);
   get value(): InferStoreRequests<S>;
 }
 
+export class RequestController<S extends AnyStore, T> implements ReactiveController {
+  constructor(host: ReactiveControllerHost, store: S, selector: (requests: InferStoreRequests<S>) => T);
+  get value(): T;
+}
+
+// PendingController - like usePending(store)
 export class PendingController<S extends AnyStore> implements ReactiveController {
   constructor(host: ReactiveControllerHost, store: S);
   get value(): PendingRecord<InferStoreTasks<S>>;
 }
 
-export class SliceController<S extends AnyStore, Slice extends AnySlice> implements ReactiveController {
-  constructor(host: ReactiveControllerHost, store: S, slice: Slice);
-  get state(): InferSliceState<Slice> | null;
-  get request(): InferSliceRequests<Slice> | null;
-  get isAvailable(): this is this & { state: InferSliceState<Slice>; request: InferSliceRequests<Slice> };
+// MutationController - like useMutation(store, selector)
+export class MutationController<S extends AnyStore, R extends (...args: any[]) => any> implements ReactiveController {
+  constructor(host: ReactiveControllerHost, store: S, selector: (requests: InferStoreRequests<S>) => R);
+  get value(): MutationResult<R>;
+}
+
+// OptimisticController - like useOptimistic(store, requestSelector, stateSelector)
+export class OptimisticController<
+  S extends AnyStore,
+  R extends (...args: any[]) => any,
+  T,
+> implements ReactiveController {
+  constructor(
+    host: ReactiveControllerHost,
+    store: S,
+    requestSelector: (requests: InferStoreRequests<S>) => R,
+    stateSelector: (state: InferStoreState<S>) => T
+  );
+  get value(): OptimisticResult<T, R>;
 }
 ```
 
 **Implementation details:**
 
-- Controllers consume store via `ContextConsumer` with `subscribe: true`
-- Subscribe to store changes, call `host.requestUpdate()` on change
-- Cleanup on `hostDisconnected` (automatic via ContextConsumer)
+- Controllers take store explicitly (base pattern, like React base hooks)
+- Subscribe to store/queue changes, call `host.requestUpdate()` on change
+- Cleanup on `hostDisconnected`
 
 ### 2.3 Exports
 
@@ -333,9 +498,15 @@ export class SliceController<S extends AnyStore, Slice extends AnySlice> impleme
 
 ```typescript
 export { createStore } from './create-store';
-export { PendingController, RequestController, SelectorController, SliceController } from './controllers';
-// Re-export mixin types for consumers who need to reference them
-export type { CreateStoreConfig, CreateStoreResult } from './types';
+export {
+  MutationController,
+  OptimisticController,
+  PendingController,
+  RequestController,
+  SelectorController,
+} from './controllers';
+
+export type { CreateStoreConfig, CreateStoreResult, MutationResult, OptimisticResult } from './types';
 ```
 
 **Note:** Mixins (`StoreMixin`, `StoreProviderMixin`, `StoreAttachMixin`) are accessed via the `createStore()` return object, not exported directly. This ensures each store has its own typed mixins.
@@ -549,6 +720,7 @@ export function Video({ children, ref, ...props }: VideoProps): JSX.Element {
 export { Video } from './media/video';
 export type { VideoProps } from './media/video';
 
+// Re-export slices for convenience (users import from @videojs/react, not @videojs/core/dom)
 export { media } from '@videojs/core/dom';
 // Re-export for extension
 export { createStore } from '@videojs/store/react';
@@ -565,9 +737,10 @@ export { createStore } from '@videojs/store/react';
 ```typescript
 import type { AnySlice, StoreConfig } from '@videojs/store';
 
-import { media } from '@videojs/core/dom';
 import { extendConfig as extendBaseConfig } from '@videojs/store';
 import { createStore } from '@videojs/store/react';
+
+import { media } from './slices'; // internal - re-exported from @videojs/react
 
 /** Base config for frosted skin. */
 const baseConfig = {
@@ -636,9 +809,10 @@ export { extendConfig, Provider } from './store';
 ```typescript
 import type { AnySlice, StoreConfig } from '@videojs/store';
 
-import { media } from '@videojs/core/dom';
 import { extendConfig as extendBaseConfig } from '@videojs/store';
 import { createStore } from '@videojs/store/lit';
+
+import { media } from './slices'; // internal - re-exported from @videojs/html
 
 /** Base config for frosted skin. */
 const baseConfig = {
@@ -738,7 +912,9 @@ export { context, extendConfig, StoreAttachMixin, StoreMixin, StoreProviderMixin
 ```tsx
 import { createStore, media, Video } from '@videojs/react';
 
-const { Provider, useSelector, useRequest } = createStore({
+// Note: media is re-exported from @videojs/react (not @videojs/core/dom)
+
+const { Provider, useSelector, useRequest, useMutation, useOptimistic } = createStore({
   slices: [media.playback],
 });
 
@@ -753,8 +929,41 @@ function App() {
 
 function MyCustomControls() {
   const currentTime = useSelector((s) => s.currentTime);
-  const { seek } = useRequest();
+  const seek = useRequest((r) => r.seek);
   return <button onClick={() => seek(0)}>Restart ({currentTime}s)</button>;
+}
+
+// With mutation status tracking
+function PlayButton() {
+  const paused = useSelector((s) => s.paused);
+  const { mutate: play, isPending } = useMutation((r) => r.play);
+  const { mutate: pause } = useMutation((r) => r.pause);
+
+  return (
+    <button onClick={() => (paused ? play() : pause())} disabled={isPending}>
+      {paused ? 'Play' : 'Pause'}
+    </button>
+  );
+}
+
+// With optimistic updates
+function VolumeSlider() {
+  const { value, setValue, isPending, isError } = useOptimistic(
+    (r) => r.changeVolume,
+    (s) => s.volume
+  );
+
+  return (
+    <>
+      <input
+        type="range"
+        value={value}
+        onChange={(e) => setValue(Number(e.target.value))}
+        style={{ opacity: isPending ? 0.5 : 1 }}
+      />
+      {isError && <span>Failed to change volume</span>}
+    </>
+  );
 }
 ```
 
@@ -856,8 +1065,7 @@ function ChaptersPanel() {
 Where `my-player.js` contains:
 
 ```typescript
-import { media } from '@videojs/core/dom';
-import { createStore } from '@videojs/store/lit';
+import { createStore, media } from '@videojs/html';
 
 const { StoreMixin } = createStore({
   slices: [media.playback],
@@ -974,22 +1182,41 @@ packages/html/src/
 
 ## Implementation Order
 
-1. **Phase 0**: Core utilities (`@videojs/utils`, `@videojs/store`) **[DONE]**
+1. **Phase 0**: Core utilities **[DONE - PR #283]**
    - `uniqBy`, `composeCallbacks` utilities ✓
    - `extendConfig` ✓
-2. **Phase 1**: React bindings + React package (`@videojs/store/react`, `@videojs/react`)
-   - Shared context (`context.ts`, `useStoreContext`)
-   - `createStore()` with `inherit` prop, base hooks, types
+
+2. **Phase 0.5**: Queue Task Refactor
+   - Unified `tasks` map with status discriminator
+   - `PendingTask`, `SuccessTask`, `ErrorTask` types
+   - `reset(key)` method
+   - Update existing tests
+
+3. **Phase 1**: React Bindings (basic)
+   - Shared context, `useStoreContext`
+   - `createStore()` with `inherit` prop
+   - `useStore`, `useSelector`, `useRequest`, `usePending`
    - `Video` component, package exports
-3. **Phase 2**: Lit bindings (`@videojs/store/lit`)
-   - `createStore()` with `StoreMixin`, `StoreProviderMixin`, `StoreAttachMixin`
-   - Controllers (`SelectorController`, `RequestController`, etc.)
+
+4. **Phase 2**: Lit Bindings (basic)
+   - `createStore()` with mixins
+   - `SelectorController`, `RequestController`, `PendingController`
    - `@lit/context` integration
-4. **Phase 3**: Playback slice (`@videojs/core/dom`)
-   - `media.playback`, utils, guards
-5. **Phase 4-6**: Frosted skin (`@videojs/react/skins/frosted`, `@videojs/html/skins/frosted`)
-   - React skin (Provider, Skin, extendConfig, hooks)
-   - HTML skin (FrostedSkinElement.define(tagName, { mixins }), extendConfig, controllers)
+
+5. **Phase 3**: Mutation Hooks/Controllers
+   - React: `useMutation(store, selector)`
+   - Lit: `MutationController(host, store, selector)`
+
+6. **Phase 4**: Optimistic Hooks/Controllers
+   - React: `useOptimistic(store, reqSel, stateSel)`
+   - Lit: `OptimisticController(host, store, reqSel, stateSel)`
+
+7. **Phase 5**: Playback Slice
+   - `media.playback` slice in `@videojs/core/dom`
+
+8. **Phase 6**: Skins
+   - React skin (Provider, Skin, extendConfig)
+   - HTML skin (FrostedSkinElement, extendConfig)
 
 Each phase includes tests.
 
@@ -1118,13 +1345,15 @@ Use `types` + `default` format to match existing packages.
 
 ### Related Issues
 
-| Issue | Title                    | Description                   |
-| ----- | ------------------------ | ----------------------------- |
-| #218  | Store                    | Parent tracking issue         |
-| #229  | React Bindings           | `createStore`, hooks, context |
-| #230  | ReactiveElement Bindings | Controllers, context          |
-| #231  | Frosted Skin             | Frosted skin implementation   |
-| #239  | Playback Feature         | Consolidated playback slice   |
+| Issue | Title               | Description                             |
+| ----- | ------------------- | --------------------------------------- |
+| #218  | Store               | Parent tracking issue                   |
+| #285  | Queue Task Refactor | Unified tasks map, status discriminator |
+| #228  | Optimistic Updates  | useMutation, useOptimistic              |
+| #229  | React Bindings      | createStore, hooks, context             |
+| #230  | Lit Bindings        | Controllers, mixins, context            |
+| #239  | Playback Slice      | media.playback slice                    |
+| #231  | Skin Stores         | Skin store configuration                |
 
 ### Existing PR
 
@@ -1139,33 +1368,45 @@ PR #283: Core Utilities [DONE]
 ├── extendConfig (store/core) ✓
 └── Tests ✓
 
-PR 1: Store React Bindings + React Package
-├── Shared context, useStoreContext (store/react)
-├── createStore with inherit prop (store/react)
-├── Base hooks (store/react)
-├── Video component (react)
-├── Package exports (react)
+PR A: Queue Task Refactor
+├── Unified Task type with status discriminator
+├── PendingTask, SuccessTask, ErrorTask
+├── Single `tasks` map, `reset(key)` method
+├── Update tests
+└── Closes #285
+
+PR B: React Bindings (basic)
+├── createStore, Provider, useStore
+├── useSelector, useRequest, usePending
+├── Video component
 ├── References #218
 └── Closes #229
 
-PR 2: Store Lit Bindings (override PR #281)
-├── createStore (store/lit) - StoreMixin, StoreProviderMixin, StoreAttachMixin, context, create
-├── Lit controllers - SelectorController, RequestController, etc.
-├── @lit/context integration
+PR C: Lit Bindings (basic)
+├── createStore with mixins
+├── SelectorController, RequestController, PendingController
 ├── References #218
 └── Closes #230
 
-PR 3: Playback Slice
+PR D: Mutation Hooks/Controllers
+├── React: useMutation
+├── Lit: MutationController
+└── References #228
+
+PR E: Optimistic Hooks/Controllers
+├── React: useOptimistic
+├── Lit: OptimisticController
+└── Closes #228
+
+PR F: Playback Slice
 ├── media.playback (core/dom/slices)
-├── Utils (serializeTimeRanges)
-├── Type guards
+├── Utils, type guards
 ├── References #218
 └── Closes #239
 
-PR 4: Frosted Skin Store
+PR G: Skins
 ├── React skin (Provider, Skin, extendConfig)
-├── HTML skin (FrostedSkinElement.define(tagName, { mixins }), extendConfig)
-├── define/vjs-frosted-skin.ts
+├── HTML skin (FrostedSkinElement, extendConfig)
 ├── References #218
 └── Closes #231
 ```
@@ -1173,10 +1414,12 @@ PR 4: Frosted Skin Store
 ### Dependency Graph
 
 ```
-PR 1 ──┬──> PR 2 (can parallel after mergeStoreConfig from PR 1)
-       └──> PR 3 (can parallel)
-            └──> PR 4 (needs PR 1, PR 2, PR 3)
+PR #283 ───> PR A ───> PR B ───> PR D ───> PR E ───> PR G
+                  └──> PR C ──────────────────────────┘
+                  └──> PR F ──────────────────────────┘
 ```
+
+PRs are sequential. PR B, C, F can technically parallel after PR A, but we'll do them sequentially for easier review.
 
 ---
 
