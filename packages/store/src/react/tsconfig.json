@@ -2,9 +2,10 @@
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
+    "jsx": "react-jsx",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "declarationDir": "../../types/react"
   },
   "references": [{ "path": "../.." }],
-  "include": ["./**/*.ts"]
+  "include": ["./**/*.ts", "./**/*.tsx"]
 }

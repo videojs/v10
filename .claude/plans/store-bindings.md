@@ -21,11 +21,7 @@ Implement React and DOM bindings for Video.js 10's store, enabling:
 | Selector hook       | `useSelector(selector)` - requires selector (Redux-style)                           |
 | Store hook          | `useStore()` - returns store instance                                               |
 | Request hook        | `useRequest()` or `useRequest(r => r.foo)` - full map or single request             |
-<<<<<<< Updated upstream
-| Tasks hook          | `useTasks()` - returns `store.queue.tasks` (reactive)                               |
-=======
 | Tasks hook          | `useTasks()` - returns `store.queue.tasks` (reactive, full lifecycle)               |
->>>>>>> Stashed changes
 | Mutation hook       | `useMutation(r => r.foo)` - status tracking (isPending, isError, error)             |
 | Optimistic hook     | `useOptimistic(r => r.foo, s => s.bar)` - optimistic value + status                 |
 | Settled state       | Core Queue tracks last result/error per key, cleared on next request                |
@@ -63,213 +59,19 @@ Refactored Queue to use unified `tasks` map with status discriminator (`PendingT
 
 ---
 
-## Phase 1: React Bindings (`@videojs/store/react`)
+## Phase 1: React Bindings (`@videojs/store/react`) [DONE]
 
-### 1.1 Shared Context (Internal)
+> Refer to [PR #288](https://github.com/videojs/v10/pull/288) for implementation details.
 
-**File:** `packages/store/src/react/context.ts`
+Basic React bindings for the store:
 
-Internal shared context used by all Providers. Not exported publicly.
+- Shared context (`useStoreContext`, `useParentStore`, `StoreContextProvider`)
+- `createStore()` factory returning Provider + typed hooks
+- Base hooks: `useSelector`, `useRequest`, `useTasks`
+- Provider with `store` prop (pre-created) and `inherit` prop (parent context)
+- `create()` method for imperative store creation
 
-```typescript
-import type { ReactNode } from 'react';
-import type { AnyStore } from '../core';
-
-import { createContext, useContext } from 'react';
-
-// Internal shared context - all Providers write to this
-const StoreContext = createContext<AnyStore | null>(null);
-
-/**
- * Internal hook for primitive UI components.
- * Accesses the nearest store from context without type information.
- */
-export function useStoreContext(): AnyStore {
-  const store = useContext(StoreContext);
-  if (!store) {
-    throw new Error('useStoreContext must be used within a Provider');
-  }
-  return store;
-}
-
-/**
- * Internal hook to get parent store (may be null).
- * Used by Provider to check for existing store in tree.
- */
-export function useParentStore(): AnyStore | null {
-  return useContext(StoreContext);
-}
-
-/**
- * Internal provider component.
- */
-export function StoreContextProvider({ store, children }: { store: AnyStore; children: ReactNode }) {
-  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
-}
-```
-
-### 1.2 `createStore`
-
-**File:** `packages/store/src/react/create-store.ts`
-
-```typescript
-import type { AnySlice, InferSliceTarget, StoreConfig } from '../core';
-import type { ReactNode } from 'react';
-
-import { useEffect, useState } from 'react';
-
-import { StoreContextProvider, useParentStore, useStoreContext } from './context';
-
-export interface CreateStoreConfig<Slices extends AnySlice[]> extends StoreConfig<
-  InferSliceTarget<Slices[number]>,
-  Slices
-> {
-  displayName?: string;
-}
-
-export interface ProviderProps {
-  children: ReactNode;
-  /** Optional pre-created store. If provided, uses this store. */
-  store?: Store<InferSliceTarget<Slices[number]>, Slices>;
-  /** If true, inherits store from parent context instead of creating new. Defaults to false (isolated). */
-  inherit?: boolean;
-}
-
-export interface CreateStoreResult<Slices extends AnySlice[]> {
-  Provider: FC<ProviderProps>;
-  useStore: () => Store<InferSliceTarget<Slices[number]>, Slices>;
-  useSelector: <T>(selector: (state: UnionSliceState<Slices>) => T) => T;
-  useRequest: {
-    (): UnionSliceRequests<Slices>;
-    <T>(selector: (requests: UnionSliceRequests<Slices>) => T): T;
-  };
-  useTasks: () => TasksRecord<UnionSliceTasks<Slices>>;
-  useMutation: <K extends keyof UnionSliceRequests<Slices>>(
-    selector: (requests: UnionSliceRequests<Slices>) => UnionSliceRequests<Slices>[K]
-  ) => MutationResult<UnionSliceRequests<Slices>[K]>;
-  useOptimistic: <K extends keyof UnionSliceRequests<Slices>, T>(
-    requestSelector: (requests: UnionSliceRequests<Slices>) => UnionSliceRequests<Slices>[K],
-    stateSelector: (state: UnionSliceState<Slices>) => T
-  ) => OptimisticResult<T, UnionSliceRequests<Slices>[K]>;
-  /** Creates a store instance for imperative access (e.g., attach before render, testing). */
-  create: () => Store<InferSliceTarget<Slices[number]>, Slices>;
-}
-
-export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig<Slices>): CreateStoreResult<Slices>;
-```
-
-### 1.3 Types
-
-**File:** `packages/store/src/react/types.ts`
-
-```typescript
-export type SliceResult<S extends AnySlice> =
-  | { state: InferSliceState<S>; request: InferSliceRequests<S>; isAvailable: true }
-  | { state: null; request: null; isAvailable: false };
-
-export interface MutationResult<Request extends (...args: any[]) => any> {
-  /** Trigger the request */
-  mutate: Request;
-  /** Request is currently in flight */
-  isPending: boolean;
-  /** Last request failed */
-  isError: boolean;
-  /** Last request succeeded */
-  isSuccess: boolean;
-  /** No request has been made yet */
-  isIdle: boolean;
-  /** Current status */
-  status: 'idle' | 'pending' | 'success' | 'error';
-  /** Error from last failed request */
-  error: unknown;
-  /** Clear settled state (error/success) */
-  reset: () => void;
-}
-
-export interface OptimisticResult<Value, Request extends (...args: any[]) => any> extends MutationResult<Request> {
-  /** Current value (optimistic if pending, otherwise confirmed) */
-  value: Value;
-  /** Trigger request with optimistic update */
-  setValue: (value: Value) => void;
-}
-```
-
-### 1.4 Base hooks
-
-**File:** `packages/store/src/react/hooks.ts`
-
-```typescript
-// Base hooks - take store explicitly (for testing/advanced use)
-// All hooks take store as first argument for consistency
-
-export function useSelector<S extends AnyStore, T>(store: S, selector: (state: InferStoreState<S>) => T): T;
-
-export function useRequest<S extends AnyStore>(store: S): InferStoreRequests<S>;
-export function useRequest<S extends AnyStore, T>(store: S, selector: (requests: InferStoreRequests<S>) => T): T;
-
-export function useTasks<S extends AnyStore>(store: S): TasksRecord<InferStoreTasks<S>>;
-
-export function useMutation<S extends AnyStore, R extends (...args: any[]) => any>(
-  store: S,
-  selector: (requests: InferStoreRequests<S>) => R
-): MutationResult<R>;
-
-export function useOptimistic<S extends AnyStore, R extends (...args: any[]) => any, T>(
-  store: S,
-  requestSelector: (requests: InferStoreRequests<S>) => R,
-  stateSelector: (state: InferStoreState<S>) => T
-): OptimisticResult<T, R>;
-```
-
-### 1.5 Implementation Details
-
-- `create()`: Returns `new Store(config)` - for creating store in `useState` or imperative use
-- `Provider`: Resolution order:
-  1. If `store` prop provided, uses that
-  2. Else if `inherit={true}` and parent store exists in context, uses that
-  3. Else, creates new store via `useState(() => new Store(config))`
-
-  **Note:** `inherit` defaults to `false` (isolated). This ensures most players are standalone by default.
-  Use `inherit` when intentionally sharing state (e.g., thumbnail preview inside main player).
-
-  Uses `StoreContextProvider` internally. Cleanup: `useEffect` calls `store.destroy()` on unmount (only if Provider created the store).
-
-  ```typescript
-  function Provider({ children, store: providedStore, inherit = false }: ProviderProps) {
-    const parentStore = useParentStore();
-    const shouldInherit = inherit && parentStore != null;
-    const [store] = useState(() => providedStore ?? (shouldInherit ? parentStore : new Store(config)));
-    const isOwner = !providedStore && !shouldInherit; // Only destroy if we created it
-
-    useEffect(() => {
-      return () => {
-        if (isOwner) store.destroy();
-      };
-    }, [store, isOwner]);
-
-    return <StoreContextProvider store={store}>{children}</StoreContextProvider>;
-  }
-  ```
-
-- `useStore()`: Returns typed store from `useStoreContext()`
-- `useSelector(selector)`: Uses `useSyncExternalStore` with selector
-- `useRequest()`: Returns stable `store.request` from context
-- `useTasks()`: Subscribes to `store.queue`, returns `queue.tasks`
-- `useSlice(slice)`: Returns `{ state, request, isAvailable }` with null narrowing
-
-### 1.6 Exports
-
-**File:** `packages/store/src/react/index.ts`
-
-```typescript
-// Internal hook for primitive UI components
-export { useStoreContext } from './context';
-export { createStore } from './create-store';
-// Base hooks for testing/advanced use (all take store as first arg)
-export { useMutation, useOptimistic, useTasks, useRequest, useSelector } from './hooks';
-
-export type { CreateStoreConfig, CreateStoreResult, MutationResult, OptimisticResult, SliceResult } from './types';
-```
+Types live next to implementations (no separate `types.ts`).
 
 ---
 
@@ -1115,11 +917,11 @@ packages/html/src/
    - Update existing tests ✓
    - Added `tryCatch` utility to `@videojs/utils/function` ✓
 
-3. **Phase 1**: React Bindings (basic)
-   - Shared context, `useStoreContext`
-   - `createStore()` with `inherit` prop
-   - `useStore`, `useSelector`, `useRequest`, `useTasks`
-   - `Video` component, package exports
+3. **Phase 1**: React Bindings (basic) **[DONE - PR #288]**
+   - Shared context, `useStoreContext` ✓
+   - `createStore()` with `inherit` prop ✓
+   - `useStore`, `useSelector`, `useRequest`, `useTasks` ✓
+   - Base hooks for testing/advanced use ✓
 
 4. **Phase 2**: Lit Bindings (basic)
    - `createStore()` with mixins
@@ -1294,10 +1096,10 @@ PR #287: Queue Task Refactor [DONE]
 ├── Added tryCatch utility ✓
 └── Closes #285
 
-PR B: React Bindings (basic)
-├── createStore, Provider, useStore
-├── useSelector, useRequest, useTasks
-├── Video component
+PR #288: React Bindings (basic) [DONE]
+├── createStore, Provider, useStore ✓
+├── useSelector, useRequest, useTasks ✓
+├── Base hooks for testing ✓
 ├── References #218
 └── Closes #229
 
@@ -1333,12 +1135,12 @@ PR G: Skins
 ### Dependency Graph
 
 ```
-PR #283 ───> PR #287 ───> PR B ───> PR D ───> PR E ───> PR G
-                     └──> PR C ──────────────────────────┘
-                     └──> PR F ──────────────────────────┘
+PR #283 ───> PR #287 ───> PR #288 ───> PR D ───> PR E ───> PR G
+                     └──> PR C ───────────────────────────┘
+                     └──> PR F ───────────────────────────┘
 ```
 
-PRs are sequential. PR B, C, F can technically parallel after PR A, but we'll do them sequentially for easier review.
+PRs are sequential. PR #288, C, F can technically parallel after PR #287, but we'll do them sequentially for easier review.
 
 ---
 

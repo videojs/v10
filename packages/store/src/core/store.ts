@@ -1,6 +1,6 @@
 import type { PendingTask, Task, TaskContext } from './queue';
 import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
-import type { AnySlice, InferSliceTarget, Slice, UnionSliceRequests, UnionSliceState, UnionSliceTasks } from './slice';
+import type { AnySlice, Slice, UnionSliceRequests, UnionSliceState, UnionSliceTarget, UnionSliceTasks } from './slice';
 import type { StateFactory } from './state';
 
 import { getSelectorKeys } from '@videojs/utils/object';
@@ -347,9 +347,9 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
 // Factory
 // ----------------------------------------
 
-export function createStore<Slices extends Slice<any, any, any>[]>(
-  config: StoreConfig<InferSliceTarget<Slices[number]>, Slices>,
-): Store<InferSliceTarget<Slices[number]>, Slices> {
+export function createStore<Slices extends AnySlice[]>(
+  config: StoreConfig<UnionSliceTarget<Slices>, Slices>,
+): Store<UnionSliceTarget<Slices>, Slices> {
   return new Store(config);
 }
 
@@ -357,7 +357,7 @@ export function createStore<Slices extends Slice<any, any, any>[]>(
 // Types
 // ----------------------------------------
 
-export type AnyStore<Target = any> = Store<Target, any>;
+export type AnyStore<Target = any> = Store<Target, AnySlice<Target>[]>;
 
 /**
  * A selector function that extracts a subset of state.
