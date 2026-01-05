@@ -1,5 +1,12 @@
 // Controllers
-export { RequestController, SelectorController, TasksController } from './controllers';
+export {
+  MutationController,
+  OptimisticController,
+  RequestController,
+  SelectorController,
+  TasksController,
+} from './controllers';
+export type { MutationResult, MutationStatus, OptimisticResult } from './controllers';
 
 // createStore factory
 export { createStore } from './create-store';
