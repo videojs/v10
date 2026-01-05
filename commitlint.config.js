@@ -12,6 +12,7 @@ export default {
     'scope-enum': [2, 'always', [
       'cd',
       'ci',
+      'claude',
       'core',
       'docs',
       'demo',
