@@ -94,11 +94,14 @@ pnpm clean
 ## Dev Workflow
 
 1. Make changes.
-2. Typecheck, fix all issues.
-3. Run test/s, fix all issues. If there are no tests add them.
-4. Lint file/s, fix all issues.
-5. Run build/s, fix all errors.
-6. Before creating a PR `pnpm test`.
+2. If you added/changed **exported types** in a package, run `pnpm -F <pkg> build` first.
+   - `pnpm typecheck` uses TypeScript project references against **built** `.d.ts` files.
+   - New/changed types won't be visible until `tsdown` builds them.
+3. Typecheck, fix all issues.
+4. Run test/s, fix all issues. If there are no tests add them.
+5. Lint file/s, fix all issues.
+6. Run build/s, fix all errors.
+7. Before creating a PR `pnpm test`.
 
 Be efficient when running operations, see "Common Root Commands".
 
@@ -158,3 +161,78 @@ When generating or editing code in this repository, follow these rules to ensure
    - Use semantic commit messages (enforced by `commitlint`).
    - One focused change per commit—no mixed updates.
    - Breaking changes use `!`.
+
+## Code Rules
+
+Prefer existing utilities over inline implementations:
+
+| Instead of                | Use                                                    |
+| ------------------------- | ------------------------------------------------------ |
+| `x === undefined`         | `isUndefined(x)` from `@videojs/utils/predicate`       |
+| `x === null`              | `isNull(x)` from `@videojs/utils/predicate`            |
+| `typeof x === 'function'` | `isFunction(x)` from `@videojs/utils/predicate`        |
+| `typeof x === 'string'`   | `isString(x)` from `@videojs/utils/predicate`          |
+
+Before writing new helpers, check `@videojs/utils` for existing utilities.
+
+### Naming Conventions
+
+| Pattern             | Prefix     | Example                          |
+| ------------------- | ---------- | -------------------------------- |
+| Type inference      | `Infer*`   | `InferSliceState<S>`             |
+| Type resolution     | `Resolve*` | `ResolveRequestHandler<R>`       |
+| Type constraint     | `Ensure*`  | `EnsureTaskRecord<T>`            |
+| Union type helpers  | `Union*`   | `UnionSliceState<Slices>`        |
+| Default loose types | `Default*` | `DefaultTaskRecord`              |
+| Type guards         | `is*`      | `isStoreError(error)`            |
+| Factory functions   | `create*`  | `createQueue()`, `createSlice()` |
+
+### Type Guards
+
+Always return `value is Type` for proper type narrowing:
+
+```ts
+function isStoreError(error: unknown): error is StoreError {
+  return error instanceof StoreError;
+}
+```
+
+### Subscribe Pattern
+
+Subscriptions return an unsubscribe function:
+
+```ts
+subscribe(listener: Listener): () => void {
+  this.#subscribers.add(listener);
+  return () => this.#subscribers.delete(listener);
+}
+```
+
+### Optional Key Parameter
+
+Methods that operate on one or all items use optional key:
+
+```ts
+// If key provided: operate on that item
+// If no key: operate on all items
+reset(key?: keyof Tasks): void {
+  if (!isUndefined(key)) {
+    // Single item
+    return;
+  }
+  // All items
+}
+```
+
+### Destroy Pattern
+
+Guard re-entry, set flag first, cleanup in order:
+
+```ts
+destroy(): void {
+  if (this.#destroyed) return;
+  this.#destroyed = true;
+  this.abort();
+  this.#subscribers.clear();
+}
+```

@@ -138,7 +138,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     this.#attachAbort?.abort();
     this.#attachAbort = null;
     this.#target = null;
-    this.#queue.abortAll();
+    this.#queue.abort();
     this.#resetState();
   }
 
