@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { isHTMLAudio, isHTMLMedia, isHTMLVideo } from '../guards';
+import { isHTMLAudio, isHTMLMedia, isHTMLVideo } from '../predicate';
 
-describe('guards', () => {
+describe('predicate', () => {
   describe('isHTMLVideo', () => {
     it('returns true for video elements', () => {
       const video = document.createElement('video');

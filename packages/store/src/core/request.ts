@@ -84,7 +84,7 @@ export type RequestHandlerRecord = {
 /**
  * Map of request names to handlers or configs. This is the config passed to `createSlice`.
  */
-export type RequestConfigMap<Target, Requests extends RequestRecord> = {
+export type RequestConfigMap<Target, Requests extends { [K in keyof Requests]: Request<any, any> }> = {
   [K in keyof Requests]: Requests[K] extends Request<infer I, infer O>
     ? RequestHandler<Target, I, O> | RequestConfig<Target, I, O>
     : never;
@@ -94,7 +94,7 @@ export type RequestConfigMap<Target, Requests extends RequestRecord> = {
  * Map of request config objects to resolved configs. This is the config stored internally in
  * the store.
  */
-export type ResolvedRequestConfigMap<Target, Requests extends RequestRecord> = {
+export type ResolvedRequestConfigMap<Target, Requests extends { [K in keyof Requests]: Request<any, any> }> = {
   [K in keyof Requests]: Requests[K] extends Request<infer I, infer O> ? ResolvedRequestConfig<Target, I, O> : never;
 };
 
@@ -145,12 +145,12 @@ export type ResolveRequestHandler<R>
 // Utilities
 // ----------------------------------------
 
-export function resolveRequests<Target, Requests extends RequestRecord>(
+export function resolveRequests<Target, Requests extends { [K in keyof Requests]: Request<any, any> }>(
   requests: RequestConfigMap<Target, Requests>,
 ): ResolvedRequestConfigMap<Target, Requests> {
   const resolved: Record<string, ResolvedRequestConfig<Target>> = {};
 
-  for (const [name, config] of Object.entries(requests)) {
+  for (const [name, config] of Object.entries(requests) as [string, RequestHandler<Target> | RequestConfig<Target>][]) {
     if (isFunction(config)) {
       resolved[name] = {
         key: name,
@@ -159,7 +159,10 @@ export function resolveRequests<Target, Requests extends RequestRecord>(
       };
     } else {
       resolved[name] = {
-        ...config,
+        key: config.key ?? name,
+        schedule: config.schedule,
+        cancel: config.cancel,
+        handler: config.handler,
         guard: config.guard ? (Array.isArray(config.guard) ? config.guard : [config.guard]) : [],
       };
     }

@@ -1,2 +1,2 @@
-export * from './guards';
-export * from './slices';
+export * from './predicate';
+export * from './store/slices';
