@@ -1,4 +1,5 @@
 export * from './errors';
+export * from './extend-config';
 export * from './guard';
 export * from './queue';
 export * from './request';
