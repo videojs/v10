@@ -5,7 +5,6 @@ import type {
   RequestConfig,
   RequestConfigMap,
   RequestHandler,
-  RequestRecord,
   ResolvedRequestConfigMap,
   ResolveRequestHandler,
   ResolveRequestMap,
@@ -19,7 +18,7 @@ import { resolveRequests } from './request';
 
 export type AnySlice<Target = any> = Slice<Target, any, any>;
 
-export interface Slice<Target, State extends object, Requests extends RequestRecord> {
+export interface Slice<Target, State extends object, Requests extends { [K in keyof Requests]: Request<any, any> }> {
   readonly id: symbol;
   readonly initialState: State;
   readonly getSnapshot: SliceGetSnapshot<Target, State>;
@@ -47,7 +46,11 @@ export interface SliceUpdate<State extends object> {
   (state: Partial<State>): void;
 }
 
-export interface SliceConfig<Target, State extends object, Requests extends RequestRecord> {
+export interface SliceConfig<
+  Target,
+  State extends object,
+  Requests extends { [K in keyof Requests]: Request<any, any> },
+> {
   initialState: State;
   getSnapshot: SliceGetSnapshot<Target, State>;
   subscribe: SliceSubscribe<Target, State>;
@@ -154,7 +157,7 @@ export function createSlice<
   return _createSlice(config!);
 }
 
-function _createSlice<Target, State extends object, Requests extends RequestRecord>(
+function _createSlice<Target, State extends object, Requests extends { [K in keyof Requests]: Request<any, any> }>(
   config: SliceConfig<Target, State, Requests>,
 ): Slice<Target, State, Requests> {
   return {

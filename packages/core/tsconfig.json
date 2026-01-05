@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
-    "declarationDir": "types"
+    "declarationDir": "types",
+    "isolatedDeclarations": false
   },
   "references": [{ "path": "../utils" }, { "path": "../store" }],
   "include": ["src/core/**/*.ts"]

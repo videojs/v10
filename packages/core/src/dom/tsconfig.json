@@ -3,7 +3,8 @@
   "compilerOptions": {
     "composite": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "declarationDir": "../../types/dom"
+    "declarationDir": "../../types/dom",
+    "isolatedDeclarations": false
   },
   "references": [{ "path": "../.." }],
   "include": ["./**/*.ts"]
