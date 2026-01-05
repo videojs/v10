@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { StoreError } from '../errors';
 import { createQueue, delay } from '../queue';
 
 describe('queue', () => {
@@ -89,7 +88,7 @@ describe('queue', () => {
         const promise1 = queue.enqueue({ name: 'a', key: 'same', handler: first });
         const promise2 = queue.enqueue({ name: 'b', key: 'same', handler: second });
 
-        await expect(promise1).rejects.toThrow(StoreError);
+        await expect(promise1).rejects.toMatchObject({ code: 'SUPERSEDED' });
         await expect(promise2).resolves.toBe('second');
         expect(first).not.toHaveBeenCalled();
         expect(second).toHaveBeenCalledOnce();
@@ -177,7 +176,7 @@ describe('queue', () => {
         expect(queue.dequeue('k')).toBe(false);
 
         vi.advanceTimersByTime(100);
-        await expect(promise).rejects.toThrow(StoreError);
+        await expect(promise).rejects.toMatchObject({ code: 'REMOVED' });
         expect(handler).not.toHaveBeenCalled();
       });
     });
@@ -192,8 +191,8 @@ describe('queue', () => {
         queue.clear();
         vi.advanceTimersByTime(100);
 
-        await expect(p1).rejects.toThrow(StoreError);
-        await expect(p2).rejects.toThrow(StoreError);
+        await expect(p1).rejects.toMatchObject({ code: 'REMOVED' });
+        await expect(p2).rejects.toMatchObject({ code: 'REMOVED' });
         expect(Reflect.ownKeys(queue.queued).length).toBe(0);
       });
     });
@@ -243,7 +242,7 @@ describe('queue', () => {
             await new Promise((_, reject) => {
               signal.addEventListener('abort', () => {
                 aborted = true;
-                reject(new Error('aborted'));
+                reject(signal.reason);
               });
               setTimeout(() => {}, 1000);
             });
@@ -251,9 +250,9 @@ describe('queue', () => {
         });
 
         await new Promise(r => setTimeout(r, 10));
-        queue.abort('k', 'test abort');
+        queue.abort('k');
 
-        await expect(promise).rejects.toThrow();
+        await expect(promise).rejects.toMatchObject({ code: 'ABORTED' });
         expect(aborted).toBe(true);
       });
     });
@@ -351,7 +350,9 @@ describe('queue', () => {
         const queue = createQueue();
         queue.destroy();
 
-        await expect(queue.enqueue({ name: 't', key: 'k', handler: vi.fn() })).rejects.toThrow('Queue destroyed');
+        await expect(queue.enqueue({ name: 't', key: 'k', handler: vi.fn() })).rejects.toMatchObject({
+          code: 'DESTROYED',
+        });
       });
 
       it('aborts all pending on destroy', async () => {
@@ -372,7 +373,7 @@ describe('queue', () => {
         await new Promise(r => setTimeout(r, 10));
         queue.destroy();
 
-        await expect(promise).rejects.toThrow();
+        await expect(promise).rejects.toMatchObject({ code: 'ABORTED' });
         expect(aborted).toHaveBeenCalled();
         expect(queue.destroyed).toBe(true);
       });
@@ -401,7 +402,7 @@ describe('queue', () => {
         });
 
         // First should be superseded
-        await expect(promise1).rejects.toMatchObject({ message: 'Superseded' });
+        await expect(promise1).rejects.toMatchObject({ code: 'SUPERSEDED' });
 
         // Queue should only have the second task (first was explicitly deleted)
         expect(Reflect.ownKeys(queue.queued).length).toBe(1);

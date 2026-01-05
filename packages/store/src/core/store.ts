@@ -81,7 +81,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
 
   attach(newTarget: Target): () => void {
     if (this.#destroyed) {
-      throw new StoreError('Store destroyed');
+      throw new StoreError('DESTROYED');
     }
 
     this.#attachAbort?.abort();
@@ -138,7 +138,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     this.#attachAbort?.abort();
     this.#attachAbort = null;
     this.#target = null;
-    this.#queue.abortAll('Target detached');
+    this.#queue.abortAll();
     this.#resetState();
   }
 
@@ -264,7 +264,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     for (const [name, config] of this.#requestConfigs) {
       proxy[name] = (input?: unknown, meta?: RequestMetaInit) => {
         if (this.#destroyed) {
-          return Promise.reject(new StoreError('Store destroyed'));
+          return Promise.reject(new StoreError('DESTROYED'));
         }
 
         return this.#execute(name, config, input, meta ? createRequestMeta(meta) : null);
@@ -283,25 +283,25 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     const key = resolveRequestKey(config.key, input);
 
     for (const cancelKey of resolveRequestCancelKeys(config.cancel, input)) {
-      this.#queue.abort(cancelKey, `Cancelled by ${name}`);
+      this.#queue.abort(cancelKey);
     }
 
     const handler = async ({ input, signal }: TaskContext) => {
       const target = this.#target;
 
       if (!target) {
-        throw new StoreError('No target attached');
+        throw new StoreError('NO_TARGET');
       }
 
       for (const guard of config.guard) {
         if (signal.aborted) {
-          throw new StoreError('Aborted');
+          throw new StoreError('ABORTED');
         }
 
         const result = await guard({ target, signal });
 
         if (!result) {
-          throw new StoreError('Rejected');
+          throw new StoreError('REJECTED');
         }
       }
 

@@ -3,7 +3,7 @@ import { isBoolean } from '@videojs/utils/predicate';
 import { StoreError } from './errors';
 
 /**
- * A guard gates request execution.
+ * Result of a guard check.
  *
  * - Truthy → proceed
  * - Falsy → cancel
@@ -11,7 +11,20 @@ import { StoreError } from './errors';
  * - Promise resolves falsy → cancel
  * - Promise rejects → cancel
  */
-export type Guard<Target> = (ctx: { target: Target; signal: AbortSignal }) => boolean | Promise<unknown>;
+export type GuardResult = boolean | Promise<unknown>;
+
+/**
+ * Context passed to guard functions.
+ */
+export interface GuardContext<Target> {
+  target: Target;
+  signal: AbortSignal;
+}
+
+/**
+ * A guard gates request execution.
+ */
+export type Guard<Target> = (ctx: GuardContext<Target>) => GuardResult;
 
 /**
  * Combine guards: All must pass (truthy).
@@ -69,7 +82,7 @@ export function timeout<Target>(guard: Guard<Target>, ms: number, name = 'guard'
     return Promise.race([
       result,
       new Promise<never>((_, reject) => {
-        const timer = setTimeout(() => reject(new StoreError(`Timeout: ${name}`)), ms);
+        const timer = setTimeout(() => reject(new StoreError('TIMEOUT', { message: `Timeout: ${name}` })), ms);
         ctx.signal.addEventListener('abort', () => clearTimeout(timer));
       }),
     ]);

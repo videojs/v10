@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { StoreError } from '../errors';
 import { createQueue } from '../queue';
 import { createSlice } from '../slice';
 import { createStore } from '../store';
@@ -210,7 +209,7 @@ describe('store', () => {
         onError: () => {}, // silence errors
       });
 
-      await expect(store.request.setVolume(0.5)).rejects.toThrow(StoreError);
+      await expect(store.request.setVolume(0.5)).rejects.toMatchObject({ code: 'NO_TARGET' });
     });
 
     it('coordinates requests with same key', async () => {
@@ -225,7 +224,7 @@ describe('store', () => {
       const playPromise = store.request.play();
       const pausePromise = store.request.pause();
 
-      await expect(playPromise).rejects.toThrow(StoreError);
+      await expect(playPromise).rejects.toMatchObject({ code: 'SUPERSEDED' });
       await pausePromise;
 
       expect(media.paused).toBe(true);

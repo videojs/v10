@@ -111,7 +111,7 @@ describe('guard', () => {
       expect(await guard(createContext())).toBe(true);
     });
 
-    it('throws StoreError on timeout', async () => {
+    it('throws StoreError with TIMEOUT code', async () => {
       vi.useFakeTimers();
 
       const guard = timeout(
@@ -125,6 +125,7 @@ describe('guard', () => {
 
       await expect(promise).rejects.toThrow(StoreError);
       await expect(promise).rejects.toMatchObject({
+        code: 'TIMEOUT',
         message: 'Timeout: waitForReady',
       });
 
