@@ -113,9 +113,9 @@ class MySkin extends HTMLElement {
 **File:** `packages/store/src/lit/create-store.ts`
 
 ```typescript
-import type { AnySlice, InferSliceTarget, StoreConfig } from '../core';
 import type { Context } from '@lit/context';
 import type { ReactiveControllerHost } from '@lit/reactive-element';
+import type { AnySlice, InferSliceTarget, StoreConfig } from '../core';
 
 import { createContext } from '@lit/context';
 
@@ -224,9 +224,9 @@ export class OptimisticController<
 export {
   MutationController,
   OptimisticController,
-  TasksController,
   RequestController,
   SelectorController,
+  TasksController,
 } from './controllers';
 export { createStore } from './create-store';
 
@@ -237,160 +237,11 @@ export type { CreateStoreConfig, CreateStoreResult, MutationResult, OptimisticRe
 
 ---
 
-## Phase 3: Playback Slice (`@videojs/core/dom`)
+## Phase 3: DOM Media Slices (`@videojs/core/dom`) [DONE]
 
-Based on [Issue #239](https://github.com/videojs/v10/issues/239).
+> Refer to [PR #292](https://github.com/videojs/v10/pull/292) for implementation details.
 
-### 3.1 Playback slice
-
-**File:** `packages/core/src/dom/slices/playback.ts`
-
-State and requests are inferred from slice definition using `InferSliceState` and `InferSliceRequests`.
-
-For reference, the expected shape:
-
-**PlaybackState (inferred via `InferSliceState<typeof playback>`):**
-
-- `paused: boolean`
-- `ended: boolean`
-- `started: boolean`
-- `waiting: boolean`
-- `currentTime: number`
-- `duration: number`
-- `buffered: Array<[number, number]>`
-- `seekable: Array<[number, number]>`
-- `volume: number`
-- `muted: boolean`
-- `canPlay: boolean`
-- `source: unknown`
-- `streamType: 'on-demand' | 'live' | 'live-dvr' | 'unknown'`
-
-**PlaybackRequests (inferred via `InferSliceRequests<typeof playback>`):**
-
-- `play: () => Promise<void>`
-- `pause: () => Promise<void>`
-- `seek: (time: number) => Promise<void>`
-- `changeVolume: (volume: number) => Promise<void>`
-- `toggleMute: () => Promise<void>`
-- `changeSource: (src: string) => Promise<string>` (returns new src)
-
-```typescript
-import type { InferSliceRequests, InferSliceState } from '@videojs/store';
-
-import { createSlice } from '@videojs/store';
-
-export const playback = createSlice<HTMLMediaElement>()({
-  initialState: {
-    paused: true,
-    ended: false,
-    started: false,
-    waiting: false,
-    currentTime: 0,
-    duration: 0,
-    buffered: [] as Array<[number, number]>,
-    seekable: [] as Array<[number, number]>,
-    volume: 1,
-    muted: false,
-    canPlay: false,
-    source: null as unknown,
-    streamType: 'unknown' as 'on-demand' | 'live' | 'live-dvr' | 'unknown',
-  },
-  getSnapshot: ({ target }) => ({
-    paused: target.paused,
-    ended: target.ended,
-    // ... etc
-  }),
-  subscribe: ({ target, update, signal }) => {
-    // Listen to media events and call update()
-  },
-  request: {
-    play: {
-      handler: async (_input: void, { target }) => {
-        await target.play();
-      },
-    },
-    pause: {
-      handler: (_input: void, { target }) => {
-        target.pause();
-      },
-    },
-    seek: {
-      handler: (time: number, { target }) => {
-        target.currentTime = time;
-        return time;
-      },
-    },
-    changeVolume: {
-      handler: (volume: number, { target }) => {
-        target.volume = volume;
-        return volume;
-      },
-    },
-    toggleMute: {
-      handler: (_input: void, { target }) => {
-        target.muted = !target.muted;
-        return target.muted;
-      },
-    },
-    changeSource: {
-      handler: (src: string, { target }) => {
-        target.src = src;
-        return src;
-      },
-    },
-  },
-});
-
-// Types are inferred from slice - use these utilities
-export type PlaybackState = InferSliceState<typeof playback>;
-export type PlaybackRequests = InferSliceRequests<typeof playback>;
-```
-
-### 3.2 Namespace export
-
-**File:** `packages/core/src/dom/slices/index.parts.ts`
-
-```typescript
-// Parts file for namespace re-export
-export { playback } from './playback';
-```
-
-**File:** `packages/core/src/dom/slices/index.ts`
-
-```typescript
-// Namespace export (from parts to avoid circular reference)
-export * as media from './index.parts';
-
-// Standalone exports
-export { playback } from './playback';
-```
-
-Usage:
-
-```typescript
-import { media, playback } from '@videojs/core/dom';
-
-media.playback; // via namespace
-playback; // standalone export
-```
-
-### 3.3 Utilities
-
-**File:** `packages/core/src/dom/slices/utils.ts`
-
-```typescript
-export function serializeTimeRanges(ranges: TimeRanges): Array<[number, number]>;
-```
-
-### 3.4 Type guards
-
-**File:** `packages/core/src/dom/guards.ts`
-
-```typescript
-export function isHTMLVideo(target: unknown): target is HTMLVideoElement;
-export function isHTMLAudio(target: unknown): target is HTMLAudioElement;
-export function isHTMLMedia(target: unknown): target is HTMLMediaElement;
-```
+Modular media slices for `HTMLMediaElement`: `playbackSlice`, `timeSlice`, `bufferSlice`, `volumeSlice`, `sourceSlice`. Includes `media` namespace export, type guards, and `serializeTimeRanges` utility.
 
 ---
 
@@ -652,16 +503,16 @@ function App() {
 }
 
 function MyCustomControls() {
-  const currentTime = useSelector((s) => s.currentTime);
-  const seek = useRequest((r) => r.seek);
+  const currentTime = useSelector(s => s.currentTime);
+  const seek = useRequest(r => r.seek);
   return <button onClick={() => seek(0)}>Restart ({currentTime}s)</button>;
 }
 
 // With mutation status tracking
 function PlayButton() {
-  const paused = useSelector((s) => s.paused);
-  const { mutate: play, isPending } = useMutation((r) => r.play);
-  const { mutate: pause } = useMutation((r) => r.pause);
+  const paused = useSelector(s => s.paused);
+  const { mutate: play, isPending } = useMutation(r => r.play);
+  const { mutate: pause } = useMutation(r => r.pause);
 
   return (
     <button onClick={() => (paused ? play() : pause())} disabled={isPending}>
@@ -673,8 +524,8 @@ function PlayButton() {
 // With optimistic updates
 function VolumeSlider() {
   const { value, setValue, isPending, isError } = useOptimistic(
-    (r) => r.changeVolume,
-    (s) => s.volume
+    r => r.changeVolume,
+    s => s.volume
   );
 
   return (
@@ -682,7 +533,7 @@ function VolumeSlider() {
       <input
         type="range"
         value={value}
-        onChange={(e) => setValue(Number(e.target.value))}
+        onChange={e => setValue(Number(e.target.value))}
         style={{ opacity: isPending ? 0.5 : 1 }}
       />
       {isError && <span>Failed to change volume</span>}
@@ -694,9 +545,9 @@ function VolumeSlider() {
 ### React: Pre-created store instance (imperative access)
 
 ```tsx
-import { useState } from 'react';
-
 import { createStore, media, Video } from '@videojs/react';
+
+import { useState } from 'react';
 
 const { Provider, create, useSelector } = createStore({
   slices: [media.playback],
@@ -869,12 +720,18 @@ packages/store/src/
     └── index.ts
 
 packages/core/src/dom/
-├── slices/
-│   ├── playback.ts             # NEW
-│   ├── utils.ts                # NEW
-│   └── index.ts                # NEW (+ media namespace)
-├── guards.ts                   # NEW
-└── index.ts
+├── store/
+│   └── slices/
+│       ├── playback.ts         # DONE
+│       ├── time.ts             # DONE
+│       ├── buffer.ts           # DONE
+│       ├── volume.ts           # DONE
+│       ├── source.ts           # DONE
+│       ├── index.parts.ts      # DONE (media namespace parts)
+│       ├── index.ts            # DONE (media namespace + exports)
+│       └── tests/              # DONE
+├── predicate.ts                # DONE (type guards)
+└── index.ts                    # DONE
 
 packages/react/src/
 ├── media/
@@ -928,16 +785,18 @@ packages/html/src/
    - `SelectorController`, `RequestController`, `TasksController`
    - `@lit/context` integration
 
-5. **Phase 3**: Mutation Hooks/Controllers
+5. **Phase 3**: DOM Media Slices **[DONE - PR #292]**
+   - Modular slices: `playbackSlice`, `timeSlice`, `bufferSlice`, `volumeSlice`, `sourceSlice` ✓
+   - `media` namespace export ✓
+   - Type guards and utilities ✓
+
+6. **Phase 4**: Mutation Hooks/Controllers
    - React: `useMutation(store, selector)`
    - Lit: `MutationController(host, store, selector)`
 
-6. **Phase 4**: Optimistic Hooks/Controllers
+7. **Phase 5**: Optimistic Hooks/Controllers
    - React: `useOptimistic(store, reqSel, stateSel)`
    - Lit: `OptimisticController(host, store, reqSel, stateSel)`
-
-7. **Phase 5**: Playback Slice
-   - `media.playback` slice in `@videojs/core/dom`
 
 8. **Phase 6**: Skins
    - React skin (Provider, Skin, extendConfig)
@@ -960,7 +819,7 @@ import { readdirSync } from 'node:fs';
 
 // Dynamically gather define/ entries
 const defineEntries = readdirSync('src/define')
-  .filter((f) => f.endsWith('.ts'))
+  .filter(f => f.endsWith('.ts'))
   .reduce(
     (acc, f) => {
       const name = f.replace('.ts', '');
@@ -1070,15 +929,15 @@ Use `types` + `default` format to match existing packages.
 
 ### Related Issues
 
-| Issue | Title               | Description                             |
-| ----- | ------------------- | --------------------------------------- |
-| #218  | Store               | Parent tracking issue                   |
-| #285  | Queue Task Refactor | Unified tasks map, status discriminator |
-| #228  | Optimistic Updates  | useMutation, useOptimistic              |
-| #229  | React Bindings      | createStore, hooks, context             |
-| #230  | Lit Bindings        | Controllers, mixins, context            |
-| #239  | Playback Slice      | media.playback slice                    |
-| #231  | Skin Stores         | Skin store configuration                |
+| Issue | Title               | Description                             | Status |
+| ----- | ------------------- | --------------------------------------- | ------ |
+| #218  | Store               | Parent tracking issue                   | Open   |
+| #285  | Queue Task Refactor | Unified tasks map, status discriminator | Closed |
+| #228  | Optimistic Updates  | useMutation, useOptimistic              | Open   |
+| #229  | React Bindings      | createStore, hooks, context             | Closed |
+| #230  | Lit Bindings        | Controllers, mixins, context            | Open   |
+| #239  | DOM Media Slices    | media slices                            | Closed |
+| #231  | Skin Stores         | Skin store configuration                | Open   |
 
 ### PR Strategy
 
@@ -1103,6 +962,13 @@ PR #288: React Bindings (basic) [DONE]
 ├── References #218
 └── Closes #229
 
+PR #292: DOM Media Slices [DONE]
+├── Modular slices: playback, time, buffer, volume, source ✓
+├── media namespace export ✓
+├── Type guards and utilities ✓
+├── References #218
+└── Closes #239
+
 PR C: Lit Bindings (basic)
 ├── createStore with mixins
 ├── SelectorController, RequestController, TasksController
@@ -1119,13 +985,7 @@ PR E: Optimistic Hooks/Controllers
 ├── Lit: OptimisticController
 └── Closes #228
 
-PR F: Playback Slice
-├── media.playback (core/dom/slices)
-├── Utils, type guards
-├── References #218
-└── Closes #239
-
-PR G: Skins
+PR F: Skins
 ├── React skin (Provider, Skin, extendConfig)
 ├── HTML skin (FrostedSkinElement, extendConfig)
 ├── References #218
@@ -1135,12 +995,12 @@ PR G: Skins
 ### Dependency Graph
 
 ```
-PR #283 ───> PR #287 ───> PR #288 ───> PR D ───> PR E ───> PR G
-                     └──> PR C ───────────────────────────┘
-                     └──> PR F ───────────────────────────┘
+PR #283 ───> PR #287 ───> PR #288 ───> PR D ───> PR E ───> PR F
+                     └──> PR #292 (done)                   │
+                     └──> PR C ────────────────────────────┘
 ```
 
-PRs are sequential. PR #288, C, F can technically parallel after PR #287, but we'll do them sequentially for easier review.
+PRs are sequential. PR #288, C, #292 can technically parallel after PR #287, but we'll do them sequentially for easier review.
 
 ---
 
