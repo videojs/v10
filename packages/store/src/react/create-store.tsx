@@ -212,7 +212,7 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
    */
   function useTasks(): TasksRecord<Tasks> {
     const store = useStore();
-    return useTasksBase(store) as TasksRecord<Tasks>;
+    return useTasksBase(store);
   }
 
   return {
