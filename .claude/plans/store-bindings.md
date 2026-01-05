@@ -11,33 +11,33 @@ Implement React and DOM bindings for Video.js 10's store, enabling:
 
 ## Key Decisions
 
-| Decision            | Resolution                                                                            |
-| ------------------- | ------------------------------------------------------------------------------------- |
-| Store creation      | `createStore({ slices, displayName? })` - types inferred from slices                  |
-| Hook naming         | `useStore`, `useSelector`, `useRequest`, `usePending`, `useMutation`, `useOptimistic` |
-| Controller naming   | `SelectorController`, `RequestController`, `PendingController`, etc                   |
-| Selector hook       | `useSelector(selector)` - requires selector (Redux-style)                             |
-| Store hook          | `useStore()` - returns store instance                                                 |
-| Request hook        | `useRequest()` or `useRequest(r => r.foo)` - full map or single request               |
-| Pending hook        | `usePending()` - returns `store.queue.pending` (reactive)                             |
-| Mutation hook       | `useMutation(r => r.foo)` - status tracking (isPending, isError, error)               |
-| Optimistic hook     | `useOptimistic(r => r.foo, s => s.bar)` - optimistic value + status                   |
-| Settled state       | Core Queue tracks last result/error per key, cleared on next request                  |
-| Base hooks          | All take store as first arg: `useSelector(store, sel)`, etc                           |
-| createStore hooks   | Returns all hooks including `useMutation` and `useOptimistic`                         |
-| Slice hook return   | `{ state, request, isAvailable }` - state/request null when unavailable               |
-| Skin exports        | `Provider`, `Skin`, `extendConfig`                                                    |
-| Slice namespace     | `export * as media` → `media.playback`                                                |
-| Video component     | Generic, exported from `@videojs/react` (not from skins)                              |
-| Lit mixins          | `StoreMixin` (combined), `StoreProviderMixin`, `StoreAttachMixin`                     |
-| Primitives context  | `useStoreContext()` internal hook for primitive UI components                         |
-| displayName         | For React DevTools component naming                                                   |
-| Component types     | Namespace pattern: `Skin.Props` via `namespace Skin { export type Props }`            |
-| Element define      | `FrostedSkinElement.define(tagName, { mixins })` for declarative setup                |
-| Config extension    | `extendConfig()` uses `uniqBy` + `composeCallbacks` from utils                        |
-| Provider resolution | Isolated by default; `inherit` prop to use parent store from context                  |
-| Store instance      | `create()` method for imperative store creation                                       |
-| Package structure   | `store/react` and `store/lit` (no `store/dom`)                                        |
+| Decision            | Resolution                                                                          |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| Store creation      | `createStore({ slices, displayName? })` - types inferred from slices                |
+| Hook naming         | `useStore`, `useSelector`, `useRequest`, `useTasks`, `useMutation`, `useOptimistic` |
+| Controller naming   | `SelectorController`, `RequestController`, `TasksController`, etc                   |
+| Selector hook       | `useSelector(selector)` - requires selector (Redux-style)                           |
+| Store hook          | `useStore()` - returns store instance                                               |
+| Request hook        | `useRequest()` or `useRequest(r => r.foo)` - full map or single request             |
+| Tasks hook          | `useTasks()` - returns `store.queue.tasks` (reactive)                               |
+| Mutation hook       | `useMutation(r => r.foo)` - status tracking (isPending, isError, error)             |
+| Optimistic hook     | `useOptimistic(r => r.foo, s => s.bar)` - optimistic value + status                 |
+| Settled state       | Core Queue tracks last result/error per key, cleared on next request                |
+| Base hooks          | All take store as first arg: `useSelector(store, sel)`, etc                         |
+| createStore hooks   | Returns all hooks including `useMutation` and `useOptimistic`                       |
+| Slice hook return   | `{ state, request, isAvailable }` - state/request null when unavailable             |
+| Skin exports        | `Provider`, `Skin`, `extendConfig`                                                  |
+| Slice namespace     | `export * as media` → `media.playback`                                              |
+| Video component     | Generic, exported from `@videojs/react` (not from skins)                            |
+| Lit mixins          | `StoreMixin` (combined), `StoreProviderMixin`, `StoreAttachMixin`                   |
+| Primitives context  | `useStoreContext()` internal hook for primitive UI components                       |
+| displayName         | For React DevTools component naming                                                 |
+| Component types     | Namespace pattern: `Skin.Props` via `namespace Skin { export type Props }`          |
+| Element define      | `FrostedSkinElement.define(tagName, { mixins })` for declarative setup              |
+| Config extension    | `extendConfig()` uses `uniqBy` + `composeCallbacks` from utils                      |
+| Provider resolution | Isolated by default; `inherit` prop to use parent store from context                |
+| Store instance      | `create()` method for imperative store creation                                     |
+| Package structure   | `store/react` and `store/lit` (no `store/dom`)                                      |
 
 ---
 
@@ -191,8 +191,8 @@ export function StoreContextProvider({ store, children }: { store: AnyStore; chi
 **File:** `packages/store/src/react/create-store.ts`
 
 ```typescript
-import type { ReactNode } from 'react';
 import type { AnySlice, InferSliceTarget, StoreConfig } from '../core';
+import type { ReactNode } from 'react';
 
 import { useEffect, useState } from 'react';
 
@@ -221,7 +221,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
     (): UnionSliceRequests<Slices>;
     <T>(selector: (requests: UnionSliceRequests<Slices>) => T): T;
   };
-  usePending: () => PendingRecord<UnionSliceTasks<Slices>>;
+  useTasks: () => TasksRecord<UnionSliceTasks<Slices>>;
   useMutation: <K extends keyof UnionSliceRequests<Slices>>(
     selector: (requests: UnionSliceRequests<Slices>) => UnionSliceRequests<Slices>[K]
   ) => MutationResult<UnionSliceRequests<Slices>[K]>;
@@ -241,9 +241,9 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
 **File:** `packages/store/src/react/types.ts`
 
 ```typescript
-export type SliceResult<S extends AnySlice>
-  = | { state: InferSliceState<S>; request: InferSliceRequests<S>; isAvailable: true }
-    | { state: null; request: null; isAvailable: false };
+export type SliceResult<S extends AnySlice> =
+  | { state: InferSliceState<S>; request: InferSliceRequests<S>; isAvailable: true }
+  | { state: null; request: null; isAvailable: false };
 
 export interface MutationResult<Request extends (...args: any[]) => any> {
   /** Trigger the request */
@@ -285,7 +285,7 @@ export function useSelector<S extends AnyStore, T>(store: S, selector: (state: I
 export function useRequest<S extends AnyStore>(store: S): InferStoreRequests<S>;
 export function useRequest<S extends AnyStore, T>(store: S, selector: (requests: InferStoreRequests<S>) => T): T;
 
-export function usePending<S extends AnyStore>(store: S): PendingRecord<InferStoreTasks<S>>;
+export function useTasks<S extends AnyStore>(store: S): TasksRecord<InferStoreTasks<S>>;
 
 export function useMutation<S extends AnyStore, R extends (...args: any[]) => any>(
   store: S,
@@ -332,7 +332,7 @@ export function useOptimistic<S extends AnyStore, R extends (...args: any[]) => 
 - `useStore()`: Returns typed store from `useStoreContext()`
 - `useSelector(selector)`: Uses `useSyncExternalStore` with selector
 - `useRequest()`: Returns stable `store.request` from context
-- `usePending()`: Subscribes to `store.queue`, returns `queue.pending`
+- `useTasks()`: Subscribes to `store.queue`, returns `queue.tasks`
 - `useSlice(slice)`: Returns `{ state, request, isAvailable }` with null narrowing
 
 ### 1.6 Exports
@@ -344,7 +344,7 @@ export function useOptimistic<S extends AnyStore, R extends (...args: any[]) => 
 export { useStoreContext } from './context';
 export { createStore } from './create-store';
 // Base hooks for testing/advanced use (all take store as first arg)
-export { useMutation, useOptimistic, usePending, useRequest, useSelector } from './hooks';
+export { useMutation, useOptimistic, useTasks, useRequest, useSelector } from './hooks';
 
 export type { CreateStoreConfig, CreateStoreResult, MutationResult, OptimisticResult, SliceResult } from './types';
 ```
@@ -389,9 +389,9 @@ class MySkin extends HTMLElement {
 **File:** `packages/store/src/lit/create-store.ts`
 
 ```typescript
+import type { AnySlice, InferSliceTarget, StoreConfig } from '../core';
 import type { Context } from '@lit/context';
 import type { ReactiveControllerHost } from '@lit/reactive-element';
-import type { AnySlice, InferSliceTarget, StoreConfig } from '../core';
 
 import { createContext } from '@lit/context';
 
@@ -458,10 +458,10 @@ export class RequestController<S extends AnyStore, T> implements ReactiveControl
   get value(): T;
 }
 
-// PendingController - like usePending(store)
-export class PendingController<S extends AnyStore> implements ReactiveController {
+// TasksController - like useTasks(store)
+export class TasksController<S extends AnyStore> implements ReactiveController {
   constructor(host: ReactiveControllerHost, store: S);
-  get value(): PendingRecord<InferStoreTasks<S>>;
+  get value(): TasksRecord<InferStoreTasks<S>>;
 }
 
 // MutationController - like useMutation(store, selector)
@@ -500,7 +500,7 @@ export class OptimisticController<
 export {
   MutationController,
   OptimisticController,
-  PendingController,
+  TasksController,
   RequestController,
   SelectorController,
 } from './controllers';
@@ -928,16 +928,16 @@ function App() {
 }
 
 function MyCustomControls() {
-  const currentTime = useSelector(s => s.currentTime);
-  const seek = useRequest(r => r.seek);
+  const currentTime = useSelector((s) => s.currentTime);
+  const seek = useRequest((r) => r.seek);
   return <button onClick={() => seek(0)}>Restart ({currentTime}s)</button>;
 }
 
 // With mutation status tracking
 function PlayButton() {
-  const paused = useSelector(s => s.paused);
-  const { mutate: play, isPending } = useMutation(r => r.play);
-  const { mutate: pause } = useMutation(r => r.pause);
+  const paused = useSelector((s) => s.paused);
+  const { mutate: play, isPending } = useMutation((r) => r.play);
+  const { mutate: pause } = useMutation((r) => r.pause);
 
   return (
     <button onClick={() => (paused ? play() : pause())} disabled={isPending}>
@@ -949,8 +949,8 @@ function PlayButton() {
 // With optimistic updates
 function VolumeSlider() {
   const { value, setValue, isPending, isError } = useOptimistic(
-    r => r.changeVolume,
-    s => s.volume
+    (r) => r.changeVolume,
+    (s) => s.volume
   );
 
   return (
@@ -958,7 +958,7 @@ function VolumeSlider() {
       <input
         type="range"
         value={value}
-        onChange={e => setValue(Number(e.target.value))}
+        onChange={(e) => setValue(Number(e.target.value))}
         style={{ opacity: isPending ? 0.5 : 1 }}
       />
       {isError && <span>Failed to change volume</span>}
@@ -970,9 +970,9 @@ function VolumeSlider() {
 ### React: Pre-created store instance (imperative access)
 
 ```tsx
-import { createStore, media, Video } from '@videojs/react';
-
 import { useState } from 'react';
+
+import { createStore, media, Video } from '@videojs/react';
 
 const { Provider, create, useSelector } = createStore({
   slices: [media.playback],
@@ -1195,12 +1195,12 @@ packages/html/src/
 3. **Phase 1**: React Bindings (basic)
    - Shared context, `useStoreContext`
    - `createStore()` with `inherit` prop
-   - `useStore`, `useSelector`, `useRequest`, `usePending`
+   - `useStore`, `useSelector`, `useRequest`, `useTasks`
    - `Video` component, package exports
 
 4. **Phase 2**: Lit Bindings (basic)
    - `createStore()` with mixins
-   - `SelectorController`, `RequestController`, `PendingController`
+   - `SelectorController`, `RequestController`, `TasksController`
    - `@lit/context` integration
 
 5. **Phase 3**: Mutation Hooks/Controllers
@@ -1235,7 +1235,7 @@ import { readdirSync } from 'node:fs';
 
 // Dynamically gather define/ entries
 const defineEntries = readdirSync('src/define')
-  .filter(f => f.endsWith('.ts'))
+  .filter((f) => f.endsWith('.ts'))
   .reduce(
     (acc, f) => {
       const name = f.replace('.ts', '');
@@ -1372,14 +1372,14 @@ PR A: Queue Task Refactor
 
 PR B: React Bindings (basic)
 ├── createStore, Provider, useStore
-├── useSelector, useRequest, usePending
+├── useSelector, useRequest, useTasks
 ├── Video component
 ├── References #218
 └── Closes #229
 
 PR C: Lit Bindings (basic)
 ├── createStore with mixins
-├── SelectorController, RequestController, PendingController
+├── SelectorController, RequestController, TasksController
 ├── References #218
 └── Closes #230
 
