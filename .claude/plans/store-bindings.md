@@ -20,117 +20,29 @@ Implement React and DOM bindings for Video.js 10's store, enabling:
 | Store hook             | `useStore()` - returns store instance                                      |
 | Pending hook           | `usePending()` - returns `store.queue.pending` (reactive)                  |
 | Slice hook return      | `{ state, request, isAvailable }` - state/request null when unavailable    |
-| Skin exports           | `Provider`, `Skin`, `defineStoreConfig`                                    |
+| Skin exports           | `Provider`, `Skin`, `extendConfig`                                         |
 | Slice namespace        | `export * as media` → `media.playback`                                     |
 | Video component        | Generic, exported from `@videojs/react` (not from skins)                   |
-| DOM mixins             | `withStore` (combined), `withStoreProvider`, `withStoreAttach`             |
+| Lit mixins             | `StoreMixin` (combined), `StoreProviderMixin`, `StoreAttachMixin`          |
 | Base hooks/controllers | Take store explicitly, for testing/advanced use                            |
 | Primitives context     | `useStoreContext()` internal hook for primitive UI components              |
 | displayName            | For React DevTools component naming                                        |
 | Component types        | Namespace pattern: `Skin.Props` via `namespace Skin { export type Props }` |
-| Element tagName        | Static `tagName` property, used by `define()` method                       |
-| Config merging         | `mergeStoreConfig()` uses `uniqBy` + `composeCallbacks` from utils         |
-| Provider resolution    | `providedStore ?? parentStore ?? new Store(config)`                        |
+| Element define         | `FrostedSkinElement.define(tagName, { mixins })` for declarative setup     |
+| Config extension       | `extendConfig()` uses `uniqBy` + `composeCallbacks` from utils             |
+| Provider resolution    | Isolated by default; `inherit` prop to use parent store from context       |
 | Store instance         | `create()` method for imperative store creation                            |
 | Package structure      | `store/react` and `store/lit` (no `store/dom`)                             |
 
 ---
 
-## Phase 0: Core Utilities
+## Phase 0: Core Utilities [DONE]
 
-### 0.1 Utility Functions (`@videojs/utils`)
+> Implemented in PR #283.
 
-**File:** `packages/utils/src/array/uniq-by.ts`
-
-```typescript
-/**
- * Returns array with duplicates removed, keeping the LAST occurrence.
- * Useful for slice merging where extensions should override base slices.
- */
-export function uniqBy<T, K>(arr: T[], mapper: (item: T) => K): T[] {
-  const seen = new Map<K, number>();
-  arr.forEach((item, i) => seen.set(mapper(item), i));
-  return arr.filter((_, i) => [...seen.values()].includes(i));
-}
-```
-
-**File:** `packages/utils/src/array/index.ts`
-
-```typescript
-export { uniqBy } from './uniq-by';
-```
-
-**File:** `packages/utils/src/function/compose-callbacks.ts`
-
-```typescript
-/**
- * Composes multiple callbacks into one. All callbacks receive same args, no return value.
- * Returns undefined if no callbacks provided.
- */
-export function composeCallbacks<T extends (...args: any[]) => void>(...fns: (T | undefined | null)[]): T | undefined {
-  const defined = fns.filter((fn): fn is T => fn != null);
-  if (defined.length === 0) return undefined;
-  if (defined.length === 1) return defined[0];
-  return ((...args: Parameters<T>) => {
-    defined.forEach((fn) => fn(...args));
-  }) as T;
-}
-```
-
-**File:** `packages/utils/src/function/index.ts`
-
-```typescript
-export { composeCallbacks } from './compose-callbacks';
-```
-
-### 0.2 `mergeStoreConfig` (`@videojs/store`)
-
-**File:** `packages/store/src/core/merge-config.ts`
-
-Utility to merge store configs, properly composing lifecycle hooks.
-
-```typescript
-import type { AnySlice, StoreConfig } from './store';
-
-import { uniqBy } from '@videojs/utils/array';
-import { composeCallbacks } from '@videojs/utils/function';
-
-/**
- * Merges two store configs, composing lifecycle hooks.
- * - slices: deduplicated by id (extension wins), preserves order
- * - onSetup/onAttach/onError: both called (base first, then extension)
- * - queue/state: extension overrides base if provided
- */
-export function mergeStoreConfig<BaseSlices extends AnySlice[], ExtSlices extends AnySlice[]>(
-  base: StoreConfig<any, BaseSlices>,
-  extension?: Partial<StoreConfig<any, ExtSlices>>
-): StoreConfig<any, [...BaseSlices, ...ExtSlices]> {
-  if (!extension) return base as any;
-
-  return {
-    // Dedupe slices by id, keeping last occurrence (extension wins)
-    slices: uniqBy([...base.slices, ...(extension.slices ?? [])], (s) => s.id) as [...BaseSlices, ...ExtSlices],
-
-    // Extension overrides if provided
-    queue: extension.queue ?? base.queue,
-    state: extension.state ?? base.state,
-
-    // Compose lifecycle hooks (both called, base first)
-    onSetup: composeCallbacks(base.onSetup, extension.onSetup),
-    onAttach: composeCallbacks(base.onAttach, extension.onAttach),
-    onError: composeCallbacks(base.onError, extension.onError),
-  };
-}
-```
-
-### 0.3 Core Exports
-
-**File:** `packages/store/src/core/index.ts`
-
-```typescript
-// ... existing exports
-export { mergeStoreConfig } from './merge-config';
-```
+- `uniqBy` - `packages/utils/src/array/uniq-by.ts`
+- `composeCallbacks` - `packages/utils/src/function/compose-callbacks.ts`
+- `extendConfig` - `packages/store/src/core/extend-config.ts`
 
 ---
 
@@ -200,8 +112,10 @@ export interface CreateStoreConfig<Slices extends AnySlice[]> extends StoreConfi
 
 export interface ProviderProps {
   children: ReactNode;
-  /** Optional pre-created store. If not provided, Provider uses parent or creates new. */
+  /** Optional pre-created store. If provided, uses this store. */
   store?: Store<InferSliceTarget<Slices[number]>, Slices>;
+  /** If true, inherits store from parent context instead of creating new. Defaults to false (isolated). */
+  inherit?: boolean;
 }
 
 export interface CreateStoreResult<Slices extends AnySlice[]> {
@@ -248,16 +162,20 @@ export function useSlice<S extends AnyStore, Slice extends AnySlice>(store: S, s
 - `create()`: Returns `new Store(config)` - for creating store in `useState` or imperative use
 - `Provider`: Resolution order:
   1. If `store` prop provided, uses that
-  2. Else if parent store exists in context, uses that
+  2. Else if `inherit={true}` and parent store exists in context, uses that
   3. Else, creates new store via `useState(() => new Store(config))`
+
+  **Note:** `inherit` defaults to `false` (isolated). This ensures most players are standalone by default.
+  Use `inherit` when intentionally sharing state (e.g., thumbnail preview inside main player).
 
   Uses `StoreContextProvider` internally. Cleanup: `useEffect` calls `store.destroy()` on unmount (only if Provider created the store).
 
   ```typescript
-  function Provider({ children, store: providedStore }: ProviderProps) {
+  function Provider({ children, store: providedStore, inherit = false }: ProviderProps) {
     const parentStore = useParentStore();
-    const [store, setStore] = useState(() => providedStore ?? parentStore ?? new Store(config));
-    const isOwner = !providedStore && !parentStore; // Only destroy if we created it
+    const shouldInherit = inherit && parentStore != null;
+    const [store] = useState(() => providedStore ?? (shouldInherit ? parentStore : new Store(config)));
+    const isOwner = !providedStore && !shouldInherit; // Only destroy if we created it
 
     useEffect(() => {
       return () => {
@@ -342,11 +260,11 @@ export interface CreateStoreConfig<Slices extends AnySlice[]> extends StoreConfi
 
 export interface CreateStoreResult<Slices extends AnySlice[]> {
   /** Combined mixin: provides store via context AND auto-attaches slotted media */
-  withStore: <T extends Constructor<HTMLElement>>(Base: T) => T;
+  StoreMixin: <T extends Constructor<HTMLElement>>(Base: T) => T;
   /** Mixin that provides store via context (no auto-attach) */
-  withStoreProvider: <T extends Constructor<HTMLElement>>(Base: T) => T;
+  StoreProviderMixin: <T extends Constructor<HTMLElement>>(Base: T) => T;
   /** Mixin that auto-attaches slotted media elements (requires store from context) */
-  withStoreAttach: <T extends Constructor<HTMLElement>>(Base: T) => T;
+  StoreAttachMixin: <T extends Constructor<HTMLElement>>(Base: T) => T;
   /** Context for consuming store in controllers */
   context: Context<Store<InferSliceTarget<Slices[number]>, Slices>>;
   /** Creates a store instance for imperative access */
@@ -360,12 +278,12 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
 
 - Uses `@lit/context` for W3C Context Protocol
 - Context key auto-generated per `createStore()` call (unique Symbol)
-- `withStore`: Combined mixin, equivalent to `withStoreAttach(withStoreProvider(Base))`
-- `withStoreProvider`: Mixin that:
+- `StoreMixin`: Combined mixin, equivalent to `StoreAttachMixin(StoreProviderMixin(Base))`
+- `StoreProviderMixin`: Mixin that:
   - Creates store instance
   - Uses `ContextProvider` internally
   - Exposes `store` setter that calls `provider.setValue(newStore)`
-- `withStoreAttach`: Mixin that:
+- `StoreAttachMixin`: Mixin that:
   - Consumes store from context
   - Observes slotted elements for `<video>` or `<audio>`
   - Calls `store.attach(mediaElement)` when found
@@ -416,9 +334,11 @@ export class SliceController<S extends AnyStore, Slice extends AnySlice> impleme
 ```typescript
 export { createStore } from './create-store';
 export { PendingController, RequestController, SelectorController, SliceController } from './controllers';
-
+// Re-export mixin types for consumers who need to reference them
 export type { CreateStoreConfig, CreateStoreResult } from './types';
 ```
+
+**Note:** Mixins (`StoreMixin`, `StoreProviderMixin`, `StoreAttachMixin`) are accessed via the `createStore()` return object, not exported directly. This ensures each store has its own typed mixins.
 
 ---
 
@@ -646,7 +566,7 @@ export { createStore } from '@videojs/store/react';
 import type { AnySlice, StoreConfig } from '@videojs/store';
 
 import { media } from '@videojs/core/dom';
-import { mergeStoreConfig } from '@videojs/store';
+import { extendConfig as extendBaseConfig } from '@videojs/store';
 import { createStore } from '@videojs/store/react';
 
 /** Base config for frosted skin. */
@@ -656,16 +576,14 @@ const baseConfig = {
 };
 
 /**
- * Defines store config for frosted skin.
- * Merges base config with extension, properly composing lifecycle hooks.
+ * Extends frosted skin config with additional slices/hooks.
+ * Composes lifecycle hooks (both called, base first).
  */
-export function defineStoreConfig<S extends readonly AnySlice[] = readonly []>(
-  extension?: Partial<StoreConfig<any, S>>
-) {
-  return mergeStoreConfig(baseConfig, extension);
+export function extendConfig<S extends readonly AnySlice[] = readonly []>(extension?: Partial<StoreConfig<any, S>>) {
+  return extendBaseConfig(baseConfig, extension);
 }
 
-export const { Provider, create } = createStore(defineStoreConfig());
+export const { Provider, create } = createStore(extendConfig());
 ```
 
 ### 5.2 Skin component
@@ -704,7 +622,7 @@ export namespace Skin {
 ```typescript
 export { Skin } from './skin';
 export type { SkinProps } from './skin';
-export { defineStoreConfig, Provider } from './store';
+export { extendConfig, Provider } from './store';
 ```
 
 ---
@@ -719,7 +637,7 @@ export { defineStoreConfig, Provider } from './store';
 import type { AnySlice, StoreConfig } from '@videojs/store';
 
 import { media } from '@videojs/core/dom';
-import { mergeStoreConfig } from '@videojs/store';
+import { extendConfig as extendBaseConfig } from '@videojs/store';
 import { createStore } from '@videojs/store/lit';
 
 /** Base config for frosted skin. */
@@ -728,16 +646,14 @@ const baseConfig = {
 };
 
 /**
- * Defines store config for frosted skin.
- * Merges base config with extension, properly composing lifecycle hooks.
+ * Extends frosted skin config with additional slices/hooks.
+ * Composes lifecycle hooks (both called, base first).
  */
-export function defineStoreConfig<S extends readonly AnySlice[] = readonly []>(
-  extension?: Partial<StoreConfig<any, S>>
-) {
-  return mergeStoreConfig(baseConfig, extension);
+export function extendConfig<S extends readonly AnySlice[] = readonly []>(extension?: Partial<StoreConfig<any, S>>) {
+  return extendBaseConfig(baseConfig, extension);
 }
 
-export const { withStore, withStoreProvider, withStoreAttach, context } = createStore(defineStoreConfig());
+export const { StoreMixin, StoreProviderMixin, StoreAttachMixin, context } = createStore(extendConfig());
 ```
 
 ### 6.2 Skin component
@@ -745,7 +661,14 @@ export const { withStore, withStoreProvider, withStoreAttach, context } = create
 **File:** `packages/html/src/skins/frosted/skin.ts`
 
 ```typescript
-import { withStore, withStoreAttach, withStoreProvider } from './store';
+import { StoreAttachMixin, StoreMixin, StoreProviderMixin } from './store';
+
+type Mixin = <T extends Constructor<HTMLElement>>(Base: T) => T;
+
+export interface DefineOptions {
+  /** Mixins to apply. Defaults to [StoreMixin] (combined provider + attach). */
+  mixins?: Mixin[];
+}
 
 /**
  * Frosted skin element. Empty for now - controls will be added later.
@@ -757,22 +680,26 @@ export class FrostedSkinElement extends HTMLElement {
 
   /**
    * Define this element with the custom elements registry.
-   * Default uses withStore (combined provider + attach).
-   * Pass custom mixins for extension scenarios.
+   *
+   * @example
+   * // Default: combined provider + attach
+   * FrostedSkinElement.define('vjs-frosted-skin');
+   *
+   * @example
+   * // Granular mixin control (e.g., attach only, inherit provider from parent)
+   * FrostedSkinElement.define('vjs-thumbnail', { mixins: [StoreAttachMixin] });
+   *
+   * @example
+   * // Custom store with extended slices
+   * const { StoreMixin } = createStore(extendConfig({ slices: [chaptersSlice] }));
+   * FrostedSkinElement.define('my-extended-player', { mixins: [StoreMixin] });
    */
-  static define(tagName = this.tagName, storeMixin = withStore) {
-    const SkinWithStore = storeMixin(this);
-    customElements.define(tagName, SkinWithStore);
-  }
+  static define(tagName: string, options: DefineOptions = {}) {
+    const { mixins = [StoreMixin] } = options;
 
-  /**
-   * Define with granular control over mixins.
-   * Use when extending with custom store config.
-   */
-  static defineWithMixins(tagName: string, providerMixin = withStoreProvider, attachMixin = withStoreAttach) {
-    // Provider first (provides context), then attach (consumes context)
-    const SkinWithStore = attachMixin(providerMixin(this));
-    customElements.define(tagName, SkinWithStore);
+    // Apply mixins in order (right to left composition)
+    const Mixed = mixins.reduceRight((Base, mixin) => mixin(Base), this as typeof FrostedSkinElement);
+    customElements.define(tagName, Mixed);
   }
 
   connectedCallback() {
@@ -789,7 +716,7 @@ export class FrostedSkinElement extends HTMLElement {
 ```typescript
 import { FrostedSkinElement } from '../skins/frosted/skin';
 
-FrostedSkinElement.define();
+FrostedSkinElement.define('vjs-frosted-skin');
 ```
 
 ### 6.4 Exports
@@ -798,7 +725,8 @@ FrostedSkinElement.define();
 
 ```typescript
 export { FrostedSkinElement } from './skin';
-export { context, defineStoreConfig, withStore, withStoreAttach, withStoreProvider } from './store';
+export type { DefineOptions } from './skin';
+export { context, extendConfig, StoreAttachMixin, StoreMixin, StoreProviderMixin } from './store';
 ```
 
 ---
@@ -875,13 +803,13 @@ function App() {
 
 ```tsx
 import { createStore, Video } from '@videojs/react';
-import { defineStoreConfig, Skin } from '@videojs/react/skins/frosted';
+import { extendConfig, Skin } from '@videojs/react/skins/frosted';
 
 import { chaptersSlice } from './slices/chapters';
 
 // Extend frosted config with custom slice (merges with base slices)
 const { Provider, useSlice } = createStore(
-  defineStoreConfig({ slices: [chaptersSlice] })
+  extendConfig({ slices: [chaptersSlice] })
 );
 
 function App() {
@@ -931,12 +859,12 @@ Where `my-player.js` contains:
 import { media } from '@videojs/core/dom';
 import { createStore } from '@videojs/store/lit';
 
-const { withStore } = createStore({
+const { StoreMixin } = createStore({
   slices: [media.playback],
 });
 
 // Create custom element with store provider and auto-attach
-class MyPlayer extends withStore(HTMLElement) {
+class MyPlayer extends StoreMixin(HTMLElement) {
   connectedCallback() {
     const shadow = this.attachShadow({ mode: 'open' });
     shadow.innerHTML = `<slot></slot>`;
@@ -959,15 +887,15 @@ customElements.define('my-player', MyPlayer);
 Where `my-extended-skin.js` contains:
 
 ```typescript
-import { defineStoreConfig, FrostedSkinElement } from '@videojs/html/skins/frosted';
+import { extendConfig, FrostedSkinElement } from '@videojs/html/skins/frosted';
 import { createStore } from '@videojs/store/lit';
 
 import { chaptersSlice } from './slices/chapters.js';
 
 // Extend frosted config with custom slice (merges with base slices)
-const { withStore } = createStore(defineStoreConfig({ slices: [chaptersSlice] }));
+const { StoreMixin } = createStore(extendConfig({ slices: [chaptersSlice] }));
 
-FrostedSkinElement.define('my-extended-skin', withStore);
+FrostedSkinElement.define('my-extended-skin', { mixins: [StoreMixin] });
 ```
 
 ---
@@ -977,19 +905,25 @@ FrostedSkinElement.define('my-extended-skin', withStore);
 ```
 packages/utils/src/
 ├── array/
-│   ├── uniq-by.ts              # NEW
-│   └── index.ts                # NEW
+│   ├── uniq-by.ts              # DONE
+│   ├── tests/
+│   │   └── uniq-by.test.ts     # DONE
+│   └── index.ts                # DONE
 └── function/
-    ├── compose-callbacks.ts    # NEW
-    └── index.ts                # NEW
+    ├── compose-callbacks.ts    # DONE
+    ├── tests/
+    │   └── compose-callbacks.test.ts  # DONE
+    └── index.ts                # DONE
 
 packages/store/src/
 ├── core/
 │   ├── store.ts                # existing
 │   ├── slice.ts                # existing
 │   ├── queue.ts                # existing
-│   ├── merge-config.ts         # NEW
-│   └── index.ts
+│   ├── extend-config.ts        # DONE
+│   ├── tests/
+│   │   └── extend-config.test.ts # DONE
+│   └── index.ts                # DONE
 ├── react/
 │   ├── context.ts              # NEW (internal shared context)
 │   ├── create-store.ts         # NEW
@@ -997,7 +931,7 @@ packages/store/src/
 │   ├── types.ts                # NEW
 │   └── index.ts
 └── lit/
-    ├── create-store.ts         # NEW (withStore, withStoreProvider, withStoreAttach, context)
+    ├── create-store.ts         # NEW (StoreMixin, StoreProviderMixin, StoreAttachMixin, context)
     ├── controllers.ts          # NEW (SelectorController, RequestController, etc.)
     ├── types.ts                # NEW
     └── index.ts
@@ -1040,22 +974,22 @@ packages/html/src/
 
 ## Implementation Order
 
-1. **Phase 0**: Core utilities (`@videojs/utils`, `@videojs/store`)
-   - `uniqBy`, `composeCallbacks` utilities
-   - `mergeStoreConfig`
+1. **Phase 0**: Core utilities (`@videojs/utils`, `@videojs/store`) **[DONE]**
+   - `uniqBy`, `composeCallbacks` utilities ✓
+   - `extendConfig` ✓
 2. **Phase 1**: React bindings + React package (`@videojs/store/react`, `@videojs/react`)
    - Shared context (`context.ts`, `useStoreContext`)
-   - `createStore()`, base hooks, types
+   - `createStore()` with `inherit` prop, base hooks, types
    - `Video` component, package exports
 3. **Phase 2**: Lit bindings (`@videojs/store/lit`)
-   - `createStore()` with `withStore`, `withStoreProvider`, `withStoreAttach`
+   - `createStore()` with `StoreMixin`, `StoreProviderMixin`, `StoreAttachMixin`
    - Controllers (`SelectorController`, `RequestController`, etc.)
    - `@lit/context` integration
 4. **Phase 3**: Playback slice (`@videojs/core/dom`)
    - `media.playback`, utils, guards
 5. **Phase 4-6**: Frosted skin (`@videojs/react/skins/frosted`, `@videojs/html/skins/frosted`)
-   - React skin (Provider, Skin, storeConfig, hooks)
-   - HTML skin (FrostedSkinElement.define, storeConfig, controllers)
+   - React skin (Provider, Skin, extendConfig, hooks)
+   - HTML skin (FrostedSkinElement.define(tagName, { mixins }), extendConfig, controllers)
 
 Each phase includes tests.
 
@@ -1200,11 +1134,14 @@ Use `types` + `default` format to match existing packages.
 ### PR Strategy
 
 ```
-PR 1: Utilities + Store React Bindings + React Package
-├── uniqBy, composeCallbacks (utils)
-├── mergeStoreConfig (store/core)
+PR #283: Core Utilities [DONE]
+├── uniqBy, composeCallbacks (utils) ✓
+├── extendConfig (store/core) ✓
+└── Tests ✓
+
+PR 1: Store React Bindings + React Package
 ├── Shared context, useStoreContext (store/react)
-├── createStore with parent lookup (store/react)
+├── createStore with inherit prop (store/react)
 ├── Base hooks (store/react)
 ├── Video component (react)
 ├── Package exports (react)
@@ -1212,7 +1149,7 @@ PR 1: Utilities + Store React Bindings + React Package
 └── Closes #229
 
 PR 2: Store Lit Bindings (override PR #281)
-├── createStore (store/lit) - withStore, withStoreProvider, withStoreAttach, context, create
+├── createStore (store/lit) - StoreMixin, StoreProviderMixin, StoreAttachMixin, context, create
 ├── Lit controllers - SelectorController, RequestController, etc.
 ├── @lit/context integration
 ├── References #218
@@ -1226,8 +1163,8 @@ PR 3: Playback Slice
 └── Closes #239
 
 PR 4: Frosted Skin Store
-├── React skin (Provider, Skin, defineStoreConfig)
-├── HTML skin (FrostedSkinElement, defineStoreConfig)
+├── React skin (Provider, Skin, extendConfig)
+├── HTML skin (FrostedSkinElement.define(tagName, { mixins }), extendConfig)
 ├── define/vjs-frosted-skin.ts
 ├── References #218
 └── Closes #231

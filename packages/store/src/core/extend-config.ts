@@ -5,7 +5,7 @@ import { uniqBy } from '@videojs/utils/array';
 import { composeCallbacks } from '@videojs/utils/function';
 
 /**
- * Merges two store configs, composing lifecycle hooks.
+ * Extends a base store config with additional configuration.
  *
  * Both configs must have slices targeting the same type (e.g., HTMLMediaElement).
  *
@@ -18,17 +18,13 @@ import { composeCallbacks } from '@videojs/utils/function';
  * const baseConfig = { slices: [media.playback] };
  *
  * // Extend with custom slice (must target same type)
- * const extendedConfig = mergeStoreConfig(baseConfig, {
+ * const extendedConfig = extendConfig(baseConfig, {
  *   slices: [chaptersSlice],
  *   onSetup: (ctx) => console.log('Extended setup'),
  * });
  * ```
  */
-export function mergeStoreConfig<
-  Target,
-  BaseSlices extends AnySlice<Target>[],
-  ExtSlices extends AnySlice<Target>[] = [],
->(
+export function extendConfig<Target, BaseSlices extends AnySlice<Target>[], ExtSlices extends AnySlice<Target>[] = []>(
   base: StoreConfig<Target, BaseSlices>,
   extension?: Partial<StoreConfig<Target, ExtSlices>>,
 ): StoreConfig<Target, [...BaseSlices, ...ExtSlices]> {

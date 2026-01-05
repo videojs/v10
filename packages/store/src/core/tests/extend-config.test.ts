@@ -2,7 +2,7 @@ import type { StoreConfig } from '../store';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { mergeStoreConfig } from '../merge-config';
+import { extendConfig } from '../extend-config';
 import { Queue } from '../queue';
 import { createSlice } from '../slice';
 import { State } from '../state';
@@ -39,13 +39,13 @@ function createBaseConfig<S extends ReturnType<typeof createTestSlice>[]>(
   return { slices, ...extra } as StoreConfig<TestTarget, S>;
 }
 
-describe('mergeStoreConfig', () => {
+describe('extendConfig', () => {
   describe('no extension', () => {
     it('returns base config unchanged when extension is undefined', () => {
       const slice = createTestSlice('a');
       const base = createBaseConfig([slice]);
 
-      const result = mergeStoreConfig(base);
+      const result = extendConfig(base);
 
       expect(result).toBe(base);
     });
@@ -54,7 +54,7 @@ describe('mergeStoreConfig', () => {
       const slice = createTestSlice('a');
       const base = createBaseConfig([slice]);
 
-      const result = mergeStoreConfig(base, {});
+      const result = extendConfig(base, {});
 
       expect(result.slices).toHaveLength(1);
       expect(result.slices[0]).toBe(slice);
@@ -69,7 +69,7 @@ describe('mergeStoreConfig', () => {
       const base = createBaseConfig([sliceA]);
       const extension = { slices: [sliceB] };
 
-      const result = mergeStoreConfig(base, extension);
+      const result = extendConfig(base, extension);
 
       expect(result.slices).toHaveLength(2);
       expect(result.slices).toContain(sliceA);
@@ -87,7 +87,7 @@ describe('mergeStoreConfig', () => {
       const base = createBaseConfig([sliceA, sliceB]);
       const extension = { slices: [sliceAExtended] };
 
-      const result = mergeStoreConfig(base, extension);
+      const result = extendConfig(base, extension);
 
       // Should have sliceB and sliceAExtended (not original sliceA)
       expect(result.slices).toHaveLength(2);
@@ -107,7 +107,7 @@ describe('mergeStoreConfig', () => {
       const base = createBaseConfig([slice], { onSetup: baseOnSetup });
       const extension = { onSetup: extOnSetup };
 
-      const result = mergeStoreConfig(base, extension);
+      const result = extendConfig(base, extension);
       result.onSetup?.({} as any);
 
       expect(order).toEqual(['base', 'ext']);
@@ -124,7 +124,7 @@ describe('mergeStoreConfig', () => {
       const base = createBaseConfig([slice], { onAttach: baseOnAttach });
       const extension = { onAttach: extOnAttach };
 
-      const result = mergeStoreConfig(base, extension);
+      const result = extendConfig(base, extension);
       result.onAttach?.({} as any);
 
       expect(order).toEqual(['base', 'ext']);
@@ -139,7 +139,7 @@ describe('mergeStoreConfig', () => {
       const base = createBaseConfig([slice], { onError: baseOnError });
       const extension = { onError: extOnError };
 
-      const result = mergeStoreConfig(base, extension);
+      const result = extendConfig(base, extension);
       result.onError?.({} as any);
 
       expect(order).toEqual(['base', 'ext']);
@@ -151,7 +151,7 @@ describe('mergeStoreConfig', () => {
       const slice = createTestSlice('a');
       const base = createBaseConfig([slice], { onSetup: baseOnSetup });
 
-      const result = mergeStoreConfig(base, {});
+      const result = extendConfig(base, {});
 
       expect(result.onSetup).toBe(baseOnSetup);
     });
@@ -163,7 +163,7 @@ describe('mergeStoreConfig', () => {
       const base = createBaseConfig([slice]);
       const extension = { onSetup: extOnSetup };
 
-      const result = mergeStoreConfig(base, extension);
+      const result = extendConfig(base, extension);
 
       expect(result.onSetup).toBe(extOnSetup);
     });
@@ -172,7 +172,7 @@ describe('mergeStoreConfig', () => {
       const slice = createTestSlice('a');
       const base = createBaseConfig([slice]);
 
-      const result = mergeStoreConfig(base, {});
+      const result = extendConfig(base, {});
 
       expect(result.onSetup).toBeUndefined();
     });
@@ -187,7 +187,7 @@ describe('mergeStoreConfig', () => {
       const base = createBaseConfig([slice], { queue: baseQueue as any });
       const extension = { queue: extQueue as any };
 
-      const result = mergeStoreConfig(base, extension);
+      const result = extendConfig(base, extension);
 
       expect(result.queue).toBe(extQueue);
     });
@@ -198,7 +198,7 @@ describe('mergeStoreConfig', () => {
       const slice = createTestSlice('a');
       const base = createBaseConfig([slice], { queue: baseQueue as any });
 
-      const result = mergeStoreConfig(base, {});
+      const result = extendConfig(base, {});
 
       expect(result.queue).toBe(baseQueue);
     });
@@ -211,7 +211,7 @@ describe('mergeStoreConfig', () => {
       const base = createBaseConfig([slice], { state: baseState });
       const extension = { state: extState };
 
-      const result = mergeStoreConfig(base, extension);
+      const result = extendConfig(base, extension);
 
       expect(result.state).toBe(extState);
     });
@@ -222,7 +222,7 @@ describe('mergeStoreConfig', () => {
       const slice = createTestSlice('a');
       const base = createBaseConfig([slice], { state: baseState });
 
-      const result = mergeStoreConfig(base, {});
+      const result = extendConfig(base, {});
 
       expect(result.state).toBe(baseState);
     });
