@@ -436,7 +436,7 @@ describe('queue', () => {
 
         // Wait for task to start
         await new Promise(r => setTimeout(r, 10));
-        expect(Reflect.ownKeys(queue.pending).length).toBe(1);
+        expect(queue.tasks.k?.status).toBe('pending');
 
         // Destroy queue
         queue.destroy();
@@ -446,8 +446,11 @@ describe('queue', () => {
         expect(cleanupSpy).toHaveBeenCalledWith('aborted');
         expect(cleanupSpy).toHaveBeenCalledWith('cleanup');
 
-        // Pending object should be empty (self-cleaned)
-        expect(Reflect.ownKeys(queue.pending).length).toBe(0);
+        // Task should transition to error state with cancelled flag
+        expect(queue.tasks.k?.status).toBe('error');
+        if (queue.tasks.k?.status === 'error') {
+          expect(queue.tasks.k.cancelled).toBe(true);
+        }
       });
 
       it('handles scheduler error without double-cleanup when already flushed', async () => {
@@ -575,7 +578,7 @@ describe('queue', () => {
         expect(listener).toHaveBeenCalledTimes(2);
       });
 
-      it('notifies with pending map when task dispatches', async () => {
+      it('notifies with tasks map on dispatch and settlement', async () => {
         vi.useRealTimers();
 
         const queue = createQueue();
@@ -602,18 +605,19 @@ describe('queue', () => {
 
         // First call should have pending task
         expect(listener).toHaveBeenCalledTimes(1);
-        const pendingObj = listener.mock.calls[0]![0] as Record<string, unknown>;
-        expect(Reflect.ownKeys(pendingObj).length).toBe(1);
-        expect('test-key' in pendingObj).toBe(true);
+        const pendingSnapshot = listener.mock.calls[0]![0] as Record<string, { status: string }>;
+        expect(Reflect.ownKeys(pendingSnapshot).length).toBe(1);
+        expect(pendingSnapshot['test-key']?.status).toBe('pending');
 
         // Complete the handler
         resolveHandler!();
         await promise;
 
-        // Second call should have empty pending
+        // Second call should have settled task (success)
         expect(listener).toHaveBeenCalledTimes(2);
-        const settledObj = listener.mock.calls[1]![0] as Record<string, unknown>;
-        expect(Reflect.ownKeys(settledObj).length).toBe(0);
+        const settledSnapshot = listener.mock.calls[1]![0] as Record<string, { status: string }>;
+        expect(Reflect.ownKeys(settledSnapshot).length).toBe(1);
+        expect(settledSnapshot['test-key']?.status).toBe('success');
       });
 
       it('unsubscribe stops notifications', async () => {
@@ -683,15 +687,15 @@ describe('queue', () => {
         consoleSpy.mockRestore();
       });
 
-      it('provides strongly typed pending object', async () => {
+      it('provides strongly typed tasks object', async () => {
         vi.useRealTimers();
 
         // Use default queue - type safety is validated at compile time
         const queue = createQueue();
 
-        queue.subscribe((pending) => {
-          // Pending is a frozen object
-          const task = pending.playback;
+        queue.subscribe((tasks) => {
+          // Tasks is a frozen object
+          const task = tasks.playback;
           if (task) {
             expect(task.key).toBe('playback');
             expect(task.name).toBeDefined();
@@ -703,6 +707,211 @@ describe('queue', () => {
           key: 'playback',
           handler: vi.fn().mockResolvedValue(undefined),
         });
+      });
+    });
+
+    describe('task lifecycle', () => {
+      it('task starts as pending and transitions to success', async () => {
+        vi.useRealTimers();
+
+        const queue = createQueue();
+
+        const promise = queue.enqueue({
+          name: 'task',
+          key: 'k',
+          handler: async () => {
+            await new Promise(r => setTimeout(r, 10));
+            return 'result';
+          },
+        });
+
+        // Task should be pending
+        await new Promise(r => setTimeout(r, 5));
+        const pendingTask = queue.tasks.k;
+        expect(pendingTask?.status).toBe('pending');
+        expect(pendingTask?.name).toBe('task');
+
+        // Wait for completion
+        await promise;
+
+        // Task should be success
+        const successTask = queue.tasks.k;
+        expect(successTask?.status).toBe('success');
+        if (successTask?.status === 'success') {
+          expect(successTask.output).toBe('result');
+          expect(successTask.duration).toBeGreaterThanOrEqual(0);
+          expect(successTask.settledAt).toBeGreaterThan(successTask.startedAt);
+        }
+      });
+
+      it('task starts as pending and transitions to error', async () => {
+        vi.useRealTimers();
+
+        const queue = createQueue();
+        const error = new Error('test error');
+
+        const promise = queue.enqueue({
+          name: 'task',
+          key: 'k',
+          handler: async () => {
+            await new Promise(r => setTimeout(r, 10));
+            throw error;
+          },
+        });
+
+        // Task should be pending
+        await new Promise(r => setTimeout(r, 5));
+        expect(queue.tasks.k?.status).toBe('pending');
+
+        // Wait for failure
+        await expect(promise).rejects.toThrow('test error');
+
+        // Task should be error
+        const errorTask = queue.tasks.k;
+        expect(errorTask?.status).toBe('error');
+        if (errorTask?.status === 'error') {
+          expect(errorTask.error).toBe(error);
+          expect(errorTask.cancelled).toBe(false);
+          expect(errorTask.duration).toBeGreaterThanOrEqual(0);
+        }
+      });
+
+      it('aborted task has cancelled flag set to true', async () => {
+        vi.useRealTimers();
+
+        const queue = createQueue();
+
+        const promise = queue.enqueue({
+          name: 'task',
+          key: 'k',
+          handler: async ({ signal }) => {
+            await new Promise((_, reject) => {
+              signal.addEventListener('abort', () => reject(signal.reason));
+              setTimeout(() => {}, 1000);
+            });
+          },
+        });
+
+        // Wait for task to start
+        await new Promise(r => setTimeout(r, 10));
+        expect(queue.tasks.k?.status).toBe('pending');
+
+        // Abort the task
+        queue.abort('k');
+        await promise.catch(() => {});
+
+        // Task should be error with cancelled=true
+        const errorTask = queue.tasks.k;
+        expect(errorTask?.status).toBe('error');
+        if (errorTask?.status === 'error') {
+          expect(errorTask.cancelled).toBe(true);
+        }
+      });
+
+      it('new request replaces settled task', async () => {
+        vi.useRealTimers();
+
+        const queue = createQueue();
+
+        // First request
+        await queue.enqueue({
+          name: 'first',
+          key: 'k',
+          handler: async () => 'first-result',
+        });
+
+        expect(queue.tasks.k?.status).toBe('success');
+        if (queue.tasks.k?.status === 'success') {
+          expect(queue.tasks.k.output).toBe('first-result');
+        }
+
+        // Second request replaces settled task
+        await queue.enqueue({
+          name: 'second',
+          key: 'k',
+          handler: async () => 'second-result',
+        });
+
+        expect(queue.tasks.k?.status).toBe('success');
+        if (queue.tasks.k?.status === 'success') {
+          expect(queue.tasks.k.output).toBe('second-result');
+          expect(queue.tasks.k.name).toBe('second');
+        }
+      });
+    });
+
+    describe('reset', () => {
+      it('clears settled task', async () => {
+        vi.useRealTimers();
+
+        const queue = createQueue();
+
+        await queue.enqueue({
+          name: 'task',
+          key: 'k',
+          handler: async () => 'result',
+        });
+
+        expect(queue.tasks.k?.status).toBe('success');
+
+        queue.reset('k');
+
+        expect(queue.tasks.k).toBeUndefined();
+      });
+
+      it('is no-op when task is pending', async () => {
+        vi.useRealTimers();
+
+        const queue = createQueue();
+
+        const promise = queue.enqueue({
+          name: 'task',
+          key: 'k',
+          handler: async () => {
+            await new Promise(r => setTimeout(r, 50));
+            return 'result';
+          },
+        });
+
+        // Wait for task to start
+        await new Promise(r => setTimeout(r, 10));
+        expect(queue.tasks.k?.status).toBe('pending');
+
+        // Reset should be no-op
+        queue.reset('k');
+        expect(queue.tasks.k?.status).toBe('pending');
+
+        await promise;
+      });
+
+      it('is no-op when task does not exist', () => {
+        const queue = createQueue();
+
+        // Should not throw
+        queue.reset('nonexistent');
+
+        expect(queue.tasks.nonexistent).toBeUndefined();
+      });
+
+      it('notifies subscribers when reset clears a task', async () => {
+        vi.useRealTimers();
+
+        const queue = createQueue();
+        const listener = vi.fn();
+
+        await queue.enqueue({
+          name: 'task',
+          key: 'k',
+          handler: async () => 'result',
+        });
+
+        queue.subscribe(listener);
+
+        queue.reset('k');
+
+        expect(listener).toHaveBeenCalledTimes(1);
+        const snapshot = listener.mock.calls[0]![0] as Record<string, unknown>;
+        expect(snapshot.k).toBeUndefined();
       });
     });
   });
