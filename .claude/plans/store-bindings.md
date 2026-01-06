@@ -13,33 +13,35 @@ Implement React and DOM bindings for Video.js 10's store, enabling:
 
 ## Key Decisions
 
-| Decision            | Resolution                                                                          |
-| ------------------- | ----------------------------------------------------------------------------------- |
-| Store creation      | `createStore({ slices, displayName? })` - types inferred from slices                |
-| Hook naming         | `useStore`, `useSelector`, `useRequest`, `useTasks`, `useMutation`, `useOptimistic` |
-| Controller naming   | `SelectorController`, `RequestController`, `TasksController`, etc                   |
-| Selector hook       | `useSelector(selector)` - requires selector (Redux-style)                           |
-| Store hook          | `useStore()` - returns store instance                                               |
-| Request hook        | `useRequest()` or `useRequest(r => r.foo)` - full map or single request             |
-| Tasks hook          | `useTasks()` - returns `store.queue.tasks` (reactive, full lifecycle)               |
-| Mutation hook       | `useMutation(r => r.foo)` - status tracking (isPending, isError, error)             |
-| Optimistic hook     | `useOptimistic(r => r.foo, s => s.bar)` - optimistic value + status                 |
-| Settled state       | Core Queue tracks last result/error per key, cleared on next request                |
-| Base hooks          | All take store as first arg: `useSelector(store, sel)`, etc                         |
-| createStore hooks   | Returns all hooks including `useMutation` and `useOptimistic`                       |
-| Slice hook return   | `{ state, request, isAvailable }` - state/request null when unavailable             |
-| Skin exports        | `Provider`, `Skin`, `extendConfig`                                                  |
-| Slice namespace     | `export * as media` → `media.playback`                                              |
-| Video component     | Generic, exported from `@videojs/react` (not from skins)                            |
-| Lit mixins          | `StoreMixin` (combined), `StoreProviderMixin`, `StoreAttachMixin`                   |
-| Primitives context  | `useStoreContext()` internal hook for primitive UI components                       |
-| displayName         | For React DevTools component naming                                                 |
-| Component types     | Namespace pattern: `Skin.Props` via `namespace Skin { export type Props }`          |
-| Element define      | `FrostedSkinElement.define(tagName, { mixins })` for declarative setup              |
-| Config extension    | `extendConfig()` uses `uniqBy` + `composeCallbacks` from utils                      |
-| Provider resolution | Isolated by default; `inherit` prop to use parent store from context                |
-| Store instance      | `create()` method for imperative store creation                                     |
-| Package structure   | `store/react` and `store/lit` (no `store/dom`)                                      |
+| Decision            | Resolution                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| Store creation      | `createStore({ slices, displayName? })` - types inferred from slices                  |
+| Hook naming         | `useStore`, `useSelector`, `useRequest`, `useTasks`, `useMutation`, `useOptimistic`   |
+| Controller naming   | `SelectorController`, `RequestController`, `TasksController`, etc                     |
+| Selector hook       | `useSelector(selector)` - requires selector (Redux-style)                             |
+| Store hook          | `useStore()` - returns store instance                                                 |
+| Request hook        | `useRequest()` or `useRequest('name')` - full map or single request by name           |
+| Tasks hook          | `useTasks()` - returns `store.queue.tasks` (reactive, full lifecycle)                 |
+| Mutation hook       | `useMutation(store, 'name')` - base hook only, direct name param                      |
+| Optimistic hook     | `useOptimistic(store, 'name', s => s.bar)` - base hook only, direct name param        |
+| Mutation/Optimistic | Discriminated union types with `status` field for type narrowing                      |
+| Settled state       | Core Queue tracks last result/error per key, cleared on next request                  |
+| Base hooks          | All take store as first arg: `useSelector(store, sel)`, etc                           |
+| createStore hooks   | Returns `useStore`, `useSelector`, `useRequest`, `useTasks` (NOT mutation/optimistic) |
+| Slice hook return   | `{ state, request, isAvailable }` - state/request null when unavailable               |
+| Skin exports        | `Provider`, `Skin`, `extendConfig`                                                    |
+| Slice namespace     | `export * as media` → `media.playback`                                                |
+| Video component     | Generic, exported from `@videojs/react` (not from skins)                              |
+| Lit mixins          | `StoreMixin` (combined), `StoreProviderMixin`, `StoreAttachMixin`                     |
+| Primitives context  | `useStoreContext()` internal hook for primitive UI components                         |
+| displayName         | For React DevTools component naming                                                   |
+| Component types     | Namespace pattern: `Skin.Props` via `namespace Skin { export type Props }`            |
+| Element define      | `FrostedSkinElement.define(tagName, { mixins })` for declarative setup                |
+| Config extension    | `extendConfig()` uses `uniqBy` + `composeCallbacks` from utils                        |
+| Provider resolution | Isolated by default; `inherit` prop to use parent store from context                  |
+| Store instance      | `create()` method for imperative store creation                                       |
+| Package structure   | `store/react` and `store/lit` (no `store/dom`)                                        |
+| Shared types        | `AsyncStatus`, `MutationResult`, `OptimisticResult` in `src/shared/types.ts`          |
 
 ---
 
@@ -341,10 +343,14 @@ export { context, extendConfig, StoreAttachMixin, StoreMixin, StoreProviderMixin
 
 ```tsx
 import { createStore, media, Video } from '@videojs/react';
+// With mutation status tracking (base hook - import directly)
+
+// With optimistic updates (base hook - import directly)
+import { useMutation, useOptimistic } from '@videojs/store/react';
 
 // Note: media is re-exported from @videojs/react (not @videojs/core/dom)
 
-const { Provider, useSelector, useRequest, useMutation, useOptimistic } = createStore({
+const { Provider, useStore, useSelector, useRequest } = createStore({
   slices: [media.playback],
 });
 
@@ -359,39 +365,39 @@ function App() {
 
 function MyCustomControls() {
   const currentTime = useSelector((s) => s.currentTime);
-  const seek = useRequest((r) => r.seek);
+  const seek = useRequest('seek');
   return <button onClick={() => seek(0)}>Restart ({currentTime}s)</button>;
 }
 
-// With mutation status tracking
 function PlayButton() {
+  const store = useStore();
   const paused = useSelector((s) => s.paused);
-  const { mutate: play, isPending } = useMutation((r) => r.play);
-  const { mutate: pause } = useMutation((r) => r.pause);
+  const playResult = useMutation(store, 'play');
+  const pauseResult = useMutation(store, 'pause');
 
   return (
-    <button onClick={() => (paused ? play() : pause())} disabled={isPending}>
+    <button
+      onClick={() => (paused ? playResult.mutate() : pauseResult.mutate())}
+      disabled={playResult.status === 'pending'}
+    >
       {paused ? 'Play' : 'Pause'}
     </button>
   );
 }
 
-// With optimistic updates
 function VolumeSlider() {
-  const { value, setValue, isPending, isError } = useOptimistic(
-    (r) => r.changeVolume,
-    (s) => s.volume
-  );
+  const store = useStore();
+  const result = useOptimistic(store, 'setVolume', (s) => s.volume);
 
   return (
     <>
       <input
         type="range"
-        value={value}
-        onChange={(e) => setValue(Number(e.target.value))}
-        style={{ opacity: isPending ? 0.5 : 1 }}
+        value={result.value}
+        onChange={(e) => result.setValue(Number(e.target.value))}
+        style={{ opacity: result.status === 'pending' ? 0.5 : 1 }}
       />
-      {isError && <span>Failed to change volume</span>}
+      {result.status === 'error' && <span>Failed to change volume</span>}
     </>
   );
 }
@@ -562,16 +568,33 @@ packages/store/src/
 │   ├── tests/
 │   │   └── extend-config.test.ts # DONE
 │   └── index.ts                # DONE
+├── shared/
+│   └── types.ts                # DONE (AsyncStatus, MutationResult, OptimisticResult)
 ├── react/
-│   ├── context.ts              # NEW (internal shared context)
-│   ├── create-store.ts         # NEW
-│   ├── hooks.ts                # NEW (base hooks)
-│   ├── types.ts                # NEW
+│   ├── context.ts              # DONE (internal shared context)
+│   ├── create-store.tsx        # DONE (Provider, useStore, useSelector, useRequest, useTasks)
+│   ├── hooks/                  # DONE (base hooks split into separate files)
+│   │   ├── index.ts
+│   │   ├── use-selector.ts
+│   │   ├── use-request.ts
+│   │   ├── use-tasks.ts
+│   │   ├── use-mutation.ts
+│   │   └── tests/
+│   │       ├── test-utils.ts
+│   │       ├── use-selector.test.tsx
+│   │       ├── use-request.test.tsx
+│   │       ├── use-tasks.test.tsx
+│   │       └── use-mutation.test.tsx
 │   └── index.ts
 └── lit/
-    ├── create-store.ts         # NEW (StoreMixin, StoreProviderMixin, StoreAttachMixin, context)
-    ├── controllers.ts          # NEW (SelectorController, RequestController, etc.)
-    ├── types.ts                # NEW
+    ├── create-store.ts         # DONE (StoreMixin, StoreProviderMixin, StoreAttachMixin, context)
+    ├── controllers/            # DONE (split into separate files)
+    │   ├── index.ts
+    │   ├── selector-controller.ts
+    │   ├── request-controller.ts
+    │   ├── tasks-controller.ts
+    │   ├── mutation-controller.ts
+    │   └── optimistic-controller.ts
     └── index.ts
 
 packages/core/src/dom/
@@ -645,13 +668,17 @@ packages/html/src/
    - `media` namespace export ✓
    - Type guards and utilities ✓
 
-6. **Phase 4**: Mutation Hooks/Controllers
-   - React: `useMutation(store, selector)`
-   - Lit: `MutationController(host, store, selector)`
+6. **Phase 4**: Mutation Hooks/Controllers **[DONE - PR #290]**
+   - React: `useMutation(store, name)` - base hook with direct name param ✓
+   - React: `useRequest(store, name)` - updated to use direct name param ✓
+   - Lit: `MutationController(host, store, name)` ✓
+   - Shared types: `MutationResult` discriminated union in `src/shared/types.ts` ✓
+   - Hooks split into `src/react/hooks/` directory ✓
 
 7. **Phase 5**: Optimistic Hooks/Controllers
-   - React: `useOptimistic(store, reqSel, stateSel)`
-   - Lit: `OptimisticController(host, store, reqSel, stateSel)`
+   - React: `useOptimistic(store, name, stateSelector)` - base hook
+   - Lit: `OptimisticController(host, store, name, stateSelector)`
+   - Shared types: `OptimisticResult` discriminated union
 
 8. **Phase 6**: Skins
    - React skin (Provider, Skin, extendConfig)
@@ -790,7 +817,7 @@ Use `types` + `default` format to match existing packages.
 | #285  | Queue Task Refactor | Unified tasks map, status discriminator | Closed |
 | #228  | Optimistic Updates  | useMutation, useOptimistic              | Open   |
 | #229  | React Bindings      | createStore, hooks, context             | Closed |
-| #230  | Lit Bindings        | Controllers, mixins, context            | Open   |
+| #230  | Lit Bindings        | Controllers, mixins, context            | Closed |
 | #239  | DOM Media Slices    | media slices                            | Closed |
 | #231  | Skin Stores         | Skin store configuration                | Open   |
 
@@ -829,17 +856,19 @@ PR #292: DOM Media Slices [DONE]
 ├── Type guards and utilities ✓
 ├── References #218
 └── Closes #239
-├── References #218
-└── Closes #230
 
-PR D: Mutation Hooks/Controllers
-├── React: useMutation
-├── Lit: MutationController
+PR #290: Mutation Hooks/Controllers [DONE]
+├── React: useMutation(store, name) - base hook with direct name param ✓
+├── React: useRequest(store, name) - updated to use direct name param ✓
+├── Lit: MutationController(host, store, name) ✓
+├── Shared types: MutationResult discriminated union ✓
+├── Hooks split into src/react/hooks/ directory ✓
 └── References #228
 
-PR E: Optimistic Hooks/Controllers
-├── React: useOptimistic
-├── Lit: OptimisticController
+PR #291: Optimistic Hooks/Controllers
+├── React: useOptimistic(store, name, stateSelector)
+├── Lit: OptimisticController(host, store, name, stateSelector)
+├── Shared types: OptimisticResult discriminated union
 └── Closes #228
 
 PR F: Skins
@@ -852,9 +881,9 @@ PR F: Skins
 ### Dependency Graph
 
 ```
-PR #283 ───> PR #287 ───> PR #288 ───> PR D ───> PR E ───> PR F
-                     └──> PR #289 (done) ──────────────────┘
-                     └──> PR #292 (done) ──────────────────┘
+PR #283 ───> PR #287 ───> PR #288 ───> PR #290 ───> PR #291 ───> PR F (Skins)
+                     └──> PR #289 (done) ────────────────────────┘
+                     └──> PR #292 (done) ────────────────────────┘
 ```
 
 PRs are sequential. PR #288, #289, #292 can technically parallel after PR #287, but we'll do them sequentially for easier review.

@@ -5,5 +5,5 @@
     "declarationDir": "types"
   },
   "references": [{ "path": "../utils" }],
-  "include": ["src/core/**/*.ts"]
+  "include": ["src/core", "src/shared"]
 }

@@ -190,11 +190,11 @@ describe('createStore', () => {
       expect(result.current).toHaveProperty('setVolume');
     });
 
-    it('returns selected request', () => {
+    it('returns request by name', () => {
       const { Provider, useRequest, create } = createStore({ slices: [audioSlice] });
       const store = create();
 
-      const { result } = renderHook(() => useRequest(r => r.setVolume), {
+      const { result } = renderHook(() => useRequest('setVolume'), {
         wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
       });
 
