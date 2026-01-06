@@ -22,9 +22,8 @@ export const bufferSlice = createSlice<HTMLMediaElement>()({
   }),
 
   subscribe: ({ target, update, signal }) => {
-    const sync = () => update();
-    listen(target, 'progress', sync, { signal });
-    listen(target, 'emptied', sync, { signal });
+    listen(target, 'progress', update, { signal });
+    listen(target, 'emptied', update, { signal });
   },
 
   request: {},

@@ -35,16 +35,14 @@ export interface SliceGetSnapshotContext<Target, State> {
 
 export type SliceSubscribe<Target, State extends object> = (ctx: SliceSubscribeContext<Target, State>) => void;
 
-export interface SliceSubscribeContext<Target, State extends object> {
+export interface SliceSubscribeContext<Target, _State extends object> {
   target: Target;
-  update: SliceUpdate<State>;
+  update: SliceUpdate;
   signal: AbortSignal;
 }
 
-export interface SliceUpdate<State extends object> {
-  (): void;
-  (state: Partial<State>): void;
-}
+/** Sync slice state from target via getSnapshot. */
+export type SliceUpdate = () => void;
 
 export interface SliceConfig<
   Target,

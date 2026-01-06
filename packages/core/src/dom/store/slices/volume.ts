@@ -22,8 +22,7 @@ export const volumeSlice = createSlice<HTMLMediaElement>()({
   }),
 
   subscribe: ({ target, update, signal }) => {
-    const sync = () => update();
-    listen(target, 'volumechange', sync, { signal });
+    listen(target, 'volumechange', update, { signal });
   },
 
   request: {

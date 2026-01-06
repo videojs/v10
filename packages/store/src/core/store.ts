@@ -1,6 +1,13 @@
 import type { PendingTask, Task, TaskContext } from './queue';
 import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
-import type { AnySlice, Slice, UnionSliceRequests, UnionSliceState, UnionSliceTarget, UnionSliceTasks } from './slice';
+import type {
+  AnySlice,
+  SliceUpdate,
+  UnionSliceRequests,
+  UnionSliceState,
+  UnionSliceTarget,
+  UnionSliceTasks,
+} from './slice';
 import type { StateFactory } from './state';
 
 import { getSelectorKeys } from '@videojs/utils/object';
@@ -115,20 +122,10 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     return () => this.#detach();
   }
 
-  #createUpdate<State extends object>(slice: Slice<Target, State, any>) {
-    return (partial?: Partial<State>) => {
+  #createUpdate(slice: AnySlice<Target>): SliceUpdate {
+    return () => {
       const target = this.#target;
-      if (!target) return;
-
-      try {
-        if (partial === undefined) {
-          this.#syncSlice(slice, target);
-        } else {
-          this.#state.patch(partial as Partial<UnionSliceState<Slices>>);
-        }
-      } catch (error) {
-        this.#handleError({ error });
-      }
+      if (target) this.#syncSlice(slice, target);
     };
   }
 
