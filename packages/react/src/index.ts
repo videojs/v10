@@ -1,11 +1,7 @@
 'use client';
 
-// Media elements
+// Media
 export { Video, type VideoProps } from './media/video';
 
-// Utilities
-export { composeRefs, useComposedRefs } from './utils/use-composed-refs';
-
-export * from '@videojs/core';
-export * from '@videojs/core/dom';
+// Store
 export * from '@videojs/store/react';

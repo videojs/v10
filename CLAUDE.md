@@ -206,6 +206,40 @@ Before writing new helpers, check `@videojs/utils` for existing utilities.
 | Type guards         | `is*`      | `isStoreError(error)`            |
 | Factory functions   | `create*`  | `createQueue()`, `createSlice()` |
 
+### Component/Hook Namespace Pattern
+
+Use namespaces to co-locate Props and Result types with components/hooks:
+
+```tsx
+// Component with Props namespace
+export function Video({ src, ...props }: VideoProps): JSX.Element {
+  // ...
+}
+
+export namespace Video {
+  export type Props = VideoProps;
+}
+
+// Hook with Result namespace
+export function useMutation(name: string): MutationResult {
+  // ...
+}
+
+export namespace useMutation {
+  export type Result = MutationResult;
+}
+```
+
+Usage:
+
+```tsx
+// Props type via namespace
+const props: Video.Props = { src: 'video.mp4' };
+
+// Result type via namespace
+const mutation: useMutation.Result = useMutation('play');
+```
+
 ### Type Guards
 
 Always return `value is Type` for proper type narrowing:
@@ -332,11 +366,11 @@ JSDoc should add value, not restate what TypeScript already shows:
  * @param callback - The callback to invoke
  * @returns A cleanup function
  */
-export function animationFrame(callback: FrameRequestCallback): () => void
+export function animationFrame(callback: FrameRequestCallback): () => void;
 
 // Good
 /** Request an animation frame with cleanup. */
-export function animationFrame(callback: FrameRequestCallback): () => void
+export function animationFrame(callback: FrameRequestCallback): () => void;
 ```
 
 **Single JSDoc for overloads** — Document the first overload only:
