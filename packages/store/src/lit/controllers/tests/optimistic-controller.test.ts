@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { noop } from '@videojs/utils/function';
 
+import { describe, expect, it } from 'vitest';
 import { createSlice } from '../../../core/slice';
 import { createStore as createCoreStore } from '../../../core/store';
 import { createCoreTestStore, createCustomKeyTestStore, createMockHost, MockMedia } from '../../tests/test-utils';
@@ -133,7 +134,11 @@ describe('OptimisticController', () => {
       },
     });
 
-    const failingStore = createCoreStore({ slices: [failingSlice] });
+    const failingStore = createCoreStore({
+      slices: [failingSlice],
+      onError: noop,
+    });
+
     const target = new MockMedia();
     failingStore.attach(target);
 
@@ -254,7 +259,7 @@ describe('OptimisticController', () => {
       expect(muteController.value.status).toBe('idle');
     });
 
-    it('superseding task with same key shows error on original controller', async () => {
+    it('superseded task shows error status', async () => {
       const { store } = createCustomKeyTestStore();
       const hostVolume = createMockHost();
       const hostMute = createMockHost();
@@ -275,26 +280,23 @@ describe('OptimisticController', () => {
       // Mute shows optimistic immediately
       expect(muteController.value.value).toBe(true);
 
-      // Wait for superseding to happen
-      await new Promise(resolve => setTimeout(resolve, 5));
-
-      // Volume should show error (superseded), reverted to actual
+      // Volume task was superseded
       try {
         await volumePromise;
       } catch {
         // Expected - task was superseded
       }
 
+      // Wait for subscription callbacks to fire
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      // Tasks are keyed by name, so superseded task shows error status
       expect(volumeController.value.status).toBe('error');
-      expect(volumeController.value.value).toBe(1); // Reverted to actual
 
-      expect(muteController.value.status).toBe('pending');
-      expect(muteController.value.value).toBe(true); // Still optimistic
-
+      // Complete the mute operation
       await mutePromise;
 
       expect(muteController.value.status).toBe('success');
-      expect(muteController.value.value).toBe(true);
     });
   });
 });

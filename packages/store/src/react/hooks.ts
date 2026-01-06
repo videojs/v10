@@ -25,6 +25,7 @@ export function useSelector<S extends AnyStore, T>(store: S, selector: (state: I
  */
 export function useRequest<S extends AnyStore>(store: S): InferStoreRequests<S>;
 export function useRequest<S extends AnyStore, T>(store: S, selector: (requests: InferStoreRequests<S>) => T): T;
+// eslint-disable-next-line react/no-unnecessary-use-prefix
 export function useRequest<S extends AnyStore, T>(
   store: S,
   selector?: (requests: InferStoreRequests<S>) => T,

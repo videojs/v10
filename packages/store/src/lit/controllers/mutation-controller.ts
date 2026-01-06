@@ -5,8 +5,6 @@ import type { AnyStore, InferStoreRequests } from '../../core/store';
 
 import { noop } from '@videojs/utils/function';
 
-import { findTaskByName } from '../../core/queue';
-
 // ----------------------------------------
 // Mutation Types
 // ----------------------------------------
@@ -84,7 +82,7 @@ export class MutationController<
     this.#host = host;
     this.#store = store;
     this.#name = name;
-    this.#task = findTaskByName(store.queue.tasks, name);
+    this.#task = store.queue.tasks[name];
     host.addController(this);
   }
 
@@ -119,15 +117,14 @@ export class MutationController<
   }
 
   #reset = () => {
-    const task = findTaskByName(this.#store.queue.tasks, this.#name);
-    if (task) this.#store.queue.reset(task.key);
+    this.#store.queue.reset(this.#name);
   };
 
   hostConnected() {
-    this.#task = findTaskByName(this.#store.queue.tasks, this.#name);
+    this.#task = this.#store.queue.tasks[this.#name];
 
     this.#unsubscribe = this.#store.queue.subscribe((tasks) => {
-      const newTask = findTaskByName(tasks, this.#name);
+      const newTask = tasks[this.#name];
       if (newTask !== this.#task) {
         this.#task = newTask;
         this.#host.requestUpdate();

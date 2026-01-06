@@ -52,7 +52,7 @@ describe('controller types', () => {
 
       const controller = new MutationController(host, store, 'setVolume');
 
-      expectTypeOf(controller.value).toMatchTypeOf<MutationResult<unknown, unknown>>();
+      expectTypeOf(controller.value).toExtend<MutationResult<unknown, unknown>>();
     });
 
     it('value has mutate function', () => {
@@ -90,7 +90,7 @@ describe('controller types', () => {
 
       const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);
 
-      expectTypeOf(controller.value).toMatchTypeOf<OptimisticResult<unknown, unknown>>();
+      expectTypeOf(controller.value).toExtend<OptimisticResult<unknown, unknown>>();
     });
 
     it('value has selected type', () => {

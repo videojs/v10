@@ -28,6 +28,7 @@ export default antfu(
       '**/.vercel/',
       '**/dist/',
       '**/styles/vjs.css',
+      'packages/__tech-preview__/**',
       // some files that make eslint/prettier panic
       'site/src/components/Posthog.astro',
       'site/src/components/ThemeInit.astro',

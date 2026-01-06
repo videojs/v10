@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { noop } from '@videojs/utils/function';
 
+import { describe, expect, it } from 'vitest';
 import { createSlice } from '../../../core/slice';
 import { createStore as createCoreStore } from '../../../core/store';
 import { createCoreTestStore, createCustomKeyTestStore, createMockHost, MockMedia } from '../../tests/test-utils';
@@ -96,7 +97,11 @@ describe('MutationController', () => {
       },
     });
 
-    const failingStore = createCoreStore({ slices: [failingSlice] });
+    const failingStore = createCoreStore({
+      slices: [failingSlice],
+      onError: noop,
+    });
+
     const target = new MockMedia();
     failingStore.attach(target);
 
@@ -207,7 +212,7 @@ describe('MutationController', () => {
       expect(muteController.value.status).toBe('idle');
     });
 
-    it('superseding removes task so controller shows idle', async () => {
+    it('superseded task shows error status', async () => {
       const { store } = createCustomKeyTestStore();
       const hostVolume = createMockHost();
       const hostMute = createMockHost();
@@ -228,17 +233,15 @@ describe('MutationController', () => {
       // Wait for superseding to happen
       await new Promise(resolve => setTimeout(resolve, 5));
 
-      // Volume task was superseded and removed from tasks record
-      // findTaskByName returns undefined, so controller shows idle
+      // Volume task was superseded
       try {
         await volumePromise;
       } catch {
         // Expected - task was superseded
       }
 
-      // Superseded task is removed, so controller shows idle (not error)
-      // because the task record is keyed by `key`, not `name`
-      expect(volumeController.value.status).toBe('idle');
+      // Tasks are keyed by name, so superseded task shows error status
+      expect(volumeController.value.status).toBe('error');
       expect(muteController.value.status).toBe('pending');
 
       await mutePromise;

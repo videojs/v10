@@ -311,7 +311,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
       });
     } catch (error) {
       const tasks = this.#queue.tasks as Record<string | symbol, Task | undefined>;
-      const task = tasks[key];
+      const task = tasks[name];
 
       this.#handleError({
         request: task?.status === 'pending' ? task : undefined,

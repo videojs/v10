@@ -5,8 +5,6 @@ import type { AnyStore, InferStoreRequests, InferStoreState } from '../../core/s
 
 import { Disposer } from '@videojs/utils/events';
 
-import { findTaskByName } from '../../core/queue';
-
 // ----------------------------------------
 // Optimistic Types
 // ----------------------------------------
@@ -93,7 +91,7 @@ export class OptimisticController<
     this.#store = store;
     this.#name = name;
     this.#selector = selector;
-    this.#task = findTaskByName(store.queue.tasks, name);
+    this.#task = store.queue.tasks[name];
     host.addController(this);
   }
 
@@ -135,18 +133,18 @@ export class OptimisticController<
     this.#optimistic = null;
     this.#host.requestUpdate();
 
-    const task = findTaskByName(this.#store.queue.tasks, this.#name);
-    if (task) this.#store.queue.reset(task.key);
+    this.#task = this.#store.queue.tasks[this.#name];
+    if (this.#task) this.#store.queue.reset(this.#name);
   };
 
   hostConnected() {
-    this.#task = findTaskByName(this.#store.queue.tasks, this.#name);
+    this.#task = this.#store.queue.tasks[this.#name];
 
     this.#disposer.add(this.#store.subscribe(this.#selector, () => this.#host.requestUpdate()));
 
     this.#disposer.add(
       this.#store.queue.subscribe((tasks) => {
-        const newTask = findTaskByName(tasks, this.#name);
+        const newTask = tasks[this.#name];
         if (newTask !== this.#task) {
           this.#task = newTask;
 

@@ -4,8 +4,9 @@ import type { Store } from '../../core/store';
 
 import { ReactiveElement } from '@lit/reactive-element';
 
-import { afterEach } from 'vitest';
+import { noop } from '@videojs/utils/function';
 
+import { afterEach } from 'vitest';
 import { createSlice } from '../../core/slice';
 import { createStore as createCoreStore } from '../../core/store';
 import { createStore as createLitStore } from '../create-store';
@@ -51,7 +52,7 @@ export const audioSlice = createSlice<MockMedia>()({
   },
 });
 
-/** Slice with custom keys (name !== key) for testing findTaskByName behavior. */
+/** Slice with custom keys (name !== key) for testing superseding behavior. */
 export const customKeySlice = createSlice<MockMedia>()({
   initialState: { volume: 1, muted: false },
   getSnapshot: ({ target }) => ({
@@ -94,17 +95,27 @@ type CustomKeySlice = typeof customKeySlice;
 
 // For controller tests - creates core store with attached target
 export function createCoreTestStore(): { store: Store<MockMedia, [TestSlice]>; target: MockMedia } {
-  const store = createCoreStore({ slices: [audioSlice] as [AnySlice] }) as Store<MockMedia, [TestSlice]>;
+  const store = createCoreStore({
+    slices: [audioSlice] as [AnySlice],
+    onError: noop,
+  });
+
   const target = new MockMedia();
   store.attach(target);
+
   return { store, target };
 }
 
-/** Creates store with custom key slice (name !== key) for testing findTaskByName. */
+/** Creates store with custom key slice (name !== key) for testing superseding. */
 export function createCustomKeyTestStore(): { store: Store<MockMedia, [CustomKeySlice]>; target: MockMedia } {
-  const store = createCoreStore({ slices: [customKeySlice] as [AnySlice] }) as Store<MockMedia, [CustomKeySlice]>;
+  const store = createCoreStore({
+    slices: [customKeySlice] as [AnySlice],
+    onError: noop,
+  });
+
   const target = new MockMedia();
   store.attach(target);
+
   return { store, target };
 }
 

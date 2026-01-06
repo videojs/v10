@@ -196,28 +196,32 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     return this.#destroyed;
   }
 
-  isPending(key: keyof Tasks): boolean {
-    return this.#tasks[key]?.status === 'pending';
+  isPending(name: keyof Tasks): boolean {
+    return this.#tasks[name]?.status === 'pending';
   }
 
-  isQueued(key: keyof Tasks): boolean {
-    return key in this.#queued;
+  isQueued(name: keyof Tasks): boolean {
+    // Note: #queued is keyed by key, but we need to search by name
+    for (const task of Object.values(this.#queued)) {
+      if (task?.name === name) return true;
+    }
+    return false;
   }
 
-  isSettled(key: keyof Tasks): boolean {
-    const task = this.#tasks[key];
+  isSettled(name: keyof Tasks): boolean {
+    const task = this.#tasks[name];
     return task?.status === 'success' || task?.status === 'error';
   }
 
   /**
-   * Clear settled task(s). If key provided, clears that task. If no key, clears all settled.
+   * Clear settled task(s). If name provided, clears that task. If no name, clears all settled.
    */
-  reset(key?: keyof Tasks): void {
-    if (!isUndefined(key)) {
-      const task = this.#tasks[key];
+  reset(name?: keyof Tasks): void {
+    if (!isUndefined(name)) {
+      const task = this.#tasks[name];
       if (!task || task.status === 'pending') return;
 
-      delete this.#tasks[key];
+      delete this.#tasks[name];
       this.#notifySubscribers();
 
       return;
@@ -266,17 +270,19 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       return Promise.reject(new StoreError('DESTROYED'));
     }
 
+    // Supersede any queued task with the same key
     const queued = this.#queued[key];
     queued?.invalidate?.();
     queued?.reject(new StoreError('SUPERSEDED'));
     delete this.#queued[key];
 
-    const existing = this.#tasks[key];
-    if (existing?.status === 'pending') {
-      existing.abort.abort(new StoreError('SUPERSEDED'));
+    // Supersede any pending task with the same key (may have different name)
+    // Don't delete - let error handler update status to 'error' so controllers can see it
+    for (const task of Object.values(this.#tasks)) {
+      if (task?.key === key && task.status === 'pending') {
+        task.abort.abort(new StoreError('SUPERSEDED'));
+      }
     }
-
-    delete this.#tasks[key];
 
     return new Promise<Tasks[K]['output']>((resolve, reject) => {
       const task: QueuedTask = {
@@ -320,18 +326,20 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   }
 
   /**
-   * Cancel queued task(s). If key provided, cancels that task. If no key, cancels all.
+   * Cancel queued task(s). If name provided, cancels that task. If no name, cancels all.
    */
-  cancel(key?: keyof Tasks): boolean {
-    if (!isUndefined(key)) {
-      const queued = this.#queued[key];
-      if (!queued) return false;
-
-      queued.invalidate?.();
-      queued.reject(new StoreError('REMOVED'));
-      delete this.#queued[key];
-
-      return true;
+  cancel(name?: keyof Tasks): boolean {
+    if (!isUndefined(name)) {
+      // Find queued task by name (#queued is keyed by key)
+      for (const [key, queued] of Object.entries(this.#queued)) {
+        if (queued?.name === name) {
+          queued.invalidate?.();
+          queued.reject(new StoreError('REMOVED'));
+          delete this.#queued[key as keyof Tasks];
+          return true;
+        }
+      }
+      return false;
     }
 
     const hadQueued = Object.keys(this.#queued).length > 0;
@@ -345,9 +353,15 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     return hadQueued;
   }
 
-  async flush(key?: keyof Tasks): Promise<void> {
-    if (!isUndefined(key)) {
-      await this.#flushKey(key);
+  async flush(name?: keyof Tasks): Promise<void> {
+    if (!isUndefined(name)) {
+      // Find queued task by name and flush by its key
+      for (const [key, queued] of Object.entries(this.#queued)) {
+        if (queued?.name === name) {
+          await this.#flushKey(key as keyof Tasks);
+          return;
+        }
+      }
       return;
     }
 
@@ -356,16 +370,22 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   }
 
   /**
-   * Abort task(s). If key provided, aborts that task. If no key, aborts all.
+   * Abort task(s). If name provided, aborts that task. If no name, aborts all.
    */
-  abort(key?: keyof Tasks): void {
-    if (!isUndefined(key)) {
-      const queued = this.#queued[key];
-      queued?.invalidate?.();
-      queued?.reject(new StoreError('ABORTED'));
-      delete this.#queued[key];
+  abort(name?: keyof Tasks): void {
+    if (!isUndefined(name)) {
+      // Find and abort queued task by name
+      for (const [key, queued] of Object.entries(this.#queued)) {
+        if (queued?.name === name) {
+          queued.invalidate?.();
+          queued.reject(new StoreError('ABORTED'));
+          delete this.#queued[key as keyof Tasks];
+          break;
+        }
+      }
 
-      const task = this.#tasks[key];
+      // Abort pending task (stored by name)
+      const task = this.#tasks[name];
       if (task?.status === 'pending') {
         task.abort.abort(new StoreError('ABORTED'));
       }
@@ -428,7 +448,8 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       meta,
     };
 
-    this.#tasks[key as keyof Tasks] = pendingTask;
+    // Store tasks by name for controller access (different names can share same key)
+    this.#tasks[name as keyof Tasks] = pendingTask;
     this.#notifySubscribers();
     this.#onDispatch?.(pendingTask);
 
@@ -452,9 +473,9 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
         output: result,
       };
 
-      // Only update if we're still the current task for this key
-      if (this.#tasks[key] === pendingTask) {
-        this.#tasks[key as keyof Tasks] = successTask;
+      // Only update if we're still the current task for this name
+      if (this.#tasks[name as keyof Tasks] === pendingTask) {
+        this.#tasks[name as keyof Tasks] = successTask;
         this.#notifySubscribers();
       }
 
@@ -470,9 +491,9 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
         cancelled: abort.signal.aborted,
       };
 
-      // Only update if we're still the current task for this key
-      if (this.#tasks[key] === pendingTask) {
-        this.#tasks[key as keyof Tasks] = errorTask;
+      // Only update if we're still the current task for this name
+      if (this.#tasks[name as keyof Tasks] === pendingTask) {
+        this.#tasks[name as keyof Tasks] = errorTask;
         this.#notifySubscribers();
       }
 
@@ -506,26 +527,4 @@ export function createQueue<Tasks extends TaskRecord = DefaultTaskRecord>(
   config: QueueConfig<Tasks> = {},
 ): Queue<Tasks> {
   return new Queue<Tasks>(config);
-}
-
-// ----------------------------------------
-// Utilities
-// ----------------------------------------
-
-/**
- * Find a task by its request name.
- *
- * Task keys can differ from request names when a custom key is configured.
- * This utility searches through all tasks to find one matching the given name.
- *
- * @param tasks - The tasks record to search
- * @param name - The request name to find
- * @returns The task if found, undefined otherwise
- */
-export function findTaskByName<Tasks extends TaskRecord>(tasks: TasksRecord<Tasks>, name: string | symbol | number): Task | undefined {
-  for (const task of Object.values(tasks)) {
-    if (task?.name === name) return task;
-  }
-
-  return undefined;
 }
