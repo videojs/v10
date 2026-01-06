@@ -579,12 +579,14 @@ packages/store/src/
 │   │   ├── use-request.ts
 │   │   ├── use-tasks.ts
 │   │   ├── use-mutation.ts
+│   │   ├── use-optimistic.ts   # DONE (PR #291)
 │   │   └── tests/
 │   │       ├── test-utils.ts
 │   │       ├── use-selector.test.tsx
 │   │       ├── use-request.test.tsx
 │   │       ├── use-tasks.test.tsx
-│   │       └── use-mutation.test.tsx
+│   │       ├── use-mutation.test.tsx
+│   │       └── use-optimistic.test.tsx  # DONE (PR #291)
 │   └── index.ts
 └── lit/
     ├── create-store.ts         # DONE (StoreMixin, StoreProviderMixin, StoreAttachMixin, context)
@@ -675,10 +677,11 @@ packages/html/src/
    - Shared types: `MutationResult` discriminated union in `src/shared/types.ts` ✓
    - Hooks split into `src/react/hooks/` directory ✓
 
-7. **Phase 5**: Optimistic Hooks/Controllers
-   - React: `useOptimistic(store, name, stateSelector)` - base hook
-   - Lit: `OptimisticController(host, store, name, stateSelector)`
-   - Shared types: `OptimisticResult` discriminated union
+7. **Phase 5**: Optimistic Hooks/Controllers **[DONE - PR #291]**
+   - React: `useOptimistic(store, name, stateSelector)` - base hook ✓
+   - Lit: `OptimisticController(host, store, name, stateSelector)` - already existed ✓
+   - Shared types: `OptimisticResult` discriminated union in `src/shared/types.ts` ✓
+   - Tests: 13 new tests for React hook ✓
 
 8. **Phase 6**: Skins
    - React skin (Provider, Skin, extendConfig)
@@ -865,10 +868,11 @@ PR #290: Mutation Hooks/Controllers [DONE]
 ├── Hooks split into src/react/hooks/ directory ✓
 └── References #228
 
-PR #291: Optimistic Hooks/Controllers
-├── React: useOptimistic(store, name, stateSelector)
-├── Lit: OptimisticController(host, store, name, stateSelector)
-├── Shared types: OptimisticResult discriminated union
+PR #291: Optimistic Hooks/Controllers [DONE]
+├── React: useOptimistic(store, name, stateSelector) - base hook ✓
+├── Lit: OptimisticController(host, store, name, stateSelector) - already existed ✓
+├── Shared types: OptimisticResult discriminated union in src/shared/types.ts ✓
+├── Tests: 13 new tests for React hook ✓
 └── Closes #228
 
 PR F: Skins
