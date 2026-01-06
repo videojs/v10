@@ -1,0 +1,86 @@
+import { createSlice } from '../../../core/slice';
+import { createStore as createCoreStore } from '../../../core/store';
+
+// Shared mock target for synchronous tests
+export class MockMedia extends EventTarget {
+  volume = 1;
+  muted = false;
+}
+
+// Shared slice for synchronous tests
+export const audioSlice = createSlice<MockMedia>()({
+  initialState: { volume: 1, muted: false },
+  getSnapshot: ({ target }) => ({
+    volume: target.volume,
+    muted: target.muted,
+  }),
+  subscribe: ({ target, update, signal }) => {
+    target.addEventListener('volumechange', update);
+    signal.addEventListener('abort', () => {
+      target.removeEventListener('volumechange', update);
+    });
+  },
+  request: {
+    setVolume: (volume: number, { target }) => {
+      target.volume = volume;
+      target.dispatchEvent(new Event('volumechange'));
+      return volume;
+    },
+    setMuted: (muted: boolean, { target }) => {
+      target.muted = muted;
+      target.dispatchEvent(new Event('volumechange'));
+      return muted;
+    },
+  },
+});
+
+export function createTestStore() {
+  const store = createCoreStore({ slices: [audioSlice] });
+  const target = new MockMedia();
+  store.attach(target);
+  return { store, target };
+}
+
+// Async mock for testing pending states
+export class AsyncMockMedia extends EventTarget {
+  volume = 1;
+  muted = false;
+}
+
+export const asyncAudioSlice = createSlice<AsyncMockMedia>()({
+  initialState: { volume: 1, muted: false },
+  getSnapshot: ({ target }) => ({
+    volume: target.volume,
+    muted: target.muted,
+  }),
+  subscribe: ({ target, update, signal }) => {
+    const handler = () => update();
+    target.addEventListener('volumechange', handler);
+    signal.addEventListener('abort', () => {
+      target.removeEventListener('volumechange', handler);
+    });
+  },
+  request: {
+    setVolume: {
+      handler: async (volume: number, { target }) => {
+        await Promise.resolve();
+        target.volume = volume;
+        target.dispatchEvent(new Event('volumechange'));
+        return volume;
+      },
+    },
+    failingRequest: {
+      handler: async () => {
+        await Promise.resolve();
+        throw new Error('Request failed');
+      },
+    },
+  },
+});
+
+export function createAsyncTestStore() {
+  const store = createCoreStore({ slices: [asyncAudioSlice] });
+  const target = new AsyncMockMedia();
+  store.attach(target);
+  return { store, target };
+}

@@ -14,13 +14,6 @@ export type TaskKey<T = string | symbol> = T & (string | symbol);
 export type EnsureTaskKey<T> = T extends string | symbol ? T : never;
 
 /**
- * Status for async operations (mutations, optimistic updates).
- *
- * Used by framework bindings (React, Lit) for tracking request lifecycle.
- */
-export type AsyncStatus = 'idle' | 'pending' | 'success' | 'error';
-
-/**
  * A task scheduler controls when a task flushes.
  *
  * Returns an optional cancel function.

@@ -222,7 +222,7 @@ describe('createStore', () => {
       const target = new MockMedia();
       store.attach(target);
 
-      const { result } = renderHook(() => useMutation(r => r.setVolume), {
+      const { result } = renderHook(() => useMutation('setVolume'), {
         wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
       });
 
@@ -234,7 +234,9 @@ describe('createStore', () => {
       });
 
       expect(result.current.status).toBe('success');
-      expect(result.current.data).toBe(0.5);
+      if (result.current.status === 'success') {
+        expect(result.current.data).toBe(0.5);
+      }
     });
   });
 });

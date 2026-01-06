@@ -1,23 +1,19 @@
-export type { AsyncStatus } from '../../core/queue';
-
-export { MutationController } from './mutation-controller';
 export type {
+  AsyncStatus,
   MutationError,
   MutationIdle,
   MutationPending,
   MutationResult,
   MutationSuccess,
-} from './mutation-controller';
-
-export { OptimisticController } from './optimistic-controller';
-export type {
   OptimisticError,
   OptimisticIdle,
   OptimisticPending,
   OptimisticResult,
   OptimisticSuccess,
-} from './optimistic-controller';
+} from '../../shared/types';
 
+export { MutationController } from './mutation-controller';
+export { OptimisticController } from './optimistic-controller';
 export { RequestController } from './request-controller';
 export { SelectorController } from './selector-controller';
 export { TasksController } from './tasks-controller';

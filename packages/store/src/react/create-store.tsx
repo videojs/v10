@@ -1,8 +1,9 @@
+import type { EnsureFunction } from '@videojs/utils/types';
 import type { FC, ReactNode } from 'react';
 import type { TasksRecord } from '../core/queue';
 import type { AnySlice, UnionSliceRequests, UnionSliceState, UnionSliceTarget, UnionSliceTasks } from '../core/slice';
 import type { StoreConfig } from '../core/store';
-import type { MutationResult } from './hooks';
+import type { MutationResult } from '../shared/types';
 
 import { isNull, isUndefined } from '@videojs/utils/predicate';
 
@@ -76,12 +77,15 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
   useTasks: () => TasksRecord<UnionSliceTasks<Slices>>;
 
   /**
-   * Returns a mutation function with status tracking.
-   * Subscribes to the queue to track the status of the selected request.
+   * Track a request as a mutation with status, data, and error.
+   * Returns boolean helpers (`isPending`, `isSuccess`, `isError`) for ergonomic use.
    */
-  useMutation: <Selector extends (requests: UnionSliceRequests<Slices>) => (...args: any[]) => any>(
-    selector: Selector,
-  ) => MutationResult<ReturnType<Selector>>;
+  useMutation: <
+    Name extends keyof UnionSliceRequests<Slices>,
+    Mutate extends UnionSliceRequests<Slices>[Name] = UnionSliceRequests<Slices>[Name],
+  >(
+    name: Name,
+  ) => MutationResult<Mutate, Awaited<ReturnType<EnsureFunction<Mutate>>>>;
 
   /**
    * Creates a new store instance.
@@ -189,13 +193,13 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
   }
 
   /**
-   * Returns a mutation function with status tracking.
+   * Track a request as a mutation with status, data, and error.
    */
-  function useMutation<Selector extends (requests: Requests) => (...args: any[]) => any>(
-    selector: Selector,
-  ): MutationResult<ReturnType<Selector>> {
+  function useMutation<Name extends keyof Requests, Mutate extends Requests[Name] = Requests[Name]>(
+    name: Name,
+  ): MutationResult<Mutate, Awaited<ReturnType<EnsureFunction<Mutate>>>> {
     const store = useStore();
-    return useMutationBase(store, selector);
+    return useMutationBase(store, name);
   }
 
   return {

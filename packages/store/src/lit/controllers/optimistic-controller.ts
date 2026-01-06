@@ -2,45 +2,9 @@ import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-e
 import type { EnsureFunction } from '@videojs/utils/types';
 import type { Task } from '../../core/queue';
 import type { AnyStore, InferStoreRequests, InferStoreState } from '../../core/store';
+import type { OptimisticResult } from '../../shared/types';
 
 import { Disposer } from '@videojs/utils/events';
-
-// ----------------------------------------
-// Optimistic Types
-// ----------------------------------------
-
-interface OptimisticBase<Value, SetValue> {
-  value: Value;
-  setValue: SetValue;
-  reset: () => void;
-}
-
-export interface OptimisticIdle<Value, SetValue> extends OptimisticBase<Value, SetValue> {
-  status: 'idle';
-}
-
-export interface OptimisticPending<Value, SetValue> extends OptimisticBase<Value, SetValue> {
-  status: 'pending';
-}
-
-export interface OptimisticSuccess<Value, SetValue> extends OptimisticBase<Value, SetValue> {
-  status: 'success';
-}
-
-export interface OptimisticError<Value, SetValue> extends OptimisticBase<Value, SetValue> {
-  status: 'error';
-  error: unknown;
-}
-
-export type OptimisticResult<Value, SetValue>
-  = | OptimisticIdle<Value, SetValue>
-    | OptimisticPending<Value, SetValue>
-    | OptimisticSuccess<Value, SetValue>
-    | OptimisticError<Value, SetValue>;
-
-// ----------------------------------------
-// Controller
-// ----------------------------------------
 
 /**
  * Shows optimistic value while mutation is pending, actual value otherwise.

@@ -119,15 +119,10 @@ export function resolveRequests<Target, Requests extends { [K in keyof Requests]
       };
     } else {
       resolved[name] = {
-<<<<<<< HEAD
         key: config.key ?? name,
         schedule: config.schedule,
         cancel: config.cancel,
         handler: config.handler,
-=======
-        key: name, // Default key to request name if not specified
-        ...config,
->>>>>>> 95a572e (feat(store): useMutation hook for react)
         guard: config.guard ? (Array.isArray(config.guard) ? config.guard : [config.guard]) : [],
       };
     }

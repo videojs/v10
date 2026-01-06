@@ -1,47 +1,10 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import type { EnsureFunction } from '@videojs/utils/types';
-import type { AsyncStatus, Task } from '../../core/queue';
+import type { Task } from '../../core/queue';
 import type { AnyStore, InferStoreRequests } from '../../core/store';
+import type { MutationResult } from '../../shared/types';
 
 import { noop } from '@videojs/utils/function';
-
-// ----------------------------------------
-// Mutation Types
-// ----------------------------------------
-
-interface MutationBase<Mutate> {
-  status: AsyncStatus;
-  mutate: Mutate;
-  reset: () => void;
-}
-
-export interface MutationIdle<Mutate> extends MutationBase<Mutate> {
-  status: 'idle';
-}
-
-export interface MutationPending<Mutate> extends MutationBase<Mutate> {
-  status: 'pending';
-}
-
-export interface MutationSuccess<Mutate, Data> extends MutationBase<Mutate> {
-  status: 'success';
-  data: Data;
-}
-
-export interface MutationError<Mutate> extends MutationBase<Mutate> {
-  status: 'error';
-  error: unknown;
-}
-
-export type MutationResult<Mutate, Data>
-  = | MutationIdle<Mutate>
-    | MutationPending<Mutate>
-    | MutationSuccess<Mutate, Data>
-    | MutationError<Mutate>;
-
-// ----------------------------------------
-// Controller
-// ----------------------------------------
 
 /**
  * Tracks a mutation's status with discriminated union result.
