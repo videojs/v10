@@ -5,7 +5,7 @@ import {
   createRequestMetaFromEvent,
   isRequestMeta,
   REQUEST_META,
-  resolveRequestCancelKeys,
+  resolveRequestCancel,
   resolveRequestKey,
 } from '../request';
 
@@ -128,22 +128,22 @@ describe('request', () => {
     });
   });
 
-  describe('resolveRequestCancelKeys', () => {
+  describe('resolveRequestCancelNames', () => {
     it('returns empty array for undefined', () => {
-      expect(resolveRequestCancelKeys(undefined, null)).toEqual([]);
+      expect(resolveRequestCancel(undefined, null)).toEqual([]);
     });
 
-    it('wraps single key in array', () => {
-      expect(resolveRequestCancelKeys('key', null)).toEqual(['key']);
+    it('wraps single name in array', () => {
+      expect(resolveRequestCancel('seek', null)).toEqual(['seek']);
     });
 
     it('returns array directly', () => {
-      expect(resolveRequestCancelKeys(['a', 'b'], null)).toEqual(['a', 'b']);
+      expect(resolveRequestCancel(['seek', 'load'], null)).toEqual(['seek', 'load']);
     });
 
     it('calls function with input', () => {
-      const cancelFn = (type: string) => [`${type}-loading`, `${type}-fetch`];
-      expect(resolveRequestCancelKeys(cancelFn, 'video')).toEqual(['video-loading', 'video-fetch']);
+      const cancelFn = (type: string) => [`${type}Loading`, `${type}Fetch`];
+      expect(resolveRequestCancel(cancelFn, 'video')).toEqual(['videoLoading', 'videoFetch']);
     });
   });
 });

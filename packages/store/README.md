@@ -263,26 +263,26 @@ const unsubscribe = store.subscribe((state) => {
 
 // Single value - only fires when volume changes
 store.subscribe(
-  s => s.volume,
-  volume => console.log('Volume:', volume)
+  (s) => s.volume,
+  (volume) => console.log('Volume:', volume)
 );
 
 // Multiple values - auto-optimized with key-based subscription
 store.subscribe(
-  s => ({ volume: s.volume, muted: s.muted }),
+  (s) => ({ volume: s.volume, muted: s.muted }),
   ({ volume, muted }) => updateAudioUI(volume, muted)
 );
 
 // Derived value
 store.subscribe(
-  s => Math.round(s.volume * 100),
-  percent => console.log(`${percent}%`)
+  (s) => Math.round(s.volume * 100),
+  (percent) => console.log(`${percent}%`)
 );
 
 // Custom equality function
 store.subscribe(
-  s => s.playlist,
-  playlist => renderPlaylist(playlist),
+  (s) => s.playlist,
+  (playlist) => renderPlaylist(playlist),
   { equalityFn: shallowEqual }
 );
 ```
@@ -350,13 +350,13 @@ request: {
 
 ### Cancels
 
-Requests can cancel other in-flight requests by key. Cancellation happens immediately when the
+Requests can cancel other in-flight requests by name. Cancellation happens immediately when the
 request is enqueued, before guards or scheduling.
 
 ```ts
 request: {
   stop: {
-    cancel: ['seek', 'preload'],
+    cancel: ['seek', 'preload'],  // Request names to cancel
     handler: (_, { target }) => target.pause(),
   },
 }
@@ -535,7 +535,7 @@ const store = createStore({
   ],
   queue: createQueue({
     // Default scheduler for requests without schedule
-    scheduler: flush => queueMicrotask(flush),
+    scheduler: (flush) => queueMicrotask(flush),
 
     // Lifecycle hooks
     onDispatch: (request) => {
@@ -558,28 +558,28 @@ const store = createStore({
 const queue = store.queue; // accessed on the store
 
 queue.queued; // tasks waiting to execute
-queue.tasks; // task lifecycle map (pending/success/error)
+queue.tasks; // task lifecycle map (pending/success/error) keyed by request name
 
-// Check task status
-queue.isPending('playback'); // true if currently executing
+// Check task status by request name
+queue.isPending('play'); // true if currently executing
 queue.isQueued('seek'); // true if waiting to execute
 queue.isSettled('seek'); // true if completed (success or error)
 
 // Cancel queued tasks (waiting to execute)
-queue.cancel('seek'); // cancel specific
+queue.cancel('seek'); // cancel specific request
 queue.cancel(); // cancel all queued
 
 // Abort tasks (queued + executing)
-queue.abort('playback'); // abort specific
+queue.abort('play'); // abort specific request
 queue.abort(); // abort all
 
 // Clear settled tasks (success/error results)
-queue.reset('seek'); // clear specific
+queue.reset('seek'); // clear specific request
 queue.reset(); // clear all settled
 
 // Execute queued tasks immediately
 queue.flush(); // execute all queued now
-queue.flush('playback'); // execute specific key now
+queue.flush('play'); // execute specific request now
 ```
 
 ### Direct Queue Usage
@@ -621,7 +621,7 @@ const store = createStore({
   slices: [
     /* ... */
   ],
-  state: initial => new VueStateAdapter(initial),
+  state: (initial) => new VueStateAdapter(initial),
 });
 ```
 
