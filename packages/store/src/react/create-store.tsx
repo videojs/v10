@@ -15,9 +15,6 @@ import { useRequest as useRequestBase, useSelector as useSelectorBase, useTasks 
 // Types
 // ----------------------------------------
 
-/**
- * Configuration for `createStore`.
- */
 export interface CreateStoreConfig<Slices extends AnySlice[]> extends StoreConfig<UnionSliceTarget<Slices>, Slices> {
   /**
    * Display name for React DevTools.
@@ -25,9 +22,6 @@ export interface CreateStoreConfig<Slices extends AnySlice[]> extends StoreConfi
   displayName?: string;
 }
 
-/**
- * Props for the Provider component returned by `createStore`.
- */
 export interface ProviderProps<Slices extends AnySlice[]> {
   children: ReactNode;
   /**
@@ -44,9 +38,6 @@ export interface ProviderProps<Slices extends AnySlice[]> {
   inherit?: boolean;
 }
 
-/**
- * Result of `createStore`.
- */
 export interface CreateStoreResult<Slices extends AnySlice[]> {
   /**
    * Provider component that creates and manages the store lifecycle.
@@ -100,21 +91,6 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
  * const { Provider, useStore, useSelector, useRequest, useTasks, create } = createStore({
  *   slices: [playbackSlice, presentationSlice],
  * });
- *
- * function App() {
- *   return (
- *     <Provider>
- *       <Video />
- *       <Controls />
- *     </Provider>
- *   );
- * }
- *
- * function Controls() {
- *   const paused = useSelector((s) => s.paused);
- *   const play = useRequest((r) => r.play);
- *   return <button onClick={() => play()}>{paused ? 'Play' : 'Pause'}</button>;
- * }
  * ```
  */
 export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig<Slices>): CreateStoreResult<Slices> {
@@ -124,9 +100,6 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
   type Tasks = UnionSliceTasks<Slices>;
   type StoreType = Store<Target, Slices>;
 
-  /**
-   * Creates a new store instance.
-   */
   function create(): StoreType {
     return new Store(config);
   }
@@ -174,31 +147,20 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
     Provider.displayName = `${config.displayName}.Provider`;
   }
 
-  /**
-   * Returns the typed store instance from context.
-   */
   function useStore(): StoreType {
     return useStoreContext() as StoreType;
   }
 
-  /**
-   * Subscribes to a selected portion of state.
-   */
   function useSelector<T>(selector: (state: State) => T): T {
     const store = useStore();
     return useSelectorBase(store, selector);
   }
 
-  /**
-   * Returns the request map or a selected request.
-   */
   function useRequest(): Requests;
   function useRequest<T>(selector: (requests: Requests) => T): T;
   function useRequest<T>(selector?: (requests: Requests) => T): Requests | T {
     const store = useStore();
-    // useRequestBase doesn't use React hooks internally, but we always call it
-    // to maintain consistent hook call order (even though it's technically not required)
-    const requests = useRequestBase(store) as Requests;
+    const requests = useRequestBase(store);
 
     if (isUndefined(selector)) {
       return requests;
@@ -207,9 +169,6 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
     return selector(requests);
   }
 
-  /**
-   * Subscribes to task state changes.
-   */
   function useTasks(): TasksRecord<Tasks> {
     const store = useStore();
     return useTasksBase(store);

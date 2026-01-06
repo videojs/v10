@@ -319,7 +319,7 @@ importers:
         specifier: ^26.1.0
         version: 26.1.0
       tsdown:
-        specifier: ^0.15.9
+        specifier: ^0.15.12
         version: 0.15.12(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
@@ -341,7 +341,7 @@ importers:
         version: link:../utils
     devDependencies:
       tsdown:
-        specifier: ^0.15.9
+        specifier: ^0.15.12
         version: 0.15.12(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
@@ -350,7 +350,7 @@ importers:
   packages/icons:
     devDependencies:
       tsdown:
-        specifier: ^0.15.9
+        specifier: ^0.15.12
         version: 0.15.12(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
@@ -375,7 +375,7 @@ importers:
         specifier: ^18.0.0
         version: 18.3.1
       tsdown:
-        specifier: ^0.15.9
+        specifier: ^0.15.12
         version: 0.15.12(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
@@ -409,7 +409,7 @@ importers:
         specifier: ^19.2.1
         version: 19.2.3(react@19.2.3)
       tsdown:
-        specifier: ^0.15.9
+        specifier: ^0.15.12
         version: 0.15.12(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
@@ -421,7 +421,7 @@ importers:
   packages/utils:
     devDependencies:
       tsdown:
-        specifier: ^0.15.9
+        specifier: ^0.15.12
         version: 0.15.12(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3

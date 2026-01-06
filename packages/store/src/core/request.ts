@@ -23,41 +23,23 @@ export type RequestRecord = {
   [K in string]: Request<any, any>;
 };
 
-/**
- * Default loose request types.
- */
 export type DefaultRequestRecord = Record<string, Request>;
 
-/**
- * Context passed to request handlers.
- */
 export interface RequestContext<Target> {
   target: Target;
   signal: AbortSignal;
   meta: RequestMeta | null;
 }
 
-/**
- * Request key - static or derived from input.
- */
 export type RequestKey<Input = unknown> = TaskKey | ((input: Input) => TaskKey);
 
-/**
- * Request cancel config.
- */
 export type RequestCancel<Input = unknown> = TaskKey | TaskKey[] | ((input: Input) => TaskKey | TaskKey[]);
 
-/**
- * Request handler function.
- */
 export type RequestHandler<Target, Input = unknown, Output = unknown> = (
   input: Input,
   ctx: RequestContext<Target>,
 ) => Output | Promise<Output>;
 
-/**
- * Full request config.
- */
 export interface RequestConfig<Target, Input = unknown, Output = unknown> {
   key?: RequestKey<Input>;
   schedule?: TaskScheduler;
@@ -66,9 +48,6 @@ export interface RequestConfig<Target, Input = unknown, Output = unknown> {
   handler: RequestHandler<Target, Input, Output>;
 }
 
-/**
- * Resolved request config (after normalization).
- */
 export interface ResolvedRequestConfig<Target, Input = unknown, Output = unknown> {
   key: RequestKey<Input>;
   schedule?: TaskScheduler | undefined;
@@ -81,19 +60,12 @@ export type RequestHandlerRecord = {
   [K in string]: RequestHandler<any, any, any>;
 };
 
-/**
- * Map of request names to handlers or configs. This is the config passed to `createSlice`.
- */
 export type RequestConfigMap<Target, Requests extends { [K in keyof Requests]: Request<any, any> }> = {
   [K in keyof Requests]: Requests[K] extends Request<infer I, infer O>
     ? RequestHandler<Target, I, O> | RequestConfig<Target, I, O>
     : never;
 };
 
-/**
- * Map of request config objects to resolved configs. This is the config stored internally in
- * the store.
- */
 export type ResolvedRequestConfigMap<Target, Requests extends { [K in keyof Requests]: Request<any, any> }> = {
   [K in keyof Requests]: Requests[K] extends Request<infer I, infer O> ? ResolvedRequestConfig<Target, I, O> : never;
 };
@@ -102,9 +74,6 @@ export type ResolvedRequestConfigMap<Target, Requests extends { [K in keyof Requ
 // Type Inference
 // ----------------------------------------
 
-/**
- * Infer the input type of a RequestHandler.
- */
 export type InferRequestHandlerInput<Handler> = Handler extends () => any
   ? void
   : Handler extends (input: infer I, ctx?: any) => any
@@ -115,25 +84,16 @@ export type InferRequestHandlerInput<Handler> = Handler extends () => any
         ? I
         : void;
 
-/**
- * Infer the output type of a RequestHandler.
- */
 export type InferRequestHandlerOutput<Handler> = Handler extends (...args: any[]) => infer O
   ? Awaited<O>
   : Handler extends { handler: (...args: any[]) => infer O }
     ? Awaited<O>
     : void;
 
-/**
- * Resolve a RequestHandlerRecord to a RequestRecord.
- */
 export type ResolveRequestMap<Requests> = {
   [K in keyof Requests]: Request<InferRequestHandlerInput<Requests[K]>, InferRequestHandlerOutput<Requests[K]>>;
 };
 
-/**
- * Resolve a Request (input/output) to its function signature.
- */
 export type ResolveRequestHandler<R>
   = R extends Request<infer I, infer O>
     ? [I] extends [void]
@@ -203,16 +163,10 @@ export function createRequestMeta<Context = unknown>(init: RequestMetaInit<Conte
   };
 }
 
-/**
- * Check if a value is a RequestMeta object.
- */
 export function isRequestMeta(value: unknown): value is RequestMeta {
   return isObject(value) && REQUEST_META in value;
 }
 
-/**
- * Convert an event-like object to RequestMeta.
- */
 export function createRequestMetaFromEvent<Context = unknown>(
   event: EventLike,
   context?: Context,

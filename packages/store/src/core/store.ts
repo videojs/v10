@@ -30,7 +30,6 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
 
     this.#queue = config.queue ?? new Queue<UnionSliceTasks<Slices>>();
 
-    // Use provided factory or default
     const factory = config.state ?? (initial => new State(initial));
     this.#state = factory(this.#createInitialState());
 
@@ -157,12 +156,10 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     maybeListener?: (selected: Selected) => void,
     options?: SubscribeOptions<Selected>,
   ): () => void {
-    // Full state subscription (single argument)
     if (!maybeListener) {
       return this.#state.subscribe(selectorOrListener);
     }
 
-    // Selector-based subscription
     const selector = selectorOrListener as Selector<UnionSliceState<Slices>, Selected>;
     const listener = maybeListener;
     const equalityFn = options?.equalityFn ?? Object.is;
@@ -176,11 +173,9 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
       }
     };
 
-    // Optimization: use key-based subscription if selector returns object
     const keys = getSelectorKeys(selector, this.#state.value);
 
     if (keys) {
-      // Note: subscribeKeys listener receives full state at runtime, type is narrowed for safety
       return this.#state.subscribeKeys(
         keys as (keyof UnionSliceState<Slices>)[],
         handler as (state: Pick<UnionSliceState<Slices>, keyof UnionSliceState<Slices>>) => void,
@@ -359,19 +354,9 @@ export function createStore<Slices extends AnySlice[]>(
 
 export type AnyStore<Target = any> = Store<Target, AnySlice<Target>[]>;
 
-/**
- * A selector function that extracts a subset of state.
- */
 export type Selector<State, Selected> = (state: State) => Selected;
 
-/**
- * Options for selector-based subscriptions.
- */
 export interface SubscribeOptions<T> {
-  /**
-   * Custom equality function for comparing selected values.
-   * Defaults to `Object.is`.
-   */
   equalityFn?: (a: T, b: T) => boolean;
 }
 

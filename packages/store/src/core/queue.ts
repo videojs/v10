@@ -20,26 +20,14 @@ export type EnsureTaskKey<T> = T extends string | symbol ? T : never;
  */
 export type TaskScheduler = (flush: () => void) => (() => void) | void;
 
-/**
- * Map of task key -> input/output types.
- */
 export type TaskRecord = {
   [K in TaskKey]: Request<any, any>;
 };
 
-/**
- * Default loose task types.
- */
 export type DefaultTaskRecord = Record<TaskKey, Request<unknown, unknown>>;
 
-/**
- * Ensure T is a TaskRecord.
- */
 export type EnsureTaskRecord<T> = T extends TaskRecord ? T : never;
 
-/**
- * Base fields shared by all task states.
- */
 export interface TaskBase<Key extends TaskKey = TaskKey, Input = unknown> {
   id: symbol;
   name: string;
@@ -49,17 +37,11 @@ export interface TaskBase<Key extends TaskKey = TaskKey, Input = unknown> {
   meta: RequestMeta | null;
 }
 
-/**
- * Pending task - request in flight.
- */
 export interface PendingTask<Key extends TaskKey = TaskKey, Input = unknown> extends TaskBase<Key, Input> {
   status: 'pending';
   abort: AbortController;
 }
 
-/**
- * Success task - completed successfully.
- */
 export interface SuccessTask<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown> extends TaskBase<
   Key,
   Input
@@ -69,9 +51,6 @@ export interface SuccessTask<Key extends TaskKey = TaskKey, Input = unknown, Out
   output: Output;
 }
 
-/**
- * Error task - failed or cancelled.
- */
 export interface ErrorTask<Key extends TaskKey = TaskKey, Input = unknown> extends TaskBase<Key, Input> {
   status: 'error';
   settledAt: number;
@@ -79,32 +58,20 @@ export interface ErrorTask<Key extends TaskKey = TaskKey, Input = unknown> exten
   cancelled: boolean;
 }
 
-/**
- * Task with status discriminator.
- */
 export type Task<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown>
   = | PendingTask<Key, Input>
     | SuccessTask<Key, Input, Output>
     | ErrorTask<Key, Input>;
 
-/**
- * Settled task (success or error).
- */
 export type SettledTask<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown>
   = | SuccessTask<Key, Input, Output>
     | ErrorTask<Key, Input>;
 
-/**
- * Context passed to task handler.
- */
 export interface TaskContext<Input = unknown> {
   input: Input;
   signal: AbortSignal;
 }
 
-/**
- * Task to enqueue.
- */
 export interface QueueTask<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown> {
   name: string;
   key: Key;
@@ -114,9 +81,6 @@ export interface QueueTask<Key extends TaskKey = TaskKey, Input = unknown, Outpu
   handler: (ctx: TaskContext<Input>) => Promise<Output>;
 }
 
-/**
- * Queued task waiting to execute.
- */
 interface QueuedTask<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown> {
   id: symbol;
   name: string;
@@ -127,7 +91,6 @@ interface QueuedTask<Key extends TaskKey = TaskKey, Input = unknown, Output = un
   handler: (ctx: TaskContext<Input>) => Promise<Output>;
   resolve: (value: Output) => void;
   reject: (error: unknown) => void;
-  /* Cancel scheduled execution. */
   invalidate?: () => void;
 }
 
@@ -151,18 +114,10 @@ export type QueuedRecord<Tasks extends TaskRecord> = {
   [K in keyof Tasks]?: QueuedTask<TaskKey<K>>;
 };
 
-/**
- * Map of task key -> task (pending, success, or error).
- */
 export type TasksRecord<Tasks extends TaskRecord> = {
   [K in keyof Tasks]?: Task<TaskKey<K>, Tasks[K]['input'], Tasks[K]['output']>;
 };
 
-/**
- * Listener callback for task state changes.
- *
- * Called when tasks are dispatched, settled, or reset.
- */
 export type QueueListener<Tasks extends TaskRecord> = (tasks: TasksRecord<Tasks>) => void;
 
 // ----------------------------------------
@@ -226,9 +181,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     return Object.freeze({ ...this.#queued });
   }
 
-  /**
-   * Map of task key -> task (pending, success, or error).
-   */
   get tasks(): Readonly<TasksRecord<Tasks>> {
     return Object.freeze({ ...this.#tasks });
   }
@@ -237,35 +189,21 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     return this.#destroyed;
   }
 
-  /**
-   * Check if a task with the given key is currently pending (executing).
-   */
   isPending(key: keyof Tasks): boolean {
     return this.#tasks[key]?.status === 'pending';
   }
 
-  /**
-   * Check if a task with the given key is currently queued (waiting to execute).
-   */
   isQueued(key: keyof Tasks): boolean {
     return key in this.#queued;
   }
 
-  /**
-   * Check if a task with the given key is settled (success or error).
-   */
   isSettled(key: keyof Tasks): boolean {
     const task = this.#tasks[key];
     return task?.status === 'success' || task?.status === 'error';
   }
 
   /**
-   * Clear settled task(s).
-   *
-   * - If key provided: clears that specific settled task (no-op if pending or doesn't exist)
-   * - If no key: clears all settled tasks (pending tasks are preserved)
-   *
-   * @param key - Optional task key to reset. If omitted, resets all settled tasks.
+   * Clear settled task(s). If key provided, clears that task. If no key, clears all settled.
    */
   reset(key?: keyof Tasks): void {
     if (!isUndefined(key)) {
@@ -278,7 +216,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       return;
     }
 
-    // Reset all settled tasks
     let cleared = false;
     for (const key of Reflect.ownKeys(this.#tasks)) {
       const task = this.#tasks[key];
@@ -293,14 +230,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     }
   }
 
-  /**
-   * Subscribe to task state changes.
-   *
-   * Fires when tasks are dispatched, settled, or reset.
-   *
-   * @param listener - Callback receiving the current tasks map
-   * @returns Unsubscribe function
-   */
   subscribe(listener: QueueListener<Tasks>): () => void {
     this.#subscribers.add(listener);
     return () => {
@@ -330,19 +259,16 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       return Promise.reject(new StoreError('DESTROYED'));
     }
 
-    // Cancel any queued task with same key
     const queued = this.#queued[key];
     queued?.invalidate?.();
     queued?.reject(new StoreError('SUPERSEDED'));
     delete this.#queued[key];
 
-    // Abort any pending task with same key
     const existing = this.#tasks[key];
     if (existing?.status === 'pending') {
       existing.abort.abort(new StoreError('SUPERSEDED'));
     }
 
-    // Clear any settled task for this key (new request replaces it)
     delete this.#tasks[key];
 
     return new Promise<Tasks[K]['output']>((resolve, reject) => {
@@ -365,7 +291,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       try {
         const scheduleFlush = schedule ?? this.#scheduler;
 
-        // Guard against multiple flushes
         const safeFlush = () => {
           if (flushed) return;
           flushed = true;
@@ -374,7 +299,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
         const cancel = scheduleFlush(safeFlush);
 
-        // Only set invalidate if we haven't already flushed
         if (!flushed && isFunction(cancel)) {
           task.invalidate = cancel;
         }
@@ -389,13 +313,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   }
 
   /**
-   * Cancel queued task(s) waiting to execute.
-   *
-   * - If key provided: cancels that specific queued task
-   * - If no key: cancels all queued tasks
-   *
-   * @param key - Optional task key to cancel
-   * @returns true if any task was cancelled
+   * Cancel queued task(s). If key provided, cancels that task. If no key, cancels all.
    */
   cancel(key?: keyof Tasks): boolean {
     if (!isUndefined(key)) {
@@ -409,7 +327,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       return true;
     }
 
-    // Cancel all queued
     const hadQueued = Object.keys(this.#queued).length > 0;
     for (const queued of Object.values(this.#queued)) {
       queued.invalidate?.();
@@ -427,28 +344,20 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       return;
     }
 
-    // Flush all
     const keys = Reflect.ownKeys(this.#queued);
     await Promise.allSettled(keys.map(k => this.#flushKey(k)));
   }
 
   /**
-   * Abort task(s) - both queued (waiting) and pending (executing).
-   *
-   * - If key provided: aborts that specific task
-   * - If no key: aborts all tasks
-   *
-   * @param key - Optional task key to abort
+   * Abort task(s). If key provided, aborts that task. If no key, aborts all.
    */
   abort(key?: keyof Tasks): void {
     if (!isUndefined(key)) {
-      // Reject queued
       const queued = this.#queued[key];
       queued?.invalidate?.();
       queued?.reject(new StoreError('ABORTED'));
       delete this.#queued[key];
 
-      // Abort pending task
       const task = this.#tasks[key];
       if (task?.status === 'pending') {
         task.abort.abort(new StoreError('ABORTED'));
@@ -457,10 +366,8 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       return;
     }
 
-    // Abort all
     const error = new StoreError('ABORTED');
 
-    // Reject all queued
     for (const queued of Object.values(this.#queued)) {
       queued.invalidate?.();
       queued.reject(error);
@@ -468,7 +375,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
     this.#queued = {};
 
-    // Abort all pending tasks
     for (const task of Object.values(this.#tasks)) {
       if (task?.status === 'pending') {
         task.abort.abort(error);
@@ -540,7 +446,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       };
 
       // Only update if we're still the current task for this key
-      if (this.#tasks[key as keyof Tasks] === pendingTask) {
+      if (this.#tasks[key] === pendingTask) {
         this.#tasks[key as keyof Tasks] = successTask;
         this.#notifySubscribers();
       }
@@ -558,7 +464,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       };
 
       // Only update if we're still the current task for this key
-      if (this.#tasks[key as keyof Tasks] === pendingTask) {
+      if (this.#tasks[key] === pendingTask) {
         this.#tasks[key as keyof Tasks] = errorTask;
         this.#notifySubscribers();
       }

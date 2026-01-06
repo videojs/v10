@@ -199,8 +199,8 @@ Before writing new helpers, check `@videojs/utils` for existing utilities.
 Always return `value is Type` for proper type narrowing:
 
 ```ts
-function isStoreError(error: unknown): error is StoreError {
-  return error instanceof StoreError;
+function isStoreError(value: unknown): value is StoreError {
+  return value instanceof StoreError;
 }
 ```
 
@@ -242,4 +242,85 @@ destroy(): void {
   this.abort();
   this.#subscribers.clear();
 }
+```
+
+### No Hungarian Type Notation
+
+Never prefix type parameters with `T`. Use descriptive names instead:
+
+```ts
+// Bad
+type Mixin<TBase extends Constructor> = ...
+function createStore<TSlices extends AnySlice[]>(...) { ... }
+
+// Good
+type Mixin<Base extends Constructor> = ...
+function createStore<Slices extends AnySlice[]>(...) { ... }
+```
+
+### No Obvious Comments
+
+Don't write comments that restate what the code does. Comments should explain _why_, not _what_:
+
+```ts
+// Bad
+// Create the store
+const store = createStore(config);
+
+// Loop through items
+for (const item of items) { ... }
+
+// Good
+// Create store before rendering to allow pre-hydration
+const store = createStore(config);
+```
+
+### No Pointless Type Casts
+
+Avoid casts that don't add value. If TypeScript can infer the type, don't cast:
+
+```ts
+// Bad - already typed
+const value = someFunction() as SomeType;
+
+// Bad - use generic type argument
+const media = node.querySelector('video, audio') as HTMLMediaElement | null;
+```
+
+### Minimal JSDoc
+
+JSDoc should add value, not restate what TypeScript already shows:
+
+**No redundant @param/@returns** — TypeScript signatures are the documentation:
+
+```ts
+// Bad
+/**
+ * @param callback - The callback to invoke
+ * @returns A cleanup function
+ */
+export function animationFrame(callback: FrameRequestCallback): () => void
+
+// Good
+/** Request an animation frame with cleanup. */
+export function animationFrame(callback: FrameRequestCallback): () => void
+```
+
+**Single JSDoc for overloads** — Document the first overload only:
+
+```ts
+/** Wait for an event to occur on a target. */
+export function onEvent<K extends keyof HTMLMediaElementEventMap>(...): Promise<...>;
+export function onEvent<K extends keyof HTMLElementEventMap>(...): Promise<...>;
+```
+
+**One example per function** — Consolidate into a single representative example.
+
+**No JSDoc for self-documenting code** — Skip JSDoc when names are clear:
+
+```ts
+// No JSDoc needed
+export function supportsIdleCallback(): boolean { ... }
+get size(): number { ... }
+add(cleanup: CleanupFn): void { ... }
 ```

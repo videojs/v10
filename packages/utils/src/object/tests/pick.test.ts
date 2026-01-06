@@ -19,8 +19,8 @@ describe('pick', () => {
   });
 
   it('ignores non-existent keys', () => {
-    const obj = { a: 1, b: 2 } as Record<string, number>;
-    expect(pick(obj, ['a', 'nonexistent'] as (keyof typeof obj)[])).toEqual({ a: 1 });
+    const obj = { a: 1, b: 2 };
+    expect(pick(obj, ['a', 'nonexistent' as keyof typeof obj])).toEqual({ a: 1 });
   });
 
   it('handles nested objects (shallow copy)', () => {

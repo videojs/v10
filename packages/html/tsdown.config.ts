@@ -21,7 +21,5 @@ export default defineConfig({
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
   },
-  dts: {
-    oxc: true,
-  },
+  dts: true,
 });

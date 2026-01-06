@@ -1,29 +1,12 @@
 import { supportsIdleCallback } from './supports';
 
 /**
- * Request an idle callback and return a cleanup function to cancel it.
- *
- * Falls back to `setTimeout` with 1ms delay in environments that don't
- * support `requestIdleCallback` (e.g., Safari).
- *
- * @param callback - The callback to invoke when the browser is idle
- * @param options - Optional idle callback options (timeout, etc.)
- * @returns A cleanup function that cancels the idle callback request
+ * Request an idle callback with cleanup. Falls back to setTimeout for Safari.
  *
  * @example
  * ```ts
- * const cancel = idleCallback((deadline) => {
- *   console.log('Time remaining:', deadline.timeRemaining());
- * });
- *
- * // Later, cancel if needed
- * cancel();
- * ```
- *
- * @example
- * ```ts
- * // With timeout option
  * const cancel = idleCallback(doWork, { timeout: 1000 });
+ * cancel(); // Cancel if needed
  * ```
  */
 export function idleCallback(callback: IdleRequestCallback, options?: IdleRequestOptions): () => void {
