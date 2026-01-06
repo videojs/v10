@@ -11,9 +11,9 @@ import { listen, serializeTimeRanges } from '@videojs/utils/dom';
 export const bufferSlice = createSlice<HTMLMediaElement>()({
   initialState: {
     /** Buffered time ranges as [start, end] tuples. */
-    buffered: [] as Array<[number, number]>,
+    buffered: [] as [number, number][],
     /** Seekable time ranges as [start, end] tuples. */
-    seekable: [] as Array<[number, number]>,
+    seekable: [] as [number, number][],
   },
 
   getSnapshot: ({ target }) => ({

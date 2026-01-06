@@ -15,6 +15,6 @@ export default defineConfig({
     '@': new URL('./src/core', import.meta.url).pathname,
   },
   dts: {
-    oxc: true,
+    incremental: true,
   },
 });

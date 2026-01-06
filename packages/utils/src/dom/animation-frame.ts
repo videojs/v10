@@ -1,17 +1,10 @@
 /**
- * Request an animation frame and return a cleanup function to cancel it.
- *
- * @param callback - The callback to invoke on the next animation frame
- * @returns A cleanup function that cancels the animation frame request
+ * Request an animation frame with cleanup.
  *
  * @example
  * ```ts
- * const cancel = animationFrame((time) => {
- *   console.log('Frame at', time);
- * });
- *
- * // Later, cancel if needed
- * cancel();
+ * const cancel = animationFrame((time) => console.log('Frame at', time));
+ * cancel(); // Cancel if needed
  * ```
  */
 export function animationFrame(callback: FrameRequestCallback): () => void {

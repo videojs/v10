@@ -25,26 +25,15 @@ export type CleanupFn = () => void | Promise<void>;
 export class Disposer {
   #cleanups = new Set<CleanupFn>();
 
-  /**
-   * Number of registered cleanup functions.
-   */
   get size(): number {
     return this.#cleanups.size;
   }
 
-  /**
-   * Add a cleanup function to the collection.
-   */
   add(cleanup: CleanupFn): void {
     this.#cleanups.add(cleanup);
   }
 
-  /**
-   * Run all cleanup functions synchronously.
-   *
-   * Note: If any cleanup functions return promises, they will not be awaited.
-   * Use `disposeAsync()` if you have async cleanup functions.
-   */
+  /** Run all cleanups sync. Use `disposeAsync()` for async cleanups. */
   dispose(): void {
     for (const cleanup of this.#cleanups) {
       cleanup();
@@ -52,9 +41,6 @@ export class Disposer {
     this.#cleanups.clear();
   }
 
-  /**
-   * Run all cleanup functions, awaiting any promises.
-   */
   async disposeAsync(): Promise<void> {
     await Promise.all([...this.#cleanups].map(cleanup => cleanup()));
     this.#cleanups.clear();

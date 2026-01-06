@@ -1,10 +1,6 @@
 /**
  * Wrap a function to catch and handle errors instead of throwing.
  *
- * @param fn - Function to wrap (can be undefined)
- * @param onError - Error handler (defaults to console.error)
- * @returns Wrapped function that never throws, or undefined if fn is undefined
- *
  * @example
  * ```ts
  * const safeFn = tryCatch(riskyFn, (e) => logger.error(e));

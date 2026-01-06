@@ -2,6 +2,7 @@
   "compilerOptions": {
     "incremental": true,
     "composite": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
     "target": "ES2020",
     "lib": ["ES2020"],
     "module": "ESNext",
@@ -25,7 +26,7 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "isolatedDeclarations": true,
+    "isolatedDeclarations": false,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true
