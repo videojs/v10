@@ -67,7 +67,7 @@ export function createStoreProviderMixin<Slices extends AnySlice[]>(
         this.#provider.setValue(newStore);
       }
 
-      override disconnectedCallback(): void {
+      override disconnectedCallback() {
         super.disconnectedCallback();
         if (this.#isOwner && this.#store) {
           this.#store.destroy();

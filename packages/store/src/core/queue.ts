@@ -522,9 +522,10 @@ export function createQueue<Tasks extends TaskRecord = DefaultTaskRecord>(
  * @param name - The request name to find
  * @returns The task if found, undefined otherwise
  */
-export function findTaskByName<Tasks extends TaskRecord>(tasks: TasksRecord<Tasks>, name: string | symbol): Task | undefined {
+export function findTaskByName<Tasks extends TaskRecord>(tasks: TasksRecord<Tasks>, name: string | symbol | number): Task | undefined {
   for (const task of Object.values(tasks)) {
     if (task?.name === name) return task;
   }
+
   return undefined;
 }

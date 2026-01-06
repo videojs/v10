@@ -9,7 +9,6 @@ export type {
 
 export { OptimisticController } from './optimistic-controller';
 export type {
-  AsyncStatus,
   OptimisticError,
   OptimisticIdle,
   OptimisticPending,

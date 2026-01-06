@@ -7,3 +7,5 @@ export type AbstractConstructor<T, Arguments extends unknown[] = any[]> = abstra
 export type Mixin<Base, Result> = <T extends Constructor<Base>>(Base: T) => T & Constructor<Result>;
 
 export type Falsy<T> = T | false | null | undefined;
+
+export type EnsureFunction<T> = T extends (...args: any[]) => any ? T : never;

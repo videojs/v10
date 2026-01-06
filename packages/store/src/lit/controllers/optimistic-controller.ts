@@ -1,9 +1,10 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
-import type { AsyncStatus, Task } from '../../core/queue';
+import type { EnsureFunction } from '@videojs/utils/types';
+import type { Task } from '../../core/queue';
+
 import type { AnyStore, InferStoreRequests, InferStoreState } from '../../core/store';
 
 import { Disposer } from '@videojs/utils/events';
-
 import { findTaskByName } from '../../core/queue';
 
 // ----------------------------------------
@@ -39,9 +40,6 @@ export type OptimisticResult<Value, SetValue>
     | OptimisticSuccess<Value, SetValue>
     | OptimisticError<Value, SetValue>;
 
-// Re-export for convenience
-export type { AsyncStatus };
-
 // ----------------------------------------
 // Controller
 // ----------------------------------------
@@ -72,61 +70,72 @@ export type { AsyncStatus };
  */
 export class OptimisticController<
   Store extends AnyStore,
-  Key extends string & keyof InferStoreRequests<Store>,
+  Key extends keyof InferStoreRequests<Store>,
   Value,
   Request extends InferStoreRequests<Store>[Key] = InferStoreRequests<Store>[Key],
 > implements ReactiveController {
   readonly #host: ReactiveControllerHost;
   readonly #store: Store;
   readonly #key: Key;
-  readonly #stateSelector: (state: InferStoreState<Store>) => Value;
+  readonly #selector: (state: InferStoreState<Store>) => Value;
   readonly #disposer = new Disposer();
 
   #optimistic: { value: Value; taskId: symbol } | null = null;
   #task: Task | undefined;
 
-  constructor(host: ReactiveControllerHost, store: Store, key: Key, stateSelector: (state: InferStoreState<Store>) => Value) {
+  constructor(
+    host: ReactiveControllerHost,
+    store: Store,
+    key: Key,
+    selector: (state: InferStoreState<Store>) => Value,
+  ) {
     this.#host = host;
     this.#store = store;
     this.#key = key;
-    this.#stateSelector = stateSelector;
+    this.#selector = selector;
     this.#task = findTaskByName(store.queue.tasks, key);
     host.addController(this);
   }
 
-  get value(): OptimisticResult<Value, (value: Value) => ReturnType<Request & ((...args: any[]) => any)>> {
-    type SetValue = (value: Value) => ReturnType<Request & ((...args: any[]) => any)>;
-
+  get value(): OptimisticResult<Value, (value: Value) => ReturnType<EnsureFunction<Request>>> {
     const task = this.#task;
-    const actualValue = this.#stateSelector(this.#store.state);
-    const reset = this.#reset;
 
-    // Use optimistic value if pending and we have one
     const isPending = task?.status === 'pending';
-    const value = isPending && this.#optimistic ? this.#optimistic.value : actualValue;
 
-    if (!task) {
-      return { status: 'idle', value, setValue: this.#setValue as SetValue, reset };
+    const value = isPending && this.#optimistic
+      ? this.#optimistic.value
+      : this.#selector(this.#store.state);
+
+    const base = {
+      value,
+      setValue: this.#setValue,
+      reset: this.#reset,
+    };
+
+    if (task?.status === 'error') {
+      return {
+        status: 'error',
+        ...base,
+        error: task.error,
+      };
     }
 
-    switch (task.status) {
-      case 'pending':
-        return { status: 'pending', value, setValue: this.#setValue as SetValue, reset };
-      case 'success':
-        return { status: 'success', value, setValue: this.#setValue as SetValue, reset };
-      case 'error':
-        return { status: 'error', value, setValue: this.#setValue as SetValue, reset, error: task.error };
-    }
+    return {
+      status: task?.status ?? 'idle',
+      ...base,
+    };
   }
 
-  #setValue = (newValue: Value): ReturnType<Request & ((...args: any[]) => any)> => {
-    const pendingTaskId = Symbol('pending');
+  #setValue = (newValue: Value): ReturnType<EnsureFunction<Request>> => {
+    const pendingTaskId = Symbol('@videojs/id');
+
     this.#optimistic = { value: newValue, taskId: pendingTaskId };
     this.#host.requestUpdate();
 
-    const request = (this.#store.request as InferStoreRequests<Store>)[this.#key] as (
+    const request = this.#store.request[this.#key] as (
       value: Value,
-    ) => ReturnType<Request & ((...args: any[]) => any)>;
+    ) => ReturnType<EnsureFunction<Request>>;
+
     const promise = request(newValue);
 
     // After microtask, update taskId to match actual task
@@ -142,37 +151,41 @@ export class OptimisticController<
 
   #reset = (): void => {
     this.#optimistic = null;
-    this.#store.queue.reset(this.#key);
+
+    const task = findTaskByName(this.#store.queue.tasks, this.#key);
+    if (task) this.#store.queue.reset(task.key);
   };
 
-  hostConnected(): void {
+  hostConnected() {
     this.#task = findTaskByName(this.#store.queue.tasks, this.#key);
 
-    this.#disposer.add(this.#store.subscribe(this.#stateSelector, () => {
-      this.#host.requestUpdate();
-    }));
+    this.#disposer.add(
+      this.#store.subscribe(this.#selector, () => this.#host.requestUpdate()),
+    );
 
-    this.#disposer.add(this.#store.queue.subscribe((tasks) => {
-      const newTask = findTaskByName(tasks, this.#key);
-      if (newTask !== this.#task) {
-        this.#task = newTask;
+    this.#disposer.add(
+      this.#store.queue.subscribe((tasks) => {
+        const newTask = findTaskByName(tasks, this.#key);
+        if (newTask !== this.#task) {
+          this.#task = newTask;
 
-        // Clear optimistic value when task settles or changes
-        if (this.#optimistic) {
-          const isPending = newTask?.status === 'pending';
-          const isSameTask = newTask?.id === this.#optimistic.taskId;
+          // Clear optimistic value when task settles or changes
+          if (this.#optimistic) {
+            const isPending = newTask?.status === 'pending';
+            const isSameTask = newTask?.id === this.#optimistic.taskId;
 
-          if (!isPending || !isSameTask) {
-            this.#optimistic = null;
+            if (!isPending || !isSameTask) {
+              this.#optimistic = null;
+            }
           }
-        }
 
-        this.#host.requestUpdate();
-      }
-    }));
+          this.#host.requestUpdate();
+        }
+      }),
+    );
   }
 
-  hostDisconnected(): void {
+  hostDisconnected() {
     this.#disposer.dispose();
   }
 }

@@ -38,7 +38,7 @@ export class TasksController<Store extends AnyStore> implements ReactiveControll
     return this.#value;
   }
 
-  hostConnected(): void {
+  hostConnected() {
     // Sync value on reconnect to avoid stale state
     this.#value = this.#store.queue.tasks;
     this.#unsubscribe = this.#store.queue.subscribe((tasks) => {
@@ -47,7 +47,7 @@ export class TasksController<Store extends AnyStore> implements ReactiveControll
     });
   }
 
-  hostDisconnected(): void {
+  hostDisconnected() {
     this.#unsubscribe?.();
     this.#unsubscribe = noop;
   }

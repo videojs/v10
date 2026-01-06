@@ -1,7 +1,9 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
+import type { EnsureFunction } from '@videojs/utils/types';
 import type { AsyncStatus, Task } from '../../core/queue';
-import type { AnyStore, InferStoreRequests } from '../../core/store';
 
+import type { AnyStore, InferStoreRequests } from '../../core/store';
+import { noop } from '@videojs/utils/function';
 import { findTaskByName } from '../../core/queue';
 
 // ----------------------------------------
@@ -58,9 +60,8 @@ export type MutationResult<Mutate, Data>
  *         @click=${() => mutation.mutate()}
  *         ?disabled=${mutation.status === 'pending'}
  *       >
- *         ${mutation.status === 'pending' ? 'Loading...' : 'Play'}
+ *        ...
  *       </button>
- *       ${mutation.status === 'error' ? html`<span>Error: ${mutation.error}</span>` : ''}
  *     `;
  *   }
  * }
@@ -68,7 +69,7 @@ export type MutationResult<Mutate, Data>
  */
 export class MutationController<
   Store extends AnyStore,
-  Key extends string & keyof InferStoreRequests<Store>,
+  Key extends keyof InferStoreRequests<Store>,
   Mutate extends InferStoreRequests<Store>[Key] = InferStoreRequests<Store>[Key],
 > implements ReactiveController {
   readonly #host: ReactiveControllerHost;
@@ -76,7 +77,7 @@ export class MutationController<
   readonly #key: Key;
 
   #task: Task | undefined;
-  #unsubscribe: (() => void) | null = null;
+  #unsubscribe = noop;
 
   constructor(host: ReactiveControllerHost, store: Store, key: Key) {
     this.#host = host;
@@ -86,32 +87,42 @@ export class MutationController<
     host.addController(this);
   }
 
-  get value(): MutationResult<Mutate, Awaited<ReturnType<Mutate & ((...args: any[]) => any)>>> {
-    type Data = Awaited<ReturnType<Mutate & ((...args: any[]) => any)>>;
-
+  get value(): MutationResult<Mutate, Awaited<ReturnType<EnsureFunction<Mutate>>>> {
     const task = this.#task;
-    const mutate = (this.#store.request as InferStoreRequests<Store>)[this.#key] as Mutate;
-    const reset = this.#reset;
 
-    if (!task) {
-      return { status: 'idle', mutate, reset };
+    const base = {
+      mutate: this.#store.request[this.#key] as Mutate,
+      reset: this.#reset,
+    };
+
+    if (task?.status === 'success') {
+      return {
+        status: 'success',
+        ...base,
+        data: (task.output as any),
+      };
     }
 
-    switch (task.status) {
-      case 'pending':
-        return { status: 'pending', mutate, reset };
-      case 'success':
-        return { status: 'success', mutate, reset, data: task.output as Data };
-      case 'error':
-        return { status: 'error', mutate, reset, error: task.error };
+    if (task?.status === 'error') {
+      return {
+        status: 'error',
+        ...base,
+        error: task.error,
+      };
     }
+
+    return {
+      status: task?.status ?? 'idle',
+      ...base,
+    };
   }
 
-  #reset = (): void => {
-    this.#store.queue.reset(this.#key);
+  #reset = () => {
+    const task = findTaskByName(this.#store.queue.tasks, this.#key);
+    if (task) this.#store.queue.reset(task.key);
   };
 
-  hostConnected(): void {
+  hostConnected() {
     this.#task = findTaskByName(this.#store.queue.tasks, this.#key);
 
     this.#unsubscribe = this.#store.queue.subscribe((tasks) => {
@@ -123,8 +134,8 @@ export class MutationController<
     });
   }
 
-  hostDisconnected(): void {
+  hostDisconnected() {
     this.#unsubscribe?.();
-    this.#unsubscribe = null;
+    this.#unsubscribe = noop;
   }
 }

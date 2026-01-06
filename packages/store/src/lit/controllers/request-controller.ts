@@ -33,5 +33,5 @@ export class RequestController<
   }
 
   // no-op to satisfy `ReactiveController` interface
-  hostConnected(): void {}
+  hostConnected() {}
 }

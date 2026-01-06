@@ -1,5 +1,6 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import type { AnyStore, InferStoreState } from '../../core/store';
+import { noop } from '@videojs/utils/function';
 
 /**
  * Subscribes to a selected portion of store state.
@@ -22,7 +23,7 @@ export class SelectorController<Store extends AnyStore, Value> implements Reacti
   readonly #selector: (state: InferStoreState<Store>) => Value;
 
   #value: Value;
-  #unsubscribe: (() => void) | null = null;
+  #unsubscribe = noop;
 
   constructor(host: ReactiveControllerHost, store: Store, selector: (state: InferStoreState<Store>) => Value) {
     this.#host = host;
@@ -36,7 +37,7 @@ export class SelectorController<Store extends AnyStore, Value> implements Reacti
     return this.#value;
   }
 
-  hostConnected(): void {
+  hostConnected() {
     // Sync value on reconnect to avoid stale state
     this.#value = this.#selector(this.#store.state);
     this.#unsubscribe = this.#store.subscribe(this.#selector, (value) => {
@@ -45,8 +46,8 @@ export class SelectorController<Store extends AnyStore, Value> implements Reacti
     });
   }
 
-  hostDisconnected(): void {
+  hostDisconnected() {
     this.#unsubscribe?.();
-    this.#unsubscribe = null;
+    this.#unsubscribe = noop;
   }
 }

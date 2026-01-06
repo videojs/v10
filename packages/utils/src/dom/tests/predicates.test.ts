@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement } from '../predicates';
 
-describe('dOM predicates', () => {
+describe('DOM predicates', () => {
   describe('isHTMLVideoElement', () => {
     it('returns true for video elements', () => {
       const video = document.createElement('video');

@@ -46,7 +46,7 @@ export function createStoreAttachMixin<Slices extends AnySlice[]>(
         return this.#consumer.value ?? null;
       }
 
-      override connectedCallback(): void {
+      override connectedCallback() {
         super.connectedCallback();
 
         const shadow = this.shadowRoot;
@@ -58,13 +58,13 @@ export function createStoreAttachMixin<Slices extends AnySlice[]>(
         this.#attachMedia();
       }
 
-      override disconnectedCallback(): void {
+      override disconnectedCallback() {
         super.disconnectedCallback();
         this.#disposer.dispose();
         this.#detach();
       }
 
-      #attachMedia(): void {
+      #attachMedia() {
         const store = this.store;
 
         if (isNull(store)) return;
