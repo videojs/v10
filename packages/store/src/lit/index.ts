@@ -6,7 +6,11 @@ export {
   SelectorController,
   TasksController,
 } from './controllers';
-export type { MutationResult, MutationStatus, OptimisticResult } from './controllers';
+export type {
+  AsyncStatus,
+  MutationResult,
+  OptimisticResult,
+} from './controllers';
 
 // createStore factory
 export { createStore } from './create-store';

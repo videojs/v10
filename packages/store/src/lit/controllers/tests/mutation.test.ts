@@ -5,7 +5,7 @@ import { createStore as createCoreStore } from '../../../core/store';
 import { MutationController } from '../mutation';
 import { createMockHost, createTestStore, MockMedia } from './test-utils';
 
-describe('MutationController', () => {
+describe('mutationController', () => {
   it('returns mutation result with idle status initially', () => {
     const { store } = createTestStore();
     const host = createMockHost();
@@ -73,7 +73,7 @@ describe('MutationController', () => {
     controller.hostDisconnected();
 
     const updateCountBefore = host.updateCount;
-    await store.request.setVolume(0.5);
+    await store.request.setVolume!(0.5);
 
     expect(host.updateCount).toBe(updateCountBefore);
   });

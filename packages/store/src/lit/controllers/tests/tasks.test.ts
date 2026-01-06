@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { TasksController } from '../tasks';
 import { createMockHost, createTestStore } from './test-utils';
 
-describe('TasksController', () => {
+describe('tasksController', () => {
   it('returns tasks record', () => {
     const { store } = createTestStore();
     const host = createMockHost();
@@ -31,7 +31,7 @@ describe('TasksController', () => {
 
     expect(controller.value.setVolume).toBeUndefined();
 
-    await store.request.setVolume(0.5);
+    await store.request.setVolume!(0.5);
 
     expect(controller.value.setVolume).toBeDefined();
     expect(controller.value.setVolume?.status).toBe('success');
@@ -47,7 +47,7 @@ describe('TasksController', () => {
     controller.hostDisconnected();
 
     const updateCountBefore = host.updateCount;
-    await store.request.setVolume(0.5);
+    await store.request.setVolume!(0.5);
 
     expect(host.updateCount).toBe(updateCountBefore);
   });
@@ -60,8 +60,8 @@ describe('TasksController', () => {
     controller.hostConnected();
 
     // Fire multiple requests
-    await store.request.setVolume(0.5);
-    await store.request.setMuted(true);
+    await store.request.setVolume!(0.5);
+    await store.request.setMuted!(true);
 
     // Both tasks should be tracked
     expect(controller.value.setVolume).toBeDefined();

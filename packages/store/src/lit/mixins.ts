@@ -236,6 +236,9 @@ export function createStoreMixin<Slices extends AnySlice[]>(
   const AttachMixin = createStoreAttachMixin<Slices>(context);
 
   return <Base extends Constructor<CustomElement>>(BaseClass: Base) => {
+    // ProviderMixin wraps AttachMixin so during connectedCallback:
+    // 1. ProviderMixin runs first (provides store via context)
+    // 2. AttachMixin runs second (consumes store from context)
     return ProviderMixin(AttachMixin(BaseClass));
   };
 }

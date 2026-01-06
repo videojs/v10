@@ -244,6 +244,27 @@ destroy(): void {
 }
 ```
 
+### Cleanup Pattern
+
+Use `Disposer` from `@videojs/utils/events` when managing multiple cleanup functions:
+
+```ts
+import { Disposer } from '@videojs/utils/events';
+
+#disposer = new Disposer();
+
+connect(): void {
+  this.#disposer.add(store.subscribe(...));
+  this.#disposer.add(queue.subscribe(...));
+}
+
+disconnect(): void {
+  this.#disposer.dispose();
+}
+```
+
+For single cleanup, use a simple unsubscribe function.
+
 ### No Hungarian Type Notation
 
 Never prefix type parameters with `T`. Use descriptive names instead:

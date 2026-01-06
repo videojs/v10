@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, expectTypeOf, it } from 'vitest';
 
 import { createSlice } from '../../core/slice';
 import { createStore } from '../create-store';
@@ -313,6 +313,35 @@ describe('lit mixins', () => {
 
       // Should attach only the first one
       expect(el.store.target).toBe(video1);
+    });
+  });
+
+  describe('mixin types', () => {
+    it('storeMixin adds store property', () => {
+      const { StoreMixin } = createStore({ slices: [audioSlice] });
+      const _MixedElement = StoreMixin(HTMLElement);
+      type Instance = InstanceType<typeof _MixedElement>;
+
+      // Verify store property exists on the mixed type
+      expectTypeOf<Instance>().toHaveProperty('store');
+    });
+
+    it('storeProviderMixin adds store property', () => {
+      const { StoreProviderMixin } = createStore({ slices: [audioSlice] });
+      const _MixedElement = StoreProviderMixin(HTMLElement);
+      type Instance = InstanceType<typeof _MixedElement>;
+
+      // Verify store property exists on the mixed type
+      expectTypeOf<Instance>().toHaveProperty('store');
+    });
+
+    it('storeAttachMixin adds store property', () => {
+      const { StoreAttachMixin } = createStore({ slices: [audioSlice] });
+      const _MixedElement = StoreAttachMixin(HTMLElement);
+      type Instance = InstanceType<typeof _MixedElement>;
+
+      // Verify store property exists on the mixed type
+      expectTypeOf<Instance>().toHaveProperty('store');
     });
   });
 });

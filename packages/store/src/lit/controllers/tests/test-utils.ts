@@ -39,8 +39,8 @@ const audioSlice = createSlice<MockMedia>()({
 
 type TestSlice = typeof audioSlice;
 
-export function createTestStore(): { store: Store<[TestSlice]>; target: MockMedia } {
-  const store = createCoreStore({ slices: [audioSlice] as [AnySlice] }) as Store<[TestSlice]>;
+export function createTestStore(): { store: Store<MockMedia, [TestSlice]>; target: MockMedia } {
+  const store = createCoreStore({ slices: [audioSlice] as [AnySlice] }) as Store<MockMedia, [TestSlice]>;
   const target = new MockMedia();
   store.attach(target);
   return { store, target };
