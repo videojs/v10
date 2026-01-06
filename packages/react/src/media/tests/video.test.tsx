@@ -7,7 +7,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { Video } from '../video';
 
 describe('video', () => {
-  // Mock target - simplified media element
   class MockMedia extends EventTarget {
     volume = 1;
     muted = false;
@@ -77,16 +76,20 @@ describe('video', () => {
 
   it('attaches video to store on mount', () => {
     const { Provider, useStore } = createTestStore();
+
     let attachCalled = false;
 
     function TestComponent() {
       const store = useStore();
+
       // Spy on attach
       const originalAttach = store.attach.bind(store);
+
       store.attach = (target) => {
         attachCalled = true;
         return originalAttach(target);
       };
+
       return <Video />;
     }
 

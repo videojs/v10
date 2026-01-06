@@ -46,22 +46,26 @@ export default antfu(
       ...jsxA11y.configs.recommended.rules,
     },
   },
+  // TypeScript files
+  {
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      'ts/no-namespace': 'off',
+    },
+  },
+  // Test files
   {
     files: ['**/*.test.{ts,tsx}'],
     rules: {
       'vitest/prefer-lowercase-title': 'off',
     },
   },
+  // Markdown files
   {
     files: ['**/*.md'],
     rules: {
-      'style/max-len': 'off',
-    },
-  },
-  {
-    files: ['**/*.md/**'],
-    rules: {
       // Disable rules that conflict with documentation code examples in markdown
+      'style/max-len': 'off',
       'ts/no-unsafe-function-type': 'off',
       'ts/method-signature-style': 'off',
       'node/handle-callback-err': 'off',
