@@ -63,7 +63,7 @@ const audioSlice = createSlice<HTMLMediaElement>()({
   }),
 
   subscribe: ({ target, update, signal }) => {
-    target.addEventListener('volumechange', () => update(), { signal });
+    target.addEventListener('volumechange', update, { signal });
   },
 
   request: {
@@ -263,44 +263,37 @@ const unsubscribe = store.subscribe((state) => {
 
 // Single value - only fires when volume changes
 store.subscribe(
-  (s) => s.volume,
-  (volume) => console.log('Volume:', volume)
+  s => s.volume,
+  volume => console.log('Volume:', volume)
 );
 
 // Multiple values - auto-optimized with key-based subscription
 store.subscribe(
-  (s) => ({ volume: s.volume, muted: s.muted }),
+  s => ({ volume: s.volume, muted: s.muted }),
   ({ volume, muted }) => updateAudioUI(volume, muted)
 );
 
 // Derived value
 store.subscribe(
-  (s) => Math.round(s.volume * 100),
-  (percent) => console.log(`${percent}%`)
+  s => Math.round(s.volume * 100),
+  percent => console.log(`${percent}%`)
 );
 
 // Custom equality function
 store.subscribe(
-  (s) => s.playlist,
-  (playlist) => renderPlaylist(playlist),
+  s => s.playlist,
+  playlist => renderPlaylist(playlist),
   { equalityFn: shallowEqual }
 );
 ```
 
-Slices can push partial updates to avoid full syncs:
+Slices sync state from the target via `getSnapshot`. The `update` callback triggers a sync, and the store only notifies subscribers for keys that actually changed:
 
 ```ts
 subscribe: ({ target, update, signal }) => {
-  // Partial - only update currentTime
-  target.addEventListener(
-    'timeupdate',
-    () => {
-      update({ currentTime: target.currentTime });
-    },
-    { signal }
-  );
-
-  // Full sync
+  // Each event triggers a full sync via getSnapshot
+  // Only changed keys notify their subscribers
+  target.addEventListener('timeupdate', update, { signal });
   target.addEventListener('durationchange', update, { signal });
 };
 ```
@@ -542,7 +535,7 @@ const store = createStore({
   ],
   queue: createQueue({
     // Default scheduler for requests without schedule
-    scheduler: (flush) => queueMicrotask(flush),
+    scheduler: flush => queueMicrotask(flush),
 
     // Lifecycle hooks
     onDispatch: (request) => {
@@ -628,7 +621,7 @@ const store = createStore({
   slices: [
     /* ... */
   ],
-  state: (initial) => new VueStateAdapter(initial),
+  state: initial => new VueStateAdapter(initial),
 });
 ```
 

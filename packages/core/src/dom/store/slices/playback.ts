@@ -28,12 +28,11 @@ export const playbackSlice = createSlice<HTMLMediaElement>()({
   }),
 
   subscribe: ({ target, update, signal }) => {
-    const sync = () => update();
-    listen(target, 'play', sync, { signal });
-    listen(target, 'pause', sync, { signal });
-    listen(target, 'ended', sync, { signal });
-    listen(target, 'playing', sync, { signal });
-    listen(target, 'waiting', sync, { signal });
+    listen(target, 'play', update, { signal });
+    listen(target, 'pause', update, { signal });
+    listen(target, 'ended', update, { signal });
+    listen(target, 'playing', update, { signal });
+    listen(target, 'waiting', update, { signal });
   },
 
   request: {

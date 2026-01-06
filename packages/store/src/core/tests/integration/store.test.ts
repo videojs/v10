@@ -15,7 +15,7 @@ describe('store lifecycle integration', () => {
       getSnapshot: ({ target }) => ({ count: target.value }),
       subscribe: ({ target, update, signal }) => {
         events.push('subscribe');
-        target.addEventListener('change', () => update(), { signal });
+        target.addEventListener('change', update, { signal });
         signal.addEventListener('abort', () => events.push('unsubscribe'));
       },
       request: {
@@ -231,7 +231,7 @@ describe('request coordination', () => {
 });
 
 describe('state syncing', () => {
-  it('partial updates only trigger relevant subscriptions', async () => {
+  it('updates only trigger subscriptions for changed keys', async () => {
     const volumeUpdates: number[] = [];
     const mutedUpdates: boolean[] = [];
 
@@ -250,21 +250,8 @@ describe('state syncing', () => {
         muted: target.muted,
       }),
       subscribe: ({ target, update, signal }) => {
-        target.addEventListener(
-          'volumechange',
-          () => {
-            update({ volume: target.volume });
-          },
-          { signal },
-        );
-
-        target.addEventListener(
-          'mutechange',
-          () => {
-            update({ muted: target.muted });
-          },
-          { signal },
-        );
+        target.addEventListener('volumechange', update, { signal });
+        target.addEventListener('mutechange', update, { signal });
       },
       request: {
         setVolume: (volume: number, { target }) => {

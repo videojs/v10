@@ -22,11 +22,10 @@ export const sourceSlice = createSlice<HTMLMediaElement>()({
   }),
 
   subscribe: ({ target, update, signal }) => {
-    const sync = () => update();
-    listen(target, 'canplay', sync, { signal });
-    listen(target, 'canplaythrough', sync, { signal });
-    listen(target, 'loadstart', sync, { signal });
-    listen(target, 'emptied', sync, { signal });
+    listen(target, 'canplay', update, { signal });
+    listen(target, 'canplaythrough', update, { signal });
+    listen(target, 'loadstart', update, { signal });
+    listen(target, 'emptied', update, { signal });
   },
 
   request: {

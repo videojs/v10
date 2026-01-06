@@ -20,10 +20,9 @@ describe('react hooks', () => {
       muted: target.muted,
     }),
     subscribe: ({ target, update, signal }) => {
-      const handler = () => update();
-      target.addEventListener('volumechange', handler);
+      target.addEventListener('volumechange', update);
       signal.addEventListener('abort', () => {
-        target.removeEventListener('volumechange', handler);
+        target.removeEventListener('volumechange', update);
       });
     },
     request: {

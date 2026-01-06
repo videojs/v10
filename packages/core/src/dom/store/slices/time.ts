@@ -22,12 +22,11 @@ export const timeSlice = createSlice<HTMLMediaElement>()({
   }),
 
   subscribe: ({ target, update, signal }) => {
-    const sync = () => update();
-    listen(target, 'timeupdate', sync, { signal });
-    listen(target, 'durationchange', sync, { signal });
-    listen(target, 'seeked', sync, { signal });
-    listen(target, 'loadedmetadata', sync, { signal });
-    listen(target, 'emptied', sync, { signal });
+    listen(target, 'timeupdate', update, { signal });
+    listen(target, 'durationchange', update, { signal });
+    listen(target, 'seeked', update, { signal });
+    listen(target, 'loadedmetadata', update, { signal });
+    listen(target, 'emptied', update, { signal });
   },
 
   request: {
