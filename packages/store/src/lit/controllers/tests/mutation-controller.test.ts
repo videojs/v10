@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createSlice } from '../../../core/slice';
 import { createStore as createCoreStore } from '../../../core/store';
-import { createCoreTestStore, createMockHost, MockMedia } from '../../tests/test-utils';
+import { createCoreTestStore, createCustomKeyTestStore, createMockHost, MockMedia } from '../../tests/test-utils';
 import { MutationController } from '../mutation-controller';
 
 describe('MutationController', () => {
@@ -114,5 +114,136 @@ describe('MutationController', () => {
       expect(controller.value.error).toBeInstanceOf(Error);
       expect((controller.value.error as Error).message).toBe('Test error');
     }
+  });
+
+  it('tracks pending status while mutation is in flight', async () => {
+    const { store } = createCoreTestStore();
+    const host = createMockHost();
+
+    const controller = new MutationController(host, store, 'slowSetVolume');
+    controller.hostConnected();
+
+    const promise = controller.value.mutate(0.5);
+
+    // Wait for task to start
+    await new Promise(resolve => setTimeout(resolve, 10));
+
+    expect(controller.value.status).toBe('pending');
+
+    await promise;
+
+    expect(controller.value.status).toBe('success');
+  });
+
+  it('syncs state on reconnect after disconnect', async () => {
+    const { store } = createCoreTestStore();
+    const host = createMockHost();
+
+    const controller = new MutationController(host, store, 'setVolume');
+    controller.hostConnected();
+
+    await controller.value.mutate(0.5);
+    expect(controller.value.status).toBe('success');
+
+    controller.hostDisconnected();
+
+    // Trigger another mutation while disconnected
+    await store.request.setVolume!(0.8);
+
+    // Reconnect - should sync to current task state
+    controller.hostConnected();
+
+    expect(controller.value.status).toBe('success');
+  });
+
+  describe('custom key (name !== key)', () => {
+    it('tracks task by name when key differs', async () => {
+      const { store } = createCustomKeyTestStore();
+      const host = createMockHost();
+
+      // adjustVolume has name='adjustVolume' but key='audio-settings'
+      const controller = new MutationController(host, store, 'adjustVolume');
+      controller.hostConnected();
+
+      const promise = controller.value.mutate(0.5);
+
+      // Wait for task to start
+      await new Promise(resolve => setTimeout(resolve, 5));
+
+      expect(controller.value.status).toBe('pending');
+
+      await promise;
+
+      expect(controller.value.status).toBe('success');
+      if (controller.value.status === 'success') {
+        expect(controller.value.data).toBe(0.5);
+      }
+    });
+
+    it('tracks correct task when multiple requests share same key', async () => {
+      const { store } = createCustomKeyTestStore();
+      const hostVolume = createMockHost();
+      const hostMute = createMockHost();
+
+      // Both adjustVolume and toggleMute have key='audio-settings'
+      const volumeController = new MutationController(hostVolume, store, 'adjustVolume');
+      const muteController = new MutationController(hostMute, store, 'toggleMute');
+      volumeController.hostConnected();
+      muteController.hostConnected();
+
+      // Start volume adjustment
+      const volumePromise = volumeController.value.mutate(0.5);
+
+      await new Promise(resolve => setTimeout(resolve, 5));
+
+      // Volume controller should be pending
+      expect(volumeController.value.status).toBe('pending');
+      // Mute controller should be idle (different name, even though same key)
+      expect(muteController.value.status).toBe('idle');
+
+      await volumePromise;
+
+      expect(volumeController.value.status).toBe('success');
+      expect(muteController.value.status).toBe('idle');
+    });
+
+    it('superseding removes task so controller shows idle', async () => {
+      const { store } = createCustomKeyTestStore();
+      const hostVolume = createMockHost();
+      const hostMute = createMockHost();
+
+      const volumeController = new MutationController(hostVolume, store, 'adjustVolume');
+      const muteController = new MutationController(hostMute, store, 'toggleMute');
+      volumeController.hostConnected();
+      muteController.hostConnected();
+
+      // Start volume adjustment
+      const volumePromise = volumeController.value.mutate(0.5);
+
+      await new Promise(resolve => setTimeout(resolve, 5));
+
+      // Start mute toggle - this will supersede volume because same key
+      const mutePromise = muteController.value.mutate(true);
+
+      // Wait for superseding to happen
+      await new Promise(resolve => setTimeout(resolve, 5));
+
+      // Volume task was superseded and removed from tasks record
+      // findTaskByName returns undefined, so controller shows idle
+      try {
+        await volumePromise;
+      } catch {
+        // Expected - task was superseded
+      }
+
+      // Superseded task is removed, so controller shows idle (not error)
+      // because the task record is keyed by `key`, not `name`
+      expect(volumeController.value.status).toBe('idle');
+      expect(muteController.value.status).toBe('pending');
+
+      await mutePromise;
+
+      expect(muteController.value.status).toBe('success');
+    });
   });
 });

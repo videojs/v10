@@ -1,8 +1,8 @@
-import { ReactiveElement } from '@lit/reactive-element';
 import { describe, expect, it } from 'vitest';
 
 import { createSlice } from '../../core/slice';
 import { createStore } from '../create-store';
+import { TestBaseElement } from './test-utils';
 
 describe('createStore', () => {
   // Mock target
@@ -54,11 +54,12 @@ describe('createStore', () => {
   });
 
   describe('context', () => {
-    it('returns a unique context per createStore call', () => {
+    it('contexts share the same key for interoperability', () => {
       const result1 = createStore({ slices: [audioSlice] });
       const result2 = createStore({ slices: [audioSlice] });
 
-      expect(result1.context).not.toBe(result2.context);
+      // Contexts use a shared key so different store configurations can interoperate
+      expect(result1.context).toBe(result2.context);
     });
 
     it('context is defined', () => {
@@ -87,16 +88,16 @@ describe('createStore', () => {
       expect(typeof StoreAttachMixin).toBe('function');
     });
 
-    it('mixins can be applied to ReactiveElement', () => {
+    it('mixins can be applied to TestBaseElement', () => {
       const { StoreMixin, StoreProviderMixin, StoreAttachMixin } = createStore({ slices: [audioSlice] });
 
-      const Mixed1 = StoreMixin(ReactiveElement);
-      const Mixed2 = StoreProviderMixin(ReactiveElement);
-      const Mixed3 = StoreAttachMixin(ReactiveElement);
+      const Mixed1 = StoreMixin(TestBaseElement);
+      const Mixed2 = StoreProviderMixin(TestBaseElement);
+      const Mixed3 = StoreAttachMixin(TestBaseElement);
 
-      expect(Mixed1.prototype).toBeInstanceOf(ReactiveElement);
-      expect(Mixed2.prototype).toBeInstanceOf(ReactiveElement);
-      expect(Mixed3.prototype).toBeInstanceOf(ReactiveElement);
+      expect(Mixed1.prototype).toBeInstanceOf(TestBaseElement);
+      expect(Mixed2.prototype).toBeInstanceOf(TestBaseElement);
+      expect(Mixed3.prototype).toBeInstanceOf(TestBaseElement);
     });
   });
 

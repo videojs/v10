@@ -69,4 +69,26 @@ describe('TasksController', () => {
     expect(controller.value.setVolume?.status).toBe('success');
     expect(controller.value.setMuted?.status).toBe('success');
   });
+
+  it('syncs to current tasks on reconnect', async () => {
+    const { store } = createCoreTestStore();
+    const host = createMockHost();
+
+    const controller = new TasksController(host, store);
+    controller.hostConnected();
+
+    await store.request.setVolume!(0.5);
+    expect(controller.value.setVolume?.status).toBe('success');
+
+    controller.hostDisconnected();
+
+    // Trigger another task while disconnected
+    await store.request.setMuted!(true);
+
+    // Reconnect - should sync to current tasks
+    controller.hostConnected();
+
+    expect(controller.value.setVolume?.status).toBe('success');
+    expect(controller.value.setMuted?.status).toBe('success');
+  });
 });

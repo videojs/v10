@@ -1,7 +1,6 @@
-import { ReactiveElement } from '@lit/reactive-element';
-
 import { describe, expect, it } from 'vitest';
-import { createLitTestStore, setupDomCleanup, uniqueTag } from '../../tests/test-utils';
+
+import { createLitTestStore, setupDomCleanup, TestBaseElement, uniqueTag } from '../../tests/test-utils';
 
 setupDomCleanup();
 
@@ -10,7 +9,7 @@ describe('createStoreAttachMixin', () => {
     const { StoreAttachMixin } = createLitTestStore();
     const tagName = uniqueTag('test-attach-standalone');
 
-    class TestElement extends StoreAttachMixin(ReactiveElement) {}
+    class TestElement extends StoreAttachMixin(TestBaseElement) {}
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
@@ -21,11 +20,11 @@ describe('createStoreAttachMixin', () => {
     expect(el.store).toBeNull();
   });
 
-  it('can be applied to ReactiveElement', () => {
+  it('can be applied to TestBaseElement', () => {
     const { StoreAttachMixin } = createLitTestStore();
 
-    class MixedElement extends StoreAttachMixin(ReactiveElement) {}
+    class MixedElement extends StoreAttachMixin(TestBaseElement) {}
 
-    expect(MixedElement.prototype).toBeInstanceOf(ReactiveElement);
+    expect(MixedElement.prototype).toBeInstanceOf(TestBaseElement);
   });
 });

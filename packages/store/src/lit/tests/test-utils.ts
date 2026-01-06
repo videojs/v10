@@ -2,11 +2,16 @@ import type { ReactiveControllerHost } from '@lit/reactive-element';
 import type { AnySlice } from '../../core/slice';
 import type { Store } from '../../core/store';
 
+import { ReactiveElement } from '@lit/reactive-element';
+
 import { afterEach } from 'vitest';
 
 import { createSlice } from '../../core/slice';
 import { createStore as createCoreStore } from '../../core/store';
 import { createStore as createLitStore } from '../create-store';
+
+/** Concrete base class for mixin tests (ReactiveElement is abstract). */
+export class TestBaseElement extends ReactiveElement {}
 
 export class MockMedia extends EventTarget {
   volume = 1;
@@ -37,14 +42,67 @@ export const audioSlice = createSlice<MockMedia>()({
       target.dispatchEvent(new Event('volumechange'));
       return muted;
     },
+    slowSetVolume: async (volume: number, { target }): Promise<number> => {
+      await new Promise(resolve => setTimeout(resolve, 50));
+      target.volume = volume;
+      target.dispatchEvent(new Event('volumechange'));
+      return volume;
+    },
+  },
+});
+
+/** Slice with custom keys (name !== key) for testing findTaskByName behavior. */
+export const customKeySlice = createSlice<MockMedia>()({
+  initialState: { volume: 1, muted: false },
+  getSnapshot: ({ target }) => ({
+    volume: target.volume,
+    muted: target.muted,
+  }),
+  subscribe: ({ target, update, signal }) => {
+    const handler = () => update();
+    target.addEventListener('volumechange', handler);
+    signal.addEventListener('abort', () => {
+      target.removeEventListener('volumechange', handler);
+    });
+  },
+  request: {
+    // name='adjustVolume', key='audio-settings'
+    adjustVolume: {
+      key: 'audio-settings',
+      handler: async (volume: number, { target }): Promise<number> => {
+        await new Promise(resolve => setTimeout(resolve, 20));
+        target.volume = volume;
+        target.dispatchEvent(new Event('volumechange'));
+        return volume;
+      },
+    },
+    // name='toggleMute', key='audio-settings' (same key - will supersede adjustVolume)
+    toggleMute: {
+      key: 'audio-settings',
+      handler: async (muted: boolean, { target }): Promise<boolean> => {
+        await new Promise(resolve => setTimeout(resolve, 20));
+        target.muted = muted;
+        target.dispatchEvent(new Event('volumechange'));
+        return muted;
+      },
+    },
   },
 });
 
 type TestSlice = typeof audioSlice;
+type CustomKeySlice = typeof customKeySlice;
 
 // For controller tests - creates core store with attached target
 export function createCoreTestStore(): { store: Store<MockMedia, [TestSlice]>; target: MockMedia } {
   const store = createCoreStore({ slices: [audioSlice] as [AnySlice] }) as Store<MockMedia, [TestSlice]>;
+  const target = new MockMedia();
+  store.attach(target);
+  return { store, target };
+}
+
+/** Creates store with custom key slice (name !== key) for testing findTaskByName. */
+export function createCustomKeyTestStore(): { store: Store<MockMedia, [CustomKeySlice]>; target: MockMedia } {
+  const store = createCoreStore({ slices: [customKeySlice] as [AnySlice] }) as Store<MockMedia, [CustomKeySlice]>;
   const target = new MockMedia();
   store.attach(target);
   return { store, target };

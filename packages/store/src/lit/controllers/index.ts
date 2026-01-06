@@ -1,3 +1,5 @@
+export type { AsyncStatus } from '../../core/queue';
+
 export { MutationController } from './mutation-controller';
 export type {
   MutationError,

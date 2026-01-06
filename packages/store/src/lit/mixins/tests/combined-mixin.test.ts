@@ -1,14 +1,13 @@
-import { ReactiveElement } from '@lit/reactive-element';
 import { describe, expect, it } from 'vitest';
 
-import { createLitTestStore, setupDomCleanup, uniqueTag } from '../../tests/test-utils';
+import { createLitTestStore, setupDomCleanup, TestBaseElement, uniqueTag } from '../../tests/test-utils';
 
 setupDomCleanup();
 
-// Helper to create shadow root with slot
+// Helper to create shadow root with named media slot
 function createShadowWithSlot(el: HTMLElement): void {
   const shadow = el.attachShadow({ mode: 'open' });
-  shadow.innerHTML = '<slot></slot>';
+  shadow.innerHTML = '<slot name="media"></slot>';
 }
 
 describe('createStoreMixin', () => {
@@ -16,7 +15,7 @@ describe('createStoreMixin', () => {
     const { StoreMixin } = createLitTestStore();
     const tagName = uniqueTag('test-combined');
 
-    class TestElement extends StoreMixin(ReactiveElement) {
+    class TestElement extends StoreMixin(TestBaseElement) {
       override createRenderRoot() {
         createShadowWithSlot(this);
         return this.shadowRoot!;
@@ -36,7 +35,7 @@ describe('createStoreMixin', () => {
     const { StoreMixin } = createLitTestStore();
     const tagName = uniqueTag('test-auto-attach');
 
-    class TestElement extends StoreMixin(ReactiveElement) {
+    class TestElement extends StoreMixin(TestBaseElement) {
       override createRenderRoot() {
         createShadowWithSlot(this);
         return this.shadowRoot!;
@@ -46,6 +45,7 @@ describe('createStoreMixin', () => {
 
     const el = document.createElement(tagName) as TestElement;
     const video = document.createElement('video');
+    video.slot = 'media';
     el.appendChild(video);
     document.body.appendChild(el);
     await el.updateComplete;
@@ -60,7 +60,7 @@ describe('createStoreMixin', () => {
     const { StoreMixin } = createLitTestStore();
     const tagName = uniqueTag('test-light-dom');
 
-    class TestElement extends StoreMixin(ReactiveElement) {
+    class TestElement extends StoreMixin(TestBaseElement) {
       override createRenderRoot() {
         return this; // Use light DOM
       }
@@ -83,7 +83,7 @@ describe('createStoreMixin', () => {
     const { StoreMixin } = createLitTestStore();
     const tagName = uniqueTag('test-nested');
 
-    class TestElement extends StoreMixin(ReactiveElement) {
+    class TestElement extends StoreMixin(TestBaseElement) {
       override createRenderRoot() {
         createShadowWithSlot(this);
         return this.shadowRoot!;
@@ -93,6 +93,7 @@ describe('createStoreMixin', () => {
 
     const el = document.createElement(tagName) as TestElement;
     const wrapper = document.createElement('div');
+    wrapper.slot = 'media';
     const video = document.createElement('video');
     wrapper.appendChild(video);
     el.appendChild(wrapper);
@@ -109,7 +110,7 @@ describe('createStoreMixin', () => {
     const { StoreMixin } = createLitTestStore();
     const tagName = uniqueTag('test-audio');
 
-    class TestElement extends StoreMixin(ReactiveElement) {
+    class TestElement extends StoreMixin(TestBaseElement) {
       override createRenderRoot() {
         createShadowWithSlot(this);
         return this.shadowRoot!;
@@ -119,6 +120,7 @@ describe('createStoreMixin', () => {
 
     const el = document.createElement(tagName) as TestElement;
     const audio = document.createElement('audio');
+    audio.slot = 'media';
     el.appendChild(audio);
     document.body.appendChild(el);
     await el.updateComplete;
@@ -133,7 +135,7 @@ describe('createStoreMixin', () => {
     const { StoreMixin } = createLitTestStore();
     const tagName = uniqueTag('test-multiple-media');
 
-    class TestElement extends StoreMixin(ReactiveElement) {
+    class TestElement extends StoreMixin(TestBaseElement) {
       override createRenderRoot() {
         createShadowWithSlot(this);
         return this.shadowRoot!;
@@ -143,7 +145,9 @@ describe('createStoreMixin', () => {
 
     const el = document.createElement(tagName) as TestElement;
     const video1 = document.createElement('video');
+    video1.slot = 'media';
     const video2 = document.createElement('video');
+    video2.slot = 'media';
     el.appendChild(video1);
     el.appendChild(video2);
     document.body.appendChild(el);

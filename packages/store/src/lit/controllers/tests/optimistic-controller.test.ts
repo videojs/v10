@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { createCoreTestStore, createMockHost } from '../../tests/test-utils';
+import { createSlice } from '../../../core/slice';
+import { createStore as createCoreStore } from '../../../core/store';
+import { createCoreTestStore, createCustomKeyTestStore, createMockHost, MockMedia } from '../../tests/test-utils';
 import { OptimisticController } from '../optimistic-controller';
 
 describe('OptimisticController', () => {
@@ -86,5 +88,213 @@ describe('OptimisticController', () => {
     target.dispatchEvent(new Event('volumechange'));
 
     expect(host.updateCount).toBe(updateCountBefore);
+  });
+
+  it('shows optimistic value immediately while pending', async () => {
+    const { store } = createCoreTestStore();
+    const host = createMockHost();
+
+    const controller = new OptimisticController(host, store, 'slowSetVolume', s => s.volume);
+    controller.hostConnected();
+
+    const promise = controller.value.setValue(0.3);
+
+    // Optimistic value shown immediately
+    expect(controller.value.value).toBe(0.3);
+    expect(host.updateCount).toBeGreaterThan(0);
+
+    // Wait for task to start
+    await new Promise(resolve => setTimeout(resolve, 10));
+    expect(controller.value.status).toBe('pending');
+    expect(controller.value.value).toBe(0.3);
+
+    await promise;
+
+    // After completion, shows actual value
+    expect(controller.value.status).toBe('success');
+    expect(controller.value.value).toBe(0.3);
+  });
+
+  it('reverts to actual value on error', async () => {
+    const host = createMockHost();
+
+    const failingSlice = createSlice<MockMedia>()({
+      initialState: { volume: 1, muted: false },
+      getSnapshot: ({ target }) => ({
+        volume: target.volume,
+        muted: target.muted,
+      }),
+      subscribe: () => {},
+      request: {
+        failingSetVolume: async () => {
+          await new Promise(resolve => setTimeout(resolve, 10));
+          throw new Error('Test error');
+        },
+      },
+    });
+
+    const failingStore = createCoreStore({ slices: [failingSlice] });
+    const target = new MockMedia();
+    failingStore.attach(target);
+
+    const controller = new OptimisticController(host, failingStore, 'failingSetVolume', s => s.volume);
+    controller.hostConnected();
+
+    const promise = controller.value.setValue(0.5);
+
+    // Optimistic value shown immediately
+    expect(controller.value.value).toBe(0.5);
+
+    try {
+      await promise;
+    } catch {
+      // Expected
+    }
+
+    // After error, shows actual value (reverted)
+    expect(controller.value.status).toBe('error');
+    expect(controller.value.value).toBe(1); // Original value
+    if (controller.value.status === 'error') {
+      expect(controller.value.error).toBeInstanceOf(Error);
+    }
+  });
+
+  it('handles rapid setValue calls (superseding)', async () => {
+    const { store } = createCoreTestStore();
+    const host = createMockHost();
+
+    const controller = new OptimisticController(host, store, 'slowSetVolume', s => s.volume);
+    controller.hostConnected();
+
+    // Fire multiple rapid calls
+    const promise1 = controller.value.setValue(0.3);
+    const promise2 = controller.value.setValue(0.5);
+    const promise3 = controller.value.setValue(0.7);
+
+    // Should show latest optimistic value
+    expect(controller.value.value).toBe(0.7);
+
+    // First two get superseded
+    await expect(promise1).rejects.toMatchObject({ code: 'SUPERSEDED' });
+    await expect(promise2).rejects.toMatchObject({ code: 'SUPERSEDED' });
+    await promise3;
+
+    expect(controller.value.status).toBe('success');
+    expect(controller.value.value).toBe(0.7);
+  });
+
+  it('reset when already idle is safe', () => {
+    const { store } = createCoreTestStore();
+    const host = createMockHost();
+
+    const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);
+    controller.hostConnected();
+
+    expect(controller.value.status).toBe('idle');
+
+    // Reset when idle should not throw
+    controller.value.reset();
+
+    expect(controller.value.status).toBe('idle');
+    expect(controller.value.value).toBe(1);
+  });
+
+  describe('custom key (name !== key)', () => {
+    it('tracks task by name when key differs', async () => {
+      const { store } = createCustomKeyTestStore();
+      const host = createMockHost();
+
+      // adjustVolume has name='adjustVolume' but key='audio-settings'
+      const controller = new OptimisticController(host, store, 'adjustVolume', s => s.volume);
+      controller.hostConnected();
+
+      const promise = controller.value.setValue(0.5);
+
+      // Optimistic value shown immediately
+      expect(controller.value.value).toBe(0.5);
+
+      // Wait for task to start
+      await new Promise(resolve => setTimeout(resolve, 5));
+
+      expect(controller.value.status).toBe('pending');
+
+      await promise;
+
+      expect(controller.value.status).toBe('success');
+      expect(controller.value.value).toBe(0.5);
+    });
+
+    it('tracks correct task when multiple requests share same key', async () => {
+      const { store } = createCustomKeyTestStore();
+      const hostVolume = createMockHost();
+      const hostMute = createMockHost();
+
+      // Both adjustVolume and toggleMute have key='audio-settings'
+      const volumeController = new OptimisticController(hostVolume, store, 'adjustVolume', s => s.volume);
+      const muteController = new OptimisticController(hostMute, store, 'toggleMute', s => s.muted);
+      volumeController.hostConnected();
+      muteController.hostConnected();
+
+      // Start volume adjustment
+      const volumePromise = volumeController.value.setValue(0.5);
+
+      await new Promise(resolve => setTimeout(resolve, 5));
+
+      // Volume controller should be pending
+      expect(volumeController.value.status).toBe('pending');
+      expect(volumeController.value.value).toBe(0.5); // Optimistic
+
+      // Mute controller should be idle (different name, even though same key)
+      expect(muteController.value.status).toBe('idle');
+      expect(muteController.value.value).toBe(false); // Actual
+
+      await volumePromise;
+
+      expect(volumeController.value.status).toBe('success');
+      expect(muteController.value.status).toBe('idle');
+    });
+
+    it('superseding task with same key shows error on original controller', async () => {
+      const { store } = createCustomKeyTestStore();
+      const hostVolume = createMockHost();
+      const hostMute = createMockHost();
+
+      const volumeController = new OptimisticController(hostVolume, store, 'adjustVolume', s => s.volume);
+      const muteController = new OptimisticController(hostMute, store, 'toggleMute', s => s.muted);
+      volumeController.hostConnected();
+      muteController.hostConnected();
+
+      // Start volume adjustment
+      const volumePromise = volumeController.value.setValue(0.5);
+
+      await new Promise(resolve => setTimeout(resolve, 5));
+
+      // Start mute toggle - this will supersede volume because same key
+      const mutePromise = muteController.value.setValue(true);
+
+      // Mute shows optimistic immediately
+      expect(muteController.value.value).toBe(true);
+
+      // Wait for superseding to happen
+      await new Promise(resolve => setTimeout(resolve, 5));
+
+      // Volume should show error (superseded), reverted to actual
+      try {
+        await volumePromise;
+      } catch {
+        // Expected - task was superseded
+      }
+
+      expect(volumeController.value.status).toBe('error');
+      expect(volumeController.value.value).toBe(1); // Reverted to actual
+
+      expect(muteController.value.status).toBe('pending');
+      expect(muteController.value.value).toBe(true); // Still optimistic
+
+      await mutePromise;
+
+      expect(muteController.value.status).toBe('success');
+      expect(muteController.value.value).toBe(true);
+    });
   });
 });

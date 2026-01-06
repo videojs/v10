@@ -1,9 +1,10 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import type { EnsureFunction } from '@videojs/utils/types';
 import type { AsyncStatus, Task } from '../../core/queue';
-
 import type { AnyStore, InferStoreRequests } from '../../core/store';
+
 import { noop } from '@videojs/utils/function';
+
 import { findTaskByName } from '../../core/queue';
 
 // ----------------------------------------
@@ -69,21 +70,21 @@ export type MutationResult<Mutate, Data>
  */
 export class MutationController<
   Store extends AnyStore,
-  Key extends keyof InferStoreRequests<Store>,
-  Mutate extends InferStoreRequests<Store>[Key] = InferStoreRequests<Store>[Key],
+  Name extends keyof InferStoreRequests<Store>,
+  Mutate extends InferStoreRequests<Store>[Name] = InferStoreRequests<Store>[Name],
 > implements ReactiveController {
   readonly #host: ReactiveControllerHost;
   readonly #store: Store;
-  readonly #key: Key;
+  readonly #name: Name;
 
   #task: Task | undefined;
   #unsubscribe = noop;
 
-  constructor(host: ReactiveControllerHost, store: Store, key: Key) {
+  constructor(host: ReactiveControllerHost, store: Store, name: Name) {
     this.#host = host;
     this.#store = store;
-    this.#key = key;
-    this.#task = findTaskByName(store.queue.tasks, key);
+    this.#name = name;
+    this.#task = findTaskByName(store.queue.tasks, name);
     host.addController(this);
   }
 
@@ -91,7 +92,7 @@ export class MutationController<
     const task = this.#task;
 
     const base = {
-      mutate: this.#store.request[this.#key] as Mutate,
+      mutate: this.#store.request[this.#name] as Mutate,
       reset: this.#reset,
     };
 
@@ -99,7 +100,7 @@ export class MutationController<
       return {
         status: 'success',
         ...base,
-        data: (task.output as any),
+        data: task.output as any,
       };
     }
 
@@ -118,15 +119,15 @@ export class MutationController<
   }
 
   #reset = () => {
-    const task = findTaskByName(this.#store.queue.tasks, this.#key);
+    const task = findTaskByName(this.#store.queue.tasks, this.#name);
     if (task) this.#store.queue.reset(task.key);
   };
 
   hostConnected() {
-    this.#task = findTaskByName(this.#store.queue.tasks, this.#key);
+    this.#task = findTaskByName(this.#store.queue.tasks, this.#name);
 
     this.#unsubscribe = this.#store.queue.subscribe((tasks) => {
-      const newTask = findTaskByName(tasks, this.#key);
+      const newTask = findTaskByName(tasks, this.#name);
       if (newTask !== this.#task) {
         this.#task = newTask;
         this.#host.requestUpdate();
@@ -135,7 +136,7 @@ export class MutationController<
   }
 
   hostDisconnected() {
-    this.#unsubscribe?.();
+    this.#unsubscribe();
     this.#unsubscribe = noop;
   }
 }

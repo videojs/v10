@@ -1,5 +1,6 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import type { AnyStore, InferStoreState } from '../../core/store';
+
 import { noop } from '@videojs/utils/function';
 
 /**
@@ -47,7 +48,7 @@ export class SelectorController<Store extends AnyStore, Value> implements Reacti
   }
 
   hostDisconnected() {
-    this.#unsubscribe?.();
+    this.#unsubscribe();
     this.#unsubscribe = noop;
   }
 }

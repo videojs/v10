@@ -1,7 +1,6 @@
-import { ReactiveElement } from '@lit/reactive-element';
 import { describe, expect, it } from 'vitest';
 
-import { createLitTestStore, setupDomCleanup, uniqueTag } from '../../tests/test-utils';
+import { createLitTestStore, setupDomCleanup, TestBaseElement, uniqueTag } from '../../tests/test-utils';
 
 setupDomCleanup();
 
@@ -10,7 +9,7 @@ describe('createStoreProviderMixin', () => {
     const { StoreProviderMixin } = createLitTestStore();
     const tagName = uniqueTag('test-provider');
 
-    class TestElement extends StoreProviderMixin(ReactiveElement) {}
+    class TestElement extends StoreProviderMixin(TestBaseElement) {}
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
@@ -25,7 +24,7 @@ describe('createStoreProviderMixin', () => {
     const { StoreProviderMixin } = createLitTestStore();
     const tagName = uniqueTag('test-provider-reuse');
 
-    class TestElement extends StoreProviderMixin(ReactiveElement) {}
+    class TestElement extends StoreProviderMixin(TestBaseElement) {}
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
@@ -42,7 +41,7 @@ describe('createStoreProviderMixin', () => {
     const { StoreProviderMixin } = createLitTestStore();
     const tagName = uniqueTag('test-provider-destroy');
 
-    class TestElement extends StoreProviderMixin(ReactiveElement) {}
+    class TestElement extends StoreProviderMixin(TestBaseElement) {}
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
@@ -61,7 +60,7 @@ describe('createStoreProviderMixin', () => {
     const { StoreProviderMixin, create } = createLitTestStore();
     const tagName = uniqueTag('test-provider-setter');
 
-    class TestElement extends StoreProviderMixin(ReactiveElement) {}
+    class TestElement extends StoreProviderMixin(TestBaseElement) {}
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
@@ -78,7 +77,7 @@ describe('createStoreProviderMixin', () => {
     const { StoreProviderMixin, create } = createLitTestStore();
     const tagName = uniqueTag('test-provider-external');
 
-    class TestElement extends StoreProviderMixin(ReactiveElement) {}
+    class TestElement extends StoreProviderMixin(TestBaseElement) {}
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
@@ -97,7 +96,7 @@ describe('createStoreProviderMixin', () => {
     const { StoreProviderMixin, create } = createLitTestStore();
     const tagName = uniqueTag('test-provider-replace');
 
-    class TestElement extends StoreProviderMixin(ReactiveElement) {}
+    class TestElement extends StoreProviderMixin(TestBaseElement) {}
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;

@@ -2,8 +2,8 @@ import type { Context } from '@lit/context';
 import type { ReactiveElement } from '@lit/reactive-element';
 import type { Constructor, Mixin } from '@videojs/utils/types';
 import type { AnySlice, UnionSliceTarget } from '../../core/slice';
-
 import type { Store, StoreConsumer } from '../../core/store';
+
 import { ContextConsumer } from '@lit/context';
 import { getSlottedElement, isHTMLMediaElement, listen, querySlot } from '@videojs/utils/dom';
 import { Disposer } from '@videojs/utils/events';
@@ -69,8 +69,12 @@ export function createStoreAttachMixin<Slices extends AnySlice[]>(
 
         if (isNull(store)) return;
 
+        // Check if element is media, or search inside for nested media
+        const findMedia = (el: Element): HTMLMediaElement | null =>
+          isHTMLMediaElement(el) ? el : el.querySelector('video, audio');
+
         const media = this.shadowRoot
-          ? getSlottedElement(this.shadowRoot, 'media', el => isHTMLMediaElement(el) && el)
+          ? getSlottedElement(this.shadowRoot, 'media', findMedia)
           : this.querySelector('video, audio');
 
         if (store.target !== media) {

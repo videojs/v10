@@ -1,10 +1,10 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import type { EnsureFunction } from '@videojs/utils/types';
 import type { Task } from '../../core/queue';
-
 import type { AnyStore, InferStoreRequests, InferStoreState } from '../../core/store';
 
 import { Disposer } from '@videojs/utils/events';
+
 import { findTaskByName } from '../../core/queue';
 
 // ----------------------------------------
@@ -70,42 +70,38 @@ export type OptimisticResult<Value, SetValue>
  */
 export class OptimisticController<
   Store extends AnyStore,
-  Key extends keyof InferStoreRequests<Store>,
+  Name extends keyof InferStoreRequests<Store>,
   Value,
-  Request extends InferStoreRequests<Store>[Key] = InferStoreRequests<Store>[Key],
+  Request extends InferStoreRequests<Store>[Name] = InferStoreRequests<Store>[Name],
 > implements ReactiveController {
   readonly #host: ReactiveControllerHost;
   readonly #store: Store;
-  readonly #key: Key;
+  readonly #name: Name;
   readonly #selector: (state: InferStoreState<Store>) => Value;
   readonly #disposer = new Disposer();
 
-  #optimistic: { value: Value; taskId: symbol } | null = null;
+  #optimistic: Value | null = null;
   #task: Task | undefined;
 
   constructor(
     host: ReactiveControllerHost,
     store: Store,
-    key: Key,
+    name: Name,
     selector: (state: InferStoreState<Store>) => Value,
   ) {
     this.#host = host;
     this.#store = store;
-    this.#key = key;
+    this.#name = name;
     this.#selector = selector;
-    this.#task = findTaskByName(store.queue.tasks, key);
+    this.#task = findTaskByName(store.queue.tasks, name);
     host.addController(this);
   }
 
   get value(): OptimisticResult<Value, (value: Value) => ReturnType<EnsureFunction<Request>>> {
     const task = this.#task;
 
-    const isPending = task?.status === 'pending';
-
-    const value = isPending && this.#optimistic
-      ? this.#optimistic.value
-      : this.#selector(this.#store.state);
-
+    // Show optimistic value when set (cleared on task settlement)
+    const value = this.#optimistic !== null ? this.#optimistic : this.#selector(this.#store.state);
     const base = {
       value,
       setValue: this.#setValue,
@@ -127,56 +123,36 @@ export class OptimisticController<
   }
 
   #setValue = (newValue: Value): ReturnType<EnsureFunction<Request>> => {
-    const pendingTaskId = Symbol('@videojs/id');
-
-    this.#optimistic = { value: newValue, taskId: pendingTaskId };
+    this.#optimistic = newValue;
     this.#host.requestUpdate();
 
-    const request = this.#store.request[this.#key] as (
-      value: Value,
-    ) => ReturnType<EnsureFunction<Request>>;
+    const request = this.#store.request[this.#name] as (value: Value) => ReturnType<EnsureFunction<Request>>;
 
-    const promise = request(newValue);
-
-    // After microtask, update taskId to match actual task
-    queueMicrotask(() => {
-      const currentTask = findTaskByName(this.#store.queue.tasks, this.#key);
-      if (currentTask?.status === 'pending' && this.#optimistic?.taskId === pendingTaskId) {
-        this.#optimistic = { value: newValue, taskId: currentTask.id };
-      }
-    });
-
-    return promise;
+    return request(newValue);
   };
 
   #reset = (): void => {
     this.#optimistic = null;
+    this.#host.requestUpdate();
 
-    const task = findTaskByName(this.#store.queue.tasks, this.#key);
+    const task = findTaskByName(this.#store.queue.tasks, this.#name);
     if (task) this.#store.queue.reset(task.key);
   };
 
   hostConnected() {
-    this.#task = findTaskByName(this.#store.queue.tasks, this.#key);
+    this.#task = findTaskByName(this.#store.queue.tasks, this.#name);
 
-    this.#disposer.add(
-      this.#store.subscribe(this.#selector, () => this.#host.requestUpdate()),
-    );
+    this.#disposer.add(this.#store.subscribe(this.#selector, () => this.#host.requestUpdate()));
 
     this.#disposer.add(
       this.#store.queue.subscribe((tasks) => {
-        const newTask = findTaskByName(tasks, this.#key);
+        const newTask = findTaskByName(tasks, this.#name);
         if (newTask !== this.#task) {
           this.#task = newTask;
 
-          // Clear optimistic value when task settles or changes
-          if (this.#optimistic) {
-            const isPending = newTask?.status === 'pending';
-            const isSameTask = newTask?.id === this.#optimistic.taskId;
-
-            if (!isPending || !isSameTask) {
-              this.#optimistic = null;
-            }
+          // Clear optimistic value when task settles
+          if (this.#optimistic !== null && newTask?.status !== 'pending') {
+            this.#optimistic = null;
           }
 
           this.#host.requestUpdate();

@@ -1,5 +1,6 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import type { AnyStore } from '../../core/store';
+
 import { noop } from '@videojs/utils/function';
 
 /**
@@ -48,7 +49,7 @@ export class TasksController<Store extends AnyStore> implements ReactiveControll
   }
 
   hostDisconnected() {
-    this.#unsubscribe?.();
+    this.#unsubscribe();
     this.#unsubscribe = noop;
   }
 }
