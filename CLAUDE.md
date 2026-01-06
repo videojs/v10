@@ -129,6 +129,18 @@ packages/utils/src/dom/
 - Follow the `act → assert` pattern.
 - Use `vi.fn()` for mocks and spies.
 
+### Test describe() Names
+
+Use the class or function name being tested:
+
+```ts
+// selector-controller.test.ts
+describe('SelectorController', () => { ... });
+
+// provider-mixin.test.ts
+describe('createStoreProviderMixin', () => { ... });
+```
+
 ## Guidelines
 
 When generating or editing code in this repository, follow these rules to ensure safe, high‑quality contributions:
@@ -243,6 +255,27 @@ destroy(): void {
   this.#subscribers.clear();
 }
 ```
+
+### Cleanup Pattern
+
+Use `Disposer` from `@videojs/utils/events` when managing multiple cleanup functions:
+
+```ts
+import { Disposer } from '@videojs/utils/events';
+
+#disposer = new Disposer();
+
+connect(): void {
+  this.#disposer.add(store.subscribe(...));
+  this.#disposer.add(queue.subscribe(...));
+}
+
+disconnect(): void {
+  this.#disposer.dispose();
+}
+```
+
+For single cleanup, use a simple unsubscribe function.
 
 ### No Hungarian Type Notation
 

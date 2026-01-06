@@ -28,6 +28,7 @@ export default antfu(
       '**/.vercel/',
       '**/dist/',
       '**/styles/vjs.css',
+      'packages/__tech-preview__/**',
       // some files that make eslint/prettier panic
       'site/src/components/Posthog.astro',
       'site/src/components/ThemeInit.astro',
@@ -43,6 +44,12 @@ export default antfu(
       'style/quote-props': ['error', 'as-needed'],
       // JSX A11Y plugin rules
       ...jsxA11y.configs.recommended.rules,
+    },
+  },
+  {
+    files: ['**/*.test.{ts,tsx}'],
+    rules: {
+      'vitest/prefer-lowercase-title': 'off',
     },
   },
   {

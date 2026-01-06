@@ -135,7 +135,7 @@ export function resolveRequestKey(keyConfig: RequestKey<any>, input: unknown): T
   return isFunction(keyConfig) ? keyConfig(input) : keyConfig;
 }
 
-export function resolveRequestCancelKeys(cancel: RequestCancel<any> | undefined, input: unknown): TaskKey[] {
+export function resolveRequestCancel(cancel: RequestCancel<any> | undefined, input: unknown): TaskKey[] {
   if (!cancel) return [];
   const result = isFunction(cancel) ? cancel(input) : cancel;
   return Array.isArray(result) ? result : [result];
