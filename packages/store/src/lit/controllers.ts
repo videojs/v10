@@ -2,99 +2,84 @@ import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-e
 import type { Task, TasksRecord } from '../core/queue';
 import type { AnyStore, InferStoreRequests, InferStoreState, InferStoreTasks } from '../core/store';
 
-import { isUndefined } from '@videojs/utils/predicate';
+import { findTaskByName } from '../core/queue';
 
 // ----------------------------------------
 // Mutation Types
 // ----------------------------------------
 
-/**
- * Status of a mutation.
- */
 export type MutationStatus = 'idle' | 'pending' | 'success' | 'error';
 
-/**
- * Result returned by `MutationController.value`.
- */
-export interface MutationResult<Mutate extends (...args: any[]) => any> {
-  /** The mutation function to call. */
+interface MutationBase<Mutate> {
   mutate: Mutate;
-  /** Current status of the mutation. */
-  status: MutationStatus;
-  /** True if the mutation is currently pending. */
-  isPending: boolean;
-  /** True if the mutation completed successfully. */
-  isSuccess: boolean;
-  /** True if the mutation failed. */
-  isError: boolean;
-  /** The result data if mutation was successful. */
-  data: Awaited<ReturnType<Mutate>> | undefined;
-  /** The error if mutation failed. */
-  error: unknown;
-  /** Clears the settled state (data/error) for this mutation. */
   reset: () => void;
 }
+
+export interface MutationIdle<Mutate> extends MutationBase<Mutate> {
+  status: 'idle';
+}
+
+export interface MutationPending<Mutate> extends MutationBase<Mutate> {
+  status: 'pending';
+}
+
+export interface MutationSuccess<Mutate, Data> extends MutationBase<Mutate> {
+  status: 'success';
+  data: Data;
+}
+
+export interface MutationError<Mutate> extends MutationBase<Mutate> {
+  status: 'error';
+  error: unknown;
+}
+
+export type MutationResult<Mutate, Data>
+  = | MutationIdle<Mutate>
+    | MutationPending<Mutate>
+    | MutationSuccess<Mutate, Data>
+    | MutationError<Mutate>;
 
 // ----------------------------------------
 // Optimistic Types
 // ----------------------------------------
 
-/**
- * Result returned by `OptimisticController.value`.
- */
-export interface OptimisticResult<Value, SetValue extends (value: Value) => any> {
-  /** The current value (optimistic if pending, actual otherwise). */
+export type OptimisticStatus = 'idle' | 'pending' | 'success' | 'error';
+
+interface OptimisticBase<Value, SetValue> {
   value: Value;
-  /** Function to set the value optimistically and trigger mutation. */
   setValue: SetValue;
-  /** True if the mutation is currently pending. */
-  isPending: boolean;
-  /** True if the last mutation failed. */
-  isError: boolean;
-  /** The error if the last mutation failed. */
-  error: unknown;
-  /** Clears the error state. */
   reset: () => void;
 }
 
-// ----------------------------------------
-// Helpers
-// ----------------------------------------
-
-/**
- * Helper to extract the request key from a selector.
- */
-function extractRequestKey<S extends AnyStore>(
-  store: S,
-  selector: (requests: InferStoreRequests<S>) => (...args: any[]) => any,
-): string {
-  const requests = store.request as InferStoreRequests<S>;
-  let capturedKey: string | undefined;
-
-  const proxy = new Proxy(requests as object, {
-    get(_target, prop) {
-      if (typeof prop === 'string') {
-        capturedKey = prop;
-      }
-      return (requests as Record<string | symbol, unknown>)[prop];
-    },
-  });
-
-  selector(proxy as InferStoreRequests<S>);
-
-  if (!capturedKey) {
-    throw new Error('Selector must access a request property');
-  }
-
-  return capturedKey;
+export interface OptimisticIdle<Value, SetValue> extends OptimisticBase<Value, SetValue> {
+  status: 'idle';
 }
+
+export interface OptimisticPending<Value, SetValue> extends OptimisticBase<Value, SetValue> {
+  status: 'pending';
+}
+
+export interface OptimisticSuccess<Value, SetValue> extends OptimisticBase<Value, SetValue> {
+  status: 'success';
+}
+
+export interface OptimisticError<Value, SetValue> extends OptimisticBase<Value, SetValue> {
+  status: 'error';
+  error: unknown;
+}
+
+export type OptimisticResult<Value, SetValue>
+  = | OptimisticIdle<Value, SetValue>
+    | OptimisticPending<Value, SetValue>
+    | OptimisticSuccess<Value, SetValue>
+    | OptimisticError<Value, SetValue>;
 
 // ----------------------------------------
 // Controllers
 // ----------------------------------------
 
 /**
- * Reactive controller that subscribes to store state changes.
+ * Subscribes to a selected portion of store state.
  * Triggers host updates when the selected value changes.
  *
  * @example
@@ -121,19 +106,15 @@ export class SelectorController<S extends AnyStore, T> implements ReactiveContro
     this.#store = store;
     this.#selector = selector;
     this.#value = selector(store.state);
-
     host.addController(this);
   }
 
-  /**
-   * Current selected value.
-   */
   get value(): T {
     return this.#value;
   }
 
   hostConnected(): void {
-    // Sync current value on reconnect to avoid stale state
+    // Sync value on reconnect to avoid stale state
     this.#value = this.#selector(this.#store.state);
 
     this.#unsubscribe = this.#store.subscribe(this.#selector, (value) => {
@@ -149,22 +130,12 @@ export class SelectorController<S extends AnyStore, T> implements ReactiveContro
 }
 
 /**
- * Reactive controller that provides access to store requests.
- * Returns the full request map or a selected request.
+ * Provides access to a store request by key.
  *
  * @example
  * ```ts
  * class MyElement extends LitElement {
- *   #request = new RequestController(this, store);
- *
- *   render() {
- *     return html`<button @click=${() => this.#request.value.play()}>Play</button>`;
- *   }
- * }
- *
- * // With selector
- * class MyElement extends LitElement {
- *   #play = new RequestController(this, store, r => r.play);
+ *   #play = new RequestController(this, store, 'play');
  *
  *   render() {
  *     return html`<button @click=${() => this.#play.value()}>Play</button>`;
@@ -172,38 +143,29 @@ export class SelectorController<S extends AnyStore, T> implements ReactiveContro
  * }
  * ```
  */
-export class RequestController<S extends AnyStore, T = InferStoreRequests<S>> implements ReactiveController {
+export class RequestController<
+  S extends AnyStore,
+  K extends string & keyof InferStoreRequests<S>,
+> implements ReactiveController {
   readonly #store: S;
-  readonly #selector: ((requests: InferStoreRequests<S>) => T) | undefined;
+  readonly #key: K;
 
-  constructor(host: ReactiveControllerHost, store: S, selector?: (requests: InferStoreRequests<S>) => T) {
+  constructor(host: ReactiveControllerHost, store: S, key: K) {
     this.#store = store;
-    this.#selector = selector;
-
-    // Register with host for lifecycle management
+    this.#key = key;
     host.addController(this);
   }
 
-  /**
-   * Request map or selected request.
-   */
-  get value(): T {
-    const requests = this.#store.request as InferStoreRequests<S>;
-
-    if (isUndefined(this.#selector)) {
-      return requests as T;
-    }
-
-    return this.#selector(requests);
+  get value(): InferStoreRequests<S>[K] {
+    return (this.#store.request as InferStoreRequests<S>)[this.#key];
   }
 
-  // No-op - requests don't change, no subscription needed
   hostConnected(): void {}
   hostDisconnected(): void {}
 }
 
 /**
- * Reactive controller that subscribes to task state changes.
+ * Subscribes to task state changes.
  * Triggers host updates when tasks change.
  *
  * @example
@@ -230,19 +192,15 @@ export class TasksController<S extends AnyStore> implements ReactiveController {
     this.#host = host;
     this.#store = store;
     this.#value = store.queue.tasks as TasksRecord<InferStoreTasks<S>>;
-
     host.addController(this);
   }
 
-  /**
-   * Current tasks map.
-   */
   get value(): TasksRecord<InferStoreTasks<S>> {
     return this.#value;
   }
 
   hostConnected(): void {
-    // Sync current value on reconnect to avoid stale state
+    // Sync value on reconnect to avoid stale state
     this.#value = this.#store.queue.tasks as TasksRecord<InferStoreTasks<S>>;
 
     this.#unsubscribe = this.#store.queue.subscribe((tasks) => {
@@ -258,21 +216,24 @@ export class TasksController<S extends AnyStore> implements ReactiveController {
 }
 
 /**
- * Reactive controller that tracks a mutation's status.
+ * Tracks a mutation's status with discriminated union result.
  * Triggers host updates when the task status changes.
  *
  * @example
  * ```ts
  * class MyElement extends LitElement {
- *   #playMutation = new MutationController(this, store, r => r.play);
+ *   #playMutation = new MutationController(this, store, 'play');
  *
  *   render() {
- *     const { mutate, isPending, isError } = this.#playMutation.value;
+ *     const mutation = this.#playMutation.value;
  *     return html`
- *       <button @click=${() => mutate()} ?disabled=${isPending}>
- *         ${isPending ? 'Loading...' : 'Play'}
+ *       <button
+ *         @click=${() => mutation.mutate()}
+ *         ?disabled=${mutation.status === 'pending'}
+ *       >
+ *         ${mutation.status === 'pending' ? 'Loading...' : 'Play'}
  *       </button>
- *       ${isError ? html`<span>Error occurred</span>` : ''}
+ *       ${mutation.status === 'error' ? html`<span>Error: ${mutation.error}</span>` : ''}
  *     `;
  *   }
  * }
@@ -280,64 +241,54 @@ export class TasksController<S extends AnyStore> implements ReactiveController {
  */
 export class MutationController<
   S extends AnyStore,
-  Selector extends (requests: InferStoreRequests<S>) => (...args: any[]) => any,
+  K extends string & keyof InferStoreRequests<S>,
+  Mutate extends InferStoreRequests<S>[K] = InferStoreRequests<S>[K],
 > implements ReactiveController {
   readonly #host: ReactiveControllerHost;
   readonly #store: S;
-  readonly #requestKey: string;
-  readonly #mutate: ReturnType<Selector>;
+  readonly #key: K;
 
   #task: Task | undefined;
   #unsubscribe: (() => void) | null = null;
 
-  constructor(host: ReactiveControllerHost, store: S, selector: Selector) {
+  constructor(host: ReactiveControllerHost, store: S, key: K) {
     this.#host = host;
     this.#store = store;
-    this.#requestKey = extractRequestKey(store, selector);
-    this.#mutate = selector(store.request as InferStoreRequests<S>) as ReturnType<Selector>;
-    this.#task = store.queue.tasks[this.#requestKey];
-
+    this.#key = key;
+    this.#task = findTaskByName(store.queue.tasks, key);
     host.addController(this);
   }
 
-  /**
-   * Current mutation result.
-   */
-  get value(): MutationResult<ReturnType<Selector>> {
-    type Mutate = ReturnType<Selector>;
-    type Output = Awaited<ReturnType<Mutate>>;
+  get value(): MutationResult<Mutate, Awaited<ReturnType<Mutate & ((...args: any[]) => any)>>> {
+    type Data = Awaited<ReturnType<Mutate & ((...args: any[]) => any)>>;
 
     const task = this.#task;
-    const status: MutationStatus = isUndefined(task) ? 'idle' : task.status;
-    const isPending = status === 'pending';
-    const isSuccess = status === 'success';
-    const isError = status === 'error';
+    const mutate = (this.#store.request as InferStoreRequests<S>)[this.#key] as Mutate;
+    const reset = this.#reset;
 
-    const data: Output | undefined = isSuccess && task?.status === 'success' ? (task.output as Output) : undefined;
-    const error: unknown = isError && task?.status === 'error' ? task.error : undefined;
+    if (!task) {
+      return { status: 'idle', mutate, reset };
+    }
 
-    return {
-      mutate: this.#mutate,
-      status,
-      isPending,
-      isSuccess,
-      isError,
-      data,
-      error,
-      reset: this.#reset,
-    };
+    switch (task.status) {
+      case 'pending':
+        return { status: 'pending', mutate, reset };
+      case 'success':
+        return { status: 'success', mutate, reset, data: task.output as Data };
+      case 'error':
+        return { status: 'error', mutate, reset, error: task.error };
+    }
   }
 
   #reset = (): void => {
-    this.#store.queue.reset(this.#requestKey);
+    this.#store.queue.reset(this.#key);
   };
 
   hostConnected(): void {
-    // Sync current task on reconnect
-    this.#task = this.#store.queue.tasks[this.#requestKey];
+    this.#task = findTaskByName(this.#store.queue.tasks, this.#key);
 
     this.#unsubscribe = this.#store.queue.subscribe((tasks) => {
-      const newTask = tasks[this.#requestKey];
+      const newTask = findTaskByName(tasks, this.#key);
       if (newTask !== this.#task) {
         this.#task = newTask;
         this.#host.requestUpdate();
@@ -352,43 +303,23 @@ export class MutationController<
 }
 
 /**
- * Reactive controller for optimistic updates.
  * Shows optimistic value while mutation is pending, actual value otherwise.
  *
  * @example
  * ```ts
  * class VolumeSlider extends LitElement {
- *   #volume = new OptimisticController(
- *     this,
- *     store,
- *     r => r.changeVolume,
- *     s => s.volume
- *   );
- *
- *   render() {
- *     const { value, setValue, isPending, isError } = this.#volume.value;
- *     return html`
- *       <input
- *         type="range"
- *         .value=${value}
- *         @input=${(e) => setValue(Number(e.target.value))}
- *         style="opacity: ${isPending ? 0.5 : 1}"
- *       />
- *       ${isError ? html`<span>Failed to change volume</span>` : ''}
- *     `;
- *   }
- * }
+ *   #volume = new OptimisticController(this, store, 'setVolume', s => s.volume);
  * ```
  */
 export class OptimisticController<
   S extends AnyStore,
+  K extends string & keyof InferStoreRequests<S>,
   Value,
-  RequestSelector extends (requests: InferStoreRequests<S>) => (value: Value) => any,
+  Request extends InferStoreRequests<S>[K] = InferStoreRequests<S>[K],
 > implements ReactiveController {
   readonly #host: ReactiveControllerHost;
   readonly #store: S;
-  readonly #requestKey: string;
-  readonly #request: ReturnType<RequestSelector>;
+  readonly #key: K;
   readonly #stateSelector: (state: InferStoreState<S>) => Value;
 
   #optimistic: { value: Value; taskId: symbol } | null = null;
@@ -396,57 +327,53 @@ export class OptimisticController<
   #stateUnsubscribe: (() => void) | null = null;
   #queueUnsubscribe: (() => void) | null = null;
 
-  constructor(
-    host: ReactiveControllerHost,
-    store: S,
-    requestSelector: RequestSelector,
-    stateSelector: (state: InferStoreState<S>) => Value,
-  ) {
+  constructor(host: ReactiveControllerHost, store: S, key: K, stateSelector: (state: InferStoreState<S>) => Value) {
     this.#host = host;
     this.#store = store;
-    this.#requestKey = extractRequestKey(store, requestSelector);
-    this.#request = requestSelector(store.request as InferStoreRequests<S>) as ReturnType<RequestSelector>;
+    this.#key = key;
     this.#stateSelector = stateSelector;
-    this.#task = store.queue.tasks[this.#requestKey];
-
+    this.#task = findTaskByName(store.queue.tasks, key);
     host.addController(this);
   }
 
-  /**
-   * Current optimistic result.
-   */
-  get value(): OptimisticResult<Value, (value: Value) => ReturnType<ReturnType<RequestSelector>>> {
+  get value(): OptimisticResult<Value, (value: Value) => ReturnType<Request & ((...args: any[]) => any)>> {
+    type SetValue = (value: Value) => ReturnType<Request & ((...args: any[]) => any)>;
+
     const task = this.#task;
-    const isPending = task?.status === 'pending';
-    const isError = task?.status === 'error';
-    const error = isError ? task.error : undefined;
+    const actualValue = this.#stateSelector(this.#store.state);
+    const reset = this.#reset;
 
     // Use optimistic value if pending and we have one
-    const actualValue = this.#stateSelector(this.#store.state);
+    const isPending = task?.status === 'pending';
     const value = isPending && this.#optimistic ? this.#optimistic.value : actualValue;
 
-    return {
-      value,
-      setValue: this.#setValue,
-      isPending,
-      isError,
-      error,
-      reset: this.#reset,
-    };
+    if (!task) {
+      return { status: 'idle', value, setValue: this.#setValue as SetValue, reset };
+    }
+
+    switch (task.status) {
+      case 'pending':
+        return { status: 'pending', value, setValue: this.#setValue as SetValue, reset };
+      case 'success':
+        return { status: 'success', value, setValue: this.#setValue as SetValue, reset };
+      case 'error':
+        return { status: 'error', value, setValue: this.#setValue as SetValue, reset, error: task.error };
+    }
   }
 
-  #setValue = (newValue: Value): ReturnType<ReturnType<RequestSelector>> => {
-    // Store optimistic value with a placeholder task ID
+  #setValue = (newValue: Value): ReturnType<Request & ((...args: any[]) => any)> => {
     const pendingTaskId = Symbol('pending');
     this.#optimistic = { value: newValue, taskId: pendingTaskId };
     this.#host.requestUpdate();
 
-    // Call the mutation
-    const promise = this.#request(newValue);
+    const request = (this.#store.request as InferStoreRequests<S>)[this.#key] as (
+      value: Value,
+    ) => ReturnType<Request & ((...args: any[]) => any)>;
+    const promise = request(newValue);
 
     // After microtask, update taskId to match actual task
     queueMicrotask(() => {
-      const currentTask = this.#store.queue.tasks[this.#requestKey];
+      const currentTask = findTaskByName(this.#store.queue.tasks, this.#key);
       if (currentTask?.status === 'pending' && this.#optimistic?.taskId === pendingTaskId) {
         this.#optimistic = { value: newValue, taskId: currentTask.id };
       }
@@ -457,21 +384,18 @@ export class OptimisticController<
 
   #reset = (): void => {
     this.#optimistic = null;
-    this.#store.queue.reset(this.#requestKey);
+    this.#store.queue.reset(this.#key);
   };
 
   hostConnected(): void {
-    // Sync current task on reconnect
-    this.#task = this.#store.queue.tasks[this.#requestKey];
+    this.#task = findTaskByName(this.#store.queue.tasks, this.#key);
 
-    // Subscribe to state changes
     this.#stateUnsubscribe = this.#store.subscribe(this.#stateSelector, () => {
       this.#host.requestUpdate();
     });
 
-    // Subscribe to queue changes
     this.#queueUnsubscribe = this.#store.queue.subscribe((tasks) => {
-      const newTask = tasks[this.#requestKey];
+      const newTask = findTaskByName(tasks, this.#key);
       if (newTask !== this.#task) {
         this.#task = newTask;
 

@@ -13,7 +13,6 @@ import {
 } from '../controllers';
 
 describe('lit controllers', () => {
-  // Mock target
   class MockMedia extends EventTarget {
     volume = 1;
     muted = false;
@@ -98,7 +97,6 @@ describe('lit controllers', () => {
       const controller = new SelectorController(host, store, s => s.volume);
       controller.hostConnected();
 
-      // Change volume
       target.volume = 0.5;
       target.dispatchEvent(new Event('volumechange'));
 
@@ -112,11 +110,8 @@ describe('lit controllers', () => {
 
       const controller = new SelectorController(host, store, s => s.volume);
       controller.hostConnected();
-
-      // Disconnect
       controller.hostDisconnected();
 
-      // Change volume should not trigger update
       const updateCountBefore = host.updateCount;
       target.volume = 0.3;
       target.dispatchEvent(new Event('volumechange'));
@@ -133,10 +128,8 @@ describe('lit controllers', () => {
 
       expect(controller.value).toBe(1);
 
-      // Disconnect
       controller.hostDisconnected();
 
-      // Change state while disconnected
       target.volume = 0.3;
       target.dispatchEvent(new Event('volumechange'));
 
@@ -156,7 +149,6 @@ describe('lit controllers', () => {
       const controller = new SelectorController(host, store, s => s.volume);
       controller.hostConnected();
 
-      // Change muted instead of volume
       target.muted = true;
       target.dispatchEvent(new Event('volumechange'));
 
@@ -166,22 +158,11 @@ describe('lit controllers', () => {
   });
 
   describe('requestController', () => {
-    it('returns request map', () => {
+    it('returns request function', () => {
       const { store } = createTestStore();
       const host = createMockHost();
 
-      const controller = new RequestController(host, store);
-
-      expect(controller.value).toHaveProperty('setVolume');
-      expect(controller.value).toHaveProperty('setMuted');
-      expect(typeof controller.value.setVolume).toBe('function');
-    });
-
-    it('returns selected request', () => {
-      const { store } = createTestStore();
-      const host = createMockHost();
-
-      const controller = new RequestController(host, store, r => r.setVolume);
+      const controller = new RequestController(host, store, 'setVolume');
 
       expect(typeof controller.value).toBe('function');
     });
@@ -190,7 +171,7 @@ describe('lit controllers', () => {
       const { store } = createTestStore();
       const host = createMockHost();
 
-      const controller = new RequestController(host, store);
+      const controller = new RequestController(host, store, 'setVolume');
 
       expect(host.controllers.has(controller)).toBe(true);
     });
@@ -199,18 +180,18 @@ describe('lit controllers', () => {
       const { store } = createTestStore();
       const host = createMockHost();
 
-      const controller = new RequestController(host, store);
+      const controller = new RequestController(host, store, 'setVolume');
       const first = controller.value;
       const second = controller.value;
 
       expect(first).toBe(second);
     });
 
-    it('requests work correctly', async () => {
+    it('request works correctly', async () => {
       const { store, target } = createTestStore();
       const host = createMockHost();
 
-      const controller = new RequestController(host, store, r => r.setVolume);
+      const controller = new RequestController(host, store, 'setVolume');
       await controller.value(0.7);
 
       expect(target.volume).toBe(0.7);
@@ -263,7 +244,6 @@ describe('lit controllers', () => {
       const updateCountBefore = host.updateCount;
       await store.request.setVolume(0.5);
 
-      // Should not have received update
       expect(host.updateCount).toBe(updateCountBefore);
     });
   });
@@ -273,21 +253,16 @@ describe('lit controllers', () => {
       const { store } = createTestStore();
       const host = createMockHost();
 
-      const controller = new MutationController(host, store, r => r.setVolume);
+      const controller = new MutationController(host, store, 'setVolume');
 
       expect(controller.value.status).toBe('idle');
-      expect(controller.value.isPending).toBe(false);
-      expect(controller.value.isSuccess).toBe(false);
-      expect(controller.value.isError).toBe(false);
-      expect(controller.value.data).toBeUndefined();
-      expect(controller.value.error).toBeUndefined();
     });
 
     it('registers with host', () => {
       const { store } = createTestStore();
       const host = createMockHost();
 
-      const controller = new MutationController(host, store, r => r.setVolume);
+      const controller = new MutationController(host, store, 'setVolume');
 
       expect(host.controllers.has(controller)).toBe(true);
     });
@@ -296,40 +271,24 @@ describe('lit controllers', () => {
       const { store } = createTestStore();
       const host = createMockHost();
 
-      const controller = new MutationController(host, store, r => r.setVolume);
+      const controller = new MutationController(host, store, 'setVolume');
 
       expect(typeof controller.value.mutate).toBe('function');
-    });
-
-    it('tracks pending state', async () => {
-      const { store } = createTestStore();
-      const host = createMockHost();
-
-      const controller = new MutationController(host, store, r => r.setVolume);
-      controller.hostConnected();
-
-      const promise = controller.value.mutate(0.5);
-
-      // Note: since the handler is synchronous, it will already be completed
-      await promise;
-
-      expect(controller.value.status).toBe('success');
-      expect(controller.value.isSuccess).toBe(true);
-      expect(controller.value.data).toBe(0.5);
     });
 
     it('tracks success state with data', async () => {
       const { store } = createTestStore();
       const host = createMockHost();
 
-      const controller = new MutationController(host, store, r => r.setVolume);
+      const controller = new MutationController(host, store, 'setVolume');
       controller.hostConnected();
 
       await controller.value.mutate(0.7);
 
       expect(controller.value.status).toBe('success');
-      expect(controller.value.isSuccess).toBe(true);
-      expect(controller.value.data).toBe(0.7);
+      if (controller.value.status === 'success') {
+        expect(controller.value.data).toBe(0.7);
+      }
       expect(host.updateCount).toBeGreaterThan(0);
     });
 
@@ -337,7 +296,7 @@ describe('lit controllers', () => {
       const { store } = createTestStore();
       const host = createMockHost();
 
-      const controller = new MutationController(host, store, r => r.setVolume);
+      const controller = new MutationController(host, store, 'setVolume');
       controller.hostConnected();
 
       await controller.value.mutate(0.5);
@@ -345,16 +304,14 @@ describe('lit controllers', () => {
 
       controller.value.reset();
 
-      // After reset, task is cleared
       expect(controller.value.status).toBe('idle');
-      expect(controller.value.data).toBeUndefined();
     });
 
     it('unsubscribes on hostDisconnected', async () => {
       const { store } = createTestStore();
       const host = createMockHost();
 
-      const controller = new MutationController(host, store, r => r.setVolume);
+      const controller = new MutationController(host, store, 'setVolume');
       controller.hostConnected();
       controller.hostDisconnected();
 
@@ -370,28 +327,17 @@ describe('lit controllers', () => {
       const { store } = createTestStore();
       const host = createMockHost();
 
-      const controller = new OptimisticController(
-        host,
-        store,
-        r => r.setVolume,
-        s => s.volume,
-      );
+      const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);
 
       expect(controller.value.value).toBe(1);
-      expect(controller.value.isPending).toBe(false);
-      expect(controller.value.isError).toBe(false);
+      expect(controller.value.status).toBe('idle');
     });
 
     it('registers with host', () => {
       const { store } = createTestStore();
       const host = createMockHost();
 
-      const controller = new OptimisticController(
-        host,
-        store,
-        r => r.setVolume,
-        s => s.volume,
-      );
+      const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);
 
       expect(host.controllers.has(controller)).toBe(true);
     });
@@ -400,12 +346,7 @@ describe('lit controllers', () => {
       const { store } = createTestStore();
       const host = createMockHost();
 
-      const controller = new OptimisticController(
-        host,
-        store,
-        r => r.setVolume,
-        s => s.volume,
-      );
+      const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);
 
       expect(typeof controller.value.setValue).toBe('function');
     });
@@ -414,53 +355,36 @@ describe('lit controllers', () => {
       const { store } = createTestStore();
       const host = createMockHost();
 
-      const controller = new OptimisticController(
-        host,
-        store,
-        r => r.setVolume,
-        s => s.volume,
-      );
+      const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);
       controller.hostConnected();
 
       await controller.value.setValue(0.3);
 
       expect(controller.value.value).toBe(0.3);
-      expect(controller.value.isPending).toBe(false);
+      expect(controller.value.status).toBe('success');
     });
 
     it('reset clears error state', async () => {
       const { store } = createTestStore();
       const host = createMockHost();
 
-      const controller = new OptimisticController(
-        host,
-        store,
-        r => r.setVolume,
-        s => s.volume,
-      );
+      const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);
       controller.hostConnected();
 
       await controller.value.setValue(0.5);
 
       controller.value.reset();
 
-      expect(controller.value.isError).toBe(false);
-      expect(controller.value.error).toBeUndefined();
+      expect(controller.value.status).toBe('idle');
     });
 
     it('triggers host update when state changes', async () => {
       const { store, target } = createTestStore();
       const host = createMockHost();
 
-      const controller = new OptimisticController(
-        host,
-        store,
-        r => r.setVolume,
-        s => s.volume,
-      );
+      const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);
       controller.hostConnected();
 
-      // Change state directly
       target.volume = 0.8;
       target.dispatchEvent(new Event('volumechange'));
 
@@ -472,12 +396,7 @@ describe('lit controllers', () => {
       const { store, target } = createTestStore();
       const host = createMockHost();
 
-      const controller = new OptimisticController(
-        host,
-        store,
-        r => r.setVolume,
-        s => s.volume,
-      );
+      const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);
       controller.hostConnected();
       controller.hostDisconnected();
 

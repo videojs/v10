@@ -175,18 +175,17 @@ describe('lit mixins', () => {
       const { StoreMixin } = createStore({ slices: [audioSlice] });
       const tagName = uniqueTag('test-combined');
 
-      const TestBase = StoreMixin(HTMLElement);
-      class TestElement extends TestBase {
-        connectedCallback() {
-          // @ts-expect-error - connectedCallback exists at runtime
-          super.connectedCallback?.();
-          this.attachShadow({ mode: 'open' });
-          this.shadowRoot!.innerHTML = '<slot></slot>';
-        }
-      }
+      const TestElement = StoreMixin(
+        class extends HTMLElement {
+          connectedCallback() {
+            this.attachShadow({ mode: 'open' });
+            this.shadowRoot!.innerHTML = '<slot></slot>';
+          }
+        },
+      );
       customElements.define(tagName, TestElement);
 
-      const el = document.createElement(tagName) as TestElement;
+      const el = document.createElement(tagName) as InstanceType<typeof TestElement>;
       document.body.appendChild(el);
 
       expect(el.store).toBeDefined();
@@ -197,18 +196,17 @@ describe('lit mixins', () => {
       const { StoreMixin } = createStore({ slices: [audioSlice] });
       const tagName = uniqueTag('test-auto-attach');
 
-      const TestBase = StoreMixin(HTMLElement);
-      class TestElement extends TestBase {
-        connectedCallback() {
-          // @ts-expect-error - connectedCallback exists at runtime
-          super.connectedCallback?.();
-          this.attachShadow({ mode: 'open' });
-          this.shadowRoot!.innerHTML = '<slot></slot>';
-        }
-      }
+      const TestElement = StoreMixin(
+        class extends HTMLElement {
+          connectedCallback() {
+            this.attachShadow({ mode: 'open' });
+            this.shadowRoot!.innerHTML = '<slot></slot>';
+          }
+        },
+      );
       customElements.define(tagName, TestElement);
 
-      const el = document.createElement(tagName) as TestElement;
+      const el = document.createElement(tagName) as InstanceType<typeof TestElement>;
       const video = document.createElement('video');
       el.appendChild(video);
       document.body.appendChild(el);
@@ -241,18 +239,17 @@ describe('lit mixins', () => {
       const { StoreMixin } = createStore({ slices: [audioSlice] });
       const tagName = uniqueTag('test-nested');
 
-      const TestBase = StoreMixin(HTMLElement);
-      class TestElement extends TestBase {
-        connectedCallback() {
-          // @ts-expect-error - connectedCallback exists at runtime
-          super.connectedCallback?.();
-          this.attachShadow({ mode: 'open' });
-          this.shadowRoot!.innerHTML = '<slot></slot>';
-        }
-      }
+      const TestElement = StoreMixin(
+        class extends HTMLElement {
+          connectedCallback() {
+            this.attachShadow({ mode: 'open' });
+            this.shadowRoot!.innerHTML = '<slot></slot>';
+          }
+        },
+      );
       customElements.define(tagName, TestElement);
 
-      const el = document.createElement(tagName) as TestElement;
+      const el = document.createElement(tagName) as InstanceType<typeof TestElement>;
       const wrapper = document.createElement('div');
       const video = document.createElement('video');
       wrapper.appendChild(video);
@@ -269,18 +266,17 @@ describe('lit mixins', () => {
       const { StoreMixin } = createStore({ slices: [audioSlice] });
       const tagName = uniqueTag('test-audio');
 
-      const TestBase = StoreMixin(HTMLElement);
-      class TestElement extends TestBase {
-        connectedCallback() {
-          // @ts-expect-error - connectedCallback exists at runtime
-          super.connectedCallback?.();
-          this.attachShadow({ mode: 'open' });
-          this.shadowRoot!.innerHTML = '<slot></slot>';
-        }
-      }
+      const TestElement = StoreMixin(
+        class extends HTMLElement {
+          connectedCallback() {
+            this.attachShadow({ mode: 'open' });
+            this.shadowRoot!.innerHTML = '<slot></slot>';
+          }
+        },
+      );
       customElements.define(tagName, TestElement);
 
-      const el = document.createElement(tagName) as TestElement;
+      const el = document.createElement(tagName) as InstanceType<typeof TestElement>;
       const audio = document.createElement('audio');
       el.appendChild(audio);
       document.body.appendChild(el);
@@ -295,18 +291,17 @@ describe('lit mixins', () => {
       const { StoreMixin } = createStore({ slices: [audioSlice] });
       const tagName = uniqueTag('test-multiple-media');
 
-      const TestBase = StoreMixin(HTMLElement);
-      class TestElement extends TestBase {
-        connectedCallback() {
-          // @ts-expect-error - connectedCallback exists at runtime
-          super.connectedCallback?.();
-          this.attachShadow({ mode: 'open' });
-          this.shadowRoot!.innerHTML = '<slot></slot>';
-        }
-      }
+      const TestElement = StoreMixin(
+        class extends HTMLElement {
+          connectedCallback() {
+            this.attachShadow({ mode: 'open' });
+            this.shadowRoot!.innerHTML = '<slot></slot>';
+          }
+        },
+      );
       customElements.define(tagName, TestElement);
 
-      const el = document.createElement(tagName) as TestElement;
+      const el = document.createElement(tagName) as InstanceType<typeof TestElement>;
       const video1 = document.createElement('video');
       const video2 = document.createElement('video');
       el.appendChild(video1);

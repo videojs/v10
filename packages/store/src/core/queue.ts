@@ -500,3 +500,24 @@ export function createQueue<Tasks extends TaskRecord = DefaultTaskRecord>(
 ): Queue<Tasks> {
   return new Queue<Tasks>(config);
 }
+
+// ----------------------------------------
+// Utilities
+// ----------------------------------------
+
+/**
+ * Find a task by its request name.
+ *
+ * Task keys can differ from request names when a custom key is configured.
+ * This utility searches through all tasks to find one matching the given name.
+ *
+ * @param tasks - The tasks record to search
+ * @param name - The request name to find
+ * @returns The task if found, undefined otherwise
+ */
+export function findTaskByName<Tasks extends TaskRecord>(tasks: TasksRecord<Tasks>, name: string | symbol): Task | undefined {
+  for (const task of Object.values(tasks)) {
+    if (task?.name === name) return task;
+  }
+  return undefined;
+}

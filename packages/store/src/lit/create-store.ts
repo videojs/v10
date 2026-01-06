@@ -1,25 +1,17 @@
 import type { Context } from '@lit/context';
+import type { CustomElement } from '@videojs/utils/dom';
+import type { Constructor } from '@videojs/utils/types';
 import type { AnySlice, UnionSliceTarget } from '../core/slice';
 import type { StoreConfig } from '../core/store';
-import type { Constructor, StoreAttacher, StoreProvider } from './mixins';
+import type { StoreConnector, StoreProvider } from './mixins';
 
 import { createContext } from '@lit/context';
 
 import { Store } from '../core/store';
 import { createStoreAttachMixin, createStoreMixin, createStoreProviderMixin } from './mixins';
 
-// ----------------------------------------
-// Types
-// ----------------------------------------
-
-/**
- * Configuration for `createStore`.
- */
 export interface CreateStoreConfig<Slices extends AnySlice[]> extends StoreConfig<UnionSliceTarget<Slices>, Slices> {}
 
-/**
- * Result of `createStore`.
- */
 export interface CreateStoreResult<Slices extends AnySlice[]> {
   /**
    * Combined mixin: provides store via context AND auto-attaches slotted media.
@@ -35,9 +27,9 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    * }
    * ```
    */
-  StoreMixin: <T extends Constructor<HTMLElement>>(
+  StoreMixin: <T extends Constructor<CustomElement>>(
     Base: T,
-  ) => T & Constructor<StoreProvider<Slices> & StoreAttacher<Slices>>;
+  ) => T & Constructor<StoreProvider<Slices> & StoreConnector<Slices>>;
 
   /**
    * Mixin that provides store via context (no auto-attach).
@@ -53,7 +45,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    * }
    * ```
    */
-  StoreProviderMixin: <T extends Constructor<HTMLElement>>(Base: T) => T & Constructor<StoreProvider<Slices>>;
+  StoreProviderMixin: <T extends Constructor<CustomElement>>(Base: T) => T & Constructor<StoreProvider<Slices>>;
 
   /**
    * Mixin that auto-attaches slotted media elements (requires store from context).
@@ -69,7 +61,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    * }
    * ```
    */
-  StoreAttachMixin: <T extends Constructor<HTMLElement>>(Base: T) => T & Constructor<StoreAttacher<Slices>>;
+  StoreAttachMixin: <T extends Constructor<CustomElement>>(Base: T) => T & Constructor<StoreConnector<Slices>>;
 
   /**
    * Context for consuming store in controllers.
@@ -97,10 +89,6 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    */
   create: () => Store<UnionSliceTarget<Slices>, Slices>;
 }
-
-// ----------------------------------------
-// Implementation
-// ----------------------------------------
 
 /**
  * Creates a store factory that returns mixins, context, and a create function.
@@ -140,22 +128,19 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
   type Target = UnionSliceTarget<Slices>;
   type StoreType = Store<Target, Slices>;
 
-  // Create unique context per createStore call
   const context = createContext<StoreType>(Symbol('@videojs/store'));
 
-  /**
-   * Creates a new store instance.
-   */
   function create(): StoreType {
     return new Store(config);
   }
 
-  // Create typed mixins
   const StoreProviderMixin = createStoreProviderMixin<Slices>(
     context,
     create,
   ) as CreateStoreResult<Slices>['StoreProviderMixin'];
+
   const StoreAttachMixin = createStoreAttachMixin<Slices>(context) as CreateStoreResult<Slices>['StoreAttachMixin'];
+
   const StoreMixin = createStoreMixin<Slices>(context, create) as CreateStoreResult<Slices>['StoreMixin'];
 
   return {
