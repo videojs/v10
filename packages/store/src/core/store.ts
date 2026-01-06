@@ -385,6 +385,14 @@ export interface StoreErrorContext<Target, Slices extends AnySlice<Target>[]> {
   error: unknown;
 }
 
+export interface StoreProvider<Slices extends AnySlice[]> {
+  store: Store<UnionSliceTarget<Slices>, Slices>;
+}
+
+export interface StoreConsumer<Slices extends AnySlice[]> {
+  readonly store: Store<UnionSliceTarget<Slices>, Slices> | null;
+}
+
 // ----------------------------------------
 // Type Inference
 // ----------------------------------------

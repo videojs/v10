@@ -1,9 +1,10 @@
+import { ReactiveElement } from '@lit/reactive-element';
 import { describe, expect, it } from 'vitest';
 
 import { createSlice } from '../../core/slice';
 import { createStore } from '../create-store';
 
-describe('createStore (lit)', () => {
+describe('createStore', () => {
   // Mock target
   class MockMedia extends EventTarget {
     volume = 1;
@@ -86,16 +87,16 @@ describe('createStore (lit)', () => {
       expect(typeof StoreAttachMixin).toBe('function');
     });
 
-    it('mixins can be applied to HTMLElement', () => {
+    it('mixins can be applied to ReactiveElement', () => {
       const { StoreMixin, StoreProviderMixin, StoreAttachMixin } = createStore({ slices: [audioSlice] });
 
-      const Mixed1 = StoreMixin(HTMLElement);
-      const Mixed2 = StoreProviderMixin(HTMLElement);
-      const Mixed3 = StoreAttachMixin(HTMLElement);
+      const Mixed1 = StoreMixin(ReactiveElement);
+      const Mixed2 = StoreProviderMixin(ReactiveElement);
+      const Mixed3 = StoreAttachMixin(ReactiveElement);
 
-      expect(Mixed1.prototype).toBeInstanceOf(HTMLElement);
-      expect(Mixed2.prototype).toBeInstanceOf(HTMLElement);
-      expect(Mixed3.prototype).toBeInstanceOf(HTMLElement);
+      expect(Mixed1.prototype).toBeInstanceOf(ReactiveElement);
+      expect(Mixed2.prototype).toBeInstanceOf(ReactiveElement);
+      expect(Mixed3.prototype).toBeInstanceOf(ReactiveElement);
     });
   });
 

@@ -16,21 +16,22 @@ import type { AnyStore, InferStoreRequests } from '../../core/store';
  * ```
  */
 export class RequestController<
-  S extends AnyStore,
-  K extends string & keyof InferStoreRequests<S>,
+  Store extends AnyStore,
+  Key extends keyof InferStoreRequests<Store>,
 > implements ReactiveController {
-  readonly #store: S;
-  readonly #key: K;
+  readonly #store: Store;
+  readonly #key: Key;
 
-  constructor(host: ReactiveControllerHost, store: S, key: K) {
+  constructor(host: ReactiveControllerHost, store: Store, key: Key) {
     this.#store = store;
     this.#key = key;
     host.addController(this);
   }
 
-  get value(): InferStoreRequests<S>[K] {
-    return (this.#store.request as InferStoreRequests<S>)[this.#key];
+  get value(): InferStoreRequests<Store>[Key] {
+    return this.#store.request[this.#key] as InferStoreRequests<Store>[Key];
   }
 
+  // no-op to satisfy `ReactiveController` interface
   hostConnected(): void {}
 }

@@ -67,18 +67,18 @@ export type MutationResult<Mutate, Data>
  * ```
  */
 export class MutationController<
-  S extends AnyStore,
-  K extends string & keyof InferStoreRequests<S>,
-  Mutate extends InferStoreRequests<S>[K] = InferStoreRequests<S>[K],
+  Store extends AnyStore,
+  Key extends string & keyof InferStoreRequests<Store>,
+  Mutate extends InferStoreRequests<Store>[Key] = InferStoreRequests<Store>[Key],
 > implements ReactiveController {
   readonly #host: ReactiveControllerHost;
-  readonly #store: S;
-  readonly #key: K;
+  readonly #store: Store;
+  readonly #key: Key;
 
   #task: Task | undefined;
   #unsubscribe: (() => void) | null = null;
 
-  constructor(host: ReactiveControllerHost, store: S, key: K) {
+  constructor(host: ReactiveControllerHost, store: Store, key: Key) {
     this.#host = host;
     this.#store = store;
     this.#key = key;
@@ -90,7 +90,7 @@ export class MutationController<
     type Data = Awaited<ReturnType<Mutate & ((...args: any[]) => any)>>;
 
     const task = this.#task;
-    const mutate = (this.#store.request as InferStoreRequests<S>)[this.#key] as Mutate;
+    const mutate = (this.#store.request as InferStoreRequests<Store>)[this.#key] as Mutate;
     const reset = this.#reset;
 
     if (!task) {

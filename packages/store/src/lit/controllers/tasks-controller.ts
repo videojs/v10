@@ -1,9 +1,10 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
-import type { TasksRecord } from '../../core/queue';
-import type { AnyStore, InferStoreTasks } from '../../core/store';
+import type { AnyStore } from '../../core/store';
+import { noop } from '@videojs/utils/function';
 
 /**
  * Subscribes to task state changes.
+ *
  * Triggers host updates when tasks change.
  *
  * @example
@@ -19,36 +20,35 @@ import type { AnyStore, InferStoreTasks } from '../../core/store';
  * }
  * ```
  */
-export class TasksController<S extends AnyStore> implements ReactiveController {
+export class TasksController<Store extends AnyStore> implements ReactiveController {
   readonly #host: ReactiveControllerHost;
-  readonly #store: S;
+  readonly #store: Store;
 
-  #value: TasksRecord<InferStoreTasks<S>>;
-  #unsubscribe: (() => void) | null = null;
+  #value: Store['queue']['tasks'];
+  #unsubscribe = noop;
 
-  constructor(host: ReactiveControllerHost, store: S) {
+  constructor(host: ReactiveControllerHost, store: Store) {
     this.#host = host;
     this.#store = store;
-    this.#value = store.queue.tasks as TasksRecord<InferStoreTasks<S>>;
+    this.#value = store.queue.tasks;
     host.addController(this);
   }
 
-  get value(): TasksRecord<InferStoreTasks<S>> {
+  get value(): Store['queue']['tasks'] {
     return this.#value;
   }
 
   hostConnected(): void {
     // Sync value on reconnect to avoid stale state
-    this.#value = this.#store.queue.tasks as TasksRecord<InferStoreTasks<S>>;
-
+    this.#value = this.#store.queue.tasks;
     this.#unsubscribe = this.#store.queue.subscribe((tasks) => {
-      this.#value = tasks as TasksRecord<InferStoreTasks<S>>;
+      this.#value = tasks;
       this.#host.requestUpdate();
     });
   }
 
   hostDisconnected(): void {
     this.#unsubscribe?.();
-    this.#unsubscribe = null;
+    this.#unsubscribe = noop;
   }
 }

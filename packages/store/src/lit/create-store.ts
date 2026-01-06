@@ -1,14 +1,15 @@
 import type { Context } from '@lit/context';
-import type { CustomElement } from '@videojs/utils/dom';
+import type { ReactiveElement } from '@lit/reactive-element';
 import type { Constructor } from '@videojs/utils/types';
 import type { AnySlice, UnionSliceTarget } from '../core/slice';
-import type { StoreConfig } from '../core/store';
-import type { StoreConnector, StoreProvider } from './mixins';
+
+import type { StoreConfig, StoreConsumer, StoreProvider } from '../core/store';
 
 import { createContext } from '@lit/context';
-
 import { Store } from '../core/store';
 import { createStoreAttachMixin, createStoreMixin, createStoreProviderMixin } from './mixins';
+
+export const contextKey = Symbol('@videojs/store');
 
 export interface CreateStoreConfig<Slices extends AnySlice[]> extends StoreConfig<UnionSliceTarget<Slices>, Slices> {}
 
@@ -18,67 +19,53 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    *
    * @example
    * ```ts
-   * class MyPlayer extends StoreMixin(HTMLElement) {
-   *   connectedCallback() {
-   *     super.connectedCallback?.();
-   *     this.attachShadow({ mode: 'open' });
-   *     this.shadowRoot.innerHTML = '<slot></slot>';
-   *   }
-   * }
+   * class MyPlayer extends StoreMixin(LitElement) {}
    * ```
    */
-  StoreMixin: <T extends Constructor<CustomElement>>(
-    Base: T,
-  ) => T & Constructor<StoreProvider<Slices> & StoreConnector<Slices>>;
+  StoreMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreProvider<Slices>>;
 
   /**
    * Mixin that provides store via context (no auto-attach).
+   *
    * Use when you need granular control over store provisioning.
    *
    * @example
    * ```ts
-   * class MyProvider extends StoreProviderMixin(HTMLElement) {
-   *   connectedCallback() {
-   *     super.connectedCallback?.();
-   *     // Store is available via context, but no auto-attach
-   *   }
-   * }
+   * class MyProvider extends StoreProviderMixin(LitElement) {}
    * ```
    */
-  StoreProviderMixin: <T extends Constructor<CustomElement>>(Base: T) => T & Constructor<StoreProvider<Slices>>;
+  StoreProviderMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreProvider<Slices>>;
 
   /**
    * Mixin that auto-attaches slotted media elements (requires store from context).
+   *
    * Use when inheriting store from a parent provider.
    *
    * @example
    * ```ts
-   * class MyControls extends StoreAttachMixin(HTMLElement) {
-   *   connectedCallback() {
-   *     super.connectedCallback?.();
-   *     // Will attach media from parent provider's context
-   *   }
-   * }
+   * class MyControls extends StoreAttachMixin(LitElement) {}
    * ```
    */
-  StoreAttachMixin: <T extends Constructor<CustomElement>>(Base: T) => T & Constructor<StoreConnector<Slices>>;
+  StoreAttachMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreConsumer<Slices>>;
 
   /**
    * Context for consuming store in controllers.
+   *
    * Use this with Lit's `ContextConsumer` or the `@consume` decorator.
    *
    * @example
    * ```ts
    * class MyElement extends LitElement {
    *   @consume({ context, subscribe: true })
-   *   accessor store!: Store;
+   *   readonly store!: ContextType<typeof context>;
    * }
    * ```
    */
-  context: Context<unknown, Store<UnionSliceTarget<Slices>, Slices>>;
+  context: Context<typeof contextKey, Store<UnionSliceTarget<Slices>, Slices>>;
 
   /**
    * Creates a store instance for imperative access.
+   *
    * Useful for creating a store before rendering or for testing.
    *
    * @example
@@ -99,20 +86,14 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
  * @example
  * ```ts
  * import { createStore } from '@videojs/store/lit';
- * import { playbackSlice } from './slices/playback';
+ * import { playbackSlice } from '@videojs/core/dom';
  *
- * const { StoreMixin, context, create } = createStore({
+ * const { StoreMixin } = createStore({
  *   slices: [playbackSlice],
  * });
  *
  * // Create a player element with store
- * class MyPlayer extends StoreMixin(HTMLElement) {
- *   connectedCallback() {
- *     super.connectedCallback?.();
- *     this.attachShadow({ mode: 'open' });
- *     this.shadowRoot.innerHTML = '<slot></slot>';
- *   }
- * }
+ * class MyPlayer extends StoreMixin(LitElement) {}
  *
  * customElements.define('my-player', MyPlayer);
  * ```
@@ -126,22 +107,22 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
  */
 export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig<Slices>): CreateStoreResult<Slices> {
   type Target = UnionSliceTarget<Slices>;
-  type StoreType = Store<Target, Slices>;
+  type ProvidedStore = Store<Target, Slices>;
 
-  const context = createContext<StoreType>(Symbol('@videojs/store'));
+  const context = createContext<ProvidedStore, typeof contextKey>(contextKey);
 
-  function create(): StoreType {
+  function create(): ProvidedStore {
     return new Store(config);
   }
 
   const StoreProviderMixin = createStoreProviderMixin<Slices>(
     context,
     create,
-  ) as CreateStoreResult<Slices>['StoreProviderMixin'];
+  );
 
-  const StoreAttachMixin = createStoreAttachMixin<Slices>(context) as CreateStoreResult<Slices>['StoreAttachMixin'];
+  const StoreAttachMixin = createStoreAttachMixin<Slices>(context);
 
-  const StoreMixin = createStoreMixin<Slices>(context, create) as CreateStoreResult<Slices>['StoreMixin'];
+  const StoreMixin = createStoreMixin<Slices>(context, create);
 
   return {
     StoreMixin,

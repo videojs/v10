@@ -71,21 +71,21 @@ export type { AsyncStatus };
  * ```
  */
 export class OptimisticController<
-  S extends AnyStore,
-  K extends string & keyof InferStoreRequests<S>,
+  Store extends AnyStore,
+  Key extends string & keyof InferStoreRequests<Store>,
   Value,
-  Request extends InferStoreRequests<S>[K] = InferStoreRequests<S>[K],
+  Request extends InferStoreRequests<Store>[Key] = InferStoreRequests<Store>[Key],
 > implements ReactiveController {
   readonly #host: ReactiveControllerHost;
-  readonly #store: S;
-  readonly #key: K;
-  readonly #stateSelector: (state: InferStoreState<S>) => Value;
+  readonly #store: Store;
+  readonly #key: Key;
+  readonly #stateSelector: (state: InferStoreState<Store>) => Value;
   readonly #disposer = new Disposer();
 
   #optimistic: { value: Value; taskId: symbol } | null = null;
   #task: Task | undefined;
 
-  constructor(host: ReactiveControllerHost, store: S, key: K, stateSelector: (state: InferStoreState<S>) => Value) {
+  constructor(host: ReactiveControllerHost, store: Store, key: Key, stateSelector: (state: InferStoreState<Store>) => Value) {
     this.#host = host;
     this.#store = store;
     this.#key = key;
@@ -124,7 +124,7 @@ export class OptimisticController<
     this.#optimistic = { value: newValue, taskId: pendingTaskId };
     this.#host.requestUpdate();
 
-    const request = (this.#store.request as InferStoreRequests<S>)[this.#key] as (
+    const request = (this.#store.request as InferStoreRequests<Store>)[this.#key] as (
       value: Value,
     ) => ReturnType<Request & ((...args: any[]) => any)>;
     const promise = request(newValue);

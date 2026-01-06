@@ -23,9 +23,7 @@ export function getSlottedElement<T extends Element>(
   slotName: string,
   predicate: (el: Element) => Falsy<T>,
 ): T | null {
-  const selector = slotName ? `slot[name="${slotName}"]` : 'slot:not([name])';
-  const slot = shadowRoot.querySelector<HTMLSlotElement>(selector);
-
+  const slot = querySlot(shadowRoot, slotName);
   if (!slot) return null;
 
   for (const el of slot.assignedElements({ flatten: true })) {
@@ -34,4 +32,11 @@ export function getSlottedElement<T extends Element>(
   }
 
   return null;
+}
+
+/**
+ * Queries a slot element by name in a shadow root.
+ */
+export function querySlot(shadowRoot: ShadowRoot, name: string): HTMLSlotElement | null {
+  return shadowRoot.querySelector<HTMLSlotElement>(name ? `slot[name="${name}"]` : 'slot:not([name])');
 }

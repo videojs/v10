@@ -16,15 +16,15 @@ import type { AnyStore, InferStoreState } from '../../core/store';
  * }
  * ```
  */
-export class SelectorController<S extends AnyStore, T> implements ReactiveController {
+export class SelectorController<Store extends AnyStore, Value> implements ReactiveController {
   readonly #host: ReactiveControllerHost;
-  readonly #store: S;
-  readonly #selector: (state: InferStoreState<S>) => T;
+  readonly #store: Store;
+  readonly #selector: (state: InferStoreState<Store>) => Value;
 
-  #value: T;
+  #value: Value;
   #unsubscribe: (() => void) | null = null;
 
-  constructor(host: ReactiveControllerHost, store: S, selector: (state: InferStoreState<S>) => T) {
+  constructor(host: ReactiveControllerHost, store: Store, selector: (state: InferStoreState<Store>) => Value) {
     this.#host = host;
     this.#store = store;
     this.#selector = selector;
@@ -32,14 +32,13 @@ export class SelectorController<S extends AnyStore, T> implements ReactiveContro
     host.addController(this);
   }
 
-  get value(): T {
+  get value(): Value {
     return this.#value;
   }
 
   hostConnected(): void {
     // Sync value on reconnect to avoid stale state
     this.#value = this.#selector(this.#store.state);
-
     this.#unsubscribe = this.#store.subscribe(this.#selector, (value) => {
       this.#value = value;
       this.#host.requestUpdate();

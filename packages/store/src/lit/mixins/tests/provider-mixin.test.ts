@@ -1,3 +1,4 @@
+import { ReactiveElement } from '@lit/reactive-element';
 import { describe, expect, it } from 'vitest';
 
 import { createLitTestStore, setupDomCleanup, uniqueTag } from '../../tests/test-utils';
@@ -5,29 +6,31 @@ import { createLitTestStore, setupDomCleanup, uniqueTag } from '../../tests/test
 setupDomCleanup();
 
 describe('createStoreProviderMixin', () => {
-  it('creates store lazily on first access', () => {
+  it('creates store lazily on first access', async () => {
     const { StoreProviderMixin } = createLitTestStore();
     const tagName = uniqueTag('test-provider');
 
-    const TestElement = StoreProviderMixin(HTMLElement);
+    class TestElement extends StoreProviderMixin(ReactiveElement) {}
     customElements.define(tagName, TestElement);
 
-    const el = document.createElement(tagName) as InstanceType<typeof TestElement>;
+    const el = document.createElement(tagName) as TestElement;
     document.body.appendChild(el);
+    await el.updateComplete;
 
     expect(el.store).toBeDefined();
     expect(el.store.state).toEqual({ volume: 1, muted: false });
   });
 
-  it('reuses same store instance', () => {
+  it('reuses same store instance', async () => {
     const { StoreProviderMixin } = createLitTestStore();
     const tagName = uniqueTag('test-provider-reuse');
 
-    const TestElement = StoreProviderMixin(HTMLElement);
+    class TestElement extends StoreProviderMixin(ReactiveElement) {}
     customElements.define(tagName, TestElement);
 
-    const el = document.createElement(tagName) as InstanceType<typeof TestElement>;
+    const el = document.createElement(tagName) as TestElement;
     document.body.appendChild(el);
+    await el.updateComplete;
 
     const first = el.store;
     const second = el.store;
@@ -35,15 +38,16 @@ describe('createStoreProviderMixin', () => {
     expect(first).toBe(second);
   });
 
-  it('destroys owned store on disconnect', () => {
+  it('destroys owned store on disconnect', async () => {
     const { StoreProviderMixin } = createLitTestStore();
     const tagName = uniqueTag('test-provider-destroy');
 
-    const TestElement = StoreProviderMixin(HTMLElement);
+    class TestElement extends StoreProviderMixin(ReactiveElement) {}
     customElements.define(tagName, TestElement);
 
-    const el = document.createElement(tagName) as InstanceType<typeof TestElement>;
+    const el = document.createElement(tagName) as TestElement;
     document.body.appendChild(el);
+    await el.updateComplete;
 
     const store = el.store;
     expect(store.destroyed).toBe(false);
@@ -53,15 +57,16 @@ describe('createStoreProviderMixin', () => {
     expect(store.destroyed).toBe(true);
   });
 
-  it('allows setting custom store via setter', () => {
+  it('allows setting custom store via setter', async () => {
     const { StoreProviderMixin, create } = createLitTestStore();
     const tagName = uniqueTag('test-provider-setter');
 
-    const TestElement = StoreProviderMixin(HTMLElement);
+    class TestElement extends StoreProviderMixin(ReactiveElement) {}
     customElements.define(tagName, TestElement);
 
-    const el = document.createElement(tagName) as InstanceType<typeof TestElement>;
+    const el = document.createElement(tagName) as TestElement;
     document.body.appendChild(el);
+    await el.updateComplete;
 
     const customStore = create();
     el.store = customStore;
@@ -69,17 +74,18 @@ describe('createStoreProviderMixin', () => {
     expect(el.store).toBe(customStore);
   });
 
-  it('does not destroy externally provided store on disconnect', () => {
+  it('does not destroy externally provided store on disconnect', async () => {
     const { StoreProviderMixin, create } = createLitTestStore();
     const tagName = uniqueTag('test-provider-external');
 
-    const TestElement = StoreProviderMixin(HTMLElement);
+    class TestElement extends StoreProviderMixin(ReactiveElement) {}
     customElements.define(tagName, TestElement);
 
-    const el = document.createElement(tagName) as InstanceType<typeof TestElement>;
+    const el = document.createElement(tagName) as TestElement;
     const externalStore = create();
     el.store = externalStore;
     document.body.appendChild(el);
+    await el.updateComplete;
 
     el.remove();
 
@@ -87,15 +93,16 @@ describe('createStoreProviderMixin', () => {
     expect(externalStore.destroyed).toBe(false);
   });
 
-  it('destroys old owned store when setting new store', () => {
+  it('destroys old owned store when setting new store', async () => {
     const { StoreProviderMixin, create } = createLitTestStore();
     const tagName = uniqueTag('test-provider-replace');
 
-    const TestElement = StoreProviderMixin(HTMLElement);
+    class TestElement extends StoreProviderMixin(ReactiveElement) {}
     customElements.define(tagName, TestElement);
 
-    const el = document.createElement(tagName) as InstanceType<typeof TestElement>;
+    const el = document.createElement(tagName) as TestElement;
     document.body.appendChild(el);
+    await el.updateComplete;
 
     const ownedStore = el.store; // Creates owned store
     const newStore = create();
