@@ -384,7 +384,7 @@ importers:
         specifier: ^19.2.1
         version: 19.2.3(react@19.2.3)
       tsdown:
-        specifier: ^0.15.12
+        specifier: ^0.15.9
         version: 0.15.12(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
