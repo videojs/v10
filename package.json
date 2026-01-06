@@ -67,6 +67,6 @@
     "commit-msg": "pnpm commitlint"
   },
   "lint-staged": {
-    "*": "eslint --fix"
+    "*": "eslint --fix --cache"
   }
 }
