@@ -17,8 +17,5 @@ export default defineConfig({
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
   },
-  dts: {
-    build: true,
-    incremental: true,
-  },
+  dts: true,
 });

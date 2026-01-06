@@ -14,7 +14,5 @@ export default defineConfig({
   alias: {
     '@': new URL('./src/core', import.meta.url).pathname,
   },
-  dts: {
-    incremental: true,
-  },
+  dts: true,
 });
