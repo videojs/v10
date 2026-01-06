@@ -46,6 +46,12 @@ export default antfu(
     },
   },
   {
+    files: ['**/*.test.{ts,tsx}'],
+    rules: {
+      'vitest/prefer-lowercase-title': 'off',
+    },
+  },
+  {
     files: ['**/*.md'],
     rules: {
       'style/max-len': 'off',

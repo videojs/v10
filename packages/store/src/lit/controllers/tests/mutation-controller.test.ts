@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import { createSlice } from '../../../core/slice';
 import { createStore as createCoreStore } from '../../../core/store';
-import { MutationController } from '../mutation';
-import { createMockHost, createTestStore, MockMedia } from './test-utils';
+import { createCoreTestStore, createMockHost, MockMedia } from '../../tests/test-utils';
+import { MutationController } from '../mutation-controller';
 
-describe('mutationController', () => {
+describe('MutationController', () => {
   it('returns mutation result with idle status initially', () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new MutationController(host, store, 'setVolume');
@@ -16,7 +16,7 @@ describe('mutationController', () => {
   });
 
   it('registers with host', () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new MutationController(host, store, 'setVolume');
@@ -25,7 +25,7 @@ describe('mutationController', () => {
   });
 
   it('provides mutate function', () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new MutationController(host, store, 'setVolume');
@@ -34,7 +34,7 @@ describe('mutationController', () => {
   });
 
   it('tracks success state with data', async () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new MutationController(host, store, 'setVolume');
@@ -50,7 +50,7 @@ describe('mutationController', () => {
   });
 
   it('reset clears settled state', async () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new MutationController(host, store, 'setVolume');
@@ -65,7 +65,7 @@ describe('mutationController', () => {
   });
 
   it('unsubscribes on hostDisconnected', async () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new MutationController(host, store, 'setVolume');

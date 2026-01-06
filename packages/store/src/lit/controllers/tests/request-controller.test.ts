@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { RequestController } from '../request';
-import { createMockHost, createTestStore } from './test-utils';
+import { createCoreTestStore, createMockHost } from '../../tests/test-utils';
+import { RequestController } from '../request-controller';
 
 describe('RequestController', () => {
   it('returns request function', () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new RequestController(host, store, 'setVolume');
@@ -14,7 +14,7 @@ describe('RequestController', () => {
   });
 
   it('registers with host', () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new RequestController(host, store, 'setVolume');
@@ -23,7 +23,7 @@ describe('RequestController', () => {
   });
 
   it('returns stable reference', () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new RequestController(host, store, 'setVolume');
@@ -34,7 +34,7 @@ describe('RequestController', () => {
   });
 
   it('request works correctly', async () => {
-    const { store, target } = createTestStore();
+    const { store, target } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new RequestController(host, store, 'setVolume');

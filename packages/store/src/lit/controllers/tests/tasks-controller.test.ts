@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { TasksController } from '../tasks';
-import { createMockHost, createTestStore } from './test-utils';
+import { createCoreTestStore, createMockHost } from '../../tests/test-utils';
+import { TasksController } from '../tasks-controller';
 
-describe('tasksController', () => {
+describe('TasksController', () => {
   it('returns tasks record', () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new TasksController(host, store);
@@ -14,7 +14,7 @@ describe('tasksController', () => {
   });
 
   it('registers with host', () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new TasksController(host, store);
@@ -23,7 +23,7 @@ describe('tasksController', () => {
   });
 
   it('updates when task completes', async () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new TasksController(host, store);
@@ -39,7 +39,7 @@ describe('tasksController', () => {
   });
 
   it('unsubscribes on hostDisconnected', async () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new TasksController(host, store);
@@ -53,7 +53,7 @@ describe('tasksController', () => {
   });
 
   it('handles multiple task updates', async () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new TasksController(host, store);

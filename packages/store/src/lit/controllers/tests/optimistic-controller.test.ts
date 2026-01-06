@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { OptimisticController } from '../optimistic';
-import { createMockHost, createTestStore } from './test-utils';
+import { createCoreTestStore, createMockHost } from '../../tests/test-utils';
+import { OptimisticController } from '../optimistic-controller';
 
 describe('OptimisticController', () => {
   it('returns actual value initially', () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);
@@ -15,7 +15,7 @@ describe('OptimisticController', () => {
   });
 
   it('registers with host', () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);
@@ -24,7 +24,7 @@ describe('OptimisticController', () => {
   });
 
   it('provides setValue function', () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);
@@ -33,7 +33,7 @@ describe('OptimisticController', () => {
   });
 
   it('updates actual value after mutation completes', async () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);
@@ -46,7 +46,7 @@ describe('OptimisticController', () => {
   });
 
   it('reset clears error state', async () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);
@@ -60,7 +60,7 @@ describe('OptimisticController', () => {
   });
 
   it('triggers host update when state changes', async () => {
-    const { store, target } = createTestStore();
+    const { store, target } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);
@@ -74,7 +74,7 @@ describe('OptimisticController', () => {
   });
 
   it('unsubscribes on hostDisconnected', async () => {
-    const { store, target } = createTestStore();
+    const { store, target } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new OptimisticController(host, store, 'setVolume', s => s.volume);

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { SelectorController } from '../selector';
-import { createMockHost, createTestStore } from './test-utils';
+import { createCoreTestStore, createMockHost } from '../../tests/test-utils';
+import { SelectorController } from '../selector-controller';
 
 describe('SelectorController', () => {
   it('returns selected state', () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new SelectorController(host, store, s => s.volume);
@@ -14,7 +14,7 @@ describe('SelectorController', () => {
   });
 
   it('registers with host', () => {
-    const { store } = createTestStore();
+    const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new SelectorController(host, store, s => s.volume);
@@ -23,7 +23,7 @@ describe('SelectorController', () => {
   });
 
   it('subscribes on hostConnected', () => {
-    const { store, target } = createTestStore();
+    const { store, target } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new SelectorController(host, store, s => s.volume);
@@ -37,7 +37,7 @@ describe('SelectorController', () => {
   });
 
   it('unsubscribes on hostDisconnected', () => {
-    const { store, target } = createTestStore();
+    const { store, target } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new SelectorController(host, store, s => s.volume);
@@ -52,7 +52,7 @@ describe('SelectorController', () => {
   });
 
   it('syncs value on reconnect after state changed while disconnected', () => {
-    const { store, target } = createTestStore();
+    const { store, target } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new SelectorController(host, store, s => s.volume);
@@ -75,7 +75,7 @@ describe('SelectorController', () => {
   });
 
   it('does not trigger update when unrelated state changes', () => {
-    const { store, target } = createTestStore();
+    const { store, target } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new SelectorController(host, store, s => s.volume);
@@ -89,7 +89,7 @@ describe('SelectorController', () => {
   });
 
   it('handles multiple reconnect cycles', () => {
-    const { store, target } = createTestStore();
+    const { store, target } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new SelectorController(host, store, s => s.volume);
