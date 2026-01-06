@@ -9,8 +9,8 @@ import { useCallback, useRef, useSyncExternalStore } from 'react';
  * Returns a record of all tasks keyed by request name.
  * Re-renders when any task is added, updated, or removed.
  *
- * For tracking a single mutation, prefer `useMutation` which provides
- * a more ergonomic API with status helpers.
+ * For tracking a single mutation, prefer `useMutation` which provides a more ergonomic API with
+ * status helpers.
  *
  * @param store - The store instance to subscribe to
  * @returns Record of tasks keyed by request name

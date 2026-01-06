@@ -1,3 +1,4 @@
+import { noop } from '@videojs/utils/function';
 import { createSlice } from '../../../core/slice';
 import { createStore as createCoreStore } from '../../../core/store';
 
@@ -79,8 +80,13 @@ export const asyncAudioSlice = createSlice<AsyncMockMedia>()({
 });
 
 export function createAsyncTestStore() {
-  const store = createCoreStore({ slices: [asyncAudioSlice] });
+  const store = createCoreStore({
+    slices: [asyncAudioSlice],
+    onError: noop,
+  });
+
   const target = new AsyncMockMedia();
   store.attach(target);
+
   return { store, target };
 }

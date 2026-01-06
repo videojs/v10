@@ -1,24 +1,9 @@
-import type { AsyncStatus, ErrorTask, PendingTask, SuccessTask, Task, TasksRecord } from '../queue';
+import type { ErrorTask, PendingTask, SuccessTask, Task, TasksRecord } from '../queue';
 
 import { describe, expectTypeOf, it } from 'vitest';
-
 import { createQueue } from '../queue';
 
 describe('queue types', () => {
-  describe('AsyncStatus', () => {
-    it('includes all status values', () => {
-      const idle: AsyncStatus = 'idle';
-      const pending: AsyncStatus = 'pending';
-      const success: AsyncStatus = 'success';
-      const error: AsyncStatus = 'error';
-
-      expectTypeOf(idle).toExtend<AsyncStatus>();
-      expectTypeOf(pending).toExtend<AsyncStatus>();
-      expectTypeOf(success).toExtend<AsyncStatus>();
-      expectTypeOf(error).toExtend<AsyncStatus>();
-    });
-  });
-
   describe('Task', () => {
     it('is discriminated union of task states', () => {
       const task: Task = {} as Task;

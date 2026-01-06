@@ -16,10 +16,10 @@ describe('useRequest', () => {
     expect(typeof result.current.setVolume).toBe('function');
   });
 
-  it('returns selected request', () => {
+  it('returns request by name', () => {
     const { store } = createTestStore();
 
-    const { result } = renderHook(() => useRequest(store, r => r.setVolume));
+    const { result } = renderHook(() => useRequest(store, 'setVolume'));
 
     expect(typeof result.current).toBe('function');
   });

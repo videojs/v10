@@ -6,6 +6,7 @@ import { useCallback, useSyncExternalStore } from 'react';
  * Subscribe to a slice of store state.
  *
  * Only re-renders when the selected value changes (shallow comparison).
+ *
  * The selector function should return a stable reference for objects
  * to avoid unnecessary re-renders.
  *

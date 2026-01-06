@@ -5,7 +5,8 @@ import { isUndefined } from '@videojs/utils/predicate';
 /**
  * Access the store's request methods.
  *
- * Returns either the full request map or a selected request function.
+ * Returns either the full request map or a specific request function by name.
+ *
  * The request map is stable across renders (same reference).
  *
  * @example
@@ -16,25 +17,28 @@ import { isUndefined } from '@videojs/utils/predicate';
  *   return <button onClick={() => request.play()}>Play</button>;
  * }
  *
- * // Select a specific request
+ * // Get a specific request by name
  * function PlayButton() {
- *   const play = useRequest(store, (r) => r.play);
+ *   const play = useRequest(store, 'play');
  *   return <button onClick={() => play()}>Play</button>;
  * }
  * ```
  */
 export function useRequest<S extends AnyStore>(store: S): InferStoreRequests<S>;
-export function useRequest<S extends AnyStore, T>(store: S, selector: (requests: InferStoreRequests<S>) => T): T;
-// eslint-disable-next-line react/no-unnecessary-use-prefix
-export function useRequest<S extends AnyStore, T>(
+export function useRequest<S extends AnyStore, Name extends keyof InferStoreRequests<S>>(
   store: S,
-  selector?: (requests: InferStoreRequests<S>) => T,
-): InferStoreRequests<S> | T {
+  name: Name,
+): InferStoreRequests<S>[Name];
+// eslint-disable-next-line react/no-unnecessary-use-prefix
+export function useRequest<S extends AnyStore, Name extends keyof InferStoreRequests<S>>(
+  store: S,
+  name?: Name,
+): InferStoreRequests<S> | InferStoreRequests<S>[Name] {
   const request = store.request as InferStoreRequests<S>;
 
-  if (isUndefined(selector)) {
+  if (isUndefined(name)) {
     return request;
   }
 
-  return selector(request);
+  return request[name];
 }

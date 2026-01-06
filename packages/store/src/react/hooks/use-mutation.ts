@@ -9,6 +9,7 @@ import { useCallback, useRef, useSyncExternalStore } from 'react';
  * Track a store request as a mutation with status, data, and error.
  *
  * Subscribes to the task queue and re-renders when the mutation's status changes.
+ *
  * Returns a discriminated union — use `status` to narrow the type and access
  * `data` (on success) or `error` (on failure).
  *

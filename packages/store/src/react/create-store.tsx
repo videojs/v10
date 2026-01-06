@@ -63,11 +63,11 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
   useSelector: <T>(selector: (state: UnionSliceState<Slices>) => T) => T;
 
   /**
-   * Returns the request map or a selected request.
+   * Returns the request map or a specific request by name.
    */
   useRequest: {
     (): UnionSliceRequests<Slices>;
-    <T>(selector: (requests: UnionSliceRequests<Slices>) => T): T;
+    <Name extends keyof UnionSliceRequests<Slices>>(name: Name): UnionSliceRequests<Slices>[Name];
   };
 
   /**
@@ -175,16 +175,10 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
   }
 
   function useRequest(): Requests;
-  function useRequest<T>(selector: (requests: Requests) => T): T;
-  function useRequest<T>(selector?: (requests: Requests) => T): Requests | T {
+  function useRequest<Name extends keyof Requests>(name: Name): Requests[Name];
+  function useRequest<Name extends keyof Requests>(name?: Name): Requests | Requests[Name] {
     const store = useStore();
-    const requests = useRequestBase(store);
-
-    if (isUndefined(selector)) {
-      return requests;
-    }
-
-    return selector(requests);
+    return useRequestBase(store, name as Name);
   }
 
   function useTasks(): TasksRecord<Tasks> {
