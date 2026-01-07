@@ -391,3 +391,35 @@ export function supportsIdleCallback(): boolean { ... }
 get size(): number { ... }
 add(cleanup: CleanupFn): void { ... }
 ```
+
+## Lit
+
+### Accessor Pattern
+
+When a controller can receive a value from multiple sources (direct instance vs context), use an Accessor to abstract resolution:
+
+```ts
+class ValueAccessor<Value> {
+  constructor(host: AccessorHost, source: Value | Context<Value>, onAvailable?: (value: Value) => void);
+  get value(): Value | null;
+  hostConnected(): void;
+}
+```
+
+- `source` accepts either a direct value or a context that provides it
+- `value` getter returns the resolved value or `null` if not yet available
+- `onAvailable` callback fires when value becomes available (use for subscription setup)
+- Consumers call `hostConnected()` to re-trigger `onAvailable` on reconnect
+
+### Explicit Host Type
+
+Export a typed host alias for controllers and mixins:
+
+```ts
+export type SelectorControllerHost = ReactiveControllerHost & HTMLElement;
+export type ProviderMixinHost = ReactiveElement & EventTarget;
+```
+
+- Always export and use the explicit type, never bare `ReactiveControllerHost`
+- Allows future extension without breaking consumers
+- Self-documents what capabilities the host must have
