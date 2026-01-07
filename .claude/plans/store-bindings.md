@@ -36,7 +36,8 @@ Implement React and DOM bindings for Video.js 10's store, enabling:
 | Primitives context  | `useStoreContext()` internal hook for primitive UI components                         |
 | displayName         | For React DevTools component naming                                                   |
 | Component types     | Namespace pattern: `Skin.Props` via `namespace Skin { export type Props }`            |
-| Element define      | `FrostedSkinElement.define(tagName, { mixins })` for declarative setup                |
+| Element define      | `FrostedSkinElement.define(tagName?, mixin?)` - pass mixin directly                   |
+| Slot handling       | Default slot (`<slot></slot>`) - no `slot="media"` attribute needed                   |
 | Config extension    | `extendConfig()` uses `uniqBy` + `composeCallbacks` from utils                        |
 | Provider resolution | Isolated by default; `inherit` prop to use parent store from context                  |
 | Store instance      | `create()` method for imperative store creation                                       |
@@ -232,108 +233,18 @@ export { extendConfig, Provider } from './store';
 
 ---
 
-## Phase 6: Frosted Skin (HTML)
+## Phase 6: Frosted Skin [DONE]
 
-### 6.1 Store config
+> Refer to [PR #298](https://github.com/videojs/v10/pull/298) for implementation details.
 
-**File:** `packages/html/src/skins/frosted/store.ts`
+React and HTML frosted skin store setup:
 
-```typescript
-import type { AnySlice, StoreConfig } from '@videojs/store';
+- React: `Provider`, `Skin`, `extendConfig`, `createStore` in `@videojs/react/skins/frosted`
+- HTML: `FrostedSkinElement`, `StoreMixin`, `extendConfig` in `@videojs/html/skins/frosted`
+- Auto-define entry: `@videojs/html/define/vjs-frosted-skin` for CDN usage
+- `StoreAttachMixin` uses default slot (no `slot="media"` attribute needed)
 
-import { extendConfig as extendBaseConfig } from '@videojs/store';
-import { createStore } from '@videojs/store/lit';
-
-import { media } from './slices'; // internal - re-exported from @videojs/html
-
-/** Base config for frosted skin. */
-const baseConfig = {
-  slices: [media.playback] as const,
-};
-
-/**
- * Extends frosted skin config with additional slices/hooks.
- * Composes lifecycle hooks (both called, base first).
- */
-export function extendConfig<S extends readonly AnySlice[] = readonly []>(extension?: Partial<StoreConfig<any, S>>) {
-  return extendBaseConfig(baseConfig, extension);
-}
-
-export const { StoreMixin, StoreProviderMixin, StoreAttachMixin, context } = createStore(extendConfig());
-```
-
-### 6.2 Skin component
-
-**File:** `packages/html/src/skins/frosted/skin.ts`
-
-```typescript
-import { StoreAttachMixin, StoreMixin, StoreProviderMixin } from './store';
-
-type Mixin = <T extends Constructor<HTMLElement>>(Base: T) => T;
-
-export interface DefineOptions {
-  /** Mixins to apply. Defaults to [StoreMixin] (combined provider + attach). */
-  mixins?: Mixin[];
-}
-
-/**
- * Frosted skin element. Empty for now - controls will be added later.
- * Uses shadow DOM with slot for video element.
- */
-export class FrostedSkinElement extends HTMLElement {
-  /** Default tag name for this element. */
-  static tagName = 'vjs-frosted-skin';
-
-  /**
-   * Define this element with the custom elements registry.
-   *
-   * @example
-   * // Default: combined provider + attach
-   * FrostedSkinElement.define('vjs-frosted-skin');
-   *
-   * @example
-   * // Granular mixin control (e.g., attach only, inherit provider from parent)
-   * FrostedSkinElement.define('vjs-thumbnail', { mixins: [StoreAttachMixin] });
-   *
-   * @example
-   * // Custom store with extended slices
-   * const { StoreMixin } = createStore(extendConfig({ slices: [chaptersSlice] }));
-   * FrostedSkinElement.define('my-extended-player', { mixins: [StoreMixin] });
-   */
-  static define(tagName: string, options: DefineOptions = {}) {
-    const { mixins = [StoreMixin] } = options;
-
-    // Apply mixins in order (right to left composition)
-    const Mixed = mixins.reduceRight((Base, mixin) => mixin(Base), this as typeof FrostedSkinElement);
-    customElements.define(tagName, Mixed);
-  }
-
-  connectedCallback() {
-    const shadow = this.attachShadow({ mode: 'open' });
-    shadow.innerHTML = `<slot></slot>`;
-  }
-}
-```
-
-### 6.3 Define export
-
-**File:** `packages/html/src/define/vjs-frosted-skin.ts`
-
-```typescript
-import { FrostedSkinElement } from '../skins/frosted/skin';
-
-FrostedSkinElement.define('vjs-frosted-skin');
-```
-
-### 6.4 Exports
-
-**File:** `packages/html/src/skins/frosted/index.ts`
-
-```typescript
-export { FrostedSkinElement } from './skin';
-export type { DefineOptions } from './skin';
-export { context, extendConfig, StoreAttachMixin, StoreMixin, StoreProviderMixin } from './store';
-```
+**Note:** Don't export `context` from skins (causes unique symbol type issues). Users can import from `@videojs/store/lit` if needed.
 
 ---
 
@@ -501,17 +412,20 @@ function ChaptersPanel() {
 Where `my-player.js` contains:
 
 ```typescript
-import { createStore, media } from '@videojs/html';
+import { ReactiveElement } from '@lit/reactive-element';
+import { media } from '@videojs/core/dom';
+import { createStore } from '@videojs/store/lit';
 
 const { StoreMixin } = createStore({
-  slices: [media.playback],
+  slices: [...media.all],
 });
 
 // Create custom element with store provider and auto-attach
-class MyPlayer extends StoreMixin(HTMLElement) {
-  connectedCallback() {
+class MyPlayer extends StoreMixin(ReactiveElement) {
+  constructor() {
+    super();
     const shadow = this.attachShadow({ mode: 'open' });
-    shadow.innerHTML = `<slot></slot>`;
+    shadow.innerHTML = '<slot></slot>';
   }
 }
 
@@ -539,7 +453,7 @@ import { chaptersSlice } from './slices/chapters.js';
 // Extend frosted config with custom slice (merges with base slices)
 const { StoreMixin } = createStore(extendConfig({ slices: [chaptersSlice] }));
 
-FrostedSkinElement.define('my-extended-skin', { mixins: [StoreMixin] });
+FrostedSkinElement.define('my-extended-skin', StoreMixin);
 ```
 
 ---
@@ -683,9 +597,9 @@ packages/html/src/
    - Shared types: `OptimisticResult` discriminated union in `src/shared/types.ts` ✓
    - Tests: 13 new tests for React hook ✓
 
-8. **Phase 6**: Skins
-   - React skin (Provider, Skin, extendConfig)
-   - HTML skin (FrostedSkinElement, extendConfig)
+8. **Phase 6**: Skins **[DONE - PR #298]**
+   - React skin (Provider, Skin, extendConfig) ✓
+   - HTML skin (FrostedSkinElement, extendConfig) ✓
 
 Each phase includes tests.
 
@@ -814,15 +728,15 @@ Use `types` + `default` format to match existing packages.
 
 ### Related Issues
 
-| Issue | Title               | Description                             | Status |
-| ----- | ------------------- | --------------------------------------- | ------ |
-| #218  | Store               | Parent tracking issue                   | Open   |
-| #285  | Queue Task Refactor | Unified tasks map, status discriminator | Closed |
-| #228  | Optimistic Updates  | useMutation, useOptimistic              | Open   |
-| #229  | React Bindings      | createStore, hooks, context             | Closed |
-| #230  | Lit Bindings        | Controllers, mixins, context            | Closed |
-| #239  | DOM Media Slices    | media slices                            | Closed |
-| #231  | Skin Stores         | Skin store configuration                | Open   |
+| Issue | Title               | Description                             | Status           |
+| ----- | ------------------- | --------------------------------------- | ---------------- |
+| #218  | Store               | Parent tracking issue                   | Open             |
+| #285  | Queue Task Refactor | Unified tasks map, status discriminator | Closed           |
+| #228  | Optimistic Updates  | useMutation, useOptimistic              | Open             |
+| #229  | React Bindings      | createStore, hooks, context             | Closed           |
+| #230  | Lit Bindings        | Controllers, mixins, context            | Closed           |
+| #239  | DOM Media Slices    | media slices                            | Closed           |
+| #231  | Skin Stores         | Skin store configuration                | Closed (PR #298) |
 
 ### PR Strategy
 
@@ -875,9 +789,9 @@ PR #291: Optimistic Hooks/Controllers [DONE]
 ├── Tests: 13 new tests for React hook ✓
 └── Closes #228
 
-PR F: Skins
-├── React skin (Provider, Skin, extendConfig)
-├── HTML skin (FrostedSkinElement, extendConfig)
+PR #298: Skins [DONE]
+├── React skin (Provider, Skin, extendConfig) ✓
+├── HTML skin (FrostedSkinElement, extendConfig) ✓
 ├── References #218
 └── Closes #231
 ```
@@ -885,12 +799,12 @@ PR F: Skins
 ### Dependency Graph
 
 ```
-PR #283 ───> PR #287 ───> PR #288 ───> PR #290 ───> PR #291 ───> PR F (Skins)
+PR #283 ───> PR #287 ───> PR #288 ───> PR #290 ───> PR #291 ───> PR #298 (Skins)
                      └──> PR #289 (done) ────────────────────────┘
                      └──> PR #292 (done) ────────────────────────┘
 ```
 
-PRs are sequential. PR #288, #289, #292 can technically parallel after PR #287, but we'll do them sequentially for easier review.
+All PRs merged. Store bindings implementation complete.
 
 ---
 

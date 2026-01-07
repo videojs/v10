@@ -6,13 +6,9 @@ import { defineConfig } from 'tsdown';
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
-    // 'skins/frosted': 'src/skins/frosted/index.ts',
+    'skins/frosted': 'src/skins/frosted/index.ts',
     // 'skins/minimal': 'src/skins/minimal/index.ts',
-    // ...defineFiles.reduce((entries, file) => {
-    //   const name = file.replace(/\.ts$/, '');
-    //   entries[`define/${name}`] = `src/define/${file}`;
-    //   return entries;
-    // }, {} as Record<string, string>),
+    'define/vjs-frosted-skin': 'src/define/vjs-frosted-skin.ts',
   },
   platform: 'browser',
   format: 'es',

@@ -16,6 +16,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./skins/frosted": {
+      "types": "./dist/skins/frosted.d.ts",
+      "default": "./dist/skins/frosted.js"
     }
   },
   "main": "dist/index.js",
