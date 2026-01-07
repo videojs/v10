@@ -250,6 +250,35 @@ function isStoreError(value: unknown): value is StoreError {
 }
 ```
 
+### Symbol Identification Pattern
+
+Use symbols to identify objects when `instanceof` isn't reliable (e.g., cross-realm, serialization boundaries):
+
+```ts
+const QUEUE_SYMBOL = Symbol('@videojs/queue');
+
+interface Queue {
+  [QUEUE_SYMBOL]: true;
+  // ...
+}
+
+function createQueue(): Queue {
+  return {
+    [QUEUE_SYMBOL]: true,
+    // ...
+  };
+}
+
+function isQueue(value: unknown): value is Queue {
+  return isObject(value) && QUEUE_SYMBOL in value;
+}
+```
+
+- Symbol constant named `*_SYMBOL` in SCREAMING_CASE
+- Symbol description is `@videojs/*`
+- Add `[SYMBOL]: true` property to the object/interface
+- Type guard checks `isObject(value) && SYMBOL in value`
+
 ### Subscribe Pattern
 
 Subscriptions return an unsubscribe function:

@@ -11,18 +11,14 @@ import type {
 import type { StateFactory } from './state';
 
 import { getSelectorKeys } from '@videojs/utils/object';
-import { isNull, isObject } from '@videojs/utils/predicate';
+import { isNull } from '@videojs/utils/predicate';
 
 import { StoreError } from './errors';
 import { Queue } from './queue';
 import { createRequestMeta, resolveRequestCancel, resolveRequestKey } from './request';
 import { State } from './state';
 
-/** Used below in `isStore` to identify store objects. */
-const STORE_KEY = Symbol('@videojs/store');
-
 export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[]> {
-  readonly [STORE_KEY] = true;
   readonly #config: StoreConfig<Target, Slices>;
   readonly #slices: Slices;
   readonly #queue: Queue<UnionSliceTasks<Slices>>;
@@ -340,7 +336,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
 }
 
 export function isStore(value: unknown): value is AnyStore {
-  return isObject(value) && STORE_KEY in value;
+  return value instanceof Store;
 }
 
 // ----------------------------------------
