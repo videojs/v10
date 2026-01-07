@@ -110,6 +110,36 @@ describe('createStore', () => {
       expect(result).toHaveProperty('StoreAttachMixin');
       expect(result).toHaveProperty('context');
       expect(result).toHaveProperty('create');
+      expect(result).toHaveProperty('SelectorController');
+      expect(result).toHaveProperty('RequestController');
+      expect(result).toHaveProperty('TasksController');
     });
+  });
+
+  describe('bound controllers', () => {
+    it('SelectorController is a class', () => {
+      const { SelectorController } = createStore({ slices: [audioSlice] });
+
+      expect(typeof SelectorController).toBe('function');
+      expect(SelectorController.prototype).toBeDefined();
+    });
+
+    it('RequestController is a class', () => {
+      const { RequestController } = createStore({ slices: [audioSlice] });
+
+      expect(typeof RequestController).toBe('function');
+      expect(RequestController.prototype).toBeDefined();
+    });
+
+    it('TasksController is a class', () => {
+      const { TasksController } = createStore({ slices: [audioSlice] });
+
+      expect(typeof TasksController).toBe('function');
+      expect(TasksController.prototype).toBeDefined();
+    });
+
+    // Note: Full integration tests with DOM and context would require
+    // setting up a provider element hierarchy. The bound controllers
+    // work via context, which is tested in integration tests.
   });
 });
