@@ -1,13 +1,35 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import type { AnyStore, InferStoreRequests } from '../../core/store';
+import type { StoreSource } from '../store-accessor';
+
+import { isNull } from '@videojs/utils/predicate';
+
+import { StoreAccessor } from '../store-accessor';
+
+export type RequestControllerHost = ReactiveControllerHost & HTMLElement;
 
 /**
  * Provides access to a store request by key.
  *
- * @example
+ * Accepts either a direct store instance or a context that provides one.
+ *
+ * @example Direct store
  * ```ts
  * class MyElement extends LitElement {
  *   #play = new RequestController(this, store, 'play');
+ *
+ *   render() {
+ *     return html`<button @click=${() => this.#play.value()}>Play</button>`;
+ *   }
+ * }
+ * ```
+ *
+ * @example Context source (from createStore)
+ * ```ts
+ * const { context } = createStore({ slices: [playbackSlice] });
+ *
+ * class MyElement extends LitElement {
+ *   #play = new RequestController(this, context, 'play');
  *
  *   render() {
  *     return html`<button @click=${() => this.#play.value()}>Play</button>`;
@@ -19,19 +41,24 @@ export class RequestController<
   Store extends AnyStore,
   Name extends keyof InferStoreRequests<Store>,
 > implements ReactiveController {
-  readonly #store: Store;
+  readonly #accessor: StoreAccessor<Store>;
   readonly #name: Name;
 
-  constructor(host: ReactiveControllerHost, store: Store, name: Name) {
-    this.#store = store;
+  constructor(host: RequestControllerHost, source: StoreSource<Store>, name: Name) {
+    this.#accessor = new StoreAccessor(host, source);
     this.#name = name;
     host.addController(this);
   }
 
   get value(): InferStoreRequests<Store>[Name] {
-    return this.#store.request[this.#name] as InferStoreRequests<Store>[Name];
+    const store = this.#accessor.value;
+    if (isNull(store)) {
+      throw new Error('RequestController: Store not available from context');
+    }
+    return store.request[this.#name] as InferStoreRequests<Store>[Name];
   }
 
-  // no-op to satisfy `ReactiveController` interface
-  hostConnected() {}
+  hostConnected(): void {
+    this.#accessor.hostConnected();
+  }
 }

@@ -1,18 +1,41 @@
-import type { ReactiveControllerHost } from '@lit/reactive-element';
+import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import type { AnySlice } from '../../core/slice';
 import type { Store } from '../../core/store';
 
 import { ReactiveElement } from '@lit/reactive-element';
 
 import { noop } from '@videojs/utils/function';
-
 import { afterEach } from 'vitest';
+
 import { createSlice } from '../../core/slice';
 import { createStore as createCoreStore } from '../../core/store';
 import { createStore as createLitStore } from '../create-store';
 
 /** Concrete base class for mixin tests (ReactiveElement is abstract). */
 export class TestBaseElement extends ReactiveElement {}
+
+/**
+ * Custom element that tracks controller registrations and update calls.
+ * Used for controller tests that need an actual HTMLElement.
+ */
+export class MockHostElement extends HTMLElement implements ReactiveControllerHost {
+  controllers = new Set<ReactiveController>();
+  updateCount = 0;
+
+  addController(controller: ReactiveController): void {
+    this.controllers.add(controller);
+  }
+
+  removeController(controller: ReactiveController): void {
+    this.controllers.delete(controller);
+  }
+
+  requestUpdate(): void {
+    this.updateCount++;
+  }
+
+  updateComplete: Promise<boolean> = Promise.resolve(true);
+}
 
 export class MockMedia extends EventTarget {
   volume = 1;
@@ -124,29 +147,19 @@ export function createLitTestStore() {
   return createLitStore({ slices: [audioSlice] });
 }
 
-// Mock ReactiveControllerHost for controller tests
-export interface MockHost extends ReactiveControllerHost {
-  controllers: Set<unknown>;
-  updateCount: number;
-}
+/** Type alias for mock host (now an actual HTMLElement). */
+export type MockHost = MockHostElement;
 
+let mockHostCounter = 0;
+
+/** Creates a mock host element for controller tests. */
 export function createMockHost(): MockHost {
-  const controllers = new Set<unknown>();
-  const host: MockHost = {
-    controllers,
-    updateCount: 0,
-    addController(controller: unknown): void {
-      controllers.add(controller);
-    },
-    removeController(controller: unknown): void {
-      controllers.delete(controller);
-    },
-    requestUpdate(): void {
-      host.updateCount++;
-    },
-    updateComplete: Promise.resolve(true),
-  };
-  return host;
+  // Register the custom element if not already
+  const tagName = `mock-host-${mockHostCounter++}`;
+  if (!customElements.get(tagName)) {
+    customElements.define(tagName, class extends MockHostElement {});
+  }
+  return document.createElement(tagName) as MockHost;
 }
 
 // For mixin tests - unique custom element tags

@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
+    onConsoleLog: log => !log.includes('Lit is in dev mode'),
     projects: [
       {
         extends: true,
