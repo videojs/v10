@@ -7,8 +7,7 @@ import { isNull } from '@videojs/utils/predicate';
 
 import { StoreAccessor } from '../store-accessor';
 
-/** Host type required for context consumption. */
-type ContextHost = ReactiveControllerHost & HTMLElement;
+export type TasksControllerHost = ReactiveControllerHost & HTMLElement;
 
 /**
  * Subscribes to task state changes.
@@ -45,13 +44,13 @@ type ContextHost = ReactiveControllerHost & HTMLElement;
  * ```
  */
 export class TasksController<Store extends AnyStore> implements ReactiveController {
-  readonly #host: ContextHost;
+  readonly #host: TasksControllerHost;
   readonly #accessor: StoreAccessor<Store>;
 
   #value: Store['queue']['tasks'] | undefined;
   #unsubscribe = noop;
 
-  constructor(host: ContextHost, source: StoreSource<Store>) {
+  constructor(host: TasksControllerHost, source: StoreSource<Store>) {
     this.#host = host;
     this.#accessor = new StoreAccessor(host, source, store => this.#connect(store));
 

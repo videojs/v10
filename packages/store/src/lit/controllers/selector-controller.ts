@@ -7,8 +7,7 @@ import { isNull } from '@videojs/utils/predicate';
 
 import { StoreAccessor } from '../store-accessor';
 
-/** Host type required for context consumption. */
-type ContextHost = ReactiveControllerHost & HTMLElement;
+export type SelectorControllerHost = ReactiveControllerHost & HTMLElement;
 
 /**
  * Subscribes to a selected portion of store state.
@@ -41,14 +40,14 @@ type ContextHost = ReactiveControllerHost & HTMLElement;
  * ```
  */
 export class SelectorController<Store extends AnyStore, Value> implements ReactiveController {
-  readonly #host: ContextHost;
+  readonly #host: SelectorControllerHost;
   readonly #accessor: StoreAccessor<Store>;
   readonly #selector: (state: InferStoreState<Store>) => Value;
 
   #value: Value | undefined;
   #unsubscribe = noop;
 
-  constructor(host: ContextHost, source: StoreSource<Store>, selector: (state: InferStoreState<Store>) => Value) {
+  constructor(host: SelectorControllerHost, source: StoreSource<Store>, selector: (state: InferStoreState<Store>) => Value) {
     this.#host = host;
     this.#selector = selector;
     this.#accessor = new StoreAccessor(host, source, store => this.#connect(store));

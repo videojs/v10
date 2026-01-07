@@ -10,8 +10,7 @@ import { isNull } from '@videojs/utils/predicate';
 
 import { StoreAccessor } from '../store-accessor';
 
-/** Host type required for context consumption. */
-type ContextHost = ReactiveControllerHost & HTMLElement;
+export type MutationControllerHost = ReactiveControllerHost & HTMLElement;
 
 /**
  * Tracks a mutation's status with discriminated union result.
@@ -64,14 +63,14 @@ export class MutationController<
   Name extends keyof InferStoreRequests<Store>,
   Mutate extends InferStoreRequests<Store>[Name] = InferStoreRequests<Store>[Name],
 > implements ReactiveController {
-  readonly #host: ContextHost;
+  readonly #host: MutationControllerHost;
   readonly #accessor: StoreAccessor<Store>;
   readonly #name: Name;
 
   #task: Task | undefined;
   #unsubscribe = noop;
 
-  constructor(host: ContextHost, source: StoreSource<Store>, name: Name) {
+  constructor(host: MutationControllerHost, source: StoreSource<Store>, name: Name) {
     this.#host = host;
     this.#name = name;
     this.#accessor = new StoreAccessor(host, source, store => this.#connect(store));

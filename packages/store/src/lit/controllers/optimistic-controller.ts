@@ -10,8 +10,7 @@ import { isNull } from '@videojs/utils/predicate';
 
 import { StoreAccessor } from '../store-accessor';
 
-/** Host type required for context consumption. */
-type ContextHost = ReactiveControllerHost & HTMLElement;
+export type OptimisticControllerHost = ReactiveControllerHost & HTMLElement;
 
 /**
  * Shows optimistic value while mutation is pending, actual value otherwise.
@@ -66,7 +65,7 @@ export class OptimisticController<
   Value,
   Request extends InferStoreRequests<Store>[Name] = InferStoreRequests<Store>[Name],
 > implements ReactiveController {
-  readonly #host: ContextHost;
+  readonly #host: OptimisticControllerHost;
   readonly #accessor: StoreAccessor<Store>;
   readonly #name: Name;
   readonly #selector: (state: InferStoreState<Store>) => Value;
@@ -76,7 +75,7 @@ export class OptimisticController<
   #task: Task | undefined;
 
   constructor(
-    host: ContextHost,
+    host: OptimisticControllerHost,
     source: StoreSource<Store>,
     name: Name,
     selector: (state: InferStoreState<Store>) => Value,

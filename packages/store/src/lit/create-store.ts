@@ -19,8 +19,7 @@ export const contextKey = Symbol('@videojs/store');
 
 export interface CreateStoreConfig<Slices extends AnySlice[]> extends StoreConfig<UnionSliceTarget<Slices>, Slices> {}
 
-/** Host type required for bound controllers. */
-type ContextHost = ReactiveControllerHost & HTMLElement;
+export type CreateStoreHost = ReactiveControllerHost & HTMLElement;
 
 export interface CreateStoreResult<Slices extends AnySlice[]> {
   /**
@@ -103,7 +102,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    * ```
    */
   SelectorController: new <Value>(
-    host: ContextHost,
+    host: CreateStoreHost,
     selector: (state: UnionSliceState<Slices>) => Value
   ) => SelectorControllerBase<Store<UnionSliceTarget<Slices>, Slices>, Value>;
 
@@ -125,7 +124,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    * ```
    */
   RequestController: new <Name extends keyof UnionSliceRequests<Slices>>(
-    host: ContextHost,
+    host: CreateStoreHost,
     name: Name
   ) => RequestControllerBase<Store<UnionSliceTarget<Slices>, Slices>, Name>;
 
@@ -147,7 +146,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    * }
    * ```
    */
-  TasksController: new (host: ContextHost) => {
+  TasksController: new (host: CreateStoreHost) => {
     value: TasksRecord<UnionSliceTasks<Slices>>;
     hostConnected: () => void;
     hostDisconnected: () => void;
@@ -211,19 +210,19 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
 
   // Bound controllers - context is pre-bound
   class SelectorController<Value> extends SelectorControllerBase<ProvidedStore, Value> {
-    constructor(host: ContextHost, selector: (state: State) => Value) {
+    constructor(host: CreateStoreHost, selector: (state: State) => Value) {
       super(host, context, selector);
     }
   }
 
   class RequestController<Name extends keyof Requests> extends RequestControllerBase<ProvidedStore, Name> {
-    constructor(host: ContextHost, name: Name) {
+    constructor(host: CreateStoreHost, name: Name) {
       super(host, context, name);
     }
   }
 
   class TasksController extends TasksControllerBase<ProvidedStore> {
-    constructor(host: ContextHost) {
+    constructor(host: CreateStoreHost) {
       super(host, context);
     }
   }

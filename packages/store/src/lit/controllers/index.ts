@@ -12,8 +12,8 @@ export type {
   OptimisticSuccess,
 } from '../../shared/types';
 
-export { MutationController } from './mutation-controller';
-export { OptimisticController } from './optimistic-controller';
-export { RequestController } from './request-controller';
-export { SelectorController } from './selector-controller';
-export { TasksController } from './tasks-controller';
+export { MutationController, type MutationControllerHost } from './mutation-controller';
+export { OptimisticController, type OptimisticControllerHost } from './optimistic-controller';
+export { RequestController, type RequestControllerHost } from './request-controller';
+export { SelectorController, type SelectorControllerHost } from './selector-controller';
+export { TasksController, type TasksControllerHost } from './tasks-controller';

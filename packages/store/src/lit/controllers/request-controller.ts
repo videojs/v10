@@ -6,8 +6,7 @@ import { isNull } from '@videojs/utils/predicate';
 
 import { StoreAccessor } from '../store-accessor';
 
-/** Host type required for context consumption. */
-type ContextHost = ReactiveControllerHost & HTMLElement;
+export type RequestControllerHost = ReactiveControllerHost & HTMLElement;
 
 /**
  * Provides access to a store request by key.
@@ -45,7 +44,7 @@ export class RequestController<
   readonly #accessor: StoreAccessor<Store>;
   readonly #name: Name;
 
-  constructor(host: ContextHost, source: StoreSource<Store>, name: Name) {
+  constructor(host: RequestControllerHost, source: StoreSource<Store>, name: Name) {
     this.#accessor = new StoreAccessor(host, source);
     this.#name = name;
     host.addController(this);

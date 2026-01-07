@@ -4,12 +4,12 @@ import type { AnyStore } from '../core/store';
 
 import { ContextConsumer } from '@lit/context';
 import { noop } from '@videojs/utils/function';
+import { isStore } from '../core/store';
 
 /** A store instance or a context that provides one. */
 export type StoreSource<Store extends AnyStore> = Store | Context<unknown, Store>;
 
-/** Host type required for context consumption. */
-type ContextHost = ReactiveControllerHost & HTMLElement;
+export type StoreAccessorHost = ReactiveControllerHost & HTMLElement;
 
 /**
  * Resolves a store from either a direct instance or context.
@@ -31,15 +31,15 @@ type ContextHost = ReactiveControllerHost & HTMLElement;
  */
 export class StoreAccessor<Store extends AnyStore> {
   readonly #onAvailable: (store: Store) => void;
-  readonly #consumer: ContextConsumer<Context<unknown, Store>, ContextHost> | null;
+  readonly #consumer: ContextConsumer<Context<unknown, Store>, StoreAccessorHost> | null;
 
   #directStore: Store | null;
 
-  constructor(host: ContextHost, source: StoreSource<Store>, onAvailable?: (store: Store) => void) {
+  constructor(host: StoreAccessorHost, source: StoreSource<Store>, onAvailable?: (store: Store) => void) {
     this.#onAvailable = onAvailable ?? (noop as (store: Store) => void);
 
     // Check if source is a store (object with subscribe) or context (symbol/string)
-    if (this.#isStore(source)) {
+    if (isStore(source)) {
       this.#directStore = source;
       this.#consumer = null;
     } else {
@@ -71,9 +71,5 @@ export class StoreAccessor<Store extends AnyStore> {
       this.#onAvailable(this.#directStore);
     }
     // Context consumer handles its own reconnect via callback
-  }
-
-  #isStore(source: StoreSource<Store>): source is Store {
-    return typeof source === 'object' && source !== null && 'subscribe' in source;
   }
 }
