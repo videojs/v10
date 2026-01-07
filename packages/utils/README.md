@@ -17,6 +17,6 @@ members:
 [Apache-2.0](./LICENSE)
 
 [package]: https://www.npmjs.com/package/@videojs/utils
-[package-badge]: https://img.shields.io/npm/v/@videojs/react/utils?label=@videojs/react@utils
+[package-badge]: https://img.shields.io/npm/v/@videojs/utils?label=@videojs/utils@next
 [discord]: https://discord.gg/JBqHh485uF
 [gh-discussions]: https://github.com/videojs/v10/discussions
