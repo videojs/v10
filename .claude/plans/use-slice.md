@@ -1,4 +1,4 @@
-# useSlice / SliceController
+# Using Slices
 
 Slice-aware state access for primitives.
 
@@ -10,86 +10,68 @@ A slice is a unit of state + behavior for a specific concern:
 
 ```ts
 const volumeSlice = createSlice<HTMLMediaElement>()({
-  initialState: { volume: 1, muted: false },
-  getSnapshot: ({ target }) => ({ volume: target.volume, muted: target.muted }),
+  initialState: { volume: 1, muted: false, volumeAvailability: 'unsupported' },
+  getSnapshot: ({ target }) => ({ volume: target.volume, muted: target.muted, ... }),
   subscribe: ({ target, update, signal }) => listen(target, 'volumechange', update, { signal }),
   request: {
-    changeVolume: (volume, { target }) => {
-      target.volume = volume;
-    },
-    toggleMute: (_, { target }) => {
-      target.muted = !target.muted;
-    },
+    changeVolume: (volume, { target }) => { target.volume = volume; },
+    toggleMute: (_, { target }) => { target.muted = !target.muted; },
   },
 });
 ```
 
 Stores are composed of slices. Slices are optional — users include what they need.
 
+### Missing Slice vs Unavailable Capability
+
+Two different concepts:
+
+| Concept                    | Meaning                                      | Detection                              | Cause                                    |
+| -------------------------- | -------------------------------------------- | -------------------------------------- | ---------------------------------------- |
+| **Missing slice**          | Store wasn't configured with this slice      | `useSlice()` returns `undefined`       | Developer didn't include slice in config |
+| **Unavailable capability** | Slice exists but platform doesn't support it | `volumeAvailability === 'unsupported'` | Platform limitation (e.g., iOS volume)   |
+
+**Missing slice** is a composition/configuration issue. The primitive requires a slice that wasn't added to the store.
+
+**Unavailable capability** is a platform limitation. The slice is configured, but the underlying media/platform can't perform the action (see `slice-availability.md`).
+
 ### Primitives Require Slices
 
-UI primitives (PlayButton, VolumeSlider) need specific slices to function:
+UI primitives (PlayButton, VolumeSlider) need specific slices:
 
-- VolumeSlider needs `volumeSlice` for state and requests
+- VolumeSlider needs `volumeSlice`
 - PlayButton needs `playbackSlice`
 - TimeDisplay needs `timeSlice`
 
-### The Design Question
-
-What happens when a primitive's required slice isn't in the store?
-
-| Approach             | Problem                                                                       |
-| -------------------- | ----------------------------------------------------------------------------- |
-| Return defaults      | **Dangerous.** User thinks volume works, but nothing happens. Silent failure. |
-| Return undefined     | Every access becomes defensive. Loses type narrowing.                         |
-| Graceful degradation | Primitives render nothing or fallback. Boilerplate everywhere.                |
-| **Error**            | Invalid composition caught early. Clean primitive code.                       |
-
-### Our Decision: Missing Slice = Invalid Composition
-
-If you render VolumeSlider, you need volumeSlice. Period.
-
-- **Compile-time error** for factory-bound hooks (ideal)
-- **Runtime error** for standalone hooks (escape hatch)
-
-Primitives don't handle missing slices. Invalid compositions fail loudly.
+When a slice is missing, `useSlice` returns `undefined`. The primitive decides how to handle it — typically throwing `StoreError('MISSING_SLICE')`.
 
 ---
 
-## API Design
-
-### Store Method
-
-```ts
-store.hasSlice(slice): boolean
-```
-
-Runtime check. Foundation for `useSlice` implementation.
+## API
 
 ### React
 
-**Base hook** (accepts store directly):
+**Base hook** (explicit store):
 
 ```ts
 import { useSlice } from '@videojs/store/react';
 
 const volume = useSlice(store, volumeSlice, (ctx) => ctx.state.volume);
-// Returns: number | undefined (undefined if slice missing)
+// Returns: number | undefined
 ```
 
-**Factory-bound hook** (from createStore):
+**Factory-bound hook** (store from context):
 
 ```ts
 const { useSlice } = createStore({ slices: [volumeSlice, playbackSlice] });
 
 const volume = useSlice(volumeSlice, (ctx) => ctx.state.volume);
-// Returns: number
-// TypeScript ERROR if volumeSlice not in store config
+// Returns: number | undefined
 ```
 
 ### Lit
 
-**Base controller** (accepts store/context):
+**Base controller** (explicit store):
 
 ```ts
 import { SliceController } from '@videojs/store/lit';
@@ -98,14 +80,13 @@ import { SliceController } from '@videojs/store/lit';
 // this.#volume.value: number | undefined
 ```
 
-**Factory-bound controller** (from createStore):
+**Factory-bound controller** (store from context):
 
 ```ts
 const { SliceController } = createStore({ slices: [volumeSlice] });
 
 #volume = new SliceController(this, volumeSlice, ctx => ctx.state.volume);
-// this.#volume.value: number
-// TypeScript ERROR if volumeSlice not in store config
+// this.#volume.value: number | undefined
 ```
 
 ### Selector
@@ -120,7 +101,6 @@ interface SliceContext<S extends AnySlice> {
 
 // Select state
 const volume = useSlice(volumeSlice, (ctx) => ctx.state.volume);
-const { volume, muted } = useSlice(volumeSlice, (ctx) => ctx.state);
 
 // Select request
 const changeVolume = useSlice(volumeSlice, (ctx) => ctx.request.changeVolume);
@@ -129,90 +109,64 @@ const changeVolume = useSlice(volumeSlice, (ctx) => ctx.request.changeVolume);
 const isSilent = useSlice(volumeSlice, (ctx) => ctx.state.muted || ctx.state.volume === 0);
 ```
 
-If selector returns state (not a function), subscribe to changes.
+### Subscription
+
+Always subscribes when selector returns state (not a function). Request handlers are stable references — subscription is effectively a no-op for them.
 
 ---
 
-## Type Safety
+## Usage in Primitives
 
-### Factory-Bound: Compile-Time Validation
+```tsx
+function VolumeSlider() {
+  const volume = useSlice(volumeSlice, (ctx) => ctx.state.volume);
+  const availability = useSlice(volumeSlice, (ctx) => ctx.state.volumeAvailability);
+  const changeVolume = useSlice(volumeSlice, (ctx) => ctx.request.changeVolume);
 
-```ts
-const { useSlice } = createStore({ slices: [playbackSlice] }); // No volumeSlice
+  // 1. Slice not in store (composition error)
+  if (volume === undefined) {
+    throw new StoreError('MISSING_SLICE', 'VolumeSlider requires volumeSlice');
+  }
 
-useSlice(volumeSlice, (ctx) => ctx.state.volume);
-// TS Error: volumeSlice is not in store's slice configuration
+  // 2. Platform doesn't support volume (iOS, etc.)
+  if (availability === 'unsupported') return null;
+  if (availability === 'unavailable') return <Slider disabled />;
+
+  // 3. Ready to use
+  return <Slider value={volume} onChange={changeVolume} />;
+}
 ```
 
-Implementation: Factory captures `Slices` type parameter. `useSlice` constrains slice arg to `Slices[number]`.
-
-### Standalone: Runtime Fallback
-
 ```ts
-import { useSlice } from '@videojs/store/react';
+// Lit
+class VolumeSlider extends LitElement {
+  #volume = new SliceController(this, volumeSlice, (ctx) => ctx.state.volume);
+  #availability = new SliceController(this, volumeSlice, (ctx) => ctx.state.volumeAvailability);
+  #changeVolume = new SliceController(this, volumeSlice, (ctx) => ctx.request.changeVolume);
 
-const volume = useSlice(dynamicStore, volumeSlice, (ctx) => ctx.state.volume);
-// Returns: number | undefined
+  render() {
+    const volume = this.#volume.value;
+    const availability = this.#availability.value;
+
+    if (volume === undefined) {
+      throw new StoreError('MISSING_SLICE', 'VolumeSlider requires volumeSlice');
+    }
+
+    if (availability === 'unsupported') return nothing;
+    if (availability === 'unavailable') return html`<vjs-slider disabled></vjs-slider>`;
+
+    return html`<vjs-slider value=${volume} @change=${this.#onChange}></vjs-slider>`;
+  }
+
+  #onChange = (e: CustomEvent) => this.#changeVolume.value?.(e.detail);
+}
 ```
-
-For dynamic stores where compile-time checking isn't possible.
 
 ---
 
-## Implementation Notes
+## Implementation
 
-### React
-
-```ts
-// Base
-function useSlice<S extends AnySlice, R>(
-  store: AnyStore,
-  slice: S,
-  selector: (ctx: SliceContext<S>) => R
-): R | undefined {
-  if (!store.hasSlice(slice)) return undefined;
-
-  const ctx = useMemo(() => ({
-    state: /* proxy to store.state filtered by slice */,
-    request: /* proxy to store.request filtered by slice */,
-  }), [store, slice]);
-
-  const selected = selector(ctx);
-
-  // If selected is not a function, subscribe
-  if (typeof selected !== 'function') {
-    return useSyncExternalStore(
-      cb => store.subscribe(/* selector that maps to selected */, cb),
-      () => selector(ctx),
-    );
-  }
-
-  return selected;
-}
-```
-
-### Lit
-
-```ts
-class SliceController<S extends AnySlice, R> implements ReactiveController {
-  #value: R | undefined;
-
-  constructor(
-    host: ReactiveControllerHost & HTMLElement,
-    source: StoreSource,
-    slice: S,
-    selector: (ctx: SliceContext<S>) => R
-  ) {
-    // Similar logic: check hasSlice, build context, subscribe if state
-  }
-
-  get value(): R | undefined {
-    return this.#value;
-  }
-}
-```
-
-### hasSlice Implementation
+### Store: hasSlice
 
 ```ts
 class Store {
@@ -228,37 +182,101 @@ class Store {
 }
 ```
 
----
+### React: useSlice
 
-## Usage in Primitives
+```ts
+function useSlice<S extends AnySlice, R>(
+  store: AnyStore,
+  slice: S,
+  selector: (ctx: SliceContext<S>) => R
+): R | undefined {
+  // Check slice presence
+  if (!store.hasSlice(slice)) return undefined;
 
-```tsx
-// React
-function VolumeSlider() {
-  const volume = useSlice(volumeSlice, (ctx) => ctx.state.volume);
-  const changeVolume = useSlice(volumeSlice, (ctx) => ctx.request.changeVolume);
+  // Build context
+  const ctx: SliceContext<S> = {
+    state: store.state,
+    request: store.request,
+  };
 
-  return <Slider value={volume} onValueChange={changeVolume} />;
-}
+  const selected = selector(ctx);
 
-// Lit
-class VolumeSlider extends LitElement {
-  #volume = new SliceController(this, volumeSlice, (ctx) => ctx.state.volume);
-  #changeVolume = new SliceController(this, volumeSlice, (ctx) => ctx.request.changeVolume);
-
-  render() {
-    return html`<vjs-slider value=${this.#volume.value} @change=${(e) => this.#changeVolume.value(e.detail)} />`;
+  // Subscribe if not a function (state vs request)
+  if (typeof selected !== 'function') {
+    return useSyncExternalStore(
+      (cb) => store.subscribe((state) => selector({ state, request: store.request }), cb),
+      () => selector(ctx)
+    );
   }
+
+  return selected;
 }
 ```
 
-No defensive checks. If slice is missing, it's a composition error caught at compile time (factory-bound) or clearly undefined (standalone).
+### Lit: SliceController
+
+```ts
+class SliceController<S extends AnySlice, R> implements ReactiveController {
+  #host: ReactiveControllerHost & HTMLElement;
+  #accessor: StoreAccessor;
+  #slice: S;
+  #selector: (ctx: SliceContext<S>) => R;
+  #value: R | undefined;
+  #unsubscribe = noop;
+
+  constructor(
+    host: ReactiveControllerHost & HTMLElement,
+    source: StoreSource,
+    slice: S,
+    selector: (ctx: SliceContext<S>) => R
+  ) {
+    this.#host = host;
+    this.#slice = slice;
+    this.#selector = selector;
+    this.#accessor = new StoreAccessor(host, source, (store) => this.#connect(store));
+    host.addController(this);
+  }
+
+  get value(): R | undefined {
+    return this.#value;
+  }
+
+  hostConnected(): void {
+    this.#accessor.hostConnected();
+  }
+
+  hostDisconnected(): void {
+    this.#unsubscribe();
+    this.#unsubscribe = noop;
+  }
+
+  #connect(store: AnyStore): void {
+    if (!store.hasSlice(this.#slice)) {
+      this.#value = undefined;
+      return;
+    }
+
+    const ctx: SliceContext<S> = { state: store.state, request: store.request };
+    this.#value = this.#selector(ctx);
+
+    // Subscribe if not a function
+    if (typeof this.#value !== 'function') {
+      this.#unsubscribe = store.subscribe((state) => {
+        const newCtx = { state, request: store.request };
+        this.#value = this.#selector(newCtx);
+        this.#host.requestUpdate();
+      });
+    }
+  }
+}
+```
 
 ---
 
 ## Files to Create/Modify
 
 - `packages/store/src/core/store.ts` — add `hasSlice` method
+- `packages/store/src/core/errors.ts` — add `MISSING_SLICE` error code
 - `packages/store/src/react/hooks/use-slice.ts` — base hook
 - `packages/store/src/react/create-store.tsx` — factory-bound hook
 - `packages/store/src/lit/controllers/slice-controller.ts` — base controller
