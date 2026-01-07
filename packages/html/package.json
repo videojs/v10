@@ -16,6 +16,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./skins/frosted": {
+      "types": "./dist/skins/frosted.d.ts",
+      "default": "./dist/skins/frosted.js"
+    },
+    "./define/vjs-frosted-skin": {
+      "types": "./dist/define/vjs-frosted-skin.d.ts",
+      "default": "./dist/define/vjs-frosted-skin.js"
     }
   },
   "main": "dist/index.js",
@@ -32,6 +40,7 @@
     "clean": "rm -rf dist types"
   },
   "dependencies": {
+    "@lit/reactive-element": "^2.1.2",
     "@videojs/core": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"

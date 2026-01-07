@@ -208,7 +208,6 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
   const StoreAttachMixin = createStoreAttachMixin<Slices>(context);
   const StoreMixin = createStoreMixin<Slices>(context, create);
 
-  // Bound controllers - context is pre-bound
   class SelectorController<Value> extends SelectorControllerBase<ProvidedStore, Value> {
     constructor(host: CreateStoreHost, selector: (state: State) => Value) {
       super(host, context, selector);

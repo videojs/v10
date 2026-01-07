@@ -36,7 +36,8 @@ Implement React and DOM bindings for Video.js 10's store, enabling:
 | Primitives context  | `useStoreContext()` internal hook for primitive UI components                         |
 | displayName         | For React DevTools component naming                                                   |
 | Component types     | Namespace pattern: `Skin.Props` via `namespace Skin { export type Props }`            |
-| Element define      | `FrostedSkinElement.define(tagName, { mixins })` for declarative setup                |
+| Element define      | `FrostedSkinElement.define(tagName?, mixin?)` - pass mixin directly                   |
+| Slot handling       | Default slot (`<slot></slot>`) - no `slot="media"` attribute needed                   |
 | Config extension    | `extendConfig()` uses `uniqBy` + `composeCallbacks` from utils                        |
 | Provider resolution | Isolated by default; `inherit` prop to use parent store from context                  |
 | Store instance      | `create()` method for imperative store creation                                       |
@@ -232,7 +233,7 @@ export { extendConfig, Provider } from './store';
 
 ---
 
-## Phase 6: Frosted Skin (HTML)
+## Phase 6: Frosted Skin (HTML) [IN PROGRESS]
 
 ### 6.1 Store config
 
@@ -241,76 +242,67 @@ export { extendConfig, Provider } from './store';
 ```typescript
 import type { AnySlice, StoreConfig } from '@videojs/store';
 
+import { media } from '@videojs/core/dom';
 import { extendConfig as extendBaseConfig } from '@videojs/store';
 import { createStore } from '@videojs/store/lit';
 
-import { media } from './slices'; // internal - re-exported from @videojs/html
-
-/** Base config for frosted skin. */
 const baseConfig = {
-  slices: [media.playback] as const,
+  slices: [...media.all], // Spread to convert readonly tuple to mutable array
 };
 
 /**
- * Extends frosted skin config with additional slices/hooks.
+ * Extends frosted skin config with additional slices.
  * Composes lifecycle hooks (both called, base first).
  */
-export function extendConfig<S extends readonly AnySlice[] = readonly []>(extension?: Partial<StoreConfig<any, S>>) {
+export function extendConfig<Slices extends AnySlice<HTMLMediaElement>[] = []>(
+  extension?: Partial<StoreConfig<HTMLMediaElement, Slices>>
+) {
   return extendBaseConfig(baseConfig, extension);
 }
 
-export const { StoreMixin, StoreProviderMixin, StoreAttachMixin, context } = createStore(extendConfig());
+export const {
+  StoreMixin,
+  StoreProviderMixin,
+  StoreAttachMixin,
+  SelectorController,
+  RequestController,
+  TasksController,
+  create,
+} = createStore(extendConfig());
 ```
 
-### 6.2 Skin component
+### 6.2 Skin element
 
 **File:** `packages/html/src/skins/frosted/skin.ts`
 
 ```typescript
-import { StoreAttachMixin, StoreMixin, StoreProviderMixin } from './store';
+import type { Mixin } from '@videojs/utils/types';
 
-type Mixin = <T extends Constructor<HTMLElement>>(Base: T) => T;
+import { ReactiveElement } from '@lit/reactive-element';
 
-export interface DefineOptions {
-  /** Mixins to apply. Defaults to [StoreMixin] (combined provider + attach). */
-  mixins?: Mixin[];
-}
+import { StoreMixin } from './store';
 
 /**
- * Frosted skin element. Empty for now - controls will be added later.
- * Uses shadow DOM with slot for video element.
+ * Frosted skin custom element.
+ * Uses shadow DOM with a default slot for video elements.
  */
-export class FrostedSkinElement extends HTMLElement {
-  /** Default tag name for this element. */
+export class FrostedSkinElement extends ReactiveElement {
   static tagName = 'vjs-frosted-skin';
 
   /**
-   * Define this element with the custom elements registry.
+   * Registers this element with the custom elements registry.
    *
-   * @example
-   * // Default: combined provider + attach
-   * FrostedSkinElement.define('vjs-frosted-skin');
-   *
-   * @example
-   * // Granular mixin control (e.g., attach only, inherit provider from parent)
-   * FrostedSkinElement.define('vjs-thumbnail', { mixins: [StoreAttachMixin] });
-   *
-   * @example
-   * // Custom store with extended slices
-   * const { StoreMixin } = createStore(extendConfig({ slices: [chaptersSlice] }));
-   * FrostedSkinElement.define('my-extended-player', { mixins: [StoreMixin] });
+   * @param tagName - Custom element tag name (defaults to 'vjs-frosted-skin')
+   * @param mixin - Mixin to apply (defaults to StoreMixin)
    */
-  static define(tagName: string, options: DefineOptions = {}) {
-    const { mixins = [StoreMixin] } = options;
-
-    // Apply mixins in order (right to left composition)
-    const Mixed = mixins.reduceRight((Base, mixin) => mixin(Base), this as typeof FrostedSkinElement);
-    customElements.define(tagName, Mixed);
+  static define(tagName = this.tagName, mixin: Mixin<FrostedSkinElement, ReactiveElement> = StoreMixin): void {
+    customElements.define(tagName, mixin(this));
   }
 
-  connectedCallback() {
+  constructor() {
+    super();
     const shadow = this.attachShadow({ mode: 'open' });
-    shadow.innerHTML = `<slot></slot>`;
+    shadow.innerHTML = '<slot></slot>';
   }
 }
 ```
@@ -320,9 +312,9 @@ export class FrostedSkinElement extends HTMLElement {
 **File:** `packages/html/src/define/vjs-frosted-skin.ts`
 
 ```typescript
-import { FrostedSkinElement } from '../skins/frosted/skin';
+import { FrostedSkinElement } from '../skins/frosted';
 
-FrostedSkinElement.define('vjs-frosted-skin');
+FrostedSkinElement.define();
 ```
 
 ### 6.4 Exports
@@ -331,9 +323,19 @@ FrostedSkinElement.define('vjs-frosted-skin');
 
 ```typescript
 export { FrostedSkinElement } from './skin';
-export type { DefineOptions } from './skin';
-export { context, extendConfig, StoreAttachMixin, StoreMixin, StoreProviderMixin } from './store';
+export {
+  create,
+  extendConfig,
+  RequestController,
+  SelectorController,
+  StoreAttachMixin,
+  StoreMixin,
+  StoreProviderMixin,
+  TasksController,
+} from './store';
 ```
+
+**Note:** Don't export `context` from skins (causes unique symbol type issues). Users can import from `@videojs/store/lit` if needed.
 
 ---
 
@@ -501,17 +503,20 @@ function ChaptersPanel() {
 Where `my-player.js` contains:
 
 ```typescript
-import { createStore, media } from '@videojs/html';
+import { ReactiveElement } from '@lit/reactive-element';
+import { media } from '@videojs/core/dom';
+import { createStore } from '@videojs/store/lit';
 
 const { StoreMixin } = createStore({
-  slices: [media.playback],
+  slices: [...media.all],
 });
 
 // Create custom element with store provider and auto-attach
-class MyPlayer extends StoreMixin(HTMLElement) {
-  connectedCallback() {
+class MyPlayer extends StoreMixin(ReactiveElement) {
+  constructor() {
+    super();
     const shadow = this.attachShadow({ mode: 'open' });
-    shadow.innerHTML = `<slot></slot>`;
+    shadow.innerHTML = '<slot></slot>';
   }
 }
 
@@ -539,7 +544,7 @@ import { chaptersSlice } from './slices/chapters.js';
 // Extend frosted config with custom slice (merges with base slices)
 const { StoreMixin } = createStore(extendConfig({ slices: [chaptersSlice] }));
 
-FrostedSkinElement.define('my-extended-skin', { mixins: [StoreMixin] });
+FrostedSkinElement.define('my-extended-skin', StoreMixin);
 ```
 
 ---

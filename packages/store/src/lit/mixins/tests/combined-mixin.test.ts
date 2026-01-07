@@ -4,10 +4,10 @@ import { createLitTestStore, setupDomCleanup, TestBaseElement, uniqueTag } from 
 
 setupDomCleanup();
 
-// Helper to create shadow root with named media slot
-function createShadowWithSlot(el: HTMLElement): void {
+function createShadowWithSlot(el: HTMLElement): ShadowRoot {
   const shadow = el.attachShadow({ mode: 'open' });
-  shadow.innerHTML = '<slot name="media"></slot>';
+  shadow.innerHTML = '<slot></slot>';
+  return shadow;
 }
 
 describe('createStoreMixin', () => {
@@ -17,8 +17,7 @@ describe('createStoreMixin', () => {
 
     class TestElement extends StoreMixin(TestBaseElement) {
       override createRenderRoot() {
-        createShadowWithSlot(this);
-        return this.shadowRoot!;
+        return createShadowWithSlot(this);
       }
     }
     customElements.define(tagName, TestElement);
@@ -37,15 +36,13 @@ describe('createStoreMixin', () => {
 
     class TestElement extends StoreMixin(TestBaseElement) {
       override createRenderRoot() {
-        createShadowWithSlot(this);
-        return this.shadowRoot!;
+        return createShadowWithSlot(this);
       }
     }
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
     const video = document.createElement('video');
-    video.slot = 'media';
     el.appendChild(video);
     document.body.appendChild(el);
     await el.updateComplete;
@@ -85,15 +82,13 @@ describe('createStoreMixin', () => {
 
     class TestElement extends StoreMixin(TestBaseElement) {
       override createRenderRoot() {
-        createShadowWithSlot(this);
-        return this.shadowRoot!;
+        return createShadowWithSlot(this);
       }
     }
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
     const wrapper = document.createElement('div');
-    wrapper.slot = 'media';
     const video = document.createElement('video');
     wrapper.appendChild(video);
     el.appendChild(wrapper);
@@ -112,15 +107,13 @@ describe('createStoreMixin', () => {
 
     class TestElement extends StoreMixin(TestBaseElement) {
       override createRenderRoot() {
-        createShadowWithSlot(this);
-        return this.shadowRoot!;
+        return createShadowWithSlot(this);
       }
     }
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
     const audio = document.createElement('audio');
-    audio.slot = 'media';
     el.appendChild(audio);
     document.body.appendChild(el);
     await el.updateComplete;
@@ -137,17 +130,14 @@ describe('createStoreMixin', () => {
 
     class TestElement extends StoreMixin(TestBaseElement) {
       override createRenderRoot() {
-        createShadowWithSlot(this);
-        return this.shadowRoot!;
+        return createShadowWithSlot(this);
       }
     }
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
     const video1 = document.createElement('video');
-    video1.slot = 'media';
     const video2 = document.createElement('video');
-    video2.slot = 'media';
     el.appendChild(video1);
     el.appendChild(video2);
     document.body.appendChild(el);

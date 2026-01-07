@@ -14,7 +14,7 @@ import { isNull } from '@videojs/utils/predicate';
  * Creates a mixin that consumes a store from context and auto-attaches media elements.
  *
  * - Requests store from context (must have a provider ancestor)
- * - Observes slotted elements for `<video slot="media">` or `<audio slot="media">`
+ * - Observes slotted elements for `<video>` or `<audio>` in the default slot
  * - Falls back to light DOM children if no shadow root
  * - Calls `store.attach(mediaElement)` when found
  * - Cleans up on disconnect
@@ -51,7 +51,7 @@ export function createStoreAttachMixin<Slices extends AnySlice[]>(
 
         const shadow = this.shadowRoot;
         if (shadow) {
-          const slot = querySlot(shadow, 'media');
+          const slot = querySlot(shadow, '');
           if (slot) this.#disposer.add(listen(slot, 'slotchange', () => this.#attachMedia()));
         }
 
@@ -74,7 +74,7 @@ export function createStoreAttachMixin<Slices extends AnySlice[]>(
           isHTMLMediaElement(el) ? el : el.querySelector('video, audio');
 
         const media = this.shadowRoot
-          ? getSlottedElement(this.shadowRoot, 'media', findMedia)
+          ? getSlottedElement(this.shadowRoot, '', findMedia)
           : this.querySelector('video, audio');
 
         if (store.target !== media) {
