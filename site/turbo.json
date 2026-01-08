@@ -9,7 +9,8 @@
         "OAUTH_REDIRECT_URI",
         "OAUTH_URL",
         "MUX_API_URL",
-        "SESSION_COOKIE_PASSWORD"
+        "SESSION_COOKIE_PASSWORD",
+        "SENTRY_AUTH_TOKEN"
       ]
     },
     "dev": {
@@ -19,7 +20,8 @@
         "OAUTH_REDIRECT_URI",
         "OAUTH_URL",
         "MUX_API_URL",
-        "SESSION_COOKIE_PASSWORD"
+        "SESSION_COOKIE_PASSWORD",
+        "SENTRY_AUTH_TOKEN"
       ]
     }
   }
