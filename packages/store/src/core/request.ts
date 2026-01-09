@@ -1,6 +1,6 @@
 import type { EventLike } from '@videojs/utils/events';
 import type { Guard } from './guard';
-import type { TaskKey } from './queue';
+import type { TaskKey } from './task';
 
 import { isFunction, isObject } from '@videojs/utils/predicate';
 

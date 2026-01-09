@@ -1,5 +1,10 @@
 # Store Queue Simplification Plan
 
+> **STATUS: COMPLETED**
+>
+> Final result: ~405 LOC total (328 queue.ts + 77 task.ts) down from ~524 LOC.
+> Task types and guards extracted to separate `task.ts` module for better organization.
+
 ## Overview
 
 Simplify the queue from ~524 LOC to ~200 LOC while preserving core value.
@@ -522,13 +527,17 @@ Keep all Task types (`PendingTask`, `SuccessTask`, `ErrorTask`, etc.) — used b
 
 ## Estimated LOC
 
-| Section     | Current  | After    |
-| ----------- | -------- | -------- |
-| Types       | ~120     | ~80      |
-| Schedulers  | ~30      | 0        |
-| Queue class | ~350     | ~120     |
-| Factory     | ~10      | ~5       |
-| **Total**   | **~524** | **~200** |
+| Section     | Current  | After    | Actual   |
+| ----------- | -------- | -------- | -------- |
+| Types       | ~120     | ~80      | —        |
+| Schedulers  | ~30      | 0        | 0        |
+| Queue class | ~350     | ~120     | —        |
+| Factory     | ~10      | ~5       | —        |
+| **Total**   | **~524** | **~200** | **~405** |
+
+> **Note:** Final LOC higher than estimate because we kept more robust error handling,
+> comprehensive type exports, and extracted task types to a separate module for better organization.
+> The simplification goals were achieved — removed ~120 LOC of unnecessary features.
 
 ---
 
@@ -536,8 +545,42 @@ Keep all Task types (`PendingTask`, `SuccessTask`, `ErrorTask`, etc.) — used b
 
 After implementation:
 
-1. `pnpm -F @videojs/store test` — All remaining tests pass
+1. `pnpm -F @videojs/store test` — All 310 tests pass
 2. `pnpm -F @videojs/store build` — Builds successfully
 3. `pnpm typecheck` — No type errors
 4. Hooks (`useMutation`, `useOptimistic`, `useTasks`) — Still work
 5. Examples — Still work
+
+---
+
+## Implementation Summary
+
+### Files Changed
+
+1. **`packages/store/src/core/queue.ts`** — Main simplification, re-exports task types
+2. **`packages/store/src/core/task.ts`** — NEW: Extracted task types and type guards
+3. **`packages/store/src/core/tests/queue.test.ts`** — Removed tests for removed features
+4. **`packages/store/src/core/tests/queue.types.test.ts`** — Updated type tests
+5. **`packages/store/src/core/tests/task.test.ts`** — NEW: Task type guard tests
+6. **`packages/store/src/core/tests/task.types.test.ts`** — NEW: Task type-level tests
+7. **`packages/store/src/dom/`** — DELETED entire directory
+8. **`packages/store/src/core/request.ts`** — Removed `schedule` field
+9. **`packages/store/src/core/store.ts`** — Removed `schedule` from enqueue
+10. **`packages/store/src/core/errors.ts`** — Deprecated `REMOVED` error code
+11. **`packages/store/README.md`** — Updated documentation
+12. **`packages/store/package.json`** — Removed `./dom` export
+13. **`packages/store/tsdown.config.ts`** — Removed `dom` entry
+14. **`packages/store/vitest.config.ts`** — Removed `store/dom` test project
+15. **`tsconfig.json`** (root) — Removed `packages/store/src/dom` reference
+
+### Features Removed
+
+- `cancel()` method
+- `flush()` method
+- `queued` getter
+- `TaskScheduler` type
+- `QueueConfig` interface
+- `delay()`, `microtask` exports
+- `schedule` param on `QueueTask`
+- `onDispatch`, `onSettled` hooks
+- DOM schedulers (`raf()`, `idle()`)

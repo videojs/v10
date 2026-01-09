@@ -1,6 +1,6 @@
 import type { EnsureFunction } from '@videojs/utils/types';
-import type { Task } from '../../core/queue';
 import type { AnyStore, InferStoreRequests, InferStoreState } from '../../core/store';
+import type { Task } from '../../core/task';
 import type { OptimisticResult } from '../../shared/types';
 
 import { useCallback, useReducer, useRef, useSyncExternalStore } from 'react';

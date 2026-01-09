@@ -6,3 +6,4 @@ export * from './request';
 export * from './slice';
 export * from './state';
 export * from './store';
+export * from './task';

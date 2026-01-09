@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createQueue, isPendingTask, isSettledTask } from '../queue';
+import { createQueue } from '../queue';
 
-describe('queue', () => {
+describe('Queue', () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -28,7 +28,7 @@ describe('queue', () => {
     });
 
     it('supersedes queued task with same key', async () => {
-      vi.useRealTimers(); // Use real timers for microtasks
+      vi.useRealTimers();
 
       const queue = createQueue();
       const first = vi.fn().mockResolvedValue('first');
@@ -173,6 +173,19 @@ describe('queue', () => {
       expect(aborted).toHaveBeenCalled();
       expect(queue.destroyed).toBe(true);
     });
+
+    it('clears all task references on destroy', async () => {
+      vi.useRealTimers();
+
+      const queue = createQueue();
+
+      await queue.enqueue({ name: 'task', key: 'k', handler: async () => 'result' });
+      expect(queue.tasks.task?.status).toBe('success');
+
+      queue.destroy();
+
+      expect(Reflect.ownKeys(queue.tasks).length).toBe(0);
+    });
   });
 
   describe('cleanup edge cases', () => {
@@ -181,24 +194,19 @@ describe('queue', () => {
 
       const queue = createQueue();
 
-      // Enqueue first task
       const promise1 = queue.enqueue({
         name: 'task1',
         key: 'shared',
         handler: vi.fn().mockResolvedValue('result1'),
       });
 
-      // Immediately enqueue second task with same key (supersedes first)
       const promise2 = queue.enqueue({
         name: 'task2',
         key: 'shared',
         handler: vi.fn().mockResolvedValue('result2'),
       });
 
-      // First should be superseded
       await expect(promise1).rejects.toMatchObject({ code: 'SUPERSEDED' });
-
-      // Second should succeed
       await expect(promise2).resolves.toBe('result2');
     });
 
@@ -223,46 +231,15 @@ describe('queue', () => {
         },
       });
 
-      // Wait for task to start
       await new Promise(r => setTimeout(r, 10));
       expect(queue.tasks.task?.status).toBe('pending');
 
-      // Destroy queue
       queue.destroy();
 
-      // Task should self-cleanup
       await promise.catch(() => {});
       expect(cleanupSpy).toHaveBeenCalledWith('aborted');
       expect(cleanupSpy).toHaveBeenCalledWith('cleanup');
-
-      // After destroy, all tasks are cleared for memory cleanup
       expect(queue.tasks.task).toBeUndefined();
-    });
-  });
-
-  describe('isPendingTask type guard', () => {
-    it('returns true when task is executing', async () => {
-      vi.useRealTimers();
-
-      const queue = createQueue();
-
-      const promise = queue.enqueue({
-        name: 'test',
-        key: 'test-key',
-        handler: async () => {
-          await new Promise(r => setTimeout(r, 50));
-          return 'result';
-        },
-      });
-
-      await new Promise(r => setTimeout(r, 10));
-
-      expect(isPendingTask(queue.tasks.test)).toBe(true);
-      expect(isPendingTask(queue.tasks.other)).toBe(false);
-
-      await promise;
-
-      expect(isPendingTask(queue.tasks.test)).toBe(false);
     });
   });
 
@@ -321,17 +298,14 @@ describe('queue', () => {
       // Wait for dispatch
       await new Promise(r => setTimeout(r, 10));
 
-      // First call should have pending task (keyed by name 'test')
       expect(listener).toHaveBeenCalledTimes(1);
       const pendingSnapshot = listener.mock.calls[0]![0] as Record<string, { status: string }>;
       expect(Reflect.ownKeys(pendingSnapshot).length).toBe(1);
       expect(pendingSnapshot.test?.status).toBe('pending');
 
-      // Complete the handler
       resolveHandler!();
       await promise;
 
-      // Second call should have settled task (success)
       expect(listener).toHaveBeenCalledTimes(2);
       const settledSnapshot = listener.mock.calls[1]![0] as Record<string, { status: string }>;
       expect(Reflect.ownKeys(settledSnapshot).length).toBe(1);
@@ -395,11 +369,8 @@ describe('queue', () => {
         handler: vi.fn().mockResolvedValue('result'),
       });
 
-      // Both listeners were called despite error
       expect(errorListener).toHaveBeenCalled();
       expect(successListener).toHaveBeenCalled();
-
-      // Error was logged
       expect(consoleSpy).toHaveBeenCalledWith('[vjs-queue]', expect.any(Error));
 
       consoleSpy.mockRestore();
@@ -408,11 +379,9 @@ describe('queue', () => {
     it('provides strongly typed tasks object', async () => {
       vi.useRealTimers();
 
-      // Use default queue - type safety is validated at compile time
       const queue = createQueue();
 
       queue.subscribe((tasks) => {
-        // Tasks is a frozen object
         const task = tasks.playback;
         if (task) {
           expect(task.key).toBe('playback');
@@ -443,16 +412,13 @@ describe('queue', () => {
         },
       });
 
-      // Task should be pending (keyed by name 'task')
       await new Promise(r => setTimeout(r, 5));
       const pendingTask = queue.tasks.task;
       expect(pendingTask?.status).toBe('pending');
       expect(pendingTask?.name).toBe('task');
 
-      // Wait for completion
       await promise;
 
-      // Task should be success
       const successTask = queue.tasks.task;
       expect(successTask?.status).toBe('success');
       if (successTask?.status === 'success') {
@@ -476,14 +442,11 @@ describe('queue', () => {
         },
       });
 
-      // Task should be pending
       await new Promise(r => setTimeout(r, 5));
       expect(queue.tasks.task?.status).toBe('pending');
 
-      // Wait for failure
       await expect(promise).rejects.toThrow('test error');
 
-      // Task should be error
       const errorTask = queue.tasks.task;
       expect(errorTask?.status).toBe('error');
       if (errorTask?.status === 'error') {
@@ -508,15 +471,12 @@ describe('queue', () => {
         },
       });
 
-      // Wait for task to start
       await new Promise(r => setTimeout(r, 10));
       expect(queue.tasks.task?.status).toBe('pending');
 
-      // Abort the task (by name)
       queue.abort('task');
       await promise.catch(() => {});
 
-      // Task should be error with cancelled=true
       const errorTask = queue.tasks.task;
       expect(errorTask?.status).toBe('error');
       if (errorTask?.status === 'error') {
@@ -529,27 +489,23 @@ describe('queue', () => {
 
       const queue = createQueue();
 
-      // First request
       await queue.enqueue({
         name: 'first',
         key: 'k',
         handler: async () => 'first-result',
       });
 
-      // Keyed by name 'first'
       expect(queue.tasks.first?.status).toBe('success');
       if (queue.tasks.first?.status === 'success') {
         expect(queue.tasks.first.output).toBe('first-result');
       }
 
-      // Second request (different name, same key) - doesn't replace first since different name
       await queue.enqueue({
         name: 'second',
         key: 'k',
         handler: async () => 'second-result',
       });
 
-      // Both tasks exist at different keys (names)
       expect(queue.tasks.second?.status).toBe('success');
       if (queue.tasks.second?.status === 'success') {
         expect(queue.tasks.second.output).toBe('second-result');
@@ -591,11 +547,9 @@ describe('queue', () => {
         },
       });
 
-      // Wait for task to start
       await new Promise(r => setTimeout(r, 10));
       expect(queue.tasks.task?.status).toBe('pending');
 
-      // Reset should be no-op
       queue.reset('task');
       expect(queue.tasks.task?.status).toBe('pending');
 
@@ -605,7 +559,6 @@ describe('queue', () => {
     it('is no-op when task does not exist', () => {
       const queue = createQueue();
 
-      // Should not throw
       queue.reset('nonexistent');
 
       expect(queue.tasks.nonexistent).toBeUndefined();
@@ -647,14 +600,12 @@ describe('queue', () => {
 
       const queue = createQueue();
 
-      // Create multiple settled tasks
       await queue.enqueue({ name: 'a', key: 'a', handler: async () => 'a-result' });
       await queue.enqueue({ name: 'b', key: 'b', handler: async () => 'b-result' });
 
       expect(queue.tasks.a?.status).toBe('success');
       expect(queue.tasks.b?.status).toBe('success');
 
-      // Reset all
       queue.reset();
 
       expect(queue.tasks.a).toBeUndefined();
@@ -666,10 +617,8 @@ describe('queue', () => {
 
       const queue = createQueue();
 
-      // Create a settled task
       await queue.enqueue({ name: 'settled', key: 'settled', handler: async () => 'done' });
 
-      // Create a pending task
       const pendingPromise = queue.enqueue({
         name: 'pending',
         key: 'pending',
@@ -683,82 +632,12 @@ describe('queue', () => {
       expect(queue.tasks.settled?.status).toBe('success');
       expect(queue.tasks.pending?.status).toBe('pending');
 
-      // Reset all - should only clear settled
       queue.reset();
 
       expect(queue.tasks.settled).toBeUndefined();
       expect(queue.tasks.pending?.status).toBe('pending');
 
       await pendingPromise;
-    });
-  });
-
-  describe('isSettledTask type guard', () => {
-    it('returns true for success task', async () => {
-      vi.useRealTimers();
-
-      const queue = createQueue();
-      await queue.enqueue({ name: 'task', key: 'k', handler: async () => 'result' });
-
-      expect(isSettledTask(queue.tasks.task)).toBe(true);
-    });
-
-    it('returns true for error task', async () => {
-      vi.useRealTimers();
-
-      const queue = createQueue();
-      const promise = queue.enqueue({
-        name: 'task',
-        key: 'k',
-        handler: async () => {
-          throw new Error('fail');
-        },
-      });
-
-      await promise.catch(() => {});
-
-      expect(isSettledTask(queue.tasks.task)).toBe(true);
-    });
-
-    it('returns false for pending task', async () => {
-      vi.useRealTimers();
-
-      const queue = createQueue();
-      const promise = queue.enqueue({
-        name: 'task',
-        key: 'k',
-        handler: async () => {
-          await new Promise(r => setTimeout(r, 50));
-          return 'result';
-        },
-      });
-
-      await new Promise(r => setTimeout(r, 10));
-
-      expect(isSettledTask(queue.tasks.task)).toBe(false);
-
-      await promise;
-    });
-
-    it('returns false for non-existent task', () => {
-      const queue = createQueue();
-
-      expect(isSettledTask(queue.tasks.nonexistent)).toBe(false);
-    });
-  });
-
-  describe('destroy cleanup', () => {
-    it('clears all task references on destroy', async () => {
-      vi.useRealTimers();
-
-      const queue = createQueue();
-
-      await queue.enqueue({ name: 'task', key: 'k', handler: async () => 'result' });
-      expect(queue.tasks.task?.status).toBe('success');
-
-      queue.destroy();
-
-      expect(Reflect.ownKeys(queue.tasks).length).toBe(0);
     });
   });
 
@@ -786,7 +665,6 @@ describe('queue', () => {
 
       const snapshot2 = queue.tasks;
 
-      // Tasks keyed by name - first and second are different entries
       expect(snapshot1).not.toBe(snapshot2);
       if (snapshot1.first?.status === 'success' && snapshot2.second?.status === 'success') {
         expect(snapshot1.first.output).toBe('first');

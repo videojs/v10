@@ -1,4 +1,3 @@
-import type { PendingTask, Task, TaskContext } from './queue';
 import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
 import type {
   AnySlice,
@@ -9,6 +8,7 @@ import type {
   UnionSliceTasks,
 } from './slice';
 import type { StateFactory } from './state';
+import type { PendingTask, Task, TaskContext } from './task';
 
 import { getSelectorKeys } from '@videojs/utils/object';
 import { isNull } from '@videojs/utils/predicate';
