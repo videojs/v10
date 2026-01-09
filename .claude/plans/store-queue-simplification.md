@@ -557,21 +557,24 @@ After implementation:
 
 ### Files Changed
 
-1. **`packages/store/src/core/queue.ts`** — Main simplification, re-exports task types
+1. **`packages/store/src/core/queue.ts`** — Main simplification (queue-only, no task re-exports)
 2. **`packages/store/src/core/task.ts`** — NEW: Extracted task types and type guards
-3. **`packages/store/src/core/tests/queue.test.ts`** — Removed tests for removed features
-4. **`packages/store/src/core/tests/queue.types.test.ts`** — Updated type tests
-5. **`packages/store/src/core/tests/task.test.ts`** — NEW: Task type guard tests
-6. **`packages/store/src/core/tests/task.types.test.ts`** — NEW: Task type-level tests
-7. **`packages/store/src/dom/`** — DELETED entire directory
-8. **`packages/store/src/core/request.ts`** — Removed `schedule` field
-9. **`packages/store/src/core/store.ts`** — Removed `schedule` from enqueue
-10. **`packages/store/src/core/errors.ts`** — Deprecated `REMOVED` error code
-11. **`packages/store/README.md`** — Updated documentation
-12. **`packages/store/package.json`** — Removed `./dom` export
-13. **`packages/store/tsdown.config.ts`** — Removed `dom` entry
-14. **`packages/store/vitest.config.ts`** — Removed `store/dom` test project
-15. **`tsconfig.json`** (root) — Removed `packages/store/src/dom` reference
+3. **`packages/store/src/core/index.ts`** — Added `task.ts` export
+4. **`packages/store/src/core/request.ts`** — Removed `schedule` field, import `TaskKey` from `task.ts`
+5. **`packages/store/src/core/store.ts`** — Removed `schedule` from enqueue, import task types from `task.ts`
+6. **`packages/store/src/core/errors.ts`** — Deprecated `REMOVED` error code
+7. **`packages/store/src/core/tests/queue.test.ts`** — Removed tests for removed features
+8. **`packages/store/src/core/tests/queue.types.test.ts`** — Updated type tests
+9. **`packages/store/src/core/tests/task.test.ts`** — NEW: Task type guard tests
+10. **`packages/store/src/core/tests/task.types.test.ts`** — NEW: Task type-level tests
+11. **`packages/store/src/dom/`** — DELETED entire directory
+12. **`packages/store/src/lit/controllers/*.ts`** — Updated imports (Task from `task.ts`)
+13. **`packages/store/src/react/hooks/*.ts`** — Updated imports (Task from `task.ts`)
+14. **`packages/store/README.md`** — Updated documentation
+15. **`packages/store/package.json`** — Removed `./dom` export
+16. **`packages/store/tsdown.config.ts`** — Removed `dom` entry
+17. **`packages/store/vitest.config.ts`** — Removed `store/dom` test project
+18. **`tsconfig.json`** (root) — Removed `packages/store/src/dom` reference
 
 ### Features Removed
 
@@ -584,3 +587,41 @@ After implementation:
 - `schedule` param on `QueueTask`
 - `onDispatch`, `onSettled` hooks
 - DOM schedulers (`raf()`, `idle()`)
+
+---
+
+## Bundle Size Analysis
+
+Tested with esbuild (minified + gzipped):
+
+| Scenario                                | Minified | Gzipped    |
+| --------------------------------------- | -------- | ---------- |
+| **Minimal** (createStore + createSlice) | 6.2 KB   | **2.3 KB** |
+| **+ requests** (using queue)            | 6.3 KB   | 2.3 KB     |
+| **+ task guards** (isPendingTask, etc.) | 6.5 KB   | 2.4 KB     |
+| **Full entry** (all exports)            | 8.1 KB   | 3.0 KB     |
+
+### Tree-Shaking Results
+
+| Export                                                                         | Tree-Shakes? | Notes                                    |
+| ------------------------------------------------------------------------------ | ------------ | ---------------------------------------- |
+| Task guards (`isPendingTask`, `isSuccessTask`, `isErrorTask`, `isSettledTask`) | ✅ Yes       | Removed when unused                      |
+| `Queue` class                                                                  | ❌ No        | Store creates one internally (by design) |
+| `StoreError`                                                                   | ❌ No        | Used by Queue for error handling         |
+| `State` class                                                                  | ❌ No        | Core dependency of Store                 |
+
+### What's Always Included
+
+```
+Queue class:      ~159 lines
+Store class:      ~193 lines
+State class:      ~59 lines
+StoreError:       ~8 lines
+Utils (@videojs/utils): isFunction, isNull, isUndefined, isObject, getSelectorKeys
+```
+
+### Notes
+
+- Queue is always present because the store architecture requires it — all writes are async requests
+- Task types extracted to `task.ts` tree-shake properly when guards aren't used
+- Savings of ~1.9 KB raw / ~700 bytes gzip when not importing everything
