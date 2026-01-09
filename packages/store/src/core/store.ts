@@ -306,7 +306,6 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
         key,
         input,
         meta,
-        schedule: config.schedule,
         handler,
       });
     } catch (error) {

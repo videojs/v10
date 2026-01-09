@@ -1,7 +1,8 @@
 import type { ErrorTask, PendingTask, SuccessTask, Task, TasksRecord } from '../queue';
 
 import { describe, expectTypeOf, it } from 'vitest';
-import { createQueue } from '../queue';
+
+import { createQueue, isErrorTask, isPendingTask, isSettledTask, isSuccessTask } from '../queue';
 
 describe('queue types', () => {
   describe('Task', () => {
@@ -46,28 +47,43 @@ describe('queue types', () => {
     });
   });
 
+  describe('Type guards', () => {
+    it('isPendingTask narrows to PendingTask', () => {
+      const task: Task = {} as Task;
+
+      if (isPendingTask(task)) {
+        expectTypeOf(task).toExtend<PendingTask>();
+      }
+    });
+
+    it('isSettledTask narrows to SuccessTask | ErrorTask', () => {
+      const task: Task = {} as Task;
+
+      if (isSettledTask(task)) {
+        expectTypeOf(task.settledAt).toBeNumber();
+      }
+    });
+
+    it('isSuccessTask narrows to SuccessTask', () => {
+      const task: Task = {} as Task;
+
+      if (isSuccessTask(task)) {
+        expectTypeOf(task).toExtend<SuccessTask>();
+        expectTypeOf(task.output).toBeUnknown();
+      }
+    });
+
+    it('isErrorTask narrows to ErrorTask', () => {
+      const task: Task = {} as Task;
+
+      if (isErrorTask(task)) {
+        expectTypeOf(task).toExtend<ErrorTask>();
+        expectTypeOf(task.error).toBeUnknown();
+      }
+    });
+  });
+
   describe('Queue methods', () => {
-    it('isPending takes name parameter', () => {
-      const queue = createQueue();
-
-      expectTypeOf(queue.isPending).toBeFunction();
-      expectTypeOf(queue.isPending).returns.toBeBoolean();
-    });
-
-    it('isQueued takes name parameter', () => {
-      const queue = createQueue();
-
-      expectTypeOf(queue.isQueued).toBeFunction();
-      expectTypeOf(queue.isQueued).returns.toBeBoolean();
-    });
-
-    it('isSettled takes name parameter', () => {
-      const queue = createQueue();
-
-      expectTypeOf(queue.isSettled).toBeFunction();
-      expectTypeOf(queue.isSettled).returns.toBeBoolean();
-    });
-
     it('reset takes optional name parameter', () => {
       const queue = createQueue();
 
@@ -75,25 +91,11 @@ describe('queue types', () => {
       expectTypeOf(queue.reset).returns.toBeVoid();
     });
 
-    it('cancel takes optional name parameter and returns boolean', () => {
-      const queue = createQueue();
-
-      expectTypeOf(queue.cancel).toBeFunction();
-      expectTypeOf(queue.cancel).returns.toBeBoolean();
-    });
-
     it('abort takes optional name parameter', () => {
       const queue = createQueue();
 
       expectTypeOf(queue.abort).toBeFunction();
       expectTypeOf(queue.abort).returns.toBeVoid();
-    });
-
-    it('flush takes optional name parameter and returns promise', () => {
-      const queue = createQueue();
-
-      expectTypeOf(queue.flush).toBeFunction();
-      expectTypeOf(queue.flush).returns.toExtend<Promise<void>>();
     });
 
     it('subscribe takes listener and returns unsubscribe', () => {

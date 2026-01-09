@@ -319,16 +319,18 @@ request: {
 
 When a new request arrives with the same key:
 
-- Queued request with that key is dropped
+- Queued request with that key is superseded
 - Executing request with that key is aborted
 - New request takes over
 
 ```ts
 store.request.play(); // queued
-store.request.pause(); // play dropped, pause queued
-store.request.play(); // pause dropped, play queued
+store.request.pause(); // play superseded, pause queued
+store.request.play(); // pause superseded, play queued
 // only final play() executes
 ```
+
+This supersession happens automatically via microtask batching—all requests in the same synchronous batch are collected, and only the last request per key actually executes.
 
 Dynamic keys for parallel execution:
 
@@ -351,58 +353,13 @@ request: {
 ### Cancels
 
 Requests can cancel other in-flight requests by name. Cancellation happens immediately when the
-request is enqueued, before guards or scheduling.
+request is enqueued, before guards.
 
 ```ts
 request: {
   stop: {
     cancel: ['seek', 'preload'],  // Request names to cancel
     handler: (_, { target }) => target.pause(),
-  },
-}
-```
-
-### Schedule
-
-Schedule controls _when_ a request executes. The schedule function receives a `flush` callback and
-optionally returns a cancel function. Default schedule is microtask (executes at end of current tick).
-
-```ts
-import { delay, microtask } from '@videojs/store';
-import { raf, idle } from '@videojs/store/dom';
-
-request: {
-  // Microtask - default, executes at end of current tick
-  setVolume: {
-    schedule: microtask,
-    handler: (volume, { target }) => { target.volume = volume; },
-  },
-
-  // Debounce 100ms - good for sliders
-  seek: {
-    schedule: delay(100),
-    handler: (time, { target }) => { target.currentTime = time; },
-  },
-
-  // Sync with animation frame
-  updateOverlay: {
-    schedule: raf(),
-    handler: () => { ... },
-  },
-
-  // Execute when browser is idle
-  preloadNext: {
-    schedule: idle(),
-    handler: () => { ... },
-  },
-
-  // Custom schedule
-  custom: {
-    schedule: (flush) => {
-      const id = setTimeout(flush, 200);
-      return () => clearTimeout(id);  // cancel function
-    },
-    handler: () => { ... },
   },
 }
 ```
@@ -478,7 +435,6 @@ All store errors include a `code` for programmatic handling:
 | `DETACHED`   | Target detached              |
 | `NO_TARGET`  | No target attached           |
 | `REJECTED`   | Guard returned falsy         |
-| `REMOVED`    | Task dequeued or cleared     |
 | `SUPERSEDED` | Replaced by same-key request |
 | `TIMEOUT`    | Guard timed out              |
 
@@ -523,51 +479,15 @@ try {
 
 ## Queue
 
-A default queue is created automatically. Provide a custom queue for lifecycle hooks or custom
-scheduling:
-
-```ts
-import { createQueue } from '@videojs/store';
-
-const store = createStore({
-  slices: [
-    /* ... */
-  ],
-  queue: createQueue({
-    // Default scheduler for requests without schedule
-    scheduler: (flush) => queueMicrotask(flush),
-
-    // Lifecycle hooks
-    onDispatch: (request) => {
-      console.log('Started:', request.name);
-    },
-
-    onSettled: (task) => {
-      analytics.track(task.name, {
-        status: task.status,
-        duration: task.settledAt - task.startedAt,
-      });
-    },
-  }),
-});
-```
+The queue manages request execution with automatic supersession and lifecycle tracking. A default queue is created automatically with the store.
 
 ### Queue API
 
 ```ts
-const queue = store.queue; // accessed on the store
+const queue = store.queue;
 
-queue.queued; // tasks waiting to execute
-queue.tasks; // task lifecycle map (pending/success/error) keyed by request name
-
-// Check task status by request name
-queue.isPending('play'); // true if currently executing
-queue.isQueued('seek'); // true if waiting to execute
-queue.isSettled('seek'); // true if completed (success or error)
-
-// Cancel queued tasks (waiting to execute)
-queue.cancel('seek'); // cancel specific request
-queue.cancel(); // cancel all queued
+// Task lifecycle map (pending/success/error) keyed by request name
+queue.tasks;
 
 // Abort tasks (queued + executing)
 queue.abort('play'); // abort specific request
@@ -577,9 +497,41 @@ queue.abort(); // abort all
 queue.reset('seek'); // clear specific request
 queue.reset(); // clear all settled
 
-// Execute queued tasks immediately
-queue.flush(); // execute all queued now
-queue.flush('play'); // execute specific request now
+// Subscribe to task changes
+queue.subscribe((tasks) => {
+  const playTask = tasks.play;
+  if (playTask?.status === 'pending') {
+    console.log('Play in progress...');
+  }
+});
+```
+
+### Task Lifecycle
+
+Each request creates a task that transitions through states:
+
+```ts
+import { isErrorTask, isPendingTask, isSettledTask, isSuccessTask } from '@videojs/store';
+
+const task = queue.tasks.play;
+
+// Type guards for status checking
+if (isPendingTask(task)) {
+  console.log('In progress, started at:', task.startedAt);
+}
+
+if (isSettledTask(task)) {
+  console.log('Duration:', task.settledAt - task.startedAt);
+}
+
+if (isSuccessTask(task)) {
+  console.log('Result:', task.output);
+}
+
+if (isErrorTask(task)) {
+  console.log('Failed:', task.error);
+  console.log('Was cancelled:', task.cancelled);
+}
 ```
 
 ### Direct Queue Usage
@@ -587,15 +539,45 @@ queue.flush('play'); // execute specific request now
 You can use the queue directly without a store:
 
 ```ts
+import { createQueue } from '@videojs/store';
+
+const queue = createQueue();
+
 await queue.enqueue({
   name: 'myTask',
   key: 'task-key',
   input: { some: 'data' },
-  schedule: delay(100),
-  handler: async ({ signal }) => {
+  handler: async ({ input, signal }) => {
     // do work, check signal.aborted
     return result;
   },
+});
+```
+
+### Observing Tasks
+
+Use `subscribe` to react to task changes—useful for loading states and error handling:
+
+```ts
+queue.subscribe((tasks) => {
+  for (const [name, task] of Object.entries(tasks)) {
+    if (task?.status === 'error' && !task.cancelled) {
+      toast.error(`${name} failed: ${task.error}`);
+    }
+  }
+});
+
+// Analytics
+queue.subscribe((tasks) => {
+  for (const task of Object.values(tasks)) {
+    if (task && task.status !== 'pending') {
+      analytics.track('request', {
+        name: task.name,
+        status: task.status,
+        duration: task.settledAt - task.startedAt,
+      });
+    }
+  }
 });
 ```
 
