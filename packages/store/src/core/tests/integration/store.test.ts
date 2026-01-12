@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { createSlice, createStore, delay } from '../../index';
+import { createSlice, createStore } from '../../index';
 
 describe('store lifecycle integration', () => {
   it('full lifecycle: create → attach → use → detach → destroy', async () => {
@@ -54,9 +54,7 @@ describe('store lifecycle integration', () => {
     expect(store.destroyed).toBe(true);
   });
 
-  it('request with guards and scheduling', async () => {
-    vi.useFakeTimers();
-
+  it('request with guards', async () => {
     let ready = false;
     const isReady = () => ready;
 
@@ -65,8 +63,7 @@ describe('store lifecycle integration', () => {
       getSnapshot: () => ({}),
       subscribe: () => {},
       request: {
-        delayedAction: {
-          schedule: delay(100),
+        guardedAction: {
           guard: [isReady],
           handler: (_, _ctx) => 'completed',
         },
@@ -81,17 +78,13 @@ describe('store lifecycle integration', () => {
     store.attach({});
 
     // Test 1: Guard rejects when not ready
-    const failPromise = store.request.delayedAction().catch(e => e);
-    await vi.runAllTimersAsync();
+    const failPromise = store.request.guardedAction().catch(e => e);
     await expect(failPromise).resolves.toMatchObject({ code: 'REJECTED' });
 
     // Test 2: Guard passes when ready
     ready = true;
-    const successPromise = store.request.delayedAction();
-    await vi.runAllTimersAsync();
+    const successPromise = store.request.guardedAction();
     await expect(successPromise).resolves.toBe('completed');
-
-    vi.useRealTimers();
   });
 });
 

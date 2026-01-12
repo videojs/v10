@@ -1,24 +1,13 @@
 import type { Request, RequestMeta } from './request';
+import type { ErrorTask, PendingTask, SuccessTask, Task, TaskContext, TaskKey } from './task';
 
-import { tryCatch } from '@videojs/utils/function';
-import { isFunction, isUndefined } from '@videojs/utils/predicate';
+import { isUndefined } from '@videojs/utils/predicate';
 
 import { StoreError } from './errors';
 
 // ----------------------------------------
 // Types
 // ----------------------------------------
-
-export type TaskKey<T = string | symbol> = T & (string | symbol);
-
-export type EnsureTaskKey<T> = T extends string | symbol ? T : never;
-
-/**
- * A task scheduler controls when a task flushes.
- *
- * Returns an optional cancel function.
- */
-export type TaskScheduler = (flush: () => void) => (() => void) | void;
 
 export type TaskRecord = {
   [K in TaskKey]: Request<any, any>;
@@ -28,56 +17,11 @@ export type DefaultTaskRecord = Record<TaskKey, Request<unknown, unknown>>;
 
 export type EnsureTaskRecord<T> = T extends TaskRecord ? T : never;
 
-export interface TaskBase<Key extends TaskKey = TaskKey, Input = unknown> {
-  id: symbol;
-  name: string;
-  key: Key;
-  input: Input;
-  startedAt: number;
-  meta: RequestMeta | null;
-}
-
-export interface PendingTask<Key extends TaskKey = TaskKey, Input = unknown> extends TaskBase<Key, Input> {
-  status: 'pending';
-  abort: AbortController;
-}
-
-export interface SuccessTask<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown> extends TaskBase<
-  Key,
-  Input
-> {
-  status: 'success';
-  settledAt: number;
-  output: Output;
-}
-
-export interface ErrorTask<Key extends TaskKey = TaskKey, Input = unknown> extends TaskBase<Key, Input> {
-  status: 'error';
-  settledAt: number;
-  error: unknown;
-  cancelled: boolean;
-}
-
-export type Task<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown>
-  = | PendingTask<Key, Input>
-    | SuccessTask<Key, Input, Output>
-    | ErrorTask<Key, Input>;
-
-export type SettledTask<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown>
-  = | SuccessTask<Key, Input, Output>
-    | ErrorTask<Key, Input>;
-
-export interface TaskContext<Input = unknown> {
-  input: Input;
-  signal: AbortSignal;
-}
-
 export interface QueueTask<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown> {
   name: string;
   key: Key;
   input?: Input;
   meta?: RequestMeta | null;
-  schedule?: TaskScheduler | undefined;
   handler: (ctx: TaskContext<Input>) => Promise<Output>;
 }
 
@@ -87,30 +31,12 @@ interface QueuedTask<Key extends TaskKey = TaskKey, Input = unknown, Output = un
   key: Key;
   input: Input;
   meta: RequestMeta | null;
-  schedule: TaskScheduler | undefined;
   handler: (ctx: TaskContext<Input>) => Promise<Output>;
   resolve: (value: Output) => void;
   reject: (error: unknown) => void;
-  invalidate?: () => void;
 }
 
-export interface QueueConfig<Tasks extends TaskRecord = DefaultTaskRecord> {
-  /** Default scheduler when task has no schedule */
-  scheduler?: TaskScheduler;
-  onDispatch?: <K extends keyof Tasks>(task: PendingTask<TaskKey<K>, Tasks[K]['input']>) => void;
-  onSettled?: <K extends keyof Tasks>(task: SettledTask<TaskKey<K>, Tasks[K]['input'], Tasks[K]['output']>) => void;
-}
-
-export interface QueuedTaskId<Key extends TaskKey = TaskKey> {
-  key: Key;
-  name: string;
-}
-
-export type PublicQueuedRecord<Tasks extends TaskRecord> = {
-  readonly [K in keyof Tasks]?: QueuedTaskId<TaskKey<K>>;
-};
-
-export type QueuedRecord<Tasks extends TaskRecord> = {
+type QueuedRecord<Tasks extends TaskRecord> = {
   [K in keyof Tasks]?: QueuedTask<TaskKey<K>>;
 };
 
@@ -121,65 +47,16 @@ export type TasksRecord<Tasks extends TaskRecord> = {
 export type QueueListener<Tasks extends TaskRecord> = (tasks: TasksRecord<Tasks>) => void;
 
 // ----------------------------------------
-// Schedulers
-// ----------------------------------------
-
-/**
- * Default scheduler, delay to next microtask.
- *
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide}
- */
-export const microtask: TaskScheduler = (flush) => {
-  let cancelled = false;
-
-  queueMicrotask(() => {
-    if (!cancelled) flush();
-  });
-
-  return () => {
-    cancelled = true;
-  };
-};
-
-/**
- * Delay execution by ms. Resets on each new task.
- *
- * @param ms - Milliseconds to delay
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout}
- */
-export function delay(ms: number): TaskScheduler {
-  return (flush) => {
-    const id = setTimeout(flush, ms);
-    return () => clearTimeout(id);
-  };
-}
-
-// ----------------------------------------
 // Implementation
 // ----------------------------------------
 
 export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
-  readonly #scheduler: TaskScheduler;
-  readonly #onDispatch: QueueConfig<Tasks>['onDispatch'];
-  readonly #onSettled: QueueConfig<Tasks>['onSettled'];
   readonly #subscribers = new Set<QueueListener<Tasks>>();
 
   #queued: QueuedRecord<Tasks> = {};
   #tasks: TasksRecord<Tasks> = {};
   #destroyed = false;
-
-  constructor(config: QueueConfig<Tasks> = {}) {
-    this.#scheduler = config.scheduler ?? microtask;
-
-    // Wrap callbacks to catch errors and prevent breaking queue/scheduler
-    const logError = (e: unknown) => console.error('[vjs-queue]', e);
-    this.#onDispatch = tryCatch(config.onDispatch, logError);
-    this.#onSettled = tryCatch(config.onSettled, logError);
-  }
-
-  get queued(): Readonly<PublicQueuedRecord<Tasks>> {
-    return Object.freeze({ ...this.#queued });
-  }
+  #flushScheduled = false;
 
   get tasks(): Readonly<TasksRecord<Tasks>> {
     return Object.freeze({ ...this.#tasks });
@@ -189,26 +66,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     return this.#destroyed;
   }
 
-  isPending(name: keyof Tasks): boolean {
-    return this.#tasks[name]?.status === 'pending';
-  }
-
-  isQueued(name: keyof Tasks): boolean {
-    // Note: #queued is keyed by key, but we need to search by name
-    for (const task of Object.values(this.#queued)) {
-      if (task?.name === name) return true;
-    }
-    return false;
-  }
-
-  isSettled(name: keyof Tasks): boolean {
-    const task = this.#tasks[name];
-    return task?.status === 'success' || task?.status === 'error';
-  }
-
-  /**
-   * Clear settled task(s). If name provided, clears that task. If no name, clears all settled.
-   */
+  /** Clear settled task(s). If name provided, clears that task. If no name, clears all settled. */
   reset(name?: keyof Tasks): void {
     if (!isUndefined(name)) {
       const task = this.#tasks[name];
@@ -257,7 +115,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   enqueue<K extends keyof Tasks>(
     task: QueueTask<TaskKey<K>, Tasks[K]['input'], Tasks[K]['output']>,
   ): Promise<Tasks[K]['output']> {
-    const { name, key, input, schedule, meta = null, handler } = task;
+    const { name, key, input, meta = null, handler } = task;
 
     if (this.#destroyed) {
       return Promise.reject(new StoreError('DESTROYED'));
@@ -265,7 +123,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
     // Supersede any queued task with the same key
     const queued = this.#queued[key];
-    queued?.invalidate?.();
     queued?.reject(new StoreError('SUPERSEDED'));
     delete this.#queued[key];
 
@@ -278,99 +135,51 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     }
 
     return new Promise<Tasks[K]['output']>((resolve, reject) => {
-      const task: QueuedTask = {
+      const queuedTask: QueuedTask = {
         id: Symbol('@videojs/task'),
         name,
         key,
         input,
         meta,
-        schedule,
         handler,
         resolve,
         reject,
       };
 
-      this.#queued[key as keyof Tasks] = task;
-
-      let flushed = false;
-
-      try {
-        const scheduleFlush = schedule ?? this.#scheduler;
-
-        const safeFlush = () => {
-          if (flushed) return;
-          flushed = true;
-          this.#flushKey(key);
-        };
-
-        const cancel = scheduleFlush(safeFlush);
-
-        if (!flushed && isFunction(cancel)) {
-          task.invalidate = cancel;
-        }
-      } catch (err) {
-        if (!flushed) {
-          delete this.#queued[key];
-        }
-
-        reject(err);
-      }
+      this.#queued[key as keyof Tasks] = queuedTask;
+      this.#scheduleFlush();
     });
   }
 
-  /**
-   * Cancel queued task(s). If name provided, cancels that task. If no name, cancels all.
-   */
-  cancel(name?: keyof Tasks): boolean {
-    if (!isUndefined(name)) {
-      // Find queued task by name (#queued is keyed by key)
-      for (const [key, queued] of Object.entries(this.#queued)) {
-        if (queued?.name === name) {
-          queued.invalidate?.();
-          queued.reject(new StoreError('REMOVED'));
-          delete this.#queued[key as keyof Tasks];
-          return true;
-        }
-      }
-      return false;
-    }
+  #scheduleFlush(): void {
+    if (this.#flushScheduled) return;
 
-    const hadQueued = Object.keys(this.#queued).length > 0;
-    for (const queued of Object.values(this.#queued)) {
-      queued.invalidate?.();
-      queued.reject(new StoreError('REMOVED'));
-    }
-
-    this.#queued = {};
-
-    return hadQueued;
+    this.#flushScheduled = true;
+    queueMicrotask(() => {
+      this.#flushScheduled = false;
+      this.#flushAll();
+    });
   }
 
-  async flush(name?: keyof Tasks): Promise<void> {
-    if (!isUndefined(name)) {
-      // Find queued task by name and flush by its key
-      for (const [key, queued] of Object.entries(this.#queued)) {
-        if (queued?.name === name) {
-          await this.#flushKey(key as keyof Tasks);
-          return;
-        }
-      }
-      return;
-    }
+  #flushAll(): void {
+    if (this.#destroyed) return;
 
-    const keys = Reflect.ownKeys(this.#queued);
-    await Promise.allSettled(keys.map(k => this.#flushKey(k)));
+    const keys = Reflect.ownKeys(this.#queued) as (keyof Tasks)[];
+    for (const key of keys) {
+      const task = this.#queued[key];
+      if (task) {
+        delete this.#queued[key];
+        this.#executeNow(task);
+      }
+    }
   }
 
-  /**
-   * Abort task(s). If name provided, aborts that task. If no name, aborts all.
-   */
+  /** Abort task(s). If name provided, aborts that task. If no name, aborts all. */
   abort(name?: keyof Tasks): void {
     if (!isUndefined(name)) {
       // Find and abort queued task by name
       for (const [key, queued] of Object.entries(this.#queued)) {
         if (queued?.name === name) {
-          queued.invalidate?.();
           queued.reject(new StoreError('ABORTED'));
           delete this.#queued[key as keyof Tasks];
           break;
@@ -389,7 +198,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     const error = new StoreError('ABORTED');
 
     for (const queued of Object.values(this.#queued)) {
-      queued.invalidate?.();
       queued.reject(error);
     }
 
@@ -409,17 +217,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     this.abort();
     this.#subscribers.clear();
     this.#tasks = {};
-  }
-
-  async #flushKey(key: keyof Tasks): Promise<void> {
-    if (this.#destroyed) return;
-
-    const task = this.#queued[key];
-    if (!task) return;
-
-    delete this.#queued[key];
-
-    await this.#executeNow(task);
   }
 
   async #executeNow<K extends keyof Tasks>(
@@ -444,7 +241,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     // Store tasks by name for controller access (different names can share same key)
     this.#tasks[name as keyof Tasks] = pendingTask;
     this.#notifySubscribers();
-    this.#onDispatch?.(pendingTask);
 
     try {
       if (abort.signal.aborted) {
@@ -471,8 +267,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
         this.#tasks[name as keyof Tasks] = successTask;
         this.#notifySubscribers();
       }
-
-      this.#onSettled?.(successTask);
     } catch (error) {
       reject(error);
 
@@ -489,8 +283,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
         this.#tasks[name as keyof Tasks] = errorTask;
         this.#notifySubscribers();
       }
-
-      this.#onSettled?.(errorTask);
     }
   }
 }
@@ -503,7 +295,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
  * Create a queue for managing task execution.
  *
  * - Same key = supersede previous (cancel queued, abort pending)
- * - Tasks scheduled via schedule function (default: microtask)
+ * - Tasks batched via microtask for supersession
  *
  * @example
  * // Loose typing (default)
@@ -516,8 +308,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
  *   'volume': Request<number>;
  * }>();
  */
-export function createQueue<Tasks extends TaskRecord = DefaultTaskRecord>(
-  config: QueueConfig<Tasks> = {},
-): Queue<Tasks> {
-  return new Queue<Tasks>(config);
+export function createQueue<Tasks extends TaskRecord = DefaultTaskRecord>(): Queue<Tasks> {
+  return new Queue<Tasks>();
 }

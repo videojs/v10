@@ -188,28 +188,6 @@ describe('store types', () => {
       expectTypeOf(store.queue.tasks).toHaveProperty('pause');
     });
 
-    it('queue.isPending accepts request names', () => {
-      const store = createSingleSliceStore();
-
-      // Should compile - valid request names
-      store.queue.isPending('setVolume');
-      store.queue.isPending('setMuted');
-    });
-
-    it('queue.isQueued accepts request names', () => {
-      const store = createSingleSliceStore();
-
-      store.queue.isQueued('setVolume');
-      store.queue.isQueued('setMuted');
-    });
-
-    it('queue.isSettled accepts request names', () => {
-      const store = createSingleSliceStore();
-
-      store.queue.isSettled('setVolume');
-      store.queue.isSettled('setMuted');
-    });
-
     it('queue.reset accepts request names', () => {
       const store = createSingleSliceStore();
 
@@ -218,28 +196,12 @@ describe('store types', () => {
       store.queue.reset(); // all
     });
 
-    it('queue.cancel accepts request names', () => {
-      const store = createSingleSliceStore();
-
-      store.queue.cancel('setVolume');
-      store.queue.cancel('setMuted');
-      store.queue.cancel(); // all
-    });
-
     it('queue.abort accepts request names', () => {
       const store = createSingleSliceStore();
 
       store.queue.abort('setVolume');
       store.queue.abort('setMuted');
       store.queue.abort(); // all
-    });
-
-    it('queue.flush accepts request names', () => {
-      const store = createSingleSliceStore();
-
-      store.queue.flush('setVolume');
-      store.queue.flush('setMuted');
-      store.queue.flush(); // all
     });
 
     it('InferStoreTasks matches queue task record keys', () => {

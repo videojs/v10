@@ -28,8 +28,6 @@ export type StoreErrorCode
     | 'NO_TARGET'
   /** Guard condition returned falsy - request preconditions not met. */
     | 'REJECTED'
-  /** Task was removed from queue via `dequeue()` or `clear()`. */
-    | 'REMOVED'
   /** Request was replaced by a newer request with the same key. */
     | 'SUPERSEDED'
   /** Guard condition timed out waiting for a truthy result. */

@@ -49,10 +49,6 @@ describe('slice', () => {
     it('preserves full config options', () => {
       const guard = () => true;
 
-      const schedule = (flush: () => void) => {
-        setTimeout(flush, 100);
-      };
-
       const slice = createSlice({
         initialState: {},
         getSnapshot: () => ({}),
@@ -61,7 +57,6 @@ describe('slice', () => {
           configured: {
             key: 'custom-key',
             guard: [guard],
-            schedule,
             handler: () => {},
           },
         },
@@ -69,7 +64,6 @@ describe('slice', () => {
 
       expect(slice.request.configured.key).toBe('custom-key');
       expect(slice.request.configured.guard).toEqual([guard]);
-      expect(slice.request.configured.schedule).toBe(schedule);
     });
   });
 });

@@ -1,6 +1,6 @@
 import type { EventLike } from '@videojs/utils/events';
 import type { Guard } from './guard';
-import type { TaskKey, TaskScheduler } from './queue';
+import type { TaskKey } from './task';
 
 import { isFunction, isObject } from '@videojs/utils/predicate';
 
@@ -42,7 +42,6 @@ export type RequestHandler<Target, Input = unknown, Output = unknown> = (
 
 export interface RequestConfig<Target, Input = unknown, Output = unknown> {
   key?: RequestKey<Input>;
-  schedule?: TaskScheduler;
   guard?: Guard<Target> | Guard<Target>[];
   cancel?: RequestCancel<Input>;
   handler: RequestHandler<Target, Input, Output>;
@@ -50,7 +49,6 @@ export interface RequestConfig<Target, Input = unknown, Output = unknown> {
 
 export interface ResolvedRequestConfig<Target, Input = unknown, Output = unknown> {
   key: RequestKey<Input>;
-  schedule?: TaskScheduler | undefined;
   guard: Guard<Target>[];
   cancel?: RequestCancel<Input> | undefined;
   handler: RequestHandler<Target, Input, Output>;
@@ -120,7 +118,6 @@ export function resolveRequests<Target, Requests extends { [K in keyof Requests]
     } else {
       resolved[name] = {
         key: config.key ?? name,
-        schedule: config.schedule,
         cancel: config.cancel,
         handler: config.handler,
         guard: config.guard ? (Array.isArray(config.guard) ? config.guard : [config.guard]) : [],
