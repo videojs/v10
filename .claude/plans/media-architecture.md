@@ -30,13 +30,15 @@ dash.on(dashjs.MediaPlayer.events.QUALITY_CHANGE_RENDERED, callback);
 ### With Store
 
 ```ts
-import { createMediaStore, hls, HlsMediaTarget, media } from '@videojs/html';
-
-const store = createMediaStore({ slices: [...media.all, ...hls.all] });
+import { createMediaStore, hls, HlsMediaTarget, presets } from '@videojs/html';
 
 const video = document.querySelector('video')!;
 const hlsInstance = new Hls();
 hlsInstance.attachMedia(video);
+
+const store = createMediaStore([
+  presets.from(hls.engine(hlsInstance))
+]);
 
 // HLS needs target to expose engine for adapters
 store.attach(new HlsMediaTarget(video, hlsInstance));
@@ -56,6 +58,73 @@ quality.levels;
 quality.selectedIndex;
 quality.select(2);
 quality.subscribe(() => console.log('changed'));
+```
+
+## Examples
+
+### Video
+
+```ts
+import { createMediaStore, presets } from '@videojs/html';
+
+const video = document.querySelector('video')!;
+const store = createMediaStore(presets.website);
+
+// HTMLMediaElement works directly — auto-wrapped as HtmlMediaTarget
+store.attach(video);
+store.request.play();
+```
+
+### HLS
+
+```ts
+import { createMediaStore, HlsMediaTarget, presets } from '@videojs/html';
+
+const store = createMediaStore(presets.hls);
+
+// HLS needs target to expose engine for quality/audio adapters
+store.attach(new HlsMediaTarget(video, hlsInstance));
+store.request.loadSource('stream.m3u8');
+store.request.selectQuality(2);
+```
+
+### Specific Capabilities
+
+```ts
+import { createMediaStore, hls, media, presets } from '@videojs/html';
+
+// Pick only the HLS capabilities you need
+const store = createMediaStore([...presets.website, media.quality(hls.quality), media.audio(hls.audio)]);
+```
+
+### Multi-Target
+
+```ts
+import { createMediaStore, dash, hls, media, presets } from '@videojs/html';
+
+// Same slices handle either target at runtime
+const store = createMediaStore([...presets.website, media.quality(hls.quality, dash.quality), media.audio(hls.audio, dash.audio)]);
+```
+
+### Low-Level Engine Access
+
+The store abstracts target differences, but sometimes you need direct access to low-level engine APIs — custom error handling, ABR tuning, buffer configuration, or engine-specific events. Type guards narrow the target type so TypeScript knows the exact engine available.
+
+```ts
+import { createMediaStore, hls, isHlsMediaTarget, media } from '@videojs/html';
+
+const store = createMediaStore({
+  slices: [...media.all, ...hls.all],
+  onAttach: ({ target }) => {
+    if (isHlsMediaTarget(target)) {
+      // TypeScript knows: target.engine is Hls
+      target.engine.config.maxBufferLength = 60;
+      target.engine.on(Hls.Events.ERROR, (_, data) => {
+        if (data.fatal) console.error('HLS fatal error:', data);
+      });
+    }
+  },
+});
 ```
 
 ---
@@ -540,171 +609,6 @@ export { qualitySlice, audioSlice, textTrackSlice } from './store/slices';
 
 ---
 
-## Usage Examples
-
-### HTML
-
-#### Simplest
-
-```html
-<!-- Just import and use -->
-<script type="module" src="@videojs/html/define/vjs-frosted-skin"></script>
-
-<vjs-frosted-skin>
-  <video src="video.mp4"></video>
-</vjs-frosted-skin>
-```
-
-#### Headless (No Skin)
-
-```ts
-import { createMediaStore, media } from '@videojs/html';
-
-const video = document.querySelector('video')!;
-const store = createMediaStore({ slices: [...media.all] });
-
-// HTMLMediaElement works directly — auto-wrapped as HtmlMediaTarget
-store.attach(video);
-store.request.play();
-```
-
-#### HLS
-
-```ts
-import { createMediaStore, hls, HlsMediaTarget, media } from '@videojs/html';
-
-const store = createMediaStore({ slices: [...media.all, ...hls.all] });
-
-// HLS needs target to expose engine for quality/audio adapters
-store.attach(new HlsMediaTarget(video, hlsInstance));
-store.request.loadSource('stream.m3u8');
-store.request.selectQuality(2);
-```
-
-#### HLS with Specific Capabilities
-
-```ts
-import { createMediaStore, hls, media } from '@videojs/html';
-
-// Pick only the HLS capabilities you need
-const store = createMediaStore({
-  slices: [...media.all, media.quality(hls.quality), media.audio(hls.audio)],
-});
-```
-
-#### Multi-Target
-
-```ts
-import { createMediaStore, dash, hls, media } from '@videojs/html';
-
-// Same slices handle either target at runtime
-const store = createMediaStore({
-  slices: [...media.all, media.quality(hls.quality, dash.quality), media.audio(hls.audio, dash.audio)],
-});
-```
-
-#### Standalone Adapter
-
-```ts
-import { hls } from '@videojs/html';
-
-// Direct adapter access without store
-const quality = hls.quality.from(hlsInstance);
-quality.select(2);
-```
-
-#### Extending Skin Store
-
-```ts
-import { createMediaStore, extendConfig, FrostedSkinElement, hls } from '@videojs/html/skins/frosted';
-
-// Add HLS capabilities to the skin's store
-const { StoreMixin } = createMediaStore(extendConfig({ slices: [...hls.all] }));
-FrostedSkinElement.define('vjs-hls-skin', StoreMixin);
-```
-
-#### Low-Level Engine Access
-
-The store abstracts target differences, but sometimes you need direct access to low-level engine APIs — custom error handling, ABR tuning, buffer configuration, or engine-specific events. Type guards narrow the target type so TypeScript knows the exact engine available.
-
-```ts
-import { createMediaStore, hls, isHlsMediaTarget, media } from '@videojs/html';
-
-const store = createMediaStore({
-  slices: [...media.all, ...hls.all],
-  onAttach: ({ target }) => {
-    if (isHlsMediaTarget(target)) {
-      // TypeScript knows: target.engine is Hls
-      target.engine.config.maxBufferLength = 60;
-      target.engine.on(Hls.Events.ERROR, (_, data) => {
-        if (data.fatal) console.error('HLS fatal error:', data);
-      });
-    }
-  },
-});
-```
-
----
-
-### React
-
-#### Basic
-
-```tsx
-import { Video } from '@videojs/react';
-import { Provider, Skin } from '@videojs/react/skins/frosted';
-
-<Provider>
-  <Skin>
-    <Video src="video.mp4" />
-  </Skin>
-</Provider>;
-```
-
-#### With Store Hooks
-
-```tsx
-import { createMediaStore, media } from '@videojs/react';
-
-const { Provider, useSelector, useRequest } = createMediaStore({ slices: [...media.all] });
-
-function Controls() {
-  const paused = useSelector((s) => s.paused);
-  const play = useRequest('play');
-  const pause = useRequest('pause');
-
-  return <button onClick={paused ? play : pause} />;
-}
-```
-
-#### HLS Quality Menu
-
-```tsx
-import { createMediaStore, hls, media } from '@videojs/react';
-
-const { useSelector, useRequest } = createMediaStore({ slices: [...media.all, ...hls.all] });
-
-function QualityMenu() {
-  const levels = useSelector((s) => s.qualityLevels);
-  const selectQuality = useRequest('selectQuality');
-  // render menu
-}
-```
-
-#### Standalone Adapter
-
-```tsx
-import { hls, useAdapter } from '@videojs/react';
-
-function QualityMenu({ hlsInstance }: { hlsInstance: Hls }) {
-  // Direct adapter access without store
-  const quality = useAdapter(hlsInstance, hls.quality);
-  // quality.levels, quality.select()
-}
-```
-
----
-
 ## Source Loading
 
 Source loading is a Target concern. The `loadSource` method is optional on `MediaTarget` — engines implement it, native targets use the fallback.
@@ -790,7 +694,7 @@ export const sourceSlice = createSlice<MediaTarget>()({
 ```ts
 import { createMediaStore, media } from '@videojs/html';
 
-const store = createMediaStore({ slices: [...media.all] });
+const store = createMediaStore(media.all);
 
 // Native video — auto-wrapped, uses fallback (video.src + load())
 const video = document.querySelector('video')!;
@@ -801,7 +705,7 @@ store.request.loadSource('video.mp4');
 ```ts
 import { createMediaStore, hls, HlsMediaTarget, media } from '@videojs/html';
 
-const store = createMediaStore({ slices: [...media.all, ...hls.all] });
+const store = createMediaStore([...media.all, ...hls.all]);
 
 // HLS — uses engine's loadSource
 const hlsInstance = new Hls();
