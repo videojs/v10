@@ -207,14 +207,14 @@ To customize, create your own player with a different preset:
 
 ```tsx
 import { createPlayer, presets } from '@videojs/react';
-import { FrostedUI } from '@videojs/react/presets/website/skins/frosted/ui';
+import { FrostedSkin } from '@videojs/react/presets/website';
 
 const { Provider, Container } = createPlayer(presets.streaming);
 
 <Provider>
   <Container>
     <Video />
-    <FrostedUI /> {/* UI components only, no store */}
+    <FrostedSkin /> {/* UI components only, no store */}
   </Container>
 </Provider>;
 ```
@@ -318,7 +318,7 @@ function AudioPlayer() {
 
 ```html
 <script type="module">
-  import '@videojs/html/presets/website/skins/frosted/define.js';
+  import '@videojs/html/presets/website/skins/frosted.js';
 </script>
 
 <vjs-frosted-skin>
