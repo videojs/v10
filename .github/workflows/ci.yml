@@ -2,7 +2,11 @@ name: CI
 
 on:
   push:
+    branches-ignore:
+      - 'rfc/**'
   pull_request:
+    branches-ignore:
+      - 'rfc/**'
 
 jobs:
   build:
