@@ -1,4 +1,4 @@
-# Media Provider Architecture
+# Media Architecture
 
 Abstraction layer for consistent interaction with different media (native video, HLS, DASH, YouTube, Vimeo).
 
@@ -30,16 +30,16 @@ dash.on(dashjs.MediaPlayer.events.QUALITY_CHANGE_RENDERED, callback);
 ### With Store
 
 ```ts
-import { createStore, hls, HLSProvider, media } from '@videojs/html';
+import { createMediaStore, hls, HlsMediaTarget, media } from '@videojs/html';
 
-const store = createStore({ slices: [...media.all, ...hls.all] });
+const store = createMediaStore({ slices: [...media.all, ...hls.all] });
 
 const video = document.querySelector('video')!;
 const hlsInstance = new Hls();
 hlsInstance.attachMedia(video);
 
-// HLS needs provider to expose engine for adapters
-store.attach(new HLSProvider(video, hlsInstance));
+// HLS needs target to expose engine for adapters
+store.attach(new HlsMediaTarget(video, hlsInstance));
 store.request.loadSource('stream.m3u8');
 store.request.selectQuality(2);
 ```
@@ -62,25 +62,25 @@ quality.subscribe(() => console.log('changed'));
 
 ## Glossary
 
-| Term              | Definition                                                                   |
-| ----------------- | ---------------------------------------------------------------------------- |
-| **Store**         | Central state container. Holds slices, dispatches requests.                  |
-| **Slice**         | Unit of state (e.g., `qualitySlice`). Reads from provider, handles requests. |
-| **Provider**      | Wraps media. Exposes `media` (Media) and `engine` (hls.js, dash.js, etc.).   |
-| **Adapter**       | Binds a capability to a specific engine. Has `from()` method.                |
-| **Engine**        | The streaming library instance (hls.js `Hls`, dash.js `MediaPlayer`).        |
-| **Media**         | Playback contract (like `HTMLMediaElement`). All providers expose this.      |
-| **QualityLevels** | Interface returned by quality adapter. Controls quality selection.           |
-| **AudioTracks**   | Interface returned by audio adapter. Controls audio track selection.         |
-| **TextTracks**    | Interface returned by text track adapter. Controls text track selection.     |
+| Term              | Definition                                                                 |
+| ----------------- | -------------------------------------------------------------------------- |
+| **Store**         | Central state container. Holds slices, dispatches requests.                |
+| **Slice**         | Unit of state (e.g., `qualitySlice`). Reads from target, handles requests. |
+| **Target**        | Wraps media. Exposes `media` (Media) and `engine` (hls.js, dash.js, etc.). |
+| **Adapter**       | Binds a capability to a specific engine. Has `from()` method.              |
+| **Engine**        | The streaming library instance (hls.js `Hls`, dash.js `MediaPlayer`).      |
+| **Media**         | Playback contract (like `HTMLMediaElement`). All targets expose this.      |
+| **QualityLevels** | Interface returned by quality adapter. Controls quality selection.         |
+| **AudioTracks**   | Interface returned by audio adapter. Controls audio track selection.       |
+| **TextTracks**    | Interface returned by text track adapter. Controls text track selection.   |
 
 ### Availability
 
-| Value           | Meaning                                                                   |
-| --------------- | ------------------------------------------------------------------------- |
-| `'unsupported'` | Provider doesn't support this capability (e.g., native video for quality) |
-| `'unavailable'` | Provider supports it but data isn't ready (e.g., manifest not loaded)     |
-| `'available'`   | Ready to use                                                              |
+| Value           | Meaning                                                                 |
+| --------------- | ----------------------------------------------------------------------- |
+| `'unsupported'` | Target doesn't support this capability (e.g., native video for quality) |
+| `'unavailable'` | Target supports it but data isn't ready (e.g., manifest not loaded)     |
+| `'available'`   | Ready to use                                                            |
 
 ---
 
@@ -92,12 +92,12 @@ quality.subscribe(() => console.log('changed'));
 │  media: [media.playback, media.volume, media.quality(adapter)] │
 └─────────────────────────────────────────────────────────────────┘
                               │
-                       store.attach(provider)
+                       store.attach(target)
                               │
               ┌───────────────┴───────────────┐
               ▼                               ▼
 ┌─────────────────────────┐     ┌─────────────────────────┐
-│   HTMLMediaProvider     │     │      HLSProvider        │
+│    HtmlMediaTarget      │     │     HlsMediaTarget      │
 │  media: <video>         │     │  media: <video>         │
 │  engine: undefined      │     │  engine: Hls instance   │
 │  loadSource: undefined  │     │  loadSource: ✓          │
@@ -112,7 +112,7 @@ quality.subscribe(() => console.log('changed'));
                       → quality.select()       → audio.select()
 ```
 
-**Provider:** Wraps media, exposes raw engine  
+**Target:** Wraps media, exposes raw engine  
 **Adapter:** Creates bound interface via `from(engine)`  
 **Slice Factory:** Uses adapter internally, exposes state to store
 
@@ -120,12 +120,12 @@ quality.subscribe(() => console.log('changed'));
 
 ## Design Decision
 
-| Option                         | Tree-shakeable | Easy to use | Verdict                              |
-| ------------------------------ | -------------- | ----------- | ------------------------------------ |
-| Monolithic Media contract      | ❌             | ✅          | Rejected—bundles everything          |
-| Capability objects on Provider | ❌             | ✅          | Rejected—capabilities always bundled |
-| **Slice Factory + Adapters**   | ✅             | ⚠️          | ✅ Chosen—full tree-shaking          |
-| **Bundled Presets**            | ⚠️             | ✅          | ✅ Chosen—easy path                  |
+| Option                       | Tree-shakeable | Easy to use | Verdict                              |
+| ---------------------------- | -------------- | ----------- | ------------------------------------ |
+| Monolithic Media contract    | ❌             | ✅          | Rejected—bundles everything          |
+| Capability objects on Target | ❌             | ✅          | Rejected—capabilities always bundled |
+| **Slice Factory + Adapters** | ✅             | ⚠️          | ✅ Chosen—full tree-shaking          |
+| **Bundled Presets**          | ⚠️             | ✅          | ✅ Chosen—easy path                  |
 
 **Final choice:** Slice Factory + Adapters for architecture, Bundled Presets for DX.
 
@@ -215,15 +215,15 @@ interface MediaEngineCapabilities {
 
 ## Core Types
 
-### MediaProvider
+### MediaTarget
 
-Base contract. All providers implement this.
+Base contract. All targets implement this.
 
 ```ts
-export const MEDIA_PROVIDER_SYMBOL = Symbol('@videojs/media-provider');
+export const MEDIA_SYMBOL = Symbol('@videojs/media');
 
-export interface MediaProvider<Engine = unknown> {
-  readonly [MEDIA_PROVIDER_SYMBOL]: true;
+export interface MediaTarget<Engine = unknown> {
+  readonly [MEDIA_SYMBOL]: true;
   readonly media: Media;
   readonly engine?: Engine;
   loadSource?(source: unknown): void;
@@ -236,7 +236,7 @@ export interface MediaProvider<Engine = unknown> {
 
 ### Media
 
-Playback contract. Subset of `HTMLMediaElement` that all providers implement.
+Playback contract. Subset of `HTMLMediaElement` that all targets implement.
 
 ```ts
 export interface Media extends TypedEventTarget<MediaEventMap> {
@@ -245,7 +245,7 @@ export interface Media extends TypedEventTarget<MediaEventMap> {
   readonly duration: number;
   readonly ended: boolean;
   readonly readyState: number;
-  readonly currentSrc: unknown; // Varies by provider
+  readonly currentSrc: unknown; // Varies by target
 
   // Readable + writable
   currentTime: number;
@@ -265,20 +265,20 @@ export interface Media extends TypedEventTarget<MediaEventMap> {
 - HLS: string URL or `MediaPlaylist`
 - YouTube: video ID or URL
 
-### HLS Provider
+### HlsMediaTarget
 
 ```ts
 export const HLS_SYMBOL = Symbol('@videojs/hls');
 
-export interface HLSProvider extends MediaProvider<Hls> {
+export interface HlsMediaTarget extends MediaTarget<Hls> {
   readonly [HLS_SYMBOL]: true;
   readonly media: HTMLVideoElement;
   readonly engine: Hls;
 }
 
 // Type guard for narrowing
-export function isHLSProvider(provider: MediaProvider): provider is HLSProvider {
-  return HLS_SYMBOL in provider;
+export function isHlsMediaTarget(target: MediaTarget): target is HlsMediaTarget {
+  return HLS_SYMBOL in target;
 }
 ```
 
@@ -289,7 +289,7 @@ Binds a capability to a specific engine via `from()`:
 ```ts
 interface Adapter<Engine, Value> {
   readonly symbol: symbol;
-  canHandle(provider: MediaProvider): provider is MediaProvider<Engine>;
+  canHandle(target: MediaTarget): target is MediaTarget<Engine>;
   from(engine: Engine, options?: AdapterOptions): Value;
 }
 
@@ -369,7 +369,7 @@ type TextTrackAdapter<Engine> = Adapter<Engine, TextTracks>;
 ```ts
 export const hlsQualityAdapter: QualityAdapter<Hls> = {
   symbol: HLS_SYMBOL,
-  canHandle: isHLSProvider,
+  canHandle: isHlsMediaTarget,
 
   from: (hls, options) => ({
     get levels() {
@@ -418,11 +418,11 @@ export const hlsQualityAdapter: QualityAdapter<Hls> = {
 Creates a slice from adapters. Uses `adapter.from()` internally and forwards `onError` from store.
 
 ```ts
-export function qualitySlice(...adapters: QualityAdapter[]): Slice<MediaProvider, QualityState> {
+export function qualitySlice(...adapters: QualityAdapter[]): Slice<MediaTarget, QualityState> {
   let adapter: QualityAdapter | null = null;
   let quality: QualityLevels | null = null;
 
-  return createSlice<MediaProvider>()({
+  return createSlice<MediaTarget>()({
     initialState: {
       qualityAvailability: 'unsupported',
       qualityLevels: [],
@@ -447,11 +447,11 @@ export function qualitySlice(...adapters: QualityAdapter[]): Slice<MediaProvider
       };
     },
 
-    subscribe: ({ target: provider, update, signal, onError }) => {
-      adapter = adapters.find((a) => a.canHandle(provider)) ?? null;
-      if (!adapter || !provider.engine) return;
+    subscribe: ({ target, update, signal, onError }) => {
+      adapter = adapters.find((a) => a.canHandle(target)) ?? null;
+      if (!adapter || !target.engine) return;
 
-      quality = adapter.from(provider.engine, { onError });
+      quality = adapter.from(target.engine, { onError });
       const unsub = quality.subscribe(update);
 
       signal.addEventListener('abort', () => {
@@ -504,7 +504,7 @@ export const all = [source, playback, volume, time] as const;
 ```ts
 // @videojs/core/dom/store/slices/hls.parts.ts
 
-import { hlsAudioAdapter, hlsQualityAdapter, hlsTextTrackAdapter } from '../providers/hls/adapters';
+import { hlsAudioAdapter, hlsQualityAdapter, hlsTextTrackAdapter } from '../store/targets/hls/adapters';
 import { media } from './media.parts';
 
 // Export adapters
@@ -529,10 +529,10 @@ export * as media from './slices/media.parts';
 export * as hls from './slices/hls.parts';
 export * as dash from './slices/dash.parts';
 
-// Providers
-export { HLSProvider, isHLSProvider, HLS_SYMBOL } from './providers/hls';
-export { DASHProvider, isDASHProvider, DASH_SYMBOL } from './providers/dash';
-export { HTMLMediaProvider, isHTMLMediaProvider } from './providers/html-media';
+// Targets
+export { HlsMediaTarget, isHlsMediaTarget, HLS_SYMBOL } from './store/targets/hls';
+export { DashMediaTarget, isDashMediaTarget, DASH_SYMBOL } from './store/targets/dash';
+export { HtmlMediaTarget, isHtmlMediaTarget } from './store/targets/html-media';
 
 // Slice factories for power users
 export { qualitySlice, audioSlice, textTrackSlice } from './store/slices';
@@ -558,12 +558,12 @@ export { qualitySlice, audioSlice, textTrackSlice } from './store/slices';
 #### Headless (No Skin)
 
 ```ts
-import { createStore, media } from '@videojs/html';
+import { createMediaStore, media } from '@videojs/html';
 
 const video = document.querySelector('video')!;
-const store = createStore({ slices: [...media.all] });
+const store = createMediaStore({ slices: [...media.all] });
 
-// HTMLMediaElement works directly — auto-wrapped as HTMLMediaProvider
+// HTMLMediaElement works directly — auto-wrapped as HtmlMediaTarget
 store.attach(video);
 store.request.play();
 ```
@@ -571,12 +571,12 @@ store.request.play();
 #### HLS
 
 ```ts
-import { createStore, hls, HLSProvider, media } from '@videojs/html';
+import { createMediaStore, hls, HlsMediaTarget, media } from '@videojs/html';
 
-const store = createStore({ slices: [...media.all, ...hls.all] });
+const store = createMediaStore({ slices: [...media.all, ...hls.all] });
 
-// HLS needs provider to expose engine for quality/audio adapters
-store.attach(new HLSProvider(video, hlsInstance));
+// HLS needs target to expose engine for quality/audio adapters
+store.attach(new HlsMediaTarget(video, hlsInstance));
 store.request.loadSource('stream.m3u8');
 store.request.selectQuality(2);
 ```
@@ -584,21 +584,21 @@ store.request.selectQuality(2);
 #### HLS with Specific Capabilities
 
 ```ts
-import { createStore, hls, media } from '@videojs/html';
+import { createMediaStore, hls, media } from '@videojs/html';
 
 // Pick only the HLS capabilities you need
-const store = createStore({
+const store = createMediaStore({
   slices: [...media.all, media.quality(hls.quality), media.audio(hls.audio)],
 });
 ```
 
-#### Multi-Provider
+#### Multi-Target
 
 ```ts
-import { createStore, dash, hls, media } from '@videojs/html';
+import { createMediaStore, dash, hls, media } from '@videojs/html';
 
-// Same slices handle either provider at runtime
-const store = createStore({
+// Same slices handle either target at runtime
+const store = createMediaStore({
   slices: [...media.all, media.quality(hls.quality, dash.quality), media.audio(hls.audio, dash.audio)],
 });
 ```
@@ -616,27 +616,27 @@ quality.select(2);
 #### Extending Skin Store
 
 ```ts
-import { createStore, extendConfig, FrostedSkinElement, hls } from '@videojs/html/skins/frosted';
+import { createMediaStore, extendConfig, FrostedSkinElement, hls } from '@videojs/html/skins/frosted';
 
 // Add HLS capabilities to the skin's store
-const { StoreMixin } = createStore(extendConfig({ slices: [...hls.all] }));
+const { StoreMixin } = createMediaStore(extendConfig({ slices: [...hls.all] }));
 FrostedSkinElement.define('vjs-hls-skin', StoreMixin);
 ```
 
 #### Low-Level Engine Access
 
-The store abstracts provider differences, but sometimes you need direct access to low-level engine APIs — custom error handling, ABR tuning, buffer configuration, or engine-specific events. Type guards narrow the provider type so TypeScript knows the exact engine available.
+The store abstracts target differences, but sometimes you need direct access to low-level engine APIs — custom error handling, ABR tuning, buffer configuration, or engine-specific events. Type guards narrow the target type so TypeScript knows the exact engine available.
 
 ```ts
-import { createStore, hls, isHLSProvider, media } from '@videojs/html';
+import { createMediaStore, hls, isHlsMediaTarget, media } from '@videojs/html';
 
-const store = createStore({
+const store = createMediaStore({
   slices: [...media.all, ...hls.all],
-  onAttach: ({ target: provider }) => {
-    if (isHLSProvider(provider)) {
-      // TypeScript knows: provider.engine is Hls
-      provider.engine.config.maxBufferLength = 60;
-      provider.engine.on(Hls.Events.ERROR, (_, data) => {
+  onAttach: ({ target }) => {
+    if (isHlsMediaTarget(target)) {
+      // TypeScript knows: target.engine is Hls
+      target.engine.config.maxBufferLength = 60;
+      target.engine.on(Hls.Events.ERROR, (_, data) => {
         if (data.fatal) console.error('HLS fatal error:', data);
       });
     }
@@ -664,9 +664,9 @@ import { Provider, Skin } from '@videojs/react/skins/frosted';
 #### With Store Hooks
 
 ```tsx
-import { createStore, media } from '@videojs/react';
+import { createMediaStore, media } from '@videojs/react';
 
-const { Provider, useSelector, useRequest } = createStore({ slices: [...media.all] });
+const { Provider, useSelector, useRequest } = createMediaStore({ slices: [...media.all] });
 
 function Controls() {
   const paused = useSelector((s) => s.paused);
@@ -680,9 +680,9 @@ function Controls() {
 #### HLS Quality Menu
 
 ```tsx
-import { createStore, hls, media } from '@videojs/react';
+import { createMediaStore, hls, media } from '@videojs/react';
 
-const { useSelector, useRequest } = createStore({ slices: [...media.all, ...hls.all] });
+const { useSelector, useRequest } = createMediaStore({ slices: [...media.all, ...hls.all] });
 
 function QualityMenu() {
   const levels = useSelector((s) => s.qualityLevels);
@@ -707,17 +707,17 @@ function QualityMenu({ hlsInstance }: { hlsInstance: Hls }) {
 
 ## Source Loading
 
-Source loading is a Provider concern. The `loadSource` method is optional on `MediaProvider` — engines implement it, native providers use the fallback.
+Source loading is a Target concern. The `loadSource` method is optional on `MediaTarget` — engines implement it, native targets use the fallback.
 
-### Provider Implementations
+### Target Implementations
 
-#### HTMLMediaProvider (No loadSource)
+#### HtmlMediaTarget (no loadSource)
 
 ```ts
 export const HTML_MEDIA_SYMBOL = Symbol('@videojs/html-media');
 
-export class HTMLMediaProvider implements MediaProvider {
-  readonly [MEDIA_PROVIDER_SYMBOL] = true;
+export class HtmlMediaTarget implements MediaTarget {
+  readonly [MEDIA_SYMBOL] = true;
   readonly [HTML_MEDIA_SYMBOL] = true;
 
   constructor(readonly media: HTMLMediaElement) {}
@@ -725,16 +725,16 @@ export class HTMLMediaProvider implements MediaProvider {
   // No loadSource — uses fallback path
 }
 
-export function isHTMLMediaProvider(provider: MediaProvider): provider is HTMLMediaProvider {
-  return HTML_MEDIA_SYMBOL in provider;
+export function isHtmlMediaTarget(target: MediaTarget): target is HtmlMediaTarget {
+  return HTML_MEDIA_SYMBOL in target;
 }
 ```
 
-#### HLSProvider (With loadSource)
+#### HlsMediaTarget (with loadSource)
 
 ```ts
-export class HLSProvider implements MediaProvider<Hls> {
-  readonly [MEDIA_PROVIDER_SYMBOL] = true;
+export class HlsMediaTarget implements MediaTarget<Hls> {
+  readonly [MEDIA_SYMBOL] = true;
   readonly [HLS_SYMBOL] = true;
 
   constructor(
@@ -751,25 +751,25 @@ export class HLSProvider implements MediaProvider<Hls> {
 ### Source Slice
 
 ```ts
-export const sourceSlice = createSlice<MediaProvider>()({
+export const sourceSlice = createSlice<MediaTarget>()({
   initialState: {
     currentSrc: null as unknown,
   },
 
-  getSnapshot: ({ target: provider }) => ({
-    currentSrc: provider.media.currentSrc,
+  getSnapshot: ({ target }) => ({
+    currentSrc: target.media.currentSrc,
   }),
 
-  subscribe: ({ target: provider, update }) => {
-    provider.media.addEventListener('loadedmetadata', update);
-    return () => provider.media.removeEventListener('loadedmetadata', update);
+  subscribe: ({ target, update }) => {
+    target.media.addEventListener('loadedmetadata', update);
+    return () => target.media.removeEventListener('loadedmetadata', update);
   },
 
   request: {
-    loadSource: (source: unknown, { target: provider }) => {
-      // Try provider's loadSource first
-      if (provider.loadSource) {
-        provider.loadSource(source);
+    loadSource: (source: unknown, { target }) => {
+      // Try target's loadSource first
+      if (target.loadSource) {
+        target.loadSource(source);
         return;
       }
 
@@ -778,8 +778,8 @@ export const sourceSlice = createSlice<MediaProvider>()({
         throw new Error('<video> requires string URL');
       }
 
-      provider.media.src = source;
-      provider.media.load();
+      target.media.src = source;
+      target.media.load();
     },
   },
 });
@@ -788,9 +788,9 @@ export const sourceSlice = createSlice<MediaProvider>()({
 ### Usage
 
 ```ts
-import { createStore, media } from '@videojs/html';
+import { createMediaStore, media } from '@videojs/html';
 
-const store = createStore({ slices: [...media.all] });
+const store = createMediaStore({ slices: [...media.all] });
 
 // Native video — auto-wrapped, uses fallback (video.src + load())
 const video = document.querySelector('video')!;
@@ -799,14 +799,14 @@ store.request.loadSource('video.mp4');
 ```
 
 ```ts
-import { createStore, hls, HLSProvider, media } from '@videojs/html';
+import { createMediaStore, hls, HlsMediaTarget, media } from '@videojs/html';
 
-const store = createStore({ slices: [...media.all, ...hls.all] });
+const store = createMediaStore({ slices: [...media.all, ...hls.all] });
 
 // HLS — uses engine's loadSource
 const hlsInstance = new Hls();
 hlsInstance.attachMedia(video);
-store.attach(new HLSProvider(video, hlsInstance));
+store.attach(new HlsMediaTarget(video, hlsInstance));
 store.request.loadSource('stream.m3u8');
 ```
 
@@ -905,7 +905,7 @@ class MyPlayer extends LitElement {
 ## Bundle Considerations
 
 - Add `sideEffects: false` to `package.json` for reliable tree-shaking
-- `hls.all` / `dash.all` bundle all adapters for that provider—no internal tree-shaking
+- `hls.all` / `dash.all` bundle all adapters for that target—no internal tree-shaking
 - Adapter selection is runtime, not compile-time—all passed adapters are bundled
 - Bundlers tree-shake unused exports from `@videojs/core/dom` automatically
 
@@ -917,20 +917,20 @@ class MyPlayer extends LitElement {
 
 ```
 packages/core/src/dom/
-├── providers/
-│   ├── types.ts                    # MediaProvider, Media
-│   ├── html-media/
-│   │   └── provider.ts             # HTMLMediaProvider
-│   ├── hls/
-│   │   ├── provider.ts             # HLSProvider, HLS_SYMBOL
-│   │   └── adapters/
-│   │       ├── quality.ts          # hlsQualityAdapter
-│   │       ├── audio.ts            # hlsAudioAdapter
-│   │       └── text-tracks.ts      # hlsTextTrackAdapter
-│   └── dash/
-│       └── ...
-│
 └── store/
+    ├── targets/
+    │   ├── types.ts                # MediaTarget, Media
+    │   ├── html-media/
+    │   │   └── target.ts           # HtmlMediaTarget
+    │   ├── hls/
+    │   │   ├── target.ts           # HlsMediaTarget
+    │   │   └── adapters/
+    │   │       ├── quality.ts      # hlsQualityAdapter
+    │   │       ├── audio.ts        # hlsAudioAdapter
+    │   │       └── text-tracks.ts  # hlsTextTrackAdapter
+    │   └── dash/
+    │       └── ...
+    │
     └── slices/
         ├── media.parts.ts          # media.playback, media.quality(), media.all
         ├── hls.parts.ts            # hls.quality, hls.audio, hls.all
@@ -976,7 +976,7 @@ export interface TypedEventTarget<Events extends EventMap> extends EventTarget {
 
 ### Skin Extensibility
 
-How should skins balance supporting features (quality menu) without knowing which provider/slices user will use? Deferred to separate planning.
+How should skins balance supporting features (quality menu) without knowing which target/slices user will use? Deferred to separate planning.
 
 ### Store Error Dispatch
 
@@ -986,7 +986,7 @@ How should skins balance supporting features (quality menu) without knowing whic
 
 ## Constraints
 
-- Providers live in `@videojs/core/dom`
+- Targets live in `@videojs/core/dom`
 - Must work across `@videojs/html` and `@videojs/react`
 - `EventTarget` for DOM; React Native needs different impl
 - Availability pattern: `'available' | 'unavailable' | 'unsupported'`
