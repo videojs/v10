@@ -134,6 +134,85 @@ quality.subscribe(() => console.log('changed'));
 
 ---
 
+## Design Rationale
+
+> **Note:** This is advanced architecture. Most users will never see it — presets handle common scenarios out of the box:
+>
+> ```ts
+> // Almost _all_ users will at most see something like this:
+> createPlayer(presets.backgroundVideo);
+> ```
+
+### SPF Integration
+
+SPF (composable streaming engine) is composable at the engine level:
+
+```ts
+// Engine: compose what you need
+const engine = createEngine([
+  audioTracks(),
+  renditions(),
+  thumbnails({ sprite: true }),
+  abr({ strategy: 'bandwidth' }),
+]);
+```
+
+The adapter model lets player composition mirror engine composition:
+
+```ts
+// Player: mirrors the engine — no textTracks composed, no text slice
+createPlayer(engine.slices);
+```
+
+You don't bundle what you didn't compose. TypeScript enforces the symmetry.
+
+If the player layer exposed a monolithic contract that includes text track APIs, something has to implement it. SPF would include text track code anyway (defeating composition).
+
+### Runtime Performance
+
+Runtime cost isn't just bundle size. Even with monolithic engines like hls.js where all capabilities ship anyway, there's runtime overhead. A monolithic player layer has to:
+
+- Subscribe to all capability events (`LEVEL_SWITCHED`, `AUDIO_TRACK_SWITCHED`, etc.)
+- Sync state on every event
+- Maintain request handlers and subscriptions for each capability
+- Boilerplate for each capability (error handling, cleanup, etc.)
+
+That happens on every `store.attach()`, whether or not the UI uses it. If all you have is a play button and progress bar, you're still paying for quality menu infra.
+
+With adapters, you pay for what you use:
+
+```ts
+// Minimal — just playback
+createPlayer([slices.playback]);
+
+// Add quality when the UI needs it
+createPlayer([slices.playback, slices.quality(engine.quality)]);
+```
+
+Composition is explicit — you wire up exactly what you need.
+
+### The Simple Path Stays Simple
+
+For users who want everything:
+
+```ts
+createPlayer(presets.from(engine));
+```
+
+`presets.from()` inspects the engine for capabilities and creates matching slices. Full capability in one line. Composition is the escape hatch.
+
+```ts
+// Sample engine contract which can be dynamically created and exposed
+interface MediaEngineCapabilities {
+  quality?: QualityAdapter;
+  audio?: AudioAdapter;
+  text?: TextAdapter;
+  // ...
+}
+```
+
+---
+
 ## Core Types
 
 ### MediaProvider
