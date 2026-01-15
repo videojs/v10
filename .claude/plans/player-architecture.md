@@ -32,7 +32,7 @@ function Controls() {
 ### HTML
 
 ```html
-<script type="module" src="@videojs/html/presets/website/skins/frosted"></script>
+<script type="module" src="@videojs/html/presets/website/skins/frosted.js"></script>
 
 <vjs-website-provider>
   <vjs-frosted-skin>
@@ -365,7 +365,7 @@ function AudioPlayer() {
 #### Declarative (Skin)
 
 ```html
-<script type="module" src="@videojs/html/presets/website/skins/frosted"></script>
+<script type="module" src="@videojs/html/presets/website/skins/frosted.js"></script>
 
 <vjs-website-provider>
   <vjs-frosted-skin>
