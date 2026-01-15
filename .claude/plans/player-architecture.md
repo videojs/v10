@@ -127,11 +127,11 @@ const mediaRequest = useMedia().request;
 The Lit equivalent of `usePlayer`. Use in custom elements to access player state and requests.
 
 ```ts
-import { createPlayer, presets } from '@videojs/html';
+import { createPlayer, presets, VjsElement } from '@videojs/html';
 
 const { PlayerController } = createPlayer(presets.website);
 
-class VjsPlayButton extends LitElement {
+class VjsPlayButton extends VjsElement {
   // Selector subscribes — triggers requestUpdate() when paused changes
   #paused = new PlayerController(this, (s) => s.paused);
   // No selector — access to state/request, no subscription
@@ -409,12 +409,12 @@ customElements.define('vjs-background-provider', ProviderElement);
 When media element and fullscreen target need different DOM locations.
 
 ```ts
-import { createPlayer, presets } from '@videojs/html';
+import { createPlayer, presets, VjsElement } from '@videojs/html';
 
 const { ProviderMixin, ContainerMixin } = createPlayer(presets.website);
 
-class MediaProviderElement extends ProviderMixin(LitElement) {}
-class MediaContainerElement extends ContainerMixin(LitElement) {}
+class MediaProviderElement extends ProviderMixin(VjsElement) {}
+class MediaContainerElement extends ContainerMixin(VjsElement) {}
 
 customElements.define('my-provider', MediaProviderElement);
 customElements.define('my-container', MediaContainerElement);
@@ -432,11 +432,11 @@ customElements.define('my-container', MediaContainerElement);
 #### Headless (No UI)
 
 ```ts
-import { createMedia, media } from '@videojs/html';
+import { createMedia, media, VjsElement } from '@videojs/html';
 
 const { MediaMixin } = createMedia([media.playback, media.time]);
 
-class VjsAudioController extends MediaMixin(LitElement) {
+class VjsAudioController extends MediaMixin(VjsElement) {
   // Programmatic control, no UI
 }
 
