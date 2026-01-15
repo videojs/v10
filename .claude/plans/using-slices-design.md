@@ -1,4 +1,4 @@
-# Using Slices
+# Using Slices Design
 
 Slice-aware state access for primitives.
 
