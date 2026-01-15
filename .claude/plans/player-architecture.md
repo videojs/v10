@@ -31,18 +31,30 @@ function Controls() {
 
 ### HTML
 
+```html
+<script type="module" src="@videojs/html/presets/website/skins/frosted"></script>
+
+<vjs-website-provider>
+  <vjs-frosted-skin>
+    <video src="video.mp4"></video>
+  </vjs-frosted-skin>
+</vjs-website-provider>
+```
+
+#### Custom Provider
+
 ```ts
 import { createPlayer, presets } from '@videojs/html';
 
 const { ProviderElement } = createPlayer(presets.website);
 
-customElements.define('vjs-website-provider', ProviderElement);
+customElements.define('my-website-provider', ProviderElement);
 ```
 
 ```html
-<vjs-website-provider>
+<my-website-provider>
   <video src="video.mp4"></video>
-</vjs-website-provider>
+</my-website-provider>
 ```
 
 ---
@@ -68,8 +80,7 @@ createPlayer({
 ```ts
 const {
   Provider, // Creates both stores
-  Container, // Attaches player store to element
-
+  Container, // Attaches container to player store
   usePlayer, // Player state + requests
   useMedia, // Media state + requests (escape hatch)
 } = createPlayer(presets.website);
@@ -80,12 +91,13 @@ const {
 ```ts
 const {
   ProviderElement, // Ready-to-use element
-  ProviderMixin, // Combined mixin for custom elements
-  MediaMixin, // Media store only (advanced)
-  ContainerMixin, // Player store only (advanced)
-
+  ProviderMixin, // Store provider (Media + Player stores)
+  ContainerMixin, // Attaches container to player store + media target to media store
   PlayerController, // Player state + requests (like usePlayer)
-  MediaController, // Media state + requests (escape hatch)
+
+  // Escape hatches (advanced)
+  MediaProviderMixin, // Media store only
+  MediaController, // Media state + requests
 } = createPlayer(presets.website);
 ```
 
@@ -120,36 +132,34 @@ import { createPlayer, presets } from '@videojs/html';
 const { PlayerController } = createPlayer(presets.website);
 
 class VjsPlayButton extends LitElement {
-  // Full access to state and requests
-  #player = new PlayerController(this);
-
-  render() {
-    const { paused } = this.#player.state;
-    const { play, pause } = this.#player.request;
-
-    return html` <button @click=${paused ? play : pause}>${paused ? 'Play' : 'Pause'}</button> `;
-  }
-}
-```
-
-With a selector for reactive updates on specific values:
-
-```ts
-class VjsVolumeSlider extends LitElement {
-  // Only re-renders when volume changes
-  #volume = new PlayerController(this, (s) => s.volume);
+  // Selector subscribes — triggers requestUpdate() when paused changes
+  #paused = new PlayerController(this, (s) => s.paused);
+  // No selector — access to state/request, no subscription
   #player = new PlayerController(this);
 
   render() {
     return html`
-      <input
-        type="range"
-        .value=${this.#volume.value}
-        @input=${(e) => this.#player.request.setVolume(e.target.value)}
-      />
+      <button @click=${this.#paused.value ? this.#player.request.play : this.#player.request.pause}>
+        ${this.#paused.value ? 'Play' : 'Pause'}
+      </button>
     `;
   }
 }
+```
+
+Both versions expose `.state` and `.request`. Only the selector version subscribes:
+
+```ts
+// No selector — read state, make requests, no subscription
+#player = new PlayerController(this);
+this.#player.state.paused;      // current value (may be stale if not subscribed)
+this.#player.request.play();    // make request
+
+// With selector — subscribes, triggers update on change
+#paused = new PlayerController(this, (s) => s.paused);
+this.#paused.value;             // selected value, always fresh
+this.#paused.state.paused;      // full state also available
+this.#paused.request.play();    // requests also available
 ```
 
 | React                        | Lit                                         |
@@ -240,17 +250,6 @@ packages/react/src/
 ```
 
 ```tsx
-// Skin exported from preset
-import { FrostedSkin } from '@videojs/react/presets/website';
-
-<FrostedSkin>
-  <Video src="video.mp4" />
-</FrostedSkin>;
-```
-
-To customize, create your own player with a different preset:
-
-```tsx
 import { createPlayer, presets } from '@videojs/react';
 import { FrostedSkin } from '@videojs/react/presets/website';
 
@@ -272,11 +271,16 @@ const { Provider } = createPlayer(presets.streaming);
 #### Declarative (Skin)
 
 ```tsx
+import { createPlayer, presets, Video } from '@videojs/react';
 import { FrostedSkin } from '@videojs/react/presets/website';
 
-<FrostedSkin>
-  <Video src="video.mp4" />
-</FrostedSkin>;
+const { Provider } = createPlayer(presets.website);
+
+<Provider>
+  <FrostedSkin>
+    <Video src="video.mp4" />
+  </FrostedSkin>
+</Provider>;
 ```
 
 #### Custom Player (Preset)
@@ -361,14 +365,16 @@ function AudioPlayer() {
 #### Declarative (Skin)
 
 ```html
-<script type="module">
-  import '@videojs/html/presets/website/skins/frosted.js';
-</script>
+<script type="module" src="@videojs/html/presets/website/skins/frosted"></script>
 
-<vjs-frosted-skin>
-  <video src="video.mp4"></video>
-</vjs-frosted-skin>
+<vjs-website-provider>
+  <vjs-frosted-skin>
+    <video src="video.mp4"></video>
+  </vjs-frosted-skin>
+</vjs-website-provider>
 ```
+
+Import registers both provider and skin — zero config.
 
 #### Custom Player (Preset)
 
@@ -380,27 +386,9 @@ const { ProviderElement, PlayerController } = createPlayer(presets.website);
 customElements.define('vjs-website-provider', ProviderElement);
 ```
 
-```ts
-// Custom controls element
-class MyControls extends LitElement {
-  #player = new PlayerController(this);
-
-  render() {
-    return html`
-      <button @click=${this.#player.state.paused ? this.#player.request.play : this.#player.request.pause}>
-        ${this.#player.state.paused ? 'Play' : 'Pause'}
-      </button>
-    `;
-  }
-}
-
-customElements.define('vjs-my-controls', MyControls);
-```
-
 ```html
 <vjs-website-provider>
   <video src="video.mp4"></video>
-  <vjs-my-controls></vjs-my-controls>
 </vjs-website-provider>
 ```
 
@@ -416,29 +404,29 @@ const { ProviderElement } = createPlayer({
 customElements.define('vjs-background-provider', ProviderElement);
 ```
 
-#### Split Provider/Container
+#### Split Provider/Container Mixins
 
 When media element and fullscreen target need different DOM locations.
 
 ```ts
 import { createPlayer, presets } from '@videojs/html';
 
-const { MediaMixin, ContainerMixin } = createPlayer(presets.website);
+const { ProviderMixin, ContainerMixin } = createPlayer(presets.website);
 
-class VjsMediaProvider extends MediaMixin(LitElement) {}
-class VjsMediaContainer extends ContainerMixin(LitElement) {}
+class MediaProviderElement extends ProviderMixin(LitElement) {}
+class MediaContainerElement extends ContainerMixin(LitElement) {}
 
-customElements.define('vjs-media-provider', VjsMediaProvider);
-customElements.define('vjs-media-container', VjsMediaContainer);
+customElements.define('my-provider', MediaProviderElement);
+customElements.define('my-container', MediaContainerElement);
 ```
 
 ```html
-<vjs-media-provider>
+<my-provider>
   <video src="video.mp4"></video>
-  <vjs-media-container>
-    <vjs-my-controls></vjs-my-controls>
-  </vjs-media-container>
-</vjs-media-provider>
+  <my-container>
+    <my-my-controls></my-my-controls>
+  </my-container>
+</my-provider>
 ```
 
 #### Headless (No UI)
