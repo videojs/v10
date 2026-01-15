@@ -34,15 +34,15 @@ function Controls() {
 ```ts
 import { createPlayer, presets } from '@videojs/html';
 
-const { PlayerElement } = createPlayer(presets.website);
+const { ProviderElement } = createPlayer(presets.website);
 
-PlayerElement.define('my-player');
+customElements.define('vjs-website-provider', ProviderElement);
 ```
 
 ```html
-<my-player>
+<vjs-website-provider>
   <video src="video.mp4"></video>
-</my-player>
+</vjs-website-provider>
 ```
 
 ---
@@ -72,7 +72,6 @@ const {
 
   usePlayer, // Player state + requests
   useMedia, // Media state + requests (escape hatch)
-  useTasks, // Task state (loading, error, etc.)
 } = createPlayer(presets.website);
 ```
 
@@ -80,16 +79,13 @@ const {
 
 ```ts
 const {
-  PlayerElement, // Ready-to-use element with .define()
-  PlayerMixin, // Combined mixin for custom elements
+  ProviderElement, // Ready-to-use element
+  ProviderMixin, // Combined mixin for custom elements
   MediaMixin, // Media store only (advanced)
   ContainerMixin, // Player store only (advanced)
 
-  SelectorController, // Bound to player store
-  RequestController,
-  TasksController,
-
-  MediaController, // Bound to media store (escape hatch)
+  PlayerController, // Player state + requests (like usePlayer)
+  MediaController, // Media state + requests (escape hatch)
 } = createPlayer(presets.website);
 ```
 
@@ -113,6 +109,55 @@ Direct media access. Rarely needed — use when player slices don't expose what 
 const isMediaFullscreen = useMedia((s) => s.isFullscreen);
 const mediaRequest = useMedia().request;
 ```
+
+### PlayerController (HTML/Lit)
+
+The Lit equivalent of `usePlayer`. Use in custom elements to access player state and requests.
+
+```ts
+import { createPlayer, presets } from '@videojs/html';
+
+const { PlayerController } = createPlayer(presets.website);
+
+class VjsPlayButton extends LitElement {
+  // Full access to state and requests
+  #player = new PlayerController(this);
+
+  render() {
+    const { paused } = this.#player.state;
+    const { play, pause } = this.#player.request;
+
+    return html` <button @click=${paused ? play : pause}>${paused ? 'Play' : 'Pause'}</button> `;
+  }
+}
+```
+
+With a selector for reactive updates on specific values:
+
+```ts
+class VjsVolumeSlider extends LitElement {
+  // Only re-renders when volume changes
+  #volume = new PlayerController(this, (s) => s.volume);
+  #player = new PlayerController(this);
+
+  render() {
+    return html`
+      <input
+        type="range"
+        .value=${this.#volume.value}
+        @input=${(e) => this.#player.request.setVolume(e.target.value)}
+      />
+    `;
+  }
+}
+```
+
+| React                        | Lit                                         |
+| ---------------------------- | ------------------------------------------- |
+| `usePlayer()`                | `new PlayerController(this)`                |
+| `usePlayer(s => s.paused)`   | `new PlayerController(this, s => s.paused)` |
+| `usePlayer().state.paused`   | `this.#player.state.paused`                 |
+| `usePlayer().request.play()` | `this.#player.request.play()`               |
 
 ---
 
@@ -209,13 +254,12 @@ To customize, create your own player with a different preset:
 import { createPlayer, presets } from '@videojs/react';
 import { FrostedSkin } from '@videojs/react/presets/website';
 
-const { Provider, Container } = createPlayer(presets.streaming);
+const { Provider } = createPlayer(presets.streaming);
 
 <Provider>
-  <Container>
-    <Video />
-    <FrostedSkin /> {/* UI components only, no store */}
-  </Container>
+  <FrostedSkin>
+    <Video src="video.mp4" />
+  </FrostedSkin>
 </Provider>;
 ```
 
@@ -331,25 +375,33 @@ function AudioPlayer() {
 ```ts
 import { createPlayer, presets } from '@videojs/html';
 
-const { PlayerElement, SelectorController, RequestController } = createPlayer(presets.website);
+const { ProviderElement, PlayerController } = createPlayer(presets.website);
 
-PlayerElement.define('my-player');
+customElements.define('vjs-website-provider', ProviderElement);
 ```
 
 ```ts
 // Custom controls element
 class MyControls extends LitElement {
-  #paused = new SelectorController(this, (s) => s.paused);
-  #request = new RequestController(this);
+  #player = new PlayerController(this);
 
   render() {
     return html`
-      <button @click=${this.#paused.value ? this.#request.play : this.#request.pause}>
-        ${this.#paused.value ? 'Play' : 'Pause'}
+      <button @click=${this.#player.state.paused ? this.#player.request.play : this.#player.request.pause}>
+        ${this.#player.state.paused ? 'Play' : 'Pause'}
       </button>
     `;
   }
 }
+
+customElements.define('vjs-my-controls', MyControls);
+```
+
+```html
+<vjs-website-provider>
+  <video src="video.mp4"></video>
+  <vjs-my-controls></vjs-my-controls>
+</vjs-website-provider>
 ```
 
 #### Extended Preset
@@ -357,11 +409,11 @@ class MyControls extends LitElement {
 ```ts
 import { createPlayer, presets, slices } from '@videojs/html';
 
-const { PlayerElement } = createPlayer({
+const { ProviderElement } = createPlayer({
   slices: [...presets.background, slices.keyboard],
 });
 
-PlayerElement.define('background-player');
+customElements.define('vjs-background-provider', ProviderElement);
 ```
 
 #### Split Provider/Container
@@ -373,20 +425,20 @@ import { createPlayer, presets } from '@videojs/html';
 
 const { MediaMixin, ContainerMixin } = createPlayer(presets.website);
 
-class MediaProvider extends MediaMixin(LitElement) {}
-class MediaContainer extends ContainerMixin(LitElement) {}
+class VjsMediaProvider extends MediaMixin(LitElement) {}
+class VjsMediaContainer extends ContainerMixin(LitElement) {}
 
-customElements.define('media-provider', MediaProvider);
-customElements.define('media-container', MediaContainer);
+customElements.define('vjs-media-provider', VjsMediaProvider);
+customElements.define('vjs-media-container', VjsMediaContainer);
 ```
 
 ```html
-<media-provider>
+<vjs-media-provider>
   <video src="video.mp4"></video>
-  <media-container>
-    <my-controls></my-controls>
-  </media-container>
-</media-provider>
+  <vjs-media-container>
+    <vjs-my-controls></vjs-my-controls>
+  </vjs-media-container>
+</vjs-media-provider>
 ```
 
 #### Headless (No UI)
@@ -396,9 +448,11 @@ import { createMedia, media } from '@videojs/html';
 
 const { MediaMixin } = createMedia([media.playback, media.time]);
 
-class AudioController extends MediaMixin(LitElement) {
+class VjsAudioController extends MediaMixin(LitElement) {
   // Programmatic control, no UI
 }
+
+customElements.define('vjs-audio-controller', VjsAudioController);
 ```
 
 ---
