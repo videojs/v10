@@ -263,26 +263,26 @@ const unsubscribe = store.subscribe((state) => {
 
 // Single value - only fires when volume changes
 store.subscribe(
-  (s) => s.volume,
-  (volume) => console.log('Volume:', volume)
+  s => s.volume,
+  volume => console.log('Volume:', volume)
 );
 
 // Multiple values - auto-optimized with key-based subscription
 store.subscribe(
-  (s) => ({ volume: s.volume, muted: s.muted }),
+  s => ({ volume: s.volume, muted: s.muted }),
   ({ volume, muted }) => updateAudioUI(volume, muted)
 );
 
 // Derived value
 store.subscribe(
-  (s) => Math.round(s.volume * 100),
-  (percent) => console.log(`${percent}%`)
+  s => Math.round(s.volume * 100),
+  percent => console.log(`${percent}%`)
 );
 
 // Custom equality function
 store.subscribe(
-  (s) => s.playlist,
-  (playlist) => renderPlaylist(playlist),
+  s => s.playlist,
+  playlist => renderPlaylist(playlist),
   { equalityFn: shallowEqual }
 );
 ```
@@ -319,18 +319,14 @@ request: {
 
 When a new request arrives with the same key:
 
-- Queued request with that key is superseded
-- Executing request with that key is aborted
+- Pending request with that key is aborted
 - New request takes over
 
 ```ts
-store.request.play(); // queued
-store.request.pause(); // play superseded, pause queued
-store.request.play(); // pause superseded, play queued
-// only final play() executes
+store.request.play(); // starts immediately
+store.request.pause(); // aborts play, starts immediately
+// both start, but play is aborted mid-flight
 ```
-
-This supersession happens automatically via microtask batching—all requests in the same synchronous batch are collected, and only the last request per key actually executes.
 
 Dynamic keys for parallel execution:
 
@@ -489,7 +485,7 @@ const queue = store.queue;
 // Task lifecycle map (pending/success/error) keyed by request name
 queue.tasks;
 
-// Abort tasks (queued + executing)
+// Abort executing tasks
 queue.abort('play'); // abort specific request
 queue.abort(); // abort all
 
@@ -603,7 +599,7 @@ const store = createStore({
   slices: [
     /* ... */
   ],
-  state: (initial) => new VueStateAdapter(initial),
+  state: initial => new VueStateAdapter(initial),
 });
 ```
 

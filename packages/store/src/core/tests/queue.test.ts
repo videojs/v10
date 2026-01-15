@@ -1,18 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { createQueue } from '../queue';
 
 describe('Queue', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   describe('enqueue', () => {
-    it('executes task via microtask scheduler', async () => {
+    it('executes task immediately', async () => {
       const queue = createQueue();
       const handler = vi.fn().mockResolvedValue('result');
 
@@ -22,30 +14,28 @@ describe('Queue', () => {
         handler,
       });
 
-      expect(handler).not.toHaveBeenCalled();
-      await vi.runAllTimersAsync();
+      // Handler called synchronously
+      expect(handler).toHaveBeenCalled();
       await expect(promise).resolves.toBe('result');
     });
 
-    it('supersedes queued task with same key', async () => {
-      vi.useRealTimers();
-
+    it('task is pending synchronously after enqueue', async () => {
       const queue = createQueue();
-      const first = vi.fn().mockResolvedValue('first');
-      const second = vi.fn().mockResolvedValue('second');
 
-      const promise1 = queue.enqueue({ name: 'a', key: 'same', handler: first });
-      const promise2 = queue.enqueue({ name: 'b', key: 'same', handler: second });
+      const promise = queue.enqueue({
+        name: 'test',
+        key: 'test-key',
+        handler: async () => 'result',
+      });
 
-      await expect(promise1).rejects.toMatchObject({ code: 'SUPERSEDED' });
-      await expect(promise2).resolves.toBe('second');
-      expect(first).not.toHaveBeenCalled();
-      expect(second).toHaveBeenCalledOnce();
+      // Synchronous check - task is pending immediately
+      expect(queue.tasks.test?.status).toBe('pending');
+
+      await promise;
+      expect(queue.tasks.test?.status).toBe('success');
     });
 
     it('aborts pending task with same key', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
       let aborted = false;
 
@@ -79,8 +69,6 @@ describe('Queue', () => {
     });
 
     it('parallel execution with different keys', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
       const results: string[] = [];
 
@@ -113,9 +101,7 @@ describe('Queue', () => {
   });
 
   describe('abort', () => {
-    it('abort(name) cancels queued and aborts pending', async () => {
-      vi.useRealTimers();
-
+    it('abort(name) aborts pending task', async () => {
       const queue = createQueue();
       let aborted = false;
 
@@ -152,8 +138,6 @@ describe('Queue', () => {
     });
 
     it('aborts all pending on destroy', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
       const aborted = vi.fn();
 
@@ -175,8 +159,6 @@ describe('Queue', () => {
     });
 
     it('clears all task references on destroy', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
 
       await queue.enqueue({ name: 'task', key: 'k', handler: async () => 'result' });
@@ -189,30 +171,7 @@ describe('Queue', () => {
   });
 
   describe('cleanup edge cases', () => {
-    it('explicitly removes superseded task from queue before adding new one', async () => {
-      vi.useRealTimers();
-
-      const queue = createQueue();
-
-      const promise1 = queue.enqueue({
-        name: 'task1',
-        key: 'shared',
-        handler: vi.fn().mockResolvedValue('result1'),
-      });
-
-      const promise2 = queue.enqueue({
-        name: 'task2',
-        key: 'shared',
-        handler: vi.fn().mockResolvedValue('result2'),
-      });
-
-      await expect(promise1).rejects.toMatchObject({ code: 'SUPERSEDED' });
-      await expect(promise2).resolves.toBe('result2');
-    });
-
     it('allows pending tasks to self-cleanup after destroy', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
       const cleanupSpy = vi.fn();
 
@@ -254,8 +213,6 @@ describe('Queue', () => {
     });
 
     it('notifies when task becomes pending', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
       const listener = vi.fn();
 
@@ -274,8 +231,6 @@ describe('Queue', () => {
     });
 
     it('notifies with tasks map on dispatch and settlement', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
       const listener = vi.fn();
 
@@ -313,8 +268,6 @@ describe('Queue', () => {
     });
 
     it('unsubscribe stops notifications', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
       const listener = vi.fn();
 
@@ -331,8 +284,6 @@ describe('Queue', () => {
     });
 
     it('supports multiple subscribers', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
       const listener1 = vi.fn();
       const listener2 = vi.fn();
@@ -351,8 +302,6 @@ describe('Queue', () => {
     });
 
     it('catches and logs listener errors', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const errorListener = vi.fn(() => {
@@ -377,8 +326,6 @@ describe('Queue', () => {
     });
 
     it('provides strongly typed tasks object', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
 
       queue.subscribe((tasks) => {
@@ -399,8 +346,6 @@ describe('Queue', () => {
 
   describe('task lifecycle', () => {
     it('task starts as pending and transitions to success', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
 
       const promise = queue.enqueue({
@@ -428,8 +373,6 @@ describe('Queue', () => {
     });
 
     it('task starts as pending and transitions to error', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
       const error = new Error('test error');
 
@@ -456,8 +399,6 @@ describe('Queue', () => {
     });
 
     it('aborted task has cancelled flag set to true', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
 
       const promise = queue.enqueue({
@@ -485,8 +426,6 @@ describe('Queue', () => {
     });
 
     it('new request replaces settled task', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
 
       await queue.enqueue({
@@ -516,8 +455,6 @@ describe('Queue', () => {
 
   describe('reset', () => {
     it('clears settled task', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
 
       await queue.enqueue({
@@ -534,8 +471,6 @@ describe('Queue', () => {
     });
 
     it('is no-op when task is pending', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
 
       const promise = queue.enqueue({
@@ -565,8 +500,6 @@ describe('Queue', () => {
     });
 
     it('notifies subscribers when reset clears a task', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
       const listener = vi.fn();
 
@@ -596,8 +529,6 @@ describe('Queue', () => {
     });
 
     it('resets all settled tasks when no key provided', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
 
       await queue.enqueue({ name: 'a', key: 'a', handler: async () => 'a-result' });
@@ -613,8 +544,6 @@ describe('Queue', () => {
     });
 
     it('preserves pending tasks when resetting all', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
 
       await queue.enqueue({ name: 'settled', key: 'settled', handler: async () => 'done' });
@@ -643,8 +572,6 @@ describe('Queue', () => {
 
   describe('tasks getter', () => {
     it('returns frozen snapshot', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
       await queue.enqueue({ name: 'task', key: 'k', handler: async () => 'result' });
 
@@ -654,8 +581,6 @@ describe('Queue', () => {
     });
 
     it('returns independent snapshots', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
       await queue.enqueue({ name: 'first', key: 'k', handler: async () => 'first' });
 
@@ -675,8 +600,6 @@ describe('Queue', () => {
 
   describe('symbol keys', () => {
     it('supports symbol names', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
       const name = Symbol('task');
 
@@ -696,8 +619,6 @@ describe('Queue', () => {
 
   describe('meta propagation', () => {
     it('meta defaults to null when not provided', async () => {
-      vi.useRealTimers();
-
       const queue = createQueue();
 
       await queue.enqueue({
