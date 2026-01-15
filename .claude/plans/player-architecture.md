@@ -7,9 +7,9 @@ Unified API for Media and Container concerns. Two stores internally, one API for
 ### React
 
 ```tsx
-import { createPlayer, presets } from '@videojs/react';
+import { createPlayerStore, presets } from '@videojs/react';
 
-const { Provider, Container, usePlayer } = createPlayer(presets.website);
+const { Provider, Container, usePlayer } = createPlayerStore(presets.website);
 
 function App() {
   return (
@@ -44,9 +44,9 @@ function Controls() {
 #### Custom Provider
 
 ```ts
-import { createPlayer, presets } from '@videojs/html';
+import { createPlayerStore, presets } from '@videojs/html';
 
-const { ProviderElement } = createPlayer(presets.website);
+const { ProviderElement } = createPlayerStore(presets.website);
 
 customElements.define('my-website-provider', ProviderElement);
 ```
@@ -61,15 +61,15 @@ customElements.define('my-website-provider', ProviderElement);
 
 ## Surface API
 
-### createPlayer
+### createPlayerStore
 
 ```ts
 // Shorthand — preset or slice array
-createPlayer(presets.website);
-createPlayer([slices.playback, slices.fullscreen]);
+createPlayerStore(presets.website);
+createPlayerStore([slices.playback, slices.fullscreen]);
 
 // Config object — extensible
-createPlayer({
+createPlayerStore({
   slices: presets.website,
   // future: devTools, middleware, etc.
 });
@@ -83,7 +83,7 @@ const {
   Container, // Attaches container to player store
   usePlayer, // Player state + requests
   useMedia, // Media state + requests (escape hatch)
-} = createPlayer(presets.website);
+} = createPlayerStore(presets.website);
 ```
 
 ### Returns (HTML)
@@ -98,7 +98,7 @@ const {
   // Escape hatches (advanced)
   MediaProviderMixin, // Media store only
   MediaController, // Media state + requests
-} = createPlayer(presets.website);
+} = createPlayerStore(presets.website);
 ```
 
 ### usePlayer
@@ -127,9 +127,9 @@ const mediaRequest = useMedia().request;
 The Lit equivalent of `usePlayer`. Use in custom elements to access player state and requests.
 
 ```ts
-import { createPlayer, presets, VjsElement } from '@videojs/html';
+import { createPlayerStore, presets, VjsElement } from '@videojs/html';
 
-const { PlayerController } = createPlayer(presets.website);
+const { PlayerController } = createPlayerStore(presets.website);
 
 class VjsPlayButton extends VjsElement {
   // Selector subscribes — triggers requestUpdate() when paused changes
@@ -189,7 +189,7 @@ Pre-built slice configurations for common use cases.
 ### Extending Presets
 
 ```ts
-createPlayer({
+createPlayerStore({
   slices: [...presets.background, slices.keyboard],
 });
 ```
@@ -228,7 +228,7 @@ interface PlayerSlice {
 }
 ```
 
-`createPlayer` filters slices by type, builds both stores, returns unified API.
+`createPlayerStore` filters slices by type, builds both stores, returns unified API.
 
 ---
 
@@ -250,10 +250,10 @@ packages/react/src/
 ```
 
 ```tsx
-import { createPlayer, presets } from '@videojs/react';
+import { createPlayerStore, presets } from '@videojs/react';
 import { FrostedSkin } from '@videojs/react/presets/website';
 
-const { Provider } = createPlayer(presets.streaming);
+const { Provider } = createPlayerStore(presets.streaming);
 
 <Provider>
   <FrostedSkin>
@@ -271,10 +271,10 @@ const { Provider } = createPlayer(presets.streaming);
 #### Declarative (Skin)
 
 ```tsx
-import { createPlayer, presets, Video } from '@videojs/react';
+import { createPlayerStore, presets, Video } from '@videojs/react';
 import { FrostedSkin } from '@videojs/react/presets/website';
 
-const { Provider } = createPlayer(presets.website);
+const { Provider } = createPlayerStore(presets.website);
 
 <Provider>
   <FrostedSkin>
@@ -286,9 +286,9 @@ const { Provider } = createPlayer(presets.website);
 #### Custom Player (Preset)
 
 ```tsx
-import { createPlayer, presets, Video } from '@videojs/react';
+import { createPlayerStore, presets, Video } from '@videojs/react';
 
-const { Provider, Container, usePlayer } = createPlayer(presets.website);
+const { Provider, Container, usePlayer } = createPlayerStore(presets.website);
 
 function App() {
   return (
@@ -318,9 +318,9 @@ function Controls() {
 #### Extended Preset
 
 ```tsx
-import { createPlayer, presets, slices, Video } from '@videojs/react';
+import { createPlayerStore, presets, slices, Video } from '@videojs/react';
 
-const { Provider, Container, usePlayer } = createPlayer({
+const { Provider, Container, usePlayer } = createPlayerStore({
   slices: [...presets.background, slices.keyboard, analyticsSlice],
 });
 ```
@@ -328,9 +328,9 @@ const { Provider, Container, usePlayer } = createPlayer({
 #### Media Escape Hatch
 
 ```tsx
-import { createPlayer, presets } from '@videojs/react';
+import { createPlayerStore, presets } from '@videojs/react';
 
-const { usePlayer, useMedia } = createPlayer(presets.website);
+const { usePlayer, useMedia } = createPlayerStore(presets.website);
 
 function DebugPanel() {
   // Player state (preferred)
@@ -347,9 +347,9 @@ function DebugPanel() {
 #### Headless (No UI)
 
 ```tsx
-import { createMedia, media } from '@videojs/react';
+import { createMediaStore, media } from '@videojs/react';
 
-const { Provider, useMedia } = createMedia([media.playback, media.time]);
+const { Provider, useMedia } = createMediaStore([media.playback, media.time]);
 
 function AudioPlayer() {
   const currentTime = useMedia((s) => s.currentTime);
@@ -379,9 +379,9 @@ Import registers both provider and skin — zero config.
 #### Custom Player (Preset)
 
 ```ts
-import { createPlayer, presets } from '@videojs/html';
+import { createPlayerStore, presets } from '@videojs/html';
 
-const { ProviderElement, PlayerController } = createPlayer(presets.website);
+const { ProviderElement, PlayerController } = createPlayerStore(presets.website);
 
 customElements.define('vjs-website-provider', ProviderElement);
 ```
@@ -395,9 +395,9 @@ customElements.define('vjs-website-provider', ProviderElement);
 #### Extended Preset
 
 ```ts
-import { createPlayer, presets, slices } from '@videojs/html';
+import { createPlayerStore, presets, slices } from '@videojs/html';
 
-const { ProviderElement } = createPlayer({
+const { ProviderElement } = createPlayerStore({
   slices: [...presets.background, slices.keyboard],
 });
 
@@ -409,9 +409,9 @@ customElements.define('vjs-background-provider', ProviderElement);
 When media element and fullscreen target need different DOM locations.
 
 ```ts
-import { createPlayer, presets, VjsElement } from '@videojs/html';
+import { createPlayerStore, presets, VjsElement } from '@videojs/html';
 
-const { ProviderMixin, ContainerMixin } = createPlayer(presets.website);
+const { ProviderMixin, ContainerMixin } = createPlayerStore(presets.website);
 
 class MediaProviderElement extends ProviderMixin(VjsElement) {}
 class MediaContainerElement extends ContainerMixin(VjsElement) {}
@@ -432,9 +432,9 @@ customElements.define('my-container', MediaContainerElement);
 #### Headless (No UI)
 
 ```ts
-import { createMedia, media, VjsElement } from '@videojs/html';
+import { createMediaStore, media, VjsElement } from '@videojs/html';
 
-const { MediaMixin } = createMedia([media.playback, media.time]);
+const { MediaMixin } = createMediaStore([media.playback, media.time]);
 
 class VjsAudioController extends MediaMixin(VjsElement) {
   // Programmatic control, no UI
@@ -449,7 +449,7 @@ customElements.define('vjs-audio-controller', VjsAudioController);
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              createPlayer()                                  │
+│                              createPlayerStore()                                  │
 │  config: presets.website | { slices: [...] }                                │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
@@ -598,7 +598,7 @@ const analytics = createPlayerSlice({
   },
 });
 
-createPlayer({
+createPlayerStore({
   slices: [...presets.website, analytics],
 });
 ```
@@ -620,7 +620,7 @@ Only for core media capabilities. Most extensions are player slices.
 import { createMediaSlice, media } from '@videojs/react';
 
 // Direct media slices for headless/programmatic use
-createMedia([media.playback, media.time]);
+createMediaStore([media.playback, media.time]);
 ```
 
 ---
@@ -642,25 +642,25 @@ createMedia([media.playback, media.time]);
 
 ## Progressive Complexity
 
-| Level         | Example                                       | Sees "store"? |
-| ------------- | --------------------------------------------- | ------------- |
-| Use skin      | `<FrostedSkin>`                               | No            |
-| Use preset    | `createPlayer(presets.website)`               | No            |
-| Custom slices | `createPlayer([...presets.website, mySlice])` | No            |
-| Use hooks     | `usePlayer(s => s.paused)`                    | No            |
-| Write slice   | `createPlayerSlice({ ... })`                  | Yes           |
+| Level         | Example                                            | Sees "store"? |
+| ------------- | -------------------------------------------------- | ------------- |
+| Use skin      | `<FrostedSkin>`                                    | No            |
+| Use preset    | `createPlayerStore(presets.website)`               | Yes (name)    |
+| Custom slices | `createPlayerStore([...presets.website, mySlice])` | Yes (name)    |
+| Use hooks     | `usePlayer(s => s.paused)`                         | No            |
+| Write slice   | `createPlayerSlice({ ... })`                       | Yes           |
 
-"Store" appears when authoring slices — that's when targets, state, requests, subscriptions matter.
+"Store" appears in the factory name at setup, but users don't need to understand store internals until authoring slices.
 
 ---
 
 ## Naming
 
-| Concept       | Name                    | Rationale                           |
-| ------------- | ----------------------- | ----------------------------------- |
-| Factory       | `createPlayer`          | Users think "I'm creating a player" |
-| Hooks         | `usePlayer`, `useMedia` | Simple, clear purpose               |
-| Slice factory | `createPlayerSlice`     | "Slice" appears at authoring level  |
+| Concept       | Name                    | Rationale                                   |
+| ------------- | ----------------------- | ------------------------------------------- |
+| Factory       | `createPlayerStore`     | Explicit — you're creating state management |
+| Hooks         | `usePlayer`, `useMedia` | Simple, clear purpose                       |
+| Slice factory | `createPlayerSlice`     | "Slice" appears at authoring level          |
 
 Simplified from original:
 
@@ -677,7 +677,7 @@ Simplified from original:
 
 ```
 packages/html/src/
-├── create-player.ts
+├── create-player-store.ts
 └── presets/
     ├── website/
     │   ├── index.ts              # preset slices
@@ -690,7 +690,7 @@ packages/html/src/
     └── ...
 
 packages/react/src/
-├── create-player.tsx
+├── create-player-store.tsx
 └── presets/
     └── website/
         ├── index.ts
@@ -708,23 +708,28 @@ packages/core/src/dom/
 
 ## Concerns & Decisions
 
-### Naming: "Player" vs "Store"
+### Naming: "PlayerStore" vs "Player"
 
-**Decision:** Use `createPlayer`, `usePlayer` — users think "I'm creating a player."
+**Decision:** Use `createPlayerStore` — explicit about what you're creating (state management, not a renderable player).
 
-**Concern:** We teach users the player has three parts (State, UI, Media) but call just the State piece "player." Not fully consistent, but acceptable as the primary entry point.
+**Rationale:**
+
+- Name should match what you receive — `createPlayerStore()` returns a store
+- `createPlayer()` oversells — users might expect a renderable player
+- Returns stay clean — `Provider`, `usePlayer` (not `StoreProvider`, `usePlayerStore`)
+- Factory name establishes context, returns don't need to repeat "Store"
 
 ### Naming: "Media" Ambiguity
 
-**Concern:** "Media" is overloaded — there's a whole third of the vjs ecosystem also called "media." `createMedia()` may be unclear.
+**Concern:** "Media" is overloaded — there's a whole third of the vjs ecosystem also called "media." `createMediaStore()` may be unclear.
 
-**Alternative considered:** `createMediaStore()` / `mediaStore` — makes the internal concept explicit for this advanced use case.
+**Decision:** Keep `createMediaStore()` — this is an escape hatch for advanced users who already understand the distinction.
 
 ### Slice Factory Naming
 
-**Decision:** `createPlayerSlice` for now.
+**Decision:** `createPlayerSlice` — not `createPlayerStoreSlice`.
 
-**Alternative considered:** `createPlayerStoreSlice` — more verbose but "PlayerSlice" has no real meaning in isolation.
+**Rationale:** The slice factory doesn't create a store, it creates a slice for a store. "PlayerSlice" is accurate.
 
 ### Why Two Stores (Not One)
 
@@ -767,7 +772,7 @@ Container inside skin just attaches to existing store — doesn't provide one. T
 ## Constraints
 
 - Player slices live in `@videojs/core/dom`
-- `createPlayer` lives in `@videojs/html` and `@videojs/react`
+- `createPlayerStore` lives in `@videojs/html` and `@videojs/react`
 - Skins are tied to presets — stores don't extend from skins
 - Two stores internally, one API externally
-- "Store" concept hidden until slice authoring
+- "Store" in factory name signals infrastructure; internals hidden until slice authoring
