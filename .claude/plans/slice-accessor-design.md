@@ -581,3 +581,65 @@ class SliceController<S extends AnySlice, R> implements ReactiveController {
 - `slices.get()` returns `undefined` for missing slice
 - Cross-slice subscription with signal cleanup works
 - Cross-slice state read in request handler works
+
+---
+
+## Implementation Plan
+
+### PR 1: Core — `store.getSlice()` & Cross-Slice Access
+
+**Scope:** `packages/store/src/core/`
+
+**Changes:**
+
+- `errors.ts` — Add `MISSING_SLICE` error code
+- `store.ts` — Add `SliceAccessor`, `SliceRegistry` interfaces and `getSlice()` method
+- `slice.ts` — Add `slices: SliceRegistry` to `SliceSubscribeContext`
+- `request.ts` — Add `slices: SliceRegistry` to `RequestContext`
+- `index.ts` — Export new types
+- `tests/store.test.ts` — Add `getSlice` and cross-slice tests
+- `README.md` — Document `getSlice` and cross-slice patterns
+
+---
+
+### PR 2: Lit — `SliceController`
+
+**Scope:** `packages/store/src/lit/`
+
+**Depends on:** PR 1
+
+**Changes:**
+
+- `controllers/slice-controller.ts` — New controller using `store.getSlice()`
+- `controllers/index.ts` — Export
+- `create-store.ts` — Factory-bound `SliceController`
+- `index.ts` — Export
+- Tests
+
+---
+
+### PR 3: React — `useSlice` Hook
+
+**Scope:** `packages/store/src/react/`
+
+**Depends on:** PR 1
+
+**Changes:**
+
+- `hooks/use-slice.ts` — New hook using `store.getSlice()`
+- `hooks/index.ts` — Export
+- `create-store.tsx` — Factory-bound `useSlice`
+- `index.ts` — Export
+- Tests
+
+---
+
+### Summary
+
+| PR  | Scope | Dependencies |
+| --- | ----- | ------------ |
+| 1   | Core  | None         |
+| 2   | Lit   | PR 1         |
+| 3   | React | PR 1         |
+
+PRs 2 and 3 can be done in parallel after PR 1 merges.
