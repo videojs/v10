@@ -257,7 +257,7 @@ const volumeSlice = createSlice<HTMLMediaElement>()({
 ```ts
 import { useSlice } from '@videojs/store/react';
 
-const volume = useSlice(store, volumeSlice, (accessor) => accessor.state.volume);
+const volume = useSlice(store, volumeSlice, (s) => s.state.volume);
 // Returns: number | undefined
 ```
 
@@ -266,7 +266,7 @@ const volume = useSlice(store, volumeSlice, (accessor) => accessor.state.volume)
 ```ts
 const { useSlice } = createStore({ slices: [volumeSlice, playbackSlice] });
 
-const volume = useSlice(volumeSlice, (accessor) => accessor.state.volume);
+const volume = useSlice(volumeSlice, (s) => s.state.volume);
 // Returns: number | undefined
 ```
 
@@ -276,13 +276,13 @@ Always required. Receives `SliceAccessor`, returns selected value:
 
 ```ts
 // Select state
-const volume = useSlice(volumeSlice, (accessor) => accessor.state.volume);
+const volume = useSlice(volumeSlice, (s) => s.state.volume);
 
 // Select request
-const changeVolume = useSlice(volumeSlice, (accessor) => accessor.request.changeVolume);
+const changeVolume = useSlice(volumeSlice, (s) => s.request.changeVolume);
 
 // Derived values
-const isSilent = useSlice(volumeSlice, (accessor) => accessor.state.muted || accessor.state.volume === 0);
+const isSilent = useSlice(volumeSlice, (s) => s.state.muted || s.state.volume === 0);
 ```
 
 ### Subscription
@@ -298,7 +298,7 @@ Always subscribes when selector returns state (not a function). Request handlers
 ```ts
 import { SliceController } from '@videojs/store/lit';
 
-#volume = new SliceController(this, store, volumeSlice, (accessor) => accessor.state.volume);
+#volume = new SliceController(this, store, volumeSlice, (s) => s.state.volume);
 // this.#volume.value: number | undefined
 ```
 
@@ -307,7 +307,7 @@ import { SliceController } from '@videojs/store/lit';
 ```ts
 const { SliceController } = createStore({ slices: [volumeSlice] });
 
-#volume = new SliceController(this, volumeSlice, (accessor) => accessor.state.volume);
+#volume = new SliceController(this, volumeSlice, (s) => s.state.volume);
 // this.#volume.value: number | undefined
 ```
 
