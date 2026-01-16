@@ -322,10 +322,10 @@
 }
 
 .vjs-frosted-skin .popover-popup {
-  margin: 0;
-  border: none;
   padding: 0.75rem 0.25rem;
   border-radius: calc(infinity * 1px);
+  margin: 0;
+  border: 0;
 }
 
 /* Tooltip Component Styles */
