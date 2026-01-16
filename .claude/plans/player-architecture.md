@@ -2,7 +2,80 @@
 
 Unified API for Media and Container concerns. Two stores internally, one API for users.
 
+## Contents
+
+**Concepts** — [Problem](#problem) · [Store](#store) · [Slices](#slices) · [Presets](#presets)
+
+**Usage** — [Quick Start](#quick-start) · [Surface API](#surface-api) · [Usage Examples](#usage-examples)
+
+**Reference** — [Player Presets](#player-presets) · [Player Slices](#player-slices) · [Skins and Presets](#skins-and-presets)
+
+**Architecture** — [Overview](#architecture) · [Cross-Store Access](#cross-store-access) · [Extending](#extending)
+
+**Internals** — [Under the Hood](#under-the-hood) · [Progressive Complexity](#progressive-complexity) · [Naming](#naming) · [File Structure](#file-structure) · [Concerns & Decisions](#concerns--decisions) · [Constraints](#constraints)
+
+## Problem
+
+Two concerns, one player:
+
+1. **Media** — play, pause, volume, time. Owned by `<video>`.
+2. **Container** — fullscreen, keyboard, gestures, idle. Owned by the player UI wrapper.
+
+Different targets, different lifecycles. Internally, they need separate stores.
+
+But users want one API. This doc defines:
+
+- How `createPlayerStore` exposes a unified API in React and HTML
+- What it returns — hooks, controllers, providers
+- How presets bundle features for common use cases
+- How to extend with custom slices
+
+## Store
+
+We built a reactive store for state you don't own. The `<video>` element is the source of truth — you observe it, request changes, react to events.
+
+```ts
+store.attach(videoElement);
+
+store.state.paused;         // synced from video
+await store.request.play(); // coordinated request
+```
+
+See [@videojs/store](../../packages/store/README.md) for the full API.
+
+## Slices
+
+Slices divide the store into features. The pattern comes from [Redux Toolkit](https://redux-toolkit.js.org/api/createSlice) (also [Zustand](https://zustand.docs.pmnd.rs/guides/slices-pattern)).
+
+```ts
+const volumeSlice = createSlice({
+  initialState: { volume: 1, muted: false },
+  getSnapshot: ({ target }) => ({ volume: target.volume, muted: target.muted }),
+  subscribe: ({ target, update, signal }) => {
+    target.addEventListener('volumechange', update, { signal });
+  },
+  request: {
+    setVolume(volume, { target }) { target.volume = volume; },
+  },
+});
+```
+
+**Why slices?** Modularity. Include only what you need. Tree-shake the rest.
+
+## Presets
+
+Presets are curated slice collections. Pick one, get the right features.
+
+```ts
+createPlayerStore(presets.website);    // full-featured
+createPlayerStore(presets.background); // minimal (autoplay, loop)
+```
+
+**Why presets?** Most users don't want to pick slices. Presets encode best practices for common use cases.
+
 ## Quick Start
+
+Here's how it comes together. Same store, framework-native APIs.
 
 ### React
 
@@ -56,8 +129,6 @@ customElements.define('my-website-provider', ProviderElement);
   <video src="video.mp4"></video>
 </my-website-provider>
 ```
-
----
 
 ## Surface API
 
@@ -169,9 +240,7 @@ this.#paused.request.play();    // requests also available
 | `usePlayer().state.paused`   | `this.#player.state.paused`                 |
 | `usePlayer().request.play()` | `this.#player.request.play()`               |
 
----
-
-## Presets
+## Player Presets
 
 Pre-built slice configurations for common use cases.
 
@@ -196,9 +265,7 @@ createPlayerStore({
 
 > **Note:** Duplicate slices are automatically deduplicated. A warning is logged if you add a slice that already exists in the preset.
 
----
-
-## Slices
+## Player Slices
 
 Flat exports, type-discriminated.
 
@@ -230,8 +297,6 @@ interface PlayerSlice {
 
 `createPlayerStore` filters slices by type, builds both stores, returns unified API.
 
----
-
 ## Skins and Presets
 
 **Skins are tied to presets.** Stores don't live in or extend from skins.
@@ -261,8 +326,6 @@ const { Provider } = createPlayerStore(presets.streaming);
   </FrostedSkin>
 </Provider>;
 ```
-
----
 
 ## Usage Examples
 
@@ -357,8 +420,6 @@ function AudioPlayer() {
   // Programmatic control, no UI
 }
 ```
-
----
 
 ### HTML
 
@@ -481,11 +542,9 @@ customElements.define('vjs-audio-controller', VjsAudioController);
 
 **Key insight:** Player Store's target includes a reference to the Media Store. This enables coordination without tight coupling.
 
----
-
 ## Cross-Store Access
 
-Player slices access media via `store.getSlice()`:
+Player slices access media via `store.getSlice()`. See [RFC: Slice Accessor Design](https://github.com/videojs/v10/pull/307) for full API details.
 
 ```ts
 const fullscreen = createPlayerSlice({
@@ -509,8 +568,6 @@ const fullscreen = createPlayerSlice({
   },
 });
 ```
-
----
 
 ## Player Slices
 
@@ -567,8 +624,6 @@ export const fullscreen = createPlayerSlice({
 
 **Gestures** — Touch gestures. Double-tap seek, swipe volume, pinch zoom.
 
----
-
 ## Extending
 
 One place to extend: player slices.
@@ -623,8 +678,6 @@ import { createMediaSlice, media } from '@videojs/react';
 createMediaStore([media.playback, media.time]);
 ```
 
----
-
 ## Under the Hood
 
 ### Why Two Stores
@@ -638,8 +691,6 @@ createMediaStore([media.playback, media.time]);
 | **Standalone media**  | Headless player, audio-only, programmatic control. Media store works alone.                       |
 | **Type safety**       | Player slices declare required media capabilities. TypeScript catches mismatches at compile time. |
 
----
-
 ## Progressive Complexity
 
 | Level         | Example                                            | Sees "store"? |
@@ -651,8 +702,6 @@ createMediaStore([media.playback, media.time]);
 | Write slice   | `createPlayerSlice({ ... })`                       | Yes           |
 
 "Store" appears in the factory name at setup, but users don't need to understand store internals until authoring slices.
-
----
 
 ## Naming
 
@@ -670,8 +719,6 @@ Simplified from original:
 | `useContainerSelector` | `usePlayer`           |
 | `useMediaRequest`      | `useMedia().request`  |
 | `useContainerRequest`  | `usePlayer().request` |
-
----
 
 ## File Structure
 
@@ -703,8 +750,6 @@ packages/core/src/dom/
 │   └── player/                   # player slices
 └── index.ts
 ```
-
----
 
 ## Concerns & Decisions
 
@@ -766,8 +811,6 @@ Container inside skin just attaches to existing store — doesn't provide one. T
 
 - **"In-between" functionality:** Where does functionality that's not clearly media or UI go? Examples needed.
 - **Plugin author experience:** How many concepts must they learn? Two stores vs one affects this.
-
----
 
 ## Constraints
 
