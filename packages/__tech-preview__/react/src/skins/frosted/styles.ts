@@ -130,7 +130,7 @@ const styles: FrostedSkinStyles = {
     'vjs:data-starting-style:scale-0 vjs:data-starting-style:opacity-0 vjs:data-starting-style:blur-sm',
     'vjs:data-ending-style:scale-0 vjs:data-ending-style:opacity-0 vjs:data-ending-style:blur-sm',
   ),
-  PopoverPopup: cn('vjs:relative vjs:px-1 vjs:py-3 vjs:rounded-full'),
+  PopoverPopup: cn('vjs:px-1 vjs:py-3 vjs:rounded-full vjs:m-0 vjs:border-0'),
   TooltipPopup: cn('vjs:whitespace-nowrap vjs:rounded-full vjs:text-white vjs:text-xs vjs:@7xl/root:text-sm vjs:px-2.5 vjs:py-1'),
 };
 
