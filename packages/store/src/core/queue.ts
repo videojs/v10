@@ -25,21 +25,6 @@ export interface QueueTask<Key extends TaskKey = TaskKey, Input = unknown, Outpu
   handler: (ctx: TaskContext<Input>) => Promise<Output>;
 }
 
-interface QueuedTask<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown> {
-  id: symbol;
-  name: string;
-  key: Key;
-  input: Input;
-  meta: RequestMeta | null;
-  handler: (ctx: TaskContext<Input>) => Promise<Output>;
-  resolve: (value: Output) => void;
-  reject: (error: unknown) => void;
-}
-
-type QueuedRecord<Tasks extends TaskRecord> = {
-  [K in keyof Tasks]?: QueuedTask<TaskKey<K>>;
-};
-
 export type TasksRecord<Tasks extends TaskRecord> = {
   [K in keyof Tasks]?: Task<TaskKey<K>, Tasks[K]['input'], Tasks[K]['output']>;
 };
@@ -53,10 +38,8 @@ export type QueueListener<Tasks extends TaskRecord> = (tasks: TasksRecord<Tasks>
 export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   readonly #subscribers = new Set<QueueListener<Tasks>>();
 
-  #queued: QueuedRecord<Tasks> = {};
   #tasks: TasksRecord<Tasks> = {};
   #destroyed = false;
-  #flushScheduled = false;
 
   get tasks(): Readonly<TasksRecord<Tasks>> {
     return Object.freeze({ ...this.#tasks });
@@ -121,11 +104,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       return Promise.reject(new StoreError('DESTROYED'));
     }
 
-    // Supersede any queued task with the same key
-    const queued = this.#queued[key];
-    queued?.reject(new StoreError('SUPERSEDED'));
-    delete this.#queued[key];
-
     // Supersede any pending task with the same key (may have different name)
     // Don't delete - let error handler update status to 'error' so controllers can see it
     for (const task of Object.values(this.#tasks)) {
@@ -135,7 +113,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     }
 
     return new Promise<Tasks[K]['output']>((resolve, reject) => {
-      const queuedTask: QueuedTask = {
+      this.#executeNow({
         id: Symbol('@videojs/task'),
         name,
         key,
@@ -144,49 +122,13 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
         handler,
         resolve,
         reject,
-      };
-
-      this.#queued[key as keyof Tasks] = queuedTask;
-      this.#scheduleFlush();
+      });
     });
-  }
-
-  #scheduleFlush(): void {
-    if (this.#flushScheduled) return;
-
-    this.#flushScheduled = true;
-    queueMicrotask(() => {
-      this.#flushScheduled = false;
-      this.#flushAll();
-    });
-  }
-
-  #flushAll(): void {
-    if (this.#destroyed) return;
-
-    const keys = Reflect.ownKeys(this.#queued) as (keyof Tasks)[];
-    for (const key of keys) {
-      const task = this.#queued[key];
-      if (task) {
-        delete this.#queued[key];
-        this.#executeNow(task);
-      }
-    }
   }
 
   /** Abort task(s). If name provided, aborts that task. If no name, aborts all. */
   abort(name?: keyof Tasks): void {
     if (!isUndefined(name)) {
-      // Find and abort queued task by name
-      for (const [key, queued] of Object.entries(this.#queued)) {
-        if (queued?.name === name) {
-          queued.reject(new StoreError('ABORTED'));
-          delete this.#queued[key as keyof Tasks];
-          break;
-        }
-      }
-
-      // Abort pending task (stored by name)
       const task = this.#tasks[name];
       if (task?.status === 'pending') {
         task.abort.abort(new StoreError('ABORTED'));
@@ -196,12 +138,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     }
 
     const error = new StoreError('ABORTED');
-
-    for (const queued of Object.values(this.#queued)) {
-      queued.reject(error);
-    }
-
-    this.#queued = {};
 
     for (const task of Object.values(this.#tasks)) {
       if (task?.status === 'pending') {
@@ -219,10 +155,17 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     this.#tasks = {};
   }
 
-  async #executeNow<K extends keyof Tasks>(
-    task: QueuedTask<TaskKey<K>, Tasks[K]['input'], Tasks[K]['output']>,
-  ): Promise<void> {
-    const { id, name, key, input, meta, handler, resolve, reject } = task;
+  async #executeNow<K extends keyof Tasks>(params: {
+    id: symbol;
+    name: string;
+    key: TaskKey<K>;
+    input: Tasks[K]['input'];
+    meta: RequestMeta | null;
+    handler: (ctx: TaskContext<Tasks[K]['input']>) => Promise<Tasks[K]['output']>;
+    resolve: (value: Tasks[K]['output']) => void;
+    reject: (error: unknown) => void;
+  }): Promise<void> {
+    const { id, name, key, input, meta, handler, resolve, reject } = params;
 
     const abort = new AbortController();
     const startedAt = Date.now();
@@ -294,8 +237,8 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 /**
  * Create a queue for managing task execution.
  *
- * - Same key = supersede previous (cancel queued, abort pending)
- * - Tasks batched via microtask for supersession
+ * - Tasks execute immediately when enqueued
+ * - Same key = supersede previous (abort pending)
  *
  * @example
  * // Loose typing (default)

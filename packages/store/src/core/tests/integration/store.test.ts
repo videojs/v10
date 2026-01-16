@@ -191,9 +191,15 @@ describe('request coordination', () => {
       request: {
         action: {
           key: 'shared',
-          async handler(name: string, _ctx) {
+          async handler(name: string, { signal }) {
             executed.push(`${name}-start`);
-            await new Promise(r => setTimeout(r, 50));
+            await new Promise((resolve, reject) => {
+              const timeout = setTimeout(resolve, 50);
+              signal.addEventListener('abort', () => {
+                clearTimeout(timeout);
+                reject(signal.reason);
+              });
+            });
             executed.push(`${name}-end`);
             return name;
           },
@@ -216,7 +222,11 @@ describe('request coordination', () => {
     await expect(p2).rejects.toThrow();
     await expect(p3).resolves.toBe('third');
 
+    // All three start immediately (immediate execution)
+    expect(executed).toContain('first-start');
+    expect(executed).toContain('second-start');
     expect(executed).toContain('third-start');
+    // Only third completes (others aborted via signal)
     expect(executed).toContain('third-end');
     expect(executed).not.toContain('first-end');
     expect(executed).not.toContain('second-end');
@@ -312,5 +322,70 @@ describe('state syncing', () => {
       volume: 0.5,
       rate: 1.5,
     });
+  });
+});
+
+describe('immediate execution', () => {
+  it('request handler side effect triggers event and state sync', async () => {
+    // Mock media that dispatches 'play' event when play() is called
+    class MockMedia extends EventTarget {
+      paused = true;
+
+      play() {
+        this.paused = false;
+        this.dispatchEvent(new Event('play'));
+      }
+    }
+
+    const playbackSlice = createSlice<MockMedia>()({
+      initialState: { paused: true },
+      getSnapshot: ({ target }) => ({ paused: target.paused }),
+      subscribe: ({ target, update, signal }) => {
+        // State syncs when 'play' event fires
+        target.addEventListener('play', update, { signal });
+      },
+      request: {
+        play: (_, { target }) => {
+          target.play(); // Triggers event → update → getSnapshot
+        },
+      },
+    });
+
+    const store = createStore({ slices: [playbackSlice] });
+    const target = new MockMedia();
+    store.attach(target);
+
+    expect(store.state.paused).toBe(true);
+
+    store.request.play();
+
+    // Validates: handler ran → play() called → event fired → state synced
+    expect(target.paused).toBe(false);
+    expect(store.state.paused).toBe(false);
+  });
+
+  it('task is pending synchronously after request', async () => {
+    const slice = createSlice<unknown>()({
+      initialState: {},
+      getSnapshot: () => ({}),
+      subscribe: () => {},
+      request: {
+        action: async () => {
+          await new Promise(r => setTimeout(r, 10));
+          return 'done';
+        },
+      },
+    });
+
+    const store = createStore({ slices: [slice] });
+    store.attach({});
+
+    const promise = store.request.action();
+
+    // Synchronous check - task is pending immediately, no microtask needed
+    expect(store.queue.tasks.action?.status).toBe('pending');
+
+    await promise;
+    expect(store.queue.tasks.action?.status).toBe('success');
   });
 });
