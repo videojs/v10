@@ -357,7 +357,7 @@ describe('immediate execution', () => {
 
     expect(store.state.paused).toBe(true);
 
-    await store.request.play();
+    store.request.play();
 
     // Validates: handler ran → play() called → event fired → state synced
     expect(target.paused).toBe(false);
