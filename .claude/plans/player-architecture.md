@@ -1,4 +1,4 @@
-# Player Architecture
+# Player API Design
 
 Unified API for Media and Container concerns. Two stores internally, one API for users.
 
