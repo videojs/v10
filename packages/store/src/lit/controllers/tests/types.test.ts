@@ -17,7 +17,8 @@ describe('controller types', () => {
 
       const controller = new SnapshotController(host, store.state);
 
-      expectTypeOf(controller.value).toEqualTypeOf<typeof store.state>();
+      // controller.value is the unwrapped type (without Reactive brand)
+      expectTypeOf(controller.value).toEqualTypeOf<{ volume: number; muted: boolean } & object>();
     });
 
     it('value properties have correct types', () => {

@@ -44,18 +44,6 @@ export type MutationControllerHost = ReactiveControllerHost & HTMLElement;
  *
  * class MyElement extends LitElement {
  *   #playMutation = new MutationController(this, context, 'play');
- *
- *   render() {
- *     const mutation = this.#playMutation.value;
- *     return html`
- *       <button
- *         @click=${() => mutation.mutate()}
- *         ?disabled=${mutation.status === 'pending'}
- *       >
- *        ...
- *       </button>
- *     `;
- *   }
  * }
  * ```
  */

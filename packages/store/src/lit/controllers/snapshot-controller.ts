@@ -1,4 +1,5 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
+import type { Reactive } from '../../core/state';
 
 import { noop } from '@videojs/utils/function';
 
@@ -40,14 +41,14 @@ export interface SnapshotControllerOptions<T extends object> {
  */
 export class SnapshotController<T extends object> implements ReactiveController {
   readonly #host: SnapshotControllerHost;
-  readonly #state: T;
+  readonly #state: Reactive<T>;
   readonly #trackedKeys = new Set<PropertyKey>();
   readonly #subscribedKeys = new Set<PropertyKey>();
   readonly #trackingWrapper: T;
   readonly #onChange: ((snapshot: T) => void) | undefined;
   #unsubscribe = noop;
 
-  constructor(host: SnapshotControllerHost, state: T, options?: SnapshotControllerOptions<T>) {
+  constructor(host: SnapshotControllerHost, state: Reactive<T>, options?: SnapshotControllerOptions<T>) {
     this.#host = host;
     this.#state = state;
     this.#onChange = options?.onChange;

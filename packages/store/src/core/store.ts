@@ -7,6 +7,7 @@ import type {
   UnionSliceTarget,
   UnionSliceTasks,
 } from './slice';
+import type { Reactive } from './state';
 import type { PendingTask, Task, TaskContext } from './task';
 
 import { isNull } from '@videojs/utils/predicate';
@@ -25,7 +26,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
   readonly #setupAbort = new AbortController();
 
   /** Reactive state. Subscribe via `subscribe(store.state, fn)`. */
-  readonly state: UnionSliceState<Slices>;
+  readonly state: Reactive<UnionSliceState<Slices> & object>;
 
   #target: Target | null = null;
   #attachAbort: AbortController | null = null;
@@ -36,7 +37,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     this.#slices = config.slices;
 
     this.#queue = config.queue ?? new Queue<UnionSliceTasks<Slices>>();
-    this.state = reactive(this.#createInitialState() as object) as UnionSliceState<Slices>;
+    this.state = reactive(this.#createInitialState() as UnionSliceState<Slices> & object);
 
     this.#requestConfigs = this.#buildRequestConfigs();
     this.#request = this.#buildRequestProxy();

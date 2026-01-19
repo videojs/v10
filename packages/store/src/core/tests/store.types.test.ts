@@ -1,4 +1,5 @@
 import type { Queue, TasksRecord } from '../queue';
+import type { Reactive } from '../state';
 import type { InferStoreRequests, InferStoreState, InferStoreTarget, InferStoreTasks } from '../store';
 
 import { describe, expectTypeOf, it } from 'vitest';
@@ -136,7 +137,7 @@ describe('store types', () => {
     it('state is reactive', () => {
       const store = createSingleSliceStore();
 
-      expectTypeOf(store.state).toEqualTypeOf<{ volume: number; muted: boolean }>();
+      expectTypeOf(store.state).toEqualTypeOf<Reactive<{ volume: number; muted: boolean } & object>>();
     });
 
     it('state properties have correct types', () => {

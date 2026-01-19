@@ -1,3 +1,5 @@
+import type { Reactive } from '../../core/state';
+
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
 import { subscribe, subscribeKeys } from '../../core/state';
@@ -19,7 +21,7 @@ import { subscribe, subscribeKeys } from '../../core/state';
  * }
  * ```
  */
-export function useSnapshot<T extends object>(state: T): T {
+export function useSnapshot<T extends object>(state: Reactive<T>): T {
   const versionRef = useRef(0);
   const [trackedKeys] = useState(() => new Set<PropertyKey>());
   const [subscribedKeys, setSubscribedKeys] = useState<PropertyKey[]>([]);

@@ -1,4 +1,5 @@
 import type { Request, RequestMeta } from './request';
+import type { Reactive } from './state';
 import type { ErrorTask, PendingTask, SuccessTask, Task, TaskContext, TaskKey } from './task';
 
 import { isUndefined } from '@videojs/utils/predicate';
@@ -36,12 +37,12 @@ export type TasksRecord<Tasks extends TaskRecord> = {
 
 export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   /** Reactive tasks. Subscribe via `subscribe(queue.tasks, fn)`. */
-  readonly tasks: TasksRecord<Tasks>;
+  readonly tasks: Reactive<TasksRecord<Tasks>>;
 
   #destroyed = false;
 
   constructor() {
-    this.tasks = reactive<TasksRecord<Tasks>>({} as TasksRecord<Tasks>);
+    this.tasks = reactive({} as TasksRecord<Tasks>);
   }
 
   get destroyed(): boolean {
@@ -155,7 +156,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     };
 
     // Store tasks by name for controller access
-    this.tasks[name as keyof Tasks] = pendingTask;
+    (this.tasks as TasksRecord<Tasks>)[name as keyof Tasks] = pendingTask;
 
     try {
       if (abort.signal.aborted) {
@@ -179,7 +180,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
           settledAt: Date.now(),
           output: result,
         };
-        this.tasks[name as keyof Tasks] = successTask;
+        (this.tasks as TasksRecord<Tasks>)[name as keyof Tasks] = successTask;
       }
     } catch (error) {
       reject(error);
@@ -194,7 +195,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
           error,
           cancelled: abort.signal.aborted,
         };
-        this.tasks[name as keyof Tasks] = errorTask;
+        (this.tasks as TasksRecord<Tasks>)[name as keyof Tasks] = errorTask;
       }
     }
   }

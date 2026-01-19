@@ -2,6 +2,12 @@ import { isObject, isPlainObject } from '@videojs/utils/predicate';
 
 type Listener = () => void;
 
+/** Symbol used to brand reactive objects. */
+const REACTIVE_SYMBOL = Symbol('@videojs/reactive');
+
+/** A reactive state object created by `reactive()`. */
+export type Reactive<T extends object> = T & { readonly [REACTIVE_SYMBOL]: true };
+
 // Track which objects are reactive (for isReactive check)
 const reactiveCache = new WeakSet<object>();
 
@@ -25,7 +31,7 @@ let batchDepth = 0;
 let flushScheduled = false;
 
 /** Create a reactive state object with optional parent for change bubbling. */
-export function reactive<T extends object>(initial: T, parent?: object): T {
+export function reactive<T extends object>(initial: T, parent?: object): Reactive<T> {
   const proxy = new Proxy(initial, {
     set(target, prop, value, receiver) {
       const prev = Reflect.get(target, prop, receiver);
@@ -85,11 +91,12 @@ export function reactive<T extends object>(initial: T, parent?: object): T {
     }
   }
 
-  return proxy;
+  // Cast is safe: the proxy is branded at runtime via reactiveCache
+  return proxy as Reactive<T>;
 }
 
 /** Check if a value is reactive (created by this module). */
-export function isReactive(value: unknown): value is object {
+export function isReactive<T extends object>(value: T | unknown): value is Reactive<T> {
   return isObject(value) && reactiveCache.has(value);
 }
 
@@ -131,14 +138,14 @@ export function batch<R>(fn: () => R): R {
 }
 
 /** Subscribe to all changes on a reactive state object. */
-export function subscribe<T extends object>(state: T, fn: Listener): () => void {
+export function subscribe<T extends object>(state: Reactive<T>, fn: Listener): () => void {
   if (!listeners.has(state)) listeners.set(state, new Set());
   listeners.get(state)!.add(fn);
   return () => listeners.get(state)?.delete(fn);
 }
 
 /** Subscribe to changes on specific keys of a reactive state object. */
-export function subscribeKeys<T extends object>(state: T, keys: (keyof T)[], fn: Listener): () => void {
+export function subscribeKeys<T extends object>(state: Reactive<T>, keys: (keyof T)[], fn: Listener): () => void {
   if (!keyListeners.has(state)) keyListeners.set(state, new Map());
   const targetMap = keyListeners.get(state)!;
 
@@ -155,6 +162,6 @@ export function subscribeKeys<T extends object>(state: T, keys: (keyof T)[], fn:
 }
 
 /** Return a frozen shallow copy of the current state. */
-export function snapshot<T extends object>(state: T): Readonly<T> {
+export function snapshot<T extends object>(state: Reactive<T>): Readonly<T> {
   return Object.freeze({ ...state });
 }

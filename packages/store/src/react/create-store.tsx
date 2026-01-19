@@ -153,7 +153,7 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
 
   function useSnapshot(): State {
     const store = useStore();
-    return useSnapshotBase(store.state as State & object) as State;
+    return useSnapshotBase(store.state) as State;
   }
 
   function useRequest(): Requests;

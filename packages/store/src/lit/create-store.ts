@@ -242,7 +242,7 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
     #connect(store: ProvidedStore | undefined): void {
       this.#unsubscribe();
       if (!store) return;
-      this.#unsubscribe = subscribe(store.state as object, () => this.#host.requestUpdate());
+      this.#unsubscribe = subscribe(store.state, () => this.#host.requestUpdate());
     }
   }
 
