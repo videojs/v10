@@ -29,11 +29,10 @@ describe('queue types', () => {
       expectTypeOf(queue.abort).returns.toBeVoid();
     });
 
-    it('subscribe takes listener and returns unsubscribe', () => {
+    it('tasks is a reactive proxy', () => {
       const queue = createQueue();
 
-      expectTypeOf(queue.subscribe).toBeFunction();
-      expectTypeOf(queue.subscribe).returns.toExtend<() => void>();
+      expectTypeOf(queue.tasks).toBeObject();
     });
 
     it('destroy returns void', () => {

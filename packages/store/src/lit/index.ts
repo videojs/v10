@@ -3,7 +3,7 @@ export {
   MutationController,
   OptimisticController,
   RequestController,
-  SelectorController,
+  SnapshotController,
   TasksController,
 } from './controllers';
 

@@ -5,6 +5,8 @@ import type { OptimisticResult } from '../../shared/types';
 
 import { useCallback, useReducer, useRef, useSyncExternalStore } from 'react';
 
+import { subscribe } from '../../core/state';
+
 /**
  * Track a store request with optimistic updates.
  *
@@ -52,10 +54,7 @@ export function useOptimistic<
   const taskRef = useRef<Task | undefined>(store.queue.tasks[name]);
 
   // Subscribe to store state for actual value
-  const subscribeToState = useCallback(
-    (onStoreChange: () => void) => store.subscribe(selector, onStoreChange),
-    [store, selector],
-  );
+  const subscribeToState = useCallback((onStoreChange: () => void) => subscribe(store.state, onStoreChange), [store]);
 
   const getStateSnapshot = useCallback(() => selector(store.state), [store, selector]);
 
@@ -64,8 +63,8 @@ export function useOptimistic<
   // Subscribe to task queue for status
   const subscribeToQueue = useCallback(
     (onStoreChange: () => void) =>
-      store.queue.subscribe((tasks) => {
-        const newTask = tasks[name];
+      subscribe(store.queue.tasks, () => {
+        const newTask = store.queue.tasks[name];
         if (newTask !== taskRef.current) {
           taskRef.current = newTask;
 

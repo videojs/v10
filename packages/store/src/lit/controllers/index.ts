@@ -15,5 +15,5 @@ export type {
 export { MutationController, type MutationControllerHost } from './mutation-controller';
 export { OptimisticController, type OptimisticControllerHost } from './optimistic-controller';
 export { RequestController, type RequestControllerHost } from './request-controller';
-export { SelectorController, type SelectorControllerHost } from './selector-controller';
+export { SnapshotController, type SnapshotControllerHost } from './snapshot-controller';
 export { TasksController, type TasksControllerHost } from './tasks-controller';

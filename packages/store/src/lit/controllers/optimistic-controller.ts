@@ -8,6 +8,7 @@ import type { StoreSource } from '../store-accessor';
 import { Disposer } from '@videojs/utils/events';
 import { isNull } from '@videojs/utils/predicate';
 
+import { subscribe } from '../../core/state';
 import { StoreAccessor } from '../store-accessor';
 
 export type OptimisticControllerHost = ReactiveControllerHost & HTMLElement;
@@ -159,11 +160,11 @@ export class OptimisticController<
     this.#disposer.dispose();
     this.#task = store.queue.tasks[this.#name];
 
-    this.#disposer.add(store.subscribe(this.#selector, () => this.#host.requestUpdate()));
+    this.#disposer.add(subscribe(store.state, () => this.#host.requestUpdate()));
 
     this.#disposer.add(
-      store.queue.subscribe((tasks) => {
-        const newTask = tasks[this.#name];
+      subscribe(store.queue.tasks, () => {
+        const newTask = store.queue.tasks[this.#name];
         if (newTask !== this.#task) {
           this.#task = newTask;
 

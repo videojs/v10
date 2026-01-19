@@ -5,6 +5,8 @@ import type { MutationResult } from '../../shared/types';
 
 import { useCallback, useRef, useSyncExternalStore } from 'react';
 
+import { subscribe } from '../../core/state';
+
 /**
  * Track a store request as a mutation with status, data, and error.
  *
@@ -46,23 +48,23 @@ export function useMutation<
 >(store: Store, name: Name): MutationResult<Mutate, Awaited<ReturnType<EnsureFunction<Mutate>>>> {
   type Data = Awaited<ReturnType<EnsureFunction<Mutate>>>;
 
-  const taskRef = useRef<Task | undefined>(store.queue.tasks[name]);
+  const versionRef = useRef(0);
 
-  const subscribe = useCallback(
+  const subscribeToQueue = useCallback(
     (onStoreChange: () => void) =>
-      store.queue.subscribe((tasks) => {
-        const newTask = tasks[name];
-        if (newTask !== taskRef.current) {
-          taskRef.current = newTask;
-          onStoreChange();
-        }
+      subscribe(store.queue.tasks, () => {
+        versionRef.current++;
+        onStoreChange();
       }),
-    [store, name],
+    [store],
   );
 
-  const getSnapshot = useCallback(() => taskRef.current, []);
+  const getSnapshot = useCallback(() => versionRef.current, []);
 
-  const task = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  useSyncExternalStore(subscribeToQueue, getSnapshot, getSnapshot);
+
+  // Read task directly from proxy
+  const task = store.queue.tasks[name] as Task | undefined;
 
   const resetRef = useRef(() => store.queue.reset(name));
 

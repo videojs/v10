@@ -1,11 +1,16 @@
 # Proxy State Migration Plan
 
 **Branch:** `feat/store-proxies`
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 
 ## Completed
 
 - **Phase 1:** Proxy primitives in `state.ts` — commit `f128125`
+- **Phase 2:** Update `Queue` and `Store` to use proxy — commit `63ec713`
+- **Phase 3:** Create `useSnapshot` and `SnapshotController`
+- **Phase 4:** Update dependent hooks/controllers to use new subscribe pattern
+- **Phase 5:** Delete old files and update exports
+- **Phase 6:** Remove legacy `State` class, delete unused `selector.ts` utility
 
 ## Overview
 

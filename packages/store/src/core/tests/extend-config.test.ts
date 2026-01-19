@@ -5,7 +5,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { extendConfig } from '../extend-config';
 import { Queue } from '../queue';
 import { createSlice } from '../slice';
-import { State } from '../state';
 
 // Test target type
 interface TestTarget {
@@ -201,30 +200,6 @@ describe('extendConfig', () => {
       const result = extendConfig(base, {});
 
       expect(result.queue).toBe(baseQueue);
-    });
-
-    it('uses extension state factory when provided', () => {
-      const baseState = (initial: any) => new State(initial);
-      const extState = (initial: any) => new State(initial);
-
-      const slice = createTestSlice('a');
-      const base = createBaseConfig([slice], { state: baseState });
-      const extension = { state: extState };
-
-      const result = extendConfig(base, extension);
-
-      expect(result.state).toBe(extState);
-    });
-
-    it('falls back to base state factory when extension has none', () => {
-      const baseState = (initial: any) => new State(initial);
-
-      const slice = createTestSlice('a');
-      const base = createBaseConfig([slice], { state: baseState });
-
-      const result = extendConfig(base, {});
-
-      expect(result.state).toBe(baseState);
     });
   });
 });

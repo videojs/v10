@@ -6,30 +6,28 @@ import { createCoreTestStore, createMockHost } from '../../tests/test-utils';
 import { MutationController } from '../mutation-controller';
 import { OptimisticController } from '../optimistic-controller';
 import { RequestController } from '../request-controller';
-import { SelectorController } from '../selector-controller';
+import { SnapshotController } from '../snapshot-controller';
 import { TasksController } from '../tasks-controller';
 
 describe('controller types', () => {
-  describe('SelectorController', () => {
-    it('value has selected type', () => {
+  describe('SnapshotController', () => {
+    it('value has proxy type', () => {
       const { store } = createCoreTestStore();
       const host = createMockHost();
 
-      const controller = new SelectorController(host, store, s => s.volume);
+      const controller = new SnapshotController(host, store.state);
 
-      expectTypeOf(controller.value).toEqualTypeOf<number>();
+      expectTypeOf(controller.value).toEqualTypeOf<typeof store.state>();
     });
 
-    it('value type matches selector return type', () => {
+    it('value properties have correct types', () => {
       const { store } = createCoreTestStore();
       const host = createMockHost();
 
-      const controller = new SelectorController(host, store, s => ({
-        volume: s.volume,
-        muted: s.muted,
-      }));
+      const controller = new SnapshotController(host, store.state);
 
-      expectTypeOf(controller.value).toEqualTypeOf<{ volume: number; muted: boolean }>();
+      expectTypeOf(controller.value.volume).toEqualTypeOf<number>();
+      expectTypeOf(controller.value.muted).toEqualTypeOf<boolean>();
     });
   });
 

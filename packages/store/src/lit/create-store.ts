@@ -5,14 +5,12 @@ import type { TasksRecord } from '../core/queue';
 import type { AnySlice, UnionSliceRequests, UnionSliceState, UnionSliceTarget, UnionSliceTasks } from '../core/slice';
 import type { StoreConfig, StoreConsumer, StoreProvider } from '../core/store';
 
-import { createContext } from '@lit/context';
+import { ContextConsumer, createContext } from '@lit/context';
+import { noop } from '@videojs/utils/function';
 
+import { subscribe } from '../core/state';
 import { Store } from '../core/store';
-import {
-  RequestController as RequestControllerBase,
-  SelectorController as SelectorControllerBase,
-  TasksController as TasksControllerBase,
-} from './controllers';
+import { RequestController as RequestControllerBase, TasksController as TasksControllerBase } from './controllers';
 import { createStoreAttachMixin, createStoreMixin, createStoreProviderMixin } from './mixins';
 
 export const contextKey = Symbol('@videojs/store');
@@ -85,26 +83,27 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
   create: () => Store<UnionSliceTarget<Slices>, Slices>;
 
   /**
-   * Selector controller bound to this store's context.
-   * Subscribes to a selected portion of store state.
+   * State controller bound to this store's context.
+   * Subscribes to store state changes and triggers host updates.
    *
    * @example
    * ```ts
-   * const { SelectorController } = createStore({ slices: [playbackSlice] });
+   * const { StateController } = createStore({ slices: [playbackSlice] });
    *
    * class MyElement extends LitElement {
-   *   #paused = new SelectorController(this, s => s.paused);
+   *   #state = new StateController(this);
    *
    *   render() {
-   *     return html`<button>${this.#paused.value ? 'Play' : 'Pause'}</button>`;
+   *     return html`<button>${this.#state.value.paused ? 'Play' : 'Pause'}</button>`;
    *   }
    * }
    * ```
    */
-  SelectorController: new <Value>(
-    host: CreateStoreHost,
-    selector: (state: UnionSliceState<Slices>) => Value
-  ) => SelectorControllerBase<Store<UnionSliceTarget<Slices>, Slices>, Value>;
+  StateController: new (host: CreateStoreHost) => {
+    value: UnionSliceState<Slices>;
+    hostConnected: () => void;
+    hostDisconnected: () => void;
+  };
 
   /**
    * Request controller bound to this store's context.
@@ -164,7 +163,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
  * import { createStore } from '@videojs/store/lit';
  * import { playbackSlice } from '@videojs/core/dom';
  *
- * const { StoreMixin, SelectorController } = createStore({
+ * const { StoreMixin, StateController } = createStore({
  *   slices: [playbackSlice],
  * });
  *
@@ -173,10 +172,10 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
  *
  * // Create a control element that uses the store via context
  * class MyControl extends LitElement {
- *   #paused = new SelectorController(this, s => s.paused);
+ *   #state = new StateController(this);
  *
  *   render() {
- *     return html`<span>${this.#paused.value ? 'Paused' : 'Playing'}</span>`;
+ *     return html`<span>${this.#state.value.paused ? 'Paused' : 'Playing'}</span>`;
  *   }
  * }
  *
@@ -208,9 +207,42 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
   const StoreAttachMixin = createStoreAttachMixin<Slices>(context);
   const StoreMixin = createStoreMixin<Slices>(context, create);
 
-  class SelectorController<Value> extends SelectorControllerBase<ProvidedStore, Value> {
-    constructor(host: CreateStoreHost, selector: (state: State) => Value) {
-      super(host, context, selector);
+  class StateController {
+    readonly #host: CreateStoreHost;
+    readonly #consumer: ContextConsumer<typeof context, CreateStoreHost>;
+    #unsubscribe = noop;
+
+    constructor(host: CreateStoreHost) {
+      this.#host = host;
+      this.#consumer = new ContextConsumer(host, {
+        context,
+        subscribe: true,
+        callback: store => this.#connect(store),
+      });
+      host.addController(this);
+    }
+
+    get value(): State {
+      const store = this.#consumer.value;
+      if (!store) {
+        throw new Error('StateController: Store not available from context');
+      }
+      return store.state;
+    }
+
+    hostConnected(): void {
+      this.#consumer.hostConnected();
+    }
+
+    hostDisconnected(): void {
+      this.#unsubscribe();
+      this.#unsubscribe = noop;
+    }
+
+    #connect(store: ProvidedStore | undefined): void {
+      this.#unsubscribe();
+      if (!store) return;
+      this.#unsubscribe = subscribe(store.state as object, () => this.#host.requestUpdate());
     }
   }
 
@@ -232,7 +264,7 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
     StoreAttachMixin,
     context,
     create,
-    SelectorController,
+    StateController,
     RequestController,
     TasksController,
   };

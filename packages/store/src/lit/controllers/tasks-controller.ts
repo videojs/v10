@@ -5,6 +5,7 @@ import type { StoreSource } from '../store-accessor';
 import { noop } from '@videojs/utils/function';
 import { isNull } from '@videojs/utils/predicate';
 
+import { subscribe } from '../../core/state';
 import { StoreAccessor } from '../store-accessor';
 
 export type TasksControllerHost = ReactiveControllerHost & HTMLElement;
@@ -81,8 +82,8 @@ export class TasksController<Store extends AnyStore> implements ReactiveControll
   #connect(store: Store): void {
     this.#unsubscribe();
     this.#value = store.queue.tasks;
-    this.#unsubscribe = store.queue.subscribe((tasks) => {
-      this.#value = tasks;
+    this.#unsubscribe = subscribe(store.queue.tasks, () => {
+      this.#value = store.queue.tasks;
       this.#host.requestUpdate();
     });
   }

@@ -15,5 +15,5 @@ export type {
 export { useMutation } from './use-mutation';
 export { useOptimistic } from './use-optimistic';
 export { useRequest } from './use-request';
-export { useSelector } from './use-selector';
+export { useSnapshot } from './use-snapshot';
 export { useTasks } from './use-tasks';

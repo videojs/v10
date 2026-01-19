@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createSlice, createStore } from '../../index';
+import { flush, subscribeKeys } from '../../state';
 
 describe('store lifecycle integration', () => {
   it('full lifecycle: create → attach → use → detach → destroy', async () => {
@@ -274,23 +275,20 @@ describe('state syncing', () => {
 
     store.attach(new Target());
 
-    store.subscribe(
-      s => s.volume,
-      (volume) => {
-        volumeUpdates.push(volume);
-      },
-    );
+    subscribeKeys(store.state, ['volume'], () => {
+      volumeUpdates.push(store.state.volume);
+    });
 
-    store.subscribe(
-      s => s.muted,
-      (muted) => {
-        mutedUpdates.push(muted);
-      },
-    );
+    subscribeKeys(store.state, ['muted'], () => {
+      mutedUpdates.push(store.state.muted);
+    });
 
     await store.request.setVolume(0.5);
+    flush();
     await store.request.setMuted(true);
+    flush();
     await store.request.setVolume(0.8);
+    flush();
 
     expect(volumeUpdates).toEqual([0.5, 0.8]);
     expect(mutedUpdates).toEqual([true]);

@@ -8,6 +8,7 @@ import type { StoreSource } from '../store-accessor';
 import { noop } from '@videojs/utils/function';
 import { isNull } from '@videojs/utils/predicate';
 
+import { subscribe } from '../../core/state';
 import { StoreAccessor } from '../store-accessor';
 
 export type MutationControllerHost = ReactiveControllerHost & HTMLElement;
@@ -135,8 +136,8 @@ export class MutationController<
     this.#unsubscribe();
     this.#task = store.queue.tasks[this.#name];
 
-    this.#unsubscribe = store.queue.subscribe((tasks) => {
-      const newTask = tasks[this.#name];
+    this.#unsubscribe = subscribe(store.queue.tasks, () => {
+      const newTask = store.queue.tasks[this.#name];
       if (newTask !== this.#task) {
         this.#task = newTask;
         this.#host.requestUpdate();

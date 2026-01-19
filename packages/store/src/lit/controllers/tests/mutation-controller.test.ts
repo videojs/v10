@@ -1,7 +1,9 @@
 import { noop } from '@videojs/utils/function';
 
 import { describe, expect, it } from 'vitest';
+
 import { createSlice } from '../../../core/slice';
+import { flush } from '../../../core/state';
 import { createStore as createCoreStore } from '../../../core/store';
 import { createCoreTestStore, createCustomKeyTestStore, createMockHost, MockMedia } from '../../tests/test-utils';
 import { MutationController } from '../mutation-controller';
@@ -58,9 +60,11 @@ describe('MutationController', () => {
     controller.hostConnected();
 
     await controller.value.mutate(0.5);
+    flush();
     expect(controller.value.status).toBe('success');
 
     controller.value.reset();
+    flush();
 
     expect(controller.value.status).toBe('idle');
   });

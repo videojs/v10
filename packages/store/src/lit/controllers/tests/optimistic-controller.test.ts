@@ -1,7 +1,9 @@
 import { noop } from '@videojs/utils/function';
 
 import { describe, expect, it } from 'vitest';
+
 import { createSlice } from '../../../core/slice';
+import { flush } from '../../../core/state';
 import { createStore as createCoreStore } from '../../../core/store';
 import { createCoreTestStore, createCustomKeyTestStore, createMockHost, MockMedia } from '../../tests/test-utils';
 import { OptimisticController } from '../optimistic-controller';
@@ -56,8 +58,10 @@ describe('OptimisticController', () => {
     controller.hostConnected();
 
     await controller.value.setValue(0.5);
+    flush();
 
     controller.value.reset();
+    flush();
 
     expect(controller.value.status).toBe('idle');
   });
@@ -71,6 +75,7 @@ describe('OptimisticController', () => {
 
     target.volume = 0.8;
     target.dispatchEvent(new Event('volumechange'));
+    flush();
 
     expect(host.updateCount).toBeGreaterThan(0);
     expect(controller.value.value).toBe(0.8);
