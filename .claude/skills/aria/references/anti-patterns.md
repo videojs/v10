@@ -10,18 +10,6 @@ Common mistakes that harm accessibility. For correct patterns, see linked refere
 
 Never remove focus outlines without a visible replacement.
 
-```css
-/* Never */
-*:focus {
-  outline: none;
-}
-
-/* Instead */
-*:focus-visible {
-  outline: 2px solid var(--focus-color);
-}
-```
-
 See [focus.md](focus.md) for focus indicator requirements.
 
 ### Focus Traps Without Escape
