@@ -28,6 +28,7 @@ interface ParentInfo {
   parent: object;
   key: PropertyKey;
 }
+
 const parents = new WeakMap<object, ParentInfo>();
 
 // Pending changes (proxy -> keys that changed)
@@ -45,23 +46,27 @@ export function reactive<T extends object>(initial: T, parent?: object, parentKe
       if (Object.is(prev, value)) return true;
 
       // Get the reactive object for this target
-      const thisReactive = reactiveMap.get(target)!;
+      const currentReactive = reactiveMap.get(target)!;
 
       // Auto-wrap nested plain objects with this as parent
       if (isPlainObject(value) && !isReactive(value)) {
-        value = reactive(value, thisReactive, prop);
+        value = reactive(value, currentReactive, prop);
       }
 
       Reflect.set(target, prop, value, receiver);
 
       // Mark this and all parents as pending
-      let current: object | undefined = thisReactive;
+      let current: object | undefined = currentReactive;
       let changedKey: PropertyKey = prop;
+
       while (current) {
-        if (!pending.has(current)) pending.set(current, new Set());
-        pending.get(current)!.add(changedKey);
+        let pendingKeys = pending.get(current);
+        if (!pendingKeys) pending.set(current, (pendingKeys = new Set()));
+        pendingKeys.add(changedKey);
+
         const info = parents.get(current);
         if (!info) break;
+
         changedKey = info.key;
         current = info.parent;
       }
@@ -75,14 +80,19 @@ export function reactive<T extends object>(initial: T, parent?: object, parentKe
       const result = Reflect.deleteProperty(target, prop);
 
       if (hadProp && result) {
-        const thisReactive = reactiveMap.get(target)!;
-        let current: object | undefined = thisReactive;
+        const currentReactive = reactiveMap.get(target)!;
+
+        let current: object | undefined = currentReactive;
         let changedKey: PropertyKey = prop;
+
         while (current) {
-          if (!pending.has(current)) pending.set(current, new Set());
-          pending.get(current)!.add(changedKey);
+          let pendingKeys = pending.get(current);
+          if (!pendingKeys) pending.set(current, (pendingKeys = new Set()));
+          pendingKeys.add(changedKey);
+
           const info = parents.get(current);
           if (!info) break;
+
           changedKey = info.key;
           current = info.parent;
         }
@@ -96,13 +106,17 @@ export function reactive<T extends object>(initial: T, parent?: object, parentKe
 
   reactiveCache.add(proxy);
   reactiveMap.set(initial, proxy);
+
   if (parent && parentKey !== undefined) parents.set(proxy, { parent, key: parentKey });
 
   // Auto-wrap nested plain objects after creation (so we can set parent)
-  for (const key of Object.keys(initial) as (keyof T)[]) {
-    const value = initial[key];
+  for (const key in initial) {
+    if (!Object.prototype.hasOwnProperty.call(initial, key)) continue;
+
+    const value = initial[key as keyof T];
+
     if (isPlainObject(value) && !isReactive(value)) {
-      (initial as Record<string, unknown>)[key as string] = reactive(value, proxy, key);
+      (initial as Record<string, unknown>)[key] = reactive(value, proxy, key);
     }
   }
 
@@ -127,13 +141,19 @@ export function flush(): void {
 
   for (const [target, keys] of pending) {
     // Notify global listeners for this target (with changed keys)
-    listeners.get(target)?.forEach(fn => fn(keys));
+    const targetListeners = listeners.get(target);
+    if (targetListeners) {
+      for (const fn of targetListeners) fn(keys);
+    }
 
     // Notify key-specific listeners (no args - already filtered by key)
     const targetKeyListeners = keyListeners.get(target);
     if (targetKeyListeners) {
       for (const key of keys) {
-        targetKeyListeners.get(key)?.forEach(fn => fn(keys));
+        const keySet = targetKeyListeners.get(key);
+        if (keySet) {
+          for (const fn of keySet) fn(keys);
+        }
       }
     }
   }
@@ -154,19 +174,21 @@ export function batch<R>(fn: () => R): R {
 
 /** Subscribe to all changes on a reactive state object. */
 export function subscribe<T extends object>(state: Reactive<T>, fn: Listener): () => void {
-  if (!listeners.has(state)) listeners.set(state, new Set());
-  listeners.get(state)!.add(fn);
+  let set = listeners.get(state);
+  if (!set) listeners.set(state, (set = new Set()));
+  set.add(fn);
   return () => listeners.get(state)?.delete(fn);
 }
 
 /** Subscribe to changes on specific keys of a reactive state object. */
 export function subscribeKeys<T extends object>(state: Reactive<T>, keys: (keyof T)[], fn: Listener): () => void {
-  if (!keyListeners.has(state)) keyListeners.set(state, new Map());
-  const targetMap = keyListeners.get(state)!;
+  let targetMap = keyListeners.get(state);
+  if (!targetMap) keyListeners.set(state, (targetMap = new Map()));
 
   for (const key of keys) {
-    if (!targetMap.has(key)) targetMap.set(key, new Set());
-    targetMap.get(key)!.add(fn);
+    let set = targetMap.get(key);
+    if (!set) targetMap.set(key, (set = new Set()));
+    set.add(fn);
   }
 
   return () => {
@@ -195,9 +217,9 @@ export interface Tracker<T extends object> {
 /**
  * Track property access on reactive state.
  *
- * Returns a tracker that records which properties are accessed and only
- * triggers updates when those specific properties change. Designed for
- * use with React's `useSyncExternalStore` or Lit's reactive controller pattern.
+ * Returns a tracker that records which properties are accessed and only triggers updates when
+ * those specific properties change. Designed for use with React's `useSyncExternalStore` or
+ * Lit's reactive controller pattern.
  */
 export function track<T extends object>(state: Reactive<T>): Tracker<T> {
   const accessed = new Set<PropertyKey>();
@@ -215,7 +237,18 @@ export function track<T extends object>(state: Reactive<T>): Tracker<T> {
     tracked,
     subscribe: notify =>
       subscribe(state, (changedKeys) => {
-        if (accessed.size === 0 || [...changedKeys].some(k => accessed.has(k))) {
+        let changed = accessed.size === 0;
+
+        if (!changed) {
+          for (const k of changedKeys) {
+            if (accessed.has(k)) {
+              changed = true;
+              break;
+            }
+          }
+        }
+
+        if (changed) {
           version++;
           notify();
         }
