@@ -13,6 +13,7 @@ Specialized knowledge for AI agents working on Video.js 10.
 | Reviewing API/architecture | `api` → `review/workflow.md`  |
 | Reviewing documentation    | `docs` → `review/workflow.md` |
 | Accessibility audit        | `aria`                        |
+| Committing / creating PRs  | `git`                         |
 
 ## Skills
 
@@ -22,6 +23,7 @@ Specialized knowledge for AI agents working on Video.js 10.
 | [docs](docs/SKILL.md)           | Write Video.js 10 documentation                                        | Yes         |
 | [component](component/SKILL.md) | Build headless UI components — compound patterns, state, styling       | No          |
 | [aria](aria/SKILL.md)           | Accessibility patterns — ARIA, keyboard, focus, media player a11y      | No          |
+| [git](git/SKILL.md)             | Git workflow — commit messages, PRs, branch naming, scope inference    | No          |
 
 ## Review Workflows
 
