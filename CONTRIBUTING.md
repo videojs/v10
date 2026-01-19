@@ -12,6 +12,9 @@ Video.js is a free and open source library, and we appreciate any help you're wi
 
 Video.js 10 is set up a monorepo using [`pnpm` workspaces](https://pnpm.io/workspaces). As such, most scripts run will be done from the project/workspace root. Unless otherwise specified, assume commands and similar should be run from the root directory.
 
+> [!TIP]
+> This repo includes tooling for AI-assisted development. See [Using AI](#using-ai).
+
 ### Getting Your Machine Ready
 
 You’ll need the following installed:
@@ -20,6 +23,7 @@ You’ll need the following installed:
 - [Git](https://git-scm.com/downloads)
 - [PNPM](https://pnpm.io/installation) (≥ 10.17.0)
 - [Volta](https://docs.volta.sh/guide) or [NVM](https://github.com/nvm-sh/nvm) (we recommend Volta for automatic Node management)
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (optional, for AI-assisted development)
 
 > [!TIP]
 > PNPM will automatically use the correct Node version when running scripts.
@@ -138,6 +142,39 @@ pnpm up <package>@<version> -r
 
 [pnpm-filtering]: https://pnpm.io/filtering
 
+## Using AI
+
+Video.js 10 includes tooling for AI-assisted development with [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Read [`CLAUDE.md`](./CLAUDE.md) for repo-wide conventions, package layout, and development workflow.
+
+### Slash Commands
+
+| Command          | Purpose                               |
+| ---------------- | ------------------------------------- |
+| `/commit-pr`     | Commit changes and create/update a PR |
+| `/review-branch` | Review changes in the current branch  |
+| `/gh-issue <n>`  | Analyze an issue and generate a plan  |
+
+### Skills
+
+Domain-specific knowledge lives in `.claude/skills/`:
+
+| Skill       | Use When                                |
+| ----------- | --------------------------------------- |
+| `api`       | Designing APIs, reviewing architecture  |
+| `component` | Building UI components                  |
+| `aria`      | Accessibility implementation and review |
+| `docs`      | Writing documentation                   |
+| `git`       | Commit messages, PR conventions         |
+
+See [`.claude/skills/README.md`](./.claude/skills/README.md) for workflow mappings.
+
+### Maintaining AI Docs
+
+When your changes introduce new patterns:
+
+- **Code conventions** → Update `CLAUDE.md` Code Rules section
+- **Domain patterns** → Update relevant skill in `.claude/skills/`
+
 ## Creating a Pull Request
 
 By submitting a pull request, you agree that your contribution is provided under the
@@ -203,13 +240,10 @@ See [Testing](#-testing) for more information.
 
 ### Step 6: Review Documentation
 
-If your changes introduced new patterns, conventions, or architectural decisions, check if documentation needs updates:
+If your changes introduced new patterns or conventions, check if documentation needs updates:
 
-- **CLAUDE.md** — Code rules, naming conventions, or workflow guidance
-- **`.claude/skills/`** — Component, accessibility, API design, or DX patterns
 - **Site docs** — User-facing documentation in `site/`
-
-This keeps our AI agents and future contributors aligned with the codebase.
+- **AI docs** — See [Maintaining AI Docs](#maintaining-ai-docs)
 
 ### Step 7: Push
 
