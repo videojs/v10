@@ -28,6 +28,7 @@ interface ParentInfo {
   parent: object;
   key: PropertyKey;
 }
+
 const parents = new WeakMap<object, ParentInfo>();
 
 // Pending changes (proxy -> keys that changed)
@@ -45,24 +46,27 @@ export function reactive<T extends object>(initial: T, parent?: object, parentKe
       if (Object.is(prev, value)) return true;
 
       // Get the reactive object for this target
-      const thisReactive = reactiveMap.get(target)!;
+      const currentReactive = reactiveMap.get(target)!;
 
       // Auto-wrap nested plain objects with this as parent
       if (isPlainObject(value) && !isReactive(value)) {
-        value = reactive(value, thisReactive, prop);
+        value = reactive(value, currentReactive, prop);
       }
 
       Reflect.set(target, prop, value, receiver);
 
       // Mark this and all parents as pending
-      let current: object | undefined = thisReactive;
+      let current: object | undefined = currentReactive;
       let changedKey: PropertyKey = prop;
+
       while (current) {
         let pendingKeys = pending.get(current);
         if (!pendingKeys) pending.set(current, (pendingKeys = new Set()));
         pendingKeys.add(changedKey);
+
         const info = parents.get(current);
         if (!info) break;
+
         changedKey = info.key;
         current = info.parent;
       }
@@ -76,15 +80,19 @@ export function reactive<T extends object>(initial: T, parent?: object, parentKe
       const result = Reflect.deleteProperty(target, prop);
 
       if (hadProp && result) {
-        const thisReactive = reactiveMap.get(target)!;
-        let current: object | undefined = thisReactive;
+        const currentReactive = reactiveMap.get(target)!;
+
+        let current: object | undefined = currentReactive;
         let changedKey: PropertyKey = prop;
+
         while (current) {
           let pendingKeys = pending.get(current);
           if (!pendingKeys) pending.set(current, (pendingKeys = new Set()));
           pendingKeys.add(changedKey);
+
           const info = parents.get(current);
           if (!info) break;
+
           changedKey = info.key;
           current = info.parent;
         }
@@ -98,12 +106,15 @@ export function reactive<T extends object>(initial: T, parent?: object, parentKe
 
   reactiveCache.add(proxy);
   reactiveMap.set(initial, proxy);
+
   if (parent && parentKey !== undefined) parents.set(proxy, { parent, key: parentKey });
 
   // Auto-wrap nested plain objects after creation (so we can set parent)
   for (const key in initial) {
     if (!Object.prototype.hasOwnProperty.call(initial, key)) continue;
+
     const value = initial[key as keyof T];
+
     if (isPlainObject(value) && !isReactive(value)) {
       (initial as Record<string, unknown>)[key] = reactive(value, proxy, key);
     }
@@ -206,9 +217,9 @@ export interface Tracker<T extends object> {
 /**
  * Track property access on reactive state.
  *
- * Returns a tracker that records which properties are accessed and only
- * triggers updates when those specific properties change. Designed for
- * use with React's `useSyncExternalStore` or Lit's reactive controller pattern.
+ * Returns a tracker that records which properties are accessed and only triggers updates when
+ * those specific properties change. Designed for use with React's `useSyncExternalStore` or
+ * Lit's reactive controller pattern.
  */
 export function track<T extends object>(state: Reactive<T>): Tracker<T> {
   const accessed = new Set<PropertyKey>();
@@ -226,16 +237,18 @@ export function track<T extends object>(state: Reactive<T>): Tracker<T> {
     tracked,
     subscribe: notify =>
       subscribe(state, (changedKeys) => {
-        let relevant = accessed.size === 0;
-        if (!relevant) {
+        let changed = accessed.size === 0;
+
+        if (!changed) {
           for (const k of changedKeys) {
             if (accessed.has(k)) {
-              relevant = true;
+              changed = true;
               break;
             }
           }
         }
-        if (relevant) {
+
+        if (changed) {
           version++;
           notify();
         }
