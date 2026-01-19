@@ -2,11 +2,11 @@ import { isObject, isPlainObject } from '@videojs/utils/predicate';
 
 type Listener = () => void;
 
-// Track which objects are proxied (for isProxy check)
-const proxyCache = new WeakSet<object>();
+// Track which objects are reactive (for isReactive check)
+const reactiveCache = new WeakSet<object>();
 
-// Map from target -> proxy (to find proxy from within set handler)
-const proxyMap = new WeakMap<object, object>();
+// Map from target -> reactive object (to find reactive from within set handler)
+const reactiveMap = new WeakMap<object, object>();
 
 // Global listeners per proxy
 const listeners = new WeakMap<object, Set<Listener>>();
@@ -24,25 +24,25 @@ const pending = new Map<object, Set<PropertyKey>>();
 let batchDepth = 0;
 let flushScheduled = false;
 
-/** Create a reactive proxy with optional parent for change bubbling. */
-export function proxy<T extends object>(initial: T, parent?: object): T {
-  const p = new Proxy(initial, {
+/** Create a reactive state object with optional parent for change bubbling. */
+export function reactive<T extends object>(initial: T, parent?: object): T {
+  const proxy = new Proxy(initial, {
     set(target, prop, value, receiver) {
       const prev = Reflect.get(target, prop, receiver);
       if (Object.is(prev, value)) return true;
 
-      // Get the proxy for this target
-      const thisProxy = proxyMap.get(target)!;
+      // Get the reactive object for this target
+      const thisReactive = reactiveMap.get(target)!;
 
-      // Auto-proxy nested plain objects with this proxy as parent
-      if (isPlainObject(value) && !isProxy(value)) {
-        value = proxy(value as object, thisProxy);
+      // Auto-wrap nested plain objects with this as parent
+      if (isPlainObject(value) && !isReactive(value)) {
+        value = reactive(value, thisReactive);
       }
 
       Reflect.set(target, prop, value, receiver);
 
-      // Mark this proxy and all parent proxies as pending
-      let current: object | undefined = thisProxy;
+      // Mark this and all parents as pending
+      let current: object | undefined = thisReactive;
       while (current) {
         if (!pending.has(current)) pending.set(current, new Set());
         pending.get(current)!.add(prop);
@@ -58,8 +58,8 @@ export function proxy<T extends object>(initial: T, parent?: object): T {
       const result = Reflect.deleteProperty(target, prop);
 
       if (hadProp && result) {
-        const thisProxy = proxyMap.get(target)!;
-        let current: object | undefined = thisProxy;
+        const thisReactive = reactiveMap.get(target)!;
+        let current: object | undefined = thisReactive;
         while (current) {
           if (!pending.has(current)) pending.set(current, new Set());
           pending.get(current)!.add(prop);
@@ -73,24 +73,24 @@ export function proxy<T extends object>(initial: T, parent?: object): T {
     },
   });
 
-  proxyCache.add(p);
-  proxyMap.set(initial, p);
-  if (parent) parents.set(p, parent);
+  reactiveCache.add(proxy);
+  reactiveMap.set(initial, proxy);
+  if (parent) parents.set(proxy, parent);
 
-  // Auto-proxy nested plain objects after the proxy is created (so we can set parent)
+  // Auto-wrap nested plain objects after creation (so we can set parent)
   for (const key of Object.keys(initial) as (keyof T)[]) {
     const value = initial[key];
-    if (isPlainObject(value) && !isProxy(value)) {
-      (initial as Record<string, unknown>)[key as string] = proxy(value as object, p);
+    if (isPlainObject(value) && !isReactive(value)) {
+      (initial as Record<string, unknown>)[key as string] = reactive(value, proxy);
     }
   }
 
-  return p;
+  return proxy;
 }
 
-/** Check if a value is a proxy created by this module. */
-export function isProxy(value: unknown): value is object {
-  return isObject(value) && proxyCache.has(value);
+/** Check if a value is reactive (created by this module). */
+export function isReactive(value: unknown): value is object {
+  return isObject(value) && reactiveCache.has(value);
 }
 
 function scheduleFlush(): void {
@@ -130,17 +130,17 @@ export function batch<R>(fn: () => R): R {
   }
 }
 
-/** Subscribe to all changes on a proxy. */
-export function subscribe<T extends object>(p: T, fn: Listener): () => void {
-  if (!listeners.has(p)) listeners.set(p, new Set());
-  listeners.get(p)!.add(fn);
-  return () => listeners.get(p)?.delete(fn);
+/** Subscribe to all changes on a reactive state object. */
+export function subscribe<T extends object>(state: T, fn: Listener): () => void {
+  if (!listeners.has(state)) listeners.set(state, new Set());
+  listeners.get(state)!.add(fn);
+  return () => listeners.get(state)?.delete(fn);
 }
 
-/** Subscribe to changes on specific keys of a proxy. */
-export function subscribeKeys<T extends object>(p: T, keys: (keyof T)[], fn: Listener): () => void {
-  if (!keyListeners.has(p)) keyListeners.set(p, new Map());
-  const targetMap = keyListeners.get(p)!;
+/** Subscribe to changes on specific keys of a reactive state object. */
+export function subscribeKeys<T extends object>(state: T, keys: (keyof T)[], fn: Listener): () => void {
+  if (!keyListeners.has(state)) keyListeners.set(state, new Map());
+  const targetMap = keyListeners.get(state)!;
 
   for (const key of keys) {
     if (!targetMap.has(key)) targetMap.set(key, new Set());
@@ -154,7 +154,7 @@ export function subscribeKeys<T extends object>(p: T, keys: (keyof T)[], fn: Lis
   };
 }
 
-/** Return a frozen shallow copy of the proxy's current state. */
-export function snapshot<T extends object>(p: T): Readonly<T> {
-  return Object.freeze({ ...p });
+/** Return a frozen shallow copy of the current state. */
+export function snapshot<T extends object>(state: T): Readonly<T> {
+  return Object.freeze({ ...state });
 }

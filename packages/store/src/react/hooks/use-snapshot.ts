@@ -3,13 +3,13 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { subscribe, subscribeKeys } from '../../core/state';
 
 /**
- * Subscribe to a reactive proxy and re-render when it changes.
+ * Subscribe to reactive state and re-render when it changes.
  *
- * Returns a tracking proxy that records which properties are accessed.
+ * Returns a tracking wrapper that records which properties are accessed.
  * Only re-renders when accessed properties change.
  *
- * @param proxy - A reactive proxy created by `proxy()`
- * @returns The proxy, which triggers re-renders when accessed properties change
+ * @param state - Reactive state created by `reactive()`
+ * @returns The state, which triggers re-renders when accessed properties change
  *
  * @example
  * ```tsx
@@ -19,34 +19,34 @@ import { subscribe, subscribeKeys } from '../../core/state';
  * }
  * ```
  */
-export function useSnapshot<T extends object>(proxy: T): T {
+export function useSnapshot<T extends object>(state: T): T {
   const versionRef = useRef(0);
   const [trackedKeys] = useState(() => new Set<PropertyKey>());
   const [subscribedKeys, setSubscribedKeys] = useState<PropertyKey[]>([]);
 
-  // Subscribe to proxy changes - resubscribes when subscribedKeys changes
-  const subscribeToProxy = useCallback(
+  // Subscribe to state changes - resubscribes when subscribedKeys changes
+  const subscribeToState = useCallback(
     (onStoreChange: () => void) => {
       if (subscribedKeys.length === 0) {
         // No keys yet (first render) - subscribe to all
-        return subscribe(proxy, () => {
+        return subscribe(state, () => {
           versionRef.current++;
           onStoreChange();
         });
       }
 
       // Subscribe only to tracked keys
-      return subscribeKeys(proxy, subscribedKeys as (keyof T)[], () => {
+      return subscribeKeys(state, subscribedKeys as (keyof T)[], () => {
         versionRef.current++;
         onStoreChange();
       });
     },
-    [proxy, subscribedKeys],
+    [state, subscribedKeys],
   );
 
   const getSnapshot = useCallback(() => versionRef.current, []);
 
-  useSyncExternalStore(subscribeToProxy, getSnapshot, getSnapshot);
+  useSyncExternalStore(subscribeToState, getSnapshot, getSnapshot);
 
   // After render: check if tracked keys differ from subscribed
   useEffect(() => {
@@ -60,10 +60,10 @@ export function useSnapshot<T extends object>(proxy: T): T {
     trackedKeys.clear();
   });
 
-  // Return tracking proxy
+  // Return tracking wrapper
   return useMemo(
     () =>
-      new Proxy(proxy, {
+      new Proxy(state, {
         get(target, prop, receiver) {
           if (typeof prop !== 'symbol') {
             trackedKeys.add(prop);
@@ -71,7 +71,7 @@ export function useSnapshot<T extends object>(proxy: T): T {
           return Reflect.get(target, prop, receiver);
         },
       }),
-    [proxy, trackedKeys],
+    [state, trackedKeys],
   );
 }
 

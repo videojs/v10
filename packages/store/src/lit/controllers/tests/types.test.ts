@@ -11,7 +11,7 @@ import { TasksController } from '../tasks-controller';
 
 describe('controller types', () => {
   describe('SnapshotController', () => {
-    it('value has proxy type', () => {
+    it('value has state type', () => {
       const { store } = createCoreTestStore();
       const host = createMockHost();
 

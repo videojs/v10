@@ -255,37 +255,23 @@ store.destroy();
 
 ### Subscribing to State
 
+State is reactive—subscribe to be notified when any property changes:
+
 ```ts
+import { subscribe, subscribeKeys } from '@videojs/store';
+
 // Subscribe to all state changes
-const unsubscribe = store.subscribe((state) => {
-  console.log('State changed:', state);
+const unsubscribe = subscribe(store.state, () => {
+  console.log('State changed:', store.state.volume);
 });
 
-// Single value - only fires when volume changes
-store.subscribe(
-  s => s.volume,
-  volume => console.log('Volume:', volume)
-);
-
-// Multiple values - auto-optimized with key-based subscription
-store.subscribe(
-  s => ({ volume: s.volume, muted: s.muted }),
-  ({ volume, muted }) => updateAudioUI(volume, muted)
-);
-
-// Derived value
-store.subscribe(
-  s => Math.round(s.volume * 100),
-  percent => console.log(`${percent}%`)
-);
-
-// Custom equality function
-store.subscribe(
-  s => s.playlist,
-  playlist => renderPlaylist(playlist),
-  { equalityFn: shallowEqual }
-);
+// Subscribe to specific keys only
+subscribeKeys(store.state, ['volume', 'muted'], () => {
+  console.log('Audio changed:', store.state.volume, store.state.muted);
+});
 ```
+
+Mutations are auto-batched—multiple changes in the same tick trigger only one notification.
 
 Slices sync state from the target via `getSnapshot`. The `update` callback triggers a sync, and the store only notifies subscribers for keys that actually changed:
 
@@ -494,8 +480,8 @@ queue.reset('seek'); // clear specific request
 queue.reset(); // clear all settled
 
 // Subscribe to task changes
-queue.subscribe((tasks) => {
-  const playTask = tasks.play;
+subscribe(queue.tasks, () => {
+  const playTask = queue.tasks.play;
   if (playTask?.status === 'pending') {
     console.log('Play in progress...');
   }
@@ -555,8 +541,10 @@ await queue.enqueue({
 Use `subscribe` to react to task changes—useful for loading states and error handling:
 
 ```ts
-queue.subscribe((tasks) => {
-  for (const [name, task] of Object.entries(tasks)) {
+import { subscribe } from '@videojs/store';
+
+subscribe(queue.tasks, () => {
+  for (const [name, task] of Object.entries(queue.tasks)) {
     if (task?.status === 'error' && !task.cancelled) {
       toast.error(`${name} failed: ${task.error}`);
     }
@@ -564,8 +552,8 @@ queue.subscribe((tasks) => {
 });
 
 // Analytics
-queue.subscribe((tasks) => {
-  for (const task of Object.values(tasks)) {
+subscribe(queue.tasks, () => {
+  for (const task of Object.values(queue.tasks)) {
     if (task && task.status !== 'pending') {
       analytics.track('request', {
         name: task.name,
@@ -579,40 +567,35 @@ queue.subscribe((tasks) => {
 
 ## Advanced
 
-### Custom State
+### Reactive Primitives
 
-The store uses a simple state container by default. Provide a custom factory for
-framework-native reactivity:
-
-```ts
-import { createStore } from '@videojs/store';
-
-// Default
-const store = createStore({
-  slices: [
-    /* ... */
-  ],
-});
-
-// Custom
-const store = createStore({
-  slices: [
-    /* ... */
-  ],
-  state: initial => new VueStateAdapter(initial),
-});
-```
-
-Custom state must match the `State` class interface, where `K` is `keyof T`:
+The store uses reactive state internally. You can also use these primitives directly:
 
 ```ts
-class State<T> {
-  get value(): T;
-  set(key: K, value: T[K]): void;
-  patch(partial: Partial<T>): void;
-  subscribe(listener: (state: T) => void): () => void;
-  subscribeKeys(keys: K[], listener: (state: Pick<T, K>) => void): () => void;
-}
+import { flush, isReactive, reactive, snapshot, subscribe, subscribeKeys } from '@videojs/store';
+
+// Create reactive state
+const state = reactive({ volume: 1, muted: false });
+
+// Mutate directly - changes are auto-batched
+state.volume = 0.5;
+state.muted = true;
+// Only ONE notification fires (after microtask)
+
+// Subscribe to all changes
+subscribe(state, () => console.log('Changed:', state.volume));
+
+// Subscribe to specific keys
+subscribeKeys(state, ['volume'], () => console.log('Volume:', state.volume));
+
+// Check if value is reactive
+isReactive(state); // true
+
+// Get frozen snapshot
+const snap = snapshot(state);
+
+// Force immediate notification (mainly for tests)
+flush();
 ```
 
 ### Capability Checking

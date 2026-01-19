@@ -12,7 +12,7 @@ export interface SnapshotControllerOptions<T extends object> {
 }
 
 /**
- * Subscribes to a reactive proxy and triggers host updates when tracked properties change.
+ * Subscribes to reactive state and triggers host updates when tracked properties change.
  *
  * Automatically tracks which properties are accessed during render and only
  * subscribes to changes on those specific keys.
@@ -40,20 +40,20 @@ export interface SnapshotControllerOptions<T extends object> {
  */
 export class SnapshotController<T extends object> implements ReactiveController {
   readonly #host: SnapshotControllerHost;
-  readonly #proxy: T;
+  readonly #state: T;
   readonly #trackedKeys = new Set<PropertyKey>();
   readonly #subscribedKeys = new Set<PropertyKey>();
-  readonly #trackingProxy: T;
+  readonly #trackingWrapper: T;
   readonly #onChange: ((snapshot: T) => void) | undefined;
   #unsubscribe = noop;
 
-  constructor(host: SnapshotControllerHost, proxy: T, options?: SnapshotControllerOptions<T>) {
+  constructor(host: SnapshotControllerHost, state: T, options?: SnapshotControllerOptions<T>) {
     this.#host = host;
-    this.#proxy = proxy;
+    this.#state = state;
     this.#onChange = options?.onChange;
 
-    // Create tracking proxy that records property access
-    this.#trackingProxy = new Proxy(proxy, {
+    // Create tracking wrapper that records property access
+    this.#trackingWrapper = new Proxy(state, {
       get: (target, prop, receiver) => {
         // Skip symbols (internal Lit/JS props)
         if (typeof prop !== 'symbol') {
@@ -66,9 +66,9 @@ export class SnapshotController<T extends object> implements ReactiveController 
     host.addController(this);
   }
 
-  /** Returns the tracking proxy. Access properties to subscribe to their changes. */
+  /** Returns the tracking wrapper. Access properties to subscribe to their changes. */
   get value(): T {
-    return this.#trackingProxy;
+    return this.#trackingWrapper;
   }
 
   hostConnected(): void {
@@ -102,9 +102,9 @@ export class SnapshotController<T extends object> implements ReactiveController 
 
     if (keys.length === 0) return;
 
-    this.#unsubscribe = subscribeKeys(this.#proxy, keys as (keyof T)[], () => {
+    this.#unsubscribe = subscribeKeys(this.#state, keys as (keyof T)[], () => {
       this.#host.requestUpdate();
-      this.#onChange?.(this.#proxy);
+      this.#onChange?.(this.#state);
     });
   }
 }

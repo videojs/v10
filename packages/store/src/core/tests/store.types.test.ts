@@ -133,7 +133,7 @@ describe('store types', () => {
   });
 
   describe('subscribe', () => {
-    it('state is a reactive proxy', () => {
+    it('state is reactive', () => {
       const store = createSingleSliceStore();
 
       expectTypeOf(store.state).toEqualTypeOf<{ volume: number; muted: boolean }>();

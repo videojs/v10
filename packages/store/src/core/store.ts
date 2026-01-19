@@ -14,7 +14,7 @@ import { isNull } from '@videojs/utils/predicate';
 import { StoreError } from './errors';
 import { Queue } from './queue';
 import { createRequestMeta, resolveRequestCancel, resolveRequestKey } from './request';
-import { proxy } from './state';
+import { reactive } from './state';
 
 export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[]> {
   readonly #config: StoreConfig<Target, Slices>;
@@ -24,7 +24,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
   readonly #requestConfigs: Map<string, ResolvedRequestConfig<Target>>;
   readonly #setupAbort = new AbortController();
 
-  /** Reactive proxy of state. Subscribe via `subscribe(store.state, fn)`. */
+  /** Reactive state. Subscribe via `subscribe(store.state, fn)`. */
   readonly state: UnionSliceState<Slices>;
 
   #target: Target | null = null;
@@ -36,7 +36,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     this.#slices = config.slices;
 
     this.#queue = config.queue ?? new Queue<UnionSliceTasks<Slices>>();
-    this.state = proxy(this.#createInitialState() as object) as UnionSliceState<Slices>;
+    this.state = reactive(this.#createInitialState() as object) as UnionSliceState<Slices>;
 
     this.#requestConfigs = this.#buildRequestConfigs();
     this.#request = this.#buildRequestProxy();

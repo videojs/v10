@@ -266,7 +266,7 @@ describe('store', () => {
     });
   });
 
-  describe('subscribe (via proxy)', () => {
+  describe('subscribe (via reactive)', () => {
     it('notifies on state change', async () => {
       const store = createStore({
         slices: [audioSlice],

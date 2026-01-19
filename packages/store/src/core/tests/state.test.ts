@@ -1,46 +1,46 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { batch, flush, isProxy, proxy, snapshot, subscribe, subscribeKeys } from '../state';
+import { batch, flush, isReactive, reactive, snapshot, subscribe, subscribeKeys } from '../state';
 
-describe('proxy', () => {
+describe('reactive', () => {
   interface TestState {
     volume: number;
     muted: boolean;
     currentTime: number;
   }
 
-  const createProxy = () =>
-    proxy<TestState>({
+  const createState = () =>
+    reactive<TestState>({
       volume: 1,
       muted: false,
       currentTime: 0,
     });
 
-  describe('proxy', () => {
-    it('creates a reactive proxy', () => {
-      const p = createProxy();
-      expect(p.volume).toBe(1);
-      expect(p.muted).toBe(false);
+  describe('reactive', () => {
+    it('creates reactive state', () => {
+      const s = createState();
+      expect(s.volume).toBe(1);
+      expect(s.muted).toBe(false);
     });
 
     it('allows direct mutation', () => {
-      const p = createProxy();
-      p.volume = 0.5;
-      expect(p.volume).toBe(0.5);
+      const s = createState();
+      s.volume = 0.5;
+      expect(s.volume).toBe(0.5);
     });
 
-    it('tracks proxy via isProxy', () => {
-      const p = createProxy();
-      expect(isProxy(p)).toBe(true);
-      expect(isProxy({})).toBe(false);
-      expect(isProxy(null)).toBe(false);
-      expect(isProxy(undefined)).toBe(false);
+    it('tracks reactive via isReactive', () => {
+      const s = createState();
+      expect(isReactive(s)).toBe(true);
+      expect(isReactive({})).toBe(false);
+      expect(isReactive(null)).toBe(false);
+      expect(isReactive(undefined)).toBe(false);
     });
   });
 
   describe('subscribe', () => {
     it('notifies on change after microtask', async () => {
-      const p = createProxy();
+      const p = createState();
       const listener = vi.fn();
       subscribe(p, listener);
 
@@ -55,7 +55,7 @@ describe('proxy', () => {
     });
 
     it('can force immediate notification with flush()', () => {
-      const p = createProxy();
+      const p = createState();
       const listener = vi.fn();
       subscribe(p, listener);
 
@@ -67,7 +67,7 @@ describe('proxy', () => {
     });
 
     it('does not notify on same value', () => {
-      const p = createProxy();
+      const p = createState();
       const listener = vi.fn();
       subscribe(p, listener);
 
@@ -77,7 +77,7 @@ describe('proxy', () => {
     });
 
     it('returns unsubscribe function', () => {
-      const p = createProxy();
+      const p = createState();
       const listener = vi.fn();
 
       const unsub = subscribe(p, listener);
@@ -94,7 +94,7 @@ describe('proxy', () => {
 
   describe('subscribeKeys', () => {
     it('only notifies for specified keys', () => {
-      const p = createProxy();
+      const p = createState();
       const volumeListener = vi.fn();
       const mutedListener = vi.fn();
 
@@ -115,7 +115,7 @@ describe('proxy', () => {
     });
 
     it('unsubscribes from all keys', () => {
-      const p = createProxy();
+      const p = createState();
       const listener = vi.fn();
 
       const unsub = subscribeKeys(p, ['volume', 'muted'], listener);
@@ -131,7 +131,7 @@ describe('proxy', () => {
 
   describe('batch', () => {
     it('batches multiple mutations into one notification', () => {
-      const p = createProxy();
+      const p = createState();
       const listener = vi.fn();
       subscribe(p, listener);
 
@@ -144,7 +144,7 @@ describe('proxy', () => {
     });
 
     it('explicit batch() groups mutations', () => {
-      const p = createProxy();
+      const p = createState();
       const listener = vi.fn();
       subscribe(p, listener);
 
@@ -166,7 +166,7 @@ describe('proxy', () => {
 
   describe('snapshot', () => {
     it('returns a frozen shallow copy', () => {
-      const p = createProxy();
+      const p = createState();
       const snap = snapshot(p);
 
       expect(snap).toEqual({ volume: 1, muted: false, currentTime: 0 });
@@ -174,7 +174,7 @@ describe('proxy', () => {
     });
 
     it('snapshot is independent of future changes', () => {
-      const p = createProxy();
+      const p = createState();
       const snap = snapshot(p);
 
       p.volume = 0.5;
@@ -184,7 +184,7 @@ describe('proxy', () => {
 
   describe('parent bubbling', () => {
     it('notifies parent when child changes', () => {
-      const parent = proxy<{ nested: { value: number } }>({
+      const parent = reactive<{ nested: { value: number } }>({
         nested: { value: 0 },
       });
       const parentListener = vi.fn();
@@ -196,16 +196,16 @@ describe('proxy', () => {
       expect(parentListener).toHaveBeenCalledOnce();
     });
 
-    it('auto-proxies nested objects', () => {
-      const p = proxy<{ nested?: { value: number } }>({});
+    it('auto-wraps nested objects', () => {
+      const s = reactive<{ nested?: { value: number } }>({});
 
-      p.nested = { value: 0 };
-      expect(isProxy(p.nested)).toBe(true);
+      s.nested = { value: 0 };
+      expect(isReactive(s.nested)).toBe(true);
 
       const listener = vi.fn();
-      subscribe(p, listener);
+      subscribe(s, listener);
 
-      p.nested.value = 42;
+      s.nested.value = 42;
       flush();
 
       expect(listener).toHaveBeenCalledOnce();
@@ -214,15 +214,15 @@ describe('proxy', () => {
 
   describe('delete property', () => {
     it('notifies on property deletion', () => {
-      const p = proxy<{ value?: number }>({ value: 1 });
+      const s = reactive<{ value?: number }>({ value: 1 });
       const listener = vi.fn();
-      subscribe(p, listener);
+      subscribe(s, listener);
 
-      delete p.value;
+      delete s.value;
       flush();
 
       expect(listener).toHaveBeenCalledOnce();
-      expect(p.value).toBeUndefined();
+      expect(s.value).toBeUndefined();
     });
   });
 });

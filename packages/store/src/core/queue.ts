@@ -4,7 +4,7 @@ import type { ErrorTask, PendingTask, SuccessTask, Task, TaskContext, TaskKey } 
 import { isUndefined } from '@videojs/utils/predicate';
 
 import { StoreError } from './errors';
-import { proxy } from './state';
+import { reactive } from './state';
 
 // ----------------------------------------
 // Types
@@ -35,13 +35,13 @@ export type TasksRecord<Tasks extends TaskRecord> = {
 // ----------------------------------------
 
 export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
-  /** Reactive proxy of tasks. Subscribe via `subscribe(queue.tasks, fn)`. */
+  /** Reactive tasks. Subscribe via `subscribe(queue.tasks, fn)`. */
   readonly tasks: TasksRecord<Tasks>;
 
   #destroyed = false;
 
   constructor() {
-    this.tasks = proxy<TasksRecord<Tasks>>({} as TasksRecord<Tasks>);
+    this.tasks = reactive<TasksRecord<Tasks>>({} as TasksRecord<Tasks>);
   }
 
   get destroyed(): boolean {
@@ -170,7 +170,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
       resolve(result);
 
-      // Only update if we're still the current task for this name (compare by ID since proxy wraps tasks)
+      // Only update if we're still the current task for this name (compare by ID since reactive wraps tasks)
       const currentTask = this.tasks[name as keyof Tasks];
       if (currentTask?.id === id) {
         const successTask: SuccessTask = {
@@ -184,7 +184,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     } catch (error) {
       reject(error);
 
-      // Only update if we're still the current task for this name (compare by ID since proxy wraps tasks)
+      // Only update if we're still the current task for this name (compare by ID since reactive wraps tasks)
       const currentTask = this.tasks[name as keyof Tasks];
       if (currentTask?.id === id) {
         const errorTask: ErrorTask = {

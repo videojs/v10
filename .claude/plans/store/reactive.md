@@ -1,20 +1,21 @@
-# Proxy State Migration Plan
+# Reactive State Migration Plan
 
 **Branch:** `feat/store-proxies`
 **Status:** COMPLETE
 
 ## Completed
 
-- **Phase 1:** Proxy primitives in `state.ts` — commit `f128125`
-- **Phase 2:** Update `Queue` and `Store` to use proxy — commit `63ec713`
+- **Phase 1:** Reactive primitives in `state.ts` — commit `f128125`
+- **Phase 2:** Update `Queue` and `Store` to use reactive — commit `63ec713`
 - **Phase 3:** Create `useSnapshot` and `SnapshotController`
 - **Phase 4:** Update dependent hooks/controllers to use new subscribe pattern
 - **Phase 5:** Delete old files and update exports
 - **Phase 6:** Remove legacy `State` class, delete unused `selector.ts` utility
+- **Phase 7:** Rename `proxy()` to `reactive()`, `isProxy()` to `isReactive()`
 
 ## Overview
 
-Replace class-based `State` with proxy-based reactivity. Remove selector APIs in favor of snapshot pattern. Add parent bubbling for nested object support.
+Replace class-based `State` with reactive state. Remove selector APIs in favor of snapshot pattern. Add parent bubbling for nested object support.
 
 **Goals:**
 
@@ -38,8 +39,8 @@ Replace class-based `State` with proxy-based reactivity. Remove selector APIs in
 Notifications are deferred to microtask by default. This means:
 
 ```ts
-proxy.a = 1;
-proxy.b = 2;
+state.a = 1;
+state.b = 2;
 // Only ONE notification fires (after microtask)
 ```
 
@@ -52,19 +53,19 @@ proxy.b = 2;
 **Reads are synchronous** — mutations apply immediately, only notifications are deferred:
 
 ```ts
-proxy.count = 5;
-console.log(proxy.count); // 5 ✓
+state.count = 5;
+console.log(state.count); // 5 ✓
 ```
 
 ---
 
 ## Core Changes
 
-### 1. Proxy-Based State
+### 1. Reactive State
 
 **Before:** `State` class with `set()`, `patch()`, `subscribe()`, `subscribeKeys()`
 
-**After:** `proxy()` function with automatic change detection
+**After:** `reactive()` function with automatic change detection
 
 ```ts
 // Before
@@ -73,7 +74,7 @@ this.#state.patch({ volume: 0.5 });
 this.#state.subscribe(fn);
 
 // After
-this.state = proxy(initial);
+this.state = reactive(initial);
 Object.assign(this.state, { volume: 0.5 });
 subscribe(this.state, fn);
 ```
@@ -129,7 +130,7 @@ Queue keeps its public API (`enqueue`, `abort`, `reset`, `tasks`) but uses proxy
 
 ---
 
-## Proxy Implementation
+## Reactive Implementation
 
 **See:** `packages/store/src/core/state.ts`
 
@@ -137,18 +138,18 @@ Queue keeps its public API (`enqueue`, `abort`, `reset`, `tasks`) but uses proxy
 
 | Export                           | Purpose                                    |
 | -------------------------------- | ------------------------------------------ |
-| `proxy(initial, parent?)`        | Create reactive proxy with parent bubbling |
-| `isProxy(value)`                 | Check if value is a proxy                  |
-| `subscribe(proxy, fn)`           | Subscribe to all changes                   |
-| `subscribeKeys(proxy, keys, fn)` | Subscribe to specific key changes          |
+| `reactive(initial, parent?)`     | Create reactive state with parent bubbling |
+| `isReactive(value)`              | Check if value is reactive                 |
+| `subscribe(state, fn)`           | Subscribe to all changes                   |
+| `subscribeKeys(state, keys, fn)` | Subscribe to specific key changes          |
 | `batch(fn)`                      | Group mutations, flush after               |
 | `flush()`                        | Force pending notifications (for tests)    |
-| `snapshot(proxy)`                | Return frozen shallow copy                 |
+| `snapshot(state)`                | Return frozen shallow copy                 |
 
 ### Key Behaviors
 
 - Auto-batches via `queueMicrotask`
-- Auto-proxies nested objects at creation and assignment
+- Auto-wraps nested objects at creation and assignment
 - Parent bubbling notifies ancestors when nested objects change
 
 ---
@@ -275,15 +276,15 @@ Since notifications are deferred to microtask, tests need to wait for flush:
 ```ts
 import { describe, expect, it, vi } from 'vitest';
 
-import { flush, proxy, subscribe } from './state';
+import { flush, reactive, subscribe } from './state';
 
-describe('proxy', () => {
+describe('reactive', () => {
   it('notifies subscribers after microtask', async () => {
-    const p = proxy({ count: 0 });
+    const s = reactive({ count: 0 });
     const listener = vi.fn();
-    subscribe(p, listener);
+    subscribe(s, listener);
 
-    p.count = 1;
+    s.count = 1;
 
     // Not called yet (deferred to microtask)
     expect(listener).not.toHaveBeenCalled();
@@ -293,19 +294,19 @@ describe('proxy', () => {
     expect(listener).toHaveBeenCalledOnce();
 
     // Option 2: await microtask
-    p.count = 2;
+    s.count = 2;
     await Promise.resolve();
     expect(listener).toHaveBeenCalledTimes(2);
   });
 
   it('batches multiple mutations', async () => {
-    const p = proxy({ a: 0, b: 0 });
+    const s = reactive({ a: 0, b: 0 });
     const listener = vi.fn();
-    subscribe(p, listener);
+    subscribe(s, listener);
 
-    p.a = 1;
-    p.b = 2;
-    p.a = 3;
+    s.a = 1;
+    s.b = 2;
+    s.a = 3;
 
     flush();
     // Only ONE notification despite 3 mutations

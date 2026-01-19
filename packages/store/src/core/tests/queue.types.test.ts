@@ -29,7 +29,7 @@ describe('queue types', () => {
       expectTypeOf(queue.abort).returns.toBeVoid();
     });
 
-    it('tasks is a reactive proxy', () => {
+    it('tasks is reactive', () => {
       const queue = createQueue();
 
       expectTypeOf(queue.tasks).toBeObject();

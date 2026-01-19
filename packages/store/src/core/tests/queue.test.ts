@@ -501,11 +501,11 @@ describe('Queue', () => {
   });
 
   describe('tasks property', () => {
-    it('returns reactive proxy', async () => {
+    it('returns reactive state', async () => {
       const queue = createQueue();
       await queue.enqueue({ name: 'task', key: 'k', handler: async () => 'result' });
 
-      // Tasks is now a reactive proxy, not a frozen object
+      // Tasks is now reactive state, not a frozen object
       expect(queue.tasks.task?.status).toBe('success');
     });
 
