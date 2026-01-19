@@ -74,9 +74,14 @@ Based on detected type, load the relevant skill for domain expertise:
 | Documentation                   | `docs`       | Tone, structure, code examples, doc types                     |
 | Accessibility                   | `aria`       | Keyboard, focus, ARIA patterns                                |
 | UI component implementation     | `component`  | Compound components, polymorphism, styling patterns           |
-| Bug/Feature (unclear)           | `dx`         | General principles apply                                      |
+| Bug/Feature (general)           | `dx`         | General principles apply                                      |
 
 **Load the skill using the skill tool before proceeding to analysis.**
+
+**Notes:**
+
+- For domain-specific bugs (e.g., accessibility bug), load the relevant domain skill (`aria`) instead of `dx`
+- When issues span multiple domains (e.g., "add accessible slider component"), load multiple skills: primary domain first, then supporting skills
 
 ### Step 3: Examine the Codebase
 

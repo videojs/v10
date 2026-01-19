@@ -45,11 +45,11 @@ You are an experienced software developer with expertise in code review.
 
 Categorize the changed files to determine which review criteria apply:
 
-| File Pattern                                   | Category      | Skill Reference     |
+| File Pattern                                   | Category      | Skills              |
 | ---------------------------------------------- | ------------- | ------------------- |
-| `packages/*/src/**/*.ts` (non-test)            | API/Code      | `dx-review`         |
+| `packages/*/src/**/*.ts` (non-test)            | API/Code      | `dx`, `api-design`  |
 | `packages/html/**`, `packages/react/**` (UI)   | UI Components | `component`, `aria` |
-| `site/**/*.md`, `**/README.md`, `**/CLAUDE.md` | Documentation | `docs-review`       |
+| `site/**/*.md`, `**/README.md`, `**/CLAUDE.md` | Documentation | `docs`              |
 | `packages/*/src/**/*.test.ts`                  | Tests         | General review      |
 | `.claude/**`                                   | Agent Config  | General review      |
 | Config files (`.json`, `.config.*`)            | Configuration | General review      |
@@ -58,13 +58,27 @@ Categorize the changed files to determine which review criteria apply:
 
 > Detected changes: [API/Code], [Documentation], [UI Components], etc.
 
-### Step 3: Apply Skill-Based Review Checklists
+### Step 3: Load Skills (Optional)
+
+For deeper domain-specific review, load the relevant skill using the skill tool:
+
+| Category      | Load Skill   | For Deeper Review               |
+| ------------- | ------------ | ------------------------------- |
+| API/Code      | `dx`         | `dx/review/workflow.md`         |
+| API/Code      | `api-design` | `api-design/review/workflow.md` |
+| UI Components | `component`  | References in SKILL.md          |
+| UI Components | `aria`       | `aria/references/checklist.md`  |
+| Documentation | `docs`       | `docs/review/workflow.md`       |
+
+Skip this step for quick reviews using the inline checklists below.
+
+### Step 4: Apply Skill-Based Review Checklists
 
 Based on detected categories, apply the relevant quick checklists:
 
 ---
 
-#### API/Code Changes Checklist (from `dx-review`)
+#### API/Code Changes Checklist (from `dx` and `api-design` skills)
 
 **Types & Inference:**
 
@@ -119,7 +133,7 @@ Based on detected categories, apply the relevant quick checklists:
 
 ---
 
-#### Documentation Changes Checklist (from `docs-review`)
+#### Documentation Changes Checklist (from `docs` skill)
 
 **Tone & Style:**
 
@@ -158,7 +172,7 @@ Based on detected categories, apply the relevant quick checklists:
 
 ---
 
-### Step 4: General Code Review
+### Step 5: General Code Review
 
 In addition to skill-based checks, review for:
 
@@ -170,7 +184,7 @@ In addition to skill-based checks, review for:
 - **Backwards compatibility** (if applicable)
 - **Test coverage** — are changes adequately tested?
 
-### Step 5: Produce Summary
+### Step 6: Produce Summary
 
 Structure your review as:
 
