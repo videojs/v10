@@ -1,21 +1,21 @@
-# DX Voices
+# Practitioner Voices
 
 Quick-reference heuristics from DX practitioners. Use as lightweight lenses — don't imitate tone, apply the thinking.
 
 ## Summary Heuristics
 
-| Voice               | Key Question                                                                |
-| ------------------- | --------------------------------------------------------------------------- |
-| Tanner Linsley      | Could this work across frameworks with the same core?                       |
-| Kent C. Dodds       | Does the API match how users think?                                         |
-| Ryan Carniato       | Does state change cause minimal re-work?                                    |
-| Adam Wathan         | Do constraints guide users to success?                                      |
-| Lee Robinson        | How fast is first success?                                                  |
-| Josh Comeau         | Does the README build intuition?                                            |
-| Evan You            | Does it feel like one cohesive product?                                     |
-| Base UI (preferred) | Is a11y in the architecture? Does `render` enable composition?              |
-| Radix               | Is a11y in the architecture? (see `ui-patterns.md` for `asChild` tradeoffs) |
-| Devon Govett        | Can behaviors compose via hooks?                                            |
+| Voice               | Key Question                                                   |
+| ------------------- | -------------------------------------------------------------- |
+| Tanner Linsley      | Could this work across frameworks with the same core?          |
+| Kent C. Dodds       | Does the API match how users think?                            |
+| Ryan Carniato       | Does state change cause minimal re-work?                       |
+| Adam Wathan         | Do constraints guide users to success?                         |
+| Lee Robinson        | How fast is first success?                                     |
+| Josh Comeau         | Does the README build intuition?                               |
+| Evan You            | Does it feel like one cohesive product?                        |
+| Base UI (preferred) | Is a11y in the architecture? Does `render` enable composition? |
+| Radix               | Is a11y in the architecture?                                   |
+| Devon Govett        | Can behaviors compose via hooks?                               |
 
 ---
 
@@ -43,7 +43,6 @@ Quick-reference heuristics from DX practitioners. Use as lightweight lenses — 
 - APIs should match how users think about the problem
 - Testing Library philosophy: test behavior, not implementation
 - Colocation — keep related things together
-- Avoid testing implementation details
 
 **Applied:** Does the API match the user's mental model? Can you test it the way it's actually used?
 
@@ -73,7 +72,7 @@ Quick-reference heuristics from DX practitioners. Use as lightweight lenses — 
 - Docs are the product's front door
 - Sensible defaults with escape hatches
 
-**Applied:** Are defaults sensible? Is the API constrained enough to guide users toward the pit of success?
+**Applied:** Are defaults sensible? Is the API constrained enough to guide users toward success?
 
 ---
 
@@ -146,142 +145,51 @@ Quick-reference heuristics from DX practitioners. Use as lightweight lenses — 
 
 ## Reference URLs
 
-URLs for studying best-in-class DX patterns. Fetch these when reviewing similar libraries.
+URLs for studying best-in-class patterns. Fetch when reviewing similar libraries.
 
 ### State Management
 
-**Zustand**
-
-- Docs: https://zustand.docs.pmnd.rs
-- GitHub: https://github.com/pmndrs/zustand
-- TypeScript Guide: https://zustand.docs.pmnd.rs/guides/typescript
-
-**Jotai**
-
-- Docs: https://jotai.org
-- GitHub: https://github.com/pmndrs/jotai
-- Core API: https://jotai.org/docs/core/atom
-
-**TanStack Store**
-
-- Docs: https://tanstack.com/store
-- GitHub: https://github.com/TanStack/store
-
-**XState**
-
-- Docs: https://stately.ai/docs
-- GitHub: https://github.com/statelyai/xstate
-- TypeScript: https://stately.ai/docs/typescript
-
-**Nanostores**
-
-- GitHub: https://github.com/nanostores/nanostores
-
-**Valtio**
-
-- Docs: https://valtio.dev
-- GitHub: https://github.com/pmndrs/valtio
-
----
+| Library        | Docs                                                                                     |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| Zustand        | https://zustand.docs.pmnd.rs, TypeScript: https://zustand.docs.pmnd.rs/guides/typescript |
+| Jotai          | https://jotai.org, Core: https://jotai.org/docs/core/atom                                |
+| TanStack Store | https://tanstack.com/store                                                               |
+| XState         | https://stately.ai/docs, TypeScript: https://stately.ai/docs/typescript                  |
+| Nanostores     | https://github.com/nanostores/nanostores                                                 |
+| Valtio         | https://valtio.dev                                                                       |
 
 ### UI Components
 
-**Base UI (Preferred)**
+| Library     | Docs                                                                                                          |
+| ----------- | ------------------------------------------------------------------------------------------------------------- |
+| Base UI     | https://base-ui.com, Styling: https://base-ui.com/react/handbook/styling                                      |
+| Radix UI    | https://www.radix-ui.com, Composition: https://www.radix-ui.com/primitives/docs/guides/composition            |
+| React Aria  | https://react-spectrum.adobe.com/react-aria, Architecture: https://react-spectrum.adobe.com/architecture.html |
+| Ark UI      | https://ark-ui.com                                                                                            |
+| Headless UI | https://headlessui.com                                                                                        |
+| Melt UI     | https://melt-ui.com (Svelte)                                                                                  |
+| Kobalte     | https://kobalte.dev (Solid)                                                                                   |
 
-- Docs: https://base-ui.com
-- Handbook: https://base-ui.com/react/handbook/styling
-- Composition: https://base-ui.com/react/handbook/composition
-- GitHub: https://github.com/mui/base-ui
+### Validation / Data
 
-**Radix UI**
-
-- Docs: https://www.radix-ui.com
-- Primitives: https://www.radix-ui.com/primitives
-- Composition Guide: https://www.radix-ui.com/primitives/docs/guides/composition
-- GitHub: https://github.com/radix-ui/primitives
-
-**React Aria**
-
-- Docs: https://react-spectrum.adobe.com/react-aria
-- Architecture: https://react-spectrum.adobe.com/architecture.html
-- GitHub: https://github.com/adobe/react-spectrum
-
-**Ark UI**
-
-- Docs: https://ark-ui.com
-- GitHub: https://github.com/chakra-ui/ark
-
-**Headless UI**
-
-- Docs: https://headlessui.com
-- GitHub: https://github.com/tailwindlabs/headlessui
-
-**Melt UI (Svelte)**
-
-- Docs: https://melt-ui.com
-- GitHub: https://github.com/melt-ui/melt-ui
-
-**Kobalte (Solid)**
-
-- Docs: https://kobalte.dev
-- GitHub: https://github.com/kobaltedev/kobalte
-
----
-
-### Validation / Schema
-
-**Zod**
-
-- Docs: https://zod.dev
-- GitHub: https://github.com/colinhacks/zod
-- Error Handling: https://zod.dev/ERROR_HANDLING
-
-**Valibot**
-
-- Docs: https://valibot.dev
-- GitHub: https://github.com/fabian-hiller/valibot
-
----
-
-### Data Fetching
-
-**TanStack Query**
-
-- Docs: https://tanstack.com/query
-- GitHub: https://github.com/TanStack/query
-- TypeScript: https://tanstack.com/query/latest/docs/framework/react/typescript
-
-**tRPC**
-
-- Docs: https://trpc.io
-- GitHub: https://github.com/trpc/trpc
-
----
-
-### Routing
-
-**TanStack Router**
-
-- Docs: https://tanstack.com/router
-- GitHub: https://github.com/TanStack/router
-
----
+| Library         | Docs                                                    |
+| --------------- | ------------------------------------------------------- |
+| Zod             | https://zod.dev, Errors: https://zod.dev/ERROR_HANDLING |
+| Valibot         | https://valibot.dev                                     |
+| TanStack Query  | https://tanstack.com/query                              |
+| tRPC            | https://trpc.io                                         |
+| TanStack Router | https://tanstack.com/router                             |
 
 ### Utilities
 
-**es-toolkit**
-
-- Docs: https://es-toolkit.slash.page
-- GitHub: https://github.com/toss/es-toolkit
-
-**Effect**
-
-- Docs: https://effect.website
-- GitHub: https://github.com/Effect-TS/effect
+| Library    | Docs                          |
+| ---------- | ----------------------------- |
+| es-toolkit | https://es-toolkit.slash.page |
+| Effect     | https://effect.website        |
 
 ---
 
-### Key Pages to Study
+## Key Pages to Study
 
 When reviewing a specific pattern, fetch these for comparison:
 
@@ -298,7 +206,7 @@ When reviewing a specific pattern, fetch these for comparison:
 
 ---
 
-### Documentation Examples
+## Documentation Examples
 
 Best-in-class docs structure to reference:
 
@@ -306,3 +214,10 @@ Best-in-class docs structure to reference:
 - **Zod** — Single-page with excellent type examples
 - **Radix** — Component pages with anatomy, API, accessibility sections
 - **React Aria** — Architecture explanation, hooks composition guides
+
+---
+
+## See Also
+
+- [Libraries](libraries.md) — code patterns from these libraries
+- [Principles](principles.md) — principles these practitioners embody

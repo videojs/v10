@@ -67,14 +67,14 @@ You are an experienced software developer tasked with diagnosing issues.
 
 Based on detected type, load the relevant skill for domain expertise:
 
-| Detected Type                   | Load Skill   | Why                                                           |
-| ------------------------------- | ------------ | ------------------------------------------------------------- |
-| API proposal, RFC, architecture | `api-design` | Extensibility, progressive disclosure, type safety principles |
-| DX, ergonomics, types           | `dx`         | DX principles, TypeScript patterns, state/adapter patterns    |
-| Documentation                   | `docs`       | Tone, structure, code examples, doc types                     |
-| Accessibility                   | `aria`       | Keyboard, focus, ARIA patterns                                |
-| UI component implementation     | `component`  | Compound components, polymorphism, styling patterns           |
-| Bug/Feature (general)           | `dx`         | General principles apply                                      |
+| Detected Type                   | Load Skill  | Why                                                           |
+| ------------------------------- | ----------- | ------------------------------------------------------------- |
+| API proposal, RFC, architecture | `api`       | Extensibility, progressive disclosure, type safety principles |
+| DX, ergonomics, types           | `api`       | DX principles, TypeScript patterns, state/adapter patterns    |
+| Documentation                   | `docs`      | Tone, structure, code examples, doc types                     |
+| Accessibility                   | `aria`      | Keyboard, focus, ARIA patterns                                |
+| UI component implementation     | `component` | Compound components, polymorphism, styling patterns           |
+| Bug/Feature (general)           | `api`       | General principles apply                                      |
 
 **Load the skill using the skill tool before proceeding to analysis.**
 
@@ -119,15 +119,12 @@ Create a plan to solve the issue that includes:
 
 **Skill-Specific Considerations:**
 
-For **API/Architecture** issues (with `api-design` skill):
+For **API/Architecture/DX** issues (with `api` skill):
 
 - Does the solution follow emergent extensibility?
 - Is progressive disclosure maintained?
 - Are types inferred without annotation?
 - Does it avoid anti-patterns (overloads, shotgun parsing)?
-
-For **DX** issues (with `dx` skill):
-
 - Does it minimize time-to-first-success?
 - Does it reduce cognitive load?
 - Are mental models clear and predictable?

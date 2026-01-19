@@ -4,46 +4,43 @@ Specialized knowledge for AI agents working on Video.js 10.
 
 ## Quick Reference
 
-| Workflow                  | Load                                      |
-| ------------------------- | ----------------------------------------- |
-| Building store/slices     | `api-design`                              |
-| Building Lit components   | `component` + `aria`                      |
-| Building React components | `component` + `aria` (load react.md refs) |
-| Writing documentation     | `docs`                                    |
-| Reviewing architecture    | `api-design` → `review/workflow.md`       |
-| Reviewing DX/ergonomics   | `dx` → `review/workflow.md`               |
-| Reviewing documentation   | `docs` → `review/workflow.md`             |
-| Accessibility audit       | `aria`                                    |
+| Workflow                   | Load                          |
+| -------------------------- | ----------------------------- |
+| Building store/slices      | `api`                         |
+| Building Lit components    | `component` + `aria`          |
+| Building React components  | `component` + `aria`          |
+| Writing documentation      | `docs`                        |
+| Reviewing API/architecture | `api` → `review/workflow.md`  |
+| Reviewing documentation    | `docs` → `review/workflow.md` |
+| Accessibility audit        | `aria`                        |
 
 ## Skills
 
-| Skill                             | Purpose                                                                  | Has Review? |
-| --------------------------------- | ------------------------------------------------------------------------ | ----------- |
-| [api-design](api-design/SKILL.md) | Design library APIs — extensibility, type safety, progressive disclosure | Yes         |
-| [dx](dx/SKILL.md)                 | Evaluate library DX — inference ergonomics, defaults, naming             | Yes         |
-| [docs](docs/SKILL.md)             | Write Video.js 10 documentation                                          | Yes         |
-| [component](component/SKILL.md)   | Build headless UI components — compound patterns, state, styling         | No          |
-| [aria](aria/SKILL.md)             | Accessibility patterns — ARIA, keyboard, focus, media player a11y        | No          |
+| Skill                           | Purpose                                                                | Has Review? |
+| ------------------------------- | ---------------------------------------------------------------------- | ----------- |
+| [api](api/SKILL.md)             | API design and DX — extensibility, type safety, progressive disclosure | Yes         |
+| [docs](docs/SKILL.md)           | Write Video.js 10 documentation                                        | Yes         |
+| [component](component/SKILL.md) | Build headless UI components — compound patterns, state, styling       | No          |
+| [aria](aria/SKILL.md)           | Accessibility patterns — ARIA, keyboard, focus, media player a11y      | No          |
 
 ## Review Workflows
 
-Each skill with review capability has a `review/` subfolder:
+Skills with review capability have a `review/` subfolder:
 
 ```
 skill/
 ├── SKILL.md
-├── references/        # or principles/
+├── references/
 └── review/
     ├── workflow.md    # Review process and checklists
     ├── agents.md      # Sub-agent prompts
     └── templates.md   # Output formats
 ```
 
-| Skill                | Review Focus                                                |
-| -------------------- | ----------------------------------------------------------- |
-| `api-design/review/` | Internal architecture — middleware, builders, type flow     |
-| `dx/review/`         | External API surface — ergonomics, inference, composability |
-| `docs/review/`       | Documentation quality — tone, structure, examples           |
+| Skill          | Review Focus                                      |
+| -------------- | ------------------------------------------------- |
+| `api/review/`  | API design, architecture, DX, type safety         |
+| `docs/review/` | Documentation quality — tone, structure, examples |
 
 ## Skill Structure
 
@@ -61,7 +58,7 @@ skill-name/
 
 **Add a reference file:**
 
-1. Create file in `references/` (or `principles/`)
+1. Create file in `references/`
 2. Add entry to reference table in SKILL.md
 3. Add cross-links to related files
 
@@ -82,7 +79,7 @@ skill-name/
 
 When code changes introduce new patterns that a skill should cover:
 
-1. Identify affected skill (component, aria, api-design, dx, docs)
+1. Identify affected skill (component, aria, api, docs)
 2. Update the relevant reference file or add a new one
 3. If pattern is cross-cutting, update CLAUDE.md Code Rules instead
 

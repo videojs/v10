@@ -453,7 +453,6 @@ CLAUDE.md contains repo-wide conventions. Domain-specific patterns live in skill
 | Component patterns and APIs | `component` skill    |
 | Accessibility               | `aria` skill         |
 | Documentation               | `docs` skill         |
-| API design                  | `api-design` skill   |
-| DX evaluation               | `dx` skill           |
+| API design and DX           | `api` skill          |
 
 When adding a new rule, ask: "Who needs this?" If it's domain-specific, put it in the relevant skill.

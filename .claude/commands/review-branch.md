@@ -47,7 +47,7 @@ Categorize the changed files to determine which review criteria apply:
 
 | File Pattern                                   | Category      | Skills              |
 | ---------------------------------------------- | ------------- | ------------------- |
-| `packages/*/src/**/*.ts` (non-test)            | API/Code      | `dx`, `api-design`  |
+| `packages/*/src/**/*.ts` (non-test)            | API/Code      | `api`               |
 | `packages/html/**`, `packages/react/**` (UI)   | UI Components | `component`, `aria` |
 | `site/**/*.md`, `**/README.md`, `**/CLAUDE.md` | Documentation | `docs`              |
 | `packages/*/src/**/*.test.ts`                  | Tests         | General review      |
@@ -62,13 +62,12 @@ Categorize the changed files to determine which review criteria apply:
 
 For deeper domain-specific review, load the relevant skill using the skill tool:
 
-| Category      | Load Skill   | For Deeper Review               |
-| ------------- | ------------ | ------------------------------- |
-| API/Code      | `dx`         | `dx/review/workflow.md`         |
-| API/Code      | `api-design` | `api-design/review/workflow.md` |
-| UI Components | `component`  | References in SKILL.md          |
-| UI Components | `aria`       | `aria/references/checklist.md`  |
-| Documentation | `docs`       | `docs/review/workflow.md`       |
+| Category      | Load Skill  | For Deeper Review              |
+| ------------- | ----------- | ------------------------------ |
+| API/Code      | `api`       | `api/review/workflow.md`       |
+| UI Components | `component` | References in SKILL.md         |
+| UI Components | `aria`      | `aria/references/checklist.md` |
+| Documentation | `docs`      | `docs/review/workflow.md`      |
 
 Skip this step for quick reviews using the inline checklists below.
 
@@ -78,7 +77,7 @@ Based on detected categories, apply the relevant quick checklists:
 
 ---
 
-#### API/Code Changes Checklist (from `dx` and `api-design` skills)
+#### API/Code Changes Checklist (from `api` skill)
 
 **Types & Inference:**
 

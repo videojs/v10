@@ -1,12 +1,12 @@
-# TypeScript Patterns for Library Authors
+# TypeScript Patterns
 
-How to design APIs with great type inference.
+Type inference techniques for library authors and evaluation patterns for consumers.
 
 ## The Partial Inference Problem
 
 TypeScript infers all generics or none. Libraries need techniques to enable partial inference.
 
-### Currying Pattern (Zustand)
+### Currying Pattern
 
 Split creation into two function calls to create separate inference sites:
 
@@ -36,7 +36,7 @@ type User = z.infer<typeof schema>;
 
 ### Factory with Generics Bound Once
 
-Capture target/platform type once, let callbacks infer it:
+Capture target/platform type once, let callbacks infer:
 
 ```ts
 // Capture Target type once
@@ -70,7 +70,7 @@ function parseNonEmpty<T>(list: T[]): NonEmptyArray<T> | null {
 // After parse, TypeScript knows it's non-empty
 ```
 
-**Why parsing wins:** After parsing, TypeScript remembers the constraint. No redundant checks needed downstream. The type carries the proof.
+**Why parsing wins:** After parsing, TypeScript remembers the constraint. No redundant checks downstream.
 
 ---
 
@@ -98,7 +98,29 @@ const user = userSchema.parse(request.body);
 processUser(user);
 ```
 
-**The principle:** Parse untrusted data at API boundaries. Once parsed, trust the types. No defensive checks in business logic.
+---
+
+## Explicit Context Narrowing
+
+TypeScript's control flow doesn't propagate through function boundaries:
+
+```ts
+// Type narrowing lost
+const middleware = ({ ctx, next }) => {
+  if (!ctx.user) throw new Error('Unauthorized');
+  return next(); // ctx.user still User | undefined downstream
+};
+
+// Explicit return tells TypeScript
+const middleware = ({ ctx, next }) => {
+  if (!ctx.user) throw new Error('Unauthorized');
+  return next({
+    ctx: { ...ctx, user: ctx.user }, // Explicitly non-null
+  });
+};
+```
+
+**Why explicit returns:** TypeScript can't know that throwing guarantees `ctx.user` exists in `next()`. You must explicitly return the narrowed context.
 
 ---
 
@@ -126,7 +148,7 @@ const t = initTRPC.context<{ user: User }>().create();
 
 ---
 
-## Design Types First, Implement Second
+## Design Types First
 
 > "Without the types and without that being great, there's no point of tRPC." — KATT
 
@@ -143,8 +165,6 @@ const t = initTRPC.context<{ user: User }>().create();
 - IDE autocomplete becomes documentation
 - "If it compiles, the API contract is correct"
 
-**The test:** Can you write the types for your API in a playground without the implementation? If the types are awkward, the API is awkward.
-
 ---
 
 ## Export Helper Types
@@ -152,41 +172,110 @@ const t = initTRPC.context<{ user: User }>().create();
 Every library should export helper types so users can derive types:
 
 ```ts
-// Export these from your library
+// Zustand
+type State = ExtractState<typeof useStore>;
+
+// Jotai
+type Value = ExtractAtomValue<typeof myAtom>;
+
+// XState
+type Snapshot = SnapshotFrom<typeof machine>;
+
+// Your library
 export type ExtractState<S> = S extends Store<infer T> ? T : never;
 export type InferInput<S> = S extends Schema<infer I, any> ? I : never;
-export type SnapshotFrom<M> = M extends Machine<infer S> ? S : never;
 ```
 
 **Rule:** If users need to manually annotate, export a helper type to derive it.
 
 ---
 
-## Explicit Context Narrowing
-
-TypeScript's control flow doesn't propagate through function boundaries:
+## Type Guards Over String Checks
 
 ```ts
-// Type narrowing lost
-const middleware = ({ ctx, next }) => {
-  if (!ctx.user) throw new Error('Unauthorized');
-  return next(); // ctx.user still User | undefined downstream
-};
+// Poor: stringly-typed, no narrowing
+if (state.status === 'playing') { ... }
 
-// Explicit return tells TypeScript
-const middleware = ({ ctx, next }) => {
-  if (!ctx.user) throw new Error('Unauthorized');
-  return next({
-    ctx: { ...ctx, user: ctx.user }, // Explicitly non-null
-  });
-};
+// Good: type guard with narrowing
+if (isPlaying(state)) {
+  state.currentTime // typed as number
+}
 ```
 
-**Why explicit returns:** TypeScript can't know that throwing guarantees `ctx.user` exists in `next()`. You must explicitly return the narrowed context.
+---
+
+## Discriminated Unions for State
+
+```ts
+type RequestState<T> =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; data: T }
+  | { status: 'error'; error: Error };
+
+// Narrowing works automatically
+if (state.status === 'success') {
+  state.data; // typed
+}
+```
+
+---
+
+## Generic Constraints
+
+Good constraints guide inference and provide better errors:
+
+```ts
+// Poor: accepts anything, unhelpful errors
+function createStore<T>(initial: T): Store<T>;
+
+// Good: constrained, clear expectations
+function createStore<T extends Record<string, unknown>>(initial: T): Store<T>;
+```
+
+---
+
+## Inference Red Flags
+
+| Pattern                             | Problem                       |
+| ----------------------------------- | ----------------------------- |
+| Frequent explicit generics in usage | Inference not working         |
+| `unknown` in public API             | Forces user casting           |
+| Deeply nested generics              | Inference often fails         |
+| Required type annotations           | Library isn't inference-first |
+
+---
+
+## Testing Type Inference
+
+Use `expectTypeOf` (vitest) or `tsd` to verify inference:
+
+```ts
+import { expectTypeOf } from 'vitest';
+
+test('infers state type', () => {
+  const store = createStore({ count: 0 });
+  expectTypeOf(store.getState()).toEqualTypeOf<{ count: number }>();
+});
+```
+
+---
+
+## Method Chaining vs Function Composition
+
+| Approach                                | Pros                                | Cons              |
+| --------------------------------------- | ----------------------------------- | ----------------- |
+| Chaining (`z.string().email()`)         | Reads naturally, great autocomplete | Larger bundle     |
+| Composition (`pipe(string(), email())`) | Tree-shakeable                      | Less discoverable |
+
+**Bundle comparison:**
+
+- Zod (chaining): ~15 kB for login form
+- Valibot (composition): ~1.4 kB for same form
 
 ---
 
 ## See Also
 
-- [TypeScript Patterns (Consumer View)](../../dx/references/typescript-patterns.md) — evaluating library types
-- [Extensibility Patterns](extensibility.md) — middleware and plugin design
+- [Principles](principles.md) — core design principles
+- [Anti-Patterns](anti-patterns.md) — TypeScript mistakes to avoid

@@ -1,6 +1,6 @@
 # Reference Libraries
 
-Best-in-class libraries and their key DX patterns. Use as benchmarks when evaluating library usability.
+Best-in-class libraries and their key patterns. Use as benchmarks when designing or evaluating APIs.
 
 ## State Management
 
@@ -26,7 +26,7 @@ const useStore = create<State>()(
 const count = useStore((s) => s.count);
 ```
 
-**Why great DX:**
+**Why great:**
 
 - Works without Provider
 - Middleware composes via function wrapping
@@ -49,7 +49,7 @@ const [count, setCount] = useAtom(countAtom);
 const doubled = useAtomValue(doubledAtom);
 ```
 
-**Why great DX:**
+**Why great:**
 
 - `useState` replacement feel
 - Derived atoms auto-track dependencies
@@ -72,7 +72,7 @@ const count = useStore(store, (s) => s.count);
 // Same API in Vue, Solid, Svelte
 ```
 
-**Why great DX:**
+**Why great:**
 
 - Learn once, use everywhere
 - Core is pure TypeScript
@@ -99,7 +99,7 @@ const machine = setup({
 });
 ```
 
-**Why great DX:**
+**Why great:**
 
 - `setup()` centralizes type definitions
 - Visualizable in inspector
@@ -121,7 +121,7 @@ const machine = setup({
 />
 ```
 
-**Why great DX:**
+**Why great:**
 
 - Explicit prop flow via render prop
 - State access in render function
@@ -149,7 +149,7 @@ const machine = setup({
 </Dialog.Root>
 ```
 
-**Why great DX:**
+**Why great:**
 
 - Compound structure is intuitive
 - `data-state` enables CSS styling
@@ -173,7 +173,7 @@ function Checkbox(props) {
 }
 ```
 
-**Why great DX:**
+**Why great:**
 
 - Stately hooks work with React Native
 - Aria hooks add web-specific behavior
@@ -203,7 +203,7 @@ if (!result.success) {
 }
 ```
 
-**Why great DX:**
+**Why great:**
 
 - `z.infer<typeof schema>` for types
 - `.safeParse()` returns Result, not throws
@@ -226,7 +226,7 @@ const { data, isLoading, error } = useQuery({
 });
 ```
 
-**Why great DX:**
+**Why great:**
 
 - `queryKey` for cache identity
 - Automatic background refetch
@@ -235,9 +235,9 @@ const { data, isLoading, error } = useQuery({
 
 ---
 
-## Quick Reference Table
+## Quick Reference
 
-| Library        | Key DX Innovation                                      |
+| Library        | Key Innovation                                         |
 | -------------- | ------------------------------------------------------ |
 | Zustand        | No Provider, curried inference, middleware composition |
 | Jotai          | Atomic primitives, derived state auto-tracking         |
@@ -248,3 +248,10 @@ const { data, isLoading, error } = useQuery({
 | React Aria     | Separated state/behavior, accessibility by default     |
 | Zod            | `z.infer`, chainable, Result pattern                   |
 | TanStack Query | `queryKey`, SWR pattern, devtools                      |
+
+---
+
+## See Also
+
+- [Voices](voices.md) — practitioner perspectives and URLs
+- [Principles](principles.md) — design principles these libraries embody

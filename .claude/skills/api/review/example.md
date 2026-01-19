@@ -1,4 +1,4 @@
-# Example: API Design Review
+# Example: API Review
 
 Review of a proposed media player store API.
 
@@ -14,29 +14,29 @@ function createPlayer(
   muted: boolean,
   controls: ControlsConfig,
   plugins?: Plugin[]
-): Player
+): Player;
 
 interface Player {
-  play(): void
-  pause(): void
-  getState(): PlayerState
-  registerPlugin(plugin: Plugin): void
-  on(event: string, handler: Function): void
+  play(): void;
+  pause(): void;
+  getState(): PlayerState;
+  registerPlugin(plugin: Plugin): void;
+  on(event: string, handler: Function): void;
 }
 ```
 
 ---
 
-# API Design Review: createPlayer
+# API Review: createPlayer
 
 ## Overall Score: 4/10
 
-| Dimension | Score | Critical | Major | Minor |
-|-----------|-------|----------|-------|-------|
-| API Surface | 3/10 | 1 | 1 | 1 |
-| Type Safety | 4/10 | 0 | 2 | 0 |
-| Extensibility | 3/10 | 1 | 1 | 0 |
-| Progressive Disclosure | 6/10 | 0 | 1 | 1 |
+| Dimension              | Score | Critical | Major | Minor |
+| ---------------------- | ----- | -------- | ----- | ----- |
+| Types                  | 4/10  | 0        | 2     | 0     |
+| API Surface            | 3/10  | 1        | 1     | 1     |
+| Extensibility          | 3/10  | 1        | 1     | 0     |
+| Progressive Disclosure | 6/10  | 0        | 1     | 1     |
 
 ---
 
@@ -46,13 +46,13 @@ interface Player {
 
 **What:** `createPlayer(source, autoplay, muted, controls, plugins)` requires remembering argument order
 **Where:** `createPlayer()` function signature
-**Why:** Impossible to remember order; adding options requires breaking changes or overloads; boolean params are particularly confusing (`true, false` means what?)
-**Principle:** Config objects for 3+ params (api-surface.md)
+**Why:** Impossible to remember order; adding options requires breaking changes; boolean params particularly confusing (`true, false` means what?)
+**Principle:** Config objects for 3+ params (principles.md)
 **Fix:** Single config object
 
 ```typescript
 // Before
-createPlayer('video.mp4', true, false, defaultControls, [analytics])
+createPlayer('video.mp4', true, false, defaultControls, [analytics]);
 
 // After
 createPlayer({
@@ -60,7 +60,7 @@ createPlayer({
   autoplay: true,
   controls: defaultControls,
   slices: [analyticsSlice],
-})
+});
 ```
 
 ---
@@ -70,20 +70,20 @@ createPlayer({
 **What:** `player.registerPlugin(plugin)` allows adding plugins after creation
 **Where:** `Player.registerPlugin()` method
 **Why:** TypeScript can't track what capabilities exist; ordering is implicit; can't tree-shake unused plugins
-**Principle:** Emergent extensibility through composition (foundational.md)
+**Principle:** Emergent extensibility through composition (principles.md)
 **Fix:** Composition at creation time
 
 ```typescript
 // Before
-const player = createPlayer(config)
-player.registerPlugin(analytics)  // Types don't know analytics exists
-player.registerPlugin(keyboard)   // Order matters but isn't visible
+const player = createPlayer(config);
+player.registerPlugin(analytics); // Types don't know analytics exists
+player.registerPlugin(keyboard); // Order matters but isn't visible
 
 // After
 const player = createPlayer({
   ...config,
-  slices: [analyticsSlice, keyboardSlice],  // Types know exactly what's included
-})
+  slices: [analyticsSlice, keyboardSlice], // Types know exactly what's included
+});
 ```
 
 ---
@@ -94,17 +94,17 @@ const player = createPlayer({
 
 **What:** `getState()` likely returns a new object each time
 **Where:** `Player.getState(): PlayerState`
-**Why:** React components re-render on every state change, not just relevant changes; performance degrades with store size
-**Principle:** Selectors for performance-critical subscriptions (api-surface.md)
+**Why:** React components re-render on every state change, not just relevant changes
+**Principle:** Selectors for fine-grained subscriptions (state.md)
 **Fix:** Support selector pattern
 
 ```typescript
 // Before
-const state = player.getState()  // New object every time
-const paused = state.paused      // Component re-renders on ANY change
+const state = player.getState(); // New object every time
+const paused = state.paused; // Component re-renders on ANY change
 
 // After
-const paused = usePlayer(s => s.paused)  // Re-render only when paused changes
+const paused = usePlayer((s) => s.paused); // Re-render only when paused changes
 ```
 
 ---
@@ -114,7 +114,7 @@ const paused = usePlayer(s => s.paused)  // Re-render only when paused changes
 **What:** `on(event: string, handler: Function)` has no type safety
 **Where:** `Player.on()` method
 **Why:** No autocomplete for event names; handler arguments untyped; typos fail silently
-**Principle:** Types as contracts (api-surface.md)
+**Principle:** Types as contracts (typescript.md)
 **Fix:** Typed event map
 
 ```typescript
@@ -142,19 +142,19 @@ player.on('plaay', ...)          // TS Error: 'plaay' not in PlayerEvents
 **What:** API doesn't expose access to raw video/audio element
 **Where:** `Player` interface (missing)
 **Why:** Power users can't handle edge cases (custom codecs, WebRTC, canvas capture)
-**Principle:** Escape hatches that compose (progressive-disclosure.md)
+**Principle:** Escape hatches that compose (principles.md)
 **Fix:** Explicit escape hatch
 
 ```typescript
 // After
 interface Player {
   // ... primary API ...
-  
+
   // Escape hatch (named to signal "you're on your own")
   get __unsafe__(): {
-    mediaElement: HTMLMediaElement
-    audioContext?: AudioContext
-  }
+    mediaElement: HTMLMediaElement;
+    audioContext?: AudioContext;
+  };
 }
 ```
 
@@ -162,11 +162,11 @@ interface Player {
 
 ## Minor Issues
 
-| Location | Issue | Principle | Fix |
-|----------|-------|-----------|-----|
-| `autoplay: boolean` | Boolean params are confusing | api-surface | Named in config object |
-| `controls: ControlsConfig` | Generic name | api-surface | Consider `ui` or `skin` |
-| `plugins?: Plugin[]` | Plugin vs Slice naming | state-architecture | Use "slice" if that's the model |
+| Location             | Issue                    | Principle     | Fix                         |
+| -------------------- | ------------------------ | ------------- | --------------------------- |
+| `autoplay: boolean`  | Boolean params confusing | principles.md | Named in config object      |
+| `controls: Config`   | Generic name             | principles.md | Consider `ui` or `skin`     |
+| `plugins?: Plugin[]` | Plugin vs Slice naming   | state.md      | Use "slice" if that's model |
 
 ---
 
@@ -189,6 +189,7 @@ This API has structural problems that will cause long-term pain. The two critica
 The event system's lack of typing is a significant DX issue but not blocking. Consider typed event maps or a subscription pattern like `subscribe(selector, callback)`.
 
 **Priority order:**
+
 1. Convert to config object (blocks everything else)
 2. Move plugins to creation-time composition
 3. Add typed events
@@ -196,6 +197,34 @@ The event system's lack of typing is a significant DX issue but not blocking. Co
 5. Add escape hatches
 
 ---
+
+<details>
+<summary>Full Types Review</summary>
+
+## Types Review
+
+### Score: 4/10
+
+### Issues
+
+#### [MAJOR] Untyped events
+
+(See main report)
+
+#### [MAJOR] Plugin type doesn't carry capabilities
+
+`Plugin` interface doesn't encode what state/methods the plugin adds, so TypeScript can't know what's available after registration.
+
+### Good Patterns
+
+- Player interface is defined
+- State type exists (PlayerState)
+
+### Summary
+
+The foundation is there but the dynamic parts (events, plugins) bypass the type system entirely. Consider making these static/creation-time.
+
+</details>
 
 <details>
 <summary>Full API Surface Review</summary>
@@ -207,44 +236,25 @@ The event system's lack of typing is a significant DX issue but not blocking. Co
 ### Issues
 
 #### [CRITICAL] Positional parameters
+
 (See main report)
 
 #### [MAJOR] getState() performance
+
 (See main report)
 
 #### [MINOR] Boolean parameters
+
 Two adjacent booleans (`autoplay, muted`) are confusing at call sites.
 
 ### Good Patterns
+
 - Method names are clear and conventional
 - Return type is defined (Player interface)
 
 ### Summary
+
 The function signature is the main problem. Converting to a config object would immediately improve usability and enable type inference for options.
-
-</details>
-
-<details>
-<summary>Full Type Safety Review</summary>
-
-## Type Safety Review
-
-### Score: 4/10
-
-### Issues
-
-#### [MAJOR] Untyped events
-(See main report)
-
-#### [MAJOR] Plugin type doesn't carry capabilities
-`Plugin` interface doesn't encode what state/methods the plugin adds, so TypeScript can't know what's available after registration.
-
-### Good Patterns
-- Player interface is defined
-- State type exists (PlayerState)
-
-### Summary
-The foundation is there but the dynamic parts (events, plugins) bypass the type system entirely. Consider making these static/creation-time.
 
 </details>
 
@@ -258,15 +268,19 @@ The foundation is there but the dynamic parts (events, plugins) bypass the type 
 ### Issues
 
 #### [CRITICAL] Runtime registration
+
 (See main report)
 
 #### [MAJOR] No composition model
+
 Plugins are black boxes. No slice pattern, no middleware composition, no builder chain.
 
 ### Good Patterns
+
 - Plugin concept exists (just needs different delivery)
 
 ### Summary
+
 The extensibility model needs a rethink. Look at Zustand slices or tRPC procedures for inspiration—extension through composition at creation time.
 
 </details>
@@ -281,16 +295,20 @@ The extensibility model needs a rethink. Look at Zustand slices or tRPC procedur
 ### Issues
 
 #### [MAJOR] No escape hatch
+
 (See main report)
 
 #### [MINOR] All-or-nothing controls
+
 `controls: ControlsConfig` is required but users might want headless or partial UI.
 
 ### Good Patterns
+
 - Basic usage is simple (source, play/pause)
 - Plugins are optional
 
 ### Summary
+
 The layering is reasonable but escape hatches are missing. Power users have no path to lower levels without abandoning the library.
 
 </details>

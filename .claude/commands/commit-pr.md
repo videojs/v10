@@ -1,11 +1,11 @@
 ---
-allowed-tools: Bash(git:*), Bash(gh:*), Glob, Grep, Read, mcp__github__*
-description: Commit all changes and create a PR following project conventions
+allowed-tools: Bash(git:*), Bash(gh:*), Glob, Grep, Read, question, mcp__github__*
+description: Commit all changes and create or update a PR following project conventions
 ---
 
 # Commit & PR
 
-Stage all changes, create a conventional commit, and open a pull request.
+Stage all changes, create a conventional commit, and open a pull request (or push to an existing one).
 
 ## Usage
 
@@ -47,6 +47,7 @@ type(scope): lowercase description
 ### Scope Inference
 
 Infer scope from changed file paths:
+
 - `packages/core/` → `core`
 - `packages/store/` → `store`
 - `packages/utils/` → `utils`
@@ -64,6 +65,7 @@ When multiple packages changed, use the most significant one or `packages` for b
 ### PR Title
 
 Same as commit message, except:
+
 - RFC proposals → `RFC: Title`
 - Discovery/exploration → `Discovery: Title`
 
@@ -114,6 +116,7 @@ You are committing changes and creating a pull request.
 ### Step 2: Determine Commit Type and Scope
 
 Based on the changes:
+
 - **Type**: What kind of change? (feat/fix/chore/refactor/docs/test/etc)
 - **Scope**: Which package or area? (infer from file paths)
 - **Breaking**: Does it break existing behavior? (use `!` suffix)
@@ -126,10 +129,26 @@ Based on the changes:
    git commit -m "type(scope): description"
    ```
 
-### Step 4: Push and Create PR
+### Step 4: Push and Create/Update PR
 
 1. Push branch to remote: `git push -u origin HEAD`
-2. Create PR using `gh pr create` (preferred) or fallback to `mcp__github__create_pull_request`:
+
+2. Check if a PR already exists for this branch:
+
+   ```bash
+   gh pr list --head "$(git branch --show-current)" --json number,url,title,body --jq '.[0]'
+   ```
+
+3. **If PR exists**:
+   - Ask the user if they want to update the PR description (use the `question` tool)
+   - **If yes**: Generate new body based on all commits in the PR, then update:
+     ```bash
+     gh pr edit <number> --body "new body"
+     ```
+     Note: Only update the body, never the title — titles are set once at PR creation.
+   - **If no**: Skip — the push already updated the PR code
+
+4. **If no PR exists**: Create one using `gh pr create` (preferred) or fallback to `mcp__github__create_pull_request`:
 
    ```bash
    gh pr create --title "type(scope): description" --body "$(cat <<'EOF'
@@ -146,11 +165,14 @@ Based on the changes:
 
 ### Step 5: Report
 
-Return the PR URL to the user.
+- **Existing PR (no update)**: "Pushed to PR #123: <url>"
+- **Existing PR (updated)**: "Updated PR #123: <url>"
+- **New PR**: "Created PR #123: <url>"
 
 ## Important
 
 - Always stage ALL changes with `git add -A`
+- Always check for existing PR before creating — avoid duplicate PRs
 - Prefer `gh` CLI for GitHub operations; fallback to MCP tools if `gh` unavailable
 - Never list files in the PR body — describe meaningful behavior changes
 - Keep the summary to 1-3 sentences
