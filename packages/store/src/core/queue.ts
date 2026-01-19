@@ -1,4 +1,4 @@
-import type { Request, RequestMeta } from './request';
+import type { Request, RequestMeta, RequestMode } from './request';
 import type { Reactive } from './state';
 import type { ErrorTask, PendingTask, SuccessTask, Task, TaskContext, TaskKey } from './task';
 
@@ -22,6 +22,7 @@ export type EnsureTaskRecord<T> = T extends TaskRecord ? T : never;
 export interface QueueTask<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown> {
   name: string;
   key: Key;
+  mode?: RequestMode;
   input?: Input;
   meta?: RequestMeta | null;
   handler: (ctx: TaskContext<Input>) => Promise<Output>;
@@ -38,6 +39,8 @@ export type TasksRecord<Tasks extends TaskRecord> = {
 export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   /** Reactive tasks. Subscribe via `subscribe(queue.tasks, fn)`. */
   readonly tasks: Reactive<TasksRecord<Tasks>>;
+
+  readonly #sharedPromises = new Map<TaskKey, Promise<unknown>>();
 
   #destroyed = false;
 
@@ -70,20 +73,28 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   enqueue<K extends keyof Tasks>(
     task: QueueTask<TaskKey<K>, Tasks[K]['input'], Tasks[K]['output']>,
   ): Promise<Tasks[K]['output']> {
-    const { name, key, input, meta = null, handler } = task;
+    const { name, key, mode = 'exclusive', input, meta = null, handler } = task;
 
     if (this.#destroyed) {
       return Promise.reject(new StoreError('DESTROYED'));
     }
 
-    // Supersede any pending task with the same key (may have different name)
-    for (const task of Object.values(this.tasks) as Task[]) {
-      if (task?.key === key && task.status === 'pending') {
-        task.abort.abort(new StoreError('SUPERSEDED'));
+    // Shared mode: join existing pending task with same key
+    if (mode === 'shared') {
+      const existingPromise = this.#sharedPromises.get(key);
+      if (existingPromise) {
+        return existingPromise as Promise<Tasks[K]['output']>;
       }
     }
 
-    return new Promise<Tasks[K]['output']>((resolve, reject) => {
+    // Supersede any pending task with the same key (may have different name)
+    for (const existingTask of Object.values(this.tasks) as Task[]) {
+      if (existingTask?.key === key && existingTask.status === 'pending') {
+        existingTask.abort.abort(new StoreError('SUPERSEDED'));
+      }
+    }
+
+    const promise = new Promise<Tasks[K]['output']>((resolve, reject) => {
       this.#executeNow({
         id: Symbol('@videojs/task'),
         name,
@@ -95,6 +106,18 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
         reject,
       });
     });
+
+    // Track promise for shared mode
+    if (mode === 'shared') {
+      this.#sharedPromises.set(key, promise);
+      // Use .then() to avoid unhandled rejection from .finally() propagating errors
+      promise.then(
+        () => this.#sharedPromises.delete(key),
+        () => this.#sharedPromises.delete(key),
+      );
+    }
+
+    return promise;
   }
 
   /** Abort task(s). If name provided, aborts that task. If no name, aborts all. */
@@ -127,6 +150,8 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     for (const key of Reflect.ownKeys(this.tasks) as (keyof Tasks)[]) {
       delete this.tasks[key];
     }
+
+    this.#sharedPromises.clear();
   }
 
   async #executeNow<K extends keyof Tasks>(params: {

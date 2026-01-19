@@ -366,6 +366,23 @@ disconnect(): void {
 
 For single cleanup, use a simple unsubscribe function.
 
+### Promise Cleanup
+
+Use `.finally()` for cleanup that runs regardless of success or failure:
+
+```ts
+// Good - when awaiting or returning the promise
+await promise.finally(() => cache.delete(key));
+
+// Good - fire-and-forget cleanup that shouldn't propagate rejection
+promise.then(
+  () => cache.delete(key),
+  () => cache.delete(key)
+);
+```
+
+**Note:** `.finally()` propagates rejections to its returned promise. If you're not awaiting or returning it, use `.then()` with both handlers to avoid unhandled rejections.
+
 ### No Hungarian Type Notation
 
 Never prefix type parameters with `T`. Use descriptive names instead:

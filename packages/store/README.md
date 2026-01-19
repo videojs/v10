@@ -154,9 +154,9 @@ request: {
   // Full config when needed
   play: {
     key: 'playback',
+    mode: 'shared',
     guard: [],
     cancel: [],
-    // ...
     async handler(_, { target, signal }) {
       target.play();
       await onEvent(target, 'play', { signal });
@@ -332,16 +332,61 @@ request: {
 }
 ```
 
+### Mode
+
+The `mode` option controls how requests with the same key interact:
+
+| Mode                    | Behavior                         | Use case            |
+| ----------------------- | -------------------------------- | ------------------- |
+| `'exclusive'` (default) | Supersede pending request        | seek, pause, volume |
+| `'shared'`              | Join pending request, share fate | play                |
+
+```ts
+request: {
+  play: {
+    key: 'playback',
+    mode: 'shared',  // Multiple play() calls share the same outcome
+    async handler(_, { target }) {
+      await target.play();
+    },
+  },
+  pause: {
+    key: 'playback',
+    mode: 'exclusive',  // default - supersedes play
+    handler: (_, { target }) => target.pause(),
+  },
+}
+```
+
+With `mode: 'shared'`, multiple calls while a request is pending all resolve/reject together:
+
+```ts
+const p1 = store.request.play(); // starts
+const p2 = store.request.play(); // joins p1
+const p3 = store.request.play(); // joins p1
+// All three resolve/reject together when playback starts or fails
+```
+
 ### Cancels
 
 Requests can cancel other in-flight requests by name. Cancellation happens immediately when the
 request is enqueued, before guards.
 
 ```ts
+import { CANCEL_ALL } from '@videojs/store';
+
 request: {
   stop: {
     cancel: ['seek', 'preload'],  // Request names to cancel
     handler: (_, { target }) => target.pause(),
+  },
+
+  load: {
+    cancel: CANCEL_ALL,  // Nuclear reset - cancels ALL pending requests
+    handler: (src, { target }) => {
+      target.src = src;
+      target.load();
+    },
   },
 }
 ```
