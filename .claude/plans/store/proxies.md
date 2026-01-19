@@ -1,7 +1,11 @@
 # Proxy State Migration Plan
 
 **Branch:** `feat/store-proxies`
-**Status:** READY
+**Status:** IN PROGRESS
+
+## Completed
+
+- **Phase 1:** Proxy primitives in `state.ts` — commit `f128125`
 
 ## Overview
 
@@ -122,233 +126,36 @@ Queue keeps its public API (`enqueue`, `abort`, `reset`, `tasks`) but uses proxy
 
 ## Proxy Implementation
 
-### Core Primitives (`state.ts`)
+**See:** `packages/store/src/core/state.ts`
 
-```ts
-// Public API
-export function proxy<T extends object>(initial: T, parent?: object): T;
-export function isProxy(value: unknown): value is object;
-export function subscribe<T extends object>(p: T, fn: () => void): () => void;
-export function subscribeKeys<T extends object>(p: T, keys: (keyof T)[], fn: () => void): () => void;
-export function batch<T>(fn: () => T): T;
-export function flush(): void; // Force pending notifications (mainly for tests)
-export function snapshot<T extends object>(p: T): Readonly<T>;
-```
+### Public API
 
-### Automatic Access Tracking
+| Export                           | Purpose                                    |
+| -------------------------------- | ------------------------------------------ |
+| `proxy(initial, parent?)`        | Create reactive proxy with parent bubbling |
+| `isProxy(value)`                 | Check if value is a proxy                  |
+| `subscribe(proxy, fn)`           | Subscribe to all changes                   |
+| `subscribeKeys(proxy, keys, fn)` | Subscribe to specific key changes          |
+| `batch(fn)`                      | Group mutations, flush after               |
+| `flush()`                        | Force pending notifications (for tests)    |
+| `snapshot(proxy)`                | Return frozen shallow copy                 |
 
-`useSnapshot` and `SnapshotController` automatically track which properties are accessed during render and only subscribe to those keys. This is handled internally — no public `trackAccess` API needed.
+### Key Behaviors
 
-```tsx
-const snap = useSnapshot(store.state);
-return <div>{snap.volume}</div>; // Only re-renders when 'volume' changes
-```
-
-**How it works:**
-
-1. Return a tracking proxy that records property access
-2. After render, subscribe to only the accessed keys via `subscribeKeys`
-3. On next render, re-track and resubscribe if keys changed
-
-### Parent Bubbling
-
-Required for Queue tasks — when a task's status changes, `queue.tasks` subscribers must be notified:
-
-```ts
-queue.tasks = proxy({});
-queue.tasks.play = proxy({ status: 'pending', ... });
-
-// Later
-Object.assign(queue.tasks.play, { status: 'success', ... });
-// Notifies: queue.tasks.play subscribers AND queue.tasks subscribers
-```
-
-### Implementation
-
-```ts
-type Listener = () => void;
-
-// Track which objects are proxied (for isProxy check)
-const proxyCache = new WeakSet<object>();
-
-// Global listeners per proxy target
-const listeners = new WeakMap<object, Set<Listener>>();
-
-// Key-specific listeners per proxy target
-const keyListeners = new WeakMap<object, Map<PropertyKey, Set<Listener>>>();
-
-// Parent references for bubbling
-const parents = new WeakMap<object, object>();
-
-// Pending changes (target → keys that changed)
-const pending = new Map<object, Set<PropertyKey>>();
-
-// Batching
-let batchDepth = 0;
-let flushScheduled = false;
-
-export function proxy<T extends object>(initial: T, parent?: object): T {
-  if (parent) parents.set(initial, parent);
-
-  const p = new Proxy(initial, {
-    set(target, prop, value) {
-      if (Object.is((target as any)[prop], value)) return true;
-
-      // Auto-proxy nested objects
-      if (value && typeof value === 'object' && !isProxy(value)) {
-        value = proxy(value, target);
-      }
-
-      (target as any)[prop] = value;
-
-      // Mark this and all parents as pending with the changed key
-      let current: object | undefined = target;
-      let changedKey: PropertyKey = prop;
-      while (current) {
-        if (!pending.has(current)) pending.set(current, new Set());
-        pending.get(current)!.add(changedKey);
-
-        // For parent, the "key" is whichever property points to the child
-        // This is simplified - we mark all keys that changed
-        changedKey = prop; // Parent tracks same key for simplicity
-        current = parents.get(current);
-      }
-
-      if (batchDepth === 0) scheduleFlush();
-      return true;
-    },
-  });
-
-  proxyCache.add(p);
-  return p;
-}
-
-export function isProxy(value: unknown): value is object {
-  return typeof value === 'object' && value !== null && proxyCache.has(value);
-}
-
-function scheduleFlush(): void {
-  if (flushScheduled) return;
-  flushScheduled = true;
-  queueMicrotask(flush);
-}
-
-export function flush(): void {
-  flushScheduled = false;
-
-  for (const [target, keys] of pending) {
-    // Notify global listeners for this target
-    listeners.get(target)?.forEach((fn) => fn());
-
-    // Notify key-specific listeners
-    const targetKeyListeners = keyListeners.get(target);
-    if (targetKeyListeners) {
-      for (const key of keys) {
-        targetKeyListeners.get(key)?.forEach((fn) => fn());
-      }
-    }
-  }
-
-  pending.clear();
-}
-
-export function batch<T>(fn: () => T): T {
-  batchDepth++;
-  try {
-    return fn();
-  } finally {
-    batchDepth--;
-    if (batchDepth === 0) scheduleFlush();
-  }
-}
-
-export function subscribe<T extends object>(p: T, fn: Listener): () => void {
-  if (!listeners.has(p)) listeners.set(p, new Set());
-  listeners.get(p)!.add(fn);
-  return () => listeners.get(p)?.delete(fn);
-}
-
-export function subscribeKeys<T extends object>(p: T, keys: (keyof T)[], fn: Listener): () => void {
-  if (!keyListeners.has(p)) keyListeners.set(p, new Map());
-  const targetMap = keyListeners.get(p)!;
-
-  for (const key of keys) {
-    if (!targetMap.has(key)) targetMap.set(key, new Set());
-    targetMap.get(key)!.add(fn);
-  }
-
-  return () => {
-    for (const key of keys) {
-      targetMap.get(key)?.delete(fn);
-    }
-  };
-}
-
-export function snapshot<T extends object>(p: T): Readonly<T> {
-  return Object.freeze({ ...p });
-}
-```
+- Auto-batches via `queueMicrotask`
+- Auto-proxies nested objects at creation and assignment
+- Parent bubbling notifies ancestors when nested objects change
 
 ---
 
 ## Platform Adapters
 
-### React
+### React: `useSnapshot` hook
 
-**`use-snapshot.ts`** (new)
-
-Uses `useSyncExternalStore` to avoid race conditions between render and subscription.
-
-```tsx
-import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
-
-import { subscribe } from '../../core/state';
-
-/**
- * Returns a tracking proxy that re-renders when accessed properties change.
- *
- * Initial implementation subscribes to ALL changes for correctness.
- * Key-based optimization (only re-render when accessed keys change) can be
- * added later if performance requires it.
- */
-export function useSnapshot<T extends object>(p: T): T {
-  // Version counter - increments on any proxy change
-  const versionRef = useRef(0);
-  const trackedRef = useRef(new Set<PropertyKey>());
-
-  // Subscribe to all changes
-  const subscribeToProxy = useCallback(
-    (onStoreChange: () => void) => {
-      return subscribe(p, () => {
-        versionRef.current++;
-        onStoreChange();
-      });
-    },
-    [p]
-  );
-
-  // Return version for React to compare
-  const getSnapshot = useCallback(() => versionRef.current, []);
-
-  // Safe subscription handling via React
-  useSyncExternalStore(subscribeToProxy, getSnapshot, getSnapshot);
-
-  // Return tracking proxy that records property access
-  // (tracking is for future key-based optimization)
-  return useMemo(() => {
-    trackedRef.current.clear();
-    return new Proxy(p, {
-      get(target, prop) {
-        if (typeof prop === 'symbol') return Reflect.get(target, prop);
-        trackedRef.current.add(prop);
-        return Reflect.get(target, prop);
-      },
-    });
-  }, [p]);
-}
-```
-
-**Hook updates:**
+- Uses `useSyncExternalStore` for safe subscription timing
+- Version counter pattern for change detection
+- Returns tracking proxy that records accessed keys (for future optimization)
+- Initially subscribes to ALL changes; key filtering can be added later
 
 | Hook            | Change                               |
 | --------------- | ------------------------------------ |
@@ -358,75 +165,12 @@ export function useSnapshot<T extends object>(p: T): T {
 | `useTasks`      | Use `useSnapshot(store.queue.tasks)` |
 | `useRequest`    | Keep as-is                           |
 
-### Lit
+### Lit: `SnapshotController`
 
-**`snapshot-controller.ts`** (new)
-
-Supports optional callback for custom handling beyond `requestUpdate()`.
-
-```ts
-export interface SnapshotControllerOptions<T extends object> {
-  /** Called when tracked state changes (after requestUpdate) */
-  onChange?: (snapshot: T) => void;
-}
-
-export class SnapshotController<T extends object> implements ReactiveController {
-  readonly #host: ReactiveControllerHost;
-  readonly #proxy: T;
-  readonly #trackedKeys = new Set<PropertyKey>();
-  readonly #trackingProxy: T;
-  readonly #onChange?: (snapshot: T) => void;
-  #unsubscribe = noop;
-
-  constructor(host: ReactiveControllerHost, proxy: T, options?: SnapshotControllerOptions<T>) {
-    this.#host = host;
-    this.#proxy = proxy;
-    this.#onChange = options?.onChange;
-
-    // Create tracking proxy
-    this.#trackingProxy = new Proxy(proxy, {
-      get: (target, prop) => {
-        // Skip symbols (internal Lit/JS props)
-        if (typeof prop === 'symbol') return Reflect.get(target, prop);
-        this.#trackedKeys.add(prop);
-        return Reflect.get(target, prop);
-      },
-    });
-
-    host.addController(this);
-  }
-
-  get value(): T {
-    return this.#trackingProxy;
-  }
-
-  hostConnected(): void {
-    this.#resubscribe();
-  }
-
-  hostUpdated(): void {
-    // Resubscribe after each render with newly tracked keys
-    this.#resubscribe();
-  }
-
-  hostDisconnected(): void {
-    this.#unsubscribe();
-    this.#unsubscribe = noop;
-  }
-
-  #resubscribe(): void {
-    this.#unsubscribe();
-    const keys = Array.from(this.#trackedKeys) as (keyof T)[];
-    this.#unsubscribe = subscribeKeys(this.#proxy, keys, () => {
-      this.#host.requestUpdate();
-      this.#onChange?.(this.#proxy);
-    });
-    this.#trackedKeys.clear();
-  }
-}
-```
-
-**Controller updates:**
+- Key-based subscription via `subscribeKeys`
+- Re-subscribes on `hostUpdated()` with newly tracked keys
+- Optional `onChange` callback for custom handling
+- Calls `host.requestUpdate()` when tracked keys change
 
 | Controller             | Change                                     |
 | ---------------------- | ------------------------------------------ |
@@ -442,45 +186,13 @@ export class SnapshotController<T extends object> implements ReactiveController 
 
 ### Top-Level Tracking Only
 
-`useSnapshot` and `SnapshotController` track property access at the **top level only**.
+Tracking is top-level only: `snap.tasks.play.status` tracks `'tasks'`, not the nested path.
 
-```tsx
-const snap = useSnapshot(store.state);
-
-snap.volume; // Tracks 'volume' ✓
-snap.tasks.play.status; // Tracks 'tasks' only, NOT nested path
-```
-
-This means changes to **any property** within `tasks` will trigger re-renders for components that accessed any part of `tasks`.
-
-**Workaround:** For fine-grained nested subscriptions, use `subscribeKeys` directly with the nested proxy:
+**Workaround:** Use `subscribeKeys` directly with nested proxy:
 
 ```ts
-// Subscribe to specific nested property
 subscribeKeys(store.queue.tasks.play, ['status'], callback);
 ```
-
-**Future enhancement:** Nested path tracking could be added if performance becomes an issue. This would require tracking access paths like `['tasks', 'play', 'status']` and creating nested tracking proxies recursively.
-
-### React Subscribes to All Changes (Initial Implementation)
-
-The initial `useSnapshot` implementation subscribes to **all** proxy changes, not just accessed keys. This is correct but may cause extra re-renders.
-
-The tracking proxy records accessed keys for future optimization. When performance profiling shows this is a bottleneck, we can add key-based filtering:
-
-```ts
-// Future optimization: only notify if accessed keys changed
-subscribe(p, () => {
-  const changedKeys = getChangedKeys(p); // Would need to track this
-  const hasAccessedKey = changedKeys.some((k) => trackedRef.current.has(k));
-  if (hasAccessedKey) {
-    versionRef.current++;
-    onStoreChange();
-  }
-});
-```
-
-The Lit `SnapshotController` already implements key-based subscription via `hostUpdated()` re-subscription.
 
 ---
 
