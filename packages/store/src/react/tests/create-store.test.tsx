@@ -143,38 +143,38 @@ describe('createStore', () => {
     });
   });
 
-  describe('useSelector', () => {
-    it('selects state from context store', () => {
-      const { Provider, useSelector, create } = createStore({ slices: [audioSlice] });
+  describe('useSnapshot', () => {
+    it('returns state from context store', () => {
+      const { Provider, useSnapshot, create } = createStore({ slices: [audioSlice] });
       const store = create();
       const target = new MockMedia();
       store.attach(target);
 
-      const { result } = renderHook(() => useSelector(s => s.volume), {
+      const { result } = renderHook(() => useSnapshot(), {
         wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
       });
 
-      expect(result.current).toBe(1);
+      expect(result.current.volume).toBe(1);
     });
 
     it('updates when state changes', async () => {
-      const { Provider, useSelector, create } = createStore({ slices: [audioSlice] });
+      const { Provider, useSnapshot, create } = createStore({ slices: [audioSlice] });
       const store = create();
       const target = new MockMedia();
       store.attach(target);
 
-      const { result } = renderHook(() => useSelector(s => s.volume), {
+      const { result } = renderHook(() => useSnapshot(), {
         wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
       });
 
-      expect(result.current).toBe(1);
+      expect(result.current.volume).toBe(1);
 
       await act(async () => {
         target.volume = 0.5;
         target.dispatchEvent(new Event('volumechange'));
       });
 
-      expect(result.current).toBe(0.5);
+      expect(result.current.volume).toBe(0.5);
     });
   });
 

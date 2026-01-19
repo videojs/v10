@@ -138,8 +138,8 @@ packages/utils/src/dom/
 Use the exact exported name being tested (preserving case):
 
 ```ts
-// selector-controller.test.ts — class export
-describe('SelectorController', () => { ... });
+// snapshot-controller.test.ts — class export
+describe('SnapshotController', () => { ... });
 
 // provider-mixin.test.ts — factory function export
 describe('createStoreProviderMixin', () => { ... });
@@ -378,6 +378,18 @@ function createStore<TSlices extends AnySlice[]>(...) { ... }
 // Good
 type Mixin<Base extends Constructor> = ...
 function createStore<Slices extends AnySlice[]>(...) { ... }
+```
+
+### React: Lazy Initialization
+
+Use `useState` with initializer function for objects that should only be created once. Don't use `useRef` with inline object creation — the object is created on every render even though only the first value is kept:
+
+```ts
+// Bad - creates new Set on every render
+const trackedRef = useRef(new Set<string>());
+
+// Good - initializer only runs once
+const [tracked] = useState(() => new Set<string>());
 ```
 
 ### No Obvious Comments

@@ -7,25 +7,26 @@ import type {
   UnionSliceTarget,
   UnionSliceTasks,
 } from './slice';
-import type { StateFactory } from './state';
+import type { Reactive } from './state';
 import type { PendingTask, Task, TaskContext } from './task';
 
-import { getSelectorKeys } from '@videojs/utils/object';
 import { isNull } from '@videojs/utils/predicate';
 
 import { StoreError } from './errors';
 import { Queue } from './queue';
 import { createRequestMeta, resolveRequestCancel, resolveRequestKey } from './request';
-import { State } from './state';
+import { reactive } from './state';
 
 export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[]> {
   readonly #config: StoreConfig<Target, Slices>;
   readonly #slices: Slices;
   readonly #queue: Queue<UnionSliceTasks<Slices>>;
-  readonly #state: State<UnionSliceState<Slices>>;
   readonly #request: UnionSliceRequests<Slices>;
   readonly #requestConfigs: Map<string, ResolvedRequestConfig<Target>>;
   readonly #setupAbort = new AbortController();
+
+  /** Reactive state. Subscribe via `subscribe(store.state, fn)`. */
+  readonly state: Reactive<UnionSliceState<Slices> & object>;
 
   #target: Target | null = null;
   #attachAbort: AbortController | null = null;
@@ -36,9 +37,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     this.#slices = config.slices;
 
     this.#queue = config.queue ?? new Queue<UnionSliceTasks<Slices>>();
-
-    const factory = config.state ?? (initial => new State(initial));
-    this.#state = factory(this.#createInitialState());
+    this.state = reactive(this.#createInitialState() as UnionSliceState<Slices> & object);
 
     this.#requestConfigs = this.#buildRequestConfigs();
     this.#request = this.#buildRequestProxy();
@@ -59,10 +58,6 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
 
   get target(): Target | null {
     return this.#target;
-  }
-
-  get state(): UnionSliceState<Slices> {
-    return this.#state.value;
   }
 
   get request(): UnionSliceRequests<Slices> {
@@ -139,50 +134,6 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
   }
 
   // ----------------------------------------
-  // Subscribe
-  // ----------------------------------------
-
-  subscribe(listener: (state: UnionSliceState<Slices>) => void): () => void;
-  subscribe<Selected>(
-    selector: Selector<UnionSliceState<Slices>, Selected>,
-    listener: (selected: Selected) => void,
-    options?: SubscribeOptions<Selected>
-  ): () => void;
-  subscribe<Selected>(
-    selectorOrListener: ((state: UnionSliceState<Slices>) => void) | Selector<UnionSliceState<Slices>, Selected>,
-    maybeListener?: (selected: Selected) => void,
-    options?: SubscribeOptions<Selected>,
-  ): () => void {
-    if (!maybeListener) {
-      return this.#state.subscribe(selectorOrListener);
-    }
-
-    const selector = selectorOrListener as Selector<UnionSliceState<Slices>, Selected>;
-    const listener = maybeListener;
-    const equalityFn = options?.equalityFn ?? Object.is;
-
-    let prev = selector(this.#state.value);
-    const handler = (state: UnionSliceState<Slices>) => {
-      const next = selector(state);
-      if (!equalityFn(prev, next)) {
-        prev = next;
-        listener(next);
-      }
-    };
-
-    const keys = getSelectorKeys(selector, this.#state.value);
-
-    if (keys) {
-      return this.#state.subscribeKeys(
-        keys as (keyof UnionSliceState<Slices>)[],
-        handler as (state: Pick<UnionSliceState<Slices>, keyof UnionSliceState<Slices>>) => void,
-      );
-    }
-
-    return this.#state.subscribe(handler);
-  }
-
-  // ----------------------------------------
   // Destroy
   // ----------------------------------------
 
@@ -214,7 +165,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
         initialState: slice.initialState,
       });
 
-      this.#state.patch(snapshot);
+      Object.assign(this.state as object, snapshot);
     } catch (error) {
       this.#handleError({ error });
     }
@@ -231,7 +182,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
   }
 
   #resetState(): void {
-    this.#state.patch(this.#createInitialState());
+    Object.assign(this.state as object, this.#createInitialState());
   }
 
   // ----------------------------------------
@@ -251,10 +202,10 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
   }
 
   #buildRequestProxy(): UnionSliceRequests<Slices> {
-    const proxy: Record<string, (...args: any[]) => Promise<unknown>> = {};
+    const reqProxy: Record<string, (...args: any[]) => Promise<unknown>> = {};
 
     for (const [name, config] of this.#requestConfigs) {
-      proxy[name] = (input?: unknown, meta?: RequestMetaInit) => {
+      reqProxy[name] = (input?: unknown, meta?: RequestMetaInit) => {
         if (this.#destroyed) {
           return Promise.reject(new StoreError('DESTROYED'));
         }
@@ -263,7 +214,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
       };
     }
 
-    return proxy as UnionSliceRequests<Slices>;
+    return reqProxy as UnionSliceRequests<Slices>;
   }
 
   async #execute(
@@ -354,18 +305,11 @@ export function createStore<Slices extends AnySlice[]>(
 
 export type AnyStore<Target = any> = Store<Target, AnySlice<Target>[]>;
 
-export type Selector<State, Selected> = (state: State) => Selected;
-
-export interface SubscribeOptions<T> {
-  equalityFn?: (a: T, b: T) => boolean;
-}
-
 export type AnyStoreConfig = StoreConfig<any, AnySlice[]>;
 
 export interface StoreConfig<Target, Slices extends AnySlice<Target>[]> {
   slices: Slices;
   queue?: Queue<UnionSliceTasks<Slices>>;
-  state?: StateFactory<UnionSliceState<Slices>>;
   onSetup?: (ctx: StoreSetupContext<Target, Slices>) => void;
   onAttach?: (ctx: StoreAttachContext<Target, Slices>) => void;
   onError?: (ctx: StoreErrorContext<Target, Slices>) => void;

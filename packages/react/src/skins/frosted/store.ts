@@ -20,7 +20,7 @@ const baseConfig = {
  * import { extendConfig } from '@videojs/react/skins/frosted';
  * import { chaptersSlice } from './slices/chapters';
  *
- * const { Provider, useSelector } = createStore(
+ * const { Provider, useSnapshot } = createStore(
  *   extendConfig({ slices: [chaptersSlice] })
  * );
  * ```
@@ -31,11 +31,4 @@ export function extendConfig<S extends AnySlice<HTMLMediaElement>[] = []>(
   return extendBaseConfig(baseConfig, extension);
 }
 
-export const {
-  Provider,
-  create,
-  useStore,
-  useSelector,
-  useRequest,
-  useTasks,
-} = createStore(baseConfig);
+export const { Provider, create, useStore, useSnapshot, useRequest, useTasks } = createStore(baseConfig);

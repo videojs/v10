@@ -4,7 +4,7 @@ export {
   create as createStore,
   extendConfig,
   RequestController,
-  SelectorController,
+  StateController,
   StoreAttachMixin,
   StoreMixin,
   StoreProviderMixin,

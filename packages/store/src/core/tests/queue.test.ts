@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createQueue } from '../queue';
+import { flush, subscribe } from '../state';
 
 describe('Queue', () => {
   describe('enqueue', () => {
@@ -203,11 +204,11 @@ describe('Queue', () => {
   });
 
   describe('subscribe', () => {
-    it('returns an unsubscribe function', () => {
+    it('subscribe returns an unsubscribe function', () => {
       const queue = createQueue();
       const listener = vi.fn();
 
-      const unsubscribe = queue.subscribe(listener);
+      const unsubscribe = subscribe(queue.tasks, listener);
 
       expect(unsubscribe).toBeTypeOf('function');
     });
@@ -216,7 +217,7 @@ describe('Queue', () => {
       const queue = createQueue();
       const listener = vi.fn();
 
-      queue.subscribe(listener);
+      subscribe(queue.tasks, listener);
 
       const promise = queue.enqueue({
         name: 'test',
@@ -224,54 +225,21 @@ describe('Queue', () => {
         handler: vi.fn().mockResolvedValue('result'),
       });
 
+      // Flush to trigger notifications (auto-batched)
+      flush();
+
       await promise;
+      flush();
 
-      // Called when pending (dispatch) and when settled
+      // Called when pending and when settled
       expect(listener).toHaveBeenCalledTimes(2);
-    });
-
-    it('notifies with tasks map on dispatch and settlement', async () => {
-      const queue = createQueue();
-      const listener = vi.fn();
-
-      queue.subscribe(listener);
-
-      let resolveHandler: () => void;
-      const handlerPromise = new Promise<void>((resolve) => {
-        resolveHandler = resolve;
-      });
-
-      const promise = queue.enqueue({
-        name: 'test',
-        key: 'test-key',
-        handler: async () => {
-          await handlerPromise;
-          return 'result';
-        },
-      });
-
-      // Wait for dispatch
-      await new Promise(r => setTimeout(r, 10));
-
-      expect(listener).toHaveBeenCalledTimes(1);
-      const pendingSnapshot = listener.mock.calls[0]![0] as Record<string, { status: string }>;
-      expect(Reflect.ownKeys(pendingSnapshot).length).toBe(1);
-      expect(pendingSnapshot.test?.status).toBe('pending');
-
-      resolveHandler!();
-      await promise;
-
-      expect(listener).toHaveBeenCalledTimes(2);
-      const settledSnapshot = listener.mock.calls[1]![0] as Record<string, { status: string }>;
-      expect(Reflect.ownKeys(settledSnapshot).length).toBe(1);
-      expect(settledSnapshot.test?.status).toBe('success');
     });
 
     it('unsubscribe stops notifications', async () => {
       const queue = createQueue();
       const listener = vi.fn();
 
-      const unsubscribe = queue.subscribe(listener);
+      const unsubscribe = subscribe(queue.tasks, listener);
       unsubscribe();
 
       await queue.enqueue({
@@ -279,6 +247,7 @@ describe('Queue', () => {
         key: 'test-key',
         handler: vi.fn().mockResolvedValue('result'),
       });
+      flush();
 
       expect(listener).not.toHaveBeenCalled();
     });
@@ -288,59 +257,19 @@ describe('Queue', () => {
       const listener1 = vi.fn();
       const listener2 = vi.fn();
 
-      queue.subscribe(listener1);
-      queue.subscribe(listener2);
+      subscribe(queue.tasks, listener1);
+      subscribe(queue.tasks, listener2);
 
       await queue.enqueue({
         name: 'test',
         key: 'test-key',
         handler: vi.fn().mockResolvedValue('result'),
       });
+      flush();
 
-      expect(listener1).toHaveBeenCalledTimes(2);
-      expect(listener2).toHaveBeenCalledTimes(2);
-    });
-
-    it('catches and logs listener errors', async () => {
-      const queue = createQueue();
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const errorListener = vi.fn(() => {
-        throw new Error('Listener error');
-      });
-      const successListener = vi.fn();
-
-      queue.subscribe(errorListener);
-      queue.subscribe(successListener);
-
-      await queue.enqueue({
-        name: 'test',
-        key: 'test-key',
-        handler: vi.fn().mockResolvedValue('result'),
-      });
-
-      expect(errorListener).toHaveBeenCalled();
-      expect(successListener).toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith('[vjs-queue]', expect.any(Error));
-
-      consoleSpy.mockRestore();
-    });
-
-    it('provides strongly typed tasks object', async () => {
-      const queue = createQueue();
-
-      queue.subscribe((tasks) => {
-        const task = tasks.playback;
-        if (task) {
-          expect(task.key).toBe('playback');
-          expect(task.name).toBeDefined();
-        }
-      });
-
-      await queue.enqueue({
-        name: 'play',
-        key: 'playback',
-        handler: vi.fn().mockResolvedValue(undefined),
-      });
+      // Called once per batch (pending + settled batched together)
+      expect(listener1).toHaveBeenCalled();
+      expect(listener2).toHaveBeenCalled();
     });
   });
 
@@ -509,21 +438,22 @@ describe('Queue', () => {
         handler: async () => 'result',
       });
 
-      queue.subscribe(listener);
+      subscribe(queue.tasks, listener);
 
       queue.reset('task');
+      flush();
 
       expect(listener).toHaveBeenCalledTimes(1);
-      const snapshot = listener.mock.calls[0]![0] as Record<string, unknown>;
-      expect(snapshot.task).toBeUndefined();
+      expect(queue.tasks.task).toBeUndefined();
     });
 
     it('does not notify subscribers when task does not exist', () => {
       const queue = createQueue();
       const listener = vi.fn();
 
-      queue.subscribe(listener);
+      subscribe(queue.tasks, listener);
       queue.reset('nonexistent');
+      flush();
 
       expect(listener).not.toHaveBeenCalled();
     });
@@ -570,31 +500,27 @@ describe('Queue', () => {
     });
   });
 
-  describe('tasks getter', () => {
-    it('returns frozen snapshot', async () => {
+  describe('tasks property', () => {
+    it('returns reactive state', async () => {
       const queue = createQueue();
       await queue.enqueue({ name: 'task', key: 'k', handler: async () => 'result' });
 
-      const tasks = queue.tasks;
-
-      expect(Object.isFrozen(tasks)).toBe(true);
+      // Tasks is now reactive state, not a frozen object
+      expect(queue.tasks.task?.status).toBe('success');
     });
 
-    it('returns independent snapshots', async () => {
+    it('reflects changes immediately', async () => {
       const queue = createQueue();
+      const tasks = queue.tasks;
+
       await queue.enqueue({ name: 'first', key: 'k', handler: async () => 'first' });
 
-      const snapshot1 = queue.tasks;
+      // Same reference reflects updates
+      expect(tasks.first?.status).toBe('success');
 
       await queue.enqueue({ name: 'second', key: 'k', handler: async () => 'second' });
 
-      const snapshot2 = queue.tasks;
-
-      expect(snapshot1).not.toBe(snapshot2);
-      if (snapshot1.first?.status === 'success' && snapshot2.second?.status === 'success') {
-        expect(snapshot1.first.output).toBe('first');
-        expect(snapshot2.second.output).toBe('second');
-      }
+      expect(tasks.second?.status).toBe('success');
     });
   });
 

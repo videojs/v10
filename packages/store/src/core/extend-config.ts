@@ -40,7 +40,6 @@ export function extendConfig<Target, BaseSlices extends AnySlice<Target>[], ExtS
 
     // Extension overrides if provided
     queue: extension.queue ?? base.queue,
-    state: extension.state ?? base.state,
 
     // Compose lifecycle hooks (both called, base first)
     onSetup: composeCallbacks(base.onSetup, extension.onSetup as typeof base.onSetup),

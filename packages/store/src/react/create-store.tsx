@@ -9,11 +9,7 @@ import { useEffect, useState } from 'react';
 
 import { Store } from '../core/store';
 import { StoreContextProvider, useParentStore, useStoreContext } from './context';
-import {
-  useRequest as useRequestBase,
-  useSelector as useSelectorBase,
-  useTasks as useTasksBase,
-} from './hooks';
+import { useRequest as useRequestBase, useSnapshot as useSnapshotBase, useTasks as useTasksBase } from './hooks';
 
 // ----------------------------------------
 // Types
@@ -54,10 +50,10 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
   useStore: () => Store<UnionSliceTarget<Slices>, Slices>;
 
   /**
-   * Subscribes to a selected portion of state.
-   * Re-renders only when the selected value changes.
+   * Returns a snapshot of the store state.
+   * Re-renders when state changes.
    */
-  useSelector: <T>(selector: (state: UnionSliceState<Slices>) => T) => T;
+  useSnapshot: () => UnionSliceState<Slices>;
 
   /**
    * Returns the request map or a specific request by name.
@@ -92,7 +88,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
  *
  * @example
  * ```tsx
- * const { Provider, useStore, useSelector, useRequest, useTasks, create } = createStore({
+ * const { Provider, useStore, useSnapshot, useRequest, useTasks, create } = createStore({
  *   slices: [playbackSlice, presentationSlice],
  * });
  * ```
@@ -155,9 +151,9 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
     return useStoreContext() as StoreType;
   }
 
-  function useSelector<T>(selector: (state: State) => T): T {
+  function useSnapshot(): State {
     const store = useStore();
-    return useSelectorBase(store, selector);
+    return useSnapshotBase(store.state) as State;
   }
 
   function useRequest(): Requests;
@@ -175,7 +171,7 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
   return {
     Provider,
     useStore,
-    useSelector,
+    useSnapshot,
     useRequest: useRequest as CreateStoreResult<Slices>['useRequest'],
     useTasks,
     create,

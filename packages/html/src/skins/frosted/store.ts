@@ -34,7 +34,7 @@ export const {
   StoreMixin,
   StoreProviderMixin,
   StoreAttachMixin,
-  SelectorController,
+  StateController,
   RequestController,
   TasksController,
   create,

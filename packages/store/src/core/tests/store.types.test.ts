@@ -1,4 +1,5 @@
 import type { Queue, TasksRecord } from '../queue';
+import type { Reactive } from '../state';
 import type { InferStoreRequests, InferStoreState, InferStoreTarget, InferStoreTasks } from '../store';
 
 import { describe, expectTypeOf, it } from 'vitest';
@@ -133,23 +134,17 @@ describe('store types', () => {
   });
 
   describe('subscribe', () => {
-    it('listener receives full state', () => {
+    it('state is reactive', () => {
       const store = createSingleSliceStore();
 
-      store.subscribe((state) => {
-        expectTypeOf(state).toEqualTypeOf<{ volume: number; muted: boolean }>();
-      });
+      expectTypeOf(store.state).toEqualTypeOf<Reactive<{ volume: number; muted: boolean } & object>>();
     });
 
-    it('selector listener receives selected value', () => {
+    it('state properties have correct types', () => {
       const store = createSingleSliceStore();
 
-      store.subscribe(
-        s => s.volume,
-        (volume) => {
-          expectTypeOf(volume).toEqualTypeOf<number>();
-        },
-      );
+      expectTypeOf(store.state.volume).toEqualTypeOf<number>();
+      expectTypeOf(store.state.muted).toEqualTypeOf<boolean>();
     });
   });
 

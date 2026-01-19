@@ -38,11 +38,17 @@ export function isObject(value: unknown): value is object {
 }
 
 /**
+ * Check if a value is a plain object (not a class instance like Date, Map, etc).
+ */
+export function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (!isObject(value)) return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === null || proto === Object.prototype;
+}
+
+/**
  * Check if a value is an AbortError.
  */
 export function isAbortError(value: unknown): value is Error {
-  return (
-    value instanceof Error
-    && value.name === 'AbortError'
-  );
+  return value instanceof Error && value.name === 'AbortError';
 }

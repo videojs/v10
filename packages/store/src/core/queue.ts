@@ -1,9 +1,11 @@
 import type { Request, RequestMeta } from './request';
+import type { Reactive } from './state';
 import type { ErrorTask, PendingTask, SuccessTask, Task, TaskContext, TaskKey } from './task';
 
 import { isUndefined } from '@videojs/utils/predicate';
 
 import { StoreError } from './errors';
+import { reactive } from './state';
 
 // ----------------------------------------
 // Types
@@ -29,20 +31,18 @@ export type TasksRecord<Tasks extends TaskRecord> = {
   [K in keyof Tasks]?: Task<TaskKey<K>, Tasks[K]['input'], Tasks[K]['output']>;
 };
 
-export type QueueListener<Tasks extends TaskRecord> = (tasks: TasksRecord<Tasks>) => void;
-
 // ----------------------------------------
 // Implementation
 // ----------------------------------------
 
 export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
-  readonly #subscribers = new Set<QueueListener<Tasks>>();
+  /** Reactive tasks. Subscribe via `subscribe(queue.tasks, fn)`. */
+  readonly tasks: Reactive<TasksRecord<Tasks>>;
 
-  #tasks: TasksRecord<Tasks> = {};
   #destroyed = false;
 
-  get tasks(): Readonly<TasksRecord<Tasks>> {
-    return Object.freeze({ ...this.#tasks });
+  constructor() {
+    this.tasks = reactive({} as TasksRecord<Tasks>);
   }
 
   get destroyed(): boolean {
@@ -52,45 +52,17 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   /** Clear settled task(s). If name provided, clears that task. If no name, clears all settled. */
   reset(name?: keyof Tasks): void {
     if (!isUndefined(name)) {
-      const task = this.#tasks[name];
+      const task = this.tasks[name];
       if (!task || task.status === 'pending') return;
 
-      delete this.#tasks[name];
-      this.#notifySubscribers();
-
+      delete this.tasks[name];
       return;
     }
 
-    let cleared = false;
-    for (const key of Reflect.ownKeys(this.#tasks)) {
-      const task = this.#tasks[key];
+    for (const key of Reflect.ownKeys(this.tasks) as (keyof Tasks)[]) {
+      const task = this.tasks[key];
       if (task && task.status !== 'pending') {
-        delete this.#tasks[key];
-        cleared = true;
-      }
-    }
-
-    if (cleared) {
-      this.#notifySubscribers();
-    }
-  }
-
-  subscribe(listener: QueueListener<Tasks>): () => void {
-    this.#subscribers.add(listener);
-    return () => {
-      this.#subscribers.delete(listener);
-    };
-  }
-
-  #notifySubscribers(): void {
-    if (this.#subscribers.size === 0) return;
-
-    const snapshot = this.tasks;
-    for (const listener of this.#subscribers) {
-      try {
-        listener(snapshot);
-      } catch (e) {
-        console.error('[vjs-queue]', e);
+        delete this.tasks[key];
       }
     }
   }
@@ -105,8 +77,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     }
 
     // Supersede any pending task with the same key (may have different name)
-    // Don't delete - let error handler update status to 'error' so controllers can see it
-    for (const task of Object.values(this.#tasks)) {
+    for (const task of Object.values(this.tasks) as Task[]) {
       if (task?.key === key && task.status === 'pending') {
         task.abort.abort(new StoreError('SUPERSEDED'));
       }
@@ -129,7 +100,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   /** Abort task(s). If name provided, aborts that task. If no name, aborts all. */
   abort(name?: keyof Tasks): void {
     if (!isUndefined(name)) {
-      const task = this.#tasks[name];
+      const task = this.tasks[name];
       if (task?.status === 'pending') {
         task.abort.abort(new StoreError('ABORTED'));
       }
@@ -139,7 +110,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
     const error = new StoreError('ABORTED');
 
-    for (const task of Object.values(this.#tasks)) {
+    for (const task of Object.values(this.tasks) as Task[]) {
       if (task?.status === 'pending') {
         task.abort.abort(error);
       }
@@ -151,8 +122,11 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
     this.#destroyed = true;
     this.abort();
-    this.#subscribers.clear();
-    this.#tasks = {};
+
+    // Clear all tasks
+    for (const key of Reflect.ownKeys(this.tasks) as (keyof Tasks)[]) {
+      delete this.tasks[key];
+    }
   }
 
   async #executeNow<K extends keyof Tasks>(params: {
@@ -181,9 +155,8 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       meta,
     };
 
-    // Store tasks by name for controller access (different names can share same key)
-    this.#tasks[name as keyof Tasks] = pendingTask;
-    this.#notifySubscribers();
+    // Store tasks by name for controller access
+    (this.tasks as TasksRecord<Tasks>)[name as keyof Tasks] = pendingTask;
 
     try {
       if (abort.signal.aborted) {
@@ -198,33 +171,27 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
       resolve(result);
 
-      const successTask: SuccessTask = {
-        ...pendingTask,
-        status: 'success',
-        settledAt: Date.now(),
-        output: result,
-      };
-
-      // Only update if we're still the current task for this name
-      if (this.#tasks[name as keyof Tasks] === pendingTask) {
-        this.#tasks[name as keyof Tasks] = successTask;
-        this.#notifySubscribers();
+      // Only update if we're still the current task for this name (compare by ID since reactive wraps tasks)
+      const currentTask = this.tasks[name as keyof Tasks];
+      if (currentTask?.id === id) {
+        Object.assign(currentTask, {
+          status: 'success',
+          settledAt: Date.now(),
+          output: result,
+        } satisfies Partial<SuccessTask>);
       }
     } catch (error) {
       reject(error);
 
-      const errorTask: ErrorTask = {
-        ...pendingTask,
-        status: 'error',
-        settledAt: Date.now(),
-        error,
-        cancelled: abort.signal.aborted,
-      };
-
-      // Only update if we're still the current task for this name
-      if (this.#tasks[name as keyof Tasks] === pendingTask) {
-        this.#tasks[name as keyof Tasks] = errorTask;
-        this.#notifySubscribers();
+      // Only update if we're still the current task for this name (compare by ID since reactive wraps tasks)
+      const currentTask = this.tasks[name as keyof Tasks];
+      if (currentTask?.id === id) {
+        Object.assign(currentTask, {
+          status: 'error',
+          settledAt: Date.now(),
+          error,
+          cancelled: abort.signal.aborted,
+        } satisfies Partial<ErrorTask>);
       }
     }
   }
@@ -239,6 +206,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
  *
  * - Tasks execute immediately when enqueued
  * - Same key = supersede previous (abort pending)
+ * - Subscribe to task changes via `subscribe(queue.tasks, fn)`
  *
  * @example
  * // Loose typing (default)

@@ -48,7 +48,7 @@ All store-related controllers live in `@videojs/store/lit`. See that package for
 
 ```ts
 class MyElement extends ReactiveElement {
-  #paused = new SelectorController(this, context, (s) => s.paused);
+  #state = new SnapshotController(this, store.state);
   #play = new RequestController(this, context, 'play');
 }
 ```
@@ -71,10 +71,10 @@ Internal utility that resolves a store from either a direct instance or context.
 
 ```ts
 // Direct store — value available immediately
-const selector = new SelectorController(this, store, (s) => s.paused);
+const state = new SnapshotController(this, store.state);
 
-// Context — value available after context resolves
-const selector = new SelectorController(this, storeContext, (s) => s.paused);
+// Context — value available after context resolves via StateController from createStore
+const state = new StateController(this);
 ```
 
 Controllers handle both cases transparently. The `StoreAccessor`:
@@ -90,7 +90,7 @@ Controllers handle both cases transparently. The `StoreAccessor`:
 Always export an explicit host type for controllers and mixins:
 
 ```ts
-export type SelectorControllerHost = ReactiveControllerHost & HTMLElement;
+export type SnapshotControllerHost = ReactiveControllerHost & HTMLElement;
 export type ProviderMixinHost = ReactiveElement & EventTarget;
 ```
 

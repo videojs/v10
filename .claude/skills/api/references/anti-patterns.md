@@ -63,7 +63,7 @@ function useVolume() {
 
 // Good: Explicit dependency
 function useVolume(store: MediaStore) {
-  return useSelector(store, (s) => s.volume);
+  return useSnapshot(store.state).volume;
 }
 ```
 

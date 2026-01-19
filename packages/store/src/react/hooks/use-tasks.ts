@@ -3,14 +3,13 @@ import type { AnyStore, InferStoreTasks } from '../../core/store';
 
 import { useCallback, useRef, useSyncExternalStore } from 'react';
 
+import { subscribe } from '../../core/state';
+
 /**
  * Subscribe to task queue state.
  *
  * Returns a record of all tasks keyed by request name.
  * Re-renders when any task is added, updated, or removed.
- *
- * For tracking a single mutation, prefer `useMutation` which provides a more ergonomic API with
- * status helpers.
  *
  * @param store - The store instance to subscribe to
  * @returns Record of tasks keyed by request name
@@ -33,18 +32,21 @@ import { useCallback, useRef, useSyncExternalStore } from 'react';
  * ```
  */
 export function useTasks<S extends AnyStore>(store: S): TasksRecord<InferStoreTasks<S>> {
-  const tasksRef = useRef(store.queue.tasks);
+  const versionRef = useRef(0);
 
-  const subscribe = useCallback(
+  const subscribeToQueue = useCallback(
     (onStoreChange: () => void) =>
-      store.queue.subscribe((tasks) => {
-        tasksRef.current = tasks;
+      subscribe(store.queue.tasks, () => {
+        versionRef.current++;
         onStoreChange();
       }),
     [store],
   );
 
-  const getSnapshot = useCallback(() => tasksRef.current as TasksRecord<InferStoreTasks<S>>, []);
+  const getSnapshot = useCallback(() => versionRef.current, []);
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  useSyncExternalStore(subscribeToQueue, getSnapshot, getSnapshot);
+
+  // Return the tasks proxy directly
+  return store.queue.tasks as TasksRecord<InferStoreTasks<S>>;
 }
