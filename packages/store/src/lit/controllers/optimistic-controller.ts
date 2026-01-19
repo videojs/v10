@@ -39,24 +39,12 @@ export type OptimisticControllerHost = ReactiveControllerHost & HTMLElement;
  * }
  * ```
  *
- * @example Context source (from createStore)
+ * @example Context source
  * ```ts
  * const { context } = createStore({ slices: [volumeSlice] });
  *
  * class VolumeSlider extends LitElement {
  *   #volume = new OptimisticController(this, context, 'setVolume', s => s.volume);
- *
- *   render() {
- *     const { value, setValue, status } = this.#volume.value;
- *     return html`
- *       <input
- *         type="range"
- *         .value=${value}
- *         @input=${(e) => setValue(Number(e.target.value))}
- *         style="opacity: ${status === 'pending' ? 0.5 : 1}"
- *       />
- *     `;
- *   }
  * }
  * ```
  */

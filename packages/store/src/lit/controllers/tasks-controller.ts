@@ -29,18 +29,12 @@ export type TasksControllerHost = ReactiveControllerHost & HTMLElement;
  * }
  * ```
  *
- * @example Context source (from createStore)
+ * @example Context source
  * ```ts
  * const { context } = createStore({ slices: [playbackSlice] });
  *
  * class MyElement extends LitElement {
  *   #tasks = new TasksController(this, context);
- *
- *   render() {
- *     const playTask = this.#tasks.value.play;
- *     const isPending = playTask?.status === 'pending';
- *     return html`<button ?disabled=${isPending}>Play</button>`;
- *   }
  * }
  * ```
  */

@@ -38,7 +38,7 @@ export type MutationControllerHost = ReactiveControllerHost & HTMLElement;
  * }
  * ```
  *
- * @example Context source (from createStore)
+ * @example Context source
  * ```ts
  * const { context } = createStore({ slices: [playbackSlice] });
  *
