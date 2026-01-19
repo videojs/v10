@@ -10,6 +10,7 @@ import type {
 import type { Reactive } from './state';
 import type { PendingTask, Task, TaskContext } from './task';
 
+import { abortable } from '@videojs/utils/events';
 import { isNull } from '@videojs/utils/predicate';
 
 import { StoreError } from './errors';
@@ -242,11 +243,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
       }
 
       for (const guard of config.guard) {
-        if (signal.aborted) {
-          throw new StoreError('ABORTED');
-        }
-
-        const result = await guard({ target, signal });
+        const result = await abortable(Promise.resolve(guard({ target, signal })), signal);
 
         if (!result) {
           throw new StoreError('REJECTED');
