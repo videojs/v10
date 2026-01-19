@@ -95,3 +95,5 @@ When code changes introduce new patterns that a skill should cover:
 - New accessibility patterns (ARIA, keyboard, focus)
 - New API design decisions (extensibility, type safety)
 - New DX considerations (inference, defaults, naming)
+
+**After modifying skills:** See CLAUDE.md "Keep AI Documentation Current" for consistency checklist.

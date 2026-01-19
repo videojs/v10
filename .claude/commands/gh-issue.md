@@ -80,7 +80,7 @@ Based on detected type, load the relevant skill for domain expertise:
 
 **Notes:**
 
-- For domain-specific bugs (e.g., accessibility bug), load the relevant domain skill (`aria`) instead of `dx`
+- For domain-specific bugs (e.g., accessibility bug), load the relevant domain skill (`aria`) instead of generic `api`
 - When issues span multiple domains (e.g., "add accessible slider component"), load multiple skills: primary domain first, then supporting skills
 
 ### Step 3: Examine the Codebase

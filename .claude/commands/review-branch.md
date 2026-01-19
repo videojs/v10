@@ -65,8 +65,8 @@ For deeper domain-specific review, load the relevant skill using the skill tool:
 | Category      | Load Skill  | For Deeper Review              |
 | ------------- | ----------- | ------------------------------ |
 | API/Code      | `api`       | `api/review/workflow.md`       |
-| UI Components | `component` | References in SKILL.md         |
-| UI Components | `aria`      | `aria/references/checklist.md` |
+| UI Components | `component` | `component/review/workflow.md` |
+| UI Components | `aria`      | `aria/review/workflow.md`      |
 | Documentation | `docs`      | `docs/review/workflow.md`      |
 
 Skip this step for quick reviews using the inline checklists below.

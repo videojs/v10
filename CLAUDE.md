@@ -185,6 +185,10 @@ When generating or editing code in this repository, follow these rules to ensure
    - When introducing new naming conventions or code patterns, update the Code Rules section.
    - When changes affect component architecture, accessibility, or API design, update relevant skills in `.claude/skills/`.
    - When discovering anti-patterns during implementation, document them to prevent recurrence.
+   - **After modifying skills**, check for consistency:
+     1. `.claude/commands/*.md` — update if they reference changed skills or paths
+     2. `.claude/skills/README.md` — update Quick Reference, Skills table, Review Workflows
+     3. This file (CLAUDE.md) — update if skill changes affect repo-wide conventions
 
 ## Code Rules
 
