@@ -183,6 +183,16 @@ See [props.md](references/props.md) for naming conventions.
 
 For accessibility patterns (ARIA, keyboard, focus), load the `aria` skill.
 
+## Review
+
+For structured component reviews, load the review workflow:
+
+| File                                | Contents                    |
+| ----------------------------------- | --------------------------- |
+| [workflow.md](review/workflow.md)   | Review process and severity |
+| [checklist.md](review/checklist.md) | Component review checklist  |
+| [templates.md](review/templates.md) | Issue and report formats    |
+
 ---
 
 ## Implementation Sources
@@ -198,8 +208,8 @@ For accessibility patterns (ARIA, keyboard, focus), load the `aria` skill.
 
 ## Related Skills
 
-| Need                   | Use                |
-| ---------------------- | ------------------ |
-| Accessibility patterns | `aria` skill       |
-| API design principles  | `api-design` skill |
-| Documentation patterns | `docs` skill       |
+| Need                   | Use          |
+| ---------------------- | ------------ |
+| Accessibility patterns | `aria` skill |
+| API design principles  | `api` skill  |
+| Documentation patterns | `docs` skill |

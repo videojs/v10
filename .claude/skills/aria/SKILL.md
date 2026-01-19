@@ -15,53 +15,16 @@ description: Review and implement accessibility patterns for UI components follo
 | React Patterns      | [react.md](references/react.md)                 |
 | Media Players       | [media.md](references/media.md)                 |
 | Anti-Patterns       | [anti-patterns.md](references/anti-patterns.md) |
-| Review Checklist    | [checklist.md](references/checklist.md)         |
 
-## Review Output Format
+## Review
 
-When reviewing code for accessibility, output findings in this format:
+For structured accessibility reviews, load the review workflow:
 
-```
-═══════════════════════════════════════════════════
-A11Y REVIEW: {filename}
-═══════════════════════════════════════════════════
-
-CRITICAL ({n} issues)
-─────────────────────
-[A11Y] Line {n}: {issue title}
-  {code snippet}
-  Fix: {recommended fix}
-  WCAG: {criterion}
-
-SERIOUS ({n} issues)
-─────────────────────
-[A11Y] Line {n}: {issue title}
-  {code snippet}
-  Fix: {recommended fix}
-  WCAG: {criterion}
-
-MODERATE ({n} issues)
-─────────────────────
-[A11Y] Line {n}: {issue title}
-  {code snippet}
-  Fix: {recommended fix}
-  WCAG: {criterion}
-
-═══════════════════════════════════════════════════
-SUMMARY: {n} critical, {n} serious, {n} moderate
-Score: {score}/100
-═══════════════════════════════════════════════════
-```
-
-### Severity Definitions
-
-- **Critical**: Blocks assistive technology users entirely (missing names, broken keyboard access, focus traps)
-- **Serious**: Significant barriers but workarounds exist (poor focus indicators, missing live regions)
-- **Moderate**: Suboptimal but functional (verbose labels, missing descriptions)
-
-### Scoring
-
-Start at 100, deduct: Critical −15, Serious −8, Moderate −3
+| File                                | Contents                    |
+| ----------------------------------- | --------------------------- |
+| [workflow.md](review/workflow.md)   | Review process and severity |
+| [checklist.md](review/checklist.md) | Comprehensive checklist     |
+| [templates.md](review/templates.md) | Issue and report formats    |
 
 ## Core Principles
 
