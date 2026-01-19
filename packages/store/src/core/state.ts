@@ -1,17 +1,6 @@
-import { isObject } from '@videojs/utils/predicate';
-
-// =============================================================================
-// PROXY-BASED REACTIVITY (New API)
-// =============================================================================
+import { isObject, isPlainObject } from '@videojs/utils/predicate';
 
 type Listener = () => void;
-
-/** Only auto-proxy plain objects, not class instances like AbortController, Date, etc. */
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  if (!isObject(value)) return false;
-  const proto = Object.getPrototypeOf(value);
-  return proto === null || proto === Object.prototype;
-}
 
 // Track which objects are proxied (for isProxy check)
 const proxyCache = new WeakSet<object>();
