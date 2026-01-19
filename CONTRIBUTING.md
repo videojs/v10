@@ -201,7 +201,17 @@ pnpm test
 
 See [Testing](#-testing) for more information.
 
-### Step 6: Push
+### Step 6: Review Documentation
+
+If your changes introduced new patterns, conventions, or architectural decisions, check if documentation needs updates:
+
+- **CLAUDE.md** — Code rules, naming conventions, or workflow guidance
+- **`.claude/skills/`** — Component, accessibility, API design, or DX patterns
+- **Site docs** — User-facing documentation in `site/`
+
+This keeps our AI agents and future contributors aligned with the codebase.
+
+### Step 7: Push
 
 When ready, push your branch up to your fork (or upstream if you are a core contributor):
 

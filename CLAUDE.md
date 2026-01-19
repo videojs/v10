@@ -9,16 +9,16 @@ Refer to **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** for setup, development, and 
 
 ## Package Layout
 
-| Package Path            | Purpose                                                            |
-| ----------------------- | ------------------------------------------------------------------ |
-| `packages/utils`        | Shared utilities (`/dom` subpath for DOM‑specific helpers).        |
-| `packages/core`         | Core runtime‑agnostic logic (`/dom` subpath for DOM bindings).     |
-| `packages/store`        | State management (`/dom` and `/react` subpaths for platform APIs). |
-| `packages/html`         | Web player—DOM/Browser‑specific implementation.                    |
-| `packages/react`        | React player—adapts core state to React components.                |
-| `packages/react-native` | React Native player integration layer.                             |
-| `examples/*`            | Demo apps for various runtimes.                                    |
-| `site/`                 | Astro‑based docs and website.                                      |
+| Package Path            | Purpose                                                             |
+| ----------------------- | ------------------------------------------------------------------- |
+| `packages/utils`        | Shared utilities (`/dom` subpath for DOM‑specific helpers).         |
+| `packages/core`         | Core runtime‑agnostic logic (`/dom` subpath for DOM bindings).      |
+| `packages/store`        | State management (`/dom`, `/lit`, `/react` subpaths for platforms). |
+| `packages/html`         | Web player—DOM/Browser‑specific implementation.                     |
+| `packages/react`        | React player—adapts core state to React components.                 |
+| `packages/react-native` | React Native player integration layer.                              |
+| `examples/*`            | Demo apps for various runtimes.                                     |
+| `site/`                 | Astro‑based docs and website.                                       |
 
 IGNORE `packages/__tech-preview__/` — it's legacy code from the Demuxed demo. Don't reference or
 modify it when working in other packages.
@@ -31,6 +31,7 @@ utils/dom       ← DOM-specific helpers
 
 store           ← state management
 store/dom       ← DOM platform APIs
+store/lit       ← Lit bindings (controllers, mixins)
 store/react     ← React bindings
 
 core            ← runtime-agnostic logic
@@ -102,6 +103,9 @@ pnpm clean
 5. Lint file/s, fix all issues.
 6. Run build/s, fix all errors.
 7. Before creating a PR `pnpm test`.
+8. If your changes introduced new patterns or conventions, review meta-documentation:
+   - **CLAUDE.md** — New naming conventions, code rules, or anti-patterns.
+   - **Skills** — New component patterns, API design patterns, or DX considerations.
 
 Be efficient when running operations, see "Common Root Commands".
 
@@ -131,14 +135,17 @@ packages/utils/src/dom/
 
 ### Test describe() Names
 
-Use the class or function name being tested:
+Use the exact exported name being tested (preserving case):
 
 ```ts
-// selector-controller.test.ts
+// selector-controller.test.ts — class export
 describe('SelectorController', () => { ... });
 
-// provider-mixin.test.ts
+// provider-mixin.test.ts — factory function export
 describe('createStoreProviderMixin', () => { ... });
+
+// disposer.test.ts — lowercase module/export
+describe('disposer', () => { ... });
 ```
 
 ## Guidelines
@@ -174,6 +181,11 @@ When generating or editing code in this repository, follow these rules to ensure
    - One focused change per commit—no mixed updates.
    - Breaking changes use `!`.
 
+7. **Keep AI Documentation Current**
+   - When introducing new naming conventions or code patterns, update the Code Rules section.
+   - When changes affect component architecture, accessibility, or API design, update relevant skills in `.claude/skills/`.
+   - When discovering anti-patterns during implementation, document them to prevent recurrence.
+
 ## Code Rules
 
 ### File Organization
@@ -196,15 +208,20 @@ Before writing new helpers, check `@videojs/utils` for existing utilities.
 
 ### Naming Conventions
 
-| Pattern             | Prefix     | Example                          |
-| ------------------- | ---------- | -------------------------------- |
-| Type inference      | `Infer*`   | `InferSliceState<S>`             |
-| Type resolution     | `Resolve*` | `ResolveRequestHandler<R>`       |
-| Type constraint     | `Ensure*`  | `EnsureTaskRecord<T>`            |
-| Union type helpers  | `Union*`   | `UnionSliceState<Slices>`        |
-| Default loose types | `Default*` | `DefaultTaskRecord`              |
-| Type guards         | `is*`      | `isStoreError(error)`            |
-| Factory functions   | `create*`  | `createQueue()`, `createSlice()` |
+| Pattern             | Prefix         | Example                                |
+| ------------------- | -------------- | -------------------------------------- |
+| Type inference      | `Infer*`       | `InferSliceState<S>`                   |
+| Type resolution     | `Resolve*`     | `ResolveRequestHandler<R>`             |
+| Type constraint     | `Ensure*`      | `EnsureTaskRecord<T>`                  |
+| Union type helpers  | `Union*`       | `UnionSliceState<Slices>`              |
+| Default loose types | `Default*`     | `DefaultTaskRecord`                    |
+| Type guards         | `is*`          | `isStoreError(error)`                  |
+| Factory functions   | `create*`      | `createQueue()`, `createSlice()`       |
+| Falsy wrapper       | `Falsy*`       | `Falsy<T>` (value that might be falsy) |
+| Constructor types   | `*Constructor` | `Constructor<T>`, `AnyConstructor<T>`  |
+| Mixin types         | `Mixin`        | `Mixin<Base, Result>`                  |
+
+**Note on `create*` prefix:** Use `create*` for factory functions that construct stateful objects or classes (e.g., `createQueue()`, `createStore()`). Simple utility functions that return cleanup callbacks don't use this prefix (e.g., `listen()`, `animationFrame()`, `idleCallback()`).
 
 ### Component/Hook Namespace Pattern
 
@@ -278,6 +295,11 @@ function isQueue(value: unknown): value is Queue {
 - Symbol description is `@videojs/*`
 - Add `[SYMBOL]: true` property to the object/interface
 - Type guard checks `isObject(value) && SYMBOL in value`
+
+**`Symbol()` vs `Symbol.for()`:**
+
+- Use `Symbol.for('@videojs/*')` for symbols that need cross-realm identity (e.g., metadata that must be recognized across module boundaries)
+- Use `Symbol('@videojs/*')` for instance-unique identifiers (e.g., task IDs, slice IDs)
 
 ### Subscribe Pattern
 
@@ -421,34 +443,17 @@ get size(): number { ... }
 add(cleanup: CleanupFn): void { ... }
 ```
 
-## Lit
+## Rule Placement
 
-### Accessor Pattern
+CLAUDE.md contains repo-wide conventions. Domain-specific patterns live in skills:
 
-When a controller can receive a value from multiple sources (direct instance vs context), use an Accessor to abstract resolution:
+| Domain                      | Location             |
+| --------------------------- | -------------------- |
+| Naming, testing, utilities  | CLAUDE.md Code Rules |
+| Component patterns and APIs | `component` skill    |
+| Accessibility               | `aria` skill         |
+| Documentation               | `docs` skill         |
+| API design                  | `api-design` skill   |
+| DX evaluation               | `dx` skill           |
 
-```ts
-class ValueAccessor<Value> {
-  constructor(host: AccessorHost, source: Value | Context<Value>, onAvailable?: (value: Value) => void);
-  get value(): Value | null;
-  hostConnected(): void;
-}
-```
-
-- `source` accepts either a direct value or a context that provides it
-- `value` getter returns the resolved value or `null` if not yet available
-- `onAvailable` callback fires when value becomes available (use for subscription setup)
-- Consumers call `hostConnected()` to re-trigger `onAvailable` on reconnect
-
-### Explicit Host Type
-
-Export a typed host alias for controllers and mixins:
-
-```ts
-export type SelectorControllerHost = ReactiveControllerHost & HTMLElement;
-export type ProviderMixinHost = ReactiveElement & EventTarget;
-```
-
-- Always export and use the explicit type, never bare `ReactiveControllerHost`
-- Allows future extension without breaking consumers
-- Self-documents what capabilities the host must have
+When adding a new rule, ask: "Who needs this?" If it's domain-specific, put it in the relevant skill.
