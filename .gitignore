@@ -134,3 +134,8 @@ bun.lockb
 # Monorepo / Tooling
 # -------------------------
 .playwright-mcp/
+
+# -------------------------
+# AI Agent Config (Generated)
+# -------------------------
+.opencode

@@ -16,6 +16,7 @@
   },
   "scripts": {
     "prepare": "simple-git-hooks",
+    "postinstall": "pnpm link:opencode",
     "build:packages": "turbo run build --filter=./packages/*",
     "build:site": "turbo run build --filter=site",
     "docs:update": "doctoc README.md CONTRIBUTING.md",
@@ -31,6 +32,7 @@
     "lint": "eslint . --cache",
     "lint:fix": "eslint . --fix --cache",
     "lint:fix:file": "eslint --fix --cache",
+    "link:opencode": "[ -e .opencode ] || ln -s .claude .opencode",
     "test": "turbo run test",
     "typecheck": "tsc --build"
   },
