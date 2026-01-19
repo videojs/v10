@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { batch, flush, isReactive, reactive, snapshot, subscribe, subscribeKeys } from '../state';
+import { batch, flush, isReactive, reactive, snapshot, subscribe, subscribeKeys, track } from '../state';
 
 describe('reactive', () => {
   interface TestState {
@@ -254,6 +254,137 @@ describe('reactive', () => {
 
       expect(listener).toHaveBeenCalledOnce();
       expect(s.value).toBeUndefined();
+    });
+  });
+
+  describe('changedKeys', () => {
+    it('subscribe listener receives changed keys', () => {
+      const s = createState();
+      const listener = vi.fn();
+      subscribe(s, listener);
+
+      s.volume = 0.5;
+      flush();
+
+      expect(listener).toHaveBeenCalledWith(new Set(['volume']));
+    });
+
+    it('subscribe listener receives multiple changed keys', () => {
+      const s = createState();
+      const listener = vi.fn();
+      subscribe(s, listener);
+
+      s.volume = 0.5;
+      s.muted = true;
+      flush();
+
+      expect(listener).toHaveBeenCalledWith(new Set(['volume', 'muted']));
+    });
+  });
+
+  describe('track', () => {
+    it('tracks accessed properties', () => {
+      const s = createState();
+      const { tracked, subscribe: sub, getSnapshot, next } = track(s);
+      const listener = vi.fn();
+
+      // Access volume
+      void tracked.volume;
+
+      sub(listener);
+
+      // Change volume - should notify
+      s.volume = 0.5;
+      flush();
+      expect(listener).toHaveBeenCalledOnce();
+      expect(getSnapshot()).toBe(1);
+
+      // Change muted - should NOT notify (not accessed)
+      s.muted = true;
+      flush();
+      expect(listener).toHaveBeenCalledOnce(); // still 1
+
+      // Access muted, call next to clear, then access again
+      next();
+      void tracked.muted;
+
+      // Now muted change should notify
+      s.muted = false;
+      flush();
+      expect(listener).toHaveBeenCalledTimes(2);
+      expect(getSnapshot()).toBe(2);
+    });
+
+    it('notifies on first render when nothing tracked yet', () => {
+      const s = createState();
+      const { subscribe: sub, getSnapshot } = track(s);
+      const listener = vi.fn();
+
+      sub(listener);
+
+      // No properties accessed yet, but should still notify
+      s.volume = 0.5;
+      flush();
+
+      expect(listener).toHaveBeenCalledOnce();
+      expect(getSnapshot()).toBe(1);
+    });
+
+    it('next() clears tracked keys', () => {
+      const s = createState();
+      const { tracked, subscribe: sub, next } = track(s);
+      const listener = vi.fn();
+
+      // Access volume
+      void tracked.volume;
+      sub(listener);
+
+      // Clear tracked keys
+      next();
+
+      // Now volume change should NOT notify (nothing tracked after next())
+      // But actually it SHOULD because accessed.size === 0 triggers notification
+      s.volume = 0.5;
+      flush();
+      expect(listener).toHaveBeenCalledOnce();
+
+      // Access muted only
+      void tracked.muted;
+
+      // Volume change should NOT notify now
+      s.volume = 0.3;
+      flush();
+      expect(listener).toHaveBeenCalledOnce(); // still 1
+    });
+
+    it('getSnapshot increments only on relevant changes', () => {
+      const s = createState();
+      const { tracked, subscribe: sub, getSnapshot, next } = track(s);
+
+      // Access only volume
+      void tracked.volume;
+      sub(() => {});
+
+      expect(getSnapshot()).toBe(0);
+
+      s.volume = 0.5;
+      flush();
+      expect(getSnapshot()).toBe(1);
+
+      // Access muted now
+      next();
+      void tracked.muted;
+
+      // Change volume - not tracked anymore after next()
+      // But muted is tracked, and accessed.size > 0, so volume change won't trigger
+      s.volume = 0.3;
+      flush();
+      expect(getSnapshot()).toBe(1); // unchanged
+
+      // Change muted - should trigger
+      s.muted = true;
+      flush();
+      expect(getSnapshot()).toBe(2);
     });
   });
 });

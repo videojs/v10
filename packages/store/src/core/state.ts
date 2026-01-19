@@ -1,6 +1,6 @@
 import { isObject, isPlainObject } from '@videojs/utils/predicate';
 
-type Listener = () => void;
+type Listener = (changedKeys: ReadonlySet<PropertyKey>) => void;
 
 /** Symbol used to brand reactive objects. */
 const REACTIVE_SYMBOL = Symbol('@videojs/reactive');
@@ -126,14 +126,14 @@ export function flush(): void {
   flushScheduled = false;
 
   for (const [target, keys] of pending) {
-    // Notify global listeners for this target
-    listeners.get(target)?.forEach(fn => fn());
+    // Notify global listeners for this target (with changed keys)
+    listeners.get(target)?.forEach(fn => fn(keys));
 
-    // Notify key-specific listeners
+    // Notify key-specific listeners (no args - already filtered by key)
     const targetKeyListeners = keyListeners.get(target);
     if (targetKeyListeners) {
       for (const key of keys) {
-        targetKeyListeners.get(key)?.forEach(fn => fn());
+        targetKeyListeners.get(key)?.forEach(fn => fn(keys));
       }
     }
   }
@@ -179,4 +179,48 @@ export function subscribeKeys<T extends object>(state: Reactive<T>, keys: (keyof
 /** Return a frozen shallow copy of the current state. */
 export function snapshot<T extends object>(state: Reactive<T>): Readonly<T> {
   return Object.freeze({ ...state });
+}
+
+export interface Tracker<T extends object> {
+  /** Tracking proxy that records which properties are accessed. */
+  tracked: T;
+  /** Subscribe function compatible with useSyncExternalStore. */
+  subscribe: (onStoreChange: () => void) => () => void;
+  /** Returns version that increments on relevant changes. */
+  getSnapshot: () => number;
+  /** Clear tracked keys for next render cycle. */
+  next: () => void;
+}
+
+/**
+ * Track property access on reactive state.
+ *
+ * Returns a tracker that records which properties are accessed and only
+ * triggers updates when those specific properties change. Designed for
+ * use with React's `useSyncExternalStore` or Lit's reactive controller pattern.
+ */
+export function track<T extends object>(state: Reactive<T>): Tracker<T> {
+  const accessed = new Set<PropertyKey>();
+
+  let version = 0;
+
+  const tracked = new Proxy(state, {
+    get(target, prop, receiver) {
+      if (typeof prop !== 'symbol') accessed.add(prop);
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+
+  return {
+    tracked,
+    subscribe: notify =>
+      subscribe(state, (changedKeys) => {
+        if (accessed.size === 0 || [...changedKeys].some(k => accessed.has(k))) {
+          version++;
+          notify();
+        }
+      }),
+    getSnapshot: () => version,
+    next: () => accessed.clear(),
+  };
 }
