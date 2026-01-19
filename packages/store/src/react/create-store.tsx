@@ -88,7 +88,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
  *
  * @example
  * ```tsx
- * const { Provider, useStore, useSelector, useRequest, useTasks, create } = createStore({
+ * const { Provider, useStore, useSnapshot, useRequest, useTasks, create } = createStore({
  *   slices: [playbackSlice, presentationSlice],
  * });
  * ```

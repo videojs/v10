@@ -208,7 +208,7 @@ return state.status === 'playing'
 
 ### New APIs
 
-- `useSelector` hook added — [Review new surface]
+- `useSnapshot` hook added — [Review new surface]
 
 ### Internal Changes
 

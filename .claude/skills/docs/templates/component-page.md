@@ -222,8 +222,8 @@ return (
 </Slider.Root>
 );
 }
-
 ````
+
 </Tab>
 <Tab label="Vue">
 ```vue
@@ -264,6 +264,7 @@ const volume = ref(1);
 </Tab>
 </Tabs>
 ```
+
 ````
 
 ---
@@ -354,10 +355,10 @@ ElementName.define('custom-name', StoreMixin);
 
 ### Controllers Used
 
-| Controller           | Selector/Request | Purpose              |
-| -------------------- | ---------------- | -------------------- |
-| `SelectorController` | `s => s.paused`  | Track playback state |
-| `RequestController`  | `'play'`         | Play request         |
+| Controller            | Usage           | Purpose              |
+| --------------------- | --------------- | -------------------- |
+| `SnapshotController`  | `store.state`   | Track playback state |
+| `RequestController`   | `'play'`        | Play request         |
 
 ### Events
 
@@ -417,3 +418,4 @@ When writing component documentation:
 - [ ] Accessibility section
 - [ ] Keyboard interactions table
 - [ ] See Also section
+````

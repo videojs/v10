@@ -138,8 +138,8 @@ packages/utils/src/dom/
 Use the exact exported name being tested (preserving case):
 
 ```ts
-// selector-controller.test.ts — class export
-describe('SelectorController', () => { ... });
+// snapshot-controller.test.ts — class export
+describe('SnapshotController', () => { ... });
 
 // provider-mixin.test.ts — factory function export
 describe('createStoreProviderMixin', () => { ... });

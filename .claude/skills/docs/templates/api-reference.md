@@ -416,16 +416,16 @@ new ControllerName(host, source, ...args)
 
 ### Example
 
-import { SelectorController } from '@videojs/store/lit';
+import { SnapshotController } from '@videojs/store/lit';
 
 class PlayButton extends LitElement {
-#paused = new SelectorController(this, context, s => s.paused);
+#state = new SnapshotController(this, store.state);
 #play = new RequestController(this, context, 'play');
 
 render() {
 return html\`
 <button @click=\${() => this.#play.value()}>
-\${this.#paused.value ? 'Play' : 'Pause'}
+\${this.#state.value.paused ? 'Play' : 'Pause'}
 </button>
 \`;
 }

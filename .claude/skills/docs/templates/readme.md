@@ -165,7 +165,7 @@ Core concepts:
 
 Core concepts:
 
-- Controllers (SelectorController, RequestController, TasksController)
+- Controllers (SnapshotController, RequestController, TasksController)
 - Mixins (StoreMixin, StoreProviderMixin, StoreAttachMixin)
 - createStore factory pattern
 - Context API
