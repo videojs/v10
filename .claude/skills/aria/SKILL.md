@@ -65,4 +65,12 @@ For structured accessibility reviews, load the review workflow:
 - For React-specific patterns: [react.md](references/react.md)
 - For media player accessibility: [media.md](references/media.md)
 - For common mistakes: [anti-patterns.md](references/anti-patterns.md)
-- For comprehensive checklist: [checklist.md](references/checklist.md)
+- For comprehensive checklist: [checklist.md](review/checklist.md)
+
+## Related Skills
+
+| Need                   | Use               |
+| ---------------------- | ----------------- |
+| Building UI components | `component` skill |
+| API design principles  | `api` skill       |
+| Documentation          | `docs` skill      |

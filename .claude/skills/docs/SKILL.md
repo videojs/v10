@@ -287,3 +287,11 @@ For reviewing existing documentation against these standards, load `review/workf
 | [review/agents.md](review/agents.md)                 | Full prompts for each sub-agent |
 | [review/issue-format.md](review/issue-format.md)     | Issue format with examples      |
 | [review/merge-template.md](review/merge-template.md) | Final report template           |
+
+## Related Skills
+
+| Need                   | Use               |
+| ---------------------- | ----------------- |
+| Building UI components | `component` skill |
+| Accessibility patterns | `aria` skill      |
+| API design principles  | `api` skill       |

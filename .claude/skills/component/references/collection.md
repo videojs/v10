@@ -161,5 +161,5 @@ For variable heights, measure items and cache heights. More complex — consider
 
 ## See Also
 
-- [Focus Management](../../aria/references/focus-management.md) — keyboard navigation in collections
+- [Focus Management](../../aria/references/focus.md) — keyboard navigation in collections
 - [Animation](animation.md) — exit animations for items

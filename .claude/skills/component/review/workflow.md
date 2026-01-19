@@ -79,12 +79,7 @@ For fast reviews without full checklist:
 
 ## Severity Levels
 
-| Level      | Meaning                      | Examples                                                   |
-| ---------- | ---------------------------- | ---------------------------------------------------------- |
-| `CRITICAL` | Breaks users, blocks release | Wrong state model, missing controlled support, memory leak |
-| `MAJOR`    | Significant DX issue         | Boolean trap, inconsistent naming, missing data attributes |
-| `MINOR`    | Improvement opportunity      | Verbose API, missing CSS variable, could use prop getter   |
-| `NIT`      | Polish, optional             | Naming consistency, minor ergonomics                       |
+See [templates.md](templates.md) for severity definitions.
 
 ## Accessibility
 

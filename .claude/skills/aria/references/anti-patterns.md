@@ -261,4 +261,4 @@ Auto-playing audio disrupts screen reader users. Mute by default or require user
 - [focus.md](focus.md) — correct focus patterns
 - [keyboard.md](keyboard.md) — keyboard navigation
 - [aria.md](aria.md) — roles, states, properties
-- [checklist.md](checklist.md) — comprehensive review checklist
+- [checklist.md](../review/checklist.md) — comprehensive review checklist

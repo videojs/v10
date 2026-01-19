@@ -4,16 +4,18 @@ Specialized knowledge for AI agents working on Video.js 10.
 
 ## Quick Reference
 
-| Workflow                   | Load                          |
-| -------------------------- | ----------------------------- |
-| Building store/slices      | `api`                         |
-| Building Lit components    | `component` + `aria`          |
-| Building React components  | `component` + `aria`          |
-| Writing documentation      | `docs`                        |
-| Reviewing API/architecture | `api` → `review/workflow.md`  |
-| Reviewing documentation    | `docs` → `review/workflow.md` |
-| Accessibility audit        | `aria`                        |
-| Committing / creating PRs  | `git`                         |
+| Workflow                   | Load                               |
+| -------------------------- | ---------------------------------- |
+| Building store/slices      | `api`                              |
+| Building Lit components    | `component` + `aria`               |
+| Building React components  | `component` + `aria`               |
+| Writing documentation      | `docs`                             |
+| Reviewing API/architecture | `api` → `review/workflow.md`       |
+| Reviewing documentation    | `docs` → `review/workflow.md`      |
+| Reviewing components       | `component` → `review/workflow.md` |
+| Reviewing accessibility    | `aria` → `review/workflow.md`      |
+| Accessibility audit        | `aria`                             |
+| Committing / creating PRs  | `git`                              |
 
 ## Skills
 
@@ -21,8 +23,8 @@ Specialized knowledge for AI agents working on Video.js 10.
 | ------------------------------- | ---------------------------------------------------------------------- | ----------- |
 | [api](api/SKILL.md)             | API design and DX — extensibility, type safety, progressive disclosure | Yes         |
 | [docs](docs/SKILL.md)           | Write Video.js 10 documentation                                        | Yes         |
-| [component](component/SKILL.md) | Build headless UI components — compound patterns, state, styling       | No          |
-| [aria](aria/SKILL.md)           | Accessibility patterns — ARIA, keyboard, focus, media player a11y      | No          |
+| [component](component/SKILL.md) | Build headless UI components — compound patterns, state, styling       | Yes         |
+| [aria](aria/SKILL.md)           | Accessibility patterns — ARIA, keyboard, focus, media player a11y      | Yes         |
 | [git](git/SKILL.md)             | Git workflow — commit messages, PRs, branch naming, scope inference    | No          |
 
 ## Review Workflows
@@ -39,10 +41,12 @@ skill/
     └── templates.md   # Output formats
 ```
 
-| Skill          | Review Focus                                      |
-| -------------- | ------------------------------------------------- |
-| `api/review/`  | API design, architecture, DX, type safety         |
-| `docs/review/` | Documentation quality — tone, structure, examples |
+| Skill               | Review Focus                                      |
+| ------------------- | ------------------------------------------------- |
+| `api/review/`       | API design, architecture, DX, type safety         |
+| `docs/review/`      | Documentation quality — tone, structure, examples |
+| `component/review/` | Component architecture, state, props, styling     |
+| `aria/review/`      | Accessibility — ARIA, keyboard, focus, WCAG       |
 
 ## Skill Structure
 

@@ -76,25 +76,7 @@ For fast reviews without full checklist:
 
 ## Severity Levels
 
-| Level      | Meaning                                | Examples                                                         |
-| ---------- | -------------------------------------- | ---------------------------------------------------------------- |
-| `CRITICAL` | Blocks assistive technology users      | Missing accessible name, keyboard trap, no focus indicator       |
-| `MAJOR`    | Significant barrier, workarounds exist | Poor focus contrast, missing live region, touch target too small |
-| `MINOR`    | Suboptimal but functional              | Verbose label, missing description, skipped heading level        |
-| `NIT`      | Enhancement opportunity                | Could use aria-describedby, label could be shorter               |
-
-## Scoring
-
-Start at 100, deduct per issue:
-
-| Severity | Points |
-| -------- | ------ |
-| CRITICAL | -15    |
-| MAJOR    | -8     |
-| MINOR    | -3     |
-| NIT      | -1     |
-
-Scores below 70 indicate significant accessibility issues.
+See [templates.md](templates.md) for severity definitions and scoring.
 
 ## References
 
