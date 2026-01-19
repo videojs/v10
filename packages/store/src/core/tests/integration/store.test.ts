@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createSlice, createStore } from '../../index';
+import { CANCEL_ALL, createSlice, createStore } from '../../index';
 import { flush, subscribeKeys } from '../../state';
 
 describe('store lifecycle integration', () => {
@@ -231,6 +231,198 @@ describe('request coordination', () => {
     expect(executed).toContain('third-end');
     expect(executed).not.toContain('first-end');
     expect(executed).not.toContain('second-end');
+  });
+
+  it('CANCEL_ALL aborts all pending requests (nuclear reset)', async () => {
+    const events: string[] = [];
+
+    const slice = createSlice<unknown>()({
+      initialState: {},
+      getSnapshot: () => ({}),
+      subscribe: () => {},
+      request: {
+        fetch: {
+          key: 'fetch',
+          async handler(_, { signal }) {
+            events.push('fetch-start');
+            await new Promise((resolve, reject) => {
+              const timeout = setTimeout(() => {
+                events.push('fetch-complete');
+                resolve('fetched');
+              }, 100);
+              signal.addEventListener('abort', () => {
+                clearTimeout(timeout);
+                events.push('fetch-aborted');
+                reject(signal.reason);
+              });
+            });
+          },
+        },
+        seek: {
+          key: 'seek',
+          async handler(_, { signal }) {
+            events.push('seek-start');
+            await new Promise((resolve, reject) => {
+              const timeout = setTimeout(() => {
+                events.push('seek-complete');
+                resolve('seeked');
+              }, 100);
+              signal.addEventListener('abort', () => {
+                clearTimeout(timeout);
+                events.push('seek-aborted');
+                reject(signal.reason);
+              });
+            });
+          },
+        },
+        load: {
+          cancel: CANCEL_ALL,
+          handler: () => {
+            events.push('load');
+          },
+        },
+      },
+    });
+
+    const store = createStore({
+      slices: [slice],
+      onError: () => {},
+    });
+
+    store.attach({});
+
+    // Start multiple requests
+    const fetchPromise = store.request.fetch();
+    const seekPromise = store.request.seek();
+    await new Promise(r => setTimeout(r, 10));
+
+    // Nuclear reset
+    await store.request.load();
+
+    await fetchPromise.catch(() => {});
+    await seekPromise.catch(() => {});
+
+    expect(events).toContain('fetch-start');
+    expect(events).toContain('seek-start');
+    expect(events).toContain('fetch-aborted');
+    expect(events).toContain('seek-aborted');
+    expect(events).toContain('load');
+    expect(events).not.toContain('fetch-complete');
+    expect(events).not.toContain('seek-complete');
+  });
+
+  it('mode: shared allows multiple requests to share fate', async () => {
+    let handlerCallCount = 0;
+
+    const slice = createSlice<unknown>()({
+      initialState: {},
+      getSnapshot: () => ({}),
+      subscribe: () => {},
+      request: {
+        play: {
+          key: 'playback',
+          mode: 'shared',
+          async handler() {
+            handlerCallCount++;
+            await new Promise(r => setTimeout(r, 50));
+            return 'playing';
+          },
+        },
+      },
+    });
+
+    const store = createStore({
+      slices: [slice],
+    });
+
+    store.attach({});
+
+    // Multiple play calls while one is pending
+    const p1 = store.request.play();
+    const p2 = store.request.play();
+    const p3 = store.request.play();
+
+    // All should resolve to the same value (shared fate)
+    const [r1, r2, r3] = await Promise.all([p1, p2, p3]);
+    expect(r1).toBe('playing');
+    expect(r2).toBe('playing');
+    expect(r3).toBe('playing');
+
+    // Handler should only be called once (not superseded)
+    expect(handlerCallCount).toBe(1);
+  });
+
+  it('mode: shared rejects all promises together on error', async () => {
+    const slice = createSlice<unknown>()({
+      initialState: {},
+      getSnapshot: () => ({}),
+      subscribe: () => {},
+      request: {
+        play: {
+          key: 'playback',
+          mode: 'shared',
+          async handler() {
+            await new Promise(r => setTimeout(r, 20));
+            throw new Error('playback failed');
+          },
+        },
+      },
+    });
+
+    const store = createStore({
+      slices: [slice],
+      onError: () => {},
+    });
+
+    store.attach({});
+
+    const p1 = store.request.play();
+    const p2 = store.request.play();
+
+    // Both should reject with the same error
+    await expect(p1).rejects.toThrow('playback failed');
+    await expect(p2).rejects.toThrow('playback failed');
+  });
+
+  it('mode: shared allows new request after previous completes', async () => {
+    let callCount = 0;
+
+    const slice = createSlice<unknown>()({
+      initialState: {},
+      getSnapshot: () => ({}),
+      subscribe: () => {},
+      request: {
+        play: {
+          key: 'playback',
+          mode: 'shared',
+          async handler() {
+            callCount++;
+            await new Promise(r => setTimeout(r, 10));
+            return `call-${callCount}`;
+          },
+        },
+      },
+    });
+
+    const store = createStore({
+      slices: [slice],
+    });
+
+    store.attach({});
+
+    // First batch shares fate
+    const p1 = store.request.play();
+    const p2 = store.request.play();
+    const [r1, r2] = await Promise.all([p1, p2]);
+    expect(r1).toBe('call-1');
+    expect(r2).toBe('call-1');
+
+    // After completion, new request starts fresh
+    const p3 = store.request.play();
+    const r3 = await p3;
+    expect(r3).toBe('call-2');
+
+    expect(callCount).toBe(2);
   });
 });
 

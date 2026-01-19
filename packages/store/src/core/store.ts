@@ -14,7 +14,7 @@ import { isNull } from '@videojs/utils/predicate';
 
 import { StoreError } from './errors';
 import { Queue } from './queue';
-import { createRequestMeta, resolveRequestCancel, resolveRequestKey } from './request';
+import { CANCEL_ALL, createRequestMeta, resolveRequestCancel, resolveRequestKey } from './request';
 import { reactive } from './state';
 
 export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[]> {
@@ -225,8 +225,13 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
   ): Promise<unknown> {
     const key = resolveRequestKey(config.key, input);
 
-    for (const requestName of resolveRequestCancel(config.cancel, input)) {
-      this.#queue.abort(requestName);
+    const cancel = resolveRequestCancel(config.cancel, input);
+    if (cancel === CANCEL_ALL) {
+      this.#queue.abort();
+    } else {
+      for (const requestName of cancel) {
+        this.#queue.abort(requestName);
+      }
     }
 
     const handler = async ({ input, signal }: TaskContext) => {
@@ -255,6 +260,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
       return await this.#queue.enqueue({
         name,
         key,
+        mode: config.mode,
         input,
         meta,
         handler,
