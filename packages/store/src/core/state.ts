@@ -58,8 +58,9 @@ export function reactive<T extends object>(initial: T, parent?: object, parentKe
       let current: object | undefined = thisReactive;
       let changedKey: PropertyKey = prop;
       while (current) {
-        if (!pending.has(current)) pending.set(current, new Set());
-        pending.get(current)!.add(changedKey);
+        let pendingKeys = pending.get(current);
+        if (!pendingKeys) pending.set(current, (pendingKeys = new Set()));
+        pendingKeys.add(changedKey);
         const info = parents.get(current);
         if (!info) break;
         changedKey = info.key;
@@ -79,8 +80,9 @@ export function reactive<T extends object>(initial: T, parent?: object, parentKe
         let current: object | undefined = thisReactive;
         let changedKey: PropertyKey = prop;
         while (current) {
-          if (!pending.has(current)) pending.set(current, new Set());
-          pending.get(current)!.add(changedKey);
+          let pendingKeys = pending.get(current);
+          if (!pendingKeys) pending.set(current, (pendingKeys = new Set()));
+          pendingKeys.add(changedKey);
           const info = parents.get(current);
           if (!info) break;
           changedKey = info.key;
@@ -99,10 +101,11 @@ export function reactive<T extends object>(initial: T, parent?: object, parentKe
   if (parent && parentKey !== undefined) parents.set(proxy, { parent, key: parentKey });
 
   // Auto-wrap nested plain objects after creation (so we can set parent)
-  for (const key of Object.keys(initial) as (keyof T)[]) {
-    const value = initial[key];
+  for (const key in initial) {
+    if (!Object.prototype.hasOwnProperty.call(initial, key)) continue;
+    const value = initial[key as keyof T];
     if (isPlainObject(value) && !isReactive(value)) {
-      (initial as Record<string, unknown>)[key as string] = reactive(value, proxy, key);
+      (initial as Record<string, unknown>)[key] = reactive(value, proxy, key);
     }
   }
 
@@ -127,13 +130,19 @@ export function flush(): void {
 
   for (const [target, keys] of pending) {
     // Notify global listeners for this target (with changed keys)
-    listeners.get(target)?.forEach(fn => fn(keys));
+    const targetListeners = listeners.get(target);
+    if (targetListeners) {
+      for (const fn of targetListeners) fn(keys);
+    }
 
     // Notify key-specific listeners (no args - already filtered by key)
     const targetKeyListeners = keyListeners.get(target);
     if (targetKeyListeners) {
       for (const key of keys) {
-        targetKeyListeners.get(key)?.forEach(fn => fn(keys));
+        const keySet = targetKeyListeners.get(key);
+        if (keySet) {
+          for (const fn of keySet) fn(keys);
+        }
       }
     }
   }
@@ -154,19 +163,21 @@ export function batch<R>(fn: () => R): R {
 
 /** Subscribe to all changes on a reactive state object. */
 export function subscribe<T extends object>(state: Reactive<T>, fn: Listener): () => void {
-  if (!listeners.has(state)) listeners.set(state, new Set());
-  listeners.get(state)!.add(fn);
+  let set = listeners.get(state);
+  if (!set) listeners.set(state, (set = new Set()));
+  set.add(fn);
   return () => listeners.get(state)?.delete(fn);
 }
 
 /** Subscribe to changes on specific keys of a reactive state object. */
 export function subscribeKeys<T extends object>(state: Reactive<T>, keys: (keyof T)[], fn: Listener): () => void {
-  if (!keyListeners.has(state)) keyListeners.set(state, new Map());
-  const targetMap = keyListeners.get(state)!;
+  let targetMap = keyListeners.get(state);
+  if (!targetMap) keyListeners.set(state, (targetMap = new Map()));
 
   for (const key of keys) {
-    if (!targetMap.has(key)) targetMap.set(key, new Set());
-    targetMap.get(key)!.add(fn);
+    let set = targetMap.get(key);
+    if (!set) targetMap.set(key, (set = new Set()));
+    set.add(fn);
   }
 
   return () => {
@@ -215,7 +226,16 @@ export function track<T extends object>(state: Reactive<T>): Tracker<T> {
     tracked,
     subscribe: notify =>
       subscribe(state, (changedKeys) => {
-        if (accessed.size === 0 || [...changedKeys].some(k => accessed.has(k))) {
+        let relevant = accessed.size === 0;
+        if (!relevant) {
+          for (const k of changedKeys) {
+            if (accessed.has(k)) {
+              relevant = true;
+              break;
+            }
+          }
+        }
+        if (relevant) {
           version++;
           notify();
         }
