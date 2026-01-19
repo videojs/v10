@@ -6,6 +6,13 @@ import { isObject } from '@videojs/utils/predicate';
 
 type Listener = () => void;
 
+/** Only auto-proxy plain objects, not class instances like AbortController, Date, etc. */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (!isObject(value)) return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === null || proto === Object.prototype;
+}
+
 // Track which objects are proxied (for isProxy check)
 const proxyCache = new WeakSet<object>();
 
@@ -38,8 +45,8 @@ export function proxy<T extends object>(initial: T, parent?: object): T {
       // Get the proxy for this target
       const thisProxy = proxyMap.get(target)!;
 
-      // Auto-proxy nested objects with this proxy as parent
-      if (isObject(value) && !isProxy(value)) {
+      // Auto-proxy nested plain objects with this proxy as parent
+      if (isPlainObject(value) && !isProxy(value)) {
         value = proxy(value as object, thisProxy);
       }
 
@@ -81,10 +88,10 @@ export function proxy<T extends object>(initial: T, parent?: object): T {
   proxyMap.set(initial, p);
   if (parent) parents.set(p, parent);
 
-  // Auto-proxy nested objects after the proxy is created (so we can set parent)
+  // Auto-proxy nested plain objects after the proxy is created (so we can set parent)
   for (const key of Object.keys(initial) as (keyof T)[]) {
     const value = initial[key];
-    if (isObject(value) && !isProxy(value)) {
+    if (isPlainObject(value) && !isProxy(value)) {
       (initial as Record<string, unknown>)[key as string] = proxy(value as object, p);
     }
   }

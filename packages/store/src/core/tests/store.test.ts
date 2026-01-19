@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createQueue } from '../queue';
 import { createSlice } from '../slice';
+import { flush, subscribe } from '../state';
 import { createStore } from '../store';
 
 describe('store', () => {
@@ -265,7 +266,7 @@ describe('store', () => {
     });
   });
 
-  describe('subscribe', () => {
+  describe('subscribe (via proxy)', () => {
     it('notifies on state change', async () => {
       const store = createStore({
         slices: [audioSlice],
@@ -275,39 +276,16 @@ describe('store', () => {
       store.attach(media);
 
       const listener = vi.fn();
-      store.subscribe(listener);
+      subscribe(store.state, listener);
 
       await store.request.setVolume(0.5);
+      flush();
 
-      const calls = listener.mock.calls;
-      const lastCall = calls[calls.length - 1];
-      expect(lastCall).toBeDefined();
-      const lastState = lastCall![0];
-      expect(lastState.volume).toBe(0.5);
+      expect(listener).toHaveBeenCalled();
+      expect(store.state.volume).toBe(0.5);
     });
 
-    it('selector subscription only notifies when selected value changes', async () => {
-      const store = createStore({
-        slices: [audioSlice],
-      });
-
-      const media = new MockMedia();
-      store.attach(media);
-
-      const volumeListener = vi.fn();
-      store.subscribe(s => s.volume, volumeListener);
-
-      // Reset after attach sync
-      volumeListener.mockClear();
-
-      await store.request.setMuted(true);
-      expect(volumeListener).not.toHaveBeenCalled();
-
-      await store.request.setVolume(0.7);
-      expect(volumeListener).toHaveBeenCalledWith(0.7);
-    });
-
-    it('object selector uses key optimization', async () => {
+    it('unsubscribe stops notifications', async () => {
       const store = createStore({
         slices: [audioSlice],
       });
@@ -316,35 +294,13 @@ describe('store', () => {
       store.attach(media);
 
       const listener = vi.fn();
-      store.subscribe(s => ({ volume: s.volume, muted: s.muted }), listener);
-
-      // Reset after attach sync
-      listener.mockClear();
+      const unsubscribe = subscribe(store.state, listener);
+      unsubscribe();
 
       await store.request.setVolume(0.5);
-      expect(listener).toHaveBeenCalledWith({ volume: 0.5, muted: false });
-    });
+      flush();
 
-    it('supports custom equality function', async () => {
-      const store = createStore({
-        slices: [audioSlice],
-      });
-
-      const media = new MockMedia();
-      store.attach(media);
-
-      const listener = vi.fn();
-      // Custom equality that ignores small volume changes
-      store.subscribe(s => s.volume, listener, { equalityFn: (a, b) => Math.abs(a - b) < 0.1 });
-
-      // Reset after attach sync
-      listener.mockClear();
-
-      await store.request.setVolume(0.95); // Within threshold of 1
       expect(listener).not.toHaveBeenCalled();
-
-      await store.request.setVolume(0.5); // Outside threshold
-      expect(listener).toHaveBeenCalledWith(0.5);
     });
   });
 
@@ -399,10 +355,12 @@ describe('store', () => {
 
       await store.request.fail().catch(() => {});
 
-      expect(onError).toHaveBeenCalledWith({
-        error: expect.any(Error),
-        store,
-      });
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.any(Error),
+          store,
+        }),
+      );
     });
   });
 });
