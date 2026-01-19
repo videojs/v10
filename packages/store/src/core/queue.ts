@@ -2,6 +2,7 @@ import type { Request, RequestMeta, RequestMode } from './request';
 import type { Reactive } from './state';
 import type { ErrorTask, PendingTask, SuccessTask, Task, TaskContext, TaskKey } from './task';
 
+import { abortable } from '@videojs/utils/events';
 import { isUndefined } from '@videojs/utils/predicate';
 
 import { StoreError } from './errors';
@@ -184,15 +185,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     (this.tasks as TasksRecord<Tasks>)[name as keyof Tasks] = pendingTask;
 
     try {
-      if (abort.signal.aborted) {
-        throw abort.signal.reason || new StoreError('ABORTED');
-      }
-
-      const result = await handler({ input, signal: abort.signal });
-
-      if (abort.signal.aborted) {
-        throw abort.signal.reason || new StoreError('ABORTED');
-      }
+      const result = await abortable(handler({ input, signal: abort.signal }), abort.signal);
 
       resolve(result);
 
