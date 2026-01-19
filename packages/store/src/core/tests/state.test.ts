@@ -210,6 +210,37 @@ describe('reactive', () => {
 
       expect(listener).toHaveBeenCalledOnce();
     });
+
+    it('subscribeKeys on parent fires when nested child changes', () => {
+      const s = reactive<{ nested: { value: number }; other: number }>({
+        nested: { value: 0 },
+        other: 0,
+      });
+      const nestedListener = vi.fn();
+      const otherListener = vi.fn();
+
+      subscribeKeys(s, ['nested'], nestedListener);
+      subscribeKeys(s, ['other'], otherListener);
+
+      s.nested.value = 42;
+      flush();
+
+      expect(nestedListener).toHaveBeenCalledOnce();
+      expect(otherListener).not.toHaveBeenCalled();
+    });
+
+    it('bubbles correct key through multiple levels', () => {
+      const s = reactive<{ a: { b: { c: number } } }>({
+        a: { b: { c: 0 } },
+      });
+      const listener = vi.fn();
+      subscribeKeys(s, ['a'], listener);
+
+      s.a.b.c = 42;
+      flush();
+
+      expect(listener).toHaveBeenCalledOnce();
+    });
   });
 
   describe('delete property', () => {

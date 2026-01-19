@@ -8,6 +8,9 @@ const REACTIVE_SYMBOL = Symbol('@videojs/reactive');
 /** A reactive state object created by `reactive()`. */
 export type Reactive<T extends object> = T & { readonly [REACTIVE_SYMBOL]: true };
 
+/** Extract the underlying state type from a `Reactive<T>`. */
+export type InferReactiveState<R> = R extends Reactive<infer T> ? T : never;
+
 // Track which objects are reactive (for isReactive check)
 const reactiveCache = new WeakSet<object>();
 
@@ -20,8 +23,12 @@ const listeners = new WeakMap<object, Set<Listener>>();
 // Key-specific listeners per proxy
 const keyListeners = new WeakMap<object, Map<PropertyKey, Set<Listener>>>();
 
-// Parent references for bubbling (proxy -> parent proxy)
-const parents = new WeakMap<object, object>();
+// Parent references for bubbling (proxy -> parent proxy + key)
+interface ParentInfo {
+  parent: object;
+  key: PropertyKey;
+}
+const parents = new WeakMap<object, ParentInfo>();
 
 // Pending changes (proxy -> keys that changed)
 const pending = new Map<object, Set<PropertyKey>>();
@@ -31,7 +38,7 @@ let batchDepth = 0;
 let flushScheduled = false;
 
 /** Create a reactive state object with optional parent for change bubbling. */
-export function reactive<T extends object>(initial: T, parent?: object): Reactive<T> {
+export function reactive<T extends object>(initial: T, parent?: object, parentKey?: PropertyKey): Reactive<T> {
   const proxy = new Proxy(initial, {
     set(target, prop, value, receiver) {
       const prev = Reflect.get(target, prop, receiver);
@@ -42,17 +49,21 @@ export function reactive<T extends object>(initial: T, parent?: object): Reactiv
 
       // Auto-wrap nested plain objects with this as parent
       if (isPlainObject(value) && !isReactive(value)) {
-        value = reactive(value, thisReactive);
+        value = reactive(value, thisReactive, prop);
       }
 
       Reflect.set(target, prop, value, receiver);
 
       // Mark this and all parents as pending
       let current: object | undefined = thisReactive;
+      let changedKey: PropertyKey = prop;
       while (current) {
         if (!pending.has(current)) pending.set(current, new Set());
-        pending.get(current)!.add(prop);
-        current = parents.get(current);
+        pending.get(current)!.add(changedKey);
+        const info = parents.get(current);
+        if (!info) break;
+        changedKey = info.key;
+        current = info.parent;
       }
 
       if (batchDepth === 0) scheduleFlush();
@@ -66,10 +77,14 @@ export function reactive<T extends object>(initial: T, parent?: object): Reactiv
       if (hadProp && result) {
         const thisReactive = reactiveMap.get(target)!;
         let current: object | undefined = thisReactive;
+        let changedKey: PropertyKey = prop;
         while (current) {
           if (!pending.has(current)) pending.set(current, new Set());
-          pending.get(current)!.add(prop);
-          current = parents.get(current);
+          pending.get(current)!.add(changedKey);
+          const info = parents.get(current);
+          if (!info) break;
+          changedKey = info.key;
+          current = info.parent;
         }
 
         if (batchDepth === 0) scheduleFlush();
@@ -81,13 +96,13 @@ export function reactive<T extends object>(initial: T, parent?: object): Reactiv
 
   reactiveCache.add(proxy);
   reactiveMap.set(initial, proxy);
-  if (parent) parents.set(proxy, parent);
+  if (parent && parentKey !== undefined) parents.set(proxy, { parent, key: parentKey });
 
   // Auto-wrap nested plain objects after creation (so we can set parent)
   for (const key of Object.keys(initial) as (keyof T)[]) {
     const value = initial[key];
     if (isPlainObject(value) && !isReactive(value)) {
-      (initial as Record<string, unknown>)[key as string] = reactive(value, proxy);
+      (initial as Record<string, unknown>)[key as string] = reactive(value, proxy, key);
     }
   }
 
