@@ -174,13 +174,11 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       // Only update if we're still the current task for this name (compare by ID since reactive wraps tasks)
       const currentTask = this.tasks[name as keyof Tasks];
       if (currentTask?.id === id) {
-        const successTask: SuccessTask = {
-          ...pendingTask,
+        Object.assign(currentTask, {
           status: 'success',
           settledAt: Date.now(),
           output: result,
-        };
-        (this.tasks as TasksRecord<Tasks>)[name as keyof Tasks] = successTask;
+        } satisfies Partial<SuccessTask>);
       }
     } catch (error) {
       reject(error);
@@ -188,14 +186,12 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       // Only update if we're still the current task for this name (compare by ID since reactive wraps tasks)
       const currentTask = this.tasks[name as keyof Tasks];
       if (currentTask?.id === id) {
-        const errorTask: ErrorTask = {
-          ...pendingTask,
+        Object.assign(currentTask, {
           status: 'error',
           settledAt: Date.now(),
           error,
           cancelled: abort.signal.aborted,
-        };
-        (this.tasks as TasksRecord<Tasks>)[name as keyof Tasks] = errorTask;
+        } satisfies Partial<ErrorTask>);
       }
     }
   }

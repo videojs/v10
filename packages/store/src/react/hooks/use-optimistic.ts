@@ -53,6 +53,9 @@ export function useOptimistic<
   const optimisticRef = useRef<Value | null>(null);
   const taskRef = useRef<Task | undefined>(store.queue.tasks[name]);
 
+  // Version counter for detecting in-place mutations (useSyncExternalStore uses Object.is)
+  const taskVersionRef = useRef(0);
+
   // Subscribe to store state for actual value
   const subscribeToState = useCallback((onStoreChange: () => void) => subscribe(store.state, onStoreChange), [store]);
 
@@ -66,6 +69,7 @@ export function useOptimistic<
       subscribeKeys(store.queue.tasks, [name], () => {
         const newTask = store.queue.tasks[name];
         taskRef.current = newTask;
+        taskVersionRef.current++; // Increment to signal change (handles in-place mutations)
 
         // Clear optimistic value when task settles
         if (optimisticRef.current !== null && newTask?.status !== 'pending') {
@@ -77,9 +81,12 @@ export function useOptimistic<
     [store, name],
   );
 
-  const getQueueSnapshot = useCallback(() => taskRef.current, []);
+  // Return version as snapshot so useSyncExternalStore detects in-place mutations
+  const getQueueSnapshot = useCallback(() => taskVersionRef.current, []);
 
-  const task = useSyncExternalStore(subscribeToQueue, getQueueSnapshot, getQueueSnapshot);
+  // Subscribe triggers re-render via version change; read actual task from ref
+  useSyncExternalStore(subscribeToQueue, getQueueSnapshot, getQueueSnapshot);
+  const task = taskRef.current;
 
   // setValue: set optimistic value and call request
   const setValueRef = useRef((newValue: Value): ReturnType<EnsureFunction<Request>> => {
