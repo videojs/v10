@@ -53,6 +53,10 @@ test(html): add slider interaction tests
 
 Commits starting with `wip` (case-insensitive) bypass commitlint validation. Use sparingly for work-in-progress that will be squashed.
 
+## No Co-Author Trailers
+
+Do NOT add `Co-Authored-By` trailers to commit messages. The commit author is sufficient attribution.
+
 ## Authoritative Source
 
 See `commitlint.config.js` for the enforced scope list.
