@@ -3,4 +3,4 @@ export { useStoreContext } from './context';
 export { createStore } from './create-store';
 export type { CreateStoreConfig, CreateStoreResult, ProviderProps } from './create-store';
 
-export { useMutation, useOptimistic, useRequest, useSnapshot, useTasks } from './hooks';
+export { useRequest, useSnapshot, useTasks } from './hooks';

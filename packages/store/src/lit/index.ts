@@ -1,11 +1,5 @@
-export type { AsyncStatus, MutationResult, OptimisticResult } from './controllers';
-export {
-  MutationController,
-  OptimisticController,
-  RequestController,
-  SnapshotController,
-  TasksController,
-} from './controllers';
+export type { AsyncStatus } from './controllers';
+export { RequestController, SnapshotController, TasksController } from './controllers';
 
 // createStore factory (returns bound controllers)
 export { createStore } from './create-store';
