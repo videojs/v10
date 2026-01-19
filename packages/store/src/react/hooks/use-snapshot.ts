@@ -1,12 +1,12 @@
-import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
-import { subscribe } from '../../core/state';
+import { subscribe, subscribeKeys } from '../../core/state';
 
 /**
  * Subscribe to a reactive proxy and re-render when it changes.
  *
  * Returns a tracking proxy that records which properties are accessed.
- * Currently subscribes to ALL changes; key-based optimization can be added later.
+ * Only re-renders when accessed properties change.
  *
  * @param proxy - A reactive proxy created by `proxy()`
  * @returns The proxy, which triggers re-renders when accessed properties change
@@ -20,40 +20,59 @@ import { subscribe } from '../../core/state';
  * ```
  */
 export function useSnapshot<T extends object>(proxy: T): T {
-  // Version counter - increments on any proxy change
   const versionRef = useRef(0);
-  const trackedRef = useRef(new Set<PropertyKey>());
+  const [trackedKeys] = useState(() => new Set<PropertyKey>());
+  const [subscribedKeys, setSubscribedKeys] = useState<PropertyKey[]>([]);
 
-  // Subscribe to all changes
+  // Subscribe to proxy changes - resubscribes when subscribedKeys changes
   const subscribeToProxy = useCallback(
     (onStoreChange: () => void) => {
-      return subscribe(proxy, () => {
+      if (subscribedKeys.length === 0) {
+        // No keys yet (first render) - subscribe to all
+        return subscribe(proxy, () => {
+          versionRef.current++;
+          onStoreChange();
+        });
+      }
+
+      // Subscribe only to tracked keys
+      return subscribeKeys(proxy, subscribedKeys as (keyof T)[], () => {
         versionRef.current++;
         onStoreChange();
       });
     },
-    [proxy],
+    [proxy, subscribedKeys],
   );
 
-  // Return version for React to compare
   const getSnapshot = useCallback(() => versionRef.current, []);
 
-  // Safe subscription handling via React
   useSyncExternalStore(subscribeToProxy, getSnapshot, getSnapshot);
 
-  // Return tracking proxy that records property access
-  // (tracking is for future key-based optimization)
-  return useMemo(() => {
-    trackedRef.current.clear();
-    return new Proxy(proxy, {
-      get(target, prop, receiver) {
-        if (typeof prop !== 'symbol') {
-          trackedRef.current.add(prop);
-        }
-        return Reflect.get(target, prop, receiver);
-      },
-    });
-  }, [proxy]);
+  // After render: check if tracked keys differ from subscribed
+  useEffect(() => {
+    const tracked = Array.from(trackedKeys);
+    const keysChanged = tracked.length !== subscribedKeys.length || tracked.some(k => !subscribedKeys.includes(k));
+
+    if (keysChanged) {
+      setSubscribedKeys(tracked);
+    }
+
+    trackedKeys.clear();
+  });
+
+  // Return tracking proxy
+  return useMemo(
+    () =>
+      new Proxy(proxy, {
+        get(target, prop, receiver) {
+          if (typeof prop !== 'symbol') {
+            trackedKeys.add(prop);
+          }
+          return Reflect.get(target, prop, receiver);
+        },
+      }),
+    [proxy, trackedKeys],
+  );
 }
 
 export namespace useSnapshot {

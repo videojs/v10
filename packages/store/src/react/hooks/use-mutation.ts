@@ -5,7 +5,7 @@ import type { MutationResult } from '../../shared/types';
 
 import { useCallback, useRef, useSyncExternalStore } from 'react';
 
-import { subscribe } from '../../core/state';
+import { subscribeKeys } from '../../core/state';
 
 /**
  * Track a store request as a mutation with status, data, and error.
@@ -52,11 +52,11 @@ export function useMutation<
 
   const subscribeToQueue = useCallback(
     (onStoreChange: () => void) =>
-      subscribe(store.queue.tasks, () => {
+      subscribeKeys(store.queue.tasks, [name], () => {
         versionRef.current++;
         onStoreChange();
       }),
-    [store],
+    [store, name],
   );
 
   const getSnapshot = useCallback(() => versionRef.current, []);

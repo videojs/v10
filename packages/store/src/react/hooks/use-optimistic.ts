@@ -5,7 +5,7 @@ import type { OptimisticResult } from '../../shared/types';
 
 import { useCallback, useReducer, useRef, useSyncExternalStore } from 'react';
 
-import { subscribe } from '../../core/state';
+import { subscribe, subscribeKeys } from '../../core/state';
 
 /**
  * Track a store request with optimistic updates.
@@ -63,18 +63,16 @@ export function useOptimistic<
   // Subscribe to task queue for status
   const subscribeToQueue = useCallback(
     (onStoreChange: () => void) =>
-      subscribe(store.queue.tasks, () => {
+      subscribeKeys(store.queue.tasks, [name], () => {
         const newTask = store.queue.tasks[name];
-        if (newTask !== taskRef.current) {
-          taskRef.current = newTask;
+        taskRef.current = newTask;
 
-          // Clear optimistic value when task settles
-          if (optimisticRef.current !== null && newTask?.status !== 'pending') {
-            optimisticRef.current = null;
-          }
-
-          onStoreChange();
+        // Clear optimistic value when task settles
+        if (optimisticRef.current !== null && newTask?.status !== 'pending') {
+          optimisticRef.current = null;
         }
+
+        onStoreChange();
       }),
     [store, name],
   );

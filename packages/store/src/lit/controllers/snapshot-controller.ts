@@ -42,6 +42,7 @@ export class SnapshotController<T extends object> implements ReactiveController 
   readonly #host: SnapshotControllerHost;
   readonly #proxy: T;
   readonly #trackedKeys = new Set<PropertyKey>();
+  readonly #subscribedKeys = new Set<PropertyKey>();
   readonly #trackingProxy: T;
   readonly #onChange: ((snapshot: T) => void) | undefined;
   #unsubscribe = noop;
@@ -82,20 +83,29 @@ export class SnapshotController<T extends object> implements ReactiveController 
   hostDisconnected(): void {
     this.#unsubscribe();
     this.#unsubscribe = noop;
+    this.#subscribedKeys.clear();
   }
 
   #resubscribe(): void {
-    this.#unsubscribe();
+    const keys = Array.from(this.#trackedKeys);
+    this.#trackedKeys.clear();
 
-    const keys = Array.from(this.#trackedKeys) as (keyof T)[];
+    // Skip resubscription if keys haven't changed
+    const keysChanged = keys.length !== this.#subscribedKeys.size || keys.some(k => !this.#subscribedKeys.has(k));
+
+    if (!keysChanged) return;
+
+    // Keys changed - resubscribe
+    this.#unsubscribe();
+    this.#subscribedKeys.clear();
+    keys.forEach(k => this.#subscribedKeys.add(k));
+
     if (keys.length === 0) return;
 
-    this.#unsubscribe = subscribeKeys(this.#proxy, keys, () => {
+    this.#unsubscribe = subscribeKeys(this.#proxy, keys as (keyof T)[], () => {
       this.#host.requestUpdate();
       this.#onChange?.(this.#proxy);
     });
-
-    this.#trackedKeys.clear();
   }
 }
 
