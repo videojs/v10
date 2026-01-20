@@ -1,32 +1,32 @@
-import type { InferSliceRequests, InferSliceState, Slice } from '../slice';
+import type { Feature, InferFeatureRequests, InferFeatureState } from '../feature';
 
 import { describe, expectTypeOf, it } from 'vitest';
 
-import { createSlice } from '../slice';
+import { createFeature } from '../feature';
 
 interface MockTarget {
   volume: number;
   muted: boolean;
 }
 
-describe('slice types', () => {
-  describe('createSlice', () => {
-    it('returns Slice type with inferred state', () => {
-      const slice = createSlice<MockTarget>()({
+describe('feature types', () => {
+  describe('createFeature', () => {
+    it('returns Feature type with inferred state', () => {
+      const feature = createFeature<MockTarget>()({
         initialState: { volume: 1, muted: false },
         getSnapshot: ({ target }) => ({ volume: target.volume, muted: target.muted }),
         subscribe: () => {},
         request: {},
       });
 
-      expectTypeOf(slice).toExtend<Slice<MockTarget, {
+      expectTypeOf(feature).toExtend<Feature<MockTarget, {
         volume: number;
         muted: boolean;
       }, object>>();
     });
 
     it('infers request handler types from simple handlers', () => {
-      const _slice = createSlice<MockTarget>()({
+      const _feature = createFeature<MockTarget>()({
         initialState: { volume: 1 },
         getSnapshot: ({ target }) => ({ volume: target.volume }),
         subscribe: () => {},
@@ -38,7 +38,7 @@ describe('slice types', () => {
         },
       });
 
-      type Requests = InferSliceRequests<typeof _slice>;
+      type Requests = InferFeatureRequests<typeof _feature>;
 
       expectTypeOf<Requests>().toHaveProperty('setVolume');
 
@@ -46,7 +46,7 @@ describe('slice types', () => {
     });
 
     it('infers async request handler types', () => {
-      const _slice = createSlice<MockTarget>()({
+      const _feature = createFeature<MockTarget>()({
         initialState: { volume: 1 },
         getSnapshot: ({ target }) => ({ volume: target.volume }),
         subscribe: () => {},
@@ -58,13 +58,13 @@ describe('slice types', () => {
         },
       });
 
-      type Requests = InferSliceRequests<typeof _slice>;
+      type Requests = InferFeatureRequests<typeof _feature>;
 
       expectTypeOf<Requests['asyncSetVolume']>().toExtend<{ input: number; output: number }>();
     });
 
     it('infers request config with custom key', () => {
-      const _slice = createSlice<MockTarget>()({
+      const _feature = createFeature<MockTarget>()({
         initialState: { volume: 1, muted: false },
         getSnapshot: ({ target }) => ({ volume: target.volume, muted: target.muted }),
         subscribe: () => {},
@@ -86,14 +86,14 @@ describe('slice types', () => {
         },
       });
 
-      type Requests = InferSliceRequests<typeof _slice>;
+      type Requests = InferFeatureRequests<typeof _feature>;
 
       expectTypeOf<Requests['setVolume']>().toExtend<{ input: number; output: number }>();
       expectTypeOf<Requests['setMuted']>().toExtend<{ input: boolean; output: boolean }>();
     });
 
     it('infers void input when handler takes no arguments', () => {
-      const _slice = createSlice<MockTarget>()({
+      const _feature = createFeature<MockTarget>()({
         initialState: { muted: false },
         getSnapshot: ({ target }) => ({ muted: target.muted }),
         subscribe: () => {},
@@ -105,30 +105,30 @@ describe('slice types', () => {
         },
       });
 
-      type Requests = InferSliceRequests<typeof _slice>;
+      type Requests = InferFeatureRequests<typeof _feature>;
 
       expectTypeOf<Requests['toggleMute']>().toExtend<{ input: void; output: boolean }>();
     });
   });
 
-  describe('InferSliceState', () => {
-    it('extracts state type from slice', () => {
-      const _slice = createSlice<MockTarget>()({
+  describe('InferFeatureState', () => {
+    it('extracts state type from feature', () => {
+      const _feature = createFeature<MockTarget>()({
         initialState: { volume: 1, muted: false, label: 'test' },
         getSnapshot: ({ initialState }) => initialState,
         subscribe: () => {},
         request: {},
       });
 
-      type State = InferSliceState<typeof _slice>;
+      type State = InferFeatureState<typeof _feature>;
 
       expectTypeOf<State>().toEqualTypeOf<{ volume: number; muted: boolean; label: string }>();
     });
   });
 
-  describe('InferSliceRequests', () => {
-    it('extracts request types from slice', () => {
-      const _slice = createSlice<MockTarget>()({
+  describe('InferFeatureRequests', () => {
+    it('extracts request types from feature', () => {
+      const _feature = createFeature<MockTarget>()({
         initialState: { volume: 1 },
         getSnapshot: ({ target }) => ({ volume: target.volume }),
         subscribe: () => {},
@@ -138,7 +138,7 @@ describe('slice types', () => {
         },
       });
 
-      type Requests = InferSliceRequests<typeof _slice>;
+      type Requests = InferFeatureRequests<typeof _feature>;
 
       expectTypeOf<Requests>().toHaveProperty('setVolume');
       expectTypeOf<Requests>().toHaveProperty('reset');

@@ -1,11 +1,11 @@
-import type { AnySlice, StoreConfig } from '@videojs/store';
+import type { AnyFeature, StoreConfig } from '@videojs/store';
 
 import { media } from '@videojs/core/dom';
 import { extendConfig as extendBaseConfig } from '@videojs/store';
 import { createStore } from '@videojs/store/lit';
 
 const baseConfig = {
-  slices: [...media.all],
+  features: [...media.all],
 };
 
 /**
@@ -15,17 +15,17 @@ const baseConfig = {
  * ```ts
  * import { createStore } from '@videojs/store/lit';
  * import { extendConfig, FrostedSkinElement } from '@videojs/html/skins/frosted';
- * import { chaptersSlice } from './slices/chapters';
+ * import { chaptersFeature } from './features/chapters';
  *
  * const { StoreMixin } = createStore(
- *   extendConfig({ slices: [chaptersSlice] })
+ *   extendConfig({ features: [chaptersFeature] })
  * );
  *
  * FrostedSkinElement.define('my-player', El => StoreMixin(El));
  * ```
  */
-export function extendConfig<Slices extends AnySlice<HTMLMediaElement>[] = []>(
-  extension?: Partial<StoreConfig<HTMLMediaElement, Slices>>,
+export function extendConfig<Features extends AnyFeature<HTMLMediaElement>[] = []>(
+  extension?: Partial<StoreConfig<HTMLMediaElement, Features>>,
 ) {
   return extendBaseConfig(baseConfig, extension);
 }

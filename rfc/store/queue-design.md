@@ -350,11 +350,11 @@ The store adds target-aware semantics:
 - State synchronization (getSnapshot, subscribe)
 - Guards (ready-gating)
 - Request metadata
-- Slice composition
+- Feature composition
 
 ```ts
 const store = createStore({
-  slices: [playbackSlice],
+  features: [playbackFeature],
 });
 
 store.attach(videoElement);
@@ -366,7 +366,7 @@ store.request.seek(30, { source: 'user' });
 Guards are **target-aware**:
 
 - They check `readyState`, `networkState`, target availability
-- They need access to the target (via slice context)
+- They need access to the target (via feature context)
 - They're part of the request contract, not generic task execution
 
 The queue doesn't know about targets. It just knows about tasks, keys, and abort signals. The store translates requests into queue tasks, including guard evaluation.

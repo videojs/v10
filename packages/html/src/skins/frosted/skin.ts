@@ -32,7 +32,7 @@ import { StoreMixin } from './store';
  * import { createStore } from '@videojs/store/lit';
  * import { extendConfig, FrostedSkinElement } from '@videojs/html/skins/frosted';
  *
- * const { StoreMixin } = createStore(extendConfig({ slices: [chaptersSlice] }));
+ * const { StoreMixin } = createStore(extendConfig({ features: [chaptersFeature] }));
  * FrostedSkinElement.define('my-player', StoreMixin);
  * ```
  */

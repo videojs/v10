@@ -1,14 +1,14 @@
-import type { InferSliceRequests, InferSliceState } from '@videojs/store';
+import type { InferFeatureRequests, InferFeatureState } from '@videojs/store';
 
-import { createSlice } from '@videojs/store';
+import { createFeature } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
 /**
- * Playback slice for HTMLMediaElement.
+ * Playback feature for HTMLMediaElement.
  *
  * Tracks core playback state and provides play/pause control.
  */
-export const playbackSlice = createSlice<HTMLMediaElement>()({
+export const playbackFeature = createFeature<HTMLMediaElement>()({
   initialState: {
     /** Whether playback is paused. */
     paused: true,
@@ -48,6 +48,6 @@ export const playbackSlice = createSlice<HTMLMediaElement>()({
   },
 });
 
-export type PlaybackState = InferSliceState<typeof playbackSlice>;
+export type PlaybackState = InferFeatureState<typeof playbackFeature>;
 
-export type PlaybackRequests = InferSliceRequests<typeof playbackSlice>;
+export type PlaybackRequests = InferFeatureRequests<typeof playbackFeature>;

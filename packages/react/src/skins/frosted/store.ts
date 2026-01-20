@@ -1,13 +1,13 @@
 'use client';
 
-import type { AnySlice, StoreConfig } from '@videojs/store';
+import type { AnyFeature, StoreConfig } from '@videojs/store';
 
 import { media } from '@videojs/core/dom';
 import { extendConfig as extendBaseConfig } from '@videojs/store';
 import { createStore } from '@videojs/store/react';
 
 const baseConfig = {
-  slices: [...media.all],
+  features: [...media.all],
   displayName: 'FrostedSkin',
 };
 
@@ -18,14 +18,14 @@ const baseConfig = {
  * ```ts
  * import { createStore } from '@videojs/store/react';
  * import { extendConfig } from '@videojs/react/skins/frosted';
- * import { chaptersSlice } from './slices/chapters';
+ * import { chaptersFeature } from './features/chapters';
  *
  * const { Provider, useSnapshot } = createStore(
- *   extendConfig({ slices: [chaptersSlice] })
+ *   extendConfig({ features: [chaptersFeature] })
  * );
  * ```
  */
-export function extendConfig<S extends AnySlice<HTMLMediaElement>[] = []>(
+export function extendConfig<S extends AnyFeature<HTMLMediaElement>[] = []>(
   extension?: Partial<StoreConfig<HTMLMediaElement, S>>,
 ) {
   return extendBaseConfig(baseConfig, extension);

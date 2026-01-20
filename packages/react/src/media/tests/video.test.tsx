@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 
-import { createSlice } from '@videojs/store';
+import { createFeature } from '@videojs/store';
 import { createStore } from '@videojs/store/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -12,7 +12,7 @@ describe('video', () => {
     muted = false;
   }
 
-  const mockSlice = createSlice<MockMedia>()({
+  const mockFeature = createFeature<MockMedia>()({
     initialState: { volume: 1, muted: false },
     getSnapshot: ({ target }) => ({
       volume: target.volume,
@@ -23,7 +23,7 @@ describe('video', () => {
   });
 
   function createTestStore() {
-    return createStore({ slices: [mockSlice] });
+    return createStore({ features: [mockFeature] });
   }
 
   it('renders a video element', () => {

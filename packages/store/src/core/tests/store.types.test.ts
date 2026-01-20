@@ -4,7 +4,7 @@ import type { InferStoreRequests, InferStoreState, InferStoreTarget, InferStoreT
 
 import { describe, expectTypeOf, it } from 'vitest';
 
-import { createSlice } from '../slice';
+import { createFeature } from '../feature';
 import { createStore } from '../store';
 
 interface MockTarget {
@@ -12,7 +12,7 @@ interface MockTarget {
   muted: boolean;
 }
 
-const audioSlice = createSlice<MockTarget>()({
+const audioFeature = createFeature<MockTarget>()({
   initialState: { volume: 1, muted: false },
   getSnapshot: ({ target }) => ({ volume: target.volume, muted: target.muted }),
   subscribe: () => {},
@@ -28,7 +28,7 @@ const audioSlice = createSlice<MockTarget>()({
   },
 });
 
-const playbackSlice = createSlice<MockTarget>()({
+const playbackFeature = createFeature<MockTarget>()({
   initialState: { playing: false },
   getSnapshot: () => ({ playing: false }),
   subscribe: () => {},
@@ -39,16 +39,16 @@ const playbackSlice = createSlice<MockTarget>()({
 });
 
 function createTestStore() {
-  return createStore({ slices: [audioSlice, playbackSlice] });
+  return createStore({ features: [audioFeature, playbackFeature] });
 }
 
-function createSingleSliceStore() {
-  return createStore({ slices: [audioSlice] });
+function createSingleFeatureStore() {
+  return createStore({ features: [audioFeature] });
 }
 
 describe('store types', () => {
   describe('createStore', () => {
-    it('state has union of all slice states', () => {
+    it('state has union of all feature states', () => {
       const store = createTestStore();
 
       expectTypeOf(store.state.volume).toEqualTypeOf<number>();
@@ -56,7 +56,7 @@ describe('store types', () => {
       expectTypeOf(store.state.playing).toEqualTypeOf<boolean>();
     });
 
-    it('request has union of all slice requests', () => {
+    it('request has union of all feature requests', () => {
       const store = createTestStore();
 
       expectTypeOf(store.request).toHaveProperty('setVolume');
@@ -66,7 +66,7 @@ describe('store types', () => {
     });
 
     it('request methods have correct signatures', () => {
-      const store = createSingleSliceStore();
+      const store = createSingleFeatureStore();
 
       expectTypeOf(store.request.setVolume).toBeFunction();
       expectTypeOf(store.request.setVolume).parameter(0).toEqualTypeOf<number>();
@@ -78,14 +78,14 @@ describe('store types', () => {
     });
 
     it('queue has correctly typed tasks', () => {
-      const store = createSingleSliceStore();
+      const store = createSingleFeatureStore();
 
       expectTypeOf(store.queue).toExtend<Queue<any>>();
       expectTypeOf(store.queue.tasks).toExtend<TasksRecord<any>>();
     });
 
     it('target is nullable before attach', () => {
-      const store = createSingleSliceStore();
+      const store = createSingleFeatureStore();
 
       expectTypeOf(store.target).toEqualTypeOf<MockTarget | null>();
     });
@@ -93,7 +93,7 @@ describe('store types', () => {
 
   describe('InferStoreTarget', () => {
     it('extracts target type from store', () => {
-      const _store = createSingleSliceStore();
+      const _store = createSingleFeatureStore();
       type Target = InferStoreTarget<typeof _store>;
       const _target: Target = {} as Target;
 
@@ -115,7 +115,7 @@ describe('store types', () => {
 
   describe('InferStoreRequests', () => {
     it('extracts request types from store', () => {
-      const _store = createSingleSliceStore();
+      const _store = createSingleFeatureStore();
       type Requests = InferStoreRequests<typeof _store>;
 
       expectTypeOf<Requests>().toHaveProperty('setVolume');
@@ -125,7 +125,7 @@ describe('store types', () => {
 
   describe('InferStoreTasks', () => {
     it('extracts task types from store', () => {
-      const _store = createSingleSliceStore();
+      const _store = createSingleFeatureStore();
       type Tasks = InferStoreTasks<typeof _store>;
 
       expectTypeOf<Tasks>().toHaveProperty('setVolume');
@@ -135,13 +135,13 @@ describe('store types', () => {
 
   describe('subscribe', () => {
     it('state is reactive', () => {
-      const store = createSingleSliceStore();
+      const store = createSingleFeatureStore();
 
       expectTypeOf(store.state).toEqualTypeOf<Reactive<{ volume: number; muted: boolean } & object>>();
     });
 
     it('state properties have correct types', () => {
-      const store = createSingleSliceStore();
+      const store = createSingleFeatureStore();
 
       expectTypeOf(store.state.volume).toEqualTypeOf<number>();
       expectTypeOf(store.state.muted).toEqualTypeOf<boolean>();
@@ -150,14 +150,14 @@ describe('store types', () => {
 
   describe('store queue integration types', () => {
     it('queue.tasks has keys matching request names', () => {
-      const store = createSingleSliceStore();
+      const store = createSingleFeatureStore();
 
       expectTypeOf(store.queue.tasks).toHaveProperty('setVolume');
       expectTypeOf(store.queue.tasks).toHaveProperty('setMuted');
     });
 
     it('task input type matches request parameter', () => {
-      const store = createSingleSliceStore();
+      const store = createSingleFeatureStore();
       const task = store.queue.tasks.setVolume;
 
       if (task) {
@@ -166,7 +166,7 @@ describe('store types', () => {
     });
 
     it('task output type matches request return on success', () => {
-      const store = createSingleSliceStore();
+      const store = createSingleFeatureStore();
       const task = store.queue.tasks.setVolume;
 
       if (task?.status === 'success') {
@@ -174,7 +174,7 @@ describe('store types', () => {
       }
     });
 
-    it('multi-slice store has combined queue task types', () => {
+    it('multi-feature store has combined queue task types', () => {
       const store = createTestStore();
 
       expectTypeOf(store.queue.tasks).toHaveProperty('setVolume');
@@ -184,7 +184,7 @@ describe('store types', () => {
     });
 
     it('queue.reset accepts request names', () => {
-      const store = createSingleSliceStore();
+      const store = createSingleFeatureStore();
 
       store.queue.reset('setVolume');
       store.queue.reset('setMuted');
@@ -192,7 +192,7 @@ describe('store types', () => {
     });
 
     it('queue.abort accepts request names', () => {
-      const store = createSingleSliceStore();
+      const store = createSingleFeatureStore();
 
       store.queue.abort('setVolume');
       store.queue.abort('setMuted');
@@ -200,7 +200,7 @@ describe('store types', () => {
     });
 
     it('InferStoreTasks matches queue task record keys', () => {
-      const _store = createSingleSliceStore();
+      const _store = createSingleFeatureStore();
       type Tasks = InferStoreTasks<typeof _store>;
 
       expectTypeOf<Tasks>().toHaveProperty('setVolume');

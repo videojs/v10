@@ -20,10 +20,10 @@ npm install @videojs/store
 - **Write Path**: Send requests, coordinate execution, handle failures
 
 ```ts
-import { createSlice, createStore } from '@videojs/store';
+import { createFeature, createStore } from '@videojs/store';
 
 const store = createStore({
-  slices: [playbackSlice, audioSlice],
+  features: [playbackFeature, audioFeature],
 });
 
 store.attach(videoElement); // <video>
@@ -41,20 +41,20 @@ await store.request.setVolume(0.5);
 
 ### Target
 
-The target contains a reference to an external systems. Slices read from and write to it.
+The target contains a reference to an external systems. Features read from and write to it.
 
 ```ts
 const videoElement = document.querySelector('video');
 store.attach(videoElement);
 ```
 
-### Slices
+### Features
 
-A slice defines state, how to sync it from the target, and requests to modify the target.
+A feature defines state, how to sync it from the target, and requests to modify the target.
 
 ```ts
-// createSlice<Target>()() - curried form enables full type inference
-const audioSlice = createSlice<HTMLMediaElement>()({
+// createFeature<Target>()() - curried form enables full type inference
+const audioFeature = createFeature<HTMLMediaElement>()({
   initialState: { volume: 1, muted: false },
 
   getSnapshot: ({ target }) => ({
@@ -78,42 +78,42 @@ const audioSlice = createSlice<HTMLMediaElement>()({
 });
 ```
 
-### Slice Type Inference
+### Feature Type Inference
 
-State and request types are fully inferred from the slice config:
+State and request types are fully inferred from the feature config:
 
 ```ts
-import type { InferSliceRequests, InferSliceState } from '@videojs/store';
+import type { InferFeatureRequests, InferFeatureState } from '@videojs/store';
 
-const audioSlice = createSlice<HTMLMediaElement>()({
+const audioFeature = createFeature<HTMLMediaElement>()({
   initialState: { volume: 1, muted: false },
   // ...
 });
 
-// Infer types from the slice
-type AudioState = InferSliceState<typeof audioSlice>;
-type AudioRequests = InferSliceRequests<typeof audioSlice>;
+// Infer types from the feature
+type AudioState = InferFeatureState<typeof audioFeature>;
+type AudioRequests = InferFeatureRequests<typeof audioFeature>;
 ```
 
-For stores with multiple slices:
+For stores with multiple features:
 
 ```ts
-import type { UnionSliceRequests, UnionSliceState } from '@videojs/store';
+import type { UnionFeatureRequests, UnionFeatureState } from '@videojs/store';
 
-const slices = [audioSlice, playbackSlice] as const;
+const features = [audioFeature, playbackFeature] as const;
 
-type MediaState = UnionSliceState<typeof slices>;
-type MediaRequests = UnionSliceRequests<typeof slices>;
+type MediaState = UnionFeatureState<typeof features>;
+type MediaRequests = UnionFeatureRequests<typeof features>;
 ```
 
-### Explicit Slice Types
+### Explicit Feature Types
 
 For upfront type definitions, use `Request<Input, Output>`:
 
 ```ts
 import type { Request } from '@videojs/store';
 
-import { createSlice } from '@videojs/store';
+import { createFeature } from '@videojs/store';
 
 interface AudioState {
   volume: number;
@@ -127,7 +127,7 @@ interface AudioRequests {
   getDuration: Request<void, number>; // () => Promise<number>
 }
 
-const audioSlice = createSlice<HTMLMediaElement, AudioState, AudioRequests>({
+const audioFeature = createFeature<HTMLMediaElement, AudioState, AudioRequests>({
   // Types enforced from interfaces
 });
 ```
@@ -197,11 +197,11 @@ async handler(_, { target, signal, meta }) {
 
 ## Store
 
-The store composes slices and manages the target connection.
+The store composes features and manages the target connection.
 
 ```ts
 const store = createStore({
-  slices: [playbackSlice, audioSlice],
+  features: [playbackFeature, audioFeature],
 
   onSetup: ({ store, signal }) => {
     // Called when store is created
@@ -222,7 +222,7 @@ const store = createStore({
 ```ts
 import type { InferStoreRequests, InferStoreState } from '@videojs/store';
 
-const store = createStore({ slices: [audioSlice, playbackSlice] });
+const store = createStore({ features: [audioFeature, playbackFeature] });
 
 type State = InferStoreState<typeof store>;
 type Requests = InferStoreRequests<typeof store>;
@@ -273,7 +273,7 @@ subscribeKeys(store.state, ['volume', 'muted'], () => {
 
 Mutations are auto-batched—multiple changes in the same tick trigger only one notification.
 
-Slices sync state from the target via `getSnapshot`. The `update` callback triggers a sync, and the store only notifies subscribers for keys that actually changed:
+Features sync state from the target via `getSnapshot`. The `update` callback triggers a sync, and the store only notifies subscribers for keys that actually changed:
 
 ```ts
 subscribe: ({ target, update, signal }) => {
@@ -472,7 +472,7 @@ import { isStoreError } from '@videojs/store';
 
 // 1. Global Error Handling
 const store = createStore({
-  slices: [playbackSlice],
+  features: [playbackFeature],
   onError: ({ error, request }) => {
     if (request) {
       console.error(`${request.name} failed`);
@@ -645,10 +645,10 @@ flush();
 
 ### Capability Checking
 
-Slices can expose capability via state. UI components check before rendering.
+Features can expose capability via state. UI components check before rendering.
 
 ```ts
-const qualitySlice = createSlice<Media>({
+const qualityFeature = createFeature<Media>({
   initialState: {
    supported: false ,
    levels: [],
@@ -683,13 +683,13 @@ function QualityMenu() {
 }
 ```
 
-### Optional Slices
+### Optional Features
 
-Check if a slice exists at runtime:
+Check if a feature exists at runtime:
 
 ```tsx
 function QualityMenu() {
-  const quality = useSlice(store, qualitySlice);
+  const quality = useFeature(store, qualityFeature);
 
   if (!quality) return null;
 

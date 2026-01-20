@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { playbackSlice } from '../playback';
+import { playbackFeature } from '../playback';
 
-describe('playbackSlice', () => {
-  describe('slice structure', () => {
+describe('playbackFeature', () => {
+  describe('feature structure', () => {
     it('has unique id symbol', () => {
-      expect(playbackSlice.id).toBeTypeOf('symbol');
+      expect(playbackFeature.id).toBeTypeOf('symbol');
     });
 
     it('has correct initial state', () => {
-      expect(playbackSlice.initialState).toEqual({
+      expect(playbackFeature.initialState).toEqual({
         paused: true,
         ended: false,
         started: false,
@@ -18,18 +18,18 @@ describe('playbackSlice', () => {
     });
 
     it('has all request handlers', () => {
-      expect(playbackSlice.request.play).toBeDefined();
-      expect(playbackSlice.request.pause).toBeDefined();
+      expect(playbackFeature.request.play).toBeDefined();
+      expect(playbackFeature.request.pause).toBeDefined();
     });
 
     it('request handlers have correct structure', () => {
-      expect(playbackSlice.request.play).toMatchObject({
+      expect(playbackFeature.request.play).toMatchObject({
         key: 'play',
         guard: [],
         handler: expect.any(Function),
       });
 
-      expect(playbackSlice.request.pause).toMatchObject({
+      expect(playbackFeature.request.pause).toMatchObject({
         key: 'pause',
         guard: [],
         handler: expect.any(Function),
@@ -46,9 +46,9 @@ describe('playbackSlice', () => {
         readyState: HTMLMediaElement.HAVE_ENOUGH_DATA,
       });
 
-      const snapshot = playbackSlice.getSnapshot({
+      const snapshot = playbackFeature.getSnapshot({
         target: video,
-        initialState: playbackSlice.initialState,
+        initialState: playbackFeature.initialState,
       });
 
       expect(snapshot).toEqual({
@@ -65,9 +65,9 @@ describe('playbackSlice', () => {
         readyState: HTMLMediaElement.HAVE_CURRENT_DATA,
       });
 
-      const snapshot = playbackSlice.getSnapshot({
+      const snapshot = playbackFeature.getSnapshot({
         target: video,
-        initialState: playbackSlice.initialState,
+        initialState: playbackFeature.initialState,
       });
 
       expect(snapshot.waiting).toBe(true);
@@ -79,9 +79,9 @@ describe('playbackSlice', () => {
         currentTime: 5,
       });
 
-      const snapshot = playbackSlice.getSnapshot({
+      const snapshot = playbackFeature.getSnapshot({
         target: video,
-        initialState: playbackSlice.initialState,
+        initialState: playbackFeature.initialState,
       });
 
       expect(snapshot.started).toBe(true);
@@ -93,9 +93,9 @@ describe('playbackSlice', () => {
         currentTime: 0,
       });
 
-      const snapshot = playbackSlice.getSnapshot({
+      const snapshot = playbackFeature.getSnapshot({
         target: video,
-        initialState: playbackSlice.initialState,
+        initialState: playbackFeature.initialState,
       });
 
       expect(snapshot.started).toBe(true);
@@ -108,7 +108,7 @@ describe('playbackSlice', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      playbackSlice.subscribe({ target: video, update, signal: controller.signal });
+      playbackFeature.subscribe({ target: video, update, signal: controller.signal });
       video.dispatchEvent(new Event('play'));
 
       expect(update).toHaveBeenCalled();
@@ -119,7 +119,7 @@ describe('playbackSlice', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      playbackSlice.subscribe({ target: video, update, signal: controller.signal });
+      playbackFeature.subscribe({ target: video, update, signal: controller.signal });
       video.dispatchEvent(new Event('pause'));
 
       expect(update).toHaveBeenCalled();
@@ -130,7 +130,7 @@ describe('playbackSlice', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      playbackSlice.subscribe({ target: video, update, signal: controller.signal });
+      playbackFeature.subscribe({ target: video, update, signal: controller.signal });
       video.dispatchEvent(new Event('ended'));
 
       expect(update).toHaveBeenCalled();
@@ -141,7 +141,7 @@ describe('playbackSlice', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      playbackSlice.subscribe({ target: video, update, signal: controller.signal });
+      playbackFeature.subscribe({ target: video, update, signal: controller.signal });
       controller.abort();
       video.dispatchEvent(new Event('play'));
 
@@ -155,7 +155,7 @@ describe('playbackSlice', () => {
         const video = createMockVideo({});
         video.play = vi.fn().mockResolvedValue(undefined);
 
-        await playbackSlice.request.play.handler(undefined, {
+        await playbackFeature.request.play.handler(undefined, {
           target: video,
           signal: new AbortController().signal,
           meta: null,
@@ -170,7 +170,7 @@ describe('playbackSlice', () => {
         const video = createMockVideo({});
         video.pause = vi.fn();
 
-        playbackSlice.request.pause.handler(undefined, {
+        playbackFeature.request.pause.handler(undefined, {
           target: video,
           signal: new AbortController().signal,
           meta: null,

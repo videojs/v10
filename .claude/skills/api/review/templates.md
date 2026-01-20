@@ -87,7 +87,7 @@ player.registerPlugin(analytics)
 // After
 const player = createPlayer({
 ...config,
-slices: [analyticsSlice],
+features: [analyticsFeature],
 })
 ```
 

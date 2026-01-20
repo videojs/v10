@@ -31,7 +31,7 @@ export type TasksControllerHost = ReactiveControllerHost & HTMLElement;
  *
  * @example Context source
  * ```ts
- * const { context } = createStore({ slices: [playbackSlice] });
+ * const { context } = createStore({ features: [playbackFeature] });
  *
  * class MyElement extends LitElement {
  *   #tasks = new TasksController(this, context);

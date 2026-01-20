@@ -22,7 +22,7 @@ export interface VideoProps extends VideoHTMLAttributes<HTMLVideoElement> {
  * import { createStore, media } from '@videojs/react';
  *
  * const { Provider } = createStore({
- *   slices: media.all
+ *   features: media.all
  * });
  *
  * function App() {

@@ -1,23 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { sourceSlice } from '../source';
+import { sourceFeature } from '../source';
 
-describe('sourceSlice', () => {
-  describe('slice structure', () => {
+describe('sourceFeature', () => {
+  describe('feature structure', () => {
     it('has unique id symbol', () => {
-      expect(sourceSlice.id).toBeTypeOf('symbol');
+      expect(sourceFeature.id).toBeTypeOf('symbol');
     });
 
     it('has correct initial state', () => {
-      expect(sourceSlice.initialState).toEqual({
+      expect(sourceFeature.initialState).toEqual({
         source: null,
         canPlay: false,
       });
     });
 
     it('has changeSource request handler', () => {
-      expect(sourceSlice.request.changeSource).toBeDefined();
-      expect(sourceSlice.request.changeSource).toMatchObject({
+      expect(sourceFeature.request.changeSource).toBeDefined();
+      expect(sourceFeature.request.changeSource).toMatchObject({
         key: 'changeSource',
         guard: [],
         handler: expect.any(Function),
@@ -33,9 +33,9 @@ describe('sourceSlice', () => {
         readyState: HTMLMediaElement.HAVE_ENOUGH_DATA,
       });
 
-      const snapshot = sourceSlice.getSnapshot({
+      const snapshot = sourceFeature.getSnapshot({
         target: video,
-        initialState: sourceSlice.initialState,
+        initialState: sourceFeature.initialState,
       });
 
       expect(snapshot).toEqual({
@@ -50,9 +50,9 @@ describe('sourceSlice', () => {
       Object.defineProperty(video, 'currentSrc', { value: '', writable: false });
       Object.defineProperty(video, 'readyState', { value: HTMLMediaElement.HAVE_NOTHING, writable: false });
 
-      const snapshot = sourceSlice.getSnapshot({
+      const snapshot = sourceFeature.getSnapshot({
         target: video,
-        initialState: sourceSlice.initialState,
+        initialState: sourceFeature.initialState,
       });
 
       expect(snapshot.source).toBe(null);
@@ -66,7 +66,7 @@ describe('sourceSlice', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      sourceSlice.subscribe({ target: video, update, signal: controller.signal });
+      sourceFeature.subscribe({ target: video, update, signal: controller.signal });
       video.dispatchEvent(new Event('canplay'));
 
       expect(update).toHaveBeenCalled();
@@ -80,7 +80,7 @@ describe('sourceSlice', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      sourceSlice.subscribe({ target: video, update, signal: controller.signal });
+      sourceFeature.subscribe({ target: video, update, signal: controller.signal });
       video.dispatchEvent(new Event('loadstart'));
 
       expect(update).toHaveBeenCalled();
@@ -91,7 +91,7 @@ describe('sourceSlice', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      sourceSlice.subscribe({ target: video, update, signal: controller.signal });
+      sourceFeature.subscribe({ target: video, update, signal: controller.signal });
       video.dispatchEvent(new Event('emptied'));
 
       expect(update).toHaveBeenCalled();
@@ -104,7 +104,7 @@ describe('sourceSlice', () => {
         const video = createMockVideo({});
         video.load = vi.fn();
 
-        const result = sourceSlice.request.changeSource.handler('https://example.com/new.mp4', {
+        const result = sourceFeature.request.changeSource.handler('https://example.com/new.mp4', {
           target: video,
           signal: new AbortController().signal,
           meta: null,

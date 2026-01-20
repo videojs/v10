@@ -236,18 +236,18 @@ See `templates/component-page.md` for full template.
 
 When documenting, understand the package hierarchy:
 
-| Package                 | Subpaths                        | Purpose                               | Doc Focus                        |
-| ----------------------- | ------------------------------- | ------------------------------------- | -------------------------------- |
-| `@videojs/utils`        | `/dom`, `/predicate`, `/events` | Shared utilities                      | Utility reference                |
-| `@videojs/store`        | `/lit`, `/react`                | State management                      | Slices, requests, error handling |
-| `@videojs/core`         | `/dom`                          | Runtime-agnostic logic + media slices | API reference, concepts          |
-| `@videojs/html`         | `/skins/frosted`                | Web Components (Lit)                  | Component docs, styling          |
-| `@videojs/react`        | —                               | React adapter                         | Components, hooks                |
-| `@videojs/react-native` | —                               | React Native adapter                  | Mobile-specific guides           |
+| Package                 | Subpaths                        | Purpose                                 | Doc Focus                          |
+| ----------------------- | ------------------------------- | --------------------------------------- | ---------------------------------- |
+| `@videojs/utils`        | `/dom`, `/predicate`, `/events` | Shared utilities                        | Utility reference                  |
+| `@videojs/store`        | `/lit`, `/react`                | State management                        | Features, requests, error handling |
+| `@videojs/core`         | `/dom`                          | Runtime-agnostic logic + media features | API reference, concepts            |
+| `@videojs/html`         | `/skins/frosted`                | Web Components (Lit)                    | Component docs, styling            |
+| `@videojs/react`        | —                               | React adapter                           | Components, hooks                  |
+| `@videojs/react-native` | —                               | React Native adapter                    | Mobile-specific guides             |
 
 **Dependency flow:** `utils → store → core → html / react / react-native`
 
-Document `@videojs/store` as state primitives (slices, requests, guards).
+Document `@videojs/store` as state primitives (features, requests, guards).
 Document `@videojs/html` as Web Components with controllers and mixins.
 Document framework adapters with framework-native idioms.
 

@@ -172,15 +172,15 @@ const dataAtom = atom(async () => fetch(...));
 
 ```ts
 // Poor: Unexpected interactions
-const volumeSlice = createSlice({
+const volumeFeature = createFeature({
   middleware: [logger], // Don't do this
 });
 
 // Good: Middleware at store level
 create(
   logger((...a) => ({
-    ...volumeSlice(...a),
-    ...playbackSlice(...a),
+    ...volumeFeature(...a),
+    ...playbackFeature(...a),
   }))
 );
 ```
