@@ -1,42 +1,26 @@
 # Queue Simplification
 
-> **STATUS: COMPLETED**
+**Status:** COMPLETED
 
 ## Summary
 
-Simplified Queue from ~524 LOC to ~405 LOC. Removed convenience features only used in tests/docs, kept what's essential for async media operations.
+Simplified Queue from ~524 LOC to ~405 LOC. Removed convenience features only used in tests/docs, kept essentials for async media operations.
 
 ## Why Queue Exists
 
-All writes are async requests — this is the architecture. Queue handles:
+All writes are async requests. Queue handles:
 
 - Supersession (rapid clicks → only last executes)
 - AbortController propagation
 - Task lifecycle tracking (pending/success/error)
 - Error surfacing for UI
 
-## Features Removed
+## Removed
 
-- `cancel()` method (use `abort()`)
-- `flush()` method (no configurable scheduling)
-- `queued` getter (internal detail)
-- `TaskScheduler` type, `QueueConfig` interface
-- `delay()`, `microtask` exports
-- `schedule` param on `QueueTask`
+- `cancel()`, `flush()`, `queued` getter
+- `TaskScheduler`, `QueueConfig`, `schedule` param
+- `delay()`, `microtask`, DOM schedulers (`raf()`, `idle()`)
 - `onDispatch`, `onSettled` hooks
-- DOM schedulers (`raf()`, `idle()`)
-
-## Files Changed
-
-| File                      | Change                               |
-| ------------------------- | ------------------------------------ |
-| `core/queue.ts`           | Main simplification                  |
-| `core/task.ts`            | NEW: Extracted task types and guards |
-| `core/index.ts`           | Added task.ts export                 |
-| `core/request.ts`         | Removed schedule field               |
-| `core/store.ts`           | Removed schedule from enqueue        |
-| `dom/`                    | DELETED entire directory             |
-| Various controllers/hooks | Updated imports                      |
 
 ## Final API
 

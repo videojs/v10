@@ -475,6 +475,19 @@ get size(): number { ... }
 add(cleanup: CleanupFn): void { ... }
 ```
 
+## Design Documents
+
+| Location         | Purpose                                                           |
+| ---------------- | ----------------------------------------------------------------- |
+| `rfcs/`          | Design proposals, API decisions, architecture — public discussion |
+| `.claude/plans/` | Implementation notes, AI-agent context, working drafts            |
+
+**RFCs** focus on **what** and **why**. Write an RFC for major API changes, architectural decisions, or patterns used across packages.
+
+**Implementation plans** focus on **how**. Use `.claude/plans/` for step-by-step implementation details, debugging notes, and AI-agent context.
+
+Before merging, compact completed plans: keep key decisions and important notes, point to PRs/commits for details. See `.claude/plans/README.md`.
+
 ## Rule Placement
 
 CLAUDE.md contains repo-wide conventions. Domain-specific patterns live in skills:

@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # Store Queue Design
 
 ## Overview

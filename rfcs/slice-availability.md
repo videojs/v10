@@ -1,3 +1,7 @@
+---
+status: draft
+---
+
 # Slice Availability Design
 
 ## The Problem

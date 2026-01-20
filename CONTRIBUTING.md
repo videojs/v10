@@ -79,10 +79,7 @@ pnpm dev
 This will run the entire workspace in developer mode, meaning all applications (examples and website) will also be started on their respective ports.
 
 ```sh
-# Run a specific app
-pnpm dev:html
-pnpm dev:react
-pnpm dev:next
+# Run the documentation site
 pnpm dev:site
 ```
 
@@ -174,6 +171,18 @@ When your changes introduce new patterns:
 
 - **Code conventions** → Update `CLAUDE.md` Code Rules section
 - **Domain patterns** → Update relevant skill in `.claude/skills/`
+
+## RFCs (Design Documents)
+
+For significant architectural decisions and API designs, we use RFCs (Request for Comments). See [`rfcs/README.md`](./rfcs/README.md) for the full process.
+
+**When to write an RFC:**
+
+- Introducing a new public API surface
+- Making architectural changes affecting multiple packages
+- Proposing patterns used throughout the codebase
+
+**Skip the RFC for:** Bug fixes, small contained features, implementation details.
 
 ## Creating a Pull Request
 
