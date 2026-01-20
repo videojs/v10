@@ -20,7 +20,7 @@ This directory contains:
 
 ## What Doesn't Belong Here
 
-Design proposals and architectural decisions belong in `/rfcs`. This directory is for **how** to implement, not **what** or **why**.
+Design proposals and architectural decisions belong in `/rfc`. This directory is for **how** to implement, not **what** or **why**.
 
 ## Compaction Rule
 
@@ -60,7 +60,7 @@ Plans may link to their parent RFC:
 ```markdown
 # Implementing Feature X
 
-**RFC:** [/rfcs/feature-x.md](/rfcs/feature-x.md)
+**RFC:** [/rfc/feature-x.md](/rfc/feature-x.md)
 
 ## Tasks
 

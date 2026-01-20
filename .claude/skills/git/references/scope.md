@@ -14,7 +14,7 @@ Infer commit scope from changed file paths.
 | `packages/react-native/` | `react-native` |
 | `packages/icons/`        | `icons`        |
 | `site/`                  | `site`         |
-| `rfcs/`                  | `rfc`          |
+| `rfc/`                   | `rfc`          |
 | `.claude/`               | `claude`       |
 | `.github/workflows/`     | `ci`           |
 | `.github/`               | `cd`           |

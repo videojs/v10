@@ -479,7 +479,7 @@ add(cleanup: CleanupFn): void { ... }
 
 | Location         | Purpose                                                           |
 | ---------------- | ----------------------------------------------------------------- |
-| `rfcs/`          | Design proposals, API decisions, architecture — public discussion |
+| `rfc/`           | Design proposals, API decisions, architecture — public discussion |
 | `.claude/plans/` | Implementation notes, AI-agent context, working drafts            |
 
 **RFCs** focus on **what** and **why**. Write an RFC for major API changes, architectural decisions, or patterns used across packages.

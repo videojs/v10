@@ -58,7 +58,7 @@ Please see our [contributing guide](./CONTRIBUTING.md) for getting setup locally
 Please note that this project is released with a [Contributor Code of Conduct][coc]. By
 participating in this project you agree to abide by its terms.
 
-[rfcs]: ./rfcs
+[rfcs]: ./rfc
 [v10-discussion]: https://github.com/videojs/video.js/discussions/9035
 [heff-presentation]: https://players.brightcove.net/3737230800001/eyILA5XG7K_default/index.html?videoId=6379311036112
 [coc]: https://github.com/videojs/video.js/blob/main/CODE_OF_CONDUCT.md

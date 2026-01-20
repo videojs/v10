@@ -63,7 +63,7 @@ implementation-plan: .claude/plans/example.md
 ## Directory Structure
 
 ```
-rfcs/
+rfc/
 ├── README.md           # This file
 ├── feature-name.md     # Single-file RFC
 └── feature-name/       # Multi-file RFC

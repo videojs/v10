@@ -174,7 +174,7 @@ When your changes introduce new patterns:
 
 ## RFCs (Design Documents)
 
-For significant architectural decisions and API designs, we use RFCs (Request for Comments). See [`rfcs/README.md`](./rfcs/README.md) for the full process.
+For significant architectural decisions and API designs, we use RFCs (Request for Comments). See [`rfc/README.md`](./rfc/README.md) for the full process.
 
 **When to write an RFC:**
 
