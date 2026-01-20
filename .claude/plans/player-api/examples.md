@@ -2,6 +2,8 @@
 
 Usage examples for React, HTML, and Lit.
 
+> **Note:** Some examples here are for demonstration. In practice, UI primitives like `<PlayButton>`, `<VolumeSlider>`, etc. would be provided.
+
 ## React
 
 ### Declarative (Skin)
@@ -23,7 +25,7 @@ function App() {
 }
 ```
 
-### Custom Player (Preset)
+### Custom Player
 
 ```tsx
 import { createPlayer, presets, Video } from '@videojs/react';
@@ -44,103 +46,57 @@ function App() {
 function Controls() {
   const player = usePlayer();
 
-  return (
-    <div className="controls">
-      <button onClick={player.paused ? player.play : player.pause}>{player.paused ? 'Play' : 'Pause'}</button>
-      <button onClick={player.toggleFullscreen}>{player.isFullscreen ? 'Exit' : 'Fullscreen'}</button>
-      <input
-        type="range"
-        min="0"
-        max="1"
-        step="0.1"
-        value={player.volume}
-        onChange={(e) => player.setVolume(Number(e.target.value))}
-      />
-    </div>
-  );
+  return <button onClick={player.paused ? player.play : player.pause}>{player.paused ? 'Play' : 'Pause'}</button>;
 }
 ```
 
 ### Extended Preset
 
 ```tsx
-import { createPlayer, createPlayerFeature, features, presets, Video } from '@videojs/react';
+import { createPlayer, features, presets } from '@videojs/react';
 
-// Custom analytics feature
-const analytics = createPlayerFeature({
-  initialState: { events: [] as string[] },
-  getSnapshot: ({ initialState }) => initialState,
-  subscribe: ({ target, update }) => {
-    target.media.subscribe(
-      (s) => s.paused,
-      (paused) => {
-        console.log(paused ? 'paused' : 'playing');
-        update();
-      }
-    );
+const { Provider, usePlayer } = createPlayer({
+  features: [...presets.website, features.keyboard],
+});
+```
+
+### Custom Feature
+
+```tsx
+import { createPlayer, createPlayerFeature, presets } from '@videojs/react';
+
+const pip = createPlayerFeature({
+  initialState: { active: false },
+  getSnapshot: ({ target }) => ({
+    active: document.pictureInPictureElement === target.media.element,
+  }),
+  subscribe: ({ update, signal }) => {
+    document.addEventListener('enterpictureinpicture', update, { signal });
+    document.addEventListener('leavepictureinpicture', update, { signal });
   },
   request: {
-    trackEvent: (name: string) => {
-      console.log('Track:', name);
-    },
+    enterPip: (_, { target }) => target.media.element.requestPictureInPicture(),
+    exitPip: () => document.exitPictureInPicture(),
   },
 });
 
-const { Provider, Container, usePlayer } = createPlayer({
-  features: [...presets.website, analytics],
+const { Provider, usePlayer } = createPlayer({
+  features: [...presets.website, pip],
 });
-
-function App() {
-  return (
-    <Provider>
-      <Container>
-        <Video src="video.mp4" />
-        <Controls />
-      </Container>
-    </Provider>
-  );
-}
-
-function Controls() {
-  const player = usePlayer();
-
-  const handlePlay = () => {
-    player.play();
-    player.trackEvent('play_clicked');
-  };
-
-  return <button onClick={handlePlay}>Play</button>;
-}
 ```
 
 ### Media Escape Hatch
 
-```tsx
-import { createPlayer, presets } from '@videojs/react';
+Direct media access when player features don't expose what you need.
 
+```tsx
 const { usePlayer, useMedia } = createPlayer(presets.website);
 
 function DebugPanel() {
   const player = usePlayer();
   const media = useMedia();
 
-  return (
-    <pre>
-      {JSON.stringify(
-        {
-          // Player state (preferred)
-          isFullscreen: player.isFullscreen,
-
-          // Media state directly (escape hatch)
-          mediaFullscreen: media.isFullscreen,
-          readyState: media.readyState,
-          networkState: media.networkState,
-        },
-        null,
-        2
-      )}
-    </pre>
-  );
+  // player.isFullscreen vs media.isFullscreen (raw)
 }
 ```
 
@@ -153,15 +109,7 @@ const { Provider, useMedia } = createMedia([features.playback, features.time]);
 
 function AudioPlayer() {
   const media = useMedia();
-
   // Programmatic control, no UI
-  useEffect(() => {
-    if (media.currentTime > 30) {
-      media.pause();
-    }
-  }, [media.currentTime]);
-
-  return <audio src="podcast.mp3" />;
 }
 ```
 
@@ -179,8 +127,6 @@ function AudioPlayer() {
 </vjs-website-provider>
 ```
 
-Import registers both provider and skin — zero config.
-
 ### Custom Provider
 
 ```ts
@@ -188,13 +134,13 @@ import { createPlayer, presets } from '@videojs/html';
 
 const { ProviderElement } = createPlayer(presets.website);
 
-customElements.define('my-website-provider', ProviderElement);
+customElements.define('my-provider', ProviderElement);
 ```
 
 ```html
-<my-website-provider>
+<my-provider>
   <video src="video.mp4"></video>
-</my-website-provider>
+</my-provider>
 ```
 
 ### Extended Preset
@@ -203,34 +149,32 @@ customElements.define('my-website-provider', ProviderElement);
 import { createPlayer, features, presets } from '@videojs/html';
 
 const { ProviderElement } = createPlayer({
-  features: [...presets.background, features.keyboard],
+  features: [...presets.website, features.keyboard],
 });
 
-customElements.define('vjs-background-provider', ProviderElement);
+customElements.define('my-provider', ProviderElement);
 ```
 
 ### Split Provider/Container
 
-When media element and fullscreen target need different DOM locations.
+When media element and container need different DOM locations.
 
 ```ts
 import { createPlayer, presets, VjsElement } from '@videojs/html';
 
 const { ProviderMixin, ContainerMixin } = createPlayer(presets.website);
 
-class MediaProviderElement extends ProviderMixin(VjsElement) {}
-class MediaContainerElement extends ContainerMixin(VjsElement) {}
+class MyProvider extends ProviderMixin(VjsElement) {}
+class MyContainer extends ContainerMixin(VjsElement) {}
 
-customElements.define('my-provider', MediaProviderElement);
-customElements.define('my-container', MediaContainerElement);
+customElements.define('my-provider', MyProvider);
+customElements.define('my-container', MyContainer);
 ```
 
 ```html
 <my-provider>
   <video src="video.mp4"></video>
-  <my-container>
-    <my-controls></my-controls>
-  </my-container>
+  <my-container>...</my-container>
 </my-provider>
 ```
 
@@ -239,18 +183,18 @@ customElements.define('my-container', MediaContainerElement);
 ```ts
 import { createMedia, features, VjsElement } from '@videojs/html';
 
-const { ProviderMixin, MediaController } = createMedia([features.playback, features.time]);
+const { ProviderMixin } = createMedia([features.playback, features.time]);
 
-class VjsAudioController extends ProviderMixin(VjsElement) {
-  // Programmatic control, no UI
+class AudioController extends ProviderMixin(VjsElement) {
+  // Programmatic control
 }
 
-customElements.define('vjs-audio-controller', VjsAudioController);
+customElements.define('audio-controller', AudioController);
 ```
 
 ## Lit
 
-### Custom Play Button
+### PlayerController
 
 ```ts
 import { html } from 'lit';
@@ -259,207 +203,15 @@ import { createPlayer, presets, VjsElement } from '@videojs/html';
 
 const { PlayerController } = createPlayer(presets.website);
 
-class VjsPlayButton extends VjsElement {
+class PlayButton extends VjsElement {
   #player = new PlayerController(this);
 
   render() {
     const { paused, play, pause } = this.#player.value;
 
-    return html`
-      <button class="play-button" @click=${paused ? play : pause} aria-label=${paused ? 'Play' : 'Pause'}>
-        ${paused ? 'Play' : 'Pause'}
-      </button>
-    `;
+    return html`<button @click=${paused ? play : pause}>${paused ? 'Play' : 'Pause'}</button>`;
   }
 }
 
-customElements.define('vjs-play-button', VjsPlayButton);
+customElements.define('play-button', PlayButton);
 ```
-
-### Volume Slider
-
-```ts
-import { html } from 'lit';
-
-import { createPlayer, presets, VjsElement } from '@videojs/html';
-
-const { PlayerController } = createPlayer(presets.website);
-
-class VjsVolumeSlider extends VjsElement {
-  #player = new PlayerController(this);
-
-  render() {
-    const { volume, muted, setVolume, toggleMute } = this.#player.value;
-
-    return html`
-      <div class="volume-control">
-        <button @click=${toggleMute} aria-label=${muted ? 'Unmute' : 'Mute'}>${muted ? 'Unmuted' : 'Muted'}</button>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.05"
-          .value=${String(volume)}
-          @input=${(e: Event) => setVolume(Number((e.target as HTMLInputElement).value))}
-          aria-label="Volume"
-        />
-      </div>
-    `;
-  }
-}
-
-customElements.define('vjs-volume-slider', VjsVolumeSlider);
-```
-
-### Time Display
-
-```ts
-import { html } from 'lit';
-
-import { createPlayer, presets, VjsElement } from '@videojs/html';
-
-const { PlayerController } = createPlayer(presets.website);
-
-function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
-class VjsTimeDisplay extends VjsElement {
-  #player = new PlayerController(this);
-
-  render() {
-    const { currentTime, duration } = this.#player.value;
-
-    return html` <span class="time-display"> ${formatTime(currentTime)} / ${formatTime(duration)} </span> `;
-  }
-}
-
-customElements.define('vjs-time-display', VjsTimeDisplay);
-```
-
-### Fullscreen Button
-
-```ts
-import { html } from 'lit';
-
-import { createPlayer, presets, VjsElement } from '@videojs/html';
-
-const { PlayerController } = createPlayer(presets.website);
-
-class VjsFullscreenButton extends VjsElement {
-  #player = new PlayerController(this);
-
-  render() {
-    const { isFullscreen, toggleFullscreen } = this.#player.value;
-
-    return html`
-      <button
-        class="fullscreen-button"
-        @click=${toggleFullscreen}
-        aria-label=${isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-      >
-        ${isFullscreen ? 'Exit' : 'Fullscreen'}
-      </button>
-    `;
-  }
-}
-
-customElements.define('vjs-fullscreen-button', VjsFullscreenButton);
-```
-
-### Complete Controls Bar
-
-```ts
-import { css, html } from 'lit';
-
-import { createPlayer, presets, VjsElement } from '@videojs/html';
-
-const { PlayerController } = createPlayer(presets.website);
-
-class VjsControlsBar extends VjsElement {
-  static styles = css`
-    :host {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px;
-      background: rgba(0, 0, 0, 0.7);
-    }
-  `;
-
-  #player = new PlayerController(this);
-
-  render() {
-    const { paused, volume, currentTime, duration, isFullscreen, play, pause, setVolume, seek, toggleFullscreen } =
-      this.#player.value;
-
-    return html`
-      <button @click=${paused ? play : pause}>${paused ? 'Play' : 'Pause'}</button>
-
-      <input
-        type="range"
-        min="0"
-        max=${duration}
-        .value=${String(currentTime)}
-        @input=${(e: Event) => seek(Number((e.target as HTMLInputElement).value))}
-      />
-
-      <span>${this.#formatTime(currentTime)} / ${this.#formatTime(duration)}</span>
-
-      <input
-        type="range"
-        min="0"
-        max="1"
-        step="0.05"
-        .value=${String(volume)}
-        @input=${(e: Event) => setVolume(Number((e.target as HTMLInputElement).value))}
-      />
-
-      <button @click=${toggleFullscreen}>${isFullscreen ? 'Exit FS' : 'FS'}</button>
-    `;
-  }
-
-  #formatTime(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }
-}
-
-customElements.define('vjs-controls-bar', VjsControlsBar);
-```
-
-## Skins
-
-### Using a Skin (React)
-
-```tsx
-import { createPlayer, presets } from '@videojs/react';
-import { FrostedSkin } from '@videojs/react/presets/website';
-
-const { Provider } = createPlayer(presets.streaming);
-
-// Skins work with any preset that has the required features
-<Provider>
-  <FrostedSkin>
-    <Video src="video.mp4" />
-  </FrostedSkin>
-</Provider>;
-```
-
-### Skin Structure
-
-```
-packages/react/src/
-└── presets/
-    └── website/
-        ├── index.ts              # preset features
-        └── skins/
-            └── frosted/
-                ├── index.ts      # FrostedSkin component
-                └── ui/           # UI components only
-```
-
-Skins are tied to presets — they assume certain features are available.
