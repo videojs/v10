@@ -13,8 +13,8 @@ Infer commit scope from changed file paths.
 | `packages/react/`        | `react`        |
 | `packages/react-native/` | `react-native` |
 | `packages/icons/`        | `icons`        |
-| `packages/skins/`        | `skins`        |
 | `site/`                  | `site`         |
+| `rfcs/`                  | `rfc`          |
 | `.claude/`               | `claude`       |
 | `.github/workflows/`     | `ci`           |
 | `.github/`               | `cd`           |
@@ -34,7 +34,7 @@ From `commitlint.config.js`:
 
 ```
 cd, ci, claude, core, docs, html, icons, packages,
-plan, react-native, react, root, site, skins, store,
+plan, react-native, react, rfc, root, site, store,
 test, utils
 ```
 
