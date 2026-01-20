@@ -1,14 +1,14 @@
-import type { InferSliceRequests, InferSliceState } from '@videojs/store';
+import type { InferFeatureRequests, InferFeatureState } from '@videojs/store';
 
-import { createSlice } from '@videojs/store';
+import { createFeature } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
 /**
- * Volume slice for HTMLMediaElement.
+ * Volume feature for HTMLMediaElement.
  *
  * Tracks volume and mute state, provides volume control.
  */
-export const volumeSlice = createSlice<HTMLMediaElement>()({
+export const volumeFeature = createFeature<HTMLMediaElement>()({
   initialState: {
     /** Volume level from 0 (silent) to 1 (max). */
     volume: 1,
@@ -40,6 +40,6 @@ export const volumeSlice = createSlice<HTMLMediaElement>()({
   },
 });
 
-export type VolumeState = InferSliceState<typeof volumeSlice>;
+export type VolumeState = InferFeatureState<typeof volumeFeature>;
 
-export type VolumeRequests = InferSliceRequests<typeof volumeSlice>;
+export type VolumeRequests = InferFeatureRequests<typeof volumeFeature>;

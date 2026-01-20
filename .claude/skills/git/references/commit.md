@@ -33,7 +33,7 @@ Use `!` suffix on type for breaking changes:
 
 ```
 feat(core)!: remove deprecated API
-refactor(store)!: rename slice methods
+refactor(store)!: rename feature methods
 ```
 
 The `!` signals breaking changes in the changelog.

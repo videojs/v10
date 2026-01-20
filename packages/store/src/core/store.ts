@@ -1,12 +1,12 @@
-import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
 import type {
-  AnySlice,
-  SliceUpdate,
-  UnionSliceRequests,
-  UnionSliceState,
-  UnionSliceTarget,
-  UnionSliceTasks,
-} from './slice';
+  AnyFeature,
+  FeatureUpdate,
+  UnionFeatureRequests,
+  UnionFeatureState,
+  UnionFeatureTarget,
+  UnionFeatureTasks,
+} from './feature';
+import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
 import type { Reactive } from './state';
 import type { PendingTask, Task, TaskContext } from './task';
 
@@ -18,27 +18,27 @@ import { Queue } from './queue';
 import { CANCEL_ALL, createRequestMeta, resolveRequestCancel, resolveRequestKey } from './request';
 import { reactive } from './state';
 
-export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[]> {
-  readonly #config: StoreConfig<Target, Slices>;
-  readonly #slices: Slices;
-  readonly #queue: Queue<UnionSliceTasks<Slices>>;
-  readonly #request: UnionSliceRequests<Slices>;
+export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Target>[]> {
+  readonly #config: StoreConfig<Target, Features>;
+  readonly #features: Features;
+  readonly #queue: Queue<UnionFeatureTasks<Features>>;
+  readonly #request: UnionFeatureRequests<Features>;
   readonly #requestConfigs: Map<string, ResolvedRequestConfig<Target>>;
   readonly #setupAbort = new AbortController();
 
   /** Reactive state. Subscribe via `subscribe(store.state, fn)`. */
-  readonly state: Reactive<UnionSliceState<Slices> & object>;
+  readonly state: Reactive<UnionFeatureState<Features> & object>;
 
   #target: Target | null = null;
   #attachAbort: AbortController | null = null;
   #destroyed = false;
 
-  constructor(config: StoreConfig<Target, Slices>) {
+  constructor(config: StoreConfig<Target, Features>) {
     this.#config = config;
-    this.#slices = config.slices;
+    this.#features = config.features;
 
-    this.#queue = config.queue ?? new Queue<UnionSliceTasks<Slices>>();
-    this.state = reactive(this.#createInitialState() as UnionSliceState<Slices> & object);
+    this.#queue = config.queue ?? new Queue<UnionFeatureTasks<Features>>();
+    this.state = reactive(this.#createInitialState() as UnionFeatureState<Features> & object);
 
     this.#requestConfigs = this.#buildRequestConfigs();
     this.#request = this.#buildRequestProxy();
@@ -61,16 +61,16 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     return this.#target;
   }
 
-  get request(): UnionSliceRequests<Slices> {
+  get request(): UnionFeatureRequests<Features> {
     return this.#request;
   }
 
-  get queue(): Queue<UnionSliceTasks<Slices>> {
+  get queue(): Queue<UnionFeatureTasks<Features>> {
     return this.#queue;
   }
 
-  get slices(): Slices {
-    return this.#slices;
+  get features(): Features {
+    return this.#features;
   }
 
   get destroyed(): boolean {
@@ -94,16 +94,16 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
 
     this.#resetState();
 
-    for (const slice of this.#slices) {
+    for (const feature of this.#features) {
       try {
-        const update = this.#createUpdate(slice);
-        slice.subscribe({ target: newTarget, update, signal });
+        const update = this.#createUpdate(feature);
+        feature.subscribe({ target: newTarget, update, signal });
       } catch (error) {
         this.#handleError({ error });
       }
     }
 
-    this.#syncAllSlices();
+    this.#syncAllFeatures();
 
     try {
       this.#config.onAttach?.({
@@ -118,10 +118,10 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     return () => this.#detach();
   }
 
-  #createUpdate(slice: AnySlice<Target>): SliceUpdate {
+  #createUpdate(feature: AnyFeature<Target>): FeatureUpdate {
     return () => {
       const target = this.#target;
-      if (target) this.#syncSlice(slice, target);
+      if (target) this.#syncFeature(feature, target);
     };
   }
 
@@ -150,20 +150,20 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
   // State
   // ----------------------------------------
 
-  #syncAllSlices(): void {
+  #syncAllFeatures(): void {
     const target = this.#target;
     if (!target) return;
 
-    for (const slice of this.#slices) {
-      this.#syncSlice(slice, target);
+    for (const feature of this.#features) {
+      this.#syncFeature(feature, target);
     }
   }
 
-  #syncSlice(slice: AnySlice<Target>, target: Target): void {
+  #syncFeature(feature: AnyFeature<Target>, target: Target): void {
     try {
-      const snapshot = slice.getSnapshot({
+      const snapshot = feature.getSnapshot({
         target,
-        initialState: slice.initialState,
+        initialState: feature.initialState,
       });
 
       Object.assign(this.state as object, snapshot);
@@ -172,14 +172,14 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     }
   }
 
-  #createInitialState(): UnionSliceState<Slices> {
+  #createInitialState(): UnionFeatureState<Features> {
     const initialState: Record<string, unknown> = {};
 
-    for (const slice of this.#slices) {
-      Object.assign(initialState, slice.initialState);
+    for (const feature of this.#features) {
+      Object.assign(initialState, feature.initialState);
     }
 
-    return initialState as UnionSliceState<Slices>;
+    return initialState as UnionFeatureState<Features>;
   }
 
   #resetState(): void {
@@ -193,8 +193,8 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
   #buildRequestConfigs(): Map<string, ResolvedRequestConfig<Target>> {
     const configs = new Map<string, ResolvedRequestConfig<Target>>();
 
-    for (const slice of this.#slices) {
-      for (const [name, config] of Object.entries(slice.request)) {
+    for (const feature of this.#features) {
+      for (const [name, config] of Object.entries(feature.request)) {
         configs.set(name, config as ResolvedRequestConfig<Target>);
       }
     }
@@ -202,7 +202,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
     return configs;
   }
 
-  #buildRequestProxy(): UnionSliceRequests<Slices> {
+  #buildRequestProxy(): UnionFeatureRequests<Features> {
     const reqProxy: Record<string, (...args: any[]) => Promise<unknown>> = {};
 
     for (const [name, config] of this.#requestConfigs) {
@@ -215,7 +215,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
       };
     }
 
-    return reqProxy as UnionSliceRequests<Slices>;
+    return reqProxy as UnionFeatureRequests<Features>;
   }
 
   async #execute(
@@ -279,7 +279,7 @@ export class Store<Target, Slices extends AnySlice<Target>[] = AnySlice<Target>[
   // Errors
   // ----------------------------------------
 
-  #handleError(context: Omit<StoreErrorContext<Target, Slices>, 'store'>): void {
+  #handleError(context: Omit<StoreErrorContext<Target, Features>, 'store'>): void {
     if (this.#config.onError) {
       this.#config.onError({ ...context, store: this });
     } else {
@@ -296,9 +296,9 @@ export function isStore(value: unknown): value is AnyStore {
 // Factory
 // ----------------------------------------
 
-export function createStore<Slices extends AnySlice[]>(
-  config: StoreConfig<UnionSliceTarget<Slices>, Slices>,
-): Store<UnionSliceTarget<Slices>, Slices> {
+export function createStore<Features extends AnyFeature[]>(
+  config: StoreConfig<UnionFeatureTarget<Features>, Features>,
+): Store<UnionFeatureTarget<Features>, Features> {
   return new Store(config);
 }
 
@@ -306,41 +306,41 @@ export function createStore<Slices extends AnySlice[]>(
 // Types
 // ----------------------------------------
 
-export type AnyStore<Target = any> = Store<Target, AnySlice<Target>[]>;
+export type AnyStore<Target = any> = Store<Target, AnyFeature<Target>[]>;
 
-export type AnyStoreConfig = StoreConfig<any, AnySlice[]>;
+export type AnyStoreConfig = StoreConfig<any, AnyFeature[]>;
 
-export interface StoreConfig<Target, Slices extends AnySlice<Target>[]> {
-  slices: Slices;
-  queue?: Queue<UnionSliceTasks<Slices>>;
-  onSetup?: (ctx: StoreSetupContext<Target, Slices>) => void;
-  onAttach?: (ctx: StoreAttachContext<Target, Slices>) => void;
-  onError?: (ctx: StoreErrorContext<Target, Slices>) => void;
+export interface StoreConfig<Target, Features extends AnyFeature<Target>[]> {
+  features: Features;
+  queue?: Queue<UnionFeatureTasks<Features>>;
+  onSetup?: (ctx: StoreSetupContext<Target, Features>) => void;
+  onAttach?: (ctx: StoreAttachContext<Target, Features>) => void;
+  onError?: (ctx: StoreErrorContext<Target, Features>) => void;
 }
 
-export interface StoreSetupContext<Target, Slices extends AnySlice<Target>[]> {
-  store: Store<Target, Slices>;
+export interface StoreSetupContext<Target, Features extends AnyFeature<Target>[]> {
+  store: Store<Target, Features>;
   signal: AbortSignal;
 }
 
-export interface StoreAttachContext<Target, Slices extends AnySlice<Target>[]> {
-  store: Store<Target, Slices>;
+export interface StoreAttachContext<Target, Features extends AnyFeature<Target>[]> {
+  store: Store<Target, Features>;
   target: Target;
   signal: AbortSignal;
 }
 
-export interface StoreErrorContext<Target, Slices extends AnySlice<Target>[]> {
+export interface StoreErrorContext<Target, Features extends AnyFeature<Target>[]> {
   request?: PendingTask | undefined;
-  store: Store<Target, Slices>;
+  store: Store<Target, Features>;
   error: unknown;
 }
 
-export interface StoreProvider<Slices extends AnySlice[]> {
-  store: Store<UnionSliceTarget<Slices>, Slices>;
+export interface StoreProvider<Features extends AnyFeature[]> {
+  store: Store<UnionFeatureTarget<Features>, Features>;
 }
 
-export interface StoreConsumer<Slices extends AnySlice[]> {
-  readonly store: Store<UnionSliceTarget<Slices>, Slices> | null;
+export interface StoreConsumer<Features extends AnyFeature[]> {
+  readonly store: Store<UnionFeatureTarget<Features>, Features> | null;
 }
 
 // ----------------------------------------
@@ -349,10 +349,10 @@ export interface StoreConsumer<Slices extends AnySlice[]> {
 
 export type InferStoreTarget<S extends AnyStore> = S extends Store<infer Target> ? Target : never;
 
-export type InferStoreSlices<S extends AnyStore> = S extends Store<any, infer Slices> ? Slices : never;
+export type InferStoreFeatures<S extends AnyStore> = S extends Store<any, infer Features> ? Features : never;
 
-export type InferStoreState<S extends AnyStore> = UnionSliceState<InferStoreSlices<S>>;
+export type InferStoreState<S extends AnyStore> = UnionFeatureState<InferStoreFeatures<S>>;
 
-export type InferStoreRequests<S extends AnyStore> = UnionSliceRequests<InferStoreSlices<S>>;
+export type InferStoreRequests<S extends AnyStore> = UnionFeatureRequests<InferStoreFeatures<S>>;
 
-export type InferStoreTasks<S extends AnyStore> = UnionSliceTasks<InferStoreSlices<S>>;
+export type InferStoreTasks<S extends AnyStore> = UnionFeatureTasks<InferStoreFeatures<S>>;

@@ -42,7 +42,7 @@ test, utils
 
 ```bash
 # Single package
-packages/store/src/slice.ts → store
+packages/store/src/feature.ts → store
 
 # Multiple files in same package
 packages/html/src/slider.ts

@@ -330,7 +330,7 @@ import { createStore } from '@videojs/store/lit';
 import { extendConfig } from '@videojs/html/skins/frosted';
 
 const { StoreMixin } = createStore(
-extendConfig({ slices: [customSlice] })
+extendConfig({ features: [customFeature] })
 );
 
 ElementName.define('custom-name', StoreMixin);
@@ -385,10 +385,10 @@ ElementName.define('custom-name', StoreMixin);
 
 import { createStore } from '@videojs/store/lit';
 import { extendConfig, FrostedSkinElement } from '@videojs/html/skins/frosted';
-import { chaptersSlice } from './slices/chapters';
+import { chaptersFeature } from './features/chapters';
 
 const { StoreMixin } = createStore(
-extendConfig({ slices: [chaptersSlice] })
+extendConfig({ features: [chaptersFeature] })
 );
 
 FrostedSkinElement.define('my-player', StoreMixin);

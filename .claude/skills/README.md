@@ -6,7 +6,7 @@ Specialized knowledge for AI agents working on Video.js 10.
 
 | Workflow                   | Load                               |
 | -------------------------- | ---------------------------------- |
-| Building store/slices      | `api`                              |
+| Building store/features    | `api`                              |
 | Building Lit components    | `component` + `aria`               |
 | Building React components  | `component` + `aria`               |
 | Writing documentation      | `docs`                             |

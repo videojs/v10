@@ -1,23 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { volumeSlice } from '../volume';
+import { volumeFeature } from '../volume';
 
-describe('volumeSlice', () => {
-  describe('slice structure', () => {
+describe('volumeFeature', () => {
+  describe('feature structure', () => {
     it('has unique id symbol', () => {
-      expect(volumeSlice.id).toBeTypeOf('symbol');
+      expect(volumeFeature.id).toBeTypeOf('symbol');
     });
 
     it('has correct initial state', () => {
-      expect(volumeSlice.initialState).toEqual({
+      expect(volumeFeature.initialState).toEqual({
         volume: 1,
         muted: false,
       });
     });
 
     it('has all request handlers', () => {
-      expect(volumeSlice.request.changeVolume).toBeDefined();
-      expect(volumeSlice.request.toggleMute).toBeDefined();
+      expect(volumeFeature.request.changeVolume).toBeDefined();
+      expect(volumeFeature.request.toggleMute).toBeDefined();
     });
   });
 
@@ -28,9 +28,9 @@ describe('volumeSlice', () => {
         muted: false,
       });
 
-      const snapshot = volumeSlice.getSnapshot({
+      const snapshot = volumeFeature.getSnapshot({
         target: video,
-        initialState: volumeSlice.initialState,
+        initialState: volumeFeature.initialState,
       });
 
       expect(snapshot).toEqual({
@@ -46,7 +46,7 @@ describe('volumeSlice', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      volumeSlice.subscribe({ target: video, update, signal: controller.signal });
+      volumeFeature.subscribe({ target: video, update, signal: controller.signal });
       video.dispatchEvent(new Event('volumechange'));
 
       expect(update).toHaveBeenCalled();
@@ -58,7 +58,7 @@ describe('volumeSlice', () => {
       it('sets volume on target', () => {
         const video = createMockVideo({});
 
-        const result = volumeSlice.request.changeVolume.handler(0.7, {
+        const result = volumeFeature.request.changeVolume.handler(0.7, {
           target: video,
           signal: new AbortController().signal,
           meta: null,
@@ -71,7 +71,7 @@ describe('volumeSlice', () => {
       it('clamps volume to min 0', () => {
         const video = createMockVideo({});
 
-        volumeSlice.request.changeVolume.handler(-0.5, {
+        volumeFeature.request.changeVolume.handler(-0.5, {
           target: video,
           signal: new AbortController().signal,
           meta: null,
@@ -83,7 +83,7 @@ describe('volumeSlice', () => {
       it('clamps volume to max 1', () => {
         const video = createMockVideo({});
 
-        volumeSlice.request.changeVolume.handler(1.5, {
+        volumeFeature.request.changeVolume.handler(1.5, {
           target: video,
           signal: new AbortController().signal,
           meta: null,
@@ -97,7 +97,7 @@ describe('volumeSlice', () => {
       it('toggles mute from false to true', () => {
         const video = createMockVideo({ muted: false });
 
-        const result = volumeSlice.request.toggleMute.handler(undefined, {
+        const result = volumeFeature.request.toggleMute.handler(undefined, {
           target: video,
           signal: new AbortController().signal,
           meta: null,
@@ -110,7 +110,7 @@ describe('volumeSlice', () => {
       it('toggles mute from true to false', () => {
         const video = createMockVideo({ muted: true });
 
-        const result = volumeSlice.request.toggleMute.handler(undefined, {
+        const result = volumeFeature.request.toggleMute.handler(undefined, {
           target: video,
           signal: new AbortController().signal,
           meta: null,

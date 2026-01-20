@@ -1,14 +1,14 @@
-import type { InferSliceRequests, InferSliceState } from '@videojs/store';
+import type { InferFeatureRequests, InferFeatureState } from '@videojs/store';
 
-import { createSlice } from '@videojs/store';
+import { createFeature } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
 /**
- * Source slice for HTMLMediaElement.
+ * Source feature for HTMLMediaElement.
  *
  * Tracks current source and loading state, provides source change control.
  */
-export const sourceSlice = createSlice<HTMLMediaElement>()({
+export const sourceFeature = createFeature<HTMLMediaElement>()({
   initialState: {
     /** Current media source URL (null if none). */
     source: null as string | null,
@@ -38,6 +38,6 @@ export const sourceSlice = createSlice<HTMLMediaElement>()({
   },
 });
 
-export type SourceState = InferSliceState<typeof sourceSlice>;
+export type SourceState = InferFeatureState<typeof sourceFeature>;
 
-export type SourceRequests = InferSliceRequests<typeof sourceSlice>;
+export type SourceRequests = InferFeatureRequests<typeof sourceFeature>;

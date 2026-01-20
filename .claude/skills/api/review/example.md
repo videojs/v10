@@ -59,7 +59,7 @@ createPlayer({
   src: 'video.mp4',
   autoplay: true,
   controls: defaultControls,
-  slices: [analyticsSlice],
+  features: [analyticsFeature],
 });
 ```
 
@@ -82,7 +82,7 @@ player.registerPlugin(keyboard); // Order matters but isn't visible
 // After
 const player = createPlayer({
   ...config,
-  slices: [analyticsSlice, keyboardSlice], // Types know exactly what's included
+  features: [analyticsFeature, keyboardFeature], // Types know exactly what's included
 });
 ```
 
@@ -166,7 +166,7 @@ interface Player {
 | -------------------- | ------------------------ | ------------- | --------------------------- |
 | `autoplay: boolean`  | Boolean params confusing | principles.md | Named in config object      |
 | `controls: Config`   | Generic name             | principles.md | Consider `ui` or `skin`     |
-| `plugins?: Plugin[]` | Plugin vs Slice naming   | state.md      | Use "slice" if that's model |
+| `plugins?: Plugin[]` | Plugin vs Feature naming | state.md      | Use "feature" if that's model |
 
 ---
 
@@ -184,7 +184,7 @@ This API has structural problems that will cause long-term pain. The two critica
 
 **Positional parameters** make the API hard to use and impossible to extend without breaking changes. Converting to a config object is straightforward and enables future options.
 
-**Runtime plugin registration** loses the type safety and tree-shaking benefits that modern libraries expect. Moving to creation-time composition (like Zustand slices) enables TypeScript to track capabilities and bundlers to eliminate unused code.
+**Runtime plugin registration** loses the type safety and tree-shaking benefits that modern libraries expect. Moving to creation-time composition (like Zustand features) enables TypeScript to track capabilities and bundlers to eliminate unused code.
 
 The event system's lack of typing is a significant DX issue but not blocking. Consider typed event maps or a subscription pattern like `subscribe(selector, callback)`.
 
@@ -273,7 +273,7 @@ The function signature is the main problem. Converting to a config object would 
 
 #### [MAJOR] No composition model
 
-Plugins are black boxes. No slice pattern, no middleware composition, no builder chain.
+Plugins are black boxes. No feature pattern, no middleware composition, no builder chain.
 
 ### Good Patterns
 
@@ -281,7 +281,7 @@ Plugins are black boxes. No slice pattern, no middleware composition, no builder
 
 ### Summary
 
-The extensibility model needs a rethink. Look at Zustand slices or tRPC procedures for inspiration—extension through composition at creation time.
+The extensibility model needs a rethink. Look at Zustand features or tRPC procedures for inspiration—extension through composition at creation time.
 
 </details>
 

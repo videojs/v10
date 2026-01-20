@@ -109,5 +109,5 @@ Fix race condition where rapid play/pause could leave player in inconsistent sta
 
 ## Testing
 
-Covered by new test in `media-slice.test.ts`. Manual: rapidly click play/pause.
+Covered by new test in `media-feature.test.ts`. Manual: rapidly click play/pause.
 ```

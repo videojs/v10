@@ -44,7 +44,7 @@ That's it. No providers, no boilerplate.
 **Applicable to Video.js:**
 
 - `createPlayerWith*` naming for factory functions
-- `sliceWith*` for slice factories
+- `featureWith*` for feature factories
 
 ### XState Pattern: Visual State Machines
 

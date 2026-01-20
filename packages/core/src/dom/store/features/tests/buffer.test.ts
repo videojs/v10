@@ -1,22 +1,22 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { bufferSlice } from '../buffer';
+import { bufferFeature } from '../buffer';
 
-describe('bufferSlice', () => {
-  describe('slice structure', () => {
+describe('bufferFeature', () => {
+  describe('feature structure', () => {
     it('has unique id symbol', () => {
-      expect(bufferSlice.id).toBeTypeOf('symbol');
+      expect(bufferFeature.id).toBeTypeOf('symbol');
     });
 
     it('has correct initial state', () => {
-      expect(bufferSlice.initialState).toEqual({
+      expect(bufferFeature.initialState).toEqual({
         buffered: [],
         seekable: [],
       });
     });
 
     it('has no request handlers', () => {
-      expect(Object.keys(bufferSlice.request)).toHaveLength(0);
+      expect(Object.keys(bufferFeature.request)).toHaveLength(0);
     });
   });
 
@@ -27,9 +27,9 @@ describe('bufferSlice', () => {
         seekable: createTimeRanges([[0, 120]]),
       });
 
-      const snapshot = bufferSlice.getSnapshot({
+      const snapshot = bufferFeature.getSnapshot({
         target: video,
-        initialState: bufferSlice.initialState,
+        initialState: bufferFeature.initialState,
       });
 
       expect(snapshot).toEqual({
@@ -47,9 +47,9 @@ describe('bufferSlice', () => {
         seekable: createTimeRanges([[0, 120]]),
       });
 
-      const snapshot = bufferSlice.getSnapshot({
+      const snapshot = bufferFeature.getSnapshot({
         target: video,
-        initialState: bufferSlice.initialState,
+        initialState: bufferFeature.initialState,
       });
 
       expect(snapshot.buffered).toEqual([
@@ -68,7 +68,7 @@ describe('bufferSlice', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      bufferSlice.subscribe({ target: video, update, signal: controller.signal });
+      bufferFeature.subscribe({ target: video, update, signal: controller.signal });
       video.dispatchEvent(new Event('progress'));
 
       expect(update).toHaveBeenCalled();
@@ -82,7 +82,7 @@ describe('bufferSlice', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      bufferSlice.subscribe({ target: video, update, signal: controller.signal });
+      bufferFeature.subscribe({ target: video, update, signal: controller.signal });
       video.dispatchEvent(new Event('emptied'));
 
       expect(update).toHaveBeenCalled();

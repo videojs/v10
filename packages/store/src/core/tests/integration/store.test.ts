@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { CANCEL_ALL, createSlice, createStore } from '../../index';
+import { CANCEL_ALL, createFeature, createStore } from '../../index';
 import { flush, subscribeKeys } from '../../state';
 
 describe('store lifecycle integration', () => {
@@ -11,7 +11,7 @@ describe('store lifecycle integration', () => {
       value = 0;
     }
 
-    const slice = createSlice<Target>()({
+    const feature = createFeature<Target>()({
       initialState: { count: 0 },
       getSnapshot: ({ target }) => ({ count: target.value }),
       subscribe: ({ target, update, signal }) => {
@@ -29,7 +29,7 @@ describe('store lifecycle integration', () => {
     });
 
     const store = createStore({
-      slices: [slice],
+      features: [feature],
       onSetup: () => events.push('setup'),
       onAttach: () => events.push('attach'),
     });
@@ -59,7 +59,7 @@ describe('store lifecycle integration', () => {
     let ready = false;
     const isReady = () => ready;
 
-    const slice = createSlice<unknown>()({
+    const feature = createFeature<unknown>()({
       initialState: {},
       getSnapshot: () => ({}),
       subscribe: () => {},
@@ -72,7 +72,7 @@ describe('store lifecycle integration', () => {
     });
 
     const store = createStore({
-      slices: [slice],
+      features: [feature],
       onError: () => {},
     });
 
@@ -93,7 +93,7 @@ describe('request coordination', () => {
   it('cancel option aborts related requests', async () => {
     const events: string[] = [];
 
-    const slice = createSlice<unknown>()({
+    const feature = createFeature<unknown>()({
       initialState: {},
       getSnapshot: () => ({}),
       subscribe: () => {},
@@ -125,7 +125,7 @@ describe('request coordination', () => {
     });
 
     const store = createStore({
-      slices: [slice],
+      features: [feature],
       onError: () => {},
     });
 
@@ -147,7 +147,7 @@ describe('request coordination', () => {
   it('dynamic keys enable parallel execution', async () => {
     const completionOrder: number[] = [];
 
-    const slice = createSlice<unknown>()({
+    const feature = createFeature<unknown>()({
       initialState: {},
       getSnapshot: () => ({}),
       subscribe: () => {},
@@ -164,7 +164,7 @@ describe('request coordination', () => {
     });
 
     const store = createStore({
-      slices: [slice],
+      features: [feature],
     });
 
     store.attach({});
@@ -185,7 +185,7 @@ describe('request coordination', () => {
   it('same key requests supersede each other', async () => {
     const executed: string[] = [];
 
-    const slice = createSlice<unknown>()({
+    const feature = createFeature<unknown>()({
       initialState: {},
       getSnapshot: () => ({}),
       subscribe: () => {},
@@ -209,7 +209,7 @@ describe('request coordination', () => {
     });
 
     const store = createStore({
-      slices: [slice],
+      features: [feature],
       onError: () => {},
     });
 
@@ -236,7 +236,7 @@ describe('request coordination', () => {
   it('CANCEL_ALL aborts all pending requests (nuclear reset)', async () => {
     const events: string[] = [];
 
-    const slice = createSlice<unknown>()({
+    const feature = createFeature<unknown>()({
       initialState: {},
       getSnapshot: () => ({}),
       subscribe: () => {},
@@ -285,7 +285,7 @@ describe('request coordination', () => {
     });
 
     const store = createStore({
-      slices: [slice],
+      features: [feature],
       onError: () => {},
     });
 
@@ -314,7 +314,7 @@ describe('request coordination', () => {
   it('mode: shared allows multiple requests to share fate', async () => {
     let handlerCallCount = 0;
 
-    const slice = createSlice<unknown>()({
+    const feature = createFeature<unknown>()({
       initialState: {},
       getSnapshot: () => ({}),
       subscribe: () => {},
@@ -332,7 +332,7 @@ describe('request coordination', () => {
     });
 
     const store = createStore({
-      slices: [slice],
+      features: [feature],
     });
 
     store.attach({});
@@ -353,7 +353,7 @@ describe('request coordination', () => {
   });
 
   it('mode: shared rejects all promises together on error', async () => {
-    const slice = createSlice<unknown>()({
+    const feature = createFeature<unknown>()({
       initialState: {},
       getSnapshot: () => ({}),
       subscribe: () => {},
@@ -370,7 +370,7 @@ describe('request coordination', () => {
     });
 
     const store = createStore({
-      slices: [slice],
+      features: [feature],
       onError: () => {},
     });
 
@@ -387,7 +387,7 @@ describe('request coordination', () => {
   it('mode: shared allows new request after previous completes', async () => {
     let callCount = 0;
 
-    const slice = createSlice<unknown>()({
+    const feature = createFeature<unknown>()({
       initialState: {},
       getSnapshot: () => ({}),
       subscribe: () => {},
@@ -405,7 +405,7 @@ describe('request coordination', () => {
     });
 
     const store = createStore({
-      slices: [slice],
+      features: [feature],
     });
 
     store.attach({});
@@ -436,7 +436,7 @@ describe('state syncing', () => {
       muted = false;
     }
 
-    const slice = createSlice<Target>()({
+    const feature = createFeature<Target>()({
       initialState: {
         volume: 1,
         muted: false,
@@ -462,7 +462,7 @@ describe('state syncing', () => {
     });
 
     const store = createStore({
-      slices: [slice],
+      features: [feature],
     });
 
     store.attach(new Target());
@@ -486,15 +486,15 @@ describe('state syncing', () => {
     expect(mutedUpdates).toEqual([true]);
   });
 
-  it('multiple slices merge state correctly', () => {
-    const audioSlice = createSlice<{ volume: number; rate: number }>()({
+  it('multiple features merge state correctly', () => {
+    const audioFeature = createFeature<{ volume: number; rate: number }>()({
       initialState: { volume: 1 },
       getSnapshot: ({ target }) => ({ volume: target.volume }),
       subscribe: () => {},
       request: {},
     });
 
-    const playbackSlice = createSlice<{ volume: number; rate: number }>()({
+    const playbackFeature = createFeature<{ volume: number; rate: number }>()({
       initialState: { rate: 1 },
       getSnapshot: ({ target }) => ({ rate: target.rate }),
       subscribe: () => {},
@@ -502,7 +502,7 @@ describe('state syncing', () => {
     });
 
     const store = createStore({
-      slices: [audioSlice, playbackSlice],
+      features: [audioFeature, playbackFeature],
     });
 
     const target = { volume: 0.5, rate: 1.5 };
@@ -527,7 +527,7 @@ describe('immediate execution', () => {
       }
     }
 
-    const playbackSlice = createSlice<MockMedia>()({
+    const playbackFeature = createFeature<MockMedia>()({
       initialState: { paused: true },
       getSnapshot: ({ target }) => ({ paused: target.paused }),
       subscribe: ({ target, update, signal }) => {
@@ -541,7 +541,7 @@ describe('immediate execution', () => {
       },
     });
 
-    const store = createStore({ slices: [playbackSlice] });
+    const store = createStore({ features: [playbackFeature] });
     const target = new MockMedia();
     store.attach(target);
 
@@ -555,7 +555,7 @@ describe('immediate execution', () => {
   });
 
   it('task is pending synchronously after request', async () => {
-    const slice = createSlice<unknown>()({
+    const feature = createFeature<unknown>()({
       initialState: {},
       getSnapshot: () => ({}),
       subscribe: () => {},
@@ -567,7 +567,7 @@ describe('immediate execution', () => {
       },
     });
 
-    const store = createStore({ slices: [slice] });
+    const store = createStore({ features: [feature] });
     store.attach({});
 
     const promise = store.request.action();

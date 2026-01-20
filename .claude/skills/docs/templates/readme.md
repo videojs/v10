@@ -152,8 +152,8 @@ Explanation.
 Core concepts:
 
 - Target
-- Slices
-- Slice Type Inference
+- Features
+- Feature Type Inference
 - Requests
 - Request Metadata
 - Store
@@ -174,7 +174,7 @@ Core concepts:
 
 Core concepts:
 
-- Media slices: volumeSlice, playbackSlice, timeSlice, sourceSlice, bufferSlice
+- Media features: volumeFeature, playbackFeature, timeFeature, sourceFeature, bufferFeature
 - `media.all` array
 - Type exports (VolumeState, PlaybackRequests, etc.)
 
@@ -185,7 +185,7 @@ Core concepts:
 - FrostedSkinElement
 - `define()` pattern
 - Slot-based composition
-- Extending with custom slices
+- Extending with custom features
 
 ### @videojs/react
 
@@ -217,10 +217,10 @@ Always include at top:
 ```markdown
 npm install @videojs/store
 
-import { createSlice, createStore } from '@videojs/store';
+import { createFeature, createStore } from '@videojs/store';
 
 const store = createStore({
-slices: [playbackSlice, volumeSlice],
+features: [playbackFeature, volumeFeature],
 });
 
 store.attach(videoElement);
@@ -243,10 +243,10 @@ Use when comparing to alternatives:
 Always show type inference for TypeScript users:
 
 ```ts
-import type { InferSliceRequests, InferSliceState } from '@videojs/store';
+import type { InferFeatureRequests, InferFeatureState } from '@videojs/store';
 
-type VolumeState = InferSliceState<typeof volumeSlice>;
-type VolumeRequests = InferSliceRequests<typeof volumeSlice>;
+type VolumeState = InferFeatureState<typeof volumeFeature>;
+type VolumeRequests = InferFeatureRequests<typeof volumeFeature>;
 ```
 
 ### Links Footer

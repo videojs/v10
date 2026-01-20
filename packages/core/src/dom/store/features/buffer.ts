@@ -1,14 +1,14 @@
-import type { InferSliceRequests, InferSliceState } from '@videojs/store';
+import type { InferFeatureRequests, InferFeatureState } from '@videojs/store';
 
-import { createSlice } from '@videojs/store';
+import { createFeature } from '@videojs/store';
 import { listen, serializeTimeRanges } from '@videojs/utils/dom';
 
 /**
- * Buffer slice for HTMLMediaElement.
+ * Buffer feature for HTMLMediaElement.
  *
  * Tracks buffered and seekable time ranges. Read-only (no requests).
  */
-export const bufferSlice = createSlice<HTMLMediaElement>()({
+export const bufferFeature = createFeature<HTMLMediaElement>()({
   initialState: {
     /** Buffered time ranges as [start, end] tuples. */
     buffered: [] as [number, number][],
@@ -29,6 +29,6 @@ export const bufferSlice = createSlice<HTMLMediaElement>()({
   request: {},
 });
 
-export type BufferState = InferSliceState<typeof bufferSlice>;
+export type BufferState = InferFeatureState<typeof bufferFeature>;
 
-export type BufferRequests = InferSliceRequests<typeof bufferSlice>;
+export type BufferRequests = InferFeatureRequests<typeof bufferFeature>;

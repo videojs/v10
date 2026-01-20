@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createSlice } from '../slice';
+import { createFeature } from '../feature';
 
-describe('slice', () => {
-  describe('createSlice', () => {
-    it('creates slice with all required properties', () => {
+describe('feature', () => {
+  describe('createFeature', () => {
+    it('creates feature with all required properties', () => {
       interface Target {
         value: number;
       }
 
-      const slice = createSlice<Target>()({
+      const feature = createFeature<Target>()({
         initialState: { count: 0 },
         getSnapshot: ({ target }) => ({ count: target.value }),
         subscribe: vi.fn(),
@@ -20,11 +20,11 @@ describe('slice', () => {
         },
       });
 
-      expect(slice.id).toBeTypeOf('symbol');
-      expect(slice.initialState).toEqual({ count: 0 });
-      expect(slice.getSnapshot).toBeTypeOf('function');
-      expect(slice.subscribe).toBeTypeOf('function');
-      expect(slice.request.increment).toMatchObject({
+      expect(feature.id).toBeTypeOf('symbol');
+      expect(feature.initialState).toEqual({ count: 0 });
+      expect(feature.getSnapshot).toBeTypeOf('function');
+      expect(feature.subscribe).toBeTypeOf('function');
+      expect(feature.request.increment).toMatchObject({
         key: 'increment',
         guard: [],
         handler: expect.any(Function),
@@ -32,7 +32,7 @@ describe('slice', () => {
     });
 
     it('resolves shorthand handlers', () => {
-      const slice = createSlice({
+      const feature = createFeature({
         initialState: {},
         getSnapshot: () => ({}),
         subscribe: () => {},
@@ -41,15 +41,15 @@ describe('slice', () => {
         },
       });
 
-      expect(slice.request.simple.key).toBe('simple');
-      expect(slice.request.simple.guard).toEqual([]);
-      expect(slice.request.simple.cancel).toBeUndefined();
+      expect(feature.request.simple.key).toBe('simple');
+      expect(feature.request.simple.guard).toEqual([]);
+      expect(feature.request.simple.cancel).toBeUndefined();
     });
 
     it('preserves full config options', () => {
       const guard = () => true;
 
-      const slice = createSlice({
+      const feature = createFeature({
         initialState: {},
         getSnapshot: () => ({}),
         subscribe: () => {},
@@ -62,8 +62,8 @@ describe('slice', () => {
         },
       });
 
-      expect(slice.request.configured.key).toBe('custom-key');
-      expect(slice.request.configured.guard).toEqual([guard]);
+      expect(feature.request.configured.key).toBe('custom-key');
+      expect(feature.request.configured.guard).toEqual([guard]);
     });
   });
 });

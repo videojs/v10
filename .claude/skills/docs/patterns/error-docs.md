@@ -44,7 +44,7 @@ Document which errors are "normal" vs programming errors:
 
 ```ts
 const store = createStore({
-  slices: [playbackSlice, volumeSlice],
+  features: [playbackFeature, volumeFeature],
   onError: ({ error, request }) => {
     if (request) {
       console.error(`${request.name} failed:`, error.code);
@@ -120,11 +120,11 @@ function handleError(error: unknown) {
 
 ```ts
 // ❌ Wrong
-const store = createStore({ slices: [playbackSlice] });
+const store = createStore({ features: [playbackFeature] });
 await store.request.play(); // Error: NO_TARGET
 
 // ✅ Correct
-const store = createStore({ slices: [playbackSlice] });
+const store = createStore({ features: [playbackFeature] });
 store.attach(videoElement);
 await store.request.play();
 ```

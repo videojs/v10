@@ -213,13 +213,13 @@ Before writing new helpers, check `@videojs/utils` for existing utilities.
 
 | Pattern             | Prefix         | Example                                |
 | ------------------- | -------------- | -------------------------------------- |
-| Type inference      | `Infer*`       | `InferSliceState<S>`                   |
+| Type inference      | `Infer*`       | `InferFeatureState<F>`                 |
 | Type resolution     | `Resolve*`     | `ResolveRequestHandler<R>`             |
 | Type constraint     | `Ensure*`      | `EnsureTaskRecord<T>`                  |
-| Union type helpers  | `Union*`       | `UnionSliceState<Slices>`              |
+| Union type helpers  | `Union*`       | `UnionFeatureState<Features>`          |
 | Default loose types | `Default*`     | `DefaultTaskRecord`                    |
 | Type guards         | `is*`          | `isStoreError(error)`                  |
-| Factory functions   | `create*`      | `createQueue()`, `createSlice()`       |
+| Factory functions   | `create*`      | `createQueue()`, `createFeature()`     |
 | Falsy wrapper       | `Falsy*`       | `Falsy<T>` (value that might be falsy) |
 | Constructor types   | `*Constructor` | `Constructor<T>`, `AnyConstructor<T>`  |
 | Mixin types         | `Mixin`        | `Mixin<Base, Result>`                  |
@@ -302,7 +302,7 @@ function isQueue(value: unknown): value is Queue {
 **`Symbol()` vs `Symbol.for()`:**
 
 - Use `Symbol.for('@videojs/*')` for symbols that need cross-realm identity (e.g., metadata that must be recognized across module boundaries)
-- Use `Symbol('@videojs/*')` for instance-unique identifiers (e.g., task IDs, slice IDs)
+- Use `Symbol('@videojs/*')` for instance-unique identifiers (e.g., task IDs, feature IDs)
 
 ### Subscribe Pattern
 
@@ -389,11 +389,11 @@ Never prefix type parameters with `T`. Use descriptive names instead:
 ```ts
 // Bad
 type Mixin<TBase extends Constructor> = ...
-function createStore<TSlices extends AnySlice[]>(...) { ... }
+function createStore<TFeatures extends AnyFeature[]>(...) { ... }
 
 // Good
 type Mixin<Base extends Constructor> = ...
-function createStore<Slices extends AnySlice[]>(...) { ... }
+function createStore<Features extends AnyFeature[]>(...) { ... }
 ```
 
 ### React: Lazy Initialization

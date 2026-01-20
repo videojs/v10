@@ -1,14 +1,14 @@
-import type { InferSliceRequests, InferSliceState } from '@videojs/store';
+import type { InferFeatureRequests, InferFeatureState } from '@videojs/store';
 
-import { createSlice } from '@videojs/store';
+import { createFeature } from '@videojs/store';
 import { listen, onEvent } from '@videojs/utils/dom';
 
 /**
- * Time slice for HTMLMediaElement.
+ * Time feature for HTMLMediaElement.
  *
  * Tracks current time and duration, provides seek control.
  */
-export const timeSlice = createSlice<HTMLMediaElement>()({
+export const timeFeature = createFeature<HTMLMediaElement>()({
   initialState: {
     /** Current playback position in seconds. */
     currentTime: 0,
@@ -39,6 +39,6 @@ export const timeSlice = createSlice<HTMLMediaElement>()({
   },
 });
 
-export type TimeState = InferSliceState<typeof timeSlice>;
+export type TimeState = InferFeatureState<typeof timeFeature>;
 
-export type TimeRequests = InferSliceRequests<typeof timeSlice>;
+export type TimeRequests = InferFeatureRequests<typeof timeFeature>;

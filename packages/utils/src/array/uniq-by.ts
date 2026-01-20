@@ -1,11 +1,11 @@
 /**
  * Returns array with duplicates removed, keeping the LAST occurrence.
- * Useful for slice merging where extensions should override base slices.
+ * Useful for feature merging where extensions should override base features.
  *
  * @example
  * ```ts
- * const slices = [{ id: 'a', v: 1 }, { id: 'b', v: 2 }, { id: 'a', v: 3 }];
- * uniqBy(slices, s => s.id);
+ * const features = [{ id: 'a', v: 1 }, { id: 'b', v: 2 }, { id: 'a', v: 3 }];
+ * uniqBy(features, s => s.id);
  * // => [{ id: 'b', v: 2 }, { id: 'a', v: 3 }]
  * ```
  */

@@ -307,20 +307,20 @@ console.log(input.prop1, input.prop2);
 
 ---
 
-## Slice Template
+## Feature Template
 
-For `@videojs/store` slices:
+For `@videojs/store` features:
 
 ```markdown
-## sliceName
+## featureName
 
-Brief description of what state this slice manages.
+Brief description of what state this feature manages.
 
-import { sliceName } from '@videojs/core/dom';
+import { featureName } from '@videojs/core/dom';
 // or
-import { createSlice } from '@videojs/store';
+import { createFeature } from '@videojs/store';
 
-const sliceName = createSlice<HTMLMediaElement>()({
+const featureName = createFeature<HTMLMediaElement>()({
 initialState: {
 property1: defaultValue,
 property2: defaultValue,
@@ -358,14 +358,14 @@ return target.property;
 
 ### Type Inference
 
-import type { InferSliceState, InferSliceRequests } from '@videojs/store';
+import type { InferFeatureState, InferFeatureRequests } from '@videojs/store';
 
-type SliceNameState = InferSliceState<typeof sliceName>;
-type SliceNameRequests = InferSliceRequests<typeof sliceName>;
+type FeatureNameState = InferFeatureState<typeof featureName>;
+type FeatureNameRequests = InferFeatureRequests<typeof featureName>;
 
 ### See Also
 
-- [Related Slice](/api/slices/related)
+- [Related Feature](/api/features/related)
 - [Store Guide](/guides/store)
 ```
 

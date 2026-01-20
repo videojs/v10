@@ -109,7 +109,7 @@ Mixins are for **store provision only**, not behavior. Behavior goes in controll
 Creates a mixin that provides a store via context:
 
 ```ts
-const { StoreProviderMixin } = createStore({ slices: [playbackSlice] });
+const { StoreProviderMixin } = createStore({ features: [playbackFeature] });
 
 class MyPlayer extends StoreProviderMixin(ReactiveElement) {
   // Store provided to all descendants

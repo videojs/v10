@@ -40,7 +40,7 @@ Capture target/platform type once, let callbacks infer:
 
 ```ts
 // Capture Target type once
-const slice = createSlice<HTMLVideoElement>()({
+const feature = createFeature<HTMLVideoElement>()({
   initialState: { volume: 1 },
   getSnapshot: ({ target }) => ({ volume: target.volume }),
   subscribe: ({ target, update }) => {

@@ -26,7 +26,7 @@ export type RequestControllerHost = ReactiveControllerHost & HTMLElement;
  *
  * @example Context source
  * ```ts
- * const { context } = createStore({ slices: [playbackSlice] });
+ * const { context } = createStore({ features: [playbackFeature] });
  *
  * class MyElement extends LitElement {
  *   #play = new RequestController(this, context, 'play');
