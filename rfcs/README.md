@@ -72,6 +72,29 @@ rfcs/
     └── examples.md     # Usage examples
 ```
 
+## Contributing an RFC
+
+### Branch and PR Workflow
+
+1. **Create branch**: `rfc/feature-name`
+2. **PR title while open**: `[RFC] Feature Name`
+3. **Squash commit when merged**: `docs(rfc): feature name`
+
+### Example
+
+```bash
+git checkout -b rfc/slice-accessor-design
+# ... write RFC ...
+git push -u origin rfc/slice-accessor-design
+gh pr create --title "[RFC] Slice Accessor Design"
+```
+
+When the RFC is accepted and merged, the squash commit becomes:
+
+```
+docs(rfc): slice accessor design
+```
+
 ## Relationship to Implementation Plans
 
 RFCs focus on **what** and **why** — the design, rationale, and public API.

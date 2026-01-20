@@ -14,8 +14,10 @@ type(scope): lowercase description
 
 | Prefix       | Use for                              |
 | ------------ | ------------------------------------ |
-| `RFC:`       | Request for comments / proposals     |
+| `[RFC]`      | Request for comments / proposals     |
 | `Discovery:` | Exploration / research / prototyping |
+
+**Note:** RFC PRs use `[RFC] Title` format while open. When merged, the squash commit uses `docs(rfc): title`.
 
 ## PR Body Template
 
