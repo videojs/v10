@@ -239,9 +239,9 @@ customElements.define('my-container', MediaContainerElement);
 ```ts
 import { createMedia, features, VjsElement } from '@videojs/html';
 
-const { MediaMixin } = createMedia([features.playback, features.time]);
+const { ProviderMixin, MediaController } = createMedia([features.playback, features.time]);
 
-class VjsAudioController extends MediaMixin(VjsElement) {
+class VjsAudioController extends ProviderMixin(VjsElement) {
   // Programmatic control, no UI
 }
 

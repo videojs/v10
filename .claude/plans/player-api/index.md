@@ -120,15 +120,29 @@ const {
 
 ```ts
 const {
-  ProviderElement, // Ready-to-use element
-  ProviderMixin, // Store provider (Media + Player stores)
-  ContainerMixin, // Attaches container to player store
-  PlayerController, // Player state + requests (like usePlayer)
+  // Ready-to-use elements
+  ProviderElement, // Both stores, auto-attaches media
+  ContainerElement, // Attaches container to player store
 
-  // Escape hatches (advanced)
-  MediaProviderMixin, // Media store only
-  MediaController, // Media state + requests
+  // Mixins (customization)
+  ProviderMixin, // Both stores
+  ContainerMixin, // Container attachment
+  MediaProviderMixin, // Media store only (escape hatch)
+
+  // Controllers
+  PlayerController, // Player state + requests (like usePlayer)
+  MediaController, // Media state + requests (escape hatch)
 } = createPlayer(presets.website);
+```
+
+### Returns (HTML) — createMedia
+
+```ts
+const {
+  ProviderElement, // Ready-to-use element
+  ProviderMixin, // Customization
+  MediaController, // Media state + requests
+} = createMedia([features.playback, features.time]);
 ```
 
 ### usePlayer (React)
