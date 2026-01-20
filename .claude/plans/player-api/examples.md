@@ -2,7 +2,8 @@
 
 Usage examples for React, HTML, and Lit.
 
-> **Note:** Some examples here are for demonstration. In practice, UI primitives like `<PlayButton>`, `<VolumeSlider>`, etc. would be provided.
+> [!NOTE]
+> Some examples here are for demonstration. In practice, UI primitives like `<PlayButton>`, `<VolumeSlider>`, etc. would be provided.
 
 ## React
 
@@ -46,7 +47,12 @@ function App() {
 function Controls() {
   const player = usePlayer();
 
-  return <button onClick={player.paused ? player.play : player.pause}>{player.paused ? 'Play' : 'Pause'}</button>;
+  // Hook usage example only, you would use `PlayButton`
+  return (
+    <button onClick={player.paused ? player.play : player.pause}>
+      {player.paused ? 'Play' : 'Pause'}
+    </button>
+  );
 }
 ```
 
@@ -65,6 +71,7 @@ const { Provider, usePlayer } = createPlayer({
 ```tsx
 import { createPlayer, createPlayerFeature, presets } from '@videojs/react';
 
+// Example of how you can create your own feature, pip would be provided.
 const pip = createPlayerFeature({
   initialState: { active: false },
   getSnapshot: ({ target }) => ({
@@ -209,6 +216,7 @@ class PlayButton extends VjsElement {
   render() {
     const { paused, play, pause } = this.#player.value;
 
+    // Controller usage example only, you would use `PlayButton`
     return html`<button @click=${paused ? play : pause}>${paused ? 'Play' : 'Pause'}</button>`;
   }
 }
