@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createSlice } from '../../core/slice';
+import { createFeature } from '../../core/feature';
 import { createStore } from '../create-store';
 import { TestBaseElement } from './test-utils';
 
@@ -11,7 +11,7 @@ describe('createStore', () => {
     muted = false;
   }
 
-  const audioSlice = createSlice<MockMedia>()({
+  const audioFeature = createFeature<MockMedia>()({
     initialState: { volume: 1, muted: false },
     getSnapshot: ({ target }) => ({
       volume: target.volume,
@@ -35,7 +35,7 @@ describe('createStore', () => {
 
   describe('create', () => {
     it('creates a store instance', () => {
-      const { create } = createStore({ slices: [audioSlice] });
+      const { create } = createStore({ features: [audioFeature] });
 
       const store = create();
 
@@ -44,7 +44,7 @@ describe('createStore', () => {
     });
 
     it('creates independent store instances', () => {
-      const { create } = createStore({ slices: [audioSlice] });
+      const { create } = createStore({ features: [audioFeature] });
 
       const store1 = create();
       const store2 = create();
@@ -55,15 +55,15 @@ describe('createStore', () => {
 
   describe('context', () => {
     it('contexts share the same key for interoperability', () => {
-      const result1 = createStore({ slices: [audioSlice] });
-      const result2 = createStore({ slices: [audioSlice] });
+      const result1 = createStore({ features: [audioFeature] });
+      const result2 = createStore({ features: [audioFeature] });
 
       // Contexts use a shared key so different store configurations can interoperate
       expect(result1.context).toBe(result2.context);
     });
 
     it('context is defined', () => {
-      const { context } = createStore({ slices: [audioSlice] });
+      const { context } = createStore({ features: [audioFeature] });
 
       expect(context).toBeDefined();
     });
@@ -71,25 +71,25 @@ describe('createStore', () => {
 
   describe('mixins', () => {
     it('returns StoreMixin', () => {
-      const { StoreMixin } = createStore({ slices: [audioSlice] });
+      const { StoreMixin } = createStore({ features: [audioFeature] });
 
       expect(typeof StoreMixin).toBe('function');
     });
 
     it('returns StoreProviderMixin', () => {
-      const { StoreProviderMixin } = createStore({ slices: [audioSlice] });
+      const { StoreProviderMixin } = createStore({ features: [audioFeature] });
 
       expect(typeof StoreProviderMixin).toBe('function');
     });
 
     it('returns StoreAttachMixin', () => {
-      const { StoreAttachMixin } = createStore({ slices: [audioSlice] });
+      const { StoreAttachMixin } = createStore({ features: [audioFeature] });
 
       expect(typeof StoreAttachMixin).toBe('function');
     });
 
     it('mixins can be applied to TestBaseElement', () => {
-      const { StoreMixin, StoreProviderMixin, StoreAttachMixin } = createStore({ slices: [audioSlice] });
+      const { StoreMixin, StoreProviderMixin, StoreAttachMixin } = createStore({ features: [audioFeature] });
 
       const Mixed1 = StoreMixin(TestBaseElement);
       const Mixed2 = StoreProviderMixin(TestBaseElement);
@@ -103,36 +103,36 @@ describe('createStore', () => {
 
   describe('result object', () => {
     it('returns all expected properties', () => {
-      const result = createStore({ slices: [audioSlice] });
+      const result = createStore({ features: [audioFeature] });
 
       expect(result).toHaveProperty('StoreMixin');
       expect(result).toHaveProperty('StoreProviderMixin');
       expect(result).toHaveProperty('StoreAttachMixin');
       expect(result).toHaveProperty('context');
       expect(result).toHaveProperty('create');
-      expect(result).toHaveProperty('SelectorController');
+      expect(result).toHaveProperty('StateController');
       expect(result).toHaveProperty('RequestController');
       expect(result).toHaveProperty('TasksController');
     });
   });
 
   describe('bound controllers', () => {
-    it('SelectorController is a class', () => {
-      const { SelectorController } = createStore({ slices: [audioSlice] });
+    it('StateController is a class', () => {
+      const { StateController } = createStore({ features: [audioFeature] });
 
-      expect(typeof SelectorController).toBe('function');
-      expect(SelectorController.prototype).toBeDefined();
+      expect(typeof StateController).toBe('function');
+      expect(StateController.prototype).toBeDefined();
     });
 
     it('RequestController is a class', () => {
-      const { RequestController } = createStore({ slices: [audioSlice] });
+      const { RequestController } = createStore({ features: [audioFeature] });
 
       expect(typeof RequestController).toBe('function');
       expect(RequestController.prototype).toBeDefined();
     });
 
     it('TasksController is a class', () => {
-      const { TasksController } = createStore({ slices: [audioSlice] });
+      const { TasksController } = createStore({ features: [audioFeature] });
 
       expect(typeof TasksController).toBe('function');
       expect(TasksController.prototype).toBeDefined();

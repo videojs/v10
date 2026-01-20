@@ -4,7 +4,7 @@ import { renderHook } from '@testing-library/react';
 
 import { describe, expect, it } from 'vitest';
 
-import { createSlice } from '../../core/slice';
+import { createFeature } from '../../core/feature';
 import { createStore as createCoreStore } from '../../core/store';
 import { StoreContextProvider, useStoreContext } from '../context';
 
@@ -14,7 +14,7 @@ describe('context', () => {
     volume = 1;
   }
 
-  const audioSlice = createSlice<MockMedia>()({
+  const audioFeature = createFeature<MockMedia>()({
     initialState: { volume: 1 },
     getSnapshot: ({ target }) => ({ volume: target.volume }),
     subscribe: () => {},
@@ -29,7 +29,7 @@ describe('context', () => {
     });
 
     it('returns store from context', () => {
-      const store = createCoreStore({ slices: [audioSlice] });
+      const store = createCoreStore({ features: [audioFeature] });
 
       const { result } = renderHook(() => useStoreContext(), {
         wrapper: ({ children }: { children: ReactNode }) => (

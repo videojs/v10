@@ -20,10 +20,10 @@ npm install @videojs/store
 - **Write Path**: Send requests, coordinate execution, handle failures
 
 ```ts
-import { createSlice, createStore } from '@videojs/store';
+import { createFeature, createStore } from '@videojs/store';
 
 const store = createStore({
-  slices: [playbackSlice, audioSlice],
+  features: [playbackFeature, audioFeature],
 });
 
 store.attach(videoElement); // <video>
@@ -41,20 +41,20 @@ await store.request.setVolume(0.5);
 
 ### Target
 
-The target contains a reference to an external systems. Slices read from and write to it.
+The target contains a reference to an external systems. Features read from and write to it.
 
 ```ts
 const videoElement = document.querySelector('video');
 store.attach(videoElement);
 ```
 
-### Slices
+### Features
 
-A slice defines state, how to sync it from the target, and requests to modify the target.
+A feature defines state, how to sync it from the target, and requests to modify the target.
 
 ```ts
-// createSlice<Target>()() - curried form enables full type inference
-const audioSlice = createSlice<HTMLMediaElement>()({
+// createFeature<Target>()() - curried form enables full type inference
+const audioFeature = createFeature<HTMLMediaElement>()({
   initialState: { volume: 1, muted: false },
 
   getSnapshot: ({ target }) => ({
@@ -78,42 +78,42 @@ const audioSlice = createSlice<HTMLMediaElement>()({
 });
 ```
 
-### Slice Type Inference
+### Feature Type Inference
 
-State and request types are fully inferred from the slice config:
+State and request types are fully inferred from the feature config:
 
 ```ts
-import type { InferSliceRequests, InferSliceState } from '@videojs/store';
+import type { InferFeatureRequests, InferFeatureState } from '@videojs/store';
 
-const audioSlice = createSlice<HTMLMediaElement>()({
+const audioFeature = createFeature<HTMLMediaElement>()({
   initialState: { volume: 1, muted: false },
   // ...
 });
 
-// Infer types from the slice
-type AudioState = InferSliceState<typeof audioSlice>;
-type AudioRequests = InferSliceRequests<typeof audioSlice>;
+// Infer types from the feature
+type AudioState = InferFeatureState<typeof audioFeature>;
+type AudioRequests = InferFeatureRequests<typeof audioFeature>;
 ```
 
-For stores with multiple slices:
+For stores with multiple features:
 
 ```ts
-import type { UnionSliceRequests, UnionSliceState } from '@videojs/store';
+import type { UnionFeatureRequests, UnionFeatureState } from '@videojs/store';
 
-const slices = [audioSlice, playbackSlice] as const;
+const features = [audioFeature, playbackFeature] as const;
 
-type MediaState = UnionSliceState<typeof slices>;
-type MediaRequests = UnionSliceRequests<typeof slices>;
+type MediaState = UnionFeatureState<typeof features>;
+type MediaRequests = UnionFeatureRequests<typeof features>;
 ```
 
-### Explicit Slice Types
+### Explicit Feature Types
 
 For upfront type definitions, use `Request<Input, Output>`:
 
 ```ts
 import type { Request } from '@videojs/store';
 
-import { createSlice } from '@videojs/store';
+import { createFeature } from '@videojs/store';
 
 interface AudioState {
   volume: number;
@@ -127,7 +127,7 @@ interface AudioRequests {
   getDuration: Request<void, number>; // () => Promise<number>
 }
 
-const audioSlice = createSlice<HTMLMediaElement, AudioState, AudioRequests>({
+const audioFeature = createFeature<HTMLMediaElement, AudioState, AudioRequests>({
   // Types enforced from interfaces
 });
 ```
@@ -154,9 +154,9 @@ request: {
   // Full config when needed
   play: {
     key: 'playback',
+    mode: 'shared',
     guard: [],
     cancel: [],
-    // ...
     async handler(_, { target, signal }) {
       target.play();
       await onEvent(target, 'play', { signal });
@@ -197,11 +197,11 @@ async handler(_, { target, signal, meta }) {
 
 ## Store
 
-The store composes slices and manages the target connection.
+The store composes features and manages the target connection.
 
 ```ts
 const store = createStore({
-  slices: [playbackSlice, audioSlice],
+  features: [playbackFeature, audioFeature],
 
   onSetup: ({ store, signal }) => {
     // Called when store is created
@@ -222,7 +222,7 @@ const store = createStore({
 ```ts
 import type { InferStoreRequests, InferStoreState } from '@videojs/store';
 
-const store = createStore({ slices: [audioSlice, playbackSlice] });
+const store = createStore({ features: [audioFeature, playbackFeature] });
 
 type State = InferStoreState<typeof store>;
 type Requests = InferStoreRequests<typeof store>;
@@ -255,39 +255,25 @@ store.destroy();
 
 ### Subscribing to State
 
+State is reactive—subscribe to be notified when any property changes:
+
 ```ts
+import { subscribe, subscribeKeys } from '@videojs/store';
+
 // Subscribe to all state changes
-const unsubscribe = store.subscribe((state) => {
-  console.log('State changed:', state);
+const unsubscribe = subscribe(store.state, () => {
+  console.log('State changed:', store.state.volume);
 });
 
-// Single value - only fires when volume changes
-store.subscribe(
-  (s) => s.volume,
-  (volume) => console.log('Volume:', volume)
-);
-
-// Multiple values - auto-optimized with key-based subscription
-store.subscribe(
-  (s) => ({ volume: s.volume, muted: s.muted }),
-  ({ volume, muted }) => updateAudioUI(volume, muted)
-);
-
-// Derived value
-store.subscribe(
-  (s) => Math.round(s.volume * 100),
-  (percent) => console.log(`${percent}%`)
-);
-
-// Custom equality function
-store.subscribe(
-  (s) => s.playlist,
-  (playlist) => renderPlaylist(playlist),
-  { equalityFn: shallowEqual }
-);
+// Subscribe to specific keys only
+subscribeKeys(store.state, ['volume', 'muted'], () => {
+  console.log('Audio changed:', store.state.volume, store.state.muted);
+});
 ```
 
-Slices sync state from the target via `getSnapshot`. The `update` callback triggers a sync, and the store only notifies subscribers for keys that actually changed:
+Mutations are auto-batched—multiple changes in the same tick trigger only one notification.
+
+Features sync state from the target via `getSnapshot`. The `update` callback triggers a sync, and the store only notifies subscribers for keys that actually changed:
 
 ```ts
 subscribe: ({ target, update, signal }) => {
@@ -319,15 +305,13 @@ request: {
 
 When a new request arrives with the same key:
 
-- Queued request with that key is dropped
-- Executing request with that key is aborted
+- Pending request with that key is aborted
 - New request takes over
 
 ```ts
-store.request.play(); // queued
-store.request.pause(); // play dropped, pause queued
-store.request.play(); // pause dropped, play queued
-// only final play() executes
+store.request.play(); // starts immediately
+store.request.pause(); // aborts play, starts immediately
+// both start, but play is aborted mid-flight
 ```
 
 Dynamic keys for parallel execution:
@@ -348,61 +332,61 @@ request: {
 }
 ```
 
-### Cancels
+### Mode
 
-Requests can cancel other in-flight requests by name. Cancellation happens immediately when the
-request is enqueued, before guards or scheduling.
+The `mode` option controls how requests with the same key interact:
+
+| Mode                    | Behavior                         | Use case            |
+| ----------------------- | -------------------------------- | ------------------- |
+| `'exclusive'` (default) | Supersede pending request        | seek, pause, volume |
+| `'shared'`              | Join pending request, share fate | play                |
 
 ```ts
 request: {
-  stop: {
-    cancel: ['seek', 'preload'],  // Request names to cancel
+  play: {
+    key: 'playback',
+    mode: 'shared',  // Multiple play() calls share the same outcome
+    async handler(_, { target }) {
+      await target.play();
+    },
+  },
+  pause: {
+    key: 'playback',
+    mode: 'exclusive',  // default - supersedes play
     handler: (_, { target }) => target.pause(),
   },
 }
 ```
 
-### Schedule
-
-Schedule controls _when_ a request executes. The schedule function receives a `flush` callback and
-optionally returns a cancel function. Default schedule is microtask (executes at end of current tick).
+With `mode: 'shared'`, multiple calls while a request is pending all resolve/reject together:
 
 ```ts
-import { delay, microtask } from '@videojs/store';
-import { raf, idle } from '@videojs/store/dom';
+const p1 = store.request.play(); // starts
+const p2 = store.request.play(); // joins p1
+const p3 = store.request.play(); // joins p1
+// All three resolve/reject together when playback starts or fails
+```
+
+### Cancels
+
+Requests can cancel other in-flight requests by name. Cancellation happens immediately when the
+request is enqueued, before guards.
+
+```ts
+import { CANCEL_ALL } from '@videojs/store';
 
 request: {
-  // Microtask - default, executes at end of current tick
-  setVolume: {
-    schedule: microtask,
-    handler: (volume, { target }) => { target.volume = volume; },
+  stop: {
+    cancel: ['seek', 'preload'],  // Request names to cancel
+    handler: (_, { target }) => target.pause(),
   },
 
-  // Debounce 100ms - good for sliders
-  seek: {
-    schedule: delay(100),
-    handler: (time, { target }) => { target.currentTime = time; },
-  },
-
-  // Sync with animation frame
-  updateOverlay: {
-    schedule: raf(),
-    handler: () => { ... },
-  },
-
-  // Execute when browser is idle
-  preloadNext: {
-    schedule: idle(),
-    handler: () => { ... },
-  },
-
-  // Custom schedule
-  custom: {
-    schedule: (flush) => {
-      const id = setTimeout(flush, 200);
-      return () => clearTimeout(id);  // cancel function
+  load: {
+    cancel: CANCEL_ALL,  // Nuclear reset - cancels ALL pending requests
+    handler: (src, { target }) => {
+      target.src = src;
+      target.load();
     },
-    handler: () => { ... },
   },
 }
 ```
@@ -478,7 +462,6 @@ All store errors include a `code` for programmatic handling:
 | `DETACHED`   | Target detached              |
 | `NO_TARGET`  | No target attached           |
 | `REJECTED`   | Guard returned falsy         |
-| `REMOVED`    | Task dequeued or cleared     |
 | `SUPERSEDED` | Replaced by same-key request |
 | `TIMEOUT`    | Guard timed out              |
 
@@ -489,7 +472,7 @@ import { isStoreError } from '@videojs/store';
 
 // 1. Global Error Handling
 const store = createStore({
-  slices: [playbackSlice],
+  features: [playbackFeature],
   onError: ({ error, request }) => {
     if (request) {
       console.error(`${request.name} failed`);
@@ -523,53 +506,17 @@ try {
 
 ## Queue
 
-A default queue is created automatically. Provide a custom queue for lifecycle hooks or custom
-scheduling:
-
-```ts
-import { createQueue } from '@videojs/store';
-
-const store = createStore({
-  slices: [
-    /* ... */
-  ],
-  queue: createQueue({
-    // Default scheduler for requests without schedule
-    scheduler: (flush) => queueMicrotask(flush),
-
-    // Lifecycle hooks
-    onDispatch: (request) => {
-      console.log('Started:', request.name);
-    },
-
-    onSettled: (task) => {
-      analytics.track(task.name, {
-        status: task.status,
-        duration: task.settledAt - task.startedAt,
-      });
-    },
-  }),
-});
-```
+The queue manages request execution with automatic supersession and lifecycle tracking. A default queue is created automatically with the store.
 
 ### Queue API
 
 ```ts
-const queue = store.queue; // accessed on the store
+const queue = store.queue;
 
-queue.queued; // tasks waiting to execute
-queue.tasks; // task lifecycle map (pending/success/error) keyed by request name
+// Task lifecycle map (pending/success/error) keyed by request name
+queue.tasks;
 
-// Check task status by request name
-queue.isPending('play'); // true if currently executing
-queue.isQueued('seek'); // true if waiting to execute
-queue.isSettled('seek'); // true if completed (success or error)
-
-// Cancel queued tasks (waiting to execute)
-queue.cancel('seek'); // cancel specific request
-queue.cancel(); // cancel all queued
-
-// Abort tasks (queued + executing)
+// Abort executing tasks
 queue.abort('play'); // abort specific request
 queue.abort(); // abort all
 
@@ -577,9 +524,41 @@ queue.abort(); // abort all
 queue.reset('seek'); // clear specific request
 queue.reset(); // clear all settled
 
-// Execute queued tasks immediately
-queue.flush(); // execute all queued now
-queue.flush('play'); // execute specific request now
+// Subscribe to task changes
+subscribe(queue.tasks, () => {
+  const playTask = queue.tasks.play;
+  if (playTask?.status === 'pending') {
+    console.log('Play in progress...');
+  }
+});
+```
+
+### Task Lifecycle
+
+Each request creates a task that transitions through states:
+
+```ts
+import { isErrorTask, isPendingTask, isSettledTask, isSuccessTask } from '@videojs/store';
+
+const task = queue.tasks.play;
+
+// Type guards for status checking
+if (isPendingTask(task)) {
+  console.log('In progress, started at:', task.startedAt);
+}
+
+if (isSettledTask(task)) {
+  console.log('Duration:', task.settledAt - task.startedAt);
+}
+
+if (isSuccessTask(task)) {
+  console.log('Result:', task.output);
+}
+
+if (isErrorTask(task)) {
+  console.log('Failed:', task.error);
+  console.log('Was cancelled:', task.cancelled);
+}
 ```
 
 ### Direct Queue Usage
@@ -587,62 +566,89 @@ queue.flush('play'); // execute specific request now
 You can use the queue directly without a store:
 
 ```ts
+import { createQueue } from '@videojs/store';
+
+const queue = createQueue();
+
 await queue.enqueue({
   name: 'myTask',
   key: 'task-key',
   input: { some: 'data' },
-  schedule: delay(100),
-  handler: async ({ signal }) => {
+  handler: async ({ input, signal }) => {
     // do work, check signal.aborted
     return result;
   },
 });
 ```
 
-## Advanced
+### Observing Tasks
 
-### Custom State
-
-The store uses a simple state container by default. Provide a custom factory for
-framework-native reactivity:
+Use `subscribe` to react to task changes—useful for loading states and error handling:
 
 ```ts
-import { createStore } from '@videojs/store';
+import { subscribe } from '@videojs/store';
 
-// Default
-const store = createStore({
-  slices: [
-    /* ... */
-  ],
+subscribe(queue.tasks, () => {
+  for (const [name, task] of Object.entries(queue.tasks)) {
+    if (task?.status === 'error' && !task.cancelled) {
+      toast.error(`${name} failed: ${task.error}`);
+    }
+  }
 });
 
-// Custom
-const store = createStore({
-  slices: [
-    /* ... */
-  ],
-  state: (initial) => new VueStateAdapter(initial),
+// Analytics
+subscribe(queue.tasks, () => {
+  for (const task of Object.values(queue.tasks)) {
+    if (task && task.status !== 'pending') {
+      analytics.track('request', {
+        name: task.name,
+        status: task.status,
+        duration: task.settledAt - task.startedAt,
+      });
+    }
+  }
 });
 ```
 
-Custom state must match the `State` class interface, where `K` is `keyof T`:
+## Advanced
+
+### Reactive Primitives
+
+The store uses reactive state internally. You can also use these primitives directly:
 
 ```ts
-class State<T> {
-  get value(): T;
-  set(key: K, value: T[K]): void;
-  patch(partial: Partial<T>): void;
-  subscribe(listener: (state: T) => void): () => void;
-  subscribeKeys(keys: K[], listener: (state: Pick<T, K>) => void): () => void;
-}
+import { flush, isReactive, reactive, snapshot, subscribe, subscribeKeys } from '@videojs/store';
+
+// Create reactive state
+const state = reactive({ volume: 1, muted: false });
+
+// Mutate directly - changes are auto-batched
+state.volume = 0.5;
+state.muted = true;
+// Only ONE notification fires (after microtask)
+
+// Subscribe to all changes
+subscribe(state, () => console.log('Changed:', state.volume));
+
+// Subscribe to specific keys
+subscribeKeys(state, ['volume'], () => console.log('Volume:', state.volume));
+
+// Check if value is reactive
+isReactive(state); // true
+
+// Get frozen snapshot
+const snap = snapshot(state);
+
+// Force immediate notification (mainly for tests)
+flush();
 ```
 
 ### Capability Checking
 
-Slices can expose capability via state. UI components check before rendering.
+Features can expose capability via state. UI components check before rendering.
 
 ```ts
-const qualitySlice = createSlice<Media>({
+const qualityFeature = createFeature<Media>({
   initialState: {
    supported: false ,
    levels: [],
@@ -677,13 +683,13 @@ function QualityMenu() {
 }
 ```
 
-### Optional Slices
+### Optional Features
 
-Check if a slice exists at runtime:
+Check if a feature exists at runtime:
 
 ```tsx
 function QualityMenu() {
-  const quality = useSlice(store, qualitySlice);
+  const quality = useFeature(store, qualityFeature);
 
   if (!quality) return null;
 

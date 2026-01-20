@@ -5,6 +5,7 @@ import type { StoreSource } from '../store-accessor';
 import { noop } from '@videojs/utils/function';
 import { isNull } from '@videojs/utils/predicate';
 
+import { subscribe } from '../../core/state';
 import { StoreAccessor } from '../store-accessor';
 
 export type TasksControllerHost = ReactiveControllerHost & HTMLElement;
@@ -28,18 +29,12 @@ export type TasksControllerHost = ReactiveControllerHost & HTMLElement;
  * }
  * ```
  *
- * @example Context source (from createStore)
+ * @example Context source
  * ```ts
- * const { context } = createStore({ slices: [playbackSlice] });
+ * const { context } = createStore({ features: [playbackFeature] });
  *
  * class MyElement extends LitElement {
  *   #tasks = new TasksController(this, context);
- *
- *   render() {
- *     const playTask = this.#tasks.value.play;
- *     const isPending = playTask?.status === 'pending';
- *     return html`<button ?disabled=${isPending}>Play</button>`;
- *   }
  * }
  * ```
  */
@@ -81,8 +76,8 @@ export class TasksController<Store extends AnyStore> implements ReactiveControll
   #connect(store: Store): void {
     this.#unsubscribe();
     this.#value = store.queue.tasks;
-    this.#unsubscribe = store.queue.subscribe((tasks) => {
-      this.#value = tasks;
+    this.#unsubscribe = subscribe(store.queue.tasks, () => {
+      this.#value = store.queue.tasks;
       this.#host.requestUpdate();
     });
   }

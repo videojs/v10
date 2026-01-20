@@ -1,1 +1,1 @@
-export * from './store/slices';
+export * from './store/features';

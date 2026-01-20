@@ -125,7 +125,7 @@ const styles: MinimalSkinStyles = {
     'vjs:data-starting-style:scale-0 vjs:data-starting-style:opacity-0 vjs:data-starting-style:blur-sm',
     'vjs:data-ending-style:scale-0 vjs:data-ending-style:opacity-0 vjs:data-ending-style:blur-sm',
   ),
-  PopoverPopup: cn('vjs:py-2 vjs:bg-transparent'),
+  PopoverPopup: cn('vjs:p-2 vjs:bg-transparent vjs:m-0 vjs:border-0'),
   TooltipPopup: cn(
     'vjs:whitespace-nowrap vjs:flex vjs:flex-col vjs:rounded vjs:text-white vjs:text-xs vjs:@7xl/root:text-sm vjs:px-2 vjs:py-1 vjs:bg-white/20 vjs:backdrop-blur-3xl vjs:backdrop-saturate-150 vjs:backdrop-brightness-90 vjs:shadow-md vjs:shadow-black/5',
   ),

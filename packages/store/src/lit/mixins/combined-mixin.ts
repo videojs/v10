@@ -1,7 +1,7 @@
 import type { Context } from '@lit/context';
 import type { ReactiveElement } from '@lit/reactive-element';
 import type { Constructor, Mixin } from '@videojs/utils/types';
-import type { AnySlice, UnionSliceTarget } from '../../core/slice';
+import type { AnyFeature, UnionFeatureTarget } from '../../core/feature';
 
 import type { Store, StoreProvider } from '../../core/store';
 
@@ -16,7 +16,7 @@ import { createStoreProviderMixin } from './provider-mixin';
  *
  * @example
  * ```ts
- * const { StoreMixin } = createStore({ slices: [playbackSlice] });
+ * const { StoreMixin } = createStore({ features: [playbackFeature] });
  *
  * class MyPlayer extends StoreMixin(LitElement) {
  *   render() {
@@ -25,12 +25,12 @@ import { createStoreProviderMixin } from './provider-mixin';
  * }
  * ```
  */
-export function createStoreMixin<Slices extends AnySlice[]>(
-  context: Context<unknown, Store<UnionSliceTarget<Slices>, Slices>>,
-  factory: () => Store<UnionSliceTarget<Slices>, Slices>,
-): Mixin<ReactiveElement, StoreProvider<Slices>> {
-  const ProviderMixin = createStoreProviderMixin<Slices>(context, factory);
-  const AttachMixin = createStoreAttachMixin<Slices>(context);
+export function createStoreMixin<Features extends AnyFeature[]>(
+  context: Context<unknown, Store<UnionFeatureTarget<Features>, Features>>,
+  factory: () => Store<UnionFeatureTarget<Features>, Features>,
+): Mixin<ReactiveElement, StoreProvider<Features>> {
+  const ProviderMixin = createStoreProviderMixin<Features>(context, factory);
+  const AttachMixin = createStoreAttachMixin<Features>(context);
 
   return <Base extends Constructor<ReactiveElement>>(BaseClass: Base) => {
     // ProviderMixin wraps AttachMixin so during connectedCallback:

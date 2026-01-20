@@ -1,27 +1,25 @@
 import type { Context } from '@lit/context';
 import type { ReactiveControllerHost, ReactiveElement } from '@lit/reactive-element';
 import type { Constructor } from '@videojs/utils/types';
+import type { AnyFeature, UnionFeatureRequests, UnionFeatureState, UnionFeatureTarget, UnionFeatureTasks } from '../core/feature';
 import type { TasksRecord } from '../core/queue';
-import type { AnySlice, UnionSliceRequests, UnionSliceState, UnionSliceTarget, UnionSliceTasks } from '../core/slice';
 import type { StoreConfig, StoreConsumer, StoreProvider } from '../core/store';
 
-import { createContext } from '@lit/context';
+import { ContextConsumer, createContext } from '@lit/context';
+import { noop } from '@videojs/utils/function';
 
+import { subscribe } from '../core/state';
 import { Store } from '../core/store';
-import {
-  RequestController as RequestControllerBase,
-  SelectorController as SelectorControllerBase,
-  TasksController as TasksControllerBase,
-} from './controllers';
+import { RequestController as RequestControllerBase, TasksController as TasksControllerBase } from './controllers';
 import { createStoreAttachMixin, createStoreMixin, createStoreProviderMixin } from './mixins';
 
 export const contextKey = Symbol('@videojs/store');
 
-export interface CreateStoreConfig<Slices extends AnySlice[]> extends StoreConfig<UnionSliceTarget<Slices>, Slices> {}
+export interface CreateStoreConfig<Features extends AnyFeature[]> extends StoreConfig<UnionFeatureTarget<Features>, Features> {}
 
 export type CreateStoreHost = ReactiveControllerHost & HTMLElement;
 
-export interface CreateStoreResult<Slices extends AnySlice[]> {
+export interface CreateStoreResult<Features extends AnyFeature[]> {
   /**
    * Combined mixin: provides store via context AND auto-attaches slotted media.
    *
@@ -30,7 +28,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    * class MyPlayer extends StoreMixin(LitElement) {}
    * ```
    */
-  StoreMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreProvider<Slices>>;
+  StoreMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreProvider<Features>>;
 
   /**
    * Mixin that provides store via context (no auto-attach).
@@ -42,7 +40,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    * class MyProvider extends StoreProviderMixin(LitElement) {}
    * ```
    */
-  StoreProviderMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreProvider<Slices>>;
+  StoreProviderMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreProvider<Features>>;
 
   /**
    * Mixin that auto-attaches slotted media elements (requires store from context).
@@ -54,7 +52,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    * class MyControls extends StoreAttachMixin(LitElement) {}
    * ```
    */
-  StoreAttachMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreConsumer<Slices>>;
+  StoreAttachMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreConsumer<Features>>;
 
   /**
    * Context for consuming store in controllers.
@@ -69,7 +67,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    * }
    * ```
    */
-  context: Context<typeof contextKey, Store<UnionSliceTarget<Slices>, Slices>>;
+  context: Context<typeof contextKey, Store<UnionFeatureTarget<Features>, Features>>;
 
   /**
    * Creates a store instance for imperative access.
@@ -82,29 +80,30 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    * store.attach(videoElement);
    * ```
    */
-  create: () => Store<UnionSliceTarget<Slices>, Slices>;
+  create: () => Store<UnionFeatureTarget<Features>, Features>;
 
   /**
-   * Selector controller bound to this store's context.
-   * Subscribes to a selected portion of store state.
+   * State controller bound to this store's context.
+   * Subscribes to store state changes and triggers host updates.
    *
    * @example
    * ```ts
-   * const { SelectorController } = createStore({ slices: [playbackSlice] });
+   * const { StateController } = createStore({ features: [playbackFeature] });
    *
    * class MyElement extends LitElement {
-   *   #paused = new SelectorController(this, s => s.paused);
+   *   #state = new StateController(this);
    *
    *   render() {
-   *     return html`<button>${this.#paused.value ? 'Play' : 'Pause'}</button>`;
+   *     return html`<button>${this.#state.value.paused ? 'Play' : 'Pause'}</button>`;
    *   }
    * }
    * ```
    */
-  SelectorController: new <Value>(
-    host: CreateStoreHost,
-    selector: (state: UnionSliceState<Slices>) => Value
-  ) => SelectorControllerBase<Store<UnionSliceTarget<Slices>, Slices>, Value>;
+  StateController: new (host: CreateStoreHost) => {
+    value: UnionFeatureState<Features>;
+    hostConnected: () => void;
+    hostDisconnected: () => void;
+  };
 
   /**
    * Request controller bound to this store's context.
@@ -112,7 +111,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    *
    * @example
    * ```ts
-   * const { RequestController } = createStore({ slices: [playbackSlice] });
+   * const { RequestController } = createStore({ features: [playbackFeature] });
    *
    * class MyElement extends LitElement {
    *   #play = new RequestController(this, 'play');
@@ -123,10 +122,10 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    * }
    * ```
    */
-  RequestController: new <Name extends keyof UnionSliceRequests<Slices>>(
+  RequestController: new <Name extends keyof UnionFeatureRequests<Features>>(
     host: CreateStoreHost,
     name: Name
-  ) => RequestControllerBase<Store<UnionSliceTarget<Slices>, Slices>, Name>;
+  ) => RequestControllerBase<Store<UnionFeatureTarget<Features>, Features>, Name>;
 
   /**
    * Tasks controller bound to this store's context.
@@ -134,7 +133,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    *
    * @example
    * ```ts
-   * const { TasksController } = createStore({ slices: [playbackSlice] });
+   * const { TasksController } = createStore({ features: [playbackFeature] });
    *
    * class MyElement extends LitElement {
    *   #tasks = new TasksController(this);
@@ -147,7 +146,7 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
    * ```
    */
   TasksController: new (host: CreateStoreHost) => {
-    value: TasksRecord<UnionSliceTasks<Slices>>;
+    value: TasksRecord<UnionFeatureTasks<Features>>;
     hostConnected: () => void;
     hostDisconnected: () => void;
   };
@@ -156,16 +155,16 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
 /**
  * Creates a store factory that returns mixins, context, bound controllers, and a create function.
  *
- * @param config - Store configuration including slices and optional lifecycle hooks
+ * @param config - Store configuration including features and optional lifecycle hooks
  * @returns An object containing mixins, context, bound controllers, and create function
  *
  * @example
  * ```ts
  * import { createStore } from '@videojs/store/lit';
- * import { playbackSlice } from '@videojs/core/dom';
+ * import { playbackFeature } from '@videojs/core/dom';
  *
- * const { StoreMixin, SelectorController } = createStore({
- *   slices: [playbackSlice],
+ * const { StoreMixin, StateController } = createStore({
+ *   features: [playbackFeature],
  * });
  *
  * // Create a player element with store
@@ -173,10 +172,10 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
  *
  * // Create a control element that uses the store via context
  * class MyControl extends LitElement {
- *   #paused = new SelectorController(this, s => s.paused);
+ *   #state = new StateController(this);
  *
  *   render() {
- *     return html`<span>${this.#paused.value ? 'Paused' : 'Playing'}</span>`;
+ *     return html`<span>${this.#state.value.paused ? 'Paused' : 'Playing'}</span>`;
  *   }
  * }
  *
@@ -192,11 +191,11 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
  * </my-player>
  * ```
  */
-export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig<Slices>): CreateStoreResult<Slices> {
-  type Target = UnionSliceTarget<Slices>;
-  type State = UnionSliceState<Slices>;
-  type Requests = UnionSliceRequests<Slices>;
-  type ProvidedStore = Store<Target, Slices>;
+export function createStore<Features extends AnyFeature[]>(config: CreateStoreConfig<Features>): CreateStoreResult<Features> {
+  type Target = UnionFeatureTarget<Features>;
+  type State = UnionFeatureState<Features>;
+  type Requests = UnionFeatureRequests<Features>;
+  type ProvidedStore = Store<Target, Features>;
 
   const context = createContext<ProvidedStore, typeof contextKey>(contextKey);
 
@@ -204,13 +203,46 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
     return new Store(config);
   }
 
-  const StoreProviderMixin = createStoreProviderMixin<Slices>(context, create);
-  const StoreAttachMixin = createStoreAttachMixin<Slices>(context);
-  const StoreMixin = createStoreMixin<Slices>(context, create);
+  const StoreProviderMixin = createStoreProviderMixin<Features>(context, create);
+  const StoreAttachMixin = createStoreAttachMixin<Features>(context);
+  const StoreMixin = createStoreMixin<Features>(context, create);
 
-  class SelectorController<Value> extends SelectorControllerBase<ProvidedStore, Value> {
-    constructor(host: CreateStoreHost, selector: (state: State) => Value) {
-      super(host, context, selector);
+  class StateController {
+    readonly #host: CreateStoreHost;
+    readonly #consumer: ContextConsumer<typeof context, CreateStoreHost>;
+    #unsubscribe = noop;
+
+    constructor(host: CreateStoreHost) {
+      this.#host = host;
+      this.#consumer = new ContextConsumer(host, {
+        context,
+        subscribe: true,
+        callback: store => this.#connect(store),
+      });
+      host.addController(this);
+    }
+
+    get value(): State {
+      const store = this.#consumer.value;
+      if (!store) {
+        throw new Error('StateController: Store not available from context');
+      }
+      return store.state;
+    }
+
+    hostConnected(): void {
+      this.#consumer.hostConnected();
+    }
+
+    hostDisconnected(): void {
+      this.#unsubscribe();
+      this.#unsubscribe = noop;
+    }
+
+    #connect(store: ProvidedStore | undefined): void {
+      this.#unsubscribe();
+      if (!store) return;
+      this.#unsubscribe = subscribe(store.state, () => this.#host.requestUpdate());
     }
   }
 
@@ -232,7 +264,7 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
     StoreAttachMixin,
     context,
     create,
-    SelectorController,
+    StateController,
     RequestController,
     TasksController,
   };
