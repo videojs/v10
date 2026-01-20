@@ -1,8 +1,12 @@
+---
+status: draft
+---
+
 # Feature Availability Design
 
 ## Problem
 
-Slices may target capabilities the platform doesn't support.
+Features may target capabilities the platform doesn't support.
 
 ```ts
 // iOS Safari doesn't allow programmatic volume control
@@ -20,7 +24,7 @@ UI needs to know: hide control? disable it? show it normally?
 Single availability state per feature:
 
 ```ts
-type Availability = 'available' | 'unavailable' | 'unsupported';
+type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 ```
 
 | Value           | Meaning                                                |
@@ -31,13 +35,13 @@ type Availability = 'available' | 'unavailable' | 'unsupported';
 
 ---
 
-## Related: Missing Slice vs Unavailable Capability
+## Related: Missing Feature vs Unavailable Capability
 
-See [slice-accessor-design.md](./slice-accessor-design.md).
+See [feature-accessor-design.md](./feature-accessor-design.md).
 
 | Concept                | Cause               | Detection                         |
 | ---------------------- | ------------------- | --------------------------------- |
-| Missing slice          | Composition error   | `getSlice()` → `undefined`        |
+| Missing feature        | Composition error   | `getFeature()` → `undefined`      |
 | Unavailable capability | Platform limitation | `*Availability === 'unsupported'` |
 
 ---
@@ -61,9 +65,9 @@ Always start `'unsupported'` (pessimistic). Must be proven otherwise.
 Use module-level cache + `update()` pattern. No API changes needed.
 
 ```ts
-let availability: Availability = 'unsupported';
+let availability: FeatureAvailability = 'unsupported';
 
-const volumeSlice = createSlice<HTMLMediaElement>()({
+const volumeFeature = createFeature<HTMLMediaElement>()({
   initialState: {
     volume: 1,
     volumeAvailability: 'unsupported',
