@@ -17,7 +17,6 @@ Refer to **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** for setup, development, and 
 | `packages/html`         | Web player—DOM/Browser‑specific implementation.                     |
 | `packages/react`        | React player—adapts core state to React components.                 |
 | `packages/react-native` | React Native player integration layer.                              |
-| `examples/*`            | Demo apps for various runtimes.                                     |
 | `site/`                 | Astro‑based docs and website.                                       |
 
 IGNORE `packages/__tech-preview__/` — it's legacy code from the Demuxed demo. Don't reference or

@@ -4,25 +4,21 @@ Infer commit scope from changed file paths.
 
 ## Path to Scope Mapping
 
-| Path                     | Scope           |
-| ------------------------ | --------------- |
-| `packages/core/`         | `core`          |
-| `packages/store/`        | `store`         |
-| `packages/utils/`        | `utils`         |
-| `packages/html/`         | `html`          |
-| `packages/react/`        | `react`         |
-| `packages/react-native/` | `react-native`  |
-| `packages/icons/`        | `icons`         |
-| `packages/skins/`        | `skins`         |
-| `site/`                  | `site`          |
-| `.claude/`               | `claude`        |
-| `.github/workflows/`     | `ci`            |
-| `.github/`               | `cd`            |
-| `examples/`              | `examples`      |
-| `examples/html/`         | `example/html`  |
-| `examples/react/`        | `example/react` |
-| `examples/next/`         | `example/next`  |
-| Root config files        | `root`          |
+| Path                     | Scope          |
+| ------------------------ | -------------- |
+| `packages/core/`         | `core`         |
+| `packages/store/`        | `store`        |
+| `packages/utils/`        | `utils`        |
+| `packages/html/`         | `html`         |
+| `packages/react/`        | `react`        |
+| `packages/react-native/` | `react-native` |
+| `packages/icons/`        | `icons`        |
+| `packages/skins/`        | `skins`        |
+| `site/`                  | `site`         |
+| `.claude/`               | `claude`       |
+| `.github/workflows/`     | `ci`           |
+| `.github/`               | `cd`           |
+| Root config files        | `root`         |
 
 ## Multiple Packages
 
@@ -37,10 +33,9 @@ When changes span multiple packages:
 From `commitlint.config.js`:
 
 ```
-cd, ci, claude, core, docs, demo, example, examples,
-example/html, example/react, example/next, html, icons,
-packages, plan, react-native, react, root, site, skins,
-store, test, utils
+cd, ci, claude, core, docs, html, icons, packages,
+plan, react-native, react, root, site, skins, store,
+test, utils
 ```
 
 ## Examples
