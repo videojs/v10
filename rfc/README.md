@@ -83,16 +83,16 @@ rfc/
 ### Example
 
 ```bash
-git checkout -b rfc/feature-accessor-design
+git checkout -b rfc/player-api
 # ... write RFC ...
-git push -u origin rfc/feature-accessor-design
-gh pr create --title "[RFC] Feature Accessor Design"
+git push -u origin rfc/player-api
+gh pr create --title "[RFC] Player API"
 ```
 
 When the RFC is accepted and merged, the squash commit becomes:
 
 ```
-docs(rfc): feature accessor design
+docs(rfc): player api
 ```
 
 ## Relationship to Implementation Plans

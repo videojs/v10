@@ -5,6 +5,8 @@ Usage examples for React, HTML, and Lit.
 > [!NOTE]
 > Some examples here are for demonstration. In practice, UI primitives like `<PlayButton>`, `<VolumeSlider>`, etc. would be provided.
 
+For primitive authoring examples (using `hasFeature`, `UnknownPlayer`, etc.), see [primitives.md](primitives.md).
+
 ## React
 
 ### Declarative (Skin)
@@ -48,11 +50,7 @@ function Controls() {
   const player = usePlayer();
 
   // Hook usage example only, you would use `PlayButton`
-  return (
-    <button onClick={player.paused ? player.play : player.pause}>
-      {player.paused ? 'Play' : 'Pause'}
-    </button>
-  );
+  return <button onClick={player.paused ? player.play : player.pause}>{player.paused ? 'Play' : 'Pause'}</button>;
 }
 ```
 
