@@ -1,11 +1,3 @@
-# Multi-File Feature Template
-
-For complex proposals with 3+ distinct concepts.
-
-See `references/features.md` for general guidance.
-
----
-
 ## Directory Structure
 
 ```

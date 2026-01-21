@@ -9,12 +9,18 @@ General guidance for writing component RFCs.
 - Interaction patterns (keyboard, touch, focus)
 - Accessibility requirements
 
-## Choose a Template
+## Templates
 
 | Template                          | Use For                                         |
 | --------------------------------- | ----------------------------------------------- |
 | `templates/simple-component.md`   | Single-element components (Button, Icon, Badge) |
 | `templates/compound-component.md` | Multi-part components (Slider, Menu, Dialog)    |
+
+## Structure
+
+**Simple component:** Usage → Examples → API → Accessibility
+
+**Compound component:** Anatomy → Examples → Parts → Styling → Accessibility
 
 ## Tips
 

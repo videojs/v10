@@ -1,12 +1,3 @@
-# Single-File Feature Template
-
-For straightforward proposals with one concept.
-
-See `references/features.md` for general guidance.
-
----
-
-```markdown
 ---
 status: draft
 ---
@@ -27,17 +18,17 @@ High-level approach. One paragraph max.
 
 Minimal working example. Show the feature in use.
 
-\`\`\`ts
+```ts
 // The simplest possible example that demonstrates value
-\`\`\`
+```
 
 ## API
 
 ### Function/Component Name
 
-\`\`\`ts
+```ts
 function featureName(config: Config): Result;
-\`\`\`
+```
 
 | Parameter | Type     | Description        |
 | --------- | -------- | ------------------ |
@@ -47,11 +38,11 @@ function featureName(config: Config): Result;
 
 ### Types
 
-\`\`\`ts
+```ts
 interface Config {
-// ...
+  // ...
 }
-\`\`\`
+```
 
 ## Behavior
 
@@ -71,4 +62,3 @@ How it works at a high level. No implementation details.
 
 - Question 1?
 - Question 2?
-```

@@ -9,12 +9,23 @@ General guidance for writing feature RFCs.
 - Cross-cutting patterns
 - Extensibility mechanisms
 
-## Choose a Template
+## Templates
 
 | Template                      | Use For                                     |
 | ----------------------------- | ------------------------------------------- |
 | `templates/feature-single.md` | Straightforward proposals with one concept  |
 | `templates/feature-multi.md`  | Complex proposals with 3+ distinct concepts |
+
+## Structure
+
+**Single-file:** Problem → Solution → Quick Start → API → Behavior → Trade-offs
+
+**Multi-file:**
+
+- `index.md` — Problem, quick start, surface API
+- `architecture.md` — Internal structure, data flow
+- `decisions.md` — Design decisions with alternatives
+- `examples.md` — Extended usage examples
 
 ## Tips
 

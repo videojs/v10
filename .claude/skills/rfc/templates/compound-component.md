@@ -1,12 +1,3 @@
-# Compound Component Template
-
-For multi-part components (Slider, Menu, Dialog).
-
-See `references/components.md` for general guidance.
-
----
-
-```markdown
 ---
 status: draft
 ---
@@ -19,53 +10,59 @@ One-sentence description.
 
 ### React
 
-\`\`\`tsx
+```tsx
 import { Slider } from '@videojs/react';
 
-<Slider.Root defaultValue={50}> {/_ Container, state owner _/}
-<Slider.Control> {/_ Interactive area _/}
-<Slider.Track> {/_ Visual track _/}
-<Slider.Indicator /> {/_ Filled portion _/}
-<Slider.Thumb /> {/_ Draggable handle _/}
-</Slider.Track>
-</Slider.Control>
+<Slider.Root defaultValue={50}>
+  {' '}
+  {/* Container, state owner */}
+  <Slider.Control>
+    {' '}
+    {/* Interactive area */}
+    <Slider.Track>
+      {' '}
+      {/* Visual track */}
+      <Slider.Indicator /> {/* Filled portion */}
+      <Slider.Thumb /> {/* Draggable handle */}
+    </Slider.Track>
+  </Slider.Control>
 </Slider.Root>;
-\`\`\`
+```
 
 ### HTML
 
-\`\`\`html
+```html
 <vjs-slider value="50">
-<vjs-slider-control>
-<vjs-slider-track>
-<vjs-slider-indicator></vjs-slider-indicator>
-<vjs-slider-thumb></vjs-slider-thumb>
-</vjs-slider-track>
-</vjs-slider-control>
+  <vjs-slider-control>
+    <vjs-slider-track>
+      <vjs-slider-indicator></vjs-slider-indicator>
+      <vjs-slider-thumb></vjs-slider-thumb>
+    </vjs-slider-track>
+  </vjs-slider-control>
 </vjs-slider>
-\`\`\`
+```
 
 ## Examples
 
 ### Range Slider
 
-\`\`\`tsx
+```tsx
 <Slider.Root defaultValue={[25, 75]}>
-<Slider.Control>
-<Slider.Track>
-<Slider.Indicator />
-<Slider.Thumb index={0} aria-label="Minimum" />
-<Slider.Thumb index={1} aria-label="Maximum" />
-</Slider.Track>
-</Slider.Control>
+  <Slider.Control>
+    <Slider.Track>
+      <Slider.Indicator />
+      <Slider.Thumb index={0} aria-label="Minimum" />
+      <Slider.Thumb index={1} aria-label="Maximum" />
+    </Slider.Track>
+  </Slider.Control>
 </Slider.Root>
-\`\`\`
+```
 
 ### Vertical Orientation
 
-\`\`\`tsx
-<Slider.Root orientation="vertical">{/_ ... _/}</Slider.Root>
-\`\`\`
+```tsx
+<Slider.Root orientation="vertical">{/* ... */}</Slider.Root>
+```
 
 ## Parts
 
@@ -183,28 +180,26 @@ Draggable handle.
 
 ## Styling
 
-High-level styling guidance.
-
-\`\`\`css
-/_ Basic horizontal slider _/
+```css
+/* Basic horizontal slider */
 vjs-slider {
---vjs-slider-size: 200px;
---vjs-track-bg: #333;
---vjs-indicator-bg: #fff;
---vjs-thumb-size: 16px;
+  --vjs-slider-size: 200px;
+  --vjs-track-bg: #333;
+  --vjs-indicator-bg: #fff;
+  --vjs-thumb-size: 16px;
 }
 
-/_ Vertical variant _/
+/* Vertical variant */
 vjs-slider[data-orientation='vertical'] {
---vjs-slider-size: 120px;
+  --vjs-slider-size: 120px;
 }
 
-/_ Disabled state _/
+/* Disabled state */
 vjs-slider[data-disabled] {
-opacity: 0.5;
-pointer-events: none;
+  opacity: 0.5;
+  pointer-events: none;
 }
-\`\`\`
+```
 
 ## Accessibility
 
@@ -229,4 +224,3 @@ pointer-events: none;
 ## Open Questions
 
 - Unresolved decisions
-```

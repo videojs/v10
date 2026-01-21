@@ -1,12 +1,3 @@
-# Simple Component Template
-
-For single-element components (Button, Icon, Badge).
-
-See `references/components.md` for general guidance.
-
----
-
-```markdown
 ---
 status: draft
 ---
@@ -19,34 +10,34 @@ One-sentence description.
 
 ### React
 
-\`\`\`tsx
+```tsx
 import { ComponentName } from '@videojs/react';
 
 <ComponentName prop="value" />;
-\`\`\`
+```
 
 ### HTML
 
-\`\`\`html
+```html
 <vjs-component-name prop="value"></vjs-component-name>
-\`\`\`
+```
 
 ## Examples
 
 ### With Icon
 
-\`\`\`tsx
+```tsx
 <ComponentName>
-<Icon name="play" />
-Play
+  <Icon name="play" />
+  Play
 </ComponentName>
-\`\`\`
+```
 
 ### Disabled State
 
-\`\`\`tsx
-<ComponentName disabled>{/_ ... _/}</ComponentName>
-\`\`\`
+```tsx
+<ComponentName disabled>{/* ... */}</ComponentName>
+```
 
 ## API
 
@@ -95,4 +86,3 @@ Play
 ## Open Questions
 
 - Unresolved decisions
-```
