@@ -134,43 +134,10 @@ controller.value; // UnknownPlayer (tracked proxy)
 
 ## Implementation
 
-Both `hasFeature` and `getFeature` work with any `StoreProxy<T>`.
+Both functions access `target[STORE_SYMBOL].features.has(feature.id)` at runtime:
 
-### `hasFeature`
-
-```ts
-function hasFeature<T extends StoreProxy, F extends AnyFeature>(
-  target: T,
-  feature: F
-): target is T & InferFeatureState<F> & ResolveFeatureRequestHandlers<F> {
-  const store = target[STORE_SYMBOL];
-  return store.features.has(feature.id);
-}
-```
-
-The type guard:
-
-1. Accesses the underlying store via `[STORE_SYMBOL]`
-2. Checks `store.features.has(feature.id)` at runtime
-3. Narrows the proxy type to include feature's state and requests
-
-### `getFeature`
-
-```ts
-// Return type: flat proxy, each property T | undefined
-type MaybeFeature<F extends AnyFeature> = {
-  [K in keyof (InferFeatureState<F> & ResolveFeatureRequestHandlers<F>)]:
-    | (InferFeatureState<F> & ResolveFeatureRequestHandlers<F>)[K]
-    | undefined;
-};
-
-function getFeature<T extends StoreProxy, F extends AnyFeature>(target: T, feature: F): MaybeFeature<F> {
-  // Returns the same proxy - properties are undefined if feature missing
-  return target as MaybeFeature<F>;
-}
-```
-
-Returns the same proxy, typed to the feature. If feature is missing, property access returns `undefined` at runtime (proxy behavior), and types reflect this with `T | undefined`.
+- **`hasFeature`** — Type guard that narrows the proxy to include feature's state and requests
+- **`getFeature`** — Returns same proxy typed to feature, with properties as `T | undefined`
 
 ## Cross-Framework Consistency
 
@@ -184,84 +151,23 @@ The same API works in React and Lit:
 
 ### Package Exports
 
-```ts
-// @videojs/store (generic utilities)
-export { createProxy, hasFeature, getFeature, subscribe };
-export type { StoreProxy };
+| Package             | Exports                                                                    |
+| ------------------- | -------------------------------------------------------------------------- |
+| `@videojs/store`    | `createProxy`, `hasFeature`, `getFeature`, `subscribe`, `StoreProxy`       |
+| `@videojs/core/dom` | `UnknownPlayer`, `UnknownMedia`, `UnknownPlayerStore`, `UnknownMediaStore` |
+| `@videojs/react`    | Re-exports above + `usePlayer`, `useMedia`, `createPlayer`                 |
+| `@videojs/html`     | Re-exports above + `PlayerController`, `MediaController`, `createPlayer`   |
 
-// @videojs/core/dom (player/media specific types)
-export type { UnknownPlayer, UnknownMedia, UnknownPlayerStore, UnknownMediaStore };
-
-// @videojs/react (re-exports + React-specific)
-export { hasFeature, getFeature } from '@videojs/store';
-export type { UnknownPlayer, ... } from '@videojs/core/dom';
-export { usePlayer, useMedia, createPlayer };
-
-// @videojs/html (re-exports + Lit-specific)
-export { hasFeature, getFeature } from '@videojs/store';
-export type { UnknownPlayer, ... } from '@videojs/core/dom';
-export { PlayerController, MediaController, createPlayer };
-```
-
-## Examples
-
-### React Primitive
+## Example: Mixing Required and Optional Features
 
 ```tsx
-import { features, hasFeature, usePlayer } from '@videojs/react';
-
-export function PlayButton() {
-  const player = usePlayer();
-
-  if (!hasFeature(player, features.playback)) {
-    return null;
-  }
-
-  return <button onClick={player.paused ? player.play : player.pause}>{player.paused ? '▶' : '⏸'}</button>;
-}
-```
-
-### ReactiveElement Primitive
-
-```ts
-import { html } from 'lit';
-
-import { features, hasFeature, PlayerController } from '@videojs/html';
-
-export class PlayButton extends ReactiveElement {
-  #player = new PlayerController(this);
-
-  render() {
-    const player = this.#player.value;
-
-    if (!hasFeature(player, features.playback)) {
-      return null;
-    }
-
-    const { paused, play, pause } = player;
-    return html` <button @click=${paused ? play : pause}>${paused ? '▶' : '⏸'}</button> `;
-  }
-}
-
-customElements.define('vjs-play-button', PlayButton);
-```
-
-### Optional Feature with `getFeature`
-
-Use `getFeature` when you want optional access without conditional blocks:
-
-```tsx
-import { features, getFeature, hasFeature, usePlayer } from '@videojs/react';
-
 export function TimeSlider() {
   const player = usePlayer();
 
-  // Required feature - use hasFeature for early return
-  if (!hasFeature(player, features.time)) {
-    return null;
-  }
+  // Required — early return if missing
+  if (!hasFeature(player, features.time)) return null;
 
-  // Optional feature - use getFeature for safe access
+  // Optional — safe access with T | undefined
   const playback = getFeature(player, features.playback);
 
   return (
@@ -269,31 +175,9 @@ export function TimeSlider() {
       value={player.currentTime}
       max={player.duration}
       onChange={player.seek}
-      onDragStart={playback.pause} // undefined if no playback feature
-      onDragEnd={playback.play} // undefined if no playback feature
+      onDragStart={playback.pause}
+      onDragEnd={playback.play}
     />
-  );
-}
-```
-
-### Combining Multiple Features with `getFeature`
-
-```tsx
-import { features, getFeature, usePlayer } from '@videojs/react';
-
-export function MediaInfo() {
-  const player = usePlayer();
-
-  const playback = getFeature(player, features.playback);
-  const time = getFeature(player, features.time);
-  const volume = getFeature(player, features.volume);
-
-  return (
-    <div>
-      {playback.paused !== undefined && <span>{playback.paused ? 'Paused' : 'Playing'}</span>}
-      {time.currentTime !== undefined && <span>{time.currentTime}s</span>}
-      {volume.volume !== undefined && <span>{Math.round(volume.volume * 100)}%</span>}
-    </div>
   );
 }
 ```

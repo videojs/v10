@@ -172,139 +172,32 @@ The proxy:
 
 ## Reactive System
 
-### Proxy-Based Tracking
-
-Based on `SnapshotController` pattern:
-
-```ts
-// React
-function Controls() {
-  const player = usePlayer();
-
-  // Accessing player.paused:
-  // 1. Returns current value
-  // 2. Tracks that this component uses "paused"
-  // 3. Re-renders when paused changes
-  return <button>{player.paused ? 'Play' : 'Pause'}</button>;
-}
-```
-
-```ts
-// Lit
-class Controls extends VjsElement {
-  #player = new PlayerController(this);
-
-  render() {
-    // Accessing #player.value.paused:
-    // 1. Returns tracking proxy
-    // 2. Tracks "paused" access
-    // 3. Triggers requestUpdate() when paused changes
-    const { paused } = this.#player.value;
-    return html`<button>${paused ? 'Play' : 'Pause'}</button>`;
-  }
-}
-```
-
-### Tracking Lifecycle
+Proxy-based tracking (based on `SnapshotController`):
 
 1. **Access** — Property access during render is tracked
 2. **Subscribe** — Tracker subscribes to changes on accessed keys
 3. **Update** — On change, trigger re-render
 4. **Next** — After render, finalize tracked keys for next cycle
 
+Works identically in React (`usePlayer()`) and Lit (`controller.value`).
+
 ## File Structure
 
-```
-packages/html/src/
-├── create-player.ts
-└── presets/
-    └── website/
-        ├── index.ts              # preset features
-        └── skins/
-            └── frosted/
-                ├── index.ts
-                └── define.ts
-
-packages/react/src/
-├── create-player.tsx
-└── presets/
-    └── website/
-        ├── index.ts
-        └── skins/
-            └── frosted/
-
-packages/core/src/dom/
-├── features/
-│   ├── media/                    # media features
-│   │   ├── playback.ts
-│   │   ├── volume.ts
-│   │   └── time.ts
-│   └── player/                   # player features
-│       ├── fullscreen.ts
-│       ├── keyboard.ts
-│       └── idle.ts
-└── index.ts
-```
+| Path                                     | Purpose                                      |
+| ---------------------------------------- | -------------------------------------------- |
+| `packages/core/src/dom/features/media/`  | Media features (playback, volume, time)      |
+| `packages/core/src/dom/features/player/` | Player features (fullscreen, keyboard, idle) |
+| `packages/html/src/`                     | Lit player + presets/skins                   |
+| `packages/react/src/`                    | React player + presets/skins                 |
 
 ## Player Features
 
-### Fullscreen
-
-```ts
-import * as media from '@videojs/core/dom/features/media';
-import { getFeature, hasFeature, subscribe } from '@videojs/store';
-
-export const fullscreen = createPlayerFeature({
-  initialState: {
-    isFullscreen: false,
-    fullscreenTarget: null as 'container' | 'media' | null,
-  },
-
-  getSnapshot: ({ target }) => {
-    const containerFS = document.fullscreenElement === target.container;
-    const mediaFS = getFeature(target.media, media.fullscreen).isFullscreen;
-    return {
-      isFullscreen: containerFS || mediaFS || false,
-      fullscreenTarget: containerFS ? 'container' : mediaFS ? 'media' : null,
-    };
-  },
-
-  subscribe: ({ target, update, signal }) => {
-    // Container fullscreen
-    listen(document, 'fullscreenchange', update, { signal });
-
-    // iOS: media fullscreen
-    if (hasFeature(target.media, media.fullscreen)) {
-      subscribe(target.media, (s) => s.isFullscreen, update, { signal });
-    }
-  },
-
-  request: {
-    enterFullscreen: (_, { target }) => {
-      // container.requestFullscreen() || media fallback
-    },
-    exitFullscreen: (_, { target }) => {
-      // document.exitFullscreen() || media fallback
-    },
-    toggleFullscreen: (_, { target, state }) => {
-      // state.isFullscreen ? exit : enter
-    },
-  },
-});
-```
-
-**Notes:**
-
-- iOS Safari lacks container fullscreen — falls back to `media.fullscreen` feature
-- `fullscreenTarget` indicates which element is fullscreen
-
-### Other Features
-
-**Idle** — Tracks user activity. Resets on `pointermove`, `pointerdown`, `keydown`. Optionally resets when media plays.
-
-**Keyboard** — Keyboard shortcuts. Maps keys to requests (e.g., `Space` → `togglePlay`, `f` → `toggleFullscreen`).
-
-**Gestures** — Touch gestures. Double-tap seek, swipe volume, pinch zoom.
+| Feature        | Description                                    |
+| -------------- | ---------------------------------------------- |
+| **Fullscreen** | Container fullscreen with iOS media fallback   |
+| **Idle**       | Tracks user activity for auto-hide UI          |
+| **Keyboard**   | Maps keys to requests (`Space` → `togglePlay`) |
+| **Gestures**   | Touch gestures (double-tap seek, swipe volume) |
 
 ## Progressive Complexity
 

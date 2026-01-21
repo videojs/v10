@@ -223,19 +223,7 @@ function DebugPanel() {
 
 **Decision:** Container is purely UI attachment. Provider owns state.
 
-```tsx
-<Provider>
-  {' '}
-  {/* state lives here (both stores) */}
-  <Skin>
-    {' '}
-    {/* UI only, no store creation */}
-    <Video /> {/* media */}
-  </Skin>
-</Provider>
-```
-
-Container inside skin just attaches to existing store — doesn't provide one.
+Container inside skin attaches to existing store — doesn't provide one.
 
 ## Validation
 
@@ -263,50 +251,15 @@ const bad = createPlayerFeature({
 
 **Decision:** Provide both `hasFeature()` (type guard) and `getFeature()` (direct access with `T | undefined` properties).
 
-**Alternatives considered:**
-
-- `useFeature(feature)` returning a scoped accessor object
-- `player.feature(feature)` method returning typed subset
-- Only `hasFeature` with no direct access alternative
-
 **Rationale:**
 
-Different use cases need different patterns:
+| Function     | Returns                            | Best for                             |
+| ------------ | ---------------------------------- | ------------------------------------ |
+| `hasFeature` | Type guard                         | Required features, early returns     |
+| `getFeature` | Object with `T \| undefined` props | Optional features, optional chaining |
 
-| Function     | Returns                            | Best for                                             |
-| ------------ | ---------------------------------- | ---------------------------------------------------- |
-| `hasFeature` | `boolean` (type guard)             | Required features, early returns, conditional blocks |
-| `getFeature` | Object with `T \| undefined` props | Optional features, safe access, optional chaining    |
-
-**`hasFeature` rationale:**
-
-- Standard TypeScript type guard pattern
-- Works with early returns in React
-- Narrows the player proxy in place
-- Best when feature is required
-
-```tsx
-if (!hasFeature(player, features.playback)) return null;
-player.play(); // typed, guaranteed to exist
-```
-
-**`getFeature` rationale:**
-
-- Properties are `T | undefined` — reflects runtime reality
-- Works with optional chaining (`?.`)
-- No conditional blocks needed for optional features
-- Best when feature is optional enhancement
-
-```tsx
-const playback = getFeature(player, features.playback);
-playback.play?.(); // safe, no crash if missing
-```
-
-**Why both?**
-
-- `hasFeature` for "fail if missing" (required features)
-- `getFeature` for "graceful if missing" (optional features)
-- Different semantics, same underlying proxy
+- `hasFeature` for "fail if missing" — narrows proxy in place
+- `getFeature` for "graceful if missing" — safe access without conditionals
 
 ### `StoreProxy<T>` and `UnknownPlayer`
 
@@ -318,23 +271,6 @@ playback.play?.(); // safe, no crash if missing
 - Index signature `[key: string]: unknown` allows any property access
 - Intersecting with feature types narrows specific properties
 - Uses interfaces (not type aliases) for clearer hover hints in editors
-
-```ts
-interface StoreProxy<T extends AnyStore = AnyStore> {
-  readonly [STORE_SYMBOL]: T;
-  [key: string]: unknown;
-}
-
-interface UnknownPlayerStore extends Store<PlayerTarget, []> {}
-interface UnknownMediaStore extends Store<MediaTarget, []> {}
-
-interface UnknownPlayer extends StoreProxy<UnknownPlayerStore> {}
-interface UnknownMedia extends StoreProxy<UnknownMediaStore> {}
-
-// After hasFeature narrowing:
-// player.paused → boolean (explicit wins over index)
-// player.anything → unknown (falls back to index)
-```
 
 ### `Store<Target, []>` for Unknown Stores
 
@@ -362,31 +298,12 @@ interface UnknownMedia extends StoreProxy<UnknownMediaStore> {}
 
 **Decision:** `PlayerTarget.media` is an `UnknownMedia` proxy, not a store.
 
-```ts
-interface PlayerTarget {
-  container: HTMLElement;
-  media: UnknownMedia; // flat proxy
-}
-```
-
 **Rationale:**
 
 - Consistent API — feature authors and component authors use same flat access pattern
 - No `.state`/`.request` namespacing for feature authors to learn
 - Subscription via `subscribe(target.media, ...)` — same as components
 - Simpler `hasFeature`/`getFeature` — only one signature (StoreProxy), no store overloads
-
-**Example:**
-
-```ts
-// Feature author accessing media (flat, like components)
-const mediaFS = getFeature(target.media, media.fullscreen);
-mediaFS.isFullscreen; // not mediaFS.state.isFullscreen
-mediaFS.enterFullscreen?.(); // not mediaFS.request.enterFullscreen()
-
-// Subscribing to media changes
-subscribe(target.media, (s) => s.isFullscreen, update, { signal });
-```
 
 ### `createProxy(store)` Factory
 
