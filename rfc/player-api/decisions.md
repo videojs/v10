@@ -251,19 +251,34 @@ const bad = createPlayerFeature({
 
 **Decision:** Provide both `hasFeature()` (type guard) and `getFeature()` (direct access with `T | undefined` properties).
 
-**Rationale:**
-
 | Function     | Returns                            | Best for                             |
 | ------------ | ---------------------------------- | ------------------------------------ |
 | `hasFeature` | Type guard                         | Required features, early returns     |
 | `getFeature` | Object with `T \| undefined` props | Optional features, optional chaining |
 
-- `hasFeature` for "fail if missing" — narrows proxy in place
-- `getFeature` for "graceful if missing" — safe access without conditionals
+```ts
+// hasFeature — fail if missing
+if (!hasFeature(player, features.playback)) return null;
+player.play(); // typed, guaranteed
+
+// getFeature — graceful if missing
+const playback = getFeature(player, features.playback);
+playback.play?.(); // safe, no crash
+```
 
 ### `StoreProxy<T>` and `UnknownPlayer`
 
 **Decision:** Use a generic `StoreProxy<T>` interface that all proxies implement.
+
+```ts
+interface StoreProxy<T extends AnyStore = AnyStore> {
+  readonly [STORE_SYMBOL]: T;
+  [key: string]: unknown;
+}
+
+interface UnknownPlayer extends StoreProxy<UnknownPlayerStore> {}
+interface UnknownMedia extends StoreProxy<UnknownMediaStore> {}
+```
 
 **Rationale:**
 

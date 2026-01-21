@@ -158,26 +158,42 @@ The same API works in React and Lit:
 | `@videojs/react`    | Re-exports above + `usePlayer`, `useMedia`, `createPlayer`                 |
 | `@videojs/html`     | Re-exports above + `PlayerController`, `MediaController`, `createPlayer`   |
 
-## Example: Mixing Required and Optional Features
+## Examples
+
+### React
+
+```tsx
+export function PlayButton() {
+  const player = usePlayer();
+  if (!hasFeature(player, features.playback)) return null;
+
+  return <button onClick={player.play}>{player.paused ? '▶' : '⏸'}</button>;
+}
+```
+
+### Lit
+
+```ts
+class PlayButton extends ReactiveElement {
+  #player = new PlayerController(this);
+
+  render() {
+    const player = this.#player.value;
+    if (!hasFeature(player, features.playback)) return null;
+
+    return html`<button @click=${player.play}>${player.paused ? '▶' : '⏸'}</button>`;
+  }
+}
+```
+
+### Mixing Required and Optional
 
 ```tsx
 export function TimeSlider() {
   const player = usePlayer();
+  if (!hasFeature(player, features.time)) return null; // required
 
-  // Required — early return if missing
-  if (!hasFeature(player, features.time)) return null;
-
-  // Optional — safe access with T | undefined
-  const playback = getFeature(player, features.playback);
-
-  return (
-    <Slider
-      value={player.currentTime}
-      max={player.duration}
-      onChange={player.seek}
-      onDragStart={playback.pause}
-      onDragEnd={playback.play}
-    />
-  );
+  const playback = getFeature(player, features.playback); // optional
+  return <Slider onDragStart={playback.pause} onDragEnd={playback.play} />;
 }
 ```
