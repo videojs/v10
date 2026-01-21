@@ -13,20 +13,14 @@ One-sentence description.
 ```tsx
 import { Slider } from '@videojs/react';
 
-<Slider.Root defaultValue={50}>
-  {' '}
-  {/* Container, state owner */}
-  <Slider.Control>
-    {' '}
-    {/* Interactive area */}
-    <Slider.Track>
-      {' '}
-      {/* Visual track */}
-      <Slider.Indicator /> {/* Filled portion */}
-      <Slider.Thumb /> {/* Draggable handle */}
+<Slider.Root defaultValue={50}>    {/* Container, state owner */}
+  <Slider.Control>                 {/* Interactive area */}
+    <Slider.Track>                 {/* Visual track */}
+      <Slider.Indicator />         {/* Filled portion */}
+      <Slider.Thumb />             {/* Draggable handle */}
     </Slider.Track>
   </Slider.Control>
-</Slider.Root>;
+</Slider.Root>
 ```
 
 ### HTML
