@@ -260,7 +260,7 @@ const bad = createPlayerFeature({
 ```ts
 // Critical feature — throw on missing
 if (!hasFeature(player, features.playback)) {
-  throwMissingFeature(features.playback, 'PlayButton');
+  throwMissingFeature(features.playback, { displayName: 'PlayButton' });
 }
 player.play(); // typed, guaranteed
 
@@ -272,8 +272,8 @@ volume.setVolume?.(0.5); // safe, no crash
 **`throwMissingFeature` rationale:**
 
 - Surfaces misconfiguration immediately — silent `return null` hides bugs
-- Clear error message: "PlayButton requires playback feature"
-- Component name in error helps debugging
+- Clear error message: `"PlayButton requires playback feature"`
+- Options object extensible for future needs (e.g., `{ displayName, silent }`)
 
 ### `StoreProxy<T>` and `UnknownPlayer`
 

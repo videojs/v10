@@ -168,7 +168,7 @@ For components that require a feature to function, throw an error to surface mis
 export function PlayButton() {
   const player = usePlayer();
   if (!hasFeature(player, features.playback)) {
-    throwMissingFeature(features.playback, 'PlayButton');
+    throwMissingFeature(features.playback, { displayName: 'PlayButton' });
   }
 
   return <button onClick={player.play}>{player.paused ? '▶' : '⏸'}</button>;
@@ -180,7 +180,7 @@ export function PlayButton() {
 render() {
   const player = this.#player.value;
   if (!hasFeature(player, features.playback)) {
-    throwMissingFeature(features.playback, 'PlayButton');
+    throwMissingFeature(features.playback, { displayName: 'PlayButton' });
   }
 
   return html`<button @click=${player.play}>${player.paused ? '▶' : '⏸'}</button>`;
@@ -195,7 +195,7 @@ For optional enhancements, use `getFeature` with safe access:
 export function TimeSlider() {
   const player = usePlayer();
   if (!hasFeature(player, features.time)) {
-    throwMissingFeature(features.time, 'TimeSlider'); // critical
+    throwMissingFeature(features.time, { displayName: 'TimeSlider' });
   }
 
   const playback = getFeature(player, features.playback); // optional
