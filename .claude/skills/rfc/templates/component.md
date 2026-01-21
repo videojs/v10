@@ -117,7 +117,7 @@ status: draft
 
 One-sentence description.
 
-## Usage
+## Anatomy
 
 ### React
 
@@ -125,10 +125,16 @@ One-sentence description.
 import { Slider } from '@videojs/react';
 
 <Slider.Root defaultValue={50}>
+  {' '}
+  {/* Container, state owner */}
   <Slider.Control>
+    {' '}
+    {/* Interactive area */}
     <Slider.Track>
-      <Slider.Indicator />
-      <Slider.Thumb />
+      {' '}
+      {/* Visual track */}
+      <Slider.Indicator /> {/* Filled portion */}
+      <Slider.Thumb /> {/* Draggable handle */}
     </Slider.Track>
   </Slider.Control>
 </Slider.Root>;
@@ -145,20 +151,6 @@ import { Slider } from '@videojs/react';
     </vjs-slider-track>
   </vjs-slider-control>
 </vjs-slider>
-```
-
-## Anatomy
-
-```
-<Slider.Root>           — Container, state owner
-  <Slider.Value />      — Displays current value (optional)
-  <Slider.Control>      — Interactive area
-    <Slider.Track>      — Visual track
-      <Slider.Indicator /> — Filled portion
-      <Slider.Thumb />     — Draggable handle
-    </Slider.Track>
-  </Slider.Control>
-</Slider.Root>
 ```
 
 ## Examples
@@ -188,22 +180,6 @@ import { Slider } from '@videojs/react';
     </Slider.Track>
   </Slider.Control>
 </Slider.Root>
-```
-
-### With Label
-
-```tsx
-<Field.Root>
-  <Field.Label>Volume</Field.Label>
-  <Slider.Root>
-    <Slider.Control>
-      <Slider.Track>
-        <Slider.Indicator />
-        <Slider.Thumb />
-      </Slider.Track>
-    </Slider.Control>
-  </Slider.Root>
-</Field.Root>
 ```
 
 ## Parts
@@ -372,12 +348,11 @@ vjs-slider[data-disabled] {
 
 ## Tips
 
-1. **Lead with usage** — Show the component working before API details
-2. **Anatomy for compound** — Visual hierarchy helps understanding
-3. **Named examples** — Real scenarios: "Range Slider", "With Label"
-4. **Full types** — Show union types, callback signatures
-5. **`render` prop** — Document on every part for composition
-6. **Data attributes** — Essential for styling component states
+1. **Anatomy first** — Show component structure before API details
+2. **Named examples** — Real scenarios: "Range Slider", "Vertical Orientation"
+3. **Full types** — Show union types, callback signatures
+4. **`render` prop** — Document on every part for composition
+5. **Data attributes** — Essential for styling component states
 
 ## Reference
 
