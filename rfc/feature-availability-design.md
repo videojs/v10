@@ -37,11 +37,11 @@ type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 
 ## Related: Missing Feature vs Unavailable Capability
 
-See [feature-accessor-design.md](./feature-accessor-design.md).
+See [player-api](./player-api/index.md) for feature access patterns.
 
 | Concept                | Cause               | Detection                         |
 | ---------------------- | ------------------- | --------------------------------- |
-| Missing feature        | Composition error   | `getFeature()` → `undefined`      |
+| Missing feature        | Composition error   | `hasFeature()` returns `false`    |
 | Unavailable capability | Platform limitation | `*Availability === 'unsupported'` |
 
 ---
@@ -108,7 +108,11 @@ Guards receive `{ target, signal }`, not state. Check capability on target direc
 
 ```tsx
 function VolumeSlider() {
-  const { volume, volumeAvailability } = usePlayer().state;
+  const player = usePlayer();
+
+  if (!hasFeature(player, features.volume)) return null;
+
+  const { volume, volumeAvailability } = player;
 
   if (volumeAvailability === 'unsupported') return null;
   if (volumeAvailability === 'unavailable') return <Slider disabled />;

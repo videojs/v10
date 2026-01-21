@@ -8,12 +8,13 @@ Unified API for Media and Container concerns. Two stores internally, one API for
 
 ## Contents
 
-| Document                           | Purpose                            |
-| ---------------------------------- | ---------------------------------- |
-| [index.md](index.md)               | Overview, quick start, surface API |
-| [decisions.md](decisions.md)       | Design decisions and rationale     |
-| [architecture.md](architecture.md) | Two-store architecture, internals  |
-| [examples.md](examples.md)         | Usage examples (React, HTML, Lit)  |
+| Document                           | Purpose                                  |
+| ---------------------------------- | ---------------------------------------- |
+| [index.md](index.md)               | Overview, quick start, surface API       |
+| [primitives.md](primitives.md)     | Library author API (`hasFeature`, types) |
+| [architecture.md](architecture.md) | Two-store architecture, internals        |
+| [decisions.md](decisions.md)       | Design decisions and rationale           |
+| [examples.md](examples.md)         | Usage examples (React, HTML, Lit)        |
 
 ## Problem
 
@@ -115,9 +116,15 @@ createPlayer({
 const {
   Provider, // Creates both stores
   Container, // Attaches container to player store
-  usePlayer, // Player state + requests (flattened)
-  useMedia, // Media state + requests (escape hatch)
+  usePlayer, // Player state + requests (flattened, typed to preset)
+  useMedia, // Media state + requests (escape hatch, typed to preset)
 } = createPlayer(presets.website);
+
+// Also exported from @videojs/react (for primitives):
+// - usePlayer() → UnknownPlayer (loosely typed)
+// - useMedia() → UnknownMedia (loosely typed)
+// - hasFeature(player, feature) → type guard
+// - getStore(player) → inferred store type
 ```
 
 ### Returns (HTML)
@@ -133,10 +140,16 @@ const {
   ContainerMixin, // Container attachment
   MediaProviderMixin, // Media store only (escape hatch)
 
-  // Controllers
-  PlayerController, // Player state + requests (like usePlayer)
+  // Controllers (typed to preset)
+  PlayerController, // .value for state + requests, .store for store access
   MediaController, // Media state + requests (escape hatch)
 } = createPlayer(presets.website);
+
+// Also exported from @videojs/html (for primitives):
+// - PlayerController → .value as UnknownPlayer, .store as UnknownPlayerStore
+// - MediaController → .value as UnknownMedia, .store as UnknownMediaStore
+// - hasFeature(player, feature) → type guard
+// - getStore(player) → inferred store type
 ```
 
 ### Returns (HTML) — createMedia
@@ -287,8 +300,17 @@ State and requests share the same flat namespace. Follow this convention to avoi
 
 Runtime validation throws if duplicate keys are detected.
 
+## Primitives API
+
+Building reusable UI primitives? See [primitives.md](primitives.md) for:
+
+- `hasFeature()` type guard for feature detection
+- `UnknownPlayer` / `UnknownMedia` loosely typed proxies
+- `getStore()` for direct store access
+- Cross-framework patterns (React + ReactiveElement)
+
 ## Related Docs
 
 - [decisions.md](decisions.md) — Why these choices were made
-- [architecture.md](architecture.md) — Two-store internals
+- [architecture.md](architecture.md) — Two-store internals, feature registry
 - [examples.md](examples.md) — Full usage examples

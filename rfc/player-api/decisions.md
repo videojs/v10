@@ -257,6 +257,90 @@ const bad = createPlayerFeature({
 - Fail fast at creation, not at runtime access
 - Clear error message: "Duplicate key 'play' found in state and requests"
 
+## Primitives API
+
+### Type Guard over Accessor Object
+
+**Decision:** Use `hasFeature()` type guard instead of a separate `FeatureAccessor` object.
+
+**Alternatives considered:**
+
+- `useFeature(feature)` returning a scoped accessor object
+- `player.feature(feature)` method returning typed subset
+- `player.has(feature)` with complex type narrowing
+
+**Rationale:**
+
+- **Simpler mental model** — One hook (`usePlayer`), one guard (`hasFeature`)
+- **No new API surface** — Type guards are standard TypeScript
+- **Works with early returns** — React's hooks rules allow early returns after hooks
+- **Framework-agnostic** — Same `hasFeature` works in React and Lit
+- **Flat access preserved** — After narrowing, you still use the same proxy object
+
+```tsx
+// Simple pattern - works in React
+const player = usePlayer();
+if (!hasFeature(player, features.playback)) return null;
+player.play(); // typed
+```
+
+### `UnknownPlayer` with Index Signature
+
+**Decision:** Use `[key: string]: unknown` for the loosely typed proxy.
+
+**Rationale:**
+
+- Allows any property access without TypeScript errors
+- Intersecting with feature types narrows specific properties
+- Index signature is fallback — explicit properties from narrowing take precedence
+
+```ts
+type UnknownPlayer = {
+  [key: string]: unknown; // anything accessible
+};
+
+// After hasFeature narrowing:
+// player.paused → boolean (explicit wins over index)
+// player.anything → unknown (falls back to index)
+
+// Store access via getStore()
+getStore(player); // Returns inferred store type
+```
+
+### `Store<Target, []>` for Unknown Stores
+
+**Decision:** Use empty array `[]` for features type on unknown stores.
+
+**Rationale:**
+
+- `[]` means "no features statically typed" not "no features at runtime"
+- Avoids confusing `AnyFeature[]` which reads as "any/all features"
+- Store still works at runtime — features registry is populated
+- Type narrowing comes from `hasFeature`, not from store's feature list
+
+### `getStore()` for Store Access
+
+**Decision:** Expose store access via `getStore(player)` function, not a symbol or property.
+
+**Rationale:**
+
+- More discoverable than symbols
+- Better typing via function overloads — returns inferred store type
+- Framework-agnostic — works with React proxy or Lit controller value
+- Symbol used internally but not exposed to users
+- For Lit, controllers also expose `.store` directly for convenience
+
+### Feature Registry as `ReadonlyMap`
+
+**Decision:** `store.features` is a `ReadonlyMap<symbol, AnyFeature>` keyed by `feature.id`.
+
+**Rationale:**
+
+- Map provides `.has()`, `.get()`, `.keys()` — standard API
+- Keyed by symbol (feature.id) — unique, no string collisions
+- Readonly — features are immutable after store creation
+- Familiar pattern — Maps are standard JavaScript
+
 ## Open Questions
 
 ### "In-between" Functionality

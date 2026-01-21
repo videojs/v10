@@ -120,6 +120,28 @@ const fullscreen = createPlayerFeature({
 });
 ```
 
+## Feature Registry
+
+Each store maintains a registry of its features as a `ReadonlyMap<symbol, AnyFeature>` keyed by `feature.id`.
+
+```ts
+store.features.has(playbackFeature.id); // boolean
+store.features.get(playbackFeature.id); // AnyFeature | undefined
+```
+
+Used by `hasFeature()` type guard for primitives. See [primitives.md](primitives.md).
+
+## Store Access
+
+Use `getStore()` to access the underlying store from a player proxy:
+
+```ts
+getStore(player); // Returns inferred store type
+controller.store; // Direct accessor on Lit controllers
+```
+
+See [primitives.md](primitives.md) for usage with `hasFeature()` and unknown types.
+
 ## State Unification
 
 `createPlayer` merges both stores into a unified API:
@@ -299,3 +321,4 @@ Internal stores are implementation details until you author features.
 - `createPlayer` lives in `@videojs/html` and `@videojs/react`
 - Skins are tied to presets — stores don't extend from skins
 - Two stores internally, one API externally
+- `hasFeature` and `getStore` are framework-agnostic (from `@videojs/store`)
