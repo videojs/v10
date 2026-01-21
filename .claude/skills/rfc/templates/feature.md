@@ -54,9 +54,9 @@ Minimal working example. Show the feature in use.
 function featureName(config: Config): Result;
 ```
 
-| Parameter | Type     | Description            |
-| --------- | -------- | ---------------------- |
-| `config`  | `Config` | What this controls     |
+| Parameter | Type     | Description        |
+| --------- | -------- | ------------------ |
+| `config`  | `Config` | What this controls |
 
 **Returns:** What comes back and what to do with it.
 
@@ -78,9 +78,9 @@ How it works at a high level. No implementation details.
 
 ## Trade-offs
 
-| Gain                 | Cost                       |
-| -------------------- | -------------------------- |
-| What we get          | What we give up            |
+| Gain        | Cost            |
+| ----------- | --------------- |
+| What we get | What we give up |
 
 ## Open Questions
 
@@ -228,7 +228,7 @@ Diagram or numbered steps
 
 ### decisions.md
 
-````markdown
+```markdown
 # Design Decisions
 
 Rationale behind Feature Name choices.
@@ -239,21 +239,25 @@ Rationale behind Feature Name choices.
 
 **Decision:** What we chose.
 
-**Alternatives considered:**
+**Alternatives:**
 
 - Alternative A — why rejected
 - Alternative B — why rejected
 
-**Rationale:**
-
-- Reason 1
-- Reason 2
-
-**Trade-off:** What we give up for this choice.
+**Rationale:** Why this choice wins. Keep concise.
 
 ## Category 2 (e.g., API Shape)
 
-(Same structure for each decision)
+### Another Decision
+
+**Decision:** What we chose.
+
+**Alternatives:**
+
+- Option A — trade-off
+- Option B — trade-off
+
+**Rationale:** Brief explanation.
 
 ## Open Questions
 
@@ -264,7 +268,7 @@ Context and options being considered.
 ### Question 2
 
 (Same structure)
-````
+```
 
 ### examples.md
 

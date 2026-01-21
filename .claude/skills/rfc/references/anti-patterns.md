@@ -234,22 +234,21 @@ Back to flat, runtime validation added.
 ```
 
 ```markdown
-// Good — single source of truth, evolution noted
+// Good — single source of truth with alternatives
 
 ### Flat API Shape
 
 **Decision:** State and requests on same object, no namespaces.
 
-**Evolution:** Initially considered `.state`/`.request` namespaces, but flat won
-for ergonomics. Added runtime duplicate detection to catch collisions early.
+**Alternatives:**
 
-**Rationale:**
+- `.state`/`.request` namespaces — explicit but verbose
+- Separate hooks — familiar but splits concerns
 
-- Less nesting = less typing
-- Naming convention prevents collisions
+**Rationale:** Less nesting, proxy tracks at property level. Runtime duplicate detection catches collisions.
 ```
 
-**Fix:** When a decision changes, update the existing entry in place. Use an "Evolution" section to note significant changes if the history matters.
+**Fix:** When a decision changes, update the existing entry in place. Always include alternatives considered as concise dot points.
 
 ## Checklist
 

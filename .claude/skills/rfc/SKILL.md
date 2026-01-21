@@ -127,7 +127,7 @@ Based on the existing `SnapshotController` pattern. See `packages/store/src/snap
 
 ### 8. Track Key Decisions
 
-Record every significant design decision in `decisions.md`. When a decision evolves, **update the existing entry** — don't append a new one.
+Record every significant design decision in `decisions.md`. Include alternatives considered. When a decision evolves, **update the existing entry** — don't append a new one.
 
 ```markdown
 // ❌ Appending creates confusion
@@ -140,20 +140,18 @@ State and requests on same object.
 
 Actually, we added namespaces...
 
-### Flat API Shape (v3)
-
-Back to flat, but with runtime validation...
-
-// ✅ Update in place, note what changed
+// ✅ Update in place, include alternatives
 
 ### Flat API Shape
 
 **Decision:** State and requests on same object, no namespaces.
 
-**Evolution:** Initially considered namespaces, but flat won for ergonomics.
-Runtime duplicate detection added to catch collisions.
+**Alternatives:**
 
-**Rationale:** ...
+- `.state`/`.request` namespaces — explicit but verbose
+- Separate hooks (`usePlayerState`, `usePlayerActions`) — familiar but splits concerns
+
+**Rationale:** Less nesting, proxy tracks at property level. Runtime duplicate detection catches collisions.
 ```
 
 ## Two RFC Types
