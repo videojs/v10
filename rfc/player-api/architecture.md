@@ -25,13 +25,13 @@ Internal structure of the Player API.
       │  state: paused, volume │      │  state: isFullscreen   │
       │  request: play, pause  │      │  request: toggleFS     │
       └────────────────────────┘      └────────────────────────┘
-                                                  │
-                                       target.media.getFeature()
-                                                  │
-                                      ┌───────────┴───────────┐
-                                      ▼                       ▼
-                               Read media state        Call media requests
-                               (iOS fallback)          (keyboard shortcuts)
+                                                   │
+                                        getFeature(target.media, f)
+                                                   │
+                                       ┌───────────┴───────────┐
+                                       ▼                       ▼
+                                Read media state        Call media requests
+                                (iOS fallback)          (keyboard shortcuts)
 ```
 
 **Key insight:** Player Store's target includes a reference to the Media Store. This enables coordination without tight coupling.
@@ -95,9 +95,12 @@ Player features can:
 
 ## Cross-Store Access
 
-Player features access media via `target.media.getFeature()`.
+Player features access media via `getFeature(target.media, feature)`.
 
 ```ts
+import * as media from '@videojs/core/dom/features/media';
+import { getFeature } from '@videojs/store';
+
 const fullscreen = createPlayerFeature({
   request: {
     enterFullscreen: (_, { target }) => {
@@ -108,14 +111,14 @@ const fullscreen = createPlayerFeature({
       }
 
       // iOS fallback — use media fullscreen
-      const mediaFS = target.media.getFeature(media.fullscreen);
-      mediaFS?.request.enterFullscreen();
+      const mediaFS = getFeature(target.media, media.fullscreen);
+      mediaFS?.request.enterFullscreen?.();
     },
   },
 
   subscribe: ({ target, update, signal }) => {
     // Subscribe to media fullscreen changes (iOS)
-    target.media.getFeature(media.fullscreen)?.subscribe((s) => s.isFullscreen, update, { signal });
+    getFeature(target.media, media.fullscreen)?.subscribe?.((s) => s.isFullscreen, update, { signal });
   },
 });
 ```
@@ -261,7 +264,7 @@ export const fullscreen = createPlayerFeature({
 
   getSnapshot: ({ target }) => {
     const containerFS = document.fullscreenElement === target.container;
-    const mediaFS = target.media.getFeature(media.fullscreen)?.state.isFullscreen;
+    const mediaFS = getFeature(target.media, media.fullscreen)?.state.isFullscreen;
     return {
       isFullscreen: containerFS || mediaFS || false,
       fullscreenTarget: containerFS ? 'container' : mediaFS ? 'media' : null,
@@ -273,7 +276,7 @@ export const fullscreen = createPlayerFeature({
     listen(document, 'fullscreenchange', update, { signal });
 
     // iOS: media fullscreen
-    target.media.getFeature(media.fullscreen)?.subscribe((s) => s.isFullscreen, update, { signal });
+    getFeature(target.media, media.fullscreen)?.subscribe?.((s) => s.isFullscreen, update, { signal });
   },
 
   request: {

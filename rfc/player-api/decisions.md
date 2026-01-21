@@ -365,6 +365,64 @@ getStore(player); // Returns inferred store type
 - Readonly — features are immutable after store creation
 - Familiar pattern — Maps are standard JavaScript
 
+### `StoreHost` Contract
+
+**Decision:** Both stores and proxies implement a common `StoreHost` interface via `[STORE_SYMBOL]`.
+
+```ts
+interface StoreHost {
+  readonly [STORE_SYMBOL]: AnyStore;
+}
+```
+
+**Behavior:**
+
+- **Proxy:** `proxy[STORE_SYMBOL]` returns the underlying store
+- **Store:** `store[STORE_SYMBOL]` returns itself (self-referential)
+
+**Rationale:**
+
+- Unified interface — `hasFeature` and `getFeature` work identically on stores and proxies
+- Self-reference isn't a memory leak — no circular references, just identity
+- Enables `getStore()` to work uniformly: always returns the store regardless of input type
+- Internal implementation detail — users interact via `getStore()`, `hasFeature()`, `getFeature()`
+
+### Overloaded `hasFeature` and `getFeature`
+
+**Decision:** Both functions are overloaded to work with stores and proxies, returning different types based on input.
+
+```ts
+// hasFeature overloads
+function hasFeature(store: AnyStore, feature: AnyFeature): boolean;
+function hasFeature<T extends StoreHost, F extends AnyFeature>(
+  target: T,
+  feature: F
+): target is T & InferFeatureState<F> & ResolveFeatureRequestHandlers<F>;
+
+// getFeature overloads
+function getFeature<S extends AnyStore, F extends AnyFeature>(
+  store: S,
+  feature: F
+): (S & { state: InferFeatureState<F>; request: ResolveFeatureRequestHandlers<F> }) | undefined;
+
+function getFeature<T extends StoreHost, F extends AnyFeature>(target: T, feature: F): MaybeFeature<F>; // props are T | undefined
+```
+
+**Why different return types?**
+
+| Input | `hasFeature` returns            | `getFeature` returns                   |
+| ----- | ------------------------------- | -------------------------------------- |
+| Proxy | Type guard narrowing flat proxy | Flat proxy with `T \| undefined` props |
+| Store | `boolean`                       | Store typed with `state` + `request`   |
+
+**Rationale:**
+
+- **Proxies (components):** Access flat state/requests directly — `player.paused`, `player.play()`
+- **Stores (features):** Access via namespaces — `store.state.paused`, `store.request.play()`
+- Same function, context-appropriate return types
+- Feature authors use store overload for cross-store access (`target.media` is a store)
+- Component authors use proxy overload for conditional rendering
+
 ## Open Questions
 
 ### "In-between" Functionality

@@ -140,45 +140,85 @@ controller.value; // UnknownPlayer (tracked proxy)
 
 ## Implementation
 
-### `hasFeature`
+Both `hasFeature` and `getFeature` work with **stores** and **proxies** via the `StoreHost` contract.
+
+### `StoreHost` Contract
 
 ```ts
-// @videojs/store - framework-agnostic
+const STORE_SYMBOL: unique symbol;
 
-function hasFeature<T extends UnknownPlayer | UnknownMedia, F extends AnyFeature>(
+interface StoreHost {
+  readonly [STORE_SYMBOL]: AnyStore;
+}
+
+// Proxy: STORE_SYMBOL returns underlying store
+proxy[STORE_SYMBOL]; // → store
+
+// Store: STORE_SYMBOL returns itself
+store[STORE_SYMBOL]; // → store (self-referential)
+```
+
+### `hasFeature` — Overloaded
+
+```ts
+// For stores - returns boolean
+function hasFeature(store: AnyStore, feature: AnyFeature): boolean;
+
+// For proxies - type guard that narrows
+function hasFeature<T extends StoreHost, F extends AnyFeature>(
   target: T,
   feature: F
-): target is T & InferFeatureState<F> & ResolveFeatureRequestHandlers<F> {
-  return getStore(target).features.has(feature.id);
+): target is T & InferFeatureState<F> & ResolveFeatureRequestHandlers<F>;
+
+// Implementation
+function hasFeature(target, feature) {
+  const store = target[STORE_SYMBOL];
+  return store.features.has(feature.id);
 }
 ```
 
-The type guard:
-
-1. Uses `getStore()` to access the underlying store
-2. Checks `store.features.has(feature.id)` at runtime
-3. Intersects the feature's state and request types for narrowing
-
-### `getFeature`
+### `getFeature` — Overloaded
 
 ```ts
-// Return type: each property is T | undefined
+// Return type for proxies: flat, each property T | undefined
 type MaybeFeature<F extends AnyFeature> = {
   [K in keyof (InferFeatureState<F> & ResolveFeatureRequestHandlers<F>)]:
     | (InferFeatureState<F> & ResolveFeatureRequestHandlers<F>)[K]
     | undefined;
 };
 
-function getFeature<T extends UnknownPlayer | UnknownMedia, F extends AnyFeature>(
-  target: T,
+// Return type for stores: { state, request } typed to feature
+type StoreFeatureView<F extends AnyFeature> = {
+  state: InferFeatureState<F>;
+  request: ResolveFeatureRequestHandlers<F>;
+};
+
+// For stores - returns store typed to feature, or undefined
+function getFeature<S extends AnyStore, F extends AnyFeature>(
+  store: S,
   feature: F
-): MaybeFeature<F> {
-  // Returns the same proxy - properties are undefined if feature missing
-  return target as MaybeFeature<F>;
+): (S & StoreFeatureView<F>) | undefined;
+
+// For proxies - returns proxy typed to feature (props T | undefined)
+function getFeature<T extends StoreHost, F extends AnyFeature>(target: T, feature: F): MaybeFeature<F>;
+
+// Implementation
+function getFeature(target, feature) {
+  const store = target[STORE_SYMBOL];
+  const isStore = store === target;
+
+  if (!store.features.has(feature.id)) {
+    return isStore ? undefined : target;
+  }
+
+  return isStore ? store : target;
 }
 ```
 
-Returns the same proxy, typed to the feature. If feature is missing, property access returns `undefined` at runtime (proxy behavior), and types reflect this with `T | undefined`.
+| Input | `getFeature` returns                            | `hasFeature` returns |
+| ----- | ----------------------------------------------- | -------------------- |
+| Store | Store typed to feature, or `undefined`          | `boolean`            |
+| Proxy | Proxy typed to feature (props `T \| undefined`) | Type guard (narrows) |
 
 ## Cross-Framework Consistency
 
