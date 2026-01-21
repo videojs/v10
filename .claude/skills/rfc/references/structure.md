@@ -20,41 +20,7 @@ Is this a single concept with straightforward trade-offs?
 - Trade-offs fit in one page
 - Reader can absorb in one sitting
 
-**Structure:**
-
-```markdown
----
-status: draft
----
-
-# Feature Name
-
-One-sentence summary.
-
-## Problem
-
-What pain exists.
-
-## Solution
-
-How we solve it.
-
-## Quick Start
-
-Show it working (code example).
-
-## API
-
-Surface area — what users interact with.
-
-## Trade-offs
-
-What we gain, what we lose.
-
-## Open Questions
-
-Unresolved decisions.
-```
+**Structure:** See [`templates/feature-single.md`](../templates/feature-single.md) for the full template.
 
 **Example:** A new utility function, a small API addition.
 
@@ -115,15 +81,15 @@ Keep `index.md` focused on "what" — save "why" for `decisions.md` and "how" fo
 
 ## File Naming
 
-| File              | Purpose                              |
-| ----------------- | ------------------------------------ |
-| `index.md`        | Entry point, overview                |
-| `architecture.md` | Internals, diagrams                  |
-| `decisions.md`    | Rationale, alternatives considered   |
-| `examples.md`     | Usage examples beyond quick start    |
-| `primitives.md`   | Library author API                   |
-| `migration.md`    | Breaking changes, upgrade path       |
-| `alternatives.md` | Rejected approaches (rare)           |
+| File              | Purpose                            |
+| ----------------- | ---------------------------------- |
+| `index.md`        | Entry point, overview              |
+| `architecture.md` | Internals, diagrams                |
+| `decisions.md`    | Rationale, alternatives considered |
+| `examples.md`     | Usage examples beyond quick start  |
+| `primitives.md`   | Library author API                 |
+| `migration.md`    | Breaking changes, upgrade path     |
+| `alternatives.md` | Rejected approaches (rare)         |
 
 Use lowercase with hyphens. Match existing patterns in `rfc/`.
 

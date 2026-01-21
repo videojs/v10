@@ -18,7 +18,7 @@ General guidance for writing feature RFCs.
 
 ## Structure
 
-**Single-file:** Problem → Solution → Quick Start → API → Behavior → Trade-offs
+**Single-file:** Problem → Solution → Quick Start → API → Behavior → Trade-offs → Open Questions
 
 **Multi-file:**
 
