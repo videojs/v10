@@ -207,23 +207,13 @@ function DebugPanel() {
 
 ### Two Stores (Not One)
 
-**Decision:** Maintain two internal stores (Media Store + Player Store).
-
-**Rationale:**
-
-- **Different targets:** Media features target `HTMLMediaElement`. Player features target container element.
-- **Different attachment timing:** `<Video>` and `<Container>` mount at different times.
-- **Config dependency:** Player features configure against typed media store. Media store must exist first.
-- **Observability:** Player→media interactions go through store. Enables debugging, tracing, request queuing.
-- **Standalone media:** Headless player, audio-only, programmatic control. Media store works alone.
+**Decision:** Maintain two internal stores (Media Store + Player Store). See [architecture.md](architecture.md) for details.
 
 **Trade-off:** Two stores exist internally, but feature authors access media via `target.media` proxy — same flat API as components.
 
 ### Container ≠ Provider
 
 **Decision:** Container is purely UI attachment. Provider owns state.
-
-Container inside skin attaches to existing store — doesn't provide one.
 
 ## Validation
 
@@ -247,79 +237,27 @@ const bad = createPlayerFeature({
 
 ## Primitives API
 
+See [primitives.md](primitives.md) for types, examples, and package exports.
+
 ### `hasFeature`, `getFeature`, `throwMissingFeature`
 
-**Decision:** Three utilities for feature access:
+**Decision:** Three utilities for feature access — type guard, optional access, and fail-fast.
 
-| Function              | Returns                            | Best for                             |
-| --------------------- | ---------------------------------- | ------------------------------------ |
-| `hasFeature`          | Type guard                         | Conditional narrowing                |
-| `getFeature`          | Object with `T \| undefined` props | Optional features, optional chaining |
-| `throwMissingFeature` | `never` (throws)                   | Critical features, fail fast         |
+**Rationale:**
 
-```ts
-// Critical feature — throw on missing
-if (!hasFeature(player, features.playback)) {
-  throwMissingFeature(features.playback, { displayName: 'PlayButton' });
-}
-player.play(); // typed, guaranteed
-
-// Optional feature — graceful degradation
-const volume = getFeature(player, features.volume);
-volume.setVolume?.(0.5); // safe, no crash
-```
-
-**`throwMissingFeature` rationale:**
-
-- Surfaces misconfiguration immediately — silent `return null` hides bugs
-- Clear error message: `"PlayButton requires playback feature"`
-- Options object extensible for future needs (e.g., `{ displayName, silent }`)
+- `hasFeature` — Standard TypeScript type guard pattern, narrows proxy in place
+- `getFeature` — Properties as `T | undefined`, works with optional chaining
+- `throwMissingFeature` — Surfaces misconfiguration immediately (silent `return null` hides bugs)
 
 ### `StoreProxy<T>` and `UnknownPlayer`
 
-**Decision:** Use a generic `StoreProxy<T>` interface that all proxies implement.
-
-```ts
-interface StoreProxy<T extends AnyStore = AnyStore> {
-  readonly [STORE_SYMBOL]: T;
-  [key: string]: unknown;
-}
-
-interface UnknownPlayerStore extends Store<PlayerTarget, []> {}
-interface UnknownMediaStore extends Store<MediaTarget, []> {}
-
-interface UnknownPlayer extends StoreProxy<UnknownPlayerStore> {}
-interface UnknownMedia extends StoreProxy<UnknownMediaStore> {}
-```
+**Decision:** Generic `StoreProxy<T>` interface that all proxies implement.
 
 **Rationale:**
 
-- Preserves store type through the proxy — `UnknownPlayer` knows it wraps `UnknownPlayerStore`
+- Preserves store type through the proxy
 - Index signature `[key: string]: unknown` allows any property access
-- Intersecting with feature types narrows specific properties
-- Uses interfaces (not type aliases) for clearer hover hints in editors
-
-### `Store<Target, []>` for Unknown Stores
-
-**Decision:** Use empty array `[]` for features type on unknown stores.
-
-**Rationale:**
-
-- `[]` means "no features statically typed" not "no features at runtime"
-- Avoids confusing `AnyFeature[]` which reads as "any/all features"
-- Store still works at runtime — features registry is populated
-- Type narrowing comes from `hasFeature`, not from store's feature list
-
-### Feature Registry as `ReadonlyMap`
-
-**Decision:** `store.features` is a `ReadonlyMap<symbol, AnyFeature>` keyed by `feature.id`.
-
-**Rationale:**
-
-- Map provides `.has()`, `.get()`, `.keys()` — standard API
-- Keyed by symbol (feature.id) — unique, no string collisions
-- Readonly — features are immutable after store creation
-- Familiar pattern — Maps are standard JavaScript
+- Uses interfaces (not type aliases) for clearer hover hints
 
 ### `target.media` as Flat Proxy
 
@@ -328,26 +266,8 @@ interface UnknownMedia extends StoreProxy<UnknownMediaStore> {}
 **Rationale:**
 
 - Consistent API — feature authors and component authors use same flat access pattern
-- No `.state`/`.request` namespacing for feature authors to learn
-- Subscription via `subscribe(target.media, ...)` — same as components
-- Simpler `hasFeature`/`getFeature` — only one signature (StoreProxy), no store overloads
-
-### `createProxy(store)` Factory
-
-**Decision:** Proxies are created from stores via `createProxy()` function.
-
-```ts
-import { createProxy } from '@videojs/store';
-
-const store = createStore({ ... });
-const proxy = createProxy(store); // StoreProxy<typeof store>
-```
-
-**Rationale:**
-
-- Clear factory pattern — store → proxy transformation is explicit
-- Used internally by `createPlayer` to build `PlayerTarget.media`
-- Not typically used by library consumers (they receive proxies via hooks/controllers)
+- No `.state`/`.request` namespacing to learn
+- Simpler `hasFeature`/`getFeature` — only one signature (StoreProxy)
 
 ## Open Questions
 

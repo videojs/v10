@@ -145,36 +145,7 @@ The same API works in React and Lit:
 | `@videojs/react`    | Re-exports above + `usePlayer`, `useMedia`, `createPlayer`                                  |
 | `@videojs/html`     | Re-exports above + `PlayerController`, `MediaController`, `createPlayer`                    |
 
-## Examples
-
-### Critical Feature — Throw on Missing
-
-For components that require a feature to function, throw an error to surface misconfiguration:
-
-```tsx
-export function PlayButton() {
-  const player = usePlayer();
-  if (!hasFeature(player, features.playback)) {
-    throwMissingFeature(features.playback, { displayName: 'PlayButton' });
-  }
-
-  return <button onClick={player.play}>{player.paused ? '▶' : '⏸'}</button>;
-}
-```
-
-```ts
-// Lit
-render() {
-  const player = this.#player.value;
-  if (!hasFeature(player, features.playback)) {
-    throwMissingFeature(features.playback, { displayName: 'PlayButton' });
-  }
-
-  return html`<button @click=${player.play}>${player.paused ? '▶' : '⏸'}</button>`;
-}
-```
-
-### Mixing Required and Optional
+## Example: Mixing Required and Optional
 
 ```tsx
 export function TimeSlider() {

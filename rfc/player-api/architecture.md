@@ -127,18 +127,7 @@ const fullscreen = createPlayerFeature({
 
 ## Feature Registry
 
-Each store maintains a registry of its features as a `ReadonlyMap<symbol, AnyFeature>` keyed by `feature.id`.
-
-```ts
-store.features.has(playbackFeature.id); // boolean
-store.features.get(playbackFeature.id); // AnyFeature | undefined
-```
-
-Used by `hasFeature()` type guard for primitives. See [primitives.md](primitives.md).
-
-## Proxy Access
-
-Feature authors access media via the flat proxy on `target.media`. See [primitives.md](primitives.md) for `hasFeature()`, `getFeature()`, and `subscribe()` usage.
+Each store maintains `features: ReadonlyMap<symbol, AnyFeature>` keyed by `feature.id`. Used by `hasFeature()` — see [primitives.md](primitives.md).
 
 ## State Unification
 
