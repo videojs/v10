@@ -157,54 +157,6 @@ Actually, we added namespaces...
 **Rationale:** Less nesting, proxy tracks at property level. Runtime duplicate detection catches collisions.
 ```
 
-## Two RFC Types
-
-### Feature RFC
-
-For APIs, architecture, patterns, extensibility decisions.
-
-**Structure:** Problem → Solution → Quick Start → API Surface → Architecture → Decisions
-
-**When to use:**
-
-- New public APIs
-- Architectural changes
-- Cross-cutting patterns
-
-See `references/features.md` for guidance, `templates/feature-single.md` or `templates/feature-multi.md` for templates.
-
-### Component RFC
-
-For UI primitives and compound components.
-
-**Structure:** Anatomy → Examples → Parts (API tables) → Accessibility
-
-**When to use:**
-
-- New UI components
-- Component API changes
-- Interaction patterns
-
-See `references/components.md` for guidance, `templates/simple-component.md` or `templates/compound-component.md` for templates.
-
-## Single vs Multi-File
-
-**Single file** — One concept, straightforward proposal
-
-**Multi-file** — 3+ distinct concepts that deserve separate pages
-
-```
-rfc/
-├── simple-feature.md           # single file
-└── complex-feature/            # multi-file
-    ├── index.md                # overview, quick start
-    ├── architecture.md         # how it works
-    ├── decisions.md            # rationale
-    └── examples.md             # usage examples
-```
-
-See `references/structure.md` for guidance.
-
 ## Checklist
 
 Before finalizing an RFC:

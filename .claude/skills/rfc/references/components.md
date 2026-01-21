@@ -18,7 +18,7 @@ General guidance for writing component RFCs.
 
 ## Structure
 
-**Simple component:** Usage → Examples → API → Accessibility
+**Basic component:** Usage → Examples → API → Accessibility
 
 **Compound component:** Anatomy → Examples → Parts → Styling → Accessibility
 
