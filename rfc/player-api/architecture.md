@@ -34,7 +34,7 @@ Internal structure of the Player API.
                                 (iOS fallback)          (keyboard shortcuts)
 ```
 
-**Key insight:** Player Store's target includes a reference to the Media Store. This enables coordination without tight coupling.
+**Key insight:** Player Store's target includes a media proxy. This enables coordination without tight coupling — feature authors use the same flat API as component authors.
 
 ## Two Stores
 
@@ -84,22 +84,22 @@ Media features observe and control the `<video>` or `<audio>` element directly.
 ```ts
 interface PlayerTarget {
   container: HTMLElement;
-  media: Store<MediaTarget>;
+  media: UnknownMedia; // flat proxy, not store
 }
 ```
 
 Player features can:
 
 - Control the container element (fullscreen, focus)
-- Access media store for coordination
+- Access media proxy for coordination (same flat API as components)
 
 ## Cross-Store Access
 
-Player features access media via `getFeature(target.media, feature)`.
+Player features access media via `target.media` (a flat proxy). Use `hasFeature`/`getFeature` for type narrowing, and `subscribe` for reactive updates.
 
 ```ts
 import * as media from '@videojs/core/dom/features/media';
-import { getFeature } from '@videojs/store';
+import { getFeature, hasFeature, subscribe } from '@videojs/store';
 
 const fullscreen = createPlayerFeature({
   request: {
@@ -110,15 +110,17 @@ const fullscreen = createPlayerFeature({
         return;
       }
 
-      // iOS fallback — use media fullscreen
+      // iOS fallback — use media fullscreen (flat access)
       const mediaFS = getFeature(target.media, media.fullscreen);
-      mediaFS?.request.enterFullscreen?.();
+      mediaFS.enterFullscreen?.();
     },
   },
 
   subscribe: ({ target, update, signal }) => {
     // Subscribe to media fullscreen changes (iOS)
-    getFeature(target.media, media.fullscreen)?.subscribe?.((s) => s.isFullscreen, update, { signal });
+    if (hasFeature(target.media, media.fullscreen)) {
+      subscribe(target.media, (s) => s.isFullscreen, update, { signal });
+    }
   },
 });
 ```
@@ -134,16 +136,9 @@ store.features.get(playbackFeature.id); // AnyFeature | undefined
 
 Used by `hasFeature()` type guard for primitives. See [primitives.md](primitives.md).
 
-## Store Access
+## Proxy Access
 
-Use `getStore()` to access the underlying store from a player proxy:
-
-```ts
-getStore(player); // Returns inferred store type
-controller.store; // Direct accessor on Lit controllers
-```
-
-See [primitives.md](primitives.md) for usage with `hasFeature()` and unknown types.
+Feature authors access media via the flat proxy on `target.media`. See [primitives.md](primitives.md) for `hasFeature()`, `getFeature()`, and `subscribe()` usage.
 
 ## State Unification
 
@@ -256,6 +251,9 @@ packages/core/src/dom/
 ### Fullscreen
 
 ```ts
+import * as media from '@videojs/core/dom/features/media';
+import { getFeature, hasFeature, subscribe } from '@videojs/store';
+
 export const fullscreen = createPlayerFeature({
   initialState: {
     isFullscreen: false,
@@ -264,7 +262,7 @@ export const fullscreen = createPlayerFeature({
 
   getSnapshot: ({ target }) => {
     const containerFS = document.fullscreenElement === target.container;
-    const mediaFS = getFeature(target.media, media.fullscreen)?.state.isFullscreen;
+    const mediaFS = getFeature(target.media, media.fullscreen).isFullscreen;
     return {
       isFullscreen: containerFS || mediaFS || false,
       fullscreenTarget: containerFS ? 'container' : mediaFS ? 'media' : null,
@@ -276,7 +274,9 @@ export const fullscreen = createPlayerFeature({
     listen(document, 'fullscreenchange', update, { signal });
 
     // iOS: media fullscreen
-    getFeature(target.media, media.fullscreen)?.subscribe?.((s) => s.isFullscreen, update, { signal });
+    if (hasFeature(target.media, media.fullscreen)) {
+      subscribe(target.media, (s) => s.isFullscreen, update, { signal });
+    }
   },
 
   request: {
@@ -324,4 +324,4 @@ Internal stores are implementation details until you author features.
 - `createPlayer` lives in `@videojs/html` and `@videojs/react`
 - Skins are tied to presets — stores don't extend from skins
 - Two stores internally, one API externally
-- `hasFeature` and `getStore` are framework-agnostic (from `@videojs/store`)
+- `hasFeature`, `getFeature`, `subscribe` are framework-agnostic (from `@videojs/store`)

@@ -308,27 +308,32 @@ playback.play?.(); // safe, no crash if missing
 - `getFeature` for "graceful if missing" (optional features)
 - Different semantics, same underlying proxy
 
-### `UnknownPlayer` with Index Signature
+### `StoreProxy<T>` and `UnknownPlayer`
 
-**Decision:** Use `[key: string]: unknown` for the loosely typed proxy.
+**Decision:** Use a generic `StoreProxy<T>` interface that all proxies implement.
 
 **Rationale:**
 
-- Allows any property access without TypeScript errors
+- Preserves store type through the proxy — `UnknownPlayer` knows it wraps `UnknownPlayerStore`
+- Index signature `[key: string]: unknown` allows any property access
 - Intersecting with feature types narrows specific properties
-- Index signature is fallback — explicit properties from narrowing take precedence
+- Uses interfaces (not type aliases) for clearer hover hints in editors
 
 ```ts
-type UnknownPlayer = {
-  [key: string]: unknown; // anything accessible
-};
+interface StoreProxy<T extends AnyStore = AnyStore> {
+  readonly [STORE_SYMBOL]: T;
+  [key: string]: unknown;
+}
+
+interface UnknownPlayerStore extends Store<PlayerTarget, []> {}
+interface UnknownMediaStore extends Store<MediaTarget, []> {}
+
+interface UnknownPlayer extends StoreProxy<UnknownPlayerStore> {}
+interface UnknownMedia extends StoreProxy<UnknownMediaStore> {}
 
 // After hasFeature narrowing:
 // player.paused → boolean (explicit wins over index)
 // player.anything → unknown (falls back to index)
-
-// Store access via getStore()
-getStore(player); // Returns inferred store type
 ```
 
 ### `Store<Target, []>` for Unknown Stores
@@ -342,18 +347,6 @@ getStore(player); // Returns inferred store type
 - Store still works at runtime — features registry is populated
 - Type narrowing comes from `hasFeature`, not from store's feature list
 
-### `getStore()` for Store Access
-
-**Decision:** Expose store access via `getStore(player)` function, not a symbol or property.
-
-**Rationale:**
-
-- More discoverable than symbols
-- Better typing via function overloads — returns inferred store type
-- Framework-agnostic — works with React proxy or Lit controller value
-- Symbol used internally but not exposed to users
-- For Lit, controllers also expose `.store` directly for convenience
-
 ### Feature Registry as `ReadonlyMap`
 
 **Decision:** `store.features` is a `ReadonlyMap<symbol, AnyFeature>` keyed by `feature.id`.
@@ -365,63 +358,52 @@ getStore(player); // Returns inferred store type
 - Readonly — features are immutable after store creation
 - Familiar pattern — Maps are standard JavaScript
 
-### `StoreHost` Contract
+### `target.media` as Flat Proxy
 
-**Decision:** Both stores and proxies implement a common `StoreHost` interface via `[STORE_SYMBOL]`.
+**Decision:** `PlayerTarget.media` is an `UnknownMedia` proxy, not a store.
 
 ```ts
-interface StoreHost {
-  readonly [STORE_SYMBOL]: AnyStore;
+interface PlayerTarget {
+  container: HTMLElement;
+  media: UnknownMedia; // flat proxy
 }
 ```
 
-**Behavior:**
-
-- **Proxy:** `proxy[STORE_SYMBOL]` returns the underlying store
-- **Store:** `store[STORE_SYMBOL]` returns itself (self-referential)
-
 **Rationale:**
 
-- Unified interface — `hasFeature` and `getFeature` work identically on stores and proxies
-- Self-reference isn't a memory leak — no circular references, just identity
-- Enables `getStore()` to work uniformly: always returns the store regardless of input type
-- Internal implementation detail — users interact via `getStore()`, `hasFeature()`, `getFeature()`
+- Consistent API — feature authors and component authors use same flat access pattern
+- No `.state`/`.request` namespacing for feature authors to learn
+- Subscription via `subscribe(target.media, ...)` — same as components
+- Simpler `hasFeature`/`getFeature` — only one signature (StoreProxy), no store overloads
 
-### Overloaded `hasFeature` and `getFeature`
-
-**Decision:** Both functions are overloaded to work with stores and proxies, returning different types based on input.
+**Example:**
 
 ```ts
-// hasFeature overloads
-function hasFeature(store: AnyStore, feature: AnyFeature): boolean;
-function hasFeature<T extends StoreHost, F extends AnyFeature>(
-  target: T,
-  feature: F
-): target is T & InferFeatureState<F> & ResolveFeatureRequestHandlers<F>;
+// Feature author accessing media (flat, like components)
+const mediaFS = getFeature(target.media, media.fullscreen);
+mediaFS.isFullscreen; // not mediaFS.state.isFullscreen
+mediaFS.enterFullscreen?.(); // not mediaFS.request.enterFullscreen()
 
-// getFeature overloads
-function getFeature<S extends AnyStore, F extends AnyFeature>(
-  store: S,
-  feature: F
-): (S & { state: InferFeatureState<F>; request: ResolveFeatureRequestHandlers<F> }) | undefined;
-
-function getFeature<T extends StoreHost, F extends AnyFeature>(target: T, feature: F): MaybeFeature<F>; // props are T | undefined
+// Subscribing to media changes
+subscribe(target.media, (s) => s.isFullscreen, update, { signal });
 ```
 
-**Why different return types?**
+### `createProxy(store)` Factory
 
-| Input | `hasFeature` returns            | `getFeature` returns                   |
-| ----- | ------------------------------- | -------------------------------------- |
-| Proxy | Type guard narrowing flat proxy | Flat proxy with `T \| undefined` props |
-| Store | `boolean`                       | Store typed with `state` + `request`   |
+**Decision:** Proxies are created from stores via `createProxy()` function.
+
+```ts
+import { createProxy } from '@videojs/store';
+
+const store = createStore({ ... });
+const proxy = createProxy(store); // StoreProxy<typeof store>
+```
 
 **Rationale:**
 
-- **Proxies (components):** Access flat state/requests directly — `player.paused`, `player.play()`
-- **Stores (features):** Access via namespaces — `store.state.paused`, `store.request.play()`
-- Same function, context-appropriate return types
-- Feature authors use store overload for cross-store access (`target.media` is a store)
-- Component authors use proxy overload for conditional rendering
+- Clear factory pattern — store → proxy transformation is explicit
+- Used internally by `createPlayer` to build `PlayerTarget.media`
+- Not typically used by library consumers (they receive proxies via hooks/controllers)
 
 ## Open Questions
 

@@ -73,152 +73,104 @@ playback.play?.(); // Safe - no crash if undefined
 
 ## Types
 
-### Loosely Typed Proxies
+### `StoreProxy<T>` Contract
+
+All proxies implement `StoreProxy<T>`, which holds a reference to the underlying store:
 
 ```ts
-type UnknownPlayer = {
-  [key: string]: unknown; // Any property accessible
-};
+const STORE_SYMBOL: unique symbol;
 
-type UnknownMedia = {
+interface StoreProxy<T extends AnyStore = AnyStore> {
+  readonly [STORE_SYMBOL]: T;
   [key: string]: unknown;
-};
+}
 ```
 
 The index signature `[key: string]: unknown` allows any property access. After `hasFeature` narrows, explicit properties take precedence.
 
-Use `getStore()` to access the underlying store from a proxy.
-
-### Unknown Stores
+### Proxy Types
 
 ```ts
-type UnknownPlayerStore = Store<PlayerTarget, []>;
-type UnknownMediaStore = Store<MediaTarget, []>;
+interface UnknownPlayerStore extends Store<PlayerTarget, []> {}
+interface UnknownMediaStore extends Store<MediaTarget, []> {}
+
+interface UnknownPlayer extends StoreProxy<UnknownPlayerStore> {}
+interface UnknownMedia extends StoreProxy<UnknownMediaStore> {}
 ```
 
 The `[]` for features means "no features statically typed" — the store has features at runtime, but TypeScript doesn't know which ones. Use `hasFeature` to narrow.
 
 ### Type Summary
 
-| Type                 | Description                 |
-| -------------------- | --------------------------- |
-| `UnknownPlayer`      | Loosely typed player proxy  |
-| `UnknownMedia`       | Loosely typed media proxy   |
-| `UnknownPlayerStore` | Store with unknown features |
-| `UnknownMediaStore`  | Store with unknown features |
+| Type                 | Description                        |
+| -------------------- | ---------------------------------- |
+| `StoreProxy<T>`      | Base interface for all proxies     |
+| `UnknownPlayer`      | Player proxy with unknown features |
+| `UnknownMedia`       | Media proxy with unknown features  |
+| `UnknownPlayerStore` | Player store with unknown features |
+| `UnknownMediaStore`  | Media store with unknown features  |
 
-## Store Access
+### Creating Proxies
 
-### Via `getStore()`
-
-Access the underlying store from a player proxy:
+Internally, proxies are created from stores via `createProxy()`:
 
 ```ts
-import { getStore, usePlayer } from '@videojs/react';
+import { createProxy } from '@videojs/store';
 
-const player = usePlayer();
-const store = getStore(player); // UnknownPlayerStore (inferred)
-
-// Check feature registry directly
-store.features.has(playbackFeature.id);
+const store = createStore({ ... });
+const proxy = createProxy(store); // StoreProxy<typeof store>
 ```
 
-`getStore()` infers the correct store type based on the input:
-
-- `getStore(player)` → `UnknownPlayerStore`
-- `getStore(media)` → `UnknownMediaStore`
+This is used internally by `createPlayer` and controllers. Library authors typically receive proxies via `usePlayer()` or `controller.value`.
 
 ### Via Controller (Lit/ReactiveElement)
 
-Controllers expose `.store` directly:
+Controllers expose the proxy via `.value`:
 
 ```ts
 const controller = new PlayerController(this);
-controller.store; // UnknownPlayerStore (direct)
 controller.value; // UnknownPlayer (tracked proxy)
 ```
 
 ## Implementation
 
-Both `hasFeature` and `getFeature` work with **stores** and **proxies** via the `StoreHost` contract.
+Both `hasFeature` and `getFeature` work with any `StoreProxy<T>`.
 
-### `StoreHost` Contract
-
-```ts
-const STORE_SYMBOL: unique symbol;
-
-interface StoreHost {
-  readonly [STORE_SYMBOL]: AnyStore;
-}
-
-// Proxy: STORE_SYMBOL returns underlying store
-proxy[STORE_SYMBOL]; // → store
-
-// Store: STORE_SYMBOL returns itself
-store[STORE_SYMBOL]; // → store (self-referential)
-```
-
-### `hasFeature` — Overloaded
+### `hasFeature`
 
 ```ts
-// For stores - returns boolean
-function hasFeature(store: AnyStore, feature: AnyFeature): boolean;
-
-// For proxies - type guard that narrows
-function hasFeature<T extends StoreHost, F extends AnyFeature>(
+function hasFeature<T extends StoreProxy, F extends AnyFeature>(
   target: T,
   feature: F
-): target is T & InferFeatureState<F> & ResolveFeatureRequestHandlers<F>;
-
-// Implementation
-function hasFeature(target, feature) {
+): target is T & InferFeatureState<F> & ResolveFeatureRequestHandlers<F> {
   const store = target[STORE_SYMBOL];
   return store.features.has(feature.id);
 }
 ```
 
-### `getFeature` — Overloaded
+The type guard:
+
+1. Accesses the underlying store via `[STORE_SYMBOL]`
+2. Checks `store.features.has(feature.id)` at runtime
+3. Narrows the proxy type to include feature's state and requests
+
+### `getFeature`
 
 ```ts
-// Return type for proxies: flat, each property T | undefined
+// Return type: flat proxy, each property T | undefined
 type MaybeFeature<F extends AnyFeature> = {
   [K in keyof (InferFeatureState<F> & ResolveFeatureRequestHandlers<F>)]:
     | (InferFeatureState<F> & ResolveFeatureRequestHandlers<F>)[K]
     | undefined;
 };
 
-// Return type for stores: { state, request } typed to feature
-type StoreFeatureView<F extends AnyFeature> = {
-  state: InferFeatureState<F>;
-  request: ResolveFeatureRequestHandlers<F>;
-};
-
-// For stores - returns store typed to feature, or undefined
-function getFeature<S extends AnyStore, F extends AnyFeature>(
-  store: S,
-  feature: F
-): (S & StoreFeatureView<F>) | undefined;
-
-// For proxies - returns proxy typed to feature (props T | undefined)
-function getFeature<T extends StoreHost, F extends AnyFeature>(target: T, feature: F): MaybeFeature<F>;
-
-// Implementation
-function getFeature(target, feature) {
-  const store = target[STORE_SYMBOL];
-  const isStore = store === target;
-
-  if (!store.features.has(feature.id)) {
-    return isStore ? undefined : target;
-  }
-
-  return isStore ? store : target;
+function getFeature<T extends StoreProxy, F extends AnyFeature>(target: T, feature: F): MaybeFeature<F> {
+  // Returns the same proxy - properties are undefined if feature missing
+  return target as MaybeFeature<F>;
 }
 ```
 
-| Input | `getFeature` returns                            | `hasFeature` returns |
-| ----- | ----------------------------------------------- | -------------------- |
-| Store | Store typed to feature, or `undefined`          | `boolean`            |
-| Proxy | Proxy typed to feature (props `T \| undefined`) | Type guard (narrows) |
+Returns the same proxy, typed to the feature. If feature is missing, property access returns `undefined` at runtime (proxy behavior), and types reflect this with `T | undefined`.
 
 ## Cross-Framework Consistency
 
@@ -227,7 +179,6 @@ The same API works in React and Lit:
 | Concept              | React                           | Lit/ReactiveElement                     |
 | -------------------- | ------------------------------- | --------------------------------------- |
 | Loosely typed player | `usePlayer()` → `UnknownPlayer` | `controller.value` → `UnknownPlayer`    |
-| Store access         | `getStore(player)`              | `controller.store`                      |
 | Type guard           | `hasFeature(player, feature)`   | `hasFeature(controller.value, feature)` |
 | Direct access        | `getFeature(player, feature)`   | `getFeature(controller.value, feature)` |
 
@@ -235,18 +186,19 @@ The same API works in React and Lit:
 
 ```ts
 // @videojs/store (generic utilities)
-export { hasFeature, getFeature, getStore };
+export { createProxy, hasFeature, getFeature, subscribe };
+export type { StoreProxy };
 
 // @videojs/core/dom (player/media specific types)
 export type { UnknownPlayer, UnknownMedia, UnknownPlayerStore, UnknownMediaStore };
 
 // @videojs/react (re-exports + React-specific)
-export { hasFeature, getFeature, getStore } from '@videojs/store';
+export { hasFeature, getFeature } from '@videojs/store';
 export type { UnknownPlayer, ... } from '@videojs/core/dom';
 export { usePlayer, useMedia, createPlayer };
 
 // @videojs/html (re-exports + Lit-specific)
-export { hasFeature, getFeature, getStore } from '@videojs/store';
+export { hasFeature, getFeature } from '@videojs/store';
 export type { UnknownPlayer, ... } from '@videojs/core/dom';
 export { PlayerController, MediaController, createPlayer };
 ```
@@ -342,26 +294,6 @@ export function MediaInfo() {
       {time.currentTime !== undefined && <span>{time.currentTime}s</span>}
       {volume.volume !== undefined && <span>{Math.round(volume.volume * 100)}%</span>}
     </div>
-  );
-}
-```
-
-### Direct Store Access
-
-For advanced cases, access the store directly:
-
-```tsx
-import { getStore, usePlayer } from '@videojs/react';
-
-function DebugPanel() {
-  const player = usePlayer();
-  const store = getStore(player);
-
-  return (
-    <pre>
-      Features: {store.features.size}
-      Attached: {store.target !== null}
-    </pre>
   );
 }
 ```
