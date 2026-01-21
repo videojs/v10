@@ -3,7 +3,7 @@ name: rfc
 description: >-
   Write and review RFCs for Video.js 10. Use for design documents, architecture decisions,
   API proposals, and UI component specifications. Triggers: "write RFC", "create RFC",
-  "design doc", "component spec", "architecture proposal".
+  "design doc", "review rfc", "component spec", "architecture proposal".
 ---
 
 # RFC
