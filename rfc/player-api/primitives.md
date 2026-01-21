@@ -21,14 +21,15 @@ They need:
 2. A way to check if a feature exists
 3. Type narrowing when the feature is present
 
-## Solution: `hasFeature` and `getFeature`
+## Solution: `hasFeature`, `getFeature`, `throwMissingFeature`
 
-Two functions for feature access:
+Three utilities for feature access:
 
 | Function                | Returns                              | Use case                           |
 | ----------------------- | ------------------------------------ | ---------------------------------- |
 | `hasFeature(player, f)` | `boolean` (type guard)               | Conditional narrowing, `if` blocks |
 | `getFeature(player, f)` | Typed object, props `T \| undefined` | Direct access, optional chaining   |
+| `throwMissingFeature`   | `never` (throws)                     | Critical features, fail fast       |
 
 ### `hasFeature` — Type Guard
 
@@ -128,11 +129,12 @@ Both functions access `target[STORE_SYMBOL].features.has(feature.id)` at runtime
 
 The same API works in React and Lit:
 
-| Concept              | React                           | Lit/ReactiveElement                     |
-| -------------------- | ------------------------------- | --------------------------------------- |
-| Loosely typed player | `usePlayer()` → `UnknownPlayer` | `controller.value` → `UnknownPlayer`    |
-| Type guard           | `hasFeature(player, feature)`   | `hasFeature(controller.value, feature)` |
-| Direct access        | `getFeature(player, feature)`   | `getFeature(controller.value, feature)` |
+| Concept              | React                                | Lit/ReactiveElement                     |
+| -------------------- | ------------------------------------ | --------------------------------------- |
+| Loosely typed player | `usePlayer()` → `UnknownPlayer`      | `controller.value` → `UnknownPlayer`    |
+| Type guard           | `hasFeature(player, feature)`        | `hasFeature(controller.value, feature)` |
+| Direct access        | `getFeature(player, feature)`        | `getFeature(controller.value, feature)` |
+| Throw on missing     | `throwMissingFeature(feature, opts)` | `throwMissingFeature(feature, opts)`    |
 
 ### Package Exports
 
@@ -172,18 +174,19 @@ render() {
 }
 ```
 
-### Optional Feature — Graceful Degradation
-
-For optional enhancements, use `getFeature` with safe access:
+### Mixing Required and Optional
 
 ```tsx
 export function TimeSlider() {
   const player = usePlayer();
+
+  // Required — throw if missing
   if (!hasFeature(player, features.time)) {
     throwMissingFeature(features.time, { displayName: 'TimeSlider' });
   }
 
-  const playback = getFeature(player, features.playback); // optional
+  // Optional — graceful degradation
+  const playback = getFeature(player, features.playback);
   return <Slider onDragStart={playback.pause} onDragEnd={playback.play} />;
 }
 ```

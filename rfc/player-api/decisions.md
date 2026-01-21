@@ -217,7 +217,7 @@ function DebugPanel() {
 - **Observability:** Player→media interactions go through store. Enables debugging, tracing, request queuing.
 - **Standalone media:** Headless player, audio-only, programmatic control. Media store works alone.
 
-**Trade-off:** Feature authors navigate two stores, but most extend only player store.
+**Trade-off:** Two stores exist internally, but feature authors access media via `target.media` proxy — same flat API as components.
 
 ### Container ≠ Provider
 
@@ -284,6 +284,9 @@ interface StoreProxy<T extends AnyStore = AnyStore> {
   readonly [STORE_SYMBOL]: T;
   [key: string]: unknown;
 }
+
+interface UnknownPlayerStore extends Store<PlayerTarget, []> {}
+interface UnknownMediaStore extends Store<MediaTarget, []> {}
 
 interface UnknownPlayer extends StoreProxy<UnknownPlayerStore> {}
 interface UnknownMedia extends StoreProxy<UnknownMediaStore> {}

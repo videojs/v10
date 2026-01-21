@@ -217,4 +217,4 @@ Internal stores are implementation details until you author features.
 - `createPlayer` lives in `@videojs/html` and `@videojs/react`
 - Skins are tied to presets — stores don't extend from skins
 - Two stores internally, one API externally
-- `hasFeature`, `getFeature`, `subscribe` are framework-agnostic (from `@videojs/store`)
+- `hasFeature`, `getFeature`, `throwMissingFeature`, `subscribe` are framework-agnostic (from `@videojs/store`)
