@@ -259,30 +259,54 @@ const bad = createPlayerFeature({
 
 ## Primitives API
 
-### Type Guard over Accessor Object
+### `hasFeature` and `getFeature` — Two Access Patterns
 
-**Decision:** Use `hasFeature()` type guard instead of a separate `FeatureAccessor` object.
+**Decision:** Provide both `hasFeature()` (type guard) and `getFeature()` (direct access with `T | undefined` properties).
 
 **Alternatives considered:**
 
 - `useFeature(feature)` returning a scoped accessor object
 - `player.feature(feature)` method returning typed subset
-- `player.has(feature)` with complex type narrowing
+- Only `hasFeature` with no direct access alternative
 
 **Rationale:**
 
-- **Simpler mental model** — One hook (`usePlayer`), one guard (`hasFeature`)
-- **No new API surface** — Type guards are standard TypeScript
-- **Works with early returns** — React's hooks rules allow early returns after hooks
-- **Framework-agnostic** — Same `hasFeature` works in React and Lit
-- **Flat access preserved** — After narrowing, you still use the same proxy object
+Different use cases need different patterns:
+
+| Function     | Returns                            | Best for                                             |
+| ------------ | ---------------------------------- | ---------------------------------------------------- |
+| `hasFeature` | `boolean` (type guard)             | Required features, early returns, conditional blocks |
+| `getFeature` | Object with `T \| undefined` props | Optional features, safe access, optional chaining    |
+
+**`hasFeature` rationale:**
+
+- Standard TypeScript type guard pattern
+- Works with early returns in React
+- Narrows the player proxy in place
+- Best when feature is required
 
 ```tsx
-// Simple pattern - works in React
-const player = usePlayer();
 if (!hasFeature(player, features.playback)) return null;
-player.play(); // typed
+player.play(); // typed, guaranteed to exist
 ```
+
+**`getFeature` rationale:**
+
+- Properties are `T | undefined` — reflects runtime reality
+- Works with optional chaining (`?.`)
+- No conditional blocks needed for optional features
+- Best when feature is optional enhancement
+
+```tsx
+const playback = getFeature(player, features.playback);
+playback.play?.(); // safe, no crash if missing
+```
+
+**Why both?**
+
+- `hasFeature` for "fail if missing" (required features)
+- `getFeature` for "graceful if missing" (optional features)
+- Different semantics, same underlying proxy
 
 ### `UnknownPlayer` with Index Signature
 

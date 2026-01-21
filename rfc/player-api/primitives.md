@@ -21,7 +21,16 @@ They need:
 2. A way to check if a feature exists
 3. Type narrowing when the feature is present
 
-## Solution: `hasFeature` Type Guard
+## Solution: `hasFeature` and `getFeature`
+
+Two functions for feature access:
+
+| Function                | Returns                              | Use case                           |
+| ----------------------- | ------------------------------------ | ---------------------------------- |
+| `hasFeature(player, f)` | `boolean` (type guard)               | Conditional narrowing, `if` blocks |
+| `getFeature(player, f)` | Typed object, props `T \| undefined` | Direct access, optional chaining   |
+
+### `hasFeature` — Type Guard
 
 ```tsx
 import { features, hasFeature, usePlayer } from '@videojs/react';
@@ -39,6 +48,28 @@ export function PlayButton() {
 ```
 
 Early returns work fine in React — the hooks rule is about not _calling_ hooks conditionally, not conditional rendering.
+
+### `getFeature` — Direct Access
+
+```tsx
+import { features, getFeature, usePlayer } from '@videojs/react';
+
+export function PlayButton() {
+  const player = usePlayer();
+  const playback = getFeature(player, features.playback);
+
+  // Properties are T | undefined - safe to access
+  // If feature missing, properties return undefined
+  return <button onClick={playback.paused ? playback.play : playback.pause}>{playback.paused ? '▶' : '⏸'}</button>;
+}
+```
+
+With optional chaining:
+
+```tsx
+const playback = getFeature(player, features.playback);
+playback.play?.(); // Safe - no crash if undefined
+```
 
 ## Types
 
@@ -107,7 +138,9 @@ controller.store; // UnknownPlayerStore (direct)
 controller.value; // UnknownPlayer (tracked proxy)
 ```
 
-## `hasFeature` Implementation
+## Implementation
+
+### `hasFeature`
 
 ```ts
 // @videojs/store - framework-agnostic
@@ -126,6 +159,27 @@ The type guard:
 2. Checks `store.features.has(feature.id)` at runtime
 3. Intersects the feature's state and request types for narrowing
 
+### `getFeature`
+
+```ts
+// Return type: each property is T | undefined
+type MaybeFeature<F extends AnyFeature> = {
+  [K in keyof (InferFeatureState<F> & ResolveFeatureRequestHandlers<F>)]:
+    | (InferFeatureState<F> & ResolveFeatureRequestHandlers<F>)[K]
+    | undefined;
+};
+
+function getFeature<T extends UnknownPlayer | UnknownMedia, F extends AnyFeature>(
+  target: T,
+  feature: F
+): MaybeFeature<F> {
+  // Returns the same proxy - properties are undefined if feature missing
+  return target as MaybeFeature<F>;
+}
+```
+
+Returns the same proxy, typed to the feature. If feature is missing, property access returns `undefined` at runtime (proxy behavior), and types reflect this with `T | undefined`.
+
 ## Cross-Framework Consistency
 
 The same API works in React and Lit:
@@ -135,23 +189,24 @@ The same API works in React and Lit:
 | Loosely typed player | `usePlayer()` → `UnknownPlayer` | `controller.value` → `UnknownPlayer`    |
 | Store access         | `getStore(player)`              | `controller.store`                      |
 | Type guard           | `hasFeature(player, feature)`   | `hasFeature(controller.value, feature)` |
+| Direct access        | `getFeature(player, feature)`   | `getFeature(controller.value, feature)` |
 
 ### Package Exports
 
 ```ts
 // @videojs/store (generic utilities)
-export { hasFeature, getStore };
+export { hasFeature, getFeature, getStore };
 
 // @videojs/core/dom (player/media specific types)
 export type { UnknownPlayer, UnknownMedia, UnknownPlayerStore, UnknownMediaStore };
 
 // @videojs/react (re-exports + React-specific)
-export { hasFeature, getStore } from '@videojs/store';
+export { hasFeature, getFeature, getStore } from '@videojs/store';
 export type { UnknownPlayer, ... } from '@videojs/core/dom';
 export { usePlayer, useMedia, createPlayer };
 
 // @videojs/html (re-exports + Lit-specific)
-export { hasFeature, getStore } from '@videojs/store';
+export { hasFeature, getFeature, getStore } from '@videojs/store';
 export type { UnknownPlayer, ... } from '@videojs/core/dom';
 export { PlayerController, MediaController, createPlayer };
 ```
@@ -199,40 +254,54 @@ export class PlayButton extends ReactiveElement {
 customElements.define('vjs-play-button', PlayButton);
 ```
 
-### Optional Feature Enhancement
+### Optional Feature with `getFeature`
 
-Primitives can use features optionally for enhanced behavior:
+Use `getFeature` when you want optional access without conditional blocks:
 
 ```tsx
-import { features, hasFeature, usePlayer } from '@videojs/react';
+import { features, getFeature, hasFeature, usePlayer } from '@videojs/react';
 
 export function TimeSlider() {
   const player = usePlayer();
 
-  // Required feature
+  // Required feature - use hasFeature for early return
   if (!hasFeature(player, features.time)) {
     return null;
   }
 
-  // Optional enhancement - pause while scrubbing
-  const hasPlayback = hasFeature(player, features.playback);
-
-  const onDragStart = () => {
-    if (hasPlayback) player.pause();
-  };
-
-  const onDragEnd = () => {
-    if (hasPlayback) player.play();
-  };
+  // Optional feature - use getFeature for safe access
+  const playback = getFeature(player, features.playback);
 
   return (
     <Slider
       value={player.currentTime}
       max={player.duration}
       onChange={player.seek}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+      onDragStart={playback.pause} // undefined if no playback feature
+      onDragEnd={playback.play} // undefined if no playback feature
     />
+  );
+}
+```
+
+### Combining Multiple Features with `getFeature`
+
+```tsx
+import { features, getFeature, usePlayer } from '@videojs/react';
+
+export function MediaInfo() {
+  const player = usePlayer();
+
+  const playback = getFeature(player, features.playback);
+  const time = getFeature(player, features.time);
+  const volume = getFeature(player, features.volume);
+
+  return (
+    <div>
+      {playback.paused !== undefined && <span>{playback.paused ? 'Paused' : 'Playing'}</span>}
+      {time.currentTime !== undefined && <span>{time.currentTime}s</span>}
+      {volume.volume !== undefined && <span>{Math.round(volume.volume * 100)}%</span>}
+    </div>
   );
 }
 ```
