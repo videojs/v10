@@ -172,14 +172,7 @@ import { Slider } from '@videojs/react';
 ### Vertical Orientation
 
 ```tsx
-<Slider.Root orientation="vertical">
-  <Slider.Control>
-    <Slider.Track>
-      <Slider.Indicator />
-      <Slider.Thumb />
-    </Slider.Track>
-  </Slider.Control>
-</Slider.Root>
+<Slider.Root orientation="vertical">{/* ... */}</Slider.Root>
 ```
 
 ## Parts
@@ -350,9 +343,10 @@ vjs-slider[data-disabled] {
 
 1. **Anatomy first** — Show component structure before API details
 2. **Named examples** — Real scenarios: "Range Slider", "Vertical Orientation"
-3. **Full types** — Show union types, callback signatures
-4. **`render` prop** — Document on every part for composition
-5. **Data attributes** — Essential for styling component states
+3. **Minimal examples** — Only show what's different, use `{/* ... */}` for the rest
+4. **Full types** — Show union types, callback signatures
+5. **`render` prop** — Document on every part for composition
+6. **Data attributes** — Essential for styling component states
 
 ## Reference
 

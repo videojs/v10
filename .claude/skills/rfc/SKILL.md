@@ -208,6 +208,7 @@ Before finalizing an RFC:
 - [ ] Problem before solution — context first
 - [ ] Concepts explained before referenced
 - [ ] Code illustrates ideas, not implementation
+- [ ] Minimal examples — only show what's different, `{/* ... */}` for the rest
 - [ ] Scannable — lists and whitespace, not walls of text
 - [ ] Single source of truth — explain once, link elsewhere
 - [ ] Decisions have alternatives and rationale
