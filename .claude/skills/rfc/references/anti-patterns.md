@@ -8,6 +8,7 @@ Common mistakes that make RFCs harder to read and review.
 
 ```markdown
 // Bad — reader has no idea why
+
 ## API
 
 createPlayer(presets.website) returns Provider, usePlayer, etc.
@@ -15,6 +16,7 @@ createPlayer(presets.website) returns Provider, usePlayer, etc.
 
 ```markdown
 // Good — establishes need first
+
 ## Problem
 
 Two concerns, one player: Media (play, pause) and Container (fullscreen, keyboard).
@@ -56,27 +58,27 @@ To check if a feature is available, use `hasFeature()`:
 ```markdown
 // Bad — too much detail
 function usePlayer() {
-  const store = useContext(PlayerContext);
-  const [, forceUpdate] = useReducer(x => x + 1, 0);
-  const proxyRef = useRef<PlayerProxy>();
+const store = useContext(PlayerContext);
+const [, forceUpdate] = useReducer(x => x + 1, 0);
+const proxyRef = useRef<PlayerProxy>();
 
-  useEffect(() => {
-    const unsubscribe = store.subscribe(() => {
-      if (proxyRef.current?.hasChanges()) {
-        forceUpdate();
-      }
-    });
-    return unsubscribe;
-  }, [store]);
-  // ... 30 more lines
+useEffect(() => {
+const unsubscribe = store.subscribe(() => {
+if (proxyRef.current?.hasChanges()) {
+forceUpdate();
+}
+});
+return unsubscribe;
+}, [store]);
+// ... 30 more lines
 }
 ```
 
 ```markdown
 // Good — illustrates the concept
 const player = usePlayer();
-player.paused;  // state access subscribes automatically
-player.play();  // requests are methods
+player.paused; // state access subscribes automatically
+player.play(); // requests are methods
 ```
 
 **Fix:** Code in RFCs illustrates ideas. Save implementation for PRs.
@@ -104,8 +106,8 @@ Two stores internally, one API externally.
 
 Access via proxy:
 
-player.paused;  // reads media state
-player.isFullscreen;  // reads player state
+player.paused; // reads media state
+player.isFullscreen; // reads player state
 
 Proxy tracks access, subscribes automatically.
 ```
@@ -135,6 +137,7 @@ hasFeature() provides type narrowing for feature detection.
 
 ```markdown
 // Bad — no rationale
+
 ### Flat API Shape
 
 State and requests are on the same object.
@@ -145,11 +148,13 @@ player.play();
 
 ```markdown
 // Good — explains the choice
+
 ### Flat API Shape
 
 **Decision:** State and requests on same object, no `.state`/`.request` namespaces.
 
 **Why:**
+
 - Less nesting = less typing
 - Naming convention prevents collisions (state = nouns, requests = verbs)
 - Proxy tracking works at property level
@@ -177,6 +182,7 @@ This happens when the RFC evolves but examples aren't updated.
 
 ```markdown
 // Bad — scope creep
+
 ## Future Considerations
 
 - DevTools integration
@@ -207,6 +213,44 @@ Throw StoreError for invalid feature access.
 
 **Fix:** Be specific. Who does what?
 
+## 10. Appending Instead of Updating Decisions
+
+**Mistake:** Adding new decision entries when the design evolves instead of updating existing ones.
+
+```markdown
+// Bad — archaeology required to understand current state
+
+### Flat API Shape
+
+State and requests on same object.
+
+### Flat API Shape (Update)
+
+Added namespaces for clarity.
+
+### Flat API Shape (Final)
+
+Back to flat, runtime validation added.
+```
+
+```markdown
+// Good — single source of truth, evolution noted
+
+### Flat API Shape
+
+**Decision:** State and requests on same object, no namespaces.
+
+**Evolution:** Initially considered `.state`/`.request` namespaces, but flat won
+for ergonomics. Added runtime duplicate detection to catch collisions early.
+
+**Rationale:**
+
+- Less nesting = less typing
+- Naming convention prevents collisions
+```
+
+**Fix:** When a decision changes, update the existing entry in place. Use an "Evolution" section to note significant changes if the history matters.
+
 ## Checklist
 
 Before submitting an RFC, check for:
@@ -217,6 +261,7 @@ Before submitting an RFC, check for:
 - [ ] Key points not buried in paragraphs
 - [ ] No duplicated content across files
 - [ ] Every decision has rationale
+- [ ] Decisions updated in place (not appended)
 - [ ] Examples match current proposal
 - [ ] Scope is focused
 - [ ] Active voice, specific language

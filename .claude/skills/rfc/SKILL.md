@@ -12,13 +12,13 @@ Write Request for Comments (RFC) documents for Video.js 10.
 
 ## Reference Material
 
-| Task                    | Load                           |
-| ----------------------- | ------------------------------ |
-| Any RFC task            | This file (SKILL.md)           |
-| Choosing structure      | `references/structure.md`      |
-| Avoiding common issues  | `references/anti-patterns.md`  |
-| Feature/architecture    | `templates/feature.md`         |
-| UI component            | `templates/component.md`       |
+| Task                   | Load                          |
+| ---------------------- | ----------------------------- |
+| Any RFC task           | This file (SKILL.md)          |
+| Choosing structure     | `references/structure.md`     |
+| Avoiding common issues | `references/anti-patterns.md` |
+| Feature/architecture   | `templates/feature.md`        |
+| UI component           | `templates/component.md`      |
 
 ## When to Write an RFC
 
@@ -93,14 +93,14 @@ Code examples show concepts, not implementation details:
 ```markdown
 // ✅ Illustrates the concept
 const player = usePlayer();
-player.paused;  // state
-player.play();  // request
+player.paused; // state
+player.play(); // request
 
 // ❌ Implementation detail
 function usePlayer() {
-  const store = useContext(PlayerContext);
-  const [, forceUpdate] = useReducer(x => x + 1, 0);
-  // ... 50 more lines
+const store = useContext(PlayerContext);
+const [, forceUpdate] = useReducer(x => x + 1, 0);
+// ... 50 more lines
 }
 ```
 
@@ -123,6 +123,37 @@ Before writing, explore relevant parts of the codebase. Link to existing pattern
 
 ```markdown
 Based on the existing `SnapshotController` pattern. See `packages/store/src/snapshot.ts`.
+```
+
+### 8. Track Key Decisions
+
+Record every significant design decision in `decisions.md`. When a decision evolves, **update the existing entry** — don't append a new one.
+
+```markdown
+// ❌ Appending creates confusion
+
+### Flat API Shape (v1)
+
+State and requests on same object.
+
+### Flat API Shape (v2)
+
+Actually, we added namespaces...
+
+### Flat API Shape (v3)
+
+Back to flat, but with runtime validation...
+
+// ✅ Update in place, note what changed
+
+### Flat API Shape
+
+**Decision:** State and requests on same object, no namespaces.
+
+**Evolution:** Initially considered namespaces, but flat won for ergonomics.
+Runtime duplicate detection added to catch collisions.
+
+**Rationale:** ...
 ```
 
 ## Two RFC Types
