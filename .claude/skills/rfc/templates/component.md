@@ -1,6 +1,6 @@
 # Component RFC Template
 
-For UI primitives and compound components.
+Two variants: simple (single element) and compound (multiple parts).
 
 ## When to Use
 
@@ -9,18 +9,9 @@ For UI primitives and compound components.
 - Interaction patterns (keyboard, touch, focus)
 - Accessibility requirements
 
-## Key Differences from Feature RFCs
+## Simple Component Template
 
-| Aspect        | Feature RFC            | Component RFC        |
-| ------------- | ---------------------- | -------------------- |
-| Primary focus | Architecture, patterns | Usage, accessibility |
-| Code examples | API signatures         | JSX/HTML usage       |
-| Structure     | Problem → Solution     | Usage → API → Design |
-| Audience      | Library authors        | Component consumers  |
-
-Component RFCs lead with **how to use it** because consumers care about the interface, not the implementation.
-
-## Template
+For single-element components (Button, Icon, Badge).
 
 ````markdown
 ---
@@ -29,7 +20,7 @@ status: draft
 
 # ComponentName
 
-One-sentence description of what this component does.
+One-sentence description.
 
 ## Usage
 
@@ -38,39 +29,13 @@ One-sentence description of what this component does.
 ```tsx
 import { ComponentName } from '@videojs/react';
 
-function Player() {
-  return <ComponentName prop="value">{/* children if applicable */}</ComponentName>;
-}
+<ComponentName prop="value" />;
 ```
 
 ### HTML
 
 ```html
-<vjs-component-name prop="value">
-  <!-- children if applicable -->
-</vjs-component-name>
-```
-
-### Common Patterns
-
-#### Pattern 1: Basic
-
-```tsx
-<ComponentName />
-```
-
-#### Pattern 2: With Options
-
-```tsx
-<ComponentName variant="secondary" disabled />
-```
-
-#### Pattern 3: Compound
-
-```tsx
-<ComponentName.Root>
-  <ComponentName.Part />
-</ComponentName.Root>
+<vjs-component-name prop="value"></vjs-component-name>
 ```
 
 ## API
@@ -80,19 +45,13 @@ function Player() {
 | Prop       | Type      | Default | Description                   |
 | ---------- | --------- | ------- | ----------------------------- |
 | `prop`     | `string`  | —       | Required. What this controls. |
-| `optional` | `boolean` | `false` | Optional. What this enables.  |
-
-### State (if stateful)
-
-| State    | Type      | Description                      |
-| -------- | --------- | -------------------------------- |
-| `active` | `boolean` | Whether the component is active. |
+| `disabled` | `boolean` | `false` | Disables interaction.         |
 
 ### Callbacks
 
-| Callback   | Signature                 | Description               |
-| ---------- | ------------------------- | ------------------------- |
-| `onChange` | `(value: string) => void` | Fired when value changes. |
+| Callback  | Signature    | Description          |
+| --------- | ------------ | -------------------- |
+| `onPress` | `() => void` | Fired on activation. |
 
 ### CSS Custom Properties
 
@@ -102,109 +61,168 @@ function Player() {
 
 ### Data Attributes
 
-| Attribute    | Values           | Description              |
-| ------------ | ---------------- | ------------------------ |
-| `data-state` | `idle`, `active` | Current component state. |
+| Attribute       | Values          | Description     |
+| --------------- | --------------- | --------------- |
+| `data-disabled` | Present if true | Disabled state. |
+| `data-pressed`  | Present if true | Pressed state.  |
 
 ## Accessibility
 
 ### Keyboard
 
-| Key          | Action       |
-| ------------ | ------------ |
-| `Enter`      | Activate     |
-| `Space`      | Toggle       |
-| `Escape`     | Close/cancel |
-| `Arrow keys` | Navigate     |
+| Key     | Action   |
+| ------- | -------- |
+| `Enter` | Activate |
+| `Space` | Activate |
 
 ### ARIA
 
-- Role: `button` / `slider` / `menu` / etc.
-- Required attributes: `aria-label`, `aria-pressed`, etc.
-- Live region behavior (if applicable)
-
-### Focus
-
-- Focus visible styles
-- Focus trap behavior (if modal)
-- Focus restoration on close
-
-## Design Notes
-
-### Why This API Shape
-
-Brief rationale for the prop/state design.
-
-### Platform Differences
-
-Any differences between React and HTML versions.
+- Role: `button`
+- `aria-disabled` when disabled
 
 ## Open Questions
 
-- Unresolved design decisions
-- Accessibility considerations needing input
+- Unresolved decisions
 ````
 
-## Compound Component Addition
+## Compound Component Template
 
-For components with parts, add a Parts section:
+For multi-part components (Slider, Menu, Dialog).
 
-```markdown
+````markdown
+---
+status: draft
+---
+
+# ComponentName
+
+One-sentence description.
+
+## Usage
+
+### React
+
+```tsx
+import { ComponentName } from '@videojs/react';
+
+<ComponentName.Root>
+  <ComponentName.Track>
+    <ComponentName.Thumb />
+  </ComponentName.Track>
+</ComponentName.Root>;
+```
+
+### HTML
+
+```html
+<vjs-component-name>
+  <vjs-component-name-track>
+    <vjs-component-name-thumb></vjs-component-name-thumb>
+  </vjs-component-name-track>
+</vjs-component-name>
+```
+
 ## Parts
 
-### ComponentName.Root
+### Root
 
 Container element. Provides context to children.
 
-| Prop    | Type     | Description       |
-| ------- | -------- | ----------------- |
-| `value` | `string` | Controlled value. |
+#### Props
 
-### ComponentName.Trigger
+| Prop    | Type     | Default | Description       |
+| ------- | -------- | ------- | ----------------- |
+| `value` | `number` | —       | Controlled value. |
 
-Interactive element that activates the component.
+#### Callbacks
 
-| Prop      | Type      | Description              |
-| --------- | --------- | ------------------------ |
-| `asChild` | `boolean` | Render as child element. |
+| Callback        | Signature                 | Description      |
+| --------------- | ------------------------- | ---------------- |
+| `onValueChange` | `(value: number) => void` | Fired on change. |
 
-### ComponentName.Content
+#### Data Attributes
 
-Content displayed when active.
+| Attribute       | Values          | Description  |
+| --------------- | --------------- | ------------ |
+| `data-dragging` | Present if true | Drag active. |
 
-| Prop    | Type               | Description |
-| ------- | ------------------ | ----------- |
-| `align` | `'start' \| 'end'` | Alignment.  |
+#### CSS Custom Properties
+
+| Property          | Default | Description  |
+| ----------------- | ------- | ------------ |
+| `--vjs-slider-bg` | `#333`  | Track color. |
+
+### Track
+
+Visual track element.
+
+#### Props
+
+| Prop      | Type      | Default | Description      |
+| --------- | --------- | ------- | ---------------- |
+| `asChild` | `boolean` | `false` | Render as child. |
+
+### Thumb
+
+Draggable handle.
+
+#### Props
+
+| Prop      | Type      | Default | Description      |
+| --------- | --------- | ------- | ---------------- |
+| `asChild` | `boolean` | `false` | Render as child. |
+
+#### Data Attributes
+
+| Attribute      | Values          | Description  |
+| -------------- | --------------- | ------------ |
+| `data-focused` | Present if true | Focus state. |
+
+## Styling
+
+High-level styling guidance and examples.
+
+```css
+/* Horizontal slider */
+vjs-slider {
+  --vjs-slider-bg: #333;
+  --vjs-slider-fill: #fff;
+}
+
+/* Vertical variant */
+vjs-slider[data-orientation='vertical'] {
+  --vjs-slider-size: 120px;
+}
 ```
 
-## Slider-Type Components
+## Accessibility
 
-For range inputs, add a Values section:
+### Keyboard
 
-```markdown
-## Values
+| Key          | Action         |
+| ------------ | -------------- |
+| `Arrow keys` | Adjust value   |
+| `Home`       | Set to minimum |
+| `End`        | Set to maximum |
 
-| Property | Type     | Description     |
-| -------- | -------- | --------------- |
-| `min`    | `number` | Minimum value.  |
-| `max`    | `number` | Maximum value.  |
-| `value`  | `number` | Current value.  |
-| `step`   | `number` | Step increment. |
+### ARIA
 
-### Derived Values
+- Root role: `slider`
+- `aria-valuenow`, `aria-valuemin`, `aria-valuemax`
+- `aria-orientation` for vertical
 
-| Property  | Calculation                   | Description      |
-| --------- | ----------------------------- | ---------------- |
-| `percent` | `(value - min) / (max - min)` | Position as 0-1. |
-```
+## Open Questions
+
+- Unresolved decisions
+````
 
 ## Tips
 
 1. **Lead with usage** — Show the component in action before API tables
-2. **Show both platforms** — React and HTML examples side by side
-3. **Accessibility first** — Keyboard and ARIA requirements are essential
-4. **Tables for props** — Scannable, consistent format
-5. **Keep design notes brief** — Link to decisions doc if complex
+2. **Show both platforms** — React and HTML examples
+3. **Accessibility first** — Keyboard and ARIA are essential
+4. **Tables for everything** — Props, callbacks, CSS vars, data attributes
+5. **Part-specific API** — Each part owns its props, callbacks, CSS vars, data attributes
 
 ## Reference
 
