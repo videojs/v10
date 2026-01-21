@@ -13,8 +13,8 @@ General guidance for writing component RFCs.
 
 | Template                          | Use For                                         |
 | --------------------------------- | ----------------------------------------------- |
-| `templates/simple-component.md`   | Single-element components (Button, Icon, Badge) |
-| `templates/compound-component.md` | Multi-part components (Slider, Menu, Dialog)    |
+| `templates/component-basic.md`    | Single-element components (Button, Icon, Badge) |
+| `templates/component-compound.md` | Multi-part components (Slider, Menu, Dialog)    |
 
 ## Structure
 

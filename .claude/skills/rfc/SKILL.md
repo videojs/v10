@@ -20,8 +20,8 @@ Write Request for Comments (RFC) documents for Video.js 10.
 | Component guidance    | `references/components.md`        |
 | Feature (single-file) | `templates/feature-single.md`     |
 | Feature (multi-file)  | `templates/feature-multi.md`      |
-| Simple component      | `templates/simple-component.md`   |
-| Compound component    | `templates/compound-component.md` |
+| Component (basic)     | `templates/component-basic.md`    |
+| Component (compound)  | `templates/component-compound.md` |
 
 ## When to Write an RFC
 
