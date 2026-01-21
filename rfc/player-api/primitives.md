@@ -33,13 +33,13 @@ Two functions for feature access:
 ### `hasFeature` — Type Guard
 
 ```tsx
-import { features, hasFeature, usePlayer } from '@videojs/react';
+import { features, hasFeature, throwMissingFeature, usePlayer } from '@videojs/react';
 
 export function PlayButton() {
   const player = usePlayer(); // UnknownPlayer - loosely typed
 
   if (!hasFeature(player, features.playback)) {
-    return null; // Feature not in store
+    throwMissingFeature(features.playback, { displayName: 'PlayButton' });
   }
 
   // TypeScript narrows: player.paused and player.play() are now typed
@@ -47,28 +47,13 @@ export function PlayButton() {
 }
 ```
 
-Early returns work fine in React — the hooks rule is about not _calling_ hooks conditionally, not conditional rendering.
-
 ### `getFeature` — Direct Access
 
-```tsx
-import { features, getFeature, usePlayer } from '@videojs/react';
-
-export function PlayButton() {
-  const player = usePlayer();
-  const playback = getFeature(player, features.playback);
-
-  // Properties are T | undefined - safe to access
-  // If feature missing, properties return undefined
-  return <button onClick={playback.paused ? playback.play : playback.pause}>{playback.paused ? '▶' : '⏸'}</button>;
-}
-```
-
-With optional chaining:
+For optional features, use `getFeature` with safe access:
 
 ```tsx
-const playback = getFeature(player, features.playback);
-playback.play?.(); // Safe - no crash if undefined
+const volume = getFeature(player, features.volume);
+volume.setVolume?.(0.5); // Safe - no crash if undefined
 ```
 
 ## Types
