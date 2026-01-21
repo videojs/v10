@@ -151,47 +151,52 @@ The same API works in React and Lit:
 
 ### Package Exports
 
-| Package             | Exports                                                                    |
-| ------------------- | -------------------------------------------------------------------------- |
-| `@videojs/store`    | `createProxy`, `hasFeature`, `getFeature`, `subscribe`, `StoreProxy`       |
-| `@videojs/core/dom` | `UnknownPlayer`, `UnknownMedia`, `UnknownPlayerStore`, `UnknownMediaStore` |
-| `@videojs/react`    | Re-exports above + `usePlayer`, `useMedia`, `createPlayer`                 |
-| `@videojs/html`     | Re-exports above + `PlayerController`, `MediaController`, `createPlayer`   |
+| Package             | Exports                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| `@videojs/store`    | `createProxy`, `hasFeature`, `getFeature`, `throwMissingFeature`, `subscribe`, `StoreProxy` |
+| `@videojs/core/dom` | `UnknownPlayer`, `UnknownMedia`, `UnknownPlayerStore`, `UnknownMediaStore`                  |
+| `@videojs/react`    | Re-exports above + `usePlayer`, `useMedia`, `createPlayer`                                  |
+| `@videojs/html`     | Re-exports above + `PlayerController`, `MediaController`, `createPlayer`                    |
 
 ## Examples
 
-### React
+### Critical Feature — Throw on Missing
+
+For components that require a feature to function, throw an error to surface misconfiguration:
 
 ```tsx
 export function PlayButton() {
   const player = usePlayer();
-  if (!hasFeature(player, features.playback)) return null;
+  if (!hasFeature(player, features.playback)) {
+    throwMissingFeature(features.playback, 'PlayButton');
+  }
 
   return <button onClick={player.play}>{player.paused ? '▶' : '⏸'}</button>;
 }
 ```
 
-### Lit
-
 ```ts
-class PlayButton extends ReactiveElement {
-  #player = new PlayerController(this);
-
-  render() {
-    const player = this.#player.value;
-    if (!hasFeature(player, features.playback)) return null;
-
-    return html`<button @click=${player.play}>${player.paused ? '▶' : '⏸'}</button>`;
+// Lit
+render() {
+  const player = this.#player.value;
+  if (!hasFeature(player, features.playback)) {
+    throwMissingFeature(features.playback, 'PlayButton');
   }
+
+  return html`<button @click=${player.play}>${player.paused ? '▶' : '⏸'}</button>`;
 }
 ```
 
-### Mixing Required and Optional
+### Optional Feature — Graceful Degradation
+
+For optional enhancements, use `getFeature` with safe access:
 
 ```tsx
 export function TimeSlider() {
   const player = usePlayer();
-  if (!hasFeature(player, features.time)) return null; // required
+  if (!hasFeature(player, features.time)) {
+    throwMissingFeature(features.time, 'TimeSlider'); // critical
+  }
 
   const playback = getFeature(player, features.playback); // optional
   return <Slider onDragStart={playback.pause} onDragEnd={playback.play} />;

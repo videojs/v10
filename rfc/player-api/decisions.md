@@ -247,24 +247,33 @@ const bad = createPlayerFeature({
 
 ## Primitives API
 
-### `hasFeature` and `getFeature` — Two Access Patterns
+### `hasFeature`, `getFeature`, `throwMissingFeature`
 
-**Decision:** Provide both `hasFeature()` (type guard) and `getFeature()` (direct access with `T | undefined` properties).
+**Decision:** Three utilities for feature access:
 
-| Function     | Returns                            | Best for                             |
-| ------------ | ---------------------------------- | ------------------------------------ |
-| `hasFeature` | Type guard                         | Required features, early returns     |
-| `getFeature` | Object with `T \| undefined` props | Optional features, optional chaining |
+| Function              | Returns                            | Best for                             |
+| --------------------- | ---------------------------------- | ------------------------------------ |
+| `hasFeature`          | Type guard                         | Conditional narrowing                |
+| `getFeature`          | Object with `T \| undefined` props | Optional features, optional chaining |
+| `throwMissingFeature` | `never` (throws)                   | Critical features, fail fast         |
 
 ```ts
-// hasFeature — fail if missing
-if (!hasFeature(player, features.playback)) return null;
+// Critical feature — throw on missing
+if (!hasFeature(player, features.playback)) {
+  throwMissingFeature(features.playback, 'PlayButton');
+}
 player.play(); // typed, guaranteed
 
-// getFeature — graceful if missing
-const playback = getFeature(player, features.playback);
-playback.play?.(); // safe, no crash
+// Optional feature — graceful degradation
+const volume = getFeature(player, features.volume);
+volume.setVolume?.(0.5); // safe, no crash
 ```
+
+**`throwMissingFeature` rationale:**
+
+- Surfaces misconfiguration immediately — silent `return null` hides bugs
+- Clear error message: "PlayButton requires playback feature"
+- Component name in error helps debugging
 
 ### `StoreProxy<T>` and `UnknownPlayer`
 
