@@ -12,13 +12,12 @@ Write Request for Comments (RFC) documents for Video.js 10.
 
 ## Reference Material
 
-| Task                   | Load                          |
-| ---------------------- | ----------------------------- |
-| Any RFC task           | This file (SKILL.md)          |
-| Choosing structure     | `references/structure.md`     |
-| Avoiding common issues | `references/anti-patterns.md` |
-| Feature/architecture   | `templates/feature.md`        |
-| UI component           | `templates/component.md`      |
+| Task                 | Load                      |
+| -------------------- | ------------------------- |
+| Any RFC task         | This file (SKILL.md)      |
+| Choosing structure   | `references/structure.md` |
+| Feature/architecture | `templates/feature.md`    |
+| UI component         | `templates/component.md`  |
 
 ## When to Write an RFC
 
@@ -206,12 +205,15 @@ See `references/structure.md` for guidance.
 
 Before finalizing an RFC:
 
-- [ ] Starts with clear problem statement
-- [ ] First-time reader can follow without prior context
-- [ ] Concepts introduced in order they're needed
-- [ ] Code examples illustrate ideas (not implementation)
-- [ ] Links to relevant existing code
-- [ ] No heavy implementation details
+- [ ] Problem before solution — context first
+- [ ] Concepts explained before referenced
+- [ ] Code illustrates ideas, not implementation
+- [ ] Scannable — lists and whitespace, not walls of text
+- [ ] Single source of truth — explain once, link elsewhere
+- [ ] Decisions have alternatives and rationale
+- [ ] Decisions updated in place, not appended
+- [ ] Examples match current proposal
+- [ ] Focused scope — future work in Open Questions
 - [ ] Multi-file if 3+ distinct concepts
 - [ ] Frontmatter has `status: draft`
 
