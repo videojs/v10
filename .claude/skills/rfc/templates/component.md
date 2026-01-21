@@ -11,12 +11,12 @@ For UI primitives and compound components.
 
 ## Key Differences from Feature RFCs
 
-| Aspect          | Feature RFC            | Component RFC                  |
-| --------------- | ---------------------- | ------------------------------ |
-| Primary focus   | Architecture, patterns | Usage, accessibility           |
-| Code examples   | API signatures         | JSX/HTML usage                 |
-| Structure       | Problem → Solution     | Usage → API → Design           |
-| Audience        | Library authors        | Component consumers            |
+| Aspect        | Feature RFC            | Component RFC        |
+| ------------- | ---------------------- | -------------------- |
+| Primary focus | Architecture, patterns | Usage, accessibility |
+| Code examples | API signatures         | JSX/HTML usage       |
+| Structure     | Problem → Solution     | Usage → API → Design |
+| Audience      | Library authors        | Component consumers  |
 
 Component RFCs lead with **how to use it** because consumers care about the interface, not the implementation.
 
@@ -39,11 +39,7 @@ One-sentence description of what this component does.
 import { ComponentName } from '@videojs/react';
 
 function Player() {
-  return (
-    <ComponentName prop="value">
-      {/* children if applicable */}
-    </ComponentName>
-  );
+  return <ComponentName prop="value">{/* children if applicable */}</ComponentName>;
 }
 ```
 
@@ -81,45 +77,45 @@ function Player() {
 
 ### Props
 
-| Prop       | Type      | Default | Description                    |
-| ---------- | --------- | ------- | ------------------------------ |
-| `prop`     | `string`  | —       | Required. What this controls.  |
-| `optional` | `boolean` | `false` | Optional. What this enables.   |
+| Prop       | Type      | Default | Description                   |
+| ---------- | --------- | ------- | ----------------------------- |
+| `prop`     | `string`  | —       | Required. What this controls. |
+| `optional` | `boolean` | `false` | Optional. What this enables.  |
 
 ### State (if stateful)
 
-| State     | Type      | Description                      |
-| --------- | --------- | -------------------------------- |
-| `active`  | `boolean` | Whether the component is active. |
+| State    | Type      | Description                      |
+| -------- | --------- | -------------------------------- |
+| `active` | `boolean` | Whether the component is active. |
 
 ### Callbacks
 
-| Callback   | Signature                    | Description             |
-| ---------- | ---------------------------- | ----------------------- |
-| `onChange` | `(value: string) => void`    | Fired when value changes. |
+| Callback   | Signature                 | Description               |
+| ---------- | ------------------------- | ------------------------- |
+| `onChange` | `(value: string) => void` | Fired when value changes. |
 
 ### CSS Custom Properties
 
-| Property              | Default  | Description           |
-| --------------------- | -------- | --------------------- |
-| `--vjs-component-bg`  | `#000`   | Background color.     |
+| Property             | Default | Description       |
+| -------------------- | ------- | ----------------- |
+| `--vjs-component-bg` | `#000`  | Background color. |
 
 ### Data Attributes
 
-| Attribute             | Values           | Description               |
-| --------------------- | ---------------- | ------------------------- |
-| `data-state`          | `idle`, `active` | Current component state.  |
+| Attribute    | Values           | Description              |
+| ------------ | ---------------- | ------------------------ |
+| `data-state` | `idle`, `active` | Current component state. |
 
 ## Accessibility
 
 ### Keyboard
 
-| Key          | Action                    |
-| ------------ | ------------------------- |
-| `Enter`      | Activate                  |
-| `Space`      | Toggle                    |
-| `Escape`     | Close/cancel              |
-| `Arrow keys` | Navigate                  |
+| Key          | Action       |
+| ------------ | ------------ |
+| `Enter`      | Activate     |
+| `Space`      | Toggle       |
+| `Escape`     | Close/cancel |
+| `Arrow keys` | Navigate     |
 
 ### ARIA
 
@@ -139,10 +135,6 @@ function Player() {
 
 Brief rationale for the prop/state design.
 
-### Compound vs Monolithic
-
-If compound pattern, explain why separate parts.
-
 ### Platform Differences
 
 Any differences between React and HTML versions.
@@ -157,54 +149,54 @@ Any differences between React and HTML versions.
 
 For components with parts, add a Parts section:
 
-````markdown
+```markdown
 ## Parts
 
 ### ComponentName.Root
 
 Container element. Provides context to children.
 
-| Prop       | Type     | Description          |
-| ---------- | -------- | -------------------- |
-| `value`    | `string` | Controlled value.    |
+| Prop    | Type     | Description       |
+| ------- | -------- | ----------------- |
+| `value` | `string` | Controlled value. |
 
 ### ComponentName.Trigger
 
 Interactive element that activates the component.
 
-| Prop       | Type     | Description          |
-| ---------- | -------- | -------------------- |
-| `asChild`  | `boolean`| Render as child element. |
+| Prop      | Type      | Description              |
+| --------- | --------- | ------------------------ |
+| `asChild` | `boolean` | Render as child element. |
 
 ### ComponentName.Content
 
 Content displayed when active.
 
-| Prop       | Type     | Description          |
-| ---------- | -------- | -------------------- |
-| `align`    | `'start' \| 'end'` | Alignment. |
-````
+| Prop    | Type               | Description |
+| ------- | ------------------ | ----------- |
+| `align` | `'start' \| 'end'` | Alignment.  |
+```
 
 ## Slider-Type Components
 
 For range inputs, add a Values section:
 
-````markdown
+```markdown
 ## Values
 
-| Property      | Type     | Description                |
-| ------------- | -------- | -------------------------- |
-| `min`         | `number` | Minimum value.             |
-| `max`         | `number` | Maximum value.             |
-| `value`       | `number` | Current value.             |
-| `step`        | `number` | Step increment.            |
+| Property | Type     | Description     |
+| -------- | -------- | --------------- |
+| `min`    | `number` | Minimum value.  |
+| `max`    | `number` | Maximum value.  |
+| `value`  | `number` | Current value.  |
+| `step`   | `number` | Step increment. |
 
 ### Derived Values
 
-| Property      | Calculation         | Description              |
-| ------------- | ------------------- | ------------------------ |
-| `percent`     | `(value - min) / (max - min)` | Position as 0-1. |
-````
+| Property  | Calculation                   | Description      |
+| --------- | ----------------------------- | ---------------- |
+| `percent` | `(value - min) / (max - min)` | Position as 0-1. |
+```
 
 ## Tips
 
