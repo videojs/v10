@@ -211,8 +211,8 @@ For range inputs, add a Values section:
 Components follow patterns from:
 
 - [WAI-ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/)
-- Radix UI component APIs
-- Headless UI patterns
+- [Base UI](https://base-ui.com/) component APIs
+- [Radix UI](https://www.radix-ui.com/) as fallback
 
 Load the `aria` skill for accessibility implementation details.
 Load the `component` skill for component architecture patterns.
