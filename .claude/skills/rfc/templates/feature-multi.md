@@ -1,100 +1,12 @@
-# Feature RFC Template
-
-For APIs, architecture, patterns, and extensibility decisions.
-
-## When to Use
-
-- New public APIs
-- Architectural changes affecting multiple packages
-- Cross-cutting patterns
-- Extensibility mechanisms
-
-## Single-File Template
-
-For straightforward proposals with one concept.
-
-````markdown
----
-status: draft
----
-
-# Feature Name
-
-One-sentence summary of what this enables.
-
-## Problem
-
-What pain exists. Be specific about the current state and why it's insufficient.
-
-**Example:**
-
-```
-Users want X, but currently they must Y.
-This causes Z problems: [list specific issues]
-```
-
-## Solution
-
-High-level approach. One paragraph max.
-
-## Quick Start
-
-Minimal working example. Show the feature in use.
-
-```ts
-// The simplest possible example that demonstrates value
-```
-
-## API
-
-### Function/Component Name
-
-```ts
-// Signature
-function featureName(config: Config): Result;
-```
-
-| Parameter | Type     | Description        |
-| --------- | -------- | ------------------ |
-| `config`  | `Config` | What this controls |
-
-**Returns:** What comes back and what to do with it.
-
-### Types
-
-```ts
-interface Config {
-  // ...
-}
-```
-
-## Behavior
-
-How it works at a high level. No implementation details.
-
-- What triggers updates
-- What side effects occur
-- Error handling approach
-
-## Trade-offs
-
-| Gain        | Cost            |
-| ----------- | --------------- |
-| What we get | What we give up |
-
-## Open Questions
-
-Unresolved decisions that need input.
-
-- Question 1?
-- Question 2?
-````
-
-## Multi-File Template
+# Multi-File Feature Template
 
 For complex proposals with 3+ distinct concepts.
 
-### Directory Structure
+See `references/features.md` for general guidance.
+
+---
+
+## Directory Structure
 
 ```
 rfc/feature-name/
@@ -104,9 +16,11 @@ rfc/feature-name/
 └── examples.md       # Extended usage examples
 ```
 
-### index.md
+---
 
-````markdown
+## index.md
+
+```markdown
 ---
 status: draft
 ---
@@ -133,59 +47,61 @@ What happens if we don't solve this?
 
 ## Quick Start
 
-### Platform 1 (e.g., React)
+### React
 
-```tsx
+\`\`\`tsx
 // Minimal working example
-```
+\`\`\`
 
-### Platform 2 (e.g., HTML/Lit)
+### HTML/Lit
 
-```ts
+\`\`\`ts
 // Same concept, different platform
-```
+\`\`\`
 
 ## Surface API
 
 ### createFeature
 
-```ts
+\`\`\`ts
 // Primary factory or entry point
-```
+\`\`\`
 
 ### Returns
 
-```ts
+\`\`\`ts
 const {
-  // What you get back
+// What you get back
 } = createFeature(config);
-```
+\`\`\`
 
 ### Core Types
 
-```ts
+\`\`\`ts
 // Only the types users interact with directly
-```
+\`\`\`
 
 ## Related Docs
 
 - [decisions.md](decisions.md) — Why these choices
 - [architecture.md](architecture.md) — How it works internally
 - [examples.md](examples.md) — More usage examples
-````
+```
 
-### architecture.md
+---
 
-````markdown
+## architecture.md
+
+```markdown
 # Architecture
 
 Internal structure of Feature Name.
 
 ## Overview
 
-```
+\`\`\`
 ASCII diagram showing key components and data flow
-```
+\`\`\`
 
 One-paragraph summary of the architecture.
 
@@ -197,11 +113,11 @@ What this component does.
 
 ### Interface
 
-```ts
+\`\`\`ts
 interface Component1 {
-  // ...
+// ...
 }
-```
+\`\`\`
 
 ### Behavior
 
@@ -215,18 +131,16 @@ How it works. Keep high-level.
 
 How information moves through the system.
 
-```
-Diagram or numbered steps
-```
-
 ## Constraints
 
 - Architectural limitations
 - Invariants that must hold
 - Performance considerations
-````
+```
 
-### decisions.md
+---
+
+## decisions.md
 
 ```markdown
 # Design Decisions
@@ -264,15 +178,13 @@ Rationale behind Feature Name choices.
 ### Question 1
 
 Context and options being considered.
-
-### Question 2
-
-(Same structure)
 ```
 
-### examples.md
+---
 
-````markdown
+## examples.md
+
+```markdown
 # Examples
 
 Usage examples for Feature Name.
@@ -281,53 +193,41 @@ Usage examples for Feature Name.
 
 ### Scenario 1
 
-```ts
+\`\`\`ts
 // Example with comments explaining what's happening
-```
+\`\`\`
 
 ### Scenario 2
 
-```ts
+\`\`\`ts
 // Another example
-```
+\`\`\`
 
 ## Advanced Usage
 
 ### Custom Configuration
 
-```ts
+\`\`\`ts
 // Example with non-default options
-```
+\`\`\`
 
 ### Integration with Other Features
 
-```ts
+\`\`\`ts
 // How this works alongside other APIs
-```
+\`\`\`
 
 ## Platform-Specific
 
 ### React
 
-```tsx
+\`\`\`tsx
 // React-specific patterns
-```
+\`\`\`
 
 ### HTML/Lit
 
-```ts
+\`\`\`ts
 // Lit-specific patterns
+\`\`\`
 ```
-````
-
-## Tips
-
-1. **Start with index.md** — Problem and quick start first
-2. **Add files as needed** — Don't create empty architecture.md
-3. **Link between files** — "See [decisions.md](decisions.md) for rationale"
-4. **Keep examples minimal** — Just enough to show the concept
-5. **Tables for structured info** — Parameters, returns, options
-
-## Reference
-
-See `rfc/player-api/` for a complete multi-file example.

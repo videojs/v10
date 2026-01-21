@@ -12,12 +12,16 @@ Write Request for Comments (RFC) documents for Video.js 10.
 
 ## Reference Material
 
-| Task                 | Load                      |
-| -------------------- | ------------------------- |
-| Any RFC task         | This file (SKILL.md)      |
-| Choosing structure   | `references/structure.md` |
-| Feature/architecture | `templates/feature.md`    |
-| UI component         | `templates/component.md`  |
+| Task                  | Load                              |
+| --------------------- | --------------------------------- |
+| Any RFC task          | This file (SKILL.md)              |
+| Choosing structure    | `references/structure.md`         |
+| Feature guidance      | `references/features.md`          |
+| Component guidance    | `references/components.md`        |
+| Feature (single-file) | `templates/feature-single.md`     |
+| Feature (multi-file)  | `templates/feature-multi.md`      |
+| Simple component      | `templates/simple-component.md`   |
+| Compound component    | `templates/compound-component.md` |
 
 ## When to Write an RFC
 
@@ -167,13 +171,13 @@ For APIs, architecture, patterns, extensibility decisions.
 - Architectural changes
 - Cross-cutting patterns
 
-See `templates/feature.md` for full template.
+See `references/features.md` for guidance, `templates/feature-single.md` or `templates/feature-multi.md` for templates.
 
 ### Component RFC
 
 For UI primitives and compound components.
 
-**Structure:** Usage (examples first) → API (tables) → Design Notes
+**Structure:** Anatomy → Examples → Parts (API tables) → Accessibility
 
 **When to use:**
 
@@ -181,7 +185,7 @@ For UI primitives and compound components.
 - Component API changes
 - Interaction patterns
 
-See `templates/component.md` for full template.
+See `references/components.md` for guidance, `templates/simple-component.md` or `templates/compound-component.md` for templates.
 
 ## Single vs Multi-File
 

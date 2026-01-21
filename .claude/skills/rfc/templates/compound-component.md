@@ -1,114 +1,12 @@
-# Component RFC Template
-
-Two variants: simple (single element) and compound (multiple parts).
-
-## When to Use
-
-- New UI components
-- Component API changes
-- Interaction patterns (keyboard, touch, focus)
-- Accessibility requirements
-
-## Simple Component Template
-
-For single-element components (Button, Icon, Badge).
-
-````markdown
----
-status: draft
----
-
-# ComponentName
-
-One-sentence description.
-
-## Usage
-
-### React
-
-```tsx
-import { ComponentName } from '@videojs/react';
-
-<ComponentName prop="value" />;
-```
-
-### HTML
-
-```html
-<vjs-component-name prop="value"></vjs-component-name>
-```
-
-## Examples
-
-### With Icon
-
-```tsx
-<ComponentName>
-  <Icon name="play" />
-  Play
-</ComponentName>
-```
-
-### Disabled State
-
-```tsx
-<ComponentName disabled>Unavailable</ComponentName>
-```
-
-## API
-
-### Props
-
-| Prop       | Type                                             | Default | Description                   |
-| ---------- | ------------------------------------------------ | ------- | ----------------------------- |
-| `prop`     | `string`                                         | —       | Required. What this controls. |
-| `disabled` | `boolean`                                        | `false` | Disables interaction.         |
-| `render`   | `ReactElement \| (props, state) => ReactElement` | —       | Custom render element.        |
-
-### Callbacks
-
-| Callback  | Signature    | Description          |
-| --------- | ------------ | -------------------- |
-| `onPress` | `() => void` | Fired on activation. |
-
-### Data Attributes
-
-| Attribute       | Description            |
-| --------------- | ---------------------- |
-| `data-disabled` | Present when disabled. |
-| `data-pressed`  | Present when pressed.  |
-| `data-focused`  | Present when focused.  |
-
-### CSS Custom Properties
-
-| Property             | Default | Description       |
-| -------------------- | ------- | ----------------- |
-| `--vjs-component-bg` | `#000`  | Background color. |
-
-## Accessibility
-
-### Keyboard
-
-| Key     | Action   |
-| ------- | -------- |
-| `Enter` | Activate |
-| `Space` | Activate |
-
-### ARIA
-
-- Role: `button`
-- `aria-disabled` when disabled
-
-## Open Questions
-
-- Unresolved decisions
-````
-
-## Compound Component Template
+# Compound Component Template
 
 For multi-part components (Slider, Menu, Dialog).
 
-````markdown
+See `references/components.md` for general guidance.
+
+---
+
+```markdown
 ---
 status: draft
 ---
@@ -121,59 +19,53 @@ One-sentence description.
 
 ### React
 
-```tsx
+\`\`\`tsx
 import { Slider } from '@videojs/react';
 
-<Slider.Root defaultValue={50}>
-  {' '}
-  {/* Container, state owner */}
-  <Slider.Control>
-    {' '}
-    {/* Interactive area */}
-    <Slider.Track>
-      {' '}
-      {/* Visual track */}
-      <Slider.Indicator /> {/* Filled portion */}
-      <Slider.Thumb /> {/* Draggable handle */}
-    </Slider.Track>
-  </Slider.Control>
+<Slider.Root defaultValue={50}> {/_ Container, state owner _/}
+<Slider.Control> {/_ Interactive area _/}
+<Slider.Track> {/_ Visual track _/}
+<Slider.Indicator /> {/_ Filled portion _/}
+<Slider.Thumb /> {/_ Draggable handle _/}
+</Slider.Track>
+</Slider.Control>
 </Slider.Root>;
-```
+\`\`\`
 
 ### HTML
 
-```html
+\`\`\`html
 <vjs-slider value="50">
-  <vjs-slider-control>
-    <vjs-slider-track>
-      <vjs-slider-indicator></vjs-slider-indicator>
-      <vjs-slider-thumb></vjs-slider-thumb>
-    </vjs-slider-track>
-  </vjs-slider-control>
+<vjs-slider-control>
+<vjs-slider-track>
+<vjs-slider-indicator></vjs-slider-indicator>
+<vjs-slider-thumb></vjs-slider-thumb>
+</vjs-slider-track>
+</vjs-slider-control>
 </vjs-slider>
-```
+\`\`\`
 
 ## Examples
 
 ### Range Slider
 
-```tsx
+\`\`\`tsx
 <Slider.Root defaultValue={[25, 75]}>
-  <Slider.Control>
-    <Slider.Track>
-      <Slider.Indicator />
-      <Slider.Thumb index={0} aria-label="Minimum" />
-      <Slider.Thumb index={1} aria-label="Maximum" />
-    </Slider.Track>
-  </Slider.Control>
+<Slider.Control>
+<Slider.Track>
+<Slider.Indicator />
+<Slider.Thumb index={0} aria-label="Minimum" />
+<Slider.Thumb index={1} aria-label="Maximum" />
+</Slider.Track>
+</Slider.Control>
 </Slider.Root>
-```
+\`\`\`
 
 ### Vertical Orientation
 
-```tsx
-<Slider.Root orientation="vertical">{/* ... */}</Slider.Root>
-```
+\`\`\`tsx
+<Slider.Root orientation="vertical">{/_ ... _/}</Slider.Root>
+\`\`\`
 
 ## Parts
 
@@ -293,26 +185,26 @@ Draggable handle.
 
 High-level styling guidance.
 
-```css
-/* Basic horizontal slider */
+\`\`\`css
+/_ Basic horizontal slider _/
 vjs-slider {
-  --vjs-slider-size: 200px;
-  --vjs-track-bg: #333;
-  --vjs-indicator-bg: #fff;
-  --vjs-thumb-size: 16px;
+--vjs-slider-size: 200px;
+--vjs-track-bg: #333;
+--vjs-indicator-bg: #fff;
+--vjs-thumb-size: 16px;
 }
 
-/* Vertical variant */
+/_ Vertical variant _/
 vjs-slider[data-orientation='vertical'] {
-  --vjs-slider-size: 120px;
+--vjs-slider-size: 120px;
 }
 
-/* Disabled state */
+/_ Disabled state _/
 vjs-slider[data-disabled] {
-  opacity: 0.5;
-  pointer-events: none;
+opacity: 0.5;
+pointer-events: none;
 }
-```
+\`\`\`
 
 ## Accessibility
 
@@ -337,24 +229,4 @@ vjs-slider[data-disabled] {
 ## Open Questions
 
 - Unresolved decisions
-````
-
-## Tips
-
-1. **Anatomy first** — Show component structure before API details
-2. **Named examples** — Real scenarios: "Range Slider", "Vertical Orientation"
-3. **Minimal examples** — Only show what's different, use `{/* ... */}` for the rest
-4. **Full types** — Show union types, callback signatures
-5. **`render` prop** — Document on every part for composition
-6. **Data attributes** — Essential for styling component states
-
-## Reference
-
-Components follow patterns from:
-
-- [WAI-ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/)
-- [Base UI](https://base-ui.com/) component APIs
-- [Radix UI](https://www.radix-ui.com/) as fallback
-
-Load the `aria` skill for accessibility implementation details.
-Load the `component` skill for component architecture patterns.
+```
