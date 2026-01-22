@@ -5,10 +5,10 @@ import type { State } from './state';
  *
  * @example
  * ```ts
- * const effectiveVolume = computed(state, ['volume', 'muted'], ({ volume, muted }) => muted ? 0 : volume);
+ * const effectiveVolume = createComputed(state, ['volume', 'muted'], ({ volume, muted }) => muted ? 0 : volume);
  * ```
  */
-export function computed<T extends object, K extends keyof T, R>(
+export function createComputed<T extends object, K extends keyof T, R>(
   state: State<T>,
   keys: K[],
   derive: (snapshot: Pick<T, K>) => R,

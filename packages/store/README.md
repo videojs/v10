@@ -650,9 +650,9 @@ flush();
 Derive reactive values from state:
 
 ```ts
-import { computed } from '@videojs/store';
+import { createComputed } from '@videojs/store';
 
-const effectiveVolume = computed(state, ['volume', 'muted'], ({ volume, muted }) => (muted ? 0 : volume));
+const effectiveVolume = createComputed(state, ['volume', 'muted'], ({ volume, muted }) => (muted ? 0 : volume));
 
 effectiveVolume.current; // derived value
 effectiveVolume.subscribe(() => console.log('changed'));
