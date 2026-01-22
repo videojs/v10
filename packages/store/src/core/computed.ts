@@ -1,6 +1,22 @@
 import type { State } from './state';
 
 /**
+ * Create a computed value derived from state.
+ *
+ * @example
+ * ```ts
+ * const effectiveVolume = computed(state, ['volume', 'muted'], ({ volume, muted }) => muted ? 0 : volume);
+ * ```
+ */
+export function computed<T extends object, K extends keyof T, R>(
+  state: State<T>,
+  keys: K[],
+  derive: (snapshot: Pick<T, K>) => R,
+): Computed<T, K, R> {
+  return new Computed(state, keys, derive);
+}
+
+/**
  * A computed value derived from state.
  *
  * The derived value is recomputed when any of the specified keys change.
