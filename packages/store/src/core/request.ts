@@ -105,8 +105,8 @@ export type ResolveRequestMap<Requests> = {
 
 export type ResolveRequestHandler<R>
   = R extends Request<infer I, infer O>
-    ? [I] extends [void]
-        ? (input?: null, meta?: RequestMetaInit) => Promise<O>
+    ? [I] extends [void | undefined]
+        ? (input?: undefined, meta?: RequestMetaInit) => Promise<O>
         : (input: I, meta?: RequestMetaInit) => Promise<O>
     : never;
 

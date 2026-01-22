@@ -177,12 +177,12 @@ await store.request.seek(30);
 Every request accepts optional metadata as the last argument.
 
 ```ts
-store.request.play(null, { source: 'user', reason: 'play-button' });
+store.request.play(undefined, { source: 'user', reason: 'play-button' });
 store.request.seek(30, { source: 'user', reason: 'slider-scrub' });
-store.request.pause(null, { source: 'system', reason: 'ad-start' });
+store.request.pause(undefined, { source: 'system', reason: 'ad-start' });
 
 // Infer metadata from DOM event
-store.request.play(null, createRequestMetaFromEvent(clickEvent)); // MouseEvent
+store.request.play(undefined, createRequestMetaFromEvent(clickEvent)); // MouseEvent
 ```
 
 Handlers receive metadata:

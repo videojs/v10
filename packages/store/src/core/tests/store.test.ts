@@ -252,7 +252,7 @@ describe('store', () => {
 
       store.attach(new MockMedia());
 
-      await store.request.action(null, {
+      await store.request.action(undefined, {
         source: 'user',
         reason: 'test',
       });
