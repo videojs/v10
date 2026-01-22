@@ -1,3 +1,4 @@
+export * from './computed';
 export * from './errors';
 export * from './extend-config';
 export * from './feature';

@@ -7,7 +7,7 @@ import type {
   UnionFeatureTasks,
 } from './feature';
 import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
-import type { Reactive } from './state';
+import type { State, WritableState } from './state';
 import type { PendingTask, Task, TaskContext } from './task';
 
 import { abortable } from '@videojs/utils/events';
@@ -16,7 +16,7 @@ import { isNull } from '@videojs/utils/predicate';
 import { StoreError } from './errors';
 import { Queue } from './queue';
 import { CANCEL_ALL, createRequestMeta, resolveRequestCancel, resolveRequestKey } from './request';
-import { reactive } from './state';
+import { createState } from './state';
 
 export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Target>[]> {
   readonly #config: StoreConfig<Target, Features>;
@@ -25,9 +25,7 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
   readonly #request: UnionFeatureRequests<Features>;
   readonly #requestConfigs: Map<string, ResolvedRequestConfig<Target>>;
   readonly #setupAbort = new AbortController();
-
-  /** Reactive state. Subscribe via `subscribe(store.state, fn)`. */
-  readonly state: Reactive<UnionFeatureState<Features> & object>;
+  readonly #state: WritableState<UnionFeatureState<Features> & object>;
 
   #target: Target | null = null;
   #attachAbort: AbortController | null = null;
@@ -38,7 +36,7 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
     this.#features = config.features;
 
     this.#queue = config.queue ?? new Queue<UnionFeatureTasks<Features>>();
-    this.state = reactive(this.#createInitialState() as UnionFeatureState<Features> & object);
+    this.#state = createState(this.#createInitialState() as UnionFeatureState<Features> & object);
 
     this.#requestConfigs = this.#buildRequestConfigs();
     this.#request = this.#buildRequestProxy();
@@ -59,6 +57,10 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
 
   get target(): Target | null {
     return this.#target;
+  }
+
+  get state(): State<UnionFeatureState<Features> & object> {
+    return this.#state;
   }
 
   get request(): UnionFeatureRequests<Features> {
@@ -166,7 +168,7 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
         initialState: feature.initialState,
       });
 
-      Object.assign(this.state as object, snapshot);
+      this.#state.patch(snapshot);
     } catch (error) {
       this.#handleError({ error });
     }
@@ -183,7 +185,7 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
   }
 
   #resetState(): void {
-    Object.assign(this.state as object, this.#createInitialState());
+    this.#state.patch(this.#createInitialState() as Partial<UnionFeatureState<Features> & object>);
   }
 
   // ----------------------------------------
@@ -263,7 +265,7 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
         handler,
       });
     } catch (error) {
-      const tasks = this.#queue.tasks as Record<string | symbol, Task | undefined>;
+      const tasks = this.#queue.tasks.current as Record<string | symbol, Task | undefined>;
       const task = tasks[name];
 
       this.#handleError({

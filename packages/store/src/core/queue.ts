@@ -1,12 +1,12 @@
 import type { Request, RequestMeta, RequestMode } from './request';
-import type { Reactive } from './state';
+import type { State, WritableState } from './state';
 import type { ErrorTask, PendingTask, SuccessTask, Task, TaskContext, TaskKey } from './task';
 
 import { abortable } from '@videojs/utils/events';
 import { isUndefined } from '@videojs/utils/predicate';
 
 import { StoreError } from './errors';
-import { reactive } from './state';
+import { createState } from './state';
 
 // ----------------------------------------
 // Types
@@ -38,15 +38,17 @@ export type TasksRecord<Tasks extends TaskRecord> = {
 // ----------------------------------------
 
 export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
-  /** Reactive tasks. Subscribe via `subscribe(queue.tasks, fn)`. */
-  readonly tasks: Reactive<TasksRecord<Tasks>>;
-
+  readonly #tasks: WritableState<TasksRecord<Tasks>>;
   readonly #sharedPromises = new Map<TaskKey, Promise<unknown>>();
 
   #destroyed = false;
 
+  get tasks(): State<TasksRecord<Tasks>> {
+    return this.#tasks;
+  }
+
   constructor() {
-    this.tasks = reactive({} as TasksRecord<Tasks>);
+    this.#tasks = createState({});
   }
 
   get destroyed(): boolean {
@@ -56,17 +58,19 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   /** Clear settled task(s). If name provided, clears that task. If no name, clears all settled. */
   reset(name?: keyof Tasks): void {
     if (!isUndefined(name)) {
-      const task = this.tasks[name];
+      const task = this.tasks.current[name];
       if (!task || task.status === 'pending') return;
 
-      delete this.tasks[name];
+      this.#tasks.delete(name);
+
       return;
     }
 
-    for (const key of Reflect.ownKeys(this.tasks) as (keyof Tasks)[]) {
-      const task = this.tasks[key];
+    for (const key of Reflect.ownKeys(this.tasks.current) as (keyof Tasks)[]) {
+      const task = this.tasks.current[key];
+
       if (task && task.status !== 'pending') {
-        delete this.tasks[key];
+        this.#tasks.delete(key);
       }
     }
   }
@@ -84,12 +88,12 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     if (mode === 'shared') {
       const existingPromise = this.#sharedPromises.get(key);
       if (existingPromise) {
-        return existingPromise as Promise<Tasks[K]['output']>;
+        return existingPromise;
       }
     }
 
     // Supersede any pending task with the same key (may have different name)
-    for (const existingTask of Object.values(this.tasks) as Task[]) {
+    for (const existingTask of Object.values(this.tasks.current)) {
       if (existingTask?.key === key && existingTask.status === 'pending') {
         existingTask.abort.abort(new StoreError('SUPERSEDED'));
       }
@@ -124,7 +128,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   /** Abort task(s). If name provided, aborts that task. If no name, aborts all. */
   abort(name?: keyof Tasks): void {
     if (!isUndefined(name)) {
-      const task = this.tasks[name];
+      const task = this.tasks.current[name];
       if (task?.status === 'pending') {
         task.abort.abort(new StoreError('ABORTED'));
       }
@@ -134,7 +138,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
     const error = new StoreError('ABORTED');
 
-    for (const task of Object.values(this.tasks) as Task[]) {
+    for (const task of Object.values(this.tasks.current)) {
       if (task?.status === 'pending') {
         task.abort.abort(error);
       }
@@ -148,8 +152,8 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     this.abort();
 
     // Clear all tasks
-    for (const key of Reflect.ownKeys(this.tasks) as (keyof Tasks)[]) {
-      delete this.tasks[key];
+    for (const key of Reflect.ownKeys(this.tasks.current)) {
+      this.#tasks.delete(key);
     }
 
     this.#sharedPromises.clear();
@@ -182,34 +186,44 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     };
 
     // Store tasks by name for controller access
-    (this.tasks as TasksRecord<Tasks>)[name as keyof Tasks] = pendingTask;
+    this.#tasks.set(name as keyof Tasks, pendingTask);
 
     try {
       const result = await abortable(handler({ input, signal: abort.signal }), abort.signal);
 
       resolve(result);
 
-      // Only update if we're still the current task for this name (compare by ID since reactive wraps tasks)
-      const currentTask = this.tasks[name as keyof Tasks];
+      // Only update if we're still the current task for this name
+      const currentTask = this.tasks.current[name];
+
       if (currentTask?.id === id) {
-        Object.assign(currentTask, {
-          status: 'success',
-          settledAt: Date.now(),
-          output: result,
-        } satisfies Partial<SuccessTask>);
+        this.#tasks.set(
+          name as keyof Tasks,
+          {
+            ...currentTask,
+            status: 'success',
+            settledAt: Date.now(),
+            output: result,
+          } satisfies SuccessTask,
+        );
       }
     } catch (error) {
       reject(error);
 
-      // Only update if we're still the current task for this name (compare by ID since reactive wraps tasks)
-      const currentTask = this.tasks[name as keyof Tasks];
+      // Only update if we're still the current task for this name
+      const currentTask = this.tasks.current[name as keyof Tasks];
+
       if (currentTask?.id === id) {
-        Object.assign(currentTask, {
-          status: 'error',
-          settledAt: Date.now(),
-          error,
-          cancelled: abort.signal.aborted,
-        } satisfies Partial<ErrorTask>);
+        this.#tasks.set(
+          name as keyof Tasks,
+          {
+            ...currentTask,
+            status: 'error',
+            settledAt: Date.now(),
+            error,
+            cancelled: abort.signal.aborted,
+          } satisfies ErrorTask,
+        );
       }
     }
   }
@@ -221,10 +235,6 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
 /**
  * Create a queue for managing task execution.
- *
- * - Tasks execute immediately when enqueued
- * - Same key = supersede previous (abort pending)
- * - Subscribe to task changes via `subscribe(queue.tasks, fn)`
  *
  * @example
  * // Loose typing (default)

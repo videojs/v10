@@ -40,7 +40,7 @@ describe('createStore', () => {
       const store = create();
 
       expect(store).toBeDefined();
-      expect(store.state).toEqual({ volume: 1, muted: false });
+      expect(store.state.current).toEqual({ volume: 1, muted: false });
     });
 
     it('creates independent store instances', () => {

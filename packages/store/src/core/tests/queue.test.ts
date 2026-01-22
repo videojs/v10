@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createQueue } from '../queue';
-import { flush, subscribe } from '../state';
+
+/** Wait for microtask queue to flush. */
+const flush = () => new Promise<void>(r => queueMicrotask(r));
 
 describe('Queue', () => {
   describe('enqueue', () => {
@@ -30,10 +32,13 @@ describe('Queue', () => {
       });
 
       // Synchronous check - task is pending immediately
-      expect(queue.tasks.test?.status).toBe('pending');
+      const { test: pendingTest } = queue.tasks.current;
+      expect(pendingTest?.status).toBe('pending');
 
       await promise;
-      expect(queue.tasks.test?.status).toBe('success');
+
+      const { test: settledTest } = queue.tasks.current;
+      expect(settledTest?.status).toBe('success');
     });
 
     it('aborts pending task with same key', async () => {
@@ -163,11 +168,13 @@ describe('Queue', () => {
       const queue = createQueue();
 
       await queue.enqueue({ name: 'task', key: 'k', handler: async () => 'result' });
-      expect(queue.tasks.task?.status).toBe('success');
+
+      const { task } = queue.tasks.current;
+      expect(task?.status).toBe('success');
 
       queue.destroy();
 
-      expect(Reflect.ownKeys(queue.tasks).length).toBe(0);
+      expect(Reflect.ownKeys(queue.tasks.current).length).toBe(0);
     });
   });
 
@@ -192,14 +199,18 @@ describe('Queue', () => {
       });
 
       await new Promise(r => setTimeout(r, 10));
-      expect(queue.tasks.task?.status).toBe('pending');
+
+      const { task: pendingTask } = queue.tasks.current;
+      expect(pendingTask?.status).toBe('pending');
 
       queue.destroy();
 
       await promise.catch(() => {});
       expect(cleanupSpy).toHaveBeenCalledWith('aborted');
       expect(cleanupSpy).toHaveBeenCalledWith('cleanup');
-      expect(queue.tasks.task).toBeUndefined();
+
+      const { task: destroyedTask } = queue.tasks.current;
+      expect(destroyedTask).toBeUndefined();
     });
   });
 
@@ -208,16 +219,16 @@ describe('Queue', () => {
       const queue = createQueue();
       const listener = vi.fn();
 
-      const unsubscribe = subscribe(queue.tasks, listener);
+      const unsubscribe = queue.tasks.subscribe(listener);
 
       expect(unsubscribe).toBeTypeOf('function');
     });
 
-    it('notifies when task becomes pending', async () => {
+    it('notifies when task changes', async () => {
       const queue = createQueue();
       const listener = vi.fn();
 
-      subscribe(queue.tasks, listener);
+      queue.tasks.subscribe(listener);
 
       const promise = queue.enqueue({
         name: 'test',
@@ -225,21 +236,18 @@ describe('Queue', () => {
         handler: vi.fn().mockResolvedValue('result'),
       });
 
-      // Flush to trigger notifications (auto-batched)
-      flush();
-
       await promise;
-      flush();
+      await flush();
 
-      // Called when pending and when settled
-      expect(listener).toHaveBeenCalledTimes(2);
+      // Notified at least once (pending and settled may batch together)
+      expect(listener).toHaveBeenCalled();
     });
 
     it('unsubscribe stops notifications', async () => {
       const queue = createQueue();
       const listener = vi.fn();
 
-      const unsubscribe = subscribe(queue.tasks, listener);
+      const unsubscribe = queue.tasks.subscribe(listener);
       unsubscribe();
 
       await queue.enqueue({
@@ -247,7 +255,7 @@ describe('Queue', () => {
         key: 'test-key',
         handler: vi.fn().mockResolvedValue('result'),
       });
-      flush();
+      await flush();
 
       expect(listener).not.toHaveBeenCalled();
     });
@@ -257,15 +265,15 @@ describe('Queue', () => {
       const listener1 = vi.fn();
       const listener2 = vi.fn();
 
-      subscribe(queue.tasks, listener1);
-      subscribe(queue.tasks, listener2);
+      queue.tasks.subscribe(listener1);
+      queue.tasks.subscribe(listener2);
 
       await queue.enqueue({
         name: 'test',
         key: 'test-key',
         handler: vi.fn().mockResolvedValue('result'),
       });
-      flush();
+      await flush();
 
       // Called once per batch (pending + settled batched together)
       expect(listener1).toHaveBeenCalled();
@@ -287,14 +295,16 @@ describe('Queue', () => {
       });
 
       await new Promise(r => setTimeout(r, 5));
-      const pendingTask = queue.tasks.task;
+
+      const { task: pendingTask } = queue.tasks.current;
       expect(pendingTask?.status).toBe('pending');
       expect(pendingTask?.name).toBe('task');
 
       await promise;
 
-      const successTask = queue.tasks.task;
+      const { task: successTask } = queue.tasks.current;
       expect(successTask?.status).toBe('success');
+
       if (successTask?.status === 'success') {
         expect(successTask.output).toBe('result');
         expect(successTask.settledAt).toBeGreaterThan(successTask.startedAt);
@@ -315,12 +325,15 @@ describe('Queue', () => {
       });
 
       await new Promise(r => setTimeout(r, 5));
-      expect(queue.tasks.task?.status).toBe('pending');
+
+      const { task: pendingTask } = queue.tasks.current;
+      expect(pendingTask?.status).toBe('pending');
 
       await expect(promise).rejects.toThrow('test error');
 
-      const errorTask = queue.tasks.task;
+      const { task: errorTask } = queue.tasks.current;
       expect(errorTask?.status).toBe('error');
+
       if (errorTask?.status === 'error') {
         expect(errorTask.error).toBe(error);
         expect(errorTask.cancelled).toBe(false);
@@ -342,13 +355,16 @@ describe('Queue', () => {
       });
 
       await new Promise(r => setTimeout(r, 10));
-      expect(queue.tasks.task?.status).toBe('pending');
+
+      const { task: pendingTask } = queue.tasks.current;
+      expect(pendingTask?.status).toBe('pending');
 
       queue.abort('task');
       await promise.catch(() => {});
 
-      const errorTask = queue.tasks.task;
+      const { task: errorTask } = queue.tasks.current;
       expect(errorTask?.status).toBe('error');
+
       if (errorTask?.status === 'error') {
         expect(errorTask.cancelled).toBe(true);
       }
@@ -363,9 +379,11 @@ describe('Queue', () => {
         handler: async () => 'first-result',
       });
 
-      expect(queue.tasks.first?.status).toBe('success');
-      if (queue.tasks.first?.status === 'success') {
-        expect(queue.tasks.first.output).toBe('first-result');
+      const { first } = queue.tasks.current;
+      expect(first?.status).toBe('success');
+
+      if (first?.status === 'success') {
+        expect(first.output).toBe('first-result');
       }
 
       await queue.enqueue({
@@ -374,10 +392,12 @@ describe('Queue', () => {
         handler: async () => 'second-result',
       });
 
-      expect(queue.tasks.second?.status).toBe('success');
-      if (queue.tasks.second?.status === 'success') {
-        expect(queue.tasks.second.output).toBe('second-result');
-        expect(queue.tasks.second.name).toBe('second');
+      const { second } = queue.tasks.current;
+      expect(second?.status).toBe('success');
+
+      if (second?.status === 'success') {
+        expect(second.output).toBe('second-result');
+        expect(second.name).toBe('second');
       }
     });
   });
@@ -392,11 +412,13 @@ describe('Queue', () => {
         handler: async () => 'result',
       });
 
-      expect(queue.tasks.task?.status).toBe('success');
+      const { task: settledTask } = queue.tasks.current;
+      expect(settledTask?.status).toBe('success');
 
       queue.reset('task');
 
-      expect(queue.tasks.task).toBeUndefined();
+      const { task: clearedTask } = queue.tasks.current;
+      expect(clearedTask).toBeUndefined();
     });
 
     it('is no-op when task is pending', async () => {
@@ -412,10 +434,14 @@ describe('Queue', () => {
       });
 
       await new Promise(r => setTimeout(r, 10));
-      expect(queue.tasks.task?.status).toBe('pending');
+
+      const { task: beforeReset } = queue.tasks.current;
+      expect(beforeReset?.status).toBe('pending');
 
       queue.reset('task');
-      expect(queue.tasks.task?.status).toBe('pending');
+
+      const { task: afterReset } = queue.tasks.current;
+      expect(afterReset?.status).toBe('pending');
 
       await promise;
     });
@@ -425,7 +451,7 @@ describe('Queue', () => {
 
       queue.reset('nonexistent');
 
-      expect(queue.tasks.nonexistent).toBeUndefined();
+      expect(queue.tasks.current.nonexistent).toBeUndefined();
     });
 
     it('notifies subscribers when reset clears a task', async () => {
@@ -438,22 +464,22 @@ describe('Queue', () => {
         handler: async () => 'result',
       });
 
-      subscribe(queue.tasks, listener);
+      queue.tasks.subscribe(listener);
 
       queue.reset('task');
-      flush();
+      await flush();
 
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(queue.tasks.task).toBeUndefined();
+      expect(queue.tasks.current.task).toBeUndefined();
     });
 
-    it('does not notify subscribers when task does not exist', () => {
+    it('does not notify subscribers when task does not exist', async () => {
       const queue = createQueue();
       const listener = vi.fn();
 
-      subscribe(queue.tasks, listener);
+      queue.tasks.subscribe(listener);
       queue.reset('nonexistent');
-      flush();
+      await flush();
 
       expect(listener).not.toHaveBeenCalled();
     });
@@ -464,13 +490,13 @@ describe('Queue', () => {
       await queue.enqueue({ name: 'a', key: 'a', handler: async () => 'a-result' });
       await queue.enqueue({ name: 'b', key: 'b', handler: async () => 'b-result' });
 
-      expect(queue.tasks.a?.status).toBe('success');
-      expect(queue.tasks.b?.status).toBe('success');
+      expect(queue.tasks.current.a?.status).toBe('success');
+      expect(queue.tasks.current.b?.status).toBe('success');
 
       queue.reset();
 
-      expect(queue.tasks.a).toBeUndefined();
-      expect(queue.tasks.b).toBeUndefined();
+      expect(queue.tasks.current.a).toBeUndefined();
+      expect(queue.tasks.current.b).toBeUndefined();
     });
 
     it('preserves pending tasks when resetting all', async () => {
@@ -488,13 +514,13 @@ describe('Queue', () => {
       });
 
       await new Promise(r => setTimeout(r, 10));
-      expect(queue.tasks.settled?.status).toBe('success');
-      expect(queue.tasks.pending?.status).toBe('pending');
+      expect(queue.tasks.current.settled?.status).toBe('success');
+      expect(queue.tasks.current.pending?.status).toBe('pending');
 
       queue.reset();
 
-      expect(queue.tasks.settled).toBeUndefined();
-      expect(queue.tasks.pending?.status).toBe('pending');
+      expect(queue.tasks.current.settled).toBeUndefined();
+      expect(queue.tasks.current.pending?.status).toBe('pending');
 
       await pendingPromise;
     });
@@ -506,7 +532,7 @@ describe('Queue', () => {
       await queue.enqueue({ name: 'task', key: 'k', handler: async () => 'result' });
 
       // Tasks is now reactive state, not a frozen object
-      expect(queue.tasks.task?.status).toBe('success');
+      expect(queue.tasks.current.task?.status).toBe('success');
     });
 
     it('reflects changes immediately', async () => {
@@ -516,11 +542,11 @@ describe('Queue', () => {
       await queue.enqueue({ name: 'first', key: 'k', handler: async () => 'first' });
 
       // Same reference reflects updates
-      expect(tasks.first?.status).toBe('success');
+      expect(tasks.current.first?.status).toBe('success');
 
       await queue.enqueue({ name: 'second', key: 'k', handler: async () => 'second' });
 
-      expect(tasks.second?.status).toBe('success');
+      expect(tasks.current.second?.status).toBe('success');
     });
   });
 
@@ -535,7 +561,7 @@ describe('Queue', () => {
         handler: async () => 'result',
       });
 
-      const task = queue.tasks[name as unknown as string];
+      const task = queue.tasks.current[name as unknown as string];
       expect(task?.status).toBe('success');
       if (task?.status === 'success') {
         expect(task.output).toBe('result');
@@ -553,7 +579,7 @@ describe('Queue', () => {
         handler: async () => 'result',
       });
 
-      expect(queue.tasks.task?.meta).toBeNull();
+      expect(queue.tasks.current.task?.meta).toBeNull();
     });
   });
 });
