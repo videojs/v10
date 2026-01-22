@@ -1,18 +1,13 @@
 import type { TasksRecord } from '../../core/queue';
 import type { AnyStore, InferStoreTasks } from '../../core/store';
 
-import { useCallback, useRef, useSyncExternalStore } from 'react';
-
-import { subscribe } from '../../core/state';
+import { useSnapshot } from './use-snapshot';
 
 /**
  * Subscribe to task queue state.
  *
  * Returns a record of all tasks keyed by request name.
  * Re-renders when any task is added, updated, or removed.
- *
- * @param store - The store instance to subscribe to
- * @returns Record of tasks keyed by request name
  *
  * @example
  * ```tsx
@@ -31,22 +26,6 @@ import { subscribe } from '../../core/state';
  * }
  * ```
  */
-export function useTasks<S extends AnyStore>(store: S): TasksRecord<InferStoreTasks<S>> {
-  const versionRef = useRef(0);
-
-  const subscribeToQueue = useCallback(
-    (onStoreChange: () => void) =>
-      subscribe(store.queue.tasks, () => {
-        versionRef.current++;
-        onStoreChange();
-      }),
-    [store],
-  );
-
-  const getSnapshot = useCallback(() => versionRef.current, []);
-
-  useSyncExternalStore(subscribeToQueue, getSnapshot, getSnapshot);
-
-  // Return the tasks proxy directly
-  return store.queue.tasks as TasksRecord<InferStoreTasks<S>>;
+export function useTasks<Store extends AnyStore>(store: Store): TasksRecord<InferStoreTasks<Store>> {
+  return useSnapshot(store.queue.tasks) as TasksRecord<InferStoreTasks<Store>>;
 }

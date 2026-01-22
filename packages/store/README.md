@@ -28,9 +28,8 @@ const store = createStore({
 
 store.attach(videoElement); // <video>
 
-// State is synced
-store.state.paused; // true
-store.state.volume; // 1
+// State is synced via .current
+const { paused, volume } = store.state.current;
 
 // Requests are coordinated async operations
 await store.request.play();
@@ -233,9 +232,8 @@ type Requests = InferStoreRequests<typeof store>;
 ```ts
 const detach = store.attach(videoElement);
 
-// State syncs from target
-store.state.paused;
-store.state.volume;
+// State syncs from target (access via .current)
+const { paused, volume } = store.state.current;
 
 // Requests go to target
 store.request.play();
@@ -258,16 +256,16 @@ store.destroy();
 State is reactive—subscribe to be notified when any property changes:
 
 ```ts
-import { subscribe, subscribeKeys } from '@videojs/store';
-
 // Subscribe to all state changes
-const unsubscribe = subscribe(store.state, () => {
-  console.log('State changed:', store.state.volume);
+const unsubscribe = store.state.subscribe(() => {
+  const { volume } = store.state.current;
+  console.log('State changed:', volume);
 });
 
 // Subscribe to specific keys only
-subscribeKeys(store.state, ['volume', 'muted'], () => {
-  console.log('Audio changed:', store.state.volume, store.state.muted);
+store.state.subscribe(['volume', 'muted'], () => {
+  const { volume, muted } = store.state.current;
+  console.log('Audio changed:', volume, muted);
 });
 ```
 
@@ -525,9 +523,9 @@ queue.reset('seek'); // clear specific request
 queue.reset(); // clear all settled
 
 // Subscribe to task changes
-subscribe(queue.tasks, () => {
-  const playTask = queue.tasks.play;
-  if (playTask?.status === 'pending') {
+queue.tasks.subscribe(() => {
+  const { play } = queue.tasks.current;
+  if (play?.status === 'pending') {
     console.log('Play in progress...');
   }
 });
@@ -540,7 +538,7 @@ Each request creates a task that transitions through states:
 ```ts
 import { isErrorTask, isPendingTask, isSettledTask, isSuccessTask } from '@videojs/store';
 
-const task = queue.tasks.play;
+const { play: task } = queue.tasks.current;
 
 // Type guards for status checking
 if (isPendingTask(task)) {
@@ -586,10 +584,8 @@ await queue.enqueue({
 Use `subscribe` to react to task changes—useful for loading states and error handling:
 
 ```ts
-import { subscribe } from '@videojs/store';
-
-subscribe(queue.tasks, () => {
-  for (const [name, task] of Object.entries(queue.tasks)) {
+queue.tasks.subscribe(() => {
+  for (const [name, task] of Object.entries(queue.tasks.current)) {
     if (task?.status === 'error' && !task.cancelled) {
       toast.error(`${name} failed: ${task.error}`);
     }
@@ -597,8 +593,8 @@ subscribe(queue.tasks, () => {
 });
 
 // Analytics
-subscribe(queue.tasks, () => {
-  for (const task of Object.values(queue.tasks)) {
+queue.tasks.subscribe(() => {
+  for (const task of Object.values(queue.tasks.current)) {
     if (task && task.status !== 'pending') {
       analytics.track('request', {
         name: task.name,
@@ -612,36 +608,58 @@ subscribe(queue.tasks, () => {
 
 ## Advanced
 
-### Reactive Primitives
+### State Primitives
 
-The store uses reactive state internally. You can also use these primitives directly:
+The store uses explicit state containers internally. You can also use these primitives directly:
 
 ```ts
-import { flush, isReactive, reactive, snapshot, subscribe, subscribeKeys } from '@videojs/store';
+import { createState, flush, isState } from '@videojs/store';
 
-// Create reactive state
-const state = reactive({ volume: 1, muted: false });
+// Create state container
+const state = createState({ volume: 1, muted: false });
 
-// Mutate directly - changes are auto-batched
-state.volume = 0.5;
-state.muted = true;
+// Read via destructuring from .current
+const { volume } = state.current; // 1
+
+// Mutate via set() or patch() - changes are auto-batched
+state.set('volume', 0.5);
+state.patch({ volume: 0.5, muted: true });
 // Only ONE notification fires (after microtask)
 
 // Subscribe to all changes
-subscribe(state, () => console.log('Changed:', state.volume));
+state.subscribe(() => {
+  const { volume } = state.current;
+  console.log('Changed:', volume);
+});
 
 // Subscribe to specific keys
-subscribeKeys(state, ['volume'], () => console.log('Volume:', state.volume));
+state.subscribe(['volume'], () => {
+  const { volume } = state.current;
+  console.log('Volume:', volume);
+});
 
-// Check if value is reactive
-isReactive(state); // true
-
-// Get frozen snapshot
-const snap = snapshot(state);
+// Check if value is state
+isState(state); // true
 
 // Force immediate notification (mainly for tests)
 flush();
 ```
+
+### Computed Values
+
+Derive reactive values from state:
+
+```ts
+import { createComputed } from '@videojs/store';
+
+const effectiveVolume = createComputed(state, ['volume', 'muted'], ({ volume, muted }) => (muted ? 0 : volume));
+
+effectiveVolume.current; // derived value
+effectiveVolume.subscribe(() => console.log('changed'));
+effectiveVolume.destroy(); // cleanup when done
+```
+
+Computed values only notify when the derived result actually changes.
 
 ### Capability Checking
 
@@ -723,7 +741,7 @@ dispatch(play());
 
 // @videojs/store - working with the abstraction
 await store.request.play(); // Resolves when actually playing
-store.state.paused; // Always reflects video.paused
+const { paused } = store.state.current; // Always reflects video.paused
 ```
 
 ## Community

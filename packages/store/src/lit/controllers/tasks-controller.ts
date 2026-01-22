@@ -5,7 +5,6 @@ import type { StoreSource } from '../store-accessor';
 import { noop } from '@videojs/utils/function';
 import { isNull } from '@videojs/utils/predicate';
 
-import { subscribe } from '../../core/state';
 import { StoreAccessor } from '../store-accessor';
 
 export type TasksControllerHost = ReactiveControllerHost & HTMLElement;
@@ -42,26 +41,22 @@ export class TasksController<Store extends AnyStore> implements ReactiveControll
   readonly #host: TasksControllerHost;
   readonly #accessor: StoreAccessor<Store>;
 
-  #value: Store['queue']['tasks'] | undefined;
   #unsubscribe = noop;
 
   constructor(host: TasksControllerHost, source: StoreSource<Store>) {
     this.#host = host;
     this.#accessor = new StoreAccessor(host, source, store => this.#connect(store));
-
-    // Initialize value if store available immediately (direct store case)
-    const store = this.#accessor.value;
-    if (store) this.#value = store.queue.tasks;
-
     host.addController(this);
   }
 
-  get value(): Store['queue']['tasks'] {
+  get value(): Store['queue']['tasks']['current'] {
     const store = this.#accessor.value;
+
     if (isNull(store)) {
       throw new Error('TasksController: Store not available from context');
     }
-    return this.#value as Store['queue']['tasks'];
+
+    return store.queue.tasks.current;
   }
 
   hostConnected(): void {
@@ -75,9 +70,7 @@ export class TasksController<Store extends AnyStore> implements ReactiveControll
 
   #connect(store: Store): void {
     this.#unsubscribe();
-    this.#value = store.queue.tasks;
-    this.#unsubscribe = subscribe(store.queue.tasks, () => {
-      this.#value = store.queue.tasks;
+    this.#unsubscribe = store.queue.tasks.subscribe(() => {
       this.#host.requestUpdate();
     });
   }

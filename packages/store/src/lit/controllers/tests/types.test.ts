@@ -47,7 +47,8 @@ describe('controller types', () => {
 
       const controller = new TasksController(host, store);
 
-      expectTypeOf(controller.value).toEqualTypeOf<typeof store.queue.tasks>();
+      // Value type matches store.queue.tasks.current
+      expectTypeOf(controller.value).toMatchTypeOf(store.queue.tasks.current);
     });
   });
 });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { CANCEL_ALL, createFeature, createStore } from '../../index';
-import { flush, subscribeKeys } from '../../state';
+import { flush } from '../../state';
 
 describe('store lifecycle integration', () => {
   it('full lifecycle: create → attach → use → detach → destroy', async () => {
@@ -41,10 +41,10 @@ describe('store lifecycle integration', () => {
     const detach = store.attach(target);
 
     expect(events).toEqual(['setup', 'subscribe', 'attach']);
-    expect(store.state.count).toBe(5);
+    expect(store.state.current.count).toBe(5);
 
     await store.request.increment();
-    expect(store.state.count).toBe(6);
+    expect(store.state.current.count).toBe(6);
     expect(events).toContain('increment');
 
     detach();
@@ -467,12 +467,12 @@ describe('state syncing', () => {
 
     store.attach(new Target());
 
-    subscribeKeys(store.state, ['volume'], () => {
-      volumeUpdates.push(store.state.volume);
+    store.state.subscribe(['volume'], () => {
+      volumeUpdates.push(store.state.current.volume);
     });
 
-    subscribeKeys(store.state, ['muted'], () => {
-      mutedUpdates.push(store.state.muted);
+    store.state.subscribe(['muted'], () => {
+      mutedUpdates.push(store.state.current.muted);
     });
 
     await store.request.setVolume(0.5);
@@ -508,7 +508,7 @@ describe('state syncing', () => {
     const target = { volume: 0.5, rate: 1.5 };
     store.attach(target);
 
-    expect(store.state).toEqual({
+    expect(store.state.current).toEqual({
       volume: 0.5,
       rate: 1.5,
     });
@@ -545,13 +545,13 @@ describe('immediate execution', () => {
     const target = new MockMedia();
     store.attach(target);
 
-    expect(store.state.paused).toBe(true);
+    expect(store.state.current.paused).toBe(true);
 
     store.request.play();
 
     // Validates: handler ran → play() called → event fired → state synced
     expect(target.paused).toBe(false);
-    expect(store.state.paused).toBe(false);
+    expect(store.state.current.paused).toBe(false);
   });
 
   it('task is pending synchronously after request', async () => {
@@ -573,9 +573,9 @@ describe('immediate execution', () => {
     const promise = store.request.action();
 
     // Synchronous check - task is pending immediately, no microtask needed
-    expect(store.queue.tasks.action?.status).toBe('pending');
+    expect(store.queue.tasks.current.action?.status).toBe('pending');
 
     await promise;
-    expect(store.queue.tasks.action?.status).toBe('success');
+    expect(store.queue.tasks.current.action?.status).toBe('success');
   });
 });

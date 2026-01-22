@@ -1,5 +1,5 @@
-import type { Queue, TasksRecord } from '../queue';
-import type { Reactive } from '../state';
+import type { Queue } from '../queue';
+import type { State } from '../state';
 import type { InferStoreRequests, InferStoreState, InferStoreTarget, InferStoreTasks } from '../store';
 
 import { describe, expectTypeOf, it } from 'vitest';
@@ -51,9 +51,9 @@ describe('store types', () => {
     it('state has union of all feature states', () => {
       const store = createTestStore();
 
-      expectTypeOf(store.state.volume).toEqualTypeOf<number>();
-      expectTypeOf(store.state.muted).toEqualTypeOf<boolean>();
-      expectTypeOf(store.state.playing).toEqualTypeOf<boolean>();
+      expectTypeOf(store.state.current.volume).toEqualTypeOf<number>();
+      expectTypeOf(store.state.current.muted).toEqualTypeOf<boolean>();
+      expectTypeOf(store.state.current.playing).toEqualTypeOf<boolean>();
     });
 
     it('request has union of all feature requests', () => {
@@ -81,7 +81,8 @@ describe('store types', () => {
       const store = createSingleFeatureStore();
 
       expectTypeOf(store.queue).toExtend<Queue<any>>();
-      expectTypeOf(store.queue.tasks).toExtend<TasksRecord<any>>();
+      expectTypeOf(store.queue.tasks).toExtend<State<object>>();
+      expectTypeOf(store.queue.tasks.current).toBeObject();
     });
 
     it('target is nullable before attach', () => {
@@ -134,31 +135,31 @@ describe('store types', () => {
   });
 
   describe('subscribe', () => {
-    it('state is reactive', () => {
+    it('state is State interface', () => {
       const store = createSingleFeatureStore();
 
-      expectTypeOf(store.state).toEqualTypeOf<Reactive<{ volume: number; muted: boolean } & object>>();
+      expectTypeOf(store.state).toEqualTypeOf<State<{ volume: number; muted: boolean } & object>>();
     });
 
-    it('state properties have correct types', () => {
+    it('state.current properties have correct types', () => {
       const store = createSingleFeatureStore();
 
-      expectTypeOf(store.state.volume).toEqualTypeOf<number>();
-      expectTypeOf(store.state.muted).toEqualTypeOf<boolean>();
+      expectTypeOf(store.state.current.volume).toEqualTypeOf<number>();
+      expectTypeOf(store.state.current.muted).toEqualTypeOf<boolean>();
     });
   });
 
   describe('store queue integration types', () => {
-    it('queue.tasks has keys matching request names', () => {
+    it('queue.tasks.current has keys matching request names', () => {
       const store = createSingleFeatureStore();
 
-      expectTypeOf(store.queue.tasks).toHaveProperty('setVolume');
-      expectTypeOf(store.queue.tasks).toHaveProperty('setMuted');
+      expectTypeOf(store.queue.tasks.current).toHaveProperty('setVolume');
+      expectTypeOf(store.queue.tasks.current).toHaveProperty('setMuted');
     });
 
     it('task input type matches request parameter', () => {
       const store = createSingleFeatureStore();
-      const task = store.queue.tasks.setVolume;
+      const task = store.queue.tasks.current.setVolume;
 
       if (task) {
         expectTypeOf(task.input).toEqualTypeOf<number>();
@@ -167,7 +168,7 @@ describe('store types', () => {
 
     it('task output type matches request return on success', () => {
       const store = createSingleFeatureStore();
-      const task = store.queue.tasks.setVolume;
+      const task = store.queue.tasks.current.setVolume;
 
       if (task?.status === 'success') {
         expectTypeOf(task.output).toEqualTypeOf<number>();
@@ -177,10 +178,10 @@ describe('store types', () => {
     it('multi-feature store has combined queue task types', () => {
       const store = createTestStore();
 
-      expectTypeOf(store.queue.tasks).toHaveProperty('setVolume');
-      expectTypeOf(store.queue.tasks).toHaveProperty('setMuted');
-      expectTypeOf(store.queue.tasks).toHaveProperty('play');
-      expectTypeOf(store.queue.tasks).toHaveProperty('pause');
+      expectTypeOf(store.queue.tasks.current).toHaveProperty('setVolume');
+      expectTypeOf(store.queue.tasks.current).toHaveProperty('setMuted');
+      expectTypeOf(store.queue.tasks.current).toHaveProperty('play');
+      expectTypeOf(store.queue.tasks.current).toHaveProperty('pause');
     });
 
     it('queue.reset accepts request names', () => {

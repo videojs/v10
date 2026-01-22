@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createFeature } from '../feature';
 import { createQueue } from '../queue';
-import { flush, subscribe } from '../state';
+import { flush } from '../state';
 import { createStore } from '../store';
 
 describe('store', () => {
@@ -67,7 +67,7 @@ describe('store', () => {
         features: [audioFeature, playbackFeature],
       });
 
-      expect(store.state).toEqual({
+      expect(store.state.current).toEqual({
         volume: 1,
         muted: false,
         paused: true,
@@ -119,7 +119,7 @@ describe('store', () => {
 
       store.attach(media);
 
-      expect(store.state).toEqual({ volume: 0.5, muted: true });
+      expect(store.state.current).toEqual({ volume: 0.5, muted: true });
       expect(store.target).toBe(media);
     });
 
@@ -184,7 +184,7 @@ describe('store', () => {
       store.attach(media2);
 
       expect(store.target).toBe(media2);
-      expect(store.state.volume).toBe(0.3);
+      expect(store.state.current.volume).toBe(0.3);
       expect(m1RemoveListenerSpy).toHaveBeenCalled();
     });
   });
@@ -266,7 +266,7 @@ describe('store', () => {
     });
   });
 
-  describe('subscribe (via reactive)', () => {
+  describe('subscribe', () => {
     it('notifies on state change', async () => {
       const store = createStore({
         features: [audioFeature],
@@ -276,13 +276,13 @@ describe('store', () => {
       store.attach(media);
 
       const listener = vi.fn();
-      subscribe(store.state, listener);
+      store.state.subscribe(listener);
 
       await store.request.setVolume(0.5);
       flush();
 
       expect(listener).toHaveBeenCalled();
-      expect(store.state.volume).toBe(0.5);
+      expect(store.state.current.volume).toBe(0.5);
     });
 
     it('unsubscribe stops notifications', async () => {
@@ -294,7 +294,7 @@ describe('store', () => {
       store.attach(media);
 
       const listener = vi.fn();
-      const unsubscribe = subscribe(store.state, listener);
+      const unsubscribe = store.state.subscribe(listener);
       unsubscribe();
 
       await store.request.setVolume(0.5);
