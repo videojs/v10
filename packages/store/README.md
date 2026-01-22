@@ -523,9 +523,9 @@ queue.reset('seek'); // clear specific request
 queue.reset(); // clear all settled
 
 // Subscribe to task changes
-queue.subscribe(() => {
-  const playTask = queue.tasks.play;
-  if (playTask?.status === 'pending') {
+queue.tasks.subscribe(() => {
+  const { play } = queue.tasks.current;
+  if (play?.status === 'pending') {
     console.log('Play in progress...');
   }
 });
@@ -538,7 +538,7 @@ Each request creates a task that transitions through states:
 ```ts
 import { isErrorTask, isPendingTask, isSettledTask, isSuccessTask } from '@videojs/store';
 
-const task = queue.tasks.play;
+const { play: task } = queue.tasks.current;
 
 // Type guards for status checking
 if (isPendingTask(task)) {
@@ -584,8 +584,8 @@ await queue.enqueue({
 Use `subscribe` to react to task changes—useful for loading states and error handling:
 
 ```ts
-queue.subscribe(() => {
-  for (const [name, task] of Object.entries(queue.tasks)) {
+queue.tasks.subscribe(() => {
+  for (const [name, task] of Object.entries(queue.tasks.current)) {
     if (task?.status === 'error' && !task.cancelled) {
       toast.error(`${name} failed: ${task.error}`);
     }
@@ -593,8 +593,8 @@ queue.subscribe(() => {
 });
 
 // Analytics
-queue.subscribe(() => {
-  for (const task of Object.values(queue.tasks)) {
+queue.tasks.subscribe(() => {
+  for (const task of Object.values(queue.tasks.current)) {
     if (task && task.status !== 'pending') {
       analytics.track('request', {
         name: task.name,
@@ -650,12 +650,13 @@ flush();
 Derive reactive values from state:
 
 ```ts
-import { computed } from '@videojs/store';
+import { Computed } from '@videojs/store';
 
-const effectiveVolume = computed(state, ['volume', 'muted'], ({ volume, muted }) => (muted ? 0 : volume));
+const effectiveVolume = new Computed(state, ['volume', 'muted'], ({ volume, muted }) => (muted ? 0 : volume));
 
 effectiveVolume.current; // derived value
 effectiveVolume.subscribe(() => console.log('changed'));
+effectiveVolume.destroy(); // cleanup when done
 ```
 
 Computed values only notify when the derived result actually changes.

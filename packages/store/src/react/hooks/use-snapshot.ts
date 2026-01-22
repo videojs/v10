@@ -15,7 +15,7 @@ import { useSyncExternalStore } from 'react';
  */
 export function useSnapshot<T extends object>(state: State<T>): T {
   return useSyncExternalStore(
-    state.subscribe,
+    onStoreChange => state.subscribe(onStoreChange),
     () => state.current,
     () => state.current,
   );
