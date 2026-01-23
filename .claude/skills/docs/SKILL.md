@@ -254,17 +254,14 @@ Document framework adapters with framework-native idioms.
 ## Output Locations
 
 ```
-packages/{name}/README.md          — readme (primary docs until site launches)
+packages/{name}/README.md          — readme
 packages/{name}/CLAUDE.md          — agent instructions
-site/src/content/docs/api/         — API reference
-site/src/content/docs/handbook/    — handbook
-site/src/content/docs/guides/      — guides
+site/src/content/docs/concepts/    — handbook (concept pages)
+site/src/content/docs/how-to/      — guides (tutorials)
+site/src/content/docs/reference/   — API reference
 site/src/content/docs/components/  — components
 site/public/llms.txt               — AI docs index
 ```
-
-> **Note:** Site structure (`site/src/content/docs/`) not yet created.
-> Package READMEs are the primary documentation until the site launches.
 
 ## Process
 

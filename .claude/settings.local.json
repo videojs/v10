@@ -1,0 +1,11 @@
+{
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "astro-docs"
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)"
+    ]
+  }
+}
