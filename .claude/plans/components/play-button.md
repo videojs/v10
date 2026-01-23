@@ -60,7 +60,7 @@ interface PlayButtonState {
 
 2. Label computation:
    ```ts
-   function getPlayButtonLabel(props: PlayButtonProps, state: { paused: boolean; ended: boolean }): string {
+   function getPlayButtonLabel(props: PlayButtonProps, state: PlayButtonState): string {
      if (props.label) return props.label;
      if (state.ended) return 'Replay';
      return state.paused ? 'Play' : 'Pause';
@@ -84,7 +84,6 @@ interface PlayButtonState {
 interface PlayButtonDataAttributes {
   'data-paused'?: '';
   'data-ended'?: '';
-  'data-disabled'?: '';
 }
 ```
 
@@ -102,7 +101,8 @@ Output includes:
 - `role: 'button'`
 - `tabindex: 0` (for non-button elements)
 - `aria-label: state.label`
-- `data-paused`, `data-ended`, `data-disabled` (boolean attributes)
+- `aria-disabled: "true" | "false"`
+- `data-paused`, `data-ended`, `disabled` (boolean attributes)
 - `onClick` handler
 - `onKeyDown` handler (Enter/Space)
 
@@ -163,7 +163,7 @@ Features:
 
 - Uses `SnapshotController` for state
 - Uses `RequestController` for play/pause
-- Dispatches callbacks as custom events: `toggle`, `playrequest`, `pauserequest`, `play`, `pause`, `error`
+- Dispatches callbacks as custom events: `toggle`, `play-request`, `pause-request`, `play`, `pause`, `error`
 
 ### Registration
 
