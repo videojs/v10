@@ -1,5 +1,8 @@
+minimumReleaseAge: 1440
+shellEmulator: true
+trustPolicy: no-downgrade
+
 packages:
   - 'packages/*'
   - 'examples/*'
   - site
-minimumReleaseAge: 1440
