@@ -66,19 +66,17 @@
   "files": {
     "includes": [
       "**",
-      "!**/CLAUDE.md",
-      "!**/.claude",
       "!**/.astro",
+      "!**/*.astro",
       "!**/.vercel",
       "!**/.turbo",
       "!**/.next",
       "!**/.github",
       "!**/dist",
-      "!**/styles/vjs.css",
-      "!**/packages/__tech-preview__",
       "!**/examples",
-      "!**/*.astro",
-      "!**/packages/react/src/icons/generated-icons"
+      "!**/styles/vjs.css",
+      "!**/packages/*/types",
+      "!**/packages/__tech-preview__"
     ]
   }
 }
