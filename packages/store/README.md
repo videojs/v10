@@ -28,8 +28,8 @@ const store = createStore({
 
 store.attach(videoElement); // <video>
 
-// State is synced via .current
-const { paused, volume } = store.state.current;
+// State is synced from target
+const { paused, volume } = store.state;
 
 // Requests are coordinated async operations
 await store.request.play();
@@ -232,8 +232,8 @@ type Requests = InferStoreRequests<typeof store>;
 ```ts
 const detach = store.attach(videoElement);
 
-// State syncs from target (access via .current)
-const { paused, volume } = store.state.current;
+// State syncs from target
+const { paused, volume } = store.state;
 
 // Requests go to target
 store.request.play();
@@ -257,14 +257,14 @@ State is reactive—subscribe to be notified when any property changes:
 
 ```ts
 // Subscribe to all state changes
-const unsubscribe = store.state.subscribe(() => {
-  const { volume } = store.state.current;
+const unsubscribe = store.subscribe(() => {
+  const { volume } = store.state;
   console.log('State changed:', volume);
 });
 
 // Subscribe to specific keys only
-store.state.subscribe(['volume', 'muted'], () => {
-  const { volume, muted } = store.state.current;
+store.subscribe(['volume', 'muted'], () => {
+  const { volume, muted } = store.state;
   console.log('Audio changed:', volume, muted);
 });
 ```
@@ -523,8 +523,8 @@ queue.reset('seek'); // clear specific request
 queue.reset(); // clear all settled
 
 // Subscribe to task changes
-queue.tasks.subscribe(() => {
-  const { play } = queue.tasks.current;
+queue.subscribe(() => {
+  const { play } = queue.tasks;
   if (play?.status === 'pending') {
     console.log('Play in progress...');
   }
@@ -538,7 +538,7 @@ Each request creates a task that transitions through states:
 ```ts
 import { isErrorTask, isPendingTask, isSettledTask, isSuccessTask } from '@videojs/store';
 
-const { play: task } = queue.tasks.current;
+const { play: task } = queue.tasks;
 
 // Type guards for status checking
 if (isPendingTask(task)) {
@@ -584,8 +584,8 @@ await queue.enqueue({
 Use `subscribe` to react to task changes—useful for loading states and error handling:
 
 ```ts
-queue.tasks.subscribe(() => {
-  for (const [name, task] of Object.entries(queue.tasks.current)) {
+queue.subscribe(() => {
+  for (const [name, task] of Object.entries(queue.tasks)) {
     if (task?.status === 'error' && !task.cancelled) {
       toast.error(`${name} failed: ${task.error}`);
     }
@@ -593,8 +593,8 @@ queue.tasks.subscribe(() => {
 });
 
 // Analytics
-queue.tasks.subscribe(() => {
-  for (const task of Object.values(queue.tasks.current)) {
+queue.subscribe(() => {
+  for (const task of Object.values(queue.tasks)) {
     if (task && task.status !== 'pending') {
       analytics.track('request', {
         name: task.name,
@@ -741,7 +741,7 @@ dispatch(play());
 
 // @videojs/store - working with the abstraction
 await store.request.play(); // Resolves when actually playing
-const { paused } = store.state.current; // Always reflects video.paused
+const { paused } = store.state; // Always reflects video.paused
 ```
 
 ## Community

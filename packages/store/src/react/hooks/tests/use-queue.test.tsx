@@ -1,15 +1,14 @@
 import { act, renderHook } from '@testing-library/react';
-
 import { describe, expect, it } from 'vitest';
 
-import { useTasks } from '../use-tasks';
+import { useQueue } from '../use-queue';
 import { createTestStore } from './test-utils';
 
-describe('useTasks', () => {
+describe('useQueue', () => {
   it('returns tasks record', () => {
     const { store } = createTestStore();
 
-    const { result } = renderHook(() => useTasks(store));
+    const { result } = renderHook(() => useQueue(store));
 
     expect(result.current).toEqual({});
   });
@@ -17,7 +16,7 @@ describe('useTasks', () => {
   it('updates when task completes', async () => {
     const { store } = createTestStore();
 
-    const { result } = renderHook(() => useTasks(store));
+    const { result } = renderHook(() => useQueue(store));
 
     expect(result.current.setVolume).toBeUndefined();
 

@@ -1,28 +1,33 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import { noop } from '@videojs/utils/function';
 import { isNull } from '@videojs/utils/predicate';
-import type { AnyStore } from '../../core/store';
+import type { AnyStore, InferStoreRequests, InferStoreState } from '../../core/store';
 import type { StoreSource } from '../store-accessor';
 
 import { StoreAccessor } from '../store-accessor';
 
-export type TasksControllerHost = ReactiveControllerHost & HTMLElement;
+export type StoreControllerHost = ReactiveControllerHost & HTMLElement;
+
+export type StoreControllerValue<Store extends AnyStore> = InferStoreState<Store> & InferStoreRequests<Store>;
 
 /**
- * Subscribes to task state changes.
- * Triggers host updates when tasks change.
+ * Subscribes to store state changes.
+ * Triggers host updates when state changes.
+ * Provides access to state and request functions spread together.
  *
  * Accepts either a direct store instance or a context that provides one.
  *
  * @example Direct store
  * ```ts
  * class MyElement extends LitElement {
- *   #tasks = new TasksController(this, store);
+ *   #store = new StoreController(this, store);
  *
  *   render() {
- *     const playTask = this.#tasks.value.play;
- *     const isPending = playTask?.status === 'pending';
- *     return html`<button ?disabled=${isPending}>Play</button>`;
+ *     const { volume, setVolume } = this.#store.value;
+ *     return html`
+ *       <span>${volume}</span>
+ *       <button @click=${() => setVolume(0.5)}>Set 50%</button>
+ *     `;
  *   }
  * }
  * ```
@@ -32,30 +37,33 @@ export type TasksControllerHost = ReactiveControllerHost & HTMLElement;
  * const { context } = createStore({ features: [playbackFeature] });
  *
  * class MyElement extends LitElement {
- *   #tasks = new TasksController(this, context);
+ *   #store = new StoreController(this, context);
  * }
  * ```
  */
-export class TasksController<Store extends AnyStore> implements ReactiveController {
-  readonly #host: TasksControllerHost;
+export class StoreController<Store extends AnyStore> implements ReactiveController {
+  readonly #host: StoreControllerHost;
   readonly #accessor: StoreAccessor<Store>;
 
   #unsubscribe = noop;
 
-  constructor(host: TasksControllerHost, source: StoreSource<Store>) {
+  constructor(host: StoreControllerHost, source: StoreSource<Store>) {
     this.#host = host;
     this.#accessor = new StoreAccessor(host, source, (store) => this.#connect(store));
     host.addController(this);
   }
 
-  get value(): Store['queue']['tasks']['current'] {
+  get value(): StoreControllerValue<Store> {
     const store = this.#accessor.value;
 
     if (isNull(store)) {
-      throw new Error('TasksController: Store not available from context');
+      throw new Error('StoreController: Store not available from context');
     }
 
-    return store.queue.tasks.current;
+    return {
+      ...store.state,
+      ...store.request,
+    } as StoreControllerValue<Store>;
   }
 
   hostConnected(): void {
@@ -69,7 +77,7 @@ export class TasksController<Store extends AnyStore> implements ReactiveControll
 
   #connect(store: Store): void {
     this.#unsubscribe();
-    this.#unsubscribe = store.queue.tasks.subscribe(() => {
+    this.#unsubscribe = store.subscribe(() => {
       this.#host.requestUpdate();
     });
   }

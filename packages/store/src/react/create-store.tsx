@@ -1,6 +1,6 @@
 import { isNull, isUndefined } from '@videojs/utils/predicate';
 import type { FC, ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import type {
   AnyFeature,
   UnionFeatureRequests,
@@ -13,7 +13,6 @@ import type { StoreConfig } from '../core/store';
 
 import { Store } from '../core/store';
 import { StoreContextProvider, useParentStore, useStoreContext } from './context';
-import { useRequest as useRequestBase, useSnapshot as useSnapshotBase, useTasks as useTasksBase } from './hooks';
 
 // ----------------------------------------
 // Types
@@ -21,9 +20,7 @@ import { useRequest as useRequestBase, useSnapshot as useSnapshotBase, useTasks 
 
 export interface CreateStoreConfig<Features extends AnyFeature[]>
   extends StoreConfig<UnionFeatureTarget<Features>, Features> {
-  /**
-   * Display name for React DevTools.
-   */
+  /** Display name for React DevTools. */
   displayName?: string;
 }
 
@@ -43,36 +40,24 @@ export interface ProviderProps<Features extends AnyFeature[]> {
   inherit?: boolean;
 }
 
+export type UseStoreResult<Features extends AnyFeature[]> = UnionFeatureState<Features> &
+  UnionFeatureRequests<Features>;
+
 export interface CreateStoreResult<Features extends AnyFeature[]> {
-  /**
-   * Provider component that creates and manages the store lifecycle.
-   */
+  /** Provider component that creates and manages the store lifecycle. */
   Provider: FC<ProviderProps<Features>>;
 
   /**
-   * Returns the typed store instance from context.
+   * Subscribe to store state and access requests.
+   * Returns state with request map, re-renders when state changes.
    */
-  useStore: () => Store<UnionFeatureTarget<Features>, Features>;
+  useStore: () => UseStoreResult<Features>;
 
   /**
-   * Returns a snapshot of the store state.
-   * Re-renders when state changes.
-   */
-  useSnapshot: () => UnionFeatureState<Features>;
-
-  /**
-   * Returns the request map or a specific request by name.
-   */
-  useRequest: {
-    (): UnionFeatureRequests<Features>;
-    <Name extends keyof UnionFeatureRequests<Features>>(name: Name): UnionFeatureRequests<Features>[Name];
-  };
-
-  /**
-   * Subscribes to task state changes.
+   * Subscribes to queue task changes.
    * Returns the current tasks map from the queue.
    */
-  useTasks: () => TasksRecord<UnionFeatureTasks<Features>>;
+  useQueue: () => TasksRecord<UnionFeatureTasks<Features>>;
 
   /**
    * Creates a new store instance.
@@ -93,7 +78,7 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
  *
  * @example
  * ```tsx
- * const { Provider, useStore, useSnapshot, useRequest, useTasks, create } = createStore({
+ * const { Provider, useStore, useQueue, create } = createStore({
  *   features: [playbackFeature, presentationFeature],
  * });
  * ```
@@ -102,8 +87,6 @@ export function createStore<Features extends AnyFeature[]>(
   config: CreateStoreConfig<Features>
 ): CreateStoreResult<Features> {
   type Target = UnionFeatureTarget<Features>;
-  type State = UnionFeatureState<Features>;
-  type Requests = UnionFeatureRequests<Features>;
   type Tasks = UnionFeatureTasks<Features>;
   type StoreType = Store<Target, Features>;
 
@@ -154,33 +137,34 @@ export function createStore<Features extends AnyFeature[]>(
     Provider.displayName = `${config.displayName}.Provider`;
   }
 
-  function useStore(): StoreType {
-    return useStoreContext() as StoreType;
+  function useStore(): UseStoreResult<Features> {
+    const store = useStoreContext() as StoreType;
+
+    const state = useSyncExternalStore(
+      (cb) => store.subscribe(cb),
+      () => store.state,
+      () => store.state
+    );
+
+    return {
+      ...state,
+      ...(store.request as object),
+    } as UseStoreResult<Features>;
   }
 
-  function useSnapshot(): State {
-    const store = useStore();
-    return useSnapshotBase(store.state) as State;
-  }
-
-  function useRequest(): Requests;
-  function useRequest<Name extends keyof Requests>(name: Name): Requests[Name];
-  function useRequest<Name extends keyof Requests>(name?: Name): Requests | Requests[Name] {
-    const store = useStore();
-    return useRequestBase(store, name as Name);
-  }
-
-  function useTasks(): TasksRecord<Tasks> {
-    const store = useStore();
-    return useTasksBase(store);
+  function useQueue(): TasksRecord<Tasks> {
+    const store = useStoreContext() as StoreType;
+    return useSyncExternalStore(
+      (cb) => store.queue.subscribe(cb),
+      () => store.queue.tasks as TasksRecord<Tasks>,
+      () => store.queue.tasks as TasksRecord<Tasks>
+    );
   }
 
   return {
     Provider,
     useStore,
-    useSnapshot,
-    useRequest: useRequest as CreateStoreResult<Features>['useRequest'],
-    useTasks,
+    useQueue,
     create,
   };
 }

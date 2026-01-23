@@ -2,7 +2,7 @@ import { abortable } from '@videojs/utils/events';
 import { isUndefined } from '@videojs/utils/predicate';
 import { StoreError } from './errors';
 import type { Request, RequestMeta, RequestMode } from './request';
-import type { State, WritableState } from './state';
+import type { WritableState } from './state';
 import { createState } from './state';
 import type { ErrorTask, PendingTask, SuccessTask, Task, TaskContext, TaskKey } from './task';
 
@@ -41,8 +41,14 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
   #destroyed = false;
 
-  get tasks(): State<TasksRecord<Tasks>> {
-    return this.#tasks;
+  /** Current task records. */
+  get tasks(): Readonly<TasksRecord<Tasks>> {
+    return this.#tasks.current;
+  }
+
+  /** Subscribe to task changes. */
+  subscribe(listener: (changedKeys: ReadonlySet<PropertyKey>) => void): () => void {
+    return this.#tasks.subscribe(listener);
   }
 
   constructor() {
@@ -56,7 +62,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   /** Clear settled task(s). If name provided, clears that task. If no name, clears all settled. */
   reset(name?: keyof Tasks): void {
     if (!isUndefined(name)) {
-      const task = this.tasks.current[name];
+      const task = this.#tasks.current[name];
       if (!task || task.status === 'pending') return;
 
       this.#tasks.delete(name);
@@ -64,8 +70,8 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       return;
     }
 
-    for (const key of Reflect.ownKeys(this.tasks.current) as (keyof Tasks)[]) {
-      const task = this.tasks.current[key];
+    for (const key of Reflect.ownKeys(this.#tasks.current) as (keyof Tasks)[]) {
+      const task = this.#tasks.current[key];
 
       if (task && task.status !== 'pending') {
         this.#tasks.delete(key);
@@ -91,7 +97,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     }
 
     // Supersede any pending task with the same key (may have different name)
-    for (const existingTask of Object.values(this.tasks.current)) {
+    for (const existingTask of Object.values(this.#tasks.current)) {
       if (existingTask?.key === key && existingTask.status === 'pending') {
         existingTask.abort.abort(new StoreError('SUPERSEDED'));
       }
@@ -126,7 +132,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   /** Abort task(s). If name provided, aborts that task. If no name, aborts all. */
   abort(name?: keyof Tasks): void {
     if (!isUndefined(name)) {
-      const task = this.tasks.current[name];
+      const task = this.#tasks.current[name];
       if (task?.status === 'pending') {
         task.abort.abort(new StoreError('ABORTED'));
       }
@@ -136,7 +142,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
 
     const error = new StoreError('ABORTED');
 
-    for (const task of Object.values(this.tasks.current)) {
+    for (const task of Object.values(this.#tasks.current)) {
       if (task?.status === 'pending') {
         task.abort.abort(error);
       }
@@ -150,7 +156,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
     this.abort();
 
     // Clear all tasks
-    for (const key of Reflect.ownKeys(this.tasks.current)) {
+    for (const key of Reflect.ownKeys(this.#tasks.current)) {
       this.#tasks.delete(key);
     }
 
@@ -192,7 +198,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       resolve(result);
 
       // Only update if we're still the current task for this name
-      const currentTask = this.tasks.current[name];
+      const currentTask = this.#tasks.current[name];
 
       if (currentTask?.id === id) {
         this.#tasks.set(name as keyof Tasks, {
@@ -206,7 +212,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       reject(error);
 
       // Only update if we're still the current task for this name
-      const currentTask = this.tasks.current[name as keyof Tasks];
+      const currentTask = this.#tasks.current[name as keyof Tasks];
 
       if (currentTask?.id === id) {
         this.#tasks.set(name as keyof Tasks, {
