@@ -1,0 +1,31 @@
+---
+import { CircleCheck, XCircle } from 'lucide-react';
+
+import Base from './Base.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  variant: 'success' | 'error';
+}
+
+const { title, description, variant } = Astro.props;
+
+const Icon = variant === 'success' ? CircleCheck : XCircle;
+const iconClass = variant === 'error' ? 'text-red' : '';
+---
+
+<Base title={title} {description}>
+  <main class="flex items-center justify-center min-h-screen p-6">
+    <div class="text-center max-w-md flex flex-col items-center gap-4">
+      <Icon size={48} className={iconClass} />
+      <div>
+        <h1 class="text-h4">{title}</h1>
+        <p class="text-lg text-dark-40 dark:text-light-40">{description}</p>
+      </div>
+      <div data-action-container class="invisible">
+        <slot name="action" />
+      </div>
+    </div>
+  </main>
+</Base>
