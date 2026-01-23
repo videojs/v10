@@ -1,11 +1,34 @@
 ---
-import { SITE_TITLE } from '@/consts';
-import Base from '@/layouts/Base.astro';
+import { ArrowLeft, X } from 'lucide-react';
+
+import AuthResult from '@/layouts/AuthResult.astro';
 ---
 
-<Base title={`Authentication Failed | ${SITE_TITLE}`} description="Authentication Failed">
-  <div class="flex items-center justify-center h-screen flex-col">
-    <h1 class="text-h4 md:text-h1 text-balance lg:text-pretty">Authentication Failed</h1>
-    <p class="md:text-lg text-balance max-w-100">Please try again...</p>
-  </div>
-</Base>
+<AuthResult title="Authentication Failed" description="Please try again..." variant="error">
+  <a slot="action" data-action="home" href="/" class="hidden items-center gap-1 intent:underline group">
+    <ArrowLeft size="1em" className="group-intent:-translate-x-1 transition-transform" />
+    Back to Home
+  </a>
+  <button slot="action" data-action="close" type="button" class="hidden items-center gap-1 intent:underline group">
+    <X size="1em" className="group-intent:scale-110 transition-transform" />
+    Close
+  </button>
+</AuthResult>
+
+<script>
+  const isPopup = Boolean(window.opener);
+  const actionContainer = document.querySelector('[data-action-container]');
+  const homeAction = document.querySelector('[data-action="home"]');
+  const closeAction = document.querySelector('[data-action="close"]');
+
+  if (isPopup && closeAction) {
+    closeAction.classList.remove('hidden');
+    closeAction.classList.add('inline-flex');
+    closeAction.addEventListener('click', () => window.close());
+  } else if (homeAction) {
+    homeAction.classList.remove('hidden');
+    homeAction.classList.add('inline-flex');
+  }
+
+  actionContainer?.classList.remove('invisible');
+</script>

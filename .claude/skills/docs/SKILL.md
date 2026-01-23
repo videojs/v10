@@ -104,6 +104,7 @@ const player = createPlayer({ src: 'video.mp4' });
 
 **Rules:**
 
+- **Sentence case for headings** — capitalize only the first word and proper nouns (e.g., "Choose your JS framework", not "Choose Your JS Framework")
 - Active voice, second person ("you")
 - Short sentences
 - No filler ("In order to", "basically", "simply")

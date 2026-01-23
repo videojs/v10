@@ -1,8 +1,10 @@
 import type { JWTPayload } from 'jose';
 import type { OAuthResponse } from '@/utils/auth';
+
 import { getActionContext } from 'astro:actions';
 import { defineMiddleware } from 'astro:middleware';
 import { jwtVerify } from 'jose';
+
 import { getJWKS, INACTIVITY_EXPIRY, refreshToken, seal, SESSION_COOKIE_NAME, unseal } from '@/utils/auth';
 
 /** JWT payload structure from the OAuth ID token */
@@ -15,8 +17,14 @@ interface UserJWT extends JWTPayload {
 // Block access to actions without authentication
 // https://docs.astro.build/en/guides/actions/#gate-actions-from-middleware
 function isGated(actionName: string | undefined) {
+  if (!actionName) return false;
+
+  // Allow createDirectUpload to handle its own auth so the client can
+  // detect UNAUTHORIZED and show a login UI before uploading
+  if (actionName === 'mux.createDirectUpload') return false;
+
   // I don't love the magic string nature of this pattern but it's what is recommended in the docs
-  return actionName && actionName.startsWith('mux');
+  return actionName.startsWith('mux');
 }
 
 /**
@@ -85,10 +93,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
 
     // Verify ID token signature and extract user information
-    const { payload: user } = await jwtVerify<UserJWT>(
-      verifiedSession.id_token,
-      jwks,
-    );
+    const { payload: user } = await jwtVerify<UserJWT>(verifiedSession.id_token, jwks);
 
     // Populate Astro context with user information (safe for rendering)
     context.locals.user = {

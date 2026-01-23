@@ -1,0 +1,46 @@
+import type { ImageRadioOption } from '@/components/ImageRadioGroup';
+import type { Renderer } from '@/stores/installation';
+
+import { useStore } from '@nanostores/react';
+
+import { Box } from 'lucide-react';
+import ImageRadioGroup from '@/components/ImageRadioGroup';
+import { renderer } from '@/stores/installation';
+
+const PRIORITY_RENDERER_OPTIONS: ImageRadioOption<Renderer>[] = [
+  { value: 'html5-video', label: 'HTML5 Video', image: <Box size={16} /> },
+  { value: 'html5-audio', label: 'HTML5 Audio', image: <Box size={16} /> },
+];
+
+const RENDERER_OPTIONS: ImageRadioOption<Renderer>[] = (
+  [
+    { value: 'cloudflare', label: 'Cloudflare', image: <Box size={16} /> },
+    { value: 'dash', label: 'DASH', image: <Box size={16} /> },
+    { value: 'hls', label: 'HLS', image: <Box size={16} /> },
+    { value: 'jwplayer', label: 'JW Player', image: <Box size={16} /> },
+    { value: 'mux', label: 'Mux', image: <Box size={16} /> },
+    { value: 'shaka', label: 'Shaka', image: <Box size={16} /> },
+    { value: 'spotify', label: 'Spotify', image: <Box size={16} /> },
+    { value: 'vimeo', label: 'Vimeo', image: <Box size={16} /> },
+    { value: 'wistia', label: 'Wistia', image: <Box size={16} /> },
+    { value: 'youtube', label: 'YouTube', image: <Box size={16} /> },
+  ] satisfies ImageRadioOption<Renderer>[]
+).sort((a, b) => a.label.localeCompare(b.label));
+
+const ALL_RENDERER_OPTIONS = [...PRIORITY_RENDERER_OPTIONS, ...RENDERER_OPTIONS];
+
+/** URL input and renderer dropdown for manual selection */
+export default function RendererSelect() {
+  const $renderer = useStore(renderer);
+
+  return (
+    <ImageRadioGroup
+      value={$renderer}
+      onChange={value => renderer.set(value)}
+      options={ALL_RENDERER_OPTIONS}
+      aria-label="Select renderer"
+      size="sm"
+      labelPosition="inline"
+    />
+  );
+}

@@ -1,117 +1,157 @@
 ---
 title: Installation
-description: Get started with Video.js v10 by choosing your framework, styles, skin, and media renderer
+description: Get started with Video.js v10 by choosing your framework, skin, and media renderer
 ---
 
-import FrameworkCase from '@/components/docs/FrameworkCase.astro';
-import ServerCode from '@/components/Code/ServerCode.astro';
-import DocsLink from '@/components/docs/DocsLink.astro';
+import JSPicker from '@/components/installation/JSPicker.astro';
+import CSSPicker from '@/components/installation/CSSPicker.astro';
+import RendererPicker from '@/components/installation/RendererPicker';
+import SkinPicker from '@/components/installation/SkinPicker';
+import UseCasePicker from '@/components/installation/UseCasePicker';
+import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
+import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
 import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
 <Aside type="caution" title="Technical Preview">
 Video.js v10 is currently in technical preview. The API and docs are actively evolving. See the <DocsLink slug="concepts/v10-roadmap">roadmap</DocsLink> for more details on what's coming.
 </Aside>
 
-Welcome to Video.js v10! This guide will help you get up and running. In it, you'll make three key choices:
+Video.js is beautifully crafted, accessible media player components; packed with powerful features; tuned for high-performance; intentionally built for your favorite frameworks; compatible with the media formats and hosting services you love.
 
-1. **Framework** - React or HTML (vanilla JavaScript)
-2. **Skin** - The pre-built UI design you'll use, and how it's applied in your project
-3. **Renderer** - The component that displays your media
+Get started quickly with a selection of great presets and skins, then extend and customize to your hearts content.
 
-## 1. Pick Your Framework
+## Choose your JS framework
 
-Video.js v10 supports both React and vanilla JavaScript/HTML through Web Components.
+Video.js provides idiomatic experiences in both React and HTML Web Components. 
 
-First, select your preferred framework in the framework selector at the top of the <span class="hidden lg:inline">sidebar</span><span class="lg:hidden">page</span>.
+<ContentWidth margins="lg">
+  <JSPicker />
+</ContentWidth>
 
-Then, install the appropriate package, taking care to use the `@next` dist.
 
-<FrameworkCase frameworks={["react"]}>
-```bash
-npm install @videojs/react@next
-```
-</FrameworkCase>
+## Choose your use case
+
+Use case presets get you started closer to your desired player without wrangling plugins. The default is the Website Player preset, which comes with a complete set of features for simple video playback on your site.
+
+<ContentWidth margins="lg">
+  <UseCasePicker client:idle />
+</ContentWidth>
+
+
+## Choose your media renderer
+
+Media are like players without the UI.  Pick the one that matches your video or audio files and hosting. They can easily be changed later.
+
+<ContentWidth margins="lg">
+  <RendererPicker client:idle />
+</ContentWidth>
+
+## Install your player
+
 <FrameworkCase frameworks={["html"]}>
-```bash
-npm install @videojs/html@next
-```
+  <TabsRoot client:idle>
+    <TabsList client:idle label="Installation">
+      <Tab client:idle value="npm" initial>npm</Tab>
+      <Tab client:idle value="pnpm">pnpm</Tab>
+      <Tab client:idle value="yarn">yarn</Tab>
+      <Tab client:idle value="bun">bun</Tab>
+      <Tab client:idle value="cdn">cdn</Tab>
+    </TabsList>
+    <TabsPanel client:idle value="npm" initial>
+      ```bash
+      npm install @videojs/html
+      ```
+    </TabsPanel>
+    <TabsPanel client:idle value="pnpm">
+      ```bash
+      pnpm add @videojs/html
+      ```
+    </TabsPanel>
+    <TabsPanel client:idle value="yarn">
+      ```bash
+      yarn add @videojs/html
+      ```
+    </TabsPanel>
+    <TabsPanel client:idle value="bun">
+      ```bash
+      bun add @videojs/html
+      ```
+    </TabsPanel>
+    <TabsPanel client:idle value="cdn">
+      ```html
+      <script>
+      // don't need this, will be included in frosted
+      // import 'https://cdn.jsdelivr.net/npm/videojs/html/presets/website.js';
+      import 'https://cdn.jsdelivr.net/npm/videojs/html/presets/website/skins/frosted.js';
+      </script>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/videojs/html/presets/website/skins/frosted.css" />
+      ```
+    </TabsPanel>
+  </TabsRoot>
+  
+</FrameworkCase>
+<FrameworkCase frameworks={["react"]}>
+  <TabsRoot client:idle>
+    <TabsList client:idle label="Installation">
+      <Tab client:idle value="npm" initial>npm</Tab>
+      <Tab client:idle value="pnpm">pnpm</Tab>
+      <Tab client:idle value="yarn">yarn</Tab>
+      <Tab client:idle value="bun">bun</Tab>
+    </TabsList>
+    <TabsPanel client:idle value="npm" initial>
+      ```bash
+      npm install @videojs/react
+      ```
+    </TabsPanel>
+    <TabsPanel client:idle value="pnpm">
+      ```bash
+      pnpm add @videojs/react
+      ```
+    </TabsPanel>
+    <TabsPanel client:idle value="yarn">
+      ```bash
+      yarn add @videojs/react
+      ```
+    </TabsPanel>
+    <TabsPanel client:idle value="bun">
+      ```bash
+      bun add @videojs/react
+      ```
+    </TabsPanel>
+  </TabsRoot>
 </FrameworkCase>
 
-## 2. Pick Your Skin
 
-Skins are packaged sets of UI components and styles. Video.js v10 includes two built-in skins:
-
-- **Frosted** - Modern glassy design with backdrop blur effects
-- **Minimal** - Clean, simple design with straightforward controls
-
-Learn more about skins <DocsLink slug="concepts/skins">in the guide →</DocsLink>
-
-Currently, Video.js v10 uses CSS for styling these skins. More styling approaches (e.g, Tailwind CSS) are coming soon.
+<FrameworkCase frameworks={["html"]}>
+## Use your player
+<ContentWidth>
+  <HTMLUsageCodeBlock client:idle />
+</ContentWidth>
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
+## Create your player
+<ContentWidth>
+  <ReactCreateCodeBlock client:idle />
+</ContentWidth>
+
+## Use your player
 ```tsx
-import '@videojs/react/skins/frosted.css';
-// or
-import '@videojs/react/skins/minimal.css';
-```
-</FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
-```ts
-import '@videojs/html/skins/frosted';
-// or
-import '@videojs/html/skins/minimal';
-```
-</FrameworkCase>
+// HomePage.tsx
+import { MyPlayer } from '../components/player';
 
-## 3. Pick Your Renderer
-
-<FrameworkCase frameworks={["react"]}>
-Media renderers display your video and audio content. For now, Video.js v10 includes `<Video />`, which supports MP4 and other natively-supported streams and `<HlsVideo />`, which supports HLS.
-</FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
-Media renderers display your video and audio content. For now, you should use the native HTML5 `<video>` element.
-</FrameworkCase>
-
-More renderers for formats like DASH, and services like YouTube and Vimeo are planned.
-
-## Basic Example
-
-<FrameworkCase frameworks={["react"]}>
-```tsx
-import { VideoProvider, FrostedSkin, Video } from '@videojs/react';
-import '@videojs/react/skins/frosted.css';
-
-export default function App() {
+export const HomePage = () => {
   return (
-    <VideoProvider>
-      <FrostedSkin>
-        <Video
-          src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
-          poster="https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/thumbnail.webp"
-          playsInline
-        />
-      </FrostedSkin>
-    </VideoProvider>
+    <div>
+      <h1>Welcome to My App</h1>
+      <MyPlayer src="https://example.com/video.mp4" />
+    </div>
   );
-}
-```
-</FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
-```ts
-import '@videojs/html/skins/frosted';
-
-document.body.innerHTML = `
-  <video-provider>
-    <media-skin-frosted>
-      <video
-        slot="media"
-        src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
-        poster="https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/thumbnail.webp"
-        playsinline
-      ></video>
-    </media-skin-frosted>
-  </video-provider>
-`;
+};
 ```
 </FrameworkCase>
 
