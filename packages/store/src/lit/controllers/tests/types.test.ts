@@ -3,7 +3,6 @@ import { describe, expectTypeOf, it } from 'vitest';
 import { createState } from '../../../core/state';
 import { createCoreTestStore, createMockHost } from '../../tests/test-utils';
 import { QueueController } from '../queue-controller';
-import { RequestController } from '../request-controller';
 import { SnapshotController } from '../snapshot-controller';
 
 describe('controller types', () => {
@@ -29,18 +28,6 @@ describe('controller types', () => {
 
       expectTypeOf(controller.value.volume).toEqualTypeOf<number>();
       expectTypeOf(controller.value.muted).toEqualTypeOf<boolean>();
-    });
-  });
-
-  describe('RequestController', () => {
-    it('value is the request function', () => {
-      const { store } = createCoreTestStore();
-      const host = createMockHost();
-
-      const controller = new RequestController(host, store, 'setVolume');
-
-      expectTypeOf(controller.value).toBeFunction();
-      expectTypeOf(controller.value).parameter(0).toEqualTypeOf<number>();
     });
   });
 

@@ -13,7 +13,6 @@ import type { StoreConfig } from '../core/store';
 
 import { Store } from '../core/store';
 import { StoreContextProvider, useParentStore, useStoreContext } from './context';
-import { useRequest as useRequestBase } from './hooks';
 
 // ----------------------------------------
 // Types
@@ -21,9 +20,7 @@ import { useRequest as useRequestBase } from './hooks';
 
 export interface CreateStoreConfig<Features extends AnyFeature[]>
   extends StoreConfig<UnionFeatureTarget<Features>, Features> {
-  /**
-   * Display name for React DevTools.
-   */
+  /** Display name for React DevTools. */
   displayName?: string;
 }
 
@@ -43,30 +40,19 @@ export interface ProviderProps<Features extends AnyFeature[]> {
   inherit?: boolean;
 }
 
+export type UseStoreResult<Features extends AnyFeature[]> = UnionFeatureState<Features> & {
+  request: UnionFeatureRequests<Features>;
+};
+
 export interface CreateStoreResult<Features extends AnyFeature[]> {
-  /**
-   * Provider component that creates and manages the store lifecycle.
-   */
+  /** Provider component that creates and manages the store lifecycle. */
   Provider: FC<ProviderProps<Features>>;
 
   /**
-   * Returns the typed store instance from context.
+   * Subscribe to store state and access requests.
+   * Returns state with request map, re-renders when state changes.
    */
-  useStore: () => Store<UnionFeatureTarget<Features>, Features>;
-
-  /**
-   * Returns a snapshot of the store state.
-   * Re-renders when state changes.
-   */
-  useSnapshot: () => UnionFeatureState<Features>;
-
-  /**
-   * Returns the request map or a specific request by name.
-   */
-  useRequest: {
-    (): UnionFeatureRequests<Features>;
-    <Name extends keyof UnionFeatureRequests<Features>>(name: Name): UnionFeatureRequests<Features>[Name];
-  };
+  useStore: () => UseStoreResult<Features>;
 
   /**
    * Subscribes to queue task changes.
@@ -93,7 +79,7 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
  *
  * @example
  * ```tsx
- * const { Provider, useStore, useSnapshot, useRequest, useQueue, create } = createStore({
+ * const { Provider, useStore, useQueue, create } = createStore({
  *   features: [playbackFeature, presentationFeature],
  * });
  * ```
@@ -102,8 +88,6 @@ export function createStore<Features extends AnyFeature[]>(
   config: CreateStoreConfig<Features>
 ): CreateStoreResult<Features> {
   type Target = UnionFeatureTarget<Features>;
-  type State = UnionFeatureState<Features>;
-  type Requests = UnionFeatureRequests<Features>;
   type Tasks = UnionFeatureTasks<Features>;
   type StoreType = Store<Target, Features>;
 
@@ -154,28 +138,22 @@ export function createStore<Features extends AnyFeature[]>(
     Provider.displayName = `${config.displayName}.Provider`;
   }
 
-  function useStore(): StoreType {
-    return useStoreContext() as StoreType;
-  }
-
-  function useSnapshot(): State {
-    const store = useStore();
-    return useSyncExternalStore(
+  function useStore(): UseStoreResult<Features> {
+    const store = useStoreContext() as StoreType;
+    const state = useSyncExternalStore(
       (cb) => store.subscribe(cb),
-      () => store.state as State,
-      () => store.state as State
+      () => store.state,
+      () => store.state
     );
-  }
 
-  function useRequest(): Requests;
-  function useRequest<Name extends keyof Requests>(name: Name): Requests[Name];
-  function useRequest<Name extends keyof Requests>(name?: Name): Requests | Requests[Name] {
-    const store = useStore();
-    return useRequestBase(store, name as Name);
+    return {
+      ...state,
+      request: store.request,
+    } as UseStoreResult<Features>;
   }
 
   function useQueue(): TasksRecord<Tasks> {
-    const store = useStore();
+    const store = useStoreContext() as StoreType;
     return useSyncExternalStore(
       (cb) => store.queue.subscribe(cb),
       () => store.queue.tasks as TasksRecord<Tasks>,
@@ -186,8 +164,6 @@ export function createStore<Features extends AnyFeature[]>(
   return {
     Provider,
     useStore,
-    useSnapshot,
-    useRequest: useRequest as CreateStoreResult<Features>['useRequest'],
     useQueue,
     create,
   };

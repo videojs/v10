@@ -14,7 +14,7 @@ import type { TasksRecord } from '../core/queue';
 import type { StoreConfig, StoreConsumer, StoreProvider } from '../core/store';
 
 import { Store } from '../core/store';
-import { QueueController as QueueControllerBase, RequestController as RequestControllerBase } from './controllers';
+import { QueueController as QueueControllerBase } from './controllers';
 import { createStoreAttachMixin, createStoreMixin, createStoreProviderMixin } from './mixins';
 
 export const contextKey = Symbol('@videojs/store');
@@ -23,6 +23,11 @@ export interface CreateStoreConfig<Features extends AnyFeature[]>
   extends StoreConfig<UnionFeatureTarget<Features>, Features> {}
 
 export type CreateStoreHost = ReactiveControllerHost & HTMLElement;
+
+export interface StoreControllerValue<Features extends AnyFeature[]> {
+  state: UnionFeatureState<Features>;
+  request: UnionFeatureRequests<Features>;
+}
 
 export interface CreateStoreResult<Features extends AnyFeature[]> {
   /**
@@ -88,51 +93,33 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
   create: () => Store<UnionFeatureTarget<Features>, Features>;
 
   /**
-   * State controller bound to this store's context.
-   * Subscribes to store state changes and triggers host updates.
+   * Store controller bound to this store's context.
+   * Subscribes to store state changes and provides access to state + request.
    *
    * @example
    * ```ts
-   * const { StateController } = createStore({ features: [playbackFeature] });
+   * const { StoreController } = createStore({ features: [playbackFeature] });
    *
    * class MyElement extends LitElement {
-   *   #state = new StateController(this);
+   *   #store = new StoreController(this);
    *
    *   render() {
-   *     return html`<button>${this.#state.value.paused ? 'Play' : 'Pause'}</button>`;
+   *     const { state, request } = this.#store.value;
+   *     return html`
+   *       <span>${state.volume}</span>
+   *       <button @click=${() => request.setVolume(0.5)}>Set 50%</button>
+   *     `;
    *   }
    * }
    * ```
    */
-  StateController: new (
+  StoreController: new (
     host: CreateStoreHost
   ) => {
-    value: UnionFeatureState<Features>;
+    value: StoreControllerValue<Features>;
     hostConnected: () => void;
     hostDisconnected: () => void;
   };
-
-  /**
-   * Request controller bound to this store's context.
-   * Provides access to a store request by name.
-   *
-   * @example
-   * ```ts
-   * const { RequestController } = createStore({ features: [playbackFeature] });
-   *
-   * class MyElement extends LitElement {
-   *   #play = new RequestController(this, 'play');
-   *
-   *   render() {
-   *     return html`<button @click=${() => this.#play.value()}>Play</button>`;
-   *   }
-   * }
-   * ```
-   */
-  RequestController: new <Name extends keyof UnionFeatureRequests<Features>>(
-    host: CreateStoreHost,
-    name: Name
-  ) => RequestControllerBase<Store<UnionFeatureTarget<Features>, Features>, Name>;
 
   /**
    * Queue controller bound to this store's context.
@@ -172,7 +159,7 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
  * import { createStore } from '@videojs/store/lit';
  * import { playbackFeature } from '@videojs/core/dom';
  *
- * const { StoreMixin, StateController } = createStore({
+ * const { StoreMixin, StoreController } = createStore({
  *   features: [playbackFeature],
  * });
  *
@@ -181,23 +168,16 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
  *
  * // Create a control element that uses the store via context
  * class MyControl extends LitElement {
- *   #state = new StateController(this);
+ *   #store = new StoreController(this);
  *
  *   render() {
- *     return html`<span>${this.#state.value.paused ? 'Paused' : 'Playing'}</span>`;
+ *     const { state, request } = this.#store.value;
+ *     return html`<span>${state.paused ? 'Paused' : 'Playing'}</span>`;
  *   }
  * }
  *
  * customElements.define('my-player', MyPlayer);
  * customElements.define('my-control', MyControl);
- * ```
- *
- * @example
- * ```html
- * <my-player>
- *   <video src="video.mp4"></video>
- *   <my-control></my-control>
- * </my-player>
  * ```
  */
 export function createStore<Features extends AnyFeature[]>(
@@ -218,7 +198,7 @@ export function createStore<Features extends AnyFeature[]>(
   const StoreAttachMixin = createStoreAttachMixin<Features>(context);
   const StoreMixin = createStoreMixin<Features>(context, create);
 
-  class StateController {
+  class StoreController {
     readonly #host: CreateStoreHost;
     readonly #consumer: ContextConsumer<typeof context, CreateStoreHost>;
     #unsubscribe = noop;
@@ -233,12 +213,15 @@ export function createStore<Features extends AnyFeature[]>(
       host.addController(this);
     }
 
-    get value(): State {
+    get value(): StoreControllerValue<Features> {
       const store = this.#consumer.value;
       if (!store) {
-        throw new Error('StateController: Store not available from context');
+        throw new Error('StoreController: Store not available from context');
       }
-      return store.state as State;
+      return {
+        state: store.state as State,
+        request: store.request as Requests,
+      };
     }
 
     hostConnected(): void {
@@ -257,12 +240,6 @@ export function createStore<Features extends AnyFeature[]>(
     }
   }
 
-  class RequestController<Name extends keyof Requests> extends RequestControllerBase<ProvidedStore, Name> {
-    constructor(host: CreateStoreHost, name: Name) {
-      super(host, context, name);
-    }
-  }
-
   class QueueController extends QueueControllerBase<ProvidedStore> {
     constructor(host: CreateStoreHost) {
       super(host, context);
@@ -275,8 +252,7 @@ export function createStore<Features extends AnyFeature[]>(
     StoreAttachMixin,
     context,
     create,
-    StateController,
-    RequestController,
+    StoreController,
     QueueController,
   };
 }

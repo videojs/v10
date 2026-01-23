@@ -112,25 +112,17 @@ describe('createStore', () => {
       expect(result).toHaveProperty('StoreAttachMixin');
       expect(result).toHaveProperty('context');
       expect(result).toHaveProperty('create');
-      expect(result).toHaveProperty('StateController');
-      expect(result).toHaveProperty('RequestController');
+      expect(result).toHaveProperty('StoreController');
       expect(result).toHaveProperty('QueueController');
     });
   });
 
   describe('bound controllers', () => {
-    it('StateController is a class', () => {
-      const { StateController } = createStore({ features: [audioFeature] });
+    it('StoreController is a class', () => {
+      const { StoreController } = createStore({ features: [audioFeature] });
 
-      expect(typeof StateController).toBe('function');
-      expect(StateController.prototype).toBeDefined();
-    });
-
-    it('RequestController is a class', () => {
-      const { RequestController } = createStore({ features: [audioFeature] });
-
-      expect(typeof RequestController).toBe('function');
-      expect(RequestController.prototype).toBeDefined();
+      expect(typeof StoreController).toBe('function');
+      expect(StoreController.prototype).toBeDefined();
     });
 
     it('QueueController is a class', () => {

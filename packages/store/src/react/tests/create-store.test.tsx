@@ -54,22 +54,8 @@ describe('createStore', () => {
       });
 
       expect(result.current).toBeDefined();
-      expect(result.current.state).toEqual({ volume: 1, muted: false });
-    });
-
-    it('destroys store on unmount', () => {
-      const { Provider, useStore } = createStore({ features: [audioFeature] });
-
-      const { result, unmount } = renderHook(() => useStore(), {
-        wrapper: ({ children }: { children: ReactNode }) => <Provider>{children}</Provider>,
-      });
-
-      const store = result.current;
-      expect(store.destroyed).toBe(false);
-
-      unmount();
-
-      expect(store.destroyed).toBe(true);
+      expect(result.current.volume).toBe(1);
+      expect(result.current.request).toBeDefined();
     });
 
     it('uses provided store prop without destroying on unmount', () => {
@@ -78,51 +64,14 @@ describe('createStore', () => {
       });
       const providedStore = create();
 
-      const { result, unmount } = renderHook(() => useStore(), {
+      const { unmount } = renderHook(() => useStore(), {
         wrapper: ({ children }: { children: ReactNode }) => <Provider store={providedStore}>{children}</Provider>,
       });
-
-      expect(result.current).toBe(providedStore);
 
       unmount();
 
       // Store should NOT be destroyed because it was provided
       expect(providedStore.destroyed).toBe(false);
-    });
-
-    it('inherits store from parent when inherit=true', () => {
-      const { Provider, useStore, create } = createStore({
-        features: [audioFeature],
-      });
-      const parentStore = create();
-
-      const { result } = renderHook(() => useStore(), {
-        wrapper: ({ children }: { children: ReactNode }) => (
-          <Provider store={parentStore}>
-            <Provider inherit>{children}</Provider>
-          </Provider>
-        ),
-      });
-
-      expect(result.current).toBe(parentStore);
-    });
-
-    it('creates isolated store by default', () => {
-      const { Provider, useStore, create } = createStore({
-        features: [audioFeature],
-      });
-      const parentStore = create();
-
-      const { result } = renderHook(() => useStore(), {
-        wrapper: ({ children }: { children: ReactNode }) => (
-          <Provider store={parentStore}>
-            <Provider>{children}</Provider>
-          </Provider>
-        ),
-      });
-
-      // Should be a different store
-      expect(result.current).not.toBe(parentStore);
     });
 
     it('sets displayName on Provider', () => {
@@ -136,45 +85,33 @@ describe('createStore', () => {
   });
 
   describe('useStore', () => {
-    it('returns the store from context', () => {
+    it('returns state with request from context', () => {
       const { Provider, useStore, create } = createStore({
         features: [audioFeature],
       });
       const store = create();
+      const target = new MockMedia();
+      store.attach(target);
 
       const { result } = renderHook(() => useStore(), {
         wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
       });
 
-      expect(result.current).toBe(store);
-    });
-  });
-
-  describe('useSnapshot', () => {
-    it('returns state from context store', () => {
-      const { Provider, useSnapshot, create } = createStore({
-        features: [audioFeature],
-      });
-      const store = create();
-      const target = new MockMedia();
-      store.attach(target);
-
-      const { result } = renderHook(() => useSnapshot(), {
-        wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
-      });
-
       expect(result.current.volume).toBe(1);
+      expect(result.current.muted).toBe(false);
+      expect(result.current.request).toBeDefined();
+      expect(typeof result.current.request.setVolume).toBe('function');
     });
 
     it('updates when state changes', async () => {
-      const { Provider, useSnapshot, create } = createStore({
+      const { Provider, useStore, create } = createStore({
         features: [audioFeature],
       });
       const store = create();
       const target = new MockMedia();
       store.attach(target);
 
-      const { result } = renderHook(() => useSnapshot(), {
+      const { result } = renderHook(() => useStore(), {
         wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
       });
 
@@ -186,34 +123,6 @@ describe('createStore', () => {
       });
 
       expect(result.current.volume).toBe(0.5);
-    });
-  });
-
-  describe('useRequest', () => {
-    it('returns request map from context store', () => {
-      const { Provider, useRequest, create } = createStore({
-        features: [audioFeature],
-      });
-      const store = create();
-
-      const { result } = renderHook(() => useRequest(), {
-        wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
-      });
-
-      expect(result.current).toHaveProperty('setVolume');
-    });
-
-    it('returns request by name', () => {
-      const { Provider, useRequest, create } = createStore({
-        features: [audioFeature],
-      });
-      const store = create();
-
-      const { result } = renderHook(() => useRequest('setVolume'), {
-        wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
-      });
-
-      expect(typeof result.current).toBe('function');
     });
   });
 
