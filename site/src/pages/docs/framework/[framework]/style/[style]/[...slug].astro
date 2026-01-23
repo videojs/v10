@@ -1,22 +1,21 @@
 ---
-import type { SupportedFramework, SupportedStyle } from '@/types/docs';
+
 import type { CollectionEntry } from 'astro:content';
-
 import { getCollection, render } from 'astro:content';
-
-import DocsLayout from '@/layouts/Docs.astro';
-import { ALL_FRAMEWORK_STYLE_COMBINATIONS } from '@/types/docs';
-import { filterSidebar, getAllGuideSlugs, getAdjacentGuides, getSectionsForGuide } from '@/utils/docs/sidebar';
-import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
-import { TableOfContents } from '@/components/docs/TableOfContents';
-import H3 from '@/components/typography/H3.astro';
-import { Selectors } from '@/components/docs/Selectors';
+import CopyMarkdownButton from '@/components/CopyMarkdownButton';
 import DocsNavigation from '@/components/docs/DocsNavigation.astro';
 import EditPageButton from '@/components/docs/EditPageButton.astro';
+import { Selectors } from '@/components/docs/Selectors';
+import { TableOfContents } from '@/components/docs/TableOfContents';
 import JsonLd from '@/components/JsonLd.astro';
-import { createTechArticleSchema } from '@/utils/jsonLd/schemas';
+import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
+import H3 from '@/components/typography/H3.astro';
+import DocsLayout from '@/layouts/Docs.astro';
+import type { SupportedFramework, SupportedStyle } from '@/types/docs';
+import { ALL_FRAMEWORK_STYLE_COMBINATIONS } from '@/types/docs';
+import { filterSidebar, getAdjacentGuides, getAllGuideSlugs, getSectionsForGuide } from '@/utils/docs/sidebar';
 import { getDocTitle } from '@/utils/docs/title';
-import CopyMarkdownButton from '@/components/CopyMarkdownButton';
+import { createTechArticleSchema } from '@/utils/jsonLd/schemas';
 
 export async function getStaticPaths() {
   const docsCollection = await getCollection('docs');

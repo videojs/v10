@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createFeature } from '../feature';
 import { createQueue } from '../queue';
-import { flush, subscribe } from '../state';
+import { flush } from '../state';
 import { createStore } from '../store';
 
 describe('store', () => {
@@ -252,7 +252,7 @@ describe('store', () => {
 
       store.attach(new MockMedia());
 
-      await store.request.action(null, {
+      await store.request.action(undefined, {
         source: 'user',
         reason: 'test',
       });
@@ -261,12 +261,12 @@ describe('store', () => {
         expect.objectContaining({
           source: 'user',
           reason: 'test',
-        }),
+        })
       );
     });
   });
 
-  describe('subscribe (via reactive)', () => {
+  describe('subscribe', () => {
     it('notifies on state change', async () => {
       const store = createStore({
         features: [audioFeature],
@@ -276,7 +276,7 @@ describe('store', () => {
       store.attach(media);
 
       const listener = vi.fn();
-      subscribe(store.state, listener);
+      store.subscribe(listener);
 
       await store.request.setVolume(0.5);
       flush();
@@ -294,7 +294,7 @@ describe('store', () => {
       store.attach(media);
 
       const listener = vi.fn();
-      const unsubscribe = subscribe(store.state, listener);
+      const unsubscribe = store.subscribe(listener);
       unsubscribe();
 
       await store.request.setVolume(0.5);
@@ -359,7 +359,7 @@ describe('store', () => {
         expect.objectContaining({
           error: expect.any(Error),
           store,
-        }),
+        })
       );
     });
   });

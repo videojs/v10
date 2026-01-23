@@ -21,7 +21,7 @@ import type { Falsy } from '../types';
 export function getSlottedElement<T extends Element>(
   shadowRoot: ShadowRoot,
   slotName: string,
-  predicate: (el: Element) => Falsy<T>,
+  predicate: (el: Element) => Falsy<T>
 ): T | null {
   const slot = querySlot(shadowRoot, slotName);
   if (!slot) return null;

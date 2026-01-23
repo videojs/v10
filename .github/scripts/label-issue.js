@@ -1,7 +1,6 @@
 import core from '@actions/core';
 import github from '@actions/github';
 
-// eslint-disable-next-line node/prefer-global/process
 const GH_TOKEN = process.env.GITHUB_TOKEN;
 
 const pkgLabel = {
@@ -77,7 +76,6 @@ async function run() {
 
     console.log(`Matched labels: ${Array.from(labels).join(', ')}`);
 
-    // eslint-disable-next-line node/prefer-global/process
     if (process.env.DRY_RUN === 'true') {
       console.log('⚠️ DRY RUN: Skipping API call.');
       return;

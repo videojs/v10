@@ -4,9 +4,9 @@ export type Constructor<T, Arguments extends unknown[] = any[]> = new (...args: 
 
 export type AbstractConstructor<T, Arguments extends unknown[] = any[]> = abstract new (...args: Arguments) => T;
 
-export type AnyConstructor<T, Arguments extends unknown[] = any[]>
-  = | Constructor<T, Arguments>
-    | AbstractConstructor<T, Arguments>;
+export type AnyConstructor<T, Arguments extends unknown[] = any[]> =
+  | Constructor<T, Arguments>
+  | AbstractConstructor<T, Arguments>;
 
 export type Mixin<Base, Result> = <T extends Constructor<Base>>(Base: T) => T & Constructor<Result>;
 

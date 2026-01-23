@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { CANCEL_ALL, createFeature, createStore } from '../../index';
-import { flush, subscribeKeys } from '../../state';
+import { flush } from '../../state';
 
 describe('store lifecycle integration', () => {
   it('full lifecycle: create → attach → use → detach → destroy', async () => {
@@ -79,7 +79,7 @@ describe('store lifecycle integration', () => {
     store.attach({});
 
     // Test 1: Guard rejects when not ready
-    const failPromise = store.request.guardedAction().catch(e => e);
+    const failPromise = store.request.guardedAction().catch((e) => e);
     await expect(failPromise).resolves.toMatchObject({ code: 'REJECTED' });
 
     // Test 2: Guard passes when ready
@@ -132,7 +132,7 @@ describe('request coordination', () => {
     store.attach({});
 
     const loadPromise = store.request.load();
-    await new Promise(r => setTimeout(r, 10));
+    await new Promise((r) => setTimeout(r, 10));
 
     await store.request.stop();
 
@@ -155,7 +155,7 @@ describe('request coordination', () => {
         fetchTrack: {
           key: (id: number) => `track-${id}`,
           async handler(id: number, _ctx) {
-            await new Promise(r => setTimeout(r, 10 * id));
+            await new Promise((r) => setTimeout(r, 10 * id));
             completionOrder.push(id);
             return id;
           },
@@ -294,7 +294,7 @@ describe('request coordination', () => {
     // Start multiple requests
     const fetchPromise = store.request.fetch();
     const seekPromise = store.request.seek();
-    await new Promise(r => setTimeout(r, 10));
+    await new Promise((r) => setTimeout(r, 10));
 
     // Nuclear reset
     await store.request.load();
@@ -324,7 +324,7 @@ describe('request coordination', () => {
           mode: 'shared',
           async handler() {
             handlerCallCount++;
-            await new Promise(r => setTimeout(r, 50));
+            await new Promise((r) => setTimeout(r, 50));
             return 'playing';
           },
         },
@@ -362,7 +362,7 @@ describe('request coordination', () => {
           key: 'playback',
           mode: 'shared',
           async handler() {
-            await new Promise(r => setTimeout(r, 20));
+            await new Promise((r) => setTimeout(r, 20));
             throw new Error('playback failed');
           },
         },
@@ -397,7 +397,7 @@ describe('request coordination', () => {
           mode: 'shared',
           async handler() {
             callCount++;
-            await new Promise(r => setTimeout(r, 10));
+            await new Promise((r) => setTimeout(r, 10));
             return `call-${callCount}`;
           },
         },
@@ -467,11 +467,11 @@ describe('state syncing', () => {
 
     store.attach(new Target());
 
-    subscribeKeys(store.state, ['volume'], () => {
+    store.subscribe(['volume'], () => {
       volumeUpdates.push(store.state.volume);
     });
 
-    subscribeKeys(store.state, ['muted'], () => {
+    store.subscribe(['muted'], () => {
       mutedUpdates.push(store.state.muted);
     });
 
@@ -561,7 +561,7 @@ describe('immediate execution', () => {
       subscribe: () => {},
       request: {
         action: async () => {
-          await new Promise(r => setTimeout(r, 10));
+          await new Promise((r) => setTimeout(r, 10));
           return 'done';
         },
       },

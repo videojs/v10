@@ -1,28 +1,46 @@
 # Reactive State
 
 **Status:** COMPLETED
-**PR:** [#311](https://github.com/videojs/v10/pull/311)
+**PRs:** [#311](https://github.com/videojs/v10/pull/311), [#321](https://github.com/videojs/v10/pull/321)
 
 ## Summary
 
-Replaced class-based `State` with proxy-based reactive primitives inspired by Valtio.
+Simplified state management with explicit mutations and computed values.
+
+PR #311 introduced proxy-based reactivity (Valtio-style). PR #321 replaced it with a simpler `State` + `Computed` design - explicit mutations via `set`/`patch`/`delete` instead of proxy traps, and `Computed` for derived values.
 
 ## Key Decisions
 
-| Decision                      | Rationale                                            |
-| ----------------------------- | ---------------------------------------------------- |
-| Auto-batch to microtask       | Coalesce rapid mutations, export `flush()` for tests |
-| React: `useSyncExternalStore` | Version counter for change detection                 |
-| Lit: `SnapshotController`     | `host.requestUpdate()` + optional callback           |
+| Decision                | Rationale                                                    |
+| ----------------------- | ------------------------------------------------------------ |
+| Explicit mutations      | `set`/`patch`/`delete` clearer than proxy assignment         |
+| Frozen snapshots        | `Object.freeze()` on `current` prevents accidental mutations |
+| Key-based subscriptions | Built into State, subscribe to specific keys for efficiency  |
+| Computed class          | Lazy derivation, notifies only when result actually changes  |
+| Auto-batch to microtask | Coalesce rapid mutations, export `flush()` for tests         |
 
 ## API
 
 ```ts
-import { batch, flush, reactive, snapshot, subscribe, subscribeKeys, track } from '@videojs/store';
+import { createComputed, createState, flush } from '@videojs/store';
+
+// State
+const state = createState({ volume: 1, muted: false });
+state.current; // readonly snapshot
+state.set('volume', 0.5); // single key
+state.patch({ volume: 0.8 }); // multiple keys
+state.subscribe(listener); // all changes
+state.subscribe(['volume'], fn); // specific keys
+
+// Computed
+const effective = createComputed(state, ['volume', 'muted'], ({ volume, muted }) => (muted ? 0 : volume));
+effective.current; // derived value (lazy)
+effective.subscribe(fn); // notified only when result changes
+effective.destroy(); // cleanup
 ```
 
 ## Breaking Changes
 
-Removed: `useMutation`, `useOptimistic`, `useSelector`, `MutationController`, `OptimisticController`, `SelectorController`
+Removed from PR #311: `reactive`, `snapshot`, `track`, `batch`, `subscribe`, `subscribeKeys`
 
-Migration: Use `useSnapshot(store.state)` and `subscribe(store.state, fn)` instead.
+Migration: Use `createState()` with explicit mutations and `createComputed()` for derived values.

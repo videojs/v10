@@ -9,9 +9,6 @@ import type { SupportedFramework } from '@/types/docs';
  * @param framework - The framework context (react or html)
  * @returns The framework-specific title or default title
  */
-export function getDocTitle(
-  doc: CollectionEntry<'docs'>,
-  framework: SupportedFramework,
-): string {
+export function getDocTitle(doc: CollectionEntry<'docs'>, framework: SupportedFramework): string {
   return doc.data.frameworkTitle?.[framework] ?? doc.data.title;
 }

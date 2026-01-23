@@ -24,7 +24,7 @@ The minimal interface any framework can consume:
 ```ts
 interface Store<T> {
   get(): T;
-  subscribe(listener: (value: T) => void): () => void;
+  subscribe(callback: (value: T) => void): () => void;
 }
 ```
 

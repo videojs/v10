@@ -32,7 +32,7 @@ interface Queue<Tasks> {
   abort(name?: keyof Tasks): void;
   reset(name?: keyof Tasks): void;
   destroy(): void;
-  subscribe(listener: QueueListener<Tasks>): () => void;
+  subscribe(callback: StateChange<TasksRecord<Tasks>>): () => void;
 }
 ```
 

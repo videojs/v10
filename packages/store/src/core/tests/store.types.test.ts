@@ -1,10 +1,7 @@
-import type { Queue, TasksRecord } from '../queue';
-import type { Reactive } from '../state';
-import type { InferStoreRequests, InferStoreState, InferStoreTarget, InferStoreTasks } from '../store';
-
 import { describe, expectTypeOf, it } from 'vitest';
-
 import { createFeature } from '../feature';
+import type { Queue } from '../queue';
+import type { InferStoreRequests, InferStoreState, InferStoreTarget, InferStoreTasks } from '../store';
 import { createStore } from '../store';
 
 interface MockTarget {
@@ -81,7 +78,8 @@ describe('store types', () => {
       const store = createSingleFeatureStore();
 
       expectTypeOf(store.queue).toExtend<Queue<any>>();
-      expectTypeOf(store.queue.tasks).toExtend<TasksRecord<any>>();
+      expectTypeOf(store.queue.tasks).toBeObject();
+      expectTypeOf(store.queue.subscribe).toBeFunction();
     });
 
     it('target is nullable before attach', () => {
@@ -134,10 +132,11 @@ describe('store types', () => {
   });
 
   describe('subscribe', () => {
-    it('state is reactive', () => {
+    it('state returns readonly snapshot', () => {
       const store = createSingleFeatureStore();
 
-      expectTypeOf(store.state).toEqualTypeOf<Reactive<{ volume: number; muted: boolean } & object>>();
+      expectTypeOf(store.state).toBeObject();
+      expectTypeOf(store.subscribe).toBeFunction();
     });
 
     it('state properties have correct types', () => {

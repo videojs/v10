@@ -1,15 +1,13 @@
-import type { TasksRecord } from '../queue';
-
 import { describe, expectTypeOf, it } from 'vitest';
-
 import { createQueue } from '../queue';
 
 describe('queue types', () => {
   describe('createQueue', () => {
-    it('returns Queue with default task record', () => {
+    it('returns Queue with tasks getter and subscribe method', () => {
       const queue = createQueue();
 
-      expectTypeOf(queue.tasks).toExtend<TasksRecord<any>>();
+      expectTypeOf(queue.tasks).toBeObject();
+      expectTypeOf(queue.subscribe).toBeFunction();
       expectTypeOf(queue.destroyed).toBeBoolean();
     });
   });

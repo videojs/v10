@@ -10,6 +10,7 @@ Specialized knowledge for AI agents working on Video.js 10.
 | Building Lit components    | `component` + `aria`               |
 | Building React components  | `component` + `aria`               |
 | Writing documentation      | `docs`                             |
+| Writing RFCs               | `rfc`                              |
 | Reviewing API/architecture | `api` → `review/workflow.md`       |
 | Reviewing documentation    | `docs` → `review/workflow.md`      |
 | Reviewing components       | `component` → `review/workflow.md` |
@@ -23,6 +24,7 @@ Specialized knowledge for AI agents working on Video.js 10.
 | ------------------------------- | ---------------------------------------------------------------------- | ----------- |
 | [api](api/SKILL.md)             | API design and DX — extensibility, type safety, progressive disclosure | Yes         |
 | [docs](docs/SKILL.md)           | Write Video.js 10 documentation                                        | Yes         |
+| [rfc](rfc/SKILL.md)             | Write RFCs — design docs, architecture proposals, component specs      | No          |
 | [component](component/SKILL.md) | Build headless UI components — compound patterns, state, styling       | Yes         |
 | [aria](aria/SKILL.md)           | Accessibility patterns — ARIA, keyboard, focus, media player a11y      | Yes         |
 | [git](git/SKILL.md)             | Git workflow — commit messages, PRs, branch naming, scope inference    | No          |

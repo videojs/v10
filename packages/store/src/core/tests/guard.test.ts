@@ -14,7 +14,7 @@ describe('guard', () => {
       const guard = all(
         () => true,
         () => true,
-        () => Promise.resolve(true),
+        () => Promise.resolve(true)
       );
       expect(await guard(createContext())).toBe(true);
     });
@@ -24,7 +24,7 @@ describe('guard', () => {
       const guard = all(
         () => true,
         () => false,
-        thirdGuard,
+        thirdGuard
       );
       expect(await guard(createContext())).toBe(false);
       expect(thirdGuard).not.toHaveBeenCalled();
@@ -34,9 +34,9 @@ describe('guard', () => {
       const guard = all(
         () => Promise.resolve(true),
         async () => {
-          await new Promise(r => setTimeout(r, 10));
+          await new Promise((r) => setTimeout(r, 10));
           return true;
-        },
+        }
       );
       expect(await guard(createContext())).toBe(true);
     });
@@ -44,7 +44,7 @@ describe('guard', () => {
     it('fails on async falsy result', async () => {
       const guard = all(
         () => true,
-        () => Promise.resolve(false),
+        () => Promise.resolve(false)
       );
       expect(await guard(createContext())).toBe(false);
     });
@@ -55,7 +55,7 @@ describe('guard', () => {
       const guard = any(
         () => false,
         () => true,
-        () => false,
+        () => false
       );
       expect(guard(createContext())).toBe(true);
     });
@@ -63,16 +63,16 @@ describe('guard', () => {
     it('returns false when all sync guards fail', () => {
       const guard = any(
         () => false,
-        () => false,
+        () => false
       );
       expect(guard(createContext())).toBe(false);
     });
 
     it('races async guards - first truthy wins', async () => {
       const guard = any(
-        () => new Promise(r => setTimeout(() => r(false), 50)),
-        () => new Promise(r => setTimeout(() => r(true), 10)),
-        () => new Promise(r => setTimeout(() => r(false), 30)),
+        () => new Promise((r) => setTimeout(() => r(false), 50)),
+        () => new Promise((r) => setTimeout(() => r(true), 10)),
+        () => new Promise((r) => setTimeout(() => r(false), 30))
       );
       expect(await guard(createContext())).toBe(true);
     });
@@ -81,7 +81,7 @@ describe('guard', () => {
       const guard = any(
         () => Promise.resolve(false),
         () => Promise.resolve(0),
-        () => Promise.resolve(null),
+        () => Promise.resolve(null)
       );
       expect(await guard(createContext())).toBe(false);
     });
@@ -89,7 +89,7 @@ describe('guard', () => {
     it('prefers sync truthy over pending async', () => {
       const guard = any(
         () => new Promise(() => {}), // never resolves
-        () => true,
+        () => true
       );
       expect(guard(createContext())).toBe(true);
     });
@@ -107,7 +107,7 @@ describe('guard', () => {
     });
 
     it('passes async within timeout', async () => {
-      const guard = timeout(() => new Promise(r => setTimeout(() => r(true), 10)), 1000);
+      const guard = timeout(() => new Promise((r) => setTimeout(() => r(true), 10)), 1000);
       expect(await guard(createContext())).toBe(true);
     });
 
@@ -117,7 +117,7 @@ describe('guard', () => {
       const guard = timeout(
         () => new Promise(() => {}), // never resolves
         100,
-        'waitForReady',
+        'waitForReady'
       );
 
       const promise = guard(createContext());

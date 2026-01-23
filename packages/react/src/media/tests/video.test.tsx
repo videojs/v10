@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 
 import { createFeature } from '@videojs/store';
-import { createStore } from '@videojs/store/react';
+import { createStore, useStoreContext } from '@videojs/store/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { Video } from '../video';
@@ -32,7 +32,7 @@ describe('video', () => {
     const { container } = render(
       <Provider>
         <Video data-testid="test-video" />
-      </Provider>,
+      </Provider>
     );
 
     const video = container.querySelector('video');
@@ -46,7 +46,7 @@ describe('video', () => {
     const { container } = render(
       <Provider>
         <Video src="test.mp4" controls autoPlay playsInline />
-      </Provider>,
+      </Provider>
     );
 
     const video = container.querySelector('video') as HTMLVideoElement;
@@ -66,7 +66,7 @@ describe('video', () => {
           <source src="test.mp4" type="video/mp4" />
           <track kind="captions" src="captions.vtt" />
         </Video>
-      </Provider>,
+      </Provider>
     );
 
     const video = container.querySelector('video');
@@ -75,12 +75,12 @@ describe('video', () => {
   });
 
   it('attaches video to store on mount', () => {
-    const { Provider, useStore } = createTestStore();
+    const { Provider } = createTestStore();
 
     let attachCalled = false;
 
     function TestComponent() {
-      const store = useStore();
+      const store = useStoreContext();
 
       // Spy on attach
       const originalAttach = store.attach.bind(store);
@@ -96,7 +96,7 @@ describe('video', () => {
     render(
       <Provider>
         <TestComponent />
-      </Provider>,
+      </Provider>
     );
 
     expect(attachCalled).toBe(true);
@@ -119,7 +119,7 @@ describe('video', () => {
     render(
       <Provider>
         <TestComponent />
-      </Provider>,
+      </Provider>
     );
 
     expect(capturedElement).toBeInstanceOf(HTMLVideoElement);

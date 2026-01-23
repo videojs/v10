@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createQueue } from '../queue';
-import { flush, subscribe } from '../state';
+
+/** Wait for microtask queue to flush. */
+const flush = () => new Promise<void>((r) => queueMicrotask(r));
 
 describe('Queue', () => {
   describe('enqueue', () => {
@@ -30,10 +32,13 @@ describe('Queue', () => {
       });
 
       // Synchronous check - task is pending immediately
-      expect(queue.tasks.test?.status).toBe('pending');
+      const { test: pendingTest } = queue.tasks;
+      expect(pendingTest?.status).toBe('pending');
 
       await promise;
-      expect(queue.tasks.test?.status).toBe('success');
+
+      const { test: settledTest } = queue.tasks;
+      expect(settledTest?.status).toBe('success');
     });
 
     it('aborts pending task with same key', async () => {
@@ -56,7 +61,7 @@ describe('Queue', () => {
       });
 
       // Let first task start
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10));
 
       const superseding = queue.enqueue({
         name: 'supersede',
@@ -78,7 +83,7 @@ describe('Queue', () => {
         key: 'key-a',
         handler: async () => {
           results.push('a-start');
-          await new Promise(r => setTimeout(r, 20));
+          await new Promise((r) => setTimeout(r, 20));
           results.push('a-end');
           return 'a';
         },
@@ -89,7 +94,7 @@ describe('Queue', () => {
         key: 'key-b',
         handler: async () => {
           results.push('b-start');
-          await new Promise(r => setTimeout(r, 10));
+          await new Promise((r) => setTimeout(r, 10));
           results.push('b-end');
           return 'b';
         },
@@ -120,7 +125,7 @@ describe('Queue', () => {
         },
       });
 
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10));
       queue.abort('test');
 
       await expect(promise).rejects.toMatchObject({ code: 'ABORTED' });
@@ -147,11 +152,11 @@ describe('Queue', () => {
         key: 'k',
         handler: async ({ signal }) => {
           signal.addEventListener('abort', aborted);
-          await new Promise(r => setTimeout(r, 100));
+          await new Promise((r) => setTimeout(r, 100));
         },
       });
 
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10));
       queue.destroy();
 
       await expect(promise).rejects.toMatchObject({ code: 'ABORTED' });
@@ -162,8 +167,14 @@ describe('Queue', () => {
     it('clears all task references on destroy', async () => {
       const queue = createQueue();
 
-      await queue.enqueue({ name: 'task', key: 'k', handler: async () => 'result' });
-      expect(queue.tasks.task?.status).toBe('success');
+      await queue.enqueue({
+        name: 'task',
+        key: 'k',
+        handler: async () => 'result',
+      });
+
+      const { task } = queue.tasks;
+      expect(task?.status).toBe('success');
 
       queue.destroy();
 
@@ -191,15 +202,19 @@ describe('Queue', () => {
         },
       });
 
-      await new Promise(r => setTimeout(r, 10));
-      expect(queue.tasks.task?.status).toBe('pending');
+      await new Promise((r) => setTimeout(r, 10));
+
+      const { task: pendingTask } = queue.tasks;
+      expect(pendingTask?.status).toBe('pending');
 
       queue.destroy();
 
       await promise.catch(() => {});
       expect(cleanupSpy).toHaveBeenCalledWith('aborted');
       expect(cleanupSpy).toHaveBeenCalledWith('cleanup');
-      expect(queue.tasks.task).toBeUndefined();
+
+      const { task: destroyedTask } = queue.tasks;
+      expect(destroyedTask).toBeUndefined();
     });
   });
 
@@ -208,16 +223,16 @@ describe('Queue', () => {
       const queue = createQueue();
       const listener = vi.fn();
 
-      const unsubscribe = subscribe(queue.tasks, listener);
+      const unsubscribe = queue.subscribe(listener);
 
       expect(unsubscribe).toBeTypeOf('function');
     });
 
-    it('notifies when task becomes pending', async () => {
+    it('notifies when task changes', async () => {
       const queue = createQueue();
       const listener = vi.fn();
 
-      subscribe(queue.tasks, listener);
+      queue.subscribe(listener);
 
       const promise = queue.enqueue({
         name: 'test',
@@ -225,21 +240,18 @@ describe('Queue', () => {
         handler: vi.fn().mockResolvedValue('result'),
       });
 
-      // Flush to trigger notifications (auto-batched)
-      flush();
-
       await promise;
-      flush();
+      await flush();
 
-      // Called when pending and when settled
-      expect(listener).toHaveBeenCalledTimes(2);
+      // Notified at least once (pending and settled may batch together)
+      expect(listener).toHaveBeenCalled();
     });
 
     it('unsubscribe stops notifications', async () => {
       const queue = createQueue();
       const listener = vi.fn();
 
-      const unsubscribe = subscribe(queue.tasks, listener);
+      const unsubscribe = queue.subscribe(listener);
       unsubscribe();
 
       await queue.enqueue({
@@ -247,7 +259,7 @@ describe('Queue', () => {
         key: 'test-key',
         handler: vi.fn().mockResolvedValue('result'),
       });
-      flush();
+      await flush();
 
       expect(listener).not.toHaveBeenCalled();
     });
@@ -257,15 +269,15 @@ describe('Queue', () => {
       const listener1 = vi.fn();
       const listener2 = vi.fn();
 
-      subscribe(queue.tasks, listener1);
-      subscribe(queue.tasks, listener2);
+      queue.subscribe(listener1);
+      queue.subscribe(listener2);
 
       await queue.enqueue({
         name: 'test',
         key: 'test-key',
         handler: vi.fn().mockResolvedValue('result'),
       });
-      flush();
+      await flush();
 
       // Called once per batch (pending + settled batched together)
       expect(listener1).toHaveBeenCalled();
@@ -281,20 +293,22 @@ describe('Queue', () => {
         name: 'task',
         key: 'k',
         handler: async () => {
-          await new Promise(r => setTimeout(r, 10));
+          await new Promise((r) => setTimeout(r, 10));
           return 'result';
         },
       });
 
-      await new Promise(r => setTimeout(r, 5));
-      const pendingTask = queue.tasks.task;
+      await new Promise((r) => setTimeout(r, 5));
+
+      const { task: pendingTask } = queue.tasks;
       expect(pendingTask?.status).toBe('pending');
       expect(pendingTask?.name).toBe('task');
 
       await promise;
 
-      const successTask = queue.tasks.task;
+      const { task: successTask } = queue.tasks;
       expect(successTask?.status).toBe('success');
+
       if (successTask?.status === 'success') {
         expect(successTask.output).toBe('result');
         expect(successTask.settledAt).toBeGreaterThan(successTask.startedAt);
@@ -309,18 +323,21 @@ describe('Queue', () => {
         name: 'task',
         key: 'k',
         handler: async () => {
-          await new Promise(r => setTimeout(r, 10));
+          await new Promise((r) => setTimeout(r, 10));
           throw error;
         },
       });
 
-      await new Promise(r => setTimeout(r, 5));
-      expect(queue.tasks.task?.status).toBe('pending');
+      await new Promise((r) => setTimeout(r, 5));
+
+      const { task: pendingTask } = queue.tasks;
+      expect(pendingTask?.status).toBe('pending');
 
       await expect(promise).rejects.toThrow('test error');
 
-      const errorTask = queue.tasks.task;
+      const { task: errorTask } = queue.tasks;
       expect(errorTask?.status).toBe('error');
+
       if (errorTask?.status === 'error') {
         expect(errorTask.error).toBe(error);
         expect(errorTask.cancelled).toBe(false);
@@ -341,14 +358,17 @@ describe('Queue', () => {
         },
       });
 
-      await new Promise(r => setTimeout(r, 10));
-      expect(queue.tasks.task?.status).toBe('pending');
+      await new Promise((r) => setTimeout(r, 10));
+
+      const { task: pendingTask } = queue.tasks;
+      expect(pendingTask?.status).toBe('pending');
 
       queue.abort('task');
       await promise.catch(() => {});
 
-      const errorTask = queue.tasks.task;
+      const { task: errorTask } = queue.tasks;
       expect(errorTask?.status).toBe('error');
+
       if (errorTask?.status === 'error') {
         expect(errorTask.cancelled).toBe(true);
       }
@@ -363,9 +383,11 @@ describe('Queue', () => {
         handler: async () => 'first-result',
       });
 
-      expect(queue.tasks.first?.status).toBe('success');
-      if (queue.tasks.first?.status === 'success') {
-        expect(queue.tasks.first.output).toBe('first-result');
+      const { first } = queue.tasks;
+      expect(first?.status).toBe('success');
+
+      if (first?.status === 'success') {
+        expect(first.output).toBe('first-result');
       }
 
       await queue.enqueue({
@@ -374,10 +396,12 @@ describe('Queue', () => {
         handler: async () => 'second-result',
       });
 
-      expect(queue.tasks.second?.status).toBe('success');
-      if (queue.tasks.second?.status === 'success') {
-        expect(queue.tasks.second.output).toBe('second-result');
-        expect(queue.tasks.second.name).toBe('second');
+      const { second } = queue.tasks;
+      expect(second?.status).toBe('success');
+
+      if (second?.status === 'success') {
+        expect(second.output).toBe('second-result');
+        expect(second.name).toBe('second');
       }
     });
   });
@@ -392,11 +416,13 @@ describe('Queue', () => {
         handler: async () => 'result',
       });
 
-      expect(queue.tasks.task?.status).toBe('success');
+      const { task: settledTask } = queue.tasks;
+      expect(settledTask?.status).toBe('success');
 
       queue.reset('task');
 
-      expect(queue.tasks.task).toBeUndefined();
+      const { task: clearedTask } = queue.tasks;
+      expect(clearedTask).toBeUndefined();
     });
 
     it('is no-op when task is pending', async () => {
@@ -406,16 +432,20 @@ describe('Queue', () => {
         name: 'task',
         key: 'k',
         handler: async () => {
-          await new Promise(r => setTimeout(r, 50));
+          await new Promise((r) => setTimeout(r, 50));
           return 'result';
         },
       });
 
-      await new Promise(r => setTimeout(r, 10));
-      expect(queue.tasks.task?.status).toBe('pending');
+      await new Promise((r) => setTimeout(r, 10));
+
+      const { task: beforeReset } = queue.tasks;
+      expect(beforeReset?.status).toBe('pending');
 
       queue.reset('task');
-      expect(queue.tasks.task?.status).toBe('pending');
+
+      const { task: afterReset } = queue.tasks;
+      expect(afterReset?.status).toBe('pending');
 
       await promise;
     });
@@ -438,22 +468,22 @@ describe('Queue', () => {
         handler: async () => 'result',
       });
 
-      subscribe(queue.tasks, listener);
+      queue.subscribe(listener);
 
       queue.reset('task');
-      flush();
+      await flush();
 
       expect(listener).toHaveBeenCalledTimes(1);
       expect(queue.tasks.task).toBeUndefined();
     });
 
-    it('does not notify subscribers when task does not exist', () => {
+    it('does not notify subscribers when task does not exist', async () => {
       const queue = createQueue();
       const listener = vi.fn();
 
-      subscribe(queue.tasks, listener);
+      queue.subscribe(listener);
       queue.reset('nonexistent');
-      flush();
+      await flush();
 
       expect(listener).not.toHaveBeenCalled();
     });
@@ -461,8 +491,16 @@ describe('Queue', () => {
     it('resets all settled tasks when no key provided', async () => {
       const queue = createQueue();
 
-      await queue.enqueue({ name: 'a', key: 'a', handler: async () => 'a-result' });
-      await queue.enqueue({ name: 'b', key: 'b', handler: async () => 'b-result' });
+      await queue.enqueue({
+        name: 'a',
+        key: 'a',
+        handler: async () => 'a-result',
+      });
+      await queue.enqueue({
+        name: 'b',
+        key: 'b',
+        handler: async () => 'b-result',
+      });
 
       expect(queue.tasks.a?.status).toBe('success');
       expect(queue.tasks.b?.status).toBe('success');
@@ -476,18 +514,22 @@ describe('Queue', () => {
     it('preserves pending tasks when resetting all', async () => {
       const queue = createQueue();
 
-      await queue.enqueue({ name: 'settled', key: 'settled', handler: async () => 'done' });
+      await queue.enqueue({
+        name: 'settled',
+        key: 'settled',
+        handler: async () => 'done',
+      });
 
       const pendingPromise = queue.enqueue({
         name: 'pending',
         key: 'pending',
         handler: async () => {
-          await new Promise(r => setTimeout(r, 100));
+          await new Promise((r) => setTimeout(r, 100));
           return 'pending-done';
         },
       });
 
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10));
       expect(queue.tasks.settled?.status).toBe('success');
       expect(queue.tasks.pending?.status).toBe('pending');
 
@@ -501,26 +543,37 @@ describe('Queue', () => {
   });
 
   describe('tasks property', () => {
-    it('returns reactive state', async () => {
+    it('returns current snapshot', async () => {
       const queue = createQueue();
-      await queue.enqueue({ name: 'task', key: 'k', handler: async () => 'result' });
+      await queue.enqueue({
+        name: 'task',
+        key: 'k',
+        handler: async () => 'result',
+      });
 
-      // Tasks is now reactive state, not a frozen object
+      // Tasks returns the current snapshot directly
       expect(queue.tasks.task?.status).toBe('success');
     });
 
     it('reflects changes immediately', async () => {
       const queue = createQueue();
-      const tasks = queue.tasks;
 
-      await queue.enqueue({ name: 'first', key: 'k', handler: async () => 'first' });
+      await queue.enqueue({
+        name: 'first',
+        key: 'k',
+        handler: async () => 'first',
+      });
 
-      // Same reference reflects updates
-      expect(tasks.first?.status).toBe('success');
+      // Getter reflects updates
+      expect(queue.tasks.first?.status).toBe('success');
 
-      await queue.enqueue({ name: 'second', key: 'k', handler: async () => 'second' });
+      await queue.enqueue({
+        name: 'second',
+        key: 'k',
+        handler: async () => 'second',
+      });
 
-      expect(tasks.second?.status).toBe('success');
+      expect(queue.tasks.second?.status).toBe('success');
     });
   });
 

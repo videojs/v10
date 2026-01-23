@@ -146,7 +146,7 @@ function createMockVideo(
   overrides: Partial<{
     currentTime: number;
     duration: number;
-  }>,
+  }>
 ): HTMLVideoElement {
   const video = document.createElement('video');
 

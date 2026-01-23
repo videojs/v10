@@ -1,7 +1,7 @@
 import type { AstroCookies } from 'astro';
 import { describe, expect, it, vi } from 'vitest';
 import { ALL_FRAMEWORK_STYLE_COMBINATIONS } from '@/types/docs';
-import { FRAMEWORK_COOKIE, getPreferencesServer, setPreferenceClient, STYLE_COOKIE } from '../preferences';
+import { FRAMEWORK_COOKIE, getPreferencesServer, STYLE_COOKIE, setPreferenceClient } from '../preferences';
 
 describe('preferences utilities', () => {
   // Derive test values from actual configuration to stay independent of supported languages

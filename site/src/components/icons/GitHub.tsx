@@ -12,6 +12,7 @@ export default function GitHub({ size = 24, ...props }: GitHubProps) {
       fill="currentColor"
       {...props}
     >
+      <title>GitHub</title>
       <path
         fillRule="evenodd"
         clipRule="evenodd"

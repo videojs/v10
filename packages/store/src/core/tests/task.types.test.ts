@@ -1,6 +1,5 @@
-import type { ErrorTask, PendingTask, SuccessTask, Task } from '../task';
-
 import { describe, expectTypeOf, it } from 'vitest';
+import type { ErrorTask, PendingTask, SuccessTask, Task } from '../task';
 
 import { isErrorTask, isPendingTask, isSettledTask, isSuccessTask } from '../task';
 

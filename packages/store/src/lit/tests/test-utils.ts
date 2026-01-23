@@ -1,13 +1,10 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
-import type { AnyFeature } from '../../core/feature';
-import type { Store } from '../../core/store';
-
 import { ReactiveElement } from '@lit/reactive-element';
-
 import { noop } from '@videojs/utils/function';
 import { afterEach } from 'vitest';
-
+import type { AnyFeature } from '../../core/feature';
 import { createFeature } from '../../core/feature';
+import type { Store } from '../../core/store';
 import { createStore as createCoreStore } from '../../core/store';
 import { createStore as createLitStore } from '../create-store';
 
@@ -67,7 +64,7 @@ export const audioFeature = createFeature<MockMedia>()({
       return muted;
     },
     slowSetVolume: async (volume: number, { target }): Promise<number> => {
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
       target.volume = volume;
       target.dispatchEvent(new Event('volumechange'));
       return volume;
@@ -94,7 +91,7 @@ export const customKeyFeature = createFeature<MockMedia>()({
     adjustVolume: {
       key: 'audio-settings',
       handler: async (volume: number, { target }): Promise<number> => {
-        await new Promise(resolve => setTimeout(resolve, 20));
+        await new Promise((resolve) => setTimeout(resolve, 20));
         target.volume = volume;
         target.dispatchEvent(new Event('volumechange'));
         return volume;
@@ -104,7 +101,7 @@ export const customKeyFeature = createFeature<MockMedia>()({
     toggleMute: {
       key: 'audio-settings',
       handler: async (muted: boolean, { target }): Promise<boolean> => {
-        await new Promise(resolve => setTimeout(resolve, 20));
+        await new Promise((resolve) => setTimeout(resolve, 20));
         target.muted = muted;
         target.dispatchEvent(new Event('volumechange'));
         return muted;

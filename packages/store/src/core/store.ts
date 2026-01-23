@@ -1,3 +1,6 @@
+import { abortable } from '@videojs/utils/events';
+import { isNull } from '@videojs/utils/predicate';
+import { StoreError } from './errors';
 import type {
   AnyFeature,
   FeatureUpdate,
@@ -6,17 +9,12 @@ import type {
   UnionFeatureTarget,
   UnionFeatureTasks,
 } from './feature';
-import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
-import type { Reactive } from './state';
-import type { PendingTask, Task, TaskContext } from './task';
-
-import { abortable } from '@videojs/utils/events';
-import { isNull } from '@videojs/utils/predicate';
-
-import { StoreError } from './errors';
 import { Queue } from './queue';
+import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
 import { CANCEL_ALL, createRequestMeta, resolveRequestCancel, resolveRequestKey } from './request';
-import { reactive } from './state';
+import type { StateChange, WritableState } from './state';
+import { createState } from './state';
+import type { PendingTask, Task, TaskContext } from './task';
 
 export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Target>[]> {
   readonly #config: StoreConfig<Target, Features>;
@@ -25,9 +23,7 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
   readonly #request: UnionFeatureRequests<Features>;
   readonly #requestConfigs: Map<string, ResolvedRequestConfig<Target>>;
   readonly #setupAbort = new AbortController();
-
-  /** Reactive state. Subscribe via `subscribe(store.state, fn)`. */
-  readonly state: Reactive<UnionFeatureState<Features> & object>;
+  readonly #state: WritableState<UnionFeatureState<Features> & object>;
 
   #target: Target | null = null;
   #attachAbort: AbortController | null = null;
@@ -38,7 +34,7 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
     this.#features = config.features;
 
     this.#queue = config.queue ?? new Queue<UnionFeatureTasks<Features>>();
-    this.state = reactive(this.#createInitialState() as UnionFeatureState<Features> & object);
+    this.#state = createState(this.#createInitialState() as UnionFeatureState<Features> & object);
 
     this.#requestConfigs = this.#buildRequestConfigs();
     this.#request = this.#buildRequestProxy();
@@ -59,6 +55,11 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
 
   get target(): Target | null {
     return this.#target;
+  }
+
+  /** Current state snapshot. */
+  get state(): Readonly<UnionFeatureState<Features> & object> {
+    return this.#state.current;
   }
 
   get request(): UnionFeatureRequests<Features> {
@@ -150,6 +151,24 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
   // State
   // ----------------------------------------
 
+  /** Subscribe to state changes. */
+  subscribe(callback: StateChange<UnionFeatureState<Features>>): () => void;
+
+  subscribe<K extends keyof UnionFeatureState<Features>>(
+    keys: K[],
+    callback: StateChange<UnionFeatureState<Features>, K>
+  ): () => void;
+
+  subscribe(
+    first: StateChange<UnionFeatureState<Features>> | (keyof UnionFeatureState<Features>)[],
+    second?: StateChange<UnionFeatureState<Features>>
+  ): () => void {
+    return this.#state.subscribe(
+      first as (keyof UnionFeatureState<Features>)[],
+      second as StateChange<UnionFeatureState<Features>>
+    );
+  }
+
   #syncAllFeatures(): void {
     const target = this.#target;
     if (!target) return;
@@ -166,7 +185,7 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
         initialState: feature.initialState,
       });
 
-      Object.assign(this.state as object, snapshot);
+      this.#state.patch(snapshot);
     } catch (error) {
       this.#handleError({ error });
     }
@@ -183,7 +202,7 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
   }
 
   #resetState(): void {
-    Object.assign(this.state as object, this.#createInitialState());
+    this.#state.patch(this.#createInitialState() as Partial<UnionFeatureState<Features> & object>);
   }
 
   // ----------------------------------------
@@ -222,7 +241,7 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
     name: string,
     config: ResolvedRequestConfig<Target>,
     input: unknown,
-    meta: RequestMeta | null,
+    meta: RequestMeta | null
   ): Promise<unknown> {
     const key = resolveRequestKey(config.key, input);
 
@@ -297,7 +316,7 @@ export function isStore(value: unknown): value is AnyStore {
 // ----------------------------------------
 
 export function createStore<Features extends AnyFeature[]>(
-  config: StoreConfig<UnionFeatureTarget<Features>, Features>,
+  config: StoreConfig<UnionFeatureTarget<Features>, Features>
 ): Store<UnionFeatureTarget<Features>, Features> {
   return new Store(config);
 }

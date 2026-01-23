@@ -1,7 +1,8 @@
 ---
+
+import type { HTMLAttributes } from 'astro/types';
 import { isValidFramework, isValidStyleForFramework } from '@/types/docs';
 import { resolveDocsLinkUrl } from '@/utils/docs/routing';
-import type { HTMLAttributes } from 'astro/types';
 import A from '../typography/A.astro';
 
 interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {

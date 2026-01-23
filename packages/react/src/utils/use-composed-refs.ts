@@ -32,7 +32,7 @@ function setRef<T>(ref: PossibleRef<T>, value: T): (() => void) | void | undefin
  */
 export function composeRefs<T>(...refs: PossibleRef<T>[]): RefCallback<T> {
   return (node): (() => void) | void => {
-    const cleanups = refs.map(ref => setRef(ref, node));
+    const cleanups = refs.map((ref) => setRef(ref, node));
 
     return () => {
       for (let i = 0; i < cleanups.length; i++) {
@@ -59,6 +59,5 @@ export function composeRefs<T>(...refs: PossibleRef<T>[]): RefCallback<T> {
  * ```
  */
 export function useComposedRefs<T>(...refs: PossibleRef<T>[]): RefCallback<T> {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useCallback(composeRefs(...refs), refs);
+  return useCallback(composeRefs(...refs), [...refs]);
 }

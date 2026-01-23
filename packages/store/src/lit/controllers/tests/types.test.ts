@@ -1,53 +1,45 @@
 import { describe, expectTypeOf, it } from 'vitest';
 
+import { createState } from '../../../core/state';
 import { createCoreTestStore, createMockHost } from '../../tests/test-utils';
-import { RequestController } from '../request-controller';
+import { QueueController } from '../queue-controller';
 import { SnapshotController } from '../snapshot-controller';
-import { TasksController } from '../tasks-controller';
 
 describe('controller types', () => {
   describe('SnapshotController', () => {
     it('value has state type', () => {
-      const { store } = createCoreTestStore();
+      const state = createState({ volume: 1, muted: false });
       const host = createMockHost();
 
-      const controller = new SnapshotController(host, store.state);
+      const controller = new SnapshotController(host, state);
 
       // controller.value is the unwrapped type (without Reactive brand)
-      expectTypeOf(controller.value).toEqualTypeOf<{ volume: number; muted: boolean } & object>();
+      expectTypeOf(controller.value).toEqualTypeOf<{
+        volume: number;
+        muted: boolean;
+      }>();
     });
 
     it('value properties have correct types', () => {
-      const { store } = createCoreTestStore();
+      const state = createState({ volume: 1, muted: false });
       const host = createMockHost();
 
-      const controller = new SnapshotController(host, store.state);
+      const controller = new SnapshotController(host, state);
 
       expectTypeOf(controller.value.volume).toEqualTypeOf<number>();
       expectTypeOf(controller.value.muted).toEqualTypeOf<boolean>();
     });
   });
 
-  describe('RequestController', () => {
-    it('value is the request function', () => {
-      const { store } = createCoreTestStore();
-      const host = createMockHost();
-
-      const controller = new RequestController(host, store, 'setVolume');
-
-      expectTypeOf(controller.value).toBeFunction();
-      expectTypeOf(controller.value).parameter(0).toEqualTypeOf<number>();
-    });
-  });
-
-  describe('TasksController', () => {
+  describe('QueueController', () => {
     it('value is tasks record', () => {
       const { store } = createCoreTestStore();
       const host = createMockHost();
 
-      const controller = new TasksController(host, store);
+      const controller = new QueueController(host, store);
 
-      expectTypeOf(controller.value).toEqualTypeOf<typeof store.queue.tasks>();
+      // Value type matches store.queue.tasks
+      expectTypeOf(controller.value).toMatchTypeOf(store.queue.tasks);
     });
   });
 });

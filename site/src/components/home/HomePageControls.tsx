@@ -9,13 +9,18 @@ export default function HomePageControls({ className }: { className?: string }) 
 
   return (
     <section
-      className={clsx('flex flex-row flex-wrap sm:grid sm:grid-cols-2 gap-2 sm:gap-9 items-center justify-center', className)}
+      className={clsx(
+        'flex flex-row flex-wrap sm:grid sm:grid-cols-2 gap-2 sm:gap-9 items-center justify-center',
+        className
+      )}
     >
       <div className="flex justify-end">
         <ToggleGroup
           toggleClassName="md:text-base md:py-1"
           value={[$skin]}
-          onChange={(values) => { if (values.length > 0) skin.set(values[0]); }}
+          onChange={(values) => {
+            if (values.length > 0) skin.set(values[0]);
+          }}
           options={[
             { value: 'frosted', label: 'Frosted' },
             { value: 'minimal', label: 'Minimal' },
@@ -27,7 +32,9 @@ export default function HomePageControls({ className }: { className?: string }) 
         <ToggleGroup
           toggleClassName="md:text-base md:py-1"
           value={[$framework]}
-          onChange={(values) => { if (values.length > 0) framework.set(values[0]); }}
+          onChange={(values) => {
+            if (values.length > 0) framework.set(values[0]);
+          }}
           options={[
             { value: 'react', label: 'React' },
             { value: 'html', label: 'HTML' },

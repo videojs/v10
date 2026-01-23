@@ -51,7 +51,7 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId }: T
     // but it actually delays this effect until later,
     // giving tab and tabpanel elements time to mount.
     if (!isHydrated) return;
-    const id = propId || new Date().getTime().toString();
+    const id = propId || Date.now().toString();
     const tabs = ref.current?.querySelectorAll('[role="tab"]') || [];
     const panels = ref.current?.querySelectorAll('[role="tabpanel"]') || [];
     tabs.forEach((tab) => {
@@ -75,8 +75,8 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId }: T
           'bg-light-100 dark:bg-dark-110 flex flex-col',
           'my-6',
           maxWidth && 'w-full max-w-3xl mx-auto',
-          className,
-        ),
+          className
+        )
       )}
       data-tabs-root
     >
@@ -92,7 +92,7 @@ interface TabsListProps {
 export function TabsList({ label, children }: TabsListProps) {
   return (
     <div className="w-full border-b border-light-40 dark:border-dark-80 flex bg-light-80 dark:bg-dark-100 overflow-x-scroll not-content">
-      <ul role="tablist" data-orientation="horizontal" aria-label={label} className="flex list-none p-0 m-0">
+      <ul data-orientation="horizontal" aria-label={label} className="flex list-none p-0 m-0">
         {children}
       </ul>
       <CopyButton
@@ -222,7 +222,7 @@ export function Tab({ value, children, initial }: TabProps) {
           'border-x border-light-40 dark:border-dark-80',
           'first:-ml-px last:-mr-px -mx-[0.5px] no-underline',
           isActive ? 'bg-light-100 dark:bg-dark-110' : 'bg-light-80 dark:bg-dark-100',
-          isHydrated ? 'cursor-pointer intent:bg-light-100 dark:intent:bg-dark-110' : 'cursor-wait',
+          isHydrated ? 'cursor-pointer intent:bg-light-100 dark:intent:bg-dark-110' : 'cursor-wait'
         )}
       >
         {children}
@@ -273,7 +273,6 @@ export function TabsPanel({ value, children, initial, className }: TabsPanelProp
       hidden={!isActive}
       data-value={value}
       className={twMerge(clsx('overflow-scroll p-6 max-h-96 flex-1'), className)}
-      tabIndex={0}
     >
       {children}
     </div>
