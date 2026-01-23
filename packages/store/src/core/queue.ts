@@ -1,12 +1,10 @@
-import type { Request, RequestMeta, RequestMode } from './request';
-import type { State, WritableState } from './state';
-import type { ErrorTask, PendingTask, SuccessTask, Task, TaskContext, TaskKey } from './task';
-
 import { abortable } from '@videojs/utils/events';
 import { isUndefined } from '@videojs/utils/predicate';
-
 import { StoreError } from './errors';
+import type { Request, RequestMeta, RequestMode } from './request';
+import type { State, WritableState } from './state';
 import { createState } from './state';
+import type { ErrorTask, PendingTask, SuccessTask, Task, TaskContext, TaskKey } from './task';
 
 // ----------------------------------------
 // Types
@@ -76,7 +74,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   }
 
   enqueue<K extends keyof Tasks>(
-    task: QueueTask<TaskKey<K>, Tasks[K]['input'], Tasks[K]['output']>,
+    task: QueueTask<TaskKey<K>, Tasks[K]['input'], Tasks[K]['output']>
   ): Promise<Tasks[K]['output']> {
     const { name, key, mode = 'exclusive', input, meta = null, handler } = task;
 
@@ -118,7 +116,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       // Use .then() to avoid unhandled rejection from .finally() propagating errors
       promise.then(
         () => this.#sharedPromises.delete(key),
-        () => this.#sharedPromises.delete(key),
+        () => this.#sharedPromises.delete(key)
       );
     }
 
@@ -197,15 +195,12 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       const currentTask = this.tasks.current[name];
 
       if (currentTask?.id === id) {
-        this.#tasks.set(
-          name as keyof Tasks,
-          {
-            ...currentTask,
-            status: 'success',
-            settledAt: Date.now(),
-            output: result,
-          } satisfies SuccessTask,
-        );
+        this.#tasks.set(name as keyof Tasks, {
+          ...currentTask,
+          status: 'success',
+          settledAt: Date.now(),
+          output: result,
+        } satisfies SuccessTask);
       }
     } catch (error) {
       reject(error);
@@ -214,16 +209,13 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
       const currentTask = this.tasks.current[name as keyof Tasks];
 
       if (currentTask?.id === id) {
-        this.#tasks.set(
-          name as keyof Tasks,
-          {
-            ...currentTask,
-            status: 'error',
-            settledAt: Date.now(),
-            error,
-            cancelled: abort.signal.aborted,
-          } satisfies ErrorTask,
-        );
+        this.#tasks.set(name as keyof Tasks, {
+          ...currentTask,
+          status: 'error',
+          settledAt: Date.now(),
+          error,
+          cancelled: abort.signal.aborted,
+        } satisfies ErrorTask);
       }
     }
   }

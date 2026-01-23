@@ -1,14 +1,13 @@
 import type { Context } from '@lit/context';
-import type { ReactiveElement } from '@lit/reactive-element';
-import type { Constructor, Mixin } from '@videojs/utils/types';
-import type { AnyFeature, UnionFeatureTarget } from '../../core/feature';
-import type { Store, StoreConsumer } from '../../core/store';
-
 import { ContextConsumer } from '@lit/context';
+import type { ReactiveElement } from '@lit/reactive-element';
 import { getSlottedElement, isHTMLMediaElement, listen, querySlot } from '@videojs/utils/dom';
 import { Disposer } from '@videojs/utils/events';
 import { noop } from '@videojs/utils/function';
 import { isNull } from '@videojs/utils/predicate';
+import type { Constructor, Mixin } from '@videojs/utils/types';
+import type { AnyFeature, UnionFeatureTarget } from '../../core/feature';
+import type { Store, StoreConsumer } from '../../core/store';
 
 /**
  * Creates a mixin that consumes a store from context and auto-attaches media elements.
@@ -27,7 +26,7 @@ import { isNull } from '@videojs/utils/predicate';
  * ```
  */
 export function createStoreAttachMixin<Features extends AnyFeature[]>(
-  context: Context<unknown, Store<UnionFeatureTarget<Features>, Features>>,
+  context: Context<unknown, Store<UnionFeatureTarget<Features>, Features>>
 ): Mixin<ReactiveElement, StoreConsumer<Features>> {
   type ConsumedStore = Store<UnionFeatureTarget<Features>, Features>;
 

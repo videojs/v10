@@ -1,5 +1,5 @@
-import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
 import { atom } from 'nanostores';
+import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
 
 /**
  * Nanostore atoms for current framework and style preferences.

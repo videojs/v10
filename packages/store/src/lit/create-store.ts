@@ -1,5 +1,7 @@
 import type { Context } from '@lit/context';
+import { ContextConsumer, createContext } from '@lit/context';
 import type { ReactiveControllerHost, ReactiveElement } from '@lit/reactive-element';
+import { noop } from '@videojs/utils/function';
 import type { Constructor } from '@videojs/utils/types';
 import type {
   AnyFeature,
@@ -11,19 +13,14 @@ import type {
 import type { TasksRecord } from '../core/queue';
 import type { StoreConfig, StoreConsumer, StoreProvider } from '../core/store';
 
-import { ContextConsumer, createContext } from '@lit/context';
-import { noop } from '@videojs/utils/function';
-
 import { Store } from '../core/store';
 import { RequestController as RequestControllerBase, TasksController as TasksControllerBase } from './controllers';
 import { createStoreAttachMixin, createStoreMixin, createStoreProviderMixin } from './mixins';
 
 export const contextKey = Symbol('@videojs/store');
 
-export interface CreateStoreConfig<Features extends AnyFeature[]> extends StoreConfig<
-  UnionFeatureTarget<Features>,
-  Features
-> {}
+export interface CreateStoreConfig<Features extends AnyFeature[]>
+  extends StoreConfig<UnionFeatureTarget<Features>, Features> {}
 
 export type CreateStoreHost = ReactiveControllerHost & HTMLElement;
 
@@ -107,7 +104,9 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
    * }
    * ```
    */
-  StateController: new (host: CreateStoreHost) => {
+  StateController: new (
+    host: CreateStoreHost
+  ) => {
     value: UnionFeatureState<Features>;
     hostConnected: () => void;
     hostDisconnected: () => void;
@@ -153,7 +152,9 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
    * }
    * ```
    */
-  TasksController: new (host: CreateStoreHost) => {
+  TasksController: new (
+    host: CreateStoreHost
+  ) => {
     value: Readonly<TasksRecord<UnionFeatureTasks<Features>>>;
     hostConnected: () => void;
     hostDisconnected: () => void;
@@ -200,7 +201,7 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
  * ```
  */
 export function createStore<Features extends AnyFeature[]>(
-  config: CreateStoreConfig<Features>,
+  config: CreateStoreConfig<Features>
 ): CreateStoreResult<Features> {
   type Target = UnionFeatureTarget<Features>;
   type State = UnionFeatureState<Features>;
@@ -227,7 +228,7 @@ export function createStore<Features extends AnyFeature[]>(
       this.#consumer = new ContextConsumer(host, {
         context,
         subscribe: true,
-        callback: store => this.#connect(store),
+        callback: (store) => this.#connect(store),
       });
       host.addController(this);
     }

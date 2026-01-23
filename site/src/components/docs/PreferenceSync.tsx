@@ -1,7 +1,7 @@
-import type { SupportedFramework, SupportedStyle } from '@/types/docs';
 import { useStore } from '@nanostores/react';
 import { useEffect } from 'react';
 import { currentFramework, currentStyle } from '@/stores/preferences';
+import type { SupportedFramework, SupportedStyle } from '@/types/docs';
 import { getPreferenceClient, setPreferenceClient } from '@/utils/docs/preferences';
 
 /**
@@ -35,5 +35,5 @@ export function PreferenceSync() {
     }
   }, [framework, style]);
 
-  return <></>;
+  return null;
 }

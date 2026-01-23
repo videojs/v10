@@ -1,8 +1,8 @@
-import type { AstroIntegration } from 'astro';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { AstroIntegration } from 'astro';
 import sirv from 'sirv';
 
 export interface PagefindOptions {
@@ -26,8 +26,7 @@ export default function pagefind(options: PagefindOptions = {}): AstroIntegratio
         // Warn if index doesn't exist yet
         if (!existsSync(pagefindDir)) {
           logger.warn(
-            'Pagefind index not found. Run `pnpm build` first to generate '
-            + 'the search index for development mode.',
+            'Pagefind index not found. Run `pnpm build` first to generate ' + 'the search index for development mode.'
           );
         } else {
           logger.debug(`Serving Pagefind index from ${indexDir}`);
@@ -71,14 +70,10 @@ export default function pagefind(options: PagefindOptions = {}): AstroIntegratio
         logger.info('Running Pagefind indexer...');
 
         return new Promise<void>((resolve, reject) => {
-          const pagefindProcess = spawn(
-            'npx',
-            ['-y', 'pagefind', ...logFlags, '--site', siteDir],
-            {
-              stdio: 'inherit',
-              shell: true,
-            },
-          );
+          const pagefindProcess = spawn('npx', ['-y', 'pagefind', ...logFlags, '--site', siteDir], {
+            stdio: 'inherit',
+            shell: true,
+          });
 
           pagefindProcess.on('close', (code) => {
             if (code === 0) {

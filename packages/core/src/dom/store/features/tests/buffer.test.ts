@@ -94,7 +94,7 @@ function createMockVideo(
   overrides: Partial<{
     buffered: TimeRanges;
     seekable: TimeRanges;
-  }>,
+  }>
 ): HTMLVideoElement {
   const video = document.createElement('video');
 

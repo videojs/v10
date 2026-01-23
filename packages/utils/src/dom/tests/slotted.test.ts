@@ -36,7 +36,7 @@ describe('getSlottedElement', () => {
       const video = document.createElement('video');
       host.appendChild(video);
 
-      const result = getSlottedElement(host.shadowRoot!, '', el => (el instanceof HTMLVideoElement ? el : null));
+      const result = getSlottedElement(host.shadowRoot!, '', (el) => (el instanceof HTMLVideoElement ? el : null));
 
       expect(result).toBe(video);
     });
@@ -48,7 +48,7 @@ describe('getSlottedElement', () => {
       host.appendChild(video1);
       host.appendChild(video2);
 
-      const result = getSlottedElement(host.shadowRoot!, '', el => (el instanceof HTMLVideoElement ? el : null));
+      const result = getSlottedElement(host.shadowRoot!, '', (el) => (el instanceof HTMLVideoElement ? el : null));
 
       expect(result).toBe(video1);
     });
@@ -58,7 +58,7 @@ describe('getSlottedElement', () => {
       const span = document.createElement('span');
       host.appendChild(span);
 
-      const result = getSlottedElement(host.shadowRoot!, '', el => (el instanceof HTMLVideoElement ? el : null));
+      const result = getSlottedElement(host.shadowRoot!, '', (el) => (el instanceof HTMLVideoElement ? el : null));
 
       expect(result).toBeNull();
     });
@@ -66,7 +66,7 @@ describe('getSlottedElement', () => {
     it('returns null when slot is empty', () => {
       const host = createHost();
 
-      const result = getSlottedElement(host.shadowRoot!, '', el => (el instanceof HTMLVideoElement ? el : null));
+      const result = getSlottedElement(host.shadowRoot!, '', (el) => (el instanceof HTMLVideoElement ? el : null));
 
       expect(result).toBeNull();
     });
@@ -76,7 +76,7 @@ describe('getSlottedElement', () => {
       const div = document.createElement('div');
       host.appendChild(div);
 
-      const result = getSlottedElement(host.shadowRoot!, '', el => (el instanceof HTMLVideoElement ? el : false));
+      const result = getSlottedElement(host.shadowRoot!, '', (el) => (el instanceof HTMLVideoElement ? el : false));
 
       expect(result).toBeNull();
     });
@@ -88,7 +88,7 @@ describe('getSlottedElement', () => {
 
       const isMedia = (el: Element): el is HTMLMediaElement => el instanceof HTMLMediaElement;
 
-      const result = getSlottedElement(host.shadowRoot!, '', el => (isMedia(el) ? el : null));
+      const result = getSlottedElement(host.shadowRoot!, '', (el) => (isMedia(el) ? el : null));
 
       expect(result).toBe(video);
       expect(result?.play).toBeDefined();
@@ -119,7 +119,7 @@ describe('getSlottedElement', () => {
       video.slot = 'media';
       host.appendChild(video);
 
-      const result = getSlottedElement(host.shadowRoot!, 'media', el => (el instanceof HTMLVideoElement ? el : null));
+      const result = getSlottedElement(host.shadowRoot!, 'media', (el) => (el instanceof HTMLVideoElement ? el : null));
 
       expect(result).toBe(video);
     });
@@ -130,7 +130,7 @@ describe('getSlottedElement', () => {
       // No slot attribute - goes to default slot
       host.appendChild(video);
 
-      const result = getSlottedElement(host.shadowRoot!, 'media', el => (el instanceof HTMLVideoElement ? el : null));
+      const result = getSlottedElement(host.shadowRoot!, 'media', (el) => (el instanceof HTMLVideoElement ? el : null));
 
       expect(result).toBeNull();
     });
@@ -141,8 +141,9 @@ describe('getSlottedElement', () => {
       video.slot = 'nonexistent';
       host.appendChild(video);
 
-      const result = getSlottedElement(host.shadowRoot!, 'nonexistent', el =>
-        el instanceof HTMLVideoElement ? el : null);
+      const result = getSlottedElement(host.shadowRoot!, 'nonexistent', (el) =>
+        el instanceof HTMLVideoElement ? el : null
+      );
 
       expect(result).toBeNull();
     });
@@ -167,7 +168,7 @@ describe('getSlottedElement', () => {
       const video = document.createElement('video');
       host.appendChild(video);
 
-      const result = getSlottedElement(host.shadowRoot!, '', el => (el instanceof HTMLVideoElement ? el : null));
+      const result = getSlottedElement(host.shadowRoot!, '', (el) => (el instanceof HTMLVideoElement ? el : null));
 
       expect(result).toBeNull();
     });

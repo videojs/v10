@@ -1,6 +1,5 @@
-import type { Feature, InferFeatureRequests, InferFeatureState } from '../feature';
-
 import { describe, expectTypeOf, it } from 'vitest';
+import type { Feature, InferFeatureRequests, InferFeatureState } from '../feature';
 
 import { createFeature } from '../feature';
 
@@ -19,10 +18,16 @@ describe('feature types', () => {
         request: {},
       });
 
-      expectTypeOf(feature).toExtend<Feature<MockTarget, {
-        volume: number;
-        muted: boolean;
-      }, object>>();
+      expectTypeOf(feature).toExtend<
+        Feature<
+          MockTarget,
+          {
+            volume: number;
+            muted: boolean;
+          },
+          object
+        >
+      >();
     });
 
     it('infers request handler types from simple handlers', () => {

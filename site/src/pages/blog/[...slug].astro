@@ -1,11 +1,12 @@
 ---
-import FormattedDate from '@/components/FormattedDate.astro';
-import Blog from '@/layouts/Blog.astro';
+
 import type { CollectionEntry } from 'astro:content';
 import { getCollection, getEntries, render } from 'astro:content';
+import FormattedDate from '@/components/FormattedDate.astro';
 import JsonLd from '@/components/JsonLd.astro';
-import { createBlogPostingSchema } from '@/utils/jsonLd/schemas';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
+import Blog from '@/layouts/Blog.astro';
+import { createBlogPostingSchema } from '@/utils/jsonLd/schemas';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');

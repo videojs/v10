@@ -27,7 +27,7 @@ import { createStoreProviderMixin } from './provider-mixin';
  */
 export function createStoreMixin<Features extends AnyFeature[]>(
   context: Context<unknown, Store<UnionFeatureTarget<Features>, Features>>,
-  factory: () => Store<UnionFeatureTarget<Features>, Features>,
+  factory: () => Store<UnionFeatureTarget<Features>, Features>
 ): Mixin<ReactiveElement, StoreProvider<Features>> {
   const ProviderMixin = createStoreProviderMixin<Features>(context, factory);
   const AttachMixin = createStoreAttachMixin<Features>(context);

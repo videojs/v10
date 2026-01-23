@@ -261,7 +261,7 @@ describe('store', () => {
         expect.objectContaining({
           source: 'user',
           reason: 'test',
-        }),
+        })
       );
     });
   });
@@ -359,7 +359,7 @@ describe('store', () => {
         expect.objectContaining({
           error: expect.any(Error),
           store,
-        }),
+        })
       );
     });
   });

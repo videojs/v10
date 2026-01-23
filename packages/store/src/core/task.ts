@@ -22,10 +22,8 @@ export interface PendingTask<Key extends TaskKey = TaskKey, Input = unknown> ext
   abort: AbortController;
 }
 
-export interface SuccessTask<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown> extends TaskBase<
-  Key,
-  Input
-> {
+export interface SuccessTask<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown>
+  extends TaskBase<Key, Input> {
   status: 'success';
   settledAt: number;
   output: Output;
@@ -38,14 +36,14 @@ export interface ErrorTask<Key extends TaskKey = TaskKey, Input = unknown> exten
   cancelled: boolean;
 }
 
-export type Task<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown>
-  = | PendingTask<Key, Input>
-    | SuccessTask<Key, Input, Output>
-    | ErrorTask<Key, Input>;
+export type Task<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown> =
+  | PendingTask<Key, Input>
+  | SuccessTask<Key, Input, Output>
+  | ErrorTask<Key, Input>;
 
-export type SettledTask<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown>
-  = | SuccessTask<Key, Input, Output>
-    | ErrorTask<Key, Input>;
+export type SettledTask<Key extends TaskKey = TaskKey, Input = unknown, Output = unknown> =
+  | SuccessTask<Key, Input, Output>
+  | ErrorTask<Key, Input>;
 
 export interface TaskContext<Input = unknown> {
   input: Input;

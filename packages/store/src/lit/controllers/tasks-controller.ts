@@ -1,9 +1,8 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
-import type { AnyStore } from '../../core/store';
-import type { StoreSource } from '../store-accessor';
-
 import { noop } from '@videojs/utils/function';
 import { isNull } from '@videojs/utils/predicate';
+import type { AnyStore } from '../../core/store';
+import type { StoreSource } from '../store-accessor';
 
 import { StoreAccessor } from '../store-accessor';
 
@@ -45,7 +44,7 @@ export class TasksController<Store extends AnyStore> implements ReactiveControll
 
   constructor(host: TasksControllerHost, source: StoreSource<Store>) {
     this.#host = host;
-    this.#accessor = new StoreAccessor(host, source, store => this.#connect(store));
+    this.#accessor = new StoreAccessor(host, source, (store) => this.#connect(store));
     host.addController(this);
   }
 

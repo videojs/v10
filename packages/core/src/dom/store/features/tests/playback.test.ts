@@ -188,7 +188,7 @@ function createMockVideo(
     ended: boolean;
     currentTime: number;
     readyState: number;
-  }>,
+  }>
 ): HTMLVideoElement {
   const video = document.createElement('video');
 

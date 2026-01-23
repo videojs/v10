@@ -1,14 +1,15 @@
 ---
+
+import { join } from 'node:path/posix';
+import clsx from 'clsx';
 /**
  * We wrap Search.tsx in an .astro entry point for
  * 1. easy CSS support, since we can't use Tailwind on pagefind-ui
  * 2. a synchronous script to set the meta key (ctrl or cmd) without FOUC or hydration errors
  */
 import SearchClient from './Search';
-import { join } from 'node:path/posix';
 import SearchIcon from './searchIcon.svg';
 import searchIconString from './searchIcon.svg?raw';
-import clsx from 'clsx';
 
 const baseUrl = import.meta.env.BASE_URL || '/';
 const bundlePath = join(baseUrl, 'pagefind/');

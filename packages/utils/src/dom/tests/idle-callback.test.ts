@@ -33,7 +33,7 @@ describe('idleCallback', () => {
       expect.objectContaining({
         didTimeout: expect.any(Boolean),
         timeRemaining: expect.any(Function),
-      }),
+      })
     );
   });
 

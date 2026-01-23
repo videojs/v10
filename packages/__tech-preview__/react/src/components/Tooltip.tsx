@@ -92,7 +92,6 @@ export function useTooltipTriggerProps(
 }
 
 export function renderTooltipTrigger(props: { child: JSX.Element; triggerProps: Record<string, any> }): JSX.Element {
-  // eslint-disable-next-line react/no-clone-element
   return cloneElement(props.child, props.triggerProps);
 }
 

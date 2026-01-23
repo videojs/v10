@@ -10,7 +10,7 @@ describe('uniqBy', () => {
       { id: 'a', v: 3 },
     ];
 
-    const result = uniqBy(arr, item => item.id);
+    const result = uniqBy(arr, (item) => item.id);
 
     expect(result).toEqual([
       { id: 'b', v: 2 },
@@ -19,14 +19,14 @@ describe('uniqBy', () => {
   });
 
   it('returns empty array for empty input', () => {
-    const result = uniqBy([], item => item);
+    const result = uniqBy([], (item) => item);
     expect(result).toEqual([]);
   });
 
   it('returns same array when no duplicates', () => {
     const arr = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
 
-    const result = uniqBy(arr, item => item.id);
+    const result = uniqBy(arr, (item) => item.id);
 
     expect(result).toEqual(arr);
   });
@@ -34,7 +34,7 @@ describe('uniqBy', () => {
   it('works with primitive values', () => {
     const arr = [1, 2, 3, 2, 1];
 
-    const result = uniqBy(arr, item => item);
+    const result = uniqBy(arr, (item) => item);
 
     expect(result).toEqual([3, 2, 1]);
   });
@@ -48,7 +48,7 @@ describe('uniqBy', () => {
       { id: 'y', order: 5 },
     ];
 
-    const result = uniqBy(arr, item => item.id);
+    const result = uniqBy(arr, (item) => item.id);
 
     expect(result).toEqual([
       { id: 'z', order: 3 },

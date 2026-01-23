@@ -42,7 +42,7 @@ export class Disposer {
   }
 
   async disposeAsync(): Promise<void> {
-    await Promise.all([...this.#cleanups].map(cleanup => cleanup()));
+    await Promise.all([...this.#cleanups].map((cleanup) => cleanup()));
     this.#cleanups.clear();
   }
 }

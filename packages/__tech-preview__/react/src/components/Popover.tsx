@@ -111,7 +111,6 @@ export function usePopoverTriggerProps(
 }
 
 export function renderPopoverTrigger(props: { child: JSX.Element; triggerProps: Record<string, any> }): JSX.Element {
-  // eslint-disable-next-line react/no-clone-element
   return cloneElement(props.child, props.triggerProps);
 }
 

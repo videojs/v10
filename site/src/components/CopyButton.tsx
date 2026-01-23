@@ -13,14 +13,7 @@ export interface CopyButtonProps {
   timeout?: number;
 }
 
-export default function CopyButton({
-  children,
-  copied,
-  copyFrom,
-  className,
-  style,
-  timeout = 2000,
-}: CopyButtonProps) {
+export default function CopyButton({ children, copied, copyFrom, className, style, timeout = 2000 }: CopyButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isCopied, setIsCopied] = useState(false);
   const isHydrated = useIsHydrated();
@@ -39,7 +32,9 @@ export default function CopyButton({
           if (target) {
             text = target?.textContent || '';
           } else {
-            console.warn(`CopyButton: No target found for selector "${copyFrom.target}" within container "${copyFrom.container}"`);
+            console.warn(
+              `CopyButton: No target found for selector "${copyFrom.target}" within container "${copyFrom.container}"`
+            );
           }
         } else {
           console.warn(`CopyButton: No container found for selector "${copyFrom.container}"`);
@@ -69,7 +64,7 @@ export default function CopyButton({
       style={style}
       aria-label={isCopied ? 'Copied' : 'Copy to clipboard'}
     >
-      {isCopied ? (copied || children) : children}
+      {isCopied ? copied || children : children}
     </button>
   );
 }

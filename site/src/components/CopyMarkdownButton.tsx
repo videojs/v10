@@ -9,16 +9,13 @@ export interface CopyMarkdownButtonProps {
   timeout?: number;
 }
 
-type CopyState
-  = | { status: 'idle' }
-    | { status: 'loading' }
-    | { status: 'success' }
-    | { status: 'error'; message: string };
+type CopyState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success' }
+  | { status: 'error'; message: string };
 
-export default function CopyMarkdownButton({
-  className,
-  style,
-}: CopyMarkdownButtonProps) {
+export default function CopyMarkdownButton({ className, style }: CopyMarkdownButtonProps) {
   const [state, setState] = useState<CopyState>({ status: 'idle' });
   const isHydrated = useIsHydrated();
   const disabled = !isHydrated || state.status === 'loading';
@@ -33,10 +30,15 @@ export default function CopyMarkdownButton({
 
       // Create fetch promise - in dev mode, return helpful message
       const markdownBlobPromise = import.meta.env.DEV
-        ? Promise.resolve(new Blob([
-            'Markdown source files are only available in production builds.\n\n'
-            + 'Run `pnpm build` and `pnpm preview` to test this feature.',
-          ], { type: 'text/plain' }))
+        ? Promise.resolve(
+            new Blob(
+              [
+                'Markdown source files are only available in production builds.\n\n' +
+                  'Run `pnpm build` and `pnpm preview` to test this feature.',
+              ],
+              { type: 'text/plain' }
+            )
+          )
         : fetch(mdUrl)
             .then((response) => {
               if (!response.ok) {
@@ -44,7 +46,7 @@ export default function CopyMarkdownButton({
               }
               return response.text();
             })
-            .then(text => new Blob([text], { type: 'text/plain' }));
+            .then((text) => new Blob([text], { type: 'text/plain' }));
 
       // Feature detection: ClipboardItem required for Safari compatibility
       if (typeof ClipboardItem === 'undefined') {
@@ -75,10 +77,7 @@ export default function CopyMarkdownButton({
     }
   };
 
-  const ariaLabel
-    = state.status === 'success'
-      ? 'Copied'
-      : 'Copy markdown to clipboard';
+  const ariaLabel = state.status === 'success' ? 'Copied' : 'Copy markdown to clipboard';
 
   return (
     <button
@@ -90,32 +89,33 @@ export default function CopyMarkdownButton({
         state.status === 'idle' && 'intent:border-dark-40 dark:intent:border-dark-40',
         state.status === 'loading' ? 'opacity-70' : 'cursor-100',
         disabled ? 'cursor-wait' : 'cursor-pointer',
-        className,
+        className
       )}
       style={style}
       aria-label={ariaLabel}
       data-llms-ignore
     >
-      <span className={clsx(
-        state.status !== 'idle' && state.status !== 'loading' ? 'opacity-0 pointer-events-none' : 'opacity-100',
-        'inline-flex items-center justify-center',
-      )}
+      <span
+        className={clsx(
+          state.status !== 'idle' && state.status !== 'loading' ? 'opacity-0 pointer-events-none' : 'opacity-100',
+          'inline-flex items-center justify-center'
+        )}
       >
         Copy page
       </span>
-      <span className={clsx(
-        state.status !== 'success' ? 'opacity-0 pointer-events-none' : 'opacity-100',
-        'absolute inset-0 inline-flex items-center justify-center',
-      )}
+      <span
+        className={clsx(
+          state.status !== 'success' ? 'opacity-0 pointer-events-none' : 'opacity-100',
+          'absolute inset-0 inline-flex items-center justify-center'
+        )}
       >
-        Copied
-        {' '}
-        <CheckIcon className="ml-1 w-4 h-4" />
+        Copied <CheckIcon className="ml-1 w-4 h-4" />
       </span>
-      <span className={clsx(
-        state.status !== 'error' ? 'opacity-0 pointer-events-none' : 'opacity-100',
-        'absolute inset-0 inline-flex items-center justify-center',
-      )}
+      <span
+        className={clsx(
+          state.status !== 'error' ? 'opacity-0 pointer-events-none' : 'opacity-100',
+          'absolute inset-0 inline-flex items-center justify-center'
+        )}
       >
         Error
       </span>

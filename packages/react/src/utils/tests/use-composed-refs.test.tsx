@@ -1,6 +1,5 @@
-import type { MutableRefObject, RefObject } from 'react';
-
 import { render } from '@testing-library/react';
+import type { MutableRefObject, RefObject } from 'react';
 
 import { useRef } from 'react';
 

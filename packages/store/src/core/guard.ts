@@ -45,7 +45,7 @@ export function all<Target>(...guards: Guard<Target>[]): Guard<Target> {
  */
 export function any<Target>(...guards: Guard<Target>[]): Guard<Target> {
   return (ctx) => {
-    const results = guards.map(g => g(ctx));
+    const results = guards.map((g) => g(ctx));
 
     // Check sync results first
     if (results.includes(true)) return true;

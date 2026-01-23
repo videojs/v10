@@ -1,6 +1,7 @@
 ---
+
 import type { HTMLTag, Polymorphic } from 'astro/types';
-import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
+import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
 
 type Props<Tag extends HTMLTag = 'pre'> = Polymorphic<{ as: Tag }> & {
   maxWidth?: boolean;

@@ -1,24 +1,17 @@
 {
   "version": "0.2",
-  "ignorePaths": [
-    "package.json",
-    "tsconfig.json"
-  ],
+  "ignorePaths": ["package.json", "tsconfig.json"],
   "dictionaryDefinitions": [],
-  "dictionaries": [
-    "css",
-    "html",
-    "node",
-    "typescript",
-    "npm"
-  ],
+  "dictionaries": ["css", "html", "node", "typescript", "npm"],
   "words": [
     "antfu",
     "demuxed",
+    "nanostores",
     "noautohide",
     "noto",
     "nums",
     "plyr",
+    "prefs",
     "rahim",
     "segoe",
     "shiki",

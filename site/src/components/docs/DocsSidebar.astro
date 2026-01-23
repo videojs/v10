@@ -1,10 +1,11 @@
 ---
-import type { SupportedFramework, SupportedStyle } from '@/types/docs';
+
+import clsx from 'clsx';
 
 import { PreferenceUpdater } from '@/components/docs/PreferenceUpdater';
 import SidebarItem from '@/components/docs/SidebarItem.astro';
+import type { SupportedFramework, SupportedStyle } from '@/types/docs';
 import { filterSidebar } from '@/utils/docs/sidebar';
-import clsx from 'clsx';
 
 type Props<F extends SupportedFramework = SupportedFramework> = {
   framework: F;

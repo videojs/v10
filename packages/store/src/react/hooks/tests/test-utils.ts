@@ -73,7 +73,7 @@ export const asyncAudioFeature = createFeature<AsyncMockMedia>()({
     },
     slowSetVolume: {
       handler: async (volume: number, { target }) => {
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 50));
         target.volume = volume;
         target.dispatchEvent(new Event('volumechange'));
         return volume;
@@ -87,7 +87,7 @@ export const asyncAudioFeature = createFeature<AsyncMockMedia>()({
     },
     failingSetVolume: {
       handler: async () => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         throw new Error('Test error');
       },
     },
@@ -125,7 +125,7 @@ export const customKeyFeature = createFeature<MockMedia>()({
     adjustVolume: {
       key: 'audio-settings',
       handler: async (volume: number, { target }): Promise<number> => {
-        await new Promise(resolve => setTimeout(resolve, 20));
+        await new Promise((resolve) => setTimeout(resolve, 20));
         target.volume = volume;
         target.dispatchEvent(new Event('volumechange'));
         return volume;
@@ -135,7 +135,7 @@ export const customKeyFeature = createFeature<MockMedia>()({
     toggleMute: {
       key: 'audio-settings',
       handler: async (muted: boolean, { target }): Promise<boolean> => {
-        await new Promise(resolve => setTimeout(resolve, 20));
+        await new Promise((resolve) => setTimeout(resolve, 20));
         target.muted = muted;
         target.dispatchEvent(new Event('volumechange'));
         return muted;

@@ -38,7 +38,7 @@ export default function ToggleGroup<T extends string = string>({
       disabled={disabled}
       className={twMerge(
         'inline-flex items-center gap-1 bg-light-60 dark:bg-dark-90 dark:text-light-100 border border-light-40 dark:border-dark-80 rounded-lg p-1',
-        className,
+        className
       )}
       aria-label={ariaLabel}
       multiple={multiple}
@@ -52,12 +52,19 @@ export default function ToggleGroup<T extends string = string>({
             key={option.value}
             value={option.value}
             disabled={isDisabled}
-            className={twMerge(clsx(
-              'relative',
-              'flex items-center gap-1.5 px-2.5 py-1.5 rounded text-sm',
-              isDisabled ? 'cursor-wait opacity-50' : 'cursor-pointer',
-              isPressed ? 'bg-light-80 dark:bg-dark-100' : !isDisabled ? 'intent:bg-light-80/50 dark:intent:bg-dark-100/50' : '',
-            ), toggleClassName)}
+            className={twMerge(
+              clsx(
+                'relative',
+                'flex items-center gap-1.5 px-2.5 py-1.5 rounded text-sm',
+                isDisabled ? 'cursor-wait opacity-50' : 'cursor-pointer',
+                isPressed
+                  ? 'bg-light-80 dark:bg-dark-100'
+                  : !isDisabled
+                    ? 'intent:bg-light-80/50 dark:intent:bg-dark-100/50'
+                    : ''
+              ),
+              toggleClassName
+            )}
             aria-label={option['aria-label']}
           >
             {option.label}

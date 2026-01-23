@@ -11,7 +11,7 @@ import type { State } from './state';
 export function createComputed<T extends object, K extends keyof T, R>(
   state: State<T>,
   keys: K[],
-  derive: (snapshot: Pick<T, K>) => R,
+  derive: (snapshot: Pick<T, K>) => R
 ): Computed<T, K, R> {
   return new Computed(state, keys, derive);
 }
