@@ -27,7 +27,7 @@ describe('createStoreMixin', () => {
     await el.updateComplete;
 
     expect(el.store).toBeDefined();
-    expect(el.store.state.current).toEqual({ volume: 1, muted: false });
+    expect(el.store.state).toEqual({ volume: 1, muted: false });
   });
 
   it('auto-attaches slotted video element', async () => {

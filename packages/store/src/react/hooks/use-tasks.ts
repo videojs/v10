@@ -1,7 +1,6 @@
+import { useSyncExternalStore } from 'react';
 import type { TasksRecord } from '../../core/queue';
 import type { AnyStore, InferStoreTasks } from '../../core/store';
-
-import { useSnapshot } from './use-snapshot';
 
 /**
  * Subscribe to task queue state.
@@ -27,5 +26,9 @@ import { useSnapshot } from './use-snapshot';
  * ```
  */
 export function useTasks<Store extends AnyStore>(store: Store): TasksRecord<InferStoreTasks<Store>> {
-  return useSnapshot(store.queue.tasks) as TasksRecord<InferStoreTasks<Store>>;
+  return useSyncExternalStore(
+    (cb) => store.queue.subscribe(cb),
+    () => store.queue.tasks as TasksRecord<InferStoreTasks<Store>>,
+    () => store.queue.tasks as TasksRecord<InferStoreTasks<Store>>
+  );
 }

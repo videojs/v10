@@ -48,14 +48,14 @@ export class TasksController<Store extends AnyStore> implements ReactiveControll
     host.addController(this);
   }
 
-  get value(): Store['queue']['tasks']['current'] {
+  get value(): Store['queue']['tasks'] {
     const store = this.#accessor.value;
 
     if (isNull(store)) {
       throw new Error('TasksController: Store not available from context');
     }
 
-    return store.queue.tasks.current;
+    return store.queue.tasks;
   }
 
   hostConnected(): void {
@@ -69,7 +69,7 @@ export class TasksController<Store extends AnyStore> implements ReactiveControll
 
   #connect(store: Store): void {
     this.#unsubscribe();
-    this.#unsubscribe = store.queue.tasks.subscribe(() => {
+    this.#unsubscribe = store.queue.subscribe(() => {
       this.#host.requestUpdate();
     });
   }

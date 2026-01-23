@@ -41,10 +41,10 @@ describe('store lifecycle integration', () => {
     const detach = store.attach(target);
 
     expect(events).toEqual(['setup', 'subscribe', 'attach']);
-    expect(store.state.current.count).toBe(5);
+    expect(store.state.count).toBe(5);
 
     await store.request.increment();
-    expect(store.state.current.count).toBe(6);
+    expect(store.state.count).toBe(6);
     expect(events).toContain('increment');
 
     detach();
@@ -467,12 +467,12 @@ describe('state syncing', () => {
 
     store.attach(new Target());
 
-    store.state.subscribe(['volume'], () => {
-      volumeUpdates.push(store.state.current.volume);
+    store.subscribe(['volume'], () => {
+      volumeUpdates.push(store.state.volume);
     });
 
-    store.state.subscribe(['muted'], () => {
-      mutedUpdates.push(store.state.current.muted);
+    store.subscribe(['muted'], () => {
+      mutedUpdates.push(store.state.muted);
     });
 
     await store.request.setVolume(0.5);
@@ -508,7 +508,7 @@ describe('state syncing', () => {
     const target = { volume: 0.5, rate: 1.5 };
     store.attach(target);
 
-    expect(store.state.current).toEqual({
+    expect(store.state).toEqual({
       volume: 0.5,
       rate: 1.5,
     });
@@ -545,13 +545,13 @@ describe('immediate execution', () => {
     const target = new MockMedia();
     store.attach(target);
 
-    expect(store.state.current.paused).toBe(true);
+    expect(store.state.paused).toBe(true);
 
     store.request.play();
 
     // Validates: handler ran → play() called → event fired → state synced
     expect(target.paused).toBe(false);
-    expect(store.state.current.paused).toBe(false);
+    expect(store.state.paused).toBe(false);
   });
 
   it('task is pending synchronously after request', async () => {
@@ -573,9 +573,9 @@ describe('immediate execution', () => {
     const promise = store.request.action();
 
     // Synchronous check - task is pending immediately, no microtask needed
-    expect(store.queue.tasks.current.action?.status).toBe('pending');
+    expect(store.queue.tasks.action?.status).toBe('pending');
 
     await promise;
-    expect(store.queue.tasks.current.action?.status).toBe('success');
+    expect(store.queue.tasks.action?.status).toBe('success');
   });
 });

@@ -1,6 +1,6 @@
 import { isNull, isUndefined } from '@videojs/utils/predicate';
 import type { FC, ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import type {
   AnyFeature,
   UnionFeatureRequests,
@@ -13,7 +13,7 @@ import type { StoreConfig } from '../core/store';
 
 import { Store } from '../core/store';
 import { StoreContextProvider, useParentStore, useStoreContext } from './context';
-import { useRequest as useRequestBase, useSnapshot as useSnapshotBase, useTasks as useTasksBase } from './hooks';
+import { useRequest as useRequestBase } from './hooks';
 
 // ----------------------------------------
 // Types
@@ -160,7 +160,11 @@ export function createStore<Features extends AnyFeature[]>(
 
   function useSnapshot(): State {
     const store = useStore();
-    return useSnapshotBase(store.state) as State;
+    return useSyncExternalStore(
+      (cb) => store.subscribe(cb),
+      () => store.state as State,
+      () => store.state as State
+    );
   }
 
   function useRequest(): Requests;
@@ -172,7 +176,11 @@ export function createStore<Features extends AnyFeature[]>(
 
   function useTasks(): TasksRecord<Tasks> {
     const store = useStore();
-    return useTasksBase(store);
+    return useSyncExternalStore(
+      (cb) => store.queue.subscribe(cb),
+      () => store.queue.tasks as TasksRecord<Tasks>,
+      () => store.queue.tasks as TasksRecord<Tasks>
+    );
   }
 
   return {

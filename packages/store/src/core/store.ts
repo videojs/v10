@@ -12,7 +12,7 @@ import type {
 import { Queue } from './queue';
 import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
 import { CANCEL_ALL, createRequestMeta, resolveRequestCancel, resolveRequestKey } from './request';
-import type { State, WritableState } from './state';
+import type { WritableState } from './state';
 import { createState } from './state';
 import type { PendingTask, Task, TaskContext } from './task';
 
@@ -57,8 +57,25 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
     return this.#target;
   }
 
-  get state(): State<UnionFeatureState<Features> & object> {
-    return this.#state;
+  /** Current state snapshot. */
+  get state(): Readonly<UnionFeatureState<Features> & object> {
+    return this.#state.current;
+  }
+
+  /** Subscribe to state changes. */
+  subscribe(listener: (changedKeys: ReadonlySet<PropertyKey>) => void): () => void;
+  subscribe<K extends keyof UnionFeatureState<Features>>(
+    keys: K[],
+    listener: (changedKeys: ReadonlySet<PropertyKey>) => void
+  ): () => void;
+  subscribe(
+    first: ((changedKeys: ReadonlySet<PropertyKey>) => void) | (keyof UnionFeatureState<Features>)[],
+    second?: (changedKeys: ReadonlySet<PropertyKey>) => void
+  ): () => void {
+    if (typeof first === 'function') {
+      return this.#state.subscribe(first);
+    }
+    return this.#state.subscribe(first as (keyof (UnionFeatureState<Features> & object))[], second!);
   }
 
   get request(): UnionFeatureRequests<Features> {
@@ -263,7 +280,7 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
         handler,
       });
     } catch (error) {
-      const tasks = this.#queue.tasks.current as Record<string | symbol, Task | undefined>;
+      const tasks = this.#queue.tasks as Record<string | symbol, Task | undefined>;
       const task = tasks[name];
 
       this.#handleError({

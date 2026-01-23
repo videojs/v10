@@ -238,7 +238,7 @@ export function createStore<Features extends AnyFeature[]>(
       if (!store) {
         throw new Error('StateController: Store not available from context');
       }
-      return store.state.current as State;
+      return store.state as State;
     }
 
     hostConnected(): void {
@@ -253,7 +253,7 @@ export function createStore<Features extends AnyFeature[]>(
     #connect(store: ProvidedStore | undefined): void {
       this.#unsubscribe();
       if (!store) return;
-      this.#unsubscribe = store.state.subscribe(() => this.#host.requestUpdate());
+      this.#unsubscribe = store.subscribe(() => this.#host.requestUpdate());
     }
   }
 

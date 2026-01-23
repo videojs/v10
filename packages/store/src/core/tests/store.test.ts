@@ -67,7 +67,7 @@ describe('store', () => {
         features: [audioFeature, playbackFeature],
       });
 
-      expect(store.state.current).toEqual({
+      expect(store.state).toEqual({
         volume: 1,
         muted: false,
         paused: true,
@@ -119,7 +119,7 @@ describe('store', () => {
 
       store.attach(media);
 
-      expect(store.state.current).toEqual({ volume: 0.5, muted: true });
+      expect(store.state).toEqual({ volume: 0.5, muted: true });
       expect(store.target).toBe(media);
     });
 
@@ -184,7 +184,7 @@ describe('store', () => {
       store.attach(media2);
 
       expect(store.target).toBe(media2);
-      expect(store.state.current.volume).toBe(0.3);
+      expect(store.state.volume).toBe(0.3);
       expect(m1RemoveListenerSpy).toHaveBeenCalled();
     });
   });
@@ -276,13 +276,13 @@ describe('store', () => {
       store.attach(media);
 
       const listener = vi.fn();
-      store.state.subscribe(listener);
+      store.subscribe(listener);
 
       await store.request.setVolume(0.5);
       flush();
 
       expect(listener).toHaveBeenCalled();
-      expect(store.state.current.volume).toBe(0.5);
+      expect(store.state.volume).toBe(0.5);
     });
 
     it('unsubscribe stops notifications', async () => {
@@ -294,7 +294,7 @@ describe('store', () => {
       store.attach(media);
 
       const listener = vi.fn();
-      const unsubscribe = store.state.subscribe(listener);
+      const unsubscribe = store.subscribe(listener);
       unsubscribe();
 
       await store.request.setVolume(0.5);

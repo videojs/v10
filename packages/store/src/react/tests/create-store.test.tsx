@@ -41,7 +41,7 @@ describe('createStore', () => {
       const store = create();
 
       expect(store).toBeDefined();
-      expect(store.state.current).toEqual({ volume: 1, muted: false });
+      expect(store.state).toEqual({ volume: 1, muted: false });
     });
   });
 
@@ -54,7 +54,7 @@ describe('createStore', () => {
       });
 
       expect(result.current).toBeDefined();
-      expect(result.current.state.current).toEqual({ volume: 1, muted: false });
+      expect(result.current.state).toEqual({ volume: 1, muted: false });
     });
 
     it('destroys store on unmount', () => {

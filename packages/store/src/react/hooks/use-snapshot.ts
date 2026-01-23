@@ -14,7 +14,7 @@ import type { State } from '../../core/state';
  */
 export function useSnapshot<T extends object>(state: State<T>): T {
   return useSyncExternalStore(
-    (onStoreChange) => state.subscribe(onStoreChange),
+    (cb) => state.subscribe(cb),
     () => state.current,
     () => state.current
   );
