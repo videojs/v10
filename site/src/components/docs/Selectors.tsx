@@ -1,7 +1,14 @@
 import type { AnySupportedStyle, SupportedFramework, SupportedStyle } from '@/types/docs';
 
 import { Select } from '@/components/Select';
-import { FRAMEWORK_STYLES, isValidFramework, isValidStyleForFramework, SUPPORTED_FRAMEWORKS } from '@/types/docs';
+import {
+  FRAMEWORK_LABELS,
+  FRAMEWORK_STYLES,
+  isValidFramework,
+  isValidStyleForFramework,
+  STYLE_LABELS,
+  SUPPORTED_FRAMEWORKS,
+} from '@/types/docs';
 import { resolveFrameworkChange, resolveStyleChange } from '@/utils/docs/routing';
 
 interface SelectorProps<T extends SupportedFramework> {
@@ -60,12 +67,12 @@ export function Selectors({
 
   const frameworkOptions = SUPPORTED_FRAMEWORKS.map(fw => ({
     value: fw,
-    label: fw,
+    label: FRAMEWORK_LABELS[fw],
   }));
 
   const styleOptions = availableStyles.map(st => ({
     value: st,
-    label: st,
+    label: STYLE_LABELS[st],
   }));
 
   return (

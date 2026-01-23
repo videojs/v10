@@ -1,31 +1,35 @@
 ---
-import { SITE_TITLE } from '@/consts';
-import Base from '@/layouts/Base.astro';
+import { ArrowLeft } from 'lucide-react';
+
+import AuthResult from '@/layouts/AuthResult.astro';
 ---
 
+<AuthResult title="Authentication Successful" description="You may close this window..." variant="success">
+  <a slot="action" href="/docs" class="inline-flex items-center gap-1 intent:underline group">
+    <ArrowLeft size="1em" className="group-intent:-translate-x-1 transition-transform" />
+    Return to docs
+  </a>
+</AuthResult>
+
 <script>
-  // Attempt to close the window automatically
-  function closeWindow() {
-    // Signal to parent window that auth is complete
+  const CLOSE_DELAY = 1000;
+
+  function tryClosePopup() {
     if (window.opener) {
       try {
-        window.opener.postMessage({ type: 'success' }, window.location.origin);
+        window.opener.postMessage({ type: 'auth-complete' }, window.location.origin);
       } catch (e) {
         console.error('Failed to notify parent window:', e);
       }
     }
 
-    // Close the popup
     window.close();
+
+    // If window didn't close, show the action
+    setTimeout(() => {
+      document.querySelector('[data-action-container]')?.classList.remove('invisible');
+    }, 100);
   }
 
-  // Close automatically after a brief delay
-  setTimeout(closeWindow, 1000);
+  setTimeout(tryClosePopup, CLOSE_DELAY);
 </script>
-
-<Base title={`Authentication Success | ${SITE_TITLE}`} description="Authentication successful">
-  <div class="flex items-center justify-center h-screen flex-col">
-    <h1 class="text-h4 md:text-h1 text-balance lg:text-pretty">Authentication Successful</h1>
-    <p class="md:text-lg text-balance max-w-100">You may close this window...</p>
-  </div>
-</Base>

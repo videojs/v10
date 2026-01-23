@@ -1,4 +1,6 @@
 import type { SharedProps } from './Shared';
+
+import bash from 'shiki/langs/bash.mjs';
 import css from 'shiki/langs/css.mjs';
 import html from 'shiki/langs/html.mjs';
 import javascript from 'shiki/langs/javascript.mjs';
@@ -9,7 +11,7 @@ import Shared from './Shared';
 
 // eslint-disable-next-line antfu/no-top-level-await
 const clientHighlighter = await createHighlighter({
-  langs: [html, tsx, css, javascript],
+  langs: [bash, html, tsx, css, javascript],
 });
 
 /**

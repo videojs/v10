@@ -1,5 +1,6 @@
 import Mux from '@mux/mux-node';
 import { ActionError, defineAction } from 'astro:actions';
+
 import { z } from 'astro:schema';
 
 /**
@@ -78,6 +79,93 @@ export const mux = {
         throw new ActionError({
           code: 'INTERNAL_SERVER_ERROR',
           message: error instanceof Error ? error.message : 'Failed to fetch asset',
+        });
+      }
+    },
+  }),
+
+  /**
+   * Create a direct upload URL for client-side uploads.
+   * Returns the signed upload URL and upload ID for tracking.
+   */
+  createDirectUpload: defineAction({
+    input: z.object({
+      corsOrigin: z.string().optional(),
+    }),
+    handler: async (input, ctx) => {
+      const muxClient = getMuxClient(ctx.locals.accessToken);
+
+      try {
+        const upload = await muxClient.video.uploads.create({
+          cors_origin: input.corsOrigin || '*',
+          new_asset_settings: {
+            playback_policy: ['public'],
+            video_quality: 'basic',
+          },
+        });
+
+        return {
+          uploadUrl: upload.url,
+          uploadId: upload.id,
+        };
+      } catch (error) {
+        throw new ActionError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to create upload',
+        });
+      }
+    },
+  }),
+
+  /**
+   * Poll upload status to get asset_id once processing begins.
+   * Status: 'waiting' | 'asset_created' | 'errored' | 'cancelled' | 'timed_out'
+   */
+  getUploadStatus: defineAction({
+    input: z.object({
+      uploadId: z.string(),
+    }),
+    handler: async (input, ctx) => {
+      const muxClient = getMuxClient(ctx.locals.accessToken);
+
+      try {
+        const upload = await muxClient.video.uploads.retrieve(input.uploadId);
+
+        return {
+          status: upload.status,
+          assetId: upload.asset_id,
+        };
+      } catch (error) {
+        throw new ActionError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to get upload status',
+        });
+      }
+    },
+  }),
+
+  /**
+   * Poll asset status to get playback_id once ready.
+   * Status: 'preparing' | 'ready' | 'errored'
+   */
+  getAssetStatus: defineAction({
+    input: z.object({
+      assetId: z.string(),
+    }),
+    handler: async (input, ctx) => {
+      const muxClient = getMuxClient(ctx.locals.accessToken);
+
+      try {
+        const asset = await muxClient.video.assets.retrieve(input.assetId);
+
+        return {
+          status: asset.status,
+          playbackId: asset.playback_ids?.[0]?.id,
+        };
+      } catch (error) {
+        throw new ActionError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to get asset status',
         });
       }
     },
