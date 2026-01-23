@@ -1,7 +1,7 @@
 /** @TODO !!! Revisit for SSR (CJP) */
 import type { ReactNode } from 'react';
 
-import { createMediaStore } from '@videojs/core/store';
+import { createMediaStore } from '@videojs/store';
 
 import { printConsoleBanner } from '@videojs/utils';
 import { useMemo } from 'react';

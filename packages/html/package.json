@@ -55,6 +55,7 @@
     "@open-wc/context-protocol": "^0.0.9",
     "@videojs/core": "workspace:*",
     "@videojs/icons": "workspace:*",
+    "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {

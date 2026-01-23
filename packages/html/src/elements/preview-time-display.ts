@@ -1,7 +1,7 @@
-import type { PreviewTimeDisplayState } from '@videojs/core/store';
+import type { PreviewTimeDisplayState } from '@videojs/store';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
-import { previewTimeDisplayStateDefinition } from '@videojs/core/store';
+import { previewTimeDisplayStateDefinition } from '@videojs/store';
 
 import { formatDisplayTime } from '@videojs/utils';
 import { toConnectedHTMLComponent } from '../utils/component-factory';

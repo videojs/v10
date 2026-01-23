@@ -2,7 +2,7 @@ import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
 import { VolumeSlider as CoreVolumeSlider } from '@videojs/core';
-import { volumeSliderStateDefinition } from '@videojs/core/store';
+import { volumeSliderStateDefinition } from '@videojs/store';
 import { memoize } from '@videojs/utils';
 
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';

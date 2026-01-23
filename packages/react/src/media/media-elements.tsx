@@ -228,6 +228,7 @@ export const VideoElement: ForwardRefExoticComponent<MediaElementProps> = forwar
       [],
     );
 
+    /* eslint-disable jsx-a11y/media-has-caption */
     return (
       <video
         ref={videoRef}

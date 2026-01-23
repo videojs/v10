@@ -1,8 +1,8 @@
-import type { PlayButtonState } from '@videojs/core/store';
+import type { PlayButtonState } from '@videojs/store';
 import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
-import { playButtonStateDefinition } from '@videojs/core/store';
+import { playButtonStateDefinition } from '@videojs/store';
 import { memoize } from '@videojs/utils';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 import { ButtonElement } from './button';

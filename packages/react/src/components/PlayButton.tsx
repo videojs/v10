@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from 'react';
 import type { ConnectedComponent } from '../utils/component-factory';
 
-import { playButtonStateDefinition } from '@videojs/core/store';
+import { playButtonStateDefinition } from '@videojs/store';
 
 import { shallowEqual } from '@videojs/utils';
 import { useMemo } from 'react';

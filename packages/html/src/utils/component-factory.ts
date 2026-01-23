@@ -1,4 +1,4 @@
-import type { MediaStore } from '@videojs/core/store';
+import type { MediaStore } from '@videojs/store';
 import { ConsumerMixin } from '@open-wc/context-protocol';
 import { shallowEqual, toCamelCase } from '@videojs/utils';
 import { setAttributes } from '@videojs/utils/dom';

@@ -1,26 +1,20 @@
 {
-  "name": "@videojs/core",
+  "name": "@videojs/store",
   "type": "module",
   "version": "0.1.0-preview.10",
-  "description": "Core components and utilities for Video.js",
+  "description": "State management store for Video.js",
   "license": "Apache-2.0",
   "keywords": [
-    "core",
-    "components",
+    "store",
+    "state",
     "media",
     "player",
-    "ui",
-    "time-range",
     "videojs"
   ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./media": {
-      "types": "./dist/media.d.ts",
-      "default": "./dist/media.js"
     }
   },
   "main": "dist/index.js",
@@ -38,7 +32,6 @@
   },
   "dependencies": {
     "@videojs/utils": "workspace:*",
-    "hls.js": "^1.6.7",
     "nanostores": "^1.0.1"
   },
   "devDependencies": {

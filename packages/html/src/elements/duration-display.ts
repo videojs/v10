@@ -1,7 +1,7 @@
-import type { DurationDisplayState } from '@videojs/core/store';
+import type { DurationDisplayState } from '@videojs/store';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
-import { durationDisplayStateDefinition } from '@videojs/core/store';
+import { durationDisplayStateDefinition } from '@videojs/store';
 
 import { formatDisplayTime } from '@videojs/utils';
 import { namedNodeMapToObject } from '@videojs/utils/dom';

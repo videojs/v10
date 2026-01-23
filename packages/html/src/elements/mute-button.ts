@@ -1,8 +1,8 @@
-import type { MuteButtonState } from '@videojs/core/store';
+import type { MuteButtonState } from '@videojs/store';
 import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
-import { muteButtonStateDefinition } from '@videojs/core/store';
+import { muteButtonStateDefinition } from '@videojs/store';
 
 import { memoize } from '@videojs/utils';
 import { toConnectedHTMLComponent } from '../utils/component-factory';

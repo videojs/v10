@@ -6,7 +6,7 @@ export type StateHookFn<TProps = any, TState = any> = (props: TProps) => TState;
 
 export type PropsHookFn<TProps = any, TState = any, TResultProps = any> = (
   props: TProps,
-  state: TState
+  state: TState,
 ) => TResultProps;
 
 export type RenderFn<TProps = any, TState = any> = (props: TProps, state: TState) => ReactElement;

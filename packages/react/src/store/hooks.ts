@@ -1,5 +1,5 @@
 /** @TODO !!! Revisit for SSR (CJP) */
-import type { MediaStore } from '@videojs/core/store';
+import type { MediaStore } from '@videojs/store';
 
 import { useContext } from 'react';
 

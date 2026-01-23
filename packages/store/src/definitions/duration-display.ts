@@ -1,9 +1,7 @@
-
 export interface DurationDisplayState {
   /** The raw duration value in seconds */
   duration: number | undefined;
 }
-
 
 export const durationDisplayStateDefinition = {
   keys: ['duration'] as const,

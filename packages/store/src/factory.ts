@@ -14,7 +14,7 @@ export type FacadeSetter<T> = (value: T, stateOwners: StateOwners) => void;
 
 export type StateOwnerUpdateHandler<T> = (
   handler: (value?: T) => void,
-  stateOwners: StateOwners
+  stateOwners: StateOwners,
 ) => (() => void) | void;
 
 export interface ReadonlyFacadeProp<T, D = T> {

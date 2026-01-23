@@ -222,6 +222,9 @@ importers:
       '@videojs/icons':
         specifier: workspace:*
         version: link:../icons
+      '@videojs/store':
+        specifier: workspace:*
+        version: link:../store
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils
@@ -250,6 +253,9 @@ importers:
       '@videojs/icons':
         specifier: workspace:*
         version: link:../icons
+      '@videojs/store':
+        specifier: workspace:*
+        version: link:../store
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils
@@ -287,6 +293,22 @@ importers:
       tailwindcss:
         specifier: ^4.1.17
         version: 4.1.18
+      tsdown:
+        specifier: ^0.15.9
+        version: 0.15.12(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/store:
+    dependencies:
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+      nanostores:
+        specifier: ^1.0.1
+        version: 1.1.0
+    devDependencies:
       tsdown:
         specifier: ^0.15.9
         version: 0.15.12(typescript@5.9.3)

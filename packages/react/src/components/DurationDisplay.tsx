@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from 'react';
 import type { ConnectedComponent } from '../utils/component-factory';
 
-import { durationDisplayStateDefinition } from '@videojs/core/store';
+import { durationDisplayStateDefinition } from '@videojs/store';
 import { formatDisplayTime, shallowEqual } from '@videojs/utils';
 
 import { useMediaSelector } from '@/store';
@@ -19,8 +19,8 @@ export function useDurationDisplayState(_props: any): {
   };
 }
 
-export type useDurationDisplayState = typeof useDurationDisplayState;
-export type DurationDisplayState = ReturnType<useDurationDisplayState>;
+export type UseDurationDisplayState = typeof useDurationDisplayState;
+export type DurationDisplayState = ReturnType<UseDurationDisplayState>;
 
 export function useDurationDisplayProps(props: PropsWithChildren): PropsWithChildren<Record<string, unknown>> {
   const baseProps: Record<string, any> = {
@@ -31,16 +31,16 @@ export function useDurationDisplayProps(props: PropsWithChildren): PropsWithChil
   return baseProps;
 }
 
-export type useDurationDisplayProps = typeof useDurationDisplayProps;
-type DurationDisplayProps = ReturnType<useDurationDisplayProps>;
+export type UseDurationDisplayProps = typeof useDurationDisplayProps;
+type DurationDisplayProps = ReturnType<UseDurationDisplayProps>;
 
 export function renderDurationDisplay(props: DurationDisplayProps, state: DurationDisplayState): JSX.Element {
   return <span {...props}>{formatDisplayTime(state.duration)}</span>;
 }
 
-export type renderDurationDisplay = typeof renderDurationDisplay;
+export type RenderDurationDisplay = typeof renderDurationDisplay;
 
-export const DurationDisplay: ConnectedComponent<DurationDisplayProps, typeof renderDurationDisplay>
+export const DurationDisplay: ConnectedComponent<DurationDisplayProps, RenderDurationDisplay>
   = toConnectedComponent(useDurationDisplayState, useDurationDisplayProps, renderDurationDisplay, 'DurationDisplay');
 
 export default DurationDisplay;

@@ -1,6 +1,6 @@
 import type { FC, HTMLProps, PropsWithChildren, RefCallback } from 'react';
 
-import { playButtonStateDefinition } from '@videojs/core/store';
+import { playButtonStateDefinition } from '@videojs/store';
 
 import { shallowEqual } from '@videojs/utils';
 import { forwardRef, useCallback, useMemo } from 'react';

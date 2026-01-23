@@ -2,7 +2,7 @@ import type { Prettify } from '../types';
 import type { ConnectedComponent } from '../utils/component-factory';
 
 import { VolumeSlider as CoreVolumeSlider } from '@videojs/core';
-import { volumeSliderStateDefinition } from '@videojs/core/store';
+import { volumeSliderStateDefinition } from '@videojs/store';
 import { shallowEqual } from '@videojs/utils';
 import { useMemo } from 'react';
 import { useMediaSelector, useMediaStore } from '@/store';

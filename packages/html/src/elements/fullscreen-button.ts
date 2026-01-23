@@ -1,8 +1,8 @@
-import type { FullscreenButtonState } from '@videojs/core/store';
+import type { FullscreenButtonState } from '@videojs/store';
 import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
-import { fullscreenButtonStateDefinition } from '@videojs/core/store';
+import { fullscreenButtonStateDefinition } from '@videojs/store';
 
 import { memoize } from '@videojs/utils';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
