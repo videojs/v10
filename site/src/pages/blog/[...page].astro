@@ -1,12 +1,12 @@
 ---
-import type { GetStaticPaths, Page } from 'astro';
-import { getCollection, getEntries } from 'astro:content';
-import type { CollectionEntry } from 'astro:content';
 
-import BlogPostCard from '@/components/blog/BlogPostCard.astro';
+import type { CollectionEntry } from 'astro:content';
+import { getCollection, getEntries } from 'astro:content';
+import type { GetStaticPaths, Page } from 'astro';
 import BlogPagination from '@/components/blog/BlogPagination.astro';
-import Blog from '@/layouts/Blog.astro';
+import BlogPostCard from '@/components/blog/BlogPostCard.astro';
 import JsonLd from '@/components/JsonLd.astro';
+import Blog from '@/layouts/Blog.astro';
 import { createBlogCollectionSchema } from '@/utils/jsonLd/schemas';
 
 export const getStaticPaths = (async ({ paginate }) => {

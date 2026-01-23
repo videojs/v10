@@ -32,7 +32,6 @@ export function useMediaQuery(
 
   // Handles the change event of the media query.
   function handleChange() {
-    // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
     setMatches(getMatches(query));
   }
 

@@ -47,7 +47,7 @@ export function AuthorSocialLinks({ socialLinks, className }: AuthorSocialLinksP
   const links = Object.entries(socialLinks).filter(([_, url]) => url) as Array<[keyof SocialLinks, string]>;
 
   if (links.length === 0) {
-    return <></>;
+    return null;
   }
 
   return (

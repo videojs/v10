@@ -9,7 +9,7 @@
  */
 export function tryCatch<T extends (...args: any[]) => unknown>(
   fn: T | undefined,
-  onError: (error: unknown) => void = console.error,
+  onError: (error: unknown) => void = console.error
 ): T | undefined {
   if (!fn) return undefined;
 

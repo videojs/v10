@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createQueue } from '../queue';
 
 /** Wait for microtask queue to flush. */
-const flush = () => new Promise<void>(r => queueMicrotask(r));
+const flush = () => new Promise<void>((r) => queueMicrotask(r));
 
 describe('Queue', () => {
   describe('enqueue', () => {
@@ -61,7 +61,7 @@ describe('Queue', () => {
       });
 
       // Let first task start
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10));
 
       const superseding = queue.enqueue({
         name: 'supersede',
@@ -83,7 +83,7 @@ describe('Queue', () => {
         key: 'key-a',
         handler: async () => {
           results.push('a-start');
-          await new Promise(r => setTimeout(r, 20));
+          await new Promise((r) => setTimeout(r, 20));
           results.push('a-end');
           return 'a';
         },
@@ -94,7 +94,7 @@ describe('Queue', () => {
         key: 'key-b',
         handler: async () => {
           results.push('b-start');
-          await new Promise(r => setTimeout(r, 10));
+          await new Promise((r) => setTimeout(r, 10));
           results.push('b-end');
           return 'b';
         },
@@ -125,7 +125,7 @@ describe('Queue', () => {
         },
       });
 
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10));
       queue.abort('test');
 
       await expect(promise).rejects.toMatchObject({ code: 'ABORTED' });
@@ -152,11 +152,11 @@ describe('Queue', () => {
         key: 'k',
         handler: async ({ signal }) => {
           signal.addEventListener('abort', aborted);
-          await new Promise(r => setTimeout(r, 100));
+          await new Promise((r) => setTimeout(r, 100));
         },
       });
 
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10));
       queue.destroy();
 
       await expect(promise).rejects.toMatchObject({ code: 'ABORTED' });
@@ -198,7 +198,7 @@ describe('Queue', () => {
         },
       });
 
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10));
 
       const { task: pendingTask } = queue.tasks.current;
       expect(pendingTask?.status).toBe('pending');
@@ -289,12 +289,12 @@ describe('Queue', () => {
         name: 'task',
         key: 'k',
         handler: async () => {
-          await new Promise(r => setTimeout(r, 10));
+          await new Promise((r) => setTimeout(r, 10));
           return 'result';
         },
       });
 
-      await new Promise(r => setTimeout(r, 5));
+      await new Promise((r) => setTimeout(r, 5));
 
       const { task: pendingTask } = queue.tasks.current;
       expect(pendingTask?.status).toBe('pending');
@@ -319,12 +319,12 @@ describe('Queue', () => {
         name: 'task',
         key: 'k',
         handler: async () => {
-          await new Promise(r => setTimeout(r, 10));
+          await new Promise((r) => setTimeout(r, 10));
           throw error;
         },
       });
 
-      await new Promise(r => setTimeout(r, 5));
+      await new Promise((r) => setTimeout(r, 5));
 
       const { task: pendingTask } = queue.tasks.current;
       expect(pendingTask?.status).toBe('pending');
@@ -354,7 +354,7 @@ describe('Queue', () => {
         },
       });
 
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10));
 
       const { task: pendingTask } = queue.tasks.current;
       expect(pendingTask?.status).toBe('pending');
@@ -428,12 +428,12 @@ describe('Queue', () => {
         name: 'task',
         key: 'k',
         handler: async () => {
-          await new Promise(r => setTimeout(r, 50));
+          await new Promise((r) => setTimeout(r, 50));
           return 'result';
         },
       });
 
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10));
 
       const { task: beforeReset } = queue.tasks.current;
       expect(beforeReset?.status).toBe('pending');
@@ -508,12 +508,12 @@ describe('Queue', () => {
         name: 'pending',
         key: 'pending',
         handler: async () => {
-          await new Promise(r => setTimeout(r, 100));
+          await new Promise((r) => setTimeout(r, 100));
           return 'pending-done';
         },
       });
 
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10));
       expect(queue.tasks.current.settled?.status).toBe('success');
       expect(queue.tasks.current.pending?.status).toBe('pending');
 

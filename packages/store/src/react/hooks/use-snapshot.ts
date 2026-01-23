@@ -1,6 +1,5 @@
-import type { State } from '../../core/state';
-
 import { useSyncExternalStore } from 'react';
+import type { State } from '../../core/state';
 
 /**
  * Subscribe to state and re-render when state changes.
@@ -15,9 +14,9 @@ import { useSyncExternalStore } from 'react';
  */
 export function useSnapshot<T extends object>(state: State<T>): T {
   return useSyncExternalStore(
-    onStoreChange => state.subscribe(onStoreChange),
+    (onStoreChange) => state.subscribe(onStoreChange),
     () => state.current,
-    () => state.current,
+    () => state.current
   );
 }
 

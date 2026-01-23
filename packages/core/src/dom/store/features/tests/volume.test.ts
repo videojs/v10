@@ -127,7 +127,7 @@ function createMockVideo(
   overrides: Partial<{
     volume: number;
     muted: boolean;
-  }>,
+  }>
 ): HTMLVideoElement {
   const video = document.createElement('video');
 

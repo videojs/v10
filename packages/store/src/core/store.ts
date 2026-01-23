@@ -1,3 +1,6 @@
+import { abortable } from '@videojs/utils/events';
+import { isNull } from '@videojs/utils/predicate';
+import { StoreError } from './errors';
 import type {
   AnyFeature,
   FeatureUpdate,
@@ -6,17 +9,12 @@ import type {
   UnionFeatureTarget,
   UnionFeatureTasks,
 } from './feature';
-import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
-import type { State, WritableState } from './state';
-import type { PendingTask, Task, TaskContext } from './task';
-
-import { abortable } from '@videojs/utils/events';
-import { isNull } from '@videojs/utils/predicate';
-
-import { StoreError } from './errors';
 import { Queue } from './queue';
+import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
 import { CANCEL_ALL, createRequestMeta, resolveRequestCancel, resolveRequestKey } from './request';
+import type { State, WritableState } from './state';
 import { createState } from './state';
+import type { PendingTask, Task, TaskContext } from './task';
 
 export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Target>[]> {
   readonly #config: StoreConfig<Target, Features>;
@@ -224,7 +222,7 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
     name: string,
     config: ResolvedRequestConfig<Target>,
     input: unknown,
-    meta: RequestMeta | null,
+    meta: RequestMeta | null
   ): Promise<unknown> {
     const key = resolveRequestKey(config.key, input);
 
@@ -299,7 +297,7 @@ export function isStore(value: unknown): value is AnyStore {
 // ----------------------------------------
 
 export function createStore<Features extends AnyFeature[]>(
-  config: StoreConfig<UnionFeatureTarget<Features>, Features>,
+  config: StoreConfig<UnionFeatureTarget<Features>, Features>
 ): Store<UnionFeatureTarget<Features>, Features> {
   return new Store(config);
 }

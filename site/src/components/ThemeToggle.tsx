@@ -48,9 +48,7 @@ export function ThemeToggle() {
   // Initialize preference and theme on mount
   useEffect(() => {
     const initialPreference = initPreference();
-    // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
     _setPreference(initialPreference);
-    // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
     setTheme(getThemeFromPreference(initialPreference));
   }, []);
 
@@ -88,7 +86,9 @@ export function ThemeToggle() {
     <ToggleGroup
       disabled={preference === null}
       value={preference ? [preference] : []}
-      onChange={(values) => { if (values.length > 0) setPreference(values[0]); }}
+      onChange={(values) => {
+        if (values.length > 0) setPreference(values[0]);
+      }}
       options={themeOptions}
     />
   );

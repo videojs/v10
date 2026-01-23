@@ -134,7 +134,6 @@ describe('predicate', () => {
   describe('isPromise', () => {
     it('returns true for promises', () => {
       expect(isPromise(Promise.resolve())).toBe(true);
-      // eslint-disable-next-line prefer-promise-reject-errors
       expect(isPromise(Promise.reject().catch(() => {}))).toBe(true);
       expect(isPromise(new Promise(() => {}))).toBe(true);
     });
@@ -167,7 +166,6 @@ describe('predicate', () => {
       expect(isObject('string')).toBe(false);
       expect(isObject(123)).toBe(false);
       expect(isObject(true)).toBe(false);
-      // eslint-disable-next-line symbol-description
       expect(isObject(Symbol())).toBe(false);
     });
 
@@ -204,7 +202,6 @@ describe('predicate', () => {
       expect(isPlainObject('string')).toBe(false);
       expect(isPlainObject(123)).toBe(false);
       expect(isPlainObject(true)).toBe(false);
-      // eslint-disable-next-line symbol-description
       expect(isPlainObject(Symbol())).toBe(false);
     });
 

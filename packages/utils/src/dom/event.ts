@@ -18,25 +18,25 @@ export interface OnEventOptions extends AddEventListenerOptions {
 export function onEvent<K extends keyof HTMLMediaElementEventMap>(
   target: HTMLMediaElement,
   type: K,
-  options?: OnEventOptions,
+  options?: OnEventOptions
 ): Promise<HTMLMediaElementEventMap[K]>;
 
 export function onEvent<K extends keyof HTMLElementEventMap>(
   target: HTMLElement,
   type: K,
-  options?: OnEventOptions,
+  options?: OnEventOptions
 ): Promise<HTMLElementEventMap[K]>;
 
 export function onEvent<K extends keyof WindowEventMap>(
   target: Window,
   type: K,
-  options?: OnEventOptions,
+  options?: OnEventOptions
 ): Promise<WindowEventMap[K]>;
 
 export function onEvent<K extends keyof DocumentEventMap>(
   target: Document,
   type: K,
-  options?: OnEventOptions,
+  options?: OnEventOptions
 ): Promise<DocumentEventMap[K]>;
 
 export function onEvent(target: EventTarget, type: string, options?: OnEventOptions): Promise<Event>;
@@ -63,7 +63,7 @@ export function onEvent(target: EventTarget, type: string, options?: OnEventOpti
         options?.signal?.removeEventListener('abort', handleAbort);
         resolve(event);
       },
-      { ...options, once: true },
+      { ...options, once: true }
     );
   });
 }

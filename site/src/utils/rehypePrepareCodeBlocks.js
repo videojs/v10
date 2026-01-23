@@ -17,7 +17,7 @@ export default function rehypePrepareCodeBlocks() {
 
         // Visit children with new context
         if (node.children) {
-          node.children.forEach(child => visitWithContext(child, newContext));
+          node.children.forEach((child) => visitWithContext(child, newContext));
         }
 
         return;
@@ -38,13 +38,13 @@ export default function rehypePrepareCodeBlocks() {
 
       // Recursively visit children for other node types
       if (node.children) {
-        node.children.forEach(child => visitWithContext(child, context));
+        node.children.forEach((child) => visitWithContext(child, context));
       }
     }
 
     // Start visiting from root
     if (tree.children) {
-      tree.children.forEach(child => visitWithContext(child));
+      tree.children.forEach((child) => visitWithContext(child));
     }
   };
 }

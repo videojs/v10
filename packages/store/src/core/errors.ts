@@ -15,23 +15,23 @@
  * }
  * ```
  */
-export type StoreErrorCode
+export type StoreErrorCode =
   /** Request was aborted via AbortSignal - user or system requested cancellation. */
-  = | 'ABORTED'
+  | 'ABORTED'
   /** Request was cancelled by another request's `cancel` configuration. */
-    | 'CANCELLED'
+  | 'CANCELLED'
   /** Store or queue was destroyed - lifecycle ended. */
-    | 'DESTROYED'
+  | 'DESTROYED'
   /** Target was detached while request was in flight. */
-    | 'DETACHED'
+  | 'DETACHED'
   /** No target is attached to the store. */
-    | 'NO_TARGET'
+  | 'NO_TARGET'
   /** Guard condition returned falsy - request preconditions not met. */
-    | 'REJECTED'
+  | 'REJECTED'
   /** Request was replaced by a newer request with the same key. */
-    | 'SUPERSEDED'
+  | 'SUPERSEDED'
   /** Guard condition timed out waiting for a truthy result. */
-    | 'TIMEOUT';
+  | 'TIMEOUT';
 
 export interface StoreErrorOptions {
   cause?: unknown;

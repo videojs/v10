@@ -1,6 +1,6 @@
-import type { ReactElement, ReactNode } from 'react';
 import { Tooltip as BaseTooltip } from '@base-ui-components/react/tooltip';
 import clsx from 'clsx';
+import type { ReactElement, ReactNode } from 'react';
 
 export interface TooltipProviderProps {
   children: ReactNode;
@@ -24,13 +24,7 @@ export interface TooltipProps {
   className?: string;
 }
 
-export function Tooltip({
-  content,
-  children,
-  side = 'top',
-  sideOffset = 5,
-  className,
-}: TooltipProps) {
+export function Tooltip({ content, children, side = 'top', sideOffset = 5, className }: TooltipProps) {
   return (
     <BaseTooltip.Root>
       <BaseTooltip.Trigger>{children}</BaseTooltip.Trigger>
@@ -40,7 +34,7 @@ export function Tooltip({
             className={clsx(
               'bg-dark-100 dark:bg-dark-90 text-light-80 dark:text-light-100 text-sm px-3 py-2 rounded-lg shadow-lg',
               'z-50 max-w-xs',
-              className,
+              className
             )}
           >
             {content}

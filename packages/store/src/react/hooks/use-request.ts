@@ -1,6 +1,5 @@
-import type { AnyStore, InferStoreRequests } from '../../core/store';
-
 import { isUndefined } from '@videojs/utils/predicate';
+import type { AnyStore, InferStoreRequests } from '../../core/store';
 
 /**
  * Access the store's request methods.
@@ -27,12 +26,11 @@ import { isUndefined } from '@videojs/utils/predicate';
 export function useRequest<S extends AnyStore>(store: S): InferStoreRequests<S>;
 export function useRequest<S extends AnyStore, Name extends keyof InferStoreRequests<S>>(
   store: S,
-  name: Name,
+  name: Name
 ): InferStoreRequests<S>[Name];
-// eslint-disable-next-line react/no-unnecessary-use-prefix
 export function useRequest<S extends AnyStore, Name extends keyof InferStoreRequests<S>>(
   store: S,
-  name?: Name,
+  name?: Name
 ): InferStoreRequests<S> | InferStoreRequests<S>[Name] {
   const request = store.request as InferStoreRequests<S>;
 

@@ -11,17 +11,11 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'Concepts',
-    contents: [
-      { slug: 'concepts/architecture' },
-      { slug: 'concepts/skins' },
-      { slug: 'concepts/ui-components' },
-    ],
+    contents: [{ slug: 'concepts/architecture' }, { slug: 'concepts/skins' }, { slug: 'concepts/ui-components' }],
   },
   {
     sidebarLabel: 'How to',
-    contents: [
-      { slug: 'how-to/customize-skins' },
-    ],
+    contents: [{ slug: 'how-to/customize-skins' }],
   },
   {
     sidebarLabel: 'Components',

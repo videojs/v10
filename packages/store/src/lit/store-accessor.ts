@@ -1,9 +1,8 @@
 import type { Context } from '@lit/context';
-import type { ReactiveControllerHost } from '@lit/reactive-element';
-import type { AnyStore } from '../core/store';
-
 import { ContextConsumer } from '@lit/context';
+import type { ReactiveControllerHost } from '@lit/reactive-element';
 import { noop } from '@videojs/utils/function';
+import type { AnyStore } from '../core/store';
 import { isStore } from '../core/store';
 
 /** A store instance or a context that provides one. */
@@ -46,7 +45,7 @@ export class StoreAccessor<Store extends AnyStore> {
       this.#directStore = null;
       this.#consumer = new ContextConsumer(host, {
         context: source,
-        callback: store => this.#onAvailable(store),
+        callback: (store) => this.#onAvailable(store),
         subscribe: false,
       });
     }

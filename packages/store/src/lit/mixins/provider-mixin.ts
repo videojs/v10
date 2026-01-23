@@ -1,11 +1,10 @@
 import type { Context } from '@lit/context';
+import { ContextProvider } from '@lit/context';
 import type { ReactiveElement } from '@lit/reactive-element';
+import { isNull } from '@videojs/utils/predicate';
 import type { Constructor } from '@videojs/utils/types';
-
 import type { AnyFeature, UnionFeatureTarget } from '../../core/feature';
 import type { Store, StoreProvider } from '../../core/store';
-import { ContextProvider } from '@lit/context';
-import { isNull } from '@videojs/utils/predicate';
 
 /**
  * Creates a mixin that provides a store via context.
@@ -30,7 +29,7 @@ import { isNull } from '@videojs/utils/predicate';
  */
 export function createStoreProviderMixin<Features extends AnyFeature[]>(
   context: Context<unknown, Store<UnionFeatureTarget<Features>, Features>>,
-  factory: () => Store<UnionFeatureTarget<Features>, Features>,
+  factory: () => Store<UnionFeatureTarget<Features>, Features>
 ): <Base extends Constructor<ReactiveElement>>(BaseClass: Base) => Base & Constructor<StoreProvider<Features>> {
   type ProvidedStore = Store<UnionFeatureTarget<Features>, Features>;
 

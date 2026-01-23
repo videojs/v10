@@ -15,9 +15,9 @@ export default function FilmGrain({ currentPath, className }: Props) {
       className={twMerge(
         clsx(
           'absolute w-full h-full top-0 left-0 pointer-events-none mix-blend-overlay z-10',
-          currentPath.startsWith('/docs') ? 'opacity-70 dark:opacity-50' : 'opacity-70 dark:opacity-60',
+          currentPath.startsWith('/docs') ? 'opacity-70 dark:opacity-50' : 'opacity-70 dark:opacity-60'
         ),
-        className,
+        className
       )}
       style={{
         backgroundImage: `url("${textureUrl}")`,

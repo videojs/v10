@@ -1,8 +1,7 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
+import { isNull } from '@videojs/utils/predicate';
 import type { AnyStore, InferStoreRequests } from '../../core/store';
 import type { StoreSource } from '../store-accessor';
-
-import { isNull } from '@videojs/utils/predicate';
 
 import { StoreAccessor } from '../store-accessor';
 
@@ -33,10 +32,9 @@ export type RequestControllerHost = ReactiveControllerHost & HTMLElement;
  * }
  * ```
  */
-export class RequestController<
-  Store extends AnyStore,
-  Name extends keyof InferStoreRequests<Store>,
-> implements ReactiveController {
+export class RequestController<Store extends AnyStore, Name extends keyof InferStoreRequests<Store>>
+  implements ReactiveController
+{
   readonly #accessor: StoreAccessor<Store>;
   readonly #name: Name;
 

@@ -12,13 +12,7 @@ export default getViteConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       include: ['src/utils/**', 'src/components/**', 'src/types/**'],
-      exclude: [
-        '**/*.test.ts',
-        '**/*.test.tsx',
-        '**/*.spec.ts',
-        '**/*.spec.tsx',
-        '**/test/**',
-      ],
+      exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx', '**/test/**'],
     },
   },
 });

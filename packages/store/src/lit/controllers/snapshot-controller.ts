@@ -1,7 +1,6 @@
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
-import type { State } from '../../core/state';
-
 import { noop } from '@videojs/utils/function';
+import type { State } from '../../core/state';
 
 export type SnapshotControllerHost = ReactiveControllerHost & HTMLElement;
 

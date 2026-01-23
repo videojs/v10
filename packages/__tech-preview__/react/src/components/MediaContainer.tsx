@@ -34,7 +34,6 @@ export interface MediaContainerProps extends PropsWithChildren<HTMLProps<HTMLDiv
  *   return <div ref={containerRef}>{children}</div>;
  * };
  */
-// eslint-disable-next-line react-refresh/only-export-components
 export function useMediaContainerRef(): RefCallback<HTMLElement | null> {
   const mediaStore = useMediaStore();
 
@@ -168,7 +167,6 @@ export const MediaContainer: FC<MediaContainerProps> = forwardRef(
     }, [getMediaElement, isUserActive, scheduleUserInactive]);
 
     return (
-      // eslint-disable-next-line jsx-a11y/no-static-element-interactions
       <div
         ref={composedRef}
         onClick={handleClick}

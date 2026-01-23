@@ -1,9 +1,6 @@
-/* eslint-disable react-refresh/only-export-components */
-
 import type { ReactNode } from 'react';
-import type { AnyStore } from '../core/store';
-
 import { createContext, useContext } from 'react';
+import type { AnyStore } from '../core/store';
 
 /**
  * Internal shared context for store instances.

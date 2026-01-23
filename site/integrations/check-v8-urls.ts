@@ -1,7 +1,7 @@
-import type { AstroIntegration } from 'astro';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { AstroIntegration } from 'astro';
 
 // Video.js v8 URLs to check for migration status
 const V8_URLS = [
@@ -309,9 +309,9 @@ export default function checkV8Urls(): AstroIntegration {
 
         // Calculate statistics
         const total = results.length;
-        const migrated = results.filter(r => r.status === 'migrated').length;
-        const redirected = results.filter(r => r.status === 'redirected').length;
-        const needsMigration = results.filter(r => r.status === 'needs migration').length;
+        const migrated = results.filter((r) => r.status === 'migrated').length;
+        const redirected = results.filter((r) => r.status === 'redirected').length;
+        const needsMigration = results.filter((r) => r.status === 'needs migration').length;
 
         const migratedPercent = ((migrated / total) * 100).toFixed(1);
         const redirectedPercent = ((redirected / total) * 100).toFixed(1);

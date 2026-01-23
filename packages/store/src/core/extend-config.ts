@@ -1,8 +1,7 @@
-import type { AnyFeature } from './feature';
-import type { StoreConfig } from './store';
-
 import { uniqBy } from '@videojs/utils/array';
 import { composeCallbacks } from '@videojs/utils/function';
+import type { AnyFeature } from './feature';
+import type { StoreConfig } from './store';
 
 /**
  * Extends a base store config with additional configuration.
@@ -24,9 +23,13 @@ import { composeCallbacks } from '@videojs/utils/function';
  * });
  * ```
  */
-export function extendConfig<Target, BaseFeatures extends AnyFeature<Target>[], ExtFeatures extends AnyFeature<Target>[] = []>(
+export function extendConfig<
+  Target,
+  BaseFeatures extends AnyFeature<Target>[],
+  ExtFeatures extends AnyFeature<Target>[] = [],
+>(
   base: StoreConfig<Target, BaseFeatures>,
-  extension?: Partial<StoreConfig<Target, ExtFeatures>>,
+  extension?: Partial<StoreConfig<Target, ExtFeatures>>
 ): StoreConfig<Target, [...BaseFeatures, ...ExtFeatures]> {
   type MergedFeatures = [...BaseFeatures, ...ExtFeatures];
   type Result = StoreConfig<Target, MergedFeatures>;
@@ -36,7 +39,7 @@ export function extendConfig<Target, BaseFeatures extends AnyFeature<Target>[], 
   }
 
   return {
-    features: uniqBy([...base.features, ...(extension.features ?? [])] as MergedFeatures, feature => feature.id),
+    features: uniqBy([...base.features, ...(extension.features ?? [])] as MergedFeatures, (feature) => feature.id),
 
     // Extension overrides if provided
     queue: extension.queue ?? base.queue,

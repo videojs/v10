@@ -12,7 +12,7 @@ export const DEFAULT_FRAMEWORK = Object.keys(FRAMEWORK_STYLES)[0] as SupportedFr
 
 export const ALL_FRAMEWORK_STYLE_COMBINATIONS = SUPPORTED_FRAMEWORKS.flatMap((framework) => {
   const availableStyles = FRAMEWORK_STYLES[framework];
-  return availableStyles.map(style => ({
+  return availableStyles.map((style) => ({
     framework,
     style,
     key: `${framework}-${style}`,
@@ -30,7 +30,7 @@ export function isValidFramework(value: string | undefined | null): value is Sup
 
 export function isValidStyleForFramework(
   framework: SupportedFramework,
-  style: string | undefined | null,
+  style: string | undefined | null
 ): style is AnySupportedStyle {
   if (!style) return false;
   return FRAMEWORK_STYLES[framework].includes(style as any);

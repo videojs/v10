@@ -16,7 +16,7 @@ export default function remarkConditionalHeadings() {
       // Handle FrameworkCase and StyleCase components
       if (node.type === 'mdxJsxFlowElement') {
         if (node.name === 'FrameworkCase') {
-          const frameworksAttr = node.attributes?.find(attr => attr.name === 'frameworks');
+          const frameworksAttr = node.attributes?.find((attr) => attr.name === 'frameworks');
           const frameworks = extractArrayValue(frameworksAttr);
 
           // Create new context for children
@@ -24,12 +24,12 @@ export default function remarkConditionalHeadings() {
 
           // Visit children with new context
           if (node.children) {
-            node.children.forEach(child => visitWithContext(child, newContext));
+            node.children.forEach((child) => visitWithContext(child, newContext));
           }
 
           return;
         } else if (node.name === 'StyleCase') {
-          const stylesAttr = node.attributes?.find(attr => attr.name === 'styles');
+          const stylesAttr = node.attributes?.find((attr) => attr.name === 'styles');
           const styles = extractArrayValue(stylesAttr);
 
           // Create new context for children
@@ -37,7 +37,7 @@ export default function remarkConditionalHeadings() {
 
           // Visit children with new context
           if (node.children) {
-            node.children.forEach(child => visitWithContext(child, newContext));
+            node.children.forEach((child) => visitWithContext(child, newContext));
           }
 
           return;
@@ -66,13 +66,13 @@ export default function remarkConditionalHeadings() {
 
       // Recursively visit children for other node types
       if (node.children) {
-        node.children.forEach(child => visitWithContext(child, context));
+        node.children.forEach((child) => visitWithContext(child, context));
       }
     }
 
     // Start visiting from root
     if (tree.children) {
-      tree.children.forEach(child => visitWithContext(child));
+      tree.children.forEach((child) => visitWithContext(child));
     }
 
     // Attach to file data for retrieval via remarkPluginFrontmatter
@@ -123,7 +123,7 @@ function extractText(node) {
   }
 
   if (node.children) {
-    return node.children.map(child => extractText(child)).join('');
+    return node.children.map((child) => extractText(child)).join('');
   }
 
   return '';

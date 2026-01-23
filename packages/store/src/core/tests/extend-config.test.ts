@@ -1,10 +1,8 @@
-import type { StoreConfig } from '../store';
-
 import { describe, expect, it, vi } from 'vitest';
-
 import { extendConfig } from '../extend-config';
 import { createFeature } from '../feature';
 import { Queue } from '../queue';
+import type { StoreConfig } from '../store';
 
 // Test target type
 interface TestTarget {
@@ -33,7 +31,7 @@ function createTestFeature(name: string, id?: symbol) {
 // Helper to create a typed base config
 function createBaseConfig<S extends ReturnType<typeof createTestFeature>[]>(
   features: S,
-  extra?: Partial<StoreConfig<TestTarget, S>>,
+  extra?: Partial<StoreConfig<TestTarget, S>>
 ): StoreConfig<TestTarget, S> {
   return { features, ...extra } as StoreConfig<TestTarget, S>;
 }

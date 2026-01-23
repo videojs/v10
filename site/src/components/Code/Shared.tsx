@@ -1,5 +1,5 @@
-import type { BundledLanguage, Highlighter } from 'shiki';
 import clsx from 'clsx';
+import type { BundledLanguage, Highlighter } from 'shiki';
 import { hastToHtml } from 'shiki';
 
 export interface SharedProps {
@@ -40,11 +40,7 @@ export default function Shared({ code, lang, highlighter }: SharedProps) {
 
   return (
     <pre className={clsx('shiki', preClassName)}>
-      <code
-        className={clsx('font-mono text-code', codeClassName)}
-        // eslint-disable-next-line react-dom/no-dangerously-set-innerhtml
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
+      <code className={clsx('font-mono text-code', codeClassName)} dangerouslySetInnerHTML={{ __html: html }} />
     </pre>
   );
 }

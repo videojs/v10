@@ -1,7 +1,7 @@
-import type { AstroIntegration } from 'astro';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { AstroIntegration } from 'astro';
 import { JSDOM } from 'jsdom';
 import TurndownService from 'turndown';
 
@@ -49,7 +49,7 @@ export default function llmsMarkdown(): AstroIntegration {
             contentElements.forEach((contentEl) => {
               const clone = contentEl.cloneNode(true) as Element;
               const ignoreElements = clone.querySelectorAll('[data-llms-ignore]');
-              ignoreElements.forEach(el => el.remove());
+              ignoreElements.forEach((el) => el.remove());
               contentParts.push(clone.innerHTML);
             });
 
@@ -91,7 +91,9 @@ export default function llmsMarkdown(): AstroIntegration {
         const llmsTxtPath = join(siteDir, 'llms.txt');
         await writeFile(llmsTxtPath, llmsTxt, 'utf-8');
 
-        logger.info(`Generated ${docsPages.length + blogPages.length + otherPages.length} markdown files and llms.txt index`);
+        logger.info(
+          `Generated ${docsPages.length + blogPages.length + otherPages.length} markdown files and llms.txt index`
+        );
       },
     },
   };
@@ -100,10 +102,13 @@ export default function llmsMarkdown(): AstroIntegration {
 function generateLlmsTxt(
   docsPages: Array<{ pathname: string; title: string; description?: string; sort?: string }>,
   blogPages: Array<{ pathname: string; title: string; description?: string; sort?: string }>,
-  otherPages: Array<{ pathname: string; title: string; description?: string; sort?: string }>,
+  otherPages: Array<{ pathname: string; title: string; description?: string; sort?: string }>
 ): string {
   // Group docs by framework and style
-  const docsByFrameworkStyle = new Map<string, Array<{ pathname: string; title: string; description?: string; sort?: string }>>();
+  const docsByFrameworkStyle = new Map<
+    string,
+    Array<{ pathname: string; title: string; description?: string; sort?: string }>
+  >();
 
   for (const doc of docsPages) {
     // Extract framework and style from pathname

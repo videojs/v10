@@ -97,7 +97,7 @@ pnpm build
 
 ### 🧹 Style & Linting
 
-For the bulk of our core code, we use a [slightly modified](./eslint.config.mjs) version of [`@antfu/eslint-config`](https://www.npmjs.com/package/@antfu/eslint-config) along with [`prettier`](https://prettier.io/) for things like markdown or svgs. Between IDE configs, pre-commit hooks, and manual CLI fixes, many styling and linting issues should get caught automatically.
+For the bulk of our core code, we use [Biome](https://biomejs.dev). Between IDE configs, pre-commit hooks, and manual CLI fixes, many styling and linting issues should get caught automatically.
 
 To ensure your code follows our lint rules with:
 

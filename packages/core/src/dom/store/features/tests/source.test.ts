@@ -123,7 +123,7 @@ function createMockVideo(
     currentSrc: string;
     src: string;
     readyState: number;
-  }>,
+  }>
 ): HTMLVideoElement {
   const video = document.createElement('video');
 

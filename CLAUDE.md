@@ -157,9 +157,9 @@ When generating or editing code in this repository, follow these rules to ensure
    - Preserve comments, type signatures, and existing code style.
 
 2. **Match Existing Conventions**
-   - Follow the repo’s Prettier, ESLint, and TypeScript settings automatically.
+   - Follow the repo's Biome and TypeScript settings automatically.
    - Use consistent naming (camelCase for variables, PascalCase for components).
-   - Prefer imports ordered and sorted as per `@antfu/eslint-config`.
+   - Biome handles import organization (side-effects → external → internal).
 
 3. **Type Safety First**
    - Never remove or bypass TypeScript types.

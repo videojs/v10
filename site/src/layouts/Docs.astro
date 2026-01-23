@@ -1,18 +1,16 @@
 ---
+
 import { type CollectionEntry, getCollection } from 'astro:content';
-
-import type { SupportedFramework, SupportedStyle } from '@/types/docs';
-
-import NavBar from '@/components/NavBar/NavBar.astro';
 import DocsSidebar from '@/components/docs/DocsSidebar.astro';
-import Footer from '@/components/Footer.astro';
-
-import Base from './Base.astro';
-import { Selectors } from '@/components/docs/Selectors';
-import { getDocTitle } from '@/utils/docs/title';
-import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
-import FilmGrain from '@/components/FilmGrain';
 import DocsSidebarRestoration from '@/components/docs/DocsSidebarRestoration.astro';
+import { Selectors } from '@/components/docs/Selectors';
+import FilmGrain from '@/components/FilmGrain';
+import Footer from '@/components/Footer.astro';
+import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
+import NavBar from '@/components/NavBar/NavBar.astro';
+import type { SupportedFramework, SupportedStyle } from '@/types/docs';
+import { getDocTitle } from '@/utils/docs/title';
+import Base from './Base.astro';
 
 type Props<F extends SupportedFramework = SupportedFramework> = {
   doc: CollectionEntry<'docs'>;

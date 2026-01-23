@@ -32,7 +32,7 @@ describe('video', () => {
     const { container } = render(
       <Provider>
         <Video data-testid="test-video" />
-      </Provider>,
+      </Provider>
     );
 
     const video = container.querySelector('video');
@@ -46,7 +46,7 @@ describe('video', () => {
     const { container } = render(
       <Provider>
         <Video src="test.mp4" controls autoPlay playsInline />
-      </Provider>,
+      </Provider>
     );
 
     const video = container.querySelector('video') as HTMLVideoElement;
@@ -66,7 +66,7 @@ describe('video', () => {
           <source src="test.mp4" type="video/mp4" />
           <track kind="captions" src="captions.vtt" />
         </Video>
-      </Provider>,
+      </Provider>
     );
 
     const video = container.querySelector('video');
@@ -96,7 +96,7 @@ describe('video', () => {
     render(
       <Provider>
         <TestComponent />
-      </Provider>,
+      </Provider>
     );
 
     expect(attachCalled).toBe(true);
@@ -119,7 +119,7 @@ describe('video', () => {
     render(
       <Provider>
         <TestComponent />
-      </Provider>,
+      </Provider>
     );
 
     expect(capturedElement).toBeInstanceOf(HTMLVideoElement);

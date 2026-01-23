@@ -1,10 +1,8 @@
+import { describe, expectTypeOf, it } from 'vitest';
+import { createFeature } from '../feature';
 import type { Queue } from '../queue';
 import type { State } from '../state';
 import type { InferStoreRequests, InferStoreState, InferStoreTarget, InferStoreTasks } from '../store';
-
-import { describe, expectTypeOf, it } from 'vitest';
-
-import { createFeature } from '../feature';
 import { createStore } from '../store';
 
 interface MockTarget {

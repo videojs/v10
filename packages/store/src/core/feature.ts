@@ -65,8 +65,8 @@ export type InferFeatureState<S> = S extends Feature<any, infer State, any> ? St
 
 export type InferFeatureRequests<S> = S extends Feature<any, any, infer R> ? { [K in keyof R]: R[K] } : never;
 
-export type ResolveFeatureRequestHandlers<S>
-  = S extends Feature<any, any, infer R> ? { [K in keyof R]: ResolveRequestHandler<R[K]> } : never;
+export type ResolveFeatureRequestHandlers<S> =
+  S extends Feature<any, any, infer R> ? { [K in keyof R]: ResolveRequestHandler<R[K]> } : never;
 
 export type UnionFeatureTarget<Features extends AnyFeature[]> = InferFeatureTarget<Features[number]>;
 
@@ -86,17 +86,15 @@ export type UnionFeatureTasks<Features extends Feature<any, any, any>[]> = Ensur
 // createFeature
 // ----------------------------------------
 
-export interface FeatureFactory<Target> {
-  <
-    State extends object,
-    const Requests extends Record<string, RequestHandler<Target, any, any> | RequestConfig<Target, any, any>>,
-  >(config: {
-    initialState: State;
-    getSnapshot: (ctx: FeatureGetSnapshotContext<Target, State>) => State;
-    subscribe: (ctx: FeatureSubscribeContext<Target, State>) => void;
-    request: Requests;
-  }): Feature<Target, State, ResolveRequestMap<Requests>>;
-}
+export type FeatureFactory<Target> = <
+  State extends object,
+  const Requests extends Record<string, RequestHandler<Target, any, any> | RequestConfig<Target, any, any>>,
+>(config: {
+  initialState: State;
+  getSnapshot: (ctx: FeatureGetSnapshotContext<Target, State>) => State;
+  subscribe: (ctx: FeatureSubscribeContext<Target, State>) => void;
+  request: Requests;
+}) => Feature<Target, State, ResolveRequestMap<Requests>>;
 
 export type FeatureFactoryResult<Target, Config> = Config extends {
   initialState: infer S extends object;
@@ -156,7 +154,7 @@ export function createFeature<
 }
 
 function _createFeature<Target, State extends object, Requests extends { [K in keyof Requests]: Request<any, any> }>(
-  config: FeatureConfig<Target, State, Requests>,
+  config: FeatureConfig<Target, State, Requests>
 ): Feature<Target, State, Requests> {
   return {
     id: Symbol('@videojs/feature'),

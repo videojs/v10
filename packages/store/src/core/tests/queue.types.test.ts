@@ -1,8 +1,6 @@
-import type { State } from '../state';
-
 import { describe, expectTypeOf, it } from 'vitest';
-
 import { createQueue } from '../queue';
+import type { State } from '../state';
 
 describe('queue types', () => {
   describe('createQueue', () => {

@@ -1,5 +1,5 @@
-import { file } from 'astro/loaders';
 import { defineCollection, reference, z } from 'astro:content';
+import { file } from 'astro/loaders';
 import { SUPPORTED_FRAMEWORKS } from './types/docs';
 import { defaultGitService } from './utils/gitService';
 import { globWithParser } from './utils/globWithParser';

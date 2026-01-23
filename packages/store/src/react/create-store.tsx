@@ -1,11 +1,15 @@
+import { isNull, isUndefined } from '@videojs/utils/predicate';
 import type { FC, ReactNode } from 'react';
-import type { AnyFeature, UnionFeatureRequests, UnionFeatureState, UnionFeatureTarget, UnionFeatureTasks } from '../core/feature';
+import { useEffect, useState } from 'react';
+import type {
+  AnyFeature,
+  UnionFeatureRequests,
+  UnionFeatureState,
+  UnionFeatureTarget,
+  UnionFeatureTasks,
+} from '../core/feature';
 import type { TasksRecord } from '../core/queue';
 import type { StoreConfig } from '../core/store';
-
-import { isNull, isUndefined } from '@videojs/utils/predicate';
-
-import { useEffect, useState } from 'react';
 
 import { Store } from '../core/store';
 import { StoreContextProvider, useParentStore, useStoreContext } from './context';
@@ -15,7 +19,8 @@ import { useRequest as useRequestBase, useSnapshot as useSnapshotBase, useTasks 
 // Types
 // ----------------------------------------
 
-export interface CreateStoreConfig<Features extends AnyFeature[]> extends StoreConfig<UnionFeatureTarget<Features>, Features> {
+export interface CreateStoreConfig<Features extends AnyFeature[]>
+  extends StoreConfig<UnionFeatureTarget<Features>, Features> {
   /**
    * Display name for React DevTools.
    */
@@ -93,7 +98,9 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
  * });
  * ```
  */
-export function createStore<Features extends AnyFeature[]>(config: CreateStoreConfig<Features>): CreateStoreResult<Features> {
+export function createStore<Features extends AnyFeature[]>(
+  config: CreateStoreConfig<Features>
+): CreateStoreResult<Features> {
   type Target = UnionFeatureTarget<Features>;
   type State = UnionFeatureState<Features>;
   type Requests = UnionFeatureRequests<Features>;
