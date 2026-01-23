@@ -139,6 +139,7 @@ export function createStore<Features extends AnyFeature[]>(
 
   function useStore(): UseStoreResult<Features> {
     const store = useStoreContext() as StoreType;
+
     const state = useSyncExternalStore(
       (cb) => store.subscribe(cb),
       () => store.state,

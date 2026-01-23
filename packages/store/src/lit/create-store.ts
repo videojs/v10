@@ -201,21 +201,25 @@ export function createStore<Features extends AnyFeature[]>(
 
     constructor(host: CreateStoreHost) {
       this.#host = host;
+
       this.#consumer = new ContextConsumer(host, {
         context,
         subscribe: true,
         callback: (store) => this.#connect(store),
       });
+
       host.addController(this);
     }
 
     get value(): StoreControllerValue<Features> {
       const store = this.#consumer.value;
+
       if (!store) {
         throw new Error('StoreController: Store not available from context');
       }
+
       return {
-        ...(store.state as object),
+        ...store.state,
         ...(store.request as object),
       } as StoreControllerValue<Features>;
     }

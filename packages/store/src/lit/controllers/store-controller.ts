@@ -61,8 +61,8 @@ export class StoreController<Store extends AnyStore> implements ReactiveControll
     }
 
     return {
-      ...(store.state as object),
-      ...(store.request as object),
+      ...store.state,
+      ...store.request,
     } as StoreControllerValue<Store>;
   }
 
