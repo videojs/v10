@@ -6,10 +6,10 @@ import type { StoreSource } from '../store-accessor';
 
 import { StoreAccessor } from '../store-accessor';
 
-export type TasksControllerHost = ReactiveControllerHost & HTMLElement;
+export type QueueControllerHost = ReactiveControllerHost & HTMLElement;
 
 /**
- * Subscribes to task state changes.
+ * Subscribes to queue task changes.
  * Triggers host updates when tasks change.
  *
  * Accepts either a direct store instance or a context that provides one.
@@ -17,10 +17,10 @@ export type TasksControllerHost = ReactiveControllerHost & HTMLElement;
  * @example Direct store
  * ```ts
  * class MyElement extends LitElement {
- *   #tasks = new TasksController(this, store);
+ *   #queue = new QueueController(this, store);
  *
  *   render() {
- *     const playTask = this.#tasks.value.play;
+ *     const playTask = this.#queue.value.play;
  *     const isPending = playTask?.status === 'pending';
  *     return html`<button ?disabled=${isPending}>Play</button>`;
  *   }
@@ -32,17 +32,17 @@ export type TasksControllerHost = ReactiveControllerHost & HTMLElement;
  * const { context } = createStore({ features: [playbackFeature] });
  *
  * class MyElement extends LitElement {
- *   #tasks = new TasksController(this, context);
+ *   #queue = new QueueController(this, context);
  * }
  * ```
  */
-export class TasksController<Store extends AnyStore> implements ReactiveController {
-  readonly #host: TasksControllerHost;
+export class QueueController<Store extends AnyStore> implements ReactiveController {
+  readonly #host: QueueControllerHost;
   readonly #accessor: StoreAccessor<Store>;
 
   #unsubscribe = noop;
 
-  constructor(host: TasksControllerHost, source: StoreSource<Store>) {
+  constructor(host: QueueControllerHost, source: StoreSource<Store>) {
     this.#host = host;
     this.#accessor = new StoreAccessor(host, source, (store) => this.#connect(store));
     host.addController(this);
@@ -52,7 +52,7 @@ export class TasksController<Store extends AnyStore> implements ReactiveControll
     const store = this.#accessor.value;
 
     if (isNull(store)) {
-      throw new Error('TasksController: Store not available from context');
+      throw new Error('QueueController: Store not available from context');
     }
 
     return store.queue.tasks;

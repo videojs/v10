@@ -1,35 +1,35 @@
 import { useSyncExternalStore } from 'react';
-import type { Queue, TaskRecord, TasksRecord } from '../../core/queue';
+import type { TasksRecord } from '../../core/queue';
+import type { AnyStore, InferStoreTasks } from '../../core/store';
 
 /**
  * Subscribe to queue task changes.
  *
- * Returns the current tasks record and re-renders when tasks change.
- * This is the lower-level hook that takes a Queue directly.
- * For store-level access, use `useTasks(store)` instead.
+ * Returns a record of all tasks keyed by request name.
+ * Re-renders when any task is added, updated, or removed.
  *
  * @example
  * ```tsx
- * function TaskList() {
- *   const tasks = useQueue(queue);
- *   return (
- *     <ul>
- *       {Object.entries(tasks).map(([name, task]) => (
- *         <li key={name}>{task.status}</li>
- *       ))}
- *     </ul>
- *   );
+ * function TaskStatus() {
+ *   const tasks = useQueue(store);
+ *   const playTask = tasks.play;
+ *
+ *   if (playTask?.status === 'pending') {
+ *     return <span>Loading...</span>;
+ *   }
+ *
+ *   return <span>Ready</span>;
  * }
  * ```
  */
-export function useQueue<Tasks extends TaskRecord>(queue: Queue<Tasks>): TasksRecord<Tasks> {
+export function useQueue<Store extends AnyStore>(store: Store): TasksRecord<InferStoreTasks<Store>> {
   return useSyncExternalStore(
-    (cb) => queue.subscribe(cb),
-    () => queue.tasks,
-    () => queue.tasks
+    (cb) => store.queue.subscribe(cb),
+    () => store.queue.tasks as TasksRecord<InferStoreTasks<Store>>,
+    () => store.queue.tasks as TasksRecord<InferStoreTasks<Store>>
   );
 }
 
 export namespace useQueue {
-  export type Result<Tasks extends TaskRecord> = TasksRecord<Tasks>;
+  export type Result<Store extends AnyStore> = TasksRecord<InferStoreTasks<Store>>;
 }

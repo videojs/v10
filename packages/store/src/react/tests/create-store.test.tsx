@@ -73,7 +73,9 @@ describe('createStore', () => {
     });
 
     it('uses provided store prop without destroying on unmount', () => {
-      const { Provider, useStore, create } = createStore({ features: [audioFeature] });
+      const { Provider, useStore, create } = createStore({
+        features: [audioFeature],
+      });
       const providedStore = create();
 
       const { result, unmount } = renderHook(() => useStore(), {
@@ -89,7 +91,9 @@ describe('createStore', () => {
     });
 
     it('inherits store from parent when inherit=true', () => {
-      const { Provider, useStore, create } = createStore({ features: [audioFeature] });
+      const { Provider, useStore, create } = createStore({
+        features: [audioFeature],
+      });
       const parentStore = create();
 
       const { result } = renderHook(() => useStore(), {
@@ -104,7 +108,9 @@ describe('createStore', () => {
     });
 
     it('creates isolated store by default', () => {
-      const { Provider, useStore, create } = createStore({ features: [audioFeature] });
+      const { Provider, useStore, create } = createStore({
+        features: [audioFeature],
+      });
       const parentStore = create();
 
       const { result } = renderHook(() => useStore(), {
@@ -131,7 +137,9 @@ describe('createStore', () => {
 
   describe('useStore', () => {
     it('returns the store from context', () => {
-      const { Provider, useStore, create } = createStore({ features: [audioFeature] });
+      const { Provider, useStore, create } = createStore({
+        features: [audioFeature],
+      });
       const store = create();
 
       const { result } = renderHook(() => useStore(), {
@@ -144,7 +152,9 @@ describe('createStore', () => {
 
   describe('useSnapshot', () => {
     it('returns state from context store', () => {
-      const { Provider, useSnapshot, create } = createStore({ features: [audioFeature] });
+      const { Provider, useSnapshot, create } = createStore({
+        features: [audioFeature],
+      });
       const store = create();
       const target = new MockMedia();
       store.attach(target);
@@ -157,7 +167,9 @@ describe('createStore', () => {
     });
 
     it('updates when state changes', async () => {
-      const { Provider, useSnapshot, create } = createStore({ features: [audioFeature] });
+      const { Provider, useSnapshot, create } = createStore({
+        features: [audioFeature],
+      });
       const store = create();
       const target = new MockMedia();
       store.attach(target);
@@ -179,7 +191,9 @@ describe('createStore', () => {
 
   describe('useRequest', () => {
     it('returns request map from context store', () => {
-      const { Provider, useRequest, create } = createStore({ features: [audioFeature] });
+      const { Provider, useRequest, create } = createStore({
+        features: [audioFeature],
+      });
       const store = create();
 
       const { result } = renderHook(() => useRequest(), {
@@ -190,7 +204,9 @@ describe('createStore', () => {
     });
 
     it('returns request by name', () => {
-      const { Provider, useRequest, create } = createStore({ features: [audioFeature] });
+      const { Provider, useRequest, create } = createStore({
+        features: [audioFeature],
+      });
       const store = create();
 
       const { result } = renderHook(() => useRequest('setVolume'), {
@@ -201,12 +217,14 @@ describe('createStore', () => {
     });
   });
 
-  describe('useTasks', () => {
+  describe('useQueue', () => {
     it('returns tasks from context store', () => {
-      const { Provider, useTasks, create } = createStore({ features: [audioFeature] });
+      const { Provider, useQueue, create } = createStore({
+        features: [audioFeature],
+      });
       const store = create();
 
-      const { result } = renderHook(() => useTasks(), {
+      const { result } = renderHook(() => useQueue(), {
         wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
       });
 

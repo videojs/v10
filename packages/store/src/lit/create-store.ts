@@ -14,7 +14,7 @@ import type { TasksRecord } from '../core/queue';
 import type { StoreConfig, StoreConsumer, StoreProvider } from '../core/store';
 
 import { Store } from '../core/store';
-import { RequestController as RequestControllerBase, TasksController as TasksControllerBase } from './controllers';
+import { QueueController as QueueControllerBase, RequestController as RequestControllerBase } from './controllers';
 import { createStoreAttachMixin, createStoreMixin, createStoreProviderMixin } from './mixins';
 
 export const contextKey = Symbol('@videojs/store');
@@ -135,24 +135,24 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
   ) => RequestControllerBase<Store<UnionFeatureTarget<Features>, Features>, Name>;
 
   /**
-   * Tasks controller bound to this store's context.
-   * Subscribes to task state changes.
+   * Queue controller bound to this store's context.
+   * Subscribes to queue task changes.
    *
    * @example
    * ```ts
-   * const { TasksController } = createStore({ features: [playbackFeature] });
+   * const { QueueController } = createStore({ features: [playbackFeature] });
    *
    * class MyElement extends LitElement {
-   *   #tasks = new TasksController(this);
+   *   #queue = new QueueController(this);
    *
    *   render() {
-   *     const playTask = this.#tasks.value.play;
+   *     const playTask = this.#queue.value.play;
    *     return html`<button ?disabled=${playTask?.status === 'pending'}>Play</button>`;
    *   }
    * }
    * ```
    */
-  TasksController: new (
+  QueueController: new (
     host: CreateStoreHost
   ) => {
     value: Readonly<TasksRecord<UnionFeatureTasks<Features>>>;
@@ -263,7 +263,7 @@ export function createStore<Features extends AnyFeature[]>(
     }
   }
 
-  class TasksController extends TasksControllerBase<ProvidedStore> {
+  class QueueController extends QueueControllerBase<ProvidedStore> {
     constructor(host: CreateStoreHost) {
       super(host, context);
     }
@@ -277,6 +277,6 @@ export function createStore<Features extends AnyFeature[]>(
     create,
     StateController,
     RequestController,
-    TasksController,
+    QueueController,
   };
 }

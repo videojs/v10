@@ -69,10 +69,10 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
   };
 
   /**
-   * Subscribes to task state changes.
+   * Subscribes to queue task changes.
    * Returns the current tasks map from the queue.
    */
-  useTasks: () => TasksRecord<UnionFeatureTasks<Features>>;
+  useQueue: () => TasksRecord<UnionFeatureTasks<Features>>;
 
   /**
    * Creates a new store instance.
@@ -93,7 +93,7 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
  *
  * @example
  * ```tsx
- * const { Provider, useStore, useSnapshot, useRequest, useTasks, create } = createStore({
+ * const { Provider, useStore, useSnapshot, useRequest, useQueue, create } = createStore({
  *   features: [playbackFeature, presentationFeature],
  * });
  * ```
@@ -174,7 +174,7 @@ export function createStore<Features extends AnyFeature[]>(
     return useRequestBase(store, name as Name);
   }
 
-  function useTasks(): TasksRecord<Tasks> {
+  function useQueue(): TasksRecord<Tasks> {
     const store = useStore();
     return useSyncExternalStore(
       (cb) => store.queue.subscribe(cb),
@@ -188,7 +188,7 @@ export function createStore<Features extends AnyFeature[]>(
     useStore,
     useSnapshot,
     useRequest: useRequest as CreateStoreResult<Features>['useRequest'],
-    useTasks,
+    useQueue,
     create,
   };
 }

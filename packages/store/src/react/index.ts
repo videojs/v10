@@ -1,5 +1,9 @@
 export { useStoreContext } from './context';
-export type { CreateStoreConfig, CreateStoreResult, ProviderProps } from './create-store';
+export type {
+  CreateStoreConfig,
+  CreateStoreResult,
+  ProviderProps,
+} from './create-store';
 export { createStore } from './create-store';
 
-export { useRequest, useSnapshot, useTasks } from './hooks';
+export { useQueue, useRequest, useSnapshot, useStore } from './hooks';

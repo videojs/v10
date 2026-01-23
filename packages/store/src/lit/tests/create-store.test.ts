@@ -89,7 +89,9 @@ describe('createStore', () => {
     });
 
     it('mixins can be applied to TestBaseElement', () => {
-      const { StoreMixin, StoreProviderMixin, StoreAttachMixin } = createStore({ features: [audioFeature] });
+      const { StoreMixin, StoreProviderMixin, StoreAttachMixin } = createStore({
+        features: [audioFeature],
+      });
 
       const Mixed1 = StoreMixin(TestBaseElement);
       const Mixed2 = StoreProviderMixin(TestBaseElement);
@@ -112,7 +114,7 @@ describe('createStore', () => {
       expect(result).toHaveProperty('create');
       expect(result).toHaveProperty('StateController');
       expect(result).toHaveProperty('RequestController');
-      expect(result).toHaveProperty('TasksController');
+      expect(result).toHaveProperty('QueueController');
     });
   });
 
@@ -131,11 +133,11 @@ describe('createStore', () => {
       expect(RequestController.prototype).toBeDefined();
     });
 
-    it('TasksController is a class', () => {
-      const { TasksController } = createStore({ features: [audioFeature] });
+    it('QueueController is a class', () => {
+      const { QueueController } = createStore({ features: [audioFeature] });
 
-      expect(typeof TasksController).toBe('function');
-      expect(TasksController.prototype).toBeDefined();
+      expect(typeof QueueController).toBe('function');
+      expect(QueueController.prototype).toBeDefined();
     });
 
     // Note: Full integration tests with DOM and context would require

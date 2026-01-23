@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import { createCoreTestStore, createMockHost } from '../../tests/test-utils';
-import { TasksController } from '../tasks-controller';
+import { QueueController } from '../queue-controller';
 
-describe('TasksController', () => {
+describe('QueueController', () => {
   it('returns tasks record', () => {
     const { store } = createCoreTestStore();
     const host = createMockHost();
 
-    const controller = new TasksController(host, store);
+    const controller = new QueueController(host, store);
 
     expect(controller.value).toEqual({});
   });
@@ -17,7 +17,7 @@ describe('TasksController', () => {
     const { store } = createCoreTestStore();
     const host = createMockHost();
 
-    const controller = new TasksController(host, store);
+    const controller = new QueueController(host, store);
 
     expect(host.controllers.has(controller)).toBe(true);
   });
@@ -26,7 +26,7 @@ describe('TasksController', () => {
     const { store } = createCoreTestStore();
     const host = createMockHost();
 
-    const controller = new TasksController(host, store);
+    const controller = new QueueController(host, store);
     controller.hostConnected();
 
     expect(controller.value.setVolume).toBeUndefined();
@@ -42,7 +42,7 @@ describe('TasksController', () => {
     const { store } = createCoreTestStore();
     const host = createMockHost();
 
-    const controller = new TasksController(host, store);
+    const controller = new QueueController(host, store);
     controller.hostConnected();
     controller.hostDisconnected();
 
@@ -56,7 +56,7 @@ describe('TasksController', () => {
     const { store } = createCoreTestStore();
     const host = createMockHost();
 
-    const controller = new TasksController(host, store);
+    const controller = new QueueController(host, store);
     controller.hostConnected();
 
     // Fire multiple requests
@@ -74,7 +74,7 @@ describe('TasksController', () => {
     const { store } = createCoreTestStore();
     const host = createMockHost();
 
-    const controller = new TasksController(host, store);
+    const controller = new QueueController(host, store);
     controller.hostConnected();
 
     await store.request.setVolume!(0.5);

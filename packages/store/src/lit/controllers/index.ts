@@ -1,5 +1,16 @@
 export type { AsyncStatus } from '../../shared/types';
 
-export { RequestController, type RequestControllerHost } from './request-controller';
-export { SnapshotController, type SnapshotControllerHost } from './snapshot-controller';
-export { TasksController, type TasksControllerHost } from './tasks-controller';
+export { QueueController, type QueueControllerHost } from './queue-controller';
+export {
+  RequestController,
+  type RequestControllerHost,
+} from './request-controller';
+export {
+  SnapshotController,
+  type SnapshotControllerHost,
+} from './snapshot-controller';
+export {
+  StoreController,
+  type StoreControllerHost,
+  type StoreControllerValue,
+} from './store-controller';

@@ -8,7 +8,7 @@ describe('useQueue', () => {
   it('returns tasks record', () => {
     const { store } = createTestStore();
 
-    const { result } = renderHook(() => useQueue(store.queue));
+    const { result } = renderHook(() => useQueue(store));
 
     expect(result.current).toEqual({});
   });
@@ -16,7 +16,7 @@ describe('useQueue', () => {
   it('updates when task completes', async () => {
     const { store } = createTestStore();
 
-    const { result } = renderHook(() => useQueue(store.queue));
+    const { result } = renderHook(() => useQueue(store));
 
     expect(result.current.setVolume).toBeUndefined();
 

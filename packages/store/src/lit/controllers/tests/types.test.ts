@@ -2,9 +2,9 @@ import { describe, expectTypeOf, it } from 'vitest';
 
 import { createState } from '../../../core/state';
 import { createCoreTestStore, createMockHost } from '../../tests/test-utils';
+import { QueueController } from '../queue-controller';
 import { RequestController } from '../request-controller';
 import { SnapshotController } from '../snapshot-controller';
-import { TasksController } from '../tasks-controller';
 
 describe('controller types', () => {
   describe('SnapshotController', () => {
@@ -15,7 +15,10 @@ describe('controller types', () => {
       const controller = new SnapshotController(host, state);
 
       // controller.value is the unwrapped type (without Reactive brand)
-      expectTypeOf(controller.value).toEqualTypeOf<{ volume: number; muted: boolean }>();
+      expectTypeOf(controller.value).toEqualTypeOf<{
+        volume: number;
+        muted: boolean;
+      }>();
     });
 
     it('value properties have correct types', () => {
@@ -41,12 +44,12 @@ describe('controller types', () => {
     });
   });
 
-  describe('TasksController', () => {
+  describe('QueueController', () => {
     it('value is tasks record', () => {
       const { store } = createCoreTestStore();
       const host = createMockHost();
 
-      const controller = new TasksController(host, store);
+      const controller = new QueueController(host, store);
 
       // Value type matches store.queue.tasks
       expectTypeOf(controller.value).toMatchTypeOf(store.queue.tasks);
