@@ -24,10 +24,8 @@ export interface CreateStoreConfig<Features extends AnyFeature[]>
 
 export type CreateStoreHost = ReactiveControllerHost & HTMLElement;
 
-export interface StoreControllerValue<Features extends AnyFeature[]> {
-  state: UnionFeatureState<Features>;
-  request: UnionFeatureRequests<Features>;
-}
+export type StoreControllerValue<Features extends AnyFeature[]> = UnionFeatureState<Features> &
+  UnionFeatureRequests<Features>;
 
 export interface CreateStoreResult<Features extends AnyFeature[]> {
   /**
@@ -94,7 +92,7 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
 
   /**
    * Store controller bound to this store's context.
-   * Subscribes to store state changes and provides access to state + request.
+   * Subscribes to store state changes and provides access to state and request functions.
    *
    * @example
    * ```ts
@@ -104,10 +102,10 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
    *   #store = new StoreController(this);
    *
    *   render() {
-   *     const { state, request } = this.#store.value;
+   *     const { volume, setVolume } = this.#store.value;
    *     return html`
-   *       <span>${state.volume}</span>
-   *       <button @click=${() => request.setVolume(0.5)}>Set 50%</button>
+   *       <span>${volume}</span>
+   *       <button @click=${() => setVolume(0.5)}>Set 50%</button>
    *     `;
    *   }
    * }
@@ -171,8 +169,8 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
  *   #store = new StoreController(this);
  *
  *   render() {
- *     const { state, request } = this.#store.value;
- *     return html`<span>${state.paused ? 'Paused' : 'Playing'}</span>`;
+ *     const { paused } = this.#store.value;
+ *     return html`<span>${paused ? 'Paused' : 'Playing'}</span>`;
  *   }
  * }
  *
@@ -184,8 +182,6 @@ export function createStore<Features extends AnyFeature[]>(
   config: CreateStoreConfig<Features>
 ): CreateStoreResult<Features> {
   type Target = UnionFeatureTarget<Features>;
-  type State = UnionFeatureState<Features>;
-  type Requests = UnionFeatureRequests<Features>;
   type ProvidedStore = Store<Target, Features>;
 
   const context = createContext<ProvidedStore, typeof contextKey>(contextKey);
@@ -219,9 +215,9 @@ export function createStore<Features extends AnyFeature[]>(
         throw new Error('StoreController: Store not available from context');
       }
       return {
-        state: store.state as State,
-        request: store.request as Requests,
-      };
+        ...(store.state as object),
+        ...(store.request as object),
+      } as StoreControllerValue<Features>;
     }
 
     hostConnected(): void {

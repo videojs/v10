@@ -5,15 +5,14 @@ import { useStore } from '../use-store';
 import { createTestStore } from './test-utils';
 
 describe('useStore', () => {
-  it('returns state snapshot with request', () => {
+  it('returns state and request functions spread together', () => {
     const { store } = createTestStore();
 
     const { result } = renderHook(() => useStore(store));
 
     expect(result.current.volume).toBe(1);
     expect(result.current.muted).toBe(false);
-    expect(result.current.request).toBeDefined();
-    expect(typeof result.current.request.setVolume).toBe('function');
+    expect(typeof result.current.setVolume).toBe('function');
   });
 
   it('updates when state changes', async () => {
@@ -24,7 +23,7 @@ describe('useStore', () => {
     expect(result.current.volume).toBe(1);
 
     await act(async () => {
-      await result.current.request.setVolume(0.5);
+      await result.current.setVolume(0.5);
     });
 
     expect(result.current.volume).toBe(0.5);

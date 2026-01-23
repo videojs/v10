@@ -1,24 +1,22 @@
 import { useSyncExternalStore } from 'react';
 import type { AnyStore, InferStoreRequests, InferStoreState } from '../../core/store';
 
-export type UseStoreResult<Store extends AnyStore> = InferStoreState<Store> & {
-  request: InferStoreRequests<Store>;
-};
+export type UseStoreResult<Store extends AnyStore> = InferStoreState<Store> & InferStoreRequests<Store>;
 
 /**
  * Subscribe to store state changes.
  *
- * Returns the current state snapshot with request map, re-renders when state changes.
+ * Returns state and request functions spread together, re-renders when state changes.
  *
  * @example
  * ```tsx
  * function VolumeControl() {
- *   const { volume, request } = useStore(store);
+ *   const { volume, setVolume } = useStore(store);
  *   return (
  *     <input
  *       type="range"
  *       value={volume}
- *       onChange={(e) => request.setVolume(+e.target.value)}
+ *       onChange={(e) => setVolume(+e.target.value)}
  *     />
  *   );
  * }
@@ -33,7 +31,7 @@ export function useStore<Store extends AnyStore>(store: Store): UseStoreResult<S
 
   return {
     ...state,
-    request: store.request,
+    ...store.request,
   } as UseStoreResult<Store>;
 }
 

@@ -40,9 +40,8 @@ export interface ProviderProps<Features extends AnyFeature[]> {
   inherit?: boolean;
 }
 
-export type UseStoreResult<Features extends AnyFeature[]> = UnionFeatureState<Features> & {
-  request: UnionFeatureRequests<Features>;
-};
+export type UseStoreResult<Features extends AnyFeature[]> = UnionFeatureState<Features> &
+  UnionFeatureRequests<Features>;
 
 export interface CreateStoreResult<Features extends AnyFeature[]> {
   /** Provider component that creates and manages the store lifecycle. */
@@ -148,7 +147,7 @@ export function createStore<Features extends AnyFeature[]>(
 
     return {
       ...state,
-      request: store.request,
+      ...(store.request as object),
     } as UseStoreResult<Features>;
   }
 

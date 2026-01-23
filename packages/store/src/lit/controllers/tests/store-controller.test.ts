@@ -4,15 +4,15 @@ import { createCoreTestStore, createMockHost } from '../../tests/test-utils';
 import { StoreController } from '../store-controller';
 
 describe('StoreController', () => {
-  it('returns state and request', () => {
+  it('returns state and request functions spread together', () => {
     const { store } = createCoreTestStore();
     const host = createMockHost();
 
     const controller = new StoreController(host, store);
 
-    expect(controller.value.state).toEqual({ volume: 1, muted: false });
-    expect(controller.value.request).toBeDefined();
-    expect(typeof controller.value.request.setVolume).toBe('function');
+    expect(controller.value.volume).toBe(1);
+    expect(controller.value.muted).toBe(false);
+    expect(typeof controller.value.setVolume).toBe('function');
   });
 
   it('registers with host', () => {
@@ -31,11 +31,11 @@ describe('StoreController', () => {
     const controller = new StoreController(host, store);
     controller.hostConnected();
 
-    expect(controller.value.state.volume).toBe(1);
+    expect(controller.value.volume).toBe(1);
 
     await store.request.setVolume!(0.5);
 
-    expect(controller.value.state.volume).toBe(0.5);
+    expect(controller.value.volume).toBe(0.5);
     expect(host.updateCount).toBeGreaterThan(0);
   });
 
@@ -61,7 +61,7 @@ describe('StoreController', () => {
     controller.hostConnected();
 
     await store.request.setVolume!(0.5);
-    expect(controller.value.state.volume).toBe(0.5);
+    expect(controller.value.volume).toBe(0.5);
 
     controller.hostDisconnected();
 
@@ -71,6 +71,6 @@ describe('StoreController', () => {
     // Reconnect - should sync to current state
     controller.hostConnected();
 
-    expect(controller.value.state.volume).toBe(0.8);
+    expect(controller.value.volume).toBe(0.8);
   });
 });

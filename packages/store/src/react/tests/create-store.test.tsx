@@ -55,7 +55,7 @@ describe('createStore', () => {
 
       expect(result.current).toBeDefined();
       expect(result.current.volume).toBe(1);
-      expect(result.current.request).toBeDefined();
+      expect(typeof result.current.setVolume).toBe('function');
     });
 
     it('uses provided store prop without destroying on unmount', () => {
@@ -85,7 +85,7 @@ describe('createStore', () => {
   });
 
   describe('useStore', () => {
-    it('returns state with request from context', () => {
+    it('returns state and request functions from context', () => {
       const { Provider, useStore, create } = createStore({
         features: [audioFeature],
       });
@@ -99,8 +99,7 @@ describe('createStore', () => {
 
       expect(result.current.volume).toBe(1);
       expect(result.current.muted).toBe(false);
-      expect(result.current.request).toBeDefined();
-      expect(typeof result.current.request.setVolume).toBe('function');
+      expect(typeof result.current.setVolume).toBe('function');
     });
 
     it('updates when state changes', async () => {

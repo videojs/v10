@@ -8,15 +8,12 @@ import { StoreAccessor } from '../store-accessor';
 
 export type StoreControllerHost = ReactiveControllerHost & HTMLElement;
 
-export interface StoreControllerValue<Store extends AnyStore> {
-  state: InferStoreState<Store>;
-  request: InferStoreRequests<Store>;
-}
+export type StoreControllerValue<Store extends AnyStore> = InferStoreState<Store> & InferStoreRequests<Store>;
 
 /**
  * Subscribes to store state changes.
  * Triggers host updates when state changes.
- * Provides access to state and request map.
+ * Provides access to state and request functions spread together.
  *
  * Accepts either a direct store instance or a context that provides one.
  *
@@ -26,10 +23,10 @@ export interface StoreControllerValue<Store extends AnyStore> {
  *   #store = new StoreController(this, store);
  *
  *   render() {
- *     const { state, request } = this.#store.value;
+ *     const { volume, setVolume } = this.#store.value;
  *     return html`
- *       <span>${state.volume}</span>
- *       <button @click=${() => request.setVolume(0.5)}>Set 50%</button>
+ *       <span>${volume}</span>
+ *       <button @click=${() => setVolume(0.5)}>Set 50%</button>
  *     `;
  *   }
  * }
@@ -64,9 +61,9 @@ export class StoreController<Store extends AnyStore> implements ReactiveControll
     }
 
     return {
-      state: store.state as InferStoreState<Store>,
-      request: store.request as InferStoreRequests<Store>,
-    };
+      ...(store.state as object),
+      ...(store.request as object),
+    } as StoreControllerValue<Store>;
   }
 
   hostConnected(): void {
