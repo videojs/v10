@@ -12,6 +12,9 @@ Video.js is a free and open source library, and we appreciate any help you're wi
 
 Video.js 10 is set up a monorepo using [`pnpm` workspaces](https://pnpm.io/workspaces). As such, most scripts run will be done from the project/workspace root. Unless otherwise specified, assume commands and similar should be run from the root directory.
 
+> [!TIP]
+> This repo includes tooling for AI-assisted development. See [Using AI](#using-ai).
+
 ### Getting Your Machine Ready
 
 You’ll need the following installed:
@@ -20,6 +23,7 @@ You’ll need the following installed:
 - [Git](https://git-scm.com/downloads)
 - [PNPM](https://pnpm.io/installation) (≥ 10.17.0)
 - [Volta](https://docs.volta.sh/guide) or [NVM](https://github.com/nvm-sh/nvm) (we recommend Volta for automatic Node management)
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (optional, for AI-assisted development)
 
 > [!TIP]
 > PNPM will automatically use the correct Node version when running scripts.
@@ -75,10 +79,7 @@ pnpm dev
 This will run the entire workspace in developer mode, meaning all applications (examples and website) will also be started on their respective ports.
 
 ```sh
-# Run a specific app
-pnpm dev:html
-pnpm dev:react
-pnpm dev:next
+# Run the documentation site
 pnpm dev:site
 ```
 
@@ -96,7 +97,7 @@ pnpm build
 
 ### 🧹 Style & Linting
 
-For the bulk of our core code, we use a [slightly modified](./eslint.config.mjs) version of [`@antfu/eslint-config`](https://www.npmjs.com/package/@antfu/eslint-config) along with [`prettier`](https://prettier.io/) for things like markdown or svgs. Between IDE configs, pre-commit hooks, and manual CLI fixes, many styling and linting issues should get caught automatically.
+For the bulk of our core code, we use [Biome](https://biomejs.dev). Between IDE configs, pre-commit hooks, and manual CLI fixes, many styling and linting issues should get caught automatically.
 
 To ensure your code follows our lint rules with:
 
@@ -137,6 +138,51 @@ pnpm up <package>@<version> -r
 > We try to be very intentional with any dependencies we add to this project. This is true of both developer/tooling dependencies and especially package-level (source) dependencies. If you find yourself needing to add a dependency, we strongly encourage you to check in with the core maintainers before proceeding to avoid wasted time and effort for everyone involved (yourself included!).
 
 [pnpm-filtering]: https://pnpm.io/filtering
+
+## Using AI
+
+Video.js 10 includes tooling for AI-assisted development with [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Read [`CLAUDE.md`](./CLAUDE.md) for repo-wide conventions, package layout, and development workflow.
+
+### Slash Commands
+
+| Command          | Purpose                               |
+| ---------------- | ------------------------------------- |
+| `/commit-pr`     | Commit changes and create/update a PR |
+| `/review-branch` | Review changes in the current branch  |
+| `/gh-issue <n>`  | Analyze an issue and generate a plan  |
+
+### Skills
+
+Domain-specific knowledge lives in `.claude/skills/`:
+
+| Skill       | Use When                                |
+| ----------- | --------------------------------------- |
+| `api`       | Designing APIs, reviewing architecture  |
+| `component` | Building UI components                  |
+| `aria`      | Accessibility implementation and review |
+| `docs`      | Writing documentation                   |
+| `git`       | Commit messages, PR conventions         |
+
+See [`.claude/skills/README.md`](./.claude/skills/README.md) for workflow mappings.
+
+### Maintaining AI Docs
+
+When your changes introduce new patterns:
+
+- **Code conventions** → Update `CLAUDE.md` Code Rules section
+- **Domain patterns** → Update relevant skill in `.claude/skills/`
+
+## RFCs (Design Documents)
+
+For significant architectural decisions and API designs, we use RFCs (Request for Comments). See [`rfc/README.md`](./rfc/README.md) for the full process.
+
+**When to write an RFC:**
+
+- Introducing a new public API surface
+- Making architectural changes affecting multiple packages
+- Proposing patterns used throughout the codebase
+
+**Skip the RFC for:** Bug fixes, small contained features, implementation details.
 
 ## Creating a Pull Request
 
@@ -201,7 +247,14 @@ pnpm test
 
 See [Testing](#-testing) for more information.
 
-### Step 6: Push
+### Step 6: Review Documentation
+
+If your changes introduced new patterns or conventions, check if documentation needs updates:
+
+- **Site docs** — User-facing documentation in `site/`
+- **AI docs** — See [Maintaining AI Docs](#maintaining-ai-docs)
+
+### Step 7: Push
 
 When ready, push your branch up to your fork (or upstream if you are a core contributor):
 

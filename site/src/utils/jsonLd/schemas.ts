@@ -6,14 +6,7 @@
  */
 
 import type { CollectionEntry } from 'astro:content';
-import type {
-  BlogPosting,
-  CollectionPage,
-  Person,
-  ProfilePage,
-  TechArticle,
-  WithContext,
-} from 'schema-dts';
+import type { BlogPosting, CollectionPage, Person, ProfilePage, TechArticle, WithContext } from 'schema-dts';
 
 /**
  * Create a TechArticle schema for documentation pages.
@@ -92,7 +85,7 @@ export function createBlogPostingSchema(params: {
             author.data.socialLinks.website,
           ].filter(Boolean) as string[],
         }),
-      }),
+      })
     ),
     publisher: {
       '@type': 'Organization',
@@ -214,7 +207,7 @@ export function createProfilePageSchema(params: {
     }),
     // Include authored articles
     ...(params.posts.length > 0 && {
-      publishedWorks: params.posts.map(post => ({
+      publishedWorks: params.posts.map((post) => ({
         '@type': 'BlogPosting',
         headline: post.data.title,
         url: `${params.siteUrl}blog/${post.id}`,

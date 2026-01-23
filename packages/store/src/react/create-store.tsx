@@ -1,39 +1,37 @@
-import type { FC, ReactNode } from 'react';
-import type { TasksRecord } from '../core/queue';
-import type { AnySlice, UnionSliceRequests, UnionSliceState, UnionSliceTarget, UnionSliceTasks } from '../core/slice';
-import type { StoreConfig } from '../core/store';
-
 import { isNull, isUndefined } from '@videojs/utils/predicate';
-
-import { useEffect, useState } from 'react';
+import type { FC, ReactNode } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
+import type {
+  AnyFeature,
+  UnionFeatureRequests,
+  UnionFeatureState,
+  UnionFeatureTarget,
+  UnionFeatureTasks,
+} from '../core/feature';
+import type { TasksRecord } from '../core/queue';
+import type { StoreConfig } from '../core/store';
 
 import { Store } from '../core/store';
 import { StoreContextProvider, useParentStore, useStoreContext } from './context';
-import {
-  useRequest as useRequestBase,
-  useSelector as useSelectorBase,
-  useTasks as useTasksBase,
-} from './hooks';
 
 // ----------------------------------------
 // Types
 // ----------------------------------------
 
-export interface CreateStoreConfig<Slices extends AnySlice[]> extends StoreConfig<UnionSliceTarget<Slices>, Slices> {
-  /**
-   * Display name for React DevTools.
-   */
+export interface CreateStoreConfig<Features extends AnyFeature[]>
+  extends StoreConfig<UnionFeatureTarget<Features>, Features> {
+  /** Display name for React DevTools. */
   displayName?: string;
 }
 
-export interface ProviderProps<Slices extends AnySlice[]> {
+export interface ProviderProps<Features extends AnyFeature[]> {
   children: ReactNode;
   /**
    * Optional pre-created store instance.
    * If provided, the Provider will use this store instead of creating one.
    * The Provider will NOT destroy this store on unmount.
    */
-  store?: Store<UnionSliceTarget<Slices>, Slices>;
+  store?: Store<UnionFeatureTarget<Features>, Features>;
   /**
    * If true, inherits the store from a parent Provider context instead of creating a new one.
    * Useful when wrapping a skin with your own Provider to add custom hooks.
@@ -42,42 +40,30 @@ export interface ProviderProps<Slices extends AnySlice[]> {
   inherit?: boolean;
 }
 
-export interface CreateStoreResult<Slices extends AnySlice[]> {
-  /**
-   * Provider component that creates and manages the store lifecycle.
-   */
-  Provider: FC<ProviderProps<Slices>>;
+export type UseStoreResult<Features extends AnyFeature[]> = UnionFeatureState<Features> &
+  UnionFeatureRequests<Features>;
+
+export interface CreateStoreResult<Features extends AnyFeature[]> {
+  /** Provider component that creates and manages the store lifecycle. */
+  Provider: FC<ProviderProps<Features>>;
 
   /**
-   * Returns the typed store instance from context.
+   * Subscribe to store state and access requests.
+   * Returns state with request map, re-renders when state changes.
    */
-  useStore: () => Store<UnionSliceTarget<Slices>, Slices>;
+  useStore: () => UseStoreResult<Features>;
 
   /**
-   * Subscribes to a selected portion of state.
-   * Re-renders only when the selected value changes.
-   */
-  useSelector: <T>(selector: (state: UnionSliceState<Slices>) => T) => T;
-
-  /**
-   * Returns the request map or a specific request by name.
-   */
-  useRequest: {
-    (): UnionSliceRequests<Slices>;
-    <Name extends keyof UnionSliceRequests<Slices>>(name: Name): UnionSliceRequests<Slices>[Name];
-  };
-
-  /**
-   * Subscribes to task state changes.
+   * Subscribes to queue task changes.
    * Returns the current tasks map from the queue.
    */
-  useTasks: () => TasksRecord<UnionSliceTasks<Slices>>;
+  useQueue: () => TasksRecord<UnionFeatureTasks<Features>>;
 
   /**
    * Creates a new store instance.
    * Useful for imperative access or creating a store before render.
    */
-  create: () => Store<UnionSliceTarget<Slices>, Slices>;
+  create: () => Store<UnionFeatureTarget<Features>, Features>;
 }
 
 // ----------------------------------------
@@ -87,22 +73,22 @@ export interface CreateStoreResult<Slices extends AnySlice[]> {
 /**
  * Creates a store factory that returns a Provider and typed hooks.
  *
- * @param config - Store configuration including slices and optional lifecycle hooks
+ * @param config - Store configuration including features and optional lifecycle hooks
  * @returns An object containing Provider, hooks, and a create function
  *
  * @example
  * ```tsx
- * const { Provider, useStore, useSelector, useRequest, useTasks, create } = createStore({
- *   slices: [playbackSlice, presentationSlice],
+ * const { Provider, useStore, useQueue, create } = createStore({
+ *   features: [playbackFeature, presentationFeature],
  * });
  * ```
  */
-export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig<Slices>): CreateStoreResult<Slices> {
-  type Target = UnionSliceTarget<Slices>;
-  type State = UnionSliceState<Slices>;
-  type Requests = UnionSliceRequests<Slices>;
-  type Tasks = UnionSliceTasks<Slices>;
-  type StoreType = Store<Target, Slices>;
+export function createStore<Features extends AnyFeature[]>(
+  config: CreateStoreConfig<Features>
+): CreateStoreResult<Features> {
+  type Target = UnionFeatureTarget<Features>;
+  type Tasks = UnionFeatureTasks<Features>;
+  type StoreType = Store<Target, Features>;
 
   function create(): StoreType {
     return new Store(config);
@@ -116,7 +102,7 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
    * 2. If `inherit={true}` and parent store exists, uses parent store (no cleanup)
    * 3. Otherwise, creates a new store and destroys it on unmount
    */
-  function Provider({ children, store: providedStore, inherit = false }: ProviderProps<Slices>): ReactNode {
+  function Provider({ children, store: providedStore, inherit = false }: ProviderProps<Features>): ReactNode {
     const parentStore = useParentStore();
     const shouldInherit = inherit && !isNull(parentStore);
 
@@ -151,33 +137,34 @@ export function createStore<Slices extends AnySlice[]>(config: CreateStoreConfig
     Provider.displayName = `${config.displayName}.Provider`;
   }
 
-  function useStore(): StoreType {
-    return useStoreContext() as StoreType;
+  function useStore(): UseStoreResult<Features> {
+    const store = useStoreContext() as StoreType;
+
+    const state = useSyncExternalStore(
+      (cb) => store.subscribe(cb),
+      () => store.state,
+      () => store.state
+    );
+
+    return {
+      ...state,
+      ...(store.request as object),
+    } as UseStoreResult<Features>;
   }
 
-  function useSelector<T>(selector: (state: State) => T): T {
-    const store = useStore();
-    return useSelectorBase(store, selector);
-  }
-
-  function useRequest(): Requests;
-  function useRequest<Name extends keyof Requests>(name: Name): Requests[Name];
-  function useRequest<Name extends keyof Requests>(name?: Name): Requests | Requests[Name] {
-    const store = useStore();
-    return useRequestBase(store, name as Name);
-  }
-
-  function useTasks(): TasksRecord<Tasks> {
-    const store = useStore();
-    return useTasksBase(store);
+  function useQueue(): TasksRecord<Tasks> {
+    const store = useStoreContext() as StoreType;
+    return useSyncExternalStore(
+      (cb) => store.queue.subscribe(cb),
+      () => store.queue.tasks as TasksRecord<Tasks>,
+      () => store.queue.tasks as TasksRecord<Tasks>
+    );
   }
 
   return {
     Provider,
     useStore,
-    useSelector,
-    useRequest: useRequest as CreateStoreResult<Slices>['useRequest'],
-    useTasks,
+    useQueue,
     create,
   };
 }

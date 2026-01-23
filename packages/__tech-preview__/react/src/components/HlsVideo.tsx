@@ -53,7 +53,6 @@ const DefaultVideoComponent: ElementType<
 > = forwardRef<any, any>(({ children, ...props }, ref) => {
   const { updateMediaElement } = useMediaStateOwner(ref, createMediaPlaybackController);
   return (
-    // eslint-disable-next-line jsx-a11y/media-has-caption
     <video
       {...props}
       ref={(mediaEl) => {

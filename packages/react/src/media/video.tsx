@@ -1,8 +1,7 @@
 'use client';
 
-import type { Ref, VideoHTMLAttributes } from 'react';
-
 import { useStoreContext } from '@videojs/store/react';
+import type { Ref, VideoHTMLAttributes } from 'react';
 
 import { useCallback } from 'react';
 
@@ -22,7 +21,7 @@ export interface VideoProps extends VideoHTMLAttributes<HTMLVideoElement> {
  * import { createStore, media } from '@videojs/react';
  *
  * const { Provider } = createStore({
- *   slices: media.all
+ *   features: media.all
  * });
  *
  * function App() {
@@ -42,13 +41,12 @@ export function Video({ children, ref: refProp, ...props }: VideoProps): React.J
       if (!el) return;
       return store.attach(el);
     },
-    [store],
+    [store]
   );
 
   const ref = useComposedRefs(refProp, attachRef);
 
   return (
-    // eslint-disable-next-line jsx-a11y/media-has-caption -- captions can be passed via children
     <video ref={ref} {...props}>
       {children}
     </video>

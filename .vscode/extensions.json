@@ -1,6 +1,6 @@
 {
   "recommendations": [
-    "dbaeumer.vscode-eslint",
+    "biomejs.biome",
     "hyrious.import-cost",
     "streetsidesoftware.code-spell-checker",
     "DavidAnson.vscode-markdownlint",

@@ -152,7 +152,7 @@ describe('disposer', () => {
         results.push(1);
       });
       disposer.add(async () => {
-        await new Promise(r => setTimeout(r, 10));
+        await new Promise((r) => setTimeout(r, 10));
         results.push(2);
       });
       disposer.add(() => {

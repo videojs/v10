@@ -1,5 +1,5 @@
-import type { Guide, Section, Sidebar } from '../../../types/docs';
 import { describe, expect, it, vi } from 'vitest';
+import type { Guide, Section, Sidebar } from '../../../types/docs';
 import {
   filterSidebar,
   findFirstGuide,
@@ -22,7 +22,7 @@ vi.mock('@/types/docs', async () => {
   } as const;
 
   type MockFramework = keyof typeof MOCK_FRAMEWORK_STYLES;
-  type MockStyle = typeof MOCK_FRAMEWORK_STYLES[MockFramework][number];
+  type MockStyle = (typeof MOCK_FRAMEWORK_STYLES)[MockFramework][number];
 
   return {
     ...actual,
@@ -30,10 +30,7 @@ vi.mock('@/types/docs', async () => {
     FRAMEWORK_STYLES: MOCK_FRAMEWORK_STYLES,
 
     // Mock isValidStyleForFramework to check against mock styles
-    isValidStyleForFramework: (
-      framework: MockFramework,
-      style: string | undefined | null,
-    ): style is MockStyle => {
+    isValidStyleForFramework: (framework: MockFramework, style: string | undefined | null): style is MockStyle => {
       if (!style) return false;
       return MOCK_FRAMEWORK_STYLES[framework]?.includes(style as MockStyle) ?? false;
     },
@@ -48,7 +45,7 @@ const _MOCK_FRAMEWORK_STYLES = {
 } as const;
 
 type MockFramework = keyof typeof _MOCK_FRAMEWORK_STYLES;
-type MockStyle = typeof _MOCK_FRAMEWORK_STYLES[MockFramework][number];
+type MockStyle = (typeof _MOCK_FRAMEWORK_STYLES)[MockFramework][number];
 
 describe('sidebar utilities', () => {
   // Test fixtures using mock framework/style values

@@ -1,8 +1,9 @@
 ---
+
+import GithubSlugger from 'github-slugger';
+import { ChevronDown } from 'lucide-react';
 import type { Guide, Section, SupportedFramework, SupportedStyle } from '@/types/docs';
 import { isSection } from '@/types/docs';
-import { ChevronDown } from 'lucide-react';
-import GithubSlugger from 'github-slugger';
 
 type Props<F extends SupportedFramework = SupportedFramework> = {
   item: Guide | Section;

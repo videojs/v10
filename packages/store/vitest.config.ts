@@ -2,21 +2,13 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    onConsoleLog: log => !log.includes('Lit is in dev mode'),
+    onConsoleLog: (log) => !log.includes('Lit is in dev mode'),
     projects: [
       {
         extends: true,
         test: {
           name: 'store',
           include: ['src/core/**/*.test.ts'],
-        },
-      },
-      {
-        extends: true,
-        test: {
-          name: 'store/dom',
-          include: ['src/dom/**/*.test.ts'],
-          environment: 'jsdom',
         },
       },
       {

@@ -1,0 +1,45 @@
+import type { InferFeatureRequests, InferFeatureState } from '@videojs/store';
+
+import { createFeature } from '@videojs/store';
+import { listen } from '@videojs/utils/dom';
+
+/**
+ * Volume feature for HTMLMediaElement.
+ *
+ * Tracks volume and mute state, provides volume control.
+ */
+export const volumeFeature = createFeature<HTMLMediaElement>()({
+  initialState: {
+    /** Volume level from 0 (silent) to 1 (max). */
+    volume: 1,
+    /** Whether audio is muted. */
+    muted: false,
+  },
+
+  getSnapshot: ({ target }) => ({
+    volume: target.volume,
+    muted: target.muted,
+  }),
+
+  subscribe: ({ target, update, signal }) => {
+    listen(target, 'volumechange', update, { signal });
+  },
+
+  request: {
+    /** Set volume (clamped 0-1). Returns the clamped value. */
+    changeVolume: (volume: number, { target }) => {
+      target.volume = Math.max(0, Math.min(1, volume));
+      return target.volume;
+    },
+
+    /** Toggle mute state. Returns new muted value. */
+    toggleMute: (_, { target }) => {
+      target.muted = !target.muted;
+      return target.muted;
+    },
+  },
+});
+
+export type VolumeState = InferFeatureState<typeof volumeFeature>;
+
+export type VolumeRequests = InferFeatureRequests<typeof volumeFeature>;

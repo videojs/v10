@@ -1,20 +1,17 @@
-import type { StoreConfig } from '../store';
-
 import { describe, expect, it, vi } from 'vitest';
-
 import { extendConfig } from '../extend-config';
+import { createFeature } from '../feature';
 import { Queue } from '../queue';
-import { createSlice } from '../slice';
-import { State } from '../state';
+import type { StoreConfig } from '../store';
 
 // Test target type
 interface TestTarget {
   value: number;
 }
 
-// Helper to create test slices with explicit id
-function createTestSlice(name: string, id?: symbol) {
-  const slice = createSlice<TestTarget>()({
+// Helper to create test features with explicit id
+function createTestFeature(name: string, id?: symbol) {
+  const feature = createFeature<TestTarget>()({
     initialState: { [`${name}State`]: 0 },
     getSnapshot: () => ({ [`${name}State`]: 0 }),
     subscribe: () => {},
@@ -25,25 +22,25 @@ function createTestSlice(name: string, id?: symbol) {
 
   // Override id if provided (for deduplication tests)
   if (id) {
-    return { ...slice, id };
+    return { ...feature, id };
   }
 
-  return slice;
+  return feature;
 }
 
 // Helper to create a typed base config
-function createBaseConfig<S extends ReturnType<typeof createTestSlice>[]>(
-  slices: S,
-  extra?: Partial<StoreConfig<TestTarget, S>>,
+function createBaseConfig<S extends ReturnType<typeof createTestFeature>[]>(
+  features: S,
+  extra?: Partial<StoreConfig<TestTarget, S>>
 ): StoreConfig<TestTarget, S> {
-  return { slices, ...extra } as StoreConfig<TestTarget, S>;
+  return { features, ...extra } as StoreConfig<TestTarget, S>;
 }
 
 describe('extendConfig', () => {
   describe('no extension', () => {
     it('returns base config unchanged when extension is undefined', () => {
-      const slice = createTestSlice('a');
-      const base = createBaseConfig([slice]);
+      const feature = createTestFeature('a');
+      const base = createBaseConfig([feature]);
 
       const result = extendConfig(base);
 
@@ -51,49 +48,49 @@ describe('extendConfig', () => {
     });
 
     it('returns base config unchanged when extension is empty object', () => {
-      const slice = createTestSlice('a');
-      const base = createBaseConfig([slice]);
+      const feature = createTestFeature('a');
+      const base = createBaseConfig([feature]);
 
       const result = extendConfig(base, {});
 
-      expect(result.slices).toHaveLength(1);
-      expect(result.slices[0]).toBe(slice);
+      expect(result.features).toHaveLength(1);
+      expect(result.features[0]).toBe(feature);
     });
   });
 
-  describe('slice merging', () => {
-    it('concatenates slices from base and extension', () => {
-      const sliceA = createTestSlice('a');
-      const sliceB = createTestSlice('b');
+  describe('feature merging', () => {
+    it('concatenates features from base and extension', () => {
+      const featureA = createTestFeature('a');
+      const featureB = createTestFeature('b');
 
-      const base = createBaseConfig([sliceA]);
-      const extension = { slices: [sliceB] };
+      const base = createBaseConfig([featureA]);
+      const extension = { features: [featureB] };
 
       const result = extendConfig(base, extension);
 
-      expect(result.slices).toHaveLength(2);
-      expect(result.slices).toContain(sliceA);
-      expect(result.slices).toContain(sliceB);
+      expect(result.features).toHaveLength(2);
+      expect(result.features).toContain(featureA);
+      expect(result.features).toContain(featureB);
     });
 
-    it('deduplicates slices by id, keeping last occurrence', () => {
+    it('deduplicates features by id, keeping last occurrence', () => {
       const sharedId = Symbol('shared');
-      const sliceA = createTestSlice('a', sharedId);
-      const sliceB = createTestSlice('b');
+      const featureA = createTestFeature('a', sharedId);
+      const featureB = createTestFeature('b');
 
-      // Create a "new version" of sliceA with same id
-      const sliceAExtended = createTestSlice('aExtended', sharedId);
+      // Create a "new version" of featureA with same id
+      const featureAExtended = createTestFeature('aExtended', sharedId);
 
-      const base = createBaseConfig([sliceA, sliceB]);
-      const extension = { slices: [sliceAExtended] };
+      const base = createBaseConfig([featureA, featureB]);
+      const extension = { features: [featureAExtended] };
 
       const result = extendConfig(base, extension);
 
-      // Should have sliceB and sliceAExtended (not original sliceA)
-      expect(result.slices).toHaveLength(2);
-      expect(result.slices).toContain(sliceB);
-      expect(result.slices).toContain(sliceAExtended);
-      expect(result.slices).not.toContain(sliceA);
+      // Should have featureB and featureAExtended (not original featureA)
+      expect(result.features).toHaveLength(2);
+      expect(result.features).toContain(featureB);
+      expect(result.features).toContain(featureAExtended);
+      expect(result.features).not.toContain(featureA);
     });
   });
 
@@ -103,8 +100,8 @@ describe('extendConfig', () => {
       const baseOnSetup = vi.fn(() => order.push('base'));
       const extOnSetup = vi.fn(() => order.push('ext'));
 
-      const slice = createTestSlice('a');
-      const base = createBaseConfig([slice], { onSetup: baseOnSetup });
+      const feature = createTestFeature('a');
+      const base = createBaseConfig([feature], { onSetup: baseOnSetup });
       const extension = { onSetup: extOnSetup };
 
       const result = extendConfig(base, extension);
@@ -120,8 +117,8 @@ describe('extendConfig', () => {
       const baseOnAttach = vi.fn(() => order.push('base'));
       const extOnAttach = vi.fn(() => order.push('ext'));
 
-      const slice = createTestSlice('a');
-      const base = createBaseConfig([slice], { onAttach: baseOnAttach });
+      const feature = createTestFeature('a');
+      const base = createBaseConfig([feature], { onAttach: baseOnAttach });
       const extension = { onAttach: extOnAttach };
 
       const result = extendConfig(base, extension);
@@ -135,8 +132,8 @@ describe('extendConfig', () => {
       const baseOnError = vi.fn(() => order.push('base'));
       const extOnError = vi.fn(() => order.push('ext'));
 
-      const slice = createTestSlice('a');
-      const base = createBaseConfig([slice], { onError: baseOnError });
+      const feature = createTestFeature('a');
+      const base = createBaseConfig([feature], { onError: baseOnError });
       const extension = { onError: extOnError };
 
       const result = extendConfig(base, extension);
@@ -148,8 +145,8 @@ describe('extendConfig', () => {
     it('returns base hook when extension has none', () => {
       const baseOnSetup = vi.fn();
 
-      const slice = createTestSlice('a');
-      const base = createBaseConfig([slice], { onSetup: baseOnSetup });
+      const feature = createTestFeature('a');
+      const base = createBaseConfig([feature], { onSetup: baseOnSetup });
 
       const result = extendConfig(base, {});
 
@@ -159,8 +156,8 @@ describe('extendConfig', () => {
     it('returns extension hook when base has none', () => {
       const extOnSetup = vi.fn();
 
-      const slice = createTestSlice('a');
-      const base = createBaseConfig([slice]);
+      const feature = createTestFeature('a');
+      const base = createBaseConfig([feature]);
       const extension = { onSetup: extOnSetup };
 
       const result = extendConfig(base, extension);
@@ -169,8 +166,8 @@ describe('extendConfig', () => {
     });
 
     it('returns undefined when neither has hook', () => {
-      const slice = createTestSlice('a');
-      const base = createBaseConfig([slice]);
+      const feature = createTestFeature('a');
+      const base = createBaseConfig([feature]);
 
       const result = extendConfig(base, {});
 
@@ -183,8 +180,8 @@ describe('extendConfig', () => {
       const baseQueue = new Queue();
       const extQueue = new Queue();
 
-      const slice = createTestSlice('a');
-      const base = createBaseConfig([slice], { queue: baseQueue as any });
+      const feature = createTestFeature('a');
+      const base = createBaseConfig([feature], { queue: baseQueue as any });
       const extension = { queue: extQueue as any };
 
       const result = extendConfig(base, extension);
@@ -195,36 +192,12 @@ describe('extendConfig', () => {
     it('falls back to base queue when extension has none', () => {
       const baseQueue = new Queue();
 
-      const slice = createTestSlice('a');
-      const base = createBaseConfig([slice], { queue: baseQueue as any });
+      const feature = createTestFeature('a');
+      const base = createBaseConfig([feature], { queue: baseQueue as any });
 
       const result = extendConfig(base, {});
 
       expect(result.queue).toBe(baseQueue);
-    });
-
-    it('uses extension state factory when provided', () => {
-      const baseState = (initial: any) => new State(initial);
-      const extState = (initial: any) => new State(initial);
-
-      const slice = createTestSlice('a');
-      const base = createBaseConfig([slice], { state: baseState });
-      const extension = { state: extState };
-
-      const result = extendConfig(base, extension);
-
-      expect(result.state).toBe(extState);
-    });
-
-    it('falls back to base state factory when extension has none', () => {
-      const baseState = (initial: any) => new State(initial);
-
-      const slice = createTestSlice('a');
-      const base = createBaseConfig([slice], { state: baseState });
-
-      const result = extendConfig(base, {});
-
-      expect(result.state).toBe(baseState);
     });
   });
 });

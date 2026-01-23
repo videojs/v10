@@ -1,145 +1,229 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { State } from '../state';
+import { createState, flush, isState } from '../state';
 
-describe('state', () => {
+describe('createState', () => {
   interface TestState {
     volume: number;
     muted: boolean;
     currentTime: number;
   }
 
-  const createState = () =>
-    new State<TestState>({
+  const createTestState = () =>
+    createState<TestState>({
       volume: 1,
       muted: false,
       currentTime: 0,
     });
 
-  describe('value', () => {
-    it('returns current state', () => {
-      const state = createState();
-      expect(state.value).toEqual({
-        volume: 1,
-        muted: false,
-        currentTime: 0,
-      });
+  describe('current', () => {
+    it('returns the current state', () => {
+      const state = createTestState();
+      expect(state.current.volume).toBe(1);
+      expect(state.current.muted).toBe(false);
     });
 
-    it('value is immutable reference', () => {
-      const state = createState();
-      const first = state.value;
+    it('reflects changes after set', () => {
+      const state = createTestState();
       state.set('volume', 0.5);
-      expect(first).not.toBe(state.value);
-      expect(first.volume).toBe(1);
+      expect(state.current.volume).toBe(0.5);
+    });
+
+    it('reflects changes after patch', () => {
+      const state = createTestState();
+      state.patch({ volume: 0.5, muted: true });
+      expect(state.current.volume).toBe(0.5);
+      expect(state.current.muted).toBe(true);
     });
   });
 
   describe('set', () => {
-    it('updates single key', () => {
-      const state = createState();
+    it('updates a single key', () => {
+      const state = createTestState();
       state.set('volume', 0.5);
-      expect(state.value.volume).toBe(0.5);
+      expect(state.current.volume).toBe(0.5);
     });
 
-    it('does not notify on same value', () => {
-      const state = createState();
+    it('does not notify if value is the same', () => {
+      const state = createTestState();
       const listener = vi.fn();
       state.subscribe(listener);
 
       state.set('volume', 1); // same as initial
+      flush();
       expect(listener).not.toHaveBeenCalled();
     });
   });
 
   describe('patch', () => {
     it('updates multiple keys', () => {
-      const state = createState();
+      const state = createTestState();
       state.patch({ volume: 0.5, muted: true });
-
-      expect(state.value).toMatchObject({
-        volume: 0.5,
-        muted: true,
-      });
+      expect(state.current.volume).toBe(0.5);
+      expect(state.current.muted).toBe(true);
+      expect(state.current.currentTime).toBe(0); // unchanged
     });
 
-    it('only notifies for changed keys', () => {
-      const state = createState();
+    it('does not notify if no values changed', () => {
+      const state = createTestState();
       const listener = vi.fn();
-      state.subscribeKeys(['volume'], listener);
+      state.subscribe(listener);
 
-      state.patch({ volume: 1, muted: true }); // volume unchanged
+      state.patch({ volume: 1, muted: false }); // same as initial
+      flush();
       expect(listener).not.toHaveBeenCalled();
-
-      state.patch({ volume: 0.5 });
-      expect(listener).toHaveBeenCalledOnce();
     });
   });
 
   describe('subscribe', () => {
-    it('calls listener on any change', () => {
-      const state = createState();
+    it('notifies on change after microtask', async () => {
+      const state = createTestState();
       const listener = vi.fn();
       state.subscribe(listener);
 
       state.set('volume', 0.5);
-      expect(listener).toHaveBeenCalledWith(state.value);
 
+      expect(listener).not.toHaveBeenCalled();
+      await Promise.resolve();
+      expect(listener).toHaveBeenCalledOnce();
+    });
+
+    it('can force immediate notification with flush()', () => {
+      const state = createTestState();
+      const listener = vi.fn();
+      state.subscribe(listener);
+
+      state.set('volume', 0.5);
+      expect(listener).not.toHaveBeenCalled();
+
+      flush();
+      expect(listener).toHaveBeenCalledOnce();
+    });
+
+    it('listener receives changed keys', () => {
+      const state = createTestState();
+      const listener = vi.fn();
+      state.subscribe(listener);
+
+      state.set('volume', 0.5);
+      flush();
+
+      expect(listener).toHaveBeenCalledWith(new Set(['volume']));
+    });
+
+    it('listener receives multiple changed keys', () => {
+      const state = createTestState();
+      const listener = vi.fn();
+      state.subscribe(listener);
+
+      state.patch({ volume: 0.5, muted: true });
+      flush();
+
+      expect(listener).toHaveBeenCalledWith(new Set(['volume', 'muted']));
+    });
+
+    it('batches multiple mutations into one notification', () => {
+      const state = createTestState();
+      const listener = vi.fn();
+      state.subscribe(listener);
+
+      state.set('volume', 0.5);
       state.set('muted', true);
-      expect(listener).toHaveBeenCalledTimes(2);
+      state.set('currentTime', 10);
+
+      flush();
+      expect(listener).toHaveBeenCalledOnce();
+      expect(listener).toHaveBeenCalledWith(new Set(['volume', 'muted', 'currentTime']));
     });
 
     it('returns unsubscribe function', () => {
-      const state = createState();
+      const state = createTestState();
       const listener = vi.fn();
 
       const unsub = state.subscribe(listener);
       state.set('volume', 0.5);
+      flush();
       expect(listener).toHaveBeenCalledOnce();
 
       unsub();
       state.set('volume', 0.3);
-      expect(listener).toHaveBeenCalledOnce();
+      flush();
+      expect(listener).toHaveBeenCalledOnce(); // still 1
     });
   });
 
-  describe('subscribeKeys', () => {
+  describe('subscribe with keys', () => {
     it('only notifies for specified keys', () => {
-      const state = createState();
+      const state = createTestState();
       const volumeListener = vi.fn();
       const mutedListener = vi.fn();
 
-      state.subscribeKeys(['volume'], volumeListener);
-      state.subscribeKeys(['muted'], mutedListener);
+      state.subscribe(['volume'], volumeListener);
+      state.subscribe(['muted'], mutedListener);
 
       state.set('volume', 0.5);
+      flush();
+
       expect(volumeListener).toHaveBeenCalledOnce();
       expect(mutedListener).not.toHaveBeenCalled();
 
       state.set('muted', true);
+      flush();
+
       expect(volumeListener).toHaveBeenCalledOnce();
       expect(mutedListener).toHaveBeenCalledOnce();
     });
 
-    it('notifies once per change even with multiple keys', () => {
-      const state = createState();
+    it('notifies for multiple specified keys', () => {
+      const state = createTestState();
       const listener = vi.fn();
-      state.subscribeKeys(['volume', 'muted'], listener);
 
-      state.patch({ volume: 0.5, muted: true });
+      state.subscribe(['volume', 'muted'], listener);
+
+      state.set('volume', 0.5);
+      flush();
       expect(listener).toHaveBeenCalledOnce();
+
+      state.set('muted', true);
+      flush();
+      expect(listener).toHaveBeenCalledTimes(2);
+
+      state.set('currentTime', 10);
+      flush();
+      expect(listener).toHaveBeenCalledTimes(2); // not notified
     });
 
     it('unsubscribes from all keys', () => {
-      const state = createState();
+      const state = createTestState();
       const listener = vi.fn();
 
-      const unsub = state.subscribeKeys(['volume', 'muted'], listener);
+      const unsub = state.subscribe(['volume', 'muted'], listener);
       unsub();
 
       state.set('volume', 0.5);
       state.set('muted', true);
+      flush();
+
       expect(listener).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('isState', () => {
+    it('returns true for state created by createState', () => {
+      const state = createTestState();
+      expect(isState(state)).toBe(true);
+    });
+
+    it('returns false for plain objects', () => {
+      expect(isState({})).toBe(false);
+      expect(isState({ current: {} })).toBe(false);
+    });
+
+    it('returns false for primitives', () => {
+      expect(isState(null)).toBe(false);
+      expect(isState(undefined)).toBe(false);
+      expect(isState(42)).toBe(false);
+      expect(isState('string')).toBe(false);
     });
   });
 });

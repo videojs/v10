@@ -324,20 +324,14 @@ media-preview-time-display {
 }
 
 media-popover {
-  margin: 0;
-  border: none;
-  box-shadow: none;
-  background: transparent;
   padding: 0.75rem 0.25rem;
   border-radius: calc(infinity * 1px);
+  margin: 0;
+  border: 0;
 }
 
 /* Tooltip Component Styles */
 media-tooltip {
-  margin: 0;
-  border: none;
-  box-shadow: none;
-  background: transparent;
   color: oklab(1 0 0);
   padding: 0.25rem 0.625rem;
   border-radius: calc(infinity * 1px);

@@ -17,7 +17,7 @@ describe('event-like', () => {
           timeStamp: 123,
           isTrusted: true,
           target: null,
-        }),
+        })
       ).toBe(true);
     });
 

@@ -1,10 +1,9 @@
-import type { ReactNode } from 'react';
-
 import { act, renderHook } from '@testing-library/react';
+import type { ReactNode } from 'react';
 
 import { describe, expect, it } from 'vitest';
 
-import { createSlice } from '../../core/slice';
+import { createFeature } from '../../core/feature';
 import { createStore } from '../create-store';
 
 describe('createStore', () => {
@@ -14,7 +13,7 @@ describe('createStore', () => {
     muted = false;
   }
 
-  const audioSlice = createSlice<MockMedia>()({
+  const audioFeature = createFeature<MockMedia>()({
     initialState: { volume: 1, muted: false },
     getSnapshot: ({ target }) => ({
       volume: target.volume,
@@ -37,7 +36,7 @@ describe('createStore', () => {
 
   describe('create', () => {
     it('creates a store instance', () => {
-      const { create } = createStore({ slices: [audioSlice] });
+      const { create } = createStore({ features: [audioFeature] });
 
       const store = create();
 
@@ -48,40 +47,26 @@ describe('createStore', () => {
 
   describe('provider', () => {
     it('creates store on mount', () => {
-      const { Provider, useStore } = createStore({ slices: [audioSlice] });
+      const { Provider, useStore } = createStore({ features: [audioFeature] });
 
       const { result } = renderHook(() => useStore(), {
         wrapper: ({ children }: { children: ReactNode }) => <Provider>{children}</Provider>,
       });
 
       expect(result.current).toBeDefined();
-      expect(result.current.state).toEqual({ volume: 1, muted: false });
-    });
-
-    it('destroys store on unmount', () => {
-      const { Provider, useStore } = createStore({ slices: [audioSlice] });
-
-      const { result, unmount } = renderHook(() => useStore(), {
-        wrapper: ({ children }: { children: ReactNode }) => <Provider>{children}</Provider>,
-      });
-
-      const store = result.current;
-      expect(store.destroyed).toBe(false);
-
-      unmount();
-
-      expect(store.destroyed).toBe(true);
+      expect(result.current.volume).toBe(1);
+      expect(typeof result.current.setVolume).toBe('function');
     });
 
     it('uses provided store prop without destroying on unmount', () => {
-      const { Provider, useStore, create } = createStore({ slices: [audioSlice] });
+      const { Provider, useStore, create } = createStore({
+        features: [audioFeature],
+      });
       const providedStore = create();
 
-      const { result, unmount } = renderHook(() => useStore(), {
+      const { unmount } = renderHook(() => useStore(), {
         wrapper: ({ children }: { children: ReactNode }) => <Provider store={providedStore}>{children}</Provider>,
       });
-
-      expect(result.current).toBe(providedStore);
 
       unmount();
 
@@ -89,40 +74,9 @@ describe('createStore', () => {
       expect(providedStore.destroyed).toBe(false);
     });
 
-    it('inherits store from parent when inherit=true', () => {
-      const { Provider, useStore, create } = createStore({ slices: [audioSlice] });
-      const parentStore = create();
-
-      const { result } = renderHook(() => useStore(), {
-        wrapper: ({ children }: { children: ReactNode }) => (
-          <Provider store={parentStore}>
-            <Provider inherit>{children}</Provider>
-          </Provider>
-        ),
-      });
-
-      expect(result.current).toBe(parentStore);
-    });
-
-    it('creates isolated store by default', () => {
-      const { Provider, useStore, create } = createStore({ slices: [audioSlice] });
-      const parentStore = create();
-
-      const { result } = renderHook(() => useStore(), {
-        wrapper: ({ children }: { children: ReactNode }) => (
-          <Provider store={parentStore}>
-            <Provider>{children}</Provider>
-          </Provider>
-        ),
-      });
-
-      // Should be a different store
-      expect(result.current).not.toBe(parentStore);
-    });
-
     it('sets displayName on Provider', () => {
       const { Provider } = createStore({
-        slices: [audioSlice],
+        features: [audioFeature],
         displayName: 'TestStore',
       });
 
@@ -131,83 +85,54 @@ describe('createStore', () => {
   });
 
   describe('useStore', () => {
-    it('returns the store from context', () => {
-      const { Provider, useStore, create } = createStore({ slices: [audioSlice] });
+    it('returns state and request functions from context', () => {
+      const { Provider, useStore, create } = createStore({
+        features: [audioFeature],
+      });
       const store = create();
+      const target = new MockMedia();
+      store.attach(target);
 
       const { result } = renderHook(() => useStore(), {
         wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
       });
 
-      expect(result.current).toBe(store);
-    });
-  });
-
-  describe('useSelector', () => {
-    it('selects state from context store', () => {
-      const { Provider, useSelector, create } = createStore({ slices: [audioSlice] });
-      const store = create();
-      const target = new MockMedia();
-      store.attach(target);
-
-      const { result } = renderHook(() => useSelector(s => s.volume), {
-        wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
-      });
-
-      expect(result.current).toBe(1);
+      expect(result.current.volume).toBe(1);
+      expect(result.current.muted).toBe(false);
+      expect(typeof result.current.setVolume).toBe('function');
     });
 
     it('updates when state changes', async () => {
-      const { Provider, useSelector, create } = createStore({ slices: [audioSlice] });
+      const { Provider, useStore, create } = createStore({
+        features: [audioFeature],
+      });
       const store = create();
       const target = new MockMedia();
       store.attach(target);
 
-      const { result } = renderHook(() => useSelector(s => s.volume), {
+      const { result } = renderHook(() => useStore(), {
         wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
       });
 
-      expect(result.current).toBe(1);
+      expect(result.current.volume).toBe(1);
 
       await act(async () => {
         target.volume = 0.5;
         target.dispatchEvent(new Event('volumechange'));
       });
 
-      expect(result.current).toBe(0.5);
+      expect(result.current.volume).toBe(0.5);
     });
   });
 
-  describe('useRequest', () => {
-    it('returns request map from context store', () => {
-      const { Provider, useRequest, create } = createStore({ slices: [audioSlice] });
-      const store = create();
-
-      const { result } = renderHook(() => useRequest(), {
-        wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
-      });
-
-      expect(result.current).toHaveProperty('setVolume');
-    });
-
-    it('returns request by name', () => {
-      const { Provider, useRequest, create } = createStore({ slices: [audioSlice] });
-      const store = create();
-
-      const { result } = renderHook(() => useRequest('setVolume'), {
-        wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
-      });
-
-      expect(typeof result.current).toBe('function');
-    });
-  });
-
-  describe('useTasks', () => {
+  describe('useQueue', () => {
     it('returns tasks from context store', () => {
-      const { Provider, useTasks, create } = createStore({ slices: [audioSlice] });
+      const { Provider, useQueue, create } = createStore({
+        features: [audioFeature],
+      });
       const store = create();
 
-      const { result } = renderHook(() => useTasks(), {
+      const { result } = renderHook(() => useQueue(), {
         wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
       });
 

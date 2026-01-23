@@ -1,6 +1,6 @@
 import { noop } from '@videojs/utils/function';
 
-import { createSlice } from '../../../core/slice';
+import { createFeature } from '../../../core/feature';
 import { createStore as createCoreStore } from '../../../core/store';
 
 // Shared mock target for synchronous tests
@@ -9,8 +9,8 @@ export class MockMedia extends EventTarget {
   muted = false;
 }
 
-// Shared slice for synchronous tests
-export const audioSlice = createSlice<MockMedia>()({
+// Shared feature for synchronous tests
+export const audioFeature = createFeature<MockMedia>()({
   initialState: { volume: 1, muted: false },
   getSnapshot: ({ target }) => ({
     volume: target.volume,
@@ -37,7 +37,7 @@ export const audioSlice = createSlice<MockMedia>()({
 });
 
 export function createTestStore() {
-  const store = createCoreStore({ slices: [audioSlice] });
+  const store = createCoreStore({ features: [audioFeature] });
   const target = new MockMedia();
   store.attach(target);
   return { store, target };
@@ -49,7 +49,7 @@ export class AsyncMockMedia extends EventTarget {
   muted = false;
 }
 
-export const asyncAudioSlice = createSlice<AsyncMockMedia>()({
+export const asyncAudioFeature = createFeature<AsyncMockMedia>()({
   initialState: { volume: 1, muted: false },
   getSnapshot: ({ target }) => ({
     volume: target.volume,
@@ -73,7 +73,7 @@ export const asyncAudioSlice = createSlice<AsyncMockMedia>()({
     },
     slowSetVolume: {
       handler: async (volume: number, { target }) => {
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 50));
         target.volume = volume;
         target.dispatchEvent(new Event('volumechange'));
         return volume;
@@ -87,7 +87,7 @@ export const asyncAudioSlice = createSlice<AsyncMockMedia>()({
     },
     failingSetVolume: {
       handler: async () => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         throw new Error('Test error');
       },
     },
@@ -96,7 +96,7 @@ export const asyncAudioSlice = createSlice<AsyncMockMedia>()({
 
 export function createAsyncTestStore() {
   const store = createCoreStore({
-    slices: [asyncAudioSlice],
+    features: [asyncAudioFeature],
     onError: noop,
   });
 
@@ -106,8 +106,8 @@ export function createAsyncTestStore() {
   return { store, target };
 }
 
-/** Slice with custom keys (name !== key) for testing superseding behavior. */
-export const customKeySlice = createSlice<MockMedia>()({
+/** Feature with custom keys (name !== key) for testing superseding behavior. */
+export const customKeyFeature = createFeature<MockMedia>()({
   initialState: { volume: 1, muted: false },
   getSnapshot: ({ target }) => ({
     volume: target.volume,
@@ -125,7 +125,7 @@ export const customKeySlice = createSlice<MockMedia>()({
     adjustVolume: {
       key: 'audio-settings',
       handler: async (volume: number, { target }): Promise<number> => {
-        await new Promise(resolve => setTimeout(resolve, 20));
+        await new Promise((resolve) => setTimeout(resolve, 20));
         target.volume = volume;
         target.dispatchEvent(new Event('volumechange'));
         return volume;
@@ -135,7 +135,7 @@ export const customKeySlice = createSlice<MockMedia>()({
     toggleMute: {
       key: 'audio-settings',
       handler: async (muted: boolean, { target }): Promise<boolean> => {
-        await new Promise(resolve => setTimeout(resolve, 20));
+        await new Promise((resolve) => setTimeout(resolve, 20));
         target.muted = muted;
         target.dispatchEvent(new Event('volumechange'));
         return muted;
@@ -146,7 +146,7 @@ export const customKeySlice = createSlice<MockMedia>()({
 
 export function createCustomKeyTestStore() {
   const store = createCoreStore({
-    slices: [customKeySlice],
+    features: [customKeyFeature],
     onError: noop,
   });
 

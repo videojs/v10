@@ -1,6 +1,5 @@
-import type { AnySupportedStyle, SupportedFramework, SupportedStyle } from '@/types/docs';
-
 import { Select } from '@/components/Select';
+import type { AnySupportedStyle, SupportedFramework, SupportedStyle } from '@/types/docs';
 import { FRAMEWORK_STYLES, isValidFramework, isValidStyleForFramework, SUPPORTED_FRAMEWORKS } from '@/types/docs';
 import { resolveFrameworkChange, resolveStyleChange } from '@/utils/docs/routing';
 
@@ -10,11 +9,7 @@ interface SelectorProps<T extends SupportedFramework> {
   currentSlug: string;
 }
 
-export function Selectors({
-  currentFramework,
-  currentStyle,
-  currentSlug,
-}: SelectorProps<SupportedFramework>) {
+export function Selectors({ currentFramework, currentStyle, currentSlug }: SelectorProps<SupportedFramework>) {
   // TODO: use astro view transitions to preserve scroll position when switching from the same slug to the same slug
   const handleFrameworkChange = (newFramework: SupportedFramework | null) => {
     if (newFramework === null) return;
@@ -58,12 +53,12 @@ export function Selectors({
 
   const availableStyles = FRAMEWORK_STYLES[currentFramework];
 
-  const frameworkOptions = SUPPORTED_FRAMEWORKS.map(fw => ({
+  const frameworkOptions = SUPPORTED_FRAMEWORKS.map((fw) => ({
     value: fw,
     label: fw,
   }));
 
-  const styleOptions = availableStyles.map(st => ({
+  const styleOptions = availableStyles.map((st) => ({
     value: st,
     label: st,
   }));

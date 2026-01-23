@@ -48,7 +48,7 @@ describe('createStoreMixin', () => {
     await el.updateComplete;
 
     // Wait for slotchange
-    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
 
     expect(el.store.target).toBe(video);
   });
@@ -71,7 +71,7 @@ describe('createStoreMixin', () => {
     await el.updateComplete;
 
     // Wait for attachment
-    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
 
     expect(el.store.target).toBe(video);
   });
@@ -96,7 +96,7 @@ describe('createStoreMixin', () => {
     await el.updateComplete;
 
     // Wait for slotchange
-    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
 
     expect(el.store.target).toBe(video);
   });
@@ -119,7 +119,7 @@ describe('createStoreMixin', () => {
     await el.updateComplete;
 
     // Wait for slotchange
-    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
 
     expect(el.store.target).toBe(audio);
   });
@@ -144,7 +144,7 @@ describe('createStoreMixin', () => {
     await el.updateComplete;
 
     // Wait for slotchange
-    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
 
     // Should attach only the first one
     expect(el.store.target).toBe(video1);

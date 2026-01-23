@@ -18,6 +18,6 @@ export function composeCallbacks<T extends (...args: any[]) => void>(...fns: (T 
   if (defined.length === 1) return defined[0];
 
   return ((...args: Parameters<T>) => {
-    defined.forEach(fn => fn(...args));
+    defined.forEach((fn) => fn(...args));
   }) as T;
 }

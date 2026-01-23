@@ -9,16 +9,15 @@ Refer to **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** for setup, development, and 
 
 ## Package Layout
 
-| Package Path            | Purpose                                                            |
-| ----------------------- | ------------------------------------------------------------------ |
-| `packages/utils`        | Shared utilities (`/dom` subpath for DOM‑specific helpers).        |
-| `packages/core`         | Core runtime‑agnostic logic (`/dom` subpath for DOM bindings).     |
-| `packages/store`        | State management (`/dom` and `/react` subpaths for platform APIs). |
-| `packages/html`         | Web player—DOM/Browser‑specific implementation.                    |
-| `packages/react`        | React player—adapts core state to React components.                |
-| `packages/react-native` | React Native player integration layer.                             |
-| `examples/*`            | Demo apps for various runtimes.                                    |
-| `site/`                 | Astro‑based docs and website.                                      |
+| Package Path            | Purpose                                                             |
+| ----------------------- | ------------------------------------------------------------------- |
+| `packages/utils`        | Shared utilities (`/dom` subpath for DOM‑specific helpers).         |
+| `packages/core`         | Core runtime‑agnostic logic (`/dom` subpath for DOM bindings).      |
+| `packages/store`        | State management (`/dom`, `/lit`, `/react` subpaths for platforms). |
+| `packages/html`         | Web player—DOM/Browser‑specific implementation.                     |
+| `packages/react`        | React player—adapts core state to React components.                 |
+| `packages/react-native` | React Native player integration layer.                              |
+| `site/`                 | Astro‑based docs and website.                                       |
 
 IGNORE `packages/__tech-preview__/` — it's legacy code from the Demuxed demo. Don't reference or
 modify it when working in other packages.
@@ -31,6 +30,7 @@ utils/dom       ← DOM-specific helpers
 
 store           ← state management
 store/dom       ← DOM platform APIs
+store/lit       ← Lit bindings (controllers, mixins)
 store/react     ← React bindings
 
 core            ← runtime-agnostic logic
@@ -102,6 +102,9 @@ pnpm clean
 5. Lint file/s, fix all issues.
 6. Run build/s, fix all errors.
 7. Before creating a PR `pnpm test`.
+8. If your changes introduced new patterns or conventions, review meta-documentation:
+   - **CLAUDE.md** — New naming conventions, code rules, or anti-patterns.
+   - **Skills** — New component patterns, API design patterns, or DX considerations.
 
 Be efficient when running operations, see "Common Root Commands".
 
@@ -131,14 +134,17 @@ packages/utils/src/dom/
 
 ### Test describe() Names
 
-Use the class or function name being tested:
+Use the exact exported name being tested (preserving case):
 
 ```ts
-// selector-controller.test.ts
-describe('SelectorController', () => { ... });
+// snapshot-controller.test.ts — class export
+describe('SnapshotController', () => { ... });
 
-// provider-mixin.test.ts
+// provider-mixin.test.ts — factory function export
 describe('createStoreProviderMixin', () => { ... });
+
+// disposer.test.ts — lowercase module/export
+describe('disposer', () => { ... });
 ```
 
 ## Guidelines
@@ -151,9 +157,9 @@ When generating or editing code in this repository, follow these rules to ensure
    - Preserve comments, type signatures, and existing code style.
 
 2. **Match Existing Conventions**
-   - Follow the repo’s Prettier, ESLint, and TypeScript settings automatically.
+   - Follow the repo's Biome and TypeScript settings automatically.
    - Use consistent naming (camelCase for variables, PascalCase for components).
-   - Prefer imports ordered and sorted as per `@antfu/eslint-config`.
+   - Biome handles import organization (side-effects → external → internal).
 
 3. **Type Safety First**
    - Never remove or bypass TypeScript types.
@@ -173,6 +179,15 @@ When generating or editing code in this repository, follow these rules to ensure
    - Use semantic commit messages (enforced by `commitlint`).
    - One focused change per commit—no mixed updates.
    - Breaking changes use `!`.
+
+7. **Keep AI Documentation Current**
+   - When introducing new naming conventions or code patterns, update the Code Rules section.
+   - When changes affect component architecture, accessibility, or API design, update relevant skills in `.claude/skills/`.
+   - When discovering anti-patterns during implementation, document them to prevent recurrence.
+   - **After modifying skills**, check for consistency:
+     1. `.claude/commands/*.md` — update if they reference changed skills or paths
+     2. `.claude/skills/README.md` — update Quick Reference, Skills table, Review Workflows
+     3. This file (CLAUDE.md) — update if skill changes affect repo-wide conventions
 
 ## Code Rules
 
@@ -196,15 +211,20 @@ Before writing new helpers, check `@videojs/utils` for existing utilities.
 
 ### Naming Conventions
 
-| Pattern             | Prefix     | Example                          |
-| ------------------- | ---------- | -------------------------------- |
-| Type inference      | `Infer*`   | `InferSliceState<S>`             |
-| Type resolution     | `Resolve*` | `ResolveRequestHandler<R>`       |
-| Type constraint     | `Ensure*`  | `EnsureTaskRecord<T>`            |
-| Union type helpers  | `Union*`   | `UnionSliceState<Slices>`        |
-| Default loose types | `Default*` | `DefaultTaskRecord`              |
-| Type guards         | `is*`      | `isStoreError(error)`            |
-| Factory functions   | `create*`  | `createQueue()`, `createSlice()` |
+| Pattern             | Prefix         | Example                                |
+| ------------------- | -------------- | -------------------------------------- |
+| Type inference      | `Infer*`       | `InferFeatureState<F>`                 |
+| Type resolution     | `Resolve*`     | `ResolveRequestHandler<R>`             |
+| Type constraint     | `Ensure*`      | `EnsureTaskRecord<T>`                  |
+| Union type helpers  | `Union*`       | `UnionFeatureState<Features>`          |
+| Default loose types | `Default*`     | `DefaultTaskRecord`                    |
+| Type guards         | `is*`          | `isStoreError(error)`                  |
+| Factory functions   | `create*`      | `createQueue()`, `createFeature()`     |
+| Falsy wrapper       | `Falsy*`       | `Falsy<T>` (value that might be falsy) |
+| Constructor types   | `*Constructor` | `Constructor<T>`, `AnyConstructor<T>`  |
+| Mixin types         | `Mixin`        | `Mixin<Base, Result>`                  |
+
+**Note on `create*` prefix:** Use `create*` for factory functions that construct stateful objects or classes (e.g., `createQueue()`, `createStore()`). Simple utility functions that return cleanup callbacks don't use this prefix (e.g., `listen()`, `animationFrame()`, `idleCallback()`).
 
 ### Component/Hook Namespace Pattern
 
@@ -279,14 +299,19 @@ function isQueue(value: unknown): value is Queue {
 - Add `[SYMBOL]: true` property to the object/interface
 - Type guard checks `isObject(value) && SYMBOL in value`
 
+**`Symbol()` vs `Symbol.for()`:**
+
+- Use `Symbol.for('@videojs/*')` for symbols that need cross-realm identity (e.g., metadata that must be recognized across module boundaries)
+- Use `Symbol('@videojs/*')` for instance-unique identifiers (e.g., task IDs, feature IDs)
+
 ### Subscribe Pattern
 
 Subscriptions return an unsubscribe function:
 
 ```ts
-subscribe(listener: Listener): () => void {
-  this.#subscribers.add(listener);
-  return () => this.#subscribers.delete(listener);
+subscribe(callback: Callback): () => void {
+  this.#subscribers.add(callback);
+  return () => this.#subscribers.delete(callback);
 }
 ```
 
@@ -340,6 +365,23 @@ disconnect(): void {
 
 For single cleanup, use a simple unsubscribe function.
 
+### Promise Cleanup
+
+Use `.finally()` for cleanup that runs regardless of success or failure:
+
+```ts
+// Good - when awaiting or returning the promise
+await promise.finally(() => cache.delete(key));
+
+// Good - fire-and-forget cleanup that shouldn't propagate rejection
+promise.then(
+  () => cache.delete(key),
+  () => cache.delete(key)
+);
+```
+
+**Note:** `.finally()` propagates rejections to its returned promise. If you're not awaiting or returning it, use `.then()` with both handlers to avoid unhandled rejections.
+
 ### No Hungarian Type Notation
 
 Never prefix type parameters with `T`. Use descriptive names instead:
@@ -347,11 +389,23 @@ Never prefix type parameters with `T`. Use descriptive names instead:
 ```ts
 // Bad
 type Mixin<TBase extends Constructor> = ...
-function createStore<TSlices extends AnySlice[]>(...) { ... }
+function createStore<TFeatures extends AnyFeature[]>(...) { ... }
 
 // Good
 type Mixin<Base extends Constructor> = ...
-function createStore<Slices extends AnySlice[]>(...) { ... }
+function createStore<Features extends AnyFeature[]>(...) { ... }
+```
+
+### React: Lazy Initialization
+
+Use `useState` with initializer function for objects that should only be created once. Don't use `useRef` with inline object creation — the object is created on every render even though only the first value is kept:
+
+```ts
+// Bad - creates new Set on every render
+const trackedRef = useRef(new Set<string>());
+
+// Good - initializer only runs once
+const [tracked] = useState(() => new Set<string>());
 ```
 
 ### No Obvious Comments
@@ -421,34 +475,29 @@ get size(): number { ... }
 add(cleanup: CleanupFn): void { ... }
 ```
 
-## Lit
+## Design Documents
 
-### Accessor Pattern
+| Location         | Purpose                                                           |
+| ---------------- | ----------------------------------------------------------------- |
+| `rfc/`           | Design proposals, API decisions, architecture — public discussion |
+| `.claude/plans/` | Implementation notes, AI-agent context, working drafts            |
 
-When a controller can receive a value from multiple sources (direct instance vs context), use an Accessor to abstract resolution:
+**RFCs** focus on **what** and **why**. Write an RFC for major API changes, architectural decisions, or patterns used across packages.
 
-```ts
-class ValueAccessor<Value> {
-  constructor(host: AccessorHost, source: Value | Context<Value>, onAvailable?: (value: Value) => void);
-  get value(): Value | null;
-  hostConnected(): void;
-}
-```
+**Implementation plans** focus on **how**. Use `.claude/plans/` for step-by-step implementation details, debugging notes, and AI-agent context.
 
-- `source` accepts either a direct value or a context that provides it
-- `value` getter returns the resolved value or `null` if not yet available
-- `onAvailable` callback fires when value becomes available (use for subscription setup)
-- Consumers call `hostConnected()` to re-trigger `onAvailable` on reconnect
+Before merging, compact completed plans: keep key decisions and important notes, point to PRs/commits for details. See `.claude/plans/README.md`.
 
-### Explicit Host Type
+## Rule Placement
 
-Export a typed host alias for controllers and mixins:
+CLAUDE.md contains repo-wide conventions. Domain-specific patterns live in skills:
 
-```ts
-export type SelectorControllerHost = ReactiveControllerHost & HTMLElement;
-export type ProviderMixinHost = ReactiveElement & EventTarget;
-```
+| Domain                      | Location             |
+| --------------------------- | -------------------- |
+| Naming, testing, utilities  | CLAUDE.md Code Rules |
+| Component patterns and APIs | `component` skill    |
+| Accessibility               | `aria` skill         |
+| Documentation               | `docs` skill         |
+| API design and DX           | `api` skill          |
 
-- Always export and use the explicit type, never bare `ReactiveControllerHost`
-- Allows future extension without breaking consumers
-- Self-documents what capabilities the host must have
+When adding a new rule, ask: "Who needs this?" If it's domain-specific, put it in the relevant skill.

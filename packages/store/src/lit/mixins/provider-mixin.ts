@@ -1,11 +1,10 @@
 import type { Context } from '@lit/context';
-import type { ReactiveElement } from '@lit/reactive-element';
-import type { Constructor } from '@videojs/utils/types';
-
-import type { AnySlice, UnionSliceTarget } from '../../core/slice';
-import type { Store, StoreProvider } from '../../core/store';
 import { ContextProvider } from '@lit/context';
+import type { ReactiveElement } from '@lit/reactive-element';
 import { isNull } from '@videojs/utils/predicate';
+import type { Constructor } from '@videojs/utils/types';
+import type { AnyFeature, UnionFeatureTarget } from '../../core/feature';
+import type { Store, StoreProvider } from '../../core/store';
 
 /**
  * Creates a mixin that provides a store via context.
@@ -18,7 +17,7 @@ import { isNull } from '@videojs/utils/predicate';
  * @example
  * ```ts
  * const { StoreProviderMixin } = createStore({
- *   slices: [playbackSlice]
+ *   features: [playbackFeature]
  * });
  *
  * class MyPlayer extends StoreProviderMixin(LitElement) {
@@ -28,14 +27,14 @@ import { isNull } from '@videojs/utils/predicate';
  * }
  * ```
  */
-export function createStoreProviderMixin<Slices extends AnySlice[]>(
-  context: Context<unknown, Store<UnionSliceTarget<Slices>, Slices>>,
-  factory: () => Store<UnionSliceTarget<Slices>, Slices>,
-): <Base extends Constructor<ReactiveElement>>(BaseClass: Base) => Base & Constructor<StoreProvider<Slices>> {
-  type ProvidedStore = Store<UnionSliceTarget<Slices>, Slices>;
+export function createStoreProviderMixin<Features extends AnyFeature[]>(
+  context: Context<unknown, Store<UnionFeatureTarget<Features>, Features>>,
+  factory: () => Store<UnionFeatureTarget<Features>, Features>
+): <Base extends Constructor<ReactiveElement>>(BaseClass: Base) => Base & Constructor<StoreProvider<Features>> {
+  type ProvidedStore = Store<UnionFeatureTarget<Features>, Features>;
 
   return <Base extends Constructor<ReactiveElement>>(BaseClass: Base) => {
-    class StoreProviderElement extends BaseClass implements StoreProvider<Slices> {
+    class StoreProviderElement extends BaseClass implements StoreProvider<Features> {
       #store: ProvidedStore | null = null;
       #isOwner = false;
 

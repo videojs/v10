@@ -97,7 +97,7 @@ describe('onEvent', () => {
         passive: true,
         capture: true,
         once: true,
-      }),
+      })
     );
   });
 

@@ -5,34 +5,32 @@ export default {
     /** @param {string} message */
     (message) => {
       const lower = message.toLowerCase().trim();
-      return ['wip'].some(word => lower.startsWith(word));
+      return ['wip'].some((word) => lower.startsWith(word));
     },
   ],
   rules: {
-    'scope-enum': [2, 'always', [
-      'cd',
-      'ci',
-      'claude',
-      'core',
-      'docs',
-      'demo',
-      'example',
-      'examples',
-      'example/html',
-      'example/react',
-      'example/next',
-      'html',
-      'icons',
-      'packages',
-      'plan',
-      'react-native',
-      'react',
-      'root',
-      'site',
-      'skins',
-      'store',
-      'test',
-      'utils',
-    ]],
+    'scope-enum': [
+      2,
+      'always',
+      [
+        'cd',
+        'ci',
+        'claude',
+        'core',
+        'docs',
+        'html',
+        'icons',
+        'packages',
+        'plan',
+        'react-native',
+        'react',
+        'rfc',
+        'root',
+        'site',
+        'store',
+        'test',
+        'utils',
+      ],
+    ],
   },
 };

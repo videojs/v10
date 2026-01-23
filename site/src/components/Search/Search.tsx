@@ -51,7 +51,7 @@ export default function Search({ children, className, baseUrl, bundlePath, searc
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setOpen(prev => !prev);
+        setOpen((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -61,7 +61,6 @@ export default function Search({ children, className, baseUrl, bundlePath, searc
   }, []);
 
   return (
-
     <Dialog.Root
       open={open}
       onOpenChange={(newOpen) => {
@@ -69,10 +68,7 @@ export default function Search({ children, className, baseUrl, bundlePath, searc
       }}
       modal
     >
-      <Dialog.Trigger
-        aria-label="Search"
-        className={className}
-      >
+      <Dialog.Trigger aria-label="Search" className={className}>
         {children}
       </Dialog.Trigger>
       <Dialog.Portal>

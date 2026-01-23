@@ -1,0 +1,352 @@
+.vjs-frosted-skin * {
+  box-sizing: border-box;
+}
+
+.vjs-frosted-skin {
+  position: relative;
+  isolation: isolate;
+  container: root / inline-size;
+  overflow: clip;
+  border-radius: var(--frosted-border-radius, 2rem);
+  background: oklab(0 0 0);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
+.vjs-frosted-skin::before,
+.vjs-frosted-skin::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 10;
+}
+.vjs-frosted-skin::before {
+  inset: 1px;
+  box-shadow: inset 0 0 0 1px oklab(1 0 0 / 0.15);
+}
+.vjs-frosted-skin::after {
+  inset: 0;
+  box-shadow: inset 0 0 0 1px oklab(0 0 0 / 0.1);
+}
+
+/* Fullscreen */
+.vjs-frosted-skin:fullscreen {
+  border-radius: 0;
+}
+
+.vjs-frosted-skin > ::slotted([slot='media']) {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Media Container UI Overlay Styling */
+.vjs-frosted-skin > .overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: start;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: linear-gradient(to top, oklab(0 0 0 / 0.5), oklab(0 0 0 / 0.3), rgba(0, 0, 0, 0));
+  backdrop-filter: saturate(1.5) brightness(0.9);
+  transition: opacity 0.15s ease-out;
+  transition-duration: 100ms;
+  transition-delay: 0ms;
+}
+.vjs-frosted-skin[data-controls='hidden'] > .overlay {
+  transition-delay: 500ms;
+  transition-duration: 300ms;
+  opacity: 0;
+}
+
+/* Common Surface Styles - e.g. tooltips, popovers, controls */
+.vjs-frosted-skin .surface {
+  background-color: oklab(1 0 0 / 0.1);
+  backdrop-filter: blur(64px) brightness(0.9) saturate(1.5);
+  box-shadow:
+    inset 0 0 0 1px oklab(1 0 0 / 0.05),
+    0 0 0 1px oklab(0 0 0 / 0.15),
+    oklab(0 0 0 / 0.15) 0px 1px 3px 0px,
+    oklab(0 0 0 / 0.15) 0px 1px 2px -1px;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .vjs-frosted-skin .surface {
+    background-color: oklab(0 0 0 / 0.7);
+    box-shadow:
+      inset 0 0 0 1px oklab(0 0 0),
+      0 0 0 1px oklab(1 0 0 / 0.2);
+  }
+}
+@media (prefers-contrast: more) {
+  .vjs-frosted-skin .surface {
+    background-color: oklab(0 0 0 / 0.9);
+    box-shadow:
+      inset 0 0 0 1px oklab(0 0 0),
+      0 0 0 1px oklab(1 0 0 / 0.2);
+  }
+}
+
+/* Media Control Bar UI/Styles */
+.vjs-frosted-skin .control-bar {
+  position: absolute;
+  bottom: 0.75rem;
+  inset-inline: 0.75rem;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  color: oklab(1 0 0);
+  border-radius: calc(infinity * 1px);
+  will-change: scale, transform, filter, opacity;
+  transition-property: scale, transform, filter, opacity;
+  transition-timing-function: ease-out;
+  transition-delay: 0ms;
+  transition-duration: 100ms;
+  transform-origin: bottom;
+}
+.vjs-frosted-skin[data-controls='hidden'] .control-bar {
+  pointer-events: none;
+  filter: blur(8px);
+  scale: 0.9;
+  opacity: 0;
+  transition-delay: 500ms;
+  transition-duration: 300ms;
+}
+
+/* Time Display Styling */
+.vjs-frosted-skin .time-controls {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 0.75rem;
+  padding-inline: 0.375rem;
+}
+.vjs-frosted-skin .time-display {
+  text-shadow: 0 1px 0 oklab(0 0 0 / 0.25);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Generic Media Button Styling */
+.vjs-frosted-skin .button {
+  display: grid;
+  flex-shrink: 0;
+  padding: 0.5rem;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: calc(infinity * 1px);
+  color: oklab(1 0 0 / 0.9);
+  user-select: none;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  transition-property: background-color, color, outline-offset;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+.vjs-frosted-skin .button:hover,
+.vjs-frosted-skin .button:focus-visible,
+.vjs-frosted-skin .button[aria-expanded='true'] {
+  background-color: oklab(1 0 0 / 0.1);
+  color: oklab(1 0 0);
+  text-decoration: none;
+}
+.vjs-frosted-skin .button:focus-visible {
+  outline-color: oklch(62.3% 0.214 259.815);
+  outline-offset: 2px;
+}
+.vjs-frosted-skin .button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+
+.vjs-frosted-skin .button .icon {
+  grid-area: 1 / 1;
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 1px 0 oklab(0 0 0 / 0.25));
+}
+
+/* Media Play Button UI/Styles */
+.vjs-frosted-skin .play-button .icon {
+  opacity: 0;
+  transition: opacity 150ms linear;
+}
+
+.vjs-frosted-skin .play-button:not([data-paused]) .pause-icon,
+.vjs-frosted-skin .play-button[data-paused] .play-icon {
+  opacity: 1;
+}
+
+/* Media Fullscreen Button UI/Styles */
+.vjs-frosted-skin .fullscreen-button .icon {
+  display: none;
+}
+.vjs-frosted-skin .fullscreen-button:not([data-fullscreen]) .fullscreen-enter-icon,
+.vjs-frosted-skin .fullscreen-button[data-fullscreen] .fullscreen-exit-icon {
+  display: inline;
+}
+
+/* One way to define the "default visible" icon (CJP) */
+.vjs-frosted-skin .mute-button .icon {
+  display: none;
+}
+.vjs-frosted-skin .mute-button:not([data-volume-level]) .volume-low-icon,
+.vjs-frosted-skin .mute-button[data-volume-level='high'] .volume-high-icon,
+.vjs-frosted-skin .mute-button[data-volume-level='medium'] .volume-high-icon,
+.vjs-frosted-skin .mute-button[data-volume-level='low'] .volume-low-icon,
+.vjs-frosted-skin .mute-button[data-volume-level='off'] .volume-off-icon {
+  display: inline;
+}
+
+/* TimeSlider Component Styles */
+.vjs-frosted-skin .slider {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-radius: calc(infinity * 1px);
+  outline: none;
+}
+
+/* Horizontal orientation styles */
+.vjs-frosted-skin .slider[data-orientation='horizontal'] {
+  min-width: 5rem;
+  width: 100%;
+  height: 1.25rem;
+}
+
+/* Vertical orientation styles */
+.vjs-frosted-skin .slider[data-orientation='vertical'] {
+  height: 5rem;
+  width: 1.25rem;
+}
+
+.vjs-frosted-skin .slider-track {
+  position: relative;
+  isolation: isolate;
+  background-color: oklab(1 0 0 / 0.2);
+  border-radius: inherit;
+  overflow: hidden;
+  user-select: none;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  transition: outline-offset 150ms ease-out;
+  box-shadow: 0 0 0 1px oklab(0 0 0 / 0.05);
+}
+
+/* Horizontal track styles */
+.vjs-frosted-skin .slider-track[data-orientation='horizontal'] {
+  width: 100%;
+  height: 0.25rem;
+}
+
+/* Vertical track styles */
+.vjs-frosted-skin .slider-track[data-orientation='vertical'] {
+  width: 0.25rem;
+  height: 100%;
+}
+
+.vjs-frosted-skin .slider:focus-visible .slider-track {
+  outline-color: oklch(62.3% 0.214 259.815);
+  outline-offset: 6px;
+}
+
+.vjs-frosted-skin .slider-thumb {
+  width: 0.625rem;
+  height: 0.625rem;
+  background-color: oklab(1 0 0);
+  border-radius: calc(infinity * 1px);
+  user-select: none;
+  z-index: 10;
+  box-shadow:
+    0 0 0 1px oklab(0 0 0 / 0.1),
+    0 1px 3px 0 oklab(0 0 0 / 0.15),
+    0 1px 2px -1px oklab(0 0 0 / 0.15);
+  opacity: 0;
+  transition-property: opacity, height, width;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+.vjs-frosted-skin .slider-thumb:active {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+.vjs-frosted-skin .slider:hover .slider-thumb,
+.vjs-frosted-skin .slider:focus-within .slider-thumb {
+  opacity: 1;
+}
+.vjs-frosted-skin .slider-track[data-orientation='horizontal'] .slider-thumb {
+  cursor: ew-resize;
+}
+.vjs-frosted-skin .slider-track[data-orientation='vertical'] .slider-thumb {
+  cursor: ns-resize;
+}
+
+.vjs-frosted-skin .slider-pointer {
+  background-color: oklab(1 0 0 / 0.2);
+  border-radius: inherit;
+}
+
+.vjs-frosted-skin .slider-progress {
+  background-color: oklab(1 0 0);
+  border-radius: inherit;
+}
+
+.vjs-frosted-skin .media-preview-time-display {
+  font-variant-numeric: tabular-nums;
+}
+
+.vjs-frosted-skin .popup-animation {
+  transition-property: transform, scale, opacity, filter;
+  transition-duration: 200ms;
+  transform: scale(1);
+  transform-origin: bottom;
+  opacity: 1;
+  filter: blur(0px);
+}
+.vjs-frosted-skin .popup-animation[data-starting-style],
+.vjs-frosted-skin .popup-animation[data-ending-style] {
+  transform: scale(0);
+  opacity: 0;
+  filter: blur(8px);
+}
+.vjs-frosted-skin .popup-animation[data-instant] {
+  transition-duration: 0ms;
+}
+
+.vjs-frosted-skin .popover-popup {
+  padding: 0.75rem 0.25rem;
+  border-radius: calc(infinity * 1px);
+  margin: 0;
+  border: 0;
+}
+
+/* Tooltip Component Styles */
+.vjs-frosted-skin .tooltip-popup {
+  color: oklab(1 0 0);
+  padding: 0.25rem 0.625rem;
+  border-radius: calc(infinity * 1px);
+  font-size: 0.75rem;
+}
+
+.vjs-frosted-skin .tooltip {
+  display: none;
+  white-space: nowrap;
+}
+
+.vjs-frosted-skin .tooltip-popup[data-paused] .play-tooltip,
+.vjs-frosted-skin .tooltip-popup:not([data-paused]) .pause-tooltip {
+  display: block;
+}
+
+.vjs-frosted-skin .tooltip-popup[data-fullscreen] .fullscreen-exit-tooltip,
+.vjs-frosted-skin .tooltip-popup:not([data-fullscreen]) .fullscreen-enter-tooltip {
+  display: block;
+}

@@ -1,14 +1,16 @@
 import type { EventLike } from '@videojs/utils/events';
-import type { Guard } from './guard';
-import type { TaskKey, TaskScheduler } from './queue';
-
 import { isFunction, isObject } from '@videojs/utils/predicate';
+import type { Guard } from './guard';
+import type { TaskKey } from './task';
 
 // ----------------------------------------
 // Symbols
 // ----------------------------------------
 
-export const REQUEST_META: unique symbol = Symbol.for('@videojs/request');
+export const REQUEST_META = Symbol.for('@videojs/request');
+
+/** Cancel all pending requests when this request is enqueued. Like native `load()`. */
+export const CANCEL_ALL = Symbol.for('@videojs/cancel-all');
 
 // ----------------------------------------
 // Types
@@ -33,16 +35,22 @@ export interface RequestContext<Target> {
 
 export type RequestKey<Input = unknown> = TaskKey | ((input: Input) => TaskKey);
 
-export type RequestCancel<Input = unknown> = TaskKey | TaskKey[] | ((input: Input) => TaskKey | TaskKey[]);
+export type RequestMode = 'exclusive' | 'shared';
+
+export type RequestCancel<Input = unknown> =
+  | typeof CANCEL_ALL
+  | TaskKey
+  | TaskKey[]
+  | ((input: Input) => typeof CANCEL_ALL | TaskKey | TaskKey[]);
 
 export type RequestHandler<Target, Input = unknown, Output = unknown> = (
   input: Input,
-  ctx: RequestContext<Target>,
+  ctx: RequestContext<Target>
 ) => Output | Promise<Output>;
 
 export interface RequestConfig<Target, Input = unknown, Output = unknown> {
   key?: RequestKey<Input>;
-  schedule?: TaskScheduler;
+  mode?: RequestMode;
   guard?: Guard<Target> | Guard<Target>[];
   cancel?: RequestCancel<Input>;
   handler: RequestHandler<Target, Input, Output>;
@@ -50,7 +58,7 @@ export interface RequestConfig<Target, Input = unknown, Output = unknown> {
 
 export interface ResolvedRequestConfig<Target, Input = unknown, Output = unknown> {
   key: RequestKey<Input>;
-  schedule?: TaskScheduler | undefined;
+  mode: RequestMode;
   guard: Guard<Target>[];
   cancel?: RequestCancel<Input> | undefined;
   handler: RequestHandler<Target, Input, Output>;
@@ -94,11 +102,11 @@ export type ResolveRequestMap<Requests> = {
   [K in keyof Requests]: Request<InferRequestHandlerInput<Requests[K]>, InferRequestHandlerOutput<Requests[K]>>;
 };
 
-export type ResolveRequestHandler<R>
-  = R extends Request<infer I, infer O>
-    ? [I] extends [void]
-        ? (input?: null, meta?: RequestMetaInit) => Promise<O>
-        : (input: I, meta?: RequestMetaInit) => Promise<O>
+export type ResolveRequestHandler<R> =
+  R extends Request<infer I, infer O>
+    ? [I] extends [void | undefined]
+      ? (input?: undefined, meta?: RequestMetaInit) => Promise<O>
+      : (input: I, meta?: RequestMetaInit) => Promise<O>
     : never;
 
 // ----------------------------------------
@@ -106,7 +114,7 @@ export type ResolveRequestHandler<R>
 // ----------------------------------------
 
 export function resolveRequests<Target, Requests extends { [K in keyof Requests]: Request<any, any> }>(
-  requests: RequestConfigMap<Target, Requests>,
+  requests: RequestConfigMap<Target, Requests>
 ): ResolvedRequestConfigMap<Target, Requests> {
   const resolved: Record<string, ResolvedRequestConfig<Target>> = {};
 
@@ -114,13 +122,14 @@ export function resolveRequests<Target, Requests extends { [K in keyof Requests]
     if (isFunction(config)) {
       resolved[name] = {
         key: name,
+        mode: 'exclusive',
         guard: [],
         handler: config,
       };
     } else {
       resolved[name] = {
         key: config.key ?? name,
-        schedule: config.schedule,
+        mode: config.mode ?? 'exclusive',
         cancel: config.cancel,
         handler: config.handler,
         guard: config.guard ? (Array.isArray(config.guard) ? config.guard : [config.guard]) : [],
@@ -135,9 +144,13 @@ export function resolveRequestKey(keyConfig: RequestKey<any>, input: unknown): T
   return isFunction(keyConfig) ? keyConfig(input) : keyConfig;
 }
 
-export function resolveRequestCancel(cancel: RequestCancel<any> | undefined, input: unknown): TaskKey[] {
+export function resolveRequestCancel(
+  cancel: RequestCancel<any> | undefined,
+  input: unknown
+): typeof CANCEL_ALL | TaskKey[] {
   if (!cancel) return [];
   const result = isFunction(cancel) ? cancel(input) : cancel;
+  if (result === CANCEL_ALL) return CANCEL_ALL;
   return Array.isArray(result) ? result : [result];
 }
 
@@ -169,7 +182,7 @@ export function isRequestMeta(value: unknown): value is RequestMeta {
 
 export function createRequestMetaFromEvent<Context = unknown>(
   event: EventLike,
-  context?: Context,
+  context?: Context
 ): RequestMeta<Context> {
   return {
     [REQUEST_META]: true,

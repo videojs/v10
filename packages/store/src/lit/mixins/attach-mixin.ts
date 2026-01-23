@@ -1,14 +1,13 @@
 import type { Context } from '@lit/context';
-import type { ReactiveElement } from '@lit/reactive-element';
-import type { Constructor, Mixin } from '@videojs/utils/types';
-import type { AnySlice, UnionSliceTarget } from '../../core/slice';
-import type { Store, StoreConsumer } from '../../core/store';
-
 import { ContextConsumer } from '@lit/context';
+import type { ReactiveElement } from '@lit/reactive-element';
 import { getSlottedElement, isHTMLMediaElement, listen, querySlot } from '@videojs/utils/dom';
 import { Disposer } from '@videojs/utils/events';
 import { noop } from '@videojs/utils/function';
 import { isNull } from '@videojs/utils/predicate';
+import type { Constructor, Mixin } from '@videojs/utils/types';
+import type { AnyFeature, UnionFeatureTarget } from '../../core/feature';
+import type { Store, StoreConsumer } from '../../core/store';
 
 /**
  * Creates a mixin that consumes a store from context and auto-attaches media elements.
@@ -21,18 +20,18 @@ import { isNull } from '@videojs/utils/predicate';
  *
  * @example
  * ```ts
- * const { StoreAttachMixin } = createStore({ slices: [playbackSlice] });
+ * const { StoreAttachMixin } = createStore({ features: [playbackFeature] });
  *
  * class MyControls extends StoreAttachMixin(LitElement) {}
  * ```
  */
-export function createStoreAttachMixin<Slices extends AnySlice[]>(
-  context: Context<unknown, Store<UnionSliceTarget<Slices>, Slices>>,
-): Mixin<ReactiveElement, StoreConsumer<Slices>> {
-  type ConsumedStore = Store<UnionSliceTarget<Slices>, Slices>;
+export function createStoreAttachMixin<Features extends AnyFeature[]>(
+  context: Context<unknown, Store<UnionFeatureTarget<Features>, Features>>
+): Mixin<ReactiveElement, StoreConsumer<Features>> {
+  type ConsumedStore = Store<UnionFeatureTarget<Features>, Features>;
 
   return <Base extends Constructor<ReactiveElement>>(BaseClass: Base) => {
-    class StoreAttachElement extends BaseClass implements StoreConsumer<Slices> {
+    class StoreAttachElement extends BaseClass implements StoreConsumer<Features> {
       #disposer = new Disposer();
       #detach = noop;
 
@@ -79,7 +78,7 @@ export function createStoreAttachMixin<Slices extends AnySlice[]>(
 
         if (store.target !== media) {
           this.#detach();
-          this.#detach = store.attach(media as UnionSliceTarget<Slices>);
+          this.#detach = store.attach(media as UnionFeatureTarget<Features>);
         }
       }
     }

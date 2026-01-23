@@ -8,6 +8,7 @@ import {
   isNull,
   isNumber,
   isObject,
+  isPlainObject,
   isPromise,
   isString,
   isUndefined,
@@ -133,7 +134,6 @@ describe('predicate', () => {
   describe('isPromise', () => {
     it('returns true for promises', () => {
       expect(isPromise(Promise.resolve())).toBe(true);
-      // eslint-disable-next-line prefer-promise-reject-errors
       expect(isPromise(Promise.reject().catch(() => {}))).toBe(true);
       expect(isPromise(new Promise(() => {}))).toBe(true);
     });
@@ -166,12 +166,48 @@ describe('predicate', () => {
       expect(isObject('string')).toBe(false);
       expect(isObject(123)).toBe(false);
       expect(isObject(true)).toBe(false);
-      // eslint-disable-next-line symbol-description
       expect(isObject(Symbol())).toBe(false);
     });
 
     it('returns false for functions', () => {
       expect(isObject(() => {})).toBe(false);
+    });
+  });
+
+  describe('isPlainObject', () => {
+    it('returns true for plain objects', () => {
+      expect(isPlainObject({})).toBe(true);
+      expect(isPlainObject({ a: 1 })).toBe(true);
+      expect(isPlainObject(Object.create(null))).toBe(true);
+      expect(isPlainObject(new Object())).toBe(true);
+    });
+
+    it('returns false for arrays', () => {
+      expect(isPlainObject([])).toBe(false);
+      expect(isPlainObject([1, 2, 3])).toBe(false);
+    });
+
+    it('returns false for class instances', () => {
+      class Foo {}
+      expect(isPlainObject(new Foo())).toBe(false);
+      expect(isPlainObject(new Date())).toBe(false);
+      expect(isPlainObject(new Map())).toBe(false);
+      expect(isPlainObject(new Set())).toBe(false);
+      expect(isPlainObject(/regex/)).toBe(false);
+    });
+
+    it('returns false for primitives', () => {
+      expect(isPlainObject(null)).toBe(false);
+      expect(isPlainObject(undefined)).toBe(false);
+      expect(isPlainObject('string')).toBe(false);
+      expect(isPlainObject(123)).toBe(false);
+      expect(isPlainObject(true)).toBe(false);
+      expect(isPlainObject(Symbol())).toBe(false);
+    });
+
+    it('returns false for functions', () => {
+      expect(isPlainObject(() => {})).toBe(false);
+      expect(isPlainObject(() => {})).toBe(false);
     });
   });
 

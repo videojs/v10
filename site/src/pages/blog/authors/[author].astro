@@ -1,12 +1,12 @@
 ---
+
 import type { CollectionEntry } from 'astro:content';
 import { getCollection, getEntries } from 'astro:content';
-
-import BlogPostCard from '@/components/blog/BlogPostCard.astro';
-import Blog from '@/layouts/Blog.astro';
-import JsonLd from '@/components/JsonLd.astro';
-import { createProfilePageSchema } from '@/utils/jsonLd/schemas';
 import { AuthorSocialLinks } from '@/components/blog/AuthorSocialLinks';
+import BlogPostCard from '@/components/blog/BlogPostCard.astro';
+import JsonLd from '@/components/JsonLd.astro';
+import Blog from '@/layouts/Blog.astro';
+import { createProfilePageSchema } from '@/utils/jsonLd/schemas';
 
 export async function getStaticPaths() {
   const authors = await getCollection('authors');

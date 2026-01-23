@@ -39,7 +39,6 @@ export const Video: React.ForwardRefExoticComponent<
     const mediaRefCallback = useMediaRef();
 
     return (
-      // eslint-disable-next-line jsx-a11y/media-has-caption
       <video {...props} ref={mediaRefCallback}>
         {children}
       </video>

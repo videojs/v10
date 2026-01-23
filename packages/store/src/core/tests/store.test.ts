@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { createFeature } from '../feature';
 import { createQueue } from '../queue';
-import { createSlice } from '../slice';
+import { flush } from '../state';
 import { createStore } from '../store';
 
 describe('store', () => {
@@ -14,7 +15,7 @@ describe('store', () => {
     pause = vi.fn();
   }
 
-  const audioSlice = createSlice<MockMedia>()({
+  const audioFeature = createFeature<MockMedia>()({
     initialState: { volume: 1, muted: false },
     getSnapshot: ({ target }) => ({
       volume: target.volume,
@@ -38,7 +39,7 @@ describe('store', () => {
     },
   });
 
-  const playbackSlice = createSlice<MockMedia>()({
+  const playbackFeature = createFeature<MockMedia>()({
     initialState: { paused: true },
     getSnapshot: ({ target }) => ({ paused: target.paused }),
     subscribe: () => {},
@@ -63,7 +64,7 @@ describe('store', () => {
   describe('creation', () => {
     it('creates store with merged initial state', () => {
       const store = createStore({
-        slices: [audioSlice, playbackSlice],
+        features: [audioFeature, playbackFeature],
       });
 
       expect(store.state).toEqual({
@@ -75,7 +76,7 @@ describe('store', () => {
 
     it('creates store with default queue', () => {
       const store = createStore({
-        slices: [audioSlice],
+        features: [audioFeature],
       });
 
       expect(store.queue).toBeDefined();
@@ -85,7 +86,7 @@ describe('store', () => {
       const queue = createQueue<any>();
 
       const store = createStore({
-        slices: [audioSlice],
+        features: [audioFeature],
         queue,
       });
 
@@ -95,7 +96,7 @@ describe('store', () => {
     it('calls onSetup', () => {
       const onSetup = vi.fn();
       const store = createStore({
-        slices: [audioSlice],
+        features: [audioFeature],
         onSetup,
       });
 
@@ -109,7 +110,7 @@ describe('store', () => {
   describe('attach', () => {
     it('syncs state from target', () => {
       const store = createStore({
-        slices: [audioSlice],
+        features: [audioFeature],
       });
 
       const media = new MockMedia();
@@ -125,7 +126,7 @@ describe('store', () => {
     it('calls onAttach', () => {
       const onAttach = vi.fn();
       const store = createStore({
-        slices: [audioSlice],
+        features: [audioFeature],
         onAttach,
       });
 
@@ -141,7 +142,7 @@ describe('store', () => {
 
     it('sets up subscriptions', () => {
       const store = createStore({
-        slices: [audioSlice],
+        features: [audioFeature],
       });
 
       const media = new MockMedia();
@@ -154,7 +155,7 @@ describe('store', () => {
 
     it('detach cleans up', () => {
       const store = createStore({
-        slices: [audioSlice],
+        features: [audioFeature],
       });
 
       const media = new MockMedia();
@@ -169,7 +170,7 @@ describe('store', () => {
 
     it('reattach cleans up previous', () => {
       const store = createStore({
-        slices: [audioSlice],
+        features: [audioFeature],
       });
 
       const media1 = new MockMedia();
@@ -191,7 +192,7 @@ describe('store', () => {
   describe('request', () => {
     it('executes request on target', async () => {
       const store = createStore({
-        slices: [audioSlice],
+        features: [audioFeature],
       });
 
       const media = new MockMedia();
@@ -204,7 +205,7 @@ describe('store', () => {
 
     it('throws StoreError without target', async () => {
       const store = createStore({
-        slices: [audioSlice],
+        features: [audioFeature],
         onError: () => {}, // silence errors
       });
 
@@ -213,7 +214,7 @@ describe('store', () => {
 
     it('coordinates requests with same key', async () => {
       const store = createStore({
-        slices: [playbackSlice],
+        features: [playbackFeature],
         onError: () => {}, // silence errors
       });
 
@@ -232,7 +233,7 @@ describe('store', () => {
     it('accepts metadata', async () => {
       const handlerSpy = vi.fn();
 
-      const slice = createSlice<MockMedia>()({
+      const feature = createFeature<MockMedia>()({
         initialState: {},
         getSnapshot: () => ({}),
         subscribe: () => {},
@@ -246,12 +247,12 @@ describe('store', () => {
       });
 
       const store = createStore({
-        slices: [slice],
+        features: [feature],
       });
 
       store.attach(new MockMedia());
 
-      await store.request.action(null, {
+      await store.request.action(undefined, {
         source: 'user',
         reason: 'test',
       });
@@ -260,7 +261,7 @@ describe('store', () => {
         expect.objectContaining({
           source: 'user',
           reason: 'test',
-        }),
+        })
       );
     });
   });
@@ -268,7 +269,7 @@ describe('store', () => {
   describe('subscribe', () => {
     it('notifies on state change', async () => {
       const store = createStore({
-        slices: [audioSlice],
+        features: [audioFeature],
       });
 
       const media = new MockMedia();
@@ -278,80 +279,35 @@ describe('store', () => {
       store.subscribe(listener);
 
       await store.request.setVolume(0.5);
+      flush();
 
-      const calls = listener.mock.calls;
-      const lastCall = calls[calls.length - 1];
-      expect(lastCall).toBeDefined();
-      const lastState = lastCall![0];
-      expect(lastState.volume).toBe(0.5);
+      expect(listener).toHaveBeenCalled();
+      expect(store.state.volume).toBe(0.5);
     });
 
-    it('selector subscription only notifies when selected value changes', async () => {
+    it('unsubscribe stops notifications', async () => {
       const store = createStore({
-        slices: [audioSlice],
-      });
-
-      const media = new MockMedia();
-      store.attach(media);
-
-      const volumeListener = vi.fn();
-      store.subscribe(s => s.volume, volumeListener);
-
-      // Reset after attach sync
-      volumeListener.mockClear();
-
-      await store.request.setMuted(true);
-      expect(volumeListener).not.toHaveBeenCalled();
-
-      await store.request.setVolume(0.7);
-      expect(volumeListener).toHaveBeenCalledWith(0.7);
-    });
-
-    it('object selector uses key optimization', async () => {
-      const store = createStore({
-        slices: [audioSlice],
+        features: [audioFeature],
       });
 
       const media = new MockMedia();
       store.attach(media);
 
       const listener = vi.fn();
-      store.subscribe(s => ({ volume: s.volume, muted: s.muted }), listener);
-
-      // Reset after attach sync
-      listener.mockClear();
+      const unsubscribe = store.subscribe(listener);
+      unsubscribe();
 
       await store.request.setVolume(0.5);
-      expect(listener).toHaveBeenCalledWith({ volume: 0.5, muted: false });
-    });
+      flush();
 
-    it('supports custom equality function', async () => {
-      const store = createStore({
-        slices: [audioSlice],
-      });
-
-      const media = new MockMedia();
-      store.attach(media);
-
-      const listener = vi.fn();
-      // Custom equality that ignores small volume changes
-      store.subscribe(s => s.volume, listener, { equalityFn: (a, b) => Math.abs(a - b) < 0.1 });
-
-      // Reset after attach sync
-      listener.mockClear();
-
-      await store.request.setVolume(0.95); // Within threshold of 1
       expect(listener).not.toHaveBeenCalled();
-
-      await store.request.setVolume(0.5); // Outside threshold
-      expect(listener).toHaveBeenCalledWith(0.5);
     });
   });
 
   describe('destroy', () => {
     it('cleans up everything', () => {
       const store = createStore({
-        slices: [audioSlice],
+        features: [audioFeature],
       });
 
       const media = new MockMedia();
@@ -365,7 +321,7 @@ describe('store', () => {
 
     it('rejects requests after destroy', async () => {
       const store = createStore({
-        slices: [audioSlice],
+        features: [audioFeature],
       });
 
       store.attach(new MockMedia());
@@ -379,7 +335,7 @@ describe('store', () => {
     it('calls onError for request errors', async () => {
       const onError = vi.fn();
 
-      const failingSlice = createSlice<MockMedia>()({
+      const failingFeature = createFeature<MockMedia>()({
         initialState: {},
         getSnapshot: () => ({}),
         subscribe: () => {},
@@ -391,7 +347,7 @@ describe('store', () => {
       });
 
       const store = createStore({
-        slices: [failingSlice],
+        features: [failingFeature],
         onError,
       });
 
@@ -399,10 +355,12 @@ describe('store', () => {
 
       await store.request.fail().catch(() => {});
 
-      expect(onError).toHaveBeenCalledWith({
-        error: expect.any(Error),
-        store,
-      });
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.any(Error),
+          store,
+        })
+      );
     });
   });
 });

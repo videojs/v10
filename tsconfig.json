@@ -8,7 +8,6 @@
     { "path": "packages/utils/src/dom" },
 
     { "path": "packages/store" },
-    { "path": "packages/store/src/dom" },
     { "path": "packages/store/src/lit" },
     { "path": "packages/store/src/react" },
 
