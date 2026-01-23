@@ -309,9 +309,9 @@ function isQueue(value: unknown): value is Queue {
 Subscriptions return an unsubscribe function:
 
 ```ts
-subscribe(listener: Listener): () => void {
-  this.#subscribers.add(listener);
-  return () => this.#subscribers.delete(listener);
+subscribe(callback: Callback): () => void {
+  this.#subscribers.add(callback);
+  return () => this.#subscribers.delete(callback);
 }
 ```
 

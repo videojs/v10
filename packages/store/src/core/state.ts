@@ -1,8 +1,9 @@
-type Listener = (changedKeys: ReadonlySet<PropertyKey>) => void;
+export type StateChange<T, K extends keyof T = keyof T> = (changedKeys: ReadonlySet<K>) => void;
 
 export interface State<T extends object> {
   readonly current: Readonly<T>;
-  subscribe: ((listener: Listener) => () => void) & (<K extends keyof T>(keys: K[], listener: Listener) => () => void);
+  subscribe<K extends keyof T>(keys: K[], callback: StateChange<T, K>): () => void;
+  subscribe(callback: StateChange<T>): () => void;
 }
 
 export interface WritableState<T extends object> extends State<T> {
@@ -19,7 +20,7 @@ function scheduleFlush(): void {
   queueMicrotask(flush);
 }
 
-const pendingContainers = new Set<StateContainer<any>>();
+const pendingContainers = new Set<StateContainer<any, any>>();
 
 export function flush(): void {
   flushScheduled = false;
@@ -33,11 +34,11 @@ export function flush(): void {
 
 const hasOwnProp = Object.prototype.hasOwnProperty;
 
-class StateContainer<T extends object> implements WritableState<T> {
+class StateContainer<T extends object, K extends keyof T> implements WritableState<T> {
   #current: T;
-  #listeners = new Set<Listener>();
-  #keyListeners = new Map<PropertyKey, Set<Listener>>();
-  #pending = new Set<PropertyKey>();
+  #listeners = new Set<StateChange<T>>();
+  #keyListeners = new Map<K, Set<StateChange<T>>>();
+  #pending = new Set<K>();
 
   constructor(initial: T) {
     this.#current = Object.freeze({ ...initial });
@@ -50,7 +51,7 @@ class StateContainer<T extends object> implements WritableState<T> {
   set<K extends keyof T>(key: K, value: T[K]): void {
     if (Object.is(this.#current[key], value)) return;
     this.#current = Object.freeze({ ...this.#current, [key]: value });
-    this.#pending.add(key);
+    this.#pending.add(key as any);
     pendingContainers.add(this);
     scheduleFlush();
   }
@@ -59,7 +60,7 @@ class StateContainer<T extends object> implements WritableState<T> {
     if (!(key in this.#current)) return;
     const { [key]: _, ...rest } = this.#current;
     this.#current = Object.freeze(rest as T);
-    this.#pending.add(key);
+    this.#pending.add(key as any);
     pendingContainers.add(this);
     scheduleFlush();
   }
@@ -74,7 +75,7 @@ class StateContainer<T extends object> implements WritableState<T> {
 
       if (!Object.is(this.#current[key], value)) {
         next[key] = value!;
-        this.#pending.add(key);
+        this.#pending.add(key as any);
       }
     }
 
@@ -85,38 +86,39 @@ class StateContainer<T extends object> implements WritableState<T> {
     }
   }
 
-  subscribe(listener: Listener): () => void;
-  subscribe<K extends keyof T>(keys: K[], listener: Listener): () => void;
-  subscribe(first: Listener | PropertyKey[], second?: Listener): () => void {
+  subscribe(callback: StateChange<T>): () => void;
+  subscribe<K extends keyof T>(keys: K[], callback: StateChange<T, K>): () => void;
+  subscribe(first: StateChange<T> | K[], second?: StateChange<T>): () => void {
     // Key-specific subscription
     if (Array.isArray(first)) {
       const keys = first;
-      const listener = second!;
+      const callback = second!;
 
       for (const key of keys) {
         let set = this.#keyListeners.get(key);
         if (!set) this.#keyListeners.set(key, (set = new Set()));
-        set.add(listener);
+        set.add(callback);
       }
 
       return () => {
         for (const key of keys) {
-          this.#keyListeners.get(key)?.delete(listener);
+          this.#keyListeners.get(key)?.delete(callback);
         }
       };
     }
 
     // Global subscription
-    const listener = first;
-    this.#listeners.add(listener);
+    const callback = first;
+    this.#listeners.add(callback);
 
-    return () => this.#listeners.delete(listener);
+    return () => this.#listeners.delete(callback);
   }
 
   flush(): void {
     if (this.#pending.size === 0) return;
 
-    const keys: ReadonlySet<PropertyKey> = new Set(this.#pending);
+    const keys: ReadonlySet<K> = new Set(this.#pending);
+
     this.#pending.clear();
 
     for (const fn of this.#listeners) fn(keys);

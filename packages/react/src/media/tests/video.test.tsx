@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 
 import { createFeature } from '@videojs/store';
-import { createStore } from '@videojs/store/react';
+import { createStore, useStoreContext } from '@videojs/store/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { Video } from '../video';
@@ -75,12 +75,12 @@ describe('video', () => {
   });
 
   it('attaches video to store on mount', () => {
-    const { Provider, useStore } = createTestStore();
+    const { Provider } = createTestStore();
 
     let attachCalled = false;
 
     function TestComponent() {
-      const store = useStore();
+      const store = useStoreContext();
 
       // Spy on attach
       const originalAttach = store.attach.bind(store);

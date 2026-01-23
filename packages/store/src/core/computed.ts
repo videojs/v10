@@ -62,9 +62,9 @@ export class Computed<T extends object, K extends keyof T, R> {
     return this.#cached;
   }
 
-  subscribe(listener: () => void): () => void {
-    this.#listeners.add(listener);
-    return () => this.#listeners.delete(listener);
+  subscribe(callback: () => void): () => void {
+    this.#listeners.add(callback);
+    return () => this.#listeners.delete(callback);
   }
 
   destroy(): void {

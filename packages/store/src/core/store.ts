@@ -12,7 +12,7 @@ import type {
 import { Queue } from './queue';
 import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
 import { CANCEL_ALL, createRequestMeta, resolveRequestCancel, resolveRequestKey } from './request';
-import type { WritableState } from './state';
+import type { StateChange, WritableState } from './state';
 import { createState } from './state';
 import type { PendingTask, Task, TaskContext } from './task';
 
@@ -60,22 +60,6 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
   /** Current state snapshot. */
   get state(): Readonly<UnionFeatureState<Features> & object> {
     return this.#state.current;
-  }
-
-  /** Subscribe to state changes. */
-  subscribe(listener: (changedKeys: ReadonlySet<PropertyKey>) => void): () => void;
-  subscribe<K extends keyof UnionFeatureState<Features>>(
-    keys: K[],
-    listener: (changedKeys: ReadonlySet<PropertyKey>) => void
-  ): () => void;
-  subscribe(
-    first: ((changedKeys: ReadonlySet<PropertyKey>) => void) | (keyof UnionFeatureState<Features>)[],
-    second?: (changedKeys: ReadonlySet<PropertyKey>) => void
-  ): () => void {
-    if (typeof first === 'function') {
-      return this.#state.subscribe(first);
-    }
-    return this.#state.subscribe(first as (keyof (UnionFeatureState<Features> & object))[], second!);
   }
 
   get request(): UnionFeatureRequests<Features> {
@@ -166,6 +150,24 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
   // ----------------------------------------
   // State
   // ----------------------------------------
+
+  /** Subscribe to state changes. */
+  subscribe(callback: StateChange<UnionFeatureState<Features>>): () => void;
+
+  subscribe<K extends keyof UnionFeatureState<Features>>(
+    keys: K[],
+    callback: StateChange<UnionFeatureState<Features>, K>
+  ): () => void;
+
+  subscribe(
+    first: StateChange<UnionFeatureState<Features>> | (keyof UnionFeatureState<Features>)[],
+    second?: StateChange<UnionFeatureState<Features>>
+  ): () => void {
+    return this.#state.subscribe(
+      first as (keyof UnionFeatureState<Features>)[],
+      second as StateChange<UnionFeatureState<Features>>
+    );
+  }
 
   #syncAllFeatures(): void {
     const target = this.#target;

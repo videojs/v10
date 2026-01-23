@@ -3,7 +3,11 @@
   "html": {
     "experimentalFullSupportEnabled": false
   },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "assist": {
+    "actions": {
+      "source": { "organizeImports": "on" }
+    }
+  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",

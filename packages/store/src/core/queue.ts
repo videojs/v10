@@ -2,7 +2,7 @@ import { abortable } from '@videojs/utils/events';
 import { isUndefined } from '@videojs/utils/predicate';
 import { StoreError } from './errors';
 import type { Request, RequestMeta, RequestMode } from './request';
-import type { WritableState } from './state';
+import type { StateChange, WritableState } from './state';
 import { createState } from './state';
 import type { ErrorTask, PendingTask, SuccessTask, Task, TaskContext, TaskKey } from './task';
 
@@ -47,8 +47,8 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   }
 
   /** Subscribe to task changes. */
-  subscribe(listener: (changedKeys: ReadonlySet<PropertyKey>) => void): () => void {
-    return this.#tasks.subscribe(listener);
+  subscribe(callback: StateChange<TasksRecord<Tasks>>): () => void {
+    return this.#tasks.subscribe(callback);
   }
 
   constructor() {
