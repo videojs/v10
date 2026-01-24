@@ -1,0 +1,249 @@
+---
+title: Media
+description: The component that displays and processes your video or audio
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Media is the component that **displays and processes your video or audio**. Think of it like the `<img>` element—it's both the component and what renders the content. Media handles playback while UI components handle controls.
+
+## Choosing a Media Type
+
+Pick the media type that matches your source:
+
+<FrameworkCase frameworks={["html"]}>
+| Source Type | Media Element | Description |
+|-------------|---------------|-------------|
+| MP4, WebM, Ogg | `<video>` | Native browser video |
+| HLS (.m3u8) | `<hls-video>` | Adaptive streaming via hls.js |
+| DASH (.mpd) | `<dash-video>` | Adaptive streaming via dash.js |
+| YouTube | `<youtube-video>` | Embedded YouTube videos |
+| Vimeo | `<vimeo-video>` | Embedded Vimeo videos |
+
+Media element names follow the pattern `{implementation}-{mediatype}`: `hls-video`, `dash-video`, `youtube-video`. This mirrors the native `<video>` and `<audio>` elements.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+| Source Type | Media Component | Description |
+|-------------|-----------------|-------------|
+| MP4, WebM, Ogg | `<Video>` | Native browser video |
+| HLS (.m3u8) | `<HlsVideo>` | Adaptive streaming via hls.js |
+| DASH (.mpd) | `<DashVideo>` | Adaptive streaming via dash.js |
+| YouTube | `<YouTubeVideo>` | Embedded YouTube videos |
+| Vimeo | `<VimeoVideo>` | Embedded Vimeo videos |
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+// Native video
+<Video src="video.mp4" />
+
+// HLS streaming
+<HlsVideo src="stream.m3u8" />
+
+// DASH streaming
+<DashVideo src="stream.mpd" />
+
+// Service embeds
+<YouTubeVideo videoId="dQw4w9WgXcQ" />
+<VimeoVideo videoId="123456789" />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<!-- Native video -->
+<video src="video.mp4"></video>
+
+<!-- HLS streaming -->
+<hls-video src="stream.m3u8"></hls-video>
+
+<!-- DASH streaming -->
+<dash-video src="stream.mpd"></dash-video>
+
+<!-- Service embeds -->
+<youtube-video video-id="dQw4w9WgXcQ"></youtube-video>
+<vimeo-video video-id="123456789"></vimeo-video>
+```
+</FrameworkCase>
+
+## Media is Independent
+
+Unlike <DocsLink slug="concepts/skins">skins</DocsLink> which are tied to <DocsLink slug="concepts/presets">players</DocsLink>, media is independent. You can use any media type with any player:
+
+<FrameworkCase frameworks={["html"]}>
+```
+website-video-player + <video>      ✓
+website-video-player + <hls-video>  ✓
+website-video-player + <youtube-video>  ✓
+news-video-player + <video>         ✓
+news-video-player + <hls-video>     ✓
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```
+presets.website() + <Video>      ✓
+presets.website() + <HlsVideo>   ✓
+presets.website() + <YouTubeVideo>   ✓
+presets.news() + <Video>         ✓
+presets.news() + <HlsVideo>      ✓
+```
+</FrameworkCase>
+
+The same UI works regardless of what's playing underneath.
+
+## Feature Support
+
+Not every media type supports every feature. The UI can detect and adapt (hiding unavailable controls), but understand what your media choice supports:
+
+| Feature | Native Video | HLS | DASH | YouTube | Vimeo |
+|---------|--------------|-----|------|---------|-------|
+| Playback | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Volume | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Seeking | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Fullscreen | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Quality selection | — | ✓ | ✓ | ✓ | ✓ |
+| Live streaming | — | ✓ | ✓ | ✓ | — |
+| DVR (live rewind) | — | ✓ | ✓ | — | — |
+| Chapters | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+**Example:** A native `<video>` playing an MP4 can't support a quality selector—there's only one quality. An HLS stream with multiple renditions can. If your preset includes quality selection but your media doesn't support it, the quality button simply won't appear.
+
+## Consistent API
+
+All media types expose the same API as the native video element. Whether you're using native video, HLS, or a service embed, you interact with it the same way:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { useRef } from 'react';
+import { HlsVideo } from '@videojs/react';
+
+function Player() {
+  const mediaRef = useRef<HTMLVideoElement>(null);
+
+  const handlePlay = () => {
+    const media = mediaRef.current;
+    if (!media) return;
+
+    media.play();
+    media.pause();
+    media.currentTime = 30;
+    media.volume = 0.5;
+    console.log(media.duration);
+  };
+
+  return (
+    <HlsVideo
+      ref={mediaRef}
+      src="stream.m3u8"
+      onCanPlay={handlePlay}
+    />
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<hls-video id="my-video" src="stream.m3u8"></hls-video>
+
+<script>
+  const media = document.getElementById('my-video');
+
+  media.play();
+  media.pause();
+  media.currentTime = 30;
+  media.volume = 0.5;
+  console.log(media.duration);
+</script>
+```
+</FrameworkCase>
+
+This works the same with native video, DASH, or service embeds—the media component normalizes the API so you can swap sources without changing your code.
+
+Some media types add extra capabilities (like `qualities` for HLS), but the core API stays consistent.
+
+## Headless Media
+
+You can use media without any UI for programmatic control:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { createPlayer, presets } from '@videojs/react';
+
+const { Provider, usePlayer } = createPlayer(presets.background());
+
+function BackgroundVideo() {
+  return (
+    <Provider>
+      <video src="background.mp4" autoPlay loop muted />
+    </Provider>
+  );
+}
+
+function Controller() {
+  const player = usePlayer();
+  // Programmatic control, no UI
+  player.play();
+  player.pause();
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<!-- background-video-player has minimal features, no UI -->
+<background-video-player>
+  <video src="background.mp4" autoplay loop muted></video>
+</background-video-player>
+```
+
+Or create a custom headless player:
+
+```ts
+import { createPlayer, features } from '@videojs/html';
+
+const { PlayerElement } = createPlayer([
+  features.playback,
+  features.time,
+]);
+
+PlayerElement.define('headless-video-player');
+```
+</FrameworkCase>
+
+## Browser-Supported Formats
+
+Native video supports formats the browser can play directly:
+
+**Video:** MP4 (H.264), WebM (VP8/VP9), Ogg (Theora)
+
+**Audio:** MP3, AAC, Ogg (Vorbis), WAV
+
+Browser support varies. MP4 with H.264 has the widest compatibility.
+
+## Streaming Formats
+
+For adaptive streaming (multiple qualities, live video), use HLS or DASH:
+
+**HLS (HTTP Live Streaming)**
+- Apple's streaming format
+- `.m3u8` playlist files
+- Widely supported, including Safari native playback
+- Good for live and on-demand
+
+**DASH (Dynamic Adaptive Streaming over HTTP)**
+- Industry standard
+- `.mpd` manifest files
+- Not natively supported in Safari
+- Good for on-demand, DRM support
+
+Both formats let the player automatically switch quality based on network conditions.
+
+## See Also
+
+- <DocsLink slug="concepts/architecture">Architecture</DocsLink> — How media fits in the three-pillar model
+- <DocsLink slug="concepts/presets">Presets</DocsLink> — Feature collections (independent of media choice)
+- <DocsLink slug="concepts/skins">Skins</DocsLink> — UI packages (work with any media)

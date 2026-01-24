@@ -1,0 +1,351 @@
+---
+title: Features
+description: Understanding player features - the behavioral and stateful core independent of UI
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+A feature is a **top-level capability of the player**.
+
+Features define what the player can do, what state exists, and how that state stays in sync with the underlying media element or player environment. Features are not UI. Buttons, menus, sliders, and skins are separate—they simply consume feature state and invoke feature requests.
+
+You can think of features as the behavioral and stateful core of the player, independent of how it looks.
+
+## Mental Model
+
+The player is composed of four layers:
+
+```
+Media element   ← native playback engine
+Environment     ← container, input, layout, persistence
+Features        ← state + behavior (this document)
+UI              ← buttons, menus, skins
+```
+
+- Features observe the media element and the environment.
+- Features expose state and requests.
+- UI reads feature state and calls requests.
+- UI never talks directly to the media element.
+
+This separation lets you change UI freely without re-implementing playback logic, and compose players by mixing and matching features.
+
+## Two Tiers of Features
+
+All features fall into one of two conceptual tiers. This distinction is about scope, not about separate stores.
+
+### Media Features
+
+Describe playback and media behavior. They primarily observe and control the media element.
+
+Examples:
+- `playback`
+- `time`
+- `volume`
+- `captions`
+- `fullscreen`
+- `pictureInPicture`
+- `live`
+- `quality`
+- `audioTracks`
+
+### Environment Features
+
+Describe how the player behaves as an interactive application. They primarily observe and control the player container and user input.
+
+Examples:
+- `layout`
+- `idle`
+- `hotkeys`
+- `gestures`
+- `i18n`
+- `preferences`
+- `casting` / `airplay`
+
+Both tiers are configured and consumed the same way.
+
+## Feature Lifecycle
+
+Every feature participates in the same lifecycle:
+
+1. **Initialization**
+   - Initial state is created
+   - Defaults and policies are applied
+   - Preferences may be restored
+
+2. **Subscription**
+   - The feature listens to relevant events (media, container, input, timers)
+
+3. **Snapshot updates**
+   - When something changes, the feature updates its state
+
+4. **Requests**
+   - The feature exposes commands that mutate behavior (e.g. `play`, `seek`, `toggleFullscreen`)
+
+This lifecycle is what allows features to stay deterministic, debuggable, and UI-agnostic.
+
+## Using Features
+
+### Using a Preset (Recommended)
+
+Presets return an array of configured features. Options are grouped by feature key.
+
+```ts
+const player = createPlayer(
+  presets.website({
+    playback: {
+      autoplay: false,
+    },
+    time: {
+      defaultDuration: 120,
+    },
+    captions: {
+      defaultMode: 'auto',
+    },
+    idle: {
+      autohideSeconds: 2,
+    },
+    hotkeys: {
+      seekForwardSeconds: 15,
+      seekBackwardSeconds: 5,
+    },
+    layout: {
+      breakpoints: 'sm:320 md:768',
+    },
+    i18n: {
+      lang: 'en',
+      t: (key) => key,
+    },
+  })
+);
+```
+
+### Extending a Preset
+
+Presets are just arrays. You can spread them and add or override features.
+
+```ts
+const features = [
+  ...presets.website({
+    playback: { autoplay: false },
+  }),
+  qualityFeature({ defaultSelection: 'auto' }),
+];
+
+const player = createPlayer({ features });
+```
+
+### Without a Preset
+
+You can always configure features directly.
+
+```ts
+const player = createPlayer({
+  features: [
+    playbackFeature({ autoplay: false }),
+    timeFeature({ defaultDuration: 120 }),
+    captionsFeature({ defaultMode: 'auto' }),
+    idleFeature({ autohideSeconds: 2 }),
+    hotkeysFeature({ seekForwardSeconds: 15 }),
+  ],
+});
+```
+
+## Media Features Reference
+
+### playback
+
+Controls core playback behavior and exposes play/pause state and requests.
+
+**What it does:**
+- Tracks `paused` / `playing` / `ended`
+- Issues `play()` and `pause()` requests
+- Applies startup playback policy
+
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `autoplay` | `boolean \| 'muted' \| 'any'` | Whether the player should attempt playback on startup. This is a policy, not state. |
+| `loop` | `boolean` | Restart playback when media ends. |
+| `preload` | `'auto' \| 'metadata' \| 'none'` | Media preload behavior. |
+| `poster` | `string` | Poster image URL. |
+
+```ts
+playbackFeature({
+  autoplay: 'muted',
+  preload: 'metadata',
+});
+```
+
+### time
+
+Tracks current playback time, duration, and seeking.
+
+**What it does:**
+- Tracks `currentTime` and `duration`
+- Exposes seek requests
+- Supports optimistic duration before metadata loads
+
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `defaultDuration` | `number` | Fallback duration used before metadata is available. |
+
+### volume
+
+Tracks volume and mute state.
+
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `initialVolume` | `number` | Initial volume (0–1). |
+| `initialMuted` | `boolean` | Initial muted state. |
+
+### captions
+
+Manages text tracks and subtitle state.
+
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `defaultMode` | `'on' \| 'off' \| 'auto'` | Default subtitle behavior. |
+| `preferredLanguage` | `string` | Preferred subtitle language. |
+
+### fullscreen
+
+Manages fullscreen state.
+
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `target` | `'container' \| 'media' \| HTMLElement` | Element that enters fullscreen. |
+
+### pictureInPicture
+
+Controls Picture-in-Picture state.
+
+No options.
+
+### live
+
+Handles live vs on-demand behavior.
+
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `defaultStreamType` | `'live' \| 'on-demand'` | Assumed stream type before metadata loads. |
+| `liveEdgeSeconds` | `number` | Window considered "live". |
+| `seekToLiveSeconds` | `number` | Offset when seeking to live. |
+| `autoSeekOnUnpause` | `boolean` | Jump to live edge when resuming. |
+
+### quality
+
+Manages rendition and quality selection.
+
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `defaultSelection` | `'auto' \| string` | Default quality selection. |
+
+## Environment Features Reference
+
+Environment features attach to the player container and describe layout, interaction, and application behavior.
+
+### layout
+
+Controls responsive and structural behavior.
+
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `breakpoints` | `string` | Named responsive breakpoints. |
+| `aspectRatio` | `string` | Preferred aspect ratio. |
+| `fluid` | `boolean` | Fluid resizing behavior. |
+| `audioMode` | `boolean` | Audio-only presentation. |
+
+### idle
+
+Tracks user activity and idle state.
+
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `autohideSeconds` | `number` | Seconds of inactivity before idle. Use `-1` to disable. |
+| `allowHideOverControls` | `boolean` | Allow hiding while controls are hovered. |
+
+### hotkeys
+
+Handles keyboard shortcuts.
+
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `enabled` | `boolean` | Enable or disable all hotkeys. |
+| `seekForwardSeconds` | `number` | Forward seek step. |
+| `seekBackwardSeconds` | `number` | Backward seek step. |
+| `shortcuts` | `Record<string, string>` | Custom key bindings. |
+| `keyTarget` | `'player' \| 'document' \| HTMLElement` | Event target for key listeners. |
+
+### gestures
+
+Controls pointer-based gestures.
+
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `enabled` | `boolean` | Enable or disable gestures. |
+
+### i18n
+
+Provides language selection and translation.
+
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `lang` | `string` | Active language code. |
+| `t` | `(key, params?) => string` | Translation function. |
+
+### preferences
+
+Handles persistence of user preferences.
+
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `persistVolume` | `boolean` | Persist volume changes. |
+| `persistMuted` | `boolean` | Persist mute state. |
+| `persistSubtitles` | `boolean` | Persist subtitle preferences. |
+| `storage` | `Storage` | Storage backend. |
+| `keyPrefix` | `string` | Storage key prefix. |
+
+### casting / airplay
+
+Controls external playback targets.
+
+No options.
+
+## Summary
+
+- Features define capabilities, not UI.
+- Media and environment features share the same model.
+- Options configure policy and defaults, not reactive state.
+- Presets are composable helpers, not abstractions you're locked into.
+- UI reads feature state and issues requests—nothing more.
+
+## See Also
+
+- <DocsLink slug="concepts/presets">Presets</DocsLink> — Curated feature collections for common use cases
+- <DocsLink slug="concepts/architecture">Architecture</DocsLink> — How features fit in the three-pillar model
+- <DocsLink slug="concepts/ui-components">UI Components</DocsLink> — How UI consumes feature state
