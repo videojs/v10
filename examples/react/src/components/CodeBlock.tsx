@@ -22,6 +22,9 @@ export function CodeBlock(props: CodeBlockProps): JSX.Element {
 
   return (
     // eslint-disable-next-line react-dom/no-dangerously-set-innerhtml
-    <div dangerouslySetInnerHTML={{ __html: output }} className="h-full [&_pre]:rounded-lg [&_pre]:overflow-auto [&_pre]:h-full [&_pre]:w-0 [&_pre]:min-w-full font-mono text-sm *:p-3" />
+    <div
+      dangerouslySetInnerHTML={{ __html: output }}
+      className="h-full [&_pre]:rounded-lg [&_pre]:overflow-auto [&_pre]:h-full [&_pre]:w-0 [&_pre]:min-w-full font-mono text-sm *:p-3"
+    />
   );
 }

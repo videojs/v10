@@ -1,5 +1,3 @@
-import type { PropsWithChildren } from 'react';
-
 import {
   CurrentTimeDisplay,
   DurationDisplay,
@@ -19,6 +17,7 @@ import {
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@videojs/react/icons';
+import type { PropsWithChildren } from 'react';
 import styles from './styles';
 
 type SkinProps = PropsWithChildren<{
@@ -87,4 +86,4 @@ export default function CustomNativeSkin({ children, className = '' }: SkinProps
       </div>
     </MediaContainer>
   );
-};
+}

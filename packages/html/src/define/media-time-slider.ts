@@ -1,4 +1,10 @@
-import { TimeSliderPointerElement, TimeSliderProgressElement, TimeSliderRootElement, TimeSliderThumbElement, TimeSliderTrackElement } from '@/elements/time-slider';
+import {
+  TimeSliderPointerElement,
+  TimeSliderProgressElement,
+  TimeSliderRootElement,
+  TimeSliderThumbElement,
+  TimeSliderTrackElement,
+} from '@/elements/time-slider';
 import { defineCustomElement } from '@/utils/custom-element';
 
 defineCustomElement('media-time-slider', TimeSliderRootElement);

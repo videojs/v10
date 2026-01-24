@@ -5,10 +5,7 @@
 body {
   margin: 0;
   padding: 2rem;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
   background: #0a0a0a;
   color: white;
 }
@@ -62,7 +59,7 @@ media-mute-button:active {
 media-volume-high-icon,
 media-volume-low-icon,
 media-volume-off-icon {
-  grid-area: 1/1;
+  grid-area: 1 / 1;
   transition: opacity 200ms ease;
   width: 18px;
   height: 18px;
@@ -71,17 +68,17 @@ media-volume-off-icon {
 
 /* Show appropriate icon based on volume level using data attributes */
 /* High volume (> 50%) */
-media-mute-button[data-volume-level='high'] media-volume-high-icon {
+media-mute-button[data-volume-level="high"] media-volume-high-icon {
   opacity: 1;
 }
 
 /* Medium/Low volume (1-50%) */
-media-mute-button[data-volume-level='medium'] media-volume-low-icon,
-media-mute-button[data-volume-level='low'] media-volume-low-icon {
+media-mute-button[data-volume-level="medium"] media-volume-low-icon,
+media-mute-button[data-volume-level="low"] media-volume-low-icon {
   opacity: 1;
 }
 
 /* Muted/Off volume (0%) */
-media-mute-button[data-volume-level='off'] media-volume-off-icon {
+media-mute-button[data-volume-level="off"] media-volume-off-icon {
   opacity: 1;
 }

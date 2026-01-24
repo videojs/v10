@@ -1,7 +1,5 @@
 // Adapted from https://github.com/caiogondim/fast-memoize.js - MIT License
-type MemoizedFunction<T extends (...args: any[]) => any> = (
-  ...args: Parameters<T>
-) => ReturnType<T>;
+type MemoizedFunction<T extends (...args: any[]) => any> = (...args: Parameters<T>) => ReturnType<T>;
 
 interface MemoizedId {
   $m: number;
@@ -17,9 +15,7 @@ function isNode(x: unknown): boolean {
   return NodeConstructor !== undefined && x instanceof NodeConstructor;
 }
 
-export function memoize<T extends (...args: any[]) => any>(
-  func: T,
-): MemoizedFunction<T> {
+export function memoize<T extends (...args: any[]) => any>(func: T): MemoizedFunction<T> {
   const cache: Record<string, ReturnType<T>> = {};
   return function (this: unknown, ...args: Parameters<T>): ReturnType<T> {
     const argsWithFuncIds = args.map((x) => {

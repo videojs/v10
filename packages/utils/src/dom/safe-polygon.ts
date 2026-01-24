@@ -51,8 +51,7 @@ function isPointInPolygon(point: Point, polygon: Polygon) {
   for (let i = 0, j = length - 1; i < length; j = i++) {
     const [xi, yi] = polygon[i] || [0, 0];
     const [xj, yj] = polygon[j] || [0, 0];
-    const intersect
-      = (yi >= y) !== (yj >= y) && x <= ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+    const intersect = yi >= y !== yj >= y && x <= ((xj - xi) * (y - yi)) / (yj - yi) + xi;
     if (intersect) {
       isInside = !isInside;
     }
@@ -62,10 +61,7 @@ function isPointInPolygon(point: Point, polygon: Polygon) {
 
 function isInside(point: Point, rect: Rect) {
   return (
-    point[0] >= rect.x
-    && point[0] <= rect.x + rect.width
-    && point[1] >= rect.y
-    && point[1] <= rect.y + rect.height
+    point[0] >= rect.x && point[0] <= rect.x + rect.width && point[1] >= rect.y && point[1] <= rect.y + rect.height
   );
 }
 
@@ -81,19 +77,14 @@ export interface SafePolygonOptions {
  * @see https://floating-ui.com/docs/useHover#safepolygon
  */
 export function safePolygon(options: SafePolygonOptions = {}): HandleClose {
-  const {
-    buffer = 0.5,
-    blockPointerEvents = false,
-    requireIntent = true,
-  } = options;
+  const { buffer = 0.5, blockPointerEvents = false, requireIntent = true } = options;
 
   const timeoutRef = { current: -1 };
 
   let hasLanded = false;
   let lastX: number | null = null;
   let lastY: number | null = null;
-  let lastCursorTime
-    = typeof performance !== 'undefined' ? performance.now() : 0;
+  let lastCursorTime = typeof performance !== 'undefined' ? performance.now() : 0;
 
   function getCursorSpeed(x: number, y: number): number | null {
     const currentTime = performance.now();
@@ -118,15 +109,7 @@ export function safePolygon(options: SafePolygonOptions = {}): HandleClose {
     return speed;
   }
 
-  const fn: HandleClose = ({
-    x,
-    y,
-    placement,
-    elements,
-    onClose,
-    nodeId,
-    tree,
-  }) => {
+  const fn: HandleClose = ({ x, y, placement, elements, onClose, nodeId, tree }) => {
     return function onMouseMove(event: MouseEvent) {
       function close() {
         clearTimeoutIfSet(timeoutRef);
@@ -135,13 +118,7 @@ export function safePolygon(options: SafePolygonOptions = {}): HandleClose {
 
       clearTimeoutIfSet(timeoutRef);
 
-      if (
-        !elements.domReference
-        || !elements.floating
-        || placement == null
-        || x == null
-        || y == null
-      ) {
+      if (!elements.domReference || !elements.floating || placement == null || x == null || y == null) {
         return;
       }
 
@@ -183,11 +160,7 @@ export function safePolygon(options: SafePolygonOptions = {}): HandleClose {
 
       // Prevent overlapping floating element from being stuck in an open-close
       // loop: https://github.com/floating-ui/floating-ui/issues/1910
-      if (
-        isLeave
-        && isElement(event.relatedTarget)
-        && contains(elements.floating, event.relatedTarget)
-      ) {
+      if (isLeave && isElement(event.relatedTarget) && contains(elements.floating, event.relatedTarget)) {
         return;
       }
 
@@ -201,10 +174,10 @@ export function safePolygon(options: SafePolygonOptions = {}): HandleClose {
       // ignored.
       // A constant of 1 handles floating point rounding errors.
       if (
-        (side === 'top' && y >= refRect.bottom - 1)
-        || (side === 'bottom' && y <= refRect.top + 1)
-        || (side === 'left' && x >= refRect.right - 1)
-        || (side === 'right' && x <= refRect.left + 1)
+        (side === 'top' && y >= refRect.bottom - 1) ||
+        (side === 'bottom' && y <= refRect.top + 1) ||
+        (side === 'left' && x >= refRect.right - 1) ||
+        (side === 'right' && x <= refRect.left + 1)
       ) {
         return close();
       }
@@ -258,37 +231,21 @@ export function safePolygon(options: SafePolygonOptions = {}): HandleClose {
         switch (side) {
           case 'top': {
             const cursorPointOne: Point = [
-              isFloatingWider
-                ? x + buffer / 2
-                : cursorLeaveFromRight
-                  ? x + buffer * 4
-                  : x - buffer * 4,
+              isFloatingWider ? x + buffer / 2 : cursorLeaveFromRight ? x + buffer * 4 : x - buffer * 4,
               y + buffer + 1,
             ];
             const cursorPointTwo: Point = [
-              isFloatingWider
-                ? x - buffer / 2
-                : cursorLeaveFromRight
-                  ? x + buffer * 4
-                  : x - buffer * 4,
+              isFloatingWider ? x - buffer / 2 : cursorLeaveFromRight ? x + buffer * 4 : x - buffer * 4,
               y + buffer + 1,
             ];
             const commonPoints: [Point, Point] = [
               [
                 rect.left,
-                cursorLeaveFromRight
-                  ? rect.bottom - buffer
-                  : isFloatingWider
-                    ? rect.bottom - buffer
-                    : rect.top,
+                cursorLeaveFromRight ? rect.bottom - buffer : isFloatingWider ? rect.bottom - buffer : rect.top,
               ],
               [
                 rect.right,
-                cursorLeaveFromRight
-                  ? isFloatingWider
-                    ? rect.bottom - buffer
-                    : rect.top
-                  : rect.bottom - buffer,
+                cursorLeaveFromRight ? (isFloatingWider ? rect.bottom - buffer : rect.top) : rect.bottom - buffer,
               ],
             ];
 
@@ -296,37 +253,18 @@ export function safePolygon(options: SafePolygonOptions = {}): HandleClose {
           }
           case 'bottom': {
             const cursorPointOne: Point = [
-              isFloatingWider
-                ? x + buffer / 2
-                : cursorLeaveFromRight
-                  ? x + buffer * 4
-                  : x - buffer * 4,
+              isFloatingWider ? x + buffer / 2 : cursorLeaveFromRight ? x + buffer * 4 : x - buffer * 4,
               y - buffer,
             ];
             const cursorPointTwo: Point = [
-              isFloatingWider
-                ? x - buffer / 2
-                : cursorLeaveFromRight
-                  ? x + buffer * 4
-                  : x - buffer * 4,
+              isFloatingWider ? x - buffer / 2 : cursorLeaveFromRight ? x + buffer * 4 : x - buffer * 4,
               y - buffer,
             ];
             const commonPoints: [Point, Point] = [
-              [
-                rect.left,
-                cursorLeaveFromRight
-                  ? rect.top + buffer
-                  : isFloatingWider
-                    ? rect.top + buffer
-                    : rect.bottom,
-              ],
+              [rect.left, cursorLeaveFromRight ? rect.top + buffer : isFloatingWider ? rect.top + buffer : rect.bottom],
               [
                 rect.right,
-                cursorLeaveFromRight
-                  ? isFloatingWider
-                    ? rect.top + buffer
-                    : rect.bottom
-                  : rect.top + buffer,
+                cursorLeaveFromRight ? (isFloatingWider ? rect.top + buffer : rect.bottom) : rect.top + buffer,
               ],
             ];
 
@@ -335,35 +273,19 @@ export function safePolygon(options: SafePolygonOptions = {}): HandleClose {
           case 'left': {
             const cursorPointOne: Point = [
               x + buffer + 1,
-              isFloatingTaller
-                ? y + buffer / 2
-                : cursorLeaveFromBottom
-                  ? y + buffer * 4
-                  : y - buffer * 4,
+              isFloatingTaller ? y + buffer / 2 : cursorLeaveFromBottom ? y + buffer * 4 : y - buffer * 4,
             ];
             const cursorPointTwo: Point = [
               x + buffer + 1,
-              isFloatingTaller
-                ? y - buffer / 2
-                : cursorLeaveFromBottom
-                  ? y + buffer * 4
-                  : y - buffer * 4,
+              isFloatingTaller ? y - buffer / 2 : cursorLeaveFromBottom ? y + buffer * 4 : y - buffer * 4,
             ];
             const commonPoints: [Point, Point] = [
               [
-                cursorLeaveFromBottom
-                  ? rect.right - buffer
-                  : isFloatingTaller
-                    ? rect.right - buffer
-                    : rect.left,
+                cursorLeaveFromBottom ? rect.right - buffer : isFloatingTaller ? rect.right - buffer : rect.left,
                 rect.top,
               ],
               [
-                cursorLeaveFromBottom
-                  ? isFloatingTaller
-                    ? rect.right - buffer
-                    : rect.left
-                  : rect.right - buffer,
+                cursorLeaveFromBottom ? (isFloatingTaller ? rect.right - buffer : rect.left) : rect.right - buffer,
                 rect.bottom,
               ],
             ];
@@ -373,35 +295,19 @@ export function safePolygon(options: SafePolygonOptions = {}): HandleClose {
           case 'right': {
             const cursorPointOne: Point = [
               x - buffer,
-              isFloatingTaller
-                ? y + buffer / 2
-                : cursorLeaveFromBottom
-                  ? y + buffer * 4
-                  : y - buffer * 4,
+              isFloatingTaller ? y + buffer / 2 : cursorLeaveFromBottom ? y + buffer * 4 : y - buffer * 4,
             ];
             const cursorPointTwo: Point = [
               x - buffer,
-              isFloatingTaller
-                ? y - buffer / 2
-                : cursorLeaveFromBottom
-                  ? y + buffer * 4
-                  : y - buffer * 4,
+              isFloatingTaller ? y - buffer / 2 : cursorLeaveFromBottom ? y + buffer * 4 : y - buffer * 4,
             ];
             const commonPoints: [Point, Point] = [
               [
-                cursorLeaveFromBottom
-                  ? rect.left + buffer
-                  : isFloatingTaller
-                    ? rect.left + buffer
-                    : rect.right,
+                cursorLeaveFromBottom ? rect.left + buffer : isFloatingTaller ? rect.left + buffer : rect.right,
                 rect.top,
               ],
               [
-                cursorLeaveFromBottom
-                  ? isFloatingTaller
-                    ? rect.left + buffer
-                    : rect.right
-                  : rect.left + buffer,
+                cursorLeaveFromBottom ? (isFloatingTaller ? rect.left + buffer : rect.right) : rect.left + buffer,
                 rect.bottom,
               ],
             ];

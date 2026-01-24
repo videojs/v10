@@ -15,7 +15,7 @@ export function useMutationObserver<T extends Element = Element>(
     attributes: true,
     childList: true,
     subtree: true,
-  },
+  }
 ): void {
   const callbackRef = useRef(callback);
 

@@ -1,11 +1,10 @@
-import type { Prettify } from '../types';
-import type { ConnectedComponent } from '../utils/component-factory';
-
 import { VolumeSlider as CoreVolumeSlider } from '@videojs/core';
 import { volumeSliderStateDefinition } from '@videojs/store';
 import { shallowEqual } from '@videojs/utils';
 import { useMemo } from 'react';
 import { useMediaSelector, useMediaStore } from '@/store';
+import type { Prettify } from '../types';
+import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent, toContextComponent, useCore } from '../utils/component-factory';
 import { useComposedRefs } from '../utils/use-composed-refs';
 
@@ -13,7 +12,7 @@ export type VolumeSliderState = Prettify<ReturnType<typeof useCore<CoreVolumeSli
   orientation: 'horizontal' | 'vertical';
 };
 
-export interface VolumeSliderProps extends React.ComponentPropsWithRef<'div'> {
+export interface VolumeSliderProps extends React.ComponentPropsWithoutRef<'div'> {
   orientation?: 'horizontal' | 'vertical';
 }
 
@@ -32,7 +31,10 @@ export function useVolumeSliderRootState(props?: VolumeSliderProps): VolumeSlide
   const { orientation = 'horizontal' } = props ?? {};
   const mediaStore = useMediaStore();
   const mediaState = useMediaSelector(volumeSliderStateDefinition.stateTransform, shallowEqual);
-  const mediaMethods = useMemo(() => volumeSliderStateDefinition.createRequestMethods(mediaStore.dispatch), [mediaStore]);
+  const mediaMethods = useMemo(
+    () => volumeSliderStateDefinition.createRequestMethods(mediaStore.dispatch),
+    [mediaStore]
+  );
   const coreState = useCore(CoreVolumeSlider, { ...mediaState, ...mediaMethods });
   return {
     ...coreState,
@@ -77,14 +79,17 @@ const VolumeSliderRoot: ConnectedComponent<VolumeSliderProps, typeof renderVolum
   useVolumeSliderRootState,
   useVolumeSliderRootProps,
   renderVolumeSliderRoot,
-  'VolumeSlider.Root',
+  'VolumeSlider.Root'
 );
 
 // ============================================================================
 // TRACK COMPONENT
 // ============================================================================
 
-export function useVolumeSliderTrackProps(props: React.ComponentProps<'div'>, context: VolumeSliderState): VolumeSliderRenderProps {
+export function useVolumeSliderTrackProps(
+  props: React.ComponentProps<'div'>,
+  context: VolumeSliderState
+): VolumeSliderRenderProps {
   return {
     ref: context._setTrackElement,
     'data-orientation': context.orientation,
@@ -109,7 +114,10 @@ const VolumeSliderTrack: ConnectedComponent<
 // THUMB COMPONENT
 // ============================================================================
 
-export function getVolumeSliderThumbProps(props: React.ComponentProps<'div'>, context: VolumeSliderState): VolumeSliderRenderProps {
+export function getVolumeSliderThumbProps(
+  props: React.ComponentProps<'div'>,
+  context: VolumeSliderState
+): VolumeSliderRenderProps {
   return {
     'data-orientation': context.orientation,
     ...props,
@@ -136,7 +144,10 @@ const VolumeSliderThumb: ConnectedComponent<
 // PROGRESS COMPONENT
 // ============================================================================
 
-export function getVolumeSliderProgressProps(props: React.ComponentProps<'div'>, context: VolumeSliderState): VolumeSliderRenderProps {
+export function getVolumeSliderProgressProps(
+  props: React.ComponentProps<'div'>,
+  context: VolumeSliderState
+): VolumeSliderRenderProps {
   return {
     'data-orientation': context.orientation,
     ...props,
@@ -170,7 +181,7 @@ export const VolumeSlider = Object.assign(
     Track: VolumeSliderTrack,
     Thumb: VolumeSliderThumb,
     Progress: VolumeSliderProgress,
-  },
+  }
 ) as {
   Root: typeof VolumeSliderRoot;
   Track: typeof VolumeSliderTrack;

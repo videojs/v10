@@ -12,10 +12,6 @@ export interface PlaybackEngine extends EventTarget {
 }
 
 export class HlsPlaybackEngine extends EventTarget {
-  constructor() {
-    super();
-  }
-
   protected _hlsInstance: Hls | undefined;
 
   get src(): string | undefined {

@@ -1,6 +1,5 @@
-import type { SliderState } from './slider';
-
 import { formatTime } from '@videojs/utils';
+import type { SliderState } from './slider';
 import { Slider } from './slider';
 
 export interface TimeSliderState extends SliderState {

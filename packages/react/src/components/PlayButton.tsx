@@ -1,12 +1,9 @@
-import type { PropsWithChildren } from 'react';
-import type { ConnectedComponent } from '../utils/component-factory';
-
 import { playButtonStateDefinition } from '@videojs/store';
-
 import { shallowEqual } from '@videojs/utils';
+import type { PropsWithChildren } from 'react';
 import { useMemo } from 'react';
-
 import { useMediaSelector, useMediaStore } from '@/store';
+import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
 export function usePlayButtonState(_props?: any): {
@@ -29,7 +26,7 @@ export type PlayButtonState = ReturnType<typeof usePlayButtonState>;
 
 export function getPlayButtonProps(
   props: Record<string, unknown>,
-  state: PlayButtonState,
+  state: PlayButtonState
 ): PropsWithChildren<Record<string, unknown>> {
   const baseProps: Record<string, any> = {
     /** @TODO Need another state provider in core for i18n (CJP) */
@@ -75,7 +72,7 @@ export const PlayButton: ConnectedComponent<PlayButtonProps, typeof renderPlayBu
   usePlayButtonState,
   getPlayButtonProps,
   renderPlayButton,
-  'PlayButton',
+  'PlayButton'
 );
 
 export default PlayButton;

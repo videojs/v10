@@ -1,6 +1,5 @@
-import type { StateOwners } from './types';
-
 import { getKey, map, subscribeKeys } from 'nanostores';
+import type { StateOwners } from './types';
 
 export interface EventOrAction<D = undefined> {
   type: string;
@@ -14,7 +13,7 @@ export type FacadeSetter<T> = (value: T, stateOwners: StateOwners) => void;
 
 export type StateOwnerUpdateHandler<T> = (
   handler: (value?: T) => void,
-  stateOwners: StateOwners,
+  stateOwners: StateOwners
 ) => (() => void) | void;
 
 export interface ReadonlyFacadeProp<T, D = T> {
@@ -66,7 +65,7 @@ export function createMediaStore({
   function updateStateOwners(nextStateOwners: any) {
     // Check if any state owner has changed
     const hasChanges = Object.entries(nextStateOwners).some(
-      ([key, value]) => stateOwners[key as keyof StateOwners] !== value,
+      ([key, value]) => stateOwners[key as keyof StateOwners] !== value
     );
 
     if (!hasChanges) {
@@ -75,7 +74,7 @@ export function createMediaStore({
 
     // Clean up existing handlers
     Object.entries(stateUpdateHandlerCleanups).forEach(([stateName, cleanups]) => {
-      cleanups.forEach(cleanup => cleanup?.());
+      cleanups.forEach((cleanup) => cleanup?.());
       stateUpdateHandlerCleanups[stateName] = [];
     });
 
@@ -143,7 +142,7 @@ export function createMediaStore({
           acc[k] = getKey(store, k);
           return acc;
         },
-        {} as { [k: string]: any },
+        {} as { [k: string]: any }
       );
     },
 

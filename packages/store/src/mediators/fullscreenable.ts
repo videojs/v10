@@ -8,11 +8,11 @@ export const fullscreenable = {
       if (!container || !globalThis?.document) return false;
 
       const doc = globalThis.document;
-      const currentFullscreenElement
-        = doc.fullscreenElement
-          || (doc as any).webkitFullscreenElement
-          || (doc as any).mozFullScreenElement
-          || (doc as any).msFullscreenElement;
+      const currentFullscreenElement =
+        doc.fullscreenElement ||
+        (doc as any).webkitFullscreenElement ||
+        (doc as any).mozFullScreenElement ||
+        (doc as any).msFullscreenElement;
 
       if (!currentFullscreenElement) return false;
 
@@ -33,8 +33,8 @@ export const fullscreenable = {
         let currentRoot = currentFullscreenElement.shadowRoot;
 
         // Check if ShadowRoot supports fullscreenElement (Safari < 16.4 workaround)
-        const fullscreenElementKey
-          = 'fullscreenElement' in doc
+        const fullscreenElementKey =
+          'fullscreenElement' in doc
             ? 'fullscreenElement'
             : 'webkitFullscreenElement' in doc
               ? 'webkitFullscreenElement'

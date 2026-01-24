@@ -1,13 +1,14 @@
 import type { PlayButtonState } from '@videojs/store';
-import type { Prettify } from '../types';
-import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
-
 import { playButtonStateDefinition } from '@videojs/store';
 import { memoize } from '@videojs/utils';
+import type { Prettify } from '../types';
+import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 import { ButtonElement } from './button';
 
-type PlayButtonStateWithMethods = Prettify<PlayButtonState & ReturnType<typeof playButtonStateDefinition.createRequestMethods>>;
+type PlayButtonStateWithMethods = Prettify<
+  PlayButtonState & ReturnType<typeof playButtonStateDefinition.createRequestMethods>
+>;
 
 const playButtonCreateRequestMethods = memoize(playButtonStateDefinition.createRequestMethods);
 
@@ -59,9 +60,5 @@ export class PlayButton extends ButtonElement {
   }
 }
 
-export const PlayButtonElement: ConnectedComponentConstructor<PlayButton, PlayButtonStateWithMethods> = toConnectedHTMLComponent(
-  PlayButton,
-  getPlayButtonState,
-  getPlayButtonProps,
-  'PlayButton',
-);
+export const PlayButtonElement: ConnectedComponentConstructor<PlayButton, PlayButtonStateWithMethods> =
+  toConnectedHTMLComponent(PlayButton, getPlayButtonState, getPlayButtonProps, 'PlayButton');

@@ -18,7 +18,7 @@ export function isItemVisible<F extends SupportedFramework>(
   item: Guide | Section,
   framework: F,
   style: SupportedStyle<F>,
-  isDev: boolean = import.meta.env.DEV,
+  isDev: boolean = import.meta.env.DEV
 ): boolean {
   // Filter out dev-only items in production
   if (item.devOnly && !isDev) {
@@ -46,10 +46,10 @@ export function filterSidebar<F extends SupportedFramework>(
   framework: F,
   style: SupportedStyle<F>,
   sidebarToFilter: Sidebar = sidebar,
-  isDev: boolean = import.meta.env.DEV,
+  isDev: boolean = import.meta.env.DEV
 ): Sidebar {
   return sidebarToFilter
-    .filter(item => isItemVisible(item, framework, style, isDev))
+    .filter((item) => isItemVisible(item, framework, style, isDev))
     .map((item) => {
       if (isSection(item)) {
         const filteredContents = filterSidebar(framework, style, item.contents, isDev);
@@ -88,7 +88,7 @@ export function findFirstGuide<F extends SupportedFramework>(
   framework: F,
   style: SupportedStyle<F>,
   sidebarToSearch: Sidebar = sidebar,
-  isDev: boolean = import.meta.env.DEV,
+  isDev: boolean = import.meta.env.DEV
 ): string {
   if (!isValidStyleForFramework(framework, style as AnySupportedStyle)) {
     throw new Error(`Invalid style "${style}" for framework "${framework}".`);
@@ -109,7 +109,9 @@ export function findFirstGuide<F extends SupportedFramework>(
     }
   }
 
-  throw new Error(`No guide found for valid combination framework "${framework}" and style "${style}". This should never happen.`);
+  throw new Error(
+    `No guide found for valid combination framework "${framework}" and style "${style}". This should never happen.`
+  );
 }
 
 /**
@@ -204,11 +206,11 @@ export function getSectionsForGuide(slug: string, sidebarToSearch: Sidebar = sid
  */
 export function getValidStylesForGuide<F extends SupportedFramework>(
   guide: Guide,
-  framework?: F,
+  framework?: F
 ): F extends undefined ? readonly AnySupportedStyle[] : readonly SupportedStyle<F>[];
 export function getValidStylesForGuide<F extends SupportedFramework>(
   guide: Guide,
-  framework?: F,
+  framework?: F
 ): readonly AnySupportedStyle[] {
   // If no framework specified, return all styles the guide supports (or all styles if no restrictions)
   if (framework === undefined) {
@@ -235,7 +237,7 @@ export function getValidStylesForGuide<F extends SupportedFramework>(
   }
 
   // Return intersection of framework styles and guide styles
-  return frameworkStyles.filter(s => guide.styles!.includes(s));
+  return frameworkStyles.filter((s) => guide.styles!.includes(s));
 }
 
 /**
@@ -266,7 +268,7 @@ export function getValidFrameworksForGuide(guide: Guide): SupportedFramework[] {
 export function getAdjacentGuides<F extends SupportedFramework>(
   currentSlug: string,
   framework: F,
-  style: SupportedStyle<F>,
+  style: SupportedStyle<F>
 ): { prev: Guide | null; next: Guide | null } {
   // Get the filtered sidebar for this framework/style combination
   const filteredSidebar = filterSidebar(framework, style);

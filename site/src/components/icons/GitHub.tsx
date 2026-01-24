@@ -10,6 +10,8 @@ export default function GitHub({ size = 24, ...props }: GitHubProps) {
       width={size}
       height={size}
       fill="currentColor"
+      role="img"
+      aria-label="GitHub"
       {...props}
     >
       <path

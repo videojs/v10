@@ -11,11 +11,7 @@ export function FullscreenButtonDemo() {
   return (
     <VideoProvider>
       <MediaContainer style={{ position: 'relative', zIndex: 10 }}>
-        <Video
-          src={VJS8_DEMO_VIDEO.mp4}
-          poster={VJS8_DEMO_VIDEO.poster}
-          muted
-        />
+        <Video src={VJS8_DEMO_VIDEO.mp4} poster={VJS8_DEMO_VIDEO.poster} muted />
         <div style={{ position: 'absolute', bottom: '1rem', right: '1rem', zIndex: 10 }}>
           <BasicFullscreenButton />
         </div>

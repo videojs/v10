@@ -8,7 +8,7 @@ import { glob } from 'astro/loaders';
  */
 type Parser = <TData extends Record<string, unknown>>(
   options: ParseDataOptions<TData>,
-  originalEntry: string,
+  originalEntry: string
 ) => Promise<ParseDataOptions<TData>>;
 
 type GlobWithParserOptions = Parameters<typeof glob>[0] & {

@@ -21,7 +21,7 @@ export const volumeSliderStateDefinition: VolumeSliderStateDefinition = {
     muted: rawState.muted ?? false,
     volumeLevel: rawState.volumeLevel ?? 'high',
   }),
-  createRequestMethods: dispatch => ({
+  createRequestMethods: (dispatch) => ({
     /**
      * @TODO Unmuting is owned by the "request-map" in media-chrome.
      * The closest equivalent to that is the "actions" in the current architecture.

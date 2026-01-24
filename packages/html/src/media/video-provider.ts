@@ -1,7 +1,6 @@
 import type { Constructor, CustomElement } from '@open-wc/context-protocol';
-import type { MediaStore } from '@videojs/store';
-
 import { ProviderMixin } from '@open-wc/context-protocol';
+import type { MediaStore } from '@videojs/store';
 import { createMediaStore } from '@videojs/store';
 
 import { printConsoleBanner } from '@videojs/utils';

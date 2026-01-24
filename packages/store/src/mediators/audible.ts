@@ -66,7 +66,7 @@ export const audible = {
   volumeLevel: {
     get(stateOwners: StateOwners): 'high' | 'medium' | 'low' | 'off' {
       const { media } = stateOwners;
-      if (typeof media?.volume == 'undefined') return 'high';
+      if (typeof media?.volume === 'undefined') return 'high';
       if (media.muted || media.volume === 0) return 'off';
       if (media.volume < 0.5) return 'low';
       if (media.volume < 0.75) return 'medium';

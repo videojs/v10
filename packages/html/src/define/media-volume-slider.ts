@@ -1,4 +1,9 @@
-import { VolumeSliderIndicatorElement, VolumeSliderRootElement, VolumeSliderThumbElement, VolumeSliderTrackElement } from '@/elements/volume-slider';
+import {
+  VolumeSliderIndicatorElement,
+  VolumeSliderRootElement,
+  VolumeSliderThumbElement,
+  VolumeSliderTrackElement,
+} from '@/elements/volume-slider';
 import { defineCustomElement } from '@/utils/custom-element';
 
 defineCustomElement('media-volume-slider', VolumeSliderRootElement);

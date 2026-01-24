@@ -35,8 +35,8 @@ export function shallowEqual(objA: object, objB: object): boolean {
   for (let i = 0; i < keysA.length; i++) {
     // NOTE: Since we've already guaranteed the keys list lengths are the same, we can safely cast to string here (CJP)
     if (
-      !globalThis.hasOwnProperty.call(objB, keysA[i] as string)
-      || !Object.is(objA[keysA[i] as string], objB[keysA[i] as string])
+      !globalThis.hasOwnProperty.call(objB, keysA[i] as string) ||
+      !Object.is(objA[keysA[i] as string], objB[keysA[i] as string])
     ) {
       return false;
     }

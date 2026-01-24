@@ -1,16 +1,14 @@
 import type { DurationDisplayState } from '@videojs/store';
-import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
-
 import { durationDisplayStateDefinition } from '@videojs/store';
-
 import { formatDisplayTime } from '@videojs/utils';
 import { namedNodeMapToObject } from '@videojs/utils/dom';
+import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 
 export function getTemplateHTML(
   this: typeof DurationDisplay,
   _attrs: Record<string, string>,
-  _props: Record<string, any> = {},
+  _props: Record<string, any> = {}
 ) {
   return /* html */ `
     <span></span>
@@ -57,9 +55,5 @@ export const getDurationDisplayProps: PropsHook<DurationDisplay, DurationDisplay
   return {};
 };
 
-export const DurationDisplayElement: ConnectedComponentConstructor<DurationDisplay, DurationDisplayState> = toConnectedHTMLComponent(
-  DurationDisplay,
-  getDurationDisplayState,
-  getDurationDisplayProps,
-  'DurationDisplay',
-);
+export const DurationDisplayElement: ConnectedComponentConstructor<DurationDisplay, DurationDisplayState> =
+  toConnectedHTMLComponent(DurationDisplay, getDurationDisplayState, getDurationDisplayProps, 'DurationDisplay');

@@ -5,9 +5,7 @@
  * @returns The camel case string.
  */
 export function toCamelCase(str: string): string {
-  return str
-    .toLowerCase()
-    .replace(/[-_]([a-z])/g, (_$0, $1) => $1.toUpperCase());
+  return str.toLowerCase().replace(/[-_]([a-z])/g, (_$0, $1) => $1.toUpperCase());
 }
 
 /**
@@ -17,7 +15,5 @@ export function toCamelCase(str: string): string {
  * @returns The kebab case string.
  */
 export function toKebabCase(str: string): string {
-  return str
-    .replace(/([A-Z])/g, '-$1')
-    .toLowerCase();
+  return str.replace(/([A-Z])/g, '-$1').toLowerCase();
 }

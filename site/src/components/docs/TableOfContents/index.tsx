@@ -11,7 +11,7 @@ export function TableOfContents({ headings }: TableOfContentsProps) {
   const filteredHeadings = filterHeadingsByDepth(headings, 2, 3);
   const activeId = useActiveHeading(filteredHeadings);
 
-  if (filteredHeadings.length === 0) return <></>;
+  if (filteredHeadings.length === 0) return null;
   return (
     <>
       <TableOfContentsMobile

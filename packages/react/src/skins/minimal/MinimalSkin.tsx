@@ -108,7 +108,9 @@ export default function MinimalSkin({ children, className = '' }: SkinProps): JS
               </FullscreenButton>
             </Tooltip.Trigger>
             <Tooltip.Positioner side="top-end" sideOffset={6} collisionPadding={12}>
-              <Tooltip.Popup className={`${styles.PopupAnimation} ${styles.TooltipPopup} ${styles.FullscreenTooltipPopup}`}>
+              <Tooltip.Popup
+                className={`${styles.PopupAnimation} ${styles.TooltipPopup} ${styles.FullscreenTooltipPopup}`}
+              >
                 <span className={styles.FullscreenEnterTooltip}>Enter Fullscreen</span>
                 <span className={styles.FullscreenExitTooltip}>Exit Fullscreen</span>
               </Tooltip.Popup>

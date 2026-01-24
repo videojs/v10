@@ -1,5 +1,5 @@
-import type { BundledLanguage, Highlighter } from 'shiki';
 import clsx from 'clsx';
+import type { BundledLanguage, Highlighter } from 'shiki';
 import { hastToHtml } from 'shiki';
 
 export interface SharedProps {

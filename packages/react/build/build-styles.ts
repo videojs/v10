@@ -61,21 +61,18 @@ export default async function buildStyles() {
     mkdirSync(skinsDir, { recursive: true });
 
     // Compile preflight (browser resets)
-    execSync(
-      'pnpm exec tailwindcss -i src/skins/preflight.css -o dist/skins/preflight.css --minify',
-      execOpts,
-    );
+    execSync('pnpm exec tailwindcss -i src/skins/preflight.css -o dist/skins/preflight.css --minify', execOpts);
 
     // Compile frosted skin
     execSync(
       'pnpm exec tailwindcss -i src/skins/frosted/frosted-skin.css -o dist/skins/frosted.css --minify',
-      execOpts,
+      execOpts
     );
 
     // Compile minimal skin
     execSync(
       'pnpm exec tailwindcss -i src/skins/minimal/minimal-skin.css -o dist/skins/minimal.css --minify',
-      execOpts,
+      execOpts
     );
 
     // Verify all CSS files were created

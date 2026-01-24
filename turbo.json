@@ -4,13 +4,17 @@
   "concurrency": "20",
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["generate:icons", "^build"],
       "outputs": ["dist/**", ".vercel/output/**"]
     },
     "dev": {
       "cache": false,
       "persistent": true,
       "interactive": false
+    },
+    "generate:icons": {
+      "inputs": ["./packages/core/icons/assets/**"],
+      "outputs": ["src/generated-icons/**"]
     },
     "clean": {
       "cache": false

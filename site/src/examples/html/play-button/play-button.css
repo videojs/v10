@@ -5,10 +5,7 @@
 body {
   margin: 0;
   padding: 2rem;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
   background: #0a0a0a;
   color: white;
 }
@@ -61,7 +58,7 @@ media-play-button:active {
 /* Icon positioning - both occupy same grid cell */
 media-play-icon,
 media-pause-icon {
-  grid-area: 1/1;
+  grid-area: 1 / 1;
   transition: opacity 200ms ease;
   width: 18px;
   height: 18px;

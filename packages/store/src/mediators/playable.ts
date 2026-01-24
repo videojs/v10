@@ -15,9 +15,9 @@ export const playable = {
 
         const eventHandler = () => handler();
         const events = ['play', 'playing', 'pause', 'emptied'];
-        events.forEach(event => media.addEventListener(event, eventHandler));
+        events.forEach((event) => media.addEventListener(event, eventHandler));
 
-        return () => events.forEach(event => media.removeEventListener(event, eventHandler));
+        return () => events.forEach((event) => media.removeEventListener(event, eventHandler));
       },
     ] as const,
     actions: {

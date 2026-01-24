@@ -1,10 +1,9 @@
-import type { SharedProps } from './Shared';
 import css from 'shiki/langs/css.mjs';
 import html from 'shiki/langs/html.mjs';
 import javascript from 'shiki/langs/javascript.mjs';
 import tsx from 'shiki/langs/tsx.mjs';
-
 import createHighlighter from './createHighlighter';
+import type { SharedProps } from './Shared';
 import Shared from './Shared';
 
 // eslint-disable-next-line antfu/no-top-level-await

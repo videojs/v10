@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 /* before we begin with tailwind, let's go over some global rules */
 /* nested lists should have lower-alpha style */
@@ -35,7 +35,8 @@ mark {
 }
 
 /* Ok, now let's do some tailwind stuff */
-@custom-variant intent (&:hover, &:focus-within);
+@custom-variant intent (&:hover,
+&:focus-within);
 @custom-variant supports-container {
   @supports (container: size) {
     @slot;
@@ -49,6 +50,7 @@ mark {
 .dark .shiki span,
 .dark .astro-code,
 .dark .astro-code span {
+  /* biome-ignore lint/complexity/noImportantStyles: needed to override shiki theme colors in dark mode */
   color: var(--shiki-dark) !important;
 }
 

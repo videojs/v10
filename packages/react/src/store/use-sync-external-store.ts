@@ -18,19 +18,21 @@ import { useDebugValue, useEffect, useMemo, useRef, useSyncExternalStore } from 
  */
 function isPolyfill(x: any, y: any) {
   return (
-    (x === y && (x !== 0 || 1 / x === 1 / y)) || (x !== x && y !== y) // eslint-disable-line no-self-compare
+    (x === y && (x !== 0 || 1 / x === 1 / y)) ||
+    // biome-ignore lint/suspicious/noSelfCompare: intentional NaN check
+    (x !== x && y !== y)
   );
 }
 
-type SnapshotRef<Selection>
-  = | {
-    hasValue: true;
-    value: Selection;
-  }
+type SnapshotRef<Selection> =
   | {
-    hasValue: false;
-    value: null;
-  }
+      hasValue: true;
+      value: Selection;
+    }
+  | {
+      hasValue: false;
+      value: null;
+    }
   | null;
 
 const is: (x: any, y: any) => boolean = typeof Object.is === 'function' ? Object.is : isPolyfill;
@@ -41,7 +43,7 @@ export function useSyncExternalStoreWithSelector<Snapshot, Selection>(
   getSnapshot: () => Snapshot,
   getServerSnapshot: undefined | null | (() => Snapshot),
   selector: (snapshot: Snapshot) => Selection,
-  isEqual?: (a: Selection, b: Selection) => boolean,
+  isEqual?: (a: Selection, b: Selection) => boolean
 ): Selection {
   // Use this to track the rendered snapshot.
   const instRef = useRef<SnapshotRef<Selection>>(null);
@@ -74,8 +76,10 @@ export function useSyncExternalStoreWithSelector<Snapshot, Selection>(
           // Even if the selector has changed, the currently rendered selection
           // may be equal to the new selection. We should attempt to reuse the
           // current value if possible, to preserve downstream memoizations.
-          if (inst.hasValue) {
-            const currentSelection = inst.value;
+          // Use instRef.current directly to avoid dependency issues - the ref is stable
+          const currentInst = instRef.current;
+          if (currentInst?.hasValue) {
+            const currentSelection = currentInst.value;
             if (isEqual(currentSelection, nextSelection)) {
               memoizedSelection = currentSelection;
               return currentSelection;
@@ -102,7 +106,7 @@ export function useSyncExternalStoreWithSelector<Snapshot, Selection>(
       // has changed. If it hasn't, return the previous selection. That signals
       // to React that the selections are conceptually equal, and we can bail
       // out of rendering.
-      if (isEqual !== undefined && isEqual(prevSelection, nextSelection)) {
+      if (isEqual?.(prevSelection, nextSelection)) {
         return prevSelection;
       }
 
@@ -113,13 +117,14 @@ export function useSyncExternalStoreWithSelector<Snapshot, Selection>(
     // Assigning this to a constant so that Flow knows it can't change.
     const maybeGetServerSnapshot = getServerSnapshot === undefined ? null : getServerSnapshot;
     const getSnapshotWithSelector = () => memoizedSelector(getSnapshot());
-    const getServerSnapshotWithSelector
-      = maybeGetServerSnapshot === null ? undefined : () => memoizedSelector(maybeGetServerSnapshot());
+    const getServerSnapshotWithSelector =
+      maybeGetServerSnapshot === null ? undefined : () => memoizedSelector(maybeGetServerSnapshot());
     return [getSnapshotWithSelector, getServerSnapshotWithSelector];
   }, [getSnapshot, getServerSnapshot, selector, isEqual]);
 
   const value = useSyncExternalStore(subscribe, getSelection, getServerSelection);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: inst is from a stable ref and should not be a dependency
   useEffect(() => {
     inst.hasValue = true;
     inst.value = value;

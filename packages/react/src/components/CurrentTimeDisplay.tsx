@@ -1,10 +1,8 @@
-import type { PropsWithChildren } from 'react';
-import type { ConnectedComponent } from '../utils/component-factory';
-
 import { currentTimeDisplayStateDefinition } from '@videojs/store';
 import { formatDisplayTime, shallowEqual } from '@videojs/utils';
-
+import type { PropsWithChildren } from 'react';
 import { useMediaSelector } from '@/store';
+import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
 export function useCurrentTimeDisplayState(_props?: any): {
@@ -23,13 +21,13 @@ export function useCurrentTimeDisplayState(_props?: any): {
 
 export type CurrentTimeDisplayState = ReturnType<typeof useCurrentTimeDisplayState>;
 
-export interface CurrentTimeDisplayProps extends React.ComponentProps<'span'> {
+export interface CurrentTimeDisplayProps extends React.ComponentPropsWithoutRef<'span'> {
   showRemaining?: boolean;
 }
 
 export function useCurrentTimeDisplayProps(
   props: PropsWithChildren,
-  _state: ReturnType<typeof useCurrentTimeDisplayState>,
+  _state: ReturnType<typeof useCurrentTimeDisplayState>
 ): PropsWithChildren<Record<string, unknown>> {
   const baseProps: Record<string, any> = {
     /** external props spread last to allow for overriding */
@@ -43,20 +41,20 @@ export function renderCurrentTimeDisplay(props: CurrentTimeDisplayProps, state: 
   const { showRemaining, ...restProps } = props;
 
   /** @TODO Should this live here or elsewhere? (CJP) */
-  const timeLabel
-    = showRemaining && state.duration != null && state.currentTime != null
+  const timeLabel =
+    showRemaining && state.duration != null && state.currentTime != null
       ? formatDisplayTime(-(state.duration - state.currentTime))
       : formatDisplayTime(state.currentTime);
 
   return <span {...restProps}>{timeLabel}</span>;
 }
 
-export const CurrentTimeDisplay: ConnectedComponent<CurrentTimeDisplayProps, typeof renderCurrentTimeDisplay>
-  = toConnectedComponent(
+export const CurrentTimeDisplay: ConnectedComponent<CurrentTimeDisplayProps, typeof renderCurrentTimeDisplay> =
+  toConnectedComponent(
     useCurrentTimeDisplayState,
     useCurrentTimeDisplayProps,
     renderCurrentTimeDisplay,
-    'CurrentTimeDisplay',
+    'CurrentTimeDisplay'
   );
 
 export default CurrentTimeDisplay;

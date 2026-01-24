@@ -6,14 +6,14 @@
 }
 
 /* Horizontal orientation */
-.root[data-orientation='horizontal'] {
+.root[data-orientation="horizontal"] {
   width: 100%;
   min-width: 100px;
   height: 20px;
 }
 
 /* Vertical orientation */
-.root[data-orientation='vertical'] {
+.root[data-orientation="vertical"] {
   width: 20px;
   height: 100px;
   flex-direction: column;
@@ -27,13 +27,13 @@
 }
 
 /* Horizontal track */
-.track[data-orientation='horizontal'] {
+.track[data-orientation="horizontal"] {
   width: 100%;
   height: 0.375rem;
 }
 
 /* Vertical track */
-.track[data-orientation='vertical'] {
+.track[data-orientation="vertical"] {
   width: 0.375rem;
   height: 100%;
 }

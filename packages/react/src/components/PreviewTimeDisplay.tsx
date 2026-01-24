@@ -1,10 +1,8 @@
-import type { PropsWithChildren } from 'react';
-import type { ConnectedComponent } from '../utils/component-factory';
-
 import { previewTimeDisplayStateDefinition } from '@videojs/store';
 import { formatDisplayTime, shallowEqual } from '@videojs/utils';
-
+import type { PropsWithChildren } from 'react';
 import { useMediaSelector } from '@/store';
+import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
 export function usePreviewTimeDisplayState(_props: any): {
@@ -21,13 +19,13 @@ export function usePreviewTimeDisplayState(_props: any): {
 
 export type PreviewTimeDisplayState = ReturnType<typeof usePreviewTimeDisplayState>;
 
-export interface PreviewTimeDisplayProps extends React.ComponentProps<'span'> {
+export interface PreviewTimeDisplayProps extends React.ComponentPropsWithoutRef<'span'> {
   showRemaining?: boolean;
 }
 
 export function getPreviewTimeDisplayProps(
   props: PropsWithChildren,
-  _state: ReturnType<typeof usePreviewTimeDisplayState>,
+  _state: ReturnType<typeof usePreviewTimeDisplayState>
 ): PropsWithChildren<Record<string, unknown>> {
   const baseProps: Record<string, any> = {
     /** external props spread last to allow for overriding */
@@ -46,12 +44,12 @@ export function renderPreviewTimeDisplay(props: PreviewTimeDisplayProps, state: 
   return <span {...restProps}>{timeLabel}</span>;
 }
 
-export const PreviewTimeDisplay: ConnectedComponent<PreviewTimeDisplayProps, typeof renderPreviewTimeDisplay>
-  = toConnectedComponent(
+export const PreviewTimeDisplay: ConnectedComponent<PreviewTimeDisplayProps, typeof renderPreviewTimeDisplay> =
+  toConnectedComponent(
     usePreviewTimeDisplayState,
     getPreviewTimeDisplayProps,
     renderPreviewTimeDisplay,
-    'PreviewTimeDisplay',
+    'PreviewTimeDisplay'
   );
 
 export default PreviewTimeDisplay;

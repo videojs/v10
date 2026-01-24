@@ -17,7 +17,7 @@ import '@/define/media-tooltip';
 import '@/icons';
 
 export function getTemplateHTML() {
-  return /* html */`
+  return /* html */ `
     ${MediaSkinElement.getTemplateHTML()}
     <style>${styles}</style>
 

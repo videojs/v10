@@ -1,8 +1,8 @@
 import type { PopoverState as CorePopoverState } from '@videojs/core';
-import type { Prettify } from '../types';
-import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 import { Popover as CorePopover } from '@videojs/core';
 import { getDocumentOrShadowRoot } from '@videojs/utils/dom';
+import type { Prettify } from '../types';
+import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
 
 type Placement = CorePopoverState['placement'];
@@ -22,16 +22,16 @@ export const getPopoverProps: PropsHook<Popover, PopoverState> = (element, state
   }
 
   const triggerElement = getDocumentOrShadowRoot(element)?.querySelector(
-    `[commandfor="${element.id}"]`,
+    `[commandfor="${element.id}"]`
   ) as HTMLElement | null;
 
   if (state._triggerElement !== triggerElement) {
     state._setTriggerElement(triggerElement);
   }
 
-  const mediaContainer = element.closest(element.collisionBoundary
-    ? `#${element.collisionBoundary}`
-    : 'media-container') as HTMLElement | null;
+  const mediaContainer = element.closest(
+    element.collisionBoundary ? `#${element.collisionBoundary}` : 'media-container'
+  ) as HTMLElement | null;
 
   if (state._collisionBoundaryElement !== mediaContainer) {
     state._setCollisionBoundaryElement(mediaContainer);
@@ -96,5 +96,5 @@ export const PopoverElement: ConnectedComponentConstructor<Popover, PopoverState
   Popover,
   getPopoverState,
   getPopoverProps,
-  'Popover',
+  'Popover'
 );

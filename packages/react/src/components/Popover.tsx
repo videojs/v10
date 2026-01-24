@@ -1,10 +1,9 @@
 import type { PopoverState as CorePopoverState } from '@videojs/core';
+import { Popover as CorePopover } from '@videojs/core';
 import type { ReactNode } from 'react';
+import { Children, cloneElement, useCallback, useEffect, useId, useState } from 'react';
 import type { Prettify } from '../types';
 import type { ConnectedComponent } from '../utils/component-factory';
-
-import { Popover as CorePopover } from '@videojs/core';
-import { Children, cloneElement, useCallback, useEffect, useId, useState } from 'react';
 import { toConnectedComponent, toContextComponent, useCore } from '../utils/component-factory';
 import { useMutationObserver } from '../utils/use-mutation-observer';
 
@@ -51,7 +50,7 @@ export function usePopoverRootState(props: PopoverRootProps): PopoverState {
       setSideOffset(newSideOffset);
       setCollisionPadding(newCollisionPadding);
     },
-    [],
+    []
   );
 
   return {
@@ -75,7 +74,7 @@ const PopoverRoot: ConnectedComponent<PopoverRootProps, typeof renderPopoverRoot
   usePopoverRootState,
   usePopoverRootProps,
   renderPopoverRoot,
-  'Popover.Root',
+  'Popover.Root'
 );
 
 // ============================================================================
@@ -88,7 +87,7 @@ export interface PopoverTriggerProps {
 
 export function usePopoverTriggerProps(
   props: PopoverTriggerProps,
-  context: PopoverState,
+  context: PopoverState
 ): { child: JSX.Element; triggerProps: Record<string, any> } {
   const { children } = props;
   const { _setTriggerElement, _open, popupId } = context;
@@ -118,7 +117,7 @@ export function renderPopoverTrigger(props: { child: JSX.Element; triggerProps: 
 const PopoverTrigger: ConnectedComponent<PopoverTriggerProps, typeof renderPopoverTrigger> = toContextComponent(
   usePopoverTriggerProps,
   renderPopoverTrigger,
-  'Popover.Trigger',
+  'Popover.Trigger'
 );
 
 // ============================================================================
@@ -135,7 +134,7 @@ export interface PopoverPositionerProps {
 
 export function usePopoverPositionerProps(
   props: PopoverPositionerProps,
-  context: PopoverState,
+  context: PopoverState
 ): { children: ReactNode } {
   const { side = 'top', sideOffset = 5, collisionPadding = 0, collisionBoundary, children } = props;
   const { updatePositioning, _setCollisionBoundaryElement } = context;
@@ -157,8 +156,8 @@ export function renderPopoverPositioner(props: { children: ReactNode }): JSX.Ele
   return <>{props.children}</>;
 }
 
-const PopoverPositioner: ConnectedComponent<PopoverPositionerProps, typeof renderPopoverPositioner>
-  = toContextComponent(usePopoverPositionerProps, renderPopoverPositioner, 'Popover.Positioner');
+const PopoverPositioner: ConnectedComponent<PopoverPositionerProps, typeof renderPopoverPositioner> =
+  toContextComponent(usePopoverPositionerProps, renderPopoverPositioner, 'Popover.Positioner');
 
 // ============================================================================
 // POPUP COMPONENT
@@ -207,7 +206,7 @@ export function usePopoverPopupProps(props: PopoverPopupProps, context: PopoverS
 
   // Track data attributes from trigger element, updating when element or attributes change
   const [dataAttrs, setDataAttrs] = useState<Record<string, string> | undefined>(() =>
-    getDataAttributes(_triggerElement),
+    getDataAttributes(_triggerElement)
   );
 
   // Update data attributes when trigger element changes
@@ -221,7 +220,7 @@ export function usePopoverPopupProps(props: PopoverPopupProps, context: PopoverS
     () => {
       setDataAttrs(getDataAttributes(_triggerElement));
     },
-    { attributes: true },
+    { attributes: true }
   );
 
   return {
@@ -247,8 +246,8 @@ function getDataAttributes(element?: HTMLElement | null): Record<string, string>
   if (!element) return undefined;
   return Object.fromEntries(
     Array.from(element.attributes)
-      .filter(attr => attr.name.startsWith('data-'))
-      .map(attr => [attr.name, attr.value]),
+      .filter((attr) => attr.name.startsWith('data-'))
+      .map((attr) => [attr.name, attr.value])
   );
 }
 
@@ -259,7 +258,7 @@ export function renderPopoverPopup(props: PopoverPopupRenderProps): JSX.Element 
 const PopoverPopup: ConnectedComponent<PopoverPopupProps, typeof renderPopoverPopup> = toContextComponent(
   usePopoverPopupProps,
   renderPopoverPopup,
-  'Popover.Popup',
+  'Popover.Popup'
 );
 
 // ============================================================================
@@ -273,7 +272,7 @@ export const Popover = Object.assign(
     Trigger: PopoverTrigger,
     Positioner: PopoverPositioner,
     Popup: PopoverPopup,
-  },
+  }
 ) as {
   Root: typeof PopoverRoot;
   Trigger: typeof PopoverTrigger;

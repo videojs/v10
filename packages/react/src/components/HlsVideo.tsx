@@ -1,13 +1,5 @@
-import type {
-  CSSProperties,
-  DetailedHTMLProps,
-  ElementType,
-  PropsWithChildren,
-  Ref,
-  VideoHTMLAttributes,
-} from 'react';
-
 import { createMediaPlaybackController } from '@videojs/core/media';
+import type { CSSProperties, DetailedHTMLProps, ElementType, PropsWithChildren, Ref, VideoHTMLAttributes } from 'react';
 
 import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { useMediaRef } from '@/store';

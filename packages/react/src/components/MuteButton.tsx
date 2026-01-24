@@ -1,12 +1,9 @@
-import type { PropsWithChildren } from 'react';
-import type { ConnectedComponent } from '../utils/component-factory';
-
 import { muteButtonStateDefinition } from '@videojs/store';
-
 import { shallowEqual } from '@videojs/utils';
+import type { PropsWithChildren } from 'react';
 import { useMemo } from 'react';
-
 import { useMediaSelector, useMediaStore } from '@/store';
+import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
 export function useMuteButtonState(_props?: any): {
@@ -31,7 +28,7 @@ export type MuteButtonState = ReturnType<typeof useMuteButtonState>;
 
 export function getMuteButtonProps(
   props: PropsWithChildren,
-  state: MuteButtonState,
+  state: MuteButtonState
 ): PropsWithChildren<Record<string, unknown>> {
   const baseProps: Record<string, any> = {
     /** data attributes/props - non-boolean */
@@ -79,7 +76,7 @@ export const MuteButton: ConnectedComponent<MuteButtonProps, typeof renderMuteBu
   useMuteButtonState,
   getMuteButtonProps,
   renderMuteButton,
-  'MuteButton',
+  'MuteButton'
 );
 
 export default MuteButton;

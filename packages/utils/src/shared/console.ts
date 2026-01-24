@@ -10,25 +10,19 @@ export function printConsoleBanner(version: string): void {
       2px 2px 0 #f26222, 
       3px 3px 0 #ea3837, 
       4px 4px 0 #a83b71`,
-    `font: 1em monospace;`,
+    `font: 1em monospace;`
   );
 
   const prereleaseType = version.includes('preview') ? 'preview' : version.includes('alpha') ? 'alpha' : null;
   if (prereleaseType) {
-    console.warn(
-      `%c This is a ${prereleaseType} release. Please use with caution.`,
-      `color: #f26222;`,
-    );
+    console.warn(`%c This is a ${prereleaseType} release. Please use with caution.`, `color: #f26222;`);
   }
 
   // eslint-disable-next-line no-console
   console.info(
     '%cReport a Bug, Issue or Feature Request - https://github.com/videojs/v10/issues/new/choose',
-    'color: #aaa; font-size: .9em;',
+    'color: #aaa; font-size: .9em;'
   );
   // eslint-disable-next-line no-console
-  console.info(
-    '%cReach out on Discord - https://discord.gg/JBqHh485uF',
-    'color: #aaa; font-size: .9em;',
-  );
+  console.info('%cReach out on Discord - https://discord.gg/JBqHh485uF', 'color: #aaa; font-size: .9em;');
 }

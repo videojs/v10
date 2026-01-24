@@ -37,7 +37,7 @@ export const refEquality = (a: any, b: any): boolean => a === b;
 
 export function useMediaSelector<S = any>(
   selector: (state: any) => S,
-  equalityFn: (a: S, b: S) => boolean = refEquality,
+  equalityFn: (a: S, b: S) => boolean = refEquality
 ): S {
   const store = useContext(MediaContext);
   const selectedState = useSyncExternalStoreWithSelector(
@@ -45,7 +45,7 @@ export function useMediaSelector<S = any>(
     store?.getState ?? identity,
     store?.getState ?? identity,
     selector,
-    equalityFn,
+    equalityFn
   ) as S;
 
   return selectedState;

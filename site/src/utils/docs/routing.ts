@@ -1,7 +1,13 @@
-import type { AnySupportedStyle, Sidebar, SupportedFramework } from '@/types/docs';
 import { sidebar as defaultSidebar } from '@/docs.config';
+import type { AnySupportedStyle, Sidebar, SupportedFramework } from '@/types/docs';
 import { DEFAULT_FRAMEWORK, getDefaultStyle, isValidFramework, isValidStyleForFramework } from '@/types/docs';
-import { findFirstGuide, findGuideBySlug, getValidFrameworksForGuide, getValidStylesForGuide, isItemVisible } from './sidebar';
+import {
+  findFirstGuide,
+  findGuideBySlug,
+  getValidFrameworksForGuide,
+  getValidStylesForGuide,
+  isItemVisible,
+} from './sidebar';
 
 /**
  * Build a docs URL from framework, style, and guide slug components.
@@ -47,7 +53,10 @@ export interface IndexRedirectResult {
  * @param input - The input containing preferences and params
  * @param sidebar - Optional sidebar to search (defaults to main sidebar config)
  */
-export function resolveIndexRedirect(input: IndexRedirectInput, sidebar: Sidebar = defaultSidebar): IndexRedirectResult {
+export function resolveIndexRedirect(
+  input: IndexRedirectInput,
+  sidebar: Sidebar = defaultSidebar
+): IndexRedirectResult {
   const { preferences, params } = input;
 
   let selectedFramework: SupportedFramework;
@@ -66,7 +75,7 @@ export function resolveIndexRedirect(input: IndexRedirectInput, sidebar: Sidebar
     selectedStyle = params.style as AnySupportedStyle;
     reason = 'Using validated params.framework and params.style';
   } else if (params.framework) {
-  // Case 2: Only framework in params
+    // Case 2: Only framework in params
     if (!isValidFramework(params.framework)) {
       throw new Error(`Invalid framework param: ${params.framework}`);
     }
@@ -81,7 +90,7 @@ export function resolveIndexRedirect(input: IndexRedirectInput, sidebar: Sidebar
       reason = 'Using params.framework and default style (preference invalid or missing)';
     }
   } else {
-  // Case 3: No params - use preferences or defaults
+    // Case 3: No params - use preferences or defaults
     // Try to use framework preference
     if (preferences.framework && isValidFramework(preferences.framework)) {
       selectedFramework = preferences.framework;
@@ -152,7 +161,10 @@ export interface FrameworkChangeResult {
  * @param input - The input containing current state and new framework
  * @param sidebar - Optional sidebar to search (defaults to main sidebar config)
  */
-export function resolveFrameworkChange(input: FrameworkChangeInput, sidebar: Sidebar = defaultSidebar): FrameworkChangeResult {
+export function resolveFrameworkChange(
+  input: FrameworkChangeInput,
+  sidebar: Sidebar = defaultSidebar
+): FrameworkChangeResult {
   const { currentSlug, currentStyle, newFramework } = input;
 
   if (!isValidFramework(newFramework)) {
@@ -356,16 +368,16 @@ export function resolveDocsLinkUrl(input: DocsLinkInput, sidebar: Sidebar = defa
     priorityLevel = 1;
     reason = 'Priority 1: Kept both framework and style (slug visible in current context)';
   } else if (validStylesForContextFramework.length > 0) {
-  // Priority 2: Try current framework + guide's first valid style for that framework
+    // Priority 2: Try current framework + guide's first valid style for that framework
     selectedFramework = contextFramework;
     selectedStyle = validStylesForContextFramework[0];
     priorityLevel = 2;
     reason = 'Priority 2: Kept framework, changed style (slug not visible with current style)';
   } else {
-  // Priority 3: Try guide's first valid framework that supports current style
+    // Priority 3: Try guide's first valid framework that supports current style
     const validFrameworks = getValidFrameworksForGuide(guide);
-    const frameworkThatSupportsContextStyle = validFrameworks.find(fw =>
-      getValidStylesForGuide(guide, fw).includes(contextStyle as any),
+    const frameworkThatSupportsContextStyle = validFrameworks.find((fw) =>
+      getValidStylesForGuide(guide, fw).includes(contextStyle as any)
     );
 
     if (frameworkThatSupportsContextStyle) {
@@ -374,7 +386,7 @@ export function resolveDocsLinkUrl(input: DocsLinkInput, sidebar: Sidebar = defa
       priorityLevel = 3;
       reason = 'Priority 3: Changed framework, kept style (slug not visible with current framework)';
     } else {
-    // Priority 4: Fallback - use guide's first valid framework + its first valid style
+      // Priority 4: Fallback - use guide's first valid framework + its first valid style
       const fallbackFramework = validFrameworks[0];
       const fallbackStyle = getValidStylesForGuide(guide, fallbackFramework)[0];
       selectedFramework = fallbackFramework;

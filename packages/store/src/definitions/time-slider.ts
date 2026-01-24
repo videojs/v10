@@ -22,7 +22,7 @@ export const timeSliderStateDefinition: TimeSliderStateDefinition = {
     duration: rawState.duration ?? 0,
     previewTime: rawState.previewTime ?? 0,
   }),
-  createRequestMethods: dispatch => ({
+  createRequestMethods: (dispatch) => ({
     requestSeek: (time: number) => {
       dispatch({ type: 'seekrequest', detail: time });
     },

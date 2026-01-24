@@ -1,12 +1,11 @@
 import type { TooltipState as CoreTooltipState } from '@videojs/core';
+import { Tooltip as CoreTooltip } from '@videojs/core';
 import type { ReactNode } from 'react';
+import { cloneElement, useCallback, useId, useState } from 'react';
 import type { Prettify } from '../types';
 import type { ConnectedComponent } from '../utils/component-factory';
-import type { PopoverPopupProps, PopoverPopupRenderProps, PopoverPositionerProps, PopoverRootProps } from './Popover';
-
-import { Tooltip as CoreTooltip } from '@videojs/core';
-import { cloneElement, useCallback, useId, useState } from 'react';
 import { toConnectedComponent, toContextComponent, useCore } from '../utils/component-factory';
+import type { PopoverPopupProps, PopoverPopupRenderProps, PopoverPositionerProps, PopoverRootProps } from './Popover';
 import { usePopoverPopupProps, usePopoverPositionerProps, usePopoverTriggerProps } from './Popover';
 
 type Placement = CoreTooltipState['placement'];
@@ -49,7 +48,7 @@ export function useTooltipRootState(props: TooltipRootProps): TooltipState {
       setSideOffset(newSideOffset);
       setCollisionPadding(newCollisionPadding);
     },
-    [],
+    []
   );
 
   return {
@@ -73,7 +72,7 @@ const TooltipRoot: ConnectedComponent<TooltipRootProps, typeof renderTooltipRoot
   useTooltipRootState,
   useTooltipRootProps,
   renderTooltipRoot,
-  'Tooltip.Root',
+  'Tooltip.Root'
 );
 
 // ============================================================================
@@ -86,7 +85,7 @@ interface TooltipTriggerProps {
 
 export function useTooltipTriggerProps(
   props: TooltipTriggerProps,
-  context: TooltipState,
+  context: TooltipState
 ): { child: JSX.Element; triggerProps: Record<string, any> } {
   return usePopoverTriggerProps(props, context);
 }
@@ -99,7 +98,7 @@ export function renderTooltipTrigger(props: { child: JSX.Element; triggerProps: 
 const TooltipTrigger: ConnectedComponent<TooltipTriggerProps, typeof renderTooltipTrigger> = toContextComponent(
   useTooltipTriggerProps,
   renderTooltipTrigger,
-  'Tooltip.Trigger',
+  'Tooltip.Trigger'
 );
 
 // ============================================================================
@@ -110,7 +109,7 @@ interface TooltipPositionerProps extends PopoverPositionerProps {}
 
 export function useTooltipPositionerProps(
   props: TooltipPositionerProps,
-  context: TooltipState,
+  context: TooltipState
 ): { children: ReactNode } {
   return usePopoverPositionerProps(props, context);
 }
@@ -119,8 +118,8 @@ export function renderTooltipPositioner(props: { children: ReactNode }): JSX.Ele
   return <>{props.children}</>;
 }
 
-const TooltipPositioner: ConnectedComponent<TooltipPositionerProps, typeof renderTooltipPositioner>
-  = toContextComponent(useTooltipPositionerProps, renderTooltipPositioner, 'Tooltip.Positioner');
+const TooltipPositioner: ConnectedComponent<TooltipPositionerProps, typeof renderTooltipPositioner> =
+  toContextComponent(useTooltipPositionerProps, renderTooltipPositioner, 'Tooltip.Positioner');
 
 // ============================================================================
 // POPUP COMPONENT
@@ -141,7 +140,7 @@ export function renderTooltipPopup(props: TooltipPopupRenderProps): JSX.Element 
 const TooltipPopup: ConnectedComponent<TooltipPopupProps, typeof renderTooltipPopup> = toContextComponent(
   useTooltipPopupProps,
   renderTooltipPopup,
-  'Tooltip.Popup',
+  'Tooltip.Popup'
 );
 
 // ============================================================================
@@ -155,7 +154,7 @@ export const Tooltip = Object.assign(
     Trigger: TooltipTrigger,
     Positioner: TooltipPositioner,
     Popup: TooltipPopup,
-  },
+  }
 ) as {
   Root: typeof TooltipRoot;
   Trigger: typeof TooltipTrigger;

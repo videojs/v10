@@ -108,7 +108,7 @@ export class Slider {
       evt.clientX,
       evt.clientY,
       { x: rect.left, y: rect.bottom },
-      { x: rect.right, y: rect.top },
+      { x: rect.right, y: rect.top }
     );
   }
 

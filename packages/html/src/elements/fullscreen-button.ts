@@ -1,14 +1,14 @@
 import type { FullscreenButtonState } from '@videojs/store';
+import { fullscreenButtonStateDefinition } from '@videojs/store';
+import { memoize } from '@videojs/utils';
 import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
-
-import { fullscreenButtonStateDefinition } from '@videojs/store';
-
-import { memoize } from '@videojs/utils';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 import { ButtonElement } from './button';
 
-type FullscreenButtonStateWithMethods = Prettify<FullscreenButtonState & ReturnType<typeof fullscreenButtonStateDefinition.createRequestMethods>>;
+type FullscreenButtonStateWithMethods = Prettify<
+  FullscreenButtonState & ReturnType<typeof fullscreenButtonStateDefinition.createRequestMethods>
+>;
 
 const fullscreenButtonCreateRequestMethods = memoize(fullscreenButtonStateDefinition.createRequestMethods);
 
@@ -16,14 +16,20 @@ const fullscreenButtonCreateRequestMethods = memoize(fullscreenButtonStateDefini
  * FullscreenButton state hook - equivalent to React's useFullscreenButtonState
  * Handles media store state subscription and transformation
  */
-export const getFullscreenButtonState: StateHook<FullscreenButton, FullscreenButtonStateWithMethods> = (_element, mediaStore) => {
+export const getFullscreenButtonState: StateHook<FullscreenButton, FullscreenButtonStateWithMethods> = (
+  _element,
+  mediaStore
+) => {
   return {
     ...fullscreenButtonStateDefinition.stateTransform(mediaStore.getState()),
     ...fullscreenButtonCreateRequestMethods(mediaStore.dispatch),
   };
 };
 
-export const getFullscreenButtonProps: PropsHook<FullscreenButton, FullscreenButtonStateWithMethods> = (_element, state) => {
+export const getFullscreenButtonProps: PropsHook<FullscreenButton, FullscreenButtonStateWithMethods> = (
+  _element,
+  state
+) => {
   const baseProps: Record<string, any> = {
     /** data attributes/props */
     'data-fullscreen': state.fullscreen,
@@ -59,9 +65,7 @@ export class FullscreenButton extends ButtonElement {
   }
 }
 
-export const FullscreenButtonElement: ConnectedComponentConstructor<FullscreenButton, FullscreenButtonStateWithMethods> = toConnectedHTMLComponent(
+export const FullscreenButtonElement: ConnectedComponentConstructor<
   FullscreenButton,
-  getFullscreenButtonState,
-  getFullscreenButtonProps,
-  'FullscreenButton',
-);
+  FullscreenButtonStateWithMethods
+> = toConnectedHTMLComponent(FullscreenButton, getFullscreenButtonState, getFullscreenButtonProps, 'FullscreenButton');

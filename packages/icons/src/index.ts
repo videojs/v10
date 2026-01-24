@@ -1,8 +1,8 @@
-import fullscreenEnterAlt from '../assets/fullscreen-enter-alt.svg';
 // Import SVG files as strings
 import fullscreenEnter from '../assets/fullscreen-enter.svg';
-import fullscreenExitAlt from '../assets/fullscreen-exit-alt.svg';
+import fullscreenEnterAlt from '../assets/fullscreen-enter-alt.svg';
 import fullscreenExit from '../assets/fullscreen-exit.svg';
+import fullscreenExitAlt from '../assets/fullscreen-exit-alt.svg';
 import pause from '../assets/pause.svg';
 import play from '../assets/play.svg';
 import volumeHigh from '../assets/volume-high.svg';
@@ -88,6 +88,6 @@ export function getAllIcons(): IconDefinition[] {
 }
 
 export function createSVGString(icon: IconDefinition): string {
-  const pathElements = icon.paths.map(path => `<path d="${path}"/>`).join('');
+  const pathElements = icon.paths.map((path) => `<path d="${path}"/>`).join('');
   return `<svg viewBox="${icon.viewBox}" xmlns="http://www.w3.org/2000/svg">${pathElements}</svg>`;
 }

@@ -17,7 +17,7 @@
   translate: -100% 0;
 }
 
-[popover] {
+header[popover] {
   transition:
     opacity 0.25s,
     translate 0.25s,

@@ -1,7 +1,7 @@
 import type { MarkdownHeading } from 'astro';
-import type { RefObject } from 'react';
 import debounce from 'just-debounce-it';
 import throttle from 'just-throttle';
+import type { RefObject } from 'react';
 import { useEffect, useState } from 'react';
 
 /**
@@ -28,10 +28,7 @@ export function getScrollParent(element: HTMLElement): HTMLElement {
 /**
  * Check if an element is outside the visible bounds of its scroll container
  */
-export function isElementOffscreen(
-  element: HTMLElement,
-  container: HTMLElement,
-): boolean {
+export function isElementOffscreen(element: HTMLElement, container: HTMLElement): boolean {
   const containerRect = container.getBoundingClientRect();
   const elementRect = element.getBoundingClientRect();
 
@@ -47,9 +44,9 @@ export function isElementOffscreen(
 export function filterHeadingsByDepth(
   headings: MarkdownHeading[],
   minDepth: number,
-  maxDepth: number,
+  maxDepth: number
 ): MarkdownHeading[] {
-  return headings.filter(h => h.depth >= minDepth && h.depth <= maxDepth);
+  return headings.filter((h) => h.depth >= minDepth && h.depth <= maxDepth);
 }
 
 /**
@@ -75,9 +72,7 @@ export function useAutoScroll({ activeId, containerRef }: UseAutoScrollOptions) 
   useEffect(() => {
     if (!activeId || !containerRef.current) return;
 
-    const activeLink = containerRef.current.querySelector<HTMLAnchorElement>(
-      `a[href="#${activeId}"]`,
-    );
+    const activeLink = containerRef.current.querySelector<HTMLAnchorElement>(`a[href="#${activeId}"]`);
     if (!activeLink) return;
 
     const scrollParent = getScrollParent(containerRef.current);

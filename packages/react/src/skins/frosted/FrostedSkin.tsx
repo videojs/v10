@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from 'react';
+import type { PropsWithChildren, ReactElement } from 'react';
 
 import { CurrentTimeDisplay } from '@/components/CurrentTimeDisplay';
 import { DurationDisplay } from '@/components/DurationDisplay';
@@ -26,7 +26,7 @@ type SkinProps = PropsWithChildren<{
   className?: string;
 }>;
 
-export default function FrostedSkin({ children, className = '' }: SkinProps): JSX.Element {
+export default function FrostedSkin({ children, className = '' }: SkinProps): ReactElement {
   return (
     <MediaContainer className={`${styles.MediaContainer} ${className}`}>
       {children}
@@ -42,7 +42,9 @@ export default function FrostedSkin({ children, className = '' }: SkinProps): JS
             </PlayButton>
           </Tooltip.Trigger>
           <Tooltip.Positioner side="top" sideOffset={12} collisionPadding={12}>
-            <Tooltip.Popup className={`${styles.TooltipPopup} ${styles.Surface} ${styles.PopupAnimation} ${styles.PlayTooltipPopup}`}>
+            <Tooltip.Popup
+              className={`${styles.TooltipPopup} ${styles.Surface} ${styles.PopupAnimation} ${styles.PlayTooltipPopup}`}
+            >
               <span className={styles.PlayTooltip}>Play</span>
               <span className={styles.PauseTooltip}>Pause</span>
             </Tooltip.Popup>
@@ -104,7 +106,9 @@ export default function FrostedSkin({ children, className = '' }: SkinProps): JS
             </FullscreenButton>
           </Tooltip.Trigger>
           <Tooltip.Positioner side="top" sideOffset={12} collisionPadding={12}>
-            <Tooltip.Popup className={`${styles.Surface} ${styles.PopupAnimation} ${styles.TooltipPopup} ${styles.FullscreenTooltipPopup}`}>
+            <Tooltip.Popup
+              className={`${styles.Surface} ${styles.PopupAnimation} ${styles.TooltipPopup} ${styles.FullscreenTooltipPopup}`}
+            >
               <span className={styles.FullscreenEnterTooltip}>Enter Fullscreen</span>
               <span className={styles.FullscreenExitTooltip}>Exit Fullscreen</span>
             </Tooltip.Popup>

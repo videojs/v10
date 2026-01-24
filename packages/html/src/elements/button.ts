@@ -3,7 +3,7 @@ import { namedNodeMapToObject } from '@videojs/utils/dom';
 export function getTemplateHTML(
   this: typeof ButtonElement,
   _attrs: Record<string, string>,
-  _props: Record<string, any> = {},
+  _props: Record<string, any> = {}
 ): string {
   return /* html */ `
     <style>

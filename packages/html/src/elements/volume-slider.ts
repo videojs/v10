@@ -1,9 +1,8 @@
-import type { Prettify } from '../types';
-import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
-
 import { VolumeSlider as CoreVolumeSlider } from '@videojs/core';
 import { volumeSliderStateDefinition } from '@videojs/store';
 import { memoize } from '@videojs/utils';
+import type { Prettify } from '../types';
+import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
 
@@ -12,11 +11,16 @@ import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../ut
 // ============================================================================
 
 type VolumeSliderState = Prettify<ReturnType<CoreVolumeSlider['getState']>>;
-type VolumeSliderStateWithMethods = Prettify<VolumeSliderState & ReturnType<typeof volumeSliderStateDefinition.createRequestMethods>>;
+type VolumeSliderStateWithMethods = Prettify<
+  VolumeSliderState & ReturnType<typeof volumeSliderStateDefinition.createRequestMethods>
+>;
 
 const volumeSliderCreateRequestMethods = memoize(volumeSliderStateDefinition.createRequestMethods);
 
-export const getVolumeSliderRootState: StateHook<VolumeSliderRoot, VolumeSliderStateWithMethods> = (element, mediaStore) => {
+export const getVolumeSliderRootState: StateHook<VolumeSliderRoot, VolumeSliderStateWithMethods> = (
+  element,
+  mediaStore
+) => {
   const mediaState = volumeSliderStateDefinition.stateTransform(mediaStore.getState());
   const mediaMethods = volumeSliderCreateRequestMethods(mediaStore.dispatch);
   const coreState = getCoreState(CoreVolumeSlider, {
@@ -69,12 +73,8 @@ export class VolumeSliderRoot extends HTMLElement {
   }
 }
 
-export const VolumeSliderRootElement: ConnectedComponentConstructor<VolumeSliderRoot, VolumeSliderStateWithMethods> = toConnectedHTMLComponent(
-  VolumeSliderRoot,
-  getVolumeSliderRootState,
-  getVolumeSliderRootProps,
-  'VolumeSliderRoot',
-);
+export const VolumeSliderRootElement: ConnectedComponentConstructor<VolumeSliderRoot, VolumeSliderStateWithMethods> =
+  toConnectedHTMLComponent(VolumeSliderRoot, getVolumeSliderRootState, getVolumeSliderRootProps, 'VolumeSliderRoot');
 
 // ============================================================================
 // TRACK COMPONENT
@@ -100,12 +100,8 @@ export const getVolumeSliderTrackProps: PropsHook<VolumeSliderTrack, undefined> 
 
 export class VolumeSliderTrack extends HTMLElement {}
 
-export const VolumeSliderTrackElement: ConnectedComponentConstructor<VolumeSliderTrack, undefined> = toConnectedHTMLComponent(
-  VolumeSliderTrack,
-  undefined,
-  getVolumeSliderTrackProps,
-  'VolumeSliderTrack',
-);
+export const VolumeSliderTrackElement: ConnectedComponentConstructor<VolumeSliderTrack, undefined> =
+  toConnectedHTMLComponent(VolumeSliderTrack, undefined, getVolumeSliderTrackProps, 'VolumeSliderTrack');
 
 // ============================================================================
 // INDICATOR COMPONENT
@@ -114,21 +110,22 @@ export const VolumeSliderTrackElement: ConnectedComponentConstructor<VolumeSlide
 export const getVolumeSliderIndicatorProps: PropsHook<VolumeSliderIndicator, undefined> = (element, _state) => {
   const rootElement = element.closest('media-volume-slider') as VolumeSliderRoot;
   const orientation = rootElement?.orientation || 'horizontal';
-  const style = orientation === 'horizontal'
-    ? {
-        position: 'absolute',
-        width: 'var(--slider-fill, 0%)',
-        height: '100%',
-        top: '0',
-        bottom: undefined,
-      }
-    : {
-        position: 'absolute',
-        height: 'var(--slider-fill, 0%)',
-        width: '100%',
-        bottom: '0',
-        top: undefined,
-      };
+  const style =
+    orientation === 'horizontal'
+      ? {
+          position: 'absolute',
+          width: 'var(--slider-fill, 0%)',
+          height: '100%',
+          top: '0',
+          bottom: undefined,
+        }
+      : {
+          position: 'absolute',
+          height: 'var(--slider-fill, 0%)',
+          width: '100%',
+          bottom: '0',
+          top: undefined,
+        };
 
   return {
     'data-orientation': orientation,
@@ -138,12 +135,8 @@ export const getVolumeSliderIndicatorProps: PropsHook<VolumeSliderIndicator, und
 
 export class VolumeSliderIndicator extends HTMLElement {}
 
-export const VolumeSliderIndicatorElement: ConnectedComponentConstructor<VolumeSliderIndicator, undefined> = toConnectedHTMLComponent(
-  VolumeSliderIndicator,
-  undefined,
-  getVolumeSliderIndicatorProps,
-  'VolumeSliderIndicator',
-);
+export const VolumeSliderIndicatorElement: ConnectedComponentConstructor<VolumeSliderIndicator, undefined> =
+  toConnectedHTMLComponent(VolumeSliderIndicator, undefined, getVolumeSliderIndicatorProps, 'VolumeSliderIndicator');
 
 // ============================================================================
 // THUMB COMPONENT
@@ -152,21 +145,22 @@ export const VolumeSliderIndicatorElement: ConnectedComponentConstructor<VolumeS
 export const getVolumeSliderThumbProps: PropsHook<VolumeSliderThumb, undefined> = (element, _state) => {
   const rootElement = element.closest('media-volume-slider') as VolumeSliderRoot;
   const orientation = rootElement?.orientation || 'horizontal';
-  const style = orientation === 'horizontal'
-    ? {
-        position: 'absolute',
-        left: 'var(--slider-fill, 0%)',
-        top: '50%',
-        bottom: undefined,
-        translate: '-50% -50%',
-      }
-    : {
-        position: 'absolute',
-        bottom: 'var(--slider-fill, 0%)',
-        left: '50%',
-        top: undefined,
-        translate: '-50% 50%',
-      };
+  const style =
+    orientation === 'horizontal'
+      ? {
+          position: 'absolute',
+          left: 'var(--slider-fill, 0%)',
+          top: '50%',
+          bottom: undefined,
+          translate: '-50% -50%',
+        }
+      : {
+          position: 'absolute',
+          bottom: 'var(--slider-fill, 0%)',
+          left: '50%',
+          top: undefined,
+          translate: '-50% 50%',
+        };
 
   return {
     'data-orientation': orientation,
@@ -176,12 +170,8 @@ export const getVolumeSliderThumbProps: PropsHook<VolumeSliderThumb, undefined> 
 
 export class VolumeSliderThumb extends HTMLElement {}
 
-export const VolumeSliderThumbElement: ConnectedComponentConstructor<VolumeSliderThumb, undefined> = toConnectedHTMLComponent(
-  VolumeSliderThumb,
-  undefined,
-  getVolumeSliderThumbProps,
-  'VolumeSliderThumb',
-);
+export const VolumeSliderThumbElement: ConnectedComponentConstructor<VolumeSliderThumb, undefined> =
+  toConnectedHTMLComponent(VolumeSliderThumb, undefined, getVolumeSliderThumbProps, 'VolumeSliderThumb');
 
 // ============================================================================
 // EXPORTS
@@ -194,7 +184,7 @@ export const VolumeSliderElement = Object.assign(
     Track: VolumeSliderTrackElement,
     Indicator: VolumeSliderIndicatorElement,
     Thumb: VolumeSliderThumbElement,
-  },
+  }
 ) as {
   Root: typeof VolumeSliderRootElement;
   Track: typeof VolumeSliderTrackElement;

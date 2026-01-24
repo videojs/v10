@@ -1,5 +1,6 @@
 'use client';
 
+export * from '@/store';
 export { CurrentTimeDisplay, useCurrentTimeDisplayState } from './components/CurrentTimeDisplay';
 export { DurationDisplay } from './components/DurationDisplay';
 export { FullscreenButton, useFullscreenButtonState } from './components/FullscreenButton';
@@ -14,4 +15,3 @@ export { Tooltip } from './components/Tooltip';
 export { Video } from './components/Video';
 export { useVolumeSliderRootState, VolumeSlider } from './components/VolumeSlider';
 export * from './skins';
-export * from '@/store';

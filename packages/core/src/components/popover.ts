@@ -131,8 +131,8 @@ export class Popover {
       _popoverStyle.left = `clamp(${_minLeft}px, ${_pointerPosition.x}px, ${_maxLeft}px)`;
     } else {
       _popoverStyle.translate = `${_collisionOffset.x}px -100%`;
-      _popoverStyle.justifySelf
-        = alignment === 'start' ? 'anchor-start' : alignment === 'end' ? 'anchor-end' : 'anchor-center';
+      _popoverStyle.justifySelf =
+        alignment === 'start' ? 'anchor-start' : alignment === 'end' ? 'anchor-end' : 'anchor-center';
     }
 
     return {
@@ -196,9 +196,9 @@ export class Popover {
 
       // This requestAnimationFrame is required for React because the data- attributes are not updated immediately.
       requestAnimationFrame(() => {
-        const transitions = this.#popoverElement?.getAnimations().filter(anim => anim instanceof CSSTransition);
+        const transitions = this.#popoverElement?.getAnimations().filter((anim) => anim instanceof CSSTransition);
         if (transitions && transitions.length > 0) {
-          Promise.all(transitions.map(t => t.finished))
+          Promise.all(transitions.map((t) => t.finished))
             .then(() => this.#popoverElement?.hidePopover())
             .catch(() => this.#popoverElement?.hidePopover());
         } else {

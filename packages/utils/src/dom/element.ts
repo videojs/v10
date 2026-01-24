@@ -105,10 +105,10 @@ interface FloatingContext {
 export function getNodeChildren(
   nodes: Array<FloatingNodeType>,
   id: string | undefined,
-  onlyOpenChildren = true,
+  onlyOpenChildren = true
 ): Array<FloatingNodeType> {
-  const directChildren = nodes.filter(node => node.parentId === id && (!onlyOpenChildren || node.context?.open));
-  return directChildren.flatMap(child => [child, ...getNodeChildren(nodes, child.id, onlyOpenChildren)]);
+  const directChildren = nodes.filter((node) => node.parentId === id && (!onlyOpenChildren || node.context?.open));
+  return directChildren.flatMap((child) => [child, ...getNodeChildren(nodes, child.id, onlyOpenChildren)]);
 }
 
 export function getUntransformedBoundingRect(element: HTMLElement): DOMRect {
@@ -169,7 +169,7 @@ function parseTranslateValue(value: string, referenceSize: number): number {
 export function getInBoundsAdjustments(
   popupRect: DOMRect,
   containerRect: DOMRect,
-  collisionPadding: number,
+  collisionPadding: number
 ): { x: number; y: number } {
   const bounds = {
     top: containerRect.top + collisionPadding,

@@ -23,7 +23,7 @@
 .volumeHighIcon,
 .volumeLowIcon,
 .volumeOffIcon {
-  grid-area: 1/1;
+  grid-area: 1 / 1;
   transition: opacity 200ms ease;
   width: 18px;
   height: 18px;
@@ -32,17 +32,17 @@
 
 /* Show appropriate icon based on volume level using data attributes */
 /* High volume (> 50%) */
-.button[data-volume-level='high'] .volumeHighIcon {
+.button[data-volume-level="high"] .volumeHighIcon {
   opacity: 1;
 }
 
 /* Medium/Low volume (1-50%) */
-.button[data-volume-level='medium'] .volumeLowIcon,
-.button[data-volume-level='low'] .volumeLowIcon {
+.button[data-volume-level="medium"] .volumeLowIcon,
+.button[data-volume-level="low"] .volumeLowIcon {
   opacity: 1;
 }
 
 /* Muted/Off volume (0%) */
-.button[data-volume-level='off'] .volumeOffIcon {
+.button[data-volume-level="off"] .volumeOffIcon {
   opacity: 1;
 }

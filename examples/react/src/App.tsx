@@ -1,6 +1,7 @@
-import type { PropsWithChildren } from 'react';
 import { VideoProvider } from '@videojs/react';
 import clsx from 'clsx';
+import type React from 'react';
+import type { PropsWithChildren } from 'react';
 import { useEffect, useMemo, useRef } from 'react';
 import { Link as LinkPrimitive, Redirect, Route, Switch, useLocation } from 'wouter';
 import { VideoElement } from './components';
@@ -26,12 +27,10 @@ type NavigationSectionProps = PropsWithChildren<{
   title: string;
 }>;
 
-function NavigationSection(props: NavigationSectionProps): JSX.Element {
+function NavigationSection(props: NavigationSectionProps): React.JSX.Element {
   return (
     <div className="space-y-1.5">
-      <div className="text-xs text-zinc-400 px-3.5 dark:text-zinc-500">
-        {props.title}
-      </div>
+      <div className="text-xs text-zinc-400 px-3.5 dark:text-zinc-500">{props.title}</div>
       <nav className="space-y-px">{props.children}</nav>
     </div>
   );
@@ -41,23 +40,28 @@ type LinkProps = PropsWithChildren<{
   to: string;
 }>;
 
-function Link(props: LinkProps): JSX.Element {
+function Link(props: LinkProps): React.JSX.Element {
   return (
     <LinkPrimitive
       {...props}
-      className={isActive => clsx('flex px-3.5 py-2 rounded-lg transition-colors text-sm', {
-        'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700': !isActive,
-        'bg-zinc-200/60 text-zinc-900 dark:bg-zinc-200': isActive,
-      })}
+      className={(isActive) =>
+        clsx('flex px-3.5 py-2 rounded-lg transition-colors text-sm', {
+          'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700': !isActive,
+          'bg-zinc-200/60 text-zinc-900 dark:bg-zinc-200': isActive,
+        })
+      }
     />
   );
 }
 
-export default function App(): JSX.Element {
-  const skinProps = useMemo(() => ({
-    className: 'aspect-video shadow-lg shadow-black/15',
-    children: <VideoElement />,
-  }), []);
+export default function App(): React.JSX.Element {
+  const skinProps = useMemo(
+    () => ({
+      className: 'aspect-video shadow-lg shadow-black/15',
+      children: <VideoElement />,
+    }),
+    []
+  );
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const navigationRef = useRef<HTMLElement>(null);
@@ -79,14 +83,28 @@ export default function App(): JSX.Element {
 
   return (
     <div className="min-h-screen text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 flex">
-      <button type="button" className="p-3 absolute top-7 left-7 md:hidden cursor-pointer z-10" popoverTarget="navigation" popoverTargetAction="show">
+      <button
+        type="button"
+        className="p-3 absolute top-7 left-7 md:hidden cursor-pointer z-10"
+        popoverTarget="navigation"
+        popoverTargetAction="show"
+      >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
-          <path fillRule="evenodd" d="M2 6.75A.75.75 0 0 1 2.75 6h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 6.75Zm0 6.5a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" clipRule="evenodd" />
+          <path
+            fillRule="evenodd"
+            d="M2 6.75A.75.75 0 0 1 2.75 6h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 6.75Zm0 6.5a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z"
+            clipRule="evenodd"
+          />
         </svg>
         <span className="sr-only">Open sidebar</span>
       </button>
 
-      <header ref={navigationRef} className="p-3 w-72 bg-zinc-50 space-y-8 dark:bg-zinc-800 max-md:h-full popover-from-left max-md:shadow-xl max-md:shadow-black/15" popover="auto" id="navigation">
+      <header
+        ref={navigationRef}
+        className="p-3 w-72 bg-zinc-50 space-y-8 dark:bg-zinc-800 max-md:h-full popover-from-left max-md:shadow-xl max-md:shadow-black/15"
+        popover="auto"
+        id="navigation"
+      >
         <h1 className="text-xl tracking-tight pt-6 px-3 flex items-center gap-2">
           <span className="font-semibold text-zinc-600 dark:text-white">Video.js</span>
           <span className="text-zinc-300 dark:text-zinc-700 font-extralight text-[80%]">/</span>
@@ -109,9 +127,7 @@ export default function App(): JSX.Element {
         </div>
       </header>
 
-      <main
-        className="flex-1 flex justify-center items-center px-6"
-      >
+      <main className="flex-1 flex justify-center items-center px-6">
         <VideoProvider>
           <Switch>
             <Route path="/imported/frosted">

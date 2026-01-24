@@ -6,7 +6,7 @@ export type StateHookFn<TProps = any, TState = any> = (props: TProps) => TState;
 
 export type PropsHookFn<TProps = any, TState = any, TResultProps = any> = (
   props: TProps,
-  state: TState,
+  state: TState
 ) => TResultProps;
 
 export type RenderFn<TProps = any, TState = any> = (props: TProps, state: TState) => ReactElement;
@@ -32,7 +32,7 @@ export function toConnectedComponent<
   useStateHook: StateHookFn<TProps, TState>,
   usePropsHook: PropsHookFn<TProps, TState, TResultProps>,
   defaultRender: TRenderFn,
-  displayName: string,
+  displayName: string
 ): ConnectedComponent<TProps, TRenderFn> {
   const ConnectedComponent = forwardRef<HTMLElement, TProps & { render?: TRenderFn }>(
     ({ render = defaultRender, ...props }, ref) => {
@@ -40,7 +40,7 @@ export function toConnectedComponent<
       const connectedState = useStateHook(propsWithRef as unknown as TProps);
       const connectedProps = usePropsHook(propsWithRef as unknown as TProps, connectedState);
       return <Context.Provider value={connectedState}>{render(connectedProps, connectedState)}</Context.Provider>;
-    },
+    }
   );
 
   ConnectedComponent.displayName = displayName;
@@ -51,9 +51,10 @@ export function toConnectedComponent<
 /**
  * Type helper to infer the component type from the factory
  */
-export type ConnectedComponent<TProps extends Record<string, any>, TRenderFn extends RenderFn<any, any>> = React.ForwardRefExoticComponent<
-  React.PropsWithoutRef<TProps & { render?: TRenderFn }> & React.RefAttributes<HTMLElement>
->;
+export type ConnectedComponent<
+  TProps extends Record<string, any>,
+  TRenderFn extends RenderFn<any, any>,
+> = React.ForwardRefExoticComponent<TProps & { render?: TRenderFn } & React.RefAttributes<HTMLElement>>;
 
 /**
  * Factory function to create context-based components that don't use toConnectedComponent
@@ -71,7 +72,7 @@ export function toContextComponent<
 >(
   usePropsHook: (props: TProps, context: ReturnType<StateHookFn<TProps>>) => TResultProps,
   defaultRender: TRenderFn,
-  displayName: string,
+  displayName: string
 ): ContextComponent<TProps, TRenderFn> {
   const ContextComponent = forwardRef<HTMLElement, TProps & { render?: TRenderFn }>(
     ({ render = defaultRender, ...props }, ref) => {
@@ -79,7 +80,7 @@ export function toContextComponent<
       const propsWithRef = ref ? { ...props, ref } : props;
       const contextProps = usePropsHook(propsWithRef as unknown as TProps, context);
       return render(contextProps, context);
-    },
+    }
   );
 
   ContextComponent.displayName = displayName;
@@ -93,9 +94,7 @@ export function toContextComponent<
 export type ContextComponent<
   TProps extends Record<string, any>,
   TRenderFn extends (props: any, context: any) => ReactElement,
-> = React.ForwardRefExoticComponent<
-  React.PropsWithoutRef<TProps & { render?: TRenderFn }> & React.RefAttributes<any>
->;
+> = React.ForwardRefExoticComponent<(Omit<TProps, 'ref'> & { render?: TRenderFn }) & React.RefAttributes<any>>;
 
 /**
  * Hook that manages a CoreClass instance and triggers re-renders when state changes.
@@ -117,6 +116,7 @@ export function useCore<
     snapshotRef.current = coreRef.current.getState();
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally tracking state values, not the object reference
   useEffect(() => {
     coreRef.current?.setState(state);
   }, [...Object.values(state)]);
@@ -133,7 +133,7 @@ export function useCore<
     useCallback(() => {
       return snapshotRef.current;
     }, []),
-    () => null, // server snapshot
+    () => null // server snapshot
   );
 
   return coreRef.current.getState();

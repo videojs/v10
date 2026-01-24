@@ -1,11 +1,10 @@
-import type { Prettify } from '../types';
-import type { ConnectedComponent } from '../utils/component-factory';
-
 import { TimeSlider as CoreTimeSlider } from '@videojs/core';
 import { timeSliderStateDefinition } from '@videojs/store';
 import { shallowEqual } from '@videojs/utils';
 import { useMemo } from 'react';
 import { useMediaSelector, useMediaStore } from '@/store';
+import type { Prettify } from '../types';
+import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent, toContextComponent, useCore } from '../utils/component-factory';
 import { useComposedRefs } from '../utils/use-composed-refs';
 
@@ -13,7 +12,7 @@ export type TimeSliderState = Prettify<ReturnType<typeof useCore<CoreTimeSlider>
   orientation: 'horizontal' | 'vertical';
 };
 
-export interface TimeSliderProps extends React.ComponentPropsWithRef<'div'> {
+export interface TimeSliderProps extends React.ComponentPropsWithoutRef<'div'> {
   orientation?: 'horizontal' | 'vertical';
 }
 
@@ -75,14 +74,17 @@ const TimeSliderRoot: ConnectedComponent<TimeSliderProps, typeof renderTimeSlide
   useTimeSliderRootState,
   useTimeSliderRootProps,
   renderTimeSliderRoot,
-  'TimeSlider.Root',
+  'TimeSlider.Root'
 );
 
 // ============================================================================
 // TRACK COMPONENT
 // ============================================================================
 
-export function useTimeSliderTrackProps(props: React.ComponentProps<'div'>, context: TimeSliderState): TimeSliderRenderProps {
+export function useTimeSliderTrackProps(
+  props: React.ComponentProps<'div'>,
+  context: TimeSliderState
+): TimeSliderRenderProps {
   return {
     ref: context._setTrackElement,
     'data-orientation': context.orientation,
@@ -98,17 +100,19 @@ export function renderTimeSliderTrack(props: TimeSliderRenderProps): JSX.Element
   return <div {...props} />;
 }
 
-const TimeSliderTrack: ConnectedComponent<React.ComponentProps<'div'>, typeof renderTimeSliderTrack> = toContextComponent(
-  useTimeSliderTrackProps,
-  renderTimeSliderTrack,
-  'TimeSlider.Track',
-);
+const TimeSliderTrack: ConnectedComponent<
+  React.ComponentProps<'div'>,
+  typeof renderTimeSliderTrack
+> = toContextComponent(useTimeSliderTrackProps, renderTimeSliderTrack, 'TimeSlider.Track');
 
 // ============================================================================
 // THUMB COMPONENT
 // ============================================================================
 
-export function getTimeSliderThumbProps(props: React.ComponentProps<'div'>, context: TimeSliderState): TimeSliderRenderProps {
+export function getTimeSliderThumbProps(
+  props: React.ComponentProps<'div'>,
+  context: TimeSliderState
+): TimeSliderRenderProps {
   return {
     'data-orientation': context.orientation,
     ...props,
@@ -126,17 +130,19 @@ export function renderTimeSliderThumb(props: TimeSliderRenderProps): JSX.Element
   return <div {...props} />;
 }
 
-const TimeSliderThumb: ConnectedComponent<React.ComponentProps<'div'>, typeof renderTimeSliderThumb> = toContextComponent(
-  getTimeSliderThumbProps,
-  renderTimeSliderThumb,
-  'TimeSlider.Thumb',
-);
+const TimeSliderThumb: ConnectedComponent<
+  React.ComponentProps<'div'>,
+  typeof renderTimeSliderThumb
+> = toContextComponent(getTimeSliderThumbProps, renderTimeSliderThumb, 'TimeSlider.Thumb');
 
 // ============================================================================
 // POINTER COMPONENT
 // ============================================================================
 
-export function getTimeSliderPointerProps(props: React.ComponentProps<'div'>, context: TimeSliderState): TimeSliderRenderProps {
+export function getTimeSliderPointerProps(
+  props: React.ComponentProps<'div'>,
+  context: TimeSliderState
+): TimeSliderRenderProps {
   return {
     'data-orientation': context.orientation,
     ...props,
@@ -162,7 +168,10 @@ const TimeSliderPointer: ConnectedComponent<
 // PROGRESS COMPONENT
 // ============================================================================
 
-export function getTimeSliderProgressProps(props: React.ComponentProps<'div'>, context: TimeSliderState): TimeSliderRenderProps {
+export function getTimeSliderProgressProps(
+  props: React.ComponentProps<'div'>,
+  context: TimeSliderState
+): TimeSliderRenderProps {
   return {
     'data-orientation': context.orientation,
     ...props,
@@ -197,7 +206,7 @@ export const TimeSlider = Object.assign(
     Thumb: TimeSliderThumb,
     Pointer: TimeSliderPointer,
     Progress: TimeSliderProgress,
-  },
+  }
 ) as {
   Root: typeof TimeSliderRoot;
   Track: typeof TimeSliderTrack;

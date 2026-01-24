@@ -1,5 +1,3 @@
-import type { PropsWithChildren } from 'react';
-
 import {
   CurrentTimeDisplay,
   DurationDisplay,
@@ -22,6 +20,7 @@ import {
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@videojs/react/icons';
+import type { PropsWithChildren } from 'react';
 
 import './frosted.css';
 

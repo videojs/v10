@@ -1,9 +1,8 @@
-import type { Prettify } from '../types';
-import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
-
 import { TimeSlider as CoreTimeSlider } from '@videojs/core';
 import { timeSliderStateDefinition } from '@videojs/store';
 import { memoize } from '@videojs/utils';
+import type { Prettify } from '../types';
+import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
 
@@ -12,7 +11,9 @@ import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../ut
 // ============================================================================
 
 type TimeSliderState = Prettify<ReturnType<CoreTimeSlider['getState']>>;
-type TimeSliderStateWithMethods = Prettify<TimeSliderState & ReturnType<typeof timeSliderStateDefinition.createRequestMethods>>;
+type TimeSliderStateWithMethods = Prettify<
+  TimeSliderState & ReturnType<typeof timeSliderStateDefinition.createRequestMethods>
+>;
 
 const timeSliderCreateRequestMethods = memoize(timeSliderStateDefinition.createRequestMethods);
 
@@ -68,12 +69,8 @@ export class TimeSliderRoot extends HTMLElement {
   }
 }
 
-export const TimeSliderRootElement: ConnectedComponentConstructor<TimeSliderRoot, TimeSliderStateWithMethods> = toConnectedHTMLComponent(
-  TimeSliderRoot,
-  getTimeSliderRootState,
-  getTimeSliderRootProps,
-  'TimeSliderRoot',
-);
+export const TimeSliderRootElement: ConnectedComponentConstructor<TimeSliderRoot, TimeSliderStateWithMethods> =
+  toConnectedHTMLComponent(TimeSliderRoot, getTimeSliderRootState, getTimeSliderRootProps, 'TimeSliderRoot');
 
 // ============================================================================
 // TRACK COMPONENT
@@ -99,12 +96,8 @@ export const getTimeSliderTrackProps: PropsHook<TimeSliderTrack, undefined> = (e
 
 export class TimeSliderTrack extends HTMLElement {}
 
-export const TimeSliderTrackElement: ConnectedComponentConstructor<TimeSliderTrack, undefined> = toConnectedHTMLComponent(
-  TimeSliderTrack,
-  undefined,
-  getTimeSliderTrackProps,
-  'TimeSliderTrack',
-);
+export const TimeSliderTrackElement: ConnectedComponentConstructor<TimeSliderTrack, undefined> =
+  toConnectedHTMLComponent(TimeSliderTrack, undefined, getTimeSliderTrackProps, 'TimeSliderTrack');
 
 // ============================================================================
 // PROGRESS COMPONENT
@@ -113,21 +106,22 @@ export const TimeSliderTrackElement: ConnectedComponentConstructor<TimeSliderTra
 export const getTimeSliderProgressProps: PropsHook<TimeSliderProgress, undefined> = (element, _state) => {
   const rootElement = element.closest('media-time-slider') as TimeSliderRoot;
   const orientation = rootElement?.orientation || 'horizontal';
-  const style = orientation === 'horizontal'
-    ? {
-        position: 'absolute',
-        width: 'var(--slider-fill, 0%)',
-        height: '100%',
-        top: '0',
-        bottom: undefined,
-      }
-    : {
-        position: 'absolute',
-        height: 'var(--slider-fill, 0%)',
-        width: '100%',
-        bottom: '0',
-        top: undefined,
-      };
+  const style =
+    orientation === 'horizontal'
+      ? {
+          position: 'absolute',
+          width: 'var(--slider-fill, 0%)',
+          height: '100%',
+          top: '0',
+          bottom: undefined,
+        }
+      : {
+          position: 'absolute',
+          height: 'var(--slider-fill, 0%)',
+          width: '100%',
+          bottom: '0',
+          top: undefined,
+        };
 
   return {
     'data-orientation': orientation,
@@ -137,12 +131,8 @@ export const getTimeSliderProgressProps: PropsHook<TimeSliderProgress, undefined
 
 export class TimeSliderProgress extends HTMLElement {}
 
-export const TimeSliderProgressElement: ConnectedComponentConstructor<TimeSliderProgress, undefined> = toConnectedHTMLComponent(
-  TimeSliderProgress,
-  undefined,
-  getTimeSliderProgressProps,
-  'TimeSliderProgress',
-);
+export const TimeSliderProgressElement: ConnectedComponentConstructor<TimeSliderProgress, undefined> =
+  toConnectedHTMLComponent(TimeSliderProgress, undefined, getTimeSliderProgressProps, 'TimeSliderProgress');
 
 // ============================================================================
 // POINTER COMPONENT
@@ -151,21 +141,22 @@ export const TimeSliderProgressElement: ConnectedComponentConstructor<TimeSlider
 export const getTimeSliderPointerProps: PropsHook<TimeSliderPointer, undefined> = (element, _state) => {
   const rootElement = element.closest('media-time-slider') as TimeSliderRoot;
   const orientation = rootElement?.orientation || 'horizontal';
-  const style = orientation === 'horizontal'
-    ? {
-        position: 'absolute',
-        width: 'var(--slider-pointer, 0%)',
-        height: '100%',
-        top: '0',
-        bottom: undefined,
-      }
-    : {
-        position: 'absolute',
-        height: 'var(--slider-pointer, 0%)',
-        width: '100%',
-        bottom: '0',
-        top: undefined,
-      };
+  const style =
+    orientation === 'horizontal'
+      ? {
+          position: 'absolute',
+          width: 'var(--slider-pointer, 0%)',
+          height: '100%',
+          top: '0',
+          bottom: undefined,
+        }
+      : {
+          position: 'absolute',
+          height: 'var(--slider-pointer, 0%)',
+          width: '100%',
+          bottom: '0',
+          top: undefined,
+        };
 
   return {
     'data-orientation': orientation,
@@ -175,12 +166,8 @@ export const getTimeSliderPointerProps: PropsHook<TimeSliderPointer, undefined> 
 
 export class TimeSliderPointer extends HTMLElement {}
 
-export const TimeSliderPointerElement: ConnectedComponentConstructor<TimeSliderPointer, undefined> = toConnectedHTMLComponent(
-  TimeSliderPointer,
-  undefined,
-  getTimeSliderPointerProps,
-  'TimeSliderPointer',
-);
+export const TimeSliderPointerElement: ConnectedComponentConstructor<TimeSliderPointer, undefined> =
+  toConnectedHTMLComponent(TimeSliderPointer, undefined, getTimeSliderPointerProps, 'TimeSliderPointer');
 
 // ============================================================================
 // THUMB COMPONENT
@@ -189,21 +176,22 @@ export const TimeSliderPointerElement: ConnectedComponentConstructor<TimeSliderP
 export const getTimeSliderThumbProps: PropsHook<TimeSliderThumb, undefined> = (element, _state) => {
   const rootElement = element.closest('media-time-slider') as TimeSliderRoot;
   const orientation = rootElement?.orientation || 'horizontal';
-  const style = orientation === 'horizontal'
-    ? {
-        position: 'absolute',
-        left: 'var(--slider-fill, 0%)',
-        top: '50%',
-        bottom: undefined,
-        translate: '-50% -50%',
-      }
-    : {
-        position: 'absolute',
-        bottom: 'var(--slider-fill, 0%)',
-        left: '50%',
-        top: undefined,
-        translate: '-50% 50%',
-      };
+  const style =
+    orientation === 'horizontal'
+      ? {
+          position: 'absolute',
+          left: 'var(--slider-fill, 0%)',
+          top: '50%',
+          bottom: undefined,
+          translate: '-50% -50%',
+        }
+      : {
+          position: 'absolute',
+          bottom: 'var(--slider-fill, 0%)',
+          left: '50%',
+          top: undefined,
+          translate: '-50% 50%',
+        };
 
   return {
     'data-orientation': orientation,
@@ -213,12 +201,8 @@ export const getTimeSliderThumbProps: PropsHook<TimeSliderThumb, undefined> = (e
 
 export class TimeSliderThumb extends HTMLElement {}
 
-export const TimeSliderThumbElement: ConnectedComponentConstructor<TimeSliderThumb, undefined> = toConnectedHTMLComponent(
-  TimeSliderThumb,
-  undefined,
-  getTimeSliderThumbProps,
-  'TimeSliderThumb',
-);
+export const TimeSliderThumbElement: ConnectedComponentConstructor<TimeSliderThumb, undefined> =
+  toConnectedHTMLComponent(TimeSliderThumb, undefined, getTimeSliderThumbProps, 'TimeSliderThumb');
 
 // ============================================================================
 // EXPORTS
@@ -232,7 +216,7 @@ export const TimeSliderElement = Object.assign(
     Progress: TimeSliderProgressElement,
     Pointer: TimeSliderPointerElement,
     Thumb: TimeSliderThumbElement,
-  },
+  }
 ) as {
   Root: typeof TimeSliderRootElement;
   Track: typeof TimeSliderTrackElement;

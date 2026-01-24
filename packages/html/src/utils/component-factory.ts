@@ -1,5 +1,5 @@
-import type { MediaStore } from '@videojs/store';
 import { ConsumerMixin } from '@open-wc/context-protocol';
+import type { MediaStore } from '@videojs/store';
 import { shallowEqual, toCamelCase } from '@videojs/utils';
 import { setAttributes } from '@videojs/utils/dom';
 
@@ -34,12 +34,13 @@ export function toConnectedHTMLComponent<E extends HTMLElement, State = any>(
   BaseClass: CustomElementConstructor,
   stateHook: StateHook<E, State> | undefined,
   propsHook: PropsHook<E, State>,
-  displayName?: string,
+  displayName?: string
 ): ConnectedComponentConstructor<E, State> {
   const ConnectedComponent = class extends ConsumerMixin(BaseClass) {
     static get observedAttributes(): string[] {
       return [
         // @ts-expect-error ts(2339)
+        // biome-ignore lint/complexity/noThisInStatic: intentional use of super in static context
         ...(super.observedAttributes ?? []),
       ];
     }
@@ -74,7 +75,7 @@ export function toConnectedHTMLComponent<E extends HTMLElement, State = any>(
 
       // Split into two phases: state transformation, then props update
       const state = stateHook?.(this as unknown as E, this.#mediaStore);
-      const props = propsHook(this as unknown as E, state ?? {} as State);
+      const props = propsHook(this as unknown as E, state ?? ({} as State));
       this._update(props, state, this.#mediaStore);
     };
 
@@ -112,11 +113,13 @@ export function toConnectedHTMLComponent<E extends HTMLElement, State = any>(
   return ConnectedComponent as unknown as ConnectedComponentConstructor<E, State>;
 }
 
-export function getCoreState<T extends {
-  subscribe: (callback: (state: any) => void) => () => void;
-  getState: () => any;
-  setState: (state: any) => void;
-}>(CoreClass: new () => T, state: any): any {
+export function getCoreState<
+  T extends {
+    subscribe: (callback: (state: any) => void) => () => void;
+    getState: () => any;
+    setState: (state: any) => void;
+  },
+>(CoreClass: new () => T, state: any): any {
   let core = currentCoreInstances[currentCoreIndex]?.core as T;
   if (!core) {
     core = new CoreClass();

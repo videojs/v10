@@ -1,12 +1,9 @@
-import type { PropsWithChildren } from 'react';
-import type { ConnectedComponent } from '../utils/component-factory';
-
 import { fullscreenButtonStateDefinition } from '@videojs/store';
-
 import { shallowEqual } from '@videojs/utils';
+import type { PropsWithChildren } from 'react';
 import { useMemo } from 'react';
-
 import { useMediaSelector, useMediaStore } from '@/store';
+import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
 export function useFullscreenButtonState(_props?: any): {
@@ -18,7 +15,7 @@ export function useFullscreenButtonState(_props?: any): {
   const mediaState = useMediaSelector(fullscreenButtonStateDefinition.stateTransform, shallowEqual);
   const methods = useMemo(
     () => fullscreenButtonStateDefinition.createRequestMethods(mediaStore.dispatch),
-    [mediaStore],
+    [mediaStore]
   );
 
   return {
@@ -32,7 +29,7 @@ export type FullscreenButtonState = ReturnType<typeof useFullscreenButtonState>;
 
 export function getFullscreenButtonProps(
   props: PropsWithChildren,
-  state: FullscreenButtonState,
+  state: FullscreenButtonState
 ): PropsWithChildren<Record<string, unknown>> {
   const baseProps: Record<string, any> = {
     /** @TODO Need another state provider in core for i18n (CJP) */
@@ -74,7 +71,7 @@ export function renderFullscreenButton(props: FullscreenButtonProps, state: Full
   );
 }
 
-export const FullscreenButton: ConnectedComponent<FullscreenButtonProps, typeof renderFullscreenButton>
-  = toConnectedComponent(useFullscreenButtonState, getFullscreenButtonProps, renderFullscreenButton, 'FullscreenButton');
+export const FullscreenButton: ConnectedComponent<FullscreenButtonProps, typeof renderFullscreenButton> =
+  toConnectedComponent(useFullscreenButtonState, getFullscreenButtonProps, renderFullscreenButton, 'FullscreenButton');
 
 export default FullscreenButton;

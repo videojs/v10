@@ -20,7 +20,7 @@ const styles: MinimalSkinStyles = {
     // Prevent rounded corners in fullscreen
     'vjs:[&:fullscreen]:rounded-none',
     // Ensure the nested video inherits the radius
-    'vjs:[&_video]:w-full vjs:[&_video]:h-full',
+    'vjs:[&_video]:w-full vjs:[&_video]:h-full'
   ),
   Overlay: cn(
     'vjs:absolute vjs:inset-0 vjs:rounded-[inherit] vjs:pointer-events-none',
@@ -32,7 +32,7 @@ const styles: MinimalSkinStyles = {
     //  FIXME: Temporary hide/show logic
     'vjs:has-[+.controls_[data-paused]]:opacity-100 vjs:has-[+.controls_[data-paused]]:delay-0 vjs:has-[+.controls_[data-paused]]:duration-75',
     'vjs:has-[+.controls_[aria-expanded="true"]]:opacity-100 vjs:has-[+.controls_[aria-expanded="true"]]:delay-0 vjs:has-[+.controls_[aria-expanded="true"]]:duration-75',
-    'vjs:group-hover/root:opacity-100 vjs:group-hover/root:delay-0 vjs:group-hover/root:duration-75',
+    'vjs:group-hover/root:opacity-100 vjs:group-hover/root:delay-0 vjs:group-hover/root:duration-75'
     // ------------------------------------
   ),
   Controls: cn(
@@ -48,7 +48,7 @@ const styles: MinimalSkinStyles = {
     'vjs:translate-y-full vjs:opacity-0 vjs:blur-sm vjs:delay-500 vjs:duration-300',
     'vjs:has-data-paused:translate-y-0 vjs:has-data-paused:opacity-100 vjs:has-data-paused:blur-none vjs:has-data-paused:delay-0 vjs:has-data-paused:duration-75',
     'vjs:has-[[aria-expanded="true"]]:translate-y-0 vjs:has-[[aria-expanded="true"]]:opacity-100 vjs:has-[[aria-expanded="true"]]:blur-none vjs:has-[[aria-expanded="true"]]:delay-0 vjs:has-[[aria-expanded="true"]]:duration-75',
-    'vjs:group-hover/root:translate-y-0 vjs:group-hover/root:opacity-100 vjs:group-hover/root:blur-none vjs:group-hover/root:delay-0 vjs:group-hover/root:duration-75',
+    'vjs:group-hover/root:translate-y-0 vjs:group-hover/root:opacity-100 vjs:group-hover/root:blur-none vjs:group-hover/root:delay-0 vjs:group-hover/root:duration-75'
     // ------------------------------------
   ),
   Icon: cn('icon vjs:[&_path]:transition-transform vjs:[&_path]:ease-out'),
@@ -66,39 +66,41 @@ const styles: MinimalSkinStyles = {
     // Loading state
     'vjs:aria-busy:pointer-events-none vjs:aria-busy:cursor-not-allowed',
     // Expanded state
-    'vjs:aria-expanded:text-white/80',
+    'vjs:aria-expanded:text-white/80'
   ),
   ButtonGroup: cn('vjs:flex vjs:items-center vjs:gap-1.5'),
   IconButton: cn(
     'vjs:grid vjs:[&_.icon]:[grid-area:1/1]',
-    'vjs:[&_.icon]:shrink-0 vjs:[&_.icon]:transition-opacity vjs:[&_.icon]:duration-150 vjs:[&_.icon]:ease-linear vjs:[&_.icon]:drop-shadow-[0_1px_0_var(--tw-shadow-color)] vjs:[&_.icon]:shadow-black/40',
+    'vjs:[&_.icon]:shrink-0 vjs:[&_.icon]:transition-opacity vjs:[&_.icon]:duration-150 vjs:[&_.icon]:ease-linear vjs:[&_.icon]:drop-shadow-[0_1px_0_var(--tw-shadow-color)] vjs:[&_.icon]:shadow-black/40'
   ),
   PlayIcon: cn('vjs:opacity-0 vjs:group-data-paused/button:opacity-100'),
   PauseIcon: cn('vjs:group-data-paused/button:opacity-0'),
   PlayTooltipPopup: cn(
     'vjs:[&_.pause-tooltip]:inline vjs:data-paused:[&_.pause-tooltip]:hidden',
-    'vjs:[&_.play-tooltip]:hidden vjs:data-paused:[&_.play-tooltip]:inline',
+    'vjs:[&_.play-tooltip]:hidden vjs:data-paused:[&_.play-tooltip]:inline'
   ),
   PlayTooltip: cn('play-tooltip'),
   PauseTooltip: cn('pause-tooltip'),
-  VolumeHighIcon: cn('vjs:hidden vjs:group-data-[volume-level=high]/button:inline vjs:group-data-[volume-level=medium]/button:inline'),
+  VolumeHighIcon: cn(
+    'vjs:hidden vjs:group-data-[volume-level=high]/button:inline vjs:group-data-[volume-level=medium]/button:inline'
+  ),
   VolumeLowIcon: cn('vjs:hidden vjs:group-data-[volume-level=low]/button:inline'),
   VolumeOffIcon: cn('vjs:hidden vjs:group-data-[volume-level=off]/button:inline'),
   FullscreenEnterIcon: cn(
     'vjs:group-data-fullscreen/button:hidden',
     'vjs:group-hover/button:[&_.arrow-1]:translate-x-px vjs:group-hover/button:[&_.arrow-1]:-translate-y-px',
-    'vjs:group-hover/button:[&_.arrow-2]:-translate-x-px vjs:group-hover/button:[&_.arrow-2]:translate-y-px',
+    'vjs:group-hover/button:[&_.arrow-2]:-translate-x-px vjs:group-hover/button:[&_.arrow-2]:translate-y-px'
   ),
   FullscreenExitIcon: cn(
     'vjs:hidden vjs:group-data-fullscreen/button:inline',
     'vjs:[&_.arrow-1]:translate-x-px vjs:[&_.arrow-1]:-translate-y-px',
     'vjs:[&_.arrow-2]:-translate-x-px vjs:[&_.arrow-2]:translate-y-px',
     'vjs:group-hover/button:[&_.arrow-1]:translate-0',
-    'vjs:group-hover/button:[&_.arrow-2]:translate-0',
+    'vjs:group-hover/button:[&_.arrow-2]:translate-0'
   ),
   FullscreenTooltipPopup: cn(
     'vjs:[&_.fullscreen-enter-tooltip]:inline vjs:data-fullscreen:[&_.fullscreen-enter-tooltip]:hidden',
-    'vjs:[&_.fullscreen-exit-tooltip]:hidden vjs:data-fullscreen:[&_.fullscreen-exit-tooltip]:inline',
+    'vjs:[&_.fullscreen-exit-tooltip]:hidden vjs:data-fullscreen:[&_.fullscreen-exit-tooltip]:inline'
   ),
   FullscreenEnterTooltip: cn('fullscreen-enter-tooltip'),
   FullscreenExitTooltip: cn('fullscreen-exit-tooltip'),
@@ -108,13 +110,13 @@ const styles: MinimalSkinStyles = {
   SliderRoot: cn(
     'vjs:group/slider vjs:outline-0 vjs:flex vjs:items-center vjs:justify-center vjs:flex-1 vjs:group/slider vjs:relative vjs:rounded-full',
     'vjs:data-[orientation=horizontal]:h-5 vjs:data-[orientation=horizontal]:min-w-20',
-    'vjs:data-[orientation=vertical]:w-5 vjs:data-[orientation=vertical]:h-18',
+    'vjs:data-[orientation=vertical]:w-5 vjs:data-[orientation=vertical]:h-18'
   ),
   SliderTrack: cn(
     'vjs:relative vjs:select-none vjs:rounded-[inherit] vjs:bg-white/10',
     'vjs:data-[orientation=horizontal]:w-full vjs:data-[orientation=horizontal]:h-0.75',
     'vjs:data-[orientation=vertical]:w-0.75',
-    'vjs:-outline-offset-2 vjs:group-focus-visible/slider:outline-2 vjs:group-focus-visible/slider:outline-offset-6 vjs:group-focus-visible/slider:outline-white',
+    'vjs:-outline-offset-2 vjs:group-focus-visible/slider:outline-2 vjs:group-focus-visible/slider:outline-offset-6 vjs:group-focus-visible/slider:outline-white'
   ),
   SliderProgress: cn('vjs:bg-white vjs:rounded-[inherit]'),
   SliderPointer: cn('vjs:hidden'),
@@ -122,18 +124,18 @@ const styles: MinimalSkinStyles = {
     'vjs:bg-white vjs:z-10 vjs:size-3 vjs:select-none vjs:ring vjs:ring-black/10 vjs:rounded-full vjs:shadow-sm vjs:shadow-black/15 vjs:transition-[opacity,scale] vjs:ease-out vjs:opacity-0 vjs:scale-70 vjs:origin-center',
     'vjs:group-hover/slider:opacity-100 vjs:group-hover/slider:scale-100',
     'vjs:data-[orientation=horizontal]:hover:cursor-ew-resize',
-    'vjs:data-[orientation=vertical]:hover:cursor-ns-resize',
+    'vjs:data-[orientation=vertical]:hover:cursor-ns-resize'
   ),
   PopupAnimation: cn(
     // Animation
     // XXX: We can't use transforms since floating UI uses them for positioning.
     'vjs:transition-[transform,scale,opacity,filter] vjs:origin-bottom vjs:duration-200 vjs:data-instant:duration-0',
     'vjs:data-starting-style:scale-0 vjs:data-starting-style:opacity-0 vjs:data-starting-style:blur-sm',
-    'vjs:data-ending-style:scale-0 vjs:data-ending-style:opacity-0 vjs:data-ending-style:blur-sm',
+    'vjs:data-ending-style:scale-0 vjs:data-ending-style:opacity-0 vjs:data-ending-style:blur-sm'
   ),
   PopoverPopup: cn('vjs:py-2 vjs:bg-transparent'),
   TooltipPopup: cn(
-    'vjs:whitespace-nowrap vjs:flex vjs:flex-col vjs:rounded vjs:text-white vjs:text-xs vjs:@7xl/root:text-sm vjs:px-2 vjs:py-1 vjs:bg-white/20 vjs:backdrop-blur-3xl vjs:backdrop-saturate-150 vjs:backdrop-brightness-90 vjs:shadow-md vjs:shadow-black/5',
+    'vjs:whitespace-nowrap vjs:flex vjs:flex-col vjs:rounded vjs:text-white vjs:text-xs vjs:@7xl/root:text-sm vjs:px-2 vjs:py-1 vjs:bg-white/20 vjs:backdrop-blur-3xl vjs:backdrop-saturate-150 vjs:backdrop-brightness-90 vjs:shadow-md vjs:shadow-black/5'
   ),
 };
 

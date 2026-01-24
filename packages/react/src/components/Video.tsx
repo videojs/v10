@@ -1,11 +1,6 @@
-import type {
-  CSSProperties,
-  DetailedHTMLProps,
-  PropsWithChildren,
-  VideoHTMLAttributes,
-} from 'react';
-
-import React, { forwardRef } from 'react';
+import type React from 'react';
+import type { CSSProperties, DetailedHTMLProps, PropsWithChildren, VideoHTMLAttributes } from 'react';
+import { forwardRef } from 'react';
 import { useMediaRef } from '@/store';
 
 export type VideoProps = PropsWithChildren<
@@ -32,20 +27,19 @@ export type VideoProps = PropsWithChildren<
  * </VideoProvider>
  * ```
  */
-export const Video: React.ForwardRefExoticComponent<
-  VideoProps & React.RefAttributes<HTMLVideoElement>
-> = forwardRef<HTMLVideoElement, VideoProps>(
-  ({ children, ...props }, _ref) => {
-    const mediaRefCallback = useMediaRef();
+export const Video: React.ForwardRefExoticComponent<VideoProps & React.RefAttributes<HTMLVideoElement>> = forwardRef<
+  HTMLVideoElement,
+  VideoProps
+>(({ children, ...props }, _ref) => {
+  const mediaRefCallback = useMediaRef();
 
-    return (
-      // eslint-disable-next-line jsx-a11y/media-has-caption
-      <video {...props} ref={mediaRefCallback}>
-        {children}
-      </video>
-    );
-  },
-);
+  return (
+    // eslint-disable-next-line jsx-a11y/media-has-caption
+    <video {...props} ref={mediaRefCallback}>
+      {children}
+    </video>
+  );
+});
 
 Video.displayName = 'Video';
 

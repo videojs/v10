@@ -19,20 +19,23 @@ export interface MediaStateOwner extends EventTarget, Pick<HTMLMediaElement, 'sr
 
 export interface PlayableMediaStateOwner
   extends EventTarget,
-  MediaStateOwner,
-  Pick<HTMLMediaElement, 'play' | 'pause' | 'paused'> {}
+    MediaStateOwner,
+    Pick<HTMLMediaElement, 'play' | 'pause' | 'paused'> {}
 
 export interface AudibleMediaStateOwner
   extends EventTarget,
-  MediaStateOwner,
-  Pick<HTMLMediaElement, 'muted' | 'volume'> {}
+    MediaStateOwner,
+    Pick<HTMLMediaElement, 'muted' | 'volume'> {}
 
 export interface TemporalMediaStateOwner
   extends EventTarget,
-  MediaStateOwner,
-  Pick<HTMLMediaElement, 'duration' | 'currentTime'> {}
+    MediaStateOwner,
+    Pick<HTMLMediaElement, 'duration' | 'currentTime'> {}
 
-export class MediaPlaybackController extends EventTarget implements MediaStateOwner, PlayableMediaStateOwner, AudibleMediaStateOwner {
+export class MediaPlaybackController
+  extends EventTarget
+  implements MediaStateOwner, PlayableMediaStateOwner, AudibleMediaStateOwner
+{
   protected _playbackEngine: PlaybackEngine;
 
   constructor() {
@@ -69,7 +72,7 @@ export class MediaPlaybackController extends EventTarget implements MediaStateOw
   pause(): void {
     /** @TODO implement deferred state etc. for cases where media has yet to be set */
     if (!this.mediaElement) return;
-    return this.mediaElement.pause();
+    this.mediaElement.pause();
   }
 
   play(): Promise<void> {

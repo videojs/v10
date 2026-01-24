@@ -22,7 +22,7 @@
 /* Icon positioning - both occupy same grid cell */
 .playIcon,
 .pauseIcon {
-  grid-area: 1/1;
+  grid-area: 1 / 1;
   transition: opacity 200ms ease;
   width: 18px;
   height: 18px;

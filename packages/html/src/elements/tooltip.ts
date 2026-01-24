@@ -1,6 +1,6 @@
+import { Tooltip as CoreTooltip } from '@videojs/core';
 import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
-import { Tooltip as CoreTooltip } from '@videojs/core';
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
 import { getPopoverProps, Popover } from './popover';
 
@@ -17,10 +17,7 @@ export const getTooltipProps: PropsHook<Tooltip, TooltipState> = getPopoverProps
 
 export class Tooltip extends Popover {
   static get observedAttributes(): string[] {
-    return [
-      ...super.observedAttributes,
-      'track-cursor-axis',
-    ];
+    return [...Popover.observedAttributes, 'track-cursor-axis'];
   }
 
   get trackCursorAxis(): 'x' | null {
@@ -33,5 +30,5 @@ export const TooltipElement: ConnectedComponentConstructor<Tooltip, TooltipState
   Tooltip,
   getTooltipState,
   getTooltipProps,
-  'Tooltip',
+  'Tooltip'
 );
