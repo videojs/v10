@@ -18,7 +18,7 @@ function OverlayWrapper({ children, className }: { children: React.ReactNode; cl
       className={clsx(
         'absolute inset-0 flex flex-col items-center justify-center gap-3',
         'bg-light-80 dark:bg-dark-100',
-        className,
+        className
       )}
     >
       {children}
@@ -71,8 +71,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
           <p className="font-medium">Ready to play</p>
         </div>
         <p className="text-center text-sm">
-          See code below, or
-          {' '}
+          See code below, or{' '}
           <a
             href="https://dashboard.mux.com"
             target="_blank"

@@ -1,8 +1,8 @@
 // @vitest-environment node
 
-import type { APIContext } from 'astro';
 import type { AstroActionContext } from 'astro:actions';
 import { getActionContext } from 'astro:actions';
+import type { APIContext } from 'astro';
 import { jwtVerify } from 'jose';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { onRequest } from '@/middleware/index';
@@ -90,7 +90,7 @@ describe('session middleware', () => {
 
       vi.mocked(getActionContext).mockReturnValue({ action: { name: 'mux.list' } } as AstroActionContext);
 
-      const response = await onRequest(context, next) as Response;
+      const response = (await onRequest(context, next)) as Response;
 
       expect(response.status).toEqual(401);
 
@@ -164,7 +164,7 @@ describe('session middleware', () => {
           sameSite: 'lax',
           maxAge: 300,
           path: '/',
-        }),
+        })
       );
 
       expect(context.locals.accessToken).toBe('new-access-token');
@@ -192,7 +192,7 @@ describe('session middleware', () => {
         'new-encrypted-session',
         expect.objectContaining({
           secure: true,
-        }),
+        })
       );
     });
   });
@@ -243,7 +243,7 @@ describe('session middleware', () => {
 
       const context = createMockContext('encrypted-session');
 
-      const response = await onRequest(context, next) as Response;
+      const response = (await onRequest(context, next)) as Response;
 
       expect(response.status).toEqual(401);
 
@@ -300,11 +300,7 @@ describe('session middleware', () => {
     await onRequest(context, next);
 
     // First call should verify access token
-    expect(jwtVerify).toHaveBeenNthCalledWith(
-      1,
-      'valid-access-token',
-      'https://auth.example.com',
-    );
+    expect(jwtVerify).toHaveBeenNthCalledWith(1, 'valid-access-token', 'https://auth.example.com');
   });
 
   it('should verify ID token with JWKS', async () => {
@@ -318,11 +314,7 @@ describe('session middleware', () => {
     await onRequest(context, next);
 
     // Second call should verify ID token
-    expect(jwtVerify).toHaveBeenNthCalledWith(
-      2,
-      'valid-id-token',
-      'https://auth.example.com',
-    );
+    expect(jwtVerify).toHaveBeenNthCalledWith(2, 'valid-id-token', 'https://auth.example.com');
   });
 
   it('should not expose sensitive token data in user object', async () => {

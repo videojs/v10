@@ -1,10 +1,8 @@
-import type { ImageRadioOption } from '@/components/ImageRadioGroup';
-import type { Renderer } from '@/stores/installation';
-
 import { useStore } from '@nanostores/react';
-
 import { Box } from 'lucide-react';
+import type { ImageRadioOption } from '@/components/ImageRadioGroup';
 import ImageRadioGroup from '@/components/ImageRadioGroup';
+import type { Renderer } from '@/stores/installation';
 import { renderer } from '@/stores/installation';
 
 const PRIORITY_RENDERER_OPTIONS: ImageRadioOption<Renderer>[] = [
@@ -36,7 +34,7 @@ export default function RendererSelect() {
   return (
     <ImageRadioGroup
       value={$renderer}
-      onChange={value => renderer.set(value)}
+      onChange={(value) => renderer.set(value)}
       options={ALL_RENDERER_OPTIONS}
       aria-label="Select renderer"
       size="sm"

@@ -1,8 +1,7 @@
-import type { Renderer, Skin, UseCase } from '@/stores/installation';
-
 import { useStore } from '@nanostores/react';
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
+import type { Renderer, Skin, UseCase } from '@/stores/installation';
 import { muxPlaybackId, renderer, skin, useCase } from '@/stores/installation';
 
 function getRendererTag(renderer: Renderer): string {

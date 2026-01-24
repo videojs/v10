@@ -1,9 +1,7 @@
-import type { ReactNode } from 'react';
-
 import { Radio } from '@base-ui-components/react/radio';
 import { RadioGroup } from '@base-ui-components/react/radio-group';
-
 import clsx from 'clsx';
+import type { ReactNode } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 export interface ImageRadioOption<T = string> {
@@ -36,7 +34,7 @@ export default function ImageRadioGroup<T extends string = string>({
   return (
     <RadioGroup
       value={value}
-      onValueChange={newValue => onChange(newValue as T)}
+      onValueChange={(newValue) => onChange(newValue as T)}
       aria-label={ariaLabel}
       className={twMerge(clsx('grid auto-rows-min', size === 'sm' && 'gap-2', size === 'md' && 'gap-4'), className)}
       style={{
@@ -56,7 +54,7 @@ export default function ImageRadioGroup<T extends string = string>({
             className={clsx(
               'group inline-flex items-center gap-2',
               isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
-              labelPosition === 'block' ? 'flex-col' : 'flex-row',
+              labelPosition === 'block' ? 'flex-col' : 'flex-row'
             )}
             key={option.value}
             disabled={isDisabled}
@@ -69,9 +67,9 @@ export default function ImageRadioGroup<T extends string = string>({
                 'border border-light-40 dark:border-dark-80',
                 isSelected
                   ? 'bg-light-60 dark:bg-dark-90'
-                  : !isDisabled
-                    && 'bg-light-80 dark:bg-dark-100 group-intent:bg-light-60/50 dark:group-intent:bg-dark-90/50',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow/50',
+                  : !isDisabled &&
+                      'bg-light-80 dark:bg-dark-100 group-intent:bg-light-60/50 dark:group-intent:bg-dark-90/50',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow/50'
               )}
               style={{
                 width: labelPosition === 'block' ? '100%' : undefined,

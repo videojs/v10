@@ -1,9 +1,7 @@
-import type { ReactNode } from 'react';
-import type { AnySupportedStyle, SupportedFramework, SupportedStyle } from '@/types/docs';
-
 import { Palette } from 'lucide-react';
-
+import type { ReactNode } from 'react';
 import ImageRadioGroup from '@/components/ImageRadioGroup';
+import type { AnySupportedStyle, SupportedFramework, SupportedStyle } from '@/types/docs';
 import { FRAMEWORK_STYLES, isValidStyleForFramework, STYLE_LABELS } from '@/types/docs';
 import { resolveStyleChange } from '@/utils/docs/routing';
 
@@ -45,7 +43,7 @@ export default function CSSPickerClient({ currentFramework, currentStyle, curren
     <ImageRadioGroup
       value={currentStyle}
       onChange={handleStyleChange}
-      options={availableStyles.map(st => ({
+      options={availableStyles.map((st) => ({
         value: st,
         label: STYLE_LABELS[st],
         image: STYLE_IMAGES[st],

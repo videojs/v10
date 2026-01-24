@@ -1,18 +1,18 @@
 import { atom } from 'nanostores';
 
-export type Renderer
-  = | 'cloudflare'
-    | 'dash'
-    | 'hls'
-    | 'html5-audio'
-    | 'html5-video'
-    | 'jwplayer'
-    | 'mux'
-    | 'shaka'
-    | 'spotify'
-    | 'vimeo'
-    | 'wistia'
-    | 'youtube';
+export type Renderer =
+  | 'cloudflare'
+  | 'dash'
+  | 'hls'
+  | 'html5-audio'
+  | 'html5-video'
+  | 'jwplayer'
+  | 'mux'
+  | 'shaka'
+  | 'spotify'
+  | 'vimeo'
+  | 'wistia'
+  | 'youtube';
 
 export type Skin = 'frosted' | 'minimal';
 

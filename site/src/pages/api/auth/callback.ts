@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 
-import { exchangeAuthorizationCode, INACTIVITY_EXPIRY, seal, SESSION_COOKIE_NAME } from '@/utils/auth';
+import { exchangeAuthorizationCode, INACTIVITY_EXPIRY, SESSION_COOKIE_NAME, seal } from '@/utils/auth';
 
 /** Disable static pre-rendering - this endpoint requires runtime request handling */
 export const prerender = false;

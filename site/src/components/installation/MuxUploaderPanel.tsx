@@ -1,5 +1,5 @@
+import { actions } from 'astro:actions';
 import type MuxUploaderElement from '@mux/mux-uploader';
-import type { UploaderState } from './UploaderOverlay';
 
 import MuxUploader, {
   MuxUploaderDrop,
@@ -8,12 +8,9 @@ import MuxUploader, {
   MuxUploaderRetry,
   MuxUploaderStatus,
 } from '@mux/mux-uploader-react';
-
-import { actions } from 'astro:actions';
-
 import { useCallback, useRef, useState } from 'react';
-
 import { muxPlaybackId, renderer } from '@/stores/installation';
+import type { UploaderState } from './UploaderOverlay';
 
 import UploaderOverlay from './UploaderOverlay';
 
@@ -97,7 +94,7 @@ export default function MuxUploaderPanel() {
     const popup = window.open(
       authorizationUrl,
       'oauth-login',
-      `width=${width},height=${height},left=${left},top=${top}`,
+      `width=${width},height=${height},left=${left},top=${top}`
     );
 
     if (!popup) {
@@ -145,7 +142,7 @@ export default function MuxUploaderPanel() {
     // Phase 1: Poll until asset_id is available
     let assetId: string | undefined;
     while (!assetId) {
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise((r) => setTimeout(r, 2000));
 
       const result = await actions.mux.getUploadStatus({ uploadId });
       if (result.error) {
@@ -165,7 +162,7 @@ export default function MuxUploaderPanel() {
     // Phase 2: Poll until playback_id is available
     let newPlaybackId: string | undefined;
     while (!newPlaybackId) {
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise((r) => setTimeout(r, 2000));
 
       const result = await actions.mux.getAssetStatus({ assetId });
       if (result.error) {

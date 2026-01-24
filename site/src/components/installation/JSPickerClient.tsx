@@ -1,9 +1,7 @@
-import type { ReactNode } from 'react';
-import type { SupportedFramework, SupportedStyle } from '@/types/docs';
-
 import { Atom, Globe } from 'lucide-react';
-
+import type { ReactNode } from 'react';
 import ImageRadioGroup from '@/components/ImageRadioGroup';
+import type { SupportedFramework, SupportedStyle } from '@/types/docs';
 import { FRAMEWORK_LABELS, isValidFramework, SUPPORTED_FRAMEWORKS } from '@/types/docs';
 import { resolveFrameworkChange } from '@/utils/docs/routing';
 
@@ -44,7 +42,7 @@ export default function JSPickerClient({ currentFramework, currentStyle, current
     <ImageRadioGroup
       value={currentFramework}
       onChange={handleFrameworkChange}
-      options={SUPPORTED_FRAMEWORKS.map(fw => ({
+      options={SUPPORTED_FRAMEWORKS.map((fw) => ({
         value: fw,
         label: FRAMEWORK_LABELS[fw],
         image: FRAMEWORK_IMAGES[fw],

@@ -1,13 +1,8 @@
 import { sealData, unsealData } from 'iron-session';
 import { createRemoteJWKSet } from 'jose';
 
-const {
-  OAUTH_URL,
-  OAUTH_CLIENT_ID,
-  OAUTH_CLIENT_SECRET,
-  OAUTH_REDIRECT_URI,
-  SESSION_COOKIE_PASSWORD,
-} = import.meta.env;
+const { OAUTH_URL, OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_REDIRECT_URI, SESSION_COOKIE_PASSWORD } = import.meta
+  .env;
 
 // =============================================================================
 // Types

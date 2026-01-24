@@ -1,7 +1,6 @@
-import Mux from '@mux/mux-node';
 import { ActionError, defineAction } from 'astro:actions';
-
 import { z } from 'astro:schema';
+import Mux from '@mux/mux-node';
 
 /**
  * Creates an authenticated Mux API client

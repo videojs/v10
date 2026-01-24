@@ -20,11 +20,7 @@ const mockOAuthResponse = {
   expires_in: 3600,
 };
 
-function createMockContext(params: {
-  code?: string;
-  state?: string;
-  storedState?: string;
-}): APIContext {
+function createMockContext(params: { code?: string; state?: string; storedState?: string }): APIContext {
   const url = new URL('https://example.com/api/auth/callback');
   if (params.code) url.searchParams.set('code', params.code);
   if (params.state) url.searchParams.set('state', params.state);
@@ -86,7 +82,7 @@ describe('callback endpoint', () => {
           sameSite: 'lax',
           maxAge: 300,
           path: '/',
-        }),
+        })
       );
 
       expect(mockContext.redirect).toHaveBeenCalledWith('/auth/success');
@@ -103,7 +99,7 @@ describe('callback endpoint', () => {
         'encrypted-session-data',
         expect.objectContaining({
           secure: true,
-        }),
+        })
       );
 
       vi.stubEnv('PROD', false);
@@ -119,9 +115,7 @@ describe('callback endpoint', () => {
       const mockContext = createMockContext({ code: '123', state: 'abc', storedState: 'abc' });
       await callbackHandler(mockContext);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'OAuth configuration missing',
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('OAuth configuration missing');
 
       expect(mockContext.redirect).toHaveBeenCalledWith('/auth/error');
     });
@@ -130,15 +124,16 @@ describe('callback endpoint', () => {
   describe('csrf protection', () => {
     it.each([
       ['state parameter is missing', { code: 'valid-code', storedState: 'valid-state-123' }],
-      ['state does not match stored state', { code: 'valid-code', state: 'different-state', storedState: 'valid-state-123' }],
+      [
+        'state does not match stored state',
+        { code: 'valid-code', state: 'different-state', storedState: 'valid-state-123' },
+      ],
       ['stored state cookie is missing', { code: 'valid-code', state: 'valid-state' }],
     ])('should reject when %s', async (_description, mockParams) => {
       const mockContext = createMockContext(mockParams);
       await callbackHandler(mockContext);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Invalid state parameter',
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid state parameter');
 
       expect(mockContext.redirect).toHaveBeenCalledWith('/auth/error');
     });
@@ -149,9 +144,7 @@ describe('callback endpoint', () => {
       const mockContext = createMockContext({ state: 'valid-state', storedState: 'valid-state' });
       await callbackHandler(mockContext);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Authorization code missing',
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Authorization code missing');
 
       expect(mockContext.redirect).toHaveBeenCalledWith('/auth/error');
       expect(mockContext.cookies.delete).toHaveBeenCalledWith('state', { path: '/' });
@@ -160,7 +153,10 @@ describe('callback endpoint', () => {
 
   describe('token exchange errors', () => {
     it.each([
-      ['token exchange fails', () => vi.mocked(exchangeAuthorizationCode).mockRejectedValueOnce(new Error('Invalid authorization code'))],
+      [
+        'token exchange fails',
+        () => vi.mocked(exchangeAuthorizationCode).mockRejectedValueOnce(new Error('Invalid authorization code')),
+      ],
       ['seal fails', () => vi.mocked(seal).mockRejectedValueOnce(new Error('Encryption failed'))],
     ])('should redirect to error when %s', async (_description, setupMock) => {
       setupMock();
@@ -168,10 +164,7 @@ describe('callback endpoint', () => {
       const mockContext = createMockContext({ code: 'valid-code', state: 'valid-state', storedState: 'valid-state' });
       await callbackHandler(mockContext);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'OAuth callback error:',
-        expect.any(Error),
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('OAuth callback error:', expect.any(Error));
 
       expect(mockContext.redirect).toHaveBeenCalledWith('/auth/error');
     });
