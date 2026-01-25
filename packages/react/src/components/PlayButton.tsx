@@ -49,7 +49,7 @@ export function getPlayButtonProps(
 
 export type PlayButtonProps = ReturnType<typeof getPlayButtonProps>;
 
-export function renderPlayButton(props: PlayButtonProps, state: PlayButtonState): JSX.Element {
+export function renderPlayButton(props: PlayButtonProps, state: PlayButtonState): React.JSX.Element {
   return (
     <button
       type="button"

@@ -52,7 +52,7 @@ export function getFullscreenButtonProps(
 
 export type FullscreenButtonProps = ReturnType<typeof getFullscreenButtonProps>;
 
-export function renderFullscreenButton(props: FullscreenButtonProps, state: FullscreenButtonState): JSX.Element {
+export function renderFullscreenButton(props: FullscreenButtonProps, state: FullscreenButtonState): React.JSX.Element {
   return (
     <button
       type="button"

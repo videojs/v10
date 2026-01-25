@@ -12,7 +12,7 @@ export type TimeSliderState = Prettify<ReturnType<typeof useCore<CoreTimeSlider>
   orientation: 'horizontal' | 'vertical';
 };
 
-export interface TimeSliderProps extends React.ComponentPropsWithoutRef<'div'> {
+export interface TimeSliderProps extends React.ComponentPropsWithRef<'div'> {
   orientation?: 'horizontal' | 'vertical';
 }
 
@@ -66,7 +66,7 @@ export function useTimeSliderRootProps(props: TimeSliderProps, state: TimeSlider
   };
 }
 
-export function renderTimeSliderRoot(props: TimeSliderRenderProps): JSX.Element {
+export function renderTimeSliderRoot(props: TimeSliderRenderProps): React.JSX.Element {
   return <div {...props} />;
 }
 
@@ -96,7 +96,7 @@ export function useTimeSliderTrackProps(
   };
 }
 
-export function renderTimeSliderTrack(props: TimeSliderRenderProps): JSX.Element {
+export function renderTimeSliderTrack(props: TimeSliderRenderProps): React.JSX.Element {
   return <div {...props} />;
 }
 
@@ -126,7 +126,7 @@ export function getTimeSliderThumbProps(
   };
 }
 
-export function renderTimeSliderThumb(props: TimeSliderRenderProps): JSX.Element {
+export function renderTimeSliderThumb(props: TimeSliderRenderProps): React.JSX.Element {
   return <div {...props} />;
 }
 
@@ -155,7 +155,7 @@ export function getTimeSliderPointerProps(
   };
 }
 
-export function renderTimeSliderPointer(props: TimeSliderRenderProps): JSX.Element {
+export function renderTimeSliderPointer(props: TimeSliderRenderProps): React.JSX.Element {
   return <div {...props} />;
 }
 
@@ -185,7 +185,7 @@ export function getTimeSliderProgressProps(
   };
 }
 
-export function renderTimeSliderProgress(props: TimeSliderRenderProps): JSX.Element {
+export function renderTimeSliderProgress(props: TimeSliderRenderProps): React.JSX.Element {
   return <div {...props} />;
 }
 

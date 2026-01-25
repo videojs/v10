@@ -35,7 +35,10 @@ export function getPreviewTimeDisplayProps(
   return baseProps;
 }
 
-export function renderPreviewTimeDisplay(props: PreviewTimeDisplayProps, state: PreviewTimeDisplayState): JSX.Element {
+export function renderPreviewTimeDisplay(
+  props: PreviewTimeDisplayProps,
+  state: PreviewTimeDisplayState
+): React.JSX.Element {
   const { showRemaining, ...restProps } = props;
 
   /** @TODO Should this live here or elsewhere? (CJP) */

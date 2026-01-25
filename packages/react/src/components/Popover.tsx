@@ -66,7 +66,7 @@ export function usePopoverRootProps(props: PopoverRootProps, _state: PopoverStat
   };
 }
 
-export function renderPopoverRoot(props: { children: ReactNode }): JSX.Element {
+export function renderPopoverRoot(props: { children: ReactNode }): React.JSX.Element {
   return <>{props.children}</>;
 }
 
@@ -88,11 +88,11 @@ export interface PopoverTriggerProps {
 export function usePopoverTriggerProps(
   props: PopoverTriggerProps,
   context: PopoverState
-): { child: JSX.Element; triggerProps: Record<string, any> } {
+): { child: React.JSX.Element; triggerProps: Record<string, any> } {
   const { children } = props;
   const { _setTriggerElement, _open, popupId } = context;
 
-  const child = Children.only(children) as JSX.Element;
+  const child = Children.only(children) as React.JSX.Element;
   const existingStyle = (child.props as { style?: React.CSSProperties })?.style || {};
 
   return {
@@ -109,7 +109,10 @@ export function usePopoverTriggerProps(
   };
 }
 
-export function renderPopoverTrigger(props: { child: JSX.Element; triggerProps: Record<string, any> }): JSX.Element {
+export function renderPopoverTrigger(props: {
+  child: React.JSX.Element;
+  triggerProps: Record<string, any>;
+}): React.JSX.Element {
   // eslint-disable-next-line react/no-clone-element
   return cloneElement(props.child, props.triggerProps);
 }
@@ -152,7 +155,7 @@ export function usePopoverPositionerProps(
   return { children };
 }
 
-export function renderPopoverPositioner(props: { children: ReactNode }): JSX.Element {
+export function renderPopoverPositioner(props: { children: ReactNode }): React.JSX.Element {
   return <>{props.children}</>;
 }
 
@@ -251,7 +254,7 @@ function getDataAttributes(element?: HTMLElement | null): Record<string, string>
   );
 }
 
-export function renderPopoverPopup(props: PopoverPopupRenderProps): JSX.Element {
+export function renderPopoverPopup(props: PopoverPopupRenderProps): React.JSX.Element {
   return <div {...props} />;
 }
 

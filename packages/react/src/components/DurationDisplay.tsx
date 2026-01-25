@@ -32,7 +32,7 @@ export function useDurationDisplayProps(props: PropsWithChildren): PropsWithChil
 export type UseDurationDisplayProps = typeof useDurationDisplayProps;
 type DurationDisplayProps = ReturnType<UseDurationDisplayProps>;
 
-export function renderDurationDisplay(props: DurationDisplayProps, state: DurationDisplayState): JSX.Element {
+export function renderDurationDisplay(props: DurationDisplayProps, state: DurationDisplayState): React.JSX.Element {
   return <span {...props}>{formatDisplayTime(state.duration)}</span>;
 }
 

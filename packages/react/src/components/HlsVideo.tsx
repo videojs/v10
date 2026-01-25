@@ -91,7 +91,7 @@ export type VideoProps = PropsWithChildren<{
 }>;
 
 // HlsVideo component with default component
-export function HlsVideo({ component = DefaultVideoComponent, children, ...props }: VideoProps): JSX.Element {
+export function HlsVideo({ component = DefaultVideoComponent, children, ...props }: VideoProps): React.JSX.Element {
   return (
     <ConnectedVideo {...props} component={component}>
       {children}

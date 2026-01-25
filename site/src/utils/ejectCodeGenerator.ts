@@ -31,7 +31,7 @@ type SkinProps = PropsWithChildren<{
   className?: string;
 }>;
 
-export default function FrostedSkin({ children, className = '' }: SkinProps): JSX.Element {
+export default function FrostedSkin({ children, className = '' }: SkinProps): React.JSX.Element {
   return (
     <MediaContainer className={\`vjs-frosted-skin \${className}\`}>
       {children}
@@ -140,7 +140,7 @@ type SkinProps = PropsWithChildren<{
   className?: string;
 }>;
 
-export default function MinimalSkin({ children, className = '' }: SkinProps): JSX.Element {
+export default function MinimalSkin({ children, className = '' }: SkinProps): React.JSX.Element {
   return (
     <MediaContainer className={\`vjs-minimal-skin \${className}\`}>
       {children}

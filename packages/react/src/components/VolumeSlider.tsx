@@ -12,7 +12,7 @@ export type VolumeSliderState = Prettify<ReturnType<typeof useCore<CoreVolumeSli
   orientation: 'horizontal' | 'vertical';
 };
 
-export interface VolumeSliderProps extends React.ComponentPropsWithoutRef<'div'> {
+export interface VolumeSliderProps extends React.ComponentPropsWithRef<'div'> {
   orientation?: 'horizontal' | 'vertical';
 }
 
@@ -71,7 +71,7 @@ export function useVolumeSliderRootProps(props: VolumeSliderProps, state: Volume
   };
 }
 
-export function renderVolumeSliderRoot(props: VolumeSliderRenderProps): JSX.Element {
+export function renderVolumeSliderRoot(props: VolumeSliderRenderProps): React.JSX.Element {
   return <div {...props} />;
 }
 
@@ -101,7 +101,7 @@ export function useVolumeSliderTrackProps(
   };
 }
 
-export function renderVolumeSliderTrack(props: VolumeSliderRenderProps): JSX.Element {
+export function renderVolumeSliderTrack(props: VolumeSliderRenderProps): React.JSX.Element {
   return <div {...props} />;
 }
 
@@ -131,7 +131,7 @@ export function getVolumeSliderThumbProps(
   };
 }
 
-export function renderVolumeSliderThumb(props: VolumeSliderRenderProps): JSX.Element {
+export function renderVolumeSliderThumb(props: VolumeSliderRenderProps): React.JSX.Element {
   return <div {...props} />;
 }
 
@@ -161,7 +161,7 @@ export function getVolumeSliderProgressProps(
   };
 }
 
-export function renderVolumeSliderProgress(props: VolumeSliderRenderProps): JSX.Element {
+export function renderVolumeSliderProgress(props: VolumeSliderRenderProps): React.JSX.Element {
   return <div {...props} />;
 }
 

@@ -53,7 +53,7 @@ export function getMuteButtonProps(
 
 export type MuteButtonProps = ReturnType<typeof getMuteButtonProps>;
 
-export function renderMuteButton(props: MuteButtonProps, state: MuteButtonState): JSX.Element {
+export function renderMuteButton(props: MuteButtonProps, state: MuteButtonState): React.JSX.Element {
   return (
     <button
       type="button"

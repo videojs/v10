@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 
 import { MediaContext } from './context';
 
-export function VideoProvider({ children }: { children: ReactNode }): JSX.Element {
+export function VideoProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const value = useMemo(() => createMediaStore(), []);
 
   // useEffect(() => {

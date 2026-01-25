@@ -64,7 +64,7 @@ export function useTooltipRootProps(props: TooltipRootProps, _state: TooltipStat
   };
 }
 
-export function renderTooltipRoot(props: { children: ReactNode }): JSX.Element {
+export function renderTooltipRoot(props: { children: ReactNode }): React.JSX.Element {
   return <>{props.children}</>;
 }
 
@@ -86,11 +86,14 @@ interface TooltipTriggerProps {
 export function useTooltipTriggerProps(
   props: TooltipTriggerProps,
   context: TooltipState
-): { child: JSX.Element; triggerProps: Record<string, any> } {
+): { child: React.JSX.Element; triggerProps: Record<string, any> } {
   return usePopoverTriggerProps(props, context);
 }
 
-export function renderTooltipTrigger(props: { child: JSX.Element; triggerProps: Record<string, any> }): JSX.Element {
+export function renderTooltipTrigger(props: {
+  child: React.JSX.Element;
+  triggerProps: Record<string, any>;
+}): React.JSX.Element {
   // eslint-disable-next-line react/no-clone-element
   return cloneElement(props.child, props.triggerProps);
 }
@@ -114,7 +117,7 @@ export function useTooltipPositionerProps(
   return usePopoverPositionerProps(props, context);
 }
 
-export function renderTooltipPositioner(props: { children: ReactNode }): JSX.Element {
+export function renderTooltipPositioner(props: { children: ReactNode }): React.JSX.Element {
   return <>{props.children}</>;
 }
 
@@ -133,7 +136,7 @@ export function useTooltipPopupProps(props: TooltipPopupProps, context: TooltipS
   return usePopoverPopupProps(props, context);
 }
 
-export function renderTooltipPopup(props: TooltipPopupRenderProps): JSX.Element {
+export function renderTooltipPopup(props: TooltipPopupRenderProps): React.JSX.Element {
   return <div {...props} />;
 }
 

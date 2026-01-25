@@ -27,7 +27,8 @@
     "isolatedDeclarations": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": []
   },
   "exclude": ["node_modules", "dist", "coverage"]
 }

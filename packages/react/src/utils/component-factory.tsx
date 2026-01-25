@@ -54,7 +54,9 @@ export function toConnectedComponent<
 export type ConnectedComponent<
   TProps extends Record<string, any>,
   TRenderFn extends RenderFn<any, any>,
-> = React.ForwardRefExoticComponent<TProps & { render?: TRenderFn } & React.RefAttributes<HTMLElement>>;
+> = React.ForwardRefExoticComponent<
+  React.PropsWithoutRef<TProps & { render?: TRenderFn }> & React.RefAttributes<HTMLElement>
+>;
 
 /**
  * Factory function to create context-based components that don't use toConnectedComponent
@@ -94,7 +96,9 @@ export function toContextComponent<
 export type ContextComponent<
   TProps extends Record<string, any>,
   TRenderFn extends (props: any, context: any) => ReactElement,
-> = React.ForwardRefExoticComponent<(Omit<TProps, 'ref'> & { render?: TRenderFn }) & React.RefAttributes<any>>;
+> = React.ForwardRefExoticComponent<
+  React.PropsWithoutRef<TProps & { render?: TRenderFn }> & React.RefAttributes<HTMLElement>
+>;
 
 /**
  * Hook that manages a CoreClass instance and triggers re-renders when state changes.

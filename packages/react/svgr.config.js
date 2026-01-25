@@ -37,7 +37,7 @@ import type { IconProps } from '../types';
 
 ${variables.interfaces};
 
-const ${variables.componentName} = ({ color = 'currentColor', ...props }: IconProps): JSX.Element => (
+const ${variables.componentName} = ({ color = 'currentColor', ...props }: IconProps): React.JSX.Element => (
   ${variables.jsx}
 );
 

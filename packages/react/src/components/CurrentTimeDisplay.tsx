@@ -1,11 +1,14 @@
 import { currentTimeDisplayStateDefinition } from '@videojs/store';
 import { useMediaSelector } from '@videojs/store/react';
 import { formatDisplayTime, shallowEqual } from '@videojs/utils';
-import type { PropsWithChildren } from 'react';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
-export function useCurrentTimeDisplayState(_props?: any): {
+export interface CurrentTimeDisplayProps extends React.ComponentPropsWithoutRef<'span'> {
+  showRemaining?: boolean;
+}
+
+export function useCurrentTimeDisplayState(_props?: CurrentTimeDisplayProps): {
   currentTime: number;
   duration: number;
 } {
@@ -21,15 +24,11 @@ export function useCurrentTimeDisplayState(_props?: any): {
 
 export type CurrentTimeDisplayState = ReturnType<typeof useCurrentTimeDisplayState>;
 
-export interface CurrentTimeDisplayProps extends React.ComponentPropsWithoutRef<'span'> {
-  showRemaining?: boolean;
-}
-
 export function useCurrentTimeDisplayProps(
-  props: PropsWithChildren,
+  props: CurrentTimeDisplayProps,
   _state: ReturnType<typeof useCurrentTimeDisplayState>
-): PropsWithChildren<Record<string, unknown>> {
-  const baseProps: Record<string, any> = {
+): CurrentTimeDisplayProps {
+  const baseProps: CurrentTimeDisplayProps = {
     /** external props spread last to allow for overriding */
     ...props,
   };
@@ -37,7 +36,10 @@ export function useCurrentTimeDisplayProps(
   return baseProps;
 }
 
-export function renderCurrentTimeDisplay(props: CurrentTimeDisplayProps, state: CurrentTimeDisplayState): JSX.Element {
+export function renderCurrentTimeDisplay(
+  props: CurrentTimeDisplayProps,
+  state: CurrentTimeDisplayState
+): React.JSX.Element {
   const { showRemaining, ...restProps } = props;
 
   /** @TODO Should this live here or elsewhere? (CJP) */
