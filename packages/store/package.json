@@ -19,6 +19,10 @@
     "./react": {
       "types": "./dist/react/index.d.ts",
       "default": "./dist/react/index.js"
+    },
+    "./html": {
+      "types": "./dist/html/index.d.ts",
+      "default": "./dist/html/index.js"
     }
   },
   "main": "dist/index.js",
@@ -39,10 +43,11 @@
     "nanostores": "^1.0.1"
   },
   "peerDependencies": {
-    "react": ">=16.8.0"
+    "react": ">=19.2.3"
   },
   "devDependencies": {
-    "react": "^19.0.0",
+    "@types/react": "^19.2.3",
+    "react": "^19.2.3",
     "tsdown": "^0.15.9",
     "typescript": "^5.9.3"
   },

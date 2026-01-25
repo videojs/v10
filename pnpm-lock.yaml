@@ -30,13 +30,13 @@ importers:
         specifier: ^16.2.3
         version: 16.2.7
       react:
-        specifier: ^19.0.0
+        specifier: ^19.2.3
         version: 19.2.3
       react-compiler-runtime:
         specifier: ^1.0.0
         version: 1.0.0(react@19.2.3)
       react-dom:
-        specifier: ^19.0.0
+        specifier: ^19.2.3
         version: 19.2.3(react@19.2.3)
       simple-git-hooks:
         specifier: ^2.13.1
@@ -122,10 +122,10 @@ importers:
         specifier: ^12.23.25
         version: 12.23.26(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react:
-        specifier: ^19.2.1
+        specifier: ^19.2.3
         version: 19.2.3
       react-dom:
-        specifier: ^19.2.1
+        specifier: ^19.2.3
         version: 19.2.3(react@19.2.3)
       shiki:
         specifier: ^3.19.0
@@ -141,7 +141,7 @@ importers:
         specifier: ^4.1.17
         version: 4.1.18(vite@7.2.7(@types/node@22.19.3)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.2))
       '@types/react':
-        specifier: ^19.2.7
+        specifier: ^19.2.3
         version: 19.2.7
       '@types/react-dom':
         specifier: ^19.2.3
@@ -252,7 +252,7 @@ importers:
         specifier: ^1.16.1
         version: 1.16.1(postcss@8.5.6)
       react:
-        specifier: ^19.0.0
+        specifier: ^19.2.3
         version: 19.2.3
       tailwindcss:
         specifier: ^4.1.17
@@ -273,8 +273,11 @@ importers:
         specifier: ^1.0.1
         version: 1.1.0
     devDependencies:
+      '@types/react':
+        specifier: ^19.2.3
+        version: 19.2.7
       react:
-        specifier: ^19.0.0
+        specifier: ^19.2.3
         version: 19.2.3
       tsdown:
         specifier: ^0.15.9
