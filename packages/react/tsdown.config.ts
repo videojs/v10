@@ -5,7 +5,6 @@ import buildStyles from './build/build-styles.ts';
 export default defineConfig({
   entry: {
     index: './src/index.ts',
-    store: './src/store/index.ts',
     icons: './src/icons/index.ts',
     'skins/frosted': './src/skins/frosted/index.ts',
     'skins/minimal': './src/skins/minimal/index.ts',

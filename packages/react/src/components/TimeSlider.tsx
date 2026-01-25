@@ -1,8 +1,8 @@
 import { TimeSlider as CoreTimeSlider } from '@videojs/core';
 import { timeSliderStateDefinition } from '@videojs/store';
+import { useMediaSelector, useMediaStore } from '@videojs/store/react';
 import { shallowEqual } from '@videojs/utils';
 import { useMemo } from 'react';
-import { useMediaSelector, useMediaStore } from '@/store';
 import type { Prettify } from '../types';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent, toContextComponent, useCore } from '../utils/component-factory';

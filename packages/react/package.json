@@ -17,10 +17,6 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./store": {
-      "types": "./dist/store.d.ts",
-      "default": "./dist/store.js"
-    },
     "./icons": {
       "types": "./dist/icons.d.ts",
       "default": "./dist/icons.js"

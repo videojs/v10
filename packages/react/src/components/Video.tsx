@@ -1,7 +1,7 @@
+import { useMediaRef } from '@videojs/store/react';
 import type React from 'react';
 import type { CSSProperties, DetailedHTMLProps, PropsWithChildren, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
-import { useMediaRef } from '@/store';
 
 export type VideoProps = PropsWithChildren<
   DetailedHTMLProps<VideoHTMLAttributes<HTMLVideoElement>, HTMLVideoElement> & {

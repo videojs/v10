@@ -1,6 +1,11 @@
 'use client';
 
-export * from '@/store';
+import { printConsoleBanner } from '@videojs/utils';
+import { version } from '../package.json';
+
+printConsoleBanner(version);
+
+export * from '@videojs/store/react';
 export { CurrentTimeDisplay, useCurrentTimeDisplayState } from './components/CurrentTimeDisplay';
 export { DurationDisplay } from './components/DurationDisplay';
 export { FullscreenButton, useFullscreenButtonState } from './components/FullscreenButton';

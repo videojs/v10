@@ -1,8 +1,8 @@
 import { playButtonStateDefinition } from '@videojs/store';
+import { useMediaSelector, useMediaStore } from '@videojs/store/react';
 import { shallowEqual } from '@videojs/utils';
 import type { DetailedHTMLProps, HTMLAttributes, PropsWithChildren, RefCallback } from 'react';
 import { forwardRef, useCallback, useMemo } from 'react';
-import { useMediaSelector, useMediaStore } from '@/store';
 import { useComposedRefs } from '../utils/use-composed-refs';
 
 /**

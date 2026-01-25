@@ -1,7 +1,7 @@
 import { currentTimeDisplayStateDefinition } from '@videojs/store';
+import { useMediaSelector } from '@videojs/store/react';
 import { formatDisplayTime, shallowEqual } from '@videojs/utils';
 import type { PropsWithChildren } from 'react';
-import { useMediaSelector } from '@/store';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 

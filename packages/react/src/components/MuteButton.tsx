@@ -1,8 +1,8 @@
 import { muteButtonStateDefinition } from '@videojs/store';
+import { useMediaSelector, useMediaStore } from '@videojs/store/react';
 import { shallowEqual } from '@videojs/utils';
 import type { PropsWithChildren } from 'react';
 import { useMemo } from 'react';
-import { useMediaSelector, useMediaStore } from '@/store';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 

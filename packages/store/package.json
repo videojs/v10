@@ -15,6 +15,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "default": "./dist/react/index.js"
     }
   },
   "main": "dist/index.js",
@@ -34,7 +38,11 @@
     "@videojs/utils": "workspace:*",
     "nanostores": "^1.0.1"
   },
+  "peerDependencies": {
+    "react": ">=16.8.0"
+  },
   "devDependencies": {
+    "react": "^19.0.0",
     "tsdown": "^0.15.9",
     "typescript": "^5.9.3"
   },

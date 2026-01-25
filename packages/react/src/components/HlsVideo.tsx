@@ -1,8 +1,7 @@
 import { createMediaPlaybackController } from '@videojs/core/media';
+import { useMediaRef } from '@videojs/store/react';
 import type { CSSProperties, DetailedHTMLProps, ElementType, PropsWithChildren, Ref, VideoHTMLAttributes } from 'react';
-
 import { forwardRef, useImperativeHandle, useRef } from 'react';
-import { useMediaRef } from '@/store';
 
 export interface MuxVideoProps {
   'playback-id'?: string;
