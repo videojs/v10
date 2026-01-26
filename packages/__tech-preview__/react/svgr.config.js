@@ -5,6 +5,7 @@ export default {
   plugins: ['@svgr/plugin-jsx'],
   typescript: true,
   jsxRuntime: 'automatic',
+  prettier: false, // Disable prettier to avoid pnpm peer dependency resolution issues
   icon: false, // Don't set height/width attributes.
   expandProps: 'end',
   svgProps: {
