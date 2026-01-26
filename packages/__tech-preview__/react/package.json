@@ -47,7 +47,7 @@
     "build:watch": "tsdown --watch ./src --ignore-watch ./src/icons/generated-icons --silent",
     "dev": "pnpm run build:watch",
     "format:icons": "echo noop. Need to replace based on eslint vs. prettier decisions!",
-    "generate:icons": "svgr --config-file svgr.config.js --out-dir src/icons/generated-icons ../icons/assets && pnpm format:icons",
+    "generate:icons": "svgr --config-file svgr.config.js --no-prettier --out-dir src/icons/generated-icons ../icons/assets",
     "test": "echo \"No tests yet\"",
     "clean": "rm -rf dist src/icons/generated-icons"
   },
