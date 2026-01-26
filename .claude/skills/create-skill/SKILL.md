@@ -5,7 +5,6 @@ description: >-
   workflows, or commands. Guides through structure, frontmatter, and conventions.
   Triggers: "create skill", "new skill", "add skill", "write skill".
 allowed-tools: Bash(mkdir:*), Bash(ls:*), Glob, Grep, Read, Write, Edit, question
-context: fork
 ---
 
 # Create Skill

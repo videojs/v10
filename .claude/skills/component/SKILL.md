@@ -174,6 +174,7 @@ See [props.md](references/props.md) for naming conventions.
 | File                                            | Contents                             |
 | ----------------------------------------------- | ------------------------------------ |
 | [lit.md](references/lit.md)                     | Lit controllers, mixins, context     |
+| [lit-fundamentals.md](references/lit-fundamentals.md) | ReactiveElement lifecycle, properties, styling |
 | [react.md](references/react.md)                 | React hooks, context, refs           |
 | [props.md](references/props.md)                 | Prop naming, conventions, defaults   |
 | [styling.md](references/styling.md)             | Data attributes, CSS variables       |
