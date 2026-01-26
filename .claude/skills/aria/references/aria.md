@@ -2,6 +2,14 @@
 
 Roles, states, properties, labeling strategies, and live regions.
 
+## Contents
+
+- [First Rule of ARIA](#first-rule-of-aria) — Use native HTML when possible
+- [Roles by Component](#roles-by-component) — Buttons, menus, dialogs, lists, tabs, sliders
+- [Required Attributes by Role](#required-attributes-by-role)
+- [State Attributes](#state-attributes) — pressed, expanded, selected, checked, current
+- [Labeling](#labeling) — Priority order, aria-label vs aria-labelledby
+
 ---
 
 ## First Rule of ARIA

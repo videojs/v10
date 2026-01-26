@@ -5,6 +5,7 @@ description: >-
   Use when creating component libraries, design systems, or reusable UI primitives.
   Handles compound components, state management, accessibility, styling hooks, and API design.
   Includes Lit (controllers, ReactiveElement) and React (hooks, context) patterns.
+  Triggers: "create component", "component pattern", "compound component", "headless component".
 ---
 
 # Component Architecture Patterns

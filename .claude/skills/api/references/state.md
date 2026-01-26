@@ -2,6 +2,24 @@
 
 Patterns for designing and using state management in TypeScript libraries.
 
+## Contents
+
+- [Mental Models](#mental-models) — Zustand, Jotai, XState, Valtio
+- [Core Subscription Interface](#core-subscription-interface)
+- [Middleware as Higher-Order Functions](#middleware-as-higher-order-functions)
+- [Slice Pattern](#slice-pattern)
+- [Atomic Composition](#atomic-composition-jotai-pattern)
+- [Selector Pattern](#selector-pattern)
+- [Split Stores When Truly Isolated](#split-stores-when-truly-isolated)
+- [Cross-Store Access](#cross-store-access)
+- [Derived State Patterns](#derived-state-patterns)
+- [Optimistic Updates](#optimistic-updates)
+- [State Initialization](#state-initialization)
+- [Request State Pattern](#request-state-pattern)
+- [Proxy-Based Reactivity](#proxy-based-reactivity-valtio)
+- [Presets as Transparent Collections](#presets-as-transparent-collections)
+- [Dev Tools Integration](#dev-tools-integration)
+
 ## Mental Models
 
 Daishi Kato created Zustand, Jotai, and Valtio with intentionally different architectures because **different problems need different mental models**.

@@ -2,6 +2,16 @@
 
 Accessibility patterns specific to video and audio players. Covers controls, keyboard shortcuts, captions, and screen reader support.
 
+## Contents
+
+- [Player Container](#player-container) — Root element identification
+- [Keyboard Shortcuts](#keyboard-shortcuts) — Standard media keys, key scope
+- [Control Bar](#control-bar) — Toolbar pattern
+- [Control Components](#control-components) — Play, mute, time slider, volume, fullscreen, captions
+- [Settings Menu](#settings-menu) — Structure, keyboard navigation
+- [Live Announcements](#live-announcements) — Announcer component, events to announce
+- [Captions](#captions) — CVAA compliance requirements
+
 ---
 
 ## Player Container

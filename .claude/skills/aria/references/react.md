@@ -2,6 +2,16 @@
 
 React-specific patterns for accessibility. Covers hook architecture, ref management, and framework considerations.
 
+## Contents
+
+- [Hook Architecture](#hook-architecture) — Layer separation, behavior hooks
+- [Focus Management Hooks](#focus-management-hooks) — Scope, ring detection, roving tabindex
+- [Ref Patterns](#ref-patterns) — Merging refs, callback refs
+- [Event Handling](#event-handling) — Keyboard normalization, press events
+- [Announcements](#announcements) — Live regions, status messages
+- [SSR Considerations](#ssr-considerations) — ID generation, hydration
+- [Portal Accessibility](#portal-accessibility)
+
 ---
 
 ## Hook Architecture

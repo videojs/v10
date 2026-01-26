@@ -1,6 +1,8 @@
 ---
 name: claude-update
-description: Update CLAUDE.md and skills when introducing new patterns or conventions
+description: >-
+  Update CLAUDE.md and skills when introducing new patterns or conventions.
+  Triggers: "update claude", "update skills", "new pattern", "add convention".
 context: fork
 disable-model-invocation: true
 ---
