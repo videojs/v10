@@ -1,42 +1,48 @@
 ---
-allowed-tools: Bash(git:*), Bash(gh:*), Glob, Grep, Read, mcp__github__*, skill
-description: Analyze a GitHub issue and create a comprehensive plan to solve it
+name: gh-issue
+description: >-
+  Analyze GitHub issues and create a comprehensive plan to solve them.
+  Triggers: "analyze issue", "plan issue", "investigate issue".
+allowed-tools: Bash(git:*), Bash(gh:*), Glob, Grep, Read, mcp__github__*
+agent: plan
 ---
 
 # GitHub Issue Analysis
 
-Deep-dive on a GitHub issue. Find the problem and generate a plan.
+Deep-dive on one or more GitHub issues. Find the problem and generate a plan.
 Do not write code. Explain the problem clearly and propose a comprehensive plan to solve it.
 
 ## Usage
 
 ```
-/gh-issue <issue>
+/gh-issue <issues...>
 ```
 
-- `issue` (required): GitHub issue number (assumes videojs/v10 repo) or full GitHub issue URL
+- `issues` (required): One or more GitHub issue numbers (assumes videojs/v10 repo) or full GitHub issue URLs
 
 ### Examples
 
 ```
 /gh-issue 123
+/gh-issue 123 456 789
 /gh-issue https://github.com/videojs/v10/issues/123
+/gh-issue 123 https://github.com/other/repo/issues/456
 ```
 
-## Issue
+## Issues
 
 $ARGUMENTS
 
-Fetch the issue details using GitHub tools. The argument above can be an issue number (assumes videojs/v10 repo) or a full GitHub issue URL.
+Fetch details for each issue using GitHub tools. Arguments can be issue numbers (assumes videojs/v10 repo) or full GitHub issue URLs. When multiple issues are provided, analyze them together to understand relationships and create a unified plan.
 
 ## Your Tasks
 
 You are an experienced software developer tasked with diagnosing issues.
 
-### Step 1: Fetch and Analyze Issue Type
+### Step 1: Fetch and Analyze Issue Types
 
-1. Fetch the issue details using GitHub tools
-2. Identify the issue type by examining:
+1. Fetch details for each issue using GitHub tools
+2. For each issue, identify the type by examining:
 
 **Labels** — Look for:
 
@@ -76,7 +82,7 @@ Based on detected type, load the relevant skill for domain expertise:
 | UI component implementation     | `component` | Compound components, polymorphism, styling patterns           |
 | Bug/Feature (general)           | `api`       | General principles apply                                      |
 
-**Load the skill using the skill tool before proceeding to analysis.**
+**Load the skill before proceeding to analysis.**
 
 **Notes:**
 
@@ -155,8 +161,8 @@ For **UI Component** issues (with `component` skill):
 
 Include:
 
-- Link to the source issue
+- Links to all source issues
 - Related discussions or issues
 - Relevant skill principles applied
 
-**ONLY CREATE A PLAN. DO NOT WRITE ANY CODE.** Your task is to create a thorough, comprehensive strategy for understanding and resolving the issue.
+**ONLY CREATE A PLAN. DO NOT WRITE ANY CODE.** Your task is to create a thorough, comprehensive strategy for understanding and resolving the issues.

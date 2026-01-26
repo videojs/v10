@@ -1,6 +1,10 @@
 ---
-allowed-tools: Bash(git:*), Bash(gh:*), Glob, Grep, Read, mcp__github__*, skill
-description: Review changes in the current Git branch and suggest improvements
+name: review-branch
+description: >-
+  Review changes in the current Git branch and suggest improvements.
+  Triggers: "review branch", "review changes", "code review".
+allowed-tools: Bash(git:*), Bash(gh:*), Glob, Grep, Read, mcp__github__*
+agent: plan
 ---
 
 # Branch Review
@@ -60,7 +64,7 @@ Categorize the changed files to determine which review criteria apply:
 
 ### Step 3: Load Skills (Optional)
 
-For deeper domain-specific review, load the relevant skill using the skill tool:
+For deeper domain-specific review, load the relevant skill:
 
 | Category      | Load Skill  | For Deeper Review              |
 | ------------- | ----------- | ------------------------------ |

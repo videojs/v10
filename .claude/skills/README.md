@@ -16,20 +16,25 @@ Specialized knowledge for AI agents working on Video.js 10.
 | Reviewing components       | `component` → `review/workflow.md` |
 | Reviewing accessibility    | `aria` → `review/workflow.md`      |
 | Accessibility audit        | `aria`                             |
-| Committing / creating PRs  | `git`                              |
-| Updating AI docs           | `claude-update`                    |
+| Committing / creating PRs  | `git` or `/commit-pr`              |
+| Reviewing branch changes   | `/review-branch`                   |
+| Analyzing GitHub issues    | `/gh-issue`                        |
+| Updating AI docs           | `/claude-update`                   |
 
 ## Skills
 
-| Skill                           | Purpose                                                                | Has Review? |
-| ------------------------------- | ---------------------------------------------------------------------- | ----------- |
-| [api](api/SKILL.md)             | API design and DX — extensibility, type safety, progressive disclosure | Yes         |
-| [aria](aria/SKILL.md)           | Accessibility patterns — ARIA, keyboard, focus, media player a11y      | Yes         |
-| [claude-update](claude-update/SKILL.md) | Update CLAUDE.md and skills when introducing new patterns        | No          |
-| [component](component/SKILL.md) | Build headless UI components — compound patterns, state, styling       | Yes         |
-| [docs](docs/SKILL.md)           | Write Video.js 10 documentation                                        | Yes         |
-| [git](git/SKILL.md)             | Git workflow — commit messages, PRs, branch naming, scope inference    | No          |
-| [rfc](rfc/SKILL.md)             | Write RFCs — design docs, architecture proposals, component specs      | No          |
+| Skill                                   | Purpose                                                                | Has Review? |
+| --------------------------------------- | ---------------------------------------------------------------------- | ----------- |
+| [api](api/SKILL.md)                     | API design and DX — extensibility, type safety, progressive disclosure | Yes         |
+| [aria](aria/SKILL.md)                   | Accessibility patterns — ARIA, keyboard, focus, media player a11y      | Yes         |
+| [claude-update](claude-update/SKILL.md) | Update CLAUDE.md and skills when introducing new patterns              | No          |
+| [commit-pr](commit-pr/SKILL.md)         | Commit changes and create/update PRs with conventions                  | No          |
+| [component](component/SKILL.md)         | Build headless UI components — compound patterns, state, styling       | Yes         |
+| [docs](docs/SKILL.md)                   | Write Video.js 10 documentation                                        | Yes         |
+| [gh-issue](gh-issue/SKILL.md)           | Analyze GitHub issues and create implementation plans                  | No          |
+| [git](git/SKILL.md)                     | Git workflow — commit messages, PRs, branch naming, scope inference    | No          |
+| [review-branch](review-branch/SKILL.md) | Review branch changes and suggest improvements                         | No          |
+| [rfc](rfc/SKILL.md)                     | Write RFCs — design docs, architecture proposals, component specs      | No          |
 
 ## Review Workflows
 

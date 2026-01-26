@@ -3,7 +3,6 @@ name: claude-update
 description: Update CLAUDE.md and skills when introducing new patterns or conventions
 context: fork
 disable-model-invocation: true
-agent: general-purpose
 ---
 
 # Claude Update
