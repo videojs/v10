@@ -7,6 +7,15 @@ export type SupportedFramework = keyof typeof FRAMEWORK_STYLES;
 export type SupportedStyle<F extends SupportedFramework> = (typeof FRAMEWORK_STYLES)[F][number];
 export type AnySupportedStyle = SupportedStyle<SupportedFramework>;
 
+export const FRAMEWORK_LABELS: Record<SupportedFramework, string> = {
+  react: 'React',
+  html: 'HTML',
+};
+
+export const STYLE_LABELS: Record<AnySupportedStyle, string> = {
+  css: 'CSS',
+};
+
 export const SUPPORTED_FRAMEWORKS = Object.keys(FRAMEWORK_STYLES) as (keyof typeof FRAMEWORK_STYLES)[];
 export const DEFAULT_FRAMEWORK = Object.keys(FRAMEWORK_STYLES)[0] as SupportedFramework;
 

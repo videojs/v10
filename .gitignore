@@ -23,7 +23,6 @@ out/
 packages/*/types/
 *.tsbuildinfo
 .turbo/
-generated-icons/
 coverage/
 *.lcov
 .nyc_output/

@@ -7,13 +7,21 @@
  * namely, that separate islands can't share context, and that,
  * depending on rendering context, Astro may render the component tree
  * bottom-up or top-down
+ *
+ * IMPORTANT: Use `client:idle` instead of `client:visible` when hydrating
+ * these components. TabsPanel elements start with `hidden` attribute,
+ * which prevents them from triggering Intersection Observer visibility,
+ * causing `client:visible` to never hydrate non-initial panels.
  */
 
 import clsx from 'clsx';
+
 import { Check, Copy } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { twMerge } from 'tailwind-merge';
+
 import useIsHydrated from '@/utils/useIsHydrated';
+
 import CopyButton from './CopyButton';
 
 interface TabsRootProps {

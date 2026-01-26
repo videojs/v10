@@ -1,5 +1,5 @@
 ---
-title: UI Components
+title: UI components
 description: Understanding Video.js v10's primitive-based component architecture
 ---
 
@@ -8,9 +8,9 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 
 Video.js v10 components are built from **unstyled UI primitives**, taking inspiration from projects like [shadcn/ui](https://ui.shadcn.com/) and [Base UI](https://base-ui.com/). This approach gives you control over styling and behavior while handling the complex interactions for you.
 
-## Core Principles
+## Core principles
 
-### 1. Primitive-Based Design
+### 1. Primitive-based design
 
 Each primitive represents at most **one HTML element**, without internal elements.
 
@@ -38,7 +38,7 @@ Each primitive represents at most **one HTML element**, without internal element
 ```
 </FrameworkCase>
 
-### 2. Compound Components
+### 2. Compound components
 
 Complex components are broken into smaller, composable pieces. This pattern is used for:
 
@@ -48,7 +48,7 @@ Complex components are broken into smaller, composable pieces. This pattern is u
 
 Each piece handles one concern, but they work together seamlessly.
 
-### 3. Built-in Accessibility
+### 3. Built-in accessibility
 
 Components include proper ARIA attributes, keyboard navigation, and focus management out of the box:
 
@@ -57,7 +57,7 @@ Components include proper ARIA attributes, keyboard navigation, and focus manage
 - Focus is managed properly in tooltips and popovers
 - Screen readers get meaningful announcements
 
-### 4. Data Attributes for Styling
+### 4. Data attributes for styling
 
 Components expose state through data attributes, allowing pure CSS state styling:
 
@@ -78,9 +78,9 @@ Common data attributes:
 - `data-fullscreen` - Present when in fullscreen mode
 - `data-volume-level` - Values: `high`, `medium`, `low`, `off`
 
-## Available Components
+## Available components
 
-### Simple Components
+### Simple components
 
 Single-element components that handle one piece of UI:
 
@@ -91,7 +91,7 @@ Single-element components that handle one piece of UI:
 - **DurationDisplay** - Total media duration
 - **PreviewTimeDisplay** - Time at hover position
 
-### Compound Components
+### Compound components
 
 Multi-element components for complex interactions:
 

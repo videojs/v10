@@ -1,5 +1,5 @@
 ---
-title: Customize Skins
+title: Customize skins
 description: Learn how to customize Video.js v10 skins by copying and modifying them
 ---
 
@@ -19,19 +19,19 @@ Video.js v10 comes with pre-built skins like Frosted and Minimal, but you can fu
 
 While eventually we'll have a CLI that'll eject skins in your preferred framework and style, for now we invite you to try it out with these copy-paste-ready implementations.
 
-## Frosted Skin
+## Frosted skin
 
 <FrameworkCase frameworks={["react"]}>
 
-<TabsRoot client:visible>
-  <TabsList client:visible label="Frosted React implementation">
-    <Tab client:visible value="component" initial>FrostedSkin.tsx</Tab>
-    <Tab client:visible value="css">frosted.css</Tab>
+<TabsRoot client:idle>
+  <TabsList client:idle label="Frosted React implementation">
+    <Tab client:idle value="component" initial>FrostedSkin.tsx</Tab>
+    <Tab client:idle value="css">frosted.css</Tab>
   </TabsList>
-  <TabsPanel client:visible value="component" initial>
+  <TabsPanel client:idle value="component" initial>
     <ServerCode code={generateReactComponent('frosted')} lang="tsx" />
   </TabsPanel>
-  <TabsPanel client:visible value="css">
+  <TabsPanel client:idle value="css">
     <ServerCode code={generateReactCSS('frosted')} lang="css" />
   </TabsPanel>
 </TabsRoot>
@@ -40,38 +40,38 @@ While eventually we'll have a CLI that'll eject skins in your preferred framewor
 
 <FrameworkCase frameworks={["html"]}>
 
-<TabsRoot client:visible>
-  <TabsList client:visible label="Frosted HTML implementation">
-    <Tab client:visible value="markup" initial>HTML</Tab>
-    <Tab client:visible value="js">JS</Tab>
-    <Tab client:visible value="css">CSS</Tab>
+<TabsRoot client:idle>
+  <TabsList client:idle label="Frosted HTML implementation">
+    <Tab client:idle value="markup" initial>HTML</Tab>
+    <Tab client:idle value="js">JS</Tab>
+    <Tab client:idle value="css">CSS</Tab>
   </TabsList>
-  <TabsPanel client:visible value="markup" initial>
+  <TabsPanel client:idle value="markup" initial>
     <ServerCode code={generateHTMLMarkup('frosted')} lang="html" />
   </TabsPanel>
-  <TabsPanel client:visible value="js">
+  <TabsPanel client:idle value="js">
     <ServerCode code={generateHTMLJS('frosted')} lang="typescript" />
   </TabsPanel>
-  <TabsPanel client:visible value="css">
+  <TabsPanel client:idle value="css">
     <ServerCode code={generateHTMLCSS('frosted')} lang="css" />
   </TabsPanel>
 </TabsRoot>
 
 </FrameworkCase>
 
-## Minimal Skin
+## Minimal skin
 
 <FrameworkCase frameworks={["react"]}>
 
-<TabsRoot client:visible>
-  <TabsList client:visible label="Minimal React implementation">
-    <Tab client:visible value="react" initial>MinimalSkin.tsx</Tab>
-    <Tab client:visible value="css">minimal.css</Tab>
+<TabsRoot client:idle>
+  <TabsList client:idle label="Minimal React implementation">
+    <Tab client:idle value="react" initial>MinimalSkin.tsx</Tab>
+    <Tab client:idle value="css">minimal.css</Tab>
   </TabsList>
-  <TabsPanel client:visible value="react" initial>
+  <TabsPanel client:idle value="react" initial>
     <ServerCode code={generateReactComponent('minimal')} lang="tsx" />
   </TabsPanel>
-  <TabsPanel client:visible value="css">
+  <TabsPanel client:idle value="css">
     <ServerCode code={generateReactCSS('minimal')} lang="css" />
   </TabsPanel>
 </TabsRoot>
@@ -80,19 +80,19 @@ While eventually we'll have a CLI that'll eject skins in your preferred framewor
 
 <FrameworkCase frameworks={["html"]}>
 
-<TabsRoot client:visible>
-  <TabsList client:visible label="Minimal HTML implementation">
-    <Tab client:visible value="html" initial>HTML</Tab>
-    <Tab client:visible value="js">JS</Tab>
-    <Tab client:visible value="css">CSS</Tab>
+<TabsRoot client:idle>
+  <TabsList client:idle label="Minimal HTML implementation">
+    <Tab client:idle value="html" initial>HTML</Tab>
+    <Tab client:idle value="js">JS</Tab>
+    <Tab client:idle value="css">CSS</Tab>
   </TabsList>
-  <TabsPanel client:visible value="html" initial>
+  <TabsPanel client:idle value="html" initial>
     <ServerCode code={generateHTMLMarkup('minimal')} lang="html" />
   </TabsPanel>
-  <TabsPanel client:visible value="js">
+  <TabsPanel client:idle value="js">
     <ServerCode code={generateHTMLJS('minimal')} lang="typescript" />
   </TabsPanel>
-  <TabsPanel client:visible value="css">
+  <TabsPanel client:idle value="css">
     <ServerCode code={generateHTMLCSS('minimal')} lang="css" />
   </TabsPanel>
 </TabsRoot>

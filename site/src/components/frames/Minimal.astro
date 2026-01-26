@@ -13,20 +13,25 @@ import { twMerge } from 'tailwind-merge';
  * import Minimal from '@/components/frames/Minimal.astro';
  *
  * <MinimalFrame>
- *   <MyDemo client:visible />
+ *   <MyDemo client:idle />
  * </MinimalFrame>
  * ```
  */
 
 type Props = {
   class?: string;
+  margins?: 'default' | 'lg';
 };
-const { class: className } = Astro.props;
+
+const { class: className, margins = 'default' } = Astro.props;
+
+const marginClass = margins === 'lg' ? 'my-12' : 'my-6';
 ---
 
 <div
   class={twMerge(
     'relative w-full max-w-3xl mx-auto flex rounded-lg overflow-hidden border border-light-40 dark:border-dark-80 bg-light-100 dark:bg-dark-110',
+    marginClass,
     className,
   )}
 >

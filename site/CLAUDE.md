@@ -104,6 +104,36 @@ import clsx from 'clsx';
 </button>
 ```
 
+### Avoiding Arbitrary Values
+
+**Prefer token-based utilities or inline styles over arbitrary values:**
+
+```astro
+<!-- ✅ CORRECT: Use token if available -->
+<div class="min-h-30">Content</div>
+
+<!-- ✅ CORRECT: Inline style for non-token values -->
+<div style="min-height: 120px">Content</div>
+
+<!-- ❌ WRONG: Arbitrary value -->
+<div class="min-h-[120px]">Content</div>
+```
+
+**For responsive/dark mode with non-token values, use CSS custom properties:**
+
+```astro
+<!-- ✅ CORRECT: Custom property bridge -->
+<div
+  style="--md-min-h: 120px"
+  class="md:min-h-(--md-min-h)"
+>Content</div>
+
+<!-- ❌ WRONG: Arbitrary value in variant -->
+<div class="md:min-h-[120px]">Content</div>
+```
+
+This limits the classnames Tailwind must generate.
+
 ## Project Structure
 
 ```

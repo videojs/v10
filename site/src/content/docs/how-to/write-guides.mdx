@@ -149,7 +149,7 @@ The blockquote element represents content that is quoted from another source, op
 | --------- | -------- | ------ |
 | _italics_ | **bold** | `code` |
 
-### Code Blocks
+### Code blocks
 
 we can use 3 backticks ``` in new line and write snippet and close with 3 backticks on new line and to highlight language specific syntax, write one word of language name after first 3 backticks, for eg. html, javascript, css, markdown, typescript, txt, bash
 
@@ -182,9 +182,9 @@ we can use 3 backticks ``` in new line and write snippet and close with 3 backti
 </html>
 ```
 
-### List Types
+### List types
 
-#### Ordered List
+#### Ordered list
 
 ```markdown
 1. First item
@@ -196,7 +196,7 @@ we can use 3 backticks ``` in new line and write snippet and close with 3 backti
 2. Second item
 3. Third item
 
-#### Unordered List
+#### Unordered list
 
 ```markdown
 - List item
@@ -297,23 +297,23 @@ Use `<TabsRoot>`, `<TabsList>`, `<Tab>`, and `<TabsPanel>` to show multiple item
 
 <Aside type="note">
 - Set `initial` on your first `<Tab>` and first `<TabsPanel>` to make them active by default
-- All `<Tab* >` components require a `client:*` directive (I'd suggest `client:visible`) so Astro knows to hydrate them
+- All `<Tab*>` components require `client:idle` — do NOT use `client:visible` because hidden panels won't trigger the Intersection Observer and will never hydrate
 - Use descriptive `label` prop on `<TabsList>` for accessibility
 </Aside>
 
 
 ````mdx
-<TabsRoot client:visible>
-  <TabsList client:visible label="Code examples">
-    <Tab client:visible value="typescript" initial>TypeScript</Tab>
-    <Tab client:visible value="javascript">JavaScript</Tab>
+<TabsRoot client:idle>
+  <TabsList client:idle label="Code examples">
+    <Tab client:idle value="typescript" initial>TypeScript</Tab>
+    <Tab client:idle value="javascript">JavaScript</Tab>
   </TabsList>
-  <TabsPanel client:visible value="typescript" initial>
+  <TabsPanel client:idle value="typescript" initial>
     ```ts
     console.log('Hello, TypeScript!');
     ```
   </TabsPanel>
-  <TabsPanel client:visible value="javascript">
+  <TabsPanel client:idle value="javascript">
     ```js
     console.log('Hello, JavaScript!');
     ```
@@ -322,17 +322,17 @@ Use `<TabsRoot>`, `<TabsList>`, `<Tab>`, and `<TabsPanel>` to show multiple item
 ````
 
 
-<TabsRoot client:visible>
-  <TabsList client:visible label="Code examples">
-    <Tab client:visible value="typescript" initial>TypeScript</Tab>
-    <Tab client:visible value="javascript">JavaScript</Tab>
+<TabsRoot client:idle>
+  <TabsList client:idle label="Code examples">
+    <Tab client:idle value="typescript" initial>TypeScript</Tab>
+    <Tab client:idle value="javascript">JavaScript</Tab>
   </TabsList>
-  <TabsPanel client:visible value="typescript" initial>
+  <TabsPanel client:idle value="typescript" initial>
     ```ts
     console.log('Hello, TypeScript!');
     ```
   </TabsPanel>
-  <TabsPanel client:visible value="javascript">
+  <TabsPanel client:idle value="javascript">
     ```js
     console.log('Hello, JavaScript!');
     ```
@@ -365,11 +365,11 @@ import componentCode from '@/examples/react/Component.tsx?raw';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs';
 import ServerCode from '@/components/Code/ServerCode.astro';
 
-<TabsRoot client:visible>
-  <TabsList client:visible label="Component implementation">
-    <Tab client:visible value="component" initial>Component</Tab>
+<TabsRoot client:idle>
+  <TabsList client:idle label="Component implementation">
+    <Tab client:idle value="component" initial>Component</Tab>
   </TabsList>
-  <TabsPanel client:visible value="component" initial>
+  <TabsPanel client:idle value="component" initial>
     <ServerCode code={componentCode} lang="tsx" />
   </TabsPanel>
 </TabsRoot>
@@ -377,11 +377,11 @@ import ServerCode from '@/components/Code/ServerCode.astro';
 
 Which will happily render
 
-<TabsRoot client:visible>
-  <TabsList client:visible label="Component implementation">
-    <Tab client:visible value="component" initial>Component</Tab>
+<TabsRoot client:idle>
+  <TabsList client:idle label="Component implementation">
+    <Tab client:idle value="component" initial>Component</Tab>
   </TabsList>
-  <TabsPanel client:visible value="component" initial>
+  <TabsPanel client:idle value="component" initial>
     <ServerCode code={`import React from 'react';
 
 function Component() {
@@ -403,7 +403,7 @@ Use the `<MinimalFrame>` frame component to wrap standalone demos with a styled 
 import { MyDemo } from '@/examples/react/MyDemo';
 import MinimalFrame from '@/components/frames/Minimal.astro';
 <MinimalFrame>
-  <MyDemo client:visible />
+  <MyDemo client:idle />
 </MinimalFrame>
 ```
 
@@ -432,17 +432,17 @@ import cssCode from '@/examples/react/MyDemo.module.css?raw';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs';
 import ServerCode from '@/components/Code/ServerCode.astro';
 
-<TabsRoot client:visible>
-  <TabsList client:visible label="MyDemo implementation">
-    <Tab client:visible value="component" initial>Component</Tab>
-    <Tab client:visible value="css">CSS Module</Tab>
+<TabsRoot client:idle>
+  <TabsList client:idle label="MyDemo implementation">
+    <Tab client:idle value="component" initial>Component</Tab>
+    <Tab client:idle value="css">CSS Module</Tab>
   </TabsList>
-  <TabsPanel client:visible value="component" initial>
+  <TabsPanel client:idle value="component" initial>
     <ServerCode code={componentCode} lang="tsx" />
   </TabsPanel>
-  <TabsPanel client:visible value="css">
+  <TabsPanel client:idle value="css">
     <ServerCode code={cssCode} lang="css" />
   </TabsPanel>
-  <MyDemo client:visible />
+  <MyDemo client:idle />
 </TabsRoot>
 ```

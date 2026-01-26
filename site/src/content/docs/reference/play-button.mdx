@@ -25,38 +25,38 @@ import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs';
 ## Example
 
 <FrameworkCase frameworks={["react"]}>
-  <TabsRoot client:visible>
-    <TabsList client:visible label="React implementation">
-      <Tab client:visible value="component" initial>Component</Tab>
-      <Tab client:visible value="css">CSS Module</Tab>
+  <TabsRoot client:idle>
+    <TabsList client:idle label="React implementation">
+      <Tab client:idle value="component" initial>Component</Tab>
+      <Tab client:idle value="css">CSS Module</Tab>
     </TabsList>
-    <TabsPanel client:visible value="component" initial>
+    <TabsPanel client:idle value="component" initial>
       <ServerCode code={componentModuleStr} lang="tsx" />
     </TabsPanel>
-    <TabsPanel client:visible value="css">
+    <TabsPanel client:idle value="css">
       <ServerCode code={cssModuleStr} lang="css" />
     </TabsPanel>
-    <PlayButtonDemo client:visible />
+    <PlayButtonDemo client:idle />
   </TabsRoot>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-  <TabsRoot client:visible>
-    <TabsList client:visible label="HTML implementation">
-      <Tab client:visible value="html" initial>HTML</Tab>
-      <Tab client:visible value="css">CSS</Tab>
-      <Tab client:visible value="javascript">JS</Tab>
+  <TabsRoot client:idle>
+    <TabsList client:idle label="HTML implementation">
+      <Tab client:idle value="html" initial>HTML</Tab>
+      <Tab client:idle value="css">CSS</Tab>
+      <Tab client:idle value="javascript">JS</Tab>
     </TabsList>
-    <TabsPanel client:visible value="html" initial>
+    <TabsPanel client:idle value="html" initial>
       <ServerCode code={htmlStr} lang="html" />
     </TabsPanel>
-    <TabsPanel client:visible value="css">
+    <TabsPanel client:idle value="css">
       <ServerCode code={htmlCssStr} lang="css" />
     </TabsPanel>
-    <TabsPanel client:visible value="javascript">
+    <TabsPanel client:idle value="javascript">
       <ServerCode code={htmlJsStr} lang="js" />
     </TabsPanel>
-    <PlayButtonDemo client:visible />
+    <PlayButtonDemo client:idle />
   </TabsRoot>
 </FrameworkCase>
 
