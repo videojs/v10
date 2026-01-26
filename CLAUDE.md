@@ -102,9 +102,7 @@ pnpm clean
 5. Lint file/s, fix all issues.
 6. Run build/s, fix all errors.
 7. Before creating a PR `pnpm test`.
-8. If your changes introduced new patterns or conventions, review meta-documentation:
-   - **CLAUDE.md** — New naming conventions, code rules, or anti-patterns.
-   - **Skills** — New component patterns, API design patterns, or DX considerations.
+8. If your changes introduced new patterns or conventions, ask the user to run `/claude-update`.
 
 Be efficient when running operations, see "Common Root Commands".
 
@@ -180,14 +178,7 @@ When generating or editing code in this repository, follow these rules to ensure
    - One focused change per commit—no mixed updates.
    - Breaking changes use `!`.
 
-7. **Keep AI Documentation Current**
-   - When introducing new naming conventions or code patterns, update the Code Rules section.
-   - When changes affect component architecture, accessibility, or API design, update relevant skills in `.claude/skills/`.
-   - When discovering anti-patterns during implementation, document them to prevent recurrence.
-   - **After modifying skills**, check for consistency:
-     1. `.claude/commands/*.md` — update if they reference changed skills or paths
-     2. `.claude/skills/README.md` — update Quick Reference, Skills table, Review Workflows
-     3. This file (CLAUDE.md) — update if skill changes affect repo-wide conventions
+7. **Keep AI Documentation Current** — When introducing new patterns, ask the user to run `/claude-update` for guidance.
 
 ## Code Rules
 
@@ -499,5 +490,6 @@ CLAUDE.md contains repo-wide conventions. Domain-specific patterns live in skill
 | Accessibility               | `aria` skill         |
 | Documentation               | `docs` skill         |
 | API design and DX           | `api` skill          |
+| Updating AI docs            | `claude-update` skill |
 
 When adding a new rule, ask: "Who needs this?" If it's domain-specific, put it in the relevant skill.

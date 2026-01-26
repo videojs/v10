@@ -17,17 +17,19 @@ Specialized knowledge for AI agents working on Video.js 10.
 | Reviewing accessibility    | `aria` → `review/workflow.md`      |
 | Accessibility audit        | `aria`                             |
 | Committing / creating PRs  | `git`                              |
+| Updating AI docs           | `claude-update`                    |
 
 ## Skills
 
 | Skill                           | Purpose                                                                | Has Review? |
 | ------------------------------- | ---------------------------------------------------------------------- | ----------- |
 | [api](api/SKILL.md)             | API design and DX — extensibility, type safety, progressive disclosure | Yes         |
-| [docs](docs/SKILL.md)           | Write Video.js 10 documentation                                        | Yes         |
-| [rfc](rfc/SKILL.md)             | Write RFCs — design docs, architecture proposals, component specs      | No          |
-| [component](component/SKILL.md) | Build headless UI components — compound patterns, state, styling       | Yes         |
 | [aria](aria/SKILL.md)           | Accessibility patterns — ARIA, keyboard, focus, media player a11y      | Yes         |
+| [claude-update](claude-update/SKILL.md) | Update CLAUDE.md and skills when introducing new patterns        | No          |
+| [component](component/SKILL.md) | Build headless UI components — compound patterns, state, styling       | Yes         |
+| [docs](docs/SKILL.md)           | Write Video.js 10 documentation                                        | Yes         |
 | [git](git/SKILL.md)             | Git workflow — commit messages, PRs, branch naming, scope inference    | No          |
+| [rfc](rfc/SKILL.md)             | Write RFCs — design docs, architecture proposals, component specs      | No          |
 
 ## Review Workflows
 
@@ -98,4 +100,4 @@ When code changes introduce new patterns that a skill should cover:
 - New API design decisions (extensibility, type safety)
 - New DX considerations (inference, defaults, naming)
 
-**After modifying skills:** See CLAUDE.md "Keep AI Documentation Current" for consistency checklist.
+For detailed guidance and consistency checklists, run `/claude-update`.
