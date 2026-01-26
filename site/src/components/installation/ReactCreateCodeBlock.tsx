@@ -49,7 +49,7 @@ function generateReactCode(useCase: UseCase, skin: Skin, renderer: Renderer, pla
     : 'interface MyPlayerProps {\n  src: string;\n}';
   const destructuredProp = isMuxWithPlaybackId ? 'playbackId' : 'src';
   const rendererJsx = isMuxWithPlaybackId
-    ? `<${rendererComponent} playbackId="${playbackId}" />`
+    ? `<${rendererComponent} playbackId={playbackId} />`
     : `<${rendererComponent} src={src} />`;
 
   return `// [your project] ./components/player/index.tsx

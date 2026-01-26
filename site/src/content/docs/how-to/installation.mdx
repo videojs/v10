@@ -10,6 +10,7 @@ import SkinPicker from '@/components/installation/SkinPicker';
 import UseCasePicker from '@/components/installation/UseCasePicker';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
+import ReactUsageCodeBlock from '@/components/installation/ReactUsageCodeBlock';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
@@ -140,19 +141,9 @@ Media are like players without the UI.  Pick the one that matches your video or 
 </ContentWidth>
 
 ## Use your player
-```tsx
-// HomePage.tsx
-import { MyPlayer } from '../components/player';
-
-export const HomePage = () => {
-  return (
-    <div>
-      <h1>Welcome to My App</h1>
-      <MyPlayer src="https://example.com/video.mp4" />
-    </div>
-  );
-};
-```
+<ContentWidth>
+  <ReactUsageCodeBlock client:idle />
+</ContentWidth>
 </FrameworkCase>
 
 That's it! You now have a fully functional Video.js player. Go forth and play.
