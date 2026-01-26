@@ -10,6 +10,8 @@ import MuxUploader, {
 } from '@mux/mux-uploader-react';
 import { useCallback, useRef, useState } from 'react';
 import { muxPlaybackId, renderer } from '@/stores/installation';
+import { initiateAuthPopup } from '@/utils/mux/auth-flow';
+import { pollForPlaybackId } from '@/utils/mux/polling';
 import type { UploaderState } from './UploaderOverlay';
 
 import UploaderOverlay from './UploaderOverlay';
@@ -84,107 +86,80 @@ export default function MuxUploaderPanel() {
       return;
     }
 
-    // Open login popup (centered)
-    const { authorizationUrl } = result.data;
-    const width = 600;
-    const height = 800;
-    const left = (window.screen.width - width) / 2;
-    const top = (window.screen.height - height) / 2;
+    initiateAuthPopup({
+      authorizationUrl: result.data.authorizationUrl,
+      onSuccess: async () => {
+        // Now authenticated - fetch upload URL
+        const uploadResult = await actions.mux.createDirectUpload({
+          corsOrigin: window.location.origin,
+        });
 
-    const popup = window.open(
-      authorizationUrl,
-      'oauth-login',
-      `width=${width},height=${height},left=${left},top=${top}`
-    );
+        if (uploadResult.error) {
+          setError(uploadResult.error.message);
+          setState('polling_error');
+          return;
+        }
 
-    if (!popup) {
-      // Popup blocked - fall back to redirect
-      window.location.href = authorizationUrl;
-      return;
-    }
-
-    // Listen for success message from popup
-    const handleMessage = async (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== 'auth-complete') return;
-
-      window.removeEventListener('message', handleMessage);
-
-      // Now authenticated - fetch upload URL
-      const uploadResult = await actions.mux.createDirectUpload({
-        corsOrigin: window.location.origin,
-      });
-
-      if (uploadResult.error) {
-        setError(uploadResult.error.message);
+        // Store upload ID and resolve the pending Promise
+        setUploadId(uploadResult.data.uploadId);
+        setState('uploading');
+        loginResolverRef.current?.(uploadResult.data.uploadUrl);
+      },
+      onError: (errorMessage) => {
+        setError(errorMessage);
         setState('polling_error');
-        return;
-      }
-
-      // Store upload ID and resolve the pending Promise
-      setUploadId(uploadResult.data.uploadId);
-      setState('uploading');
-      loginResolverRef.current?.(uploadResult.data.uploadUrl);
-    };
-
-    window.addEventListener('message', handleMessage);
+      },
+    });
   }, []);
 
   /**
    * Polls Mux API for playback ID after upload completes.
    * Updates renderer to 'mux' and stores playback ID on success.
    */
-  const pollForPlaybackId = useCallback(async () => {
+  const handleUploadSuccess = useCallback(async () => {
     if (!uploadId) return;
 
     setState('preparing');
 
-    // Phase 1: Poll until asset_id is available
-    let assetId: string | undefined;
-    while (!assetId) {
-      await new Promise((r) => setTimeout(r, 2000));
+    const result = await pollForPlaybackId({
+      uploadId,
+      getUploadStatus: async (id) => {
+        const response = await actions.mux.getUploadStatus({ uploadId: id });
+        if (response.error) {
+          return { error: { message: response.error.message } };
+        }
+        return {
+          data: {
+            status: response.data.status as 'waiting' | 'asset_created' | 'errored' | 'cancelled' | 'timed_out',
+            assetId: response.data.assetId,
+          },
+        };
+      },
+      getAssetStatus: async (assetId) => {
+        const response = await actions.mux.getAssetStatus({ assetId });
+        if (response.error) {
+          return { error: { message: response.error.message } };
+        }
+        return {
+          data: {
+            status: response.data.status as 'preparing' | 'ready' | 'errored',
+            playbackId: response.data.playbackId,
+          },
+        };
+      },
+    });
 
-      const result = await actions.mux.getUploadStatus({ uploadId });
-      if (result.error) {
-        setError(result.error.message);
-        setState('polling_error');
-        return;
-      }
-      if (result.data.status === 'errored') {
-        setError('Upload processing failed');
-        setState('polling_error');
-        return;
-      }
-
-      assetId = result.data.assetId;
-    }
-
-    // Phase 2: Poll until playback_id is available
-    let newPlaybackId: string | undefined;
-    while (!newPlaybackId) {
-      await new Promise((r) => setTimeout(r, 2000));
-
-      const result = await actions.mux.getAssetStatus({ assetId });
-      if (result.error) {
-        setError(result.error.message);
-        setState('polling_error');
-        return;
-      }
-      if (result.data.status === 'errored') {
-        setError('Asset processing failed');
-        setState('polling_error');
-        return;
-      }
-      if (result.data.status === 'ready' && result.data.playbackId) {
-        newPlaybackId = result.data.playbackId;
-      }
+    if (result.status === 'error') {
+      setError(result.message);
+      setState('polling_error');
+      return;
     }
 
     // Success! Update local state and nanostores (for cross-island use)
-    setPlaybackId(newPlaybackId);
+    setPlaybackId(result.playbackId);
     setState('ready');
     renderer.set('mux');
-    muxPlaybackId.set(newPlaybackId);
+    muxPlaybackId.set(result.playbackId);
   }, [uploadId]);
 
   /** Resets uploader to try again after error */
@@ -210,7 +185,7 @@ export default function MuxUploaderPanel() {
         noStatus
         noRetry
         endpoint={getEndpoint}
-        onSuccess={pollForPlaybackId}
+        onSuccess={handleUploadSuccess}
       />
       {/* Custom Mux Uploader UI */}
       <MuxUploaderDrop
