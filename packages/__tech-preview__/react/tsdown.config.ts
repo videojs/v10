@@ -1,6 +1,14 @@
-import { execSync } from 'node:child_process';
+import { existsSync, readdirSync } from 'node:fs';
 import { defineConfig } from 'tsdown';
 import buildStyles from './build/build-styles.ts';
+
+const GENERATED_ICONS_DIR = new URL('./src/icons/generated-icons', import.meta.url).pathname;
+
+function hasGeneratedIcons(): boolean {
+  if (!existsSync(GENERATED_ICONS_DIR)) return false;
+  const files = readdirSync(GENERATED_ICONS_DIR);
+  return files.some((f) => f.endsWith('.tsx'));
+}
 
 export default defineConfig({
   entry: {
@@ -22,7 +30,14 @@ export default defineConfig({
   },
   hooks: {
     'build:prepare': async () => {
-      execSync('pnpm generate:icons', { stdio: 'inherit' });
+      // Generated icons are committed to git due to @svgr/cli having a bug where it
+      // unconditionally requires 'prettier' at module load time (before parsing CLI args),
+      // which fails in pnpm's strict dependency isolation. Skip generation if icons exist.
+      // To regenerate: pnpm -F @videojs/react-preview generate:icons
+      if (hasGeneratedIcons()) return;
+      throw new Error(
+        'Generated icons not found. Run: pnpm -F @videojs/react-preview generate:icons',
+      );
     },
     'build:done': async () => {
       await buildStyles();
