@@ -1,6 +1,10 @@
 ---
-allowed-tools: Bash(git:*), Bash(gh:*), Glob, Grep, Read, question, mcp__github__*, skill
-description: Commit all changes and create or update a PR following project conventions
+name: commit-pr
+description: >-
+  Commit all changes and create or update a PR following project conventions.
+  Triggers: "commit and pr", "push changes", "create pull request".
+allowed-tools: Bash(git:*), Bash(gh:*), Glob, Grep, Read, question, mcp__github__*
+context: fork
 ---
 
 # Commit & PR

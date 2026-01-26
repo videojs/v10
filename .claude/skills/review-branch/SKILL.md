@@ -1,6 +1,10 @@
 ---
-allowed-tools: Bash(git:*), Bash(gh:*), Glob, Grep, Read, mcp__github__*, skill
-description: Review changes in the current Git branch and suggest improvements
+name: review-branch
+description: >-
+  Review changes in the current Git branch and suggest improvements.
+  Triggers: "review branch", "review changes", "code review".
+allowed-tools: Bash(git:*), Bash(gh:*), Glob, Grep, Read, mcp__github__*
+agent: plan
 ---
 
 # Branch Review
@@ -60,7 +64,7 @@ Categorize the changed files to determine which review criteria apply:
 
 ### Step 3: Load Skills (Optional)
 
-For deeper domain-specific review, load the relevant skill using the skill tool:
+For deeper domain-specific review, load the relevant skill:
 
 | Category      | Load Skill  | For Deeper Review              |
 | ------------- | ----------- | ------------------------------ |
@@ -71,105 +75,24 @@ For deeper domain-specific review, load the relevant skill using the skill tool:
 
 Skip this step for quick reviews using the inline checklists below.
 
-### Step 4: Apply Skill-Based Review Checklists
+### Step 4: Apply Skill-Based Review
 
-Based on detected categories, apply the relevant quick checklists:
+Based on detected categories, load the relevant skill's review checklist:
 
----
+| Category      | Load Checklist                     |
+| ------------- | ---------------------------------- |
+| API/Code      | `api/review/checklist.md`          |
+| UI Components | `component/review/checklist.md`    |
+| Accessibility | `aria/review/checklist.md`         |
+| Documentation | `docs/review/workflow.md`          |
 
-#### API/Code Changes Checklist (from `api` skill)
-
-**Types & Inference:**
-
-- [ ] Types infer without manual annotation
-- [ ] Generics infer from arguments, not explicit type params
-- [ ] No unnecessary `as` casts
-- [ ] Explicit context narrowing where needed
-
-**API Surface:**
-
-- [ ] Config objects for 3+ parameters (no long param lists)
-- [ ] No function overloads (use config objects instead)
-- [ ] Flat returns for independent values
-- [ ] Consistent naming with existing codebase
-
-**Composition & Extensibility:**
-
-- [ ] Extension through composition, not inheritance
-- [ ] Tree-shakeable exports
-- [ ] Framework-agnostic where appropriate
-
-**Patterns:**
-
-- [ ] Uses existing utilities from `@videojs/utils` where applicable
-- [ ] Follows Symbol identification pattern for cross-realm objects
-- [ ] Subscribe pattern returns unsubscribe function
-- [ ] Destroy pattern guards re-entry
-
----
-
-#### UI Component Changes Checklist (from `component` and `aria` skills)
-
-**Component Architecture:**
-
-- [ ] Compound component pattern where appropriate
-- [ ] Render props over implicit requirements
-- [ ] Controlled and uncontrolled modes supported
-- [ ] Context properly scoped for nesting
-
-**Styling:**
-
-- [ ] Data attributes for state-based styling (`data-*`)
-- [ ] CSS variables for customization
-- [ ] No inline animation JS (prefer CSS transitions)
-
-**Accessibility:**
-
-- [ ] Proper ARIA roles and attributes
-- [ ] Keyboard navigation supported
-- [ ] Focus management correct (trap, restore, roving)
-- [ ] Screen reader announcements where needed
-
----
-
-#### Documentation Changes Checklist (from `docs` skill)
-
-**Tone & Style:**
-
-- [ ] No filler words ("basically", "simply", "just", "in order to")
-- [ ] No hedging ("might", "could", "perhaps")
-- [ ] Active voice, second person ("you")
-- [ ] Direct and confident
-
-**Structure:**
-
-- [ ] Code before explanation (show, don't tell first)
-- [ ] Progressive disclosure (simple → complex)
-- [ ] Matches appropriate doc type (handbook, guide, API ref, component)
-- [ ] Has "See Also" section with cross-links
-
-**Code Examples:**
-
-- [ ] All imports shown
-- [ ] Examples are runnable/copy-pasteable
-- [ ] Includes Do/Don't patterns where helpful
-
-**AI Readiness:**
-
-- [ ] Self-contained (doesn't rely on external context)
-- [ ] Clean markdown (no complex HTML)
-
----
-
-#### Test Changes Checklist
+For test changes, apply these checks:
 
 - [ ] Tests follow `act → assert` pattern
 - [ ] Test file named `<module>.test.ts`
 - [ ] `describe()` uses exact exported name
 - [ ] Uses `vi.fn()` for mocks
 - [ ] Tests live in `tests/` directory next to implementation
-
----
 
 ### Step 5: General Code Review
 

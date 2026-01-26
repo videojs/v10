@@ -2,6 +2,12 @@
 
 Patterns from Zustand, Jotai, XState, Vite, Vitest, esbuild, Biome.
 
+## Contents
+
+- [State Management Documentation](#state-management-documentation) — Zustand, Jotai, XState patterns
+- [Configuration Documentation](#configuration-documentation) — Vite, esbuild patterns
+- [Testing Documentation](#testing-documentation-vitest) — Test examples, mocking media
+
 ## State Management Documentation
 
 ### Zustand Pattern: Minimal Getting Started

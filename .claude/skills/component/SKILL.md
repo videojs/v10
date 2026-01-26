@@ -5,6 +5,7 @@ description: >-
   Use when creating component libraries, design systems, or reusable UI primitives.
   Handles compound components, state management, accessibility, styling hooks, and API design.
   Includes Lit (controllers, ReactiveElement) and React (hooks, context) patterns.
+  Triggers: "create component", "component pattern", "compound component", "headless component".
 ---
 
 # Component Architecture Patterns
@@ -173,6 +174,7 @@ See [props.md](references/props.md) for naming conventions.
 | File                                            | Contents                             |
 | ----------------------------------------------- | ------------------------------------ |
 | [lit.md](references/lit.md)                     | Lit controllers, mixins, context     |
+| [lit-fundamentals.md](references/lit-fundamentals.md) | ReactiveElement lifecycle, properties, styling |
 | [react.md](references/react.md)                 | React hooks, context, refs           |
 | [props.md](references/props.md)                 | Prop naming, conventions, defaults   |
 | [styling.md](references/styling.md)             | Data attributes, CSS variables       |

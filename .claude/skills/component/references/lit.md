@@ -1,6 +1,6 @@
 # Lit Component Patterns
 
-Lit-specific patterns for Video.js web components.
+Lit-specific patterns for Video.js web components. For ReactiveElement fundamentals (lifecycle, properties, styling), see [lit-fundamentals.md](lit-fundamentals.md).
 
 ## Package Requirements
 
