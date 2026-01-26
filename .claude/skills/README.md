@@ -20,6 +20,7 @@ Specialized knowledge for AI agents working on Video.js 10.
 | Reviewing branch changes   | `/review-branch`                   |
 | Analyzing GitHub issues    | `/gh-issue`                        |
 | Updating AI docs           | `/claude-update`                   |
+| Creating new skills        | `/create-skill`                    |
 
 ## Skills
 
@@ -30,6 +31,7 @@ Specialized knowledge for AI agents working on Video.js 10.
 | [claude-update](claude-update/SKILL.md) | Update CLAUDE.md and skills when introducing new patterns              | No          |
 | [commit-pr](commit-pr/SKILL.md)         | Commit changes and create/update PRs with conventions                  | No          |
 | [component](component/SKILL.md)         | Build headless UI components — compound patterns, state, styling       | Yes         |
+| [create-skill](create-skill/SKILL.md)   | Create new skills with proper structure and conventions                | No          |
 | [docs](docs/SKILL.md)                   | Write Video.js 10 documentation                                        | Yes         |
 | [gh-issue](gh-issue/SKILL.md)           | Analyze GitHub issues and create implementation plans                  | No          |
 | [git](git/SKILL.md)                     | Git workflow — commit messages, PRs, branch naming, scope inference    | No          |
