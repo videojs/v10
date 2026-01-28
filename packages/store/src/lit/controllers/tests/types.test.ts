@@ -1,7 +1,7 @@
 import { describe, expectTypeOf, it } from 'vitest';
 
 import { createState } from '../../../core/state';
-import { createCoreTestStore, createMockHost } from '../../tests/test-utils';
+import { createCoreTestStore, createTestHost } from '../../tests/test-utils';
 import { QueueController } from '../queue-controller';
 import { SnapshotController } from '../snapshot-controller';
 
@@ -9,7 +9,7 @@ describe('controller types', () => {
   describe('SnapshotController', () => {
     it('value has state type', () => {
       const state = createState({ volume: 1, muted: false });
-      const host = createMockHost();
+      const host = createTestHost();
 
       const controller = new SnapshotController(host, state);
 
@@ -22,7 +22,7 @@ describe('controller types', () => {
 
     it('value properties have correct types', () => {
       const state = createState({ volume: 1, muted: false });
-      const host = createMockHost();
+      const host = createTestHost();
 
       const controller = new SnapshotController(host, state);
 
@@ -34,7 +34,7 @@ describe('controller types', () => {
   describe('QueueController', () => {
     it('value is tasks record', () => {
       const { store } = createCoreTestStore();
-      const host = createMockHost();
+      const host = createTestHost();
 
       const controller = new QueueController(host, store);
 

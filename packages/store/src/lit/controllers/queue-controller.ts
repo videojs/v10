@@ -1,12 +1,9 @@
-import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
-import { noop } from '@videojs/utils/function';
-import { isNull } from '@videojs/utils/predicate';
 import type { AnyStore } from '../../core/store';
 import type { StoreSource } from '../store-accessor';
+import type { SubscriptionControllerHost } from './subscription-controller';
+import { SubscriptionController } from './subscription-controller';
 
-import { StoreAccessor } from '../store-accessor';
-
-export type QueueControllerHost = ReactiveControllerHost & HTMLElement;
+export type QueueControllerHost = SubscriptionControllerHost;
 
 /**
  * Subscribes to queue task changes.
@@ -36,41 +33,17 @@ export type QueueControllerHost = ReactiveControllerHost & HTMLElement;
  * }
  * ```
  */
-export class QueueController<Store extends AnyStore> implements ReactiveController {
-  readonly #host: QueueControllerHost;
-  readonly #accessor: StoreAccessor<Store>;
-
-  #unsubscribe = noop;
+export class QueueController<Store extends AnyStore> {
+  readonly #sub: SubscriptionController<Store, Store['queue']['tasks']>;
 
   constructor(host: QueueControllerHost, source: StoreSource<Store>) {
-    this.#host = host;
-    this.#accessor = new StoreAccessor(host, source, (store) => this.#connect(store));
-    host.addController(this);
+    this.#sub = new SubscriptionController(host, source, {
+      subscribe: (store, onChange) => store.queue.subscribe(onChange),
+      getValue: (store) => store.queue.tasks,
+    });
   }
 
   get value(): Store['queue']['tasks'] {
-    const store = this.#accessor.value;
-
-    if (isNull(store)) {
-      throw new Error('QueueController: Store not available from context');
-    }
-
-    return store.queue.tasks;
-  }
-
-  hostConnected(): void {
-    this.#accessor.hostConnected();
-  }
-
-  hostDisconnected(): void {
-    this.#unsubscribe();
-    this.#unsubscribe = noop;
-  }
-
-  #connect(store: Store): void {
-    this.#unsubscribe();
-    this.#unsubscribe = store.queue.subscribe(() => {
-      this.#host.requestUpdate();
-    });
+    return this.#sub.value;
   }
 }

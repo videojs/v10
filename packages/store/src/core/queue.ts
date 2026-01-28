@@ -47,7 +47,7 @@ export class Queue<Tasks extends TaskRecord = DefaultTaskRecord> {
   }
 
   /** Subscribe to task changes. */
-  subscribe(callback: StateChange<TasksRecord<Tasks>>): () => void {
+  subscribe(callback: StateChange): () => void {
     return this.#tasks.subscribe(callback);
   }
 

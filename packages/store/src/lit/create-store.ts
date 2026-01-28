@@ -215,7 +215,7 @@ export function createStore<Features extends AnyFeature[]>(
       const store = this.#consumer.value;
 
       if (!store) {
-        throw new Error('StoreController: Store not available from context');
+        throw new Error('Store not available');
       }
 
       return {

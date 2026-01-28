@@ -1,4 +1,3 @@
-import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import { ReactiveElement } from '@lit/reactive-element';
 import { noop } from '@videojs/utils/function';
 import { afterEach } from 'vitest';
@@ -12,26 +11,16 @@ import { createStore as createLitStore } from '../create-store';
 export class TestBaseElement extends ReactiveElement {}
 
 /**
- * Custom element that tracks controller registrations and update calls.
- * Used for controller tests that need an actual HTMLElement.
+ * Test host element that extends ReactiveElement.
+ * Tracks update calls for assertions.
  */
-export class MockHostElement extends HTMLElement implements ReactiveControllerHost {
-  controllers = new Set<ReactiveController>();
+export class TestHostElement extends ReactiveElement {
   updateCount = 0;
-
-  addController(controller: ReactiveController): void {
-    this.controllers.add(controller);
-  }
-
-  removeController(controller: ReactiveController): void {
-    this.controllers.delete(controller);
-  }
 
   requestUpdate(): void {
     this.updateCount++;
+    super.requestUpdate();
   }
-
-  updateComplete: Promise<boolean> = Promise.resolve(true);
 }
 
 export class MockMedia extends EventTarget {
@@ -144,19 +133,18 @@ export function createLitTestStore() {
   return createLitStore({ features: [audioFeature] });
 }
 
-/** Type alias for mock host (now an actual HTMLElement). */
-export type MockHost = MockHostElement;
+/** Type alias for test host. */
+export type TestHost = TestHostElement;
 
-let mockHostCounter = 0;
+let testHostCounter = 0;
 
-/** Creates a mock host element for controller tests. */
-export function createMockHost(): MockHost {
-  // Register the custom element if not already
-  const tagName = `mock-host-${mockHostCounter++}`;
+/** Creates a test host element for controller tests. */
+export function createTestHost(): TestHost {
+  const tagName = `test-host-${testHostCounter++}`;
   if (!customElements.get(tagName)) {
-    customElements.define(tagName, class extends MockHostElement {});
+    customElements.define(tagName, class extends TestHostElement {});
   }
-  return document.createElement(tagName) as MockHost;
+  return document.createElement(tagName) as TestHost;
 }
 
 // For mixin tests - unique custom element tags

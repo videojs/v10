@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import type { AnyStore, InferStoreRequests, InferStoreState } from '../../core/store';
 
 export type UseStoreResult<Store extends AnyStore> = InferStoreState<Store> & InferStoreRequests<Store>;
@@ -29,10 +29,7 @@ export function useStore<Store extends AnyStore>(store: Store): UseStoreResult<S
     () => store.state
   );
 
-  return {
-    ...state,
-    ...store.request,
-  } as UseStoreResult<Store>;
+  return useMemo(() => ({ ...state, ...store.request }) as UseStoreResult<Store>, [state, store.request]);
 }
 
 export namespace useStore {

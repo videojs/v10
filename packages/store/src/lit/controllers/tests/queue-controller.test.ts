@@ -1,33 +1,28 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
-import { createCoreTestStore, createMockHost } from '../../tests/test-utils';
+import { createCoreTestStore, createTestHost } from '../../tests/test-utils';
 import { QueueController } from '../queue-controller';
 
 describe('QueueController', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
   it('returns tasks record', () => {
     const { store } = createCoreTestStore();
-    const host = createMockHost();
+    const host = createTestHost();
 
     const controller = new QueueController(host, store);
 
     expect(controller.value).toEqual({});
   });
 
-  it('registers with host', () => {
-    const { store } = createCoreTestStore();
-    const host = createMockHost();
-
-    const controller = new QueueController(host, store);
-
-    expect(host.controllers.has(controller)).toBe(true);
-  });
-
   it('updates when task completes', async () => {
     const { store } = createCoreTestStore();
-    const host = createMockHost();
+    const host = createTestHost();
 
     const controller = new QueueController(host, store);
-    controller.hostConnected();
+    document.body.appendChild(host);
 
     expect(controller.value.setVolume).toBeUndefined();
 
@@ -38,13 +33,13 @@ describe('QueueController', () => {
     expect(host.updateCount).toBeGreaterThan(0);
   });
 
-  it('unsubscribes on hostDisconnected', async () => {
+  it('unsubscribes on disconnect', async () => {
     const { store } = createCoreTestStore();
-    const host = createMockHost();
+    const host = createTestHost();
 
     const controller = new QueueController(host, store);
-    controller.hostConnected();
-    controller.hostDisconnected();
+    document.body.appendChild(host);
+    host.remove();
 
     const updateCountBefore = host.updateCount;
     await store.request.setVolume!(0.5);
@@ -54,16 +49,14 @@ describe('QueueController', () => {
 
   it('handles multiple task updates', async () => {
     const { store } = createCoreTestStore();
-    const host = createMockHost();
+    const host = createTestHost();
 
     const controller = new QueueController(host, store);
-    controller.hostConnected();
+    document.body.appendChild(host);
 
-    // Fire multiple requests
     await store.request.setVolume!(0.5);
     await store.request.setMuted!(true);
 
-    // Both tasks should be tracked
     expect(controller.value.setVolume).toBeDefined();
     expect(controller.value.setMuted).toBeDefined();
     expect(controller.value.setVolume?.status).toBe('success');
@@ -72,21 +65,20 @@ describe('QueueController', () => {
 
   it('syncs to current tasks on reconnect', async () => {
     const { store } = createCoreTestStore();
-    const host = createMockHost();
+    const host = createTestHost();
 
     const controller = new QueueController(host, store);
-    controller.hostConnected();
+    document.body.appendChild(host);
 
     await store.request.setVolume!(0.5);
     expect(controller.value.setVolume?.status).toBe('success');
 
-    controller.hostDisconnected();
+    host.remove();
 
-    // Trigger another task while disconnected
     await store.request.setMuted!(true);
 
-    // Reconnect - should sync to current tasks
-    controller.hostConnected();
+    // Reconnect
+    document.body.appendChild(host);
 
     expect(controller.value.setVolume?.status).toBe('success');
     expect(controller.value.setMuted?.status).toBe('success');

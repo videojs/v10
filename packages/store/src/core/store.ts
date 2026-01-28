@@ -152,21 +152,12 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
   // ----------------------------------------
 
   /** Subscribe to state changes. */
-  subscribe(callback: StateChange<UnionFeatureState<Features>>): () => void;
+  subscribe(callback: StateChange): () => void;
 
-  subscribe<K extends keyof UnionFeatureState<Features>>(
-    keys: K[],
-    callback: StateChange<UnionFeatureState<Features>, K>
-  ): () => void;
+  subscribe<K extends keyof UnionFeatureState<Features>>(keys: K[], callback: StateChange): () => void;
 
-  subscribe(
-    first: StateChange<UnionFeatureState<Features>> | (keyof UnionFeatureState<Features>)[],
-    second?: StateChange<UnionFeatureState<Features>>
-  ): () => void {
-    return this.#state.subscribe(
-      first as (keyof UnionFeatureState<Features>)[],
-      second as StateChange<UnionFeatureState<Features>>
-    );
+  subscribe(first: StateChange | (keyof UnionFeatureState<Features>)[], second?: StateChange): () => void {
+    return this.#state.subscribe(first as (keyof UnionFeatureState<Features>)[], second as StateChange);
   }
 
   #syncAllFeatures(): void {
