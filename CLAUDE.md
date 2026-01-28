@@ -468,16 +468,25 @@ add(cleanup: CleanupFn): void { ... }
 
 ## Design Documents
 
-| Location         | Purpose                                                           |
-| ---------------- | ----------------------------------------------------------------- |
-| `rfc/`           | Design proposals, API decisions, architecture — public discussion |
-| `.claude/plans/` | Implementation notes, AI-agent context, working drafts            |
+| Location           | Purpose                                                    |
+| ------------------ | ---------------------------------------------------------- |
+| `internal/design/` | Decisions you own — document for posterity                 |
+| `rfc/`             | Proposals needing buy-in — get alignment before committing |
+| `.claude/plans/`   | Implementation notes, AI-agent context, working drafts     |
 
-**RFCs** focus on **what** and **why**. Write an RFC for major API changes, architectural decisions, or patterns used across packages.
+### Design Doc vs RFC
 
-**Implementation plans** focus on **how**. Use `.claude/plans/` for step-by-step implementation details, debugging notes, and AI-agent context.
+|                | Design Doc             | RFC                              |
+| -------------- | ---------------------- | -------------------------------- |
+| **Scope**      | Your area of work      | Shared concerns or public API    |
+| **Approval**   | None needed            | Needs buy-in from others         |
+| **Purpose**    | Document for posterity | Get alignment first              |
 
-Before merging, compact completed plans: keep key decisions and important notes, point to PRs/commits for details. See `.claude/plans/README.md`.
+**Design Docs** — Decisions you own. Write one when making significant decisions in your area, choosing between approaches, or documenting architecture others will build on. See `internal/design/README.md`.
+
+**RFCs** — Cross-team alignment. Write one when the decision affects multiple areas, changes shared API surface, or is hard to reverse. See `rfc/README.md`.
+
+**Implementation plans** — Step-by-step details for **how** to implement. Use `.claude/plans/` for implementation notes, debugging discoveries, and AI-agent context. Compact before merging.
 
 ## Rule Placement
 

@@ -1,6 +1,6 @@
-# RFC Structure
+# Design Doc Structure
 
-When to use single-file vs multi-file RFCs.
+When to use single-file vs multi-file Design Docs.
 
 ## Decision Tree
 
@@ -16,13 +16,13 @@ Is this a single concept with straightforward trade-offs?
 
 **Use when:**
 
-- One concept, one proposal
+- One concept, one decision
 - Trade-offs fit in one page
 - Reader can absorb in one sitting
 
 **Structure:** See [`templates/feature-single.md`](../templates/feature-single.md) for the full template.
 
-**Example:** A new utility function, a small API addition.
+**Example:** A new utility function, a small API addition, an internal pattern.
 
 ## Multi-File
 
@@ -35,7 +35,7 @@ Is this a single concept with straightforward trade-offs?
 **Structure:**
 
 ```
-rfc/feature-name/
+internal/design/feature-name/
 ├── index.md          # Overview, problem, solution, quick start
 ├── architecture.md   # How it works internally
 ├── decisions.md      # Design decisions and rationale
@@ -52,9 +52,9 @@ rfc/feature-name/
 
 ## index.md Contents
 
-The entry point for multi-file RFCs:
+The entry point for multi-file Design Docs:
 
-1. **Frontmatter** — Status, links to implementation
+1. **Frontmatter** — Status, date
 2. **Contents table** — Links to all files with one-line descriptions
 3. **Problem** — What pain exists
 4. **Solution overview** — High-level approach
@@ -91,11 +91,11 @@ Keep `index.md` focused on "what" — save "why" for `decisions.md` and "how" fo
 | `migration.md`    | Breaking changes, upgrade path     |
 | `alternatives.md` | Rejected approaches (rare)         |
 
-Use lowercase with hyphens. Match existing patterns in `rfc/`.
+Use lowercase with hyphens. Match existing patterns in `internal/design/`.
 
 ## Cross-Linking
 
-In multi-file RFCs, link between files:
+In multi-file Design Docs, link between files:
 
 ```markdown
 See [architecture.md](architecture.md) for internal details.
