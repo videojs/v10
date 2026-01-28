@@ -1,6 +1,6 @@
-# Component RFC Guidance
+# Component Spec Guidance
 
-General guidance for writing component RFCs.
+General guidance for writing component specification Design Docs.
 
 ## When to Use
 

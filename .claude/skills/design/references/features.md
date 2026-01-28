@@ -1,20 +1,20 @@
-# Feature RFC Guidance
+# Feature Design Guidance
 
-General guidance for writing feature RFCs.
+General guidance for writing feature Design Docs.
 
 ## When to Use
 
-- New public APIs
-- Architectural changes affecting multiple packages
-- Cross-cutting patterns
+- New internal APIs
+- Architectural decisions in your area
+- Design patterns you're introducing
 - Extensibility mechanisms
 
 ## Templates
 
 | Template                      | Use For                                     |
 | ----------------------------- | ------------------------------------------- |
-| `templates/feature-single.md` | Straightforward proposals with one concept  |
-| `templates/feature-multi.md`  | Complex proposals with 3+ distinct concepts |
+| `templates/feature-single.md` | Straightforward designs with one concept    |
+| `templates/feature-multi.md`  | Complex designs with 3+ distinct concepts   |
 
 ## Structure
 
@@ -37,7 +37,7 @@ General guidance for writing feature RFCs.
 
 ## Reference
 
-See `rfc/player-api/` for a complete multi-file example.
+See existing Design Docs in `internal/design/` for examples.
 
 ## Related Skills
 

@@ -1,5 +1,6 @@
 ---
 status: draft
+date: 2025-01-27
 ---
 
 # Feature Availability Design
@@ -37,7 +38,7 @@ type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 
 ## Related: Missing Feature vs Unavailable Capability
 
-See [player-api](./player-api/index.md) for feature access patterns.
+See [player-api](/rfc/player-api/index.md) for feature access patterns.
 
 | Concept                | Cause               | Detection                         |
 | ---------------------- | ------------------- | --------------------------------- |

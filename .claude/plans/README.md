@@ -53,16 +53,8 @@ Brief description of what was implemented.
 Any gotchas or important context for future reference.
 ```
 
-## Relationship to RFCs
+## See Also
 
-Plans may link to their parent RFC:
-
-```markdown
-# Implementing Feature X
-
-**RFC:** [/rfc/feature-x.md](/rfc/feature-x.md)
-
-## Tasks
-
-...
-```
+- [Design Docs](/internal/design/README.md) — Decisions you own
+- [RFCs](/rfc/README.md) — Proposals needing buy-in
+- [CLAUDE.md](/CLAUDE.md#design-documents) — How these relate

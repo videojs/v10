@@ -1,5 +1,6 @@
 ---
-status: implemented
+status: decided
+date: 2025-01-27
 ---
 
 # Store Queue Design
