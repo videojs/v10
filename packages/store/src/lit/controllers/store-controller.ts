@@ -1,12 +1,9 @@
-import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
-import { noop } from '@videojs/utils/function';
-import { isNull } from '@videojs/utils/predicate';
 import type { AnyStore, InferStoreRequests, InferStoreState } from '../../core/store';
 import type { StoreSource } from '../store-accessor';
+import type { SubscriptionControllerHost } from './subscription-controller';
+import { SubscriptionController } from './subscription-controller';
 
-import { StoreAccessor } from '../store-accessor';
-
-export type StoreControllerHost = ReactiveControllerHost & HTMLElement;
+export type StoreControllerHost = SubscriptionControllerHost;
 
 export type StoreControllerValue<Store extends AnyStore> = InferStoreState<Store> & InferStoreRequests<Store>;
 
@@ -41,44 +38,17 @@ export type StoreControllerValue<Store extends AnyStore> = InferStoreState<Store
  * }
  * ```
  */
-export class StoreController<Store extends AnyStore> implements ReactiveController {
-  readonly #host: StoreControllerHost;
-  readonly #accessor: StoreAccessor<Store>;
-
-  #unsubscribe = noop;
+export class StoreController<Store extends AnyStore> {
+  readonly #sub: SubscriptionController<Store, StoreControllerValue<Store>>;
 
   constructor(host: StoreControllerHost, source: StoreSource<Store>) {
-    this.#host = host;
-    this.#accessor = new StoreAccessor(host, source, (store) => this.#connect(store));
-    host.addController(this);
+    this.#sub = new SubscriptionController(host, source, {
+      subscribe: (store, onChange) => store.subscribe(onChange),
+      getValue: (store) => ({ ...store.state, ...store.request }) as StoreControllerValue<Store>,
+    });
   }
 
   get value(): StoreControllerValue<Store> {
-    const store = this.#accessor.value;
-
-    if (isNull(store)) {
-      throw new Error('StoreController: Store not available from context');
-    }
-
-    return {
-      ...store.state,
-      ...store.request,
-    } as StoreControllerValue<Store>;
-  }
-
-  hostConnected(): void {
-    this.#accessor.hostConnected();
-  }
-
-  hostDisconnected(): void {
-    this.#unsubscribe();
-    this.#unsubscribe = noop;
-  }
-
-  #connect(store: Store): void {
-    this.#unsubscribe();
-    this.#unsubscribe = store.subscribe(() => {
-      this.#host.requestUpdate();
-    });
+    return this.#sub.value;
   }
 }

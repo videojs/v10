@@ -1,9 +1,9 @@
-export type StateChange<T, K extends keyof T = keyof T> = (changedKeys: ReadonlySet<K>) => void;
+export type StateChange = () => void;
 
 export interface State<T extends object> {
   readonly current: Readonly<T>;
-  subscribe<K extends keyof T>(keys: K[], callback: StateChange<T, K>): () => void;
-  subscribe(callback: StateChange<T>): () => void;
+  subscribe<K extends keyof T>(keys: K[], callback: StateChange): () => void;
+  subscribe(callback: StateChange): () => void;
 }
 
 export interface WritableState<T extends object> extends State<T> {
@@ -36,8 +36,8 @@ const hasOwnProp = Object.prototype.hasOwnProperty;
 
 class StateContainer<T extends object, K extends keyof T> implements WritableState<T> {
   #current: T;
-  #listeners = new Set<StateChange<T>>();
-  #keyListeners = new Map<K, Set<StateChange<T>>>();
+  #listeners = new Set<StateChange>();
+  #keyListeners = new Map<K, Set<StateChange>>();
   #pending = new Set<K>();
 
   constructor(initial: T) {
@@ -86,9 +86,9 @@ class StateContainer<T extends object, K extends keyof T> implements WritableSta
     }
   }
 
-  subscribe(callback: StateChange<T>): () => void;
-  subscribe<K extends keyof T>(keys: K[], callback: StateChange<T, K>): () => void;
-  subscribe(first: StateChange<T> | K[], second?: StateChange<T>): () => void {
+  subscribe(callback: StateChange): () => void;
+  subscribe<K extends keyof T>(keys: K[], callback: StateChange): () => void;
+  subscribe(first: StateChange | K[], second?: StateChange): () => void {
     // Key-specific subscription
     if (Array.isArray(first)) {
       const keys = first;
@@ -117,17 +117,16 @@ class StateContainer<T extends object, K extends keyof T> implements WritableSta
   flush(): void {
     if (this.#pending.size === 0) return;
 
-    const keys: ReadonlySet<K> = new Set(this.#pending);
+    const keys = this.#pending;
+    this.#pending = new Set();
 
-    this.#pending.clear();
-
-    for (const fn of this.#listeners) fn(keys);
+    for (const fn of this.#listeners) fn();
 
     for (const key of keys) {
       const set = this.#keyListeners.get(key);
 
       if (set) {
-        for (const fn of set) fn(keys);
+        for (const fn of set) fn();
       }
     }
   }

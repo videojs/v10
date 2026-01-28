@@ -3,6 +3,7 @@ export {
   QueueController,
   SnapshotController,
   StoreController,
+  SubscriptionController,
 } from './controllers';
 export type {
   CreateStoreConfig,

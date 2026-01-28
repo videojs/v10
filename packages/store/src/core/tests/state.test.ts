@@ -100,28 +100,6 @@ describe('createState', () => {
       expect(listener).toHaveBeenCalledOnce();
     });
 
-    it('listener receives changed keys', () => {
-      const state = createTestState();
-      const listener = vi.fn();
-      state.subscribe(listener);
-
-      state.set('volume', 0.5);
-      flush();
-
-      expect(listener).toHaveBeenCalledWith(new Set(['volume']));
-    });
-
-    it('listener receives multiple changed keys', () => {
-      const state = createTestState();
-      const listener = vi.fn();
-      state.subscribe(listener);
-
-      state.patch({ volume: 0.5, muted: true });
-      flush();
-
-      expect(listener).toHaveBeenCalledWith(new Set(['volume', 'muted']));
-    });
-
     it('batches multiple mutations into one notification', () => {
       const state = createTestState();
       const listener = vi.fn();
@@ -133,7 +111,6 @@ describe('createState', () => {
 
       flush();
       expect(listener).toHaveBeenCalledOnce();
-      expect(listener).toHaveBeenCalledWith(new Set(['volume', 'muted', 'currentTime']));
     });
 
     it('returns unsubscribe function', () => {
