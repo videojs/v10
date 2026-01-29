@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(pnpm build:packages:*)",
+      "Bash(curl:*)",
+      "Bash(pnpm -F site build:*)",
+      "Bash(pnpm dev:site:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "astro-docs"
+  ]
+}

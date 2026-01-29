@@ -1,92 +1,170 @@
 ---
 title: Architecture
-description: Understanding the three-tier architecture of Video.js v10 - State, UI, and Renderers
+description: Understanding the three-pillar architecture of Video.js v10+ - Player, Media, and UI
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Video.js v10 is built around a three-tier architecture that separates concerns and maximizes flexibility. Each tier is designed to work independently or together, allowing you to use as much or as little of Video.js as you need.
+Video.js v10+ is built around three independent pillars—**Player**, **Media**, and **UI/Skins**.
 
-## The Three Tiers
+> Note: Compare this previous versions of Video.js where there was a single `player` component that included everything about the player under the hood.
 
-### 1. State Management
+## The Three Pillars
 
-<FrameworkCase frameworks={["react"]}>
-State is handled by `VideoProvider`, which creates a central store that all components can access. When you wrap your player in a `VideoProvider`, components automatically connect to the state.
-</FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
-State is handled by `video-provider`, which creates a central store that all components can access. When you wrap your player in a `video-provider`, components automatically connect to the state.
-</FrameworkCase>
+### Player
+
+The **Player** is the state and coordination root—think of it like an HTML `<form>` element. It doesn't render UI or play media directly. Instead, it provides shared state and coordinates between Media and UI components inside it.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<VideoProvider>
-  {/* All components inside automatically connect to state */}
-</VideoProvider>
+import { createPlayer, features } from '@videojs/react';
+
+const { Provider, usePlayer } = createPlayer({
+  features: features.video(),
+});
+
+<Provider>
+  {/* All components inside can access player state */}
+</Provider>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 ```html
-<video-provider>
-  <!-- All components inside automatically connect to state -->
-</video-provider>
+<video-player>
+  <!-- All components inside can access player state -->
+</video-player>
 ```
 </FrameworkCase>
 
-### 2. User Interface
-
-#### Skins
-Complete, pre-designed player UIs that package components and styles together:
-- Frosted (glassy design)
-- Minimal (clean, simple design)
-
-Want to learn more? <DocsLink slug="concepts/skins">Read the skins guide →</DocsLink>
-
-#### Components
-Most should use a skin as a starting point. However, if you want more control, you have two options.
-
-First, you can use eject a skin to customize it. <DocsLink slug="how-to/customize-skins">to learn more, check out our guide on customizing skins →</DocsLink>
-
-Next, you can use the individual, unstyled UI primitives, standalone or composed into custom designs:
-- Buttons (Play, Mute, Fullscreen)
-- Sliders (Time, Volume)
-- Displays (CurrentTime, Duration)
-- Compound components (Tooltip, Popover)
-
-Want to dive deeper? <DocsLink slug="concepts/ui-components">Explore UI components →</DocsLink>
-
-### 3. Media Renderers
-
-Media renderers are the components that actually display your media. They're essentially "players with no UI". They handle the video/audio rendering and expose a consistent API.
-
-<FrameworkCase frameworks={["react"]}>
-For now, we'll have a default `<Video />` component, which supports MP4 and other natively-supported streams and `<HlsVideo />`, which supports HLS. In the future, we'll be adding additional support for streaming standards like DASH and services like YouTube and Vimeo.
-</FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-For now, we're starting with just the native HTML5 `<video />` component, but we're looking forward to adding more in the future. From engines like HLS and DASH, to services like YouTube and Vimeo.
+For custom configurations, use `createPlayer()`:
+
+```ts
+import { createPlayer, features } from '@videojs/html';
+
+const { Player } = createPlayer({
+  features: features.video(),
+});
+
+Player.define('my-video-player');
+```
 </FrameworkCase>
 
-## How It All Works Together
+**Features** bundle related state and requests (like Redux slices). Feature bundles range from specific capabilities to complete use-case configurations:
 
-Here's a complete example showing all three tiers:
+- `features.video()` — the default for `<video>`: playback, volume, time, fullscreen, keyboard, idle
+- `features.audio()` — the default for `<audio>`: playback, volume, time, keyboard
+- `features.backgroundVideo()` — minimal: playback only (autoplay, loop)
+- `features.adaptive()` — add-on: quality selection for HLS/DASH streams
+- `features.creator()` — use-case: video + quality selection, chapters
+
+<DocsLink slug="concepts/features">Learn more about features →</DocsLink>
+
+### Media
+
+Media elements **display and process your video or audio**. They're enhanced versions of the native `<video>` and `<audio>` elements, named by their implementation and media type.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { VideoProvider, FrostedSkin, Video } from '@videojs/react';
-import '@videojs/react/skins/frosted.css';
+// Native video
+<Video src="video.mp4" />
+
+// HLS streaming
+<HlsVideo src="stream.m3u8" />
+
+// DASH streaming
+<DashVideo src="stream.mpd" />
+
+// Service embeds
+<YouTubeVideo videoId="dQw4w9WgXcQ" />
+<VimeoVideo videoId="123456789" />
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<!-- Native video -->
+<video src="video.mp4"></video>
+
+<!-- HLS streaming -->
+<hls-video src="stream.m3u8"></hls-video>
+
+<!-- DASH streaming -->
+<dash-video src="stream.mpd"></dash-video>
+
+<!-- Service embeds -->
+<youtube-video video-id="dQw4w9WgXcQ"></youtube-video>
+<vimeo-video video-id="123456789"></vimeo-video>
+```
+</FrameworkCase>
+
+Media is independent of the Player and UI—you can use any media type with any player configuration. Media exposes the same API as the native video element, so UI components work regardless of what's playing underneath.
+
+<DocsLink slug="concepts/media">Learn more about media →</DocsLink>
+
+### UI/Skins
+
+The UI pillar has two layers:
+
+**Skins** — Complete, pre-designed player UIs that package components and styles together:
+
+<FrameworkCase frameworks={["html"]}>
+- `<video-skin>` — The default skin
+- `<minimal-video-skin>` — Clean, simple alternative
+</FrameworkCase>
+<FrameworkCase frameworks={["react"]}>
+- `<VideoSkin>` — The default skin
+- `<MinimalSkin>` — Clean, simple alternative
+</FrameworkCase>
+
+<DocsLink slug="concepts/skins">Learn more about skins →</DocsLink>
+
+**Components** — Unstyled UI primitives in the `media-*` namespace. These bind via context to the nearest player/media:
+- Buttons (`media-play-button`, `media-mute-button`, `media-fullscreen-button`)
+- Sliders (`media-time-slider`, `media-volume-slider`)
+- Displays (`media-current-time`, `media-duration`)
+- Compound components (Tooltip, Popover)
+
+Most people start with a skin and eject it for customization. <DocsLink slug="how-to/customize-skins">Learn how to customize a skin →</DocsLink>
+
+<DocsLink slug="concepts/ui-components">Explore UI components →</DocsLink>
+
+#### Media and Feature Support
+
+Not every media type supports every feature. For example, a native `<video>` playing an MP4 can't support a quality selector—there's only one quality. An HLS stream with multiple renditions can.
+
+UI components can detect unsupported features and adapt (hiding the quality button when there's nothing to select). But if you're expecting a specific feature, make sure your media choice supports it:
+
+| Feature | Native Video | HLS | DASH | YouTube |
+|---------|--------------|-----|------|---------|
+| Playback | ✓ | ✓ | ✓ | ✓ |
+| Quality selection | — | ✓ | ✓ | ✓ |
+| Chapters | ✓ | ✓ | ✓ | ✓ |
+| Live | — | ✓ | ✓ | ✓ |
+
+## How It All Works Together
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { createPlayer, features } from '@videojs/react';
+import { VideoSkin } from '@videojs/react/skin/video';
+import '@videojs/react/skin/video.css';
+
+const { Provider } = createPlayer({
+  features: features.video(),
+});
 
 function Player() {
   return (
-    // Tier 1: State Management
-    <VideoProvider>
-      {/* Tier 2: User Interface (Skin with components) */}
-      <FrostedSkin>
-        {/* Tier 3: Media Renderer */}
-        <Video src="video.mp4" />
-      </FrostedSkin>
-    </VideoProvider>
+    // Player: State coordination root
+    <Provider>
+      {/* UI: Skin */}
+      <VideoSkin>
+        {/* Media: Independent choice */}
+        <video src="video.mp4" />
+      </VideoSkin>
+    </Provider>
   );
 }
 ```
@@ -101,23 +179,115 @@ function Player() {
   <TabsPanel client:visible value="html" initial>
 
 ```html
-<!-- Tier 1: State Management -->
-<video-provider>
-  <!-- Tier 2: User Interface (Skin with components) -->
-  <media-skin-frosted>
-    <!-- Tier 3: Media Renderer -->
-    <video slot="media" src="video.mp4"></video>
-  </media-skin-frosted>
-</video-provider>
+<!-- Player: State coordination root -->
+<video-player>
+  <!-- UI: Skin -->
+  <video-skin>
+    <!-- Media: Independent choice -->
+    <video src="video.mp4"></video>
+  </video-skin>
+</video-player>
 ```
 
   </TabsPanel>
   <TabsPanel client:visible value="javascript">
 
 ```ts
-import '@videojs/html/skins/frosted';
+import '@videojs/html/player/video';
+import '@videojs/html/skin/video';
+import '@videojs/html/skin/video.css';
 ```
 
   </TabsPanel>
 </TabsRoot>
 </FrameworkCase>
+
+## Mix and Match
+
+The three-pillar architecture gives you flexibility:
+
+- **Use everything** — Pick a use case, get a player + skin + media that work together
+- **Swap the skin** — Use a different skin with the same player
+- **Swap the media** — Use HLS instead of native video, same UI
+- **Custom UI** — Use the player for state, build your own UI with primitives
+- **Headless** — Use just the player layer for programmatic control, no UI
+
+## Design Notes
+
+This section covers the reasoning behind architectural decisions. Skip this if you're just getting started.
+
+### Why "Player" Instead of "Provider"?
+
+The Player element is modeled after HTML's `<form>`—a container that doesn't render visible UI itself but provides shared state and coordination for everything inside it. Just as a form collects inputs and handles submission, a player collects media state and coordinates playback.
+
+We chose "Player" over "Provider" because:
+- It matches what users expect ("I want a video player")
+- It's concrete rather than abstract
+- It parallels the `<form>` mental model
+
+### Why This Naming Structure?
+
+<FrameworkCase frameworks={["html"]}>
+HTML element names follow a deliberate pattern:
+
+| Pattern | Example |
+|---------|---------|
+| `{mediatype}-player` | `video-player` |
+| `{mediatype}-skin` | `video-skin` |
+| `{impl}-{mediatype}` | `hls-video` |
+| `media-{action}-{object}` | `media-play-button` |
+
+**Object-last** (`video-player` not `player-video`): Groups related elements together in IDE autocomplete.
+
+**Media type explicit**: Video and audio have different affordances. Separate elements (`video-player` vs `audio-player`) let skins optimize for each.
+
+**`media-*` for primitives**: UI components use the `media-` prefix (like [Media Chrome](https://www.media-chrome.org/)) because they're portable—they work with any player and bind automatically via context.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React uses idiomatic patterns rather than encoding everything in names:
+
+| Concept | Pattern |
+|---------|---------|
+| Features | `createPlayer({ features: features.video() })` — configuration |
+| Skin | `<VideoSkin>` — component import |
+| Media | `<HlsVideo>` — component import |
+| Primitives | `<PlayButton>` — component import |
+
+Configuration via props and factory arguments is more natural in React than encoding features in component names. The conceptual model is identical—only the expression differs.
+</FrameworkCase>
+
+### Why Do HTML and React Differ?
+
+Both frameworks share the same concepts (Player = state root, Media = playback, Skins = UI), but express them naturally for each platform.
+
+In HTML, the element name *is* the API. `<video-player>` is self-documenting and requires no build step to understand. Custom elements are the platform's composition primitive.
+
+In React, composition happens through imports and props. `createPlayer({ features: features.video() })` followed by `<Provider>` is idiomatic React.
+
+The principle: **start from the same concepts, diverge where it creates a more natural experience**.
+
+### Why Are Skins Standalone Elements?
+
+Skins aren't CSS themes applied to a fixed structure—they're complete component trees. Each skin defines its own layout, controls, and interactions.
+
+This means:
+- A streaming skin can have completely different controls than a website skin
+- Skins can be optimized for their use case without compromise
+- Swapping skins is explicit, not accidental (no CSS specificity battles)
+
+### Why Is Media Independent?
+
+Media elements (`<hls-video>`, `<Video>`) are decoupled from players and skins because:
+- The same UI should work regardless of what's playing underneath
+- Media choice is often determined by content, not design
+- You can swap from MP4 to HLS without touching UI code
+
+Media exposes the same API as native `<video>`, so UI components don't need to know what implementation is underneath.
+
+## See Also
+
+- <DocsLink slug="concepts/features">Features</DocsLink> — State and behavior bundles
+- <DocsLink slug="concepts/skins">Skins</DocsLink> — Packaged player designs
+- <DocsLink slug="concepts/ui-components">UI Components</DocsLink> — Unstyled primitives
+- <DocsLink slug="concepts/media">Media</DocsLink> — Video and audio playback components

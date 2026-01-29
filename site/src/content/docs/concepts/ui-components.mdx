@@ -6,7 +6,15 @@ description: Understanding Video.js v10's primitive-based component architecture
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Video.js v10 components are built from **unstyled UI primitives**, taking inspiration from projects like [shadcn/ui](https://ui.shadcn.com/) and [Base UI](https://base-ui.com/). This approach gives you control over styling and behavior while handling the complex interactions for you.
+Video.js v10 components are built from **unstyled UI primitives**, taking inspiration from projects like [shadcn/ui](https://ui.shadcn.com/), [Base UI](https://base-ui.com/), and [Media Chrome](https://www.media-chrome.org/). This approach gives you control over styling and behavior while handling the complex interactions for you.
+
+<FrameworkCase frameworks={["html"]}>
+All UI primitives use the **`media-*` namespace**: `media-play-button`, `media-time-slider`, `media-volume-slider`. This naming convention is shared with Media Chrome for familiarity and interoperability.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+UI primitives are React components with standard PascalCase naming: `PlayButton`, `TimeSlider`, `VolumeSlider`.
+</FrameworkCase>
 
 ## Core Principles
 
@@ -99,3 +107,44 @@ Multi-element components for complex interactions:
 - <DocsLink slug="reference/volume-slider">**VolumeSlider**</DocsLink> - Volume control slider
 - **Tooltip** - Hover tooltips with positioning
 - **Popover** - Click/hover popovers with collision detection
+
+## Context Binding
+
+UI components automatically bind to the nearest player and media in the DOM tree. You don't need to pass props or wire up event handlers—components discover their context.
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <video-skin>
+    <video src="video.mp4"></video>
+  </video-skin>
+
+  <!-- This button automatically binds to the player above -->
+  <media-play-button></media-play-button>
+</video-player>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Provider>
+  <VideoSkin>
+    <Video src="video.mp4" />
+  </VideoSkin>
+
+  {/* This button automatically binds to the Provider above */}
+  <PlayButton />
+</Provider>
+```
+</FrameworkCase>
+
+This pattern means you can:
+- Place controls anywhere inside the player tree
+- Create custom layouts without prop drilling
+- Mix skins and individual components as needed
+
+## See Also
+
+- <DocsLink slug="concepts/skins">Skins</DocsLink> — Pre-composed component collections
+- <DocsLink slug="concepts/architecture">Architecture</DocsLink> — How components fit in the three-pillar model
+- <DocsLink slug="concepts/features">Features</DocsLink> — State and behavior bundles that power components

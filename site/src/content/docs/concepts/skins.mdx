@@ -1,6 +1,6 @@
 ---
 title: Skins
-description: Understanding skins in Video.js v10 - packaged sets of UI components and styles
+description: Packaged player designs that combine UI components and styles for specific use cases
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
@@ -9,46 +9,78 @@ import { MinimalSkinDemo } from '@/examples/react/MinimalSkin/MinimalSkinDemo';
 import MinimalFrame from '@/components/frames/Minimal.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-In Video.js v10, skins are **complete, packaged player designs** that include both UI components and their styles. This is a significant change from v8, where skins were purely CSS themes applied to a fixed component structure.
+Skins are **complete, packaged player designs** that include both UI components and their styles. Pick your favorite and use it as is, or copy its components into your project for customization.
 
-## What's Different in v10?
+## Skins in v10+
 
-### Video.js v8 Skins
-- CSS-only themes
-- Applied to a fixed component structure
-- Limited customization without JavaScript
+In Video.js v8, skins were CSS-only themes applied to a fixed component structure. In v10+, skins are fundamentally different:
 
-### Video.js v10 Skins
-- **UI components + styles packaged together**
-- Each skin can have completely different components
-- Can address entirely different use cases
-- Only include the components they need
+| v8 Skins | v10+ Skins |
+|----------|-----------|
+| CSS-only themes | UI components + styles packaged together |
+| Fixed component structure | Each skin defines its own components |
+| Limited customization | Fully customizable via eject |
+
+This means each skin can be completely unique—different layouts, different controls, different interactions. A streaming app skin can have a totally different structure than a news player skin.
+
+## Skins and Features
+
+**Skins are designed for specific feature sets.** A skin includes UI components for the features it supports. If you add features the skin wasn't designed for, you won't get UI for them automatically—the skin only includes components for its intended features.
+
+To add UI for new features, <DocsLink slug="how-to/customize-skins">eject the skin</DocsLink> and customize it.
+
+<FrameworkCase frameworks={["html"]}>
+| Features | Available Skins |
+|----------|-----------------|
+| `features.video()` | `<video-skin>`, `<minimal-video-skin>` |
+| `features.backgroundVideo()` | (no UI) |
+| `features.creator()` | `<creator-video-skin>` |
+
+Skins are **standalone custom elements**. The default skin is simply `video-skin`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+| Features | Available Skins |
+|----------|-----------------|
+| `features.video()` | `<VideoSkin>`, `<MinimalSkin>` |
+| `features.backgroundVideo()` | (no UI) |
+| `features.creator()` | `<CreatorSkin>` |
+
+Skins are **React components** that you import and compose. The component name reflects the style.
+</FrameworkCase>
+
+The default video features offer multiple skins. VideoSkin is the default; Minimal is a clean alternative that's easy to customize.
 
 ## Built-in Skins
 
-### Frosted
+### VideoSkin
 
-A modern, glassy design with backdrop blur effects and polished interactions.
+The default skin—a modern, glassy design with backdrop blur effects and polished interactions.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { VideoProvider, FrostedSkin, Video } from '@videojs/react';
-import '@videojs/react/skins/frosted.css';
+import { createPlayer, features } from '@videojs/react';
+import { VideoSkin } from '@videojs/react/skin/video';
+import '@videojs/react/skin/video.css';
 
-<VideoProvider>
-  <FrostedSkin>
-    <Video src="video.mp4" />
-  </FrostedSkin>
-</VideoProvider>
+const { Provider } = createPlayer({
+  features: features.video(),
+});
+
+<Provider>
+  <VideoSkin>
+    <video src="video.mp4" />
+  </VideoSkin>
+</Provider>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 ```html
-<video-provider>
-  <media-skin-frosted>
-    <video slot="media" src="video.mp4"></video>
-  </media-skin-frosted>
-</video-provider>
+<video-player>
+  <video-skin>
+    <video src="video.mp4"></video>
+  </video-skin>
+</video-player>
 ```
 </FrameworkCase>
 
@@ -58,27 +90,32 @@ import '@videojs/react/skins/frosted.css';
 
 ### Minimal
 
-A clean, straightforward design that focuses on simplicity and clarity.
+A clean, straightforward design that focuses on simplicity. A good starting point for customization.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { VideoProvider, MinimalSkin, Video } from '@videojs/react';
-import '@videojs/react/skins/minimal.css';
+import { createPlayer, features } from '@videojs/react';
+import { MinimalSkin } from '@videojs/react/skin/minimal';
+import '@videojs/react/skin/minimal.css';
 
-<VideoProvider>
+const { Provider } = createPlayer({
+  features: features.video(),
+});
+
+<Provider>
   <MinimalSkin>
-    <Video src="video.mp4" />
+    <video src="video.mp4" />
   </MinimalSkin>
-</VideoProvider>
+</Provider>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 ```html
-<video-provider>
-  <media-skin-minimal>
-    <video slot="media" src="video.mp4"></video>
-  </media-skin-minimal>
-</video-provider>
+<video-player>
+  <minimal-video-skin>
+    <video src="video.mp4"></video>
+  </minimal-video-skin>
+</video-player>
 ```
 </FrameworkCase>
 
@@ -88,25 +125,29 @@ import '@videojs/react/skins/minimal.css';
 
 ## Customizing Skins
 
-Skins are designed to be ejected and modified for your specific needs.
+### Eject and Modify
 
-Ready to make it your own? <DocsLink slug="how-to/customize-skins">Learn how to customize a skin →</DocsLink>
+Instead of overriding styles from the outside, **eject** a skin into your project. This copies all the components and styles in your framework of choice, giving you full control. Inspired by [shadcn/ui](https://ui.shadcn.com/) and Create React App's [eject](https://create-react-app.dev/docs/available-scripts/#npm-run-eject).
 
-## Building Your Own Skin
+A CLI for ejecting skins is coming soon. For now, you can manually copy a skin's components and styles from its documentation page.
 
+<DocsLink slug="how-to/customize-skins">Copy a skin into your project →</DocsLink>
 
-A skin is simply a component that:
+### Build from Scratch
+
+A skin is a component that:
+
 <FrameworkCase frameworks={["react"]}>
 1. Wraps content in a `MediaContainer`
-2. Includes a `children` prop (for the media renderer)
-3. Arranges UI components as desired
-4. Provides styles for those components
+2. Accepts `children` (for the media element)
+3. Arranges UI components from the `media-*` namespace
+4. Provides styles
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 1. Wraps content in a `media-container`
-2. Includes a `<slot>` element (for the media renderer)
-3. Arranges UI components as desired
-4. Provides styles for those components
+2. Includes a `<slot>` (for the media element)
+3. Arranges UI components from the `media-*` namespace
+4. Provides styles
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -134,23 +175,32 @@ export function CustomSkin({ children, className }) {
 
 <FrameworkCase frameworks={["html"]}>
 ```html
-<video-provider>
-  <media-container class="custom-skin">
-    <slot></slot>
-    <div class="controls">
-      <media-play-button></media-play-button>
-      <media-time-slider>
-        <!-- Custom skin structure -->
-      </media-time-slider>
-    </div>
-  </media-container>
-</video-provider>
+<!-- Custom skin element - UI primitives use media-* namespace -->
+<media-container class="custom-skin">
+  <slot></slot>
+  <div class="controls">
+    <media-play-button></media-play-button>
+    <media-time-slider></media-time-slider>
+  </div>
+</media-container>
 ```
 </FrameworkCase>
 
-Read more about components <DocsLink slug="concepts/ui-components">in the components guide →</DocsLink>
+<FrameworkCase frameworks={["html"]}>
+To register your custom skin as a custom element:
 
-## Coming Soon
+```ts
+import { createSkin } from '@videojs/html';
 
-- More built-in skins for different use cases
-- CLI tool for ejecting and customizing skins
+const { SkinElement } = createSkin(/* ... */);
+
+// {style}-{mediatype}-skin
+SkinElement.define('custom-video-skin');
+```
+</FrameworkCase>
+
+## See Also
+
+- <DocsLink slug="concepts/ui-components">UI Components</DocsLink> — The primitives skins are built from
+- <DocsLink slug="concepts/features">Features</DocsLink> — State and behavior bundles
+- <DocsLink slug="concepts/architecture">Architecture</DocsLink> — Where skins fit in the three-pillar model

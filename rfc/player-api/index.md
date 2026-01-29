@@ -243,8 +243,8 @@ createPlayer(presets.background); // minimal (autoplay, loop)
 | `presets.news`       | Article embeds                       |
 | `presets.creator`    | Creator platforms (YouTube)          |
 | `presets.swipe`      | Short-form video (TikTok)            |
-| `presets.streaming`  | Streaming apps (Netflix)             |
-| `presets.live`       | Interactive live (Twitch)            |
+| `presets.streamingApp` | Streaming apps (Netflix)           |
+| `presets.interactiveLive` | Interactive live (Twitch)            |
 
 ### Extending Presets
 
@@ -266,7 +266,7 @@ const analytics = createPlayerFeature({
 
   subscribe: ({ target, update, signal }) => {
     target.media.subscribe(
-      (s) => s.paused,
+      s => s.paused,
       () => {
         track(target.media.state.paused ? 'pause' : 'play');
         update();
