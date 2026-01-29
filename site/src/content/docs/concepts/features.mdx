@@ -115,17 +115,17 @@ Feature bundles are curated collections of features for common scenarios:
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 import { createPlayer, features } from '@videojs/react';
-import { FrostedSkin } from '@videojs/react/skin/frosted';
-import '@videojs/react/skin/frosted.css';
+import { VideoSkin } from '@videojs/react/skin/video';
+import '@videojs/react/skin/video.css';
 
 const { Provider } = createPlayer({
   features: features.video(),
 });
 
 <Provider>
-  <FrostedSkin>
+  <VideoSkin>
     <video src="video.mp4" />
-  </FrostedSkin>
+  </VideoSkin>
 </Provider>
 ```
 </FrameworkCase>
@@ -133,9 +133,9 @@ const { Provider } = createPlayer({
 <FrameworkCase frameworks={["html"]}>
 ```html
 <video-player>
-  <frosted-video-skin>
+  <video-skin>
     <video src="video.mp4"></video>
-  </frosted-video-skin>
+  </video-skin>
 </video-player>
 ```
 </FrameworkCase>

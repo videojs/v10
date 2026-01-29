@@ -9,7 +9,7 @@ import { MinimalSkinDemo } from '@/examples/react/MinimalSkin/MinimalSkinDemo';
 import MinimalFrame from '@/components/frames/Minimal.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Skins are **complete, packaged player designs** that include both UI components and their styles. Pick a skin that matches your use case, or eject one in your framework of choice and make it your own.
+Skins are **complete, packaged player designs** that include both UI components and their styles. Pick your favorite and use it as is, or copy its components into your project for customization.
 
 ## Skins in v10+
 
@@ -32,54 +32,54 @@ To add UI for new features, <DocsLink slug="how-to/customize-skins">eject the sk
 <FrameworkCase frameworks={["html"]}>
 | Features | Available Skins |
 |----------|-----------------|
-| `features.video()` | `<frosted-video-skin>`, `<minimal-video-skin>` |
+| `features.video()` | `<video-skin>`, `<minimal-video-skin>` |
 | `features.backgroundVideo()` | (no UI) |
 | `features.creator()` | `<creator-video-skin>` |
 
-Skins are **standalone custom elements**. The element name includes the style and media type: `frosted-video-skin`.
+Skins are **standalone custom elements**. The default skin is simply `video-skin`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 | Features | Available Skins |
 |----------|-----------------|
-| `features.video()` | `<FrostedSkin>`, `<MinimalSkin>` |
+| `features.video()` | `<VideoSkin>`, `<MinimalSkin>` |
 | `features.backgroundVideo()` | (no UI) |
 | `features.creator()` | `<CreatorSkin>` |
 
 Skins are **React components** that you import and compose. The component name reflects the style.
 </FrameworkCase>
 
-The default video features offer multiple skins. Frosted is opinionated and recognizable; Minimal is clean and easy to customize.
+The default video features offer multiple skins. VideoSkin is the default; Minimal is a clean alternative that's easy to customize.
 
 ## Built-in Skins
 
-### Frosted
+### VideoSkin
 
-A modern, glassy design with backdrop blur effects and polished interactions.
+The default skin—a modern, glassy design with backdrop blur effects and polished interactions.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 import { createPlayer, features } from '@videojs/react';
-import { FrostedSkin } from '@videojs/react/skin/frosted';
-import '@videojs/react/skin/frosted.css';
+import { VideoSkin } from '@videojs/react/skin/video';
+import '@videojs/react/skin/video.css';
 
 const { Provider } = createPlayer({
   features: features.video(),
 });
 
 <Provider>
-  <FrostedSkin>
+  <VideoSkin>
     <video src="video.mp4" />
-  </FrostedSkin>
+  </VideoSkin>
 </Provider>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 ```html
 <video-player>
-  <frosted-video-skin>
+  <video-skin>
     <video src="video.mp4"></video>
-  </frosted-video-skin>
+  </video-skin>
 </video-player>
 ```
 </FrameworkCase>

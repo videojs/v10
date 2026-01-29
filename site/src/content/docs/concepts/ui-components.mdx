@@ -114,23 +114,23 @@ UI components automatically bind to the nearest player and media in the DOM tree
 
 <FrameworkCase frameworks={["html"]}>
 ```html
-<website-video-player>
-  <website-frosted-video-skin>
+<video-player>
+  <video-skin>
     <video src="video.mp4"></video>
-  </website-frosted-video-skin>
+  </video-skin>
 
   <!-- This button automatically binds to the player above -->
   <media-play-button></media-play-button>
-</website-video-player>
+</video-player>
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <Provider>
-  <FrostedSkin>
+  <VideoSkin>
     <Video src="video.mp4" />
-  </FrostedSkin>
+  </VideoSkin>
 
   {/* This button automatically binds to the Provider above */}
   <PlayButton />
@@ -147,4 +147,4 @@ This pattern means you can:
 
 - <DocsLink slug="concepts/skins">Skins</DocsLink> — Pre-composed component collections
 - <DocsLink slug="concepts/architecture">Architecture</DocsLink> — How components fit in the three-pillar model
-- <DocsLink slug="concepts/presets">Presets</DocsLink> — Feature collections that power components
+- <DocsLink slug="concepts/features">Features</DocsLink> — State and behavior bundles that power components

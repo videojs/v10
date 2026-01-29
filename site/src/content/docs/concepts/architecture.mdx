@@ -9,6 +9,8 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 
 Video.js v10+ is built around three independent pillars—**Player**, **Media**, and **UI/Skins**.
 
+> Note: Compare this previous versions of Video.js where there was a single `player` component that included everything about the player under the hood.
+
 ## The Three Pillars
 
 ### Player
@@ -108,12 +110,12 @@ The UI pillar has two layers:
 **Skins** — Complete, pre-designed player UIs that package components and styles together:
 
 <FrameworkCase frameworks={["html"]}>
-- `<frosted-video-skin>` — Glassy, modern design
-- `<minimal-video-skin>` — Clean, simple design
+- `<video-skin>` — The default skin
+- `<minimal-video-skin>` — Clean, simple alternative
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
-- `<FrostedSkin>` — Glassy, modern design
-- `<MinimalSkin>` — Clean, simple design
+- `<VideoSkin>` — The default skin
+- `<MinimalSkin>` — Clean, simple alternative
 </FrameworkCase>
 
 <DocsLink slug="concepts/skins">Learn more about skins →</DocsLink>
@@ -146,8 +148,8 @@ UI components can detect unsupported features and adapt (hiding the quality butt
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 import { createPlayer, features } from '@videojs/react';
-import { FrostedSkin } from '@videojs/react/skin/frosted';
-import '@videojs/react/skin/frosted.css';
+import { VideoSkin } from '@videojs/react/skin/video';
+import '@videojs/react/skin/video.css';
 
 const { Provider } = createPlayer({
   features: features.video(),
@@ -158,10 +160,10 @@ function Player() {
     // Player: State coordination root
     <Provider>
       {/* UI: Skin */}
-      <FrostedSkin>
+      <VideoSkin>
         {/* Media: Independent choice */}
         <video src="video.mp4" />
-      </FrostedSkin>
+      </VideoSkin>
     </Provider>
   );
 }
@@ -180,10 +182,10 @@ function Player() {
 <!-- Player: State coordination root -->
 <video-player>
   <!-- UI: Skin -->
-  <frosted-video-skin>
+  <video-skin>
     <!-- Media: Independent choice -->
     <video src="video.mp4"></video>
-  </frosted-video-skin>
+  </video-skin>
 </video-player>
 ```
 
@@ -192,8 +194,8 @@ function Player() {
 
 ```ts
 import '@videojs/html/player/video';
-import '@videojs/html/skin/frosted';
-import '@videojs/html/skin/frosted.css';
+import '@videojs/html/skin/video';
+import '@videojs/html/skin/video.css';
 ```
 
   </TabsPanel>
@@ -231,7 +233,7 @@ HTML element names follow a deliberate pattern:
 | Pattern | Example |
 |---------|---------|
 | `{mediatype}-player` | `video-player` |
-| `{style}-{mediatype}-skin` | `frosted-video-skin` |
+| `{mediatype}-skin` | `video-skin` |
 | `{impl}-{mediatype}` | `hls-video` |
 | `media-{action}-{object}` | `media-play-button` |
 
@@ -248,7 +250,7 @@ React uses idiomatic patterns rather than encoding everything in names:
 | Concept | Pattern |
 |---------|---------|
 | Features | `createPlayer({ features: features.video() })` — configuration |
-| Skin | `<FrostedSkin>` — component import |
+| Skin | `<VideoSkin>` — component import |
 | Media | `<HlsVideo>` — component import |
 | Primitives | `<PlayButton>` — component import |
 
