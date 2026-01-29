@@ -70,25 +70,21 @@ Media element names follow the pattern `{implementation}-{mediatype}`: `hls-vide
 
 ## Media is Independent
 
-Unlike <DocsLink slug="concepts/skins">skins</DocsLink> which are tied to <DocsLink slug="concepts/presets">players</DocsLink>, media is independent. You can use any media type with any player:
+Media is independent of <DocsLink slug="concepts/features">features</DocsLink> and <DocsLink slug="concepts/skins">skins</DocsLink>. You can use any media type with any player:
 
 <FrameworkCase frameworks={["html"]}>
 ```
-website-video-player + <video>      ✓
-website-video-player + <hls-video>  ✓
-website-video-player + <youtube-video>  ✓
-news-video-player + <video>         ✓
-news-video-player + <hls-video>     ✓
+video-player + <video>         ✓
+video-player + <hls-video>     ✓
+video-player + <youtube-video> ✓
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```
-presets.website() + <Video>      ✓
-presets.website() + <HlsVideo>   ✓
-presets.website() + <YouTubeVideo>   ✓
-presets.news() + <Video>         ✓
-presets.news() + <HlsVideo>      ✓
+features.video() + <video>         ✓
+features.video() + <HlsVideo>      ✓
+features.video() + <YouTubeVideo>  ✓
 ```
 </FrameworkCase>
 
@@ -109,7 +105,7 @@ Not every media type supports every feature. The UI can detect and adapt (hiding
 | DVR (live rewind) | — | ✓ | ✓ | — | — |
 | Chapters | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-**Example:** A native `<video>` playing an MP4 can't support a quality selector—there's only one quality. An HLS stream with multiple renditions can. If your preset includes quality selection but your media doesn't support it, the quality button simply won't appear.
+**Example:** A native `<video>` playing an MP4 can't support a quality selector—there's only one quality. An HLS stream with multiple renditions can. If your features include quality selection but your media doesn't support it, the quality button simply won't appear.
 
 ## Consistent API
 
@@ -171,9 +167,11 @@ You can use media without any UI for programmatic control:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { createPlayer, presets } from '@videojs/react';
+import { createPlayer, features } from '@videojs/react';
 
-const { Provider, usePlayer } = createPlayer(presets.background());
+const { Provider, usePlayer } = createPlayer({
+  features: features.backgroundVideo(),
+});
 
 function BackgroundVideo() {
   return (
@@ -205,12 +203,14 @@ Or create a custom headless player:
 ```ts
 import { createPlayer, features } from '@videojs/html';
 
-const { PlayerElement } = createPlayer([
-  features.playback,
-  features.time,
-]);
+const { Player } = createPlayer({
+  features: [
+    features.playback,
+    features.time,
+  ],
+});
 
-PlayerElement.define('headless-video-player');
+Player.define('headless-video-player');
 ```
 </FrameworkCase>
 
@@ -245,5 +245,5 @@ Both formats let the player automatically switch quality based on network condit
 ## See Also
 
 - <DocsLink slug="concepts/architecture">Architecture</DocsLink> — How media fits in the three-pillar model
-- <DocsLink slug="concepts/presets">Presets</DocsLink> — Feature collections (independent of media choice)
-- <DocsLink slug="concepts/skins">Skins</DocsLink> — UI packages (work with any media)
+- <DocsLink slug="concepts/features">Features</DocsLink> — State and behavior bundles
+- <DocsLink slug="concepts/skins">Skins</DocsLink> — Packaged player designs

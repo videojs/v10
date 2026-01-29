@@ -23,35 +23,33 @@ In Video.js v8, skins were CSS-only themes applied to a fixed component structur
 
 This means each skin can be completely unique—different layouts, different controls, different interactions. A streaming app skin can have a totally different structure than a news player skin.
 
-## Skins and Use Cases
+## Skins and Features
 
-Video.js v10+ is built around **use cases**—common scenarios like website players, background video, news embeds, or streaming apps. Each use case defines a <DocsLink slug="concepts/presets">preset</DocsLink> (the features needed) and pairs with specific skins designed for that scenario.
+**Skins are designed for specific feature sets.** A skin includes UI components for the features it supports. If you add features the skin wasn't designed for, you won't get UI for them automatically—the skin only includes components for its intended features.
 
-**Skins are tied to use cases.** A skin is designed for a specific feature set. If you use a website skin with a news player (which includes ads), the website skin won't suddenly show ads UI—it simply doesn't include those components. The skin defines what UI exists; the player defines what features are available.
+To add UI for new features, <DocsLink slug="how-to/customize-skins">eject the skin</DocsLink> and customize it.
 
 <FrameworkCase frameworks={["html"]}>
-| Player | Available Skins |
-|--------|-----------------|
-| `<website-video-player>` | `<website-frosted-video-skin>`, `<website-minimal-video-skin>` |
-| `<background-video-player>` | (no UI) |
-| `<news-video-player>` | `<news-video-skin>` | *(planned)* |
-| `<streaming-app-video-player>` | `<streaming-app-video-skin>` | *(planned)* |
+| Features | Available Skins |
+|----------|-----------------|
+| `features.video()` | `<frosted-video-skin>`, `<minimal-video-skin>` |
+| `features.backgroundVideo()` | (no UI) |
+| `features.creator()` | `<creator-video-skin>` |
 
-Skins are **standalone custom elements**. The element name includes the use case, style, and media type: `website-frosted-video-skin`. This groups related skins in IDE autocomplete and makes the purpose clear.
+Skins are **standalone custom elements**. The element name includes the style and media type: `frosted-video-skin`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-| Preset | Available Skins |
-|--------|-----------------|
-| `presets.website()` | `<FrostedSkin>`, `<MinimalSkin>` |
-| `presets.background()` | (no UI) |
-| `presets.news()` | `<NewsSkin>` | *(planned)* |
-| `presets.streamingApp()` | `<StreamingSkin>` | *(planned)* |
+| Features | Available Skins |
+|----------|-----------------|
+| `features.video()` | `<FrostedSkin>`, `<MinimalSkin>` |
+| `features.backgroundVideo()` | (no UI) |
+| `features.creator()` | `<CreatorSkin>` |
 
 Skins are **React components** that you import and compose. The component name reflects the style.
 </FrameworkCase>
 
-The **website** use case intentionally offers multiple skins. Frosted is opinionated and recognizable; Minimal is clean and easy to customize. Most other use cases have a sensible default.
+The default video features offer multiple skins. Frosted is opinionated and recognizable; Minimal is clean and easy to customize.
 
 ## Built-in Skins
 
@@ -61,25 +59,28 @@ A modern, glassy design with backdrop blur effects and polished interactions.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { createPlayer, presets, FrostedSkin, Video } from '@videojs/react';
-import '@videojs/react/skins/frosted.css';
+import { createPlayer, features } from '@videojs/react';
+import { FrostedSkin } from '@videojs/react/skin/frosted';
+import '@videojs/react/skin/frosted.css';
 
-const { Provider } = createPlayer(presets.website());
+const { Provider } = createPlayer({
+  features: features.video(),
+});
 
 <Provider>
   <FrostedSkin>
-    <Video src="video.mp4" />
+    <video src="video.mp4" />
   </FrostedSkin>
 </Provider>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 ```html
-<website-video-player>
-  <website-frosted-video-skin>
+<video-player>
+  <frosted-video-skin>
     <video src="video.mp4"></video>
-  </website-frosted-video-skin>
-</website-video-player>
+  </frosted-video-skin>
+</video-player>
 ```
 </FrameworkCase>
 
@@ -93,25 +94,28 @@ A clean, straightforward design that focuses on simplicity. A good starting poin
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { createPlayer, presets, MinimalSkin, Video } from '@videojs/react';
-import '@videojs/react/skins/minimal.css';
+import { createPlayer, features } from '@videojs/react';
+import { MinimalSkin } from '@videojs/react/skin/minimal';
+import '@videojs/react/skin/minimal.css';
 
-const { Provider } = createPlayer(presets.website());
+const { Provider } = createPlayer({
+  features: features.video(),
+});
 
 <Provider>
   <MinimalSkin>
-    <Video src="video.mp4" />
+    <video src="video.mp4" />
   </MinimalSkin>
 </Provider>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 ```html
-<website-video-player>
-  <website-minimal-video-skin>
+<video-player>
+  <minimal-video-skin>
     <video src="video.mp4"></video>
-  </website-minimal-video-skin>
-</website-video-player>
+  </minimal-video-skin>
+</video-player>
 ```
 </FrameworkCase>
 
@@ -183,20 +187,20 @@ export function CustomSkin({ children, className }) {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-To register your custom skin as a custom element, follow the naming convention:
+To register your custom skin as a custom element:
 
 ```ts
 import { createSkin } from '@videojs/html';
 
 const { SkinElement } = createSkin(/* ... */);
 
-// {usecase}-{style}-{mediatype}-skin
-SkinElement.define('website-custom-video-skin');
+// {style}-{mediatype}-skin
+SkinElement.define('custom-video-skin');
 ```
 </FrameworkCase>
 
 ## See Also
 
 - <DocsLink slug="concepts/ui-components">UI Components</DocsLink> — The primitives skins are built from
-- <DocsLink slug="concepts/presets">Presets</DocsLink> — How use cases define features
+- <DocsLink slug="concepts/features">Features</DocsLink> — State and behavior bundles
 - <DocsLink slug="concepts/architecture">Architecture</DocsLink> — Where skins fit in the three-pillar model

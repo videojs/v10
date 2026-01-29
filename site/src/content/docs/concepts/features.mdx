@@ -1,15 +1,18 @@
 ---
 title: Features
-description: Understanding player features - the behavioral and stateful core independent of UI
+description: State and behavior bundles that configure your player
 ---
 
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-A feature is a **top-level capability of the player**.
+Features are **bundles of state and behavior** that configure your player. Each feature adds specific capabilities—playback controls, volume management, fullscreen support, and more.
 
 Features define what the player can do, what state exists, and how that state stays in sync with the underlying media element or player environment. Features are not UI. Buttons, menus, sliders, and skins are separate—they simply consume feature state and invoke feature requests.
 
 You can think of features as the behavioral and stateful core of the player, independent of how it looks.
+
+> **Note:** If you're familiar with other state management libraries like Redux or Zustand, features are conceptually similar to "slices"—self-contained modules that manage a specific piece of state and logic.
 
 ## Mental Model
 
@@ -83,23 +86,101 @@ Every feature participates in the same lifecycle:
 
 This lifecycle is what allows features to stay deterministic, debuggable, and UI-agnostic.
 
+## Feature Bundles
+
+Feature bundles are curated collections of features for common scenarios:
+
+<FrameworkCase frameworks={["html"]}>
+| Bundle | Use Case | Includes |
+|--------|----------|----------|
+| `features.video()` | Default video player | playback, volume, time, fullscreen, keyboard, idle |
+| `features.audio()` | Default audio player | playback, volume, time, keyboard |
+| `features.backgroundVideo()` | Background/hero video | playback (autoplay, loop) |
+| `features.creator()` | Creator platforms | video + quality, chapters |
+| `features.adaptive()` | Streaming media | quality selection for HLS/DASH |
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+| Bundle | Use Case | Includes |
+|--------|----------|----------|
+| `features.video()` | Default video player | playback, volume, time, fullscreen, keyboard, idle |
+| `features.audio()` | Default audio player | playback, volume, time, keyboard |
+| `features.backgroundVideo()` | Background/hero video | playback (autoplay, loop) |
+| `features.creator()` | Creator platforms | video + quality, chapters |
+| `features.adaptive()` | Streaming media | quality selection for HLS/DASH |
+</FrameworkCase>
+
 ## Using Features
 
-### Using a Preset (Recommended)
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { createPlayer, features } from '@videojs/react';
+import { FrostedSkin } from '@videojs/react/skin/frosted';
+import '@videojs/react/skin/frosted.css';
 
-Presets return an array of configured features. Options are grouped by feature key.
+const { Provider } = createPlayer({
+  features: features.video(),
+});
+
+<Provider>
+  <FrostedSkin>
+    <video src="video.mp4" />
+  </FrostedSkin>
+</Provider>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <frosted-video-skin>
+    <video src="video.mp4"></video>
+  </frosted-video-skin>
+</video-player>
+```
+</FrameworkCase>
+
+### Combining Features
+
+Spread a bundle and add more features:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { createPlayer, features } from '@videojs/react';
+
+const { Provider } = createPlayer({
+  features: [
+    ...features.video(),
+    features.gestures,
+  ],
+});
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { createPlayer, features } from '@videojs/html';
+
+const { Player } = createPlayer({
+  features: [
+    ...features.video(),
+    features.gestures,
+  ],
+});
+
+Player.define('gesture-video-player');
+```
+</FrameworkCase>
+
+### Configuring Features
+
+Pass options to configure individual features:
 
 ```ts
-const player = createPlayer(
-  presets.website({
+const { Provider } = createPlayer({
+  features: features.video({
     playback: {
       autoplay: false,
-    },
-    time: {
-      defaultDuration: 120,
-    },
-    captions: {
-      defaultMode: 'auto',
     },
     idle: {
       autohideSeconds: 2,
@@ -108,44 +189,22 @@ const player = createPlayer(
       seekForwardSeconds: 15,
       seekBackwardSeconds: 5,
     },
-    layout: {
-      breakpoints: 'sm:320 md:768',
-    },
-    i18n: {
-      lang: 'en',
-      t: (key) => key,
-    },
-  })
-);
-```
-
-### Extending a Preset
-
-Presets are just arrays. You can spread them and add or override features.
-
-```ts
-const features = [
-  ...presets.website({
-    playback: { autoplay: false },
   }),
-  qualityFeature({ defaultSelection: 'auto' }),
-];
-
-const player = createPlayer({ features });
+});
 ```
 
-### Without a Preset
+### Without a Bundle
 
-You can always configure features directly.
+You can always configure features directly:
 
 ```ts
-const player = createPlayer({
+const { Provider } = createPlayer({
   features: [
-    playbackFeature({ autoplay: false }),
-    timeFeature({ defaultDuration: 120 }),
-    captionsFeature({ defaultMode: 'auto' }),
-    idleFeature({ autohideSeconds: 2 }),
-    hotkeysFeature({ seekForwardSeconds: 15 }),
+    features.playback({ autoplay: false }),
+    features.time({ defaultDuration: 120 }),
+    features.volume(),
+    features.fullscreen(),
+    features.idle({ autohideSeconds: 2 }),
   ],
 });
 ```
@@ -346,6 +405,6 @@ No options.
 
 ## See Also
 
-- <DocsLink slug="concepts/presets">Presets</DocsLink> — Curated feature collections for common use cases
 - <DocsLink slug="concepts/architecture">Architecture</DocsLink> — How features fit in the three-pillar model
+- <DocsLink slug="concepts/skins">Skins</DocsLink> — Packaged player designs
 - <DocsLink slug="concepts/ui-components">UI Components</DocsLink> — How UI consumes feature state
