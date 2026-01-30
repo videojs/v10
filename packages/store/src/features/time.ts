@@ -1,9 +1,10 @@
 import { isValidNumber } from '@videojs/utils';
 import { listen } from '@videojs/utils/dom';
-import { createFeature } from '../store';
-import type { FeatureActions, FeatureState } from '../types';
+import type { FeatureActions, FeatureCreator, FeatureState } from '../types';
 
-export const timeFeature = createFeature<{ media: HTMLMediaElement }>()(() => ({
+type TimeTargets = { media: HTMLMediaElement };
+
+export const time = (() => ({
   initialState: {
     /** Current playback position in seconds. */
     currentTime: 0,
@@ -38,10 +39,10 @@ export const timeFeature = createFeature<{ media: HTMLMediaElement }>()(() => ({
       media.currentTime = value;
     },
   }),
-}));
+})) satisfies FeatureCreator<TimeTargets>;
 
-export type TimeState = FeatureState<typeof timeFeature>;
-export type TimeActions = FeatureActions<typeof timeFeature>;
+export type TimeState = FeatureState<typeof time>;
+export type TimeActions = FeatureActions<typeof time>;
 
 function getSeekable(media: HTMLMediaElement | undefined): [number, number] | undefined {
   if (!media?.seekable?.length) return undefined;

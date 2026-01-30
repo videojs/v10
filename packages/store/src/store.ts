@@ -1,7 +1,6 @@
-import { createStore as createZustandStore } from 'zustand';
 import type {
   FeatureConfig,
-  FeatureCreator,
+  FeatureCreatorFn,
   FeatureStore,
   InferTargetsFromCreators,
   MergeFeatureActions,
@@ -9,14 +8,10 @@ import type {
   SubscribeFn,
   Targets,
 } from './types';
+import { createStore as createZustandStore } from './zustand-store';
 
-export function createFeature<T extends Targets>() {
-  return <S extends object, A extends object>(creator: FeatureCreator<T, S, A>) => creator;
-}
-
-// Array of feature creators (Zustand-style slices) — infers T from creators, merged state/actions
-export function createStore<const Creators extends readonly FeatureCreator<any, any, any>[]>(
-  featureCreators: Creators
+export function createStore<const Creators extends readonly FeatureCreatorFn<any, any, any>[]>(
+  ...featureCreators: Creators
 ): FeatureStore<InferTargetsFromCreators<Creators>, MergeFeatureStates<Creators>, MergeFeatureActions<Creators>> {
   type T = InferTargetsFromCreators<Creators>;
   type S = MergeFeatureStates<Creators>;
@@ -65,12 +60,14 @@ export function createStore<const Creators extends readonly FeatureCreator<any, 
     }
   };
 
+  const setState = (partial: Partial<S & A>) => store.setState(partial);
+
   const buildInitialActions = (): A => {
     if (targetKeys.length === 0) {
-      return config.actions({} as T) as A;
+      return config.actions({} as T, setState) as A;
     }
 
-    const actionKeys = Object.keys(config.actions({} as T));
+    const actionKeys = Object.keys(config.actions({} as T, setState));
     const noops = {} as A;
     for (const key of actionKeys) {
       (noops as Record<string, () => void>)[key] = () => {
@@ -108,7 +105,7 @@ export function createStore<const Creators extends readonly FeatureCreator<any, 
       store.setState({
         ...store.getState(),
         ...config.getSnapshot?.(targets as T),
-        ...config.actions(targets as T, (partial) => store.setState(partial as Partial<S & A>)),
+        ...config.actions(targets as T, setState),
       });
     } else {
       store.setState(buildInitialActions());
@@ -141,5 +138,5 @@ const mergeConfigs = <T extends Targets, S extends object, A extends object>(
     }
     return acc;
   }, {}),
-  actions: (targets, getState) => Object.assign({}, ...configs.map((c) => c.actions(targets, getState))),
+  actions: (targets, setState) => Object.assign({}, ...configs.map((c) => c.actions(targets, setState))),
 });

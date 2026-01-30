@@ -1,8 +1,9 @@
 import { listen } from '@videojs/utils/dom';
-import { createFeature } from '../store';
-import type { FeatureActions, FeatureState } from '../types';
+import type { FeatureActions, FeatureCreator, FeatureState } from '../types';
 
-export const playbackFeature = createFeature<{ media: HTMLMediaElement }>()(() => ({
+type PlaybackTargets = { media: HTMLMediaElement };
+
+export const playback = (() => ({
   initialState: {
     /** Whether playback is paused. */
     paused: true,
@@ -40,7 +41,7 @@ export const playbackFeature = createFeature<{ media: HTMLMediaElement }>()(() =
       media.pause();
     },
   }),
-}));
+})) satisfies FeatureCreator<PlaybackTargets>;
 
-export type PlaybackState = FeatureState<typeof playbackFeature>;
-export type PlaybackActions = FeatureActions<typeof playbackFeature>;
+export type PlaybackState = FeatureState<typeof playback>;
+export type PlaybackActions = FeatureActions<typeof playback>;

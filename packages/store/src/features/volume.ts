@@ -1,8 +1,9 @@
 import { listen } from '@videojs/utils/dom';
-import { createFeature } from '../store';
-import type { FeatureActions, FeatureState } from '../types';
+import type { FeatureActions, FeatureCreator, FeatureState } from '../types';
 
-export const volumeFeature = createFeature<{ media: HTMLMediaElement }>()(() => ({
+type VolumeTargets = { media: HTMLMediaElement };
+
+export const volume = (() => ({
   initialState: {
     /** Whether audio is muted. */
     muted: true,
@@ -43,10 +44,10 @@ export const volumeFeature = createFeature<{ media: HTMLMediaElement }>()(() => 
       }
     },
   }),
-}));
+})) satisfies FeatureCreator<VolumeTargets>;
 
-export type VolumeState = FeatureState<typeof volumeFeature>;
-export type VolumeActions = FeatureActions<typeof volumeFeature>;
+export type VolumeState = FeatureState<typeof volume>;
+export type VolumeActions = FeatureActions<typeof volume>;
 
 function getVolumeLevel(muted: boolean, volume: number): 'high' | 'medium' | 'low' | 'off' {
   if (muted || volume === 0) return 'off';

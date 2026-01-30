@@ -1,13 +1,12 @@
 import { containsComposedNode, listen } from '@videojs/utils/dom';
-import { createFeature } from '../store';
-import type { FeatureActions, FeatureState } from '../types';
+import type { FeatureActions, FeatureCreator, FeatureState } from '../types';
 
 export interface FullscreenTargets {
   container: HTMLElement;
   media: HTMLMediaElement;
 }
 
-export const fullscreenFeature = createFeature<FullscreenTargets>()(() => {
+export const fullscreen = (() => {
   const doc = globalThis?.document;
 
   return {
@@ -24,7 +23,7 @@ export const fullscreenFeature = createFeature<FullscreenTargets>()(() => {
     },
 
     subscribe: {
-      container: (_, update, signal) => {
+      container: (_targets, update, signal) => {
         if (!doc) return;
         const events = [
           'fullscreenchange',
@@ -72,10 +71,10 @@ export const fullscreenFeature = createFeature<FullscreenTargets>()(() => {
       },
     }),
   };
-});
+}) satisfies FeatureCreator<FullscreenTargets>;
 
-export type FullscreenState = FeatureState<typeof fullscreenFeature>;
-export type FullscreenActions = FeatureActions<typeof fullscreenFeature>;
+export type FullscreenState = FeatureState<typeof fullscreen>;
+export type FullscreenActions = FeatureActions<typeof fullscreen>;
 
 /** @TODO This is implemented for web/browser only! We will need an alternative for e.g. React Native. */
 

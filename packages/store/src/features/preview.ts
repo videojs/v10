@@ -1,7 +1,6 @@
-import { createFeature } from '../store';
-import type { FeatureActions, FeatureState } from '../types';
+import type { FeatureActions, FeatureCreator, FeatureState } from '../types';
 
-export const previewFeature = createFeature()(() => ({
+export const preview = (() => ({
   initialState: {
     /** Preview time in seconds (e.g. from hover on seek bar) */
     previewTime: 0,
@@ -9,10 +8,10 @@ export const previewFeature = createFeature()(() => ({
 
   actions: (_, set) => ({
     setPreviewTime(value: number) {
-      set?.({ previewTime: value });
+      set({ previewTime: value });
     },
   }),
-}));
+})) satisfies FeatureCreator<Record<string, never>>;
 
-export type PreviewState = FeatureState<typeof previewFeature>;
-export type PreviewActions = FeatureActions<typeof previewFeature>;
+export type PreviewState = FeatureState<typeof preview>;
+export type PreviewActions = FeatureActions<typeof preview>;
