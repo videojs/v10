@@ -1,26 +1,28 @@
 import { useEffect } from 'react';
 import { currentFramework as frameworkStore, currentStyle as styleStore } from '@/stores/preferences';
-import type { SupportedFramework, SupportedStyle } from '@/types/docs';
+import { getDefaultStyle, type SupportedFramework } from '@/types/docs';
+import { getStylePreferenceClient } from '@/utils/docs/preferences';
 
-interface PreferenceUpdaterProps<F extends SupportedFramework = SupportedFramework> {
-  currentFramework: F;
-  currentStyle: SupportedStyle<F>;
+interface PreferenceUpdaterProps {
+  currentFramework: SupportedFramework;
 }
 
 /**
- * PreferenceUpdater component updates the preference nanostore based on URL params.
+ * PreferenceUpdater component updates the preference nanostore based on URL params and localStorage.
  * This component is loaded with client:idle directive on docs pages, making it non-blocking.
- * It updates the nanostore whenever framework or style from URL changes.
- * PreferenceSync handles persisting to cookies.
+ * It updates the framework store from URL params and style store from localStorage.
+ * PreferenceSync handles persisting framework to cookies.
  */
-export function PreferenceUpdater<F extends SupportedFramework = SupportedFramework>({
-  currentFramework,
-  currentStyle,
-}: PreferenceUpdaterProps<F>) {
+export function PreferenceUpdater({ currentFramework }: PreferenceUpdaterProps) {
   useEffect(() => {
+    // Update framework store from URL
     frameworkStore.set(currentFramework);
-    styleStore.set(currentStyle);
-  }, [currentFramework, currentStyle]);
+
+    // Read style from localStorage (StyleInit guarantees a valid value exists)
+    // Fallback to default if React hydrates before StyleInit completes
+    const style = getStylePreferenceClient(currentFramework) ?? getDefaultStyle(currentFramework);
+    styleStore.set(style);
+  }, [currentFramework]);
 
   return null;
 }

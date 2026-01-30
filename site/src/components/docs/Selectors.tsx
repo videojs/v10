@@ -1,23 +1,28 @@
+import { useStore } from '@nanostores/react';
 import { Select } from '@/components/Select';
-import type { AnySupportedStyle, SupportedFramework, SupportedStyle } from '@/types/docs';
+import { currentStyle as styleStore } from '@/stores/preferences';
+import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
 import { FRAMEWORK_STYLES, isValidFramework, isValidStyleForFramework, SUPPORTED_FRAMEWORKS } from '@/types/docs';
-import { resolveFrameworkChange, resolveStyleChange } from '@/utils/docs/routing';
+import { setStylePreferenceClient, updateStyleAttribute } from '@/utils/docs/preferences';
+import { resolveFrameworkChange } from '@/utils/docs/routing';
 
-interface SelectorProps<T extends SupportedFramework> {
-  currentFramework: T;
-  currentStyle: SupportedStyle<T>;
+interface SelectorProps {
+  currentFramework: SupportedFramework;
   currentSlug: string;
 }
 
-export function Selectors({ currentFramework, currentStyle, currentSlug }: SelectorProps<SupportedFramework>) {
-  // TODO: use astro view transitions to preserve scroll position when switching from the same slug to the same slug
+export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
+  // Read style from nanostore (StyleInit + PreferenceUpdater guarantee a valid value)
+  // Guard against React hydrating before style is initialized
+  const currentStyle = useStore(styleStore);
+  if (!currentStyle) return null;
+
   const handleFrameworkChange = (newFramework: SupportedFramework | null) => {
     if (newFramework === null) return;
     if (!isValidFramework(newFramework)) return;
 
     const { url, shouldReplace } = resolveFrameworkChange({
       currentFramework,
-      currentStyle,
       currentSlug,
       newFramework,
     });
@@ -35,20 +40,12 @@ export function Selectors({ currentFramework, currentStyle, currentSlug }: Selec
     if (newStyle === null) return;
     if (!isValidStyleForFramework(currentFramework, newStyle)) return;
 
-    const { url, shouldReplace } = resolveStyleChange({
-      currentFramework,
-      currentStyle,
-      currentSlug,
-      newStyle,
-    });
-
-    if (shouldReplace) {
-      // Maintaining the current slug, navigate without pushing onto the history stack
-      window.location.replace(url);
-    } else {
-      // Changing slug, use normal navigation
-      window.location.href = url;
-    }
+    // Update localStorage for this framework
+    setStylePreferenceClient(currentFramework, newStyle);
+    // Update DOM attribute
+    updateStyleAttribute(newStyle);
+    // Update nanostore for React components
+    styleStore.set(newStyle);
   };
 
   const availableStyles = FRAMEWORK_STYLES[currentFramework];

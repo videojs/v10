@@ -1,31 +1,25 @@
 ---
-
 import clsx from 'clsx';
 
 import { PreferenceUpdater } from '@/components/docs/PreferenceUpdater';
 import SidebarItem from '@/components/docs/SidebarItem.astro';
-import type { SupportedFramework, SupportedStyle } from '@/types/docs';
+import type { SupportedFramework } from '@/types/docs';
 import { filterSidebar } from '@/utils/docs/sidebar';
 
-type Props<F extends SupportedFramework = SupportedFramework> = {
-  framework: F;
-  style: SupportedStyle<F>;
+type Props = {
+  framework: SupportedFramework;
   docTitles: Map<string, string>;
   class?: string;
 };
 
-const { framework, style, docTitles, class: className } = Astro.props;
-const filteredSidebar = filterSidebar(framework, style);
+const { framework, docTitles, class: className } = Astro.props;
+const filteredSidebar = filterSidebar(framework);
 ---
 
 <div class={clsx('bg-light-80 dark:bg-dark-100', className)}>
   <slot />
-  <PreferenceUpdater client:idle currentFramework={framework} currentStyle={style} />
+  <PreferenceUpdater client:idle currentFramework={framework} />
   <nav class="p-6">
-    {
-      filteredSidebar.map((item) => (
-        <SidebarItem item={item} framework={framework} style={style} docTitles={docTitles} />
-      ))
-    }
+    {filteredSidebar.map((item) => <SidebarItem item={item} framework={framework} docTitles={docTitles} />)}
   </nav>
 </div>
