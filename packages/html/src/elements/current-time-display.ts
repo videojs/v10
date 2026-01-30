@@ -1,16 +1,24 @@
-import type { CurrentTimeDisplayState } from '@videojs/store';
-import { currentTimeDisplayStateDefinition } from '@videojs/store';
 import { formatDisplayTime } from '@videojs/utils';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 
+type CurrentTimeDisplayState = {
+  currentTime: number;
+  duration: number;
+};
+
+/**
+ * CurrentTimeDisplay state hook - equivalent to React's useCurrentTimeDisplayState
+ * Handles media store state subscription and transformation
+ */
 export const getCurrentTimeDisplayState: StateHook<CurrentTimeDisplay, CurrentTimeDisplayState> = (
   _element,
   mediaStore
 ) => {
+  const state = mediaStore.getState();
   return {
-    ...currentTimeDisplayStateDefinition.stateTransform(mediaStore.getState()),
-    // Current time display is read-only, so no request methods needed
+    currentTime: state.currentTime,
+    duration: state.duration,
   };
 };
 

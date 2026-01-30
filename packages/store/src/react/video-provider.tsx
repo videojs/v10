@@ -1,8 +1,8 @@
 /** @TODO !!! Revisit for SSR (CJP) */
 
-import { createMediaStore } from '@videojs/store';
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
+import { createMediaStore } from '../media-store';
 
 import { MediaContext } from './context';
 

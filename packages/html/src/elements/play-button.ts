@@ -1,29 +1,27 @@
-import type { PlayButtonState } from '@videojs/store';
-import { playButtonStateDefinition } from '@videojs/store';
-import { memoize } from '@videojs/utils';
-import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 import { ButtonElement } from './button';
 
-type PlayButtonStateWithMethods = Prettify<
-  PlayButtonState & ReturnType<typeof playButtonStateDefinition.createRequestMethods>
->;
-
-const playButtonCreateRequestMethods = memoize(playButtonStateDefinition.createRequestMethods);
+type PlayButtonState = {
+  paused: boolean;
+  play: () => void;
+  pause: () => void;
+};
 
 /**
  * PlayButton state hook - equivalent to React's usePlayButtonState
  * Handles media store state subscription and transformation
  */
-export const getPlayButtonState: StateHook<PlayButton, PlayButtonStateWithMethods> = (_element, mediaStore) => {
+export const getPlayButtonState: StateHook<PlayButton, PlayButtonState> = (_element, mediaStore) => {
+  const state = mediaStore.getState();
   return {
-    ...playButtonStateDefinition.stateTransform(mediaStore.getState()),
-    ...playButtonCreateRequestMethods(mediaStore.dispatch),
+    paused: state.paused,
+    play: state.play,
+    pause: state.pause,
   };
 };
 
-export const getPlayButtonProps: PropsHook<PlayButton, PlayButtonStateWithMethods> = (_element, state) => {
+export const getPlayButtonProps: PropsHook<PlayButton, PlayButtonState> = (_element, state) => {
   const baseProps: Record<string, any> = {
     /** data attributes/props */
     'data-paused': state.paused,
@@ -43,7 +41,7 @@ export const getPlayButtonProps: PropsHook<PlayButton, PlayButtonStateWithMethod
 };
 
 export class PlayButton extends ButtonElement {
-  _state: PlayButtonStateWithMethods | undefined;
+  _state: PlayButtonState | undefined;
 
   handleEvent(event: Event): void {
     super.handleEvent(event);
@@ -52,13 +50,17 @@ export class PlayButton extends ButtonElement {
     const state = this._state;
     if (state && type === 'click') {
       if (state.paused) {
-        state.requestPlay();
+        state.play();
       } else {
-        state.requestPause();
+        state.pause();
       }
     }
   }
 }
 
-export const PlayButtonElement: ConnectedComponentConstructor<PlayButton, PlayButtonStateWithMethods> =
-  toConnectedHTMLComponent(PlayButton, getPlayButtonState, getPlayButtonProps, 'PlayButton');
+export const PlayButtonElement: ConnectedComponentConstructor<PlayButton, PlayButtonState> = toConnectedHTMLComponent(
+  PlayButton,
+  getPlayButtonState,
+  getPlayButtonProps,
+  'PlayButton'
+);

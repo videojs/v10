@@ -1,8 +1,6 @@
-import { playButtonStateDefinition } from '@videojs/store';
 import { useMediaSelector, useMediaStore } from '@videojs/store/react';
-import { shallowEqual } from '@videojs/utils';
 import type { DetailedHTMLProps, HTMLAttributes, PropsWithChildren, RefCallback } from 'react';
-import { forwardRef, useCallback, useMemo } from 'react';
+import { forwardRef, useCallback } from 'react';
 import { useComposedRefs } from '../utils/use-composed-refs';
 
 /**
@@ -27,12 +25,7 @@ export function useMediaContainerRef(): RefCallback<HTMLElement | null> {
   return useCallback(
     (containerElement: HTMLElement | null) => {
       if (!mediaStore) return;
-
-      // Register or unregister the container element as the container state owner
-      mediaStore.dispatch({
-        type: 'containerstateownerchangerequest',
-        detail: containerElement,
-      });
+      mediaStore.attach({ container: containerElement });
     },
     [mediaStore]
   );
@@ -60,21 +53,21 @@ export const MediaContainer: React.ForwardRefExoticComponent<
     const containerRef = useMediaContainerRef();
     const composedRef = useComposedRefs(ref, containerRef);
 
-    const mediaStore = useMediaStore();
-    const mediaState = useMediaSelector(playButtonStateDefinition.stateTransform, shallowEqual);
-    const methods = useMemo(() => playButtonStateDefinition.createRequestMethods(mediaStore.dispatch), [mediaStore]);
+    const paused = useMediaSelector((state) => state.paused);
+    const play = useMediaSelector((state) => state.play);
+    const pause = useMediaSelector((state) => state.pause);
 
     const handleClick = useCallback(
       (event: React.MouseEvent<HTMLDivElement>) => {
         if (!['video', 'audio'].includes((event.target as HTMLElement).localName || '')) return;
 
-        if (mediaState.paused) {
-          methods.requestPlay();
+        if (paused) {
+          play();
         } else {
-          methods.requestPause();
+          pause();
         }
       },
-      [mediaState.paused, methods]
+      [paused, play, pause]
     );
 
     return (

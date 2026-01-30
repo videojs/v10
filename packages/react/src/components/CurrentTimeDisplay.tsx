@@ -1,6 +1,5 @@
-import { currentTimeDisplayStateDefinition } from '@videojs/store';
 import { useMediaSelector } from '@videojs/store/react';
-import { formatDisplayTime, shallowEqual } from '@videojs/utils';
+import { formatDisplayTime } from '@videojs/utils';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
@@ -8,17 +7,13 @@ export interface CurrentTimeDisplayProps extends React.ComponentPropsWithoutRef<
   showRemaining?: boolean;
 }
 
-export function useCurrentTimeDisplayState(_props?: CurrentTimeDisplayProps): {
-  currentTime: number;
-  duration: number;
-} {
-  /** @TODO Fix type issues with hooks (CJP) */
-  const mediaState = useMediaSelector(currentTimeDisplayStateDefinition.stateTransform, shallowEqual);
+export function useCurrentTimeDisplayState(_props?: CurrentTimeDisplayProps) {
+  const currentTime = useMediaSelector((state) => state.currentTime);
+  const duration = useMediaSelector((state) => state.duration);
 
-  // Current time display is read-only, no request methods needed
   return {
-    currentTime: mediaState.currentTime ?? 0,
-    duration: mediaState.duration ?? 0,
+    currentTime,
+    duration,
   };
 }
 

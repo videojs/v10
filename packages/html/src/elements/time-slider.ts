@@ -1,7 +1,4 @@
 import { TimeSlider as CoreTimeSlider } from '@videojs/core';
-import { timeSliderStateDefinition } from '@videojs/store';
-import { memoize } from '@videojs/utils';
-import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
@@ -10,20 +7,20 @@ import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../ut
 // ROOT COMPONENT
 // ============================================================================
 
-type TimeSliderState = Prettify<ReturnType<CoreTimeSlider['getState']>>;
-type TimeSliderStateWithMethods = Prettify<
-  TimeSliderState & ReturnType<typeof timeSliderStateDefinition.createRequestMethods>
->;
+type TimeSliderStateWithMethods = ReturnType<CoreTimeSlider['getState']>;
 
-const timeSliderCreateRequestMethods = memoize(timeSliderStateDefinition.createRequestMethods);
-
+/**
+ * TimeSlider Root state hook - equivalent to React's useTimeSliderRootState
+ * Handles media store state subscription and core slider state
+ */
 export const getTimeSliderRootState: StateHook<TimeSliderRoot, TimeSliderStateWithMethods> = (element, mediaStore) => {
-  const mediaState = timeSliderStateDefinition.stateTransform(mediaStore.getState());
-  const mediaMethods = timeSliderCreateRequestMethods(mediaStore.dispatch);
+  const state = mediaStore.getState();
   const coreState = getCoreState(CoreTimeSlider, {
     ...getPropsFromAttrs(element),
-    ...mediaState,
-    ...mediaMethods,
+    currentTime: state.currentTime,
+    duration: state.duration,
+    setCurrentTime: state.setCurrentTime,
+    setPreviewTime: state.setPreviewTime,
   });
   return {
     ...coreState,
@@ -62,7 +59,7 @@ export const getTimeSliderRootProps: PropsHook<TimeSliderRoot, TimeSliderStateWi
 export class TimeSliderRoot extends HTMLElement {
   static readonly observedAttributes: readonly string[] = ['commandfor', 'orientation'];
 
-  _state: TimeSliderState | undefined;
+  _state: TimeSliderStateWithMethods | undefined;
 
   get orientation(): 'horizontal' | 'vertical' {
     return (this.getAttribute('orientation') as 'horizontal' | 'vertical') || 'horizontal';

@@ -1,24 +1,17 @@
-import { playButtonStateDefinition } from '@videojs/store';
-import { useMediaSelector, useMediaStore } from '@videojs/store/react';
-import { shallowEqual } from '@videojs/utils';
+import { useMediaSelector } from '@videojs/store/react';
 import type { PropsWithChildren } from 'react';
-import { useMemo } from 'react';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
-export function usePlayButtonState(_props?: any): {
-  paused: boolean;
-  requestPlay: () => void;
-  requestPause: () => void;
-} {
-  const mediaStore = useMediaStore();
-  const mediaState = useMediaSelector(playButtonStateDefinition.stateTransform, shallowEqual);
-  const methods = useMemo(() => playButtonStateDefinition.createRequestMethods(mediaStore.dispatch), [mediaStore]);
+export function usePlayButtonState(_props?: any) {
+  const paused = useMediaSelector((state) => state.paused);
+  const play = useMediaSelector((state) => state.play);
+  const pause = useMediaSelector((state) => state.pause);
 
   return {
-    paused: mediaState.paused,
-    requestPlay: methods.requestPlay,
-    requestPause: methods.requestPause,
+    paused,
+    play,
+    pause,
   };
 }
 
@@ -57,9 +50,9 @@ export function renderPlayButton(props: PlayButtonProps, state: PlayButtonState)
       onClick={() => {
         if (props.disabled) return;
         if (state.paused) {
-          state.requestPlay();
+          state.play();
         } else {
-          state.requestPause();
+          state.pause();
         }
       }}
     >

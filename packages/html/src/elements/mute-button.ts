@@ -1,25 +1,27 @@
-import type { MuteButtonState } from '@videojs/store';
-import { muteButtonStateDefinition } from '@videojs/store';
-import { memoize } from '@videojs/utils';
-import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 import { ButtonElement } from './button';
 
-type MuteButtonStateWithMethods = Prettify<
-  MuteButtonState & ReturnType<typeof muteButtonStateDefinition.createRequestMethods>
->;
+type MuteButtonState = {
+  muted: boolean;
+  volumeLevel: 'high' | 'medium' | 'low' | 'off';
+  setMuted: (value: boolean) => void;
+};
 
-const muteButtonCreateRequestMethods = memoize(muteButtonStateDefinition.createRequestMethods);
-
-export const getMuteButtonState: StateHook<MuteButton, MuteButtonStateWithMethods> = (_element, mediaStore) => {
+/**
+ * MuteButton state hook - equivalent to React's useMuteButtonState
+ * Handles media store state subscription and transformation
+ */
+export const getMuteButtonState: StateHook<MuteButton, MuteButtonState> = (_element, mediaStore) => {
+  const state = mediaStore.getState();
   return {
-    ...muteButtonStateDefinition.stateTransform(mediaStore.getState()),
-    ...muteButtonCreateRequestMethods(mediaStore.dispatch),
+    muted: state.muted,
+    volumeLevel: state.volumeLevel,
+    setMuted: state.setMuted,
   };
 };
 
-export const getMuteButtonProps: PropsHook<MuteButton, MuteButtonStateWithMethods> = (_element, state) => {
+export const getMuteButtonProps: PropsHook<MuteButton, MuteButtonState> = (_element, state) => {
   const baseProps: Record<string, any> = {
     /** data attributes/props */
     'data-muted': state.muted,
@@ -39,7 +41,7 @@ export const getMuteButtonProps: PropsHook<MuteButton, MuteButtonStateWithMethod
 };
 
 export class MuteButton extends ButtonElement {
-  _state: MuteButtonStateWithMethods | undefined;
+  _state: MuteButtonState | undefined;
 
   handleEvent(event: Event): void {
     super.handleEvent(event);
@@ -50,14 +52,18 @@ export class MuteButton extends ButtonElement {
     if (state) {
       if (type === 'click') {
         if (state.volumeLevel === 'off') {
-          state.requestUnmute();
+          state.setMuted(false);
         } else {
-          state.requestMute();
+          state.setMuted(true);
         }
       }
     }
   }
 }
 
-export const MuteButtonElement: ConnectedComponentConstructor<MuteButton, MuteButtonStateWithMethods> =
-  toConnectedHTMLComponent(MuteButton, getMuteButtonState, getMuteButtonProps, 'MuteButton');
+export const MuteButtonElement: ConnectedComponentConstructor<MuteButton, MuteButtonState> = toConnectedHTMLComponent(
+  MuteButton,
+  getMuteButtonState,
+  getMuteButtonProps,
+  'MuteButton'
+);

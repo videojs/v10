@@ -6,7 +6,7 @@ export interface VolumeSliderState extends SliderState {
   volume: number;
   muted: boolean;
   volumeLevel: string;
-  requestVolumeChange: (volume: number) => void;
+  setVolume: (volume: number) => void;
   _volumeText: string;
 }
 
@@ -67,25 +67,25 @@ export class VolumeSlider extends Slider {
   #handlePointerDown(event: PointerEvent) {
     super.handleEvent(event);
 
-    const { _pointerRatio, requestVolumeChange } = super.getState() as VolumeSliderState;
-    requestVolumeChange(_pointerRatio);
+    const { _pointerRatio, setVolume } = super.getState() as VolumeSliderState;
+    setVolume(_pointerRatio);
   }
 
   #handlePointerMove(event: PointerEvent) {
     super.handleEvent(event);
 
-    const { _dragging, _pointerRatio, requestVolumeChange } = super.getState() as VolumeSliderState;
+    const { _dragging, _pointerRatio, setVolume } = super.getState() as VolumeSliderState;
 
     if (_dragging) {
-      requestVolumeChange(_pointerRatio);
+      setVolume(_pointerRatio);
     }
   }
 
   #handlePointerUp(event: PointerEvent) {
-    const { _dragging, _pointerRatio, requestVolumeChange } = super.getState() as VolumeSliderState;
+    const { _dragging, _pointerRatio, setVolume } = super.getState() as VolumeSliderState;
 
     if (_dragging) {
-      requestVolumeChange(_pointerRatio);
+      setVolume(_pointerRatio);
     }
 
     super.handleEvent(event);
@@ -94,8 +94,8 @@ export class VolumeSlider extends Slider {
   #handleKeyDown(event: KeyboardEvent) {
     super.handleEvent(event);
 
-    const { _pointerRatio, requestVolumeChange } = super.getState() as VolumeSliderState;
-    requestVolumeChange(_pointerRatio);
+    const { _pointerRatio, setVolume } = super.getState() as VolumeSliderState;
+    setVolume(_pointerRatio);
   }
 }
 

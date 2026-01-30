@@ -1,5 +1,6 @@
 /** @TODO !!! Revisit for SSR (CJP) */
-import type { MediaStore } from '@videojs/store';
+import type { MediaStore, MediaStoreState } from '@videojs/store';
+import { shallowEqual } from '@videojs/utils';
 
 import { useContext } from 'react';
 
@@ -12,41 +13,23 @@ export function useMediaStore(): MediaStore {
   return useContext(MediaContext);
 }
 
-export function useMediaDispatch(): (value: any) => unknown {
-  const store = useContext(MediaContext);
-  const dispatch = store?.dispatch ?? identity;
-  return (value: any) => {
-    return dispatch(value);
+export function useMediaRef(): (media: HTMLMediaElement | null) => void {
+  const store = useContext(MediaContext) as MediaStore;
+  return (media: HTMLMediaElement | null): void => {
+    store.attach({ media });
   };
 }
 
-export function useMediaRef() {
-  const dispatch = useMediaDispatch();
-
-  return (element: any): void => {
-    // NOTE: This should get invoked with `null` when using as a `ref` callback whenever
-    // the corresponding react media element instance (e.g. a `<video>`) is being removed.
-    /*
-    { type: 'mediastateownerchangerequest', detail: media }
-    */
-    dispatch({ type: 'mediastateownerchangerequest', detail: element });
-  };
-}
-
-export const refEquality = (a: any, b: any): boolean => a === b;
-
-export function useMediaSelector<S = any>(
-  selector: (state: any) => S,
-  equalityFn: (a: S, b: S) => boolean = refEquality
-): S {
-  const store = useContext(MediaContext);
-  const selectedState = useSyncExternalStoreWithSelector(
+export function useMediaSelector<Selection>(
+  selector: (state: MediaStoreState) => Selection,
+  equalityFn: (a: Selection, b: Selection) => boolean = shallowEqual as (a: Selection, b: Selection) => boolean
+): Selection {
+  const store = useContext(MediaContext) as MediaStore;
+  return useSyncExternalStoreWithSelector(
     store?.subscribe ?? identity,
     store?.getState ?? identity,
     store?.getState ?? identity,
     selector,
     equalityFn
-  ) as S;
-
-  return selectedState;
+  );
 }

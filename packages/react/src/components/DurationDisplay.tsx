@@ -1,19 +1,14 @@
-import { durationDisplayStateDefinition } from '@videojs/store';
 import { useMediaSelector } from '@videojs/store/react';
-import { formatDisplayTime, shallowEqual } from '@videojs/utils';
+import { formatDisplayTime } from '@videojs/utils';
 import type { PropsWithChildren } from 'react';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
-export function useDurationDisplayState(_props: any): {
-  duration: number;
-} {
-  /** @TODO Fix type issues with hooks (CJP) */
-  const mediaState = useMediaSelector(durationDisplayStateDefinition.stateTransform, shallowEqual);
+export function useDurationDisplayState(_props: any) {
+  const duration = useMediaSelector((state) => state.duration);
 
-  // Duration display is read-only, no request methods needed
   return {
-    duration: mediaState.duration ?? 0,
+    duration,
   };
 }
 

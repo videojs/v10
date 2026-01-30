@@ -1,7 +1,4 @@
 import { VolumeSlider as CoreVolumeSlider } from '@videojs/core';
-import { volumeSliderStateDefinition } from '@videojs/store';
-import { memoize } from '@videojs/utils';
-import type { Prettify } from '../types';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 
 import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../utils/component-factory';
@@ -10,23 +7,23 @@ import { getCoreState, getPropsFromAttrs, toConnectedHTMLComponent } from '../ut
 // ROOT COMPONENT
 // ============================================================================
 
-type VolumeSliderState = Prettify<ReturnType<CoreVolumeSlider['getState']>>;
-type VolumeSliderStateWithMethods = Prettify<
-  VolumeSliderState & ReturnType<typeof volumeSliderStateDefinition.createRequestMethods>
->;
+type VolumeSliderStateWithMethods = ReturnType<CoreVolumeSlider['getState']>;
 
-const volumeSliderCreateRequestMethods = memoize(volumeSliderStateDefinition.createRequestMethods);
-
+/**
+ * VolumeSlider Root state hook - equivalent to React's useVolumeSliderRootState
+ * Handles media store state subscription and core slider state
+ */
 export const getVolumeSliderRootState: StateHook<VolumeSliderRoot, VolumeSliderStateWithMethods> = (
   element,
   mediaStore
 ) => {
-  const mediaState = volumeSliderStateDefinition.stateTransform(mediaStore.getState());
-  const mediaMethods = volumeSliderCreateRequestMethods(mediaStore.dispatch);
+  const state = mediaStore.getState();
   const coreState = getCoreState(CoreVolumeSlider, {
     ...getPropsFromAttrs(element),
-    ...mediaState,
-    ...mediaMethods,
+    muted: state.muted,
+    volume: state.volume,
+    volumeLevel: state.volumeLevel,
+    setVolume: state.setVolume,
   });
   return {
     ...coreState,
@@ -66,7 +63,7 @@ export const getVolumeSliderRootProps: PropsHook<VolumeSliderRoot, VolumeSliderS
 export class VolumeSliderRoot extends HTMLElement {
   static readonly observedAttributes: readonly string[] = ['commandfor', 'orientation'];
 
-  _state: VolumeSliderState | undefined;
+  _state: VolumeSliderStateWithMethods | undefined;
 
   get orientation(): 'horizontal' | 'vertical' {
     return (this.getAttribute('orientation') as 'horizontal' | 'vertical') || 'horizontal';

@@ -1,27 +1,18 @@
-import { muteButtonStateDefinition } from '@videojs/store';
-import { useMediaSelector, useMediaStore } from '@videojs/store/react';
-import { shallowEqual } from '@videojs/utils';
+import { useMediaSelector } from '@videojs/store/react';
 import type { PropsWithChildren } from 'react';
-import { useMemo } from 'react';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
-export function useMuteButtonState(_props?: any): {
-  volumeLevel: string;
-  muted: boolean;
-  requestMute: () => void;
-  requestUnmute: () => void;
-} {
-  const mediaStore = useMediaStore();
-  const mediaState = useMediaSelector(muteButtonStateDefinition.stateTransform, shallowEqual);
-  const methods = useMemo(() => muteButtonStateDefinition.createRequestMethods(mediaStore.dispatch), [mediaStore]);
+export function useMuteButtonState(_props?: any) {
+  const muted = useMediaSelector((state) => state.muted);
+  const volumeLevel = useMediaSelector((state) => state.volumeLevel);
+  const setMuted = useMediaSelector((state) => state.setMuted);
 
   return {
-    volumeLevel: mediaState.volumeLevel,
-    muted: mediaState.muted,
-    requestMute: methods.requestMute,
-    requestUnmute: methods.requestUnmute,
-  } as const;
+    volumeLevel,
+    muted,
+    setMuted,
+  };
 }
 
 export type MuteButtonState = ReturnType<typeof useMuteButtonState>;
@@ -61,9 +52,9 @@ export function renderMuteButton(props: MuteButtonProps, state: MuteButtonState)
       onClick={() => {
         if (props.disabled) return;
         if (state.volumeLevel === 'off') {
-          state.requestUnmute();
+          state.setMuted(false);
         } else {
-          state.requestMute();
+          state.setMuted(true);
         }
       }}
     >

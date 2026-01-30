@@ -54,17 +54,17 @@ export class MediaContainerElement extends CustomElementConsumer {
 
   _registerContainerStateOwner = (): void => {
     if (!this._mediaStore) return;
-    this._mediaStore.dispatch({ type: 'containerstateownerchangerequest', detail: this });
+    this._mediaStore.attach({ container: this });
   };
 
   _unregisterContainerStateOwner = (): void => {
     if (!this._mediaStore) return;
-    this._mediaStore.dispatch({ type: 'containerstateownerchangerequest', detail: null });
+    this._mediaStore.attach({ container: null });
   };
 
   _handleMediaSlotChange = (): void => {
     const media = this._mediaSlot.assignedElements({ flatten: true })[0];
-    this._mediaStore.dispatch({ type: 'mediastateownerchangerequest', detail: media });
+    this._mediaStore.attach({ media });
   };
 
   _handleClick = (event: Event): void => {
@@ -73,9 +73,9 @@ export class MediaContainerElement extends CustomElementConsumer {
     if (!['video', 'audio'].includes((event.target as HTMLElement).localName || '')) return;
 
     if (this._paused) {
-      this._mediaStore.dispatch({ type: 'playrequest' });
+      this._mediaStore.getState().play();
     } else {
-      this._mediaStore.dispatch({ type: 'pauserequest' });
+      this._mediaStore.getState().pause();
     }
   };
 

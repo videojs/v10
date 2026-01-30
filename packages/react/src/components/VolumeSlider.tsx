@@ -1,8 +1,5 @@
 import { VolumeSlider as CoreVolumeSlider } from '@videojs/core';
-import { volumeSliderStateDefinition } from '@videojs/store';
-import { useMediaSelector, useMediaStore } from '@videojs/store/react';
-import { shallowEqual } from '@videojs/utils';
-import { useMemo } from 'react';
+import { useMediaSelector } from '@videojs/store/react';
 import type { Prettify } from '../types';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent, toContextComponent, useCore } from '../utils/component-factory';
@@ -29,13 +26,16 @@ interface VolumeSliderRenderProps extends React.ComponentProps<'div'> {
 
 export function useVolumeSliderRootState(props?: VolumeSliderProps): VolumeSliderState {
   const { orientation = 'horizontal' } = props ?? {};
-  const mediaStore = useMediaStore();
-  const mediaState = useMediaSelector(volumeSliderStateDefinition.stateTransform, shallowEqual);
-  const mediaMethods = useMemo(
-    () => volumeSliderStateDefinition.createRequestMethods(mediaStore.dispatch),
-    [mediaStore]
-  );
-  const coreState = useCore(CoreVolumeSlider, { ...mediaState, ...mediaMethods });
+  const volume = useMediaSelector((state) => state.volume);
+  const muted = useMediaSelector((state) => state.muted);
+  const volumeLevel = useMediaSelector((state) => state.volumeLevel);
+  const setVolume = useMediaSelector((state) => state.setVolume);
+  const coreState = useCore(CoreVolumeSlider, {
+    volume,
+    muted,
+    volumeLevel,
+    setVolume,
+  });
   return {
     ...coreState,
     orientation,

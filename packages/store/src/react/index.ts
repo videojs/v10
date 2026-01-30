@@ -2,7 +2,6 @@
 
 export { MediaContext } from './context';
 export {
-  useMediaDispatch,
   useMediaRef,
   useMediaSelector,
   useMediaStore,

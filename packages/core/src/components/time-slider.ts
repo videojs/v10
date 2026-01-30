@@ -5,8 +5,8 @@ import { Slider } from './slider';
 export interface TimeSliderState extends SliderState {
   currentTime: number;
   duration: number;
-  requestSeek: (time: number) => void;
-  requestPreview: (time: number) => void;
+  setCurrentTime: (time: number) => void;
+  setPreviewTime: (time: number) => void;
   _currentTimeText: string;
   _durationText: string;
 }
@@ -75,32 +75,32 @@ export class TimeSlider extends Slider {
   #handlePointerDown(event: PointerEvent) {
     super.handleEvent(event);
 
-    const { _pointerRatio, duration, requestSeek } = super.getState() as TimeSliderState;
+    const { _pointerRatio, duration, setCurrentTime } = super.getState() as TimeSliderState;
 
     this.#seekingTime = _pointerRatio * duration;
-    requestSeek(this.#seekingTime);
+    setCurrentTime(this.#seekingTime);
   }
 
   #handlePointerMove(event: PointerEvent) {
     super.handleEvent(event);
 
-    const { _dragging, _pointerRatio, duration, requestSeek, requestPreview } = super.getState() as TimeSliderState;
+    const { _dragging, _pointerRatio, duration, setCurrentTime, setPreviewTime } = super.getState() as TimeSliderState;
 
     const previewTime = _pointerRatio * duration;
-    requestPreview(previewTime);
+    setPreviewTime(previewTime);
 
     if (_dragging) {
       this.#seekingTime = previewTime;
-      requestSeek(this.#seekingTime);
+      setCurrentTime(this.#seekingTime);
     }
   }
 
   #handlePointerUp(event: PointerEvent) {
-    const { _dragging, _pointerRatio, duration, requestSeek } = super.getState() as TimeSliderState;
+    const { _dragging, _pointerRatio, duration, setCurrentTime } = super.getState() as TimeSliderState;
 
     if (_dragging) {
       this.#seekingTime = _pointerRatio * duration;
-      requestSeek(this.#seekingTime);
+      setCurrentTime(this.#seekingTime);
     }
 
     super.handleEvent(event);
@@ -109,9 +109,9 @@ export class TimeSlider extends Slider {
   #handleKeyDown(event: KeyboardEvent) {
     super.handleEvent(event);
 
-    const { _pointerRatio, duration, requestSeek } = super.getState() as TimeSliderState;
+    const { _pointerRatio, duration, setCurrentTime } = super.getState() as TimeSliderState;
 
     this.#seekingTime = _pointerRatio * duration;
-    requestSeek(this.#seekingTime);
+    setCurrentTime(this.#seekingTime);
   }
 }

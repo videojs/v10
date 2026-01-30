@@ -1,16 +1,22 @@
-import type { PreviewTimeDisplayState } from '@videojs/store';
-import { previewTimeDisplayStateDefinition } from '@videojs/store';
 import { formatDisplayTime } from '@videojs/utils';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
 
+type PreviewTimeDisplayState = {
+  previewTime: number;
+};
+
+/**
+ * PreviewTimeDisplay state hook - equivalent to React's usePreviewTimeDisplayState
+ * Handles media store state subscription and transformation
+ */
 export const getPreviewTimeDisplayState: StateHook<PreviewTimeDisplay, PreviewTimeDisplayState> = (
   _element,
   mediaStore
 ) => {
+  const state = mediaStore.getState();
   return {
-    ...previewTimeDisplayStateDefinition.stateTransform(mediaStore.getState()),
-    // Preview time display is read-only, so no request methods needed
+    previewTime: state.previewTime,
   };
 };
 

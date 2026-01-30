@@ -1,21 +1,15 @@
-import type { MediaStore } from './factory';
+import { fullscreenFeature, playbackFeature, previewFeature, timeFeature, volumeFeature } from './features';
+import { createStore } from './store';
+import type { MergeFeatureActions, MergeFeatureStates } from './types';
 
-import { createMediaStore as factory } from './factory';
-import { audible } from './mediators/audible';
-import { fullscreenable } from './mediators/fullscreenable';
-import { playable } from './mediators/playable';
-import { preview } from './mediators/preview';
-import { temporal } from './mediators/temporal';
+const mediaStoreCreators = [playbackFeature, previewFeature, timeFeature, volumeFeature, fullscreenFeature] as const;
 
-// Example of default media store with default state mediator definitions. (CJP)
-// NOTE: We can also change the API to take an array of stateMediators (or either/both) (CJP)
-const stateMediator = { ...playable, ...audible, ...temporal, ...fullscreenable, ...preview };
-
-type Params = Partial<Parameters<typeof factory>[0]>;
-
-export function createMediaStore(params: Params = {}): MediaStore {
-  return factory({
-    stateMediator: stateMediator as any,
-    ...params,
-  });
+export function createMediaStore() {
+  return createStore(mediaStoreCreators);
 }
+
+export type MediaStore = ReturnType<typeof createMediaStore>;
+
+/** Explicit merged state + actions so all feature slices (e.g. previewTime, setPreviewTime) are in the type. */
+export type MediaStoreState = MergeFeatureStates<typeof mediaStoreCreators> &
+  MergeFeatureActions<typeof mediaStoreCreators>;

@@ -102,15 +102,15 @@ function Button(props: ButtonProps) {
 }
 
 function PlayButton() {
-  const { paused, requestPause, requestPlay } = usePlayButtonState();
+  const { paused, pause, play } = usePlayButtonState();
 
   const onClick = useCallback(() => {
     if (paused) {
-      requestPlay();
+      play();
     } else {
-      requestPause();
+      pause();
     }
-  }, [paused, requestPlay, requestPause]);
+  }, [paused, play, pause]);
 
   const label = paused ? 'Play' : 'Pause';
 
@@ -134,16 +134,16 @@ function PlayButton() {
 }
 
 function MuteButton() {
-  const { muted, requestMute, requestUnmute } = useMuteButtonState();
+  const { muted, setMuted } = useMuteButtonState();
   const [open, setOpen] = useState(false);
 
   const onClick = useCallback(() => {
     if (muted) {
-      requestUnmute();
+      setMuted(false);
     } else {
-      requestMute();
+      setMuted(true);
     }
-  }, [muted, requestMute, requestUnmute]);
+  }, [muted, setMuted]);
 
   const handleOpenChange = useCallback((isOpen: boolean, eventDetails: PopoverPrimitive.Root.ChangeEventDetails) => {
     // Don't close when clicking the trigger button - only allow hover to control it
@@ -180,15 +180,15 @@ function MuteButton() {
 }
 
 function FullscreenButton() {
-  const { fullscreen, requestEnterFullscreen, requestExitFullscreen } = useFullscreenButtonState();
+  const { fullscreen, requestFullscreen, exitFullscreen } = useFullscreenButtonState();
 
   const onClick = useCallback(() => {
     if (fullscreen) {
-      requestExitFullscreen();
+      exitFullscreen();
     } else {
-      requestEnterFullscreen();
+      requestFullscreen();
     }
-  }, [fullscreen, requestEnterFullscreen, requestExitFullscreen]);
+  }, [fullscreen, requestFullscreen, exitFullscreen]);
 
   const label = fullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
 
@@ -253,7 +253,7 @@ function Slider(props: SliderProps) {
 
 function TimeSlider() {
   // TODO: Expose something like _fillWidth to facilitate debouncing etc.
-  const { currentTime, duration, requestSeek } = useTimeSliderRootState();
+  const { currentTime, duration, setCurrentTime } = useTimeSliderRootState();
 
   return (
     <Slider
@@ -263,17 +263,17 @@ function TimeSlider() {
       // Base UI will throw an error if max is less than min (which is 0)
       max={!duration ? 1 : duration}
       step={0.1}
-      onValueChange={requestSeek}
+      onValueChange={setCurrentTime}
     />
   );
 }
 
 function VolumeSlider() {
-  const { volume, muted, requestVolumeChange } = useVolumeSliderRootState();
+  const { volume, muted, setVolume } = useVolumeSliderRootState();
   // FIXME: If seems that volume can be undefined initially, despite the types.
   const value = muted ? 0 : (volume ?? 0);
 
-  return <Slider value={value} max={1} step={0.1} onValueChange={requestVolumeChange} orientation="vertical" />;
+  return <Slider value={value} max={1} step={0.1} onValueChange={setVolume} orientation="vertical" />;
 }
 
 interface TimeDisplayProps {
@@ -289,7 +289,7 @@ function TimeDisplay(props: TimeDisplayProps) {
   return <span className={clsx('tabular-nums', className)}>{value}</span>;
 }
 
-export default function CustomBaseUISkin({ children, className }: SkinProps): JSX.Element {
+export default function CustomBaseUISkin({ children, className }: SkinProps) {
   return (
     <MediaContainer
       className={clsx(

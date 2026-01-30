@@ -1,9 +1,11 @@
-import type { DurationDisplayState } from '@videojs/store';
-import { durationDisplayStateDefinition } from '@videojs/store';
 import { formatDisplayTime } from '@videojs/utils';
 import { namedNodeMapToObject } from '@videojs/utils/dom';
 import type { ConnectedComponentConstructor, PropsHook, StateHook } from '../utils/component-factory';
 import { toConnectedHTMLComponent } from '../utils/component-factory';
+
+type DurationDisplayState = {
+  duration: number;
+};
 
 export function getTemplateHTML(
   this: typeof DurationDisplay,
@@ -44,10 +46,14 @@ export class DurationDisplay extends HTMLElement {
   }
 }
 
+/**
+ * DurationDisplay state hook - equivalent to React's useDurationDisplayState
+ * Handles media store state subscription and transformation
+ */
 export const getDurationDisplayState: StateHook<DurationDisplay, DurationDisplayState> = (_element, mediaStore) => {
+  const state = mediaStore.getState();
   return {
-    ...durationDisplayStateDefinition.stateTransform(mediaStore.getState()),
-    // Duration display is read-only, so no request methods needed
+    duration: state.duration,
   };
 };
 

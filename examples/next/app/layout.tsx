@@ -23,7 +23,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    /* @ts-expect-error - Not sure what's going on here, Next being Next */
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
     </html>

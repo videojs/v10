@@ -1,19 +1,14 @@
-import { previewTimeDisplayStateDefinition } from '@videojs/store';
 import { useMediaSelector } from '@videojs/store/react';
-import { formatDisplayTime, shallowEqual } from '@videojs/utils';
+import { formatDisplayTime } from '@videojs/utils';
 import type { PropsWithChildren } from 'react';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
-export function usePreviewTimeDisplayState(_props: any): {
-  previewTime: number;
-} {
-  /** @TODO Fix type issues with hooks (CJP) */
-  const mediaState = useMediaSelector(previewTimeDisplayStateDefinition.stateTransform, shallowEqual);
+export function usePreviewTimeDisplayState(_props: any) {
+  const previewTime = useMediaSelector((state) => state.previewTime);
 
-  // Preview time display is read-only, no request methods needed
   return {
-    previewTime: mediaState.previewTime ?? 0,
+    previewTime,
   };
 }
 

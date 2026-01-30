@@ -1,28 +1,18 @@
-import { fullscreenButtonStateDefinition } from '@videojs/store';
-import { useMediaSelector, useMediaStore } from '@videojs/store/react';
-import { shallowEqual } from '@videojs/utils';
+import { useMediaSelector } from '@videojs/store/react';
 import type { PropsWithChildren } from 'react';
-import { useMemo } from 'react';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
-export function useFullscreenButtonState(_props?: any): {
-  fullscreen: boolean;
-  requestEnterFullscreen: () => void;
-  requestExitFullscreen: () => void;
-} {
-  const mediaStore = useMediaStore();
-  const mediaState = useMediaSelector(fullscreenButtonStateDefinition.stateTransform, shallowEqual);
-  const methods = useMemo(
-    () => fullscreenButtonStateDefinition.createRequestMethods(mediaStore.dispatch),
-    [mediaStore]
-  );
+export function useFullscreenButtonState(_props?: any) {
+  const fullscreen = useMediaSelector((state) => state.fullscreen);
+  const requestFullscreen = useMediaSelector((state) => state.requestFullscreen);
+  const exitFullscreen = useMediaSelector((state) => state.exitFullscreen);
 
   return {
-    fullscreen: mediaState.fullscreen,
-    requestEnterFullscreen: methods.requestEnterFullscreen,
-    requestExitFullscreen: methods.requestExitFullscreen,
-  } as const;
+    fullscreen,
+    requestFullscreen,
+    exitFullscreen,
+  };
 }
 
 export type FullscreenButtonState = ReturnType<typeof useFullscreenButtonState>;
@@ -60,9 +50,9 @@ export function renderFullscreenButton(props: FullscreenButtonProps, state: Full
       onClick={() => {
         if (props.disabled) return;
         if (state.fullscreen) {
-          state.requestExitFullscreen();
+          state.exitFullscreen();
         } else {
-          state.requestEnterFullscreen();
+          state.requestFullscreen();
         }
       }}
     >
