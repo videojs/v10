@@ -38,11 +38,11 @@ type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 
 ## Related: Missing Feature vs Unavailable Capability
 
-See [player-api](/rfc/player-api/index.md) for feature access patterns.
+See [feature-slice-design](feature-slice-design.md) for feature access patterns.
 
 | Concept                | Cause               | Detection                         |
 | ---------------------- | ------------------- | --------------------------------- |
-| Missing feature        | Composition error   | `hasFeature()` returns `false`    |
+| Missing feature        | Feature not included| `slice === undefined`             |
 | Unavailable capability | Platform limitation | `*Availability === 'unsupported'` |
 
 ---
@@ -104,24 +104,6 @@ const volumeFeature = createFeature<HTMLMediaElement>()({
 ### Guards
 
 Guards receive `{ target, signal }`, not state. Check capability on target directly.
-
-### UI Usage
-
-```tsx
-function VolumeSlider() {
-  const player = usePlayer();
-
-  if (!hasFeature(player, features.volume)) return null;
-
-  const { volume, volumeAvailability } = player;
-
-  if (volumeAvailability === 'unsupported') return null;
-  if (volumeAvailability === 'unavailable') return <Slider disabled />;
-  return <Slider value={volume} />;
-}
-```
-
----
 
 ## References
 
