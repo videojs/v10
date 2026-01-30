@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 import { createPlayerStore } from '../player-store';
 
-import { MediaContext } from './context';
+import { PlayerContext } from './context';
 
 export function VideoProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const store = useMemo(() => createPlayerStore(), []);
@@ -22,5 +22,5 @@ export function VideoProvider({ children }: { children: ReactNode }): React.JSX.
   //   };
   // }, []);
 
-  return <MediaContext.Provider value={store}>{children}</MediaContext.Provider>;
+  return <PlayerContext.Provider value={store}>{children}</PlayerContext.Provider>;
 }
