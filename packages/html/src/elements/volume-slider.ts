@@ -11,13 +11,13 @@ type VolumeSliderStateWithMethods = ReturnType<CoreVolumeSlider['getState']>;
 
 /**
  * VolumeSlider Root state hook - equivalent to React's useVolumeSliderRootState
- * Handles media store state subscription and core slider state
+ * Handles player store state subscription and core slider state
  */
 export const getVolumeSliderRootState: StateHook<VolumeSliderRoot, VolumeSliderStateWithMethods> = (
   element,
-  mediaStore
+  playerStore
 ) => {
-  const state = mediaStore.getState();
+  const state = playerStore.getState();
   const coreState = getCoreState(CoreVolumeSlider, {
     ...getPropsFromAttrs(element),
     muted: state.muted,

@@ -10,10 +10,10 @@ type MuteButtonState = {
 
 /**
  * MuteButton state hook - equivalent to React's useMuteButtonState
- * Handles media store state subscription and transformation
+ * Handles player store state subscription and transformation
  */
-export const getMuteButtonState: StateHook<MuteButton, MuteButtonState> = (_element, mediaStore) => {
-  const state = mediaStore.getState();
+export const getMuteButtonState: StateHook<MuteButton, MuteButtonState> = (_element, playerStore) => {
+  const state = playerStore.getState();
   return {
     muted: state.muted,
     volumeLevel: state.volumeLevel,

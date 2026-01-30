@@ -1,14 +1,14 @@
-import { useMediaSelector, useMediaStore } from '@videojs/store/react';
+import { useMediaSelector, usePlayerStore } from '@videojs/store/react';
 import type { DetailedHTMLProps, HTMLAttributes, PropsWithChildren, RefCallback } from 'react';
 import { forwardRef, useCallback } from 'react';
 import { useComposedRefs } from '../utils/use-composed-refs';
 
 /**
- * Hook to associate a React element as the fullscreen container for the media store.
+ * Hook to associate a React element as the fullscreen container for the player store.
  * This is equivalent to Media Chrome's useMediaFullscreenRef but for VJS-10.
  *
  * The ref callback will register the element as the container state owner
- * in the media store, enabling fullscreen functionality.
+ * in the player store, enabling fullscreen functionality.
  *
  * @example
  * import { useMediaContainerRef } from '@videojs/react';
@@ -20,14 +20,14 @@ import { useComposedRefs } from '../utils/use-composed-refs';
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function useMediaContainerRef(): RefCallback<HTMLElement | null> {
-  const mediaStore = useMediaStore();
+  const playerStore = usePlayerStore();
 
   return useCallback(
     (containerElement: HTMLElement | null) => {
-      if (!mediaStore) return;
-      mediaStore.attach({ container: containerElement });
+      if (!playerStore) return;
+      playerStore.attach({ container: containerElement });
     },
-    [mediaStore]
+    [playerStore]
   );
 }
 

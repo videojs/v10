@@ -11,10 +11,10 @@ type TimeSliderStateWithMethods = ReturnType<CoreTimeSlider['getState']>;
 
 /**
  * TimeSlider Root state hook - equivalent to React's useTimeSliderRootState
- * Handles media store state subscription and core slider state
+ * Handles player store state subscription and core slider state
  */
-export const getTimeSliderRootState: StateHook<TimeSliderRoot, TimeSliderStateWithMethods> = (element, mediaStore) => {
-  const state = mediaStore.getState();
+export const getTimeSliderRootState: StateHook<TimeSliderRoot, TimeSliderStateWithMethods> = (element, playerStore) => {
+  const state = playerStore.getState();
   const coreState = getCoreState(CoreTimeSlider, {
     ...getPropsFromAttrs(element),
     currentTime: state.currentTime,

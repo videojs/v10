@@ -10,10 +10,10 @@ type FullscreenButtonState = {
 
 /**
  * FullscreenButton state hook - equivalent to React's useFullscreenButtonState
- * Handles media store state subscription and transformation
+ * Handles player store state subscription and transformation
  */
-export const getFullscreenButtonState: StateHook<FullscreenButton, FullscreenButtonState> = (_element, mediaStore) => {
-  const state = mediaStore.getState();
+export const getFullscreenButtonState: StateHook<FullscreenButton, FullscreenButtonState> = (_element, playerStore) => {
+  const state = playerStore.getState();
   return {
     fullscreen: state.fullscreen,
     requestFullscreen: state.requestFullscreen,

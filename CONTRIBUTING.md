@@ -174,7 +174,7 @@ git checkout -b my-branch
 One helpful naming convention approximates [conventional commits](conventional-commit-style), e.g.:
 
 - `fix/some-issue`
-- `feat/my-media-store-feature`
+- `feat/my-player-store-feature`
 - `docs/site-docs-for-x`
 - `chore/repo-cleanup-task`
 

@@ -1,5 +1,5 @@
 import { ConsumerMixin } from '@open-wc/context-protocol';
-import type { MediaStore } from '@videojs/store';
+import type { PlayerStore } from '@videojs/store';
 import { shallowEqual, toCamelCase } from '@videojs/utils';
 import { setAttributes } from '@videojs/utils/dom';
 
@@ -7,7 +7,7 @@ import { setAttributes } from '@videojs/utils/dom';
  * Generic types for HTML component hooks pattern
  * Mirrors the React hooks architecture for consistency
  */
-export type StateHook<E extends HTMLElement, T = any> = (element: E, mediaStore: MediaStore) => T;
+export type StateHook<E extends HTMLElement, T = any> = (element: E, playerStore: PlayerStore) => T;
 
 export type PropsHook<E extends HTMLElement, T = any, P = any> = (element: E, state: T) => P;
 
@@ -28,7 +28,7 @@ let currentCoreIndex: number = 0;
  * @param stateHook - Hook that defines state keys and transformation logic
  * @param propsHook - Hook that handles element attributes and properties based on state
  * @param displayName - Display name for debugging
- * @returns Connected custom element class with media store integration
+ * @returns Connected custom element class with player store integration
  */
 export function toConnectedHTMLComponent<E extends HTMLElement, State = any>(
   BaseClass: CustomElementConstructor,
@@ -46,15 +46,15 @@ export function toConnectedHTMLComponent<E extends HTMLElement, State = any>(
     }
 
     _state: State | undefined;
-    #mediaStore: MediaStore | undefined;
+    #playerStore: PlayerStore | undefined;
     #coreInstances: { core: any; listening: boolean }[] = [];
 
     contexts = {
-      mediaStore: (mediaStore: any) => {
-        this.#mediaStore = mediaStore;
+      playerStore: (playerStore: any) => {
+        this.#playerStore = playerStore;
 
-        // Subscribe to media store state changes
-        mediaStore.subscribe(() => {
+        // Subscribe to player store state changes
+        playerStore.subscribe(() => {
           this.#render();
 
           for (const instance of this.#coreInstances) {
@@ -68,21 +68,21 @@ export function toConnectedHTMLComponent<E extends HTMLElement, State = any>(
     };
 
     #render = (): void => {
-      if (!this.#mediaStore) return;
+      if (!this.#playerStore) return;
 
       currentCoreIndex = 0;
       currentCoreInstances = this.#coreInstances;
 
       // Split into two phases: state transformation, then props update
-      const state = stateHook?.(this as unknown as E, this.#mediaStore);
+      const state = stateHook?.(this as unknown as E, this.#playerStore);
       const props = propsHook(this as unknown as E, state ?? ({} as State));
-      this._update(props, state, this.#mediaStore);
+      this._update(props, state, this.#playerStore);
     };
 
-    _update(props: any, state: State | undefined, _mediaStore: MediaStore): void {
+    _update(props: any, state: State | undefined, _playerStore: PlayerStore): void {
       this._state = state;
       // @ts-expect-error any
-      super._update?.(props, state, _mediaStore);
+      super._update?.(props, state, _playerStore);
       setAttributes(this, props);
     }
 

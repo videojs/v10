@@ -15,12 +15,12 @@ export class MediaContainerElement extends CustomElementConsumer {
   static shadowRootOptions = { mode: 'open' as ShadowRootMode };
   static getTemplateHTML: () => string = getTemplateHTML;
 
-  _mediaStore: any;
+  _playerStore: any;
   _mediaSlot: HTMLSlotElement;
   _paused: boolean = true;
   contexts = {
-    mediaStore: (mediaStore: any): void => {
-      this._mediaStore = mediaStore;
+    playerStore: (playerStore: any): void => {
+      this._playerStore = playerStore;
       this._handleMediaSlotChange();
       this._registerContainerStateOwner();
       this._subscribeToPlayState();
@@ -53,37 +53,37 @@ export class MediaContainerElement extends CustomElementConsumer {
   }
 
   _registerContainerStateOwner = (): void => {
-    if (!this._mediaStore) return;
-    this._mediaStore.attach({ container: this });
+    if (!this._playerStore) return;
+    this._playerStore.attach({ container: this });
   };
 
   _unregisterContainerStateOwner = (): void => {
-    if (!this._mediaStore) return;
-    this._mediaStore.attach({ container: null });
+    if (!this._playerStore) return;
+    this._playerStore.attach({ container: null });
   };
 
   _handleMediaSlotChange = (): void => {
     const media = this._mediaSlot.assignedElements({ flatten: true })[0];
-    this._mediaStore.attach({ media });
+    this._playerStore.attach({ media });
   };
 
   _handleClick = (event: Event): void => {
-    if (!this._mediaStore) return;
+    if (!this._playerStore) return;
 
     if (!['video', 'audio'].includes((event.target as HTMLElement).localName || '')) return;
 
     if (this._paused) {
-      this._mediaStore.getState().play();
+      this._playerStore.getState().play();
     } else {
-      this._mediaStore.getState().pause();
+      this._playerStore.getState().pause();
     }
   };
 
   _subscribeToPlayState = (): void => {
-    if (!this._mediaStore) return;
+    if (!this._playerStore) return;
 
     // Subscribe to paused state changes
-    this._mediaStore.subscribe((state: any) => {
+    this._playerStore.subscribe((state: any) => {
       this._paused = state.paused ?? true;
     });
   };

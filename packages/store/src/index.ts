@@ -1,2 +1,2 @@
 export * from './features';
-export * from './media-store';
+export * from './player-store';

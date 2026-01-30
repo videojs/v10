@@ -9,7 +9,7 @@ type Placement = CorePopoverState['placement'];
 
 export type PopoverState = Prettify<ReturnType<CorePopover['getState']>>;
 
-export const getPopoverState: StateHook<Popover, PopoverState> = (element, _mediaStore) => {
+export const getPopoverState: StateHook<Popover, PopoverState> = (element, _playerStore) => {
   const coreState = getCoreState(CorePopover, getPropsFromAttrs(element));
   return {
     ...coreState,

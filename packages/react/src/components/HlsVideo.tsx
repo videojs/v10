@@ -59,7 +59,7 @@ const DefaultVideoComponent: ElementType<
 
 /**
  * @description This is a "thin wrapper" around the media component whose primary responsibility is to wire up the element
- * to the <VideoProvider/>'s MediaStore for the media state.
+ * to the <VideoProvider/>'s PlayerStore for the media state.
  * @param props - Identical to both a <video/>'s props and the <Player/> props, with one addition that may be familiar to
  * MUI users: a `component` prop that allows you to use something other than the <video/> element under the hood.
  * @returns A media react component (e.g. <video/>), wired up as the media element.

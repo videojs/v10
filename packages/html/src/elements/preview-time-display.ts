@@ -8,13 +8,13 @@ type PreviewTimeDisplayState = {
 
 /**
  * PreviewTimeDisplay state hook - equivalent to React's usePreviewTimeDisplayState
- * Handles media store state subscription and transformation
+ * Handles player store state subscription and transformation
  */
 export const getPreviewTimeDisplayState: StateHook<PreviewTimeDisplay, PreviewTimeDisplayState> = (
   _element,
-  mediaStore
+  playerStore
 ) => {
-  const state = mediaStore.getState();
+  const state = playerStore.getState();
   return {
     previewTime: state.previewTime,
   };

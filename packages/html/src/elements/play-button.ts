@@ -10,10 +10,10 @@ type PlayButtonState = {
 
 /**
  * PlayButton state hook - equivalent to React's usePlayButtonState
- * Handles media store state subscription and transformation
+ * Handles player store state subscription and transformation
  */
-export const getPlayButtonState: StateHook<PlayButton, PlayButtonState> = (_element, mediaStore) => {
-  const state = mediaStore.getState();
+export const getPlayButtonState: StateHook<PlayButton, PlayButtonState> = (_element, playerStore) => {
+  const state = playerStore.getState();
   return {
     paused: state.paused,
     play: state.play,

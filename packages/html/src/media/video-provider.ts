@@ -1,7 +1,7 @@
 import type { Constructor, CustomElement } from '@open-wc/context-protocol';
 import { ProviderMixin } from '@open-wc/context-protocol';
-import type { MediaStore } from '@videojs/store';
-import { createMediaStore } from '@videojs/store';
+import type { PlayerStore } from '@videojs/store';
+import { createPlayerStore } from '@videojs/store';
 
 import { printConsoleBanner } from '@videojs/utils';
 import { version } from '../../package.json';
@@ -12,8 +12,8 @@ const ProviderHTMLElement: Constructor<CustomElement & HTMLElement> = ProviderMi
 
 export class VideoProviderElement extends ProviderHTMLElement {
   contexts = {
-    mediaStore: (): MediaStore => {
-      return createMediaStore();
+    playerStore: (): PlayerStore => {
+      return createPlayerStore();
     },
   };
 }

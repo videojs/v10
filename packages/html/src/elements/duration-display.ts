@@ -48,10 +48,10 @@ export class DurationDisplay extends HTMLElement {
 
 /**
  * DurationDisplay state hook - equivalent to React's useDurationDisplayState
- * Handles media store state subscription and transformation
+ * Handles player store state subscription and transformation
  */
-export const getDurationDisplayState: StateHook<DurationDisplay, DurationDisplayState> = (_element, mediaStore) => {
-  const state = mediaStore.getState();
+export const getDurationDisplayState: StateHook<DurationDisplay, DurationDisplayState> = (_element, playerStore) => {
+  const state = playerStore.getState();
   return {
     duration: state.duration,
   };

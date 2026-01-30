@@ -6,7 +6,7 @@ import { getPopoverProps, Popover } from './popover';
 
 export type TooltipState = Prettify<ReturnType<CoreTooltip['getState']>>;
 
-export const getTooltipState: StateHook<Tooltip, TooltipState> = (element, _mediaStore) => {
+export const getTooltipState: StateHook<Tooltip, TooltipState> = (element, _playerStore) => {
   const coreState = getCoreState(CoreTooltip, getPropsFromAttrs(element));
   return {
     ...coreState,

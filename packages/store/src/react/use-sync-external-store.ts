@@ -10,7 +10,7 @@ import { useDebugValue, useEffect, useMemo, useRef, useSyncExternalStore } from 
 
 // NOTE: This is a port of https://github.com/facebook/react/blob/main/packages/use-sync-external-store/src/useSyncExternalStoreWithSelector.js
 // and React's internal/shared version of `Object.is` with refactors for TypeScript and bundling. Doing this to avoid adding an additional dependency
-// beyond core React when using the `MediaStore` React hooks and related (CJP)
+// beyond core React when using the `PlayerStore` React hooks and related (CJP)
 
 /**
  * inlined Object.is polyfill to avoid requiring consumers ship their own
