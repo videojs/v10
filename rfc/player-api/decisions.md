@@ -2,283 +2,216 @@
 
 Rationale behind Player API design choices.
 
+## Problem
+
+Original direction used use-case presets as the primary abstraction:
+
+```html
+<website-video-player>
+  <website-frosted-video-skin>
+    <hls-video src="...">
+  </website-frosted-video-skin>
+</website-video-player>
+```
+
+### Issues
+
+1. **Verbose for common case** — most people just want "a video player"
+2. **Opaque naming** — "website" means nothing without context
+3. **Mental model mismatch** — Devs think "I need a video player... then adaptive... then ads", not "I need a news player"
+4. **Preset/skin/media relationship unclear** — If you use `website` preset but `<hls-video>`, does the skin show quality controls?
+5. **Use-cases are just feature combos** — News = default + ads. Why make it a separate concept?
+6. **Feature/skin pairing unclear** — Does `streaming-video-skin` strictly require streaming features?
+7. **Default was hidden** — "website" was default but not obvious
+8. **Configuration vs composition** — Presets are "pick one". Features are "add what you need". Composition scales better.
+9. **Presets hid what's inside** — "website" bundles player + features, not transparent
+10. **Not self-documenting** — User doesn't see what's included without checking docs
+11. **Presets might make sense at a higher layer** — e.g., Mux could bundle features as presets for their customers
+
+### Core Insight
+
+Presets aren't the primary abstraction. **Features are.**
+
+Player is simple. Features are additive. Skins adapt.
+
+## Features over Presets
+
+**Decision:** Features are the primary abstraction, not presets.
+
+Features match the mental model: start simple, add what you need.
+
+## Selectors (No Proxy Tracking)
+
+**Decision:** Use explicit selectors for state subscriptions.
+
+```tsx
+// Selector-based
+const paused = usePlayer(features.playback, s => s.paused);
+```
+
+**Rationale:**
+
+- **Explicit** — You control what you subscribe to
+- **Predictable** — No magic tracking, clear performance characteristics
+- **Standard** — Matches Zustand, Redux Toolkit patterns
+
+**Trade-off:** More ceremony than proxy tracking, but no surprises.
+
+## shallowEqual for Object Selectors
+
+**Decision:** Object selector results compared with `shallowEqual`.
+
+```tsx
+const state = usePlayer(s => ({ paused: s.paused, volume: s.volume }));
+// Re-renders only when paused OR volume changes
+```
+
+**Rationale:**
+
+- Selectors often return objects for convenience
+- Without shallow comparison, new object = new reference = re-render
+- `shallowEqual` exported from `@videojs/store` for custom use
+
+## Feature Keys
+
+**Decision:** Features can have custom symbol keys with type-carrying.
+
+```ts
+const PLAYBACK_KEY = Symbol.for('@videojs/playback');
+export const playbackKey: FeatureKey<typeof playbackFeature> = PLAYBACK_KEY;
+```
+
+**Rationale:**
+
+- **Smaller imports** — Import just the key, not the feature definition
+- **Cross-realm** — `Symbol.for()` works across module boundaries
+- **Type inference** — `FeatureKey<F>` carries feature type for `store.get()`
+
+## usePlayer Overloads
+
+**Decision:** Single hook with multiple overloads.
+
+```tsx
+usePlayer(feature)           // Full feature slice
+usePlayer(feature, selector) // Selected value from feature
+usePlayer(selector)          // Selected value from all state
+```
+
+**Rationale:**
+
+- **Single hook** — Less API surface to learn
+- **Progressive** — Start simple, add selector for performance
+- **Consistent** — Same pattern for feature access and selection
+
+**Why no array support?** Call `usePlayer` multiple times. Simpler, explicit.
+
+```tsx
+const playback = usePlayer(features.playback);
+const volume = usePlayer(features.volume);
+```
+
+## Feature Returns Undefined, Not Throws
+
+**Decision:** `usePlayer(feature)` returns `Slice | undefined`, doesn't throw.
+
+**Rationale:**
+
+- Primitives need graceful handling — they don't know user's feature config
+- Throwing would break apps when features are misconfigured
+- Caller decides how to handle: return null, show fallback, throw themselves
+
+## store.get / store.has
+
+**Decision:** Use `store.get()` and `store.has()` for feature access in feature context.
+
+```ts
+subscribe: ({ store }) => {
+  const playback = store.get(features.playback);
+  if (store.has('time')) { /* ... */ }
+}
+```
+
+**Rationale:**
+
+- **Map-like** — Familiar pattern, `.get()` returns `T | undefined`
+- **Unified** — Same API for feature reference, key, or name
+- **Cross-store** — Abstracts which store a feature lives on
+
+## No Store Merge
+
+**Decision:** Keep two stores internally (media + player).
+
+**Rationale:**
+
+- Different targets (media element vs container)
+- Different attachment timing
+- `store.get()` abstracts cross-store access
+- Feature authors use same API regardless of store
+
+**Trade-off:** Internal complexity, but hidden from users.
+
 ## Naming
 
-### `createPlayer` / `createMedia` (not `createPlayerStore` / `createMediaStore`)
-
-**Decision:** Use `createPlayer` and `createMedia` — don't expose "store" in the primary API.
-
-**Rationale:**
+### createPlayer (not createPlayerStore)
 
 - Users want a player, not a store
-- "Store" is an implementation detail — complexity should grow with use case
-- Progressive disclosure: simple concept first, internals when authoring features
-- Returns stay clean: `Provider`, `usePlayer` (not `StoreProvider`, `usePlayerStore`)
+- "Store" is implementation detail
+- Matches ecosystem: `createContext`, `createRoot`, `createBrowserRouter`
 
-**"But we're not creating a player?"** — This matches React ecosystem conventions where `create*` means "create the infrastructure for X":
+### features (not slices)
 
-| Factory                 | Returns                                                 |
-| ----------------------- | ------------------------------------------------------- |
-| `createContext()`       | `{ Provider, Consumer }` — not "a context"              |
-| `createRoot()`          | `{ render, unmount }` — not "a root"                    |
-| `createBrowserRouter()` | Config for `<RouterProvider>` — not "a router"          |
-| `createTRPCReact()`     | `{ Provider, hooks }` — not "a tRPC"                    |
-| `createMachine()`       | Machine definition — needs actor to run                 |
-| **`createPlayer()`**    | `{ Provider, usePlayer }` — infrastructure for a player |
+- "Slice" implies Redux mental model (store owns state, reducers modify)
+- Our pattern: target owns state, features observe and request
+- "Feature" matches user mental model: "I want the fullscreen feature"
 
-The pattern is established: `create*` returns building blocks, not a usable instance.
+### MediaElement (not VjsElement)
 
-### `features` (not `slices`)
+- Clearer purpose — base class for media UI primitives
+- No `vjs-` prefix in new naming convention
 
-**Decision:** Rename from "slices" to "features" everywhere (user-facing AND internal).
+## Element Naming (HTML)
 
-**Rationale:**
+**Decision:** No `vjs-` prefix. Pattern-based naming.
 
-Our pattern is fundamentally different from Redux Toolkit slices:
-
-| Aspect          | Redux "slice"          | Our pattern                               |
-| --------------- | ---------------------- | ----------------------------------------- |
-| State ownership | Store owns state       | Target owns state (HTMLMediaElement)      |
-| State mutation  | Reducers modify state  | Requests mutate target, snapshot reflects |
-| Mental model    | "A slice of the store" | "A feature I'm enabling"                  |
-
-Our concept is:
-
-- **Observer/Adapter** — binds store to external source of truth
-- **Feature module** — bundles related state + requests
-- **Binding** — connects reactive state to DOM element
-
-"Feature" maps to user mental models:
-
-- "I want the fullscreen feature"
-- "Add the keyboard feature"
-- "This preset includes playback, volume, and time features"
-
-Calling it "slice" creates false expectations from Redux users.
-
-### `createPlayerFeature` / `createMediaFeature` (not `createSlice`)
-
-**Decision:** Use explicit factory names: `createPlayerFeature` and `createMediaFeature`.
-
-**Alternatives considered:**
-
-- `createFeature<PlayerTarget>()` — generic with type parameter (rejected: curried call, less clear intent)
-- `createFeature` — simpler but ambiguous
+| Layer  | Pattern                  | Examples                          |
+| ------ | ------------------------ | --------------------------------- |
+| Player | `<{mediatype}-player>`   | `<video-player>`, `<audio-player>` |
+| Skin   | `<{mediatype}-skin>`     | `<video-skin>`                    |
+| Media  | `<{source}-{mediatype}>` | `<hls-video>`, `<dash-video>`     |
+| UI     | `<media-{component}>`    | `<media-play-button>`             |
 
 **Rationale:**
 
-- Clearer intent — you know what you're creating
-- Simpler call signature — no curried type parameter
-- Matches `createPlayer` naming pattern
-- Explicit is better than implicit
+- Self-documenting — element name tells you what it is
+- Consistent — every name ends in its object type
+- No vendor prefix — cleaner, less typing
 
-### Simple Provider Naming
+## Adaptive Skins
 
-**Decision:** Keep `Provider`, not `PlayerProvider`.
+**Decision:** Default skin adapts to available features.
 
-**Rationale:**
-
-- Scoped by `createPlayer()` call — context is already clear
-- Less ceremony for the common case
-- If someone needs multiple providers (rare), they can alias:
-  ```ts
-  const { Provider: VideoProvider } = createPlayer(...);
-  ```
-
-## API Shape
-
-### Flat `usePlayer` Return
-
-**Decision:** Return flattened object with state and requests at same level, no `.state`/`.request` namespaces.
-
-```tsx
-// Before (considered)
-const player = usePlayer();
-player.state.paused;
-player.request.play();
-
-// After (chosen)
-const player = usePlayer();
-player.paused;
-player.play();
+```html
+<video-skin>  <!-- shows quality menu only if streaming feature loaded -->
 ```
 
 **Rationale:**
 
-- Less nesting = less typing
-- Proxy-based tracking works at property access level
-- Naming convention prevents collisions (state = nouns, requests = verbs)
+- DX — import features, skin "just works"
+- Progressive — add features, UI adapts
+- Named skins for specific variants (minimal, cinematic)
 
-**Trade-off:** Requires runtime duplicate detection. If a feature defines state `foo` and another defines request `foo`, throw at creation time.
+## Feature Bundles Are Sugar
 
-### Proxy-Based Tracking (No Selectors)
-
-**Decision:** Use proxy-based automatic tracking instead of selector functions.
-
-```tsx
-// Before (selector approach)
-const paused = usePlayer((s) => s.paused);
-
-// After (proxy tracking)
-const player = usePlayer();
-player.paused; // accessing subscribes automatically
-```
-
-**Rationale:**
-
-- Simpler API — no selector functions to write
-- Automatic fine-grained subscriptions
-- Matches modern patterns (Valtio, MobX)
-- Works with flattened return (proxy tracks which properties accessed)
-
-**Implementation:** Based on existing `SnapshotController` pattern using `track()`.
-
-### PlayerController Uses `.value`
-
-**Decision:** Access player state/requests via `.value` property (like `SnapshotController`).
+**Decision:** Bundles like `features.video` are convenience, not required.
 
 ```ts
-class MyComponent extends VjsElement {
-  #player = new PlayerController(this);
-
-  render() {
-    const { paused, play } = this.#player.value;
-    // ...
-  }
-}
+// These are equivalent:
+features.video
+[features.playback, features.volume, features.time, features.presentation, features.userActivity, /* ... */]
 ```
 
 **Rationale:**
 
-- Consistent with `SnapshotController` API
-- `.value` returns tracking proxy
-- Property access during render auto-subscribes
-- No `watch()` method needed — proxy handles tracking
-
-### Keep Shorthand Config
-
-**Decision:** Support both shorthand and config object forms.
-
-```ts
-// Shorthand — common case
-createPlayer(presets.website);
-createPlayer([features.playback, features.fullscreen]);
-
-// Config object — extensibility
-createPlayer({
-  features: presets.website,
-  // future: devTools, middleware, etc.
-});
-```
-
-**Rationale:**
-
-- Shorthand is the 90% case — don't penalize it
-- Config object enables future extensibility without API changes
-- Progressive disclosure: simple → extensible
-
-**Feedback addressed:** "Doing things too many ways can be rough" — but these aren't competing APIs, they're progressive complexity levels.
-
-## Escape Hatches
-
-### Keep `useMedia`
-
-**Decision:** Keep `useMedia` as escape hatch for direct media access.
-
-**Rationale:**
-
-- Progressive disclosure — 95% of users never need it
-- Costs nothing if unused
-- Saves advanced users when they need raw media state
-- Debugging scenarios: compare player vs media fullscreen state
-
-```tsx
-function DebugPanel() {
-  const player = usePlayer();
-  const media = useMedia();
-
-  // Player may abstract/transform media state
-  // Sometimes you need the raw value
-  console.log({ playerFS: player.isFullscreen, mediaFS: media.isFullscreen });
-}
-```
-
-## Architecture
-
-### Two Stores (Not One)
-
-**Decision:** Maintain two internal stores (Media Store + Player Store). See [architecture.md](architecture.md) for details.
-
-**Trade-off:** Two stores exist internally, but feature authors access media via `target.media` proxy — same flat API as components.
-
-### Container ≠ Provider
-
-**Decision:** Container is purely UI attachment. Provider owns state.
-
-## Validation
-
-### Runtime Duplicate Key Detection
-
-**Decision:** Throw at `createPlayer` time if state/request keys collide.
-
-```ts
-// This should throw
-const bad = createPlayerFeature({
-  initialState: { play: false }, // "play" as state
-  request: { play: () => {} }, // "play" as request — collision!
-});
-```
-
-**Rationale:**
-
-- Flat namespace requires disambiguation
-- Fail fast at creation, not at runtime access
-- Clear error message: "Duplicate key 'play' found in state and requests"
-
-## Primitives API
-
-See [primitives.md](primitives.md) for types, examples, and package exports.
-
-### `hasFeature`, `getFeature`, `throwMissingFeature`
-
-**Decision:** Three utilities for feature access — type guard, optional access, and fail-fast.
-
-**Rationale:**
-
-- `hasFeature` — Standard TypeScript type guard pattern, narrows proxy in place
-- `getFeature` — Properties as `T | undefined`, works with optional chaining
-- `throwMissingFeature` — Surfaces misconfiguration immediately (silent `return null` hides bugs)
-
-### `StoreProxy<T>` and `UnknownPlayer`
-
-**Decision:** Generic `StoreProxy<T>` interface that all proxies implement.
-
-**Rationale:**
-
-- Preserves store type through the proxy
-- Index signature `[key: string]: unknown` allows any property access
-- Uses interfaces (not type aliases) for clearer hover hints
-
-### `target.media` as Flat Proxy
-
-**Decision:** `PlayerTarget.media` is an `UnknownMedia` proxy, not a store.
-
-**Rationale:**
-
-- Consistent API — feature authors and component authors use same flat access pattern
-- No `.state`/`.request` namespacing to learn
-- Simpler `hasFeature`/`getFeature` — only one signature (StoreProxy)
-
-## Open Questions
-
-### "In-between" Functionality
-
-Where does functionality that's not clearly media or UI go?
-
-Examples needed to clarify boundary.
-
-### Feature Author Experience
-
-How many concepts must authors learn? Current: Target types, state, requests, subscribe pattern.
-
-Is this the right level of complexity for the extension story?
+- Bundles reduce API surface — fewer imports for common cases
+- Granular still available — full control when needed
+- Upgrade path — add to bundle, users get it automatically

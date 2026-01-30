@@ -38,7 +38,7 @@ type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 
 ## Related: Missing Feature vs Unavailable Capability
 
-See [feature-slice-design](feature-slice-design.md) for feature access patterns.
+See [rfc/player-api](../../rfc/player-api/primitives.md) for feature access patterns.
 
 | Concept                | Cause               | Detection                         |
 | ---------------------- | ------------------- | --------------------------------- |
