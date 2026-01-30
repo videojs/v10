@@ -1,12 +1,12 @@
-import { useMediaSelector } from '@videojs/store/react';
+import { usePlayer } from '@videojs/store/react';
 import type { PropsWithChildren } from 'react';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
 export function usePlayButtonState(_props?: any) {
-  const paused = useMediaSelector((state) => state.paused);
-  const play = useMediaSelector((state) => state.play);
-  const pause = useMediaSelector((state) => state.pause);
+  const paused = usePlayer((state) => state.paused);
+  const play = usePlayer((state) => state.play);
+  const pause = usePlayer((state) => state.pause);
 
   return {
     paused,

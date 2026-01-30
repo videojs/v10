@@ -1,5 +1,5 @@
 import { TimeSlider as CoreTimeSlider } from '@videojs/core';
-import { useMediaSelector } from '@videojs/store/react';
+import { usePlayer } from '@videojs/store/react';
 import type { Prettify } from '../types';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent, toContextComponent, useCore } from '../utils/component-factory';
@@ -25,11 +25,11 @@ interface TimeSliderRenderProps extends React.ComponentProps<'div'> {
 
 export function useTimeSliderRootState(props?: TimeSliderProps): TimeSliderState {
   const { orientation = 'horizontal' } = props ?? {};
-  const currentTime = useMediaSelector((state) => state.currentTime);
-  const duration = useMediaSelector((state) => state.duration);
-  const previewTime = useMediaSelector((state) => state.previewTime);
-  const setCurrentTime = useMediaSelector((state) => state.setCurrentTime);
-  const setPreviewTime = useMediaSelector((state) => state.setPreviewTime);
+  const currentTime = usePlayer((state) => state.currentTime);
+  const duration = usePlayer((state) => state.duration);
+  const previewTime = usePlayer((state) => state.previewTime);
+  const setCurrentTime = usePlayer((state) => state.setCurrentTime);
+  const setPreviewTime = usePlayer((state) => state.setPreviewTime);
   const coreState = useCore(CoreTimeSlider, {
     currentTime,
     duration,

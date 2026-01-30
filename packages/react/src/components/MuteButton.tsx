@@ -1,12 +1,12 @@
-import { useMediaSelector } from '@videojs/store/react';
+import { usePlayer } from '@videojs/store/react';
 import type { PropsWithChildren } from 'react';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
 export function useMuteButtonState(_props?: any) {
-  const muted = useMediaSelector((state) => state.muted);
-  const volumeLevel = useMediaSelector((state) => state.volumeLevel);
-  const setMuted = useMediaSelector((state) => state.setMuted);
+  const muted = usePlayer((state) => state.muted);
+  const volumeLevel = usePlayer((state) => state.volumeLevel);
+  const setMuted = usePlayer((state) => state.setMuted);
 
   return {
     volumeLevel,

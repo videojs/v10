@@ -1,4 +1,4 @@
-import { useMediaSelector } from '@videojs/store/react';
+import { usePlayer } from '@videojs/store/react';
 import { formatDisplayTime } from '@videojs/utils';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
@@ -8,8 +8,8 @@ export interface CurrentTimeDisplayProps extends React.ComponentPropsWithoutRef<
 }
 
 export function useCurrentTimeDisplayState(_props?: CurrentTimeDisplayProps) {
-  const currentTime = useMediaSelector((state) => state.currentTime);
-  const duration = useMediaSelector((state) => state.duration);
+  const currentTime = usePlayer((state) => state.currentTime);
+  const duration = usePlayer((state) => state.duration);
 
   return {
     currentTime,

@@ -3,7 +3,7 @@
 export { MediaContext } from './context';
 export {
   useMediaRef,
-  useMediaSelector,
+  usePlayer,
   usePlayerStore,
 } from './hooks';
 export { VideoProvider } from './video-provider';

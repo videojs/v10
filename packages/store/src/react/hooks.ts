@@ -20,7 +20,7 @@ export function useMediaRef(): (media: HTMLMediaElement | null) => void {
   };
 }
 
-export function useMediaSelector<Selection>(
+export function usePlayer<Selection>(
   selector: (state: PlayerStoreState) => Selection,
   equalityFn: (a: Selection, b: Selection) => boolean = shallowEqual as (a: Selection, b: Selection) => boolean
 ): Selection {

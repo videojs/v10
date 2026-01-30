@@ -1,11 +1,11 @@
-import { useMediaSelector } from '@videojs/store/react';
+import { usePlayer } from '@videojs/store/react';
 import { formatDisplayTime } from '@videojs/utils';
 import type { PropsWithChildren } from 'react';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
 export function useDurationDisplayState(_props: any) {
-  const duration = useMediaSelector((state) => state.duration);
+  const duration = usePlayer((state) => state.duration);
 
   return {
     duration,

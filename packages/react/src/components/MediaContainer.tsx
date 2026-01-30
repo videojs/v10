@@ -1,4 +1,4 @@
-import { useMediaSelector, usePlayerStore } from '@videojs/store/react';
+import { usePlayer, usePlayerStore } from '@videojs/store/react';
 import type { DetailedHTMLProps, HTMLAttributes, PropsWithChildren, RefCallback } from 'react';
 import { forwardRef, useCallback } from 'react';
 import { useComposedRefs } from '../utils/use-composed-refs';
@@ -53,9 +53,9 @@ export const MediaContainer: React.ForwardRefExoticComponent<
     const containerRef = useMediaContainerRef();
     const composedRef = useComposedRefs(ref, containerRef);
 
-    const paused = useMediaSelector((state) => state.paused);
-    const play = useMediaSelector((state) => state.play);
-    const pause = useMediaSelector((state) => state.pause);
+    const paused = usePlayer((state) => state.paused);
+    const play = usePlayer((state) => state.play);
+    const pause = usePlayer((state) => state.pause);
 
     const handleClick = useCallback(
       (event: React.MouseEvent<HTMLDivElement>) => {

@@ -8,6 +8,6 @@ import { createContext } from 'react';
  *
  * @see {@link VideoProvider}
  * @see {@link useMediaDispatch}
- * @see {@link useMediaSelector}
+ * @see {@link usePlayer}
  */
 export const MediaContext: Context<any | null> = createContext<any | null>(null);

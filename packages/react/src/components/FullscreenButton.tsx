@@ -1,12 +1,12 @@
-import { useMediaSelector } from '@videojs/store/react';
+import { usePlayer } from '@videojs/store/react';
 import type { PropsWithChildren } from 'react';
 import type { ConnectedComponent } from '../utils/component-factory';
 import { toConnectedComponent } from '../utils/component-factory';
 
 export function useFullscreenButtonState(_props?: any) {
-  const fullscreen = useMediaSelector((state) => state.fullscreen);
-  const requestFullscreen = useMediaSelector((state) => state.requestFullscreen);
-  const exitFullscreen = useMediaSelector((state) => state.exitFullscreen);
+  const fullscreen = usePlayer((state) => state.fullscreen);
+  const requestFullscreen = usePlayer((state) => state.requestFullscreen);
+  const exitFullscreen = usePlayer((state) => state.exitFullscreen);
 
   return {
     fullscreen,
