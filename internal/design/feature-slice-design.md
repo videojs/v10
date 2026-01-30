@@ -154,9 +154,9 @@ A thin lens over the store — flat access, scoped subscription:
 3. **Layered API** — Primitive layer is generic, player layer is typed and convenient
 4. **Familiar pattern** — Similar to Jotai atoms, Vue InjectionKey
 
-## Alternatives Considered
+## Related
 
-See [`rfc/player-api/primitives.md`](../../rfc/player-api/primitives.md) for the proxy-level API.
+See [feature-availability-design](feature-availability-design.md) for capability detection patterns.
 
 ## Files
 
