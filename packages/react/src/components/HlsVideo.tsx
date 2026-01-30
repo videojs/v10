@@ -10,7 +10,7 @@ export interface MuxVideoProps {
 type MediaStateOwner = NonNullable<Parameters<ReturnType<typeof useMediaRef>>[0]>;
 
 /** @TODO Improve type inference and narrowing/widening for different use cases (CJP) */
-type ComponentType = ElementType<
+type VideoElementType = ElementType<
   Omit<DetailedHTMLProps<VideoHTMLAttributes<HTMLVideoElement>, HTMLVideoElement>, 'ref'> & {
     ref: Ref<MediaStateOwner>;
   }
@@ -39,9 +39,10 @@ function useMediaStateOwner(ref: Ref<any>, createMediaPlaybackController: Create
   };
 }
 
-const DefaultVideoComponent: ElementType<
-  Omit<DetailedHTMLProps<VideoHTMLAttributes<HTMLVideoElement>, HTMLVideoElement>, 'ref'> & { ref: Ref<any> }
-> = forwardRef<any, any>(({ children, ...props }, ref) => {
+const DefaultVideoComponent = forwardRef<
+  MediaStateOwner,
+  DetailedHTMLProps<VideoHTMLAttributes<HTMLVideoElement>, HTMLVideoElement>
+>(({ children, ...props }, ref) => {
   const { updateMediaElement } = useMediaStateOwner(ref, createMediaPlaybackController);
   return (
     // eslint-disable-next-line jsx-a11y/media-has-caption
@@ -55,7 +56,7 @@ const DefaultVideoComponent: ElementType<
       {children}
     </video>
   );
-});
+}) as VideoElementType;
 
 /**
  * @description This is a "thin wrapper" around the media component whose primary responsibility is to wire up the element
@@ -69,7 +70,7 @@ function ConnectedVideo({
   children,
   ...props
 }: PropsWithChildren<{
-  component: ComponentType;
+  component: VideoElementType;
   className?: string | undefined;
   style?: CSSProperties | undefined;
 }>) {
@@ -85,12 +86,11 @@ function ConnectedVideo({
 }
 
 export type VideoProps = PropsWithChildren<{
-  component?: ComponentType;
+  component?: VideoElementType;
   className?: string | undefined;
   style?: CSSProperties | undefined;
 }>;
 
-// HlsVideo component with default component
 export function HlsVideo({ component = DefaultVideoComponent, children, ...props }: VideoProps): React.JSX.Element {
   return (
     <ConnectedVideo {...props} component={component}>
