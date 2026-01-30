@@ -7,7 +7,7 @@ import {
   getUntransformedBoundingRect,
   safePolygon,
 } from '@videojs/utils/dom';
-import { map } from 'nanostores';
+import { createStore } from 'zustand';
 
 type Placement = 'top' | 'top-start' | 'top-end';
 
@@ -38,7 +38,7 @@ export interface PopoverState {
 export class Popover {
   #hoverTimeout: ReturnType<typeof setTimeout> | null = null;
   #resizeObserver: ResizeObserver | null = null;
-  #state = map<PopoverState>({
+  #store = createStore<PopoverState>(() => ({
     openOnHover: false,
     delay: 0,
     closeDelay: 0,
@@ -53,7 +53,7 @@ export class Popover {
     _setTriggerElement: this._setTriggerElement.bind(this),
     _setPopoverElement: this._setPopoverElement.bind(this),
     _setCollisionBoundaryElement: this._setCollisionBoundaryElement.bind(this),
-  });
+  }));
 
   _setPopoverElement(element: HTMLElement | null): void {
     if (!element) {
@@ -99,16 +99,16 @@ export class Popover {
   }
 
   subscribe(callback: (state: PopoverState) => void): () => void {
-    return this.#state.subscribe(callback);
+    return this.#store.subscribe(callback);
   }
 
   setState(state: Partial<PopoverState>): void {
-    if (shallowEqual(state, this.#state.get())) return;
-    this.#state.set({ ...this.#state.get(), ...state });
+    if (shallowEqual(state, this.#store.getState())) return;
+    this.#store.setState(state);
   }
 
   getState(): PopoverState {
-    const baseState = this.#state.get();
+    const baseState = this.#store.getState();
     const {
       placement,
       sideOffset,

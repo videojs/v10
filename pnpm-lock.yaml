@@ -164,9 +164,9 @@ importers:
       hls.js:
         specifier: ^1.6.7
         version: 1.6.15
-      nanostores:
-        specifier: ^1.0.1
-        version: 1.1.0
+      zustand:
+        specifier: ^5.0.2
+        version: 5.0.10(@types/react@19.2.7)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))
     devDependencies:
       tsdown:
         specifier: ^0.15.9
@@ -269,9 +269,6 @@ importers:
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils
-      nanostores:
-        specifier: ^1.0.1
-        version: 1.1.0
       zustand:
         specifier: ^5.0.2
         version: 5.0.10(@types/react@19.2.7)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))

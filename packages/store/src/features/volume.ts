@@ -27,6 +27,7 @@ export const volumeFeature = createFeature<{ media: HTMLMediaElement }>()(() => 
   actions: ({ media }) => ({
     setMuted(value: boolean) {
       media.muted = value;
+
       if (!value && !media.volume) {
         media.volume = 0.25;
       }
@@ -34,7 +35,9 @@ export const volumeFeature = createFeature<{ media: HTMLMediaElement }>()(() => 
     setVolume(value: number) {
       const numericValue = +value;
       if (!Number.isFinite(numericValue)) return;
+
       media.volume = numericValue;
+
       if (numericValue > 0) {
         media.muted = false;
       }

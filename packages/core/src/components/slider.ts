@@ -1,5 +1,5 @@
 import { getPointProgressOnLine, shallowEqual } from '@videojs/utils';
-import { map } from 'nanostores';
+import { createStore } from 'zustand';
 
 export interface SliderState {
   _setRootElement: (element: HTMLElement | null) => void;
@@ -17,10 +17,10 @@ export interface SliderState {
 
 export class Slider {
   #abortController: AbortController | null = null;
-  #state = map<SliderState>({
+  #store = createStore<SliderState>((set: (partial: Partial<SliderState>) => void) => ({
     _setRootElement: this._setRootElement.bind(this),
     _rootElement: null,
-    _setTrackElement: (element: HTMLElement | null) => this.setState({ _trackElement: element }),
+    _setTrackElement: (element: HTMLElement | null) => set({ _trackElement: element }),
     _trackElement: null,
     _pointerRatio: 0,
     _hovering: false,
@@ -29,7 +29,7 @@ export class Slider {
     _fillWidth: 0,
     _pointerWidth: 0,
     _stepSize: 0.01,
-  });
+  }));
 
   _setRootElement(element: HTMLElement | null): void {
     this.setState({ _rootElement: element });
@@ -53,16 +53,16 @@ export class Slider {
   }
 
   subscribe(callback: (state: SliderState) => void): () => void {
-    return this.#state.subscribe(callback);
+    return this.#store.subscribe(callback);
   }
 
   setState(state: Partial<SliderState>): void {
-    if (shallowEqual(state, this.#state.get())) return;
-    this.#state.set({ ...this.#state.get(), ...state });
+    if (shallowEqual(state, this.#store.getState())) return;
+    this.#store.setState(state);
   }
 
   getState(): SliderState {
-    const state = this.#state.get();
+    const state = this.#store.getState();
 
     let _pointerWidth = 0;
     if (state._hovering) {
@@ -100,7 +100,7 @@ export class Slider {
   }
 
   getPointerRatio(evt: PointerEvent): number {
-    const { _trackElement } = this.#state.get();
+    const { _trackElement } = this.#store.getState();
     if (!_trackElement) return 0;
 
     const rect = _trackElement.getBoundingClientRect();
@@ -113,7 +113,7 @@ export class Slider {
   }
 
   #handlePointerDown(event: PointerEvent) {
-    this.#state.get()._rootElement?.setPointerCapture(event.pointerId);
+    this.#store.getState()._rootElement?.setPointerCapture(event.pointerId);
     this.setState({ _pointerRatio: this.getPointerRatio(event), _dragging: true });
   }
 
@@ -123,7 +123,7 @@ export class Slider {
 
   #handlePointerUp(event: PointerEvent) {
     this.setState({ _pointerRatio: this.getPointerRatio(event), _dragging: false });
-    this.#state.get()._rootElement?.releasePointerCapture(event.pointerId);
+    this.#store.getState()._rootElement?.releasePointerCapture(event.pointerId);
   }
 
   #handlePointerEnter(_event: PointerEvent) {
@@ -136,7 +136,7 @@ export class Slider {
 
   #handleKeyDown(event: KeyboardEvent) {
     const { key } = event;
-    const { _pointerRatio, _stepSize } = this.#state.get();
+    const { _pointerRatio, _stepSize } = this.#store.getState();
 
     let newRatio = _pointerRatio;
 
