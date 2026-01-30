@@ -27,6 +27,7 @@ export function createStore<const Creators extends readonly FeatureCreator<any, 
 
   const targets: Partial<T> = {};
   const abortControllers = new Map<keyof T, AbortController>();
+  const unsubscribes = new Map<keyof T, () => void>();
 
   const hasAllTargets = (): boolean => {
     return targetKeys.every((k) => targets[k] != null);
@@ -51,12 +52,17 @@ export function createStore<const Creators extends readonly FeatureCreator<any, 
     const subscribeFn = config.subscribe?.[key];
     if (!subscribeFn) return;
 
+    unsubscribes.get(key)?.();
+    unsubscribes.delete(key);
     abortControllers.get(key)?.abort();
 
     const controller = new AbortController();
     abortControllers.set(key, controller);
 
-    subscribeFn(t, update, controller.signal);
+    const teardown = subscribeFn(t, update, controller.signal);
+    if (typeof teardown === 'function') {
+      unsubscribes.set(key, teardown);
+    }
   };
 
   const buildInitialActions = (): A => {
@@ -83,6 +89,8 @@ export function createStore<const Creators extends readonly FeatureCreator<any, 
     for (const key of Object.keys(newTargets) as (keyof T)[]) {
       const target = newTargets[key];
 
+      unsubscribes.get(key)?.();
+      unsubscribes.delete(key);
       abortControllers.get(key)?.abort();
       abortControllers.delete(key);
 
@@ -122,8 +130,12 @@ const mergeConfigs = <T extends Targets, S extends object, A extends object>(
       const prev = acc[key] as SubscribeFn<T>;
       acc[key] = prev
         ? (targets: T, update: () => void, signal: AbortSignal) => {
-            prev(targets, update, signal);
-            fn?.(targets, update, signal);
+            const prevTeardown = prev(targets, update, signal);
+            const teardown = fn?.(targets, update, signal);
+            return () => {
+              if (typeof prevTeardown === 'function') prevTeardown();
+              if (typeof teardown === 'function') teardown();
+            };
           }
         : fn;
     }

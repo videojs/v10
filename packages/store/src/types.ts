@@ -1,13 +1,12 @@
 import type { StoreApi } from 'zustand';
 
-export interface StateOwners {
-  media?: HTMLMediaElement;
-  container?: HTMLElement;
-}
-
 export type Targets = object;
 
-export type SubscribeFn<T extends Targets> = (targets: T, update: () => void, signal: AbortSignal) => void;
+export type SubscribeFn<T extends Targets> = (
+  targets: T,
+  update: () => void,
+  signal: AbortSignal
+) => void | (() => void);
 
 export type ActionsFn<T extends Targets, S extends object, A extends object> = (
   targets: T,
