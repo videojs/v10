@@ -1,5 +1,5 @@
+import { createStore } from '@videojs/store';
 import { getPointProgressOnLine, shallowEqual } from '@videojs/utils';
-import { createStore } from 'zustand';
 
 export interface SliderState {
   _setRootElement: (element: HTMLElement | null) => void;
@@ -17,18 +17,22 @@ export interface SliderState {
 
 export class Slider {
   #abortController: AbortController | null = null;
-  #store = createStore<SliderState>((set: (partial: Partial<SliderState>) => void) => ({
-    _setRootElement: this._setRootElement.bind(this),
-    _rootElement: null,
-    _setTrackElement: (element: HTMLElement | null) => set({ _trackElement: element }),
-    _trackElement: null,
-    _pointerRatio: 0,
-    _hovering: false,
-    _dragging: false,
-    _keying: false,
-    _fillWidth: 0,
-    _pointerWidth: 0,
-    _stepSize: 0.01,
+  #store = createStore(() => ({
+    initialState: {
+      _rootElement: null as HTMLElement | null,
+      _trackElement: null as HTMLElement | null,
+      _pointerRatio: 0,
+      _hovering: false,
+      _dragging: false,
+      _keying: false,
+      _fillWidth: 0,
+      _pointerWidth: 0,
+      _stepSize: 0.01,
+    },
+    actions: (_, set) => ({
+      _setRootElement: this._setRootElement.bind(this),
+      _setTrackElement: (element: HTMLElement | null) => set({ _trackElement: element }),
+    }),
   }));
 
   _setRootElement(element: HTMLElement | null): void {

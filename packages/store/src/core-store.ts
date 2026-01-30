@@ -1,8 +1,4 @@
-/*!
- * @description Zustand vanilla store.
- * @license MIT
- * @see https://github.com/pmndrs/zustand
- */
+/*! Adapted from Zustand (https://github.com/pmndrs/zustand) - MIT license */
 
 type SetStateInternal<T> = {
   _(partial: T | Partial<T> | { _(state: T): T | Partial<T> }['_'], replace?: false): void;

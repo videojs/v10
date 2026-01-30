@@ -39,8 +39,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@videojs/utils": "workspace:*",
-    "zustand": "^5.0.2"
+    "@videojs/utils": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=19.2.3"

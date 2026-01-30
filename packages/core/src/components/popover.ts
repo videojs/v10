@@ -1,3 +1,4 @@
+import { createStore } from '@videojs/store';
 import { shallowEqual } from '@videojs/utils';
 import {
   addTranslateToBoundingRect,
@@ -7,7 +8,6 @@ import {
   getUntransformedBoundingRect,
   safePolygon,
 } from '@videojs/utils/dom';
-import { createStore } from 'zustand';
 
 type Placement = 'top' | 'top-start' | 'top-end';
 
@@ -19,7 +19,7 @@ export interface PopoverState {
   sideOffset: number;
   collisionPadding: number;
   disableHoverablePopover: boolean;
-  trackCursorAxis?: 'x';
+  trackCursorAxis?: 'x' | undefined;
   _open: boolean;
   _transitionStatus: 'initial' | 'open' | 'close' | 'unmounted';
   _collisionOffset: { x: number };
@@ -27,32 +27,40 @@ export interface PopoverState {
   _setTriggerElement: (element: HTMLElement | null) => void;
   _triggerElement?: HTMLElement | null;
   _setPopoverElement: (element: HTMLElement | null) => void;
-  _popoverElement?: HTMLElement | null;
+  _popoverElement: HTMLElement | null;
   _setCollisionBoundaryElement: (element: HTMLElement | null) => void;
   _collisionBoundaryElement?: HTMLElement | null;
   _popoverStyle?: Partial<CSSStyleDeclaration>;
-  _minLeft?: number;
-  _maxLeft?: number;
+  _minLeft: number;
+  _maxLeft: number;
 }
 
 export class Popover {
   #hoverTimeout: ReturnType<typeof setTimeout> | null = null;
   #resizeObserver: ResizeObserver | null = null;
-  #store = createStore<PopoverState>(() => ({
-    openOnHover: false,
-    delay: 0,
-    closeDelay: 0,
-    placement: 'top',
-    sideOffset: 5,
-    collisionPadding: 0,
-    disableHoverablePopover: false,
-    _open: false,
-    _transitionStatus: 'initial',
-    _collisionOffset: { x: 0 },
-    _pointerPosition: { x: 0 },
-    _setTriggerElement: this._setTriggerElement.bind(this),
-    _setPopoverElement: this._setPopoverElement.bind(this),
-    _setCollisionBoundaryElement: this._setCollisionBoundaryElement.bind(this),
+  #store = createStore(() => ({
+    initialState: {
+      openOnHover: false,
+      delay: 0,
+      closeDelay: 0,
+      placement: 'top' as Placement,
+      sideOffset: 5,
+      collisionPadding: 0,
+      disableHoverablePopover: false,
+      trackCursorAxis: undefined as PopoverState['trackCursorAxis'],
+      _open: false,
+      _transitionStatus: 'initial' as PopoverState['_transitionStatus'],
+      _collisionOffset: { x: 0 },
+      _pointerPosition: { x: 0 },
+      _popoverElement: null as PopoverState['_popoverElement'],
+      _minLeft: 0 as PopoverState['_minLeft'],
+      _maxLeft: 0 as PopoverState['_maxLeft'],
+    },
+    actions: () => ({
+      _setTriggerElement: this._setTriggerElement.bind(this),
+      _setPopoverElement: this._setPopoverElement.bind(this),
+      _setCollisionBoundaryElement: this._setCollisionBoundaryElement.bind(this),
+    }),
   }));
 
   _setPopoverElement(element: HTMLElement | null): void {

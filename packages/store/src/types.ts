@@ -1,4 +1,4 @@
-import type { StoreApi } from 'zustand';
+import type { StoreApi } from './core-store';
 
 export type Targets = object;
 

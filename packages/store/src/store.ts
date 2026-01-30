@@ -1,3 +1,4 @@
+import { createStore as createCoreStore } from './core-store';
 import type {
   FeatureConfig,
   FeatureCreatorFn,
@@ -8,7 +9,6 @@ import type {
   SubscribeFn,
   Targets,
 } from './types';
-import { createStore as createZustandStore } from './zustand-store';
 
 export function createStore<const Creators extends readonly FeatureCreatorFn<any, any, any>[]>(
   ...featureCreators: Creators
@@ -77,7 +77,7 @@ export function createStore<const Creators extends readonly FeatureCreatorFn<any
     return noops;
   };
 
-  const store = createZustandStore<S & A>()(() => ({
+  const store = createCoreStore<S & A>()(() => ({
     ...config.initialState,
     ...buildInitialActions(),
   }));
@@ -119,6 +119,7 @@ const mergeConfigs = <T extends Targets, S extends object, A extends object>(
   ...configs: FeatureConfig<T, S, A>[]
 ): FeatureConfig<T, S, A> => ({
   initialState: Object.assign({}, ...configs.map((c) => c.initialState)) as S,
+  actions: (targets, setState) => Object.assign({}, ...configs.map((c) => c.actions(targets, setState))),
   getSnapshot: (targets: T) => Object.assign({}, ...configs.map((c) => c.getSnapshot?.(targets))) as S,
   subscribe: configs.reduce<{ [K in keyof T]?: SubscribeFn<T> }>((acc, c) => {
     for (const key in c.subscribe) {
@@ -138,5 +139,4 @@ const mergeConfigs = <T extends Targets, S extends object, A extends object>(
     }
     return acc;
   }, {}),
-  actions: (targets, setState) => Object.assign({}, ...configs.map((c) => c.actions(targets, setState))),
 });

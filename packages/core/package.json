@@ -37,9 +37,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*",
-    "hls.js": "^1.6.7",
-    "zustand": "^5.0.2"
+    "hls.js": "^1.6.7"
   },
   "devDependencies": {
     "tsdown": "^0.15.9",
