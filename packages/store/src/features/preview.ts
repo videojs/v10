@@ -11,7 +11,7 @@ export const preview = (() => ({
       set({ previewTime: value });
     },
   }),
-})) satisfies FeatureCreator<Record<string, never>>;
+})) satisfies FeatureCreator<{}>;
 
 export type PreviewState = FeatureState<typeof preview>;
 export type PreviewActions = FeatureActions<typeof preview>;
