@@ -1,25 +1,18 @@
 import { abortable } from '@videojs/utils/events';
 import { isNull } from '@videojs/utils/predicate';
 import { StoreError } from './errors';
-import type {
-  AnyFeature,
-  FeatureUpdate,
-  UnionFeatureRequests,
-  UnionFeatureState,
-  UnionFeatureTarget,
-  UnionFeatureTasks,
-} from './feature';
+import type { AnyFeature, FeatureUpdate, UnionFeatureRequests, UnionFeatureState, UnionFeatureTarget } from './feature';
+
 import { Queue } from './queue';
 import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
 import { CANCEL_ALL, createRequestMeta, resolveRequestCancel, resolveRequestKey } from './request';
 import type { StateChange, WritableState } from './state';
 import { createState } from './state';
-import type { PendingTask, Task, TaskContext } from './task';
 
 export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Target>[]> {
   readonly #config: StoreConfig<Target, Features>;
   readonly #features: Features;
-  readonly #queue: Queue<UnionFeatureTasks<Features>>;
+  readonly #queue: Queue;
   readonly #request: UnionFeatureRequests<Features>;
   readonly #requestConfigs: Map<string, ResolvedRequestConfig<Target>>;
   readonly #setupAbort = new AbortController();
@@ -33,7 +26,7 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
     this.#config = config;
     this.#features = config.features;
 
-    this.#queue = config.queue ?? new Queue<UnionFeatureTasks<Features>>();
+    this.#queue = new Queue();
     this.#state = createState(this.#createInitialState() as UnionFeatureState<Features> & object);
 
     this.#requestConfigs = this.#buildRequestConfigs();
@@ -64,10 +57,6 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
 
   get request(): UnionFeatureRequests<Features> {
     return this.#request;
-  }
-
-  get queue(): Queue<UnionFeatureTasks<Features>> {
-    return this.#queue;
   }
 
   get features(): Features {
@@ -229,7 +218,7 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
   }
 
   async #execute(
-    name: string,
+    _name: string,
     config: ResolvedRequestConfig<Target>,
     input: unknown,
     meta: RequestMeta | null
@@ -245,7 +234,7 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
       }
     }
 
-    const handler = async ({ input, signal }: TaskContext) => {
+    const handler = async ({ signal }: { signal: AbortSignal }) => {
       const target = this.#target;
 
       if (!target) {
@@ -265,22 +254,12 @@ export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Ta
 
     try {
       return await this.#queue.enqueue({
-        name,
         key,
         mode: config.mode,
-        input,
-        meta,
         handler,
       });
     } catch (error) {
-      const tasks = this.#queue.tasks as Record<string | symbol, Task | undefined>;
-      const task = tasks[name];
-
-      this.#handleError({
-        request: task?.status === 'pending' ? task : undefined,
-        error,
-      });
-
+      this.#handleError({ error });
       throw error;
     }
   }
@@ -322,7 +301,6 @@ export type AnyStoreConfig = StoreConfig<any, AnyFeature[]>;
 
 export interface StoreConfig<Target, Features extends AnyFeature<Target>[]> {
   features: Features;
-  queue?: Queue<UnionFeatureTasks<Features>>;
   onSetup?: (ctx: StoreSetupContext<Target, Features>) => void;
   onAttach?: (ctx: StoreAttachContext<Target, Features>) => void;
   onError?: (ctx: StoreErrorContext<Target, Features>) => void;
@@ -340,7 +318,6 @@ export interface StoreAttachContext<Target, Features extends AnyFeature<Target>[
 }
 
 export interface StoreErrorContext<Target, Features extends AnyFeature<Target>[]> {
-  request?: PendingTask | undefined;
   store: Store<Target, Features>;
   error: unknown;
 }
@@ -364,5 +341,3 @@ export type InferStoreFeatures<S extends AnyStore> = S extends Store<any, infer 
 export type InferStoreState<S extends AnyStore> = UnionFeatureState<InferStoreFeatures<S>>;
 
 export type InferStoreRequests<S extends AnyStore> = UnionFeatureRequests<InferStoreFeatures<S>>;
-
-export type InferStoreTasks<S extends AnyStore> = UnionFeatureTasks<InferStoreFeatures<S>>;

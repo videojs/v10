@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createFeature } from '../feature';
-import { createQueue } from '../queue';
 import { flush } from '../state';
 import { createStore } from '../store';
 
@@ -72,25 +71,6 @@ describe('store', () => {
         muted: false,
         paused: true,
       });
-    });
-
-    it('creates store with default queue', () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
-
-      expect(store.queue).toBeDefined();
-    });
-
-    it('accepts custom queue', () => {
-      const queue = createQueue<any>();
-
-      const store = createStore({
-        features: [audioFeature],
-        queue,
-      });
-
-      expect(store.queue).toBe(queue);
     });
 
     it('calls onSetup', () => {
@@ -316,7 +296,6 @@ describe('store', () => {
 
       expect(store.destroyed).toBe(true);
       expect(store.target).toBeNull();
-      expect(store.queue.destroyed).toBe(true);
     });
 
     it('rejects requests after destroy', async () => {
