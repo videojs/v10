@@ -13,9 +13,9 @@ describe('errors', () => {
     });
 
     it('creates error with code and message', () => {
-      const error = new StoreError('TIMEOUT', { message: 'Timeout: canPlay' });
-      expect(error.code).toBe('TIMEOUT');
-      expect(error.message).toBe('Timeout: canPlay');
+      const error = new StoreError('DESTROYED', { message: 'Store was destroyed' });
+      expect(error.code).toBe('DESTROYED');
+      expect(error.message).toBe('Store was destroyed');
     });
 
     it('supports cause for error chaining', () => {
@@ -27,9 +27,9 @@ describe('errors', () => {
 
     it('supports both message and cause', () => {
       const cause = new Error('original');
-      const error = new StoreError('TIMEOUT', { message: 'Timeout: guard', cause });
-      expect(error.code).toBe('TIMEOUT');
-      expect(error.message).toBe('Timeout: guard');
+      const error = new StoreError('NO_TARGET', { message: 'No target attached', cause });
+      expect(error.code).toBe('NO_TARGET');
+      expect(error.message).toBe('No target attached');
       expect(error.cause).toBe(cause);
     });
   });
@@ -37,7 +37,7 @@ describe('errors', () => {
   describe('type guard', () => {
     it('isStoreError identifies store errors', () => {
       expect(isStoreError(new StoreError('ABORTED'))).toBe(true);
-      expect(isStoreError(new StoreError('REJECTED'))).toBe(true);
+      expect(isStoreError(new StoreError('SUPERSEDED'))).toBe(true);
       expect(isStoreError(new Error('regular'))).toBe(false);
       expect(isStoreError(null)).toBe(false);
     });

@@ -13,3 +13,6 @@ export type Mixin<Base, Result> = <T extends Constructor<Base>>(Base: T) => T & 
 export type Falsy<T> = T | false | null | undefined;
 
 export type EnsureFunction<T> = T extends (...args: any[]) => any ? T : never;
+
+/** Flatten intersection types for better IDE display. */
+export type Simplify<T> = T extends (...args: any[]) => any ? T : { [K in keyof T]: T[K] } & {};

@@ -4,11 +4,18 @@ import { describe, expect, it } from 'vitest';
 import { useStore } from '../use-store';
 import { createTestStore } from './test-utils';
 
+interface AudioState {
+  volume: number;
+  muted: boolean;
+  setVolume: (volume: number) => Promise<number>;
+  setMuted: (muted: boolean) => Promise<boolean>;
+}
+
 describe('useStore', () => {
-  it('returns state and request functions spread together', () => {
+  it('returns state and action functions spread together', () => {
     const { store } = createTestStore();
 
-    const { result } = renderHook(() => useStore(store));
+    const { result } = renderHook(() => useStore(store) as AudioState);
 
     expect(result.current.volume).toBe(1);
     expect(result.current.muted).toBe(false);
@@ -18,7 +25,7 @@ describe('useStore', () => {
   it('updates when state changes', async () => {
     const { store } = createTestStore();
 
-    const { result } = renderHook(() => useStore(store));
+    const { result } = renderHook(() => useStore(store) as AudioState);
 
     expect(result.current.volume).toBe(1);
 

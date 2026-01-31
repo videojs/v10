@@ -1,35 +1,23 @@
 import { isUndefined } from '@videojs/utils/predicate';
 import type { FC, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
-import type { AnyFeature, UnionFeatureRequests, UnionFeatureState, UnionFeatureTarget } from '../core/feature';
-import type { StoreConfig } from '../core/store';
-
-import { Store } from '../core/store';
+import type { StoreConfig } from '../core/config';
+import type { AnyFeature, UnionFeatureState } from '../core/feature';
+import type { Store } from '../core/store';
+import { createStore as createCoreStore } from '../core/store';
 import { StoreContextProvider, useStoreContext } from './context';
 import { useStore as useStoreBase } from './hooks/use-store';
 
-// ----------------------------------------
-// Types
-// ----------------------------------------
-
-export interface CreateStoreConfig<Features extends AnyFeature[]>
-  extends StoreConfig<UnionFeatureTarget<Features>, Features> {
-  /** Display name for React DevTools. */
+export interface CreateStoreConfig<Features extends AnyFeature[]> extends StoreConfig<Features> {
   displayName?: string;
 }
 
 export interface ProviderProps<Features extends AnyFeature[]> {
   children: ReactNode;
-  /**
-   * Optional pre-created store instance.
-   * If provided, the Provider will use this store instead of creating one.
-   * The Provider will NOT destroy this store on unmount.
-   */
-  store?: Store<UnionFeatureTarget<Features>, Features>;
+  store?: Store<Features>;
 }
 
-export type UseStoreResult<Features extends AnyFeature[]> = UnionFeatureState<Features> &
-  UnionFeatureRequests<Features>;
+export type UseStoreResult<Features extends AnyFeature[]> = UnionFeatureState<Features>;
 
 export interface CreateStoreResult<Features extends AnyFeature[]> {
   /** Provider component that creates and manages the store lifecycle. */
@@ -45,7 +33,7 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
    * Creates a new store instance.
    * Useful for imperative access or creating a store before render.
    */
-  create: () => Store<UnionFeatureTarget<Features>, Features>;
+  create: () => Store<Features>;
 }
 
 // ----------------------------------------
@@ -68,11 +56,10 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
 export function createStore<Features extends AnyFeature[]>(
   config: CreateStoreConfig<Features>
 ): CreateStoreResult<Features> {
-  type Target = UnionFeatureTarget<Features>;
-  type StoreType = Store<Target, Features>;
+  type StoreType = Store<Features>;
 
   function create(): StoreType {
-    return new Store(config);
+    return createCoreStore(config);
   }
 
   /**

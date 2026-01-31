@@ -3,21 +3,20 @@ import { ContextConsumer, createContext } from '@lit/context';
 import type { ReactiveControllerHost, ReactiveElement } from '@lit/reactive-element';
 import { noop } from '@videojs/utils/function';
 import type { Constructor } from '@videojs/utils/types';
-import type { AnyFeature, UnionFeatureRequests, UnionFeatureState, UnionFeatureTarget } from '../core/feature';
-import type { StoreConfig, StoreConsumer, StoreProvider } from '../core/store';
-
-import { Store } from '../core/store';
+import type { StoreConfig } from '../core/config';
+import type { AnyFeature, UnionFeatureState } from '../core/feature';
+import type { Store } from '../core/store';
+import { createStore as createCoreStore } from '../core/store';
 import { createContainerMixin, createProviderMixin, createStoreMixin } from './mixins';
+import type { StoreConsumer, StoreProvider } from './types';
 
 export const contextKey = Symbol('@videojs/store');
 
-export interface CreateStoreConfig<Features extends AnyFeature[]>
-  extends StoreConfig<UnionFeatureTarget<Features>, Features> {}
+export interface CreateStoreConfig<Features extends AnyFeature[]> extends StoreConfig<Features> {}
 
 export type CreateStoreHost = ReactiveControllerHost & HTMLElement;
 
-export type StoreControllerValue<Features extends AnyFeature[]> = UnionFeatureState<Features> &
-  UnionFeatureRequests<Features>;
+export type StoreControllerValue<Features extends AnyFeature[]> = UnionFeatureState<Features>;
 
 export interface CreateStoreResult<Features extends AnyFeature[]> {
   /**
@@ -67,7 +66,7 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
    * }
    * ```
    */
-  context: Context<typeof contextKey, Store<UnionFeatureTarget<Features>, Features>>;
+  context: Context<typeof contextKey, Store<Features>>;
 
   /**
    * Creates a store instance for imperative access.
@@ -80,7 +79,7 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
    * store.attach(videoElement);
    * ```
    */
-  create: () => Store<UnionFeatureTarget<Features>, Features>;
+  create: () => Store<Features>;
 
   /**
    * Store controller bound to this store's context.
@@ -147,13 +146,12 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
 export function createStore<Features extends AnyFeature[]>(
   config: CreateStoreConfig<Features>
 ): CreateStoreResult<Features> {
-  type Target = UnionFeatureTarget<Features>;
-  type ProvidedStore = Store<Target, Features>;
+  type ProvidedStore = Store<Features>;
 
   const context = createContext<ProvidedStore, typeof contextKey>(contextKey);
 
   function create(): ProvidedStore {
-    return new Store(config);
+    return createCoreStore(config);
   }
 
   const ProviderMixin = createProviderMixin<Features>(context, create);
@@ -184,10 +182,8 @@ export function createStore<Features extends AnyFeature[]>(
         throw new Error('Store not available');
       }
 
-      return {
-        ...store.state,
-        ...(store.request as object),
-      } as StoreControllerValue<Features>;
+      // In v2, state and actions are directly on the store object
+      return store as unknown as StoreControllerValue<Features>;
     }
 
     hostConnected(): void {

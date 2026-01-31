@@ -1,15 +1,10 @@
-import type { InferFeatureRequests, InferFeatureState } from '@videojs/store';
+import type { InferFeatureState } from '@videojs/store';
 
-import { createFeature } from '@videojs/store';
+import { defineFeature } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
-/**
- * Playback feature for HTMLMediaElement.
- *
- * Tracks core playback state and provides play/pause control.
- */
-export const playbackFeature = createFeature<HTMLMediaElement>()({
-  initialState: {
+export const playbackFeature = defineFeature<HTMLMediaElement>()({
+  state: ({ task }) => ({
     /** Whether playback is paused. */
     paused: true,
     /** Whether playback has reached the end. */
@@ -18,7 +13,28 @@ export const playbackFeature = createFeature<HTMLMediaElement>()({
     started: false,
     /** Whether playback is stalled waiting for data. */
     waiting: false,
-  },
+
+    /** Start playback. Returns when playback begins. */
+    play() {
+      return task({
+        key: 'playback',
+        mode: 'shared',
+        async handler({ target }) {
+          await target.play();
+        },
+      });
+    },
+
+    /** Pause playback immediately. */
+    pause() {
+      return task({
+        key: 'playback',
+        handler({ target }) {
+          target.pause();
+        },
+      });
+    },
+  }),
 
   getSnapshot: ({ target }) => ({
     paused: target.paused,
@@ -34,20 +50,6 @@ export const playbackFeature = createFeature<HTMLMediaElement>()({
     listen(target, 'playing', update, { signal });
     listen(target, 'waiting', update, { signal });
   },
-
-  request: {
-    /** Start playback. Returns when playback begins. */
-    play: async (_, { target }) => {
-      await target.play();
-    },
-
-    /** Pause playback immediately. */
-    pause: (_, { target }) => {
-      target.pause();
-    },
-  },
 });
 
 export type PlaybackState = InferFeatureState<typeof playbackFeature>;
-
-export type PlaybackRequests = InferFeatureRequests<typeof playbackFeature>;

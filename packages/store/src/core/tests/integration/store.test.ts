@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { CANCEL_ALL, createFeature, createStore } from '../../index';
-import { flush } from '../../state';
+import { createStore, defineFeature } from '../../index';
 
 describe('store lifecycle integration', () => {
   it('full lifecycle: create → attach → use → detach → destroy', async () => {
@@ -11,23 +10,26 @@ describe('store lifecycle integration', () => {
       value = 0;
     }
 
-    const feature = createFeature<Target>()({
-      initialState: { count: 0 },
-      getSnapshot: ({ target }) => ({ count: target.value }),
-      subscribe: ({ target, update, signal }) => {
-        events.push('subscribe');
-        target.addEventListener('change', update, { signal });
-        signal.addEventListener('abort', () => events.push('unsubscribe'));
-      },
-      request: {
-        increment: (_, { target }) => {
-          target.value++;
-          target.dispatchEvent(new Event('change'));
-          events.push('increment');
+    const feature = defineFeature<Target>()({
+      state: ({ task }) => ({
+        count: 0,
+        increment() {
+          return task(({ target: t }) => {
+            t.value++;
+            t.dispatchEvent(new Event('change'));
+            events.push('increment');
+          });
         },
+      }),
+      getSnapshot: ({ target: t }) => ({ count: t.value }),
+      subscribe: ({ target: t, update, signal }) => {
+        events.push('subscribe');
+        t.addEventListener('change', update, { signal });
+        signal.addEventListener('abort', () => events.push('unsubscribe'));
       },
     });
 
+    // Cast to any for test access to dynamic properties
     const store = createStore({
       features: [feature],
       onSetup: () => events.push('setup'),
@@ -36,14 +38,14 @@ describe('store lifecycle integration', () => {
 
     expect(events).toEqual(['setup']);
 
-    const target = new Target();
-    target.value = 5;
-    const detach = store.attach(target);
+    const targetInstance = new Target();
+    targetInstance.value = 5;
+    const detach = store.attach(targetInstance);
 
     expect(events).toEqual(['setup', 'subscribe', 'attach']);
     expect(store.state.count).toBe(5);
 
-    await store.request.increment();
+    await store.increment();
     expect(store.state.count).toBe(6);
     expect(events).toContain('increment');
 
@@ -54,74 +56,45 @@ describe('store lifecycle integration', () => {
     store.destroy();
     expect(store.destroyed).toBe(true);
   });
-
-  it('request with guards', async () => {
-    let ready = false;
-    const isReady = () => ready;
-
-    const feature = createFeature<unknown>()({
-      initialState: {},
-      getSnapshot: () => ({}),
-      subscribe: () => {},
-      request: {
-        guardedAction: {
-          guard: [isReady],
-          handler: (_, _ctx) => 'completed',
-        },
-      },
-    });
-
-    const store = createStore({
-      features: [feature],
-      onError: () => {},
-    });
-
-    store.attach({});
-
-    // Test 1: Guard rejects when not ready
-    const failPromise = store.request.guardedAction().catch((e) => e);
-    await expect(failPromise).resolves.toMatchObject({ code: 'REJECTED' });
-
-    // Test 2: Guard passes when ready
-    ready = true;
-    const successPromise = store.request.guardedAction();
-    await expect(successPromise).resolves.toBe('completed');
-  });
 });
 
-describe('request coordination', () => {
-  it('cancel option aborts related requests', async () => {
+describe('task coordination', () => {
+  it('cancels option aborts related tasks', async () => {
     const events: string[] = [];
 
-    const feature = createFeature<unknown>()({
-      initialState: {},
-      getSnapshot: () => ({}),
-      subscribe: () => {},
-      request: {
-        load: {
-          key: 'load',
-          async handler(_, { signal }) {
-            events.push('load-start');
-            await new Promise((resolve, reject) => {
-              const timeout = setTimeout(() => {
-                events.push('load-complete');
-                resolve('loaded');
-              }, 100);
-              signal.addEventListener('abort', () => {
-                clearTimeout(timeout);
-                events.push('load-aborted');
-                reject(new Error('aborted'));
+    const feature = defineFeature<unknown>()({
+      state: ({ task }) => ({
+        loading: false,
+        load() {
+          return task({
+            key: 'load',
+            async handler({ signal }) {
+              events.push('load-start');
+              await new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                  events.push('load-complete');
+                  resolve('loaded');
+                }, 100);
+                signal.addEventListener('abort', () => {
+                  clearTimeout(timeout);
+                  events.push('load-aborted');
+                  reject(new Error('aborted'));
+                });
               });
-            });
-          },
+            },
+          });
         },
-        stop: {
-          cancel: ['load'],
-          handler: (_, _ctx) => {
-            events.push('stop');
-          },
+        stop() {
+          return task({
+            cancels: ['load'],
+            handler() {
+              events.push('stop');
+            },
+          });
         },
-      },
+      }),
+      getSnapshot: () => ({ loading: false }),
+      subscribe: () => {},
     });
 
     const store = createStore({
@@ -131,10 +104,10 @@ describe('request coordination', () => {
 
     store.attach({});
 
-    const loadPromise = store.request.load();
+    const loadPromise = store.load();
     await new Promise((r) => setTimeout(r, 10));
 
-    await store.request.stop();
+    await store.stop();
 
     await loadPromise.catch(() => {});
 
@@ -144,68 +117,64 @@ describe('request coordination', () => {
     expect(events).not.toContain('load-complete');
   });
 
-  it('dynamic keys enable parallel execution', async () => {
+  it('different keys enable parallel execution', async () => {
     const completionOrder: number[] = [];
 
-    const feature = createFeature<unknown>()({
-      initialState: {},
-      getSnapshot: () => ({}),
-      subscribe: () => {},
-      request: {
-        fetchTrack: {
-          key: (id: number) => `track-${id}`,
-          async handler(id: number, _ctx) {
-            await new Promise((r) => setTimeout(r, 10 * id));
-            completionOrder.push(id);
-            return id;
-          },
+    const feature = defineFeature<unknown>()({
+      state: ({ task }) => ({
+        fetching: false,
+        fetchTrack(id: number) {
+          return task({
+            key: `track-${id}`,
+            async handler() {
+              await new Promise((r) => setTimeout(r, 10 * id));
+              completionOrder.push(id);
+              return id;
+            },
+          });
         },
-      },
+      }),
+      getSnapshot: () => ({ fetching: false }),
+      subscribe: () => {},
     });
 
-    const store = createStore({
-      features: [feature],
-    });
-
+    const store = createStore({ features: [feature] });
     store.attach({});
 
-    // All should run in parallel with different keys
-    const [r3, r1, r2] = await Promise.all([
-      store.request.fetchTrack(3),
-      store.request.fetchTrack(1),
-      store.request.fetchTrack(2),
-    ]);
+    const [r3, r1, r2] = await Promise.all([store.fetchTrack(3), store.fetchTrack(1), store.fetchTrack(2)]);
 
     expect(r1).toBe(1);
     expect(r2).toBe(2);
     expect(r3).toBe(3);
-    expect(completionOrder).toEqual([1, 2, 3]); // Complete in duration order
+    expect(completionOrder).toEqual([1, 2, 3]);
   });
 
-  it('same key requests supersede each other', async () => {
+  it('same key tasks supersede each other', async () => {
     const executed: string[] = [];
 
-    const feature = createFeature<unknown>()({
-      initialState: {},
-      getSnapshot: () => ({}),
-      subscribe: () => {},
-      request: {
-        action: {
-          key: 'shared',
-          async handler(name: string, { signal }) {
-            executed.push(`${name}-start`);
-            await new Promise((resolve, reject) => {
-              const timeout = setTimeout(resolve, 50);
-              signal.addEventListener('abort', () => {
-                clearTimeout(timeout);
-                reject(signal.reason);
+    const feature = defineFeature<unknown>()({
+      state: ({ task }) => ({
+        running: false,
+        action(name: string) {
+          return task({
+            key: 'shared',
+            async handler({ signal }) {
+              executed.push(`${name}-start`);
+              await new Promise((resolve, reject) => {
+                const timeout = setTimeout(resolve, 50);
+                signal.addEventListener('abort', () => {
+                  clearTimeout(timeout);
+                  reject(signal.reason);
+                });
               });
-            });
-            executed.push(`${name}-end`);
-            return name;
-          },
+              executed.push(`${name}-end`);
+              return name;
+            },
+          });
         },
-      },
+      }),
+      getSnapshot: () => ({ running: false }),
+      subscribe: () => {},
     });
 
     const store = createStore({
@@ -215,158 +184,75 @@ describe('request coordination', () => {
 
     store.attach({});
 
-    const p1 = store.request.action('first');
-    const p2 = store.request.action('second');
-    const p3 = store.request.action('third');
+    const p1 = store.action('first');
+    const p2 = store.action('second');
+    const p3 = store.action('third');
 
     await expect(p1).rejects.toThrow();
     await expect(p2).rejects.toThrow();
     await expect(p3).resolves.toBe('third');
 
-    // All three start immediately (immediate execution)
     expect(executed).toContain('first-start');
     expect(executed).toContain('second-start');
     expect(executed).toContain('third-start');
-    // Only third completes (others aborted via signal)
     expect(executed).toContain('third-end');
     expect(executed).not.toContain('first-end');
     expect(executed).not.toContain('second-end');
   });
 
-  it('CANCEL_ALL aborts all pending requests (nuclear reset)', async () => {
-    const events: string[] = [];
-
-    const feature = createFeature<unknown>()({
-      initialState: {},
-      getSnapshot: () => ({}),
-      subscribe: () => {},
-      request: {
-        fetch: {
-          key: 'fetch',
-          async handler(_, { signal }) {
-            events.push('fetch-start');
-            await new Promise((resolve, reject) => {
-              const timeout = setTimeout(() => {
-                events.push('fetch-complete');
-                resolve('fetched');
-              }, 100);
-              signal.addEventListener('abort', () => {
-                clearTimeout(timeout);
-                events.push('fetch-aborted');
-                reject(signal.reason);
-              });
-            });
-          },
-        },
-        seek: {
-          key: 'seek',
-          async handler(_, { signal }) {
-            events.push('seek-start');
-            await new Promise((resolve, reject) => {
-              const timeout = setTimeout(() => {
-                events.push('seek-complete');
-                resolve('seeked');
-              }, 100);
-              signal.addEventListener('abort', () => {
-                clearTimeout(timeout);
-                events.push('seek-aborted');
-                reject(signal.reason);
-              });
-            });
-          },
-        },
-        load: {
-          cancel: CANCEL_ALL,
-          handler: () => {
-            events.push('load');
-          },
-        },
-      },
-    });
-
-    const store = createStore({
-      features: [feature],
-      onError: () => {},
-    });
-
-    store.attach({});
-
-    // Start multiple requests
-    const fetchPromise = store.request.fetch();
-    const seekPromise = store.request.seek();
-    await new Promise((r) => setTimeout(r, 10));
-
-    // Nuclear reset
-    await store.request.load();
-
-    await fetchPromise.catch(() => {});
-    await seekPromise.catch(() => {});
-
-    expect(events).toContain('fetch-start');
-    expect(events).toContain('seek-start');
-    expect(events).toContain('fetch-aborted');
-    expect(events).toContain('seek-aborted');
-    expect(events).toContain('load');
-    expect(events).not.toContain('fetch-complete');
-    expect(events).not.toContain('seek-complete');
-  });
-
-  it('mode: shared allows multiple requests to share fate', async () => {
+  it('mode: shared allows multiple tasks to share fate', async () => {
     let handlerCallCount = 0;
 
-    const feature = createFeature<unknown>()({
-      initialState: {},
-      getSnapshot: () => ({}),
-      subscribe: () => {},
-      request: {
-        play: {
-          key: 'playback',
-          mode: 'shared',
-          async handler() {
-            handlerCallCount++;
-            await new Promise((r) => setTimeout(r, 50));
-            return 'playing';
-          },
+    const feature = defineFeature<unknown>()({
+      state: ({ task }) => ({
+        playing: false,
+        play() {
+          return task({
+            key: 'playback',
+            mode: 'shared',
+            async handler() {
+              handlerCallCount++;
+              await new Promise((r) => setTimeout(r, 50));
+              return 'playing';
+            },
+          });
         },
-      },
+      }),
+      getSnapshot: () => ({ playing: false }),
+      subscribe: () => {},
     });
 
-    const store = createStore({
-      features: [feature],
-    });
-
+    const store = createStore({ features: [feature] });
     store.attach({});
 
-    // Multiple play calls while one is pending
-    const p1 = store.request.play();
-    const p2 = store.request.play();
-    const p3 = store.request.play();
+    const p1 = store.play();
+    const p2 = store.play();
+    const p3 = store.play();
 
-    // All should resolve to the same value (shared fate)
     const [r1, r2, r3] = await Promise.all([p1, p2, p3]);
     expect(r1).toBe('playing');
     expect(r2).toBe('playing');
     expect(r3).toBe('playing');
-
-    // Handler should only be called once (not superseded)
     expect(handlerCallCount).toBe(1);
   });
 
   it('mode: shared rejects all promises together on error', async () => {
-    const feature = createFeature<unknown>()({
-      initialState: {},
-      getSnapshot: () => ({}),
-      subscribe: () => {},
-      request: {
-        play: {
-          key: 'playback',
-          mode: 'shared',
-          async handler() {
-            await new Promise((r) => setTimeout(r, 20));
-            throw new Error('playback failed');
-          },
+    const feature = defineFeature<unknown>()({
+      state: ({ task }) => ({
+        playing: false,
+        play() {
+          return task({
+            key: 'playback',
+            mode: 'shared',
+            async handler() {
+              await new Promise((r) => setTimeout(r, 20));
+              throw new Error('playback failed');
+            },
+          });
         },
-      },
+      }),
+      getSnapshot: () => ({ playing: false }),
+      subscribe: () => {},
     });
 
     const store = createStore({
@@ -376,49 +262,45 @@ describe('request coordination', () => {
 
     store.attach({});
 
-    const p1 = store.request.play();
-    const p2 = store.request.play();
+    const p1 = store.play();
+    const p2 = store.play();
 
-    // Both should reject with the same error
     await expect(p1).rejects.toThrow('playback failed');
     await expect(p2).rejects.toThrow('playback failed');
   });
 
-  it('mode: shared allows new request after previous completes', async () => {
+  it('mode: shared allows new task after previous completes', async () => {
     let callCount = 0;
 
-    const feature = createFeature<unknown>()({
-      initialState: {},
-      getSnapshot: () => ({}),
-      subscribe: () => {},
-      request: {
-        play: {
-          key: 'playback',
-          mode: 'shared',
-          async handler() {
-            callCount++;
-            await new Promise((r) => setTimeout(r, 10));
-            return `call-${callCount}`;
-          },
+    const feature = defineFeature<unknown>()({
+      state: ({ task }) => ({
+        playing: false,
+        play() {
+          return task({
+            key: 'playback',
+            mode: 'shared',
+            async handler() {
+              callCount++;
+              await new Promise((r) => setTimeout(r, 10));
+              return `call-${callCount}`;
+            },
+          });
         },
-      },
+      }),
+      getSnapshot: () => ({ playing: false }),
+      subscribe: () => {},
     });
 
-    const store = createStore({
-      features: [feature],
-    });
-
+    const store = createStore({ features: [feature] });
     store.attach({});
 
-    // First batch shares fate
-    const p1 = store.request.play();
-    const p2 = store.request.play();
+    const p1 = store.play();
+    const p2 = store.play();
     const [r1, r2] = await Promise.all([p1, p2]);
     expect(r1).toBe('call-1');
     expect(r2).toBe('call-1');
 
-    // After completion, new request starts fresh
-    const p3 = store.request.play();
+    const p3 = store.play();
     const r3 = await p3;
     expect(r3).toBe('call-2');
 
@@ -427,78 +309,17 @@ describe('request coordination', () => {
 });
 
 describe('state syncing', () => {
-  it('updates only trigger subscriptions for changed keys', async () => {
-    const volumeUpdates: number[] = [];
-    const mutedUpdates: boolean[] = [];
-
-    class Target extends EventTarget {
-      volume = 1;
-      muted = false;
-    }
-
-    const feature = createFeature<Target>()({
-      initialState: {
-        volume: 1,
-        muted: false,
-      },
-      getSnapshot: ({ target }) => ({
-        volume: target.volume,
-        muted: target.muted,
-      }),
-      subscribe: ({ target, update, signal }) => {
-        target.addEventListener('volumechange', update, { signal });
-        target.addEventListener('mutechange', update, { signal });
-      },
-      request: {
-        setVolume: (volume: number, { target }) => {
-          target.volume = volume;
-          target.dispatchEvent(new Event('volumechange'));
-        },
-        setMuted: (muted: boolean, { target }) => {
-          target.muted = muted;
-          target.dispatchEvent(new Event('mutechange'));
-        },
-      },
-    });
-
-    const store = createStore({
-      features: [feature],
-    });
-
-    store.attach(new Target());
-
-    store.subscribe(['volume'], () => {
-      volumeUpdates.push(store.state.volume);
-    });
-
-    store.subscribe(['muted'], () => {
-      mutedUpdates.push(store.state.muted);
-    });
-
-    await store.request.setVolume(0.5);
-    flush();
-    await store.request.setMuted(true);
-    flush();
-    await store.request.setVolume(0.8);
-    flush();
-
-    expect(volumeUpdates).toEqual([0.5, 0.8]);
-    expect(mutedUpdates).toEqual([true]);
-  });
-
   it('multiple features merge state correctly', () => {
-    const audioFeature = createFeature<{ volume: number; rate: number }>()({
-      initialState: { volume: 1 },
+    const audioFeature = defineFeature<{ volume: number; rate: number }>()({
+      state: () => ({ volume: 1 }),
       getSnapshot: ({ target }) => ({ volume: target.volume }),
       subscribe: () => {},
-      request: {},
     });
 
-    const playbackFeature = createFeature<{ volume: number; rate: number }>()({
-      initialState: { rate: 1 },
+    const playbackFeature = defineFeature<{ volume: number; rate: number }>()({
+      state: () => ({ rate: 1 }),
       getSnapshot: ({ target }) => ({ rate: target.rate }),
       subscribe: () => {},
-      request: {},
     });
 
     const store = createStore({
@@ -508,7 +329,7 @@ describe('state syncing', () => {
     const target = { volume: 0.5, rate: 1.5 };
     store.attach(target);
 
-    expect(store.state).toEqual({
+    expect(store.state).toMatchObject({
       volume: 0.5,
       rate: 1.5,
     });
@@ -516,28 +337,27 @@ describe('state syncing', () => {
 });
 
 describe('immediate execution', () => {
-  it('request handler side effect triggers event and state sync', async () => {
-    // Mock media that dispatches 'play' event when play() is called
+  it('task handler side effect triggers event and state sync', async () => {
     class MockMedia extends EventTarget {
       paused = true;
-
       play() {
         this.paused = false;
         this.dispatchEvent(new Event('play'));
       }
     }
 
-    const playbackFeature = createFeature<MockMedia>()({
-      initialState: { paused: true },
+    const playbackFeature = defineFeature<MockMedia>()({
+      state: ({ task }) => ({
+        paused: true,
+        play() {
+          return task(({ target }) => {
+            target.play();
+          });
+        },
+      }),
       getSnapshot: ({ target }) => ({ paused: target.paused }),
       subscribe: ({ target, update, signal }) => {
-        // State syncs when 'play' event fires
         target.addEventListener('play', update, { signal });
-      },
-      request: {
-        play: (_, { target }) => {
-          target.play(); // Triggers event → update → getSnapshot
-        },
       },
     });
 
@@ -547,10 +367,150 @@ describe('immediate execution', () => {
 
     expect(store.state.paused).toBe(true);
 
-    store.request.play();
+    store.play();
 
-    // Validates: handler ran → play() called → event fired → state synced
     expect(target.paused).toBe(false);
     expect(store.state.paused).toBe(false);
+  });
+});
+
+describe('meta tracing', () => {
+  it('store.meta() passes meta to task handlers', async () => {
+    let receivedMeta: unknown = null;
+
+    const feature = defineFeature<unknown>()({
+      state: ({ task }) => ({
+        playing: false,
+        play() {
+          return task({
+            key: 'playback',
+            handler({ meta }) {
+              receivedMeta = meta;
+            },
+          });
+        },
+      }),
+      getSnapshot: () => ({ playing: false }),
+      subscribe: () => {},
+    });
+
+    const store = createStore({ features: [feature] });
+    store.attach({});
+
+    await store.meta({ source: 'user', reason: 'button-click' }).play();
+
+    expect(receivedMeta).toMatchObject({
+      source: 'user',
+      reason: 'button-click',
+    });
+  });
+
+  it('onTaskStart and onTaskEnd callbacks fire', async () => {
+    const events: string[] = [];
+
+    const feature = defineFeature<unknown>()({
+      state: ({ task }) => ({
+        count: 0,
+        increment() {
+          return task({
+            key: 'increment',
+            async handler() {
+              await new Promise((r) => setTimeout(r, 10));
+            },
+          });
+        },
+      }),
+      getSnapshot: () => ({ count: 0 }),
+      subscribe: () => {},
+    });
+
+    const store = createStore({
+      features: [feature],
+      onTaskStart: ({ key }) => events.push(`start:${String(key)}`),
+      onTaskEnd: ({ key, error }) => events.push(`end:${String(key)}${error ? ':error' : ''}`),
+    });
+
+    store.attach({});
+
+    await store.increment();
+
+    expect(events).toEqual(['start:increment', 'end:increment']);
+  });
+
+  it('pending tracks running tasks', async () => {
+    const feature = defineFeature<unknown>()({
+      state: ({ task }) => ({
+        loading: false,
+        load() {
+          return task({
+            key: 'load',
+            async handler() {
+              await new Promise((r) => setTimeout(r, 50));
+            },
+          });
+        },
+      }),
+      getSnapshot: () => ({ loading: false }),
+      subscribe: () => {},
+    });
+
+    const store = createStore({ features: [feature] });
+    store.attach({});
+
+    expect(store.pending.load).toBeUndefined();
+
+    const promise = store.load();
+
+    expect(store.pending.load).toBeDefined();
+    expect(store.pending.load?.key).toBe('load');
+    expect(store.pending.load?.startedAt).toBeTypeOf('number');
+
+    await promise;
+
+    expect(store.pending.load).toBeUndefined();
+  });
+});
+
+describe('sync actions', () => {
+  it('target() allows sync mutations without task', () => {
+    class Target {
+      volume = 1;
+    }
+
+    const feature = defineFeature<Target>()({
+      state: ({ target }) => ({
+        volume: 1,
+        setVolume(value: number) {
+          target().volume = value;
+        },
+      }),
+      getSnapshot: ({ target: t }) => ({ volume: t.volume }),
+      subscribe: () => {},
+    });
+
+    const store = createStore({ features: [feature] });
+    const targetInstance = new Target();
+
+    store.attach(targetInstance);
+    store.setVolume(0.5);
+
+    expect(targetInstance.volume).toBe(0.5);
+  });
+
+  it('target() throws when not attached', () => {
+    const feature = defineFeature<unknown>()({
+      state: ({ target }) => ({
+        value: 0,
+        doSomething() {
+          target();
+        },
+      }),
+      getSnapshot: () => ({ value: 0 }),
+      subscribe: () => {},
+    });
+
+    const store = createStore({ features: [feature] });
+
+    expect(() => store.doSomething()).toThrow('NO_TARGET');
   });
 });

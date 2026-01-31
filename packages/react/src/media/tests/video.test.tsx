@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 
-import { createFeature } from '@videojs/store';
+import { defineFeature } from '@videojs/store';
 import { createStore, useStoreContext } from '@videojs/store/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -12,14 +12,16 @@ describe('video', () => {
     muted = false;
   }
 
-  const mockFeature = createFeature<MockMedia>()({
-    initialState: { volume: 1, muted: false },
+  const mockFeature = defineFeature<MockMedia>()({
+    state: () => ({
+      volume: 1,
+      muted: false,
+    }),
     getSnapshot: ({ target }) => ({
       volume: target.volume,
       muted: target.muted,
     }),
     subscribe: () => {},
-    request: {},
   });
 
   function createTestStore() {

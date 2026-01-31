@@ -2,7 +2,6 @@ export type StateChange = () => void;
 
 export interface State<T extends object> {
   readonly current: Readonly<T>;
-  subscribe<K extends keyof T>(keys: K[], callback: StateChange): () => void;
   subscribe(callback: StateChange): () => void;
 }
 
@@ -20,7 +19,7 @@ function scheduleFlush(): void {
   queueMicrotask(flush);
 }
 
-const pendingContainers = new Set<StateContainer<any, any>>();
+const pendingContainers = new Set<StateContainer<any>>();
 
 export function flush(): void {
   flushScheduled = false;
@@ -34,11 +33,10 @@ export function flush(): void {
 
 const hasOwnProp = Object.prototype.hasOwnProperty;
 
-class StateContainer<T extends object, K extends keyof T> implements WritableState<T> {
+class StateContainer<T extends object> implements WritableState<T> {
   #current: T;
   #listeners = new Set<StateChange>();
-  #keyListeners = new Map<K, Set<StateChange>>();
-  #pending = new Set<K>();
+  #pending = false;
 
   constructor(initial: T) {
     this.#current = Object.freeze({ ...initial });
@@ -51,22 +49,19 @@ class StateContainer<T extends object, K extends keyof T> implements WritableSta
   set<K extends keyof T>(key: K, value: T[K]): void {
     if (Object.is(this.#current[key], value)) return;
     this.#current = Object.freeze({ ...this.#current, [key]: value });
-    this.#pending.add(key as any);
-    pendingContainers.add(this);
-    scheduleFlush();
+    this.#markPending();
   }
 
   delete<K extends keyof T>(key: K): void {
     if (!(key in this.#current)) return;
     const { [key]: _, ...rest } = this.#current;
     this.#current = Object.freeze(rest as T);
-    this.#pending.add(key as any);
-    pendingContainers.add(this);
-    scheduleFlush();
+    this.#markPending();
   }
 
   patch(partial: Partial<T>): void {
     const next = { ...this.#current };
+    let changed = false;
 
     for (const key in partial) {
       if (!hasOwnProp.call(partial, key)) continue;
@@ -75,60 +70,32 @@ class StateContainer<T extends object, K extends keyof T> implements WritableSta
 
       if (!Object.is(this.#current[key], value)) {
         next[key] = value!;
-        this.#pending.add(key as any);
+        changed = true;
       }
     }
 
-    if (this.#pending.size > 0) {
+    if (changed) {
       this.#current = Object.freeze(next);
-      pendingContainers.add(this);
-      scheduleFlush();
+      this.#markPending();
     }
   }
 
-  subscribe(callback: StateChange): () => void;
-  subscribe<K extends keyof T>(keys: K[], callback: StateChange): () => void;
-  subscribe(first: StateChange | K[], second?: StateChange): () => void {
-    // Key-specific subscription
-    if (Array.isArray(first)) {
-      const keys = first;
-      const callback = second!;
-
-      for (const key of keys) {
-        let set = this.#keyListeners.get(key);
-        if (!set) this.#keyListeners.set(key, (set = new Set()));
-        set.add(callback);
-      }
-
-      return () => {
-        for (const key of keys) {
-          this.#keyListeners.get(key)?.delete(callback);
-        }
-      };
-    }
-
-    // Global subscription
-    const callback = first;
+  subscribe(callback: StateChange): () => void {
     this.#listeners.add(callback);
-
     return () => this.#listeners.delete(callback);
   }
 
   flush(): void {
-    if (this.#pending.size === 0) return;
-
-    const keys = this.#pending;
-    this.#pending = new Set();
+    if (!this.#pending) return;
+    this.#pending = false;
 
     for (const fn of this.#listeners) fn();
+  }
 
-    for (const key of keys) {
-      const set = this.#keyListeners.get(key);
-
-      if (set) {
-        for (const fn of set) fn();
-      }
-    }
+  #markPending(): void {
+    this.#pending = true;
+    pendingContainers.add(this);
+    scheduleFlush();
   }
 }
 

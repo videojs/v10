@@ -39,7 +39,7 @@ export class StoreAccessor<Store extends AnyStore> {
 
     // Check if source is a store (object with subscribe) or context (symbol/string)
     if (isStore(source)) {
-      this.#directStore = source;
+      this.#directStore = source as Store;
       this.#consumer = null;
     } else {
       this.#directStore = null;

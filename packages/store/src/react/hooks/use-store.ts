@@ -1,12 +1,12 @@
-import { useMemo, useSyncExternalStore } from 'react';
-import type { AnyStore, InferStoreRequests, InferStoreState } from '../../core/store';
+import { useSyncExternalStore } from 'react';
+import type { AnyStore, InferStoreState } from '../../core/store';
 
-export type UseStoreResult<Store extends AnyStore> = InferStoreState<Store> & InferStoreRequests<Store>;
+export type UseStoreResult<S extends AnyStore> = InferStoreState<S>;
 
 /**
  * Subscribe to store state changes.
  *
- * Returns state and request functions spread together, re-renders when state changes.
+ * Returns state and action functions, re-renders when state changes.
  *
  * @example
  * ```tsx
@@ -22,16 +22,17 @@ export type UseStoreResult<Store extends AnyStore> = InferStoreState<Store> & In
  * }
  * ```
  */
-export function useStore<Store extends AnyStore>(store: Store): UseStoreResult<Store> {
-  const state = useSyncExternalStore(
+export function useStore<S extends AnyStore>(store: S): UseStoreResult<S> {
+  useSyncExternalStore(
     (cb) => store.subscribe(cb),
     () => store.state,
     () => store.state
   );
 
-  return useMemo(() => ({ ...state, ...store.request }) as UseStoreResult<Store>, [state, store.request]);
+  // In v2, state and actions are directly on the store object
+  return store as unknown as UseStoreResult<S>;
 }
 
 export namespace useStore {
-  export type Result<Store extends AnyStore> = UseStoreResult<Store>;
+  export type Result<S extends AnyStore> = UseStoreResult<S>;
 }

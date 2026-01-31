@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 import { describe, expect, it } from 'vitest';
 
-import { createFeature } from '../../core/feature';
+import { defineFeature } from '../../core/feature';
 import { createStore as createCoreStore } from '../../core/store';
 import { StoreContextProvider, useStoreContext } from '../context';
 
@@ -13,11 +13,12 @@ describe('context', () => {
     volume = 1;
   }
 
-  const audioFeature = createFeature<MockMedia>()({
-    initialState: { volume: 1 },
+  const audioFeature = defineFeature<MockMedia>()({
+    state: () => ({
+      volume: 1,
+    }),
     getSnapshot: ({ target }) => ({ volume: target.volume }),
     subscribe: () => {},
-    request: {},
   });
 
   describe('useStoreContext', () => {

@@ -8,30 +8,22 @@
  *     case 'SUPERSEDED':
  *       // Request was replaced by another - expected behavior
  *       break;
- *     case 'REJECTED':
- *       // Guard condition failed
+ *     case 'ABORTED':
+ *       // Request was aborted
  *       break;
  *   }
  * }
  * ```
  */
 export type StoreErrorCode =
-  /** Request was aborted via AbortSignal - user or system requested cancellation. */
+  /** Request was aborted via AbortSignal. */
   | 'ABORTED'
-  /** Request was cancelled by another request's `cancel` configuration. */
-  | 'CANCELLED'
-  /** Store or queue was destroyed - lifecycle ended. */
+  /** Store or queue was destroyed. */
   | 'DESTROYED'
-  /** Target was detached while request was in flight. */
-  | 'DETACHED'
   /** No target is attached to the store. */
   | 'NO_TARGET'
-  /** Guard condition returned falsy - request preconditions not met. */
-  | 'REJECTED'
   /** Request was replaced by a newer request with the same key. */
-  | 'SUPERSEDED'
-  /** Guard condition timed out waiting for a truthy result. */
-  | 'TIMEOUT';
+  | 'SUPERSEDED';
 
 export interface StoreErrorOptions {
   cause?: unknown;

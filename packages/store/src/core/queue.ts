@@ -1,6 +1,8 @@
 import { abortable } from '@videojs/utils/events';
 import { StoreError } from './errors';
-import type { RequestMode } from './request';
+
+/** Cancel all pending tasks (nuclear reset). */
+export const CANCEL_ALL = Symbol.for('@videojs/cancel-all');
 
 // ----------------------------------------
 // Types
@@ -8,9 +10,11 @@ import type { RequestMode } from './request';
 
 export type TaskKey = string | symbol;
 
+export type TaskMode = 'exclusive' | 'shared';
+
 export interface QueueTask<Output = unknown> {
   key: TaskKey;
-  mode?: RequestMode;
+  mode?: TaskMode;
   handler: (ctx: { signal: AbortSignal }) => Promise<Output>;
 }
 

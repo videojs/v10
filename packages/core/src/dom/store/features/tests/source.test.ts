@@ -1,30 +1,18 @@
+import { createStore } from '@videojs/store';
+import { noop } from '@videojs/utils/function';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { SourceState } from '../source';
 import { sourceFeature } from '../source';
 
+const mockState = () =>
+  ({
+    source: null,
+    canPlay: false,
+    loadSource: noop,
+  }) as unknown as SourceState;
+
 describe('sourceFeature', () => {
-  describe('feature structure', () => {
-    it('has unique id symbol', () => {
-      expect(sourceFeature.id).toBeTypeOf('symbol');
-    });
-
-    it('has correct initial state', () => {
-      expect(sourceFeature.initialState).toEqual({
-        source: null,
-        canPlay: false,
-      });
-    });
-
-    it('has changeSource request handler', () => {
-      expect(sourceFeature.request.changeSource).toBeDefined();
-      expect(sourceFeature.request.changeSource).toMatchObject({
-        key: 'changeSource',
-        guard: [],
-        handler: expect.any(Function),
-      });
-    });
-  });
-
   describe('getSnapshot', () => {
     it('captures source state from video element', () => {
       const video = createMockVideo({
@@ -35,7 +23,8 @@ describe('sourceFeature', () => {
 
       const snapshot = sourceFeature.getSnapshot({
         target: video,
-        initialState: sourceFeature.initialState,
+        get: mockState,
+        initialState: mockState(),
       });
 
       expect(snapshot).toEqual({
@@ -52,7 +41,8 @@ describe('sourceFeature', () => {
 
       const snapshot = sourceFeature.getSnapshot({
         target: video,
-        initialState: sourceFeature.initialState,
+        get: mockState,
+        initialState: mockState(),
       });
 
       expect(snapshot.source).toBe(null);
@@ -66,7 +56,12 @@ describe('sourceFeature', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      sourceFeature.subscribe({ target: video, update, signal: controller.signal });
+      sourceFeature.subscribe({
+        target: video,
+        update,
+        signal: controller.signal,
+        get: mockState,
+      });
       video.dispatchEvent(new Event('canplay'));
 
       expect(update).toHaveBeenCalled();
@@ -80,7 +75,12 @@ describe('sourceFeature', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      sourceFeature.subscribe({ target: video, update, signal: controller.signal });
+      sourceFeature.subscribe({
+        target: video,
+        update,
+        signal: controller.signal,
+        get: mockState,
+      });
       video.dispatchEvent(new Event('loadstart'));
 
       expect(update).toHaveBeenCalled();
@@ -91,24 +91,28 @@ describe('sourceFeature', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      sourceFeature.subscribe({ target: video, update, signal: controller.signal });
+      sourceFeature.subscribe({
+        target: video,
+        update,
+        signal: controller.signal,
+        get: mockState,
+      });
       video.dispatchEvent(new Event('emptied'));
 
       expect(update).toHaveBeenCalled();
     });
   });
 
-  describe('request handlers', () => {
-    describe('changeSource', () => {
-      it('sets src on target and calls load', () => {
+  describe('actions', () => {
+    describe('loadSource', () => {
+      it('sets src on target and calls load', async () => {
         const video = createMockVideo({});
         video.load = vi.fn();
 
-        const result = sourceFeature.request.changeSource.handler('https://example.com/new.mp4', {
-          target: video,
-          signal: new AbortController().signal,
-          meta: null,
-        });
+        const store = createStore({ features: [sourceFeature] });
+        store.attach(video);
+
+        const result = await store.loadSource('https://example.com/new.mp4');
 
         expect(video.src).toBe('https://example.com/new.mp4');
         expect(video.load).toHaveBeenCalled();

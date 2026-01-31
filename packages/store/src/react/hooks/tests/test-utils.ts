@@ -1,6 +1,6 @@
 import { noop } from '@videojs/utils/function';
 
-import { createFeature } from '../../../core/feature';
+import { defineFeature } from '../../../core/feature';
 import { createStore as createCoreStore } from '../../../core/store';
 
 // Shared mock target for synchronous tests
@@ -10,8 +10,25 @@ export class MockMedia extends EventTarget {
 }
 
 // Shared feature for synchronous tests
-export const audioFeature = createFeature<MockMedia>()({
-  initialState: { volume: 1, muted: false },
+export const audioFeature = defineFeature<MockMedia>()({
+  state: ({ task }) => ({
+    volume: 1,
+    muted: false,
+    setVolume(volume: number) {
+      return task(({ target }) => {
+        target.volume = volume;
+        target.dispatchEvent(new Event('volumechange'));
+        return volume;
+      });
+    },
+    setMuted(muted: boolean) {
+      return task(({ target }) => {
+        target.muted = muted;
+        target.dispatchEvent(new Event('volumechange'));
+        return muted;
+      });
+    },
+  }),
   getSnapshot: ({ target }) => ({
     volume: target.volume,
     muted: target.muted,
@@ -21,18 +38,6 @@ export const audioFeature = createFeature<MockMedia>()({
     signal.addEventListener('abort', () => {
       target.removeEventListener('volumechange', update);
     });
-  },
-  request: {
-    setVolume: (volume: number, { target }) => {
-      target.volume = volume;
-      target.dispatchEvent(new Event('volumechange'));
-      return volume;
-    },
-    setMuted: (muted: boolean, { target }) => {
-      target.muted = muted;
-      target.dispatchEvent(new Event('volumechange'));
-      return muted;
-    },
   },
 });
 
@@ -49,8 +54,39 @@ export class AsyncMockMedia extends EventTarget {
   muted = false;
 }
 
-export const asyncAudioFeature = createFeature<AsyncMockMedia>()({
-  initialState: { volume: 1, muted: false },
+export const asyncAudioFeature = defineFeature<AsyncMockMedia>()({
+  state: ({ task }) => ({
+    volume: 1,
+    muted: false,
+    setVolume(volume: number) {
+      return task(async ({ target }) => {
+        await Promise.resolve();
+        target.volume = volume;
+        target.dispatchEvent(new Event('volumechange'));
+        return volume;
+      });
+    },
+    slowSetVolume(volume: number) {
+      return task(async ({ target }) => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        target.volume = volume;
+        target.dispatchEvent(new Event('volumechange'));
+        return volume;
+      });
+    },
+    failingRequest() {
+      return task(async () => {
+        await Promise.resolve();
+        throw new Error('Request failed');
+      });
+    },
+    failingSetVolume() {
+      return task(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        throw new Error('Test error');
+      });
+    },
+  }),
   getSnapshot: ({ target }) => ({
     volume: target.volume,
     muted: target.muted,
@@ -61,36 +97,6 @@ export const asyncAudioFeature = createFeature<AsyncMockMedia>()({
     signal.addEventListener('abort', () => {
       target.removeEventListener('volumechange', handler);
     });
-  },
-  request: {
-    setVolume: {
-      handler: async (volume: number, { target }) => {
-        await Promise.resolve();
-        target.volume = volume;
-        target.dispatchEvent(new Event('volumechange'));
-        return volume;
-      },
-    },
-    slowSetVolume: {
-      handler: async (volume: number, { target }) => {
-        await new Promise((resolve) => setTimeout(resolve, 50));
-        target.volume = volume;
-        target.dispatchEvent(new Event('volumechange'));
-        return volume;
-      },
-    },
-    failingRequest: {
-      handler: async () => {
-        await Promise.resolve();
-        throw new Error('Request failed');
-      },
-    },
-    failingSetVolume: {
-      handler: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10));
-        throw new Error('Test error');
-      },
-    },
   },
 });
 
@@ -107,8 +113,35 @@ export function createAsyncTestStore() {
 }
 
 /** Feature with custom keys (name !== key) for testing superseding behavior. */
-export const customKeyFeature = createFeature<MockMedia>()({
-  initialState: { volume: 1, muted: false },
+export const customKeyFeature = defineFeature<MockMedia>()({
+  state: ({ task }) => ({
+    volume: 1,
+    muted: false,
+    // name='adjustVolume', key='audio-settings'
+    adjustVolume(volume: number) {
+      return task({
+        key: 'audio-settings',
+        async handler({ target }) {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+          target.volume = volume;
+          target.dispatchEvent(new Event('volumechange'));
+          return volume;
+        },
+      });
+    },
+    // name='toggleMute', key='audio-settings' (same key - will supersede adjustVolume)
+    toggleMute(muted: boolean) {
+      return task({
+        key: 'audio-settings',
+        async handler({ target }) {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+          target.muted = muted;
+          target.dispatchEvent(new Event('volumechange'));
+          return muted;
+        },
+      });
+    },
+  }),
   getSnapshot: ({ target }) => ({
     volume: target.volume,
     muted: target.muted,
@@ -119,28 +152,6 @@ export const customKeyFeature = createFeature<MockMedia>()({
     signal.addEventListener('abort', () => {
       target.removeEventListener('volumechange', handler);
     });
-  },
-  request: {
-    // name='adjustVolume', key='audio-settings'
-    adjustVolume: {
-      key: 'audio-settings',
-      handler: async (volume: number, { target }): Promise<number> => {
-        await new Promise((resolve) => setTimeout(resolve, 20));
-        target.volume = volume;
-        target.dispatchEvent(new Event('volumechange'));
-        return volume;
-      },
-    },
-    // name='toggleMute', key='audio-settings' (same key - will supersede adjustVolume)
-    toggleMute: {
-      key: 'audio-settings',
-      handler: async (muted: boolean, { target }): Promise<boolean> => {
-        await new Promise((resolve) => setTimeout(resolve, 20));
-        target.muted = muted;
-        target.dispatchEvent(new Event('volumechange'));
-        return muted;
-      },
-    },
   },
 });
 
