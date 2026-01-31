@@ -1,14 +1,7 @@
 import { isNull, isUndefined } from '@videojs/utils/predicate';
 import type { FC, ReactNode } from 'react';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import type {
-  AnyFeature,
-  UnionFeatureRequests,
-  UnionFeatureState,
-  UnionFeatureTarget,
-  UnionFeatureTasks,
-} from '../core/feature';
-import type { TasksRecord } from '../core/queue';
+import type { AnyFeature, UnionFeatureRequests, UnionFeatureState, UnionFeatureTarget } from '../core/feature';
 import type { StoreConfig } from '../core/store';
 
 import { Store } from '../core/store';
@@ -54,12 +47,6 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
   useStore: () => UseStoreResult<Features>;
 
   /**
-   * Subscribes to queue task changes.
-   * Returns the current tasks map from the queue.
-   */
-  useQueue: () => TasksRecord<UnionFeatureTasks<Features>>;
-
-  /**
    * Creates a new store instance.
    * Useful for imperative access or creating a store before render.
    */
@@ -87,7 +74,6 @@ export function createStore<Features extends AnyFeature[]>(
   config: CreateStoreConfig<Features>
 ): CreateStoreResult<Features> {
   type Target = UnionFeatureTarget<Features>;
-  type Tasks = UnionFeatureTasks<Features>;
   type StoreType = Store<Target, Features>;
 
   function create(): StoreType {
@@ -152,19 +138,9 @@ export function createStore<Features extends AnyFeature[]>(
     );
   }
 
-  function useQueue(): TasksRecord<Tasks> {
-    const store = useStoreContext() as StoreType;
-    return useSyncExternalStore(
-      (cb) => store.queue.subscribe(cb),
-      () => store.queue.tasks,
-      () => store.queue.tasks
-    );
-  }
-
   return {
     Provider,
     useStore,
-    useQueue,
     create,
   };
 }

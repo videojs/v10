@@ -1,6 +1,5 @@
 export type { AsyncStatus } from './controllers';
 export {
-  QueueController,
   SnapshotController,
   StoreController,
   SubscriptionController,

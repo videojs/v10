@@ -113,7 +113,6 @@ describe('createStore', () => {
       expect(result).toHaveProperty('context');
       expect(result).toHaveProperty('create');
       expect(result).toHaveProperty('StoreController');
-      expect(result).toHaveProperty('QueueController');
     });
   });
 
@@ -123,13 +122,6 @@ describe('createStore', () => {
 
       expect(typeof StoreController).toBe('function');
       expect(StoreController.prototype).toBeDefined();
-    });
-
-    it('QueueController is a class', () => {
-      const { QueueController } = createStore({ features: [audioFeature] });
-
-      expect(typeof QueueController).toBe('function');
-      expect(QueueController.prototype).toBeDefined();
     });
 
     // Note: Full integration tests with DOM and context would require

@@ -124,19 +124,4 @@ describe('createStore', () => {
       expect(result.current.volume).toBe(0.5);
     });
   });
-
-  describe('useQueue', () => {
-    it('returns tasks from context store', () => {
-      const { Provider, useQueue, create } = createStore({
-        features: [audioFeature],
-      });
-      const store = create();
-
-      const { result } = renderHook(() => useQueue(), {
-        wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
-      });
-
-      expect(result.current).toEqual({});
-    });
-  });
 });

@@ -3,18 +3,10 @@ import { ContextConsumer, createContext } from '@lit/context';
 import type { ReactiveControllerHost, ReactiveElement } from '@lit/reactive-element';
 import { noop } from '@videojs/utils/function';
 import type { Constructor } from '@videojs/utils/types';
-import type {
-  AnyFeature,
-  UnionFeatureRequests,
-  UnionFeatureState,
-  UnionFeatureTarget,
-  UnionFeatureTasks,
-} from '../core/feature';
-import type { TasksRecord } from '../core/queue';
+import type { AnyFeature, UnionFeatureRequests, UnionFeatureState, UnionFeatureTarget } from '../core/feature';
 import type { StoreConfig, StoreConsumer, StoreProvider } from '../core/store';
 
 import { Store } from '../core/store';
-import { QueueController as QueueControllerBase } from './controllers';
 import { createStoreAttachMixin, createStoreMixin, createStoreProviderMixin } from './mixins';
 
 export const contextKey = Symbol('@videojs/store');
@@ -118,32 +110,6 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
     hostConnected: () => void;
     hostDisconnected: () => void;
   };
-
-  /**
-   * Queue controller bound to this store's context.
-   * Subscribes to queue task changes.
-   *
-   * @example
-   * ```ts
-   * const { QueueController } = createStore({ features: [playbackFeature] });
-   *
-   * class MyElement extends LitElement {
-   *   #queue = new QueueController(this);
-   *
-   *   render() {
-   *     const playTask = this.#queue.value.play;
-   *     return html`<button ?disabled=${playTask?.status === 'pending'}>Play</button>`;
-   *   }
-   * }
-   * ```
-   */
-  QueueController: new (
-    host: CreateStoreHost
-  ) => {
-    value: Readonly<TasksRecord<UnionFeatureTasks<Features>>>;
-    hostConnected: () => void;
-    hostDisconnected: () => void;
-  };
 }
 
 /**
@@ -240,12 +206,6 @@ export function createStore<Features extends AnyFeature[]>(
     }
   }
 
-  class QueueController extends QueueControllerBase<ProvidedStore> {
-    constructor(host: CreateStoreHost) {
-      super(host, context);
-    }
-  }
-
   return {
     StoreMixin,
     StoreProviderMixin,
@@ -253,6 +213,5 @@ export function createStore<Features extends AnyFeature[]>(
     context,
     create,
     StoreController,
-    QueueController,
   };
 }
