@@ -1,6 +1,5 @@
 export type { AsyncStatus } from '../../shared/types';
 
-export { QueueController, type QueueControllerHost } from './queue-controller';
 export {
   SnapshotController,
   type SnapshotControllerHost,

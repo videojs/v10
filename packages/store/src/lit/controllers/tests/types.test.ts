@@ -1,8 +1,7 @@
 import { describe, expectTypeOf, it } from 'vitest';
 
 import { createState } from '../../../core/state';
-import { createCoreTestStore, createTestHost } from '../../tests/test-utils';
-import { QueueController } from '../queue-controller';
+import { createTestHost } from '../../tests/test-utils';
 import { SnapshotController } from '../snapshot-controller';
 
 describe('controller types', () => {
@@ -28,18 +27,6 @@ describe('controller types', () => {
 
       expectTypeOf(controller.value.volume).toEqualTypeOf<number>();
       expectTypeOf(controller.value.muted).toEqualTypeOf<boolean>();
-    });
-  });
-
-  describe('QueueController', () => {
-    it('value is tasks record', () => {
-      const { store } = createCoreTestStore();
-      const host = createTestHost();
-
-      const controller = new QueueController(host, store);
-
-      // Value type matches store.queue.tasks
-      expectTypeOf(controller.value).toMatchTypeOf(store.queue.tasks);
     });
   });
 });
