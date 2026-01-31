@@ -553,29 +553,4 @@ describe('immediate execution', () => {
     expect(target.paused).toBe(false);
     expect(store.state.paused).toBe(false);
   });
-
-  it('task is pending synchronously after request', async () => {
-    const feature = createFeature<unknown>()({
-      initialState: {},
-      getSnapshot: () => ({}),
-      subscribe: () => {},
-      request: {
-        action: async () => {
-          await new Promise((r) => setTimeout(r, 10));
-          return 'done';
-        },
-      },
-    });
-
-    const store = createStore({ features: [feature] });
-    store.attach({});
-
-    const promise = store.request.action();
-
-    // Synchronous check - task is pending immediately, no microtask needed
-    expect(store.queue.tasks.action?.status).toBe('pending');
-
-    await promise;
-    expect(store.queue.tasks.action?.status).toBe('success');
-  });
 });

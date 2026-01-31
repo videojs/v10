@@ -1,9 +1,8 @@
 export * from './computed';
 export * from './errors';
 export * from './feature';
-export * from './guard';
-export * from './queue';
+export type { Guard, GuardContext, GuardResult } from './guard';
+export type { TaskKey } from './queue';
 export * from './request';
 export * from './state';
 export * from './store';
-export * from './task';

@@ -1,5 +1,4 @@
 import type { UnionToIntersection } from '@videojs/utils/types';
-import type { EnsureTaskRecord } from './queue';
 import type {
   Request,
   RequestConfig,
@@ -76,10 +75,6 @@ export type UnionFeatureState<Features extends Feature<any, any, any>[]> = Union
 
 export type UnionFeatureRequests<Features extends Feature<any, any, any>[]> = UnionToIntersection<
   ResolveFeatureRequestHandlers<Features[number]>
->;
-
-export type UnionFeatureTasks<Features extends Feature<any, any, any>[]> = EnsureTaskRecord<
-  UnionToIntersection<InferFeatureRequests<Features[number]>>
 >;
 
 // ----------------------------------------

@@ -1,7 +1,6 @@
 import { describe, expectTypeOf, it } from 'vitest';
 import { createFeature } from '../feature';
-import type { Queue } from '../queue';
-import type { InferStoreRequests, InferStoreState, InferStoreTarget, InferStoreTasks } from '../store';
+import type { InferStoreRequests, InferStoreState, InferStoreTarget } from '../store';
 import { createStore } from '../store';
 
 interface MockTarget {
@@ -74,14 +73,6 @@ describe('store types', () => {
       expectTypeOf(store.request.setMuted).returns.toEqualTypeOf<Promise<boolean>>();
     });
 
-    it('queue has correctly typed tasks', () => {
-      const store = createSingleFeatureStore();
-
-      expectTypeOf(store.queue).toExtend<Queue<any>>();
-      expectTypeOf(store.queue.tasks).toBeObject();
-      expectTypeOf(store.queue.subscribe).toBeFunction();
-    });
-
     it('target is nullable before attach', () => {
       const store = createSingleFeatureStore();
 
@@ -121,16 +112,6 @@ describe('store types', () => {
     });
   });
 
-  describe('InferStoreTasks', () => {
-    it('extracts task types from store', () => {
-      const _store = createSingleFeatureStore();
-      type Tasks = InferStoreTasks<typeof _store>;
-
-      expectTypeOf<Tasks>().toHaveProperty('setVolume');
-      expectTypeOf<Tasks>().toHaveProperty('setMuted');
-    });
-  });
-
   describe('subscribe', () => {
     it('state returns readonly snapshot', () => {
       const store = createSingleFeatureStore();
@@ -144,66 +125,6 @@ describe('store types', () => {
 
       expectTypeOf(store.state.volume).toEqualTypeOf<number>();
       expectTypeOf(store.state.muted).toEqualTypeOf<boolean>();
-    });
-  });
-
-  describe('store queue integration types', () => {
-    it('queue.tasks has keys matching request names', () => {
-      const store = createSingleFeatureStore();
-
-      expectTypeOf(store.queue.tasks).toHaveProperty('setVolume');
-      expectTypeOf(store.queue.tasks).toHaveProperty('setMuted');
-    });
-
-    it('task input type matches request parameter', () => {
-      const store = createSingleFeatureStore();
-      const task = store.queue.tasks.setVolume;
-
-      if (task) {
-        expectTypeOf(task.input).toEqualTypeOf<number>();
-      }
-    });
-
-    it('task output type matches request return on success', () => {
-      const store = createSingleFeatureStore();
-      const task = store.queue.tasks.setVolume;
-
-      if (task?.status === 'success') {
-        expectTypeOf(task.output).toEqualTypeOf<number>();
-      }
-    });
-
-    it('multi-feature store has combined queue task types', () => {
-      const store = createTestStore();
-
-      expectTypeOf(store.queue.tasks).toHaveProperty('setVolume');
-      expectTypeOf(store.queue.tasks).toHaveProperty('setMuted');
-      expectTypeOf(store.queue.tasks).toHaveProperty('play');
-      expectTypeOf(store.queue.tasks).toHaveProperty('pause');
-    });
-
-    it('queue.reset accepts request names', () => {
-      const store = createSingleFeatureStore();
-
-      store.queue.reset('setVolume');
-      store.queue.reset('setMuted');
-      store.queue.reset(); // all
-    });
-
-    it('queue.abort accepts request names', () => {
-      const store = createSingleFeatureStore();
-
-      store.queue.abort('setVolume');
-      store.queue.abort('setMuted');
-      store.queue.abort(); // all
-    });
-
-    it('InferStoreTasks matches queue task record keys', () => {
-      const _store = createSingleFeatureStore();
-      type Tasks = InferStoreTasks<typeof _store>;
-
-      expectTypeOf<Tasks>().toHaveProperty('setVolume');
-      expectTypeOf<Tasks>().toHaveProperty('setMuted');
     });
   });
 });
