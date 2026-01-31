@@ -15,9 +15,9 @@ export { createStore } from './create-store';
 
 // Mixin factories (for advanced use cases)
 export {
-  createStoreAttachMixin,
+  createContainerMixin,
+  createProviderMixin,
   createStoreMixin,
-  createStoreProviderMixin,
 } from './mixins';
 export type { StoreSource } from './store-accessor';
 // StoreAccessor (for custom controllers)

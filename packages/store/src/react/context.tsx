@@ -25,15 +25,6 @@ export function useStoreContext(): AnyStore {
 }
 
 /**
- * Internal hook to get parent store from context.
- * Returns null if no parent Provider exists.
- * Used by Provider to implement the `inherit` prop.
- */
-export function useParentStore(): AnyStore | null {
-  return useContext(StoreContext);
-}
-
-/**
  * Internal provider component that wraps children with store context.
  */
 export function StoreContextProvider({ store, children }: { store: AnyStore; children: ReactNode }): ReactNode {

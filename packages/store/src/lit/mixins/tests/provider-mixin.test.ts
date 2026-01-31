@@ -4,12 +4,12 @@ import { createLitTestStore, setupDomCleanup, TestBaseElement, uniqueTag } from 
 
 setupDomCleanup();
 
-describe('createStoreProviderMixin', () => {
+describe('createProviderMixin', () => {
   it('creates store lazily on first access', async () => {
-    const { StoreProviderMixin } = createLitTestStore();
+    const { ProviderMixin } = createLitTestStore();
     const tagName = uniqueTag('test-provider');
 
-    class TestElement extends StoreProviderMixin(TestBaseElement) {}
+    class TestElement extends ProviderMixin(TestBaseElement) {}
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
@@ -21,10 +21,10 @@ describe('createStoreProviderMixin', () => {
   });
 
   it('reuses same store instance', async () => {
-    const { StoreProviderMixin } = createLitTestStore();
+    const { ProviderMixin } = createLitTestStore();
     const tagName = uniqueTag('test-provider-reuse');
 
-    class TestElement extends StoreProviderMixin(TestBaseElement) {}
+    class TestElement extends ProviderMixin(TestBaseElement) {}
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
@@ -38,10 +38,10 @@ describe('createStoreProviderMixin', () => {
   });
 
   it('destroys owned store on disconnect', async () => {
-    const { StoreProviderMixin } = createLitTestStore();
+    const { ProviderMixin } = createLitTestStore();
     const tagName = uniqueTag('test-provider-destroy');
 
-    class TestElement extends StoreProviderMixin(TestBaseElement) {}
+    class TestElement extends ProviderMixin(TestBaseElement) {}
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
@@ -57,10 +57,10 @@ describe('createStoreProviderMixin', () => {
   });
 
   it('allows setting custom store via setter', async () => {
-    const { StoreProviderMixin, create } = createLitTestStore();
+    const { ProviderMixin, create } = createLitTestStore();
     const tagName = uniqueTag('test-provider-setter');
 
-    class TestElement extends StoreProviderMixin(TestBaseElement) {}
+    class TestElement extends ProviderMixin(TestBaseElement) {}
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
@@ -74,10 +74,10 @@ describe('createStoreProviderMixin', () => {
   });
 
   it('does not destroy externally provided store on disconnect', async () => {
-    const { StoreProviderMixin, create } = createLitTestStore();
+    const { ProviderMixin, create } = createLitTestStore();
     const tagName = uniqueTag('test-provider-external');
 
-    class TestElement extends StoreProviderMixin(TestBaseElement) {}
+    class TestElement extends ProviderMixin(TestBaseElement) {}
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
@@ -93,10 +93,10 @@ describe('createStoreProviderMixin', () => {
   });
 
   it('destroys old owned store when setting new store', async () => {
-    const { StoreProviderMixin, create } = createLitTestStore();
+    const { ProviderMixin, create } = createLitTestStore();
     const tagName = uniqueTag('test-provider-replace');
 
-    class TestElement extends StoreProviderMixin(TestBaseElement) {}
+    class TestElement extends ProviderMixin(TestBaseElement) {}
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;

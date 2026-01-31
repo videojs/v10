@@ -76,26 +76,26 @@ describe('createStore', () => {
       expect(typeof StoreMixin).toBe('function');
     });
 
-    it('returns StoreProviderMixin', () => {
-      const { StoreProviderMixin } = createStore({ features: [audioFeature] });
+    it('returns ProviderMixin', () => {
+      const { ProviderMixin } = createStore({ features: [audioFeature] });
 
-      expect(typeof StoreProviderMixin).toBe('function');
+      expect(typeof ProviderMixin).toBe('function');
     });
 
-    it('returns StoreAttachMixin', () => {
-      const { StoreAttachMixin } = createStore({ features: [audioFeature] });
+    it('returns ContainerMixin', () => {
+      const { ContainerMixin } = createStore({ features: [audioFeature] });
 
-      expect(typeof StoreAttachMixin).toBe('function');
+      expect(typeof ContainerMixin).toBe('function');
     });
 
     it('mixins can be applied to TestBaseElement', () => {
-      const { StoreMixin, StoreProviderMixin, StoreAttachMixin } = createStore({
+      const { StoreMixin, ProviderMixin, ContainerMixin } = createStore({
         features: [audioFeature],
       });
 
       const Mixed1 = StoreMixin(TestBaseElement);
-      const Mixed2 = StoreProviderMixin(TestBaseElement);
-      const Mixed3 = StoreAttachMixin(TestBaseElement);
+      const Mixed2 = ProviderMixin(TestBaseElement);
+      const Mixed3 = ContainerMixin(TestBaseElement);
 
       expect(Mixed1.prototype).toBeInstanceOf(TestBaseElement);
       expect(Mixed2.prototype).toBeInstanceOf(TestBaseElement);
@@ -108,8 +108,8 @@ describe('createStore', () => {
       const result = createStore({ features: [audioFeature] });
 
       expect(result).toHaveProperty('StoreMixin');
-      expect(result).toHaveProperty('StoreProviderMixin');
-      expect(result).toHaveProperty('StoreAttachMixin');
+      expect(result).toHaveProperty('ProviderMixin');
+      expect(result).toHaveProperty('ContainerMixin');
       expect(result).toHaveProperty('context');
       expect(result).toHaveProperty('create');
       expect(result).toHaveProperty('StoreController');
