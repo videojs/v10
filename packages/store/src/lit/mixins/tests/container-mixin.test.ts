@@ -4,12 +4,12 @@ import { createLitTestStore, setupDomCleanup, TestBaseElement, uniqueTag } from 
 
 setupDomCleanup();
 
-describe('createStoreAttachMixin', () => {
+describe('createContainerMixin', () => {
   it('exposes store property (initially null without context)', async () => {
-    const { StoreAttachMixin } = createLitTestStore();
-    const tagName = uniqueTag('test-attach-standalone');
+    const { ContainerMixin } = createLitTestStore();
+    const tagName = uniqueTag('test-container-standalone');
 
-    class TestElement extends StoreAttachMixin(TestBaseElement) {}
+    class TestElement extends ContainerMixin(TestBaseElement) {}
     customElements.define(tagName, TestElement);
 
     const el = document.createElement(tagName) as TestElement;
@@ -21,9 +21,9 @@ describe('createStoreAttachMixin', () => {
   });
 
   it('can be applied to TestBaseElement', () => {
-    const { StoreAttachMixin } = createLitTestStore();
+    const { ContainerMixin } = createLitTestStore();
 
-    class MixedElement extends StoreAttachMixin(TestBaseElement) {}
+    class MixedElement extends ContainerMixin(TestBaseElement) {}
 
     expect(MixedElement.prototype).toBeInstanceOf(TestBaseElement);
   });

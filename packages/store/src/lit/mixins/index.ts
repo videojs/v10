@@ -1,3 +1,3 @@
-export { createStoreAttachMixin } from './attach-mixin';
 export { createStoreMixin } from './combined-mixin';
-export { createStoreProviderMixin } from './provider-mixin';
+export { createContainerMixin } from './container-mixin';
+export { createProviderMixin } from './provider-mixin';

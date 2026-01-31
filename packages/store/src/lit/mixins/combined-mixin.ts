@@ -5,8 +5,8 @@ import type { AnyFeature, UnionFeatureTarget } from '../../core/feature';
 
 import type { Store, StoreProvider } from '../../core/store';
 
-import { createStoreAttachMixin } from './attach-mixin';
-import { createStoreProviderMixin } from './provider-mixin';
+import { createContainerMixin } from './container-mixin';
+import { createProviderMixin } from './provider-mixin';
 
 /**
  * Creates a combined mixin that both provides a store and auto-attaches media elements.
@@ -29,13 +29,13 @@ export function createStoreMixin<Features extends AnyFeature[]>(
   context: Context<unknown, Store<UnionFeatureTarget<Features>, Features>>,
   factory: () => Store<UnionFeatureTarget<Features>, Features>
 ): Mixin<ReactiveElement, StoreProvider<Features>> {
-  const ProviderMixin = createStoreProviderMixin<Features>(context, factory);
-  const AttachMixin = createStoreAttachMixin<Features>(context);
+  const ProviderMixin = createProviderMixin<Features>(context, factory);
+  const ContainerMixin = createContainerMixin<Features>(context);
 
   return <Base extends Constructor<ReactiveElement>>(BaseClass: Base) => {
     // ProviderMixin wraps AttachMixin so during connectedCallback:
     // 1. ProviderMixin runs first (provides store via context)
     // 2. AttachMixin runs second (consumes store from context)
-    return ProviderMixin(AttachMixin(BaseClass));
+    return ProviderMixin(ContainerMixin(BaseClass));
   };
 }

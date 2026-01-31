@@ -7,7 +7,7 @@ import type { AnyFeature, UnionFeatureRequests, UnionFeatureState, UnionFeatureT
 import type { StoreConfig, StoreConsumer, StoreProvider } from '../core/store';
 
 import { Store } from '../core/store';
-import { createStoreAttachMixin, createStoreMixin, createStoreProviderMixin } from './mixins';
+import { createContainerMixin, createProviderMixin, createStoreMixin } from './mixins';
 
 export const contextKey = Symbol('@videojs/store');
 
@@ -37,10 +37,10 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
    *
    * @example
    * ```ts
-   * class MyProvider extends StoreProviderMixin(LitElement) {}
+   * class MyProvider extends ProviderMixin(LitElement) {}
    * ```
    */
-  StoreProviderMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreProvider<Features>>;
+  ProviderMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreProvider<Features>>;
 
   /**
    * Mixin that auto-attaches slotted media elements (requires store from context).
@@ -49,10 +49,10 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
    *
    * @example
    * ```ts
-   * class MyControls extends StoreAttachMixin(LitElement) {}
+   * class MyControls extends ContainerMixin(LitElement) {}
    * ```
    */
-  StoreAttachMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreConsumer<Features>>;
+  ContainerMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreConsumer<Features>>;
 
   /**
    * Context for consuming store in controllers.
@@ -156,8 +156,8 @@ export function createStore<Features extends AnyFeature[]>(
     return new Store(config);
   }
 
-  const StoreProviderMixin = createStoreProviderMixin<Features>(context, create);
-  const StoreAttachMixin = createStoreAttachMixin<Features>(context);
+  const ProviderMixin = createProviderMixin<Features>(context, create);
+  const ContainerMixin = createContainerMixin<Features>(context);
   const StoreMixin = createStoreMixin<Features>(context, create);
 
   class StoreController {
@@ -208,8 +208,8 @@ export function createStore<Features extends AnyFeature[]>(
 
   return {
     StoreMixin,
-    StoreProviderMixin,
-    StoreAttachMixin,
+    ProviderMixin,
+    ContainerMixin,
     context,
     create,
     StoreController,

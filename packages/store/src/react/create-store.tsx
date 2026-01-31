@@ -1,11 +1,12 @@
-import { isNull, isUndefined } from '@videojs/utils/predicate';
+import { isUndefined } from '@videojs/utils/predicate';
 import type { FC, ReactNode } from 'react';
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useState } from 'react';
 import type { AnyFeature, UnionFeatureRequests, UnionFeatureState, UnionFeatureTarget } from '../core/feature';
 import type { StoreConfig } from '../core/store';
 
 import { Store } from '../core/store';
-import { StoreContextProvider, useParentStore, useStoreContext } from './context';
+import { StoreContextProvider, useStoreContext } from './context';
+import { useStore as useStoreBase } from './hooks/use-store';
 
 // ----------------------------------------
 // Types
@@ -25,12 +26,6 @@ export interface ProviderProps<Features extends AnyFeature[]> {
    * The Provider will NOT destroy this store on unmount.
    */
   store?: Store<UnionFeatureTarget<Features>, Features>;
-  /**
-   * If true, inherits the store from a parent Provider context instead of creating a new one.
-   * Useful when wrapping a skin with your own Provider to add custom hooks.
-   * Defaults to false (isolated store).
-   */
-  inherit?: boolean;
 }
 
 export type UseStoreResult<Features extends AnyFeature[]> = UnionFeatureState<Features> &
@@ -83,29 +78,19 @@ export function createStore<Features extends AnyFeature[]>(
   /**
    * Provider component that manages store lifecycle.
    *
-   * Resolution order:
-   * 1. If `store` prop provided, uses that store (no cleanup on unmount)
-   * 2. If `inherit={true}` and parent store exists, uses parent store (no cleanup)
-   * 3. Otherwise, creates a new store and destroys it on unmount
+   * If `store` prop is provided, uses that store (no cleanup on unmount).
+   * Otherwise, creates a new store and destroys it on unmount.
    */
-  function Provider({ children, store: providedStore, inherit = false }: ProviderProps<Features>): ReactNode {
-    const parentStore = useParentStore();
-    const shouldInherit = inherit && !isNull(parentStore);
-
+  function Provider({ children, store: providedStore }: ProviderProps<Features>): ReactNode {
     const [store] = useState<StoreType>(() => {
       if (!isUndefined(providedStore)) {
         return providedStore;
       }
 
-      if (shouldInherit) {
-        return parentStore as StoreType;
-      }
-
       return create();
     });
 
-    // Only destroy if we created the store (not provided, not inherited)
-    const isOwner = isUndefined(providedStore) && !shouldInherit;
+    const isOwner = isUndefined(providedStore);
 
     useEffect(() => {
       if (isOwner) {
@@ -125,17 +110,7 @@ export function createStore<Features extends AnyFeature[]>(
 
   function useStore(): UseStoreResult<Features> {
     const store = useStoreContext();
-
-    const state = useSyncExternalStore(
-      (cb) => store.subscribe(cb),
-      () => store.state,
-      () => store.state
-    );
-
-    return useMemo(
-      () => ({ ...state, ...(store.request as object) }) as UseStoreResult<Features>,
-      [state, store.request]
-    );
+    return useStoreBase(store) as UseStoreResult<Features>;
   }
 
   return {

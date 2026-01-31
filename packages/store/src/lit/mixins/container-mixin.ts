@@ -20,12 +20,12 @@ import type { Store, StoreConsumer } from '../../core/store';
  *
  * @example
  * ```ts
- * const { StoreAttachMixin } = createStore({ features: [playbackFeature] });
+ * const { ContainerMixin } = createStore({ features: [playbackFeature] });
  *
- * class MyControls extends StoreAttachMixin(LitElement) {}
+ * class MyControls extends ContainerMixin(LitElement) {}
  * ```
  */
-export function createStoreAttachMixin<Features extends AnyFeature[]>(
+export function createContainerMixin<Features extends AnyFeature[]>(
   context: Context<unknown, Store<UnionFeatureTarget<Features>, Features>>
 ): Mixin<ReactiveElement, StoreConsumer<Features>> {
   type ConsumedStore = Store<UnionFeatureTarget<Features>, Features>;

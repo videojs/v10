@@ -12,18 +12,18 @@ describe('mixin types', () => {
     expectTypeOf<Instance>().toHaveProperty('store');
   });
 
-  it('storeProviderMixin adds store property', () => {
-    const { StoreProviderMixin } = createLitTestStore();
-    const _MixedElement = StoreProviderMixin(TestBaseElement);
+  it('providerMixin adds store property', () => {
+    const { ProviderMixin } = createLitTestStore();
+    const _MixedElement = ProviderMixin(TestBaseElement);
     type Instance = InstanceType<typeof _MixedElement>;
 
     // Verify store property exists on the mixed type
     expectTypeOf<Instance>().toHaveProperty('store');
   });
 
-  it('storeAttachMixin adds store property', () => {
-    const { StoreAttachMixin } = createLitTestStore();
-    const _MixedElement = StoreAttachMixin(TestBaseElement);
+  it('containerMixin adds store property', () => {
+    const { ContainerMixin } = createLitTestStore();
+    const _MixedElement = ContainerMixin(TestBaseElement);
     type Instance = InstanceType<typeof _MixedElement>;
 
     // Verify store property exists on the mixed type

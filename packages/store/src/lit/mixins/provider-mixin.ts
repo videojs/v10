@@ -16,18 +16,18 @@ import type { Store, StoreProvider } from '../../core/store';
  *
  * @example
  * ```ts
- * const { StoreProviderMixin } = createStore({
+ * const { ProviderMixin } = createStore({
  *   features: [playbackFeature]
  * });
  *
- * class MyPlayer extends StoreProviderMixin(LitElement) {
+ * class MyPlayer extends ProviderMixin(LitElement) {
  *   render() {
  *     return html`<slot></slot>`;
  *   }
  * }
  * ```
  */
-export function createStoreProviderMixin<Features extends AnyFeature[]>(
+export function createProviderMixin<Features extends AnyFeature[]>(
   context: Context<unknown, Store<UnionFeatureTarget<Features>, Features>>,
   factory: () => Store<UnionFeatureTarget<Features>, Features>
 ): <Base extends Constructor<ReactiveElement>>(BaseClass: Base) => Base & Constructor<StoreProvider<Features>> {
