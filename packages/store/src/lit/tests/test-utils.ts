@@ -1,8 +1,7 @@
 import { ReactiveElement } from '@lit/reactive-element';
 import { noop } from '@videojs/utils/function';
 import { afterEach } from 'vitest';
-import type { AnyFeature } from '../../core/feature';
-import { createFeature } from '../../core/feature';
+import { defineFeature } from '../../core/feature';
 import type { Store } from '../../core/store';
 import { createStore as createCoreStore } from '../../core/store';
 import { createStore as createLitStore } from '../create-store';
@@ -28,8 +27,33 @@ export class MockMedia extends EventTarget {
   muted = false;
 }
 
-export const audioFeature = createFeature<MockMedia>()({
-  initialState: { volume: 1, muted: false },
+export const audioFeature = defineFeature<MockMedia>()({
+  state: ({ task }) => ({
+    volume: 1,
+    muted: false,
+    setVolume(volume: number) {
+      return task(({ target }) => {
+        target.volume = volume;
+        target.dispatchEvent(new Event('volumechange'));
+        return volume;
+      });
+    },
+    setMuted(muted: boolean) {
+      return task(({ target }) => {
+        target.muted = muted;
+        target.dispatchEvent(new Event('volumechange'));
+        return muted;
+      });
+    },
+    slowSetVolume(volume: number) {
+      return task(async ({ target }) => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        target.volume = volume;
+        target.dispatchEvent(new Event('volumechange'));
+        return volume;
+      });
+    },
+  }),
   getSnapshot: ({ target }) => ({
     volume: target.volume,
     muted: target.muted,
@@ -40,30 +64,39 @@ export const audioFeature = createFeature<MockMedia>()({
     signal.addEventListener('abort', () => {
       target.removeEventListener('volumechange', handler);
     });
-  },
-  request: {
-    setVolume: (volume: number, { target }): number => {
-      target.volume = volume;
-      target.dispatchEvent(new Event('volumechange'));
-      return volume;
-    },
-    setMuted: (muted: boolean, { target }): boolean => {
-      target.muted = muted;
-      target.dispatchEvent(new Event('volumechange'));
-      return muted;
-    },
-    slowSetVolume: async (volume: number, { target }): Promise<number> => {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      target.volume = volume;
-      target.dispatchEvent(new Event('volumechange'));
-      return volume;
-    },
   },
 });
 
 /** Feature with custom keys (name !== key) for testing superseding behavior. */
-export const customKeyFeature = createFeature<MockMedia>()({
-  initialState: { volume: 1, muted: false },
+export const customKeyFeature = defineFeature<MockMedia>()({
+  state: ({ task }) => ({
+    volume: 1,
+    muted: false,
+    // name='adjustVolume', key='audio-settings'
+    adjustVolume(volume: number) {
+      return task({
+        key: 'audio-settings',
+        async handler({ target }) {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+          target.volume = volume;
+          target.dispatchEvent(new Event('volumechange'));
+          return volume;
+        },
+      });
+    },
+    // name='toggleMute', key='audio-settings' (same key - will supersede adjustVolume)
+    toggleMute(muted: boolean) {
+      return task({
+        key: 'audio-settings',
+        async handler({ target }) {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+          target.muted = muted;
+          target.dispatchEvent(new Event('volumechange'));
+          return muted;
+        },
+      });
+    },
+  }),
   getSnapshot: ({ target }) => ({
     volume: target.volume,
     muted: target.muted,
@@ -74,58 +107,51 @@ export const customKeyFeature = createFeature<MockMedia>()({
     signal.addEventListener('abort', () => {
       target.removeEventListener('volumechange', handler);
     });
-  },
-  request: {
-    // name='adjustVolume', key='audio-settings'
-    adjustVolume: {
-      key: 'audio-settings',
-      handler: async (volume: number, { target }): Promise<number> => {
-        await new Promise((resolve) => setTimeout(resolve, 20));
-        target.volume = volume;
-        target.dispatchEvent(new Event('volumechange'));
-        return volume;
-      },
-    },
-    // name='toggleMute', key='audio-settings' (same key - will supersede adjustVolume)
-    toggleMute: {
-      key: 'audio-settings',
-      handler: async (muted: boolean, { target }): Promise<boolean> => {
-        await new Promise((resolve) => setTimeout(resolve, 20));
-        target.muted = muted;
-        target.dispatchEvent(new Event('volumechange'));
-        return muted;
-      },
-    },
   },
 });
 
 type TestFeature = typeof audioFeature;
 type CustomKeyFeature = typeof customKeyFeature;
 
+type TestStore = Store<[TestFeature]> & {
+  volume: number;
+  muted: boolean;
+  setVolume: (volume: number) => Promise<number>;
+  setMuted: (muted: boolean) => Promise<boolean>;
+  slowSetVolume: (volume: number) => Promise<number>;
+};
+
+type CustomKeyStore = Store<[CustomKeyFeature]> & {
+  volume: number;
+  muted: boolean;
+  adjustVolume: (volume: number) => Promise<number>;
+  toggleMute: (muted: boolean) => Promise<boolean>;
+};
+
 // For controller tests - creates core store with attached target
-export function createCoreTestStore(): { store: Store<MockMedia, [TestFeature]>; target: MockMedia } {
+export function createCoreTestStore(): { store: TestStore; target: MockMedia } {
   const store = createCoreStore({
-    features: [audioFeature] as [AnyFeature],
+    features: [audioFeature],
     onError: noop,
   });
 
   const target = new MockMedia();
   store.attach(target);
 
-  return { store, target };
+  return { store: store as TestStore, target };
 }
 
 /** Creates store with custom key feature (name !== key) for testing superseding. */
-export function createCustomKeyTestStore(): { store: Store<MockMedia, [CustomKeyFeature]>; target: MockMedia } {
+export function createCustomKeyTestStore(): { store: CustomKeyStore; target: MockMedia } {
   const store = createCoreStore({
-    features: [customKeyFeature] as [AnyFeature],
+    features: [customKeyFeature],
     onError: noop,
   });
 
   const target = new MockMedia();
   store.attach(target);
 
-  return { store, target };
+  return { store: store as CustomKeyStore, target };
 }
 
 // For mixin tests - creates lit store factory

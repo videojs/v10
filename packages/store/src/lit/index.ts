@@ -1,9 +1,4 @@
-export type { AsyncStatus } from './controllers';
-export {
-  SnapshotController,
-  StoreController,
-  SubscriptionController,
-} from './controllers';
+export { StoreController, SubscriptionController } from './controllers';
 export type {
   CreateStoreConfig,
   CreateStoreHost,
@@ -22,3 +17,6 @@ export {
 export type { StoreSource } from './store-accessor';
 // StoreAccessor (for custom controllers)
 export { StoreAccessor, type StoreAccessorHost } from './store-accessor';
+
+// Types
+export type { StoreConsumer, StoreProvider } from './types';

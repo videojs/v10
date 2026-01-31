@@ -1,42 +1,21 @@
+import { createStore } from '@videojs/store';
+import { noop } from '@videojs/utils/function';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { PlaybackState } from '../playback';
 import { playbackFeature } from '../playback';
 
+const mockState = () =>
+  ({
+    paused: true,
+    ended: false,
+    started: false,
+    waiting: false,
+    play: noop,
+    pause: noop,
+  }) as unknown as PlaybackState;
+
 describe('playbackFeature', () => {
-  describe('feature structure', () => {
-    it('has unique id symbol', () => {
-      expect(playbackFeature.id).toBeTypeOf('symbol');
-    });
-
-    it('has correct initial state', () => {
-      expect(playbackFeature.initialState).toEqual({
-        paused: true,
-        ended: false,
-        started: false,
-        waiting: false,
-      });
-    });
-
-    it('has all request handlers', () => {
-      expect(playbackFeature.request.play).toBeDefined();
-      expect(playbackFeature.request.pause).toBeDefined();
-    });
-
-    it('request handlers have correct structure', () => {
-      expect(playbackFeature.request.play).toMatchObject({
-        key: 'play',
-        guard: [],
-        handler: expect.any(Function),
-      });
-
-      expect(playbackFeature.request.pause).toMatchObject({
-        key: 'pause',
-        guard: [],
-        handler: expect.any(Function),
-      });
-    });
-  });
-
   describe('getSnapshot', () => {
     it('captures current playback state from video element', () => {
       const video = createMockVideo({
@@ -48,7 +27,8 @@ describe('playbackFeature', () => {
 
       const snapshot = playbackFeature.getSnapshot({
         target: video,
-        initialState: playbackFeature.initialState,
+        get: mockState,
+        initialState: mockState(),
       });
 
       expect(snapshot).toEqual({
@@ -67,7 +47,8 @@ describe('playbackFeature', () => {
 
       const snapshot = playbackFeature.getSnapshot({
         target: video,
-        initialState: playbackFeature.initialState,
+        get: mockState,
+        initialState: mockState(),
       });
 
       expect(snapshot.waiting).toBe(true);
@@ -81,7 +62,8 @@ describe('playbackFeature', () => {
 
       const snapshot = playbackFeature.getSnapshot({
         target: video,
-        initialState: playbackFeature.initialState,
+        get: mockState,
+        initialState: mockState(),
       });
 
       expect(snapshot.started).toBe(true);
@@ -95,7 +77,8 @@ describe('playbackFeature', () => {
 
       const snapshot = playbackFeature.getSnapshot({
         target: video,
-        initialState: playbackFeature.initialState,
+        get: mockState,
+        initialState: mockState(),
       });
 
       expect(snapshot.started).toBe(true);
@@ -108,7 +91,12 @@ describe('playbackFeature', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      playbackFeature.subscribe({ target: video, update, signal: controller.signal });
+      playbackFeature.subscribe({
+        target: video,
+        update,
+        signal: controller.signal,
+        get: mockState,
+      });
       video.dispatchEvent(new Event('play'));
 
       expect(update).toHaveBeenCalled();
@@ -119,7 +107,12 @@ describe('playbackFeature', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      playbackFeature.subscribe({ target: video, update, signal: controller.signal });
+      playbackFeature.subscribe({
+        target: video,
+        update,
+        signal: controller.signal,
+        get: mockState,
+      });
       video.dispatchEvent(new Event('pause'));
 
       expect(update).toHaveBeenCalled();
@@ -130,7 +123,12 @@ describe('playbackFeature', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      playbackFeature.subscribe({ target: video, update, signal: controller.signal });
+      playbackFeature.subscribe({
+        target: video,
+        update,
+        signal: controller.signal,
+        get: mockState,
+      });
       video.dispatchEvent(new Event('ended'));
 
       expect(update).toHaveBeenCalled();
@@ -141,7 +139,12 @@ describe('playbackFeature', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      playbackFeature.subscribe({ target: video, update, signal: controller.signal });
+      playbackFeature.subscribe({
+        target: video,
+        update,
+        signal: controller.signal,
+        get: mockState,
+      });
       controller.abort();
       video.dispatchEvent(new Event('play'));
 
@@ -149,35 +152,29 @@ describe('playbackFeature', () => {
     });
   });
 
-  describe('request handlers', () => {
-    describe('play', () => {
-      it('calls play on target', async () => {
-        const video = createMockVideo({});
-        video.play = vi.fn().mockResolvedValue(undefined);
+  describe('actions', () => {
+    it('play() calls play on target', async () => {
+      const video = createMockVideo({});
+      video.play = vi.fn().mockResolvedValue(undefined);
 
-        await playbackFeature.request.play.handler(undefined, {
-          target: video,
-          signal: new AbortController().signal,
-          meta: null,
-        });
+      const store = createStore({ features: [playbackFeature] });
+      store.attach(video);
 
-        expect(video.play).toHaveBeenCalled();
-      });
+      await store.play();
+
+      expect(video.play).toHaveBeenCalled();
     });
 
-    describe('pause', () => {
-      it('calls pause on target', () => {
-        const video = createMockVideo({});
-        video.pause = vi.fn();
+    it('pause() calls pause on target', () => {
+      const video = createMockVideo({});
+      video.pause = vi.fn();
 
-        playbackFeature.request.pause.handler(undefined, {
-          target: video,
-          signal: new AbortController().signal,
-          meta: null,
-        });
+      const store = createStore({ features: [playbackFeature] });
+      store.attach(video);
 
-        expect(video.pause).toHaveBeenCalled();
-      });
+      store.pause();
+
+      expect(video.pause).toHaveBeenCalled();
     });
   });
 });

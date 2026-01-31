@@ -7,7 +7,8 @@ import { noop } from '@videojs/utils/function';
 import { isNull } from '@videojs/utils/predicate';
 import type { Constructor, Mixin } from '@videojs/utils/types';
 import type { AnyFeature, UnionFeatureTarget } from '../../core/feature';
-import type { Store, StoreConsumer } from '../../core/store';
+import type { Store } from '../../core/store';
+import type { StoreConsumer } from '../types';
 
 /**
  * Creates a mixin that consumes a store from context and auto-attaches media elements.
@@ -26,9 +27,9 @@ import type { Store, StoreConsumer } from '../../core/store';
  * ```
  */
 export function createContainerMixin<Features extends AnyFeature[]>(
-  context: Context<unknown, Store<UnionFeatureTarget<Features>, Features>>
+  context: Context<unknown, Store<Features>>
 ): Mixin<ReactiveElement, StoreConsumer<Features>> {
-  type ConsumedStore = Store<UnionFeatureTarget<Features>, Features>;
+  type ConsumedStore = Store<Features>;
 
   return <Base extends Constructor<ReactiveElement>>(BaseClass: Base) => {
     class StoreAttachElement extends BaseClass implements StoreConsumer<Features> {

@@ -1,159 +1,118 @@
-import type { UnionToIntersection } from '@videojs/utils/types';
-import type {
-  Request,
-  RequestConfig,
-  RequestConfigMap,
-  RequestHandler,
-  ResolvedRequestConfigMap,
-  ResolveRequestHandler,
-  ResolveRequestMap,
-} from './request';
+import { isObject } from '@videojs/utils/predicate';
+import type { Simplify, UnionToIntersection } from '@videojs/utils/types';
+import type { TaskKey, TaskMode } from './queue';
+import type { RequestMeta } from './request';
 
-import { resolveRequests } from './request';
+const FEATURE_SYMBOL = Symbol('@videojs/feature');
 
 // ----------------------------------------
-// Types
+// Task
 // ----------------------------------------
 
-export type AnyFeature<Target = any> = Feature<Target, any, any>;
+export type Task<Target, State extends object> = {
+  <Output>(handler: TaskHandler<Target, State, Output>): Promise<Awaited<Output>>;
+  <Output>(options: TaskOptions<Target, State, Output>): Promise<Awaited<Output>>;
+};
 
-export interface Feature<Target, State extends object, Requests extends { [K in keyof Requests]: Request<any, any> }> {
-  readonly id: symbol;
-  readonly initialState: State;
-  readonly getSnapshot: FeatureGetSnapshot<Target, State>;
-  readonly subscribe: FeatureSubscribe<Target, State>;
-  readonly request: ResolvedRequestConfigMap<Target, Requests>;
+export interface TaskOptions<Target, State extends object, Output> {
+  key?: TaskKey;
+  mode?: TaskMode;
+  cancels?: TaskKey[];
+  handler: TaskHandler<Target, State, Output>;
 }
 
-export type FeatureGetSnapshot<Target, State> = (ctx: FeatureGetSnapshotContext<Target, State>) => State;
+export type TaskHandler<Target, State extends object, Output> = (ctx: TaskContext<Target, State>) => Output;
 
-export interface FeatureGetSnapshotContext<Target, State> {
+export interface TaskContext<Target, State extends object> {
   target: Target;
-  initialState: State;
-}
-
-export type FeatureSubscribe<Target, State extends object> = (ctx: FeatureSubscribeContext<Target, State>) => void;
-
-export interface FeatureSubscribeContext<Target, _State extends object> {
-  target: Target;
-  update: FeatureUpdate;
   signal: AbortSignal;
-}
-
-/** Sync feature state from target via getSnapshot. */
-export type FeatureUpdate = () => void;
-
-export interface FeatureConfig<
-  Target,
-  State extends object,
-  Requests extends { [K in keyof Requests]: Request<any, any> },
-> {
-  initialState: State;
-  getSnapshot: FeatureGetSnapshot<Target, State>;
-  subscribe: FeatureSubscribe<Target, State>;
-  request: RequestConfigMap<Target, Requests>;
+  get: () => Readonly<State>;
+  meta: RequestMeta | null;
 }
 
 // ----------------------------------------
-// Type Inference
+// Sync Config
 // ----------------------------------------
 
-export type InferFeatureTarget<S> = S extends Feature<infer T, any, any> ? T : never;
+export type GetSnapshot<Target, State extends object> = (ctx: GetSnapshotContext<Target, State>) => Partial<State>;
 
-export type InferFeatureState<S> = S extends Feature<any, infer State, any> ? State : never;
+export interface GetSnapshotContext<Target, State extends object> {
+  target: Target;
+  get: () => Readonly<State>;
+  initialState: Readonly<State>;
+}
 
-export type InferFeatureRequests<S> = S extends Feature<any, any, infer R> ? { [K in keyof R]: R[K] } : never;
+export type Subscribe<Target, State extends object> = (ctx: SubscribeContext<Target, State>) => void;
 
-export type ResolveFeatureRequestHandlers<S> =
-  S extends Feature<any, any, infer R> ? { [K in keyof R]: ResolveRequestHandler<R[K]> } : never;
+export interface SubscribeContext<Target, State extends object> {
+  target: Target;
+  update: () => void;
+  signal: AbortSignal;
+  get: () => Readonly<State>;
+}
+
+// ----------------------------------------
+// Feature Context
+// ----------------------------------------
+
+export interface FeatureContext<Target, State extends object> {
+  task: Task<Target, State>;
+  get: () => Readonly<State>;
+  target: () => Target;
+}
+
+/** Context passed to state factory - uses loose types to enable State inference. */
+export interface StateFactoryContext<Target> {
+  task: Task<Target, any>;
+  get: () => Readonly<object>;
+  target: () => Target;
+}
+
+// ----------------------------------------
+// Feature
+// ----------------------------------------
+
+export type StateFactory<Target, State extends object> = (ctx: StateFactoryContext<Target>) => State;
+
+export interface FeatureConfig<Target, State extends object> {
+  state: StateFactory<Target, State>;
+  getSnapshot: GetSnapshot<Target, State>;
+  subscribe: Subscribe<Target, State>;
+}
+
+export interface Feature<Target, State extends object> extends FeatureConfig<Target, State> {
+  [FEATURE_SYMBOL]: true;
+}
+
+export type AnyFeature<Target = any> = Feature<Target, any>;
+
+// ----------------------------------------
+// Factory
+// ----------------------------------------
+
+export function defineFeature<Target>(): <State extends object>(
+  config: FeatureConfig<Target, State>
+) => Feature<Target, State> {
+  return <State extends object>(config: FeatureConfig<Target, State>): Feature<Target, State> => ({
+    [FEATURE_SYMBOL]: true,
+    ...config,
+  });
+}
+
+export function isFeature(value: unknown): value is AnyFeature {
+  return isObject(value) && FEATURE_SYMBOL in value;
+}
+
+// ----------------------------------------
+// Inference
+// ----------------------------------------
+
+export type InferFeatureTarget<F> = F extends Feature<infer Target, any> ? Target : never;
+
+export type InferFeatureState<F> = F extends Feature<any, infer State> ? State : never;
 
 export type UnionFeatureTarget<Features extends AnyFeature[]> = InferFeatureTarget<Features[number]>;
 
-export type UnionFeatureState<Features extends Feature<any, any, any>[]> = UnionToIntersection<
-  InferFeatureState<Features[number]>
+export type UnionFeatureState<Features extends AnyFeature[]> = Simplify<
+  UnionToIntersection<InferFeatureState<Features[number]>>
 >;
-
-export type UnionFeatureRequests<Features extends Feature<any, any, any>[]> = UnionToIntersection<
-  ResolveFeatureRequestHandlers<Features[number]>
->;
-
-// ----------------------------------------
-// createFeature
-// ----------------------------------------
-
-export type FeatureFactory<Target> = <
-  State extends object,
-  const Requests extends Record<string, RequestHandler<Target, any, any> | RequestConfig<Target, any, any>>,
->(config: {
-  initialState: State;
-  getSnapshot: (ctx: FeatureGetSnapshotContext<Target, State>) => State;
-  subscribe: (ctx: FeatureSubscribeContext<Target, State>) => void;
-  request: Requests;
-}) => Feature<Target, State, ResolveRequestMap<Requests>>;
-
-export type FeatureFactoryResult<Target, Config> = Config extends {
-  initialState: infer S extends object;
-  request: infer R;
-}
-  ? Feature<Target, S, ResolveRequestMap<R>>
-  : never;
-
-/**
- * Create a feature for a target type.
- *
- * @example
- * // Curried form - infers state and requests from config
- * const audioFeature = createFeature<HTMLVideoElement>()({
- *   ...
- * });
- *
- * @example
- * // Explicit types
- * interface AudioState {
- *   volume: number;
- *   muted: boolean
- * }
- *
- * interface AudioRequests {
- *   setVolume: Request<number>;
- *   setMuted: Request<boolean>;
- * }
- * const audioFeature = createFeature<HTMLVideoElement, AudioState, AudioRequests>({...});
- */
-export function createFeature<Target>(): FeatureFactory<Target>;
-
-export function createFeature<
-  Target,
-  State extends object,
-  Requests extends { [K in keyof Requests]: Request<any, any> },
->(config: FeatureConfig<Target, State, Requests>): Feature<Target, State, Requests>;
-
-export function createFeature<
-  Target,
-  State extends object = any,
-  Requests extends { [K in keyof Requests]: Request<any, any> } = any,
->(config?: FeatureConfig<Target, State, Requests>): Feature<Target, State, Requests> | FeatureFactory<Target> {
-  if (arguments.length === 0) {
-    return (<
-      S extends object,
-      const R extends Record<string, RequestHandler<Target, any, any> | RequestConfig<Target, any, any>>,
-    >(config: {
-      initialState: S;
-      getSnapshot: (ctx: FeatureGetSnapshotContext<Target, S>) => S;
-      subscribe: (ctx: FeatureSubscribeContext<Target, S>) => void;
-      request: R;
-    }) => _createFeature(config)) as FeatureFactory<Target>;
-  }
-
-  return _createFeature(config!);
-}
-
-function _createFeature<Target, State extends object, Requests extends { [K in keyof Requests]: Request<any, any> }>(
-  config: FeatureConfig<Target, State, Requests>
-): Feature<Target, State, Requests> {
-  return {
-    id: Symbol('@videojs/feature'),
-    ...config,
-    request: resolveRequests(config.request),
-  };
-}

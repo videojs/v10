@@ -17,7 +17,7 @@ describe('createProviderMixin', () => {
     await el.updateComplete;
 
     expect(el.store).toBeDefined();
-    expect(el.store.state).toEqual({ volume: 1, muted: false });
+    expect(el.store.state).toMatchObject({ volume: 1, muted: false });
   });
 
   it('reuses same store instance', async () => {

@@ -1,9 +1,9 @@
 import type { Context } from '@lit/context';
 import type { ReactiveElement } from '@lit/reactive-element';
 import type { Constructor, Mixin } from '@videojs/utils/types';
-import type { AnyFeature, UnionFeatureTarget } from '../../core/feature';
-
-import type { Store, StoreProvider } from '../../core/store';
+import type { AnyFeature } from '../../core/feature';
+import type { Store } from '../../core/store';
+import type { StoreProvider } from '../types';
 
 import { createContainerMixin } from './container-mixin';
 import { createProviderMixin } from './provider-mixin';
@@ -26,8 +26,8 @@ import { createProviderMixin } from './provider-mixin';
  * ```
  */
 export function createStoreMixin<Features extends AnyFeature[]>(
-  context: Context<unknown, Store<UnionFeatureTarget<Features>, Features>>,
-  factory: () => Store<UnionFeatureTarget<Features>, Features>
+  context: Context<unknown, Store<Features>>,
+  factory: () => Store<Features>
 ): Mixin<ReactiveElement, StoreProvider<Features>> {
   const ProviderMixin = createProviderMixin<Features>(context, factory);
   const ContainerMixin = createContainerMixin<Features>(context);

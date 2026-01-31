@@ -1,343 +1,304 @@
-import { abortable } from '@videojs/utils/events';
-import { isNull } from '@videojs/utils/predicate';
+import type { EventLike } from '@videojs/utils/events';
+import { isFunction, isNull, isObject } from '@videojs/utils/predicate';
+import type { PendingTask, StoreConfig } from './config';
 import { StoreError } from './errors';
-import type { AnyFeature, FeatureUpdate, UnionFeatureRequests, UnionFeatureState, UnionFeatureTarget } from './feature';
-
-import { Queue } from './queue';
-import type { RequestMeta, RequestMetaInit, ResolvedRequestConfig } from './request';
-import { CANCEL_ALL, createRequestMeta, resolveRequestCancel, resolveRequestKey } from './request';
+import type {
+  AnyFeature,
+  StateFactoryContext,
+  TaskContext,
+  TaskHandler,
+  TaskOptions,
+  UnionFeatureState,
+  UnionFeatureTarget,
+} from './feature';
+import { CANCEL_ALL, Queue } from './queue';
+import type { RequestMeta, RequestMetaInit } from './request';
+import { createRequestMeta, createRequestMetaFromEvent } from './request';
 import type { StateChange, WritableState } from './state';
 import { createState } from './state';
 
-export class Store<Target, Features extends AnyFeature<Target>[] = AnyFeature<Target>[]> {
-  readonly #config: StoreConfig<Target, Features>;
-  readonly #features: Features;
-  readonly #queue: Queue;
-  readonly #request: UnionFeatureRequests<Features>;
-  readonly #requestConfigs: Map<string, ResolvedRequestConfig<Target>>;
-  readonly #setupAbort = new AbortController();
-  readonly #state: WritableState<UnionFeatureState<Features> & object>;
+const STORE_SYMBOL = Symbol('@videojs/store');
 
-  #target: Target | null = null;
-  #attachAbort: AbortController | null = null;
-  #destroyed = false;
+export function createStore<Features extends AnyFeature[]>(config: StoreConfig<Features>): Store<Features> {
+  type Target = UnionFeatureTarget<Features>;
+  type State = UnionFeatureState<Features>;
 
-  constructor(config: StoreConfig<Target, Features>) {
-    this.#config = config;
-    this.#features = config.features;
+  const { features } = config;
 
-    this.#queue = new Queue();
-    this.#state = createState(this.#createInitialState() as UnionFeatureState<Features> & object);
+  // Closure state
+  let target: Target | null = null;
+  let destroyed = false;
+  let attachAbort: AbortController | null = null;
 
-    this.#requestConfigs = this.#buildRequestConfigs();
-    this.#request = this.#buildRequestProxy();
+  const setupAbort = new AbortController();
+  const queue = new Queue();
+  const pending: Record<string, PendingTask> = {};
 
-    try {
-      config.onSetup?.({
-        store: this,
-        signal: this.#setupAbort.signal,
-      });
-    } catch (error) {
-      this.#handleError({ error });
-    }
+  // Reactive state - initialized after building features
+  let state: WritableState<State>;
+
+  const ctx: StateFactoryContext<Target> = {
+    task: executeTask,
+    get: () => state.current,
+    target: () => {
+      if (!target) throw new StoreError('NO_TARGET');
+      return target;
+    },
+  };
+
+  const featureState = buildFeatureState(ctx);
+  state = createState(featureState);
+
+  const store = {
+    [STORE_SYMBOL]: true,
+    get target() {
+      return target;
+    },
+    get destroyed() {
+      return destroyed;
+    },
+    get pending() {
+      return pending;
+    },
+    get state() {
+      return state.current;
+    },
+    attach,
+    destroy,
+    subscribe,
+    meta,
+  } as unknown as Store<Features>;
+
+  for (const key of Object.keys(featureState)) {
+    Object.defineProperty(store, key, {
+      get: () => (state.current as Record<string, unknown>)[key],
+      enumerable: true,
+    });
   }
 
-  // ----------------------------------------
-  // Public Getters
-  // ----------------------------------------
+  // Proxy returned by meta() - wraps action calls to clear currentMeta after invocation
+  let currentMeta: RequestMeta | null = null;
+  const metaProxy = new Proxy(store, {
+    get(obj, prop) {
+      const value = Reflect.get(obj, prop);
 
-  get target(): Target | null {
-    return this.#target;
+      if (!isFunction(value)) return value;
+
+      return (...args: unknown[]) => {
+        try {
+          return (value as (...args: unknown[]) => unknown)(...args);
+        } finally {
+          currentMeta = null;
+        }
+      };
+    },
+  });
+
+  try {
+    config.onSetup?.({ store, signal: setupAbort.signal });
+  } catch (error) {
+    handleError(error);
   }
 
-  /** Current state snapshot. */
-  get state(): Readonly<UnionFeatureState<Features> & object> {
-    return this.#state.current;
-  }
+  return store;
 
-  get request(): UnionFeatureRequests<Features> {
-    return this.#request;
-  }
+  function attach(newTarget: Target): () => void {
+    if (destroyed) throw new StoreError('DESTROYED');
 
-  get features(): Features {
-    return this.#features;
-  }
+    attachAbort?.abort();
+    target = newTarget;
+    attachAbort = new AbortController();
+    const signal = attachAbort.signal;
 
-  get destroyed(): boolean {
-    return this.#destroyed;
-  }
+    state.patch(featureState);
 
-  // ----------------------------------------
-  // Attach / Detach
-  // ----------------------------------------
-
-  attach(newTarget: Target): () => void {
-    if (this.#destroyed) {
-      throw new StoreError('DESTROYED');
-    }
-
-    this.#attachAbort?.abort();
-
-    this.#target = newTarget;
-    this.#attachAbort = new AbortController();
-    const signal = this.#attachAbort.signal;
-
-    this.#resetState();
-
-    for (const feature of this.#features) {
+    for (const feature of features) {
       try {
-        const update = this.#createUpdate(feature);
-        feature.subscribe({ target: newTarget, update, signal });
+        feature.subscribe({
+          target: newTarget,
+          update: () => syncFeature(feature, newTarget),
+          signal,
+          get: () => state.current,
+        });
       } catch (error) {
-        this.#handleError({ error });
+        handleError(error);
       }
     }
 
-    this.#syncAllFeatures();
+    syncAll();
 
     try {
-      this.#config.onAttach?.({
-        store: this,
-        target: newTarget,
-        signal,
-      });
+      config.onAttach?.({ store, target: newTarget, signal });
     } catch (error) {
-      this.#handleError({ error });
+      handleError(error);
     }
 
-    return () => this.#detach();
+    return detach;
   }
 
-  #createUpdate(feature: AnyFeature<Target>): FeatureUpdate {
-    return () => {
-      const target = this.#target;
-      if (target) this.#syncFeature(feature, target);
-    };
+  function detach(): void {
+    if (isNull(target)) return;
+    attachAbort?.abort();
+    attachAbort = null;
+    target = null;
+    queue.abort();
+    state.patch(featureState);
   }
 
-  #detach(): void {
-    if (isNull(this.#target)) return;
-    this.#attachAbort?.abort();
-    this.#attachAbort = null;
-    this.#target = null;
-    this.#queue.abort();
-    this.#resetState();
+  function destroy(): void {
+    if (destroyed) return;
+    destroyed = true;
+    detach();
+    setupAbort.abort();
+    queue.destroy();
   }
 
-  // ----------------------------------------
-  // Destroy
-  // ----------------------------------------
-
-  destroy(): void {
-    if (this.#destroyed) return;
-    this.#destroyed = true;
-    this.#detach();
-    this.#setupAbort.abort();
-    this.#queue.destroy();
+  function subscribe(callback: StateChange): () => void {
+    return state.subscribe(callback);
   }
 
-  // ----------------------------------------
-  // State
-  // ----------------------------------------
-
-  /** Subscribe to state changes. */
-  subscribe(callback: StateChange): () => void;
-
-  subscribe<K extends keyof UnionFeatureState<Features>>(keys: K[], callback: StateChange): () => void;
-
-  subscribe(first: StateChange | (keyof UnionFeatureState<Features>)[], second?: StateChange): () => void {
-    return this.#state.subscribe(first as (keyof UnionFeatureState<Features>)[], second as StateChange);
+  function meta(eventOrMeta: EventLike | RequestMetaInit): Store<Features> {
+    currentMeta =
+      'isTrusted' in eventOrMeta
+        ? createRequestMetaFromEvent(eventOrMeta as EventLike)
+        : createRequestMeta(eventOrMeta as RequestMetaInit);
+    return metaProxy as Store<Features>;
   }
 
-  #syncAllFeatures(): void {
-    const target = this.#target;
+  function buildFeatureState(ctx: StateFactoryContext<Target>): State {
+    const result: Record<string, unknown> = {};
+
+    for (const feature of features) {
+      const featureResult = feature.state(ctx);
+      Object.assign(result, featureResult);
+    }
+
+    return result as State;
+  }
+
+  function syncAll(): void {
     if (!target) return;
-
-    for (const feature of this.#features) {
-      this.#syncFeature(feature, target);
+    for (const feature of features) {
+      syncFeature(feature, target);
     }
   }
 
-  #syncFeature(feature: AnyFeature<Target>, target: Target): void {
+  function syncFeature(feature: AnyFeature<Target>, t: Target): void {
     try {
       const snapshot = feature.getSnapshot({
-        target,
-        initialState: feature.initialState,
+        target: t,
+        get: () => state.current,
+        initialState: featureState,
       });
-
-      this.#state.patch(snapshot);
+      state.patch(snapshot as Partial<State>);
     } catch (error) {
-      this.#handleError({ error });
+      handleError(error);
     }
   }
 
-  #createInitialState(): UnionFeatureState<Features> {
-    const initialState: Record<string, unknown> = {};
+  async function executeTask<Output>(handler: TaskHandler<Target, State, Output>): Promise<Awaited<Output>>;
+  async function executeTask<Output>(options: TaskOptions<Target, State, Output>): Promise<Awaited<Output>>;
+  async function executeTask<Output>(
+    handlerOrOptions: TaskHandler<Target, State, Output> | TaskOptions<Target, State, Output>
+  ): Promise<Awaited<Output>> {
+    if (destroyed) throw new StoreError('DESTROYED');
 
-    for (const feature of this.#features) {
-      Object.assign(initialState, feature.initialState);
-    }
+    const options: TaskOptions<Target, State, Output> = isFunction(handlerOrOptions)
+      ? { handler: handlerOrOptions }
+      : handlerOrOptions;
 
-    return initialState as UnionFeatureState<Features>;
-  }
+    const { key, mode = 'exclusive', cancels, handler } = options;
 
-  #resetState(): void {
-    this.#state.patch(this.#createInitialState() as Partial<UnionFeatureState<Features> & object>);
-  }
+    const meta = currentMeta;
+    currentMeta = null;
 
-  // ----------------------------------------
-  // Requests
-  // ----------------------------------------
-
-  #buildRequestConfigs(): Map<string, ResolvedRequestConfig<Target>> {
-    const configs = new Map<string, ResolvedRequestConfig<Target>>();
-
-    for (const feature of this.#features) {
-      for (const [name, config] of Object.entries(feature.request)) {
-        configs.set(name, config as ResolvedRequestConfig<Target>);
+    if (cancels) {
+      for (const cancelKey of cancels) {
+        if (cancelKey === CANCEL_ALL) {
+          queue.abort();
+        } else {
+          queue.abort(cancelKey);
+        }
       }
     }
 
-    return configs;
-  }
+    if (key) {
+      pending[key as string] = { key, meta, startedAt: Date.now() };
+      config.onTaskStart?.({ key, meta });
+    }
 
-  #buildRequestProxy(): UnionFeatureRequests<Features> {
-    const reqProxy: Record<string, (...args: any[]) => Promise<unknown>> = {};
+    const queueHandler = async ({ signal }: { signal: AbortSignal }) => {
+      if (!target) throw new StoreError('NO_TARGET');
 
-    for (const [name, config] of this.#requestConfigs) {
-      reqProxy[name] = (input?: unknown, meta?: RequestMetaInit) => {
-        if (this.#destroyed) {
-          return Promise.reject(new StoreError('DESTROYED'));
-        }
-
-        return this.#execute(name, config, input, meta ? createRequestMeta(meta) : null);
+      const ctx: TaskContext<Target, State> = {
+        target,
+        signal,
+        get: () => state.current,
+        meta,
       };
-    }
 
-    return reqProxy as UnionFeatureRequests<Features>;
-  }
-
-  async #execute(
-    _name: string,
-    config: ResolvedRequestConfig<Target>,
-    input: unknown,
-    meta: RequestMeta | null
-  ): Promise<unknown> {
-    const key = resolveRequestKey(config.key, input);
-
-    const cancel = resolveRequestCancel(config.cancel, input);
-    if (cancel === CANCEL_ALL) {
-      this.#queue.abort();
-    } else {
-      for (const requestName of cancel) {
-        this.#queue.abort(requestName);
-      }
-    }
-
-    const handler = async ({ signal }: { signal: AbortSignal }) => {
-      const target = this.#target;
-
-      if (!target) {
-        throw new StoreError('NO_TARGET');
-      }
-
-      for (const guard of config.guard) {
-        const result = await abortable(Promise.resolve(guard({ target, signal })), signal);
-
-        if (!result) {
-          throw new StoreError('REJECTED');
-        }
-      }
-
-      return config.handler(input, { target, signal, meta });
+      return handler(ctx);
     };
 
     try {
-      return await this.#queue.enqueue({
-        key,
-        mode: config.mode,
-        handler,
+      const result = await queue.enqueue({
+        key: key ?? Symbol('@videojs/task'),
+        mode,
+        handler: queueHandler,
       });
+
+      if (key) {
+        delete pending[key as string];
+        config.onTaskEnd?.({ key, meta });
+      }
+
+      return result as Awaited<Output>;
     } catch (error) {
-      this.#handleError({ error });
+      if (key) {
+        delete pending[key as string];
+        config.onTaskEnd?.({ key, meta, error });
+      }
+
+      handleError(error);
       throw error;
     }
   }
 
-  // ----------------------------------------
-  // Errors
-  // ----------------------------------------
-
-  #handleError(context: Omit<StoreErrorContext<Target, Features>, 'store'>): void {
-    if (this.#config.onError) {
-      this.#config.onError({ ...context, store: this });
+  function handleError(error: unknown): void {
+    if (config.onError) {
+      config.onError({ store, error });
     } else {
-      console.error('[vjs-store]', context.error);
+      console.error('[vjs-store]', error);
     }
   }
 }
 
 export function isStore(value: unknown): value is AnyStore {
-  return value instanceof Store;
-}
-
-// ----------------------------------------
-// Factory
-// ----------------------------------------
-
-export function createStore<Features extends AnyFeature[]>(
-  config: StoreConfig<UnionFeatureTarget<Features>, Features>
-): Store<UnionFeatureTarget<Features>, Features> {
-  return new Store(config);
+  return isObject(value) && STORE_SYMBOL in value;
 }
 
 // ----------------------------------------
 // Types
 // ----------------------------------------
 
-export type AnyStore<Target = any> = Store<Target, AnyFeature<Target>[]>;
-
-export type AnyStoreConfig = StoreConfig<any, AnyFeature[]>;
-
-export interface StoreConfig<Target, Features extends AnyFeature<Target>[]> {
-  features: Features;
-  onSetup?: (ctx: StoreSetupContext<Target, Features>) => void;
-  onAttach?: (ctx: StoreAttachContext<Target, Features>) => void;
-  onError?: (ctx: StoreErrorContext<Target, Features>) => void;
+export interface StoreAPI<Target, Features extends AnyFeature<Target>[]> {
+  readonly target: Target | null;
+  readonly destroyed: boolean;
+  readonly pending: Readonly<Record<string, PendingTask>>;
+  readonly state: UnionFeatureState<Features>;
+  attach(target: Target): () => void;
+  destroy(): void;
+  subscribe(callback: StateChange): () => void;
+  meta(eventOrMeta: EventLike | RequestMetaInit): this;
 }
 
-export interface StoreSetupContext<Target, Features extends AnyFeature<Target>[]> {
-  store: Store<Target, Features>;
-  signal: AbortSignal;
-}
+export type Store<Features extends AnyFeature[]> = StoreAPI<UnionFeatureTarget<Features>, Features> &
+  UnionFeatureState<Features>;
 
-export interface StoreAttachContext<Target, Features extends AnyFeature<Target>[]> {
-  store: Store<Target, Features>;
-  target: Target;
-  signal: AbortSignal;
-}
+export type AnyStore<Target = any> = StoreAPI<Target, AnyFeature<Target>[]>;
 
-export interface StoreErrorContext<Target, Features extends AnyFeature<Target>[]> {
-  store: Store<Target, Features>;
-  error: unknown;
-}
+export type InferStoreTarget<S extends AnyStore> = S extends StoreAPI<infer Target, any> ? Target : never;
 
-export interface StoreProvider<Features extends AnyFeature[]> {
-  store: Store<UnionFeatureTarget<Features>, Features>;
-}
-
-export interface StoreConsumer<Features extends AnyFeature[]> {
-  readonly store: Store<UnionFeatureTarget<Features>, Features> | null;
-}
-
-// ----------------------------------------
-// Type Inference
-// ----------------------------------------
-
-export type InferStoreTarget<S extends AnyStore> = S extends Store<infer Target> ? Target : never;
-
-export type InferStoreFeatures<S extends AnyStore> = S extends Store<any, infer Features> ? Features : never;
+export type InferStoreFeatures<S extends AnyStore> = S extends StoreAPI<any, infer Features> ? Features : never;
 
 export type InferStoreState<S extends AnyStore> = UnionFeatureState<InferStoreFeatures<S>>;
-
-export type InferStoreRequests<S extends AnyStore> = UnionFeatureRequests<InferStoreFeatures<S>>;

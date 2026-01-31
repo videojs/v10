@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createFeature } from '../../core/feature';
+import { defineFeature } from '../../core/feature';
 import { createStore } from '../create-store';
 import { TestBaseElement } from './test-utils';
 
@@ -11,8 +11,18 @@ describe('createStore', () => {
     muted = false;
   }
 
-  const audioFeature = createFeature<MockMedia>()({
-    initialState: { volume: 1, muted: false },
+  const audioFeature = defineFeature<MockMedia>()({
+    state: ({ task }) => ({
+      volume: 1,
+      muted: false,
+      setVolume(volume: number) {
+        return task(({ target }) => {
+          target.volume = volume;
+          target.dispatchEvent(new Event('volumechange'));
+          return volume;
+        });
+      },
+    }),
     getSnapshot: ({ target }) => ({
       volume: target.volume,
       muted: target.muted,
@@ -24,13 +34,6 @@ describe('createStore', () => {
         target.removeEventListener('volumechange', handler);
       });
     },
-    request: {
-      setVolume: (volume: number, { target }) => {
-        target.volume = volume;
-        target.dispatchEvent(new Event('volumechange'));
-        return volume;
-      },
-    },
   });
 
   describe('create', () => {
@@ -40,7 +43,7 @@ describe('createStore', () => {
       const store = create();
 
       expect(store).toBeDefined();
-      expect(store.state).toEqual({ volume: 1, muted: false });
+      expect(store.state).toMatchObject({ volume: 1, muted: false });
     });
 
     it('creates independent store instances', () => {

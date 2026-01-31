@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createFeature } from '../feature';
+import { defineFeature } from '../feature';
 import { flush } from '../state';
 import { createStore } from '../store';
 
@@ -14,8 +14,23 @@ describe('store', () => {
     pause = vi.fn();
   }
 
-  const audioFeature = createFeature<MockMedia>()({
-    initialState: { volume: 1, muted: false },
+  const audioFeature = defineFeature<MockMedia>()({
+    state: ({ task }) => ({
+      volume: 1,
+      muted: false,
+      setVolume(volume: number) {
+        return task(({ target }) => {
+          target.volume = volume;
+          target.dispatchEvent(new Event('volumechange'));
+        });
+      },
+      setMuted(muted: boolean) {
+        return task(({ target }) => {
+          target.muted = muted;
+          target.dispatchEvent(new Event('volumechange'));
+        });
+      },
+    }),
     getSnapshot: ({ target }) => ({
       volume: target.volume,
       muted: target.muted,
@@ -26,38 +41,32 @@ describe('store', () => {
         target.removeEventListener('volumechange', update);
       });
     },
-    request: {
-      setVolume: (volume: number, { target }) => {
-        target.volume = volume;
-        target.dispatchEvent(new Event('volumechange'));
-      },
-      setMuted: (muted: boolean, { target }) => {
-        target.muted = muted;
-        target.dispatchEvent(new Event('volumechange'));
-      },
-    },
   });
 
-  const playbackFeature = createFeature<MockMedia>()({
-    initialState: { paused: true },
+  const playbackFeature = defineFeature<MockMedia>()({
+    state: ({ task }) => ({
+      paused: true,
+      play() {
+        return task({
+          key: 'playback',
+          async handler({ target }) {
+            target.play();
+            target.paused = false;
+          },
+        });
+      },
+      pause() {
+        return task({
+          key: 'playback',
+          async handler({ target }) {
+            target.pause();
+            target.paused = true;
+          },
+        });
+      },
+    }),
     getSnapshot: ({ target }) => ({ paused: target.paused }),
     subscribe: () => {},
-    request: {
-      play: {
-        key: 'playback',
-        async handler(_, { target }) {
-          target.play();
-          target.paused = false;
-        },
-      },
-      pause: {
-        key: 'playback',
-        async handler(_, { target }) {
-          target.pause();
-          target.paused = true;
-        },
-      },
-    },
   });
 
   describe('creation', () => {
@@ -66,7 +75,7 @@ describe('store', () => {
         features: [audioFeature, playbackFeature],
       });
 
-      expect(store.state).toEqual({
+      expect(store.state).toMatchObject({
         volume: 1,
         muted: false,
         paused: true,
@@ -99,7 +108,7 @@ describe('store', () => {
 
       store.attach(media);
 
-      expect(store.state).toEqual({ volume: 0.5, muted: true });
+      expect(store.state).toMatchObject({ volume: 0.5, muted: true });
       expect(store.target).toBe(media);
     });
 
@@ -169,8 +178,8 @@ describe('store', () => {
     });
   });
 
-  describe('request', () => {
-    it('executes request on target', async () => {
+  describe('actions', () => {
+    it('executes action on target', async () => {
       const store = createStore({
         features: [audioFeature],
       });
@@ -178,7 +187,7 @@ describe('store', () => {
       const media = new MockMedia();
       store.attach(media);
 
-      await store.request.setVolume(0.5);
+      await store.setVolume(0.5);
 
       expect(media.volume).toBe(0.5);
     });
@@ -186,23 +195,23 @@ describe('store', () => {
     it('throws StoreError without target', async () => {
       const store = createStore({
         features: [audioFeature],
-        onError: () => {}, // silence errors
+        onError: () => {},
       });
 
-      await expect(store.request.setVolume(0.5)).rejects.toMatchObject({ code: 'NO_TARGET' });
+      await expect(store.setVolume(0.5)).rejects.toMatchObject({ code: 'NO_TARGET' });
     });
 
-    it('coordinates requests with same key', async () => {
+    it('coordinates actions with same key', async () => {
       const store = createStore({
         features: [playbackFeature],
-        onError: () => {}, // silence errors
+        onError: () => {},
       });
 
       const media = new MockMedia();
       store.attach(media);
 
-      const playPromise = store.request.play();
-      const pausePromise = store.request.pause();
+      const playPromise = store.play();
+      const pausePromise = store.pause();
 
       await expect(playPromise).rejects.toMatchObject({ code: 'SUPERSEDED' });
       await pausePromise;
@@ -210,20 +219,23 @@ describe('store', () => {
       expect(media.paused).toBe(true);
     });
 
-    it('accepts metadata', async () => {
-      const handlerSpy = vi.fn();
+    it('passes meta to handler', async () => {
+      let receivedMeta: unknown = null;
 
-      const feature = createFeature<MockMedia>()({
-        initialState: {},
-        getSnapshot: () => ({}),
-        subscribe: () => {},
-        request: {
-          action: {
-            handler: (_, ctx) => {
-              handlerSpy(ctx.meta);
-            },
+      const feature = defineFeature<MockMedia>()({
+        state: ({ task }) => ({
+          value: 0,
+          action() {
+            return task({
+              key: 'action',
+              handler({ meta }) {
+                receivedMeta = meta;
+              },
+            });
           },
-        },
+        }),
+        getSnapshot: () => ({ value: 0 }),
+        subscribe: () => {},
       });
 
       const store = createStore({
@@ -232,17 +244,86 @@ describe('store', () => {
 
       store.attach(new MockMedia());
 
-      await store.request.action(undefined, {
+      await store.meta({ source: 'user', reason: 'test' }).action();
+
+      expect(receivedMeta).toMatchObject({
         source: 'user',
         reason: 'test',
       });
+    });
 
-      expect(handlerSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          source: 'user',
-          reason: 'test',
-        })
-      );
+    it('clears meta after action without task()', async () => {
+      let receivedMeta: unknown = 'not-called';
+
+      const feature = defineFeature<MockMedia>()({
+        state: ({ task }) => ({
+          value: 0,
+          // Sync action that doesn't use task()
+          syncAction() {
+            // Does nothing with meta
+          },
+          // Action that uses task() to capture meta
+          asyncAction() {
+            return task({
+              key: 'async',
+              handler({ meta }) {
+                receivedMeta = meta;
+              },
+            });
+          },
+        }),
+        getSnapshot: () => ({ value: 0 }),
+        subscribe: () => {},
+      });
+
+      const store = createStore({
+        features: [feature],
+      });
+
+      store.attach(new MockMedia());
+
+      // Call sync action with meta - meta should be cleared after
+      store.meta({ source: 'user', reason: 'sync' }).syncAction();
+
+      // Call async action without meta - should NOT receive leaked meta
+      await store.asyncAction();
+
+      expect(receivedMeta).toBeNull();
+    });
+
+    it('isolates meta between chained calls', async () => {
+      const receivedMetas: unknown[] = [];
+
+      const feature = defineFeature<MockMedia>()({
+        state: ({ task }) => ({
+          value: 0,
+          action() {
+            return task({
+              key: 'action',
+              handler({ meta }) {
+                receivedMetas.push(meta);
+              },
+            });
+          },
+        }),
+        getSnapshot: () => ({ value: 0 }),
+        subscribe: () => {},
+      });
+
+      const store = createStore({
+        features: [feature],
+      });
+
+      store.attach(new MockMedia());
+
+      await store.meta({ source: 'first' }).action();
+      await store.meta({ source: 'second' }).action();
+      await store.action(); // No meta
+
+      expect(receivedMetas).toHaveLength(3);
+      expect(receivedMetas[0]).toMatchObject({ source: 'first' });
+      expect(receivedMetas[1]).toMatchObject({ source: 'second' });
+      expect(receivedMetas[2]).toBeNull();
     });
   });
 
@@ -258,7 +339,7 @@ describe('store', () => {
       const listener = vi.fn();
       store.subscribe(listener);
 
-      await store.request.setVolume(0.5);
+      await store.setVolume(0.5);
       flush();
 
       expect(listener).toHaveBeenCalled();
@@ -277,7 +358,7 @@ describe('store', () => {
       const unsubscribe = store.subscribe(listener);
       unsubscribe();
 
-      await store.request.setVolume(0.5);
+      await store.setVolume(0.5);
       flush();
 
       expect(listener).not.toHaveBeenCalled();
@@ -298,7 +379,7 @@ describe('store', () => {
       expect(store.target).toBeNull();
     });
 
-    it('rejects requests after destroy', async () => {
+    it('rejects actions after destroy', async () => {
       const store = createStore({
         features: [audioFeature],
       });
@@ -306,23 +387,25 @@ describe('store', () => {
       store.attach(new MockMedia());
       store.destroy();
 
-      await expect(store.request.setVolume(0.5)).rejects.toThrow();
+      await expect(store.setVolume(0.5)).rejects.toThrow();
     });
   });
 
   describe('error handling', () => {
-    it('calls onError for request errors', async () => {
+    it('calls onError for action errors', async () => {
       const onError = vi.fn();
 
-      const failingFeature = createFeature<MockMedia>()({
-        initialState: {},
-        getSnapshot: () => ({}),
-        subscribe: () => {},
-        request: {
-          fail: () => {
-            throw new Error('request failed');
+      const failingFeature = defineFeature<MockMedia>()({
+        state: ({ task }) => ({
+          value: 0,
+          fail() {
+            return task(() => {
+              throw new Error('action failed');
+            });
           },
-        },
+        }),
+        getSnapshot: () => ({ value: 0 }),
+        subscribe: () => {},
       });
 
       const store = createStore({
@@ -332,7 +415,7 @@ describe('store', () => {
 
       store.attach(new MockMedia());
 
-      await store.request.fail().catch(() => {});
+      await store.fail().catch(() => {});
 
       expect(onError).toHaveBeenCalledWith(
         expect.objectContaining({

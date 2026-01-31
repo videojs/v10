@@ -1,20 +1,15 @@
-import type { InferFeatureRequests, InferFeatureState } from '@videojs/store';
+import type { InferFeatureState } from '@videojs/store';
 
-import { createFeature } from '@videojs/store';
+import { defineFeature } from '@videojs/store';
 import { listen, serializeTimeRanges } from '@videojs/utils/dom';
 
-/**
- * Buffer feature for HTMLMediaElement.
- *
- * Tracks buffered and seekable time ranges. Read-only (no requests).
- */
-export const bufferFeature = createFeature<HTMLMediaElement>()({
-  initialState: {
+export const bufferFeature = defineFeature<HTMLMediaElement>()({
+  state: () => ({
     /** Buffered time ranges as [start, end] tuples. */
     buffered: [] as [number, number][],
     /** Seekable time ranges as [start, end] tuples. */
     seekable: [] as [number, number][],
-  },
+  }),
 
   getSnapshot: ({ target }) => ({
     buffered: serializeTimeRanges(target.buffered),
@@ -25,10 +20,6 @@ export const bufferFeature = createFeature<HTMLMediaElement>()({
     listen(target, 'progress', update, { signal });
     listen(target, 'emptied', update, { signal });
   },
-
-  request: {},
 });
 
 export type BufferState = InferFeatureState<typeof bufferFeature>;
-
-export type BufferRequests = InferFeatureRequests<typeof bufferFeature>;

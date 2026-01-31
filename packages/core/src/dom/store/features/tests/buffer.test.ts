@@ -3,23 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { bufferFeature } from '../buffer';
 
 describe('bufferFeature', () => {
-  describe('feature structure', () => {
-    it('has unique id symbol', () => {
-      expect(bufferFeature.id).toBeTypeOf('symbol');
-    });
-
-    it('has correct initial state', () => {
-      expect(bufferFeature.initialState).toEqual({
-        buffered: [],
-        seekable: [],
-      });
-    });
-
-    it('has no request handlers', () => {
-      expect(Object.keys(bufferFeature.request)).toHaveLength(0);
-    });
-  });
-
   describe('getSnapshot', () => {
     it('captures buffered and seekable ranges from video element', () => {
       const video = createMockVideo({
@@ -29,7 +12,8 @@ describe('bufferFeature', () => {
 
       const snapshot = bufferFeature.getSnapshot({
         target: video,
-        initialState: bufferFeature.initialState,
+        get: () => ({ buffered: [], seekable: [] }),
+        initialState: { buffered: [], seekable: [] },
       });
 
       expect(snapshot).toEqual({
@@ -49,7 +33,8 @@ describe('bufferFeature', () => {
 
       const snapshot = bufferFeature.getSnapshot({
         target: video,
-        initialState: bufferFeature.initialState,
+        get: () => ({ buffered: [], seekable: [] }),
+        initialState: { buffered: [], seekable: [] },
       });
 
       expect(snapshot.buffered).toEqual([
@@ -68,7 +53,12 @@ describe('bufferFeature', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      bufferFeature.subscribe({ target: video, update, signal: controller.signal });
+      bufferFeature.subscribe({
+        target: video,
+        update,
+        signal: controller.signal,
+        get: () => ({ buffered: [], seekable: [] }),
+      });
       video.dispatchEvent(new Event('progress'));
 
       expect(update).toHaveBeenCalled();
@@ -82,7 +72,12 @@ describe('bufferFeature', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      bufferFeature.subscribe({ target: video, update, signal: controller.signal });
+      bufferFeature.subscribe({
+        target: video,
+        update,
+        signal: controller.signal,
+        get: () => ({ buffered: [], seekable: [] }),
+      });
       video.dispatchEvent(new Event('emptied'));
 
       expect(update).toHaveBeenCalled();

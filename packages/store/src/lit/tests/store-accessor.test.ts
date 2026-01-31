@@ -59,6 +59,7 @@ describe('StoreAccessor', () => {
   describe('context source', () => {
     it('returns null when context not yet provided', () => {
       const host = createTestHost();
+
       // Use a symbol as context (this is what createContext returns)
       const fakeContext = Symbol('test-context') as any;
 

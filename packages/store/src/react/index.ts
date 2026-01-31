@@ -6,4 +6,4 @@ export type {
 } from './create-store';
 export { createStore } from './create-store';
 
-export { useSnapshot, useStore } from './hooks';
+export { useStore } from './hooks';

@@ -1,20 +1,27 @@
-import type { InferFeatureRequests, InferFeatureState } from '@videojs/store';
+import type { InferFeatureState } from '@videojs/store';
 
-import { createFeature } from '@videojs/store';
+import { CANCEL_ALL, defineFeature } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
-/**
- * Source feature for HTMLMediaElement.
- *
- * Tracks current source and loading state, provides source change control.
- */
-export const sourceFeature = createFeature<HTMLMediaElement>()({
-  initialState: {
+export const sourceFeature = defineFeature<HTMLMediaElement>()({
+  state: ({ task }) => ({
     /** Current media source URL (null if none). */
     source: null as string | null,
     /** Whether enough data is loaded to begin playback. */
     canPlay: false,
-  },
+    /** Load a new media source. Cancels all pending operations. Returns the new source URL. */
+    loadSource(src: string) {
+      return task({
+        key: 'source',
+        cancels: [CANCEL_ALL],
+        handler({ target }) {
+          target.src = src;
+          target.load();
+          return src;
+        },
+      });
+    },
+  }),
 
   getSnapshot: ({ target }) => ({
     source: target.currentSrc || target.src || null,
@@ -27,17 +34,6 @@ export const sourceFeature = createFeature<HTMLMediaElement>()({
     listen(target, 'loadstart', update, { signal });
     listen(target, 'emptied', update, { signal });
   },
-
-  request: {
-    /** Change media source and begin loading. Returns the new source URL. */
-    changeSource: (src: string, { target }) => {
-      target.src = src;
-      target.load();
-      return src;
-    },
-  },
 });
 
 export type SourceState = InferFeatureState<typeof sourceFeature>;
-
-export type SourceRequests = InferFeatureRequests<typeof sourceFeature>;

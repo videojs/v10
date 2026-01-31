@@ -48,8 +48,7 @@ All store-related controllers live in `@videojs/store/lit`. See that package for
 
 ```ts
 class MyElement extends ReactiveElement {
-  #state = new SnapshotController(this, store.state);
-  #play = new RequestController(this, context, 'play');
+  #store = new StoreController(this, context);
 }
 ```
 
@@ -71,10 +70,10 @@ Internal utility that resolves a store from either a direct instance or context.
 
 ```ts
 // Direct store — value available immediately
-const state = new SnapshotController(this, store.state);
+const store = new StoreController(this, store);
 
-// Context — value available after context resolves via StateController from createStore
-const state = new StateController(this);
+// Context — value available after context resolves
+const store = new StoreController(this, context);
 ```
 
 Controllers handle both cases transparently. The `StoreAccessor`:
@@ -90,7 +89,7 @@ Controllers handle both cases transparently. The `StoreAccessor`:
 Always export an explicit host type for controllers and mixins:
 
 ```ts
-export type SnapshotControllerHost = ReactiveControllerHost & HTMLElement;
+export type StoreControllerHost = ReactiveControllerHost & HTMLElement;
 export type ProviderMixinHost = ReactiveElement & EventTarget;
 ```
 
@@ -104,15 +103,28 @@ export type ProviderMixinHost = ReactiveElement & EventTarget;
 
 Mixins are for **store provision only**, not behavior. Behavior goes in controllers.
 
-### createStoreProviderMixin
+### Store Mixins
 
-Creates a mixin that provides a store via context:
+`createStore()` returns mixins for different use cases:
 
 ```ts
-const { StoreProviderMixin } = createStore({ features: [playbackFeature] });
+const { StoreMixin, ProviderMixin, ContainerMixin } = createStore({
+  features: [playbackFeature],
+});
 
-class MyPlayer extends StoreProviderMixin(ReactiveElement) {
+// StoreMixin: provides store AND auto-attaches slotted media
+class MyPlayer extends StoreMixin(ReactiveElement) {
+  // Store provided to all descendants, media auto-attached
+}
+
+// ProviderMixin: provides store only (no auto-attach)
+class MyProvider extends ProviderMixin(ReactiveElement) {
   // Store provided to all descendants
+}
+
+// ContainerMixin: consumes store from context, auto-attaches media
+class MyControls extends ContainerMixin(ReactiveElement) {
+  // Inherits store from parent provider
 }
 ```
 

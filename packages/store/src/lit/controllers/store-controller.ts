@@ -1,11 +1,11 @@
-import type { AnyStore, InferStoreRequests, InferStoreState } from '../../core/store';
+import type { AnyStore, InferStoreState } from '../../core/store';
 import type { StoreSource } from '../store-accessor';
 import type { SubscriptionControllerHost } from './subscription-controller';
 import { SubscriptionController } from './subscription-controller';
 
 export type StoreControllerHost = SubscriptionControllerHost;
 
-export type StoreControllerValue<Store extends AnyStore> = InferStoreState<Store> & InferStoreRequests<Store>;
+export type StoreControllerValue<Store extends AnyStore> = InferStoreState<Store>;
 
 /**
  * Subscribes to store state changes.
@@ -44,7 +44,7 @@ export class StoreController<Store extends AnyStore> {
   constructor(host: StoreControllerHost, source: StoreSource<Store>) {
     this.#sub = new SubscriptionController(host, source, {
       subscribe: (store, onChange) => store.subscribe(onChange),
-      getValue: (store) => ({ ...store.state, ...store.request }) as StoreControllerValue<Store>,
+      getValue: (store) => store as unknown as StoreControllerValue<Store>,
     });
   }
 

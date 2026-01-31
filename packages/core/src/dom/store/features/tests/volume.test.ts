@@ -1,26 +1,19 @@
+import { createStore } from '@videojs/store';
+import { noop } from '@videojs/utils/function';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { VolumeState } from '../volume';
 import { volumeFeature } from '../volume';
 
+const mockState = () =>
+  ({
+    volume: 1,
+    muted: false,
+    changeVolume: noop,
+    toggleMute: noop,
+  }) as unknown as VolumeState;
+
 describe('volumeFeature', () => {
-  describe('feature structure', () => {
-    it('has unique id symbol', () => {
-      expect(volumeFeature.id).toBeTypeOf('symbol');
-    });
-
-    it('has correct initial state', () => {
-      expect(volumeFeature.initialState).toEqual({
-        volume: 1,
-        muted: false,
-      });
-    });
-
-    it('has all request handlers', () => {
-      expect(volumeFeature.request.changeVolume).toBeDefined();
-      expect(volumeFeature.request.toggleMute).toBeDefined();
-    });
-  });
-
   describe('getSnapshot', () => {
     it('captures volume state from video element', () => {
       const video = createMockVideo({
@@ -30,7 +23,8 @@ describe('volumeFeature', () => {
 
       const snapshot = volumeFeature.getSnapshot({
         target: video,
-        initialState: volumeFeature.initialState,
+        get: mockState,
+        initialState: mockState(),
       });
 
       expect(snapshot).toEqual({
@@ -46,75 +40,70 @@ describe('volumeFeature', () => {
       const update = vi.fn();
       const controller = new AbortController();
 
-      volumeFeature.subscribe({ target: video, update, signal: controller.signal });
+      volumeFeature.subscribe({
+        target: video,
+        update,
+        signal: controller.signal,
+        get: mockState,
+      });
       video.dispatchEvent(new Event('volumechange'));
 
       expect(update).toHaveBeenCalled();
     });
   });
 
-  describe('request handlers', () => {
+  describe('actions', () => {
     describe('changeVolume', () => {
-      it('sets volume on target', () => {
+      it('sets volume on target', async () => {
         const video = createMockVideo({});
+        const store = createStore({ features: [volumeFeature] });
+        store.attach(video);
 
-        const result = volumeFeature.request.changeVolume.handler(0.7, {
-          target: video,
-          signal: new AbortController().signal,
-          meta: null,
-        });
+        const result = await store.changeVolume(0.7);
 
         expect(video.volume).toBe(0.7);
         expect(result).toBe(0.7);
       });
 
-      it('clamps volume to min 0', () => {
+      it('clamps volume to min 0', async () => {
         const video = createMockVideo({});
+        const store = createStore({ features: [volumeFeature] });
+        store.attach(video);
 
-        volumeFeature.request.changeVolume.handler(-0.5, {
-          target: video,
-          signal: new AbortController().signal,
-          meta: null,
-        });
+        await store.changeVolume(-0.5);
 
         expect(video.volume).toBe(0);
       });
 
-      it('clamps volume to max 1', () => {
+      it('clamps volume to max 1', async () => {
         const video = createMockVideo({});
+        const store = createStore({ features: [volumeFeature] });
+        store.attach(video);
 
-        volumeFeature.request.changeVolume.handler(1.5, {
-          target: video,
-          signal: new AbortController().signal,
-          meta: null,
-        });
+        await store.changeVolume(1.5);
 
         expect(video.volume).toBe(1);
       });
     });
 
     describe('toggleMute', () => {
-      it('toggles mute from false to true', () => {
+      it('toggles mute from false to true', async () => {
         const video = createMockVideo({ muted: false });
+        const store = createStore({ features: [volumeFeature] });
+        store.attach(video);
 
-        const result = volumeFeature.request.toggleMute.handler(undefined, {
-          target: video,
-          signal: new AbortController().signal,
-          meta: null,
-        });
+        const result = await store.toggleMute();
 
         expect(video.muted).toBe(true);
         expect(result).toBe(true);
       });
 
-      it('toggles mute from true to false', () => {
+      it('toggles mute from true to false', async () => {
         const video = createMockVideo({ muted: true });
+        const store = createStore({ features: [volumeFeature] });
+        store.attach(video);
 
-        const result = volumeFeature.request.toggleMute.handler(undefined, {
-          target: video,
-          signal: new AbortController().signal,
-          meta: null,
-        });
+        const result = await store.toggleMute();
 
         expect(video.muted).toBe(false);
         expect(result).toBe(false);

@@ -3,8 +3,14 @@ import type { ReactNode } from 'react';
 
 import { describe, expect, it } from 'vitest';
 
-import { createFeature } from '../../core/feature';
+import { defineFeature } from '../../core/feature';
 import { createStore } from '../create-store';
+
+interface AudioState {
+  volume: number;
+  muted: boolean;
+  setVolume: (volume: number) => Promise<number>;
+}
 
 describe('createStore', () => {
   // Mock target
@@ -13,8 +19,18 @@ describe('createStore', () => {
     muted = false;
   }
 
-  const audioFeature = createFeature<MockMedia>()({
-    initialState: { volume: 1, muted: false },
+  const audioFeature = defineFeature<MockMedia>()({
+    state: ({ task }) => ({
+      volume: 1,
+      muted: false,
+      setVolume(volume: number) {
+        return task(({ target }) => {
+          target.volume = volume;
+          target.dispatchEvent(new Event('volumechange'));
+          return volume;
+        });
+      },
+    }),
     getSnapshot: ({ target }) => ({
       volume: target.volume,
       muted: target.muted,
@@ -25,13 +41,6 @@ describe('createStore', () => {
         target.removeEventListener('volumechange', update);
       });
     },
-    request: {
-      setVolume: (volume: number, { target }) => {
-        target.volume = volume;
-        target.dispatchEvent(new Event('volumechange'));
-        return volume;
-      },
-    },
   });
 
   describe('create', () => {
@@ -41,7 +50,7 @@ describe('createStore', () => {
       const store = create();
 
       expect(store).toBeDefined();
-      expect(store.state).toEqual({ volume: 1, muted: false });
+      expect(store.state).toMatchObject({ volume: 1, muted: false });
     });
   });
 
@@ -49,7 +58,7 @@ describe('createStore', () => {
     it('creates store on mount', () => {
       const { Provider, useStore } = createStore({ features: [audioFeature] });
 
-      const { result } = renderHook(() => useStore(), {
+      const { result } = renderHook(() => useStore() as AudioState, {
         wrapper: ({ children }: { children: ReactNode }) => <Provider>{children}</Provider>,
       });
 
@@ -85,7 +94,7 @@ describe('createStore', () => {
   });
 
   describe('useStore', () => {
-    it('returns state and request functions from context', () => {
+    it('returns state and action functions from context', () => {
       const { Provider, useStore, create } = createStore({
         features: [audioFeature],
       });
@@ -93,7 +102,7 @@ describe('createStore', () => {
       const target = new MockMedia();
       store.attach(target);
 
-      const { result } = renderHook(() => useStore(), {
+      const { result } = renderHook(() => useStore() as AudioState, {
         wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
       });
 
@@ -110,7 +119,7 @@ describe('createStore', () => {
       const target = new MockMedia();
       store.attach(target);
 
-      const { result } = renderHook(() => useStore(), {
+      const { result } = renderHook(() => useStore() as AudioState, {
         wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
       });
 

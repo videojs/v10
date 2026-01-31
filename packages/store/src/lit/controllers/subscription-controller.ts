@@ -55,7 +55,7 @@ export class SubscriptionController<Store extends AnyStore, Value> implements Re
     this.#config = config;
 
     if (isStore(source)) {
-      this.#directStore = source;
+      this.#directStore = source as Store;
       this.#consumer = null;
     } else {
       this.#directStore = null;
