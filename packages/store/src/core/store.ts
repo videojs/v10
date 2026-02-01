@@ -38,7 +38,7 @@ export function createStore<Features extends AnyFeature[]>(config: StoreConfig<F
   // Reactive state - initialized after building features
   let state: WritableState<State>;
 
-  const stateFactoryCtx: StateFactoryContext<Target> = {
+  const stateFactoryContext: StateFactoryContext<Target> = {
     task: executeTask,
     target: () => {
       if (!target) throw new StoreError('NO_TARGET');
@@ -46,8 +46,8 @@ export function createStore<Features extends AnyFeature[]>(config: StoreConfig<F
     },
   };
 
-  const featureState = buildFeatureState(stateFactoryCtx);
-  state = createState(featureState);
+  const initialState = createInitialState(stateFactoryContext);
+  state = createState(initialState);
 
   const store = {
     [STORE_SYMBOL]: true,
@@ -69,7 +69,7 @@ export function createStore<Features extends AnyFeature[]>(config: StoreConfig<F
     meta,
   } as unknown as Store<Features>;
 
-  for (const key of Object.keys(featureState)) {
+  for (const key of Object.keys(initialState)) {
     Object.defineProperty(store, key, {
       get: () => (state.current as Record<string, unknown>)[key],
       enumerable: true,
@@ -111,7 +111,7 @@ export function createStore<Features extends AnyFeature[]>(config: StoreConfig<F
     const signal = attachAbort.signal;
 
     // Create attach context once, share across all features
-    const attachCtx: AttachContext<Target, State> = {
+    const attachContext: AttachContext<Target, State> = {
       target: newTarget,
       signal,
       get: () => state.current,
@@ -120,7 +120,7 @@ export function createStore<Features extends AnyFeature[]>(config: StoreConfig<F
 
     for (const feature of features) {
       try {
-        feature.attach?.(attachCtx);
+        feature.attach?.(attachContext);
       } catch (error) {
         handleError(error);
       }
@@ -141,7 +141,7 @@ export function createStore<Features extends AnyFeature[]>(config: StoreConfig<F
     attachAbort = null;
     target = null;
     queue.abort();
-    state.patch(featureState);
+    state.patch(initialState);
   }
 
   function destroy(): void {
@@ -164,7 +164,7 @@ export function createStore<Features extends AnyFeature[]>(config: StoreConfig<F
     return metaProxy as Store<Features>;
   }
 
-  function buildFeatureState(ctx: StateFactoryContext<Target>): State {
+  function createInitialState(ctx: StateFactoryContext<Target>): State {
     const result: Record<string, unknown> = {};
 
     for (const feature of features) {
