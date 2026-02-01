@@ -29,14 +29,15 @@ export const audioFeature = defineFeature<MockMedia>()({
       });
     },
   }),
-  getSnapshot: ({ target }) => ({
-    volume: target.volume,
-    muted: target.muted,
-  }),
-  subscribe: ({ target, update, signal }) => {
-    target.addEventListener('volumechange', update);
+
+  attach({ target, signal, set }) {
+    const sync = () => set({ volume: target.volume, muted: target.muted });
+
+    sync();
+
+    target.addEventListener('volumechange', sync);
     signal.addEventListener('abort', () => {
-      target.removeEventListener('volumechange', update);
+      target.removeEventListener('volumechange', sync);
     });
   },
 });
@@ -87,15 +88,15 @@ export const asyncAudioFeature = defineFeature<AsyncMockMedia>()({
       });
     },
   }),
-  getSnapshot: ({ target }) => ({
-    volume: target.volume,
-    muted: target.muted,
-  }),
-  subscribe: ({ target, update, signal }) => {
-    const handler = () => update();
-    target.addEventListener('volumechange', handler);
+
+  attach({ target, signal, set }) {
+    const sync = () => set({ volume: target.volume, muted: target.muted });
+
+    sync();
+
+    target.addEventListener('volumechange', sync);
     signal.addEventListener('abort', () => {
-      target.removeEventListener('volumechange', handler);
+      target.removeEventListener('volumechange', sync);
     });
   },
 });
@@ -142,15 +143,15 @@ export const customKeyFeature = defineFeature<MockMedia>()({
       });
     },
   }),
-  getSnapshot: ({ target }) => ({
-    volume: target.volume,
-    muted: target.muted,
-  }),
-  subscribe: ({ target, update, signal }) => {
-    const handler = () => update();
-    target.addEventListener('volumechange', handler);
+
+  attach({ target, signal, set }) {
+    const sync = () => set({ volume: target.volume, muted: target.muted });
+
+    sync();
+
+    target.addEventListener('volumechange', sync);
     signal.addEventListener('abort', () => {
-      target.removeEventListener('volumechange', handler);
+      target.removeEventListener('volumechange', sync);
     });
   },
 });

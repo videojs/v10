@@ -1,54 +1,38 @@
 import { createStore } from '@videojs/store';
-import { noop } from '@videojs/utils/function';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import type { VolumeState } from '../volume';
 import { volumeFeature } from '../volume';
 
-const mockState = () =>
-  ({
-    volume: 1,
-    muted: false,
-    changeVolume: noop,
-    toggleMute: noop,
-  }) as unknown as VolumeState;
-
 describe('volumeFeature', () => {
-  describe('getSnapshot', () => {
-    it('captures volume state from video element', () => {
+  describe('attach', () => {
+    it('syncs volume state on attach', () => {
       const video = createMockVideo({
         volume: 0.8,
         muted: false,
       });
 
-      const snapshot = volumeFeature.getSnapshot({
-        target: video,
-        get: mockState,
-        initialState: mockState(),
-      });
+      const store = createStore({ features: [volumeFeature] });
+      store.attach(video);
 
-      expect(snapshot).toEqual({
-        volume: 0.8,
-        muted: false,
-      });
+      expect(store.state.volume).toBe(0.8);
+      expect(store.state.muted).toBe(false);
     });
-  });
 
-  describe('subscribe', () => {
-    it('calls update on volumechange event', () => {
-      const video = createMockVideo({ volume: 0.5, muted: true });
-      const update = vi.fn();
-      const controller = new AbortController();
+    it('updates on volumechange event', () => {
+      const video = createMockVideo({ volume: 1, muted: false });
 
-      volumeFeature.subscribe({
-        target: video,
-        update,
-        signal: controller.signal,
-        get: mockState,
-      });
+      const store = createStore({ features: [volumeFeature] });
+      store.attach(video);
+
+      expect(store.state.volume).toBe(1);
+
+      // Update mock volume
+      video.volume = 0.5;
+      video.muted = true;
       video.dispatchEvent(new Event('volumechange'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.volume).toBe(0.5);
+      expect(store.state.muted).toBe(true);
     });
   });
 

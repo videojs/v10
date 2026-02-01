@@ -3,20 +3,15 @@ import { describe, expect, it, vi } from 'vitest';
 import { defineFeature, isFeature } from '../feature';
 
 describe('defineFeature', () => {
-  it('creates feature with create function and config', () => {
+  it('creates feature with state factory and optional attach', () => {
     interface Target {
       value: number;
     }
 
     const feature = defineFeature<Target>()({
-      state: ({ task, target }) => ({
-        // State
+      state: ({ task }) => ({
         count: 0,
-        // Actions
         increment(amount: number) {
-          target().value += amount;
-        },
-        asyncIncrement(amount: number) {
           return task({
             key: 'increment',
             handler: ({ target }) => {
@@ -25,16 +20,17 @@ describe('defineFeature', () => {
           });
         },
       }),
-      getSnapshot: ({ target }) => ({ count: target.value }),
-      subscribe: vi.fn(),
+
+      attach({ target, set }) {
+        set({ count: target.value });
+      },
     });
 
     expect(feature.state).toBeTypeOf('function');
-    expect(feature.getSnapshot).toBeTypeOf('function');
-    expect(feature.subscribe).toBeTypeOf('function');
+    expect(feature.attach).toBeTypeOf('function');
   });
 
-  it('factory receives task, get, and target helpers', () => {
+  it('factory receives task and target helpers', () => {
     interface Target {
       value: number;
     }
@@ -43,8 +39,6 @@ describe('defineFeature', () => {
 
     defineFeature<Target>()({
       state: factorySpy,
-      getSnapshot: () => ({ count: 0 }),
-      subscribe: () => {},
     });
 
     // Can't call the factory directly, but we can verify the shape
@@ -52,20 +46,23 @@ describe('defineFeature', () => {
     expect(factorySpy).not.toHaveBeenCalled();
   });
 
-  it('allows sync actions using target()', () => {
+  it('allows sync actions using task handler', () => {
     interface Target {
       volume: number;
     }
 
     const feature = defineFeature<Target>()({
-      state: ({ target }) => ({
+      state: ({ task }) => ({
         volume: 1,
         setVolume(value: number) {
-          target().volume = value;
+          return task({
+            key: 'volume',
+            handler: ({ target }) => {
+              target.volume = value;
+            },
+          });
         },
       }),
-      getSnapshot: ({ target }) => ({ volume: target.volume }),
-      subscribe: () => {},
     });
 
     expect(feature.state).toBeTypeOf('function');
@@ -86,8 +83,6 @@ describe('defineFeature', () => {
           });
         },
       }),
-      getSnapshot: () => ({ playing: false }),
-      subscribe: () => {},
     });
 
     expect(feature.state).toBeTypeOf('function');
@@ -109,11 +104,18 @@ describe('defineFeature', () => {
           });
         },
       }),
-      getSnapshot: () => ({ loading: false }),
-      subscribe: () => {},
     });
 
     expect(feature.state).toBeTypeOf('function');
+  });
+
+  it('attach is optional', () => {
+    const feature = defineFeature<HTMLVideoElement>()({
+      state: () => ({ playing: false }),
+    });
+
+    expect(feature.state).toBeTypeOf('function');
+    expect(feature.attach).toBeUndefined();
   });
 });
 
@@ -121,8 +123,6 @@ describe('isFeature', () => {
   it('returns true for features created with defineFeature', () => {
     const feature = defineFeature<HTMLVideoElement>()({
       state: () => ({ playing: false }),
-      getSnapshot: () => ({ playing: false }),
-      subscribe: () => {},
     });
 
     expect(isFeature(feature)).toBe(true);

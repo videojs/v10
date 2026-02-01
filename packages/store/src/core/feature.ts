@@ -31,40 +31,25 @@ export interface TaskContext<Target, State extends object> {
 }
 
 // ----------------------------------------
-// Sync Config
+// Attach
 // ----------------------------------------
 
-export type GetSnapshot<Target, State extends object> = (ctx: GetSnapshotContext<Target, State>) => Partial<State>;
+export type Attach<Target, State extends object> = (ctx: AttachContext<Target, State>) => void;
 
-export interface GetSnapshotContext<Target, State extends object> {
+export interface AttachContext<Target, State extends object> {
   target: Target;
-  get: () => Readonly<State>;
-  initialState: Readonly<State>;
-}
-
-export type Subscribe<Target, State extends object> = (ctx: SubscribeContext<Target, State>) => void;
-
-export interface SubscribeContext<Target, State extends object> {
-  target: Target;
-  update: () => void;
   signal: AbortSignal;
   get: () => Readonly<State>;
+  set: (partial: Partial<State>) => void;
 }
 
 // ----------------------------------------
 // Feature Context
 // ----------------------------------------
 
-export interface FeatureContext<Target, State extends object> {
-  task: Task<Target, State>;
-  get: () => Readonly<State>;
-  target: () => Target;
-}
-
 /** Context passed to state factory - uses loose types to enable State inference. */
 export interface StateFactoryContext<Target> {
   task: Task<Target, any>;
-  get: () => Readonly<object>;
   target: () => Target;
 }
 
@@ -76,8 +61,7 @@ export type StateFactory<Target, State extends object> = (ctx: StateFactoryConte
 
 export interface FeatureConfig<Target, State extends object> {
   state: StateFactory<Target, State>;
-  getSnapshot: GetSnapshot<Target, State>;
-  subscribe: Subscribe<Target, State>;
+  attach?: Attach<Target, State>;
 }
 
 export interface Feature<Target, State extends object> extends FeatureConfig<Target, State> {

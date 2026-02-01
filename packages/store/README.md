@@ -56,24 +56,16 @@ import { defineFeature } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
 const volumeFeature = defineFeature<HTMLMediaElement>()({
-  // State factory - returns initial state and actions
-  state: ({ task }) => ({
-    // State (plain values)
+  state: ({ task, target }) => ({
     volume: 1,
     muted: false,
 
-    // Action - async, tracked
-    changeVolume(volume: number) {
-      return task({
-        key: 'volume',
-        handler({ target }) {
-          target.volume = Math.max(0, Math.min(1, volume));
-          return target.volume;
-        },
-      });
+    // Sync - use target() directly
+    setVolume(value: number) {
+      target().volume = Math.max(0, Math.min(1, value));
     },
 
-    // Action - async, tracked
+    // Task - tracked, coordinated
     toggleMute() {
       return task({
         key: 'mute',
@@ -85,15 +77,12 @@ const volumeFeature = defineFeature<HTMLMediaElement>()({
     },
   }),
 
-  // Sync state from target
-  getSnapshot: ({ target }) => ({
-    volume: target.volume,
-    muted: target.muted,
-  }),
+  attach({ target, signal, set }) {
+    const sync = () => set({ volume: target.volume, muted: target.muted });
 
-  // Subscribe to target events
-  subscribe: ({ target, update, signal }) => {
-    listen(target, 'volumechange', update, { signal });
+    sync();
+
+    listen(target, 'volumechange', sync, { signal });
   },
 });
 ```
@@ -127,13 +116,13 @@ type MediaState = UnionFeatureState<typeof features>;
 
 ### Actions
 
-Actions modify the target. Use `task()` for async operations with tracking, or access the target directly for simple sync mutations.
+Actions modify the target. Use `task()` for operations—handlers receive `target` directly.
 
 ```ts
-state: ({ task, target }) => ({
+state: ({ task }) => ({
   volume: 1,
 
-  // Async action with tracking
+  // Action with tracking (has key)
   changeVolume(volume: number) {
     return task({
       key: 'volume',
@@ -144,12 +133,7 @@ state: ({ task, target }) => ({
     });
   },
 
-  // Sync action - direct target access
-  setVolumeDirect(volume: number) {
-    target().volume = volume;
-  },
-
-  // Async action - fire-and-forget (no tracking)
+  // Fire-and-forget (no key)
   logVolume() {
     return task(({ target }) => {
       console.log('Current volume:', target.volume);
@@ -424,7 +408,6 @@ All store errors include a `code` for programmatic handling:
 | ------------ | ---------------------------- |
 | `ABORTED`    | Task aborted via signal      |
 | `DESTROYED`  | Store destroyed              |
-| `DETACHED`   | Target detached              |
 | `NO_TARGET`  | No target attached           |
 | `SUPERSEDED` | Replaced by same-key task    |
 
@@ -475,8 +458,8 @@ const state = createState({ volume: 1, muted: false });
 // Read via .current
 const { volume } = state.current; // 1
 
-// Mutate via set() or patch() - changes are auto-batched
-state.set('volume', 0.5);
+// Mutate via patch() - changes are auto-batched
+state.patch({ volume: 0.5 });
 state.patch({ volume: 0.5, muted: true });
 // Only ONE notification fires (after microtask)
 
@@ -493,58 +476,13 @@ isState(state); // true
 flush();
 ```
 
-### Capability Checking
-
-Features can expose capability via state. UI components check before rendering.
-
-```ts
-const qualityFeature = defineFeature<Media>()({
-  state: ({ task }) => ({
-    supported: false,
-    levels: [] as QualityLevel[],
-    currentLevel: -1,
-
-    setLevel(index: number) {
-      return task({
-        key: 'quality',
-        handler: ({ target }) => target.setQualityLevel(index),
-      });
-    },
-  }),
-
-  getSnapshot: ({ target, initialState }) => {
-    if (target.canSetVideoQuality) {
-      return {
-        supported: true,
-        levels: target.levels,
-        currentLevel: target.currentLevel,
-      };
-    }
-    return initialState; // supported: false
-  },
-
-  subscribe: ({ target, update, signal }) => {
-    target.addEventListener('qualitychange', update, { signal });
-  },
-});
-
-// UI checks capability
-function QualityMenu() {
-  const { supported, levels } = store;
-
-  if (!supported) return null;
-
-  return <Menu items={levels} />;
-}
-```
-
 ## How It's Different
 
 |                   | Redux/Zustand    | React Query           | @videojs/store             |
 | ----------------- | ---------------- | --------------------- | -------------------------- |
 | **Authority**     | You own state    | Server owns state     | External system owns state |
 | **Mutations**     | Sync reducers    | Async server requests | Async tasks to target      |
-| **State source**  | Internal store   | HTTP cache            | `getSnapshot` from target  |
+| **State source**  | Internal store   | HTTP cache            | Synced from target         |
 | **Subscriptions** | To store changes | To query cache        | To target events           |
 | **Use case**      | App state        | Server data           | Media, WebSocket, hardware |
 

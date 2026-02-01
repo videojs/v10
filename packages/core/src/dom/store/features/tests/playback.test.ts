@@ -1,23 +1,11 @@
 import { createStore } from '@videojs/store';
-import { noop } from '@videojs/utils/function';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { PlaybackState } from '../playback';
 import { playbackFeature } from '../playback';
 
-const mockState = () =>
-  ({
-    paused: true,
-    ended: false,
-    started: false,
-    waiting: false,
-    play: noop,
-    pause: noop,
-  }) as unknown as PlaybackState;
-
 describe('playbackFeature', () => {
-  describe('getSnapshot', () => {
-    it('captures current playback state from video element', () => {
+  describe('attach', () => {
+    it('syncs playback state on attach', () => {
       const video = createMockVideo({
         paused: false,
         ended: false,
@@ -25,18 +13,13 @@ describe('playbackFeature', () => {
         readyState: HTMLMediaElement.HAVE_ENOUGH_DATA,
       });
 
-      const snapshot = playbackFeature.getSnapshot({
-        target: video,
-        get: mockState,
-        initialState: mockState(),
-      });
+      const store = createStore({ features: [playbackFeature] });
+      store.attach(video);
 
-      expect(snapshot).toEqual({
-        paused: false,
-        ended: false,
-        started: true,
-        waiting: false,
-      });
+      expect(store.state.paused).toBe(false);
+      expect(store.state.ended).toBe(false);
+      expect(store.state.started).toBe(true);
+      expect(store.state.waiting).toBe(false);
     });
 
     it('detects waiting state when buffering', () => {
@@ -45,13 +28,10 @@ describe('playbackFeature', () => {
         readyState: HTMLMediaElement.HAVE_CURRENT_DATA,
       });
 
-      const snapshot = playbackFeature.getSnapshot({
-        target: video,
-        get: mockState,
-        initialState: mockState(),
-      });
+      const store = createStore({ features: [playbackFeature] });
+      store.attach(video);
 
-      expect(snapshot.waiting).toBe(true);
+      expect(store.state.waiting).toBe(true);
     });
 
     it('detects started from currentTime', () => {
@@ -60,13 +40,10 @@ describe('playbackFeature', () => {
         currentTime: 5,
       });
 
-      const snapshot = playbackFeature.getSnapshot({
-        target: video,
-        get: mockState,
-        initialState: mockState(),
-      });
+      const store = createStore({ features: [playbackFeature] });
+      store.attach(video);
 
-      expect(snapshot.started).toBe(true);
+      expect(store.state.started).toBe(true);
     });
 
     it('detects started from playing state', () => {
@@ -75,80 +52,71 @@ describe('playbackFeature', () => {
         currentTime: 0,
       });
 
-      const snapshot = playbackFeature.getSnapshot({
-        target: video,
-        get: mockState,
-        initialState: mockState(),
-      });
+      const store = createStore({ features: [playbackFeature] });
+      store.attach(video);
 
-      expect(snapshot.started).toBe(true);
+      expect(store.state.started).toBe(true);
     });
-  });
 
-  describe('subscribe', () => {
-    it('calls update on play event', () => {
-      const video = createMockVideo({});
-      const update = vi.fn();
-      const controller = new AbortController();
+    it('updates on play event', () => {
+      const video = createMockVideo({ paused: true });
 
-      playbackFeature.subscribe({
-        target: video,
-        update,
-        signal: controller.signal,
-        get: mockState,
-      });
+      const store = createStore({ features: [playbackFeature] });
+      store.attach(video);
+
+      expect(store.state.paused).toBe(true);
+
+      // Update mock to playing state
+      Object.defineProperty(video, 'paused', { value: false, writable: false, configurable: true });
       video.dispatchEvent(new Event('play'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.paused).toBe(false);
     });
 
-    it('calls update on pause event', () => {
-      const video = createMockVideo({});
-      const update = vi.fn();
-      const controller = new AbortController();
+    it('updates on pause event', () => {
+      const video = createMockVideo({ paused: false });
 
-      playbackFeature.subscribe({
-        target: video,
-        update,
-        signal: controller.signal,
-        get: mockState,
-      });
+      const store = createStore({ features: [playbackFeature] });
+      store.attach(video);
+
+      expect(store.state.paused).toBe(false);
+
+      // Update mock to paused state
+      Object.defineProperty(video, 'paused', { value: true, writable: false, configurable: true });
       video.dispatchEvent(new Event('pause'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.paused).toBe(true);
     });
 
-    it('calls update on ended event', () => {
-      const video = createMockVideo({});
-      const update = vi.fn();
-      const controller = new AbortController();
+    it('updates on ended event', () => {
+      const video = createMockVideo({ ended: false });
 
-      playbackFeature.subscribe({
-        target: video,
-        update,
-        signal: controller.signal,
-        get: mockState,
-      });
+      const store = createStore({ features: [playbackFeature] });
+      store.attach(video);
+
+      expect(store.state.ended).toBe(false);
+
+      // Update mock to ended state
+      Object.defineProperty(video, 'ended', { value: true, writable: false, configurable: true });
       video.dispatchEvent(new Event('ended'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.ended).toBe(true);
     });
 
-    it('unsubscribes when signal aborted', () => {
+    it('stops listening when store is destroyed', () => {
       const video = createMockVideo({});
-      const update = vi.fn();
-      const controller = new AbortController();
 
-      playbackFeature.subscribe({
-        target: video,
-        update,
-        signal: controller.signal,
-        get: mockState,
-      });
-      controller.abort();
+      const store = createStore({ features: [playbackFeature] });
+      store.attach(video);
+
+      store.destroy();
+
+      // Update mock to playing state
+      Object.defineProperty(video, 'paused', { value: false, writable: false, configurable: true });
       video.dispatchEvent(new Event('play'));
 
-      expect(update).not.toHaveBeenCalled();
+      // State should not update after destroy
+      expect(store.state.paused).toBe(true);
     });
   });
 
@@ -190,16 +158,16 @@ function createMockVideo(
   const video = document.createElement('video');
 
   if (overrides.paused !== undefined) {
-    Object.defineProperty(video, 'paused', { value: overrides.paused, writable: false });
+    Object.defineProperty(video, 'paused', { value: overrides.paused, writable: false, configurable: true });
   }
   if (overrides.ended !== undefined) {
-    Object.defineProperty(video, 'ended', { value: overrides.ended, writable: false });
+    Object.defineProperty(video, 'ended', { value: overrides.ended, writable: false, configurable: true });
   }
   if (overrides.currentTime !== undefined) {
     video.currentTime = overrides.currentTime;
   }
   if (overrides.readyState !== undefined) {
-    Object.defineProperty(video, 'readyState', { value: overrides.readyState, writable: false });
+    Object.defineProperty(video, 'readyState', { value: overrides.readyState, writable: false, configurable: true });
   }
 
   return video;

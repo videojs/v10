@@ -1,5 +1,8 @@
 # Feature API Redesign
 
+**Status:** COMPLETED  
+**Branch:** `refactor/store-feature-attach`
+
 Merge `getSnapshot` and `subscribe` into a single `attach` method with explicit `set()`.
 
 ## Overview

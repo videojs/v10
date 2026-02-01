@@ -21,15 +21,16 @@ describe('store lifecycle integration', () => {
           });
         },
       }),
-      getSnapshot: ({ target: t }) => ({ count: t.value }),
-      subscribe: ({ target: t, update, signal }) => {
-        events.push('subscribe');
-        t.addEventListener('change', update, { signal });
+
+      attach({ target: t, signal, set }) {
+        events.push('attach-feature');
+        set({ count: t.value });
+
+        t.addEventListener('change', () => set({ count: t.value }), { signal });
         signal.addEventListener('abort', () => events.push('unsubscribe'));
       },
     });
 
-    // Cast to any for test access to dynamic properties
     const store = createStore({
       features: [feature],
       onSetup: () => events.push('setup'),
@@ -42,7 +43,7 @@ describe('store lifecycle integration', () => {
     targetInstance.value = 5;
     const detach = store.attach(targetInstance);
 
-    expect(events).toEqual(['setup', 'subscribe', 'attach']);
+    expect(events).toEqual(['setup', 'attach-feature', 'attach']);
     expect(store.state.count).toBe(5);
 
     await store.increment();
@@ -93,8 +94,6 @@ describe('task coordination', () => {
           });
         },
       }),
-      getSnapshot: () => ({ loading: false }),
-      subscribe: () => {},
     });
 
     const store = createStore({
@@ -134,8 +133,6 @@ describe('task coordination', () => {
           });
         },
       }),
-      getSnapshot: () => ({ fetching: false }),
-      subscribe: () => {},
     });
 
     const store = createStore({ features: [feature] });
@@ -173,8 +170,6 @@ describe('task coordination', () => {
           });
         },
       }),
-      getSnapshot: () => ({ running: false }),
-      subscribe: () => {},
     });
 
     const store = createStore({
@@ -218,8 +213,6 @@ describe('task coordination', () => {
           });
         },
       }),
-      getSnapshot: () => ({ playing: false }),
-      subscribe: () => {},
     });
 
     const store = createStore({ features: [feature] });
@@ -251,8 +244,6 @@ describe('task coordination', () => {
           });
         },
       }),
-      getSnapshot: () => ({ playing: false }),
-      subscribe: () => {},
     });
 
     const store = createStore({
@@ -287,8 +278,6 @@ describe('task coordination', () => {
           });
         },
       }),
-      getSnapshot: () => ({ playing: false }),
-      subscribe: () => {},
     });
 
     const store = createStore({ features: [feature] });
@@ -312,14 +301,18 @@ describe('state syncing', () => {
   it('multiple features merge state correctly', () => {
     const audioFeature = defineFeature<{ volume: number; rate: number }>()({
       state: () => ({ volume: 1 }),
-      getSnapshot: ({ target }) => ({ volume: target.volume }),
-      subscribe: () => {},
+
+      attach({ target, set }) {
+        set({ volume: target.volume });
+      },
     });
 
     const playbackFeature = defineFeature<{ volume: number; rate: number }>()({
       state: () => ({ rate: 1 }),
-      getSnapshot: ({ target }) => ({ rate: target.rate }),
-      subscribe: () => {},
+
+      attach({ target, set }) {
+        set({ rate: target.rate });
+      },
     });
 
     const store = createStore({
@@ -355,9 +348,11 @@ describe('immediate execution', () => {
           });
         },
       }),
-      getSnapshot: ({ target }) => ({ paused: target.paused }),
-      subscribe: ({ target, update, signal }) => {
-        target.addEventListener('play', update, { signal });
+
+      attach({ target, signal, set }) {
+        set({ paused: target.paused });
+
+        target.addEventListener('play', () => set({ paused: target.paused }), { signal });
       },
     });
 
@@ -390,8 +385,6 @@ describe('meta tracing', () => {
           });
         },
       }),
-      getSnapshot: () => ({ playing: false }),
-      subscribe: () => {},
     });
 
     const store = createStore({ features: [feature] });
@@ -420,8 +413,6 @@ describe('meta tracing', () => {
           });
         },
       }),
-      getSnapshot: () => ({ count: 0 }),
-      subscribe: () => {},
     });
 
     const store = createStore({
@@ -450,8 +441,6 @@ describe('meta tracing', () => {
           });
         },
       }),
-      getSnapshot: () => ({ loading: false }),
-      subscribe: () => {},
     });
 
     const store = createStore({ features: [feature] });
@@ -472,45 +461,47 @@ describe('meta tracing', () => {
 });
 
 describe('sync actions', () => {
-  it('target() allows sync mutations without task', () => {
+  it('task handler allows sync mutations', async () => {
     class Target {
       volume = 1;
     }
 
     const feature = defineFeature<Target>()({
-      state: ({ target }) => ({
+      state: ({ task }) => ({
         volume: 1,
         setVolume(value: number) {
-          target().volume = value;
+          return task(({ target }) => {
+            target.volume = value;
+          });
         },
       }),
-      getSnapshot: ({ target: t }) => ({ volume: t.volume }),
-      subscribe: () => {},
+
+      attach({ target: t, set }) {
+        set({ volume: t.volume });
+      },
     });
 
     const store = createStore({ features: [feature] });
     const targetInstance = new Target();
 
     store.attach(targetInstance);
-    store.setVolume(0.5);
+    await store.setVolume(0.5);
 
     expect(targetInstance.volume).toBe(0.5);
   });
 
-  it('target() throws when not attached', () => {
+  it('task throws when not attached', async () => {
     const feature = defineFeature<unknown>()({
-      state: ({ target }) => ({
+      state: ({ task }) => ({
         value: 0,
         doSomething() {
-          target();
+          return task(() => {});
         },
       }),
-      getSnapshot: () => ({ value: 0 }),
-      subscribe: () => {},
     });
 
     const store = createStore({ features: [feature] });
 
-    expect(() => store.doSomething()).toThrow('NO_TARGET');
+    await expect(store.doSomething()).rejects.toThrow('NO_TARGET');
   });
 });
