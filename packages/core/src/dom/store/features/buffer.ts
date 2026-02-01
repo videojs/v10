@@ -11,14 +11,17 @@ export const bufferFeature = defineFeature<HTMLMediaElement>()({
     seekable: [] as [number, number][],
   }),
 
-  getSnapshot: ({ target }) => ({
-    buffered: serializeTimeRanges(target.buffered),
-    seekable: serializeTimeRanges(target.seekable),
-  }),
+  attach({ target, signal, set }) {
+    const sync = () =>
+      set({
+        buffered: serializeTimeRanges(target.buffered),
+        seekable: serializeTimeRanges(target.seekable),
+      });
 
-  subscribe: ({ target, update, signal }) => {
-    listen(target, 'progress', update, { signal });
-    listen(target, 'emptied', update, { signal });
+    sync();
+
+    listen(target, 'progress', sync, { signal });
+    listen(target, 'emptied', sync, { signal });
   },
 });
 

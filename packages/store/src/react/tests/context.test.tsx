@@ -17,8 +17,9 @@ describe('context', () => {
     state: () => ({
       volume: 1,
     }),
-    getSnapshot: ({ target }) => ({ volume: target.volume }),
-    subscribe: () => {},
+    attach({ target, set }) {
+      set({ volume: target.volume });
+    },
   });
 
   describe('useStoreContext', () => {

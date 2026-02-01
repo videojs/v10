@@ -23,15 +23,15 @@ describe('createStore', () => {
         });
       },
     }),
-    getSnapshot: ({ target }) => ({
-      volume: target.volume,
-      muted: target.muted,
-    }),
-    subscribe: ({ target, update, signal }) => {
-      const handler = () => update();
-      target.addEventListener('volumechange', handler);
+
+    attach({ target, signal, set }) {
+      const sync = () => set({ volume: target.volume, muted: target.muted });
+
+      sync();
+
+      target.addEventListener('volumechange', sync);
       signal.addEventListener('abort', () => {
-        target.removeEventListener('volumechange', handler);
+        target.removeEventListener('volumechange', sync);
       });
     },
   });

@@ -318,29 +318,34 @@ Brief description of what state this feature manages.
 
 import { featureName } from '@videojs/core/dom';
 // or
-import { createFeature } from '@videojs/store';
+import { defineFeature } from '@videojs/store';
 
-const featureName = createFeature<HTMLMediaElement>()({
-initialState: {
-property1: defaultValue,
-property2: defaultValue,
-},
+const featureName = defineFeature<HTMLMediaElement>()({
+  state: ({ task }) => ({
+    property1: defaultValue,
+    property2: defaultValue,
 
-getSnapshot: ({ target }) => ({
-property1: target.property1,
-property2: target.property2,
-}),
+    actionName(input: InputType) {
+      return task({
+        key: 'actionKey',
+        handler({ target }) {
+          target.property = input;
+          return target.property;
+        },
+      });
+    },
+  }),
 
-subscribe: ({ target, update, signal }) => {
-listen(target, 'eventname', update, { signal });
-},
+  attach({ target, signal, set }) {
+    const sync = () => set({
+      property1: target.property1,
+      property2: target.property2,
+    });
 
-request: {
-requestName: (input, { target }) => {
-target.property = input;
-return target.property;
-},
-},
+    sync();
+
+    listen(target, 'eventname', sync, { signal });
+  },
 });
 
 ### State
@@ -350,11 +355,11 @@ return target.property;
 | `property1` | `type` | Description |
 | `property2` | `type` | Description |
 
-### Requests
+### Actions
 
-| Request       | Input       | Output       | Description  |
-| ------------- | ----------- | ------------ | ------------ |
-| `requestName` | `InputType` | `OutputType` | What it does |
+| Action       | Input       | Output       | Description  |
+| ------------ | ----------- | ------------ | ------------ |
+| `actionName` | `InputType` | `OutputType` | What it does |
 
 ### Type Inference
 

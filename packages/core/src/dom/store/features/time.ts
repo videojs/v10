@@ -23,17 +23,20 @@ export const timeFeature = defineFeature<HTMLMediaElement>()({
     },
   }),
 
-  getSnapshot: ({ target }) => ({
-    currentTime: target.currentTime,
-    duration: target.duration || 0,
-  }),
+  attach({ target, signal, set }) {
+    const sync = () =>
+      set({
+        currentTime: target.currentTime,
+        duration: target.duration || 0,
+      });
 
-  subscribe: ({ target, update, signal }) => {
-    listen(target, 'timeupdate', update, { signal });
-    listen(target, 'durationchange', update, { signal });
-    listen(target, 'seeked', update, { signal });
-    listen(target, 'loadedmetadata', update, { signal });
-    listen(target, 'emptied', update, { signal });
+    sync();
+
+    listen(target, 'timeupdate', sync, { signal });
+    listen(target, 'durationchange', sync, { signal });
+    listen(target, 'seeked', sync, { signal });
+    listen(target, 'loadedmetadata', sync, { signal });
+    listen(target, 'emptied', sync, { signal });
   },
 });
 

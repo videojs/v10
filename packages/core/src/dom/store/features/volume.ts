@@ -33,13 +33,12 @@ export const volumeFeature = defineFeature<HTMLMediaElement>()({
     },
   }),
 
-  getSnapshot: ({ target }) => ({
-    volume: target.volume,
-    muted: target.muted,
-  }),
+  attach({ target, signal, set }) {
+    const sync = () => set({ volume: target.volume, muted: target.muted });
 
-  subscribe: ({ target, update, signal }) => {
-    listen(target, 'volumechange', update, { signal });
+    sync();
+
+    listen(target, 'volumechange', sync, { signal });
   },
 });
 

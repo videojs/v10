@@ -23,35 +23,11 @@ describe('createState', () => {
       expect(state.current.muted).toBe(false);
     });
 
-    it('reflects changes after set', () => {
-      const state = createTestState();
-      state.set('volume', 0.5);
-      expect(state.current.volume).toBe(0.5);
-    });
-
     it('reflects changes after patch', () => {
       const state = createTestState();
       state.patch({ volume: 0.5, muted: true });
       expect(state.current.volume).toBe(0.5);
       expect(state.current.muted).toBe(true);
-    });
-  });
-
-  describe('set', () => {
-    it('updates a single key', () => {
-      const state = createTestState();
-      state.set('volume', 0.5);
-      expect(state.current.volume).toBe(0.5);
-    });
-
-    it('does not notify if value is the same', () => {
-      const state = createTestState();
-      const listener = vi.fn();
-      state.subscribe(listener);
-
-      state.set('volume', 1); // same as initial
-      flush();
-      expect(listener).not.toHaveBeenCalled();
     });
   });
 
@@ -81,7 +57,7 @@ describe('createState', () => {
       const listener = vi.fn();
       state.subscribe(listener);
 
-      state.set('volume', 0.5);
+      state.patch({ volume: 0.5 });
 
       expect(listener).not.toHaveBeenCalled();
       await Promise.resolve();
@@ -93,21 +69,21 @@ describe('createState', () => {
       const listener = vi.fn();
       state.subscribe(listener);
 
-      state.set('volume', 0.5);
+      state.patch({ volume: 0.5 });
       expect(listener).not.toHaveBeenCalled();
 
       flush();
       expect(listener).toHaveBeenCalledOnce();
     });
 
-    it('batches multiple mutations into one notification', () => {
+    it('batches multiple patches into one notification', () => {
       const state = createTestState();
       const listener = vi.fn();
       state.subscribe(listener);
 
-      state.set('volume', 0.5);
-      state.set('muted', true);
-      state.set('currentTime', 10);
+      state.patch({ volume: 0.5 });
+      state.patch({ muted: true });
+      state.patch({ currentTime: 10 });
 
       flush();
       expect(listener).toHaveBeenCalledOnce();
@@ -118,12 +94,12 @@ describe('createState', () => {
       const listener = vi.fn();
 
       const unsub = state.subscribe(listener);
-      state.set('volume', 0.5);
+      state.patch({ volume: 0.5 });
       flush();
       expect(listener).toHaveBeenCalledOnce();
 
       unsub();
-      state.set('volume', 0.3);
+      state.patch({ volume: 0.3 });
       flush();
       expect(listener).toHaveBeenCalledOnce(); // still 1
     });

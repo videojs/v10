@@ -6,28 +6,21 @@ export interface State<T extends object> {
 }
 
 export interface WritableState<T extends object> extends State<T> {
-  set: <K extends keyof T>(key: K, value: T[K]) => void;
   patch: (partial: Partial<T>) => void;
-  delete: <K extends keyof T>(key: K) => void;
 }
 
-let flushScheduled = false;
-
+let isFlushScheduled = false;
 function scheduleFlush(): void {
-  if (flushScheduled) return;
-  flushScheduled = true;
+  if (isFlushScheduled) return;
+  isFlushScheduled = true;
   queueMicrotask(flush);
 }
 
 const pendingContainers = new Set<StateContainer<any>>();
 
 export function flush(): void {
-  flushScheduled = false;
-
-  for (const container of pendingContainers) {
-    container.flush();
-  }
-
+  isFlushScheduled = false;
+  for (const container of pendingContainers) container.flush();
   pendingContainers.clear();
 }
 
@@ -46,21 +39,9 @@ class StateContainer<T extends object> implements WritableState<T> {
     return this.#current;
   }
 
-  set<K extends keyof T>(key: K, value: T[K]): void {
-    if (Object.is(this.#current[key], value)) return;
-    this.#current = Object.freeze({ ...this.#current, [key]: value });
-    this.#markPending();
-  }
-
-  delete<K extends keyof T>(key: K): void {
-    if (!(key in this.#current)) return;
-    const { [key]: _, ...rest } = this.#current;
-    this.#current = Object.freeze(rest as T);
-    this.#markPending();
-  }
-
   patch(partial: Partial<T>): void {
     const next = { ...this.#current };
+
     let changed = false;
 
     for (const key in partial) {
@@ -88,7 +69,6 @@ class StateContainer<T extends object> implements WritableState<T> {
   flush(): void {
     if (!this.#pending) return;
     this.#pending = false;
-
     for (const fn of this.#listeners) fn();
   }
 

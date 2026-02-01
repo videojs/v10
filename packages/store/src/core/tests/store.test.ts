@@ -31,14 +31,15 @@ describe('store', () => {
         });
       },
     }),
-    getSnapshot: ({ target }) => ({
-      volume: target.volume,
-      muted: target.muted,
-    }),
-    subscribe: ({ target, update, signal }) => {
-      target.addEventListener('volumechange', update);
+
+    attach({ target, signal, set }) {
+      const sync = () => set({ volume: target.volume, muted: target.muted });
+
+      sync();
+
+      target.addEventListener('volumechange', sync);
       signal.addEventListener('abort', () => {
-        target.removeEventListener('volumechange', update);
+        target.removeEventListener('volumechange', sync);
       });
     },
   });
@@ -65,8 +66,10 @@ describe('store', () => {
         });
       },
     }),
-    getSnapshot: ({ target }) => ({ paused: target.paused }),
-    subscribe: () => {},
+
+    attach({ target, set }) {
+      set({ paused: target.paused });
+    },
   });
 
   describe('creation', () => {
@@ -234,8 +237,6 @@ describe('store', () => {
             });
           },
         }),
-        getSnapshot: () => ({ value: 0 }),
-        subscribe: () => {},
       });
 
       const store = createStore({
@@ -272,8 +273,6 @@ describe('store', () => {
             });
           },
         }),
-        getSnapshot: () => ({ value: 0 }),
-        subscribe: () => {},
       });
 
       const store = createStore({
@@ -306,8 +305,6 @@ describe('store', () => {
             });
           },
         }),
-        getSnapshot: () => ({ value: 0 }),
-        subscribe: () => {},
       });
 
       const store = createStore({
@@ -404,8 +401,6 @@ describe('store', () => {
             });
           },
         }),
-        getSnapshot: () => ({ value: 0 }),
-        subscribe: () => {},
       });
 
       const store = createStore({

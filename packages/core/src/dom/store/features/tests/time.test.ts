@@ -1,35 +1,21 @@
 import { createStore } from '@videojs/store';
-import { noop } from '@videojs/utils/function';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import type { TimeState } from '../time';
 import { timeFeature } from '../time';
 
-const mockState = () =>
-  ({
-    currentTime: 0,
-    duration: 0,
-    seek: noop,
-  }) as unknown as TimeState;
-
 describe('timeFeature', () => {
-  describe('getSnapshot', () => {
-    it('captures current time state from video element', () => {
+  describe('attach', () => {
+    it('syncs time state on attach', () => {
       const video = createMockVideo({
         currentTime: 30,
         duration: 120,
       });
 
-      const snapshot = timeFeature.getSnapshot({
-        target: video,
-        get: mockState,
-        initialState: mockState(),
-      });
+      const store = createStore({ features: [timeFeature] });
+      store.attach(video);
 
-      expect(snapshot).toEqual({
-        currentTime: 30,
-        duration: 120,
-      });
+      expect(store.state.currentTime).toBe(30);
+      expect(store.state.duration).toBe(120);
     });
 
     it('handles NaN duration', () => {
@@ -38,79 +24,71 @@ describe('timeFeature', () => {
         duration: Number.NaN,
       });
 
-      const snapshot = timeFeature.getSnapshot({
-        target: video,
-        get: mockState,
-        initialState: mockState(),
-      });
+      const store = createStore({ features: [timeFeature] });
+      store.attach(video);
 
-      expect(snapshot.duration).toBe(0);
+      expect(store.state.duration).toBe(0);
     });
-  });
 
-  describe('subscribe', () => {
-    it('calls update on timeupdate event', () => {
-      const video = createMockVideo({ currentTime: 42 });
-      const update = vi.fn();
-      const controller = new AbortController();
+    it('updates on timeupdate event', () => {
+      const video = createMockVideo({ currentTime: 0 });
 
-      timeFeature.subscribe({
-        target: video,
-        update,
-        signal: controller.signal,
-        get: mockState,
-      });
+      const store = createStore({ features: [timeFeature] });
+      store.attach(video);
+
+      expect(store.state.currentTime).toBe(0);
+
+      // Update mock currentTime
+      video.currentTime = 42;
       video.dispatchEvent(new Event('timeupdate'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.currentTime).toBe(42);
     });
 
-    it('calls update on durationchange event', () => {
-      const video = createMockVideo({ duration: 100 });
-      const update = vi.fn();
-      const controller = new AbortController();
+    it('updates on durationchange event', () => {
+      const video = createMockVideo({ duration: 0 });
 
-      timeFeature.subscribe({
-        target: video,
-        update,
-        signal: controller.signal,
-        get: mockState,
-      });
+      const store = createStore({ features: [timeFeature] });
+      store.attach(video);
+
+      expect(store.state.duration).toBe(0);
+
+      // Update mock duration
+      Object.defineProperty(video, 'duration', { value: 100, writable: false, configurable: true });
       video.dispatchEvent(new Event('durationchange'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.duration).toBe(100);
     });
 
-    it('calls update on seeked event', () => {
-      const video = createMockVideo({ currentTime: 50 });
-      const update = vi.fn();
-      const controller = new AbortController();
+    it('updates on seeked event', () => {
+      const video = createMockVideo({ currentTime: 0 });
 
-      timeFeature.subscribe({
-        target: video,
-        update,
-        signal: controller.signal,
-        get: mockState,
-      });
+      const store = createStore({ features: [timeFeature] });
+      store.attach(video);
+
+      // Update mock currentTime
+      video.currentTime = 50;
       video.dispatchEvent(new Event('seeked'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.currentTime).toBe(50);
     });
 
-    it('calls update on emptied event', () => {
-      const video = createMockVideo({});
-      const update = vi.fn();
-      const controller = new AbortController();
-
-      timeFeature.subscribe({
-        target: video,
-        update,
-        signal: controller.signal,
-        get: mockState,
+    it('updates on emptied event', () => {
+      const video = createMockVideo({
+        currentTime: 30,
+        duration: 120,
       });
+
+      const store = createStore({ features: [timeFeature] });
+      store.attach(video);
+
+      // Update mock to empty state
+      video.currentTime = 0;
+      Object.defineProperty(video, 'duration', { value: Number.NaN, writable: false, configurable: true });
       video.dispatchEvent(new Event('emptied'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.currentTime).toBe(0);
+      expect(store.state.duration).toBe(0);
     });
   });
 
@@ -147,7 +125,7 @@ function createMockVideo(
     video.currentTime = overrides.currentTime;
   }
   if (overrides.duration !== undefined) {
-    Object.defineProperty(video, 'duration', { value: overrides.duration, writable: false });
+    Object.defineProperty(video, 'duration', { value: overrides.duration, writable: false, configurable: true });
   }
 
   return video;

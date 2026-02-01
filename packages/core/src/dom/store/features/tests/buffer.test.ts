@@ -1,25 +1,21 @@
-import { describe, expect, it, vi } from 'vitest';
+import { createStore } from '@videojs/store';
+import { describe, expect, it } from 'vitest';
 
 import { bufferFeature } from '../buffer';
 
 describe('bufferFeature', () => {
-  describe('getSnapshot', () => {
-    it('captures buffered and seekable ranges from video element', () => {
+  describe('attach', () => {
+    it('syncs buffered and seekable ranges on attach', () => {
       const video = createMockVideo({
         buffered: createTimeRanges([[0, 60]]),
         seekable: createTimeRanges([[0, 120]]),
       });
 
-      const snapshot = bufferFeature.getSnapshot({
-        target: video,
-        get: () => ({ buffered: [], seekable: [] }),
-        initialState: { buffered: [], seekable: [] },
-      });
+      const store = createStore({ features: [bufferFeature] });
+      store.attach(video);
 
-      expect(snapshot).toEqual({
-        buffered: [[0, 60]],
-        seekable: [[0, 120]],
-      });
+      expect(store.state.buffered).toEqual([[0, 60]]);
+      expect(store.state.seekable).toEqual([[0, 120]]);
     });
 
     it('handles multiple ranges', () => {
@@ -31,56 +27,61 @@ describe('bufferFeature', () => {
         seekable: createTimeRanges([[0, 120]]),
       });
 
-      const snapshot = bufferFeature.getSnapshot({
-        target: video,
-        get: () => ({ buffered: [], seekable: [] }),
-        initialState: { buffered: [], seekable: [] },
-      });
+      const store = createStore({ features: [bufferFeature] });
+      store.attach(video);
 
-      expect(snapshot.buffered).toEqual([
+      expect(store.state.buffered).toEqual([
         [0, 30],
         [60, 90],
       ]);
     });
-  });
 
-  describe('subscribe', () => {
-    it('calls update on progress event', () => {
+    it('updates on progress event', () => {
       const video = createMockVideo({
         buffered: createTimeRanges([[0, 50]]),
         seekable: createTimeRanges([[0, 100]]),
       });
-      const update = vi.fn();
-      const controller = new AbortController();
 
-      bufferFeature.subscribe({
-        target: video,
-        update,
-        signal: controller.signal,
-        get: () => ({ buffered: [], seekable: [] }),
+      const store = createStore({ features: [bufferFeature] });
+      store.attach(video);
+
+      // Update the mock video's buffered range
+      Object.defineProperty(video, 'buffered', {
+        value: createTimeRanges([[0, 75]]),
+        writable: false,
+        configurable: true,
       });
+
       video.dispatchEvent(new Event('progress'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.buffered).toEqual([[0, 75]]);
     });
 
-    it('calls update on emptied event', () => {
+    it('updates on emptied event', () => {
       const video = createMockVideo({
-        buffered: createTimeRanges([]),
-        seekable: createTimeRanges([]),
+        buffered: createTimeRanges([[0, 50]]),
+        seekable: createTimeRanges([[0, 100]]),
       });
-      const update = vi.fn();
-      const controller = new AbortController();
 
-      bufferFeature.subscribe({
-        target: video,
-        update,
-        signal: controller.signal,
-        get: () => ({ buffered: [], seekable: [] }),
+      const store = createStore({ features: [bufferFeature] });
+      store.attach(video);
+
+      // Update the mock video to have no buffered content
+      Object.defineProperty(video, 'buffered', {
+        value: createTimeRanges([]),
+        writable: false,
+        configurable: true,
       });
+      Object.defineProperty(video, 'seekable', {
+        value: createTimeRanges([]),
+        writable: false,
+        configurable: true,
+      });
+
       video.dispatchEvent(new Event('emptied'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.buffered).toEqual([]);
+      expect(store.state.seekable).toEqual([]);
     });
   });
 });
@@ -94,10 +95,10 @@ function createMockVideo(
   const video = document.createElement('video');
 
   if (overrides.buffered !== undefined) {
-    Object.defineProperty(video, 'buffered', { value: overrides.buffered, writable: false });
+    Object.defineProperty(video, 'buffered', { value: overrides.buffered, writable: false, configurable: true });
   }
   if (overrides.seekable !== undefined) {
-    Object.defineProperty(video, 'seekable', { value: overrides.seekable, writable: false });
+    Object.defineProperty(video, 'seekable', { value: overrides.seekable, writable: false, configurable: true });
   }
 
   return video;

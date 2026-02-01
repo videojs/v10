@@ -9,6 +9,7 @@ export const sourceFeature = defineFeature<HTMLMediaElement>()({
     source: null as string | null,
     /** Whether enough data is loaded to begin playback. */
     canPlay: false,
+
     /** Load a new media source. Cancels all pending operations. Returns the new source URL. */
     loadSource(src: string) {
       return task({
@@ -23,16 +24,19 @@ export const sourceFeature = defineFeature<HTMLMediaElement>()({
     },
   }),
 
-  getSnapshot: ({ target }) => ({
-    source: target.currentSrc || target.src || null,
-    canPlay: target.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA,
-  }),
+  attach({ target, signal, set }) {
+    const sync = () =>
+      set({
+        source: target.currentSrc || target.src || null,
+        canPlay: target.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA,
+      });
 
-  subscribe: ({ target, update, signal }) => {
-    listen(target, 'canplay', update, { signal });
-    listen(target, 'canplaythrough', update, { signal });
-    listen(target, 'loadstart', update, { signal });
-    listen(target, 'emptied', update, { signal });
+    sync();
+
+    listen(target, 'canplay', sync, { signal });
+    listen(target, 'canplaythrough', sync, { signal });
+    listen(target, 'loadstart', sync, { signal });
+    listen(target, 'emptied', sync, { signal });
   },
 });
 

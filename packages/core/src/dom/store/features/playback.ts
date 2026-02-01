@@ -36,19 +36,22 @@ export const playbackFeature = defineFeature<HTMLMediaElement>()({
     },
   }),
 
-  getSnapshot: ({ target }) => ({
-    paused: target.paused,
-    ended: target.ended,
-    started: !target.paused || target.currentTime > 0,
-    waiting: target.readyState < HTMLMediaElement.HAVE_FUTURE_DATA && !target.paused,
-  }),
+  attach({ target, signal, set }) {
+    const sync = () =>
+      set({
+        paused: target.paused,
+        ended: target.ended,
+        started: !target.paused || target.currentTime > 0,
+        waiting: target.readyState < HTMLMediaElement.HAVE_FUTURE_DATA && !target.paused,
+      });
 
-  subscribe: ({ target, update, signal }) => {
-    listen(target, 'play', update, { signal });
-    listen(target, 'pause', update, { signal });
-    listen(target, 'ended', update, { signal });
-    listen(target, 'playing', update, { signal });
-    listen(target, 'waiting', update, { signal });
+    sync();
+
+    listen(target, 'play', sync, { signal });
+    listen(target, 'pause', sync, { signal });
+    listen(target, 'ended', sync, { signal });
+    listen(target, 'playing', sync, { signal });
+    listen(target, 'waiting', sync, { signal });
   },
 });
 

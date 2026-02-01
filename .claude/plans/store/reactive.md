@@ -7,13 +7,13 @@
 
 Simplified state management with explicit mutations and computed values.
 
-PR #311 introduced proxy-based reactivity (Valtio-style). PR #321 replaced it with a simpler `State` + `Computed` design - explicit mutations via `set`/`patch`/`delete` instead of proxy traps, and `Computed` for derived values.
+PR #311 introduced proxy-based reactivity (Valtio-style). PR #321 replaced it with a simpler `State` + `Computed` design - explicit mutations via `patch` instead of proxy traps, and `Computed` for derived values.
 
 ## Key Decisions
 
 | Decision                | Rationale                                                    |
 | ----------------------- | ------------------------------------------------------------ |
-| Explicit mutations      | `set`/`patch`/`delete` clearer than proxy assignment         |
+| Explicit mutations      | `patch()` clearer than proxy assignment                      |
 | Frozen snapshots        | `Object.freeze()` on `current` prevents accidental mutations |
 | Key-based subscriptions | Built into State, subscribe to specific keys for efficiency  |
 | Computed class          | Lazy derivation, notifies only when result actually changes  |
@@ -27,10 +27,8 @@ import { createComputed, createState, flush } from '@videojs/store';
 // State
 const state = createState({ volume: 1, muted: false });
 state.current; // readonly snapshot
-state.set('volume', 0.5); // single key
-state.patch({ volume: 0.8 }); // multiple keys
+state.patch({ volume: 0.8 }); // update one or more keys
 state.subscribe(listener); // all changes
-state.subscribe(['volume'], fn); // specific keys
 
 // Computed
 const effective = createComputed(state, ['volume', 'muted'], ({ volume, muted }) => (muted ? 0 : volume));
@@ -43,4 +41,6 @@ effective.destroy(); // cleanup
 
 Removed from PR #311: `reactive`, `snapshot`, `track`, `batch`, `subscribe`, `subscribeKeys`
 
-Migration: Use `createState()` with explicit mutations and `createComputed()` for derived values.
+Migration: Use `createState()` with `patch()` and `createComputed()` for derived values.
+
+**Note:** `WritableState` now only exposes `patch()`. The `set()` and `delete()` methods were removed as `patch()` covers all use cases.

@@ -4,6 +4,7 @@ import type { PendingTask, StoreConfig } from './config';
 import { StoreError } from './errors';
 import type {
   AnyFeature,
+  AttachContext,
   StateFactoryContext,
   TaskContext,
   TaskHandler,
@@ -37,16 +38,15 @@ export function createStore<Features extends AnyFeature[]>(config: StoreConfig<F
   // Reactive state - initialized after building features
   let state: WritableState<State>;
 
-  const ctx: StateFactoryContext<Target> = {
+  const stateFactoryCtx: StateFactoryContext<Target> = {
     task: executeTask,
-    get: () => state.current,
     target: () => {
       if (!target) throw new StoreError('NO_TARGET');
       return target;
     },
   };
 
-  const featureState = buildFeatureState(ctx);
+  const featureState = buildFeatureState(stateFactoryCtx);
   state = createState(featureState);
 
   const store = {
@@ -110,22 +110,21 @@ export function createStore<Features extends AnyFeature[]>(config: StoreConfig<F
     attachAbort = new AbortController();
     const signal = attachAbort.signal;
 
-    state.patch(featureState);
+    // Create attach context once, share across all features
+    const attachCtx: AttachContext<Target, State> = {
+      target: newTarget,
+      signal,
+      get: () => state.current,
+      set: (partial) => state.patch(partial),
+    };
 
     for (const feature of features) {
       try {
-        feature.subscribe({
-          target: newTarget,
-          update: () => syncFeature(feature, newTarget),
-          signal,
-          get: () => state.current,
-        });
+        feature.attach?.(attachCtx);
       } catch (error) {
         handleError(error);
       }
     }
-
-    syncAll();
 
     try {
       config.onAttach?.({ store, target: newTarget, signal });
@@ -174,26 +173,6 @@ export function createStore<Features extends AnyFeature[]>(config: StoreConfig<F
     }
 
     return result as State;
-  }
-
-  function syncAll(): void {
-    if (!target) return;
-    for (const feature of features) {
-      syncFeature(feature, target);
-    }
-  }
-
-  function syncFeature(feature: AnyFeature<Target>, t: Target): void {
-    try {
-      const snapshot = feature.getSnapshot({
-        target: t,
-        get: () => state.current,
-        initialState: featureState,
-      });
-      state.patch(snapshot as Partial<State>);
-    } catch (error) {
-      handleError(error);
-    }
   }
 
   async function executeTask<Output>(handler: TaskHandler<Target, State, Output>): Promise<Awaited<Output>>;
