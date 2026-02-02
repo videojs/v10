@@ -3,7 +3,9 @@ import type { InferFeatureState } from '@videojs/store';
 import { defineFeature } from '@videojs/store';
 import { listen, onEvent } from '@videojs/utils/dom';
 
-export const timeFeature = defineFeature<HTMLMediaElement>()({
+import type { PlayerTarget } from '../../types';
+
+export const timeFeature = defineFeature<PlayerTarget>()({
   state: ({ task }) => ({
     /** Current playback position in seconds. */
     currentTime: 0,
@@ -15,28 +17,30 @@ export const timeFeature = defineFeature<HTMLMediaElement>()({
       return task({
         key: 'seek',
         async handler({ target, signal }) {
-          target.currentTime = time;
-          await onEvent(target, 'seeked', { signal });
-          return target.currentTime; // actual position after seek
+          target.media.currentTime = time;
+          await onEvent(target.media, 'seeked', { signal });
+          return target.media.currentTime; // actual position after seek
         },
       });
     },
   }),
 
   attach({ target, signal, set }) {
+    const { media } = target;
+
     const sync = () =>
       set({
-        currentTime: target.currentTime,
-        duration: target.duration || 0,
+        currentTime: media.currentTime,
+        duration: media.duration || 0,
       });
 
     sync();
 
-    listen(target, 'timeupdate', sync, { signal });
-    listen(target, 'durationchange', sync, { signal });
-    listen(target, 'seeked', sync, { signal });
-    listen(target, 'loadedmetadata', sync, { signal });
-    listen(target, 'emptied', sync, { signal });
+    listen(media, 'timeupdate', sync, { signal });
+    listen(media, 'durationchange', sync, { signal });
+    listen(media, 'seeked', sync, { signal });
+    listen(media, 'loadedmetadata', sync, { signal });
+    listen(media, 'emptied', sync, { signal });
   },
 });
 

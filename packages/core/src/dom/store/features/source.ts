@@ -3,7 +3,9 @@ import type { InferFeatureState } from '@videojs/store';
 import { CANCEL_ALL, defineFeature } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
-export const sourceFeature = defineFeature<HTMLMediaElement>()({
+import type { PlayerTarget } from '../../types';
+
+export const sourceFeature = defineFeature<PlayerTarget>()({
   state: ({ task }) => ({
     /** Current media source URL (null if none). */
     source: null as string | null,
@@ -16,8 +18,8 @@ export const sourceFeature = defineFeature<HTMLMediaElement>()({
         key: 'source',
         cancels: [CANCEL_ALL],
         handler({ target }) {
-          target.src = src;
-          target.load();
+          target.media.src = src;
+          target.media.load();
           return src;
         },
       });
@@ -25,18 +27,20 @@ export const sourceFeature = defineFeature<HTMLMediaElement>()({
   }),
 
   attach({ target, signal, set }) {
+    const { media } = target;
+
     const sync = () =>
       set({
-        source: target.currentSrc || target.src || null,
-        canPlay: target.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA,
+        source: media.currentSrc || media.src || null,
+        canPlay: media.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA,
       });
 
     sync();
 
-    listen(target, 'canplay', sync, { signal });
-    listen(target, 'canplaythrough', sync, { signal });
-    listen(target, 'loadstart', sync, { signal });
-    listen(target, 'emptied', sync, { signal });
+    listen(media, 'canplay', sync, { signal });
+    listen(media, 'canplaythrough', sync, { signal });
+    listen(media, 'loadstart', sync, { signal });
+    listen(media, 'emptied', sync, { signal });
   },
 });
 

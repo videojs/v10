@@ -4,6 +4,7 @@ import { sourceFeature } from './source';
 import { timeFeature } from './time';
 import { volumeFeature } from './volume';
 
+// Short aliases
 export {
   bufferFeature as buffer,
   playbackFeature as playback,
@@ -12,4 +13,8 @@ export {
   volumeFeature as volume,
 };
 
-export const all = [bufferFeature, playbackFeature, sourceFeature, timeFeature, volumeFeature] as const;
+/** Base video player features. */
+export const video = [playbackFeature, volumeFeature, timeFeature, sourceFeature, bufferFeature] as const;
+
+/** Base audio player features. */
+export const audio = [playbackFeature, volumeFeature, timeFeature, sourceFeature, bufferFeature] as const;

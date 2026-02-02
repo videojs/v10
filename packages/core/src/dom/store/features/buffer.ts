@@ -3,7 +3,9 @@ import type { InferFeatureState } from '@videojs/store';
 import { defineFeature } from '@videojs/store';
 import { listen, serializeTimeRanges } from '@videojs/utils/dom';
 
-export const bufferFeature = defineFeature<HTMLMediaElement>()({
+import type { PlayerTarget } from '../../types';
+
+export const bufferFeature = defineFeature<PlayerTarget>()({
   state: () => ({
     /** Buffered time ranges as [start, end] tuples. */
     buffered: [] as [number, number][],
@@ -12,16 +14,18 @@ export const bufferFeature = defineFeature<HTMLMediaElement>()({
   }),
 
   attach({ target, signal, set }) {
+    const { media } = target;
+
     const sync = () =>
       set({
-        buffered: serializeTimeRanges(target.buffered),
-        seekable: serializeTimeRanges(target.seekable),
+        buffered: serializeTimeRanges(media.buffered),
+        seekable: serializeTimeRanges(media.seekable),
       });
 
     sync();
 
-    listen(target, 'progress', sync, { signal });
-    listen(target, 'emptied', sync, { signal });
+    listen(media, 'progress', sync, { signal });
+    listen(media, 'emptied', sync, { signal });
   },
 });
 

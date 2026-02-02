@@ -12,7 +12,7 @@ describe('bufferFeature', () => {
       });
 
       const store = createStore({ features: [bufferFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.buffered).toEqual([[0, 60]]);
       expect(store.state.seekable).toEqual([[0, 120]]);
@@ -28,7 +28,7 @@ describe('bufferFeature', () => {
       });
 
       const store = createStore({ features: [bufferFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.buffered).toEqual([
         [0, 30],
@@ -43,7 +43,7 @@ describe('bufferFeature', () => {
       });
 
       const store = createStore({ features: [bufferFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       // Update the mock video's buffered range
       Object.defineProperty(video, 'buffered', {
@@ -64,7 +64,7 @@ describe('bufferFeature', () => {
       });
 
       const store = createStore({ features: [bufferFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       // Update the mock video to have no buffered content
       Object.defineProperty(video, 'buffered', {
