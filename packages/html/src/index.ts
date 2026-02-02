@@ -1,26 +1,18 @@
-// Re-exports from core/dom
-export {
-  type AnyPlayerFeature,
-  type BufferState,
-  definePlayerFeature,
-  type FeatureAvailability,
-  features,
-  type Media,
-  type MediaContainer,
-  type PlaybackState,
-  type PlayerFeature,
-  type PlayerStore,
-  type PlayerTarget,
-  type SourceState,
-  selectBuffer,
-  selectPlayback,
-  selectSource,
-  selectTime,
-  selectVolume,
-  type TimeState,
-  type VolumeState,
-} from '@videojs/core/dom';
+// Core
+export * from '@videojs/core/dom';
 
-// Re-exports from store (utilities)
+// Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
+// Player
+export * from './player/context';
+export * from './player/create-player';
+export * from './player/player-controller';
+export * from './player/player-mixin';
+export * from './store/container-mixin';
+export * from './store/provider-mixin';
+// Store bindings
+export * from './store/types';
+
+// Primitives
+export { MediaElement } from './ui/media-element';

@@ -1,19 +1,14 @@
-import type { Context } from '@lit/context';
-import { ContextConsumer } from '@lit/context';
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import { noop } from '@videojs/utils/function';
 import { isNull } from '@videojs/utils/predicate';
 import type { AnyStore } from '../../core/store';
-import { isStore } from '../../core/store';
-import type { StoreSource } from '../store-accessor';
+import { StoreAccessor, type StoreSource } from '../store-accessor';
 
 export type SubscriptionControllerHost = ReactiveControllerHost & HTMLElement;
 
 export interface SubscriptionControllerConfig<Store extends AnyStore, Value> {
-  /** Subscribe to the store. Returns an unsubscribe function. */
-  subscribe: (store: Store, onChange: () => void) => () => void;
-  /** Get the current value from the store. */
   getValue: (store: Store) => Value;
+  subscribe: (store: Store, onChange: () => void) => () => void;
 }
 
 /**
@@ -25,7 +20,7 @@ export interface SubscriptionControllerConfig<Store extends AnyStore, Value> {
  * @example
  * ```ts
  * class MyController<Store extends AnyStore> {
- *   #ctrl: SubscriptionController<Store, Store['queue']['tasks']>;
+ *   #ctrl: SubscriptionController<Store, Tasks>;
  *
  *   constructor(host: Host, source: StoreSource<Store>) {
  *     this.#ctrl = new SubscriptionController(host, source, {
@@ -34,16 +29,17 @@ export interface SubscriptionControllerConfig<Store extends AnyStore, Value> {
  *     });
  *   }
  *
- *   get value() { return this.#ctrl.value; }
+ *   get value() {
+ *     return this.#ctrl.value;
+ *   }
  * }
  * ```
  */
 export class SubscriptionController<Store extends AnyStore, Value> implements ReactiveController {
   readonly #host: SubscriptionControllerHost;
   readonly #config: SubscriptionControllerConfig<Store, Value>;
-  readonly #consumer: ContextConsumer<Context<unknown, Store>, SubscriptionControllerHost> | null;
+  readonly #accessor: StoreAccessor<Store>;
 
-  #directStore: Store | null;
   #unsubscribe = noop;
 
   constructor(
@@ -53,46 +49,19 @@ export class SubscriptionController<Store extends AnyStore, Value> implements Re
   ) {
     this.#host = host;
     this.#config = config;
-
-    if (isStore(source)) {
-      this.#directStore = source as Store;
-      this.#consumer = null;
-    } else {
-      this.#directStore = null;
-      this.#consumer = new ContextConsumer(host, {
-        context: source,
-        callback: (store) => this.#connect(store),
-        subscribe: false,
-      });
-    }
+    this.#accessor = new StoreAccessor(host, source, (store) => this.#connect(store));
 
     host.addController(this);
   }
 
   get value(): Value {
-    const store = this.#store;
+    const store = this.#accessor.value;
 
     if (isNull(store)) {
       throw new Error('Store not available');
     }
 
     return this.#config.getValue(store);
-  }
-
-  get #store(): Store | null {
-    if (this.#consumer) {
-      return this.#consumer.value ?? null;
-    }
-
-    return this.#directStore;
-  }
-
-  hostConnected(): void {
-    // For direct store, connect immediately
-    // For context, ContextConsumer triggers callback when value is available
-    if (this.#directStore) {
-      this.#connect(this.#directStore);
-    }
   }
 
   hostDisconnected(): void {
