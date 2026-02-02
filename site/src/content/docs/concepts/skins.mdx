@@ -11,20 +11,20 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 
 In Video.js v10, skins are **complete, packaged player designs** that include both UI components and their styles. This is a significant change from v8, where skins were purely CSS themes applied to a fixed component structure.
 
-## What's Different in v10?
+## What's different in v10?
 
-### Video.js v8 Skins
+### Video.js v8 skins
 - CSS-only themes
 - Applied to a fixed component structure
 - Limited customization without JavaScript
 
-### Video.js v10 Skins
+### Video.js v10 skins
 - **UI components + styles packaged together**
 - Each skin can have completely different components
 - Can address entirely different use cases
 - Only include the components they need
 
-## Built-in Skins
+## Built-in skins
 
 ### Frosted
 
@@ -86,13 +86,13 @@ import '@videojs/react-preview/skins/minimal.css';
   <MinimalSkinDemo client:visible />
 </MinimalFrame>
 
-## Customizing Skins
+## Customizing skins
 
 Skins are designed to be ejected and modified for your specific needs.
 
 Ready to make it your own? <DocsLink slug="how-to/customize-skins">Learn how to customize a skin →</DocsLink>
 
-## Building Your Own Skin
+## Building your own skin
 
 
 A skin is simply a component that:
@@ -150,7 +150,7 @@ export function CustomSkin({ children, className }) {
 
 Read more about components <DocsLink slug="concepts/ui-components">in the components guide →</DocsLink>
 
-## Coming Soon
+## Coming soon
 
 - More built-in skins for different use cases
 - CLI tool for ejecting and customizing skins

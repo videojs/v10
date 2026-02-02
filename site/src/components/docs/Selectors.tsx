@@ -2,9 +2,17 @@ import { useStore } from '@nanostores/react';
 import { Select } from '@/components/Select';
 import { currentStyle as styleStore } from '@/stores/preferences';
 import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
-import { FRAMEWORK_STYLES, isValidFramework, isValidStyleForFramework, SUPPORTED_FRAMEWORKS } from '@/types/docs';
+import {
+  FRAMEWORK_LABELS,
+  FRAMEWORK_STYLES,
+  isValidFramework,
+  isValidStyleForFramework,
+  STYLE_LABELS,
+  SUPPORTED_FRAMEWORKS,
+} from '@/types/docs';
 import { setStylePreferenceClient, updateStyleAttribute } from '@/utils/docs/preferences';
 import { resolveFrameworkChange } from '@/utils/docs/routing';
+import useIsHydrated from '@/utils/useIsHydrated';
 
 interface SelectorProps {
   currentFramework: SupportedFramework;
@@ -12,10 +20,9 @@ interface SelectorProps {
 }
 
 export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
-  // Read style from nanostore (StyleInit + PreferenceUpdater guarantee a valid value)
-  // Guard against React hydrating before style is initialized
   const currentStyle = useStore(styleStore);
-  if (!currentStyle) return null;
+  const isHydrated = useIsHydrated();
+  const hydrationSafeCurrentStyle = isHydrated ? currentStyle : null;
 
   const handleFrameworkChange = (newFramework: SupportedFramework | null) => {
     if (newFramework === null) return;
@@ -52,12 +59,12 @@ export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
 
   const frameworkOptions = SUPPORTED_FRAMEWORKS.map((fw) => ({
     value: fw,
-    label: fw,
+    label: FRAMEWORK_LABELS[fw],
   }));
 
   const styleOptions = availableStyles.map((st) => ({
     value: st,
-    label: st,
+    label: STYLE_LABELS[st],
   }));
 
   return (
@@ -77,7 +84,7 @@ export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
         />
         <span>Style</span>
         <Select
-          value={currentStyle}
+          value={hydrationSafeCurrentStyle}
           onChange={handleStyleChange}
           options={styleOptions}
           aria-label="Select style"

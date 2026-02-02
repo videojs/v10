@@ -1,0 +1,32 @@
+---
+import { twMerge } from 'tailwind-merge';
+
+/**
+ * ContentWidth frame component for constraining content width.
+ *
+ * Applies the standard max-width constraint used throughout the docs
+ * without any visual styling (borders, backgrounds).
+ *
+ * Usage:
+ * ```mdx
+ * import ContentWidth from '@/components/frames/ContentWidth.astro';
+ *
+ * <ContentWidth>
+ *   <MyComponent client:idle />
+ * </ContentWidth>
+ * ```
+ */
+
+type Props = {
+  class?: string;
+  margins?: 'default' | 'lg';
+};
+
+const { class: className, margins = 'default' } = Astro.props;
+
+const marginClass = margins === 'lg' ? 'my-12' : 'my-6';
+---
+
+<div class={twMerge('max-w-3xl mx-auto', marginClass, className)}>
+  <slot />
+</div>

@@ -1,0 +1,35 @@
+---
+import { ArrowLeft } from 'lucide-react';
+
+import AuthResult from '@/layouts/AuthResult.astro';
+---
+
+<AuthResult title="Authentication Successful" description="You may close this window." variant="success">
+  <a slot="action" href="/docs" class="inline-flex items-center gap-1 intent:underline group">
+    <ArrowLeft size="1em" className="group-intent:-translate-x-1 transition-transform" />
+    Return to docs
+  </a>
+</AuthResult>
+
+<script>
+  const CLOSE_DELAY = 1000;
+
+  function tryClosePopup() {
+    if (window.opener) {
+      try {
+        window.opener.postMessage({ type: 'auth-complete' }, window.location.origin);
+      } catch (e) {
+        console.error('Failed to notify parent window:', e);
+      }
+    }
+
+    window.close();
+
+    // If window didn't close, show the action
+    setTimeout(() => {
+      document.querySelector('[data-action-container]')?.classList.remove('invisible');
+    }, 100);
+  }
+
+  setTimeout(tryClosePopup, CLOSE_DELAY);
+</script>

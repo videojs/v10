@@ -9,9 +9,9 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 
 Video.js v10 is built around a three-tier architecture that separates concerns and maximizes flexibility. Each tier is designed to work independently or together, allowing you to use as much or as little of Video.js as you need.
 
-## The Three Tiers
+## The three tiers
 
-### 1. State Management
+### 1. State management
 
 <FrameworkCase frameworks={["react"]}>
 State is handled by `VideoProvider`, which creates a central store that all components can access. When you wrap your player in a `VideoProvider`, components automatically connect to the state.
@@ -35,7 +35,7 @@ State is handled by `video-provider`, which creates a central store that all com
 ```
 </FrameworkCase>
 
-### 2. User Interface
+### 2. User interface
 
 #### Skins
 Complete, pre-designed player UIs that package components and styles together:
@@ -57,7 +57,7 @@ Next, you can use the individual, unstyled UI primitives, standalone or composed
 
 Want to dive deeper? <DocsLink slug="concepts/ui-components">Explore UI components →</DocsLink>
 
-### 3. Media Renderers
+### 3. Media renderers
 
 Media renderers are the components that actually display your media. They're essentially "players with no UI". They handle the video/audio rendering and expose a consistent API.
 
@@ -68,7 +68,7 @@ For now, we'll have a default `<Video />` component, which supports MP4 and othe
 For now, we're starting with just the native HTML5 `<video />` component, but we're looking forward to adding more in the future. From engines like HLS and DASH, to services like YouTube and Vimeo.
 </FrameworkCase>
 
-## How It All Works Together
+## How it all works together
 
 Here's a complete example showing all three tiers:
 
@@ -93,12 +93,12 @@ function Player() {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-<TabsRoot client:visible>
-  <TabsList client:visible label="HTML implementation">
-    <Tab client:visible value="html" initial>HTML</Tab>
-    <Tab client:visible value="javascript">JavaScript</Tab>
+<TabsRoot client:idle>
+  <TabsList client:idle label="HTML implementation">
+    <Tab client:idle value="html" initial>HTML</Tab>
+    <Tab client:idle value="javascript">JavaScript</Tab>
   </TabsList>
-  <TabsPanel client:visible value="html" initial>
+  <TabsPanel client:idle value="html" initial>
 
 ```html
 <!-- Tier 1: State Management -->
@@ -112,7 +112,7 @@ function Player() {
 ```
 
   </TabsPanel>
-  <TabsPanel client:visible value="javascript">
+  <TabsPanel client:idle value="javascript">
 
 ```ts
 import '@videojs/html-preview/skins/frosted';
