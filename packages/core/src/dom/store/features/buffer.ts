@@ -1,11 +1,9 @@
-import type { InferFeatureState } from '@videojs/store';
-
-import { defineFeature } from '@videojs/store';
+import type { InferSliceState } from '@videojs/store';
 import { listen, serializeTimeRanges } from '@videojs/utils/dom';
 
-import type { PlayerTarget } from '../../types';
+import { definePlayerFeature } from '../../feature';
 
-export const bufferFeature = defineFeature<PlayerTarget>()({
+export const bufferFeature = definePlayerFeature({
   state: () => ({
     /** Buffered time ranges as [start, end] tuples. */
     buffered: [] as [number, number][],
@@ -29,4 +27,4 @@ export const bufferFeature = defineFeature<PlayerTarget>()({
   },
 });
 
-export type BufferState = InferFeatureState<typeof bufferFeature>;
+export type BufferState = InferSliceState<typeof bufferFeature>;

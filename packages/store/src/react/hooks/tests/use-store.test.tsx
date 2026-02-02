@@ -4,19 +4,12 @@ import { describe, expect, it } from 'vitest';
 import { useStore } from '../use-store';
 import { createTestStore } from './test-utils';
 
-interface AudioState {
-  volume: number;
-  muted: boolean;
-  setVolume: (volume: number) => Promise<number>;
-  setMuted: (muted: boolean) => Promise<boolean>;
-}
-
 describe('useStore', () => {
   describe('without selector', () => {
     it('returns state and action functions', () => {
       const { store } = createTestStore();
 
-      const { result } = renderHook(() => useStore(store) as AudioState);
+      const { result } = renderHook(() => useStore(store));
 
       expect(result.current.volume).toBe(1);
       expect(result.current.muted).toBe(false);
@@ -29,7 +22,7 @@ describe('useStore', () => {
 
       const { result } = renderHook(() => {
         renderCount++;
-        return useStore(store) as AudioState;
+        return useStore(store);
       });
 
       expect(renderCount).toBe(1);
@@ -53,14 +46,14 @@ describe('useStore', () => {
 
       const { result } = renderHook(() => {
         renderCount++;
-        return useStore(store, (s: AudioState) => s.volume);
+        return useStore(store, (s) => s.volume);
       });
 
       expect(renderCount).toBe(1);
       expect(result.current).toBe(1);
 
       await act(async () => {
-        await (store as unknown as AudioState).setVolume(0.5);
+        await store.setVolume(0.5);
       });
 
       // Should have re-rendered
@@ -74,13 +67,13 @@ describe('useStore', () => {
 
       const { result } = renderHook(() => {
         renderCount++;
-        return useStore(store, (s: AudioState) => s.volume);
+        return useStore(store, (s) => s.volume);
       });
 
       expect(renderCount).toBe(1);
 
       await act(async () => {
-        await (store as unknown as AudioState).setMuted(true);
+        await store.setMuted(true);
       });
 
       // Should NOT re-render since volume didn't change

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { defineFeature } from '../../core/feature';
+import { defineSlice } from '../../core/slice';
 import { createStore } from '../create-store';
 import { TestBaseElement } from './test-utils';
 
@@ -11,7 +11,7 @@ describe('createStore', () => {
     muted = false;
   }
 
-  const audioFeature = defineFeature<MockMedia>()({
+  const audioSlice = defineSlice<MockMedia>()({
     state: ({ task }) => ({
       volume: 1,
       muted: false,
@@ -38,7 +38,7 @@ describe('createStore', () => {
 
   describe('create', () => {
     it('creates a store instance', () => {
-      const { create } = createStore({ features: [audioFeature] });
+      const { create } = createStore(audioSlice);
 
       const store = create();
 
@@ -47,7 +47,7 @@ describe('createStore', () => {
     });
 
     it('creates independent store instances', () => {
-      const { create } = createStore({ features: [audioFeature] });
+      const { create } = createStore(audioSlice);
 
       const store1 = create();
       const store2 = create();
@@ -58,15 +58,15 @@ describe('createStore', () => {
 
   describe('context', () => {
     it('contexts share the same key for interoperability', () => {
-      const result1 = createStore({ features: [audioFeature] });
-      const result2 = createStore({ features: [audioFeature] });
+      const result1 = createStore(audioSlice);
+      const result2 = createStore(audioSlice);
 
       // Contexts use a shared key so different store configurations can interoperate
       expect(result1.context).toBe(result2.context);
     });
 
     it('context is defined', () => {
-      const { context } = createStore({ features: [audioFeature] });
+      const { context } = createStore(audioSlice);
 
       expect(context).toBeDefined();
     });
@@ -74,27 +74,25 @@ describe('createStore', () => {
 
   describe('mixins', () => {
     it('returns StoreMixin', () => {
-      const { StoreMixin } = createStore({ features: [audioFeature] });
+      const { StoreMixin } = createStore(audioSlice);
 
       expect(typeof StoreMixin).toBe('function');
     });
 
     it('returns ProviderMixin', () => {
-      const { ProviderMixin } = createStore({ features: [audioFeature] });
+      const { ProviderMixin } = createStore(audioSlice);
 
       expect(typeof ProviderMixin).toBe('function');
     });
 
     it('returns ContainerMixin', () => {
-      const { ContainerMixin } = createStore({ features: [audioFeature] });
+      const { ContainerMixin } = createStore(audioSlice);
 
       expect(typeof ContainerMixin).toBe('function');
     });
 
     it('mixins can be applied to TestBaseElement', () => {
-      const { StoreMixin, ProviderMixin, ContainerMixin } = createStore({
-        features: [audioFeature],
-      });
+      const { StoreMixin, ProviderMixin, ContainerMixin } = createStore(audioSlice);
 
       const Mixed1 = StoreMixin(TestBaseElement);
       const Mixed2 = ProviderMixin(TestBaseElement);
@@ -108,7 +106,7 @@ describe('createStore', () => {
 
   describe('result object', () => {
     it('returns all expected properties', () => {
-      const result = createStore({ features: [audioFeature] });
+      const result = createStore(audioSlice);
 
       expect(result).toHaveProperty('StoreMixin');
       expect(result).toHaveProperty('ProviderMixin');
@@ -121,7 +119,7 @@ describe('createStore', () => {
 
   describe('bound controllers', () => {
     it('StoreController is a class', () => {
-      const { StoreController } = createStore({ features: [audioFeature] });
+      const { StoreController } = createStore(audioSlice);
 
       expect(typeof StoreController).toBe('function');
       expect(StoreController.prototype).toBeDefined();

@@ -20,42 +20,43 @@ npm install @videojs/store
 - **Write Path**: Send requests, coordinate execution, handle failures
 
 ```ts
-import { createStore } from '@videojs/store';
+import { createStore, defineSlice } from '@videojs/store';
 
-const store = createStore({
-  features: [playbackFeature, volumeFeature],
+const volumeSlice = defineSlice<HTMLMediaElement>()({
+  state: () => ({ volume: 1 }),
+  attach: ({ target, set, signal }) => {
+    const sync = () => set({ volume: target.volume });
+    target.addEventListener('volumechange', sync, { signal });
+  },
 });
 
+const store = createStore<HTMLMediaElement>()(volumeSlice);
 store.attach(videoElement);
 
 // State is flat on the store
-const { paused, volume } = store;
-
-// Actions are flat on the store
-await store.play();
-store.setVolume(0.5);
+const { volume } = store;
 ```
 
 ## Core Concepts
 
 ### Target
 
-The target is a reference to the external system. Features read from and write to it.
+The target is a reference to the external system. Slices read from and write to it.
 
 ```ts
 const videoElement = document.querySelector('video');
 store.attach(videoElement);
 ```
 
-### Features
+### Slices
 
-A feature defines state, how to sync it from the target, and actions to modify the target.
+A slice defines state, how to sync it from the target, and actions to modify the target.
 
 ```ts
-import { defineFeature } from '@videojs/store';
+import { defineSlice } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
-const volumeFeature = defineFeature<HTMLMediaElement>()({
+const volumeSlice = defineSlice<HTMLMediaElement>()({
   state: ({ task, target }) => ({
     volume: 1,
     muted: false,
@@ -87,31 +88,48 @@ const volumeFeature = defineFeature<HTMLMediaElement>()({
 });
 ```
 
-### Feature Type Inference
+### Slice Type Inference
 
-State types are fully inferred from the feature config:
+State types are fully inferred from the slice config:
 
 ```ts
-import type { InferFeatureState } from '@videojs/store';
+import type { InferSliceState } from '@videojs/store';
 
-const volumeFeature = defineFeature<HTMLMediaElement>()({
+const volumeSlice = defineSlice<HTMLMediaElement>()({
   state: () => ({ volume: 1, muted: false, /* actions */ }),
   // ...
 });
 
-// Infer types from the feature
-type VolumeState = InferFeatureState<typeof volumeFeature>;
+// Infer types from the slice
+type VolumeState = InferSliceState<typeof volumeSlice>;
 // { volume: number; muted: boolean; changeVolume: ...; toggleMute: ... }
 ```
 
-For stores with multiple features:
+### Combining Slices
+
+Use `combine` to merge multiple slices into one:
 
 ```ts
-import type { UnionFeatureState } from '@videojs/store';
+import { combine, createStore, defineSlice } from '@videojs/store';
 
-const features = [volumeFeature, playbackFeature] as const;
+const volumeSlice = defineSlice<HTMLMediaElement>()({ /* ... */ });
+const playbackSlice = defineSlice<HTMLMediaElement>()({ /* ... */ });
 
-type MediaState = UnionFeatureState<typeof features>;
+// Combine into a single slice
+const mediaSlice = combine(volumeSlice, playbackSlice);
+const store = createStore<HTMLMediaElement>()(mediaSlice);
+```
+
+Behavior:
+- State factories are called in order, results merged (last wins on conflict)
+- All attach handlers run; errors are caught and reported via `reportError`
+- Use `UnionSliceState<Slices>` for combined state type inference
+
+```ts
+import type { UnionSliceState } from '@videojs/store';
+
+const slices = [volumeSlice, playbackSlice] as const;
+type MediaState = UnionSliceState<typeof slices>;
 ```
 
 ### Actions
@@ -192,32 +210,37 @@ changeVolume(volume: number) {
 
 ## Store
 
-The store composes features and manages the target connection.
+The store connects a slice to a target.
 
 ```ts
-const store = createStore({
-  features: [playbackFeature, volumeFeature],
+// Simple
+const store = createStore<HTMLMediaElement>()(volumeSlice);
 
-  onSetup: ({ store, signal }) => {
-    // Called when store is created
-  },
+// With combined slices and options
+const store = createStore<HTMLMediaElement>()(
+  combine(volumeSlice, playbackSlice),
+  {
+    onSetup: ({ store, signal }) => {
+      // Called when store is created
+    },
 
-  onAttach: ({ store, target, signal }) => {
-    // Called when target is attached
-  },
+    onAttach: ({ store, target, signal }) => {
+      // Called when target is attached
+    },
 
-  onError: ({ error, store }) => {
-    // Global error handler
-  },
+    onError: ({ error, store }) => {
+      // Global error handler
+    },
 
-  onTaskStart: ({ key, meta }) => {
-    // Called when a tracked task starts
-  },
+    onTaskStart: ({ key, meta }) => {
+      // Called when a tracked task starts
+    },
 
-  onTaskEnd: ({ key, meta, error }) => {
-    // Called when a tracked task completes
-  },
-});
+    onTaskEnd: ({ key, meta, error }) => {
+      // Called when a tracked task completes
+    },
+  }
+);
 ```
 
 ### Type Inference
@@ -225,7 +248,7 @@ const store = createStore({
 ```ts
 import type { InferStoreState, InferStoreTarget } from '@videojs/store';
 
-const store = createStore({ features: [volumeFeature, playbackFeature] });
+const store = createStore<HTMLMediaElement>()(volumeSlice);
 
 type State = InferStoreState<typeof store>;
 type Target = InferStoreTarget<typeof store>;
@@ -417,8 +440,7 @@ Handle errors locally via the promise, or globally via `onError`:
 import { isStoreError } from '@videojs/store';
 
 // Global error handling
-const store = createStore({
-  features: [playbackFeature],
+const store = createStore<HTMLMediaElement>()(volumeSlice, {
   onError: ({ error, store }) => {
     console.error('Store error:', error);
   },

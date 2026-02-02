@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { defineFeature } from '../feature';
-import { createFeatureSelector } from '../feature-selector';
+import { createSelector } from '../selector';
+import { defineSlice } from '../slice';
 
 interface MockMedia {
   volume: number;
 }
 
-describe('createFeatureSelector', () => {
-  const volumeFeature = defineFeature<MockMedia>()({
+describe('createSelector', () => {
+  const volumeSlice = defineSlice<MockMedia>()({
     state: ({ task }) => ({
       volume: 1,
       muted: false,
@@ -20,15 +20,15 @@ describe('createFeatureSelector', () => {
     }),
   });
 
-  const playbackFeature = defineFeature<MockMedia>()({
+  const playbackSlice = defineSlice<MockMedia>()({
     state: () => ({
       paused: true,
       ended: false,
     }),
   });
 
-  it('selects feature state from store state', () => {
-    const selectVolume = createFeatureSelector(volumeFeature);
+  it('selects slice state from store state', () => {
+    const selectVolume = createSelector(volumeSlice);
     const state = { volume: 0.5, muted: true, setVolume: () => Promise.resolve(0.5) };
 
     const selected = selectVolume(state);
@@ -40,8 +40,8 @@ describe('createFeatureSelector', () => {
     });
   });
 
-  it('returns undefined when feature is not configured', () => {
-    const selectVolume = createFeatureSelector(volumeFeature);
+  it('returns undefined when slice is not configured', () => {
+    const selectVolume = createSelector(volumeSlice);
     const state = { paused: true, ended: false }; // No volume keys
 
     const selected = selectVolume(state);
@@ -49,9 +49,9 @@ describe('createFeatureSelector', () => {
     expect(selected).toBeUndefined();
   });
 
-  it('creates separate selectors for different features', () => {
-    const selectVolume = createFeatureSelector(volumeFeature);
-    const selectPlayback = createFeatureSelector(playbackFeature);
+  it('creates separate selectors for different slices', () => {
+    const selectVolume = createSelector(volumeSlice);
+    const selectPlayback = createSelector(playbackSlice);
     const state = {
       volume: 0.75,
       muted: false,
@@ -75,7 +75,7 @@ describe('createFeatureSelector', () => {
   });
 
   it('returns stable references when state values are the same', () => {
-    const selectVolume = createFeatureSelector(volumeFeature);
+    const selectVolume = createSelector(volumeSlice);
     const setVolume = () => Promise.resolve(1);
     const state1 = { volume: 1, muted: false, setVolume };
     const state2 = { volume: 1, muted: false, setVolume };

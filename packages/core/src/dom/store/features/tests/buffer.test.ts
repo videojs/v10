@@ -1,6 +1,7 @@
 import { createStore } from '@videojs/store';
 import { describe, expect, it } from 'vitest';
 
+import type { PlayerTarget } from '../../../types';
 import { bufferFeature } from '../buffer';
 
 describe('bufferFeature', () => {
@@ -11,7 +12,7 @@ describe('bufferFeature', () => {
         seekable: createTimeRanges([[0, 120]]),
       });
 
-      const store = createStore({ features: [bufferFeature] });
+      const store = createStore<PlayerTarget>()(bufferFeature);
       store.attach({ media: video, container: null });
 
       expect(store.state.buffered).toEqual([[0, 60]]);
@@ -27,7 +28,7 @@ describe('bufferFeature', () => {
         seekable: createTimeRanges([[0, 120]]),
       });
 
-      const store = createStore({ features: [bufferFeature] });
+      const store = createStore<PlayerTarget>()(bufferFeature);
       store.attach({ media: video, container: null });
 
       expect(store.state.buffered).toEqual([
@@ -42,7 +43,7 @@ describe('bufferFeature', () => {
         seekable: createTimeRanges([[0, 100]]),
       });
 
-      const store = createStore({ features: [bufferFeature] });
+      const store = createStore<PlayerTarget>()(bufferFeature);
       store.attach({ media: video, container: null });
 
       // Update the mock video's buffered range
@@ -63,7 +64,7 @@ describe('bufferFeature', () => {
         seekable: createTimeRanges([[0, 100]]),
       });
 
-      const store = createStore({ features: [bufferFeature] });
+      const store = createStore<PlayerTarget>()(bufferFeature);
       store.attach({ media: video, container: null });
 
       // Update the mock video to have no buffered content

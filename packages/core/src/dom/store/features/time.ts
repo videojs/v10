@@ -1,11 +1,9 @@
-import type { InferFeatureState } from '@videojs/store';
-
-import { defineFeature } from '@videojs/store';
+import type { InferSliceState } from '@videojs/store';
 import { listen, onEvent } from '@videojs/utils/dom';
 
-import type { PlayerTarget } from '../../types';
+import { definePlayerFeature } from '../../feature';
 
-export const timeFeature = defineFeature<PlayerTarget>()({
+export const timeFeature = definePlayerFeature({
   state: ({ task }) => ({
     /** Current playback position in seconds. */
     currentTime: 0,
@@ -44,4 +42,4 @@ export const timeFeature = defineFeature<PlayerTarget>()({
   },
 });
 
-export type TimeState = InferFeatureState<typeof timeFeature>;
+export type TimeState = InferSliceState<typeof timeFeature>;

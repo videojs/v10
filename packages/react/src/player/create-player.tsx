@@ -1,15 +1,15 @@
 'use client';
 
-import type { Media, PlayerTarget } from '@videojs/core/dom';
-import type { AnyFeature, FeatureStore, UnionFeatureState } from '@videojs/store';
-import { createStore } from '@videojs/store';
+import type { AnyPlayerFeature, Media, PlayerStore, PlayerTarget } from '@videojs/core/dom';
+import type { UnionSliceState } from '@videojs/store';
+import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
-import type { ReactNode } from 'react';
+import type { FC, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
 import { Container, PlayerContextProvider, useMedia, usePlayerContext } from './context';
 
-export interface CreatePlayerConfig<Features extends AnyFeature[]> {
+export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
   features: Features;
   displayName?: string;
 }
@@ -18,26 +18,26 @@ export interface ProviderProps {
   children: ReactNode;
 }
 
-export interface CreatePlayerResult<Features extends AnyFeature[]> {
-  Provider: (props: ProviderProps) => ReactNode;
+export interface CreatePlayerResult<Features extends AnyPlayerFeature[]> {
+  Provider: FC<ProviderProps>;
   Container: typeof Container;
   usePlayer: UsePlayerHook<Features>;
   useMedia: () => Media | null;
 }
 
-type UsePlayerHook<Features extends AnyFeature[]> = {
-  (): FeatureStore<Features>;
-  <R>(selector: (state: UnionFeatureState<Features>) => R): R;
+type UsePlayerHook<Features extends AnyPlayerFeature[]> = {
+  (): PlayerStore<Features>;
+  <R>(selector: (state: UnionSliceState<Features>) => R): R;
 };
 
-export function createPlayer<const Features extends AnyFeature<PlayerTarget>[]>(
+export function createPlayer<const Features extends AnyPlayerFeature[]>(
   config: CreatePlayerConfig<Features>
 ): CreatePlayerResult<Features> {
-  type Store = FeatureStore<Features>;
-  type State = UnionFeatureState<Features>;
+  type Store = PlayerStore<Features>;
+  type State = UnionSliceState<Features>;
 
   function Provider({ children }: ProviderProps): ReactNode {
-    const [store] = useState(() => createStore({ features: config.features }));
+    const [store] = useState(() => createStore<PlayerTarget>()(combine(...config.features)));
     const [media, setMedia] = useState<Media | null>(null);
 
     useEffect(() => () => store.destroy(), [store]);

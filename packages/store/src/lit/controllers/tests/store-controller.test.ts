@@ -3,14 +3,6 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createCoreTestStore, createTestHost } from '../../tests/test-utils';
 import { StoreController } from '../store-controller';
 
-interface AudioState {
-  volume: number;
-  muted: boolean;
-  setVolume: (volume: number) => Promise<number>;
-  setMuted: (muted: boolean) => Promise<boolean>;
-  slowSetVolume: (volume: number) => Promise<number>;
-}
-
 describe('StoreController', () => {
   afterEach(() => {
     document.body.innerHTML = '';
@@ -21,7 +13,7 @@ describe('StoreController', () => {
     const host = createTestHost();
 
     const controller = new StoreController(host, store);
-    const value = controller.value as AudioState;
+    const value = controller.value;
 
     expect(value.volume).toBe(1);
     expect(value.muted).toBe(false);
@@ -35,11 +27,11 @@ describe('StoreController', () => {
     const controller = new StoreController(host, store);
     document.body.appendChild(host);
 
-    expect((controller.value as AudioState).volume).toBe(1);
+    expect(controller.value.volume).toBe(1);
 
     await store.setVolume(0.5);
 
-    expect((controller.value as AudioState).volume).toBe(0.5);
+    expect(controller.value.volume).toBe(0.5);
     expect(host.updateCount).toBeGreaterThan(0);
   });
 
@@ -65,7 +57,7 @@ describe('StoreController', () => {
     document.body.appendChild(host);
 
     await store.setVolume(0.5);
-    expect((controller.value as AudioState).volume).toBe(0.5);
+    expect(controller.value.volume).toBe(0.5);
 
     host.remove();
 
@@ -74,6 +66,6 @@ describe('StoreController', () => {
     // Reconnect
     document.body.appendChild(host);
 
-    expect((controller.value as AudioState).volume).toBe(0.8);
+    expect(controller.value.volume).toBe(0.8);
   });
 });

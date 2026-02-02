@@ -1,8 +1,8 @@
 import { ReactiveElement } from '@lit/reactive-element';
 import { noop } from '@videojs/utils/function';
 import { afterEach } from 'vitest';
-import { defineFeature } from '../../core/feature';
-import type { FeatureStore } from '../../core/store';
+import { defineSlice } from '../../core/slice';
+import type { Store } from '../../core/store';
 import { createStore as createCoreStore } from '../../core/store';
 import { createStore as createLitStore } from '../create-store';
 
@@ -27,7 +27,7 @@ export class MockMedia extends EventTarget {
   muted = false;
 }
 
-export const audioFeature = defineFeature<MockMedia>()({
+export const audioSlice = defineSlice<MockMedia>()({
   state: ({ task }) => ({
     volume: 1,
     muted: false,
@@ -67,8 +67,8 @@ export const audioFeature = defineFeature<MockMedia>()({
   },
 });
 
-/** Feature with custom keys (name !== key) for testing superseding behavior. */
-export const customKeyFeature = defineFeature<MockMedia>()({
+/** Slice with custom keys (name !== key) for testing superseding behavior. */
+export const customKeySlice = defineSlice<MockMedia>()({
   state: ({ task }) => ({
     volume: 1,
     muted: false,
@@ -110,42 +110,47 @@ export const customKeyFeature = defineFeature<MockMedia>()({
   },
 });
 
-type TestFeature = typeof audioFeature;
-type CustomKeyFeature = typeof customKeyFeature;
+export type AudioSliceState = {
+  volume: number;
+  muted: boolean;
+  setVolume: (volume: number) => Promise<number>;
+  setMuted: (muted: boolean) => Promise<boolean>;
+  slowSetVolume: (volume: number) => Promise<number>;
+};
 
-// FeatureStore already includes state intersection, no need to repeat
-type TestStore = FeatureStore<[TestFeature]>;
-type CustomKeyStore = FeatureStore<[CustomKeyFeature]>;
+type CustomKeySliceState = {
+  volume: number;
+  muted: boolean;
+  adjustVolume: (volume: number) => Promise<number>;
+  toggleMute: (muted: boolean) => Promise<boolean>;
+};
+
+type TestStore = Store<MockMedia, AudioSliceState>;
+type CustomKeyStore = Store<MockMedia, CustomKeySliceState>;
 
 // For controller tests - creates core store with attached target
 export function createCoreTestStore(): { store: TestStore; target: MockMedia } {
-  const store = createCoreStore({
-    features: [audioFeature],
-    onError: noop,
-  });
+  const store = createCoreStore<MockMedia>()(audioSlice, { onError: noop });
 
   const target = new MockMedia();
   store.attach(target);
 
-  return { store: store as TestStore, target };
+  return { store, target };
 }
 
-/** Creates store with custom key feature (name !== key) for testing superseding. */
+/** Creates store with custom key slice (name !== key) for testing superseding. */
 export function createCustomKeyTestStore(): { store: CustomKeyStore; target: MockMedia } {
-  const store = createCoreStore({
-    features: [customKeyFeature],
-    onError: noop,
-  });
+  const store = createCoreStore<MockMedia>()(customKeySlice, { onError: noop });
 
   const target = new MockMedia();
   store.attach(target);
 
-  return { store: store as CustomKeyStore, target };
+  return { store, target };
 }
 
 // For mixin tests - creates lit store factory
 export function createLitTestStore() {
-  return createLitStore({ features: [audioFeature] });
+  return createLitStore(audioSlice);
 }
 
 /** Type alias for test host. */
