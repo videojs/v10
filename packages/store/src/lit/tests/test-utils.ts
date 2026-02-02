@@ -4,7 +4,6 @@ import { afterEach } from 'vitest';
 import { defineSlice } from '../../core/slice';
 import type { Store } from '../../core/store';
 import { createStore as createCoreStore } from '../../core/store';
-import { createStore as createLitStore } from '../create-store';
 
 /** Concrete base class for mixin tests (ReactiveElement is abstract). */
 export class TestBaseElement extends ReactiveElement {}
@@ -146,11 +145,6 @@ export function createCustomKeyTestStore(): { store: CustomKeyStore; target: Moc
   store.attach(target);
 
   return { store, target };
-}
-
-// For mixin tests - creates lit store factory
-export function createLitTestStore() {
-  return createLitStore(audioSlice);
 }
 
 /** Type alias for test host. */

@@ -1,11 +1,10 @@
 import type { Context } from '@lit/context';
 import { ContextConsumer } from '@lit/context';
-import type { ReactiveControllerHost } from '@lit/reactive-element';
+import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import { noop } from '@videojs/utils/function';
 import type { AnyStore } from '../core/store';
 import { isStore } from '../core/store';
 
-/** A store instance or a context that provides one. */
 export type StoreSource<Store extends AnyStore> = Store | Context<unknown, Store>;
 
 export type StoreAccessorHost = ReactiveControllerHost & HTMLElement;
@@ -28,14 +27,14 @@ export type StoreAccessorHost = ReactiveControllerHost & HTMLElement;
  * accessor.value; // null until context provides store
  * ```
  */
-export class StoreAccessor<Store extends AnyStore> {
+export class StoreAccessor<Store extends AnyStore> implements ReactiveController {
   readonly #onAvailable: (store: Store) => void;
   readonly #consumer: ContextConsumer<Context<unknown, Store>, StoreAccessorHost> | null;
 
   #directStore: Store | null;
 
   constructor(host: StoreAccessorHost, source: StoreSource<Store>, onAvailable?: (store: Store) => void) {
-    this.#onAvailable = onAvailable ?? (noop as (store: Store) => void);
+    this.#onAvailable = onAvailable ?? noop;
 
     // Check if source is a store (object with subscribe) or context (symbol/string)
     if (isStore(source)) {
@@ -49,6 +48,8 @@ export class StoreAccessor<Store extends AnyStore> {
         subscribe: false,
       });
     }
+
+    host.addController(this);
   }
 
   /** Returns the store, or null if not yet available from context. */
@@ -56,19 +57,15 @@ export class StoreAccessor<Store extends AnyStore> {
     if (this.#consumer) {
       return this.#consumer.value ?? null;
     }
+
     return this.#directStore;
   }
 
-  /**
-   * Call from hostConnected to re-trigger onAvailable.
-   * For context sources, the ContextConsumer handles reconnect automatically.
-   * For direct stores, this manually triggers onAvailable.
-   */
   hostConnected(): void {
     // For direct store, trigger onAvailable on connect/reconnect
+    // Context consumer handles its own reconnect via callback
     if (this.#directStore) {
       this.#onAvailable(this.#directStore);
     }
-    // Context consumer handles its own reconnect via callback
   }
 }

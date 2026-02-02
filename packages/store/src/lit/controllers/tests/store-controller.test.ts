@@ -8,30 +8,53 @@ describe('StoreController', () => {
     document.body.innerHTML = '';
   });
 
-  it('returns state and action functions spread together', () => {
+  it('returns store without selector (no subscription)', () => {
     const { store } = createCoreTestStore();
     const host = createTestHost();
 
     const controller = new StoreController(host, store);
     const value = controller.value;
 
+    expect(value).toBe(store);
     expect(value.volume).toBe(1);
-    expect(value.muted).toBe(false);
     expect(typeof value.setVolume).toBe('function');
   });
 
-  it('updates when state changes', async () => {
+  it('does not trigger updates without selector', async () => {
     const { store } = createCoreTestStore();
     const host = createTestHost();
 
-    const controller = new StoreController(host, store);
+    new StoreController(host, store);
     document.body.appendChild(host);
-
-    expect(controller.value.volume).toBe(1);
 
     await store.setVolume(0.5);
 
-    expect(controller.value.volume).toBe(0.5);
+    expect(host.updateCount).toBe(0);
+  });
+
+  it('returns selected state with selector', () => {
+    const { store } = createCoreTestStore();
+    const host = createTestHost();
+
+    const controller = new StoreController(host, store, (s) => s.volume);
+
+    document.body.appendChild(host);
+
+    expect(controller.value).toBe(1);
+  });
+
+  it('updates when selected state changes', async () => {
+    const { store } = createCoreTestStore();
+    const host = createTestHost();
+
+    const controller = new StoreController(host, store, (s) => s.volume);
+    document.body.appendChild(host);
+
+    expect(controller.value).toBe(1);
+
+    await store.setVolume(0.5);
+
+    expect(controller.value).toBe(0.5);
     expect(host.updateCount).toBeGreaterThan(0);
   });
 
@@ -39,7 +62,7 @@ describe('StoreController', () => {
     const { store } = createCoreTestStore();
     const host = createTestHost();
 
-    new StoreController(host, store);
+    new StoreController(host, store, (s) => s.volume);
     document.body.appendChild(host);
     host.remove();
 
@@ -53,11 +76,11 @@ describe('StoreController', () => {
     const { store } = createCoreTestStore();
     const host = createTestHost();
 
-    const controller = new StoreController(host, store);
+    const controller = new StoreController(host, store, (s) => s.volume);
     document.body.appendChild(host);
 
     await store.setVolume(0.5);
-    expect(controller.value.volume).toBe(0.5);
+    expect(controller.value).toBe(0.5);
 
     host.remove();
 
@@ -66,6 +89,6 @@ describe('StoreController', () => {
     // Reconnect
     document.body.appendChild(host);
 
-    expect(controller.value.volume).toBe(0.8);
+    expect(controller.value).toBe(0.8);
   });
 });
