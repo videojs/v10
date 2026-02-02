@@ -37,7 +37,7 @@ const V8_URLS = [
   'https://videojs.org/blog/the-end-of-html-first/',
   'https://videojs.org/blog/video-js-5-11-0-prelease/',
   'https://videojs.org/blog/video-js-5-s-fluid-mode-and-playlist-picker/',
-  'https://videojs.org/blog/video-js-5-the-only-thing-that’s-changed-is-everything-except-for-like-3-things-that-didn-t-including-the-name/',
+  "https://videojs.org/blog/video-js-5-the-only-thing-that's-changed-is-everything-except-for-like-3-things-that-didn-t-including-the-name/",
   'https://videojs.org/blog/it-s-here-5-0-release-candidates/',
   'https://videojs.org/blog/video-js-4-12-the-last-of-the-4-minors/',
   'https://videojs.org/blog/video-js-4-9-now-can-join-the-party/',
@@ -178,35 +178,40 @@ interface V8UrlStatus {
   status: 'migrated' | 'redirected' | 'needs migration';
 }
 
-interface VercelRedirect {
-  source: string;
-  destination: string;
-  statusCode?: number;
-  permanent?: boolean;
+interface NetlifyRedirect {
+  from: string;
+  to: string;
+  status: number;
 }
 
-/**
- * Check if a pathname matches a Vercel redirect source pattern
- * Supports exact matches and :path(.*) wildcard patterns
- */
-function matchesVercelPattern(pathname: string, pattern: string): boolean {
-  // Remove trailing slash for consistent matching
+function parseNetlifyToml(content: string): NetlifyRedirect[] {
+  const redirects: NetlifyRedirect[] = [];
+  const redirectRegex = /\[\[redirects\]\]\s+from\s*=\s*"([^"]+)"\s+to\s*=\s*"([^"]+)"\s+status\s*=\s*(\d+)/g;
+
+  let match: RegExpExecArray | null;
+  while ((match = redirectRegex.exec(content)) !== null) {
+    redirects.push({
+      from: match[1],
+      to: match[2],
+      status: parseInt(match[3], 10),
+    });
+  }
+
+  return redirects;
+}
+
+function matchesNetlifyPattern(pathname: string, pattern: string): boolean {
   const normalizedPath = pathname.replace(/\/$/, '');
   const normalizedPattern = pattern.replace(/\/$/, '');
 
-  // Exact match
   if (normalizedPattern === normalizedPath) {
     return true;
   }
 
-  // Handle :path(.*) wildcard pattern
-  // Convert /tags/:path(.*) to a regex that matches /tags/anything
-  if (normalizedPattern.includes(':path(')) {
-    const regexPattern = normalizedPattern
-      .replace(/:[^/]+\(\.\*\)/g, '.*') // :path(.*) -> .*
-      .replace(/\//g, '\\/'); // Escape slashes
-    const regex = new RegExp(`^${regexPattern}$`);
-    return regex.test(normalizedPath);
+  // Handle * splat pattern (e.g., /tags/* matches /tags/anything)
+  if (normalizedPattern.endsWith('/*')) {
+    const prefix = normalizedPattern.slice(0, -2);
+    return normalizedPath === prefix || normalizedPath.startsWith(`${prefix}/`);
   }
 
   return false;
@@ -220,20 +225,18 @@ export default function checkV8Urls(): AstroIntegration {
         // Convert URL to file path
         const buildDir = fileURLToPath(dir);
 
-        // Check for Vercel config files
-        // buildDir is dist/client/, so go up two levels to site/
-        const siteDir = resolve(buildDir, '..', '..');
-        const vercelConfigPath = resolve(siteDir, '.vercel', 'output', 'config.json');
-        const vercelJsonPath = resolve(siteDir, 'vercel.json');
+        // buildDir is dist/, so go up one level to site/
+        const siteDir = resolve(buildDir, '..');
+        const netlifyTomlPath = resolve(siteDir, 'netlify.toml');
 
-        // Read vercel.json redirects if it exists
-        let vercelJsonRedirects: VercelRedirect[] = [];
-        if (existsSync(vercelJsonPath)) {
+        // Read netlify.toml redirects if it exists
+        let netlifyRedirects: NetlifyRedirect[] = [];
+        if (existsSync(netlifyTomlPath)) {
           try {
-            const vercelJson = JSON.parse(readFileSync(vercelJsonPath, 'utf-8'));
-            vercelJsonRedirects = vercelJson.redirects || [];
+            const content = readFileSync(netlifyTomlPath, 'utf-8');
+            netlifyRedirects = parseNetlifyToml(content);
           } catch {
-            // Ignore JSON parse errors
+            // Ignore parse errors
           }
         }
 
@@ -254,49 +257,17 @@ export default function checkV8Urls(): AstroIntegration {
           if (existsSync(htmlPath1) || existsSync(htmlPath2)) {
             status = 'migrated';
           } else {
-            // Check for redirects in vercel.json first
-            const hasVercelJsonRedirect = vercelJsonRedirects.some((redirect) => {
-              // Check if redirect has a redirect status code (or permanent flag)
-              const isRedirect = redirect.statusCode
-                ? redirect.statusCode >= 301 && redirect.statusCode <= 308
-                : redirect.permanent !== undefined;
-
+            // Check for redirects in netlify.toml
+            const hasNetlifyRedirect = netlifyRedirects.some((redirect) => {
+              const isRedirect = redirect.status >= 301 && redirect.status <= 308;
               if (isRedirect) {
-                return matchesVercelPattern(pathname, redirect.source);
+                return matchesNetlifyPattern(pathname, redirect.from);
               }
               return false;
             });
 
-            if (hasVercelJsonRedirect) {
+            if (hasNetlifyRedirect) {
               status = 'redirected';
-            } else {
-              // Fall back to checking .vercel/output/config.json (adapter-generated)
-              if (existsSync(vercelConfigPath)) {
-                try {
-                  const vercelConfig = JSON.parse(readFileSync(vercelConfigPath, 'utf-8'));
-                  const routes = vercelConfig.routes || [];
-
-                  // Check if this pathname has a redirect (status 301/302/307/308)
-                  const hasRedirect = routes.some((route: any) => {
-                    if (route.status && route.status >= 301 && route.status <= 308) {
-                      // Route has a redirect status code
-                      const src = route.src;
-                      // Match against pathname (src is a regex pattern)
-                      // Simple check: convert pathname to regex pattern
-                      const pathPattern = `^${pathname.replace(/\/$/, '')}$`;
-                      const pathPatternWithSlash = `^${pathname}$`;
-                      return src === pathPattern || src === pathPatternWithSlash;
-                    }
-                    return false;
-                  });
-
-                  if (hasRedirect) {
-                    status = 'redirected';
-                  }
-                } catch {
-                  // Ignore JSON parse errors
-                }
-              }
             }
           }
 

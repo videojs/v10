@@ -3,6 +3,7 @@ title: Installation
 description: Get started with Video.js v10 by choosing your framework, styles, skin, and media renderer
 ---
 
+
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import ServerCode from '@/components/Code/ServerCode.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
@@ -24,16 +25,16 @@ Video.js v10 supports both React and vanilla JavaScript/HTML through Web Compone
 
 First, select your preferred framework in the framework selector at the top of the <span class="hidden lg:inline">sidebar</span><span class="lg:hidden">page</span>.
 
-Then, install the appropriate package, taking care to use the `@next` dist.
+Then, install the package:
 
 <FrameworkCase frameworks={["react"]}>
 ```bash
-npm install @videojs/react@next
+npm install @videojs/react-preview
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 ```bash
-npm install @videojs/html@next
+npm install @videojs/html-preview
 ```
 </FrameworkCase>
 
@@ -50,16 +51,16 @@ Currently, Video.js v10 uses CSS for styling these skins. More styling approache
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import '@videojs/react/skins/frosted.css';
+import '@videojs/react-preview/skins/frosted.css';
 // or
-import '@videojs/react/skins/minimal.css';
+import '@videojs/react-preview/skins/minimal.css';
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import '@videojs/html/skins/frosted';
+import '@videojs/html-preview/skins/frosted';
 // or
-import '@videojs/html/skins/minimal';
+import '@videojs/html-preview/skins/minimal';
 ```
 </FrameworkCase>
 
@@ -78,8 +79,8 @@ More renderers for formats like DASH, and services like YouTube and Vimeo are pl
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { VideoProvider, FrostedSkin, Video } from '@videojs/react';
-import '@videojs/react/skins/frosted.css';
+import { VideoProvider, FrostedSkin, Video } from '@videojs/react-preview';
+import '@videojs/react-preview/skins/frosted.css';
 
 export default function App() {
   return (
@@ -98,7 +99,7 @@ export default function App() {
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import '@videojs/html/skins/frosted';
+import '@videojs/html-preview/skins/frosted';
 
 document.body.innerHTML = `
   <video-provider>
