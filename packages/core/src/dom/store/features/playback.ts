@@ -3,7 +3,9 @@ import type { InferFeatureState } from '@videojs/store';
 import { defineFeature } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
-export const playbackFeature = defineFeature<HTMLMediaElement>()({
+import type { PlayerTarget } from '../../types';
+
+export const playbackFeature = defineFeature<PlayerTarget>()({
   state: ({ task }) => ({
     /** Whether playback is paused. */
     paused: true,
@@ -20,7 +22,7 @@ export const playbackFeature = defineFeature<HTMLMediaElement>()({
         key: 'playback',
         mode: 'shared',
         async handler({ target }) {
-          await target.play();
+          await target.media.play();
         },
       });
     },
@@ -30,28 +32,30 @@ export const playbackFeature = defineFeature<HTMLMediaElement>()({
       return task({
         key: 'playback',
         handler({ target }) {
-          target.pause();
+          target.media.pause();
         },
       });
     },
   }),
 
   attach({ target, signal, set }) {
+    const { media } = target;
+
     const sync = () =>
       set({
-        paused: target.paused,
-        ended: target.ended,
-        started: !target.paused || target.currentTime > 0,
-        waiting: target.readyState < HTMLMediaElement.HAVE_FUTURE_DATA && !target.paused,
+        paused: media.paused,
+        ended: media.ended,
+        started: !media.paused || media.currentTime > 0,
+        waiting: media.readyState < HTMLMediaElement.HAVE_FUTURE_DATA && !media.paused,
       });
 
     sync();
 
-    listen(target, 'play', sync, { signal });
-    listen(target, 'pause', sync, { signal });
-    listen(target, 'ended', sync, { signal });
-    listen(target, 'playing', sync, { signal });
-    listen(target, 'waiting', sync, { signal });
+    listen(media, 'play', sync, { signal });
+    listen(media, 'pause', sync, { signal });
+    listen(media, 'ended', sync, { signal });
+    listen(media, 'playing', sync, { signal });
+    listen(media, 'waiting', sync, { signal });
   },
 });
 

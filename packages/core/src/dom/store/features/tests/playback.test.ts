@@ -14,7 +14,7 @@ describe('playbackFeature', () => {
       });
 
       const store = createStore({ features: [playbackFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.paused).toBe(false);
       expect(store.state.ended).toBe(false);
@@ -29,7 +29,7 @@ describe('playbackFeature', () => {
       });
 
       const store = createStore({ features: [playbackFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.waiting).toBe(true);
     });
@@ -41,7 +41,7 @@ describe('playbackFeature', () => {
       });
 
       const store = createStore({ features: [playbackFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.started).toBe(true);
     });
@@ -53,7 +53,7 @@ describe('playbackFeature', () => {
       });
 
       const store = createStore({ features: [playbackFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.started).toBe(true);
     });
@@ -62,7 +62,7 @@ describe('playbackFeature', () => {
       const video = createMockVideo({ paused: true });
 
       const store = createStore({ features: [playbackFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.paused).toBe(true);
 
@@ -77,7 +77,7 @@ describe('playbackFeature', () => {
       const video = createMockVideo({ paused: false });
 
       const store = createStore({ features: [playbackFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.paused).toBe(false);
 
@@ -92,7 +92,7 @@ describe('playbackFeature', () => {
       const video = createMockVideo({ ended: false });
 
       const store = createStore({ features: [playbackFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.ended).toBe(false);
 
@@ -107,7 +107,7 @@ describe('playbackFeature', () => {
       const video = createMockVideo({});
 
       const store = createStore({ features: [playbackFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       store.destroy();
 
@@ -126,7 +126,7 @@ describe('playbackFeature', () => {
       video.play = vi.fn().mockResolvedValue(undefined);
 
       const store = createStore({ features: [playbackFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       await store.play();
 
@@ -138,7 +138,7 @@ describe('playbackFeature', () => {
       video.pause = vi.fn();
 
       const store = createStore({ features: [playbackFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       store.pause();
 

@@ -12,7 +12,7 @@ describe('timeFeature', () => {
       });
 
       const store = createStore({ features: [timeFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.currentTime).toBe(30);
       expect(store.state.duration).toBe(120);
@@ -25,7 +25,7 @@ describe('timeFeature', () => {
       });
 
       const store = createStore({ features: [timeFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.duration).toBe(0);
     });
@@ -34,7 +34,7 @@ describe('timeFeature', () => {
       const video = createMockVideo({ currentTime: 0 });
 
       const store = createStore({ features: [timeFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.currentTime).toBe(0);
 
@@ -49,7 +49,7 @@ describe('timeFeature', () => {
       const video = createMockVideo({ duration: 0 });
 
       const store = createStore({ features: [timeFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.duration).toBe(0);
 
@@ -64,7 +64,7 @@ describe('timeFeature', () => {
       const video = createMockVideo({ currentTime: 0 });
 
       const store = createStore({ features: [timeFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       // Update mock currentTime
       video.currentTime = 50;
@@ -80,7 +80,7 @@ describe('timeFeature', () => {
       });
 
       const store = createStore({ features: [timeFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       // Update mock to empty state
       video.currentTime = 0;
@@ -97,7 +97,7 @@ describe('timeFeature', () => {
       it('sets currentTime on target and waits for seeked event', async () => {
         const video = createMockVideo({});
         const store = createStore({ features: [timeFeature] });
-        store.attach(video);
+        store.attach({ media: video, container: null });
 
         const resultPromise = store.seek(45);
 

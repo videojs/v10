@@ -464,6 +464,17 @@ export function onEvent<K extends keyof HTMLElementEventMap>(...): Promise<...>;
 export function supportsIdleCallback(): boolean { ... }
 get size(): number { ... }
 add(cleanup: CleanupFn): void { ... }
+
+// Bad - comment restates the obvious
+/** Media element contract. */
+export interface Media extends HTMLMediaElement {}
+
+/** Feature capability availability. */
+export type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
+
+// Good - no comment needed
+export interface Media extends HTMLMediaElement {}
+export type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 ```
 
 ## Design Documents

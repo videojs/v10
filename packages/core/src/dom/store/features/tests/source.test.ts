@@ -13,7 +13,7 @@ describe('sourceFeature', () => {
       });
 
       const store = createStore({ features: [sourceFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.source).toBe('https://example.com/video.mp4');
       expect(store.state.canPlay).toBe(true);
@@ -26,7 +26,7 @@ describe('sourceFeature', () => {
       Object.defineProperty(video, 'readyState', { value: HTMLMediaElement.HAVE_NOTHING, writable: false });
 
       const store = createStore({ features: [sourceFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.source).toBe(null);
       expect(store.state.canPlay).toBe(false);
@@ -39,7 +39,7 @@ describe('sourceFeature', () => {
       });
 
       const store = createStore({ features: [sourceFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.canPlay).toBe(false);
 
@@ -60,7 +60,7 @@ describe('sourceFeature', () => {
       });
 
       const store = createStore({ features: [sourceFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.source).toBe('https://example.com/video.mp4');
 
@@ -82,7 +82,7 @@ describe('sourceFeature', () => {
       });
 
       const store = createStore({ features: [sourceFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.canPlay).toBe(true);
 
@@ -107,7 +107,7 @@ describe('sourceFeature', () => {
         video.load = vi.fn();
 
         const store = createStore({ features: [sourceFeature] });
-        store.attach(video);
+        store.attach({ media: video, container: null });
 
         const result = await store.loadSource('https://example.com/new.mp4');
 

@@ -12,17 +12,26 @@ describe('volumeFeature', () => {
       });
 
       const store = createStore({ features: [volumeFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.volume).toBe(0.8);
       expect(store.state.muted).toBe(false);
+    });
+
+    it('sets volumeAvailability on attach', () => {
+      const video = createMockVideo({});
+      const store = createStore({ features: [volumeFeature] });
+      store.attach({ media: video, container: null });
+
+      // Should be 'available' or 'unsupported' based on browser capability
+      expect(['available', 'unsupported']).toContain(store.state.volumeAvailability);
     });
 
     it('updates on volumechange event', () => {
       const video = createMockVideo({ volume: 1, muted: false });
 
       const store = createStore({ features: [volumeFeature] });
-      store.attach(video);
+      store.attach({ media: video, container: null });
 
       expect(store.state.volume).toBe(1);
 
@@ -41,7 +50,7 @@ describe('volumeFeature', () => {
       it('sets volume on target', async () => {
         const video = createMockVideo({});
         const store = createStore({ features: [volumeFeature] });
-        store.attach(video);
+        store.attach({ media: video, container: null });
 
         const result = await store.changeVolume(0.7);
 
@@ -52,7 +61,7 @@ describe('volumeFeature', () => {
       it('clamps volume to min 0', async () => {
         const video = createMockVideo({});
         const store = createStore({ features: [volumeFeature] });
-        store.attach(video);
+        store.attach({ media: video, container: null });
 
         await store.changeVolume(-0.5);
 
@@ -62,7 +71,7 @@ describe('volumeFeature', () => {
       it('clamps volume to max 1', async () => {
         const video = createMockVideo({});
         const store = createStore({ features: [volumeFeature] });
-        store.attach(video);
+        store.attach({ media: video, container: null });
 
         await store.changeVolume(1.5);
 
@@ -74,7 +83,7 @@ describe('volumeFeature', () => {
       it('toggles mute from false to true', async () => {
         const video = createMockVideo({ muted: false });
         const store = createStore({ features: [volumeFeature] });
-        store.attach(video);
+        store.attach({ media: video, container: null });
 
         const result = await store.toggleMute();
 
@@ -85,7 +94,7 @@ describe('volumeFeature', () => {
       it('toggles mute from true to false', async () => {
         const video = createMockVideo({ muted: true });
         const store = createStore({ features: [volumeFeature] });
-        store.attach(video);
+        store.attach({ media: video, container: null });
 
         const result = await store.toggleMute();
 
