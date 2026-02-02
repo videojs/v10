@@ -1,0 +1,35 @@
+[build]
+  command = "pnpm build"
+  publish = "dist"
+
+# Redirect old theme demo pages to home
+[[redirects]]
+  from = "/city"
+  to = "/"
+  status = 308
+
+[[redirects]]
+  from = "/fantasy"
+  to = "/"
+  status = 308
+
+[[redirects]]
+  from = "/forest"
+  to = "/"
+  status = 308
+
+[[redirects]]
+  from = "/sea"
+  to = "/"
+  status = 308
+
+# Redirect old tags pages to blog (no tag filtering in v10)
+[[redirects]]
+  from = "/tags"
+  to = "/blog"
+  status = 307
+
+[[redirects]]
+  from = "/tags/*"
+  to = "/blog"
+  status = 307
