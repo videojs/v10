@@ -1,8 +1,6 @@
 import { listen } from '@videojs/utils/dom';
 import type { FeatureActions, FeatureCreator, FeatureState } from '../types';
 
-type VolumeTargets = { media: HTMLMediaElement };
-
 export const volume = (() => ({
   initialState: {
     /** Whether audio is muted. */
@@ -44,7 +42,7 @@ export const volume = (() => ({
       }
     },
   }),
-})) satisfies FeatureCreator<VolumeTargets>;
+})) satisfies FeatureCreator<{ media: HTMLMediaElement }>;
 
 export type VolumeState = FeatureState<typeof volume>;
 export type VolumeActions = FeatureActions<typeof volume>;

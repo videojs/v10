@@ -2,8 +2,6 @@ import { isValidNumber } from '@videojs/utils';
 import { listen } from '@videojs/utils/dom';
 import type { FeatureActions, FeatureCreator, FeatureState } from '../types';
 
-type TimeTargets = { media: HTMLMediaElement };
-
 export const time = (() => ({
   initialState: {
     /** Current playback position in seconds. */
@@ -39,7 +37,7 @@ export const time = (() => ({
       media.currentTime = value;
     },
   }),
-})) satisfies FeatureCreator<TimeTargets>;
+})) satisfies FeatureCreator<{ media: HTMLMediaElement }>;
 
 export type TimeState = FeatureState<typeof time>;
 export type TimeActions = FeatureActions<typeof time>;

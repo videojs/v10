@@ -1,5 +1,3 @@
-/** @TODO !!! Revisit for SSR (CJP) */
-
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 import { createPlayerStore } from '../player-store';
@@ -10,14 +8,12 @@ export function VideoProvider({ children }: { children: ReactNode }): React.JSX.
   const store = useMemo(() => createPlayerStore(), []);
 
   // useEffect(() => {
-  //   value?.dispatch({
-  //     type: 'documentelementchangerequest',
-  //     detail: globalThis.document,
+  //   store?.attach({
+  //     document: globalThis.document,
   //   });
   //   return () => {
-  //     value?.dispatch({
-  //       type: 'documentelementchangerequest',
-  //       detail: undefined,
+  //     store?.attach({
+  //       document: undefined,
   //     });
   //   };
   // }, []);

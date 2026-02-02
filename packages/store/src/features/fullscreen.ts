@@ -1,11 +1,6 @@
 import { containsComposedNode, listen } from '@videojs/utils/dom';
 import type { FeatureActions, FeatureCreator, FeatureState } from '../types';
 
-export interface FullscreenTargets {
-  container: HTMLElement;
-  media: HTMLMediaElement;
-}
-
 export const fullscreen = (() => {
   const doc = globalThis?.document;
 
@@ -71,7 +66,10 @@ export const fullscreen = (() => {
       },
     }),
   };
-}) satisfies FeatureCreator<FullscreenTargets>;
+}) satisfies FeatureCreator<{
+  container: HTMLElement;
+  media: HTMLMediaElement;
+}>;
 
 export type FullscreenState = FeatureState<typeof fullscreen>;
 export type FullscreenActions = FeatureActions<typeof fullscreen>;
