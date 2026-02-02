@@ -6,13 +6,13 @@ Parent issue: [#320](https://github.com/videojs/v10/issues/320)
 
 ## Phases
 
-| # | Issue | Title | SP |
-|---|-------|-------|-----|
-| 1 | [#365](https://github.com/videojs/v10/issues/365) | Store v2 Foundation | 5 |
-| 2 | [#366](https://github.com/videojs/v10/issues/366) | PlayerTarget & Features | 3 |
-| 3 | [#367](https://github.com/videojs/v10/issues/367) | React Player API | 3 |
-| 4 | [#368](https://github.com/videojs/v10/issues/368) | HTML Player API | 5 |
-| 5 | [#369](https://github.com/videojs/v10/issues/369) | Cleanup & Documentation | 2 |
+| # | Issue | Title | SP | Status |
+|---|-------|-------|-----|--------|
+| 1 | [#365](https://github.com/videojs/v10/issues/365) | Store v2 Foundation | 5 | ✅ |
+| 2 | [#366](https://github.com/videojs/v10/issues/366) | PlayerTarget & Features | 3 | ✅ |
+| 3 | [#367](https://github.com/videojs/v10/issues/367) | React Player API | 3 | ✅ |
+| 4 | [#368](https://github.com/videojs/v10/issues/368) | HTML Player API | 5 | ✅ |
+| 5 | [#369](https://github.com/videojs/v10/issues/369) | Cleanup & Documentation | 2 | 🔄 Partial (store/lit cleanup done in #368) |
 
 **Total: 18 SP**
 
