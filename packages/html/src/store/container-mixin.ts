@@ -1,22 +1,18 @@
 import { ContextConsumer } from '@lit/context';
-import type { ReactiveElement } from '@lit/reactive-element';
 import type { MediaContainer, PlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { listen, querySlot } from '@videojs/utils/dom';
 import { Disposer } from '@videojs/utils/events';
 import { noop } from '@videojs/utils/function';
-import type { Constructor } from '@videojs/utils/types';
-
+import type { MediaElementConstructor } from '@/ui/media-element';
 import type { PlayerContext } from '../player/context';
-import type { PlayerConsumer } from './types';
+import type { PlayerConsumer, PlayerConsumerConstructor } from './types';
 
-type Base = Constructor<ReactiveElement>;
-
-type Result<Class extends Base, Store extends PlayerStore> = Class & Constructor<PlayerConsumer<Store>>;
-
-export type ContainerMixin<Store extends PlayerStore> = <Class extends Base>(BaseClass: Class) => Result<Class, Store>;
+export type ContainerMixin<Store extends PlayerStore> = <Class extends MediaElementConstructor>(
+  BaseClass: Class
+) => Class & PlayerConsumerConstructor<Store>;
 
 export function createContainerMixin<Store extends PlayerStore>(context: PlayerContext<Store>): ContainerMixin<Store> {
-  return <Class extends Base>(BaseClass: Class) => {
+  return <Class extends MediaElementConstructor>(BaseClass: Class) => {
     class PlayerContainerElement extends BaseClass implements PlayerConsumer<Store>, MediaContainer {
       #detach = noop;
       #disposer = new Disposer();

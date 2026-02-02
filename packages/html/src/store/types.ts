@@ -1,10 +1,32 @@
 import type { Media, PlayerStore } from '@videojs/core/dom';
+import type { Constructor } from '@videojs/utils/types';
+import type { MediaElement } from '@/ui/media-element';
 
-export interface PlayerProvider<Store extends PlayerStore> {
+// ----------------------------------------
+// PlayerElement
+// ----------------------------------------
+
+export interface PlayerElement<Store extends PlayerStore> extends MediaElement, PlayerProvider<Store> {}
+
+export interface PlayerElementConstructor<Store extends PlayerStore> extends Constructor<PlayerElement<Store>> {}
+
+// ----------------------------------------
+// PlayerProvider
+// ----------------------------------------
+
+export interface PlayerProvider<Store extends PlayerStore> extends MediaElement {
   readonly store: Store;
   media: Media | null;
 }
 
-export interface PlayerConsumer<Store extends PlayerStore> {
+export interface PlayerProviderConstructor<Store extends PlayerStore> extends Constructor<PlayerProvider<Store>> {}
+
+// ----------------------------------------
+// PlayerConsumer
+// ----------------------------------------
+
+export interface PlayerConsumer<Store extends PlayerStore> extends MediaElement {
   readonly store: Store | null;
 }
+
+export interface PlayerConsumerConstructor<Store extends PlayerStore> extends Constructor<PlayerConsumer<Store>> {}

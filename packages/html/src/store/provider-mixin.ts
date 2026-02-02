@@ -1,23 +1,19 @@
 import { ContextProvider } from '@lit/context';
-import type { ReactiveElement } from '@lit/reactive-element';
 import type { Media, PlayerStore } from '@videojs/core/dom';
 import { isNull } from '@videojs/utils/predicate';
-import type { Constructor } from '@videojs/utils/types';
-
+import type { MediaElementConstructor } from '@/ui/media-element';
 import type { PlayerContext } from '../player/context';
-import type { PlayerProvider } from './types';
+import type { PlayerProvider, PlayerProviderConstructor } from './types';
 
-type Base = Constructor<ReactiveElement>;
-
-type Result<Class extends Base, Store extends PlayerStore> = Class & Constructor<PlayerProvider<Store>>;
-
-export type ProviderMixin<Store extends PlayerStore> = <Class extends Base>(BaseClass: Class) => Result<Class, Store>;
+export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaElementConstructor>(
+  BaseClass: Class
+) => Class & PlayerProviderConstructor<Store>;
 
 export function createProviderMixin<Store extends PlayerStore>(
   context: PlayerContext<Store>,
   factory: () => Store
 ): ProviderMixin<Store> {
-  return <Class extends Base>(BaseClass: Class) => {
+  return <Class extends MediaElementConstructor>(BaseClass: Class) => {
     class PlayerProviderElement extends BaseClass implements PlayerProvider<Store> {
       #store: Store | null = null;
       #media: Media | null = null;
