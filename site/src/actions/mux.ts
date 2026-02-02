@@ -16,7 +16,10 @@ function getMuxClient(token: string | undefined) {
     throw new ActionError({ code: 'UNAUTHORIZED' });
   }
 
-  return new Mux({ authorizationToken: token, baseURL: import.meta.env.MUX_API_URL ?? 'https://api.mux.com' });
+  return new Mux({
+    authorizationToken: token,
+    baseURL: import.meta.env.MUX_API_URL ?? 'https://api.mux.com',
+  });
 }
 
 export const mux = {

@@ -39,6 +39,7 @@ export function Select<T extends string = string>({
         data-testid={dataTestId}
       >
         <BaseSelect.Value className="flex-1 min-w-0 truncate" />
+        &nbsp;
         <BaseSelect.Icon>
           <ChevronDown size={12} />
         </BaseSelect.Icon>
