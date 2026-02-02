@@ -3,7 +3,6 @@ import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-e
 import type { PlayerStore } from '@videojs/core/dom';
 import type { InferStoreState, Selector } from '@videojs/store';
 import { StoreController } from '@videojs/store/lit';
-import type { Constructor as Ctor } from '@videojs/utils/types';
 
 import type { PlayerContext, PlayerContextValue } from './context';
 
@@ -18,7 +17,7 @@ export type PlayerControllerHost = ReactiveControllerHost & HTMLElement;
  * @example
  * ```ts
  * // Store access (no subscription)
- * class Controls extends ReactiveElement {
+ * class Controls extends MediaElement {
  *   #player = new PlayerController(this, playerContext);
  *
  *   handleClick() {
@@ -27,7 +26,7 @@ export type PlayerControllerHost = ReactiveControllerHost & HTMLElement;
  * }
  *
  * // Selector-based subscription
- * class PlayButton extends ReactiveElement {
+ * class PlayButton extends MediaElement {
  *   #playback = new PlayerController(this, playerContext, selectPlayback);
  * }
  * ```
@@ -95,7 +94,8 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
 export namespace PlayerController {
   export type Host = PlayerControllerHost;
 
-  export type Constructor<Store extends PlayerStore = PlayerStore, Result = Store> = Ctor<
-    typeof PlayerController<Store, Result>
+  export type Constructor<Store extends PlayerStore = PlayerStore, Result = Store> = typeof PlayerController<
+    Store,
+    Result
   >;
 }

@@ -3,6 +3,8 @@ import { combine, createStore } from '@videojs/store';
 
 import { type ContainerMixin, createContainerMixin } from '../store/container-mixin';
 import { createProviderMixin, type ProviderMixin } from '../store/provider-mixin';
+import type { PlayerElementConstructor } from '../store/types';
+import { MediaElement } from '../ui/media-element';
 import { type PlayerContext, playerContext } from './context';
 import { PlayerController } from './player-controller';
 import { createPlayerMixin, type PlayerMixin } from './player-mixin';
@@ -21,6 +23,9 @@ export interface CreatePlayerResult<Store extends PlayerStore> {
   /** Player controller bound to this player's context. */
   PlayerController: PlayerController.Constructor<Store>;
 
+  /** Pre-composed player element ready for customElements.define(). */
+  PlayerElement: PlayerElementConstructor<Store>;
+
   /** Mixin for a complete player element (provider + container). */
   PlayerMixin: PlayerMixin<Store>;
 
@@ -37,28 +42,21 @@ export interface CreatePlayerResult<Store extends PlayerStore> {
  * @example
  * ```ts
  * import { features } from '@videojs/core/dom';
+ * import { createPlayer, MediaElement } from '@videojs/html';
  *
- * const {
- *   context,
- *   create,
- *   PlayerController,
- *   PlayerMixin,
- *   ProviderMixin,
- *   ContainerMixin,
- * } = createPlayer({
+ * const { PlayerElement, PlayerController, context } = createPlayer({
  *   features: [...features.video],
  * });
  *
- * // Complete player element
- * class VideoPlayer extends PlayerMixin(ReactiveElement) {}
+ * // Simple: register pre-composed PlayerElement
+ * customElements.define('video-player', PlayerElement);
  *
- * // Or separate provider/container
- * class MyPlayer extends ProviderMixin(ReactiveElement) {}
- * class MyContainer extends ContainerMixin(ReactiveElement) {}
+ * // Custom: extend with PlayerMixin
+ * class MyPlayer extends PlayerMixin(MediaElement) {}
  *
- * // Control element
- * class PlayButton extends ReactiveElement {
- *   #playback = new PlayerController(this, selectPlayback);
+ * // Control element with selector
+ * class PlayButton extends MediaElement {
+ *   #playback = new PlayerController(this, context, selectPlayback);
  * }
  * ```
  */
@@ -76,14 +74,15 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
   const ctx = playerContext as PlayerContext<Store>;
 
   const PlayerMixin = createPlayerMixin<Store>(ctx, create);
+  const PlayerElement = PlayerMixin(MediaElement);
   const ProviderMixin = createProviderMixin<Store>(ctx, create);
   const ContainerMixin = createContainerMixin<Store>(ctx);
-  const BoundPlayerController = PlayerController as unknown as PlayerController.Constructor<Store>;
 
   return {
     context: ctx,
     create,
-    PlayerController: BoundPlayerController,
+    PlayerController,
+    PlayerElement,
     PlayerMixin,
     ProviderMixin,
     ContainerMixin,
