@@ -9,21 +9,21 @@ const FEATURE_SYMBOL = Symbol('@videojs/feature');
 // Task
 // ----------------------------------------
 
-export type Task<Target, State extends object> = {
+export type Task<Target, State> = {
   <Output>(handler: TaskHandler<Target, State, Output>): Promise<Awaited<Output>>;
   <Output>(options: TaskOptions<Target, State, Output>): Promise<Awaited<Output>>;
 };
 
-export interface TaskOptions<Target, State extends object, Output> {
+export interface TaskOptions<Target, State, Output> {
   key?: TaskKey;
   mode?: TaskMode;
   cancels?: TaskKey[];
   handler: TaskHandler<Target, State, Output>;
 }
 
-export type TaskHandler<Target, State extends object, Output> = (ctx: TaskContext<Target, State>) => Output;
+export type TaskHandler<Target, State, Output> = (ctx: TaskContext<Target, State>) => Output;
 
-export interface TaskContext<Target, State extends object> {
+export interface TaskContext<Target, State> {
   target: Target;
   signal: AbortSignal;
   get: () => Readonly<State>;
@@ -34,13 +34,15 @@ export interface TaskContext<Target, State extends object> {
 // Attach
 // ----------------------------------------
 
-export type Attach<Target, State extends object> = (ctx: AttachContext<Target, State>) => void;
+export type Attach<Target, State> = (ctx: AttachContext<Target, State>) => void;
 
-export interface AttachContext<Target, State extends object> {
+export interface AttachContext<Target, State> {
   target: Target;
   signal: AbortSignal;
   get: () => Readonly<State>;
   set: (partial: Partial<State>) => void;
+  /** Store instance for cross-feature access via selectors. */
+  store: { readonly state: Readonly<State>; subscribe: (callback: () => void) => () => void };
 }
 
 // ----------------------------------------
@@ -57,14 +59,14 @@ export interface StateFactoryContext<Target> {
 // Feature
 // ----------------------------------------
 
-export type StateFactory<Target, State extends object> = (ctx: StateFactoryContext<Target>) => State;
+export type StateFactory<Target, State> = (ctx: StateFactoryContext<Target>) => State;
 
-export interface FeatureConfig<Target, State extends object> {
+export interface FeatureConfig<Target, State> {
   state: StateFactory<Target, State>;
   attach?: Attach<Target, State>;
 }
 
-export interface Feature<Target, State extends object> extends FeatureConfig<Target, State> {
+export interface Feature<Target, State> extends FeatureConfig<Target, State> {
   [FEATURE_SYMBOL]: true;
 }
 
@@ -74,10 +76,8 @@ export type AnyFeature<Target = any> = Feature<Target, any>;
 // Factory
 // ----------------------------------------
 
-export function defineFeature<Target>(): <State extends object>(
-  config: FeatureConfig<Target, State>
-) => Feature<Target, State> {
-  return <State extends object>(config: FeatureConfig<Target, State>): Feature<Target, State> => ({
+export function defineFeature<Target>(): <State>(config: FeatureConfig<Target, State>) => Feature<Target, State> {
+  return <State>(config: FeatureConfig<Target, State>): Feature<Target, State> => ({
     [FEATURE_SYMBOL]: true,
     ...config,
   });

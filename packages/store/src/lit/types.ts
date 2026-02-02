@@ -1,10 +1,9 @@
-import type { AnyFeature } from '../core/feature';
-import type { Store } from '../core/store';
+import type { AnyStore } from '../core/store';
 
-export interface StoreProvider<Features extends AnyFeature[]> {
-  store: Store<Features>;
+export interface StoreProvider<Store extends AnyStore> {
+  store: Store;
 }
 
-export interface StoreConsumer<Features extends AnyFeature[]> {
-  readonly store: Store<Features> | null;
+export interface StoreConsumer<Store extends AnyStore> {
+  readonly store: Store | null;
 }

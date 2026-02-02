@@ -2,7 +2,7 @@ import { ReactiveElement } from '@lit/reactive-element';
 import { noop } from '@videojs/utils/function';
 import { afterEach } from 'vitest';
 import { defineFeature } from '../../core/feature';
-import type { Store } from '../../core/store';
+import type { FeatureStore } from '../../core/store';
 import { createStore as createCoreStore } from '../../core/store';
 import { createStore as createLitStore } from '../create-store';
 
@@ -113,20 +113,9 @@ export const customKeyFeature = defineFeature<MockMedia>()({
 type TestFeature = typeof audioFeature;
 type CustomKeyFeature = typeof customKeyFeature;
 
-type TestStore = Store<[TestFeature]> & {
-  volume: number;
-  muted: boolean;
-  setVolume: (volume: number) => Promise<number>;
-  setMuted: (muted: boolean) => Promise<boolean>;
-  slowSetVolume: (volume: number) => Promise<number>;
-};
-
-type CustomKeyStore = Store<[CustomKeyFeature]> & {
-  volume: number;
-  muted: boolean;
-  adjustVolume: (volume: number) => Promise<number>;
-  toggleMute: (muted: boolean) => Promise<boolean>;
-};
+// FeatureStore already includes state intersection, no need to repeat
+type TestStore = FeatureStore<[TestFeature]>;
+type CustomKeyStore = FeatureStore<[CustomKeyFeature]>;
 
 // For controller tests - creates core store with attached target
 export function createCoreTestStore(): { store: TestStore; target: MockMedia } {

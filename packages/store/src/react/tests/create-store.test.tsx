@@ -115,18 +115,26 @@ describe('createStore', () => {
       expect(typeof result.current.setVolume).toBe('function');
     });
 
-    it('updates when state changes', async () => {
+    it('does not re-render on state change (no subscription)', async () => {
       const { Provider, useStore, create } = createStore({
         features: [audioFeature],
       });
       const store = create();
       const target = new MockMedia();
       store.attach(target);
+      let renderCount = 0;
 
-      const { result } = renderHook(() => useStore() as AudioState, {
-        wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
-      });
+      const { result } = renderHook(
+        () => {
+          renderCount++;
+          return useStore() as AudioState;
+        },
+        {
+          wrapper: ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>,
+        }
+      );
 
+      expect(renderCount).toBe(1);
       expect(result.current.volume).toBe(1);
 
       await act(async () => {
@@ -134,7 +142,10 @@ describe('createStore', () => {
         target.dispatchEvent(new Event('volumechange'));
       });
 
-      expect(result.current.volume).toBe(0.5);
+      // Should NOT have re-rendered
+      expect(renderCount).toBe(1);
+      // But store state DID change
+      expect(store.state.volume).toBe(0.5);
     });
   });
 });

@@ -1,3 +1,4 @@
+import { noop } from '@videojs/utils/function';
 import { describe, expect, it } from 'vitest';
 
 import { createStore, defineFeature } from '../../index';
@@ -500,7 +501,7 @@ describe('sync actions', () => {
       }),
     });
 
-    const store = createStore({ features: [feature] });
+    const store = createStore({ features: [feature], onError: noop });
 
     await expect(store.doSomething()).rejects.toThrow('NO_TARGET');
   });

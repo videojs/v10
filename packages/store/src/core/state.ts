@@ -1,11 +1,13 @@
 export type StateChange = () => void;
 
-export interface State<T extends object> {
+export type UnknownState = Record<string, unknown>;
+
+export interface State<T> {
   readonly current: Readonly<T>;
   subscribe(callback: StateChange): () => void;
 }
 
-export interface WritableState<T extends object> extends State<T> {
+export interface WritableState<T> extends State<T> {
   patch: (partial: Partial<T>) => void;
 }
 
@@ -26,7 +28,7 @@ export function flush(): void {
 
 const hasOwnProp = Object.prototype.hasOwnProperty;
 
-class StateContainer<T extends object> implements WritableState<T> {
+class StateContainer<T> implements WritableState<T> {
   #current: T;
   #listeners = new Set<StateChange>();
   #pending = false;
@@ -79,7 +81,7 @@ class StateContainer<T extends object> implements WritableState<T> {
   }
 }
 
-export function createState<T extends object>(initial: T): WritableState<T> {
+export function createState<T>(initial: T): WritableState<T> {
   return new StateContainer(initial);
 }
 

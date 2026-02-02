@@ -1,4 +1,4 @@
-import type { AnyFeature, UnionFeatureTarget } from './feature';
+import type { AnyFeature, UnionFeatureState, UnionFeatureTarget } from './feature';
 import type { TaskKey } from './queue';
 import type { RequestMeta } from './request';
 import type { Store } from './store';
@@ -9,28 +9,32 @@ export interface PendingTask {
   startedAt: number;
 }
 
-export interface StoreConfig<Features extends AnyFeature[]> {
+export interface StoreConfig<Features extends AnyFeature[]>
+  extends StoreCallbacks<UnionFeatureTarget<Features>, UnionFeatureState<Features>> {
   features: Features;
-  onSetup?: (ctx: StoreSetupContext<Features>) => void;
-  onAttach?: (ctx: StoreAttachContext<Features>) => void;
-  onError?: (ctx: StoreErrorContext<Features>) => void;
+}
+
+export interface StoreCallbacks<Target, State> {
+  onSetup?: (ctx: StoreSetupContext<Target, State>) => void;
+  onAttach?: (ctx: StoreAttachContext<Target, State>) => void;
+  onError?: (ctx: StoreErrorContext<Target, State>) => void;
   onTaskStart?: (ctx: StoreTaskContext) => void;
   onTaskEnd?: (ctx: StoreTaskContext & { error?: unknown }) => void;
 }
 
-export interface StoreSetupContext<Features extends AnyFeature[]> {
-  store: Store<Features>;
+export interface StoreSetupContext<Target, State> {
+  store: Store<Target, State>;
   signal: AbortSignal;
 }
 
-export interface StoreAttachContext<Features extends AnyFeature[]> {
-  store: Store<Features>;
-  target: UnionFeatureTarget<Features>;
+export interface StoreAttachContext<Target, State> {
+  store: Store<Target, State>;
+  target: Target;
   signal: AbortSignal;
 }
 
-export interface StoreErrorContext<Features extends AnyFeature[]> {
-  store: Store<Features>;
+export interface StoreErrorContext<Target, State> {
+  store: Store<Target, State>;
   error: unknown;
 }
 
