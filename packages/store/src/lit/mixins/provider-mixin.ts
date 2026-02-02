@@ -3,17 +3,11 @@ import { ContextProvider } from '@lit/context';
 import type { ReactiveElement } from '@lit/reactive-element';
 import { isNull } from '@videojs/utils/predicate';
 import type { Constructor } from '@videojs/utils/types';
-import type { AnyFeature } from '../../core/feature';
-import type { Store } from '../../core/store';
+import type { AnyStore } from '../../core/store';
 import type { StoreProvider } from '../types';
 
 /**
  * Creates a mixin that provides a store via context.
- *
- * - Creates a store instance on first access
- * - Provides the store to descendants via Lit Context Protocol
- * - Allows store replacement via setter (notifies all consumers)
- * - Destroys the store on disconnect (if not externally provided)
  *
  * @example
  * ```ts
@@ -28,15 +22,13 @@ import type { StoreProvider } from '../types';
  * }
  * ```
  */
-export function createProviderMixin<Features extends AnyFeature[]>(
-  context: Context<unknown, Store<Features>>,
-  factory: () => Store<Features>
-): <Base extends Constructor<ReactiveElement>>(BaseClass: Base) => Base & Constructor<StoreProvider<Features>> {
-  type ProvidedStore = Store<Features>;
-
+export function createProviderMixin<Store extends AnyStore>(
+  context: Context<unknown, Store>,
+  factory: () => Store
+): <Base extends Constructor<ReactiveElement>>(BaseClass: Base) => Base & Constructor<StoreProvider<Store>> {
   return <Base extends Constructor<ReactiveElement>>(BaseClass: Base) => {
-    class StoreProviderElement extends BaseClass implements StoreProvider<Features> {
-      #store: ProvidedStore | null = null;
+    class StoreProviderElement extends BaseClass implements StoreProvider<Store> {
+      #store: Store | null = null;
       #isOwner = false;
 
       #provider = new ContextProvider(this, {
@@ -44,7 +36,7 @@ export function createProviderMixin<Features extends AnyFeature[]>(
         initialValue: this.store,
       });
 
-      get store(): ProvidedStore {
+      get store(): Store {
         if (isNull(this.#store)) {
           this.#store = factory();
           this.#isOwner = true;
@@ -53,7 +45,7 @@ export function createProviderMixin<Features extends AnyFeature[]>(
         return this.#store;
       }
 
-      set store(newStore: ProvidedStore) {
+      set store(newStore: Store) {
         const wasOwner = this.#isOwner;
         const oldStore = this.#store;
 

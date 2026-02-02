@@ -2,8 +2,8 @@ import { isUndefined } from '@videojs/utils/predicate';
 import type { FC, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import type { StoreConfig } from '../core/config';
-import type { AnyFeature, UnionFeatureState } from '../core/feature';
-import type { Store } from '../core/store';
+import type { AnyFeature } from '../core/feature';
+import type { AnyStore, FeatureStore } from '../core/store';
 import { createStore as createCoreStore } from '../core/store';
 import { StoreContextProvider, useStoreContext } from './context';
 import { useStore as useStoreBase } from './hooks/use-store';
@@ -12,28 +12,27 @@ export interface CreateStoreConfig<Features extends AnyFeature[]> extends StoreC
   displayName?: string;
 }
 
-export interface ProviderProps<Features extends AnyFeature[]> {
+export interface ProviderProps<S extends AnyStore> {
   children: ReactNode;
-  store?: Store<Features>;
+  store?: S;
 }
 
-export type UseStoreResult<Features extends AnyFeature[]> = UnionFeatureState<Features>;
-
-export interface CreateStoreResult<Features extends AnyFeature[]> {
+export interface CreateStoreResult<S extends AnyStore> {
   /** Provider component that creates and manages the store lifecycle. */
-  Provider: FC<ProviderProps<Features>>;
+  Provider: FC<ProviderProps<S>>;
 
   /**
-   * Subscribe to store state and access requests.
-   * Returns state with request map, re-renders when state changes.
+   * Access store state and actions.
+   * Returns the store without subscribing to changes.
+   * Use selectors via `useSelector` for reactive updates.
    */
-  useStore: () => UseStoreResult<Features>;
+  useStore: () => S;
 
   /**
    * Creates a new store instance.
    * Useful for imperative access or creating a store before render.
    */
-  create: () => Store<Features>;
+  create: () => S;
 }
 
 // ----------------------------------------
@@ -55,10 +54,10 @@ export interface CreateStoreResult<Features extends AnyFeature[]> {
  */
 export function createStore<Features extends AnyFeature[]>(
   config: CreateStoreConfig<Features>
-): CreateStoreResult<Features> {
-  type StoreType = Store<Features>;
+): CreateStoreResult<FeatureStore<Features>> {
+  type Store = FeatureStore<Features>;
 
-  function create(): StoreType {
+  function create(): Store {
     return createCoreStore(config);
   }
 
@@ -68,8 +67,8 @@ export function createStore<Features extends AnyFeature[]>(
    * If `store` prop is provided, uses that store (no cleanup on unmount).
    * Otherwise, creates a new store and destroys it on unmount.
    */
-  function Provider({ children, store: providedStore }: ProviderProps<Features>): ReactNode {
-    const [store] = useState<StoreType>(() => {
+  function Provider({ children, store: providedStore }: ProviderProps<Store>): ReactNode {
+    const [store] = useState<Store>(() => {
       if (!isUndefined(providedStore)) {
         return providedStore;
       }
@@ -95,9 +94,9 @@ export function createStore<Features extends AnyFeature[]>(
     Provider.displayName = `${config.displayName}.Provider`;
   }
 
-  function useStore(): UseStoreResult<Features> {
+  function useStore(): Store {
     const store = useStoreContext();
-    return useStoreBase(store) as UseStoreResult<Features>;
+    return useStoreBase(store) as Store;
   }
 
   return {

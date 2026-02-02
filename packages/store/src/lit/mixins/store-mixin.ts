@@ -1,8 +1,7 @@
 import type { Context } from '@lit/context';
 import type { ReactiveElement } from '@lit/reactive-element';
 import type { Constructor, Mixin } from '@videojs/utils/types';
-import type { AnyFeature } from '../../core/feature';
-import type { Store } from '../../core/store';
+import type { AnyStore } from '../../core/store';
 import type { StoreProvider } from '../types';
 
 import { createContainerMixin } from './container-mixin';
@@ -25,12 +24,12 @@ import { createProviderMixin } from './provider-mixin';
  * }
  * ```
  */
-export function createStoreMixin<Features extends AnyFeature[]>(
-  context: Context<unknown, Store<Features>>,
-  factory: () => Store<Features>
-): Mixin<ReactiveElement, StoreProvider<Features>> {
-  const ProviderMixin = createProviderMixin<Features>(context, factory);
-  const ContainerMixin = createContainerMixin<Features>(context);
+export function createStoreMixin<Store extends AnyStore>(
+  context: Context<unknown, Store>,
+  factory: () => Store
+): Mixin<ReactiveElement, StoreProvider<Store>> {
+  const ProviderMixin = createProviderMixin<Store>(context, factory);
+  const ContainerMixin = createContainerMixin<Store>(context);
 
   return <Base extends Constructor<ReactiveElement>>(BaseClass: Base) => {
     // ProviderMixin wraps AttachMixin so during connectedCallback:

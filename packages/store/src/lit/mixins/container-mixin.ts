@@ -6,18 +6,11 @@ import { Disposer } from '@videojs/utils/events';
 import { noop } from '@videojs/utils/function';
 import { isNull } from '@videojs/utils/predicate';
 import type { Constructor, Mixin } from '@videojs/utils/types';
-import type { AnyFeature, UnionFeatureTarget } from '../../core/feature';
-import type { Store } from '../../core/store';
+import type { AnyStore, InferStoreTarget } from '../../core/store';
 import type { StoreConsumer } from '../types';
 
 /**
  * Creates a mixin that consumes a store from context and auto-attaches media elements.
- *
- * - Requests store from context (must have a provider ancestor)
- * - Observes slotted elements for `<video>` or `<audio>` in the default slot
- * - Falls back to light DOM children if no shadow root
- * - Calls `store.attach(mediaElement)` when found
- * - Cleans up on disconnect
  *
  * @example
  * ```ts
@@ -26,13 +19,11 @@ import type { StoreConsumer } from '../types';
  * class MyControls extends ContainerMixin(LitElement) {}
  * ```
  */
-export function createContainerMixin<Features extends AnyFeature[]>(
-  context: Context<unknown, Store<Features>>
-): Mixin<ReactiveElement, StoreConsumer<Features>> {
-  type ConsumedStore = Store<Features>;
-
+export function createContainerMixin<Store extends AnyStore>(
+  context: Context<unknown, Store>
+): Mixin<ReactiveElement, StoreConsumer<Store>> {
   return <Base extends Constructor<ReactiveElement>>(BaseClass: Base) => {
-    class StoreAttachElement extends BaseClass implements StoreConsumer<Features> {
+    class StoreAttachElement extends BaseClass implements StoreConsumer<Store> {
       #disposer = new Disposer();
       #detach = noop;
 
@@ -42,7 +33,7 @@ export function createContainerMixin<Features extends AnyFeature[]>(
         subscribe: false,
       });
 
-      get store(): ConsumedStore | null {
+      get store(): Store | null {
         return this.#consumer.value ?? null;
       }
 
@@ -69,7 +60,6 @@ export function createContainerMixin<Features extends AnyFeature[]>(
 
         if (isNull(store)) return;
 
-        // Check if element is media, or search inside for nested media
         const findMedia = (el: Element): HTMLMediaElement | null =>
           isHTMLMediaElement(el) ? el : el.querySelector('video, audio');
 
@@ -79,7 +69,7 @@ export function createContainerMixin<Features extends AnyFeature[]>(
 
         if (store.target !== media) {
           this.#detach();
-          this.#detach = store.attach(media as UnionFeatureTarget<Features>);
+          this.#detach = store.attach(media as InferStoreTarget<Store>);
         }
       }
     }

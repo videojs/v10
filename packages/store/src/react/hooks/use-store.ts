@@ -1,38 +1,45 @@
-import { useSyncExternalStore } from 'react';
+import { noop } from '@videojs/utils/function';
 import type { AnyStore, InferStoreState } from '../../core/store';
+import { type Comparator, type Selector, useSelector } from './use-selector';
 
-export type UseStoreResult<S extends AnyStore> = InferStoreState<S>;
+const identity = (s: any) => s,
+  noopSubscribe = () => noop;
 
 /**
- * Subscribe to store state changes.
+ * Access store state and actions.
  *
- * Returns state and action functions, re-renders when state changes.
+ * Without selector: Returns the store, does NOT subscribe to changes.
+ * With selector: Returns selected state, re-renders when selected state changes (shallowEqual).
  *
  * @example
  * ```tsx
- * function VolumeControl() {
- *   const { volume, setVolume } = useStore(store);
- *   return (
- *     <input
- *       type="range"
- *       value={volume}
- *       onChange={(e) => setVolume(+e.target.value)}
- *     />
- *   );
+ * // Store access (no subscription) - access actions, subscribe without re-render
+ * function Controls() {
+ *   const { setVolume } = useStore(store);
+ * }
+ *
+ * // Selector-based subscription - re-renders when paused changes
+ * function PlayButton() {
+ *   const paused = useStore(store, (s) => s.paused);
+ *   return <button>{paused ? 'Play' : 'Pause'}</button>;
  * }
  * ```
  */
-export function useStore<S extends AnyStore>(store: S): UseStoreResult<S> {
-  useSyncExternalStore(
-    (cb) => store.subscribe(cb),
-    () => store.state,
-    () => store.state
-  );
+export function useStore<S extends AnyStore>(store: S): S;
 
-  // In v2, state and actions are directly on the store object
-  return store as unknown as UseStoreResult<S>;
+export function useStore<S extends AnyStore, R>(
+  store: S,
+  selector: Selector<InferStoreState<S>, R>,
+  isEqual?: Comparator<R>
+): R;
+
+export function useStore(store: AnyStore, selector?: Selector<any, any>, isEqual?: Comparator<any>) {
+  const subscribe = selector ? (cb: () => void) => store.subscribe(cb) : noopSubscribe,
+    getSnapshot = selector ? () => store.state : () => store;
+
+  return useSelector(subscribe, getSnapshot, selector ?? identity, isEqual);
 }
 
 export namespace useStore {
-  export type Result<S extends AnyStore> = UseStoreResult<S>;
+  export type Result<S extends AnyStore> = S;
 }

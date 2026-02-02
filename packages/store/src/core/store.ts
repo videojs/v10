@@ -15,14 +15,15 @@ import type {
 import { CANCEL_ALL, Queue } from './queue';
 import type { RequestMeta, RequestMetaInit } from './request';
 import { createRequestMeta, createRequestMetaFromEvent } from './request';
-import type { StateChange, WritableState } from './state';
+import type { StateChange, UnknownState, WritableState } from './state';
 import { createState } from './state';
 
 const STORE_SYMBOL = Symbol('@videojs/store');
 
-export function createStore<Features extends AnyFeature[]>(config: StoreConfig<Features>): Store<Features> {
-  type Target = UnionFeatureTarget<Features>;
-  type State = UnionFeatureState<Features>;
+export function createStore<Features extends AnyFeature[]>(config: StoreConfig<Features>): FeatureStore<Features> {
+  type Store = FeatureStore<Features>;
+  type Target = InferStoreTarget<Store>;
+  type State = UnknownState;
 
   const { features } = config;
 
@@ -38,15 +39,14 @@ export function createStore<Features extends AnyFeature[]>(config: StoreConfig<F
   // Reactive state - initialized after building features
   let state: WritableState<State>;
 
-  const stateFactoryContext: StateFactoryContext<Target> = {
+  const initialState = createInitialState({
     task: executeTask,
     target: () => {
       if (!target) throw new StoreError('NO_TARGET');
       return target;
     },
-  };
+  });
 
-  const initialState = createInitialState(stateFactoryContext);
   state = createState(initialState);
 
   const store = {
@@ -67,11 +67,11 @@ export function createStore<Features extends AnyFeature[]>(config: StoreConfig<F
     destroy,
     subscribe,
     meta,
-  } as unknown as Store<Features>;
+  } as unknown as Store;
 
   for (const key of Object.keys(initialState)) {
     Object.defineProperty(store, key, {
-      get: () => (state.current as Record<string, unknown>)[key],
+      get: () => state.current[key],
       enumerable: true,
     });
   }
@@ -116,6 +116,12 @@ export function createStore<Features extends AnyFeature[]>(config: StoreConfig<F
       signal,
       get: () => state.current,
       set: (partial) => state.patch(partial),
+      store: {
+        get state() {
+          return state.current;
+        },
+        subscribe,
+      },
     };
 
     for (const feature of features) {
@@ -127,7 +133,11 @@ export function createStore<Features extends AnyFeature[]>(config: StoreConfig<F
     }
 
     try {
-      config.onAttach?.({ store, target: newTarget, signal });
+      config.onAttach?.({
+        store,
+        target: newTarget as any,
+        signal,
+      });
     } catch (error) {
       handleError(error);
     }
@@ -156,12 +166,13 @@ export function createStore<Features extends AnyFeature[]>(config: StoreConfig<F
     return state.subscribe(callback);
   }
 
-  function meta(eventOrMeta: EventLike | RequestMetaInit): Store<Features> {
+  function meta(eventOrMeta: EventLike | RequestMetaInit): Store {
     currentMeta =
       'isTrusted' in eventOrMeta
         ? createRequestMetaFromEvent(eventOrMeta as EventLike)
         : createRequestMeta(eventOrMeta as RequestMetaInit);
-    return metaProxy as Store<Features>;
+
+    return metaProxy as Store;
   }
 
   function createInitialState(ctx: StateFactoryContext<Target>): State {
@@ -260,24 +271,29 @@ export function isStore(value: unknown): value is AnyStore {
 // Types
 // ----------------------------------------
 
-export interface StoreAPI<Target, Features extends AnyFeature<Target>[]> {
+export interface BaseStore<Target = unknown, State = UnknownState> {
+  [key: string]: unknown;
   readonly target: Target | null;
   readonly destroyed: boolean;
   readonly pending: Readonly<Record<string, PendingTask>>;
-  readonly state: UnionFeatureState<Features>;
+  readonly state: State;
   attach(target: Target): () => void;
   destroy(): void;
   subscribe(callback: StateChange): () => void;
-  meta(eventOrMeta: EventLike | RequestMetaInit): this;
+  meta(eventOrMeta: EventLike | RequestMetaInit): Store<Target, State>;
 }
 
-export type Store<Features extends AnyFeature[]> = StoreAPI<UnionFeatureTarget<Features>, Features> &
-  UnionFeatureState<Features>;
+export type Store<Target = unknown, State = UnknownState> = BaseStore<Target, State> & State;
 
-export type AnyStore<Target = any> = StoreAPI<Target, AnyFeature<Target>[]>;
+export type FeatureStore<Features extends AnyFeature[]> = Store<
+  UnionFeatureTarget<Features>,
+  UnionFeatureState<Features>
+>;
 
-export type InferStoreTarget<S extends AnyStore> = S extends StoreAPI<infer Target, any> ? Target : never;
+export type AnyStore<Target = any> = BaseStore<Target, object>;
 
-export type InferStoreFeatures<S extends AnyStore> = S extends StoreAPI<any, infer Features> ? Features : never;
+export type UnknownStore<Target = unknown> = Store<Target, UnknownState>;
 
-export type InferStoreState<S extends AnyStore> = UnionFeatureState<InferStoreFeatures<S>>;
+export type InferStoreTarget<S extends AnyStore> = S extends Store<infer T, any> ? T : never;
+
+export type InferStoreState<S extends AnyStore> = S extends Store<any, infer State> ? State : never;

@@ -1,8 +1,10 @@
 export * from './config';
 export * from './errors';
 export * from './feature';
+export { createFeatureSelector } from './feature-selector';
 export type { TaskKey, TaskMode } from './queue';
 export { CANCEL_ALL } from './queue';
 export * from './request';
+export { shallowEqual } from './shallow-equal';
 export * from './state';
 export * from './store';
