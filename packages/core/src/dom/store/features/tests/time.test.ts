@@ -1,46 +1,22 @@
-import { describe, expect, it, vi } from 'vitest';
+import { createStore } from '@videojs/store';
+import { describe, expect, it } from 'vitest';
 
+import type { PlayerTarget } from '../../../types';
 import { timeFeature } from '../time';
 
 describe('timeFeature', () => {
-  describe('feature structure', () => {
-    it('has unique id symbol', () => {
-      expect(timeFeature.id).toBeTypeOf('symbol');
-    });
-
-    it('has correct initial state', () => {
-      expect(timeFeature.initialState).toEqual({
-        currentTime: 0,
-        duration: 0,
-      });
-    });
-
-    it('has seek request handler', () => {
-      expect(timeFeature.request.seek).toBeDefined();
-      expect(timeFeature.request.seek).toMatchObject({
-        key: 'seek',
-        guard: [],
-        handler: expect.any(Function),
-      });
-    });
-  });
-
-  describe('getSnapshot', () => {
-    it('captures current time state from video element', () => {
+  describe('attach', () => {
+    it('syncs time state on attach', () => {
       const video = createMockVideo({
         currentTime: 30,
         duration: 120,
       });
 
-      const snapshot = timeFeature.getSnapshot({
-        target: video,
-        initialState: timeFeature.initialState,
-      });
+      const store = createStore<PlayerTarget>()(timeFeature);
+      store.attach({ media: video, container: null });
 
-      expect(snapshot).toEqual({
-        currentTime: 30,
-        duration: 120,
-      });
+      expect(store.state.currentTime).toBe(30);
+      expect(store.state.duration).toBe(120);
     });
 
     it('handles NaN duration', () => {
@@ -49,71 +25,82 @@ describe('timeFeature', () => {
         duration: Number.NaN,
       });
 
-      const snapshot = timeFeature.getSnapshot({
-        target: video,
-        initialState: timeFeature.initialState,
-      });
+      const store = createStore<PlayerTarget>()(timeFeature);
+      store.attach({ media: video, container: null });
 
-      expect(snapshot.duration).toBe(0);
+      expect(store.state.duration).toBe(0);
     });
-  });
 
-  describe('subscribe', () => {
-    it('calls update on timeupdate event', () => {
-      const video = createMockVideo({ currentTime: 42 });
-      const update = vi.fn();
-      const controller = new AbortController();
+    it('updates on timeupdate event', () => {
+      const video = createMockVideo({ currentTime: 0 });
 
-      timeFeature.subscribe({ target: video, update, signal: controller.signal });
+      const store = createStore<PlayerTarget>()(timeFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.currentTime).toBe(0);
+
+      // Update mock currentTime
+      video.currentTime = 42;
       video.dispatchEvent(new Event('timeupdate'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.currentTime).toBe(42);
     });
 
-    it('calls update on durationchange event', () => {
-      const video = createMockVideo({ duration: 100 });
-      const update = vi.fn();
-      const controller = new AbortController();
+    it('updates on durationchange event', () => {
+      const video = createMockVideo({ duration: 0 });
 
-      timeFeature.subscribe({ target: video, update, signal: controller.signal });
+      const store = createStore<PlayerTarget>()(timeFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.duration).toBe(0);
+
+      // Update mock duration
+      Object.defineProperty(video, 'duration', { value: 100, writable: false, configurable: true });
       video.dispatchEvent(new Event('durationchange'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.duration).toBe(100);
     });
 
-    it('calls update on seeked event', () => {
-      const video = createMockVideo({ currentTime: 50 });
-      const update = vi.fn();
-      const controller = new AbortController();
+    it('updates on seeked event', () => {
+      const video = createMockVideo({ currentTime: 0 });
 
-      timeFeature.subscribe({ target: video, update, signal: controller.signal });
+      const store = createStore<PlayerTarget>()(timeFeature);
+      store.attach({ media: video, container: null });
+
+      // Update mock currentTime
+      video.currentTime = 50;
       video.dispatchEvent(new Event('seeked'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.currentTime).toBe(50);
     });
 
-    it('calls update on emptied event', () => {
-      const video = createMockVideo({});
-      const update = vi.fn();
-      const controller = new AbortController();
+    it('updates on emptied event', () => {
+      const video = createMockVideo({
+        currentTime: 30,
+        duration: 120,
+      });
 
-      timeFeature.subscribe({ target: video, update, signal: controller.signal });
+      const store = createStore<PlayerTarget>()(timeFeature);
+      store.attach({ media: video, container: null });
+
+      // Update mock to empty state
+      video.currentTime = 0;
+      Object.defineProperty(video, 'duration', { value: Number.NaN, writable: false, configurable: true });
       video.dispatchEvent(new Event('emptied'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.currentTime).toBe(0);
+      expect(store.state.duration).toBe(0);
     });
   });
 
-  describe('request handlers', () => {
+  describe('actions', () => {
     describe('seek', () => {
       it('sets currentTime on target and waits for seeked event', async () => {
         const video = createMockVideo({});
+        const store = createStore<PlayerTarget>()(timeFeature);
+        store.attach({ media: video, container: null });
 
-        const resultPromise = timeFeature.request.seek.handler(45, {
-          target: video,
-          signal: new AbortController().signal,
-          meta: null,
-        });
+        const resultPromise = store.seek(45);
 
         expect(video.currentTime).toBe(45);
 
@@ -122,21 +109,6 @@ describe('timeFeature', () => {
 
         const result = await resultPromise;
         expect(result).toBe(45);
-      });
-
-      it('rejects if signal is aborted before seeked', async () => {
-        const video = createMockVideo({});
-        const controller = new AbortController();
-
-        const resultPromise = timeFeature.request.seek.handler(30, {
-          target: video,
-          signal: controller.signal,
-          meta: null,
-        });
-
-        controller.abort();
-
-        await expect(resultPromise).rejects.toThrow();
       });
     });
   });
@@ -154,7 +126,7 @@ function createMockVideo(
     video.currentTime = overrides.currentTime;
   }
   if (overrides.duration !== undefined) {
-    Object.defineProperty(video, 'duration', { value: overrides.duration, writable: false });
+    Object.defineProperty(video, 'duration', { value: overrides.duration, writable: false, configurable: true });
   }
 
   return video;

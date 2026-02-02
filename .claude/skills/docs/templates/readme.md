@@ -152,21 +152,20 @@ Explanation.
 Core concepts:
 
 - Target
-- Features
+- Features (defineFeature, state factory)
 - Feature Type Inference
-- Requests
-- Request Metadata
-- Store
-- Request Configuration (Keys, Cancels, Guards)
+- Actions (task helper, sync mutations)
+- Action Metadata (store.meta())
+- Store (flat access, pending tasks)
+- Task Configuration (Keys, Modes, Cancels)
 - Error Handling
-- Queue
 
 ### @videojs/store/lit
 
 Core concepts:
 
-- Controllers (SnapshotController, RequestController, TasksController)
-- Mixins (StoreMixin, StoreProviderMixin, StoreAttachMixin)
+- Controllers (StoreController, SubscriptionController)
+- Mixins (StoreMixin, ProviderMixin, ContainerMixin)
 - createStore factory pattern
 - Context API
 
@@ -217,14 +216,14 @@ Always include at top:
 ```markdown
 npm install @videojs/store
 
-import { createFeature, createStore } from '@videojs/store';
+import { createStore } from '@videojs/store';
 
 const store = createStore({
 features: [playbackFeature, volumeFeature],
 });
 
 store.attach(videoElement);
-await store.request.play();
+await store.play();
 ```
 
 ### "How It's Different" Table
@@ -243,10 +242,10 @@ Use when comparing to alternatives:
 Always show type inference for TypeScript users:
 
 ```ts
-import type { InferFeatureRequests, InferFeatureState } from '@videojs/store';
+import type { InferFeatureState } from '@videojs/store';
 
 type VolumeState = InferFeatureState<typeof volumeFeature>;
-type VolumeRequests = InferFeatureRequests<typeof volumeFeature>;
+// { volume: number; muted: boolean; changeVolume: ...; toggleMute: ... }
 ```
 
 ### Links Footer

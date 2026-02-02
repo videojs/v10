@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createFeature } from '../feature';
-import { createQueue } from '../queue';
+import { combine } from '../combine';
+import { defineSlice } from '../slice';
 import { flush } from '../state';
 import { createStore } from '../store';
 
@@ -15,90 +15,78 @@ describe('store', () => {
     pause = vi.fn();
   }
 
-  const audioFeature = createFeature<MockMedia>()({
-    initialState: { volume: 1, muted: false },
-    getSnapshot: ({ target }) => ({
-      volume: target.volume,
-      muted: target.muted,
+  const audioSlice = defineSlice<MockMedia>()({
+    state: ({ task }) => ({
+      volume: 1,
+      muted: false,
+      setVolume(volume: number) {
+        return task(({ target }) => {
+          target.volume = volume;
+          target.dispatchEvent(new Event('volumechange'));
+        });
+      },
+      setMuted(muted: boolean) {
+        return task(({ target }) => {
+          target.muted = muted;
+          target.dispatchEvent(new Event('volumechange'));
+        });
+      },
     }),
-    subscribe: ({ target, update, signal }) => {
-      target.addEventListener('volumechange', update);
+
+    attach({ target, signal, set }) {
+      const sync = () => set({ volume: target.volume, muted: target.muted });
+
+      sync();
+
+      target.addEventListener('volumechange', sync);
       signal.addEventListener('abort', () => {
-        target.removeEventListener('volumechange', update);
+        target.removeEventListener('volumechange', sync);
       });
-    },
-    request: {
-      setVolume: (volume: number, { target }) => {
-        target.volume = volume;
-        target.dispatchEvent(new Event('volumechange'));
-      },
-      setMuted: (muted: boolean, { target }) => {
-        target.muted = muted;
-        target.dispatchEvent(new Event('volumechange'));
-      },
     },
   });
 
-  const playbackFeature = createFeature<MockMedia>()({
-    initialState: { paused: true },
-    getSnapshot: ({ target }) => ({ paused: target.paused }),
-    subscribe: () => {},
-    request: {
-      play: {
-        key: 'playback',
-        async handler(_, { target }) {
-          target.play();
-          target.paused = false;
-        },
+  const playbackSlice = defineSlice<MockMedia>()({
+    state: ({ task }) => ({
+      paused: true,
+      play() {
+        return task({
+          key: 'playback',
+          async handler({ target }) {
+            target.play();
+            target.paused = false;
+          },
+        });
       },
-      pause: {
-        key: 'playback',
-        async handler(_, { target }) {
-          target.pause();
-          target.paused = true;
-        },
+      pause() {
+        return task({
+          key: 'playback',
+          async handler({ target }) {
+            target.pause();
+            target.paused = true;
+          },
+        });
       },
+    }),
+
+    attach({ target, set }) {
+      set({ paused: target.paused });
     },
   });
 
   describe('creation', () => {
     it('creates store with merged initial state', () => {
-      const store = createStore({
-        features: [audioFeature, playbackFeature],
-      });
+      const store = createStore<MockMedia>()(combine(audioSlice, playbackSlice));
 
-      expect(store.state).toEqual({
+      expect(store.state).toMatchObject({
         volume: 1,
         muted: false,
         paused: true,
       });
     });
 
-    it('creates store with default queue', () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
-
-      expect(store.queue).toBeDefined();
-    });
-
-    it('accepts custom queue', () => {
-      const queue = createQueue<any>();
-
-      const store = createStore({
-        features: [audioFeature],
-        queue,
-      });
-
-      expect(store.queue).toBe(queue);
-    });
-
     it('calls onSetup', () => {
       const onSetup = vi.fn();
-      const store = createStore({
-        features: [audioFeature],
-        onSetup,
-      });
+      const store = createStore<MockMedia>()(audioSlice, { onSetup });
 
       expect(onSetup).toHaveBeenCalledWith({
         store,
@@ -109,9 +97,7 @@ describe('store', () => {
 
   describe('attach', () => {
     it('syncs state from target', () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
       media.volume = 0.5;
@@ -119,16 +105,13 @@ describe('store', () => {
 
       store.attach(media);
 
-      expect(store.state).toEqual({ volume: 0.5, muted: true });
+      expect(store.state).toMatchObject({ volume: 0.5, muted: true });
       expect(store.target).toBe(media);
     });
 
     it('calls onAttach', () => {
       const onAttach = vi.fn();
-      const store = createStore({
-        features: [audioFeature],
-        onAttach,
-      });
+      const store = createStore<MockMedia>()(audioSlice, { onAttach });
 
       const media = new MockMedia();
       store.attach(media);
@@ -141,9 +124,7 @@ describe('store', () => {
     });
 
     it('sets up subscriptions', () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
       const addListenerSpy = vi.spyOn(media, 'addEventListener');
@@ -154,9 +135,7 @@ describe('store', () => {
     });
 
     it('detach cleans up', () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
       const removeListenerSpy = vi.spyOn(media, 'removeEventListener');
@@ -169,9 +148,7 @@ describe('store', () => {
     });
 
     it('reattach cleans up previous', () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media1 = new MockMedia();
       const m1RemoveListenerSpy = vi.spyOn(media1, 'removeEventListener');
@@ -189,40 +166,32 @@ describe('store', () => {
     });
   });
 
-  describe('request', () => {
-    it('executes request on target', async () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+  describe('actions', () => {
+    it('executes action on target', async () => {
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
       store.attach(media);
 
-      await store.request.setVolume(0.5);
+      await store.setVolume(0.5);
 
       expect(media.volume).toBe(0.5);
     });
 
     it('throws StoreError without target', async () => {
-      const store = createStore({
-        features: [audioFeature],
-        onError: () => {}, // silence errors
-      });
+      const store = createStore<MockMedia>()(audioSlice, { onError: () => {} });
 
-      await expect(store.request.setVolume(0.5)).rejects.toMatchObject({ code: 'NO_TARGET' });
+      await expect(store.setVolume(0.5)).rejects.toMatchObject({ code: 'NO_TARGET' });
     });
 
-    it('coordinates requests with same key', async () => {
-      const store = createStore({
-        features: [playbackFeature],
-        onError: () => {}, // silence errors
-      });
+    it('coordinates actions with same key', async () => {
+      const store = createStore<MockMedia>()(playbackSlice, { onError: () => {} });
 
       const media = new MockMedia();
       store.attach(media);
 
-      const playPromise = store.request.play();
-      const pausePromise = store.request.pause();
+      const playPromise = store.play();
+      const pausePromise = store.pause();
 
       await expect(playPromise).rejects.toMatchObject({ code: 'SUPERSEDED' });
       await pausePromise;
@@ -230,47 +199,105 @@ describe('store', () => {
       expect(media.paused).toBe(true);
     });
 
-    it('accepts metadata', async () => {
-      const handlerSpy = vi.fn();
+    it('passes meta to handler', async () => {
+      let receivedMeta: unknown = null;
 
-      const feature = createFeature<MockMedia>()({
-        initialState: {},
-        getSnapshot: () => ({}),
-        subscribe: () => {},
-        request: {
-          action: {
-            handler: (_, ctx) => {
-              handlerSpy(ctx.meta);
-            },
+      const slice = defineSlice<MockMedia>()({
+        state: ({ task }) => ({
+          value: 0,
+          action() {
+            return task({
+              key: 'action',
+              handler({ meta }) {
+                receivedMeta = meta;
+              },
+            });
           },
-        },
+        }),
       });
 
-      const store = createStore({
-        features: [feature],
-      });
+      const store = createStore<MockMedia>()(slice);
 
       store.attach(new MockMedia());
 
-      await store.request.action(undefined, {
+      await store.meta({ source: 'user', reason: 'test' }).action();
+
+      expect(receivedMeta).toMatchObject({
         source: 'user',
         reason: 'test',
       });
+    });
 
-      expect(handlerSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          source: 'user',
-          reason: 'test',
-        })
-      );
+    it('clears meta after action without task()', async () => {
+      let receivedMeta: unknown = 'not-called';
+
+      const slice = defineSlice<MockMedia>()({
+        state: ({ task }) => ({
+          value: 0,
+          // Sync action that doesn't use task()
+          syncAction() {
+            // Does nothing with meta
+          },
+          // Action that uses task() to capture meta
+          asyncAction() {
+            return task({
+              key: 'async',
+              handler({ meta }) {
+                receivedMeta = meta;
+              },
+            });
+          },
+        }),
+      });
+
+      const store = createStore<MockMedia>()(slice);
+
+      store.attach(new MockMedia());
+
+      // Call sync action with meta - meta should be cleared after
+      store.meta({ source: 'user', reason: 'sync' }).syncAction();
+
+      // Call async action without meta - should NOT receive leaked meta
+      await store.asyncAction();
+
+      expect(receivedMeta).toBeNull();
+    });
+
+    it('isolates meta between chained calls', async () => {
+      const receivedMetas: unknown[] = [];
+
+      const slice = defineSlice<MockMedia>()({
+        state: ({ task }) => ({
+          value: 0,
+          action() {
+            return task({
+              key: 'action',
+              handler({ meta }) {
+                receivedMetas.push(meta);
+              },
+            });
+          },
+        }),
+      });
+
+      const store = createStore<MockMedia>()(slice);
+
+      store.attach(new MockMedia());
+
+      await store.meta({ source: 'first' }).action();
+      await store.meta({ source: 'second' }).action();
+      await store.action(); // No meta
+
+      expect(receivedMetas).toHaveLength(3);
+      expect(receivedMetas[0]).toMatchObject({ source: 'first' });
+      expect(receivedMetas[1]).toMatchObject({ source: 'second' });
+      expect(receivedMetas[2]).toBeNull();
     });
   });
 
   describe('subscribe', () => {
     it('notifies on state change', async () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
       store.attach(media);
@@ -278,7 +305,7 @@ describe('store', () => {
       const listener = vi.fn();
       store.subscribe(listener);
 
-      await store.request.setVolume(0.5);
+      await store.setVolume(0.5);
       flush();
 
       expect(listener).toHaveBeenCalled();
@@ -286,9 +313,7 @@ describe('store', () => {
     });
 
     it('unsubscribe stops notifications', async () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
       store.attach(media);
@@ -297,7 +322,7 @@ describe('store', () => {
       const unsubscribe = store.subscribe(listener);
       unsubscribe();
 
-      await store.request.setVolume(0.5);
+      await store.setVolume(0.5);
       flush();
 
       expect(listener).not.toHaveBeenCalled();
@@ -306,9 +331,7 @@ describe('store', () => {
 
   describe('destroy', () => {
     it('cleans up everything', () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
       store.attach(media);
@@ -316,44 +339,38 @@ describe('store', () => {
 
       expect(store.destroyed).toBe(true);
       expect(store.target).toBeNull();
-      expect(store.queue.destroyed).toBe(true);
     });
 
-    it('rejects requests after destroy', async () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+    it('rejects actions after destroy', async () => {
+      const store = createStore<MockMedia>()(audioSlice);
 
       store.attach(new MockMedia());
       store.destroy();
 
-      await expect(store.request.setVolume(0.5)).rejects.toThrow();
+      await expect(store.setVolume(0.5)).rejects.toThrow();
     });
   });
 
   describe('error handling', () => {
-    it('calls onError for request errors', async () => {
+    it('calls onError for action errors', async () => {
       const onError = vi.fn();
 
-      const failingFeature = createFeature<MockMedia>()({
-        initialState: {},
-        getSnapshot: () => ({}),
-        subscribe: () => {},
-        request: {
-          fail: () => {
-            throw new Error('request failed');
+      const failingSlice = defineSlice<MockMedia>()({
+        state: ({ task }) => ({
+          value: 0,
+          fail() {
+            return task(() => {
+              throw new Error('action failed');
+            });
           },
-        },
+        }),
       });
 
-      const store = createStore({
-        features: [failingFeature],
-        onError,
-      });
+      const store = createStore<MockMedia>()(failingSlice, { onError });
 
       store.attach(new MockMedia());
 
-      await store.request.fail().catch(() => {});
+      await store.fail().catch(() => {});
 
       expect(onError).toHaveBeenCalledWith(
         expect.objectContaining({

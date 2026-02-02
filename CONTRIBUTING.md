@@ -172,17 +172,17 @@ When your changes introduce new patterns:
 - **Code conventions** → Update `CLAUDE.md` Code Rules section
 - **Domain patterns** → Update relevant skill in `.claude/skills/`
 
-## RFCs (Design Documents)
+## Design Docs and RFCs
 
-For significant architectural decisions and API designs, we use RFCs (Request for Comments). See [`rfc/README.md`](./rfc/README.md) for the full process.
+We use two types of design documents:
 
-**When to write an RFC:**
+**Design Docs** (`internal/design/`) — Decisions you own, documented for posterity. Write one when making significant decisions in your area, choosing between approaches, or documenting architecture. See [`internal/design/README.md`](./internal/design/README.md).
 
-- Introducing a new public API surface
-- Making architectural changes affecting multiple packages
-- Proposing patterns used throughout the codebase
+**RFCs** (`rfc/`) — Proposals needing buy-in from others. Write one when the decision affects multiple areas, changes shared API surface, or is hard to reverse. See [`rfc/README.md`](./rfc/README.md).
 
-**Skip the RFC for:** Bug fixes, small contained features, implementation details.
+**Rule of thumb:** If you need someone else's approval, it's an RFC. If you're documenting your own decision, it's a Design Doc.
+
+**Skip both for:** Bug fixes, small contained features, implementation details.
 
 ## Creating a Pull Request
 

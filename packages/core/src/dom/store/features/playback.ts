@@ -1,15 +1,10 @@
-import type { InferFeatureRequests, InferFeatureState } from '@videojs/store';
-
-import { createFeature } from '@videojs/store';
+import type { InferSliceState } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
-/**
- * Playback feature for HTMLMediaElement.
- *
- * Tracks core playback state and provides play/pause control.
- */
-export const playbackFeature = createFeature<HTMLMediaElement>()({
-  initialState: {
+import { definePlayerFeature } from '../../feature';
+
+export const playbackFeature = definePlayerFeature({
+  state: ({ task }) => ({
     /** Whether playback is paused. */
     paused: true,
     /** Whether playback has reached the end. */
@@ -18,36 +13,48 @@ export const playbackFeature = createFeature<HTMLMediaElement>()({
     started: false,
     /** Whether playback is stalled waiting for data. */
     waiting: false,
-  },
 
-  getSnapshot: ({ target }) => ({
-    paused: target.paused,
-    ended: target.ended,
-    started: !target.paused || target.currentTime > 0,
-    waiting: target.readyState < HTMLMediaElement.HAVE_FUTURE_DATA && !target.paused,
-  }),
-
-  subscribe: ({ target, update, signal }) => {
-    listen(target, 'play', update, { signal });
-    listen(target, 'pause', update, { signal });
-    listen(target, 'ended', update, { signal });
-    listen(target, 'playing', update, { signal });
-    listen(target, 'waiting', update, { signal });
-  },
-
-  request: {
     /** Start playback. Returns when playback begins. */
-    play: async (_, { target }) => {
-      await target.play();
+    play() {
+      return task({
+        key: 'playback',
+        mode: 'shared',
+        async handler({ target }) {
+          await target.media.play();
+        },
+      });
     },
 
     /** Pause playback immediately. */
-    pause: (_, { target }) => {
-      target.pause();
+    pause() {
+      return task({
+        key: 'playback',
+        handler({ target }) {
+          target.media.pause();
+        },
+      });
     },
+  }),
+
+  attach({ target, signal, set }) {
+    const { media } = target;
+
+    const sync = () =>
+      set({
+        paused: media.paused,
+        ended: media.ended,
+        started: !media.paused || media.currentTime > 0,
+        waiting: media.readyState < HTMLMediaElement.HAVE_FUTURE_DATA && !media.paused,
+      });
+
+    sync();
+
+    listen(media, 'play', sync, { signal });
+    listen(media, 'pause', sync, { signal });
+    listen(media, 'ended', sync, { signal });
+    listen(media, 'playing', sync, { signal });
+    listen(media, 'waiting', sync, { signal });
   },
 });
 
-export type PlaybackState = InferFeatureState<typeof playbackFeature>;
-
-export type PlaybackRequests = InferFeatureRequests<typeof playbackFeature>;
+export type PlaybackState = InferSliceState<typeof playbackFeature>;

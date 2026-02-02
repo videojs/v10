@@ -24,6 +24,7 @@ type/short-description
 | `docs/readme-examples`      | Update README examples           |
 | `test/slider-keyboard`      | Add keyboard tests for slider    |
 | `rfc/request-api`           | RFC for new request API design   |
+| `design/queue-design`       | Design doc for queue architecture|
 | `plan/store-simplification` | Planning store architecture      |
 
 ## Guidelines
@@ -35,11 +36,12 @@ type/short-description
 
 ## Special Branches
 
-| Branch   | Purpose                          |
-| -------- | -------------------------------- |
-| `main`   | Primary branch                   |
-| `rfc/*`  | Request for comments / proposals |
-| `plan/*` | Planning and discovery work      |
+| Branch     | Purpose                            |
+| ---------- | ---------------------------------- |
+| `main`     | Primary branch                     |
+| `rfc/*`    | Request for comments / proposals   |
+| `design/*` | Design docs (decisions you own) |
+| `plan/*`   | Planning and discovery work        |
 
 ## Issue-Linked Branches
 

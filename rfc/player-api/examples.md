@@ -1,223 +1,429 @@
 # Examples
 
-Usage examples for React, HTML, and Lit.
+Progressive journey from simple to fully custom.
 
-> [!NOTE]
-> Some examples here are for demonstration. In practice, UI primitives like `<PlayButton>`, `<VolumeSlider>`, etc. would be provided.
+## 1. It Works (Minimal)
 
-For primitive authoring examples (using `hasFeature`, `UnknownPlayer`, etc.), see [primitives.md](primitives.md).
-
-## React
-
-### Declarative (Skin)
+### React
 
 ```tsx
-import { createPlayer, presets, Video } from '@videojs/react';
-import { FrostedSkin } from '@videojs/react/presets/website';
+import { createPlayer } from '@videojs/react';
+import { features } from '@videojs/core/dom';
 
-const { Provider } = createPlayer(presets.website);
-
-function App() {
-  return (
-    <Provider>
-      <FrostedSkin>
-        <Video src="video.mp4" />
-      </FrostedSkin>
-    </Provider>
-  );
-}
-```
-
-### Custom Player
-
-```tsx
-import { createPlayer, presets, Video } from '@videojs/react';
-
-const { Provider, Container, usePlayer } = createPlayer(presets.website);
-
-function App() {
-  return (
-    <Provider>
-      <Container>
-        <Video src="video.mp4" />
-        <Controls />
-      </Container>
-    </Provider>
-  );
-}
-
-function Controls() {
-  const player = usePlayer();
-
-  // Hook usage example only, you would use `PlayButton`
-  return <button onClick={player.paused ? player.play : player.pause}>{player.paused ? 'Play' : 'Pause'}</button>;
-}
-```
-
-### Extended Preset
-
-```tsx
-import { createPlayer, features, presets } from '@videojs/react';
-
-const { Provider, usePlayer } = createPlayer({
-  features: [...presets.website, features.keyboard],
+const { Provider: VideoProvider, Container: VideoContainer } = createPlayer({
+  features: [...features.video],
 });
+
+function App() {
+  return (
+    <VideoProvider>
+      <VideoContainer>
+        <video src="video.mp4" />
+        {/* Custom UI */}
+      </VideoContainer>
+    </VideoProvider>
+  );
+}
 ```
 
-### Custom Feature
+### HTML
+
+```ts
+import '@videojs/html/player/video';
+```
+
+```html
+<video-player>
+  <video src="video.mp4">
+  <!-- Custom UI -->
+</video-player>
+```
+
+## 2. It's Pretty (Add Skin)
+
+### React
 
 ```tsx
-import { createPlayer, createPlayerFeature, presets } from '@videojs/react';
+import '@videojs/react/skin/video.css';
 
-// Example of how you can create your own feature, pip would be provided.
-const pip = createPlayerFeature({
-  initialState: { active: false },
-  getSnapshot: ({ target }) => ({
-    active: document.pictureInPictureElement === target.media.element,
+import { createPlayer } from '@videojs/react';
+import { features } from '@videojs/core/dom';
+import { VideoSkin } from '@videojs/react/skin/video';
+
+const { Provider: VideoProvider } = createPlayer({
+  features: [...features.video],
+});
+
+function App() {
+  return (
+    <VideoProvider>
+      <VideoSkin>
+        <video src="video.mp4" />
+      </VideoSkin>
+    </VideoProvider>
+  );
+}
+```
+
+### HTML
+
+```ts
+import '@videojs/html/player/video';
+import '@videojs/html/skin/video.css';
+import '@videojs/html/skin/video';
+```
+
+```html
+<video-player>
+  <video-skin>
+    <video src="video.mp4">
+  </video-skin>
+</video-player>
+```
+
+## 3. I Need a Feature (Chapters)
+
+Skin detects chapters feature, shows chapter menu.
+
+### React
+
+```tsx
+import '@videojs/react/skin/video.css';
+
+import { createPlayer } from '@videojs/react';
+import { features, chaptersSlice } from '@videojs/core/dom';
+import { VideoSkin } from '@videojs/react/skin/video';
+
+const { Provider: VideoProvider } = createPlayer({
+  features: [...features.video, chaptersSlice],
+});
+
+function App() {
+  return (
+    <VideoProvider>
+      <VideoSkin>
+        <video src="video.mp4" />
+      </VideoSkin>
+    </VideoProvider>
+  );
+}
+```
+
+### HTML
+
+```ts
+import '@videojs/html/player/video';
+import '@videojs/html/feature/chapters';
+import '@videojs/html/skin/video.css';
+import '@videojs/html/skin/video';
+```
+
+```html
+<video-player>
+  <video-skin>
+    <video src="video.mp4">
+  </video-skin>
+</video-player>
+```
+
+## 4. I Need Streaming (HLS)
+
+Skin detects streaming features, shows quality/tracks menus.
+
+### React
+
+```tsx
+import '@videojs/react/skin/video.css';
+
+import { createPlayer } from '@videojs/react';
+import { features } from '@videojs/core/dom';
+import { HlsVideo } from '@videojs/react/media/hls';
+import { VideoSkin } from '@videojs/react/skin/video';
+
+const { Provider: VideoProvider } = createPlayer({
+  features: [...features.video, ...features.streaming],
+});
+
+function App() {
+  return (
+    <VideoProvider>
+      <VideoSkin>
+        <HlsVideo src="stream.m3u8" />
+      </VideoSkin>
+    </VideoProvider>
+  );
+}
+```
+
+### HTML
+
+```ts
+import '@videojs/html/player/video';
+import '@videojs/html/feature/streaming';
+import '@videojs/html/media/hls-video';
+import '@videojs/html/skin/video.css';
+import '@videojs/html/skin/video';
+```
+
+```html
+<video-player>
+  <video-skin>
+    <hls-video src="stream.m3u8">
+  </video-skin>
+</video-player>
+```
+
+## 5. I Need Ads
+
+Same skin adapts to show ad UI.
+
+### React
+
+```tsx
+import '@videojs/react/skin/video.css';
+
+import { createPlayer } from '@videojs/react';
+import { features } from '@videojs/core/dom';
+import { HlsVideo } from '@videojs/react/media/hls';
+import { VideoSkin } from '@videojs/react/skin/video';
+
+const { Provider: VideoProvider } = createPlayer({
+  features: [...features.video, ...features.streaming, ...features.ads],
+});
+
+function App() {
+  return (
+    <VideoProvider>
+      <VideoSkin>
+        <HlsVideo src="stream.m3u8" />
+      </VideoSkin>
+    </VideoProvider>
+  );
+}
+```
+
+### HTML
+
+```ts
+import '@videojs/html/player/video';
+import '@videojs/html/feature/streaming';
+import '@videojs/html/feature/ads';
+import '@videojs/html/media/hls-video';
+import '@videojs/html/skin/video.css';
+import '@videojs/html/skin/video';
+```
+
+## 6. Full Custom (Escape Hatch)
+
+### React
+
+```tsx
+import { createPlayer } from '@videojs/react';
+import { defineSlice } from '@videojs/store';
+import { features, selectPlayback, selectTime, type PlayerTarget } from '@videojs/core/dom';
+import { HlsVideo } from '@videojs/react/media/hls';
+
+const analyticsSlice = defineSlice<PlayerTarget>()({
+  state: ({ task }) => ({
+    trackEvent: task('trackEvent', ({ get }, name: string) => {
+      console.log('track', name, get());
+    }),
   }),
-  subscribe: ({ update, signal }) => {
-    document.addEventListener('enterpictureinpicture', update, { signal });
-    document.addEventListener('leavepictureinpicture', update, { signal });
-  },
-  request: {
-    enterPip: (_, { target }) => target.media.element.requestPictureInPicture(),
-    exitPip: () => document.exitPictureInPicture(),
-  },
 });
 
-const { Provider, usePlayer } = createPlayer({
-  features: [...presets.website, pip],
+const { Provider: VideoProvider, Container: VideoContainer, usePlayer } = createPlayer({
+  features: [...features.video, ...features.streaming, analyticsSlice],
 });
-```
 
-### Media Escape Hatch
+function App() {
+  return (
+    <VideoProvider>
+      <VideoContainer>
+        <HlsVideo src="stream.m3u8" />
+        <MyCustomSkin />
+      </VideoContainer>
+    </VideoProvider>
+  );
+}
 
-Direct media access when player features don't expose what you need.
+function MyCustomSkin() {
+  const playback = usePlayer(selectPlayback);
+  const time = usePlayer(selectTime);
 
-```tsx
-const { usePlayer, useMedia } = createPlayer(presets.website);
+  if (!playback || !time) return null;
 
-function DebugPanel() {
-  const player = usePlayer();
-  const media = useMedia();
-
-  // player.isFullscreen vs media.isFullscreen (raw)
+  return (
+    <div className="my-skin">
+      <button onClick={playback.toggle}>
+        {playback.paused ? 'Play' : 'Pause'}
+      </button>
+      <span>{time.currentTime} / {time.duration}</span>
+    </div>
+  );
 }
 ```
 
-### Headless (No UI)
-
-```tsx
-import { createMedia, features } from '@videojs/react';
-
-const { Provider, useMedia } = createMedia([features.playback, features.time]);
-
-function AudioPlayer() {
-  const media = useMedia();
-  // Programmatic control, no UI
-}
-```
-
-## HTML
-
-### Declarative (Skin)
-
-```html
-<script type="module" src="@videojs/html/presets/website/skins/frosted.js"></script>
-
-<vjs-website-provider>
-  <vjs-frosted-skin>
-    <video src="video.mp4"></video>
-  </vjs-frosted-skin>
-</vjs-website-provider>
-```
-
-### Custom Provider
+### HTML
 
 ```ts
-import { createPlayer, presets } from '@videojs/html';
+import { createPlayer, MediaElement } from '@videojs/html';
+import { features, selectPlayback } from '@videojs/core/dom';
 
-const { ProviderElement } = createPlayer(presets.website);
-
-customElements.define('my-provider', ProviderElement);
-```
-
-```html
-<my-provider>
-  <video src="video.mp4"></video>
-</my-provider>
-```
-
-### Extended Preset
-
-```ts
-import { createPlayer, features, presets } from '@videojs/html';
-
-const { ProviderElement } = createPlayer({
-  features: [...presets.website, features.keyboard],
+const { PlayerElement, PlayerController, context } = createPlayer({
+  features: [...features.video, ...features.streaming, myCustomSlice],
 });
 
-customElements.define('my-provider', ProviderElement);
-```
+// Define player element
+customElements.define('my-video-player', PlayerElement);
 
-### Split Provider/Container
+// Custom play button
+class MyPlayButton extends MediaElement {
+  #playback = new PlayerController(this, context, selectPlayback);
 
-When media element and container need different DOM locations.
+  override connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('click', this.#handleClick);
+  }
 
-```ts
-import { createPlayer, presets, VjsElement } from '@videojs/html';
+  #handleClick = () => {
+    this.#playback.value?.toggle();
+  };
 
-const { ProviderMixin, ContainerMixin } = createPlayer(presets.website);
+  override update() {
+    const playback = this.#playback.value;
+    if (!playback) return;
 
-class MyProvider extends ProviderMixin(VjsElement) {}
-class MyContainer extends ContainerMixin(VjsElement) {}
-
-customElements.define('my-provider', MyProvider);
-customElements.define('my-container', MyContainer);
-```
-
-```html
-<my-provider>
-  <video src="video.mp4"></video>
-  <my-container>...</my-container>
-</my-provider>
-```
-
-### Headless (No UI)
-
-```ts
-import { createMedia, features, VjsElement } from '@videojs/html';
-
-const { ProviderMixin } = createMedia([features.playback, features.time]);
-
-class AudioController extends ProviderMixin(VjsElement) {
-  // Programmatic control
-}
-
-customElements.define('audio-controller', AudioController);
-```
-
-## Lit
-
-### PlayerController
-
-```ts
-import { html } from 'lit';
-
-import { createPlayer, presets, VjsElement } from '@videojs/html';
-
-const { PlayerController } = createPlayer(presets.website);
-
-class PlayButton extends VjsElement {
-  #player = new PlayerController(this);
-
-  render() {
-    const { paused, play, pause } = this.#player.value;
-
-    // Controller usage example only, you would use `PlayButton`
-    return html`<button @click=${paused ? play : pause}>${paused ? 'Play' : 'Pause'}</button>`;
+    this.textContent = playback.paused ? 'Play' : 'Pause';
   }
 }
 
-customElements.define('play-button', PlayButton);
+customElements.define('my-play-button', MyPlayButton);
+```
+
+```html
+<my-video-player>
+  <hls-video src="stream.m3u8"></hls-video>
+  <my-play-button></my-play-button>
+</my-video-player>
+```
+
+## 7. Configure Media Engine
+
+### HTML
+
+```html
+<hls-video
+  src="stream.m3u8"
+  buffer-size="30"
+  abr-strategy="bandwidth"
+>
+```
+
+### React
+
+```tsx
+<HlsVideo
+  src="stream.m3u8"
+  bufferSize={30}
+  abrStrategy="bandwidth"
+  onManifestLoaded={() => {}}
+/>
+```
+
+## 8. Headless (No UI)
+
+### React
+
+```tsx
+import { createPlayer } from '@videojs/react';
+import { features, selectPlayback, selectTime } from '@videojs/core/dom';
+
+const { Provider: AudioProvider, usePlayer } = createPlayer({
+  features: [...features.audio],
+});
+
+function AudioController() {
+  const playback = usePlayer(selectPlayback);
+  const time = usePlayer(selectTime);
+
+  // Programmatic control, no UI
+  useEffect(() => {
+    if (time && time.currentTime > 60) {
+      playback?.pause();
+    }
+  }, [time?.currentTime, playback]);
+
+  return <audio src="audio.mp3" />;
+}
+```
+
+## 9. Using Selectors
+
+### Performance-Optimized Access
+
+```tsx
+function TimeDisplay() {
+  // Only re-renders when currentTime changes
+  const currentTime = usePlayer((s) => s.currentTime);
+
+  if (currentTime === undefined) return null;
+
+  return <span>{formatTime(currentTime)}</span>;
+}
+```
+
+### Derived Values
+
+```tsx
+function PlayState() {
+  // Derived value, re-renders when paused OR ended changes
+  const isPlaying = usePlayer((s) => !s.paused && !s.ended);
+
+  if (isPlaying === undefined) return null;
+
+  return <span>{isPlaying ? 'Playing' : 'Stopped'}</span>;
+}
+```
+
+### Cross-Feature Selection
+
+```tsx
+function DebugPanel() {
+  // Select across multiple properties
+  const debug = usePlayer((s) => ({
+    paused: s.paused,
+    currentTime: s.currentTime,
+    volume: s.volume,
+  }));
+
+  return <pre>{JSON.stringify(debug, null, 2)}</pre>;
+}
+```
+
+## 10. Using Mixins (HTML)
+
+When you need custom player behavior:
+
+```ts
+import { createPlayer, MediaElement } from '@videojs/html';
+import { features } from '@videojs/core/dom';
+
+const { PlayerMixin } = createPlayer({
+  features: [...features.video],
+});
+
+class MyVideoPlayer extends PlayerMixin(MediaElement) {
+  override connectedCallback() {
+    super.connectedCallback();
+
+    // Custom initialization
+    this.addEventListener('fullscreenchange', this.#onFullscreen);
+  }
+
+  #onFullscreen = () => {
+    // Custom fullscreen handling
+  };
+}
+
+customElements.define('my-video-player', MyVideoPlayer);
 ```

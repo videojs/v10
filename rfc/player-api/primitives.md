@@ -1,163 +1,267 @@
 # Primitives API
 
-Guide for library authors building UI primitives (like `<PlayButton>`, `<VolumeSlider>`).
+Guide for library authors building UI primitives (like `<media-play-button>`, `<media-slider>`).
 
 ## Problem
 
-Primitives don't know which preset the user chose:
+Primitives don't know which features the user configured:
 
 ```tsx
-// Inside @videojs/react - shipped to users
+// Inside @videojs/react — shipped to users
 export function PlayButton() {
-  const player = usePlayer(); // What type is this?
-  // User might use presets.website or presets.background
-  // We don't know if playbackFeature is included
+  // User might use features.video or a custom subset
+  // We don't know if playback slice is included
 }
 ```
 
 They need:
 
-1. Loosely typed access to the player
+1. Access to the player store
 2. A way to check if a feature exists
 3. Type narrowing when the feature is present
 
-## Solution: `hasFeature`, `getFeature`, `throwMissingFeature`
+## Solution: Selector-Based Access
 
-Three utilities for feature access:
-
-| Function                | Returns                              | Use case                           |
-| ----------------------- | ------------------------------------ | ---------------------------------- |
-| `hasFeature(player, f)` | `boolean` (type guard)               | Conditional narrowing, `if` blocks |
-| `getFeature(player, f)` | Typed object, props `T \| undefined` | Direct access, optional chaining   |
-| `throwMissingFeature`   | `never` (throws)                     | Critical features, fail fast       |
-
-### `hasFeature` — Type Guard
+### React
 
 ```tsx
-import { features, hasFeature, throwMissingFeature, usePlayer } from '@videojs/react';
+import { selectPlayback } from '@videojs/core/dom';
 
 export function PlayButton() {
-  const player = usePlayer(); // UnknownPlayer - loosely typed
+  const playback = usePlayer(selectPlayback);
 
-  if (!hasFeature(player, features.playback)) {
-    throwMissingFeature(features.playback, { displayName: 'PlayButton' });
+  if (!playback) return null;
+
+  // TypeScript knows playback shape
+  return (
+    <button onClick={playback.toggle}>
+      {playback.paused ? 'Play' : 'Pause'}
+    </button>
+  );
+}
+```
+
+### HTML
+
+```ts
+import { MediaElement } from '@videojs/html';
+import { selectPlayback } from '@videojs/core/dom';
+
+class MediaPlayButton extends MediaElement {
+  #playback = new PlayerController(this, context, selectPlayback);
+
+  override connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('click', this.#handleClick);
   }
 
-  // TypeScript narrows: player.paused and player.play() are now typed
-  return <button onClick={player.play}>{player.paused ? '▶' : '⏸'}</button>;
+  #handleClick = () => {
+    this.#playback.value?.toggle();
+  };
+
+  override update() {
+    const playback = this.#playback.value;
+    if (!playback) return;
+
+    this.setAttribute('aria-pressed', String(!playback.paused));
+  }
 }
 ```
 
-### `getFeature` — Direct Access
+## Selector Types
 
-For optional features, use `getFeature` with safe access:
+Selectors extract typed state from the store:
+
+```ts
+import { createSelector } from '@videojs/store';
+
+const selectPlayback = createSelector(playbackSlice);
+// Type: (state: Record<string, unknown>) => PlaybackState | undefined
+```
+
+Returns `undefined` when the slice isn't configured.
+
+## Patterns
+
+### Required Feature
+
+If a primitive requires a feature to function:
 
 ```tsx
-const volume = getFeature(player, features.volume);
-volume.setVolume?.(0.5); // Safe - no crash if undefined
-```
+export function VolumeSlider() {
+  const volume = usePlayer(selectVolume);
 
-## Types
+  // Return nothing if feature not available
+  if (!volume) return null;
 
-### `StoreProxy<T>` Contract
-
-All proxies implement `StoreProxy<T>`, which holds a reference to the underlying store:
-
-```ts
-const STORE_SYMBOL: unique symbol;
-
-interface StoreProxy<T extends AnyStore = AnyStore> {
-  readonly [STORE_SYMBOL]: T;
-  [key: string]: unknown;
+  return (
+    <input
+      type="range"
+      value={volume.volume}
+      onChange={(e) => volume.setVolume(Number(e.target.value))}
+    />
+  );
 }
 ```
 
-The index signature `[key: string]: unknown` allows any property access. After `hasFeature` narrows, explicit properties take precedence.
+### Optional Feature Enhancement
 
-### Proxy Types
-
-```ts
-interface UnknownPlayerStore extends Store<PlayerTarget, []> {}
-interface UnknownMediaStore extends Store<MediaTarget, []> {}
-
-interface UnknownPlayer extends StoreProxy<UnknownPlayerStore> {}
-interface UnknownMedia extends StoreProxy<UnknownMediaStore> {}
-```
-
-The `[]` for features means "no features statically typed" — the store has features at runtime, but TypeScript doesn't know which ones. Use `hasFeature` to narrow.
-
-### Type Summary
-
-| Type                 | Description                        |
-| -------------------- | ---------------------------------- |
-| `StoreProxy<T>`      | Base interface for all proxies     |
-| `UnknownPlayer`      | Player proxy with unknown features |
-| `UnknownMedia`       | Media proxy with unknown features  |
-| `UnknownPlayerStore` | Player store with unknown features |
-| `UnknownMediaStore`  | Media store with unknown features  |
-
-### Creating Proxies
-
-Internally, proxies are created from stores via `createProxy()`:
-
-```ts
-import { createProxy } from '@videojs/store';
-
-const store = createStore({ ... });
-const proxy = createProxy(store); // StoreProxy<typeof store>
-```
-
-This is used internally by `createPlayer` and controllers. Library authors typically receive proxies via `usePlayer()` or `controller.value`.
-
-### Via Controller (Lit/ReactiveElement)
-
-Controllers expose the proxy via `.value`:
-
-```ts
-const controller = new PlayerController(this);
-controller.value; // UnknownPlayer (tracked proxy)
-```
-
-## Implementation
-
-Both functions access `target[STORE_SYMBOL].features.has(feature.id)` at runtime:
-
-- **`hasFeature`** — Type guard that narrows the proxy to include feature's state and requests
-- **`getFeature`** — Returns same proxy typed to feature, with properties as `T | undefined`
-
-## Cross-Framework Consistency
-
-The same API works in React and Lit:
-
-| Concept              | React                                | Lit/ReactiveElement                     |
-| -------------------- | ------------------------------------ | --------------------------------------- |
-| Loosely typed player | `usePlayer()` → `UnknownPlayer`      | `controller.value` → `UnknownPlayer`    |
-| Type guard           | `hasFeature(player, feature)`        | `hasFeature(controller.value, feature)` |
-| Direct access        | `getFeature(player, feature)`        | `getFeature(controller.value, feature)` |
-| Throw on missing     | `throwMissingFeature(feature, opts)` | `throwMissingFeature(feature, opts)`    |
-
-### Package Exports
-
-| Package             | Exports                                                                                     |
-| ------------------- | ------------------------------------------------------------------------------------------- |
-| `@videojs/store`    | `createProxy`, `hasFeature`, `getFeature`, `throwMissingFeature`, `subscribe`, `StoreProxy` |
-| `@videojs/core/dom` | `UnknownPlayer`, `UnknownMedia`, `UnknownPlayerStore`, `UnknownMediaStore`                  |
-| `@videojs/react`    | Re-exports above + `usePlayer`, `useMedia`, `createPlayer`                                  |
-| `@videojs/html`     | Re-exports above + `PlayerController`, `MediaController`, `createPlayer`                    |
-
-## Example: Mixing Required and Optional
+If a primitive works without a feature but enhances with it:
 
 ```tsx
 export function TimeSlider() {
-  const player = usePlayer();
+  const time = usePlayer(selectTime);
+  const playback = usePlayer(selectPlayback);
 
-  // Required — throw if missing
-  if (!hasFeature(player, features.time)) {
-    throwMissingFeature(features.time, { displayName: 'TimeSlider' });
-  }
+  if (!time) return null;
 
-  // Optional — graceful degradation
-  const playback = getFeature(player, features.playback);
-  return <Slider onDragStart={playback.pause} onDragEnd={playback.play} />;
+  return (
+    <input
+      type="range"
+      value={time.currentTime}
+      max={time.duration}
+      onChange={(e) => time.seek(Number(e.target.value))}
+      // Optional: pause during drag
+      onMouseDown={() => playback?.pause()}
+      onMouseUp={() => playback?.play()}
+    />
+  );
 }
+```
+
+### Multiple Required Features
+
+```tsx
+export function Controls() {
+  const playback = usePlayer(selectPlayback);
+  const volume = usePlayer(selectVolume);
+  const fullscreen = usePlayer(selectFullscreen);
+
+  // All required
+  if (!playback || !volume || !fullscreen) return null;
+
+  return (
+    <div>
+      <PlayButton playback={playback} />
+      <VolumeSlider volume={volume} />
+      <FullscreenButton fullscreen={fullscreen} />
+    </div>
+  );
+}
+```
+
+### Custom Selectors
+
+Derive values from state:
+
+```tsx
+// Select specific value
+const paused = usePlayer((s) => s.paused);
+
+// Derive value
+const isPlaying = usePlayer((s) => !s.paused && !s.ended);
+
+// Combine multiple properties
+const state = usePlayer((s) => ({
+  paused: s.paused,
+  volume: s.volume,
+}));
+```
+
+## Cross-Framework Consistency
+
+Same pattern works in React and HTML:
+
+| Concept         | React                      | HTML                                         |
+| --------------- | -------------------------- | -------------------------------------------- |
+| Hook/Controller | `usePlayer(selector)`      | `new PlayerController(this, ctx, selector)`  |
+| Get state       | returns state              | `controller.value`                           |
+| Check existence | `if (!state)`              | `if (!value)`                                |
+| Access state    | `state.paused`             | `value.paused`                               |
+| Call action     | `state.play()`             | `value.play()`                               |
+
+## Feature Availability
+
+Features may target capabilities the platform doesn't support.
+
+```tsx
+const volume = usePlayer(selectVolume);
+volume?.volumeAvailability; // 'available' | 'unavailable' | 'unsupported'
+```
+
+| Value           | Meaning                                                |
+| --------------- | ------------------------------------------------------ |
+| `'unsupported'` | Platform can never do this (e.g., iOS volume)          |
+| `'unavailable'` | Could work, not ready yet (e.g., waiting for manifest) |
+| `'available'`   | Ready to use                                           |
+
+### Handling Unavailable Features
+
+```tsx
+export function VolumeSlider() {
+  const volume = usePlayer(selectVolume);
+
+  if (!volume) return null;
+
+  // Hide if platform doesn't support volume control
+  if (volume.volumeAvailability === 'unsupported') return null;
+
+  // Disable if temporarily unavailable
+  const disabled = volume.volumeAvailability !== 'available';
+
+  return (
+    <input
+      type="range"
+      value={volume.volume}
+      onChange={(e) => volume.setVolume(Number(e.target.value))}
+      disabled={disabled}
+    />
+  );
+}
+```
+
+## Package Exports
+
+### @videojs/store
+
+```ts
+import { shallowEqual, createSelector } from '@videojs/store';
+```
+
+### @videojs/core/dom
+
+```ts
+import {
+  features,
+  selectPlayback,
+  selectVolume,
+  selectTime,
+  selectSource,
+  selectBuffer,
+} from '@videojs/core/dom';
+```
+
+### @videojs/react
+
+```ts
+import { createPlayer } from '@videojs/react';
+
+// From createPlayer result
+const { Provider, Container, usePlayer, useMedia } = createPlayer({ ... });
+```
+
+### @videojs/html
+
+```ts
+import { createPlayer, MediaElement } from '@videojs/html';
+
+// From createPlayer result
+const {
+  context,
+  PlayerElement,
+  PlayerController,
+  PlayerMixin,
+  ProviderMixin,
+  ContainerMixin,
+} = createPlayer({ ... });
 ```

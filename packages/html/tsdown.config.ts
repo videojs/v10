@@ -1,11 +1,17 @@
+import { globSync } from 'node:fs';
 import { defineConfig } from 'tsdown';
 
-// const defineDir = new URL('./src/define', import.meta.url).pathname;
-// const defineFiles = readdirSync(defineDir).filter(file => file.endsWith('.ts'));
+const defineEntries = Object.fromEntries(
+  globSync('src/define/**/*.ts').map((file) => {
+    const key = file.replace('src/', '').replace('.ts', '');
+    return [key, file];
+  })
+);
 
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
+    ...defineEntries,
   },
   platform: 'browser',
   format: 'es',

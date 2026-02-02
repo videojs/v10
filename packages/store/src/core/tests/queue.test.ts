@@ -1,52 +1,42 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createQueue } from '../queue';
-
-/** Wait for microtask queue to flush. */
-const flush = () => new Promise<void>((r) => queueMicrotask(r));
+import { Queue } from '../queue';
 
 describe('Queue', () => {
   describe('enqueue', () => {
-    it('executes task immediately', async () => {
-      const queue = createQueue();
+    it('executes handler immediately', async () => {
+      const queue = new Queue();
       const handler = vi.fn().mockResolvedValue('result');
 
       const promise = queue.enqueue({
-        name: 'test',
-        key: 'test-key',
+        key: 'test',
         handler,
       });
 
-      // Handler called synchronously
       expect(handler).toHaveBeenCalled();
       await expect(promise).resolves.toBe('result');
     });
 
-    it('task is pending synchronously after enqueue', async () => {
-      const queue = createQueue();
+    it('passes signal to handler', async () => {
+      const queue = new Queue();
+      let receivedSignal: AbortSignal | undefined;
 
-      const promise = queue.enqueue({
-        name: 'test',
-        key: 'test-key',
-        handler: async () => 'result',
+      await queue.enqueue({
+        key: 'test',
+        handler: async ({ signal }) => {
+          receivedSignal = signal;
+          return 'result';
+        },
       });
 
-      // Synchronous check - task is pending immediately
-      const { test: pendingTest } = queue.tasks;
-      expect(pendingTest?.status).toBe('pending');
-
-      await promise;
-
-      const { test: settledTest } = queue.tasks;
-      expect(settledTest?.status).toBe('success');
+      expect(receivedSignal).toBeInstanceOf(AbortSignal);
     });
 
-    it('aborts pending task with same key', async () => {
-      const queue = createQueue();
+    it('supersedes pending task with same key', async () => {
+      const queue = new Queue();
       let aborted = false;
 
-      const longRunning = queue.enqueue({
-        name: 'long',
+      const first = queue.enqueue({
         key: 'shared',
         handler: async ({ signal }) => {
           await new Promise((resolve, reject) => {
@@ -54,7 +44,7 @@ describe('Queue', () => {
             signal.addEventListener('abort', () => {
               clearTimeout(timeout);
               aborted = true;
-              reject(new Error('aborted'));
+              reject(signal.reason);
             });
           });
         },
@@ -63,23 +53,21 @@ describe('Queue', () => {
       // Let first task start
       await new Promise((r) => setTimeout(r, 10));
 
-      const superseding = queue.enqueue({
-        name: 'supersede',
+      const second = queue.enqueue({
         key: 'shared',
         handler: async () => 'new result',
       });
 
-      await expect(longRunning).rejects.toThrow();
-      await expect(superseding).resolves.toBe('new result');
+      await expect(first).rejects.toMatchObject({ code: 'SUPERSEDED' });
+      await expect(second).resolves.toBe('new result');
       expect(aborted).toBe(true);
     });
 
-    it('parallel execution with different keys', async () => {
-      const queue = createQueue();
+    it('runs tasks with different keys in parallel', async () => {
+      const queue = new Queue();
       const results: string[] = [];
 
       const task1 = queue.enqueue({
-        name: 'task1',
         key: 'key-a',
         handler: async () => {
           results.push('a-start');
@@ -90,7 +78,6 @@ describe('Queue', () => {
       });
 
       const task2 = queue.enqueue({
-        name: 'task2',
         key: 'key-b',
         handler: async () => {
           results.push('b-start');
@@ -106,14 +93,77 @@ describe('Queue', () => {
     });
   });
 
+  describe('mode', () => {
+    it('exclusive mode (default) supersedes same key', async () => {
+      const queue = new Queue();
+
+      const first = queue.enqueue({
+        key: 'k',
+        handler: async ({ signal }) => {
+          await new Promise((_, reject) => {
+            signal.addEventListener('abort', () => reject(signal.reason));
+            setTimeout(() => {}, 1000);
+          });
+        },
+      });
+
+      await new Promise((r) => setTimeout(r, 10));
+
+      const second = queue.enqueue({
+        key: 'k',
+        mode: 'exclusive',
+        handler: async () => 'second',
+      });
+
+      await expect(first).rejects.toMatchObject({ code: 'SUPERSEDED' });
+      await expect(second).resolves.toBe('second');
+    });
+
+    it('shared mode joins existing promise with same key', async () => {
+      const queue = new Queue();
+      let callCount = 0;
+
+      const handler = async () => {
+        callCount++;
+        await new Promise((r) => setTimeout(r, 50));
+        return 'result';
+      };
+
+      const first = queue.enqueue({ key: 'shared', mode: 'shared', handler });
+      const second = queue.enqueue({ key: 'shared', mode: 'shared', handler });
+
+      const [result1, result2] = await Promise.all([first, second]);
+
+      expect(callCount).toBe(1);
+      expect(result1).toBe('result');
+      expect(result2).toBe('result');
+    });
+
+    it('shared mode creates new task after first completes', async () => {
+      const queue = new Queue();
+      let callCount = 0;
+
+      const handler = async () => {
+        callCount++;
+        return `result-${callCount}`;
+      };
+
+      const first = await queue.enqueue({ key: 'shared', mode: 'shared', handler });
+      const second = await queue.enqueue({ key: 'shared', mode: 'shared', handler });
+
+      expect(callCount).toBe(2);
+      expect(first).toBe('result-1');
+      expect(second).toBe('result-2');
+    });
+  });
+
   describe('abort', () => {
-    it('abort(name) aborts pending task', async () => {
-      const queue = createQueue();
+    it('abort(key) aborts pending task with that key', async () => {
+      const queue = new Queue();
       let aborted = false;
 
       const promise = queue.enqueue({
-        name: 'test',
-        key: 'k',
+        key: 'test',
         handler: async ({ signal }) => {
           await new Promise((_, reject) => {
             signal.addEventListener('abort', () => {
@@ -131,25 +181,77 @@ describe('Queue', () => {
       await expect(promise).rejects.toMatchObject({ code: 'ABORTED' });
       expect(aborted).toBe(true);
     });
+
+    it('abort() without key aborts all pending tasks', async () => {
+      const queue = new Queue();
+      const abortedKeys: string[] = [];
+
+      const taskA = queue.enqueue({
+        key: 'a',
+        handler: async ({ signal }) => {
+          await new Promise((_, reject) => {
+            signal.addEventListener('abort', () => {
+              abortedKeys.push('a');
+              reject(signal.reason);
+            });
+            setTimeout(() => {}, 1000);
+          });
+        },
+      });
+
+      const taskB = queue.enqueue({
+        key: 'b',
+        handler: async ({ signal }) => {
+          await new Promise((_, reject) => {
+            signal.addEventListener('abort', () => {
+              abortedKeys.push('b');
+              reject(signal.reason);
+            });
+            setTimeout(() => {}, 1000);
+          });
+        },
+      });
+
+      await new Promise((r) => setTimeout(r, 10));
+      queue.abort();
+
+      await expect(taskA).rejects.toMatchObject({ code: 'ABORTED' });
+      await expect(taskB).rejects.toMatchObject({ code: 'ABORTED' });
+      expect(abortedKeys).toContain('a');
+      expect(abortedKeys).toContain('b');
+    });
+
+    it('abort(key) is no-op for non-existent key', () => {
+      const queue = new Queue();
+      // Should not throw
+      queue.abort('nonexistent');
+    });
   });
 
   describe('destroy', () => {
-    it('rejects after destroy', async () => {
-      const queue = createQueue();
+    it('rejects enqueue after destroy', async () => {
+      const queue = new Queue();
       queue.destroy();
 
-      await expect(queue.enqueue({ name: 't', key: 'k', handler: vi.fn() })).rejects.toMatchObject({
+      await expect(queue.enqueue({ key: 'k', handler: vi.fn() })).rejects.toMatchObject({
         code: 'DESTROYED',
       });
     });
 
-    it('aborts all pending on destroy', async () => {
-      const queue = createQueue();
+    it('sets destroyed flag', () => {
+      const queue = new Queue();
+      expect(queue.destroyed).toBe(false);
+
+      queue.destroy();
+      expect(queue.destroyed).toBe(true);
+    });
+
+    it('aborts all pending tasks on destroy', async () => {
+      const queue = new Queue();
       const aborted = vi.fn();
 
       const promise = queue.enqueue({
-        name: 'task',
-        key: 'k',
+        key: 'task',
         handler: async ({ signal }) => {
           signal.addEventListener('abort', aborted);
           await new Promise((r) => setTimeout(r, 100));
@@ -161,195 +263,97 @@ describe('Queue', () => {
 
       await expect(promise).rejects.toMatchObject({ code: 'ABORTED' });
       expect(aborted).toHaveBeenCalled();
-      expect(queue.destroyed).toBe(true);
     });
 
-    it('clears all task references on destroy', async () => {
-      const queue = createQueue();
+    it('destroy is idempotent', () => {
+      const queue = new Queue();
+      queue.destroy();
+      queue.destroy(); // Should not throw
+      expect(queue.destroyed).toBe(true);
+    });
+  });
+
+  describe('cleanup', () => {
+    it('cleans up pending map after task completes', async () => {
+      const queue = new Queue();
 
       await queue.enqueue({
-        name: 'task',
-        key: 'k',
+        key: 'test',
         handler: async () => 'result',
       });
 
-      const { task } = queue.tasks;
-      expect(task?.status).toBe('success');
+      // Enqueue same key should not supersede (no pending task exists)
+      const handler = vi.fn().mockResolvedValue('new');
+      await queue.enqueue({ key: 'test', handler });
 
-      queue.destroy();
-
-      expect(Reflect.ownKeys(queue.tasks).length).toBe(0);
-    });
-  });
-
-  describe('cleanup edge cases', () => {
-    it('allows pending tasks to self-cleanup after destroy', async () => {
-      const queue = createQueue();
-      const cleanupSpy = vi.fn();
-
-      const promise = queue.enqueue({
-        name: 'task',
-        key: 'k',
-        handler: async ({ signal }) => {
-          signal.addEventListener('abort', () => cleanupSpy('aborted'));
-          try {
-            await new Promise((_, reject) => {
-              signal.addEventListener('abort', () => reject(signal.reason));
-            });
-          } finally {
-            cleanupSpy('cleanup');
-          }
-        },
-      });
-
-      await new Promise((r) => setTimeout(r, 10));
-
-      const { task: pendingTask } = queue.tasks;
-      expect(pendingTask?.status).toBe('pending');
-
-      queue.destroy();
-
-      await promise.catch(() => {});
-      expect(cleanupSpy).toHaveBeenCalledWith('aborted');
-      expect(cleanupSpy).toHaveBeenCalledWith('cleanup');
-
-      const { task: destroyedTask } = queue.tasks;
-      expect(destroyedTask).toBeUndefined();
-    });
-  });
-
-  describe('subscribe', () => {
-    it('subscribe returns an unsubscribe function', () => {
-      const queue = createQueue();
-      const listener = vi.fn();
-
-      const unsubscribe = queue.subscribe(listener);
-
-      expect(unsubscribe).toBeTypeOf('function');
+      expect(handler).toHaveBeenCalled();
     });
 
-    it('notifies when task changes', async () => {
-      const queue = createQueue();
-      const listener = vi.fn();
+    it('cleans up pending map after task fails', async () => {
+      const queue = new Queue();
 
-      queue.subscribe(listener);
+      await queue
+        .enqueue({
+          key: 'test',
+          handler: async () => {
+            throw new Error('fail');
+          },
+        })
+        .catch(() => {});
 
-      const promise = queue.enqueue({
-        name: 'test',
-        key: 'test-key',
-        handler: vi.fn().mockResolvedValue('result'),
-      });
+      // Enqueue same key should work (no pending task to supersede)
+      const handler = vi.fn().mockResolvedValue('new');
+      await queue.enqueue({ key: 'test', handler });
 
-      await promise;
-      await flush();
-
-      // Notified at least once (pending and settled may batch together)
-      expect(listener).toHaveBeenCalled();
+      expect(handler).toHaveBeenCalled();
     });
 
-    it('unsubscribe stops notifications', async () => {
-      const queue = createQueue();
-      const listener = vi.fn();
-
-      const unsubscribe = queue.subscribe(listener);
-      unsubscribe();
+    it('cleans up shared map after task completes', async () => {
+      const queue = new Queue();
+      let callCount = 0;
 
       await queue.enqueue({
-        name: 'test',
-        key: 'test-key',
-        handler: vi.fn().mockResolvedValue('result'),
-      });
-      await flush();
-
-      expect(listener).not.toHaveBeenCalled();
-    });
-
-    it('supports multiple subscribers', async () => {
-      const queue = createQueue();
-      const listener1 = vi.fn();
-      const listener2 = vi.fn();
-
-      queue.subscribe(listener1);
-      queue.subscribe(listener2);
-
-      await queue.enqueue({
-        name: 'test',
-        key: 'test-key',
-        handler: vi.fn().mockResolvedValue('result'),
-      });
-      await flush();
-
-      // Called once per batch (pending + settled batched together)
-      expect(listener1).toHaveBeenCalled();
-      expect(listener2).toHaveBeenCalled();
-    });
-  });
-
-  describe('task lifecycle', () => {
-    it('task starts as pending and transitions to success', async () => {
-      const queue = createQueue();
-
-      const promise = queue.enqueue({
-        name: 'task',
-        key: 'k',
+        key: 'shared',
+        mode: 'shared',
         handler: async () => {
-          await new Promise((r) => setTimeout(r, 10));
+          callCount++;
           return 'result';
         },
       });
 
-      await new Promise((r) => setTimeout(r, 5));
-
-      const { task: pendingTask } = queue.tasks;
-      expect(pendingTask?.status).toBe('pending');
-      expect(pendingTask?.name).toBe('task');
-
-      await promise;
-
-      const { task: successTask } = queue.tasks;
-      expect(successTask?.status).toBe('success');
-
-      if (successTask?.status === 'success') {
-        expect(successTask.output).toBe('result');
-        expect(successTask.settledAt).toBeGreaterThan(successTask.startedAt);
-      }
-    });
-
-    it('task starts as pending and transitions to error', async () => {
-      const queue = createQueue();
-      const error = new Error('test error');
-
-      const promise = queue.enqueue({
-        name: 'task',
-        key: 'k',
+      // Second call should create new task since first completed
+      await queue.enqueue({
+        key: 'shared',
+        mode: 'shared',
         handler: async () => {
-          await new Promise((r) => setTimeout(r, 10));
-          throw error;
+          callCount++;
+          return 'result2';
         },
       });
 
-      await new Promise((r) => setTimeout(r, 5));
+      expect(callCount).toBe(2);
+    });
+  });
 
-      const { task: pendingTask } = queue.tasks;
-      expect(pendingTask?.status).toBe('pending');
+  describe('symbol keys', () => {
+    it('supports symbol as key', async () => {
+      const queue = new Queue();
+      const key = Symbol('task');
 
-      await expect(promise).rejects.toThrow('test error');
+      const result = await queue.enqueue({
+        key,
+        handler: async () => 'result',
+      });
 
-      const { task: errorTask } = queue.tasks;
-      expect(errorTask?.status).toBe('error');
-
-      if (errorTask?.status === 'error') {
-        expect(errorTask.error).toBe(error);
-        expect(errorTask.cancelled).toBe(false);
-      }
+      expect(result).toBe('result');
     });
 
-    it('aborted task has cancelled flag set to true', async () => {
-      const queue = createQueue();
+    it('supersedes by symbol key', async () => {
+      const queue = new Queue();
+      const key = Symbol('task');
 
-      const promise = queue.enqueue({
-        name: 'task',
-        key: 'k',
+      const first = queue.enqueue({
+        key,
         handler: async ({ signal }) => {
           await new Promise((_, reject) => {
             signal.addEventListener('abort', () => reject(signal.reason));
@@ -360,253 +364,13 @@ describe('Queue', () => {
 
       await new Promise((r) => setTimeout(r, 10));
 
-      const { task: pendingTask } = queue.tasks;
-      expect(pendingTask?.status).toBe('pending');
-
-      queue.abort('task');
-      await promise.catch(() => {});
-
-      const { task: errorTask } = queue.tasks;
-      expect(errorTask?.status).toBe('error');
-
-      if (errorTask?.status === 'error') {
-        expect(errorTask.cancelled).toBe(true);
-      }
-    });
-
-    it('new request replaces settled task', async () => {
-      const queue = createQueue();
-
-      await queue.enqueue({
-        name: 'first',
-        key: 'k',
-        handler: async () => 'first-result',
+      const second = queue.enqueue({
+        key,
+        handler: async () => 'new',
       });
 
-      const { first } = queue.tasks;
-      expect(first?.status).toBe('success');
-
-      if (first?.status === 'success') {
-        expect(first.output).toBe('first-result');
-      }
-
-      await queue.enqueue({
-        name: 'second',
-        key: 'k',
-        handler: async () => 'second-result',
-      });
-
-      const { second } = queue.tasks;
-      expect(second?.status).toBe('success');
-
-      if (second?.status === 'success') {
-        expect(second.output).toBe('second-result');
-        expect(second.name).toBe('second');
-      }
-    });
-  });
-
-  describe('reset', () => {
-    it('clears settled task', async () => {
-      const queue = createQueue();
-
-      await queue.enqueue({
-        name: 'task',
-        key: 'k',
-        handler: async () => 'result',
-      });
-
-      const { task: settledTask } = queue.tasks;
-      expect(settledTask?.status).toBe('success');
-
-      queue.reset('task');
-
-      const { task: clearedTask } = queue.tasks;
-      expect(clearedTask).toBeUndefined();
-    });
-
-    it('is no-op when task is pending', async () => {
-      const queue = createQueue();
-
-      const promise = queue.enqueue({
-        name: 'task',
-        key: 'k',
-        handler: async () => {
-          await new Promise((r) => setTimeout(r, 50));
-          return 'result';
-        },
-      });
-
-      await new Promise((r) => setTimeout(r, 10));
-
-      const { task: beforeReset } = queue.tasks;
-      expect(beforeReset?.status).toBe('pending');
-
-      queue.reset('task');
-
-      const { task: afterReset } = queue.tasks;
-      expect(afterReset?.status).toBe('pending');
-
-      await promise;
-    });
-
-    it('is no-op when task does not exist', () => {
-      const queue = createQueue();
-
-      queue.reset('nonexistent');
-
-      expect(queue.tasks.nonexistent).toBeUndefined();
-    });
-
-    it('notifies subscribers when reset clears a task', async () => {
-      const queue = createQueue();
-      const listener = vi.fn();
-
-      await queue.enqueue({
-        name: 'task',
-        key: 'k',
-        handler: async () => 'result',
-      });
-
-      queue.subscribe(listener);
-
-      queue.reset('task');
-      await flush();
-
-      expect(listener).toHaveBeenCalledTimes(1);
-      expect(queue.tasks.task).toBeUndefined();
-    });
-
-    it('does not notify subscribers when task does not exist', async () => {
-      const queue = createQueue();
-      const listener = vi.fn();
-
-      queue.subscribe(listener);
-      queue.reset('nonexistent');
-      await flush();
-
-      expect(listener).not.toHaveBeenCalled();
-    });
-
-    it('resets all settled tasks when no key provided', async () => {
-      const queue = createQueue();
-
-      await queue.enqueue({
-        name: 'a',
-        key: 'a',
-        handler: async () => 'a-result',
-      });
-      await queue.enqueue({
-        name: 'b',
-        key: 'b',
-        handler: async () => 'b-result',
-      });
-
-      expect(queue.tasks.a?.status).toBe('success');
-      expect(queue.tasks.b?.status).toBe('success');
-
-      queue.reset();
-
-      expect(queue.tasks.a).toBeUndefined();
-      expect(queue.tasks.b).toBeUndefined();
-    });
-
-    it('preserves pending tasks when resetting all', async () => {
-      const queue = createQueue();
-
-      await queue.enqueue({
-        name: 'settled',
-        key: 'settled',
-        handler: async () => 'done',
-      });
-
-      const pendingPromise = queue.enqueue({
-        name: 'pending',
-        key: 'pending',
-        handler: async () => {
-          await new Promise((r) => setTimeout(r, 100));
-          return 'pending-done';
-        },
-      });
-
-      await new Promise((r) => setTimeout(r, 10));
-      expect(queue.tasks.settled?.status).toBe('success');
-      expect(queue.tasks.pending?.status).toBe('pending');
-
-      queue.reset();
-
-      expect(queue.tasks.settled).toBeUndefined();
-      expect(queue.tasks.pending?.status).toBe('pending');
-
-      await pendingPromise;
-    });
-  });
-
-  describe('tasks property', () => {
-    it('returns current snapshot', async () => {
-      const queue = createQueue();
-      await queue.enqueue({
-        name: 'task',
-        key: 'k',
-        handler: async () => 'result',
-      });
-
-      // Tasks returns the current snapshot directly
-      expect(queue.tasks.task?.status).toBe('success');
-    });
-
-    it('reflects changes immediately', async () => {
-      const queue = createQueue();
-
-      await queue.enqueue({
-        name: 'first',
-        key: 'k',
-        handler: async () => 'first',
-      });
-
-      // Getter reflects updates
-      expect(queue.tasks.first?.status).toBe('success');
-
-      await queue.enqueue({
-        name: 'second',
-        key: 'k',
-        handler: async () => 'second',
-      });
-
-      expect(queue.tasks.second?.status).toBe('success');
-    });
-  });
-
-  describe('symbol keys', () => {
-    it('supports symbol names', async () => {
-      const queue = createQueue();
-      const name = Symbol('task');
-
-      await queue.enqueue({
-        name: name as unknown as string,
-        key: name,
-        handler: async () => 'result',
-      });
-
-      const task = queue.tasks[name as unknown as string];
-      expect(task?.status).toBe('success');
-      if (task?.status === 'success') {
-        expect(task.output).toBe('result');
-      }
-    });
-  });
-
-  describe('meta propagation', () => {
-    it('meta defaults to null when not provided', async () => {
-      const queue = createQueue();
-
-      await queue.enqueue({
-        name: 'task',
-        key: 'k',
-        handler: async () => 'result',
-      });
-
-      expect(queue.tasks.task?.meta).toBeNull();
+      await expect(first).rejects.toMatchObject({ code: 'SUPERSEDED' });
+      await expect(second).resolves.toBe('new');
     });
   });
 });

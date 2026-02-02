@@ -1,138 +1,100 @@
 import { render } from '@testing-library/react';
-
-import { createFeature } from '@videojs/store';
-import { createStore, useStoreContext } from '@videojs/store/react';
+import type { ReactNode } from 'react';
+import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { PlayerContextProvider, type PlayerContextValue } from '../../player/context';
 import { Video } from '../video';
 
-describe('video', () => {
-  class MockMedia extends EventTarget {
-    volume = 1;
-    muted = false;
+describe('Video', () => {
+  function createMockStore() {
+    return {
+      state: { volume: 1, muted: false },
+      attach: vi.fn(() => vi.fn()),
+      subscribe: vi.fn(() => vi.fn()),
+      destroy: vi.fn(),
+    };
   }
 
-  const mockFeature = createFeature<MockMedia>()({
-    initialState: { volume: 1, muted: false },
-    getSnapshot: ({ target }) => ({
-      volume: target.volume,
-      muted: target.muted,
-    }),
-    subscribe: () => {},
-    request: {},
-  });
-
-  function createTestStore() {
-    return createStore({ features: [mockFeature] });
+  function createWrapper(value: PlayerContextValue) {
+    return function Wrapper({ children }: { children: ReactNode }) {
+      return <PlayerContextProvider value={value}>{children}</PlayerContextProvider>;
+    };
   }
 
-  it('renders a video element', () => {
-    const { Provider } = createTestStore();
+  describe('standalone (without Provider)', () => {
+    it('renders without error', () => {
+      const { container } = render(<Video data-testid="video" />);
+      const video = container.querySelector('video');
+      expect(video).toBeTruthy();
+      expect(video?.getAttribute('data-testid')).toBe('video');
+    });
 
-    const { container } = render(
-      <Provider>
-        <Video data-testid="test-video" />
-      </Provider>
-    );
+    it('passes props to video element', () => {
+      const { container } = render(<Video src="test.mp4" controls autoPlay playsInline />);
 
-    const video = container.querySelector('video');
-    expect(video).toBeTruthy();
-    expect(video?.getAttribute('data-testid')).toBe('test-video');
-  });
+      const video = container.querySelector('video') as HTMLVideoElement;
+      expect(video?.getAttribute('src')).toBe('test.mp4');
+      expect(video?.hasAttribute('controls')).toBe(true);
+      expect(video?.hasAttribute('autoplay')).toBe(true);
+      expect(video?.hasAttribute('playsinline')).toBe(true);
+    });
 
-  it('passes props to video element', () => {
-    const { Provider } = createTestStore();
-
-    const { container } = render(
-      <Provider>
-        <Video src="test.mp4" controls autoPlay playsInline />
-      </Provider>
-    );
-
-    const video = container.querySelector('video') as HTMLVideoElement;
-    expect(video?.getAttribute('src')).toBe('test.mp4');
-    expect(video?.hasAttribute('controls')).toBe(true);
-    expect(video?.hasAttribute('autoplay')).toBe(true);
-    // playsInline becomes playsinline attribute
-    expect(video?.hasAttribute('playsinline')).toBe(true);
-  });
-
-  it('renders children', () => {
-    const { Provider } = createTestStore();
-
-    const { container } = render(
-      <Provider>
+    it('renders children', () => {
+      const { container } = render(
         <Video>
           <source src="test.mp4" type="video/mp4" />
           <track kind="captions" src="captions.vtt" />
         </Video>
-      </Provider>
-    );
-
-    const video = container.querySelector('video');
-    expect(video?.querySelector('source')).toBeTruthy();
-    expect(video?.querySelector('track')).toBeTruthy();
-  });
-
-  it('attaches video to store on mount', () => {
-    const { Provider } = createTestStore();
-
-    let attachCalled = false;
-
-    function TestComponent() {
-      const store = useStoreContext();
-
-      // Spy on attach
-      const originalAttach = store.attach.bind(store);
-
-      store.attach = (target) => {
-        attachCalled = true;
-        return originalAttach(target);
-      };
-
-      return <Video />;
-    }
-
-    render(
-      <Provider>
-        <TestComponent />
-      </Provider>
-    );
-
-    expect(attachCalled).toBe(true);
-  });
-
-  it('works with external ref', () => {
-    const { Provider } = createTestStore();
-    let capturedElement: HTMLVideoElement | null = null;
-
-    function TestComponent() {
-      return (
-        <Video
-          ref={(el) => {
-            capturedElement = el;
-          }}
-        />
       );
-    }
 
-    render(
-      <Provider>
-        <TestComponent />
-      </Provider>
-    );
+      const video = container.querySelector('video');
+      expect(video?.querySelector('source')).toBeTruthy();
+      expect(video?.querySelector('track')).toBeTruthy();
+    });
 
-    expect(capturedElement).toBeInstanceOf(HTMLVideoElement);
+    it('forwards ref correctly', () => {
+      const ref = createRef<HTMLVideoElement>();
+      render(<Video ref={ref} />);
+
+      expect(ref.current).toBeInstanceOf(HTMLVideoElement);
+    });
   });
 
-  it('throws when used outside Provider', () => {
-    // Suppress console.error for this test
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  describe('with Provider', () => {
+    it('calls setMedia on mount', () => {
+      const setMedia = vi.fn();
+      const store = createMockStore();
+      const value: PlayerContextValue = { store: store as any, media: null, setMedia };
 
-    expect(() => {
-      render(<Video />);
-    }).toThrow('useStoreContext must be used within a Provider');
+      render(<Video />, { wrapper: createWrapper(value) });
 
-    consoleSpy.mockRestore();
+      expect(setMedia).toHaveBeenCalledWith(expect.any(HTMLVideoElement));
+    });
+
+    it('calls setMedia with null on unmount', () => {
+      const setMedia = vi.fn();
+      const store = createMockStore();
+      const value: PlayerContextValue = { store: store as any, media: null, setMedia };
+
+      const { unmount } = render(<Video />, { wrapper: createWrapper(value) });
+
+      setMedia.mockClear();
+      unmount();
+
+      expect(setMedia).toHaveBeenCalledWith(null);
+    });
+
+    it('forwards ref while also registering media', () => {
+      const setMedia = vi.fn();
+      const store = createMockStore();
+      const value: PlayerContextValue = { store: store as any, media: null, setMedia };
+
+      const ref = createRef<HTMLVideoElement>();
+      render(<Video ref={ref} />, { wrapper: createWrapper(value) });
+
+      expect(ref.current).toBeInstanceOf(HTMLVideoElement);
+      expect(setMedia).toHaveBeenCalledWith(ref.current);
+    });
   });
 });

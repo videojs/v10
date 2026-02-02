@@ -1,44 +1,45 @@
-import type { InferFeatureRequests, InferFeatureState } from '@videojs/store';
-
-import { createFeature } from '@videojs/store';
+import type { InferSliceState } from '@videojs/store';
 import { listen, onEvent } from '@videojs/utils/dom';
 
-/**
- * Time feature for HTMLMediaElement.
- *
- * Tracks current time and duration, provides seek control.
- */
-export const timeFeature = createFeature<HTMLMediaElement>()({
-  initialState: {
+import { definePlayerFeature } from '../../feature';
+
+export const timeFeature = definePlayerFeature({
+  state: ({ task }) => ({
     /** Current playback position in seconds. */
     currentTime: 0,
     /** Total duration in seconds (0 if unknown). */
     duration: 0,
-  },
 
-  getSnapshot: ({ target }) => ({
-    currentTime: target.currentTime,
-    duration: target.duration || 0,
+    /** Seek to a time in seconds. Returns the requested time. */
+    seek(time: number) {
+      return task({
+        key: 'seek',
+        async handler({ target, signal }) {
+          target.media.currentTime = time;
+          await onEvent(target.media, 'seeked', { signal });
+          return target.media.currentTime; // actual position after seek
+        },
+      });
+    },
   }),
 
-  subscribe: ({ target, update, signal }) => {
-    listen(target, 'timeupdate', update, { signal });
-    listen(target, 'durationchange', update, { signal });
-    listen(target, 'seeked', update, { signal });
-    listen(target, 'loadedmetadata', update, { signal });
-    listen(target, 'emptied', update, { signal });
-  },
+  attach({ target, signal, set }) {
+    const { media } = target;
 
-  request: {
-    /** Seek to a time in seconds. Returns the requested time. */
-    seek: async (time: number, { target, signal }) => {
-      target.currentTime = time;
-      await onEvent(target, 'seeked', { signal });
-      return target.currentTime; // actual position after seek
-    },
+    const sync = () =>
+      set({
+        currentTime: media.currentTime,
+        duration: media.duration || 0,
+      });
+
+    sync();
+
+    listen(media, 'timeupdate', sync, { signal });
+    listen(media, 'durationchange', sync, { signal });
+    listen(media, 'seeked', sync, { signal });
+    listen(media, 'loadedmetadata', sync, { signal });
+    listen(media, 'emptied', sync, { signal });
   },
 });
 
-export type TimeState = InferFeatureState<typeof timeFeature>;
-
-export type TimeRequests = InferFeatureRequests<typeof timeFeature>;
+export type TimeState = InferSliceState<typeof timeFeature>;
