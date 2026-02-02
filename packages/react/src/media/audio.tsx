@@ -1,18 +1,18 @@
 'use client';
 
-import type { VideoHTMLAttributes } from 'react';
+import type { AudioHTMLAttributes } from 'react';
 import { forwardRef, useCallback } from 'react';
 
 import { useMediaRegistration } from '../player/context';
 import { useComposedRefs } from '../utils/use-composed-refs';
 
-export interface VideoProps extends VideoHTMLAttributes<HTMLVideoElement> {}
+export interface AudioProps extends AudioHTMLAttributes<HTMLAudioElement> {}
 
-export const Video = forwardRef<HTMLVideoElement, VideoProps>(function Video({ children, ...props }, ref) {
+export const Audio = forwardRef<HTMLAudioElement, AudioProps>(function Audio({ children, ...props }, ref) {
   const setMedia = useMediaRegistration();
 
   const mediaRef = useCallback(
-    (el: HTMLVideoElement | null) => {
+    (el: HTMLAudioElement | null) => {
       setMedia?.(el);
     },
     [setMedia]
@@ -21,12 +21,12 @@ export const Video = forwardRef<HTMLVideoElement, VideoProps>(function Video({ c
   const composedRef = useComposedRefs(ref, mediaRef);
 
   return (
-    <video ref={composedRef} {...props}>
+    <audio ref={composedRef} {...props}>
       {children}
-    </video>
+    </audio>
   );
 });
 
-export namespace Video {
-  export type Props = VideoProps;
+export namespace Audio {
+  export type Props = AudioProps;
 }
