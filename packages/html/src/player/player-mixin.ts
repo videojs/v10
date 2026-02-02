@@ -2,12 +2,12 @@ import type { ReactiveElement } from '@lit/reactive-element';
 import type { PlayerStore } from '@videojs/core/dom';
 import type { Constructor } from '@videojs/utils/types';
 
-import { createContainerMixin } from './container-mixin';
+import { createContainerMixin } from '../store/container-mixin';
+import { createProviderMixin } from '../store/provider-mixin';
+import type { PlayerProvider } from '../store/types';
 import type { PlayerContext } from './context';
-import { createProviderMixin } from './provider-mixin';
-import type { PlayerStoreProvider } from './types';
 
-export interface PlayerElement<Store extends PlayerStore> extends PlayerStoreProvider<Store> {}
+export interface PlayerElement<Store extends PlayerStore> extends PlayerProvider<Store> {}
 
 type Base = Constructor<ReactiveElement>;
 

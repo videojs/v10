@@ -1,11 +1,11 @@
 import type { AnyPlayerFeature, PlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { combine, createStore } from '@videojs/store';
 
-import { type ContainerMixin, createContainerMixin } from './container-mixin';
+import { type ContainerMixin, createContainerMixin } from '../store/container-mixin';
+import { createProviderMixin, type ProviderMixin } from '../store/provider-mixin';
 import { type PlayerContext, playerContext } from './context';
 import { PlayerController } from './player-controller';
 import { createPlayerMixin, type PlayerMixin } from './player-mixin';
-import { createProviderMixin, type ProviderMixin } from './provider-mixin';
 
 export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
   features: Features;

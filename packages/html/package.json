@@ -18,26 +18,29 @@
       "default": "./dist/index.js"
     },
     "./player/*": {
-      "types": "./dist/player/*.d.ts",
-      "default": "./dist/player/*.js"
+      "types": "./dist/define/player/*.d.ts",
+      "default": "./dist/define/player/*.js"
     },
     "./ui/*": {
-      "types": "./dist/ui/*.d.ts",
-      "default": "./dist/ui/*.js"
+      "types": "./dist/define/ui/*.d.ts",
+      "default": "./dist/define/ui/*.js"
     },
     "./skin/*": {
-      "types": "./dist/skin/*.d.ts",
-      "default": "./dist/skin/*.js"
+      "types": "./dist/define/skin/*.d.ts",
+      "default": "./dist/define/skin/*.js"
     },
     "./feature/*": {
-      "types": "./dist/feature/*.d.ts",
-      "default": "./dist/feature/*.js"
+      "types": "./dist/define/feature/*.d.ts",
+      "default": "./dist/define/feature/*.js"
     },
     "./media/*": {
-      "types": "./dist/media/*.d.ts",
-      "default": "./dist/media/*.js"
+      "types": "./dist/define/media/*.d.ts",
+      "default": "./dist/define/media/*.js"
     }
   },
+  "sideEffects": [
+    "./dist/define/**/*.js"
+  ],
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",

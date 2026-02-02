@@ -1,6 +1,6 @@
 import { features } from '@videojs/core/dom';
 import { MediaElement } from '@/ui/media-element';
-import { createPlayer } from './create-player';
+import { createPlayer } from '../../player/create-player';
 
 const { PlayerMixin } = createPlayer({
   features: [...features.video],

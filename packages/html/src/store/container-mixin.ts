@@ -6,18 +6,18 @@ import { Disposer } from '@videojs/utils/events';
 import { noop } from '@videojs/utils/function';
 import type { Constructor } from '@videojs/utils/types';
 
-import type { PlayerContext } from './context';
-import type { PlayerStoreConsumer } from './types';
+import type { PlayerContext } from '../player/context';
+import type { PlayerConsumer } from './types';
 
 type Base = Constructor<ReactiveElement>;
 
-type Result<Class extends Base, Store extends PlayerStore> = Class & Constructor<PlayerStoreConsumer<Store>>;
+type Result<Class extends Base, Store extends PlayerStore> = Class & Constructor<PlayerConsumer<Store>>;
 
 export type ContainerMixin<Store extends PlayerStore> = <Class extends Base>(BaseClass: Class) => Result<Class, Store>;
 
 export function createContainerMixin<Store extends PlayerStore>(context: PlayerContext<Store>): ContainerMixin<Store> {
   return <Class extends Base>(BaseClass: Class) => {
-    class PlayerContainerElement extends BaseClass implements PlayerStoreConsumer<Store>, MediaContainer {
+    class PlayerContainerElement extends BaseClass implements PlayerConsumer<Store>, MediaContainer {
       #detach = noop;
       #disposer = new Disposer();
 

@@ -1,18 +1,17 @@
+import { globSync } from 'node:fs';
 import { defineConfig } from 'tsdown';
+
+const defineEntries = Object.fromEntries(
+  globSync('src/define/**/*.ts').map((file) => {
+    const key = file.replace('src/', '').replace('.ts', '');
+    return [key, file];
+  })
+);
 
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
-    // Player
-    'player/video': 'src/player/video.ts',
-    // UI
-    'ui/media-play-button': 'src/ui/media-play-button.ts',
-    // Skin
-    'skin/video-skin': 'src/skin/video-skin.ts',
-    // Feature
-    'feature/video': 'src/feature/video.ts',
-    // Media
-    'media/hls-video': 'src/media/hls-video.ts',
+    ...defineEntries,
   },
   platform: 'browser',
   format: 'es',
