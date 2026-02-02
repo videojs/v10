@@ -13,8 +13,6 @@ export {
   volumeFeature as volume,
 };
 
-/** Base video player features. */
 export const video = [playbackFeature, volumeFeature, timeFeature, sourceFeature, bufferFeature] as const;
 
-/** Base audio player features. */
 export const audio = [playbackFeature, volumeFeature, timeFeature, sourceFeature, bufferFeature] as const;

@@ -5,17 +5,6 @@ import { listen } from '@videojs/utils/dom';
 
 import type { FeatureAvailability, PlayerTarget } from '../../types';
 
-/** Check if volume can be programmatically set (fails on iOS Safari). */
-function canSetVolume(): FeatureAvailability {
-  const video = document.createElement('video');
-  try {
-    video.volume = 0.5;
-    return video.volume === 0.5 ? 'available' : 'unsupported';
-  } catch {
-    return 'unsupported';
-  }
-}
-
 export const volumeFeature = defineFeature<PlayerTarget>()({
   state: ({ task }) => ({
     /** Volume level from 0 (silent) to 1 (max). */
@@ -62,3 +51,14 @@ export const volumeFeature = defineFeature<PlayerTarget>()({
 });
 
 export type VolumeState = InferFeatureState<typeof volumeFeature>;
+
+/** Check if volume can be programmatically set (fails on iOS Safari). */
+function canSetVolume(): FeatureAvailability {
+  const video = document.createElement('video');
+  try {
+    video.volume = 0.5;
+    return video.volume === 0.5 ? 'available' : 'unsupported';
+  } catch {
+    return 'unsupported';
+  }
+}
