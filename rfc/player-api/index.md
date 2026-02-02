@@ -1,20 +1,20 @@
 ---
-status: draft
+status: accepted
 ---
 
 # Player API Design
 
-| Document                           | Purpose                                    |
-| ---------------------------------- | ------------------------------------------ |
-| [index.md](index.md)               | Overview, principles, model                |
-| [api.md](api.md)                   | Surface API (usePlayer, store, controller) |
-| [features.md](features.md)         | Feature definition, keys, bundles          |
-| [primitives.md](primitives.md)     | Library author patterns                    |
-| [architecture.md](architecture.md) | Two-store internals                        |
-| [decisions.md](decisions.md)       | Problem statement, design rationale        |
-| [examples.md](examples.md)         | Progressive journey examples               |
-| [html.md](html.md)                 | HTML elements, imports, skins              |
-| [feedback.md](feedback.md)         | Collected feedback                         |
+| Document                           | Purpose                                   |
+| ---------------------------------- | ----------------------------------------- |
+| [index.md](index.md)               | Overview, principles, model               |
+| [api.md](api.md)                   | Surface API (usePlayer, controller)       |
+| [features.md](features.md)         | Feature definition, slices, bundles       |
+| [primitives.md](primitives.md)     | Library author patterns                   |
+| [architecture.md](architecture.md) | Single-store internals                    |
+| [decisions.md](decisions.md)       | Problem statement, design rationale       |
+| [examples.md](examples.md)         | Progressive journey examples              |
+| [html.md](html.md)                 | HTML elements, imports, skins             |
+| [feedback.md](feedback.md)         | Collected feedback                        |
 
 ## Principles
 
@@ -76,11 +76,12 @@ Start simple                          Add as needed
 ```tsx
 import '@videojs/react/skin/video.css';
 
-import { createPlayer, features } from '@videojs/react';
+import { createPlayer } from '@videojs/react';
+import { features } from '@videojs/core/dom';
 import { VideoSkin } from '@videojs/react/skin/video';
 
-const { Provider: VideoProvider, usePlayer } = createPlayer({
-  features: [features.video]
+const { Provider: VideoProvider } = createPlayer({
+  features: [...features.video],
 });
 
 function App() {

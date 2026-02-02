@@ -40,29 +40,63 @@ Player is simple. Features are additive. Skins adapt.
 
 Features match the mental model: start simple, add what you need.
 
-## Selectors (No Proxy Tracking)
+## Single Store with PlayerTarget
+
+**Decision:** Use a single store with composite `PlayerTarget`.
+
+```ts
+interface PlayerTarget {
+  media: Media;                    // HTMLMediaElement
+  container: MediaContainer | null; // Container element (optional)
+}
+```
+
+### Why Single Store
+
+| Reason                | Explanation                                                     |
+| --------------------- | --------------------------------------------------------------- |
+| **Simpler mental model** | One store, one target, one subscription flow                 |
+| **Unified state**     | All state in one place, selectors work across all slices        |
+| **Easier debugging**  | Single state tree to inspect                                    |
+| **Composite target**  | `PlayerTarget` gives features access to both media and container |
+| **Optional container** | `container: null` for headless/audio-only use cases            |
+
+### Trade-off
+
+Features that only need the media element still receive the full `PlayerTarget`. This is acceptable because:
+
+- Type narrowing via `target.media` is straightforward
+- No runtime overhead — just property access
+- Consistent API for all features
+
+## Selector-Based Access
 
 **Decision:** Use explicit selectors for state subscriptions.
 
 ```tsx
 // Selector-based
-const paused = usePlayer(features.playback, s => s.paused);
+const playback = usePlayer(selectPlayback);
+const paused = usePlayer((s) => s.paused);
 ```
 
-**Rationale:**
+### Why Selectors over Feature-Scoped Hooks
 
-- **Explicit** — You control what you subscribe to
-- **Predictable** — No magic tracking, clear performance characteristics
-- **Standard** — Matches Zustand, Redux Toolkit patterns
+| Reason                | Explanation                                                |
+| --------------------- | ---------------------------------------------------------- |
+| **Simpler API**       | One hook pattern, not multiple hook variants               |
+| **Matches ecosystem** | Zustand, Redux Toolkit use same pattern                    |
+| **Explicit**          | You control what you subscribe to                          |
+| **Composable**        | Selectors can derive, combine, filter                      |
+| **No magic**          | No proxy tracking, clear performance characteristics       |
 
-**Trade-off:** More ceremony than proxy tracking, but no surprises.
+**Trade-off:** Requires importing selectors separately from `@videojs/core/dom`.
 
 ## shallowEqual for Object Selectors
 
 **Decision:** Object selector results compared with `shallowEqual`.
 
 ```tsx
-const state = usePlayer(s => ({ paused: s.paused, volume: s.volume }));
+const state = usePlayer((s) => ({ paused: s.paused, volume: s.volume }));
 // Re-renders only when paused OR volume changes
 ```
 
@@ -72,83 +106,67 @@ const state = usePlayer(s => ({ paused: s.paused, volume: s.volume }));
 - Without shallow comparison, new object = new reference = re-render
 - `shallowEqual` exported from `@videojs/store` for custom use
 
-## Feature Keys
+## Selector Returns Undefined, Not Throws
 
-**Decision:** Features can have custom symbol keys with type-carrying.
-
-```ts
-const PLAYBACK_KEY = Symbol.for('@videojs/playback');
-export const playbackKey: FeatureKey<typeof playbackFeature> = PLAYBACK_KEY;
-```
+**Decision:** Selectors return `T | undefined`, don't throw.
 
 **Rationale:**
 
-- **Smaller imports** — Import just the key, not the feature definition
-- **Cross-realm** — `Symbol.for()` works across module boundaries
-- **Type inference** — `FeatureKey<F>` carries feature type for `store.get()`
-
-## usePlayer Overloads
-
-**Decision:** Single hook with multiple overloads.
-
-```tsx
-usePlayer(feature)           // Full feature slice
-usePlayer(feature, selector) // Selected value from feature
-usePlayer(selector)          // Selected value from all state
-```
-
-**Rationale:**
-
-- **Single hook** — Less API surface to learn
-- **Progressive** — Start simple, add selector for performance
-- **Consistent** — Same pattern for feature access and selection
-
-**Why no array support?** Call `usePlayer` multiple times. Simpler, explicit.
-
-```tsx
-const playback = usePlayer(features.playback);
-const volume = usePlayer(features.volume);
-```
-
-## Feature Returns Undefined, Not Throws
-
-**Decision:** `usePlayer(feature)` returns `Slice | undefined`, doesn't throw.
-
-**Rationale:**
-
-- Primitives need graceful handling — they don't know user's feature config
-- Throwing would break apps when features are misconfigured
+- Primitives need graceful handling — they don't know user's slice config
+- Throwing would break apps when slices are misconfigured
 - Caller decides how to handle: return null, show fallback, throw themselves
 
-## store.get / store.has
-
-**Decision:** Use `store.get()` and `store.has()` for feature access in feature context.
-
-```ts
-subscribe: ({ store }) => {
-  const playback = store.get(features.playback);
-  if (store.has('time')) { /* ... */ }
-}
+```tsx
+const playback = usePlayer(selectPlayback);
+if (!playback) return null; // Graceful handling
 ```
 
-**Rationale:**
+## createPlayer Factory
 
-- **Map-like** — Familiar pattern, `.get()` returns `T | undefined`
-- **Unified** — Same API for feature reference, key, or name
-- **Cross-store** — Abstracts which store a feature lives on
+**Decision:** Use `createPlayer()` factory that returns typed infrastructure.
 
-## No Store Merge
+```ts
+const { Provider, Container, usePlayer } = createPlayer({
+  features: [...features.video],
+});
+```
 
-**Decision:** Keep two stores internally (media + player).
+### Why Factory
 
-**Rationale:**
+| Reason                | Explanation                                                |
+| --------------------- | ---------------------------------------------------------- |
+| **Type inference**    | Return types inferred from features array                  |
+| **Scoped context**    | Each `createPlayer` call creates isolated context          |
+| **Explicit config**   | Features declared upfront, not discovered at runtime       |
+| **Tree-shakeable**    | Unused features not bundled                                |
 
-- Different targets (media element vs container)
-- Different attachment timing
-- `store.get()` abstracts cross-store access
-- Feature authors use same API regardless of store
+### Why Not Global Registration
 
-**Trade-off:** Internal complexity, but hidden from users.
+Global registration (like side-effect imports) works for HTML but doesn't fit React's component model. The factory provides:
+
+- Type safety from features to hooks
+- Multiple players with different features
+- Clear dependency graph
+
+## PlayerElement vs Mixins
+
+**Decision:** Provide both `PlayerElement` (simple) and mixins (advanced).
+
+```ts
+// Simple — complete player element
+customElements.define('video-player', PlayerElement);
+
+// Advanced — custom behavior
+class MyPlayer extends PlayerMixin(MediaElement) {}
+```
+
+### Why Both
+
+| Use Case        | Solution       | When to Use                        |
+| --------------- | -------------- | ---------------------------------- |
+| Standard player | `PlayerElement` | Most cases, just works            |
+| Custom behavior | `PlayerMixin`  | Need to extend lifecycle, add logic |
+| Split concerns  | `ProviderMixin` + `ContainerMixin` | Media and controls in different DOM locations |
 
 ## Naming
 
@@ -160,9 +178,9 @@ subscribe: ({ store }) => {
 
 ### features (not slices)
 
-- "Slice" implies Redux mental model (store owns state, reducers modify)
-- Our pattern: target owns state, features observe and request
+- "Slice" implies Redux mental model
 - "Feature" matches user mental model: "I want the fullscreen feature"
+- Slices are the implementation, features are the concept
 
 ### MediaElement (not VjsElement)
 
@@ -207,7 +225,7 @@ subscribe: ({ store }) => {
 ```ts
 // These are equivalent:
 features.video
-[features.playback, features.volume, features.time, features.presentation, features.userActivity, /* ... */]
+[playbackSlice, volumeSlice, timeSlice, sourceSlice, bufferSlice]
 ```
 
 **Rationale:**
@@ -215,3 +233,25 @@ features.video
 - Bundles reduce API surface — fewer imports for common cases
 - Granular still available — full control when needed
 - Upgrade path — add to bundle, users get it automatically
+
+## Future Work Deferred
+
+Some patterns were considered but deferred:
+
+### Feature Keys
+
+```ts
+const playbackKey: FeatureKey<typeof playbackSlice> = PLAYBACK_KEY;
+store.get(playbackKey); // Typed access without importing slice
+```
+
+**Deferred:** `createSliceSelector` provides equivalent type-safe access without the complexity of symbol-based keys.
+
+### store.get / store.has
+
+```ts
+store.get(feature); // Direct feature access
+store.has(feature); // Check if feature exists
+```
+
+**Deferred:** Selectors provide the same capability with better composition and TypeScript inference.

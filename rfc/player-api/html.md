@@ -93,15 +93,16 @@ import '@videojs/html/skin/video';
 </video-player>
 ```
 
-### createPlayer (Escape Hatch)
+### createPlayer (Programmatic)
 
 For custom element names or full control:
 
 ```ts
-import { createPlayer, features } from '@videojs/html';
+import { createPlayer } from '@videojs/html';
+import { features } from '@videojs/core/dom';
 
-const { PlayerElement, PlayerController } = createPlayer({
-  features: [features.video, myCustomFeature]
+const { PlayerElement, PlayerController, context } = createPlayer({
+  features: [...features.video],
 });
 
 customElements.define('my-video-player', PlayerElement);
@@ -113,29 +114,49 @@ customElements.define('my-video-player', PlayerElement);
 </my-video-player>
 ```
 
-### Split Provider/Container (Advanced)
+### Mixins (Advanced)
 
-When media element and container need different DOM locations:
+When you need to extend behavior or split provider/container:
 
 ```ts
-import { createPlayer, features } from '@videojs/html';
+import { createPlayer, MediaElement } from '@videojs/html';
+import { features } from '@videojs/core/dom';
 
-const { ProviderElement, ContainerElement } = createPlayer({
-  features: [features.video]
+const { PlayerMixin, ProviderMixin, ContainerMixin } = createPlayer({
+  features: [...features.video],
 });
 
-customElements.define('my-video-provider', ProviderElement);
-customElements.define('my-video-container', ContainerElement);
+// Combined player (provider + container)
+class MyPlayer extends PlayerMixin(MediaElement) {
+  // Custom logic
+}
+
+// Or split for advanced cases
+class MyProvider extends ProviderMixin(MediaElement) {}
+class MyContainer extends ContainerMixin(MediaElement) {}
 ```
 
-```html
-<my-video-provider>
-  <video src="video.mp4">
-  <my-video-container>
-    <!-- Controls here, separate from media -->
-  </my-video-container>
-</my-video-provider>
+## PlayerElement
+
+The simplest way to create a player element:
+
+```ts
+import { createPlayer } from '@videojs/html';
+import { features } from '@videojs/core/dom';
+
+const { PlayerElement } = createPlayer({
+  features: [...features.video],
+});
+
+customElements.define('video-player', PlayerElement);
 ```
+
+`PlayerElement` is a complete player that:
+
+- Creates and manages the store
+- Provides context to descendants
+- Auto-attaches media elements
+- Handles cleanup on disconnect
 
 ## Skins
 
@@ -150,7 +171,7 @@ import '@videojs/html/skin/video';
 ```
 
 ```html
-<video-skin>  <!-- adapts to used features -->
+<video-skin>  <!-- adapts to registered features -->
 ```
 
 ### Named Skins
@@ -177,29 +198,16 @@ skin/
     features.ts
 ```
 
-**features.ts:**
-
-```ts
-import { features } from '@videojs/html';
-
-// Lazy-define element for a feature
-// Shell element registers immediately, loads implementation when feature available
-features.lazy(
-  'qualitySelection',
-  () => import('./ui/quality-menu')
-);
-```
-
 ## MediaElement Base Class
 
-Base class for UI primitives. The host element IS the control (e.g., `<media-play-button>` extends button behavior).
+Base class for UI primitives. No shadow DOM — the host element IS the control.
 
 ```ts
-// src/ui/media-play-button.ts
-import { MediaElement, PlayerController, features } from '@videojs/html';
+import { MediaElement, PlayerController } from '@videojs/html';
+import { selectPlayback } from '@videojs/core/dom';
 
 export class MediaPlayButton extends MediaElement {
-  #playback = new PlayerController(this, features.playback);
+  #playback = new PlayerController(this, context, selectPlayback);
 
   override connectedCallback() {
     super.connectedCallback();
@@ -234,13 +242,26 @@ import '@videojs/html/ui/media-play-button';
 
 ## PlayerController
 
-Reactive controller for accessing player state. Triggers `update()` when subscribed feature changes.
+Reactive controller for accessing player state. Triggers `update()` when subscribed state changes.
+
+### Constructor
 
 ```ts
-import { PlayerController, features, MediaElement } from '@videojs/html';
+// Without selector — store access only, no subscription
+new PlayerController(host, context)
+
+// With selector — subscribes, triggers update on change
+new PlayerController(host, context, selector)
+```
+
+### Example
+
+```ts
+import { MediaElement, PlayerController } from '@videojs/html';
+import { selectVolume } from '@videojs/core/dom';
 
 export class MediaVolumeSlider extends MediaElement {
-  #volume = new PlayerController(this, features.volume);
+  #volume = new PlayerController(this, context, selectVolume);
 
   override connectedCallback() {
     super.connectedCallback();
@@ -255,7 +276,6 @@ export class MediaVolumeSlider extends MediaElement {
     const volume = this.#volume.value;
     if (!volume) return;
 
-    // Host is the slider — update its value
     (this as unknown as HTMLInputElement).value = String(volume.volume);
   }
 }
@@ -263,20 +283,36 @@ export class MediaVolumeSlider extends MediaElement {
 
 ### Controller API
 
-| Property | Returns              | Description                                |
-| -------- | -------------------- | ------------------------------------------ |
-| `value`  | `Slice \| undefined` | Feature slice, triggers update on change   |
+| Property | Type             | Description                                          |
+| -------- | ---------------- | ---------------------------------------------------- |
+| `store`  | `Store`          | Direct store access                                  |
+| `value`  | `R \| undefined` | Selected state (with selector) or snapshot (without) |
+
 ## Mixins
 
 For advanced customization when you need to extend behavior.
 
-### ProviderMixin
+### PlayerMixin
+
+Combined provider + container in one element:
 
 ```ts
-import { createPlayer, features, MediaElement } from '@videojs/html';
+const { PlayerMixin } = createPlayer({
+  features: [...features.video],
+});
 
+class MyPlayer extends PlayerMixin(MediaElement) {
+  // Custom player logic
+}
+```
+
+### ProviderMixin
+
+Provider-only — creates store and provides context:
+
+```ts
 const { ProviderMixin } = createPlayer({
-  features: [features.video]
+  features: [...features.video],
 });
 
 class MyProvider extends ProviderMixin(MediaElement) {
@@ -286,14 +322,29 @@ class MyProvider extends ProviderMixin(MediaElement) {
 
 ### ContainerMixin
 
+Container-only — consumes context and auto-attaches media:
+
 ```ts
 const { ContainerMixin } = createPlayer({
-  features: [features.video]
+  features: [...features.video],
 });
 
 class MyContainer extends ContainerMixin(MediaElement) {
   // Custom container logic
 }
+```
+
+### Split Provider/Container
+
+When media element and container need different DOM locations:
+
+```html
+<my-provider>
+  <video src="video.mp4">
+  <my-container>
+    <!-- Controls here, separate from media -->
+  </my-container>
+</my-provider>
 ```
 
 ## Full Example
@@ -321,3 +372,4 @@ import '@videojs/html/skin/video';
   </video-player>
 </body>
 </html>
+```
