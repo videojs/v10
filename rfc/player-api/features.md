@@ -1,206 +1,285 @@
 # Features
 
-Features are the primary abstraction. They bundle related state and requests.
+Features are the primary abstraction. They bundle related state and actions as slices.
 
-## Feature Definition
+## Slice Definition
 
-### createFeature
+### defineSlice
 
 ```ts
-import { createFeature } from '@videojs/store';
+import { defineSlice } from '@videojs/store';
+import type { PlayerTarget } from '@videojs/core/dom';
 
-const playbackFeature = createFeature<HTMLMediaElement>()({
-  name: 'playback',
-
-  initialState: { 
-    paused: true, 
-    ended: false 
-  },
-
-  getSnapshot: ({ target }) => ({
-    paused: target.paused,
-    ended: target.ended,
+const playbackSlice = defineSlice<PlayerTarget>()({
+  state: ({ task }) => ({
+    paused: true,
+    ended: false,
+    play: task('play', async ({ target }) => {
+      await target.media.play();
+    }),
+    pause: task('pause', ({ target }) => {
+      target.media.pause();
+    }),
+    toggle: task('toggle', async ({ target }) => {
+      if (target.media.paused) {
+        await target.media.play();
+      } else {
+        target.media.pause();
+      }
+    }),
   }),
 
-  subscribe: ({ target, update, signal }) => {
-    target.addEventListener('play', update, { signal });
-    target.addEventListener('pause', update, { signal });
-    target.addEventListener('ended', update, { signal });
-  },
+  attach: ({ target, set, signal }) => {
+    const { media } = target;
 
-  request: {
-    play: (_, { target }) => target.play(),
-    pause: (_, { target }) => target.pause(),
-    toggle: (_, { target }) => target.paused ? target.play() : target.pause(),
+    const sync = () => set({
+      paused: media.paused,
+      ended: media.ended,
+    });
+
+    media.addEventListener('play', sync, { signal });
+    media.addEventListener('pause', sync, { signal });
+    media.addEventListener('ended', sync, { signal });
+    sync();
   },
 });
 ```
 
 ### Config Properties
 
-| Property       | Type                          | Description                              |
-| -------------- | ----------------------------- | ---------------------------------------- |
-| `key`          | `symbol` (optional)           | Unique identifier. Auto-generated if not provided. |
-| `name`         | `string`                      | Human-readable name for debugging        |
-| `initialState` | `object`                      | Initial state before target attached     |
-| `getSnapshot`  | `(ctx) => State`              | Derive state from target                 |
-| `subscribe`    | `(ctx) => void`               | Set up subscriptions, call `update()` on changes |
-| `request`      | `Record<string, RequestHandler>` | Actions that modify target           |
+| Property | Type                     | Description                              |
+| -------- | ------------------------ | ---------------------------------------- |
+| `state`  | `(ctx) => State`         | Initial state factory with task helper   |
+| `attach` | `(ctx) => void`          | Set up subscriptions when target attached |
 
-### Context Object
+### State Context
 
-Both `getSnapshot`, `subscribe`, and `request` handlers receive a context:
+The `state` function receives a context for defining tasks:
 
 ```ts
-interface FeatureContext {
-  target: Target;        // HTMLMediaElement or PlayerTarget
-  store: Store;          // Access other features via store.get()
-  signal: AbortSignal;   // For cleanup (subscribe only)
-  update: () => void;    // Trigger re-snapshot (subscribe only)
+interface StateContext<Target> {
+  task: TaskFactory<Target>;  // Create async actions
+  target: () => Target;       // Get current target (throws if not attached)
 }
 ```
 
-## Feature Keys
+### Attach Context
 
-Features can define a custom key for identity and type-carrying.
-
-### Pattern
+The `attach` function receives a context for syncing state:
 
 ```ts
-// Define key
-const PLAYBACK_KEY = Symbol.for('@videojs/playback');
+interface AttachContext<Target, State> {
+  target: Target;                       // The attached target
+  signal: AbortSignal;                  // Cleanup signal
+  get: () => State;                     // Read current state
+  set: (partial: Partial<State>) => void; // Update state
+  store: { state: State; subscribe: ... }; // Store access
+}
+```
 
-// Create feature with key
-const playbackFeature = createFeature({
-  key: PLAYBACK_KEY,
-  name: 'playback',
-  // ...
-});
+## Combining Slices
 
-// Export typed key
-export const playbackKey: FeatureKey<typeof playbackFeature> = PLAYBACK_KEY;
+Slices are combined into a single store:
 
-// Export feature
-export { playbackFeature };
+```ts
+import { combine, createStore } from '@videojs/store';
+
+const playerSlice = combine(
+  playbackSlice,
+  volumeSlice,
+  timeSlice,
+  sourceSlice,
+  bufferSlice,
+);
+
+const store = createStore<PlayerTarget>()(playerSlice);
+```
+
+## Feature Bundles
+
+Bundles are pre-composed arrays of slices for common use cases.
+
+### Base Bundles
+
+```ts
+import { features } from '@videojs/core/dom';
+
+// Video player base
+features.video = [
+  playbackSlice,
+  volumeSlice,
+  timeSlice,
+  sourceSlice,
+  bufferSlice,
+];
+
+// Audio player base
+features.audio = [
+  playbackSlice,
+  volumeSlice,
+  timeSlice,
+  sourceSlice,
+  bufferSlice,
+];
 ```
 
 ### Usage
 
 ```ts
-// Import just the key (smaller bundle, no feature code)
-import { playbackKey } from '@videojs/core/features';
+import { createPlayer } from '@videojs/react';
+import { features } from '@videojs/core/dom';
 
-// Typed access
-const playback = store.get(playbackKey); // PlaybackSlice | undefined
+// Use bundle (spread required)
+createPlayer({
+  features: [...features.video],
+});
+
+// Extend bundle
+createPlayer({
+  features: [...features.video, myCustomSlice],
+});
 ```
 
-### FeatureKey Type
-
-```ts
-// Type carrier — key holds the feature's type info
-type FeatureKey<F extends Feature> = symbol & { __feature?: F };
-```
-
-### Why Keys?
-
-1. **Smaller imports** — Import just the key when you don't need the feature definition
-2. **Cross-realm identity** — `Symbol.for()` works across module boundaries
-3. **Type inference** — `FeatureKey<F>` carries the feature type for `store.get()`
-## Feature Bundles
-
-Bundles are sugar for common feature combinations.
-
-### Base Bundles
-
-```ts
-// Video player base
-features.video = [
-  features.playback,
-  features.volume,
-  features.time,
-  features.presentation,
-  features.userActivity,
-];
-
-// Audio player base
-features.audio = [
-  features.playback,
-  features.volume,
-  features.time,
-];
-```
-
-### Additional Bundles (Beta+)
+### Additional Bundles (Future)
 
 ```ts
 features.streaming = [
-  features.qualitySelection,
-  features.audioTracks,
-  features.textTracks,
+  qualitySelectionSlice,
+  audioTracksSlice,
+  textTracksSlice,
 ];
 
 features.ads = [
-  features.adMarkers,
-  features.adSkip,
-  features.adCountdown,
+  adMarkersSlice,
+  adSkipSlice,
+  adCountdownSlice,
 ];
 
 features.live = [
-  features.liveIndicator,
-  features.lowLatency,
-  features.seekToLive,
-  features.dvr,
+  liveIndicatorSlice,
+  seekToLiveSlice,
+  dvrSlice,
 ];
 ```
 
-### Granular vs Bundled
+## Feature Selectors
+
+Each slice has a corresponding selector for typed access:
 
 ```ts
-// Granular — import individual features
-import '@videojs/html/feature/quality-selection';
-import '@videojs/html/feature/audio-tracks';
+import { createSliceSelector } from '@videojs/store';
 
-// Bundled — sugar for above + more
-import '@videojs/html/feature/streaming';
+export const selectPlayback = createSliceSelector(playbackSlice);
+export const selectVolume = createSliceSelector(volumeSlice);
+export const selectTime = createSliceSelector(timeSlice);
 ```
 
-### Extending Bundles
+### Pre-built Selectors
+
+Standard selectors are exported from `@videojs/core/dom`:
 
 ```ts
-createPlayer({
-  features: [features.video, features.streaming, myCustomFeature]
-});
+import {
+  selectPlayback,
+  selectVolume,
+  selectTime,
+  selectSource,
+  selectBuffer,
+} from '@videojs/core/dom';
 ```
 
-## Media vs Player Features
+### Usage
 
-### Media Features
+```tsx
+import { selectPlayback } from '@videojs/core/dom';
 
-Target `HTMLMediaElement`. Handle playback, volume, time, etc.
+function PlayButton() {
+  const playback = usePlayer(selectPlayback);
+
+  if (!playback) return null;
+
+  return (
+    <button onClick={playback.toggle}>
+      {playback.paused ? 'Play' : 'Pause'}
+    </button>
+  );
+}
+```
+
+## Feature Availability
+
+Features may target capabilities the platform doesn't support.
 
 ```ts
-const volumeFeature = createMediaFeature({
-  name: 'volume',
-  initialState: { 
-    volume: 1, 
-    muted: false 
-  },
-  getSnapshot: ({ target }) => ({
-    volume: target.volume,
-    muted: target.muted,
+const volumeSlice = defineSlice<PlayerTarget>()({
+  state: () => ({
+    volume: 1,
+    muted: false,
+    volumeAvailability: 'unsupported' as FeatureAvailability,
+    // ...
   }),
-  // ...
+
+  attach: ({ target, set, signal }) => {
+    const { media } = target;
+
+    // Check platform capability
+    set({ volumeAvailability: canSetVolume(media) });
+
+    // ...
+  },
 });
 ```
 
-### Player Features
-
-Target the container element. Have access to media store via `store.get()`.
+### FeatureAvailability Type
 
 ```ts
-createPlayerFeature({
-  subscribe: ({ store, target, update, signal }) => {
-    // Access media features from player store
-    const playback = store.get(features.playback);
-});
+type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 ```
+
+| Value           | Meaning                                                |
+| --------------- | ------------------------------------------------------ |
+| `'unsupported'` | Platform can never do this (e.g., iOS volume)          |
+| `'unavailable'` | Could work, not ready yet (e.g., waiting for manifest) |
+| `'available'`   | Ready to use                                           |
+
+### Handling Unavailable Features
+
+```tsx
+function VolumeSlider() {
+  const volume = usePlayer(selectVolume);
+
+  if (!volume) return null;
+
+  // Hide if platform doesn't support volume control
+  if (volume.volumeAvailability === 'unsupported') return null;
+
+  // Disable if temporarily unavailable
+  const disabled = volume.volumeAvailability !== 'available';
+
+  return (
+    <input
+      type="range"
+      value={volume.volume}
+      onChange={(e) => volume.setVolume(Number(e.target.value))}
+      disabled={disabled}
+    />
+  );
+}
+```
+
+## Future Work
+
+### Feature Keys
+
+Typed symbols for feature identity (not yet implemented):
+
+```ts
+const PLAYBACK_KEY = Symbol.for('@videojs/playback');
+export const playbackKey: FeatureKey<typeof playbackSlice> = PLAYBACK_KEY;
+
+// Usage: smaller imports when you don't need the slice
+import { playbackKey } from '@videojs/core/dom';
+const playback = store.get(playbackKey);
+```
+
+**Deferred:** `createSliceSelector` provides equivalent type-safe access without the complexity.

@@ -10,7 +10,7 @@ Primitives don't know which features the user configured:
 // Inside @videojs/react — shipped to users
 export function PlayButton() {
   // User might use features.video or a custom subset
-  // We don't know if playback feature is included
+  // We don't know if playback slice is included
 }
 ```
 
@@ -20,21 +20,21 @@ They need:
 2. A way to check if a feature exists
 3. Type narrowing when the feature is present
 
-## Solution: Feature Access Pattern
+## Solution: Selector-Based Access
 
 ### React
 
 ```tsx
-import { usePlayer, features } from '@videojs/react';
+import { selectPlayback } from '@videojs/core/dom';
 
 export function PlayButton() {
-  const playback = usePlayer(features.playback);
+  const playback = usePlayer(selectPlayback);
 
   if (!playback) return null;
 
-  // TypeScript knows playback is PlaybackSlice
+  // TypeScript knows playback shape
   return (
-    <button onClick={playback.paused ? playback.play : playback.pause}>
+    <button onClick={playback.toggle}>
       {playback.paused ? 'Play' : 'Pause'}
     </button>
   );
@@ -44,10 +44,11 @@ export function PlayButton() {
 ### HTML
 
 ```ts
-import { features, MediaElement, PlayerController } from '@videojs/html';
+import { MediaElement } from '@videojs/html';
+import { selectPlayback } from '@videojs/core/dom';
 
 class MediaPlayButton extends MediaElement {
-  #playback = new PlayerController(this, features.playback);
+  #playback = new PlayerController(this, context, selectPlayback);
 
   override connectedCallback() {
     super.connectedCallback();
@@ -57,35 +58,28 @@ class MediaPlayButton extends MediaElement {
   #handleClick = () => {
     this.#playback.value?.toggle();
   };
+
+  override update() {
+    const playback = this.#playback.value;
+    if (!playback) return;
+
+    this.setAttribute('aria-pressed', String(!playback.paused));
+  }
 }
 ```
 
-## Types
+## Selector Types
 
-### FeatureKey
-
-Type carrier for feature keys:
+Selectors extract typed state from the store:
 
 ```ts
-type FeatureKey<F extends Feature> = symbol & { __feature?: F };
+import { createSliceSelector } from '@videojs/store';
+
+const selectPlayback = createSliceSelector(playbackSlice);
+// Type: (state: Record<string, unknown>) => PlaybackState | undefined
 ```
 
-Use with `store.get()` for typed access:
-
-```ts
-import { playbackKey } from '@videojs/core/features';
-
-const playback = store.get(playbackKey); // PlaybackSlice | undefined
-```
-
-### InferFeatureSlice
-
-Infer the slice type from a feature:
-
-```ts
-type PlaybackSlice = InferFeatureSlice<typeof playbackFeature>;
-// { paused: boolean; ended: boolean; play(): void; pause(): void; toggle(): void }
-```
+Returns `undefined` when the slice isn't configured.
 
 ## Patterns
 
@@ -95,12 +89,18 @@ If a primitive requires a feature to function:
 
 ```tsx
 export function VolumeSlider() {
-  const volume = usePlayer(features.volume);
+  const volume = usePlayer(selectVolume);
 
   // Return nothing if feature not available
   if (!volume) return null;
 
-  return <Slider value={volume.volume} onChange={volume.setVolume} />;
+  return (
+    <input
+      type="range"
+      value={volume.volume}
+      onChange={(e) => volume.setVolume(Number(e.target.value))}
+    />
+  );
 }
 ```
 
@@ -110,19 +110,20 @@ If a primitive works without a feature but enhances with it:
 
 ```tsx
 export function TimeSlider() {
-  const time = usePlayer(features.time);
-  const playback = usePlayer(features.playback);
+  const time = usePlayer(selectTime);
+  const playback = usePlayer(selectPlayback);
 
   if (!time) return null;
 
   return (
-    <Slider
+    <input
+      type="range"
       value={time.currentTime}
       max={time.duration}
-      onChange={time.seek}
+      onChange={(e) => time.seek(Number(e.target.value))}
       // Optional: pause during drag
-      onDragStart={playback?.pause}
-      onDragEnd={playback?.play}
+      onMouseDown={() => playback?.pause()}
+      onMouseUp={() => playback?.play()}
     />
   );
 }
@@ -132,9 +133,9 @@ export function TimeSlider() {
 
 ```tsx
 export function Controls() {
-  const playback = usePlayer(features.playback);
-  const volume = usePlayer(features.volume);
-  const fullscreen = usePlayer(features.fullscreen);
+  const playback = usePlayer(selectPlayback);
+  const volume = usePlayer(selectVolume);
+  const fullscreen = usePlayer(selectFullscreen);
 
   // All required
   if (!playback || !volume || !fullscreen) return null;
@@ -149,53 +150,42 @@ export function Controls() {
 }
 ```
 
+### Custom Selectors
+
+Derive values from state:
+
+```tsx
+// Select specific value
+const paused = usePlayer((s) => s.paused);
+
+// Derive value
+const isPlaying = usePlayer((s) => !s.paused && !s.ended);
+
+// Combine multiple properties
+const state = usePlayer((s) => ({
+  paused: s.paused,
+  volume: s.volume,
+}));
+```
+
 ## Cross-Framework Consistency
 
 Same pattern works in React and HTML:
 
-| Concept         | React                | HTML                                        |
-| --------------- | -------------------- | ------------------------------------------- |
-| Hook/Controller | `usePlayer(feature)` | `new PlayerController(this, feature)`       |
-| Get slice       | returns slice        | `controller.value`                          |
-| Check existence | `if (!slice)`        | `if (!slice)`                               |
-| Access state    | `slice.paused`       | `slice.paused`                              |
-| Call request    | `slice.play()`       | `slice.play()`                              |
-## Package Exports
-
-### @videojs/store
-
-```ts
-import { shallowEqual } from '@videojs/store';
-```
-
-### @videojs/core
-
-```ts
-import { 
-  features, createMediaFeature, createPlayerFeature,  
-  playbackKey, volumeKey, timeKey  
-} from '@videojs/core/dom';
-```
-
-### @videojs/react
-
-```ts
-import { createPlayer, usePlayer, features } from '@videojs/react';
-```
-
-### @videojs/html
-
-```ts
-import { createPlayer, features, MediaElement, PlayerController } from '@videojs/html';
-```
+| Concept         | React                      | HTML                                         |
+| --------------- | -------------------------- | -------------------------------------------- |
+| Hook/Controller | `usePlayer(selector)`      | `new PlayerController(this, ctx, selector)`  |
+| Get state       | returns state              | `controller.value`                           |
+| Check existence | `if (!state)`              | `if (!value)`                                |
+| Access state    | `state.paused`             | `value.paused`                               |
+| Call action     | `state.play()`             | `value.play()`                               |
 
 ## Feature Availability
 
 Features may target capabilities the platform doesn't support.
 
-```ts
-// iOS Safari doesn't allow programmatic volume control
-const volume = usePlayer(features.volume);
+```tsx
+const volume = usePlayer(selectVolume);
 volume?.volumeAvailability; // 'available' | 'unavailable' | 'unsupported'
 ```
 
@@ -209,7 +199,7 @@ volume?.volumeAvailability; // 'available' | 'unavailable' | 'unsupported'
 
 ```tsx
 export function VolumeSlider() {
-  const volume = usePlayer(features.volume);
+  const volume = usePlayer(selectVolume);
 
   if (!volume) return null;
 
@@ -219,5 +209,59 @@ export function VolumeSlider() {
   // Disable if temporarily unavailable
   const disabled = volume.volumeAvailability !== 'available';
 
-  return <Slider value={volume.volume} onChange={volume.setVolume} disabled={disabled} />;
+  return (
+    <input
+      type="range"
+      value={volume.volume}
+      onChange={(e) => volume.setVolume(Number(e.target.value))}
+      disabled={disabled}
+    />
+  );
 }
+```
+
+## Package Exports
+
+### @videojs/store
+
+```ts
+import { shallowEqual, createSliceSelector } from '@videojs/store';
+```
+
+### @videojs/core/dom
+
+```ts
+import {
+  features,
+  selectPlayback,
+  selectVolume,
+  selectTime,
+  selectSource,
+  selectBuffer,
+} from '@videojs/core/dom';
+```
+
+### @videojs/react
+
+```ts
+import { createPlayer } from '@videojs/react';
+
+// From createPlayer result
+const { Provider, Container, usePlayer, useMedia } = createPlayer({ ... });
+```
+
+### @videojs/html
+
+```ts
+import { createPlayer, MediaElement } from '@videojs/html';
+
+// From createPlayer result
+const {
+  context,
+  PlayerElement,
+  PlayerController,
+  PlayerMixin,
+  ProviderMixin,
+  ContainerMixin,
+} = createPlayer({ ... });
+```

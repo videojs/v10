@@ -7,60 +7,74 @@ Surface API for React and HTML.
 ### React
 
 ```ts
-import { createPlayer, features } from '@videojs/react';
+import { createPlayer } from '@videojs/react';
+import { features } from '@videojs/core/dom';
 
-const { Provider, Container, usePlayer } = createPlayer({
-  features: [features.video]
+const { Provider, Container, usePlayer, useMedia } = createPlayer({
+  features: [...features.video],
 });
 ```
 
 **Returns:**
 
-| Export      | Purpose                                  |
-| ----------- | ---------------------------------------- |
-| `Provider`  | Creates stores, provides context         |
-| `Container` | Attaches container element to player store |
-| `usePlayer` | Access player state (typed to features)  |
+| Export      | Purpose                                      |
+| ----------- | -------------------------------------------- |
+| `Provider`  | Creates store, provides context              |
+| `Container` | Attaches container element, observes media   |
+| `usePlayer` | Access player state via selector             |
+| `useMedia`  | Access current media element                 |
 
 ### HTML
 
 ```ts
-import { createPlayer, features } from '@videojs/html';
+import { createPlayer } from '@videojs/html';
+import { features } from '@videojs/core/dom';
 
-const { PlayerElement, PlayerController } = createPlayer({
-  features: [features.video]
+const {
+  context,
+  create,
+  PlayerElement,
+  PlayerController,
+  PlayerMixin,
+  ProviderMixin,
+  ContainerMixin,
+} = createPlayer({
+  features: [...features.video],
 });
 
-customElements.define('my-video-player', PlayerElement);
+customElements.define('video-player', PlayerElement);
 ```
 
 **Returns:**
 
 | Export             | Purpose                                             |
 | ------------------ | --------------------------------------------------- |
+| `context`          | Player context for controllers                      |
+| `create`           | Factory to create store instance                    |
 | `PlayerElement`    | Combined provider + container element (common case) |
-| `PlayerController` | Reactive controller for accessing player state      |
-| `ProviderElement`  | Provider-only element (advanced, split cases)       |
-| `ContainerElement` | Container-only element (advanced, split cases)      |
-| `ProviderMixin`    | Mixin for custom provider elements                  |
-| `ContainerMixin`   | Mixin for custom container elements                 |
+| `PlayerController` | Controller for accessing player state               |
+| `PlayerMixin`      | Mixin for custom player elements                    |
+| `ProviderMixin`    | Mixin for provider-only elements                    |
+| `ContainerMixin`   | Mixin for container-only elements                   |
 
 ### Config
 
 ```ts
-// Individual features
-createPlayer({
-  features: [features.playback, features.volume, features.fullscreen]
-});
+import { features } from '@videojs/core/dom';
 
-// Feature bundles (sugar)
+// Feature bundles (recommended)
 createPlayer({
-  features: [features.video]
+  features: [...features.video],
 });
 
 // Extended bundle
 createPlayer({
-  features: [features.video, features.streaming]
+  features: [...features.video, ...features.streaming],
+});
+
+// Custom features
+createPlayer({
+  features: [...features.video, myCustomSlice],
 });
 ```
 
@@ -71,51 +85,50 @@ Access player state with selector-based subscriptions.
 ### Overloads
 
 ```ts
-// 1. Feature only — returns full feature slice
-usePlayer(feature): FeatureSlice | undefined
+// 1. No selector — returns full store (re-renders on any change)
+usePlayer(): Store
 
-// 2. Feature + selector — returns selected value from feature
-usePlayer(feature, selector): R | undefined
-
-// 3. Global selector — returns selected value from all state
+// 2. With selector — returns selected value (re-renders when selected value changes)
 usePlayer(selector): R
 ```
 
 ### Examples
 
 ```tsx
-// Get full playback feature slice
-const playback = usePlayer(features.playback);
+import { selectPlayback, selectVolume, selectTime } from '@videojs/core/dom';
+
+// Get playback state
+const playback = usePlayer(selectPlayback);
 if (!playback) return null;
-playback.paused;
-playback.play();
+playback.paused;  // boolean
+playback.ended;   // boolean
 
-// Get specific value from feature
-const paused = usePlayer(features.playback, s => s.paused);
+// Get specific value
+const paused = usePlayer((s) => s.paused);
 
-// Derive value from feature
-const isPlaying = usePlayer(features.playback, s => !s.paused && !s.ended);
+// Derive value
+const isPlaying = usePlayer((s) => !s.paused && !s.ended);
 
-// Select across multiple features (global selector)
-const state = usePlayer(s => ({
+// Select across multiple properties
+const state = usePlayer((s) => ({
   paused: s.paused,
-  volume: s.volume
+  volume: s.volume,
 }));
 ```
 
 ### Performance
 
-> **Warning:** Global selectors without feature scoping subscribe to all state changes. During playback, `currentTime` updates frequently (4-60 times/sec). Always scope to features or use specific selectors.
+> **Warning:** Selectors without scoping subscribe to all state changes. During playback, `currentTime` updates frequently (4-60 times/sec). Use feature selectors for optimal performance.
 
 ```tsx
 // Bad — re-renders on every currentTime update
-const state = usePlayer(s => s);
+const state = usePlayer((s) => s);
 
-// Good — only subscribes to playback feature
-const playback = usePlayer(features.playback);
+// Good — only re-renders when playback state changes
+const playback = usePlayer(selectPlayback);
 
-// Good — only subscribes to paused
-const paused = usePlayer(features.playback, s => s.paused);
+// Good — only re-renders when paused changes
+const paused = usePlayer((s) => s.paused);
 ```
 
 ### Selector Comparison
@@ -124,68 +137,55 @@ Selectors returning objects use `shallowEqual` comparison:
 
 ```tsx
 // Re-renders only when paused OR volume changes
-const state = usePlayer(s => ({
+const state = usePlayer((s) => ({
   paused: s.paused,
-  volume: s.volume
+  volume: s.volume,
 }));
 ```
 
 `shallowEqual` is exported from `@videojs/store` for custom use.
-## store.get / store.has
 
-Access features within feature context (subscribe/request handlers).
+## useMedia (React)
 
-### store.get(feature | key | name)
+Access the current media element.
 
-Returns typed feature slice or `undefined`.
+```tsx
+const media = useMedia();
 
-```ts
-// By feature reference
-store.get(features.playback)     // PlaybackSlice | undefined
-
-// By feature key (Symbol)
-store.get(playbackKey)           // PlaybackSlice | undefined
-
-// By name (string)
-store.get('playback')            // Slice | undefined (loose typing)
+if (media) {
+  console.log(media.currentTime);
+}
 ```
 
-### store.has(feature | key | name)
-
-Returns `boolean`.
-
-```ts
-store.has(features.playback)     // boolean
-store.has('playback')            // boolean
-```
-
-### Usage in Features
-
-```ts
-const keyboardFeature = createPlayerFeature({
-  subscribe: ({ store, update, signal }) => {
-    const playback = store.get(features.playback);
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === ' ') playback?.toggle();
-    }, { signal });
-  }
-});
-```
+Returns `Media | null` — null if no media element is registered.
 
 ## PlayerController (HTML)
 
 Reactive controller for accessing player state in custom elements.
 
-```ts
-import { createPlayer, features, MediaElement } from '@videojs/html';
+### Constructor Overloads
 
-const { PlayerController } = createPlayer({
-  features: [features.video]
+```ts
+// Without selector — store access only, no subscription
+new PlayerController(host, context)
+
+// With selector — subscribes, triggers update on change
+new PlayerController(host, context, selector)
+```
+
+### Examples
+
+```ts
+import { createPlayer, MediaElement } from '@videojs/html';
+import { features, selectPlayback } from '@videojs/core/dom';
+
+const { context, PlayerController } = createPlayer({
+  features: [...features.video],
 });
 
 class MediaPlayButton extends MediaElement {
-  #playback = new PlayerController(this, features.playback);
+  // With selector: subscribes, .value is selected state
+  #playback = new PlayerController(this, context, selectPlayback);
 
   override connectedCallback() {
     super.connectedCallback();
@@ -199,42 +199,102 @@ class MediaPlayButton extends MediaElement {
   override update() {
     const playback = this.#playback.value;
     if (!playback) return;
-    // ...
+
+    this.setAttribute('aria-pressed', String(!playback.paused));
   }
 }
 ```
 
 ### Controller API
 
-| Property | Returns              | Description                                     |
-| -------- | -------------------- | ----------------------------------------------- |
-| `value`  | `FeatureSlice \| undefined` | Feature slice, triggers update on change        |
+| Property | Type                      | Description                              |
+| -------- | ------------------------- | ---------------------------------------- |
+| `store`  | `Store`                   | Direct store access                      |
+| `value`  | `R \| undefined`          | Selected state (with selector) or state snapshot (without) |
+
+### Without Selector
+
+When no selector is provided, the controller provides store access without subscribing:
+
+```ts
+class SomeElement extends MediaElement {
+  // No subscription, just store access
+  #ctrl = new PlayerController(this, context);
+
+  someMethod() {
+    // Read current state (not reactive)
+    const state = this.#ctrl.store.state;
+
+    // Call actions
+    this.#ctrl.store.play();
+  }
+}
+```
+
+## Feature Selectors
+
+Pre-built selectors for standard features:
+
+```ts
+import {
+  selectPlayback,
+  selectVolume,
+  selectTime,
+  selectSource,
+  selectBuffer,
+} from '@videojs/core/dom';
+```
+
+### Creating Custom Selectors
+
+```ts
+import { createSliceSelector } from '@videojs/store';
+
+const selectMyFeature = createSliceSelector(mySlice);
+```
+
 ## Type Exports
 
 ### From `@videojs/store`
 
 ```ts
-import { shallowEqual } from '@videojs/store';
+import { shallowEqual, createSliceSelector } from '@videojs/store';
 ```
 
-| Export         | Purpose                          |
-| -------------- | -------------------------------- |
-| `shallowEqual` | Shallow comparison for selectors |
+| Export                | Purpose                          |
+| --------------------- | -------------------------------- |
+| `shallowEqual`        | Shallow comparison for selectors |
+| `createSliceSelector` | Create selector from slice       |
+
+### From `@videojs/core/dom`
+
+```ts
+import {
+  features,
+  selectPlayback,
+  selectVolume,
+  selectTime,
+} from '@videojs/core/dom';
+```
+
+| Export           | Purpose                    |
+| ---------------- | -------------------------- |
+| `features`       | Feature bundles            |
+| `select*`        | Pre-built feature selectors |
 
 ### From `@videojs/react`
 
 ```ts
-import { createPlayer, features, usePlayer } from '@videojs/react';
+import { createPlayer } from '@videojs/react';
 ```
 
 ### From `@videojs/html`
 
 ```ts
-import { createPlayer, features, MediaElement } from '@videojs/html';
+import { createPlayer, MediaElement } from '@videojs/html';
 ```
 
 | Export          | Purpose                           |
 | --------------- | --------------------------------- |
 | `createPlayer`  | Factory for player infrastructure |
-| `features`      | Feature definitions and bundles   |
 | `MediaElement`  | Base class for UI primitives      |
