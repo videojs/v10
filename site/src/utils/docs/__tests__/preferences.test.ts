@@ -1,16 +1,20 @@
 import type { AstroCookies } from 'astro';
 import { describe, expect, it, vi } from 'vitest';
-import { ALL_FRAMEWORK_STYLE_COMBINATIONS } from '@/types/docs';
-import { FRAMEWORK_COOKIE, getPreferencesServer, STYLE_COOKIE, setPreferenceClient } from '../preferences';
+import { SUPPORTED_FRAMEWORKS } from '@/types/docs';
+import {
+  FRAMEWORK_COOKIE,
+  getPreferencesServer,
+  STYLE_STORAGE_KEY_PREFIX,
+  setFrameworkPreferenceClient,
+  setStylePreferenceClient,
+} from '../preferences';
 
 describe('preferences utilities', () => {
   // Derive test values from actual configuration to stay independent of supported languages
-  const firstCombo = ALL_FRAMEWORK_STYLE_COMBINATIONS[0];
-  const firstFramework = firstCombo.framework;
-  const firstStyle = firstCombo.style;
+  const firstFramework = SUPPORTED_FRAMEWORKS[0];
 
   describe('getPreferencesServer', () => {
-    it('should return null preferences when no cookies are set', () => {
+    it('should return null preference when no cookies are set', () => {
       const mockCookies = {
         has: vi.fn().mockReturnValue(false),
         get: vi.fn(),
@@ -18,10 +22,10 @@ describe('preferences utilities', () => {
 
       const result = getPreferencesServer(mockCookies);
 
-      expect(result).toEqual({ framework: null, style: null });
+      expect(result).toEqual({ framework: null });
     });
 
-    it('should return framework preference when only framework cookie is set', () => {
+    it('should return framework preference when cookie is set', () => {
       const mockCookies = {
         has: vi.fn((name: string) => name === FRAMEWORK_COOKIE),
         get: vi.fn((name: string) => {
@@ -34,26 +38,7 @@ describe('preferences utilities', () => {
 
       const result = getPreferencesServer(mockCookies);
 
-      expect(result).toEqual({ framework: firstFramework, style: null });
-    });
-
-    it('should return both preferences when both cookies are set with valid values', () => {
-      const mockCookies = {
-        has: vi.fn().mockReturnValue(true),
-        get: vi.fn((name: string) => {
-          if (name === FRAMEWORK_COOKIE) {
-            return { value: firstFramework };
-          }
-          if (name === STYLE_COOKIE) {
-            return { value: firstStyle };
-          }
-          return null;
-        }),
-      } as unknown as AstroCookies;
-
-      const result = getPreferencesServer(mockCookies);
-
-      expect(result).toEqual({ framework: firstFramework, style: firstStyle });
+      expect(result).toEqual({ framework: firstFramework });
     });
 
     it('should ignore invalid framework cookie', () => {
@@ -63,65 +48,22 @@ describe('preferences utilities', () => {
           if (name === FRAMEWORK_COOKIE) {
             return { value: 'invalid-framework' };
           }
-          if (name === STYLE_COOKIE) {
-            return { value: firstStyle };
-          }
           return null;
         }),
       } as unknown as AstroCookies;
 
       const result = getPreferencesServer(mockCookies);
 
-      expect(result).toEqual({ framework: null, style: null });
+      expect(result).toEqual({ framework: null });
     });
 
-    it('should ignore style cookie when framework is null', () => {
-      const mockCookies = {
-        has: vi.fn((name: string) => name === STYLE_COOKIE),
-        get: vi.fn((name: string) => {
-          if (name === STYLE_COOKIE) {
-            return { value: firstStyle };
-          }
-          return null;
-        }),
-      } as unknown as AstroCookies;
-
-      const result = getPreferencesServer(mockCookies);
-
-      expect(result).toEqual({ framework: null, style: null });
-    });
-
-    it('should ignore style cookie when it is invalid for the framework', () => {
-      const mockCookies = {
-        has: vi.fn().mockReturnValue(true),
-        get: vi.fn((name: string) => {
-          if (name === FRAMEWORK_COOKIE) {
-            return { value: firstFramework };
-          }
-          if (name === STYLE_COOKIE) {
-            return { value: 'invalid-style' }; // Not valid for any framework
-          }
-          return null;
-        }),
-      } as unknown as AstroCookies;
-
-      const result = getPreferencesServer(mockCookies);
-
-      expect(result).toEqual({ framework: firstFramework, style: null });
-    });
-
-    it('should accept valid framework/style combinations', () => {
-      const testCases = ALL_FRAMEWORK_STYLE_COMBINATIONS;
-
-      for (const { framework, style } of testCases) {
+    it('should accept valid framework values', () => {
+      for (const framework of SUPPORTED_FRAMEWORKS) {
         const mockCookies = {
           has: vi.fn().mockReturnValue(true),
           get: vi.fn((name: string) => {
             if (name === FRAMEWORK_COOKIE) {
               return { value: framework };
-            }
-            if (name === STYLE_COOKIE) {
-              return { value: style };
             }
             return null;
           }),
@@ -129,13 +71,13 @@ describe('preferences utilities', () => {
 
         const result = getPreferencesServer(mockCookies);
 
-        expect(result).toEqual({ framework, style });
+        expect(result).toEqual({ framework });
       }
     });
   });
 
-  describe('setPreferenceClient', () => {
-    it('should set both framework and style cookies', () => {
+  describe('setFrameworkPreferenceClient', () => {
+    it('should set framework cookie', () => {
       // Mock document.cookie
       const cookies: string[] = [];
       Object.defineProperty(document, 'cookie', {
@@ -146,34 +88,24 @@ describe('preferences utilities', () => {
         configurable: true,
       });
 
-      setPreferenceClient(firstFramework, firstStyle);
+      setFrameworkPreferenceClient(firstFramework);
 
-      expect(cookies).toHaveLength(2);
+      expect(cookies).toHaveLength(1);
       expect(cookies[0]).toContain(`vjs_docs_framework=${firstFramework}`);
       expect(cookies[0]).toContain('max-age=31536000');
       expect(cookies[0]).toContain('path=/');
       expect(cookies[0]).toContain('samesite=lax');
-      expect(cookies[1]).toContain(`vjs_docs_style=${firstStyle}`);
     });
 
     it('should throw error for invalid framework', () => {
       expect(() => {
         // @ts-expect-error Testing invalid input
-        setPreferenceClient('invalid-framework', 'css');
+        setFrameworkPreferenceClient('invalid-framework');
       }).toThrow('Invalid framework: invalid-framework');
     });
 
-    it('should throw error for invalid style for framework', () => {
-      expect(() => {
-        // @ts-expect-error Testing invalid input
-        setPreferenceClient(firstFramework, 'invalid-style');
-      }).toThrow(`Invalid style "invalid-style" for framework "${firstFramework}"`);
-    });
-
-    it('should accept all valid framework/style combinations', () => {
-      const testCases = ALL_FRAMEWORK_STYLE_COMBINATIONS;
-
-      for (const { framework, style } of testCases) {
+    it('should accept all valid frameworks', () => {
+      for (const framework of SUPPORTED_FRAMEWORKS) {
         // Mock document.cookie
         const cookies: string[] = [];
         Object.defineProperty(document, 'cookie', {
@@ -185,7 +117,7 @@ describe('preferences utilities', () => {
         });
 
         expect(() => {
-          setPreferenceClient(framework, style);
+          setFrameworkPreferenceClient(framework);
         }).not.toThrow();
       }
     });
@@ -196,10 +128,68 @@ describe('preferences utilities', () => {
       globalThis.document = undefined;
 
       expect(() => {
-        setPreferenceClient(firstFramework, firstStyle);
+        setFrameworkPreferenceClient(firstFramework);
       }).not.toThrow();
 
       globalThis.document = originalDocument;
+    });
+  });
+
+  describe('setStylePreferenceClient', () => {
+    it('should set style in localStorage', () => {
+      const mockStorage: Record<string, string> = {};
+      Object.defineProperty(globalThis, 'localStorage', {
+        value: {
+          getItem: (key: string) => mockStorage[key] ?? null,
+          setItem: (key: string, value: string) => {
+            mockStorage[key] = value;
+          },
+        },
+        configurable: true,
+      });
+
+      setStylePreferenceClient(firstFramework, 'css');
+
+      const expectedKey = STYLE_STORAGE_KEY_PREFIX + firstFramework;
+      expect(mockStorage[expectedKey]).toBe('css');
+    });
+
+    it('should throw error for invalid style', () => {
+      const mockStorage: Record<string, string> = {};
+      Object.defineProperty(globalThis, 'localStorage', {
+        value: {
+          getItem: (key: string) => mockStorage[key] ?? null,
+          setItem: (key: string, value: string) => {
+            mockStorage[key] = value;
+          },
+        },
+        configurable: true,
+      });
+
+      expect(() => {
+        // @ts-expect-error Testing invalid input
+        setStylePreferenceClient(firstFramework, 'invalid-style');
+      }).toThrow(`Invalid style "invalid-style" for framework "${firstFramework}"`);
+    });
+
+    it('should do nothing when localStorage is undefined (SSR)', () => {
+      // Use Object.defineProperty to make localStorage temporarily undefined
+      const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+
+      Object.defineProperty(globalThis, 'localStorage', {
+        value: undefined,
+        configurable: true,
+        writable: true,
+      });
+
+      expect(() => {
+        setStylePreferenceClient(firstFramework, 'css');
+      }).not.toThrow();
+
+      // Restore original descriptor
+      if (descriptor) {
+        Object.defineProperty(globalThis, 'localStorage', descriptor);
+      }
     });
   });
 });

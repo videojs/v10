@@ -1,20 +1,18 @@
 ---
-
 import { ChevronDown } from 'lucide-react';
-import type { Guide, SupportedFramework, SupportedStyle } from '@/types/docs';
+import type { Guide, SupportedFramework } from '@/types/docs';
 
-type Props<F extends SupportedFramework = SupportedFramework> = {
+type Props = {
   prev: Guide | null;
   next: Guide | null;
-  framework: F;
-  style: SupportedStyle<F>;
+  framework: SupportedFramework;
   docTitles: Map<string, string>;
 };
 
-const { prev, next, framework, style, docTitles } = Astro.props;
+const { prev, next, framework, docTitles } = Astro.props;
 
-function getGuideUrl<F extends SupportedFramework>(framework: F, style: SupportedStyle<F>, slug: string): string {
-  return `/docs/framework/${framework}/style/${style}/${slug}`;
+function getGuideUrl(framework: SupportedFramework, slug: string): string {
+  return `/docs/framework/${framework}/${slug}`;
 }
 ---
 
@@ -22,7 +20,7 @@ function getGuideUrl<F extends SupportedFramework>(framework: F, style: Supporte
   {
     prev ? (
       <a
-        href={getGuideUrl(framework, style, prev.slug)}
+        href={getGuideUrl(framework, prev.slug)}
         class="grid items-center gap-x-2 p-4 border border-light-40 dark:border-dark-80 rounded-lg intent:border-dark-40 dark:intent:border-dark-40"
         style="grid-template-areas: 'empty direction' 'icon title'; grid-template-columns: auto minmax(0,1fr); grid-template-rows: auto minmax(0,1fr);"
       >
@@ -43,7 +41,7 @@ function getGuideUrl<F extends SupportedFramework>(framework: F, style: Supporte
   {
     next ? (
       <a
-        href={getGuideUrl(framework, style, next.slug)}
+        href={getGuideUrl(framework, next.slug)}
         class="grid items-center gap-x-2 p-4 border border-light-40 dark:border-dark-80 rounded-lg intent:border-dark-40 text-right dark:intent:border-dark-40"
         style="grid-template-areas: 'direction empty' 'title icon';grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto minmax(0,1fr);"
       >

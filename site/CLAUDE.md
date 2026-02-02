@@ -145,13 +145,15 @@ Documentation is generated for **multiple framework and style combinations** fro
 
 **URL pattern:**
 ```
-/docs/framework/{framework}/style/{style}/{...slug}/
+/docs/framework/{framework}/{...slug}/
 ```
+
+**Style handling:** Style is a **client-side preference** stored in localStorage per-framework (`vjs_docs_style_html`, `vjs_docs_style_react`). The `StyleInit.astro` component reads localStorage before paint and sets `html[data-style]`. CSS rules control content visibility via `[data-for-style]` attributes on `<StyleCase>` wrapped content.
 
 **Example:**
 - `src/content/docs/how-to/installation.mdx` generates:
-  - `/docs/framework/html/style/css/how-to/installation/`
-  - `/docs/framework/react/style/css/how-to/installation/`
+  - `/docs/framework/html/how-to/installation/`
+  - `/docs/framework/react/how-to/installation/`
 
 ### Content Restriction Mechanisms
 
@@ -171,20 +173,24 @@ Use `<FrameworkCase>` or `<StyleCase>` components to show framework/style-specif
 
 **2. In sidebar config (`src/docs.config.ts`):**
 
+Restrict entire guides to specific frameworks:
+
 ```ts
 const sidebar: Sidebar = [
   {
     sidebarLabel: 'Getting started',
     contents: [
-      { slug: 'how-to/installation' }, // Available to all
+      { slug: 'how-to/installation' }, // Available to all frameworks
       {
         slug: 'how-to/react-hooks',
-        frameworks: ['react'] // Only for React
+        frameworks: ['react'] // Only visible when viewing React docs
       },
     ],
   },
 ];
 ```
+
+**Note:** Style restrictions on sidebar items are no longer supported. All docs are visible to all styles; use `<StyleCase>` within docs to show style-specific content.
 
 ### Sidebar Configuration
 
@@ -195,7 +201,6 @@ const sidebar: Sidebar = [
   - `slug`: Path relative to `src/content/docs/` (without `.mdx`)
   - `sidebarLabel` (optional): Override display name
   - `frameworks` (optional): Restrict to specific frameworks
-  - `styles` (optional): Restrict to specific styles
   - `devOnly` (optional): Show only in development mode
 
 **Example:**
@@ -216,11 +221,10 @@ export const sidebar: Sidebar = [
 ### Key Utility Functions (`src/utils/docs/`)
 
 **`sidebar.ts`** — Sidebar filtering and navigation:
-- `filterSidebar()`: Filter sidebar by framework/style, remove empty sections
-- `findFirstGuide()`: Get first available guide for framework/style combo
+- `filterSidebar()`: Filter sidebar by framework, remove empty sections
+- `findFirstGuide()`: Get first available guide for framework
 - `findGuideBySlug()`: Search sidebar recursively for a guide
 - `getAdjacentGuides()`: Get prev/next guides for navigation
-- `getValidStylesForGuide()`: Determine valid styles for a guide
 - `getSectionsForGuide()`: Get breadcrumb trail to a guide
 
 **`routing.ts`** — URL building and redirect logic:
@@ -234,18 +238,18 @@ export const sidebar: Sidebar = [
 
 **Nested index pages** handle redirects at each level:
 ```
-/docs/                                              → redirect to first guide
-/docs/framework/                                    → redirect to first guide
-/docs/framework/{framework}/                        → redirect to first guide
-/docs/framework/{framework}/style/                  → redirect to first guide
-/docs/framework/{framework}/style/{style}/          → redirect to first guide
-/docs/framework/{framework}/style/{style}/{...slug} → render guide
+/docs/                             → redirect to first guide
+/docs/framework/                   → redirect to first guide
+/docs/framework/{framework}/       → redirect to first guide
+/docs/framework/{framework}/{slug} → render guide
 ```
 
 Each index page uses `resolveIndexRedirect()` to determine where to redirect based on:
-1. URL params (framework, style)
-2. User preferences (from localStorage via Nanostores)
+1. URL params (framework)
+2. User preferences (framework from cookies)
 3. Defaults (when invalid or missing)
+
+**Style is not part of the URL.** Style preference is stored per-framework in localStorage and applied client-side via CSS.
 
 ## Content Collections
 
@@ -453,18 +457,13 @@ Sidebar filtering is recursive because sections can contain guides or nested sec
 
 ```ts
 export function filterSidebar(
-  sidebar: Sidebar,
   framework: SupportedFramework,
-  style: AnySupportedStyle,
+  sidebarToFilter?: Sidebar,
 ): Sidebar {
-  return sidebar
-    .map((section) => ({
-      ...section,
-      contents: section.contents.filter((item) =>
-        isItemVisible(item, framework, style)
-      ),
-    }))
-    .filter((section) => section.contents.length > 0);
+  const root = sidebarToFilter ?? sidebar;
+  return root
+    .map((item) => filterItem(item, framework))
+    .filter(isNotFalsy);
 }
 ```
 

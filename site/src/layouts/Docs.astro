@@ -4,22 +4,22 @@ import { type CollectionEntry, getCollection } from 'astro:content';
 import DocsSidebar from '@/components/docs/DocsSidebar.astro';
 import DocsSidebarRestoration from '@/components/docs/DocsSidebarRestoration.astro';
 import { Selectors } from '@/components/docs/Selectors';
+import StyleInit from '@/components/docs/StyleInit.astro';
 import FilmGrain from '@/components/FilmGrain';
 import Footer from '@/components/Footer.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import NavBar from '@/components/NavBar/NavBar.astro';
-import type { SupportedFramework, SupportedStyle } from '@/types/docs';
+import type { SupportedFramework } from '@/types/docs';
 import { getDocTitle } from '@/utils/docs/title';
 import Base from './Base.astro';
 
-type Props<F extends SupportedFramework = SupportedFramework> = {
+type Props = {
   doc: CollectionEntry<'docs'>;
-  framework: F;
-  style: SupportedStyle<F>;
+  framework: SupportedFramework;
   slug: string;
 };
 
-const { doc, framework, style, slug } = Astro.props;
+const { doc, framework, slug } = Astro.props;
 
 // Fetch all docs to get their framework-specific titles
 const allDocs = await getCollection('docs');
@@ -29,6 +29,9 @@ const docsSidebarId = 'docs-sidebar';
 ---
 
 <Base title={[getDocTitle(doc, framework), 'Docs']} description={doc.data.description}>
+  <Fragment slot="priority-head">
+    <StyleInit />
+  </Fragment>
   <Fragment slot="head">
     <DocsSidebarRestoration docsSidebarId={docsSidebarId} />
     <slot name="head" slot="head" />
@@ -38,7 +41,7 @@ const docsSidebarId = 'docs-sidebar';
     style="--lg-grid-cols: calc(var(--spacing) * 75) 1fr;grid-template-rows:auto minmax(0,1fr);"
   >
     <NavBar class="col-span-full">
-      <DocsSidebar slot="mobile-nav" framework={framework} style={style} docTitles={docTitles} />
+      <DocsSidebar slot="mobile-nav" framework={framework} docTitles={docTitles} />
     </NavBar>
     <aside
       id={docsSidebarId}
@@ -46,8 +49,8 @@ const docsSidebarId = 'docs-sidebar';
       style="top: var(--nav-h); max-height: calc(100vh - var(--nav-h));"
     >
       <FilmGrain currentPath={Astro.url.pathname} />
-      <DocsSidebar framework={framework} style={style} docTitles={docTitles} class="flex-1">
-        <Selectors client:idle currentFramework={framework} currentStyle={style} currentSlug={slug} />
+      <DocsSidebar framework={framework} docTitles={docTitles} class="flex-1">
+        <Selectors client:idle currentFramework={framework} currentSlug={slug} />
       </DocsSidebar>
     </aside>
     <div>

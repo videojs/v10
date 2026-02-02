@@ -1,5 +1,4 @@
 ---
-
 import type { CollectionEntry } from 'astro:content';
 import { getCollection, render } from 'astro:content';
 import CopyMarkdownButton from '@/components/CopyMarkdownButton';
@@ -11,8 +10,8 @@ import JsonLd from '@/components/JsonLd.astro';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
 import H3 from '@/components/typography/H3.astro';
 import DocsLayout from '@/layouts/Docs.astro';
-import type { SupportedFramework, SupportedStyle } from '@/types/docs';
-import { ALL_FRAMEWORK_STYLE_COMBINATIONS } from '@/types/docs';
+import type { SupportedFramework } from '@/types/docs';
+import { SUPPORTED_FRAMEWORKS } from '@/types/docs';
 import { filterSidebar, getAdjacentGuides, getAllGuideSlugs, getSectionsForGuide } from '@/utils/docs/sidebar';
 import { getDocTitle } from '@/utils/docs/title';
 import { createTechArticleSchema } from '@/utils/jsonLd/schemas';
@@ -21,29 +20,28 @@ export async function getStaticPaths() {
   const docsCollection = await getCollection('docs');
 
   /**
-   * Build a map of allowed slugs for each framework/style combination.
+   * Build a map of allowed slugs for each framework.
    * Only docs that appear in the filtered sidebar will be allowed to generate pages.
    */
-  type AllowedSlugsMap = Map<string, Set<string>>;
+  type AllowedSlugsMap = Map<SupportedFramework, Set<string>>;
   const allowedSlugsMap: AllowedSlugsMap = new Map();
 
-  for (const { framework, style, key } of ALL_FRAMEWORK_STYLE_COMBINATIONS) {
-    const sidebarForFrameworkAndStyle = filterSidebar(framework, style);
-    const slugsForFrameworkAndStyle = getAllGuideSlugs(sidebarForFrameworkAndStyle);
-    allowedSlugsMap.set(key, new Set(slugsForFrameworkAndStyle));
+  for (const framework of SUPPORTED_FRAMEWORKS) {
+    const sidebarForFramework = filterSidebar(framework);
+    const slugsForFramework = getAllGuideSlugs(sidebarForFramework);
+    allowedSlugsMap.set(framework, new Set(slugsForFramework));
   }
 
-  // Generate a path for each doc that's visible in at least one framework/style combination
-  const staticPaths = ALL_FRAMEWORK_STYLE_COMBINATIONS.flatMap(({ framework, style, key }) => {
-    const allowedSlugs = allowedSlugsMap.get(key)!;
+  // Generate a path for each doc that's visible for each framework
+  const staticPaths = SUPPORTED_FRAMEWORKS.flatMap((framework) => {
+    const allowedSlugs = allowedSlugsMap.get(framework)!;
 
-    // Filter docs to only those visible in this combination's sidebar
+    // Filter docs to only those visible in this framework's sidebar
     return docsCollection
       .filter((doc) => allowedSlugs.has(doc.id))
       .map((doc) => ({
         params: {
           framework,
-          style,
           slug: doc.id,
         },
         props: { doc },
@@ -53,13 +51,12 @@ export async function getStaticPaths() {
   return staticPaths;
 }
 
-type Props<F extends SupportedFramework = SupportedFramework> = {
+type Props = {
   doc: CollectionEntry<'docs'>;
-  framework: F;
-  style: SupportedStyle<F>;
+  framework: SupportedFramework;
 };
 
-const { framework, style, slug } = Astro.params;
+const { framework, slug } = Astro.params;
 const { doc } = Astro.props;
 const { Content, headings, remarkPluginFrontmatter } = await render(doc);
 
@@ -68,20 +65,19 @@ const conditionalHeadings = remarkPluginFrontmatter?.conditionalHeadings;
 const filteredHeadings = conditionalHeadings
   ? conditionalHeadings.filter((h: any) => {
       const matchesFramework = !h.frameworks || h.frameworks.includes(framework);
-      const matchesStyle = !h.styles || h.styles.includes(style);
-      return matchesFramework && matchesStyle;
+      return matchesFramework;
     })
   : headings;
 
 // Get adjacent guides for navigation
-const { prev, next } = getAdjacentGuides(slug, framework, style);
+const { prev, next } = getAdjacentGuides(slug, framework);
 
 // Fetch all docs to get their framework-specific titles
 const allDocs = await getCollection('docs');
 const docTitles = new Map(allDocs.map((d) => [d.id, getDocTitle(d, framework)]));
 
 // Get the section hierarchy for this guide
-const sections = getSectionsForGuide(slug, filterSidebar(framework, style));
+const sections = getSectionsForGuide(slug, filterSidebar(framework));
 
 // Build JSON-LD schema for TechArticle
 const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
@@ -95,7 +91,7 @@ const jsonLdSchema = createTechArticleSchema({
 });
 ---
 
-<DocsLayout doc={doc} framework={framework} style={style} slug={slug}>
+<DocsLayout doc={doc} framework={framework} slug={slug}>
   <JsonLd slot="head" schema={jsonLdSchema} />
   <main
     class:list={[
@@ -114,7 +110,7 @@ const jsonLdSchema = createTechArticleSchema({
     "
   >
     <div class="lg:hidden" style="grid-area: selectors;">
-      <Selectors client:idle currentFramework={framework} currentStyle={style} currentSlug={slug} />
+      <Selectors client:idle currentFramework={framework} currentSlug={slug} />
     </div>
     <div
       class="sticky overflow-y-auto z-30"
@@ -129,10 +125,9 @@ const jsonLdSchema = createTechArticleSchema({
         data-llms-content
         data-llms-description={doc.data.description}
         data-framework={framework}
-        data-style={style}
         data-site="docs"
         data-category={sections[0]}
-        data-pagefind-filter="framework[data-framework], style[data-style], section[data-site]"
+        data-pagefind-filter="framework[data-framework], section[data-site]"
       >
         <header
           class:list={[
@@ -149,7 +144,7 @@ const jsonLdSchema = createTechArticleSchema({
         <Content components={{ ...defaultMarkdownComponents }} />
       </article>
       <footer class="mb-18 grid gap-5">
-        <DocsNavigation prev={prev} next={next} framework={framework} style={style} docTitles={docTitles} />
+        <DocsNavigation prev={prev} next={next} framework={framework} docTitles={docTitles} />
         <EditPageButton filePath={`site/src/content/docs/${doc.id}.mdx`} />
       </footer>
     </div>

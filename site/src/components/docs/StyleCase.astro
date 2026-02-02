@@ -1,37 +1,38 @@
 ---
-
-import type { AnySupportedStyle } from '@/types/docs';
+/**
+ * Conditionally shows content based on the user's selected style preference.
+ *
+ * When `styles` is provided: Content is wrapped in a div with `data-for-style`
+ * attribute. CSS rules in StyleInit.astro control visibility based on `html[data-style]`.
+ *
+ * When `styles` is omitted: Content is rendered directly without any wrapper,
+ * making it visible regardless of style preference.
+ *
+ * @example
+ * <!-- Show only for CSS style -->
+ * <StyleCase styles={['css']}>CSS-specific content</StyleCase>
+ *
+ * <!-- Show for multiple styles -->
+ * <StyleCase styles={['css', 'tailwind']}>Shared content</StyleCase>
+ *
+ * <!-- Always visible (no styles prop) -->
+ * <StyleCase>Universal content</StyleCase>
+ */
+import type { AnySupportedStyle } from "@/types/docs";
 
 interface Props {
-  styles?: AnySupportedStyle[];
+    styles?: AnySupportedStyle[];
 }
 
 const { styles } = Astro.props;
-const { style } = Astro.params;
-
-// Only render if current style matches, or if no styles specified (all styles)
-const shouldRender = !styles || styles.includes(style as AnySupportedStyle);
 ---
 
 {
-  /*
-    What I WANT to do is
-    ```
-    {shouldRender && <slot />}
-    ```
-
-    But I'm running into some crazy problems with hydration.
-    Putting client:load in one of these conditionals causes Astro to just give up hydrating the whole app for some reason.
-    TODO: fix this
-
-    So, while I debug those... let's do this
-  */
+    !styles ? (
+        <slot />
+    ) : (
+        <div class="contents" data-for-style={styles.join(" ")}>
+            <slot />
+        </div>
+    )
 }
-<div
-  class="contents"
-  hidden={!shouldRender}
-  data-pagefind-ignore={shouldRender ? undefined : 'all'}
-  data-llms-ignore={shouldRender ? undefined : 'all'}
->
-  <slot />
-</div>
