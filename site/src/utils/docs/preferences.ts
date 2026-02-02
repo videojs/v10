@@ -2,9 +2,11 @@ import type { AstroCookies } from 'astro';
 import type { AnySupportedStyle, SupportedFramework, SupportedStyle } from '@/types/docs';
 import { isValidFramework, isValidStyleForFramework } from '@/types/docs';
 
-// Cookie names
+// Cookie name for framework (server-side redirects)
 export const FRAMEWORK_COOKIE = 'vjs_docs_framework';
-export const STYLE_COOKIE = 'vjs_docs_style';
+
+// LocalStorage key prefix for style (per-framework, client-side only)
+export const STYLE_STORAGE_KEY_PREFIX = 'vjs_docs_style_';
 
 // Cookie options for client-side (1 year expiration)
 const COOKIE_MAX_AGE = 31536000; // 1 year in seconds
@@ -16,34 +18,25 @@ const COOKIE_OPTIONS = `max-age=${COOKIE_MAX_AGE}; path=/; samesite=lax`;
 
 interface NoPreference {
   framework: null;
-  style: null;
 }
-interface NoStylePreference {
+interface FrameworkPreference {
   framework: SupportedFramework;
-  style: null;
 }
-interface FullPreference {
-  framework: SupportedFramework;
-  style: AnySupportedStyle;
-}
-export type Preference = NoPreference | NoStylePreference | FullPreference;
+export type Preference = NoPreference | FrameworkPreference;
 
 export function getPreferencesServer(cookies: AstroCookies): Preference {
   const frameworkCookie = cookies.has(FRAMEWORK_COOKIE) ? cookies.get(FRAMEWORK_COOKIE) : null;
-  const styleCookie = cookies.has(STYLE_COOKIE) ? cookies.get(STYLE_COOKIE) : null;
 
   const framework = frameworkCookie && isValidFramework(frameworkCookie.value) ? frameworkCookie.value : null;
-  const style =
-    styleCookie && framework && isValidStyleForFramework(framework, styleCookie.value) ? styleCookie.value : null;
-  return { framework, style } as Preference;
+  return { framework } as Preference;
 }
 
 /**
- * Client-side API: Works with document.cookie
+ * Client-side API: Works with document.cookie and localStorage
  */
 
-export function getPreferenceClient(): Preference {
-  if (typeof document === 'undefined') return { framework: null, style: null };
+export function getFrameworkPreferenceClient(): SupportedFramework | null {
+  if (typeof document === 'undefined') return null;
 
   const cookies = document.cookie.split(';').reduce(
     (acc, cookie) => {
@@ -54,22 +47,49 @@ export function getPreferenceClient(): Preference {
     {} as Record<string, string>
   );
 
-  const framework =
-    cookies[FRAMEWORK_COOKIE] && isValidFramework(cookies[FRAMEWORK_COOKIE]) ? cookies[FRAMEWORK_COOKIE] : null;
-  const style =
-    framework && cookies[STYLE_COOKIE] && isValidStyleForFramework(framework, cookies[STYLE_COOKIE])
-      ? cookies[STYLE_COOKIE]
-      : null;
-
-  return { framework, style } as Preference;
+  const framework = cookies[FRAMEWORK_COOKIE];
+  return framework && isValidFramework(framework) ? framework : null;
 }
 
-export function setPreferenceClient<T extends SupportedFramework>(framework: T, style: SupportedStyle<T>) {
+export function setFrameworkPreferenceClient(framework: SupportedFramework): void {
   if (typeof document === 'undefined') return;
   if (!isValidFramework(framework)) throw new Error(`Invalid framework: ${framework}`);
-  if (!isValidStyleForFramework(framework, style))
-    throw new Error(`Invalid style "${style}" for framework "${framework}"`);
 
   document.cookie = `${FRAMEWORK_COOKIE}=${framework}; ${COOKIE_OPTIONS}`;
-  document.cookie = `${STYLE_COOKIE}=${style}; ${COOKIE_OPTIONS}`;
+}
+
+/**
+ * Get style preference from localStorage for a specific framework
+ */
+export function getStylePreferenceClient<F extends SupportedFramework>(framework: F): SupportedStyle<F> | null {
+  if (typeof localStorage === 'undefined') return null;
+
+  const storageKey = STYLE_STORAGE_KEY_PREFIX + framework;
+  const style = localStorage.getItem(storageKey);
+
+  if (style && isValidStyleForFramework(framework, style)) {
+    return style as SupportedStyle<F>;
+  }
+  return null;
+}
+
+/**
+ * Set style preference in localStorage for a specific framework
+ */
+export function setStylePreferenceClient<F extends SupportedFramework>(framework: F, style: SupportedStyle<F>): void {
+  if (typeof localStorage === 'undefined') return;
+  if (!isValidStyleForFramework(framework, style)) {
+    throw new Error(`Invalid style "${style}" for framework "${framework}"`);
+  }
+
+  const storageKey = STYLE_STORAGE_KEY_PREFIX + framework;
+  localStorage.setItem(storageKey, style);
+}
+
+/**
+ * Update the DOM data-style attribute to match the current style
+ */
+export function updateStyleAttribute(style: AnySupportedStyle): void {
+  if (typeof document === 'undefined') return;
+  document.documentElement.dataset.style = style;
 }

@@ -3,11 +3,9 @@
 import process from 'node:process';
 
 import mdx from '@astrojs/mdx';
+import netlify from '@astrojs/netlify';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
-
-import vercel from '@astrojs/vercel';
-
 import sentry from '@sentry/astro';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, fontProviders } from 'astro/config';
@@ -25,9 +23,9 @@ const SITE_URL = 'https://v10.videojs.org';
 export default defineConfig({
   site: SITE_URL,
   trailingSlash: 'never',
-  adapter: vercel(),
+  adapter: netlify(),
   redirects: {
-    // Redirects are configured in vercel.json
+    // Redirects are configured in netlify.toml
   },
   integrations: [
     sentry({
@@ -76,9 +74,10 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
-      exclude: ['@vjs/react'],
+      exclude: ['@videojs/react-preview'],
     },
     resolve: {
+      dedupe: ['react', 'react-dom'],
       alias: {
         '@': new URL('./src', import.meta.url).pathname,
       },

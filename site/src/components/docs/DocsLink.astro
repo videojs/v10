@@ -1,7 +1,6 @@
 ---
-
 import type { HTMLAttributes } from 'astro/types';
-import { isValidFramework, isValidStyleForFramework } from '@/types/docs';
+import { isValidFramework } from '@/types/docs';
 import { resolveDocsLinkUrl } from '@/utils/docs/routing';
 import A from '../typography/A.astro';
 
@@ -10,18 +9,14 @@ interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
 }
 const { slug } = Astro.props;
 
-const { framework: paramFramework, style: paramStyle } = Astro.params;
+const { framework: paramFramework } = Astro.params;
 if (!paramFramework || !isValidFramework(paramFramework)) {
   throw new Error(`Invalid or missing framework param "${paramFramework ?? 'undefined'}".`);
-}
-if (!paramStyle || !isValidStyleForFramework(paramFramework, paramStyle)) {
-  throw new Error(`Invalid style param "${paramStyle}" for framework "${paramFramework}".`);
 }
 
 const { url: href } = resolveDocsLinkUrl({
   targetSlug: slug,
   contextFramework: paramFramework,
-  contextStyle: paramStyle,
 });
 ---
 

@@ -12,13 +12,13 @@
  *
  * @generated
  */
-export { default as FullscreenEnterAltIcon } from './FullscreenEnterAlt';
-export { default as FullscreenEnterIcon } from './FullscreenEnter';
-export { default as FullscreenExitAltIcon } from './FullscreenExitAlt';
-export { default as FullscreenExitIcon } from './FullscreenExit';
-export { default as PauseIcon } from './Pause';
-export { default as PlayIcon } from './Play';
-export { default as SpinnerIcon } from './Spinner';
-export { default as VolumeHighIcon } from './VolumeHigh';
-export { default as VolumeLowIcon } from './VolumeLow';
-export { default as VolumeOffIcon } from './VolumeOff';
+export { default as FullscreenEnterAltIcon } from "./FullscreenEnterAlt";
+export { default as FullscreenEnterIcon } from "./FullscreenEnter";
+export { default as FullscreenExitAltIcon } from "./FullscreenExitAlt";
+export { default as FullscreenExitIcon } from "./FullscreenExit";
+export { default as PauseIcon } from "./Pause";
+export { default as PlayIcon } from "./Play";
+export { default as SpinnerIcon } from "./Spinner";
+export { default as VolumeHighIcon } from "./VolumeHigh";
+export { default as VolumeLowIcon } from "./VolumeLow";
+export { default as VolumeOffIcon } from "./VolumeOff";

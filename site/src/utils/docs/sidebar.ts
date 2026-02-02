@@ -1,23 +1,20 @@
-import type { AnySupportedStyle, Guide, Section, Sidebar, SupportedFramework, SupportedStyle } from '@/types/docs';
+import type { Guide, Section, Sidebar, SupportedFramework } from '@/types/docs';
+import { FRAMEWORK_STYLES, isSection } from '@/types/docs';
 
 import { sidebar } from '../../docs.config';
-import { FRAMEWORK_STYLES, isSection, isValidStyleForFramework } from '../../types/docs';
 
 /**
- * Check if an item (Guide or Section) should be shown based on framework and style.
+ * Check if an item (Guide or Section) should be shown based on framework.
  * If no frameworks are specified, the item is visible to all frameworks.
- * If no styles are specified, the item is visible to all styles.
  *
  * @param item - The guide or section to check
  * @param framework - The currently selected framework
- * @param style - The currently selected style
  * @param isDev - Whether in development mode (defaults to import.meta.env.DEV)
  * @returns true if the item should be visible
  */
-export function isItemVisible<F extends SupportedFramework>(
+export function isItemVisible(
   item: Guide | Section,
-  framework: F,
-  style: SupportedStyle<F>,
+  framework: SupportedFramework,
   isDev: boolean = import.meta.env.DEV
 ): boolean {
   // Filter out dev-only items in production
@@ -25,34 +22,30 @@ export function isItemVisible<F extends SupportedFramework>(
     return false;
   }
 
-  const frameworkMatch = !item.frameworks || item.frameworks.includes(framework);
-  const styleMatch = !item.styles || item.styles.includes(style as AnySupportedStyle);
-  return frameworkMatch && styleMatch;
+  return !item.frameworks || item.frameworks.includes(framework);
 }
 
 /**
- * Filter sidebar items based on selected framework and style.
+ * Filter sidebar items based on selected framework.
  * Recursively filters sections and guides to only include
- * those that are visible for the given framework and style combination.
+ * those that are visible for the given framework.
  * Removes empty sections after filtering.
  *
  * @param framework - The framework to filter for
- * @param style - The style to filter for
  * @param sidebarToFilter - Optional sidebar to filter (defaults to main sidebar config)
  * @param isDev - Whether in development mode (defaults to import.meta.env.DEV)
  * @returns A new filtered sidebar with only visible content
  */
-export function filterSidebar<F extends SupportedFramework>(
-  framework: F,
-  style: SupportedStyle<F>,
+export function filterSidebar(
+  framework: SupportedFramework,
   sidebarToFilter: Sidebar = sidebar,
   isDev: boolean = import.meta.env.DEV
 ): Sidebar {
   return sidebarToFilter
-    .filter((item) => isItemVisible(item, framework, style, isDev))
+    .filter((item) => isItemVisible(item, framework, isDev))
     .map((item) => {
       if (isSection(item)) {
-        const filteredContents = filterSidebar(framework, style, item.contents, isDev);
+        const filteredContents = filterSidebar(framework, item.contents, isDev);
         return {
           ...item,
           contents: filteredContents,
@@ -72,46 +65,42 @@ export function filterSidebar<F extends SupportedFramework>(
 }
 
 /**
- * Find the first guide in the sidebar that matches the framework and style.
+ * Find the first guide in the sidebar that matches the framework.
  * Recursively searches through sections and guides in order,
  * returning the slug of the first visible guide found.
- * A test validates that this function always returns a guide for any valid framework/style combo,
- * since the sidebar always includes at least one guide that has no fw/style restrictions.
+ * A test validates that this function always returns a guide for any valid framework,
+ * since the sidebar always includes at least one guide that has no framework restrictions.
  *
  * @param framework - The framework to match
- * @param style - The style to match
  * @param sidebarToSearch - Optional sidebar to search (defaults to main sidebar config)
  * @param isDev - Whether in development mode (defaults to import.meta.env.DEV)
- * @returns The slug of the first visible guide, or null if none found
+ * @returns The slug of the first visible guide, or throws if none found
  */
-export function findFirstGuide<F extends SupportedFramework>(
-  framework: F,
-  style: SupportedStyle<F>,
+export function findFirstGuide(
+  framework: SupportedFramework,
   sidebarToSearch: Sidebar = sidebar,
   isDev: boolean = import.meta.env.DEV
 ): string {
-  if (!isValidStyleForFramework(framework, style as AnySupportedStyle)) {
-    throw new Error(`Invalid style "${style}" for framework "${framework}".`);
-  }
-
   for (const item of sidebarToSearch) {
-    if (!isItemVisible(item, framework, style, isDev)) {
+    if (!isItemVisible(item, framework, isDev)) {
       continue;
     }
 
     if (isSection(item)) {
       // Recursively search section contents
-      const guide = findFirstGuide(framework, style, item.contents, isDev);
-      if (guide) return guide;
+      try {
+        const guide = findFirstGuide(framework, item.contents, isDev);
+        if (guide) return guide;
+      } catch {
+        // Continue searching other sections
+      }
     } else {
       // It's a Guide, return its slug
       return item.slug;
     }
   }
 
-  throw new Error(
-    `No guide found for valid combination framework "${framework}" and style "${style}". This should never happen.`
-  );
+  throw new Error(`No guide found for valid combination framework "${framework}". This should never happen.`);
 }
 
 /**
@@ -189,58 +178,6 @@ export function getSectionsForGuide(slug: string, sidebarToSearch: Sidebar = sid
 }
 
 /**
- * Get valid styles for a guide, optionally filtered by framework.
- *
- * When framework is provided:
- * - First checks if guide supports the framework (returns empty array if not)
- * - Returns the intersection of styles the framework supports and styles the guide supports
- * - If the guide has no style restrictions, returns all framework styles
- *
- * When framework is omitted:
- * - Returns all styles the guide supports
- * - If the guide has no style restrictions, returns all possible styles across all frameworks
- *
- * @param guide - The guide to check
- * @param framework - Optional framework to check against
- * @returns Array of valid styles for this guide (in the specified framework, if provided)
- */
-export function getValidStylesForGuide<F extends SupportedFramework>(
-  guide: Guide,
-  framework?: F
-): F extends undefined ? readonly AnySupportedStyle[] : readonly SupportedStyle<F>[];
-export function getValidStylesForGuide<F extends SupportedFramework>(
-  guide: Guide,
-  framework?: F
-): readonly AnySupportedStyle[] {
-  // If no framework specified, return all styles the guide supports (or all styles if no restrictions)
-  if (framework === undefined) {
-    if (!guide.styles) {
-      // Guide has no style restrictions, return all possible styles (deduplicated)
-      const allStyles = Object.values(FRAMEWORK_STYLES).flat();
-      return [...new Set(allStyles)] as readonly AnySupportedStyle[];
-    }
-    return guide.styles;
-  }
-
-  // Framework specified - first check if guide supports this framework
-  if (guide.frameworks && !guide.frameworks.includes(framework)) {
-    // Guide doesn't support this framework, return empty array
-    return [];
-  }
-
-  // Framework specified, filter by framework styles
-  const frameworkStyles = FRAMEWORK_STYLES[framework];
-
-  // If guide has no style restrictions, all framework styles are valid
-  if (!guide.styles) {
-    return frameworkStyles;
-  }
-
-  // Return intersection of framework styles and guide styles
-  return frameworkStyles.filter((s) => guide.styles!.includes(s));
-}
-
-/**
  * Get all valid frameworks for a guide.
  * Returns the frameworks the guide is restricted to, or all frameworks if it has no restrictions.
  *
@@ -258,20 +195,18 @@ export function getValidFrameworksForGuide(guide: Guide): SupportedFramework[] {
 
 /**
  * Get the previous and next guides for a given guide slug.
- * Returns the adjacent guides in the filtered sidebar for the given framework and style.
+ * Returns the adjacent guides in the filtered sidebar for the given framework.
  *
  * @param currentSlug - The slug of the current guide
  * @param framework - The framework to filter for
- * @param style - The style to filter for
  * @returns Object with prev and next guides (null if at start/end)
  */
-export function getAdjacentGuides<F extends SupportedFramework>(
+export function getAdjacentGuides(
   currentSlug: string,
-  framework: F,
-  style: SupportedStyle<F>
+  framework: SupportedFramework
 ): { prev: Guide | null; next: Guide | null } {
-  // Get the filtered sidebar for this framework/style combination
-  const filteredSidebar = filterSidebar(framework, style);
+  // Get the filtered sidebar for this framework
+  const filteredSidebar = filterSidebar(framework);
 
   // Flatten the sidebar to get all guides in order
   const allGuides = getAllGuideSlugs(filteredSidebar);

@@ -1,19 +1,17 @@
 ---
-
 import GithubSlugger from 'github-slugger';
 import { ChevronDown } from 'lucide-react';
-import type { Guide, Section, SupportedFramework, SupportedStyle } from '@/types/docs';
+import type { Guide, Section, SupportedFramework } from '@/types/docs';
 import { isSection } from '@/types/docs';
 
-type Props<F extends SupportedFramework = SupportedFramework> = {
+type Props = {
   item: Guide | Section;
-  framework: F;
-  style: SupportedStyle<F>;
+  framework: SupportedFramework;
   docTitles: Map<string, string>;
   depth?: number;
 };
 
-const { item, framework, style, docTitles, depth = 0 } = Astro.props;
+const { item, framework, docTitles, depth = 0 } = Astro.props;
 const currentPath = Astro.url.pathname;
 const slugger = new GithubSlugger();
 
@@ -22,7 +20,7 @@ function containsActivePath(item: Guide | Section): boolean {
   if (isSection(item)) {
     return item.contents.some((child) => containsActivePath(child));
   } else {
-    const itemPath = `/docs/framework/${framework}/style/${style}/${item.slug}`;
+    const itemPath = `/docs/framework/${framework}/${item.slug}`;
     return itemPath === currentPath;
   }
 }
@@ -52,7 +50,7 @@ const isActive = containsActivePath(item);
       </summary>
       <div>
         {item.contents.map((contentItem) => (
-          <Astro.self item={contentItem} framework={framework} style={style} docTitles={docTitles} depth={depth + 1} />
+          <Astro.self item={contentItem} framework={framework} docTitles={docTitles} depth={depth + 1} />
         ))}
       </div>
     </details>
@@ -67,7 +65,7 @@ const isActive = containsActivePath(item);
         isActive ? 'text-dark-100 dark:text-light-100 border-current ' : 'border-light-40 dark:border-dark-40',
       ]}
       style={`padding-left: calc(var(--spacing) * ${depth * 4})`}
-      href={`/docs/framework/${framework}/style/${style}/${item.slug}`}
+      href={`/docs/framework/${framework}/${item.slug}`}
     >
       {item.devOnly ? '[Dev only] ' : ''}
       {item.sidebarLabel || docTitles.get(item.slug) || item.slug}

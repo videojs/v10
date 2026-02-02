@@ -1,0 +1,63 @@
+---
+import { FRAMEWORK_STYLES, getDefaultStyle, SUPPORTED_FRAMEWORKS } from '@/types/docs';
+
+const STYLE_KEY_PREFIX = 'vjs_docs_style_';
+
+// Derive values from the single source of truth (FRAMEWORK_STYLES)
+// Pass as plain objects since define:vars serializes to JSON
+const frameworkStylesConfig = Object.fromEntries(SUPPORTED_FRAMEWORKS.map((fw) => [fw, [...FRAMEWORK_STYLES[fw]]]));
+const defaultStyleConfig = getDefaultStyle(SUPPORTED_FRAMEWORKS[0]);
+
+// Collect all unique styles across all frameworks for CSS generation
+const allStyles = [...new Set(Object.values(FRAMEWORK_STYLES).flat())];
+---
+
+{/* Style visibility CSS rules - generated from FRAMEWORK_STYLES to stay in sync */}
+<style set:html={`
+  [data-for-style] { display: none; }
+  ${allStyles.map(style => `html[data-style='${style}'] [data-for-style~='${style}'] { display: contents; }`).join('\n  ')}
+`}></style>
+
+{/*
+  Style initialization script - runs before paint to prevent FOUC.
+
+  Supports ?style= query param for deep-linking (e.g., ?style=tailwind).
+  This allows external links to specify a style preference. The style is
+  validated against valid styles for the current framework and persisted
+  to localStorage.
+*/}
+<script
+  is:inline
+  define:vars={{ keyPrefix: STYLE_KEY_PREFIX, frameworkStyles: frameworkStylesConfig, defaultStyle: defaultStyleConfig }}
+>
+  if (typeof localStorage !== 'undefined' && typeof document !== 'undefined') {
+    // Extract framework from URL: /docs/framework/{framework}/...
+    const pathMatch = window.location.pathname.match(/\/docs\/framework\/([^/]+)/);
+    const framework = pathMatch?.[1];
+
+    const validStyles = frameworkStyles[framework];
+    if (framework && validStyles) {
+      const storageKey = keyPrefix + framework;
+
+      // Check for ?style= query param (enables deep-linking)
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryStyle = urlParams.get('style');
+
+      let style;
+      if (queryStyle && validStyles.includes(queryStyle)) {
+        // Query param overrides and persists to localStorage for this framework
+        style = queryStyle;
+        localStorage.setItem(storageKey, style);
+      } else {
+        // Fall back to localStorage or default
+        style = localStorage.getItem(storageKey);
+        if (!style || !validStyles.includes(style)) {
+          style = defaultStyle;
+          localStorage.setItem(storageKey, style);
+        }
+      }
+
+      document.documentElement.dataset.style = style;
+    }
+  }
+</script>
