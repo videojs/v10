@@ -1,7 +1,3 @@
-[build]
-  command = "pnpm build"
-  publish = "dist"
-
 # Redirect old theme demo pages to home
 [[redirects]]
   from = "/city"
