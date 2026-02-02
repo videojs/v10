@@ -1202,19 +1202,15 @@ export function createPlayer<const Features extends AnyFeature<PlayerTarget>[]>(
 
 ## Phase 5: Cleanup
 
-### PR 15: refactor(store): remove createStore from react and lit
+### PR 15: refactor(store): remove createStore from lit
 
 Remove deprecated exports, update package indexes.
+
+**Note:** React cleanup (`createStore`, `useStoreContext`, etc.) was done in Phase 3 (PR 11).
 
 **Files:**
 
 ```
-packages/store/src/react/create-store.tsx (delete)
-packages/store/src/react/context.tsx (delete)
-packages/store/src/react/index.ts (update)
-packages/store/src/react/tests/create-store.test.tsx (delete)
-packages/store/src/react/tests/context.test.tsx (delete)
-
 packages/store/src/lit/create-store.ts (delete)
 packages/store/src/lit/mixins/provider-mixin.ts (delete)
 packages/store/src/lit/mixins/container-mixin.ts (delete)

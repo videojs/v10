@@ -4,9 +4,9 @@ import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { PlayerContextProvider, type PlayerContextValue } from '../../player/context';
-import { Video } from '../video';
+import { Audio } from '../audio';
 
-describe('Video', () => {
+describe('Audio', () => {
   function createMockStore() {
     return {
       state: { volume: 1, muted: false },
@@ -24,40 +24,37 @@ describe('Video', () => {
 
   describe('standalone (without Provider)', () => {
     it('renders without error', () => {
-      const { container } = render(<Video data-testid="video" />);
-      const video = container.querySelector('video');
-      expect(video).toBeTruthy();
-      expect(video?.getAttribute('data-testid')).toBe('video');
+      const { container } = render(<Audio data-testid="audio" />);
+      const audio = container.querySelector('audio');
+      expect(audio).toBeTruthy();
+      expect(audio?.getAttribute('data-testid')).toBe('audio');
     });
 
-    it('passes props to video element', () => {
-      const { container } = render(<Video src="test.mp4" controls autoPlay playsInline />);
+    it('passes props to audio element', () => {
+      const { container } = render(<Audio src="test.mp3" controls autoPlay />);
 
-      const video = container.querySelector('video') as HTMLVideoElement;
-      expect(video?.getAttribute('src')).toBe('test.mp4');
-      expect(video?.hasAttribute('controls')).toBe(true);
-      expect(video?.hasAttribute('autoplay')).toBe(true);
-      expect(video?.hasAttribute('playsinline')).toBe(true);
+      const audio = container.querySelector('audio') as HTMLAudioElement;
+      expect(audio?.getAttribute('src')).toBe('test.mp3');
+      expect(audio?.hasAttribute('controls')).toBe(true);
+      expect(audio?.hasAttribute('autoplay')).toBe(true);
     });
 
     it('renders children', () => {
       const { container } = render(
-        <Video>
-          <source src="test.mp4" type="video/mp4" />
-          <track kind="captions" src="captions.vtt" />
-        </Video>
+        <Audio>
+          <source src="test.mp3" type="audio/mpeg" />
+        </Audio>
       );
 
-      const video = container.querySelector('video');
-      expect(video?.querySelector('source')).toBeTruthy();
-      expect(video?.querySelector('track')).toBeTruthy();
+      const audio = container.querySelector('audio');
+      expect(audio?.querySelector('source')).toBeTruthy();
     });
 
     it('forwards ref correctly', () => {
-      const ref = createRef<HTMLVideoElement>();
-      render(<Video ref={ref} />);
+      const ref = createRef<HTMLAudioElement>();
+      render(<Audio ref={ref} />);
 
-      expect(ref.current).toBeInstanceOf(HTMLVideoElement);
+      expect(ref.current).toBeInstanceOf(HTMLAudioElement);
     });
   });
 
@@ -67,9 +64,9 @@ describe('Video', () => {
       const store = createMockStore();
       const value: PlayerContextValue = { store: store as any, media: null, setMedia };
 
-      render(<Video />, { wrapper: createWrapper(value) });
+      render(<Audio />, { wrapper: createWrapper(value) });
 
-      expect(setMedia).toHaveBeenCalledWith(expect.any(HTMLVideoElement));
+      expect(setMedia).toHaveBeenCalledWith(expect.any(HTMLAudioElement));
     });
 
     it('calls setMedia with null on unmount', () => {
@@ -77,7 +74,7 @@ describe('Video', () => {
       const store = createMockStore();
       const value: PlayerContextValue = { store: store as any, media: null, setMedia };
 
-      const { unmount } = render(<Video />, { wrapper: createWrapper(value) });
+      const { unmount } = render(<Audio />, { wrapper: createWrapper(value) });
 
       setMedia.mockClear();
       unmount();
@@ -90,10 +87,10 @@ describe('Video', () => {
       const store = createMockStore();
       const value: PlayerContextValue = { store: store as any, media: null, setMedia };
 
-      const ref = createRef<HTMLVideoElement>();
-      render(<Video ref={ref} />, { wrapper: createWrapper(value) });
+      const ref = createRef<HTMLAudioElement>();
+      render(<Audio ref={ref} />, { wrapper: createWrapper(value) });
 
-      expect(ref.current).toBeInstanceOf(HTMLVideoElement);
+      expect(ref.current).toBeInstanceOf(HTMLAudioElement);
       expect(setMedia).toHaveBeenCalledWith(ref.current);
     });
   });
