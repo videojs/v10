@@ -99,10 +99,10 @@ Selectors extract typed state from the store. They enable:
 - **Composition** — Derive values from multiple state properties
 
 ```ts
-import { createSliceSelector } from '@videojs/store';
+import { createSelector } from '@videojs/store';
 
 // Create selector from slice
-const selectPlayback = createSliceSelector(playbackSlice);
+const selectPlayback = createSelector(playbackSlice);
 
 // Usage in React
 const playback = usePlayer(selectPlayback);

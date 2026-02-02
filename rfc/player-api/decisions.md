@@ -245,7 +245,7 @@ const playbackKey: FeatureKey<typeof playbackSlice> = PLAYBACK_KEY;
 store.get(playbackKey); // Typed access without importing slice
 ```
 
-**Deferred:** `createSliceSelector` provides equivalent type-safe access without the complexity of symbol-based keys.
+**Deferred:** `createSelector` provides equivalent type-safe access without the complexity of symbol-based keys.
 
 ### store.get / store.has
 

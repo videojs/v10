@@ -73,9 +73,9 @@ class MediaPlayButton extends MediaElement {
 Selectors extract typed state from the store:
 
 ```ts
-import { createSliceSelector } from '@videojs/store';
+import { createSelector } from '@videojs/store';
 
-const selectPlayback = createSliceSelector(playbackSlice);
+const selectPlayback = createSelector(playbackSlice);
 // Type: (state: Record<string, unknown>) => PlaybackState | undefined
 ```
 
@@ -225,7 +225,7 @@ export function VolumeSlider() {
 ### @videojs/store
 
 ```ts
-import { shallowEqual, createSliceSelector } from '@videojs/store';
+import { shallowEqual, createSelector } from '@videojs/store';
 ```
 
 ### @videojs/core/dom

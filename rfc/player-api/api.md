@@ -248,9 +248,9 @@ import {
 ### Creating Custom Selectors
 
 ```ts
-import { createSliceSelector } from '@videojs/store';
+import { createSelector } from '@videojs/store';
 
-const selectMyFeature = createSliceSelector(mySlice);
+const selectMyFeature = createSelector(mySlice);
 ```
 
 ## Type Exports
@@ -258,13 +258,13 @@ const selectMyFeature = createSliceSelector(mySlice);
 ### From `@videojs/store`
 
 ```ts
-import { shallowEqual, createSliceSelector } from '@videojs/store';
+import { shallowEqual, createSelector } from '@videojs/store';
 ```
 
-| Export                | Purpose                          |
-| --------------------- | -------------------------------- |
-| `shallowEqual`        | Shallow comparison for selectors |
-| `createSliceSelector` | Create selector from slice       |
+| Export           | Purpose                          |
+| ---------------- | -------------------------------- |
+| `shallowEqual`   | Shallow comparison for selectors |
+| `createSelector` | Create selector from slice       |
 
 ### From `@videojs/core/dom`
 

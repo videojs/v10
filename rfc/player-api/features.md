@@ -167,11 +167,11 @@ features.live = [
 Each slice has a corresponding selector for typed access:
 
 ```ts
-import { createSliceSelector } from '@videojs/store';
+import { createSelector } from '@videojs/store';
 
-export const selectPlayback = createSliceSelector(playbackSlice);
-export const selectVolume = createSliceSelector(volumeSlice);
-export const selectTime = createSliceSelector(timeSlice);
+export const selectPlayback = createSelector(playbackSlice);
+export const selectVolume = createSelector(volumeSlice);
+export const selectTime = createSelector(timeSlice);
 ```
 
 ### Pre-built Selectors
@@ -282,4 +282,4 @@ import { playbackKey } from '@videojs/core/dom';
 const playback = store.get(playbackKey);
 ```
 
-**Deferred:** `createSliceSelector` provides equivalent type-safe access without the complexity.
+**Deferred:** `createSelector` provides equivalent type-safe access without the complexity.
