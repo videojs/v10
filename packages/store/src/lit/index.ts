@@ -1,7 +1,7 @@
 export { StoreController, SubscriptionController } from './controllers';
 export type {
-  CreateStoreConfig,
   CreateStoreHost,
+  CreateStoreOptions,
   CreateStoreResult,
   contextKey,
 } from './create-store';

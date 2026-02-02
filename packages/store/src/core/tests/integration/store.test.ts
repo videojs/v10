@@ -1,7 +1,7 @@
 import { noop } from '@videojs/utils/function';
 import { describe, expect, it } from 'vitest';
 
-import { createStore, defineFeature } from '../../index';
+import { combine, createStore, defineSlice } from '../../index';
 
 describe('store lifecycle integration', () => {
   it('full lifecycle: create → attach → use → detach → destroy', async () => {
@@ -11,7 +11,7 @@ describe('store lifecycle integration', () => {
       value = 0;
     }
 
-    const feature = defineFeature<Target>()({
+    const slice = defineSlice<Target>()({
       state: ({ task }) => ({
         count: 0,
         increment() {
@@ -24,7 +24,7 @@ describe('store lifecycle integration', () => {
       }),
 
       attach({ target: t, signal, set }) {
-        events.push('attach-feature');
+        events.push('attach-slice');
         set({ count: t.value });
 
         t.addEventListener('change', () => set({ count: t.value }), { signal });
@@ -32,8 +32,7 @@ describe('store lifecycle integration', () => {
       },
     });
 
-    const store = createStore({
-      features: [feature],
+    const store = createStore<Target>()(slice, {
       onSetup: () => events.push('setup'),
       onAttach: () => events.push('attach'),
     });
@@ -44,7 +43,7 @@ describe('store lifecycle integration', () => {
     targetInstance.value = 5;
     const detach = store.attach(targetInstance);
 
-    expect(events).toEqual(['setup', 'attach-feature', 'attach']);
+    expect(events).toEqual(['setup', 'attach-slice', 'attach']);
     expect(store.state.count).toBe(5);
 
     await store.increment();
@@ -64,7 +63,7 @@ describe('task coordination', () => {
   it('cancels option aborts related tasks', async () => {
     const events: string[] = [];
 
-    const feature = defineFeature<unknown>()({
+    const slice = defineSlice<unknown>()({
       state: ({ task }) => ({
         loading: false,
         load() {
@@ -97,10 +96,7 @@ describe('task coordination', () => {
       }),
     });
 
-    const store = createStore({
-      features: [feature],
-      onError: () => {},
-    });
+    const store = createStore<unknown>()(slice, { onError: () => {} });
 
     store.attach({});
 
@@ -120,7 +116,7 @@ describe('task coordination', () => {
   it('different keys enable parallel execution', async () => {
     const completionOrder: number[] = [];
 
-    const feature = defineFeature<unknown>()({
+    const slice = defineSlice<unknown>()({
       state: ({ task }) => ({
         fetching: false,
         fetchTrack(id: number) {
@@ -136,7 +132,7 @@ describe('task coordination', () => {
       }),
     });
 
-    const store = createStore({ features: [feature] });
+    const store = createStore<unknown>()(slice);
     store.attach({});
 
     const [r3, r1, r2] = await Promise.all([store.fetchTrack(3), store.fetchTrack(1), store.fetchTrack(2)]);
@@ -150,7 +146,7 @@ describe('task coordination', () => {
   it('same key tasks supersede each other', async () => {
     const executed: string[] = [];
 
-    const feature = defineFeature<unknown>()({
+    const slice = defineSlice<unknown>()({
       state: ({ task }) => ({
         running: false,
         action(name: string) {
@@ -173,10 +169,7 @@ describe('task coordination', () => {
       }),
     });
 
-    const store = createStore({
-      features: [feature],
-      onError: () => {},
-    });
+    const store = createStore<unknown>()(slice, { onError: () => {} });
 
     store.attach({});
 
@@ -199,7 +192,7 @@ describe('task coordination', () => {
   it('mode: shared allows multiple tasks to share fate', async () => {
     let handlerCallCount = 0;
 
-    const feature = defineFeature<unknown>()({
+    const slice = defineSlice<unknown>()({
       state: ({ task }) => ({
         playing: false,
         play() {
@@ -216,7 +209,7 @@ describe('task coordination', () => {
       }),
     });
 
-    const store = createStore({ features: [feature] });
+    const store = createStore<unknown>()(slice);
     store.attach({});
 
     const p1 = store.play();
@@ -231,7 +224,7 @@ describe('task coordination', () => {
   });
 
   it('mode: shared rejects all promises together on error', async () => {
-    const feature = defineFeature<unknown>()({
+    const slice = defineSlice<unknown>()({
       state: ({ task }) => ({
         playing: false,
         play() {
@@ -247,10 +240,7 @@ describe('task coordination', () => {
       }),
     });
 
-    const store = createStore({
-      features: [feature],
-      onError: () => {},
-    });
+    const store = createStore<unknown>()(slice, { onError: () => {} });
 
     store.attach({});
 
@@ -264,7 +254,7 @@ describe('task coordination', () => {
   it('mode: shared allows new task after previous completes', async () => {
     let callCount = 0;
 
-    const feature = defineFeature<unknown>()({
+    const slice = defineSlice<unknown>()({
       state: ({ task }) => ({
         playing: false,
         play() {
@@ -281,7 +271,7 @@ describe('task coordination', () => {
       }),
     });
 
-    const store = createStore({ features: [feature] });
+    const store = createStore<unknown>()(slice);
     store.attach({});
 
     const p1 = store.play();
@@ -299,8 +289,8 @@ describe('task coordination', () => {
 });
 
 describe('state syncing', () => {
-  it('multiple features merge state correctly', () => {
-    const audioFeature = defineFeature<{ volume: number; rate: number }>()({
+  it('multiple slices merge state correctly', () => {
+    const audioSlice = defineSlice<{ volume: number; rate: number }>()({
       state: () => ({ volume: 1 }),
 
       attach({ target, set }) {
@@ -308,7 +298,7 @@ describe('state syncing', () => {
       },
     });
 
-    const playbackFeature = defineFeature<{ volume: number; rate: number }>()({
+    const playbackSlice = defineSlice<{ volume: number; rate: number }>()({
       state: () => ({ rate: 1 }),
 
       attach({ target, set }) {
@@ -316,9 +306,7 @@ describe('state syncing', () => {
       },
     });
 
-    const store = createStore({
-      features: [audioFeature, playbackFeature],
-    });
+    const store = createStore<{ volume: number; rate: number }>()(combine(audioSlice, playbackSlice));
 
     const target = { volume: 0.5, rate: 1.5 };
     store.attach(target);
@@ -340,7 +328,7 @@ describe('immediate execution', () => {
       }
     }
 
-    const playbackFeature = defineFeature<MockMedia>()({
+    const playbackSlice = defineSlice<MockMedia>()({
       state: ({ task }) => ({
         paused: true,
         play() {
@@ -357,7 +345,7 @@ describe('immediate execution', () => {
       },
     });
 
-    const store = createStore({ features: [playbackFeature] });
+    const store = createStore<MockMedia>()(playbackSlice);
     const target = new MockMedia();
     store.attach(target);
 
@@ -374,7 +362,7 @@ describe('meta tracing', () => {
   it('store.meta() passes meta to task handlers', async () => {
     let receivedMeta: unknown = null;
 
-    const feature = defineFeature<unknown>()({
+    const slice = defineSlice<unknown>()({
       state: ({ task }) => ({
         playing: false,
         play() {
@@ -388,7 +376,7 @@ describe('meta tracing', () => {
       }),
     });
 
-    const store = createStore({ features: [feature] });
+    const store = createStore<unknown>()(slice);
     store.attach({});
 
     await store.meta({ source: 'user', reason: 'button-click' }).play();
@@ -402,7 +390,7 @@ describe('meta tracing', () => {
   it('onTaskStart and onTaskEnd callbacks fire', async () => {
     const events: string[] = [];
 
-    const feature = defineFeature<unknown>()({
+    const slice = defineSlice<unknown>()({
       state: ({ task }) => ({
         count: 0,
         increment() {
@@ -416,8 +404,7 @@ describe('meta tracing', () => {
       }),
     });
 
-    const store = createStore({
-      features: [feature],
+    const store = createStore<unknown>()(slice, {
       onTaskStart: ({ key }) => events.push(`start:${String(key)}`),
       onTaskEnd: ({ key, error }) => events.push(`end:${String(key)}${error ? ':error' : ''}`),
     });
@@ -430,7 +417,7 @@ describe('meta tracing', () => {
   });
 
   it('pending tracks running tasks', async () => {
-    const feature = defineFeature<unknown>()({
+    const slice = defineSlice<unknown>()({
       state: ({ task }) => ({
         loading: false,
         load() {
@@ -444,7 +431,7 @@ describe('meta tracing', () => {
       }),
     });
 
-    const store = createStore({ features: [feature] });
+    const store = createStore<unknown>()(slice);
     store.attach({});
 
     expect(store.pending.load).toBeUndefined();
@@ -467,7 +454,7 @@ describe('sync actions', () => {
       volume = 1;
     }
 
-    const feature = defineFeature<Target>()({
+    const slice = defineSlice<Target>()({
       state: ({ task }) => ({
         volume: 1,
         setVolume(value: number) {
@@ -482,7 +469,7 @@ describe('sync actions', () => {
       },
     });
 
-    const store = createStore({ features: [feature] });
+    const store = createStore<Target>()(slice);
     const targetInstance = new Target();
 
     store.attach(targetInstance);
@@ -492,7 +479,7 @@ describe('sync actions', () => {
   });
 
   it('task throws when not attached', async () => {
-    const feature = defineFeature<unknown>()({
+    const slice = defineSlice<unknown>()({
       state: ({ task }) => ({
         value: 0,
         doSomething() {
@@ -501,7 +488,7 @@ describe('sync actions', () => {
       }),
     });
 
-    const store = createStore({ features: [feature], onError: noop });
+    const store = createStore<unknown>()(slice, { onError: noop });
 
     await expect(store.doSomething()).rejects.toThrow('NO_TARGET');
   });

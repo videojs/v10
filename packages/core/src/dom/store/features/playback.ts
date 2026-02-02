@@ -1,11 +1,9 @@
-import type { InferFeatureState } from '@videojs/store';
-
-import { defineFeature } from '@videojs/store';
+import type { InferSliceState } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
-import type { PlayerTarget } from '../../types';
+import { definePlayerFeature } from '../../feature';
 
-export const playbackFeature = defineFeature<PlayerTarget>()({
+export const playbackFeature = definePlayerFeature({
   state: ({ task }) => ({
     /** Whether playback is paused. */
     paused: true,
@@ -59,4 +57,4 @@ export const playbackFeature = defineFeature<PlayerTarget>()({
   },
 });
 
-export type PlaybackState = InferFeatureState<typeof playbackFeature>;
+export type PlaybackState = InferSliceState<typeof playbackFeature>;

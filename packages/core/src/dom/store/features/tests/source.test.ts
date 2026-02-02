@@ -1,6 +1,7 @@
 import { createStore } from '@videojs/store';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { PlayerTarget } from '../../../types';
 import { sourceFeature } from '../source';
 
 describe('sourceFeature', () => {
@@ -12,7 +13,7 @@ describe('sourceFeature', () => {
         readyState: HTMLMediaElement.HAVE_ENOUGH_DATA,
       });
 
-      const store = createStore({ features: [sourceFeature] });
+      const store = createStore<PlayerTarget>()(sourceFeature);
       store.attach({ media: video, container: null });
 
       expect(store.state.source).toBe('https://example.com/video.mp4');
@@ -25,7 +26,7 @@ describe('sourceFeature', () => {
       Object.defineProperty(video, 'currentSrc', { value: '', writable: false });
       Object.defineProperty(video, 'readyState', { value: HTMLMediaElement.HAVE_NOTHING, writable: false });
 
-      const store = createStore({ features: [sourceFeature] });
+      const store = createStore<PlayerTarget>()(sourceFeature);
       store.attach({ media: video, container: null });
 
       expect(store.state.source).toBe(null);
@@ -38,7 +39,7 @@ describe('sourceFeature', () => {
         readyState: HTMLMediaElement.HAVE_NOTHING,
       });
 
-      const store = createStore({ features: [sourceFeature] });
+      const store = createStore<PlayerTarget>()(sourceFeature);
       store.attach({ media: video, container: null });
 
       expect(store.state.canPlay).toBe(false);
@@ -59,7 +60,7 @@ describe('sourceFeature', () => {
         currentSrc: 'https://example.com/video.mp4',
       });
 
-      const store = createStore({ features: [sourceFeature] });
+      const store = createStore<PlayerTarget>()(sourceFeature);
       store.attach({ media: video, container: null });
 
       expect(store.state.source).toBe('https://example.com/video.mp4');
@@ -81,7 +82,7 @@ describe('sourceFeature', () => {
         readyState: HTMLMediaElement.HAVE_ENOUGH_DATA,
       });
 
-      const store = createStore({ features: [sourceFeature] });
+      const store = createStore<PlayerTarget>()(sourceFeature);
       store.attach({ media: video, container: null });
 
       expect(store.state.canPlay).toBe(true);
@@ -106,7 +107,7 @@ describe('sourceFeature', () => {
         const video = createMockVideo({});
         video.load = vi.fn();
 
-        const store = createStore({ features: [sourceFeature] });
+        const store = createStore<PlayerTarget>()(sourceFeature);
         store.attach({ media: video, container: null });
 
         const result = await store.loadSource('https://example.com/new.mp4');

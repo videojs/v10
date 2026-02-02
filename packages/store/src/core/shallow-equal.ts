@@ -1,3 +1,7 @@
+export type Selector<State, Result> = (state: State) => Result;
+
+export type Comparator<T> = (a: T, b: T) => boolean;
+
 const hasOwn = Object.prototype.hasOwnProperty;
 
 export function shallowEqual<T>(a: T, b: T): boolean {

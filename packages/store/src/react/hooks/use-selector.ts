@@ -1,9 +1,7 @@
 import { useRef, useSyncExternalStore } from 'react';
-import { shallowEqual } from '../../core/shallow-equal';
+import { type Comparator, type Selector, shallowEqual } from '../../core/shallow-equal';
 
-export type Selector<S, R> = (state: S) => R;
-
-export type Comparator<T> = (a: T, b: T) => boolean;
+export type { Comparator, Selector };
 
 /** Subscribe to derived state with customizable equality check. */
 export function useSelector<S, R>(

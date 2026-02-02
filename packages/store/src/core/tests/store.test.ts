@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { defineFeature } from '../feature';
+import { combine } from '../combine';
+import { defineSlice } from '../slice';
 import { flush } from '../state';
 import { createStore } from '../store';
 
@@ -14,7 +15,7 @@ describe('store', () => {
     pause = vi.fn();
   }
 
-  const audioFeature = defineFeature<MockMedia>()({
+  const audioSlice = defineSlice<MockMedia>()({
     state: ({ task }) => ({
       volume: 1,
       muted: false,
@@ -44,7 +45,7 @@ describe('store', () => {
     },
   });
 
-  const playbackFeature = defineFeature<MockMedia>()({
+  const playbackSlice = defineSlice<MockMedia>()({
     state: ({ task }) => ({
       paused: true,
       play() {
@@ -74,9 +75,7 @@ describe('store', () => {
 
   describe('creation', () => {
     it('creates store with merged initial state', () => {
-      const store = createStore({
-        features: [audioFeature, playbackFeature],
-      });
+      const store = createStore<MockMedia>()(combine(audioSlice, playbackSlice));
 
       expect(store.state).toMatchObject({
         volume: 1,
@@ -87,10 +86,7 @@ describe('store', () => {
 
     it('calls onSetup', () => {
       const onSetup = vi.fn();
-      const store = createStore({
-        features: [audioFeature],
-        onSetup,
-      });
+      const store = createStore<MockMedia>()(audioSlice, { onSetup });
 
       expect(onSetup).toHaveBeenCalledWith({
         store,
@@ -101,9 +97,7 @@ describe('store', () => {
 
   describe('attach', () => {
     it('syncs state from target', () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
       media.volume = 0.5;
@@ -117,10 +111,7 @@ describe('store', () => {
 
     it('calls onAttach', () => {
       const onAttach = vi.fn();
-      const store = createStore({
-        features: [audioFeature],
-        onAttach,
-      });
+      const store = createStore<MockMedia>()(audioSlice, { onAttach });
 
       const media = new MockMedia();
       store.attach(media);
@@ -133,9 +124,7 @@ describe('store', () => {
     });
 
     it('sets up subscriptions', () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
       const addListenerSpy = vi.spyOn(media, 'addEventListener');
@@ -146,9 +135,7 @@ describe('store', () => {
     });
 
     it('detach cleans up', () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
       const removeListenerSpy = vi.spyOn(media, 'removeEventListener');
@@ -161,9 +148,7 @@ describe('store', () => {
     });
 
     it('reattach cleans up previous', () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media1 = new MockMedia();
       const m1RemoveListenerSpy = vi.spyOn(media1, 'removeEventListener');
@@ -183,9 +168,7 @@ describe('store', () => {
 
   describe('actions', () => {
     it('executes action on target', async () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
       store.attach(media);
@@ -196,19 +179,13 @@ describe('store', () => {
     });
 
     it('throws StoreError without target', async () => {
-      const store = createStore({
-        features: [audioFeature],
-        onError: () => {},
-      });
+      const store = createStore<MockMedia>()(audioSlice, { onError: () => {} });
 
       await expect(store.setVolume(0.5)).rejects.toMatchObject({ code: 'NO_TARGET' });
     });
 
     it('coordinates actions with same key', async () => {
-      const store = createStore({
-        features: [playbackFeature],
-        onError: () => {},
-      });
+      const store = createStore<MockMedia>()(playbackSlice, { onError: () => {} });
 
       const media = new MockMedia();
       store.attach(media);
@@ -225,7 +202,7 @@ describe('store', () => {
     it('passes meta to handler', async () => {
       let receivedMeta: unknown = null;
 
-      const feature = defineFeature<MockMedia>()({
+      const slice = defineSlice<MockMedia>()({
         state: ({ task }) => ({
           value: 0,
           action() {
@@ -239,9 +216,7 @@ describe('store', () => {
         }),
       });
 
-      const store = createStore({
-        features: [feature],
-      });
+      const store = createStore<MockMedia>()(slice);
 
       store.attach(new MockMedia());
 
@@ -256,7 +231,7 @@ describe('store', () => {
     it('clears meta after action without task()', async () => {
       let receivedMeta: unknown = 'not-called';
 
-      const feature = defineFeature<MockMedia>()({
+      const slice = defineSlice<MockMedia>()({
         state: ({ task }) => ({
           value: 0,
           // Sync action that doesn't use task()
@@ -275,9 +250,7 @@ describe('store', () => {
         }),
       });
 
-      const store = createStore({
-        features: [feature],
-      });
+      const store = createStore<MockMedia>()(slice);
 
       store.attach(new MockMedia());
 
@@ -293,7 +266,7 @@ describe('store', () => {
     it('isolates meta between chained calls', async () => {
       const receivedMetas: unknown[] = [];
 
-      const feature = defineFeature<MockMedia>()({
+      const slice = defineSlice<MockMedia>()({
         state: ({ task }) => ({
           value: 0,
           action() {
@@ -307,9 +280,7 @@ describe('store', () => {
         }),
       });
 
-      const store = createStore({
-        features: [feature],
-      });
+      const store = createStore<MockMedia>()(slice);
 
       store.attach(new MockMedia());
 
@@ -326,9 +297,7 @@ describe('store', () => {
 
   describe('subscribe', () => {
     it('notifies on state change', async () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
       store.attach(media);
@@ -344,9 +313,7 @@ describe('store', () => {
     });
 
     it('unsubscribe stops notifications', async () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
       store.attach(media);
@@ -364,9 +331,7 @@ describe('store', () => {
 
   describe('destroy', () => {
     it('cleans up everything', () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
       store.attach(media);
@@ -377,9 +342,7 @@ describe('store', () => {
     });
 
     it('rejects actions after destroy', async () => {
-      const store = createStore({
-        features: [audioFeature],
-      });
+      const store = createStore<MockMedia>()(audioSlice);
 
       store.attach(new MockMedia());
       store.destroy();
@@ -392,7 +355,7 @@ describe('store', () => {
     it('calls onError for action errors', async () => {
       const onError = vi.fn();
 
-      const failingFeature = defineFeature<MockMedia>()({
+      const failingSlice = defineSlice<MockMedia>()({
         state: ({ task }) => ({
           value: 0,
           fail() {
@@ -403,10 +366,7 @@ describe('store', () => {
         }),
       });
 
-      const store = createStore({
-        features: [failingFeature],
-        onError,
-      });
+      const store = createStore<MockMedia>()(failingSlice, { onError });
 
       store.attach(new MockMedia());
 

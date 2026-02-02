@@ -1,6 +1,7 @@
 import { createStore } from '@videojs/store';
 import { describe, expect, it } from 'vitest';
 
+import type { PlayerTarget } from '../../../types';
 import { timeFeature } from '../time';
 
 describe('timeFeature', () => {
@@ -11,7 +12,7 @@ describe('timeFeature', () => {
         duration: 120,
       });
 
-      const store = createStore({ features: [timeFeature] });
+      const store = createStore<PlayerTarget>()(timeFeature);
       store.attach({ media: video, container: null });
 
       expect(store.state.currentTime).toBe(30);
@@ -24,7 +25,7 @@ describe('timeFeature', () => {
         duration: Number.NaN,
       });
 
-      const store = createStore({ features: [timeFeature] });
+      const store = createStore<PlayerTarget>()(timeFeature);
       store.attach({ media: video, container: null });
 
       expect(store.state.duration).toBe(0);
@@ -33,7 +34,7 @@ describe('timeFeature', () => {
     it('updates on timeupdate event', () => {
       const video = createMockVideo({ currentTime: 0 });
 
-      const store = createStore({ features: [timeFeature] });
+      const store = createStore<PlayerTarget>()(timeFeature);
       store.attach({ media: video, container: null });
 
       expect(store.state.currentTime).toBe(0);
@@ -48,7 +49,7 @@ describe('timeFeature', () => {
     it('updates on durationchange event', () => {
       const video = createMockVideo({ duration: 0 });
 
-      const store = createStore({ features: [timeFeature] });
+      const store = createStore<PlayerTarget>()(timeFeature);
       store.attach({ media: video, container: null });
 
       expect(store.state.duration).toBe(0);
@@ -63,7 +64,7 @@ describe('timeFeature', () => {
     it('updates on seeked event', () => {
       const video = createMockVideo({ currentTime: 0 });
 
-      const store = createStore({ features: [timeFeature] });
+      const store = createStore<PlayerTarget>()(timeFeature);
       store.attach({ media: video, container: null });
 
       // Update mock currentTime
@@ -79,7 +80,7 @@ describe('timeFeature', () => {
         duration: 120,
       });
 
-      const store = createStore({ features: [timeFeature] });
+      const store = createStore<PlayerTarget>()(timeFeature);
       store.attach({ media: video, container: null });
 
       // Update mock to empty state
@@ -96,7 +97,7 @@ describe('timeFeature', () => {
     describe('seek', () => {
       it('sets currentTime on target and waits for seeked event', async () => {
         const video = createMockVideo({});
-        const store = createStore({ features: [timeFeature] });
+        const store = createStore<PlayerTarget>()(timeFeature);
         store.attach({ media: video, container: null });
 
         const resultPromise = store.seek(45);

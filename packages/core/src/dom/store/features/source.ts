@@ -1,11 +1,10 @@
-import type { InferFeatureState } from '@videojs/store';
-
-import { CANCEL_ALL, defineFeature } from '@videojs/store';
+import type { InferSliceState } from '@videojs/store';
+import { CANCEL_ALL } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
-import type { PlayerTarget } from '../../types';
+import { definePlayerFeature } from '../../feature';
 
-export const sourceFeature = defineFeature<PlayerTarget>()({
+export const sourceFeature = definePlayerFeature({
   state: ({ task }) => ({
     /** Current media source URL (null if none). */
     source: null as string | null,
@@ -44,4 +43,4 @@ export const sourceFeature = defineFeature<PlayerTarget>()({
   },
 });
 
-export type SourceState = InferFeatureState<typeof sourceFeature>;
+export type SourceState = InferSliceState<typeof sourceFeature>;

@@ -1,4 +1,3 @@
-import type { AnyFeature, UnionFeatureState, UnionFeatureTarget } from './feature';
 import type { TaskKey } from './queue';
 import type { RequestMeta } from './request';
 import type { Store } from './store';
@@ -7,11 +6,6 @@ export interface PendingTask {
   key: TaskKey;
   meta: RequestMeta | null;
   startedAt: number;
-}
-
-export interface StoreConfig<Features extends AnyFeature[]>
-  extends StoreCallbacks<UnionFeatureTarget<Features>, UnionFeatureState<Features>> {
-  features: Features;
 }
 
 export interface StoreCallbacks<Target, State> {

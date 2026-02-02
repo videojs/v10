@@ -3,22 +3,22 @@ import { ContextConsumer, createContext } from '@lit/context';
 import type { ReactiveControllerHost, ReactiveElement } from '@lit/reactive-element';
 import { noop } from '@videojs/utils/function';
 import type { Constructor } from '@videojs/utils/types';
-import type { StoreConfig } from '../core/config';
-import type { AnyFeature } from '../core/feature';
-import type { AnyStore, FeatureStore, InferStoreState } from '../core/store';
+import type { StoreCallbacks } from '../core/config';
+import type { InferSliceState, InferSliceTarget, Slice } from '../core/slice';
+import type { AnyStore, InferStoreState, Store } from '../core/store';
 import { createStore as createCoreStore } from '../core/store';
 import { createContainerMixin, createProviderMixin, createStoreMixin } from './mixins';
 import type { StoreConsumer, StoreProvider } from './types';
 
 export const contextKey = Symbol('@videojs/store');
 
-export interface CreateStoreConfig<Features extends AnyFeature[]> extends StoreConfig<Features> {}
+export interface CreateStoreOptions<Target, State> extends StoreCallbacks<Target, State> {}
 
 export type CreateStoreHost = ReactiveControllerHost & HTMLElement;
 
-export type StoreControllerValue<Store extends AnyStore> = InferStoreState<Store>;
+export type StoreControllerValue<S extends AnyStore> = InferStoreState<S>;
 
-export interface CreateStoreResult<Store extends AnyStore> {
+export interface CreateStoreResult<S extends AnyStore> {
   /**
    * Combined mixin: provides store via context AND auto-attaches slotted media.
    *
@@ -27,7 +27,7 @@ export interface CreateStoreResult<Store extends AnyStore> {
    * class MyPlayer extends StoreMixin(LitElement) {}
    * ```
    */
-  StoreMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreProvider<Store>>;
+  StoreMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreProvider<S>>;
 
   /**
    * Mixin that provides store via context (no auto-attach).
@@ -39,7 +39,7 @@ export interface CreateStoreResult<Store extends AnyStore> {
    * class MyProvider extends ProviderMixin(LitElement) {}
    * ```
    */
-  ProviderMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreProvider<Store>>;
+  ProviderMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreProvider<S>>;
 
   /**
    * Mixin that auto-attaches slotted media elements (requires store from context).
@@ -51,7 +51,7 @@ export interface CreateStoreResult<Store extends AnyStore> {
    * class MyControls extends ContainerMixin(LitElement) {}
    * ```
    */
-  ContainerMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreConsumer<Store>>;
+  ContainerMixin: <T extends Constructor<ReactiveElement>>(Base: T) => T & Constructor<StoreConsumer<S>>;
 
   /**
    * Context for consuming store in controllers.
@@ -66,7 +66,7 @@ export interface CreateStoreResult<Store extends AnyStore> {
    * }
    * ```
    */
-  context: Context<typeof contextKey, Store>;
+  context: Context<typeof contextKey, S>;
 
   /**
    * Creates a store instance for imperative access.
@@ -79,7 +79,7 @@ export interface CreateStoreResult<Store extends AnyStore> {
    * store.attach(videoElement);
    * ```
    */
-  create: () => Store;
+  create: () => S;
 
   /**
    * Store controller bound to this store's context.
@@ -87,7 +87,7 @@ export interface CreateStoreResult<Store extends AnyStore> {
    *
    * @example
    * ```ts
-   * const { StoreController } = createStore({ features: [playbackFeature] });
+   * const { StoreController } = createStore(playbackSlice);
    *
    * class MyElement extends LitElement {
    *   #store = new StoreController(this);
@@ -105,7 +105,7 @@ export interface CreateStoreResult<Store extends AnyStore> {
   StoreController: new (
     host: CreateStoreHost
   ) => {
-    value: StoreControllerValue<Store>;
+    value: StoreControllerValue<S>;
     hostConnected: () => void;
     hostDisconnected: () => void;
   };
@@ -114,17 +114,24 @@ export interface CreateStoreResult<Store extends AnyStore> {
 /**
  * Creates a store factory that returns mixins, context, bound controllers, and a create function.
  *
- * @param config - Store configuration including features and optional lifecycle hooks
+ * @param slice - Slice defining state and attach behavior
+ * @param options - Optional store lifecycle hooks
  * @returns An object containing mixins, context, bound controllers, and create function
  *
  * @example
  * ```ts
  * import { createStore } from '@videojs/store/lit';
- * import { playbackFeature } from '@videojs/core/dom';
+ * import { combine, defineSlice } from '@videojs/store';
  *
- * const { StoreMixin, StoreController } = createStore({
- *   features: [playbackFeature],
+ * const playbackSlice = defineSlice<HTMLMediaElement>()({
+ *   state: () => ({ paused: true }),
+ *   attach: ({ target, set, signal }) => {
+ *     target.addEventListener('play', () => set({ paused: false }), { signal });
+ *     target.addEventListener('pause', () => set({ paused: true }), { signal });
+ *   },
  * });
+ *
+ * const { StoreMixin, StoreController } = createStore(playbackSlice);
  *
  * // Create a player element with store
  * class MyPlayer extends StoreMixin(LitElement) {}
@@ -143,15 +150,17 @@ export interface CreateStoreResult<Store extends AnyStore> {
  * customElements.define('my-control', MyControl);
  * ```
  */
-export function createStore<Features extends AnyFeature[]>(
-  config: CreateStoreConfig<Features>
-): CreateStoreResult<FeatureStore<Features>> {
-  type ProvidedStore = FeatureStore<Features>;
+export function createStore<S extends Slice<any, any>>(
+  slice: S,
+  options?: CreateStoreOptions<InferSliceTarget<S>, InferSliceState<S>>
+): CreateStoreResult<Store<InferSliceTarget<S>, InferSliceState<S>>> {
+  type Target = InferSliceTarget<S>;
+  type ProvidedStore = Store<Target, InferSliceState<S>>;
 
   const context = createContext<ProvidedStore, typeof contextKey>(contextKey);
 
   function create(): ProvidedStore {
-    return createCoreStore(config);
+    return createCoreStore<Target>()(slice, options);
   }
 
   const ProviderMixin = createProviderMixin<ProvidedStore>(context, create);
@@ -182,7 +191,7 @@ export function createStore<Features extends AnyFeature[]>(
         throw new Error('Store not available');
       }
 
-      // In v2, state and actions are directly on the store object
+      // State and actions are directly on the store object
       return store as unknown as StoreControllerValue<ProvidedStore>;
     }
 

@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { defineFeature, isFeature } from '../feature';
+import { defineSlice } from '../slice';
 
-describe('defineFeature', () => {
-  it('creates feature with state factory and optional attach', () => {
+describe('defineSlice', () => {
+  it('creates slice with state factory and optional attach', () => {
     interface Target {
       value: number;
     }
 
-    const feature = defineFeature<Target>()({
+    const slice = defineSlice<Target>()({
       state: ({ task }) => ({
         count: 0,
         increment(amount: number) {
@@ -26,8 +26,8 @@ describe('defineFeature', () => {
       },
     });
 
-    expect(feature.state).toBeTypeOf('function');
-    expect(feature.attach).toBeTypeOf('function');
+    expect(slice.state).toBeTypeOf('function');
+    expect(slice.attach).toBeTypeOf('function');
   });
 
   it('factory receives task and target helpers', () => {
@@ -37,12 +37,10 @@ describe('defineFeature', () => {
 
     const factorySpy = vi.fn().mockReturnValue({ count: 0 });
 
-    defineFeature<Target>()({
+    defineSlice<Target>()({
       state: factorySpy,
     });
 
-    // Can't call the factory directly, but we can verify the shape
-    // The factory will be called by the store when building features
     expect(factorySpy).not.toHaveBeenCalled();
   });
 
@@ -51,7 +49,7 @@ describe('defineFeature', () => {
       volume: number;
     }
 
-    const feature = defineFeature<Target>()({
+    const slice = defineSlice<Target>()({
       state: ({ task }) => ({
         volume: 1,
         setVolume(value: number) {
@@ -65,7 +63,7 @@ describe('defineFeature', () => {
       }),
     });
 
-    expect(feature.state).toBeTypeOf('function');
+    expect(slice.state).toBeTypeOf('function');
   });
 
   it('allows async actions using task()', () => {
@@ -73,7 +71,7 @@ describe('defineFeature', () => {
       play: () => Promise<void>;
     }
 
-    const feature = defineFeature<Target>()({
+    const slice = defineSlice<Target>()({
       state: ({ task }) => ({
         playing: false,
         play() {
@@ -85,7 +83,7 @@ describe('defineFeature', () => {
       }),
     });
 
-    expect(feature.state).toBeTypeOf('function');
+    expect(slice.state).toBeTypeOf('function');
   });
 
   it('supports task shorthand (fire-and-forget)', () => {
@@ -94,7 +92,7 @@ describe('defineFeature', () => {
       load: () => void;
     }
 
-    const feature = defineFeature<Target>()({
+    const slice = defineSlice<Target>()({
       state: ({ task }) => ({
         loading: false,
         load(src: string) {
@@ -106,32 +104,15 @@ describe('defineFeature', () => {
       }),
     });
 
-    expect(feature.state).toBeTypeOf('function');
+    expect(slice.state).toBeTypeOf('function');
   });
 
   it('attach is optional', () => {
-    const feature = defineFeature<HTMLVideoElement>()({
+    const slice = defineSlice<HTMLVideoElement>()({
       state: () => ({ playing: false }),
     });
 
-    expect(feature.state).toBeTypeOf('function');
-    expect(feature.attach).toBeUndefined();
-  });
-});
-
-describe('isFeature', () => {
-  it('returns true for features created with defineFeature', () => {
-    const feature = defineFeature<HTMLVideoElement>()({
-      state: () => ({ playing: false }),
-    });
-
-    expect(isFeature(feature)).toBe(true);
-  });
-
-  it('returns false for non-feature objects', () => {
-    expect(isFeature({})).toBe(false);
-    expect(isFeature(null)).toBe(false);
-    expect(isFeature(undefined)).toBe(false);
-    expect(isFeature({ create: () => {} })).toBe(false);
+    expect(slice.state).toBeTypeOf('function');
+    expect(slice.attach).toBeUndefined();
   });
 });

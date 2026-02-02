@@ -1,3 +1,5 @@
+import type { AnySlice, Slice, Store, UnionSliceState } from '@videojs/store';
+
 export interface Media extends HTMLMediaElement {}
 
 export interface MediaContainer extends HTMLElement {}
@@ -8,3 +10,9 @@ export interface PlayerTarget {
 }
 
 export type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
+
+export type PlayerFeature<State> = Slice<PlayerTarget, State>;
+
+export type AnyPlayerFeature = AnySlice<PlayerTarget>;
+
+export type PlayerStore<Features extends AnyPlayerFeature[] = []> = Store<PlayerTarget, UnionSliceState<Features>>;

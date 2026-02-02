@@ -2,12 +2,16 @@
 
 // Re-exports from core/dom
 export {
+  type AnyPlayerFeature,
   type BufferState,
+  definePlayerFeature,
   type FeatureAvailability,
   features,
   type Media,
   type MediaContainer,
   type PlaybackState,
+  type PlayerFeature,
+  type PlayerStore,
   type PlayerTarget,
   type SourceState,
   selectBuffer,
@@ -19,13 +23,9 @@ export {
   type VolumeState,
 } from '@videojs/core/dom';
 
-export type { AnyFeature, Feature, InferFeatureState } from '@videojs/store';
-
-// Re-exports (for custom features)
-export { createFeatureSelector, defineFeature } from '@videojs/store';
-export type { Comparator, Selector } from '@videojs/store/react';
-
-// Re-exports (for advanced store access)
+// Re-exports from store (utilities)
+export type { Comparator, Selector } from '@videojs/store';
+export { createSelector, shallowEqual } from '@videojs/store';
 export { useSelector, useStore } from '@videojs/store/react';
 
 // Media primitives

@@ -1,13 +1,13 @@
 import { render, renderHook } from '@testing-library/react';
-import { defineFeature } from '@videojs/store';
+import type { PlayerStore } from '@videojs/core/dom';
+import { defineSlice } from '@videojs/store';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-
 import { createPlayer } from '../create-player';
 
 describe('createPlayer', () => {
-  // Create a mock feature that works with any target
-  const mockFeature = defineFeature<any>()({
+  // Create a mock slice that works with any target
+  const mockSlice = defineSlice()({
     state: () => ({
       volume: 1,
       muted: false,
@@ -17,9 +17,9 @@ describe('createPlayer', () => {
 
   describe('Provider', () => {
     it('creates store on mount', () => {
-      const { Provider, usePlayer } = createPlayer({ features: [mockFeature] as any });
+      const { Provider, usePlayer } = createPlayer({ features: [mockSlice] });
 
-      let store: unknown;
+      let store!: PlayerStore;
 
       function TestComponent() {
         store = usePlayer();
@@ -33,15 +33,15 @@ describe('createPlayer', () => {
       );
 
       expect(store).toBeDefined();
-      expect(typeof (store as any).subscribe).toBe('function');
-      expect(typeof (store as any).attach).toBe('function');
-      expect(typeof (store as any).destroy).toBe('function');
+      expect(typeof store.subscribe).toBe('function');
+      expect(typeof store.attach).toBe('function');
+      expect(typeof store.destroy).toBe('function');
     });
 
     it('destroys store on unmount', () => {
-      const { Provider, usePlayer } = createPlayer({ features: [mockFeature] as any });
+      const { Provider, usePlayer } = createPlayer({ features: [mockSlice] });
 
-      let store: any;
+      let store!: PlayerStore;
 
       function TestComponent() {
         store = usePlayer();
@@ -62,15 +62,15 @@ describe('createPlayer', () => {
 
     it('uses displayName when provided', () => {
       const { Provider } = createPlayer({
-        features: [mockFeature] as any,
+        features: [mockSlice],
         displayName: 'VideoPlayer',
       });
 
-      expect((Provider as any).displayName).toBe('VideoPlayer.Provider');
+      expect(Provider.displayName).toBe('VideoPlayer.Provider');
     });
 
     it('renders children', () => {
-      const { Provider } = createPlayer({ features: [mockFeature] as any });
+      const { Provider } = createPlayer({ features: [mockSlice] });
 
       const { container } = render(
         <Provider>
@@ -84,7 +84,7 @@ describe('createPlayer', () => {
 
   describe('usePlayer', () => {
     it('returns store without selector', () => {
-      const { Provider, usePlayer } = createPlayer({ features: [mockFeature] as any });
+      const { Provider, usePlayer } = createPlayer({ features: [mockSlice] });
 
       const wrapper = ({ children }: { children: ReactNode }) => <Provider>{children}</Provider>;
 
@@ -96,7 +96,7 @@ describe('createPlayer', () => {
     });
 
     it('returns selected state with selector', () => {
-      const { Provider, usePlayer } = createPlayer({ features: [mockFeature] as any });
+      const { Provider, usePlayer } = createPlayer({ features: [mockSlice] });
 
       const wrapper = ({ children }: { children: ReactNode }) => <Provider>{children}</Provider>;
 
@@ -106,7 +106,7 @@ describe('createPlayer', () => {
     });
 
     it('throws outside Provider', () => {
-      const { usePlayer } = createPlayer({ features: [mockFeature] as any });
+      const { usePlayer } = createPlayer({ features: [mockSlice] });
 
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -120,16 +120,16 @@ describe('createPlayer', () => {
 
   describe('Container', () => {
     it('is exported from createPlayer result', () => {
-      const { Container } = createPlayer({ features: [mockFeature] as any });
+      const { Container } = createPlayer({ features: [mockSlice] });
       expect(Container).toBeDefined();
     });
   });
 
   describe('full integration', () => {
     it('Provider → Container → media attach flow', () => {
-      const { Provider, Container, usePlayer } = createPlayer({ features: [mockFeature] as any });
+      const { Provider, Container, usePlayer } = createPlayer({ features: [mockSlice] });
 
-      let store: any;
+      let store!: PlayerStore;
 
       function TestComponent() {
         store = usePlayer();

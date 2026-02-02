@@ -1,11 +1,10 @@
-import type { InferFeatureState } from '@videojs/store';
-
-import { defineFeature } from '@videojs/store';
+import type { InferSliceState } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
-import type { FeatureAvailability, PlayerTarget } from '../../types';
+import { definePlayerFeature } from '../../feature';
+import type { FeatureAvailability } from '../../types';
 
-export const volumeFeature = defineFeature<PlayerTarget>()({
+export const volumeFeature = definePlayerFeature({
   state: ({ task }) => ({
     /** Volume level from 0 (silent) to 1 (max). */
     volume: 1,
@@ -50,7 +49,7 @@ export const volumeFeature = defineFeature<PlayerTarget>()({
   },
 });
 
-export type VolumeState = InferFeatureState<typeof volumeFeature>;
+export type VolumeState = InferSliceState<typeof volumeFeature>;
 
 /** Check if volume can be programmatically set (fails on iOS Safari). */
 function canSetVolume(): FeatureAvailability {

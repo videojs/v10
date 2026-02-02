@@ -1,9 +1,7 @@
-import { isObject } from '@videojs/utils/predicate';
 import type { Simplify, UnionToIntersection } from '@videojs/utils/types';
 import type { TaskKey, TaskMode } from './queue';
 import type { RequestMeta } from './request';
-
-const FEATURE_SYMBOL = Symbol('@videojs/feature');
+import type { UnknownState } from './state';
 
 // ----------------------------------------
 // Task
@@ -36,67 +34,58 @@ export interface TaskContext<Target, State> {
 
 export type Attach<Target, State> = (ctx: AttachContext<Target, State>) => void;
 
+export interface AttachStore {
+  readonly state: UnknownState;
+  subscribe: (callback: () => void) => () => void;
+}
+
 export interface AttachContext<Target, State> {
   target: Target;
   signal: AbortSignal;
+  store: AttachStore;
   get: () => Readonly<State>;
   set: (partial: Partial<State>) => void;
-  /** Store instance for cross-feature access via selectors. */
-  store: { readonly state: Readonly<State>; subscribe: (callback: () => void) => () => void };
+  reportError: (error: unknown) => void;
 }
 
 // ----------------------------------------
-// Feature Context
+// State Context
 // ----------------------------------------
 
-/** Context passed to state factory - uses loose types to enable State inference. */
-export interface StateFactoryContext<Target> {
-  task: Task<Target, any>;
+export interface StateContext<Target> {
+  task: Task<Target, UnknownState>;
   target: () => Target;
 }
 
 // ----------------------------------------
-// Feature
+// Slice
 // ----------------------------------------
 
-export type StateFactory<Target, State> = (ctx: StateFactoryContext<Target>) => State;
-
-export interface FeatureConfig<Target, State> {
-  state: StateFactory<Target, State>;
-  attach?: Attach<Target, State>;
+export interface SliceConfig<Target, State> {
+  state: (ctx: StateContext<Target>) => State;
+  attach?: (ctx: AttachContext<Target, State>) => void;
 }
 
-export interface Feature<Target, State> extends FeatureConfig<Target, State> {
-  [FEATURE_SYMBOL]: true;
-}
+export type Slice<Target, State> = SliceConfig<Target, State>;
 
-export type AnyFeature<Target = any> = Feature<Target, any>;
+export type AnySlice<Target = any> = Slice<Target, any>;
 
 // ----------------------------------------
 // Factory
 // ----------------------------------------
 
-export function defineFeature<Target>(): <State>(config: FeatureConfig<Target, State>) => Feature<Target, State> {
-  return <State>(config: FeatureConfig<Target, State>): Feature<Target, State> => ({
-    [FEATURE_SYMBOL]: true,
-    ...config,
-  });
-}
+export type SliceFactory<Target> = <State>(config: SliceConfig<Target, State>) => Slice<Target, State>;
 
-export function isFeature(value: unknown): value is AnyFeature {
-  return isObject(value) && FEATURE_SYMBOL in value;
+export function defineSlice<Target>(): SliceFactory<Target> {
+  return (config) => config;
 }
 
 // ----------------------------------------
 // Inference
 // ----------------------------------------
 
-export type InferFeatureTarget<F> = F extends Feature<infer Target, any> ? Target : never;
+export type InferSliceTarget<S> = S extends Slice<infer Target, any> ? Target : never;
 
-export type InferFeatureState<F> = F extends Feature<any, infer State> ? State : never;
+export type InferSliceState<S> = S extends Slice<any, infer State> ? State : never;
 
-export type UnionFeatureTarget<Features extends AnyFeature[]> = InferFeatureTarget<Features[number]>;
-
-export type UnionFeatureState<Features extends AnyFeature[]> = Simplify<
-  UnionToIntersection<InferFeatureState<Features[number]>>
->;
+export type UnionSliceState<Slices extends AnySlice[]> = Simplify<UnionToIntersection<InferSliceState<Slices[number]>>>;
