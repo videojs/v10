@@ -1,6 +1,6 @@
 'use client';
 
-// Re-exports from @videojs/core/dom
+// Re-exports from core/dom
 export {
   type BufferState,
   type FeatureAvailability,
@@ -18,12 +18,16 @@ export {
   type TimeState,
   type VolumeState,
 } from '@videojs/core/dom';
+
 export type { AnyFeature, Feature, InferFeatureState } from '@videojs/store';
-// Re-exports from @videojs/store (for custom features)
+
+// Re-exports (for custom features)
 export { createFeatureSelector, defineFeature } from '@videojs/store';
 export type { Comparator, Selector } from '@videojs/store/react';
-// Re-exports from @videojs/store/react (for advanced store access)
+
+// Re-exports (for advanced store access)
 export { useSelector, useStore } from '@videojs/store/react';
+
 // Media primitives
 export { Audio, type AudioProps } from './media/audio';
 export { Video, type VideoProps } from './media/video';
@@ -36,6 +40,7 @@ export {
   usePlayer,
   usePlayerContext,
 } from './player/context';
+
 // Player API
 export {
   type CreatePlayerConfig,

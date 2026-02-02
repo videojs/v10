@@ -7,7 +7,7 @@ import { useStore } from '@videojs/store/react';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
-import { Container, PlayerContextProvider, usePlayerContext } from './context';
+import { Container, PlayerContextProvider, useMedia, usePlayerContext } from './context';
 
 export interface CreatePlayerConfig<Features extends AnyFeature[]> {
   features: Features;
@@ -22,6 +22,7 @@ export interface CreatePlayerResult<Features extends AnyFeature[]> {
   Provider: (props: ProviderProps) => ReactNode;
   Container: typeof Container;
   usePlayer: UsePlayerHook<Features>;
+  useMedia: () => Media | null;
 }
 
 type UsePlayerHook<Features extends AnyFeature[]> = {
@@ -59,5 +60,6 @@ export function createPlayer<const Features extends AnyFeature<PlayerTarget>[]>(
     Provider,
     Container,
     usePlayer: usePlayer as UsePlayerHook<Features>,
+    useMedia,
   };
 }
