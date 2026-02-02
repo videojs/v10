@@ -120,6 +120,9 @@ Pods/
 # Vercel
 .vercel
 
+# Netlify
+.netlify
+
 # -------------------------
 # Package Manager Locks
 # Keep only one when enforcing workspace consistency

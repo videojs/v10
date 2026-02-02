@@ -5,7 +5,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".vercel/output/**"]
+      "outputs": ["dist/**", ".netlify/**"]
     },
     "dev": {
       "cache": false,
