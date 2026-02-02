@@ -1,13 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  createRequestMeta,
-  createRequestMetaFromEvent,
-  isRequestMeta,
-  REQUEST_META,
-  resolveRequestCancel,
-  resolveRequestKey,
-} from '../request';
+import { createRequestMeta, createRequestMetaFromEvent, isRequestMeta, REQUEST_META } from '../request';
 
 describe('request', () => {
   describe('meta', () => {
@@ -109,41 +102,6 @@ describe('request', () => {
 
         expect(meta.context).toEqual({ extra: 'data' });
       });
-    });
-  });
-
-  describe('resolveRequestKey', () => {
-    it('returns string key directly', () => {
-      expect(resolveRequestKey('my-key', undefined)).toBe('my-key');
-    });
-
-    it('calls function with input', () => {
-      const keyFn = (id: string) => `track-${id}`;
-      expect(resolveRequestKey(keyFn, 'abc')).toBe('track-abc');
-    });
-
-    it('handles symbol keys', () => {
-      const sym = Symbol('@videojs/unique');
-      expect(resolveRequestKey(sym, undefined)).toBe(sym);
-    });
-  });
-
-  describe('resolveRequestCancelNames', () => {
-    it('returns empty array for undefined', () => {
-      expect(resolveRequestCancel(undefined, null)).toEqual([]);
-    });
-
-    it('wraps single name in array', () => {
-      expect(resolveRequestCancel('seek', null)).toEqual(['seek']);
-    });
-
-    it('returns array directly', () => {
-      expect(resolveRequestCancel(['seek', 'load'], null)).toEqual(['seek', 'load']);
-    });
-
-    it('calls function with input', () => {
-      const cancelFn = (type: string) => [`${type}Loading`, `${type}Fetch`];
-      expect(resolveRequestCancel(cancelFn, 'video')).toEqual(['videoLoading', 'videoFetch']);
     });
   });
 });

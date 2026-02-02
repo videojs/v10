@@ -40,12 +40,20 @@ Capture target/platform type once, let callbacks infer:
 
 ```ts
 // Capture Target type once
-const feature = createFeature<HTMLVideoElement>()({
-  initialState: { volume: 1 },
-  getSnapshot: ({ target }) => ({ volume: target.volume }),
-  subscribe: ({ target, update }) => {
-    target.addEventListener('volumechange', update);
-    return () => target.removeEventListener('volumechange', update);
+const feature = defineFeature<HTMLVideoElement>()({
+  state: ({ task }) => ({
+    volume: 1,
+    setVolume(v: number) {
+      return task({ handler: ({ target }) => { target.volume = v; } });
+    },
+  }),
+
+  attach({ target, signal, set }) {
+    const sync = () => set({ volume: target.volume });
+
+    sync();
+
+    target.addEventListener('volumechange', sync, { signal });
   },
 });
 ```

@@ -1,5 +1,5 @@
 export * from './buffer';
-export * as media from './media.parts';
+export * as features from './feature.parts';
 export * from './playback';
 export * from './source';
 export * from './time';

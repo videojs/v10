@@ -13,3 +13,5 @@ export type Mixin<Base, Result> = <T extends Constructor<Base>>(Base: T) => T & 
 export type Falsy<T> = T | false | null | undefined;
 
 export type EnsureFunction<T> = T extends (...args: any[]) => any ? T : never;
+
+export type Simplify<T> = { [KeyType in keyof T]: T[KeyType] } & {};

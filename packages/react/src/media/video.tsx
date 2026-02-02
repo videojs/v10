@@ -1,57 +1,31 @@
 'use client';
 
-import { useStoreContext } from '@videojs/store/react';
-import type { Ref, VideoHTMLAttributes } from 'react';
+import type { VideoHTMLAttributes } from 'react';
+import { forwardRef, useCallback } from 'react';
 
-import { useCallback } from 'react';
-
+import { useMediaRegistration } from '../player/context';
 import { useComposedRefs } from '../utils/use-composed-refs';
 
-export interface VideoProps extends VideoHTMLAttributes<HTMLVideoElement> {
-  ref?: Ref<HTMLVideoElement> | React.RefObject<HTMLVideoElement>;
-}
+export interface VideoProps extends VideoHTMLAttributes<HTMLVideoElement> {}
 
-/**
- * Video element that automatically attaches to the nearest store context.
- *
- * Must be used within a Provider created by `createStore()`.
- *
- * @example
- * ```tsx
- * import { createStore, media } from '@videojs/react';
- *
- * const { Provider } = createStore({
- *   features: media.all
- * });
- *
- * function App() {
- *   return (
- *     <Provider>
- *       <Video src="video.mp4" controls />
- *     </Provider>
- *   );
- * }
- * ```
- */
-export function Video({ children, ref: refProp, ...props }: VideoProps): React.JSX.Element {
-  const store = useStoreContext();
+export const Video = forwardRef<HTMLVideoElement, VideoProps>(function Video({ children, ...props }, ref) {
+  const setMedia = useMediaRegistration();
 
-  const attachRef = useCallback(
-    (el: HTMLVideoElement): (() => void) | void => {
-      if (!el) return;
-      return store.attach(el);
+  const mediaRef = useCallback(
+    (el: HTMLVideoElement | null) => {
+      setMedia?.(el);
     },
-    [store]
+    [setMedia]
   );
 
-  const ref = useComposedRefs(refProp, attachRef);
+  const composedRef = useComposedRefs(ref, mediaRef);
 
   return (
-    <video ref={ref} {...props}>
+    <video ref={composedRef} {...props}>
       {children}
     </video>
   );
-}
+});
 
 export namespace Video {
   export type Props = VideoProps;

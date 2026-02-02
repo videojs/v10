@@ -1,76 +1,94 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
-import { createCoreTestStore, createMockHost } from '../../tests/test-utils';
+import { createCoreTestStore, createTestHost } from '../../tests/test-utils';
 import { StoreController } from '../store-controller';
 
 describe('StoreController', () => {
-  it('returns state and request functions spread together', () => {
-    const { store } = createCoreTestStore();
-    const host = createMockHost();
-
-    const controller = new StoreController(host, store);
-
-    expect(controller.value.volume).toBe(1);
-    expect(controller.value.muted).toBe(false);
-    expect(typeof controller.value.setVolume).toBe('function');
+  afterEach(() => {
+    document.body.innerHTML = '';
   });
 
-  it('registers with host', () => {
+  it('returns store without selector (no subscription)', () => {
     const { store } = createCoreTestStore();
-    const host = createMockHost();
+    const host = createTestHost();
 
     const controller = new StoreController(host, store);
+    const value = controller.value;
 
-    expect(host.controllers.has(controller)).toBe(true);
+    expect(value).toBe(store);
+    expect(value.volume).toBe(1);
+    expect(typeof value.setVolume).toBe('function');
   });
 
-  it('updates when state changes', async () => {
+  it('does not trigger updates without selector', async () => {
     const { store } = createCoreTestStore();
-    const host = createMockHost();
+    const host = createTestHost();
 
-    const controller = new StoreController(host, store);
-    controller.hostConnected();
+    new StoreController(host, store);
+    document.body.appendChild(host);
 
-    expect(controller.value.volume).toBe(1);
+    await store.setVolume(0.5);
 
-    await store.request.setVolume!(0.5);
+    expect(host.updateCount).toBe(0);
+  });
 
-    expect(controller.value.volume).toBe(0.5);
+  it('returns selected state with selector', () => {
+    const { store } = createCoreTestStore();
+    const host = createTestHost();
+
+    const controller = new StoreController(host, store, (s) => s.volume);
+
+    document.body.appendChild(host);
+
+    expect(controller.value).toBe(1);
+  });
+
+  it('updates when selected state changes', async () => {
+    const { store } = createCoreTestStore();
+    const host = createTestHost();
+
+    const controller = new StoreController(host, store, (s) => s.volume);
+    document.body.appendChild(host);
+
+    expect(controller.value).toBe(1);
+
+    await store.setVolume(0.5);
+
+    expect(controller.value).toBe(0.5);
     expect(host.updateCount).toBeGreaterThan(0);
   });
 
-  it('unsubscribes on hostDisconnected', async () => {
+  it('unsubscribes on disconnect', async () => {
     const { store } = createCoreTestStore();
-    const host = createMockHost();
+    const host = createTestHost();
 
-    const controller = new StoreController(host, store);
-    controller.hostConnected();
-    controller.hostDisconnected();
+    new StoreController(host, store, (s) => s.volume);
+    document.body.appendChild(host);
+    host.remove();
 
     const updateCountBefore = host.updateCount;
-    await store.request.setVolume!(0.5);
+    await store.setVolume(0.5);
 
     expect(host.updateCount).toBe(updateCountBefore);
   });
 
   it('syncs to current state on reconnect', async () => {
     const { store } = createCoreTestStore();
-    const host = createMockHost();
+    const host = createTestHost();
 
-    const controller = new StoreController(host, store);
-    controller.hostConnected();
+    const controller = new StoreController(host, store, (s) => s.volume);
+    document.body.appendChild(host);
 
-    await store.request.setVolume!(0.5);
-    expect(controller.value.volume).toBe(0.5);
+    await store.setVolume(0.5);
+    expect(controller.value).toBe(0.5);
 
-    controller.hostDisconnected();
+    host.remove();
 
-    // Change state while disconnected
-    await store.request.setVolume!(0.8);
+    await store.setVolume(0.8);
 
-    // Reconnect - should sync to current state
-    controller.hostConnected();
+    // Reconnect
+    document.body.appendChild(host);
 
-    expect(controller.value.volume).toBe(0.8);
+    expect(controller.value).toBe(0.8);
   });
 });

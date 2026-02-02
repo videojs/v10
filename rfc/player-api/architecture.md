@@ -1,209 +1,182 @@
 # Architecture
 
-Internal structure of the Player API.
+Internal structure of the Player API. Implementation detail for feature authors.
 
 ## Overview
 
 ```
                           createPlayer()
-                    config: presets.website | { features: [...] }
-                                   │
-                         filters by feature.type
-                                   │
-                   ┌───────────────┴───────────────┐
-                   ▼                               ▼
-      ┌────────────────────────┐      ┌────────────────────────┐
-      │  createStore()         │      │  createStore()         │
-      │  type: 'media'         │      │  type: 'player'        │
-      └────────────────────────┘      └────────────────────────┘
-                   │                               │
-                   ▼                               ▼
-      ┌────────────────────────┐      ┌────────────────────────┐
-      │     Media Store        │◄─────│    Player Store        │
-      │  target: MediaTarget   │      │  target: PlayerTarget  │
-      │                        │      │                        │
-      │  state: paused, volume │      │  state: isFullscreen   │
-      │  request: play, pause  │      │  request: toggleFS     │
-      └────────────────────────┘      └────────────────────────┘
-                                                   │
-                                        getFeature(target.media, f)
-                                                   │
-                                       ┌───────────┴───────────┐
-                                       ▼                       ▼
-                                Read media state        Call media requests
-                                (iOS fallback)          (keyboard shortcuts)
+                               │
+                    creates Store<PlayerTarget>
+                               │
+                               ▼
+                   ┌───────────────────────┐
+                   │        Store          │
+                   │  target: PlayerTarget │
+                   │                       │
+                   │  playback, volume,    │
+                   │  time, fullscreen...  │
+                   └───────────────────────┘
+                               │
+                        store.state
+                               │
+                    ┌──────────┴──────────┐
+                    ▼                     ▼
+              selectPlayback()      selectVolume()
+                    │                     │
+                    ▼                     ▼
+              PlaybackState         VolumeState
 ```
 
-**Key insight:** Player Store's target includes a media proxy. This enables coordination without tight coupling — feature authors use the same flat API as component authors.
+**Key insight:** Single store with composite target. Features define slices that are combined. Selectors extract typed state for UI components.
 
-## Two Stores
+## PlayerTarget
 
-### Why Two Stores
-
-| Reason                | Explanation                                                                                         |
-| --------------------- | --------------------------------------------------------------------------------------------------- |
-| **Different targets** | Media features target `MediaTarget`. Player features target `PlayerTarget`.                         |
-| **Attachment timing** | `<Video>` and `<Container>` mount at different times, possibly different tree locations.            |
-| **Config dependency** | Player features configure against typed media store. Media store must exist first.                  |
-| **Observability**     | Player→media interactions go through store. Enables debugging, tracing, request queuing.            |
-| **Standalone media**  | Headless player, audio-only, programmatic control. Media store works alone.                         |
-| **Type safety**       | Player features declare required media capabilities. TypeScript catches mismatches at compile time. |
-
-### Feature Types
-
-Features are discriminated by `type`:
-
-```ts
-interface MediaFeature {
-  type: 'media';
-  // ...
-}
-
-interface PlayerFeature {
-  type: 'player';
-  // ...
-}
-```
-
-`createPlayer` filters features by type, builds both stores, returns unified API.
-
-## Targets
-
-### MediaTarget
-
-```ts
-interface MediaTarget {
-  element: HTMLMediaElement;
-}
-```
-
-Media features observe and control the `<video>` or `<audio>` element directly.
-
-### PlayerTarget
+All features receive a composite target containing both media element and container:
 
 ```ts
 interface PlayerTarget {
-  container: HTMLElement;
-  media: UnknownMedia; // flat proxy, not store
+  media: Media;                    // HTMLMediaElement
+  container: MediaContainer | null; // Container element (optional)
 }
 ```
 
-Player features can:
+This allows features to:
 
-- Control the container element (fullscreen, focus)
-- Access media proxy for coordination (same flat API as components)
+- Observe and control the media element directly
+- Access the container for UI concerns (fullscreen, focus)
+- Work with media-only scenarios (headless, audio)
 
-## Cross-Store Access
-
-Player features access media via `target.media` (a flat proxy). Use `hasFeature`/`getFeature` for type narrowing, and `subscribe` for reactive updates.
+## Store Type
 
 ```ts
-import * as media from '@videojs/core/dom/features/media';
-import { getFeature, hasFeature, subscribe } from '@videojs/store';
+type Store<Target, State> = {
+  readonly target: Target | null;
+  readonly state: State;
+  attach(target: Target): () => void;
+  subscribe(callback: () => void): () => void;
+  destroy(): void;
+} & State;  // Direct state access via intersection
+```
 
-const fullscreen = createPlayerFeature({
-  request: {
-    enterFullscreen: (_, { target }) => {
-      // Try container fullscreen
-      if (document.fullscreenEnabled) {
-        target.container.requestFullscreen();
-        return;
-      }
+The store provides:
 
-      // iOS fallback — use media fullscreen (flat access)
-      const mediaFS = getFeature(target.media, media.fullscreen);
-      mediaFS.enterFullscreen?.();
-    },
-  },
+- **Direct access** — `store.paused` works for quick reads
+- **State snapshot** — `store.state` for selectors
+- **Attachment** — `store.attach(target)` connects to media element
+- **Subscriptions** — `store.subscribe(callback)` for reactive updates
 
-  subscribe: ({ target, update, signal }) => {
-    // Subscribe to media fullscreen changes (iOS)
-    if (hasFeature(target.media, media.fullscreen)) {
-      subscribe(target.media, (s) => s.isFullscreen, update, { signal });
-    }
+## Slices and Combine
+
+Features are defined as slices and combined into a single store:
+
+```ts
+import { defineSlice, combine, createStore } from '@videojs/store';
+
+const playbackSlice = defineSlice<PlayerTarget>()({
+  state: () => ({ paused: true, ended: false }),
+  attach: ({ target, set, signal }) => {
+    const sync = () => set({ paused: target.media.paused, ended: target.media.ended });
+    target.media.addEventListener('play', sync, { signal });
+    target.media.addEventListener('pause', sync, { signal });
+    sync();
   },
 });
+
+// Combine slices
+const playerSlice = combine(playbackSlice, volumeSlice, timeSlice);
+
+// Create store
+const store = createStore<PlayerTarget>()(playerSlice);
 ```
 
-## Feature Registry
+## Selectors
 
-Each store maintains `features: ReadonlyMap<symbol, AnyFeature>` keyed by `feature.id`. Used by `hasFeature()` — see [primitives.md](primitives.md).
+Selectors extract typed state from the store. They enable:
 
-## State Unification
+- **Type-safe access** — TypeScript knows the shape of selected state
+- **Subscription scoping** — Only re-render when selected state changes
+- **Composition** — Derive values from multiple state properties
 
-`createPlayer` merges both stores into a unified API:
+```ts
+import { createSelector } from '@videojs/store';
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                      usePlayer()                         │
-│                                                          │
-│   Media State          Player State         Requests     │
-│   ───────────          ────────────         ────────     │
-│   paused               isFullscreen         play()       │
-│   volume               isIdle               pause()      │
-│   currentTime          ...                  setVolume()  │
-│   ...                                       toggleFS()   │
-│                                             ...          │
-└─────────────────────────────────────────────────────────┘
-                            │
-                  Flattened via Proxy
-                            │
-              ┌─────────────┴─────────────┐
-              ▼                           ▼
-      Media Store                   Player Store
+// Create selector from slice
+const selectPlayback = createSelector(playbackSlice);
+
+// Usage in React
+const playback = usePlayer(selectPlayback);
+// Type: { paused: boolean; ended: boolean; ... } | undefined
+
+// Usage in HTML
+const ctrl = new PlayerController(this, context, selectPlayback);
+// ctrl.value: { paused: boolean; ended: boolean; ... } | undefined
 ```
 
-The proxy:
+### Pre-built Selectors
 
-1. Merges state from both stores
-2. Merges requests from both stores
-3. Tracks property access for fine-grained subscriptions
+Standard selectors are exported from `@videojs/core/dom`:
+
+```ts
+import {
+  selectPlayback,
+  selectVolume,
+  selectTime,
+  selectSource,
+  selectBuffer,
+} from '@videojs/core/dom';
+```
 
 ## Reactive System
 
-Proxy-based tracking (based on `SnapshotController`):
+Selector-based subscriptions via `useSyncExternalStore` (React) or controller update cycle (HTML).
 
-1. **Access** — Property access during render is tracked
-2. **Subscribe** — Tracker subscribes to changes on accessed keys
-3. **Update** — On change, trigger re-render
-4. **Next** — After render, finalize tracked keys for next cycle
+### Subscription Flow
 
-Works identically in React (`usePlayer()`) and Lit (`controller.value`).
+1. **Subscribe** — `usePlayer(selector)` subscribes to store
+2. **Snapshot** — On change, `store.state` provides current state
+3. **Select** — Selector extracts relevant state
+4. **Compare** — Result compared with `shallowEqual`
+5. **Update** — If different, trigger re-render
+
+### Performance
+
+Selectors with `shallowEqual` comparison prevent unnecessary re-renders:
+
+```tsx
+// Only re-renders when paused OR ended changes
+const playback = usePlayer(selectPlayback);
+
+// currentTime updates (60fps during playback) don't affect this component
+```
 
 ## File Structure
 
-| Path                                     | Purpose                                      |
-| ---------------------------------------- | -------------------------------------------- |
-| `packages/core/src/dom/features/media/`  | Media features (playback, volume, time)      |
-| `packages/core/src/dom/features/player/` | Player features (fullscreen, keyboard, idle) |
-| `packages/html/src/`                     | Lit player + presets/skins                   |
-| `packages/react/src/`                    | React player + presets/skins                 |
-
-## Player Features
-
-| Feature        | Description                                    |
-| -------------- | ---------------------------------------------- |
-| **Fullscreen** | Container fullscreen with iOS media fallback   |
-| **Idle**       | Tracks user activity for auto-hide UI          |
-| **Keyboard**   | Maps keys to requests (`Space` → `togglePlay`) |
-| **Gestures**   | Touch gestures (double-tap seek, swipe volume) |
+| Path                                  | Purpose                             |
+| ------------------------------------- | ----------------------------------- |
+| `packages/store/src/core/`            | Core store, slices, selectors       |
+| `packages/store/src/react/`           | React hooks (`useStore`)            |
+| `packages/store/src/lit/`             | Lit controllers (`StoreController`) |
+| `packages/core/src/dom/`              | PlayerTarget, features, selectors   |
+| `packages/html/src/`                  | HTML player, mixins, elements       |
+| `packages/react/src/`                 | React player, context, hooks        |
 
 ## Progressive Complexity
 
-| Level           | Example                                         | Sees internal stores? |
-| --------------- | ----------------------------------------------- | --------------------- |
-| Use skin        | `<FrostedSkin>`                                 | No                    |
-| Use preset      | `createPlayer(presets.website)`                 | No                    |
-| Custom features | `createPlayer([...presets.website, myFeature])` | No                    |
-| Use hooks       | `usePlayer()`                                   | No                    |
-| Write feature   | `createPlayerFeature({ ... })`                  | Yes (target.media)    |
+| Level           | Example                                        | Sees internals? |
+| --------------- | ---------------------------------------------- | --------------- |
+| Use skin        | `<VideoSkin>`                                  | No              |
+| Use features    | `createPlayer({ features: [...] })`            | No              |
+| Custom features | `createPlayer({ features: [..., mySlice] })`   | No              |
+| Use hooks       | `usePlayer(selectPlayback)`                    | No              |
+| Write slice     | `defineSlice<PlayerTarget>()({ ... })`         | Yes (attach)    |
 
-Internal stores are implementation details until you author features.
+Store internals are implementation details until you author slices.
 
 ## Constraints
 
-- Player features live in `@videojs/core/dom`
+- Features target `PlayerTarget` (composite of media + container)
+- Slices live in `@videojs/core/dom`
 - `createPlayer` lives in `@videojs/html` and `@videojs/react`
-- Skins are tied to presets — stores don't extend from skins
-- Two stores internally, one API externally
-- `hasFeature`, `getFeature`, `throwMissingFeature`, `subscribe` are framework-agnostic (from `@videojs/store`)
+- Single store, selectors for typed access
+- `shallowEqual` comparison in React hooks and Lit controllers

@@ -16,8 +16,31 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./player/*": {
+      "types": "./dist/define/player/*.d.ts",
+      "default": "./dist/define/player/*.js"
+    },
+    "./ui/*": {
+      "types": "./dist/define/ui/*.d.ts",
+      "default": "./dist/define/ui/*.js"
+    },
+    "./skin/*": {
+      "types": "./dist/define/skin/*.d.ts",
+      "default": "./dist/define/skin/*.js"
+    },
+    "./feature/*": {
+      "types": "./dist/define/feature/*.d.ts",
+      "default": "./dist/define/feature/*.js"
+    },
+    "./media/*": {
+      "types": "./dist/define/media/*.d.ts",
+      "default": "./dist/define/media/*.js"
     }
   },
+  "sideEffects": [
+    "./dist/define/**/*.js"
+  ],
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,18 +51,22 @@
     "build": "tsdown",
     "build:watch": "tsdown --watch --silent",
     "dev": "pnpm run build:watch",
-    "test": "echo \"No tests yet\"",
+    "test": "vitest run",
     "clean": "rm -rf dist types"
   },
   "dependencies": {
+    "@lit/context": "^1.1.0",
     "@lit/reactive-element": "^2.1.2",
     "@videojs/core": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "happy-dom": "^18.0.1",
     "tsdown": "^0.15.12",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   },
   "publishConfig": {
     "access": "public"

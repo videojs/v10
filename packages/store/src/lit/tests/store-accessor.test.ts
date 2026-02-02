@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { StoreAccessor } from '../store-accessor';
-import { createCoreTestStore, createMockHost } from './test-utils';
+import { createCoreTestStore, createTestHost } from './test-utils';
 
 describe('StoreAccessor', () => {
   describe('direct store source', () => {
     it('returns store immediately', () => {
       const { store } = createCoreTestStore();
-      const host = createMockHost();
+      const host = createTestHost();
 
       const accessor = new StoreAccessor(host, store);
 
@@ -16,7 +16,7 @@ describe('StoreAccessor', () => {
 
     it('does not call onAvailable on construction', () => {
       const { store } = createCoreTestStore();
-      const host = createMockHost();
+      const host = createTestHost();
       const onAvailable = vi.fn();
 
       // For direct store, onAvailable is NOT called on construction
@@ -29,7 +29,7 @@ describe('StoreAccessor', () => {
 
     it('calls onAvailable on hostConnected', () => {
       const { store } = createCoreTestStore();
-      const host = createMockHost();
+      const host = createTestHost();
       const onAvailable = vi.fn();
 
       const accessor = new StoreAccessor(host, store, onAvailable);
@@ -41,7 +41,7 @@ describe('StoreAccessor', () => {
 
     it('calls onAvailable on each reconnect', () => {
       const { store } = createCoreTestStore();
-      const host = createMockHost();
+      const host = createTestHost();
       const onAvailable = vi.fn();
 
       const accessor = new StoreAccessor(host, store, onAvailable);
@@ -58,7 +58,8 @@ describe('StoreAccessor', () => {
 
   describe('context source', () => {
     it('returns null when context not yet provided', () => {
-      const host = createMockHost();
+      const host = createTestHost();
+
       // Use a symbol as context (this is what createContext returns)
       const fakeContext = Symbol('test-context') as any;
 

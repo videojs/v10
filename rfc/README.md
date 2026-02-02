@@ -1,31 +1,29 @@
 # RFCs
 
-Request for Comments (RFC) documents for Video.js 10 architecture and API design decisions.
+Proposals that need buy-in before proceeding.
 
 ## What Belongs Here
 
-RFCs document significant design decisions that benefit from review and discussion:
+RFCs are for proposals that require alignment from others:
 
-- Major API changes or new APIs
-- Architectural decisions
-- Design patterns used across packages
-- Breaking changes with migration paths
+- Changes to public API surface
+- Product direction decisions
+- User-facing developer experience changes
+- Significant changes to core architecture
 
 ## When to Write an RFC
 
 Write an RFC when:
 
-- Introducing a new public API surface
-- Making architectural changes that affect multiple packages
-- Proposing patterns that will be used throughout the codebase
-- Changes need input from multiple contributors
+- Changes public API surface
+- Affects product direction
+- Affects user-facing developer experience
+- Significant changes to core architecture
+- Needs buy-in from others
 
-Skip the RFC for:
+**Use a Design Doc instead** (`internal/design/`) for decisions you own — architectural choices in your area, internal patterns, component specs.
 
-- Bug fixes
-- Small features contained to one package
-- Implementation details that don't affect public APIs
-- Documentation updates
+**Skip both for:** Bug fixes, small features, implementation details, documentation updates.
 
 ## File Format
 
@@ -95,17 +93,8 @@ When the RFC is accepted and merged, the squash commit becomes:
 docs(rfc): player api
 ```
 
-## Relationship to Implementation Plans
+## See Also
 
-RFCs focus on **what** and **why** — the design, rationale, and public API.
-
-Implementation details live in `.claude/plans/` — step-by-step plans, code snippets, and AI-agent context for executing the RFC.
-
-An RFC may link to its implementation plan:
-
-```markdown
----
-status: implemented
-implementation-plan: .claude/plans/feature-name.md
----
-```
+- [Design Docs](/internal/design/README.md) — Decisions you own
+- [Plans](/.claude/plans/README.md) — Implementation details
+- [CLAUDE.md](/CLAUDE.md#design-documents) — How these relate

@@ -1,47 +1,23 @@
+import { createStore } from '@videojs/store';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { PlayerTarget } from '../../../types';
 import { sourceFeature } from '../source';
 
 describe('sourceFeature', () => {
-  describe('feature structure', () => {
-    it('has unique id symbol', () => {
-      expect(sourceFeature.id).toBeTypeOf('symbol');
-    });
-
-    it('has correct initial state', () => {
-      expect(sourceFeature.initialState).toEqual({
-        source: null,
-        canPlay: false,
-      });
-    });
-
-    it('has changeSource request handler', () => {
-      expect(sourceFeature.request.changeSource).toBeDefined();
-      expect(sourceFeature.request.changeSource).toMatchObject({
-        key: 'changeSource',
-        guard: [],
-        handler: expect.any(Function),
-      });
-    });
-  });
-
-  describe('getSnapshot', () => {
-    it('captures source state from video element', () => {
+  describe('attach', () => {
+    it('syncs source state on attach', () => {
       const video = createMockVideo({
         currentSrc: 'https://example.com/video.mp4',
         src: 'https://example.com/video.mp4',
         readyState: HTMLMediaElement.HAVE_ENOUGH_DATA,
       });
 
-      const snapshot = sourceFeature.getSnapshot({
-        target: video,
-        initialState: sourceFeature.initialState,
-      });
+      const store = createStore<PlayerTarget>()(sourceFeature);
+      store.attach({ media: video, container: null });
 
-      expect(snapshot).toEqual({
-        source: 'https://example.com/video.mp4',
-        canPlay: true,
-      });
+      expect(store.state.source).toBe('https://example.com/video.mp4');
+      expect(store.state.canPlay).toBe(true);
     });
 
     it('returns null source when no source set', () => {
@@ -50,65 +26,91 @@ describe('sourceFeature', () => {
       Object.defineProperty(video, 'currentSrc', { value: '', writable: false });
       Object.defineProperty(video, 'readyState', { value: HTMLMediaElement.HAVE_NOTHING, writable: false });
 
-      const snapshot = sourceFeature.getSnapshot({
-        target: video,
-        initialState: sourceFeature.initialState,
+      const store = createStore<PlayerTarget>()(sourceFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.source).toBe(null);
+      expect(store.state.canPlay).toBe(false);
+    });
+
+    it('updates on canplay event', () => {
+      const video = createMockVideo({
+        currentSrc: '',
+        readyState: HTMLMediaElement.HAVE_NOTHING,
       });
 
-      expect(snapshot.source).toBe(null);
-      expect(snapshot.canPlay).toBe(false);
-    });
-  });
+      const store = createStore<PlayerTarget>()(sourceFeature);
+      store.attach({ media: video, container: null });
 
-  describe('subscribe', () => {
-    it('calls update on canplay event', () => {
-      const video = createMockVideo({});
-      const update = vi.fn();
-      const controller = new AbortController();
+      expect(store.state.canPlay).toBe(false);
 
-      sourceFeature.subscribe({ target: video, update, signal: controller.signal });
+      // Update mock to ready state
+      Object.defineProperty(video, 'readyState', {
+        value: HTMLMediaElement.HAVE_ENOUGH_DATA,
+        writable: false,
+        configurable: true,
+      });
       video.dispatchEvent(new Event('canplay'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.canPlay).toBe(true);
     });
 
-    it('calls update on loadstart event', () => {
+    it('updates on loadstart event', () => {
       const video = createMockVideo({
-        currentSrc: 'https://example.com/new.mp4',
-        src: 'https://example.com/new.mp4',
+        currentSrc: 'https://example.com/video.mp4',
       });
-      const update = vi.fn();
-      const controller = new AbortController();
 
-      sourceFeature.subscribe({ target: video, update, signal: controller.signal });
+      const store = createStore<PlayerTarget>()(sourceFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.source).toBe('https://example.com/video.mp4');
+
+      // Update mock with new source
+      Object.defineProperty(video, 'currentSrc', {
+        value: 'https://example.com/new.mp4',
+        writable: false,
+        configurable: true,
+      });
       video.dispatchEvent(new Event('loadstart'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.source).toBe('https://example.com/new.mp4');
     });
 
-    it('calls update on emptied event', () => {
-      const video = createMockVideo({});
-      const update = vi.fn();
-      const controller = new AbortController();
+    it('updates on emptied event', () => {
+      const video = createMockVideo({
+        currentSrc: 'https://example.com/video.mp4',
+        readyState: HTMLMediaElement.HAVE_ENOUGH_DATA,
+      });
 
-      sourceFeature.subscribe({ target: video, update, signal: controller.signal });
+      const store = createStore<PlayerTarget>()(sourceFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.canPlay).toBe(true);
+
+      // Update mock to empty state
+      Object.defineProperty(video, 'currentSrc', { value: '', writable: false, configurable: true });
+      Object.defineProperty(video, 'readyState', {
+        value: HTMLMediaElement.HAVE_NOTHING,
+        writable: false,
+        configurable: true,
+      });
       video.dispatchEvent(new Event('emptied'));
 
-      expect(update).toHaveBeenCalled();
+      expect(store.state.source).toBe(null);
+      expect(store.state.canPlay).toBe(false);
     });
   });
 
-  describe('request handlers', () => {
-    describe('changeSource', () => {
-      it('sets src on target and calls load', () => {
+  describe('actions', () => {
+    describe('loadSource', () => {
+      it('sets src on target and calls load', async () => {
         const video = createMockVideo({});
         video.load = vi.fn();
 
-        const result = sourceFeature.request.changeSource.handler('https://example.com/new.mp4', {
-          target: video,
-          signal: new AbortController().signal,
-          meta: null,
-        });
+        const store = createStore<PlayerTarget>()(sourceFeature);
+        store.attach({ media: video, container: null });
+
+        const result = await store.loadSource('https://example.com/new.mp4');
 
         expect(video.src).toBe('https://example.com/new.mp4');
         expect(video.load).toHaveBeenCalled();
@@ -128,13 +130,13 @@ function createMockVideo(
   const video = document.createElement('video');
 
   if (overrides.currentSrc !== undefined) {
-    Object.defineProperty(video, 'currentSrc', { value: overrides.currentSrc, writable: false });
+    Object.defineProperty(video, 'currentSrc', { value: overrides.currentSrc, writable: false, configurable: true });
   }
   if (overrides.src !== undefined) {
     video.src = overrides.src;
   }
   if (overrides.readyState !== undefined) {
-    Object.defineProperty(video, 'readyState', { value: overrides.readyState, writable: false });
+    Object.defineProperty(video, 'readyState', { value: overrides.readyState, writable: false, configurable: true });
   }
 
   return video;
