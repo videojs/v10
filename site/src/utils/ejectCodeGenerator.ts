@@ -11,7 +11,7 @@ type Skin = 'frosted' | 'minimal';
  */
 export function generateReactComponent(skin: Skin): string {
   if (skin === 'frosted') {
-    return `// npm install @videojs/react@next
+    return `// npm install @videojs/react-preview
 import type { PropsWithChildren } from 'react';
 
 import { CurrentTimeDisplay, DurationDisplay, FullscreenButton, MediaContainer, MuteButton, PlayButton, Popover, PreviewTimeDisplay, TimeSlider, Tooltip, VolumeSlider } from '@videojs/react-preview';
@@ -120,7 +120,7 @@ export default function FrostedSkin({ children, className = '' }: SkinProps): JS
   );
 }`;
   } else {
-    return `// npm install @videojs/react@next
+    return `// npm install @videojs/react-preview
 import type { PropsWithChildren } from 'react';
 
 import { CurrentTimeDisplay, DurationDisplay, FullscreenButton, MediaContainer, MuteButton, PlayButton, Popover, PreviewTimeDisplay, TimeSlider, Tooltip, VolumeSlider } from '@videojs/react-preview';
@@ -1898,7 +1898,7 @@ media-tooltip {
 export function generateHTMLJS(skin: Skin): string {
   return `import './${skin}.css';
 
-// npm install @videojs/html@next
+// npm install @videojs/html-preview
 import '@videojs/html-preview/icons';
 // be sure to import video-provider first for proper context initialization
 import '@videojs/html-preview/define/video-provider';
