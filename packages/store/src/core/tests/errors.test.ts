@@ -5,9 +5,9 @@ import { isStoreError, StoreError } from '../errors';
 describe('errors', () => {
   describe('storeError', () => {
     it('creates error with code only', () => {
-      const error = new StoreError('ABORTED');
-      expect(error.code).toBe('ABORTED');
-      expect(error.message).toBe('ABORTED');
+      const error = new StoreError('DESTROYED');
+      expect(error.code).toBe('DESTROYED');
+      expect(error.message).toBe('DESTROYED');
       expect(error.name).toBe('StoreError');
       expect(error).toBeInstanceOf(Error);
     });
@@ -20,8 +20,8 @@ describe('errors', () => {
 
     it('supports cause for error chaining', () => {
       const cause = new Error('original error');
-      const error = new StoreError('ABORTED', { cause });
-      expect(error.code).toBe('ABORTED');
+      const error = new StoreError('DESTROYED', { cause });
+      expect(error.code).toBe('DESTROYED');
       expect(error.cause).toBe(cause);
     });
 
@@ -36,8 +36,8 @@ describe('errors', () => {
 
   describe('type guard', () => {
     it('isStoreError identifies store errors', () => {
-      expect(isStoreError(new StoreError('ABORTED'))).toBe(true);
-      expect(isStoreError(new StoreError('SUPERSEDED'))).toBe(true);
+      expect(isStoreError(new StoreError('DESTROYED'))).toBe(true);
+      expect(isStoreError(new StoreError('NO_TARGET'))).toBe(true);
       expect(isStoreError(new Error('regular'))).toBe(false);
       expect(isStoreError(null)).toBe(false);
     });

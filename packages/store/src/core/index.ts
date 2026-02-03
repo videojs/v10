@@ -1,9 +1,6 @@
 export { combine } from './combine';
 export * from './config';
 export * from './errors';
-export type { TaskKey, TaskMode } from './queue';
-export { CANCEL_ALL } from './queue';
-export * from './request';
 export { createSelector } from './selector';
 export type { Comparator, Selector } from './shallow-equal';
 export { shallowEqual } from './shallow-equal';

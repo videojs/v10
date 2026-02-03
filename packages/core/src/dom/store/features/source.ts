@@ -1,27 +1,23 @@
 import type { InferSliceState } from '@videojs/store';
-import { CANCEL_ALL } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
 import { definePlayerFeature } from '../../feature';
 
 export const sourceFeature = definePlayerFeature({
-  state: ({ task }) => ({
+  state: ({ target, abort }) => ({
     /** Current media source URL (null if none). */
     source: null as string | null,
     /** Whether enough data is loaded to begin playback. */
     canPlay: false,
-
-    /** Load a new media source. Cancels all pending operations. Returns the new source URL. */
+    /** Load a new media source. Returns the new source URL. */
     loadSource(src: string) {
-      return task({
-        key: 'source',
-        cancels: [CANCEL_ALL],
-        handler({ target }) {
-          target.media.src = src;
-          target.media.load();
-          return src;
-        },
-      });
+      abort(); // Cancel pending operations (e.g., seek)
+
+      const { media } = target();
+      media.src = src;
+      media.load();
+
+      return src;
     },
   }),
 

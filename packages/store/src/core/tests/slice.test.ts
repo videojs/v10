@@ -9,15 +9,10 @@ describe('defineSlice', () => {
     }
 
     const slice = defineSlice<Target>()({
-      state: ({ task }) => ({
+      state: ({ target }) => ({
         count: 0,
         increment(amount: number) {
-          return task({
-            key: 'increment',
-            handler: ({ target }) => {
-              target.value += amount;
-            },
-          });
+          target().value += amount;
         },
       }),
 
@@ -30,7 +25,7 @@ describe('defineSlice', () => {
     expect(slice.attach).toBeTypeOf('function');
   });
 
-  it('factory receives task and target helpers', () => {
+  it('factory receives target helper', () => {
     interface Target {
       value: number;
     }
@@ -44,21 +39,16 @@ describe('defineSlice', () => {
     expect(factorySpy).not.toHaveBeenCalled();
   });
 
-  it('allows sync actions using task handler', () => {
+  it('allows sync actions using target()', () => {
     interface Target {
       volume: number;
     }
 
     const slice = defineSlice<Target>()({
-      state: ({ task }) => ({
+      state: ({ target }) => ({
         volume: 1,
         setVolume(value: number) {
-          return task({
-            key: 'volume',
-            handler: ({ target }) => {
-              target.volume = value;
-            },
-          });
+          target().volume = value;
         },
       }),
     });
@@ -66,40 +56,16 @@ describe('defineSlice', () => {
     expect(slice.state).toBeTypeOf('function');
   });
 
-  it('allows async actions using task()', () => {
+  it('allows async actions using target()', () => {
     interface Target {
       play: () => Promise<void>;
     }
 
     const slice = defineSlice<Target>()({
-      state: ({ task }) => ({
+      state: ({ target }) => ({
         playing: false,
         play() {
-          return task({
-            key: 'playback',
-            handler: ({ target }) => target.play(),
-          });
-        },
-      }),
-    });
-
-    expect(slice.state).toBeTypeOf('function');
-  });
-
-  it('supports task shorthand (fire-and-forget)', () => {
-    interface Target {
-      src: string;
-      load: () => void;
-    }
-
-    const slice = defineSlice<Target>()({
-      state: ({ task }) => ({
-        loading: false,
-        load(src: string) {
-          return task(({ target }) => {
-            target.src = src;
-            target.load();
-          });
+          return target().play();
         },
       }),
     });

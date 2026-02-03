@@ -1,32 +1,5 @@
 import type { Simplify, UnionToIntersection } from '@videojs/utils/types';
-import type { TaskKey, TaskMode } from './queue';
-import type { RequestMeta } from './request';
 import type { UnknownState } from './state';
-
-// ----------------------------------------
-// Task
-// ----------------------------------------
-
-export type Task<Target, State> = {
-  <Output>(handler: TaskHandler<Target, State, Output>): Promise<Awaited<Output>>;
-  <Output>(options: TaskOptions<Target, State, Output>): Promise<Awaited<Output>>;
-};
-
-export interface TaskOptions<Target, State, Output> {
-  key?: TaskKey;
-  mode?: TaskMode;
-  cancels?: TaskKey[];
-  handler: TaskHandler<Target, State, Output>;
-}
-
-export type TaskHandler<Target, State, Output> = (ctx: TaskContext<Target, State>) => Output;
-
-export interface TaskContext<Target, State> {
-  target: Target;
-  signal: AbortSignal;
-  get: () => Readonly<State>;
-  meta: RequestMeta | null;
-}
 
 // ----------------------------------------
 // Attach
@@ -53,8 +26,12 @@ export interface AttachContext<Target, State> {
 // ----------------------------------------
 
 export interface StateContext<Target> {
-  task: Task<Target, UnknownState>;
+  /** Returns the current target. Throws if not attached. */
   target: () => Target;
+  /** Returns a signal that aborts on detach or when `abort()` is called. Throws if not attached. */
+  signal: () => AbortSignal;
+  /** Aborts the current signal and creates a new one. Use to cancel pending operations. */
+  abort: () => void;
 }
 
 // ----------------------------------------

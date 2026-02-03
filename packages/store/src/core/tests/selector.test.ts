@@ -8,14 +8,12 @@ interface MockMedia {
 
 describe('createSelector', () => {
   const volumeSlice = defineSlice<MockMedia>()({
-    state: ({ task }) => ({
+    state: ({ target }) => ({
       volume: 1,
       muted: false,
       setVolume(value: number) {
-        return task(({ target }) => {
-          target.volume = value;
-          return value;
-        });
+        target().volume = value;
+        return value;
       },
     }),
   });
@@ -29,7 +27,7 @@ describe('createSelector', () => {
 
   it('selects slice state from store state', () => {
     const selectVolume = createSelector(volumeSlice);
-    const state = { volume: 0.5, muted: true, setVolume: () => Promise.resolve(0.5) };
+    const state = { volume: 0.5, muted: true, setVolume: () => 0.5 };
 
     const selected = selectVolume(state);
 
@@ -55,7 +53,7 @@ describe('createSelector', () => {
     const state = {
       volume: 0.75,
       muted: false,
-      setVolume: () => Promise.resolve(0.75),
+      setVolume: () => 0.75,
       paused: false,
       ended: false,
     };
@@ -76,7 +74,7 @@ describe('createSelector', () => {
 
   it('returns stable references when state values are the same', () => {
     const selectVolume = createSelector(volumeSlice);
-    const setVolume = () => Promise.resolve(1);
+    const setVolume = () => 1;
     const state1 = { volume: 1, muted: false, setVolume };
     const state2 = { volume: 1, muted: false, setVolume };
 

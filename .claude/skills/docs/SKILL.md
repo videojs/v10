@@ -121,8 +121,8 @@ Show why something is better:
 // ❌ Don't — mutate directly
 video.volume = 0.5; // No coordination, no error handling
 
-// ✅ Do — use requests
-await player.request.setVolume(0.5); // Queued, cancellable, tracked
+// ✅ Do — use store actions
+player.setVolume(0.5); // Managed, observable, integrated with store
 ```
 
 ## Familiar Terms

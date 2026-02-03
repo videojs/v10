@@ -1,29 +1,8 @@
-/**
- * Error codes for store operations.
- *
- * @example
- * ```ts
- * if (isStoreError(error)) {
- *   switch (error.code) {
- *     case 'SUPERSEDED':
- *       // Request was replaced by another - expected behavior
- *       break;
- *     case 'ABORTED':
- *       // Request was aborted
- *       break;
- *   }
- * }
- * ```
- */
 export type StoreErrorCode =
-  /** Request was aborted via AbortSignal. */
-  | 'ABORTED'
-  /** Store or queue was destroyed. */
+  /** Store was destroyed. */
   | 'DESTROYED'
   /** No target is attached to the store. */
-  | 'NO_TARGET'
-  /** Request was replaced by a newer request with the same key. */
-  | 'SUPERSEDED';
+  | 'NO_TARGET';
 
 export interface StoreErrorOptions {
   cause?: unknown;
@@ -44,4 +23,12 @@ export class StoreError extends Error {
 
 export function isStoreError(error: unknown): error is StoreError {
   return error instanceof StoreError;
+}
+
+export function throwNoTargetError(): never {
+  throw new StoreError('NO_TARGET');
+}
+
+export function throwDestroyedError(): never {
+  throw new StoreError('DESTROYED');
 }

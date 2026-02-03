@@ -5,7 +5,7 @@ import { definePlayerFeature } from '../../feature';
 import type { FeatureAvailability } from '../../types';
 
 export const volumeFeature = definePlayerFeature({
-  state: ({ task }) => ({
+  state: ({ target }) => ({
     /** Volume level from 0 (silent) to 1 (max). */
     volume: 1,
     /** Whether audio is muted. */
@@ -15,24 +15,16 @@ export const volumeFeature = definePlayerFeature({
 
     /** Set volume (clamped 0-1). Returns the clamped value. */
     changeVolume(volume: number) {
-      return task({
-        key: 'volume',
-        handler({ target }) {
-          target.media.volume = Math.max(0, Math.min(1, volume));
-          return target.media.volume;
-        },
-      });
+      const { media } = target();
+      media.volume = Math.max(0, Math.min(1, volume));
+      return media.volume;
     },
 
     /** Toggle mute state. Returns new muted value. */
     toggleMute() {
-      return task({
-        key: 'mute',
-        handler({ target }) {
-          target.media.muted = !target.media.muted;
-          return target.media.muted;
-        },
-      });
+      const { media } = target();
+      media.muted = !media.muted;
+      return media.muted;
     },
   }),
 
@@ -42,7 +34,6 @@ export const volumeFeature = definePlayerFeature({
     set({ volumeAvailability: canSetVolume() });
 
     const sync = () => set({ volume: media.volume, muted: media.muted });
-
     sync();
 
     listen(media, 'volumechange', sync, { signal });

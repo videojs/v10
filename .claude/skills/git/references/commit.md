@@ -42,7 +42,7 @@ The `!` signals breaking changes in the changelog.
 
 ```
 feat(html): add volume slider component
-fix(store): prevent race condition in queue
+fix(store): prevent race condition in state sync
 chore(root): bump vitest to v3
 docs(core): document request lifecycle
 refactor(utils): simplify event listener cleanup

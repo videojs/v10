@@ -62,7 +62,7 @@ const volumeSlice = defineSlice<HTMLMediaElement>()({
     muted: false,
 
     // Sync - use target() directly
-    setVolume(value: number) {
+    setVolume() {
       target().volume = Math.max(0, Math.min(1, value));
     },
 

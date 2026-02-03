@@ -1,8 +1,9 @@
-import { createStore } from '@videojs/store';
+import { combine, createStore } from '@videojs/store';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { PlayerTarget } from '../../../types';
 import { sourceFeature } from '../source';
+import { timeFeature } from '../time';
 
 describe('sourceFeature', () => {
   describe('attach', () => {
@@ -115,6 +116,28 @@ describe('sourceFeature', () => {
         expect(video.src).toBe('https://example.com/new.mp4');
         expect(video.load).toHaveBeenCalled();
         expect(result).toBe('https://example.com/new.mp4');
+      });
+
+      it('aborts pending operations when loading new source', async () => {
+        const video = createMockVideo({
+          readyState: HTMLMediaElement.HAVE_METADATA,
+        });
+        video.load = vi.fn();
+
+        const store = createStore<PlayerTarget>()(combine(sourceFeature, timeFeature));
+        store.attach({ media: video, container: null });
+
+        // Start a seek that will wait for seeked event
+        const seekPromise = store.seek(30);
+
+        // Load new source before seek completes - should abort the seek
+        store.loadSource('https://example.com/new.mp4');
+
+        // Seek should resolve immediately (aborted)
+        const result = await seekPromise;
+        expect(result).toBe(30); // Returns current position
+
+        expect(video.load).toHaveBeenCalled();
       });
     });
   });

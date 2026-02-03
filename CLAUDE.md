@@ -266,22 +266,22 @@ function isStoreError(value: unknown): value is StoreError {
 Use symbols to identify objects when `instanceof` isn't reliable (e.g., cross-realm, serialization boundaries):
 
 ```ts
-const QUEUE_SYMBOL = Symbol('@videojs/queue');
+const STORE_SYMBOL = Symbol('@videojs/store');
 
-interface Queue {
-  [QUEUE_SYMBOL]: true;
+interface Store {
+  [STORE_SYMBOL]: true;
   // ...
 }
 
-function createQueue(): Queue {
+function createStore(): Store {
   return {
-    [QUEUE_SYMBOL]: true,
+    [STORE_SYMBOL]: true,
     // ...
   };
 }
 
-function isQueue(value: unknown): value is Queue {
-  return isObject(value) && QUEUE_SYMBOL in value;
+function isStore(value: unknown): value is Store {
+  return isObject(value) && STORE_SYMBOL in value;
 }
 ```
 
@@ -346,7 +346,7 @@ import { Disposer } from '@videojs/utils/events';
 
 connect(): void {
   this.#disposer.add(store.subscribe(...));
-  this.#disposer.add(queue.subscribe(...));
+  this.#disposer.add(listen(element, 'click', handler));
 }
 
 disconnect(): void {
