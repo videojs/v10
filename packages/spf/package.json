@@ -1,0 +1,46 @@
+{
+  "name": "@videojs/spf",
+  "type": "module",
+  "version": "0.1.0-alpha.1",
+  "description": "Stream Processing Framework for Video.js 10",
+  "license": "Apache-2.0",
+  "keywords": [
+    "video",
+    "hls",
+    "streaming",
+    "spf",
+    "videojs"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch --silent",
+    "dev": "pnpm run build:watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist types"
+  },
+  "dependencies": {
+    "@videojs/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "jsdom": "^26.1.0",
+    "tsdown": "^0.15.12",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
