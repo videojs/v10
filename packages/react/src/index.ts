@@ -28,3 +28,14 @@ export {
   createPlayer,
   type ProviderProps,
 } from './player/create-player';
+
+// UI Hooks
+export { useButton } from './ui/hooks/use-button';
+
+// UI Components
+export { PlayButton, type PlayButtonProps } from './ui/play-button/play-button';
+
+// Utilities
+export { mergeProps } from './utils/merge-props';
+export type { HTMLProps, RenderFunction, RenderProp, UIComponentProps } from './utils/types';
+export { renderElement } from './utils/use-render';

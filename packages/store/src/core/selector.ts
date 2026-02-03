@@ -20,9 +20,7 @@ const stateContext: StateContext<unknown> = {
  * selectPlayback(store.state); // { paused, play, pause, ... } | undefined
  * ```
  */
-export function createSelector<S extends AnySlice>(
-  slice: S
-): (state: Record<string, unknown>) => InferSliceState<S> | undefined {
+export function createSelector<S extends AnySlice>(slice: S): (state: object) => InferSliceState<S> | undefined {
   const initialState = slice.state(stateContext);
   const keys = Object.keys(initialState as object);
 
@@ -32,6 +30,6 @@ export function createSelector<S extends AnySlice>(
   return (state) => {
     // WARN: Could be the source of a bug if two slices have overlapping state keys
     if (!(firstKey in state)) return undefined;
-    return pick(state, keys) as InferSliceState<S>;
+    return pick(state as Record<string, unknown>, keys) as InferSliceState<S>;
   };
 }

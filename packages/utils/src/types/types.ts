@@ -15,3 +15,7 @@ export type Falsy<T> = T | false | null | undefined;
 export type EnsureFunction<T> = T extends (...args: any[]) => any ? T : never;
 
 export type Simplify<T> = { [KeyType in keyof T]: T[KeyType] } & {};
+
+export type NonNullableObject<T extends object> = {
+  [P in keyof T]-?: Exclude<T[P], null | undefined>;
+};

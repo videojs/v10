@@ -36,7 +36,7 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
   readonly #selector: Selector<InferStoreState<Store>, Result> | undefined;
 
   #consumer: ContextConsumer<PlayerContext<Store>, PlayerControllerHost>;
-  #storeCtrl: StoreController<Store, Result> | null = null;
+  #store: StoreController<Store, Result> | null = null;
 
   constructor(host: PlayerControllerHost, context: PlayerContext<Store>);
   constructor(
@@ -61,15 +61,15 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
     host.addController(this);
   }
 
-  get value(): Result {
+  get value(): Result | undefined {
     const ctx = this.#consumer.value;
-    if (!ctx) throw new Error('Player context not available');
+    if (!ctx) return undefined;
 
     // Without selector: return store directly
     if (!this.#selector) return ctx.store as unknown as Result;
 
     // With selector: use StoreController
-    return this.#storeCtrl!.value;
+    return this.#store?.value;
   }
 
   hostConnected(): void {
@@ -78,15 +78,15 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
   }
 
   hostDisconnected(): void {
-    this.#storeCtrl = null;
+    this.#store = null;
   }
 
   #connect(ctx: PlayerContextValue<Store> | undefined): void {
     if (!ctx) return;
 
     // Create StoreController with the store directly
-    if (!this.#storeCtrl && this.#selector) {
-      this.#storeCtrl = new StoreController(this.#host, ctx.store, this.#selector);
+    if (!this.#store && this.#selector) {
+      this.#store = new StoreController(this.#host, ctx.store, this.#selector);
     }
   }
 }

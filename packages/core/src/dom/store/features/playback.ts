@@ -1,23 +1,17 @@
-import type { InferSliceState } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
+import type { PlaybackState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 
 export const playbackFeature = definePlayerFeature({
-  state: ({ target }) => ({
-    /** Whether playback is paused. */
+  state: ({ target }): PlaybackState => ({
     paused: true,
-    /** Whether playback has reached the end. */
     ended: false,
-    /** Whether playback has started (played or seeked). */
     started: false,
-    /** Whether playback is stalled waiting for data. */
     waiting: false,
-    /** Start playback. */
     play() {
       return target().media.play();
     },
-    /** Pause playback immediately. */
     pause() {
       target().media.pause();
     },
@@ -43,5 +37,3 @@ export const playbackFeature = definePlayerFeature({
     listen(media, 'waiting', sync, { signal });
   },
 });
-
-export type PlaybackState = InferSliceState<typeof playbackFeature>;
