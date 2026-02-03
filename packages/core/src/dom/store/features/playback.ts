@@ -4,7 +4,7 @@ import { listen } from '@videojs/utils/dom';
 import { definePlayerFeature } from '../../feature';
 
 export const playbackFeature = definePlayerFeature({
-  state: ({ task }) => ({
+  state: ({ target }) => ({
     /** Whether playback is paused. */
     paused: true,
     /** Whether playback has reached the end. */
@@ -13,26 +13,13 @@ export const playbackFeature = definePlayerFeature({
     started: false,
     /** Whether playback is stalled waiting for data. */
     waiting: false,
-
-    /** Start playback. Returns when playback begins. */
+    /** Start playback. */
     play() {
-      return task({
-        key: 'playback',
-        mode: 'shared',
-        async handler({ target }) {
-          await target.media.play();
-        },
-      });
+      return target().media.play();
     },
-
     /** Pause playback immediately. */
     pause() {
-      return task({
-        key: 'playback',
-        handler({ target }) {
-          target.media.pause();
-        },
-      });
+      target().media.pause();
     },
   }),
 

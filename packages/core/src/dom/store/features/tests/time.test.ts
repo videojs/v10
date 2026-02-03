@@ -110,6 +110,47 @@ describe('timeFeature', () => {
         const result = await resultPromise;
         expect(result).toBe(45);
       });
+
+      it('aborts pending seek on detach', async () => {
+        const video = createMockVideo({});
+        const store = createStore<PlayerTarget>()(timeFeature);
+        const detach = store.attach({ media: video, container: null });
+
+        const resultPromise = store.seek(45);
+
+        expect(video.currentTime).toBe(45);
+
+        // Detach before seeked event fires
+        detach();
+
+        // Should resolve with current time (seek was aborted)
+        const result = await resultPromise;
+        expect(result).toBe(45);
+      });
+
+      it('supersedes previous seek when new seek starts', async () => {
+        const video = createMockVideo({});
+        const store = createStore<PlayerTarget>()(timeFeature);
+        store.attach({ media: video, container: null });
+
+        // Start first seek
+        const seek1Promise = store.seek(10);
+
+        // Start second seek before first completes (supersedes)
+        const seek2Promise = store.seek(20);
+
+        expect(video.currentTime).toBe(20);
+
+        // First seek should resolve immediately (aborted)
+        const result1 = await seek1Promise;
+        expect(result1).toBe(20); // Returns current position
+
+        // Fire seeked for second seek
+        video.dispatchEvent(new Event('seeked'));
+
+        const result2 = await seek2Promise;
+        expect(result2).toBe(20);
+      });
     });
   });
 });
@@ -118,7 +159,8 @@ function createMockVideo(
   overrides: Partial<{
     currentTime: number;
     duration: number;
-  }>
+    readyState: number;
+  }> = {}
 ): HTMLVideoElement {
   const video = document.createElement('video');
 
@@ -128,6 +170,12 @@ function createMockVideo(
   if (overrides.duration !== undefined) {
     Object.defineProperty(video, 'duration', { value: overrides.duration, writable: false, configurable: true });
   }
+  // Default to HAVE_METADATA so seek tests work without waiting for loadedmetadata
+  Object.defineProperty(video, 'readyState', {
+    value: overrides.readyState ?? HTMLMediaElement.HAVE_METADATA,
+    writable: false,
+    configurable: true,
+  });
 
   return video;
 }

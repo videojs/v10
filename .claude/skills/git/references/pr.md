@@ -104,8 +104,8 @@ Fix race condition where rapid play/pause could leave player in inconsistent sta
 
 ## Changes
 
-- Queue play/pause requests to prevent overlapping operations
-- Add guard against redundant state transitions
+- Add guard to debounce rapid play/pause calls
+- Prevent redundant state transitions
 
 ## Testing
 

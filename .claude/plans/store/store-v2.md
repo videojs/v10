@@ -2,11 +2,22 @@
 
 Simplify store package by removing queue public API, simplifying internals, and cleaning up bindings.
 
-**Note:** RequestMeta stays in implementation, removed from types only where task.ts removal requires it.
-
 ---
 
-## Phase 1: Queue Simplification
+## Phase 1: Queue Removal ✅
+
+> **COMPLETED:** Queue, task, and meta were completely removed. Actions now use `target()` directly.
+
+**What was done:**
+- Deleted `queue.ts`, `request.ts` and their tests
+- Removed `Task`, `TaskOptions`, `TaskHandler`, `TaskContext` types from `slice.ts`
+- Simplified `StateContext` to just `{ target: () => Target }`
+- Removed `pending`, `meta()`, `onTaskStart`, `onTaskEnd` from store
+- Removed `ABORTED`, `SUPERSEDED` error codes
+- Actions now call `target()` directly instead of using `task()` wrapper
+
+<details>
+<summary>Original plan (obsolete)</summary>
 
 Remove public API, keep internal for abort/supersession/modes.
 
@@ -323,6 +334,8 @@ pnpm -F @videojs/store test
 pnpm lint
 pnpm build:packages
 ```
+
+</details>
 
 ---
 

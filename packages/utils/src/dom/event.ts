@@ -44,7 +44,7 @@ export function onEvent(target: EventTarget, type: string, options?: OnEventOpti
 export function onEvent(target: EventTarget, type: string, options?: OnEventOptions): Promise<Event> {
   return new Promise((resolve, reject) => {
     const handleAbort = () => {
-      reject(options?.signal?.reason ?? new DOMException('Aborted', 'AbortError'));
+      reject(options?.signal?.reason ?? 'Aborted');
     };
 
     // If already aborted, reject immediately

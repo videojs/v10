@@ -50,7 +50,7 @@ packages/html/src/slider.ts
 packages/html/src/button.ts → html
 
 # Cross-package refactor
-packages/store/src/queue.ts
+packages/store/src/slice.ts
 packages/core/src/media.ts → packages (or primary one)
 
 # Root configs

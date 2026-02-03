@@ -11,7 +11,7 @@ Implemented React and Lit bindings for `@videojs/store`: `createStore()` factory
 | Phase | PR                                                                                               | Description                                            |
 | ----- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
 | 0     | [#283](https://github.com/videojs/v10/pull/283)                                                  | `uniqBy`, `composeCallbacks`, `extendConfig` utilities |
-| 0.5   | [#287](https://github.com/videojs/v10/pull/287)                                                  | Queue task refactor                                    |
+| 0.5   | [#287](https://github.com/videojs/v10/pull/287)                                                  | Queue task refactor (later removed)                    |
 | 1     | [#288](https://github.com/videojs/v10/pull/288)                                                  | React bindings                                         |
 | 2     | [#289](https://github.com/videojs/v10/pull/289)                                                  | Lit bindings                                           |
 | 3     | [#292](https://github.com/videojs/v10/pull/292)                                                  | DOM media slices                                       |

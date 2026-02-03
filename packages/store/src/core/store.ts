@@ -1,11 +1,7 @@
-import type { EventLike } from '@videojs/utils/events';
-import { isFunction, isNull, isObject } from '@videojs/utils/predicate';
-import type { PendingTask, StoreCallbacks } from './config';
-import { StoreError } from './errors';
-import { CANCEL_ALL, Queue } from './queue';
-import type { RequestMeta, RequestMetaInit } from './request';
-import { createRequestMeta, createRequestMetaFromEvent } from './request';
-import type { AttachContext, Slice, StateContext, TaskContext, TaskHandler, TaskOptions } from './slice';
+import { isNull, isObject } from '@videojs/utils/predicate';
+import type { StoreCallbacks } from './config';
+import { throwDestroyedError, throwNoTargetError } from './errors';
+import type { AttachContext, Slice, StateContext } from './slice';
 import type { StateChange, UnknownState, WritableState } from './state';
 import { createState } from './state';
 
@@ -24,19 +20,30 @@ export function createStore<Target = unknown>(): <State>(
     let target: Target | null = null;
     let destroyed = false;
     let attachAbort: AbortController | null = null;
+    let stateAbort = new AbortController();
 
     const setupAbort = new AbortController();
-    const queue = new Queue();
-    const pending: Record<string, PendingTask> = {};
 
     // Reactive state - initialized after building slice state
     let state: WritableState<State>;
 
+    function validate() {
+      if (destroyed) throwDestroyedError();
+      if (!target) throwNoTargetError();
+    }
+
     const initialState = slice.state({
-      task: executeTask,
       target: () => {
-        if (!target) throw new StoreError('NO_TARGET');
-        return target;
+        validate();
+        return target!;
+      },
+      signal: () => {
+        validate();
+        return AbortSignal.any([attachAbort!.signal, stateAbort.signal]);
+      },
+      abort: () => {
+        stateAbort.abort();
+        stateAbort = new AbortController();
       },
     } satisfies StateContext<Target>);
 
@@ -50,16 +57,12 @@ export function createStore<Target = unknown>(): <State>(
       get destroyed() {
         return destroyed;
       },
-      get pending() {
-        return pending;
-      },
       get state() {
         return state.current;
       },
       attach,
       destroy,
       subscribe,
-      meta,
     } as unknown as TargetStore;
 
     for (const key of Object.keys(initialState as object)) {
@@ -68,24 +71,6 @@ export function createStore<Target = unknown>(): <State>(
         enumerable: true,
       });
     }
-
-    // Proxy returned by meta() - wraps action calls to clear currentMeta after invocation
-    let currentMeta: RequestMeta | null = null;
-    const metaProxy = new Proxy(store, {
-      get(obj, prop) {
-        const value = Reflect.get(obj, prop);
-
-        if (!isFunction(value)) return value;
-
-        return (...args: unknown[]) => {
-          try {
-            return (value as (...args: unknown[]) => unknown)(...args);
-          } finally {
-            currentMeta = null;
-          }
-        };
-      },
-    });
 
     try {
       options.onSetup?.({ store, signal: setupAbort.signal });
@@ -96,7 +81,7 @@ export function createStore<Target = unknown>(): <State>(
     return store;
 
     function attach(newTarget: Target): () => void {
-      if (destroyed) throw new StoreError('DESTROYED');
+      if (destroyed) throwDestroyedError();
 
       attachAbort?.abort();
       target = newTarget;
@@ -139,10 +124,11 @@ export function createStore<Target = unknown>(): <State>(
 
     function detach(): void {
       if (isNull(target)) return;
+      stateAbort.abort();
+      stateAbort = new AbortController();
       attachAbort?.abort();
       attachAbort = null;
       target = null;
-      queue.abort();
       state.patch(initialState);
     }
 
@@ -151,88 +137,10 @@ export function createStore<Target = unknown>(): <State>(
       destroyed = true;
       detach();
       setupAbort.abort();
-      queue.destroy();
     }
 
     function subscribe(callback: StateChange): () => void {
       return state.subscribe(callback);
-    }
-
-    function meta(eventOrMeta: EventLike | RequestMetaInit): TargetStore {
-      currentMeta =
-        'isTrusted' in eventOrMeta
-          ? createRequestMetaFromEvent(eventOrMeta as EventLike)
-          : createRequestMeta(eventOrMeta as RequestMetaInit);
-
-      return metaProxy as TargetStore;
-    }
-
-    async function executeTask<Output>(handler: TaskHandler<Target, State, Output>): Promise<Awaited<Output>>;
-    async function executeTask<Output>(options: TaskOptions<Target, State, Output>): Promise<Awaited<Output>>;
-    async function executeTask<Output>(
-      handlerOrOptions: TaskHandler<Target, State, Output> | TaskOptions<Target, State, Output>
-    ): Promise<Awaited<Output>> {
-      if (destroyed) throw new StoreError('DESTROYED');
-
-      const taskOptions: TaskOptions<Target, State, Output> = isFunction(handlerOrOptions)
-        ? { handler: handlerOrOptions }
-        : handlerOrOptions;
-
-      const { key, mode = 'exclusive', cancels, handler } = taskOptions;
-
-      const taskMeta = currentMeta;
-      currentMeta = null;
-
-      if (cancels) {
-        for (const cancelKey of cancels) {
-          if (cancelKey === CANCEL_ALL) {
-            queue.abort();
-          } else {
-            queue.abort(cancelKey);
-          }
-        }
-      }
-
-      if (key) {
-        pending[key as string] = { key, meta: taskMeta, startedAt: Date.now() };
-        options.onTaskStart?.({ key, meta: taskMeta });
-      }
-
-      const queueHandler = async ({ signal }: { signal: AbortSignal }) => {
-        if (!target) throw new StoreError('NO_TARGET');
-
-        const ctx: TaskContext<Target, State> = {
-          target,
-          signal,
-          get: () => state.current,
-          meta: taskMeta,
-        };
-
-        return handler(ctx);
-      };
-
-      try {
-        const result = await queue.enqueue({
-          key: key ?? Symbol('@videojs/task'),
-          mode,
-          handler: queueHandler,
-        });
-
-        if (key) {
-          delete pending[key as string];
-          options.onTaskEnd?.({ key, meta: taskMeta });
-        }
-
-        return result as Awaited<Output>;
-      } catch (error) {
-        if (key) {
-          delete pending[key as string];
-          options.onTaskEnd?.({ key, meta: taskMeta, error });
-        }
-
-        reportError(error);
-        throw error;
-      }
     }
 
     function reportError(error: unknown): void {
@@ -257,12 +165,10 @@ export interface BaseStore<Target = unknown, State = UnknownState> {
   [key: string]: unknown;
   readonly target: Target | null;
   readonly destroyed: boolean;
-  readonly pending: Readonly<Record<string, PendingTask>>;
   readonly state: State;
   attach(target: Target): () => void;
   destroy(): void;
   subscribe(callback: StateChange): () => void;
-  meta(eventOrMeta: EventLike | RequestMetaInit): Store<Target, State>;
 }
 
 export type Store<Target = unknown, State = UnknownState> = BaseStore<Target, State> & State;

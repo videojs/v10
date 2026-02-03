@@ -1,14 +1,11 @@
 import { pick } from '@videojs/utils/object';
-import { StoreError } from './errors';
+import { throwNoTargetError } from './errors';
 import type { AnySlice, InferSliceState, StateContext } from './slice';
 
 const stateContext: StateContext<unknown> = {
-  task: () => {
-    throw new StoreError('NO_TARGET');
-  },
-  target: () => {
-    throw new StoreError('NO_TARGET');
-  },
+  target: throwNoTargetError,
+  signal: throwNoTargetError,
+  abort: throwNoTargetError,
 };
 
 /**

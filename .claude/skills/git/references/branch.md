@@ -18,13 +18,13 @@ type/short-description
 | `feat/volume-slider`        | New volume slider component      |
 | `feat/media-queries`        | Add media query support          |
 | `fix/slider-drag-edge`      | Fix edge case in slider dragging |
-| `fix/race-condition-queue`  | Fix race condition in queue      |
+| `fix/state-sync-race`       | Fix race condition in state sync |
 | `refactor/store-cleanup`    | Clean up store internals         |
 | `chore/bump-deps`           | Dependency updates               |
 | `docs/readme-examples`      | Update README examples           |
 | `test/slider-keyboard`      | Add keyboard tests for slider    |
 | `rfc/request-api`           | RFC for new request API design   |
-| `design/queue-design`       | Design doc for queue architecture|
+| `design/slice-store`        | Design doc for slice/store arch  |
 | `plan/store-simplification` | Planning store architecture      |
 
 ## Guidelines
