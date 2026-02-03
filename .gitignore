@@ -120,9 +120,6 @@ Pods/
 # Vercel
 .vercel
 
-# Netlify
-.netlify
-
 # -------------------------
 # Package Manager Locks
 # Keep only one when enforcing workspace consistency
@@ -141,3 +138,15 @@ bun.lockb
 # AI Agent Config (Generated)
 # -------------------------
 .opencode
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Test fixtures (large media files)
+packages/spf/test-fixtures/streams/*
+!packages/spf/test-fixtures/streams/.gitkeep
+
+# Local archive for reference (not committed)
+/.archive/
