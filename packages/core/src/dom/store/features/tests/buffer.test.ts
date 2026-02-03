@@ -1,7 +1,7 @@
 import { createStore } from '@videojs/store';
 import { describe, expect, it } from 'vitest';
 
-import type { PlayerTarget } from '../../../types';
+import type { PlayerTarget } from '../../../media/types';
 import { bufferFeature } from '../buffer';
 
 describe('bufferFeature', () => {

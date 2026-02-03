@@ -16,3 +16,6 @@ export * from './store/types';
 
 // Primitives
 export * from './ui/media-element';
+
+// UI Components
+export { PlayButtonElement } from './ui/play-button/play-button-element';

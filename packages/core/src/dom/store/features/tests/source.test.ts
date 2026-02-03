@@ -1,7 +1,7 @@
 import { combine, createStore } from '@videojs/store';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { PlayerTarget } from '../../../types';
+import type { PlayerTarget } from '../../../media/types';
 import { sourceFeature } from '../source';
 import { timeFeature } from '../time';
 

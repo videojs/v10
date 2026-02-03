@@ -1,10 +1,11 @@
 'use client';
 
+import { isFunction } from '@videojs/utils/predicate';
 import type { Ref, RefCallback } from 'react';
 
 import { useCallback } from 'react';
 
-type PossibleRef<T> = Ref<T> | undefined;
+type OptionalRef<T> = Ref<T> | undefined;
 
 /**
  * Set a given ref to a given value.
@@ -13,8 +14,8 @@ type PossibleRef<T> = Ref<T> | undefined;
  *
  * @returns Cleanup function if the ref callback returned one (React 19+)
  */
-function setRef<T>(ref: PossibleRef<T>, value: T): (() => void) | void | undefined {
-  if (typeof ref === 'function') {
+function setRef<T>(ref: OptionalRef<T>, value: T): (() => void) | void | undefined {
+  if (isFunction(ref)) {
     return ref(value);
   } else if (ref !== null && ref !== undefined) {
     ref.current = value;
@@ -30,17 +31,19 @@ function setRef<T>(ref: PossibleRef<T>, value: T): (() => void) | void | undefin
  * return <div ref={composedRef} />;
  * ```
  */
-export function composeRefs<T>(...refs: PossibleRef<T>[]): RefCallback<T> {
+export function composeRefs<T>(...refs: (OptionalRef<T> | OptionalRef<T>[])[]): RefCallback<T> {
+  const flatRefs = refs.flat();
+
   return (node): (() => void) | void => {
-    const cleanups = refs.map((ref) => setRef(ref, node));
+    const cleanups = flatRefs.map((ref) => setRef(ref, node));
 
     return () => {
       for (let i = 0; i < cleanups.length; i++) {
         const cleanup = cleanups[i];
-        if (typeof cleanup === 'function') {
+        if (isFunction(cleanup)) {
           cleanup();
         } else {
-          setRef(refs[i], null);
+          setRef(flatRefs[i], null);
         }
       }
     };
@@ -58,6 +61,6 @@ export function composeRefs<T>(...refs: PossibleRef<T>[]): RefCallback<T> {
  * return <div ref={composedRef} />;
  * ```
  */
-export function useComposedRefs<T>(...refs: PossibleRef<T>[]): RefCallback<T> {
+export function useComposedRefs<T>(...refs: OptionalRef<T>[]): RefCallback<T> {
   return useCallback(composeRefs(...refs), [...refs]);
 }

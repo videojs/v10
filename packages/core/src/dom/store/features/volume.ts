@@ -2,7 +2,7 @@ import type { InferSliceState } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
 import { definePlayerFeature } from '../../feature';
-import type { FeatureAvailability } from '../../types';
+import type { FeatureAvailability } from '../../media/types';
 
 export const volumeFeature = definePlayerFeature({
   state: ({ target }) => ({
