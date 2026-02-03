@@ -50,7 +50,7 @@ mark {
 .dark .shiki span,
 .dark .astro-code,
 .dark .astro-code span {
-  color: var(--shiki-dark);
+  color: var(--shiki-dark) !important;
 }
 
 /* theme inline tells tailwind to reference the value of these properties */
