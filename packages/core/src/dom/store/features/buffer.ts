@@ -1,14 +1,12 @@
-import type { InferSliceState } from '@videojs/store';
 import { listen, serializeTimeRanges } from '@videojs/utils/dom';
 
+import type { BufferState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 
 export const bufferFeature = definePlayerFeature({
-  state: () => ({
-    /** Buffered time ranges as [start, end] tuples. */
-    buffered: [] as [number, number][],
-    /** Seekable time ranges as [start, end] tuples. */
-    seekable: [] as [number, number][],
+  state: (): BufferState => ({
+    buffered: [],
+    seekable: [],
   }),
 
   attach({ target, signal, set }) {
@@ -26,5 +24,3 @@ export const bufferFeature = definePlayerFeature({
     listen(media, 'emptied', sync, { signal });
   },
 });
-
-export type BufferState = InferSliceState<typeof bufferFeature>;

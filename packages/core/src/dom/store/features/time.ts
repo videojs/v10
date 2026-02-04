@@ -1,11 +1,11 @@
-import type { InferSliceState } from '@videojs/store';
 import { listen, onEvent } from '@videojs/utils/dom';
 import { noop } from '@videojs/utils/function';
+import type { TimeState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { hasMetadata } from '../../media/predicate';
 
 export const timeFeature = definePlayerFeature({
-  state: ({ target, signal }) => {
+  state: ({ target, signal }): TimeState => {
     let abort: AbortController | null = null;
 
     const supersede = () => {
@@ -15,13 +15,9 @@ export const timeFeature = definePlayerFeature({
     };
 
     return {
-      /** Current playback position in seconds. */
       currentTime: 0,
-      /** Total duration in seconds (0 if unknown). */
       duration: 0,
-      /** Whether a seek operation is in progress. */
       seeking: false,
-      /** Seek to a time in seconds. Returns the actual position after seek. */
       async seek(time: number) {
         const { media } = target(),
           signal = supersede();
@@ -62,5 +58,3 @@ export const timeFeature = definePlayerFeature({
     listen(media, 'emptied', sync, { signal });
   },
 });
-
-export type TimeState = InferSliceState<typeof timeFeature>;
