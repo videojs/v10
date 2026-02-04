@@ -1,4 +1,5 @@
 import type { Simplify, UnionToIntersection } from '@videojs/utils/types';
+import type { Signals } from './signals';
 import type { UnknownState } from './state';
 
 // ----------------------------------------
@@ -28,10 +29,17 @@ export interface AttachContext<Target, State> {
 export interface StateContext<Target> {
   /** Returns the current target. Throws if not attached. */
   target: () => Target;
-  /** Returns a signal that aborts on detach or when `abort()` is called. Throws if not attached. */
-  signal: () => AbortSignal;
-  /** Aborts the current signal and creates a new one. Use to cancel pending operations. */
-  abort: () => void;
+  /**
+   * Cancellation signals for async operations.
+   *
+   * - `signals.base` — Aborts on detach or reattach. Use for cleanup.
+   * - `signals.supersede(key)` — Returns a signal that aborts when the same key
+   *   is superseded or when base aborts. Use for operations that should cancel
+   *   previous in-flight work (e.g., seek superseding seek).
+   * - `signals.clear()` — Aborts all keyed signals. Use when starting fresh
+   *   (e.g., loading a new source cancels pending seeks).
+   */
+  signals: Signals;
 }
 
 // ----------------------------------------

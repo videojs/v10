@@ -3,40 +3,31 @@ import { noop } from '@videojs/utils/function';
 import type { TimeState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { hasMetadata } from '../../media/predicate';
+import { signalKeys } from '../signal-keys';
 
 export const timeFeature = definePlayerFeature({
-  state: ({ target, signal }): TimeState => {
-    let abort: AbortController | null = null;
+  state: ({ target, signals }): TimeState => ({
+    currentTime: 0,
+    duration: 0,
+    seeking: false,
+    async seek(time: number) {
+      const { media } = target(),
+        signal = signals.supersede(signalKeys.seek);
 
-    const supersede = () => {
-      abort?.abort();
-      abort = new AbortController();
-      return AbortSignal.any([signal(), abort.signal]);
-    };
+      // If metadata isn't loaded, wait for it before seeking to avoid errors.
+      if (!hasMetadata(media)) {
+        const loaded = await onEvent(media, 'loadedmetadata', { signal }).catch(() => false);
+        if (!loaded) return media.currentTime;
+      }
 
-    return {
-      currentTime: 0,
-      duration: 0,
-      seeking: false,
-      async seek(time: number) {
-        const { media } = target(),
-          signal = supersede();
+      // Perform the seek and wait for it to complete.
+      const clampedTime = Math.max(0, Math.min(time, media.duration || Infinity));
+      media.currentTime = clampedTime;
+      await onEvent(media, 'seeked', { signal }).catch(noop);
 
-        // If metadata isn't loaded, wait for it before seeking to avoid errors.
-        if (!hasMetadata(media)) {
-          const loaded = await onEvent(media, 'loadedmetadata', { signal }).catch(() => false);
-          if (!loaded) return media.currentTime;
-        }
-
-        // Perform the seek and wait for it to complete.
-        const clampedTime = Math.max(0, Math.min(time, media.duration || Infinity));
-        media.currentTime = clampedTime;
-        await onEvent(media, 'seeked', { signal }).catch(noop);
-
-        return media.currentTime;
-      },
-    };
-  },
+      return media.currentTime;
+    },
+  }),
 
   attach({ target, signal, set }) {
     const { media } = target;

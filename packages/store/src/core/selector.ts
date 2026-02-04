@@ -1,11 +1,11 @@
 import { pick } from '@videojs/utils/object';
 import { throwNoTargetError } from './errors';
+import { Signals } from './signals';
 import type { AnySlice, InferSliceState, StateContext } from './slice';
 
 const stateContext: StateContext<unknown> = {
   target: throwNoTargetError,
-  signal: throwNoTargetError,
-  abort: throwNoTargetError,
+  signals: new Signals(),
 };
 
 /**

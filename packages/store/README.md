@@ -227,14 +227,43 @@ const unsubscribe = store.subscribe(() => {
 
 Mutations are auto-batched—multiple changes in the same tick trigger only one notification.
 
+## Cancellation Signals
+
+Use `signals` to manage cancellation for async operations. The store provides a `Signals` instance that tracks the attach lifecycle and supports keyed cancellation for superseding work.
+
+```ts
+state: ({ target, signals }) => ({
+  // Supersede pattern: new seek cancels previous seek
+  async seek(time: number) {
+    const signal = signals.supersede(signalKeys.seek);
+    // ...
+  },
+
+  // Cancel all pending operations (e.g., when loading new source)
+  loadSource(src: string) {
+    signals.clear();
+    // ...
+  },
+}),
+```
+
+**API:**
+
+| Method | Description |
+|--------|-------------|
+| `signals.base` | Attach-scoped signal. Aborts on detach or reattach. |
+| `signals.supersede(key)` | Returns signal that aborts when same key is superseded or base aborts. |
+| `signals.clear()` | Aborts all keyed signals, leaving base intact. |
+
+Define shared keys for cross-slice coordination:
+
+```ts
+export const signalKeys = {
+  seek: Symbol.for('@videojs/seek'),
+} as const;
+```
+
 ## Error Handling
-
-All store errors include a `code` for programmatic handling:
-
-| Code         | Description                  |
-| ------------ | ---------------------------- |
-| `DESTROYED`  | Store destroyed              |
-| `NO_TARGET`  | No target attached           |
 
 Handle errors locally via `try/catch`, or globally via `onError`:
 
@@ -264,9 +293,14 @@ try {
 }
 ```
 
-## Advanced
+All store errors include a `code` for programmatic handling:
 
-### State Primitives
+| Code         | Description                  |
+| ------------ | ---------------------------- |
+| `DESTROYED`  | Store destroyed              |
+| `NO_TARGET`  | No target attached           |
+
+## State Primitives
 
 The store uses explicit state containers internally. You can use these primitives directly:
 
