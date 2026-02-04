@@ -172,13 +172,16 @@ When generating or editing code in this repository, follow these rules to ensure
    - Maintain accessibility: ARIA roles, keyboard interactions, focus management.
    - Use data‑attributes and CSS variables for style hooks—no inline animation JS.
    - Ensure logic runs at 60 FPS; prefer CSS transitions over manual DOM mutations.
+6. **Dev‑Only Diagnostics**
+   - Use `__DEV__` for warnings, debug helpers, and displayName assignments.
+   - Keep production builds free of dev‑only logging and checks.
 
-6. **Commit Scope**
+7. **Commit Scope**
    - Use semantic commit messages (enforced by `commitlint`).
    - One focused change per commit—no mixed updates.
    - Breaking changes use `!`.
 
-7. **Keep AI Documentation Current** — When introducing new patterns, ask the user to run `/claude-update` for guidance.
+8. **Keep AI Documentation Current** — When introducing new patterns, ask the user to run `/claude-update` for guidance.
 
 ## Code Rules
 

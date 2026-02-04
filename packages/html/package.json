@@ -14,36 +14,42 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/dev/index.d.ts",
+      "development": "./dist/dev/index.js",
+      "default": "./dist/default/index.js"
     },
     "./player/*": {
-      "types": "./dist/define/player/*.d.ts",
-      "default": "./dist/define/player/*.js"
+      "types": "./dist/dev/define/player/*.d.ts",
+      "development": "./dist/dev/define/player/*.js",
+      "default": "./dist/default/define/player/*.js"
     },
     "./ui/*": {
-      "types": "./dist/define/ui/*.d.ts",
-      "default": "./dist/define/ui/*.js"
+      "types": "./dist/dev/define/ui/*.d.ts",
+      "development": "./dist/dev/define/ui/*.js",
+      "default": "./dist/default/define/ui/*.js"
     },
     "./skin/*": {
-      "types": "./dist/define/skin/*.d.ts",
-      "default": "./dist/define/skin/*.js"
+      "types": "./dist/dev/define/skin/*.d.ts",
+      "development": "./dist/dev/define/skin/*.js",
+      "default": "./dist/default/define/skin/*.js"
     },
     "./feature/*": {
-      "types": "./dist/define/feature/*.d.ts",
-      "default": "./dist/define/feature/*.js"
+      "types": "./dist/dev/define/feature/*.d.ts",
+      "development": "./dist/dev/define/feature/*.js",
+      "default": "./dist/default/define/feature/*.js"
     },
     "./media/*": {
-      "types": "./dist/define/media/*.d.ts",
-      "default": "./dist/define/media/*.js"
+      "types": "./dist/dev/define/media/*.d.ts",
+      "development": "./dist/dev/define/media/*.js",
+      "default": "./dist/default/define/media/*.js"
     }
   },
   "sideEffects": [
-    "./dist/define/**/*.js"
+    "./dist/*/define/**/*.js"
   ],
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/default/index.js",
+  "module": "dist/default/index.js",
+  "types": "dist/dev/index.d.ts",
   "files": [
     "dist"
   ],

@@ -1,6 +1,11 @@
+import type { Options } from 'tsdown';
 import { defineConfig } from 'tsdown';
 
-export default defineConfig({
+type BuildMode = 'dev' | 'default';
+
+const buildModes: BuildMode[] = ['dev', 'default'];
+
+const createConfig = (mode: BuildMode): Options => ({
   entry: {
     index: './src/core/index.ts',
     lit: './src/lit/index.ts',
@@ -13,5 +18,11 @@ export default defineConfig({
   alias: {
     '@': new URL('./src/core', import.meta.url).pathname,
   },
-  dts: true,
+  outDir: `dist/${mode}`,
+  define: {
+    __DEV__: mode === 'dev' ? 'true' : 'false',
+  },
+  dts: mode === 'dev',
 });
+
+export default defineConfig(buildModes.map((mode) => createConfig(mode)));

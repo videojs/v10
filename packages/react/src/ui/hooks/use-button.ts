@@ -39,7 +39,7 @@ export function useButton(params: UseButtonParameters): UseButtonReturnValue {
 
   const buttonRef = useCallback(
     (element: HTMLElement | null) => {
-      if (element && element.tagName !== 'BUTTON') {
+      if (__DEV__ && element && element.tagName !== 'BUTTON') {
         console.warn(`${displayName} should render a <button> element for accessibility`);
       }
     },
