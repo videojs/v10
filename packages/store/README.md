@@ -292,6 +292,19 @@ const unsubscribe = store.subscribe(() => {
 
 Mutations are auto-batched—multiple changes in the same tick trigger only one notification.
 
+You can also pass an abort signal to clean up automatically:
+
+```ts
+const controller = new AbortController();
+
+store.subscribe(() => {
+  const { volume } = store;
+  console.log('State changed:', volume);
+}, { signal: controller.signal });
+
+controller.abort(); // unsubscribes
+```
+
 ### Pending Tasks
 
 Track in-flight async operations:
@@ -490,6 +503,11 @@ state.subscribe(() => {
   const { volume } = state.current;
   console.log('Changed:', volume);
 });
+
+// Optional abort signal for cleanup
+const controller = new AbortController();
+state.subscribe(() => {}, { signal: controller.signal });
+controller.abort();
 
 // Check if value is state
 isState(state); // true

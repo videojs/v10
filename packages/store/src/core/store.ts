@@ -2,7 +2,7 @@ import { isNull, isObject } from '@videojs/utils/predicate';
 import type { StoreCallbacks } from './config';
 import { throwDestroyedError, throwNoTargetError } from './errors';
 import type { AttachContext, Slice, StateContext } from './slice';
-import type { StateChange, UnknownState, WritableState } from './state';
+import type { StateChange, SubscribeOptions, UnknownState, WritableState } from './state';
 import { createState } from './state';
 
 const STORE_SYMBOL = Symbol('@videojs/store');
@@ -139,8 +139,8 @@ export function createStore<Target = unknown>(): <State>(
       setupAbort.abort();
     }
 
-    function subscribe(callback: StateChange): () => void {
-      return state.subscribe(callback);
+    function subscribe(callback: StateChange, options?: SubscribeOptions): () => void {
+      return state.subscribe(callback, options);
     }
 
     function reportError(error: unknown): void {
@@ -168,7 +168,7 @@ export interface BaseStore<Target = unknown, State = UnknownState> {
   readonly state: State;
   attach(target: Target): () => void;
   destroy(): void;
-  subscribe(callback: StateChange): () => void;
+  subscribe(callback: StateChange, options?: SubscribeOptions): () => void;
 }
 
 export type Store<Target = unknown, State = UnknownState> = BaseStore<Target, State> & State;
