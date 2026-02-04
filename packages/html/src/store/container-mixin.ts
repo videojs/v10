@@ -1,7 +1,6 @@
 import { ContextConsumer } from '@lit/context';
 import type { MediaContainer, PlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { listen, querySlot } from '@videojs/utils/dom';
-import { Disposer } from '@videojs/utils/events';
 import { noop } from '@videojs/utils/function';
 import type { MediaElementConstructor } from '@/ui/media-element';
 import type { PlayerContext } from '../player/context';
@@ -15,7 +14,7 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
   return <Class extends MediaElementConstructor>(BaseClass: Class) => {
     class PlayerContainerElement extends BaseClass implements PlayerConsumer<Store>, MediaContainer {
       #detach = noop;
-      #disposer = new Disposer();
+      #disconnect: AbortController | null = null;
 
       #consumer = new ContextConsumer(this, {
         context,
@@ -30,9 +29,12 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
       override connectedCallback() {
         super.connectedCallback();
 
+        this.#disconnect?.abort();
+        this.#disconnect = new AbortController();
+
         if (this.shadowRoot) {
           const slot = querySlot(this.shadowRoot, '');
-          if (slot) this.#disposer.add(listen(slot, 'slotchange', () => this.#attachMedia()));
+          if (slot) listen(slot, 'slotchange', () => this.#attachMedia(), { signal: this.#disconnect.signal });
         }
 
         this.#attachMedia();
@@ -40,7 +42,8 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
 
       override disconnectedCallback() {
         super.disconnectedCallback();
-        this.#disposer.dispose();
+        this.#disconnect?.abort();
+        this.#disconnect = null;
         this.#detach();
       }
 

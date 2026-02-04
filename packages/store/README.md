@@ -290,6 +290,11 @@ state.subscribe(() => {
   console.log('Changed:', volume);
 });
 
+// Optional abort signal for cleanup
+const controller = new AbortController();
+state.subscribe(() => {}, { signal: controller.signal });
+controller.abort();
+
 // Check if value is state
 isState(state); // true
 

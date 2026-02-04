@@ -182,6 +182,7 @@ See [props.md](references/props.md) for naming conventions.
 | [polymorphism.md](references/polymorphism.md)   | render vs asChild patterns           |
 | [collection.md](references/collection.md)       | Collections, portals, virtualization |
 | [anti-patterns.md](references/anti-patterns.md) | Common component mistakes            |
+| [videojs.md](references/videojs.md)             | Video.js component architecture      |
 
 For accessibility patterns (ARIA, keyboard, focus), load the `aria` skill.
 

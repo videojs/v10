@@ -24,14 +24,15 @@ function getRendererComponent(renderer: Renderer): string {
 
 function getSkinComponent(skin: Skin): string {
   const map: Record<Skin, string> = {
-    frosted: 'FrostedVideoSkin',
+    'default-video': 'VideoSkin',
+    'default-audio': 'AudioSkin',
     minimal: 'MinimalVideoSkin',
   };
   return map[skin];
 }
 
 function getPresetAccess(useCase: UseCase): string {
-  if (useCase === 'website') {
+  if (useCase === 'default-video') {
     return 'presets.website';
   }
   return `presets['${useCase}']`;
@@ -52,8 +53,7 @@ function generateReactCode(useCase: UseCase, skin: Skin, renderer: Renderer, pla
     ? `<${rendererComponent} playbackId={playbackId} />`
     : `<${rendererComponent} src={src} />`;
 
-  return `// [your project] ./components/player/index.tsx
-import { createPlayer, presets, ${rendererComponent} } from '@videojs/react';
+  return `import { createPlayer, presets, ${rendererComponent} } from '@videojs/react';
 import { ${skinComponent} } from '@videojs/react/presets/${useCase}';
 import '@videojs/react/presets/${useCase}/skins/${skin}.css';
 
@@ -92,7 +92,7 @@ export default function ReactCreateCodeBlock() {
     <TabsRoot maxWidth={false}>
       <TabsList label="React implementation">
         <Tab value="react" initial>
-          React
+          ./components/player/index.tsx
         </Tab>
       </TabsList>
       <TabsPanel value="react" initial>

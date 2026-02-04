@@ -103,6 +103,19 @@ describe('createState', () => {
       flush();
       expect(listener).toHaveBeenCalledOnce(); // still 1
     });
+
+    it('respects abort signal', () => {
+      const state = createTestState();
+      const listener = vi.fn();
+      const controller = new AbortController();
+
+      state.subscribe(listener, { signal: controller.signal });
+      controller.abort();
+
+      state.patch({ volume: 0.5 });
+      flush();
+      expect(listener).not.toHaveBeenCalled();
+    });
   });
 
   describe('isState', () => {
