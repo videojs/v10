@@ -4,6 +4,7 @@
     "composite": true,
     "declarationDir": "types"
   },
-  "references": [{ "path": "../utils" }],
-  "include": ["src/**/*.ts"]
+  "references": [{ "path": "../utils" }, { "path": "./src/dom" }],
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/dom/**/*.ts"]
 }
