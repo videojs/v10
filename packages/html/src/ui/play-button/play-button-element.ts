@@ -39,6 +39,10 @@ export class PlayButtonElement extends MediaElement {
     });
 
     applyElementProps(this, buttonProps, this.#disconnect.signal);
+
+    if (!this.#state.value) {
+      logMissingFeature(PlayButtonElement.tagName, 'playback');
+    }
   }
 
   override disconnectedCallback(): void {
@@ -58,7 +62,6 @@ export class PlayButtonElement extends MediaElement {
     const state = this.#state.value;
 
     if (!state) {
-      logMissingFeature(PlayButtonElement.tagName, 'playback');
       return;
     }
 

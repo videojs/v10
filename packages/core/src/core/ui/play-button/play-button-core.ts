@@ -1,4 +1,5 @@
 import { defaults } from '@videojs/utils/object';
+import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { ElementProps } from '../../element';
@@ -6,7 +7,7 @@ import type { PlaybackState } from '../../media/state';
 
 export interface PlayButtonProps {
   /** Custom label for the button. */
-  label?: string | undefined;
+  label?: string | ((state: PlayButtonState) => string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
 }
@@ -30,9 +31,18 @@ export class PlayButtonCore {
   }
 
   getLabel(playback: PlaybackState): string {
-    if (this.#props.label) return this.#props.label;
-    if (playback.ended) return 'Replay';
-    return playback.paused ? 'Play' : 'Pause';
+    const state = this.getState(playback);
+    const { label } = this.#props;
+
+    if (isFunction(label)) {
+      const customLabel = label(state);
+      if (customLabel) return customLabel;
+    } else if (label) {
+      return label;
+    }
+
+    if (state.ended) return 'Replay';
+    return state.paused ? 'Play' : 'Pause';
   }
 
   getAttrs(playback: PlaybackState): ElementProps {
