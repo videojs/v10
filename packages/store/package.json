@@ -13,24 +13,24 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.ts",
+      "types": "./dist/dev/index.d.ts",
       "development": "./dist/dev/index.js",
       "default": "./dist/prod/index.js"
     },
     "./lit": {
-      "types": "./dist/types/lit.d.ts",
+      "types": "./dist/dev/lit.d.ts",
       "development": "./dist/dev/lit.js",
       "default": "./dist/prod/lit.js"
     },
     "./react": {
-      "types": "./dist/types/react.d.ts",
+      "types": "./dist/dev/react.d.ts",
       "development": "./dist/dev/react.js",
       "default": "./dist/prod/react.js"
     }
   },
   "main": "dist/prod/index.js",
   "module": "dist/prod/index.js",
-  "types": "dist/types/index.d.ts",
+  "types": "dist/dev/index.d.ts",
   "files": [
     "dist"
   ],

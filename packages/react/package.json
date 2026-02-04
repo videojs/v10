@@ -14,14 +14,14 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.ts",
+      "types": "./dist/dev/index.d.ts",
       "development": "./dist/dev/index.js",
       "default": "./dist/prod/index.js"
     }
   },
   "main": "dist/prod/index.js",
   "module": "dist/prod/index.js",
-  "types": "dist/types/index.d.ts",
+  "types": "dist/dev/index.d.ts",
   "files": [
     "dist"
   ],

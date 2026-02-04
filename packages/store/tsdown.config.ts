@@ -1,9 +1,9 @@
 import type { Options } from 'tsdown';
 import { defineConfig } from 'tsdown';
 
-type BuildMode = 'dev' | 'prod' | 'types';
+type BuildMode = 'dev' | 'prod';
 
-const buildModes: BuildMode[] = ['dev', 'prod', 'types'];
+const buildModes: BuildMode[] = ['dev', 'prod'];
 
 const createConfig = (mode: BuildMode): Options => ({
   entry: {
@@ -14,7 +14,7 @@ const createConfig = (mode: BuildMode): Options => ({
   platform: 'neutral',
   format: 'es',
   sourcemap: true,
-  clean: true,
+  clean: mode === 'dev',
   alias: {
     '@': new URL('./src/core', import.meta.url).pathname,
   },
@@ -22,7 +22,7 @@ const createConfig = (mode: BuildMode): Options => ({
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',
   },
-  dts: mode === 'types' && { emitDtsOnly: true },
+  dts: mode === 'dev',
 });
 
 export default defineConfig(buildModes.map((mode) => createConfig(mode)));

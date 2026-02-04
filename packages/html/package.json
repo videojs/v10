@@ -14,32 +14,32 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.ts",
+      "types": "./dist/dev/index.d.ts",
       "development": "./dist/dev/index.js",
       "default": "./dist/prod/index.js"
     },
     "./player/*": {
-      "types": "./dist/types/define/player/*.d.ts",
+      "types": "./dist/dev/define/player/*.d.ts",
       "development": "./dist/dev/define/player/*.js",
       "default": "./dist/prod/define/player/*.js"
     },
     "./ui/*": {
-      "types": "./dist/types/define/ui/*.d.ts",
+      "types": "./dist/dev/define/ui/*.d.ts",
       "development": "./dist/dev/define/ui/*.js",
       "default": "./dist/prod/define/ui/*.js"
     },
     "./skin/*": {
-      "types": "./dist/types/define/skin/*.d.ts",
+      "types": "./dist/dev/define/skin/*.d.ts",
       "development": "./dist/dev/define/skin/*.js",
       "default": "./dist/prod/define/skin/*.js"
     },
     "./feature/*": {
-      "types": "./dist/types/define/feature/*.d.ts",
+      "types": "./dist/dev/define/feature/*.d.ts",
       "development": "./dist/dev/define/feature/*.js",
       "default": "./dist/prod/define/feature/*.js"
     },
     "./media/*": {
-      "types": "./dist/types/define/media/*.d.ts",
+      "types": "./dist/dev/define/media/*.d.ts",
       "development": "./dist/dev/define/media/*.js",
       "default": "./dist/prod/define/media/*.js"
     }
@@ -49,7 +49,7 @@
   ],
   "main": "dist/prod/index.js",
   "module": "dist/prod/index.js",
-  "types": "dist/types/index.d.ts",
+  "types": "dist/dev/index.d.ts",
   "files": [
     "dist"
   ],
