@@ -14,7 +14,7 @@ const createConfig = (mode: BuildMode): Options => ({
   platform: 'neutral',
   format: 'es',
   sourcemap: true,
-  clean: mode === 'dev',
+  clean: true,
   alias: {
     '@': new URL('./src/core', import.meta.url).pathname,
   },
