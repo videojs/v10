@@ -278,3 +278,29 @@ export type Presentation = Ham &
     duration?: number | undefined;
     endTime?: number | undefined;
   };
+
+// =============================================================================
+// Type Guards
+// =============================================================================
+
+/**
+ * Check if a track is resolved (has segments).
+ * Works for all track types with overloaded signatures for type narrowing.
+ */
+export function isResolvedTrack(track: UnresolvedVideoTrack | VideoTrack): track is VideoTrack;
+export function isResolvedTrack(track: UnresolvedAudioTrack | AudioTrack): track is AudioTrack;
+export function isResolvedTrack(track: UnresolvedTextTrack | TextTrack): track is TextTrack;
+export function isResolvedTrack(track: UnresolvedTrack | ResolvedTrack): track is ResolvedTrack;
+export function isResolvedTrack(track: UnresolvedTrack | ResolvedTrack): track is ResolvedTrack {
+  return 'segments' in track;
+}
+
+/**
+ * Check if a presentation has duration (at least one track resolved).
+ * Narrows type to include required duration and endTime.
+ */
+export function hasPresentationDuration(
+  presentation: Presentation
+): presentation is Presentation & { duration: number; endTime: number } {
+  return presentation.duration !== undefined;
+}
