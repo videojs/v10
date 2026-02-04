@@ -141,8 +141,8 @@ describe('SnapshotController', () => { ... });
 // provider-mixin.test.ts — factory function export
 describe('createStoreProviderMixin', () => { ... });
 
-// disposer.test.ts — lowercase module/export
-describe('disposer', () => { ... });
+// event-like.test.ts — lowercase module/export
+describe('event-like', () => { ... });
 ```
 
 ## Guidelines
@@ -337,20 +337,22 @@ destroy(): void {
 
 ### Cleanup Pattern
 
-Use `Disposer` from `@videojs/utils/events` when managing multiple cleanup functions:
+Use `AbortController` when managing multiple cleanups. It works with `listen` and any API that accepts a `signal`:
 
 ```ts
-import { Disposer } from '@videojs/utils/events';
-
-#disposer = new Disposer();
+#disconnect: AbortController | null = null;
 
 connect(): void {
-  this.#disposer.add(store.subscribe(...));
-  this.#disposer.add(listen(element, 'click', handler));
+  this.#disconnect?.abort();
+  this.#disconnect = new AbortController();
+
+  store.subscribe(() => {}, { signal: this.#disconnect.signal });
+  listen(element, 'click', handler, { signal: this.#disconnect.signal });
 }
 
 disconnect(): void {
-  this.#disposer.dispose();
+  this.#disconnect?.abort();
+  this.#disconnect = null;
 }
 ```
 

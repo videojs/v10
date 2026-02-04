@@ -203,6 +203,23 @@ describe('store', () => {
 
       expect(listener).not.toHaveBeenCalled();
     });
+
+    it('respects abort signal', () => {
+      const store = createStore<MockMedia>()(audioSlice);
+
+      const media = new MockMedia();
+      store.attach(media);
+
+      const listener = vi.fn();
+      const controller = new AbortController();
+      store.subscribe(listener, { signal: controller.signal });
+
+      controller.abort();
+      store.setVolume(0.5);
+      flush();
+
+      expect(listener).not.toHaveBeenCalled();
+    });
   });
 
   describe('destroy', () => {

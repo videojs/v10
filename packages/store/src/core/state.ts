@@ -1,10 +1,16 @@
+import { noop } from '@videojs/utils/function';
+
 export type StateChange = () => void;
 
 export type UnknownState = Record<string, unknown>;
 
+export interface SubscribeOptions {
+  signal?: AbortSignal;
+}
+
 export interface State<T> {
   readonly current: Readonly<T>;
-  subscribe(callback: StateChange): () => void;
+  subscribe(callback: StateChange, options?: SubscribeOptions): () => void;
 }
 
 export interface WritableState<T> extends State<T> {
@@ -63,9 +69,23 @@ class StateContainer<T> implements WritableState<T> {
     }
   }
 
-  subscribe(callback: StateChange): () => void {
+  subscribe(callback: StateChange, options?: SubscribeOptions): () => void {
+    const signal = options?.signal;
+    if (signal?.aborted) return noop;
+
     this.#listeners.add(callback);
-    return () => this.#listeners.delete(callback);
+
+    if (!signal) {
+      return () => this.#listeners.delete(callback);
+    }
+
+    const onAbort = () => this.#listeners.delete(callback);
+    signal.addEventListener('abort', onAbort, { once: true });
+
+    return () => {
+      signal.removeEventListener('abort', onAbort);
+      this.#listeners.delete(callback);
+    };
   }
 
   flush(): void {
