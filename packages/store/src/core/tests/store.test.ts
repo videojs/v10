@@ -262,46 +262,34 @@ describe('store', () => {
     });
   });
 
-  describe('signal and abort', () => {
-    it('signal() throws when not attached', () => {
+  describe('signals', () => {
+    it('signals.base returns AbortSignal', () => {
       const slice = defineSlice<MockMedia>()({
-        state: ({ signal }) => ({
-          getSignal: () => signal(),
-        }),
-      });
-
-      const store = createStore<MockMedia>()(slice);
-
-      expect(() => store.getSignal()).toThrow();
-    });
-
-    it('signal() returns AbortSignal when attached', () => {
-      const slice = defineSlice<MockMedia>()({
-        state: ({ signal }) => ({
-          getSignal: () => signal(),
+        state: ({ signals }) => ({
+          getBase: () => signals.base,
         }),
       });
 
       const store = createStore<MockMedia>()(slice);
       store.attach(new MockMedia());
 
-      const sig = store.getSignal();
+      const sig = store.getBase();
 
       expect(sig).toBeInstanceOf(AbortSignal);
       expect(sig.aborted).toBe(false);
     });
 
-    it('signal aborts on detach', () => {
+    it('signals.base aborts on detach', () => {
       const slice = defineSlice<MockMedia>()({
-        state: ({ signal }) => ({
-          getSignal: () => signal(),
+        state: ({ signals }) => ({
+          getBase: () => signals.base,
         }),
       });
 
       const store = createStore<MockMedia>()(slice);
       const detach = store.attach(new MockMedia());
 
-      const sig = store.getSignal();
+      const sig = store.getBase();
       expect(sig.aborted).toBe(false);
 
       detach();
@@ -309,62 +297,94 @@ describe('store', () => {
       expect(sig.aborted).toBe(true);
     });
 
-    it('abort() aborts current signal', () => {
+    it('signals.base aborts on reattach', () => {
       const slice = defineSlice<MockMedia>()({
-        state: ({ signal, abort }) => ({
-          getSignal: () => signal(),
-          abort: () => abort(),
+        state: ({ signals }) => ({
+          getBase: () => signals.base,
         }),
       });
 
       const store = createStore<MockMedia>()(slice);
       store.attach(new MockMedia());
 
-      const sig1 = store.getSignal();
-      expect(sig1.aborted).toBe(false);
-
-      store.abort();
-
-      expect(sig1.aborted).toBe(true);
-    });
-
-    it('abort() creates new signal for subsequent operations', () => {
-      const slice = defineSlice<MockMedia>()({
-        state: ({ signal, abort }) => ({
-          getSignal: () => signal(),
-          abort: () => abort(),
-        }),
-      });
-
-      const store = createStore<MockMedia>()(slice);
-      store.attach(new MockMedia());
-
-      const sig1 = store.getSignal();
-      store.abort();
-
-      const sig2 = store.getSignal();
-
-      expect(sig1.aborted).toBe(true);
-      expect(sig2.aborted).toBe(false);
-      expect(sig1).not.toBe(sig2);
-    });
-
-    it('signal aborts on reattach', () => {
-      const slice = defineSlice<MockMedia>()({
-        state: ({ signal }) => ({
-          getSignal: () => signal(),
-        }),
-      });
-
-      const store = createStore<MockMedia>()(slice);
-      store.attach(new MockMedia());
-
-      const sig = store.getSignal();
+      const sig = store.getBase();
       expect(sig.aborted).toBe(false);
 
       store.attach(new MockMedia()); // Reattach
 
       expect(sig.aborted).toBe(true);
+    });
+
+    it('signals.supersede() returns AbortSignal combined with base', () => {
+      const slice = defineSlice<MockMedia>()({
+        state: ({ signals }) => ({
+          supersede: (key: string) => signals.supersede(key),
+        }),
+      });
+
+      const store = createStore<MockMedia>()(slice);
+      store.attach(new MockMedia());
+
+      const sig = store.supersede('test');
+
+      expect(sig).toBeInstanceOf(AbortSignal);
+      expect(sig.aborted).toBe(false);
+    });
+
+    it('signals.supersede() aborts previous signal for same key', () => {
+      const slice = defineSlice<MockMedia>()({
+        state: ({ signals }) => ({
+          supersede: (key: string) => signals.supersede(key),
+        }),
+      });
+
+      const store = createStore<MockMedia>()(slice);
+      store.attach(new MockMedia());
+
+      const sig1 = store.supersede('seek');
+      const sig2 = store.supersede('seek');
+
+      expect(sig1.aborted).toBe(true);
+      expect(sig2.aborted).toBe(false);
+    });
+
+    it('signals.supersede() aborts on detach', () => {
+      const slice = defineSlice<MockMedia>()({
+        state: ({ signals }) => ({
+          supersede: (key: string) => signals.supersede(key),
+        }),
+      });
+
+      const store = createStore<MockMedia>()(slice);
+      const detach = store.attach(new MockMedia());
+
+      const sig = store.supersede('test');
+      expect(sig.aborted).toBe(false);
+
+      detach();
+
+      expect(sig.aborted).toBe(true);
+    });
+
+    it('signals.clear() aborts keyed signals but not base', () => {
+      const slice = defineSlice<MockMedia>()({
+        state: ({ signals }) => ({
+          getBase: () => signals.base,
+          supersede: (key: string) => signals.supersede(key),
+          clear: () => signals.clear(),
+        }),
+      });
+
+      const store = createStore<MockMedia>()(slice);
+      store.attach(new MockMedia());
+
+      const base = store.getBase();
+      const keyed = store.supersede('test');
+
+      store.clear();
+
+      expect(base.aborted).toBe(false);
+      expect(keyed.aborted).toBe(true);
     });
   });
 });

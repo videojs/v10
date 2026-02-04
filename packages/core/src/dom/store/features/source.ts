@@ -4,11 +4,11 @@ import type { SourceState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 
 export const sourceFeature = definePlayerFeature({
-  state: ({ target, abort }): SourceState => ({
+  state: ({ target, signals }): SourceState => ({
     source: null,
     canPlay: false,
     loadSource(src: string) {
-      abort(); // Cancel pending operations (e.g., seek)
+      signals.clear(); // Cancel pending operations (e.g., seek)
 
       const { media } = target();
       media.src = src;

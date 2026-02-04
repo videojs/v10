@@ -1,6 +1,7 @@
 import { isNull, isObject } from '@videojs/utils/predicate';
 import type { StoreCallbacks } from './config';
 import { throwDestroyedError, throwNoTargetError } from './errors';
+import { Signals } from './signals';
 import type { AttachContext, Slice, StateContext } from './slice';
 import type { StateChange, SubscribeOptions, UnknownState, WritableState } from './state';
 import { createState } from './state';
@@ -19,10 +20,9 @@ export function createStore<Target = unknown>(): <State>(
     // Closure state
     let target: Target | null = null;
     let destroyed = false;
-    let attachAbort: AbortController | null = null;
-    let stateAbort = new AbortController();
 
     const setupAbort = new AbortController();
+    const signals = new Signals();
 
     // Reactive state - initialized after building slice state
     let state: WritableState<State>;
@@ -37,14 +37,7 @@ export function createStore<Target = unknown>(): <State>(
         validate();
         return target!;
       },
-      signal: () => {
-        validate();
-        return AbortSignal.any([attachAbort!.signal, stateAbort.signal]);
-      },
-      abort: () => {
-        stateAbort.abort();
-        stateAbort = new AbortController();
-      },
+      signals,
     } satisfies StateContext<Target>);
 
     state = createState(initialState);
@@ -83,15 +76,14 @@ export function createStore<Target = unknown>(): <State>(
     function attach(newTarget: Target): () => void {
       if (destroyed) throwDestroyedError();
 
-      attachAbort?.abort();
+      // Reset signals for new attachment (also cleans up previous if reattaching)
+      signals.reset();
       target = newTarget;
-      attachAbort = new AbortController();
-      const signal = attachAbort.signal;
 
       // Create attach context
       const attachContext: AttachContext<Target, State> = {
         target: newTarget,
-        signal,
+        signal: signals.base,
         get: () => state.current,
         set: (partial) => state.patch(partial),
         reportError,
@@ -113,7 +105,7 @@ export function createStore<Target = unknown>(): <State>(
         options.onAttach?.({
           store,
           target: newTarget,
-          signal,
+          signal: signals.base,
         });
       } catch (error) {
         reportError(error);
@@ -124,10 +116,7 @@ export function createStore<Target = unknown>(): <State>(
 
     function detach(): void {
       if (isNull(target)) return;
-      stateAbort.abort();
-      stateAbort = new AbortController();
-      attachAbort?.abort();
-      attachAbort = null;
+      signals.reset();
       target = null;
       state.patch(initialState);
     }
