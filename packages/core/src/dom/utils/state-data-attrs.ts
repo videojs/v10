@@ -1,3 +1,7 @@
+export type StateAttrMap<State> = {
+  [Key in keyof State]?: string;
+};
+
 /**
  * Convert state object to data attributes.
  *
@@ -11,17 +15,23 @@
  * getStateDataAttrs(state);
  * // { 'data-paused': '', 'data-volume': '0.5' }
  * ```
+ *
+ * When a mapping is provided, only mapped keys are converted.
  */
-export function getStateDataAttrs<State extends object>(state: State): Record<string, string> {
+export function getStateDataAttrs<State extends object>(
+  state: State,
+  map?: StateAttrMap<State>
+): Record<string, string> {
   const attrs: Record<string, string> = {};
 
   for (const key in state) {
-    const value = state[key];
+    const name = map?.[key] ?? toDataAttrName(key),
+      value = state[key];
 
     if (value === true) {
-      attrs[`data-${key.toLowerCase()}`] = '';
+      attrs[name] = '';
     } else if (value) {
-      attrs[`data-${key.toLowerCase()}`] = String(value);
+      attrs[name] = String(value);
     }
   }
 
@@ -42,17 +52,25 @@ export function getStateDataAttrs<State extends object>(state: State): Record<st
  * // element has data-paused="", data-ended is removed
  * ```
  */
-export function applyStateDataAttrs<State extends object>(element: HTMLElement, state: State): void {
+export function applyStateDataAttrs<State extends object>(
+  element: HTMLElement,
+  state: State,
+  map?: StateAttrMap<State>
+): void {
   for (const key in state) {
-    const value = state[key];
-    const attrName = `data-${key.toLowerCase()}`;
+    const name = map?.[key] ?? toDataAttrName(key),
+      value = state[key];
 
     if (value === true) {
-      element.setAttribute(attrName, '');
+      element.setAttribute(name, '');
     } else if (value) {
-      element.setAttribute(attrName, String(value));
+      element.setAttribute(name, String(value));
     } else {
-      element.removeAttribute(attrName);
+      element.removeAttribute(name);
     }
   }
+}
+
+function toDataAttrName(key: string): string {
+  return `data-${key.toLowerCase()}`;
 }
