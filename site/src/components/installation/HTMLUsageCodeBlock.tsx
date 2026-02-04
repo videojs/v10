@@ -15,7 +15,6 @@ function getRendererTag(renderer: Renderer): string {
     mux: 'mux-video',
     shaka: 'shaka-video',
     spotify: 'spotify-audio',
-    videojs: 'videojs-video',
     vimeo: 'vimeo-video',
     wistia: 'wistia-video',
     youtube: 'youtube-video',
@@ -25,15 +24,17 @@ function getRendererTag(renderer: Renderer): string {
 
 function getProviderTag(useCase: UseCase): string {
   const map: Record<UseCase, string> = {
-    website: 'website-player-provider',
-    'background-video': 'background-video-player-provider',
+    'default-video': 'video-player',
+    'default-audio': 'audio-player',
+    'background-video': 'background-video-player',
   };
   return map[useCase];
 }
 
 function getSkinTag(skin: Skin): string {
   const map: Record<Skin, string> = {
-    frosted: 'frosted-video-skin',
+    'default-video': 'video-skin',
+    'default-audio': 'audio-skin',
     minimal: 'minimal-video-skin',
   };
   return map[skin];
@@ -89,19 +90,27 @@ export default function HTMLUsageCodeBlock() {
   const $muxPlaybackId = useStore(muxPlaybackId);
 
   return (
-    <TabsRoot maxWidth={false}>
-      <TabsList label="HTML implementation">
-        <Tab value="html" initial>
-          HTML
-        </Tab>
-        <Tab value="javascript">JavaScript</Tab>
-      </TabsList>
-      <TabsPanel value="html" initial>
-        <ClientCode code={generateHTMLCode($useCase, $skin, $renderer, $muxPlaybackId)} lang="html" />
-      </TabsPanel>
-      <TabsPanel value="javascript">
-        <ClientCode code={generateJS($skin)} lang="javascript" />
-      </TabsPanel>
-    </TabsRoot>
+    <>
+      <TabsRoot maxWidth={false}>
+        <TabsList label="HTML implementation">
+          <Tab value="javascript" initial>
+            JavaScript
+          </Tab>
+        </TabsList>
+        <TabsPanel value="javascript" initial>
+          <ClientCode code={generateJS($skin)} lang="javascript" />
+        </TabsPanel>
+      </TabsRoot>
+      <TabsRoot maxWidth={false}>
+        <TabsList label="HTML implementation">
+          <Tab value="html" initial>
+            HTML
+          </Tab>
+        </TabsList>
+        <TabsPanel value="html" initial>
+          <ClientCode code={generateHTMLCode($useCase, $skin, $renderer, $muxPlaybackId)} lang="html" />
+        </TabsPanel>
+      </TabsRoot>
+    </>
   );
 }

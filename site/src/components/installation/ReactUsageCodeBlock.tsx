@@ -8,8 +8,7 @@ function generateUsageCode(renderer: Renderer, playbackId: string | null): strin
   const isMuxWithPlaybackId = renderer === 'mux' && playbackId;
   const playerProp = isMuxWithPlaybackId ? `playbackId="${playbackId}"` : 'src="https://example.com/video.mp4"';
 
-  return `// HomePage.tsx
-import { MyPlayer } from '../components/player';
+  return `import { MyPlayer } from '../components/player';
 
 export const HomePage = () => {
   return (
@@ -29,7 +28,7 @@ export default function ReactUsageCodeBlock() {
     <TabsRoot maxWidth={false}>
       <TabsList label="React usage">
         <Tab value="react" initial>
-          React
+          ./app/page.tsx
         </Tab>
       </TabsList>
       <TabsPanel value="react" initial>

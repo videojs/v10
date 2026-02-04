@@ -14,12 +14,12 @@ export type Renderer =
   | 'wistia'
   | 'youtube';
 
-export type Skin = 'frosted' | 'minimal';
+export type Skin = 'default-video' | 'default-audio' | 'minimal';
 
 export type UseCase = 'default-video' | 'default-audio' | 'background-video';
 
 export const renderer = atom<Renderer>('html5-video');
-export const skin = atom<Skin>('frosted');
+export const skin = atom<Skin>('default-video');
 export const useCase = atom<UseCase>('default-video');
 
 /** Mux playback ID from successful upload (used by code generation) */

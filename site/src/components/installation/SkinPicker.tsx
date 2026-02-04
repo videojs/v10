@@ -12,7 +12,8 @@ export default function SkinPicker() {
       value={$skin}
       onChange={(value) => skin.set(value as Skin)}
       options={[
-        { value: 'frosted' satisfies Skin, label: 'Frosted', image: <Sparkles size={32} /> },
+        { value: 'default-video' satisfies Skin, label: 'Default Video', image: <Sparkles size={32} /> },
+        { value: 'default-audio' satisfies Skin, label: 'Default Audio', image: <Sparkles size={32} /> },
         { value: 'minimal' satisfies Skin, label: 'Minimal', image: <Minus size={32} /> },
       ]}
       aria-label="Select skin"

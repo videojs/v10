@@ -20,12 +20,12 @@ import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
 Video.js v10 is currently in _beta_. The API may evolve with [feedback&#x1F64F;](https://github.com/videojs/v10/issues). See the [Changelog](https://github.com/videojs/v10/blob/main/CHANGELOG.md)\[todo\] for recent updates and the <DocsLink slug="concepts/v10-roadmap">Roadmap</DocsLink> for more details on what's coming.
 </Aside>
 
-Video.js is **audio and video player components** &mdash; intentionally built to achieve minimal bundle sizes while providing framework-specific customization and a great viewer experience.
+Video.js is **audio and video player components** &mdash; intentionally built to achieve **minimal bundle sizes** while providing **framework-specific customization** and a **great viewer experience**.
 Answer the questions below to get started quickly with your first embed code.
 
 ## Choose your JS framework
 
-Video.js aims to provide idiomatic development experiences in your favorite JS and CSS frameworks. More to come ([vote](https://github.com/videojs/v10/discussions/categories/ideas))\[todo\].
+Video.js aims to provide idiomatic development experiences in your favorite JS and CSS frameworks. More to come ([Vote on what's next](https://github.com/videojs/v10/discussions/categories/ideas))\[todo\].
 
 <ContentWidth margins="lg">
   <JSPicker />
@@ -41,25 +41,35 @@ The defaults work well for general website playback. More use case player preset
 </ContentWidth>
 
 
-## Choose your source type
+## Choose your media source type
 
-Video.js supports your favorite file types and hosting services. Whichever you choose can be easily changed later. ([missing something?](https://github.com/videojs/v10/discussions/categories/ideas))
+Video.js supports a wide range of file types and hosting services. It's easy to switch between them. ([missing something?](https://github.com/videojs/v10/discussions/categories/ideas))
 
 <ContentWidth margins="lg">
   <RendererPicker client:idle />
 </ContentWidth>
 
-## Install your player
+## Install Video.js
 
 <FrameworkCase frameworks={["html"]}>
   <TabsRoot client:idle>
     <TabsList client:idle label="Installation">
-      <Tab client:idle value="npm" initial>npm</Tab>
+      <Tab client:idle value="cdn" initial>cdn</Tab>
+      <Tab client:idle value="npm">npm</Tab>
       <Tab client:idle value="pnpm">pnpm</Tab>
       <Tab client:idle value="yarn">yarn</Tab>
       <Tab client:idle value="bun">bun</Tab>
-      <Tab client:idle value="cdn">cdn</Tab>
     </TabsList>
+    <TabsPanel client:idle value="cdn">
+      ```html
+      <script>
+      // don't need this, will be included in frosted
+      // import 'https://cdn.jsdelivr.net/npm/videojs/html/presets/website.js';
+      import 'https://cdn.jsdelivr.net/npm/videojs/html/presets/website/skins/frosted.js';
+      </script>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/videojs/html/presets/website/skins/frosted.css" />
+      ```
+    </TabsPanel>
     <TabsPanel client:idle value="npm" initial>
       ```bash
       npm install @videojs/html
@@ -78,16 +88,6 @@ Video.js supports your favorite file types and hosting services. Whichever you c
     <TabsPanel client:idle value="bun">
       ```bash
       bun add @videojs/html
-      ```
-    </TabsPanel>
-    <TabsPanel client:idle value="cdn">
-      ```html
-      <script>
-      // don't need this, will be included in frosted
-      // import 'https://cdn.jsdelivr.net/npm/videojs/html/presets/website.js';
-      import 'https://cdn.jsdelivr.net/npm/videojs/html/presets/website/skins/frosted.js';
-      </script>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/videojs/html/presets/website/skins/frosted.css" />
       ```
     </TabsPanel>
   </TabsRoot>
@@ -124,7 +124,6 @@ Video.js supports your favorite file types and hosting services. Whichever you c
   </TabsRoot>
 </FrameworkCase>
 
-
 <FrameworkCase frameworks={["html"]}>
 ## Use your player
 <ContentWidth>
@@ -134,6 +133,7 @@ Video.js supports your favorite file types and hosting services. Whichever you c
 
 <FrameworkCase frameworks={["react"]}>
 ## Create your player
+Add it to your components folder in a new file.
 <ContentWidth>
   <ReactCreateCodeBlock client:idle />
 </ContentWidth>
@@ -145,3 +145,5 @@ Video.js supports your favorite file types and hosting services. Whichever you c
 </FrameworkCase>
 
 That's it! You now have a fully functional Video.js player. Go forth and play.
+
+Something not quite right? You can [submit an issue](https://github.com/videojs/v10/issues) and ask for help, or explore [other support options](/html5-video-support).
