@@ -17,7 +17,7 @@ npm install @videojs/store
 `@videojs/store` embraces this model:
 
 - **Read Path**: Observe external state, sync to reactive store
-- **Write Path**: Send requests, coordinate execution, handle failures
+- **Write Path**: Send requests to the target, handle failures
 
 ```ts
 import { createStore, defineSlice } from '@videojs/store';
@@ -57,24 +57,21 @@ import { defineSlice } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
 const volumeSlice = defineSlice<HTMLMediaElement>()({
-  state: ({ task, target }) => ({
+  state: ({ target }) => ({
     volume: 1,
     muted: false,
 
     // Sync - use target() directly
-    setVolume() {
-      target().volume = Math.max(0, Math.min(1, value));
+    setVolume(value: number) {
+      const media = target();
+      media.volume = Math.max(0, Math.min(1, value));
     },
 
-    // Task - tracked, coordinated
+    // Action - directly updates target
     toggleMute() {
-      return task({
-        key: 'mute',
-        handler({ target }) {
-          target.muted = !target.muted;
-          return target.muted;
-        },
-      });
+      const media = target();
+      media.muted = !media.muted;
+      return media.muted;
     },
   }),
 
@@ -134,78 +131,24 @@ type MediaState = UnionSliceState<typeof slices>;
 
 ### Actions
 
-Actions modify the target. Use `task()` for operations—handlers receive `target` directly.
+Actions modify the target. You can call `target()` to access the attached target.
 
 ```ts
-state: ({ task }) => ({
+state: ({ target }) => ({
   volume: 1,
 
-  // Action with tracking (has key)
+  // Action
   changeVolume(volume: number) {
-    return task({
-      key: 'volume',
-      handler({ target }) {
-        target.volume = volume;
-        return target.volume;
-      },
-    });
+    const media = target();
+    media.volume = volume;
+    return media.volume;
   },
 
-  // Fire-and-forget (no key)
+  // Fire-and-forget
   logVolume() {
-    return task(({ target }) => {
-      console.log('Current volume:', target.volume);
-    });
+    console.log('Current volume:', target().volume);
   },
 }),
-```
-
-The `task()` helper provides:
-
-- **Tracked execution** — Tasks with a `key` appear in `store.pending`
-- **Cancellation** — Handlers receive `signal: AbortSignal`
-- **Coordination** — Tasks with the same key supersede each other
-- **State access** — Handlers can read current state via `get()`
-
-```ts
-handler({ target, signal, get, meta }) {
-  // target - the attached target
-  // signal - AbortSignal for cancellation
-  // get() - current state snapshot
-  // meta - request metadata (from store.meta())
-}
-```
-
-### Action Metadata
-
-Pass metadata to actions for observability and debugging:
-
-```ts
-// From DOM event
-store.meta(clickEvent).play();
-store.meta(keyEvent).seek(10);
-
-// Explicit metadata
-store.meta({ source: 'keyboard', reason: 'shortcut' }).play();
-
-// Chain multiple actions with same context
-const m = store.meta(event);
-m.play();
-m.seek(30);
-```
-
-Handlers receive metadata via the context:
-
-```ts
-changeVolume(volume: number) {
-  return task({
-    key: 'volume',
-    handler({ target, meta }) {
-      console.log(`Volume change from: ${meta?.source}`);
-      target.volume = volume;
-    },
-  });
-},
 ```
 
 ## Store
@@ -230,14 +173,6 @@ const store = createStore<HTMLMediaElement>()(
 
     onError: ({ error, store }) => {
       // Global error handler
-    },
-
-    onTaskStart: ({ key, meta }) => {
-      // Called when a tracked task starts
-    },
-
-    onTaskEnd: ({ key, meta, error }) => {
-      // Called when a tracked task completes
     },
   }
 );
@@ -275,7 +210,7 @@ detach();
 Clean up when the store is no longer needed:
 
 ```ts
-// Detaches target, aborts pending tasks, cleans up
+// Detaches target, aborts signals, cleans up
 store.destroy();
 ```
 
@@ -292,162 +227,16 @@ const unsubscribe = store.subscribe(() => {
 
 Mutations are auto-batched—multiple changes in the same tick trigger only one notification.
 
-You can also pass an abort signal to clean up automatically:
-
-```ts
-const controller = new AbortController();
-
-store.subscribe(() => {
-  const { volume } = store;
-  console.log('State changed:', volume);
-}, { signal: controller.signal });
-
-controller.abort(); // unsubscribes
-```
-
-### Pending Tasks
-
-Track in-flight async operations:
-
-```ts
-// Check if a task is running
-if (store.pending.playback) {
-  console.log('Playback task in progress...');
-}
-
-// Pending task info
-const task = store.pending.volume;
-if (task) {
-  console.log(task.key);       // 'volume'
-  console.log(task.startedAt); // timestamp
-  console.log(task.meta);      // RequestMeta | null
-}
-```
-
-## Task Configuration
-
-### Keys
-
-Tasks with the same key coordinate together. When a new task arrives with the same key, the pending task is aborted and the new one takes over.
-
-```ts
-state: ({ task }) => ({
-  play() {
-    return task({
-      key: 'playback',
-      handler: ({ target }) => target.play(),
-    });
-  },
-
-  pause() {
-    return task({
-      key: 'playback', // same key - coordinates with play
-      handler: ({ target }) => target.pause(),
-    });
-  },
-}),
-```
-
-```ts
-store.play();  // starts immediately
-store.pause(); // aborts play, starts immediately
-```
-
-Dynamic keys for parallel execution:
-
-```ts
-// Each call gets unique key - no coordination
-logEvent(data: unknown) {
-  return task({
-    key: Symbol(),
-    handler: () => analytics.log(data),
-  });
-},
-
-// Key based on input
-loadTrack(trackId: string) {
-  return task({
-    key: `track-${trackId}`,
-    handler: ({ target }) => target.loadTrack(trackId),
-  });
-},
-```
-
-### Mode
-
-The `mode` option controls how tasks with the same key interact:
-
-| Mode                    | Behavior                  | Use case            |
-| ----------------------- | ------------------------- | ------------------- |
-| `'exclusive'` (default) | Supersede pending task    | seek, pause, volume |
-| `'shared'`              | Join pending task         | play                |
-
-```ts
-play() {
-  return task({
-    key: 'playback',
-    mode: 'shared', // Multiple play() calls share the same outcome
-    async handler({ target }) {
-      await target.play();
-    },
-  });
-},
-
-pause() {
-  return task({
-    key: 'playback',
-    mode: 'exclusive', // default - supersedes play
-    handler: ({ target }) => target.pause(),
-  });
-},
-```
-
-With `mode: 'shared'`, multiple calls while a task is pending all resolve/reject together:
-
-```ts
-const p1 = store.play(); // starts
-const p2 = store.play(); // joins p1
-const p3 = store.play(); // joins p1
-// All three resolve/reject together
-```
-
-### Cancels
-
-Tasks can cancel other in-flight tasks by key:
-
-```ts
-import { CANCEL_ALL } from '@videojs/store';
-
-stop() {
-  return task({
-    cancels: ['seek', 'preload'], // Keys to cancel
-    handler: ({ target }) => target.pause(),
-  });
-},
-
-load(src: string) {
-  return task({
-    cancels: CANCEL_ALL, // Cancel ALL pending tasks
-    handler: ({ target }) => {
-      target.src = src;
-      target.load();
-    },
-  });
-},
-```
-
 ## Error Handling
 
 All store errors include a `code` for programmatic handling:
 
 | Code         | Description                  |
 | ------------ | ---------------------------- |
-| `ABORTED`    | Task aborted via signal      |
 | `DESTROYED`  | Store destroyed              |
 | `NO_TARGET`  | No target attached           |
-| `SUPERSEDED` | Replaced by same-key task    |
 
-Handle errors locally via the promise, or globally via `onError`:
+Handle errors locally via `try/catch`, or globally via `onError`:
 
 ```ts
 import { isStoreError } from '@videojs/store';
@@ -465,9 +254,6 @@ try {
 } catch (error) {
   if (isStoreError(error)) {
     switch (error.code) {
-      case 'SUPERSEDED':
-        // Another task took over - expected
-        break;
       case 'NO_TARGET':
         // No media element attached
         break;
@@ -521,7 +307,7 @@ flush();
 |                   | Redux/Zustand    | React Query           | @videojs/store             |
 | ----------------- | ---------------- | --------------------- | -------------------------- |
 | **Authority**     | You own state    | Server owns state     | External system owns state |
-| **Mutations**     | Sync reducers    | Async server requests | Async tasks to target      |
+| **Mutations**     | Sync reducers    | Async server requests | Actions to target          |
 | **State source**  | Internal store   | HTTP cache            | Synced from target         |
 | **Subscriptions** | To store changes | To query cache        | To target events           |
 | **Use case**      | App state        | Server data           | Media, WebSocket, hardware |
@@ -540,7 +326,7 @@ dispatch(play());
 // Handle race conditions...
 
 // @videojs/store - working with the abstraction
-await store.play();           // Resolves when task completes
+store.play();                 // Actions call into the target
 const { paused } = store;     // Always reflects video.paused
 ```
 
