@@ -78,6 +78,40 @@ export function parseCodecs(codecs: string): { video?: string; audio?: string } 
 }
 
 /**
+ * Parse #EXTINF duration value.
+ */
+export function parseExtInfDuration(value: string): number {
+  const durationPart = value.split(',')[0] ?? value;
+  const duration = Number.parseFloat(durationPart);
+  return Number.isNaN(duration) ? 0 : duration;
+}
+
+/**
+ * Parse BYTERANGE attribute value.
+ * Format: "length[@offset]"
+ * If offset is omitted, it continues from the previous byte range end.
+ */
+export function parseByteRange(value: string, previousEnd?: number): { start: number; end: number } | null {
+  const match = /^(\d+)(?:@(\d+))?$/.exec(value);
+  if (!match) return null;
+
+  const length = Number.parseInt(match[1]!, 10);
+  if (Number.isNaN(length)) return null;
+
+  let start: number;
+  if (match[2] !== undefined) {
+    start = Number.parseInt(match[2], 10);
+    if (Number.isNaN(start)) return null;
+  } else if (previousEnd !== undefined) {
+    start = previousEnd;
+  } else {
+    return null;
+  }
+
+  return { start, end: start + length - 1 };
+}
+
+/**
  * AttributeList - Typed attribute access wrapper.
  */
 export interface AttributeList {

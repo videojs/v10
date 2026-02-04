@@ -57,16 +57,30 @@ video-1080p.m3u8`;
       width: 1280,
       height: 720,
       codecs: ['avc1.4d401f'],
+      mimeType: 'video/mp4',
+      par: '1:1',
+      sar: '1:1',
+      scanType: 'progressive',
     });
 
-    // Third track (1080p)
-    expect(videoTracks?.[2]).toMatchObject({
+    // Third track (1080p) - verify all fields are seed values for P2
+    const track1080p = videoTracks?.[2] as UnresolvedVideoTrack;
+    expect(track1080p).toEqual({
       type: 'video',
       id: 'video-2',
+      url: 'https://example.com/video-1080p.m3u8',
       bandwidth: 2800000,
       width: 1920,
       height: 1080,
       codecs: ['avc1.640028'],
+      // Type-specific defaults (seed values for P2)
+      mimeType: 'video/mp4',
+      par: '1:1',
+      sar: '1:1',
+      scanType: 'progressive',
+      // Optional fields not present
+      frameRate: undefined,
+      audioGroupId: undefined,
     });
   });
 

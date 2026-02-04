@@ -37,6 +37,17 @@ export interface Base {
 }
 
 // =============================================================================
+// Duration
+// =============================================================================
+
+/**
+ * Duration in seconds.
+ */
+export interface Duration {
+  duration: number;
+}
+
+// =============================================================================
 // Enums
 // =============================================================================
 
@@ -68,6 +79,7 @@ export interface FrameRate {
 /**
  * Unresolved video track - metadata from manifest, no segments.
  * Contains enough info for ABR selection (bandwidth, resolution, codecs).
+ * Includes type-specific defaults set during multivariant parsing.
  * Distinguishing feature: no `segments` property.
  */
 export interface UnresolvedVideoTrack {
@@ -80,10 +92,16 @@ export interface UnresolvedVideoTrack {
   codecs?: string[] | undefined;
   frameRate?: FrameRate | undefined;
   audioGroupId?: string | undefined;
+  // Type-specific defaults (set in P1)
+  mimeType: 'video/mp4';
+  par: '1:1';
+  sar: '1:1';
+  scanType: 'progressive';
 }
 
 /**
  * Unresolved audio track - metadata from manifest, no segments.
+ * Includes type-specific defaults set during multivariant parsing.
  * Distinguishing feature: no `segments` property.
  */
 export interface UnresolvedAudioTrack {
@@ -96,10 +114,16 @@ export interface UnresolvedAudioTrack {
   codecs?: string[] | undefined;
   default?: boolean | undefined;
   autoselect?: boolean | undefined;
+  // Type-specific defaults (set in P1)
+  mimeType: 'audio/mp4';
+  bandwidth: 0; // Not available in multivariant for demuxed audio
+  sampleRate: 48000; // Default for CMAF
+  channels: 2; // Default stereo
 }
 
 /**
  * Unresolved text track - metadata from manifest, no segments.
+ * Includes type-specific defaults set during multivariant parsing.
  * Distinguishing feature: no `segments` property.
  */
 export interface UnresolvedTextTrack {
@@ -112,12 +136,76 @@ export interface UnresolvedTextTrack {
   language?: string | undefined;
   default?: boolean | undefined;
   forced?: boolean | undefined;
+  // Type-specific defaults (set in P1)
+  mimeType: 'text/vtt';
+  bandwidth: 0; // Text tracks don't consume bandwidth
+  codecs: []; // VTT has no codecs
 }
 
 /**
  * Union of all unresolved track types.
  */
 export type UnresolvedTrack = UnresolvedVideoTrack | UnresolvedAudioTrack | UnresolvedTextTrack;
+
+// =============================================================================
+// Resolved Track Types (with segments from media playlist)
+// =============================================================================
+
+/**
+ * Base track type containing common properties for all resolved tracks.
+ * A resolved track has segments and initialization data.
+ */
+export type Track = Ham &
+  Base &
+  Duration &
+  AddressableObject & {
+    type: TrackType;
+    codecs: string[];
+    mimeType: string;
+    language?: string | undefined;
+    bandwidth: number;
+    initialization: AddressableObject;
+    segments: Segment[];
+  };
+
+/**
+ * Resolved video track with segments.
+ */
+export type VideoTrack = Track & {
+  type: 'video';
+  width: number;
+  height: number;
+  frameRate: FrameRate;
+  par: string;
+  sar: string;
+  scanType: string;
+};
+
+/**
+ * Resolved audio track with segments.
+ */
+export type AudioTrack = Track & {
+  type: 'audio';
+  sampleRate: number;
+  channels: number;
+};
+
+/**
+ * Resolved text track with segments.
+ */
+export type TextTrack = Omit<Track, 'initialization'> & {
+  type: 'text';
+  label: string;
+  kind: 'subtitles' | 'captions';
+  default?: boolean | undefined;
+  forced?: boolean | undefined;
+  initialization?: AddressableObject | undefined;
+};
+
+/**
+ * Union of all resolved track types.
+ */
+export type ResolvedTrack = VideoTrack | AudioTrack | TextTrack;
 
 // =============================================================================
 // Switching and Selection Sets
@@ -139,6 +227,38 @@ export type SelectionSet = Ham & {
   switchingSets: SwitchingSet[];
   type: TrackType;
 };
+
+// =============================================================================
+// Segment
+// =============================================================================
+
+/**
+ * Media segment with timing information.
+ * Follows CMAF-HAM composition pattern.
+ */
+export type Segment = Ham &
+  AddressableObject &
+  Duration & {
+    startTime: number;
+  };
+
+// =============================================================================
+// Media Playlist Info
+// =============================================================================
+
+/**
+ * Intermediate representation of a parsed media playlist.
+ * Used internally before assembling into full Track structure.
+ */
+export interface MediaPlaylistInfo {
+  version: number;
+  targetDuration: number;
+  playlistType: 'VOD' | 'EVENT' | undefined;
+  initSegment: AddressableObject | null;
+  segments: Segment[];
+  duration: number;
+  endList: boolean;
+}
 
 // =============================================================================
 // Presentation

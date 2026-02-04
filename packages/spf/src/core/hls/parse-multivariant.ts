@@ -68,18 +68,12 @@ export function parseMultivariantPlaylist(text: string, baseUrl: string): Presen
       continue;
     }
 
-    // #EXTM3U - Playlist header
-    if (trimmed === '#EXTM3U') {
-      continue;
-    }
-
-    // #EXT-X-VERSION - Not used in Presentation model
-    if (trimmed.startsWith('#EXT-X-VERSION:')) {
-      continue;
-    }
-
-    // #EXT-X-INDEPENDENT-SEGMENTS - Not used in Presentation model
-    if (trimmed.startsWith('#EXT-X-INDEPENDENT-SEGMENTS')) {
+    // Skip tags not used in Presentation model
+    if (
+      trimmed === '#EXTM3U' ||
+      trimmed.startsWith('#EXT-X-VERSION:') ||
+      trimmed.startsWith('#EXT-X-INDEPENDENT-SEGMENTS')
+    ) {
       continue;
     }
 
@@ -152,6 +146,11 @@ export function parseMultivariantPlaylist(text: string, baseUrl: string): Presen
       id: `video-${index}`,
       url: stream.uri,
       bandwidth: stream.bandwidth,
+      // Type-specific defaults (CMAF video)
+      mimeType: 'video/mp4',
+      par: '1:1',
+      sar: '1:1',
+      scanType: 'progressive',
     };
 
     if (stream.resolution?.width !== undefined) {
@@ -193,6 +192,11 @@ export function parseMultivariantPlaylist(text: string, baseUrl: string): Presen
       url: rendition.uri ?? '',
       groupId: rendition.groupId,
       name: rendition.name,
+      // Type-specific defaults (CMAF audio)
+      mimeType: 'audio/mp4',
+      bandwidth: 0, // Not available in multivariant for demuxed audio
+      sampleRate: 48000, // CMAF default
+      channels: 2, // Stereo default
     };
 
     if (rendition.language) {
@@ -220,6 +224,10 @@ export function parseMultivariantPlaylist(text: string, baseUrl: string): Presen
       groupId: rendition.groupId,
       label: rendition.name,
       kind: 'subtitles' as const,
+      // Type-specific defaults (VTT)
+      mimeType: 'text/vtt',
+      bandwidth: 0, // Text tracks don't consume bandwidth
+      codecs: [], // VTT has no codecs
     };
 
     if (rendition.language) {
