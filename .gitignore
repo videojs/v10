@@ -141,3 +141,5 @@ bun.lockb
 # AI Agent Config (Generated)
 # -------------------------
 .opencode
+AGENTS.md
+agents
