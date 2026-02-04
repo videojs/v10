@@ -12,7 +12,8 @@ export default function UseCasePicker() {
       value={$useCase}
       onChange={(value) => useCase.set(value as UseCase)}
       options={[
-        { value: 'website' satisfies UseCase, label: 'Website', image: <Globe size={32} /> },
+        { value: 'default-video' satisfies UseCase, label: 'Default Video', image: <Globe size={32} /> },
+        { value: 'default-audio' satisfies UseCase, label: 'Default Audio', image: <Globe size={32} /> },
         { value: 'background-video' satisfies UseCase, label: 'Background Video', image: <Image size={32} /> },
       ]}
       aria-label="Select use case"

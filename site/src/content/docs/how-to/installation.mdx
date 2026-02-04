@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Get started with Video.js v10 by choosing your framework, skin, and media renderer
+description: Get started quickly with Video.js by building your first embed code
 ---
 
 import JSPicker from '@/components/installation/JSPicker.astro';
@@ -16,17 +16,16 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
 
-<Aside type="caution" title="Technical Preview">
-Video.js v10 is currently in technical preview. The API and docs are actively evolving. See the <DocsLink slug="concepts/v10-roadmap">roadmap</DocsLink> for more details on what's coming.
+<Aside type="caution" title="Beta Software">
+Video.js v10 is currently in _beta_. The API may evolve with [feedback&#x1F64F;](https://github.com/videojs/v10/issues). See the [Changelog](https://github.com/videojs/v10/blob/main/CHANGELOG.md)\[todo\] for recent updates and the <DocsLink slug="concepts/v10-roadmap">Roadmap</DocsLink> for more details on what's coming.
 </Aside>
 
-Video.js is beautifully crafted, accessible media player components; packed with powerful features; tuned for high-performance; intentionally built for your favorite frameworks; compatible with the media formats and hosting services you love.
-
-Get started quickly with a selection of great presets and skins, then extend and customize to your hearts content.
+Video.js is **audio and video player components** &mdash; intentionally built to achieve minimal bundle sizes while providing framework-specific customization and a great viewer experience.
+Answer the questions below to get started quickly with your first embed code.
 
 ## Choose your JS framework
 
-Video.js provides idiomatic experiences in both React and HTML Web Components. 
+Video.js aims to provide idiomatic development experiences in your favorite JS and CSS frameworks. More to come ([vote](https://github.com/videojs/v10/discussions/categories/ideas))\[todo\].
 
 <ContentWidth margins="lg">
   <JSPicker />
@@ -35,16 +34,16 @@ Video.js provides idiomatic experiences in both React and HTML Web Components.
 
 ## Choose your use case
 
-Use case presets get you started closer to your desired player without wrangling plugins. The default is the Website Player preset, which comes with a complete set of features for simple video playback on your site.
+The defaults work well for general website playback. More use case player presets to come.
 
 <ContentWidth margins="lg">
   <UseCasePicker client:idle />
 </ContentWidth>
 
 
-## Choose your media renderer
+## Choose your source type
 
-Media are like players without the UI.  Pick the one that matches your video or audio files and hosting. They can easily be changed later.
+Video.js supports your favorite file types and hosting services. Whichever you choose can be easily changed later. ([missing something?](https://github.com/videojs/v10/discussions/categories/ideas))
 
 <ContentWidth margins="lg">
   <RendererPicker client:idle />

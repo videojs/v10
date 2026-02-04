@@ -16,11 +16,11 @@ export type Renderer =
 
 export type Skin = 'frosted' | 'minimal';
 
-export type UseCase = 'website' | 'background-video';
+export type UseCase = 'default-video' | 'default-audio' | 'background-video';
 
 export const renderer = atom<Renderer>('html5-video');
 export const skin = atom<Skin>('frosted');
-export const useCase = atom<UseCase>('website');
+export const useCase = atom<UseCase>('default-video');
 
 /** Mux playback ID from successful upload (used by code generation) */
 export const muxPlaybackId = atom<string | null>(null);
