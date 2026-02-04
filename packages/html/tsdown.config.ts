@@ -1,6 +1,10 @@
 import { globSync } from 'node:fs';
 import { defineConfig } from 'tsdown';
 
+type BuildMode = 'dev' | 'prod' | 'types';
+
+const buildModes: BuildMode[] = ['dev', 'prod', 'types'];
+
 const defineEntries = Object.fromEntries(
   globSync('src/define/**/*.ts').map((file) => {
     const key = file.replace('src/', '').replace('.ts', '');
@@ -8,7 +12,7 @@ const defineEntries = Object.fromEntries(
   })
 );
 
-export default defineConfig({
+const createConfig = (mode: BuildMode) => ({
   entry: {
     index: 'src/index.ts',
     ...defineEntries,
@@ -20,5 +24,11 @@ export default defineConfig({
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
   },
-  dts: true,
+  outDir: `dist/${mode}`,
+  define: {
+    __DEV__: mode === 'dev' ? 'true' : 'false',
+  },
+  dts: mode === 'types',
 });
+
+export default defineConfig(buildModes.map((mode) => createConfig(mode)));

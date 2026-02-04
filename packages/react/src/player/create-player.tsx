@@ -45,7 +45,7 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
     return <PlayerContextProvider value={{ store, media, setMedia }}>{children}</PlayerContextProvider>;
   }
 
-  if (config.displayName) {
+  if (__DEV__ && config.displayName) {
     Provider.displayName = `${config.displayName}.Provider`;
   }
 
