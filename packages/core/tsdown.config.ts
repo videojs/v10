@@ -1,10 +1,11 @@
+import type { Options } from 'tsdown';
 import { defineConfig } from 'tsdown';
 
 type BuildMode = 'dev' | 'prod' | 'types';
 
 const buildModes: BuildMode[] = ['dev', 'prod', 'types'];
 
-const createConfig = (mode: BuildMode) => ({
+const createConfig = (mode: BuildMode): Options => ({
   entry: {
     index: './src/core/index.ts',
     dom: './src/dom/index.ts',

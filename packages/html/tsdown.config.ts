@@ -1,4 +1,5 @@
 import { globSync } from 'node:fs';
+import type { Options } from 'tsdown';
 import { defineConfig } from 'tsdown';
 
 type BuildMode = 'dev' | 'prod' | 'types';
@@ -12,7 +13,7 @@ const defineEntries = Object.fromEntries(
   })
 );
 
-const createConfig = (mode: BuildMode) => ({
+const createConfig = (mode: BuildMode): Options => ({
   entry: {
     index: 'src/index.ts',
     ...defineEntries,
