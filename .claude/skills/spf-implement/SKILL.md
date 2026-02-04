@@ -25,8 +25,8 @@ Phase 0: SETUP     → Create branch, set issue to "In progress"
 Phase 1: RED       → Write failing tests
 Phase 2: GREEN     → Implement (tests + typecheck + lint)
 Phase 3: REFACTOR  → Clean up if needed
-Phase 4: UPDATE    → Commit, push, create PR to parent Epic
-→ Human reviews PR and merges
+Phase 4: UPDATE    → Commit, squash merge to Epic branch, delete feature branch
+→ Human verifies and pushes Epic branch
 ```
 
 ## Prerequisites
@@ -51,10 +51,10 @@ main
       └─ ... (other epics)
 ```
 
-**PR Flow:**
-- Sub-issue branch → PR to Epic branch → merge
-- Epic branch → PR to SPF base branch → merge
-- SPF base branch → PR to main → merge
+**Merge Flow:**
+- Sub-issue branch → squash merge to Epic branch (local)
+- Epic branch → squash merge to SPF base branch (local)
+- SPF base branch → squash merge to main (local)
 
 **Branch Naming:**
 - Epic: `feat/spf-wave-N-epic-XXX`
@@ -219,43 +219,43 @@ Questions to ask:
 
 ---
 
-## Phase 4: UPDATE - Complete Issue & Create PR
+## Phase 4: UPDATE - Complete Issue & Merge Locally
 
 ### Steps:
 
 1. **Commit the implementation:**
    ```bash
-   git add packages/spf/src/
-   git commit -m "feat(packages): implement <feature> (<issue-id>)
+   git add src/
+   git commit -m "feat(spf): implement <feature> (<issue-id>)
 
-   [Description]
+   [Description of implementation]
 
-   Implements #<number>"
+   [Key details]
+
+   Implements #<number>
+
+   Co-Authored-By: Claude Sonnet 4.5 (1M context) <noreply@anthropic.com>"
    ```
 
-2. **Push branch and create PR to parent:**
+2. **Squash merge to Epic branch:**
    ```bash
-   # Push feature branch
-   git push -u origin <current-branch>
+   # Switch to Epic branch
+   git checkout <parent-epic-branch>
 
-   # Create PR to parent Epic branch (not main!)
-   gh pr create \
-     --repo videojs/v10 \
-     --base <parent-epic-branch> \
-     --title "[<ID>] <Feature Name>" \
-     --body "Implements #<number>
+   # Squash merge feature branch
+   git merge --squash <feature-branch>
 
-   ## Summary
-   - [List what was implemented]
+   # Commit the squashed changes
+   git commit -m "feat(spf): <feature-name> (<issue-id>)
 
-   ## Quality Checks
-   - ✅ Tests: X/X passing
-   - ✅ TypeScript: Clean
-   - ✅ Lint: Clean
+   [Summary]
 
-   ## Bundle Size: ~XKB
+   Implements #<number>
 
-   Related Epic: #<epic-number>"
+   Co-Authored-By: Claude Sonnet 4.5 (1M context) <noreply@anthropic.com>"
+
+   # Delete feature branch
+   git branch -d <feature-branch>
    ```
 
 3. **Add comment to GitHub issue** with completion status:
@@ -272,56 +272,31 @@ Questions to ask:
    - [List files with brief description]
 
    ### Quality Checks:
-   - ✅ Tests: X/X passing
+   - ✅ Tests: X/X passing (Y total)
    - ✅ TypeScript: Clean
    - ✅ Lint: Clean
 
    ### Bundle Size: ~XKB (estimated)
 
-   **Ready for commit.**
+   **Merged to Epic branch** \`<parent-epic-branch>\`
    "
    ```
 
-2. **Prepare commit message** following conventions:
-   ```
-   feat(packages): implement <feature> (<issue-id>)
-
-   [Brief description of what was implemented]
-
-   Files:
-   - [List key files]
-
-   TDD: RED → GREEN (test + typecheck + lint) → verified
-
-   Implements #<number>
-
-   Co-Authored-By: Claude Sonnet 4.5 (1M context) <noreply@anthropic.com>
-   ```
-
-3. **Show git status** and staged files
-
 ### Output:
-- GitHub issue commented
-- Commit message ready
-- Files staged
-
-### Output:
-- Commit created
-- Branch pushed
-- PR created to parent Epic branch
+- Commit created on feature branch
+- Squash merged to Epic branch
+- Feature branch deleted locally
 - GitHub issue commented
 
 ### Human Gate 🚦
-**STOP - Human reviews PR and merges when ready.**
+**STOP - Verify merge and push when ready.**
 
 User can:
-- Review PR in GitHub
-- Request changes if needed
-- Merge to Epic branch when satisfied
-- Epic branch eventually merges to SPF base
-- SPF base eventually merges to main
+- Review the squashed commit in Epic branch
+- Run tests on Epic branch to verify
+- Push Epic branch when satisfied: `git push origin <epic-branch>`
 
-**Note:** Issue status moves to "Done" only after PR is merged to main (tracked separately)
+**Note:** Issue status stays "In progress" until Epic is merged to main
 
 ---
 
@@ -455,7 +430,7 @@ git rebase feat/spf-v1-foundation
 
 ---
 
-## Branch and PR Management Commands
+## Branch and Local Merge Management
 
 ### Useful Commands
 
@@ -464,19 +439,21 @@ git rebase feat/spf-v1-foundation
 git branch --list "feat/spf-*"
 ```
 
-**View PR for current branch:**
+**Squash merge feature branch to Epic:**
 ```bash
-gh pr view
+git checkout <epic-branch>
+git merge --squash <feature-branch>
+git commit -m "feat(spf): <description>"
 ```
 
-**Merge PR when approved:**
+**Delete merged feature branch:**
 ```bash
-gh pr merge --squash  # or --merge or --rebase
+git branch -d <feature-branch>
 ```
 
-**Delete merged branch:**
+**Push Epic branch to remote:**
 ```bash
-git branch -d <branch-name>
+git push origin <epic-branch>
 ```
 
 ---
@@ -485,10 +462,9 @@ git branch -d <branch-name>
 
 **Status flow:**
 1. **Start issue** → Set to "In progress" (Phase 0)
-2. **Create PR** → Stays "In progress" (Phase 4)
-3. **PR merged to Epic** → Stays "In progress"
-4. **Epic merged to SPF base** → Stays "In progress"
-5. **SPF base merged to main** → Set to "Done" (manual)
+2. **Squash merge to Epic** → Stays "In progress" (Phase 4)
+3. **Epic merged to SPF base** → Stays "In progress"
+4. **SPF base merged to main** → Set to "Done" (manual)
 
 **Why "Done" only after main merge:**
 - Work isn't truly complete until in main
