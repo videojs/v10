@@ -43,10 +43,7 @@ import { Time } from '@videojs/react';
 ### HTML
 
 ```ts
-import '@videojs/html/time';
-// or
-import '@videojs/html/time/group';
-import '@videojs/html/time/separator';
+import '@videojs/html/ui/time';
 ```
 
 ```html
