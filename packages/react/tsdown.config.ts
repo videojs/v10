@@ -20,7 +20,7 @@ const createConfig = (mode: BuildMode): Options => ({
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',
   },
-  dts: mode === 'types',
+  dts: mode === 'types' && { emitDtsOnly: true },
 });
 
 export default defineConfig(buildModes.map((mode) => createConfig(mode)));
