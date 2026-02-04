@@ -1,15 +1,12 @@
-import type { InferSliceState } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
+import type { SourceState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 
 export const sourceFeature = definePlayerFeature({
-  state: ({ target, abort }) => ({
-    /** Current media source URL (null if none). */
-    source: null as string | null,
-    /** Whether enough data is loaded to begin playback. */
+  state: ({ target, abort }): SourceState => ({
+    source: null,
     canPlay: false,
-    /** Load a new media source. Returns the new source URL. */
     loadSource(src: string) {
       abort(); // Cancel pending operations (e.g., seek)
 
@@ -38,5 +35,3 @@ export const sourceFeature = definePlayerFeature({
     listen(media, 'emptied', sync, { signal });
   },
 });
-
-export type SourceState = InferSliceState<typeof sourceFeature>;
