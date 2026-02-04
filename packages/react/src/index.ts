@@ -33,6 +33,7 @@ export {
 export { useButton } from './ui/hooks/use-button';
 
 // UI Components
+export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
 export { PlayButton, type PlayButtonProps } from './ui/play-button/play-button';
 
 // Utilities

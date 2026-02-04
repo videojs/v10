@@ -64,6 +64,29 @@ describe('getStateDataAttrs', () => {
     const state = { label: '' };
     expect(getStateDataAttrs(state)).toEqual({});
   });
+
+  it('supports explicit attribute mapping', () => {
+    const state = { muted: true, volumeLevel: 'low' };
+    const mapping = {
+      muted: 'data-muted',
+      volumeLevel: 'data-volume-level',
+    };
+
+    expect(getStateDataAttrs(state, mapping)).toEqual({
+      'data-muted': '',
+      'data-volume-level': 'low',
+    });
+  });
+
+  it('allows unmapped keys when mapping is provided', () => {
+    const state = { muted: true, volumeLevel: 'low' };
+    const mapping = { muted: 'data-muted' };
+
+    expect(getStateDataAttrs(state, mapping)).toEqual({
+      'data-muted': '',
+      'data-volumelevel': 'low',
+    });
+  });
 });
 
 describe('applyStateDataAttrs', () => {
@@ -133,5 +156,18 @@ describe('applyStateDataAttrs', () => {
     expect(element.hasAttribute('data-paused')).toBe(false);
     expect(element.hasAttribute('data-ended')).toBe(true);
     expect(element.hasAttribute('data-volume')).toBe(false);
+  });
+
+  it('removes mapped attributes when values become falsy', () => {
+    const element = document.createElement('div');
+    const mapping = { muted: 'data-muted', volumeLevel: 'data-volume-level' };
+
+    applyStateDataAttrs(element, { muted: true, volumeLevel: 'high' }, mapping);
+    expect(element.getAttribute('data-muted')).toBe('');
+    expect(element.getAttribute('data-volume-level')).toBe('high');
+
+    applyStateDataAttrs(element, { muted: false, volumeLevel: '' }, mapping);
+    expect(element.hasAttribute('data-muted')).toBe(false);
+    expect(element.hasAttribute('data-volume-level')).toBe(false);
   });
 });

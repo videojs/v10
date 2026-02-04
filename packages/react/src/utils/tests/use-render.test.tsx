@@ -487,6 +487,39 @@ describe('renderElement', () => {
       expect(element?.getAttribute('data-ispaused')).toBe('');
     });
 
+    it('supports explicit state attribute mapping', () => {
+      interface VolumeState {
+        muted: boolean;
+        volumeLevel: 'low' | 'high';
+      }
+
+      const mapping = {
+        muted: 'data-muted',
+        volumeLevel: 'data-volume-level',
+      } as const;
+
+      const VolumeComponent = forwardRef(function VolumeComponent(
+        props: { muted?: boolean; volumeLevel?: 'low' | 'high' } & renderElement.ComponentProps<VolumeState>,
+        ref: ForwardedRef<HTMLDivElement>
+      ) {
+        const { className, style, render: renderProp, muted = false, volumeLevel = 'high', ...elementProps } = props;
+        const state: VolumeState = { muted, volumeLevel };
+
+        return renderElement(
+          'div',
+          { className, style, render: renderProp },
+          { state, ref, props: [elementProps], stateAttrMap: mapping }
+        );
+      });
+
+      const { container } = render(<VolumeComponent muted volumeLevel="low" />);
+      const element = container.firstElementChild;
+
+      expect(element?.getAttribute('data-muted')).toBe('');
+      expect(element?.getAttribute('data-volume-level')).toBe('low');
+      expect(element?.hasAttribute('data-volumelevel')).toBe(false);
+    });
+
     it('state data-* attributes can be overridden by explicit props', () => {
       const ComponentWithExplicitDataAttr = forwardRef(function ComponentWithExplicitDataAttr(
         props: TestComponentProps,

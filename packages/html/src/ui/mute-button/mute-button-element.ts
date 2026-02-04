@@ -1,19 +1,19 @@
 import type { PropertyValues } from '@lit/reactive-element';
-import { PlayButtonCore } from '@videojs/core';
+import { MuteButtonCore, MuteButtonDataAttributes } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
   createButton,
   logMissingFeature,
-  selectPlayback,
+  selectVolume,
 } from '@videojs/core/dom';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 
-export class PlayButtonElement extends MediaElement {
-  static readonly tagName = 'media-play-button';
+export class MuteButtonElement extends MediaElement {
+  static readonly tagName = 'media-mute-button';
 
   static override properties = {
     label: { type: String },
@@ -23,8 +23,8 @@ export class PlayButtonElement extends MediaElement {
   label = '';
   disabled = false;
 
-  readonly #core = new PlayButtonCore();
-  readonly #state = new PlayerController(this, playerContext, selectPlayback);
+  readonly #core = new MuteButtonCore();
+  readonly #state = new PlayerController(this, playerContext, selectVolume);
 
   #disconnect: AbortController | null = null;
 
@@ -41,7 +41,7 @@ export class PlayButtonElement extends MediaElement {
     applyElementProps(this, buttonProps, this.#disconnect.signal);
 
     if (!this.#state.value) {
-      logMissingFeature(PlayButtonElement.tagName, 'playback');
+      logMissingFeature(MuteButtonElement.tagName, 'volume');
     }
   }
 
@@ -66,6 +66,6 @@ export class PlayButtonElement extends MediaElement {
     }
 
     applyElementProps(this, this.#core.getAttrs(state));
-    applyStateDataAttrs(this, this.#core.getState(state));
+    applyStateDataAttrs(this, this.#core.getState(state), MuteButtonDataAttributes);
   }
 }

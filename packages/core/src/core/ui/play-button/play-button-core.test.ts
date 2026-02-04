@@ -17,11 +17,27 @@ function createMockPlayback(overrides: Partial<PlaybackState> = {}): PlaybackSta
 
 describe('PlayButtonCore', () => {
   describe('getLabel', () => {
-    it('returns custom label when provided', () => {
+    it('returns custom label string when provided', () => {
       const core = new PlayButtonCore({ label: 'Custom Label' });
       const playback = createMockPlayback();
 
       expect(core.getLabel(playback)).toBe('Custom Label');
+    });
+
+    it('returns custom label from function when provided', () => {
+      const core = new PlayButtonCore({
+        label: (state) => (state.paused ? 'Start' : 'Stop'),
+      });
+      const playback = createMockPlayback({ paused: true });
+
+      expect(core.getLabel(playback)).toBe('Start');
+    });
+
+    it('falls back to default label when function returns empty string', () => {
+      const core = new PlayButtonCore({ label: () => '' });
+      const playback = createMockPlayback({ paused: true });
+
+      expect(core.getLabel(playback)).toBe('Play');
     });
 
     it('returns "Replay" when ended', () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { getStateDataAttrs } from '@videojs/core/dom';
+import { getStateDataAttrs, type StateAttrMap } from '@videojs/core/dom';
 import { isFunction } from '@videojs/utils/predicate';
 import type { CSSProperties, ReactElement, Ref } from 'react';
 import { cloneElement, createElement, isValidElement } from 'react';
@@ -20,6 +20,7 @@ export interface UseRenderParameters<State, RenderedElementType extends Element>
   state: State;
   ref?: Ref<RenderedElementType> | Ref<RenderedElementType>[] | undefined;
   props?: object | object[] | undefined;
+  stateAttrMap?: StateAttrMap<State> | undefined;
 }
 
 function resolveClassName<State>(
@@ -72,14 +73,14 @@ export function renderElement<
   params: UseRenderParameters<State, RenderedElementType>
 ): ReactElement {
   const { className: classNameProp, style: styleProp, render } = componentProps;
-  const { state, ref, props } = params;
+  const { state, ref, props, stateAttrMap } = params;
 
   // Resolve className and style if they're functions
   const className = resolveClassName(classNameProp, state);
   const style = resolveStyle(styleProp, state);
 
   // Generate data attributes from state
-  const stateDataAttrs = getStateDataAttrs(state);
+  const stateDataAttrs = getStateDataAttrs(state, stateAttrMap);
 
   // Merge: state data attrs first, then props (so props can override)
   const propsArray = Array.isArray(props) ? props : props ? [props] : [];
