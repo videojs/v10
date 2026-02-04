@@ -121,6 +121,13 @@ import '@videojs/html/time/separator';
 
 Container for composed time displays. Provides shared context to children.
 
+**Why a component?**
+
+- **Semantic structure** — Clear boundary around related time displays
+- **Shared context** — Children inherit `hoursDisplay` for consistent formatting
+- **Future API surface** — Room to add formatting options that apply to all children
+- **Styling container** — Provides a "box" for layout and theming
+
 #### Props
 
 | Prop           | Type                 | Default   | Description              |
@@ -214,11 +221,16 @@ Displays a formatted time value. Works standalone or within Group.
 
 Divider between time values. Hidden from screen readers.
 
-A custom element (rather than a plain character) for:
+**Why a custom element?**
 
 - **Consistency** — Fits the component model, composable with Group
 - **Automatic accessibility** — Always applies `aria-hidden="true"`
 - **Styling** — Can be targeted with CSS, has default spacing
+- **Prevents mistakes** — Users don't need to remember `aria-hidden`
+
+**Why `aria-hidden="true"`?**
+
+The separator is a decorative visual cue. Screen readers already hear two separate time values — announcing "slash" or "of" between them adds noise without meaning. Each `<Time.Value>` has its own `aria-valuetext` providing full context.
 
 #### Props
 
@@ -274,7 +286,15 @@ For `type="remaining"`:
 | `'always'` | `-4:30` | Always show sign.             |
 | `'never'`  | `4:30`  | Hide sign.                    |
 
-The negative sign is rendered as a separate `<span aria-hidden="true">` element.
+The negative sign is rendered internally as `<span aria-hidden="true">-</span>`.
+
+**Why internal to Value?**
+
+The negative sign is semantically part of "remaining time", not a compositional element between siblings. The `negativeSign` prop provides control without exposing a separate component.
+
+**Why `aria-hidden="true"`?**
+
+The `aria-valuetext` already says "4 minutes, 30 seconds **remaining**" — the word "remaining" conveys the meaning. Announcing "minus" or "dash" would be redundant and potentially confusing.
 
 ## Accessibility
 
@@ -496,6 +516,17 @@ function TimeValue(props: TimeValueProps) {
 - `showSign` — simpler but less precise
 
 **Rationale:** More descriptive for this specific use case. `signDisplay` is generic; `negativeSign` is clear about what it controls.
+
+### Negative Sign Internal to Value
+
+**Decision:** The negative sign for remaining time is rendered internally by `<Time.Value>`, controlled by `negativeSign` prop.
+
+**Alternatives:**
+
+- Separate `<Time.Sign>` component — maximum flexibility but overkill
+- User's responsibility — minimal API but users must handle a11y
+
+**Rationale:** The negative sign is semantically part of "remaining time", not a compositional element like Separator. It only appears with `type="remaining"`. Internal rendering ensures consistent `aria-hidden` handling.
 
 ## Open Questions
 
