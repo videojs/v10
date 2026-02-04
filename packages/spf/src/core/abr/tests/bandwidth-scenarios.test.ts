@@ -474,11 +474,14 @@ describe('real-world segment patterns', () => {
     const segmentDuration = 2000;
     const estimates: number[] = [];
 
+    // Deterministic variance pattern (realistic but predictable)
+    const variancePattern = [10_000, -5_000, 15_000, -10_000, 8_000, -3_000, 12_000, -8_000, 5_000, -12_000];
+
     // Simulate 30 segments (1 minute of playback)
     for (let i = 0; i < 30; i++) {
       // Slight variance in bytes (realistic network conditions)
       const baseBytes = 250_000;
-      const variance = Math.floor(Math.random() * 50_000) - 25_000; // ±10%
+      const variance = variancePattern[i % variancePattern.length]; // ±10% pattern
       const bytes = baseBytes + variance;
 
       state = sampleBandwidth(state, segmentDuration, bytes);
