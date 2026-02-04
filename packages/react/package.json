@@ -16,11 +16,11 @@
     ".": {
       "types": "./dist/dev/index.d.ts",
       "development": "./dist/dev/index.js",
-      "default": "./dist/prod/index.js"
+      "default": "./dist/default/index.js"
     }
   },
-  "main": "dist/prod/index.js",
-  "module": "dist/prod/index.js",
+  "main": "dist/default/index.js",
+  "module": "dist/default/index.js",
   "types": "dist/dev/index.d.ts",
   "files": [
     "dist"

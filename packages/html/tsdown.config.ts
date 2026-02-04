@@ -2,9 +2,9 @@ import { globSync } from 'node:fs';
 import type { Options } from 'tsdown';
 import { defineConfig } from 'tsdown';
 
-type BuildMode = 'dev' | 'prod';
+type BuildMode = 'dev' | 'default';
 
-const buildModes: BuildMode[] = ['dev', 'prod'];
+const buildModes: BuildMode[] = ['dev', 'default'];
 
 const defineEntries = Object.fromEntries(
   globSync('src/define/**/*.ts').map((file) => {

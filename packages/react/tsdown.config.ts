@@ -1,9 +1,9 @@
 import type { Options } from 'tsdown';
 import { defineConfig } from 'tsdown';
 
-type BuildMode = 'dev' | 'prod';
+type BuildMode = 'dev' | 'default';
 
-const buildModes: BuildMode[] = ['dev', 'prod'];
+const buildModes: BuildMode[] = ['dev', 'default'];
 
 const createConfig = (mode: BuildMode): Options => ({
   entry: {
