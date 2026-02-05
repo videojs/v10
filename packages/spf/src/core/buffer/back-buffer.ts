@@ -87,5 +87,5 @@ export function calculateBackBufferFlushPoint(
 
   // Return the startTime of the first segment we want to keep
   // Everything before this will be flushed
-  return segmentsBefore[segmentsToFlush].startTime;
+  return segmentsBefore[segmentsToFlush]!.startTime;
 }

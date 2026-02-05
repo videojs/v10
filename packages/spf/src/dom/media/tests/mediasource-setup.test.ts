@@ -53,7 +53,7 @@ describe('attachMediaSource', () => {
     const mediaElement = document.createElement('video');
     const mediaSource = createMediaSource();
 
-    const { url, detach } = attachMediaSource(mediaSource, mediaElement);
+    const { detach } = attachMediaSource(mediaSource, mediaElement);
 
     detach();
 
