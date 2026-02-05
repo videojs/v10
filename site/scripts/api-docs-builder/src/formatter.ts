@@ -1,5 +1,6 @@
 import { uniq } from 'es-toolkit/array';
 import * as tae from 'typescript-api-extractor';
+import type { PropDef } from './types.js';
 
 /**
  * Get abbreviated type for display in collapsed rows.
@@ -50,10 +51,8 @@ export function getShortPropType(name: string, type: string): string | undefined
 /**
  * Format a list of properties into API reference format.
  */
-export function formatProperties(
-  props: tae.PropertyNode[]
-): Record<string, { type: string; shortType?: string; description?: string; default?: string; required?: boolean }> {
-  const result: Record<string, any> = {};
+export function formatProperties(props: tae.PropertyNode[]): Record<string, PropDef> {
+  const result: Record<string, PropDef> = {};
 
   for (const prop of props) {
     // Skip ref for components
@@ -64,20 +63,13 @@ export function formatProperties(
     const formattedType = formatType(prop.type, prop.optional);
     const shortType = getShortPropType(prop.name, formattedType);
 
-    const resultObject: Record<string, any> = {
-      type: formattedType,
-      shortType,
-      default: prop.documentation?.defaultValue,
-      required: !prop.optional || undefined,
-      description: prop.documentation?.description,
-    };
+    const entry: PropDef = { type: formattedType };
+    if (shortType !== undefined) entry.shortType = shortType;
+    if (prop.documentation?.defaultValue !== undefined) entry.default = prop.documentation.defaultValue;
+    if (!prop.optional) entry.required = true;
+    if (prop.documentation?.description !== undefined) entry.description = prop.documentation.description;
 
-    // Clean up undefined values
-    Object.keys(resultObject).forEach((key) => {
-      if (resultObject[key] === undefined) delete resultObject[key];
-    });
-
-    result[prop.name] = resultObject;
+    result[prop.name] = entry;
   }
 
   return result;

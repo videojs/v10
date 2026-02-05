@@ -86,7 +86,7 @@ export function extractDataAttrs(
 /**
  * Extract JSDoc comment from a property assignment.
  */
-function getJsDocComment(node: ts.PropertyAssignment, sourceFile: ts.SourceFile): string {
+export function getJsDocComment(node: ts.PropertyAssignment, sourceFile: ts.SourceFile): string {
   // Get leading comment ranges
   const fullText = sourceFile.getFullText();
   const nodeStart = node.getFullStart();

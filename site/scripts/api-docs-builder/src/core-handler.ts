@@ -63,7 +63,11 @@ export function extractCore(filePath: string, program: ts.Program, componentName
  *
  * Looks for: static readonly defaultProps = { label: '', disabled: false }
  */
-function extractDefaultProps(filePath: string, program: ts.Program, componentName: string): Record<string, string> {
+export function extractDefaultProps(
+  filePath: string,
+  program: ts.Program,
+  componentName: string
+): Record<string, string> {
   const sourceFile = program.getSourceFile(filePath);
   if (!sourceFile) return {};
 
@@ -109,7 +113,7 @@ function extractDefaultProps(filePath: string, program: ts.Program, componentNam
 /**
  * Get a string representation of a property value.
  */
-function getPropertyValue(node: ts.Expression, sourceFile: ts.SourceFile): string | undefined {
+export function getPropertyValue(node: ts.Expression, sourceFile: ts.SourceFile): string | undefined {
   if (ts.isStringLiteral(node)) {
     return `'${node.text}'`;
   }

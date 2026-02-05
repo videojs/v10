@@ -1,59 +1,17 @@
-import * as ts from 'typescript';
-import { describe, expect, it } from 'vitest';
+import * as tae from 'typescript-api-extractor';
+import { describe, expect, it, type MockInstance, vi } from 'vitest';
+import { extractCore, extractDefaultProps } from '../core-handler.js';
+import { createTestProgram } from './test-utils.js';
 
-function createSourceFile(code: string, fileName = 'test.ts'): ts.SourceFile {
-  return ts.createSourceFile(fileName, code, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TS);
-}
+vi.mock('typescript-api-extractor', async () => {
+  const actual = await vi.importActual<typeof tae>('typescript-api-extractor');
+  return {
+    ...actual,
+    parseFromProgram: vi.fn(),
+  };
+});
 
-/**
- * Extract defaultProps from source code using the same logic as core-handler.
- * This mirrors extractDefaultProps from core-handler.ts for unit testing.
- */
-function extractDefaultProps(sourceFile: ts.SourceFile, componentName: string): Record<string, string> {
-  const defaultProps: Record<string, string> = {};
-
-  function visit(node: ts.Node) {
-    if (ts.isClassDeclaration(node) && node.name?.text === `${componentName}Core`) {
-      for (const member of node.members) {
-        if (
-          ts.isPropertyDeclaration(member) &&
-          member.name &&
-          ts.isIdentifier(member.name) &&
-          member.name.text === 'defaultProps' &&
-          member.modifiers?.some((m) => m.kind === ts.SyntaxKind.StaticKeyword) &&
-          member.initializer
-        ) {
-          if (ts.isObjectLiteralExpression(member.initializer)) {
-            for (const prop of member.initializer.properties) {
-              if (ts.isPropertyAssignment(prop) && ts.isIdentifier(prop.name)) {
-                const propName = prop.name.text;
-                const propValue = getPropertyValue(prop.initializer, sourceFile);
-                if (propValue !== undefined) {
-                  defaultProps[propName] = propValue;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
-  return defaultProps;
-}
-
-function getPropertyValue(node: ts.Expression, sourceFile: ts.SourceFile): string | undefined {
-  if (ts.isStringLiteral(node)) return `'${node.text}'`;
-  if (ts.isNumericLiteral(node)) return node.text;
-  if (node.kind === ts.SyntaxKind.TrueKeyword) return 'true';
-  if (node.kind === ts.SyntaxKind.FalseKeyword) return 'false';
-  if (node.kind === ts.SyntaxKind.NullKeyword) return 'null';
-  if (ts.isArrayLiteralExpression(node) && node.elements.length === 0) return '[]';
-  if (ts.isObjectLiteralExpression(node) && node.properties.length === 0) return '{}';
-  return node.getText(sourceFile);
-}
+const mockParseFromProgram = tae.parseFromProgram as unknown as MockInstance;
 
 describe('extractDefaultProps', () => {
   it("extracts string literals with quotes ('label' → \"''\")", () => {
@@ -64,8 +22,8 @@ describe('extractDefaultProps', () => {
         };
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractDefaultProps(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractDefaultProps('test.ts', program, 'MockComponent');
 
     expect(result.label).toBe("''");
   });
@@ -78,8 +36,8 @@ describe('extractDefaultProps', () => {
         };
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractDefaultProps(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractDefaultProps('test.ts', program, 'MockComponent');
 
     expect(result.label).toBe("'Play'");
   });
@@ -92,8 +50,8 @@ describe('extractDefaultProps', () => {
         };
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractDefaultProps(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractDefaultProps('test.ts', program, 'MockComponent');
 
     expect(result.disabled).toBe('false');
   });
@@ -106,8 +64,8 @@ describe('extractDefaultProps', () => {
         };
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractDefaultProps(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractDefaultProps('test.ts', program, 'MockComponent');
 
     expect(result.enabled).toBe('true');
   });
@@ -120,8 +78,8 @@ describe('extractDefaultProps', () => {
         };
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractDefaultProps(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractDefaultProps('test.ts', program, 'MockComponent');
 
     expect(result.value).toBe('null');
   });
@@ -134,8 +92,8 @@ describe('extractDefaultProps', () => {
         };
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractDefaultProps(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractDefaultProps('test.ts', program, 'MockComponent');
 
     expect(result.items).toBe('[]');
   });
@@ -148,8 +106,8 @@ describe('extractDefaultProps', () => {
         };
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractDefaultProps(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractDefaultProps('test.ts', program, 'MockComponent');
 
     expect(result.config).toBe('{}');
   });
@@ -163,8 +121,8 @@ describe('extractDefaultProps', () => {
         };
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractDefaultProps(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractDefaultProps('test.ts', program, 'MockComponent');
 
     expect(result.count).toBe('42');
     expect(result.ratio).toBe('1.5');
@@ -178,8 +136,8 @@ describe('extractDefaultProps', () => {
         };
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractDefaultProps(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractDefaultProps('test.ts', program, 'MockComponent');
 
     expect(result).toEqual({});
   });
@@ -192,8 +150,8 @@ describe('extractDefaultProps', () => {
         };
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractDefaultProps(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractDefaultProps('test.ts', program, 'MockComponent');
 
     expect(result).toEqual({});
   });
@@ -206,9 +164,173 @@ describe('extractDefaultProps', () => {
         };
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractDefaultProps(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractDefaultProps('test.ts', program, 'MockComponent');
 
     expect(result).toEqual({});
+  });
+});
+
+describe('getPropertyValue', () => {
+  it('falls back to getText for complex expressions', () => {
+    const code = `
+      export class MockComponentCore {
+        static readonly defaultProps = {
+          label: \`hello \${world}\`,
+        };
+      }
+    `;
+    const program = createTestProgram(code);
+    const result = extractDefaultProps('test.ts', program, 'MockComponent');
+
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: testing template literal extraction
+    expect(result.label).toBe('`hello ${world}`');
+  });
+});
+
+describe('extractCore', () => {
+  function createMockAst(exports: Array<{ name: string; type: unknown; documentation?: unknown }>) {
+    return { exports };
+  }
+
+  function createMockObjectNode(properties: tae.PropertyNode[]): tae.ObjectNode {
+    const node = Object.create(tae.ObjectNode.prototype);
+    node.properties = properties;
+    return node;
+  }
+
+  function createMockIntrinsicNode(intrinsic: string): tae.IntrinsicNode {
+    const node = Object.create(tae.IntrinsicNode.prototype);
+    node.intrinsic = intrinsic;
+    node.typeName = undefined;
+    return node;
+  }
+
+  function createMockPropertyNode(
+    name: string,
+    typeName: string,
+    options: { optional?: boolean; description?: string; defaultValue?: string } = {}
+  ): tae.PropertyNode {
+    const type = createMockIntrinsicNode(typeName);
+    const documentation =
+      options.description !== undefined || options.defaultValue !== undefined
+        ? ({
+            description: options.description,
+            defaultValue: options.defaultValue,
+            hasTag: () => false,
+          } as unknown as tae.Documentation)
+        : undefined;
+
+    return { name, type, optional: options.optional ?? false, documentation } as tae.PropertyNode;
+  }
+
+  it('returns null when neither Props nor State export is found', () => {
+    const code = 'export const x = 1;';
+    const program = createTestProgram(code);
+
+    mockParseFromProgram.mockReturnValueOnce(
+      createMockAst([{ name: 'SomethingElse', type: createMockIntrinsicNode('string') }])
+    );
+
+    const result = extractCore('test.ts', program, 'MockComponent');
+
+    expect(result).toBeNull();
+  });
+
+  it('extracts props when propsExport.type is an ObjectNode', () => {
+    const code = 'export const x = 1;';
+    const program = createTestProgram(code);
+
+    const propsType = createMockObjectNode([
+      createMockPropertyNode('label', 'string', { optional: true }),
+      createMockPropertyNode('disabled', 'boolean', { optional: true }),
+    ]);
+
+    mockParseFromProgram.mockReturnValueOnce(createMockAst([{ name: 'MockComponentProps', type: propsType }]));
+
+    const result = extractCore('test.ts', program, 'MockComponent');
+
+    expect(result).not.toBeNull();
+    expect(result!.props).toHaveLength(2);
+    expect(result!.props[0]!.name).toBe('label');
+    expect(result!.props[0]!.type).toBe('string');
+    expect(result!.props[1]!.name).toBe('disabled');
+    expect(result!.props[1]!.type).toBe('boolean');
+  });
+
+  it('extracts state when stateExport.type is an ObjectNode', () => {
+    const code = 'export const x = 1;';
+    const program = createTestProgram(code);
+
+    const stateType = createMockObjectNode([createMockPropertyNode('paused', 'boolean', { optional: false })]);
+
+    mockParseFromProgram.mockReturnValueOnce(createMockAst([{ name: 'MockComponentState', type: stateType }]));
+
+    const result = extractCore('test.ts', program, 'MockComponent');
+
+    expect(result).not.toBeNull();
+    expect(result!.state).toHaveLength(1);
+    expect(result!.state[0]!.name).toBe('paused');
+    expect(result!.state[0]!.type).toBe('boolean');
+  });
+
+  it('extracts description from propsExport documentation', () => {
+    const code = 'export const x = 1;';
+    const program = createTestProgram(code);
+
+    const propsType = createMockObjectNode([createMockPropertyNode('label', 'string', { optional: true })]);
+
+    mockParseFromProgram.mockReturnValueOnce(
+      createMockAst([
+        {
+          name: 'MockComponentProps',
+          type: propsType,
+          documentation: { description: 'Props for the play button.' },
+        },
+      ])
+    );
+
+    const result = extractCore('test.ts', program, 'MockComponent');
+
+    expect(result).not.toBeNull();
+    expect(result!.description).toBe('Props for the play button.');
+  });
+
+  it('skips props when propsExport.type is not an ObjectNode', () => {
+    const code = 'export const x = 1;';
+    const program = createTestProgram(code);
+
+    mockParseFromProgram.mockReturnValueOnce(
+      createMockAst([
+        { name: 'MockComponentProps', type: createMockIntrinsicNode('string') },
+        { name: 'MockComponentState', type: createMockObjectNode([createMockPropertyNode('paused', 'boolean')]) },
+      ])
+    );
+
+    const result = extractCore('test.ts', program, 'MockComponent');
+
+    expect(result).not.toBeNull();
+    expect(result!.props).toHaveLength(0);
+    expect(result!.state).toHaveLength(1);
+  });
+
+  it('merges defaultProps from extractDefaultProps into result', () => {
+    const code = `
+      export class MockComponentCore {
+        static readonly defaultProps = {
+          label: 'Play',
+        };
+      }
+    `;
+    const program = createTestProgram(code);
+
+    const propsType = createMockObjectNode([createMockPropertyNode('label', 'string', { optional: true })]);
+
+    mockParseFromProgram.mockReturnValueOnce(createMockAst([{ name: 'MockComponentProps', type: propsType }]));
+
+    const result = extractCore('test.ts', program, 'MockComponent');
+
+    expect(result).not.toBeNull();
+    expect(result!.defaultProps).toEqual({ label: "'Play'" });
   });
 });

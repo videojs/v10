@@ -1,40 +1,6 @@
-import * as ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-
-function createSourceFile(code: string, fileName = 'test.ts'): ts.SourceFile {
-  return ts.createSourceFile(fileName, code, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TS);
-}
-
-/**
- * Extract tagName from source code.
- * Mirrors extractHtml from html-handler.ts for unit testing.
- */
-function extractHtml(sourceFile: ts.SourceFile, componentName: string): { tagName: string } | null {
-  let tagName = '';
-
-  function visit(node: ts.Node) {
-    if (ts.isClassDeclaration(node) && node.name?.text === `${componentName}Element`) {
-      for (const member of node.members) {
-        if (
-          ts.isPropertyDeclaration(member) &&
-          member.name &&
-          ts.isIdentifier(member.name) &&
-          member.name.text === 'tagName' &&
-          member.modifiers?.some((m) => m.kind === ts.SyntaxKind.StaticKeyword) &&
-          member.initializer &&
-          ts.isStringLiteral(member.initializer)
-        ) {
-          tagName = member.initializer.text;
-        }
-      }
-    }
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
-
-  return tagName ? { tagName } : null;
-}
+import { extractHtml } from '../html-handler.js';
+import { createTestProgram } from './test-utils.js';
 
 describe('extractHtml', () => {
   it('extracts tagName from {Name}Element class', () => {
@@ -43,8 +9,8 @@ describe('extractHtml', () => {
         static readonly tagName = 'media-mock-component';
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractHtml(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractHtml('test.ts', program, 'MockComponent');
 
     expect(result).not.toBeNull();
     expect(result!.tagName).toBe('media-mock-component');
@@ -56,8 +22,8 @@ describe('extractHtml', () => {
         static tagName = 'media-mock-component';
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractHtml(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractHtml('test.ts', program, 'MockComponent');
 
     expect(result).not.toBeNull();
     expect(result!.tagName).toBe('media-mock-component');
@@ -69,8 +35,8 @@ describe('extractHtml', () => {
         static readonly tagName = 'media-other';
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractHtml(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractHtml('test.ts', program, 'MockComponent');
 
     expect(result).toBeNull();
   });
@@ -81,8 +47,8 @@ describe('extractHtml', () => {
         readonly tagName = 'media-mock-component';
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractHtml(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractHtml('test.ts', program, 'MockComponent');
 
     expect(result).toBeNull();
   });
@@ -94,8 +60,8 @@ describe('extractHtml', () => {
         static readonly tagName = TAG;
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractHtml(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractHtml('test.ts', program, 'MockComponent');
 
     expect(result).toBeNull();
   });
@@ -106,8 +72,8 @@ describe('extractHtml', () => {
         static readonly otherProperty = 'value';
       }
     `;
-    const sourceFile = createSourceFile(code);
-    const result = extractHtml(sourceFile, 'MockComponent');
+    const program = createTestProgram(code);
+    const result = extractHtml('test.ts', program, 'MockComponent');
 
     expect(result).toBeNull();
   });

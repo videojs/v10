@@ -14,6 +14,7 @@ import {
   type PropDef,
   type StateDef,
 } from './types.js';
+import { kebabToPascal, sortProps } from './utils.js';
 
 // Magenta prefix - visible on both light and dark terminals
 const PREFIX = '\x1b[35m[api-docs-builder]\x1b[0m';
@@ -30,16 +31,6 @@ const MONOREPO_ROOT = path.resolve(import.meta.dirname, '../../../../');
 const CORE_UI_PATH = path.join(MONOREPO_ROOT, 'packages/core/src/core/ui');
 const HTML_UI_PATH = path.join(MONOREPO_ROOT, 'packages/html/src/ui');
 const OUTPUT_PATH = path.join(MONOREPO_ROOT, 'site/src/content/generated-api-reference');
-
-/**
- * Convert kebab-case to PascalCase
- */
-function kebabToPascal(str: string): string {
-  return str
-    .split('-')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join('');
-}
 
 /**
  * Discover all components by scanning the core/ui directory.
@@ -143,9 +134,9 @@ function buildComponentApiReference(source: ComponentSource, program: ts.Program
     };
 
     // Clean up undefined values
-    if (!props[prop.name]!.shortType) delete props[prop.name]!.shortType;
-    if (!props[prop.name]!.description) delete props[prop.name]!.description;
-    if (!props[prop.name]!.default) delete props[prop.name]!.default;
+    if (props[prop.name]!.shortType === undefined) delete props[prop.name]!.shortType;
+    if (props[prop.name]!.description === undefined) delete props[prop.name]!.description;
+    if (props[prop.name]!.default === undefined) delete props[prop.name]!.default;
     if (!props[prop.name]!.required) delete props[prop.name]!.required;
   }
 
@@ -156,7 +147,7 @@ function buildComponentApiReference(source: ComponentSource, program: ts.Program
       type: s.type,
       description: s.description,
     };
-    if (!state[s.name]!.description) delete state[s.name]!.description;
+    if (state[s.name]!.description === undefined) delete state[s.name]!.description;
   }
 
   // Build data attributes record
@@ -187,30 +178,9 @@ function buildComponentApiReference(source: ComponentSource, program: ts.Program
   }
 
   // Clean up undefined description
-  if (!result.description) delete result.description;
+  if (result.description === undefined) delete result.description;
 
   return result;
-}
-
-/**
- * Sort props: required first, then alphabetical.
- */
-function sortProps(props: Record<string, PropDef>): Record<string, PropDef> {
-  const entries = Object.entries(props);
-
-  entries.sort((a, b) => {
-    // Required first
-    const aRequired = a[1].required ?? false;
-    const bRequired = b[1].required ?? false;
-
-    if (aRequired && !bRequired) return -1;
-    if (!aRequired && bRequired) return 1;
-
-    // Then alphabetical
-    return a[0].localeCompare(b[0]);
-  });
-
-  return Object.fromEntries(entries);
 }
 
 /**
