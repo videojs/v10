@@ -3,3 +3,5 @@ export * from './media/state';
 export * from './ui/mute-button/mute-button-core';
 export * from './ui/mute-button/mute-button-data-attrs';
 export * from './ui/play-button/play-button-core';
+export * from './ui/time/time-core';
+export * from './ui/time/time-data-attrs';
