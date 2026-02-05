@@ -1,12 +1,12 @@
 ---
-import { renderInlineMarkdown } from "@/utils/docs/renderInlineMarkdown";
+import { renderInlineMarkdown } from '@/utils/docs/renderInlineMarkdown';
 
 interface Props {
-    content?: string;
-    fallback?: string;
+  content?: string;
+  fallback?: string;
 }
 
-const { content, fallback = "-" } = Astro.props;
+const { content, fallback = '-' } = Astro.props;
 
 const html = content ? renderInlineMarkdown(content) : fallback;
 ---

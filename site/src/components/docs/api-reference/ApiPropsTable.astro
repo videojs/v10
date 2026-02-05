@@ -4,17 +4,17 @@
  *
  * Props are sorted: required first, then alphabetical.
  */
-import type { PropDef } from "@/types/api-reference";
-import Table from "@/components/typography/Table.astro";
-import Thead from "@/components/typography/Thead.astro";
-import Tbody from "@/components/typography/Tbody.astro";
-import Tr from "@/components/typography/Tr.astro";
-import Th from "@/components/typography/Th.astro";
-import PropRow from "./PropRow.astro";
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+import type { PropDef } from '@/types/api-reference';
+import PropRow from './PropRow.astro';
 
 interface Props {
-    props: Record<string, PropDef>;
-    componentName: string;
+  props: Record<string, PropDef>;
+  componentName: string;
 }
 
 const { props, componentName } = Astro.props;

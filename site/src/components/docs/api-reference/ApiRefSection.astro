@@ -1,31 +1,29 @@
 ---
-import { kebabCase } from "es-toolkit/string";
-import { getEntry } from "astro:content";
-import { isValidFramework } from "@/types/docs";
-import type { ComponentApiReference } from "@/types/api-reference";
-import MarkdownCode from "@/components/typography/MarkdownCode.astro";
-import ApiPropsTable from "./ApiPropsTable.astro";
-import ApiStateTable from "./ApiStateTable.astro";
-import ApiDataAttrsTable from "./ApiDataAttrsTable.astro";
-import FrameworkCase from "../FrameworkCase.astro";
-import P from "@/components/typography/P.astro";
-import ContentWidth from "@/components/frames/ContentWidth.astro";
+import { getEntry } from 'astro:content';
+import { kebabCase } from 'es-toolkit/string';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import P from '@/components/typography/P.astro';
+import type { ComponentApiReference } from '@/types/api-reference';
+import { isValidFramework } from '@/types/docs';
+import FrameworkCase from '../FrameworkCase.astro';
+import ApiDataAttrsTable from './ApiDataAttrsTable.astro';
+import ApiPropsTable from './ApiPropsTable.astro';
+import ApiStateTable from './ApiStateTable.astro';
 
 interface Props {
-    component: string;
-    section: "props" | "state" | "dataAttributes";
+  component: string;
+  section: 'props' | 'state' | 'dataAttributes';
 }
 
 const { component, section } = Astro.props;
 
 const { framework } = Astro.params;
 if (!framework || !isValidFramework(framework)) {
-    throw new Error(
-        `Invalid or missing framework param "${framework ?? "undefined"}".`,
-    );
+  throw new Error(`Invalid or missing framework param "${framework ?? 'undefined'}".`);
 }
 
-const entry = await getEntry("apiReference", kebabCase(component));
+const entry = await getEntry('apiReference', kebabCase(component));
 const apiRef: ComponentApiReference | null = entry?.data ?? null;
 
 const hasData = apiRef && Object.keys(apiRef[section]).length > 0;

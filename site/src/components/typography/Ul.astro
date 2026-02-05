@@ -1,21 +1,16 @@
 ---
-import type { HTMLTag, Polymorphic } from "astro/types";
-import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import type { HTMLTag, Polymorphic } from 'astro/types';
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
-import { shared } from "./styles";
+import { shared } from './styles';
 
-type Props<Tag extends HTMLTag = "ul"> = Polymorphic<{ as: Tag }> & {
-    maxWidth?: boolean;
-    class?: string;
+type Props<Tag extends HTMLTag = 'ul'> = Polymorphic<{ as: Tag }> & {
+  maxWidth?: boolean;
+  class?: string;
 };
 
-const {
-    as: Tag = "ul",
-    maxWidth = true,
-    class: className,
-    ...props
-} = Astro.props;
+const { as: Tag = 'ul', maxWidth = true, class: className, ...props } = Astro.props;
 ---
 
 <Tag

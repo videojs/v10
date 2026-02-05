@@ -6,31 +6,23 @@
  * the detail row is a separate `<tr>` toggled via `aria-controls` + `hidden`.
  * The entire summary row is clickable, delegating to the toggle button.
  */
-import clsx from "clsx";
-import Tr from "@/components/typography/Tr.astro";
-import Td from "@/components/typography/Td.astro";
-import MarkdownCode from "@/components/typography/MarkdownCode.astro";
-import InlineMarkdown from "./InlineMarkdown.astro";
+import clsx from 'clsx';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import Td from '@/components/typography/Td.astro';
+import Tr from '@/components/typography/Tr.astro';
+import InlineMarkdown from './InlineMarkdown.astro';
 
 interface Props {
-    name: string;
-    type: string;
-    shortType?: string;
-    description?: string;
-    defaultValue?: string;
-    required?: boolean;
-    componentName: string;
+  name: string;
+  type: string;
+  shortType?: string;
+  description?: string;
+  defaultValue?: string;
+  required?: boolean;
+  componentName: string;
 }
 
-const {
-    name,
-    type,
-    shortType,
-    description,
-    defaultValue,
-    required,
-    componentName,
-} = Astro.props;
+const { name, type, shortType, description, defaultValue, required, componentName } = Astro.props;
 
 const displayType = shortType ?? type;
 const hasDetail = Boolean(shortType || description);

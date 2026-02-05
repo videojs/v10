@@ -1,19 +1,19 @@
 ---
-import type { HTMLTag, Polymorphic } from "astro/types";
-import { twMerge } from "tailwind-merge";
+import type { HTMLTag, Polymorphic } from 'astro/types';
+import { twMerge } from 'tailwind-merge';
 
-import { shared } from "./styles";
+import { shared } from './styles';
 
-type Props<Tag extends HTMLTag = "code"> = Polymorphic<{ as: Tag }> & {
-    class?: string;
-    codeBlock?: string;
+type Props<Tag extends HTMLTag = 'code'> = Polymorphic<{ as: Tag }> & {
+  class?: string;
+  codeBlock?: string;
 };
 
-const { as: Tag = "code", class: className, codeBlock, ...props } = Astro.props;
+const { as: Tag = 'code', class: className, codeBlock, ...props } = Astro.props;
 
 // When codeBlock="true", render plain code tag (Shiki handles styling)
 // Otherwise, render inline code with styling
-const isCodeBlock = codeBlock === "true";
+const isCodeBlock = codeBlock === 'true';
 ---
 
 {
