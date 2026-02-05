@@ -83,17 +83,6 @@ import '@videojs/html/ui/time';
 // Renders: -4:30
 ```
 
-### Always Show Hours
-
-```tsx
-<Time.Group hoursDisplay="always">
-  <Time.Value type="current" />
-  <Time.Separator />
-  <Time.Value type="duration" />
-</Time.Group>
-// Renders: 0:01:30 / 0:05:00
-```
-
 ### Custom Separator
 
 ```tsx
@@ -105,38 +94,42 @@ import '@videojs/html/ui/time';
 // Renders: 1:30 of 5:00
 ```
 
-### Hide Negative Sign
+### Custom Negative Sign
 
 ```tsx
-<Time.Value type="remaining" negativeSign="never" />
-// Renders: 4:30 (instead of -4:30)
+<Time.Value type="remaining" negativeSign="−" />
+// Renders: −4:30 (using proper minus sign U+2212)
 ```
 
 ## Parts
 
 ### Group
 
-Container for composed time displays. Provides shared context to children.
+Container for composed time displays. Renders a `<span>` element.
 
 **Why a component?**
 
 - **Semantic structure** — Clear boundary around related time displays
-- **Shared context** — Children inherit `hoursDisplay` for consistent formatting
-- **Future API surface** — Room to add formatting options that apply to all children
-- **Styling container** — Provides a "box" for layout and theming
+- **Future API surface** — Room to add formatting options (e.g., `hoursDisplay`) that apply to all children
+- **Styling container** — Provides a target for layout and theming
 
 #### Props
 
-| Prop           | Type                 | Default   | Description              |
-| -------------- | -------------------- | --------- | ------------------------ |
-| `hoursDisplay` | `'auto' \| 'always'` | `'auto'`  | When to show hours.      |
-| `render`       | `RenderProp<State>`  | —         | Custom render element.   |
+| Prop     | Type               | Default | Description            |
+| -------- | ------------------ | ------- | ---------------------- |
+| `render` | `RenderProp<State>` | —       | Custom render element. |
 
 #### Data Attributes
 
 | Attribute | Description |
 | --------- | ----------- |
 | — | None currently. |
+
+#### Renders
+
+```html
+<span><!-- children --></span>
+```
 
 ---
 
@@ -149,22 +142,19 @@ Displays a formatted time value. Works standalone or within Group.
 | Prop            | Type                                       | Default     | Description                    |
 | --------------- | ------------------------------------------ | ----------- | ------------------------------ |
 | `type`          | `'current' \| 'duration' \| 'remaining'`   | `'current'` | Which time to display.         |
-| `hoursDisplay`  | `'auto' \| 'always'`                       | `'auto'`    | When to show hours.            |
-| `negativeSign`  | `'auto' \| 'always' \| 'never'`            | `'auto'`    | Negative sign for remaining.   |
-| `fallback`      | `string`                                   | `'--:--'`   | Text when time unknown.        |
+| `negativeSign`  | `string`                                   | `'-'`       | Symbol for remaining time.     |
 | `label`         | `string`                                   | Auto        | Custom aria-label.             |
 | `render`        | `RenderProp<State>`                        | —           | Custom render element.         |
 
 #### State
 
-| Property       | Type     | Description                                       |
-| -------------- | -------- | ------------------------------------------------- |
-| `type`         | `string` | `'current'`, `'duration'`, or `'remaining'`       |
-| `text`         | `string` | Formatted display text.                           |
-| `hours`        | `number` | Hours component.                                  |
-| `minutes`      | `number` | Minutes component.                                |
-| `seconds`      | `number` | Seconds component.                                |
-| `totalSeconds` | `number` | Raw value in seconds.                             |
+| Property   | Type       | Description                                       |
+| ---------- | ---------- | ------------------------------------------------- |
+| `type`     | `TimeType` | `'current'`, `'duration'`, or `'remaining'`       |
+| `seconds`  | `number`   | Raw value in seconds.                             |
+| `text`     | `string`   | Formatted display text (`1:30`).                  |
+| `phrase`   | `string`   | Human-readable phrase (`1 minute, 30 seconds`).   |
+| `datetime` | `string`   | ISO 8601 duration (`PT1M30S`).                    |
 
 #### Data Attributes
 
@@ -266,32 +256,28 @@ Smart defaults handle padding automatically:
 
 ### Hour Display
 
-When `hoursDisplay="auto"` (default), hours are shown only when:
-
-- Current value has hours > 0, OR
-- Duration has hours > 0 (for consistency within Group)
-
-This ensures `1:30 / 1:05:00` doesn't happen — both would show hours.
+Hours are shown when the value or duration exceeds 1 hour. This ensures times within a Group display consistently — `1:30 / 1:05:00` won't happen; both would show hours.
 
 ### Negative Sign
 
-For `type="remaining"`:
+For `type="remaining"`, a negative sign is prepended to indicate countdown. The `negativeSign` prop controls which symbol to use (default `'-'`).
 
-| Option     | Output  | Description                   |
-| ---------- | ------- | ----------------------------- |
-| `'auto'`   | `-4:30` | Show negative sign (default). |
-| `'always'` | `-4:30` | Always show sign.             |
-| `'never'`  | `4:30`  | Hide sign.                    |
+```tsx
+<Time.Value type="remaining" />              // -4:30
+<Time.Value type="remaining" negativeSign="−" />  // −4:30 (proper minus sign)
+```
 
-The negative sign is rendered internally as `<span aria-hidden="true">-</span>`.
+The sign is rendered as `<span aria-hidden="true">{negativeSign}</span>`. To hide it, use CSS:
 
-**Why internal to Value?**
-
-The negative sign is semantically part of "remaining time", not a compositional element between siblings. The `negativeSign` prop provides control without exposing a separate component.
+```css
+[data-type="remaining"] > span[aria-hidden] {
+  display: none;
+}
+```
 
 **Why `aria-hidden="true"`?**
 
-The `aria-valuetext` already says "4 minutes, 30 seconds **remaining**" — the word "remaining" conveys the meaning. Announcing "minus" or "dash" would be redundant and potentially confusing.
+The `aria-valuetext` already says "4 minutes, 30 seconds **remaining**" — the word "remaining" conveys the meaning. Announcing "minus" or "dash" would be redundant.
 
 ## Accessibility
 
@@ -345,11 +331,12 @@ packages/
 │   ├── time-core.ts           # TimeCore class (shared logic)
 │   └── tests/
 ├── react/src/ui/time/
-│   ├── time.tsx               # Time namespace export
-│   ├── time-value.tsx
-│   ├── time-group.tsx
-│   ├── time-separator.tsx
-│   ├── time-context.tsx       # Context for Group → Value
+│   ├── index.ts               # export * as Time from './index.parts'
+│   ├── index.parts.ts         # export { Value, Group, Separator }
+│   ├── time-value.tsx         # Value component
+│   ├── time-group.tsx         # Group component
+│   ├── time-separator.tsx     # Separator component
+│   ├── time-context.tsx       # Context for Group → Value (future)
 │   └── tests/
 └── html/src/ui/time/
     ├── time-element.ts        # <media-time>
@@ -404,9 +391,9 @@ function secondsToIsoDuration(seconds: number): string;
 
 Reference: [Media Chrome time utilities](https://github.com/muxinc/media-chrome/blob/main/src/js/utils/time.ts)
 
-### Context Pattern
+### Context Pattern (Future)
 
-Group provides options via React context:
+Group can provide shared options via context (e.g., `hoursDisplay` when added):
 
 ```tsx
 // time-context.tsx
@@ -417,12 +404,14 @@ function useTimeContext(): TimeContextValue | null {
 }
 
 // time-value.tsx
-function TimeValue(props: TimeValueProps) {
+function Value(props: ValueProps) {
   const context = useTimeContext();
   const mergedProps = { ...context, ...props }; // Props override context
   // ...
 }
 ```
+
+For HTML, use Lit context (`@lit/context`) for Group → child communication.
 
 ## Decisions
 
@@ -439,14 +428,14 @@ function TimeValue(props: TimeValueProps) {
 
 ### Minimal Props for Beta
 
-**Decision:** Only essential props: `type`, `hoursDisplay`, `negativeSign`, `fallback`, `label`.
+**Decision:** Only essential props: `type`, `negativeSign`, `label`. Defer `hoursDisplay` and `fallback` to later releases.
 
 **Alternatives:**
 
 - Per-unit formatting (`hours`, `minutes`, `seconds` props) — more control
 - Multiple format presets (`digital`, `short`, `narrow`, `long`) — more options
 
-**Rationale:** Video players have used the same digital format for decades. Smart defaults handle padding. We can add options later if users request them.
+**Rationale:** Video players have used the same digital format for decades. Smart defaults handle padding and hour display. We can add options later if users request them.
 
 ### Smart Padding Defaults
 
@@ -503,16 +492,16 @@ function TimeValue(props: TimeValueProps) {
 
 **Rationale:** Consistency with component model. Automatic `aria-hidden` prevents accessibility mistakes. Can have default styling. Low implementation cost.
 
-### `negativeSign` Instead of `signDisplay`
+### `negativeSign` as String
 
-**Decision:** Use `negativeSign` prop name.
+**Decision:** `negativeSign` is a string (the symbol to display), not an enum like `'auto' | 'always' | 'never'`.
 
 **Alternatives:**
 
-- `signDisplay` — matches `Intl.NumberFormat`
-- `showSign` — simpler but less precise
+- `signDisplay` enum — matches `Intl.NumberFormat` but adds complexity
+- Boolean `showSign` — doesn't allow custom symbols
 
-**Rationale:** More descriptive for this specific use case. `signDisplay` is generic; `negativeSign` is clear about what it controls.
+**Rationale:** Users who want a different symbol (like proper minus `−`) can specify it. Users who want to hide it can use CSS — the sign is wrapped in `<span aria-hidden="true">` which is a natural styling target.
 
 ### Negative Sign Internal to Value
 
@@ -523,7 +512,7 @@ function TimeValue(props: TimeValueProps) {
 - Separate `<Time.Sign>` component — maximum flexibility but overkill
 - User's responsibility — minimal API but users must handle a11y
 
-**Rationale:** The negative sign is semantically part of "remaining time", not a compositional element like Separator. It only appears with `type="remaining"`. Internal rendering ensures consistent `aria-hidden` handling.
+**Rationale:** The negative sign is semantically part of "remaining time", not a compositional element like Separator. Internal rendering ensures consistent `aria-hidden` handling.
 
 ## Open Questions
 
