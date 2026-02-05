@@ -1,15 +1,16 @@
 import { Marked, type MarkedExtension, type Tokens } from 'marked';
+import { twMerge } from 'tailwind-merge';
+import { shared } from '@/components/typography/styles';
 
-// Tailwind classes matching the site's typography components.
 const classes = {
   p: 'mt-3 first:mt-0',
-  ul: 'list-disc list-outside pl-6 mt-3 space-y-1',
-  ol: 'list-decimal list-outside pl-6 mt-3 space-y-1',
-  li: 'text-base',
-  code: 'bg-light-100 dark:bg-dark-110 dark:text-light-100 border border-light-40 dark:border-dark-80 px-1 rounded font-mono text-code',
-  strong: 'font-semibold',
-  em: 'font-medium',
-  a: 'underline intent:no-underline',
+  ul: twMerge(shared.ul, 'mt-3'),
+  ol: twMerge(shared.ol, 'mt-3'),
+  li: shared.li,
+  code: shared.code,
+  strong: shared.strong,
+  em: shared.em,
+  a: shared.a,
 } as const;
 
 const renderer: MarkedExtension['renderer'] = {
