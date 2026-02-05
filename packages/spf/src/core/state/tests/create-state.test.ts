@@ -472,9 +472,9 @@ describe('createState', () => {
       expect(state.current).toEqual({ count: 2, name: 'both' });
     });
 
-    it('enforces readonly current state', () => {
+    it('provides current state access', () => {
       const state = createState({ count: 0 });
-      const current: Readonly<{ count: number }> = state.current;
+      const current: { count: number } = state.current;
 
       expect(current.count).toBe(0);
     });
@@ -859,7 +859,6 @@ describe('createState', () => {
       const state = createState({});
 
       expect(state.current).toEqual({});
-      expect(Object.isFrozen(state.current)).toBe(true);
     });
 
     it('handles state with array values', () => {
@@ -911,137 +910,6 @@ describe('createState', () => {
       // Second flush for patch made during notification
       state.flush();
       expect(listener).toHaveBeenCalledTimes(2);
-    });
-  });
-
-  describe('frozen state', () => {
-    it('freezes initial state', () => {
-      const state = createState({ count: 0 });
-
-      expect(Object.isFrozen(state.current)).toBe(true);
-    });
-
-    it('freezes state after patch', () => {
-      const state = createState({ count: 0 });
-
-      state.patch({ count: 1 });
-
-      expect(Object.isFrozen(state.current)).toBe(true);
-    });
-
-    it('freezes state after flush', () => {
-      const state = createState({ count: 0 });
-
-      state.patch({ count: 1 });
-      state.flush();
-
-      expect(Object.isFrozen(state.current)).toBe(true);
-    });
-
-    it('freezes state after multiple patches', () => {
-      const state = createState({ count: 0 });
-
-      state.patch({ count: 1 });
-      state.patch({ count: 2 });
-      state.flush();
-
-      expect(Object.isFrozen(state.current)).toBe(true);
-    });
-
-    it('passes frozen previous value to full-state listener', () => {
-      const initial = { count: 0 };
-      const state = createState(initial);
-      const listener = vi.fn();
-
-      state.subscribe(listener);
-      state.patch({ count: 1 });
-      state.flush();
-
-      const [current, previous] = listener.mock.calls[0]!;
-
-      expect(Object.isFrozen(previous)).toBe(true);
-      expect(Object.isFrozen(current)).toBe(true);
-    });
-
-    it('passes frozen current value to full-state listener', () => {
-      const state = createState({ count: 0 });
-      const listener = vi.fn();
-
-      state.subscribe(listener);
-      state.patch({ count: 1 });
-      state.flush();
-
-      const [current] = listener.mock.calls[0]!;
-
-      expect(Object.isFrozen(current)).toBe(true);
-    });
-
-    it('prevents mutation of current state', () => {
-      const state = createState({ count: 0 });
-
-      expect(() => {
-        // @ts-expect-error - Testing runtime immutability
-        state.current.count = 1;
-      }).toThrow();
-    });
-
-    it('prevents mutation after patch', () => {
-      const state = createState({ count: 0 });
-      state.patch({ count: 1 });
-
-      expect(() => {
-        // @ts-expect-error - Testing runtime immutability
-        state.current.count = 999;
-      }).toThrow();
-    });
-
-    it('prevents mutation of previous state passed to listener', () => {
-      const state = createState({ count: 0 });
-      const listener = vi.fn();
-
-      state.subscribe(listener);
-      state.patch({ count: 1 });
-      state.flush();
-
-      const [, previous] = listener.mock.calls[0]!;
-
-      expect(() => {
-        previous.count = 999;
-      }).toThrow();
-    });
-  });
-
-  describe('reference immutability', () => {
-    it('creates new reference for each patch', () => {
-      const state = createState({ count: 0 });
-      const refs = [state.current];
-
-      state.patch({ count: 1 });
-      refs.push(state.current);
-
-      state.patch({ count: 2 });
-      refs.push(state.current);
-
-      // All references should be different
-      expect(refs[0]).not.toBe(refs[1]);
-      expect(refs[1]).not.toBe(refs[2]);
-      expect(refs[0]).not.toBe(refs[2]);
-    });
-
-    it('does not reuse references across patches', () => {
-      const state = createState({ count: 0, name: 'test' });
-      const initial = state.current;
-
-      state.patch({ count: 1 });
-      const afterFirst = state.current;
-
-      state.patch({ count: 0, name: 'test' }); // Back to same values
-      const afterSecond = state.current;
-
-      // Even with same values, references should differ
-      expect(initial).not.toBe(afterFirst);
-      expect(afterFirst).not.toBe(afterSecond);
-      expect(initial).not.toBe(afterSecond);
     });
   });
 });

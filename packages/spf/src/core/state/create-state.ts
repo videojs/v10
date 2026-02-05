@@ -1,5 +1,7 @@
 /**
  * Reactive state container with selectors, custom equality, and batched updates.
+ *
+ * Manages both immutable state values and mutable object references (e.g., HTMLMediaElement).
  */
 
 // =============================================================================
@@ -56,8 +58,8 @@ export interface State<T> {
   /** Symbol for type identification */
   readonly [STATE_SYMBOL]: true;
 
-  /** Current state snapshot (frozen) */
-  readonly current: Readonly<T>;
+  /** Current state snapshot */
+  readonly current: T;
 
   /** Subscribe to state changes */
   subscribe(listener: StateListener<T>): () => void;
@@ -122,12 +124,11 @@ class StateContainer<T> implements WritableState<T> {
   #selectorListeners = new Set<SelectorEntry<T, unknown>>();
 
   constructor(initial: T, config?: StateConfig<T>) {
-    // Create frozen copy of initial state
-    this.#current = Object.freeze({ ...initial });
+    this.#current = { ...initial };
     this.#equalityFn = config?.equalityFn ?? defaultEquality;
   }
 
-  get current(): Readonly<T> {
+  get current(): T {
     // Return pending state if available (for chained patches)
     return this.#pending ?? this.#current;
   }
@@ -151,7 +152,7 @@ class StateContainer<T> implements WritableState<T> {
     }
 
     if (changed) {
-      this.#pending = Object.freeze(next);
+      this.#pending = next;
       this.#scheduleFlush();
     }
   }
