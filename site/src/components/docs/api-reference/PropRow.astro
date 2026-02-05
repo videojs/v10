@@ -34,7 +34,7 @@ const id = `${componentName}-${name}`;
     data-prop-row
     class={clsx(
         hasDetail &&
-            "group cursor-pointer intent:bg-light-80 dark:intent:bg-dark-100",
+            "group cursor-pointer intent:bg-light-60 dark:intent:bg-dark-110",
     )}
 >
     <Td class="align-top">
@@ -59,7 +59,6 @@ const id = `${componentName}-${name}`;
                     aria-controls={`${id}-detail`}
                     aria-label={`Details for ${name}`}
                     data-prop-toggle
-                    class="appearance-none border-0 bg-transparent p-0 cursor-pointer"
                 >
                     <span
                         aria-hidden="true"
@@ -107,7 +106,7 @@ const id = `${componentName}-${name}`;
     )
 }
 
-{/* Astro deduplicates <script> tags, so this runs once per page. */}
+{/* Astro deduplicates script tags, so this runs once per page. */}
 <script>
     document
         .querySelectorAll<HTMLButtonElement>("[data-prop-toggle]")
@@ -138,4 +137,4 @@ const id = `${componentName}-${name}`;
                 )?.click();
             });
         });
-</script>
+    </script>
