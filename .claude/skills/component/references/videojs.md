@@ -226,6 +226,8 @@ packages/
     └── utils/                            # renderElement, mergeProps
 ```
 
+**No barrel exports for simple components** — Don't create `index.ts` files for simple UI components. Export directly from individual files. Reserve `index.ts` barrels for compound components with multiple related exports that form a cohesive API.
+
 ---
 
 ## Component Registration
