@@ -1,0 +1,81 @@
+{
+  "auto_install_extensions": {
+    "biome": true,
+    "astro": true,
+    "mdx": true,
+    "markdownlint": true
+  },
+  "format_on_save": "on",
+  "lsp": {
+    "biome": {
+      "settings": {
+        "require_config_file": true
+      }
+    },
+    "vtsls": {
+      "settings": {
+        "vtsls": {
+          "autoUseWorkspaceTsdk": true
+        }
+      }
+    }
+  },
+  "languages": {
+    "JavaScript": {
+      "formatter": { "language_server": { "name": "biome" } },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
+      },
+      "prettier": { "allowed": false },
+      "language_servers": ["!eslint", "..."]
+    },
+    "TypeScript": {
+      "formatter": { "language_server": { "name": "biome" } },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
+      },
+      "prettier": { "allowed": false },
+      "language_servers": ["!eslint", "..."]
+    },
+    "TSX": {
+      "formatter": { "language_server": { "name": "biome" } },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
+      },
+      "prettier": { "allowed": false },
+      "language_servers": ["!eslint", "..."]
+    },
+    "JSON": {
+      "formatter": { "language_server": { "name": "biome" } },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true
+      },
+      "prettier": { "allowed": false }
+    },
+    "JSONC": {
+      "formatter": { "language_server": { "name": "biome" } },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true
+      },
+      "prettier": { "allowed": false }
+    },
+    "CSS": {
+      "formatter": { "language_server": { "name": "biome" } },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true
+      },
+      "prettier": { "allowed": false }
+    },
+    "Astro": {
+      "formatter": { "language_server": { "name": "biome" } },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
+      },
+      "prettier": { "allowed": false }
+    }
+  }
+}

@@ -70,8 +70,6 @@
   "files": {
     "includes": [
       "**",
-      "!**/.astro",
-      "!**/*.astro",
       "!**/.vercel",
       "!**/.turbo",
       "!**/.next",

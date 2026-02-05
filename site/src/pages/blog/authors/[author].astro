@@ -32,7 +32,7 @@ const postsWithAuthors = await Promise.all(
   sortedPosts.map(async (post) => ({
     ...post,
     authors: await getEntries(post.data.authors),
-  })),
+  }))
 );
 
 // Build JSON-LD schema for ProfilePage
