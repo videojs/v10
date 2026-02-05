@@ -176,9 +176,10 @@ export type VideoTrack = Track & {
   width: number;
   height: number;
   frameRate: FrameRate;
-  par: string;
-  sar: string;
-  scanType: string;
+  /** @TODO Revisit for interop (default, forced, initialization) */
+  par: string; // drop
+  sar: string; // drop
+  scanType: string; // drop
 };
 
 /**
@@ -197,6 +198,7 @@ export type TextTrack = Omit<Track, 'initialization'> & {
   type: 'text';
   label: string;
   kind: 'subtitles' | 'captions';
+  /** @TODO Revisit for interop (default, forced, initialization) */
   default?: boolean | undefined;
   forced?: boolean | undefined;
   initialization?: AddressableObject | undefined;
@@ -274,9 +276,11 @@ export type Presentation = Ham &
   Base &
   AddressableObject & {
     selectionSets: SelectionSet[];
-    startTime: number;
+    /** @TODO Revisit for interop */
+    startTime: number; // always 0
     duration?: number | undefined;
-    endTime?: number | undefined;
+    /** @TODO Revisit for interop */
+    endTime?: number | undefined; // can drop - normallize to a Duration + startTime type for all things with this kind of info
   };
 
 // =============================================================================
