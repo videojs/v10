@@ -1,0 +1,148 @@
+---
+/**
+ * Single row in the props table with expandable details.
+ *
+ * Uses button disclosure pattern: the summary row has real `<td>` cells,
+ * the detail row is a separate `<tr>` toggled via `aria-controls` + `hidden`.
+ * The entire summary row is clickable, delegating to the toggle button.
+ */
+import clsx from "clsx";
+import Tr from "@/components/typography/Tr.astro";
+import Td from "@/components/typography/Td.astro";
+import MarkdownCode from "@/components/typography/MarkdownCode.astro";
+import InlineMarkdown from "./InlineMarkdown.astro";
+
+interface Props {
+    name: string;
+    type: string;
+    shortType?: string;
+    description?: string;
+    defaultValue?: string;
+    required?: boolean;
+    componentName: string;
+}
+
+const {
+    name,
+    type,
+    shortType,
+    description,
+    defaultValue,
+    required,
+    componentName,
+} = Astro.props;
+
+const displayType = shortType ?? type;
+const hasDetail = Boolean(shortType || description);
+const id = `${componentName}-${name}`;
+---
+
+<Tr
+    id={id}
+    data-prop-row
+    class={clsx(
+        hasDetail &&
+            "group cursor-pointer intent:bg-light-80 dark:intent:bg-dark-100",
+    )}
+>
+    <Td class="align-top">
+        <MarkdownCode>
+            {name}
+            {required && <span class="text-orange">*</span>}
+        </MarkdownCode>
+    </Td>
+    <Td class="align-top">
+        <MarkdownCode>{displayType}</MarkdownCode>
+    </Td>
+    <Td class="align-top">
+        <MarkdownCode>
+            {defaultValue ?? "—"}
+        </MarkdownCode>
+    </Td>
+    {
+        hasDetail && (
+            <Td class="align-top">
+                <button
+                    aria-expanded="false"
+                    aria-controls={`${id}-detail`}
+                    aria-label={`Details for ${name}`}
+                    data-prop-toggle
+                    class="appearance-none border-0 bg-transparent p-0 cursor-pointer"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="inline-block group-data-expanded:rotate-90"
+                    >
+                        ▸
+                    </span>
+                </button>
+            </Td>
+        )
+    }
+</Tr>
+
+{
+    hasDetail && (
+        <Tr id={`${id}-detail`} hidden>
+            <Td colspan="4" class="p-0">
+                <div class="px-6 py-4">
+                    <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
+                        {description && (
+                            <>
+                                <dt class="text-dark-40 dark:text-light-40">
+                                    Description
+                                </dt>
+                                <dd><InlineMarkdown content={description} /></dd>
+                            </>
+                        )}
+
+                        {(type || shortType) && (
+                            <>
+                                <dt class="text-dark-40 dark:text-light-40">
+                                    Type
+                                </dt>
+                                <dd>
+                                    <MarkdownCode>
+                                        {type || shortType}
+                                    </MarkdownCode>
+                                </dd>
+                            </>
+                        )}
+                    </dl>
+                </div>
+            </Td>
+        </Tr>
+    )
+}
+
+<script>
+    document
+        .querySelectorAll<HTMLButtonElement>("[data-prop-toggle]")
+        .forEach((button) => {
+            button.addEventListener("click", () => {
+                const expanded =
+                    button.getAttribute("aria-expanded") === "true";
+                button.setAttribute("aria-expanded", String(!expanded));
+
+                const row =
+                    button.closest<HTMLTableRowElement>("[data-prop-row]");
+                if (row) row.toggleAttribute("data-expanded", !expanded);
+
+                const detail = document.getElementById(
+                    button.getAttribute("aria-controls")!,
+                );
+                if (detail) detail.hidden = expanded;
+            });
+        });
+
+    document
+        .querySelectorAll<HTMLTableRowElement>("[data-prop-row]")
+        .forEach((row) => {
+            row.addEventListener("click", (e) => {
+                if ((e.target as Element).closest("a, button")) return;
+                row.querySelector<HTMLButtonElement>(
+                    "[data-prop-toggle]",
+                )?.click();
+            });
+        });
+</script>

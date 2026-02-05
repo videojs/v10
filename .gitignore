@@ -29,6 +29,7 @@ coverage/
 .coverage/
 .jest/
 __tests__/coverage/
+site/src/content/generated-api-reference/
 
 # -------------------------
 # Environment

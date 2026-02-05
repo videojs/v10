@@ -17,6 +17,7 @@ From `site/` directory:
 | `pnpm dev`           | Start dev server at `localhost:4321`                 |
 | `pnpm build`         | Build production site to `./dist/`                   |
 | `pnpm preview`       | Preview production build locally                     |
+| `pnpm api-docs`      | Regenerate API reference JSON files                  |
 | `pnpm test`          | Run all tests once                                   |
 | `pnpm test:watch`    | Run tests in watch mode                              |
 | `pnpm test:ui`       | Run Vitest with web UI                               |
@@ -140,9 +141,11 @@ This limits the classnames Tailwind must generate.
 site/
 ├── src/
 │   ├── components/          # Astro + React components
+│   │   └── docs/api-reference/  # API reference Astro components
 │   ├── content/             # Content collections (blog/, docs/, authors.json)
 │   ├── layouts/             # Page layouts (Base, Blog, Docs, Markdown)
 │   ├── pages/               # Route pages (file-based routing)
+│   ├── content/generated-api-reference/ # Generated API reference JSON (gitignored)
 │   ├── stores/              # Nanostores for cross-island state
 │   ├── styles/              # Global CSS, Tailwind imports
 │   ├── types/               # TypeScript type definitions
@@ -155,6 +158,8 @@ site/
 │   ├── content.config.ts    # Content collection schemas
 │   ├── docs.config.ts       # Documentation sidebar structure
 │   └── test-setup.ts        # Vitest setup file
+├── scripts/
+│   └── api-docs-builder/    # Generates API reference from TypeScript
 ├── public/                  # Static assets (served untransformed)
 ├── integrations/            # Custom Astro integrations
 │   └── pagefind.ts          # Pagefind search integration
@@ -429,6 +434,48 @@ vi.mock('@/types/docs', async () => {
 - **[Shiki 3.13.0](https://shiki.style)**: Syntax highlighting
 - **[Vitest 3.2.4](https://vitest.dev)**: Testing framework
 - **[clsx](https://github.com/lukeed/clsx)**: Class name concatenation utility
+
+## API Reference Generation
+
+The API docs builder extracts type information from TypeScript sources and generates JSON files used by Astro components.
+
+### How It Works
+
+```
+packages/core/src/core/ui/{component}/  → JSON → <ApiReference /> → tables
+```
+
+1. **Builder script** (`scripts/api-docs-builder/`) parses TypeScript using `typescript-api-extractor`
+2. **Extracts** from core files: Props interface, State interface, defaultProps
+3. **Extracts** from data-attrs files: data attributes with JSDoc descriptions
+4. **Extracts** from HTML element files: Lit `tagName`
+5. **Outputs** JSON to `src/content/generated-api-reference/{component}.json`
+6. **Astro components** (`src/components/docs/api-reference/`) render the JSON as tables
+
+### Generated Files Are Gitignored
+
+The `src/content/generated-api-reference/` directory is **gitignored**. JSON files are regenerated:
+- Automatically on `pnpm dev` (via `predev` hook)
+- Automatically on `pnpm build` (via `prebuild` hook)
+- Manually via `pnpm api-docs`
+
+### Usage in MDX
+
+```mdx
+import ApiReference from '@/components/docs/api-reference/ApiReference.astro';
+
+## API Reference
+
+<ApiReference component="PlayButton" />
+```
+
+### Adding a New Component
+
+When a new component is added to `packages/core/src/core/ui/`:
+1. Run `pnpm api-docs` to generate its JSON
+2. Add `<ApiReference component="ComponentName" />` to the MDX reference page
+
+See `scripts/api-docs-builder/README.md` for full documentation.
 
 ## Custom Astro Integration: Pagefind
 

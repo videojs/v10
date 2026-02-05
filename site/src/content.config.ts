@@ -1,5 +1,6 @@
 import { defineCollection, reference, z } from 'astro:content';
-import { file } from 'astro/loaders';
+import { file, glob } from 'astro/loaders';
+import { ComponentApiReferenceSchema } from './types/api-reference';
 import { SUPPORTED_FRAMEWORKS } from './types/docs';
 import { defaultGitService } from './utils/gitService';
 import { globWithParser } from './utils/globWithParser';
@@ -106,4 +107,12 @@ const authors = defineCollection({
   }),
 });
 
-export const collections = { blog, docs, authors };
+const apiReference = defineCollection({
+  loader: glob({
+    pattern: '*.json',
+    base: './src/content/generated-api-reference',
+  }),
+  schema: ComponentApiReferenceSchema,
+});
+
+export const collections = { blog, docs, authors, apiReference };
