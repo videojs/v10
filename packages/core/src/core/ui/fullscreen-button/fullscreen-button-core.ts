@@ -6,11 +6,18 @@ import type { ElementProps } from '../../element';
 import type { PresentationState } from '../../media/state';
 
 export interface FullscreenButtonProps {
+  /** Custom label for the button. */
   label?: string | ((state: FullscreenButtonState) => string) | undefined;
+  /** Whether the button is disabled. */
   disabled?: boolean | undefined;
 }
 
-export interface FullscreenButtonState extends Pick<PresentationState, 'fullscreenActive' | 'fullscreenAvailability'> {}
+export interface FullscreenButtonState {
+  /** Whether fullscreen mode is currently active. */
+  fullscreenActive: boolean;
+  /** Availability of fullscreen mode. */
+  fullscreenAvailability: PresentationState['fullscreenAvailability'];
+}
 
 export class FullscreenButtonCore {
   static readonly defaultProps: NonNullableObject<FullscreenButtonProps> = {
@@ -60,10 +67,14 @@ export class FullscreenButtonCore {
     if (this.#props.disabled) return;
     if (presentation.fullscreenAvailability !== 'available') return;
 
-    if (presentation.fullscreenActive) {
-      await presentation.exitFullscreen();
-    } else {
-      await presentation.requestFullscreen();
+    try {
+      if (presentation.fullscreenActive) {
+        await presentation.exitFullscreen();
+      } else {
+        await presentation.requestFullscreen();
+      }
+    } catch {
+      // Fullscreen requests can fail (user gesture required, permissions, etc.)
     }
   }
 }
