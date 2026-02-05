@@ -442,7 +442,7 @@ The API docs builder extracts type information from TypeScript sources and gener
 ### How It Works
 
 ```
-packages/core/src/core/ui/{component}/  → JSON → <ApiReference /> → tables
+packages/core/src/core/ui/{component}/  → JSON → <ApiRefSection /> → tables
 ```
 
 1. **Builder script** (`scripts/api-docs-builder/`) parses TypeScript using `typescript-api-extractor`
@@ -462,18 +462,28 @@ The `src/content/generated-api-reference/` directory is **gitignored**. JSON fil
 ### Usage in MDX
 
 ```mdx
-import ApiReference from '@/components/docs/api-reference/ApiReference.astro';
+import ApiRefSection from '@/components/docs/api-reference/ApiRefSection.astro';
 
 ## API Reference
 
-<ApiReference component="PlayButton" />
+### Props
+
+<ApiRefSection component="PlayButton" section="props" />
+
+### State
+
+<ApiRefSection component="PlayButton" section="state" />
+
+### Data Attributes
+
+<ApiRefSection component="PlayButton" section="dataAttributes" />
 ```
 
 ### Adding a New Component
 
 When a new component is added to `packages/core/src/core/ui/`:
 1. Run `pnpm api-docs` to generate its JSON
-2. Add `<ApiReference component="ComponentName" />` to the MDX reference page
+2. Add `<ApiRefSection ... />` to the MDX reference page as described above
 
 See `scripts/api-docs-builder/README.md` for full documentation.
 

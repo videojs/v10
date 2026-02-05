@@ -107,6 +107,7 @@ const id = `${componentName}-${name}`;
     )
 }
 
+{/* Astro deduplicates <script> tags, so this runs once per page. */}
 <script>
     document
         .querySelectorAll<HTMLButtonElement>("[data-prop-toggle]")

@@ -11,7 +11,7 @@ TypeScript Sources (core/html packages)
          ↓
    JSON files (site/src/content/generated-api-reference/)
          ↓
-   <ApiReference /> Astro component
+   <ApiRefSection /> Astro component
          ↓
    Interactive tables in MDX pages
 ```
@@ -70,7 +70,7 @@ Generates one JSON file per component at `site/src/content/generated-api-referen
 
 ### 4. Astro Components
 
-The `<ApiReference component="PlayButton" />` component:
+The `<ApiRefSection />` component:
 
 1. Loads the JSON via Astro Content Collections (`getEntry('apiReference', 'play-button')`)
 2. Filters props based on current framework (hides React-only props on HTML pages)
@@ -81,11 +81,21 @@ The `<ApiReference component="PlayButton" />` component:
 ### In MDX
 
 ```mdx
-import ApiReference from '@/components/docs/api-reference/ApiReference.astro';
+import ApiRefSection from '@/components/docs/api-reference/ApiRefSection.astro';
 
 ## API Reference
 
-<ApiReference component="PlayButton" />
+### Props
+
+<ApiRefSection component="PlayButton" section="props" />
+
+### State
+
+<ApiRefSection component="PlayButton" section="state" />
+
+### Data Attributes
+
+<ApiRefSection component="PlayButton" section="dataAttributes" />
 ```
 
 ### Building
@@ -114,6 +124,7 @@ site/scripts/api-docs-builder/
     ├── data-attrs-handler.ts  # Extracts data attributes
     ├── html-handler.ts    # Extracts Lit element info
     └── tests/
+        ├── test-utils.ts
         ├── core-handler.test.ts
         ├── data-attrs-handler.test.ts
         ├── formatter.test.ts
@@ -124,7 +135,7 @@ site/src/
 │   ├── play-button.json
 │   └── mute-button.json
 └── components/docs/api-reference/
-    ├── ApiReference.astro     # Main wrapper, loads JSON
+    ├── ApiRefSection.astro    # Main wrapper, loads JSON
     ├── ApiPropsTable.astro    # Props table
     ├── ApiStateTable.astro    # State interface table
     ├── ApiDataAttrsTable.astro # Data attributes table
@@ -138,7 +149,7 @@ site/src/
 3. Optionally create `{name}-data-attrs.ts` with data attribute definitions
 4. Create the HTML element in `packages/html/src/ui/{name}/` with `static tagName`
 5. Run `pnpm api-docs` to generate JSON
-6. Use `<ApiReference component="{Name}" />` in MDX
+6. Use `<ApiRefSection component="{Name}" section="{section}" />` in MDX as described above
 
 ## Differences from base-ui
 
