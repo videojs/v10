@@ -25,7 +25,7 @@ const canonicalURL = canonical || new URL(Astro.url.pathname, Astro.site);
 const { title, description, image } = Astro.props;
 
 const fullTitle = Array.isArray(title)
-  ? title.filter((t) => t !== SITE_TITLE).join(' | ') + ` | ${SITE_TITLE}`
+  ? `${title.filter((t) => t !== SITE_TITLE).join(' | ')} | ${SITE_TITLE}`
   : title === SITE_TITLE
     ? title
     : `${title} | ${SITE_TITLE}`;

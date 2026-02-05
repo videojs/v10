@@ -50,6 +50,7 @@ mark {
 .dark .shiki span,
 .dark .astro-code,
 .dark .astro-code span {
+  /* biome-ignore lint/complexity/noImportantStyles: override shiki's inline styles */
   color: var(--shiki-dark) !important;
 }
 
