@@ -135,3 +135,54 @@ export interface BufferState {
    */
   seekable: [number, number][];
 }
+
+export interface PresentationState {
+  /**
+   * Whether fullscreen mode is currently active.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/Fullscreen_API
+   */
+  fullscreenActive: boolean;
+  /**
+   * Whether picture-in-picture mode is currently active.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/Picture-in-Picture_API
+   */
+  pipActive: boolean;
+  /**
+   * Whether fullscreen can be requested on this platform.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/fullscreenEnabled
+   */
+  fullscreenAvailability: FeatureAvailability;
+  /**
+   * Whether picture-in-picture can be requested on this platform.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/pictureInPictureEnabled
+   */
+  pipAvailability: FeatureAvailability;
+  /**
+   * Enter fullscreen mode. Tries container first, falls back to media element.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/Element/requestFullscreen
+   */
+  requestFullscreen(): Promise<void>;
+  /**
+   * Exit fullscreen mode.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/exitFullscreen
+   */
+  exitFullscreen(): Promise<void>;
+  /**
+   * Enter picture-in-picture mode.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/requestPictureInPicture
+   */
+  requestPiP(): Promise<void>;
+  /**
+   * Exit picture-in-picture mode.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/exitPictureInPicture
+   */
+  exitPiP(): Promise<void>;
+}
