@@ -29,7 +29,9 @@
     "dev": "pnpm run build:watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rm -rf dist types"
+    "clean": "rm -rf dist types",
+    "size": "node scripts/measure-size.js",
+    "size:all": "node scripts/measure-size.js --all"
   },
   "dependencies": {
     "@videojs/utils": "workspace:*"
