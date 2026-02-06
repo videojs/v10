@@ -1,6 +1,6 @@
 import { listen } from '@videojs/utils/dom';
 
-import type { PresentationState } from '../../../core/media/state';
+import type { FullscreenState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import {
   enterFullscreen,
@@ -8,15 +8,13 @@ import {
   isElementFullscreen,
   isFullscreenSupported,
 } from '../../presentation/fullscreen';
-import { enterPiP, exitPiP, isPiPActive, isPiPSupported } from '../../presentation/pip';
+import { exitPiP, isPiPActive } from '../../presentation/pip';
 import type { WebKitVideoElement } from '../../presentation/types';
 
-export const presentationFeature = definePlayerFeature({
-  state: ({ target }): PresentationState => ({
-    fullscreenActive: false,
-    pipActive: false,
+export const fullscreenFeature = definePlayerFeature({
+  state: ({ target }): FullscreenState => ({
+    fullscreen: false,
     fullscreenAvailability: 'unavailable',
-    pipAvailability: 'unavailable',
 
     async requestFullscreen() {
       const { media, container } = target();
@@ -32,22 +30,6 @@ export const presentationFeature = definePlayerFeature({
     async exitFullscreen() {
       return exitFullscreen();
     },
-
-    async requestPiP() {
-      const { media, container } = target();
-
-      // Exit fullscreen first if active
-      if (isElementFullscreen(container, media)) {
-        await exitFullscreen();
-      }
-
-      return enterPiP(media);
-    },
-
-    async exitPiP() {
-      const { media } = target();
-      return exitPiP(media);
-    },
   }),
 
   attach({ target, signal, set }) {
@@ -55,13 +37,11 @@ export const presentationFeature = definePlayerFeature({
 
     set({
       fullscreenAvailability: isFullscreenSupported() ? 'available' : 'unsupported',
-      pipAvailability: isPiPSupported() ? 'available' : 'unsupported',
     });
 
     const sync = () =>
       set({
-        fullscreenActive: isElementFullscreen(container, media),
-        pipActive: isPiPActive(media),
+        fullscreen: isElementFullscreen(container, media),
       });
 
     sync();
@@ -69,10 +49,7 @@ export const presentationFeature = definePlayerFeature({
     listen(document, 'fullscreenchange', sync, { signal });
     listen(document, 'webkitfullscreenchange', sync, { signal });
 
-    listen(media, 'enterpictureinpicture', sync, { signal });
-    listen(media, 'leavepictureinpicture', sync, { signal });
-
-    // iOS Safari presentation mode change (covers both fullscreen and PiP)
+    // iOS Safari presentation mode change (covers fullscreen)
     const video = media as WebKitVideoElement;
     if ('webkitPresentationMode' in video) {
       listen(media, 'webkitpresentationmodechanged', sync, { signal });
