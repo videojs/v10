@@ -3,7 +3,7 @@ status: draft
 date: 2025-02-05
 ---
 
-# Poster Component
+# Poster
 
 Display component for video poster image. Shows before playback starts, hides after.
 
