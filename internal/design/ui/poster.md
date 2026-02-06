@@ -88,6 +88,45 @@ media-poster:not([data-visible]) {
 
 User controls the image entirely — responsive images, lazy loading, placeholder strategies all work naturally.
 
+### With Placeholder (Blurhash / LQIP)
+
+Use CSS `background-image` on the `<img>` element to show a placeholder while the main image loads. When the `src` loads, it naturally covers the background.
+
+#### HTML
+
+```html
+<media-poster>
+  <img
+    src="poster.jpg"
+    alt="Video description"
+    style="background: url(data:image/jpeg;base64,...) center/cover no-repeat;"
+  />
+</media-poster>
+```
+
+#### React
+
+```tsx
+<Poster
+  src="poster.jpg"
+  alt="Video description"
+  style={{ background: 'url(data:image/jpeg;base64,...) center/cover no-repeat' }}
+/>
+```
+
+For fade transitions (blur → sharp), handle the `load` event on the image:
+
+```html
+<media-poster>
+  <img
+    src="poster.jpg"
+    alt="Video description"
+    style="background: url(blur.jpg) center/cover; opacity: 0; transition: opacity 0.3s;"
+    onload="this.style.opacity = 1"
+  />
+</media-poster>
+```
+
 ## API
 
 ### Data Attributes
@@ -128,13 +167,15 @@ media-poster img {
 }
 ```
 
-**`pointer-events: none`** — Poster is decorative. Clicks should pass through to the video or play button beneath.
+**`pointer-events: none`** — Clicks should pass through to the video or play button beneath.
 
 ## Accessibility
 
-**Wrapper (`<media-poster>`):** No ARIA role needed. Custom elements have no implicit role, so there's no semantics to hide or override.
+**Wrapper (`<media-poster>`):** No ARIA role needed. Custom elements have no implicit role, so there's no semantics to hide or override. Do not add `aria-hidden` to the wrapper — the poster image may be informative.
 
-**Child (`<img>`):** User provides appropriate `alt` text. If purely decorative, use `alt=""`.
+**Child (`<img>`):** User provides appropriate `alt` text describing the poster content (e.g., `alt="Keynote speaker at a conference"`). If purely decorative, use `alt=""`.
+
+Whether a poster is informative or decorative is the author's judgment (per [WAI guidelines](https://www.w3.org/WAI/tutorials/images/decorative/)). In most video player contexts, posters are informative — they give users a preview of the video content. This is an advantage over Media Chrome (which forces `aria-hidden="true"` on the internal image) and native `<video poster>` (which has no `alt` equivalent).
 
 ## Alternatives Considered
 
@@ -148,18 +189,20 @@ media-poster[data-started]:not([data-ended]) {
 }
 ```
 
-**Why not:** More flexible but requires users to understand the state model. The common case is "show before play, hide after" — `data-visible` captures this directly.
+**Why not:** Requires users to understand the state model. `data-started` on a poster doesn't make sense in the component's local context — `data-visible` directly describes the poster's state. Consistent with how button components use context-appropriate names (`data-fullscreen`, `data-muted`) rather than raw feature state.
 
 **Future:** Could add `data-started` and `data-ended` later if needed for advanced use cases (e.g., show poster on ended).
 
 ### Component-managed image (`src` prop)
 
-Like Media Chrome and Vidstack — component owns the `<img>`.
+Like Media Chrome — component owns the `<img>` internally.
 
-**Why not:** Limits user control. Can't use `srcset`, `loading="lazy"`, or framework-specific optimized image components (Next.js `<Image>`, Astro `<Image>`).
+**Why not:** Limits user control. Can't use `srcset`, `loading="lazy"`, `<picture>`, or framework-specific optimized image components (Next.js `<Image>`, Astro `<Image>`). Media Chrome acknowledges this tradeoff in their docs: "If better control or better performance is desired, you can use `<img slot="poster" src="...">` instead."
 
-## Open Questions
+Our approach makes the flexible path the default.
 
-1. **Ended behavior** — Should we add a prop to show poster when media ends? For now, no — keep it simple. Users wanting this can use raw attributes if we add them later.
+## Future
 
-2. **Transitions** — Should we document recommended CSS transitions for fade in/out? Probably in a styling guide, not here.
+1. **`data-ended`** — Show poster when media ends. Would allow `media-poster[data-visible]:not([data-ended])` patterns.
+2. **`data-loaded`** — Set when child image loads. Enables CSS-only placeholder-to-main transitions without user-handled `onload`. Lightweight to implement (listen for `load` event on child `<img>`).
+3. **Transition/animation support** — CSS transition recommendations for fade in/out.
