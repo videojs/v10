@@ -5,8 +5,9 @@ description: Get started quickly with Video.js by building your first embed code
 
 import JSPicker from '@/components/installation/JSPicker.astro';
 import RendererPicker from '@/components/installation/RendererPicker';
-import SkinPicker from '@/components/installation/SkinPicker';
+import SkinPickerSection from '@/components/installation/SkinPickerSection';
 import UseCasePicker from '@/components/installation/UseCasePicker';
+import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
 import ReactUsageCodeBlock from '@/components/installation/ReactUsageCodeBlock';
@@ -25,7 +26,7 @@ Answer the questions below to get started quickly with your first embed code.
 
 ## Choose your JS framework
 
-Video.js aims to provide idiomatic development experiences in your favorite JS and CSS frameworks. More to come ([Vote on what's next](https://github.com/videojs/v10/discussions/categories/ideas))\[todo\].
+Video.js aims to provide idiomatic development experiences in your favorite JS and CSS frameworks. More to come. ([vote](https://github.com/videojs/v10/discussions/categories/ideas))\[todo\].
 
 <ContentWidth margins="lg">
   <JSPicker />
@@ -34,12 +35,15 @@ Video.js aims to provide idiomatic development experiences in your favorite JS a
 
 ## Choose your use case
 
-The defaults work well for general website playback. More use case player presets to come.
+The defaults work well for general website playback. More prebuilt players to come. ([vote](https://github.com/videojs/v10/discussions/categories/ideas))\[todo\]
 
 <ContentWidth margins="lg">
   <UseCasePicker client:idle />
 </ContentWidth>
 
+<ContentWidth margins="lg">
+  <SkinPickerSection client:idle />
+</ContentWidth>
 
 ## Choose your media source type
 
@@ -52,46 +56,7 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
 ## Install Video.js
 
 <FrameworkCase frameworks={["html"]}>
-  <TabsRoot client:idle>
-    <TabsList client:idle label="Installation">
-      <Tab client:idle value="cdn" initial>cdn</Tab>
-      <Tab client:idle value="npm">npm</Tab>
-      <Tab client:idle value="pnpm">pnpm</Tab>
-      <Tab client:idle value="yarn">yarn</Tab>
-      <Tab client:idle value="bun">bun</Tab>
-    </TabsList>
-    <TabsPanel client:idle value="cdn">
-      ```html
-      <script>
-      // don't need this, will be included in frosted
-      // import 'https://cdn.jsdelivr.net/npm/videojs/html/presets/website.js';
-      import 'https://cdn.jsdelivr.net/npm/videojs/html/presets/website/skins/frosted.js';
-      </script>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/videojs/html/presets/website/skins/frosted.css" />
-      ```
-    </TabsPanel>
-    <TabsPanel client:idle value="npm" initial>
-      ```bash
-      npm install @videojs/html
-      ```
-    </TabsPanel>
-    <TabsPanel client:idle value="pnpm">
-      ```bash
-      pnpm add @videojs/html
-      ```
-    </TabsPanel>
-    <TabsPanel client:idle value="yarn">
-      ```bash
-      yarn add @videojs/html
-      ```
-    </TabsPanel>
-    <TabsPanel client:idle value="bun">
-      ```bash
-      bun add @videojs/html
-      ```
-    </TabsPanel>
-  </TabsRoot>
-  
+  <HTMLInstallTabs client:idle />
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
   <TabsRoot client:idle>
