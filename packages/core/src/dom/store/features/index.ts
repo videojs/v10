@@ -1,5 +1,7 @@
 export * from './buffer';
 export * as features from './feature.parts';
+export * from './fullscreen';
+export * from './pip';
 export * from './playback';
 export * from './source';
 export * from './time';
