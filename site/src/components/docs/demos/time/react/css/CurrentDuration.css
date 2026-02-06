@@ -1,0 +1,12 @@
+.time-current-duration {
+  position: relative;
+}
+
+.time-current-duration video {
+  width: 100%;
+  border-radius: 0.5rem;
+}
+
+.time-current-duration__group {
+  font-variant-numeric: tabular-nums;
+}

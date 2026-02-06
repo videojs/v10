@@ -1,0 +1,25 @@
+---
+interface Props {
+  html: string;
+}
+const { html } = Astro.props;
+const markup = html.replace(/<script[\s\S]*?<\/script>/gi, '');
+---
+
+<html-demo-host data-markup={markup} style="position: relative; z-index: 20;"></html-demo-host>
+
+<script>
+  class HtmlDemoHost extends HTMLElement {
+    connectedCallback() {
+      const markup = this.dataset.markup;
+      if (!markup) return;
+      const shadow = this.attachShadow({ mode: 'open' });
+      shadow.innerHTML = markup;
+      this.removeAttribute('data-markup');
+    }
+  }
+
+  if (!customElements.get('html-demo-host')) {
+    customElements.define('html-demo-host', HtmlDemoHost);
+  }
+</script>

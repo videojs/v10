@@ -1,0 +1,29 @@
+<script type="module">
+  import '@videojs/html/player/video';
+  import '@videojs/html/ui/time';
+</script>
+
+<style>
+  video-player video {
+    width: 100%;
+    border-radius: 0.5rem;
+  }
+
+  media-time-group {
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+
+<video-player>
+  <video
+    src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
+    autoplay
+    muted
+    loop
+  ></video>
+  <media-time-group>
+    <media-time type="current"></media-time>
+    <media-time-separator></media-time-separator>
+    <media-time type="duration"></media-time>
+  </media-time-group>
+</video-player>
