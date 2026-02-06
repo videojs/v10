@@ -12,11 +12,9 @@ export interface FullscreenButtonProps {
   disabled?: boolean | undefined;
 }
 
-export interface FullscreenButtonState {
-  /** Whether fullscreen mode is currently active. */
-  fullscreen: boolean;
-  /** Availability of fullscreen mode. */
-  fullscreenAvailability: FullscreenState['fullscreenAvailability'];
+export interface FullscreenButtonState extends Pick<FullscreenState, 'fullscreen'> {
+  /** Whether fullscreen can be requested on this platform. */
+  availability: FullscreenState['fullscreenAvailability'];
 }
 
 export class FullscreenButtonCore {
@@ -59,7 +57,7 @@ export class FullscreenButtonCore {
   getState(state: FullscreenState): FullscreenButtonState {
     return {
       fullscreen: state.fullscreen,
-      fullscreenAvailability: state.fullscreenAvailability,
+      availability: state.fullscreenAvailability,
     };
   }
 

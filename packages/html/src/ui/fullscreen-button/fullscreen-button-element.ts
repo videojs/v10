@@ -1,5 +1,5 @@
 import type { PropertyValues } from '@lit/reactive-element';
-import { FullscreenButtonCore, FullscreenButtonDataAttributes } from '@videojs/core';
+import { FullscreenButtonCore } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -66,6 +66,6 @@ export class FullscreenButtonElement extends MediaElement {
     }
 
     applyElementProps(this, this.#core.getAttrs(state));
-    applyStateDataAttrs(this, this.#core.getState(state), FullscreenButtonDataAttributes);
+    applyStateDataAttrs(this, this.#core.getState(state));
   }
 }

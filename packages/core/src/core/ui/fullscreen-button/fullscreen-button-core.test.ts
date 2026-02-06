@@ -91,7 +91,7 @@ describe('FullscreenButtonCore', () => {
 
       expect(buttonState).toEqual({
         fullscreen: true,
-        fullscreenAvailability: 'available',
+        availability: 'available',
       });
 
       const functionKeys = Object.entries(buttonState).filter(([, value]) => typeof value === 'function');
@@ -105,12 +105,12 @@ describe('FullscreenButtonCore', () => {
       expect(core.getState(createMockFullscreen({ fullscreen: false })).fullscreen).toBe(false);
     });
 
-    it('picks fullscreenAvailability from state', () => {
+    it('picks availability from state', () => {
       const core = new FullscreenButtonCore();
 
-      expect(
-        core.getState(createMockFullscreen({ fullscreenAvailability: 'unsupported' })).fullscreenAvailability
-      ).toBe('unsupported');
+      expect(core.getState(createMockFullscreen({ fullscreenAvailability: 'unsupported' })).availability).toBe(
+        'unsupported'
+      );
     });
   });
 

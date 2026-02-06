@@ -46,11 +46,19 @@ interface PlayButtonProps {
 ### State Interface
 
 ```ts
+// When keys match the feature state, use Pick (preserves JSDoc on IDE hover)
 interface PlayButtonState extends Pick<PlaybackState, 'paused' | 'ended' | 'started'> {}
+
+// When renaming keys, use Pick for matching keys and add JSDoc for renamed ones
+interface FullscreenButtonState extends Pick<FullscreenState, 'fullscreen'> {
+  /** Whether fullscreen can be requested on this platform. */
+  availability: FullscreenState['fullscreenAvailability'];
+}
 ```
 
 - Primitives only — no methods
-- Use `Pick<FeatureState, ...>` to select relevant fields
+- Use `Pick<FeatureState, ...>` to select relevant fields — preserves JSDoc on IDE hover
+- When a key is renamed for the button context, use `FeatureState['...']` for the type and add a JSDoc description
 
 ### Core Class
 

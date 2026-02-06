@@ -1,6 +1,6 @@
 'use client';
 
-import { FullscreenButtonCore, FullscreenButtonDataAttributes } from '@videojs/core';
+import { FullscreenButtonCore } from '@videojs/core';
 import { logMissingFeature, selectFullscreen } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
@@ -43,7 +43,6 @@ export const FullscreenButton = forwardRef(function FullscreenButton(
       state: core.getState(fullscreen),
       ref: [forwardedRef, buttonRef],
       props: [core.getAttrs(fullscreen), elementProps, getButtonProps()],
-      stateAttrMap: FullscreenButtonDataAttributes,
     }
   );
 });
