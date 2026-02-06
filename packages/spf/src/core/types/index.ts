@@ -37,6 +37,19 @@ export interface Base {
 }
 
 // =============================================================================
+// Platform-agnostic Media Element
+// =============================================================================
+
+/**
+ * Platform-agnostic media element interface.
+ * Captures minimal shape needed for orchestration without DOM dependencies.
+ * HTMLMediaElement satisfies this interface.
+ */
+export interface MediaElementLike {
+  preload: string;
+}
+
+// =============================================================================
 // Duration
 // =============================================================================
 

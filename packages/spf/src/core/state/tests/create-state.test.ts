@@ -71,6 +71,7 @@ describe('createState', () => {
       const state = createState({ count: 0 });
       const listener = vi.fn();
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
 
       // Same value (no change)
       state.patch({ count: 0 });
@@ -95,6 +96,7 @@ describe('createState', () => {
       const state = createState({ count: 0, name: 'test' });
       const listener = vi.fn();
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
       const before = state.current;
 
       state.patch({ count: 0, name: 'test' });
@@ -139,6 +141,7 @@ describe('createState', () => {
       const listener = vi.fn();
 
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
       state.patch({ count: 1 });
       state.flush();
 
@@ -156,7 +159,7 @@ describe('createState', () => {
       state.patch({ count: 1 });
       state.flush();
 
-      expect(listener).not.toHaveBeenCalled();
+      expect(listener).toHaveBeenCalledTimes(1); // Only initial call
     });
 
     it('allows multiple subscribers', () => {
@@ -166,6 +169,8 @@ describe('createState', () => {
 
       state.subscribe(listener1);
       state.subscribe(listener2);
+      listener1.mockClear(); // Clear initial call
+      listener2.mockClear(); // Clear initial call
       state.patch({ count: 1 });
       state.flush();
 
@@ -182,11 +187,12 @@ describe('createState', () => {
       const unsubscribe2 = state.subscribe(listener2);
 
       unsubscribe2();
+      listener1.mockClear(); // Clear initial call
       state.patch({ count: 1 });
       state.flush();
 
       expect(listener1).toHaveBeenCalledTimes(1);
-      expect(listener2).not.toHaveBeenCalled();
+      expect(listener2).toHaveBeenCalledTimes(1); // Only initial call
     });
 
     it('handles same listener subscribed multiple times', () => {
@@ -195,6 +201,7 @@ describe('createState', () => {
 
       state.subscribe(listener);
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
       state.patch({ count: 1 });
       state.flush();
 
@@ -214,7 +221,7 @@ describe('createState', () => {
       state.patch({ count: 1 });
       state.flush();
 
-      expect(listener).not.toHaveBeenCalled();
+      expect(listener).toHaveBeenCalledTimes(1); // Only initial call
     });
   });
 
@@ -224,6 +231,7 @@ describe('createState', () => {
       const listener = vi.fn();
 
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
 
       // Multiple patches in same tick
       state.patch({ count: 1 });
@@ -249,6 +257,8 @@ describe('createState', () => {
 
       state1.subscribe(listener1);
       state2.subscribe(listener2);
+      listener1.mockClear(); // Clear initial call
+      listener2.mockClear(); // Clear initial call
 
       state1.patch({ value: 1 });
       state2.patch({ value: 2 });
@@ -267,6 +277,7 @@ describe('createState', () => {
       const listener = vi.fn();
 
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
 
       state.patch({ count: 1 });
       state.patch({ count: 2 });
@@ -283,6 +294,7 @@ describe('createState', () => {
       const listener = vi.fn();
 
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
 
       // Multiple patches to the same new value
       state.patch({ count: 5 });
@@ -293,10 +305,7 @@ describe('createState', () => {
 
       // Should notify once (0 → 5), not three times
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith(
-        expect.objectContaining({ count: 5 }),
-        expect.objectContaining({ count: 0 })
-      );
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({ count: 5 }));
     });
 
     it('notifies once when consecutive identical patches with manual flush', () => {
@@ -304,6 +313,7 @@ describe('createState', () => {
       const listener = vi.fn();
 
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
 
       // Multiple patches to the same new value
       state.patch({ count: 10 });
@@ -314,10 +324,7 @@ describe('createState', () => {
 
       // Should notify once (0 → 10)
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith(
-        expect.objectContaining({ count: 10 }),
-        expect.objectContaining({ count: 0 })
-      );
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({ count: 10 }));
     });
 
     it('does not notify when all patches are to current value', async () => {
@@ -325,6 +332,7 @@ describe('createState', () => {
       const listener = vi.fn();
 
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
 
       // Multiple patches to the same value as initial
       state.patch({ count: 5 });
@@ -344,6 +352,7 @@ describe('createState', () => {
       const listener = vi.fn();
 
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
       state.patch({ count: 1 });
 
       expect(listener).not.toHaveBeenCalled();
@@ -358,6 +367,7 @@ describe('createState', () => {
       const listener = vi.fn();
 
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
       state.patch({ count: 1 });
       state.flush();
 
@@ -373,6 +383,7 @@ describe('createState', () => {
       const listener = vi.fn();
 
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
       state.patch({ count: 1 });
 
       // Wait for automatic microtask flush
@@ -390,6 +401,7 @@ describe('createState', () => {
       const listener = vi.fn();
 
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
 
       state.flush();
       state.flush();
@@ -403,6 +415,7 @@ describe('createState', () => {
       const listener = vi.fn();
 
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
 
       state.patch({ count: 1 });
       state.flush();
@@ -425,6 +438,8 @@ describe('createState', () => {
 
       state1.subscribe(listener1);
       state2.subscribe(listener2);
+      listener1.mockClear(); // Clear initial call
+      listener2.mockClear(); // Clear initial call
 
       state1.patch({ value: 1 });
       state2.patch({ value: 2 });
@@ -487,11 +502,12 @@ describe('createState', () => {
       const selector = (s: { count: number; name: string }) => s.count;
 
       state.subscribe(selector, listener);
+      listener.mockClear(); // Clear initial call
       state.patch({ count: 1 });
       state.flush();
 
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith(1, 0);
+      expect(listener).toHaveBeenCalledWith(1);
     });
 
     it('only notifies when selected value changes', () => {
@@ -500,6 +516,7 @@ describe('createState', () => {
       const selector = (s: { count: number; name: string }) => s.count;
 
       state.subscribe(selector, listener);
+      listener.mockClear(); // Clear initial call
 
       // Change name (not count)
       state.patch({ name: 'updated' });
@@ -523,7 +540,7 @@ describe('createState', () => {
       state.patch({ count: 1 });
       state.flush();
 
-      expect(listener).not.toHaveBeenCalled();
+      expect(listener).toHaveBeenCalledTimes(1); // Only initial call
     });
 
     it('supports multiple selector subscriptions', () => {
@@ -535,6 +552,8 @@ describe('createState', () => {
 
       state.subscribe(countSelector, countListener);
       state.subscribe(nameSelector, nameListener);
+      countListener.mockClear(); // Clear initial call
+      nameListener.mockClear(); // Clear initial call
 
       state.patch({ count: 1 });
       state.flush();
@@ -555,6 +574,7 @@ describe('createState', () => {
       const selector = (s: { nested: { value: number } }) => s.nested;
 
       state.subscribe(selector, listener);
+      listener.mockClear(); // Clear initial call
 
       // Same object reference
       const obj = { value: 1 };
@@ -580,6 +600,7 @@ describe('createState', () => {
       const equalityFn = (a: { value: number }, b: { value: number }) => a.value === b.value;
 
       state.subscribe(selector, listener, { equalityFn });
+      listener.mockClear(); // Clear initial call
 
       // Different reference but same value
       state.patch({ nested: { value: 1 } });
@@ -593,7 +614,7 @@ describe('createState', () => {
       state.flush();
 
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith({ value: 2 }, { value: 1 });
+      expect(listener).toHaveBeenCalledWith({ value: 2 });
     });
 
     it('handles selector returning primitives', () => {
@@ -602,10 +623,11 @@ describe('createState', () => {
       const selector = (s: { count: number; name: string }) => s.count * 2;
 
       state.subscribe(selector, listener);
+      listener.mockClear(); // Clear initial call
       state.patch({ count: 5 });
       state.flush();
 
-      expect(listener).toHaveBeenCalledWith(10, 0);
+      expect(listener).toHaveBeenCalledWith(10);
     });
 
     it('handles selector returning objects', () => {
@@ -616,10 +638,11 @@ describe('createState', () => {
       });
 
       state.subscribe(selector, listener);
+      listener.mockClear(); // Clear initial call
       state.patch({ a: 10 });
       state.flush();
 
-      expect(listener).toHaveBeenCalledWith({ sum: 12 }, { sum: 3 });
+      expect(listener).toHaveBeenCalledWith({ sum: 12 });
     });
 
     it('batches selector notifications', async () => {
@@ -628,6 +651,7 @@ describe('createState', () => {
       const selector = (s: { count: number; name: string }) => s.count;
 
       state.subscribe(selector, listener);
+      listener.mockClear(); // Clear initial call
 
       state.patch({ count: 1 });
       state.patch({ count: 2 });
@@ -637,7 +661,7 @@ describe('createState', () => {
 
       // Only one notification after batching
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith(3, 0);
+      expect(listener).toHaveBeenCalledWith(3);
     });
 
     it('can mix full-state and selector subscriptions', () => {
@@ -648,6 +672,8 @@ describe('createState', () => {
 
       state.subscribe(fullListener);
       state.subscribe(selector, selectorListener);
+      fullListener.mockClear(); // Clear initial call
+      selectorListener.mockClear(); // Clear initial call
 
       state.patch({ count: 1 });
       state.flush();
@@ -672,6 +698,7 @@ describe('createState', () => {
       const state = createState({ count: 0 });
       const listener = vi.fn();
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
 
       // Object.is(NaN, NaN) returns true (unlike ===)
       state.patch({ count: Number.NaN });
@@ -697,6 +724,7 @@ describe('createState', () => {
       const state = createState({ count: 0, name: 'test' }, { equalityFn });
       const listener = vi.fn();
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
 
       // Change name but not count
       state.patch({ name: 'updated' });
@@ -720,6 +748,7 @@ describe('createState', () => {
       const state = createState({ count: 0, name: 'test' }, { equalityFn });
       const listener = vi.fn();
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
 
       // Multiple patches that end up at same count
       state.patch({ count: 1 });
@@ -739,6 +768,7 @@ describe('createState', () => {
       const state = createState({ count: 0, name: 'test' }, { equalityFn });
       const listener = vi.fn();
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
 
       // Multiple patches in same tick
       state.patch({ count: 5 });
@@ -759,6 +789,7 @@ describe('createState', () => {
       const state = createState({ count: 0, name: 'test' }, { equalityFn });
       const listener = vi.fn();
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
 
       // Multiple patches ending at different count
       state.patch({ count: 1 });
@@ -770,10 +801,7 @@ describe('createState', () => {
 
       // Should notify once with final state
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(listener).toHaveBeenCalledWith(
-        expect.objectContaining({ count: 3, name: 'updated' }),
-        expect.objectContaining({ count: 0, name: 'test' })
-      );
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({ count: 3, name: 'updated' }));
     });
 
     it('uses shallow equality when specified', () => {
@@ -788,6 +816,7 @@ describe('createState', () => {
       const state = createState({ count: 0, name: 'test' }, { equalityFn: shallowEqual });
       const listener = vi.fn();
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
 
       // Same values (shallow equal)
       state.patch({ count: 0, name: 'test' });
@@ -813,6 +842,7 @@ describe('createState', () => {
       const state = createState({ count: 0, name: 'test' }, { equalityFn: shallowEqual });
       const listener = vi.fn();
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
 
       // Multiple patches ending at original values
       state.patch({ count: 5 });
@@ -885,6 +915,7 @@ describe('createState', () => {
       unsubscribe();
 
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
       state.patch({ count: 1 });
       state.flush();
 
@@ -900,6 +931,7 @@ describe('createState', () => {
       });
 
       state.subscribe(listener);
+      listener.mockClear(); // Clear initial call
       state.patch({ count: 1 });
       state.flush();
 

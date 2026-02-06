@@ -2,7 +2,7 @@
  * HTTP Fetch Wrapper
  *
  * Two-function approach for composability:
- * 1. fetchResource() - Fetch AddressableObject (handles byte ranges)
+ * 1. fetchResolvable() - Fetch AddressableObject (handles byte ranges)
  * 2. getResponseText() - Extract text from Response
  */
 
@@ -17,7 +17,7 @@ export interface ResponseLike {
 }
 
 /**
- * Fetch resource from AddressableObject.
+ * Fetch resolvable from AddressableObject.
  *
  * Handles byte range requests if byteRange is present.
  * Returns native fetch Response for composability (can extract text, stream, etc.).
@@ -26,17 +26,17 @@ export interface ResponseLike {
  * @returns Promise resolving to Response
  *
  * @example
- * const response = await fetchResource({ url: 'https://example.com/segment.m4s' });
+ * const response = await fetchResolvable({ url: 'https://example.com/segment.m4s' });
  * const text = await getResponseText(response);
  *
  * @example
  * // With byte range
- * const response = await fetchResource({
+ * const response = await fetchResolvable({
  *   url: 'https://example.com/file.mp4',
  *   byteRange: { start: 1000, end: 1999 }
  * });
  */
-export async function fetchResource(addressable: AddressableObject): Promise<Response> {
+export async function fetchResolvable(addressable: AddressableObject): Promise<Response> {
   const headers = new Headers();
 
   // Add Range header for byte range requests
@@ -63,7 +63,7 @@ export async function fetchResource(addressable: AddressableObject): Promise<Res
  * @returns Promise resolving to text content
  *
  * @example
- * const response = await fetchResource(addressable);
+ * const response = await fetchResolvable(addressable);
  * const text = await getResponseText(response);
  */
 export function getResponseText(response: ResponseLike): Promise<string> {

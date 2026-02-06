@@ -17,7 +17,7 @@ const STATE_SYMBOL = Symbol('@videojs/spf/state');
 /**
  * State change listener for full-state subscriptions.
  */
-export type StateListener<T> = (current: T, previous: T) => void;
+export type StateListener<T> = (current: T) => void;
 
 /**
  * Selector function to derive a value from state.
@@ -27,7 +27,7 @@ export type StateSelector<T, R> = (state: T) => R;
 /**
  * Listener for selector-based subscriptions.
  */
-export type SelectorListener<R> = (current: R, previous: R) => void;
+export type SelectorListener<R> = (current: R) => void;
 
 /**
  * Options for selector subscriptions.
@@ -168,6 +168,10 @@ class StateContainer<T> implements WritableState<T> {
     if (maybeListener === undefined) {
       const listener = selectorOrListener as StateListener<T>;
       this.#listeners.add(listener);
+
+      // Fire immediately with current state
+      listener(this.current);
+
       return () => {
         this.#listeners.delete(listener);
       };
@@ -185,6 +189,10 @@ class StateContainer<T> implements WritableState<T> {
     };
 
     this.#selectorListeners.add(entry);
+
+    // Fire immediately with current selected value
+    const selected = selector(this.current);
+    listener(selected);
 
     return () => {
       this.#selectorListeners.delete(entry);
@@ -206,7 +214,7 @@ class StateContainer<T> implements WritableState<T> {
 
     // Notify full-state listeners
     for (const listener of this.#listeners) {
-      listener(this.#current, prev);
+      listener(this.#current);
     }
 
     // Notify selector listeners
@@ -217,7 +225,7 @@ class StateContainer<T> implements WritableState<T> {
       const equalityFn = entry.options.equalityFn ?? Object.is;
 
       if (!equalityFn(prevSelected, nextSelected)) {
-        entry.listener(nextSelected, prevSelected);
+        entry.listener(nextSelected);
       }
     }
   }

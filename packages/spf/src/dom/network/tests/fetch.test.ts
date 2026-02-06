@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AddressableObject } from '../../../core/types';
 import type { ResponseLike } from '../fetch';
-import { fetchResource, getResponseText } from '../fetch';
+import { fetchResolvable, getResponseText } from '../fetch';
 
-describe('fetchResource', () => {
+describe('fetchResolvable', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
@@ -15,7 +15,7 @@ describe('fetchResource', () => {
       url: 'https://example.com/playlist.m3u8',
     };
 
-    const response = await fetchResource(addressable);
+    const response = await fetchResolvable(addressable);
 
     expect(fetchSpy).toHaveBeenCalledWith(expect.any(Request));
     expect(response).toBeInstanceOf(Response);
@@ -25,7 +25,7 @@ describe('fetchResource', () => {
     const mockResponse = new Response('test content');
     vi.spyOn(global, 'fetch').mockResolvedValue(mockResponse);
 
-    const response = await fetchResource({ url: 'https://example.com/test.m3u8' });
+    const response = await fetchResolvable({ url: 'https://example.com/test.m3u8' });
 
     expect(response).toBe(mockResponse);
   });
@@ -37,7 +37,7 @@ describe('fetchResource', () => {
       url: 'https://example.com/playlist.m3u8',
     };
 
-    await expect(fetchResource(addressable)).resolves.toBeDefined();
+    await expect(fetchResolvable(addressable)).resolves.toBeDefined();
   });
 
   it('accepts AddressableObject with byteRange', async () => {
@@ -48,7 +48,7 @@ describe('fetchResource', () => {
       byteRange: { start: 1000, end: 1999 },
     };
 
-    await expect(fetchResource(addressable)).resolves.toBeDefined();
+    await expect(fetchResolvable(addressable)).resolves.toBeDefined();
   });
 
   it('handles zero-offset byte range', async () => {
@@ -59,7 +59,7 @@ describe('fetchResource', () => {
       byteRange: { start: 0, end: 999 },
     };
 
-    await expect(fetchResource(addressable)).resolves.toBeDefined();
+    await expect(fetchResolvable(addressable)).resolves.toBeDefined();
   });
 });
 
