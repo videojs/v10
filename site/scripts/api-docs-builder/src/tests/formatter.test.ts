@@ -1,6 +1,6 @@
 import * as tae from 'typescript-api-extractor';
 import { describe, expect, it } from 'vitest';
-import { formatProperties, formatType, getShortPropType } from '../formatter';
+import { formatDetailedType, formatProperties, formatType, getShortPropType } from '../formatter';
 
 describe('getShortPropType', () => {
   it("returns 'function' for callback props (onX with =>)", () => {
@@ -38,6 +38,11 @@ describe('getShortPropType', () => {
   it('returns undefined for short unions (< 3 members and < 40 chars)', () => {
     expect(getShortPropType('size', "'small' | 'large'")).toBeUndefined();
     expect(getShortPropType('value', 'string | number')).toBeUndefined();
+  });
+
+  it("returns 'type | function' for short callback unions (< 40 chars, 2 members)", () => {
+    const type = 'string | ((state: TimeState) => string)';
+    expect(getShortPropType('label', type)).toBe('string | function');
   });
 
   it("returns 'type | function' for unions containing functions", () => {
@@ -118,6 +123,32 @@ describe('formatProperties', () => {
     const result = formatProperties(props);
 
     expect(result.disabled?.default).toBe('false');
+  });
+
+  it('expands type aliases when allExports is provided', () => {
+    // Create a property with an ExternalTypeNode referencing 'TimeType'
+    const externalType = createExternalTypeNode('TimeType');
+    const prop = {
+      name: 'type',
+      type: externalType,
+      optional: true,
+      documentation: undefined,
+    } as tae.PropertyNode;
+
+    // Create allExports with TimeType resolved to a union
+    const timeTypeExport = {
+      name: 'TimeType',
+      type: createUnionNode([
+        createLiteralNode("'current'"),
+        createLiteralNode("'duration'"),
+        createLiteralNode("'remaining'"),
+      ]),
+      documentation: undefined,
+    } as tae.ExportNode;
+
+    const result = formatProperties([prop], [timeTypeExport]);
+
+    expect(result.type?.type).toBe("'current' | 'duration' | 'remaining'");
   });
 
   it('sets shortType for callback props', () => {
@@ -366,6 +397,93 @@ describe('formatType', () => {
     const union = createUnionNode([typeParam, createIntrinsicNode('boolean')]);
 
     expect(formatType(union, false)).toBe('string | number | boolean');
+  });
+});
+
+describe('formatDetailedType', () => {
+  it('expands ExternalTypeNode when found in allExports', () => {
+    const externalType = createExternalTypeNode('TimeType');
+    const resolvedUnion = createUnionNode([
+      createLiteralNode("'current'"),
+      createLiteralNode("'duration'"),
+      createLiteralNode("'remaining'"),
+    ]);
+    const allExports = [{ name: 'TimeType', type: resolvedUnion, documentation: undefined }] as tae.ExportNode[];
+
+    expect(formatDetailedType(externalType, allExports, false)).toBe("'current' | 'duration' | 'remaining'");
+  });
+
+  it('returns qualified name when not found in allExports', () => {
+    const externalType = createExternalTypeNode('UnknownType');
+
+    expect(formatDetailedType(externalType, [], false)).toBe('UnknownType');
+  });
+
+  it('skips re-exported types (reexportedFrom is set)', () => {
+    const externalType = createExternalTypeNode('TimeType');
+    const resolvedUnion = createUnionNode([createLiteralNode("'current'"), createLiteralNode("'duration'")]);
+    const reexport = {
+      name: 'TimeType',
+      type: resolvedUnion,
+      documentation: undefined,
+      reexportedFrom: 'OriginalTimeType',
+    } as unknown as tae.ExportNode;
+
+    expect(formatDetailedType(externalType, [reexport], false)).toBe('TimeType');
+  });
+
+  it('expands UnionNode with typeName (ignores alias, expands members)', () => {
+    const typeName = createTypeName('VolumeLevel');
+    const union = createUnionNode(
+      [
+        createLiteralNode("'off'"),
+        createLiteralNode("'low'"),
+        createLiteralNode("'medium'"),
+        createLiteralNode("'high'"),
+      ],
+      typeName
+    );
+    const allExports: tae.ExportNode[] = [];
+
+    expect(formatDetailedType(union, allExports, false)).toBe("'off' | 'low' | 'medium' | 'high'");
+  });
+
+  it('handles removeUndefined for optional props', () => {
+    const union = createUnionNode([createIntrinsicNode('string'), createIntrinsicNode('undefined')]);
+
+    expect(formatDetailedType(union, [], true)).toBe('string');
+    expect(formatDetailedType(union, [], false)).toBe('string | undefined');
+  });
+
+  it('prevents infinite recursion via visited set', () => {
+    const externalType = createExternalTypeNode('SelfRef');
+    // SelfRef resolves to itself
+    const selfRefExport = {
+      name: 'SelfRef',
+      type: createExternalTypeNode('SelfRef'),
+      documentation: undefined,
+    } as tae.ExportNode;
+
+    // Should not stack overflow; falls back to formatType
+    expect(formatDetailedType(externalType, [selfRefExport], false)).toBe('SelfRef');
+  });
+
+  it('expands IntersectionNode members', () => {
+    const externalA = createExternalTypeNode('BaseProps');
+    const basePropsExport = {
+      name: 'BaseProps',
+      type: createObjectNode([{ name: 'id', type: createIntrinsicNode('string'), optional: false }]),
+      documentation: undefined,
+    } as tae.ExportNode;
+    const intersection = createIntersectionNode([externalA, createIntrinsicNode('number')]);
+
+    expect(formatDetailedType(intersection, [basePropsExport], false)).toBe('{ id: string } & number');
+  });
+
+  it('delegates non-expandable nodes to formatType', () => {
+    const intrinsic = createIntrinsicNode('boolean');
+
+    expect(formatDetailedType(intrinsic, [], false)).toBe('boolean');
   });
 });
 

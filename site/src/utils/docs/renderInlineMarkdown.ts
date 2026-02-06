@@ -13,6 +13,10 @@ const classes = {
   a: shared.a,
 } as const;
 
+function escapeHtmlCarets(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 const renderer: MarkedExtension['renderer'] = {
   // --- Supported elements ---
 
@@ -36,11 +40,11 @@ const renderer: MarkedExtension['renderer'] = {
   },
 
   code({ text }) {
-    return `<code class="${classes.code}">${text}</code>`;
+    return `<code class="${classes.code}">${escapeHtmlCarets(text)}</code>`;
   },
 
   codespan({ text }) {
-    return `<code class="${classes.code}">${text}</code>`;
+    return `<code class="${classes.code}">${escapeHtmlCarets(text)}</code>`;
   },
 
   strong({ tokens }) {

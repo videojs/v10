@@ -1,0 +1,126 @@
+---
+/**
+ * Expandable table row used by PropRow and StateRow.
+ *
+ * Uses button disclosure pattern: the summary row has real `<td>` cells,
+ * the detail row is a separate `<tr>` toggled via `aria-controls` + `hidden`.
+ * The entire summary row is clickable, delegating to the toggle button.
+ *
+ * The default slot provides the summary cells. This component appends the
+ * toggle-button cell and renders the expandable detail panel beneath.
+ */
+import clsx from 'clsx';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import Td from '@/components/typography/Td.astro';
+import Tr from '@/components/typography/Tr.astro';
+import InlineMarkdown from './InlineMarkdown.astro';
+
+interface Props {
+  id: string;
+  name: string;
+  type: string;
+  shortType?: string;
+  description?: string;
+  colspan: number;
+}
+
+const { id, name, type, shortType, description, colspan } = Astro.props;
+
+const hasDetail = Boolean(shortType || description);
+---
+
+<Tr
+    id={id}
+    data-detail-row
+    class={clsx(
+        hasDetail &&
+            "group cursor-pointer intent:bg-light-60 dark:intent:bg-dark-110 data-expanded:border-transparent dark:data-expanded:border-transparent",
+    )}
+>
+    <slot />
+    {
+        hasDetail && (
+            <Td class="align-top">
+                <button
+                    aria-expanded="false"
+                    aria-controls={`${id}-detail`}
+                    aria-label={`Details for ${name}`}
+                    data-detail-toggle
+                >
+                    <span
+                        aria-hidden="true"
+                        class="inline-block group-data-expanded:rotate-90"
+                    >
+                        ▸
+                    </span>
+                </button>
+            </Td>
+        )
+    }
+</Tr>
+
+{
+    hasDetail && (
+        <Tr id={`${id}-detail`} hidden>
+            <Td colspan={String(colspan)} class="p-0">
+                <div class="px-6 py-4">
+                    <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3">
+                        {description && (
+                            <>
+                                <dt class="text-dark-40 dark:text-light-40">
+                                    Description
+                                </dt>
+                                <dd><InlineMarkdown content={description} /></dd>
+                            </>
+                        )}
+
+                        {(type || shortType) && (
+                            <>
+                                <dt class="text-dark-40 dark:text-light-40">
+                                    Type
+                                </dt>
+                                <dd>
+                                    <MarkdownCode>
+                                        {type || shortType}
+                                    </MarkdownCode>
+                                </dd>
+                            </>
+                        )}
+                    </dl>
+                </div>
+            </Td>
+        </Tr>
+    )
+}
+
+<script>
+    document
+        .querySelectorAll<HTMLButtonElement>("[data-detail-toggle]")
+        .forEach((button) => {
+            button.addEventListener("click", () => {
+                const expanded =
+                    button.getAttribute("aria-expanded") === "true";
+                button.setAttribute("aria-expanded", String(!expanded));
+
+                const row =
+                    button.closest<HTMLTableRowElement>("[data-detail-row]");
+                if (row) row.toggleAttribute("data-expanded", !expanded);
+
+                const detail = document.getElementById(
+                    button.getAttribute("aria-controls")!,
+                );
+                if (detail) detail.hidden = expanded;
+            });
+        });
+
+    document
+        .querySelectorAll<HTMLTableRowElement>("[data-detail-row]")
+        .forEach((row) => {
+            row.addEventListener("click", (e) => {
+                if ((e.target as Element).closest("a, button")) return;
+                row.querySelector<HTMLButtonElement>(
+                    "[data-detail-toggle]",
+                )?.click();
+            });
+        });
+</script>

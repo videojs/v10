@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { kebabToPascal, sortProps } from '../utils.js';
+import { kebabToPascal, partKebabFromSource, sortProps } from '../utils.js';
 
 describe('kebabToPascal', () => {
   it("converts 'play-button' to 'PlayButton'", () => {
@@ -12,6 +12,24 @@ describe('kebabToPascal', () => {
 
   it("converts 'time-display-current' to 'TimeDisplayCurrent'", () => {
     expect(kebabToPascal('time-display-current')).toBe('TimeDisplayCurrent');
+  });
+});
+
+describe('partKebabFromSource', () => {
+  it("derives 'value' from './time-value' with component 'time'", () => {
+    expect(partKebabFromSource('./time-value', 'time')).toBe('value');
+  });
+
+  it("derives 'group' from './time-group' with component 'time'", () => {
+    expect(partKebabFromSource('./time-group', 'time')).toBe('group');
+  });
+
+  it("derives 'separator' from './time-separator' with component 'time'", () => {
+    expect(partKebabFromSource('./time-separator', 'time')).toBe('separator');
+  });
+
+  it("handles multi-segment component names like 'play-button'", () => {
+    expect(partKebabFromSource('./play-button-icon', 'play-button')).toBe('icon');
   });
 });
 
