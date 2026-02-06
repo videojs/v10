@@ -89,6 +89,10 @@ pnpm lint:fix:file <file>
 
 # Remove all dist and types outputs
 pnpm clean
+
+# Measure bundle size (SPF only)
+pnpm -F @videojs/spf size        # Public API (minified + gzipped)
+pnpm -F @videojs/spf size:all    # All exports (minified + gzipped)
 ```
 
 ## Dev Workflow
