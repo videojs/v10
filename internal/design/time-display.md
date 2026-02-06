@@ -3,7 +3,7 @@ status: draft
 date: 2025-02-04
 ---
 
-# Time Component
+# Time Display
 
 Displays current time, duration, or remaining time.
 
