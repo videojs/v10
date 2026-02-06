@@ -2,6 +2,7 @@
 
 export { PlayerContext } from './context';
 export {
+  useMedia,
   useMediaRef,
   usePlayer,
   usePlayerStore,
