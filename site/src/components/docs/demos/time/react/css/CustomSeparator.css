@@ -1,0 +1,12 @@
+.time-custom-separator {
+  position: relative;
+}
+
+.time-custom-separator video {
+  width: 100%;
+  border-radius: 0.5rem;
+}
+
+.time-custom-separator__group {
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,34 @@
+<script type="module">
+  import '@videojs/html/player/video';
+  import '@videojs/html/ui/play-button';
+</script>
+
+<style>
+  video-player {
+    position: relative;
+  }
+
+  video-player video {
+    width: 100%;
+    border-radius: 0.5rem;
+  }
+
+  media-play-button {
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background-color: black;
+    color: white;
+    cursor: pointer;
+  }
+</style>
+
+<video-player>
+  <video
+    src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
+    muted
+  ></video>
+  <media-play-button>play</media-play-button>
+</video-player>

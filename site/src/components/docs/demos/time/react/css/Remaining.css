@@ -1,0 +1,12 @@
+.time-remaining {
+  position: relative;
+}
+
+.time-remaining video {
+  width: 100%;
+  border-radius: 0.5rem;
+}
+
+.time-remaining__value {
+  font-variant-numeric: tabular-nums;
+}
