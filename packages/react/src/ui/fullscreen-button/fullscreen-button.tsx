@@ -1,7 +1,7 @@
 'use client';
 
 import { FullscreenButtonCore, FullscreenButtonDataAttributes } from '@videojs/core';
-import { logMissingFeature, selectPresentation } from '@videojs/core/dom';
+import { logMissingFeature, selectFullscreen } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
 
@@ -20,19 +20,19 @@ export const FullscreenButton = forwardRef(function FullscreenButton(
 ) {
   const { render, className, style, label, disabled = false, ...elementProps } = componentProps;
 
-  const presentation = usePlayer(selectPresentation);
+  const fullscreen = usePlayer(selectFullscreen);
 
   const [core] = useState(() => new FullscreenButtonCore());
   core.setProps({ label, disabled });
 
   const { getButtonProps, buttonRef } = useButton({
     displayName: 'FullscreenButton',
-    onActivate: () => core.toggle(presentation!),
-    isDisabled: () => disabled || !presentation,
+    onActivate: () => core.toggle(fullscreen!),
+    isDisabled: () => disabled || !fullscreen,
   });
 
-  if (!presentation) {
-    logMissingFeature('FullscreenButton', 'presentation');
+  if (!fullscreen) {
+    logMissingFeature('FullscreenButton', 'fullscreen');
     return null;
   }
 
@@ -40,9 +40,9 @@ export const FullscreenButton = forwardRef(function FullscreenButton(
     'button',
     { render, className, style },
     {
-      state: core.getState(presentation),
+      state: core.getState(fullscreen),
       ref: [forwardedRef, buttonRef],
-      props: [core.getAttrs(presentation), elementProps, getButtonProps()],
+      props: [core.getAttrs(fullscreen), elementProps, getButtonProps()],
       stateAttrMap: FullscreenButtonDataAttributes,
     }
   );

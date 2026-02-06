@@ -1,18 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { PresentationState } from '../../media/state';
+import type { FullscreenState } from '../../media/state';
 import { FullscreenButtonCore } from './fullscreen-button-core';
 
-function createMockPresentation(overrides: Partial<PresentationState> = {}): PresentationState {
+function createMockFullscreen(overrides: Partial<FullscreenState> = {}): FullscreenState {
   return {
-    fullscreenActive: false,
-    pipActive: false,
+    fullscreen: false,
     fullscreenAvailability: 'available',
-    pipAvailability: 'available',
     requestFullscreen: vi.fn(),
     exitFullscreen: vi.fn(),
-    requestPiP: vi.fn(),
-    exitPiP: vi.fn(),
     ...overrides,
   };
 }
@@ -21,66 +17,66 @@ describe('FullscreenButtonCore', () => {
   describe('getLabel', () => {
     it('returns custom label string when provided', () => {
       const core = new FullscreenButtonCore({ label: 'Custom Label' });
-      const presentation = createMockPresentation();
+      const state = createMockFullscreen();
 
-      expect(core.getLabel(presentation)).toBe('Custom Label');
+      expect(core.getLabel(state)).toBe('Custom Label');
     });
 
     it('returns custom label from function when provided', () => {
       const core = new FullscreenButtonCore({
-        label: (state) => (state.fullscreenActive ? 'Exit' : 'Enter'),
+        label: (state) => (state.fullscreen ? 'Exit' : 'Enter'),
       });
-      const presentation = createMockPresentation({ fullscreenActive: true });
+      const state = createMockFullscreen({ fullscreen: true });
 
-      expect(core.getLabel(presentation)).toBe('Exit');
+      expect(core.getLabel(state)).toBe('Exit');
     });
 
     it('falls back to default label when function returns empty string', () => {
       const core = new FullscreenButtonCore({ label: () => '' });
-      const presentation = createMockPresentation({ fullscreenActive: false });
+      const state = createMockFullscreen({ fullscreen: false });
 
-      expect(core.getLabel(presentation)).toBe('Enter fullscreen');
+      expect(core.getLabel(state)).toBe('Enter fullscreen');
     });
 
     it('returns "Exit fullscreen" when active', () => {
       const core = new FullscreenButtonCore();
-      const presentation = createMockPresentation({ fullscreenActive: true });
+      const state = createMockFullscreen({ fullscreen: true });
 
-      expect(core.getLabel(presentation)).toBe('Exit fullscreen');
+      expect(core.getLabel(state)).toBe('Exit fullscreen');
     });
 
     it('returns "Enter fullscreen" when not active', () => {
       const core = new FullscreenButtonCore();
-      const presentation = createMockPresentation({ fullscreenActive: false });
+      const state = createMockFullscreen({ fullscreen: false });
 
-      expect(core.getLabel(presentation)).toBe('Enter fullscreen');
+      expect(core.getLabel(state)).toBe('Enter fullscreen');
     });
   });
 
   describe('getAttrs', () => {
     it('returns aria-label based on fullscreen state', () => {
       const core = new FullscreenButtonCore();
-      const presentation = createMockPresentation({ fullscreenActive: true });
+      const state = createMockFullscreen({ fullscreen: true });
 
-      const attrs = core.getAttrs(presentation);
+      const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('Exit fullscreen');
     });
 
     it('returns aria-disabled when disabled', () => {
       const core = new FullscreenButtonCore({ disabled: true });
-      const presentation = createMockPresentation();
+      const state = createMockFullscreen();
 
-      const attrs = core.getAttrs(presentation);
+      const attrs = core.getAttrs(state);
 
       expect(attrs['aria-disabled']).toBe('true');
     });
 
     it('returns undefined aria-disabled when not disabled', () => {
       const core = new FullscreenButtonCore({ disabled: false });
-      const presentation = createMockPresentation();
+      const state = createMockFullscreen();
 
-      const attrs = core.getAttrs(presentation);
+      const attrs = core.getAttrs(state);
 
       expect(attrs['aria-disabled']).toBeUndefined();
     });
@@ -89,31 +85,31 @@ describe('FullscreenButtonCore', () => {
   describe('getState', () => {
     it('returns primitive values only (no methods)', () => {
       const core = new FullscreenButtonCore();
-      const presentation = createMockPresentation({ fullscreenActive: true });
+      const state = createMockFullscreen({ fullscreen: true });
 
-      const state = core.getState(presentation);
+      const buttonState = core.getState(state);
 
-      expect(state).toEqual({
-        fullscreenActive: true,
+      expect(buttonState).toEqual({
+        fullscreen: true,
         fullscreenAvailability: 'available',
       });
 
-      const functionKeys = Object.entries(state).filter(([, value]) => typeof value === 'function');
+      const functionKeys = Object.entries(buttonState).filter(([, value]) => typeof value === 'function');
       expect(functionKeys).toHaveLength(0);
     });
 
-    it('picks fullscreenActive from presentation', () => {
+    it('picks fullscreen from state', () => {
       const core = new FullscreenButtonCore();
 
-      expect(core.getState(createMockPresentation({ fullscreenActive: true })).fullscreenActive).toBe(true);
-      expect(core.getState(createMockPresentation({ fullscreenActive: false })).fullscreenActive).toBe(false);
+      expect(core.getState(createMockFullscreen({ fullscreen: true })).fullscreen).toBe(true);
+      expect(core.getState(createMockFullscreen({ fullscreen: false })).fullscreen).toBe(false);
     });
 
-    it('picks fullscreenAvailability from presentation', () => {
+    it('picks fullscreenAvailability from state', () => {
       const core = new FullscreenButtonCore();
 
       expect(
-        core.getState(createMockPresentation({ fullscreenAvailability: 'unsupported' })).fullscreenAvailability
+        core.getState(createMockFullscreen({ fullscreenAvailability: 'unsupported' })).fullscreenAvailability
       ).toBe('unsupported');
     });
   });
@@ -121,42 +117,42 @@ describe('FullscreenButtonCore', () => {
   describe('toggle', () => {
     it('calls requestFullscreen when not active', async () => {
       const core = new FullscreenButtonCore();
-      const presentation = createMockPresentation({ fullscreenActive: false });
+      const state = createMockFullscreen({ fullscreen: false });
 
-      await core.toggle(presentation);
+      await core.toggle(state);
 
-      expect(presentation.requestFullscreen).toHaveBeenCalledTimes(1);
-      expect(presentation.exitFullscreen).not.toHaveBeenCalled();
+      expect(state.requestFullscreen).toHaveBeenCalledTimes(1);
+      expect(state.exitFullscreen).not.toHaveBeenCalled();
     });
 
     it('calls exitFullscreen when active', async () => {
       const core = new FullscreenButtonCore();
-      const presentation = createMockPresentation({ fullscreenActive: true });
+      const state = createMockFullscreen({ fullscreen: true });
 
-      await core.toggle(presentation);
+      await core.toggle(state);
 
-      expect(presentation.exitFullscreen).toHaveBeenCalledTimes(1);
-      expect(presentation.requestFullscreen).not.toHaveBeenCalled();
+      expect(state.exitFullscreen).toHaveBeenCalledTimes(1);
+      expect(state.requestFullscreen).not.toHaveBeenCalled();
     });
 
     it('does nothing when disabled', async () => {
       const core = new FullscreenButtonCore({ disabled: true });
-      const presentation = createMockPresentation();
+      const state = createMockFullscreen();
 
-      await core.toggle(presentation);
+      await core.toggle(state);
 
-      expect(presentation.requestFullscreen).not.toHaveBeenCalled();
-      expect(presentation.exitFullscreen).not.toHaveBeenCalled();
+      expect(state.requestFullscreen).not.toHaveBeenCalled();
+      expect(state.exitFullscreen).not.toHaveBeenCalled();
     });
 
     it('does nothing when availability is not available', async () => {
       const core = new FullscreenButtonCore();
-      const presentation = createMockPresentation({ fullscreenAvailability: 'unsupported' });
+      const state = createMockFullscreen({ fullscreenAvailability: 'unsupported' });
 
-      await core.toggle(presentation);
+      await core.toggle(state);
 
-      expect(presentation.requestFullscreen).not.toHaveBeenCalled();
-      expect(presentation.exitFullscreen).not.toHaveBeenCalled();
+      expect(state.requestFullscreen).not.toHaveBeenCalled();
+      expect(state.exitFullscreen).not.toHaveBeenCalled();
     });
   });
 });

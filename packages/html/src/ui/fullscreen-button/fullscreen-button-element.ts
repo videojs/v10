@@ -5,7 +5,7 @@ import {
   applyStateDataAttrs,
   createButton,
   logMissingFeature,
-  selectPresentation,
+  selectFullscreen,
 } from '@videojs/core/dom';
 
 import { playerContext } from '../../player/context';
@@ -24,7 +24,7 @@ export class FullscreenButtonElement extends MediaElement {
   disabled = false;
 
   readonly #core = new FullscreenButtonCore();
-  readonly #state = new PlayerController(this, playerContext, selectPresentation);
+  readonly #state = new PlayerController(this, playerContext, selectFullscreen);
 
   #disconnect: AbortController | null = null;
 
@@ -41,7 +41,7 @@ export class FullscreenButtonElement extends MediaElement {
     applyElementProps(this, buttonProps, this.#disconnect.signal);
 
     if (!this.#state.value) {
-      logMissingFeature(FullscreenButtonElement.tagName, 'presentation');
+      logMissingFeature(FullscreenButtonElement.tagName, 'fullscreen');
     }
   }
 
