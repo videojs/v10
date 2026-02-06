@@ -4,7 +4,11 @@ export const sidebar: Sidebar = [
   {
     sidebarLabel: 'Getting started',
     contents: [
-      { slug: 'how-to/write-guides', sidebarLabel: 'Writing guides', devOnly: true },
+      {
+        slug: 'how-to/write-guides',
+        sidebarLabel: 'Writing guides',
+        devOnly: true,
+      },
       { slug: 'how-to/installation' },
       { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
     ],
@@ -19,12 +23,6 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'Components',
-    contents: [
-      { slug: 'reference/play-button' },
-      { slug: 'reference/mute-button' },
-      { slug: 'reference/fullscreen-button' },
-      { slug: 'reference/time-slider' },
-      { slug: 'reference/volume-slider' },
-    ],
+    contents: [{ slug: 'reference/play-button' }, { slug: 'reference/mute-button' }],
   },
 ];

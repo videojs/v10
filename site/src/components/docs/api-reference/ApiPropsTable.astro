@@ -1,0 +1,47 @@
+---
+/**
+ * Renders the props table for API reference.
+ *
+ * Props are sorted: required first, then alphabetical.
+ */
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+import type { PropDef } from '@/types/api-reference';
+import PropRow from './PropRow.astro';
+
+interface Props {
+  props: Record<string, PropDef>;
+  componentName: string;
+}
+
+const { props, componentName } = Astro.props;
+---
+
+<Table maxWidth={false} outerClass="my-6">
+    <Thead>
+        <Tr>
+            <Th>Prop</Th>
+            <Th>Type</Th>
+            <Th>Default</Th>
+            <Th />
+        </Tr>
+    </Thead>
+    <Tbody>
+        {
+            Object.entries(props).map(([name, prop]) => (
+                <PropRow
+                    name={name}
+                    type={prop.type}
+                    shortType={prop.shortType}
+                    description={prop.description}
+                    defaultValue={prop.default}
+                    required={prop.required}
+                    componentName={componentName}
+                />
+            ))
+        }
+    </Tbody>
+</Table>

@@ -2,92 +2,21 @@
 title: MuteButton
 frameworkTitle:
   html: mute-button
-description: A button component for toggling audio mute state
+description: A button component for muting and unmuting audio playback
 ---
 
-import { MuteButtonDemo } from '@/examples/react/MuteButton/MuteButtonDemo';
-import componentModuleStr from '@/examples/react/MuteButton/BasicMuteButton.tsx?raw';
-import cssModuleStr from '@/examples/react/MuteButton/MuteButton.module.css?raw';
-import htmlStr from '@/examples/html/mute-button/snippet.html?raw';
-import htmlCssStr from '@/examples/html/mute-button/mute-button.css?raw';
-import htmlJsStr from '@/examples/html/mute-button/mute-button.js?raw';
-import FrameworkCase from '@/components/docs/FrameworkCase.astro';
-import ServerCode from '@/components/Code/ServerCode.astro';
-import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs';
+import ApiRefSection from '@/components/docs/api-reference/ApiRefSection.astro';
 
-## Features
+## API Reference
 
-- Multi-state icon display (high, low, off)
-- Automatically reflects volume level changes
-- Toggles mute/unmute on click
-- Accessible keyboard navigation
+### Props
 
-## Example
+<ApiRefSection component="MuteButton" section="props" />
 
-<FrameworkCase frameworks={["react"]}>
-  <TabsRoot client:idle>
-    <TabsList client:idle label="React implementation">
-      <Tab client:idle value="component" initial>Component</Tab>
-      <Tab client:idle value="css">CSS Module</Tab>
-    </TabsList>
-    <TabsPanel client:idle value="component" initial>
-      <ServerCode code={componentModuleStr} lang="tsx" />
-    </TabsPanel>
-    <TabsPanel client:idle value="css">
-      <ServerCode code={cssModuleStr} lang="css" />
-    </TabsPanel>
-    <MuteButtonDemo client:idle />
-  </TabsRoot>
-</FrameworkCase>
+### State
 
-<FrameworkCase frameworks={["html"]}>
-  <TabsRoot client:idle>
-    <TabsList client:idle label="HTML implementation">
-      <Tab client:idle value="html" initial>HTML</Tab>
-      <Tab client:idle value="css">CSS</Tab>
-      <Tab client:idle value="javascript">JS</Tab>
-    </TabsList>
-    <TabsPanel client:idle value="html" initial>
-      <ServerCode code={htmlStr} lang="html" />
-    </TabsPanel>
-    <TabsPanel client:idle value="css">
-      <ServerCode code={htmlCssStr} lang="css" />
-    </TabsPanel>
-    <TabsPanel client:idle value="javascript">
-      <ServerCode code={htmlJsStr} lang="js" />
-    </TabsPanel>
-    <MuteButtonDemo client:idle />
-  </TabsRoot>
-</FrameworkCase>
+<ApiRefSection component="MuteButton" section="state" />
 
+### Data Attributes
 
-
-## Data Attributes
-
-The MuteButton automatically sets data attributes based on volume level:
-
-- `data-volume-level="high"` - Volume > 50%
-- `data-volume-level="medium"` - Volume 25-50%
-- `data-volume-level="low"` - Volume 1-24%
-- `data-volume-level="off"` - Volume 0% (muted)
-
-Use these attributes for state-based styling in your CSS.
-
-<FrameworkCase frameworks={["react"]}>
-
-## Props
-
-All standard button props are supported, plus:
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `children` | `ReactNode` | Button content (typically icons) |
-| `className` | `string` | CSS class name |
-
-</FrameworkCase>
-
-## Accessibility
-
-- Automatically includes proper ARIA labels
-- Keyboard accessible (Space/Enter)
-- Announces volume state changes to screen readers
+<ApiRefSection component="MuteButton" section="dataAttributes" />

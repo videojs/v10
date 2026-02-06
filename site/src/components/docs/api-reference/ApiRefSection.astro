@@ -1,0 +1,63 @@
+---
+import { getEntry } from 'astro:content';
+import { kebabCase } from 'es-toolkit/string';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import P from '@/components/typography/P.astro';
+import type { ComponentApiReference } from '@/types/api-reference';
+import { isValidFramework } from '@/types/docs';
+import FrameworkCase from '../FrameworkCase.astro';
+import ApiDataAttrsTable from './ApiDataAttrsTable.astro';
+import ApiPropsTable from './ApiPropsTable.astro';
+import ApiStateTable from './ApiStateTable.astro';
+
+interface Props {
+  component: string;
+  section: 'props' | 'state' | 'dataAttributes';
+}
+
+const { component, section } = Astro.props;
+
+const { framework } = Astro.params;
+if (!framework || !isValidFramework(framework)) {
+  throw new Error(`Invalid or missing framework param "${framework ?? 'undefined'}".`);
+}
+
+const entry = await getEntry('apiReference', kebabCase(component));
+const apiRef: ComponentApiReference | null = entry?.data ?? null;
+
+const hasData = apiRef && Object.keys(apiRef[section]).length > 0;
+---
+
+<ContentWidth>
+    {
+        hasData && section === "props" && (
+            <ApiPropsTable props={apiRef.props} componentName={component} />
+        )
+    }
+
+    {
+        hasData && section === "state" && (
+            <>
+                <P>
+                    <FrameworkCase frameworks={["react"]}>
+                        State is accessible via the{" "}
+                        <MarkdownCode>render</MarkdownCode>,{" "}
+                        <MarkdownCode>className</MarkdownCode>, and{" "}
+                        <MarkdownCode>style</MarkdownCode> props.
+                    </FrameworkCase>
+                    <FrameworkCase frameworks={["html"]}>
+                        State is reflected as data attributes for CSS styling.
+                    </FrameworkCase>
+                </P>
+                <ApiStateTable state={apiRef.state} />
+            </>
+        )
+    }
+
+    {
+        hasData && section === "dataAttributes" && (
+            <ApiDataAttrsTable dataAttributes={apiRef.dataAttributes} />
+        )
+    }
+</ContentWidth>

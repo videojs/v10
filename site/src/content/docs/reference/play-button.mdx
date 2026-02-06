@@ -5,84 +5,18 @@ frameworkTitle:
 description: A button component for playing and pausing media playback
 ---
 
-import { PlayButtonDemo } from '@/examples/react/PlayButton/PlayButtonDemo';
-import componentModuleStr from '@/examples/react/PlayButton/BasicPlayButton.tsx?raw';
-import cssModuleStr from '@/examples/react/PlayButton/PlayButton.module.css?raw';
-import htmlStr from '@/examples/html/play-button/snippet.html?raw';
-import htmlCssStr from '@/examples/html/play-button/play-button.css?raw';
-import htmlJsStr from '@/examples/html/play-button/play-button.js?raw';
-import FrameworkCase from '@/components/docs/FrameworkCase.astro';
-import ServerCode from '@/components/Code/ServerCode.astro';
-import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs';
+import ApiRefSection from '@/components/docs/api-reference/ApiRefSection.astro';
 
-## Features
+## API Reference
 
-- Automatically switches icons based on playback state
-- Uses data attributes for state-based styling
-- Accessible keyboard navigation
-- Works with any media element
+### Props
 
-## Example
+<ApiRefSection component="PlayButton" section="props" />
 
-<FrameworkCase frameworks={["react"]}>
-  <TabsRoot client:idle>
-    <TabsList client:idle label="React implementation">
-      <Tab client:idle value="component" initial>Component</Tab>
-      <Tab client:idle value="css">CSS Module</Tab>
-    </TabsList>
-    <TabsPanel client:idle value="component" initial>
-      <ServerCode code={componentModuleStr} lang="tsx" />
-    </TabsPanel>
-    <TabsPanel client:idle value="css">
-      <ServerCode code={cssModuleStr} lang="css" />
-    </TabsPanel>
-    <PlayButtonDemo client:idle />
-  </TabsRoot>
-</FrameworkCase>
+### State
 
-<FrameworkCase frameworks={["html"]}>
-  <TabsRoot client:idle>
-    <TabsList client:idle label="HTML implementation">
-      <Tab client:idle value="html" initial>HTML</Tab>
-      <Tab client:idle value="css">CSS</Tab>
-      <Tab client:idle value="javascript">JS</Tab>
-    </TabsList>
-    <TabsPanel client:idle value="html" initial>
-      <ServerCode code={htmlStr} lang="html" />
-    </TabsPanel>
-    <TabsPanel client:idle value="css">
-      <ServerCode code={htmlCssStr} lang="css" />
-    </TabsPanel>
-    <TabsPanel client:idle value="javascript">
-      <ServerCode code={htmlJsStr} lang="js" />
-    </TabsPanel>
-    <PlayButtonDemo client:idle />
-  </TabsRoot>
-</FrameworkCase>
+<ApiRefSection component="PlayButton" section="state" />
 
-## Data Attributes
+### Data Attributes
 
-The PlayButton automatically sets data attributes based on media state:
-
-- `data-paused` - Present when media is paused, absent when playing
-
-Use these attributes for state-based styling in your CSS.
-
-<FrameworkCase frameworks={["react"]}>
-
-## Props
-
-All standard button props are supported, plus:
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `children` | `ReactNode` | Button content (typically icons) |
-| `className` | `string` | CSS class name |
-
-</FrameworkCase>
-
-## Accessibility
-
-- Automatically includes proper ARIA labels
-- Keyboard accessible (Space/Enter)
-- Announces state changes to screen readers
+<ApiRefSection component="PlayButton" section="dataAttributes" />
