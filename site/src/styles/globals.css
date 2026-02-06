@@ -139,7 +139,7 @@ mark {
   --text-sm--font-weight: var(--font-weight-normal);
 
   /* Notice the use of em, so that code scales with, say, headers */
-  --text-code: 0.9375em;
+  --text-code: clamp(0.875em, calc(0.8125em + 0.125rem), 0.9375em);
   --text-code--line-height: inherit;
   --text-code--letter-spacing: -0.02em;
   --text-code--font-weight: var(--font-weight-code-normal);

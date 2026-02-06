@@ -30,7 +30,7 @@ export function getShortPropType(name: string, type: string): string | undefined
   }
 
   // Short unions (less than 3 members and under 40 chars) → no abbreviation
-  if (!type.includes(' | ') || (type.split(' | ').length < 3 && type.length < 40)) {
+  if (!type.includes(' | ') || (type.split(' | ').length < 3 && type.length < 40 && !type.includes('=>'))) {
     return undefined;
   }
 
@@ -51,7 +51,7 @@ export function getShortPropType(name: string, type: string): string | undefined
 /**
  * Format a list of properties into API reference format.
  */
-export function formatProperties(props: tae.PropertyNode[]): Record<string, PropDef> {
+export function formatProperties(props: tae.PropertyNode[], allExports?: tae.ExportNode[]): Record<string, PropDef> {
   const result: Record<string, PropDef> = {};
 
   for (const prop of props) {
@@ -60,7 +60,9 @@ export function formatProperties(props: tae.PropertyNode[]): Record<string, Prop
     // Skip props marked with @ignore
     if (prop.documentation?.hasTag('ignore')) continue;
 
-    const formattedType = formatType(prop.type, prop.optional);
+    const formattedType = allExports
+      ? formatDetailedType(prop.type, allExports, prop.optional)
+      : formatType(prop.type, prop.optional);
     const shortType = getShortPropType(prop.name, formattedType);
 
     const entry: PropDef = { type: formattedType };
@@ -73,6 +75,65 @@ export function formatProperties(props: tae.PropertyNode[]): Record<string, Prop
   }
 
   return result;
+}
+
+/**
+ * Format a type into a human-readable string, expanding type aliases when possible.
+ *
+ * Resolves `ExternalTypeNode` references against `allExports` so that type aliases
+ * like `TimeType` are expanded to their underlying union (`'current' | 'duration' | 'remaining'`).
+ */
+export function formatDetailedType(
+  type: tae.AnyType,
+  allExports: tae.ExportNode[],
+  removeUndefined: boolean,
+  visited: Set<string> = new Set()
+): string {
+  if (type instanceof tae.ExternalTypeNode) {
+    const name = type.typeName.name;
+
+    if (!visited.has(name)) {
+      const resolved = allExports.find((exp) => exp.name === name && exp.reexportedFrom === undefined);
+      if (resolved) {
+        visited.add(name);
+        return formatDetailedType(resolved.type, allExports, removeUndefined, visited);
+      }
+    }
+
+    return formatType(type, removeUndefined);
+  }
+
+  if (type instanceof tae.UnionNode) {
+    let memberTypes = type.types;
+
+    if (removeUndefined) {
+      memberTypes = memberTypes.filter((t) => !(t instanceof tae.IntrinsicNode && t.intrinsic === 'undefined'));
+    }
+
+    const flattenedMemberTypes = memberTypes.flatMap((t) => {
+      if (t instanceof tae.UnionNode) {
+        return t.typeName ? t : t.types;
+      }
+      if (t instanceof tae.TypeParameterNode && t.constraint instanceof tae.UnionNode) {
+        return t.constraint.types;
+      }
+      return t;
+    });
+
+    const formattedMemberTypes = uniq(
+      orderMembers(flattenedMemberTypes).map((t) => formatDetailedType(t, allExports, removeUndefined, visited))
+    );
+
+    return formattedMemberTypes.join(' | ');
+  }
+
+  if (type instanceof tae.IntersectionNode) {
+    return orderMembers(type.types)
+      .map((t) => formatDetailedType(t, allExports, false, visited))
+      .join(' & ');
+  }
+
+  return formatType(type, removeUndefined);
 }
 
 /**

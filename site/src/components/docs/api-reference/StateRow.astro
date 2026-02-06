@@ -1,0 +1,27 @@
+---
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import Td from '@/components/typography/Td.astro';
+import DetailRow from './DetailRow.astro';
+
+interface Props {
+  name: string;
+  type: string;
+  shortType?: string;
+  description?: string;
+  componentName: string;
+}
+
+const { name, type, shortType, description, componentName } = Astro.props;
+
+const displayType = shortType ?? type;
+const id = `${componentName}-state-${name}`;
+---
+
+<DetailRow id={id} name={name} type={type} shortType={shortType} description={description} colspan={3}>
+    <Td class="align-top">
+        <MarkdownCode>{name}</MarkdownCode>
+    </Td>
+    <Td class="align-top">
+        <MarkdownCode>{displayType}</MarkdownCode>
+    </Td>
+</DetailRow>

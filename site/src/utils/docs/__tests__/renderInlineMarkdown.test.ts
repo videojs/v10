@@ -85,4 +85,10 @@ describe('renderInlineMarkdown', () => {
     expect(result).toContain('<code');
     expect(result).toContain('const x = 1;');
   });
+
+  it('escapes HTML tags inside inline code', () => {
+    const result = renderInlineMarkdown('Renders a `<span>` element.');
+    expect(result).toContain('&lt;span&gt;');
+    expect(result).not.toContain('<span>');
+  });
 });

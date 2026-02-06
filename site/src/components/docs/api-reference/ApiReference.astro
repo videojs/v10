@@ -1,0 +1,133 @@
+---
+import { getEntry } from 'astro:content';
+import { kebabCase } from 'es-toolkit/string';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import H2 from '@/components/typography/H2Markdown.astro';
+import H3 from '@/components/typography/H3Markdown.astro';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import P from '@/components/typography/P.astro';
+import type { ComponentApiReference } from '@/types/api-reference';
+import { isValidFramework } from '@/types/docs';
+import FrameworkCase from '../FrameworkCase.astro';
+import ApiDataAttrsTable from './ApiDataAttrsTable.astro';
+import ApiPropsTable from './ApiPropsTable.astro';
+import ApiStateTable from './ApiStateTable.astro';
+import InlineMarkdown from './InlineMarkdown.astro';
+
+interface Props {
+  component: string;
+}
+
+const { component } = Astro.props;
+const { framework } = Astro.params;
+if (!framework || !isValidFramework(framework)) {
+  throw new Error(`Invalid or missing framework param.`);
+}
+
+const entry = await getEntry('apiReference', kebabCase(component));
+const apiRef: ComponentApiReference | null = entry?.data ?? null;
+if (!apiRef) return;
+
+const hasParts = apiRef.parts && Object.keys(apiRef.parts).length > 0;
+
+const hasProps = Object.keys(apiRef.props).length > 0;
+const hasState = Object.keys(apiRef.state).length > 0;
+const hasDataAttrs = Object.keys(apiRef.dataAttributes).length > 0;
+---
+
+{hasParts ? (
+  <ContentWidth>
+    {Object.entries(apiRef.parts!).map(([partKebab, part]) => {
+      const tagName = part.platforms?.html?.tagName;
+      const partHasProps = Object.keys(part.props).length > 0;
+      const partHasState = Object.keys(part.state).length > 0;
+      const partHasDataAttrs = Object.keys(part.dataAttributes).length > 0;
+      const componentName = `${component}.${part.name}`;
+
+      return (
+        <>
+          <H2 id={partKebab}>
+            <FrameworkCase frameworks={["react"]}>
+              <MarkdownCode>{`<${component}.${part.name} />`}</MarkdownCode> reference
+            </FrameworkCase>
+            <FrameworkCase frameworks={["html"]}>
+              <MarkdownCode>{tagName ? `<${tagName}>` : part.name}</MarkdownCode> reference
+            </FrameworkCase>
+          </H2>
+
+          {part.description && (
+            <P><InlineMarkdown content={part.description} /></P>
+          )}
+
+          {partHasProps && (
+            <>
+              <H3 id={`${partKebab}-props`}>Props</H3>
+              <ApiPropsTable props={part.props} componentName={componentName} />
+            </>
+          )}
+
+          {partHasState && (
+            <>
+              <H3 id={`${partKebab}-state`}>State</H3>
+              <P>
+                <FrameworkCase frameworks={["react"]}>
+                  State is accessible via the{" "}
+                  <MarkdownCode>render</MarkdownCode>,{" "}
+                  <MarkdownCode>className</MarkdownCode>, and{" "}
+                  <MarkdownCode>style</MarkdownCode> props.
+                </FrameworkCase>
+                <FrameworkCase frameworks={["html"]}>
+                  State is reflected as data attributes for CSS styling.
+                </FrameworkCase>
+              </P>
+              <ApiStateTable state={part.state} componentName={componentName} />
+            </>
+          )}
+
+          {partHasDataAttrs && (
+            <>
+              <H3 id={`${partKebab}-data-attributes`}>Data attributes</H3>
+              <ApiDataAttrsTable dataAttributes={part.dataAttributes} />
+            </>
+          )}
+        </>
+      );
+    })}
+  </ContentWidth>
+) : (
+  <ContentWidth>
+    <H2 id="api-reference">API reference</H2>
+
+    {hasProps && (
+      <>
+        <H3 id="props">Props</H3>
+        <ApiPropsTable props={apiRef.props} componentName={component} />
+      </>
+    )}
+
+    {hasState && (
+      <>
+        <H3 id="state">State</H3>
+        <P>
+          <FrameworkCase frameworks={["react"]}>
+            State is accessible via the{" "}
+            <MarkdownCode>render</MarkdownCode>,{" "}
+            <MarkdownCode>className</MarkdownCode>, and{" "}
+            <MarkdownCode>style</MarkdownCode> props.
+          </FrameworkCase>
+          <FrameworkCase frameworks={["html"]}>
+            State is reflected as data attributes for CSS styling.
+          </FrameworkCase>
+        </P>
+        <ApiStateTable state={apiRef.state} componentName={component} />
+      </>
+    )}
+
+    {hasDataAttrs && (
+      <>
+        <H3 id="data-attributes">Data attributes</H3>
+        <ApiDataAttrsTable dataAttributes={apiRef.dataAttributes} />
+      </>
+    )}
+  </ContentWidth>
+)}

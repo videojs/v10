@@ -5,11 +5,28 @@
 export type {
   ComponentApiReference,
   DataAttrDef,
+  PartApiReference,
   PropDef,
   StateDef,
 } from '../../../src/types/api-reference.js';
 
-export { ComponentApiReferenceSchema } from '../../../src/types/api-reference.js';
+export { ComponentApiReferenceSchema, PartApiReferenceSchema } from '../../../src/types/api-reference.js';
+
+/**
+ * Discovered part within a multi-part component.
+ */
+export interface PartSource {
+  /** PascalCase name (e.g., "Value", "Group", "Separator"). */
+  name: string;
+  /** Kebab-case segment (e.g., "value", "group", "separator"). */
+  kebab: string;
+  /** True if this part gets the shared core/data-attrs. */
+  isPrimary: boolean;
+  /** Path to HTML element file. */
+  htmlPath?: string;
+  /** Path to React component file (for JSDoc description extraction). */
+  reactPath?: string;
+}
 
 /**
  * Source file locations for a component across packages.
@@ -23,6 +40,8 @@ export interface ComponentSource {
   dataAttrsPath?: string;
   /** Path to HTML element file */
   htmlPath?: string;
+  /** Path to index.parts.ts (if multi-part) */
+  partsIndexPath?: string;
 }
 
 /**

@@ -3,21 +3,21 @@ import { isFunction } from '@videojs/utils/predicate';
 import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-import type { TimeState } from '../../media/state';
+import type { TimeState as MediaTimeState } from '../../media/state';
 
 /** Time display type. */
 export type TimeType = 'current' | 'duration' | 'remaining';
 
-export interface TimeCoreProps {
+export interface TimeProps {
   /** Which time value to display. */
   type?: TimeType | undefined;
   /** Symbol prepended to remaining time. */
   negativeSign?: string | undefined;
   /** Custom label for accessibility. */
-  label?: string | ((state: TimeValueState) => string) | undefined;
+  label?: string | ((state: TimeState) => string) | undefined;
 }
 
-export interface TimeValueState {
+export interface TimeState {
   /** Time display type. */
   type: TimeType;
   /** Raw value in seconds. */
@@ -37,7 +37,7 @@ const DEFAULT_LABELS: Record<TimeType, string> = {
 };
 
 export class TimeCore {
-  static readonly defaultProps: NonNullableObject<TimeCoreProps> = {
+  static readonly defaultProps: NonNullableObject<TimeProps> = {
     type: 'current',
     negativeSign: '-',
     label: '',
@@ -45,15 +45,15 @@ export class TimeCore {
 
   #props = { ...TimeCore.defaultProps };
 
-  constructor(props?: TimeCoreProps) {
+  constructor(props?: TimeProps) {
     if (props) this.setProps(props);
   }
 
-  setProps(props: TimeCoreProps): void {
+  setProps(props: TimeProps): void {
     this.#props = defaults(props, TimeCore.defaultProps);
   }
 
-  #getSeconds(time: TimeState): number {
+  #getSeconds(time: MediaTimeState): number {
     const { type } = this.#props;
     switch (type) {
       case 'current':
@@ -67,7 +67,7 @@ export class TimeCore {
     }
   }
 
-  #getText(time: TimeState): string {
+  #getText(time: MediaTimeState): string {
     const { type, negativeSign } = this.#props;
     const seconds = this.#getSeconds(time);
 
@@ -79,7 +79,7 @@ export class TimeCore {
     return formatTime(seconds, time.duration);
   }
 
-  #getPhrase(time: TimeState): string {
+  #getPhrase(time: MediaTimeState): string {
     const { type } = this.#props;
     const seconds = this.#getSeconds(time);
 
@@ -91,12 +91,12 @@ export class TimeCore {
     return formatTimeAsPhrase(seconds);
   }
 
-  #getDatetime(time: TimeState): string {
+  #getDatetime(time: MediaTimeState): string {
     const seconds = this.#getSeconds(time);
     return secondsToIsoDuration(Math.abs(seconds));
   }
 
-  getLabel(time: TimeState): string {
+  getLabel(time: MediaTimeState): string {
     const state = this.getState(time);
     const { label } = this.#props;
 
@@ -110,14 +110,14 @@ export class TimeCore {
     return DEFAULT_LABELS[this.#props.type];
   }
 
-  getAttrs(time: TimeState): Record<string, string | undefined> {
+  getAttrs(time: MediaTimeState): Record<string, string | undefined> {
     return {
       'aria-label': this.getLabel(time),
       'aria-valuetext': this.#getPhrase(time),
     };
   }
 
-  getState(time: TimeState): TimeValueState {
+  getState(time: MediaTimeState): TimeState {
     const seconds = this.#getSeconds(time);
     return {
       type: this.#props.type,
@@ -130,6 +130,6 @@ export class TimeCore {
 }
 
 export namespace TimeCore {
-  export type Props = TimeCoreProps;
-  export type State = TimeValueState;
+  export type Props = TimeProps;
+  export type State = TimeState;
 }

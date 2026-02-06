@@ -23,6 +23,11 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'Components',
-    contents: [{ slug: 'reference/play-button' }, { slug: 'reference/mute-button' }],
+    contents: [
+      { slug: 'reference/play-button' },
+      { slug: 'reference/mute-button' },
+      { slug: 'reference/fullscreen-button' },
+      { slug: 'reference/time' },
+    ],
   },
 ];
