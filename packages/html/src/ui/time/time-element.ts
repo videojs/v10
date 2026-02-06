@@ -1,5 +1,5 @@
 import type { PropertyValues } from '@lit/reactive-element';
-import { TimeCore, TimeDataAttrs, type TimeType } from '@videojs/core';
+import { TimeCore, type TimeType } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectTime } from '@videojs/core/dom';
 
 import { playerContext } from '../../player/context';
@@ -75,6 +75,6 @@ export class TimeElement extends MediaElement {
     }
 
     applyElementProps(this, this.#core.getAttrs(time));
-    applyStateDataAttrs(this, state, TimeDataAttrs);
+    applyStateDataAttrs(this, state);
   }
 }

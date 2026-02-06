@@ -1,6 +1,6 @@
 'use client';
 
-import { TimeCore, TimeDataAttrs } from '@videojs/core';
+import { TimeCore } from '@videojs/core';
 import { logMissingFeature, selectTime } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
@@ -64,7 +64,6 @@ export const Value = forwardRef(function Value(
         },
         elementProps,
       ],
-      stateAttrMap: TimeDataAttrs,
     }
   );
 });
