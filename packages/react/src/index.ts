@@ -34,6 +34,7 @@ export { FullscreenButton, type FullscreenButtonProps } from './ui/fullscreen-bu
 export { useButton } from './ui/hooks/use-button';
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
 export { PlayButton, type PlayButtonProps } from './ui/play-button/play-button';
+export { Poster, type PosterProps } from './ui/poster/poster';
 export { Time } from './ui/time';
 
 // Utilities
