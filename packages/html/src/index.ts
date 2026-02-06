@@ -13,11 +13,10 @@ export * from './player/player-mixin';
 export * from './store/container-mixin';
 export * from './store/provider-mixin';
 export * from './store/types';
-
+// UI Components
+export { FullscreenButtonElement } from './ui/fullscreen-button/fullscreen-button-element';
 // Primitives
 export * from './ui/media-element';
-
-// UI Components
 export { MuteButtonElement } from './ui/mute-button/mute-button-element';
 export { PlayButtonElement } from './ui/play-button/play-button-element';
 export { TimeElement } from './ui/time/time-element';

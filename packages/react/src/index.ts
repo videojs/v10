@@ -29,10 +29,9 @@ export {
   type ProviderProps,
 } from './player/create-player';
 
-// UI Hooks
+// UI
+export { FullscreenButton, type FullscreenButtonProps } from './ui/fullscreen-button/fullscreen-button';
 export { useButton } from './ui/hooks/use-button';
-
-// UI Components
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
 export { PlayButton, type PlayButtonProps } from './ui/play-button/play-button';
 export { Time } from './ui/time';
