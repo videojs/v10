@@ -154,7 +154,11 @@ Questions to ask:
    - Use CMAF-HAM type model (composition with `Ham & Base & AddressableObject`)
    - Follow CLAUDE.md conventions (naming, patterns, etc.)
 3. **Implement to make tests pass**
-4. **Run quality checks in order:**
+4. **Update all.ts exports:**
+   - Add new types and functions to `packages/spf/src/all.ts`
+   - Organize by feature area (State, Events, Reactive, Features, etc.)
+   - Keep alphabetical within sections
+5. **Run quality checks in order:**
    ```bash
    # 1. Run tests
    pnpm test <test-file>
@@ -165,10 +169,13 @@ Questions to ask:
    # 3. Run lint
    pnpm lint:fix:file <files>
 
-   # 4. Re-run tests (verify still passing)
+   # 4. Measure bundle size
+   pnpm -F @videojs/spf size:all
+
+   # 5. Re-run tests (verify still passing)
    pnpm test <test-file>
    ```
-5. **Verify architecture**:
+6. **Verify architecture**:
    - Follows CMAF-HAM model (type composition)
    - Follows CLAUDE.md conventions
    - No obvious code smells
@@ -178,6 +185,8 @@ Questions to ask:
 - All tests passing (GREEN)
 - TypeScript clean
 - Lint clean
+- all.ts updated with new exports
+- Bundle size measured
 - Architecture verified
 
 ### Human Gate 🚦
@@ -276,7 +285,10 @@ Questions to ask:
    - ✅ TypeScript: Clean
    - ✅ Lint: Clean
 
-   ### Bundle Size: ~XKB (estimated)
+   ### Bundle Size:
+   - Minified + Gzipped: X.XX KB (measured via \`pnpm size:all\`)
+   - Percentage of 20 KB target: XX.X%
+   - Remaining budget: XX.XX KB
 
    **Merged to Epic branch** \`<parent-epic-branch>\`
    "
@@ -333,10 +345,14 @@ Before each human gate, verify:
 - Critical path items need extra care
 
 ### Bundle Size Awareness:
-- Check bundle impact for each issue
-- Target < 20KB total for SPF
+- **Measure after each implementation:** `pnpm -F @videojs/spf size:all`
+- **Update all.ts** with new exports before measuring
+- **Target:** < 20 KB total (minified + gzipped)
+- **Track in commits:** Include actual measurements in issue comments
 - Use simple implementations where possible
 - Avoid heavy dependencies
+
+**Current status:** 3.32 KB used (16.6%), 16.68 KB remaining
 
 ---
 
