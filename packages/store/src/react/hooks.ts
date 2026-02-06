@@ -2,7 +2,7 @@
 import type { PlayerStore, PlayerStoreState } from '@videojs/store';
 import { shallowEqual } from '@videojs/utils';
 
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 
 import { PlayerContext } from './context';
 import { useSyncExternalStoreWithSelector } from './use-sync-external-store';
@@ -18,6 +18,14 @@ export function useMediaRef(): (media: HTMLMediaElement | null) => void {
   return (media: HTMLMediaElement | null): void => {
     store.attach({ media });
   };
+}
+
+export function useMedia<T>(media: T): T {
+  const store = useContext(PlayerContext) as PlayerStore;
+  useEffect(() => {
+    store.attach({ media: media as HTMLMediaElement });
+  }, [media, store.attach]);
+  return media;
 }
 
 export function usePlayer<Selection>(
