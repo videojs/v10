@@ -34,6 +34,10 @@
       "types": "./dist/predicate.d.ts",
       "default": "./dist/predicate.js"
     },
+    "./time": {
+      "types": "./dist/time.d.ts",
+      "default": "./dist/time.js"
+    },
     "./types": {
       "types": "./dist/types.d.ts",
       "default": "./dist/types.js"

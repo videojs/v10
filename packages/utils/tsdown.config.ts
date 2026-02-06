@@ -8,6 +8,7 @@ export default defineConfig({
     function: './src/function/index.ts',
     object: './src/object/index.ts',
     predicate: './src/predicate/index.ts',
+    time: './src/time/index.ts',
     types: './src/types/index.ts',
   },
   platform: 'neutral',
