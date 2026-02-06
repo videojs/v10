@@ -72,6 +72,7 @@ export type {
   AudioTrack,
   CmafTrack,
   FrameRate,
+  MediaElementLike,
   MediaInitialization,
   Presentation,
   Segment,
@@ -98,7 +99,37 @@ export type {
   SourceBufferConfig,
 } from './dom/media/mediasource-setup';
 export { setupMediaSource } from './dom/media/mediasource-setup';
-export type { FetchOptions, FetchResult } from './dom/network/fetch';
-export { fetchResource } from './dom/network/fetch';
-export type { PreloadState } from './dom/utils/preload';
-export { readPreloadState } from './dom/utils/preload';
+export type { ResponseLike } from './dom/network/fetch';
+export { fetchResolvable, getResponseText } from './dom/network/fetch';
+
+// =============================================================================
+// Events (F1)
+// =============================================================================
+
+export type { EventListener, EventStream } from './core/events/create-event-stream';
+export { createEventStream, isEventStream } from './core/events/create-event-stream';
+
+// =============================================================================
+// Reactive Composition (F1)
+// =============================================================================
+
+export type { InferObservableValues, Observable } from './core/reactive/combine-latest';
+export { combineLatest } from './core/reactive/combine-latest';
+
+// =============================================================================
+// Features (F1)
+// =============================================================================
+
+export type {
+  PlatformOwners,
+  PresentationAction,
+  PresentationState,
+  UnresolvedPresentation,
+} from './core/features/resolve-presentation';
+export {
+  canResolve,
+  isUnresolved,
+  resolvePresentation,
+  shouldResolve,
+  syncPreloadAttribute,
+} from './core/features/resolve-presentation';
