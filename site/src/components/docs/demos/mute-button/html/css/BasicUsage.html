@@ -1,0 +1,40 @@
+<style>
+  .mute-button-basic {
+    position: relative;
+  }
+
+  .mute-button-basic video {
+    width: 100%;
+    border-radius: 0.5rem;
+  }
+
+  .mute-button-basic__button {
+    height: 50px;
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    padding-inline: 12px;
+    background-color: black;
+    color: white;
+    cursor: pointer;
+  }
+
+  .mute-button-basic__button .show-when-muted { display: none; }
+  .mute-button-basic__button .show-when-unmuted { display: none; }
+  .mute-button-basic__button[data-muted] .show-when-muted { display: inline; }
+  .mute-button-basic__button:not([data-muted]) .show-when-unmuted { display: inline; }
+</style>
+
+<video-player class="mute-button-basic">
+  <video
+    src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
+    autoplay
+    muted
+    playsinline
+    loop
+  ></video>
+  <media-mute-button class="mute-button-basic__button">
+    <span class="show-when-muted">Unmute</span>
+    <span class="show-when-unmuted">Mute</span>
+  </media-mute-button>
+</video-player>

@@ -1,0 +1,40 @@
+<style>
+  .play-button-basic {
+    position: relative;
+  }
+
+  .play-button-basic video {
+    width: 100%;
+    border-radius: 0.5rem;
+  }
+
+  .play-button-basic__button {
+    height: 50px;
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    padding-inline: 12px;
+    background-color: black;
+    color: white;
+    cursor: pointer;
+  }
+
+  .play-button-basic__button .show-when-paused { display: none; }
+  .play-button-basic__button .show-when-playing { display: none; }
+  .play-button-basic__button[data-paused] .show-when-paused { display: inline; }
+  .play-button-basic__button:not([data-paused]) .show-when-playing { display: inline; }
+</style>
+
+<video-player class="play-button-basic">
+  <video
+    src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
+    autoplay
+    muted
+    playsinline
+    loop
+  ></video>
+  <media-play-button class="play-button-basic__button">
+    <span class="show-when-paused">Play</span>
+    <span class="show-when-playing">Pause</span>
+  </media-play-button>
+</video-player>

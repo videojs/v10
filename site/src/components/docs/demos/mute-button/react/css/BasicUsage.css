@@ -1,0 +1,19 @@
+.mute-button-basic {
+  position: relative;
+}
+
+.mute-button-basic video {
+  width: 100%;
+  border-radius: 0.5rem;
+}
+
+.mute-button-basic__button {
+  height: 50px;
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding-inline: 12px;
+  background-color: black;
+  color: white;
+  cursor: pointer;
+}

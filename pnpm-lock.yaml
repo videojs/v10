@@ -397,9 +397,15 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.1.17
         version: 4.1.18(vite@7.2.7(@types/node@22.19.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@videojs/html':
+        specifier: workspace:*
+        version: link:../packages/html
       '@videojs/html-preview':
         specifier: workspace:*
         version: link:../packages/__tech-preview__/html
+      '@videojs/react':
+        specifier: workspace:*
+        version: link:../packages/react
       '@videojs/react-preview':
         specifier: workspace:*
         version: link:../packages/__tech-preview__/react
