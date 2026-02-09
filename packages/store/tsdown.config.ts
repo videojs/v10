@@ -16,6 +16,7 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   sourcemap: true,
   clean: true,
   hash: false,
+  unbundle: true,
   alias: {
     '@': new URL('./src/core', import.meta.url).pathname,
   },
