@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createEventStream } from '../../events/create-event-stream';
-import { combineLatest } from '../../reactive/combine-latest';
 import { createState } from '../../state/create-state';
 import type { AddressableObject, MediaElementLike, Presentation } from '../../types';
 import type { PlatformOwners, PresentationAction } from '../resolve-presentation';
@@ -174,7 +173,6 @@ variant1.m3u8`)
     const resolvedPresentation: Presentation = {
       id: 'pres-1',
       url: 'http://example.com/resolved.m3u8',
-      baseUrl: 'http://example.com/',
       selectionSets: [
         {
           id: 'video-set',
@@ -182,7 +180,7 @@ variant1.m3u8`)
           switchingSets: [
             {
               id: 'switching-1',
-              baseUrl: 'http://example.com/',
+              type: 'video',
               tracks: [
                 {
                   type: 'video',
@@ -190,9 +188,7 @@ variant1.m3u8`)
                   url: 'http://example.com/variant1.m3u8',
                   bandwidth: 1000000,
                   mimeType: 'video/mp4',
-                  par: '1:1',
-                  sar: '1:1',
-                  scanType: 'progressive',
+                  codecs: [],
                 },
               ],
             },
@@ -243,7 +239,6 @@ variant2.m3u8`)
     const resolvedPresentation: Presentation = {
       id: 'pres-1',
       url: 'http://example.com/first.m3u8',
-      baseUrl: 'http://example.com/',
       selectionSets: [],
       startTime: 0,
     };
@@ -396,6 +391,77 @@ variant1.m3u8`)
     });
   });
 
+  describe('event-driven resolution with combineLatest', () => {
+    it('resolves on PLAY event when preload is "none"', async () => {
+      interface State {
+        presentation?: AddressableObject | Presentation | undefined;
+        preload?: 'auto' | 'metadata' | 'none' | undefined;
+      }
+
+      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
+        new Response(`#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=1000000
+variant1.m3u8`)
+      );
+
+      const state = createState<State>({
+        presentation: { url: 'http://example.com/playlist.m3u8' },
+        preload: 'none',
+      });
+
+      const events = createEventStream<PresentationAction>();
+
+      // Use resolvePresentation with combineLatest composition
+      const cleanup = resolvePresentation(state, events);
+
+      // Dispatch initial neutral event to prime combineLatest
+      events.dispatch({ type: 'pause' });
+
+      // Initially shouldn't fetch (preload="none")
+      expect(fetchSpy).not.toHaveBeenCalled();
+
+      // Dispatch PLAY event
+      events.dispatch({ type: 'play' });
+
+      // Wait for resolution
+      await vi.waitFor(() => {
+        expect(state.current.presentation).toHaveProperty('id');
+      });
+
+      expect(fetchSpy).toHaveBeenCalledOnce();
+
+      cleanup();
+    });
+
+    it('does not resolve on non-PLAY events', async () => {
+      interface State {
+        presentation?: AddressableObject | Presentation | undefined;
+        preload?: 'auto' | 'metadata' | 'none' | undefined;
+      }
+
+      const fetchSpy = vi.spyOn(global, 'fetch');
+
+      const state = createState<State>({
+        presentation: { url: 'http://example.com/playlist.m3u8' },
+        preload: 'none',
+      });
+
+      const events = createEventStream<PresentationAction>();
+
+      const cleanup = resolvePresentation(state, events);
+
+      // Dispatch PAUSE event (not PLAY) - this primes combineLatest but shouldn't trigger resolution
+      events.dispatch({ type: 'pause' });
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(state.current.presentation).toEqual({ url: 'http://example.com/playlist.m3u8' });
+
+      cleanup();
+    });
+  });
+
   describe('syncPreloadAttribute', () => {
     it('syncs preload from mediaElement to state', () => {
       interface State {
@@ -492,77 +558,6 @@ variant1.m3u8`)
     });
   });
 
-  describe('event-driven resolution with combineLatest', () => {
-    it('resolves on PLAY event when preload is "none"', async () => {
-      interface State {
-        presentation?: AddressableObject | Presentation | undefined;
-        preload?: 'auto' | 'metadata' | 'none' | undefined;
-      }
-
-      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
-        new Response(`#EXTM3U
-#EXT-X-STREAM-INF:BANDWIDTH=1000000
-variant1.m3u8`)
-      );
-
-      const state = createState<State>({
-        presentation: { url: 'http://example.com/playlist.m3u8' },
-        preload: 'none',
-      });
-
-      const events = createEventStream<PresentationAction>();
-
-      // Use resolvePresentation with combineLatest composition
-      const cleanup = resolvePresentation(state, events);
-
-      // Dispatch initial neutral event to prime combineLatest
-      events.dispatch({ type: 'pause' });
-
-      // Initially shouldn't fetch (preload="none")
-      expect(fetchSpy).not.toHaveBeenCalled();
-
-      // Dispatch PLAY event
-      events.dispatch({ type: 'play' });
-
-      // Wait for resolution
-      await vi.waitFor(() => {
-        expect(state.current.presentation).toHaveProperty('id');
-      });
-
-      expect(fetchSpy).toHaveBeenCalledOnce();
-
-      cleanup();
-    });
-
-    it('does not resolve on non-PLAY events', async () => {
-      interface State {
-        presentation?: AddressableObject | Presentation | undefined;
-        preload?: 'auto' | 'metadata' | 'none' | undefined;
-      }
-
-      const fetchSpy = vi.spyOn(global, 'fetch');
-
-      const state = createState<State>({
-        presentation: { url: 'http://example.com/playlist.m3u8' },
-        preload: 'none',
-      });
-
-      const events = createEventStream<PresentationAction>();
-
-      const cleanup = resolvePresentation(state, events);
-
-      // Dispatch PAUSE event (not PLAY) - this primes combineLatest but shouldn't trigger resolution
-      events.dispatch({ type: 'pause' });
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(fetchSpy).not.toHaveBeenCalled();
-      expect(state.current.presentation).toEqual({ url: 'http://example.com/playlist.m3u8' });
-
-      cleanup();
-    });
-  });
-
   describe('deduplication', () => {
     it('does not trigger multiple fetches for same presentation', async () => {
       interface State {
@@ -651,14 +646,6 @@ variant1.m3u8`)
 });
 
 describe('shouldResolve', () => {
-  const resolvedPresentation: Presentation = {
-    id: 'pres-1',
-    url: 'http://example.com/resolved.m3u8',
-    baseUrl: 'http://example.com/',
-    selectionSets: [],
-    startTime: 0,
-  };
-
   it('returns true when preload is "auto"', () => {
     const result = shouldResolve(
       { presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'auto' },
@@ -718,7 +705,6 @@ describe('isUnresolved', () => {
   const resolvedPresentation: Presentation = {
     id: 'pres-1',
     url: 'http://example.com/resolved.m3u8',
-    baseUrl: 'http://example.com/',
     selectionSets: [],
     startTime: 0,
   };

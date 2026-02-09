@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { UnresolvedAudioTrack, UnresolvedTextTrack, UnresolvedVideoTrack } from '../../types';
+import type { PartiallyResolvedAudioTrack, PartiallyResolvedTextTrack, PartiallyResolvedVideoTrack } from '../../types';
 import { parseMediaPlaylist } from '../parse-media-playlist';
 
 describe('parseMediaPlaylist', () => {
   describe('Video tracks', () => {
-    const unresolvedVideo: UnresolvedVideoTrack = {
+    const unresolvedVideo: PartiallyResolvedVideoTrack = {
       type: 'video',
       id: 'video-0',
       url: 'https://example.com/video/playlist.m3u8',
@@ -13,14 +13,10 @@ describe('parseMediaPlaylist', () => {
       height: 720,
       codecs: ['avc1.4d401f'],
       frameRate: { frameRateNumerator: 30 },
-      // Type-specific defaults (from P1)
       mimeType: 'video/mp4',
-      par: '1:1',
-      sar: '1:1',
-      scanType: 'progressive',
     };
 
-    it('returns VideoTrack for UnresolvedVideoTrack input (type inference)', () => {
+    it('returns VideoTrack for PartiallyResolvedVideoTrack input (type inference)', () => {
       const playlistText = `#EXTM3U
 #EXT-X-VERSION:7
 #EXT-X-TARGETDURATION:6
@@ -38,11 +34,11 @@ segment1.m4s
       // TypeScript should infer result as VideoTrack
       expect(result.type).toBe('video');
       expect(result.id).toBe('video-0');
-      expect(result.baseUrl).toBe('https://example.com/video/playlist.m3u8');
       expect(result.url).toBe('https://example.com/video/playlist.m3u8');
       expect(result.width).toBe(1280);
       expect(result.height).toBe(720);
       expect(result.bandwidth).toBe(1400000);
+      expect(result.startTime).toBe(0);
       expect(result.segments).toHaveLength(2);
     });
 
@@ -55,11 +51,11 @@ segment.m4s
 
       const result = parseMediaPlaylist(playlistText, unresolvedVideo);
 
-      // HAM composition: Ham & Base & Duration & AddressableObject & Track
+      // HAM composition: Ham & AddressableObject & TimeSpan & Track
       expect(result.id).toBeDefined(); // Ham
-      expect(result.baseUrl).toBeDefined(); // Base
-      expect(result.duration).toBe(5.0); // Duration
       expect(result.url).toBeDefined(); // AddressableObject
+      expect(result.startTime).toBe(0); // TimeSpan
+      expect(result.duration).toBe(5.0); // TimeSpan
       expect(result.segments).toBeDefined(); // Track
       expect(result.initialization).toBeDefined(); // Track
 
@@ -67,9 +63,6 @@ segment.m4s
       expect(result.width).toBe(1280);
       expect(result.height).toBe(720);
       expect(result.frameRate).toBeDefined();
-      expect(result.par).toBe('1:1');
-      expect(result.sar).toBe('1:1');
-      expect(result.scanType).toBe('progressive');
     });
 
     it('segments follow HAM Segment type (Ham & AddressableObject & Duration)', () => {
@@ -126,7 +119,7 @@ main.mp4
     });
 
     it('handles Mux CMAF video playlist', () => {
-      const muxUnresolved: UnresolvedVideoTrack = {
+      const muxUnresolved: PartiallyResolvedVideoTrack = {
         type: 'video',
         id: 'video-0',
         url: 'https://example.com/video-med.m3u8',
@@ -135,9 +128,6 @@ main.mp4
         height: 432,
         codecs: ['avc1.64001f'],
         mimeType: 'video/mp4',
-        par: '1:1',
-        sar: '1:1',
-        scanType: 'progressive',
       };
 
       const muxPlaylist = `#EXTM3U
@@ -169,7 +159,7 @@ chunk-00003.m4s
   });
 
   describe('Audio tracks', () => {
-    const unresolvedAudio: UnresolvedAudioTrack = {
+    const unresolvedAudio: PartiallyResolvedAudioTrack = {
       type: 'audio',
       id: 'audio-0',
       url: 'https://example.com/audio/playlist.m3u8',
@@ -184,7 +174,7 @@ chunk-00003.m4s
       channels: 2,
     };
 
-    it('returns AudioTrack for UnresolvedAudioTrack input (type inference)', () => {
+    it('returns AudioTrack for PartiallyResolvedAudioTrack input (type inference)', () => {
       const playlistText = `#EXTM3U
 #EXT-X-VERSION:7
 #EXT-X-MAP:URI="init.mp4"
@@ -221,7 +211,7 @@ segment.m4s
     });
 
     it('handles Mux CMAF audio playlist', () => {
-      const muxAudio: UnresolvedAudioTrack = {
+      const muxAudio: PartiallyResolvedAudioTrack = {
         type: 'audio',
         id: 'audio-0',
         url: 'https://example.com/audio-hi.m3u8',
@@ -255,7 +245,7 @@ audio-chunk-00002.m4s
   });
 
   describe('Text tracks', () => {
-    const unresolvedText: UnresolvedTextTrack = {
+    const unresolvedText: PartiallyResolvedTextTrack = {
       type: 'text',
       id: 'text-0',
       url: 'https://example.com/subs/en.m3u8',
@@ -270,7 +260,7 @@ audio-chunk-00002.m4s
       codecs: [],
     };
 
-    it('returns TextTrack for UnresolvedTextTrack input (type inference)', () => {
+    it('returns TextTrack for PartiallyResolvedTextTrack input (type inference)', () => {
       const playlistText = `#EXTM3U
 #EXT-X-TARGETDURATION:10
 #EXT-X-PLAYLIST-TYPE:VOD

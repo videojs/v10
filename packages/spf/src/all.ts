@@ -74,6 +74,10 @@ export type {
   FrameRate,
   MediaElementLike,
   MediaInitialization,
+  PartiallyResolvedAudioTrack,
+  PartiallyResolvedTextTrack,
+  PartiallyResolvedTrack,
+  PartiallyResolvedVideoTrack,
   Presentation,
   Segment,
   SegmentIdentity,
@@ -81,10 +85,6 @@ export type {
   SelectionStrategy,
   TextTrack,
   Track,
-  UnresolvedAudioTrack,
-  UnresolvedTextTrack,
-  UnresolvedTrack,
-  UnresolvedVideoTrack,
   VideoTrack,
 } from './core/types';
 export { hasPresentationDuration, isResolvedTrack } from './core/types';

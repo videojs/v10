@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { UnresolvedAudioTrack, UnresolvedTextTrack, UnresolvedVideoTrack } from '../../types';
+import type { PartiallyResolvedAudioTrack, PartiallyResolvedTextTrack, PartiallyResolvedVideoTrack } from '../../types';
 import { parseMultivariantPlaylist } from '../parse-multivariant';
 
 describe('parseMultivariantPlaylist', () => {
@@ -10,12 +10,12 @@ describe('parseMultivariantPlaylist', () => {
 #EXT-X-STREAM-INF:BANDWIDTH=800000
 video.m3u8`;
 
-    const result = parseMultivariantPlaylist(text, baseUrl);
+    const result = parseMultivariantPlaylist(text, { url: baseUrl });
 
     expect(result).toHaveProperty('id');
-    expect(result).toHaveProperty('baseUrl', baseUrl);
     expect(result).toHaveProperty('url', baseUrl);
     expect(result).toHaveProperty('selectionSets');
+    expect(result).toHaveProperty('startTime', 0);
     expect(result.duration).toBeUndefined();
   });
 
@@ -29,7 +29,7 @@ video-720p.m3u8
 #EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1920x1080,CODECS="avc1.640028,mp4a.40.2"
 video-1080p.m3u8`;
 
-    const result = parseMultivariantPlaylist(text, baseUrl);
+    const result = parseMultivariantPlaylist(text, { url: baseUrl });
 
     // Should have video selection set
     const videoSet = result.selectionSets.find((s) => s.type === 'video');
@@ -42,46 +42,39 @@ video-1080p.m3u8`;
     // First track (360p)
     expect(videoTracks?.[0]).toMatchObject({
       type: 'video',
-      id: 'video-0',
       bandwidth: 800000,
       width: 640,
       height: 360,
       codecs: ['avc1.4d401e'],
     });
+    expect(typeof videoTracks?.[0]?.id).toBe('string');
 
     // Second track (720p)
     expect(videoTracks?.[1]).toMatchObject({
       type: 'video',
-      id: 'video-1',
       bandwidth: 1400000,
       width: 1280,
       height: 720,
       codecs: ['avc1.4d401f'],
       mimeType: 'video/mp4',
-      par: '1:1',
-      sar: '1:1',
-      scanType: 'progressive',
     });
+    expect(typeof videoTracks?.[1]?.id).toBe('string');
 
-    // Third track (1080p) - verify all fields are seed values for P2
-    const track1080p = videoTracks?.[2] as UnresolvedVideoTrack;
-    expect(track1080p).toEqual({
+    // Third track (1080p) - verify all fields
+    const track1080p = videoTracks?.[2] as PartiallyResolvedVideoTrack;
+    expect(track1080p).toMatchObject({
       type: 'video',
-      id: 'video-2',
       url: 'https://example.com/video-1080p.m3u8',
       bandwidth: 2800000,
       width: 1920,
       height: 1080,
       codecs: ['avc1.640028'],
-      // Type-specific defaults (seed values for P2)
       mimeType: 'video/mp4',
-      par: '1:1',
-      sar: '1:1',
-      scanType: 'progressive',
-      // Optional fields not present
-      frameRate: undefined,
-      audioGroupId: undefined,
     });
+    expect(typeof track1080p.id).toBe('string');
+    // Optional fields not present
+    expect(track1080p.frameRate).toBeUndefined();
+    expect(track1080p.audioGroupId).toBeUndefined();
   });
 
   it('handles relative URLs by resolving against baseUrl', () => {
@@ -91,7 +84,7 @@ video/playlist.m3u8
 #EXT-X-STREAM-INF:BANDWIDTH=1400000
 ../other/playlist.m3u8`;
 
-    const result = parseMultivariantPlaylist(text, baseUrl);
+    const result = parseMultivariantPlaylist(text, { url: baseUrl });
     const videoSet = result.selectionSets.find((s) => s.type === 'video');
     const videoTracks = videoSet?.switchingSets[0]?.tracks;
 
@@ -104,7 +97,7 @@ video/playlist.m3u8
 #EXT-X-STREAM-INF:BANDWIDTH=800000
 https://cdn.example.com/video.m3u8`;
 
-    const result = parseMultivariantPlaylist(text, baseUrl);
+    const result = parseMultivariantPlaylist(text, { url: baseUrl });
     const videoSet = result.selectionSets.find((s) => s.type === 'video');
     const videoTracks = videoSet?.switchingSets[0]?.tracks;
 
@@ -116,7 +109,7 @@ https://cdn.example.com/video.m3u8`;
 #EXT-X-STREAM-INF:BANDWIDTH=800000
 video.m3u8`;
 
-    const result = parseMultivariantPlaylist(text, baseUrl);
+    const result = parseMultivariantPlaylist(text, { url: baseUrl });
     const videoSet = result.selectionSets.find((s) => s.type === 'video');
     const videoTracks = videoSet?.switchingSets[0]?.tracks;
 
@@ -124,17 +117,17 @@ video.m3u8`;
       type: 'video',
       bandwidth: 800000,
     });
-    const videoTrack = videoTracks?.[0] as UnresolvedVideoTrack | undefined;
+    const videoTrack = videoTracks?.[0] as PartiallyResolvedVideoTrack | undefined;
     expect(videoTrack?.width).toBeUndefined();
     expect(videoTrack?.height).toBeUndefined();
-    expect(videoTrack?.codecs).toBeUndefined();
+    expect(videoTrack?.codecs).toEqual([]); // Default when not in playlist
   });
 
   it('handles Windows line endings (CRLF)', () => {
     const text =
       '#EXTM3U\r\n#EXT-X-STREAM-INF:BANDWIDTH=800000\r\nvideo.m3u8\r\n#EXT-X-STREAM-INF:BANDWIDTH=1400000\r\nvideo2.m3u8';
 
-    const result = parseMultivariantPlaylist(text, baseUrl);
+    const result = parseMultivariantPlaylist(text, { url: baseUrl });
     const videoSet = result.selectionSets.find((s) => s.type === 'video');
     const videoTracks = videoSet?.switchingSets[0]?.tracks;
 
@@ -147,7 +140,7 @@ video.m3u8`;
 #EXT-X-STREAM-INF:BANDWIDTH=800000
 video.m3u8`;
 
-    const result = parseMultivariantPlaylist(text, baseUrl);
+    const result = parseMultivariantPlaylist(text, { url: baseUrl });
     const videoSet = result.selectionSets.find((s) => s.type === 'video');
     const videoTracks = videoSet?.switchingSets[0]?.tracks;
 
@@ -157,7 +150,7 @@ video.m3u8`;
   it('handles empty playlist (only #EXTM3U)', () => {
     const text = `#EXTM3U`;
 
-    const result = parseMultivariantPlaylist(text, baseUrl);
+    const result = parseMultivariantPlaylist(text, { url: baseUrl });
 
     expect(result.selectionSets).toHaveLength(0);
   });
@@ -167,23 +160,23 @@ video.m3u8`;
 #EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360,FRAME-RATE=29.970
 video.m3u8`;
 
-    const result = parseMultivariantPlaylist(text, baseUrl);
+    const result = parseMultivariantPlaylist(text, { url: baseUrl });
     const videoSet = result.selectionSets.find((s) => s.type === 'video');
     const videoTracks = videoSet?.switchingSets[0]?.tracks;
 
-    const videoTrack = videoTracks?.[0] as UnresolvedVideoTrack | undefined;
+    const videoTrack = videoTracks?.[0] as PartiallyResolvedVideoTrack | undefined;
     expect(videoTrack?.frameRate).toEqual({
       frameRateNumerator: 30000,
       frameRateDenominator: 1001,
     });
   });
 
-  it('returns UnresolvedVideoTrack (no segments property)', () => {
+  it('returns PartiallyResolvedVideoTrack (no segments property)', () => {
     const text = `#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=800000
 video.m3u8`;
 
-    const result = parseMultivariantPlaylist(text, baseUrl);
+    const result = parseMultivariantPlaylist(text, { url: baseUrl });
     const videoSet = result.selectionSets.find((s) => s.type === 'video');
     const videoTracks = videoSet?.switchingSets[0]?.tracks;
 
@@ -207,7 +200,7 @@ video-med.m3u8
 video-lo.m3u8`;
 
     it('parses Mux CMAF playlist with demuxed audio', () => {
-      const result = parseMultivariantPlaylist(muxPlaylist, baseUrl);
+      const result = parseMultivariantPlaylist(muxPlaylist, { url: baseUrl });
 
       // Should have both video and audio selection sets
       expect(result.selectionSets).toHaveLength(2);
@@ -220,7 +213,7 @@ video-lo.m3u8`;
     });
 
     it('parses video tracks with AUDIO group reference', () => {
-      const result = parseMultivariantPlaylist(muxPlaylist, baseUrl);
+      const result = parseMultivariantPlaylist(muxPlaylist, { url: baseUrl });
       const videoSet = result.selectionSets.find((s) => s.type === 'video');
       const videoTracks = videoSet?.switchingSets[0]?.tracks;
 
@@ -246,13 +239,13 @@ video-lo.m3u8`;
     });
 
     it('parses all audio tracks from EXT-X-MEDIA', () => {
-      const result = parseMultivariantPlaylist(muxPlaylist, baseUrl);
+      const result = parseMultivariantPlaylist(muxPlaylist, { url: baseUrl });
       const audioSet = result.selectionSets.find((s) => s.type === 'audio');
       const audioTracks = audioSet?.switchingSets[0]?.tracks;
 
       expect(audioTracks).toHaveLength(3);
 
-      expect(audioTracks?.map((t) => (t as UnresolvedAudioTrack).groupId)).toEqual([
+      expect(audioTracks?.map((t) => (t as PartiallyResolvedAudioTrack).groupId)).toEqual([
         'audio-hi-0',
         'audio-med-0',
         'audio-lo-0',
@@ -260,21 +253,21 @@ video-lo.m3u8`;
     });
 
     it('extracts audio codecs from referencing streams', () => {
-      const result = parseMultivariantPlaylist(muxPlaylist, baseUrl);
+      const result = parseMultivariantPlaylist(muxPlaylist, { url: baseUrl });
       const audioSet = result.selectionSets.find((s) => s.type === 'audio');
       const audioTracks = audioSet?.switchingSets[0]?.tracks;
 
       // audio-med-0 is referenced by video stream - should have codec
-      const audioMed = audioTracks?.find((t) => (t as UnresolvedAudioTrack).groupId === 'audio-med-0') as
-        | UnresolvedAudioTrack
+      const audioMed = audioTracks?.find((t) => (t as PartiallyResolvedAudioTrack).groupId === 'audio-med-0') as
+        | PartiallyResolvedAudioTrack
         | undefined;
       expect(audioMed?.codecs).toEqual(['mp4a.40.2']);
 
       // audio-hi-0 is NOT referenced - no codec info
-      const audioHi = audioTracks?.find((t) => (t as UnresolvedAudioTrack).groupId === 'audio-hi-0') as
-        | UnresolvedAudioTrack
+      const audioHi = audioTracks?.find((t) => (t as PartiallyResolvedAudioTrack).groupId === 'audio-hi-0') as
+        | PartiallyResolvedAudioTrack
         | undefined;
-      expect(audioHi?.codecs).toBeUndefined();
+      expect(audioHi?.codecs).toEqual([]); // Default when not extracted from streams
     });
   });
 
@@ -286,7 +279,7 @@ video-lo.m3u8`;
 #EXT-X-STREAM-INF:BANDWIDTH=800000,SUBTITLES="subs"
 video.m3u8`;
 
-      const result = parseMultivariantPlaylist(text, baseUrl);
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
       const textSet = result.selectionSets.find((s) => s.type === 'text');
       const textTracks = textSet?.switchingSets[0]?.tracks;
 
@@ -294,16 +287,15 @@ video.m3u8`;
 
       expect(textTracks?.[0]).toMatchObject({
         type: 'text',
-        id: 'text-0',
         label: 'English',
         language: 'en',
         kind: 'subtitles',
         default: true,
       });
+      expect(typeof textTracks?.[0]?.id).toBe('string');
 
       expect(textTracks?.[1]).toMatchObject({
         type: 'text',
-        id: 'text-1',
         label: 'Spanish',
         language: 'es',
         kind: 'subtitles',
@@ -316,11 +308,11 @@ video.m3u8`;
 #EXT-X-STREAM-INF:BANDWIDTH=800000
 video.m3u8`;
 
-      const result = parseMultivariantPlaylist(text, baseUrl);
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
       const textSet = result.selectionSets.find((s) => s.type === 'text');
       const textTracks = textSet?.switchingSets[0]?.tracks;
 
-      const textTrack = textTracks?.[0] as UnresolvedTextTrack | undefined;
+      const textTrack = textTracks?.[0] as PartiallyResolvedTextTrack | undefined;
       expect(textTrack?.forced).toBe(true);
     });
 
@@ -330,7 +322,7 @@ video.m3u8`;
 #EXT-X-STREAM-INF:BANDWIDTH=800000
 video.m3u8`;
 
-      const result = parseMultivariantPlaylist(text, baseUrl);
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
       const textSet = result.selectionSets.find((s) => s.type === 'text');
 
       // No text tracks should be created without URI
@@ -348,7 +340,7 @@ video.m3u8
 
 `;
 
-      const result = parseMultivariantPlaylist(text, baseUrl);
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
       const videoSet = result.selectionSets.find((s) => s.type === 'video');
       const videoTracks = videoSet?.switchingSets[0]?.tracks;
 
@@ -362,7 +354,7 @@ video.m3u8
 #EXT-X-STREAM-INF:BANDWIDTH=800000
 video.m3u8`;
 
-      const result = parseMultivariantPlaylist(text, baseUrl);
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
 
       // Should parse without errors
       expect(result.selectionSets).toHaveLength(1);
@@ -372,9 +364,134 @@ video.m3u8`;
       const text = `#EXTM3U
 #EXT-X-VERSION:7`;
 
-      const result = parseMultivariantPlaylist(text, baseUrl);
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
 
       expect(result.selectionSets).toHaveLength(0);
+    });
+
+    it('parses complex real-world playlist with multiple audio groups and codecs', () => {
+      const text = `#EXTM3U
+#EXT-X-VERSION:6
+#EXT-X-INDEPENDENT-SEGMENTS
+
+
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=2168183,BANDWIDTH=2177116,CODECS="avc1.640020,mp4a.40.2",RESOLUTION=960x540,FRAME-RATE=60.000,CLOSED-CAPTIONS="cc1",AUDIO="aud1",SUBTITLES="sub1"
+v5/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=7968416,BANDWIDTH=8001098,CODECS="avc1.64002a,mp4a.40.2",RESOLUTION=1920x1080,FRAME-RATE=60.000,CLOSED-CAPTIONS="cc1",AUDIO="aud1",SUBTITLES="sub1"
+v9/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=6170000,BANDWIDTH=6312875,CODECS="avc1.64002a,mp4a.40.2",RESOLUTION=1920x1080,FRAME-RATE=60.000,CLOSED-CAPTIONS="cc1",AUDIO="aud1",SUBTITLES="sub1"
+v8/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=4670769,BANDWIDTH=4943747,CODECS="avc1.64002a,mp4a.40.2",RESOLUTION=1920x1080,FRAME-RATE=60.000,CLOSED-CAPTIONS="cc1",AUDIO="aud1",SUBTITLES="sub1"
+v7/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=3168702,BANDWIDTH=3216424,CODECS="avc1.640020,mp4a.40.2",RESOLUTION=1280x720,FRAME-RATE=60.000,CLOSED-CAPTIONS="cc1",AUDIO="aud1",SUBTITLES="sub1"
+v6/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=1265132,BANDWIDTH=1268994,CODECS="avc1.64001e,mp4a.40.2",RESOLUTION=768x432,FRAME-RATE=30.000,CLOSED-CAPTIONS="cc1",AUDIO="aud1",SUBTITLES="sub1"
+v4/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=895755,BANDWIDTH=902298,CODECS="avc1.64001e,mp4a.40.2",RESOLUTION=640x360,FRAME-RATE=30.000,CLOSED-CAPTIONS="cc1",AUDIO="aud1",SUBTITLES="sub1"
+v3/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=530721,BANDWIDTH=541052,CODECS="avc1.640015,mp4a.40.2",RESOLUTION=480x270,FRAME-RATE=30.000,CLOSED-CAPTIONS="cc1",AUDIO="aud1",SUBTITLES="sub1"
+v2/prog_index.m3u8
+
+
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=2390686,BANDWIDTH=2399619,CODECS="avc1.640020,ac-3",RESOLUTION=960x540,FRAME-RATE=60.000,CLOSED-CAPTIONS="cc1",AUDIO="aud2",SUBTITLES="sub1"
+v5/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=8190919,BANDWIDTH=8223601,CODECS="avc1.64002a,ac-3",RESOLUTION=1920x1080,FRAME-RATE=60.000,CLOSED-CAPTIONS="cc1",AUDIO="aud2",SUBTITLES="sub1"
+v9/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=6392503,BANDWIDTH=6535378,CODECS="avc1.64002a,ac-3",RESOLUTION=1920x1080,FRAME-RATE=60.000,CLOSED-CAPTIONS="cc1",AUDIO="aud2",SUBTITLES="sub1"
+v8/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=4893272,BANDWIDTH=5166250,CODECS="avc1.64002a,ac-3",RESOLUTION=1920x1080,FRAME-RATE=60.000,CLOSED-CAPTIONS="cc1",AUDIO="aud2",SUBTITLES="sub1"
+v7/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=3391205,BANDWIDTH=3438927,CODECS="avc1.640020,ac-3",RESOLUTION=1280x720,FRAME-RATE=60.000,CLOSED-CAPTIONS="cc1",AUDIO="aud2",SUBTITLES="sub1"
+v6/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=1487635,BANDWIDTH=1491497,CODECS="avc1.64001e,ac-3",RESOLUTION=768x432,FRAME-RATE=30.000,CLOSED-CAPTIONS="cc1",AUDIO="aud2",SUBTITLES="sub1"
+v4/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=1118258,BANDWIDTH=1124801,CODECS="avc1.64001e,ac-3",RESOLUTION=640x360,FRAME-RATE=30.000,CLOSED-CAPTIONS="cc1",AUDIO="aud2",SUBTITLES="sub1"
+v3/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=753224,BANDWIDTH=763555,CODECS="avc1.640015,ac-3",RESOLUTION=480x270,FRAME-RATE=30.000,CLOSED-CAPTIONS="cc1",AUDIO="aud2",SUBTITLES="sub1"
+v2/prog_index.m3u8
+
+
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=2198686,BANDWIDTH=2207619,CODECS="avc1.640020,ec-3",RESOLUTION=960x540,FRAME-RATE=60.000,CLOSED-CAPTIONS="cc1",AUDIO="aud3",SUBTITLES="sub1"
+v5/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=7998919,BANDWIDTH=8031601,CODECS="avc1.64002a,ec-3",RESOLUTION=1920x1080,FRAME-RATE=60.000,CLOSED-CAPTIONS="cc1",AUDIO="aud3",SUBTITLES="sub1"
+v9/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=6200503,BANDWIDTH=6343378,CODECS="avc1.64002a,ec-3",RESOLUTION=1920x1080,FRAME-RATE=60.000,CLOSED-CAPTIONS="cc1",AUDIO="aud3",SUBTITLES="sub1"
+v8/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=4701272,BANDWIDTH=4974250,CODECS="avc1.64002a,ec-3",RESOLUTION=1920x1080,FRAME-RATE=60.000,CLOSED-CAPTIONS="cc1",AUDIO="aud3",SUBTITLES="sub1"
+v7/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=3199205,BANDWIDTH=3246927,CODECS="avc1.640020,ec-3",RESOLUTION=1280x720,FRAME-RATE=60.000,CLOSED-CAPTIONS="cc1",AUDIO="aud3",SUBTITLES="sub1"
+v6/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=1295635,BANDWIDTH=1299497,CODECS="avc1.64001e,ec-3",RESOLUTION=768x432,FRAME-RATE=30.000,CLOSED-CAPTIONS="cc1",AUDIO="aud3",SUBTITLES="sub1"
+v4/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=926258,BANDWIDTH=932801,CODECS="avc1.64001e,ec-3",RESOLUTION=640x360,FRAME-RATE=30.000,CLOSED-CAPTIONS="cc1",AUDIO="aud3",SUBTITLES="sub1"
+v3/prog_index.m3u8
+#EXT-X-STREAM-INF:AVERAGE-BANDWIDTH=561224,BANDWIDTH=571555,CODECS="avc1.640015,ec-3",RESOLUTION=480x270,FRAME-RATE=30.000,CLOSED-CAPTIONS="cc1",AUDIO="aud3",SUBTITLES="sub1"
+v2/prog_index.m3u8
+
+
+#EXT-X-I-FRAME-STREAM-INF:AVERAGE-BANDWIDTH=183689,BANDWIDTH=187492,CODECS="avc1.64002a",RESOLUTION=1920x1080,URI="v7/iframe_index.m3u8"
+#EXT-X-I-FRAME-STREAM-INF:AVERAGE-BANDWIDTH=132672,BANDWIDTH=136398,CODECS="avc1.640020",RESOLUTION=1280x720,URI="v6/iframe_index.m3u8"
+#EXT-X-I-FRAME-STREAM-INF:AVERAGE-BANDWIDTH=97767,BANDWIDTH=101378,CODECS="avc1.640020",RESOLUTION=960x540,URI="v5/iframe_index.m3u8"
+#EXT-X-I-FRAME-STREAM-INF:AVERAGE-BANDWIDTH=75722,BANDWIDTH=77818,CODECS="avc1.64001e",RESOLUTION=768x432,URI="v4/iframe_index.m3u8"
+#EXT-X-I-FRAME-STREAM-INF:AVERAGE-BANDWIDTH=63522,BANDWIDTH=65091,CODECS="avc1.64001e",RESOLUTION=640x360,URI="v3/iframe_index.m3u8"
+#EXT-X-I-FRAME-STREAM-INF:AVERAGE-BANDWIDTH=39678,BANDWIDTH=40282,CODECS="avc1.640015",RESOLUTION=480x270,URI="v2/iframe_index.m3u8"
+
+
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="aud1",LANGUAGE="en",NAME="English",AUTOSELECT=YES,DEFAULT=YES,CHANNELS="2",URI="a1/prog_index.m3u8"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="aud2",LANGUAGE="en",NAME="English",AUTOSELECT=YES,DEFAULT=YES,CHANNELS="6",URI="a2/prog_index.m3u8"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="aud3",LANGUAGE="en",NAME="English",AUTOSELECT=YES,DEFAULT=YES,CHANNELS="6",URI="a3/prog_index.m3u8"
+
+
+#EXT-X-MEDIA:TYPE=CLOSED-CAPTIONS,GROUP-ID="cc1",LANGUAGE="en",NAME="English",AUTOSELECT=YES,DEFAULT=YES,INSTREAM-ID="CC1"
+
+
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="sub1",LANGUAGE="en",NAME="English",AUTOSELECT=YES,DEFAULT=YES,FORCED=NO,URI="s1/en/prog_index.m3u8"
+`;
+
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+
+      // Should have video, audio, and text selection sets
+      expect(result.selectionSets.length).toBeGreaterThanOrEqual(2);
+
+      // Find video selection set
+      const videoSet = result.selectionSets.find((s) => s.type === 'video');
+      expect(videoSet).toBeDefined();
+      expect(videoSet!.switchingSets).toBeDefined();
+
+      // Should have 24 video variants (8 resolutions × 3 codec combinations)
+      const allVideoTracks = videoSet!.switchingSets.flatMap((ss) => ss.tracks);
+      expect(allVideoTracks.length).toBe(24);
+
+      // Check first track details (960x540, 60fps, avc1+mp4a, aud1)
+      const firstTrack = allVideoTracks.find((t) => t.bandwidth === 2177116);
+      expect(firstTrack).toBeDefined();
+      expect(firstTrack!.width).toBe(960);
+      expect(firstTrack!.height).toBe(540);
+      expect(firstTrack!.frameRate).toEqual({ frameRateNumerator: 60 });
+      expect(firstTrack!.codecs).toContain('avc1.640020');
+      expect(firstTrack!.url).toBe('https://example.com/v5/prog_index.m3u8');
+
+      // Find audio selection set
+      const audioSet = result.selectionSets.find((s) => s.type === 'audio');
+      expect(audioSet).toBeDefined();
+      expect(audioSet!.switchingSets.length).toBeGreaterThan(0);
+
+      // Should have 3 audio groups (aud1, aud2, aud3)
+      const allAudioTracks = audioSet!.switchingSets.flatMap((ss) => ss.tracks);
+      expect(allAudioTracks.length).toBe(3);
+
+      // Check audio track details
+      const stereoTrack = allAudioTracks.find((t) => t.url.includes('a1/'));
+      expect(stereoTrack).toBeDefined();
+
+      // Find text/subtitle selection set
+      const textSet = result.selectionSets.find((s) => s.type === 'text');
+      expect(textSet).toBeDefined();
+
+      // Should have subtitle track
+      const allTextTracks = textSet!.switchingSets.flatMap((ss) => ss.tracks);
+      expect(allTextTracks.length).toBeGreaterThan(0);
+      expect(allTextTracks[0]?.url).toContain('s1/en/prog_index.m3u8');
     });
   });
 });

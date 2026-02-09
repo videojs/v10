@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { UnresolvedVideoTrack } from '../../types';
+import type { PartiallyResolvedVideoTrack } from '../../types';
 import { DEFAULT_QUALITY_CONFIG, selectQuality } from '../quality-selection';
 
 // Helper to create test tracks
-const createTrack = (id: string, bandwidth: number, width = 1920, height = 1080): UnresolvedVideoTrack => ({
+const createTrack = (id: string, bandwidth: number, width = 1920, height = 1080): PartiallyResolvedVideoTrack => ({
   type: 'video',
   id,
   url: `https://example.com/${id}.m3u8`,
@@ -11,15 +11,12 @@ const createTrack = (id: string, bandwidth: number, width = 1920, height = 1080)
   width,
   height,
   mimeType: 'video/mp4',
-  par: '1:1',
-  sar: '1:1',
-  scanType: 'progressive',
 });
 
 describe('selectQuality', () => {
   describe('basic track selection', () => {
     it('should select highest quality that fits within bandwidth', () => {
-      const tracks: UnresolvedVideoTrack[] = [
+      const tracks: PartiallyResolvedVideoTrack[] = [
         createTrack('360p', 500_000),
         createTrack('480p', 1_000_000),
         createTrack('720p', 2_000_000),
@@ -33,7 +30,7 @@ describe('selectQuality', () => {
     });
 
     it('should select lowest quality when bandwidth is very low', () => {
-      const tracks: UnresolvedVideoTrack[] = [
+      const tracks: PartiallyResolvedVideoTrack[] = [
         createTrack('360p', 500_000),
         createTrack('480p', 1_000_000),
         createTrack('720p', 2_000_000),
@@ -46,7 +43,7 @@ describe('selectQuality', () => {
     });
 
     it('should select highest quality when bandwidth is very high', () => {
-      const tracks: UnresolvedVideoTrack[] = [
+      const tracks: PartiallyResolvedVideoTrack[] = [
         createTrack('360p', 500_000),
         createTrack('480p', 1_000_000),
         createTrack('720p', 2_000_000),
@@ -62,7 +59,7 @@ describe('selectQuality', () => {
 
   describe('safety margin', () => {
     it('should apply safety margin (default 0.85)', () => {
-      const tracks: UnresolvedVideoTrack[] = [createTrack('720p', 2_000_000), createTrack('1080p', 4_000_000)];
+      const tracks: PartiallyResolvedVideoTrack[] = [createTrack('720p', 2_000_000), createTrack('1080p', 4_000_000)];
 
       // To select 1080p (4 Mbps), need 4M / 0.85 ≈ 4.7 Mbps
       // With 4.6 Mbps, should select 720p (15% safety margin)
@@ -75,7 +72,7 @@ describe('selectQuality', () => {
     });
 
     it('should select 720p with exactly required bandwidth', () => {
-      const tracks: UnresolvedVideoTrack[] = [createTrack('720p', 2_000_000), createTrack('1080p', 4_000_000)];
+      const tracks: PartiallyResolvedVideoTrack[] = [createTrack('720p', 2_000_000), createTrack('1080p', 4_000_000)];
 
       // Exactly 2M / 0.85 ≈ 2.35 Mbps required for 720p
       const selected = selectQuality(tracks, 2_350_000);
@@ -83,7 +80,7 @@ describe('selectQuality', () => {
     });
 
     it('should use custom safety margin', () => {
-      const tracks: UnresolvedVideoTrack[] = [createTrack('720p', 2_000_000), createTrack('1080p', 4_000_000)];
+      const tracks: PartiallyResolvedVideoTrack[] = [createTrack('720p', 2_000_000), createTrack('1080p', 4_000_000)];
 
       const config = {
         ...DEFAULT_QUALITY_CONFIG,
@@ -103,7 +100,7 @@ describe('selectQuality', () => {
     });
 
     it('should handle single track', () => {
-      const tracks: UnresolvedVideoTrack[] = [createTrack('720p', 2_000_000)];
+      const tracks: PartiallyResolvedVideoTrack[] = [createTrack('720p', 2_000_000)];
 
       // Should select the only available track
       const selected = selectQuality(tracks, 1_000_000);
@@ -111,7 +108,7 @@ describe('selectQuality', () => {
     });
 
     it('should handle tracks with same bandwidth', () => {
-      const tracks: UnresolvedVideoTrack[] = [
+      const tracks: PartiallyResolvedVideoTrack[] = [
         createTrack('720p', 2_000_000, 1280, 720),
         createTrack('720p-high', 2_000_000, 1920, 1080), // Same bitrate, higher res
       ];
@@ -122,7 +119,7 @@ describe('selectQuality', () => {
     });
 
     it('should handle zero bandwidth', () => {
-      const tracks: UnresolvedVideoTrack[] = [createTrack('360p', 500_000), createTrack('720p', 2_000_000)];
+      const tracks: PartiallyResolvedVideoTrack[] = [createTrack('360p', 500_000), createTrack('720p', 2_000_000)];
 
       // Should select lowest quality
       const selected = selectQuality(tracks, 0);
@@ -130,18 +127,15 @@ describe('selectQuality', () => {
     });
 
     it('should handle tracks without width/height', () => {
-      const track1: UnresolvedVideoTrack = {
+      const track1: PartiallyResolvedVideoTrack = {
         type: 'video',
         id: 'track1',
         url: 'https://example.com/1.m3u8',
         bandwidth: 1_000_000,
         mimeType: 'video/mp4',
-        par: '1:1',
-        sar: '1:1',
-        scanType: 'progressive',
       };
 
-      const track2: UnresolvedVideoTrack = {
+      const track2: PartiallyResolvedVideoTrack = {
         type: 'video',
         id: 'track2',
         url: 'https://example.com/2.m3u8',
@@ -149,9 +143,6 @@ describe('selectQuality', () => {
         width: 1280,
         height: 720,
         mimeType: 'video/mp4',
-        par: '1:1',
-        sar: '1:1',
-        scanType: 'progressive',
       };
 
       const tracks = [track1, track2];
@@ -164,7 +155,7 @@ describe('selectQuality', () => {
 
   describe('unsorted track lists', () => {
     it('should handle tracks in random order', () => {
-      const tracks: UnresolvedVideoTrack[] = [
+      const tracks: PartiallyResolvedVideoTrack[] = [
         createTrack('1080p', 4_000_000),
         createTrack('360p', 500_000),
         createTrack('720p', 2_000_000),
@@ -177,7 +168,7 @@ describe('selectQuality', () => {
     });
 
     it('should handle descending order', () => {
-      const tracks: UnresolvedVideoTrack[] = [
+      const tracks: PartiallyResolvedVideoTrack[] = [
         createTrack('1080p', 4_000_000),
         createTrack('720p', 2_000_000),
         createTrack('480p', 1_000_000),
@@ -190,7 +181,7 @@ describe('selectQuality', () => {
   });
 
   describe('realistic ABR scenarios', () => {
-    const abrLadder: UnresolvedVideoTrack[] = [
+    const abrLadder: PartiallyResolvedVideoTrack[] = [
       createTrack('240p', 300_000, 426, 240),
       createTrack('360p', 600_000, 640, 360),
       createTrack('480p', 1_200_000, 854, 480),
@@ -235,7 +226,7 @@ describe('selectQuality', () => {
 
   describe('resolution preference at same bandwidth', () => {
     it('should prefer higher resolution when bitrates are equal', () => {
-      const tracks: UnresolvedVideoTrack[] = [
+      const tracks: PartiallyResolvedVideoTrack[] = [
         createTrack('720p-low', 2_000_000, 1280, 720),
         createTrack('1080p-low', 2_000_000, 1920, 1080),
       ];
@@ -245,7 +236,7 @@ describe('selectQuality', () => {
     });
 
     it('should compare by pixel count (width × height)', () => {
-      const tracks: UnresolvedVideoTrack[] = [
+      const tracks: PartiallyResolvedVideoTrack[] = [
         createTrack('wide', 2_000_000, 1920, 800), // 1,536,000 pixels
         createTrack('tall', 2_000_000, 1280, 1440), // 1,843,200 pixels
       ];
@@ -257,7 +248,7 @@ describe('selectQuality', () => {
 
   describe('safety margin behavior', () => {
     it('should enforce 15% headroom with default config', () => {
-      const tracks: UnresolvedVideoTrack[] = [createTrack('720p', 2_000_000), createTrack('1080p', 4_000_000)];
+      const tracks: PartiallyResolvedVideoTrack[] = [createTrack('720p', 2_000_000), createTrack('1080p', 4_000_000)];
 
       // To select 1080p: need 4M / 0.85 ≈ 4.7 Mbps (15% headroom)
 
@@ -271,7 +262,7 @@ describe('selectQuality', () => {
     });
 
     it('should always select highest quality that fits with margin', () => {
-      const tracks: UnresolvedVideoTrack[] = [
+      const tracks: PartiallyResolvedVideoTrack[] = [
         createTrack('360p', 500_000),
         createTrack('480p', 1_000_000),
         createTrack('720p', 2_000_000),

@@ -1,11 +1,11 @@
 import type {
   AudioTrack,
+  PartiallyResolvedAudioTrack,
+  PartiallyResolvedTextTrack,
+  PartiallyResolvedTrack,
+  PartiallyResolvedVideoTrack,
   Segment,
   TextTrack,
-  UnresolvedAudioTrack,
-  UnresolvedTextTrack,
-  UnresolvedTrack,
-  UnresolvedVideoTrack,
   VideoTrack,
 } from '../types';
 import { matchTag, parseByteRange, parseExtInfDuration } from './parse-attributes';
@@ -14,11 +14,11 @@ import { resolveUrl } from './resolve-url';
 /**
  * Resolve unresolved track type to its resolved equivalent.
  */
-type ResolveTrack<T> = T extends UnresolvedVideoTrack
+type ResolveTrack<T> = T extends PartiallyResolvedVideoTrack
   ? VideoTrack
-  : T extends UnresolvedAudioTrack
+  : T extends PartiallyResolvedAudioTrack
     ? AudioTrack
-    : T extends UnresolvedTextTrack
+    : T extends PartiallyResolvedTextTrack
       ? TextTrack
       : never;
 
@@ -32,7 +32,10 @@ type ResolveTrack<T> = T extends UnresolvedVideoTrack
  * @param unresolved - Unresolved track from parseMultivariantPlaylist
  * @returns Resolved track with segments (type inferred from input)
  */
-export function parseMediaPlaylist<T extends UnresolvedTrack>(text: string, unresolved: T): ResolveTrack<T> {
+export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
+  text: string,
+  unresolved: T | ResolveTrack<T>
+): ResolveTrack<T> {
   const lines = text.split(/\r?\n/);
 
   // Segments and resources resolve relative to media playlist URL (per HLS spec)
@@ -132,18 +135,12 @@ export function parseMediaPlaylist<T extends UnresolvedTrack>(text: string, unre
         : { url: '' };
 
   // Generic resolution: All type-specific fields already on unresolved track from P1
-  // Just add parsed properties (duration, segments, initialization, baseUrl)
+  // Just add parsed properties (startTime, duration, segments, initialization)
   return {
     ...unresolved,
-    baseUrl: unresolved.url,
+    startTime: 0,
     duration: totalDuration,
     segments,
     initialization,
-    // Fill in optional fields with defaults only where needed
-    ...(unresolved.type === 'video' && {
-      width: unresolved.width ?? 0,
-      height: unresolved.height ?? 0,
-      frameRate: unresolved.frameRate ?? { frameRateNumerator: 30 },
-    }),
   } as unknown as ResolveTrack<T>;
 }

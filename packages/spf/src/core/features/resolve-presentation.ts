@@ -44,12 +44,9 @@ export function canResolve(
 /**
  * Determines if resolution conditions are met based on preload policy and event.
  *
- * Checks resolution conditions independently from presentation state.
- * Use with isUnresolved() to determine if fetch should be triggered.
- *
  * Resolution conditions:
  * - State-driven: preload is 'auto' or 'metadata'
- * - Event-driven: PLAY event when preload is 'none'
+ * - Event-driven: play event
  *
  * @param state - Current presentation state
  * @param event - Current action/event
@@ -60,7 +57,7 @@ export function shouldResolve(state: PresentationState, event: PresentationActio
   return (
     // State-driven: preload allows (auto/metadata)
     ['auto', 'metadata'].includes(preload as any) ||
-    // Event-driven: play event when preload="none"
+    // Event-driven: play event
     event.type === 'play'
   );
 }
@@ -138,7 +135,7 @@ export function resolvePresentation(
       // Fetch and parse playlist
       const response = await fetchResolvable(presentation);
       const text = await getResponseText(response);
-      const parsed = parseMultivariantPlaylist(text, presentation.url);
+      const parsed = parseMultivariantPlaylist(text, presentation);
 
       // Update state with resolved presentation
       state.patch({

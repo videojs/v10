@@ -29,13 +29,6 @@ export interface AddressableObject {
   };
 }
 
-/**
- * Base URL for resolving relative URLs.
- */
-export interface Base {
-  baseUrl: string;
-}
-
 // =============================================================================
 // Platform-agnostic Media Element
 // =============================================================================
@@ -50,13 +43,15 @@ export interface MediaElementLike {
 }
 
 // =============================================================================
-// Duration
+// Time and Duration
 // =============================================================================
 
 /**
- * Duration in seconds.
+ * Time span with start time and duration.
+ * Used for segments and other timed ranges.
  */
-export interface Duration {
+export interface TimeSpan {
+  startTime: number;
   duration: number;
 }
 
@@ -86,79 +81,33 @@ export interface FrameRate {
 }
 
 // =============================================================================
-// Unresolved Track Types (before media playlist is fetched)
+// Partially Resolved Tracks (before media playlist is fetched)
 // =============================================================================
 
 /**
- * Unresolved video track - metadata from manifest, no segments.
- * Contains enough info for ABR selection (bandwidth, resolution, codecs).
- * Includes type-specific defaults set during multivariant parsing.
- * Distinguishing feature: no `segments` property.
+ * Generic type for partially resolved tracks.
+ * Removes fields that come from media playlist parsing.
+ *
+ * @param T - Track type to make partially resolved (must extend Track)
  */
-export interface UnresolvedVideoTrack {
-  type: 'video';
-  id: string;
-  url: string;
-  bandwidth: number;
-  width?: number | undefined;
-  height?: number | undefined;
-  codecs?: string[] | undefined;
-  frameRate?: FrameRate | undefined;
-  audioGroupId?: string | undefined;
-  // Type-specific defaults (set in P1)
-  mimeType: 'video/mp4';
-  par: '1:1';
-  sar: '1:1';
-  scanType: 'progressive';
-}
+export type PartiallyResolved<T extends Track = Track> = Omit<T, 'segments' | 'initialization' | keyof TimeSpan> & {
+  segments?: never;
+  duration?: never;
+  startTime?: never;
+  initialization?: never;
+};
 
 /**
- * Unresolved audio track - metadata from manifest, no segments.
- * Includes type-specific defaults set during multivariant parsing.
- * Distinguishing feature: no `segments` property.
+ * Partially resolved video track from multivariant playlist.
+ * Has metadata but no segments or initialization yet (media playlist not fetched).
  */
-export interface UnresolvedAudioTrack {
-  type: 'audio';
-  id: string;
-  url: string;
-  groupId: string;
-  name: string;
-  language?: string | undefined;
-  codecs?: string[] | undefined;
-  default?: boolean | undefined;
-  autoselect?: boolean | undefined;
-  // Type-specific defaults (set in P1)
-  mimeType: 'audio/mp4';
-  bandwidth: 0; // Not available in multivariant for demuxed audio
-  sampleRate: 48000; // Default for CMAF
-  channels: 2; // Default stereo
-}
+export type PartiallyResolvedVideoTrack = PartiallyResolved<VideoTrack>;
 
 /**
- * Unresolved text track - metadata from manifest, no segments.
- * Includes type-specific defaults set during multivariant parsing.
- * Distinguishing feature: no `segments` property.
+ * Partially resolved audio track from multivariant playlist.
+ * Has metadata but no segments or initialization yet (media playlist not fetched).
  */
-export interface UnresolvedTextTrack {
-  type: 'text';
-  id: string;
-  url: string;
-  groupId: string;
-  label: string;
-  kind: 'subtitles' | 'captions';
-  language?: string | undefined;
-  default?: boolean | undefined;
-  forced?: boolean | undefined;
-  // Type-specific defaults (set in P1)
-  mimeType: 'text/vtt';
-  bandwidth: 0; // Text tracks don't consume bandwidth
-  codecs: []; // VTT has no codecs
-}
-
-/**
- * Union of all unresolved track types.
- */
-export type UnresolvedTrack = UnresolvedVideoTrack | UnresolvedAudioTrack | UnresolvedTextTrack;
+export type PartiallyResolvedAudioTrack = PartiallyResolved<AudioTrack>;
 
 // =============================================================================
 // Resolved Track Types (with segments from media playlist)
@@ -166,82 +115,156 @@ export type UnresolvedTrack = UnresolvedVideoTrack | UnresolvedAudioTrack | Unre
 
 /**
  * Base track type containing common properties for all resolved tracks.
- * A resolved track has segments and initialization data.
+ * A resolved track has segments, duration, and initialization data.
+ * All URLs are fully qualified (parsers resolve relative URLs).
+ */
+/**
+ * Track startTime is always 0 (for future multi-period support).
  */
 export type Track = Ham &
-  Base &
-  Duration &
-  AddressableObject & {
+  AddressableObject &
+  TimeSpan & {
     type: TrackType;
-    codecs: string[];
+    codecs?: string[]; // Optional per HLS spec
     mimeType: string;
     language?: string | undefined;
     bandwidth: number;
-    initialization: AddressableObject;
+    initialization?: AddressableObject;
     segments: Segment[];
   };
 
 /**
  * Resolved video track with segments.
  */
-export type VideoTrack = Track & {
-  type: 'video';
-  width: number;
-  height: number;
-  frameRate: FrameRate;
-  /** @TODO Revisit for interop (default, forced, initialization) */
-  par: string; // drop
-  sar: string; // drop
-  scanType: string; // drop
-};
+export type VideoTrack = Track &
+  Required<Pick<Track, 'initialization' | 'codecs'>> & {
+    type: 'video';
+
+    // Optional metadata from multivariant (per HLS spec)
+    width?: number;
+    height?: number;
+    frameRate?: FrameRate;
+    audioGroupId?: string;
+  };
 
 /**
  * Resolved audio track with segments.
  */
-export type AudioTrack = Track & {
-  type: 'audio';
-  sampleRate: number;
-  channels: number;
-};
+export type AudioTrack = Track &
+  Required<Pick<Track, 'initialization' | 'codecs'>> & {
+    type: 'audio';
+    groupId: string;
+    name: string;
+    sampleRate: number;
+    channels: number;
+    default?: boolean;
+    autoselect?: boolean;
+  };
 
 /**
  * Resolved text track with segments.
  */
-export type TextTrack = Omit<Track, 'initialization'> & {
+export type TextTrack = Track & {
   type: 'text';
+  groupId: string;
   label: string;
   kind: 'subtitles' | 'captions';
-  /** @TODO Revisit for interop (default, forced, initialization) */
-  default?: boolean | undefined;
-  forced?: boolean | undefined;
-  initialization?: AddressableObject | undefined;
+  default?: boolean;
+  forced?: boolean;
 };
+
+/**
+ * Partially resolved text track from multivariant playlist.
+ * Has metadata but no segments or initialization yet (media playlist not fetched).
+ */
+export type PartiallyResolvedTextTrack = PartiallyResolved<TextTrack>;
+
+/**
+ * Unresolved text track (alias for backwards compatibility).
 
 /**
  * Union of all resolved track types.
  */
 export type ResolvedTrack = VideoTrack | AudioTrack | TextTrack;
 
+/**
+ * Union of all partially resolved track types.
+ */
+export type PartiallyResolvedTrack =
+  | PartiallyResolvedVideoTrack
+  | PartiallyResolvedAudioTrack
+  | PartiallyResolvedTextTrack;
+
+/**
+ * Union of all unresolved track types (alias for backwards compatibility).
+
 // =============================================================================
 // Switching and Selection Sets
 // =============================================================================
 
 /**
- * Switching set - a group of tracks that can be switched between seamlessly.
- * Tracks may be unresolved (no segments) or resolved (with segments).
+ * Generic switching set type.
+ * A group of tracks that can be switched between seamlessly.
+ *
+ * @param T - Track type (VideoTrack, AudioTrack, or TextTrack)
  */
-export type SwitchingSet = Ham &
-  Base & {
-    tracks: UnresolvedTrack[];
-  };
+export type SwitchingSetOf<T extends Track = Track> = Ham & {
+  type: T['type'];
+  tracks: (PartiallyResolved<T> | T)[];
+};
+
+/**
+ * Video switching set - contains only video tracks (partially resolved or fully resolved).
+ */
+export type VideoSwitchingSet = SwitchingSetOf<VideoTrack>;
+
+/**
+ * Audio switching set - contains only audio tracks (partially resolved or fully resolved).
+ */
+export type AudioSwitchingSet = SwitchingSetOf<AudioTrack>;
+
+/**
+ * Text switching set - contains only text tracks (partially resolved or fully resolved).
+ */
+export type TextSwitchingSet = SwitchingSetOf<TextTrack>;
+
+/**
+ * Switching set - a group of tracks that can be switched between seamlessly.
+ * Discriminated by track type.
+ */
+export type SwitchingSet = VideoSwitchingSet | AudioSwitchingSet | TextSwitchingSet;
+
+/**
+ * Generic selection set type.
+ * Groups switching sets by track type.
+ *
+ * @param T - Track type (VideoTrack, AudioTrack, or TextTrack)
+ */
+export type SelectionSetOf<T extends Track = Track> = Ham & {
+  type: T['type'];
+  switchingSets: SwitchingSetOf<T>[];
+};
+
+/**
+ * Video selection set - contains only video switching sets.
+ */
+export type VideoSelectionSet = SelectionSetOf<VideoTrack>;
+
+/**
+ * Audio selection set - contains only audio switching sets.
+ */
+export type AudioSelectionSet = SelectionSetOf<AudioTrack>;
+
+/**
+ * Text selection set - contains only text switching sets.
+ */
+export type TextSelectionSet = SelectionSetOf<TextTrack>;
 
 /**
  * Selection set - groups switching sets by track type.
+ * Discriminated union ensures type-safe track access.
  */
-export type SelectionSet = Ham & {
-  switchingSets: SwitchingSet[];
-  type: TrackType;
-};
+export type SelectionSet = VideoSelectionSet | AudioSelectionSet | TextSelectionSet;
 
 // =============================================================================
 // Segment
@@ -251,11 +274,7 @@ export type SelectionSet = Ham & {
  * Media segment with timing information.
  * Follows CMAF-HAM composition pattern.
  */
-export type Segment = Ham &
-  AddressableObject &
-  Duration & {
-    startTime: number;
-  };
+export type Segment = Ham & AddressableObject & TimeSpan;
 
 // =============================================================================
 // Media Playlist Info
@@ -281,19 +300,15 @@ export interface MediaPlaylistInfo {
 
 /**
  * Presentation - a single playable period of content.
- * Duration and endTime are optional until at least one track is resolved.
+ * Uses TimeSpan fields (startTime always 0, duration optional until track resolved).
  *
  * Extends AddressableObject so `url` contains the original manifest URL.
+ * All URLs are fully qualified (parsers resolve relative URLs).
  */
 export type Presentation = Ham &
-  Base &
-  AddressableObject & {
+  AddressableObject &
+  Partial<TimeSpan> & {
     selectionSets: SelectionSet[];
-    /** @TODO Revisit for interop */
-    startTime: number; // always 0
-    duration?: number | undefined;
-    /** @TODO Revisit for interop */
-    endTime?: number | undefined; // can drop - normallize to a Duration + startTime type for all things with this kind of info
   };
 
 // =============================================================================
@@ -304,20 +319,20 @@ export type Presentation = Ham &
  * Check if a track is resolved (has segments).
  * Works for all track types with overloaded signatures for type narrowing.
  */
-export function isResolvedTrack(track: UnresolvedVideoTrack | VideoTrack): track is VideoTrack;
-export function isResolvedTrack(track: UnresolvedAudioTrack | AudioTrack): track is AudioTrack;
-export function isResolvedTrack(track: UnresolvedTextTrack | TextTrack): track is TextTrack;
-export function isResolvedTrack(track: UnresolvedTrack | ResolvedTrack): track is ResolvedTrack;
-export function isResolvedTrack(track: UnresolvedTrack | ResolvedTrack): track is ResolvedTrack {
+export function isResolvedTrack(track: PartiallyResolvedVideoTrack | VideoTrack): track is VideoTrack;
+export function isResolvedTrack(track: PartiallyResolvedAudioTrack | AudioTrack): track is AudioTrack;
+export function isResolvedTrack(track: PartiallyResolvedTextTrack | TextTrack): track is TextTrack;
+export function isResolvedTrack(track: PartiallyResolvedTrack | ResolvedTrack): track is ResolvedTrack;
+export function isResolvedTrack(track: PartiallyResolvedTrack | ResolvedTrack): track is ResolvedTrack {
   return 'segments' in track;
 }
 
 /**
  * Check if a presentation has duration (at least one track resolved).
- * Narrows type to include required duration and endTime.
+ * Narrows type to include required duration.
  */
 export function hasPresentationDuration(
   presentation: Presentation
-): presentation is Presentation & { duration: number; endTime: number } {
+): presentation is Presentation & { duration: number } {
   return presentation.duration !== undefined;
 }

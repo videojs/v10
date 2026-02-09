@@ -1,27 +1,35 @@
 import type {
+  AddressableObject,
+  AudioSelectionSet,
+  AudioSwitchingSet,
   FrameRate,
+  PartiallyResolvedAudioTrack,
+  PartiallyResolvedTextTrack,
+  PartiallyResolvedVideoTrack,
   Presentation,
   SelectionSet,
-  SwitchingSet,
-  UnresolvedAudioTrack,
-  UnresolvedTextTrack,
-  UnresolvedVideoTrack,
+  TextSelectionSet,
+  TextSwitchingSet,
+  VideoSelectionSet,
+  VideoSwitchingSet,
 } from '../types';
+import { generateId } from '../utils/generate-id';
 import { matchTag, parseCodecs } from './parse-attributes';
 import { resolveUrl } from './resolve-url';
 
 /**
  * Parse HLS multivariant playlist into a Presentation.
  *
- * Returns Presentation with unresolved tracks (no segment information).
+ * Returns Presentation with partially resolved tracks (no segment information).
  * Tracks contain metadata from multivariant playlist (bandwidth, resolution, codecs)
  * but segment information is added when media playlists are fetched.
  *
  * @param text - Raw playlist text content
- * @param baseUrl - Base URL for resolving relative playlist URLs
- * @returns Presentation with unresolved tracks (duration is undefined)
+ * @param unresolved - Unresolved presentation (contains URL for base URL resolution)
+ * @returns Presentation with partially resolved tracks (duration is undefined)
  */
-export function parseMultivariantPlaylist(text: string, baseUrl: string): Presentation {
+export function parseMultivariantPlaylist(text: string, unresolved: AddressableObject): Presentation {
+  const baseUrl = unresolved.url;
   const lines = text.split(/\r?\n/);
 
   // Intermediate parsing structures
@@ -137,20 +145,18 @@ export function parseMultivariantPlaylist(text: string, baseUrl: string): Presen
     }
   }
 
-  // Build UnresolvedVideoTracks from streams
-  const videoTracks: UnresolvedVideoTrack[] = streams.map((stream, index) => {
+  // Build PartiallyResolvedVideoTracks from streams
+  const videoTracks: PartiallyResolvedVideoTrack[] = streams.map((stream) => {
     const codecs = stream.codecs ? parseCodecs(stream.codecs) : undefined;
 
-    const track: UnresolvedVideoTrack = {
+    const track: PartiallyResolvedVideoTrack = {
       type: 'video' as const,
-      id: `video-${index}`,
+      id: generateId(),
       url: stream.uri,
       bandwidth: stream.bandwidth,
       // Type-specific defaults (CMAF video)
       mimeType: 'video/mp4',
-      par: '1:1',
-      sar: '1:1',
-      scanType: 'progressive',
+      codecs: [],
     };
 
     if (stream.resolution?.width !== undefined) {
@@ -172,9 +178,9 @@ export function parseMultivariantPlaylist(text: string, baseUrl: string): Presen
     return track;
   });
 
-  // Build UnresolvedAudioTracks from audio renditions
+  // Build PartiallyResolvedAudioTracks from audio renditions
   // Extract audio codecs from referencing streams
-  const audioTracks: UnresolvedAudioTrack[] = audioRenditions.map((rendition, index) => {
+  const audioTracks: PartiallyResolvedAudioTrack[] = audioRenditions.map((rendition) => {
     let audioCodecs: string[] | undefined;
     for (const stream of streams) {
       if (stream.audioGroupId === rendition.groupId && stream.codecs) {
@@ -186,9 +192,9 @@ export function parseMultivariantPlaylist(text: string, baseUrl: string): Presen
       }
     }
 
-    const track: UnresolvedAudioTrack = {
+    const track: PartiallyResolvedAudioTrack = {
       type: 'audio' as const,
-      id: `audio-${index}`,
+      id: generateId(),
       url: rendition.uri ?? '',
       groupId: rendition.groupId,
       name: rendition.name,
@@ -197,6 +203,7 @@ export function parseMultivariantPlaylist(text: string, baseUrl: string): Presen
       bandwidth: 0, // Not available in multivariant for demuxed audio
       sampleRate: 48000, // CMAF default
       channels: 2, // Stereo default
+      codecs: [],
     };
 
     if (rendition.language) {
@@ -215,11 +222,11 @@ export function parseMultivariantPlaylist(text: string, baseUrl: string): Presen
     return track;
   });
 
-  // Build UnresolvedTextTracks from subtitle renditions
-  const textTracks: UnresolvedTextTrack[] = subtitleRenditions.map((rendition, index) => {
-    const track: UnresolvedTextTrack = {
+  // Build PartiallyResolvedTextTracks from subtitle renditions
+  const textTracks: PartiallyResolvedTextTrack[] = subtitleRenditions.map((rendition) => {
+    const track: PartiallyResolvedTextTrack = {
       type: 'text' as const,
-      id: `text-${index}`,
+      id: generateId(),
       url: rendition.uri,
       groupId: rendition.groupId,
       label: rendition.name,
@@ -227,7 +234,6 @@ export function parseMultivariantPlaylist(text: string, baseUrl: string): Presen
       // Type-specific defaults (VTT)
       mimeType: 'text/vtt',
       bandwidth: 0, // Text tracks don't consume bandwidth
-      codecs: [], // VTT has no codecs
     };
 
     if (rendition.language) {
@@ -247,55 +253,59 @@ export function parseMultivariantPlaylist(text: string, baseUrl: string): Presen
   const selectionSets: SelectionSet[] = [];
 
   if (videoTracks.length > 0) {
-    const videoSwitchingSet: SwitchingSet = {
-      id: 'video-switching-set',
-      baseUrl,
+    const videoSwitchingSet: VideoSwitchingSet = {
+      id: generateId(),
+      type: 'video',
       tracks: videoTracks,
     };
 
-    selectionSets.push({
-      id: 'video-selection-set',
+    const videoSelectionSet: VideoSelectionSet = {
+      id: generateId(),
       type: 'video',
       switchingSets: [videoSwitchingSet],
-    });
+    };
+
+    selectionSets.push(videoSelectionSet);
   }
 
   if (audioTracks.length > 0) {
-    const audioSwitchingSet: SwitchingSet = {
-      id: 'audio-switching-set',
-      baseUrl,
+    const audioSwitchingSet: AudioSwitchingSet = {
+      id: generateId(),
+      type: 'audio',
       tracks: audioTracks,
     };
 
-    selectionSets.push({
-      id: 'audio-selection-set',
+    const audioSelectionSet: AudioSelectionSet = {
+      id: generateId(),
       type: 'audio',
       switchingSets: [audioSwitchingSet],
-    });
+    };
+
+    selectionSets.push(audioSelectionSet);
   }
 
   if (textTracks.length > 0) {
-    const textSwitchingSet: SwitchingSet = {
-      id: 'text-switching-set',
-      baseUrl,
+    const textSwitchingSet: TextSwitchingSet = {
+      id: generateId(),
+      type: 'text',
       tracks: textTracks,
     };
 
-    selectionSets.push({
-      id: 'text-selection-set',
+    const textSelectionSet: TextSelectionSet = {
+      id: generateId(),
       type: 'text',
       switchingSets: [textSwitchingSet],
-    });
+    };
+
+    selectionSets.push(textSelectionSet);
   }
 
   // Build presentation (duration is undefined until tracks are resolved)
   return {
-    id: 'presentation-0',
-    baseUrl,
-    url: baseUrl,
+    id: generateId(),
+    url: unresolved.url,
     startTime: 0,
-    duration: undefined,
-    endTime: undefined,
+    // duration: undefined, // Won't be known until after at least one media playlist is fetched + parsed
     selectionSets,
   };
 }

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type {
+  PartiallyResolvedAudioTrack,
+  PartiallyResolvedTextTrack,
+  PartiallyResolvedVideoTrack,
   Presentation,
-  UnresolvedAudioTrack,
-  UnresolvedTextTrack,
-  UnresolvedVideoTrack,
   VideoTrack,
 } from '../index';
 import { hasPresentationDuration, isResolvedTrack } from '../index';
@@ -15,16 +15,13 @@ describe('Type Guards', () => {
         type: 'video',
         id: 'video-0',
         url: 'https://example.com/video.m3u8',
-        baseUrl: 'https://example.com/video.m3u8',
         bandwidth: 1400000,
         width: 1280,
         height: 720,
         codecs: ['avc1.4d401f'],
         frameRate: { frameRateNumerator: 30 },
         mimeType: 'video/mp4',
-        par: '1:1',
-        sar: '1:1',
-        scanType: 'progressive',
+        startTime: 0,
         duration: 10,
         initialization: { url: 'https://example.com/init.mp4' },
         segments: [],
@@ -34,35 +31,29 @@ describe('Type Guards', () => {
     });
 
     it('returns false for unresolved video track (no segments)', () => {
-      const unresolved: UnresolvedVideoTrack = {
+      const unresolved: PartiallyResolvedVideoTrack = {
         type: 'video',
         id: 'video-0',
         url: 'https://example.com/video.m3u8',
         bandwidth: 1400000,
         mimeType: 'video/mp4',
-        par: '1:1',
-        sar: '1:1',
-        scanType: 'progressive',
       };
 
       expect(isResolvedTrack(unresolved)).toBe(false);
     });
 
-    it('narrows UnresolvedVideoTrack | VideoTrack to VideoTrack', () => {
-      const track: UnresolvedVideoTrack | VideoTrack = {
+    it('narrows PartiallyResolvedVideoTrack | VideoTrack to VideoTrack', () => {
+      const track: PartiallyResolvedVideoTrack | VideoTrack = {
         type: 'video',
         id: 'video-0',
         url: 'https://example.com/video.m3u8',
-        baseUrl: 'https://example.com/video.m3u8',
         bandwidth: 1400000,
         width: 1280,
         height: 720,
         codecs: ['avc1.4d401f'],
         frameRate: { frameRateNumerator: 30 },
         mimeType: 'video/mp4',
-        par: '1:1',
-        sar: '1:1',
-        scanType: 'progressive',
+        startTime: 0,
         duration: 10,
         initialization: { url: 'https://example.com/init.mp4' },
         segments: [],
@@ -76,7 +67,7 @@ describe('Type Guards', () => {
     });
 
     it('works for audio tracks', () => {
-      const unresolved: UnresolvedAudioTrack = {
+      const unresolved: PartiallyResolvedAudioTrack = {
         type: 'audio',
         id: 'audio-0',
         url: 'https://example.com/audio.m3u8',
@@ -92,7 +83,7 @@ describe('Type Guards', () => {
     });
 
     it('works for text tracks', () => {
-      const unresolved: UnresolvedTextTrack = {
+      const unresolved: PartiallyResolvedTextTrack = {
         type: 'text',
         id: 'text-0',
         url: 'https://example.com/subs.m3u8',
@@ -112,11 +103,9 @@ describe('Type Guards', () => {
     it('returns true when presentation has duration', () => {
       const presentation: Presentation = {
         id: 'presentation-0',
-        baseUrl: 'https://example.com/master.m3u8',
         url: 'https://example.com/master.m3u8',
         startTime: 0,
         duration: 100,
-        endTime: 100,
         selectionSets: [],
       };
 
@@ -126,34 +115,28 @@ describe('Type Guards', () => {
     it('returns false when presentation has undefined duration', () => {
       const presentation: Presentation = {
         id: 'presentation-0',
-        baseUrl: 'https://example.com/master.m3u8',
         url: 'https://example.com/master.m3u8',
         startTime: 0,
         duration: undefined,
-        endTime: undefined,
         selectionSets: [],
       };
 
       expect(hasPresentationDuration(presentation)).toBe(false);
     });
 
-    it('narrows type to include required duration and endTime', () => {
+    it('narrows type to include required duration', () => {
       const presentation: Presentation = {
         id: 'presentation-0',
-        baseUrl: 'https://example.com/master.m3u8',
         url: 'https://example.com/master.m3u8',
         startTime: 0,
         duration: 100,
-        endTime: 100,
         selectionSets: [],
       };
 
       if (hasPresentationDuration(presentation)) {
-        // TypeScript knows duration and endTime are numbers (not undefined)
+        // TypeScript knows duration is number (not undefined)
         const d: number = presentation.duration;
-        const e: number = presentation.endTime;
         expect(d).toBe(100);
-        expect(e).toBe(100);
       }
     });
   });
