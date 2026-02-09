@@ -9,7 +9,6 @@ import ApiReference from "@/components/docs/api-reference/ApiReference.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
-import HtmlDemo from "@/components/docs/demos/HtmlDemo.astro";
 
 {/* React demos */}
 import CurrentTimeDemoReact from "@/components/docs/demos/time/react/css/CurrentTime";
@@ -33,19 +32,21 @@ import customNegativeSignReactTsx from "@/components/docs/demos/time/react/css/C
 import customNegativeSignReactCss from "@/components/docs/demos/time/react/css/CustomNegativeSign.css?raw";
 
 {/* HTML demos */}
+import CurrentTimeDemoHtml from "@/components/docs/demos/time/html/css/CurrentTime.astro";
 import currentTimeHtml from "@/components/docs/demos/time/html/css/CurrentTime.html?raw";
 import currentTimeHtmlTs from "@/components/docs/demos/time/html/css/CurrentTime.ts?raw";
+import CurrentDurationDemoHtml from "@/components/docs/demos/time/html/css/CurrentDuration.astro";
 import currentDurationHtml from "@/components/docs/demos/time/html/css/CurrentDuration.html?raw";
 import currentDurationHtmlTs from "@/components/docs/demos/time/html/css/CurrentDuration.ts?raw";
+import RemainingDemoHtml from "@/components/docs/demos/time/html/css/Remaining.astro";
 import remainingHtml from "@/components/docs/demos/time/html/css/Remaining.html?raw";
 import remainingHtmlTs from "@/components/docs/demos/time/html/css/Remaining.ts?raw";
+import CustomSeparatorDemoHtml from "@/components/docs/demos/time/html/css/CustomSeparator.astro";
 import customSeparatorHtml from "@/components/docs/demos/time/html/css/CustomSeparator.html?raw";
 import customSeparatorHtmlTs from "@/components/docs/demos/time/html/css/CustomSeparator.ts?raw";
+import CustomNegativeSignDemoHtml from "@/components/docs/demos/time/html/css/CustomNegativeSign.astro";
 import customNegativeSignHtml from "@/components/docs/demos/time/html/css/CustomNegativeSign.html?raw";
 import customNegativeSignHtmlTs from "@/components/docs/demos/time/html/css/CustomNegativeSign.ts?raw";
-import timeHtmlScript from "@/components/docs/demos/time/html/css/CurrentTime.ts?url";
-
-<script src={timeHtmlScript} type="module"></script>
 
 ## Anatomy
 
@@ -90,7 +91,7 @@ import timeHtmlScript from "@/components/docs/demos/time/html/css/CurrentTime.ts
       { title: "index.html", code: currentTimeHtml, lang: "html" },
       { title: "index.ts", code: currentTimeHtmlTs, lang: "ts" },
     ]}>
-      <HtmlDemo html={currentTimeHtml} />
+      <CurrentTimeDemoHtml />
     </Demo>
   </StyleCase>
 </FrameworkCase>
@@ -114,7 +115,7 @@ import timeHtmlScript from "@/components/docs/demos/time/html/css/CurrentTime.ts
       { title: "index.html", code: currentDurationHtml, lang: "html" },
       { title: "index.ts", code: currentDurationHtmlTs, lang: "ts" },
     ]}>
-      <HtmlDemo html={currentDurationHtml} />
+      <CurrentDurationDemoHtml />
     </Demo>
   </StyleCase>
 </FrameworkCase>
@@ -138,7 +139,7 @@ import timeHtmlScript from "@/components/docs/demos/time/html/css/CurrentTime.ts
       { title: "index.html", code: remainingHtml, lang: "html" },
       { title: "index.ts", code: remainingHtmlTs, lang: "ts" },
     ]}>
-      <HtmlDemo html={remainingHtml} />
+      <RemainingDemoHtml />
     </Demo>
   </StyleCase>
 </FrameworkCase>
@@ -162,7 +163,7 @@ import timeHtmlScript from "@/components/docs/demos/time/html/css/CurrentTime.ts
       { title: "index.html", code: customSeparatorHtml, lang: "html" },
       { title: "index.ts", code: customSeparatorHtmlTs, lang: "ts" },
     ]}>
-      <HtmlDemo html={customSeparatorHtml} />
+      <CustomSeparatorDemoHtml />
     </Demo>
   </StyleCase>
 </FrameworkCase>
@@ -186,7 +187,7 @@ import timeHtmlScript from "@/components/docs/demos/time/html/css/CurrentTime.ts
       { title: "index.html", code: customNegativeSignHtml, lang: "html" },
       { title: "index.ts", code: customNegativeSignHtmlTs, lang: "ts" },
     ]}>
-      <HtmlDemo html={customNegativeSignHtml} />
+      <CustomNegativeSignDemoHtml />
     </Demo>
   </StyleCase>
 </FrameworkCase>

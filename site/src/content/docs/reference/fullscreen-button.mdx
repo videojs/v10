@@ -9,7 +9,6 @@ import ApiReference from "@/components/docs/api-reference/ApiReference.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
-import HtmlDemo from "@/components/docs/demos/HtmlDemo.astro";
 
 {/* React demos */}
 import BasicUsageDemoReact from "@/components/docs/demos/fullscreen-button/react/css/BasicUsage";
@@ -17,11 +16,9 @@ import basicUsageReactTsx from "@/components/docs/demos/fullscreen-button/react/
 import basicUsageReactCss from "@/components/docs/demos/fullscreen-button/react/css/BasicUsage.css?raw";
 
 {/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/fullscreen-button/html/css/BasicUsage.astro";
 import basicUsageHtml from "@/components/docs/demos/fullscreen-button/html/css/BasicUsage.html?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/fullscreen-button/html/css/BasicUsage.ts?raw";
-import basicUsageHtmlScript from "@/components/docs/demos/fullscreen-button/html/css/BasicUsage.ts?url";
-
-<script src={basicUsageHtmlScript} type="module"></script>
 
 ## Anatomy
 
@@ -58,7 +55,7 @@ import basicUsageHtmlScript from "@/components/docs/demos/fullscreen-button/html
       { title: "index.html", code: basicUsageHtml, lang: "html" },
       { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
     ]}>
-      <HtmlDemo html={basicUsageHtml} />
+      <BasicUsageDemoHtml />
     </Demo>
   </StyleCase>
 </FrameworkCase>

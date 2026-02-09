@@ -182,6 +182,7 @@ src/components/docs/demos/
 ├── HtmlDemo.astro          # Renders raw HTML via set:html
 └── {component}/{framework}/{style}/
     ├── BasicUsage.tsx      # React: component (+ .css)
+    ├── BasicUsage.astro    # HTML: Astro wrapper (renders HTML + bundles script)
     ├── BasicUsage.html     # HTML: markup + <style>, no <script>
     └── BasicUsage.ts       # HTML: side-effect imports for custom element registration
 ```
@@ -216,24 +217,33 @@ import basicUsageCss from "@/components/docs/demos/play-button/react/css/BasicUs
 
 ### HTML Demos
 
-Split into `.html` (markup + style) and `.ts` (custom element registration). The `.ts` file is bundled by Vite via `?url` and loaded as a module script:
+Three files per demo: `.html` (markup + style), `.ts` (custom element registration), and `.astro` (wrapper that ties them together). The `.astro` wrapper is needed because only Astro `<script>` tags go through Vite's bundling pipeline — MDX `<script>` tags compile as JSX and aren't bundled.
 
+**`.astro` wrapper** (renders HTML + bundles the `.ts` script):
+```astro
+---
+import HtmlDemo from '@/components/docs/demos/HtmlDemo.astro';
+import html from './BasicUsage.html?raw';
+---
+<HtmlDemo html={html} />
+<script>
+  import './BasicUsage.ts';
+</script>
+```
+
+**MDX usage:**
 ```mdx
+import BasicUsageDemoHtml from "@/components/docs/demos/play-button/html/css/BasicUsage.astro";
 import basicUsageHtml from "@/components/docs/demos/play-button/html/css/BasicUsage.html?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/play-button/html/css/BasicUsage.ts?raw";
-import basicUsageHtmlScript from "@/components/docs/demos/play-button/html/css/BasicUsage.ts?url";
-
-<script src={basicUsageHtmlScript} type="module"></script>
 
 <Demo files={[
   { title: "index.html", code: basicUsageHtml, lang: "html" },
   { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
 ]}>
-  <HtmlDemo html={basicUsageHtml} />
+  <BasicUsageDemoHtml />
 </Demo>
 ```
-
-When multiple HTML demos on one page use the same custom elements, a single `<script>` tag suffices.
 
 ### State Reflection in HTML Demos
 
