@@ -442,15 +442,17 @@ The API docs builder extracts type information from TypeScript sources and gener
 ### How It Works
 
 ```
-packages/core/src/core/ui/{component}/  → JSON → <ApiRefSection /> → tables
+packages/core/html/react/  → JSON → <ApiReference /> → tables
 ```
 
 1. **Builder script** (`scripts/api-docs-builder/`) parses TypeScript using `typescript-api-extractor`
 2. **Extracts** from core files: Props interface, State interface, defaultProps
 3. **Extracts** from data-attrs files: data attributes with JSDoc descriptions
 4. **Extracts** from HTML element files: Lit `tagName`
-5. **Outputs** JSON to `src/content/generated-api-reference/{component}.json`
-6. **Astro components** (`src/components/docs/api-reference/`) render the JSON as tables
+5. **Detects** multi-part components via `packages/react/src/ui/{name}/index.parts.ts`
+6. **Extracts** part descriptions from React component JSDoc
+7. **Outputs** JSON to `src/content/generated-api-reference/{component}.json`
+8. **`<ApiReference />`** Astro component renders the JSON as tables
 
 ### Generated Files Are Gitignored
 
@@ -461,29 +463,29 @@ The `src/content/generated-api-reference/` directory is **gitignored**. JSON fil
 
 ### Usage in MDX
 
+Use the unified `<ApiReference />` component for both single-part and multi-part components:
+
 ```mdx
-import ApiRefSection from '@/components/docs/api-reference/ApiRefSection.astro';
+import ApiReference from '@/components/docs/api-reference/ApiReference.astro';
 
-## API Reference
-
-### Props
-
-<ApiRefSection component="PlayButton" section="props" />
-
-### State
-
-<ApiRefSection component="PlayButton" section="state" />
-
-### Data Attributes
-
-<ApiRefSection component="PlayButton" section="dataAttributes" />
+<ApiReference component="PlayButton" />
 ```
+
+The component automatically handles:
+- **Single-part**: Renders Props, State, and Data Attributes sections with h3 headings
+- **Multi-part**: Renders each part with a framework-aware h3 heading, description from JSDoc, and h4 sub-sections
 
 ### Adding a New Component
 
 When a new component is added to `packages/core/src/core/ui/`:
 1. Run `pnpm api-docs` to generate its JSON
-2. Add `<ApiRefSection ... />` to the MDX reference page as described above
+2. Add `<ApiReference component="{Name}" />` to the MDX reference page
+
+For multi-part components:
+1. Ensure `packages/react/src/ui/{name}/index.parts.ts` exports each part
+2. Add JSDoc descriptions to each React component export for part descriptions
+3. Ensure each part's HTML element is at `packages/html/src/ui/{name}/{name}-{part}-element.ts`
+4. The primary part (whose element is just `{name}-element.ts`) gets the shared core props/state/data-attrs
 
 See `scripts/api-docs-builder/README.md` for full documentation.
 

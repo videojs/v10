@@ -1,0 +1,33 @@
+---
+title: Time
+frameworkTitle:
+  html: media-time
+description: Components for displaying and composing media time information
+---
+
+import ApiReference from "@/components/docs/api-reference/ApiReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Time.Group>
+  <Time.Value type="current" />
+  <Time.Separator />
+  <Time.Value type="duration" />
+</Time.Group>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-time-group>
+  <media-time type="current"></media-time>
+  <media-time-separator></media-time-separator>
+  <media-time type="duration"></media-time>
+</media-time-group>
+```
+</FrameworkCase>
+
+<ApiReference component="Time" />

@@ -314,6 +314,48 @@ describe('extractCore', () => {
     expect(result!.state).toHaveLength(1);
   });
 
+  it('expands type aliases via allExports', () => {
+    const code = 'export const x = 1;';
+    const program = createTestProgram(code);
+
+    // Create an ExternalTypeNode referencing 'TimeType'
+    const externalTypeNode = Object.create(tae.ExternalTypeNode.prototype);
+    externalTypeNode.typeName = new tae.TypeName('TimeType');
+
+    const propsType = createMockObjectNode([
+      {
+        name: 'type',
+        type: externalTypeNode,
+        optional: true,
+        documentation: undefined,
+      } as tae.PropertyNode,
+    ]);
+
+    // TimeType is also in the exports list with its resolved union type
+    const timeTypeLiteral1 = Object.create(tae.LiteralNode.prototype);
+    timeTypeLiteral1.value = "'current'";
+    const timeTypeLiteral2 = Object.create(tae.LiteralNode.prototype);
+    timeTypeLiteral2.value = "'duration'";
+    const timeTypeLiteral3 = Object.create(tae.LiteralNode.prototype);
+    timeTypeLiteral3.value = "'remaining'";
+    const timeTypeUnion = Object.create(tae.UnionNode.prototype);
+    timeTypeUnion.types = [timeTypeLiteral1, timeTypeLiteral2, timeTypeLiteral3];
+    timeTypeUnion.typeName = undefined;
+
+    mockParseFromProgram.mockReturnValueOnce(
+      createMockAst([
+        { name: 'MockComponentProps', type: propsType },
+        { name: 'TimeType', type: timeTypeUnion },
+      ])
+    );
+
+    const result = extractCore('test.ts', program, 'MockComponent');
+
+    expect(result).not.toBeNull();
+    expect(result!.props[0]!.name).toBe('type');
+    expect(result!.props[0]!.type).toBe("'current' | 'duration' | 'remaining'");
+  });
+
   it('merges defaultProps from extractDefaultProps into result', () => {
     const code = `
       export class MockComponentCore {

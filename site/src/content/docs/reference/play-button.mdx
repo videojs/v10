@@ -1,22 +1,25 @@
 ---
 title: PlayButton
 frameworkTitle:
-  html: play-button
+  html: media-play-button
 description: A button component for playing and pausing media playback
 ---
 
-import ApiRefSection from '@/components/docs/api-reference/ApiRefSection.astro';
+import ApiReference from "@/components/docs/api-reference/ApiReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-## API Reference
+## Anatomy
 
-### Props
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<PlayButton />
+```
+</FrameworkCase>
 
-<ApiRefSection component="PlayButton" section="props" />
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-play-button></media-play-button>
+```
+</FrameworkCase>
 
-### State
-
-<ApiRefSection component="PlayButton" section="state" />
-
-### Data Attributes
-
-<ApiRefSection component="PlayButton" section="dataAttributes" />
+<ApiReference component="PlayButton" />

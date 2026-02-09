@@ -1,10 +1,28 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { kebabCase } from 'es-toolkit/string';
 import GithubSlugger from 'github-slugger';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const API_REF_DIR = path.resolve(__dirname, '../content/generated-api-reference');
+
+function readApiRefJson(componentName) {
+  const kebab = kebabCase(componentName);
+  const filePath = path.join(API_REF_DIR, `${kebab}.json`);
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Remark plugin that tracks headings wrapped in FrameworkCase or StyleCase components
  * and adds conditional metadata to them.
  *
- * This allows filtering headings in the TOC based on the current framework/style combination.
+ * Also detects `<ApiReference>` components and injects heading metadata from
+ * generated JSON, so component-rendered headings appear in the table of contents.
  */
 export default function remarkConditionalHeadings() {
   return (tree, file) => {
@@ -40,6 +58,9 @@ export default function remarkConditionalHeadings() {
             node.children.forEach((child) => visitWithContext(child, newContext));
           }
 
+          return;
+        } else if (node.name === 'ApiReference') {
+          injectApiReferenceHeadings(node, slugger, headingsWithMetadata);
           return;
         }
       }
@@ -84,6 +105,61 @@ export default function remarkConditionalHeadings() {
     }
     file.data.astro.frontmatter.conditionalHeadings = headingsWithMetadata;
   };
+}
+
+/**
+ * Inject heading metadata from generated API reference JSON.
+ *
+ * For multi-part components, injects framework-conditional part headings.
+ * For single-part components, injects "API reference".
+ * For each, injects Props/State/Data attributes headings
+ */
+function injectApiReferenceHeadings(node, slugger, headingsWithMetadata) {
+  const componentAttr = node.attributes?.find((a) => a.name === 'component');
+  const componentName = typeof componentAttr?.value === 'string' ? componentAttr.value : null;
+  if (!componentName) return;
+
+  const json = readApiRefJson(componentName);
+  if (!json) return;
+
+  if (json.parts && Object.keys(json.parts).length > 0) {
+    for (const [partKebab, part] of Object.entries(json.parts)) {
+      const tagName = part.platforms?.html?.tagName;
+      const partKebabSlug = slugger.slug(partKebab);
+      headingsWithMetadata.push({
+        depth: 2,
+        text: `<${componentName}.${part.name} /> reference`,
+        slug: partKebabSlug,
+        frameworks: ['react'],
+      });
+      headingsWithMetadata.push({
+        depth: 2,
+        text: `${tagName ? `<${tagName}>` : part.name} reference`,
+        slug: partKebabSlug,
+        frameworks: ['html'],
+      });
+      if (part.props && Object.keys(part.props).length > 0) {
+        headingsWithMetadata.push({ depth: 3, text: 'Props', slug: slugger.slug('Props') });
+      }
+      if (part.state && Object.keys(part.state).length > 0) {
+        headingsWithMetadata.push({ depth: 3, text: 'State', slug: slugger.slug('State') });
+      }
+      if (part.dataAttributes && Object.keys(part.dataAttributes).length > 0) {
+        headingsWithMetadata.push({ depth: 3, text: 'Data attributes', slug: slugger.slug('Data attributes') });
+      }
+    }
+  } else {
+    headingsWithMetadata.push({ depth: 2, text: 'API reference', slug: slugger.slug('API reference') });
+    if (json.props && Object.keys(json.props).length > 0) {
+      headingsWithMetadata.push({ depth: 3, text: 'Props', slug: slugger.slug('Props') });
+    }
+    if (json.state && Object.keys(json.state).length > 0) {
+      headingsWithMetadata.push({ depth: 3, text: 'State', slug: slugger.slug('State') });
+    }
+    if (json.dataAttributes && Object.keys(json.dataAttributes).length > 0) {
+      headingsWithMetadata.push({ depth: 3, text: 'Data attributes', slug: slugger.slug('Data attributes') });
+    }
+  }
 }
 
 /**
