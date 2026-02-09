@@ -6,7 +6,7 @@ const { html } = Astro.props;
 const markup = html.replace(/<script[\s\S]*?<\/script>/gi, '');
 ---
 
-<html-demo-host data-markup={markup} style="position: relative; z-index: 20;"></html-demo-host>
+<html-demo-host data-markup={markup}></html-demo-host>
 
 <script>
   class HtmlDemoHost extends HTMLElement {

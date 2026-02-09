@@ -7,6 +7,23 @@ description: A button component for entering and exiting fullscreen mode
 
 import ApiReference from "@/components/docs/api-reference/ApiReference.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import HtmlDemo from "@/components/docs/demos/HtmlDemo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/fullscreen-button/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/fullscreen-button/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/fullscreen-button/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import basicUsageHtml from "@/components/docs/demos/fullscreen-button/html/css/BasicUsage.html?raw";
+
+{/* Register HTML custom elements */}
+<script>
+  import '@videojs/html/player/video';
+  import '@videojs/html/ui/fullscreen-button';
+</script>
 
 ## Anatomy
 
@@ -20,6 +37,31 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 ```html
 <media-fullscreen-button></media-fullscreen-button>
 ```
+</FrameworkCase>
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+    ]}>
+      <HtmlDemo html={basicUsageHtml} />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <ApiReference component="FullscreenButton" />

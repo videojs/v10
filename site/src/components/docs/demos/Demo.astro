@@ -18,7 +18,7 @@ const { files } = Astro.props;
 ---
 
 <div class="my-6 w-full max-w-3xl mx-auto flex flex-col rounded-lg overflow-hidden border border-light-40 dark:border-dark-80">
-  <div class="p-6 bg-light-80 dark:bg-dark-100">
+  <div class="relative z-20 p-6 bg-light-80 dark:bg-dark-100">
     <slot />
   </div>
   <TabsRoot client:idle maxWidth={false} className="my-0 rounded-none border-0 border-t border-light-40 dark:border-dark-80">

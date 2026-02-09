@@ -1,13 +1,13 @@
-.play-button-basic {
+.mute-button-basic {
   position: relative;
 }
 
-.play-button-basic video {
+.mute-button-basic video {
   width: 100%;
   border-radius: 0.5rem;
 }
 
-.play-button-basic__button {
+.mute-button-basic__button {
   height: 50px;
   position: absolute;
   bottom: 10px;

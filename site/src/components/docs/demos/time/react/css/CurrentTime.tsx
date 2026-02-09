@@ -12,6 +12,7 @@ export default function CurrentTime() {
           src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
           autoPlay
           muted
+          playsInline
           loop
         />
         <Time.Value type="current" className="time-current-time__value" />

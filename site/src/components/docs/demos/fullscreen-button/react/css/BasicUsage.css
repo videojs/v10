@@ -1,17 +1,17 @@
-.play-button-basic {
+.fullscreen-button-basic {
   position: relative;
 }
 
-.play-button-basic video {
+.fullscreen-button-basic video {
   width: 100%;
   border-radius: 0.5rem;
 }
 
-.play-button-basic__button {
+.fullscreen-button-basic__button {
   height: 50px;
   position: absolute;
   bottom: 10px;
-  left: 10px;
+  right: 10px;
   padding-inline: 12px;
   background-color: black;
   color: white;

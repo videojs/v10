@@ -1,0 +1,45 @@
+<script type="module">
+  import '@videojs/html/player/video';
+  import '@videojs/html/ui/fullscreen-button';
+</script>
+
+<style>
+  video-player {
+    position: relative;
+  }
+
+  video-player video {
+    width: 100%;
+    border-radius: 0.5rem;
+  }
+
+  media-fullscreen-button {
+    height: 50px;
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    padding-inline: 12px;
+    background-color: black;
+    color: white;
+    cursor: pointer;
+  }
+
+  media-fullscreen-button .show-when-fullscreen { display: none; }
+  media-fullscreen-button .show-when-not-fullscreen { display: none; }
+  media-fullscreen-button[data-fullscreen] .show-when-fullscreen { display: inline; }
+  media-fullscreen-button:not([data-fullscreen]) .show-when-not-fullscreen { display: inline; }
+</style>
+
+<video-player>
+  <video
+    src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
+    autoplay
+    muted
+    playsinline
+    loop
+  ></video>
+  <media-fullscreen-button>
+    <span class="show-when-fullscreen">Exit Fullscreen</span>
+    <span class="show-when-not-fullscreen">Fullscreen</span>
+  </media-fullscreen-button>
+</video-player>

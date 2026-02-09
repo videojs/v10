@@ -12,6 +12,7 @@ export default function CurrentDuration() {
           src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
           autoPlay
           muted
+          playsInline
           loop
         />
         <Time.Group className="time-current-duration__group">

@@ -12,6 +12,7 @@ export default function CustomNegativeSign() {
           src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
           autoPlay
           muted
+          playsInline
           loop
         />
         <Time.Value type="remaining" negativeSign={'\u2212'} className="time-custom-negative-sign__value" />

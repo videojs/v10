@@ -1,6 +1,6 @@
 <script type="module">
   import '@videojs/html/player/video';
-  import '@videojs/html/ui/play-button';
+  import '@videojs/html/ui/mute-button';
 </script>
 
 <style>
@@ -13,7 +13,7 @@
     border-radius: 0.5rem;
   }
 
-  media-play-button {
+  media-mute-button {
     height: 50px;
     position: absolute;
     bottom: 10px;
@@ -24,10 +24,10 @@
     cursor: pointer;
   }
 
-  media-play-button .show-when-paused { display: none; }
-  media-play-button .show-when-playing { display: none; }
-  media-play-button[data-paused] .show-when-paused { display: inline; }
-  media-play-button:not([data-paused]) .show-when-playing { display: inline; }
+  media-mute-button .show-when-muted { display: none; }
+  media-mute-button .show-when-unmuted { display: none; }
+  media-mute-button[data-muted] .show-when-muted { display: inline; }
+  media-mute-button:not([data-muted]) .show-when-unmuted { display: inline; }
 </style>
 
 <video-player>
@@ -38,8 +38,8 @@
     playsinline
     loop
   ></video>
-  <media-play-button>
-    <span class="show-when-paused">Play</span>
-    <span class="show-when-playing">Pause</span>
-  </media-play-button>
+  <media-mute-button>
+    <span class="show-when-muted">Unmute</span>
+    <span class="show-when-unmuted">Mute</span>
+  </media-mute-button>
 </video-player>

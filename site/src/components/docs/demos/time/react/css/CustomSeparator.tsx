@@ -12,6 +12,7 @@ export default function CustomSeparator() {
           src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
           autoPlay
           muted
+          playsInline
           loop
         />
         <Time.Group className="time-custom-separator__group">
