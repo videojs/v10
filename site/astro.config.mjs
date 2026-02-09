@@ -77,7 +77,7 @@ export default defineConfig({
       exclude: ['@videojs/react-preview', '@videojs/react', '@videojs/html'],
     },
     resolve: {
-      dedupe: ['react', 'react-dom', '@lit/reactive-element'],
+      dedupe: ['react', 'react-dom'],
       alias: {
         '@': new URL('./src', import.meta.url).pathname,
       },

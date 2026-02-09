@@ -1,20 +1,19 @@
-<script type="module">
-  import '@videojs/html/player/video';
-  import '@videojs/html/ui/time';
-</script>
-
 <style>
-  video-player video {
+  .time-custom-negative-sign {
+    position: relative;
+  }
+
+  .time-custom-negative-sign video {
     width: 100%;
     border-radius: 0.5rem;
   }
 
-  media-time {
+  .time-custom-negative-sign__value {
     font-variant-numeric: tabular-nums;
   }
 </style>
 
-<video-player>
+<video-player class="time-custom-negative-sign">
   <video
     src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
     autoplay
@@ -22,5 +21,5 @@
     playsinline
     loop
   ></video>
-  <media-time type="remaining" negative-sign="&#x2212;"></media-time>
+  <media-time class="time-custom-negative-sign__value" type="remaining" negative-sign="&#x2212;"></media-time>
 </video-player>

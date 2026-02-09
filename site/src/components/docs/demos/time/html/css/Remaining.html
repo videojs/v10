@@ -1,20 +1,19 @@
-<script type="module">
-  import '@videojs/html/player/video';
-  import '@videojs/html/ui/time';
-</script>
-
 <style>
-  video-player video {
+  .time-remaining {
+    position: relative;
+  }
+
+  .time-remaining video {
     width: 100%;
     border-radius: 0.5rem;
   }
 
-  media-time {
+  .time-remaining__value {
     font-variant-numeric: tabular-nums;
   }
 </style>
 
-<video-player>
+<video-player class="time-remaining">
   <video
     src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
     autoplay
@@ -22,5 +21,5 @@
     playsinline
     loop
   ></video>
-  <media-time type="remaining"></media-time>
+  <media-time class="time-remaining__value" type="remaining"></media-time>
 </video-player>

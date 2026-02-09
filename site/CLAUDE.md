@@ -141,7 +141,9 @@ This limits the classnames Tailwind must generate.
 site/
 ├── src/
 │   ├── components/          # Astro + React components
-│   │   └── docs/api-reference/  # API reference Astro components
+│   │   └── docs/
+│   │       ├── api-reference/   # API reference Astro components
+│   │       └── demos/           # Interactive component demos (see below)
 │   ├── content/             # Content collections (blog/, docs/, authors.json)
 │   ├── layouts/             # Page layouts (Base, Blog, Docs, Markdown)
 │   ├── pages/               # Route pages (file-based routing)
@@ -167,6 +169,94 @@ site/
 ├── tsconfig.json            # TypeScript config with path aliases
 └── vitest.config.ts         # Test configuration
 ```
+
+## Interactive Demos
+
+Reference pages include live, interactive demos for each component. Demos are framework-specific (React, HTML) and style-specific (CSS).
+
+### Directory Structure
+
+```
+src/components/docs/demos/
+├── Demo.astro              # Shared shell (live preview + tabbed source code)
+├── HtmlDemo.astro          # Renders raw HTML via set:html
+└── {component}/{framework}/{style}/
+    ├── BasicUsage.tsx      # React: component (+ .css)
+    ├── BasicUsage.html     # HTML: markup + <style>, no <script>
+    └── BasicUsage.ts       # HTML: side-effect imports for custom element registration
+```
+
+### CSS Scoping with BEM
+
+Demos use BEM class names for scoping. Block = `{component}-{variant}`, element = `__{part}`:
+
+```
+.play-button-basic              /* block */
+.play-button-basic__button      /* element */
+```
+
+React `.css` and HTML `<style>` blocks for the same demo should use identical BEM names.
+
+### React Demos
+
+A `.tsx` component + `.css` file. Rendered as an Astro island via `client:idle`, displayed as source via `?raw`:
+
+```mdx
+import BasicUsageDemo from "@/components/docs/demos/play-button/react/css/BasicUsage";
+import basicUsageTsx from "@/components/docs/demos/play-button/react/css/BasicUsage.tsx?raw";
+import basicUsageCss from "@/components/docs/demos/play-button/react/css/BasicUsage.css?raw";
+
+<Demo files={[
+  { title: "App.tsx", code: basicUsageTsx, lang: "tsx" },
+  { title: "App.css", code: basicUsageCss, lang: "css" },
+]}>
+  <BasicUsageDemo client:idle />
+</Demo>
+```
+
+### HTML Demos
+
+Split into `.html` (markup + style) and `.ts` (custom element registration). The `.ts` file is bundled by Vite via `?url` and loaded as a module script:
+
+```mdx
+import basicUsageHtml from "@/components/docs/demos/play-button/html/css/BasicUsage.html?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/play-button/html/css/BasicUsage.ts?raw";
+import basicUsageHtmlScript from "@/components/docs/demos/play-button/html/css/BasicUsage.ts?url";
+
+<script src={basicUsageHtmlScript} type="module"></script>
+
+<Demo files={[
+  { title: "index.html", code: basicUsageHtml, lang: "html" },
+  { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+]}>
+  <HtmlDemo html={basicUsageHtml} />
+</Demo>
+```
+
+When multiple HTML demos on one page use the same custom elements, a single `<script>` tag suffices.
+
+### State Reflection in HTML Demos
+
+HTML custom elements expose state via `data-*` attributes. Use CSS to toggle labels:
+
+```html
+<media-play-button class="play-button-basic__button">
+  <span class="show-when-paused">Play</span>
+  <span class="show-when-playing">Pause</span>
+</media-play-button>
+```
+```css
+.play-button-basic__button .show-when-paused { display: none; }
+.play-button-basic__button .show-when-playing { display: none; }
+.play-button-basic__button[data-paused] .show-when-paused { display: inline; }
+.play-button-basic__button:not([data-paused]) .show-when-playing { display: inline; }
+```
+
+The React equivalent uses the `render` prop: `render={(props, state) => <button {...props}>{state.paused ? 'Play' : 'Pause'}</button>}`.
+
+### Video Attributes
+
+All demo videos use `autoplay muted playsinline loop` (React: `autoPlay muted playsInline loop`).
 
 ## Multi-Framework Documentation Architecture
 

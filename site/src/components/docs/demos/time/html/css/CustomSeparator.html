@@ -1,20 +1,19 @@
-<script type="module">
-  import '@videojs/html/player/video';
-  import '@videojs/html/ui/time';
-</script>
-
 <style>
-  video-player video {
+  .time-custom-separator {
+    position: relative;
+  }
+
+  .time-custom-separator video {
     width: 100%;
     border-radius: 0.5rem;
   }
 
-  media-time-group {
+  .time-custom-separator__group {
     font-variant-numeric: tabular-nums;
   }
 </style>
 
-<video-player>
+<video-player class="time-custom-separator">
   <video
     src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
     autoplay
@@ -22,7 +21,7 @@
     playsinline
     loop
   ></video>
-  <media-time-group>
+  <media-time-group class="time-custom-separator__group">
     <media-time type="current"></media-time>
     <media-time-separator> of </media-time-separator>
     <media-time type="duration"></media-time>

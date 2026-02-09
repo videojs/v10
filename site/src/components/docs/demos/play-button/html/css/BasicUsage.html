@@ -1,19 +1,14 @@
-<script type="module">
-  import '@videojs/html/player/video';
-  import '@videojs/html/ui/play-button';
-</script>
-
 <style>
-  video-player {
+  .play-button-basic {
     position: relative;
   }
 
-  video-player video {
+  .play-button-basic video {
     width: 100%;
     border-radius: 0.5rem;
   }
 
-  media-play-button {
+  .play-button-basic__button {
     height: 50px;
     position: absolute;
     bottom: 10px;
@@ -24,13 +19,13 @@
     cursor: pointer;
   }
 
-  media-play-button .show-when-paused { display: none; }
-  media-play-button .show-when-playing { display: none; }
-  media-play-button[data-paused] .show-when-paused { display: inline; }
-  media-play-button:not([data-paused]) .show-when-playing { display: inline; }
+  .play-button-basic__button .show-when-paused { display: none; }
+  .play-button-basic__button .show-when-playing { display: none; }
+  .play-button-basic__button[data-paused] .show-when-paused { display: inline; }
+  .play-button-basic__button:not([data-paused]) .show-when-playing { display: inline; }
 </style>
 
-<video-player>
+<video-player class="play-button-basic">
   <video
     src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
     autoplay
@@ -38,7 +33,7 @@
     playsinline
     loop
   ></video>
-  <media-play-button>
+  <media-play-button class="play-button-basic__button">
     <span class="show-when-paused">Play</span>
     <span class="show-when-playing">Pause</span>
   </media-play-button>

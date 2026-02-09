@@ -18,12 +18,10 @@ import basicUsageReactCss from "@/components/docs/demos/mute-button/react/css/Ba
 
 {/* HTML demos */}
 import basicUsageHtml from "@/components/docs/demos/mute-button/html/css/BasicUsage.html?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/mute-button/html/css/BasicUsage.ts?raw";
+import basicUsageHtmlScript from "@/components/docs/demos/mute-button/html/css/BasicUsage.ts?url";
 
-{/* Register HTML custom elements */}
-<script>
-  import '@videojs/html/player/video';
-  import '@videojs/html/ui/mute-button';
-</script>
+<script src={basicUsageHtmlScript} type="module"></script>
 
 ## Anatomy
 
@@ -58,6 +56,7 @@ import basicUsageHtml from "@/components/docs/demos/mute-button/html/css/BasicUs
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
     ]}>
       <HtmlDemo html={basicUsageHtml} />
     </Demo>

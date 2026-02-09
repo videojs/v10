@@ -1,19 +1,15 @@
-<script type="module">
-  import '@videojs/html/player/video';
-  import '@videojs/html/ui/fullscreen-button';
-</script>
-
 <style>
-  video-player {
+  .fullscreen-button-basic {
+    display: block;
     position: relative;
   }
 
-  video-player video {
+  .fullscreen-button-basic video {
     width: 100%;
     border-radius: 0.5rem;
   }
 
-  media-fullscreen-button {
+  .fullscreen-button-basic__button {
     height: 50px;
     position: absolute;
     bottom: 10px;
@@ -24,13 +20,13 @@
     cursor: pointer;
   }
 
-  media-fullscreen-button .show-when-fullscreen { display: none; }
-  media-fullscreen-button .show-when-not-fullscreen { display: none; }
-  media-fullscreen-button[data-fullscreen] .show-when-fullscreen { display: inline; }
-  media-fullscreen-button:not([data-fullscreen]) .show-when-not-fullscreen { display: inline; }
+  .fullscreen-button-basic__button .show-when-fullscreen { display: none; }
+  .fullscreen-button-basic__button .show-when-not-fullscreen { display: none; }
+  .fullscreen-button-basic__button[data-fullscreen] .show-when-fullscreen { display: inline; }
+  .fullscreen-button-basic__button:not([data-fullscreen]) .show-when-not-fullscreen { display: inline; }
 </style>
 
-<video-player>
+<video-player class="fullscreen-button-basic">
   <video
     src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
     autoplay
@@ -38,7 +34,7 @@
     playsinline
     loop
   ></video>
-  <media-fullscreen-button>
+  <media-fullscreen-button class="fullscreen-button-basic__button">
     <span class="show-when-fullscreen">Exit Fullscreen</span>
     <span class="show-when-not-fullscreen">Fullscreen</span>
   </media-fullscreen-button>
