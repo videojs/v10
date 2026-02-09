@@ -1,4 +1,12 @@
-import type { AnyPlayerFeature, PlayerStore, PlayerTarget } from '@videojs/core/dom';
+import type {
+  AnyPlayerFeature,
+  AudioFeatures,
+  AudioPlayerStore,
+  PlayerStore,
+  PlayerTarget,
+  VideoFeatures,
+  VideoPlayerStore,
+} from '@videojs/core/dom';
 import { combine, createStore } from '@videojs/store';
 
 import { type ContainerMixin, createContainerMixin } from '../store/container-mixin';
@@ -45,7 +53,7 @@ export interface CreatePlayerResult<Store extends PlayerStore> {
  * import { createPlayer, MediaElement } from '@videojs/html';
  *
  * const { PlayerElement, PlayerController, context } = createPlayer({
- *   features: [...features.video],
+ *   features: features.video,
  * });
  *
  * // Simple: register pre-composed PlayerElement
@@ -60,23 +68,26 @@ export interface CreatePlayerResult<Store extends PlayerStore> {
  * }
  * ```
  */
+export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
+
+export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;
+
 export function createPlayer<const Features extends AnyPlayerFeature[]>(
   config: CreatePlayerConfig<Features>
-): CreatePlayerResult<PlayerStore<Features>> {
-  type Store = PlayerStore<Features>;
+): CreatePlayerResult<PlayerStore<Features>>;
 
-  const slice = combine<PlayerTarget, Features>(...config.features);
+export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): CreatePlayerResult<PlayerStore> {
+  const slice = combine<PlayerTarget, AnyPlayerFeature[]>(...config.features);
 
-  function create(): Store {
+  function create(): PlayerStore {
     return createStore<PlayerTarget>()(slice);
   }
 
-  const ctx = playerContext as PlayerContext<Store>;
-
-  const PlayerMixin = createPlayerMixin<Store>(ctx, create);
+  const ctx = playerContext;
+  const PlayerMixin = createPlayerMixin<PlayerStore>(ctx, create);
   const PlayerElement = PlayerMixin(MediaElement);
-  const ProviderMixin = createProviderMixin<Store>(ctx, create);
-  const ContainerMixin = createContainerMixin<Store>(ctx);
+  const ProviderMixin = createProviderMixin<PlayerStore>(ctx, create);
+  const ContainerMixin = createContainerMixin<PlayerStore>(ctx);
 
   return {
     context: ctx,

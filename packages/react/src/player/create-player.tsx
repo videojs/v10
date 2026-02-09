@@ -1,7 +1,17 @@
 'use client';
 
-import type { AnyPlayerFeature, Media, PlayerStore, PlayerTarget } from '@videojs/core/dom';
-import type { UnionSliceState } from '@videojs/store';
+import type {
+  AnyPlayerFeature,
+  AnyPlayerStore,
+  AudioFeatures,
+  AudioPlayerStore,
+  Media,
+  PlayerStore,
+  PlayerTarget,
+  VideoFeatures,
+  VideoPlayerStore,
+} from '@videojs/core/dom';
+import type { InferStoreState } from '@videojs/store';
 import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { FC, ReactNode } from 'react';
@@ -18,24 +28,27 @@ export interface ProviderProps {
   children: ReactNode;
 }
 
-export interface CreatePlayerResult<Features extends AnyPlayerFeature[]> {
+export interface CreatePlayerResult<Store extends PlayerStore> {
   Provider: FC<ProviderProps>;
   Container: typeof Container;
-  usePlayer: UsePlayerHook<Features>;
+  usePlayer: UsePlayerHook<Store>;
   useMedia: () => Media | null;
 }
 
-type UsePlayerHook<Features extends AnyPlayerFeature[]> = {
-  (): PlayerStore<Features>;
-  <R>(selector: (state: UnionSliceState<Features>) => R): R;
+export type UsePlayerHook<Store extends PlayerStore> = {
+  (): Store;
+  <R>(selector: (state: InferStoreState<Store>) => R): R;
 };
+
+export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
+
+export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;
 
 export function createPlayer<const Features extends AnyPlayerFeature[]>(
   config: CreatePlayerConfig<Features>
-): CreatePlayerResult<Features> {
-  type Store = PlayerStore<Features>;
-  type State = UnionSliceState<Features>;
+): CreatePlayerResult<PlayerStore<Features>>;
 
+export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): CreatePlayerResult<AnyPlayerStore> {
   function Provider({ children }: ProviderProps): ReactNode {
     const [store] = useState(() => createStore<PlayerTarget>()(combine(...config.features)));
     const [media, setMedia] = useState<Media | null>(null);
@@ -49,9 +62,7 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
     Provider.displayName = `${config.displayName}.Provider`;
   }
 
-  function usePlayer(): Store;
-  function usePlayer<R>(selector: (state: State) => R): R;
-  function usePlayer<R>(selector?: (state: State) => R): Store | R {
+  function usePlayer<R>(selector?: (state: object) => R): AnyPlayerStore | R {
     const { store } = usePlayerContext();
     return useStore(store, selector as any);
   }
@@ -59,7 +70,7 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
   return {
     Provider,
     Container,
-    usePlayer: usePlayer as UsePlayerHook<Features>,
+    usePlayer,
     useMedia,
   };
 }

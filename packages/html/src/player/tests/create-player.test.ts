@@ -5,7 +5,7 @@ import { createPlayer } from '../create-player';
 
 describe('createPlayer', () => {
   it('returns expected exports', () => {
-    const result = createPlayer({ features: [...features.video] });
+    const result = createPlayer({ features: features.video });
 
     expect(result.context).toBeDefined();
     expect(result.create).toBeInstanceOf(Function);
@@ -17,7 +17,7 @@ describe('createPlayer', () => {
   });
 
   it('create() returns a store instance', () => {
-    const { create } = createPlayer({ features: [...features.video] });
+    const { create } = createPlayer({ features: features.video });
     const store = create();
 
     expect(store.attach).toBeInstanceOf(Function);
@@ -26,7 +26,7 @@ describe('createPlayer', () => {
   });
 
   it('PlayerElement is a valid custom element class', () => {
-    const { PlayerElement } = createPlayer({ features: [...features.video] });
+    const { PlayerElement } = createPlayer({ features: features.video });
 
     expect(typeof PlayerElement).toBe('function');
     expect(PlayerElement.prototype).toBeDefined();
