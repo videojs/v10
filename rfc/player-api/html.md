@@ -21,12 +21,30 @@ Only fundamentally different behaviors get their own player:
 
 ## Import Paths
 
-### Player (includes base features)
+Grouped by use case, then by concern:
+
+### Video (default)
 
 ```ts
-import '@videojs/html/player/video';        // includes features.video
-import '@videojs/html/player/audio';        // includes features.audio
-import '@videojs/html/player/background-video';
+import '@videojs/html/video/player';       // includes features.video
+import '@videojs/html/video/skin';
+import '@videojs/html/video/skin.css';
+```
+
+### Audio (default)
+
+```ts
+import '@videojs/html/audio/player';       // includes features.audio
+import '@videojs/html/audio/skin';
+import '@videojs/html/audio/skin.css';
+```
+
+### Background Video
+
+```ts
+import '@videojs/html/background/player';  // includes features.background
+import '@videojs/html/background/skin';
+import '@videojs/html/background/skin.css';
 ```
 
 ### Features (additive)
@@ -51,21 +69,6 @@ import '@videojs/html/media/hls-audio';
 import '@videojs/html/media/dash-video';
 ```
 
-### Skins
-
-```ts
-// Default skin
-import '@videojs/html/skin/video.css';
-import '@videojs/html/skin/video';
-
-// Named variants
-import '@videojs/html/skin/video/minimal.css';
-import '@videojs/html/skin/video/minimal';
-
-import '@videojs/html/skin/audio.css';
-import '@videojs/html/skin/audio';
-```
-
 ### UI Primitives (for custom skins)
 
 ```ts
@@ -81,8 +84,8 @@ import '@videojs/html/ui/slider';
 Elements register globally when imported:
 
 ```ts
-import '@videojs/html/player/video';
-import '@videojs/html/skin/video';
+import '@videojs/html/video/player';
+import '@videojs/html/video/skin';
 ```
 
 ```html
@@ -165,9 +168,9 @@ customElements.define('video-player', PlayerElement);
 Default skin adapts to available features:
 
 ```ts
-import '@videojs/html/player/video';
+import '@videojs/html/video/player';
 import '@videojs/html/feature/streaming';  // skin will show quality menu
-import '@videojs/html/skin/video';
+import '@videojs/html/video/skin';
 ```
 
 ```html
@@ -351,11 +354,11 @@ When media element and container need different DOM locations:
 
 ```ts
 // main.ts
-import '@videojs/html/player/video';
+import '@videojs/html/video/player';
 import '@videojs/html/feature/streaming';
 import '@videojs/html/media/hls-video';
-import '@videojs/html/skin/video.css';
-import '@videojs/html/skin/video';
+import '@videojs/html/video/skin.css';
+import '@videojs/html/video/skin';
 ```
 
 ```html

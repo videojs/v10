@@ -51,6 +51,11 @@ export type AudioFeatures = [
   PlayerFeature<MediaBufferState>,
 ];
 
+// TODO: Define background video features (e.g., playback, source, buffer)
+export type BackgroundFeatures = [];
+
 export type VideoPlayerStore = PlayerStore<VideoFeatures>;
 
 export type AudioPlayerStore = PlayerStore<AudioFeatures>;
+
+export type BackgroundPlayerStore = PlayerStore<BackgroundFeatures>;

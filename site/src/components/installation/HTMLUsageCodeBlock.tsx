@@ -79,8 +79,17 @@ function generateHTMLCode(useCase: UseCase, skin: Skin, renderer: Renderer, play
 </${providerTag}>`;
 }
 
+function getSkinImportPath(skin: Skin): string {
+  const map: Record<Skin, string> = {
+    'default-video': '@videojs/html/video/skin',
+    'default-audio': '@videojs/html/audio/skin',
+    minimal: '@videojs/html/video/minimal-skin',
+  };
+  return map[skin];
+}
+
 function generateJS(skin: Skin): string {
-  return `import '@videojs/html/skins/${skin}';`;
+  return `import '${getSkinImportPath(skin)}';`;
 }
 
 export default function HTMLUsageCodeBlock() {

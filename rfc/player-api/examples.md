@@ -29,7 +29,7 @@ function App() {
 ### HTML
 
 ```ts
-import '@videojs/html/player/video';
+import '@videojs/html/video/player';
 ```
 
 ```html
@@ -44,11 +44,11 @@ import '@videojs/html/player/video';
 ### React
 
 ```tsx
-import '@videojs/react/skin/video.css';
+import '@videojs/react/video/skin.css';
 
 import { createPlayer } from '@videojs/react';
 import { features } from '@videojs/core/dom';
-import { VideoSkin } from '@videojs/react/skin/video';
+import { VideoSkin } from '@videojs/react/video/skin';
 
 const { Provider: VideoProvider } = createPlayer({
   features: [...features.video],
@@ -68,9 +68,9 @@ function App() {
 ### HTML
 
 ```ts
-import '@videojs/html/player/video';
-import '@videojs/html/skin/video.css';
-import '@videojs/html/skin/video';
+import '@videojs/html/video/player';
+import '@videojs/html/video/skin.css';
+import '@videojs/html/video/skin';
 ```
 
 ```html
@@ -88,11 +88,11 @@ Skin detects chapters feature, shows chapter menu.
 ### React
 
 ```tsx
-import '@videojs/react/skin/video.css';
+import '@videojs/react/video/skin.css';
 
 import { createPlayer } from '@videojs/react';
 import { features, chaptersSlice } from '@videojs/core/dom';
-import { VideoSkin } from '@videojs/react/skin/video';
+import { VideoSkin } from '@videojs/react/video/skin';
 
 const { Provider: VideoProvider } = createPlayer({
   features: [...features.video, chaptersSlice],
@@ -112,10 +112,10 @@ function App() {
 ### HTML
 
 ```ts
-import '@videojs/html/player/video';
+import '@videojs/html/video/player';
 import '@videojs/html/feature/chapters';
-import '@videojs/html/skin/video.css';
-import '@videojs/html/skin/video';
+import '@videojs/html/video/skin.css';
+import '@videojs/html/video/skin';
 ```
 
 ```html
@@ -133,12 +133,12 @@ Skin detects streaming features, shows quality/tracks menus.
 ### React
 
 ```tsx
-import '@videojs/react/skin/video.css';
+import '@videojs/react/video/skin.css';
 
 import { createPlayer } from '@videojs/react';
 import { features } from '@videojs/core/dom';
 import { HlsVideo } from '@videojs/react/media/hls';
-import { VideoSkin } from '@videojs/react/skin/video';
+import { VideoSkin } from '@videojs/react/video/skin';
 
 const { Provider: VideoProvider } = createPlayer({
   features: [...features.video, ...features.streaming],
@@ -158,11 +158,11 @@ function App() {
 ### HTML
 
 ```ts
-import '@videojs/html/player/video';
+import '@videojs/html/video/player';
 import '@videojs/html/feature/streaming';
 import '@videojs/html/media/hls-video';
-import '@videojs/html/skin/video.css';
-import '@videojs/html/skin/video';
+import '@videojs/html/video/skin.css';
+import '@videojs/html/video/skin';
 ```
 
 ```html
@@ -180,12 +180,12 @@ Same skin adapts to show ad UI.
 ### React
 
 ```tsx
-import '@videojs/react/skin/video.css';
+import '@videojs/react/video/skin.css';
 
 import { createPlayer } from '@videojs/react';
 import { features } from '@videojs/core/dom';
 import { HlsVideo } from '@videojs/react/media/hls';
-import { VideoSkin } from '@videojs/react/skin/video';
+import { VideoSkin } from '@videojs/react/video/skin';
 
 const { Provider: VideoProvider } = createPlayer({
   features: [...features.video, ...features.streaming, ...features.ads],
@@ -205,12 +205,12 @@ function App() {
 ### HTML
 
 ```ts
-import '@videojs/html/player/video';
+import '@videojs/html/video/player';
 import '@videojs/html/feature/streaming';
 import '@videojs/html/feature/ads';
 import '@videojs/html/media/hls-video';
-import '@videojs/html/skin/video.css';
-import '@videojs/html/skin/video';
+import '@videojs/html/video/skin.css';
+import '@videojs/html/video/skin';
 ```
 
 ## 6. Full Custom (Escape Hatch)
