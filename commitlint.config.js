@@ -27,6 +27,7 @@ export default {
         'react',
         'rfc',
         'root',
+        'sandbox',
         'site',
         'store',
         'test',

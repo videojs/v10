@@ -1,0 +1,30 @@
+{
+  "name": "@videojs/sandbox",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx setup.ts && vite",
+    "build": "tsx setup.ts && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@videojs/core": "workspace:*",
+    "@videojs/html": "workspace:*",
+    "@videojs/react": "workspace:*",
+    "@videojs/store": "workspace:*",
+    "@videojs/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@tailwindcss/vite": "^4.1.17",
+    "@vitejs/plugin-react": "^4.0.0",
+    "tailwindcss": "^4.1.17",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^6.0.0"
+  }
+}
