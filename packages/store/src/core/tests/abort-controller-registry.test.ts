@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { Signals } from '../signals';
+import { AbortControllerRegistry } from '../abort-controller-registry';
 
-describe('Signals', () => {
+describe('AbortControllerRegistry', () => {
   describe('base', () => {
     it('returns an AbortSignal', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       expect(signals.base).toBeInstanceOf(AbortSignal);
     });
 
     it('is not aborted initially', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       expect(signals.base.aborted).toBe(false);
     });
 
     it('is aborted after reset()', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const base = signals.base;
 
       signals.reset();
@@ -23,7 +23,7 @@ describe('Signals', () => {
     });
 
     it('returns new signal after reset()', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const base1 = signals.base;
 
       signals.reset();
@@ -34,7 +34,7 @@ describe('Signals', () => {
     });
 
     it('is not aborted after clear()', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const base = signals.base;
 
       signals.clear();
@@ -45,7 +45,7 @@ describe('Signals', () => {
 
   describe('clear', () => {
     it('aborts keyed signals', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const signal = signals.supersede('test');
 
       signals.clear();
@@ -54,7 +54,7 @@ describe('Signals', () => {
     });
 
     it('does not abort base', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const base = signals.base;
       signals.supersede('test');
 
@@ -64,7 +64,7 @@ describe('Signals', () => {
     });
 
     it('clears all keyed signals', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const signal1 = signals.supersede('key1');
       const signal2 = signals.supersede('key2');
 
@@ -77,7 +77,7 @@ describe('Signals', () => {
 
   describe('reset', () => {
     it('aborts base signal', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const base = signals.base;
 
       signals.reset();
@@ -86,7 +86,7 @@ describe('Signals', () => {
     });
 
     it('aborts keyed signals', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const signal = signals.supersede('test');
 
       signals.reset();
@@ -95,7 +95,7 @@ describe('Signals', () => {
     });
 
     it('creates new base signal', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const base1 = signals.base;
 
       signals.reset();
@@ -108,21 +108,21 @@ describe('Signals', () => {
 
   describe('supersede', () => {
     it('returns an AbortSignal', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const signal = signals.supersede('test');
 
       expect(signal).toBeInstanceOf(AbortSignal);
     });
 
     it('is not aborted initially', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const signal = signals.supersede('test');
 
       expect(signal.aborted).toBe(false);
     });
 
     it('aborts when base is reset', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const signal = signals.supersede('test');
 
       signals.reset();
@@ -131,7 +131,7 @@ describe('Signals', () => {
     });
 
     it('aborts previous signal for same key', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const signal1 = signals.supersede('seek');
 
       const signal2 = signals.supersede('seek');
@@ -141,7 +141,7 @@ describe('Signals', () => {
     });
 
     it('does not abort signals with different keys', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const signal1 = signals.supersede('key1');
       const signal2 = signals.supersede('key2');
 
@@ -150,7 +150,7 @@ describe('Signals', () => {
     });
 
     it('supports symbol keys', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const key = Symbol('test');
       const signal1 = signals.supersede(key);
       const signal2 = signals.supersede(key);
@@ -160,7 +160,7 @@ describe('Signals', () => {
     });
 
     it('allows reusing key after clear()', () => {
-      const signals = new Signals();
+      const signals = new AbortControllerRegistry();
       const signal1 = signals.supersede('test');
 
       signals.clear();

@@ -1,6 +1,6 @@
 export type SignalKey = PropertyKey;
 
-export class Signals {
+export class AbortControllerRegistry {
   #base = new AbortController();
   #keys = new Map<SignalKey, AbortController>();
 

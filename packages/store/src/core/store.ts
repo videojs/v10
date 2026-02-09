@@ -1,7 +1,7 @@
 import { isNull, isObject } from '@videojs/utils/predicate';
+import { AbortControllerRegistry } from './abort-controller-registry';
 import type { StoreCallbacks } from './config';
 import { throwDestroyedError, throwNoTargetError } from './errors';
-import { Signals } from './signals';
 import type { AttachContext, Slice, StateContext } from './slice';
 import type { StateChange, SubscribeOptions, UnknownState, WritableState } from './state';
 import { createState } from './state';
@@ -22,7 +22,7 @@ export function createStore<Target = unknown>(): <State>(
     let destroyed = false;
 
     const setupAbort = new AbortController();
-    const signals = new Signals();
+    const signals = new AbortControllerRegistry();
 
     // Reactive state - initialized after building slice state
     let state: WritableState<State>;

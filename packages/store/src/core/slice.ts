@@ -1,5 +1,5 @@
 import type { Simplify, UnionToIntersection } from '@videojs/utils/types';
-import type { Signals } from './signals';
+import type { AbortControllerRegistry } from './abort-controller-registry';
 import type { UnknownState } from './state';
 
 // ----------------------------------------
@@ -39,7 +39,7 @@ export interface StateContext<Target> {
    * - `signals.clear()` — Aborts all keyed signals. Use when starting fresh
    *   (e.g., loading a new source cancels pending seeks).
    */
-  signals: Signals;
+  signals: AbortControllerRegistry;
 }
 
 // ----------------------------------------
