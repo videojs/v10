@@ -5,7 +5,7 @@ description: Get started quickly with Video.js by building your first embed code
 
 import JSPicker from '@/components/installation/JSPicker.astro';
 import RendererPicker from '@/components/installation/RendererPicker';
-import SkinPickerSection from '@/components/installation/SkinPickerSection';
+import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import UseCasePicker from '@/components/installation/UseCasePicker';
 import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
@@ -42,7 +42,7 @@ The defaults work well for general website playback. More prebuilt players to co
 </ContentWidth>
 
 <ContentWidth margins="lg">
-  <SkinPickerSection client:idle />
+  <SkinPickerSection />
 </ContentWidth>
 
 ## Choose your media source type
