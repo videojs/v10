@@ -27,7 +27,7 @@ import UploaderOverlay from './UploaderOverlay';
  * 3. If 401: show login overlay, wait for auth, retry
  * 4. Upload begins with returned URL
  * 5. On success: poll for playback ID
- * 6. When ready: update renderer to 'mux', store playback ID in nanostore
+ * 6. When ready: update renderer to 'mux-video', store playback ID in nanostore
  */
 export default function MuxUploaderPanel() {
   // Local state for upload flow (not shared across islands)
@@ -158,7 +158,7 @@ export default function MuxUploaderPanel() {
     // Success! Update local state and nanostores (for cross-island use)
     setPlaybackId(result.playbackId);
     setState('ready');
-    renderer.set('mux');
+    renderer.set('mux-video');
     muxPlaybackId.set(result.playbackId);
   }, [uploadId]);
 

@@ -6,14 +6,17 @@ import { muxPlaybackId, renderer, skin, useCase } from '@/stores/installation';
 
 function getRendererComponent(renderer: Renderer): string {
   const map: Record<Renderer, string> = {
+    'background-video': 'BackgroundVideo',
     cloudflare: 'CloudflareVideo',
     dash: 'DashVideo',
     hls: 'HlsVideo',
     'html5-audio': 'Audio',
     'html5-video': 'Video',
     jwplayer: 'JwplayerVideo',
-    mux: 'MuxVideo',
-    shaka: 'ShakaVideo',
+    'mux-audio': 'MuxAudio',
+    'mux-background-video': 'MuxBackgroundVideo',
+    'mux-video': 'MuxVideo',
+    // shaka: 'ShakaVideo', this one probably adds more confusion than help at this level
     spotify: 'SpotifyAudio',
     vimeo: 'VimeoVideo',
     wistia: 'WistiaVideo',
@@ -24,11 +27,18 @@ function getRendererComponent(renderer: Renderer): string {
 
 function getSkinComponent(skin: Skin): string {
   const map: Record<Skin, string> = {
-    'default-video': 'VideoSkin',
-    'default-audio': 'AudioSkin',
-    minimal: 'MinimalVideoSkin',
+    video: 'VideoSkin',
+    audio: 'AudioSkin',
+    'minimal-video': 'MinimalVideoSkin',
+    'minimal-audio': 'MinimalAudioSkin',
   };
   return map[skin];
+}
+
+function getSkinImportParts(skin: Skin): { group: string; skinFile: string } {
+  if (skin === 'minimal-video') return { group: 'video', skinFile: 'minimal-skin' };
+  if (skin === 'minimal-audio') return { group: 'audio', skinFile: 'minimal-skin' };
+  return { group: skin, skinFile: 'skin' };
 }
 
 function getPresetAccess(useCase: UseCase): string {
@@ -38,13 +48,32 @@ function getPresetAccess(useCase: UseCase): string {
   return `presets['${useCase}']`;
 }
 
+function getProviderComponent(useCase: UseCase): string {
+  const map: Record<UseCase, string> = {
+    'default-video': 'VideoProvider',
+    'default-audio': 'AudioProvider',
+    'background-video': 'BackgroundVideoProvider',
+  };
+  return map[useCase];
+}
+
 function generateReactCode(useCase: UseCase, skin: Skin, renderer: Renderer, playbackId: string | null): string {
-  const skinComponent = getSkinComponent(skin);
+  const providerComponent = getProviderComponent(useCase);
   const rendererComponent = getRendererComponent(renderer);
   const presetAccess = getPresetAccess(useCase);
 
+  // Background video has fixed skin and subpath imports, others use skin picker value
+  const isBackgroundVideo = useCase === 'background-video';
+  const skinComponent = isBackgroundVideo ? 'BackgroundVideoSkin' : getSkinComponent(skin);
+  const { group, skinFile } = getSkinImportParts(skin);
+  const skinCssImport = isBackgroundVideo
+    ? '@videojs/react/background/skin.css'
+    : `@videojs/react/${group}/${skinFile}.css`;
+  const componentImportPath = isBackgroundVideo ? '@videojs/react/background' : '@videojs/react';
+
   // Determine props based on renderer + playbackId
-  const isMuxWithPlaybackId = renderer === 'mux' && playbackId;
+  const isMuxWithPlaybackId =
+    (renderer === 'mux-video' || renderer === 'mux-audio' || renderer === 'mux-background-video') && playbackId;
   const propsInterface = isMuxWithPlaybackId
     ? 'interface MyPlayerProps {\n  playbackId: string;\n}'
     : 'interface MyPlayerProps {\n  src: string;\n}';
@@ -53,21 +82,17 @@ function generateReactCode(useCase: UseCase, skin: Skin, renderer: Renderer, pla
     ? `<${rendererComponent} playbackId={playbackId} />`
     : `<${rendererComponent} src={src} />`;
 
-  return `import { createPlayer, presets, ${rendererComponent} } from '@videojs/react';
-import { ${skinComponent} } from '@videojs/react/presets/${useCase}';
-import '@videojs/react/presets/${useCase}/skins/${skin}.css';
+  return `import '${skinCssImport}';
+import { ${providerComponent}, ${skinComponent}, ${rendererComponent} } from '${componentImportPath}';
 
 ${propsInterface}
-
-// Set up the player state features
-const { PlayerProvider } = createPlayer(${presetAccess});
 
 export const MyPlayer = ({ ${destructuredProp} }: MyPlayerProps) => {
   return (
     {/* The Provider passes state between the UI components
         and the Media, and makes fully custom UIs possible.
         Does not render its own HTML element. */}
-    <PlayerProvider>
+    <${providerComponent}>
       {/* Skins contain the entire player UI and are easily swappable.
           They can each be "ejected" for full control and customization
           of UI components. */}
@@ -77,7 +102,7 @@ export const MyPlayer = ({ ${destructuredProp} }: MyPlayerProps) => {
             They are easily swappable to handle different sources. */}
         ${rendererJsx}
       </${skinComponent}>
-    </PlayerProvider>
+    </${providerComponent}>
   );
 };`;
 }
