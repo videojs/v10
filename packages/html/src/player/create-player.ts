@@ -83,14 +83,13 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     return createStore<PlayerTarget>()(slice);
   }
 
-  const ctx = playerContext;
-  const PlayerMixin = createPlayerMixin<PlayerStore>(ctx, create);
+  const PlayerMixin = createPlayerMixin<PlayerStore>(playerContext, create);
   const PlayerElement = PlayerMixin(MediaElement);
-  const ProviderMixin = createProviderMixin<PlayerStore>(ctx, create);
-  const ContainerMixin = createContainerMixin<PlayerStore>(ctx);
+  const ProviderMixin = createProviderMixin<PlayerStore>(playerContext, create);
+  const ContainerMixin = createContainerMixin<PlayerStore>(playerContext);
 
   return {
-    context: ctx,
+    context: playerContext,
     create,
     PlayerController,
     PlayerElement,

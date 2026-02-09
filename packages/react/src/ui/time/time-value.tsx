@@ -57,7 +57,7 @@ export const Value = forwardRef(function Value(
       ref: [forwardedRef],
       props: [
         {
-          datetime: state.datetime,
+          dateTime: state.datetime,
           children: content,
           ...core.getAttrs(state),
         },

@@ -1,6 +1,5 @@
 import { ContextConsumer } from '@lit/context';
-import type { MediaContainer, PlayerStore, PlayerTarget } from '@videojs/core/dom';
-import { listen, querySlot } from '@videojs/utils/dom';
+import type { Media, MediaContainer, PlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { noop } from '@videojs/utils/function';
 import type { MediaElementConstructor } from '@/ui/media-element';
 import type { PlayerContext } from '../player/context';
@@ -14,7 +13,7 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
   return <Class extends MediaElementConstructor>(BaseClass: Class) => {
     class PlayerContainerElement extends BaseClass implements PlayerConsumer<Store>, MediaContainer {
       #detach = noop;
-      #disconnect: AbortController | null = null;
+      #observer: MutationObserver | null = null;
 
       #consumer = new ContextConsumer(this, {
         context,
@@ -23,44 +22,54 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
       });
 
       get store(): Store | null {
-        return (this.#consumer.value?.store as Store) ?? null;
+        return this.#consumer.value ?? null;
+      }
+
+      protected createRenderRoot() {
+        return this;
       }
 
       override connectedCallback() {
         super.connectedCallback();
 
-        this.#disconnect?.abort();
-        this.#disconnect = new AbortController();
+        this.#observer = new MutationObserver((records) => {
+          if (records.some(hasMediaNode)) this.#attachMedia();
+        });
 
-        if (this.shadowRoot) {
-          const slot = querySlot(this.shadowRoot, '');
-          if (slot) listen(slot, 'slotchange', () => this.#attachMedia(), { signal: this.#disconnect.signal });
-        }
+        this.#observer.observe(this, { childList: true, subtree: true });
 
         this.#attachMedia();
       }
 
       override disconnectedCallback() {
         super.disconnectedCallback();
-        this.#disconnect?.abort();
-        this.#disconnect = null;
+        this.#observer?.disconnect();
+        this.#observer = null;
         this.#detach();
       }
 
       #attachMedia() {
-        const ctx = this.#consumer.value;
-        if (!ctx) return;
+        // Store will be overridden and set by provider mixin if consumer is empty.
+        const store = this.#consumer.value ?? this.store;
+        if (!store) return;
 
-        const { store, media } = ctx;
+        const media = this.querySelector<HTMLMediaElement>('video, audio');
 
-        if (!media) return;
+        if (!media) {
+          this.#detach();
+          this.#detach = noop;
+          return;
+        }
 
         const target: PlayerTarget = {
           media,
           container: this,
         };
 
-        if (store.target?.media !== target.media || store.target?.container !== target.container) {
+        const hasMediaChanged = store.target?.media !== target.media,
+          hasContainerChanged = store.target?.container !== target.container;
+
+        if (hasMediaChanged || hasContainerChanged) {
           this.#detach();
           this.#detach = store.attach(target);
         }
@@ -69,4 +78,20 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
 
     return PlayerContainerElement;
   };
+}
+
+function isMediaNode(node: Node): boolean {
+  return node instanceof HTMLMediaElement;
+}
+
+function hasMediaNode(record: MutationRecord): boolean {
+  for (const node of record.addedNodes) {
+    if (isMediaNode(node)) return true;
+  }
+
+  for (const node of record.removedNodes) {
+    if (isMediaNode(node)) return true;
+  }
+
+  return false;
 }

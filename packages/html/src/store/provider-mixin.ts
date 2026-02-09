@@ -1,5 +1,5 @@
 import { ContextProvider } from '@lit/context';
-import type { Media, PlayerStore } from '@videojs/core/dom';
+import type { PlayerStore } from '@videojs/core/dom';
 import { isNull } from '@videojs/utils/predicate';
 import type { MediaElementConstructor } from '@/ui/media-element';
 import type { PlayerContext } from '../player/context';
@@ -15,36 +15,34 @@ export function createProviderMixin<Store extends PlayerStore>(
 ): ProviderMixin<Store> {
   return <Class extends MediaElementConstructor>(BaseClass: Class) => {
     class PlayerProviderElement extends BaseClass implements PlayerProvider<Store> {
-      #store: Store | null = null;
-      #media: Media | null = null;
+      #store: Store | null = factory();
 
       #provider = new ContextProvider(this, {
         context,
-        initialValue: { store: this.store, media: null },
+        initialValue: this.store,
       });
 
       get store(): Store {
         if (isNull(this.#store)) {
           this.#store = factory();
         }
+
         return this.#store;
       }
 
-      get media(): Media | null {
-        return this.#media;
+      protected createRenderRoot() {
+        return this;
       }
 
-      set media(value: Media | null) {
-        this.#media = value;
-        this.#provider.setValue({ store: this.store, media: value });
+      override connectedCallback() {
+        super.connectedCallback();
+        this.#provider.setValue(this.store);
       }
 
       override disconnectedCallback() {
         super.disconnectedCallback();
-        if (this.#store) {
-          this.#store.destroy();
-          this.#store = null;
-        }
+        this.#store?.destroy();
+        this.#store = null;
       }
     }
 

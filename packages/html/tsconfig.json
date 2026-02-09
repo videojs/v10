@@ -6,7 +6,8 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "declarationDir": "types"
+    "declarationDir": "types",
+    "useDefineForClassFields": false
   },
   "include": ["src"]
 }
