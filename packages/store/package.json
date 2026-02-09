@@ -36,7 +36,7 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "build:watch": "tsdown --watch --silent",
+    "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
     "test": "vitest run",
     "test:watch": "vitest",

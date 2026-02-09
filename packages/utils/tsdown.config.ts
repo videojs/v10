@@ -15,6 +15,7 @@ export default defineConfig({
   format: 'es',
   sourcemap: true,
   clean: true,
+  hash: false,
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
   },
