@@ -1,6 +1,6 @@
 'use client';
 
-import { MuteButtonCore, MuteButtonDataAttributes } from '@videojs/core';
+import { MuteButtonCore, MuteButtonDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectVolume } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
@@ -33,18 +33,20 @@ export const MuteButton = forwardRef(function MuteButton(
   });
 
   if (!volume) {
-    logMissingFeature('MuteButton', 'volume');
+    if (__DEV__) logMissingFeature('MuteButton', 'volume');
     return null;
   }
+
+  const state = core.getState(volume);
 
   return renderElement(
     'button',
     { render, className, style },
     {
-      state: core.getState(volume),
+      state,
+      stateAttrMap: MuteButtonDataAttrs,
       ref: [forwardedRef, buttonRef],
-      props: [core.getAttrs(volume), elementProps, getButtonProps()],
-      stateAttrMap: MuteButtonDataAttributes,
+      props: [core.getAttrs(state), elementProps, getButtonProps()],
     }
   );
 });

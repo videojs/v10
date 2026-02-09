@@ -1,3 +1,6 @@
+import type { StateAttrMap } from '../types';
+import type { PlayButtonState } from './play-button-core';
+
 export const PlayButtonDataAttrs = {
   /** Present when the media is paused. */
   paused: 'data-paused',
@@ -5,4 +8,4 @@ export const PlayButtonDataAttrs = {
   ended: 'data-ended',
   /** Present when playback has started. */
   started: 'data-started',
-} as const;
+} as const satisfies StateAttrMap<PlayButtonState>;

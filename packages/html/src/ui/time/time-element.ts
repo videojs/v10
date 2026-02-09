@@ -1,5 +1,5 @@
 import type { PropertyValues } from '@lit/reactive-element';
-import { TimeCore, type TimeType } from '@videojs/core';
+import { TimeCore, TimeDataAttrs, type TimeType } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectTime } from '@videojs/core/dom';
 
 import { playerContext } from '../../player/context';
@@ -33,31 +33,28 @@ export class TimeElement extends MediaElement {
   override connectedCallback(): void {
     super.connectedCallback();
 
-    if (!this.#state.value) {
+    if (__DEV__ && !this.#state.value) {
       logMissingFeature(TimeElement.tagName, 'time');
     }
   }
 
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed);
-    this.#core.setProps({ type: this.type, negativeSign: this.negativeSign, label: this.label });
+    this.#core.setProps(this);
   }
 
   protected override update(changed: PropertyValues): void {
     super.update(changed);
 
-    const time = this.#state.value;
+    const media = this.#state.value;
 
-    if (!time) {
-      return;
-    }
+    if (!media) return;
 
-    const state = this.#core.getState(time);
-    const showSign = state.type === 'remaining' && state.seconds < 0;
+    const state = this.#core.getState(media);
 
-    if (showSign) {
+    if (state.negative) {
       this.#signSpan.textContent = this.negativeSign;
-      this.#textNode.textContent = state.text.replace(/^-/, '');
+      this.#textNode.textContent = state.text;
 
       // Append elements if not already in DOM
       if (!this.#signSpan.parentNode) {
@@ -74,7 +71,7 @@ export class TimeElement extends MediaElement {
       this.textContent = state.text;
     }
 
-    applyElementProps(this, this.#core.getAttrs(time));
-    applyStateDataAttrs(this, state);
+    applyElementProps(this, this.#core.getAttrs(state));
+    applyStateDataAttrs(this, state, TimeDataAttrs);
   }
 }

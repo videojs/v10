@@ -1,6 +1,6 @@
 'use client';
 
-import { TimeCore } from '@videojs/core';
+import { TimeCore, TimeDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectTime } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
@@ -33,34 +33,33 @@ export const Value = forwardRef(function Value(
   core.setProps({ type, negativeSign, label });
 
   if (!time) {
-    logMissingFeature('Time.Value', 'time');
+    if (__DEV__) logMissingFeature('Time.Value', 'time');
     return null;
   }
 
   const state = core.getState(time);
 
-  // Render negative sign as aria-hidden span for remaining time
-  const content =
-    state.type === 'remaining' && state.seconds < 0 ? (
-      <>
-        <span aria-hidden="true">{negativeSign ?? '-'}</span>
-        {state.text.replace(/^-/, '')}
-      </>
-    ) : (
-      state.text
-    );
+  const content = state.negative ? (
+    <>
+      <span aria-hidden="true">{negativeSign ?? '-'}</span>
+      {state.text}
+    </>
+  ) : (
+    state.text
+  );
 
   return renderElement(
     'time',
     { render, className, style },
     {
       state,
+      stateAttrMap: TimeDataAttrs,
       ref: [forwardedRef],
       props: [
         {
           datetime: state.datetime,
           children: content,
-          ...core.getAttrs(time),
+          ...core.getAttrs(state),
         },
         elementProps,
       ],
