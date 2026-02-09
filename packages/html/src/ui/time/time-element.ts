@@ -32,6 +32,10 @@ export class TimeElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
+    if (__DEV__ && !this.#state.value) {
+      logMissingFeature(TimeElement.tagName, 'time');
+    }
   }
 
   protected override willUpdate(changed: PropertyValues): void {
@@ -44,10 +48,7 @@ export class TimeElement extends MediaElement {
 
     const media = this.#state.value;
 
-    if (!media) {
-      logMissingFeature(TimeElement.tagName, 'time');
-      return;
-    }
+    if (!media) return;
 
     const state = this.#core.getState(media);
 

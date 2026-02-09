@@ -26,7 +26,7 @@ Video.js-specific patterns. See [videojs.md](../../references/videojs.md) for ar
 - [ ] Uses `PlayerController` with selector for store subscription
 - [ ] Uses `AbortController` for cleanup in `disconnectedCallback`
 - [ ] `willUpdate`: syncs props to core via `setProps(this)`
-- [ ] `update`: null-guard with `logMissingFeature`, project state, apply attrs and data attrs with map
+- [ ] `update`: silent null guard, project state, apply attrs and data attrs with map
 
 ## React Component
 
@@ -38,6 +38,6 @@ Video.js-specific patterns. See [videojs.md](../../references/videojs.md) for ar
 
 ## Common
 
-- [ ] Missing feature handled with `logMissingFeature()` in `update()` null guard
+- [ ] Missing feature warned with `if (__DEV__) logMissingFeature()` in `connectedCallback` (HTML) or null guard (React)
 - [ ] Web Component registered in `define/ui/` with `HTMLElementTagNameMap`
 - [ ] `static readonly tagName = 'media-{name}'`

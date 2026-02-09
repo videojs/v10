@@ -165,23 +165,31 @@ class PlayButtonElement extends MediaElement {
 
 **Lifecycle flow:**
 
-1. `connectedCallback` — Create `AbortController`, apply button props via `applyElementProps()`
+1. `connectedCallback` — Create `AbortController`, apply button props, `__DEV__` warning for missing feature
 2. `disconnectedCallback` — Abort controller for cleanup
 3. `willUpdate` — Sync component props to core via `setProps(this)`
-4. `update` — Null-guard with `logMissingFeature`, then project state and apply attrs
+4. `update` — Silent null guard, then project state and apply attrs
 
-**`update()` pattern:**
+**`connectedCallback` + `update()` pattern:**
 
 ```ts
+override connectedCallback(): void {
+  super.connectedCallback();
+
+  this.#disconnect = new AbortController();
+  const buttonProps = createButton({ ... });
+  applyElementProps(this, buttonProps, this.#disconnect.signal);
+
+  if (__DEV__ && !this.#state.value) {
+    logMissingFeature(PlayButtonElement.tagName, 'playback');
+  }
+}
+
 protected override update(changed: PropertyValues): void {
   super.update(changed);
 
   const media = this.#state.value;
-
-  if (!media) {
-    logMissingFeature(PlayButtonElement.tagName, 'playback');
-    return;
-  }
+  if (!media) return;
 
   const state = this.#core.getState(media);
   applyElementProps(this, this.#core.getAttrs(state));
@@ -194,7 +202,7 @@ protected override update(changed: PropertyValues): void {
 - `PlayerController(host, context, selector)` — Store subscription
 - `applyElementProps(el, props, signal?)` — Apply attrs + events to DOM
 - `applyStateDataAttrs(el, state, map)` — State → `data-*` (map controls which keys are serialized)
-- `logMissingFeature(name, feature)` — Deduped warning (called in `update()` null guard)
+- `logMissingFeature(name, feature)` — Deduped `__DEV__`-only warning (called in `connectedCallback`)
 
 ---
 

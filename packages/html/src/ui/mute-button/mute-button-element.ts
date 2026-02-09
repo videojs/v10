@@ -39,6 +39,10 @@ export class MuteButtonElement extends MediaElement {
     });
 
     applyElementProps(this, buttonProps, this.#disconnect.signal);
+
+    if (__DEV__ && !this.#state.value) {
+      logMissingFeature(MuteButtonElement.tagName, 'volume');
+    }
   }
 
   override disconnectedCallback(): void {
@@ -57,10 +61,7 @@ export class MuteButtonElement extends MediaElement {
 
     const media = this.#state.value;
 
-    if (!media) {
-      logMissingFeature(MuteButtonElement.tagName, 'volume');
-      return;
-    }
+    if (!media) return;
 
     const state = this.#core.getState(media);
     applyElementProps(this, this.#core.getAttrs(state));

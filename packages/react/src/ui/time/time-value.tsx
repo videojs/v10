@@ -33,7 +33,7 @@ export const Value = forwardRef(function Value(
   core.setProps({ type, negativeSign, label });
 
   if (!time) {
-    logMissingFeature('Time.Value', 'time');
+    if (__DEV__) logMissingFeature('Time.Value', 'time');
     return null;
   }
 

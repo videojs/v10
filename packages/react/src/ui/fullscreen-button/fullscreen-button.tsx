@@ -32,7 +32,7 @@ export const FullscreenButton = forwardRef(function FullscreenButton(
   });
 
   if (!fullscreen) {
-    logMissingFeature('FullscreenButton', 'fullscreen');
+    if (__DEV__) logMissingFeature('FullscreenButton', 'fullscreen');
     return null;
   }
 

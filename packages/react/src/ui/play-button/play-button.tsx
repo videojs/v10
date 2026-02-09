@@ -46,7 +46,7 @@ export const PlayButton = forwardRef(function PlayButton(
   });
 
   if (!playback) {
-    logMissingFeature('PlayButton', 'playback');
+    if (__DEV__) logMissingFeature('PlayButton', 'playback');
     return null;
   }
 

@@ -33,7 +33,7 @@ export const MuteButton = forwardRef(function MuteButton(
   });
 
   if (!volume) {
-    logMissingFeature('MuteButton', 'volume');
+    if (__DEV__) logMissingFeature('MuteButton', 'volume');
     return null;
   }
 
