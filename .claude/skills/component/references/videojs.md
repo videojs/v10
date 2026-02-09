@@ -66,11 +66,11 @@ interface FullscreenButtonState extends Pick<FullscreenState, 'fullscreen'> {
 class PlayButtonCore {
   static readonly defaultProps: NonNullableObject<Props>;
   
-  setProps(props: Props): void;           // Merge with defaults
-  getLabel(state: FeatureState): string;  // Computed label
-  getAttrs(state: FeatureState): ElementProps;  // ARIA only
-  getState(state: FeatureState): State;   // Primitives only
-  toggle(state: FeatureState): Promise<void>;   // Action
+  setProps(props: Props): void;                    // Merge with defaults
+  getState(media: MediaPlaybackState): State;      // Project media → UI state
+  getLabel(state: PlayButtonState): string;        // Computed label
+  getAttrs(state: PlayButtonState): { ... };       // ARIA only (inferred)
+  toggle(media: MediaPlaybackState): Promise<void>; // Action
 }
 
 namespace PlayButtonCore {
@@ -79,12 +79,22 @@ namespace PlayButtonCore {
 }
 ```
 
+**Method signatures — queries vs commands:**
+
+| Method | Accepts | Why |
+|--------|---------|-----|
+| `getState(media)` | Raw media state | Projection boundary — only place that touches `Media*State` |
+| `getLabel(state)` | Projected UI state | Pure query, needs only data fields |
+| `getAttrs(state)` | Projected UI state | Pure query, return type inferred from object literal |
+| `toggle(media)` | Raw media state | Command — needs action methods (`play`, `pause`, etc.) |
+
 **Rules:**
 
 - `static readonly defaultProps` with `NonNullableObject<Props>` type
-- `getAttrs()` returns ARIA attributes only (no `data-*`)
+- `getAttrs()` returns ARIA attributes only (no `data-*`), return type inferred (no explicit interface)
 - `getState()` returns primitives only (no methods) — converted to `data-*` for CSS
-- Action methods receive feature state from store
+- `toggle()` accepts raw media state (commands need action methods)
+- `getLabel()` and `getAttrs()` accept projected UI state (queries need only data)
 - Namespace exports `Props` and `State` types
 
 ---
@@ -104,30 +114,37 @@ namespace PlayButtonCore {
 
 ---
 
-## Data Attribute Enums
+## Data Attribute Maps
 
-Enums provide single source of truth + API reference tooling:
+Each component has a `*DataAttrs` constant that maps state keys to `data-*` attribute names.
+The `satisfies StateAttrMap<*State>` constraint validates at compile-time that only keys from the
+component's state type are mapped — preventing accidental serialization of unmapped keys.
 
 ```ts
-export enum PlayButtonDataAttrs {
+import type { StateAttrMap } from '../types';
+import type { PlayButtonState } from './play-button-core';
+
+export const PlayButtonDataAttrs = {
   /** Present when the media is paused. */
-  paused = 'data-paused',
+  paused: 'data-paused',
   /** Present when the media has ended. */
-  ended = 'data-ended',
-}
+  ended: 'data-ended',
+  /** Present when playback has started. */
+  started: 'data-started',
+} as const satisfies StateAttrMap<PlayButtonState>;
 ```
 
-JSDoc comments generate API documentation.
+`StateAttrMap<State>` is defined in `core/ui/types.ts`:
 
----
+```ts
+export type StateAttrMap<State> = {
+  [Key in keyof State]?: string;
+};
+```
 
-## ElementProps
-
-Shared interface in `core/element.ts`. Extend as components need new attributes:
-
-- Add `aria-*` attributes used by any component
-- Use string literal types where ARIA spec defines allowed values
-- `undefined` removes the attribute
+- JSDoc comments generate API documentation
+- Maps are partial — only mapped state keys become `data-*` attributes
+- `getStateDataAttrs` and `applyStateDataAttrs` skip unmapped keys when a map is provided
 
 ---
 
@@ -150,15 +167,34 @@ class PlayButtonElement extends MediaElement {
 
 1. `connectedCallback` — Create `AbortController`, apply button props via `applyElementProps()`
 2. `disconnectedCallback` — Abort controller for cleanup
-3. `willUpdate` — Sync component props to core via `setProps()`
-4. `update` — Apply `getAttrs()` and `getState()` to element
+3. `willUpdate` — Sync component props to core via `setProps(this)`
+4. `update` — Null-guard with `logMissingFeature`, then project state and apply attrs
+
+**`update()` pattern:**
+
+```ts
+protected override update(changed: PropertyValues): void {
+  super.update(changed);
+
+  const media = this.#state.value;
+
+  if (!media) {
+    logMissingFeature(PlayButtonElement.tagName, 'playback');
+    return;
+  }
+
+  const state = this.#core.getState(media);
+  applyElementProps(this, this.#core.getAttrs(state));
+  applyStateDataAttrs(this, state, PlayButtonDataAttrs);
+}
+```
 
 **Key utilities:**
 
 - `PlayerController(host, context, selector)` — Store subscription
-- `applyElementProps(el, props, signal)` — Apply attrs + events
-- `applyStateDataAttrs(el, state)` — State → `data-*`
-- `logMissingFeature(name, feature)` — Deduped warning
+- `applyElementProps(el, props, signal?)` — Apply attrs + events to DOM
+- `applyStateDataAttrs(el, state, map)` — State → `data-*` (map controls which keys are serialized)
+- `logMissingFeature(name, feature)` — Deduped warning (called in `update()` null guard)
 
 ---
 
@@ -168,12 +204,18 @@ class PlayButtonElement extends MediaElement {
 const PlayButton = forwardRef(function PlayButton(props, ref) {
   const playback = usePlayer(selectPlayback);
   const [core] = useState(() => new PlayButtonCore());
-  const { getButtonProps, buttonRef } = useButton({ onActivate, isDisabled });
+  const { getButtonProps, buttonRef } = useButton({
+    onActivate: () => core.toggle(playback!),
+    isDisabled,
+  });
+
+  const state = core.getState(playback);
 
   return renderElement('button', { render, className, style }, {
-    state: core.getState(playback),
+    state,
+    stateAttrMap: PlayButtonDataAttrs,
     ref: [ref, buttonRef],
-    props: [core.getAttrs(playback), elementProps, getButtonProps()],
+    props: [core.getAttrs(state), elementProps, getButtonProps()],
   });
 });
 ```
@@ -197,8 +239,8 @@ const PlayButton = forwardRef(function PlayButton(props, ref) {
 |---------|---------|
 | `createButton(options)` | Accessible button (Enter/Space, click, disabled) |
 | `applyElementProps(el, props, signal?)` | Apply attrs and events to DOM |
-| `applyStateDataAttrs(el, state)` | State object → `data-*` attributes |
-| `getStateDataAttrs(state)` | State → data-attrs object (React) |
+| `applyStateDataAttrs(el, state, map)` | State → `data-*` (map controls serialized keys) |
+| `getStateDataAttrs(state, map)` | State → data-attrs object (React) |
 | `logMissingFeature(name, feature)` | Deduped console.warn |
 | `selectPlayback` / `selectVolume` | Store selectors |
 
@@ -218,20 +260,21 @@ const PlayButton = forwardRef(function PlayButton(props, ref) {
 packages/
 ├── core/src/
 │   ├── core/
-│   │   ├── element.ts                    # ElementProps interface
+│   │   ├── ui/types.ts                        # StateAttrMap type
 │   │   └── ui/{component}/
-│   │       ├── {component}-core.ts       # Core class
-│   │       ├── {component}-core.test.ts  # Core tests
-│   │       └── {component}-data-attrs.ts # Data attr enum
-│   └── dom/ui/                           # createButton, utils
+│   │       ├── {component}-core.ts            # Core class
+│   │       ├── {component}-data-attrs.ts      # Data attr map (satisfies StateAttrMap)
+│   │       └── tests/
+│   │           └── {component}-core.test.ts   # Core tests
+│   └── dom/ui/                                # createButton, utils
 ├── html/src/
-│   ├── ui/{component}/                   # Web Component
-│   ├── define/ui/                        # Side-effect registration
-│   └── player/player-controller.ts       # Store controller
+│   ├── ui/{component}/                        # Web Component
+│   ├── define/ui/                             # Side-effect registration
+│   └── player/player-controller.ts            # Store controller
 └── react/src/
-    ├── ui/{component}/                   # React component
-    ├── ui/hooks/                         # Behavior hooks
-    └── utils/                            # renderElement, mergeProps
+    ├── ui/{component}/                        # React component
+    ├── ui/hooks/                              # Behavior hooks
+    └── utils/                                 # renderElement, mergeProps
 ```
 
 **No barrel exports for simple components** — Don't create `index.ts` files for simple UI components. Export directly from individual files. Reserve `index.ts` barrels for compound components with multiple related exports that form a cohesive API.
