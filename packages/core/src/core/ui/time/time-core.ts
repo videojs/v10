@@ -3,7 +3,7 @@ import { isFunction } from '@videojs/utils/predicate';
 import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-import type { TimeState as MediaTimeState } from '../../media/state';
+import type { MediaTimeState } from '../../media/state';
 
 /** Time display type. */
 export type TimeType = 'current' | 'duration' | 'remaining';

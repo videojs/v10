@@ -1,4 +1,4 @@
-export interface PlaybackState {
+export interface MediaPlaybackState {
   /**
    * Whether playback is paused.
    *
@@ -36,9 +36,9 @@ export interface PlaybackState {
 }
 
 /** Indicates whether a feature can be programmatically controlled on this platform. */
-export type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
+export type MediaFeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 
-export interface VolumeState {
+export interface MediaVolumeState {
   /**
    * Volume level from 0 (silent) to 1 (max).
    *
@@ -56,7 +56,7 @@ export interface VolumeState {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/volume
    */
-  volumeAvailability: FeatureAvailability;
+  volumeAvailability: MediaFeatureAvailability;
   /**
    * Set volume (clamped 0-1). Returns the clamped value.
    *
@@ -71,7 +71,7 @@ export interface VolumeState {
   toggleMute(): boolean;
 }
 
-export interface TimeState {
+export interface MediaTimeState {
   /**
    * Current playback position in seconds.
    *
@@ -98,7 +98,7 @@ export interface TimeState {
   seek(time: number): Promise<number>;
 }
 
-export interface SourceState {
+export interface MediaSourceState {
   /**
    * Current media source URL (null if none).
    *
@@ -121,7 +121,7 @@ export interface SourceState {
   loadSource(src: string): string;
 }
 
-export interface BufferState {
+export interface MediaBufferState {
   /**
    * Buffered time ranges as [start, end] tuples.
    *
@@ -136,7 +136,7 @@ export interface BufferState {
   seekable: [number, number][];
 }
 
-export interface FullscreenState {
+export interface MediaFullscreenState {
   /**
    * Whether fullscreen mode is currently active.
    *
@@ -148,7 +148,7 @@ export interface FullscreenState {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/fullscreenEnabled
    */
-  fullscreenAvailability: FeatureAvailability;
+  fullscreenAvailability: MediaFeatureAvailability;
   /**
    * Enter fullscreen mode. Tries container first, falls back to media element.
    *
@@ -163,7 +163,7 @@ export interface FullscreenState {
   exitFullscreen(): Promise<void>;
 }
 
-export interface PictureInPictureState {
+export interface MediaPictureInPictureState {
   /**
    * Whether picture-in-picture mode is currently active.
    *
@@ -175,7 +175,7 @@ export interface PictureInPictureState {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/pictureInPictureEnabled
    */
-  pipAvailability: FeatureAvailability;
+  pipAvailability: MediaFeatureAvailability;
   /**
    * Enter picture-in-picture mode.
    *

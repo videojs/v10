@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { PlaybackState } from '../../media/state';
+import type { MediaPlaybackState } from '../../media/state';
 import { PlayButtonCore } from './play-button-core';
 
-function createMockPlayback(overrides: Partial<PlaybackState> = {}): PlaybackState {
+function createMockPlayback(overrides: Partial<MediaPlaybackState> = {}): MediaPlaybackState {
   return {
     paused: true,
     ended: false,

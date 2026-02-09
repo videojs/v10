@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { VolumeState } from '../../media/state';
+import type { MediaVolumeState } from '../../media/state';
 import { MuteButtonCore } from './mute-button-core';
 
-function createMockVolume(overrides: Partial<VolumeState> = {}): VolumeState {
+function createMockVolume(overrides: Partial<MediaVolumeState> = {}): MediaVolumeState {
   return {
     volume: 1,
     muted: false,

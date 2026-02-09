@@ -3,7 +3,7 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { ElementProps } from '../../element';
-import type { PlaybackState } from '../../media/state';
+import type { MediaPlaybackState } from '../../media/state';
 
 export interface PlayButtonProps {
   /** Custom label for the button. */
@@ -12,7 +12,7 @@ export interface PlayButtonProps {
   disabled?: boolean | undefined;
 }
 
-export interface PlayButtonState extends Pick<PlaybackState, 'paused' | 'ended' | 'started'> {}
+export interface PlayButtonState extends Pick<MediaPlaybackState, 'paused' | 'ended' | 'started'> {}
 
 export class PlayButtonCore {
   static readonly defaultProps: NonNullableObject<PlayButtonProps> = {
@@ -30,7 +30,7 @@ export class PlayButtonCore {
     this.#props = defaults(props, PlayButtonCore.defaultProps);
   }
 
-  getLabel(playback: PlaybackState): string {
+  getLabel(playback: MediaPlaybackState): string {
     const state = this.getState(playback);
     const { label } = this.#props;
 
@@ -45,14 +45,14 @@ export class PlayButtonCore {
     return state.paused ? 'Play' : 'Pause';
   }
 
-  getAttrs(playback: PlaybackState): ElementProps {
+  getAttrs(playback: MediaPlaybackState): ElementProps {
     return {
       'aria-label': this.getLabel(playback),
       'aria-disabled': this.#props.disabled ? 'true' : undefined,
     };
   }
 
-  getState(playback: PlaybackState): PlayButtonState {
+  getState(playback: MediaPlaybackState): PlayButtonState {
     return {
       paused: playback.paused,
       ended: playback.ended,
@@ -60,7 +60,7 @@ export class PlayButtonCore {
     };
   }
 
-  async toggle(playback: PlaybackState): Promise<void> {
+  async toggle(playback: MediaPlaybackState): Promise<void> {
     if (this.#props.disabled) return;
 
     if (playback.paused || playback.ended) {

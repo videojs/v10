@@ -1,13 +1,13 @@
 import { listen } from '@videojs/utils/dom';
 
-import type { PictureInPictureState } from '../../../core/media/state';
+import type { MediaPictureInPictureState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { exitFullscreen, isElementFullscreen } from '../../presentation/fullscreen';
 import { enterPiP, exitPiP, isPiPActive, isPiPSupported } from '../../presentation/pip';
 import type { WebKitVideoElement } from '../../presentation/types';
 
 export const pipFeature = definePlayerFeature({
-  state: ({ target }): PictureInPictureState => ({
+  state: ({ target }): MediaPictureInPictureState => ({
     pip: false,
     pipAvailability: 'unavailable',
 

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import type { TimeState } from '../../../media/state';
+import type { MediaTimeState } from '../../../media/state';
 import { TimeCore } from '../time-core';
 
-function createTimeState(overrides: Partial<TimeState> = {}): TimeState {
+function createTimeState(overrides: Partial<MediaTimeState> = {}): MediaTimeState {
   return {
     currentTime: 90,
     duration: 300,

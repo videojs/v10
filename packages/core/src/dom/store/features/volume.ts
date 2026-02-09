@@ -1,10 +1,10 @@
 import { listen } from '@videojs/utils/dom';
 
-import type { FeatureAvailability, VolumeState } from '../../../core/media/state';
+import type { MediaFeatureAvailability, MediaVolumeState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 
 export const volumeFeature = definePlayerFeature({
-  state: ({ target }): VolumeState => ({
+  state: ({ target }): MediaVolumeState => ({
     volume: 1,
     muted: false,
     volumeAvailability: 'unavailable',
@@ -35,7 +35,7 @@ export const volumeFeature = definePlayerFeature({
 });
 
 /** Check if volume can be programmatically set (fails on iOS Safari). */
-function canSetVolume(): FeatureAvailability {
+function canSetVolume(): MediaFeatureAvailability {
   const video = document.createElement('video');
   try {
     video.volume = 0.5;

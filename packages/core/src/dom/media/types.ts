@@ -9,7 +9,7 @@ export interface PlayerTarget {
   container: MediaContainer | null;
 }
 
-export type { FeatureAvailability } from '../../core/media/state';
+export type { MediaFeatureAvailability } from '../../core/media/state';
 
 export type PlayerFeature<State> = Slice<PlayerTarget, State>;
 
