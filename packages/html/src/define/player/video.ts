@@ -3,7 +3,7 @@ import { MediaElement } from '@/ui/media-element';
 import { createPlayer } from '../../player/create-player';
 
 const { PlayerMixin } = createPlayer({
-  features: [...features.video],
+  features: features.video,
 });
 
 export class VideoPlayer extends PlayerMixin(MediaElement) {}
