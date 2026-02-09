@@ -1384,12 +1384,12 @@ Items identified during planning but deferred from initial implementation.
 
 ### Side-Effect Registration System
 
-The `/ui/*`, `/skin/*`, `/feature/*` exports provide scaffold for future registration patterns:
+The `/ui/*`, `/video/*`, `/audio/*`, `/background/*`, `/feature/*` exports provide scaffold for future registration patterns:
 
 ```ts
 // User imports trigger registration
 import '@videojs/html/ui/play-button';
-import '@videojs/html/skin/modern';
+import '@videojs/html/video/skin';
 import '@videojs/html/feature/quality-selection';
 ```
 

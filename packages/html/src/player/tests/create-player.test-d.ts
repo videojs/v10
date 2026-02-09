@@ -62,6 +62,12 @@ describe('createPlayer', () => {
     assertType<string[]>(store.events);
   });
 
+  it('resolves background features to generic PlayerStore', () => {
+    const result = createPlayer({ features: features.background });
+
+    assertType<CreatePlayerResult<PlayerStore<[]>>>(result);
+  });
+
   it('resolves extended audio features to generic PlayerStore', () => {
     interface AnalyticsState {
       events: string[];

@@ -18,20 +18,25 @@
       "development": "./dist/dev/index.js",
       "default": "./dist/default/index.js"
     },
-    "./player/*": {
-      "types": "./dist/dev/define/player/*.d.ts",
-      "development": "./dist/dev/define/player/*.js",
-      "default": "./dist/default/define/player/*.js"
+    "./video/*": {
+      "types": "./dist/dev/define/video/*.d.ts",
+      "development": "./dist/dev/define/video/*.js",
+      "default": "./dist/default/define/video/*.js"
+    },
+    "./audio/*": {
+      "types": "./dist/dev/define/audio/*.d.ts",
+      "development": "./dist/dev/define/audio/*.js",
+      "default": "./dist/default/define/audio/*.js"
+    },
+    "./background/*": {
+      "types": "./dist/dev/define/background/*.d.ts",
+      "development": "./dist/dev/define/background/*.js",
+      "default": "./dist/default/define/background/*.js"
     },
     "./ui/*": {
       "types": "./dist/dev/define/ui/*.d.ts",
       "development": "./dist/dev/define/ui/*.js",
       "default": "./dist/default/define/ui/*.js"
-    },
-    "./skin/*": {
-      "types": "./dist/dev/define/skin/*.d.ts",
-      "development": "./dist/dev/define/skin/*.js",
-      "default": "./dist/default/define/skin/*.js"
     },
     "./feature/*": {
       "types": "./dist/dev/define/feature/*.d.ts",
