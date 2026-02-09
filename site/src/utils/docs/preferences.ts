@@ -1,6 +1,6 @@
 import type { AstroCookies } from 'astro';
 import type { AnySupportedStyle, SupportedFramework, SupportedStyle } from '@/types/docs';
-import { isValidFramework, isValidStyleForFramework } from '@/types/docs';
+import { DEFAULT_FRAMEWORK, isValidFramework, isValidStyleForFramework } from '@/types/docs';
 
 // Cookie name for framework (server-side redirects)
 export const FRAMEWORK_COOKIE = 'vjs_docs_framework';
@@ -48,7 +48,7 @@ export function getFrameworkPreferenceClient(): SupportedFramework | null {
   );
 
   const framework = cookies[FRAMEWORK_COOKIE];
-  return framework && isValidFramework(framework) ? framework : null;
+  return framework && isValidFramework(framework) ? framework : DEFAULT_FRAMEWORK;
 }
 
 export function setFrameworkPreferenceClient(framework: SupportedFramework): void {

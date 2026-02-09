@@ -1,8 +1,9 @@
 import type { AstroCookies } from 'astro';
 import { describe, expect, it, vi } from 'vitest';
-import { SUPPORTED_FRAMEWORKS } from '@/types/docs';
+import { DEFAULT_FRAMEWORK, SUPPORTED_FRAMEWORKS } from '@/types/docs';
 import {
   FRAMEWORK_COOKIE,
+  getFrameworkPreferenceClient,
   getPreferencesServer,
   STYLE_STORAGE_KEY_PREFIX,
   setFrameworkPreferenceClient,
@@ -73,6 +74,47 @@ describe('preferences utilities', () => {
 
         expect(result).toEqual({ framework });
       }
+    });
+  });
+
+  describe('getFrameworkPreferenceClient', () => {
+    it('should return DEFAULT_FRAMEWORK when no cookie is set', () => {
+      Object.defineProperty(document, 'cookie', {
+        get: () => '',
+        configurable: true,
+      });
+
+      expect(getFrameworkPreferenceClient()).toBe(DEFAULT_FRAMEWORK);
+    });
+
+    it('should return the framework from cookie when valid', () => {
+      for (const framework of SUPPORTED_FRAMEWORKS) {
+        Object.defineProperty(document, 'cookie', {
+          get: () => `${FRAMEWORK_COOKIE}=${framework}`,
+          configurable: true,
+        });
+
+        expect(getFrameworkPreferenceClient()).toBe(framework);
+      }
+    });
+
+    it('should return DEFAULT_FRAMEWORK when cookie has invalid value', () => {
+      Object.defineProperty(document, 'cookie', {
+        get: () => `${FRAMEWORK_COOKIE}=invalid-framework`,
+        configurable: true,
+      });
+
+      expect(getFrameworkPreferenceClient()).toBe(DEFAULT_FRAMEWORK);
+    });
+
+    it('should return null when document is undefined (SSR)', () => {
+      const originalDocument = globalThis.document;
+      // @ts-expect-error Testing SSR scenario
+      globalThis.document = undefined;
+
+      expect(getFrameworkPreferenceClient()).toBeNull();
+
+      globalThis.document = originalDocument;
     });
   });
 

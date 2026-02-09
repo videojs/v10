@@ -1,11 +1,13 @@
 ---
 
+import clsx from 'clsx';
 import { ArrowUpRight } from 'lucide-react';
 import Discord from '@/components/icons/Discord';
 import GitHub from '@/components/icons/GitHub';
 import Search from '@/components/Search';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
 import FilmGrain from '../FilmGrain';
+import GetStartedLink from './GetStartedLink';
 import MobileNav from './MobileNav';
 
 export interface Props {
@@ -25,6 +27,8 @@ const navLinks: NavLink[] = [
 ];
 
 const currentPath = Astro.url.pathname;
+const isDocsActive = currentPath.startsWith('/docs');
+const otherNavLinks = navLinks.filter((link) => link.href !== '/docs');
 const { class: className, dark = false } = Astro.props;
 ---
 
@@ -47,8 +51,18 @@ const { class: className, dark = false } = Astro.props;
 
   {/* Desktop nav links */}
   <div class="hidden sm:flex -mb-px pr-3">
+    <GetStartedLink
+      client:idle
+      className={clsx(
+        'h-full flex items-center px-3 border-b gap-1',
+        isDocsActive ? 'border-current' : 'border-transparent intent:border-current',
+      )}
+      aria-current={isDocsActive ? 'page' : undefined}
+    >
+      Docs
+    </GetStartedLink>
     {
-      navLinks.map((link) => (
+      otherNavLinks.map((link) => (
         <a
           href={link.href}
           class:list={[
@@ -84,7 +98,7 @@ const { class: className, dark = false } = Astro.props;
   </div>
 
   {/* Mobile nav */}
-  <MobileNav client:idle navLinks={navLinks} currentPath={currentPath} dark={dark}>
+  <!-- <MobileNav client:idle navLinks={navLinks} currentPath={currentPath} dark={dark}>
     <slot name="mobile-nav" />
-  </MobileNav>
+  </MobileNav> -->
 </nav>

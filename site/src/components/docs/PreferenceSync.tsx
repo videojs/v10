@@ -1,7 +1,6 @@
 import { useStore } from '@nanostores/react';
 import { useEffect } from 'react';
 import { currentFramework } from '@/stores/preferences';
-import type { SupportedFramework } from '@/types/docs';
 import { getFrameworkPreferenceClient, setFrameworkPreferenceClient } from '@/utils/docs/preferences';
 
 /**
@@ -20,16 +19,13 @@ export function PreferenceSync() {
 
   // Initialize store from cookies on mount
   useEffect(() => {
-    const prefs = getFrameworkPreferenceClient();
-    if (prefs) {
-      currentFramework.set(prefs);
-    }
+    currentFramework.set(getFrameworkPreferenceClient());
   }, []);
 
   // Sync store changes to cookies
   useEffect(() => {
     if (framework) {
-      setFrameworkPreferenceClient(framework as SupportedFramework);
+      setFrameworkPreferenceClient(framework);
     }
   }, [framework]);
 
