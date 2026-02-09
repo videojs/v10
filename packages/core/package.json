@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "jsdom": "^26.1.0",
-    "tsdown": "^0.15.12",
+    "tsdown": "^0.20.3",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   },
