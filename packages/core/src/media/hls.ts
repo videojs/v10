@@ -1,11 +1,10 @@
 import Hls from 'hls.js';
-import type { Media } from './media';
 import { Video } from './media';
 
 type Constructor<T> = new (...args: any[]) => T;
 
-export const HlsMediaMixin = <T extends Media>(Super: Constructor<T>) => {
-  class HlsMedia extends (Super as Constructor<Media>) {
+export const HlsMediaMixin = <T extends Video>(Super: Constructor<T>) => {
+  class HlsMedia extends (Super as Constructor<Video>) {
     engine = new Hls();
 
     attach(element: HTMLVideoElement): void {

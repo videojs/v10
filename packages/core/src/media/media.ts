@@ -1,4 +1,14 @@
-type Constructor<T> = new (...args: any[]) => T;
+type Constructor<T> = {
+  new (...args: any[]): T;
+  prototype: T;
+};
+
+type MediaElementConstructor =
+  | Constructor<HTMLMediaElement>
+  | Constructor<HTMLVideoElement>
+  | Constructor<HTMLAudioElement>;
+
+type MediaElementInstance = InstanceType<MediaElementConstructor>;
 
 /**
  * This class provides a base for a uniform Media API across all media types.
@@ -11,34 +21,39 @@ type Constructor<T> = new (...args: any[]) => T;
  *
  * The `get`, `set`, and `call` methods can be overridden to provide catch-all custom behavior.
  */
-export const MediaMixin = <T extends EventTarget>(superclass: Constructor<T>) => {
+export const MediaMixin = <T extends EventTarget, E extends MediaElementConstructor>(
+  superclass: Constructor<T>,
+  MediaElement: E
+) => {
   class Media extends (superclass as Constructor<any>) {
-    static #proxyProps(element: HTMLMediaElement) {
-      const nativeElProps = getNativeElProps(element);
+    static define(MediaElement: E) {
+      const { props, methods } = getNativeElProps(MediaElement);
 
       // Passthrough native element functions from the custom element to the native element
-      for (const prop of nativeElProps) {
+      for (const method of methods) {
+        if (method in Media.prototype) continue;
+
+        Media.prototype[method] = function (...args: any[]) {
+          return this.call(method as keyof HTMLMediaElement, ...args);
+        };
+      }
+
+      for (const prop of props) {
         if (prop in Media.prototype) continue;
 
-        if (typeof element?.[prop] === 'function') {
-          Media.prototype[prop] = function (...args: any[]) {
-            return this.call(prop, ...args);
-          };
-        } else {
-          const config: PropertyDescriptor = {
-            get(this: Media) {
-              return this.get(prop);
-            },
-          };
+        const config: PropertyDescriptor = {
+          get(this: Media) {
+            return this.get(prop as keyof HTMLMediaElement);
+          },
+        };
 
-          if (prop !== prop.toUpperCase()) {
-            config.set = function (this: Media, val: any) {
-              this.set(prop, val);
-            };
-          }
-
-          Object.defineProperty(Media.prototype, prop, config);
+        if (prop !== prop.toUpperCase()) {
+          config.set = function (this: Media, val: any) {
+            this.set(prop as keyof HTMLMediaElement, val);
+          };
         }
+
+        Object.defineProperty(Media.prototype, prop, config);
       }
     }
 
@@ -67,8 +82,6 @@ export const MediaMixin = <T extends EventTarget>(superclass: Constructor<T>) =>
     attach(element: HTMLMediaElement): void {
       if (!element || this.#element === element) return;
       this.#element = element;
-      // Proxy native element methods and properties to the media instance.
-      Media.#proxyProps(element);
     }
 
     detach(): void {
@@ -96,26 +109,39 @@ export const MediaMixin = <T extends EventTarget>(superclass: Constructor<T>) =>
       return this.#element?.dispatchEvent(event) ?? false;
     }
   }
-  return Media as Constructor<T & InstanceType<typeof Media>>;
+
+  // Proxy native element methods and properties to the media instance.
+  Media.define(MediaElement);
+
+  return Media as unknown as Constructor<T & E & InstanceType<typeof Media>>;
 };
 
-export class Media extends MediaMixin(EventTarget) {}
-export class Video extends MediaMixin(EventTarget) {}
-export class Audio extends MediaMixin(EventTarget) {}
+export class Media extends MediaMixin(EventTarget, HTMLMediaElement) {}
+export class Video extends MediaMixin(EventTarget, HTMLVideoElement) {}
+export class Audio extends MediaMixin(EventTarget, HTMLAudioElement) {}
 
 /**
  * Helper function to get all properties from a native media element's prototype.
  * TODO: For React native don't use HTMLElement?
  */
-function getNativeElProps(nativeElTest: HTMLVideoElement | HTMLAudioElement) {
-  const nativeElProps: (keyof typeof nativeElTest)[] = [];
+function getNativeElProps(MediaElement: MediaElementConstructor) {
+  const methods: Set<keyof MediaElementInstance> = new Set();
+  const props: Set<keyof MediaElementInstance> = new Set();
+
   for (
-    let proto = Object.getPrototypeOf(nativeElTest);
+    let proto = MediaElement.prototype;
     proto && proto !== HTMLElement.prototype;
     proto = Object.getPrototypeOf(proto)
   ) {
-    const props = Object.getOwnPropertyNames(proto) as (keyof typeof nativeElTest)[];
-    nativeElProps.push(...props);
+    const names = Object.getOwnPropertyNames(proto);
+    names.forEach((name) => {
+      const descriptor = Object.getOwnPropertyDescriptor(proto, name);
+      if (descriptor?.value && typeof descriptor.value === 'function') {
+        methods.add(name as keyof MediaElementInstance);
+      } else {
+        props.add(name as keyof MediaElementInstance);
+      }
+    });
   }
-  return nativeElProps;
+  return { props, methods };
 }
