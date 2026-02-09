@@ -4,7 +4,7 @@ import type { PlayerStore } from '@videojs/core/dom';
 import type { InferStoreState, Selector } from '@videojs/store';
 import { StoreController } from '@videojs/store/lit';
 
-import type { PlayerContext, PlayerContextValue } from './context';
+import type { PlayerContext } from './context';
 
 export type PlayerControllerHost = ReactiveControllerHost & HTMLElement;
 
@@ -62,31 +62,28 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
   }
 
   get value(): Result | undefined {
-    const ctx = this.#consumer.value;
-    if (!ctx) return undefined;
+    const store = this.#consumer.value;
+    if (!store) return undefined;
 
     // Without selector: return store directly
-    if (!this.#selector) return ctx.store as unknown as Result;
+    if (!this.#selector) return store as unknown as Result;
 
     // With selector: use StoreController
     return this.#store?.value;
   }
 
   hostConnected(): void {
-    const ctx = this.#consumer.value;
-    if (ctx) this.#connect(ctx);
+    const store = this.#consumer.value;
+    if (store) this.#connect(store);
   }
 
   hostDisconnected(): void {
     this.#store = null;
   }
 
-  #connect(ctx: PlayerContextValue<Store> | undefined): void {
-    if (!ctx) return;
-
-    // Create StoreController with the store directly
+  #connect(store: Store): void {
     if (!this.#store && this.#selector) {
-      this.#store = new StoreController(this.#host, ctx.store, this.#selector);
+      this.#store = new StoreController(this.#host, store, this.#selector);
     }
   }
 }
