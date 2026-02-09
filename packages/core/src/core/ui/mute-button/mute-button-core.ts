@@ -2,7 +2,6 @@ import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-import type { ElementProps } from '../../element';
 import type { MediaVolumeState } from '../../media/state';
 
 export type VolumeLevel = 'off' | 'low' | 'medium' | 'high';
@@ -14,9 +13,7 @@ export interface MuteButtonProps {
   disabled?: boolean | undefined;
 }
 
-export interface MuteButtonState {
-  /** Whether audio is muted. */
-  muted: boolean;
+export interface MuteButtonState extends Pick<MediaVolumeState, 'muted'> {
   /**
    * Derived volume level:
    * - `off`: muted or volume is 0
@@ -43,8 +40,7 @@ export class MuteButtonCore {
     this.#props = defaults(props, MuteButtonCore.defaultProps);
   }
 
-  getLabel(volume: MediaVolumeState): string {
-    const state = this.getState(volume);
+  getLabel(state: MuteButtonState): string {
     const { label } = this.#props;
 
     if (isFunction(label)) {
@@ -57,23 +53,23 @@ export class MuteButtonCore {
     return state.muted ? 'Unmute' : 'Mute';
   }
 
-  getAttrs(volume: MediaVolumeState): ElementProps {
+  getAttrs(state: MuteButtonState) {
     return {
-      'aria-label': this.getLabel(volume),
+      'aria-label': this.getLabel(state),
       'aria-disabled': this.#props.disabled ? 'true' : undefined,
     };
   }
 
-  getState(volume: MediaVolumeState): MuteButtonState {
+  getState(media: MediaVolumeState): MuteButtonState {
     return {
-      muted: volume.muted,
-      volumeLevel: getVolumeLevel(volume),
+      muted: media.muted,
+      volumeLevel: getVolumeLevel(media),
     };
   }
 
-  toggle(volume: MediaVolumeState): void {
+  toggle(media: MediaVolumeState): void {
     if (this.#props.disabled) return;
-    volume.toggleMute();
+    media.toggleMute();
   }
 }
 
@@ -82,9 +78,9 @@ export namespace MuteButtonCore {
   export type State = MuteButtonState;
 }
 
-function getVolumeLevel(volume: MediaVolumeState): VolumeLevel {
-  if (volume.muted || volume.volume === 0) return 'off';
-  if (volume.volume < 0.5) return 'low';
-  if (volume.volume < 0.75) return 'medium';
+function getVolumeLevel(media: MediaVolumeState): VolumeLevel {
+  if (media.muted || media.volume === 0) return 'off';
+  if (media.volume < 0.5) return 'low';
+  if (media.volume < 0.75) return 'medium';
   return 'high';
 }

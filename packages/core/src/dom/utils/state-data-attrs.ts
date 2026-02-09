@@ -1,6 +1,4 @@
-export type StateAttrMap<State> = {
-  [Key in keyof State]?: string;
-};
+import type { StateAttrMap } from '../../core/ui/types';
 
 /**
  * Convert state object to data attributes.
@@ -25,6 +23,8 @@ export function getStateDataAttrs<State extends object>(
   const attrs: Record<string, string> = {};
 
   for (const key in state) {
+    if (map && !(key in map)) continue;
+
     const name = map?.[key] ?? toDataAttrName(key),
       value = state[key];
 
@@ -58,6 +58,8 @@ export function applyStateDataAttrs<State extends object>(
   map?: StateAttrMap<State>
 ): void {
   for (const key in state) {
+    if (map && !(key in map)) continue;
+
     const name = map?.[key] ?? toDataAttrName(key),
       value = state[key];
 

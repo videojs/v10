@@ -22,7 +22,9 @@ export interface TimeState {
   type: TimeType;
   /** Raw value in seconds. */
   seconds: number;
-  /** Formatted display text (e.g., "1:30"). */
+  /** Whether the time value is negative (remaining time before end). */
+  negative: boolean;
+  /** Formatted display text without sign (e.g., "1:30"). */
   text: string;
   /** Human-readable phrase (e.g., "1 minute, 30 seconds"). */
   phrase: string;
@@ -53,35 +55,28 @@ export class TimeCore {
     this.#props = defaults(props, TimeCore.defaultProps);
   }
 
-  #getSeconds(time: MediaTimeState): number {
+  #getSeconds(media: MediaTimeState): number {
     const { type } = this.#props;
     switch (type) {
       case 'current':
-        return time.currentTime;
+        return media.currentTime;
       case 'duration':
-        return time.duration;
+        return media.duration;
       case 'remaining':
-        return time.currentTime - time.duration;
+        return media.currentTime - media.duration;
       default:
         return 0;
     }
   }
 
-  #getText(time: MediaTimeState): string {
-    const { type, negativeSign } = this.#props;
-    const seconds = this.#getSeconds(time);
-
-    if (type === 'remaining') {
-      const formatted = formatTime(Math.abs(seconds), time.duration);
-      return seconds < 0 ? `${negativeSign}${formatted}` : formatted;
-    }
-
-    return formatTime(seconds, time.duration);
+  #getText(media: MediaTimeState): string {
+    const seconds = this.#getSeconds(media);
+    return formatTime(Math.abs(seconds), media.duration);
   }
 
-  #getPhrase(time: MediaTimeState): string {
+  #getPhrase(media: MediaTimeState): string {
     const { type } = this.#props;
-    const seconds = this.#getSeconds(time);
+    const seconds = this.#getSeconds(media);
 
     if (type === 'remaining') {
       // Use negative to trigger "remaining" suffix
@@ -91,13 +86,12 @@ export class TimeCore {
     return formatTimeAsPhrase(seconds);
   }
 
-  #getDatetime(time: MediaTimeState): string {
-    const seconds = this.#getSeconds(time);
+  #getDatetime(media: MediaTimeState): string {
+    const seconds = this.#getSeconds(media);
     return secondsToIsoDuration(Math.abs(seconds));
   }
 
-  getLabel(time: MediaTimeState): string {
-    const state = this.getState(time);
+  getLabel(state: TimeState): string {
     const { label } = this.#props;
 
     if (isFunction(label)) {
@@ -110,21 +104,22 @@ export class TimeCore {
     return DEFAULT_LABELS[this.#props.type];
   }
 
-  getAttrs(time: MediaTimeState): Record<string, string | undefined> {
+  getAttrs(state: TimeState) {
     return {
-      'aria-label': this.getLabel(time),
-      'aria-valuetext': this.#getPhrase(time),
+      'aria-label': this.getLabel(state),
+      'aria-valuetext': state.phrase,
     };
   }
 
-  getState(time: MediaTimeState): TimeState {
-    const seconds = this.#getSeconds(time);
+  getState(media: MediaTimeState): TimeState {
+    const seconds = this.#getSeconds(media);
     return {
       type: this.#props.type,
       seconds,
-      text: this.#getText(time),
-      phrase: this.#getPhrase(time),
-      datetime: this.#getDatetime(time),
+      negative: this.#props.type === 'remaining' && seconds < 0,
+      text: this.#getText(media),
+      phrase: this.#getPhrase(media),
+      datetime: this.#getDatetime(media),
     };
   }
 }

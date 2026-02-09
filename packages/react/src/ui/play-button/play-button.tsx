@@ -1,6 +1,6 @@
 'use client';
 
-import { PlayButtonCore } from '@videojs/core';
+import { PlayButtonCore, PlayButtonDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
@@ -50,13 +50,16 @@ export const PlayButton = forwardRef(function PlayButton(
     return null;
   }
 
+  const state = core.getState(playback);
+
   return renderElement(
     'button',
     { render, className, style },
     {
-      state: core.getState(playback),
+      state,
+      stateAttrMap: PlayButtonDataAttrs,
       ref: [forwardedRef, buttonRef],
-      props: [core.getAttrs(playback), elementProps, getButtonProps()],
+      props: [core.getAttrs(state), elementProps, getButtonProps()],
     }
   );
 });

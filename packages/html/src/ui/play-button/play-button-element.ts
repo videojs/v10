@@ -1,5 +1,5 @@
 import type { PropertyValues } from '@lit/reactive-element';
-import { PlayButtonCore } from '@videojs/core';
+import { PlayButtonCore, PlayButtonDataAttrs } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -39,10 +39,6 @@ export class PlayButtonElement extends MediaElement {
     });
 
     applyElementProps(this, buttonProps, this.#disconnect.signal);
-
-    if (!this.#state.value) {
-      logMissingFeature(PlayButtonElement.tagName, 'playback');
-    }
   }
 
   override disconnectedCallback(): void {
@@ -59,13 +55,15 @@ export class PlayButtonElement extends MediaElement {
   protected override update(changed: PropertyValues): void {
     super.update(changed);
 
-    const state = this.#state.value;
+    const media = this.#state.value;
 
-    if (!state) {
+    if (!media) {
+      logMissingFeature(PlayButtonElement.tagName, 'playback');
       return;
     }
 
+    const state = this.#core.getState(media);
     applyElementProps(this, this.#core.getAttrs(state));
-    applyStateDataAttrs(this, this.#core.getState(state));
+    applyStateDataAttrs(this, state, PlayButtonDataAttrs);
   }
 }
