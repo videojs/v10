@@ -1,11 +1,11 @@
 import { pick } from '@videojs/utils/object';
+import { AbortControllerRegistry } from './abort-controller-registry';
 import { throwNoTargetError } from './errors';
-import { Signals } from './signals';
 import type { AnySlice, InferSliceState, StateContext } from './slice';
 
 const stateContext: StateContext<unknown> = {
   target: throwNoTargetError,
-  signals: new Signals(),
+  signals: new AbortControllerRegistry(),
 };
 
 /**
