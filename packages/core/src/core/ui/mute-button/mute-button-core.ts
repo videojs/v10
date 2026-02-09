@@ -3,7 +3,7 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { ElementProps } from '../../element';
-import type { VolumeState } from '../../media/state';
+import type { MediaVolumeState } from '../../media/state';
 
 export type VolumeLevel = 'off' | 'low' | 'medium' | 'high';
 
@@ -43,7 +43,7 @@ export class MuteButtonCore {
     this.#props = defaults(props, MuteButtonCore.defaultProps);
   }
 
-  getLabel(volume: VolumeState): string {
+  getLabel(volume: MediaVolumeState): string {
     const state = this.getState(volume);
     const { label } = this.#props;
 
@@ -57,21 +57,21 @@ export class MuteButtonCore {
     return state.muted ? 'Unmute' : 'Mute';
   }
 
-  getAttrs(volume: VolumeState): ElementProps {
+  getAttrs(volume: MediaVolumeState): ElementProps {
     return {
       'aria-label': this.getLabel(volume),
       'aria-disabled': this.#props.disabled ? 'true' : undefined,
     };
   }
 
-  getState(volume: VolumeState): MuteButtonState {
+  getState(volume: MediaVolumeState): MuteButtonState {
     return {
       muted: volume.muted,
       volumeLevel: getVolumeLevel(volume),
     };
   }
 
-  toggle(volume: VolumeState): void {
+  toggle(volume: MediaVolumeState): void {
     if (this.#props.disabled) return;
     volume.toggleMute();
   }
@@ -82,7 +82,7 @@ export namespace MuteButtonCore {
   export type State = MuteButtonState;
 }
 
-function getVolumeLevel(volume: VolumeState): VolumeLevel {
+function getVolumeLevel(volume: MediaVolumeState): VolumeLevel {
   if (volume.muted || volume.volume === 0) return 'off';
   if (volume.volume < 0.5) return 'low';
   if (volume.volume < 0.75) return 'medium';

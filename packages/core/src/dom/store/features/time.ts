@@ -1,12 +1,12 @@
 import { listen, onEvent } from '@videojs/utils/dom';
 import { noop } from '@videojs/utils/function';
-import type { TimeState } from '../../../core/media/state';
+import type { MediaTimeState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { hasMetadata } from '../../media/predicate';
 import { signalKeys } from '../signal-keys';
 
 export const timeFeature = definePlayerFeature({
-  state: ({ target, signals }): TimeState => ({
+  state: ({ target, signals }): MediaTimeState => ({
     currentTime: 0,
     duration: 0,
     seeking: false,

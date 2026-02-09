@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { FullscreenState } from '../../media/state';
+import type { MediaFullscreenState } from '../../media/state';
 import { FullscreenButtonCore } from './fullscreen-button-core';
 
-function createMockFullscreen(overrides: Partial<FullscreenState> = {}): FullscreenState {
+function createMockFullscreen(overrides: Partial<MediaFullscreenState> = {}): MediaFullscreenState {
   return {
     fullscreen: false,
     fullscreenAvailability: 'available',

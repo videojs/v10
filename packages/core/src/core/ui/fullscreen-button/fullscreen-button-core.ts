@@ -3,7 +3,7 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { ElementProps } from '../../element';
-import type { FullscreenState } from '../../media/state';
+import type { MediaFullscreenState } from '../../media/state';
 
 export interface FullscreenButtonProps {
   /** Custom label for the button. */
@@ -12,9 +12,9 @@ export interface FullscreenButtonProps {
   disabled?: boolean | undefined;
 }
 
-export interface FullscreenButtonState extends Pick<FullscreenState, 'fullscreen'> {
+export interface FullscreenButtonState extends Pick<MediaFullscreenState, 'fullscreen'> {
   /** Whether fullscreen can be requested on this platform. */
-  availability: FullscreenState['fullscreenAvailability'];
+  availability: MediaFullscreenState['fullscreenAvailability'];
 }
 
 export class FullscreenButtonCore {
@@ -33,7 +33,7 @@ export class FullscreenButtonCore {
     this.#props = defaults(props, FullscreenButtonCore.defaultProps);
   }
 
-  getLabel(state: FullscreenState): string {
+  getLabel(state: MediaFullscreenState): string {
     const buttonState = this.getState(state);
     const { label } = this.#props;
 
@@ -47,21 +47,21 @@ export class FullscreenButtonCore {
     return buttonState.fullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
   }
 
-  getAttrs(state: FullscreenState): ElementProps {
+  getAttrs(state: MediaFullscreenState): ElementProps {
     return {
       'aria-label': this.getLabel(state),
       'aria-disabled': this.#props.disabled ? 'true' : undefined,
     };
   }
 
-  getState(state: FullscreenState): FullscreenButtonState {
+  getState(state: MediaFullscreenState): FullscreenButtonState {
     return {
       fullscreen: state.fullscreen,
       availability: state.fullscreenAvailability,
     };
   }
 
-  async toggle(state: FullscreenState): Promise<void> {
+  async toggle(state: MediaFullscreenState): Promise<void> {
     if (this.#props.disabled) return;
     if (state.fullscreenAvailability !== 'available') return;
 

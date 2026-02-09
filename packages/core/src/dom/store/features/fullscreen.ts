@@ -1,6 +1,6 @@
 import { listen } from '@videojs/utils/dom';
 
-import type { FullscreenState } from '../../../core/media/state';
+import type { MediaFullscreenState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import {
   enterFullscreen,
@@ -12,7 +12,7 @@ import { exitPiP, isPiPActive } from '../../presentation/pip';
 import type { WebKitVideoElement } from '../../presentation/types';
 
 export const fullscreenFeature = definePlayerFeature({
-  state: ({ target }): FullscreenState => ({
+  state: ({ target }): MediaFullscreenState => ({
     fullscreen: false,
     fullscreenAvailability: 'unavailable',
 
