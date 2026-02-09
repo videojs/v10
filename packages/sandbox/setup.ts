@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const root = import.meta.dirname;
@@ -11,6 +11,7 @@ function mirror(dir: string) {
     const targetPath = resolve(srcDir, templatePath.slice(templatesDir.length + 1));
 
     if (statSync(templatePath).isDirectory()) {
+      mkdirSync(targetPath, { recursive: true });
       mirror(templatePath);
       continue;
     }
