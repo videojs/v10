@@ -15,7 +15,7 @@ export default function CustomNegativeSign() {
           playsInline
           loop
         />
-        <Time.Value type="remaining" negativeSign={'\u2212'} className="time-custom-negative-sign__value" />
+        <Time.Value type="remaining" negativeSign="~" className="time-custom-negative-sign__value" />
       </Player.Container>
     </Player.Provider>
   );

@@ -1,41 +1,13 @@
-<style>
-  .fullscreen-button-basic {
-    display: block;
-    position: relative;
-  }
-
-  .fullscreen-button-basic video {
-    width: 100%;
-    border-radius: 0.5rem;
-  }
-
-  .fullscreen-button-basic__button {
-    height: 50px;
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    padding-inline: 12px;
-    background-color: black;
-    color: white;
-    cursor: pointer;
-  }
-
-  .fullscreen-button-basic__button .show-when-fullscreen { display: none; }
-  .fullscreen-button-basic__button .show-when-not-fullscreen { display: none; }
-  .fullscreen-button-basic__button[data-fullscreen] .show-when-fullscreen { display: inline; }
-  .fullscreen-button-basic__button:not([data-fullscreen]) .show-when-not-fullscreen { display: inline; }
-</style>
-
 <video-player class="fullscreen-button-basic">
-  <video
-    src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
-    autoplay
-    muted
-    playsinline
-    loop
-  ></video>
-  <media-fullscreen-button class="fullscreen-button-basic__button">
-    <span class="show-when-fullscreen">Exit Fullscreen</span>
-    <span class="show-when-not-fullscreen">Fullscreen</span>
-  </media-fullscreen-button>
+    <video
+        src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
+        autoplay
+        muted
+        playsinline
+        loop
+    ></video>
+    <media-fullscreen-button class="fullscreen-button-basic__button">
+        <span class="show-when-fullscreen">Exit Fullscreen</span>
+        <span class="show-when-not-fullscreen">Fullscreen</span>
+    </media-fullscreen-button>
 </video-player>

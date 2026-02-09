@@ -19,3 +19,16 @@
   padding-inline: 20px;
   cursor: pointer;
 }
+
+.play-button-basic__button .show-when-paused {
+  display: none;
+}
+.play-button-basic__button .show-when-playing {
+  display: none;
+}
+.play-button-basic__button[data-paused] .show-when-paused {
+  display: inline;
+}
+.play-button-basic__button:not([data-paused]) .show-when-playing {
+  display: inline;
+}

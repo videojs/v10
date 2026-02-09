@@ -1,29 +1,14 @@
-<style>
-  .time-current-duration {
-    position: relative;
-  }
-
-  .time-current-duration video {
-    width: 100%;
-    border-radius: 0.5rem;
-  }
-
-  .time-current-duration__group {
-    font-variant-numeric: tabular-nums;
-  }
-</style>
-
 <video-player class="time-current-duration">
-  <video
-    src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
-    autoplay
-    muted
-    playsinline
-    loop
-  ></video>
-  <media-time-group class="time-current-duration__group">
-    <media-time type="current"></media-time>
-    <media-time-separator></media-time-separator>
-    <media-time type="duration"></media-time>
-  </media-time-group>
+    <video
+        src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
+        autoplay
+        muted
+        playsinline
+        loop
+    ></video>
+    <media-time-group class="time-current-duration__group">
+        <media-time type="current"></media-time>
+        <media-time-separator></media-time-separator>
+        <media-time type="duration"></media-time>
+    </media-time-group>
 </video-player>

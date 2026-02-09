@@ -182,8 +182,9 @@ src/components/docs/demos/
 ├── HtmlDemo.astro          # Renders raw HTML via set:html
 └── {component}/{framework}/{style}/
     ├── BasicUsage.tsx      # React: component (+ .css)
-    ├── BasicUsage.astro    # HTML: Astro wrapper (renders HTML + bundles script)
-    ├── BasicUsage.html     # HTML: markup + <style>, no <script>
+    ├── BasicUsage.astro    # HTML: Astro wrapper (renders HTML, imports CSS, bundles script)
+    ├── BasicUsage.html     # HTML: markup only, no <style> or <script>
+    ├── BasicUsage.css      # HTML: styles (imported by .astro wrapper for live demo)
     └── BasicUsage.ts       # HTML: side-effect imports for custom element registration
 ```
 
@@ -196,7 +197,7 @@ Demos use BEM class names for scoping. Block = `{component}-{variant}`, element 
 .play-button-basic__button      /* element */
 ```
 
-React `.css` and HTML `<style>` blocks for the same demo should use identical BEM names.
+React `.css` and HTML `.css` files for the same demo should use identical BEM names.
 
 ### React Demos
 
@@ -217,13 +218,14 @@ import basicUsageCss from "@/components/docs/demos/play-button/react/css/BasicUs
 
 ### HTML Demos
 
-Three files per demo: `.html` (markup + style), `.ts` (custom element registration), and `.astro` (wrapper that ties them together). The `.astro` wrapper is needed because only Astro `<script>` tags go through Vite's bundling pipeline — MDX `<script>` tags compile as JSX and aren't bundled.
+Four files per demo: `.html` (markup only), `.css` (styles), `.ts` (custom element registration), and `.astro` (wrapper that ties them together). The `.astro` wrapper is needed because only Astro `<script>` tags go through Vite's bundling pipeline — MDX `<script>` tags compile as JSX and aren't bundled.
 
-**`.astro` wrapper** (renders HTML + bundles the `.ts` script):
+**`.astro` wrapper** (imports CSS for live demo, renders HTML, bundles the `.ts` script):
 ```astro
 ---
 import HtmlDemo from '@/components/docs/demos/HtmlDemo.astro';
 import html from './BasicUsage.html?raw';
+import './BasicUsage.css';
 ---
 <HtmlDemo html={html} />
 <script>
@@ -235,10 +237,12 @@ import html from './BasicUsage.html?raw';
 ```mdx
 import BasicUsageDemoHtml from "@/components/docs/demos/play-button/html/css/BasicUsage.astro";
 import basicUsageHtml from "@/components/docs/demos/play-button/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/play-button/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/play-button/html/css/BasicUsage.ts?raw";
 
 <Demo files={[
   { title: "index.html", code: basicUsageHtml, lang: "html" },
+  { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
   { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
 ]}>
   <BasicUsageDemoHtml />

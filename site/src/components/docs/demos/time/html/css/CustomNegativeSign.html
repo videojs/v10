@@ -1,25 +1,14 @@
-<style>
-  .time-custom-negative-sign {
-    position: relative;
-  }
-
-  .time-custom-negative-sign video {
-    width: 100%;
-    border-radius: 0.5rem;
-  }
-
-  .time-custom-negative-sign__value {
-    font-variant-numeric: tabular-nums;
-  }
-</style>
-
 <video-player class="time-custom-negative-sign">
-  <video
-    src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
-    autoplay
-    muted
-    playsinline
-    loop
-  ></video>
-  <media-time class="time-custom-negative-sign__value" type="remaining" negative-sign="&#x2212;"></media-time>
+    <video
+        src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
+        autoplay
+        muted
+        playsinline
+        loop
+    ></video>
+    <media-time
+        class="time-custom-negative-sign__value"
+        type="remaining"
+        negative-sign="~"
+    ></media-time>
 </video-player>

@@ -1,4 +1,5 @@
 .fullscreen-button-basic {
+  display: block;
   position: relative;
 }
 
@@ -18,4 +19,17 @@
   border-radius: 9999px;
   padding-inline: 20px;
   cursor: pointer;
+}
+
+.fullscreen-button-basic__button .show-when-fullscreen {
+  display: none;
+}
+.fullscreen-button-basic__button .show-when-not-fullscreen {
+  display: none;
+}
+.fullscreen-button-basic__button[data-fullscreen] .show-when-fullscreen {
+  display: inline;
+}
+.fullscreen-button-basic__button:not([data-fullscreen]) .show-when-not-fullscreen {
+  display: inline;
 }
