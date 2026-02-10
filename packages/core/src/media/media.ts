@@ -1,5 +1,6 @@
 type Constructor<T> = {
   new (...args: any[]): T;
+  prototype: T;
 };
 
 export type MediaElementConstructor =
@@ -21,10 +22,10 @@ export type MediaElementInstance = InstanceType<MediaElementConstructor>;
  * The `get`, `set`, and `call` methods can be overridden to provide catch-all custom behavior.
  */
 export const MediaMixin = <T extends EventTarget, E extends MediaElementConstructor>(
-  superclass: Constructor<T>,
+  Super: Constructor<T>,
   MediaElement: E
 ) => {
-  class Media extends (superclass as Constructor<any>) {
+  class Media extends (Super as Constructor<EventTarget>) {
     static define(MediaElement: E) {
       const { props, methods } = getNativeElProps(MediaElement);
 
@@ -32,8 +33,8 @@ export const MediaMixin = <T extends EventTarget, E extends MediaElementConstruc
       for (const method of methods) {
         if (method in Media.prototype) continue;
 
-        Media.prototype[method] = function (...args: any[]) {
-          return this.call(method as keyof HTMLMediaElement, ...args);
+        (Media.prototype as any).prototype[method] = function (...args: any[]) {
+          return this.call(method, ...args);
         };
       }
 
@@ -42,13 +43,13 @@ export const MediaMixin = <T extends EventTarget, E extends MediaElementConstruc
 
         const config: PropertyDescriptor = {
           get(this: Media) {
-            return this.get(prop as keyof HTMLMediaElement);
+            return this.get(prop);
           },
         };
 
         if (prop !== prop.toUpperCase()) {
           config.set = function (this: Media, val: any) {
-            this.set(prop as keyof HTMLMediaElement, val);
+            this.set(prop, val);
           };
         }
 
@@ -56,29 +57,29 @@ export const MediaMixin = <T extends EventTarget, E extends MediaElementConstruc
       }
     }
 
-    #element: HTMLMediaElement | null = null;
+    #element: MediaElementInstance | null = null;
 
     get element() {
       return this.#element;
     }
 
-    get(prop: keyof HTMLMediaElement): any {
+    get(prop: keyof MediaElementInstance): any {
       return this.element?.[prop];
     }
 
-    set(prop: keyof HTMLMediaElement, val: any): void {
+    set(prop: keyof MediaElementInstance, val: any): void {
       if (this.element) {
         // @ts-expect-error - Errors on readonly property
         this.element[prop] = val;
       }
     }
 
-    call(prop: keyof HTMLMediaElement, ...args: any[]): any {
+    call(prop: keyof MediaElementInstance, ...args: any[]): any {
       const nativeFn = this.element?.[prop] as ((...args: any[]) => any) | undefined;
       return nativeFn?.apply(this.element, args);
     }
 
-    attach(element: HTMLMediaElement): void {
+    attach(element: MediaElementInstance): void {
       if (!element || this.#element === element) return;
       this.#element = element;
     }
@@ -112,16 +113,17 @@ export const MediaMixin = <T extends EventTarget, E extends MediaElementConstruc
   // Proxy native element methods and properties to the media instance.
   Media.define(MediaElement);
 
-  return Media as unknown as Constructor<T & E> & typeof Media;
+  return Media as Constructor<T & E> & typeof Media;
 };
 
+// TODO: For React native don't use HTMLMediaElement or child classes.
 export class Media extends MediaMixin(EventTarget, HTMLMediaElement) {}
 export class Video extends MediaMixin(EventTarget, HTMLVideoElement) {}
 export class Audio extends MediaMixin(EventTarget, HTMLAudioElement) {}
 
 /**
  * Helper function to get all properties from a native media element's prototype.
- * TODO: For React native don't use HTMLElement?
+ * TODO: For React native don't use HTMLElement.
  */
 function getNativeElProps(MediaElement: MediaElementConstructor) {
   const methods: Set<keyof MediaElementInstance> = new Set();
@@ -142,5 +144,6 @@ function getNativeElProps(MediaElement: MediaElementConstructor) {
       }
     });
   }
+
   return { props, methods };
 }
