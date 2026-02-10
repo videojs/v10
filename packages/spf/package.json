@@ -24,7 +24,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown",
+    "build": "tsc --build && tsdown",
     "build:watch": "tsdown --watch --silent",
     "dev": "pnpm run build:watch",
     "test": "vitest run",
