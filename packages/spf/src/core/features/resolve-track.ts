@@ -125,15 +125,15 @@ export interface TrackResolutionConfig<T extends TrackType = TrackType> {
  *
  * Generic version that works for video, audio, or text tracks based on config.
  * Type parameter T is inferred from config.type (use 'as const' for inference).
- *
- * @param state - State with presentation and selected track IDs
- * @param events - Event stream for actions
- * @param config - Configuration including track type
- * @returns Cleanup function
  */
 export function resolveTrack<T extends TrackType>(
-  state: WritableState<TrackResolutionState>,
-  events: EventStream<TrackResolutionAction>,
+  {
+    state,
+    events,
+  }: {
+    state: WritableState<TrackResolutionState>;
+    events: EventStream<TrackResolutionAction>;
+  },
   config: TrackResolutionConfig<T>
 ): () => void {
   // This is effectively a very simple finite state model. We can formalize this if needed.
