@@ -33,7 +33,7 @@ export const MediaMixin = <T extends EventTarget, E extends MediaElementConstruc
       for (const method of methods) {
         if (method in Media.prototype) continue;
 
-        (Media.prototype as any).prototype[method] = function (...args: any[]) {
+        (Media.prototype as any)[method] = function (...args: any[]) {
           return this.call(method, ...args);
         };
       }
