@@ -28,6 +28,7 @@ export default {
         'rfc',
         'root',
         'site',
+        'spf',
         'store',
         'test',
         'utils',
