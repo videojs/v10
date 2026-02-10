@@ -145,38 +145,8 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
     }
   }
 
-  // Separate streams into video and audio based on codecs
-  // If CODECS has single codec, use parseCodecs to determine type
-  const videoStreams: typeof streams = [];
-  const audioOnlyStreams: typeof streams = [];
-
-  for (const stream of streams) {
-    if (!stream.codecs) {
-      // No codecs - assume video (default behavior)
-      videoStreams.push(stream);
-      continue;
-    }
-
-    const parsedCodecs = parseCodecs(stream.codecs);
-    const codecCount = stream.codecs.split(',').length;
-
-    // Single codec - determine type from parseCodecs result
-    if (codecCount === 1) {
-      if (parsedCodecs.audio && !parsedCodecs.video) {
-        // Audio-only stream
-        audioOnlyStreams.push(stream);
-      } else {
-        // Video stream (or unknown - default to video)
-        videoStreams.push(stream);
-      }
-    } else {
-      // Multiple codecs - video stream with muxed audio
-      videoStreams.push(stream);
-    }
-  }
-
-  // Build PartiallyResolvedVideoTracks from video streams
-  const videoTracks: PartiallyResolvedVideoTrack[] = videoStreams.map((stream) => {
+  // Build PartiallyResolvedVideoTracks from streams
+  const videoTracks: PartiallyResolvedVideoTrack[] = streams.map((stream) => {
     const codecs = stream.codecs ? parseCodecs(stream.codecs) : undefined;
 
     const track: PartiallyResolvedVideoTrack = {
@@ -208,29 +178,9 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
     return track;
   });
 
-  // Build PartiallyResolvedAudioTracks from audio-only streams
-  const audioOnlyTracks: PartiallyResolvedAudioTrack[] = audioOnlyStreams.map((stream) => {
-    const codecs = stream.codecs ? parseCodecs(stream.codecs) : undefined;
-
-    const track: PartiallyResolvedAudioTrack = {
-      type: 'audio' as const,
-      id: generateId(),
-      url: stream.uri,
-      bandwidth: stream.bandwidth,
-      mimeType: 'audio/mp4',
-      codecs: codecs?.audio ? [codecs.audio] : [],
-      groupId: stream.audioGroupId || 'default',
-      name: 'Default',
-      sampleRate: 48000, // Default - will be in media playlist if available
-      channels: 2, // Default - will be in media playlist if available
-    };
-
-    return track;
-  });
-
-  // Build PartiallyResolvedAudioTracks from audio renditions (EXT-X-MEDIA)
+  // Build PartiallyResolvedAudioTracks from audio renditions
   // Extract audio codecs from referencing streams
-  const audioRenditionTracks: PartiallyResolvedAudioTrack[] = audioRenditions.map((rendition) => {
+  const audioTracks: PartiallyResolvedAudioTrack[] = audioRenditions.map((rendition) => {
     let audioCodecs: string[] | undefined;
     for (const stream of streams) {
       if (stream.audioGroupId === rendition.groupId && stream.codecs) {
@@ -272,9 +222,6 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
     return track;
   });
 
-  // Combine audio tracks from both EXT-X-MEDIA renditions and audio-only STREAM-INF
-  const audioTracks = [...audioRenditionTracks, ...audioOnlyTracks];
-
   // Build PartiallyResolvedTextTracks from subtitle renditions
   const textTracks: PartiallyResolvedTextTrack[] = subtitleRenditions.map((rendition) => {
     const track: PartiallyResolvedTextTrack = {
@@ -292,12 +239,8 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
     if (rendition.language) {
       track.language = rendition.language;
     }
-    // Match hls.js/http-streaming: only set default=true when BOTH DEFAULT=YES AND AUTOSELECT=YES
-    if (rendition.default && rendition.autoselect) {
-      track.default = true;
-    }
-    if (rendition.autoselect) {
-      track.autoselect = rendition.autoselect;
+    if (rendition.default) {
+      track.default = rendition.default;
     }
     if (rendition.forced) {
       track.forced = rendition.forced;

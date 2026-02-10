@@ -30,7 +30,7 @@ variant2.m3u8`)
     );
 
     // Act
-    const cleanup = resolvePresentation({ state, events });
+    const cleanup = resolvePresentation(state, events);
 
     // Dispatch initial neutral event to prime combineLatest
     events.dispatch({ type: 'pause' });
@@ -84,7 +84,7 @@ variant1.m3u8`)
 
     // Act
     const events = createEventStream<PresentationAction>();
-    const cleanup = resolvePresentation({ state, events });
+    const cleanup = resolvePresentation(state, events);
 
     // Dispatch initial neutral event to prime combineLatest
     events.dispatch({ type: 'pause' });
@@ -139,7 +139,7 @@ variant1.m3u8`)
 
     // Act
     const events = createEventStream<PresentationAction>();
-    const cleanup = resolvePresentation({ state, events });
+    const cleanup = resolvePresentation(state, events);
 
     // Dispatch initial neutral event to prime combineLatest
     events.dispatch({ type: 'pause' });
@@ -206,7 +206,7 @@ variant1.m3u8`)
 
     // Act
     const events = createEventStream<PresentationAction>();
-    const cleanup = resolvePresentation({ state, events });
+    const cleanup = resolvePresentation(state, events);
 
     // Dispatch initial neutral event to prime combineLatest
     events.dispatch({ type: 'pause' });
@@ -250,7 +250,7 @@ variant2.m3u8`)
 
     // Act
     const events = createEventStream<PresentationAction>();
-    const cleanup = resolvePresentation({ state, events });
+    const cleanup = resolvePresentation(state, events);
 
     // Dispatch initial neutral event to prime combineLatest
     events.dispatch({ type: 'pause' });
@@ -294,7 +294,7 @@ variant1.m3u8`)
       });
 
       const events = createEventStream<PresentationAction>();
-      const cleanup = resolvePresentation({ state, events });
+      const cleanup = resolvePresentation(state, events);
 
       // Dispatch initial neutral event to prime combineLatest
       events.dispatch({ type: 'pause' });
@@ -324,7 +324,7 @@ variant1.m3u8`)
       });
 
       const events = createEventStream<PresentationAction>();
-      const cleanup = resolvePresentation({ state, events });
+      const cleanup = resolvePresentation(state, events);
 
       // Dispatch initial neutral event to prime combineLatest
       events.dispatch({ type: 'pause' });
@@ -350,7 +350,7 @@ variant1.m3u8`)
       });
 
       const events = createEventStream<PresentationAction>();
-      const cleanup = resolvePresentation({ state, events });
+      const cleanup = resolvePresentation(state, events);
 
       // Dispatch initial neutral event to prime combineLatest
       events.dispatch({ type: 'pause' });
@@ -377,7 +377,7 @@ variant1.m3u8`)
       });
 
       const events = createEventStream<PresentationAction>();
-      const cleanup = resolvePresentation({ state, events });
+      const cleanup = resolvePresentation(state, events);
 
       // Dispatch initial neutral event to prime combineLatest
       events.dispatch({ type: 'pause' });
@@ -412,7 +412,7 @@ variant1.m3u8`)
       const events = createEventStream<PresentationAction>();
 
       // Use resolvePresentation with combineLatest composition
-      const cleanup = resolvePresentation({ state, events });
+      const cleanup = resolvePresentation(state, events);
 
       // Dispatch initial neutral event to prime combineLatest
       events.dispatch({ type: 'pause' });
@@ -448,7 +448,7 @@ variant1.m3u8`)
 
       const events = createEventStream<PresentationAction>();
 
-      const cleanup = resolvePresentation({ state, events });
+      const cleanup = resolvePresentation(state, events);
 
       // Dispatch PAUSE event (not PLAY) - this primes combineLatest but shouldn't trigger resolution
       events.dispatch({ type: 'pause' });
@@ -577,7 +577,7 @@ variant1.m3u8`)
       });
 
       const events = createEventStream<PresentationAction>();
-      const cleanup = resolvePresentation({ state, events });
+      const cleanup = resolvePresentation(state, events);
 
       // Prime combineLatest and trigger first resolution
       events.dispatch({ type: 'pause' });
@@ -617,7 +617,7 @@ variant1.m3u8`)
       });
 
       const events = createEventStream<PresentationAction>();
-      const cleanup = resolvePresentation({ state, events });
+      const cleanup = resolvePresentation(state, events);
 
       events.dispatch({ type: 'pause' });
 

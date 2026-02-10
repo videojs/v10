@@ -6,7 +6,7 @@ describe('calculateAlpha', () => {
     // alpha = exp(ln(0.5) / halfLife)
     // For halfLife = 2: alpha ≈ 0.7071
     const alpha = calculateAlpha(2);
-    expect(alpha).toBeCloseTo(Math.SQRT1_2, 4);
+    expect(alpha).toBeCloseTo(0.7071, 4);
   });
 
   it('should calculate correct alpha for 5-second half-life', () => {

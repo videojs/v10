@@ -14,13 +14,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "development": "./dist/index.js",
       "default": "./dist/index.js"
-    },
-    "./dom/playback-engine": {
-      "types": "./dist/dom/playback-engine.d.ts",
-      "development": "./dist/dom/playback-engine.js",
-      "default": "./dist/dom/playback-engine.js"
     }
   },
   "main": "dist/index.js",
@@ -37,7 +31,7 @@
     "test:ci": "vitest run --project=core --project=dom --project=utils",
     "test:watch": "vitest",
     "clean": "rm -rf dist types",
-    "size": "node scripts/measure-size.js --playback-engine",
+    "size": "node scripts/measure-size.js",
     "size:all": "node scripts/measure-size.js --all"
   },
   "dependencies": {

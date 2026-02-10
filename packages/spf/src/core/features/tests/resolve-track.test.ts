@@ -63,7 +63,7 @@ http://example.com/segment2.m4s
     );
 
     // Act
-    const cleanup = resolveTrack({ state, events }, { type: 'video' as const });
+    const cleanup = resolveTrack(state, events, { type: 'video' as const });
     events.dispatch({ type: 'pause' });
 
     // Wait for resolution
@@ -131,7 +131,7 @@ http://example.com/segment2.m4s
     });
 
     const events = createEventStream<TrackResolutionAction>();
-    const cleanup = resolveTrack({ state, events }, { type: 'video' as const });
+    const cleanup = resolveTrack(state, events, { type: 'video' as const });
     events.dispatch({ type: 'pause' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -157,7 +157,7 @@ http://example.com/segment2.m4s
     });
 
     const events = createEventStream<TrackResolutionAction>();
-    const cleanup = resolveTrack({ state, events }, { type: 'video' as const });
+    const cleanup = resolveTrack(state, events, { type: 'video' as const });
     events.dispatch({ type: 'pause' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -219,7 +219,7 @@ http://example.com/segment1.m4s
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveTrack({ state, events }, { type: 'audio' as const });
+    const cleanup = resolveTrack(state, events, { type: 'audio' as const });
     events.dispatch({ type: 'pause' });
 
     await vi.waitFor(() => {
@@ -294,7 +294,7 @@ http://example.com/subtitle1.webvtt
 #EXT-X-ENDLIST`)
     );
 
-    const cleanup = resolveTrack({ state, events }, { type: 'text' as const });
+    const cleanup = resolveTrack(state, events, { type: 'text' as const });
     events.dispatch({ type: 'pause' });
 
     await vi.waitFor(() => {

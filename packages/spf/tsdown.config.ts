@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/dom/playback-engine.ts'],
+  entry: ['src/index.ts'],
   platform: 'browser',
   format: 'es',
   sourcemap: true,

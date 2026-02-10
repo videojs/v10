@@ -9,7 +9,7 @@ describe('fetchResolvable', () => {
   });
 
   it('fetches from AddressableObject URL', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('content'));
+    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(new Response('content'));
 
     const addressable: AddressableObject = {
       url: 'https://example.com/playlist.m3u8',
@@ -23,7 +23,7 @@ describe('fetchResolvable', () => {
 
   it('returns Response from fetch', async () => {
     const mockResponse = new Response('test content');
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(mockResponse);
+    vi.spyOn(global, 'fetch').mockResolvedValue(mockResponse);
 
     const response = await fetchResolvable({ url: 'https://example.com/test.m3u8' });
 
@@ -31,7 +31,7 @@ describe('fetchResolvable', () => {
   });
 
   it('accepts AddressableObject with just url', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(''));
+    vi.spyOn(global, 'fetch').mockResolvedValue(new Response(''));
 
     const addressable: AddressableObject = {
       url: 'https://example.com/playlist.m3u8',
@@ -41,7 +41,7 @@ describe('fetchResolvable', () => {
   });
 
   it('accepts AddressableObject with byteRange', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(''));
+    vi.spyOn(global, 'fetch').mockResolvedValue(new Response(''));
 
     const addressable: AddressableObject = {
       url: 'https://example.com/segment.m4s',
@@ -52,7 +52,7 @@ describe('fetchResolvable', () => {
   });
 
   it('handles zero-offset byte range', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(''));
+    vi.spyOn(global, 'fetch').mockResolvedValue(new Response(''));
 
     const addressable: AddressableObject = {
       url: 'https://example.com/init.mp4',

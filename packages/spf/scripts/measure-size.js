@@ -4,8 +4,8 @@
  * Measure SPF bundle size
  *
  * Usage:
- *   pnpm size                    # Measure playback engine
- *   pnpm size:all                # Measure all exports (all.ts)
+ *   pnpm size           # Measure public API (index.ts)
+ *   pnpm size:all       # Measure all exports (all.ts)
  */
 
 import { execSync } from 'node:child_process';
@@ -13,23 +13,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 
 const measureAll = process.argv.includes('--all');
-const measureEngine = process.argv.includes('--playback-engine');
-
-let entry, label, bundlePath;
-
-if (measureAll) {
-  entry = 'all.ts';
-  label = 'All Exports';
-  bundlePath = './dist/all.js';
-} else if (measureEngine) {
-  entry = 'dom/playback-engine.ts';
-  label = 'Playback Engine';
-  bundlePath = './dist/playback-engine.js';
-} else {
-  entry = 'index.ts';
-  label = 'Public API';
-  bundlePath = './dist/index.js';
-}
+const entry = measureAll ? 'all.ts' : 'index.ts';
+const label = measureAll ? 'All Exports' : 'Public API';
 
 console.log(`\n📦 Measuring ${label} bundle size...\n`);
 
@@ -59,6 +44,7 @@ try {
   execSync('pnpm build', { stdio: 'inherit' });
 
   // Measure sizes
+  const bundlePath = './dist/index.js';
   const content = readFileSync(bundlePath);
   const gzipped = gzipSync(content);
 
