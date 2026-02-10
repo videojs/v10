@@ -38,3 +38,17 @@ jobs:
 
       - name: Build
         run: pnpm build:packages
+
+      - name: Test SPF
+        run: pnpm -F @videojs/spf test:ci
+
+      - name: Test SPF with Coverage
+        run: pnpm -F @videojs/spf test:ci --coverage
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v5
+        if: always()
+        with:
+          files: ./packages/spf/coverage/lcov.info
+          flags: spf
+          name: spf-coverage
