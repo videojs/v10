@@ -28,6 +28,7 @@
     "build:watch": "tsdown --watch --silent",
     "dev": "pnpm run build:watch",
     "test": "vitest run",
+    "test:ci": "vitest run --project=core --project=dom --project=utils",
     "test:watch": "vitest",
     "clean": "rm -rf dist types",
     "size": "node scripts/measure-size.js",
