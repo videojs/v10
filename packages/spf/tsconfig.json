@@ -2,9 +2,9 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
-    "declarationDir": "types"
+    "declarationDir": "types",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
-  "references": [{ "path": "../utils" }, { "path": "./src/dom" }],
-  "include": ["src/**/*.ts"],
-  "exclude": ["src/dom/**/*.ts"]
+  "references": [{ "path": "../utils" }],
+  "include": ["src/**/*.ts"]
 }

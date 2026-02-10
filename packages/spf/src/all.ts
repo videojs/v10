@@ -38,31 +38,26 @@ export { resolveUrl } from './core/hls/resolve-url';
 // =============================================================================
 
 export type {
-  BandwidthEstimate,
-  BandwidthEstimator,
-  BandwidthSample,
+  BandwidthConfig,
+  BandwidthState,
 } from './core/abr/bandwidth-estimator';
-export { createBandwidthEstimator } from './core/abr/bandwidth-estimator';
-export type {
-  QualitySelectionOptions,
-  QualitySelectionResult,
-} from './core/abr/quality-selection';
-export { selectQuality } from './core/abr/quality-selection';
+export {
+  DEFAULT_BANDWIDTH_CONFIG,
+  getBandwidthEstimate,
+  hasGoodEstimate,
+  sampleBandwidth,
+} from './core/abr/bandwidth-estimator';
+export type { QualityConfig } from './core/abr/quality-selection';
+export { DEFAULT_QUALITY_CONFIG, selectQuality } from './core/abr/quality-selection';
 
 // =============================================================================
 // Buffer Management (P8, P9)
 // =============================================================================
 
-export type {
-  BackBufferConfig,
-  BackBufferResult,
-} from './core/buffer/back-buffer';
-export { calculateBackBuffer } from './core/buffer/back-buffer';
-export type {
-  ForwardBufferConfig,
-  ForwardBufferResult,
-} from './core/buffer/forward-buffer';
-export { calculateForwardBuffer } from './core/buffer/forward-buffer';
+export type { BackBufferConfig } from './core/buffer/back-buffer';
+export { calculateBackBufferFlushPoint, DEFAULT_BACK_BUFFER_CONFIG } from './core/buffer/back-buffer';
+export type { ForwardBufferConfig } from './core/buffer/forward-buffer';
+export { DEFAULT_FORWARD_BUFFER_CONFIG, getSegmentsToLoad } from './core/buffer/forward-buffer';
 
 // =============================================================================
 // Types (P15)
@@ -70,19 +65,15 @@ export { calculateForwardBuffer } from './core/buffer/forward-buffer';
 
 export type {
   AudioTrack,
-  CmafTrack,
   FrameRate,
   MediaElementLike,
-  MediaInitialization,
   PartiallyResolvedAudioTrack,
   PartiallyResolvedTextTrack,
   PartiallyResolvedTrack,
   PartiallyResolvedVideoTrack,
   Presentation,
   Segment,
-  SegmentIdentity,
   SelectionSet,
-  SelectionStrategy,
   TextTrack,
   Track,
   VideoTrack,
@@ -94,11 +85,18 @@ export { hasPresentationDuration, isResolvedTrack } from './core/types';
 // =============================================================================
 
 export type {
-  MediaSourceConfig,
-  MediaSourceSetup,
-  SourceBufferConfig,
+  AttachMediaSourceResult,
+  CreateMediaSourceOptions,
 } from './dom/media/mediasource-setup';
-export { setupMediaSource } from './dom/media/mediasource-setup';
+export {
+  attachMediaSource,
+  createMediaSource,
+  createSourceBuffer,
+  isCodecSupported,
+  supportsManagedMediaSource,
+  supportsMediaSource,
+  waitForSourceOpen,
+} from './dom/media/mediasource-setup';
 export type { ResponseLike } from './dom/network/fetch';
 export { fetchResolvable, getResponseText } from './dom/network/fetch';
 

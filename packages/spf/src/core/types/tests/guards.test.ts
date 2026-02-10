@@ -13,12 +13,12 @@ describe('Type Guards', () => {
     it('returns true for resolved video track (has segments)', () => {
       const resolved: VideoTrack = {
         type: 'video',
+        codecs: [],
         id: 'video-0',
         url: 'https://example.com/video.m3u8',
         bandwidth: 1400000,
         width: 1280,
         height: 720,
-        codecs: ['avc1.4d401f'],
         frameRate: { frameRateNumerator: 30 },
         mimeType: 'video/mp4',
         startTime: 0,
@@ -33,6 +33,7 @@ describe('Type Guards', () => {
     it('returns false for unresolved video track (no segments)', () => {
       const unresolved: PartiallyResolvedVideoTrack = {
         type: 'video',
+        codecs: [],
         id: 'video-0',
         url: 'https://example.com/video.m3u8',
         bandwidth: 1400000,
@@ -45,12 +46,12 @@ describe('Type Guards', () => {
     it('narrows PartiallyResolvedVideoTrack | VideoTrack to VideoTrack', () => {
       const track: PartiallyResolvedVideoTrack | VideoTrack = {
         type: 'video',
+        codecs: [],
         id: 'video-0',
         url: 'https://example.com/video.m3u8',
         bandwidth: 1400000,
         width: 1280,
         height: 720,
-        codecs: ['avc1.4d401f'],
         frameRate: { frameRateNumerator: 30 },
         mimeType: 'video/mp4',
         startTime: 0,
@@ -77,6 +78,7 @@ describe('Type Guards', () => {
         bandwidth: 0,
         sampleRate: 48000,
         channels: 2,
+        codecs: [],
       };
 
       expect(isResolvedTrack(unresolved)).toBe(false);
@@ -117,7 +119,7 @@ describe('Type Guards', () => {
         id: 'presentation-0',
         url: 'https://example.com/master.m3u8',
         startTime: 0,
-        duration: undefined,
+
         selectionSets: [],
       };
 

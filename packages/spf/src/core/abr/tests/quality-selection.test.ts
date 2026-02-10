@@ -5,6 +5,7 @@ import { DEFAULT_QUALITY_CONFIG, selectQuality } from '../quality-selection';
 // Helper to create test tracks
 const createTrack = (id: string, bandwidth: number, width = 1920, height = 1080): PartiallyResolvedVideoTrack => ({
   type: 'video',
+  codecs: [],
   id,
   url: `https://example.com/${id}.m3u8`,
   bandwidth,
@@ -129,6 +130,7 @@ describe('selectQuality', () => {
     it('should handle tracks without width/height', () => {
       const track1: PartiallyResolvedVideoTrack = {
         type: 'video',
+        codecs: [],
         id: 'track1',
         url: 'https://example.com/1.m3u8',
         bandwidth: 1_000_000,
@@ -137,6 +139,7 @@ describe('selectQuality', () => {
 
       const track2: PartiallyResolvedVideoTrack = {
         type: 'video',
+        codecs: [],
         id: 'track2',
         url: 'https://example.com/2.m3u8',
         bandwidth: 1_000_000,
