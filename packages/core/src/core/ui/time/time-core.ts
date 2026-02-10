@@ -47,10 +47,6 @@ export class TimeCore {
 
   #props = { ...TimeCore.defaultProps };
 
-  get props(): NonNullableObject<TimeProps> {
-    return this.#props;
-  }
-
   constructor(props?: TimeProps) {
     if (props) this.setProps(props);
   }
