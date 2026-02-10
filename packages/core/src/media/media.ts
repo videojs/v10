@@ -1,14 +1,13 @@
 type Constructor<T> = {
   new (...args: any[]): T;
-  prototype: T;
 };
 
-type MediaElementConstructor =
+export type MediaElementConstructor =
   | Constructor<HTMLMediaElement>
   | Constructor<HTMLVideoElement>
   | Constructor<HTMLAudioElement>;
 
-type MediaElementInstance = InstanceType<MediaElementConstructor>;
+export type MediaElementInstance = InstanceType<MediaElementConstructor>;
 
 /**
  * This class provides a base for a uniform Media API across all media types.
@@ -113,7 +112,7 @@ export const MediaMixin = <T extends EventTarget, E extends MediaElementConstruc
   // Proxy native element methods and properties to the media instance.
   Media.define(MediaElement);
 
-  return Media as unknown as Constructor<T & E & InstanceType<typeof Media>>;
+  return Media as unknown as Constructor<T & E> & typeof Media;
 };
 
 export class Media extends MediaMixin(EventTarget, HTMLMediaElement) {}

@@ -70,7 +70,7 @@ export class MediaContainerElement extends CustomElementConsumer {
   _handleClick = (event: Event): void => {
     if (!this._playerStore) return;
 
-    if (!['video', 'audio'].includes((event.target as HTMLElement).localName || '')) return;
+    if (!/(video|audio)$/.test((event.target as HTMLElement).localName)) return;
 
     if (this._paused) {
       this._playerStore.getState().play();

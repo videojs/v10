@@ -1,2 +1,2 @@
-export { HlsMedia } from './hls';
+export { HlsMedia, HlsMediaMixin } from './hls';
 export { Audio, Media, Video } from './media';

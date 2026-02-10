@@ -1,19 +1,17 @@
 import Hls from 'hls.js';
-import { Video } from './media';
+import { type MediaElementInstance, Video } from './media';
 
-type Constructor<T> = new (...args: any[]) => T;
-
-export const HlsMediaMixin = <T extends Video>(Super: Constructor<T>) => {
-  class HlsMedia extends (Super as Constructor<Video>) {
+export const HlsMediaMixin = <T extends object>(Super: T) => {
+  class HlsMedia extends (Super as any) {
     engine = new Hls();
 
-    attach(element: HTMLVideoElement): void {
-      super.attach(element);
+    attach(element: MediaElementInstance): void {
+      super.attach?.(element);
       this.engine.attachMedia(element);
     }
 
     detach(): void {
-      super.detach();
+      super.detach?.();
       this.engine.detachMedia();
     }
 
@@ -25,7 +23,7 @@ export const HlsMediaMixin = <T extends Video>(Super: Constructor<T>) => {
       return this.engine.url ?? '';
     }
   }
-  return HlsMedia as Constructor<T & InstanceType<typeof HlsMedia>>;
+  return HlsMedia as T & typeof HlsMedia;
 };
 
 export class HlsMedia extends HlsMediaMixin(Video) {}
