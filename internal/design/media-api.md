@@ -49,7 +49,7 @@ The unified media API adds the following to a media element (or EventTarget-base
 Implementations may expose these only when applicable (e.g. `liveEdgeStart` for live; renditions for HAS).
 
 ```ts
-class Media extends EventTarget {
+declare class Media extends EventTarget {
   // Custom extensions (unified media API)
   streamType: 'live' | 'on-demand';
   liveEdgeStart: number;
@@ -113,6 +113,29 @@ class Media extends EventTarget {
   set(prop: keyof HTMLMediaElement, val: any): void;
   call(prop: keyof HTMLMediaElement, ...args: any[]): any;
 }
+
+// Implemented as a mixin
+export const MediaMixin = <T extends EventTarget, E extends MediaElementConstructor>(
+  Super: Constructor<T>,
+  MediaElement: E
+) => class Media extends (Super as Constructor<EventTarget>) {
+  // Logic that proxies media API to the media element
+  // ...
+
+  // Attach media element to the media instance
+  element: HTMLMediaElement;
+  attach(element: HTMLMediaElement): void;
+  detach(): void;
+
+  // Proxy handlers
+  get(prop: keyof HTMLMediaElement): any;
+  set(prop: keyof HTMLMediaElement, val: any): void;
+  call(prop: keyof HTMLMediaElement, ...args: any[]): any;
+}
+
+export class Media extends MediaMixin(EventTarget, HTMLMediaElement) {}
+export class Video extends MediaMixin(EventTarget, HTMLVideoElement) {}
+export class Audio extends MediaMixin(EventTarget, HTMLAudioElement) {}
 ```
 
 ### Example of using the media API
@@ -128,6 +151,7 @@ interface HlsMediaBase {
   detach?(): void;
 }
 
+// The mixin is used by the web component because it needs to extend HTMLElement!
 export const HlsMediaMixin = <T extends Constructor>(Super: T) => {
   class HlsMedia extends (Super as Constructor<HlsMediaBase>) {
     engine = new Hls();
@@ -153,5 +177,6 @@ export const HlsMediaMixin = <T extends Constructor>(Super: T) => {
   return HlsMedia as T & typeof HlsMedia;
 };
 
+// This class is used by the React component.
 export class HlsMedia extends HlsMediaMixin(Video) {}
 ```
