@@ -20,8 +20,8 @@ export class PlayButtonElement extends MediaElement {
     disabled: { type: Boolean },
   };
 
-  label = '';
-  disabled = false;
+  label = PlayButtonCore.defaultProps.label;
+  disabled = PlayButtonCore.defaultProps.disabled;
 
   readonly #core = new PlayButtonCore();
   readonly #state = new PlayerController(this, playerContext, selectPlayback);

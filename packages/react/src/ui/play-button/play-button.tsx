@@ -32,7 +32,7 @@ export const PlayButton = forwardRef(function PlayButton(
   componentProps: PlayButtonProps,
   forwardedRef: ForwardedRef<HTMLButtonElement>
 ) {
-  const { render, className, style, label, disabled = false, ...elementProps } = componentProps;
+  const { render, className, style, label, disabled, ...elementProps } = componentProps;
 
   const playback = usePlayer(selectPlayback);
 

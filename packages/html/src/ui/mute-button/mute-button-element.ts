@@ -20,8 +20,8 @@ export class MuteButtonElement extends MediaElement {
     disabled: { type: Boolean },
   };
 
-  label = '';
-  disabled = false;
+  label = MuteButtonCore.defaultProps.label;
+  disabled = MuteButtonCore.defaultProps.disabled;
 
   readonly #core = new MuteButtonCore();
   readonly #state = new PlayerController(this, playerContext, selectVolume);

@@ -19,7 +19,7 @@ export const MuteButton = forwardRef(function MuteButton(
   componentProps: MuteButtonProps,
   forwardedRef: ForwardedRef<HTMLButtonElement>
 ) {
-  const { render, className, style, label, disabled = false, ...elementProps } = componentProps;
+  const { render, className, style, label, disabled, ...elementProps } = componentProps;
 
   const volume = usePlayer(selectVolume);
 

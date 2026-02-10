@@ -20,8 +20,8 @@ export class FullscreenButtonElement extends MediaElement {
     disabled: { type: Boolean },
   };
 
-  label = '';
-  disabled = false;
+  label = FullscreenButtonCore.defaultProps.label;
+  disabled = FullscreenButtonCore.defaultProps.disabled;
 
   readonly #core = new FullscreenButtonCore();
   readonly #state = new PlayerController(this, playerContext, selectFullscreen);
