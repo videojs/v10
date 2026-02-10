@@ -30,6 +30,7 @@ export default {
         'root',
         'sandbox',
         'site',
+        'spf',
         'store',
         'test',
         'utils',
