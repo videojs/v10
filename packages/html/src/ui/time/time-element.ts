@@ -15,9 +15,9 @@ export class TimeElement extends MediaElement {
     label: { type: String },
   };
 
-  type: TimeType = 'current';
-  negativeSign = '-';
-  label = '';
+  type: TimeType = TimeCore.defaultProps.type;
+  negativeSign = TimeCore.defaultProps.negativeSign;
+  label = TimeCore.defaultProps.label;
 
   readonly #core = new TimeCore();
   readonly #state = new PlayerController(this, playerContext, selectTime);

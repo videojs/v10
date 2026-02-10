@@ -41,7 +41,7 @@ export const Value = forwardRef(function Value(
 
   const content = state.negative ? (
     <>
-      <span aria-hidden="true">{negativeSign ?? '-'}</span>
+      <span aria-hidden="true">{negativeSign ?? TimeCore.defaultProps.negativeSign}</span>
       {state.text}
     </>
   ) : (
