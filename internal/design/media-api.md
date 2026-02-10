@@ -51,6 +51,43 @@ The unified media API adds the following to a media element (or EventTarget-base
 - **Custom extensions** — Implementations may expose the custom extensions only when applicable (e.g. `liveEdgeStart` for live; renditions for HAS).
 
 ```ts
+declare const MediaEvents = [
+  'abort',
+  'canplay',
+  'canplaythrough',
+  'durationchange',
+  'emptied',
+  'encrypted',
+  'ended',
+  'error',
+  'loadeddata',
+  'loadedmetadata',
+  'loadstart',
+  'pause',
+  'play',
+  'playing',
+  'progress',
+  'ratechange',
+  'seeked',
+  'seeking',
+  'stalled',
+  'suspend',
+  'timeupdate',
+  'volumechange',
+  'waiting',
+  'waitingforkey',
+  'resize',
+  'enterpictureinpicture',
+  'leavepictureinpicture',
+  'webkitbeginfullscreen',
+  'webkitendfullscreen',
+  'webkitpresentationmodechanged',
+] as const;
+
+type MediaTarget = HTMLMediaElement | HTMLVideoElement | HTMLAudioElement;
+
+type MediaTargetConstructor = Constructor<MediaTarget>;
+
 declare class Media extends EventTarget {
   // Custom extensions (unified media API)
   streamType: 'live' | 'on-demand';
@@ -105,34 +142,34 @@ declare class Media extends EventTarget {
   addTextTrack(kind: TextTrackKind, label?: string, language?: string): TextTrack;
   setMediaKeys(mediaKeys: MediaKeys | null): Promise<void>; // secure context
 
-  // Attach media element to the media instance
-  element: HTMLMediaElement;
-  attach(element: HTMLMediaElement): void;
+  // Attach media target to the media instance
+  target: MediaTarget;
+  attach(target: MediaTarget): void;
   detach(): void;
 
   // Proxy handlers
-  get(prop: keyof HTMLMediaElement): any;
-  set(prop: keyof HTMLMediaElement, val: any): void;
-  call(prop: keyof HTMLMediaElement, ...args: any[]): any;
+  get(prop: keyof MediaTarget): any;
+  set(prop: keyof MediaTarget, val: any): void;
+  call(prop: keyof MediaTarget, ...args: any[]): any;
 }
 
 // Implemented as a mixin
-export const MediaMixin = <T extends EventTarget, E extends MediaElementConstructor>(
-  Super: Constructor<T>,
-  MediaElement: E
+export const MediaMixin = <E extends EventTarget, T extends MediaTargetConstructor>(
+  Super: Constructor<E>,
+  Target: T
 ) => class Media extends (Super as Constructor<EventTarget>) {
-  // Logic that proxies media API to the media element
+  // Logic that proxies media API to the media target
   // ...
 
-  // Attach media element to the media instance
-  element: HTMLMediaElement;
-  attach(element: HTMLMediaElement): void;
+  // Attach media target to the media instance
+  target: MediaTarget;
+  attach(target: MediaTarget): void;
   detach(): void;
 
   // Proxy handlers
-  get(prop: keyof HTMLMediaElement): any;
-  set(prop: keyof HTMLMediaElement, val: any): void;
-  call(prop: keyof HTMLMediaElement, ...args: any[]): any;
+  get(prop: keyof MediaTarget): any;
+  set(prop: keyof MediaTarget, val: any): void;
+  call(prop: keyof MediaTarget, ...args: any[]): any;
 }
 
 export class Media extends MediaMixin(EventTarget, HTMLMediaElement) {}
@@ -144,12 +181,12 @@ export class Audio extends MediaMixin(EventTarget, HTMLAudioElement) {}
 
 ```ts
 import Hls from 'hls.js';
-import { type MediaElementInstance, Video } from './media';
+import { type MediaTarget, Video } from './media';
 
 type Constructor<T = object> = new (...args: unknown[]) => T;
 
 interface HlsMediaBase {
-  attach?(element: MediaElementInstance): void;
+  attach?(target: MediaTarget): void;
   detach?(): void;
 }
 
@@ -158,9 +195,9 @@ export const HlsMediaMixin = <T extends Constructor>(Super: T) => {
   class HlsMedia extends (Super as Constructor<HlsMediaBase>) {
     engine = new Hls();
 
-    attach(element: MediaElementInstance): void {
-      super.attach?.(element);
-      this.engine.attachMedia(element);
+    attach(target: MediaTarget): void {
+      super.attach?.(target);
+      this.engine.attachMedia(target);
     }
 
     detach(): void {
