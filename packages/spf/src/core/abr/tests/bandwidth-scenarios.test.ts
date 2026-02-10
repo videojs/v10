@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { BandwidthState } from '../bandwidth-estimator';
-import {
-  DEFAULT_BANDWIDTH_CONFIG,
-  getBandwidthEstimate,
-  hasGoodEstimate,
-  sampleBandwidth,
-} from '../bandwidth-estimator';
+import { getBandwidthEstimate, hasGoodEstimate, sampleBandwidth } from '../bandwidth-estimator';
 
 // Helper to create initial state
 const createInitialState = (): BandwidthState => ({
@@ -39,7 +34,7 @@ describe('realistic bandwidth patterns', () => {
 
       // Each estimate should be lower than previous (gradual decline)
       for (let i = 1; i < estimates.length; i++) {
-        expect(estimates[i]).toBeLessThan(estimates[i - 1]);
+        expect(estimates[i]!).toBeLessThan(estimates[i - 1]!);
       }
 
       // Final estimate should be significantly lower than initial
@@ -393,10 +388,10 @@ describe('zero-factor correction reliability', () => {
     }
 
     // Early corrections should be larger
-    expect(corrections[0]).toBeGreaterThan(corrections[corrections.length - 1]);
+    expect(corrections[0]!).toBeGreaterThan(corrections[corrections.length - 1]!);
 
     // Should converge toward 1 (no correction needed)
-    expect(corrections[corrections.length - 1]).toBeCloseTo(1, 0);
+    expect(corrections[corrections.length - 1]!).toBeCloseTo(1, 0);
   });
 });
 
@@ -430,11 +425,11 @@ describe('real-world segment patterns', () => {
     history.push({ phase: 'recovery', estimate: getBandwidthEstimate(state, 2_000_000) });
 
     // Verify phase transitions
-    expect(history[0].estimate).toBe(2_000_000); // Startup uses default
-    expect(history[1].estimate).toBeLessThan(2_000_000); // Steady state has real estimate
-    expect(history[2].estimate).toBeLessThanOrEqual(history[1].estimate); // Congestion drops (or equals if slow EWMA hasn't adapted yet)
-    expect(history[3].estimate).toBeGreaterThanOrEqual(history[2].estimate); // Recovery rises (or equals)
-    expect(history[3].estimate).toBeLessThanOrEqual(history[1].estimate); // Still conservative (or equals)
+    expect(history[0]!.estimate).toBe(2_000_000); // Startup uses default
+    expect(history[1]!.estimate).toBeLessThan(2_000_000); // Steady state has real estimate
+    expect(history[2]!.estimate).toBeLessThanOrEqual(history[1]!.estimate); // Congestion drops (or equals if slow EWMA hasn't adapted yet)
+    expect(history[3]!.estimate).toBeGreaterThanOrEqual(history[2]!.estimate); // Recovery rises (or equals)
+    expect(history[3]!.estimate).toBeLessThanOrEqual(history[1]!.estimate); // Still conservative (or equals)
   });
 
   it('should handle variable bitrate stream (ABR switching)', () => {
@@ -481,7 +476,7 @@ describe('real-world segment patterns', () => {
     for (let i = 0; i < 30; i++) {
       // Slight variance in bytes (realistic network conditions)
       const baseBytes = 250_000;
-      const variance = variancePattern[i % variancePattern.length]; // ±10% pattern
+      const variance = variancePattern[i % variancePattern.length]!; // ±10% pattern
       const bytes = baseBytes + variance;
 
       state = sampleBandwidth(state, segmentDuration, bytes);
@@ -492,8 +487,8 @@ describe('real-world segment patterns', () => {
     }
 
     // Estimates should stabilize over time
-    const earlyVariance = Math.abs(estimates[1] - estimates[0]);
-    const lateVariance = Math.abs(estimates[estimates.length - 1] - estimates[estimates.length - 2]);
+    const earlyVariance = Math.abs(estimates[1]! - estimates[0]!);
+    const lateVariance = Math.abs(estimates[estimates.length - 1]! - estimates[estimates.length - 2]!);
 
     expect(lateVariance).toBeLessThan(earlyVariance); // More stable later
   });
