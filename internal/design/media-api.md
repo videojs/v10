@@ -4,8 +4,8 @@
 
 This RFC proposes a **unified media API** that extends the [HTMLMediaElement](https://html.spec.whatwg.org/multipage/media.html#htmlmediaelement) to support different media types (video, HLS, DASH, YouTube, etc.) in a consistent way. The API is designed to:
 
-- **Extend** the existing HTMLMediaElement surface rather than replace it.
-- **Support multiple integration points:** for HTML, web components that implement this API; for React and other frameworks, an API that extends `EventTarget` and exposes the same surface.
+- **Extend** the existing HTMLMediaElement surface rather than replace it. Implementations may expose the **full** HTMLMediaElement surface or a **subset** of it; the unified contract is "HTMLMediaElement-like" where the subset is sufficient for the integration (e.g. play/pause, currentTime, seekable).
+- **Support multiple integration points:** for HTML, web components that implement this API; for React and other frameworks, an API that extends `EventTarget` and exposes the same surface (full or subset).
 - **Add custom extensions** for behavior not covered by HTMLMediaElement, specifically:
   - **Stream type** — distinguish live vs. on-demand content.
   - **Live edge** — model the “live edge” of live streams (window, seekable end, seek-to-live).
@@ -33,12 +33,13 @@ By extending the media element (or an EventTarget-based equivalent) with **strea
 ## Design principles
 
 - **Extension of HTMLMediaElement** — New behavior is added via partial interfaces and constraints on existing attributes (e.g. `seekable`), not by replacing the element.
-- **Web components and frameworks** — For HTML, the API can be implemented by custom elements that wrap or emulate a media element. For React and others, the same contract can be implemented by an object that extends `EventTarget` and exposes the same properties and events.
+- **Subset of HTMLMediaElement allowed** — A conforming implementation may expose the full HTMLMediaElement surface or a **subset** of it. The contract is "HTMLMediaElement-like": consumers can rely on the subset that is documented as required for a given use case (e.g. `play`, `pause`, `currentTime`, `seekable` for basic playback). Backends that cannot support certain attributes (e.g. `audioTracks` for some HAS) may omit them or expose them as no-ops/empty where specified.
+- **Web components and frameworks** — For HTML, the API can be implemented by custom elements that wrap or emulate a media element. For React and others, the same contract can be implemented by an object that extends `EventTarget` and exposes the same properties and events (full or subset).
 - **Custom extensions only where needed** — Use native media APIs where they suffice; add **stream type**, **live edge**, and **renditions list** only where the platform does not already define the behavior.
 
 ## API overview
 
-The unified media API adds the following to a media element (or EventTarget-based equivalent):
+The unified media API adds the following to a media element (or EventTarget-based equivalent). The base surface is **HTMLMediaElement** (or a subset thereof); implementations may expose the full HTMLMediaElement API or only the subset needed for their backend and use case.
 
 | Area        | Addition                                      | Purpose                                                                         |
 | ----------- | --------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -46,7 +47,8 @@ The unified media API adds the following to a media element (or EventTarget-base
 | Live edge   | `liveEdgeStart`, constrained `seekable.end()` | “At live” detection and “seek to live” for live/HAS.                            |
 | Renditions  | `videoRenditions`, `audioRenditions`          | List and select quality levels for HAS.                                         |
 
-Implementations may expose these only when applicable (e.g. `liveEdgeStart` for live; renditions for HAS).
+- **HTMLMediaElement subset** — A conforming implementation may implement only a subset of HTMLMediaElement (e.g. core playback: `play`, `pause`, `currentTime`, `duration`, `seekable`, `paused`, `ended`). The type system and documentation will define which subset is required for which integration.
+- **Custom extensions** — Implementations may expose the custom extensions only when applicable (e.g. `liveEdgeStart` for live; renditions for HAS).
 
 ```ts
 declare class Media extends EventTarget {
