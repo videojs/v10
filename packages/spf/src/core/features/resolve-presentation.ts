@@ -98,16 +98,12 @@ export type PresentationAction = { type: 'play' } | { type: 'pause' } | { type: 
  * - State-driven: Unresolved presentation + preload allows (auto/metadata)
  * - Event-driven: PLAY event when preload="none"
  *
- * @param state - State container with presentation and preload
- * @param events - Event stream for actions
- * @returns Cleanup function
- *
  * @example
  * ```ts
  * const state = createState({ presentation: undefined, preload: 'auto' });
  * const events = createEventStream<PresentationAction>();
  *
- * const cleanup = resolvePresentation(state, events);
+ * const cleanup = resolvePresentation({ state, events });
  *
  * // State-driven: resolves immediately when preload allows
  * state.patch({ presentation: { url: 'http://example.com/playlist.m3u8' } });
@@ -117,10 +113,13 @@ export type PresentationAction = { type: 'play' } | { type: 'pause' } | { type: 
  * events.dispatch({ type: 'PLAY' });
  * ```
  */
-export function resolvePresentation(
-  state: WritableState<PresentationState>,
-  events: EventStream<PresentationAction>
-): () => void {
+export function resolvePresentation({
+  state,
+  events,
+}: {
+  state: WritableState<PresentationState>;
+  events: EventStream<PresentationAction>;
+}): () => void {
   // This is effectively a very simple finite state model. We can formalize this if needed.
   let resolving = false;
 
