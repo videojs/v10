@@ -24,7 +24,7 @@ import { Slider } from '@videojs/react';
   onValueChange={(value) => {}}
   onValueCommit={(value) => {}}
 >
-  {/* children are purely visual */}
+  {/* children */}
 </Slider.Root>
 ```
 
@@ -36,19 +36,23 @@ import { Slider } from '@videojs/react';
 | `defaultValue` | `number` | `0` | Initial value (uncontrolled). |
 | `min` | `number` | `0` | Minimum value. |
 | `max` | `number` | `100` | Maximum value. |
-| `step` | `number` | `1` | Step increment. |
+| `step` | `number` | `1` | Step increment for arrow keys. Also controls value snap granularity for generic slider. Domain sliders handle snap precision internally. |
+| `largeStep` | `number` | `10` | Step increment for Shift+Arrow and Page Up/Down. |
 | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Layout direction. |
 | `disabled` | `boolean` | `false` | Disables all interaction. |
-| `keyStep` | `number` | `step` | Keyboard arrow key step. Provided to Thumb via context. |
-| `keyLargeStep` | `number` | `keyStep * 10` | Keyboard Page Up/Down step. Provided to Thumb via context. |
+| `thumbAlignment` | `'center' \| 'edge'` | `'center'` | How the thumb aligns at min/max. `center`: thumb center at track edge (may overflow). `edge`: thumb stays within track bounds (uses `ResizeObserver`). See [architecture.md](architecture.md#thumb-alignment). |
 | `render` | `RenderProp<SliderState>` | — | Custom render element. |
 
 #### Callbacks
 
 | Callback | Signature | Description |
 | -------- | --------- | ----------- |
-| `onValueChange` | `(value: number) => void` | Fired during drag and keyboard input. |
-| `onValueCommit` | `(value: number) => void` | Fired on drag end and keyboard release. |
+| `onValueChange` | `(value: number) => void` | Fired on every value change (pointer drag, keyboard step). Updates visual state. |
+| `onValueCommit` | `(value: number) => void` | Fired when user completes a gesture (pointer up, each keyboard step). Commits the value. |
+| `onDragStart` | `() => void` | Fired when intentional drag begins (after drag threshold). |
+| `onDragEnd` | `() => void` | Fired when drag ends. |
+
+For keyboard input, both `onValueChange` and `onValueCommit` fire on each step — each keypress is a complete gesture.
 
 Root has **no** ARIA role or attributes — those live on Thumb. See [Thumb](#thumb).
 
@@ -58,12 +62,13 @@ Root has **no** ARIA role or attributes — those live on Thumb. See [Thumb](#th
 | -------- | ---- | ----------- |
 | `value` | `number` | Current value. |
 | `fillPercent` | `number` | Value as percentage (0-100). |
-| `pointerPercent` | `number` | Pointer position as percentage. |
+| `pointerPercent` | `number` | Pointer position as percentage (0-100). |
 | `dragging` | `boolean` | User is dragging. |
 | `pointing` | `boolean` | Pointer is over the slider. |
 | `interactive` | `boolean` | Hovering, focused, or dragging. |
 | `orientation` | `'horizontal' \| 'vertical'` | Layout direction. |
 | `disabled` | `boolean` | Slider is disabled. |
+| `thumbAlignment` | `'center' \| 'edge'` | Thumb alignment mode. |
 
 #### Data Attributes
 
@@ -89,9 +94,23 @@ Defined in `SliderCSSVars` (`slider-css-vars.ts`):
 | `--media-slider-pointer` | Pointer position as percentage of track. |
 | `--media-slider-buffer` | Buffered range as percentage. Set by domain roots that have a buffer concept (e.g., TimeSlider). |
 
+#### Events (HTML)
+
+Generic `<media-slider>` dispatches custom DOM events. All events bubble.
+
+| Event | Detail | Fires when |
+| ----- | ------ | ---------- |
+| `value-change` | `{ value: number }` | Every value change (drag, keyboard). |
+| `value-commit` | `{ value: number }` | Gesture complete (pointerup, keyboard step). |
+| `drag-start` | — | Intentional drag begins (after threshold). |
+| `drag-end` | — | Drag ends. |
+
+See [architecture.md — Event Interfaces](architecture.md#event-interfaces-html) for TypeScript types.
+
 #### Renders
 
 React: `<div>` with CSS custom properties set via `style` and pointer event handlers.
+HTML: `<media-slider>` custom element. Dispatches custom DOM events for callbacks.
 
 ---
 
@@ -115,7 +134,7 @@ Visual track element. Purely structural — a container for Fill and Buffer.
 
 #### Data Attributes
 
-Inherits all data attributes from Root (`data-dragging`, `data-pointing`, `data-interactive`, `data-orientation`, `data-disabled`).
+Inherits all [data attributes from Root](#data-attributes).
 
 #### Renders
 
@@ -142,7 +161,7 @@ Filled portion of the track. Represents the current value.
 
 #### Data Attributes
 
-Inherits all data attributes from Root (`data-dragging`, `data-pointing`, `data-interactive`, `data-orientation`, `data-disabled`).
+Inherits all [data attributes from Root](#data-attributes).
 
 #### Styling
 
@@ -179,7 +198,7 @@ Buffered/loaded range indicator. Sits inside Track alongside Fill. Only visually
 
 #### Data Attributes
 
-Inherits all data attributes from Root (`data-dragging`, `data-pointing`, `data-interactive`, `data-orientation`, `data-disabled`).
+Inherits all [data attributes from Root](#data-attributes).
 
 #### Styling
 
@@ -234,22 +253,24 @@ Set by `SliderCore.getThumbAttrs()`. Domain cores extend with `aria-label` and `
 
 #### Keyboard
 
-Handled via `createSlider().thumbProps.onKeyDown`. Step values come from Root's `keyStep` and `keyLargeStep` props via context.
+Handled via `createSlider().thumbProps.onKeyDown`. Step values come from Root's `step` and `largeStep` props via context.
 
 | Key | Action |
 | --- | ------ |
-| `ArrowRight` / `ArrowUp` | Increase by step |
-| `ArrowLeft` / `ArrowDown` | Decrease by step |
-| `PageUp` | Increase by large step |
-| `PageDown` | Decrease by large step |
+| `ArrowRight` / `ArrowUp` | Increase by `step` |
+| `ArrowLeft` / `ArrowDown` | Decrease by `step` |
+| `Shift + Arrow` | Increase/decrease by `largeStep` |
+| `PageUp` | Increase by `largeStep` |
+| `PageDown` | Decrease by `largeStep` |
 | `Home` | Set to minimum |
 | `End` | Set to maximum |
+| `0`–`9` | Jump to 0%–90% of range |
 
-Keyboard input commits immediately — no "keyboard drag" concept. Each keypress fires both `onValueChange` and `onValueCommit`.
+Each keypress fires both `onValueChange` and `onValueCommit`. Keyboard input always commits immediately — no "keyboard drag" concept.
 
 #### Data Attributes
 
-Inherits all data attributes from Root (`data-dragging`, `data-pointing`, `data-interactive`, `data-orientation`, `data-disabled`).
+Inherits all [data attributes from Root](#data-attributes).
 
 #### Styling
 
@@ -278,8 +299,8 @@ Inherits all data attributes from Root (`data-dragging`, `data-pointing`, `data-
 
 #### Renders
 
-React: `<div>` with `role="slider"`, `tabIndex={0}`, ARIA attributes, and `onKeyDown`.
-HTML: `<media-slider-thumb>` with `role="slider"`, `tabindex="0"`, ARIA attributes, and keyboard handler.
+React: `<div>` with `role="slider"`, `tabIndex={0}`, `autocomplete="off"`, ARIA attributes, and `onKeyDown`.
+HTML: `<media-slider-thumb>` with `role="slider"`, `tabindex="0"`, `autocomplete="off"`, ARIA attributes, and keyboard handler.
 
 ---
 
@@ -307,7 +328,7 @@ Children are rendered as-is.
 
 #### Data Attributes
 
-Inherits all data attributes from Root (`data-dragging`, `data-pointing`, `data-interactive`, `data-orientation`, `data-disabled`).
+Inherits all [data attributes from Root](#data-attributes).
 
 #### Styling
 
@@ -362,9 +383,9 @@ The default formatter is `String()`. Domain roots provide a context-specific for
 
 #### Data Attributes
 
-Inherits all data attributes from Root (`data-dragging`, `data-pointing`, `data-interactive`, `data-orientation`, `data-disabled`).
+Inherits all [data attributes from Root](#data-attributes).
 
-#### State
+#### State (`SliderValueState`)
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
@@ -372,10 +393,14 @@ Inherits all data attributes from Root (`data-dragging`, `data-pointing`, `data-
 | `value` | `number` | The numeric value. |
 | `text` | `string` | Formatted display text. |
 
+#### Accessibility
+
+The `<output>` element renders with `aria-live="off"` by default. This prevents screen readers from announcing every value change during drag (which would produce constant announcements during scrubbing). The Thumb element already provides `aria-valuenow` and `aria-valuetext` for assistive technology. Users can override to `aria-live="polite"` if needed. See [decisions.md](decisions.md#aria-liveoff-on-value).
+
 #### Renders
 
-React: `<output>`.
-HTML: `<media-slider-value>` with `type` attribute.
+React: `<output>` with `aria-live="off"`.
+HTML: `<media-slider-value>` with `type` attribute and `aria-live="off"`.
 
 ---
 
@@ -425,9 +450,20 @@ import { TimeSlider } from '@videojs/react';
 
 | Prop | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
-| `step` | `number` | `5` | Keyboard step in seconds. |
+| `label` | `string` | `'Seek'` | Accessible label for the slider. Sets `aria-label` on Thumb. |
+| `step` | `number` | `5` | Arrow key step in seconds. Drag precision is handled internally (sub-second). |
+| `largeStep` | `number` | `10` | Shift+Arrow / Page Up/Down step in seconds. |
+| `seekThrottle` | `number` | `100` | Trailing-edge throttle (ms) for seek requests during drag. `0` disables throttling. |
 | `disabled` | `boolean` | `false` | Disables interaction. |
+| `thumbAlignment` | `'center' \| 'edge'` | `'center'` | How the thumb aligns at min/max. See [Slider.Root `thumbAlignment`](#props). |
 | `render` | `RenderProp<TimeSliderState>` | — | Custom render element. |
+
+`orientation` is not exposed — time sliders are always horizontal. `min` and `max` are managed internally (`min=0`, `max=duration`).
+
+| Callback | Signature | Description |
+| -------- | --------- | ----------- |
+| `onDragStart` | `() => void` | Fired when intentional drag begins. |
+| `onDragEnd` | `() => void` | Fired when drag ends. |
 
 No `value` / `onValueChange` — the root manages value internally from the store.
 
@@ -456,7 +492,7 @@ Inherited by all children (including `data-seeking`).
 - **Value formatting:** Provides time formatter (`formatTime`) to `Slider.Value` children — `type="current"` shows formatted current time (`1:30`), `type="pointer"` shows formatted pointer time.
 - **Data attributes:** All slider data attributes + `data-seeking` are propagated to children.
 - **ARIA for Thumb:** Provides domain-specific ARIA attrs to `Slider.Thumb` via context.
-- **Keyboard step values:** `keyStep` defaults to `5` (seconds), `keyLargeStep` defaults to `50` (seconds).
+- **Keyboard step values:** `step` defaults to `5` (seconds), `largeStep` defaults to `10` (seconds).
 
 #### ARIA (on Thumb)
 
@@ -464,18 +500,29 @@ These attributes are provided by Root to the Thumb element via context:
 
 | Attribute | Value |
 | --------- | ----- |
-| `aria-label` | `"Seek"` |
+| `aria-label` | From `label` prop (default `"Seek"`). |
 | `aria-valuemin` | `0` |
 | `aria-valuemax` | Duration in seconds. |
 | `aria-valuenow` | Current time in seconds. |
-| `aria-valuetext` | `"2 minutes, 30 seconds of 10 minutes"` |
+| `aria-valuetext` | `"2 minutes, 30 seconds of 10 minutes"` (on init/focus) or `"2 minutes, 30 seconds"` (during changes). See [decisions.md](decisions.md#time-slider-aria-valuetext-format). |
 
 #### Behavior
 
 - While idle: `value` = `currentTime`. Fill tracks playback.
-- While dragging: `value` = drag position. Seek is deferred until drag ends.
-- On drag end / keyboard commit: calls `time.seek(seconds)`.
-- Pause-on-scrub: optionally pauses playback during drag (future).
+- While dragging: `value` = drag position. Seeks during drag, throttled by `seekThrottle`. Final seek on drag end.
+- On keyboard commit: calls `time.seek(seconds)` immediately.
+- Controls auto-hide: `onDragStart`/`onDragEnd` callbacks enable the controls feature to pause auto-hide during scrub.
+
+#### Events (HTML)
+
+`<media-time-slider>` dispatches drag events only. All events bubble.
+
+| Event | Detail | Fires when |
+| ----- | ------ | ---------- |
+| `drag-start` | — | Intentional drag begins. |
+| `drag-end` | — | Drag ends. |
+
+No `value-change` or `value-commit` events — value is managed from the store.
 
 #### Renders
 
@@ -516,10 +563,20 @@ import { VolumeSlider } from '@videojs/react';
 
 | Prop | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
+| `label` | `string` | `'Volume'` | Accessible label for the slider. Sets `aria-label` on Thumb. |
 | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Layout direction. |
-| `step` | `number` | `5` | Step as percentage (0-100). |
+| `step` | `number` | `5` | Arrow key step as percentage (0-100). |
+| `largeStep` | `number` | `10` | Shift+Arrow / Page Up/Down step as percentage. |
 | `disabled` | `boolean` | `false` | Disables interaction. |
+| `thumbAlignment` | `'center' \| 'edge'` | `'center'` | How the thumb aligns at min/max. See [Slider.Root `thumbAlignment`](#props). |
 | `render` | `RenderProp<VolumeSliderState>` | — | Custom render element. |
+
+`min` and `max` are managed internally (`min=0`, `max=100`).
+
+| Callback | Signature | Description |
+| -------- | --------- | ----------- |
+| `onDragStart` | `() => void` | Fired when intentional drag begins. |
+| `onDragEnd` | `() => void` | Fired when drag ends. |
 
 No `value` / `onValueChange` — managed from store.
 
@@ -535,7 +592,7 @@ No `value` / `onValueChange` — managed from store.
 - **Value formatting:** Provides percentage formatter to `Slider.Value` children — displays `75%`.
 - **Data attributes:** All slider data attributes are propagated to children.
 - **ARIA for Thumb:** Provides domain-specific ARIA attrs to `Slider.Thumb` via context.
-- **Keyboard step values:** `keyStep` defaults to `5` (%), `keyLargeStep` defaults to `10` (%).
+- **Keyboard step values:** `step` defaults to `5` (%), `largeStep` defaults to `10` (%).
 
 #### ARIA (on Thumb)
 
@@ -543,17 +600,27 @@ These attributes are provided by Root to the Thumb element via context:
 
 | Attribute | Value |
 | --------- | ----- |
-| `aria-label` | `"Volume"` |
+| `aria-label` | From `label` prop (default `"Volume"`). |
 | `aria-valuemin` | `0` |
 | `aria-valuemax` | `100` |
-| `aria-valuenow` | Volume as 0-100. |
-| `aria-valuetext` | `"75 percent"` |
+| `aria-valuenow` | Volume as 0-100 (actual volume, even when muted). |
+| `aria-valuetext` | `"75 percent"` or `"75 percent, muted"` when muted. |
 
 #### Behavior
 
-- Value change immediately calls `volume.changeVolume(value / 100)`.
-- No distinction between change and commit — volume feedback should be instant.
-- When muted, fill shows 0% but `aria-valuenow` shows the actual volume.
+- `VolumeSlider.Root` calls `volume.changeVolume(value / 100)` from `onValueChange` — every pointermove and keyboard step triggers an immediate volume update. `onValueCommit` is not used; volume changes are cheap and instant, so there's no need for a separate commit step or throttling.
+- When muted, fill shows 0% but `aria-valuenow` shows the actual volume. `aria-valuetext` communicates both: `"75 percent, muted"`.
+
+#### Events (HTML)
+
+`<media-volume-slider>` dispatches drag events only. All events bubble.
+
+| Event | Detail | Fires when |
+| ----- | ------ | ---------- |
+| `drag-start` | — | Intentional drag begins. |
+| `drag-end` | — | Drag ends. |
+
+No `value-change` or `value-commit` events — value is managed from the store.
 
 #### Renders
 
@@ -605,6 +672,7 @@ Every part except Root is the same generic `Slider.*` component — re-exported 
 
 | Element | Tag |
 | ------- | --- |
+| Root | `<media-slider>` |
 | Track | `<media-slider-track>` |
 | Fill | `<media-slider-fill>` |
 | Buffer | `<media-slider-buffer>` |
@@ -621,7 +689,7 @@ Every part except Root is the same generic `Slider.*` component — re-exported 
 
 ### Registration
 
-Registering a domain slider auto-registers basic structural parts (track, fill, buffer, thumb, value). Preview is registered separately — it's heavier and opt-in.
+Registration files live in `src/define/ui/` (following the existing convention), exported as `@videojs/html/ui/*` via package.json exports. Registering a domain slider auto-registers basic structural parts (track, fill, buffer, thumb, value). Preview is registered separately — it's heavier and opt-in.
 
 ```ts
 // @videojs/html/ui/time-slider

@@ -101,9 +101,9 @@ Three layers, each independently useful:
 
 | Layer | Package | Purpose |
 | ----- | ------- | ------- |
-| Core | `@videojs/core` | State computation, ARIA attrs, CSS vars. No DOM. |
-| DOM | `@videojs/core/dom` | Pointer/keyboard interaction factory (`createSlider`). |
-| UI | `@videojs/react`, `@videojs/html` | Compound components and custom elements. |
+| Core | `@videojs/core` | State computation, ARIA attrs, raw percentages. Accepts split `(interaction, media)` inputs. No DOM. |
+| DOM | `@videojs/core/dom` | Pointer/keyboard interaction (`createSlider`), interaction state (`createState`), CSS var formatting (`getSliderCSSVars`). |
+| UI | `@videojs/react`, `@videojs/html` | Compound components and custom elements. HTML elements dispatch custom DOM events. |
 
 See [architecture.md](architecture.md) for internals.
 
@@ -151,6 +151,7 @@ State is exposed through data attributes for CSS targeting. Applied to the root 
 | `data-orientation` | `horizontal` / `vertical` | Always present |
 | `data-disabled` | present/absent | Slider is disabled |
 
+
 Time slider adds:
 
 | Attribute | Values | When |
@@ -183,16 +184,18 @@ Keyboard events are handled by the **Thumb** element (the focusable `role="slide
 | --- | ----------- | ------------- |
 | `ArrowRight` / `ArrowUp` | Seek forward 5 seconds | Increase volume 5% |
 | `ArrowLeft` / `ArrowDown` | Seek backward 5 seconds | Decrease volume 5% |
-| `PageUp` | Seek forward by large step | Increase volume by large step |
-| `PageDown` | Seek backward by large step | Decrease volume by large step |
+| `Shift + Arrow` | Seek forward/backward 10 seconds | Increase/decrease volume 10% |
+| `PageUp` | Seek forward 10 seconds | Increase volume 10% |
+| `PageDown` | Seek backward 10 seconds | Decrease volume 10% |
 | `Home` | Seek to beginning | Set to minimum |
 | `End` | Seek to end | Set to maximum |
+| `0`–`9` | Jump to 0%–90% of duration | Jump to 0%–90% of range |
 
 Default step values:
-- Time slider: `keyStep = 5` (seconds), `keyLargeStep = keyStep * 10` (50 seconds)
-- Volume slider: `keyStep = 5` (%), `keyLargeStep = 10` (%)
+- Time slider: `step = 5` (seconds), `largeStep = 10` (seconds)
+- Volume slider: `step = 5` (%), `largeStep = 10` (%)
 
-Customizable via `keyStep` and `keyLargeStep` props on the Root.
+Customizable via `step` and `largeStep` props on the Root.
 
 ## Accessibility
 
