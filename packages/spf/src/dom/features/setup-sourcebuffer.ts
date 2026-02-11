@@ -140,9 +140,6 @@ export function setupSourceBuffer<T extends MediaTrackType>(
       // Update owners with buffer reference
       const bufferKey = BufferKeyByType[config.type];
       owners.patch({ [bufferKey]: buffer });
-
-      // Wait a frame before clearing flag to allow async state updates to flush
-      await new Promise((resolve) => requestAnimationFrame(resolve));
     } finally {
       settingUp = false;
     }
