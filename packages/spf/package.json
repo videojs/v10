@@ -15,6 +15,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./playback-engine": {
+      "types": "./dist/playback-engine.d.ts",
+      "default": "./dist/playback-engine.js"
     }
   },
   "main": "dist/index.js",
@@ -31,7 +35,7 @@
     "test:ci": "vitest run --project=core --project=dom --project=utils",
     "test:watch": "vitest",
     "clean": "rm -rf dist types",
-    "size": "node scripts/measure-size.js",
+    "size": "node scripts/measure-size.js --playback-engine",
     "size:all": "node scripts/measure-size.js --all"
   },
   "dependencies": {
