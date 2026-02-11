@@ -37,15 +37,15 @@ const docsSidebarId = 'docs-sidebar';
     <slot name="head" slot="head" />
   </Fragment>
   <div
-    class="grid grid-cols-1 lg:grid-cols-(--lg-grid-cols) min-h-screen"
-    style="--lg-grid-cols: calc(var(--spacing) * 75) 1fr;grid-template-rows:auto minmax(0,1fr);"
+    class="grid grid-cols-1 md:grid-cols-(--md-grid-cols) lg:grid-cols-(--lg-grid-cols) min-h-screen"
+    style="--md-grid-cols: calc(var(--spacing) * 70) 1fr;--lg-grid-cols: calc(var(--spacing) * 75) 1fr;grid-template-rows:auto minmax(0,1fr);"
   >
     <NavBar class="col-span-full">
       <DocsSidebar slot="mobile-nav" framework={framework} docTitles={docTitles} />
     </NavBar>
     <aside
       id={docsSidebarId}
-      class="hidden lg:flex flex-col lg:border-r border-light-40 dark:border-dark-80 z-10 sticky overflow-y-scroll"
+      class="hidden md:flex flex-col md:border-r border-light-40 dark:border-dark-80 z-10 sticky overflow-y-scroll"
       style="top: var(--nav-h); max-height: calc(100vh - var(--nav-h));"
     >
       <FilmGrain currentPath={Astro.url.pathname} />
@@ -58,7 +58,7 @@ const docsSidebarId = 'docs-sidebar';
         <slot />
         <Footer class="mt-auto" />
       </div>
-      <FooterEasterEgg class="lg:col-start-2" />
+      <FooterEasterEgg class="md:col-start-2" />
     </div>
   </div>
 </Base>
