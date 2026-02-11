@@ -1,25 +1,20 @@
 import { createEventStream } from '../core/events/create-event-stream';
-import { resolvePresentation } from '../core/features/resolve-presentation';
-import { resolveTrack } from '../core/features/resolve-track';
-import { selectAudioTrack, selectVideoTrack } from '../core/features/select-tracks';
+import { type PresentationAction, resolvePresentation } from '../core/features/resolve-presentation';
+import { resolveTrack, type TrackResolutionAction } from '../core/features/resolve-track';
+import { selectAudioTrack, selectVideoTrack, type TrackSelectionAction } from '../core/features/select-tracks';
 import { createState } from '../core/state/create-state';
 import { setupMediaSource } from './features/setup-mediasource';
 import { setupSourceBuffer } from './features/setup-sourcebuffer';
 
 /**
+ * Union of all action types used by playback engine orchestrations.
+ */
+export type PlaybackEngineAction = PresentationAction | TrackResolutionAction | TrackSelectionAction;
+
+/**
  * Configuration for the playback engine.
  */
 export interface PlaybackEngineConfig {
-  /**
-   * HLS playlist URL to load.
-   */
-  url: string;
-
-  /**
-   * HTMLMediaElement to attach MediaSource to.
-   */
-  mediaElement: HTMLMediaElement;
-
   /**
    * Initial bandwidth estimate for cold start (bits per second).
    * Default: 1 Mbps (conservative).
@@ -40,6 +35,7 @@ export interface PlaybackEngineConfig {
 export interface PlaybackEngineState {
   // Presentation state
   presentation?: any;
+  preload?: string;
 
   // Track selection state
   selectedVideoTrackId?: string;
@@ -80,11 +76,7 @@ export interface PlaybackEngine {
   /**
    * Shared event stream (for inspection/testing/triggering events).
    */
-  events: ReturnType<
-    typeof createEventStream<
-      { type: 'play' } | { type: 'pause' } | { type: 'load'; url: string } | { type: 'presentation-loaded' }
-    >
-  >;
+  events: ReturnType<typeof createEventStream<PlaybackEngineAction>>;
 
   /**
    * Cleanup function to destroy all orchestrations.
@@ -109,10 +101,15 @@ export interface PlaybackEngine {
  *
  * @example
  * const engine = createPlaybackEngine({
- *   url: 'https://example.com/playlist.m3u8',
- *   mediaElement: document.querySelector('video'),
  *   initialBandwidth: 2_000_000,
  *   preferredAudioLanguage: 'en',
+ * });
+ *
+ * // Initialize by patching state and owners
+ * engine.owners.patch({ mediaElement: document.querySelector('video') });
+ * engine.state.patch({
+ *   presentation: { url: 'https://example.com/playlist.m3u8' },
+ *   preload: 'auto',
  * });
  *
  * // Inspect state
@@ -121,35 +118,35 @@ export interface PlaybackEngine {
  * // Cleanup
  * engine.destroy();
  */
-export function createPlaybackEngine(config: PlaybackEngineConfig): PlaybackEngine {
-  // Create reactive state and owners
-  const state = createState<PlaybackEngineState>({
-    presentation: { url: config.url } as any,
-  });
-  const owners = createState<PlaybackEngineOwners>({
-    mediaElement: config.mediaElement,
-  });
+export function createPlaybackEngine(config: PlaybackEngineConfig = {}): PlaybackEngine {
+  // Create reactive state and owners (initially empty)
+  const state = createState<PlaybackEngineState>({});
+  const owners = createState<PlaybackEngineOwners>({});
 
-  // Create single shared event stream
-  const events = createEventStream<
-    { type: 'play' } | { type: 'pause' } | { type: 'load'; url: string } | { type: 'presentation-loaded' }
-  >();
+  // Create single shared event stream for all orchestrations
+  const events = createEventStream<PlaybackEngineAction>();
 
   // Wire up orchestrations (all share single event stream)
+  // Note: @ts-expect-error needed due to EventStream invariance - each orchestration expects
+  // specific event types, but shared stream has union of all types. Proper fix would
+  // require making EventStream covariant or refactoring event system.
   const cleanups = [
     // 1. Resolve presentation (URL already in state)
-    resolvePresentation({ state, events: events as any }),
+    // @ts-expect-error - EventStream type variance
+    resolvePresentation({ state, events }),
 
     // 2. Select initial tracks (when presentation loads)
     selectVideoTrack(
-      { state, owners: owners as any, events: events as any },
+      // @ts-expect-error - Owners and EventStream type compatibility
+      { state, owners, events },
       {
         type: 'video',
         ...(config.initialBandwidth !== undefined && { initialBandwidth: config.initialBandwidth }),
       }
     ),
     selectAudioTrack(
-      { state, owners: owners as any, events: events as any },
+      // @ts-expect-error - Owners and EventStream type compatibility
+      { state, owners, events },
       {
         type: 'audio',
         ...(config.preferredAudioLanguage !== undefined && { preferredAudioLanguage: config.preferredAudioLanguage }),
@@ -157,8 +154,10 @@ export function createPlaybackEngine(config: PlaybackEngineConfig): PlaybackEngi
     ),
 
     // 3. Resolve selected tracks (fetch media playlists)
-    resolveTrack({ state, events: events as any }, { type: 'video' as const }),
-    resolveTrack({ state, events: events as any }, { type: 'audio' as const }),
+    // @ts-expect-error - EventStream type variance
+    resolveTrack({ state, events }, { type: 'video' as const }),
+    // @ts-expect-error - EventStream type variance
+    resolveTrack({ state, events }, { type: 'audio' as const }),
 
     // 4. Setup MediaSource (when presentation loaded)
     setupMediaSource({ state, owners }),
@@ -167,9 +166,6 @@ export function createPlaybackEngine(config: PlaybackEngineConfig): PlaybackEngi
     setupSourceBuffer({ state, owners }, { type: 'video' }),
     setupSourceBuffer({ state, owners }, { type: 'audio' }),
   ];
-
-  // Trigger initial presentation load
-  events.dispatch({ type: 'load', url: config.url });
 
   // Return engine instance
   return {
