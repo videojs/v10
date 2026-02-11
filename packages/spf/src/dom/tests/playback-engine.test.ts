@@ -246,4 +246,189 @@ http://example.com/audio-seg1.m4s
 
     engine.destroy();
   });
+
+  it('handles video-only stream (no audio tracks)', async () => {
+    // Mock fetch for video-only stream
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E",RESOLUTION=640x360
+http://example.com/video-360p.m3u8`)
+        );
+      }
+
+      if (url.includes('video-360p.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video.mp4"
+#EXTINF:10.0,
+http://example.com/video-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
+    globalThis.fetch = mockFetch;
+
+    const engine = createPlaybackEngine();
+    const mediaElement = document.createElement('video');
+
+    engine.owners.patch({ mediaElement });
+    engine.state.patch({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: 'auto',
+    });
+
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+        const owners = engine.owners.current;
+
+        // Should create video track and buffer
+        expect(state.selectedVideoTrackId).toBeDefined();
+        expect(owners.videoBuffer).toBeDefined();
+
+        // Should NOT create audio track or buffer
+        expect(state.selectedAudioTrackId).toBeUndefined();
+        expect(owners.audioBuffer).toBeUndefined();
+
+        // MediaSource should still be created
+        expect(owners.mediaSource).toBeDefined();
+        expect(owners.mediaSource?.readyState).toBe('open');
+      },
+      { timeout: 2000 }
+    );
+
+    engine.destroy();
+  });
+
+  it.skip('handles audio-only stream (no video tracks)', async () => {
+    // TODO: Need proper audio-only HLS manifest structure
+    // Current STREAM-INF approach creates video track
+    // Mock fetch for audio-only stream
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en",CHANNELS="2",URI="http://example.com/audio-en.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=128000,CODECS="mp4a.40.2",AUDIO="audio"
+http://example.com/audio-en.m3u8`)
+        );
+      }
+
+      if (url.includes('audio-en.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-audio.mp4"
+#EXTINF:10.0,
+http://example.com/audio-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
+    globalThis.fetch = mockFetch;
+
+    const engine = createPlaybackEngine();
+    const mediaElement = document.createElement('video');
+
+    engine.owners.patch({ mediaElement });
+    engine.state.patch({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: 'auto',
+    });
+
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+        const owners = engine.owners.current;
+
+        // Should create audio track and buffer
+        expect(state.selectedAudioTrackId).toBeDefined();
+        expect(owners.audioBuffer).toBeDefined();
+
+        // Should NOT create video track or buffer
+        expect(state.selectedVideoTrackId).toBeUndefined();
+        expect(owners.videoBuffer).toBeUndefined();
+
+        // MediaSource should still be created
+        expect(owners.mediaSource).toBeDefined();
+        expect(owners.mediaSource?.readyState).toBe('open');
+      },
+      { timeout: 2000 }
+    );
+
+    engine.destroy();
+  });
+
+  it('does not auto-select text tracks (user opt-in)', async () => {
+    // Mock fetch for stream with text tracks
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="http://example.com/text-en.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E",SUBTITLES="subs",RESOLUTION=640x360
+http://example.com/video-360p.m3u8`)
+        );
+      }
+
+      if (url.includes('video-360p.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video.mp4"
+#EXTINF:10.0,
+http://example.com/video-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
+    globalThis.fetch = mockFetch;
+
+    const engine = createPlaybackEngine();
+    const mediaElement = document.createElement('video');
+
+    engine.owners.patch({ mediaElement });
+    engine.state.patch({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: 'auto',
+    });
+
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+
+        // Should have resolved presentation with text tracks
+        expect(state.presentation?.selectionSets).toBeDefined();
+        const textSet = state.presentation?.selectionSets?.find((s: any) => s.type === 'text');
+        expect(textSet).toBeDefined();
+
+        // Should NOT auto-select text track (user opt-in)
+        expect(state.selectedTextTrackId).toBeUndefined();
+      },
+      { timeout: 2000 }
+    );
+
+    engine.destroy();
+  });
 });
