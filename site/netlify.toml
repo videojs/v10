@@ -1,3 +1,8 @@
+[build]
+  command = "pnpm build:site"
+  publish = "site/dist"
+  ignore = "pnpm dlx turbo-ignore site --task=build --fallback=origin/main"
+
 # Redirect old theme demo pages to home
 [[redirects]]
   from = "/city"
