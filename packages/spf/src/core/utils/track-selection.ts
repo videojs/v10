@@ -1,4 +1,5 @@
 import type {
+  AddressableObject,
   AudioTrack,
   PartiallyResolvedAudioTrack,
   PartiallyResolvedTextTrack,
@@ -14,7 +15,7 @@ import type {
  * Minimal shape containing presentation and selected track IDs.
  */
 export interface TrackSelectionState {
-  presentation?: Presentation | undefined;
+  presentation?: AddressableObject | Presentation | undefined;
   selectedVideoTrackId?: string | undefined;
   selectedAudioTrackId?: string | undefined;
   selectedTextTrackId?: string | undefined;
@@ -61,7 +62,8 @@ export function getSelectedTrack<T extends TrackType>(
       : never {
   const { presentation } = state;
 
-  if (!presentation) return undefined as any;
+  /** @TODO Consider moving and reusing isUnresolved(presentation) (CJP) */
+  if (!presentation || !('id' in presentation)) return undefined as any;
 
   // Get track ID based on type
   const trackIdKey = SelectedTrackIdKeyByType[type];
