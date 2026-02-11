@@ -82,15 +82,36 @@ describe('createPlaybackEngine', () => {
   });
 
   it('resolves presentation when URL and preload are patched', async () => {
-    // Mock fetch to return fresh Response for each call
-    const mockFetch = vi.fn().mockImplementation(() =>
-      Promise.resolve(
-        new Response(`#EXTM3U
+    // Mock fetch with URL-based lookup for different playlist types
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      // Multivariant playlist
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
 #EXT-X-VERSION:7
 #EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E",RESOLUTION=640x360
 http://example.com/video-360p.m3u8`)
-      )
-    );
+        );
+      }
+
+      // Video media playlist
+      if (url.includes('video-360p.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init.mp4"
+#EXTINF:10.0,
+http://example.com/segment1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      // Fallback for unmocked URLs
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
     globalThis.fetch = mockFetch;
 
     const engine = createPlaybackEngine();
