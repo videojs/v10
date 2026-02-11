@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { createEventStream } from '../../events/create-event-stream';
 import { createState } from '../../state/create-state';
 import type {
   AudioSelectionSet,
@@ -10,15 +9,13 @@ import type {
   VideoSelectionSet,
 } from '../../types';
 import {
-  pickAudioTrack,
-  pickTextTrack,
-  pickVideoTrack,
+  canSelectInitialQuality,
+  type InitialQualityState,
   selectAudioTrack,
+  selectInitialQuality,
   selectTextTrack,
   selectVideoTrack,
-  type TrackSelectionAction,
-  type TrackSelectionOwners,
-  type TrackSelectionState,
+  shouldSelectInitialQuality,
 } from '../select-tracks';
 
 // Helper to create a minimal presentation
@@ -79,7 +76,60 @@ function createPresentation(config: {
   };
 }
 
-describe('pickVideoTrack', () => {
+describe('canSelectInitialQuality', () => {
+  it('returns true when presentation exists and no tracks selected', () => {
+    const state: InitialQualityState = {
+      presentation: createPresentation({ video: [] }),
+    };
+
+    expect(canSelectInitialQuality(state)).toBe(true);
+  });
+
+  it('returns false when presentation is missing', () => {
+    const state: InitialQualityState = {};
+
+    expect(canSelectInitialQuality(state)).toBe(false);
+  });
+
+  it('returns false when video track already selected', () => {
+    const state: InitialQualityState = {
+      presentation: createPresentation({ video: [] }),
+      selectedVideoTrackId: 'video-1',
+    };
+
+    expect(canSelectInitialQuality(state)).toBe(false);
+  });
+
+  it('returns false when audio track already selected', () => {
+    const state: InitialQualityState = {
+      presentation: createPresentation({ audio: [] }),
+      selectedAudioTrackId: 'audio-1',
+    };
+
+    expect(canSelectInitialQuality(state)).toBe(false);
+  });
+
+  it('returns false when text track already selected', () => {
+    const state: InitialQualityState = {
+      presentation: createPresentation({ text: [] }),
+      selectedTextTrackId: 'text-1',
+    };
+
+    expect(canSelectInitialQuality(state)).toBe(false);
+  });
+});
+
+describe('shouldSelectInitialQuality', () => {
+  it('returns true when conditions are met', () => {
+    const state: InitialQualityState = {
+      presentation: createPresentation({ video: [] }),
+    };
+
+    expect(shouldSelectInitialQuality(state)).toBe(true);
+  });
+});
+
+describe('selectVideoTrack', () => {
   it('selects appropriate quality based on initial bandwidth', () => {
     const tracks: PartiallyResolvedVideoTrack[] = [
       {
@@ -117,22 +167,22 @@ describe('pickVideoTrack', () => {
     const presentation = createPresentation({ video: tracks });
 
     // With default 1 Mbps, should select 360p (500k fits with margin)
-    const selected = pickVideoTrack(presentation, { type: 'video' });
+    const selected = selectVideoTrack(presentation, {});
     expect(selected).toBe('360p');
 
     // With 3 Mbps, should select 720p (2M fits, 4M doesn't with 0.85 margin)
-    const selected2 = pickVideoTrack(presentation, { initialBandwidth: 3_000_000, type: 'video' });
+    const selected2 = selectVideoTrack(presentation, { initialBandwidth: 3_000_000 });
     expect(selected2).toBe('720p');
 
     // With 5 Mbps, should select 1080p (4M fits with margin)
-    const selected3 = pickVideoTrack(presentation, { initialBandwidth: 5_000_000, type: 'video' });
+    const selected3 = selectVideoTrack(presentation, { initialBandwidth: 5_000_000 });
     expect(selected3).toBe('1080p');
   });
 
   it('returns undefined when no video tracks', () => {
     const presentation = createPresentation({ audio: [] });
 
-    const selected = pickVideoTrack(presentation, { type: 'video' });
+    const selected = selectVideoTrack(presentation, {});
     expect(selected).toBeUndefined();
   });
 
@@ -159,7 +209,7 @@ describe('pickVideoTrack', () => {
     const presentation = createPresentation({ video: tracks });
 
     // With 100 kbps (very low), should fall back to lowest (720p)
-    const selected = pickVideoTrack(presentation, { initialBandwidth: 100_000, type: 'video' });
+    const selected = selectVideoTrack(presentation, { initialBandwidth: 100_000 });
     expect(selected).toBe('720p');
   });
 
@@ -179,16 +229,15 @@ describe('pickVideoTrack', () => {
 
     // With 2.1 Mbps and 0.95 margin, should NOT select 720p (needs 2.1M)
     // Falls back to lowest
-    const selected = pickVideoTrack(presentation, {
+    const selected = selectVideoTrack(presentation, {
       initialBandwidth: 2_050_000,
       safetyMargin: 0.95,
-      type: 'video',
     });
     expect(selected).toBe('720p'); // Falls back since it's the only/lowest option
   });
 });
 
-describe('pickAudioTrack', () => {
+describe('selectAudioTrack', () => {
   it('selects first track when no preferences', () => {
     const tracks: PartiallyResolvedAudioTrack[] = [
       {
@@ -221,7 +270,7 @@ describe('pickAudioTrack', () => {
 
     const presentation = createPresentation({ audio: tracks });
 
-    const selected = pickAudioTrack(presentation, { type: 'audio' });
+    const selected = selectAudioTrack(presentation, {});
     expect(selected).toBe('audio-en');
   });
 
@@ -257,7 +306,7 @@ describe('pickAudioTrack', () => {
 
     const presentation = createPresentation({ audio: tracks });
 
-    const selected = pickAudioTrack(presentation, { type: 'audio', preferredAudioLanguage: 'es' });
+    const selected = selectAudioTrack(presentation, { preferredAudioLanguage: 'es' });
     expect(selected).toBe('audio-es');
   });
 
@@ -292,7 +341,7 @@ describe('pickAudioTrack', () => {
 
     const presentation = createPresentation({ audio: tracks });
 
-    const selected = pickAudioTrack(presentation, { type: 'audio' });
+    const selected = selectAudioTrack(presentation, {});
     expect(selected).toBe('audio-es');
   });
 
@@ -329,20 +378,20 @@ describe('pickAudioTrack', () => {
 
     const presentation = createPresentation({ audio: tracks });
 
-    const selected = pickAudioTrack(presentation, { type: 'audio', preferredAudioLanguage: 'en' });
+    const selected = selectAudioTrack(presentation, { preferredAudioLanguage: 'en' });
     expect(selected).toBe('audio-en');
   });
 
   it('returns undefined when no audio tracks', () => {
     const presentation = createPresentation({ video: [] });
 
-    const selected = pickAudioTrack(presentation, { type: 'audio' });
+    const selected = selectAudioTrack(presentation, {});
     expect(selected).toBeUndefined();
   });
 });
 
-describe('pickTextTrack', () => {
-  it('returns undefined by default (user opt-in)', () => {
+describe('selectTextTrack', () => {
+  it('returns undefined (no auto-selection)', () => {
     const tracks = [
       {
         type: 'text' as const,
@@ -350,277 +399,28 @@ describe('pickTextTrack', () => {
         url: 'http://example.com/text-en.m3u8',
         bandwidth: 256,
         mimeType: 'application/mp4',
-        codecs: [],
         groupId: 'text',
         label: 'English',
         kind: 'subtitles' as const,
-        language: 'en',
       },
     ];
 
     const presentation = createPresentation({ text: tracks });
 
-    const selected = pickTextTrack(presentation, { type: 'text' });
+    const selected = selectTextTrack(presentation, {});
     expect(selected).toBeUndefined();
   });
 
   it('returns undefined when no text tracks', () => {
     const presentation = createPresentation({ video: [] });
 
-    const selected = pickTextTrack(presentation, { type: 'text' });
-    expect(selected).toBeUndefined();
-  });
-
-  it('excludes FORCED tracks by default', () => {
-    const tracks = [
-      {
-        type: 'text' as const,
-        id: 'text-en',
-        url: 'http://example.com/text-en.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        codecs: [],
-        groupId: 'text',
-        label: 'English',
-        kind: 'subtitles' as const,
-        language: 'en',
-      },
-      {
-        type: 'text' as const,
-        id: 'text-en-forced',
-        url: 'http://example.com/text-en-forced.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        codecs: [],
-        groupId: 'text',
-        label: 'English (Forced)',
-        kind: 'subtitles' as const,
-        language: 'en',
-        forced: true,
-        default: true,
-      },
-    ];
-
-    const presentation = createPresentation({ text: tracks });
-
-    // FORCED track excluded by default, even with DEFAULT=YES
-    const selected = pickTextTrack(presentation, { type: 'text', enableDefaultTrack: true });
-    expect(selected).toBeUndefined();
-  });
-
-  it('includes FORCED tracks when includeForcedTracks enabled', () => {
-    const tracks = [
-      {
-        type: 'text' as const,
-        id: 'text-en',
-        url: 'http://example.com/text-en.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        codecs: [],
-        groupId: 'text',
-        label: 'English',
-        kind: 'subtitles' as const,
-        language: 'en',
-      },
-      {
-        type: 'text' as const,
-        id: 'text-en-forced',
-        url: 'http://example.com/text-en-forced.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        codecs: [],
-        groupId: 'text',
-        label: 'English (Forced)',
-        kind: 'subtitles' as const,
-        language: 'en',
-        forced: true,
-        default: true,
-      },
-    ];
-
-    const presentation = createPresentation({ text: tracks });
-
-    // FORCED track included and selected when enabled
-    const selected = pickTextTrack(presentation, {
-      type: 'text',
-      includeForcedTracks: true,
-      enableDefaultTrack: true,
-    });
-    expect(selected).toBe('text-en-forced');
-  });
-
-  it('selects preferred language when specified', () => {
-    const tracks = [
-      {
-        type: 'text' as const,
-        id: 'text-en',
-        url: 'http://example.com/text-en.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        codecs: [],
-        groupId: 'text',
-        label: 'English',
-        kind: 'subtitles' as const,
-        language: 'en',
-      },
-      {
-        type: 'text' as const,
-        id: 'text-es',
-        url: 'http://example.com/text-es.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        codecs: [],
-        groupId: 'text',
-        label: 'Spanish',
-        kind: 'subtitles' as const,
-        language: 'es',
-      },
-    ];
-
-    const presentation = createPresentation({ text: tracks });
-
-    const selected = pickTextTrack(presentation, { type: 'text', preferredSubtitleLanguage: 'es' });
-    expect(selected).toBe('text-es');
-  });
-
-  it('selects DEFAULT track when enableDefaultTrack is true', () => {
-    const tracks = [
-      {
-        type: 'text' as const,
-        id: 'text-en',
-        url: 'http://example.com/text-en.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        codecs: [],
-        groupId: 'text',
-        label: 'English',
-        kind: 'subtitles' as const,
-        language: 'en',
-      },
-      {
-        type: 'text' as const,
-        id: 'text-es',
-        url: 'http://example.com/text-es.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        codecs: [],
-        groupId: 'text',
-        label: 'Spanish',
-        kind: 'subtitles' as const,
-        language: 'es',
-        default: true,
-      },
-    ];
-
-    const presentation = createPresentation({ text: tracks });
-
-    const selected = pickTextTrack(presentation, { type: 'text', enableDefaultTrack: true });
-    expect(selected).toBe('text-es');
-  });
-
-  it('does NOT select DEFAULT track when enableDefaultTrack is false', () => {
-    const tracks = [
-      {
-        type: 'text' as const,
-        id: 'text-en',
-        url: 'http://example.com/text-en.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        codecs: [],
-        groupId: 'text',
-        label: 'English',
-        kind: 'subtitles' as const,
-        language: 'en',
-      },
-      {
-        type: 'text' as const,
-        id: 'text-es',
-        url: 'http://example.com/text-es.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        codecs: [],
-        groupId: 'text',
-        label: 'Spanish',
-        kind: 'subtitles' as const,
-        language: 'es',
-        default: true,
-      },
-    ];
-
-    const presentation = createPresentation({ text: tracks });
-
-    // enableDefaultTrack defaults to false
-    const selected = pickTextTrack(presentation, { type: 'text' });
-    expect(selected).toBeUndefined();
-  });
-
-  it('prefers language match over DEFAULT flag', () => {
-    const tracks = [
-      {
-        type: 'text' as const,
-        id: 'text-en',
-        url: 'http://example.com/text-en.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        codecs: [],
-        groupId: 'text',
-        label: 'English',
-        kind: 'subtitles' as const,
-        language: 'en',
-      },
-      {
-        type: 'text' as const,
-        id: 'text-es',
-        url: 'http://example.com/text-es.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        codecs: [],
-        groupId: 'text',
-        label: 'Spanish',
-        kind: 'subtitles' as const,
-        language: 'es',
-        default: true,
-      },
-    ];
-
-    const presentation = createPresentation({ text: tracks });
-
-    // Preferred language trumps DEFAULT
-    const selected = pickTextTrack(presentation, {
-      type: 'text',
-      preferredSubtitleLanguage: 'en',
-      enableDefaultTrack: true,
-    });
-    expect(selected).toBe('text-en');
-  });
-
-  it('returns undefined when all tracks are FORCED and includeForcedTracks is false', () => {
-    const tracks = [
-      {
-        type: 'text' as const,
-        id: 'text-en-forced',
-        url: 'http://example.com/text-en-forced.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        codecs: [],
-        groupId: 'text',
-        label: 'English (Forced)',
-        kind: 'subtitles' as const,
-        language: 'en',
-        forced: true,
-      },
-    ];
-
-    const presentation = createPresentation({ text: tracks });
-
-    // All tracks filtered out - no selection
-    const selected = pickTextTrack(presentation, { type: 'text', enableDefaultTrack: true });
+    const selected = selectTextTrack(presentation, {});
     expect(selected).toBeUndefined();
   });
 });
 
-describe('selectVideoTrack', () => {
-  it('selects video track when presentation loaded', async () => {
+describe('selectInitialQuality', () => {
+  it('selects video, audio, and skips text on initial load', async () => {
     const videoTracks: PartiallyResolvedVideoTrack[] = [
       {
         type: 'video',
@@ -632,43 +432,55 @@ describe('selectVideoTrack', () => {
       },
     ];
 
-    const presentation = createPresentation({ video: videoTracks });
+    const audioTracks: PartiallyResolvedAudioTrack[] = [
+      {
+        type: 'audio',
+        id: 'audio-en',
+        url: 'http://example.com/audio-en.m3u8',
+        bandwidth: 128_000,
+        mimeType: 'audio/mp4',
+        codecs: ['mp4a.40.2'],
+        groupId: 'audio',
+        name: 'English',
+        sampleRate: 48000,
+        channels: 2,
+      },
+    ];
 
-    const state = createState<TrackSelectionState>({ presentation });
-    const owners = createState<TrackSelectionOwners>({});
-    const events = createEventStream<TrackSelectionAction>();
+    const presentation = createPresentation({ video: videoTracks, audio: audioTracks });
 
-    const cleanup = selectVideoTrack({ state, owners, events }, { type: 'video' });
-    events.dispatch({ type: 'presentation-loaded' });
+    const state = createState<InitialQualityState>({ presentation });
+    const cleanup = selectInitialQuality({ state });
 
     // Wait for selection
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(state.current.selectedVideoTrackId).toBe('video-360p');
+    expect(state.current.selectedAudioTrackId).toBe('audio-en');
+    expect(state.current.selectedTextTrackId).toBeUndefined();
 
     cleanup();
   });
 
-  it('does not select when video track already selected', async () => {
-    const presentation = createPresentation({ video: [] });
+  it('does not select when tracks already selected', async () => {
+    const presentation = createPresentation({ video: [], audio: [] });
 
-    const state = createState<TrackSelectionState>({
+    const state = createState<InitialQualityState>({
       presentation,
       selectedVideoTrackId: 'existing-video',
     });
-    const owners = createState<TrackSelectionOwners>({});
-    const events = createEventStream<TrackSelectionAction>();
 
-    const cleanup = selectVideoTrack({ state, owners, events }, { type: 'video' });
+    const cleanup = selectInitialQuality({ state });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
+    // Should not change existing selection
     expect(state.current.selectedVideoTrackId).toBe('existing-video');
 
     cleanup();
   });
 
-  it.skip('uses custom bandwidth configuration', async () => {
+  it('uses custom configuration', async () => {
     const videoTracks: PartiallyResolvedVideoTrack[] = [
       {
         type: 'video',
@@ -688,76 +500,6 @@ describe('selectVideoTrack', () => {
       },
     ];
 
-    const presentation = createPresentation({ video: videoTracks });
-
-    const state = createState<TrackSelectionState>({ presentation });
-    const owners = createState<TrackSelectionOwners>({});
-    const events = createEventStream<TrackSelectionAction>();
-
-    const cleanup = selectVideoTrack({ state, owners, events }, { initialBandwidth: 3_000_000, type: 'video' });
-    events.dispatch({ type: 'presentation-loaded' });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.current.selectedVideoTrackId).toBe('video-720p');
-
-    cleanup();
-  });
-});
-
-describe('selectAudioTrack', () => {
-  it('selects audio track when presentation loaded', async () => {
-    const audioTracks: PartiallyResolvedAudioTrack[] = [
-      {
-        type: 'audio',
-        id: 'audio-en',
-        url: 'http://example.com/audio-en.m3u8',
-        bandwidth: 128_000,
-        mimeType: 'audio/mp4',
-        codecs: ['mp4a.40.2'],
-        groupId: 'audio',
-        name: 'English',
-        sampleRate: 48000,
-        channels: 2,
-      },
-    ];
-
-    const presentation = createPresentation({ audio: audioTracks });
-
-    const state = createState<TrackSelectionState>({ presentation });
-    const owners = createState<TrackSelectionOwners>({});
-    const events = createEventStream<TrackSelectionAction>();
-
-    const cleanup = selectAudioTrack({ state, owners, events }, { type: 'audio' });
-    events.dispatch({ type: 'presentation-loaded' });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.current.selectedAudioTrackId).toBe('audio-en');
-
-    cleanup();
-  });
-
-  it('does not select when audio track already selected', async () => {
-    const presentation = createPresentation({ audio: [] });
-
-    const state = createState<TrackSelectionState>({
-      presentation,
-      selectedAudioTrackId: 'existing-audio',
-    });
-    const owners = createState<TrackSelectionOwners>({});
-    const events = createEventStream<TrackSelectionAction>();
-
-    const cleanup = selectAudioTrack({ state, owners, events }, { type: 'audio' });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.current.selectedAudioTrackId).toBe('existing-audio');
-
-    cleanup();
-  });
-
-  it.skip('uses preferred language configuration', async () => {
     const audioTracks: PartiallyResolvedAudioTrack[] = [
       {
         type: 'audio',
@@ -787,49 +529,42 @@ describe('selectAudioTrack', () => {
       },
     ];
 
-    const presentation = createPresentation({ audio: audioTracks });
+    const presentation = createPresentation({ video: videoTracks, audio: audioTracks });
 
-    const state = createState<TrackSelectionState>({ presentation });
-    const owners = createState<TrackSelectionOwners>({});
-    const events = createEventStream<TrackSelectionAction>();
-
-    const cleanup = selectAudioTrack({ state, owners, events }, { type: 'audio', preferredAudioLanguage: 'es' });
-    events.dispatch({ type: 'presentation-loaded' });
+    const state = createState<InitialQualityState>({ presentation });
+    const cleanup = selectInitialQuality(
+      { state },
+      {
+        initialBandwidth: 3_000_000,
+        preferredAudioLanguage: 'es',
+      }
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
+    expect(state.current.selectedVideoTrackId).toBe('video-720p');
     expect(state.current.selectedAudioTrackId).toBe('audio-es');
 
     cleanup();
   });
-});
 
-describe('selectTextTrack', () => {
-  it('does not auto-select text track', async () => {
-    const textTracks = [
-      {
-        type: 'text' as const,
-        id: 'text-en',
-        url: 'http://example.com/text-en.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        groupId: 'text',
-        label: 'English',
-        kind: 'subtitles' as const,
-      },
-    ];
+  it('only runs once (not on subsequent presentation updates)', async () => {
+    const presentation = createPresentation({ video: [], audio: [] });
 
-    const presentation = createPresentation({ text: textTracks });
-
-    const state = createState<TrackSelectionState>({ presentation });
-    const owners = createState<TrackSelectionOwners>({});
-    const events = createEventStream<TrackSelectionAction>();
-
-    const cleanup = selectTextTrack({ state, owners, events }, { type: 'text' });
+    const state = createState<InitialQualityState>({ presentation });
+    const cleanup = selectInitialQuality({ state });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.current.selectedTextTrackId).toBeUndefined();
+    const firstVideoId = state.current.selectedVideoTrackId;
+
+    // Update presentation
+    state.patch({ presentation: { ...presentation } });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Should not re-select
+    expect(state.current.selectedVideoTrackId).toBe(firstVideoId);
 
     cleanup();
   });
