@@ -8,8 +8,13 @@ import { setupSourceBuffer } from './features/setup-sourcebuffer';
 
 /**
  * Union of all action types used by playback engine orchestrations.
+ * Includes synthetic @@INITIALIZE@@ event for combineLatest bootstrapping.
  */
-export type PlaybackEngineAction = PresentationAction | TrackResolutionAction | TrackSelectionAction;
+export type PlaybackEngineAction =
+  | PresentationAction
+  | TrackResolutionAction
+  | TrackSelectionAction
+  | { type: '@@INITIALIZE@@' };
 
 /**
  * Configuration for the playback engine.
@@ -166,6 +171,10 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     setupSourceBuffer({ state, owners }, { type: 'video' }),
     setupSourceBuffer({ state, owners }, { type: 'audio' }),
   ];
+
+  // Dispatch synthetic initialize event to satisfy combineLatest
+  // (combineLatest waits for all sources to emit before triggering listeners)
+  events.dispatch({ type: '@@INITIALIZE@@' });
 
   // Return engine instance
   return {
