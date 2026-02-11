@@ -309,9 +309,7 @@ http://example.com/video-seg1.m4s
     engine.destroy();
   });
 
-  it.skip('handles audio-only stream (no video tracks)', async () => {
-    // TODO: Need proper audio-only HLS manifest structure
-    // Current STREAM-INF approach creates video track
+  it('handles audio-only stream (no video tracks)', async () => {
     // Mock fetch for audio-only stream
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
