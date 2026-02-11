@@ -431,4 +431,237 @@ http://example.com/video-seg1.m4s
 
     engine.destroy();
   });
+
+  it('does not create MediaSource without mediaElement', async () => {
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E",RESOLUTION=640x360
+http://example.com/video-360p.m3u8`)
+        );
+      }
+
+      if (url.includes('video-360p.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video.mp4"
+#EXTINF:10.0,
+http://example.com/video-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
+    globalThis.fetch = mockFetch;
+
+    const engine = createPlaybackEngine();
+
+    // Patch state but NOT owners (no mediaElement)
+    engine.state.patch({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: 'auto',
+    });
+
+    // Wait for presentation and track resolution
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+        expect(state.presentation?.selectionSets).toBeDefined();
+        expect(state.selectedVideoTrackId).toBeDefined();
+
+        // Track should be resolved
+        const videoTrack = state.presentation?.selectionSets
+          ?.find((s: any) => s.type === 'video')
+          ?.switchingSets?.[0]?.tracks?.find((t: any) => t.id === state.selectedVideoTrackId);
+        expect(videoTrack?.segments).toBeDefined();
+      },
+      { timeout: 2000 }
+    );
+
+    // Give time for MediaSource setup (which shouldn't happen)
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const owners = engine.owners.current;
+
+    // Should NOT create MediaSource or SourceBuffers without mediaElement
+    expect(owners.mediaElement).toBeUndefined();
+    expect(owners.mediaSource).toBeUndefined();
+    expect(owners.videoBuffer).toBeUndefined();
+
+    engine.destroy();
+  });
+
+  it('does not auto-resolve with preload: "none"', async () => {
+    const mockFetch = vi.fn();
+    globalThis.fetch = mockFetch;
+
+    const engine = createPlaybackEngine();
+    const mediaElement = document.createElement('video');
+
+    engine.owners.patch({ mediaElement });
+    engine.state.patch({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: 'none',
+    });
+
+    // Wait to ensure orchestrations don't trigger
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    const state = engine.state.current;
+
+    // Should NOT resolve presentation with preload: 'none'
+    expect(state.presentation?.selectionSets).toBeUndefined();
+    expect(mockFetch).not.toHaveBeenCalled();
+
+    engine.destroy();
+  });
+
+  it('resolves presentation and tracks with preload: "metadata"', async () => {
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E",RESOLUTION=640x360
+http://example.com/video-360p.m3u8`)
+        );
+      }
+
+      if (url.includes('video-360p.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init.mp4"
+#EXTINF:10.0,
+http://example.com/seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
+    globalThis.fetch = mockFetch;
+
+    const engine = createPlaybackEngine();
+    const mediaElement = document.createElement('video');
+
+    engine.owners.patch({ mediaElement });
+    engine.state.patch({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: 'metadata',
+    });
+
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+
+        // Should resolve presentation
+        expect(state.presentation?.selectionSets).toBeDefined();
+
+        // Should select and resolve track (metadata includes segment list)
+        expect(state.selectedVideoTrackId).toBeDefined();
+
+        const videoTrack = state.presentation?.selectionSets
+          ?.find((s: any) => s.type === 'video')
+          ?.switchingSets?.[0]?.tracks?.find((t: any) => t.id === state.selectedVideoTrackId);
+        expect(videoTrack?.segments).toBeDefined(); // Track IS resolved with metadata
+      },
+      { timeout: 2000 }
+    );
+
+    // Fetches both multivariant and media playlist for metadata
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+
+    // Note: preload: 'metadata' defers segment LOADING, not track resolution
+    // Track metadata (segment list) is needed for duration/seekable ranges
+
+    engine.destroy();
+  });
+
+  it('resolves only selected track (not all qualities)', async () => {
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-STREAM-INF:BANDWIDTH=500000,CODECS="avc1.42E01E",RESOLUTION=640x360
+http://example.com/video-360p.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=2000000,CODECS="avc1.42E01E",RESOLUTION=1280x720
+http://example.com/video-720p.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=4000000,CODECS="avc1.42E01E",RESOLUTION=1920x1080
+http://example.com/video-1080p.m3u8`)
+        );
+      }
+
+      // Return media playlist for whichever quality is requested
+      if (url.includes('video-360p.m3u8') || url.includes('video-720p.m3u8') || url.includes('video-1080p.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init.mp4"
+#EXTINF:10.0,
+http://example.com/seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
+    globalThis.fetch = mockFetch;
+
+    const engine = createPlaybackEngine();
+    const mediaElement = document.createElement('video');
+
+    engine.owners.patch({ mediaElement });
+    engine.state.patch({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: 'auto',
+    });
+
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+        expect(state.selectedVideoTrackId).toBeDefined();
+
+        // Selected track should be resolved
+        const selectedTrack = state.presentation?.selectionSets
+          ?.find((s: any) => s.type === 'video')
+          ?.switchingSets?.[0]?.tracks?.find((t: any) => t.id === state.selectedVideoTrackId);
+        expect(selectedTrack?.segments).toBeDefined();
+      },
+      { timeout: 2000 }
+    );
+
+    const state = engine.state.current;
+    const allVideoTracks = state.presentation?.selectionSets?.find((s: any) => s.type === 'video')?.switchingSets?.[0]
+      ?.tracks;
+
+    // Should have 3 tracks total
+    expect(allVideoTracks?.length).toBe(3);
+
+    // Only ONE track should be resolved (has segments)
+    const resolvedTracks = allVideoTracks?.filter((t: any) => t.segments);
+    expect(resolvedTracks?.length).toBe(1);
+
+    // The resolved track should be the selected one
+    expect(resolvedTracks?.[0]?.id).toBe(state.selectedVideoTrackId);
+
+    // Should only fetch: 1 multivariant + 1 media playlist (not all 3)
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+
+    engine.destroy();
+  });
 });
