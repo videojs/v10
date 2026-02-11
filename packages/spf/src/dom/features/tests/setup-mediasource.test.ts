@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createState } from '../../state/create-state';
-import type { Presentation } from '../../types';
+import { createState } from '../../../core/state/create-state';
+import type { Presentation } from '../../../core/types';
 import {
   canSetup,
   type MediaSourceOwners,
@@ -10,7 +10,7 @@ import {
 } from '../setup-mediasource';
 
 // Mock the DOM utilities
-vi.mock('../../../dom/media/mediasource-setup', () => ({
+vi.mock('../../media/mediasource-setup', () => ({
   createMediaSource: vi.fn(() => ({
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
@@ -91,7 +91,7 @@ describe('setupMediaSource', () => {
   });
 
   it('creates MediaSource when mediaElement and presentation.url exist', async () => {
-    const { createMediaSource } = await import('../../../dom/media/mediasource-setup');
+    const { createMediaSource } = await import('../../media/mediasource-setup');
 
     const state = createState<MediaSourceState>({});
     const owners = createState<MediaSourceOwners>({});
@@ -113,7 +113,7 @@ describe('setupMediaSource', () => {
   });
 
   it('attaches MediaSource to mediaElement', async () => {
-    const { createMediaSource, attachMediaSource } = await import('../../../dom/media/mediasource-setup');
+    const { createMediaSource, attachMediaSource } = await import('../../media/mediasource-setup');
 
     const mockMediaSource = {
       addEventListener: vi.fn(),
@@ -141,7 +141,7 @@ describe('setupMediaSource', () => {
   });
 
   it('waits for sourceopen event', async () => {
-    const { waitForSourceOpen } = await import('../../../dom/media/mediasource-setup');
+    const { waitForSourceOpen } = await import('../../media/mediasource-setup');
 
     const state = createState<MediaSourceState>({});
     const owners = createState<MediaSourceOwners>({});
@@ -161,7 +161,7 @@ describe('setupMediaSource', () => {
   });
 
   it('updates owners with mediaSource reference', async () => {
-    const { createMediaSource } = await import('../../../dom/media/mediasource-setup');
+    const { createMediaSource } = await import('../../media/mediasource-setup');
 
     const mockMediaSource = {
       addEventListener: vi.fn(),
@@ -189,7 +189,7 @@ describe('setupMediaSource', () => {
   });
 
   it('does not create MediaSource if mediaElement is missing', async () => {
-    const { createMediaSource } = await import('../../../dom/media/mediasource-setup');
+    const { createMediaSource } = await import('../../media/mediasource-setup');
 
     const state = createState<MediaSourceState>({});
     const owners = createState<MediaSourceOwners>({});
@@ -209,7 +209,7 @@ describe('setupMediaSource', () => {
   });
 
   it('does not create MediaSource if presentation.url is missing', async () => {
-    const { createMediaSource } = await import('../../../dom/media/mediasource-setup');
+    const { createMediaSource } = await import('../../media/mediasource-setup');
 
     const state = createState<MediaSourceState>({});
     const owners = createState<MediaSourceOwners>({});
@@ -227,7 +227,7 @@ describe('setupMediaSource', () => {
   });
 
   it('does not create multiple MediaSources (deduplication)', async () => {
-    const { createMediaSource } = await import('../../../dom/media/mediasource-setup');
+    const { createMediaSource } = await import('../../media/mediasource-setup');
 
     const state = createState<MediaSourceState>({});
     const owners = createState<MediaSourceOwners>({});

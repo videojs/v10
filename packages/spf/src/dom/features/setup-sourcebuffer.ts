@@ -1,10 +1,10 @@
 import { isUndefined } from '@videojs/utils/predicate';
-import { createSourceBuffer } from '../../dom/media/mediasource-setup';
-import { combineLatest } from '../reactive/combine-latest';
-import type { WritableState } from '../state/create-state';
-import type { Presentation, ResolvedTrack } from '../types';
-import { isResolvedTrack } from '../types';
-import { getSelectedTrack } from './resolve-track';
+import { combineLatest } from '../../core/reactive/combine-latest';
+import type { WritableState } from '../../core/state/create-state';
+import type { Presentation, ResolvedTrack } from '../../core/types';
+import { isResolvedTrack } from '../../core/types';
+import { BufferKeyByType, getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
+import { createSourceBuffer } from '../media/mediasource-setup';
 
 /**
  * Media track type for SourceBuffer setup.
@@ -15,7 +15,7 @@ export type MediaTrackType = 'video' | 'audio';
 /**
  * State shape for SourceBuffer setup.
  */
-export interface SourceBufferState {
+export interface SourceBufferState extends TrackSelectionState {
   presentation?: Presentation;
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
@@ -29,14 +29,6 @@ export interface SourceBufferOwners {
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
 }
-
-/**
- * Map track type to buffer owner key.
- */
-const BufferKeyByType = {
-  video: 'videoBuffer',
-  audio: 'audioBuffer',
-} as const;
 
 /**
  * Build MIME codec string from track metadata.
@@ -57,15 +49,20 @@ export function buildMimeCodec(track: ResolvedTrack): string {
  * Check if we can setup SourceBuffer for track type.
  *
  * Requires:
- * - MediaSource exists and is in 'open' state
+ * - MediaSource exists in owners
  * - Track is selected
+ *
+ * Note: We don't check mediaSource.readyState because owners holds references
+ * to mutable objects. Changes to properties on those objects won't trigger
+ * observations. Instead, setupMediaSource only patches owners.mediaSource after
+ * it's already open, so if it exists in owners, it's ready to use.
  *
  * Note: Track does not need to be resolved yet. The orchestration will wait
  * for the track to be resolved (via resolveTrack) before creating the SourceBuffer.
  */
 export function canSetupBuffer(state: SourceBufferState, owners: SourceBufferOwners, type: MediaTrackType): boolean {
-  // Need open MediaSource
-  if (!owners.mediaSource || owners.mediaSource.readyState !== 'open') {
+  // MediaSource exists (already open - see note above)
+  if (!owners.mediaSource) {
     return false;
   }
 

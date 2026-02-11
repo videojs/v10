@@ -1,8 +1,8 @@
 import { isNil } from '@videojs/utils/predicate';
-import { attachMediaSource, createMediaSource, waitForSourceOpen } from '../../dom/media/mediasource-setup';
-import { combineLatest } from '../reactive/combine-latest';
-import type { WritableState } from '../state/create-state';
-import type { Presentation } from '../types';
+import { combineLatest } from '../../core/reactive/combine-latest';
+import type { WritableState } from '../../core/state/create-state';
+import type { Presentation } from '../../core/types';
+import { attachMediaSource, createMediaSource, waitForSourceOpen } from '../media/mediasource-setup';
 
 /**
  * State shape required for MediaSource setup.
