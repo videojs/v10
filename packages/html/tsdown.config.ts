@@ -1,5 +1,5 @@
 import { globSync } from 'node:fs';
-import type { Options } from 'tsdown';
+import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 
 type BuildMode = 'dev' | 'default';
@@ -13,7 +13,7 @@ const defineEntries = Object.fromEntries(
   })
 );
 
-const createConfig = (mode: BuildMode): Options => ({
+const createConfig = (mode: BuildMode): UserConfig => ({
   entry: {
     index: 'src/index.ts',
     ...defineEntries,
@@ -22,6 +22,8 @@ const createConfig = (mode: BuildMode): Options => ({
   format: 'es',
   sourcemap: true,
   clean: true,
+  hash: false,
+  unbundle: true,
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
   },

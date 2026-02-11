@@ -1,0 +1,21 @@
+.time-current-time {
+  position: relative;
+}
+
+.time-current-time video {
+  width: 100%;
+}
+
+.time-current-time__value {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  color: black;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  padding-block: 8px;
+  padding-inline: 20px;
+  font-variant-numeric: tabular-nums;
+}

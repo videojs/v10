@@ -1,5 +1,5 @@
 import type { PropertyValues } from '@lit/reactive-element';
-import { MuteButtonCore, MuteButtonDataAttributes } from '@videojs/core';
+import { MuteButtonCore, MuteButtonDataAttrs } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -20,8 +20,8 @@ export class MuteButtonElement extends MediaElement {
     disabled: { type: Boolean },
   };
 
-  label = '';
-  disabled = false;
+  label = MuteButtonCore.defaultProps.label;
+  disabled = MuteButtonCore.defaultProps.disabled;
 
   readonly #core = new MuteButtonCore();
   readonly #state = new PlayerController(this, playerContext, selectVolume);
@@ -40,7 +40,7 @@ export class MuteButtonElement extends MediaElement {
 
     applyElementProps(this, buttonProps, this.#disconnect.signal);
 
-    if (!this.#state.value) {
+    if (__DEV__ && !this.#state.value) {
       logMissingFeature(MuteButtonElement.tagName, 'volume');
     }
   }
@@ -59,13 +59,12 @@ export class MuteButtonElement extends MediaElement {
   protected override update(changed: PropertyValues): void {
     super.update(changed);
 
-    const state = this.#state.value;
+    const media = this.#state.value;
 
-    if (!state) {
-      return;
-    }
+    if (!media) return;
 
+    const state = this.#core.getState(media);
     applyElementProps(this, this.#core.getAttrs(state));
-    applyStateDataAttrs(this, this.#core.getState(state), MuteButtonDataAttributes);
+    applyStateDataAttrs(this, state, MuteButtonDataAttrs);
   }
 }

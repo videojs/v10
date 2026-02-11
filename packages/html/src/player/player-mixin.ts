@@ -25,6 +25,6 @@ export function createPlayerMixin<Store extends PlayerStore>(
   const ContainerMixin = createContainerMixin<Store>(context);
 
   return <Class extends MediaElementConstructor>(BaseClass: Class) => {
-    return ContainerMixin(ProviderMixin(BaseClass)) as unknown as Result<Class, Store>;
+    return ProviderMixin(ContainerMixin(BaseClass)) as unknown as Result<Class, Store>;
   };
 }

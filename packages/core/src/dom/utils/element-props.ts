@@ -1,8 +1,6 @@
 import { listen } from '@videojs/utils/dom';
 import { isFunction, isUndefined } from '@videojs/utils/predicate';
 
-import type { ElementProps } from '../../core/element';
-
 /**
  * Apply props to a DOM element.
  *
@@ -12,7 +10,7 @@ import type { ElementProps } from '../../core/element';
  * - `undefined` removes the attribute
  * - Other props are set as string attributes
  */
-export function applyElementProps(element: HTMLElement, props: ElementProps | object, signal?: AbortSignal): void {
+export function applyElementProps(element: HTMLElement, props: object, signal?: AbortSignal): void {
   for (const [key, value] of Object.entries(props)) {
     if (isFunction(value) && key.startsWith('on')) {
       const event = key.slice(2).toLowerCase();

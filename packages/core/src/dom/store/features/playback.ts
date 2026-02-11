@@ -1,10 +1,10 @@
 import { listen } from '@videojs/utils/dom';
 
-import type { PlaybackState } from '../../../core/media/state';
+import type { MediaPlaybackState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 
 export const playbackFeature = definePlayerFeature({
-  state: ({ target }): PlaybackState => ({
+  state: ({ target }): MediaPlaybackState => ({
     paused: true,
     ended: false,
     started: false,

@@ -1,10 +1,10 @@
 import { listen } from '@videojs/utils/dom';
 
-import type { SourceState } from '../../../core/media/state';
+import type { MediaSourceState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 
 export const sourceFeature = definePlayerFeature({
-  state: ({ target, signals }): SourceState => ({
+  state: ({ target, signals }): MediaSourceState => ({
     source: null,
     canPlay: false,
     loadSource(src: string) {

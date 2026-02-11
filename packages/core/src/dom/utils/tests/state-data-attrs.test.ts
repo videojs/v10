@@ -78,13 +78,12 @@ describe('getStateDataAttrs', () => {
     });
   });
 
-  it('allows unmapped keys when mapping is provided', () => {
+  it('skips unmapped keys when mapping is provided', () => {
     const state = { muted: true, volumeLevel: 'low' };
     const mapping = { muted: 'data-muted' };
 
     expect(getStateDataAttrs(state, mapping)).toEqual({
       'data-muted': '',
-      'data-volumelevel': 'low',
     });
   });
 });

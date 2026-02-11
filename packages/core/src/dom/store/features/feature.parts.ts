@@ -1,3 +1,4 @@
+import type { AudioFeatures, BackgroundFeatures, VideoFeatures } from '../../media/types';
 import { bufferFeature } from './buffer';
 import { fullscreenFeature } from './fullscreen';
 import { pipFeature } from './pip';
@@ -17,7 +18,7 @@ export {
   volumeFeature as volume,
 };
 
-export const video = [
+export const video: VideoFeatures = [
   playbackFeature,
   volumeFeature,
   timeFeature,
@@ -25,6 +26,9 @@ export const video = [
   bufferFeature,
   fullscreenFeature,
   pipFeature,
-] as const;
+];
 
-export const audio = [playbackFeature, volumeFeature, timeFeature, sourceFeature, bufferFeature] as const;
+export const audio: AudioFeatures = [playbackFeature, volumeFeature, timeFeature, sourceFeature, bufferFeature];
+
+// TODO: Add background video features (e.g., playback, source, buffer)
+export const background: BackgroundFeatures = [];

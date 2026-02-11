@@ -77,4 +77,29 @@ describe('extractHtml', () => {
 
     expect(result).toBeNull();
   });
+
+  it('extracts tagName using custom elementName override', () => {
+    const code = `
+      export class TimeGroupElement {
+        static readonly tagName = 'media-time-group';
+      }
+    `;
+    const program = createTestProgram(code);
+    const result = extractHtml('test.ts', program, 'Time', 'TimeGroupElement');
+
+    expect(result).not.toBeNull();
+    expect(result!.tagName).toBe('media-time-group');
+  });
+
+  it('returns null when elementName override does not match', () => {
+    const code = `
+      export class TimeGroupElement {
+        static readonly tagName = 'media-time-group';
+      }
+    `;
+    const program = createTestProgram(code);
+    const result = extractHtml('test.ts', program, 'Time', 'TimeSeparatorElement');
+
+    expect(result).toBeNull();
+  });
 });

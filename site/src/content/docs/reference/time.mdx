@@ -1,0 +1,205 @@
+---
+title: Time
+frameworkTitle:
+  html: media-time
+description: Components for displaying and composing media time information
+---
+
+import ApiReference from "@/components/docs/api-reference/ApiReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import CurrentTimeDemoReact from "@/components/docs/demos/time/react/css/CurrentTime";
+import currentTimeReactTsx from "@/components/docs/demos/time/react/css/CurrentTime.tsx?raw";
+import currentTimeReactCss from "@/components/docs/demos/time/react/css/CurrentTime.css?raw";
+
+import CurrentDurationDemoReact from "@/components/docs/demos/time/react/css/CurrentDuration";
+import currentDurationReactTsx from "@/components/docs/demos/time/react/css/CurrentDuration.tsx?raw";
+import currentDurationReactCss from "@/components/docs/demos/time/react/css/CurrentDuration.css?raw";
+
+import RemainingDemoReact from "@/components/docs/demos/time/react/css/Remaining";
+import remainingReactTsx from "@/components/docs/demos/time/react/css/Remaining.tsx?raw";
+import remainingReactCss from "@/components/docs/demos/time/react/css/Remaining.css?raw";
+
+import CustomSeparatorDemoReact from "@/components/docs/demos/time/react/css/CustomSeparator";
+import customSeparatorReactTsx from "@/components/docs/demos/time/react/css/CustomSeparator.tsx?raw";
+import customSeparatorReactCss from "@/components/docs/demos/time/react/css/CustomSeparator.css?raw";
+
+import CustomNegativeSignDemoReact from "@/components/docs/demos/time/react/css/CustomNegativeSign";
+import customNegativeSignReactTsx from "@/components/docs/demos/time/react/css/CustomNegativeSign.tsx?raw";
+import customNegativeSignReactCss from "@/components/docs/demos/time/react/css/CustomNegativeSign.css?raw";
+
+{/* HTML demos */}
+import CurrentTimeDemoHtml from "@/components/docs/demos/time/html/css/CurrentTime.astro";
+import currentTimeHtml from "@/components/docs/demos/time/html/css/CurrentTime.html?raw";
+import currentTimeHtmlCss from "@/components/docs/demos/time/html/css/CurrentTime.css?raw";
+import currentTimeHtmlTs from "@/components/docs/demos/time/html/css/CurrentTime.ts?raw";
+import CurrentDurationDemoHtml from "@/components/docs/demos/time/html/css/CurrentDuration.astro";
+import currentDurationHtml from "@/components/docs/demos/time/html/css/CurrentDuration.html?raw";
+import currentDurationHtmlCss from "@/components/docs/demos/time/html/css/CurrentDuration.css?raw";
+import currentDurationHtmlTs from "@/components/docs/demos/time/html/css/CurrentDuration.ts?raw";
+import RemainingDemoHtml from "@/components/docs/demos/time/html/css/Remaining.astro";
+import remainingHtml from "@/components/docs/demos/time/html/css/Remaining.html?raw";
+import remainingHtmlCss from "@/components/docs/demos/time/html/css/Remaining.css?raw";
+import remainingHtmlTs from "@/components/docs/demos/time/html/css/Remaining.ts?raw";
+import CustomSeparatorDemoHtml from "@/components/docs/demos/time/html/css/CustomSeparator.astro";
+import customSeparatorHtml from "@/components/docs/demos/time/html/css/CustomSeparator.html?raw";
+import customSeparatorHtmlCss from "@/components/docs/demos/time/html/css/CustomSeparator.css?raw";
+import customSeparatorHtmlTs from "@/components/docs/demos/time/html/css/CustomSeparator.ts?raw";
+import CustomNegativeSignDemoHtml from "@/components/docs/demos/time/html/css/CustomNegativeSign.astro";
+import customNegativeSignHtml from "@/components/docs/demos/time/html/css/CustomNegativeSign.html?raw";
+import customNegativeSignHtmlCss from "@/components/docs/demos/time/html/css/CustomNegativeSign.css?raw";
+import customNegativeSignHtmlTs from "@/components/docs/demos/time/html/css/CustomNegativeSign.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Time.Group>
+  <Time.Value type="current" />
+  <Time.Separator />
+  <Time.Value type="duration" />
+</Time.Group>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-time-group>
+  <media-time type="current"></media-time>
+  <media-time-separator></media-time-separator>
+  <media-time type="duration"></media-time>
+</media-time-group>
+```
+</FrameworkCase>
+
+## Examples
+
+### Current Time
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: currentTimeReactTsx, lang: "tsx" },
+      { title: "App.css", code: currentTimeReactCss, lang: "css" },
+    ]}>
+      <CurrentTimeDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: currentTimeHtml, lang: "html" },
+      { title: "index.css", code: currentTimeHtmlCss, lang: "css" },
+      { title: "index.ts", code: currentTimeHtmlTs, lang: "ts" },
+    ]}>
+      <CurrentTimeDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+### Current / Duration
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: currentDurationReactTsx, lang: "tsx" },
+      { title: "App.css", code: currentDurationReactCss, lang: "css" },
+    ]}>
+      <CurrentDurationDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: currentDurationHtml, lang: "html" },
+      { title: "index.css", code: currentDurationHtmlCss, lang: "css" },
+      { title: "index.ts", code: currentDurationHtmlTs, lang: "ts" },
+    ]}>
+      <CurrentDurationDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+### Remaining
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: remainingReactTsx, lang: "tsx" },
+      { title: "App.css", code: remainingReactCss, lang: "css" },
+    ]}>
+      <RemainingDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: remainingHtml, lang: "html" },
+      { title: "index.css", code: remainingHtmlCss, lang: "css" },
+      { title: "index.ts", code: remainingHtmlTs, lang: "ts" },
+    ]}>
+      <RemainingDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+### Custom Separator
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: customSeparatorReactTsx, lang: "tsx" },
+      { title: "App.css", code: customSeparatorReactCss, lang: "css" },
+    ]}>
+      <CustomSeparatorDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: customSeparatorHtml, lang: "html" },
+      { title: "index.css", code: customSeparatorHtmlCss, lang: "css" },
+      { title: "index.ts", code: customSeparatorHtmlTs, lang: "ts" },
+    ]}>
+      <CustomSeparatorDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+### Custom Negative Sign
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: customNegativeSignReactTsx, lang: "tsx" },
+      { title: "App.css", code: customNegativeSignReactCss, lang: "css" },
+    ]}>
+      <CustomNegativeSignDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: customNegativeSignHtml, lang: "html" },
+      { title: "index.css", code: customNegativeSignHtmlCss, lang: "css" },
+      { title: "index.ts", code: customNegativeSignHtmlTs, lang: "ts" },
+    ]}>
+      <CustomNegativeSignDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ApiReference component="Time" />

@@ -1,0 +1,10 @@
+---
+import HtmlDemo from '@/components/docs/demos/HtmlDemo.astro';
+import html from './CurrentTime.html?raw';
+import './CurrentTime.css';
+---
+
+<HtmlDemo html={html} />
+<script>
+  import './CurrentTime.ts';
+</script>

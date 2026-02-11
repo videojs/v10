@@ -1,11 +1,11 @@
-import type { Options } from 'tsdown';
+import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 
 type BuildMode = 'dev' | 'default';
 
 const buildModes: BuildMode[] = ['dev', 'default'];
 
-const createConfig = (mode: BuildMode): Options => ({
+const createConfig = (mode: BuildMode): UserConfig => ({
   entry: {
     index: './src/core/index.ts',
     dom: './src/dom/index.ts',
@@ -14,6 +14,8 @@ const createConfig = (mode: BuildMode): Options => ({
   format: 'es',
   sourcemap: true,
   clean: true,
+  hash: false,
+  unbundle: true,
   alias: {
     '@': new URL('./src/core', import.meta.url).pathname,
   },

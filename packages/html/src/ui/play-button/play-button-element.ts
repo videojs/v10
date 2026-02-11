@@ -1,5 +1,5 @@
 import type { PropertyValues } from '@lit/reactive-element';
-import { PlayButtonCore } from '@videojs/core';
+import { PlayButtonCore, PlayButtonDataAttrs } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -20,8 +20,8 @@ export class PlayButtonElement extends MediaElement {
     disabled: { type: Boolean },
   };
 
-  label = '';
-  disabled = false;
+  label = PlayButtonCore.defaultProps.label;
+  disabled = PlayButtonCore.defaultProps.disabled;
 
   readonly #core = new PlayButtonCore();
   readonly #state = new PlayerController(this, playerContext, selectPlayback);
@@ -40,7 +40,7 @@ export class PlayButtonElement extends MediaElement {
 
     applyElementProps(this, buttonProps, this.#disconnect.signal);
 
-    if (!this.#state.value) {
+    if (__DEV__ && !this.#state.value) {
       logMissingFeature(PlayButtonElement.tagName, 'playback');
     }
   }
@@ -59,13 +59,12 @@ export class PlayButtonElement extends MediaElement {
   protected override update(changed: PropertyValues): void {
     super.update(changed);
 
-    const state = this.#state.value;
+    const media = this.#state.value;
 
-    if (!state) {
-      return;
-    }
+    if (!media) return;
 
+    const state = this.#core.getState(media);
     applyElementProps(this, this.#core.getAttrs(state));
-    applyStateDataAttrs(this, this.#core.getState(state));
+    applyStateDataAttrs(this, state, PlayButtonDataAttrs);
   }
 }

@@ -16,7 +16,6 @@ From `site/` directory:
 | -------------------- | ---------------------------------------------------- |
 | `pnpm dev`           | Start dev server at `localhost:4321`                 |
 | `pnpm build`         | Build production site to `./dist/`                   |
-| `pnpm preview`       | Preview production build locally                     |
 | `pnpm api-docs`      | Regenerate API reference JSON files                  |
 | `pnpm test`          | Run all tests once                                   |
 | `pnpm test:watch`    | Run tests in watch mode                              |
@@ -141,7 +140,9 @@ This limits the classnames Tailwind must generate.
 site/
 ├── src/
 │   ├── components/          # Astro + React components
-│   │   └── docs/api-reference/  # API reference Astro components
+│   │   └── docs/
+│   │       ├── api-reference/   # API reference Astro components
+│   │       └── demos/           # Interactive component demos (see below)
 │   ├── content/             # Content collections (blog/, docs/, authors.json)
 │   ├── layouts/             # Page layouts (Base, Blog, Docs, Markdown)
 │   ├── pages/               # Route pages (file-based routing)
@@ -162,11 +163,115 @@ site/
 │   └── api-docs-builder/    # Generates API reference from TypeScript
 ├── public/                  # Static assets (served untransformed)
 ├── integrations/            # Custom Astro integrations
-│   └── pagefind.ts          # Pagefind search integration
+│   ├── pagefind.ts          # Pagefind search integration
+│   ├── llms-markdown.ts     # LLM-optimized markdown generation
+│   └── check-v8-urls.ts     # v8 URL migration audit
 ├── astro.config.mjs         # Astro configuration
 ├── tsconfig.json            # TypeScript config with path aliases
 └── vitest.config.ts         # Test configuration
 ```
+
+## Interactive Demos
+
+Reference pages include live, interactive demos for each component. Demos are framework-specific (React, HTML) and style-specific (CSS).
+
+### Directory Structure
+
+```
+src/components/docs/demos/
+├── Demo.astro              # Shared shell (live preview + tabbed source code)
+├── HtmlDemo.astro          # Renders raw HTML via set:html
+└── {component}/{framework}/{style}/
+    ├── BasicUsage.tsx      # React: component (+ .css)
+    ├── BasicUsage.astro    # HTML: Astro wrapper (renders HTML, imports CSS, bundles script)
+    ├── BasicUsage.html     # HTML: markup only, no <style> or <script>
+    ├── BasicUsage.css      # HTML: styles (imported by .astro wrapper for live demo)
+    └── BasicUsage.ts       # HTML: side-effect imports for custom element registration
+```
+
+### CSS Scoping with BEM
+
+Demos use BEM class names for scoping. Block = `{component}-{variant}`, element = `__{part}`:
+
+```
+.play-button-basic              /* block */
+.play-button-basic__button      /* element */
+```
+
+React `.css` and HTML `.css` files for the same demo should use identical BEM names.
+
+### React Demos
+
+A `.tsx` component + `.css` file. Rendered as an Astro island via `client:idle`, displayed as source via `?raw`:
+
+```mdx
+import BasicUsageDemo from "@/components/docs/demos/play-button/react/css/BasicUsage";
+import basicUsageTsx from "@/components/docs/demos/play-button/react/css/BasicUsage.tsx?raw";
+import basicUsageCss from "@/components/docs/demos/play-button/react/css/BasicUsage.css?raw";
+
+<Demo files={[
+  { title: "App.tsx", code: basicUsageTsx, lang: "tsx" },
+  { title: "App.css", code: basicUsageCss, lang: "css" },
+]}>
+  <BasicUsageDemo client:idle />
+</Demo>
+```
+
+### HTML Demos
+
+Four files per demo: `.html` (markup only), `.css` (styles), `.ts` (custom element registration), and `.astro` (wrapper that ties them together). The `.astro` wrapper is needed because only Astro `<script>` tags go through Vite's bundling pipeline — MDX `<script>` tags compile as JSX and aren't bundled.
+
+**`.astro` wrapper** (imports CSS for live demo, renders HTML, bundles the `.ts` script):
+```astro
+---
+import HtmlDemo from '@/components/docs/demos/HtmlDemo.astro';
+import html from './BasicUsage.html?raw';
+import './BasicUsage.css';
+---
+<HtmlDemo html={html} />
+<script>
+  import './BasicUsage.ts';
+</script>
+```
+
+**MDX usage:**
+```mdx
+import BasicUsageDemoHtml from "@/components/docs/demos/play-button/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/play-button/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/play-button/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/play-button/html/css/BasicUsage.ts?raw";
+
+<Demo files={[
+  { title: "index.html", code: basicUsageHtml, lang: "html" },
+  { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+  { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+]}>
+  <BasicUsageDemoHtml />
+</Demo>
+```
+
+### State Reflection in HTML Demos
+
+HTML custom elements expose state via `data-*` attributes. Use CSS to toggle labels:
+
+```html
+<media-play-button class="play-button-basic__button">
+  <span class="show-when-paused">Play</span>
+  <span class="show-when-playing">Pause</span>
+</media-play-button>
+```
+```css
+.play-button-basic__button .show-when-paused { display: none; }
+.play-button-basic__button .show-when-playing { display: none; }
+.play-button-basic__button[data-paused] .show-when-paused { display: inline; }
+.play-button-basic__button:not([data-paused]) .show-when-playing { display: inline; }
+```
+
+The React equivalent uses the `render` prop: `render={(props, state) => <button {...props}>{state.paused ? 'Play' : 'Pause'}</button>}`.
+
+### Video Attributes
+
+All demo videos use `autoplay muted playsinline loop` (React: `autoPlay muted playsInline loop`).
 
 ## Multi-Framework Documentation Architecture
 
@@ -263,10 +368,9 @@ export const sidebar: Sidebar = [
 - `getSectionsForGuide()`: Get breadcrumb trail to a guide
 
 **`routing.ts`** — URL building and redirect logic:
-- `buildDocsUrl()`: Construct docs URLs from framework/style/slug
+- `buildDocsUrl()`: Construct docs URLs from framework and slug
 - `resolveIndexRedirect()`: Intelligent redirect for index pages
-  - Handles user preferences from localStorage
-  - Validates framework/style combinations
+  - Validates framework from URL params or cookie preferences
   - Falls back to defaults when invalid
 
 ### Docs Routing Pattern
@@ -311,8 +415,9 @@ All content must be written in **MDX format** to support:
 {
   title: string;
   description: string;
-  pubDate: Date;          // From filename or git history
+  pubDate: Date;          // From filename date prefix
   authors: string[];      // Reference to authors.json
+  canonical?: string;     // Canonical URL override
   devOnly?: boolean;      // Show only in development
 }
 ```
@@ -343,9 +448,17 @@ All content must be written in **MDX format** to support:
 {
   [key: string]: {
     name: string;
+    shortName: string;
     bio?: string;
     avatar?: string;
-    socialLinks?: { platform: string; url: string }[];
+    socialLinks?: {
+      x?: string;
+      bluesky?: string;
+      mastodon?: string;
+      github?: string;
+      linkedin?: string;
+      website?: string;
+    };
   }
 }
 ```
@@ -353,7 +466,7 @@ All content must be written in **MDX format** to support:
 ### Git Integration
 
 `src/utils/gitService.ts` uses `simple-git` to enrich content with metadata:
-- Blog posts: `pubDate` from filename or first commit
+- Blog posts: `pubDate` from filename date prefix
 - All content: `updatedDate` from last modification
 
 ## State Management with Nanostores
@@ -364,6 +477,7 @@ All content must be written in **MDX format** to support:
 - `preferences.ts`: User framework/style preferences (persisted to localStorage)
 - `homePageDemos.ts`: Home page demo state
 - `tabs.ts`: Tab component state
+- `installation.ts`: Installation page state (renderer, skin, install method)
 
 **Usage pattern:**
 ```ts
@@ -387,8 +501,9 @@ function MyComponent() {
   setupFiles: ['./src/test-setup.ts'], // Imports @testing-library/jest-dom
   coverage: {
     provider: 'v8',
-    include: ['src/utils/**', 'src/components/**', 'src/types/**'],
-    exclude: ['**/*.test.ts', '**/*.spec.ts', '**/__tests__/**'],
+    reporter: ['text', 'json', 'html'],
+    include: ['src/utils/**', 'src/components/**', 'src/types/**', 'scripts/api-docs-builder/src/**'],
+    exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx', '**/test/**'],
   },
 }
 ```
@@ -427,6 +542,7 @@ vi.mock('@/types/docs', async () => {
 
 - **[Astro 5.14.4](https://astro.build)**: Static site generation with island architecture
 - **[React 18](https://react.dev)**: Client-side interactive components (`client:load`)
+- **[React Compiler](https://react.dev/learn/react-compiler)**: Enabled via `babel-plugin-react-compiler` targeting React 18
 - **[Tailwind v4](https://tailwindcss.com)**: CSS utility classes via `@tailwindcss/vite`
 - **[Nanostores 1.0.1](https://github.com/nanostores/nanostores)**: Cross-island state
 - **[Base UI 1.0.0-beta.4](https://base-ui.com)**: Headless accessible components
@@ -442,15 +558,17 @@ The API docs builder extracts type information from TypeScript sources and gener
 ### How It Works
 
 ```
-packages/core/src/core/ui/{component}/  → JSON → <ApiRefSection /> → tables
+packages/core/html/react/  → JSON → <ApiReference /> → tables
 ```
 
 1. **Builder script** (`scripts/api-docs-builder/`) parses TypeScript using `typescript-api-extractor`
 2. **Extracts** from core files: Props interface, State interface, defaultProps
 3. **Extracts** from data-attrs files: data attributes with JSDoc descriptions
 4. **Extracts** from HTML element files: Lit `tagName`
-5. **Outputs** JSON to `src/content/generated-api-reference/{component}.json`
-6. **Astro components** (`src/components/docs/api-reference/`) render the JSON as tables
+5. **Detects** multi-part components via `packages/react/src/ui/{name}/index.parts.ts`
+6. **Extracts** part descriptions from React component JSDoc
+7. **Outputs** JSON to `src/content/generated-api-reference/{component}.json`
+8. **`<ApiReference />`** Astro component renders the JSON as tables
 
 ### Generated Files Are Gitignored
 
@@ -461,29 +579,29 @@ The `src/content/generated-api-reference/` directory is **gitignored**. JSON fil
 
 ### Usage in MDX
 
+Use the unified `<ApiReference />` component for both single-part and multi-part components:
+
 ```mdx
-import ApiRefSection from '@/components/docs/api-reference/ApiRefSection.astro';
+import ApiReference from '@/components/docs/api-reference/ApiReference.astro';
 
-## API Reference
-
-### Props
-
-<ApiRefSection component="PlayButton" section="props" />
-
-### State
-
-<ApiRefSection component="PlayButton" section="state" />
-
-### Data Attributes
-
-<ApiRefSection component="PlayButton" section="dataAttributes" />
+<ApiReference component="PlayButton" />
 ```
+
+The component automatically handles:
+- **Single-part**: Renders Props, State, and Data Attributes sections with h3 headings
+- **Multi-part**: Renders each part with a framework-aware h3 heading, description from JSDoc, and h4 sub-sections
 
 ### Adding a New Component
 
 When a new component is added to `packages/core/src/core/ui/`:
 1. Run `pnpm api-docs` to generate its JSON
-2. Add `<ApiRefSection ... />` to the MDX reference page as described above
+2. Add `<ApiReference component="{Name}" />` to the MDX reference page
+
+For multi-part components:
+1. Ensure `packages/react/src/ui/{name}/index.parts.ts` exports each part
+2. Add JSDoc descriptions to each React component export for part descriptions
+3. Ensure each part's HTML element is at `packages/html/src/ui/{name}/{name}-{part}-element.ts`
+4. The primary part (whose element is just `{name}-element.ts`) gets the shared core props/state/data-attrs
 
 See `scripts/api-docs-builder/README.md` for full documentation.
 
@@ -511,6 +629,88 @@ export default defineConfig({
   integrations: [pagefind()],
 });
 ```
+
+## Environment Variables
+
+The site uses OAuth for authentication and Mux for video management. Required variables are needed for auth features to work; the site degrades gracefully without them.
+
+**Required for authentication:**
+
+| Variable | Purpose |
+| --- | --- |
+| `OAUTH_CLIENT_ID` | OAuth client ID |
+| `OAUTH_CLIENT_SECRET` | OAuth client secret |
+| `OAUTH_REDIRECT_URI` | OAuth callback URL |
+| `OAUTH_URL` | OAuth provider base URL |
+| `SESSION_COOKIE_PASSWORD` | Encryption key for `iron-session` cookies |
+
+**Optional:**
+
+| Variable | Purpose |
+| --- | --- |
+| `MUX_API_URL` | Override Mux API endpoint (defaults to `https://api.mux.com`) |
+| `SENTRY_AUTH_TOKEN` | Sentry error tracking auth token |
+
+## Authentication & Mux Integration
+
+OAuth and Mux integration exist to support the **video uploader** on the installation page (`src/components/installation/MuxUploaderPanel.tsx`). This is the only consumer of the auth system.
+
+**Key files:**
+- `src/middleware/index.ts` — Validates and refreshes OAuth sessions on every request via `iron-session`
+- `src/utils/auth.ts` — Session encryption, JWKS verification, token refresh
+- `src/pages/api/auth/callback.ts` — OAuth callback endpoint
+- `src/actions/auth.ts` — `initiateLogin()`, `logout()` server actions
+- `src/actions/mux.ts` — `createDirectUpload()`, `getUploadStatus()`, `getAssetStatus()`, `listAssets()`, `getAsset()` server actions
+
+**How sessions work:**
+1. Middleware decrypts session cookie, verifies access token via JWKS
+2. If expired, automatically refreshes using the refresh token
+3. Populates `context.locals.user` (safe to render) and `context.locals.accessToken` (server-only, never expose to client)
+4. Invalid/corrupted sessions are silently cleared
+
+**Action gating:** All `mux.*` actions (except `createDirectUpload`) return 401 without a valid session. `createDirectUpload` handles its own auth so the client can detect UNAUTHORIZED and show a login UI.
+
+## MDX Processing Plugins
+
+Four plugins transform MDX content during build. Registered in `astro.config.mjs`:
+
+**`remarkConditionalHeadings`** (`src/utils/remarkConditionalHeadings.js`)
+Walks the MDX AST and tracks headings inside `<FrameworkCase>` / `<StyleCase>` components, attaching conditional metadata (which frameworks/styles a heading belongs to). Also reads `<ApiReference>` component props, loads the generated JSON, and injects heading entries so API reference sections appear in the table of contents. Outputs to `frontmatter.conditionalHeadings`.
+
+**`remarkReadingTime`** (`src/utils/remarkReadingTime.mjs`)
+Calculates reading time and injects `frontmatter.minutesRead` (text) and `frontmatter.readingTimeMinutes` (number).
+
+**`rehypePrepareCodeBlocks`** (`src/utils/rehypePrepareCodeBlocks.js`)
+Tags `<code>` children of `<pre>` with a `codeBlock` property, and marks `<pre>` blocks with `hasFrame: true` when inside a `<TabsPanel>` JSX component. This controls code block styling (framed vs. standalone).
+
+**`shikiTransformMetadata`** (`src/utils/shikiTransformMetadata.js`)
+Shiki transformer that extracts `title="..."` from code fence metadata, enabling titled code blocks:
+
+~~~markdown
+```tsx title="Example.tsx"
+~~~
+
+## Custom Astro Integration: LLM Markdown
+
+**Location:** `integrations/llms-markdown.ts`
+
+Generates LLM-optimized markdown files and a `llms.txt` index after build.
+
+**How it works:**
+1. Scans all built HTML pages for elements with `[data-llms-content]`
+2. Strips elements with `[data-llms-ignore]` from the content
+3. Converts remaining HTML to markdown via Turndown
+4. Writes `.md` files alongside built HTML
+5. Generates `llms.txt` index grouped by framework/style
+
+**Data attributes for content authors:**
+
+| Attribute | Purpose |
+| --- | --- |
+| `data-llms-content` | Mark an element's content for LLM markdown extraction |
+| `data-llms-ignore` | Exclude an element (and its children) from LLM output |
+| `data-llms-description` | Description text for the `llms.txt` index entry |
+| `data-llms-sort` | Sort key for ordering entries in the index |
 
 ## TypeScript Configuration
 
@@ -621,10 +821,10 @@ Standard MDX elements (headings, paragraphs, lists, etc.) are defined here and u
 **Usage in layouts:**
 ```astro
 ---
-import { components } from '@/components/typography';
+import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
 ---
 
-<slot Components={components} />
+<Content components={{ ...defaultMarkdownComponents }} />
 ```
 
 ## Important Development Notes

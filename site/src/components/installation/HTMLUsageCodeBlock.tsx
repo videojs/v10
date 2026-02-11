@@ -2,18 +2,21 @@ import { useStore } from '@nanostores/react';
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import type { Renderer, Skin, UseCase } from '@/stores/installation';
-import { muxPlaybackId, renderer, skin, useCase } from '@/stores/installation';
+import { installMethod, muxPlaybackId, renderer, skin, useCase } from '@/stores/installation';
 
 function getRendererTag(renderer: Renderer): string {
   const map: Record<Renderer, string> = {
+    'background-video': 'background-video',
     cloudflare: 'cloudflare-video',
     dash: 'dash-video',
     hls: 'hls-video',
     'html5-audio': 'audio',
     'html5-video': 'video',
     jwplayer: 'jwplayer-video',
-    mux: 'mux-video',
-    shaka: 'shaka-video',
+    'mux-audio': 'mux-audio',
+    'mux-background-video': 'mux-background-video',
+    'mux-video': 'mux-video',
+    // shaka: 'shaka-video',
     spotify: 'spotify-audio',
     vimeo: 'vimeo-video',
     wistia: 'wistia-video',
@@ -31,11 +34,16 @@ function getProviderTag(useCase: UseCase): string {
   return map[useCase];
 }
 
-function getSkinTag(skin: Skin): string {
+function getSkinTag(useCase: UseCase, skin: Skin): string {
+  // Background video has fixed skin
+  if (useCase === 'background-video') {
+    return 'background-video-skin';
+  }
   const map: Record<Skin, string> = {
-    'default-video': 'video-skin',
-    'default-audio': 'audio-skin',
-    minimal: 'minimal-video-skin',
+    video: 'video-skin',
+    audio: 'audio-skin',
+    'minimal-video': 'minimal-video-skin',
+    'minimal-audio': 'minimal-audio-skin',
   };
   return map[skin];
 }
@@ -43,8 +51,8 @@ function getSkinTag(skin: Skin): string {
 function getRendererElement(renderer: Renderer, playbackId: string | null): string {
   const tag = getRendererTag(renderer);
 
-  // When renderer is 'mux' and we have a playback ID, use playback-id attribute
-  if (renderer === 'mux' && playbackId) {
+  // When renderer is a mux variant and we have a playback ID, use playback-id attribute
+  if ((renderer === 'mux-video' || renderer === 'mux-audio' || renderer === 'mux-background-video') && playbackId) {
     return `<${tag} playback-id="${playbackId}"></${tag}>`;
   }
 
@@ -54,7 +62,7 @@ function getRendererElement(renderer: Renderer, playbackId: string | null): stri
 
 function generateHTMLCode(useCase: UseCase, skin: Skin, renderer: Renderer, playbackId: string | null): string {
   const providerTag = getProviderTag(useCase);
-  const skinTag = getSkinTag(skin);
+  const skinTag = getSkinTag(useCase, skin);
   const rendererElement = getRendererElement(renderer, playbackId);
 
   return `<!--
@@ -79,8 +87,22 @@ function generateHTMLCode(useCase: UseCase, skin: Skin, renderer: Renderer, play
 </${providerTag}>`;
 }
 
-function generateJS(skin: Skin): string {
-  return `import '@videojs/html/skins/${skin}';`;
+function getSkinImportParts(skin: Skin): { group: string; skinFile: string } {
+  if (skin === 'minimal-video') return { group: 'video', skinFile: 'minimal-skin' };
+  if (skin === 'minimal-audio') return { group: 'audio', skinFile: 'minimal-skin' };
+  return { group: skin, skinFile: 'skin' };
+}
+
+function generateJS(useCase: UseCase, skin: Skin): string {
+  if (useCase === 'background-video') {
+    return `import '@videojs/html/background/player';
+import '@videojs/html/background/skin';
+import '@videojs/html/background/skin.css';`;
+  }
+  const { group, skinFile } = getSkinImportParts(skin);
+  return `import '@videojs/html/${group}/player';
+import '@videojs/html/${group}/${skinFile}';
+import '@videojs/html/${group}/${skinFile}.css';`;
 }
 
 export default function HTMLUsageCodeBlock() {
@@ -88,19 +110,22 @@ export default function HTMLUsageCodeBlock() {
   const $skin = useStore(skin);
   const $renderer = useStore(renderer);
   const $muxPlaybackId = useStore(muxPlaybackId);
+  const $installMethod = useStore(installMethod);
 
   return (
     <>
-      <TabsRoot maxWidth={false}>
-        <TabsList label="HTML implementation">
-          <Tab value="javascript" initial>
-            JavaScript
-          </Tab>
-        </TabsList>
-        <TabsPanel value="javascript" initial>
-          <ClientCode code={generateJS($skin)} lang="javascript" />
-        </TabsPanel>
-      </TabsRoot>
+      {$installMethod !== 'cdn' && (
+        <TabsRoot maxWidth={false}>
+          <TabsList label="HTML implementation">
+            <Tab value="javascript" initial>
+              JavaScript
+            </Tab>
+          </TabsList>
+          <TabsPanel value="javascript" initial>
+            <ClientCode code={generateJS($useCase, $skin)} lang="javascript" />
+          </TabsPanel>
+        </TabsRoot>
+      )}
       <TabsRoot maxWidth={false}>
         <TabsList label="HTML implementation">
           <Tab value="html" initial>

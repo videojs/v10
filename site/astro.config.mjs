@@ -74,7 +74,7 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
-      exclude: ['@videojs/react-preview'],
+      exclude: ['@videojs/react-preview', '@videojs/react', '@videojs/html'],
     },
     resolve: {
       dedupe: ['react', 'react-dom'],

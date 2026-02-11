@@ -1,14 +1,56 @@
 @import "tailwindcss";
 
+/**
+ * @license
+ * MyFonts Webfont Build ID 3867246
+ *
+ * The fonts listed in this notice are subject to the End User License
+ * Agreement(s) entered into by the website owner. All other parties are
+ * explicitly restricted from using the Licensed Webfonts(s).
+ *
+ * Webfont: Eurostile LT Pro Bold by Linotype
+ * Webfont: Eurostile LT Pro Extended #2 by Linotype
+ * Webfont: Eurostile LT Pro Bold Extended #2 by Linotype
+ */
+@font-face {
+  font-family: "Eurostile LT Pro";
+  src:
+    url("https://static.mux.com/fonts/EurostileLTProBold/font.woff2") format("woff2"),
+    url("https://static.mux.com/fonts/EurostileLTProBold/font.woff") format("woff");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Eurostile LT Pro Extended";
+  src:
+    url("https://static.mux.com/fonts/EurostileLTProExtended2/font.woff2") format("woff2"),
+    url("https://static.mux.com/fonts/EurostileLTProExtended2/font.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Eurostile LT Pro Extended";
+  src:
+    url("https://static.mux.com/fonts/EurostileLTProBoldExtended2/font.woff2") format("woff2"),
+    url("https://static.mux.com/fonts/EurostileLTProBoldExtended2/font.woff") format("woff");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* before we begin with tailwind, let's go over some global rules */
 /* nested lists should have lower-alpha style */
 .list-decimal .list-decimal {
   list-style-type: lower-alpha;
 }
+
 /* slightly thinner decorations */
 * {
   text-decoration-thickness: max(0.05em, 0.05rem);
 }
+
 /* global text decoration offset */
 .font-sans {
   text-underline-offset: 0.25em;
@@ -16,15 +58,18 @@
 .font-mono {
   text-underline-offset: 0.125em;
 }
-/* ligatures */
+
+/* no ligatures in code... */
 .font-mono {
   font-variant-ligatures: none;
 }
+
 /* stuff should leave room for the nav when scroll margining */
 [id] {
   scroll-margin-top: calc(var(--nav-h) + var(--spacing) * 5 + var(--scroll-mt, 0px));
 }
-/* misc */
+
+/* basic HTML elements */
 b,
 strong {
   font-weight: var(--font-weight-semibold);
@@ -32,6 +77,15 @@ strong {
 mark {
   background-color: var(--color-yellow);
   color: var(--color-dark-100);
+}
+
+/* shiki dark mode */
+.dark .shiki,
+.dark .shiki span,
+.dark .astro-code,
+.dark .astro-code span {
+  /* biome-ignore lint/complexity/noImportantStyles: override shiki's inline styles */
+  color: var(--shiki-dark) !important;
 }
 
 /* Ok, now let's do some tailwind stuff */
@@ -46,13 +100,6 @@ mark {
 .dark * {
   color-scheme: dark;
 }
-.dark .shiki,
-.dark .shiki span,
-.dark .astro-code,
-.dark .astro-code span {
-  /* biome-ignore lint/complexity/noImportantStyles: override shiki's inline styles */
-  color: var(--shiki-dark) !important;
-}
 
 /* theme inline tells tailwind to reference the value of these properties */
 @theme inline {
@@ -60,7 +107,10 @@ mark {
   /* --font-instrument-sans and --font-ibm-plex-mono are defined in Base.astro */
   --font-sans: var(--font-instrument-sans);
   --font-mono: var(--font-ibm-plex-mono);
+  --font-display-compact: "Eurostile LT Pro", sans-serif;
+  --font-display-extended: "Eurostile LT Pro Extended", sans-serif;
 }
+
 /* Everything else can be configured here */
 @theme {
   --color-*: initial;
@@ -139,7 +189,7 @@ mark {
   --text-sm--font-weight: var(--font-weight-normal);
 
   /* Notice the use of em, so that code scales with, say, headers */
-  --text-code: 0.9375em;
+  --text-code: clamp(0.875em, calc(0.8125em + 0.125rem), 0.9375em);
   --text-code--line-height: inherit;
   --text-code--letter-spacing: -0.02em;
   --text-code--font-weight: var(--font-weight-code-normal);

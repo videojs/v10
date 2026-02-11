@@ -16,16 +16,17 @@ Video.js-specific patterns. See [videojs.md](../../references/videojs.md) for ar
 ## State vs Attrs Separation
 
 - [ ] `getState()` returns primitives only (no methods)
-- [ ] `getAttrs()` returns ARIA only (no `data-*`)
-- [ ] Data attribute enum with JSDoc for API tooling
+- [ ] `getAttrs()` returns ARIA only (no `data-*`), return type inferred
+- [ ] `getLabel()`/`getAttrs()` accept projected UI state, `toggle()` accepts raw media state
+- [ ] Data attribute map with `as const satisfies StateAttrMap<*State>` constraint
 
 ## Web Component (Lit)
 
 - [ ] Extends `MediaElement`
 - [ ] Uses `PlayerController` with selector for store subscription
 - [ ] Uses `AbortController` for cleanup in `disconnectedCallback`
-- [ ] `willUpdate`: syncs props to core via `setProps()`
-- [ ] `update`: applies attrs and state data attrs
+- [ ] `willUpdate`: syncs props to core via `setProps(this)`
+- [ ] `update`: silent null guard, project state, apply attrs and data attrs with map
 
 ## React Component
 
@@ -37,6 +38,6 @@ Video.js-specific patterns. See [videojs.md](../../references/videojs.md) for ar
 
 ## Common
 
-- [ ] Missing feature handled with `logMissingFeature()`
+- [ ] Missing feature warned with `if (__DEV__) logMissingFeature()` in `connectedCallback` (HTML) or null guard (React)
 - [ ] Web Component registered in `define/ui/` with `HTMLElementTagNameMap`
 - [ ] `static readonly tagName = 'media-{name}'`

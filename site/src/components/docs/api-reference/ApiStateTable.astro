@@ -2,21 +2,20 @@
 /**
  * Renders the state interface table for API reference.
  */
-import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import Table from '@/components/typography/Table.astro';
 import Tbody from '@/components/typography/Tbody.astro';
-import Td from '@/components/typography/Td.astro';
 import Th from '@/components/typography/Th.astro';
 import Thead from '@/components/typography/Thead.astro';
 import Tr from '@/components/typography/Tr.astro';
 import type { StateDef } from '@/types/api-reference';
-import InlineMarkdown from './InlineMarkdown.astro';
+import StateRow from './StateRow.astro';
 
 interface Props {
   state: Record<string, StateDef>;
+  componentName: string;
 }
 
-const { state } = Astro.props;
+const { state, componentName } = Astro.props;
 
 const stateEntries = Object.entries(state);
 ---
@@ -26,21 +25,19 @@ const stateEntries = Object.entries(state);
         <Tr>
             <Th>Property</Th>
             <Th>Type</Th>
-            <Th>Description</Th>
+            <Th />
         </Tr>
     </Thead>
     <Tbody>
         {
             stateEntries.map(([name, def]) => (
-                <Tr>
-                    <Td class="align-top">
-                        <MarkdownCode>{name}</MarkdownCode>
-                    </Td>
-                    <Td class="align-top">
-                        <MarkdownCode>{def.type}</MarkdownCode>
-                    </Td>
-                    <Td><InlineMarkdown content={def.description} /></Td>
-                </Tr>
+                <StateRow
+                    name={name}
+                    type={def.type}
+                    shortType={def.shortType}
+                    description={def.description}
+                    componentName={componentName}
+                />
             ))
         }
     </Tbody>

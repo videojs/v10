@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { ArrowUpRight, Menu, X } from 'lucide-react';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
 import FilmGrain from '../FilmGrain';
+import GetStartedLink from './GetStartedLink';
 
 interface NavLink {
   href: string;
@@ -74,19 +75,24 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
 
           {/* Navigation links */}
           <nav className="flex flex-col py-3">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className={clsx(
-                  'text-lg px-6 py-3',
-                  link.matchPath && currentPath.startsWith(link.matchPath) ? 'underline' : 'intent:underline'
-                )}
-                aria-current={link.matchPath && currentPath.startsWith(link.matchPath) ? 'page' : undefined}
-              >
-                {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
-              </a>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = link.matchPath && currentPath.startsWith(link.matchPath);
+              const className = clsx('text-lg px-6 py-3', isActive ? 'underline' : 'intent:underline');
+
+              if (link.href === '/docs') {
+                return (
+                  <GetStartedLink key={link.href} className={className} aria-current={isActive ? 'page' : undefined}>
+                    {link.label}
+                  </GetStartedLink>
+                );
+              }
+
+              return (
+                <a key={link.href} href={link.href} className={className} aria-current={isActive ? 'page' : undefined}>
+                  {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
+                </a>
+              );
+            })}
             <a href={GITHUB_REPO_URL} className="text-lg px-6 py-3 inline-flex items-center gap-1 intent:underline">
               GitHub <ArrowUpRight size="1em" />
             </a>

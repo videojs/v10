@@ -74,11 +74,11 @@ Start simple                          Add as needed
 ### React
 
 ```tsx
-import '@videojs/react/skin/video.css';
+import '@videojs/react/video/skin.css';
 
 import { createPlayer } from '@videojs/react';
 import { features } from '@videojs/core/dom';
-import { VideoSkin } from '@videojs/react/skin/video';
+import { VideoSkin } from '@videojs/react/video/skin';
 
 const { Provider: VideoProvider } = createPlayer({
   features: [...features.video],
@@ -98,9 +98,9 @@ function App() {
 ### HTML
 
 ```ts
-import '@videojs/html/player/video';
-import '@videojs/html/skin/video.css';
-import '@videojs/html/skin/video';
+import '@videojs/html/video/player';
+import '@videojs/html/video/skin.css';
+import '@videojs/html/video/skin';
 ```
 
 ```html

@@ -2,8 +2,7 @@ import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-import type { ElementProps } from '../../element';
-import type { FullscreenState } from '../../media/state';
+import type { MediaFullscreenState } from '../../media/state';
 
 export interface FullscreenButtonProps {
   /** Custom label for the button. */
@@ -12,9 +11,9 @@ export interface FullscreenButtonProps {
   disabled?: boolean | undefined;
 }
 
-export interface FullscreenButtonState extends Pick<FullscreenState, 'fullscreen'> {
+export interface FullscreenButtonState extends Pick<MediaFullscreenState, 'fullscreen'> {
   /** Whether fullscreen can be requested on this platform. */
-  availability: FullscreenState['fullscreenAvailability'];
+  availability: MediaFullscreenState['fullscreenAvailability'];
 }
 
 export class FullscreenButtonCore {
@@ -33,43 +32,42 @@ export class FullscreenButtonCore {
     this.#props = defaults(props, FullscreenButtonCore.defaultProps);
   }
 
-  getLabel(state: FullscreenState): string {
-    const buttonState = this.getState(state);
+  getLabel(state: FullscreenButtonState): string {
     const { label } = this.#props;
 
     if (isFunction(label)) {
-      const customLabel = label(buttonState);
+      const customLabel = label(state);
       if (customLabel) return customLabel;
     } else if (label) {
       return label;
     }
 
-    return buttonState.fullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
+    return state.fullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
   }
 
-  getAttrs(state: FullscreenState): ElementProps {
+  getAttrs(state: FullscreenButtonState) {
     return {
       'aria-label': this.getLabel(state),
       'aria-disabled': this.#props.disabled ? 'true' : undefined,
     };
   }
 
-  getState(state: FullscreenState): FullscreenButtonState {
+  getState(media: MediaFullscreenState): FullscreenButtonState {
     return {
-      fullscreen: state.fullscreen,
-      availability: state.fullscreenAvailability,
+      fullscreen: media.fullscreen,
+      availability: media.fullscreenAvailability,
     };
   }
 
-  async toggle(state: FullscreenState): Promise<void> {
+  async toggle(media: MediaFullscreenState): Promise<void> {
     if (this.#props.disabled) return;
-    if (state.fullscreenAvailability !== 'available') return;
+    if (media.fullscreenAvailability !== 'available') return;
 
     try {
-      if (state.fullscreen) {
-        await state.exitFullscreen();
+      if (media.fullscreen) {
+        await media.exitFullscreen();
       } else {
-        await state.requestFullscreen();
+        await media.requestFullscreen();
       }
     } catch {
       // Fullscreen requests can fail (user gesture required, permissions, etc.)

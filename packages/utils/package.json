@@ -48,14 +48,14 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "build:watch": "tsdown --watch --silent",
+    "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "rm -rf dist types"
   },
   "devDependencies": {
-    "tsdown": "^0.15.12",
+    "tsdown": "^0.20.3",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   },

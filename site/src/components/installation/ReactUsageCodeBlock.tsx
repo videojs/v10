@@ -5,7 +5,8 @@ import type { Renderer } from '@/stores/installation';
 import { muxPlaybackId, renderer } from '@/stores/installation';
 
 function generateUsageCode(renderer: Renderer, playbackId: string | null): string {
-  const isMuxWithPlaybackId = renderer === 'mux' && playbackId;
+  const isMuxWithPlaybackId =
+    (renderer === 'mux-video' || renderer === 'mux-audio' || renderer === 'mux-background-video') && playbackId;
   const playerProp = isMuxWithPlaybackId ? `playbackId="${playbackId}"` : 'src="https://example.com/video.mp4"';
 
   return `import { MyPlayer } from '../components/player';

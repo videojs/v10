@@ -229,7 +229,7 @@ Mutations are auto-batched—multiple changes in the same tick trigger only one 
 
 ## Cancellation Signals
 
-Use `signals` to manage cancellation for async operations. The store provides a `Signals` instance that tracks the attach lifecycle and supports keyed cancellation for superseding work.
+Use `signals` to manage cancellation for async operations. The store provides an `AbortControllerRegistry` instance that tracks the attach lifecycle and supports keyed cancellation for superseding work.
 
 ```ts
 state: ({ target, signals }) => ({
