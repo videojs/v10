@@ -45,7 +45,7 @@ describe('createPlaybackEngine', () => {
     });
 
     // Wait for microtask queue to drain (patches are batched)
-    await new Promise((resolve) => queueMicrotask(resolve));
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
 
     expect(engine.owners.current.mediaElement).toBe(mediaElement);
     expect(engine.state.current.presentation?.url).toBe('https://example.com/playlist.m3u8');
@@ -432,7 +432,7 @@ http://example.com/video-seg1.m4s
     engine.destroy();
   });
 
-  it('does not create MediaSource without mediaElement', async () => {
+  it('resolves presentation and tracks but not MediaSource without mediaElement', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
 
