@@ -101,7 +101,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
           'inline-flex items-center justify-center'
         )}
       >
-        Copy page
+        Copy as Markdown
       </span>
       <span
         className={clsx(
