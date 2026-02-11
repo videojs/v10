@@ -1,7 +1,18 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPlaybackEngine } from '../playback-engine';
 
 describe('createPlaybackEngine', () => {
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    // Save original fetch
+    originalFetch = globalThis.fetch;
+  });
+
+  afterEach(() => {
+    // Restore original fetch
+    globalThis.fetch = originalFetch;
+  });
   it('creates engine with state, owners, and events', () => {
     const engine = createPlaybackEngine();
 
@@ -71,12 +82,14 @@ describe('createPlaybackEngine', () => {
   });
 
   it('resolves presentation when URL and preload are patched', async () => {
-    // Mock fetch to return simple multivariant playlist
-    const mockFetch = vi.fn().mockResolvedValue(
-      new Response(`#EXTM3U
+    // Mock fetch to return fresh Response for each call
+    const mockFetch = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(`#EXTM3U
 #EXT-X-VERSION:7
 #EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E",RESOLUTION=640x360
 http://example.com/video-360p.m3u8`)
+      )
     );
     globalThis.fetch = mockFetch;
 
