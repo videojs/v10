@@ -17,10 +17,9 @@
       "development": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./dom/playback-engine": {
-      "types": "./dist/dom/playback-engine.d.ts",
-      "development": "./dist/dom/playback-engine.js",
-      "default": "./dist/dom/playback-engine.js"
+    "./playback-engine": {
+      "types": "./dist/playback-engine.d.ts",
+      "default": "./dist/playback-engine.js"
     }
   },
   "main": "dist/index.js",
