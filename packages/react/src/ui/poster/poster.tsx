@@ -1,6 +1,6 @@
 'use client';
 
-import { PosterCore } from '@videojs/core';
+import { PosterCore, PosterDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
@@ -36,7 +36,7 @@ export const Poster = forwardRef(function Poster(
   const [core] = useState(() => new PosterCore());
 
   if (!playback) {
-    logMissingFeature('Poster', 'playback');
+    if (__DEV__) logMissingFeature('Poster', 'playback');
     return null;
   }
 
@@ -45,6 +45,7 @@ export const Poster = forwardRef(function Poster(
     { render, className, style },
     {
       state: core.getState(playback),
+      stateAttrMap: PosterDataAttrs,
       ref: [forwardedRef],
       props: [elementProps],
     }

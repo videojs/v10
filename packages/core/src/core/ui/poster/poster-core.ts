@@ -1,12 +1,11 @@
-import type { PlaybackState } from '../../media/state';
+import type { MediaPlaybackState } from '../../media/state';
 
 export interface PosterState {
-  /** Whether the poster should be visible (playback has not started). */
   visible: boolean;
 }
 
 export class PosterCore {
-  getState(playback: PlaybackState): PosterState {
+  getState(playback: MediaPlaybackState): PosterState {
     return {
       visible: !playback.started,
     };

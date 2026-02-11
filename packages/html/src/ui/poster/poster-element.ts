@@ -1,5 +1,5 @@
 import type { PropertyValues } from '@lit/reactive-element';
-import { PosterCore } from '@videojs/core';
+import { PosterCore, PosterDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectPlayback } from '@videojs/core/dom';
 
 import { playerContext } from '../../player/context';
@@ -15,7 +15,7 @@ export class PosterElement extends MediaElement {
   override connectedCallback(): void {
     super.connectedCallback();
 
-    if (!this.#state.value) {
+    if (__DEV__ && !this.#state.value) {
       logMissingFeature(PosterElement.tagName, 'playback');
     }
   }
@@ -29,6 +29,6 @@ export class PosterElement extends MediaElement {
       return;
     }
 
-    applyStateDataAttrs(this, this.#core.getState(state));
+    applyStateDataAttrs(this, this.#core.getState(state), PosterDataAttrs);
   }
 }
