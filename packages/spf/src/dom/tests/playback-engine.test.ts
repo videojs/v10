@@ -88,10 +88,7 @@ http://example.com/video-360p.m3u8`)
       preload: 'auto',
     });
 
-    // Dispatch event to trigger combineLatest
-    engine.events.dispatch({ type: 'play' });
-
-    // Wait for presentation to be resolved
+    // Wait for presentation to be resolved (no event needed - state-driven)
     await vi.waitFor(
       () => {
         const { presentation } = engine.state.current;
