@@ -78,6 +78,15 @@ export interface PlaybackEngine {
   owners: ReturnType<typeof createState<PlaybackEngineOwners>>;
 
   /**
+   * Shared event stream (for inspection/testing/triggering events).
+   */
+  events: ReturnType<
+    typeof createEventStream<
+      { type: 'play' } | { type: 'pause' } | { type: 'load'; url: string } | { type: 'presentation-loaded' }
+    >
+  >;
+
+  /**
    * Cleanup function to destroy all orchestrations.
    */
   destroy: () => void;
@@ -121,27 +130,26 @@ export function createPlaybackEngine(config: PlaybackEngineConfig): PlaybackEngi
     mediaElement: config.mediaElement,
   });
 
-  // Create event streams for orchestrations
-  const presentationEvents = createEventStream<{ type: 'play' } | { type: 'pause' } | { type: 'load'; url: string }>();
-  const videoTrackEvents = createEventStream<{ type: 'play' } | { type: 'pause' }>();
-  const audioTrackEvents = createEventStream<{ type: 'play' } | { type: 'pause' }>();
-  const trackSelectionEvents = createEventStream<{ type: 'presentation-loaded' }>();
+  // Create single shared event stream
+  const events = createEventStream<
+    { type: 'play' } | { type: 'pause' } | { type: 'load'; url: string } | { type: 'presentation-loaded' }
+  >();
 
-  // Wire up orchestrations
+  // Wire up orchestrations (all share single event stream)
   const cleanups = [
     // 1. Resolve presentation (URL already in state)
-    resolvePresentation({ state, events: presentationEvents }),
+    resolvePresentation({ state, events: events as any }),
 
     // 2. Select initial tracks (when presentation loads)
     selectVideoTrack(
-      { state, owners: owners as any, events: trackSelectionEvents },
+      { state, owners: owners as any, events: events as any },
       {
         type: 'video',
         ...(config.initialBandwidth !== undefined && { initialBandwidth: config.initialBandwidth }),
       }
     ),
     selectAudioTrack(
-      { state, owners: owners as any, events: trackSelectionEvents },
+      { state, owners: owners as any, events: events as any },
       {
         type: 'audio',
         ...(config.preferredAudioLanguage !== undefined && { preferredAudioLanguage: config.preferredAudioLanguage }),
@@ -149,8 +157,8 @@ export function createPlaybackEngine(config: PlaybackEngineConfig): PlaybackEngi
     ),
 
     // 3. Resolve selected tracks (fetch media playlists)
-    resolveTrack({ state, events: videoTrackEvents }, { type: 'video' as const }),
-    resolveTrack({ state, events: audioTrackEvents }, { type: 'audio' as const }),
+    resolveTrack({ state, events: events as any }, { type: 'video' as const }),
+    resolveTrack({ state, events: events as any }, { type: 'audio' as const }),
 
     // 4. Setup MediaSource (when presentation loaded)
     setupMediaSource({ state, owners }),
@@ -161,12 +169,13 @@ export function createPlaybackEngine(config: PlaybackEngineConfig): PlaybackEngi
   ];
 
   // Trigger initial presentation load
-  presentationEvents.dispatch({ type: 'load', url: config.url });
+  events.dispatch({ type: 'load', url: config.url });
 
   // Return engine instance
   return {
     state,
     owners,
+    events,
     destroy: () => {
       cleanups.forEach((cleanup) => cleanup());
     },
