@@ -1,8 +1,8 @@
-import { isUndefined } from '@videojs/utils/predicate';
 import { DEFAULT_QUALITY_CONFIG, selectQuality } from '../abr/quality-selection';
-import { combineLatest } from '../reactive/combine-latest';
+import type { EventStream } from '../events/create-event-stream';
 import type { WritableState } from '../state/create-state';
-import type { AudioSelectionSet, Presentation, VideoSelectionSet } from '../types';
+import type { AudioSelectionSet, Presentation, TrackType, VideoSelectionSet } from '../types';
+import { SelectedTrackIdKeyByType } from '../utils/track-selection';
 
 /**
  * Default initial bandwidth estimate for cold start (bits per second).
@@ -11,9 +11,9 @@ import type { AudioSelectionSet, Presentation, VideoSelectionSet } from '../type
 export const DEFAULT_INITIAL_BANDWIDTH = 1_000_000;
 
 /**
- * State shape for initial quality selection.
+ * State shape for track selection.
  */
-export interface InitialQualityState {
+export interface TrackSelectionState {
   presentation?: Presentation;
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
@@ -21,21 +21,36 @@ export interface InitialQualityState {
 }
 
 /**
- * Configuration for initial quality selection.
+ * Owners shape for track selection.
+ * Currently empty - reserved for future use (e.g., bandwidth estimator).
  */
-export interface InitialQualityConfig {
+export type TrackSelectionOwners = Record<string, never>;
+
+/**
+ * Action types for track selection.
+ * Reserved for future event-driven selection triggers.
+ */
+export type TrackSelectionAction = { type: 'presentation-loaded' };
+
+/**
+ * Base configuration for track selection.
+ * Generic over track type with discriminant `type` field.
+ */
+export interface TrackSelectionConfig<T extends TrackType = TrackType> {
+  type: T;
+}
+
+/**
+ * Configuration for video track selection.
+ * Generic with default to 'video' for convenience.
+ */
+export interface VideoSelectionConfig<T extends TrackType = 'video'> extends TrackSelectionConfig<T> {
   /**
    * Initial bandwidth estimate for cold start (bits per second).
    * Used to select video quality before we have real measurements.
    * Default: 1 Mbps (conservative).
    */
   initialBandwidth?: number;
-
-  /**
-   * Preferred audio language (ISO 639 code, e.g., "en", "es").
-   * If not specified, selects first audio track.
-   */
-  preferredAudioLanguage?: string;
 
   /**
    * Safety margin for quality selection (0-1).
@@ -45,36 +60,31 @@ export interface InitialQualityConfig {
 }
 
 /**
- * Check if we can select initial quality.
- *
- * Requires:
- * - Presentation exists
- * - No tracks selected yet (initial selection only)
+ * Configuration for audio track selection.
+ * Generic with default to 'audio' for convenience.
  */
-export function canSelectInitialQuality(state: InitialQualityState): boolean {
-  if (!state.presentation) {
-    return false;
-  }
-
-  // Only select if no tracks are selected yet (initial selection only)
-  const hasSelection =
-    !isUndefined(state.selectedVideoTrackId) ||
-    !isUndefined(state.selectedAudioTrackId) ||
-    !isUndefined(state.selectedTextTrackId);
-
-  return !hasSelection;
+export interface AudioSelectionConfig<T extends TrackType = 'audio'> extends TrackSelectionConfig<T> {
+  /**
+   * Preferred audio language (ISO 639 code, e.g., "en", "es").
+   * If not specified, selects first audio track.
+   */
+  preferredAudioLanguage?: string;
 }
 
 /**
- * Check if we should proceed with initial quality selection.
- * Currently always returns true when conditions are met.
+ * Configuration for text track selection.
+ * Generic with default to 'text' for convenience.
  */
-export function shouldSelectInitialQuality(_state: InitialQualityState): boolean {
-  return true;
+export interface TextSelectionConfig<T extends TrackType = 'text'> extends TrackSelectionConfig<T> {
+  // No additional options yet - reserved for future use
 }
 
+// =============================================================================
+// Helper Functions (Pure Selection Logic)
+// =============================================================================
+
 /**
- * Select video track using quality selection algorithm.
+ * Pick video track using quality selection algorithm.
  *
  * Uses bandwidth-based selection with safety margin to pick
  * the highest quality track that fits available bandwidth.
@@ -83,7 +93,7 @@ export function shouldSelectInitialQuality(_state: InitialQualityState): boolean
  * @param config - Selection configuration (bandwidth, safety margin)
  * @returns Selected video track ID, or undefined if no video tracks
  */
-export function selectVideoTrack(presentation: Presentation, config: InitialQualityConfig): string | undefined {
+export function pickVideoTrack(presentation: Presentation, config: VideoSelectionConfig): string | undefined {
   const videoSet = presentation.selectionSets.find((set) => set.type === 'video') as VideoSelectionSet | undefined;
 
   if (!videoSet || videoSet.switchingSets.length === 0) {
@@ -106,7 +116,7 @@ export function selectVideoTrack(presentation: Presentation, config: InitialQual
 }
 
 /**
- * Select audio track.
+ * Pick audio track.
  *
  * Selection priority:
  * 1. First track matching preferred language (if specified)
@@ -117,7 +127,7 @@ export function selectVideoTrack(presentation: Presentation, config: InitialQual
  * @param config - Selection configuration (preferred language)
  * @returns Selected audio track ID, or undefined if no audio tracks
  */
-export function selectAudioTrack(presentation: Presentation, config: InitialQualityConfig): string | undefined {
+export function pickAudioTrack(presentation: Presentation, config: AudioSelectionConfig): string | undefined {
   const audioSet = presentation.selectionSets.find((set) => set.type === 'audio') as AudioSelectionSet | undefined;
 
   if (!audioSet || audioSet.switchingSets.length === 0) {
@@ -151,7 +161,7 @@ export function selectAudioTrack(presentation: Presentation, config: InitialQual
 }
 
 /**
- * Select text track.
+ * Pick text track.
  *
  * Note: Text tracks (captions/subtitles) are typically user opt-in,
  * so this returns undefined by default. Future enhancement could support
@@ -161,58 +171,179 @@ export function selectAudioTrack(presentation: Presentation, config: InitialQual
  * @param config - Selection configuration (unused for now)
  * @returns undefined (no auto-selection)
  */
-export function selectTextTrack(_presentation: Presentation, _config: InitialQualityConfig): string | undefined {
+export function pickTextTrack(_presentation: Presentation, _config: TextSelectionConfig): string | undefined {
   // Text tracks are user opt-in - don't auto-select
   return undefined;
 }
 
 /**
- * Initial quality selection orchestration.
+ * Check if we can select a track of the given type.
  *
- * Selects initial tracks when presentation is first loaded:
- * - Video: Uses bandwidth-based quality selection
- * - Audio: Prefers user language or default track
- * - Text: No auto-selection (user opt-in)
+ * Returns true when:
+ * - Presentation exists
+ * - Has tracks of the specified type
  *
- * Only runs once on initial presentation load. Track changes after
- * initial selection are handled by other orchestrations (ABR, user selection).
+ * Generic over track type - works for video, audio, or text.
+ */
+export function canSelectTrack<T extends TrackType>(
+  state: TrackSelectionState,
+  config: TrackSelectionConfig<T>
+): boolean {
+  return !!state?.presentation?.selectionSets?.find(({ type }) => type === config.type)?.switchingSets?.[0]?.tracks
+    .length;
+}
+
+/**
+ * Check if we should select a track of the given type.
+ *
+ * Returns true when:
+ * - Track of this type is not already selected
+ *
+ * Generic over track type - works for video, audio, or text.
+ *
+ * @TODO figure out reactive model for ABR cases - right now we're only selecting
+ * if we have nothing selected (CJP)
+ */
+export function shouldSelectTrack<T extends TrackType>(
+  state: TrackSelectionState,
+  config: TrackSelectionConfig<T>
+): boolean {
+  return !state[SelectedTrackIdKeyByType[config.type]];
+}
+
+// =============================================================================
+// Orchestrations
+// =============================================================================
+
+/**
+ * Select video track orchestration.
+ *
+ * Selects video track when:
+ * - Presentation exists
+ * - No video track is selected yet
+ *
+ * Uses bandwidth-based quality selection algorithm.
  *
  * @example
- * const state = createState({ presentation });
- * const cleanup = selectInitialQuality(
- *   { state },
- *   { initialBandwidth: 2_000_000, preferredAudioLanguage: 'en' }
+ * const cleanup = selectVideoTrack(
+ *   { state, owners, events },
+ *   { initialBandwidth: 2_000_000 }
  * );
  */
-export function selectInitialQuality(
-  { state }: { state: WritableState<InitialQualityState> },
-  config: InitialQualityConfig = {}
+export function selectVideoTrack(
+  {
+    state,
+  }: {
+    state: WritableState<TrackSelectionState>;
+    owners: WritableState<TrackSelectionOwners>;
+    events: EventStream<TrackSelectionAction>;
+  },
+  config: VideoSelectionConfig = { type: 'video' }
 ): () => void {
   let selecting = false;
 
-  return combineLatest([state]).subscribe(async ([s]: [InitialQualityState]) => {
-    // Check conditions
-    if (selecting) return;
-    if (!canSelectInitialQuality(s) || !shouldSelectInitialQuality(s)) return;
+  return state.subscribe(async (currentState: TrackSelectionState) => {
+    /** @TODO figure out reactive model for ABR cases (CJP) */
+    if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config) || selecting) return;
 
     try {
       selecting = true;
 
-      const { presentation } = s;
+      // Just to have basic functionality/POC, simply selecting the first track
+      const selectedTrackId = currentState.presentation?.selectionSets.find(({ type }) => type === config.type)
+        ?.switchingSets[0]?.tracks[0]?.id;
 
-      // Select tracks using generic selection functions
-      const selectedVideoTrackId = selectVideoTrack(presentation!, config);
-      const selectedAudioTrackId = selectAudioTrack(presentation!, config);
-      const selectedTextTrackId = selectTextTrack(presentation!, config);
+      if (selectedTrackId) {
+        const selectedTrackKey = SelectedTrackIdKeyByType[config.type];
+        state.patch({ [selectedTrackKey]: selectedTrackId });
+      }
+    } finally {
+      selecting = false;
+    }
+  });
+}
 
-      // Patch state with selections (only patch defined values)
-      const updates: Partial<InitialQualityState> = {};
-      if (selectedVideoTrackId) updates.selectedVideoTrackId = selectedVideoTrackId;
-      if (selectedAudioTrackId) updates.selectedAudioTrackId = selectedAudioTrackId;
-      if (selectedTextTrackId) updates.selectedTextTrackId = selectedTextTrackId;
+/**
+ * Select audio track orchestration.
+ *
+ * Selects audio track when:
+ * - Presentation exists
+ * - No audio track is selected yet
+ *
+ * Uses language and preference-based selection.
+ *
+ * @example
+ * const cleanup = selectAudioTrack(
+ *   { state, owners, events },
+ *   { preferredAudioLanguage: 'en' }
+ * );
+ */
+export function selectAudioTrack(
+  {
+    state,
+  }: {
+    state: WritableState<TrackSelectionState>;
+    owners: WritableState<TrackSelectionOwners>;
+    events: EventStream<TrackSelectionAction>;
+  },
+  config: AudioSelectionConfig = { type: 'audio' }
+): () => void {
+  let selecting = false;
 
-      if (Object.keys(updates).length > 0) {
-        state.patch(updates);
+  return state.subscribe(async (currentState: TrackSelectionState) => {
+    if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config) || selecting) return;
+
+    try {
+      selecting = true;
+
+      // Just to have basic functionality/POC, simply selecting the first track
+      const selectedTrackId = currentState.presentation?.selectionSets.find(({ type }) => type === 'audio')
+        ?.switchingSets[0]?.tracks[0]?.id;
+
+      if (selectedTrackId) {
+        state.patch({ selectedAudioTrackId: selectedTrackId });
+      }
+    } finally {
+      selecting = false;
+    }
+  });
+}
+
+/**
+ * Select text track orchestration.
+ *
+ * Selects text track when:
+ * - Presentation exists
+ * - No text track is selected yet
+ *
+ * Note: Currently does not auto-select (user opt-in).
+ *
+ * @example
+ * const cleanup = selectTextTrack({ state, owners, events }, {});
+ */
+export function selectTextTrack(
+  {
+    state,
+  }: {
+    state: WritableState<TrackSelectionState>;
+    owners: WritableState<TrackSelectionOwners>;
+    events: EventStream<TrackSelectionAction>;
+  },
+  config: TextSelectionConfig = { type: 'text' }
+): () => void {
+  let selecting = false;
+
+  return state.subscribe(async (currentState: TrackSelectionState) => {
+    if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config) || selecting) return;
+
+    try {
+      selecting = true;
+
+      // Text tracks are user opt-in - don't auto-select
+      const selectedTextTrackId = pickTextTrack(currentState.presentation!, config);
+
+      if (selectedTextTrackId) {
+        state.patch({ selectedTextTrackId });
       }
     } finally {
       selecting = false;
