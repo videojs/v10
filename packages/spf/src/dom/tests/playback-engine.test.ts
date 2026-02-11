@@ -23,7 +23,7 @@ describe('createPlaybackEngine', () => {
     engine.destroy();
   });
 
-  it('allows patching state and owners from outside', () => {
+  it('allows patching state and owners from outside', async () => {
     const engine = createPlaybackEngine();
 
     const mediaElement = document.createElement('video');
@@ -32,6 +32,9 @@ describe('createPlaybackEngine', () => {
       presentation: { url: 'https://example.com/playlist.m3u8' },
       preload: 'auto',
     });
+
+    // Wait for microtask queue to drain (patches are batched)
+    await new Promise((resolve) => queueMicrotask(resolve));
 
     expect(engine.owners.current.mediaElement).toBe(mediaElement);
     expect(engine.state.current.presentation?.url).toBe('https://example.com/playlist.m3u8');
