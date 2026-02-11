@@ -498,8 +498,46 @@ http://example.com/video-seg1.m4s
     engine.destroy();
   });
 
-  it('does not auto-resolve with preload: "none"', async () => {
-    const mockFetch = vi.fn();
+  it('defers resolution with preload: "none" until play event', async () => {
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en",CHANNELS="2",URI="http://example.com/audio-en.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E,mp4a.40.2",AUDIO="audio",RESOLUTION=640x360
+http://example.com/video-360p.m3u8`)
+        );
+      }
+
+      if (url.includes('video-360p.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video.mp4"
+#EXTINF:10.0,
+http://example.com/video-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      if (url.includes('audio-en.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-audio.mp4"
+#EXTINF:10.0,
+http://example.com/audio-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
     globalThis.fetch = mockFetch;
 
     const engine = createPlaybackEngine();
@@ -511,14 +549,38 @@ http://example.com/video-seg1.m4s
       preload: 'none',
     });
 
-    // Wait to ensure orchestrations don't trigger
+    // PHASE 1: Verify nothing auto-resolves
     await new Promise((resolve) => setTimeout(resolve, 200));
 
-    const state = engine.state.current;
+    let state = engine.state.current;
 
-    // Should NOT resolve presentation with preload: 'none'
     expect(state.presentation?.selectionSets).toBeUndefined();
     expect(mockFetch).not.toHaveBeenCalled();
+
+    // PHASE 2: Dispatch play event to trigger orchestrations
+    engine.events.dispatch({ type: 'play' });
+
+    // Wait for complete orchestration
+    await vi.waitFor(
+      () => {
+        state = engine.state.current;
+        const owners = engine.owners.current;
+
+        // Now everything should be resolved and created
+        expect(state.presentation?.selectionSets).toBeDefined();
+        expect(state.selectedVideoTrackId).toBeDefined();
+        expect(state.selectedAudioTrackId).toBeDefined();
+
+        expect(owners.mediaSource).toBeDefined();
+        expect(owners.mediaSource?.readyState).toBe('open');
+        expect(owners.videoBuffer).toBeDefined();
+        expect(owners.audioBuffer).toBeDefined();
+      },
+      { timeout: 2000 }
+    );
+
+    // Fetch should have been called for multivariant + 2 media playlists
+    expect(mockFetch).toHaveBeenCalled();
 
     engine.destroy();
   });
