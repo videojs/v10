@@ -1,39 +1,39 @@
 import { describe, expect, it } from 'vitest';
 import { createState } from '../../../core/state/create-state';
 import {
-  activateTextTrack,
-  canActivateTextTrack,
-  type TextTrackActivationOwners,
-  type TextTrackActivationState,
-} from '../activate-text-track';
+  canSyncTextTrackModes,
+  syncTextTrackModes,
+  type TextTrackModeOwners,
+  type TextTrackModeState,
+} from '../sync-text-track-modes';
 
-describe('activateTextTrack', () => {
-  describe('canActivateTextTrack', () => {
+describe('syncTextTrackModes', () => {
+  describe('canSyncTextTrackModes', () => {
     it('returns false when no textTracks map', () => {
-      const owners: TextTrackActivationOwners = {};
+      const owners: TextTrackModeOwners = {};
 
-      expect(canActivateTextTrack(owners)).toBe(false);
+      expect(canSyncTextTrackModes(owners)).toBe(false);
     });
 
     it('returns false when textTracks map is empty', () => {
-      const owners: TextTrackActivationOwners = {
+      const owners: TextTrackModeOwners = {
         textTracks: new Map(),
       };
 
-      expect(canActivateTextTrack(owners)).toBe(false);
+      expect(canSyncTextTrackModes(owners)).toBe(false);
     });
 
     it('returns true when textTracks map has entries', () => {
       const trackElement = document.createElement('track');
-      const owners: TextTrackActivationOwners = {
+      const owners: TextTrackModeOwners = {
         textTracks: new Map([['track-1', trackElement]]),
       };
 
-      expect(canActivateTextTrack(owners)).toBe(true);
+      expect(canSyncTextTrackModes(owners)).toBe(true);
     });
   });
 
-  describe('activateTextTrack orchestration', () => {
+  describe('syncTextTrackModes orchestration', () => {
     it('sets selected track mode to "showing"', async () => {
       const mediaElement = document.createElement('video');
 
@@ -53,15 +53,15 @@ describe('activateTextTrack', () => {
       // Wait for tracks to be ready
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      const state = createState<TextTrackActivationState>({});
-      const owners = createState<TextTrackActivationOwners>({
+      const state = createState<TextTrackModeState>({});
+      const owners = createState<TextTrackModeOwners>({
         textTracks: new Map([
           ['track-en', track1],
           ['track-es', track2],
         ]),
       });
 
-      const cleanup = activateTextTrack({ state, owners });
+      const cleanup = syncTextTrackModes({ state, owners });
 
       // Select first track
       state.patch({ selectedTextTrackId: 'track-en' });
@@ -91,15 +91,15 @@ describe('activateTextTrack', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      const state = createState<TextTrackActivationState>({});
-      const owners = createState<TextTrackActivationOwners>({
+      const state = createState<TextTrackModeState>({});
+      const owners = createState<TextTrackModeOwners>({
         textTracks: new Map([
           ['track-en', track1],
           ['track-es', track2],
         ]),
       });
 
-      const cleanup = activateTextTrack({ state, owners });
+      const cleanup = syncTextTrackModes({ state, owners });
 
       // Select first track
       state.patch({ selectedTextTrackId: 'track-en' });
@@ -133,15 +133,15 @@ describe('activateTextTrack', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      const state = createState<TextTrackActivationState>({});
-      const owners = createState<TextTrackActivationOwners>({
+      const state = createState<TextTrackModeState>({});
+      const owners = createState<TextTrackModeOwners>({
         textTracks: new Map([
           ['track-en', track1],
           ['track-es', track2],
         ]),
       });
 
-      const cleanup = activateTextTrack({ state, owners });
+      const cleanup = syncTextTrackModes({ state, owners });
 
       // First select a track
       state.patch({ selectedTextTrackId: 'track-en' });
@@ -161,11 +161,11 @@ describe('activateTextTrack', () => {
     });
 
     it('does nothing when textTracks not available', async () => {
-      const state = createState<TextTrackActivationState>({ selectedTextTrackId: 'track-en' });
-      const owners = createState<TextTrackActivationOwners>({});
+      const state = createState<TextTrackModeState>({ selectedTextTrackId: 'track-en' });
+      const owners = createState<TextTrackModeOwners>({});
 
       // Should not throw
-      const cleanup = activateTextTrack({ state, owners });
+      const cleanup = syncTextTrackModes({ state, owners });
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -183,10 +183,10 @@ describe('activateTextTrack', () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Select track BEFORE creating owners with textTracks
-      const state = createState<TextTrackActivationState>({ selectedTextTrackId: 'track-en' });
-      const owners = createState<TextTrackActivationOwners>({});
+      const state = createState<TextTrackModeState>({ selectedTextTrackId: 'track-en' });
+      const owners = createState<TextTrackModeOwners>({});
 
-      const cleanup = activateTextTrack({ state, owners });
+      const cleanup = syncTextTrackModes({ state, owners });
 
       // Later, add textTracks
       owners.patch({

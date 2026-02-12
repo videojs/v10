@@ -2,31 +2,31 @@ import { combineLatest } from '../../core/reactive/combine-latest';
 import type { WritableState } from '../../core/state/create-state';
 
 /**
- * State shape for text track activation.
+ * State shape for text track mode synchronization.
  */
-export interface TextTrackActivationState {
-  selectedTextTrackId?: string;
+export interface TextTrackModeState {
+  selectedTextTrackId?: string | undefined;
 }
 
 /**
- * Owners shape for text track activation.
+ * Owners shape for text track mode synchronization.
  */
-export interface TextTrackActivationOwners {
+export interface TextTrackModeOwners {
   textTracks?: Map<string, HTMLTrackElement>;
 }
 
 /**
- * Check if we can activate text tracks.
+ * Check if we can sync text track modes.
  *
  * Requires:
  * - textTracks map exists (track elements created)
  */
-export function canActivateTextTrack(owners: TextTrackActivationOwners): boolean {
+export function canSyncTextTrackModes(owners: TextTrackModeOwners): boolean {
   return !!owners.textTracks && owners.textTracks.size > 0;
 }
 
 /**
- * Activate text track orchestration.
+ * Sync text track modes orchestration.
  *
  * Manages track element modes based on selectedTextTrackId:
  * - Selected track: mode = "showing"
@@ -37,18 +37,18 @@ export function canActivateTextTrack(owners: TextTrackActivationOwners): boolean
  * so they remain available in the browser's track menu.
  *
  * @example
- * const cleanup = activateTextTrack({ state, owners });
+ * const cleanup = syncTextTrackModes({ state, owners });
  */
-export function activateTextTrack({
+export function syncTextTrackModes({
   state,
   owners,
 }: {
-  state: WritableState<TextTrackActivationState>;
-  owners: WritableState<TextTrackActivationOwners>;
+  state: WritableState<TextTrackModeState>;
+  owners: WritableState<TextTrackModeOwners>;
 }): () => void {
-  return combineLatest([state, owners]).subscribe(([s, o]: [TextTrackActivationState, TextTrackActivationOwners]) => {
+  return combineLatest([state, owners]).subscribe(([s, o]: [TextTrackModeState, TextTrackModeOwners]) => {
     // Check orchestration conditions
-    if (!canActivateTextTrack(o)) return;
+    if (!canSyncTextTrackModes(o)) return;
 
     const selectedId = s.selectedTextTrackId;
 
