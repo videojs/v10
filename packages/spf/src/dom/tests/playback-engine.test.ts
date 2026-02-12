@@ -696,4 +696,460 @@ http://example.com/seg1.m4s
 
     engine.destroy();
   });
+
+  it('manually selects text track via patch()', async () => {
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="http://example.com/text-en.m3u8"
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Spanish",LANGUAGE="es",URI="http://example.com/text-es.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E",SUBTITLES="subs",RESOLUTION=640x360
+http://example.com/video-360p.m3u8`)
+        );
+      }
+
+      if (url.includes('video-360p.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video.mp4"
+#EXTINF:10.0,
+http://example.com/video-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      // Text track playlists (VTT segments)
+      if (url.includes('text-en.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+http://example.com/text-en-seg1.vtt
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      if (url.includes('text-es.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+http://example.com/text-es-seg1.vtt
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
+    globalThis.fetch = mockFetch;
+
+    const engine = createPlaybackEngine();
+    const mediaElement = document.createElement('video');
+
+    engine.owners.patch({ mediaElement });
+    engine.state.patch({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: 'auto',
+    });
+
+    // Wait for presentation to be resolved
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+        expect(state.presentation?.selectionSets).toBeDefined();
+        const textSet = state.presentation?.selectionSets?.find((s: any) => s.type === 'text');
+        expect(textSet?.switchingSets?.[0]?.tracks.length).toBeGreaterThan(0);
+      },
+      { timeout: 2000 }
+    );
+
+    // Get text track IDs
+    const textSet = engine.state.current.presentation?.selectionSets?.find((s: any) => s.type === 'text');
+    const textTracks = textSet?.switchingSets?.[0]?.tracks;
+    expect(textTracks?.length).toBe(2);
+
+    const englishTrack = textTracks?.find((t: any) => t.language === 'en');
+    expect(englishTrack).toBeDefined();
+
+    // Manually select English text track
+    engine.state.patch({
+      selectedTextTrackId: englishTrack!.id,
+    });
+
+    // Wait for text track to be resolved
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+        expect(state.selectedTextTrackId).toBe(englishTrack!.id);
+
+        // Text track should be resolved (has segments)
+        const resolvedTextTrack = state.presentation?.selectionSets
+          ?.find((s: any) => s.type === 'text')
+          ?.switchingSets?.[0]?.tracks?.find((t: any) => t.id === state.selectedTextTrackId);
+        expect(resolvedTextTrack?.segments).toBeDefined();
+        expect(resolvedTextTrack?.segments?.length).toBeGreaterThan(0);
+      },
+      { timeout: 2000 }
+    );
+
+    engine.destroy();
+  });
+
+  it('auto-selects DEFAULT text track when enableDefaultTrack is true', async () => {
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="http://example.com/text-en.m3u8"
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Spanish",LANGUAGE="es",URI="http://example.com/text-es.m3u8",DEFAULT=YES,AUTOSELECT=YES
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E",SUBTITLES="subs",RESOLUTION=640x360
+http://example.com/video-360p.m3u8`)
+        );
+      }
+
+      if (url.includes('video-360p.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video.mp4"
+#EXTINF:10.0,
+http://example.com/video-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      // Text track playlists (VTT segments)
+      if (url.includes('text-es.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+http://example.com/text-es-seg1.vtt
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
+    globalThis.fetch = mockFetch;
+
+    const engine = createPlaybackEngine({
+      enableDefaultTrack: true,
+    });
+    const mediaElement = document.createElement('video');
+
+    engine.owners.patch({ mediaElement });
+    engine.state.patch({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: 'auto',
+    });
+
+    // Wait for DEFAULT text track to be auto-selected and resolved
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+        expect(state.presentation?.selectionSets).toBeDefined();
+
+        // Should auto-select text track with DEFAULT=YES + AUTOSELECT=YES
+        expect(state.selectedTextTrackId).toBeDefined();
+
+        const textSet = state.presentation?.selectionSets?.find((s: any) => s.type === 'text');
+        const selectedTrack = textSet?.switchingSets?.[0]?.tracks?.find((t: any) => t.id === state.selectedTextTrackId);
+
+        expect(selectedTrack?.language).toBe('es'); // Spanish is marked DEFAULT
+        expect(selectedTrack?.segments).toBeDefined(); // Track resolved
+        expect(selectedTrack?.segments?.length).toBeGreaterThan(0);
+      },
+      { timeout: 2000 }
+    );
+
+    engine.destroy();
+  });
+
+  it('auto-selects preferred subtitle language', async () => {
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="http://example.com/text-en.m3u8"
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Spanish",LANGUAGE="es",URI="http://example.com/text-es.m3u8"
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="French",LANGUAGE="fr",URI="http://example.com/text-fr.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E",SUBTITLES="subs",RESOLUTION=640x360
+http://example.com/video-360p.m3u8`)
+        );
+      }
+
+      if (url.includes('video-360p.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video.mp4"
+#EXTINF:10.0,
+http://example.com/video-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      // Text track playlists (VTT segments)
+      if (url.includes('text-fr.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+http://example.com/text-fr-seg1.vtt
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
+    globalThis.fetch = mockFetch;
+
+    const engine = createPlaybackEngine({
+      preferredSubtitleLanguage: 'fr',
+    });
+    const mediaElement = document.createElement('video');
+
+    engine.owners.patch({ mediaElement });
+    engine.state.patch({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: 'auto',
+    });
+
+    // Wait for preferred language text track to be auto-selected and resolved
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+        expect(state.presentation?.selectionSets).toBeDefined();
+
+        expect(state.selectedTextTrackId).toBeDefined();
+
+        const textSet = state.presentation?.selectionSets?.find((s: any) => s.type === 'text');
+        const selectedTrack = textSet?.switchingSets?.[0]?.tracks?.find((t: any) => t.id === state.selectedTextTrackId);
+
+        expect(selectedTrack?.language).toBe('fr'); // French preferred
+        expect(selectedTrack?.segments).toBeDefined(); // Track resolved
+        expect(selectedTrack?.segments?.length).toBeGreaterThan(0);
+      },
+      { timeout: 2000 }
+    );
+
+    engine.destroy();
+  });
+
+  it('switches between text tracks via patch()', async () => {
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="http://example.com/text-en.m3u8"
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Spanish",LANGUAGE="es",URI="http://example.com/text-es.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E",SUBTITLES="subs",RESOLUTION=640x360
+http://example.com/video-360p.m3u8`)
+        );
+      }
+
+      if (url.includes('video-360p.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video.mp4"
+#EXTINF:10.0,
+http://example.com/video-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      // Text track playlists (VTT segments)
+      if (url.includes('text-en.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+http://example.com/text-en-seg1.vtt
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      if (url.includes('text-es.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+http://example.com/text-es-seg1.vtt
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
+    globalThis.fetch = mockFetch;
+
+    const engine = createPlaybackEngine();
+    const mediaElement = document.createElement('video');
+
+    engine.owners.patch({ mediaElement });
+    engine.state.patch({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: 'auto',
+    });
+
+    // Wait for presentation to be resolved
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+        expect(state.presentation?.selectionSets).toBeDefined();
+      },
+      { timeout: 2000 }
+    );
+
+    const textSet = engine.state.current.presentation?.selectionSets?.find((s: any) => s.type === 'text');
+    const textTracks = textSet?.switchingSets?.[0]?.tracks;
+
+    const englishTrack = textTracks?.find((t: any) => t.language === 'en');
+    const spanishTrack = textTracks?.find((t: any) => t.language === 'es');
+
+    // Select English track
+    engine.state.patch({ selectedTextTrackId: englishTrack!.id });
+
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+        expect(state.selectedTextTrackId).toBe(englishTrack!.id);
+
+        const resolvedTrack = state.presentation?.selectionSets
+          ?.find((s: any) => s.type === 'text')
+          ?.switchingSets?.[0]?.tracks?.find((t: any) => t.id === englishTrack!.id);
+        expect(resolvedTrack?.segments).toBeDefined();
+        expect(resolvedTrack?.segments?.length).toBeGreaterThan(0);
+      },
+      { timeout: 2000 }
+    );
+
+    // Switch to Spanish track
+    engine.state.patch({ selectedTextTrackId: spanishTrack!.id });
+
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+        expect(state.selectedTextTrackId).toBe(spanishTrack!.id);
+
+        const resolvedTrack = state.presentation?.selectionSets
+          ?.find((s: any) => s.type === 'text')
+          ?.switchingSets?.[0]?.tracks?.find((t: any) => t.id === spanishTrack!.id);
+        expect(resolvedTrack?.segments).toBeDefined();
+        expect(resolvedTrack?.segments?.length).toBeGreaterThan(0);
+      },
+      { timeout: 2000 }
+    );
+
+    engine.destroy();
+  });
+
+  it('creates track elements for all text tracks', async () => {
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="http://example.com/text-en.m3u8"
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Spanish",LANGUAGE="es",URI="http://example.com/text-es.m3u8",DEFAULT=YES,AUTOSELECT=YES
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="French",LANGUAGE="fr",URI="http://example.com/text-fr.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E",SUBTITLES="subs",RESOLUTION=640x360
+http://example.com/video-360p.m3u8`)
+        );
+      }
+
+      if (url.includes('video-360p.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video.mp4"
+#EXTINF:10.0,
+http://example.com/video-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
+    globalThis.fetch = mockFetch;
+
+    const engine = createPlaybackEngine();
+    const mediaElement = document.createElement('video');
+
+    engine.owners.patch({ mediaElement });
+    engine.state.patch({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: 'auto',
+    });
+
+    // Wait for text tracks to be set up
+    await vi.waitFor(
+      () => {
+        const owners = engine.owners.current;
+
+        // Text tracks should be created
+        expect(owners.textTracks).toBeDefined();
+        expect(owners.textTracks?.size).toBe(3);
+
+        // Track elements should be in DOM
+        expect(mediaElement.children.length).toBe(3);
+
+        // Verify track elements
+        const tracks = Array.from(mediaElement.children) as HTMLTrackElement[];
+
+        // English track
+        expect(tracks[0].kind).toBe('subtitles');
+        expect(tracks[0].label).toBe('English');
+        expect(tracks[0].srclang).toBe('en');
+        expect(tracks[0].src).toBe('http://example.com/text-en.m3u8');
+        expect(tracks[0].default).toBe(false);
+
+        // Spanish track (DEFAULT)
+        expect(tracks[1].kind).toBe('subtitles');
+        expect(tracks[1].label).toBe('Spanish');
+        expect(tracks[1].srclang).toBe('es');
+        expect(tracks[1].src).toBe('http://example.com/text-es.m3u8');
+        expect(tracks[1].default).toBe(true);
+
+        // French track
+        expect(tracks[2].kind).toBe('subtitles');
+        expect(tracks[2].label).toBe('French');
+        expect(tracks[2].srclang).toBe('fr');
+        expect(tracks[2].src).toBe('http://example.com/text-fr.m3u8');
+        expect(tracks[2].default).toBe(false);
+      },
+      { timeout: 2000 }
+    );
+
+    engine.destroy();
+  });
 });

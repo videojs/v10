@@ -6,8 +6,8 @@ import type { PartiallyResolvedTextTrack, Presentation } from '../../core/types'
  * State shape for text track setup.
  */
 export interface TextTrackState {
-  presentation?: Presentation | undefined;
-  selectedTextTrackId?: string | undefined;
+  presentation?: Presentation;
+  selectedTextTrackId?: string;
 }
 
 /**
@@ -35,10 +35,10 @@ function getTextTracks(presentation?: Presentation): PartiallyResolvedTextTrack[
  *
  * Requires:
  * - mediaElement exists
- * - presentation has text tracks to setup
+ * - presentation is resolved (has selectionSets)
  */
 export function canSetupTextTracks(state: TextTrackState, owners: TextTrackOwners): boolean {
-  return !!owners.mediaElement && !!getTextTracks(state.presentation).length;
+  return !!owners.mediaElement && !!state.presentation?.selectionSets;
 }
 
 /**
@@ -57,7 +57,6 @@ export function shouldSetupTextTracks(owners: TextTrackOwners): boolean {
 function createTrackElement(track: PartiallyResolvedTextTrack): HTMLTrackElement {
   const trackElement = document.createElement('track');
 
-  trackElement.id = track.id;
   trackElement.kind = track.kind;
   trackElement.label = track.label;
 
@@ -68,6 +67,9 @@ function createTrackElement(track: PartiallyResolvedTextTrack): HTMLTrackElement
   if (track.default) {
     trackElement.default = true;
   }
+
+  // Store track ID for lookup
+  trackElement.dataset.trackId = track.id;
 
   // Set src to track URL
   trackElement.src = track.url;

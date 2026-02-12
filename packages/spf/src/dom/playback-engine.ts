@@ -5,6 +5,7 @@ import { selectAudioTrack, selectVideoTrack } from '../core/features/select-trac
 import { createState } from '../core/state/create-state';
 import { setupMediaSource } from './features/setup-mediasource';
 import { setupSourceBuffer } from './features/setup-sourcebuffer';
+import { setupTextTracks } from './features/setup-text-tracks';
 
 /**
  * Configuration for the playback engine.
@@ -61,6 +62,9 @@ export interface PlaybackEngineOwners {
   // SourceBuffers
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
+
+  // Text tracks (track elements by ID)
+  textTracks?: Map<string, HTMLTrackElement>;
 }
 
 /**
@@ -158,6 +162,9 @@ export function createPlaybackEngine(config: PlaybackEngineConfig): PlaybackEngi
     // 5. Setup SourceBuffers (when MediaSource ready and tracks resolved)
     setupSourceBuffer({ state, owners }, { type: 'video' }),
     setupSourceBuffer({ state, owners }, { type: 'audio' }),
+
+    // 6. Setup text tracks (when mediaElement and presentation ready)
+    setupTextTracks({ state, owners }),
   ];
 
   // Trigger initial presentation load
