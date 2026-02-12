@@ -812,11 +812,21 @@ http://example.com/text-es-seg1.vtt
       selectedTextTrackId: englishTrack!.id,
     });
 
-    // Wait a microtask for state patch to apply
-    await new Promise((resolve) => queueMicrotask(resolve));
+    // Wait for text track to be resolved
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+        expect(state.selectedTextTrackId).toBe(englishTrack!.id);
 
-    // Verify text track is selected in state
-    expect(engine.state.current.selectedTextTrackId).toBe(englishTrack!.id);
+        // Text track should be resolved (has segments)
+        const resolvedTextTrack = state.presentation?.selectionSets
+          ?.find((s: any) => s.type === 'text')
+          ?.switchingSets?.[0]?.tracks?.find((t: any) => t.id === state.selectedTextTrackId);
+        expect(resolvedTextTrack?.segments).toBeDefined();
+        expect(resolvedTextTrack?.segments?.length).toBeGreaterThan(0);
+      },
+      { timeout: 2000 }
+    );
 
     engine.destroy();
   });
@@ -848,6 +858,18 @@ http://example.com/video-seg1.m4s
         );
       }
 
+      // Text track playlists (VTT segments)
+      if (url.includes('text-es.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+http://example.com/text-es-seg1.vtt
+#EXT-X-ENDLIST`)
+        );
+      }
+
       return Promise.reject(new Error(`Unmocked URL: ${url}`));
     });
     globalThis.fetch = mockFetch;
@@ -863,7 +885,7 @@ http://example.com/video-seg1.m4s
       preload: 'auto',
     });
 
-    // Wait for DEFAULT text track to be auto-selected
+    // Wait for DEFAULT text track to be auto-selected and resolved
     await vi.waitFor(
       () => {
         const state = engine.state.current;
@@ -876,6 +898,8 @@ http://example.com/video-seg1.m4s
         const selectedTrack = textSet?.switchingSets?.[0]?.tracks?.find((t: any) => t.id === state.selectedTextTrackId);
 
         expect(selectedTrack?.language).toBe('es'); // Spanish is marked DEFAULT
+        expect(selectedTrack?.segments).toBeDefined(); // Track resolved
+        expect(selectedTrack?.segments?.length).toBeGreaterThan(0);
       },
       { timeout: 2000 }
     );
@@ -911,6 +935,18 @@ http://example.com/video-seg1.m4s
         );
       }
 
+      // Text track playlists (VTT segments)
+      if (url.includes('text-fr.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+http://example.com/text-fr-seg1.vtt
+#EXT-X-ENDLIST`)
+        );
+      }
+
       return Promise.reject(new Error(`Unmocked URL: ${url}`));
     });
     globalThis.fetch = mockFetch;
@@ -926,7 +962,7 @@ http://example.com/video-seg1.m4s
       preload: 'auto',
     });
 
-    // Wait for preferred language text track to be auto-selected
+    // Wait for preferred language text track to be auto-selected and resolved
     await vi.waitFor(
       () => {
         const state = engine.state.current;
@@ -938,6 +974,8 @@ http://example.com/video-seg1.m4s
         const selectedTrack = textSet?.switchingSets?.[0]?.tracks?.find((t: any) => t.id === state.selectedTextTrackId);
 
         expect(selectedTrack?.language).toBe('fr'); // French preferred
+        expect(selectedTrack?.segments).toBeDefined(); // Track resolved
+        expect(selectedTrack?.segments?.length).toBeGreaterThan(0);
       },
       { timeout: 2000 }
     );
@@ -1026,18 +1064,36 @@ http://example.com/text-es-seg1.vtt
     // Select English track
     engine.state.patch({ selectedTextTrackId: englishTrack!.id });
 
-    // Wait a microtask for state patch to apply
-    await new Promise((resolve) => queueMicrotask(resolve));
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+        expect(state.selectedTextTrackId).toBe(englishTrack!.id);
 
-    expect(engine.state.current.selectedTextTrackId).toBe(englishTrack!.id);
+        const resolvedTrack = state.presentation?.selectionSets
+          ?.find((s: any) => s.type === 'text')
+          ?.switchingSets?.[0]?.tracks?.find((t: any) => t.id === englishTrack!.id);
+        expect(resolvedTrack?.segments).toBeDefined();
+        expect(resolvedTrack?.segments?.length).toBeGreaterThan(0);
+      },
+      { timeout: 2000 }
+    );
 
     // Switch to Spanish track
     engine.state.patch({ selectedTextTrackId: spanishTrack!.id });
 
-    // Wait a microtask for state patch to apply
-    await new Promise((resolve) => queueMicrotask(resolve));
+    await vi.waitFor(
+      () => {
+        const state = engine.state.current;
+        expect(state.selectedTextTrackId).toBe(spanishTrack!.id);
 
-    expect(engine.state.current.selectedTextTrackId).toBe(spanishTrack!.id);
+        const resolvedTrack = state.presentation?.selectionSets
+          ?.find((s: any) => s.type === 'text')
+          ?.switchingSets?.[0]?.tracks?.find((t: any) => t.id === spanishTrack!.id);
+        expect(resolvedTrack?.segments).toBeDefined();
+        expect(resolvedTrack?.segments?.length).toBeGreaterThan(0);
+      },
+      { timeout: 2000 }
+    );
 
     engine.destroy();
   });
