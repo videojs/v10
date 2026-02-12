@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { kebabCase } from 'es-toolkit/string';
 import GithubSlugger from 'github-slugger';
+import { buildApiReferenceTocHeadings, createApiReferenceModel } from './apiReferenceModel';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const API_REF_DIR = path.resolve(__dirname, '../content/generated-api-reference');
@@ -28,6 +29,7 @@ export default function remarkConditionalHeadings() {
   return (tree, file) => {
     const headingsWithMetadata = [];
     const slugger = new GithubSlugger();
+    const reservedSlugs = new Set();
 
     // Process the tree with a stateful visitor
     function visitWithContext(node, context = { frameworks: null, styles: null }) {
@@ -60,7 +62,7 @@ export default function remarkConditionalHeadings() {
 
           return;
         } else if (node.name === 'ApiReference') {
-          injectApiReferenceHeadings(node, slugger, headingsWithMetadata);
+          injectApiReferenceHeadings(node, headingsWithMetadata, reservedSlugs);
           return;
         }
       }
@@ -68,10 +70,18 @@ export default function remarkConditionalHeadings() {
       // Handle headings
       if (node.type === 'heading') {
         const text = extractText(node);
+        let slug = slugger.slug(text);
+
+        // Avoid collisions with explicit API reference ids.
+        while (reservedSlugs.has(slug)) {
+          slug = slugger.slug(text);
+        }
+        reservedSlugs.add(slug);
+
         const metadata = {
           depth: node.depth,
           text,
-          slug: slugger.slug(text),
+          slug,
         };
 
         // Add conditional context if present
@@ -114,7 +124,7 @@ export default function remarkConditionalHeadings() {
  * For single-part components, injects "API reference".
  * For each, injects Props/State/Data attributes headings
  */
-function injectApiReferenceHeadings(node, slugger, headingsWithMetadata) {
+function injectApiReferenceHeadings(node, headingsWithMetadata, reservedSlugs) {
   const componentAttr = node.attributes?.find((a) => a.name === 'component');
   const componentName = typeof componentAttr?.value === 'string' ? componentAttr.value : null;
   if (!componentName) return;
@@ -122,43 +132,12 @@ function injectApiReferenceHeadings(node, slugger, headingsWithMetadata) {
   const json = readApiRefJson(componentName);
   if (!json) return;
 
-  if (json.parts && Object.keys(json.parts).length > 0) {
-    for (const [partKebab, part] of Object.entries(json.parts)) {
-      const tagName = part.platforms?.html?.tagName;
-      const partKebabSlug = slugger.slug(partKebab);
-      headingsWithMetadata.push({
-        depth: 2,
-        text: `<${componentName}.${part.name} /> reference`,
-        slug: partKebabSlug,
-        frameworks: ['react'],
-      });
-      headingsWithMetadata.push({
-        depth: 2,
-        text: `${tagName ? `<${tagName}>` : part.name} reference`,
-        slug: partKebabSlug,
-        frameworks: ['html'],
-      });
-      if (part.props && Object.keys(part.props).length > 0) {
-        headingsWithMetadata.push({ depth: 3, text: 'Props', slug: slugger.slug('Props') });
-      }
-      if (part.state && Object.keys(part.state).length > 0) {
-        headingsWithMetadata.push({ depth: 3, text: 'State', slug: slugger.slug('State') });
-      }
-      if (part.dataAttributes && Object.keys(part.dataAttributes).length > 0) {
-        headingsWithMetadata.push({ depth: 3, text: 'Data attributes', slug: slugger.slug('Data attributes') });
-      }
-    }
-  } else {
-    headingsWithMetadata.push({ depth: 2, text: 'API reference', slug: slugger.slug('API reference') });
-    if (json.props && Object.keys(json.props).length > 0) {
-      headingsWithMetadata.push({ depth: 3, text: 'Props', slug: slugger.slug('Props') });
-    }
-    if (json.state && Object.keys(json.state).length > 0) {
-      headingsWithMetadata.push({ depth: 3, text: 'State', slug: slugger.slug('State') });
-    }
-    if (json.dataAttributes && Object.keys(json.dataAttributes).length > 0) {
-      headingsWithMetadata.push({ depth: 3, text: 'Data attributes', slug: slugger.slug('Data attributes') });
-    }
+  const apiReferenceModel = createApiReferenceModel(componentName, json);
+  const apiReferenceHeadings = buildApiReferenceTocHeadings(apiReferenceModel);
+
+  headingsWithMetadata.push(...apiReferenceHeadings);
+  for (const heading of apiReferenceHeadings) {
+    reservedSlugs.add(heading.slug);
   }
 }
 

@@ -3,6 +3,7 @@ import debounce from 'just-debounce-it';
 import throttle from 'just-throttle';
 import type { RefObject } from 'react';
 import { useEffect, useState } from 'react';
+import { API_REFERENCE_SUBSECTION_TITLES } from '@/utils/apiReferenceModel';
 
 /**
  * Find the first scrollable ancestor of an element
@@ -39,14 +40,28 @@ export function isElementOffscreen(element: HTMLElement, container: HTMLElement)
 }
 
 /**
- * Filter headings by depth range
+ * Include headings for docs TOC, including API-reference subsection H4s only.
  */
-export function filterHeadingsByDepth(
-  headings: MarkdownHeading[],
-  minDepth: number,
-  maxDepth: number
-): MarkdownHeading[] {
-  return headings.filter((h) => h.depth >= minDepth && h.depth <= maxDepth);
+export function filterHeadingsForToc(headings: MarkdownHeading[]): MarkdownHeading[] {
+  const apiReferenceSubsectionTitles = new Set(API_REFERENCE_SUBSECTION_TITLES);
+  const isTocHeadingDepth = (depth: number): boolean => depth === 2 || depth === 3;
+  const isApiReferenceSubsectionHeading = (heading: MarkdownHeading): boolean => {
+    const tocKind = (heading as MarkdownHeading & { tocKind?: string }).tocKind;
+
+    return tocKind === 'api-reference-subsection' && apiReferenceSubsectionTitles.has(heading.text);
+  };
+
+  return headings.filter((heading) => {
+    if (isTocHeadingDepth(heading.depth)) {
+      return true;
+    }
+
+    if (heading.depth === 4) {
+      return isApiReferenceSubsectionHeading(heading);
+    }
+
+    return false;
+  });
 }
 
 /**

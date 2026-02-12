@@ -4,10 +4,12 @@ import { kebabCase } from 'es-toolkit/string';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import H2 from '@/components/typography/H2Markdown.astro';
 import H3 from '@/components/typography/H3Markdown.astro';
+import H4 from '@/components/typography/H4Markdown.astro';
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import P from '@/components/typography/P.astro';
 import type { ComponentApiReference } from '@/types/api-reference';
 import { isValidFramework } from '@/types/docs';
+import { createApiReferenceModel } from '@/utils/apiReferenceModel';
 import FrameworkCase from '../FrameworkCase.astro';
 import ApiDataAttrsTable from './ApiDataAttrsTable.astro';
 import ApiPropsTable from './ApiPropsTable.astro';
@@ -28,47 +30,50 @@ const entry = await getEntry('apiReference', kebabCase(component));
 const apiRef: ComponentApiReference | null = entry?.data ?? null;
 if (!apiRef) return;
 
-const hasParts = apiRef.parts && Object.keys(apiRef.parts).length > 0;
+const apiReferenceModel = createApiReferenceModel(component, apiRef);
+if (!apiReferenceModel) return;
 
-const hasProps = Object.keys(apiRef.props).length > 0;
-const hasState = Object.keys(apiRef.state).length > 0;
-const hasDataAttrs = Object.keys(apiRef.dataAttributes).length > 0;
+const singlePropsSection = !apiReferenceModel.hasParts
+  ? apiReferenceModel.sections.find((section) => section.key === 'props')
+  : null;
+const singleStateSection = !apiReferenceModel.hasParts
+  ? apiReferenceModel.sections.find((section) => section.key === 'state')
+  : null;
+const singleDataAttributesSection = !apiReferenceModel.hasParts
+  ? apiReferenceModel.sections.find((section) => section.key === 'dataAttributes')
+  : null;
 ---
 
-{hasParts ? (
-  <ContentWidth>
-    {Object.entries(apiRef.parts!).map(([partKebab, part]) => {
-      const tagName = part.platforms?.html?.tagName;
-      const partHasProps = Object.keys(part.props).length > 0;
-      const partHasState = Object.keys(part.state).length > 0;
-      const partHasDataAttrs = Object.keys(part.dataAttributes).length > 0;
-      const componentName = `${component}.${part.name}`;
+<ContentWidth>
+  <H2 id={apiReferenceModel.heading.id}>{apiReferenceModel.heading.text}</H2>
+
+  {apiReferenceModel.hasParts ? (
+    apiReferenceModel.parts.map((part) => {
+      const partPropsSection = part.sections.find((section) => section.key === 'props');
+      const partStateSection = part.sections.find((section) => section.key === 'state');
+      const partDataAttributesSection = part.sections.find((section) => section.key === 'dataAttributes');
 
       return (
         <>
-          <H2 id={partKebab}>
-            <FrameworkCase frameworks={["react"]}>
-              <MarkdownCode>{`<${component}.${part.name} />`}</MarkdownCode> reference
-            </FrameworkCase>
-            <FrameworkCase frameworks={["html"]}>
-              <MarkdownCode>{tagName ? `<${tagName}>` : part.name}</MarkdownCode> reference
-            </FrameworkCase>
-          </H2>
+          <H3 id={part.id}>
+            <FrameworkCase frameworks={["react"]}>{part.labelByFramework.react}</FrameworkCase>
+            <FrameworkCase frameworks={["html"]}>{part.labelByFramework.html}</FrameworkCase>
+          </H3>
 
           {part.description && (
             <P><InlineMarkdown content={part.description} /></P>
           )}
 
-          {partHasProps && (
+          {partPropsSection && (
             <>
-              <H3 id={`${partKebab}-props`}>Props</H3>
-              <ApiPropsTable props={part.props} componentName={componentName} />
+              <H4 id={partPropsSection.id}>{partPropsSection.title}</H4>
+              <ApiPropsTable props={part.data.props} componentName={part.componentName} />
             </>
           )}
 
-          {partHasState && (
+          {partStateSection && (
             <>
-              <H3 id={`${partKebab}-state`}>State</H3>
+              <H4 id={partStateSection.id}>{partStateSection.title}</H4>
               <P>
                 <FrameworkCase frameworks={["react"]}>
                   State is accessible via the{" "}
@@ -80,54 +85,52 @@ const hasDataAttrs = Object.keys(apiRef.dataAttributes).length > 0;
                   State is reflected as data attributes for CSS styling.
                 </FrameworkCase>
               </P>
-              <ApiStateTable state={part.state} componentName={componentName} />
+              <ApiStateTable state={part.data.state} componentName={part.componentName} />
             </>
           )}
 
-          {partHasDataAttrs && (
+          {partDataAttributesSection && (
             <>
-              <H3 id={`${partKebab}-data-attributes`}>Data attributes</H3>
-              <ApiDataAttrsTable dataAttributes={part.dataAttributes} />
+              <H4 id={partDataAttributesSection.id}>{partDataAttributesSection.title}</H4>
+              <ApiDataAttrsTable dataAttributes={part.data.dataAttributes} />
             </>
           )}
         </>
       );
-    })}
-  </ContentWidth>
-) : (
-  <ContentWidth>
-    <H2 id="api-reference">API reference</H2>
+    })
+  ) : (
+    <>
+      {singlePropsSection && (
+        <>
+          <H3 id={singlePropsSection.id}>{singlePropsSection.title}</H3>
+          <ApiPropsTable props={apiReferenceModel.data.props} componentName={component} />
+        </>
+      )}
 
-    {hasProps && (
-      <>
-        <H3 id="props">Props</H3>
-        <ApiPropsTable props={apiRef.props} componentName={component} />
-      </>
-    )}
+      {singleStateSection && (
+        <>
+          <H3 id={singleStateSection.id}>{singleStateSection.title}</H3>
+          <P>
+            <FrameworkCase frameworks={["react"]}>
+              State is accessible via the{" "}
+              <MarkdownCode>render</MarkdownCode>,{" "}
+              <MarkdownCode>className</MarkdownCode>, and{" "}
+              <MarkdownCode>style</MarkdownCode> props.
+            </FrameworkCase>
+            <FrameworkCase frameworks={["html"]}>
+              State is reflected as data attributes for CSS styling.
+            </FrameworkCase>
+          </P>
+          <ApiStateTable state={apiReferenceModel.data.state} componentName={component} />
+        </>
+      )}
 
-    {hasState && (
-      <>
-        <H3 id="state">State</H3>
-        <P>
-          <FrameworkCase frameworks={["react"]}>
-            State is accessible via the{" "}
-            <MarkdownCode>render</MarkdownCode>,{" "}
-            <MarkdownCode>className</MarkdownCode>, and{" "}
-            <MarkdownCode>style</MarkdownCode> props.
-          </FrameworkCase>
-          <FrameworkCase frameworks={["html"]}>
-            State is reflected as data attributes for CSS styling.
-          </FrameworkCase>
-        </P>
-        <ApiStateTable state={apiRef.state} componentName={component} />
-      </>
-    )}
-
-    {hasDataAttrs && (
-      <>
-        <H3 id="data-attributes">Data attributes</H3>
-        <ApiDataAttrsTable dataAttributes={apiRef.dataAttributes} />
-      </>
-    )}
-  </ContentWidth>
-)}
+      {singleDataAttributesSection && (
+        <>
+          <H3 id={singleDataAttributesSection.id}>{singleDataAttributesSection.title}</H3>
+          <ApiDataAttrsTable dataAttributes={apiReferenceModel.data.dataAttributes} />
+        </>
+      )}
+    </>
+  )}
+</ContentWidth>
