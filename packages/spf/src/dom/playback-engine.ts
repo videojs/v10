@@ -198,6 +198,8 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     resolveTrack({ state, events }, { type: 'video' as const }),
     // @ts-expect-error - EventStream type variance
     resolveTrack({ state, events }, { type: 'audio' as const }),
+    // @ts-expect-error - EventStream type variance
+    resolveTrack({ state, events }, { type: 'text' as const }),
 
     // 4. Setup MediaSource (when presentation loaded)
     setupMediaSource({ state, owners }),
