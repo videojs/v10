@@ -1,7 +1,12 @@
 import { createEventStream } from '../core/events/create-event-stream';
 import { type PresentationAction, resolvePresentation } from '../core/features/resolve-presentation';
 import { resolveTrack, type TrackResolutionAction } from '../core/features/resolve-track';
-import { selectAudioTrack, selectVideoTrack, type TrackSelectionAction } from '../core/features/select-tracks';
+import {
+  selectAudioTrack,
+  selectTextTrack,
+  selectVideoTrack,
+  type TrackSelectionAction,
+} from '../core/features/select-tracks';
 import { createState } from '../core/state/create-state';
 import { setupMediaSource } from './features/setup-mediasource';
 import { setupSourceBuffer } from './features/setup-sourcebuffer';
@@ -31,6 +36,24 @@ export interface PlaybackEngineConfig {
    * If not specified, selects first audio track.
    */
   preferredAudioLanguage?: string;
+
+  /**
+   * Preferred subtitle language (ISO 639 code, e.g., "en", "es").
+   * If specified, selects matching text track if available.
+   */
+  preferredSubtitleLanguage?: string;
+
+  /**
+   * Include FORCED subtitle tracks in selection.
+   * Default: false (follows hls.js/http-streaming pattern)
+   */
+  includeForcedTracks?: boolean;
+
+  /**
+   * Auto-select DEFAULT track (requires DEFAULT=YES + AUTOSELECT=YES in HLS).
+   * Default: false (user opt-in, matches hls.js/http-streaming)
+   */
+  enableDefaultTrack?: boolean;
 }
 
 /**
@@ -155,6 +178,18 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
       {
         type: 'audio',
         ...(config.preferredAudioLanguage !== undefined && { preferredAudioLanguage: config.preferredAudioLanguage }),
+      }
+    ),
+    selectTextTrack(
+      // @ts-expect-error - Owners and EventStream type compatibility
+      { state, owners, events },
+      {
+        type: 'text',
+        ...(config.preferredSubtitleLanguage !== undefined && {
+          preferredSubtitleLanguage: config.preferredSubtitleLanguage,
+        }),
+        ...(config.includeForcedTracks !== undefined && { includeForcedTracks: config.includeForcedTracks }),
+        ...(config.enableDefaultTrack !== undefined && { enableDefaultTrack: config.enableDefaultTrack }),
       }
     ),
 
