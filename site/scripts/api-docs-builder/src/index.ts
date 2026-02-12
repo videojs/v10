@@ -265,6 +265,7 @@ function discoverParts(source: ComponentSource, program: ts.Program): PartSource
 
     const part: PartSource = {
       name: partExport.name,
+      localName: partExport.localName,
       kebab,
       isPrimary,
       htmlPath: hasSubPartElement ? subPartElementFile : isPrimary ? source.htmlPath : undefined,
@@ -310,7 +311,10 @@ function buildMultiPartApiReference(
 
   for (const part of parts) {
     // Extract JSDoc description from React component file
-    const description = part.reactPath ? extractPartDescription(part.reactPath, program, part.name) : undefined;
+    const description = part.reactPath
+      ? (extractPartDescription(part.reactPath, program, part.localName) ??
+        extractPartDescription(part.reactPath, program, part.name))
+      : undefined;
 
     if (part.isPrimary) {
       // Primary part: extract from shared core and data-attrs
