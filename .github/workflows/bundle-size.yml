@@ -62,12 +62,12 @@ jobs:
             }
 
             function formatDelta(current, previous) {
-              if (previous === undefined) return '—';
+              if (previous === undefined) return { bytes: '—', pct: '' };
               const diff = current - previous;
-              if (diff === 0) return '0 B';
+              if (diff === 0) return { bytes: '0 B', pct: '0%' };
               const sign = diff > 0 ? '+' : '-';
-              const pct = ((diff / previous) * 100).toFixed(1);
-              return `${sign}${formatBytes(Math.abs(diff))} (${sign}${Math.abs(pct)}%)`;
+              const pct = Math.abs((diff / previous) * 100).toFixed(1);
+              return { bytes: `${sign}${formatBytes(Math.abs(diff))}`, pct: `${sign}${pct}%` };
             }
 
             function statusIcon(current, previous) {
@@ -105,26 +105,30 @@ jobs:
                 return sub ? `.${sub}` : '.';
               };
 
-              const pkgSummary = entries.length > 1
-                ? `${formatBytes(pkgTotalPr)}${hasBase ? ` (${formatDelta(pkgTotalPr, pkgTotalBase)})` : ''}`
-                : `${formatBytes(entries[0].size)}${baseMap[entries[0].name] !== undefined ? ` (${formatDelta(entries[0].size, baseMap[entries[0].name])})` : ''}`;
+              const pkgDelta = entries.length > 1
+                ? formatDelta(pkgTotalPr, pkgTotalBase)
+                : formatDelta(entries[0].size, baseMap[entries[0].name]);
+              const hasDelta = entries.length > 1 ? hasBase : baseMap[entries[0].name] !== undefined;
+              const pkgSummary = `${formatBytes(entries.length > 1 ? pkgTotalPr : entries[0].size)}${hasDelta && pkgDelta.bytes !== '—' ? ` (${pkgDelta.bytes}) (${pkgDelta.pct})` : ''}`;
 
               lines.push(`<details>`);
               lines.push(`<summary><strong>@videojs/${pkg}</strong> — ${pkgSummary}</summary>`);
               lines.push('');
-              lines.push('| Subpath | Base | PR | Delta | |');
-              lines.push('|---|--:|--:|--:|:-:|');
+              lines.push('| Subpath | Base | PR | Diff | % | |');
+              lines.push('|---|--:|--:|--:|--:|:-:|');
 
               for (const entry of entries) {
                 const prev = baseMap[entry.name];
+                const d = formatDelta(entry.size, prev);
                 lines.push(
-                  `| \`${displayName(entry.name)}\` | ${prev !== undefined ? formatBytes(prev) : '—'} | ${formatBytes(entry.size)} | ${formatDelta(entry.size, prev)} | ${statusIcon(entry.size, prev)} |`
+                  `| \`${displayName(entry.name)}\` | ${prev !== undefined ? formatBytes(prev) : '—'} | ${formatBytes(entry.size)} | ${d.bytes} | ${d.pct} | ${statusIcon(entry.size, prev)} |`
                 );
               }
 
               if (entries.length > 1) {
+                const d = formatDelta(pkgTotalPr, pkgTotalBase);
                 lines.push(
-                  `| **total** | **${hasBase ? formatBytes(pkgTotalBase) : '—'}** | **${formatBytes(pkgTotalPr)}** | **${hasBase ? formatDelta(pkgTotalPr, pkgTotalBase) : '—'}** | |`
+                  `| **total** | **${hasBase ? formatBytes(pkgTotalBase) : '—'}** | **${formatBytes(pkgTotalPr)}** | **${hasBase ? d.bytes : '—'}** | **${hasBase ? d.pct : ''}** | |`
                 );
               }
 
@@ -141,7 +145,10 @@ jobs:
               ...lines,
               '---',
               '',
-              `**Total: ${formatBytes(grandTotalPr)}**${grandTotalBase ? ` (${formatDelta(grandTotalPr, grandTotalBase)})` : ''}`,
+              (() => {
+                const d = formatDelta(grandTotalPr, grandTotalBase);
+                return `**Total: ${formatBytes(grandTotalPr)}**${grandTotalBase ? ` (${d.bytes}) (${d.pct})` : ''}`;
+              })(),
               '',
               '<details>',
               '<summary>ℹ️ How to interpret</summary>',
