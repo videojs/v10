@@ -82,7 +82,7 @@ jobs:
             // Size bar: proportional block characters
             function sizeBar(bytes, maxBytes) {
               const width = 8;
-              const filled = Math.max(1, Math.round((bytes / maxBytes) * width));
+              const filled = Math.round((bytes / maxBytes) * width);
               return '█'.repeat(filled) + '░'.repeat(width - filled);
             }
 
