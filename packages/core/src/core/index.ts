@@ -1,4 +1,6 @@
 export * from './media/state';
+export * from './ui/controls/controls-core';
+export * from './ui/controls/controls-data-attrs';
 export * from './ui/fullscreen-button/fullscreen-button-core';
 export * from './ui/fullscreen-button/fullscreen-button-data-attrs';
 export * from './ui/mute-button/mute-button-core';
