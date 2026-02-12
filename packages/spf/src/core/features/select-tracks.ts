@@ -69,8 +69,32 @@ export function canSelectInitialQuality(state: InitialQualityState): boolean {
  * Check if we should proceed with initial quality selection.
  * Currently always returns true when conditions are met.
  */
-export function shouldSelectInitialQuality(_state: InitialQualityState): boolean {
-  return true;
+export interface TextSelectionConfig<T extends TrackType = 'text'> extends TrackSelectionConfig<T> {
+  /**
+   * Preferred subtitle language (ISO 639 code, e.g., "en", "es").
+   * If specified, selects matching track if available.
+   */
+  preferredSubtitleLanguage?: string;
+
+  /**
+   * Include FORCED subtitle tracks in selection.
+   * Default: false (follows hls.js/http-streaming pattern)
+   *
+   * Note: Per Apple's HLS spec, if content has forced and regular subtitles
+   * in the same language, the regular track MUST contain both forced and
+   * regular content. Therefore, forced-only tracks are redundant and excluded
+   * by default.
+   */
+  includeForcedTracks?: boolean;
+
+  /**
+   * Auto-select DEFAULT track (requires DEFAULT=YES + AUTOSELECT=YES in HLS).
+   * Default: false (user opt-in, matches hls.js/http-streaming)
+   *
+   * When enabled, tracks marked with both DEFAULT=YES and AUTOSELECT=YES
+   * will be automatically selected if no user preference matches.
+   */
+  enableDefaultTrack?: boolean;
 }
 
 /**
@@ -151,18 +175,47 @@ export function selectAudioTrack(presentation: Presentation, config: InitialQual
 }
 
 /**
- * Select text track.
+ * Pick text track to activate.
  *
- * Note: Text tracks (captions/subtitles) are typically user opt-in,
- * so this returns undefined by default. Future enhancement could support
- * auto-selecting based on user preferences or accessibility requirements.
+ * Selection priority (if enabled):
+ * 1. User preference (preferredSubtitleLanguage)
+ * 2. DEFAULT track (if enableDefaultTrack is true and track has DEFAULT=YES + AUTOSELECT=YES)
+ * 3. No auto-selection (user opt-in)
+ *
+ * By default, FORCED tracks are excluded per Apple's HLS spec.
  *
  * @param presentation - Presentation with text tracks
- * @param config - Selection configuration (unused for now)
- * @returns undefined (no auto-selection)
+ * @param config - Selection configuration
+ * @returns Track ID or undefined (no auto-selection)
  */
-export function selectTextTrack(_presentation: Presentation, _config: InitialQualityConfig): string | undefined {
-  // Text tracks are user opt-in - don't auto-select
+export function pickTextTrack(presentation: Presentation, config: TextSelectionConfig): string | undefined {
+  const textSet = presentation.selectionSets.find((set) => set.type === 'text');
+  if (!textSet?.switchingSets?.[0]?.tracks.length) return undefined;
+
+  const tracks = textSet.switchingSets[0].tracks;
+
+  // Filter out FORCED tracks by default (following hls.js/http-streaming pattern)
+  // Per Apple spec: regular tracks MUST contain forced content when both exist
+  const availableTracks = config.includeForcedTracks ? tracks : tracks.filter((track) => !track.forced);
+
+  if (availableTracks.length === 0) return undefined;
+
+  const { preferredSubtitleLanguage, enableDefaultTrack = false } = config;
+
+  // 1. Preferred language match (if specified)
+  if (preferredSubtitleLanguage) {
+    const languageMatch = availableTracks.find((track) => track.language === preferredSubtitleLanguage);
+    if (languageMatch) return languageMatch.id;
+  }
+
+  // 2. DEFAULT track (if enabled AND track has both DEFAULT=YES + AUTOSELECT=YES)
+  //    Note: Parser only sets default=true when BOTH attributes present
+  if (enableDefaultTrack) {
+    const defaultTrack = availableTracks.find((track) => track.default === true);
+    if (defaultTrack) return defaultTrack.id;
+  }
+
+  // 3. User opt-in (no auto-selection)
   return undefined;
 }
 
