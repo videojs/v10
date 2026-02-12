@@ -79,6 +79,13 @@ jobs:
               return pct > 10 ? '🔴' : '🔺';
             }
 
+            // Size bar: proportional block characters
+            function sizeBar(bytes, maxBytes) {
+              const width = 8;
+              const filled = Math.max(1, Math.round((bytes / maxBytes) * width));
+              return '█'.repeat(filled) + '░'.repeat(width - filled);
+            }
+
             // Group entries by package: @videojs/utils/* -> utils, @videojs/store/* -> store, etc.
             const groups = new Map();
             for (const entry of pr) {
@@ -88,7 +95,8 @@ jobs:
               groups.get(pkg).push(entry);
             }
 
-            const lines = [];
+            // First pass: compute per-package totals
+            const pkgData = [];
             let grandTotalPr = 0;
             let grandTotalBase = 0;
 
@@ -99,71 +107,99 @@ jobs:
               grandTotalPr += pkgTotalPr;
               grandTotalBase += pkgTotalBase;
 
+              const pkgPrev = entries.length > 1 ? pkgTotalBase : baseMap[entries[0].name];
+              const pkgCur = entries.length > 1 ? pkgTotalPr : entries[0].size;
+              const changed = hasBase && pkgCur !== pkgPrev;
+
+              pkgData.push({ pkg, entries, pkgTotalPr, pkgTotalBase, hasBase, pkgPrev, pkgCur, changed });
+            }
+
+            const maxPkgSize = Math.max(...pkgData.map(p => p.pkgCur));
+
+            // Overview table
+            const overview = [];
+            overview.push('| Package | Size | | Diff | % | |');
+            overview.push('|---|--:|---|--:|--:|:-:|');
+
+            for (const p of pkgData) {
+              const d = formatDelta(p.pkgCur, p.pkgPrev);
+              const icon = p.hasBase ? statusIcon(p.pkgCur, p.pkgPrev) : '';
+              const bar = `\`${sizeBar(p.pkgCur, maxPkgSize)}\``;
+              overview.push(
+                `| **@videojs/${p.pkg}** | **${formatBytes(p.pkgCur)}** | ${bar} | ${p.hasBase ? d.bytes : '—'} | ${p.hasBase ? d.pct : ''} | ${icon} |`
+              );
+            }
+
+            // Detail sections
+            const details = [];
+
+            for (const p of pkgData) {
+              const { pkg, entries, pkgTotalPr, pkgTotalBase, hasBase, pkgPrev, pkgCur, changed } = p;
+              const pkgDelta = formatDelta(pkgCur, pkgPrev);
+              const hasDelta = hasBase && pkgDelta.bytes !== '—';
+              const pkgIcon = hasBase ? ` ${statusIcon(pkgCur, pkgPrev)}` : '';
+              const pkgSummary = `**${formatBytes(pkgCur)}**${hasDelta ? ` · ${pkgDelta.bytes} · ${pkgDelta.pct}` : ''}`;
+
               // Subpath display: @videojs/utils/dom -> ./dom, @videojs/store -> .
               const displayName = (name) => {
                 const sub = name.replace(`@videojs/${pkg}`, '');
                 return sub ? `.${sub}` : '.';
               };
 
-              const pkgPrev = entries.length > 1 ? pkgTotalBase : baseMap[entries[0].name];
-              const pkgCur = entries.length > 1 ? pkgTotalPr : entries[0].size;
-              const pkgDelta = formatDelta(pkgCur, pkgPrev);
-              const hasDelta = entries.length > 1 ? hasBase : pkgPrev !== undefined;
-              const pkgIcon = hasDelta ? ` ${statusIcon(pkgCur, pkgPrev)}` : '';
-              const pkgSummary = `${formatBytes(pkgCur)}${hasDelta && pkgDelta.bytes !== '—' ? ` (${pkgDelta.bytes}) (${pkgDelta.pct})` : ''}`;
-
-              lines.push(`<details>`);
-              lines.push(`<summary><strong>@videojs/${pkg}</strong> — ${pkgSummary}${pkgIcon}</summary>`);
-              lines.push('');
-              lines.push('| Subpath | Base | PR | Diff | % | |');
-              lines.push('|---|--:|--:|--:|--:|:-:|');
+              // Auto-open packages with changes
+              details.push(changed ? `<details open>` : `<details>`);
+              details.push(`<summary><strong>@videojs/${pkg}</strong> — ${pkgSummary}${pkgIcon}</summary>`);
+              details.push('');
+              details.push('| Subpath | Base | PR | Diff | % | |');
+              details.push('|---|--:|--:|--:|--:|:-:|');
 
               for (const entry of entries) {
                 const prev = baseMap[entry.name];
                 const d = formatDelta(entry.size, prev);
-                lines.push(
+                details.push(
                   `| \`${displayName(entry.name)}\` | ${prev !== undefined ? formatBytes(prev) : '—'} | **${formatBytes(entry.size)}** | ${d.bytes} | ${d.pct} | ${statusIcon(entry.size, prev)} |`
                 );
               }
 
               if (entries.length > 1) {
                 const d = formatDelta(pkgTotalPr, pkgTotalBase);
-                lines.push(
+                details.push(
                   `| **total** | **${hasBase ? formatBytes(pkgTotalBase) : '—'}** | **${formatBytes(pkgTotalPr)}** | **${hasBase ? d.bytes : '—'}** | **${hasBase ? d.pct : ''}** | |`
                 );
               }
 
-              lines.push('');
-              lines.push('</details>');
-              lines.push('');
+              details.push('');
+              details.push('</details>');
+              details.push('');
             }
+
+            const grandDelta = formatDelta(grandTotalPr, grandTotalBase);
 
             const marker = '<!-- bundle-size-report -->';
             const body = [
               marker,
               '### 📦 Bundle Size Report',
               '',
-              ...lines,
+              ...overview,
+              '',
+              `**Total: ${formatBytes(grandTotalPr)}**${grandTotalBase ? ` · ${grandDelta.bytes} · ${grandDelta.pct}` : ''}`,
+              '',
               '---',
               '',
-              (() => {
-                const d = formatDelta(grandTotalPr, grandTotalBase);
-                return `**Total: ${formatBytes(grandTotalPr)}**${grandTotalBase ? ` (${d.bytes}) (${d.pct})` : ''}`;
-              })(),
-              '',
+              ...details,
               '<details>',
               '<summary>ℹ️ How to interpret</summary>',
               '',
-              'Each package section shows its own code size with dependencies externalized.',
-              'Sizes are minified + brotli compressed, measured via [size-limit](https://github.com/ai/size-limit) with esbuild.',
+              'Each package shows its own code size with workspace and peer dependencies externalized.',
+              'Sizes are minified + brotli, measured via [size-limit](https://github.com/ai/size-limit) with esbuild.',
               '',
               '| Icon | Meaning |',
               '|---|---|',
               '| ✅ | No change |',
-              '| 🔺 | Size increased ≤ 10% |',
-              '| 🔴 | Size increased > 10% |',
-              '| 🔽 | Size decreased |',
-              '| 🆕 | New entry (no baseline) |',
+              '| 🔺 | Increased ≤ 10% |',
+              '| 🔴 | Increased > 10% |',
+              '| 🔽 | Decreased |',
+              '| 🆕 | New (no baseline) |',
               '',
               'Run `pnpm size` locally to check current sizes.',
               '</details>',
