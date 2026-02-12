@@ -752,6 +752,29 @@ http://example.com/video-seg1.m4s
         );
       }
 
+      // Text track playlists (VTT segments)
+      if (url.includes('text-en.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+http://example.com/text-en-seg1.vtt
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      if (url.includes('text-es.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+http://example.com/text-es-seg1.vtt
+#EXT-X-ENDLIST`)
+        );
+      }
+
       return Promise.reject(new Error(`Unmocked URL: ${url}`));
     });
     globalThis.fetch = mockFetch;
@@ -945,6 +968,29 @@ http://example.com/video-360p.m3u8`)
 #EXT-X-MAP:URI="http://example.com/init-video.mp4"
 #EXTINF:10.0,
 http://example.com/video-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      // Text track playlists (VTT segments)
+      if (url.includes('text-en.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+http://example.com/text-en-seg1.vtt
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      if (url.includes('text-es.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+http://example.com/text-es-seg1.vtt
 #EXT-X-ENDLIST`)
         );
       }
