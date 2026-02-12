@@ -24,7 +24,7 @@ Split into **feature** (state management) and **component** (UI):
 |---------|----------|----------------|
 | Activity tracking | `controlsFeature` | Pointer/keyboard events, idle timer (internal) |
 | Visibility computation | `controlsFeature` | `controlsVisible = userActive \|\| paused` |
-| Auto-hide timing | `<media-controls>` | Configures idle timeout via `hide-delay` |
+| Auto-hide timing | `controlsFeature` | Idle timer, configurable delay |
 | Layout | `<media-controls-group>` | Visual grouping of controls |
 
 ## Quick Start
@@ -50,7 +50,7 @@ import '@videojs/html/ui/media-controls'
 Simple (no groups):
 
 ```html
-<media-controls hide-delay="2000">
+<media-controls>
   <media-play-button></media-play-button>
   <media-time-slider></media-time-slider>
   <media-mute-button></media-mute-button>
@@ -61,7 +61,7 @@ Simple (no groups):
 With groups (time slider top, buttons bottom):
 
 ```html
-<media-controls hide-delay="2000">
+<media-controls>
   <media-controls-group>
     <media-time-slider></media-time-slider>
   </media-controls-group>
@@ -83,7 +83,7 @@ import { Controls } from '@videojs/react';
 Simple (no groups):
 
 ```tsx
-<Controls.Root hideDelay={2000}>
+<Controls.Root>
   <PlayButton />
   <TimeSlider />
   <MuteButton />
@@ -94,7 +94,7 @@ Simple (no groups):
 With groups (time slider top, buttons bottom):
 
 ```tsx
-<Controls.Root hideDelay={2000}>
+<Controls.Root>
   <Controls.Group>
     <TimeSlider />
   </Controls.Group>
@@ -118,9 +118,6 @@ interface ControlsSlice {
   
   /** Computed visibility: userActive || paused */
   controlsVisible: boolean;
-  
-  /** Configure idle timeout. Controls component calls this on mount. */
-  setUserIdleTimeout(ms: number): void;
 }
 ```
 
@@ -131,12 +128,6 @@ Activity tracking and input type detection are handled internally by the feature
 ### `<media-controls>`
 
 Container for player controls. Manages visibility based on feature state.
-
-#### Attributes
-
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `hide-delay` | `number` | `2000` | Ms before hiding. `-1` disables auto-hide. |
 
 #### Data Attributes
 
@@ -154,26 +145,6 @@ Visual grouping container. No special behavior — pure layout.
   <media-seek-backward-button></media-seek-backward-button>
   <media-seek-forward-button></media-seek-forward-button>
 </media-controls-group>
-```
-
-## Container Integration
-
-The player container reflects controls state for CSS targeting:
-
-### Data Attributes on Container
-
-| Attribute | Description |
-|-----------|-------------|
-| `[data-user-active]` | Raw activity state |
-| `[data-controls-visible]` | Computed visibility |
-
-### Usage
-
-```css
-/* Hide cursor when inactive */
-video-player:not([data-user-active]) {
-  cursor: none;
-}
 ```
 
 ## Behavior
@@ -225,11 +196,6 @@ media-controls {
 
 media-controls-group {
   pointer-events: auto;
-}
-
-/* Cursor hiding when inactive (video only) */
-video-player:not([data-user-active]):not([data-paused]) {
-  cursor: none;
 }
 
 /* Controls visibility transition */
@@ -303,26 +269,6 @@ connectedCallback() {
 
 **Rationale:** Container owns the full player area. Activity anywhere in the player should reset idle timer. Matches Media Chrome's approach.
 
-### `hide-delay` on Component, Not Feature
-
-**Decision:** Idle timeout configured via component attribute, feature provides mechanism.
-
-**Alternatives:**
-- Feature config: `controlsFeature({ hideDelay: 2000 })` — less flexible per-instance
-- Both: feature default, component override — more complex
-
-**Rationale:** Different controls instances might want different delays. Component calls `setUserIdleTimeout()` on mount. Keeps feature pure.
-
-### Opt-Out Auto-Hide (Default On)
-
-**Decision:** Auto-hide enabled by default. Disable via `hide-delay="-1"`.
-
-**Alternatives:**
-- Opt-in: `<media-controls autohide>` — safer but unexpected for video
-- Separate boolean: `no-autohide` attribute — more API surface for same result
-
-**Rationale:** Users expect video controls to auto-hide. Matches YouTube, Vimeo, Netflix, Media Chrome behavior. `-1` is sufficient and matches Media Chrome's pattern.
-
 ### Focus Resets Timer, Doesn't Prevent Hide
 
 **Decision:** Focus inside controls resets the idle timer but does not prevent auto-hide.
@@ -344,15 +290,6 @@ const mediaType = target.media?.tagName === 'AUDIO' ? 'audio'
 ```
 
 **Rationale:** Keep it simple. Detection from the element handles most cases. Audio-only media disables auto-hide by default.
-
-### Milliseconds for `hide-delay`
-
-**Decision:** Use milliseconds for `hide-delay` attribute.
-
-**Alternatives:**
-- Seconds (like Media Chrome's `autohide="2"`) — more human-friendly
-
-**Rationale:** Milliseconds align with web platform APIs (`setTimeout`, CSS animations). More precise control.
 
 ### Pointer Events via CSS
 
