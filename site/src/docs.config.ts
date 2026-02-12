@@ -29,6 +29,7 @@ export const sidebar: Sidebar = [
       { slug: 'reference/fullscreen-button' },
       { slug: 'reference/mute-button' },
       { slug: 'reference/play-button' },
+      { slug: 'reference/poster' },
       { slug: 'reference/time' },
     ],
   },
