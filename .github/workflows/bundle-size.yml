@@ -121,7 +121,7 @@ jobs:
                 const prev = baseMap[entry.name];
                 const d = formatDelta(entry.size, prev);
                 lines.push(
-                  `| \`${displayName(entry.name)}\` | ${prev !== undefined ? formatBytes(prev) : '—'} | ${formatBytes(entry.size)} | ${d.bytes} | ${d.pct} | ${statusIcon(entry.size, prev)} |`
+                  `| \`${displayName(entry.name)}\` | ${prev !== undefined ? formatBytes(prev) : '—'} | **${formatBytes(entry.size)}** | ${d.bytes} | ${d.pct} | ${statusIcon(entry.size, prev)} |`
                 );
               }
 
