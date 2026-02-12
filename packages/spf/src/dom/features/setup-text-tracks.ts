@@ -6,8 +6,8 @@ import type { PartiallyResolvedTextTrack, Presentation } from '../../core/types'
  * State shape for text track setup.
  */
 export interface TextTrackState {
-  presentation?: Presentation;
-  selectedTextTrackId?: string;
+  presentation?: Presentation | undefined;
+  selectedTextTrackId?: string | undefined;
 }
 
 /**

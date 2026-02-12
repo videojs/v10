@@ -1181,7 +1181,7 @@ http://example.com/video-seg1.m4s
     engine.destroy();
   });
 
-  it('activates selected text track', async () => {
+  it('syncs text track modes with selection', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
 
