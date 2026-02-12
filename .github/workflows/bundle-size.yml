@@ -79,10 +79,12 @@ jobs:
               return pct > 10 ? '🔴' : '🔺';
             }
 
-            // Size bar: proportional block characters
-            function sizeBar(bytes, maxBytes) {
+            // Delta bar: visualizes % change relative to the largest change
+            function deltaBar(current, previous, maxAbsPct) {
               const width = 8;
-              const filled = Math.round((bytes / maxBytes) * width);
+              if (previous === undefined || maxAbsPct === 0) return '░'.repeat(width);
+              const pct = Math.abs(((current - previous) / previous) * 100);
+              const filled = Math.round((pct / maxAbsPct) * width);
               return '█'.repeat(filled) + '░'.repeat(width - filled);
             }
 
@@ -114,19 +116,24 @@ jobs:
               pkgData.push({ pkg, entries, pkgTotalPr, pkgTotalBase, hasBase, pkgPrev, pkgCur, changed });
             }
 
-            const maxPkgSize = Math.max(...pkgData.map(p => p.pkgCur));
+            const maxAbsPct = Math.max(
+              ...pkgData.map(p => {
+                if (!p.hasBase || p.pkgPrev === 0) return 0;
+                return Math.abs(((p.pkgCur - p.pkgPrev) / p.pkgPrev) * 100);
+              })
+            );
 
             // Overview table
             const overview = [];
-            overview.push('| Package | Size | | Diff | % | |');
-            overview.push('|---|--:|---|--:|--:|:-:|');
+            overview.push('| Package | Size | Diff | | % | |');
+            overview.push('|---|--:|--:|---|--:|:-:|');
 
             for (const p of pkgData) {
               const d = formatDelta(p.pkgCur, p.pkgPrev);
               const icon = p.hasBase ? statusIcon(p.pkgCur, p.pkgPrev) : '';
-              const bar = `\`${sizeBar(p.pkgCur, maxPkgSize)}\``;
+              const bar = `\`${deltaBar(p.pkgCur, p.pkgPrev, maxAbsPct)}\``;
               overview.push(
-                `| **@videojs/${p.pkg}** | **${formatBytes(p.pkgCur)}** | ${bar} | ${p.hasBase ? d.bytes : '—'} | ${p.hasBase ? d.pct : ''} | ${icon} |`
+                `| **@videojs/${p.pkg}** | **${formatBytes(p.pkgCur)}** | ${p.hasBase ? d.bytes : '—'} | ${bar} | ${p.hasBase ? d.pct : ''} | ${icon} |`
               );
             }
 
