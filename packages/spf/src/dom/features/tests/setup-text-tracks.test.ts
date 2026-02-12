@@ -38,6 +38,7 @@ describe('setupTextTracks', () => {
         presentation: {
           id: 'pres-1',
           url: 'http://example.com/playlist.m3u8',
+          selectionSets: [],
         },
       };
       const owners: TextTrackOwners = {
