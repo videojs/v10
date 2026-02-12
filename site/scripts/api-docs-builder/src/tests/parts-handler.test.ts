@@ -24,9 +24,9 @@ describe('extractParts', () => {
     const result = extractParts('test.ts', program);
 
     expect(result).toEqual([
-      { name: 'Group', source: './time-group' },
-      { name: 'Separator', source: './time-separator' },
-      { name: 'Value', source: './time-value' },
+      { name: 'Group', localName: 'Group', source: './time-group' },
+      { name: 'Separator', localName: 'Separator', source: './time-separator' },
+      { name: 'Value', localName: 'Value', source: './time-value' },
     ]);
   });
 
@@ -38,7 +38,7 @@ describe('extractParts', () => {
     const program = createTestProgram(code);
     const result = extractParts('test.ts', program);
 
-    expect(result).toEqual([{ name: 'Group', source: './time-group' }]);
+    expect(result).toEqual([{ name: 'Group', localName: 'Group', source: './time-group' }]);
   });
 
   it('returns empty array for file with no exports', () => {
@@ -57,8 +57,8 @@ describe('extractParts', () => {
     const result = extractParts('test.ts', program);
 
     expect(result).toEqual([
-      { name: 'Foo', source: './source' },
-      { name: 'Bar', source: './source' },
+      { name: 'Foo', localName: 'Foo', source: './source' },
+      { name: 'Bar', localName: 'Bar', source: './source' },
     ]);
   });
 
@@ -69,7 +69,17 @@ describe('extractParts', () => {
     const program = createTestProgram(code);
     const result = extractParts('test.ts', program);
 
-    expect(result).toEqual([{ name: 'Value', source: './time-value' }]);
+    expect(result).toEqual([{ name: 'Value', localName: 'Value', source: './time-value' }]);
+  });
+
+  it('captures local symbol name for aliased exports', () => {
+    const code = `
+      export { ControlsRoot as Root, type ControlsRootProps as RootProps } from './controls-root';
+    `;
+    const program = createTestProgram(code);
+    const result = extractParts('test.ts', program);
+
+    expect(result).toEqual([{ name: 'Root', localName: 'ControlsRoot', source: './controls-root' }]);
   });
 });
 
@@ -108,6 +118,24 @@ describe('extractPartDescription', () => {
     const result = extractPartDescription('test.tsx', program, 'Group');
 
     expect(result).toBe('Container for composed time displays.');
+  });
+
+  it('extracts JSDoc description from a local (non-aliased) symbol name', () => {
+    const program = createTestProgram('');
+    mockParseFromProgram.mockReturnValue({
+      exports: [
+        {
+          name: 'ControlsRoot',
+          documentation: {
+            description: 'Root container for player controls.',
+          },
+        },
+      ],
+    });
+
+    const result = extractPartDescription('test.tsx', program, 'ControlsRoot');
+
+    expect(result).toBe('Root container for player controls.');
   });
 
   it('returns undefined when export is not found', () => {

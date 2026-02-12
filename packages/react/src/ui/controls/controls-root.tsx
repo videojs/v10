@@ -13,6 +13,7 @@ export interface ControlsRootProps extends UIComponentProps<'div', ControlsCore.
   children?: ReactNode | undefined;
 }
 
+/** Root container for player controls state and rendered control content. */
 export const ControlsRoot = forwardRef(function ControlsRoot(
   componentProps: ControlsRootProps,
   forwardedRef: ForwardedRef<HTMLDivElement>

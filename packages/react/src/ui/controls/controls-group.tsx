@@ -12,6 +12,7 @@ export interface ControlsGroupProps extends UIComponentProps<'div', GroupState> 
   children?: ReactNode | undefined;
 }
 
+/** Layout group for related controls; sets `role="group"` when labeled. */
 export const ControlsGroup = forwardRef(function ControlsGroup(
   componentProps: ControlsGroupProps,
   forwardedRef: ForwardedRef<HTMLDivElement>

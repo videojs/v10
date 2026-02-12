@@ -18,6 +18,8 @@ export { ComponentApiReferenceSchema, PartApiReferenceSchema } from '../../../sr
 export interface PartSource {
   /** PascalCase name (e.g., "Value", "Group", "Separator"). */
   name: string;
+  /** Local symbol name in the source module (before any aliasing). */
+  localName: string;
   /** Kebab-case segment (e.g., "value", "group", "separator"). */
   kebab: string;
   /** True if this part gets the shared core/data-attrs. */
