@@ -57,6 +57,7 @@ export function shouldSetupTextTracks(owners: TextTrackOwners): boolean {
 function createTrackElement(track: PartiallyResolvedTextTrack): HTMLTrackElement {
   const trackElement = document.createElement('track');
 
+  trackElement.id = track.id;
   trackElement.kind = track.kind;
   trackElement.label = track.label;
 
@@ -67,9 +68,6 @@ function createTrackElement(track: PartiallyResolvedTextTrack): HTMLTrackElement
   if (track.default) {
     trackElement.default = true;
   }
-
-  // Store track ID for lookup
-  trackElement.dataset.trackId = track.id;
 
   // Set src to track URL
   trackElement.src = track.url;
