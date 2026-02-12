@@ -5,6 +5,8 @@ export * from './ui/mute-button/mute-button-core';
 export * from './ui/mute-button/mute-button-data-attrs';
 export * from './ui/play-button/play-button-core';
 export * from './ui/play-button/play-button-data-attrs';
+export * from './ui/poster/poster-core';
+export * from './ui/poster/poster-data-attrs';
 export * from './ui/time/time-core';
 export * from './ui/time/time-data-attrs';
 export * from './ui/types';
