@@ -1,40 +1,5 @@
 [
   {
-    "name": "@videojs/utils/array",
-    "path": "packages/utils/dist/array.js",
-    "import": "*"
-  },
-  {
-    "name": "@videojs/utils/dom",
-    "path": "packages/utils/dist/dom.js",
-    "import": "*"
-  },
-  {
-    "name": "@videojs/utils/events",
-    "path": "packages/utils/dist/events.js",
-    "import": "*"
-  },
-  {
-    "name": "@videojs/utils/function",
-    "path": "packages/utils/dist/function.js",
-    "import": "*"
-  },
-  {
-    "name": "@videojs/utils/object",
-    "path": "packages/utils/dist/object.js",
-    "import": "*"
-  },
-  {
-    "name": "@videojs/utils/predicate",
-    "path": "packages/utils/dist/predicate.js",
-    "import": "*"
-  },
-  {
-    "name": "@videojs/utils/time",
-    "path": "packages/utils/dist/time.js",
-    "import": "*"
-  },
-  {
     "name": "@videojs/store",
     "path": "packages/store/dist/default/index.js",
     "import": "*"
@@ -73,5 +38,40 @@
     "path": "packages/react/dist/default/index.js",
     "import": "*",
     "ignore": ["react"]
+  },
+  {
+    "name": "@videojs/utils/array",
+    "path": "packages/utils/dist/array.js",
+    "import": "*"
+  },
+  {
+    "name": "@videojs/utils/dom",
+    "path": "packages/utils/dist/dom.js",
+    "import": "*"
+  },
+  {
+    "name": "@videojs/utils/events",
+    "path": "packages/utils/dist/events.js",
+    "import": "*"
+  },
+  {
+    "name": "@videojs/utils/function",
+    "path": "packages/utils/dist/function.js",
+    "import": "*"
+  },
+  {
+    "name": "@videojs/utils/object",
+    "path": "packages/utils/dist/object.js",
+    "import": "*"
+  },
+  {
+    "name": "@videojs/utils/predicate",
+    "path": "packages/utils/dist/predicate.js",
+    "import": "*"
+  },
+  {
+    "name": "@videojs/utils/time",
+    "path": "packages/utils/dist/time.js",
+    "import": "*"
   }
 ]

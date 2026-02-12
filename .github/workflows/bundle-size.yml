@@ -105,7 +105,12 @@ jobs:
                 return sub ? `.${sub}` : '.';
               };
 
-              lines.push(`#### \`@videojs/${pkg}\``);
+              const pkgSummary = entries.length > 1
+                ? `${formatBytes(pkgTotalPr)}${hasBase ? ` (${formatDelta(pkgTotalPr, pkgTotalBase)})` : ''}`
+                : `${formatBytes(entries[0].size)}${baseMap[entries[0].name] !== undefined ? ` (${formatDelta(entries[0].size, baseMap[entries[0].name])})` : ''}`;
+
+              lines.push(`<details>`);
+              lines.push(`<summary><strong>@videojs/${pkg}</strong> — ${pkgSummary}</summary>`);
               lines.push('');
               lines.push('| Subpath | Base | PR | Delta | |');
               lines.push('|---|--:|--:|--:|:-:|');
@@ -123,6 +128,8 @@ jobs:
                 );
               }
 
+              lines.push('');
+              lines.push('</details>');
               lines.push('');
             }
 
