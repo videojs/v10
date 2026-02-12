@@ -105,14 +105,15 @@ jobs:
                 return sub ? `.${sub}` : '.';
               };
 
-              const pkgDelta = entries.length > 1
-                ? formatDelta(pkgTotalPr, pkgTotalBase)
-                : formatDelta(entries[0].size, baseMap[entries[0].name]);
-              const hasDelta = entries.length > 1 ? hasBase : baseMap[entries[0].name] !== undefined;
-              const pkgSummary = `${formatBytes(entries.length > 1 ? pkgTotalPr : entries[0].size)}${hasDelta && pkgDelta.bytes !== '—' ? ` (${pkgDelta.bytes}) (${pkgDelta.pct})` : ''}`;
+              const pkgPrev = entries.length > 1 ? pkgTotalBase : baseMap[entries[0].name];
+              const pkgCur = entries.length > 1 ? pkgTotalPr : entries[0].size;
+              const pkgDelta = formatDelta(pkgCur, pkgPrev);
+              const hasDelta = entries.length > 1 ? hasBase : pkgPrev !== undefined;
+              const pkgIcon = hasDelta ? ` ${statusIcon(pkgCur, pkgPrev)}` : '';
+              const pkgSummary = `${formatBytes(pkgCur)}${hasDelta && pkgDelta.bytes !== '—' ? ` (${pkgDelta.bytes}) (${pkgDelta.pct})` : ''}`;
 
               lines.push(`<details>`);
-              lines.push(`<summary><strong>@videojs/${pkg}</strong> — ${pkgSummary}</summary>`);
+              lines.push(`<summary><strong>@videojs/${pkg}</strong> — ${pkgSummary}${pkgIcon}</summary>`);
               lines.push('');
               lines.push('| Subpath | Base | PR | Diff | % | |');
               lines.push('|---|--:|--:|--:|--:|:-:|');
