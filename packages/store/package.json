@@ -4,12 +4,12 @@
   "version": "0.1.0-alpha.1",
   "description": "Reactive state management for external systems.",
   "license": "Apache-2.0",
-  "keywords": [
-    "store",
-    "media",
-    "player",
-    "videojs",
-    "reactive"
+  "main": "dist/default/index.js",
+  "module": "dist/default/index.js",
+  "types": "dist/dev/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist"
   ],
   "exports": {
     ".": {
@@ -28,12 +28,6 @@
       "default": "./dist/default/react.js"
     }
   },
-  "main": "dist/default/index.js",
-  "module": "dist/default/index.js",
-  "types": "dist/dev/index.d.ts",
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
@@ -75,5 +69,12 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "keywords": [
+    "store",
+    "media",
+    "player",
+    "videojs",
+    "reactive"
+  ]
 }

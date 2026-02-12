@@ -79,28 +79,68 @@ jobs:
               return pct > 10 ? '🔴' : '🔺';
             }
 
-            const rows = pr.map(entry => {
-              const prev = baseMap[entry.name];
-              return `| ${entry.name} | ${prev !== undefined ? formatBytes(prev) : '—'} | ${formatBytes(entry.size)} | ${formatDelta(entry.size, prev)} | ${statusIcon(entry.size, prev)} |`;
-            });
+            // Group entries by package: @videojs/utils/* -> utils, @videojs/store/* -> store, etc.
+            const groups = new Map();
+            for (const entry of pr) {
+              const match = entry.name.match(/^@videojs\/([^/]+)/);
+              const pkg = match ? match[1] : 'other';
+              if (!groups.has(pkg)) groups.set(pkg, []);
+              groups.get(pkg).push(entry);
+            }
 
-            const total = pr.reduce((sum, e) => sum + e.size, 0);
-            const baseTotal = base.reduce((sum, e) => sum + e.size, 0);
+            const lines = [];
+            let grandTotalPr = 0;
+            let grandTotalBase = 0;
+
+            for (const [pkg, entries] of groups) {
+              const pkgTotalPr = entries.reduce((s, e) => s + e.size, 0);
+              const pkgTotalBase = entries.reduce((s, e) => s + (baseMap[e.name] ?? 0), 0);
+              const hasBase = entries.some(e => baseMap[e.name] !== undefined);
+              grandTotalPr += pkgTotalPr;
+              grandTotalBase += pkgTotalBase;
+
+              // Subpath display: @videojs/utils/dom -> ./dom, @videojs/store -> .
+              const displayName = (name) => {
+                const sub = name.replace(`@videojs/${pkg}`, '');
+                return sub ? `.${sub}` : '.';
+              };
+
+              lines.push(`#### \`@videojs/${pkg}\``);
+              lines.push('');
+              lines.push('| Subpath | Base | PR | Delta | |');
+              lines.push('|---|--:|--:|--:|:-:|');
+
+              for (const entry of entries) {
+                const prev = baseMap[entry.name];
+                lines.push(
+                  `| \`${displayName(entry.name)}\` | ${prev !== undefined ? formatBytes(prev) : '—'} | ${formatBytes(entry.size)} | ${formatDelta(entry.size, prev)} | ${statusIcon(entry.size, prev)} |`
+                );
+              }
+
+              if (entries.length > 1) {
+                lines.push(
+                  `| **total** | **${hasBase ? formatBytes(pkgTotalBase) : '—'}** | **${formatBytes(pkgTotalPr)}** | **${hasBase ? formatDelta(pkgTotalPr, pkgTotalBase) : '—'}** | |`
+                );
+              }
+
+              lines.push('');
+            }
 
             const marker = '<!-- bundle-size-report -->';
             const body = [
               marker,
               '### 📦 Bundle Size Report',
               '',
-              '| Package | Base | PR | Delta | |',
-              '|---|---|---|---|---|',
-              ...rows,
-              `| **Total** | **${base.length ? formatBytes(baseTotal) : '—'}** | **${formatBytes(total)}** | **${base.length ? formatDelta(total, baseTotal) : '—'}** | |`,
+              ...lines,
+              '---',
+              '',
+              `**Total: ${formatBytes(grandTotalPr)}**${grandTotalBase ? ` (${formatDelta(grandTotalPr, grandTotalBase)})` : ''}`,
               '',
               '<details>',
               '<summary>ℹ️ How to interpret</summary>',
               '',
-              'Sizes are minified + brotli compressed, measured via [size-limit](https://github.com/ai/size-limit) with esbuild tree-shaking.',
+              'Each package section shows its own code size with dependencies externalized.',
+              'Sizes are minified + brotli compressed, measured via [size-limit](https://github.com/ai/size-limit) with esbuild.',
               '',
               '| Icon | Meaning |',
               '|---|---|',
