@@ -1,80 +1,84 @@
-# Lit ReactiveElement Fundamentals
+# ReactiveElement Fundamentals
 
-Core Lit concepts for building web components. For Video.js-specific patterns, see [lit.md](lit.md).
+Core concepts for building web components with `@videojs/element`. For Video.js-specific patterns, see [lit.md](lit.md).
 
 ## ReactiveElement Basics
 
-`ReactiveElement` is the base class providing the reactive update cycle and property system. It extends `HTMLElement` directly:
+`ReactiveElement` is our lightweight custom element base class (`@videojs/element`). It provides reactive properties, attribute reflection, batched updates, and reactive controllers — without Shadow DOM, `static styles`, or decorators.
 
 ```ts
+import { ReactiveElement } from '@videojs/element';
+import type { PropertyValues } from '@videojs/element';
+
 class MyElement extends ReactiveElement {
-  static properties = {
-    name: { type: String }
+  static override properties = {
+    name: { type: String },
   };
 
-  constructor() {
-    super();
-    this.name = 'World';
+  name = 'World';
+
+  protected override update(changed: PropertyValues): void {
+    super.update(changed);
+    this.textContent = `Hello, ${this.name}!`;
   }
 }
 customElements.define('my-element', MyElement);
 ```
 
-**Reactive update cycle:** property change → `hasChanged()` check → `requestUpdate()` → microtask batch → `shouldUpdate()` → `willUpdate()` → `update()` → `firstUpdated()` (first time only) → `updated()` → `updateComplete` resolves.
+**Reactive update cycle:** property change → `Object.is()` check → `requestUpdate()` → microtask batch → `willUpdate()` → `update()` → `updateComplete` resolves.
 
-**Shadow DOM provides:**
-
-- DOM scoping (selectors won't leak)
-- Style scoping (CSS encapsulated)
-- Composition via slots
-
-Override `createRenderRoot()` to customize shadow root creation or disable it.
+**Light DOM only** — elements render directly to `this` (e.g. `this.textContent`, `this.appendChild()`). No Shadow DOM, no `createRenderRoot()`.
 
 ---
 
 ## Reactive Properties
 
-Properties declared via static `properties` field:
+Properties declared via the static `properties` field:
 
 | Option | Purpose |
 |--------|---------|
-| `type` | `String \| Number \| Boolean \| Array \| Object` for attribute conversion |
-| `attribute` | Custom attribute name or `false` to disable |
-| `reflect` | `true` to sync property → attribute |
-| `converter` | Custom `fromAttribute`/`toAttribute` functions |
-| `hasChanged` | Custom change detection function |
-| `noAccessor` | Skip Lit's accessor generation |
-| `useDefault` | Reset to default when attribute removed |
-| `state` | `true` for internal reactive state (no attribute) |
+| `type` | `String`, `Boolean`, or `Number` — used for attribute → property coercion |
+| `attribute` | Custom attribute name (defaults to the property name) |
 
 ```ts
-static properties = {
-  // Public property with attribute
-  name: { type: String },
+static override properties = {
+  // String property, attribute name matches property name
+  label: { type: String },
+
+  // Number property
+  count: { type: Number },
+
+  // Boolean property (attribute presence = true, absence = false)
+  disabled: { type: Boolean },
 
   // Custom attribute name
-  count: { type: Number, attribute: 'item-count' },
-
-  // Reflected to attribute
-  active: { type: Boolean, reflect: true },
-
-  // Internal state (no attribute)
-  _data: { state: true },
-
-  // Custom converter
-  date: {
-    converter: {
-      fromAttribute: (value) => new Date(value),
-      toAttribute: (value) => value.toISOString()
-    }
-  },
-
-  // Custom change detection
-  items: {
-    hasChanged: (newVal, oldVal) => newVal !== oldVal
-  }
+  negativeSign: { type: String, attribute: 'negative-sign' },
 };
 ```
+
+**How attribute coercion works:**
+
+- `String` — attribute value passed through as-is
+- `Boolean` — `true` if attribute is present, `false` if absent
+- `Number` — attribute value parsed via `Number()`
+
+**Change detection** uses `Object.is()` — setting a property to the same value does not trigger an update. This correctly handles `NaN` and `-0`.
+
+**Property storage** uses Symbols internally. Prototype accessors are installed automatically when the class is registered via `customElements.define()`.
+
+### TypeScript Configuration
+
+Required to prevent class fields from shadowing reactive accessors:
+
+```json
+{
+  "compilerOptions": {
+    "useDefineForClassFields": false
+  }
+}
+```
+
+Without this, `label = 'default'` uses `[[Define]]` semantics which creates an own data property, bypassing the prototype getter/setter.
 
 ---
 
@@ -82,121 +86,56 @@ static properties = {
 
 **In execution order:**
 
-1. **`constructor()`** — Initialize properties, call `super()`. No DOM access.
+1. **`constructor()`** — Call `super()`. Initialize field defaults. No DOM access.
 
-2. **`connectedCallback()`** — Element added to DOM. Always call `super.connectedCallback()`. Start external subscriptions here.
+2. **`connectedCallback()`** — Element added to DOM. Always call `super.connectedCallback()`. Start subscriptions here. The first update is scheduled automatically.
 
-3. **`attributeChangedCallback(name, old, new)`** — Attribute changed. Handled automatically for declared properties.
+3. **`attributeChangedCallback(name, old, new)`** — Attribute changed. Handled automatically for declared properties — you rarely need to override this.
 
-4. **`willUpdate(changedProperties)`** — Before update, compute derived state. Runs during SSR.
+4. **`willUpdate(changed: PropertyValues)`** — Called before `update()`. Use for computing derived state from changed properties.
 
-5. **`update(changedProperties)`** — Performs the update. Call `super.update(changedProperties)`.
+5. **`update(changed: PropertyValues)`** — Performs the DOM update. Always call `super.update(changed)`. This is where you write to the DOM.
 
-6. **`firstUpdated(changedProperties)`** — After first update only. Safe for one-time DOM setup.
+6. **`disconnectedCallback()`** — Element removed. Always call `super.disconnectedCallback()`. Clean up subscriptions.
 
-7. **`updated(changedProperties)`** — After every update. Safe for DOM-dependent operations.
+**Update control:**
 
-8. **`disconnectedCallback()`** — Element removed. Always call `super.disconnectedCallback()`. Clean up subscriptions.
-
-**Update control methods:**
-
-- `requestUpdate(name?, oldValue?)` — Manually trigger update cycle
-- `shouldUpdate(changedProperties)` — Return `false` to skip update
-- `getUpdateComplete()` — Override to await child updates
-- `updateComplete` — Promise resolving after update completes
-- `performUpdate()` — Override for custom scheduling (use carefully)
+- `requestUpdate(name?, oldValue?)` — Manually trigger an update cycle
+- `updateComplete` — Promise that resolves after the current update completes
 
 ```ts
 class MyElement extends ReactiveElement {
-  static properties = {
-    items: { type: Array },
-    _computedValue: { state: true }
+  static override properties = {
+    items: { type: String },
   };
 
-  willUpdate(changedProperties) {
-    if (changedProperties.has('items')) {
-      this._computedValue = this.items.reduce((a, b) => a + b, 0);
+  items = '';
+
+  #computedCount = 0;
+
+  protected override willUpdate(changed: PropertyValues): void {
+    super.willUpdate(changed);
+    if (changed.has('items')) {
+      this.#computedCount = this.items.split(',').length;
     }
   }
 
-  shouldUpdate(changedProperties) {
-    return this.items.length > 0;
-  }
-
-  async getUpdateComplete() {
-    await super.getUpdateComplete();
-    await this._childElement?.updateComplete;
+  protected override update(changed: PropertyValues): void {
+    super.update(changed);
+    this.textContent = `${this.#computedCount} items`;
   }
 }
 ```
 
----
+### What we DON'T have (vs Lit)
 
-## Shadow DOM and Render Root
+These Lit lifecycle methods are **not available** in our ReactiveElement:
 
-Override `createRenderRoot()` to customize:
-
-```ts
-// Default: open shadow root
-createRenderRoot() {
-  return this.attachShadow({ mode: 'open' });
-}
-
-// Render to light DOM instead
-createRenderRoot() {
-  return this;
-}
-
-// Custom shadow root options
-createRenderRoot() {
-  return this.attachShadow({
-    mode: 'open',
-    delegatesFocus: true
-  });
-}
-```
-
----
-
-## Styling
-
-Use static `styles` property for optimal performance (evaluated once per class, uses Constructable Stylesheets):
-
-```ts
-import { css } from 'lit';
-
-class MyElement extends ReactiveElement {
-  static styles = css`
-    :host { display: block; }
-    :host([hidden]) { display: none; }
-    :host(.active) { border: 1px solid blue; }
-    ::slotted(p) { color: blue; }
-  `;
-}
-```
-
-**Key selectors:**
-
-- `:host` — Target host element
-- `:host([attr])` — Host with attribute
-- `:host(.class)` — Host with class
-- `::slotted(selector)` — Direct slotted children only
-
-**CSS custom properties** inherit through shadow boundaries — primary theming mechanism.
-
-**Share styles across components:**
-
-```ts
-// shared-styles.ts
-export const sharedStyles = css`
-  :host { box-sizing: border-box; }
-`;
-
-// my-element.ts
-static styles = [sharedStyles, css`
-  :host { display: flex; }
-`];
-```
+- `shouldUpdate()` — no skipping updates
+- `firstUpdated()` — use a flag in `update()` if needed
+- `updated()` — use `update()` directly
+- `getUpdateComplete()` — no async update chaining
+- `performUpdate()` — no custom scheduling
 
 ---
 
@@ -205,31 +144,26 @@ static styles = [sharedStyles, css`
 Encapsulate reusable behavior with lifecycle hooks:
 
 ```ts
-interface ReactiveController {
-  hostConnected?(): void;
-  hostDisconnected?(): void;
-  hostUpdate?(): void;
-  hostUpdated?(): void;
-}
+import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
 
 class ClockController implements ReactiveController {
-  host: ReactiveControllerHost;
-  value = new Date();
+  #host: ReactiveControllerHost;
   #timerID?: number;
+  value = new Date();
 
   constructor(host: ReactiveControllerHost) {
-    this.host = host;
+    this.#host = host;
     host.addController(this);
   }
 
-  hostConnected() {
+  hostConnected(): void {
     this.#timerID = window.setInterval(() => {
       this.value = new Date();
-      this.host.requestUpdate();
+      this.#host.requestUpdate();
     }, 1000);
   }
 
-  hostDisconnected() {
+  hostDisconnected(): void {
     clearInterval(this.#timerID);
   }
 }
@@ -237,17 +171,28 @@ class ClockController implements ReactiveController {
 // Usage
 class MyElement extends ReactiveElement {
   #clock = new ClockController(this);
+
+  protected override update(): void {
+    this.textContent = this.#clock.value.toLocaleTimeString();
+  }
 }
 ```
 
+**Controller interface:**
+
+- `hostConnected()` — Called when the host element connects to the DOM
+- `hostDisconnected()` — Called when the host element disconnects
+
+Note: Lit's `hostUpdate()` and `hostUpdated()` are **not available**.
+
 ---
 
-## Context API (@lit/context)
+## Context API
 
-Context enables data sharing without prop drilling:
+Context enables data sharing without prop drilling. We re-export `@lit/context` from `@videojs/element/context`:
 
 ```ts
-import { createContext, ContextProvider, ContextConsumer } from '@lit/context';
+import { createContext, ContextProvider, ContextConsumer } from '@videojs/element/context';
 
 // Define context
 const userContext = createContext<User>('user-context');
@@ -256,10 +201,10 @@ const userContext = createContext<User>('user-context');
 class MyApp extends ReactiveElement {
   #provider = new ContextProvider(this, {
     context: userContext,
-    initialValue: { name: 'Guest' }
+    initialValue: { name: 'Guest' },
   });
 
-  setUser(user: User) {
+  setUser(user: User): void {
     this.#provider.setValue(user);
   }
 }
@@ -269,25 +214,12 @@ class UserDisplay extends ReactiveElement {
   #consumer = new ContextConsumer(this, {
     context: userContext,
     subscribe: true,
-    callback: (value) => this.requestUpdate()
+    callback: () => this.requestUpdate(),
   });
 
-  get user() {
-    return this.#consumer.value;
-  }
-}
-```
-
----
-
-## TypeScript Configuration
-
-Required setting to prevent class fields from shadowing reactive accessors:
-
-```json
-{
-  "compilerOptions": {
-    "useDefineForClassFields": false
+  protected override update(): void {
+    const user = this.#consumer.value;
+    this.textContent = user?.name ?? 'Unknown';
   }
 }
 ```
@@ -298,27 +230,23 @@ Required setting to prevent class fields from shadowing reactive accessors:
 
 ### Do
 
-- **Always call `super` in lifecycle methods** — Maintains Lit functionality
-- **Use `willUpdate()` for derived state** — Computed before render
-- **Clean up in `disconnectedCallback()`** — Prevents memory leaks
+- **Always call `super` in lifecycle methods** — maintains the reactive update cycle
+- **Use `willUpdate()` for derived state** — computed before DOM update
+- **Clean up in `disconnectedCallback()`** — prevents memory leaks
 - **Use immutable data patterns** — `this.arr = [...this.arr, item]` not `push()`
 - **Wait for `updateComplete`** before asserting DOM state in tests
-- **Use `state: true`** for internal reactive state not exposed as attributes
-- **Override `createRenderRoot()`** when shadow DOM isn't appropriate
+- **Use `useDefineForClassFields: false`** in tsconfig for packages with reactive elements
 
 ### Don't
 
-- **Don't mutate arrays/objects** without reassigning — Won't trigger updates
-- **Don't access DOM in constructor** — Shadow root doesn't exist yet
-- **Don't use external stylesheets via `<link>`** — FOUC issues, ShadyCSS incompatibility
-- **Don't reflect Object/Array properties** — Serialization overhead
+- **Don't mutate arrays/objects** without reassigning — won't trigger updates
+- **Don't access DOM in constructor** — element isn't connected yet
 - **Don't forget `super` calls** in lifecycle methods
-- **Don't perform side effects in `shouldUpdate`** — Use `willUpdate` instead
 
 ### Common Mistakes
 
 1. **Forgetting super calls**: `connectedCallback() { super.connectedCallback(); ... }`
-2. **Boolean defaults**: Must default to `false` for attribute configuration to work
+2. **Boolean defaults**: Must default to `false` for attribute coercion to work correctly
 3. **Memory leaks**: Add listeners in `connectedCallback`, remove in `disconnectedCallback`
-4. **DOM access too early**: Wait for `firstUpdated()` or `updateComplete`
-5. **Mutating instead of replacing**: `this.items = [...this.items, item]` not `push()`
+4. **Mutating instead of replacing**: `this.items = [...this.items, item]` not `push()`
+5. **Missing tsconfig setting**: `useDefineForClassFields: false` is required

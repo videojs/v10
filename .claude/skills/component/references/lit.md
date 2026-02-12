@@ -14,7 +14,7 @@ import { ReactiveElement } from '@lit/reactive-element';
 
 ## Platform Bindings
 
-- Package-specific bindings live in `{package}/lit/` (e.g., `@videojs/store/lit`)
+- Package-specific bindings live in `{package}/lit/` (e.g., `@videojs/store/html`)
 - Main web component library: `@videojs/html`
 
 ---
@@ -42,7 +42,7 @@ import { ReactiveElement } from '@lit/reactive-element';
 
 Controllers are the primary composability mechanism. Use controllers, not hooks or behavior mixins.
 
-All store-related controllers live in `@videojs/store/lit`. See that package for available controllers and their APIs.
+All store-related controllers live in `@videojs/store/html`. See that package for available controllers and their APIs.
 
 ### Controller Pattern
 
@@ -168,6 +168,6 @@ customElements.define('vjs-player', StoreMixin(PlayerElement));
 
 ## See Also
 
-- `@videojs/store/lit` — Controller and mixin implementations
+- `@videojs/store/html` — Controller and mixin implementations
 - `@videojs/html` — Web component library
 - [react.md](react.md) — React-specific patterns (parallel reference)

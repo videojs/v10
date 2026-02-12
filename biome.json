@@ -69,6 +69,16 @@
   },
   "overrides": [
     {
+      "includes": ["packages/element/**"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noThisInStatic": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["**/*.astro"],
       "linter": {
         "rules": {

@@ -378,14 +378,14 @@ type FeatureNameRequests = InferFeatureRequests<typeof featureName>;
 
 ## Lit Controller Template
 
-For `@videojs/store/lit` controllers:
+For `@videojs/store/html` controllers:
 
 ```markdown
 ## ControllerName
 
 Brief description of what this controller does.
 
-import { ControllerName } from '@videojs/store/lit';
+import { ControllerName } from '@videojs/store/html';
 
 class MyElement extends LitElement {
 #controller = new ControllerName(this, source, ...args);
@@ -421,7 +421,7 @@ new ControllerName(host, source, ...args)
 
 ### Example
 
-import { SnapshotController } from '@videojs/store/lit';
+import { SnapshotController } from '@videojs/store/html';
 
 class PlayButton extends LitElement {
 #state = new SnapshotController(this, store.state);

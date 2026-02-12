@@ -12,7 +12,7 @@ Parent issue: [#320](https://github.com/videojs/v10/issues/320)
 | 2 | [#366](https://github.com/videojs/v10/issues/366) | PlayerTarget & Features | 3 | ✅ |
 | 3 | [#367](https://github.com/videojs/v10/issues/367) | React Player API | 3 | ✅ |
 | 4 | [#368](https://github.com/videojs/v10/issues/368) | HTML Player API | 5 | ✅ |
-| 5 | [#369](https://github.com/videojs/v10/issues/369) | Cleanup & Documentation | 2 | 🔄 Partial (store/lit cleanup done in #368) |
+| 5 | [#369](https://github.com/videojs/v10/issues/369) | Cleanup & Documentation | 2 | 🔄 Partial (store/html cleanup done in #368) |
 
 **Total: 18 SP**
 
@@ -91,7 +91,7 @@ PlayerContextValue = {
 | `useStore` | Hook to subscribe to store state |
 | `useSelector` (new) | Selector-based subscription with shallowEqual |
 
-### Removed from `@videojs/store/lit`
+### Removed from `@videojs/store/html`
 
 | Export | Reason |
 |--------|--------|
@@ -106,7 +106,7 @@ PlayerContextValue = {
 | `StoreConsumer` | Player-specific |
 | `StoreProvider` | Player-specific |
 
-### Kept in `@videojs/store/lit`
+### Kept in `@videojs/store/html`
 
 | Export | Purpose |
 |--------|---------|
@@ -1013,7 +1013,7 @@ export function ContainerMixin<Base extends Constructor<ReactiveElement>>(BaseCl
 import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import type { AnyStore, InferStoreState } from '@videojs/store';
 import { shallowEqual } from '@videojs/store';
-import { StoreAccessor, type StoreSource } from '@videojs/store/lit';
+import { StoreAccessor, type StoreSource } from '@videojs/store/html';
 
 export class PlayerController<S extends AnyStore, R = InferStoreState<S>>
   implements ReactiveController

@@ -326,7 +326,7 @@ ElementName.define();
 ElementName.define('custom-name');
 
 // With custom mixin
-import { createStore } from '@videojs/store/lit';
+import { createStore } from '@videojs/store/html';
 import { extendConfig } from '@videojs/html/video/skin';
 
 const { StoreMixin } = createStore(
@@ -383,7 +383,7 @@ ElementName.define('custom-name', StoreMixin);
 
 ### Extending
 
-import { createStore } from '@videojs/store/lit';
+import { createStore } from '@videojs/store/html';
 import { extendConfig, FrostedSkinElement } from '@videojs/html/video/skin';
 import { chaptersFeature } from './features/chapters';
 

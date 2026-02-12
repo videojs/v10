@@ -13,7 +13,7 @@ Refer to **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** for setup, development, and 
 | ----------------------- | ------------------------------------------------------------------- |
 | `packages/utils`        | Shared utilities (`/dom` subpath for DOM‑specific helpers).         |
 | `packages/core`         | Core runtime‑agnostic logic (`/dom` subpath for DOM bindings).      |
-| `packages/store`        | State management (`/dom`, `/lit`, `/react` subpaths for platforms). |
+| `packages/store`        | State management (`/html`, `/react` subpaths for platforms).        |
 | `packages/html`         | Web player—DOM/Browser‑specific implementation.                     |
 | `packages/react`        | React player—adapts core state to React components.                 |
 | `packages/react-native` | React Native player integration layer.                              |
@@ -30,7 +30,7 @@ utils/dom       ← DOM-specific helpers
 
 store           ← state management
 store/dom       ← DOM platform APIs
-store/lit       ← Lit bindings (controllers, mixins)
+store/html      ← HTML bindings (controllers, mixins)
 store/react     ← React bindings
 
 core            ← runtime-agnostic logic
