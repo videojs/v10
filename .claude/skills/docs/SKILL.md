@@ -20,7 +20,7 @@ Load these files based on task:
 | README documentation       | `templates/readme.md`                  |
 | Component docs             | `references/component-libraries.md`    |
 | Multi-framework docs       | `references/multi-framework.md` (TODO) |
-| Lit/Web Components         | `references/component-libraries.md`    |
+| Web Components             | `references/component-libraries.md`    |
 | Studying exemplary docs    | `references/gold-standard.md`          |
 | State/config/tooling docs  | `references/state-tooling.md`          |
 | Error/troubleshooting docs | `patterns/error-docs.md`               |
@@ -240,9 +240,9 @@ When documenting, understand the package hierarchy:
 | Package                 | Subpaths                        | Purpose                                 | Doc Focus                          |
 | ----------------------- | ------------------------------- | --------------------------------------- | ---------------------------------- |
 | `@videojs/utils`        | `/dom`, `/predicate`, `/events` | Shared utilities                        | Utility reference                  |
-| `@videojs/store`        | `/lit`, `/react`                | State management                        | Features, requests, error handling |
+| `@videojs/store`        | `/html`, `/react`               | State management                        | Features, requests, error handling |
 | `@videojs/core`         | `/dom`                          | Runtime-agnostic logic + media features | API reference, concepts            |
-| `@videojs/html`         | `/skins/frosted`                | Web Components (Lit)                    | Component docs, styling            |
+| `@videojs/html`         | `/skins/frosted`                | Web Components                          | Component docs, styling            |
 | `@videojs/react`        | —                               | React adapter                           | Components, hooks                  |
 | `@videojs/react-native` | —                               | React Native adapter                    | Mobile-specific guides             |
 

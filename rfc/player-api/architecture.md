@@ -156,7 +156,7 @@ const playback = usePlayer(selectPlayback);
 | ------------------------------------- | ----------------------------------- |
 | `packages/store/src/core/`            | Core store, slices, selectors       |
 | `packages/store/src/react/`           | React hooks (`useStore`)            |
-| `packages/store/src/lit/`             | Lit controllers (`StoreController`) |
+| `packages/store/src/html/`            | HTML controllers (`StoreController`) |
 | `packages/core/src/dom/`              | PlayerTarget, features, selectors   |
 | `packages/html/src/`                  | HTML player, mixins, elements       |
 | `packages/react/src/`                 | React player, context, hooks        |
@@ -179,4 +179,4 @@ Store internals are implementation details until you author slices.
 - Slices live in `@videojs/core/dom`
 - `createPlayer` lives in `@videojs/html` and `@videojs/react`
 - Single store, selectors for typed access
-- `shallowEqual` comparison in React hooks and Lit controllers
+- `shallowEqual` comparison in React hooks and HTML controllers

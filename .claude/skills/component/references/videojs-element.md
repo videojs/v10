@@ -1,6 +1,6 @@
-# ReactiveElement Fundamentals
+# @videojs/element
 
-Core concepts for building web components with `@videojs/element`. For Video.js-specific patterns, see [lit.md](lit.md).
+Core concepts for building web components with `@videojs/element`. For Video.js-specific component patterns, see [html.md](html.md).
 
 ## ReactiveElement Basics
 
@@ -25,7 +25,9 @@ class MyElement extends ReactiveElement {
 customElements.define('my-element', MyElement);
 ```
 
-**Reactive update cycle:** property change → `Object.is()` check → `requestUpdate()` → microtask batch → `willUpdate()` → `update()` → `updateComplete` resolves.
+**Reactive update cycle:** property change → `Object.is()` check → `requestUpdate()` → microtask batch → `scheduleUpdate()` → `performUpdate()`:
+
+`willUpdate()` → `hostUpdate()` (controllers) → `update()` → `hostUpdated()` (controllers) → `hasUpdated = true` → `firstUpdated()` (first time only) → `updated()` → `updateComplete` resolves.
 
 **Light DOM only** — elements render directly to `this` (e.g. `this.textContent`, `this.appendChild()`). No Shadow DOM, no `createRenderRoot()`.
 
@@ -96,11 +98,19 @@ Without this, `label = 'default'` uses `[[Define]]` semantics which creates an o
 
 5. **`update(changed: PropertyValues)`** — Performs the DOM update. Always call `super.update(changed)`. This is where you write to the DOM.
 
-6. **`disconnectedCallback()`** — Element removed. Always call `super.disconnectedCallback()`. Clean up subscriptions.
+6. **`firstUpdated(changed: PropertyValues)`** — Called once after the very first update. Use for one-time setup that requires the DOM (e.g., measuring layout, adding event listeners that depend on rendered content). `hasUpdated` is `true` during this call.
+
+7. **`updated(changed: PropertyValues)`** — Called after every `update()` (including the first). `hasUpdated` is `true` during this call. Use for post-update side effects like focus management or external library syncing.
+
+8. **`disconnectedCallback()`** — Element removed. Always call `super.disconnectedCallback()`. Clean up subscriptions.
 
 **Update control:**
 
 - `requestUpdate(name?, oldValue?)` — Manually trigger an update cycle
+- `isUpdatePending` — `boolean`, `true` while an update is queued or in progress
+- `hasUpdated` — `boolean`, `false` until the first update cycle completes
+- `performUpdate()` — Synchronously flush a pending update (no-op if none pending)
+- `scheduleUpdate()` — Override to change update timing (e.g., use `requestAnimationFrame`). Default calls `performUpdate()`.
 - `updateComplete` — Promise that resolves after the current update completes
 
 ```ts
@@ -129,13 +139,10 @@ class MyElement extends ReactiveElement {
 
 ### What we DON'T have (vs Lit)
 
-These Lit lifecycle methods are **not available** in our ReactiveElement:
+These Lit features are **not available** in our ReactiveElement:
 
 - `shouldUpdate()` — no skipping updates
-- `firstUpdated()` — use a flag in `update()` if needed
-- `updated()` — use `update()` directly
 - `getUpdateComplete()` — no async update chaining
-- `performUpdate()` — no custom scheduling
 
 ---
 
@@ -178,12 +185,12 @@ class MyElement extends ReactiveElement {
 }
 ```
 
-**Controller interface:**
+**Controller interface (aligned with [Lit's ReactiveController](https://github.com/lit/lit/blob/main/packages/reactive-element/src/reactive-controller.ts)):**
 
 - `hostConnected()` — Called when the host element connects to the DOM
 - `hostDisconnected()` — Called when the host element disconnects
-
-Note: Lit's `hostUpdate()` and `hostUpdated()` are **not available**.
+- `hostUpdate()` — Called before the host's `willUpdate`/`update`
+- `hostUpdated()` — Called after the host's update, before `updated()`
 
 ---
 

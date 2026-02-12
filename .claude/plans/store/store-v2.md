@@ -1299,7 +1299,7 @@ function createStore(config) {
 **Theme:** Update docs and AI guidance
 
 - `packages/store/README.md` — Update API docs
-- `.claude/skills/component/references/lit.md` — Update mixin names
+- `.claude/skills/component/references/html.md` — Update mixin names
 - `.claude/skills/docs/templates/readme.md` — Update mixin references
 - `CLAUDE.md` — Update store patterns/conventions
 - Document new v2 API patterns and examples

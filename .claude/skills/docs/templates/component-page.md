@@ -306,9 +306,9 @@ outline: 2px solid blue;
 
 ---
 
-## Web Component Template (Lit)
+## Web Component Template
 
-For `@videojs/html` components built with Lit:
+For `@videojs/html` components built with `@videojs/element`:
 
 ```markdown
 ## element-name
@@ -395,7 +395,7 @@ FrostedSkinElement.define('my-player', StoreMixin);
 
 ### See Also
 
-- [Lit Controllers](/api/controllers)
+- [Controllers](/api/controllers)
 - [Creating Custom Elements](/guides/custom-elements)
 ```
 

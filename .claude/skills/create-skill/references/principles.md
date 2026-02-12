@@ -94,7 +94,7 @@ skill/
 ├── SKILL.md (overview + navigation)
 └── references/
     ├── react.md      # React-specific patterns
-    ├── lit.md        # Lit-specific patterns
+    ├── html.md       # HTML/Web Component patterns
     └── vanilla.md    # Vanilla JS patterns
 ```
 

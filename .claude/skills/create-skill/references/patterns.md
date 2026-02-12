@@ -13,7 +13,7 @@ description: >-
   Build accessible, headless UI components with modern architecture patterns.
   Use when creating component libraries, design systems, or reusable UI primitives.
   Handles compound components, state management, accessibility, styling hooks.
-  Includes Lit (controllers, ReactiveElement) and React (hooks, context) patterns.
+  Includes HTML (controllers, ReactiveElement) and React (hooks, context) patterns.
 ---
 
 # Component Architecture Patterns
@@ -46,7 +46,7 @@ Build accessible, headless UI components using proven patterns.
 
 | File | Contents |
 |------|----------|
-| [lit.md](references/lit.md) | Lit controllers, mixins |
+| [html.md](references/html.md) | HTML controllers, mixins |
 | [react.md](references/react.md) | React hooks, context |
 | [props.md](references/props.md) | Prop naming conventions |
 
