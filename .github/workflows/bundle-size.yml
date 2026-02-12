@@ -65,9 +65,9 @@ jobs:
               if (previous === undefined) return '—';
               const diff = current - previous;
               if (diff === 0) return '0 B';
-              const sign = diff > 0 ? '+' : '';
+              const sign = diff > 0 ? '+' : '-';
               const pct = ((diff / previous) * 100).toFixed(1);
-              return `${sign}${formatBytes(diff)} (${sign}${pct}%)`;
+              return `${sign}${formatBytes(Math.abs(diff))} (${sign}${Math.abs(pct)}%)`;
             }
 
             function statusIcon(current, previous) {
