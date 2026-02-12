@@ -14,6 +14,8 @@ export * from './store/container-mixin';
 export * from './store/provider-mixin';
 export * from './store/types';
 // UI Components
+export { ControlsElement } from './ui/controls/controls-element';
+export { ControlsGroupElement } from './ui/controls/controls-group-element';
 export { FullscreenButtonElement } from './ui/fullscreen-button/fullscreen-button-element';
 // Primitives
 export * from './ui/media-element';

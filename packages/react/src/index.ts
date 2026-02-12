@@ -30,6 +30,9 @@ export {
 } from './player/create-player';
 
 // UI
+export { Controls } from './ui/controls';
+export type { ControlsGroupProps } from './ui/controls/controls-group';
+export type { ControlsRootProps } from './ui/controls/controls-root';
 export { FullscreenButton, type FullscreenButtonProps } from './ui/fullscreen-button/fullscreen-button';
 export { useButton } from './ui/hooks/use-button';
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
