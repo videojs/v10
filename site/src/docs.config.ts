@@ -24,9 +24,11 @@ export const sidebar: Sidebar = [
   {
     sidebarLabel: 'Components',
     contents: [
-      { slug: 'reference/play-button' },
-      { slug: 'reference/mute-button' },
+      // sorted alphabetically
+      { slug: 'reference/controls' },
       { slug: 'reference/fullscreen-button' },
+      { slug: 'reference/mute-button' },
+      { slug: 'reference/play-button' },
       { slug: 'reference/time' },
     ],
   },
