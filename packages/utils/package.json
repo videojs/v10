@@ -4,11 +4,7 @@
   "version": "0.1.0-alpha.1",
   "description": "Utility functions and helpers for Video.js",
   "license": "Apache-2.0",
-  "keywords": [
-    "media",
-    "utils",
-    "videojs"
-  ],
+  "sideEffects": false,
   "exports": {
     "./array": {
       "types": "./dist/array.d.ts",
@@ -61,5 +57,10 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "keywords": [
+    "media",
+    "utils",
+    "videojs"
+  ]
 }
