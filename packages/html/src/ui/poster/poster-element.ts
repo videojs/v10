@@ -23,12 +23,12 @@ export class PosterElement extends MediaElement {
   protected override update(changed: PropertyValues): void {
     super.update(changed);
 
-    const state = this.#state.value;
+    const media = this.#state.value;
 
-    if (!state) {
+    if (!media) {
       return;
     }
 
-    applyStateDataAttrs(this, this.#core.getState(state), PosterDataAttrs);
+    applyStateDataAttrs(this, this.#core.getState(media), PosterDataAttrs);
   }
 }

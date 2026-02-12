@@ -5,9 +5,9 @@ export interface PosterState {
 }
 
 export class PosterCore {
-  getState(playback: MediaPlaybackState): PosterState {
+  getState(media: MediaPlaybackState): PosterState {
     return {
-      visible: !playback.started,
+      visible: !media.started,
     };
   }
 }
