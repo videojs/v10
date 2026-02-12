@@ -8,7 +8,7 @@ const buildModes: BuildMode[] = ['dev', 'default'];
 const createConfig = (mode: BuildMode): UserConfig => ({
   entry: {
     index: './src/core/index.ts',
-    lit: './src/lit/index.ts',
+    html: './src/html/index.ts',
     react: './src/react/index.ts',
   },
   platform: 'neutral',

@@ -1,6 +1,6 @@
-import type { Context } from '@lit/context';
-import { ContextConsumer } from '@lit/context';
-import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
+import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
+import type { Context } from '@videojs/element/context';
+import { ContextConsumer } from '@videojs/element/context';
 import { noop } from '@videojs/utils/function';
 import type { AnyStore } from '../core/store';
 import { isStore } from '../core/store';
