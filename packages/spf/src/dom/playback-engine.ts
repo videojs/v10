@@ -10,6 +10,7 @@ import {
 import { createState } from '../core/state/create-state';
 import { setupMediaSource } from './features/setup-mediasource';
 import { setupSourceBuffer } from './features/setup-sourcebuffer';
+import { setupTextTracks } from './features/setup-text-tracks';
 
 /**
  * Union of all action types used by playback engine orchestrations.
@@ -85,6 +86,9 @@ export interface PlaybackEngineOwners {
   // SourceBuffers
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
+
+  // Text tracks (track elements by ID)
+  textTracks?: Map<string, HTMLTrackElement>;
 }
 
 /**
@@ -207,6 +211,9 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     // 5. Setup SourceBuffers (when MediaSource ready and tracks resolved)
     setupSourceBuffer({ state, owners }, { type: 'video' }),
     setupSourceBuffer({ state, owners }, { type: 'audio' }),
+
+    // 6. Setup text tracks (when mediaElement and presentation ready)
+    setupTextTracks({ state, owners }),
   ];
 
   // Dispatch synthetic initialize event to satisfy combineLatest
