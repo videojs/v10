@@ -1,0 +1,37 @@
+[
+  {
+    "name": "@videojs/store",
+    "path": "packages/store/dist/default/index.js",
+    "import": "*"
+  },
+  {
+    "name": "@videojs/store/lit",
+    "path": "packages/store/dist/default/lit.js",
+    "import": "*"
+  },
+  {
+    "name": "@videojs/store/react",
+    "path": "packages/store/dist/default/react.js",
+    "import": "*"
+  },
+  {
+    "name": "@videojs/core",
+    "path": "packages/core/dist/default/index.js",
+    "import": "*"
+  },
+  {
+    "name": "@videojs/core/dom",
+    "path": "packages/core/dist/default/dom.js",
+    "import": "*"
+  },
+  {
+    "name": "@videojs/react",
+    "path": "packages/react/dist/default/index.js",
+    "import": "*"
+  },
+  {
+    "name": "@videojs/html",
+    "path": "packages/html/dist/default/index.js",
+    "import": "*"
+  }
+]
