@@ -132,13 +132,11 @@ jobs:
 
             // Detail sections
             const details = [];
+            details.push('#### Subpath Breakdown');
+            details.push('');
 
             for (const p of pkgData) {
-              const { pkg, entries, pkgTotalPr, pkgTotalBase, hasBase, pkgPrev, pkgCur, changed } = p;
-              const pkgDelta = formatDelta(pkgCur, pkgPrev);
-              const hasDelta = hasBase && pkgDelta.bytes !== '—';
-              const pkgIcon = hasBase ? ` ${statusIcon(pkgCur, pkgPrev)}` : '';
-              const pkgSummary = `**${formatBytes(pkgCur)}**${hasDelta ? ` · ${pkgDelta.bytes} · ${pkgDelta.pct}` : ''}`;
+              const { pkg, entries, pkgTotalPr, pkgTotalBase, hasBase } = p;
 
               // Subpath display: @videojs/utils/dom -> ./dom, @videojs/store -> .
               const displayName = (name) => {
@@ -146,9 +144,8 @@ jobs:
                 return sub ? `.${sub}` : '.';
               };
 
-              // Auto-open packages with changes
-              details.push(changed ? `<details open>` : `<details>`);
-              details.push(`<summary><strong>@videojs/${pkg}</strong> — ${pkgSummary}${pkgIcon}</summary>`);
+              details.push(`<details>`);
+              details.push(`<summary><code>@videojs/${pkg}</code></summary>`);
               details.push('');
               details.push('| Subpath | Base | PR | Diff | % | |');
               details.push('|---|--:|--:|--:|--:|:-:|');
