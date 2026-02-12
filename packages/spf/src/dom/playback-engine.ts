@@ -6,6 +6,7 @@ import { createState } from '../core/state/create-state';
 import { setupMediaSource } from './features/setup-mediasource';
 import { setupSourceBuffer } from './features/setup-sourcebuffer';
 import { setupTextTracks } from './features/setup-text-tracks';
+import { syncTextTrackModes } from './features/sync-text-track-modes';
 
 /**
  * Configuration for the playback engine.
@@ -45,7 +46,8 @@ export interface PlaybackEngineState {
   // Track selection state
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
-  selectedTextTrackId?: string;
+  // NOTE: Text Tracks (subtitles/ccs) can be unselected
+  selectedTextTrackId?: string | undefined;
 }
 
 /**
@@ -165,6 +167,9 @@ export function createPlaybackEngine(config: PlaybackEngineConfig): PlaybackEngi
 
     // 6. Setup text tracks (when mediaElement and presentation ready)
     setupTextTracks({ state, owners }),
+
+    // 7. Sync text track modes (when track selected and track elements created)
+    syncTextTrackModes({ state, owners }),
   ];
 
   // Trigger initial presentation load

@@ -1152,4 +1152,133 @@ http://example.com/video-seg1.m4s
 
     engine.destroy();
   });
+
+  it('syncs text track modes with selection', async () => {
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="http://example.com/text-en.m3u8"
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Spanish",LANGUAGE="es",URI="http://example.com/text-es.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E",SUBTITLES="subs",RESOLUTION=640x360
+http://example.com/video-360p.m3u8`)
+        );
+      }
+
+      if (url.includes('video-360p.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video.mp4"
+#EXTINF:10.0,
+http://example.com/video-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      if (url.includes('text-en.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+http://example.com/text-en-seg1.vtt
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      if (url.includes('text-es.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+http://example.com/text-es-seg1.vtt
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
+    globalThis.fetch = mockFetch;
+
+    const engine = createPlaybackEngine();
+    const mediaElement = document.createElement('video');
+
+    engine.owners.patch({ mediaElement });
+    engine.state.patch({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: 'auto',
+    });
+
+    // Wait for text tracks to be set up
+    await vi.waitFor(
+      () => {
+        expect(engine.owners.current.textTracks?.size).toBe(2);
+      },
+      { timeout: 2000 }
+    );
+
+    const textTracks = engine.owners.current.textTracks!;
+    const tracks = Array.from(mediaElement.children) as HTMLTrackElement[];
+
+    // Initially all tracks should be hidden (no selection, managed by activateTextTrack)
+    expect(tracks[0].track.mode).toBe('hidden');
+    expect(tracks[1].track.mode).toBe('hidden');
+
+    // Get track IDs from the map
+    const englishTrackId = Array.from(textTracks.entries()).find(([, el]) => el.srclang === 'en')?.[0];
+    const spanishTrackId = Array.from(textTracks.entries()).find(([, el]) => el.srclang === 'es')?.[0];
+
+    expect(englishTrackId).toBeDefined();
+    expect(spanishTrackId).toBeDefined();
+
+    // Select English track
+    engine.state.patch({ selectedTextTrackId: englishTrackId });
+
+    await vi.waitFor(
+      () => {
+        const englishTrack = textTracks.get(englishTrackId!)!;
+        const spanishTrack = textTracks.get(spanishTrackId!)!;
+
+        expect(englishTrack.track.mode).toBe('showing');
+        expect(spanishTrack.track.mode).toBe('hidden');
+      },
+      { timeout: 2000 }
+    );
+
+    // Switch to Spanish track
+    engine.state.patch({ selectedTextTrackId: spanishTrackId });
+
+    await vi.waitFor(
+      () => {
+        const englishTrack = textTracks.get(englishTrackId!)!;
+        const spanishTrack = textTracks.get(spanishTrackId!)!;
+
+        expect(englishTrack.track.mode).toBe('hidden');
+        expect(spanishTrack.track.mode).toBe('showing');
+      },
+      { timeout: 2000 }
+    );
+
+    // Deselect (hide all)
+    engine.state.patch({ selectedTextTrackId: undefined });
+
+    await vi.waitFor(
+      () => {
+        const englishTrack = textTracks.get(englishTrackId!)!;
+        const spanishTrack = textTracks.get(spanishTrackId!)!;
+
+        expect(englishTrack.track.mode).toBe('hidden');
+        expect(spanishTrack.track.mode).toBe('hidden');
+      },
+      { timeout: 2000 }
+    );
+
+    engine.destroy();
+  });
 });
