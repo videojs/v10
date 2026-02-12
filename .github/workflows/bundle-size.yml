@@ -1,0 +1,139 @@
+name: Bundle Size
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  pull-requests: write
+
+jobs:
+  size:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install and build PR
+        run: pnpm install && pnpm build:packages
+
+      - name: Measure PR bundle size
+        run: pnpm -w exec size-limit --json > /tmp/pr-size.json
+
+      - name: Measure base bundle size
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          git checkout -f FETCH_HEAD
+
+          pnpm install
+
+          if [ -f .size-limit.json ]; then
+            pnpm build:packages
+            pnpm -w exec size-limit --json > /tmp/base-size.json
+          else
+            echo '[]' > /tmp/base-size.json
+          fi
+
+      - name: Report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const pr = JSON.parse(fs.readFileSync('/tmp/pr-size.json', 'utf8'));
+            const base = JSON.parse(fs.readFileSync('/tmp/base-size.json', 'utf8'));
+
+            const baseMap = Object.fromEntries(base.map(e => [e.name, e.size]));
+
+            function formatBytes(bytes) {
+              if (bytes < 1024) return `${bytes} B`;
+              return `${(bytes / 1024).toFixed(2)} kB`;
+            }
+
+            function formatDelta(current, previous) {
+              if (previous === undefined) return '—';
+              const diff = current - previous;
+              if (diff === 0) return '0 B';
+              const sign = diff > 0 ? '+' : '';
+              const pct = ((diff / previous) * 100).toFixed(1);
+              return `${sign}${formatBytes(diff)} (${sign}${pct}%)`;
+            }
+
+            function statusIcon(current, previous) {
+              if (previous === undefined) return '🆕';
+              const diff = current - previous;
+              if (diff === 0) return '✅';
+              if (diff < 0) return '🔽';
+              const pct = (diff / previous) * 100;
+              return pct > 10 ? '🔴' : '🔺';
+            }
+
+            const rows = pr.map(entry => {
+              const prev = baseMap[entry.name];
+              return `| ${entry.name} | ${prev !== undefined ? formatBytes(prev) : '—'} | ${formatBytes(entry.size)} | ${formatDelta(entry.size, prev)} | ${statusIcon(entry.size, prev)} |`;
+            });
+
+            const total = pr.reduce((sum, e) => sum + e.size, 0);
+            const baseTotal = base.reduce((sum, e) => sum + e.size, 0);
+
+            const marker = '<!-- bundle-size-report -->';
+            const body = [
+              marker,
+              '### 📦 Bundle Size Report',
+              '',
+              '| Package | Base | PR | Delta | |',
+              '|---|---|---|---|---|',
+              ...rows,
+              `| **Total** | **${base.length ? formatBytes(baseTotal) : '—'}** | **${formatBytes(total)}** | **${base.length ? formatDelta(total, baseTotal) : '—'}** | |`,
+              '',
+              '<details>',
+              '<summary>ℹ️ How to interpret</summary>',
+              '',
+              'Sizes are minified + brotli compressed, measured via [size-limit](https://github.com/ai/size-limit) with esbuild tree-shaking.',
+              '',
+              '| Icon | Meaning |',
+              '|---|---|',
+              '| ✅ | No change |',
+              '| 🔺 | Size increased ≤ 10% |',
+              '| 🔴 | Size increased > 10% |',
+              '| 🔽 | Size decreased |',
+              '| 🆕 | New entry (no baseline) |',
+              '',
+              'Run `pnpm size` locally to check current sizes.',
+              '</details>',
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body?.startsWith(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
