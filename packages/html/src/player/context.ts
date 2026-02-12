@@ -1,5 +1,5 @@
-import { type Context, createContext } from '@lit/context';
 import type { AnyPlayerStore, PlayerStore } from '@videojs/core/dom';
+import { type Context, createContext } from '@videojs/element/context';
 
 export const PLAYER_CONTEXT_KEY = Symbol('@videojs/player');
 

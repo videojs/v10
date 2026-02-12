@@ -7,7 +7,7 @@
 
 | Framework          | Package                 | Status    |
 | ------------------ | ----------------------- | --------- |
-| Vanilla/HTML (Lit) | `@videojs/html`         | Available |
+| Vanilla/HTML       | `@videojs/html`         | Available |
 | React              | `@videojs/react`        | Available |
 | React Native       | `@videojs/react-native` | Available |
 

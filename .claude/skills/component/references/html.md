@@ -1,20 +1,21 @@
-# Lit Component Patterns
+# Component Patterns
 
-Lit-specific patterns for Video.js web components. For ReactiveElement fundamentals (lifecycle, properties, styling), see [lit-fundamentals.md](lit-fundamentals.md).
+Patterns for Video.js web components. For ReactiveElement fundamentals (lifecycle, properties, controllers), see [videojs-element.md](videojs-element.md).
 
 ## Package Requirements
 
 ```ts
-import { ContextConsumer, ContextProvider } from '@lit/context';
-import { ReactiveElement } from '@lit/reactive-element';
+import { ReactiveElement } from '@videojs/element';
+import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 ```
 
-- Use `@lit/reactive-element` and `@lit/context`
-- **Never** import from `lit` package
+- Use `@videojs/element` for the base class and types
+- Use `@videojs/element/context` for context (re-exports `@lit/context`)
+- **Never** import from `lit` or `@lit/reactive-element`
 
 ## Platform Bindings
 
-- Package-specific bindings live in `{package}/lit/` (e.g., `@videojs/store/lit`)
+- Store HTML bindings: `@videojs/store/html`
 - Main web component library: `@videojs/html`
 
 ---
@@ -42,7 +43,7 @@ import { ReactiveElement } from '@lit/reactive-element';
 
 Controllers are the primary composability mechanism. Use controllers, not hooks or behavior mixins.
 
-All store-related controllers live in `@videojs/store/lit`. See that package for available controllers and their APIs.
+All store-related controllers live in `@videojs/store/html`. See that package for available controllers and their APIs.
 
 ### Controller Pattern
 
@@ -129,7 +130,7 @@ class MyControls extends ContainerMixin(ReactiveElement) {
 ```
 
 - Creates store on first access (lazy)
-- Provides via Lit Context Protocol
+- Provides via Context Protocol (`@lit/context`)
 - Destroys store on disconnect (if owned)
 
 ---
@@ -168,6 +169,6 @@ customElements.define('vjs-player', StoreMixin(PlayerElement));
 
 ## See Also
 
-- `@videojs/store/lit` — Controller and mixin implementations
+- `@videojs/store/html` — Controller and mixin implementations
 - `@videojs/html` — Web component library
 - [react.md](react.md) — React-specific patterns (parallel reference)

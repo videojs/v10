@@ -58,9 +58,8 @@
     "clean": "rm -rf dist types"
   },
   "dependencies": {
-    "@lit/context": "^1.1.0",
-    "@lit/reactive-element": "^2.1.2",
     "@videojs/core": "workspace:*",
+    "@videojs/element": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"
   },

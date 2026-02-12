@@ -1,14 +1,24 @@
 [
   {
+    "name": "@videojs/element",
+    "path": "packages/element/dist/default/index.js",
+    "import": "*"
+  },
+  {
+    "name": "@videojs/element/context",
+    "path": "packages/element/dist/default/context.js",
+    "import": "*"
+  },
+  {
     "name": "@videojs/store",
     "path": "packages/store/dist/default/index.js",
     "import": "*"
   },
   {
-    "name": "@videojs/store/lit",
-    "path": "packages/store/dist/default/lit.js",
+    "name": "@videojs/store/html",
+    "path": "packages/store/dist/default/html.js",
     "import": "*",
-    "ignore": ["@videojs/utils", "@lit/reactive-element", "@lit/context"]
+    "ignore": ["@videojs/utils", "@videojs/element"]
   },
   {
     "name": "@videojs/store/react",

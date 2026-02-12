@@ -376,18 +376,18 @@ type FeatureNameRequests = InferFeatureRequests<typeof featureName>;
 
 ---
 
-## Lit Controller Template
+## Controller Template
 
-For `@videojs/store/lit` controllers:
+For `@videojs/store/html` controllers:
 
 ```markdown
 ## ControllerName
 
 Brief description of what this controller does.
 
-import { ControllerName } from '@videojs/store/lit';
+import { ControllerName } from '@videojs/store/html';
 
-class MyElement extends LitElement {
+class MyElement extends ReactiveElement {
 #controller = new ControllerName(this, source, ...args);
 
 render() {
@@ -403,7 +403,7 @@ new ControllerName(host, source, ...args)
 
 | Parameter | Type                                   | Description             |
 | --------- | -------------------------------------- | ----------------------- |
-| `host`    | `ReactiveControllerHost & HTMLElement` | The Lit element         |
+| `host`    | `ReactiveControllerHost & HTMLElement` | The host element        |
 | `source`  | `Store \| Context<Store>`              | Direct store or context |
 
 ### Properties
@@ -421,9 +421,9 @@ new ControllerName(host, source, ...args)
 
 ### Example
 
-import { SnapshotController } from '@videojs/store/lit';
+import { SnapshotController } from '@videojs/store/html';
 
-class PlayButton extends LitElement {
+class PlayButton extends ReactiveElement {
 #state = new SnapshotController(this, store.state);
 #play = new RequestController(this, context, 'play');
 
@@ -439,7 +439,7 @@ return html\`
 ### See Also
 
 - [Related Controller](/api/controllers/related)
-- [Lit Integration Guide](/guides/lit)
+- [Web Components Guide](/guides/web-components)
 ```
 
 ---

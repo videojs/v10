@@ -1,10 +1,6 @@
-import { ReactiveElement } from '@lit/reactive-element';
+import { ReactiveElement } from '@videojs/element';
 import type { Constructor } from '@videojs/utils/types';
 
-export class MediaElement extends ReactiveElement {
-  protected createRenderRoot() {
-    return this;
-  }
-}
+export class MediaElement extends ReactiveElement {}
 
 export interface MediaElementConstructor extends Constructor<MediaElement> {}

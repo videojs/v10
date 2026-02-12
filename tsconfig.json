@@ -7,8 +7,10 @@
     { "path": "packages/utils" },
     { "path": "packages/utils/src/dom" },
 
+    { "path": "packages/element" },
+
     { "path": "packages/store" },
-    { "path": "packages/store/src/lit" },
+    { "path": "packages/store/src/html" },
     { "path": "packages/store/src/react" },
 
     { "path": "packages/core" },

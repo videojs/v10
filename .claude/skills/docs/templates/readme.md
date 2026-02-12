@@ -160,7 +160,7 @@ Core concepts:
 - Task Configuration (Keys, Modes, Cancels)
 - Error Handling
 
-### @videojs/store/lit
+### @videojs/store/html
 
 Core concepts:
 

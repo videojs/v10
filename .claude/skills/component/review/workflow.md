@@ -13,7 +13,7 @@ Review UI components for architecture, API design, and patterns.
                        ▼
 ┌─────────────────────────────────────────────────────┐
 │               Load References                        │
-│   Based on framework (Lit, React) and component type │
+│   Based on framework (HTML, React) and component type │
 └──────────────────────┬──────────────────────────────┘
                        │
                        ▼
@@ -44,7 +44,7 @@ Based on component type and framework:
 | Component Type   | Load                                           |
 | ---------------- | ---------------------------------------------- |
 | Any component    | `references/props.md`, `references/styling.md` |
-| Lit components   | `references/lit.md`                            |
+| HTML components  | `references/html.md`                           |
 | React components | `references/react.md`                          |
 | Popups/modals    | `references/collection.md`                     |
 | Animated         | `references/animation.md`                      |
@@ -100,7 +100,7 @@ Component reviews should always include accessibility checks. The `aria` skill p
 | [templates.md](templates.md)                                     | Issue format, report template  |
 | [../references/props.md](../references/props.md)                 | Prop naming conventions        |
 | [../references/styling.md](../references/styling.md)             | Data attributes, CSS variables |
-| [../references/lit.md](../references/lit.md)                     | Lit controllers, mixins        |
+| [../references/html.md](../references/html.md)                   | HTML controllers, mixins       |
 | [../references/react.md](../references/react.md)                 | React hooks, context           |
 | [../references/polymorphism.md](../references/polymorphism.md)   | render vs asChild              |
 | [../references/collection.md](../references/collection.md)       | Collections, portals           |

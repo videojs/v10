@@ -1,4 +1,4 @@
-import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
+import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
 import { noop } from '@videojs/utils/function';
 import { isNull, isUndefined } from '@videojs/utils/predicate';
 import { shallowEqual } from '../../core/shallow-equal';

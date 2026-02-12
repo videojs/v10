@@ -1,6 +1,6 @@
-import type { PropertyValues } from '@lit/reactive-element';
 import { TimeCore, TimeDataAttrs, type TimeType } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectTime } from '@videojs/core/dom';
+import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
@@ -13,7 +13,7 @@ export class TimeElement extends MediaElement {
     type: { type: String },
     negativeSign: { type: String, attribute: 'negative-sign' },
     label: { type: String },
-  };
+  } satisfies PropertyDeclarationMap<keyof TimeCore.Props>;
 
   type: TimeType = TimeCore.defaultProps.type;
   negativeSign = TimeCore.defaultProps.negativeSign;

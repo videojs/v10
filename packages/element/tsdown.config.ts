@@ -7,19 +7,15 @@ const buildModes: BuildMode[] = ['dev', 'default'];
 
 const createConfig = (mode: BuildMode): UserConfig => ({
   entry: {
-    index: './src/core/index.ts',
-    html: './src/html/index.ts',
-    react: './src/react/index.ts',
+    index: './src/index.ts',
+    context: './src/context.ts',
   },
-  platform: 'neutral',
+  platform: 'browser',
   format: 'es',
   sourcemap: true,
   clean: true,
   hash: false,
   unbundle: true,
-  alias: {
-    '@': new URL('./src/core', import.meta.url).pathname,
-  },
   outDir: `dist/${mode}`,
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',

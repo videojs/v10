@@ -1,4 +1,4 @@
-import { ReactiveElement } from '@lit/reactive-element';
+import { ReactiveElement } from '@videojs/element';
 import { noop } from '@videojs/utils/function';
 import { afterEach } from 'vitest';
 import { defineSlice } from '../../core/slice';

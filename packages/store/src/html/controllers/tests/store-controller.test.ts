@@ -27,9 +27,13 @@ describe('StoreController', () => {
     new StoreController(host, store);
     document.body.appendChild(host);
 
+    // Wait for initial update cycle to complete
+    await Promise.resolve();
+    const initialCount = host.updateCount;
+
     await store.setVolume(0.5);
 
-    expect(host.updateCount).toBe(0);
+    expect(host.updateCount).toBe(initialCount);
   });
 
   it('returns selected state with selector', () => {
