@@ -63,6 +63,58 @@ describe('extractDataAttrs', () => {
     expect(result!.attrs).toHaveLength(1);
   });
 
+  it('extracts from {Name}DataAttrs with as const satisfies', () => {
+    const code = `
+      type StateAttrMap<State> = { [Key in keyof State]?: string };
+      interface MockComponentState {
+        active: boolean;
+      }
+
+      export const MockComponentDataAttrs = {
+        active: 'data-active',
+      } as const satisfies StateAttrMap<MockComponentState>;
+    `;
+    const program = createTestProgram(code);
+    const result = extractDataAttrs('test.ts', program, 'MockComponent');
+
+    expect(result).not.toBeNull();
+    expect(result!.attrs).toHaveLength(1);
+    expect(result!.attrs[0]!.name).toBe('data-active');
+  });
+
+  it('extracts from {Name}DataAttrs with satisfies expression', () => {
+    const code = `
+      export const MockComponentDataAttrs = ({
+        active: 'data-active',
+      }) satisfies Record<string, string>;
+    `;
+    const program = createTestProgram(code);
+    const result = extractDataAttrs('test.ts', program, 'MockComponent');
+
+    expect(result).not.toBeNull();
+    expect(result!.attrs).toHaveLength(1);
+    expect(result!.attrs[0]!.name).toBe('data-active');
+  });
+
+  it('extracts JSDoc comments for properties wrapped with satisfies', () => {
+    const code = `
+      type StateAttrMap<State> = { [Key in keyof State]?: string };
+      interface MockComponentState {
+        active: boolean;
+      }
+
+      export const MockComponentDataAttrs = {
+        /** Present when the component is active. */
+        active: 'data-active',
+      } as const satisfies StateAttrMap<MockComponentState>;
+    `;
+    const program = createTestProgram(code);
+    const result = extractDataAttrs('test.ts', program, 'MockComponent');
+
+    expect(result).not.toBeNull();
+    expect(result!.attrs[0]!.description).toBe('Present when the component is active.');
+  });
+
   it('returns null when constant not found', () => {
     const code = `
       export const OtherConstant = {
