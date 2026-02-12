@@ -254,8 +254,14 @@ function discoverParts(source: ComponentSource, program: ts.Program): PartSource
     const subPartElementFile = path.join(htmlDir, `${componentKebab}-${kebab}-element.ts`);
     const hasSubPartElement = fs.existsSync(subPartElementFile);
 
-    // Primary part: no matching sub-part element, but main element exists
-    const isPrimary = !hasSubPartElement && !!source.htmlPath;
+    // Primary part: no matching sub-part element, main element exists, and first match wins.
+    const isPrimary = !hasSubPartElement && !!source.htmlPath && !hasPrimary;
+
+    if (!hasSubPartElement && !!source.htmlPath && hasPrimary) {
+      log.warn(
+        `${source.name}: Part "${partExport.name}" also matches primary criteria and was skipped (first-match-wins)`
+      );
+    }
 
     if (isPrimary) hasPrimary = true;
 
