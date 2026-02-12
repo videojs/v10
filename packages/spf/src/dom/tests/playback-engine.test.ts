@@ -1097,4 +1097,87 @@ http://example.com/text-es-seg1.vtt
 
     engine.destroy();
   });
+
+  it('creates track elements for all text tracks', async () => {
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="http://example.com/text-en.m3u8"
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Spanish",LANGUAGE="es",URI="http://example.com/text-es.m3u8",DEFAULT=YES,AUTOSELECT=YES
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="French",LANGUAGE="fr",URI="http://example.com/text-fr.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E",SUBTITLES="subs",RESOLUTION=640x360
+http://example.com/video-360p.m3u8`)
+        );
+      }
+
+      if (url.includes('video-360p.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init-video.mp4"
+#EXTINF:10.0,
+http://example.com/video-seg1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
+    globalThis.fetch = mockFetch;
+
+    const engine = createPlaybackEngine();
+    const mediaElement = document.createElement('video');
+
+    engine.owners.patch({ mediaElement });
+    engine.state.patch({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: 'auto',
+    });
+
+    // Wait for text tracks to be set up
+    await vi.waitFor(
+      () => {
+        const owners = engine.owners.current;
+
+        // Text tracks should be created
+        expect(owners.textTracks).toBeDefined();
+        expect(owners.textTracks?.size).toBe(3);
+
+        // Track elements should be in DOM
+        expect(mediaElement.children.length).toBe(3);
+
+        // Verify track elements
+        const tracks = Array.from(mediaElement.children) as HTMLTrackElement[];
+
+        // English track
+        expect(tracks[0].kind).toBe('subtitles');
+        expect(tracks[0].label).toBe('English');
+        expect(tracks[0].srclang).toBe('en');
+        expect(tracks[0].src).toBe('http://example.com/text-en.m3u8');
+        expect(tracks[0].default).toBe(false);
+
+        // Spanish track (DEFAULT)
+        expect(tracks[1].kind).toBe('subtitles');
+        expect(tracks[1].label).toBe('Spanish');
+        expect(tracks[1].srclang).toBe('es');
+        expect(tracks[1].src).toBe('http://example.com/text-es.m3u8');
+        expect(tracks[1].default).toBe(true);
+
+        // French track
+        expect(tracks[2].kind).toBe('subtitles');
+        expect(tracks[2].label).toBe('French');
+        expect(tracks[2].srclang).toBe('fr');
+        expect(tracks[2].src).toBe('http://example.com/text-fr.m3u8');
+        expect(tracks[2].default).toBe(false);
+      },
+      { timeout: 2000 }
+    );
+
+    engine.destroy();
+  });
 });
