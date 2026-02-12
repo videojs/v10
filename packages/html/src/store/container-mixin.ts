@@ -1,5 +1,5 @@
-import { ContextConsumer } from '@lit/context';
-import type { Media, MediaContainer, PlayerStore, PlayerTarget } from '@videojs/core/dom';
+import type { MediaContainer, PlayerStore, PlayerTarget } from '@videojs/core/dom';
+import { ContextConsumer } from '@videojs/element/context';
 import { noop } from '@videojs/utils/function';
 import type { MediaElementConstructor } from '@/ui/media-element';
 import type { PlayerContext } from '../player/context';
@@ -23,10 +23,6 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
 
       get store(): Store | null {
         return this.#consumer.value ?? null;
-      }
-
-      protected createRenderRoot() {
-        return this;
       }
 
       override connectedCallback() {

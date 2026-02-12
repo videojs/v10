@@ -1,8 +1,8 @@
-import { ContextConsumer } from '@lit/context';
-import type { ReactiveController, ReactiveControllerHost } from '@lit/reactive-element';
 import type { PlayerStore } from '@videojs/core/dom';
+import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
+import { ContextConsumer } from '@videojs/element/context';
 import type { InferStoreState, Selector } from '@videojs/store';
-import { StoreController } from '@videojs/store/lit';
+import { StoreController } from '@videojs/store/html';
 
 import type { PlayerContext } from './context';
 

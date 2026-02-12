@@ -1,6 +1,6 @@
-import type { PropertyValues } from '@lit/reactive-element';
 import { PosterCore, PosterDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectPlayback } from '@videojs/core/dom';
+import type { PropertyValues } from '@videojs/element';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
