@@ -8,6 +8,7 @@ import {
   type TrackSelectionAction,
 } from '../core/features/select-tracks';
 import { createState } from '../core/state/create-state';
+import { activateTextTrack } from './features/activate-text-track';
 import { setupMediaSource } from './features/setup-mediasource';
 import { setupSourceBuffer } from './features/setup-sourcebuffer';
 import { setupTextTracks } from './features/setup-text-tracks';
@@ -214,6 +215,9 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
 
     // 6. Setup text tracks (when mediaElement and presentation ready)
     setupTextTracks({ state, owners }),
+
+    // 7. Activate text track (when track selected and track elements created)
+    activateTextTrack({ state, owners }),
   ];
 
   // Dispatch synthetic initialize event to satisfy combineLatest
