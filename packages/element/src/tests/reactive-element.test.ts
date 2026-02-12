@@ -66,7 +66,7 @@ describe('ReactiveElement', () => {
 
     const el = createElement(TestElement);
     document.body.appendChild(el);
-    await Promise.resolve();
+    await el.updateComplete;
 
     expect(willUpdate).toHaveBeenCalledOnce();
     expect(update).toHaveBeenCalledOnce();
@@ -82,7 +82,9 @@ describe('ReactiveElement', () => {
     }
 
     createElement(TestElement);
-    await Promise.resolve();
+
+    // Flush multiple microtasks — update should never fire without connect
+    await new Promise((r) => setTimeout(r, 10));
 
     expect(update).not.toHaveBeenCalled();
   });
@@ -119,6 +121,27 @@ describe('ReactiveElement properties', () => {
     expect(el.disabled).toBe(false);
   });
 
+  it('coerces number attribute to property', () => {
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        count: { type: Number },
+      };
+      count = 0;
+    }
+
+    const el = createElement(TestElement);
+
+    el.setAttribute('count', '42');
+    expect(el.count).toBe(42);
+    expect(typeof el.count).toBe('number');
+
+    el.setAttribute('count', '3.14');
+    expect(el.count).toBe(3.14);
+
+    el.setAttribute('count', 'not-a-number');
+    expect(el.count).toBeNaN();
+  });
+
   it('supports custom attribute names', () => {
     class TestElement extends ReactiveElement {
       static override properties = {
@@ -149,12 +172,12 @@ describe('ReactiveElement properties', () => {
 
     const el = createElement(TestElement);
     document.body.appendChild(el);
-    await Promise.resolve();
+    await el.updateComplete;
 
     update.mockClear();
 
     el.label = 'new';
-    await Promise.resolve();
+    await el.updateComplete;
 
     expect(update).toHaveBeenCalledOnce();
     const changed = update.mock.calls[0]![0] as PropertyValues;
@@ -180,13 +203,13 @@ describe('ReactiveElement properties', () => {
 
     const el = createElement(TestElement);
     document.body.appendChild(el);
-    await Promise.resolve();
+    await el.updateComplete;
 
     update.mockClear();
 
     el.label = 'hello';
     el.disabled = true;
-    await Promise.resolve();
+    await el.updateComplete;
 
     expect(update).toHaveBeenCalledOnce();
     const changed = update.mock.calls[0]![0] as PropertyValues;
@@ -210,12 +233,14 @@ describe('ReactiveElement properties', () => {
 
     const el = createElement(TestElement);
     document.body.appendChild(el);
-    await Promise.resolve();
+    await el.updateComplete;
 
     update.mockClear();
 
     el.label = 'same';
-    await Promise.resolve();
+
+    // Flush multiple microtasks — update should not fire
+    await new Promise((r) => setTimeout(r, 10));
 
     expect(update).not.toHaveBeenCalled();
   });
@@ -289,9 +314,274 @@ describe('ReactiveElement controllers', () => {
   });
 });
 
-describe('ReactiveElement updateComplete', () => {
-  it('resolves to true', async () => {
+describe('ReactiveElement lifecycle', () => {
+  it('calls firstUpdated only once on first update', async () => {
+    const firstUpdated = vi.fn();
+
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: String },
+      };
+      label = '';
+
+      protected override firstUpdated(changed: PropertyValues) {
+        firstUpdated(new Map(changed));
+      }
+    }
+
+    const el = createElement(TestElement);
+    document.body.appendChild(el);
+    await el.updateComplete;
+
+    expect(firstUpdated).toHaveBeenCalledOnce();
+
+    // Second update should not call firstUpdated again
+    firstUpdated.mockClear();
+    el.label = 'new';
+    await el.updateComplete;
+
+    expect(firstUpdated).not.toHaveBeenCalled();
+  });
+
+  it('calls updated after every update', async () => {
+    const updated = vi.fn();
+
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: String },
+      };
+      label = '';
+
+      protected override updated(changed: PropertyValues) {
+        updated(new Map(changed));
+      }
+    }
+
+    const el = createElement(TestElement);
+    document.body.appendChild(el);
+    await el.updateComplete;
+
+    expect(updated).toHaveBeenCalledOnce();
+
+    // Should fire on subsequent updates too
+    updated.mockClear();
+    el.label = 'new';
+    await el.updateComplete;
+
+    expect(updated).toHaveBeenCalledOnce();
+    const changed = updated.mock.calls[0]![0] as PropertyValues;
+    expect(changed.get('label')).toBe('');
+  });
+
+  it('calls lifecycle methods in correct order (matches Lit)', async () => {
+    const calls: string[] = [];
+
+    const controller: ReactiveController = {
+      hostUpdate: () => calls.push('hostUpdate'),
+      hostUpdated: () => calls.push('hostUpdated'),
+    };
+
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: String },
+      };
+      label = '';
+
+      constructor() {
+        super();
+        this.addController(controller);
+      }
+
+      protected override willUpdate(_changed: PropertyValues) {
+        calls.push('willUpdate');
+      }
+      protected override update(_changed: PropertyValues) {
+        calls.push('update');
+      }
+      protected override firstUpdated(_changed: PropertyValues) {
+        calls.push('firstUpdated');
+      }
+      protected override updated(_changed: PropertyValues) {
+        calls.push('updated');
+      }
+    }
+
+    const el = createElement(TestElement);
+    document.body.appendChild(el);
+    await el.updateComplete;
+
+    // Lit order: willUpdate → hostUpdate → update → hostUpdated → firstUpdated → updated
+    expect(calls).toEqual(['willUpdate', 'hostUpdate', 'update', 'hostUpdated', 'firstUpdated', 'updated']);
+
+    // Second update — no firstUpdated
+    calls.length = 0;
+    el.label = 'new';
+    await el.updateComplete;
+
+    expect(calls).toEqual(['willUpdate', 'hostUpdate', 'update', 'hostUpdated', 'updated']);
+  });
+
+  it('sets hasUpdated to true after first update', async () => {
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: String },
+      };
+      label = '';
+    }
+
+    const el = createElement(TestElement);
+    expect(el.hasUpdated).toBe(false);
+
+    document.body.appendChild(el);
+    expect(el.hasUpdated).toBe(false);
+
+    await el.updateComplete;
+    expect(el.hasUpdated).toBe(true);
+  });
+
+  it('hasUpdated is true inside firstUpdated and updated (matches Lit)', async () => {
+    let hasUpdatedDuringFirstUpdated: boolean | undefined;
+    let hasUpdatedDuringUpdated: boolean | undefined;
+
+    class TestElement extends ReactiveElement {
+      protected override firstUpdated(_changed: PropertyValues) {
+        hasUpdatedDuringFirstUpdated = this.hasUpdated;
+      }
+      protected override updated(_changed: PropertyValues) {
+        hasUpdatedDuringUpdated = this.hasUpdated;
+      }
+    }
+
+    const el = createElement(TestElement);
+    document.body.appendChild(el);
+    await el.updateComplete;
+
+    // Matches Lit: hasUpdated is set before firstUpdated and updated
+    expect(hasUpdatedDuringFirstUpdated).toBe(true);
+    expect(hasUpdatedDuringUpdated).toBe(true);
+    expect(el.hasUpdated).toBe(true);
+  });
+});
+
+describe('ReactiveElement isUpdatePending', () => {
+  it('is true after requestUpdate, false after update completes', async () => {
     const el = createElement(ReactiveElement);
+    document.body.appendChild(el);
+    await el.updateComplete;
+
+    expect(el.isUpdatePending).toBe(false);
+
+    el.requestUpdate();
+    expect(el.isUpdatePending).toBe(true);
+
+    await el.updateComplete;
+    expect(el.isUpdatePending).toBe(false);
+  });
+
+  it('is true during update cycle', async () => {
+    let pendingDuringUpdate: boolean | undefined;
+    let pendingDuringUpdated: boolean | undefined;
+
+    class TestElement extends ReactiveElement {
+      protected override update(_changed: PropertyValues) {
+        pendingDuringUpdate = this.isUpdatePending;
+      }
+      protected override updated(_changed: PropertyValues) {
+        pendingDuringUpdated = this.isUpdatePending;
+      }
+    }
+
+    const el = createElement(TestElement);
+    document.body.appendChild(el);
+    await el.updateComplete;
+
+    // isUpdatePending is true during update, false during updated
+    // (matches Lit: __markUpdated runs after update, before _$didUpdate)
+    expect(pendingDuringUpdate).toBe(true);
+    expect(pendingDuringUpdated).toBe(false);
+  });
+});
+
+describe('ReactiveElement performUpdate', () => {
+  it('flushes a pending update synchronously', async () => {
+    const update = vi.fn();
+
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: String },
+      };
+      label = '';
+
+      override performUpdate() {
+        super.performUpdate();
+      }
+
+      protected override update(changed: PropertyValues) {
+        super.update(changed);
+        update(changed);
+      }
+    }
+
+    const el = createElement(TestElement);
+    document.body.appendChild(el);
+    await el.updateComplete;
+    update.mockClear();
+
+    el.label = 'sync';
+    expect(el.isUpdatePending).toBe(true);
+
+    // Flush synchronously
+    el.performUpdate();
+    expect(update).toHaveBeenCalledOnce();
+    expect(el.isUpdatePending).toBe(false);
+  });
+
+  it('is a no-op when no update is pending', async () => {
+    const update = vi.fn();
+
+    class TestElement extends ReactiveElement {
+      override performUpdate() {
+        super.performUpdate();
+      }
+
+      protected override update() {
+        update();
+      }
+    }
+
+    const el = createElement(TestElement);
+    document.body.appendChild(el);
+    await el.updateComplete;
+    update.mockClear();
+
+    el.performUpdate();
+    expect(update).not.toHaveBeenCalled();
+  });
+});
+
+describe('ReactiveElement updateComplete', () => {
+  it('resolves after first update when connected', async () => {
+    const el = createElement(ReactiveElement);
+    document.body.appendChild(el);
+
+    const result = await el.updateComplete;
+    expect(result).toBe(true);
+    expect(el.hasUpdated).toBe(true);
+  });
+
+  it('resolves after property-triggered update', async () => {
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: String },
+      };
+      label = '';
+    }
+
+    const el = createElement(TestElement);
+    document.body.appendChild(el);
+    await el.updateComplete;
+
+    el.label = 'changed';
     const result = await el.updateComplete;
     expect(result).toBe(true);
   });
