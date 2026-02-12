@@ -292,8 +292,12 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
     if (rendition.language) {
       track.language = rendition.language;
     }
-    if (rendition.default) {
-      track.default = rendition.default;
+    // Match hls.js/http-streaming: only set default=true when BOTH DEFAULT=YES AND AUTOSELECT=YES
+    if (rendition.default && rendition.autoselect) {
+      track.default = true;
+    }
+    if (rendition.autoselect) {
+      track.autoselect = rendition.autoselect;
     }
     if (rendition.forced) {
       track.forced = rendition.forced;
