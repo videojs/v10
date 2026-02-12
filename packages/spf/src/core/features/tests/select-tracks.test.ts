@@ -342,7 +342,7 @@ describe('pickAudioTrack', () => {
 });
 
 describe('pickTextTrack', () => {
-  it('returns undefined (no auto-selection)', () => {
+  it('returns undefined by default (user opt-in)', () => {
     const tracks = [
       {
         type: 'text' as const,
@@ -350,9 +350,11 @@ describe('pickTextTrack', () => {
         url: 'http://example.com/text-en.m3u8',
         bandwidth: 256,
         mimeType: 'application/mp4',
+        codecs: [],
         groupId: 'text',
         label: 'English',
         kind: 'subtitles' as const,
+        language: 'en',
       },
     ];
 
@@ -366,6 +368,253 @@ describe('pickTextTrack', () => {
     const presentation = createPresentation({ video: [] });
 
     const selected = pickTextTrack(presentation, { type: 'text' });
+    expect(selected).toBeUndefined();
+  });
+
+  it('excludes FORCED tracks by default', () => {
+    const tracks = [
+      {
+        type: 'text' as const,
+        id: 'text-en',
+        url: 'http://example.com/text-en.m3u8',
+        bandwidth: 256,
+        mimeType: 'application/mp4',
+        codecs: [],
+        groupId: 'text',
+        label: 'English',
+        kind: 'subtitles' as const,
+        language: 'en',
+      },
+      {
+        type: 'text' as const,
+        id: 'text-en-forced',
+        url: 'http://example.com/text-en-forced.m3u8',
+        bandwidth: 256,
+        mimeType: 'application/mp4',
+        codecs: [],
+        groupId: 'text',
+        label: 'English (Forced)',
+        kind: 'subtitles' as const,
+        language: 'en',
+        forced: true,
+        default: true,
+      },
+    ];
+
+    const presentation = createPresentation({ text: tracks });
+
+    // FORCED track excluded by default, even with DEFAULT=YES
+    const selected = pickTextTrack(presentation, { type: 'text', enableDefaultTrack: true });
+    expect(selected).toBeUndefined();
+  });
+
+  it('includes FORCED tracks when includeForcedTracks enabled', () => {
+    const tracks = [
+      {
+        type: 'text' as const,
+        id: 'text-en',
+        url: 'http://example.com/text-en.m3u8',
+        bandwidth: 256,
+        mimeType: 'application/mp4',
+        codecs: [],
+        groupId: 'text',
+        label: 'English',
+        kind: 'subtitles' as const,
+        language: 'en',
+      },
+      {
+        type: 'text' as const,
+        id: 'text-en-forced',
+        url: 'http://example.com/text-en-forced.m3u8',
+        bandwidth: 256,
+        mimeType: 'application/mp4',
+        codecs: [],
+        groupId: 'text',
+        label: 'English (Forced)',
+        kind: 'subtitles' as const,
+        language: 'en',
+        forced: true,
+        default: true,
+      },
+    ];
+
+    const presentation = createPresentation({ text: tracks });
+
+    // FORCED track included and selected when enabled
+    const selected = pickTextTrack(presentation, {
+      type: 'text',
+      includeForcedTracks: true,
+      enableDefaultTrack: true,
+    });
+    expect(selected).toBe('text-en-forced');
+  });
+
+  it('selects preferred language when specified', () => {
+    const tracks = [
+      {
+        type: 'text' as const,
+        id: 'text-en',
+        url: 'http://example.com/text-en.m3u8',
+        bandwidth: 256,
+        mimeType: 'application/mp4',
+        codecs: [],
+        groupId: 'text',
+        label: 'English',
+        kind: 'subtitles' as const,
+        language: 'en',
+      },
+      {
+        type: 'text' as const,
+        id: 'text-es',
+        url: 'http://example.com/text-es.m3u8',
+        bandwidth: 256,
+        mimeType: 'application/mp4',
+        codecs: [],
+        groupId: 'text',
+        label: 'Spanish',
+        kind: 'subtitles' as const,
+        language: 'es',
+      },
+    ];
+
+    const presentation = createPresentation({ text: tracks });
+
+    const selected = pickTextTrack(presentation, { type: 'text', preferredSubtitleLanguage: 'es' });
+    expect(selected).toBe('text-es');
+  });
+
+  it('selects DEFAULT track when enableDefaultTrack is true', () => {
+    const tracks = [
+      {
+        type: 'text' as const,
+        id: 'text-en',
+        url: 'http://example.com/text-en.m3u8',
+        bandwidth: 256,
+        mimeType: 'application/mp4',
+        codecs: [],
+        groupId: 'text',
+        label: 'English',
+        kind: 'subtitles' as const,
+        language: 'en',
+      },
+      {
+        type: 'text' as const,
+        id: 'text-es',
+        url: 'http://example.com/text-es.m3u8',
+        bandwidth: 256,
+        mimeType: 'application/mp4',
+        codecs: [],
+        groupId: 'text',
+        label: 'Spanish',
+        kind: 'subtitles' as const,
+        language: 'es',
+        default: true,
+      },
+    ];
+
+    const presentation = createPresentation({ text: tracks });
+
+    const selected = pickTextTrack(presentation, { type: 'text', enableDefaultTrack: true });
+    expect(selected).toBe('text-es');
+  });
+
+  it('does NOT select DEFAULT track when enableDefaultTrack is false', () => {
+    const tracks = [
+      {
+        type: 'text' as const,
+        id: 'text-en',
+        url: 'http://example.com/text-en.m3u8',
+        bandwidth: 256,
+        mimeType: 'application/mp4',
+        codecs: [],
+        groupId: 'text',
+        label: 'English',
+        kind: 'subtitles' as const,
+        language: 'en',
+      },
+      {
+        type: 'text' as const,
+        id: 'text-es',
+        url: 'http://example.com/text-es.m3u8',
+        bandwidth: 256,
+        mimeType: 'application/mp4',
+        codecs: [],
+        groupId: 'text',
+        label: 'Spanish',
+        kind: 'subtitles' as const,
+        language: 'es',
+        default: true,
+      },
+    ];
+
+    const presentation = createPresentation({ text: tracks });
+
+    // enableDefaultTrack defaults to false
+    const selected = pickTextTrack(presentation, { type: 'text' });
+    expect(selected).toBeUndefined();
+  });
+
+  it('prefers language match over DEFAULT flag', () => {
+    const tracks = [
+      {
+        type: 'text' as const,
+        id: 'text-en',
+        url: 'http://example.com/text-en.m3u8',
+        bandwidth: 256,
+        mimeType: 'application/mp4',
+        codecs: [],
+        groupId: 'text',
+        label: 'English',
+        kind: 'subtitles' as const,
+        language: 'en',
+      },
+      {
+        type: 'text' as const,
+        id: 'text-es',
+        url: 'http://example.com/text-es.m3u8',
+        bandwidth: 256,
+        mimeType: 'application/mp4',
+        codecs: [],
+        groupId: 'text',
+        label: 'Spanish',
+        kind: 'subtitles' as const,
+        language: 'es',
+        default: true,
+      },
+    ];
+
+    const presentation = createPresentation({ text: tracks });
+
+    // Preferred language trumps DEFAULT
+    const selected = pickTextTrack(presentation, {
+      type: 'text',
+      preferredSubtitleLanguage: 'en',
+      enableDefaultTrack: true,
+    });
+    expect(selected).toBe('text-en');
+  });
+
+  it('returns undefined when all tracks are FORCED and includeForcedTracks is false', () => {
+    const tracks = [
+      {
+        type: 'text' as const,
+        id: 'text-en-forced',
+        url: 'http://example.com/text-en-forced.m3u8',
+        bandwidth: 256,
+        mimeType: 'application/mp4',
+        codecs: [],
+        groupId: 'text',
+        label: 'English (Forced)',
+        kind: 'subtitles' as const,
+        language: 'en',
+        forced: true,
+      },
+    ];
+
+    const presentation = createPresentation({ text: tracks });
+
+    // All tracks filtered out - no selection
+    const selected = pickTextTrack(presentation, { type: 'text', enableDefaultTrack: true });
     expect(selected).toBeUndefined();
   });
 });
