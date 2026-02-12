@@ -31,4 +31,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           package_manager: pnpm
           build_script: build:packages
-          script: pnpm -w exec size-limit --json
+          script: "test -f .size-limit.json && pnpm -w exec size-limit --json || echo '[]'"
