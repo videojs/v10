@@ -184,6 +184,8 @@ jobs:
               '---',
               '',
               ...details,
+              '---',
+              '',
               '<details>',
               '<summary>ℹ️ How to interpret</summary>',
               '',
