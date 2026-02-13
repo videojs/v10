@@ -1,4 +1,6 @@
 export * from './media/state';
+export * from './ui/buffering-indicator/buffering-indicator-core';
+export * from './ui/buffering-indicator/buffering-indicator-data-attrs';
 export * from './ui/controls/controls-core';
 export * from './ui/controls/controls-data-attrs';
 export * from './ui/fullscreen-button/fullscreen-button-core';
