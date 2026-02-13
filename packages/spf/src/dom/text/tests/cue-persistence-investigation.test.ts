@@ -25,7 +25,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     });
   });
 
-  describe.skip('After setTimeout (minimal delay)', () => {
+  describe('After setTimeout (minimal delay)', () => {
     it('cues persist after setTimeout(0)', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
@@ -127,7 +127,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     });
   });
 
-  describe.skip('Multiple cues', () => {
+  describe('Multiple cues', () => {
     it('multiple cues persist after setTimeout', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
@@ -147,7 +147,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     });
   });
 
-  describe.skip('Track element variations', () => {
+  describe('Track element variations', () => {
     it('cues persist with track appended before setting mode', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
@@ -227,7 +227,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
   });
 
   describe('Mode changes', () => {
-    it.skip('cues persist when mode changes after adding', async () => {
+    it('cues persist when mode changes after adding', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
       track.kind = 'subtitles';
