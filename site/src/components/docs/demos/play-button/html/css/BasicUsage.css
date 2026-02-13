@@ -1,12 +1,12 @@
-.play-button-basic {
+.html-play-button-basic {
   position: relative;
 }
 
-.play-button-basic video {
+.html-play-button-basic video {
   width: 100%;
 }
 
-.play-button-basic__button {
+.html-play-button-basic__button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;
@@ -20,15 +20,27 @@
   cursor: pointer;
 }
 
-.play-button-basic__button .show-when-paused {
+.html-play-button-basic__button .show-when-paused {
   display: none;
 }
-.play-button-basic__button .show-when-playing {
+.html-play-button-basic__button .show-when-playing {
   display: none;
 }
-.play-button-basic__button[data-paused] .show-when-paused {
+.html-play-button-basic__button .show-when-ended {
+  display: none;
+}
+.html-play-button-basic__button[data-paused]:not([data-ended]) .show-when-paused {
   display: inline;
 }
-.play-button-basic__button:not([data-paused]) .show-when-playing {
+.html-play-button-basic__button:not([data-paused]) .show-when-playing {
   display: inline;
+}
+.html-play-button-basic__button[data-ended] .show-when-ended {
+  display: inline;
+}
+.html-play-button-basic__button[data-ended] .show-when-paused {
+  display: none;
+}
+.html-play-button-basic__button[data-ended] .show-when-playing {
+  display: none;
 }

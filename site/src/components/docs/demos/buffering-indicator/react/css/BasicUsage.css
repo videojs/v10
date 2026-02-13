@@ -1,11 +1,11 @@
-.buffering-indicator-basic {
+.react-buffering-indicator-basic {
   display: flex;
   width: 100%;
   height: 100%;
   position: relative;
 }
 
-.buffering-indicator-basic__overlay {
+.react-buffering-indicator-basic__overlay {
   position: absolute;
   inset: 0;
   display: flex;
@@ -15,15 +15,15 @@
   z-index: 30;
 }
 
-.buffering-indicator-basic__overlay .buffering-indicator-basic__spinner {
+.react-buffering-indicator-basic__overlay .react-buffering-indicator-basic__spinner {
   display: none;
 }
 
-.buffering-indicator-basic__overlay[data-visible] .buffering-indicator-basic__spinner {
+.react-buffering-indicator-basic__overlay[data-visible] .react-buffering-indicator-basic__spinner {
   display: block;
 }
 
-.buffering-indicator-basic__spinner {
+.react-buffering-indicator-basic__spinner {
   width: 48px;
   height: 48px;
   border: 4px solid rgba(255, 255, 255, 0.3);

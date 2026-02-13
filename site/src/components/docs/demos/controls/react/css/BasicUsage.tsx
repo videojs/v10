@@ -7,7 +7,7 @@ const Player = createPlayer({ features: [...features.video] });
 export default function BasicUsage() {
   return (
     <Player.Provider>
-      <Player.Container className="controls-basic">
+      <Player.Container className="react-controls-basic">
         <Video
           src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
           autoPlay
@@ -16,14 +16,14 @@ export default function BasicUsage() {
           loop
         />
 
-        <Controls.Root className="controls-basic__root">
-          <Controls.Group className="controls-basic__bottom" aria-label="Playback controls">
+        <Controls.Root className="react-controls-basic__root">
+          <Controls.Group className="react-controls-basic__bottom" aria-label="Playback controls">
             <PlayButton
-              className="controls-basic__button"
+              className="react-controls-basic__button"
               render={(props, state) => <button {...props}>{state.paused ? 'Play' : 'Pause'}</button>}
             />
 
-            <Time.Value type="current" className="controls-basic__time" />
+            <Time.Value type="current" className="react-controls-basic__time" />
           </Controls.Group>
         </Controls.Root>
       </Player.Container>

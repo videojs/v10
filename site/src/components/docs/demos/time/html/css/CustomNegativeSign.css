@@ -1,12 +1,12 @@
-.time-custom-negative-sign {
+.html-time-custom-negative-sign {
   position: relative;
 }
 
-.time-custom-negative-sign video {
+.html-time-custom-negative-sign video {
   width: 100%;
 }
 
-.time-custom-negative-sign__value {
+.html-time-custom-negative-sign__value {
   position: absolute;
   bottom: 10px;
   left: 10px;

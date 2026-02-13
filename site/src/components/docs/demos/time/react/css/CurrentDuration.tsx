@@ -7,7 +7,7 @@ const Player = createPlayer({ features: [...features.video] });
 export default function CurrentDuration() {
   return (
     <Player.Provider>
-      <Player.Container className="time-current-duration">
+      <Player.Container className="react-time-current-duration">
         <Video
           src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
           autoPlay
@@ -15,7 +15,7 @@ export default function CurrentDuration() {
           playsInline
           loop
         />
-        <Time.Group className="time-current-duration__group">
+        <Time.Group className="react-time-current-duration__group">
           <Time.Value type="current" />
           <Time.Separator />
           <Time.Value type="duration" />

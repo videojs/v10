@@ -41,6 +41,39 @@ Import the component and assemble its parts:
   ```
 </FrameworkCase>
 
+## Behavior
+
+If the user is active, or if the video is paused, this component will show controls. Otherwise, it will hide them after a short delay.
+
+User activity is tracked via pointer movement, keyboard input, and focus events on the player container. On touch devices, a quick tap toggles visibility. `mouseleave` immediately sets the user as inactive.
+
+## Styling
+By default, controls have the following styles:
+
+```css
+/* Click-through: clicks pass through controls to video beneath */
+media-controls {
+  pointer-events: none;
+}
+
+media-controls-group {
+  pointer-events: auto;
+}
+
+/* Fade transition */
+media-controls {
+  transition: opacity 0.25s;
+}
+
+media-controls:not([data-visible]) {
+  opacity: 0;
+}
+```
+
+## Accessibility
+
+No ARIA role is applied to `<media-controls>` — it is a layout wrapper, not a landmark. `<media-controls-group>` automatically receives `role="group"` when an `aria-label` or `aria-labelledby` attribute is provided; otherwise no role is assigned.
+
 ## Examples
 
 ### Basic Usage

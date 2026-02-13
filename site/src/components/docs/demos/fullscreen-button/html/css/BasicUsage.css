@@ -1,13 +1,13 @@
-.fullscreen-button-basic {
+.html-fullscreen-button-basic {
   display: block;
   position: relative;
 }
 
-.fullscreen-button-basic video {
+.html-fullscreen-button-basic video {
   width: 100%;
 }
 
-.fullscreen-button-basic__button {
+.html-fullscreen-button-basic__button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;
@@ -21,15 +21,15 @@
   cursor: pointer;
 }
 
-.fullscreen-button-basic__button .show-when-fullscreen {
+.html-fullscreen-button-basic__button .show-when-fullscreen {
   display: none;
 }
-.fullscreen-button-basic__button .show-when-not-fullscreen {
+.html-fullscreen-button-basic__button .show-when-not-fullscreen {
   display: none;
 }
-.fullscreen-button-basic__button[data-fullscreen] .show-when-fullscreen {
+.html-fullscreen-button-basic__button[data-fullscreen] .show-when-fullscreen {
   display: inline;
 }
-.fullscreen-button-basic__button:not([data-fullscreen]) .show-when-not-fullscreen {
+.html-fullscreen-button-basic__button:not([data-fullscreen]) .show-when-not-fullscreen {
   display: inline;
 }

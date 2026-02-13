@@ -508,13 +508,14 @@ export type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 
 CLAUDE.md contains repo-wide conventions. Domain-specific patterns live in skills:
 
-| Domain                      | Location             |
-| --------------------------- | -------------------- |
-| Naming, testing, utilities  | CLAUDE.md Code Rules |
-| Component patterns and APIs | `component` skill    |
-| Accessibility               | `aria` skill         |
-| Documentation               | `docs` skill         |
-| API design and DX           | `api` skill          |
-| Updating AI docs            | `claude-update` skill |
+| Domain                      | Location                   |
+| --------------------------- | -------------------------- |
+| Naming, testing, utilities  | CLAUDE.md Code Rules       |
+| Component patterns and APIs | `component` skill          |
+| Accessibility               | `aria` skill               |
+| Documentation               | `docs` skill               |
+| Component reference pages   | `api-reference` skill      |
+| API design and DX           | `api` skill                |
+| Updating AI docs            | `claude-update` skill      |
 
 When adding a new rule, ask: "Who needs this?" If it's domain-specific, put it in the relevant skill.

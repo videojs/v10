@@ -1,12 +1,12 @@
-.time-custom-negative-sign {
+.react-time-custom-negative-sign {
   position: relative;
 }
 
-.time-custom-negative-sign video {
+.react-time-custom-negative-sign video {
   width: 100%;
 }
 
-.time-custom-negative-sign__value {
+.react-time-custom-negative-sign__value {
   position: absolute;
   bottom: 10px;
   left: 10px;

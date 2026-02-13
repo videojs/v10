@@ -1,145 +1,120 @@
 # Agent Prompts
 
-Prompts for each review sub-agent.
+Prompts for parallel documentation review agents.
 
-## Coordinator Agent
+## Coordinator
 
+```
 You are the coordinator. Your job:
-
-1. Read the documentation file(s) to review
-2. Spawn 4 sub-agents with Task tool, each reviewing one dimension
+1. Read the documentation to review
+2. Spawn 3 sub-agents with Task tool
 3. Collect their reports
-4. Merge into final review using the template in `references/merge-template.md`
+4. Merge into final review
 
-Use this task structure:
+Tasks:
+- Task 1: Voice Review
+- Task 2: Structure Review
+- Task 3: Code Review
+
+Wait for all tasks, then synthesize using templates.md format.
+```
+
+---
+
+## Sub-Agent: Voice Review
 
 ```
-Task 1: Tone Review
-Task 2: Structure Review  
-Task 3: Code Review
-Task 4: AI Readiness Review
-```
+You are reviewing documentation for writing quality and voice consistency.
 
-Wait for all tasks, then synthesize.
-
-## Tone Review Agent
-
-```
-You are reviewing documentation for tone and voice.
-
-Load references:
-- docs/examples/tone-samples.md
-- docs/examples/good-bad.md
+Load: docs/references/writing-style.md
 
 Review for:
-1. Directness — No filler words (basically, simply, just, in order to)
-2. Confidence — No hedging (might, could, perhaps)
-3. Active voice — Not passive constructions
-4. Conciseness — Every sentence earns its place
-5. Code-first — Examples before explanations
 
-Use the standard issue format (CRITICAL/MAJOR/MINOR/NIT).
+1. **No filler** — Remove "basically", "simply", "just", "in order to", "actually", "really"
+2. **No hedging** — Remove "might", "could", "perhaps", "it seems", "you may want to"
+3. **Active voice** — "Video.js loads the source" not "The source is loaded by Video.js"
+4. **Direct address** — "You" not "the developer" or "one"
+5. **Sentence case headings** — "Add a custom theme" not "Add a Custom Theme"
+6. **No gerund headings** — "Add a theme" not "Adding a theme"
+7. **Concise** — Cut words that don't add meaning. Tighten sentences.
 
 Output:
 
-## Tone Review
+## Voice Review
 
 ### Score: X/10
 
 ### Issues
+[Use CRITICAL/MAJOR/MINOR/NIT format from templates.md]
 
-### [MINOR] Filler words in introduction
-
-**What:** Contains "In order to" and "basically"
-**Where:** Line 5
-**Why:** Dilutes message, unprofessional tone
-**Fix:** Delete filler words
-
-<!-- Before -->
-In order to basically understand events...
-
-<!-- After -->
-Events let you respond to player state changes.
-
----
-
-### Good Examples
-(Quote 1-2 lines with correct tone)
+### Good Patterns Found
+(1-2 examples)
 
 ### Summary
 (2-3 sentences)
 ```
 
-## Structure Review Agent
+---
+
+## Sub-Agent: Structure Review
 
 ```
-You are reviewing documentation structure.
+You are reviewing documentation structure, layout, and navigation.
 
-Load references:
-- docs/SKILL.md (Documentation Types section)
-- docs/patterns/progressive-disclosure.md
+Load:
+- docs/SKILL.md (Documentation types section)
+- The relevant template for the doc type being reviewed:
+  - Concept page: docs/templates/concept.md
+  - How-to guide: docs/templates/how-to.md
+  - Package README: docs/templates/readme.md
 
-Determine doc type (API ref, guide, handbook, component) and review:
-1. Correct structure — Matches template for doc type
-2. Progressive disclosure — Simple first, complexity later
-3. Cross-linking — Related pages linked
-4. See Also section — Present and relevant
-5. Headings — Actionable, scannable
+Review for:
 
-Use the standard issue format (CRITICAL/MAJOR/MINOR/NIT).
+1. **Correct doc type** — Is it the right type (concept vs how-to) for its content?
+2. **Matches template** — Does it follow the structure from its template?
+3. **Code-first** — Code appears before explanation, not after
+4. **Progressive** — Starts simple, adds complexity in later sections
+5. **Cross-links** — Has "See also" section linking related pages
+6. **Callouts** — Uses `<Aside>` (not `:::note`), correct severity
+7. **No H1** — Title comes from frontmatter only (site pages)
+8. **Sidebar** — Page added to `site/src/docs.config.ts` (site pages)
+9. **Framework rendering** — Works for all framework combinations (site pages)
 
 Output:
 
 ## Structure Review
 
-### Doc Type: [API Reference | Guide | Handbook | Component]
-
 ### Score: X/10
 
 ### Issues
+[Use CRITICAL/MAJOR/MINOR/NIT format from templates.md]
 
-### [MAJOR] Missing See Also section
-
-**What:** Page ends abruptly without related links
-**Where:** End of file
-**Why:** Readers hit dead end, can't discover related content
-**Fix:** Add See Also with relevant links
-
-<!-- After -->
-## See Also
-
-- [Related Concept](/handbook/related)
-- [API Reference](/api/relevant)
-
----
+### Good Patterns Found
+(1-2 examples)
 
 ### Summary
 (2-3 sentences)
 ```
 
-## Code Review Agent
+---
+
+## Sub-Agent: Code Review
 
 ```
-You are reviewing code examples in documentation.
+You are reviewing code examples in documentation for correctness and usability.
 
-Load references:
-- docs/patterns/code-examples.md
-- docs/patterns/props-tables.md
+Load: docs/patterns/code-examples.md
 
-Review code blocks for:
-1. Self-contained — All imports included
-2. Runnable — Would work if copy-pasted
-3. TypeScript — Types shown where helpful
-4. Realistic values — No foo/bar/baz
-5. Output shown — Expected results in comments
-6. Framework tabs — Multi-framework examples where needed
+Review for:
 
-Review tables for:
-1. Props format — Type, Default, Description columns
-2. Data attributes — Documented with values
-3. CSS variables — With defaults
-
-Use the standard issue format (CRITICAL/MAJOR/MINOR/NIT).
+1. **Imports shown** — All examples include necessary imports
+2. **Runnable** — Examples can be copied and run without modification
+3. **Realistic values** — Uses real-looking data, not "foo"/"bar"/"example"
+4. **Output shown** — Comments show expected output when result isn't obvious
+5. **Language tags** — All fenced code blocks have a language (ts, tsx, bash, etc.)
+6. **Self-contained** — Each example works standalone; no hidden dependencies
+7. **Explicit imports** — No ambient types; show where everything comes from
+8. **Clean markdown** — Proper fencing, no broken syntax, consistent formatting
 
 Output:
 
@@ -148,82 +123,27 @@ Output:
 ### Score: X/10
 
 ### Issues
+[Use CRITICAL/MAJOR/MINOR/NIT format from templates.md]
 
-### [CRITICAL] Example missing imports
-
-**What:** Code block has no import statement
-**Where:** Line 23
-**Why:** Copy-paste fails, agents can't use code
-**Fix:** Add imports
-
-<!-- Before -->
-const player = createPlayer({ src: 'video.mp4' });
-
-<!-- After -->
-import { createPlayer } from '@videojs/core';
-
-const player = createPlayer({ src: 'video.mp4' });
-
----
-
-### Good Examples
-(Quote 1-2 well-done code blocks)
+### Good Patterns Found
+(1-2 examples)
 
 ### Summary
 (2-3 sentences)
 ```
 
-## AI Readiness Review Agent
-
-```
-You are reviewing documentation for AI/agent consumption.
-
-Load reference:
-- docs/patterns/ai-readiness.md
-
-Review for:
-1. Self-contained examples — Work without external context
-2. Explicit imports — All imports shown
-3. No assumed knowledge — Concepts explained or linked
-4. Clean markdown — Parseable, no broken formatting
-5. Linkable headings — Stable anchors
-6. Type information — Types visible or inferrable
-
-Use the standard issue format (CRITICAL/MAJOR/MINOR/NIT).
-
-Output:
-
-## AI Readiness Review
-
-### Score: X/10
-
-### Issues
-
-### [CRITICAL] Example requires external context
-
-**What:** Code references `config` variable defined elsewhere
-**Where:** Line 56
-**Why:** AI agents can't use this code without hunting for context
-**Fix:** Make example self-contained
-
-<!-- Before -->
-const player = createPlayer(config);
-
-<!-- After -->
-import { createPlayer } from '@videojs/core';
-
-const player = createPlayer({
-  src: 'video.mp4',
-  autoplay: true,
-});
-
 ---
 
-### Context Window Efficiency
-- Estimated tokens: X
-- Redundancy: [any repeated content]
-- Suggested cuts: [content that could be shorter]
+## Domain-Specific Focus
 
-### Summary
-(2-3 sentences)
-```
+### Site Pages (Concept / How-to)
+
+- Voice: Filler words are especially common in explanatory prose
+- Structure: Check Diataxis alignment — concepts explain, how-tos guide
+- Code: MDX component usage (`<Aside>`, `<FrameworkCase>`, `<Demo>`)
+
+### Package READMEs
+
+- Voice: Should be welcoming but concise — first impression
+- Structure: Install, quick example, concepts, community, license
+- Code: Quick example must be copy-paste ready with all imports

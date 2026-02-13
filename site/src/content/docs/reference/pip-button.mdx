@@ -35,6 +35,33 @@ import basicUsageHtmlTs from "@/components/docs/demos/pip-button/html/css/BasicU
 ```
 </FrameworkCase>
 
+## Behavior
+
+Toggles picture-in-picture (PiP) mode. Detects platform support through `availability` — when PiP is `"unsupported"`, the toggle does nothing.
+
+## Styling
+
+You can style the button based on PiP state:
+
+```css
+/* In PiP mode */
+media-pip-button[data-pip] {
+  background: red;
+}
+```
+
+Consider hiding the button when unsupported:
+
+```css
+media-pip-button[data-availability="unsupported"] {
+  display: none;
+}
+```
+
+## Accessibility
+
+Renders a `<button>` with an automatic `aria-label`: "Enter PiP" or "Exit PiP". Override with the `label` prop. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
+
 ## Examples
 
 ### Basic Usage

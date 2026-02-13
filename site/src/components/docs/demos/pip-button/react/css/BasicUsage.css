@@ -1,12 +1,12 @@
-.pip-button-basic {
+.react-pip-button-basic {
   position: relative;
 }
 
-.pip-button-basic video {
+.react-pip-button-basic video {
   width: 100%;
 }
 
-.pip-button-basic__button {
+.react-pip-button-basic__button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;

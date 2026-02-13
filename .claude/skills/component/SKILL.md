@@ -215,4 +215,5 @@ For structured component reviews, load the review workflow:
 | ---------------------- | ------------ |
 | Accessibility patterns | `aria` skill |
 | API design principles  | `api` skill  |
-| Documentation patterns | `docs` skill |
+| Documentation patterns | `docs` skill         |
+| Component API reference  | `api-reference` skill |
