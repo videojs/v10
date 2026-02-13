@@ -3,10 +3,12 @@ import { resolvePresentation } from '../core/features/resolve-presentation';
 import { resolveTrack } from '../core/features/resolve-track';
 import { selectAudioTrack, selectVideoTrack } from '../core/features/select-tracks';
 import { createState } from '../core/state/create-state';
+import { loadTextTrackCues } from './features/load-text-track-cues';
 import { setupMediaSource } from './features/setup-mediasource';
 import { setupSourceBuffer } from './features/setup-sourcebuffer';
 import { setupTextTracks } from './features/setup-text-tracks';
 import { syncTextTrackModes } from './features/sync-text-track-modes';
+import { destroyVttParser } from './text/parse-vtt-segment';
 
 /**
  * Configuration for the playback engine.
@@ -47,7 +49,7 @@ export interface PlaybackEngineState {
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
   // NOTE: Text Tracks (subtitles/ccs) can be unselected
-  selectedTextTrackId?: string | undefined;
+  selectedTextTrackId?: string;
 }
 
 /**
@@ -170,6 +172,9 @@ export function createPlaybackEngine(config: PlaybackEngineConfig): PlaybackEngi
 
     // 7. Sync text track modes (when track selected and track elements created)
     syncTextTrackModes({ state, owners }),
+
+    // 8. Load text track cues (when track resolved and mode set)
+    loadTextTrackCues({ state, owners }),
   ];
 
   // Trigger initial presentation load
@@ -181,6 +186,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig): PlaybackEngi
     owners,
     destroy: () => {
       cleanups.forEach((cleanup) => cleanup());
+      destroyVttParser();
     },
   };
 }

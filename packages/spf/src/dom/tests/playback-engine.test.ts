@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { createPlaybackEngine } from '../playback-engine';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createPlaybackEngine, type PlaybackEngineState } from '../playback-engine';
 
 describe('createPlaybackEngine', () => {
   it('creates engine with state and owners', () => {
@@ -1127,25 +1127,25 @@ http://example.com/video-seg1.m4s
         const tracks = Array.from(mediaElement.children) as HTMLTrackElement[];
 
         // English track
-        expect(tracks[0].kind).toBe('subtitles');
-        expect(tracks[0].label).toBe('English');
-        expect(tracks[0].srclang).toBe('en');
-        expect(tracks[0].src).toBe('http://example.com/text-en.m3u8');
-        expect(tracks[0].default).toBe(false);
+        expect(tracks[0]!.kind).toBe('subtitles');
+        expect(tracks[0]!.label).toBe('English');
+        expect(tracks[0]!.srclang).toBe('en');
+        expect(tracks[0]!.src).toBe('http://example.com/text-en.m3u8');
+        expect(tracks[0]!.default).toBe(false);
 
         // Spanish track (DEFAULT)
-        expect(tracks[1].kind).toBe('subtitles');
-        expect(tracks[1].label).toBe('Spanish');
-        expect(tracks[1].srclang).toBe('es');
-        expect(tracks[1].src).toBe('http://example.com/text-es.m3u8');
-        expect(tracks[1].default).toBe(true);
+        expect(tracks[1]!.kind).toBe('subtitles');
+        expect(tracks[1]!.label).toBe('Spanish');
+        expect(tracks[1]!.srclang).toBe('es');
+        expect(tracks[1]!.src).toBe('http://example.com/text-es.m3u8');
+        expect(tracks[1]!.default).toBe(true);
 
         // French track
-        expect(tracks[2].kind).toBe('subtitles');
-        expect(tracks[2].label).toBe('French');
-        expect(tracks[2].srclang).toBe('fr');
-        expect(tracks[2].src).toBe('http://example.com/text-fr.m3u8');
-        expect(tracks[2].default).toBe(false);
+        expect(tracks[2]!.kind).toBe('subtitles');
+        expect(tracks[2]!.label).toBe('French');
+        expect(tracks[2]!.srclang).toBe('fr');
+        expect(tracks[2]!.src).toBe('http://example.com/text-fr.m3u8');
+        expect(tracks[2]!.default).toBe(false);
       },
       { timeout: 2000 }
     );
@@ -1227,8 +1227,8 @@ http://example.com/text-es-seg1.vtt
     const tracks = Array.from(mediaElement.children) as HTMLTrackElement[];
 
     // Initially all tracks should be hidden (no selection, managed by activateTextTrack)
-    expect(tracks[0].track.mode).toBe('hidden');
-    expect(tracks[1].track.mode).toBe('hidden');
+    expect(tracks[0]!.track.mode).toBe('hidden');
+    expect(tracks[1]!.track.mode).toBe('hidden');
 
     // Get track IDs from the map
     const englishTrackId = Array.from(textTracks.entries()).find(([, el]) => el.srclang === 'en')?.[0];
@@ -1238,7 +1238,7 @@ http://example.com/text-es-seg1.vtt
     expect(spanishTrackId).toBeDefined();
 
     // Select English track
-    engine.state.patch({ selectedTextTrackId: englishTrackId });
+    engine.state.patch({ selectedTextTrackId: englishTrackId! });
 
     await vi.waitFor(
       () => {
@@ -1252,7 +1252,7 @@ http://example.com/text-es-seg1.vtt
     );
 
     // Switch to Spanish track
-    engine.state.patch({ selectedTextTrackId: spanishTrackId });
+    engine.state.patch({ selectedTextTrackId: spanishTrackId! });
 
     await vi.waitFor(
       () => {
@@ -1266,7 +1266,7 @@ http://example.com/text-es-seg1.vtt
     );
 
     // Deselect (hide all)
-    engine.state.patch({ selectedTextTrackId: undefined });
+    engine.state.patch({ selectedTextTrackId: undefined } as unknown as Partial<PlaybackEngineState>);
 
     await vi.waitFor(
       () => {
