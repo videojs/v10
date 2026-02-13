@@ -47,9 +47,9 @@ Accept component name as argument (kebab-case).
 1. Read the core file at `packages/core/src/core/ui/{name}/{name}-core.ts` — extract Props, State, behavior
 2. Read data-attrs file at `packages/core/src/core/ui/{name}/{name}-data-attrs.ts` — extract data attributes
 3. Check `packages/react/src/ui/{name}/index.parts.ts` — detect if multi-part
-4. Search `internal/design/` for matching design doc: `internal/design/**/*{name}*`
+4. Search `internal/design/` for matching design doc: `internal/design/**/*{name}*`. If no design doc is found, proceed — the core file is the primary source of truth; design docs are supplementary context.
 5. Read the HTML element file(s) for tag names at `packages/html/src/ui/{name}/`
-6. Use `git log --oneline --all -- packages/core/src/core/ui/{name}` to find the commit that added the component, then check linked PRs via `gh pr list --search` for additional context
+6. (Optional) Use `git log --oneline --all -- packages/core/src/core/ui/{name}` to find the commit that added the component, then check linked PRs via `gh pr list --search` for additional context. This enriches understanding but steps 1-3 and 5 are sufficient to build the reference page.
 
 ### Step 2: Validate api-docs-builder compatibility
 

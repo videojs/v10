@@ -9,7 +9,7 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 This guide covers how to create component reference pages — the API documentation under `reference/` in the docs sidebar.
 
 <Aside type="tip">
-Reference pages are scaffolded with the `docs-api-reference` Claude skill. Run `/api-reference play-button` to generate a reference page interactively.
+Reference pages are scaffolded with the `api-reference` Claude skill. Run `/api-reference play-button` to generate a reference page interactively.
 </Aside>
 
 ## Prerequisites
@@ -44,7 +44,7 @@ The builder relies on file naming conventions to discover components:
 | React component | `packages/react/src/ui/{name}/` | `packages/react/src/ui/play-button/` |
 | Multi-part detection | `index.parts.ts` | `packages/react/src/ui/slider/index.parts.ts` |
 
-If the builder output is missing or incomplete, check that your files match these conventions. See `.claude/skills/docs-api-reference/references/builder-conventions.md` for the full list.
+If the builder output is missing or incomplete, check that your files match these conventions. See `.claude/skills/api-reference/references/builder-conventions.md` for the full list.
 
 ## Create demo files
 

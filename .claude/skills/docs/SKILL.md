@@ -29,7 +29,7 @@ This skill adds writing guidance on top of those. When in doubt, the source file
 | Task | Load |
 |------|------|
 | Writing style and voice | `references/writing-style.md` |
-| Notes on effective component library docs | `references/component-library.md` |
+| Notes on effective component library docs | `references/component-libraries.md` |
 | Notes on effective general developer tool docs | `references/gold-standard.md` |
 | Notes on effective state tooling docs | `references/state-tooling.md` |
 | Concept page from scratch | `templates/concept.md` |
