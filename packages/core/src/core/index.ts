@@ -9,6 +9,8 @@ export * from './ui/play-button/play-button-core';
 export * from './ui/play-button/play-button-data-attrs';
 export * from './ui/poster/poster-core';
 export * from './ui/poster/poster-data-attrs';
+export * from './ui/seek-button/seek-button-core';
+export * from './ui/seek-button/seek-button-data-attrs';
 export * from './ui/time/time-core';
 export * from './ui/time/time-data-attrs';
 export * from './ui/types';
