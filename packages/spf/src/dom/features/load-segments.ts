@@ -138,15 +138,25 @@ export function loadSegments({
 
       if (segmentsToLoad.length === 0) return;
 
-      // Map segments to async task functions
-      const tasks = segmentsToLoad.map((segment) => async () => {
-        // Fetch segment data
+      const track = findSelectedVideoTrack(s);
+      if (!track || !isResolvedTrack(track)) return;
+
+      // Create task for initialization segment (must load first!)
+      const initTask = async () => {
+        const response = await fetchResolvable(track.initialization);
+        const initData = await response.arrayBuffer();
+        await appendSegment(sourceBuffer, initData);
+      };
+
+      // Create tasks for media segments
+      const mediaTasks = segmentsToLoad.map((segment) => async () => {
         const response = await fetchResolvable(segment);
         const segmentData = await response.arrayBuffer();
-
-        // Append to SourceBuffer
         await appendSegment(sourceBuffer, segmentData);
       });
+
+      // Combine: init segment first, then media segments
+      const tasks = [initTask, ...mediaTasks];
 
       // Execute tasks serially
       isLoading = true;
