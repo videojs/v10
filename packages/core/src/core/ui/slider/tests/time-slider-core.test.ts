@@ -61,6 +61,17 @@ describe('TimeSliderCore', () => {
       expect(state.currentTime).toBe(90); // unchanged
     });
 
+    it('uses raw precision during drag for smooth scrubbing', () => {
+      const core = new TimeSliderCore();
+      const state = core.getTimeState(
+        createMediaState({ currentTime: 0, duration: 10 }),
+        createInteraction({ dragging: true, dragPercent: 33.333 })
+      );
+
+      // 33.333% of 10 = 3.3333, NOT snapped to step (which would be 3)
+      expect(state.value).toBeCloseTo(3.3333, 3);
+    });
+
     it('computes buffer percent from buffered ranges', () => {
       const core = new TimeSliderCore();
       const state = core.getTimeState(createMediaState({ duration: 200, buffered: [[0, 100]] }), createInteraction());

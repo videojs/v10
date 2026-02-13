@@ -1,3 +1,4 @@
+import { clamp } from '@videojs/utils/number';
 import { defaults } from '@videojs/utils/object';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
@@ -39,7 +40,8 @@ export class TimeSliderCore extends SliderCore {
     // Override min/max for time domain
     super.setProps({ min: 0, max: duration, step: this.#props.step, largeStep: this.#props.largeStep });
 
-    const value = interaction.dragging ? this.valueFromPercent(interaction.dragPercent) : currentTime;
+    // Raw precision during drag for smooth scrubbing — step snapping only applies to keyboard.
+    const value = interaction.dragging ? clamp((interaction.dragPercent / 100) * duration, 0, duration) : currentTime;
     const base = super.getState(interaction, value);
 
     // Use end of the furthest buffered range

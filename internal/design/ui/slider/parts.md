@@ -451,7 +451,7 @@ import { TimeSlider } from '@videojs/react';
 | Prop | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | `label` | `string` | `'Seek'` | Accessible label for the slider. Sets `aria-label` on Thumb. |
-| `step` | `number` | `1` | Arrow key step in seconds. Drag precision is handled internally (sub-second). |
+| `step` | `number` | `1` | Arrow key step in seconds. Drag uses raw precision (no step snapping) for smooth scrubbing. |
 | `largeStep` | `number` | `10` | Shift+Arrow / Page Up/Down step in seconds. |
 | `seekThrottle` | `number` | `100` | Trailing-edge throttle (ms) for seek requests during drag. `0` disables throttling. |
 | `disabled` | `boolean` | `false` | Disables interaction. |
