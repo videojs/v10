@@ -192,8 +192,8 @@ Keyboard events are handled by the **Thumb** element (the focusable `role="slide
 | `0`–`9` | Jump to 0%–90% of duration | Jump to 0%–90% of range |
 
 Default step values:
-- Time slider: `step = 5` (seconds), `largeStep = 10` (seconds)
-- Volume slider: `step = 5` (%), `largeStep = 10` (%)
+- Time slider: `step = 1` (second), `largeStep = 10` (seconds)
+- Volume slider: `step = 1` (%), `largeStep = 10` (%)
 
 Customizable via `step` and `largeStep` props on the Root.
 

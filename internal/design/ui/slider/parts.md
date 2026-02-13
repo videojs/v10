@@ -237,7 +237,7 @@ Focusable slider handle. Carries `role="slider"`, `tabindex="0"`, all ARIA attri
 
 #### ARIA (automatic)
 
-Set by `SliderCore.getThumbAttrs()`. Domain cores extend with `aria-label` and `aria-valuetext`.
+Set by `SliderCore.getAttrs()`. Domain cores extend via `override getAttrs()` with `aria-label` and `aria-valuetext`.
 
 | Attribute | Source |
 | --------- | ------ |
@@ -451,7 +451,7 @@ import { TimeSlider } from '@videojs/react';
 | Prop | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | `label` | `string` | `'Seek'` | Accessible label for the slider. Sets `aria-label` on Thumb. |
-| `step` | `number` | `5` | Arrow key step in seconds. Drag precision is handled internally (sub-second). |
+| `step` | `number` | `1` | Arrow key step in seconds. Drag uses raw precision (no step snapping) for smooth scrubbing. |
 | `largeStep` | `number` | `10` | Shift+Arrow / Page Up/Down step in seconds. |
 | `seekThrottle` | `number` | `100` | Trailing-edge throttle (ms) for seek requests during drag. `0` disables throttling. |
 | `disabled` | `boolean` | `false` | Disables interaction. |
@@ -492,7 +492,7 @@ Inherited by all children (including `data-seeking`).
 - **Value formatting:** Provides time formatter (`formatTime`) to `Slider.Value` children — `type="current"` shows formatted current time (`1:30`), `type="pointer"` shows formatted pointer time.
 - **Data attributes:** All slider data attributes + `data-seeking` are propagated to children.
 - **ARIA for Thumb:** Provides domain-specific ARIA attrs to `Slider.Thumb` via context.
-- **Keyboard step values:** `step` defaults to `5` (seconds), `largeStep` defaults to `10` (seconds).
+- **Keyboard step values:** `step` defaults to `1` (second), `largeStep` defaults to `10` (seconds).
 
 #### ARIA (on Thumb)
 
@@ -565,7 +565,7 @@ import { VolumeSlider } from '@videojs/react';
 | ---- | ---- | ------- | ----------- |
 | `label` | `string` | `'Volume'` | Accessible label for the slider. Sets `aria-label` on Thumb. |
 | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Layout direction. |
-| `step` | `number` | `5` | Arrow key step as percentage (0-100). |
+| `step` | `number` | `1` | Arrow key step as percentage (0-100). |
 | `largeStep` | `number` | `10` | Shift+Arrow / Page Up/Down step as percentage. |
 | `disabled` | `boolean` | `false` | Disables interaction. |
 | `thumbAlignment` | `'center' \| 'edge'` | `'center'` | How the thumb aligns at min/max. See [Slider.Root `thumbAlignment`](#props). |
@@ -592,7 +592,7 @@ No `value` / `onValueChange` — managed from store.
 - **Value formatting:** Provides percentage formatter to `Slider.Value` children — displays `75%`.
 - **Data attributes:** All slider data attributes are propagated to children.
 - **ARIA for Thumb:** Provides domain-specific ARIA attrs to `Slider.Thumb` via context.
-- **Keyboard step values:** `step` defaults to `5` (%), `largeStep` defaults to `10` (%).
+- **Keyboard step values:** `step` defaults to `1` (%), `largeStep` defaults to `10` (%).
 
 #### ARIA (on Thumb)
 

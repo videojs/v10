@@ -78,6 +78,10 @@ export function formatTimeAsPhrase(seconds: number): string {
   const m = Math.floor((positiveSeconds / 60) % 60);
   const s = Math.floor(positiveSeconds % 60);
 
+  if (positiveSeconds === 0) {
+    return `${toTimeUnitPhrase(0, 2)}${negative ? ' remaining' : ''}`;
+  }
+
   const parts = [h, m, s].map((value, index) => (value > 0 ? toTimeUnitPhrase(value, index) : null)).filter(Boolean);
 
   const phrase = parts.join(', ');

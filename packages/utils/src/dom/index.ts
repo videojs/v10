@@ -1,8 +1,10 @@
 export { animationFrame } from './animation-frame';
+export { isRTL } from './direction';
 export { type OnEventOptions, onEvent } from './event';
 export { idleCallback } from './idle-callback';
 export { listen } from './listen';
 export { isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement } from './predicates';
+export { type RafThrottled, rafThrottle } from './raf-throttle';
 export { getSlottedElement, querySlot } from './slotted';
 export { supportsAnimationFrame, supportsIdleCallback } from './supports';
 export { serializeTimeRanges } from './time-ranges';

@@ -34,6 +34,10 @@
       "types": "./dist/time.d.ts",
       "default": "./dist/time.js"
     },
+    "./number": {
+      "types": "./dist/number.d.ts",
+      "default": "./dist/number.js"
+    },
     "./types": {
       "types": "./dist/types.d.ts",
       "default": "./dist/types.js"
