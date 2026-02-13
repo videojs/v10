@@ -234,44 +234,4 @@ describe('BufferingIndicatorCore', () => {
       expect(callback).not.toHaveBeenCalled();
     });
   });
-
-  describe('destroy', () => {
-    it('clears pending timer', () => {
-      const core = new BufferingIndicatorCore();
-      const callback = vi.fn();
-
-      core.state.subscribe(callback);
-
-      core.update(createMediaState({ waiting: true, paused: false }));
-      core.destroy();
-
-      vi.advanceTimersByTime(500);
-      flush();
-
-      expect(callback).not.toHaveBeenCalled();
-    });
-
-    it('resets visible to false', () => {
-      const core = new BufferingIndicatorCore();
-
-      core.update(createMediaState({ waiting: true, paused: false }));
-      vi.advanceTimersByTime(500);
-      expect(core.state.current.visible).toBe(true);
-
-      core.destroy();
-      flush();
-
-      expect(core.state.current.visible).toBe(false);
-    });
-
-    it('guards against re-entry', () => {
-      const core = new BufferingIndicatorCore();
-
-      core.update(createMediaState({ waiting: true, paused: false }));
-      vi.advanceTimersByTime(500);
-
-      core.destroy();
-      core.destroy(); // should not throw
-    });
-  });
 });

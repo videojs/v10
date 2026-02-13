@@ -3,7 +3,7 @@
 import { BufferingIndicatorCore, BufferingIndicatorDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
-import { forwardRef, useEffect, useState, useSyncExternalStore } from 'react';
+import { forwardRef, useState, useSyncExternalStore } from 'react';
 
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -48,8 +48,6 @@ export const BufferingIndicator = forwardRef(function BufferingIndicator(
     (cb) => core.state.subscribe(cb),
     () => core.state.current
   );
-
-  useEffect(() => () => core.destroy(), [core]);
 
   if (!playback) {
     if (__DEV__) logMissingFeature('BufferingIndicator', 'playback');

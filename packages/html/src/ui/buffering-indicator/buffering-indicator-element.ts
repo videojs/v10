@@ -38,7 +38,6 @@ export class BufferingIndicatorElement extends MediaElement {
     super.disconnectedCallback();
     this.#disconnect?.abort();
     this.#disconnect = null;
-    this.#core.destroy();
   }
 
   protected override willUpdate(changed: PropertyValues): void {

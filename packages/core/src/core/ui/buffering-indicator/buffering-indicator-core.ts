@@ -23,7 +23,6 @@ export class BufferingIndicatorCore {
 
   #props = { ...BufferingIndicatorCore.defaultProps };
   #timer: ReturnType<typeof setTimeout> | null = null;
-  #destroyed = false;
 
   setProps(props: BufferingIndicatorProps): void {
     this.#props = defaults(props, BufferingIndicatorCore.defaultProps);
@@ -38,22 +37,12 @@ export class BufferingIndicatorCore {
         this.state.patch({ visible: true });
       }, this.#props.delay);
     } else if (!buffering) {
-      this.#clearTimer();
+      if (this.#timer !== null) {
+        clearTimeout(this.#timer);
+        this.#timer = null;
+      }
+
       this.state.patch({ visible: false });
-    }
-  }
-
-  destroy(): void {
-    if (this.#destroyed) return;
-    this.#destroyed = true;
-    this.#clearTimer();
-    this.state.patch({ visible: false });
-  }
-
-  #clearTimer(): void {
-    if (this.#timer !== null) {
-      clearTimeout(this.#timer);
-      this.#timer = null;
     }
   }
 }
