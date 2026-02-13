@@ -3,7 +3,7 @@ import { AbortControllerRegistry } from './abort-controller-registry';
 import type { StoreCallbacks } from './config';
 import { throwDestroyedError, throwNoTargetError } from './errors';
 import type { AttachContext, Slice, StateContext } from './slice';
-import type { StateChange, SubscribeOptions, UnknownState, WritableState } from './state';
+import type { StateChange, State as StateContainer, SubscribeOptions, UnknownState, WritableState } from './state';
 import { createState } from './state';
 
 const STORE_SYMBOL = Symbol('@videojs/store');
@@ -44,6 +44,9 @@ export function createStore<Target = unknown>(): <State>(
 
     const store = {
       [STORE_SYMBOL]: true,
+      get $state() {
+        return state;
+      },
       get target() {
         return target;
       },
@@ -152,6 +155,7 @@ export function isStore(value: unknown): value is AnyStore {
 
 export interface BaseStore<Target = unknown, State = UnknownState> {
   [key: string]: unknown;
+  readonly $state: StateContainer<State>;
   readonly target: Target | null;
   readonly destroyed: boolean;
   readonly state: State;

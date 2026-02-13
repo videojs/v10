@@ -1,9 +1,8 @@
-import { noop } from '@videojs/utils/function';
+import { identity, noop } from '@videojs/utils/function';
 import type { AnyStore, InferStoreState } from '../../core/store';
 import { type Comparator, type Selector, useSelector } from './use-selector';
 
-const identity = (s: any) => s,
-  noopSubscribe = () => noop;
+const noopSubscribe = () => noop;
 
 /**
  * Access store state and actions.
