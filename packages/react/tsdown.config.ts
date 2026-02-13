@@ -6,18 +6,8 @@ type BuildMode = 'dev' | 'default';
 
 const buildModes: BuildMode[] = ['dev', 'default'];
 
-const presetsEntries = Object.fromEntries(
-  globSync('src/presets/**/*.{ts,tsx}').map((file) => {
-    const key = file.replace('src/', '').replace(/\.tsx?$/, '');
-    return [key, file];
-  })
-);
-
-const createConfig = (mode: BuildMode): UserConfig => ({
-  entry: {
-    index: './src/index.ts',
-    ...presetsEntries,
-  },
+const createConfig = (mode: BuildMode, isWatch: boolean): UserConfig => ({
+  entry: 'src/**/index.ts',
   platform: 'browser',
   format: 'es',
   sourcemap: true,
@@ -32,6 +22,27 @@ const createConfig = (mode: BuildMode): UserConfig => ({
     __DEV__: mode === 'dev' ? 'true' : 'false',
   },
   dts: mode === 'dev',
+  copy: [
+    {
+      from: 'src/**/*.css',
+      to: `dist/${mode}`,
+      flatten: false,
+    },
+  ],
+  plugins: [
+    {
+      name: 'watch-css',
+      buildStart() {
+        const cssFiles = globSync('src/**/*.css');
+        for (const file of cssFiles) {
+          this.addWatchFile(file);
+        }
+      },
+    },
+  ],
 });
 
-export default defineConfig(buildModes.map((mode) => createConfig(mode)));
+export default defineConfig((cliOptions) => {
+  const isWatch = !!cliOptions.watch;
+  return buildModes.map((mode) => createConfig(mode, isWatch));
+});

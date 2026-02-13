@@ -35,10 +35,8 @@
     }
   },
   "scripts": {
-    "build": "tsdown && pnpm css:copy",
-    "build:watch": "concurrently 'tsdown --watch ./src --no-clean' 'pnpm css:watch'",
-    "css:copy": "rsync -a --include='*/' --include='*.css' --exclude='*' src/presets/ dist/default/presets/",
-    "css:watch": "chokidar 'src/presets/**/*.css' --initial -c 'pnpm run css:copy'",
+    "build": "tsdown",
+    "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm build:watch",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -55,8 +53,6 @@
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
     "@types/react": "^19.2.7",
-    "chokidar-cli": "^3.0.0",
-    "concurrently": "^9.2.1",
     "jsdom": "^26.1.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
