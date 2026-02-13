@@ -20,6 +20,7 @@ export { FullscreenButtonElement } from './ui/fullscreen-button/fullscreen-butto
 // Primitives
 export * from './ui/media-element';
 export { MuteButtonElement } from './ui/mute-button/mute-button-element';
+export { PipButtonElement } from './ui/pip-button/pip-button-element';
 export { PlayButtonElement } from './ui/play-button/play-button-element';
 export { PosterElement } from './ui/poster/poster-element';
 export { TimeElement } from './ui/time/time-element';

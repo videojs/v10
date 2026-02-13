@@ -5,6 +5,8 @@ export * from './ui/fullscreen-button/fullscreen-button-core';
 export * from './ui/fullscreen-button/fullscreen-button-data-attrs';
 export * from './ui/mute-button/mute-button-core';
 export * from './ui/mute-button/mute-button-data-attrs';
+export * from './ui/pip-button/pip-button-core';
+export * from './ui/pip-button/pip-button-data-attrs';
 export * from './ui/play-button/play-button-core';
 export * from './ui/play-button/play-button-data-attrs';
 export * from './ui/poster/poster-core';
