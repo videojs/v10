@@ -28,6 +28,7 @@ export const sidebar: Sidebar = [
       { slug: 'reference/controls' },
       { slug: 'reference/fullscreen-button' },
       { slug: 'reference/mute-button' },
+      { slug: 'reference/pip-button' },
       { slug: 'reference/play-button' },
       { slug: 'reference/poster' },
       { slug: 'reference/time' },

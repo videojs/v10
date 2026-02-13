@@ -36,6 +36,8 @@ export interface PartSource {
 export interface ComponentSource {
   /** PascalCase component name (e.g., PlayButton) */
   name: string;
+  /** Original kebab-case directory name (e.g., play-button). */
+  kebab: string;
   /** Path to core file (e.g., packages/core/src/core/ui/play-button/play-button-core.ts) */
   corePath?: string;
   /** Path to data attrs file */
