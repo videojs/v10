@@ -1,13 +1,13 @@
-.pip-button-basic {
+.html-pip-button-basic {
   display: block;
   position: relative;
 }
 
-.pip-button-basic video {
+.html-pip-button-basic video {
   width: 100%;
 }
 
-.pip-button-basic__button {
+.html-pip-button-basic__button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;
@@ -21,15 +21,15 @@
   cursor: pointer;
 }
 
-.pip-button-basic__button .show-when-pip {
+.html-pip-button-basic__button .show-when-pip {
   display: none;
 }
-.pip-button-basic__button .show-when-not-pip {
+.html-pip-button-basic__button .show-when-not-pip {
   display: none;
 }
-.pip-button-basic__button[data-pip] .show-when-pip {
+.html-pip-button-basic__button[data-pip] .show-when-pip {
   display: inline;
 }
-.pip-button-basic__button:not([data-pip]) .show-when-not-pip {
+.html-pip-button-basic__button:not([data-pip]) .show-when-not-pip {
   display: inline;
 }

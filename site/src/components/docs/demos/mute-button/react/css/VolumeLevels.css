@@ -1,0 +1,21 @@
+.react-mute-button-volume-levels {
+  position: relative;
+}
+
+.react-mute-button-volume-levels video {
+  width: 100%;
+}
+
+.react-mute-button-volume-levels__button {
+  padding-block: 8px;
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  color: black;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  padding-inline: 20px;
+  cursor: pointer;
+}

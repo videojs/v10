@@ -1,12 +1,12 @@
-.poster-basic {
+.react-poster-basic {
   position: relative;
 }
 
-.poster-basic video {
+.react-poster-basic video {
   width: 100%;
 }
 
-.poster-basic__poster {
+.react-poster-basic__poster {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -16,11 +16,11 @@
   transition: opacity 0.25s;
 }
 
-.poster-basic__poster:not([data-visible]) {
+.react-poster-basic__poster:not([data-visible]) {
   opacity: 0;
 }
 
-.poster-basic__button {
+.react-poster-basic__button {
   position: absolute;
   bottom: 10px;
   left: 10px;

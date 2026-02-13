@@ -77,7 +77,8 @@ Based on detected type, load the relevant skill for domain expertise:
 | ------------------------------- | ----------- | ------------------------------------------------------------- |
 | API proposal, RFC, architecture | `api`       | Extensibility, progressive disclosure, type safety principles |
 | DX, ergonomics, types           | `api`       | DX principles, TypeScript patterns, state/adapter patterns    |
-| Documentation                   | `docs`      | Tone, structure, code examples, doc types                     |
+| Documentation                   | `docs`          | Tone, structure, code examples, Diátaxis types            |
+| Component reference pages       | `api-reference` | API reference page structure, builder conventions         |
 | Accessibility                   | `aria`      | Keyboard, focus, ARIA patterns                                |
 | UI component implementation     | `component` | Compound components, polymorphism, styling patterns           |
 | Bug/Feature (general)           | `api`       | General principles apply                                      |

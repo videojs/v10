@@ -1,274 +1,140 @@
 # README Template
 
-Use this template for package README files.
+Guide for writing package READMEs. See `packages/store/README.md` as the exemplar.
 
----
+## Light vs comprehensive
 
-## Decision: Light vs Comprehensive
+| Factor | Light | Comprehensive |
+|--------|-------|---------------|
+| Package has site docs | Yes — link to them | No — README is the primary docs |
+| API surface | Small, few exports | Large, many concepts |
+| Target audience | Already using Video.js | Evaluating or onboarding |
+| Examples needed | 1 quick example | Multiple, progressive |
 
-| Condition                        | Use           |
-| -------------------------------- | ------------- |
-| Site docs exist for this package | Light         |
-| No site docs yet                 | Comprehensive |
-| Internal/utility package         | Light         |
-| Primary entry point for users    | Comprehensive |
+Most packages should use the **light** template. Use comprehensive when the README is the primary documentation surface (e.g., `@videojs/store`).
 
-**Current state:**
-
-- `@videojs/store` — Comprehensive (exemplar)
-- `@videojs/core`, `@videojs/html`, `@videojs/react` — Need upgrade
-
----
-
-## Light Template
+## Light template
 
 ```markdown
-# @videojs/{package}
+# @videojs/{name}
 
 [![package-badge]][package]
 
 > **⚠️ Alpha - SUBJECT TO CHANGE** Not recommended for production use.
 
-One-sentence description of what this package provides.
+{One-sentence description of what this package does.}
 
-## Install
+```bash
+npm install @videojs/{name}
+```
 
-npm install @videojs/{package}
+## Usage
 
-## Quick Start
+```ts
+import { ... } from '@videojs/{name}';
 
-import { mainExport } from '@videojs/{package}';
+// Minimal working example
+```
 
-// 3-5 lines showing core usage
+## Documentation
 
-[Full documentation →](https://videojs.com/docs/{package})
+For full documentation, see the [Video.js docs](https://videojs.com/docs).
 
 ## Community
 
-- [Discord][discord]
-- [GitHub Discussions][discussions]
+If you need help with anything related to Video.js v10, or if you'd like to casually chat with other
+members:
+
+- [Join Discord Server][discord]
+- [See GitHub Discussions][gh-discussions]
 
 ## License
 
 [Apache-2.0](./LICENSE)
 
-[package]: https://www.npmjs.com/package/@videojs/{package}
-[package-badge]: https://img.shields.io/npm/v/@videojs/{package}/next
+[package]: https://www.npmjs.com/package/@videojs/{name}
+[package-badge]: https://img.shields.io/npm/v/@videojs/{name}/next?label=@videojs/{name}@next
 [discord]: https://discord.gg/JBqHh485uF
-[discussions]: https://github.com/videojs/v10/discussions
+[gh-discussions]: https://github.com/videojs/v10/discussions
 ```
 
----
+## Comprehensive template
 
-## Comprehensive Template
-
-Follow `@videojs/store` README structure:
-
-### Required Sections (in order)
-
-1. **Title + Badge**
-2. **Alpha Warning**
-3. **Overview** (2-3 sentences + install + minimal example)
-4. **Why?** (problem statement, what makes this different)
-5. **Core Concepts** (h3 per concept with code examples)
-6. **Advanced** (optional, for power users)
-7. **How It's Different** (comparison table if applicable)
-8. **Community**
-9. **License**
-
-### Structure
+Use this structure when the README is the primary documentation for the package. Based on `packages/store/README.md`.
 
 ```markdown
-# @videojs/{package}
+# @videojs/{name}
 
 [![package-badge]][package]
 
 > **⚠️ Alpha - SUBJECT TO CHANGE** Not recommended for production use.
 
-Brief description (2-3 sentences).
+{One-sentence description.}
 
-npm install @videojs/{package}
-
-import { mainExport } from '@videojs/{package}';
-
-// Minimal working example (5-10 lines)
+```bash
+npm install @videojs/{name}
+```
 
 ## Why?
 
-[Problem statement]
+{Motivation — what problem does this solve? Why not use X instead?}
 
-Traditional approach assumes X. But when working with Y, you need Z.
-
-`@videojs/{package}` embraces this model:
-
-- **Point one**: Description
-- **Point two**: Description
+```ts
+// Quick example showing the core value proposition
+```
 
 ## Core Concepts
 
-### Concept One
+### {Concept A}
 
-Explanation.
+{Explanation with code example.}
 
-// Code example
+### {Concept B}
 
-### Concept Two
+{Explanation with code example.}
 
-Explanation.
+## {Main API}
 
-// Code example
+{Primary API surface with examples.}
 
-## Advanced
+### {Sub-topic}
 
-[Optional section for power users]
-
-## How It's Different
-
-|            | Alternative A | Alternative B | @videojs/{package} |
-| ---------- | ------------- | ------------- | ------------------ |
-| **Aspect** | ...           | ...           | ...                |
+{Progressive detail.}
 
 ## Community
 
-- [Discord][discord]
-- [GitHub Discussions][discussions]
+If you need help with anything related to Video.js v10, or if you'd like to casually chat with other
+members:
+
+- [Join Discord Server][discord]
+- [See GitHub Discussions][gh-discussions]
 
 ## License
 
 [Apache-2.0](./LICENSE)
 
-[package]: https://www.npmjs.com/package/@videojs/{package}
-[package-badge]: https://img.shields.io/npm/v/@videojs/{package}/next
-[discord]: https://discord.gg/JBqHh485uF
-[discussions]: https://github.com/videojs/v10/discussions
-```
-
----
-
-## Package-Specific Sections
-
-### @videojs/store
-
-Core concepts:
-
-- Target
-- Features (defineFeature, state factory)
-- Feature Type Inference
-- Actions (task helper, sync mutations)
-- Action Metadata (store.meta())
-- Store (flat access, pending tasks)
-- Task Configuration (Keys, Modes, Cancels)
-- Error Handling
-
-### @videojs/store/html
-
-Core concepts:
-
-- Controllers (StoreController, SubscriptionController)
-- Mixins (StoreMixin, ProviderMixin, ContainerMixin)
-- createStore factory pattern
-- Context API
-
-### @videojs/core/dom
-
-Core concepts:
-
-- Media features: volumeFeature, playbackFeature, timeFeature, sourceFeature, bufferFeature
-- `media.all` array
-- Type exports (VolumeState, PlaybackRequests, etc.)
-
-### @videojs/html
-
-Core concepts:
-
-- FrostedSkinElement
-- `define()` pattern
-- Slot-based composition
-- Extending with custom features
-
-### @videojs/react
-
-Core concepts:
-
-- Components
-- Hooks
-- Context Providers
-
----
-
-## Patterns
-
-### Alpha Warning
-
-Always include at top:
-
-```markdown
-> **⚠️ Alpha - SUBJECT TO CHANGE** Not recommended for production use.
-```
-
-### Install → Example Progression
-
-1. Install command
-2. Imports
-3. Minimal working code (5-10 lines)
-4. [More complex examples in later sections]
-
-```markdown
-npm install @videojs/store
-
-import { createStore } from '@videojs/store';
-
-const store = createStore({
-features: [playbackFeature, volumeFeature],
-});
-
-store.attach(videoElement);
-await store.play();
-```
-
-### "How It's Different" Table
-
-Use when comparing to alternatives:
-
-```markdown
-|               | Redux/Zustand | React Query           | @videojs/store             |
-| ------------- | ------------- | --------------------- | -------------------------- |
-| **Authority** | You own state | Server owns state     | External system owns state |
-| **Mutations** | Sync reducers | Async server requests | Async requests to target   |
-```
-
-### Type Inference Export Pattern
-
-Always show type inference for TypeScript users:
-
-```ts
-import type { InferFeatureState } from '@videojs/store';
-
-type VolumeState = InferFeatureState<typeof volumeFeature>;
-// { volume: number; muted: boolean; changeVolume: ...; toggleMute: ... }
-```
-
-### Links Footer
-
-```markdown
 [package]: https://www.npmjs.com/package/@videojs/{name}
-[package-badge]: https://img.shields.io/npm/v/@videojs/{name}/next
+[package-badge]: https://img.shields.io/npm/v/@videojs/{name}/next?label=@videojs/{name}@next
 [discord]: https://discord.gg/JBqHh485uF
-[discussions]: https://github.com/videojs/v10/discussions
+[gh-discussions]: https://github.com/videojs/v10/discussions
 ```
 
----
+## Conventions
+
+- **Badge:** Always use the `/next` tag badge during alpha.
+- **Alpha warning:** Include the blockquote warning until stable release.
+- **Code examples:** Must be self-contained — include imports, use realistic values.
+- **Progressive disclosure:** Start simple, add complexity in later sections.
+- **No inline animation JS or framework code** — READMEs show the package API, not framework integration.
+- **Link definitions at bottom** — Keep URLs as reference-style links at the end.
 
 ## Checklist
 
-When writing READMEs:
-
-- [ ] Badge links to npm @next tag
-- [ ] Alpha warning present
-- [ ] Install command shown first
-- [ ] Working example within 30 seconds of reading
-- [ ] All code examples self-contained (include imports)
-- [ ] Type inference patterns shown for TS users
-- [ ] Community links (Discord, Discussions)
-- [ ] License stated
-- [ ] Follows package-specific section guidance
+- [ ] npm badge with `/next` tag
+- [ ] Alpha warning blockquote
+- [ ] Install command
+- [ ] Working quick example with imports
+- [ ] Self-contained code examples (copy-paste and run)
+- [ ] Community section with Discord + Discussions
+- [ ] License section
+- [ ] Reference-style links at bottom

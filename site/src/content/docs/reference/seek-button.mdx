@@ -35,6 +35,14 @@ import basicUsageHtmlTs from "@/components/docs/demos/seek-button/html/css/Basic
   ```
 </FrameworkCase>
 
+## Behavior
+
+Seeks media by a configurable number of `seconds` (default 30). Positive values seek forward, negative values seek backward. The seek is clamped to media bounds (0 to duration).
+
+## Accessibility
+
+Renders a `<button>` with an automatic `aria-label` describing the action, e.g. "Seek forward 30 seconds" or "Seek backward 10 seconds". Override with the `label` prop. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
+
 ## Examples
 
 ### Basic Usage

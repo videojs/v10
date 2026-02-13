@@ -39,6 +39,26 @@ Import the component:
   ```
 </FrameworkCase>
 
+## Behavior
+
+The poster is visible before playback starts. Once the user plays or seeks, the poster hides permanently — pausing does not bring it back. The poster reappears when a new source is loaded.
+
+## Styling
+
+Style the poster with the `[data-visible]` attribute:
+
+```css
+media-poster:not([data-visible]) {
+  display: none;
+}
+```
+
+You control the child `<img>` — this means `srcset`, `sizes`, `loading="lazy"`, and framework image components all work naturally.
+
+## Accessibility
+
+Unlike the native `<video poster>` attribute, this component allows you to provide accessible text alternatives for screen readers via the `alt` attribute on your child `<img>`. This means you can describe the poster image (e.g., `alt="Keynote speaker at a conference"`) or mark it as decorative with `alt=""` if it doesn't convey meaningful information. 
+
 ## Examples
 
 ### Basic Usage

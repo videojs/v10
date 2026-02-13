@@ -1,6 +1,6 @@
 # Code Examples Pattern
 
-How to write effective code examples for documentation.
+How to write effective code examples across documentation — site pages, READMEs, and JSDoc.
 
 ## Core Principles
 
@@ -15,16 +15,28 @@ How to write effective code examples for documentation.
 ```tsx
 // ❌ Missing imports — won't work when copied
 function App() {
-  const player = usePlayer();
-  return <Player src="video.mp4" />;
+  return (
+    <Player.Container>
+      <Video src="video.mp4" />
+      <PlayButton />
+    </Player.Container>
+  );
 }
 
 // ✅ Complete — copy, paste, run
-import { Player, usePlayer } from '@videojs/react';
+import { createPlayer, features, PlayButton, Video } from '@videojs/react';
+
+const Player = createPlayer({ features: [...features.video] });
 
 function App() {
-  const player = usePlayer();
-  return <Player src="video.mp4" />;
+  return (
+    <Player.Provider>
+      <Player.Container>
+        <Video src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4" />
+        <PlayButton />
+      </Player.Container>
+    </Player.Provider>
+  );
 }
 ```
 
@@ -34,310 +46,254 @@ function App() {
 
 ```ts
 // ✅ Let inference work — cleaner
-const player = createPlayer({
-  src: 'video.mp4',
-  autoplay: true,
-});
-// player is inferred as Player
+const store = createStore<HTMLMediaElement>()(volumeSlice);
 
 // ❌ Redundant annotation
-const player: Player = createPlayer({
-  src: 'video.mp4',
-  autoplay: true,
-});
+const store: Store<HTMLMediaElement, VolumeState> = createStore<HTMLMediaElement>()(volumeSlice);
 ```
 
 ### Annotate When Helpful
 
 ```ts
 // ✅ Annotation clarifies complex return
-function usePlayerState(): {
-  state: PlayerState;
-  request: RequestAPI;
-} {
-  // ...
-}
+import type { InferSliceState } from '@videojs/store';
 
-// ✅ Annotation shows expected shape
-const options: PlayerOptions = {
-  src: 'video.mp4',
-  tracks: [
-    { kind: 'subtitles', src: 'en.vtt', label: 'English' },
-  ],
-};
+type VolumeState = InferSliceState<typeof volumeSlice>;
+// { volume: number; muted: boolean; setVolume: ...; toggleMute: ... }
 ```
 
 ### Show Type Imports
 
 ```ts
-// ✅ Show type imports for complex types
-import type { PlayerOptions, TextTrack } from '@videojs/core';
-
-const tracks: TextTrack[] = [
-  { kind: 'subtitles', src: 'en.vtt', label: 'English' },
-];
+// ✅ Separate type imports
+import { createStore, defineSlice } from '@videojs/store';
+import type { InferStoreState } from '@videojs/store';
 ```
 
-## Framework Tabs
+## Framework-Specific Code
 
-Use tabs for multi-framework examples:
+Site pages use `<FrameworkCase>` and `<StyleCase>` to show code per framework. Never use generic `<Tabs>` for framework switching.
 
-````markdown
-<Tabs>
-<Tab label="React">
+**React:**
+
 ```tsx
-import { Player } from '@videojs/react';
+import { createPlayer, features, PlayButton, Video } from '@videojs/react';
 
-function App() {
-  return <Player src="video.mp4" />;
+const Player = createPlayer({ features: [...features.video] });
+
+export default function BasicUsage() {
+  return (
+    <Player.Provider>
+      <Player.Container className="player">
+        <Video
+          src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
+          autoPlay
+          muted
+          playsInline
+        />
+        <PlayButton
+          render={(props, state) => (
+            <button {...props}>{state.paused ? 'Play' : 'Pause'}</button>
+          )}
+        />
+      </Player.Container>
+    </Player.Provider>
+  );
 }
 ```
-</Tab>
-<Tab label="Vue">
-```vue
-<script setup>
-import { Player } from '@videojs/vue';
-</script>
 
-<template>
-  <Player src="video.mp4" />
-</template>
-```
-</Tab>
-<Tab label="Svelte">
-```svelte
-<script>
-  import { Player } from '@videojs/svelte';
-</script>
+**HTML:**
 
-<Player src="video.mp4" />
+```html
+<video-player class="player">
+  <video
+    src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
+    autoplay
+    muted
+    playsinline
+  ></video>
+  <media-play-button>
+    <span class="show-when-paused">Play</span>
+    <span class="show-when-playing">Pause</span>
+  </media-play-button>
+</video-player>
 ```
-</Tab>
-<Tab label="Vanilla">
-```ts
-import { createPlayer } from '@videojs/core';
-
-const player = createPlayer({
-  target: document.getElementById('player'),
-  src: 'video.mp4',
-});
-```
-</Tab>
-</Tabs>
-````
 
 ## Progressive Examples
 
-Start simple, add complexity:
+Start simple, add complexity in later sections:
 
 ```markdown
 ## Basic Usage
 
-const player = createPlayer({ src: 'video.mp4' });
-
-## With Options
-
-const player = createPlayer({
-  src: 'video.mp4',
-  autoplay: true,
-  muted: true,
+const volumeSlice = defineSlice<HTMLMediaElement>()({
+  state: () => ({ volume: 1 }),
+  attach: ({ target, set, signal }) => {
+    const sync = () => set({ volume: target.volume });
+    target.addEventListener('volumechange', sync, { signal });
+  },
 });
 
-## With Event Handling
+## With Actions
 
-const player = createPlayer({
-  src: 'video.mp4',
-  onPlay: () => console.log('Playing'),
-  onError: (e) => console.error(e),
+const volumeSlice = defineSlice<HTMLMediaElement>()({
+  state: ({ target }) => ({
+    volume: 1,
+    setVolume(value: number) {
+      target().volume = Math.max(0, Math.min(1, value));
+    },
+  }),
+  attach: ({ target, set, signal }) => {
+    const sync = () => set({ volume: target.volume });
+    sync();
+    target.addEventListener('volumechange', sync, { signal });
+  },
 });
 
-## Full Configuration
+## Combining Slices
 
-const player = createPlayer({
-  src: 'video.mp4',
-  autoplay: true,
-  muted: true,
-  loop: false,
-  preload: 'metadata',
-  tracks: [
-    { kind: 'subtitles', src: 'en.vtt', label: 'English', default: true },
-  ],
-  onPlay: () => analytics.track('video_play'),
-  onError: (e) => errorReporter.capture(e),
-});
+const mediaSlice = combine(volumeSlice, playbackSlice);
+const store = createStore<HTMLMediaElement>()(mediaSlice);
 ```
 
-## Highlight Key Lines
+## Do/Don't Contrasts
 
-Use comments to draw attention:
+Use `// ❌ Don't` / `// ✅ Do` pairs. Always explain *why* the wrong way is wrong:
 
 ```ts
-const player = createPlayer({
-  src: 'video.mp4',
-  // highlight-next-line
-  autoplay: true, // ← Starts playing automatically
-});
+// ❌ Don't — creates new Set on every render
+const trackedRef = useRef(new Set<string>());
+
+// ✅ Do — initializer only runs once
+const [tracked] = useState(() => new Set<string>());
 ```
 
-Or diff-style:
-
 ```ts
-const player = createPlayer({
-  src: 'video.mp4',
-- autoplay: false,
-+ autoplay: true,
-});
+// ❌ Don't — redundant type annotation
+const value = someFunction() as SomeType;
+
+// ✅ Do — let inference work
+const value = someFunction();
 ```
 
 ## Show Output
 
-Include expected output as comments:
+Include expected output as comments when the result isn't obvious:
 
 ```ts
-console.log(player.state.currentTime);
-// => 0
+import type { InferSliceState } from '@videojs/store';
 
-await player.request.seek(30);
-console.log(player.state.currentTime);
-// => 30
+type VolumeState = InferSliceState<typeof volumeSlice>;
+// { volume: number; setVolume: (value: number) => void }
+
+const store = createStore<HTMLMediaElement>()(volumeSlice);
+store.attach(videoElement);
+
+const { volume } = store;
+// volume: 1
 ```
 
 ## Error Examples
 
-Show what errors look like:
+Show what errors look like and how to handle them:
 
 ```ts
-// This will throw:
-player.play();
-// => Error: Player not attached to media element
+import { isStoreError } from '@videojs/store';
 
-// Do this instead:
-await player.attach(videoElement);
-player.play();
-```
-
-## Interactive Examples
-
-Link to StackBlitz/CodeSandbox:
-
-```markdown
-```tsx
-import { Player } from '@videojs/react';
-
-function App() {
-  return <Player src="video.mp4" />;
+try {
+  await store.play();
+} catch (error) {
+  if (isStoreError(error)) {
+    switch (error.code) {
+      case 'NO_TARGET':
+        // No media element attached
+        break;
+      case 'DESTROYED':
+        // Store was destroyed
+        break;
+    }
+  }
 }
-```
-
-[Open in StackBlitz →](https://stackblitz.com/edit/videojs-react-basic)
-```
-
-## Copy Buttons
-
-All code blocks should have copy functionality. In MDX:
-
-```mdx
-<CodeBlock copy>
-const player = createPlayer({ src: 'video.mp4' });
-</CodeBlock>
 ```
 
 ## Filename Headers
 
-Show which file the code belongs to:
+Show which file code belongs to when multiple files are involved:
 
 ````markdown
 ```tsx title="App.tsx"
-import { Player } from '@videojs/react';
+import { createPlayer, features, PlayButton, Video } from '@videojs/react';
+import './App.css';
 
-export function App() {
-  return <Player src="video.mp4" />;
+const Player = createPlayer({ features: [...features.video] });
+
+export default function App() {
+  return (
+    <Player.Provider>
+      <Player.Container className="player">
+        <Video src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4" />
+        <PlayButton />
+      </Player.Container>
+    </Player.Provider>
+  );
 }
 ```
 
-```css title="player.css"
+```css title="App.css"
 .player {
   --player-accent-color: #3b82f6;
 }
 ```
 ````
 
-## Do/Don't Examples
-
-Show contrast:
-
-```markdown
-### Event Handling
-
-// ❌ Don't — inline handlers get recreated
-<Player
-  onTimeUpdate={(t) => setTime(t)}
-/>
-
-// ✅ Do — stable callback reference
-const handleTimeUpdate = useCallback((t) => setTime(t), []);
-<Player onTimeUpdate={handleTimeUpdate} />
-```
-
 ## Realistic Values
 
 ```ts
 // ❌ Meaningless
-const foo = createBar({ baz: 'qux' });
+const slice = defineSlice<Foo>()({
+  state: () => ({ bar: 'baz' }),
+});
 
 // ✅ Realistic
-const player = createPlayer({
-  src: 'https://example.com/video.mp4',
-  poster: 'https://example.com/poster.jpg',
+const volumeSlice = defineSlice<HTMLMediaElement>()({
+  state: () => ({ volume: 1, muted: false }),
+  attach: ({ target, set, signal }) => {
+    const sync = () => set({ volume: target.volume, muted: target.muted });
+    sync();
+    target.addEventListener('volumechange', sync, { signal });
+  },
 });
 ```
 
 ## Console Examples
 
-For CLI documentation:
+For installation and CLI:
 
 ```bash
 # Install the package
-npm install @videojs/core
+npm install @videojs/store
 
 # Or with other package managers
-pnpm add @videojs/core
-yarn add @videojs/core
+pnpm add @videojs/store
 ```
 
-## API Response Examples
+## Demo Files (Site Pages)
 
-For async operations:
+Live demos in reference pages use the `<Demo>` component with `?raw` imports for source code display. See the `api-reference` skill for full patterns.
 
-```ts
-const result = await player.request.play();
-// => { success: true, state: 'playing' }
+```mdx
+import BasicUsageDemo from "@/components/docs/demos/play-button/react/css/BasicUsage";
+import basicUsageTsx from "@/components/docs/demos/play-button/react/css/BasicUsage.tsx?raw";
+import basicUsageCss from "@/components/docs/demos/play-button/react/css/BasicUsage.css?raw";
 
-const error = await player.request.play();
-// => { success: false, error: { code: 'NOT_ALLOWED', message: '...' } }
-```
-
-## Configuration Comparison
-
-Show equivalent configs:
-
-```markdown
-### JavaScript
-
-const player = createPlayer({
-  src: 'video.mp4',
-  autoplay: true,
-});
-
-### HTML Data Attributes
-
-<video
-  data-player
-  data-src="video.mp4"
-  data-autoplay
-></video>
-
-### React Props
-
-<Player src="video.mp4" autoplay />
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageCss, lang: "css" },
+    ]}>
+      <BasicUsageDemo client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
 ```

@@ -9,6 +9,11 @@ export const sidebar: Sidebar = [
         sidebarLabel: 'Writing guides',
         devOnly: true,
       },
+      {
+        slug: 'reference/write-references',
+        sidebarLabel: 'Writing references',
+        devOnly: true,
+      },
       { slug: 'how-to/installation' },
       { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
     ],

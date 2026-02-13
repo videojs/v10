@@ -1,12 +1,12 @@
-.controls-basic {
+.react-controls-basic {
   position: relative;
 }
 
-.controls-basic video {
+.react-controls-basic video {
   width: 100%;
 }
 
-.controls-basic__root {
+.react-controls-basic__root {
   position: absolute;
   inset: 0;
   display: flex;
@@ -17,15 +17,15 @@
   transition: opacity 0.25s;
 }
 
-.controls-basic__root:not([data-visible]) {
+.react-controls-basic__root:not([data-visible]) {
   opacity: 0;
 }
 
-.controls-basic__bottom {
+.react-controls-basic__bottom {
   pointer-events: auto;
 }
 
-.controls-basic__time {
+.react-controls-basic__time {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -39,14 +39,14 @@
   font-size: 14px;
 }
 
-.controls-basic__bottom {
+.react-controls-basic__bottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
 }
 
-.controls-basic__button {
+.react-controls-basic__button {
   padding-block: 8px;
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(10px);

@@ -1,12 +1,12 @@
-.mute-button-basic {
+.html-mute-button-basic {
   position: relative;
 }
 
-.mute-button-basic video {
+.html-mute-button-basic video {
   width: 100%;
 }
 
-.mute-button-basic__button {
+.html-mute-button-basic__button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;
@@ -20,15 +20,15 @@
   cursor: pointer;
 }
 
-.mute-button-basic__button .show-when-muted {
+.html-mute-button-basic__button .show-when-muted {
   display: none;
 }
-.mute-button-basic__button .show-when-unmuted {
+.html-mute-button-basic__button .show-when-unmuted {
   display: none;
 }
-.mute-button-basic__button[data-muted] .show-when-muted {
+.html-mute-button-basic__button[data-muted] .show-when-muted {
   display: inline;
 }
-.mute-button-basic__button:not([data-muted]) .show-when-unmuted {
+.html-mute-button-basic__button:not([data-muted]) .show-when-unmuted {
   display: inline;
 }

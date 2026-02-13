@@ -55,7 +55,7 @@ Is this domain-specific knowledge?
 
 | Type          | Characteristics                                              | Examples                              |
 | ------------- | ------------------------------------------------------------ | ------------------------------------- |
-| **Knowledge** | Domain expertise, reference-heavy, may have review workflow  | `api`, `component`, `aria`, `docs`    |
+| **Knowledge** | Domain expertise, reference-heavy, may have review workflow  | `api`, `component`, `aria`, `docs` |
 | **Workflow**  | Conventions, processes, templates                            | `git`, `rfc`                          |
 | **Command**   | Procedural steps, forked context, restricted tools           | `commit-pr`, `gh-issue`, `review-branch` |
 

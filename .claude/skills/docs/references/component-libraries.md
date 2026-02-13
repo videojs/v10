@@ -24,7 +24,7 @@ Show component composition clearly:
 
 ```tsx
 // ✅ Clear anatomy
-import { Slider } from '@videojs/dom';
+import { Slider } from "@videojs/dom";
 
 <Slider.Root>
   <Slider.Track>
@@ -104,7 +104,7 @@ Document theming hooks:
 Document programmatic access:
 
 ```tsx
-import { Slider, useSliderContext } from '@videojs/dom';
+import { Slider, useSliderContext } from "@videojs/dom";
 
 function CustomThumb() {
   const slider = useSliderContext();
@@ -126,7 +126,7 @@ Document both high-level components and low-level hooks:
 ### Component API
 
 ```tsx
-import { Slider } from '@videojs/react';
+import { Slider } from "@videojs/react";
 
 <Slider defaultValue={50} />;
 ```
@@ -134,7 +134,7 @@ import { Slider } from '@videojs/react';
 ### Hook API
 
 ```tsx
-import { useSlider } from '@videojs/react';
+import { useSlider } from "@videojs/react";
 
 function CustomSlider() {
   const { rootProps, trackProps, thumbProps, state } = useSlider({
@@ -243,7 +243,12 @@ Show real-world compositions:
 
 ---
 
+## Applicable to Video.js
+
+The patterns above are drawn from many libraries. Not all apply to Video.js reference pages. Where existing patterns contradict the patterns outlined here, follow the existing patterns.
+
+---
+
 ## See Also
 
 - [Component Patterns](../../component/SKILL.md) — building headless components
-- [Multi-Framework Docs](multi-framework.md) — documenting across frameworks
