@@ -4,6 +4,6 @@ import type { SeekButtonState } from './seek-button-core';
 export const SeekButtonDataAttrs = {
   /** Present when a seek is in progress. */
   seeking: 'data-seeking',
-  /** Reflects the seconds offset value. */
-  seconds: 'data-seconds',
+  /** Indicates the seek direction: `"forward"` or `"backward"`. */
+  direction: 'data-direction',
 } as const satisfies StateAttrMap<SeekButtonState>;

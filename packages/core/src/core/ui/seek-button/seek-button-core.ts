@@ -13,11 +13,13 @@ export interface SeekButtonProps {
   disabled?: boolean | undefined;
 }
 
+export type SeekButtonDirection = 'forward' | 'backward';
+
 export interface SeekButtonState {
   /** Whether a seek is in progress. */
   seeking: boolean;
-  /** The seconds offset (from props). */
-  seconds: number;
+  /** Whether the button seeks forward or backward. */
+  direction: SeekButtonDirection;
 }
 
 export class SeekButtonCore {
@@ -47,8 +49,8 @@ export class SeekButtonCore {
       return label;
     }
 
-    const abs = Math.abs(state.seconds);
-    return state.seconds < 0 ? `Seek backward ${abs} seconds` : `Seek forward ${abs} seconds`;
+    const abs = Math.abs(this.#props.seconds);
+    return state.direction === 'backward' ? `Seek backward ${abs} seconds` : `Seek forward ${abs} seconds`;
   }
 
   getAttrs(state: SeekButtonState) {
@@ -61,7 +63,7 @@ export class SeekButtonCore {
   getState(media: MediaTimeState): SeekButtonState {
     return {
       seeking: media.seeking,
-      seconds: this.#props.seconds,
+      direction: this.#props.seconds < 0 ? 'backward' : 'forward',
     };
   }
 

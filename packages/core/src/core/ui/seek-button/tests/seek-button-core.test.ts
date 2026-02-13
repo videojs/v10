@@ -17,7 +17,7 @@ function createMediaState(overrides: Partial<MediaTimeState> = {}): MediaTimeSta
 function createState(overrides: Partial<SeekButtonState> = {}): SeekButtonState {
   return {
     seeking: false,
-    seconds: 30,
+    direction: 'forward',
     ...overrides,
   };
 }
@@ -27,13 +27,13 @@ describe('SeekButtonCore', () => {
     it('uses default props', () => {
       const core = new SeekButtonCore();
       const state = core.getState(createMediaState());
-      expect(state.seconds).toBe(30);
+      expect(state.direction).toBe('forward');
     });
 
     it('accepts constructor props', () => {
       const core = new SeekButtonCore({ seconds: -10 });
       const state = core.getState(createMediaState());
-      expect(state.seconds).toBe(-10);
+      expect(state.direction).toBe('backward');
     });
 
     it('accepts disabled via constructor', () => {
@@ -50,33 +50,39 @@ describe('SeekButtonCore', () => {
       expect(state.seeking).toBe(true);
     });
 
-    it('injects seconds from props', () => {
-      const core = new SeekButtonCore({ seconds: -15 });
+    it('derives forward direction from positive seconds', () => {
+      const core = new SeekButtonCore({ seconds: 15 });
       const state = core.getState(createMediaState());
-      expect(state.seconds).toBe(-15);
+      expect(state.direction).toBe('forward');
     });
 
-    it('uses default seconds when not specified', () => {
+    it('derives backward direction from negative seconds', () => {
+      const core = new SeekButtonCore({ seconds: -15 });
+      const state = core.getState(createMediaState());
+      expect(state.direction).toBe('backward');
+    });
+
+    it('defaults to forward direction', () => {
       const core = new SeekButtonCore();
       const state = core.getState(createMediaState());
-      expect(state.seconds).toBe(30);
+      expect(state.direction).toBe('forward');
     });
   });
 
   describe('getLabel', () => {
-    it('returns forward label for positive seconds', () => {
-      const core = new SeekButtonCore();
-      expect(core.getLabel(createState({ seconds: 30 }))).toBe('Seek forward 30 seconds');
+    it('returns forward label for forward direction', () => {
+      const core = new SeekButtonCore({ seconds: 30 });
+      expect(core.getLabel(createState({ direction: 'forward' }))).toBe('Seek forward 30 seconds');
     });
 
-    it('returns backward label for negative seconds', () => {
+    it('returns backward label for backward direction', () => {
       const core = new SeekButtonCore({ seconds: -10 });
-      expect(core.getLabel(createState({ seconds: -10 }))).toBe('Seek backward 10 seconds');
+      expect(core.getLabel(createState({ direction: 'backward' }))).toBe('Seek backward 10 seconds');
     });
 
     it('uses absolute value in backward label', () => {
-      const core = new SeekButtonCore();
-      const label = core.getLabel(createState({ seconds: -30 }));
+      const core = new SeekButtonCore({ seconds: -30 });
+      const label = core.getLabel(createState({ direction: 'backward' }));
       expect(label).toBe('Seek backward 30 seconds');
       expect(label).not.toContain('-');
     });
@@ -88,22 +94,22 @@ describe('SeekButtonCore', () => {
 
     it('returns custom function label', () => {
       const core = new SeekButtonCore({
-        label: (state) => (state.seconds < 0 ? 'Rewind' : 'Skip ahead'),
+        label: (state) => (state.direction === 'backward' ? 'Rewind' : 'Skip ahead'),
       });
-      expect(core.getLabel(createState({ seconds: -10 }))).toBe('Rewind');
-      expect(core.getLabel(createState({ seconds: 30 }))).toBe('Skip ahead');
+      expect(core.getLabel(createState({ direction: 'backward' }))).toBe('Rewind');
+      expect(core.getLabel(createState({ direction: 'forward' }))).toBe('Skip ahead');
     });
 
     it('falls back to default when function returns empty', () => {
-      const core = new SeekButtonCore({ label: () => '' });
-      expect(core.getLabel(createState({ seconds: 10 }))).toBe('Seek forward 10 seconds');
+      const core = new SeekButtonCore({ seconds: 10, label: () => '' });
+      expect(core.getLabel(createState({ direction: 'forward' }))).toBe('Seek forward 10 seconds');
     });
   });
 
   describe('getAttrs', () => {
     it('returns aria-label', () => {
-      const core = new SeekButtonCore();
-      const attrs = core.getAttrs(createState({ seconds: 30 }));
+      const core = new SeekButtonCore({ seconds: 30 });
+      const attrs = core.getAttrs(createState({ direction: 'forward' }));
       expect(attrs['aria-label']).toBe('Seek forward 30 seconds');
     });
 

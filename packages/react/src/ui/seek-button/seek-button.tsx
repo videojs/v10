@@ -23,7 +23,7 @@ export interface SeekButtonProps extends UIComponentProps<'button', SeekButtonCo
  *   seconds={30}
  *   render={(props, state) => (
  *     <button {...props}>
- *       {state.seconds < 0 ? <RewindIcon /> : <FastForwardIcon />}
+ *       {state.direction === 'backward' ? <RewindIcon /> : <FastForwardIcon />}
  *     </button>
  *   )}
  * />
