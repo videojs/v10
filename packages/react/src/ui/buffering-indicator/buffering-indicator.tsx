@@ -46,6 +46,7 @@ export const BufferingIndicator = forwardRef(function BufferingIndicator(
 
   const state = useSyncExternalStore(
     (cb) => core.state.subscribe(cb),
+    () => core.state.current,
     () => core.state.current
   );
 

@@ -25,6 +25,7 @@ export const sidebar: Sidebar = [
     sidebarLabel: 'Components',
     contents: [
       // sorted alphabetically
+      { slug: 'reference/buffering-indicator' },
       { slug: 'reference/controls' },
       { slug: 'reference/fullscreen-button' },
       { slug: 'reference/mute-button' },
