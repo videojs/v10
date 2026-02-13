@@ -6,7 +6,7 @@ type BuildMode = 'dev' | 'default';
 
 const buildModes: BuildMode[] = ['dev', 'default'];
 
-const createConfig = (mode: BuildMode, isWatch: boolean): UserConfig => ({
+const createConfig = (mode: BuildMode): UserConfig => ({
   entry: 'src/**/index.ts',
   platform: 'browser',
   format: 'es',
@@ -42,7 +42,4 @@ const createConfig = (mode: BuildMode, isWatch: boolean): UserConfig => ({
   ],
 });
 
-export default defineConfig((cliOptions) => {
-  const isWatch = !!cliOptions.watch;
-  return buildModes.map((mode) => createConfig(mode, isWatch));
-});
+export default defineConfig(buildModes.map((mode) => createConfig(mode)));
