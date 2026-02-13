@@ -1,0 +1,69 @@
+---
+title: SeekButton
+frameworkTitle:
+  html: media-seek-button
+description: A button component for seeking media playback forward or backward by a specified number of seconds
+---
+
+import ApiReference from "@/components/docs/api-reference/ApiReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/seek-button/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/seek-button/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/seek-button/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/seek-button/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/seek-button/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/seek-button/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/seek-button/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <SeekButton />
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-seek-button></media-seek-button>
+  ```
+</FrameworkCase>
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+        { title: "App.css", code: basicUsageReactCss, lang: "css" },
+      ]}
+    >
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: basicUsageHtml, lang: "html" },
+        { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+        { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+      ]}
+    >
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ApiReference component="SeekButton" />

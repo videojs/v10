@@ -1,0 +1,40 @@
+.seek-button-basic {
+  position: relative;
+}
+
+.seek-button-basic video {
+  width: 100%;
+}
+
+.seek-button-basic__buttons {
+  display: flex;
+  gap: 8px;
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+}
+
+.seek-button-basic__button {
+  padding-block: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  color: black;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  padding-inline: 20px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.seek-button-basic__button .show-when-backward {
+  display: none;
+}
+.seek-button-basic__button .show-when-forward {
+  display: none;
+}
+.seek-button-basic__button[data-direction="backward"] .show-when-backward {
+  display: inline;
+}
+.seek-button-basic__button[data-direction="forward"] .show-when-forward {
+  display: inline;
+}

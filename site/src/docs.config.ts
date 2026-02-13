@@ -31,6 +31,7 @@ export const sidebar: Sidebar = [
       { slug: 'reference/pip-button' },
       { slug: 'reference/play-button' },
       { slug: 'reference/poster' },
+      { slug: 'reference/seek-button' },
       { slug: 'reference/time' },
     ],
   },
