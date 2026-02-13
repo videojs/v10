@@ -10,6 +10,7 @@ export { useSelector, useStore } from '@videojs/store/react';
 
 // Media primitives
 export { Audio, type AudioProps } from './media/audio';
+export { HlsVideo, type HlsVideoProps } from './media/hls-video';
 export { Video, type VideoProps } from './media/video';
 export {
   Container,

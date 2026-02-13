@@ -23,7 +23,11 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',
   },
-  dts: mode === 'dev',
+  dts: {
+    build: true,
+    // Needed to preserve the MediaApiMixin return types.
+    tsconfig: 'src/dom/tsconfig.json',
+  },
 });
 
 export default defineConfig(buildModes.map((mode) => createConfig(mode)));

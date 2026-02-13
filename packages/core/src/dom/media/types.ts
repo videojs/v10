@@ -1,5 +1,4 @@
 import type { AnySlice, Slice, Store, UnionSliceState } from '@videojs/store';
-
 import type {
   MediaBufferState,
   MediaFullscreenState,
@@ -9,8 +8,9 @@ import type {
   MediaTimeState,
   MediaVolumeState,
 } from '../../core/media/state';
+import type { MediaApi } from './api';
 
-export interface Media extends HTMLMediaElement {}
+export type Media = MediaApi | HTMLMediaElement | HTMLAudioElement | HTMLVideoElement | null;
 
 export interface MediaContainer extends HTMLElement {}
 

@@ -1,3 +1,4 @@
+export * from './media/api';
 export * from './media/state';
 export * from './ui/fullscreen-button/fullscreen-button-core';
 export * from './ui/fullscreen-button/fullscreen-button-data-attrs';
