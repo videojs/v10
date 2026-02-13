@@ -1,30 +1,45 @@
 import { combineLatest } from '../../core/reactive/combine-latest';
 import type { WritableState } from '../../core/state/create-state';
-import type { Presentation, Segment } from '../../core/types';
+import type { Presentation, Segment, VideoTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
-import { BufferKeyByType, getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
 import { appendSegment } from '../media/append-segment';
 import { fetchResolvable } from '../network/fetch';
-import type { MediaTrackType } from './setup-sourcebuffer';
 
 /**
  * State shape for segment loading.
  */
-export interface SegmentLoadingState extends TrackSelectionState {
+export interface SegmentLoadingState {
+  selectedVideoTrackId?: string;
   presentation?: Presentation;
-  preload?: string;
 }
 
 /**
  * Owners shape for segment loading.
  */
 export interface SegmentLoadingOwners {
-  videoBuffer?: SourceBuffer;
-  audioBuffer?: SourceBuffer;
+  videoSourceBuffer?: SourceBuffer;
 }
 
 /**
- * Select which segments to load for the current track.
+ * Find the selected video track in the presentation.
+ */
+function findSelectedVideoTrack(state: SegmentLoadingState): VideoTrack | undefined {
+  if (!state.presentation || !state.selectedVideoTrackId) {
+    return undefined;
+  }
+
+  const videoSet = state.presentation.selectionSets.find((set) => set.type === 'video');
+  if (!videoSet?.switchingSets?.[0]?.tracks) {
+    return undefined;
+  }
+
+  const track = videoSet.switchingSets[0].tracks.find((t) => t.id === state.selectedVideoTrackId);
+
+  return track as VideoTrack | undefined;
+}
+
+/**
+ * Select which segments to load for the current video track.
  *
  * Currently returns all segments (full track loading).
  *
@@ -35,11 +50,10 @@ export interface SegmentLoadingOwners {
  * - Apply timing offsets for discontinuities
  *
  * @param state - Current playback state (track selection, presentation)
- * @param type - Track type (video or audio)
  * @returns Array of segments to load, or empty array if track not ready
  */
-function selectSegmentsToLoad(state: SegmentLoadingState, type: MediaTrackType): Segment[] {
-  const track = getSelectedTrack(state, type);
+function selectSegmentsToLoad(state: SegmentLoadingState): Segment[] {
+  const track = findSelectedVideoTrack(state);
 
   if (!track || !isResolvedTrack(track)) {
     return [];
@@ -54,55 +68,34 @@ function selectSegmentsToLoad(state: SegmentLoadingState, type: MediaTrackType):
  * Check if we can load segments.
  *
  * Requires:
- * - Selected track ID exists
- * - SourceBuffer exists for track type
+ * - Selected video track ID exists
+ * - VideoSourceBuffer exists
  */
-export function canLoadSegments(
-  state: SegmentLoadingState,
-  owners: SegmentLoadingOwners,
-  type: MediaTrackType
-): boolean {
-  const track = getSelectedTrack(state, type);
-  if (!track) return false;
-
-  const bufferKey = BufferKeyByType[type];
-  const sourceBuffer = owners[bufferKey];
-  return !!sourceBuffer;
+export function canLoadSegments(state: SegmentLoadingState, owners: SegmentLoadingOwners): boolean {
+  return !!state.selectedVideoTrackId && !!owners.videoSourceBuffer;
 }
 
 /**
  * Check if we should load segments.
  *
  * Only load if:
- * - preload is 'auto' (metadata only loads track info, not segments)
  * - Track is resolved (has segments)
  * - Track has at least one segment
  * - SourceBuffer is not already buffered (simple check for POC)
  */
-export function shouldLoadSegments(
-  state: SegmentLoadingState,
-  owners: SegmentLoadingOwners,
-  type: MediaTrackType
-): boolean {
-  if (!canLoadSegments(state, owners, type)) {
+export function shouldLoadSegments(state: SegmentLoadingState, owners: SegmentLoadingOwners): boolean {
+  if (!canLoadSegments(state, owners)) {
     return false;
   }
 
-  // Only load segments with preload: 'auto'
-  // preload: 'metadata' should only resolve tracks, not load segments
-  if (state.preload !== 'auto') {
-    return false;
-  }
-
-  const track = getSelectedTrack(state, type);
+  const track = findSelectedVideoTrack(state);
   if (!track || !isResolvedTrack(track) || track.segments.length === 0) {
     return false;
   }
 
   // For POC: simple check - if SourceBuffer has any buffered data, skip
   // TODO: More sophisticated buffering logic (check ranges, append new segments only)
-  const bufferKey = BufferKeyByType[type];
-  const sourceBuffer = owners[bufferKey];
+  const sourceBuffer = owners.videoSourceBuffer;
   if (sourceBuffer && sourceBuffer.buffered.length > 0) {
     return false;
   }
@@ -114,64 +107,46 @@ export function shouldLoadSegments(
  * Load segments orchestration (F4 + P11 POC).
  *
  * Triggers when:
- * - Track is selected and resolved (video or audio)
- * - SourceBuffer exists for track type
+ * - Video track is selected and resolved
+ * - VideoSourceBuffer exists
  * - No segments loaded yet
  *
- * Fetches and appends segments sequentially:
- * 1. Initialization segment (required for fmp4)
- * 2. Media segments
- *
+ * Fetches and appends segments sequentially.
  * Continues on segment errors to provide partial playback.
  *
  * @example
- * const cleanup = loadSegments({ state, owners }, { type: 'video' });
+ * const cleanup = loadSegments({ state, owners });
  */
-export function loadSegments(
-  {
-    state,
-    owners,
-  }: {
-    state: WritableState<SegmentLoadingState>;
-    owners: WritableState<SegmentLoadingOwners>;
-  },
-  config: { type: MediaTrackType }
-): () => void {
-  const { type } = config;
+export function loadSegments({
+  state,
+  owners,
+}: {
+  state: WritableState<SegmentLoadingState>;
+  owners: WritableState<SegmentLoadingOwners>;
+}): () => void {
   let isLoading = false;
 
   const unsubscribe = combineLatest([state, owners]).subscribe(
     async ([s, o]: [SegmentLoadingState, SegmentLoadingOwners]) => {
-      if (!shouldLoadSegments(s, o, type) || isLoading) return;
+      if (!shouldLoadSegments(s, o) || isLoading) return;
 
-      const bufferKey = BufferKeyByType[type];
-      const sourceBuffer = o[bufferKey];
+      const sourceBuffer = o.videoSourceBuffer;
       if (!sourceBuffer) return;
 
       // Determine which segments to load
-      const segmentsToLoad = selectSegmentsToLoad(s, type);
+      const segmentsToLoad = selectSegmentsToLoad(s);
 
       if (segmentsToLoad.length === 0) return;
 
-      const track = getSelectedTrack(s, type);
-      if (!track || !isResolvedTrack(track)) return;
-
-      // Create task for initialization segment (must load first!)
-      const initTask = async () => {
-        const response = await fetchResolvable(track.initialization);
-        const initData = await response.arrayBuffer();
-        await appendSegment(sourceBuffer, initData);
-      };
-
-      // Create tasks for media segments
-      const mediaTasks = segmentsToLoad.map((segment) => async () => {
+      // Map segments to async task functions
+      const tasks = segmentsToLoad.map((segment) => async () => {
+        // Fetch segment data
         const response = await fetchResolvable(segment);
         const segmentData = await response.arrayBuffer();
+
+        // Append to SourceBuffer
         await appendSegment(sourceBuffer, segmentData);
       });
-
-      // Combine: init segment first, then media segments
-      const tasks = [initTask, ...mediaTasks];
 
       // Execute tasks serially
       isLoading = true;
@@ -185,9 +160,6 @@ export function loadSegments(
           }
         }
       } finally {
-        // Wait a frame before clearing flag to allow async state updates to flush
-        // This prevents race conditions where multiple triggers fire before the flag is checked
-        await new Promise((resolve) => requestAnimationFrame(resolve));
         isLoading = false;
       }
     }
