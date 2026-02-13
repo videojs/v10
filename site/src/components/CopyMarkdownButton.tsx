@@ -25,7 +25,9 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
       setState({ status: 'loading' });
 
       // Get current pathname and construct markdown URL
-      const pathname = window.location.pathname;
+      // Strip trailing slashes so `/guide/` becomes `/guide.md`, not `/guide/.md`
+      // Astro should forbid trailing slashes, but infra might add them back on (e.g., Netlify)
+      const pathname = window.location.pathname.replace(/\/+$/, '');
       const mdUrl = `${pathname}.md`;
 
       // Create fetch promise - in dev mode, return helpful message
@@ -101,7 +103,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
           'inline-flex items-center justify-center'
         )}
       >
-        Copy as Markdown
+        Copy Markdown
       </span>
       <span
         className={clsx(
