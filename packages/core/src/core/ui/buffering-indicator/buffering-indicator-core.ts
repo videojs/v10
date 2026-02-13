@@ -1,3 +1,4 @@
+import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
@@ -9,49 +10,44 @@ export interface BufferingIndicatorProps {
 }
 
 export interface BufferingIndicatorState {
+  /** Whether the indicator should be visible. True after the delay elapses while media is waiting and not paused. */
   visible: boolean;
 }
 
-const DEFAULT_DELAY = 500;
-
 export class BufferingIndicatorCore {
   static readonly defaultProps: NonNullableObject<BufferingIndicatorProps> = {
-    delay: DEFAULT_DELAY,
+    delay: 500,
   };
 
-  #props = { ...BufferingIndicatorCore.defaultProps };
-  #visible = false;
-  #timer: ReturnType<typeof setTimeout> | null = null;
-  #onChange: (() => void) | null;
+  readonly state = createState<BufferingIndicatorState>({ visible: false });
 
-  constructor(onChange?: () => void) {
-    this.#onChange = onChange ?? null;
-  }
+  #props = { ...BufferingIndicatorCore.defaultProps };
+  #timer: ReturnType<typeof setTimeout> | null = null;
+  #destroyed = false;
 
   setProps(props: BufferingIndicatorProps): void {
     this.#props = defaults(props, BufferingIndicatorCore.defaultProps);
   }
 
-  getState(media: MediaPlaybackState): BufferingIndicatorState {
+  update(media: MediaPlaybackState): void {
     const buffering = media.waiting && !media.paused;
 
-    if (buffering && !this.#visible && !this.#timer) {
+    if (buffering && !this.state.current.visible && !this.#timer) {
       this.#timer = setTimeout(() => {
         this.#timer = null;
-        this.#visible = true;
-        this.#onChange?.();
+        this.state.patch({ visible: true });
       }, this.#props.delay);
     } else if (!buffering) {
       this.#clearTimer();
-      this.#visible = false;
+      this.state.patch({ visible: false });
     }
-
-    return { visible: this.#visible };
   }
 
   destroy(): void {
+    if (this.#destroyed) return;
+    this.#destroyed = true;
     this.#clearTimer();
-    this.#visible = false;
+    this.state.patch({ visible: false });
   }
 
   #clearTimer(): void {

@@ -15,11 +15,19 @@ export class BufferingIndicatorElement extends MediaElement {
 
   delay = BufferingIndicatorCore.defaultProps.delay;
 
-  readonly #core = new BufferingIndicatorCore(() => this.requestUpdate());
+  readonly #core = new BufferingIndicatorCore();
   readonly #state = new PlayerController(this, playerContext, selectPlayback);
+
+  #disconnect: AbortController | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
+
+    this.#disconnect = new AbortController();
+
+    this.#core.state.subscribe(() => this.requestUpdate(), {
+      signal: this.#disconnect.signal,
+    });
 
     if (__DEV__ && !this.#state.value) {
       logMissingFeature(BufferingIndicatorElement.tagName, 'playback');
@@ -28,6 +36,8 @@ export class BufferingIndicatorElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.#disconnect?.abort();
+    this.#disconnect = null;
     this.#core.destroy();
   }
 
@@ -43,6 +53,7 @@ export class BufferingIndicatorElement extends MediaElement {
 
     if (!media) return;
 
-    applyStateDataAttrs(this, this.#core.getState(media), BufferingIndicatorDataAttrs);
+    this.#core.update(media);
+    applyStateDataAttrs(this, this.#core.state.current, BufferingIndicatorDataAttrs);
   }
 }

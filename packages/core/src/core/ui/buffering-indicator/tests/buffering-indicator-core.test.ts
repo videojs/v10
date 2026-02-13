@@ -1,3 +1,4 @@
+import { flush } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { MediaPlaybackState } from '../../../media/state';
@@ -24,52 +25,53 @@ describe('BufferingIndicatorCore', () => {
     vi.useRealTimers();
   });
 
-  describe('getState', () => {
-    it('returns visible: false when not waiting', () => {
+  describe('update', () => {
+    it('visible is false when not waiting', () => {
       const core = new BufferingIndicatorCore();
-      const media = createMediaState({ waiting: false, paused: false });
 
-      expect(core.getState(media)).toEqual({ visible: false });
+      core.update(createMediaState({ waiting: false, paused: false }));
+
+      expect(core.state.current.visible).toBe(false);
     });
 
-    it('returns visible: false when waiting but paused', () => {
+    it('visible is false when waiting but paused', () => {
       const core = new BufferingIndicatorCore();
-      const media = createMediaState({ waiting: true, paused: true });
 
-      expect(core.getState(media)).toEqual({ visible: false });
+      core.update(createMediaState({ waiting: true, paused: true }));
+
+      expect(core.state.current.visible).toBe(false);
     });
 
-    it('returns visible: false immediately when waiting and not paused (before delay)', () => {
+    it('visible is false immediately when waiting and not paused (before delay)', () => {
       const core = new BufferingIndicatorCore();
-      const media = createMediaState({ waiting: true, paused: false });
 
-      expect(core.getState(media)).toEqual({ visible: false });
+      core.update(createMediaState({ waiting: true, paused: false }));
+
+      expect(core.state.current.visible).toBe(false);
     });
 
-    it('returns visible: true after default delay elapses', () => {
+    it('visible becomes true after default delay elapses', () => {
       const core = new BufferingIndicatorCore();
-      const media = createMediaState({ waiting: true, paused: false });
 
-      core.getState(media);
+      core.update(createMediaState({ waiting: true, paused: false }));
       vi.advanceTimersByTime(500);
 
-      expect(core.getState(media)).toEqual({ visible: true });
+      expect(core.state.current.visible).toBe(true);
     });
 
-    it('returns visible: false if waiting ends before delay', () => {
+    it('visible stays false if waiting ends before delay', () => {
       const core = new BufferingIndicatorCore();
 
-      core.getState(createMediaState({ waiting: true, paused: false }));
+      core.update(createMediaState({ waiting: true, paused: false }));
       vi.advanceTimersByTime(300);
 
-      // Waiting ends
-      const state = core.getState(createMediaState({ waiting: false, paused: false }));
+      core.update(createMediaState({ waiting: false, paused: false }));
 
-      expect(state).toEqual({ visible: false });
+      expect(core.state.current.visible).toBe(false);
 
       // Even after more time, still not visible
       vi.advanceTimersByTime(500);
-      expect(core.getState(createMediaState({ waiting: false, paused: false }))).toEqual({ visible: false });
+      expect(core.state.current.visible).toBe(false);
     });
 
     it('resets timer when waiting toggles off and on within delay', () => {
@@ -77,54 +79,59 @@ describe('BufferingIndicatorCore', () => {
       const waiting = createMediaState({ waiting: true, paused: false });
       const notWaiting = createMediaState({ waiting: false, paused: false });
 
-      // Start waiting
-      core.getState(waiting);
+      core.update(waiting);
       vi.advanceTimersByTime(300);
 
       // Stop waiting (cancels timer)
-      core.getState(notWaiting);
+      core.update(notWaiting);
 
       // Start waiting again (new timer)
-      core.getState(waiting);
+      core.update(waiting);
       vi.advanceTimersByTime(300);
 
       // Only 300ms into the new timer, not yet visible
-      expect(core.getState(waiting)).toEqual({ visible: false });
+      expect(core.state.current.visible).toBe(false);
 
       // Full 500ms from second start
       vi.advanceTimersByTime(200);
-      expect(core.getState(waiting)).toEqual({ visible: true });
+      expect(core.state.current.visible).toBe(true);
     });
 
     it('immediately hides when waiting ends while visible', () => {
       const core = new BufferingIndicatorCore();
-      const waiting = createMediaState({ waiting: true, paused: false });
 
-      core.getState(waiting);
+      core.update(createMediaState({ waiting: true, paused: false }));
       vi.advanceTimersByTime(500);
-      expect(core.getState(waiting)).toEqual({ visible: true });
+      expect(core.state.current.visible).toBe(true);
 
-      // Stop waiting
-      expect(core.getState(createMediaState({ waiting: false, paused: false }))).toEqual({ visible: false });
+      core.update(createMediaState({ waiting: false, paused: false }));
+      expect(core.state.current.visible).toBe(false);
     });
 
     it('immediately hides when paused while visible', () => {
       const core = new BufferingIndicatorCore();
 
-      core.getState(createMediaState({ waiting: true, paused: false }));
+      core.update(createMediaState({ waiting: true, paused: false }));
       vi.advanceTimersByTime(500);
-      expect(core.getState(createMediaState({ waiting: true, paused: false }))).toEqual({ visible: true });
+      expect(core.state.current.visible).toBe(true);
 
-      // Pause
-      expect(core.getState(createMediaState({ waiting: true, paused: true }))).toEqual({ visible: false });
+      core.update(createMediaState({ waiting: true, paused: true }));
+      expect(core.state.current.visible).toBe(false);
     });
 
-    it('returns only primitive values', () => {
+    it('is idempotent — repeated calls with same state do not restart timer', () => {
       const core = new BufferingIndicatorCore();
-      const state = core.getState(createMediaState());
+      const media = createMediaState({ waiting: true, paused: false });
 
-      const functionKeys = Object.entries(state).filter(([, value]) => typeof value === 'function');
-      expect(functionKeys).toHaveLength(0);
+      core.update(media);
+      vi.advanceTimersByTime(300);
+
+      // Same state again — should NOT restart timer
+      core.update(media);
+      vi.advanceTimersByTime(200);
+
+      // 500ms total from first call — timer should fire
+      expect(core.state.current.visible).toBe(true);
     });
   });
 
@@ -132,76 +139,139 @@ describe('BufferingIndicatorCore', () => {
     it('respects a custom delay value', () => {
       const core = new BufferingIndicatorCore();
       core.setProps({ delay: 1000 });
-      const media = createMediaState({ waiting: true, paused: false });
 
-      core.getState(media);
+      core.update(createMediaState({ waiting: true, paused: false }));
       vi.advanceTimersByTime(500);
-      expect(core.getState(media)).toEqual({ visible: false });
+      expect(core.state.current.visible).toBe(false);
 
       vi.advanceTimersByTime(500);
-      expect(core.getState(media)).toEqual({ visible: true });
+      expect(core.state.current.visible).toBe(true);
     });
 
     it('respects delay: 0 for immediate visibility', () => {
       const core = new BufferingIndicatorCore();
       core.setProps({ delay: 0 });
-      const media = createMediaState({ waiting: true, paused: false });
 
-      core.getState(media);
+      core.update(createMediaState({ waiting: true, paused: false }));
       vi.advanceTimersByTime(0);
 
-      expect(core.getState(media)).toEqual({ visible: true });
+      expect(core.state.current.visible).toBe(true);
+    });
+
+    it('does not apply new delay to an already running timer', () => {
+      const core = new BufferingIndicatorCore();
+
+      core.update(createMediaState({ waiting: true, paused: false }));
+      vi.advanceTimersByTime(300);
+
+      core.setProps({ delay: 1000 });
+      vi.advanceTimersByTime(200);
+
+      // Original 500ms timer fires
+      expect(core.state.current.visible).toBe(true);
     });
   });
 
-  describe('onChange callback', () => {
-    it('calls onChange when delay elapses', () => {
-      const onChange = vi.fn();
-      const core = new BufferingIndicatorCore(onChange);
-      const media = createMediaState({ waiting: true, paused: false });
+  describe('state.subscribe', () => {
+    it('notifies subscribers when visible becomes true', () => {
+      const core = new BufferingIndicatorCore();
+      const callback = vi.fn();
 
-      core.getState(media);
-      expect(onChange).not.toHaveBeenCalled();
+      core.state.subscribe(callback);
+
+      core.update(createMediaState({ waiting: true, paused: false }));
+      expect(callback).not.toHaveBeenCalled();
 
       vi.advanceTimersByTime(500);
-      expect(onChange).toHaveBeenCalledOnce();
+      flush();
+
+      expect(callback).toHaveBeenCalledOnce();
     });
 
-    it('does not call onChange if waiting ends before delay', () => {
-      const onChange = vi.fn();
-      const core = new BufferingIndicatorCore(onChange);
+    it('notifies subscribers when visible becomes false', () => {
+      const core = new BufferingIndicatorCore();
+      const callback = vi.fn();
 
-      core.getState(createMediaState({ waiting: true, paused: false }));
-      vi.advanceTimersByTime(300);
-      core.getState(createMediaState({ waiting: false, paused: false }));
+      core.update(createMediaState({ waiting: true, paused: false }));
       vi.advanceTimersByTime(500);
+      flush();
 
-      expect(onChange).not.toHaveBeenCalled();
+      core.state.subscribe(callback);
+
+      core.update(createMediaState({ waiting: false, paused: false }));
+      flush();
+
+      expect(callback).toHaveBeenCalledOnce();
+    });
+
+    it('does not notify if waiting ends before delay', () => {
+      const core = new BufferingIndicatorCore();
+      const callback = vi.fn();
+
+      core.state.subscribe(callback);
+
+      core.update(createMediaState({ waiting: true, paused: false }));
+      vi.advanceTimersByTime(300);
+      core.update(createMediaState({ waiting: false, paused: false }));
+
+      vi.advanceTimersByTime(500);
+      flush();
+
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('supports unsubscribe', () => {
+      const core = new BufferingIndicatorCore();
+      const callback = vi.fn();
+
+      const unsubscribe = core.state.subscribe(callback);
+      unsubscribe();
+
+      core.update(createMediaState({ waiting: true, paused: false }));
+      vi.advanceTimersByTime(500);
+      flush();
+
+      expect(callback).not.toHaveBeenCalled();
     });
   });
 
   describe('destroy', () => {
     it('clears pending timer', () => {
-      const onChange = vi.fn();
-      const core = new BufferingIndicatorCore(onChange);
+      const core = new BufferingIndicatorCore();
+      const callback = vi.fn();
 
-      core.getState(createMediaState({ waiting: true, paused: false }));
+      core.state.subscribe(callback);
+
+      core.update(createMediaState({ waiting: true, paused: false }));
       core.destroy();
 
       vi.advanceTimersByTime(500);
-      expect(onChange).not.toHaveBeenCalled();
+      flush();
+
+      expect(callback).not.toHaveBeenCalled();
     });
 
     it('resets visible to false', () => {
       const core = new BufferingIndicatorCore();
-      const media = createMediaState({ waiting: true, paused: false });
 
-      core.getState(media);
+      core.update(createMediaState({ waiting: true, paused: false }));
       vi.advanceTimersByTime(500);
-      expect(core.getState(media)).toEqual({ visible: true });
+      expect(core.state.current.visible).toBe(true);
 
       core.destroy();
-      expect(core.getState(createMediaState({ waiting: false }))).toEqual({ visible: false });
+      flush();
+
+      expect(core.state.current.visible).toBe(false);
+    });
+
+    it('guards against re-entry', () => {
+      const core = new BufferingIndicatorCore();
+
+      core.update(createMediaState({ waiting: true, paused: false }));
+      vi.advanceTimersByTime(500);
+
+      core.destroy();
+      core.destroy(); // should not throw
     });
   });
 });
