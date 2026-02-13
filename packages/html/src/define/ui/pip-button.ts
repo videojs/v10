@@ -1,9 +1,9 @@
-import { PipButtonElement } from '../../ui/pip-button/pip-button-element';
+import { PiPButtonElement } from '../../ui/pip-button/pip-button-element';
 
-customElements.define(PipButtonElement.tagName, PipButtonElement);
+customElements.define(PiPButtonElement.tagName, PiPButtonElement);
 
 declare global {
   interface HTMLElementTagNameMap {
-    [PipButtonElement.tagName]: PipButtonElement;
+    [PiPButtonElement.tagName]: PiPButtonElement;
   }
 }

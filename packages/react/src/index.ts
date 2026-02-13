@@ -36,7 +36,7 @@ export type { ControlsRootProps } from './ui/controls/controls-root';
 export { FullscreenButton, type FullscreenButtonProps } from './ui/fullscreen-button/fullscreen-button';
 export { useButton } from './ui/hooks/use-button';
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
-export { PipButton, type PipButtonProps } from './ui/pip-button/pip-button';
+export { PiPButton, type PiPButtonProps } from './ui/pip-button/pip-button';
 export { PlayButton, type PlayButtonProps } from './ui/play-button/play-button';
 export { Poster, type PosterProps } from './ui/poster/poster';
 export { Time } from './ui/time';

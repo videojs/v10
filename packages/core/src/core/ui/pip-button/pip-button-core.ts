@@ -4,35 +4,35 @@ import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPictureInPictureState } from '../../media/state';
 
-export interface PipButtonProps {
+export interface PiPButtonProps {
   /** Custom label for the button. */
-  label?: string | ((state: PipButtonState) => string) | undefined;
+  label?: string | ((state: PiPButtonState) => string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
 }
 
-export interface PipButtonState extends Pick<MediaPictureInPictureState, 'pip'> {
+export interface PiPButtonState extends Pick<MediaPictureInPictureState, 'pip'> {
   /** Whether picture-in-picture can be requested on this platform. */
   availability: MediaPictureInPictureState['pipAvailability'];
 }
 
-export class PipButtonCore {
-  static readonly defaultProps: NonNullableObject<PipButtonProps> = {
+export class PiPButtonCore {
+  static readonly defaultProps: NonNullableObject<PiPButtonProps> = {
     label: '',
     disabled: false,
   };
 
-  #props = { ...PipButtonCore.defaultProps };
+  #props = { ...PiPButtonCore.defaultProps };
 
-  constructor(props?: PipButtonProps) {
+  constructor(props?: PiPButtonProps) {
     if (props) this.setProps(props);
   }
 
-  setProps(props: PipButtonProps): void {
-    this.#props = defaults(props, PipButtonCore.defaultProps);
+  setProps(props: PiPButtonProps): void {
+    this.#props = defaults(props, PiPButtonCore.defaultProps);
   }
 
-  getLabel(state: PipButtonState): string {
+  getLabel(state: PiPButtonState): string {
     const { label } = this.#props;
 
     if (isFunction(label)) {
@@ -45,14 +45,14 @@ export class PipButtonCore {
     return state.pip ? 'Exit PiP' : 'Enter PiP';
   }
 
-  getAttrs(state: PipButtonState) {
+  getAttrs(state: PiPButtonState) {
     return {
       'aria-label': this.getLabel(state),
       'aria-disabled': this.#props.disabled ? 'true' : undefined,
     };
   }
 
-  getState(media: MediaPictureInPictureState): PipButtonState {
+  getState(media: MediaPictureInPictureState): PiPButtonState {
     return {
       pip: media.pip,
       availability: media.pipAvailability,
@@ -75,7 +75,7 @@ export class PipButtonCore {
   }
 }
 
-export namespace PipButtonCore {
-  export type Props = PipButtonProps;
-  export type State = PipButtonState;
+export namespace PiPButtonCore {
+  export type Props = PiPButtonProps;
+  export type State = PiPButtonState;
 }

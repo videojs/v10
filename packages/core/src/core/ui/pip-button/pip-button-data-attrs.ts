@@ -1,9 +1,9 @@
 import type { StateAttrMap } from '../types';
-import type { PipButtonState } from './pip-button-core';
+import type { PiPButtonState } from './pip-button-core';
 
-export const PipButtonDataAttrs = {
+export const PiPButtonDataAttrs = {
   /** Present when picture-in-picture mode is active. */
   pip: 'data-pip',
   /** Indicates picture-in-picture availability (`available` or `unsupported`). */
   availability: 'data-availability',
-} as const satisfies StateAttrMap<PipButtonState>;
+} as const satisfies StateAttrMap<PiPButtonState>;

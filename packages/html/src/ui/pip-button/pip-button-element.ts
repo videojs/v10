@@ -1,4 +1,4 @@
-import { PipButtonCore, PipButtonDataAttrs } from '@videojs/core';
+import { PiPButtonCore, PiPButtonDataAttrs } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, createButton, logMissingFeature, selectPiP } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
@@ -6,18 +6,18 @@ import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 
-export class PipButtonElement extends MediaElement {
+export class PiPButtonElement extends MediaElement {
   static readonly tagName = 'media-pip-button';
 
   static override properties = {
     label: { type: String },
     disabled: { type: Boolean },
-  } satisfies PropertyDeclarationMap<keyof PipButtonCore.Props>;
+  } satisfies PropertyDeclarationMap<keyof PiPButtonCore.Props>;
 
-  label = PipButtonCore.defaultProps.label;
-  disabled = PipButtonCore.defaultProps.disabled;
+  label = PiPButtonCore.defaultProps.label;
+  disabled = PiPButtonCore.defaultProps.disabled;
 
-  readonly #core = new PipButtonCore();
+  readonly #core = new PiPButtonCore();
   readonly #state = new PlayerController(this, playerContext, selectPiP);
 
   #disconnect: AbortController | null = null;
@@ -35,7 +35,7 @@ export class PipButtonElement extends MediaElement {
     applyElementProps(this, buttonProps, this.#disconnect.signal);
 
     if (__DEV__ && !this.#state.value) {
-      logMissingFeature(PipButtonElement.tagName, 'pip');
+      logMissingFeature(PiPButtonElement.tagName, 'pip');
     }
   }
 
@@ -59,6 +59,6 @@ export class PipButtonElement extends MediaElement {
 
     const state = this.#core.getState(media);
     applyElementProps(this, this.#core.getAttrs(state));
-    applyStateDataAttrs(this, state, PipButtonDataAttrs);
+    applyStateDataAttrs(this, state, PiPButtonDataAttrs);
   }
 }

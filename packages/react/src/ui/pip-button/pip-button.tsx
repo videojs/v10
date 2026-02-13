@@ -1,6 +1,6 @@
 'use client';
 
-import { PipButtonCore, PipButtonDataAttrs } from '@videojs/core';
+import { PiPButtonCore, PiPButtonDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectPiP } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
@@ -10,27 +10,27 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useButton } from '../hooks/use-button';
 
-export interface PipButtonProps extends UIComponentProps<'button', PipButtonCore.State>, PipButtonCore.Props {}
+export interface PiPButtonProps extends UIComponentProps<'button', PiPButtonCore.State>, PiPButtonCore.Props {}
 
-export const PipButton = forwardRef(function PipButton(
-  componentProps: PipButtonProps,
+export const PiPButton = forwardRef(function PiPButton(
+  componentProps: PiPButtonProps,
   forwardedRef: ForwardedRef<HTMLButtonElement>
 ) {
   const { render, className, style, label, disabled, ...elementProps } = componentProps;
 
   const pip = usePlayer(selectPiP);
 
-  const [core] = useState(() => new PipButtonCore());
+  const [core] = useState(() => new PiPButtonCore());
   core.setProps({ label, disabled });
 
   const { getButtonProps, buttonRef } = useButton({
-    displayName: 'PipButton',
+    displayName: 'PiPButton',
     onActivate: () => core.toggle(pip!),
     isDisabled: () => disabled || !pip,
   });
 
   if (!pip) {
-    if (__DEV__) logMissingFeature('PipButton', 'pip');
+    if (__DEV__) logMissingFeature('PiPButton', 'pip');
     return null;
   }
 
@@ -41,14 +41,14 @@ export const PipButton = forwardRef(function PipButton(
     { render, className, style },
     {
       state,
-      stateAttrMap: PipButtonDataAttrs,
+      stateAttrMap: PiPButtonDataAttrs,
       ref: [forwardedRef, buttonRef],
       props: [core.getAttrs(state), elementProps, getButtonProps()],
     }
   );
 });
 
-export namespace PipButton {
-  export type Props = PipButtonProps;
-  export type State = PipButtonCore.State;
+export namespace PiPButton {
+  export type Props = PiPButtonProps;
+  export type State = PiPButtonCore.State;
 }
