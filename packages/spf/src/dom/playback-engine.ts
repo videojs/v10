@@ -8,10 +8,12 @@ import {
   type TrackSelectionAction,
 } from '../core/features/select-tracks';
 import { createState } from '../core/state/create-state';
+import { loadTextTrackCues } from './features/load-text-track-cues';
 import { setupMediaSource } from './features/setup-mediasource';
 import { setupSourceBuffer } from './features/setup-sourcebuffer';
 import { setupTextTracks } from './features/setup-text-tracks';
 import { syncTextTrackModes } from './features/sync-text-track-modes';
+import { destroyVttParser } from './text/parse-vtt-segment';
 
 /**
  * Union of all action types used by playback engine orchestrations.
@@ -71,7 +73,7 @@ export interface PlaybackEngineState {
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
   // NOTE: Text Tracks (subtitles/ccs) can be unselected
-  selectedTextTrackId?: string | undefined;
+  selectedTextTrackId?: string;
 }
 
 /**
@@ -219,6 +221,9 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
 
     // 7. Sync text track modes (when track selected and track elements created)
     syncTextTrackModes({ state, owners }),
+
+    // 8. Load text track cues (when track resolved and mode set)
+    loadTextTrackCues({ state, owners }),
   ];
 
   // Dispatch synthetic initialize event to satisfy combineLatest
@@ -232,6 +237,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     events,
     destroy: () => {
       cleanups.forEach((cleanup) => cleanup());
+      destroyVttParser();
     },
   };
 }
