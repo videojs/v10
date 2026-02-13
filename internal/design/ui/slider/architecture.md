@@ -84,7 +84,7 @@ interface SliderInteraction {
 }
 ```
 
-`interactive` is derived by Core: `pointing || focused || dragging`.
+`interactive` is derived by Core: `dragging || pointing || focused`.
 
 ### Methods
 
@@ -99,10 +99,11 @@ class SliderCore {
   // For generic slider, `value` is the controlled/uncontrolled value.
   // Domain cores override to accept media state and compute `value` internally.
 
-  getThumbAttrs(state: SliderState): SliderThumbAttrs;
-  // Returns: role, tabIndex, aria-valuemin, aria-valuemax, aria-valuenow,
-  //          aria-orientation, aria-disabled
+  getAttrs(state: SliderState);
+  // Returns: role, tabindex, autocomplete, aria-valuemin, aria-valuemax,
+  //          aria-valuenow, aria-orientation, aria-disabled
   // These go on the Thumb element (the focusable role="slider" element).
+  // Inlined return type (no explicit annotation — TS infers).
 
   valueFromPercent(percent: number): number;
   // Clamps to [min, max], snaps to step.
@@ -116,12 +117,13 @@ class SliderCore {
 
 ### ARIA Output
 
-`getThumbAttrs()` returns attributes for the **Thumb** element — the focusable `role="slider"` element per the [WAI-ARIA Slider Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/slider/) and the [Media Seek Slider Example](https://www.w3.org/WAI/ARIA/apg/patterns/slider/examples/slider-seek/):
+`getAttrs()` returns attributes for the **Thumb** element — the focusable `role="slider"` element per the [WAI-ARIA Slider Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/slider/) and the [Media Seek Slider Example](https://www.w3.org/WAI/ARIA/apg/patterns/slider/examples/slider-seek/):
 
 ```ts
 {
   role: 'slider',
-  tabIndex: 0,
+  tabindex: 0,
+  autocomplete: 'off',
   'aria-valuemin': 0,
   'aria-valuemax': 100,
   'aria-valuenow': 45,
@@ -130,7 +132,7 @@ class SliderCore {
 }
 ```
 
-`aria-label` and `aria-valuetext` are NOT set by `SliderCore` — they're domain-specific. `TimeSliderCore` and `VolumeSliderCore` add them.
+`aria-label` and `aria-valuetext` are NOT set by `SliderCore` — they're domain-specific. `TimeSliderCore` and `VolumeSliderCore` add them via `override getAttrs()`.
 
 Root handles pointer events and provides context (data attrs, raw state for CSS vars) to children. Thumb carries `role="slider"`, receives keyboard focus, and owns all ARIA attributes. There is no separate Control element. Children other than Thumb (Track, Fill, Buffer, Preview) are purely visual.
 
@@ -138,41 +140,32 @@ Root handles pointer events and provides context (data attrs, raw state for CSS 
 
 `valueFromPercent()` must handle floating-point precision carefully. Without rounding, values like `0.1 + 0.2` produce `0.30000000000000004`.
 
-### `roundValueToStep`
+### `roundToStep` and `clamp`
 
-Rounds a value to the nearest step, anchored at `min`:
+Located in `@videojs/utils/number` — shared utilities used by `SliderCore.valueFromPercent()`:
 
 ```ts
-function roundValueToStep(value: number, step: number, min: number): number {
+function clamp(value: number, min: number, max: number): number;
+function roundToStep(value: number, step: number, min: number): number;
+```
+
+`roundToStep` rounds a value to the nearest step, anchored at `min`. For fractional steps, it derives decimal precision from the step's string representation to avoid floating-point drift:
+
+```ts
+function roundToStep(value: number, step: number, min: number): number {
   const nearest = Math.round((value - min) / step) * step + min;
-  return Number(nearest.toFixed(getDecimalPrecision(step)));
+  const dot = `${step}`.indexOf('.');
+  return dot === -1 ? nearest : Number(nearest.toFixed(`${step}`.length - dot - 1));
 }
 ```
 
-The `toFixed(getDecimalPrecision(step))` call derives precision from the step value itself. If `step = 0.01`, the result is fixed to 2 decimal places. If `step = 5`, no decimal places. This prevents accumulating floating-point drift.
-
-### `getDecimalPrecision`
-
-```ts
-function getDecimalPrecision(num: number): number {
-  if (Math.abs(num) < 1) {
-    // Handles scientific notation (e.g., 0.00000001 → 1e-8)
-    const parts = num.toExponential().split('e-');
-    const mantissaDecimals = parts[0].split('.')[1];
-    return (mantissaDecimals ? mantissaDecimals.length : 0) + parseInt(parts[1], 10);
-  }
-  const decimalPart = num.toString().split('.')[1];
-  return decimalPart ? decimalPart.length : 0;
-}
-```
+Integer steps skip `toFixed` entirely. Fractional steps (e.g., `step = 0.1`) get cleaned up using the step's own decimal count.
 
 ### Where It's Used
 
-- `SliderCore.valueFromPercent()` — snaps computed value to step precision after percent → value conversion.
+- `SliderCore.valueFromPercent()` — clamps to `[min, max]` then snaps to step precision after percent → value conversion.
 - Keyboard handler — rounds current value to nearest step before computing next value. Without this, a pointer drag that landed at 47.3 on a step-5 slider would produce unexpected keyboard steps (47.3 → 52.3 instead of 45 → 50).
 - All percentage calculations for CSS vars use 3 decimal places (`45.123%`) for smooth visual animation, separate from value-level step precision.
-
-Pattern taken from Base UI's `roundValueToStep` utility.
 
 ## Documentation Constants
 
@@ -245,42 +238,32 @@ interface TimeSliderProps extends SliderProps {
   label?: string;                          // default: 'Seek'
 }
 
-interface TimeSliderState extends SliderState {
-  currentTime: number;
-  duration: number;
-  seeking: boolean;
+interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'currentTime' | 'duration' | 'seeking'> {
   bufferPercent: number;
 }
 
 class TimeSliderCore extends SliderCore {
-  getTimeState(interaction: SliderInteraction, media: TimeMediaState): TimeSliderState;
+  getTimeState(media: MediaTimeState & MediaBufferState, interaction: SliderInteraction): TimeSliderState;
+  // Accepts canonical media state types directly — no wrapper interface.
   // Core owns the value swap: dragging ? valueFromPercent(dragPercent) : currentTime.
-  // bufferPercent is computed from bufferedEnd / duration.
-  // The DOM layer uses this to format --media-slider-buffer.
+  // Computes bufferedEnd internally from media.buffered ranges.
+  // bufferPercent = (bufferedEnd / duration) * 100.
+  // Overrides min=0, max=duration on each call.
 
-  getTimeThumbAttrs(state: TimeSliderState): TimeSliderThumbAttrs;
-  // Extends getThumbAttrs() with: aria-label (from props.label, default "Seek"),
+  override getAttrs(state: TimeSliderState);
+  // Extends super.getAttrs() with: aria-label (from props.label, default "Seek"),
   // aria-valuetext="2 minutes, 30 seconds of 10 minutes"
-
-  formatValue(value: number): string;
-  // Returns formatted time string (e.g., "1:30")
+  // Inlined return type.
 }
 ```
 
-```ts
-interface TimeMediaState {
-  currentTime: number;
-  duration: number;
-  seeking: boolean;
-  bufferedEnd: number;    // end of last buffered range
-}
-```
+Uses `MediaTimeState & MediaBufferState` from `@videojs/core` directly — no custom `TimeMediaState` wrapper. `TimeSliderState` uses `Pick<>` to select the specific fields it exposes (`currentTime`, `duration`, `seeking`), keeping the state interface focused.
 
-Core owns the value swap: when not dragging, `value` = `currentTime`. When dragging, `value` = `valueFromPercent(interaction.dragPercent)`. This domain logic lives in Core so both frameworks get it for free.
+Core owns the value swap: when not dragging, `value` = `currentTime`. When dragging, `value` = `valueFromPercent(interaction.dragPercent)`. `bufferedEnd` is computed internally from `media.buffered` (the end of the last buffered range). This domain logic lives in Core so both frameworks get it for free.
 
 ### Time Formatting
 
-Uses `TimeCore` (already exists in `@videojs/core`) for `aria-valuetext`. On initialization and focus, the value text follows the pattern `"{current} of {duration}"`. During value changes, duration is omitted (`"{current}"` only) to reduce screen reader verbosity. Each uses a human-readable phrase from `formatTimeAsPhrase()`. See [decisions.md](decisions.md#time-slider-aria-valuetext-format).
+Uses `formatTimeAsPhrase()` from `@videojs/utils/time` for `aria-valuetext`. The value text follows the pattern `"{current} of {duration}"` using human-readable phrases. See [decisions.md](decisions.md#time-slider-aria-valuetext-format).
 
 ## VolumeSliderCore
 
@@ -291,32 +274,26 @@ interface VolumeSliderProps extends SliderProps {
   label?: string;                          // default: 'Volume'
 }
 
-interface VolumeSliderState extends SliderState {
-  volume: number;
-  muted: boolean;
-}
+interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, 'volume' | 'muted'> {}
 
 class VolumeSliderCore extends SliderCore {
-  getVolumeState(interaction: SliderInteraction, media: VolumeMediaState): VolumeSliderState;
+  getVolumeState(media: MediaVolumeState, interaction: SliderInteraction): VolumeSliderState;
+  // Accepts canonical MediaVolumeState directly — no wrapper interface.
   // Core owns the value swap: dragging ? valueFromPercent(dragPercent) : volume * 100.
   // When muted: `value` = actual volume * 100 (always reflects real level),
-  // `fillPercent` = muted ? 0 : percentFromValue(value) (visual silence).
+  // `fillPercent` = muted ? 0 : base.fillPercent (visual silence).
   // `aria-valuenow` uses `value` (actual volume), not `fillPercent`.
 
-  getVolumeThumbAttrs(state: VolumeSliderState): VolumeSliderThumbAttrs;
-  // Extends getThumbAttrs() with: aria-label (from props.label, default "Volume"),
+  override getAttrs(state: VolumeSliderState);
+  // Extends super.getAttrs() with: aria-label (from props.label, default "Volume"),
   // aria-valuetext="75 percent" (or "75 percent, muted" when muted)
+  // Inlined return type.
 }
 ```
 
-```ts
-interface VolumeMediaState {
-  volume: number;   // 0-1 from store
-  muted: boolean;
-}
-```
+Uses `MediaVolumeState` from `@videojs/core` directly — no custom `VolumeMediaState` wrapper. `VolumeSliderState` uses `Pick<>` to select the specific fields it exposes (`volume`, `muted`).
 
-Default props override: `min=0, max=100, step=5, largeStep=10, orientation='horizontal'`.
+Default props: `min=0, max=100, step=1, largeStep=10, orientation='horizontal'`.
 
 Volume is stored as 0-1 in the store but displayed as 0-100 in the slider. `VolumeSliderCore` handles this conversion.
 
@@ -442,7 +419,7 @@ All via `onKeyDown` on the **Thumb** element (the focusable `role="slider"` elem
 
 **RTL direction:** `createSlider` accepts an `isRTL` callback. When RTL, `ArrowRight` subtracts `stepPercent` (decreases) and `ArrowLeft` adds `stepPercent` (increases). `ArrowUp`/`ArrowDown` are unaffected. Both Base UI and Vidstack implement this.
 
-**Round before stepping:** Before computing the next value from a keyboard step, the current value is rounded to the nearest step via `roundValueToStep()`. This prevents drift when the current value isn't aligned to a step boundary (e.g., after a pointer drag landed between steps). See [Value Snapping Precision](#value-snapping-precision).
+**Round before stepping:** Before computing the next value from a keyboard step, the current value is rounded to the nearest step via `roundToStep()` (from `@videojs/utils/number`). This prevents drift when the current value isn't aligned to a step boundary (e.g., after a pointer drag landed between steps). See [Value Snapping Precision](#value-snapping-precision).
 
 **Numeric keys** match YouTube behavior (0 = start, 5 = midpoint, 9 = 90%). Only active when `metaKey` is not held.
 
@@ -478,7 +455,7 @@ interaction.current     onValueChange(%)            onValueCommit(%)
 │  const media = usePlayer(selectTimeAndBuffer);                │
 │  const state = core.getTimeState(interaction, media);         │
 │  const cssVars = getTimeSliderCSSVars(state);                 │
-│  const thumbAttrs = core.getTimeThumbAttrs(state);            │
+│  const thumbAttrs = core.getAttrs(state);                     │
 │                                                               │
 │  → CSS vars on Root                                           │
 │  → Data attrs on Root + children (via context)                │

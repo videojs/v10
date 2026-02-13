@@ -179,12 +179,14 @@ export { rafThrottle, type RafThrottled } from './raf-throttle';
 
 **File:** `packages/utils/src/dom/direction.ts`
 
-Detects right-to-left text direction for an element. Uses `getComputedStyle` which
-respects inherited direction from any ancestor or stylesheet — more robust than checking
-the `dir` attribute directly.
+Detects right-to-left text direction for an element. Checks `element.closest('[dir]')` first
+for fast attribute lookup, then falls back to `getComputedStyle` which respects inherited
+direction from stylesheets.
 
 ```ts
 export function isRTL(element: Element): boolean {
+  const dir = element.closest('[dir]')?.getAttribute('dir');
+  if (dir) return dir.toLowerCase() === 'rtl';
   return getComputedStyle(element).direction === 'rtl';
 }
 ```
@@ -197,7 +199,7 @@ export { isRTL } from './direction';
 **Test:** `packages/utils/src/dom/tests/direction.test.ts`
 - Returns `false` for default LTR element
 - Returns `true` when ancestor has `dir="rtl"`
-- Returns `true` when CSS `direction: rtl` is set via stylesheet
+- Returns `true` when element has `dir="rtl"`
 
 ### 1.4 `SliderCore` — Generic Slider State
 
@@ -230,7 +232,7 @@ export interface SliderState {
   pointerPercent: number;
   dragging: boolean;
   pointing: boolean;
-  interactive: boolean;   // dragging || pointing
+  interactive: boolean;   // dragging || pointing || focused
   orientation: 'horizontal' | 'vertical';
   disabled: boolean;
   thumbAlignment: 'center' | 'edge';
@@ -253,7 +255,7 @@ export class SliderCore {
 
   getState(interaction: SliderInteraction, value: number): SliderState;
   // Computes fillPercent = percentFromValue(value), pointerPercent from interaction,
-  // interactive = dragging || pointing. All percentages 0-100.
+  // interactive = dragging || pointing || focused. All percentages 0-100.
 
   getAttrs(state: SliderState);
   // Returns inlined ARIA attrs object (no explicit return type — TS infers).
@@ -280,39 +282,33 @@ export namespace SliderCore {
 }
 ```
 
-**Utility functions** (same file or adjacent helper file):
+**Utility functions** in `@videojs/utils/number` (new subpath):
 
 ```ts
-export function roundValueToStep(value: number, step: number, min: number): number;
-// Rounds value to nearest step anchored at min.
-// toFixed(getDecimalPrecision(step)) to avoid floating-point drift.
+export function clamp(value: number, min: number, max: number): number;
+// Clamp a value between min and max (inclusive).
 
-export function getDecimalPrecision(num: number): number;
-// Handles scientific notation (e.g., 1e-7 → 7).
+export function roundToStep(value: number, step: number, min: number): number;
+// Snap a value to the nearest step, offset from min.
+// Derives decimal precision from step's string representation to avoid floating-point drift.
+// Integer steps skip toFixed entirely.
 ```
+
+Requires adding `./number` export to `packages/utils/package.json` and `number` entry to `packages/utils/tsdown.config.ts`.
 
 ### 1.5 `TimeSliderCore` — Time-Domain Slider
 
 **File:** `packages/core/src/core/ui/slider/time-slider-core.ts`
 
-Extends `SliderCore`. Accepts `SliderInteraction` + `TimeMediaState` (a subset of `MediaTimeState` + `MediaBufferState`), returns time-specific state.
+Extends `SliderCore`. Accepts `MediaTimeState & MediaBufferState` (canonical types from `@videojs/core`) + `SliderInteraction`, returns time-specific state.
 
 ```ts
-export interface TimeMediaState {
-  currentTime: number;
-  duration: number;
-  seeking: boolean;
-  bufferedEnd: number;  // pre-computed by consumer from MediaBufferState.buffered
-}
-
-export interface TimeSliderState extends SliderState {
-  currentTime: number;
-  duration: number;
-  seeking: boolean;
+export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'currentTime' | 'duration' | 'seeking'> {
   bufferPercent: number;
 }
-
 ```
+
+Uses `Pick<>` to select specific fields from canonical media state. No custom `TimeMediaState` wrapper — accepts the full `MediaTimeState & MediaBufferState` and computes `bufferedEnd` internally from `media.buffered` ranges.
 
 **Class shape:**
 
@@ -325,11 +321,12 @@ export class TimeSliderCore extends SliderCore {
   static override readonly defaultProps: NonNullableObject<TimeSliderProps>;
   // Inherits slider defaults. label='Seek'.
 
-  getTimeState(interaction: SliderInteraction, media: TimeMediaState): TimeSliderState;
-  // - min=0, max=duration (overrides generic min/max).
+  getTimeState(media: MediaTimeState & MediaBufferState, interaction: SliderInteraction): TimeSliderState;
+  // - min=0, max=duration (overrides generic min/max on each call).
   // - Value swap: dragging ? valueFromPercent(dragPercent) : currentTime.
+  // - Computes bufferedEnd from media.buffered ranges internally.
   // - bufferPercent = (bufferedEnd / duration) * 100 || 0.
-  // - Delegates to getState() for base slider state.
+  // - Delegates to super.getState() for base slider state.
 
   override getAttrs(state: TimeSliderState);
   // Returns inlined object (no explicit return type).
@@ -341,7 +338,6 @@ export class TimeSliderCore extends SliderCore {
 export namespace TimeSliderCore {
   export type Props = TimeSliderProps;
   export type State = TimeSliderState;
-  export type MediaState = TimeMediaState;
 }
 ```
 
@@ -349,20 +345,13 @@ export namespace TimeSliderCore {
 
 **File:** `packages/core/src/core/ui/slider/volume-slider-core.ts`
 
-Extends `SliderCore`. Accepts `SliderInteraction` + `VolumeMediaState`, returns volume-specific state.
+Extends `SliderCore`. Accepts `MediaVolumeState` (canonical type from `@videojs/core`) + `SliderInteraction`, returns volume-specific state.
 
 ```ts
-export interface VolumeMediaState {
-  volume: number;  // 0-1
-  muted: boolean;
-}
-
-export interface VolumeSliderState extends SliderState {
-  volume: number;
-  muted: boolean;
-}
-
+export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, 'volume' | 'muted'> {}
 ```
+
+Uses `Pick<>` to select specific fields from canonical media state. No custom `VolumeMediaState` wrapper.
 
 **Class shape:**
 
@@ -375,11 +364,11 @@ export class VolumeSliderCore extends SliderCore {
   static override readonly defaultProps: NonNullableObject<VolumeSliderProps>;
   // min=0, max=100, step=1, largeStep=10, label='Volume'.
 
-  getVolumeState(interaction: SliderInteraction, media: VolumeMediaState): VolumeSliderState;
+  getVolumeState(media: MediaVolumeState, interaction: SliderInteraction): VolumeSliderState;
   // - Value: always volume * 100 (actual volume as percent, regardless of muted).
   // - Value swap: dragging ? valueFromPercent(dragPercent) : volume * 100.
-  // - fillPercent: muted ? 0 : percentFromValue(value). Visual silence when muted.
-  // - Delegates to getState() for base slider state.
+  // - fillPercent: muted ? 0 : base.fillPercent. Visual silence when muted.
+  // - Delegates to super.getState() for base slider state.
 
   override getAttrs(state: VolumeSliderState);
   // Returns inlined object (no explicit return type).
@@ -391,7 +380,6 @@ export class VolumeSliderCore extends SliderCore {
 export namespace VolumeSliderCore {
   export type Props = VolumeSliderProps;
   export type State = VolumeSliderState;
-  export type MediaState = VolumeMediaState;
 }
 ```
 
@@ -452,10 +440,10 @@ export * from './ui/slider/slider-css-vars';
 
 **File:** `packages/core/src/core/ui/slider/tests/slider-core.test.ts`
 
-- `roundValueToStep`: edge cases (floating point, scientific notation, step < 1)
-- `getDecimalPrecision`: integers, decimals, scientific notation
-- `SliderCore.getState`: basic value to percent, interaction passthrough, interactive derivation
-- `SliderCore.getThumbAttrs`: ARIA output
+- `clamp`: within range, clamp to min, clamp to max, min equals max, negative ranges
+- `roundToStep`: nearest step, min offset, decimal steps, value equals min
+- `SliderCore.getState`: basic value to percent, interaction passthrough, interactive derivation (including focused)
+- `SliderCore.getAttrs`: ARIA output
 - `SliderCore.valueFromPercent`: min/max bounds, step snapping
 - `SliderCore.percentFromValue`: inverse of valueFromPercent
 - `SliderCore.adjustPercentForAlignment`: center (identity) and edge modes
@@ -463,15 +451,15 @@ export * from './ui/slider/slider-css-vars';
 
 **File:** `packages/core/src/core/ui/slider/tests/time-slider-core.test.ts`
 
-- `getTimeState`: value swap on drag vs non-drag, buffer percent, duration as max
-- `getTimeThumbAttrs`: aria-label, aria-valuetext formatting
+- `getTimeState`: value swap on drag vs non-drag, buffer percent from buffered ranges, duration as max
+- `getAttrs`: aria-label, aria-valuetext formatting
 - Zero duration edge case
 - Seeking state passthrough
 
 **File:** `packages/core/src/core/ui/slider/tests/volume-slider-core.test.ts`
 
 - `getVolumeState`: value always actual volume, fillPercent=0 when muted, value swap on drag
-- `getVolumeThumbAttrs`: aria-label, aria-valuetext with and without muted
+- `getAttrs`: aria-label, aria-valuetext with and without muted
 - Volume 0-1 to 0-100 percent mapping
 
 ### 1.10 Verify

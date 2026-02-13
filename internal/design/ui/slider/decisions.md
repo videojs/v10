@@ -345,7 +345,7 @@ slider.interaction.subscribe(cb);  // notified on change
 
 ### Core Accepts Split (Interaction, Media) Inputs
 
-**Decision:** `SliderCore.getState()` accepts `SliderInteraction` and a value separately. Domain cores (`TimeSliderCore`, `VolumeSliderCore`) accept `(interaction, media)` where media is a domain-specific type (`TimeMediaState`, `VolumeMediaState`). Core owns the merge logic — e.g., the value swap (`dragging ? valueFromPercent(dragPercent) : currentTime`).
+**Decision:** `SliderCore.getState()` accepts `SliderInteraction` and a value separately. Domain cores (`TimeSliderCore`, `VolumeSliderCore`) accept `(media, interaction)` where media is the canonical type from `@videojs/core` (`MediaTimeState & MediaBufferState`, `MediaVolumeState`). Core owns the merge logic — e.g., the value swap (`dragging ? valueFromPercent(dragPercent) : currentTime`). Media is the first parameter since it's the primary input; interaction is secondary context.
 
 **Alternatives:**
 
@@ -419,7 +419,7 @@ This follows the [WAI-ARIA Slider Pattern](https://www.w3.org/WAI/ARIA/apg/patte
 
 ### Domain Sliders Set aria-label and aria-valuetext
 
-**Decision:** Generic `SliderCore.getThumbAttrs()` sets `role`, `tabIndex`, `aria-valuemin/max/now`, `aria-orientation`, `aria-disabled` on the Thumb element. Domain cores (`TimeSliderCore`, `VolumeSliderCore`) extend with `aria-label` and `aria-valuetext`. Domain Roots accept a `label` prop (default `"Seek"` / `"Volume"`) that feeds into `aria-label`, and provide the complete ARIA attrs to Thumb via context.
+**Decision:** Generic `SliderCore.getAttrs()` sets `role`, `tabindex`, `autocomplete`, `aria-valuemin/max/now`, `aria-orientation`, `aria-disabled` on the Thumb element. Domain cores (`TimeSliderCore`, `VolumeSliderCore`) extend via `override getAttrs()` with `aria-label` and `aria-valuetext`. Domain Roots accept a `label` prop (default `"Seek"` / `"Volume"`) that feeds into `aria-label`, and provide the complete ARIA attrs to Thumb via context.
 
 **Alternatives:**
 
