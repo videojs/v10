@@ -30,6 +30,7 @@ export {
 } from './player/create-player';
 
 // UI
+export { BufferingIndicator, type BufferingIndicatorProps } from './ui/buffering-indicator/buffering-indicator';
 export { Controls } from './ui/controls';
 export type { ControlsGroupProps } from './ui/controls/controls-group';
 export type { ControlsRootProps } from './ui/controls/controls-root';
