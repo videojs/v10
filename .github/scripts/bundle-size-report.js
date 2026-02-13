@@ -11,7 +11,16 @@
  */
 
 import { readFileSync } from 'node:fs';
-import kleur from 'kleur';
+
+const ESC = '\x1b[';
+const ansi = {
+  bold: (s) => `${ESC}1m${s}${ESC}22m`,
+  dim: (s) => `${ESC}2m${s}${ESC}22m`,
+  cyan: (s) => `${ESC}36m${s}${ESC}39m`,
+  yellow: (s) => `${ESC}33m${s}${ESC}39m`,
+  white: (s) => `${ESC}37m${s}${ESC}39m`,
+  green: (s) => `${ESC}32m${s}${ESC}39m`,
+};
 
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -226,7 +235,7 @@ function generateComparisonReport(current, base) {
  * Render rows as a padded, aligned table for terminal output.
  *
  * Each row is an array of cell values. Cells can be plain strings or
- * `{ text, style }` objects where `style` is a kleur chain (e.g. kleur.bold).
+ * `{ text, style }` objects where `style` is a ansi chain (e.g. ansi.bold).
  * Alignment and padding use the plain text width; ANSI codes are ignored.
  *
  * The first row is treated as a dim header.
@@ -246,7 +255,7 @@ function printTable(rows) {
     }
   }
 
-  const sep = kleur.dim(
+  const sep = ansi.dim(
     `─${widths.map((w) => '─'.repeat(w)).join('─┼─')}─`,
   );
   const lines = [];
@@ -257,9 +266,9 @@ function printTable(rows) {
       const padded =
         i === cols - 1 ? t.padStart(widths[i]) : t.padEnd(widths[i]);
       // Header row is dim, data rows use their own style
-      return r === 0 ? kleur.dim(padded) : style(cell)(padded);
+      return r === 0 ? ansi.dim(padded) : style(cell)(padded);
     });
-    lines.push(` ${cells.join(kleur.dim(' │ '))} `);
+    lines.push(` ${cells.join(ansi.dim(' │ '))} `);
     if (r === 0) lines.push(sep);
   }
 
@@ -269,9 +278,9 @@ function printTable(rows) {
 /** Color a size value based on magnitude. */
 function colorSize(bytes) {
   const text = formatBytes(bytes);
-  if (bytes >= 5 * 1024) return { text, style: kleur.yellow };
-  if (bytes >= 1024) return { text, style: kleur.white };
-  return { text, style: kleur.green };
+  if (bytes >= 5 * 1024) return { text, style: ansi.yellow };
+  if (bytes >= 1024) return { text, style: ansi.white };
+  return { text, style: ansi.green };
 }
 
 /** Generate a local-only report (no base comparison). */
@@ -292,7 +301,7 @@ function generateLocalReport(current) {
 
     grandTotal += pkgTotal;
     overviewRows.push([
-      { text: `@videojs/${pkg}`, style: kleur.bold },
+      { text: `@videojs/${pkg}`, style: ansi.bold },
       colorSize(pkgTotal),
     ]);
 
@@ -305,12 +314,12 @@ function generateLocalReport(current) {
   lines.push('');
   lines.push(printTable(overviewRows));
   lines.push('');
-  lines.push(kleur.bold(`Total: ${formatBytes(grandTotal)}`));
+  lines.push(ansi.bold(`Total: ${formatBytes(grandTotal)}`));
 
   if (pkgsWithSubs.length > 0) {
     for (const { pkg, rootEntries, subEntries, pkgTotal } of pkgsWithSubs) {
       lines.push('');
-      lines.push(kleur.bold(`@videojs/${pkg}`));
+      lines.push(ansi.bold(`@videojs/${pkg}`));
 
       const rows = [['Entry', 'Size']];
       for (const entry of [...rootEntries, ...subEntries]) {
@@ -318,13 +327,13 @@ function generateLocalReport(current) {
           entry.name.replace(`@videojs/${pkg}`, '') || '.';
         const label = displayName === '.' ? displayName : `.${displayName}`;
         rows.push([
-          { text: label, style: kleur.cyan },
+          { text: label, style: ansi.cyan },
           colorSize(entry.size),
         ]);
       }
       rows.push([
-        { text: 'total', style: kleur.bold },
-        { text: formatBytes(pkgTotal), style: kleur.bold },
+        { text: 'total', style: ansi.bold },
+        { text: formatBytes(pkgTotal), style: ansi.bold },
       ]);
 
       lines.push(printTable(rows));
@@ -332,7 +341,7 @@ function generateLocalReport(current) {
   }
 
   lines.push('');
-  lines.push(kleur.dim('Sizes are minified + brotli.'));
+  lines.push(ansi.dim('Sizes are minified + brotli.'));
   lines.push('');
 
   return lines.join('\n');
