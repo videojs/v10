@@ -1,7 +1,8 @@
 // React sandbox — React player
 // http://localhost:5173/react/
 
-import { Container, createPlayer, features, Video } from '@videojs/react';
+import { Container, createPlayer, features } from '@videojs/react';
+import { Video } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
 
 const { Provider } = createPlayer({

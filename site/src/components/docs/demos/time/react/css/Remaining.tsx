@@ -1,4 +1,5 @@
-import { createPlayer, features, Time, Video } from '@videojs/react';
+import { createPlayer, features, Time } from '@videojs/react';
+import { Video } from '@videojs/react/video';
 
 import './Remaining.css';
 

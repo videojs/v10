@@ -16,12 +16,30 @@
       "types": "./dist/dev/index.d.ts",
       "development": "./dist/dev/index.js",
       "default": "./dist/default/index.js"
+    },
+    "./*.css": "./dist/default/presets/*.css",
+    "./audio": {
+      "types": "./dist/dev/presets/audio/index.d.ts",
+      "development": "./dist/dev/presets/audio/index.js",
+      "default": "./dist/default/presets/audio/index.js"
+    },
+    "./background": {
+      "types": "./dist/dev/presets/background/index.d.ts",
+      "development": "./dist/dev/presets/background/index.js",
+      "default": "./dist/default/presets/background/index.js"
+    },
+    "./video": {
+      "types": "./dist/dev/presets/video/index.d.ts",
+      "development": "./dist/dev/presets/video/index.js",
+      "default": "./dist/default/presets/video/index.js"
     }
   },
   "scripts": {
-    "build": "tsdown",
-    "build:watch": "tsdown --watch ./src --no-clean",
-    "dev": "pnpm run build:watch",
+    "build": "tsdown && pnpm css:copy",
+    "build:watch": "concurrently 'tsdown --watch ./src --no-clean' 'pnpm css:watch'",
+    "css:copy": "rsync -a --include='*/' --include='*.css' --exclude='*' src/presets/ dist/default/presets/",
+    "css:watch": "chokidar 'src/presets/**/*.css' --initial -c 'pnpm run css:copy'",
+    "dev": "pnpm build:watch",
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "rm -rf dist types"
@@ -37,6 +55,8 @@
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
     "@types/react": "^19.2.7",
+    "chokidar-cli": "^3.0.0",
+    "concurrently": "^9.2.1",
     "jsdom": "^26.1.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",

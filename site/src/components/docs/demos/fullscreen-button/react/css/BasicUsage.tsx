@@ -1,4 +1,5 @@
-import { createPlayer, FullscreenButton, features, Video } from '@videojs/react';
+import { createPlayer, FullscreenButton, features } from '@videojs/react';
+import { Video } from '@videojs/react/video';
 
 import './BasicUsage.css';
 
