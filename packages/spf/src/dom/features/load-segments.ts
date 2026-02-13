@@ -17,7 +17,7 @@ export interface SegmentLoadingState {
  * Owners shape for segment loading.
  */
 export interface SegmentLoadingOwners {
-  videoSourceBuffer?: SourceBuffer;
+  videoBuffer?: SourceBuffer;
 }
 
 /**
@@ -72,7 +72,7 @@ function selectSegmentsToLoad(state: SegmentLoadingState): Segment[] {
  * - VideoSourceBuffer exists
  */
 export function canLoadSegments(state: SegmentLoadingState, owners: SegmentLoadingOwners): boolean {
-  return !!state.selectedVideoTrackId && !!owners.videoSourceBuffer;
+  return !!state.selectedVideoTrackId && !!owners.videoBuffer;
 }
 
 /**
@@ -95,7 +95,7 @@ export function shouldLoadSegments(state: SegmentLoadingState, owners: SegmentLo
 
   // For POC: simple check - if SourceBuffer has any buffered data, skip
   // TODO: More sophisticated buffering logic (check ranges, append new segments only)
-  const sourceBuffer = owners.videoSourceBuffer;
+  const sourceBuffer = owners.videoBuffer;
   if (sourceBuffer && sourceBuffer.buffered.length > 0) {
     return false;
   }
@@ -130,7 +130,7 @@ export function loadSegments({
     async ([s, o]: [SegmentLoadingState, SegmentLoadingOwners]) => {
       if (!shouldLoadSegments(s, o) || isLoading) return;
 
-      const sourceBuffer = o.videoSourceBuffer;
+      const sourceBuffer = o.videoBuffer;
       if (!sourceBuffer) return;
 
       // Determine which segments to load
