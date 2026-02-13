@@ -1,13 +1,11 @@
 import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
-import { noop } from '@videojs/utils/function';
 import { isNull, isUndefined } from '@videojs/utils/predicate';
-import { shallowEqual } from '../../core/shallow-equal';
+import type { Selector } from '../../core/shallow-equal';
 import type { AnyStore, InferStoreState } from '../../core/store';
 import { StoreAccessor, type StoreSource } from '../store-accessor';
+import { SnapshotController } from './snapshot-controller';
 
 export type StoreControllerHost = ReactiveControllerHost & HTMLElement;
-
-export type Selector<State, Result> = (state: State) => Result;
 
 /**
  * Access store state and actions.
@@ -45,8 +43,7 @@ export class StoreController<Store extends AnyStore, Result = Store> implements 
   readonly #selector: Selector<InferStoreState<Store>, Result> | undefined;
   readonly #accessor: StoreAccessor<Store>;
 
-  #cached: Result | undefined;
-  #unsubscribe = noop;
+  #snapshot: SnapshotController<object, Result> | null = null;
 
   constructor(host: StoreControllerHost, source: StoreSource<Store>);
   constructor(
@@ -77,37 +74,22 @@ export class StoreController<Store extends AnyStore, Result = Store> implements 
       return store as unknown as Result;
     }
 
-    // With selector: return cached selected value
-    this.#cached ??= this.#selector(store.state as InferStoreState<Store>);
-    return this.#cached;
+    // With selector: delegate to snapshot controller
+    return this.#snapshot!.value;
   }
 
-  hostDisconnected(): void {
-    this.#unsubscribe();
-    this.#unsubscribe = noop;
-    this.#cached = undefined;
+  hostConnected(): void {
+    // StoreAccessor + SnapshotController handle their own lifecycle.
   }
 
   #connect(store: Store): void {
-    this.#unsubscribe();
+    if (isUndefined(this.#selector)) return;
 
-    // Without selector: no subscription
-    if (isUndefined(this.#selector)) {
-      return;
+    if (!this.#snapshot) {
+      this.#snapshot = new SnapshotController(this.#host, store.$state, this.#selector as Selector<object, Result>);
+    } else {
+      this.#snapshot.track(store.$state);
     }
-
-    // With selector: subscribe with shallowEqual comparison
-    const selector = this.#selector;
-
-    this.#cached = selector(store.state as InferStoreState<Store>);
-
-    this.#unsubscribe = store.subscribe(() => {
-      const next = selector(store.state as InferStoreState<Store>);
-      if (!shallowEqual(this.#cached, next)) {
-        this.#cached = next;
-        this.#host.requestUpdate();
-      }
-    });
   }
 }
 
