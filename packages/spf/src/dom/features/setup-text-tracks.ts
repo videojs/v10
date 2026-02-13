@@ -35,10 +35,10 @@ function getTextTracks(presentation?: Presentation): PartiallyResolvedTextTrack[
  *
  * Requires:
  * - mediaElement exists
- * - presentation is resolved (has selectionSets)
+ * - presentation has text tracks to setup
  */
 export function canSetupTextTracks(state: TextTrackState, owners: TextTrackOwners): boolean {
-  return !!owners.mediaElement && !!state.presentation?.selectionSets;
+  return !!owners.mediaElement && !!getTextTracks(state.presentation).length;
 }
 
 /**
