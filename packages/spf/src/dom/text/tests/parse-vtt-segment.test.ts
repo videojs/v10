@@ -109,13 +109,13 @@ Third line
   });
 
   it('rejects on malformed VTT', async () => {
-    const invalidVtt = 'data:text/vtt,' + encodeURIComponent('NOT VALID VTT CONTENT');
+    const invalidVtt = `data:text/vtt,${encodeURIComponent('NOT VALID VTT CONTENT')}`;
 
     await expect(parseVttSegment(invalidVtt)).rejects.toThrow('Failed to load VTT segment');
   });
 
   it('returns empty array for VTT with no cues', async () => {
-    const vttDataUrl = 'data:text/vtt,' + encodeURIComponent('WEBVTT\n\n');
+    const vttDataUrl = `data:text/vtt,${encodeURIComponent('WEBVTT\n\n')}`;
 
     const cues = await parseVttSegment(vttDataUrl);
 
