@@ -142,8 +142,8 @@ Visual grouping container. No special behavior — pure layout.
 ```html
 <media-controls-group>
   <media-play-button></media-play-button>
-  <media-seek-backward-button></media-seek-backward-button>
-  <media-seek-forward-button></media-seek-forward-button>
+  <media-seek-button seconds="-10"></media-seek-button>
+  <media-seek-button seconds="10"></media-seek-button>
 </media-controls-group>
 ```
 
