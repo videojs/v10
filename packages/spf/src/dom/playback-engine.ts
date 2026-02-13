@@ -8,6 +8,7 @@ import {
   type TrackSelectionAction,
 } from '../core/features/select-tracks';
 import { createState } from '../core/state/create-state';
+import { loadSegments } from './features/load-segments';
 import { loadTextTrackCues } from './features/load-text-track-cues';
 import { setupMediaSource } from './features/setup-mediasource';
 import { setupSourceBuffer } from './features/setup-sourcebuffer';
@@ -216,13 +217,16 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     setupSourceBuffer({ state, owners }, { type: 'video' }),
     setupSourceBuffer({ state, owners }, { type: 'audio' }),
 
-    // 6. Setup text tracks (when mediaElement and presentation ready)
+    // 6. Load video segments (when SourceBuffer ready and track resolved)
+    loadSegments({ state, owners }),
+
+    // 7. Setup text tracks (when mediaElement and presentation ready)
     setupTextTracks({ state, owners }),
 
-    // 7. Sync text track modes (when track selected and track elements created)
+    // 8. Sync text track modes (when track selected and track elements created)
     syncTextTrackModes({ state, owners }),
 
-    // 8. Load text track cues (when track resolved and mode set)
+    // 9. Load text track cues (when track resolved and mode set)
     loadTextTrackCues({ state, owners }),
   ];
 
