@@ -1,7 +1,7 @@
 {
   "name": "@videojs/react",
   "type": "module",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-preview.11",
   "description": "React library for building media players",
   "license": "Apache-2.0",
   "main": "dist/default/index.js",
