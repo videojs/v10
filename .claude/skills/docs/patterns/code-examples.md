@@ -24,7 +24,8 @@ function App() {
 }
 
 // ✅ Complete — copy, paste, run
-import { createPlayer, features, PlayButton, Video } from '@videojs/react';
+import { createPlayer, features, PlayButton } from '@videojs/react';
+import { Video } from '@videojs/react/video';
 
 const Player = createPlayer({ features: [...features.video] });
 
@@ -77,7 +78,8 @@ Site pages use `<FrameworkCase>` and `<StyleCase>` to show code per framework. N
 **React:**
 
 ```tsx
-import { createPlayer, features, PlayButton, Video } from '@videojs/react';
+import { createPlayer, features, PlayButton } from '@videojs/react';
+import { Video } from '@videojs/react/video';
 
 const Player = createPlayer({ features: [...features.video] });
 
@@ -222,7 +224,8 @@ Show which file code belongs to when multiple files are involved:
 
 ````markdown
 ```tsx title="App.tsx"
-import { createPlayer, features, PlayButton, Video } from '@videojs/react';
+import { createPlayer, features, PlayButton } from '@videojs/react';
+import { Video } from '@videojs/react/video';
 import './App.css';
 
 const Player = createPlayer({ features: [...features.video] });

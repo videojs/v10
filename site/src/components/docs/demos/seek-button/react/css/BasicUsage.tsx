@@ -1,4 +1,5 @@
-import { createPlayer, features, SeekButton, Video } from '@videojs/react';
+import { createPlayer, features, SeekButton } from '@videojs/react';
+import { Video } from '@videojs/react/video';
 
 import './BasicUsage.css';
 
