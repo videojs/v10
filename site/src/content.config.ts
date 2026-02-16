@@ -1,7 +1,8 @@
 import { defineCollection, reference, z } from 'astro:content';
 import { file, glob } from 'astro/loaders';
-import { ComponentApiReferenceSchema } from './types/api-reference';
+import { ComponentReferenceSchema } from './types/component-reference';
 import { SUPPORTED_FRAMEWORKS } from './types/docs';
+import { UtilReferenceSchema } from './types/util-reference';
 import { defaultGitService } from './utils/gitService';
 import { globWithParser } from './utils/globWithParser';
 
@@ -107,12 +108,20 @@ const authors = defineCollection({
   }),
 });
 
-const apiReference = defineCollection({
+const componentReference = defineCollection({
   loader: glob({
     pattern: '*.json',
-    base: './src/content/generated-api-reference',
+    base: './src/content/generated-component-reference',
   }),
-  schema: ComponentApiReferenceSchema,
+  schema: ComponentReferenceSchema,
 });
 
-export const collections = { blog, docs, authors, apiReference };
+const utilReference = defineCollection({
+  loader: glob({
+    pattern: '*.json',
+    base: './src/content/generated-util-reference',
+  }),
+  schema: UtilReferenceSchema,
+});
+
+export const collections = { blog, docs, authors, componentReference, utilReference };

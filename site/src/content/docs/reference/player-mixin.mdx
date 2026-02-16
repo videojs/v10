@@ -1,0 +1,65 @@
+---
+title: PlayerMixin
+description: Composed mixin combining ProviderMixin and ContainerMixin for a complete player element
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```ts
+import { PlayerMixin } from '@videojs/html';
+```
+
+## Usage
+
+`PlayerMixin` combines `ProviderMixin` and `ContainerMixin` into a single mixin. The resulting class both owns the player store and auto-attaches media elements, making it a complete player element.
+
+```ts
+import { createPlayer, features, MediaElement } from '@videojs/html';
+
+const { PlayerMixin } = createPlayer({ features: features.video });
+
+class MyPlayer extends PlayerMixin(MediaElement) {
+  connectedCallback() {
+    super.connectedCallback();
+    // this.store is the player store instance
+  }
+}
+
+customElements.define('my-player', MyPlayer);
+```
+
+### Choose your approach
+
+| Approach | When to use |
+|----------|-------------|
+| `PlayerElement` | Simplest setup. Register and use directly -- no custom class needed. |
+| `PlayerMixin(Base)` | Custom player element with additional lifecycle logic or methods. |
+| `ProviderMixin` + `ContainerMixin` | Provider and container are separate elements (e.g., store owner is a layout shell, media lives in a content region). |
+
+`PlayerMixin` is equivalent to `ProviderMixin(ContainerMixin(Base))`. It creates the store on connect, observes the DOM for `<video>` or `<audio>` children, and publishes the store to descendant elements via context.
+
+### PlayerElement vs PlayerMixin
+
+For the simplest setup, use the pre-composed `PlayerElement` from `createPlayer`:
+
+```ts
+const { PlayerElement } = createPlayer({ features: features.video });
+customElements.define('video-player', PlayerElement);
+```
+
+Use `PlayerMixin` when you need to add custom behavior:
+
+```ts
+class MyPlayer extends PlayerMixin(MediaElement) {
+  connectedCallback() {
+    super.connectedCallback();
+    this.store.subscribe(() => {
+      // Custom logic on state changes
+    });
+  }
+}
+```
+
+<UtilReference util="PlayerMixin" />

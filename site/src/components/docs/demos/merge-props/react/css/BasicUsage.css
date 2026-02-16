@@ -1,0 +1,44 @@
+.react-merge-props-basic {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.react-merge-props-basic button {
+  align-self: flex-start;
+  padding: 8px 20px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  background: white;
+}
+
+.react-merge-props-basic__base {
+  border-left: 4px solid #3b82f6;
+}
+
+.react-merge-props-basic__external {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.react-merge-props-basic__counts {
+  display: flex;
+  gap: 24px;
+  margin: 0;
+}
+
+.react-merge-props-basic__counts div {
+  display: flex;
+  gap: 8px;
+}
+
+.react-merge-props-basic__counts dt {
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.react-merge-props-basic__counts dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}

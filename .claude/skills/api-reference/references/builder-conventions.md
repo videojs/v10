@@ -76,10 +76,13 @@ The builder fails silently for many issues — data just won't appear in the JSO
 # Generate JSON
 pnpm -F site api-docs
 
-# Check output
-cat site/src/content/generated-api-reference/{name}.json
+# Check component output
+cat site/src/content/generated-component-reference/{name}.json
+
+# Check util output
+cat site/src/content/generated-util-reference/{slug}.json
 
 # Verify schema
-# The builder validates against ComponentApiReferenceSchema before writing.
+# The builder validates against ComponentReferenceSchema / UtilReferenceSchema before writing.
 # Schema errors are logged as errors and cause exit code 1.
 ```

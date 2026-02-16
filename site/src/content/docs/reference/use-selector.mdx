@@ -1,0 +1,49 @@
+---
+title: useSelector
+description: Low-level hook for subscribing to derived state with customizable equality checks
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useSelector } from '@videojs/store/react';
+```
+
+## Usage
+
+`useSelector` is a low-level hook that subscribes to an external store using React's `useSyncExternalStore`. It accepts a `subscribe` function, a `getSnapshot` function, a `selector` to derive state, and an optional `isEqual` comparator (defaults to `shallowEqual`).
+
+```tsx
+import { useSelector, shallowEqual } from '@videojs/store/react';
+
+function TimeDisplay({ store }) {
+  const time = useSelector(
+    (cb) => store.subscribe(cb),
+    () => store.state,
+    (state) => ({ current: state.currentTime, duration: state.duration }),
+    shallowEqual,
+  );
+
+  return <span>{time.current} / {time.duration}</span>;
+}
+```
+
+### Relationship to useStore and useSnapshot
+
+Both `useStore` and `useSnapshot` are built on `useSelector`:
+
+| Hook | Input | Use case |
+|------|-------|----------|
+| `useStore` | Store instance | Player and store access with selector |
+| `useSnapshot` | `State` container | Subscribe to raw state changes |
+| `useSelector` | Custom subscribe/snapshot | Full control over subscription plumbing |
+
+Prefer `useStore` for store-backed state and `useSnapshot` for `State` containers. Use `useSelector` when you need to integrate with a non-standard external source or customize the equality comparison.
+
+### Equality comparison
+
+The `isEqual` parameter controls when React re-renders. The default `shallowEqual` compares object properties one level deep -- sufficient for most selector return values. Pass a custom comparator for deeply nested objects or when you need reference equality (`Object.is`).
+
+<UtilReference util="useSelector" />

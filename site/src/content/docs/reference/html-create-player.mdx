@@ -1,0 +1,60 @@
+---
+title: createPlayer
+description: Factory function that creates a player instance with typed store, mixins, and controller for HTML custom elements
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import BasicUsageDemoHtml from "@/components/docs/demos/html-create-player/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/html-create-player/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/html-create-player/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/html-create-player/html/css/BasicUsage.ts?raw";
+
+## Import
+
+```ts
+import { createPlayer, features } from '@videojs/html';
+```
+
+## Usage
+
+`createPlayer` is the entry point for setting up a Video.js player with HTML custom elements. It accepts a configuration object with a `features` array and returns everything needed to build a player: a pre-composed `PlayerElement`, typed `PlayerController`, `context`, individual mixins, and a `create` factory.
+
+```ts
+import { createPlayer, features, MediaElement } from '@videojs/html';
+
+const {
+  PlayerElement,
+  PlayerController,
+  context,
+  PlayerMixin,
+  ProviderMixin,
+  ContainerMixin,
+  create,
+} = createPlayer({ features: features.video });
+
+// Register the pre-composed player element
+customElements.define('video-player', PlayerElement);
+```
+
+The simplest approach is to register `PlayerElement` directly. For custom behavior, use the individual mixins to compose your own element classes.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<UtilReference util="createPlayer" slug="html-create-player" />

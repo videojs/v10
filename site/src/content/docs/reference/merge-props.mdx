@@ -1,0 +1,68 @@
+---
+title: mergeProps
+description: Utility for merging multiple React props objects with smart event handler chaining
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import BasicUsageDemoReact from "@/components/docs/demos/merge-props/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/merge-props/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/merge-props/react/css/BasicUsage.css?raw";
+
+## Import
+
+```tsx
+import { mergeProps } from '@videojs/react';
+```
+
+## Usage
+
+`mergeProps` merges multiple props objects with intelligent handling for event handlers, `className`, and `style`:
+
+- **Event handlers** (`on*`): chained -- earlier handlers run first
+- **`className`**: concatenated with a space
+- **`style`**: shallow-merged, later values override conflicts
+- **Other props**: last value wins
+
+```tsx
+import { mergeProps } from '@videojs/react';
+
+const internalProps = {
+  onClick: () => console.log('internal'),
+  className: 'base',
+  style: { color: 'red' },
+};
+
+const externalProps = {
+  onClick: () => console.log('external'),
+  className: 'custom',
+  style: { fontWeight: 'bold' },
+};
+
+const merged = mergeProps(internalProps, externalProps);
+// Result:
+// - onClick: calls external handler, then internal handler
+// - className: 'base custom'
+// - style: { color: 'red', fontWeight: 'bold' }
+```
+
+This is used internally by `useButton` and `renderElement` to merge component props with user-provided overrides. It accepts `undefined` entries, which are safely skipped.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<UtilReference util="mergeProps" />

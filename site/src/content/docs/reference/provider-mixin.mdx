@@ -1,0 +1,55 @@
+---
+title: ProviderMixin
+description: Mixin that provides player context to descendant elements
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```ts
+import { ProviderMixin } from '@videojs/html';
+```
+
+## Usage
+
+`ProviderMixin` creates a class that provides the player store to descendant elements via context. It owns the store lifecycle: creates the store lazily on first access and destroys it on disconnect.
+
+```ts
+import { createPlayer, features, MediaElement } from '@videojs/html';
+
+const { ProviderMixin } = createPlayer({ features: features.video });
+
+class MyProvider extends ProviderMixin(MediaElement) {
+  connectedCallback() {
+    super.connectedCallback();
+    // this.store is the player store instance
+  }
+}
+
+customElements.define('my-provider', MyProvider);
+```
+
+### Store lifecycle
+
+The store is created lazily using the factory from `createPlayer`. On `connectedCallback`, the mixin publishes the store to context so descendant elements can consume it. On `disconnectedCallback`, it calls `store.destroy()` and cleans up.
+
+Any `PlayerController` or `ContainerMixin` element below the provider in the DOM tree receives the store automatically through context.
+
+### When to split provider and container
+
+Use `ProviderMixin` separate from `ContainerMixin` when the store owner is a different element from the one containing the media. This is common in complex layouts:
+
+```ts
+const { ProviderMixin, ContainerMixin } = createPlayer({ features: features.video });
+
+// Layout shell owns the store
+class AppShell extends ProviderMixin(MediaElement) {}
+
+// Content region discovers and attaches the media element
+class VideoRegion extends ContainerMixin(MediaElement) {}
+```
+
+When a single element should handle both, use `PlayerMixin` instead.
+
+<UtilReference util="ProviderMixin" />

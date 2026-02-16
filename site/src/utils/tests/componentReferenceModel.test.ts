@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { buildApiReferenceTocHeadings, createApiReferenceModel } from '../apiReferenceModel';
+import { buildComponentReferenceTocHeadings, createComponentReferenceModel } from '../componentReferenceModel';
 
-describe('createApiReferenceModel', () => {
+describe('createComponentReferenceModel', () => {
   it('builds a single-part model with H3 sections for present data only', () => {
     const apiReference = {
       name: 'PlayButton',
@@ -19,7 +19,7 @@ describe('createApiReferenceModel', () => {
       platforms: {},
     };
 
-    const model = createApiReferenceModel('PlayButton', apiReference);
+    const model = createComponentReferenceModel('PlayButton', apiReference);
 
     expect(model).toMatchObject({
       hasParts: false,
@@ -83,7 +83,7 @@ describe('createApiReferenceModel', () => {
       },
     };
 
-    const model = createApiReferenceModel('Controls', apiReference);
+    const model = createComponentReferenceModel('Controls', apiReference);
 
     expect(model).toMatchObject({
       hasParts: true,
@@ -131,7 +131,7 @@ describe('createApiReferenceModel', () => {
   });
 });
 
-describe('buildApiReferenceTocHeadings', () => {
+describe('buildComponentReferenceTocHeadings', () => {
   it('creates TOC headings with API H4 metadata for multi-part sections', () => {
     const apiReference = {
       name: 'Controls',
@@ -162,8 +162,8 @@ describe('buildApiReferenceTocHeadings', () => {
       },
     };
 
-    const model = createApiReferenceModel('Controls', apiReference);
-    const headings = buildApiReferenceTocHeadings(model);
+    const model = createComponentReferenceModel('Controls', apiReference);
+    const headings = buildComponentReferenceTocHeadings(model);
 
     expect(headings).toEqual([
       {

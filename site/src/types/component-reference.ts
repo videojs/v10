@@ -24,7 +24,7 @@ export const DataAttrDefSchema = z.object({
   description: z.string(),
 });
 
-export const PartApiReferenceSchema = z.object({
+export const PartReferenceSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   props: z.record(z.string(), PropDefSchema),
@@ -39,12 +39,12 @@ export const PartApiReferenceSchema = z.object({
   }),
 });
 
-export const ComponentApiReferenceSchema = PartApiReferenceSchema.extend({
-  parts: z.record(z.string(), PartApiReferenceSchema).optional(),
+export const ComponentReferenceSchema = PartReferenceSchema.extend({
+  parts: z.record(z.string(), PartReferenceSchema).optional(),
 });
 
 export type PropDef = z.infer<typeof PropDefSchema>;
 export type StateDef = z.infer<typeof StateDefSchema>;
 export type DataAttrDef = z.infer<typeof DataAttrDefSchema>;
-export type PartApiReference = z.infer<typeof PartApiReferenceSchema>;
-export type ComponentApiReference = z.infer<typeof ComponentApiReferenceSchema>;
+export type PartReference = z.infer<typeof PartReferenceSchema>;
+export type ComponentReference = z.infer<typeof ComponentReferenceSchema>;

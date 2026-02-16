@@ -7,17 +7,18 @@ import { extractDataAttrs } from './data-attrs-handler.js';
 import { extractHtml } from './html-handler.js';
 import { extractPartDescription, extractParts } from './parts-handler.js';
 import {
-  type ComponentApiReference,
-  ComponentApiReferenceSchema,
+  type ComponentReference,
+  ComponentReferenceSchema,
   type ComponentSource,
   type CoreExtraction,
   type DataAttrDef,
   type DataAttrsExtraction,
-  type PartApiReference,
+  type PartReference,
   type PartSource,
   type PropDef,
   type StateDef,
 } from './types.js';
+import { generateUtilReferences } from './util-handler.js';
 import { kebabToPascal, partKebabFromSource, sortProps } from './utils.js';
 
 // Components whose PascalCase name doesn't match simple kebab-to-pascal conversion.
@@ -81,7 +82,8 @@ const MONOREPO_ROOT = path.resolve(import.meta.dirname, '../../../../');
 const CORE_UI_PATH = path.join(MONOREPO_ROOT, 'packages/core/src/core/ui');
 const HTML_UI_PATH = path.join(MONOREPO_ROOT, 'packages/html/src/ui');
 const REACT_UI_PATH = path.join(MONOREPO_ROOT, 'packages/react/src/ui');
-const OUTPUT_PATH = path.join(MONOREPO_ROOT, 'site/src/content/generated-api-reference');
+const COMPONENT_OUTPUT_PATH = path.join(MONOREPO_ROOT, 'site/src/content/generated-component-reference');
+const UTIL_OUTPUT_PATH = path.join(MONOREPO_ROOT, 'site/src/content/generated-util-reference');
 
 /**
  * Discover all components by scanning the core/ui directory.
@@ -191,7 +193,7 @@ function createProgram(sources: ComponentSource[]): ts.Program {
 /**
  * Build the API reference for a single-part component.
  */
-function buildSingleComponentApiReference(source: ComponentSource, program: ts.Program): ComponentApiReference | null {
+function buildSingleComponentReference(source: ComponentSource, program: ts.Program): ComponentReference | null {
   // Extract from core
   const coreData = source.corePath ? extractCore(source.corePath, program, source.name) : null;
 
@@ -207,7 +209,7 @@ function buildSingleComponentApiReference(source: ComponentSource, program: ts.P
   const htmlData = source.htmlPath ? extractHtml(source.htmlPath, program, source.name) : null;
 
   // Build result
-  const result: ComponentApiReference = {
+  const result: ComponentReference = {
     name: source.name,
     description: coreData.description,
     props: buildProps(coreData),
@@ -312,12 +314,12 @@ function discoverParts(source: ComponentSource, program: ts.Program): PartSource
  * - Props, state, and data attributes are empty (no dedicated core file)
  * - HTML tag comes from their sub-part element file (`{name}-{part}-element.ts`)
  */
-function buildMultiPartApiReference(
+function buildMultiPartReference(
   source: ComponentSource,
   program: ts.Program,
   parts: PartSource[]
-): ComponentApiReference | null {
-  const partsRecord: Record<string, PartApiReference> = {};
+): ComponentReference | null {
+  const partsRecord: Record<string, PartReference> = {};
 
   for (const part of parts) {
     // Extract JSDoc description from React component file
@@ -334,7 +336,7 @@ function buildMultiPartApiReference(
       const elementName = `${source.name}Element`;
       const htmlData = part.htmlPath ? extractHtml(part.htmlPath, program, source.name, elementName) : null;
 
-      const partRef: PartApiReference = {
+      const partRef: PartReference = {
         name: part.name,
         description,
         props: coreData ? sortProps(buildProps(coreData)) : {},
@@ -354,7 +356,7 @@ function buildMultiPartApiReference(
       const elementName = `${source.name}${part.name}Element`;
       const htmlData = part.htmlPath ? extractHtml(part.htmlPath, program, source.name, elementName) : null;
 
-      const partRef: PartApiReference = {
+      const partRef: PartReference = {
         name: part.name,
         description,
         props: {},
@@ -385,15 +387,15 @@ function buildMultiPartApiReference(
 /**
  * Build the API reference for a single component.
  */
-function buildComponentApiReference(source: ComponentSource, program: ts.Program): ComponentApiReference | null {
+function buildComponentReference(source: ComponentSource, program: ts.Program): ComponentReference | null {
   if (source.partsIndexPath) {
     const parts = discoverParts(source, program);
     if (parts.length > 0) {
-      return buildMultiPartApiReference(source, program, parts);
+      return buildMultiPartReference(source, program, parts);
     }
   }
 
-  return buildSingleComponentApiReference(source, program);
+  return buildSingleComponentReference(source, program);
 }
 
 /**
@@ -412,8 +414,8 @@ function main() {
   };
 
   // Ensure output directory exists
-  if (!fs.existsSync(OUTPUT_PATH)) {
-    fs.mkdirSync(OUTPUT_PATH, { recursive: true });
+  if (!fs.existsSync(COMPONENT_OUTPUT_PATH)) {
+    fs.mkdirSync(COMPONENT_OUTPUT_PATH, { recursive: true });
   }
 
   // Discover components
@@ -434,14 +436,14 @@ function main() {
 
   for (const source of components) {
     try {
-      const apiRef = buildComponentApiReference(source, program);
+      const apiRef = buildComponentReference(source, program);
 
       if (apiRef) {
         // Sort props (top-level only for single-part)
         apiRef.props = sortProps(apiRef.props);
 
         // Validate against schema before writing
-        const validated = ComponentApiReferenceSchema.safeParse(apiRef);
+        const validated = ComponentReferenceSchema.safeParse(apiRef);
         if (!validated.success) {
           log.error(`Schema validation failed for ${source.name}:`);
           for (const issue of validated.error.issues) {
@@ -452,7 +454,7 @@ function main() {
         }
 
         // Write JSON file
-        const outputFile = path.join(OUTPUT_PATH, `${source.kebab}.json`);
+        const outputFile = path.join(COMPONENT_OUTPUT_PATH, `${source.kebab}.json`);
         const json = `${JSON.stringify(validated.data, null, 2)}\n`;
         fs.writeFileSync(outputFile, json);
 
@@ -465,7 +467,14 @@ function main() {
     }
   }
 
-  log.info(`Done! Generated ${successCount} files.`);
+  log.info(`Done! Generated ${successCount} component files.`);
+
+  // Generate util references
+  const utilResult = generateUtilReferences(UTIL_OUTPUT_PATH, MONOREPO_ROOT);
+  successCount += utilResult.success;
+  errorCount += utilResult.errors;
+
+  log.info(`Done! Generated ${utilResult.success} util files.`);
 
   console.warn = originalWarn;
 

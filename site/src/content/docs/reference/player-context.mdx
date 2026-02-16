@@ -1,0 +1,52 @@
+---
+title: playerContext
+description: The default player context instance for consuming the player store in controllers
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```ts
+import { playerContext } from '@videojs/html';
+```
+
+## Usage
+
+`playerContext` is a Web Components context token that carries the player store through the DOM tree. Provider elements publish the store to this context, and consumer elements (via `PlayerController` or `ContainerMixin`) read from it.
+
+Pass it as the second argument to `PlayerController`:
+
+```ts
+import { PlayerController, MediaElement, playerContext, selectPlayback } from '@videojs/html';
+
+class PlayButton extends MediaElement {
+  #playback = new PlayerController(this, playerContext, selectPlayback);
+
+  render() {
+    const playback = this.#playback.value;
+    // Use playback state to render
+  }
+}
+```
+
+### Import directly or destructure from createPlayer
+
+`createPlayer` returns a `context` property that is the same `playerContext` instance. Both approaches reference the same object:
+
+```ts
+// Direct import
+import { playerContext } from '@videojs/html';
+
+// Destructured — identical object
+const { context } = createPlayer({ features: features.video });
+context === playerContext; // true
+```
+
+Use the direct import when building reusable elements that don't depend on a specific `createPlayer` call. Destructure from `createPlayer` when you want all player utilities from a single result.
+
+### When you need this
+
+Most elements should use `PlayerController` (which accepts a context argument) rather than importing `playerContext` directly. Import it directly when you need to pass the context token to a lower-level API like `ContainerMixin` or `ProviderMixin`.
+
+<UtilReference util="playerContext" />

@@ -26,12 +26,14 @@ export function PlayerContextProvider({
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
 }
 
+/** Access the full player context value. Throws if used outside a Player Provider. */
 export function usePlayerContext(): PlayerContextValue {
   const ctx = useContext(PlayerContext);
   if (!ctx) throw new Error('usePlayerContext must be used within a Player Provider');
   return ctx;
 }
 
+/** Access the player store from within a Player Provider. */
 export function usePlayer(): UnknownStore;
 export function usePlayer<R>(selector: (state: UnknownState) => R): R;
 export function usePlayer<R>(selector?: (state: UnknownState) => R) {
@@ -39,11 +41,13 @@ export function usePlayer<R>(selector?: (state: UnknownState) => R) {
   return useStore(store, selector as any);
 }
 
+/** Access the media element from within a Player Provider. */
 export function useMedia(): Media | null {
   const { media } = usePlayerContext();
   return media;
 }
 
+/** Access the media registration setter for connecting a media element to the player. */
 export function useMediaRegistration(): Dispatch<SetStateAction<Media | null>> | undefined {
   const ctx = useContext(PlayerContext);
   return ctx?.setMedia;

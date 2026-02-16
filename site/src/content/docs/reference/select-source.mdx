@@ -1,0 +1,48 @@
+---
+title: selectSource
+description: Select the source state slice from the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+## Import
+
+```ts
+import { selectSource } from '@videojs/core/dom';
+```
+
+## Usage
+
+Pass `selectSource` to `usePlayer` (React) or `PlayerController` (HTML) to subscribe to source state. Returns `undefined` if the source feature is not configured.
+
+The returned state includes the current `src` and `type`.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { usePlayer } from '@videojs/react';
+import { selectSource } from '@videojs/core/dom';
+
+function SourceInfo() {
+  const source = usePlayer(selectSource);
+  if (!source) return null;
+
+  return <span>{source.src}</span>;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { createPlayer, features, MediaElement } from '@videojs/html';
+import { selectSource } from '@videojs/core/dom';
+
+const { PlayerController, context } = createPlayer({ features: features.video });
+
+class SourceInfo extends MediaElement {
+  #source = new PlayerController(this, context, selectSource);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectSource" />

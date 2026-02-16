@@ -1,16 +1,16 @@
 /**
  * Re-export types from the shared schema.
- * The shared schema in src/types/api-reference.ts is the single source of truth.
+ * The shared schema in src/types/component-reference.ts is the single source of truth.
  */
 export type {
-  ComponentApiReference,
+  ComponentReference,
   DataAttrDef,
-  PartApiReference,
+  PartReference,
   PropDef,
   StateDef,
-} from '../../../src/types/api-reference.js';
+} from '../../../src/types/component-reference.js';
 
-export { ComponentApiReferenceSchema, PartApiReferenceSchema } from '../../../src/types/api-reference.js';
+export { ComponentReferenceSchema, PartReferenceSchema } from '../../../src/types/component-reference.js';
 
 /**
  * Discovered part within a multi-part component.

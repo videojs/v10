@@ -132,7 +132,7 @@ unsubscribe();
 
 ```markdown
 // ✅ Natural
-See [Events](/concepts/events) for the full list.
+See <DocsLink slug="/concepts/events">Events</DocsLink> for the full list.
 
 // ❌ Awkward
 For more information about events, please refer to the Events page.

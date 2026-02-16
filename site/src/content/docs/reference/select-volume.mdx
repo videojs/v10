@@ -1,0 +1,57 @@
+---
+title: selectVolume
+description: Select the volume state slice from the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+## Import
+
+```ts
+import { selectVolume } from '@videojs/core/dom';
+```
+
+## Usage
+
+Pass `selectVolume` to `usePlayer` (React) or `PlayerController` (HTML) to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
+
+The returned state includes `volume`, `muted`, and action methods like `setVolume` and `setMuted`.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { usePlayer } from '@videojs/react';
+import { selectVolume } from '@videojs/core/dom';
+
+function VolumeSlider() {
+  const vol = usePlayer(selectVolume);
+  if (!vol) return null;
+
+  return (
+    <input
+      type="range"
+      min={0}
+      max={1}
+      step={0.01}
+      value={vol.volume}
+      onChange={(e) => vol.setVolume(Number(e.target.value))}
+    />
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { createPlayer, features, MediaElement } from '@videojs/html';
+import { selectVolume } from '@videojs/core/dom';
+
+const { PlayerController, context } = createPlayer({ features: features.video });
+
+class VolumeSlider extends MediaElement {
+  #volume = new PlayerController(this, context, selectVolume);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectVolume" />

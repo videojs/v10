@@ -54,6 +54,7 @@ function getElementRef(element: ReactElement): Ref<unknown> | undefined {
  * - Ref composition
  * - className/style as functions of state
  *
+ * @public
  * @example
  * ```tsx
  * return renderElement('button', componentProps, {

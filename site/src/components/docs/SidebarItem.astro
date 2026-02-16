@@ -26,27 +26,49 @@ function containsActivePath(item: Guide | Section): boolean {
 }
 
 const isActive = containsActivePath(item);
+
+function getGroup(depth: number) {
+  if (depth === 0) return 'group';
+  if (depth === 1) return 'group/1';
+  if (depth === 2) return 'group/2';
+  return '';
+}
+function getGroupMargin(depth: number) {
+  if (depth === 1) return 'group-open/1:mb-1';
+  if (depth === 2) return 'group-open/2:mb-1';
+  return '';
+}
+function getGroupRotate(depth: number) {
+  if (depth === 0) return 'group-open:rotate-180';
+  if (depth === 1) return 'group-open/1:rotate-180';
+  if (depth === 2) return 'group-open/2:rotate-180';
+  return '';
+}
 ---
 
 {
   isSection(item) ? (
     <details
       id={slugger.slug(item.sidebarLabel)}
-      open
-      class="group my-4 first:mt-0"
-      style={depth ? `padding-left: calc(var(--spacing) * ${depth * 4})` : ``}
+      open={isActive || item.defaultOpen !== false}
+      class:list={[
+        getGroup(depth),
+        depth === 0 && 'my-4 first:mt-0',
+      ]}
     >
       <summary
         class:list={[
           'py-2 flex items-center gap-4 ',
           'intent:text-dark-100 dark:intent:text-light-80 cursor-pointer',
-          depth === 0 && 'font-medium',
-          depth > 0 && 'border-l',
+          (depth === 0 || depth === 1) && 'font-medium',
+          depth > 0 && 'border-l pl-4',
           isActive ? 'text-dark-100 dark:text-light-100 border-dark-100' : 'border-light-40 dark:border-dark-40',
+          getGroupMargin(depth)
         ]}
+        style={depth ? `margin-left: calc(var(--spacing) * ${(depth - 1) * 4})` : ``}
       >
         <span class="flex-1">{item.sidebarLabel}</span>
-        <ChevronDown size={12} className="group-open:rotate-180" />
+        <ChevronDown size={12} className={getGroupRotate(depth)} />
       </summary>
       <div>
         {item.contents.map((contentItem) => (
@@ -61,10 +83,10 @@ const isActive = containsActivePath(item);
         'py-2 flex items-center gap-4 ',
         'intent:text-dark-100 dark:intent:text-light-100 cursor-pointer',
         depth === 0 && 'font-medium',
-        depth > 0 && 'border-l',
+        depth > 0 && 'border-l pl-4',
         isActive ? 'text-dark-100 dark:text-light-100 border-current ' : 'border-light-40 dark:border-dark-40',
       ]}
-      style={`padding-left: calc(var(--spacing) * ${depth * 4})`}
+      style={`margin-left: calc(var(--spacing) * ${(depth - 1) * 4})`}
       href={`/docs/framework/${framework}/${item.slug}`}
     >
       {item.devOnly ? '[Dev only] ' : ''}

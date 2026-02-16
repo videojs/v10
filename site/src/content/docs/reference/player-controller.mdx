@@ -1,0 +1,72 @@
+---
+title: PlayerController
+description: Reactive controller for accessing player store state in HTML custom elements
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import BasicUsageDemoHtml from "@/components/docs/demos/player-controller/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/player-controller/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/player-controller/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/player-controller/html/css/BasicUsage.ts?raw";
+
+## Import
+
+```ts
+import { PlayerController } from '@videojs/html';
+```
+
+## Usage
+
+`PlayerController` is a reactive controller that consumes the player store from context. It has two overloads:
+
+**Without selector** -- returns the store instance directly. Does NOT subscribe to changes. Use this to access store actions.
+
+```ts
+import { PlayerController, MediaElement, playerContext } from '@videojs/html';
+
+class VolumeControl extends MediaElement {
+  #player = new PlayerController(this, playerContext);
+
+  handleClick() {
+    this.#player.value?.setVolume(0.5);
+  }
+}
+```
+
+**With selector** -- returns the selected value and subscribes to changes. Triggers a host update when the selected value changes (using shallow equality).
+
+```ts
+import { PlayerController, MediaElement, selectPlayback } from '@videojs/html';
+
+class PlayButton extends MediaElement {
+  #playback = new PlayerController(this, context, selectPlayback);
+
+  render() {
+    const playback = this.#playback.value;
+    // playback is the selected state slice
+  }
+}
+```
+
+Access the current value via the `.value` getter, which returns `undefined` if the controller is not yet connected to a provider.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<UtilReference util="PlayerController" />

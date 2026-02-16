@@ -41,4 +41,61 @@ export const sidebar: Sidebar = [
       { slug: 'reference/time' },
     ],
   },
+  {
+    sidebarLabel: 'Hooks & Utilities',
+    frameworks: ['react'],
+    contents: [
+      { slug: 'reference/create-player' },
+      { slug: 'reference/use-player' },
+      { slug: 'reference/use-media' },
+      { slug: 'reference/use-store' },
+      {
+        sidebarLabel: 'Advanced',
+        defaultOpen: false,
+        contents: [
+          { slug: 'reference/merge-props' },
+          { slug: 'reference/render-element' },
+          { slug: 'reference/use-button' },
+          { slug: 'reference/use-media-registration' },
+          { slug: 'reference/use-player-context' },
+          { slug: 'reference/use-selector' },
+          { slug: 'reference/use-snapshot' },
+        ],
+      },
+    ],
+  },
+  {
+    sidebarLabel: 'Controllers & Mixins',
+    frameworks: ['html'],
+    contents: [
+      { slug: 'reference/html-create-player', sidebarLabel: 'createPlayer' },
+      { slug: 'reference/player-controller' },
+      { slug: 'reference/player-mixin' },
+      {
+        sidebarLabel: 'Advanced',
+        defaultOpen: false,
+        contents: [
+          { slug: 'reference/container-mixin' },
+          { slug: 'reference/player-context' },
+          { slug: 'reference/provider-mixin' },
+          { slug: 'reference/snapshot-controller' },
+          { slug: 'reference/store-controller' },
+        ],
+      },
+    ],
+  },
+  {
+    sidebarLabel: 'Selectors',
+    contents: [
+      { slug: 'reference/create-selector' },
+      { slug: 'reference/select-buffer' },
+      { slug: 'reference/select-controls' },
+      { slug: 'reference/select-fullscreen' },
+      { slug: 'reference/select-pip', sidebarLabel: 'selectPiP' },
+      { slug: 'reference/select-playback' },
+      { slug: 'reference/select-source' },
+      { slug: 'reference/select-time' },
+      { slug: 'reference/select-volume' },
+    ],
+  },
 ];

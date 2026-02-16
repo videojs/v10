@@ -1,0 +1,72 @@
+---
+title: renderElement
+description: Utility for rendering UI component elements with state-driven props and render prop support
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import BasicUsageDemoReact from "@/components/docs/demos/render-element/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/render-element/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/render-element/react/css/BasicUsage.css?raw";
+
+## Import
+
+```tsx
+import { renderElement } from '@videojs/react';
+```
+
+## Usage
+
+`renderElement` renders a UI component element, handling default tag rendering, render props (element or function), props merging, ref composition, and state-driven `className`/`style`.
+
+```tsx
+import { renderElement } from '@videojs/react';
+
+function PlayButton({ className, style, render, ...props }) {
+  const state = { paused: true };
+
+  return renderElement('button', { className, style, render }, {
+    state,
+    ref: buttonRef,
+    props: [{ type: 'button', 'aria-label': 'Play' }, props],
+  });
+}
+```
+
+The `className` and `style` component props accept either static values or functions that receive the current state:
+
+```tsx
+<PlayButton
+  className={(state) => state.paused ? 'paused' : 'playing'}
+  style={(state) => ({ opacity: state.paused ? 0.5 : 1 })}
+/>
+```
+
+The `render` prop lets consumers fully customize the rendered element while preserving all internal props and refs:
+
+```tsx
+<PlayButton
+  render={(props, state) => (
+    <button {...props}>{state.paused ? 'Play' : 'Pause'}</button>
+  )}
+/>
+```
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<UtilReference util="renderElement" />
