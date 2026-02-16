@@ -109,6 +109,7 @@ import '@videojs/html/ui/mute-button';
 ```
 
 Import registration for:
+
 - `@videojs/html/video/player` — always needed (registers `<video-player>`)
 - `@videojs/html/ui/{component}` — registers the component's custom element
 
@@ -117,7 +118,8 @@ Import registration for:
 ### .tsx (component)
 
 ```tsx
-import { createPlayer, features, MuteButton, Video } from '@videojs/react';
+import { createPlayer, features, MuteButton } from '@videojs/react';
+import { Video } from '@videojs/react/video';
 
 import './BasicUsage.css';
 
@@ -147,6 +149,7 @@ export default function BasicUsage() {
 ```
 
 Key patterns:
+
 - `createPlayer({ features: [...features.video] })` creates the player
 - Video attributes: `autoPlay muted playsInline loop` (React camelCase)
 - `render` prop for state-based rendering: `render={(props, state) => ...}`

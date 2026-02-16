@@ -1,4 +1,5 @@
-import { createPlayer, features, PiPButton, Video } from '@videojs/react';
+import { createPlayer, features, PiPButton } from '@videojs/react';
+import { Video } from '@videojs/react/video';
 
 import './BasicUsage.css';
 

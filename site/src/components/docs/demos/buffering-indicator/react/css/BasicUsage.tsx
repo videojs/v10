@@ -1,4 +1,5 @@
-import { BufferingIndicator, createPlayer, features, Video } from '@videojs/react';
+import { BufferingIndicator, createPlayer, features } from '@videojs/react';
+import { Video } from '@videojs/react/video';
 
 import './BasicUsage.css';
 
