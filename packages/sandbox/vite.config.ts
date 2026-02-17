@@ -10,7 +10,7 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
-    exclude: ['@videojs/core', '@videojs/html', '@videojs/react', '@videojs/store', '@videojs/utils'],
+    exclude: ['@videojs/core', '@videojs/html', '@videojs/react', '@videojs/spf', '@videojs/store', '@videojs/utils'],
   },
   build: {
     outDir: resolve(__dirname, 'dist'),
@@ -21,6 +21,7 @@ export default defineConfig({
         core: resolve(__dirname, 'src/core/index.html'),
         html: resolve(__dirname, 'src/html/index.html'),
         react: resolve(__dirname, 'src/react/index.html'),
+        'spf-segment-loading': resolve(__dirname, 'src/spf-segment-loading/index.html'),
       },
     },
   },
