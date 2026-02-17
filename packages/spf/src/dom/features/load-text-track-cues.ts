@@ -4,6 +4,75 @@ import type { Presentation, Segment, TextTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { parseVttSegment } from '../text/parse-vtt-segment';
 
+// ============================================================================
+// SUBTASKS (module-level)
+// ============================================================================
+
+/**
+ * Load VTT segment subtask.
+ */
+const loadVttSegmentTask = async (
+  { segment }: { segment: Segment },
+  context: { textTrack: globalThis.TextTrack }
+): Promise<void> => {
+  const cues = await parseVttSegment(segment.url);
+  for (const cue of cues) {
+    context.textTrack.addCue(cue);
+  }
+};
+
+// ============================================================================
+// MAIN TASK (composite - orchestrates subtasks)
+// ============================================================================
+
+/**
+ * Load text track cues task (composite - orchestrates VTT segment subtasks).
+ */
+const loadTextTrackCuesTask = async (
+  { currentState }: { currentState: TextTrackCueLoadingState },
+  context: { signal: AbortSignal; textTrack: globalThis.TextTrack }
+): Promise<void> => {
+  const track = findSelectedTextTrack(currentState);
+  if (!track || !isResolvedTrack(track)) return;
+
+  const segments = track.segments;
+  if (segments.length === 0) return;
+
+  // Build array of subtask invocation functions
+  const createVttTasks = segments.map(
+    (segment) => () => loadVttSegmentTask({ segment }, { textTrack: context.textTrack })
+  );
+
+  const taskFactories = createVttTasks;
+
+  // Track current subtask (same pattern as main task tracking)
+  let currentSubtask: Promise<void> | null = null;
+
+  // Execute subtasks sequentially
+  for (const createTask of taskFactories) {
+    if (context.signal.aborted) break;
+
+    currentSubtask = createTask();
+
+    try {
+      await currentSubtask;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') break;
+      console.error('Failed to load VTT segment:', error);
+      // Continue to next segment (graceful degradation)
+    } finally {
+      currentSubtask = null;
+    }
+  }
+
+  // Wait a frame before completing to allow state updates to flush
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+};
+
+// ============================================================================
+// STATE & OWNERS
+// ============================================================================
+
 /**
  * State shape for text track cue loading.
  */
@@ -44,25 +113,6 @@ function findSelectedTextTrack(state: TextTrackCueLoadingState): TextTrack | und
  *
  * Future enhancements:
  * - Filter based on playhead position and buffer window
- * - Skip already-loaded segments (avoid re-downloading)
- * - Handle live stream segment updates
- * - Apply timing offsets for discontinuities
- *
- * @param state - Current playback state (track selection, presentation)
- * @returns Array of segments to load, or empty array if track not ready
- */
-function selectSegmentsToLoad(state: TextTrackCueLoadingState): Segment[] {
-  const track = findSelectedTextTrack(state);
-
-  if (!track || !isResolvedTrack(track)) {
-    return [];
-  }
-
-  // For now: load all segments
-  // TODO: Add buffering logic based on playhead position and buffer ranges
-  return track.segments;
-}
-
 /**
  * Get the browser's TextTrack object for the selected text track.
  *
@@ -154,58 +204,32 @@ export function loadTextTrackCues({
   state: WritableState<TextTrackCueLoadingState>;
   owners: WritableState<TextTrackCueLoadingOwners>;
 }): () => void {
-  let isLoading = false;
+  let currentTask: Promise<void> | null = null;
   let abortController: AbortController | null = null;
 
   const cleanup = combineLatest([state, owners]).subscribe(
-    async ([s, o]: [TextTrackCueLoadingState, TextTrackCueLoadingOwners]) => {
-      if (!shouldLoadTextTrackCues(s, o) || isLoading) return;
+    async ([currentState, currentOwners]: [TextTrackCueLoadingState, TextTrackCueLoadingOwners]) => {
+      if (currentTask) return; // Task already in progress
+      if (!shouldLoadTextTrackCues(currentState, currentOwners)) return;
 
-      const textTrack = getSelectedTextTrackFromOwners(s, o);
+      const textTrack = getSelectedTextTrackFromOwners(currentState, currentOwners);
       if (!textTrack) return;
 
-      // Determine which segments to load
-      const segmentsToLoad = selectSegmentsToLoad(s);
-
-      if (segmentsToLoad.length === 0) return;
-
-      // Map segments to async task functions
-      const tasks = segmentsToLoad.map((segment) => async () => {
-        const cues = await parseVttSegment(segment.url);
-        for (const cue of cues) {
-          textTrack.addCue(cue);
-        }
-      });
-
-      // Execute tasks serially
-      isLoading = true;
+      // Create abort controller and invoke task
       abortController = new AbortController();
+      currentTask = loadTextTrackCuesTask({ currentState }, { signal: abortController.signal, textTrack });
 
       try {
-        for (const task of tasks) {
-          try {
-            // Check if aborted before each segment
-            if (abortController.signal.aborted) break;
-            await task();
-          } catch (error) {
-            // Ignore AbortError - expected during cleanup
-            if (error instanceof Error && error.name === 'AbortError') {
-              break;
-            }
-            // Log error but continue - partial subtitles better than none
-            console.error(`Failed to load VTT segment:`, error);
-          }
-        }
+        await currentTask;
       } finally {
-        // Wait a frame before clearing flag to allow async state updates to flush
-        await new Promise((resolve) => requestAnimationFrame(resolve));
-        isLoading = false;
+        // Cleanup orchestration state
+        currentTask = null;
         abortController = null;
       }
     }
   );
 
-  // Return cleanup function that aborts pending fetches
+  // Return cleanup function that aborts pending task
   return () => {
     abortController?.abort();
     cleanup();
