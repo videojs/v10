@@ -5,6 +5,27 @@ import type { Presentation } from '../../core/types';
 import { attachMediaSource, createMediaSource, waitForSourceOpen } from '../media/mediasource-setup';
 
 /**
+ * Setup MediaSource task (module-level, pure).
+ * Creates MediaSource, attaches to element, waits for sourceopen.
+ */
+const setupMediaSourceTask = async (
+  { currentOwners }: { currentOwners: MediaSourceOwners },
+  context: { signal: AbortSignal; owners: WritableState<MediaSourceOwners> }
+): Promise<void> => {
+  // Create MediaSource
+  const mediaSource = createMediaSource({ preferManaged: true });
+
+  // Attach to element
+  attachMediaSource(mediaSource, currentOwners.mediaElement!);
+
+  // Wait for sourceopen (abortable)
+  await waitForSourceOpen(mediaSource, context.signal);
+
+  // Update owners with created MediaSource
+  context.owners.patch({ mediaSource });
+};
+
+/**
  * State shape required for MediaSource setup.
  */
 export interface MediaSourceState {
@@ -51,29 +72,37 @@ export function setupMediaSource({
   state: WritableState<MediaSourceState>;
   owners: WritableState<MediaSourceOwners>;
 }): () => void {
-  let settingUp = false;
+  let currentTask: Promise<void> | null = null;
+  let abortController: AbortController | null = null;
 
-  return combineLatest([state, owners]).subscribe(
+  const cleanup = combineLatest([state, owners]).subscribe(
     async ([currentState, currentOwners]: [MediaSourceState, MediaSourceOwners]) => {
-      if (!canSetup(currentState, currentOwners) || !shouldSetup(currentState, currentOwners) || settingUp) return;
+      if (!canSetup(currentState, currentOwners) || !shouldSetup(currentState, currentOwners)) return;
+      if (currentTask) return; // Task already in progress
+
+      // Create abort controller and invoke task
+      abortController = new AbortController();
+      currentTask = setupMediaSourceTask({ currentOwners }, { signal: abortController.signal, owners });
 
       try {
-        settingUp = true;
-
-        // Create MediaSource
-        const mediaSource = createMediaSource({ preferManaged: true });
-
-        // Attach to element
-        attachMediaSource(mediaSource, currentOwners.mediaElement!);
-
-        // Wait for sourceopen
-        await waitForSourceOpen(mediaSource);
-
-        // Update owners with created MediaSource
-        owners.patch({ mediaSource });
+        await currentTask;
+      } catch (error) {
+        // Ignore AbortError - expected when cleanup happens
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
+        throw error;
       } finally {
-        settingUp = false;
+        // Cleanup orchestration state
+        currentTask = null;
+        abortController = null;
       }
     }
   );
+
+  // Return cleanup function that aborts pending task
+  return () => {
+    abortController?.abort();
+    cleanup();
+  };
 }
