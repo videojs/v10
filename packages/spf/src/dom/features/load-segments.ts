@@ -177,6 +177,9 @@ export function loadSegments(
           }
         }
       } finally {
+        // Wait a frame before clearing flag to allow async state updates to flush
+        // This prevents race conditions where multiple triggers fire before the flag is checked
+        await new Promise((resolve) => requestAnimationFrame(resolve));
         isLoading = false;
       }
     }
