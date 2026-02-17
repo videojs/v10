@@ -65,6 +65,30 @@ export function shouldUpdateDuration(state: DurationUpdateState, owners: Duratio
 }
 
 /**
+ * Duration update task (module-level, pure).
+ * Sets MediaSource duration, extending if buffered ranges exceed calculated value.
+ */
+const updateDurationTask = async (
+  { currentState, currentOwners }: { currentState: DurationUpdateState; currentOwners: DurationUpdateOwners },
+  _context: {}
+): Promise<void> => {
+  const { mediaSource } = currentOwners;
+  let duration = currentState.presentation!.duration!;
+
+  // Get max buffered end time across all SourceBuffers
+  const maxBufferedEnd = getMaxBufferedEnd(currentOwners);
+
+  // MSE spec: duration cannot be less than any buffered range
+  // If buffered ranges exceed calculated duration, extend to match
+  if (maxBufferedEnd > duration) {
+    duration = maxBufferedEnd;
+  }
+
+  // Set duration on MediaSource
+  mediaSource!.duration = duration;
+};
+
+/**
  * Update MediaSource duration when presentation duration becomes available.
  */
 export function updateDuration({
@@ -75,23 +99,11 @@ export function updateDuration({
   owners: WritableState<DurationUpdateOwners>;
 }): () => void {
   return combineLatest([state, owners]).subscribe(
-    ([currentState, currentOwners]: [DurationUpdateState, DurationUpdateOwners]) => {
+    async ([currentState, currentOwners]: [DurationUpdateState, DurationUpdateOwners]) => {
       if (!shouldUpdateDuration(currentState, currentOwners)) return;
 
-      const { mediaSource } = currentOwners;
-      let duration = currentState.presentation!.duration!;
-
-      // Get max buffered end time across all SourceBuffers
-      const maxBufferedEnd = getMaxBufferedEnd(currentOwners);
-
-      // MSE spec: duration cannot be less than any buffered range
-      // If buffered ranges exceed calculated duration, extend to match
-      if (maxBufferedEnd > duration) {
-        duration = maxBufferedEnd;
-      }
-
-      // Set duration on MediaSource
-      mediaSource!.duration = duration;
+      // Execute task (no tracking needed - guards prevent duplicate work)
+      await updateDurationTask({ currentState, currentOwners }, {});
     }
   );
 }

@@ -62,6 +62,28 @@ export function getDurationFromResolvedTracks(state: PresentationDurationState):
 }
 
 /**
+ * Calculate presentation duration task (module-level, pure).
+ * Extracts duration from resolved tracks and patches presentation.
+ */
+const calculatePresentationDurationTask = async (
+  { currentState }: { currentState: PresentationDurationState },
+  context: { state: WritableState<PresentationDurationState> }
+): Promise<void> => {
+  const duration = getDurationFromResolvedTracks(currentState);
+  if (duration === undefined || !Number.isFinite(duration)) return;
+
+  const { presentation } = currentState;
+
+  // Patch presentation with duration
+  context.state.patch({
+    presentation: {
+      ...presentation!,
+      duration,
+    },
+  });
+};
+
+/**
  * Calculate and set presentation duration from resolved tracks.
  */
 export function calculatePresentationDuration({
@@ -69,20 +91,10 @@ export function calculatePresentationDuration({
 }: {
   state: WritableState<PresentationDurationState>;
 }): () => void {
-  return combineLatest([state]).subscribe(([currentState]: [PresentationDurationState]) => {
+  return combineLatest([state]).subscribe(async ([currentState]: [PresentationDurationState]) => {
     if (!shouldCalculateDuration(currentState)) return;
 
-    const duration = getDurationFromResolvedTracks(currentState);
-    if (duration === undefined || !Number.isFinite(duration)) return;
-
-    const { presentation } = currentState;
-
-    // Patch presentation with duration
-    state.patch({
-      presentation: {
-        ...presentation!,
-        duration,
-      },
-    });
+    // Execute task (no tracking needed - guards prevent duplicate work)
+    await calculatePresentationDurationTask({ currentState }, { state });
   });
 }
