@@ -18,7 +18,26 @@ describe('createPlaybackEngine', () => {
     engine.destroy();
   });
 
-  it('initializes owners with mediaElement', () => {
+  it('initializes with empty state and owners', () => {
+    const engine = createPlaybackEngine();
+
+    expect(engine.state.current).toEqual({
+      bandwidthState: {
+        fastEstimate: 0,
+        fastTotalWeight: 0,
+        slowEstimate: 0,
+        slowTotalWeight: 0,
+        bytesSampled: 0,
+      },
+    });
+    expect(engine.owners.current).toEqual({});
+
+    engine.destroy();
+  });
+
+  it('allows patching state and owners from outside', async () => {
+    const engine = createPlaybackEngine();
+
     const mediaElement = document.createElement('video');
 
     const engine = createPlaybackEngine({

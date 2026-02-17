@@ -1,3 +1,5 @@
+import type { BandwidthState } from '../../core/abr/bandwidth-estimator';
+import { sampleBandwidth } from '../../core/abr/bandwidth-estimator';
 import { combineLatest } from '../../core/reactive/combine-latest';
 import type { WritableState } from '../../core/state/create-state';
 import type { AddressableObject, Presentation, Segment } from '../../core/types';
@@ -23,14 +25,28 @@ const loadInitSegmentTask = async (
 
 /**
  * Load media segment subtask.
+ * Tracks download time and bytes for bandwidth estimation.
  */
 const loadMediaSegmentTask = async (
   { segment }: { segment: Segment },
-  context: { signal: AbortSignal; sourceBuffer: SourceBuffer }
+  context: {
+    signal: AbortSignal;
+    sourceBuffer: SourceBuffer;
+    state: WritableState<{ bandwidthState?: BandwidthState }>;
+  }
 ): Promise<void> => {
+  const startTime = performance.now();
   const response = await fetchResolvable(segment, { signal: context.signal });
   const segmentData = await response.arrayBuffer();
+  const downloadTime = performance.now() - startTime;
+
   await appendSegment(context.sourceBuffer, segmentData);
+
+  // Update bandwidth estimate
+  const currentBandwidth = context.state.current.bandwidthState!;
+  const updatedBandwidth = sampleBandwidth(currentBandwidth, downloadTime, segmentData.byteLength);
+
+  context.state.patch({ bandwidthState: updatedBandwidth });
 };
 
 // ============================================================================
@@ -45,6 +61,7 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
   context: {
     signal: AbortSignal;
     sourceBuffer: SourceBuffer;
+    state: WritableState<{ bandwidthState?: BandwidthState }>;
     config: { type: T };
   }
 ): Promise<void> => {
@@ -62,7 +79,11 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
     );
 
   const createMediaTasks = segments.map(
-    (segment) => () => loadMediaSegmentTask({ segment }, { signal: context.signal, sourceBuffer: context.sourceBuffer })
+    (segment) => () =>
+      loadMediaSegmentTask(
+        { segment },
+        { signal: context.signal, sourceBuffer: context.sourceBuffer, state: context.state }
+      )
   );
 
   // Combine: init task first, then media segment tasks
@@ -104,6 +125,8 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
 export interface SegmentLoadingState {
   selectedVideoTrackId?: string;
   presentation?: Presentation;
+  preload?: string;
+  bandwidthState?: BandwidthState;
 }
 
 /**
@@ -192,7 +215,7 @@ export function loadSegments(
       abortController = new AbortController();
       currentTask = loadSegmentsTask(
         { currentState },
-        { signal: abortController.signal, sourceBuffer, config: { type } }
+        { signal: abortController.signal, sourceBuffer, state, config: { type } }
       );
 
       try {

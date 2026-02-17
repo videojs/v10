@@ -1,3 +1,4 @@
+import type { BandwidthState } from '../core/abr/bandwidth-estimator';
 import { createEventStream } from '../core/events/create-event-stream';
 import { calculatePresentationDuration } from '../core/features/calculate-presentation-duration';
 import { type PresentationAction, resolvePresentation } from '../core/features/resolve-presentation';
@@ -59,6 +60,9 @@ export interface PlaybackEngineState {
   selectedAudioTrackId?: string;
   // NOTE: Text Tracks (subtitles/ccs) can be unselected
   selectedTextTrackId?: string;
+
+  // Bandwidth estimation state
+  bandwidthState?: BandwidthState;
 }
 
 /**
@@ -129,14 +133,18 @@ export interface PlaybackEngine {
  * // Cleanup
  * engine.destroy();
  */
-export function createPlaybackEngine(config: PlaybackEngineConfig): PlaybackEngine {
-  // Create reactive state and owners
+export function createPlaybackEngine(config: PlaybackEngineConfig = {}): PlaybackEngine {
+  // Create reactive state and owners (initially empty)
   const state = createState<PlaybackEngineState>({
-    presentation: { url: config.url } as any,
+    bandwidthState: {
+      fastEstimate: 0,
+      fastTotalWeight: 0,
+      slowEstimate: 0,
+      slowTotalWeight: 0,
+      bytesSampled: 0,
+    },
   });
-  const owners = createState<PlaybackEngineOwners>({
-    mediaElement: config.mediaElement,
-  });
+  const owners = createState<PlaybackEngineOwners>({});
 
   // Create event streams for orchestrations
   const presentationEvents = createEventStream<{ type: 'play' } | { type: 'pause' } | { type: 'load'; url: string }>();
