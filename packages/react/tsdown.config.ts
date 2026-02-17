@@ -10,6 +10,9 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   entry: {
     index: './src/index.ts',
     'media/hls-video': './src/media/hls-video.tsx',
+    'presets/audio/index': './src/presets/audio/index.ts',
+    'presets/background/index': './src/presets/background/index.ts',
+    'presets/video/index': './src/presets/video/index.ts',
   },
   platform: 'browser',
   format: 'es',
