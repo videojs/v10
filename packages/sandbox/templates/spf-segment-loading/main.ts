@@ -23,8 +23,8 @@ function inspectState() {
     return;
   }
 
-  const state = engine.state.get();
-  const owners = engine.owners.get();
+  const state = engine.state.current;
+  const owners = engine.owners.current;
 
   const videoBufferRanges = owners.videoBuffer
     ? Array.from(
@@ -117,7 +117,10 @@ video.addEventListener('waiting', () => log('📺 Video: waiting', 'warning'));
 video.addEventListener('error', () => log(`📺 Video: error - ${video.error?.message}`, 'error'));
 
 // Mux test asset - short CMAF stream
-const TEST_STREAM = 'https://stream.mux.com/cmg02Moxu5B7WORo2MElg2U02p2ZyMP7Hb01d80001gHDgPE.m3u8';
+// Mad Max Fury Road Trailer (short, subtitles)
+const TEST_STREAM = 'https://stream.mux.com/JX01bG8eB4uaoV3OpDuK602rBfvdSgrMObjwuUOBn4JrQ.m3u8';
+// Mux Blue Smoke (extra short, simple)
+// const TEST_STREAM = 'https://stream.mux.com/cmg02Moxu5B7WORo2MElg2U02p2ZyMP7Hb01d80001gHDgPE.m3u8';
 
 log('=== SPF Segment Loading POC Test ===');
 log(`Test stream: ${TEST_STREAM}`);
@@ -135,8 +138,8 @@ try {
 
   // Expose for debugging in DevTools console
   (window as any).engine = engine;
-  (window as any).state = engine.state.get;
-  (window as any).owners = engine.owners.get;
+  (window as any).state = () => engine.state.current;
+  (window as any).owners = () => engine.owners.current;
 
   log('Engine exposed as window.engine');
   log('Access state: window.state()');
@@ -146,12 +149,25 @@ try {
   engine.state.subscribe((state) => {
     if (state.presentation) {
       log('Presentation resolved');
+
+      // Auto-select first text track if available (smoke test text track support)
+      if (!state.selectedTextTrackId && state.presentation.selectionSets) {
+        const textSet = state.presentation.selectionSets.find((s) => s.type === 'text');
+        const firstTextTrack = textSet?.switchingSets?.[0]?.tracks?.[0];
+        if (firstTextTrack) {
+          log(`Auto-selecting text track: ${firstTextTrack.id}`);
+          engine.state.patch({ selectedTextTrackId: firstTextTrack.id });
+        }
+      }
     }
     if (state.selectedVideoTrackId) {
       log('Video track selected');
     }
     if (state.selectedAudioTrackId) {
       log('Audio track selected');
+    }
+    if (state.selectedTextTrackId) {
+      log('Text track selected', 'success');
     }
   });
 
