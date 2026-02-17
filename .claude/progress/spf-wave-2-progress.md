@@ -6,7 +6,9 @@
 
 ## Summary
 
-Wave 2 built the complete core playback pipeline, enabling end-to-end HLS VOD playback with full text track support. We implemented 5 major features (F1-F4, F13), completed 3 foundational items that were discovered to be done (P11, P13, O7), and added critical functionality not in the original plan (duration management, stream completion, race condition fixes). The work went beyond just implementing features—we established robust orchestration patterns, fixed fundamental async timing issues, and created a comprehensive test harness. With all 483 tests passing and playback working end-to-end in the sandbox, the core pipeline is production-ready.
+This wave we built the complete core playback pipeline, taking SPF from foundation to working end-to-end HLS playback. We implemented five major features (F1 Playlist Resolution, F2 Track Selection, F3 Track Resolution, F4 Segment Loading, F13 Text Tracks) and discovered three foundational items were already complete (P11 Segment Appender, P13 Track Element Manager, O7 Event Bus). Beyond the planned features, we built critical infrastructure not in the original spec: presentation duration calculation from resolved tracks, MediaSource duration management with buffered range correction, and stream completion signaling with proper HAVE_METADATA timing. We also uncovered and fixed fundamental race conditions in async orchestration across the entire codebase, establishing the wait-a-frame pattern that prevents duplicate operations when state updates flush asynchronously.
+
+The work transformed SPF from a collection of pure functions into a fully reactive playback system with proper MSE lifecycle management. We established robust orchestration patterns (can/should guards, cleanup functions, AbortController for cancellation) that will power all future features. The playback engine now orchestrates 9 features reactively through a clean pipeline: presentation → tracks → duration → MediaSource → SourceBuffers → segments → endOfStream → text tracks. With all 483 tests passing (including comprehensive browser-based DOM tests), 6.06 KB gzipped bundle size (30.3% of 20 KB target, 69.7% remaining), and playback working end-to-end in the interactive sandbox test harness, the core pipeline is production-ready. You can now load a Mux HLS stream and watch it play with synchronized subtitles—the fundamental playback experience works.
 
 ## This Wave We (Wave 2):
 
@@ -240,9 +242,14 @@ export function featureName({
 
 ## Bundle Size
 
-**Playback Engine:** 63.27 KB raw, 15.41 KB gzipped
-- Includes all wave 2 features
-- Still well under budget
+**Playback Engine (Primary Metric):** 6.06 KB gzipped
+- Minified: 18.71 KB
+- Target: 20 KB gzipped
+- **Used: 30.3% (69.7% remaining)**
+
+**Total Bundle (All Exports):** ~15.4 KB gzipped
+- Includes index exports and utilities
+- Playback engine is the critical measurement
 
 ## Sandbox Test Harness
 
@@ -303,7 +310,7 @@ export function featureName({
 **Files Changed:** 114 files
 **Lines Added:** 26,500+ insertions
 **Test Coverage:** 483 tests, all passing
-**Bundle Size:** 15.41 KB gzipped (77% of 20 KB budget remaining)
+**Bundle Size:** 6.06 KB gzipped playback engine (69.7% of 20 KB budget remaining)
 
 ---
 
