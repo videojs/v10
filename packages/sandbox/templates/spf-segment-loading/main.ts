@@ -146,6 +146,17 @@ try {
   engine.state.subscribe((state) => {
     if (state.presentation) {
       log('Presentation resolved');
+      previousState.hasPresentation = true;
+    }
+
+    // Auto-select first text track if available (runs on every state update)
+    if (state.presentation && !state.selectedTextTrackId && state.presentation.selectionSets) {
+      const textSet = state.presentation.selectionSets.find((s) => s.type === 'text');
+      const firstTextTrack = textSet?.switchingSets?.[0]?.tracks?.[0];
+      if (firstTextTrack) {
+        log(`Auto-selecting text track: ${firstTextTrack.id}`);
+        engine.state.patch({ selectedTextTrackId: firstTextTrack.id });
+      }
     }
     if (state.selectedVideoTrackId) {
       log('Video track selected');
