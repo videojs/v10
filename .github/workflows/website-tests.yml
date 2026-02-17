@@ -39,4 +39,4 @@ jobs:
             ${{ runner.os }}-turbo-
 
       - name: Run website tests
-        run: pnpm --filter site test
+        run: turbo run test --filter=site
