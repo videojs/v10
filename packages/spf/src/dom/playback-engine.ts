@@ -217,8 +217,9 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     setupSourceBuffer({ state, owners }, { type: 'video' }),
     setupSourceBuffer({ state, owners }, { type: 'audio' }),
 
-    // 6. Load video segments (when SourceBuffer ready and track resolved)
-    loadSegments({ state, owners }),
+    // 6. Load segments (when SourceBuffer ready and track resolved)
+    loadSegments({ state, owners }, { type: 'video' }),
+    loadSegments({ state, owners }, { type: 'audio' }),
 
     // 7. Setup text tracks (when mediaElement and presentation ready)
     setupTextTracks({ state, owners }),
