@@ -1,4 +1,5 @@
 import { createEventStream } from '../core/events/create-event-stream';
+import { calculatePresentationDuration } from '../core/features/calculate-presentation-duration';
 import { type PresentationAction, resolvePresentation } from '../core/features/resolve-presentation';
 import { resolveTrack, type TrackResolutionAction } from '../core/features/resolve-track';
 import {
@@ -8,12 +9,14 @@ import {
   type TrackSelectionAction,
 } from '../core/features/select-tracks';
 import { createState } from '../core/state/create-state';
+import { endOfStream } from './features/end-of-stream';
 import { loadSegments } from './features/load-segments';
 import { loadTextTrackCues } from './features/load-text-track-cues';
 import { setupMediaSource } from './features/setup-mediasource';
 import { setupSourceBuffer } from './features/setup-sourcebuffer';
 import { setupTextTracks } from './features/setup-text-tracks';
 import { syncTextTrackModes } from './features/sync-text-track-modes';
+import { updateDuration } from './features/update-duration';
 import { destroyVttParser } from './text/parse-vtt-segment';
 
 /**
@@ -210,8 +213,14 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     // @ts-expect-error - EventStream type variance
     resolveTrack({ state, events }, { type: 'text' as const }),
 
+    // 3.5. Calculate presentation duration from resolved tracks
+    calculatePresentationDuration({ state }),
+
     // 4. Setup MediaSource (when presentation loaded)
     setupMediaSource({ state, owners }),
+
+    // 4.5. Update MediaSource duration (when presentation duration available)
+    updateDuration({ state, owners }),
 
     // 5. Setup SourceBuffers (when MediaSource ready and tracks resolved)
     setupSourceBuffer({ state, owners }, { type: 'video' }),
@@ -220,6 +229,9 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     // 6. Load segments (when SourceBuffer ready and track resolved)
     loadSegments({ state, owners }, { type: 'video' }),
     loadSegments({ state, owners }, { type: 'audio' }),
+
+    // 6.5. Signal end of stream when all segments loaded
+    endOfStream({ state, owners }),
 
     // 7. Setup text tracks (when mediaElement and presentation ready)
     setupTextTracks({ state, owners }),

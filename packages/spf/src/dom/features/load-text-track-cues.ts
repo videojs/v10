@@ -188,6 +188,8 @@ export function loadTextTrackCues({
           }
         }
       } finally {
+        // Wait a frame before clearing flag to allow async state updates to flush
+        await new Promise((resolve) => requestAnimationFrame(resolve));
         isLoading = false;
       }
     }
