@@ -125,8 +125,9 @@ export function loadSegments({
   owners: WritableState<SegmentLoadingOwners>;
 }): () => void {
   let isLoading = false;
+  let abortController: AbortController | null = null;
 
-  const unsubscribe = combineLatest([state, owners]).subscribe(
+  const cleanup = combineLatest([state, owners]).subscribe(
     async ([s, o]: [SegmentLoadingState, SegmentLoadingOwners]) => {
       if (!shouldLoadSegments(s, o) || isLoading) return;
 
@@ -150,11 +151,19 @@ export function loadSegments({
 
       // Execute tasks serially
       isLoading = true;
+      abortController = new AbortController();
+
       try {
         for (const task of tasks) {
           try {
+            // Check if aborted before each segment
+            if (abortController.signal.aborted) break;
             await task();
           } catch (error) {
+            // Ignore AbortError - expected during cleanup
+            if (error instanceof Error && error.name === 'AbortError') {
+              break;
+            }
             // Log error but continue - partial video better than none
             console.error('Failed to load segment:', error);
           }
@@ -164,9 +173,14 @@ export function loadSegments({
         // This prevents race conditions where multiple triggers fire before the flag is checked
         await new Promise((resolve) => requestAnimationFrame(resolve));
         isLoading = false;
+        abortController = null;
       }
     }
   );
 
-  return unsubscribe;
+  // Return cleanup function that aborts pending fetches
+  return () => {
+    abortController?.abort();
+    cleanup();
+  };
 }

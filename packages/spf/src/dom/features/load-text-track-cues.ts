@@ -155,8 +155,9 @@ export function loadTextTrackCues({
   owners: WritableState<TextTrackCueLoadingOwners>;
 }): () => void {
   let isLoading = false;
+  let abortController: AbortController | null = null;
 
-  const unsubscribe = combineLatest([state, owners]).subscribe(
+  const cleanup = combineLatest([state, owners]).subscribe(
     async ([s, o]: [TextTrackCueLoadingState, TextTrackCueLoadingOwners]) => {
       if (!shouldLoadTextTrackCues(s, o) || isLoading) return;
 
@@ -178,11 +179,19 @@ export function loadTextTrackCues({
 
       // Execute tasks serially
       isLoading = true;
+      abortController = new AbortController();
+
       try {
         for (const task of tasks) {
           try {
+            // Check if aborted before each segment
+            if (abortController.signal.aborted) break;
             await task();
           } catch (error) {
+            // Ignore AbortError - expected during cleanup
+            if (error instanceof Error && error.name === 'AbortError') {
+              break;
+            }
             // Log error but continue - partial subtitles better than none
             console.error(`Failed to load VTT segment:`, error);
           }
@@ -191,9 +200,14 @@ export function loadTextTrackCues({
         // Wait a frame before clearing flag to allow async state updates to flush
         await new Promise((resolve) => requestAnimationFrame(resolve));
         isLoading = false;
+        abortController = null;
       }
     }
   );
 
-  return unsubscribe;
+  // Return cleanup function that aborts pending fetches
+  return () => {
+    abortController?.abort();
+    cleanup();
+  };
 }
