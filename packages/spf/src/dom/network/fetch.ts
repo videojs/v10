@@ -36,8 +36,8 @@ export interface ResponseLike {
  *   byteRange: { start: 1000, end: 1999 }
  * });
  */
-export async function fetchResolvable(addressable: AddressableObject): Promise<Response> {
-  const headers = new Headers();
+export async function fetchResolvable(addressable: AddressableObject, options?: RequestInit): Promise<Response> {
+  const headers = new Headers(options?.headers);
 
   // Add Range header for byte range requests
   if (addressable.byteRange) {
@@ -48,6 +48,7 @@ export async function fetchResolvable(addressable: AddressableObject): Promise<R
   const request = new Request(addressable.url, {
     method: 'GET',
     headers,
+    ...options,
   });
 
   return fetch(request);

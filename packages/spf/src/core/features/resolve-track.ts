@@ -3,60 +3,18 @@ import type { EventStream } from '../events/create-event-stream';
 import { parseMediaPlaylist } from '../hls/parse-media-playlist';
 import { combineLatest } from '../reactive/combine-latest';
 import type { WritableState } from '../state/create-state';
-import type {
-  AudioTrack,
-  PartiallyResolvedAudioTrack,
-  PartiallyResolvedTextTrack,
-  PartiallyResolvedVideoTrack,
-  Presentation,
-  ResolvedTrack,
-  TextTrack,
-  TrackType,
-  VideoTrack,
-} from '../types';
+import type { Presentation, ResolvedTrack, TrackType } from '../types';
 import { isResolvedTrack } from '../types';
+import { getSelectedTrack, type TrackSelectionState } from '../utils/track-selection';
 
 /**
  * State shape for track resolution.
  */
-export interface TrackResolutionState {
+export interface TrackResolutionState extends TrackSelectionState {
   presentation?: Presentation | undefined;
   selectedVideoTrackId?: string | undefined;
   selectedAudioTrackId?: string | undefined;
   selectedTextTrackId?: string | undefined;
-}
-
-const SelectedTrackIdKeyByType = {
-  video: 'selectedVideoTrackId',
-  audio: 'selectedAudioTrackId',
-  text: 'selectedTextTrackId',
-} as const;
-
-/**
- * Get selected track from state by type.
- * Returns properly typed track (partially or fully resolved) or undefined.
- * Type parameter T is inferred from the type argument.
- */
-export function getSelectedTrack<T extends TrackType>(
-  state: TrackResolutionState,
-  type: T
-): T extends 'video'
-  ? PartiallyResolvedVideoTrack | VideoTrack | undefined
-  : T extends 'audio'
-    ? PartiallyResolvedAudioTrack | AudioTrack | undefined
-    : T extends 'text'
-      ? PartiallyResolvedTextTrack | TextTrack | undefined
-      : never {
-  const { presentation } = state;
-
-  if (!presentation) return undefined as any;
-
-  // Get track ID based on type
-  const trackIdKey = SelectedTrackIdKeyByType[type];
-  const trackId = state[trackIdKey];
-  return presentation.selectionSets
-    .find(({ type: selectionSetType }) => selectionSetType === type)
-    ?.switchingSets[0]?.tracks.find(({ id }) => id === trackId) as any;
 }
 
 export function canResolve<T extends TrackType>(
@@ -125,15 +83,15 @@ export interface TrackResolutionConfig<T extends TrackType = TrackType> {
  *
  * Generic version that works for video, audio, or text tracks based on config.
  * Type parameter T is inferred from config.type (use 'as const' for inference).
- *
- * @param state - State with presentation and selected track IDs
- * @param events - Event stream for actions
- * @param config - Configuration including track type
- * @returns Cleanup function
  */
 export function resolveTrack<T extends TrackType>(
-  state: WritableState<TrackResolutionState>,
-  events: EventStream<TrackResolutionAction>,
+  {
+    state,
+    events,
+  }: {
+    state: WritableState<TrackResolutionState>;
+    events: EventStream<TrackResolutionAction>;
+  },
   config: TrackResolutionConfig<T>
 ): () => void {
   // This is effectively a very simple finite state model. We can formalize this if needed.

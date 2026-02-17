@@ -325,6 +325,9 @@ importers:
       '@videojs/react':
         specifier: workspace:*
         version: link:../react
+      '@videojs/spf':
+        specifier: workspace:*
+        version: link:../spf
       '@videojs/store':
         specifier: workspace:*
         version: link:../store

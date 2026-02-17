@@ -12,6 +12,7 @@
     "@videojs/core": "workspace:*",
     "@videojs/html": "workspace:*",
     "@videojs/react": "workspace:*",
+    "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"
   },

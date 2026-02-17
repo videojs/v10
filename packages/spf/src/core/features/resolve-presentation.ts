@@ -98,16 +98,12 @@ export type PresentationAction = { type: 'play' } | { type: 'pause' } | { type: 
  * - State-driven: Unresolved presentation + preload allows (auto/metadata)
  * - Event-driven: PLAY event when preload="none"
  *
- * @param state - State container with presentation and preload
- * @param events - Event stream for actions
- * @returns Cleanup function
- *
  * @example
  * ```ts
  * const state = createState({ presentation: undefined, preload: 'auto' });
  * const events = createEventStream<PresentationAction>();
  *
- * const cleanup = resolvePresentation(state, events);
+ * const cleanup = resolvePresentation({ state, events });
  *
  * // State-driven: resolves immediately when preload allows
  * state.patch({ presentation: { url: 'http://example.com/playlist.m3u8' } });
@@ -117,23 +113,29 @@ export type PresentationAction = { type: 'play' } | { type: 'pause' } | { type: 
  * events.dispatch({ type: 'PLAY' });
  * ```
  */
-export function resolvePresentation(
-  state: WritableState<PresentationState>,
-  events: EventStream<PresentationAction>
-): () => void {
+export function resolvePresentation({
+  state,
+  events,
+}: {
+  state: WritableState<PresentationState>;
+  events: EventStream<PresentationAction>;
+}): () => void {
   // This is effectively a very simple finite state model. We can formalize this if needed.
   let resolving = false;
+  let abortController: AbortController | null = null;
 
-  return combineLatest([state, events]).subscribe(async ([currentState, event]) => {
+  const cleanup = combineLatest([state, events]).subscribe(async ([currentState, event]) => {
     if (!canResolve(currentState) || !shouldResolve(currentState, event) || resolving) return;
 
     try {
       // This along with the resolving finite state (or more complex) could be pulled into its own abstraction.
       // Set flag before async work
       resolving = true;
+      abortController = new AbortController();
+
       const { presentation } = currentState;
       // Fetch and parse playlist
-      const response = await fetchResolvable(presentation);
+      const response = await fetchResolvable(presentation, { signal: abortController.signal });
       const text = await getResponseText(response);
       const parsed = parseMultivariantPlaylist(text, presentation);
 
@@ -141,9 +143,22 @@ export function resolvePresentation(
       state.patch({
         presentation: parsed,
       });
+    } catch (error) {
+      // Ignore AbortError - this is expected when cleanup happens
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
+      throw error;
     } finally {
       // Always clear flag
       resolving = false;
+      abortController = null;
     }
   });
+
+  // Return cleanup function that aborts pending fetches
+  return () => {
+    abortController?.abort();
+    cleanup();
+  };
 }
