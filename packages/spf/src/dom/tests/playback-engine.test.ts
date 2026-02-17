@@ -719,8 +719,10 @@ http://example.com/seg1.m4s
     // The resolved track should be the selected one
     expect(resolvedTracks?.[0]?.id).toBe(state.selectedVideoTrackId);
 
-    // Should only fetch: 1 multivariant + 1 media playlist (not all 3)
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    // Should fetch: 1 multivariant + 1 media playlist + init + segments
+    // (Only selected quality, not all 3 qualities)
+    // With preload: 'auto', segments are loaded immediately
+    expect(mockFetch).toHaveBeenCalledTimes(4);
 
     engine.destroy();
   });
