@@ -26,7 +26,6 @@ export const UtilOverloadSchema = z.object({
 
 export const UtilReferenceSchema = z.object({
   name: z.string(),
-  kind: z.enum(['hook', 'utility', 'factory', 'controller', 'mixin', 'context', 'selector']),
   description: z.string().optional(),
   overloads: z.array(UtilOverloadSchema).min(1),
   frameworks: z.array(z.string()).optional(),

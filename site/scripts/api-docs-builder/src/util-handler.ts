@@ -4,53 +4,34 @@
  * Generates JSON reference files for hooks, controllers, mixins, factories,
  * contexts, selectors, and utilities by scanning package entry points.
  *
- * Exports are included by naming convention or `@public` JSDoc tag.
+ * Exports are included by naming convention or `@public` JSDoc tag:
+ *   select* (capital 3rd), use* (capital 3rd), *Controller (class),
+ *   create* (function), or any export tagged @public.
  *
- * Architecture Overview
- * =====================
- *
- * Discovery pipeline scans package entry points and classifies exports
- * by naming convention or @public JSDoc tag.
- *
- * Entry Points → Local Module Resolution → 4 Discovery Strategies → JSON Output
- *
- * Naming Conventions (auto-included):
- *   select*           → 'selector'   (const functions from createSelector)
- *   use* + capital 3rd → 'hook'      (React hooks)
- *   *Controller       → 'controller' (Lit reactive controllers, classes)
- *   create*Mixin      → 'mixin'     (class mixins, display name strips "create")
- *   create*           → 'factory'   (factory functions)
- *   @public + function → 'utility'  (named utilities like mergeProps)
- *   @public + non-fn   → 'context'  (exported values like playerContext)
+ * Extraction routing is determined by export node type:
+ *   - Class / *Controller non-function → controller extraction (raw TS AST)
+ *   - Non-function → context extraction (type only)
+ *   - Function → function extraction (TAE call signatures)
  *
  * 4 Discovery Strategies (run per entry point, in order):
  *
  *   Strategy 1 — TAE on local modules (primary path)
  *     Parses each resolved local module with typescript-api-extractor.
- *     Handles: hooks, factories, mixins, utilities, contexts, selectors.
- *     Example: usePlayer from packages/react/src/player/context.tsx
  *
  *   Strategy 2 — TAE on index file (class re-exports)
  *     Parses the entry index file itself to find controllers that are
  *     re-exported but whose source module is separate.
- *     Only processes *Controller exports, then finds source via raw AST.
- *     Example: PlayerController re-exported from packages/html/src/index.ts
  *
  *   Strategy 3 — Raw TS AST fallback (failed modules)
  *     When TAE fails on a module (e.g., UniqueESSymbol in HTML bundle),
  *     falls back to walking the raw TypeScript AST for exports.
- *     Example: HTML store controllers when TAE throws
  *
  *   Strategy 4 — Raw TS AST for missed classes
  *     Scans local modules for exported classes that TAE parsed but missed.
- *     Only processes classes (isClass check).
- *     Example: SnapshotController found via raw AST after TAE skipped it
  *
  * Overload Collapsing:
  *   When a function has multiple overloads with identical return types,
- *   only the "widest" signature (most parameters) is kept. This avoids
- *   redundant overload entries in the JSON. Overloads with different
- *   return types are kept as separate entries.
+ *   only the "widest" signature (most parameters) is kept.
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -76,8 +57,6 @@ const log = {
 };
 
 // ─── Types ─────────────────────────────────────────────────────────
-
-type UtilKind = 'hook' | 'controller' | 'mixin' | 'factory' | 'utility' | 'context' | 'selector';
 
 export interface UtilEntry {
   slug: string;
@@ -165,28 +144,10 @@ function isUtilExport(exportNode: tae.ExportNode): boolean {
   return false;
 }
 
-// ─── Classification ────────────────────────────────────────────────
-
-function classifyExport(name: string, exportNode: tae.ExportNode): UtilKind {
-  const type = exportNode.type;
-
-  if (name.startsWith('select') && name.charAt(6) >= 'A' && name.charAt(6) <= 'Z' && type instanceof tae.FunctionNode) {
-    return 'selector';
-  }
-  if (name.startsWith('use') && name.charAt(3) >= 'A' && name.charAt(3) <= 'Z' && type instanceof tae.FunctionNode) {
-    return 'hook';
-  }
-  if (name.endsWith('Controller') && !(type instanceof tae.FunctionNode)) return 'controller';
-  if (name.startsWith('create') && name.includes('Mixin') && type instanceof tae.FunctionNode) return 'mixin';
-  if (name.startsWith('create') && type instanceof tae.FunctionNode) return 'factory';
-  if (type instanceof tae.FunctionNode) return 'utility';
-  return 'context';
-}
-
 // ─── Display Name ──────────────────────────────────────────────────
 
-function getDisplayName(name: string, kind: UtilKind): string {
-  if (kind === 'mixin') {
+function getDisplayName(name: string): string {
+  if (name.startsWith('create') && name.includes('Mixin')) {
     // createProviderMixin → ProviderMixin
     return name.replace(/^create/, '');
   }
@@ -605,18 +566,16 @@ function discoverExportsFromRawAST(modulePath: string, program: ts.Program): Raw
   return results;
 }
 
-function classifyRawExport(info: RawExportInfo): UtilKind | null {
+function isRawUtilExport(info: RawExportInfo): boolean {
   const { name, isFunction, isClass, hasPublicTag } = info;
 
-  if (name.startsWith('select') && name.charAt(6) >= 'A' && name.charAt(6) <= 'Z') return 'selector';
-  if (name.startsWith('use') && name.charAt(3) >= 'A' && name.charAt(3) <= 'Z' && isFunction) return 'hook';
-  if (name.endsWith('Controller') && isClass) return 'controller';
-  if (name.startsWith('create') && name.includes('Mixin') && isFunction) return 'mixin';
-  if (name.startsWith('create') && isFunction) return 'factory';
-  if (isFunction && hasPublicTag) return 'utility';
-  if (!isFunction && hasPublicTag) return 'context';
+  if (name.startsWith('select') && name.charAt(6) >= 'A' && name.charAt(6) <= 'Z') return true;
+  if (name.startsWith('use') && name.charAt(3) >= 'A' && name.charAt(3) <= 'Z' && isFunction) return true;
+  if (name.endsWith('Controller') && isClass) return true;
+  if (name.startsWith('create') && isFunction) return true;
+  if (hasPublicTag) return true;
 
-  return null;
+  return false;
 }
 
 // ─── Raw TS AST: Function Extraction ───────────────────────────────
@@ -760,8 +719,7 @@ function processExport(
   if (seenKeys.has(key)) return;
   if (!isUtilExport(exportNode)) return;
 
-  const kind = classifyExport(exportNode.name, exportNode);
-  const displayName = getDisplayName(exportNode.name, kind);
+  const displayName = getDisplayName(exportNode.name);
 
   let slug = kebabCase(displayName);
   if (seenSlugs.has(slug)) {
@@ -774,10 +732,10 @@ function processExport(
 
   let overloads: UtilOverload[];
 
-  if (kind === 'controller') {
+  if (exportNode.name.endsWith('Controller') && !(exportNode.type instanceof tae.FunctionNode)) {
     // Controllers use raw TS AST because TAE represents them as ObjectNode
     overloads = extractControllerOverloads(modulePath, program, exportNode.name);
-  } else if (kind === 'context') {
+  } else if (!(exportNode.type instanceof tae.FunctionNode)) {
     overloads = [extractContextOverload(exportNode)];
   } else {
     overloads = extractFunctionOverloads(exportNode, modulePath, program);
@@ -791,7 +749,6 @@ function processExport(
   const description = exportNode.documentation?.description;
   const data: UtilReference = {
     name: displayName,
-    kind,
     overloads,
   };
 
@@ -817,10 +774,9 @@ function processRawExport(
   const key = `${entryPoint.framework}:${info.name}`;
   if (seenKeys.has(key)) return;
 
-  const kind = classifyRawExport(info);
-  if (!kind) return;
+  if (!isRawUtilExport(info)) return;
 
-  const displayName = getDisplayName(info.name, kind);
+  const displayName = getDisplayName(info.name);
 
   let slug = kebabCase(displayName);
   if (seenSlugs.has(slug)) {
@@ -833,9 +789,9 @@ function processRawExport(
 
   let overloads: UtilOverload[];
 
-  if (kind === 'controller') {
+  if (info.isClass) {
     overloads = extractControllerOverloads(info.sourceFile, program, info.name);
-  } else if (kind === 'context') {
+  } else if (!info.isFunction && !info.isClass) {
     overloads = [{ parameters: {}, returnValue: { type: 'unknown' } }];
   } else {
     overloads = extractFunctionOverloadsFromAST(info.sourceFile, program, info.name);
@@ -848,7 +804,6 @@ function processRawExport(
 
   const data: UtilReference = {
     name: displayName,
-    kind,
     overloads,
   };
 

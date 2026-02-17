@@ -51,7 +51,6 @@ export function createUtilReferenceModel(name, ref) {
 
     return {
       name,
-      kind: ref.kind,
       description: ref.description,
       isMultiOverload: true,
       heading: {
@@ -84,7 +83,6 @@ export function createUtilReferenceModel(name, ref) {
 
   return {
     name,
-    kind: ref.kind,
     description: ref.description,
     isMultiOverload: false,
     heading: {

@@ -9,7 +9,6 @@ describe('createUtilReferenceModel', () => {
   it('builds a single-overload model with Parameters and Return Value H3s', () => {
     const ref = {
       name: 'useMedia',
-      kind: 'hook',
       overloads: [
         {
           parameters: {},
@@ -32,7 +31,6 @@ describe('createUtilReferenceModel', () => {
   it('includes parameters section when parameters are present', () => {
     const ref = {
       name: 'useButton',
-      kind: 'hook',
       overloads: [
         {
           parameters: {
@@ -55,7 +53,6 @@ describe('createUtilReferenceModel', () => {
   it('builds a multi-overload model with overload H3s and H4 subsections', () => {
     const ref = {
       name: 'usePlayer',
-      kind: 'hook',
       overloads: [
         {
           description: 'Returns the store. No subscription.',
@@ -104,7 +101,6 @@ describe('buildUtilReferenceTocHeadings', () => {
   it('creates TOC headings for single-overload model', () => {
     const ref = {
       name: 'useButton',
-      kind: 'hook',
       overloads: [
         {
           parameters: { params: { type: 'UseButtonParameters', required: true } },
@@ -126,7 +122,6 @@ describe('buildUtilReferenceTocHeadings', () => {
   it('creates TOC headings for multi-overload model', () => {
     const ref = {
       name: 'useStore',
-      kind: 'hook',
       overloads: [
         {
           description: 'Store access',

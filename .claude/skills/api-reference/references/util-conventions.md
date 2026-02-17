@@ -50,21 +50,6 @@ Exports are auto-included when they match these patterns:
 
 Exports that don't match any convention are excluded (UI components, types, internal helpers).
 
-## Classification
-
-Based on the export name pattern:
-
-| Kind | Rule | Examples |
-|------|------|----------|
-| `hook` | Starts with `use` + function | `usePlayer`, `useStore`, `useButton` |
-| `controller` | Ends with `Controller` | `PlayerController`, `StoreController` |
-| `mixin` | Starts with `create` + contains `Mixin` + function | `createProviderMixin` → displays as `ProviderMixin` |
-| `factory` | Starts with `create` + function (not mixin) | `createPlayer` |
-| `utility` | Any other function passing inclusion | `mergeProps`, `renderElement` |
-| `context` | Non-function passing inclusion (`@public`) | `playerContext` |
-
-**Mixin display name:** `create` prefix is stripped — `createProviderMixin` displays as `ProviderMixin`.
-
 ## Slug Conventions
 
 - Slugs are kebab-case: `use-player`, `player-controller`, `merge-props`
@@ -102,7 +87,6 @@ Schema: `UtilReferenceSchema` from `site/src/types/util-reference.ts`
 ```json
 {
   "name": "usePlayer",
-  "kind": "hook",
   "description": "...",
   "overloads": [
     {
@@ -152,5 +136,5 @@ When adding a new util to the docs:
 
 ## Tests
 
-- `site/scripts/api-docs-builder/src/tests/util-handler.test.ts` — validates discovery, classification, slug uniqueness
+- `site/scripts/api-docs-builder/src/tests/util-handler.test.ts` — fixture-based tests for discovery, slug uniqueness, frameworks, overloads
 - `site/src/utils/tests/utilReferenceModel.test.ts` — validates model structure and TOC headings
