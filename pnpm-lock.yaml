@@ -349,6 +349,9 @@ importers:
       '@videojs/skins':
         specifier: workspace:*
         version: link:../skins
+      '@videojs/spf':
+        specifier: workspace:*
+        version: link:../spf
       '@videojs/store':
         specifier: workspace:*
         version: link:../store

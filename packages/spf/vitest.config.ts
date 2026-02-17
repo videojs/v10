@@ -27,19 +27,11 @@ export default defineConfig({
         test: {
           name: 'dom',
           include: ['src/dom/**/*.test.ts'],
-          exclude: ['src/dom/media/**/*.test.ts'], // Use browser mode for media tests
-          environment: 'jsdom',
-        },
-      },
-      {
-        extends: true,
-        test: {
-          name: 'dom-browser',
-          include: ['src/dom/media/**/*.test.ts'],
           browser: {
             enabled: true,
             provider: 'playwright',
             headless: true,
+            screenshotFailures: false,
             instances: [{ browser: 'chromium' }],
           },
         },
