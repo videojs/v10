@@ -94,45 +94,49 @@ export function resolveTrack<T extends TrackType>(
   },
   config: TrackResolutionConfig<T>
 ): () => void {
-  // This is effectively a very simple finite state model. We can formalize this if needed.
-  let resolving = false;
+  // Task pattern: use function reference as in-progress indicator
+  let currentTask: (() => Promise<void>) | null = null;
   let abortController: AbortController | null = null;
 
   const cleanup = combineLatest([state, events]).subscribe(async ([currentState, event]) => {
-    if (!canResolve(currentState, config) || !shouldResolve(currentState, event) || resolving) return;
+    if (!canResolve(currentState, config) || !shouldResolve(currentState, event)) return;
+    if (currentTask) return; // Task already in progress
 
-    try {
-      // This along with the resolving finite state (or more complex) could be pulled into its own abstraction.
-      // Set flag before async work
-      resolving = true;
+    // Define the resolution task
+    currentTask = async () => {
       abortController = new AbortController();
 
-      const { presentation } = currentState;
-      const track = getSelectedTrack(currentState, config.type)!;
+      try {
+        const { presentation } = currentState;
+        const track = getSelectedTrack(currentState, config.type)!;
 
-      // Fetch and parse media playlist
-      const response = await fetchResolvable(track, { signal: abortController.signal });
-      const text = await getResponseText(response);
-      const mediaTrack = parseMediaPlaylist(text, track);
+        // Fetch and parse media playlist
+        const response = await fetchResolvable(track, { signal: abortController.signal });
+        const text = await getResponseText(response);
+        const mediaTrack = parseMediaPlaylist(text, track);
 
-      // Update presentation with resolved track
-      const updatedPresentation = updateTrackInPresentation(presentation!, mediaTrack);
+        // Update presentation with resolved track
+        const updatedPresentation = updateTrackInPresentation(presentation!, mediaTrack);
 
-      state.patch({ presentation: updatedPresentation });
-    } catch (error) {
-      // Ignore AbortError - this is expected when cleanup happens
-      if (error instanceof Error && error.name === 'AbortError') {
-        return;
+        state.patch({ presentation: updatedPresentation });
+      } catch (error) {
+        // Ignore AbortError - this is expected when cleanup happens
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
+        throw error;
+      } finally {
+        // Clear task and abort controller
+        abortController = null;
+        currentTask = null;
       }
-      throw error;
-    } finally {
-      // Always clear flag
-      resolving = false;
-      abortController = null;
-    }
+    };
+
+    // Execute the task
+    await currentTask();
   });
 
-  // Return cleanup function that aborts pending fetches
+  // Return cleanup function that aborts pending task
   return () => {
     abortController?.abort();
     cleanup();
