@@ -1,9 +1,102 @@
 import { combineLatest } from '../../core/reactive/combine-latest';
 import type { WritableState } from '../../core/state/create-state';
-import type { Presentation, Segment, VideoTrack } from '../../core/types';
+import type { AddressableObject, Presentation, Segment } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { appendSegment } from '../media/append-segment';
 import { fetchResolvable } from '../network/fetch';
+
+// ============================================================================
+// SUBTASKS (module-level)
+// ============================================================================
+
+/**
+ * Load initialization segment subtask.
+ */
+const loadInitSegmentTask = async (
+  { initialization }: { initialization: AddressableObject },
+  context: { signal: AbortSignal; sourceBuffer: SourceBuffer }
+): Promise<void> => {
+  const response = await fetchResolvable(initialization, { signal: context.signal });
+  const initData = await response.arrayBuffer();
+  await appendSegment(context.sourceBuffer, initData);
+};
+
+/**
+ * Load media segment subtask.
+ */
+const loadMediaSegmentTask = async (
+  { segment }: { segment: Segment },
+  context: { signal: AbortSignal; sourceBuffer: SourceBuffer }
+): Promise<void> => {
+  const response = await fetchResolvable(segment, { signal: context.signal });
+  const segmentData = await response.arrayBuffer();
+  await appendSegment(context.sourceBuffer, segmentData);
+};
+
+// ============================================================================
+// MAIN TASK (composite - orchestrates subtasks)
+// ============================================================================
+
+/**
+ * Load segments task (composite - orchestrates init + media segment subtasks).
+ */
+const loadSegmentsTask = async <T extends MediaTrackType>(
+  { currentState }: { currentState: SegmentLoadingState },
+  context: {
+    signal: AbortSignal;
+    sourceBuffer: SourceBuffer;
+    config: { type: T };
+  }
+): Promise<void> => {
+  const track = getSelectedTrack(currentState, context.config.type);
+  if (!track || !isResolvedTrack(track)) return;
+
+  const segments = track.segments;
+  if (segments.length === 0) return;
+
+  // Build array of subtask invocation functions
+  const createInitTask = () =>
+    loadInitSegmentTask(
+      { initialization: track.initialization },
+      { signal: context.signal, sourceBuffer: context.sourceBuffer }
+    );
+
+  const createMediaTasks = segments.map(
+    (segment) => () => loadMediaSegmentTask({ segment }, { signal: context.signal, sourceBuffer: context.sourceBuffer })
+  );
+
+  // Combine: init task first, then media segment tasks
+  // Future: Can conditionally include init or filter segments here
+  const taskFactories = [createInitTask, ...createMediaTasks];
+
+  // Track current subtask (same pattern as main task tracking)
+  let currentSubtask: Promise<void> | null = null;
+
+  // Execute subtasks sequentially
+  for (const createTask of taskFactories) {
+    if (context.signal.aborted) break;
+
+    // Invoke task factory and store promise
+    currentSubtask = createTask();
+
+    try {
+      await currentSubtask;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') break;
+      console.error('Failed to load segment:', error);
+      // Continue to next segment (graceful degradation)
+    } finally {
+      currentSubtask = null;
+    }
+  }
+
+  // Wait a frame before completing to allow state updates to flush
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+};
+
+// ============================================================================
+// STATE & OWNERS
+// ============================================================================
 
 /**
  * State shape for segment loading.
@@ -18,50 +111,6 @@ export interface SegmentLoadingState {
  */
 export interface SegmentLoadingOwners {
   videoBuffer?: SourceBuffer;
-}
-
-/**
- * Find the selected video track in the presentation.
- */
-function findSelectedVideoTrack(state: SegmentLoadingState): VideoTrack | undefined {
-  if (!state.presentation || !state.selectedVideoTrackId) {
-    return undefined;
-  }
-
-  const videoSet = state.presentation.selectionSets.find((set) => set.type === 'video');
-  if (!videoSet?.switchingSets?.[0]?.tracks) {
-    return undefined;
-  }
-
-  const track = videoSet.switchingSets[0].tracks.find((t) => t.id === state.selectedVideoTrackId);
-
-  return track as VideoTrack | undefined;
-}
-
-/**
- * Select which segments to load for the current video track.
- *
- * Currently returns all segments (full track loading).
- *
- * Future enhancements:
- * - Filter based on playhead position and buffer ranges
- * - Skip already-loaded segments
- * - Handle live stream segment updates
- * - Apply timing offsets for discontinuities
- *
- * @param state - Current playback state (track selection, presentation)
- * @returns Array of segments to load, or empty array if track not ready
- */
-function selectSegmentsToLoad(state: SegmentLoadingState): Segment[] {
-  const track = findSelectedVideoTrack(state);
-
-  if (!track || !isResolvedTrack(track)) {
-    return [];
-  }
-
-  // For now: load all segments
-  // TODO: Add buffering logic based on playhead position and buffer ranges
-  return track.segments;
 }
 
 /**
@@ -117,68 +166,46 @@ export function shouldLoadSegments(state: SegmentLoadingState, owners: SegmentLo
  * @example
  * const cleanup = loadSegments({ state, owners });
  */
-export function loadSegments({
-  state,
-  owners,
-}: {
-  state: WritableState<SegmentLoadingState>;
-  owners: WritableState<SegmentLoadingOwners>;
-}): () => void {
-  let isLoading = false;
+export function loadSegments(
+  {
+    state,
+    owners,
+  }: {
+    state: WritableState<SegmentLoadingState>;
+    owners: WritableState<SegmentLoadingOwners>;
+  },
+  config: { type: MediaTrackType }
+): () => void {
+  const { type } = config;
+  let currentTask: Promise<void> | null = null;
   let abortController: AbortController | null = null;
 
   const cleanup = combineLatest([state, owners]).subscribe(
-    async ([s, o]: [SegmentLoadingState, SegmentLoadingOwners]) => {
-      if (!shouldLoadSegments(s, o) || isLoading) return;
+    async ([currentState, currentOwners]: [SegmentLoadingState, SegmentLoadingOwners]) => {
+      if (currentTask) return; // Task already in progress
+      if (!shouldLoadSegments(currentState, currentOwners, type)) return;
 
-      const sourceBuffer = o.videoBuffer;
+      const sourceBuffer = currentOwners[BufferKeyByType[type]];
       if (!sourceBuffer) return;
 
-      // Determine which segments to load
-      const segmentsToLoad = selectSegmentsToLoad(s);
-
-      if (segmentsToLoad.length === 0) return;
-
-      // Map segments to async task functions
-      const tasks = segmentsToLoad.map((segment) => async () => {
-        // Fetch segment data
-        const response = await fetchResolvable(segment);
-        const segmentData = await response.arrayBuffer();
-
-        // Append to SourceBuffer
-        await appendSegment(sourceBuffer, segmentData);
-      });
-
-      // Execute tasks serially
-      isLoading = true;
+      // Create abort controller and invoke task
       abortController = new AbortController();
+      currentTask = loadSegmentsTask(
+        { currentState },
+        { signal: abortController.signal, sourceBuffer, config: { type } }
+      );
 
       try {
-        for (const task of tasks) {
-          try {
-            // Check if aborted before each segment
-            if (abortController.signal.aborted) break;
-            await task();
-          } catch (error) {
-            // Ignore AbortError - expected during cleanup
-            if (error instanceof Error && error.name === 'AbortError') {
-              break;
-            }
-            // Log error but continue - partial video better than none
-            console.error('Failed to load segment:', error);
-          }
-        }
+        await currentTask;
       } finally {
-        // Wait a frame before clearing flag to allow async state updates to flush
-        // This prevents race conditions where multiple triggers fire before the flag is checked
-        await new Promise((resolve) => requestAnimationFrame(resolve));
-        isLoading = false;
+        // Cleanup orchestration state
+        currentTask = null;
         abortController = null;
       }
     }
   );
 
-  // Return cleanup function that aborts pending fetches
+  // Return cleanup function that aborts pending task
   return () => {
     abortController?.abort();
     cleanup();
