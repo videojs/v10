@@ -1,7 +1,7 @@
 // SPF Segment Loading POC Test
 // http://localhost:5173/spf-segment-loading/
 
-import { createPlaybackEngine } from '@videojs/spf/playback-engine';
+import { createPlaybackEngine } from '@videojs/spf/dom/playback-engine';
 
 const video = document.getElementById('video') as HTMLVideoElement;
 const logsDiv = document.getElementById('logs') as HTMLDivElement;
