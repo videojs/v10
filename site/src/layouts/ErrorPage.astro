@@ -1,0 +1,32 @@
+---
+import Footer from '@/components/Footer.astro';
+import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
+import GetStartedLink from '@/components/NavBar/GetStartedLink';
+import NavBar from '@/components/NavBar/NavBar.astro';
+import Base from '@/layouts/Base.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  heading: string;
+}
+
+const { title, description, heading } = Astro.props;
+---
+
+<Base {title} {description}>
+  <div class="min-h-screen flex flex-col">
+    <NavBar />
+    <main class="flex-1 px-6 md:px-10 py-10 sm:py-14 flex items-center justify-center">
+      <div class="text-center flex flex-col items-center gap-4">
+        <h1 class="text-h2 md:text-h1">{heading}</h1>
+        <div class="text-lg flex flex-col items-center gap-2">
+          <a href="/" class="intent:underline">Go home</a>
+          <GetStartedLink client:idle className="intent:underline">Read the docs</GetStartedLink>
+        </div>
+      </div>
+    </main>
+    <Footer />
+  </div>
+  <FooterEasterEgg />
+</Base>

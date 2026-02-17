@@ -1,6 +1,26 @@
 import * as ts from 'typescript';
 import type { DataAttrsExtraction } from './types.js';
 
+function unwrapObjectLiteral(node: ts.Expression): ts.ObjectLiteralExpression | undefined {
+  if (ts.isObjectLiteralExpression(node)) {
+    return node;
+  }
+
+  if (ts.isParenthesizedExpression(node)) {
+    return unwrapObjectLiteral(node.expression);
+  }
+
+  if (ts.isAsExpression(node)) {
+    return unwrapObjectLiteral(node.expression);
+  }
+
+  if (ts.isSatisfiesExpression(node)) {
+    return unwrapObjectLiteral(node.expression);
+  }
+
+  return undefined;
+}
+
 /**
  * Extract data attributes from a data-attrs file.
  *
@@ -37,15 +57,7 @@ export function extractDataAttrs(
           continue;
         }
 
-        // Handle `as const` assertions
-        let objLiteral: ts.ObjectLiteralExpression | undefined;
-
-        if (ts.isObjectLiteralExpression(decl.initializer)) {
-          objLiteral = decl.initializer;
-        } else if (ts.isAsExpression(decl.initializer) && ts.isObjectLiteralExpression(decl.initializer.expression)) {
-          objLiteral = decl.initializer.expression;
-        }
-
+        const objLiteral = unwrapObjectLiteral(decl.initializer);
         if (!objLiteral) continue;
 
         // Extract properties with their JSDoc comments

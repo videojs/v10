@@ -1,5 +1,5 @@
-import { ContextProvider } from '@lit/context';
 import type { PlayerStore } from '@videojs/core/dom';
+import { ContextProvider } from '@videojs/element/context';
 import { isNull } from '@videojs/utils/predicate';
 import type { MediaElementConstructor } from '@/ui/media-element';
 import type { PlayerContext } from '../player/context';
@@ -28,10 +28,6 @@ export function createProviderMixin<Store extends PlayerStore>(
         }
 
         return this.#store;
-      }
-
-      protected createRenderRoot() {
-        return this;
       }
 
       override connectedCallback() {

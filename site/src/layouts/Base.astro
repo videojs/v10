@@ -10,7 +10,6 @@ import '@/styles/globals.css';
 
 import { PreferenceSync } from '@/components/docs/PreferenceSync';
 import FilmGrain from '@/components/FilmGrain';
-import Posthog from '@/components/Posthog.astro';
 import ThemeInit from '@/components/ThemeInit.astro';
 
 interface Props {
@@ -82,9 +81,6 @@ const fullTitle = Array.isArray(title)
 
     {/* Whatever else */}
     <slot name="head" />
-
-    {/* Analytics */}
-    {import.meta.env.PROD && <Posthog />}
 
     <ThemeInit />
   </head>

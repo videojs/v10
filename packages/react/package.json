@@ -4,13 +4,12 @@
   "version": "0.1.0-alpha.1",
   "description": "React library for building media players",
   "license": "Apache-2.0",
-  "keywords": [
-    "media",
-    "player",
-    "react",
-    "components",
-    "hooks",
-    "videojs"
+  "main": "dist/default/index.js",
+  "module": "dist/default/index.js",
+  "types": "dist/dev/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist"
   ],
   "exports": {
     ".": {
@@ -22,18 +21,28 @@
       "types": "./dist/dev/media/hls-video.d.ts",
       "development": "./dist/dev/media/hls-video.js",
       "default": "./dist/default/media/hls-video.js"
+    },
+    "./*.css": "./dist/default/presets/*.css",
+    "./audio": {
+      "types": "./dist/dev/presets/audio/index.d.ts",
+      "development": "./dist/dev/presets/audio/index.js",
+      "default": "./dist/default/presets/audio/index.js"
+    },
+    "./background": {
+      "types": "./dist/dev/presets/background/index.d.ts",
+      "development": "./dist/dev/presets/background/index.js",
+      "default": "./dist/default/presets/background/index.js"
+    },
+    "./video": {
+      "types": "./dist/dev/presets/video/index.d.ts",
+      "development": "./dist/dev/presets/video/index.js",
+      "default": "./dist/default/presets/video/index.js"
     }
   },
-  "main": "dist/default/index.js",
-  "module": "dist/default/index.js",
-  "types": "dist/dev/index.d.ts",
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
-    "dev": "pnpm run build:watch",
+    "dev": "pnpm build:watch",
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "rm -rf dist types"
@@ -58,5 +67,13 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "keywords": [
+    "media",
+    "player",
+    "react",
+    "components",
+    "hooks",
+    "videojs"
+  ]
 }

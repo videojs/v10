@@ -50,7 +50,7 @@ const { class: className, dark = false } = Astro.props;
   <Search dark={dark} class="ml-auto mr-4 sm:self-center" />
 
   {/* Desktop nav links */}
-  <div class="hidden sm:flex -mb-px pr-3">
+  <div class="hidden md:flex -mb-px pr-3">
     <GetStartedLink
       client:idle
       className={clsx(
@@ -98,7 +98,7 @@ const { class: className, dark = false } = Astro.props;
   </div>
 
   {/* Mobile nav */}
-  <!-- <MobileNav client:idle navLinks={navLinks} currentPath={currentPath} dark={dark}>
+  <MobileNav client:idle navLinks={navLinks} currentPath={currentPath} dark={dark}>
     <slot name="mobile-nav" />
-  </MobileNav> -->
+  </MobileNav>
 </nav>

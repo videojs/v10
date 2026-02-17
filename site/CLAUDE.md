@@ -16,7 +16,6 @@ From `site/` directory:
 | -------------------- | ---------------------------------------------------- |
 | `pnpm dev`           | Start dev server at `localhost:4321`                 |
 | `pnpm build`         | Build production site to `./dist/`                   |
-| `pnpm preview`       | Preview production build locally                     |
 | `pnpm api-docs`      | Regenerate API reference JSON files                  |
 | `pnpm test`          | Run all tests once                                   |
 | `pnpm test:watch`    | Run tests in watch mode                              |
@@ -164,7 +163,9 @@ site/
 │   └── api-docs-builder/    # Generates API reference from TypeScript
 ├── public/                  # Static assets (served untransformed)
 ├── integrations/            # Custom Astro integrations
-│   └── pagefind.ts          # Pagefind search integration
+│   ├── pagefind.ts          # Pagefind search integration
+│   ├── llms-markdown.ts     # LLM-optimized markdown generation
+│   └── check-v8-urls.ts     # v8 URL migration audit
 ├── astro.config.mjs         # Astro configuration
 ├── tsconfig.json            # TypeScript config with path aliases
 └── vitest.config.ts         # Test configuration
@@ -367,10 +368,9 @@ export const sidebar: Sidebar = [
 - `getSectionsForGuide()`: Get breadcrumb trail to a guide
 
 **`routing.ts`** — URL building and redirect logic:
-- `buildDocsUrl()`: Construct docs URLs from framework/style/slug
+- `buildDocsUrl()`: Construct docs URLs from framework and slug
 - `resolveIndexRedirect()`: Intelligent redirect for index pages
-  - Handles user preferences from localStorage
-  - Validates framework/style combinations
+  - Validates framework from URL params or cookie preferences
   - Falls back to defaults when invalid
 
 ### Docs Routing Pattern
@@ -415,8 +415,9 @@ All content must be written in **MDX format** to support:
 {
   title: string;
   description: string;
-  pubDate: Date;          // From filename or git history
+  pubDate: Date;          // From filename date prefix
   authors: string[];      // Reference to authors.json
+  canonical?: string;     // Canonical URL override
   devOnly?: boolean;      // Show only in development
 }
 ```
@@ -447,9 +448,17 @@ All content must be written in **MDX format** to support:
 {
   [key: string]: {
     name: string;
+    shortName: string;
     bio?: string;
     avatar?: string;
-    socialLinks?: { platform: string; url: string }[];
+    socialLinks?: {
+      x?: string;
+      bluesky?: string;
+      mastodon?: string;
+      github?: string;
+      linkedin?: string;
+      website?: string;
+    };
   }
 }
 ```
@@ -457,7 +466,7 @@ All content must be written in **MDX format** to support:
 ### Git Integration
 
 `src/utils/gitService.ts` uses `simple-git` to enrich content with metadata:
-- Blog posts: `pubDate` from filename or first commit
+- Blog posts: `pubDate` from filename date prefix
 - All content: `updatedDate` from last modification
 
 ## State Management with Nanostores
@@ -468,6 +477,7 @@ All content must be written in **MDX format** to support:
 - `preferences.ts`: User framework/style preferences (persisted to localStorage)
 - `homePageDemos.ts`: Home page demo state
 - `tabs.ts`: Tab component state
+- `installation.ts`: Installation page state (renderer, skin, install method)
 
 **Usage pattern:**
 ```ts
@@ -491,8 +501,9 @@ function MyComponent() {
   setupFiles: ['./src/test-setup.ts'], // Imports @testing-library/jest-dom
   coverage: {
     provider: 'v8',
-    include: ['src/utils/**', 'src/components/**', 'src/types/**'],
-    exclude: ['**/*.test.ts', '**/*.spec.ts', '**/__tests__/**'],
+    reporter: ['text', 'json', 'html'],
+    include: ['src/utils/**', 'src/components/**', 'src/types/**', 'scripts/api-docs-builder/src/**'],
+    exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx', '**/test/**'],
   },
 }
 ```
@@ -531,6 +542,7 @@ vi.mock('@/types/docs', async () => {
 
 - **[Astro 5.14.4](https://astro.build)**: Static site generation with island architecture
 - **[React 18](https://react.dev)**: Client-side interactive components (`client:load`)
+- **[React Compiler](https://react.dev/learn/react-compiler)**: Enabled via `babel-plugin-react-compiler` targeting React 18
 - **[Tailwind v4](https://tailwindcss.com)**: CSS utility classes via `@tailwindcss/vite`
 - **[Nanostores 1.0.1](https://github.com/nanostores/nanostores)**: Cross-island state
 - **[Base UI 1.0.0-beta.4](https://base-ui.com)**: Headless accessible components
@@ -617,6 +629,90 @@ export default defineConfig({
   integrations: [pagefind()],
 });
 ```
+
+## Environment Variables
+
+The site uses OAuth for authentication and Mux for video management. Required variables are needed for auth features to work; the site degrades gracefully without them.
+
+**Required for authentication:**
+
+| Variable | Purpose |
+| --- | --- |
+| `OAUTH_CLIENT_ID` | OAuth client ID |
+| `OAUTH_CLIENT_SECRET` | OAuth client secret |
+| `OAUTH_REDIRECT_URI` | OAuth callback URL |
+| `OAUTH_URL` | OAuth provider base URL |
+| `SESSION_COOKIE_PASSWORD` | Encryption key for `iron-session` cookies |
+
+**Optional:**
+
+| Variable | Purpose |
+| --- | --- |
+| `MUX_API_URL` | Override Mux API endpoint (defaults to `https://api.mux.com`) |
+| `MUX_TOKEN_ID` | Mux API token ID (for server-side health checks) |
+| `MUX_TOKEN_SECRET` | Mux API token secret (for server-side health checks) |
+| `SENTRY_AUTH_TOKEN` | Sentry error tracking auth token |
+
+## Authentication & Mux Integration
+
+OAuth and Mux integration exist to support the **video uploader** on the installation page (`src/components/installation/MuxUploaderPanel.tsx`). This is the only consumer of the auth system.
+
+**Key files:**
+- `src/middleware/index.ts` — Validates and refreshes OAuth sessions on every request via `iron-session`
+- `src/utils/auth.ts` — Session encryption, JWKS verification, token refresh
+- `src/pages/api/auth/callback.ts` — OAuth callback endpoint
+- `src/actions/auth.ts` — `initiateLogin()`, `logout()` server actions
+- `src/actions/mux.ts` — `createDirectUpload()`, `getUploadStatus()`, `getAssetStatus()`, `listAssets()`, `getAsset()` server actions
+
+**How sessions work:**
+1. Middleware decrypts session cookie, verifies access token via JWKS
+2. If expired, automatically refreshes using the refresh token
+3. Populates `context.locals.user` (safe to render) and `context.locals.accessToken` (server-only, never expose to client)
+4. Invalid/corrupted sessions are silently cleared
+
+**Action gating:** All `mux.*` actions (except `createDirectUpload`) return 401 without a valid session. `createDirectUpload` handles its own auth so the client can detect UNAUTHORIZED and show a login UI.
+
+## MDX Processing Plugins
+
+Four plugins transform MDX content during build. Registered in `astro.config.mjs`:
+
+**`remarkConditionalHeadings`** (`src/utils/remarkConditionalHeadings.js`)
+Walks the MDX AST and tracks headings inside `<FrameworkCase>` / `<StyleCase>` components, attaching conditional metadata (which frameworks/styles a heading belongs to). Also reads `<ApiReference>` component props, loads the generated JSON, and injects heading entries so API reference sections appear in the table of contents. Outputs to `frontmatter.conditionalHeadings`.
+
+**`remarkReadingTime`** (`src/utils/remarkReadingTime.mjs`)
+Calculates reading time and injects `frontmatter.minutesRead` (text) and `frontmatter.readingTimeMinutes` (number).
+
+**`rehypePrepareCodeBlocks`** (`src/utils/rehypePrepareCodeBlocks.js`)
+Tags `<code>` children of `<pre>` with a `codeBlock` property, and marks `<pre>` blocks with `hasFrame: true` when inside a `<TabsPanel>` JSX component. This controls code block styling (framed vs. standalone).
+
+**`shikiTransformMetadata`** (`src/utils/shikiTransformMetadata.js`)
+Shiki transformer that extracts `title="..."` from code fence metadata, enabling titled code blocks:
+
+~~~markdown
+```tsx title="Example.tsx"
+~~~
+
+## Custom Astro Integration: LLM Markdown
+
+**Location:** `integrations/llms-markdown.ts`
+
+Generates LLM-optimized markdown files and a `llms.txt` index after build.
+
+**How it works:**
+1. Scans all built HTML pages for elements with `[data-llms-content]`
+2. Strips elements with `[data-llms-ignore]` from the content
+3. Converts remaining HTML to markdown via Turndown
+4. Writes `.md` files alongside built HTML
+5. Generates `llms.txt` index grouped by framework/style
+
+**Data attributes for content authors:**
+
+| Attribute | Purpose |
+| --- | --- |
+| `data-llms-content` | Mark an element's content for LLM markdown extraction |
+| `data-llms-ignore` | Exclude an element (and its children) from LLM output |
+| `data-llms-description` | Description text for the `llms.txt` index entry |
+| `data-llms-sort` | Sort key for ordering entries in the index |
 
 ## TypeScript Configuration
 
@@ -727,10 +823,10 @@ Standard MDX elements (headings, paragraphs, lists, etc.) are defined here and u
 **Usage in layouts:**
 ```astro
 ---
-import { components } from '@/components/typography';
+import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
 ---
 
-<slot Components={components} />
+<Content components={{ ...defaultMarkdownComponents }} />
 ```
 
 ## Important Development Notes

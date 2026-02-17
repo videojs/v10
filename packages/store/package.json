@@ -4,12 +4,12 @@
   "version": "0.1.0-alpha.1",
   "description": "Reactive state management for external systems.",
   "license": "Apache-2.0",
-  "keywords": [
-    "store",
-    "media",
-    "player",
-    "videojs",
-    "reactive"
+  "main": "dist/default/index.js",
+  "module": "dist/default/index.js",
+  "types": "dist/dev/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist"
   ],
   "exports": {
     ".": {
@@ -17,10 +17,10 @@
       "development": "./dist/dev/index.js",
       "default": "./dist/default/index.js"
     },
-    "./lit": {
-      "types": "./dist/dev/lit.d.ts",
-      "development": "./dist/dev/lit.js",
-      "default": "./dist/default/lit.js"
+    "./html": {
+      "types": "./dist/dev/html.d.ts",
+      "development": "./dist/dev/html.js",
+      "default": "./dist/default/html.js"
     },
     "./react": {
       "types": "./dist/dev/react.d.ts",
@@ -28,12 +28,6 @@
       "default": "./dist/default/react.js"
     }
   },
-  "main": "dist/default/index.js",
-  "module": "dist/default/index.js",
-  "types": "dist/dev/index.d.ts",
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
@@ -43,15 +37,11 @@
     "clean": "rm -rf dist types"
   },
   "peerDependencies": {
-    "@lit/context": "^1.1.0",
-    "@lit/reactive-element": "^2.0.0",
+    "@videojs/element": "workspace:*",
     "react": "^18.0.0 || ^19.0.0"
   },
   "peerDependenciesMeta": {
-    "@lit/context": {
-      "optional": true
-    },
-    "@lit/reactive-element": {
+    "@videojs/element": {
       "optional": true
     },
     "react": {
@@ -62,8 +52,7 @@
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
-    "@lit/context": "^1.1.6",
-    "@lit/reactive-element": "^2.1.0",
+    "@videojs/element": "workspace:*",
     "@testing-library/react": "^16.3.0",
     "@types/react": "^19.2.7",
     "jsdom": "^26.1.0",
@@ -75,5 +64,12 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "keywords": [
+    "store",
+    "media",
+    "player",
+    "videojs",
+    "reactive"
+  ]
 }

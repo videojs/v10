@@ -7,11 +7,12 @@ Specialized knowledge for AI agents working on Video.js 10.
 | Workflow                   | Load                               |
 | -------------------------- | ---------------------------------- |
 | Building store/features    | `api`                              |
-| Building Lit components    | `component` + `aria`               |
+| Building HTML components   | `component` + `aria`               |
 | Building React components  | `component` + `aria`               |
 | Writing documentation      | `docs`                             |
-| Writing Design Docs / RFCs | `design` or `rfc`                  |
-| Reviewing API/architecture | `api` → `review/workflow.md`       |
+| Writing component reference| `api-reference`                     |
+| Writing Design Docs / RFCs | `design` or `rfc`                        |
+| Reviewing API/architecture | `api` → `review/workflow.md`             |
 | Reviewing documentation    | `docs` → `review/workflow.md`      |
 | Reviewing components       | `component` → `review/workflow.md` |
 | Reviewing accessibility    | `aria` → `review/workflow.md`      |
@@ -33,7 +34,8 @@ Specialized knowledge for AI agents working on Video.js 10.
 | [component](component/SKILL.md)         | Build headless UI components — compound patterns, state, styling       | Yes         |
 | [create-skill](create-skill/SKILL.md)   | Create new skills with proper structure and conventions                | No          |
 | [design](design/SKILL.md)               | Write Design Docs — decisions you own, component specs, feature designs| No          |
-| [docs](docs/SKILL.md)                   | Write Video.js 10 documentation                                        | Yes         |
+| [api-reference](api-reference/SKILL.md) | Scaffold component API reference pages                          | No          |
+| [docs](docs/SKILL.md)                   | Write Video.js 10 documentation (concepts, how-to, READMEs)    | Yes         |
 | [gh-issue](gh-issue/SKILL.md)           | Analyze GitHub issues and create implementation plans                  | No          |
 | [git](git/SKILL.md)                     | Git workflow — commit messages, PRs, branch naming, scope inference    | No          |
 | [review-branch](review-branch/SKILL.md) | Review branch changes and suggest improvements                         | No          |
@@ -56,7 +58,7 @@ skill/
 | Skill               | Review Focus                                      |
 | ------------------- | ------------------------------------------------- |
 | `api/review/`       | API design, architecture, DX, type safety         |
-| `docs/review/`      | Documentation quality — tone, structure, examples |
+| `docs/review/`       | Documentation quality — tone, structure, examples |
 | `component/review/` | Component architecture, state, props, styling     |
 | `aria/review/`      | Accessibility — ARIA, keyboard, focus, WCAG       |
 

@@ -1,0 +1,21 @@
+.react-pip-button-basic {
+  position: relative;
+}
+
+.react-pip-button-basic video {
+  width: 100%;
+}
+
+.react-pip-button-basic__button {
+  padding-block: 8px;
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  color: black;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  padding-inline: 20px;
+  cursor: pointer;
+}

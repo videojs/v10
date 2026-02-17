@@ -107,4 +107,4 @@ For reviewing APIs and architecture, load `review/workflow.md`.
 | ---------------------- | ----------------- |
 | Building UI components | `component` skill |
 | Accessibility patterns | `aria` skill      |
-| Documentation          | `docs` skill      |
+| Documentation          | `docs` skill |

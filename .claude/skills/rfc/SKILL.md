@@ -78,4 +78,4 @@ For detailed writing guidance (progressive disclosure, conciseness, etc.), see t
 | Decisions you own          | `design` skill    |
 | API design principles      | `api` skill       |
 | Building UI components     | `component` skill |
-| Writing documentation      | `docs` skill      |
+| Writing documentation      | `docs` skill |

@@ -9,6 +9,11 @@ export const sidebar: Sidebar = [
         sidebarLabel: 'Writing guides',
         devOnly: true,
       },
+      {
+        slug: 'reference/write-references',
+        sidebarLabel: 'Writing references',
+        devOnly: true,
+      },
       { slug: 'how-to/installation' },
       { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
     ],
@@ -24,9 +29,15 @@ export const sidebar: Sidebar = [
   {
     sidebarLabel: 'Components',
     contents: [
-      { slug: 'reference/play-button' },
-      { slug: 'reference/mute-button' },
+      // sorted alphabetically
+      { slug: 'reference/buffering-indicator' },
+      { slug: 'reference/controls' },
       { slug: 'reference/fullscreen-button' },
+      { slug: 'reference/mute-button' },
+      { slug: 'reference/pip-button' },
+      { slug: 'reference/play-button' },
+      { slug: 'reference/poster' },
+      { slug: 'reference/seek-button' },
       { slug: 'reference/time' },
     ],
   },

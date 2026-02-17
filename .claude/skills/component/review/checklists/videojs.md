@@ -20,7 +20,7 @@ Video.js-specific patterns. See [videojs.md](../../references/videojs.md) for ar
 - [ ] `getLabel()`/`getAttrs()` accept projected UI state, `toggle()` accepts raw media state
 - [ ] Data attribute map with `as const satisfies StateAttrMap<*State>` constraint
 
-## Web Component (Lit)
+## Web Component
 
 - [ ] Extends `MediaElement`
 - [ ] Uses `PlayerController` with selector for store subscription

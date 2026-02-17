@@ -30,6 +30,7 @@
     "lint:fix:file": "biome check --write",
     "link:opencode": "[ -e .opencode ] || ln -s .claude .opencode",
     "link:agents": "[ -e AGENTS.md ] || ln -s CLAUDE.md AGENTS.md; [ -e agents ] || ln -s .claude agents",
+    "size": "node .github/scripts/bundle-size.js | node .github/scripts/bundle-size-report.js",
     "test": "turbo run test",
     "typecheck": "tsc --build"
   },
@@ -39,6 +40,7 @@
     "@commitlint/config-conventional": "^20.0.0",
     "@commitlint/format": "^20.0.0",
     "@types/node": "^22.18.6",
+    "esbuild": "^0.27.3",
     "lint-staged": "^16.2.3",
     "react": "^18.0.0",
     "react-compiler-runtime": "^1.0.0",

@@ -18,6 +18,8 @@ export { ComponentApiReferenceSchema, PartApiReferenceSchema } from '../../../sr
 export interface PartSource {
   /** PascalCase name (e.g., "Value", "Group", "Separator"). */
   name: string;
+  /** Local symbol name in the source module (before any aliasing). */
+  localName: string;
   /** Kebab-case segment (e.g., "value", "group", "separator"). */
   kebab: string;
   /** True if this part gets the shared core/data-attrs. */
@@ -34,6 +36,8 @@ export interface PartSource {
 export interface ComponentSource {
   /** PascalCase component name (e.g., PlayButton) */
   name: string;
+  /** Original kebab-case directory name (e.g., play-button). */
+  kebab: string;
   /** Path to core file (e.g., packages/core/src/core/ui/play-button/play-button-core.ts) */
   corePath?: string;
   /** Path to data attrs file */

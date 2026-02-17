@@ -1,5 +1,5 @@
 ---
-title: 'Writing guides for Video.js'
+title: 'Write guides for Video.js'
 description: 'A guide on writing documentation, and a test bed for all our MDX components'
 ---
 
@@ -11,17 +11,31 @@ import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import Aside from '@/components/Aside.astro';
 
-## 1. Create a guide in the correct content folder
+What is a guide? In this context, it's a document in the docs that's not an API reference. For API references, see <DocsLink slug="reference/write-references">Write reference pages</DocsLink>.
 
-First, read and understand [Diátaxis](https://diataxis.fr/).
+<Aside type="tip">
+Oh hey by the way. A lot of this knowledge is encoded in the `docs-guide` Claude skill. You should still read it, but, now your LLM can help you along the way, too.
+</Aside>
 
-Next, know that our [MDX](https://mdxjs.com) guides are separated into two categories:
-1. How-to guides: Focused on achieving a specific outcome. Place these in `src/content/docs/how-to/[slug].mdx`
-2. Concept guides: Focused on understanding a topic. Place these in `src/content/docs/concepts/[slug].mdx`
+## 1. Understand our documentation structure
 
-(You might also notice that we've written some `src/content/docs/reference` guides, but soon those will be auto-generated from source code.)
+First, read and understand [Diátaxis](https://diataxis.fr/). We organize documentation into three modes:
 
-## 2. Add that guide to the sidebar
+1. **Concept pages** (`src/content/docs/concepts/`): Explain how and why things work. General understanding, spanning multiple APIs, can be applied to multiple outcomes. As we write guides, what are things we need people to understand in multiple places and don’t want to duplicate the content?
+2. **How-to guides** (`src/content/docs/how-to/`): Spans multiple concepts in order to achieve a specific outcome with step-by-step instructions. 
+3. **Reference pages** (`src/content/docs/reference/`): Component API documentation. These are scaffolded using the `api-reference` skill and the api-docs-builder. Again, see <DocsLink slug="reference/write-references">Write reference pages</DocsLink> for details.
+
+When in doubt, you probably want a concept page.
+
+## 2. Create a guide in the correct content folder
+
+Our guides are [MDX](https://mdxjs.com) files placed in the matching directory:
+
+- Concept pages go in `src/content/docs/concepts/[slug].mdx`
+- How-to guides go in `src/content/docs/how-to/[slug].mdx`
+
+## 3. Add that guide to the sidebar
+
 Next, open `src/docs.config.ts` and add your guide to the appropriate section of the sidebar. For example, to add a how-to guide on "Writing guides", you would add:
 
 ```ts
@@ -42,7 +56,21 @@ If you want the guide to only apply to specific frameworks or styles, you can sp
 }
 ```
 
-## 3. Understand MDX and our components
+## 4. Follow our writing style
+
+Keep documentation clear, human, and useful. Here are the key rules:
+
+- **Sentence case for headings** — capitalize only the first word and proper nouns (e.g., "Choose your JS framework", not "Choose Your JS Framework")
+- **Active voice, second person** — speak directly to the reader with "you"
+- **Collaborative pronouns** — use "we," "us," and "our" when talking about the project or team
+- **Avoid gerunds in headings** — prefer "Write good headings" over "Writing good headings"
+- **Oxford comma** — always use the serial comma in lists of three or more
+- **Gender-neutral language** — use "they" or "their" instead of "his" or "her"
+- **Cut filler words** — remove "In order to," "basically," "simply," "might," "could," "perhaps"
+- **Be precise** — make claims as strong as possible without becoming false; avoid vague qualifiers like "somewhat" or "fairly"
+- **Read it out loud** — if it sounds awkward, rewrite it
+
+## 5. Understand MDX and our components
 
 ### `<FrameworkCase>` and `<StyleCase>`
 First, understand that the guide you write will be rendered for every framework / style combination (e.g., HTML + CSS, React + CSS) unless you restrict it in the sidebar config as shown above.
@@ -69,8 +97,8 @@ Use the `<StyleCase>` component to show content only for specific styling approa
 ```mdx
 <StyleCase styles={["css"]}>
   CSS-only content
-</StyleCase>  
-``` 
+</StyleCase>
+```
 
 
 <StyleCase styles={["css"]}>
@@ -299,7 +327,7 @@ The elements have a gross Tailwind class that manages their margins which makes 
 
 ### Tabs
 
-Use `<TabsRoot>`, `<TabsList>`, `<Tab>`, and `<TabsPanel>` to show multiple items side-by-side. 
+Use `<TabsRoot>`, `<TabsList>`, `<Tab>`, and `<TabsPanel>` to show multiple items side-by-side.
 
 <Aside type="note">
 - Set `initial` on your first `<Tab>` and first `<TabsPanel>` to make them active by default

@@ -45,7 +45,7 @@ What happens if we don't solve this?
 // Minimal working example
 \`\`\`
 
-### HTML/Lit
+### HTML
 
 \`\`\`ts
 // Same concept, different platform
@@ -217,9 +217,9 @@ Usage examples for Feature Name.
 // React-specific patterns
 \`\`\`
 
-### HTML/Lit
+### HTML
 
 \`\`\`ts
-// Lit-specific patterns
+// HTML/Web Component patterns
 \`\`\`
 ```

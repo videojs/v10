@@ -1,0 +1,35 @@
+.react-poster-basic {
+  position: relative;
+}
+
+.react-poster-basic video {
+  width: 100%;
+}
+
+.react-poster-basic__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+
+.react-poster-basic__poster:not([data-visible]) {
+  opacity: 0;
+}
+
+.react-poster-basic__button {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding-block: 8px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  color: black;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 9999px;
+  padding-inline: 16px;
+  cursor: pointer;
+}

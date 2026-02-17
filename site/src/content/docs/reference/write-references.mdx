@@ -1,0 +1,205 @@
+---
+title: Write reference pages
+description: How to create component API reference pages for the Video.js documentation site
+---
+
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+This guide covers how to create component reference pages — the API documentation under `reference/` in the docs sidebar.
+
+<Aside type="tip">
+Reference pages are scaffolded with the `api-reference` Claude skill. Run `/api-reference play-button` to generate a reference page interactively.
+</Aside>
+
+## Prerequisites
+
+Before creating a reference page, the component must exist in:
+
+- **Core**: `packages/core/src/core/ui/{name}/{name}-core.ts` (props, state, behavior)
+- **HTML**: `packages/html/src/ui/{name}/` (custom element)
+- **React**: `packages/react/src/ui/{name}/` (React component)
+
+The component should be feature-complete enough that its props, state, and data attributes are stable.
+
+## Generate the API reference JSON
+
+The api-docs-builder extracts type information from TypeScript sources and outputs JSON files that the `<ApiReference />` component renders as tables.
+
+```bash
+pnpm -F site api-docs
+```
+
+This generates JSON to `site/src/content/generated-api-reference/{name}.json`. These files are gitignored and regenerated automatically on `pnpm dev` and `pnpm build`.
+
+### Builder naming conventions
+
+The builder relies on file naming conventions to discover components:
+
+| Convention | Pattern | Example |
+|------------|---------|---------|
+| Core file | `{name}-core.ts` | `play-button-core.ts` |
+| Data attrs | `{name}-data-attrs.ts` | `play-button-data-attrs.ts` |
+| HTML element | `{name}-element.ts` | `play-button-element.ts` |
+| React component | `packages/react/src/ui/{name}/` | `packages/react/src/ui/play-button/` |
+| Multi-part detection | `index.parts.ts` | `packages/react/src/ui/slider/index.parts.ts` |
+
+If the builder output is missing or incomplete, check that your files match these conventions. See `.claude/skills/api-reference/references/builder-conventions.md` for the full list.
+
+## Create demo files
+
+Each reference page needs at least a BasicUsage demo in both HTML and React.
+
+### HTML demo (4 files)
+
+```
+src/components/docs/demos/{name}/html/css/
+├── BasicUsage.astro    # Wrapper: imports CSS, renders HTML, bundles script
+├── BasicUsage.html     # Markup only (no <style> or <script>)
+├── BasicUsage.css      # Styles
+└── BasicUsage.ts       # Side-effect imports for custom element registration
+```
+
+The `.astro` wrapper ties everything together:
+
+```astro
+---
+import HtmlDemo from '@/components/docs/demos/HtmlDemo.astro';
+import html from './BasicUsage.html?raw';
+import './BasicUsage.css';
+---
+<HtmlDemo html={html} />
+<script>
+  import './BasicUsage.ts';
+</script>
+```
+
+### React demo (2 files)
+
+```
+src/components/docs/demos/{name}/react/css/
+├── BasicUsage.tsx      # React component
+└── BasicUsage.css      # Styles
+```
+
+### BEM naming
+
+Use BEM class names for CSS scoping. The block name follows the pattern `{framework}-{component}-{variant}`:
+
+```css
+/* HTML demo */
+.html-play-button-basic__button { /* ... */ }
+
+/* React demo */
+.react-play-button-basic__button { /* ... */ }
+```
+
+React and HTML demos for the same variant should use matching BEM structures.
+
+### Video and poster sources
+
+All demos use these URLs:
+
+```
+Video: https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4
+Poster: https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/thumbnail.jpg
+```
+
+All demo videos use `autoplay muted playsinline loop` (React: `autoPlay muted playsInline loop`).
+
+## Create the MDX reference page
+
+Create `site/src/content/docs/reference/{name}.mdx` with this structure:
+
+### Frontmatter
+
+```yaml
+---
+title: PlayButton
+frameworkTitle:
+  html: media-play-button
+description: A button component for playing and pausing media playback
+---
+```
+
+Use `frameworkTitle` to show the HTML custom element tag name when the HTML framework is selected.
+
+### Imports
+
+```tsx
+import ApiReference from "@/components/docs/api-reference/ApiReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/{name}/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/{name}/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/{name}/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/{name}/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/{name}/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/{name}/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/{name}/html/css/BasicUsage.ts?raw";
+```
+
+#### Import naming conventions
+
+| What | Naming pattern | Example |
+|------|---------------|---------|
+| React demo component | `{Variant}DemoReact` | `BasicUsageDemoReact` |
+| React source (TSX) | `{variant}ReactTsx` | `basicUsageReactTsx` |
+| React source (CSS) | `{variant}ReactCss` | `basicUsageReactCss` |
+| HTML demo component | `{Variant}DemoHtml` | `BasicUsageDemoHtml` |
+| HTML source (HTML) | `{variant}Html` | `basicUsageHtml` |
+| HTML source (CSS) | `{variant}HtmlCss` | `basicUsageHtmlCss` |
+| HTML source (TS) | `{variant}HtmlTs` | `basicUsageHtmlTs` |
+
+### Page sections
+
+After imports, the page follows this order:
+
+1. **Anatomy** — show the component markup for each framework using `<FrameworkCase>`
+2. **Prose sections** (optional, as needed):
+   - **Behavior** — state transitions, timing, interaction logic
+   - **Styling** — data attribute CSS selectors
+   - **Accessibility** — ARIA attributes, keyboard interactions
+   - Other sections as appropriate
+3. **Examples** — at least BasicUsage, wrapped in `<Demo>` with `<FrameworkCase>`
+4. **`<ApiReference />`** — renders the generated JSON as props, state, and data attribute tables
+
+```mdx
+<ApiReference component="PlayButton" />
+```
+
+The component automatically handles single-part and multi-part layouts.
+
+## Add to the sidebar
+
+Open `site/src/docs.config.ts` and add your page alphabetically within the Components section:
+
+```ts
+{
+  sidebarLabel: 'Components',
+  contents: [
+    // sorted alphabetically
+    { slug: 'reference/play-button' },
+    { slug: 'reference/your-component' }, // add here
+  ],
+},
+```
+
+## Verify
+
+1. Run `pnpm dev` from the repo root
+2. Navigate to your reference page in both HTML and React framework modes
+3. Confirm the anatomy, demos, and API reference tables render correctly
+4. Check that the page appears in the sidebar
+
+## Examples
+
+For reference, look at existing pages:
+
+- <DocsLink slug="reference/play-button">PlayButton</DocsLink> — single-part, interactive
+- <DocsLink slug="reference/controls">Controls</DocsLink> — behavior-heavy (auto-hide)
+- <DocsLink slug="reference/time">Time</DocsLink> — multi-part, formatting

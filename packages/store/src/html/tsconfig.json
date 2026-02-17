@@ -1,0 +1,10 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "declarationDir": "../../types/html"
+  },
+  "references": [{ "path": "../.." }, { "path": "../../../element" }],
+  "include": ["./**/*.ts"]
+}

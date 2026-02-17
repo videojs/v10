@@ -4,7 +4,7 @@ description: >-
   Build accessible, headless UI components with modern architecture patterns.
   Use when creating component libraries, design systems, or reusable UI primitives.
   Handles compound components, state management, accessibility, styling hooks, and API design.
-  Includes Lit (controllers, ReactiveElement) and React (hooks, context) patterns.
+  Includes HTML (controllers, ReactiveElement) and React (hooks, context) patterns.
   Triggers: "create component", "component pattern", "compound component", "headless component".
 ---
 
@@ -18,7 +18,7 @@ Build accessible, headless UI components using proven patterns from Base UI, Rad
 - [Ark UI](https://ark-ui.com/) — Cross-framework implementation
 - [Zag.js](https://zagjs.com/) — State machines for UI components
 
-**Framework-specific:** [react.md](references/react.md) | [lit.md](references/lit.md)
+**Framework-specific:** [react.md](references/react.md) | [html.md](references/html.md)
 
 ---
 
@@ -173,8 +173,8 @@ See [props.md](references/props.md) for naming conventions.
 
 | File                                            | Contents                             |
 | ----------------------------------------------- | ------------------------------------ |
-| [lit.md](references/lit.md)                     | Lit controllers, mixins, context     |
-| [lit-fundamentals.md](references/lit-fundamentals.md) | ReactiveElement lifecycle, properties, styling |
+| [html.md](references/html.md)                   | HTML controllers, mixins, context    |
+| [videojs-element.md](references/videojs-element.md) | ReactiveElement lifecycle, properties, controllers |
 | [react.md](references/react.md)                 | React hooks, context, refs           |
 | [props.md](references/props.md)                 | Prop naming, conventions, defaults   |
 | [styling.md](references/styling.md)             | Data attributes, CSS variables       |
@@ -215,4 +215,5 @@ For structured component reviews, load the review workflow:
 | ---------------------- | ------------ |
 | Accessibility patterns | `aria` skill |
 | API design principles  | `api` skill  |
-| Documentation patterns | `docs` skill |
+| Documentation patterns | `docs` skill         |
+| Component API reference  | `api-reference` skill |

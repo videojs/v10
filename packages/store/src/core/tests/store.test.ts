@@ -70,6 +70,24 @@ describe('store', () => {
       });
     });
 
+    it('exposes $state container matching store.state', () => {
+      const store = createStore<MockMedia>()(audioSlice);
+      const media = new MockMedia();
+      store.attach(media);
+
+      expect(store.$state.current).toBe(store.state);
+
+      const callback = vi.fn();
+      store.$state.subscribe(callback);
+
+      media.volume = 0.5;
+      media.dispatchEvent(new Event('volumechange'));
+      flush();
+
+      expect(callback).toHaveBeenCalled();
+      expect(store.$state.current.volume).toBe(0.5);
+    });
+
     it('calls onSetup', () => {
       const onSetup = vi.fn();
       const store = createStore<MockMedia>()(audioSlice, { onSetup });

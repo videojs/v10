@@ -1,12 +1,12 @@
-.time-current-duration {
+.html-time-current-duration {
   position: relative;
 }
 
-.time-current-duration video {
+.html-time-current-duration video {
   width: 100%;
 }
 
-.time-current-duration__group {
+.html-time-current-duration__group {
   display: flex;
   align-items: center;
   gap: 4px;

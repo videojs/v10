@@ -1,12 +1,12 @@
-.mute-button-basic {
+.react-mute-button-basic {
   position: relative;
 }
 
-.mute-button-basic video {
+.react-mute-button-basic video {
   width: 100%;
 }
 
-.mute-button-basic__button {
+.react-mute-button-basic__button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;

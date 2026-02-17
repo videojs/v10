@@ -1,19 +1,22 @@
 # Docs Review Workflow
 
-Review documentation against Video.js standards.
+Review documentation for writing quality, structure, and code example correctness.
 
 ## Process
 
 ```
-┌─────────────────────────────────────────────┐
-│              Coordinator                     │
-└──────────────────┬──────────────────────────┘
-     ┌─────────────┼─────────────┬─────────────┐
-     ▼             ▼             ▼             ▼
-┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐
-│  Tone   │  │Structure│  │  Code   │  │   AI    │
-└─────────┘  └─────────┘  └─────────┘  └─────────┘
-     └─────────────┴─────────────┴─────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      Coordinator                            │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+        ┌─────────────┼─────────────┐
+        ▼             ▼             ▼
+   ┌─────────┐  ┌─────────┐  ┌─────────┐
+   │  Voice  │  │Structure│  │  Code   │
+   └─────────┘  └─────────┘  └─────────┘
+        │             │             │
+        └─────────────┴─────────────┘
+                      │
                       ▼
               ┌─────────────┐
               │   Merge     │
@@ -22,35 +25,36 @@ Review documentation against Video.js standards.
 
 ### 1. Gather Context
 
-Load the file(s) to review.
+- Single page: `site/src/content/docs/concepts/foo.mdx`
+- Package README: `packages/core/README.md`
+- PR diff: changed documentation files
 
 ### 2. Fork Reviews
 
-Spawn 4 sub-agents. See [agents.md](agents.md) for prompts.
+Spawn 3 sub-agents. See [agents.md](agents.md) for prompts.
 
-| Agent         | Reviews                           | Loads                                   |
-| ------------- | --------------------------------- | --------------------------------------- |
-| **Tone**      | Directness, hedging, active voice | `../examples/tone-samples.md`           |
-| **Structure** | Doc type, progressive disclosure  | `../patterns/progressive-disclosure.md` |
-| **Code**      | Imports, runnable, props tables   | `../patterns/code-examples.md`          |
-| **AI**        | Self-contained, clean markdown    | `../patterns/ai-readiness.md`           |
+| Agent     | Focus                               | References                      |
+| --------- | ----------------------------------- | ------------------------------- |
+| Voice     | Tone, clarity, filler, hedging      | `references/writing-style.md`   |
+| Structure | Doc type, template, layout, linking | SKILL.md + relevant template    |
+| Code      | Examples, imports, output, markdown | `patterns/code-examples.md`     |
 
 ### 3. Merge Report
 
-Combine findings using [merge-template.md](merge-template.md).
+Combine findings using template in [templates.md](templates.md).
 
-## Quick Review (No Fork)
+## Quick Review
 
-For fast single-agent reviews:
+For fast reviews without forking, use [checklist.md](checklist.md).
 
-- [ ] No filler words (basically, simply, just)
-- [ ] No hedging (might, could, perhaps)
-- [ ] Active voice
-- [ ] Code before explanation
-- [ ] All imports shown
-- [ ] Examples are runnable
-- [ ] Has See Also section
-- [ ] Matches doc type template
+## Severity Levels
+
+| Level      | Meaning                        | Action     |
+| ---------- | ------------------------------ | ---------- |
+| `CRITICAL` | Broken example, wrong info     | Must fix   |
+| `MAJOR`    | Missing section, unclear prose | Should fix |
+| `MINOR`    | Suboptimal wording or layout   | Consider   |
+| `NIT`      | Polish, phrasing preference    | Optional   |
 
 ## Issue Format
 
@@ -58,32 +62,21 @@ For fast single-agent reviews:
 ### [SEVERITY] Issue title
 
 **What:** Brief description
-**Where:** `path/to/file.md` line 42
+**Where:** `path/to/file.mdx:42`
 **Why:** Impact on readers
 **Fix:** Concrete suggestion
 
-<!-- Before -->
+// Before
+problematic text or code
 
-In order to create a player...
-
-<!-- After -->
-
-Create a player:
+// After
+improved text or code
 ```
-
-## Severity Levels
-
-| Level      | Use for                                          |
-| ---------- | ------------------------------------------------ |
-| `CRITICAL` | Blocks understanding — wrong API, broken example |
-| `MAJOR`    | Hurts quality — wall of text, missing See Also   |
-| `MINOR`    | Polish — filler words, passive voice             |
-| `NIT`      | Suggestions — could be shorter                   |
 
 ## References
 
-| File                                   | Content                         |
-| -------------------------------------- | ------------------------------- |
-| [agents.md](agents.md)                 | Full prompts for each sub-agent |
-| [issue-format.md](issue-format.md)     | Issue format with examples      |
-| [merge-template.md](merge-template.md) | Final report template           |
+| File                         | Contents                      |
+| ---------------------------- | ----------------------------- |
+| [agents.md](agents.md)       | Sub-agent prompts             |
+| [templates.md](templates.md) | Issue format, report template |
+| [checklist.md](checklist.md) | Quick single-agent checklist  |

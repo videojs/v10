@@ -57,6 +57,10 @@ describe('formatTime', () => {
 });
 
 describe('formatTimeAsPhrase', () => {
+  it('formats zero seconds', () => {
+    expect(formatTimeAsPhrase(0)).toBe('0 seconds');
+  });
+
   it('formats seconds only', () => {
     expect(formatTimeAsPhrase(1)).toBe('1 second');
     expect(formatTimeAsPhrase(30)).toBe('30 seconds');

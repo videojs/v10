@@ -21,6 +21,17 @@ import basicUsageHtml from "@/components/docs/demos/mute-button/html/css/BasicUs
 import basicUsageHtmlCss from "@/components/docs/demos/mute-button/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/mute-button/html/css/BasicUsage.ts?raw";
 
+{/* React demos — Volume Levels */}
+import VolumeLevelsDemoReact from "@/components/docs/demos/mute-button/react/css/VolumeLevels";
+import volumeLevelsReactTsx from "@/components/docs/demos/mute-button/react/css/VolumeLevels.tsx?raw";
+import volumeLevelsReactCss from "@/components/docs/demos/mute-button/react/css/VolumeLevels.css?raw";
+
+{/* HTML demos — Volume Levels */}
+import VolumeLevelsDemoHtml from "@/components/docs/demos/mute-button/html/css/VolumeLevels.astro";
+import volumeLevelsHtml from "@/components/docs/demos/mute-button/html/css/VolumeLevels.html?raw";
+import volumeLevelsHtmlCss from "@/components/docs/demos/mute-button/html/css/VolumeLevels.css?raw";
+import volumeLevelsHtmlTs from "@/components/docs/demos/mute-button/html/css/VolumeLevels.ts?raw";
+
 ## Anatomy
 
 <FrameworkCase frameworks={["react"]}>
@@ -34,6 +45,32 @@ import basicUsageHtmlTs from "@/components/docs/demos/mute-button/html/css/Basic
 <media-mute-button></media-mute-button>
 ```
 </FrameworkCase>
+
+## Behavior
+
+Toggles mute on and off, and exposes a derived `volumeLevel` based on the current volume and mute state.
+
+## Styling
+
+Style the button based on muted state:
+
+```css
+media-mute-button[data-muted] .icon-muted { display: inline; }
+media-mute-button:not([data-muted]) .icon-unmuted { display: inline; }
+```
+
+Use `data-volume-level` for multi-level icon switching:
+
+```css
+media-mute-button[data-volume-level="off"] .icon-off { display: inline; }
+media-mute-button[data-volume-level="low"] .icon-low { display: inline; }
+media-mute-button[data-volume-level="medium"] .icon-medium { display: inline; }
+media-mute-button[data-volume-level="high"] .icon-high { display: inline; }
+```
+
+## Accessibility
+
+Renders a `<button>` with an automatic `aria-label`: "Unmute" when muted, "Mute" when unmuted. Override with the `label` prop. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
 
 ## Examples
 
@@ -58,6 +95,31 @@ import basicUsageHtmlTs from "@/components/docs/demos/mute-button/html/css/Basic
       { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
     ]}>
       <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+### Volume Levels
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: volumeLevelsReactTsx, lang: "tsx" },
+      { title: "App.css", code: volumeLevelsReactCss, lang: "css" },
+    ]}>
+      <VolumeLevelsDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: volumeLevelsHtml, lang: "html" },
+      { title: "index.css", code: volumeLevelsHtmlCss, lang: "css" },
+      { title: "index.ts", code: volumeLevelsHtmlTs, lang: "ts" },
+    ]}>
+      <VolumeLevelsDemoHtml />
     </Demo>
   </StyleCase>
 </FrameworkCase>

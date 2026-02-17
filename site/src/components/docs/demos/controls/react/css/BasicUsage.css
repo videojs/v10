@@ -1,0 +1,59 @@
+.react-controls-basic {
+  position: relative;
+}
+
+.react-controls-basic video {
+  width: 100%;
+}
+
+.react-controls-basic__root {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 12px;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.45), transparent 45%);
+  transition: opacity 0.25s;
+}
+
+.react-controls-basic__root:not([data-visible]) {
+  opacity: 0;
+}
+
+.react-controls-basic__bottom {
+  pointer-events: auto;
+}
+
+.react-controls-basic__time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-block: 8px;
+  padding-inline: 16px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  color: black;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 14px;
+}
+
+.react-controls-basic__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.react-controls-basic__button {
+  padding-block: 8px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  color: black;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 9999px;
+  padding-inline: 16px;
+  font-size: 14px;
+  cursor: pointer;
+}

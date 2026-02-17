@@ -1,4 +1,3 @@
-import type { PropertyValues } from '@lit/reactive-element';
 import { FullscreenButtonCore, FullscreenButtonDataAttrs } from '@videojs/core';
 import {
   applyElementProps,
@@ -7,6 +6,7 @@ import {
   logMissingFeature,
   selectFullscreen,
 } from '@videojs/core/dom';
+import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
@@ -18,7 +18,7 @@ export class FullscreenButtonElement extends MediaElement {
   static override properties = {
     label: { type: String },
     disabled: { type: Boolean },
-  };
+  } satisfies PropertyDeclarationMap<keyof FullscreenButtonCore.Props>;
 
   label = FullscreenButtonCore.defaultProps.label;
   disabled = FullscreenButtonCore.defaultProps.disabled;
