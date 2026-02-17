@@ -1,7 +1,7 @@
 // SPF Segment Loading POC Test
 // http://localhost:5173/spf-segment-loading/
 
-import { createPlaybackEngine } from '@videojs/spf/dom/playback-engine';
+import { createPlaybackEngine } from '@videojs/spf/playback-engine';
 
 const video = document.getElementById('video') as HTMLVideoElement;
 const logsDiv = document.getElementById('logs') as HTMLDivElement;
@@ -23,8 +23,8 @@ function inspectState() {
     return;
   }
 
-  const state = engine.state.current;
-  const owners = engine.owners.current;
+  const state = engine.state.get();
+  const owners = engine.owners.get();
 
   const videoBufferRanges = owners.videoBuffer
     ? Array.from(
@@ -117,10 +117,7 @@ video.addEventListener('waiting', () => log('📺 Video: waiting', 'warning'));
 video.addEventListener('error', () => log(`📺 Video: error - ${video.error?.message}`, 'error'));
 
 // Mux test asset - short CMAF stream
-// Mad Max Fury Road Trailer (short, subtitles)
-const TEST_STREAM = 'https://stream.mux.com/JX01bG8eB4uaoV3OpDuK602rBfvdSgrMObjwuUOBn4JrQ.m3u8';
-// Mux Blue Smoke (extra short, simple)
-// const TEST_STREAM = 'https://stream.mux.com/cmg02Moxu5B7WORo2MElg2U02p2ZyMP7Hb01d80001gHDgPE.m3u8';
+const TEST_STREAM = 'https://stream.mux.com/cmg02Moxu5B7WORo2MElg2U02p2ZyMP7Hb01d80001gHDgPE.m3u8';
 
 log('=== SPF Segment Loading POC Test ===');
 log(`Test stream: ${TEST_STREAM}`);
@@ -138,74 +135,36 @@ try {
 
   // Expose for debugging in DevTools console
   (window as any).engine = engine;
-  (window as any).state = () => engine.state.current;
-  (window as any).owners = () => engine.owners.current;
+  (window as any).state = engine.state.get;
+  (window as any).owners = engine.owners.get;
 
   log('Engine exposed as window.engine');
   log('Access state: window.state()');
   log('Access owners: window.owners()');
 
-  // Subscribe to state changes for detailed logging (track previous state to avoid duplicate logs)
-  const previousState = {
-    hasPresentation: false,
-    selectedVideoTrackId: undefined as string | undefined,
-    selectedAudioTrackId: undefined as string | undefined,
-    selectedTextTrackId: undefined as string | undefined,
-  };
-
+  // Subscribe to state changes for detailed logging
   engine.state.subscribe((state) => {
-    // Only log when presentation first becomes available
-    if (state.presentation && !previousState.hasPresentation) {
+    if (state.presentation) {
       log('Presentation resolved');
-      previousState.hasPresentation = true;
-
-      // Auto-select first text track if available (smoke test text track support)
-      if (!state.selectedTextTrackId && state.presentation.selectionSets) {
-        const textSet = state.presentation.selectionSets.find((s) => s.type === 'text');
-        const firstTextTrack = textSet?.switchingSets?.[0]?.tracks?.[0];
-        if (firstTextTrack) {
-          log(`Auto-selecting text track: ${firstTextTrack.id}`);
-          engine.state.patch({ selectedTextTrackId: firstTextTrack.id });
-        }
-      }
     }
-
-    // Only log when track selection changes
-    if (state.selectedVideoTrackId && state.selectedVideoTrackId !== previousState.selectedVideoTrackId) {
-      log(`Video track selected: ${state.selectedVideoTrackId}`);
-      previousState.selectedVideoTrackId = state.selectedVideoTrackId;
+    if (state.selectedVideoTrackId) {
+      log('Video track selected');
     }
-    if (state.selectedAudioTrackId && state.selectedAudioTrackId !== previousState.selectedAudioTrackId) {
-      log(`Audio track selected: ${state.selectedAudioTrackId}`);
-      previousState.selectedAudioTrackId = state.selectedAudioTrackId;
-    }
-    if (state.selectedTextTrackId && state.selectedTextTrackId !== previousState.selectedTextTrackId) {
-      log(`Text track selected: ${state.selectedTextTrackId}`, 'success');
-      previousState.selectedTextTrackId = state.selectedTextTrackId;
+    if (state.selectedAudioTrackId) {
+      log('Audio track selected');
     }
   });
 
-  // Subscribe to owners changes (track previous owners to avoid duplicate logs)
-  const previousOwners = {
-    hasMediaSource: false,
-    hasVideoBuffer: false,
-    hasAudioBuffer: false,
-  };
-
+  // Subscribe to owners changes
   engine.owners.subscribe((owners) => {
-    // Only log when MediaSource first becomes available
-    if (owners.mediaSource && !previousOwners.hasMediaSource) {
+    if (owners.mediaSource) {
       log(`MediaSource created: ${owners.mediaSource.readyState}`, 'success');
-      previousOwners.hasMediaSource = true;
     }
-    // Only log when SourceBuffers first become available
-    if (owners.videoBuffer && !previousOwners.hasVideoBuffer) {
+    if (owners.videoBuffer) {
       log('Video SourceBuffer created', 'success');
-      previousOwners.hasVideoBuffer = true;
     }
-    if (owners.audioBuffer && !previousOwners.hasAudioBuffer) {
+    if (owners.audioBuffer) {
       log('Audio SourceBuffer created', 'success');
-      previousOwners.hasAudioBuffer = true;
     }
   });
 
