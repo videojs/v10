@@ -38,8 +38,5 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-turbo-
 
-      - name: Build packages
-        run: pnpm build:packages
-
       - name: Run website tests
         run: pnpm --filter site test
