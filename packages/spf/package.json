@@ -14,10 +14,12 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "development": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./playback-engine": {
       "types": "./dist/playback-engine.d.ts",
+      "development": "./dist/playback-engine.js",
       "default": "./dist/playback-engine.js"
     }
   },
