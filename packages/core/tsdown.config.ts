@@ -26,8 +26,9 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   },
   dts: {
     build: true,
-    // Needed to preserve the MediaApiMixin return types.
-    tsconfig: 'src/dom/tsconfig.json',
+    // Unified tsconfig covering both core and dom sources.
+    // Needs DOM libs to preserve MediaApiMixin return types.
+    tsconfig: 'tsconfig.dts.json',
   },
 });
 
