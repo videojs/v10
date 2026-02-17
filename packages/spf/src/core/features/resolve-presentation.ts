@@ -122,17 +122,20 @@ export function resolvePresentation({
 }): () => void {
   // This is effectively a very simple finite state model. We can formalize this if needed.
   let resolving = false;
+  let abortController: AbortController | null = null;
 
-  return combineLatest([state, events]).subscribe(async ([currentState, event]) => {
+  const cleanup = combineLatest([state, events]).subscribe(async ([currentState, event]) => {
     if (!canResolve(currentState) || !shouldResolve(currentState, event) || resolving) return;
 
     try {
       // This along with the resolving finite state (or more complex) could be pulled into its own abstraction.
       // Set flag before async work
       resolving = true;
+      abortController = new AbortController();
+
       const { presentation } = currentState;
       // Fetch and parse playlist
-      const response = await fetchResolvable(presentation);
+      const response = await fetchResolvable(presentation, { signal: abortController.signal });
       const text = await getResponseText(response);
       const parsed = parseMultivariantPlaylist(text, presentation);
 
@@ -140,9 +143,22 @@ export function resolvePresentation({
       state.patch({
         presentation: parsed,
       });
+    } catch (error) {
+      // Ignore AbortError - this is expected when cleanup happens
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
+      throw error;
     } finally {
       // Always clear flag
       resolving = false;
+      abortController = null;
     }
   });
+
+  // Return cleanup function that aborts pending fetches
+  return () => {
+    abortController?.abort();
+    cleanup();
+  };
 }
