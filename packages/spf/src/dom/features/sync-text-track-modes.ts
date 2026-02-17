@@ -26,6 +26,28 @@ export function canSyncTextTrackModes(owners: TextTrackModeOwners): boolean {
 }
 
 /**
+ * Text track mode sync task (module-level, pure).
+ * Sets track element modes based on selection.
+ */
+const syncTextTrackModesTask = async (
+  { currentState, currentOwners }: { currentState: TextTrackModeState; currentOwners: TextTrackModeOwners },
+  _context: {}
+): Promise<void> => {
+  const selectedId = currentState.selectedTextTrackId;
+
+  // Update all track element modes
+  for (const [trackId, trackElement] of currentOwners.textTracks!) {
+    if (trackId === selectedId) {
+      // Selected track: show it
+      trackElement.track.mode = 'showing';
+    } else {
+      // Other tracks: hide them (but keep available in menu)
+      trackElement.track.mode = 'hidden';
+    }
+  }
+};
+
+/**
  * Sync text track modes orchestration.
  *
  * Manages track element modes based on selectedTextTrackId:
@@ -46,21 +68,13 @@ export function syncTextTrackModes({
   state: WritableState<TextTrackModeState>;
   owners: WritableState<TextTrackModeOwners>;
 }): () => void {
-  return combineLatest([state, owners]).subscribe(([s, o]: [TextTrackModeState, TextTrackModeOwners]) => {
-    // Check orchestration conditions
-    if (!canSyncTextTrackModes(o)) return;
+  return combineLatest([state, owners]).subscribe(
+    async ([currentState, currentOwners]: [TextTrackModeState, TextTrackModeOwners]) => {
+      // Check orchestration conditions
+      if (!canSyncTextTrackModes(currentOwners)) return;
 
-    const selectedId = s.selectedTextTrackId;
-
-    // Update all track element modes
-    for (const [trackId, trackElement] of o.textTracks!) {
-      if (trackId === selectedId) {
-        // Selected track: show it
-        trackElement.track.mode = 'showing';
-      } else {
-        // Other tracks: hide them (but keep available in menu)
-        trackElement.track.mode = 'hidden';
-      }
+      // Execute task
+      await syncTextTrackModesTask({ currentState, currentOwners }, {});
     }
-  });
+  );
 }

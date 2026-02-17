@@ -93,6 +93,34 @@ function createTrackElement(track: PartiallyResolvedTextTrack): HTMLTrackElement
  * @example
  * const cleanup = setupTextTracks({ state, owners });
  */
+/**
+ * Setup text tracks task (module-level, pure).
+ * Creates track elements and returns them for cleanup tracking.
+ */
+const setupTextTracksTask = async (
+  { currentState, currentOwners }: { currentState: TextTrackState; currentOwners: TextTrackOwners },
+  context: { owners: WritableState<TextTrackOwners> }
+): Promise<HTMLTrackElement[]> => {
+  const textTracks = getTextTracks(currentState.presentation);
+  if (textTracks.length === 0) return [];
+
+  const trackMap = new Map<string, HTMLTrackElement>();
+  const createdElements: HTMLTrackElement[] = [];
+
+  // Create track elements for all text tracks
+  for (const track of textTracks) {
+    const trackElement = createTrackElement(track);
+    currentOwners.mediaElement!.appendChild(trackElement);
+    trackMap.set(track.id, trackElement);
+    createdElements.push(trackElement);
+  }
+
+  // Update owners with track element map
+  context.owners.patch({ textTracks: trackMap });
+
+  return createdElements;
+};
+
 export function setupTextTracks({
   state,
   owners,
@@ -103,30 +131,19 @@ export function setupTextTracks({
   let hasSetup = false;
   let createdTracks: HTMLTrackElement[] = [];
 
-  const unsubscribe = combineLatest([state, owners]).subscribe(([s, o]: [TextTrackState, TextTrackOwners]) => {
-    // Check orchestration conditions
-    if (hasSetup) return; // Only run once
-    if (!canSetupTextTracks(s, o) || !shouldSetupTextTracks(o)) return;
+  const unsubscribe = combineLatest([state, owners]).subscribe(
+    async ([currentState, currentOwners]: [TextTrackState, TextTrackOwners]) => {
+      // Check orchestration conditions
+      if (hasSetup) return; // Only run once
+      if (!canSetupTextTracks(currentState, currentOwners) || !shouldSetupTextTracks(currentOwners)) return;
 
-    // Mark as setup before doing any work to prevent re-entry
-    hasSetup = true;
+      // Mark as setup before doing any work to prevent re-entry
+      hasSetup = true;
 
-    const textTracks = getTextTracks(s.presentation);
-    if (textTracks.length === 0) return;
-
-    const trackMap = new Map<string, HTMLTrackElement>();
-
-    // Create track elements for all text tracks
-    for (const track of textTracks) {
-      const trackElement = createTrackElement(track);
-      o.mediaElement!.appendChild(trackElement);
-      trackMap.set(track.id, trackElement);
-      createdTracks.push(trackElement);
+      // Execute task and store created elements for cleanup
+      createdTracks = await setupTextTracksTask({ currentState, currentOwners }, { owners });
     }
-
-    // Update owners with track element map
-    owners.patch({ textTracks: trackMap });
-  });
+  );
 
   // Return cleanup function
   return () => {

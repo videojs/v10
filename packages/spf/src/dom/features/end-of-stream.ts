@@ -124,6 +124,27 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
 }
 
 /**
+ * End of stream task (module-level, pure).
+ * Calls MediaSource.endOfStream() to signal stream completion.
+ */
+const endOfStreamTask = async (
+  { currentOwners }: { currentOwners: EndOfStreamOwners },
+  _context: {}
+): Promise<void> => {
+  const { mediaSource } = currentOwners;
+
+  // Double-check MediaSource isn't already ended (in case of race)
+  if (mediaSource!.readyState === 'ended') {
+    return;
+  }
+
+  mediaSource!.endOfStream();
+
+  // Wait a frame to allow async state updates to flush
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+};
+
+/**
  * Call endOfStream when all segments are loaded.
  * This signals to the browser that the stream is complete.
  */
@@ -141,20 +162,8 @@ export function endOfStream({
       if (hasEnded) return; // Only call once
       if (!shouldEndStream(currentState, currentOwners)) return;
 
-      const { mediaSource } = currentOwners;
-
-      // Double-check MediaSource isn't already ended (in case of race)
-      if (mediaSource!.readyState === 'ended') {
-        hasEnded = true;
-        return;
-      }
-
       try {
-        mediaSource!.endOfStream();
-
-        // Wait a frame before setting flag to allow async state updates to flush
-        // This prevents race conditions where multiple triggers fire before the flag is checked
-        await new Promise((resolve) => requestAnimationFrame(resolve));
+        await endOfStreamTask({ currentOwners }, {});
         hasEnded = true;
       } catch (error) {
         console.error('Failed to call endOfStream:', error);
