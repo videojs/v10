@@ -12,6 +12,7 @@ import type { MediaTrackType } from './setup-sourcebuffer';
  */
 export interface SegmentLoadingState extends TrackSelectionState {
   presentation?: Presentation;
+  preload?: string;
 }
 
 /**
@@ -73,6 +74,7 @@ export function canLoadSegments(
  * Check if we should load segments.
  *
  * Only load if:
+ * - preload is 'auto' (metadata only loads track info, not segments)
  * - Track is resolved (has segments)
  * - Track has at least one segment
  * - SourceBuffer is not already buffered (simple check for POC)
@@ -83,6 +85,12 @@ export function shouldLoadSegments(
   type: MediaTrackType
 ): boolean {
   if (!canLoadSegments(state, owners, type)) {
+    return false;
+  }
+
+  // Only load segments with preload: 'auto'
+  // preload: 'metadata' should only resolve tracks, not load segments
+  if (state.preload !== 'auto') {
     return false;
   }
 
