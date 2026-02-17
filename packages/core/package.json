@@ -20,6 +20,11 @@
       "types": "./dist/dev/dom.d.ts",
       "development": "./dist/dev/dom.js",
       "default": "./dist/default/dom.js"
+    },
+    "./dom/media/hls": {
+      "types": "./dist/dev/dom/media/hls.d.ts",
+      "development": "./dist/dev/dom/media/hls.js",
+      "default": "./dist/default/dom/media/hls.js"
     }
   },
   "main": "dist/default/index.js",

@@ -9,6 +9,7 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   entry: {
     index: './src/core/index.ts',
     dom: './src/dom/index.ts',
+    'dom/media/hls': './src/dom/media/hls.ts',
   },
   platform: 'neutral',
   format: 'es',

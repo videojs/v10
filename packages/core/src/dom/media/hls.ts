@@ -1,14 +1,14 @@
-import type { MediaApiTarget } from '@videojs/core';
+import type { MediaApiProxyTarget } from '@videojs/core';
 import type { AnyConstructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
-import { VideoApi } from './api';
+import { VideoApiProxy } from './proxy';
 
 // This is used by the web component because it needs to extend HTMLElement!
 export const HlsMediaMixin = <T extends AnyConstructor<EventTarget>>(Super: T) => {
   class HlsMedia extends Super {
     engine = new Hls();
 
-    attach(target: MediaApiTarget): void {
+    attach(target: MediaApiProxyTarget): void {
       super.attach?.(target);
       this.engine.attachMedia(target as HTMLMediaElement);
     }
@@ -30,4 +30,4 @@ export const HlsMediaMixin = <T extends AnyConstructor<EventTarget>>(Super: T) =
 };
 
 // This is used by the React component.
-export class HlsMedia extends HlsMediaMixin(VideoApi) {}
+export class HlsMedia extends HlsMediaMixin(VideoApiProxy) {}

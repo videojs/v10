@@ -1,6 +1,6 @@
-import type { VideoApi } from '@videojs/core/dom';
+import type { MediaApiProxy } from '@videojs/core/dom';
 
-export function attachMediaElement<T extends HTMLVideoElement>(media: VideoApi): (element: T | null) => void {
+export function attachMediaElement<T extends HTMLVideoElement>(media: MediaApiProxy): (element: T | null) => void {
   return (element: T | null) => {
     if (element) {
       media.attach(element);

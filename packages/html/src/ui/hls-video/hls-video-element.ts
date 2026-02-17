@@ -1,4 +1,4 @@
-import { HlsMediaMixin } from '@videojs/core/dom';
+import { HlsMediaMixin } from '@videojs/core/dom/media/hls';
 import { CustomMediaMixin } from '../custom-media-element';
 
 export class HlsVideo extends HlsMediaMixin(CustomMediaMixin(HTMLElement, { tag: 'video' })) {

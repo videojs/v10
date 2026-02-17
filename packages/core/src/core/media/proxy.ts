@@ -1,6 +1,6 @@
 import type { AnyConstructor, Constructor } from '@videojs/utils/types';
 
-export interface MediaApiTarget extends EventTarget {}
+export interface MediaApiProxyTarget extends EventTarget {}
 
 type API_TYPE = 0 | 1 | 2;
 
@@ -9,7 +9,7 @@ const API_GET: API_TYPE = 1;
 const API_GET_SET: API_TYPE = 2;
 
 /**
- * This class provides a base for a uniform Media API across all media types.
+ * This mixin creates an API from the passed classes and proxies the methods and properties to the attached target.
  *
  * Many methods and properties will need no translation and are proxied directly to the attached target.
  * For example, the `play` and `pause` methods are proxied directly to the attached target.
@@ -19,58 +19,58 @@ const API_GET_SET: API_TYPE = 2;
  *
  * The `get`, `set`, and `call` methods can be overridden to provide catch-all custom behavior.
  */
-export const MediaApiMixin = <T extends EventTarget>(
+export const MediaApiProxyMixin = <T extends EventTarget>(
   ...MediaApiTargetClasses: AnyConstructor<T extends [unknown, ...unknown[]] ? T : any>[]
 ) => {
-  class MediaApi {
+  class MediaApiProxy {
     static extends(...MediaApiTargetClasses: AnyConstructor<T>[]) {
       const props = getClassProps<T>(...MediaApiTargetClasses);
 
       for (const [prop, type] of props.entries()) {
-        if (prop in MediaApi.prototype) continue;
+        if (prop in MediaApiProxy.prototype) continue;
 
         const config: PropertyDescriptor = {};
         if (type === API_METHOD) {
-          config.value = function (this: MediaApi, ...args: any[]) {
-            return this.call(prop as keyof MediaApiTarget, ...args);
+          config.value = function (this: MediaApiProxy, ...args: any[]) {
+            return this.call(prop as keyof MediaApiProxyTarget, ...args);
           };
         } else if (type === API_GET || type === API_GET_SET) {
-          config.get = function (this: MediaApi) {
-            return this.get(prop as keyof MediaApiTarget);
+          config.get = function (this: MediaApiProxy) {
+            return this.get(prop as keyof MediaApiProxyTarget);
           };
           if (type === API_GET_SET) {
-            config.set = function (this: MediaApi, val: any) {
-              this.set(prop as keyof MediaApiTarget, val);
+            config.set = function (this: MediaApiProxy, val: any) {
+              this.set(prop as keyof MediaApiProxyTarget, val);
             };
           }
         }
 
-        Object.defineProperty(MediaApi.prototype, prop, config);
+        Object.defineProperty(MediaApiProxy.prototype, prop, config);
       }
     }
 
-    #target: MediaApiTarget | null = null;
+    #target: MediaApiProxyTarget | null = null;
 
     get target() {
       return this.#target;
     }
 
-    get(prop: keyof MediaApiTarget): any {
+    get(prop: keyof MediaApiProxyTarget): any {
       return this.target?.[prop];
     }
 
-    set(prop: keyof MediaApiTarget, val: any): void {
+    set(prop: keyof MediaApiProxyTarget, val: any): void {
       if (this.target) {
         this.target[prop] = val;
       }
     }
 
-    call(prop: keyof MediaApiTarget, ...args: any[]): any {
+    call(prop: keyof MediaApiProxyTarget, ...args: any[]): any {
       const nativeFn = this.target?.[prop] as ((...args: any[]) => any) | undefined;
       return nativeFn?.apply(this.target, args);
     }
 
-    attach(target: MediaApiTarget): void {
+    attach(target: MediaApiProxyTarget): void {
       if (!target || this.#target === target) return;
       this.#target = target;
     }
@@ -81,9 +81,9 @@ export const MediaApiMixin = <T extends EventTarget>(
     }
   }
 
-  MediaApi.extends(...MediaApiTargetClasses);
+  MediaApiProxy.extends(...MediaApiTargetClasses);
 
-  return MediaApi as unknown as Constructor<T> & typeof MediaApi;
+  return MediaApiProxy as unknown as Constructor<T> & typeof MediaApiProxy;
 };
 
 /**

@@ -8,7 +8,15 @@ import type {
   MediaTimeState,
   MediaVolumeState,
 } from '../../core/media/state';
-import type { MediaApi } from './api';
+
+type WithOptional<Required, Full> = Required & Partial<Omit<Full, keyof Required>>;
+
+export type MediaBaseApi = {
+  play: () => Promise<void>;
+  paused: boolean;
+};
+
+export type MediaApi = WithOptional<MediaBaseApi, HTMLVideoElement>;
 
 export type Media = MediaApi | HTMLMediaElement | HTMLAudioElement | HTMLVideoElement | null;
 

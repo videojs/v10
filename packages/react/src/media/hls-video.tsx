@@ -1,4 +1,4 @@
-import { HlsMedia } from '@videojs/core/dom';
+import { HlsMedia } from '@videojs/core/dom/media/hls';
 import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
 import { forwardRef, useEffect, useMemo } from 'react';
 import { useMediaRegistration } from '../player/context';

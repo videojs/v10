@@ -17,6 +17,11 @@
       "types": "./dist/dev/index.d.ts",
       "development": "./dist/dev/index.js",
       "default": "./dist/default/index.js"
+    },
+    "./media/hls-video": {
+      "types": "./dist/dev/media/hls-video.d.ts",
+      "development": "./dist/dev/media/hls-video.js",
+      "default": "./dist/default/media/hls-video.js"
     }
   },
   "main": "dist/default/index.js",

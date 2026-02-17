@@ -8,6 +8,7 @@ const buildModes: BuildMode[] = ['dev', 'default'];
 const createConfig = (mode: BuildMode): UserConfig => ({
   entry: {
     index: './src/index.ts',
+    'media/hls-video': './src/media/hls-video.tsx',
   },
   platform: 'browser',
   format: 'es',

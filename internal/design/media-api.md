@@ -84,17 +84,12 @@ declare const MediaEvents = [
   'webkitpresentationmodechanged',
 ] as const;
 
-type MediaTarget = HTMLMediaElement | HTMLVideoElement | HTMLAudioElement;
+interface MediaBaseApi {
+  play(): Promise<void>;
+  paused: boolean;
+}
 
-type MediaTargetConstructor = Constructor<MediaTarget>;
-
-declare class Media extends EventTarget {
-  // Custom extensions (unified media API)
-  streamType: 'live' | 'on-demand';
-  liveEdgeStart: number;
-  videoRenditions: VideoRenditionList;
-  audioRenditions: AudioRenditionList;
-
+interface MediaFullApi {
   // Properties
   src: string;
   srcObject: MediaStream | MediaSource | Blob | null;
@@ -112,7 +107,6 @@ declare class Media extends EventTarget {
   defaultPlaybackRate: number;
   playbackRate: number;
   duration: number; // read only, NaN if unknown, Infinity for live
-  paused: boolean; // read only
   ended: boolean; // read only
   seeking: boolean; // read only
   seekable: TimeRanges; // read only
@@ -135,69 +129,57 @@ declare class Media extends EventTarget {
   removeAudioTrack(track: AudioTrack): void;
 
   // Methods
-  play(): Promise<void>;
   pause(): void;
   load(): void;
   canPlayType(type: string): 'probably' | 'maybe' | '';
   addTextTrack(kind: TextTrackKind, label?: string, language?: string): TextTrack;
   setMediaKeys(mediaKeys: MediaKeys | null): Promise<void>; // secure context
-
-  // Attach media target to the media instance
-  target: MediaTarget;
-  attach(target: MediaTarget): void;
-  detach(): void;
-
-  // Proxy handlers
-  get(prop: keyof MediaTarget): any;
-  set(prop: keyof MediaTarget, val: any): void;
-  call(prop: keyof MediaTarget, ...args: any[]): any;
 }
 
-// Implemented as a mixin
-export const MediaMixin = <E extends EventTarget, T extends MediaTargetConstructor>(
-  Super: Constructor<E>,
-  Target: T
-) => class Media extends (Super as Constructor<EventTarget>) {
+interface MediaApi extends MediaBaseApi, Partial<MediaFullApi> {}
+
+export interface MediaApiProxyTarget extends EventTarget {}
+
+// Proxy mixin that creates a MediaApi from the passed classes and proxies the methods and properties to the attached target.
+export const MediaApiProxyMixin = <T extends EventTarget>(
+  ...MediaApiTargetClasses: AnyConstructor<T extends [unknown, ...unknown[]] ? T : any>[]
+) => class MediaApiProxy {
   // Logic that proxies media API to the media target
   // ...
 
   // Attach media target to the media instance
-  target: MediaTarget;
-  attach(target: MediaTarget): void;
+  target: MediaApiProxyTarget;
+  attach(target: MediaApiProxyTarget): void;
   detach(): void;
 
   // Proxy handlers
-  get(prop: keyof MediaTarget): any;
-  set(prop: keyof MediaTarget, val: any): void;
-  call(prop: keyof MediaTarget, ...args: any[]): any;
+  get(prop: keyof MediaApiProxyTarget): any;
+  set(prop: keyof MediaApiProxyTarget, val: any): void;
+  call(prop: keyof MediaApiProxyTarget, ...args: any[]): any;
 }
 
-export class Media extends MediaMixin(EventTarget, HTMLMediaElement) {}
-export class Video extends MediaMixin(EventTarget, HTMLVideoElement) {}
-export class Audio extends MediaMixin(EventTarget, HTMLAudioElement) {}
+// Size optimized for the most common use case of proxying HTMLMediaElement.
+export class MediaApiProxy extends MediaApiProxyMixin<HTMLMediaElement>(HTMLMediaElement, EventTarget) {}
+export class VideoApiProxy extends MediaApiProxyMixin<HTMLVideoElement>(HTMLVideoElement, HTMLMediaElement, EventTarget) {}
+export class AudioApiProxy extends MediaApiProxyMixin<HTMLAudioElement>(HTMLAudioElement, HTMLMediaElement, EventTarget) {}
 ```
 
 ### Example of using the media API
 
 ```ts
+import type { MediaApiProxyTarget } from '@videojs/core';
+import type { AnyConstructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
-import { type MediaTarget, Video } from './media';
+import { VideoApiProxy } from './proxy';
 
-type Constructor<T = object> = new (...args: unknown[]) => T;
-
-interface HlsMediaBase {
-  attach?(target: MediaTarget): void;
-  detach?(): void;
-}
-
-// The mixin is used by the web component because it needs to extend HTMLElement!
-export const HlsMediaMixin = <T extends Constructor>(Super: T) => {
-  class HlsMedia extends (Super as Constructor<HlsMediaBase>) {
+// This is used by the web component because it needs to extend HTMLElement!
+export const HlsMediaMixin = <T extends AnyConstructor<EventTarget>>(Super: T) => {
+  class HlsMedia extends Super {
     engine = new Hls();
 
-    attach(target: MediaTarget): void {
+    attach(target: MediaApiProxyTarget): void {
       super.attach?.(target);
-      this.engine.attachMedia(target);
+      this.engine.attachMedia(target as HTMLMediaElement);
     }
 
     detach(): void {
@@ -216,6 +198,6 @@ export const HlsMediaMixin = <T extends Constructor>(Super: T) => {
   return HlsMedia as T & typeof HlsMedia;
 };
 
-// This class is used by the React component.
-export class HlsMedia extends HlsMediaMixin(Video) {}
+// This is used by the React component.
+export class HlsMedia extends HlsMediaMixin(VideoApiProxy) {}
 ```
