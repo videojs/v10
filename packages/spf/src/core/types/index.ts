@@ -170,6 +170,7 @@ export type TextTrack = Track & {
   label: string;
   kind: 'subtitles' | 'captions';
   default?: boolean;
+  autoselect?: boolean;
   forced?: boolean;
 };
 

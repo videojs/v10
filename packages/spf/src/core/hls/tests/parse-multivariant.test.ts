@@ -274,7 +274,7 @@ video-lo.m3u8`;
   describe('Subtitle tracks', () => {
     it('parses subtitle tracks from EXT-X-MEDIA TYPE=SUBTITLES', () => {
       const text = `#EXTM3U
-#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="subs-en.m3u8",DEFAULT=YES
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",URI="subs-en.m3u8",DEFAULT=YES,AUTOSELECT=YES
 #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Spanish",LANGUAGE="es",URI="subs-es.m3u8"
 #EXT-X-STREAM-INF:BANDWIDTH=800000,SUBTITLES="subs"
 video.m3u8`;
@@ -285,14 +285,16 @@ video.m3u8`;
 
       expect(textTracks).toHaveLength(2);
 
-      expect(textTracks?.[0]).toMatchObject({
+      const englishTrack = textTracks?.[0] as PartiallyResolvedTextTrack | undefined;
+      expect(englishTrack).toMatchObject({
         type: 'text',
         label: 'English',
         language: 'en',
         kind: 'subtitles',
         default: true,
+        autoselect: true,
       });
-      expect(typeof textTracks?.[0]?.id).toBe('string');
+      expect(typeof englishTrack?.id).toBe('string');
 
       expect(textTracks?.[1]).toMatchObject({
         type: 'text',
@@ -327,6 +329,63 @@ video.m3u8`;
 
       // No text tracks should be created without URI
       expect(textSet).toBeUndefined();
+    });
+
+    it('requires BOTH DEFAULT=YES and AUTOSELECT=YES to set default flag', () => {
+      const text = `#EXTM3U
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Only Default",LANGUAGE="en",URI="subs-default-only.m3u8",DEFAULT=YES
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Only Autoselect",LANGUAGE="es",URI="subs-auto-only.m3u8",AUTOSELECT=YES
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Both",LANGUAGE="fr",URI="subs-both.m3u8",DEFAULT=YES,AUTOSELECT=YES
+#EXT-X-STREAM-INF:BANDWIDTH=800000
+video.m3u8`;
+
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+      const textSet = result.selectionSets.find((s) => s.type === 'text');
+      const textTracks = textSet?.switchingSets[0]?.tracks as PartiallyResolvedTextTrack[] | undefined;
+
+      expect(textTracks).toHaveLength(3);
+
+      // DEFAULT=YES only: default flag should NOT be set (following hls.js pattern)
+      const defaultOnly = textTracks?.[0];
+      expect(defaultOnly?.label).toBe('Only Default');
+      expect(defaultOnly?.default).toBeUndefined();
+      expect(defaultOnly?.autoselect).toBeUndefined();
+
+      // AUTOSELECT=YES only: default flag should NOT be set
+      const autoselectOnly = textTracks?.[1];
+      expect(autoselectOnly?.label).toBe('Only Autoselect');
+      expect(autoselectOnly?.default).toBeUndefined();
+      expect(autoselectOnly?.autoselect).toBe(true);
+
+      // Both DEFAULT=YES and AUTOSELECT=YES: default flag SHOULD be set
+      const both = textTracks?.[2];
+      expect(both?.label).toBe('Both');
+      expect(both?.default).toBe(true);
+      expect(both?.autoselect).toBe(true);
+    });
+
+    it('parses autoselect attribute independently of default', () => {
+      const text = `#EXTM3U
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Auto Only",LANGUAGE="en",URI="subs-auto.m3u8",AUTOSELECT=YES
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="No Flags",LANGUAGE="es",URI="subs-none.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=800000
+video.m3u8`;
+
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+      const textSet = result.selectionSets.find((s) => s.type === 'text');
+      const textTracks = textSet?.switchingSets[0]?.tracks as PartiallyResolvedTextTrack[] | undefined;
+
+      expect(textTracks).toHaveLength(2);
+
+      // Track with AUTOSELECT=YES
+      const autoTrack = textTracks?.[0];
+      expect(autoTrack?.autoselect).toBe(true);
+      expect(autoTrack?.default).toBeUndefined();
+
+      // Track without flags
+      const normalTrack = textTracks?.[1];
+      expect(normalTrack?.autoselect).toBeUndefined();
+      expect(normalTrack?.default).toBeUndefined();
     });
   });
 

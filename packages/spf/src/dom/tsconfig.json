@@ -5,5 +5,6 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "declarationDir": "../../types/dom"
   },
+  "references": [{ "path": "../.." }],
   "include": ["./**/*.ts"]
 }

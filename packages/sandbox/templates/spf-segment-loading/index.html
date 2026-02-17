@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sandbox — SPF Segment Loading POC</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <style>
+      body {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        font-family: monospace;
+      }
+      h1 {
+        margin-bottom: 10px;
+      }
+      video {
+        margin: 20px 0;
+        border: 2px solid #333;
+        display: block;
+        width: 100%;
+        max-width: 640px;
+      }
+      #controls {
+        margin: 20px 0;
+      }
+      button {
+        padding: 8px 16px;
+        margin-right: 10px;
+        cursor: pointer;
+        border: 1px solid #333;
+        background: #f0f0f0;
+        border-radius: 4px;
+      }
+      button:hover {
+        background: #e0e0e0;
+      }
+      #state {
+        background: #f5f5f5;
+        padding: 15px;
+        margin: 20px 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+      #state h2 {
+        margin-top: 0;
+        font-size: 14px;
+      }
+      #state pre {
+        margin: 10px 0;
+        padding: 10px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+      #logs {
+        background: #f5f5f5;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        max-height: 400px;
+        overflow-y: auto;
+        font-size: 12px;
+      }
+      #logs div {
+        padding: 2px 0;
+        border-bottom: 1px solid #eee;
+      }
+      .error {
+        color: red;
+        font-weight: bold;
+      }
+      .success {
+        color: green;
+      }
+      .warning {
+        color: orange;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>SPF Segment Loading POC Test</h1>
+    <p>Testing segment loading pipeline with real Mux HLS stream</p>
+
+    <div id="controls">
+      <button id="play">Play</button>
+      <button id="pause">Pause</button>
+      <button id="inspect">Inspect State</button>
+      <button id="clearLogs">Clear Logs</button>
+    </div>
+
+    <video id="video" controls></video>
+
+    <div id="state">
+      <h2>State Inspector</h2>
+      <div>Click "Inspect State" to view engine state</div>
+    </div>
+
+    <div>
+      <h2>Logs</h2>
+      <div id="logs"></div>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
