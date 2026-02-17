@@ -42,6 +42,31 @@ export function shouldResolve(_state: TrackResolutionState, _event: TrackResolut
 }
 
 /**
+ * Resolution task function (module-level, pure).
+ * Fetches and parses media playlist for a track, then updates presentation.
+ */
+const resolveTrackTask = async <T extends TrackType>(
+  { currentState }: { currentState: TrackResolutionState },
+  context: {
+    signal: AbortSignal;
+    state: WritableState<TrackResolutionState>;
+    config: TrackResolutionConfig<T>;
+  }
+): Promise<void> => {
+  const { presentation } = currentState;
+  const track = getSelectedTrack(currentState, context.config.type)!;
+
+  // Fetch and parse media playlist
+  const response = await fetchResolvable(track, { signal: context.signal });
+  const text = await getResponseText(response);
+  const mediaTrack = parseMediaPlaylist(text, track);
+
+  // Update presentation with resolved track
+  const updatedPresentation = updateTrackInPresentation(presentation!, mediaTrack);
+  context.state.patch({ presentation: updatedPresentation });
+};
+
+/**
  * Updates a track within a presentation (immutably).
  * Generic - works for video, audio, or text tracks.
  */
@@ -102,33 +127,9 @@ export function resolveTrack<T extends TrackType>(
     if (!canResolve(currentState, config) || !shouldResolve(currentState, event)) return;
     if (currentTask) return; // Task already in progress
 
-    // Define the resolution task function
-    const resolveTrackTask = async (params: {
-      currentState: TrackResolutionState;
-      signal: AbortSignal;
-      patchState: (update: Partial<TrackResolutionState>) => void;
-    }): Promise<void> => {
-      const { currentState: taskState, signal, patchState } = params;
-      const { presentation } = taskState;
-      const track = getSelectedTrack(taskState, config.type)!;
-
-      // Fetch and parse media playlist
-      const response = await fetchResolvable(track, { signal });
-      const text = await getResponseText(response);
-      const mediaTrack = parseMediaPlaylist(text, track);
-
-      // Update presentation with resolved track
-      const updatedPresentation = updateTrackInPresentation(presentation!, mediaTrack);
-      patchState({ presentation: updatedPresentation });
-    };
-
-    // Create abort controller and assign task promise
+    // Create abort controller and invoke module-level task
     abortController = new AbortController();
-    currentTask = resolveTrackTask({
-      currentState,
-      signal: abortController.signal,
-      patchState: (update) => state.patch(update),
-    });
+    currentTask = resolveTrackTask({ currentState }, { signal: abortController.signal, state, config });
 
     try {
       // Await the task promise
