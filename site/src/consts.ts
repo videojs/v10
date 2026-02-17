@@ -1,4 +1,5 @@
-export const SITE_TITLE = 'Video.js — Open Source Video Player';
+export const SITE_TITLE = 'Video.js';
+export const SEO_SUFFIX = 'Open Source Video Player';
 export const SITE_DESCRIPTION = `The open-source video player for React and HTML. Lightweight, accessible components built for performance and streaming.`;
 export const GITHUB_REPO_URL = 'https://github.com/videojs/v10/';
 export const DISCORD_INVITE_URL = 'https://discord.gg/JBqHh485uF';
