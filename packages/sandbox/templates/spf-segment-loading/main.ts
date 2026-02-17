@@ -145,10 +145,19 @@ try {
   log('Access state: window.state()');
   log('Access owners: window.owners()');
 
-  // Subscribe to state changes for detailed logging
+  // Subscribe to state changes for detailed logging (track previous state to avoid duplicate logs)
+  const previousState = {
+    hasPresentation: false,
+    selectedVideoTrackId: undefined as string | undefined,
+    selectedAudioTrackId: undefined as string | undefined,
+    selectedTextTrackId: undefined as string | undefined,
+  };
+
   engine.state.subscribe((state) => {
-    if (state.presentation) {
+    // Only log when presentation first becomes available
+    if (state.presentation && !previousState.hasPresentation) {
       log('Presentation resolved');
+      previousState.hasPresentation = true;
 
       // Auto-select first text track if available (smoke test text track support)
       if (!state.selectedTextTrackId && state.presentation.selectionSets) {
@@ -160,27 +169,43 @@ try {
         }
       }
     }
-    if (state.selectedVideoTrackId) {
-      log('Video track selected');
+
+    // Only log when track selection changes
+    if (state.selectedVideoTrackId && state.selectedVideoTrackId !== previousState.selectedVideoTrackId) {
+      log(`Video track selected: ${state.selectedVideoTrackId}`);
+      previousState.selectedVideoTrackId = state.selectedVideoTrackId;
     }
-    if (state.selectedAudioTrackId) {
-      log('Audio track selected');
+    if (state.selectedAudioTrackId && state.selectedAudioTrackId !== previousState.selectedAudioTrackId) {
+      log(`Audio track selected: ${state.selectedAudioTrackId}`);
+      previousState.selectedAudioTrackId = state.selectedAudioTrackId;
     }
-    if (state.selectedTextTrackId) {
-      log('Text track selected', 'success');
+    if (state.selectedTextTrackId && state.selectedTextTrackId !== previousState.selectedTextTrackId) {
+      log(`Text track selected: ${state.selectedTextTrackId}`, 'success');
+      previousState.selectedTextTrackId = state.selectedTextTrackId;
     }
   });
 
-  // Subscribe to owners changes
+  // Subscribe to owners changes (track previous owners to avoid duplicate logs)
+  const previousOwners = {
+    hasMediaSource: false,
+    hasVideoBuffer: false,
+    hasAudioBuffer: false,
+  };
+
   engine.owners.subscribe((owners) => {
-    if (owners.mediaSource) {
+    // Only log when MediaSource first becomes available
+    if (owners.mediaSource && !previousOwners.hasMediaSource) {
       log(`MediaSource created: ${owners.mediaSource.readyState}`, 'success');
+      previousOwners.hasMediaSource = true;
     }
-    if (owners.videoBuffer) {
+    // Only log when SourceBuffers first become available
+    if (owners.videoBuffer && !previousOwners.hasVideoBuffer) {
       log('Video SourceBuffer created', 'success');
+      previousOwners.hasVideoBuffer = true;
     }
-    if (owners.audioBuffer) {
+    if (owners.audioBuffer && !previousOwners.hasAudioBuffer) {
       log('Audio SourceBuffer created', 'success');
+      previousOwners.hasAudioBuffer = true;
     }
   });
 
