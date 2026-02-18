@@ -889,6 +889,10 @@ devOnly: true
 ---
 ```
 
+## SEO Metadata
+
+When writing content for the site, especially page titles and descriptions, follow the conventions in `.claude/skills/docs/references/seo.md` for the full keyword list and guidelines.
+
 ## Common Tasks
 
 ### Adding a New Docs Guide

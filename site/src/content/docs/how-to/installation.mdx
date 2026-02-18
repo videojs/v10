@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Get started quickly with Video.js by building your first embed code
+description: Install Video.js and build your first player with streaming support and accessible controls
 ---
 
 import JSPicker from '@/components/installation/JSPicker.astro';
@@ -21,7 +21,13 @@ import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
 Video.js v10 is currently in _beta_. The API may evolve with [feedback&#x1F64F;](https://github.com/videojs/v10/issues). See the [Changelog](https://github.com/videojs/v10/blob/main/CHANGELOG.md)\[todo\] for recent updates and the <DocsLink slug="concepts/v10-roadmap">Roadmap</DocsLink> for more details on what's coming.
 </Aside>
 
-Video.js is **audio and video player components** &mdash; intentionally built to achieve **minimal bundle sizes** while providing **framework-specific customization** and a **great viewer experience**.
+<FrameworkCase frameworks={["react"]}>
+Video.js is a **React video player component library** &mdash; composable primitives, hooks, and TypeScript types for building accessible, customizable players with minimal bundle size.
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+Video.js is an **HTML video player built on custom elements** &mdash; lightweight, framework-free components for building accessible, customizable players with minimal bundle size.
+</FrameworkCase>
+
 Answer the questions below to get started quickly with your first embed code.
 
 ## Choose your JS framework

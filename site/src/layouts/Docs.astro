@@ -9,7 +9,7 @@ import FilmGrain from '@/components/FilmGrain';
 import Footer from '@/components/Footer.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import NavBar from '@/components/NavBar/NavBar.astro';
-import type { SupportedFramework } from '@/types/docs';
+import { FRAMEWORK_LABELS, type SupportedFramework } from '@/types/docs';
 import { getDocTitle } from '@/utils/docs/title';
 import Base from './Base.astro';
 
@@ -25,10 +25,11 @@ const { doc, framework, slug } = Astro.props;
 const allDocs = await getCollection('docs');
 const docTitles = new Map(allDocs.map((d) => [d.id, getDocTitle(d, framework)]));
 
+const seoCategory = `${FRAMEWORK_LABELS[framework]} Video Player`;
 const docsSidebarId = 'docs-sidebar';
 ---
 
-<Base title={[getDocTitle(doc, framework), 'Docs']} description={doc.data.description}>
+<Base title={getDocTitle(doc, framework)} suffix={`Open Source ${FRAMEWORK_LABELS[framework]} Video Player`} description={`${doc.data.description} — Video.js ${seoCategory}.`}>
   <Fragment slot="priority-head">
     <StyleInit />
   </Fragment>
