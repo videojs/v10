@@ -8,6 +8,33 @@ import { appendSegment } from '../media/append-segment';
 import { fetchResolvable } from '../network/fetch';
 
 // ============================================================================
+// BUFFER STATE TYPES
+// ============================================================================
+
+/**
+ * Buffer state for a single SourceBuffer.
+ * Tracks which init segment and media segments are loaded.
+ */
+export interface SourceBufferState {
+  /** Track ID of the loaded init segment */
+  initTrackId?: string;
+
+  /** Loaded media segments (unordered - selectors derive ordering) */
+  segments: Array<{
+    id: string;
+    trackId: string;
+  }>;
+}
+
+/**
+ * Buffer state for all SourceBuffers.
+ */
+export interface BufferState {
+  video?: SourceBufferState;
+  audio?: SourceBufferState;
+}
+
+// ============================================================================
 // SUBTASKS (module-level)
 // ============================================================================
 
@@ -15,24 +42,42 @@ import { fetchResolvable } from '../network/fetch';
  * Load initialization segment subtask.
  */
 const loadInitSegmentTask = async (
-  { initialization }: { initialization: AddressableObject },
-  context: { signal: AbortSignal; sourceBuffer: SourceBuffer }
+  { initialization, trackId }: { initialization: AddressableObject; trackId: string },
+  context: {
+    signal: AbortSignal;
+    sourceBuffer: SourceBuffer;
+    state: WritableState<{ bufferState?: BufferState }>;
+    bufferKey: 'video' | 'audio';
+  }
 ): Promise<void> => {
   const response = await fetchResolvable(initialization, { signal: context.signal });
   const initData = await response.arrayBuffer();
   await appendSegment(context.sourceBuffer, initData);
+
+  // Track init segment in buffer state
+  const currentBuffer = context.state.current.bufferState?.[context.bufferKey];
+  context.state.patch({
+    bufferState: {
+      ...context.state.current.bufferState,
+      [context.bufferKey]: {
+        ...currentBuffer,
+        initTrackId: trackId,
+      },
+    },
+  });
 };
 
 /**
  * Load media segment subtask.
- * Tracks download time and bytes for bandwidth estimation.
+ * Tracks download time/bytes for bandwidth and adds segment to buffer state.
  */
 const loadMediaSegmentTask = async (
-  { segment }: { segment: Segment },
+  { segment, trackId }: { segment: Segment; trackId: string },
   context: {
     signal: AbortSignal;
     sourceBuffer: SourceBuffer;
-    state: WritableState<{ bandwidthState?: BandwidthState }>;
+    state: WritableState<{ bandwidthState?: BandwidthState; bufferState?: BufferState }>;
+    bufferKey: 'video' | 'audio';
   }
 ): Promise<void> => {
   const startTime = performance.now();
@@ -46,7 +91,20 @@ const loadMediaSegmentTask = async (
   const currentBandwidth = context.state.current.bandwidthState!;
   const updatedBandwidth = sampleBandwidth(currentBandwidth, downloadTime, segmentData.byteLength);
 
-  context.state.patch({ bandwidthState: updatedBandwidth });
+  // Add segment to buffer state
+  const currentBuffer = context.state.current.bufferState?.[context.bufferKey];
+  const updatedSegments = [...(currentBuffer?.segments || []), { id: segment.id, trackId }];
+
+  context.state.patch({
+    bandwidthState: updatedBandwidth,
+    bufferState: {
+      ...context.state.current.bufferState,
+      [context.bufferKey]: {
+        ...currentBuffer,
+        segments: updatedSegments,
+      },
+    },
+  });
 };
 
 // ============================================================================
@@ -61,7 +119,7 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
   context: {
     signal: AbortSignal;
     sourceBuffer: SourceBuffer;
-    state: WritableState<{ bandwidthState?: BandwidthState }>;
+    state: WritableState<{ bandwidthState?: BandwidthState; bufferState?: BufferState }>;
     config: { type: T };
   }
 ): Promise<void> => {
@@ -72,17 +130,19 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
   if (segments.length === 0) return;
 
   // Build array of subtask invocation functions
+  const bufferKey = context.config.type as 'video' | 'audio';
+
   const createInitTask = () =>
     loadInitSegmentTask(
-      { initialization: track.initialization },
-      { signal: context.signal, sourceBuffer: context.sourceBuffer }
+      { initialization: track.initialization, trackId: track.id },
+      { signal: context.signal, sourceBuffer: context.sourceBuffer, state: context.state, bufferKey }
     );
 
   const createMediaTasks = segments.map(
     (segment) => () =>
       loadMediaSegmentTask(
-        { segment },
-        { signal: context.signal, sourceBuffer: context.sourceBuffer, state: context.state }
+        { segment, trackId: track.id },
+        { signal: context.signal, sourceBuffer: context.sourceBuffer, state: context.state, bufferKey }
       )
   );
 

@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPlaybackEngine, type PlaybackEngineState } from '../playback-engine';
 
+// Mock appendSegment to succeed without real MP4 data
+vi.mock('../media/append-segment', () => ({
+  appendSegment: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe('createPlaybackEngine', () => {
   it('creates engine with state and owners', () => {
     const mediaElement = document.createElement('video');
@@ -1300,4 +1305,145 @@ http://example.com/text-es-seg1.vtt
 
     engine.destroy();
   });
+});
+
+it('tracks buffer state for video segments', async () => {
+  const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+    if (url.includes('playlist.m3u8')) {
+      return Promise.resolve(
+        new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E"
+http://example.com/video.m3u8`)
+      );
+    }
+
+    if (url.includes('video.m3u8')) {
+      return Promise.resolve(
+        new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init.mp4"
+#EXTINF:10.0,
+http://example.com/seg1.m4s
+#EXTINF:10.0,
+http://example.com/seg2.m4s
+#EXT-X-ENDLIST`)
+      );
+    }
+
+    if (url.includes('init.mp4') || url.includes('.m4s')) {
+      return Promise.resolve(new Response(new ArrayBuffer(1000)));
+    }
+
+    return Promise.reject(new Error(`Unmocked URL: ${url}`));
+  });
+  globalThis.fetch = mockFetch;
+
+  const engine = createPlaybackEngine();
+  const mediaElement = document.createElement('video');
+
+  engine.owners.patch({ mediaElement });
+  engine.state.patch({
+    presentation: { url: 'http://example.com/playlist.m3u8' },
+    preload: 'auto',
+  });
+
+  await vi.waitFor(
+    () => {
+      const state = engine.state.current;
+
+      // Should have init segment tracked (by track ID)
+      expect(state.bufferState?.video?.initTrackId).toBeDefined();
+
+      // Should have media segments tracked
+      expect(state.bufferState?.video?.segments).toBeDefined();
+      expect(state.bufferState?.video?.segments?.length).toBeGreaterThan(0);
+
+      // Each segment should have id and trackId
+      const firstSegment = state.bufferState?.video?.segments?.[0];
+      expect(firstSegment?.id).toBeDefined();
+      expect(firstSegment?.trackId).toBeDefined();
+    },
+    { timeout: 3000 }
+  );
+
+  engine.destroy();
+});
+
+it('tracks buffer state separately for video and audio', async () => {
+  const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+    if (url.includes('playlist.m3u8')) {
+      return Promise.resolve(
+        new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E"
+http://example.com/video.m3u8
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",URI="http://example.com/audio.m3u8"`)
+      );
+    }
+
+    if (url.includes('video.m3u8')) {
+      return Promise.resolve(
+        new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MAP:URI="http://example.com/init-video.mp4"
+#EXTINF:10.0,
+http://example.com/video-seg1.m4s
+#EXT-X-ENDLIST`)
+      );
+    }
+
+    if (url.includes('audio.m3u8')) {
+      return Promise.resolve(
+        new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MAP:URI="http://example.com/init-audio.mp4"
+#EXTINF:10.0,
+http://example.com/audio-seg1.m4s
+#EXT-X-ENDLIST`)
+      );
+    }
+
+    if (url.includes('.mp4') || url.includes('.m4s')) {
+      return Promise.resolve(new Response(new ArrayBuffer(1000)));
+    }
+
+    return Promise.reject(new Error(`Unmocked URL: ${url}`));
+  });
+  globalThis.fetch = mockFetch;
+
+  const engine = createPlaybackEngine();
+  const mediaElement = document.createElement('video');
+
+  engine.owners.patch({ mediaElement });
+  engine.state.patch({
+    presentation: { url: 'http://example.com/playlist.m3u8' },
+    preload: 'auto',
+  });
+
+  await vi.waitFor(
+    () => {
+      const state = engine.state.current;
+
+      // Both video and audio should have buffer state
+      expect(state.bufferState?.video).toBeDefined();
+      expect(state.bufferState?.audio).toBeDefined();
+
+      // Each should track init segments (by track ID)
+      expect(state.bufferState?.video?.initTrackId).toBeDefined();
+      expect(state.bufferState?.audio?.initTrackId).toBeDefined();
+
+      // Each should track media segments independently
+      expect(state.bufferState?.video?.segments?.length).toBeGreaterThan(0);
+      expect(state.bufferState?.audio?.segments?.length).toBeGreaterThan(0);
+    },
+    { timeout: 3000 }
+  );
+
+  engine.destroy();
 });

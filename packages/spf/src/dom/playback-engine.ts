@@ -11,6 +11,7 @@ import {
 } from '../core/features/select-tracks';
 import { createState } from '../core/state/create-state';
 import { endOfStream } from './features/end-of-stream';
+import type { BufferState } from './features/load-segments';
 import { loadSegments } from './features/load-segments';
 import { loadTextTrackCues } from './features/load-text-track-cues';
 import { setupMediaSource } from './features/setup-mediasource';
@@ -63,6 +64,9 @@ export interface PlaybackEngineState {
 
   // Bandwidth estimation state
   bandwidthState?: BandwidthState;
+
+  // Buffer state (tracks loaded segments per SourceBuffer)
+  bufferState?: BufferState;
 }
 
 /**
@@ -142,6 +146,10 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
       slowEstimate: 0,
       slowTotalWeight: 0,
       bytesSampled: 0,
+    },
+    bufferState: {
+      video: { segments: [] },
+      audio: { segments: [] },
     },
   });
   const owners = createState<PlaybackEngineOwners>({});
