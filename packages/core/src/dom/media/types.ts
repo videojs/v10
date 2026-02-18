@@ -1,5 +1,4 @@
 import type { AnySlice, Slice, Store, UnionSliceState } from '@videojs/store';
-
 import type {
   MediaBufferState,
   MediaControlsState,
@@ -11,7 +10,16 @@ import type {
   MediaVolumeState,
 } from '../../core/media/state';
 
-export interface Media extends HTMLMediaElement {}
+type WithOptional<Required, Full> = Required & Partial<Omit<Full, keyof Required>>;
+
+export type MediaBaseApi = {
+  play: () => Promise<void>;
+  paused: boolean;
+};
+
+export type MediaApi = WithOptional<MediaBaseApi, HTMLVideoElement>;
+
+export type Media = MediaApi | HTMLMediaElement | HTMLAudioElement | HTMLVideoElement | null;
 
 export interface MediaContainer extends HTMLElement {}
 

@@ -17,6 +17,11 @@
       "development": "./dist/dev/index.js",
       "default": "./dist/default/index.js"
     },
+    "./media/*": {
+      "types": "./dist/dev/media/*/index.d.ts",
+      "development": "./dist/dev/media/*/index.js",
+      "default": "./dist/default/media/*/index.js"
+    },
     "./*.css": "./dist/default/presets/*.css",
     "./audio": {
       "types": "./dist/dev/presets/audio/index.d.ts",

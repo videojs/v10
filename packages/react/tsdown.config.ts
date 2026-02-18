@@ -7,7 +7,7 @@ type BuildMode = 'dev' | 'default';
 const buildModes: BuildMode[] = ['dev', 'default'];
 
 const createConfig = (mode: BuildMode): UserConfig => ({
-  entry: 'src/**/index.ts',
+  entry: 'src/**/index.{ts,tsx}',
   platform: 'browser',
   format: 'es',
   sourcemap: true,

@@ -1,3 +1,4 @@
+export * from './media/proxy';
 export * from './media/state';
 export * from './ui/buffering-indicator/buffering-indicator-core';
 export * from './ui/buffering-indicator/buffering-indicator-data-attrs';
