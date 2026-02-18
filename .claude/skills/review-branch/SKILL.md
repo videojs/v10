@@ -53,7 +53,8 @@ Categorize the changed files to determine which review criteria apply:
 | ---------------------------------------------- | ------------- | ------------------- |
 | `packages/*/src/**/*.ts` (non-test)            | API/Code      | `api`               |
 | `packages/html/**`, `packages/react/**` (UI)   | UI Components | `component`, `aria` |
-| `site/**/*.md`, `**/README.md`, `**/CLAUDE.md` | Documentation | `docs`              |
+| `site/**/*.md`, `**/README.md`, `**/CLAUDE.md` | Documentation | `docs`               |
+| `site/**/reference/*.mdx`                      | API Reference | `api-reference`      |
 | `packages/*/src/**/*.test.ts`                  | Tests         | General review      |
 | `.claude/**`                                   | Agent Config  | General review      |
 | Config files (`.json`, `.config.*`)            | Configuration | General review      |
@@ -71,7 +72,7 @@ For deeper domain-specific review, load the relevant skill:
 | API/Code      | `api`       | `api/review/workflow.md`       |
 | UI Components | `component` | `component/review/workflow.md` |
 | UI Components | `aria`      | `aria/review/workflow.md`      |
-| Documentation | `docs`      | `docs/review/workflow.md`      |
+| Documentation | `docs` | `docs/review/workflow.md` |
 
 Skip this step for quick reviews using the inline checklists below.
 
@@ -84,7 +85,7 @@ Based on detected categories, load the relevant skill's review checklist:
 | API/Code      | `api/review/checklist.md`          |
 | UI Components | `component/review/checklist.md`    |
 | Accessibility | `aria/review/checklist.md`         |
-| Documentation | `docs/review/workflow.md`          |
+| Documentation | `docs/review/workflow.md`    |
 
 For test changes, apply these checks:
 

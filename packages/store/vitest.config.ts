@@ -17,8 +17,8 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          name: 'store/lit',
-          include: ['src/lit/**/*.test.ts'],
+          name: 'store/html',
+          include: ['src/html/**/*.test.ts'],
           environment: 'jsdom',
         },
       },

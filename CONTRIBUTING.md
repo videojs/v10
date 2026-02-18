@@ -160,7 +160,7 @@ Domain-specific knowledge lives in `.claude/skills/`:
 | `api`       | Designing APIs, reviewing architecture  |
 | `component` | Building UI components                  |
 | `aria`      | Accessibility implementation and review |
-| `docs`      | Writing documentation                   |
+| `docs`       | Writing documentation                  |
 | `git`       | Commit messages, PR conventions         |
 
 See [`.claude/skills/README.md`](./.claude/skills/README.md) for workflow mappings.

@@ -8,6 +8,7 @@
       "outputs": ["dist/**", ".netlify/**"]
     },
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true,
       "interactive": false
@@ -16,6 +17,7 @@
       "cache": false
     },
     "test": {
+      "dependsOn": ["^build"],
       "outputs": []
     },
     "lint": {

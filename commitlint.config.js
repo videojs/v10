@@ -18,6 +18,7 @@ export default {
         'claude',
         'core',
         'design',
+        'element',
         'docs',
         'html',
         'icons',

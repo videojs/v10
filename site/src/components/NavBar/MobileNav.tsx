@@ -25,7 +25,7 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
       {/* Trigger button - hamburger menu */}
       <Dialog.Trigger
         className={clsx(
-          'sm:hidden flex items-center justify-center p-3 h-full aspect-square',
+          'md:hidden flex items-center justify-center p-3 h-full aspect-square',
           dark
             ? 'bg-light-80 text-dark-100 intent:bg-light-40'
             : 'bg-dark-100 dark:bg-light-80 text-light-80 dark:text-dark-100 intent:bg-dark-80 dark:intent:bg-light-40'
@@ -41,7 +41,7 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
         <Dialog.Popup
           className={clsx(
             'fixed inset-0 z-50 flex flex-col',
-            dark ? 'bg-dark-100 text-light-100' : 'bg-light-80 dark:bg-dark-100 text-dark-100 dark:text-light-100'
+            dark ? 'bg-dark-100 text-light-100 dark' : 'bg-light-80 dark:bg-dark-100 text-dark-100 dark:text-light-100'
           )}
         >
           <FilmGrain currentPath={currentPath} />
@@ -68,38 +68,48 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
             </Dialog.Close>
           </div>
 
-          {/* Astro makes it hard to know if we have children, so, we use -mt-px to hide the border-b if we don't */}
-          <div className={clsx('-mt-px border-b', dark ? 'border-dark-80' : 'border-light-40 dark:border-dark-80')}>
-            {children}
-          </div>
+          <div className="overflow-y-scroll">
+            {/* Astro makes it hard to know if we have children, so, we use -mt-px to hide the border-b if we don't */}
+            <div className={clsx('-mt-px border-b', dark ? 'border-dark-80' : 'border-light-40 dark:border-dark-80')}>
+              {children}
+            </div>
 
-          {/* Navigation links */}
-          <nav className="flex flex-col py-3">
-            {navLinks.map((link) => {
-              const isActive = link.matchPath && currentPath.startsWith(link.matchPath);
-              const className = clsx('text-lg px-6 py-3', isActive ? 'underline' : 'intent:underline');
+            {/* Navigation links */}
+            <nav className="flex flex-col py-3">
+              {navLinks.map((link) => {
+                const isActive = link.matchPath && currentPath.startsWith(link.matchPath);
+                const className = clsx('text-lg px-6 py-3', isActive ? 'underline' : 'intent:underline');
 
-              if (link.href === '/docs') {
+                if (link.href === '/docs') {
+                  return (
+                    <GetStartedLink key={link.href} className={className} aria-current={isActive ? 'page' : undefined}>
+                      {link.label}
+                    </GetStartedLink>
+                  );
+                }
+
                 return (
-                  <GetStartedLink key={link.href} className={className} aria-current={isActive ? 'page' : undefined}>
-                    {link.label}
-                  </GetStartedLink>
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className={className}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
+                  </a>
                 );
-              }
-
-              return (
-                <a key={link.href} href={link.href} className={className} aria-current={isActive ? 'page' : undefined}>
-                  {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
-                </a>
-              );
-            })}
-            <a href={GITHUB_REPO_URL} className="text-lg px-6 py-3 inline-flex items-center gap-1 intent:underline">
-              GitHub <ArrowUpRight size="1em" />
-            </a>
-            <a href={DISCORD_INVITE_URL} className="text-lg px-6 py-3 inline-flex items-center gap-1 intent:underline">
-              Discord <ArrowUpRight size="1em" />
-            </a>
-          </nav>
+              })}
+              <a href={GITHUB_REPO_URL} className="text-lg px-6 py-3 inline-flex items-center gap-1 intent:underline">
+                GitHub <ArrowUpRight size="1em" />
+              </a>
+              <a
+                href={DISCORD_INVITE_URL}
+                className="text-lg px-6 py-3 inline-flex items-center gap-1 intent:underline"
+              >
+                Discord <ArrowUpRight size="1em" />
+              </a>
+            </nav>
+          </div>
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>

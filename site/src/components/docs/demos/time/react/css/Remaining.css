@@ -1,12 +1,12 @@
-.time-remaining {
+.react-time-remaining {
   position: relative;
 }
 
-.time-remaining video {
+.react-time-remaining video {
   width: 100%;
 }
 
-.time-remaining__value {
+.react-time-remaining__value {
   position: absolute;
   bottom: 10px;
   left: 10px;

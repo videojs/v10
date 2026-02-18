@@ -356,5 +356,4 @@ player.emit('custom:event', { data: 'value' });
 
 ## See Also
 
-- [State Patterns](../../dx/references/state-patterns.md) — state management patterns
-- [Multi-Framework Docs](multi-framework.md) — documenting across frameworks
+- [State Patterns](../../api/references/state.md) — state management patterns

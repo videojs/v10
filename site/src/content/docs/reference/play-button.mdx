@@ -2,7 +2,7 @@
 title: PlayButton
 frameworkTitle:
   html: media-play-button
-description: A button component for playing and pausing media playback
+description: Accessible play/pause button with keyboard support and customizable rendering
 ---
 
 import ApiReference from "@/components/docs/api-reference/ApiReference.astro";
@@ -34,6 +34,36 @@ import basicUsageHtmlTs from "@/components/docs/demos/play-button/html/css/Basic
 <media-play-button></media-play-button>
 ```
 </FrameworkCase>
+
+## Behavior
+
+PlayButton is a three-state button: **play**, **pause**, and **replay**. When media reaches the end (`ended` state), clicking restarts playback from the beginning.
+
+## Styling
+
+Style with the `[data-paused]` and `[data-ended]` attributes to show/hide play/pause/replay icons based on state. For example:
+
+```css
+/* Paused (but not ended) */
+media-play-button[data-paused]:not([data-ended]) .play-icon { display: inline; }
+
+/* Playing */
+media-play-button:not([data-paused]) .pause-icon { display: inline; }
+
+/* Ended */
+media-play-button[data-ended] .replay-icon { display: inline; }
+```
+
+After first play, the `data-started` attribute is added and remains present until a new source is loaded. Use this to hide the play button when media hasn't started yet:
+
+```css
+/* Hide play button before first play */
+media-play-button:not([data-started]) .play-icon { display: none; }
+```
+
+## Accessibility
+
+Renders a `<button>` element with an automatic `aria-label` that updates based on state: "Play", "Pause", or "Replay". Override with the `label` prop (accepts a string or function). Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
 
 ## Examples
 

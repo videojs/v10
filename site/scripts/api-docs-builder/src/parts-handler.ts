@@ -2,8 +2,10 @@ import * as ts from 'typescript';
 import * as tae from 'typescript-api-extractor';
 
 export interface PartExport {
-  /** PascalCase export name (e.g., "Value", "Group", "Separator"). */
+  /** PascalCase exported part name (e.g., "Value", "Group", "Separator"). */
   name: string;
+  /** Local symbol name in the source module before aliasing. */
+  localName: string;
   /** Source path (e.g., "./time-value", "./time-group"). */
   source: string;
 }
@@ -39,8 +41,10 @@ export function extractParts(filePath: string, program: ts.Program): PartExport[
           // Skip type-only specifiers (e.g., `type GroupProps`)
           if (element.isTypeOnly) continue;
 
+          const localName = element.propertyName?.text ?? element.name.text;
           parts.push({
             name: element.name.text,
+            localName,
             source,
           });
         }

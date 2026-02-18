@@ -1,12 +1,12 @@
-.time-custom-separator {
+.react-time-custom-separator {
   position: relative;
 }
 
-.time-custom-separator video {
+.react-time-custom-separator video {
   width: 100%;
 }
 
-.time-custom-separator__group {
+.react-time-custom-separator__group {
   display: flex;
   align-items: center;
   gap: 4px;

@@ -73,4 +73,4 @@ For structured accessibility reviews, load the review workflow:
 | ---------------------- | ----------------- |
 | Building UI components | `component` skill |
 | API design principles  | `api` skill       |
-| Documentation          | `docs` skill      |
+| Documentation          | `docs` skill |

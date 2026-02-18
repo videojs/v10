@@ -1,4 +1,5 @@
 export * from './buffer';
+export * from './controls';
 export * as features from './feature.parts';
 export * from './fullscreen';
 export * from './pip';

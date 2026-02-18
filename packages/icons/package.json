@@ -1,15 +1,55 @@
 {
   "name": "@videojs/icons",
   "type": "module",
+  "private": true,
   "version": "0.1.0-alpha.1",
   "description": "SVG icon library for Video.js",
   "license": "Apache-2.0",
-  "files": [],
+  "sideEffects": false,
+  "exports": {
+    "./react": {
+      "types": "./dist/react/default/index.d.ts",
+      "default": "./dist/react/default/index.js"
+    },
+    "./react/*": {
+      "types": "./dist/react/*/index.d.ts",
+      "default": "./dist/react/*/index.js"
+    },
+    "./html": {
+      "types": "./dist/html/default/index.d.ts",
+      "default": "./dist/html/default/index.js"
+    },
+    "./html/*": {
+      "types": "./dist/html/*/index.d.ts",
+      "default": "./dist/html/*/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node --import tsx scripts/build.ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "svgo": "^3.3.2"
+  },
   "devDependencies": {
-    "tsdown": "^0.20.3",
+    "@svgr/core": "^8.1.0",
+    "@svgr/plugin-jsx": "^8.1.0",
+    "@svgr/plugin-svgo": "^8.1.0",
+    "@types/react": "^19.0.0",
+    "@videojs/utils": "workspace:*",
+    "react": "^19.0.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.9.3"
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "keywords": [
+    "videojs",
+    "icons",
+    "svg"
+  ]
 }

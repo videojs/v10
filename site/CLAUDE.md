@@ -649,6 +649,8 @@ The site uses OAuth for authentication and Mux for video management. Required va
 | Variable | Purpose |
 | --- | --- |
 | `MUX_API_URL` | Override Mux API endpoint (defaults to `https://api.mux.com`) |
+| `MUX_TOKEN_ID` | Mux API token ID (for server-side health checks) |
+| `MUX_TOKEN_SECRET` | Mux API token secret (for server-side health checks) |
 | `SENTRY_AUTH_TOKEN` | Sentry error tracking auth token |
 
 ## Authentication & Mux Integration
@@ -886,6 +888,10 @@ title: Internal Documentation
 devOnly: true
 ---
 ```
+
+## SEO Metadata
+
+When writing content for the site, especially page titles and descriptions, follow the conventions in `.claude/skills/docs/references/seo.md` for the full keyword list and guidelines.
 
 ## Common Tasks
 

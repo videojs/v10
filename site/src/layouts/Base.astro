@@ -2,7 +2,7 @@
 import { Font } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 
-import { SITE_TITLE } from '@/consts';
+import { SEO_SUFFIX, SITE_TITLE } from '@/consts';
 
 import '@/styles/globals.css';
 
@@ -15,17 +15,17 @@ interface Props {
   description: string;
   image?: ImageMetadata;
   canonical?: string;
+  suffix?: string;
 }
-const { canonical } = Astro.props;
+const { canonical, suffix } = Astro.props;
 const canonicalURL = canonical || new URL(Astro.url.pathname, Astro.site);
 
 const { title, description, image } = Astro.props;
 
-const fullTitle = Array.isArray(title)
-  ? `${title.filter((t) => t !== SITE_TITLE).join(' | ')} | ${SITE_TITLE}`
-  : title === SITE_TITLE
-    ? title
-    : `${title} | ${SITE_TITLE}`;
+const seoSuffix = suffix ?? SEO_SUFFIX;
+const pageTitle = Array.isArray(title) ? title.join(' | ') : title;
+const fullTitle =
+  pageTitle === SITE_TITLE ? `${SITE_TITLE} | ${seoSuffix}` : `${pageTitle} | ${SITE_TITLE} | ${seoSuffix}`;
 ---
 
 <html lang="en">
@@ -113,9 +113,6 @@ const fullTitle = Array.isArray(title)
 
     {/* Whatever else */}
     <slot name="head" />
-
-    {/* Analytics */}
-    {import.meta.env.PROD && <Posthog />}
 
     <ThemeInit />
   </head>

@@ -1,0 +1,51 @@
+{
+  "name": "@videojs/element",
+  "type": "module",
+  "version": "0.1.0-alpha.1",
+  "description": "Lightweight reactive custom element base for Video.js",
+  "license": "Apache-2.0",
+  "main": "dist/default/index.js",
+  "module": "dist/default/index.js",
+  "types": "dist/dev/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/dev/index.d.ts",
+      "development": "./dist/dev/index.js",
+      "default": "./dist/default/index.js"
+    },
+    "./context": {
+      "types": "./dist/dev/context.d.ts",
+      "development": "./dist/dev/context.js",
+      "default": "./dist/default/context.js"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch ./src --no-clean",
+    "dev": "pnpm run build:watch",
+    "test": "vitest run",
+    "clean": "rm -rf dist types"
+  },
+  "dependencies": {
+    "@lit/context": "^1.1.0"
+  },
+  "devDependencies": {
+    "happy-dom": "^18.0.1",
+    "tsdown": "^0.20.3",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "custom-element",
+    "reactive",
+    "videojs",
+    "element"
+  ]
+}

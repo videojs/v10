@@ -13,7 +13,7 @@ Video.js components use a three-layer architecture separating framework-agnostic
             ┌─────────────────┴─────────────────┐
             ▼                                   ▼
       @videojs/html                     @videojs/react
-      Web Components (Lit)              React Components
+      Web Components                    React Components
 ```
 
 | Package | Responsibility |
@@ -148,7 +148,7 @@ export type StateAttrMap<State> = {
 
 ---
 
-## Web Component (Lit)
+## Web Component
 
 ```ts
 class PlayButtonElement extends MediaElement {

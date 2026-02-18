@@ -1,6 +1,5 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { kebabCase } from 'es-toolkit/string';
 import * as ts from 'typescript';
 import * as tae from 'typescript-api-extractor';
 import { extractCore } from './core-handler.js';
@@ -20,6 +19,11 @@ import {
   type StateDef,
 } from './types.js';
 import { kebabToPascal, partKebabFromSource, sortProps } from './utils.js';
+
+// Components whose PascalCase name doesn't match simple kebab-to-pascal conversion.
+const NAME_OVERRIDES: Record<string, string> = {
+  'pip-button': 'PiPButton',
+};
 
 function buildProps(coreData: CoreExtraction): Record<string, PropDef> {
   const props: Record<string, PropDef> = {};
@@ -95,7 +99,7 @@ function discoverComponents(): ComponentSource[] {
   for (const dir of dirs) {
     if (!dir.isDirectory()) continue;
 
-    const componentName = kebabToPascal(dir.name);
+    const componentName = NAME_OVERRIDES[dir.name] ?? kebabToPascal(dir.name);
     const componentDir = path.join(CORE_UI_PATH, dir.name);
 
     // Look for core file
@@ -107,6 +111,7 @@ function discoverComponents(): ComponentSource[] {
 
     const source: ComponentSource = {
       name: componentName,
+      kebab: dir.name,
     };
 
     if (fs.existsSync(coreFile)) {
@@ -151,8 +156,7 @@ function createProgram(sources: ComponentSource[]): ts.Program {
     // For multi-part components, include all element files from the HTML directory
     // and React source files for JSDoc description extraction
     if (source.partsIndexPath) {
-      const componentKebab = kebabCase(source.name);
-      const htmlDir = path.join(HTML_UI_PATH, componentKebab);
+      const htmlDir = path.join(HTML_UI_PATH, source.kebab);
       if (fs.existsSync(htmlDir)) {
         const elementFiles = fs.readdirSync(htmlDir).filter((f) => f.endsWith('-element.ts'));
         for (const file of elementFiles) {
@@ -241,7 +245,7 @@ function discoverParts(source: ComponentSource, program: ts.Program): PartSource
   const partExports = extractParts(source.partsIndexPath, program);
   if (partExports.length === 0) return [];
 
-  const componentKebab = kebabCase(source.name);
+  const componentKebab = source.kebab;
   const htmlDir = path.join(HTML_UI_PATH, componentKebab);
 
   const parts: PartSource[] = [];
@@ -254,8 +258,14 @@ function discoverParts(source: ComponentSource, program: ts.Program): PartSource
     const subPartElementFile = path.join(htmlDir, `${componentKebab}-${kebab}-element.ts`);
     const hasSubPartElement = fs.existsSync(subPartElementFile);
 
-    // Primary part: no matching sub-part element, but main element exists
-    const isPrimary = !hasSubPartElement && !!source.htmlPath;
+    // Primary part: no matching sub-part element, main element exists, and first match wins.
+    const isPrimary = !hasSubPartElement && !!source.htmlPath && !hasPrimary;
+
+    if (!hasSubPartElement && !!source.htmlPath && hasPrimary) {
+      log.warn(
+        `${source.name}: Part "${partExport.name}" also matches primary criteria and was skipped (first-match-wins)`
+      );
+    }
 
     if (isPrimary) hasPrimary = true;
 
@@ -265,6 +275,7 @@ function discoverParts(source: ComponentSource, program: ts.Program): PartSource
 
     const part: PartSource = {
       name: partExport.name,
+      localName: partExport.localName,
       kebab,
       isPrimary,
       htmlPath: hasSubPartElement ? subPartElementFile : isPrimary ? source.htmlPath : undefined,
@@ -310,7 +321,10 @@ function buildMultiPartApiReference(
 
   for (const part of parts) {
     // Extract JSDoc description from React component file
-    const description = part.reactPath ? extractPartDescription(part.reactPath, program, part.name) : undefined;
+    const description = part.reactPath
+      ? (extractPartDescription(part.reactPath, program, part.localName) ??
+        extractPartDescription(part.reactPath, program, part.name))
+      : undefined;
 
     if (part.isPrimary) {
       // Primary part: extract from shared core and data-attrs
@@ -438,7 +452,7 @@ function main() {
         }
 
         // Write JSON file
-        const outputFile = path.join(OUTPUT_PATH, `${kebabCase(source.name)}.json`);
+        const outputFile = path.join(OUTPUT_PATH, `${source.kebab}.json`);
         const json = `${JSON.stringify(validated.data, null, 2)}\n`;
         fs.writeFileSync(outputFile, json);
 

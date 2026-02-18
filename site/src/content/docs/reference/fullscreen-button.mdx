@@ -2,7 +2,7 @@
 title: FullscreenButton
 frameworkTitle:
   html: media-fullscreen-button
-description: A button component for entering and exiting fullscreen mode
+description: Accessible fullscreen toggle button with keyboard support and state reflection
 ---
 
 import ApiReference from "@/components/docs/api-reference/ApiReference.astro";
@@ -24,16 +24,43 @@ import basicUsageHtmlTs from "@/components/docs/demos/fullscreen-button/html/css
 ## Anatomy
 
 <FrameworkCase frameworks={["react"]}>
-```tsx
-<FullscreenButton />
-```
+  ```tsx
+  <FullscreenButton />
+  ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-```html
-<media-fullscreen-button></media-fullscreen-button>
-```
+  ```html
+  <media-fullscreen-button></media-fullscreen-button>
+  ```
 </FrameworkCase>
+
+## Behavior
+
+Toggles fullscreen mode. Detects platform support through `availability` — when fullscreen is `"unsupported"`, the toggle does nothing.
+
+## Styling
+
+You can style the button based on fullscreen state:
+
+```css
+/* In fullscreen */
+media-fullscreen-button[data-fullscreen] {
+  background: red;
+}
+```
+
+Consider hiding the button when unsupported:
+
+```css
+media-fullscreen-button[data-availability="unsupported"] {
+  display: none;
+}
+```
+
+## Accessibility
+
+Renders a `<button>` with an automatic `aria-label`: "Enter fullscreen" or "Exit fullscreen". Override with the `label` prop. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
 
 ## Examples
 
@@ -41,10 +68,12 @@ import basicUsageHtmlTs from "@/components/docs/demos/fullscreen-button/html/css
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
-    <Demo files={[
-      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
-      { title: "App.css", code: basicUsageReactCss, lang: "css" },
-    ]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+        { title: "App.css", code: basicUsageReactCss, lang: "css" },
+      ]}
+    >
       <BasicUsageDemoReact client:idle />
     </Demo>
   </StyleCase>
@@ -52,11 +81,13 @@ import basicUsageHtmlTs from "@/components/docs/demos/fullscreen-button/html/css
 
 <FrameworkCase frameworks={["html"]}>
   <StyleCase styles={["css"]}>
-    <Demo files={[
-      { title: "index.html", code: basicUsageHtml, lang: "html" },
-      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
-      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
-    ]}>
+    <Demo
+      files={[
+        { title: "index.html", code: basicUsageHtml, lang: "html" },
+        { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+        { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+      ]}
+    >
       <BasicUsageDemoHtml />
     </Demo>
   </StyleCase>

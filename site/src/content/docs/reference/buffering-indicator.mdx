@@ -1,0 +1,73 @@
+---
+title: BufferingIndicator
+frameworkTitle:
+  html: media-buffering-indicator
+description: Loading indicator that displays when the video player is buffering or waiting for data
+---
+
+import ApiReference from "@/components/docs/api-reference/ApiReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/buffering-indicator/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/buffering-indicator/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/buffering-indicator/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/buffering-indicator/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/buffering-indicator/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/buffering-indicator/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/buffering-indicator/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<BufferingIndicator />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-buffering-indicator></media-buffering-indicator>
+```
+</FrameworkCase>
+
+## Behavior
+
+Shows a loading indicator when the media is waiting to buffer and not paused, but only after a configurable `delay` (default 500ms). This delay prevents the indicator from flickering during brief stalls. The indicator hides immediately when buffering ends.
+
+## Styling
+
+Hide and show the indicator based on the `data-visible` attribute.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ApiReference component="BufferingIndicator" />

@@ -1,0 +1,141 @@
+name: Bundle Size
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  pull-requests: write
+
+jobs:
+  pr-size:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Cache turbo build setup
+        uses: actions/cache@v5
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Install and build
+        run: pnpm install && pnpm build:packages
+
+      - name: Measure bundle size
+        run: node .github/scripts/bundle-size.js --json pr-size.json
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-size
+          path: pr-size.json
+
+  base-size:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout base
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.base_ref }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Cache turbo build setup
+        uses: actions/cache@v5
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.event.pull_request.base.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Install and build
+        run: |
+          pnpm install
+
+          if [ -f .github/scripts/bundle-size.js ]; then
+            pnpm build:packages
+            node .github/scripts/bundle-size.js --json base-size.json
+          else
+            echo '[]' > base-size.json
+          fi
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: base-size
+          path: base-size.json
+
+  report:
+    runs-on: ubuntu-latest
+    needs: [pr-size, base-size]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Download size data
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Generate report
+        run: >
+          node .github/scripts/bundle-size-report.js
+          --pr artifacts/pr-size/pr-size.json
+          --base artifacts/base-size/base-size.json
+          > report.md
+
+      - name: Post comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('report.md', 'utf8');
+            const marker = '<!-- bundle-size-report -->';
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body?.startsWith(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }

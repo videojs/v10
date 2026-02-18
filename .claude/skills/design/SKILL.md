@@ -202,4 +202,4 @@ Before finalizing a Design Doc:
 | Proposals needing buy-in   | `rfc` skill       |
 | API design principles      | `api` skill       |
 | Building UI components     | `component` skill |
-| Writing documentation      | `docs` skill      |
+| Writing documentation      | `docs` skill |

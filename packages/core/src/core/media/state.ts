@@ -163,6 +163,13 @@ export interface MediaFullscreenState {
   exitFullscreen(): Promise<void>;
 }
 
+export interface MediaControlsState {
+  /** Whether the user has recently interacted with the player. */
+  userActive: boolean;
+  /** Whether controls should be visible (userActive || paused). */
+  controlsVisible: boolean;
+}
+
 export interface MediaPictureInPictureState {
   /**
    * Whether picture-in-picture mode is currently active.

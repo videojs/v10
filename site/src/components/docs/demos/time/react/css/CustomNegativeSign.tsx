@@ -1,4 +1,5 @@
-import { createPlayer, features, Time, Video } from '@videojs/react';
+import { createPlayer, features, Time } from '@videojs/react';
+import { Video } from '@videojs/react/video';
 
 import './CustomNegativeSign.css';
 
@@ -7,7 +8,7 @@ const Player = createPlayer({ features: [...features.video] });
 export default function CustomNegativeSign() {
   return (
     <Player.Provider>
-      <Player.Container className="time-custom-negative-sign">
+      <Player.Container className="react-time-custom-negative-sign">
         <Video
           src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
           autoPlay
@@ -15,7 +16,7 @@ export default function CustomNegativeSign() {
           playsInline
           loop
         />
-        <Time.Value type="remaining" negativeSign="~" className="time-custom-negative-sign__value" />
+        <Time.Value type="remaining" negativeSign="~" className="react-time-custom-negative-sign__value" />
       </Player.Container>
     </Player.Provider>
   );

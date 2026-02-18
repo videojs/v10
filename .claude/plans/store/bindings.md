@@ -20,7 +20,7 @@ Implemented React and Lit bindings for `@videojs/store`: `createStore()` factory
 
 ## Key Decisions
 
-- Package structure: `store/react` and `store/lit`
+- Package structure: `store/react` and `store/html`
 - Provider resolution: Isolated by default; `inherit` prop for parent context
 - Lit mixins: `StoreMixin` (combined), `StoreProviderMixin`, `StoreAttachMixin`
 

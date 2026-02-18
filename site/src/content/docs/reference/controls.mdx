@@ -1,0 +1,108 @@
+---
+title: Controls
+frameworkTitle:
+  html: media-controls
+description: Container component for composing and auto-hiding video player controls on user interaction
+---
+
+import ApiReference from "@/components/docs/api-reference/ApiReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/controls/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/controls/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/controls/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/controls/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/controls/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/controls/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/controls/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+Import the component and assemble its parts:
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <Controls.Root>
+    <Controls.Group />
+  </Controls.Root>
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-controls>
+    <media-controls-group></media-controls-group>
+  </media-controls>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+If the user is active, or if the video is paused, this component will show controls. Otherwise, it will hide them after a short delay.
+
+User activity is tracked via pointer movement, keyboard input, and focus events on the player container. On touch devices, a quick tap toggles visibility. `mouseleave` immediately sets the user as inactive.
+
+## Styling
+By default, controls have the following styles:
+
+```css
+/* Click-through: clicks pass through controls to video beneath */
+media-controls {
+  pointer-events: none;
+}
+
+media-controls-group {
+  pointer-events: auto;
+}
+
+/* Fade transition */
+media-controls {
+  transition: opacity 0.25s;
+}
+
+media-controls:not([data-visible]) {
+  opacity: 0;
+}
+```
+
+## Accessibility
+
+No ARIA role is applied to `<media-controls>` — it is a layout wrapper, not a landmark. `<media-controls-group>` automatically receives `role="group"` when an `aria-label` or `aria-labelledby` attribute is provided; otherwise no role is assigned.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+        { title: "App.css", code: basicUsageReactCss, lang: "css" },
+      ]}
+    >
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: basicUsageHtml, lang: "html" },
+        { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+        { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+      ]}
+    >
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ApiReference component="Controls" />

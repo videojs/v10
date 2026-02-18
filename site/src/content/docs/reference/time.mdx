@@ -2,7 +2,7 @@
 title: Time
 frameworkTitle:
   html: media-time
-description: Components for displaying and composing media time information
+description: Time display components for showing current time, duration, and remaining time in a video player
 ---
 
 import ApiReference from "@/components/docs/api-reference/ApiReference.astro";
@@ -74,6 +74,42 @@ import customNegativeSignHtmlTs from "@/components/docs/demos/time/html/css/Cust
 </media-time-group>
 ```
 </FrameworkCase>
+
+## Behavior
+
+Three display types — `current`, `duration`, and `remaining` — in digital format with smart padding:
+
+- **Hours** are never padded (`1:05:30`, not `01:05:30`)
+- **Minutes** are padded when hours are shown (`1:05:30`, but `5:30`)
+- **Seconds** are always padded (`1:05`, not `1:5`)
+
+Hour display is triggered when either the current value or the duration exceeds 1 hour, ensuring consistency within a Group. Remaining time displays a negative sign (customizable via the `negativeSign` prop).
+
+## Styling
+
+The negative sign is rendered inside `<span aria-hidden="true">` and can be hidden with CSS:
+
+```css
+[data-type="remaining"] > span[aria-hidden] {
+  display: none;
+}
+```
+
+## Accessibility
+
+<FrameworkCase frameworks={["html"]}>
+Each `<media-time>` has:
+- `aria-label` for the static role label ("Current time", "Duration", "Remaining")
+- `aria-valuetext` for the dynamic human-readable time ("1 minute, 30 seconds")
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+Each `<Time.Value>` has:
+- `aria-label` for the static role label ("Current time", "Duration", "Remaining")
+- `aria-valuetext` for the dynamic human-readable time ("1 minute, 30 seconds")
+</FrameworkCase>
+
+No `aria-live` region is used — time updates too frequently and might overwhelm screen readers. The separator is `aria-hidden="true"` since screen readers already hear each time value separately. The negative sign is also `aria-hidden` because `aria-valuetext` already conveys "remaining". In React, `<time datetime>` provides machine-readable time for parsers.
 
 ## Examples
 

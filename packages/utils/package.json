@@ -4,11 +4,7 @@
   "version": "0.1.0-alpha.1",
   "description": "Utility functions and helpers for Video.js",
   "license": "Apache-2.0",
-  "keywords": [
-    "media",
-    "utils",
-    "videojs"
-  ],
+  "sideEffects": false,
   "exports": {
     "./array": {
       "types": "./dist/array.d.ts",
@@ -34,9 +30,21 @@
       "types": "./dist/predicate.d.ts",
       "default": "./dist/predicate.js"
     },
+    "./string": {
+      "types": "./dist/string.d.ts",
+      "default": "./dist/string.js"
+    },
+    "./style": {
+      "types": "./dist/style.d.ts",
+      "default": "./dist/style.js"
+    },
     "./time": {
       "types": "./dist/time.d.ts",
       "default": "./dist/time.js"
+    },
+    "./number": {
+      "types": "./dist/number.d.ts",
+      "default": "./dist/number.js"
     },
     "./types": {
       "types": "./dist/types.d.ts",
@@ -61,5 +69,10 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "keywords": [
+    "media",
+    "utils",
+    "videojs"
+  ]
 }

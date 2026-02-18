@@ -1,6 +1,6 @@
 ---
 title: "Privacy Policy"
-description: "Last Updated October 2025"
+description: "Last Updated February 2026"
 ---
 
 import { GITHUB_REPO_URL } from '@/consts';
@@ -8,7 +8,7 @@ import A from '@/components/typography/A.astro'
 
 ## Introduction
 
-Video.js is a community-built, free and open source HTML5 video player framework. This privacy policy describes how the Video.js website (videojs.com) handles information when you visit our site.
+Video.js is a community-built, free and open source HTML5 video player framework. This privacy policy describes how the Video.js website at v10.videojs.org handles information when you visit our site.
 
 ## Information We Don't Collect
 
@@ -32,44 +32,46 @@ This information is used solely for maintaining the website's functionality, sec
 
 ## Analytics and Tracking
 
-To help us improve the Video.js website and documentation, we use PostHog, a privacy-focused analytics platform. PostHog helps us understand how visitors use our site so we can make it more useful and accessible.
+To help us improve the Video.js website and documentation, we use Netlify Web Analytics to understand aggregate traffic patterns.
 
-**What PostHog Collects:**
-- Page views and navigation patterns within our site
-- Interactions with documentation features (e.g., framework/style preference toggles)
-- General usage statistics to help improve our documentation
+**How this works:**
+- We review aggregate usage metrics such as page views and top content paths.
+- We use this information to improve documentation quality and site usability.
+- We do not run a client-side product analytics SDK on this site.
 
-**Privacy Features:**
-- PostHog uses only first-party cookies (no third-party tracking networks)
-- Data is used solely to improve the Video.js website and documentation
-- No data is shared with advertising networks or used for cross-site tracking
-- For more details, see [PostHog's Privacy Policy](https://posthog.com/privacy)
+**What this is not used for:**
+- Advertising targeting
+- Cross-site behavioral profiling
 
 ## Open Source and GitHub
 
 Video.js is hosted on GitHub, and our documentation may link to GitHub repositories and issues. When you interact with GitHub (such as submitting issues or pull requests), you are subject to [GitHub's Privacy Policy](https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement).
 
-## Cookies
+## Cookies and Similar Technologies
 
-This website uses cookies for two purposes:
+This website uses cookies and browser localStorage for security, authentication, and documentation preferences.
 
-### Functional Cookies (Necessary)
+### Essential Security and Authentication Cookies
 
-These cookies are essential for the website to remember your preferences and provide a better user experience:
+These cookies are required for secure authentication flows related to Mux uploader access:
 
-- **`vjs_docs_framework`** - Remembers your preferred framework (HTML, React, or React Native) when viewing documentation
-- **`vjs_docs_style`** - Remembers your preferred code style for the selected framework
-- **Duration:** 1 year
-- **Purpose:** These cookies ensure that when you return to our documentation, it displays code examples in your preferred format
+- **`state`** - Short-lived OAuth state token used for CSRF protection during sign-in.
+- **`session`** - Encrypted, HTTP-only session cookie used to keep authenticated sessions active.
+- **Duration:** `state` is short-lived (up to 10 minutes). `session` expires after inactivity (up to 2 days).
+- **Purpose:** Securely authenticate access to authenticated Mux upload features.
 
-### Analytics Cookies (PostHog)
+### Functional Preference Storage
 
-PostHog sets first-party cookies to help us understand how visitors use our site:
+We store documentation display preferences so the site can remember your preferred view:
 
-- Used to track page views and user interactions
-- Help us improve our documentation and site experience
-- Not used for advertising or cross-site tracking
-- Data remains within our analytics platform and is not shared with third parties
+- **Cookie:** `vjs_docs_framework` remembers your preferred docs framework (HTML, React, or React Native).
+- **localStorage:** `vjs_docs_style_<framework>` remembers your preferred style for each framework.
+- **Duration:** `vjs_docs_framework` is set for up to 1 year. localStorage values persist until you clear browser storage.
+- **Purpose:** Show documentation and code examples in your preferred format.
+
+### Analytics Measurement
+
+We use Netlify Web Analytics for aggregate site measurement. This measurement is not used for ad targeting or cross-site profiling by us.
 
 ## Children's Privacy
 
@@ -79,7 +81,7 @@ Our website does not specifically target children under 13, and we do not knowin
 
 **Server Logs:** Server logs containing technical information may be retained for security and operational purposes for a reasonable period, typically not exceeding 12 months.
 
-**Analytics Data:** PostHog analytics data is retained according to PostHog's data retention policies. This data is used solely for improving our website and documentation and is not shared with third parties.
+**Analytics Data:** Netlify Web Analytics data retention and availability are managed by Netlify according to their product settings and policies. We use analytics data in aggregate form to improve the website and documentation.
 
 ## Changes to This Policy
 
