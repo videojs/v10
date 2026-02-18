@@ -10,7 +10,7 @@ export function DataViz() {
       </p>
       <div className="my-4 w-full data-bar" />
       <div className="flex gap-0.5">
-        <p className="text-base inline py-0.5 px-8 rounded-2xl bg-faded-black border border-light-manila text-center text-light-manila font-display-extended uppercase font-bold">
+        <p className="text-base flex items-center py-0.5 px-8 rounded-2xl bg-faded-black border border-light-manila text-center text-light-manila font-display-extended uppercase font-bold">
           VJS 8
         </p>
         <p className="text-base inline py-1 px-4 rounded-2xl text-center text-light-manila font-display-extended uppercase font-bold">
@@ -22,7 +22,7 @@ export function DataViz() {
       <div className="my-4 w-full data-bar data-bar-orange max-w-43" />
 
       <div className="flex gap-0.5">
-        <p className="text-base inline py-0 px-8 rounded-2xl bg-faded-black border border-orange text-center text-orange font-display-extended uppercase font-bold">
+        <p className="flex items-center text-base py-0 px-8 rounded-2xl bg-faded-black border border-orange text-center text-orange font-display-extended uppercase font-bold">
           VJS 10
         </p>
         <p className="text-base inline py-1 px-4 rounded-2xl text-center text-orange font-display-extended uppercase font-bold">
