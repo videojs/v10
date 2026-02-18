@@ -6,7 +6,7 @@ description: Packaged sets of video player UI components and styles that you can
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import { FrostedSkinDemo } from '@/examples/react/FrostedSkin/FrostedSkinDemo';
 import { MinimalSkinDemo } from '@/examples/react/MinimalSkin/MinimalSkinDemo';
-import MinimalFrame from '@/components/frames/Minimal.astro';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
 In Video.js v10, skins are **complete, packaged player designs** that include both UI components and their styles. This is a significant change from v8, where skins were purely CSS themes applied to a fixed component structure.
@@ -32,14 +32,22 @@ A modern, glassy design with backdrop blur effects and polished interactions.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { VideoProvider, FrostedSkin, Video } from '@videojs/react-preview';
-import '@videojs/react-preview/skins/frosted.css';
+import { createPlayer, features, Poster } from '@videojs/react';
+import { VideoSkin, Video } from '@videojs/react/video';
+import '@videojs/react/video/skin.css';
 
-<VideoProvider>
-  <FrostedSkin>
-    <Video src="video.mp4" />
-  </FrostedSkin>
-</VideoProvider>
+const Player = createPlayer({ features: [...features.video] });
+
+export function VideoPlayer() {
+  return (
+    <Player.Provider>
+      <VideoSkin className="w-full aspect-video">
+        <Video src="video.mp4" />
+        <Poster src="poster.webp" />
+      </VideoSkin>
+    </Player.Provider>
+  );
+}
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
@@ -52,9 +60,9 @@ import '@videojs/react-preview/skins/frosted.css';
 ```
 </FrameworkCase>
 
-<MinimalFrame class="rounded-3xl">
+<ContentWidth class='relative z-20'>
   <FrostedSkinDemo client:visible />
-</MinimalFrame>
+</ContentWidth>
 
 ### Minimal
 
@@ -62,14 +70,22 @@ A clean, straightforward design that focuses on simplicity and clarity.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { VideoProvider, MinimalSkin, Video } from '@videojs/react-preview';
-import '@videojs/react-preview/skins/minimal.css';
+import { createPlayer, features, Poster } from '@videojs/react';
+import { MinimalVideoSkin, Video } from '@videojs/react/video';
+import '@videojs/react/video/minimal-skin.css';
 
-<VideoProvider>
-  <MinimalSkin>
-    <Video src="video.mp4" />
-  </MinimalSkin>
-</VideoProvider>
+const Player = createPlayer({ features: [...features.video] });
+
+export function VideoPlayer() {
+  return (
+    <Player.Provider>
+      <MinimalVideoSkin className="w-full aspect-video">
+        <Video src="video.mp4" />
+        <Poster src="poster.webp" />
+      </MinimalVideoSkin>
+    </Player.Provider>
+  );
+}
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
@@ -82,9 +98,9 @@ import '@videojs/react-preview/skins/minimal.css';
 ```
 </FrameworkCase>
 
-<MinimalFrame>
+<ContentWidth class='relative z-20'>
   <MinimalSkinDemo client:visible />
-</MinimalFrame>
+</ContentWidth>
 
 ## Customizing skins
 
@@ -93,7 +109,6 @@ Skins are designed to be ejected and modified for your specific needs.
 Ready to make it your own? <DocsLink slug="how-to/customize-skins">Learn how to customize a skin →</DocsLink>
 
 ## Building your own skin
-
 
 A skin is simply a component that:
 <FrameworkCase frameworks={["react"]}>

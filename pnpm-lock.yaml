@@ -279,6 +279,9 @@ importers:
       '@videojs/core':
         specifier: workspace:*
         version: link:../core
+      '@videojs/icons':
+        specifier: workspace:*
+        version: link:../icons
       '@videojs/store':
         specifier: workspace:*
         version: link:../store

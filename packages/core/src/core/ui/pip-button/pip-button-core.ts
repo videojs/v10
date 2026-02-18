@@ -42,7 +42,7 @@ export class PiPButtonCore {
       return label;
     }
 
-    return state.pip ? 'Exit PiP' : 'Enter PiP';
+    return state.pip ? 'Exit picture-in-picture' : 'Enter picture-in-picture';
   }
 
   getAttrs(state: PiPButtonState) {
