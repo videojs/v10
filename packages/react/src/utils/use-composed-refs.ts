@@ -37,16 +37,20 @@ export function composeRefs<T>(...refs: (OptionalRef<T> | OptionalRef<T>[])[]): 
   return (node): (() => void) | void => {
     const cleanups = flatRefs.map((ref) => setRef(ref, node));
 
-    return () => {
-      for (let i = 0; i < cleanups.length; i++) {
-        const cleanup = cleanups[i];
-        if (isFunction(cleanup)) {
-          cleanup();
-        } else {
-          setRef(flatRefs[i], null);
+    // Only return cleanup if any refs returned one (React 19+).
+    // React 18 handles cleanup by calling the ref callback with null.
+    if (cleanups.some(isFunction)) {
+      return () => {
+        for (let i = 0; i < cleanups.length; i++) {
+          const cleanup = cleanups[i];
+          if (isFunction(cleanup)) {
+            cleanup();
+          } else {
+            setRef(flatRefs[i], null);
+          }
         }
-      }
-    };
+      };
+    }
   };
 }
 

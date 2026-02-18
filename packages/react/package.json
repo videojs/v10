@@ -47,6 +47,7 @@
   },
   "dependencies": {
     "@videojs/core": "workspace:*",
+    "@videojs/icons": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"
   },
