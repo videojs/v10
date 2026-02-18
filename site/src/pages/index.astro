@@ -1,13 +1,16 @@
 ---
-import { CircleCheck, Clock } from 'lucide-react';
 
-import construction from '@/assets/construction.svg?raw';
+import { Built } from '@/components/Built/BuiltSection';
 import Footer from '@/components/Footer.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
+import GetStartedBanner from '@/components/GetStartedBanner';
 import HomePageDemo from '@/components/HomePageDemo';
 import HeroVideo from '@/components/home/HeroVideo';
 import HomePageControls from '@/components/home/HomePageControls';
+import MuxLogoSmall from '@/components/icons/MuxLogoSmall';
 import NavBar from '@/components/NavBar/NavBar.astro';
+import { RoadMap } from '@/components/Roadmap';
+import { Sponsors } from '@/components/Sponsors';
 import { SITE_DESCRIPTION, SITE_TITLE, VJS8_DEMO_VIDEO } from '@/consts';
 import Base from '@/layouts/Base.astro';
 
@@ -15,93 +18,72 @@ const poster = `${VJS8_DEMO_VIDEO.poster}?time=0`;
 ---
 
 <Base title={SITE_TITLE} description={SITE_DESCRIPTION}>
-  <link rel="preload" href={poster} as="image" type="image/webp" fetchpriority="high" slot="priority-head" />
-  <NavBar dark />
-  <header class="relative bg-dark-100 text-light-80 flex flex-col">
-    <div class="w-full max-w-7xl mx-auto px-6 md:px-10 mt-20 md:mt-30">
-      <div
-        class="gap-5 lg:gap-12 grid lg:grid-cols-(--lg-grid-cols) items-center mb-10"
-        style={{ '--lg-grid-cols': 'auto auto' }}
-      >
-        <h1 class="text-h4 md:text-h1 text-balance lg:text-pretty">The Open Source Player for the Web</h1>
-        <p class="md:text-lg text-balance max-w-100">
-          For over 15 years, Video.js has been the world’s web video player. Now rebuilt in v10 for modern development
-          and performance.
-        </p>
-      </div>
-      <div class="vjs relative z-10 w-full -mb-11 md:-mb-21 lg:-mb-32 grid grid-cols-1 grid-rows-1">
+  <link
+    rel="preload"
+    href={poster}
+    as="image"
+    type="image/webp"
+    fetchpriority="high"
+    slot="priority-head"
+  />
+  <NavBar />
+  <header class="relative flex flex-col">
+    <div class="w-full max-w-6xl mx-auto px-5 md:px-6">
+      <div class="vjs relative z-10 w-full grid grid-cols-1 grid-rows-1">
+        <div class="block md:hidden">
+          <h1
+            class="text-faded-black text-h5 pt-20 leading-[120%] w-full font-display-extended uppercase font-bold justify-self-center self-center text-center"
+          >
+            The Open Source Player<br />
+            <span class="">for the Web</span>
+          </h1>
+          <p
+            class="w-full text-base font-normal text-warm-gary max-w-3xl mx-auto pt-5 pb-20 md:px-5 text-center"
+          >
+            For over 15 years, Video.js has been the world’s web video player.
+            Now rebuilt in v10 for modern development and performance.
+          </p>
+        </div>
+
         <HeroVideo
           client:load
           className="aspect-video rounded-3xl bg-dark-80 dark:bg-dark-40 shadow-2xl"
           poster={poster}
         />
-      </div>
-    </div>
-    <div class="absolute bottom-0 left-0 right-0 h-28 md:h-67 grid grid-rows-4">
-      <div class="bg-yellow"></div>
-      <div class="bg-orange"></div>
-      <div class="bg-red"></div>
-      <div class="bg-purple"></div>
-    </div>
-  </header>
-  <!-- padding corresponds to negative margin on player -->
-  <main class="@container pt-11 pb-30 lg:pb-50 md:pt-21 lg:pt-32 px-6 md:px-10 w-full max-w-7xl mx-auto min-h-64">
-    <HomePageControls client:idle className="col-span-full my-10 sm:my-12 lg:mb-15" />
-    <HomePageDemo client:idle className="mb-6 lg:mb-30" />
-    <section class="rounded-3xl">
-      <header class="max-w-3xl mb-3">
-        <h2 class="text-h5 font-semibold lg:text-h4">Roadmap</h2>
-        <p class="mb-3">Video.js 10 is under construction</p>
-      </header>
-      <div class="relative h-3 w-full bg-yellow rounded-full overflow-hidden mb-6">
-        <div
-          style={`background-image:url('data:image/svg+xml,${encodeURIComponent(construction)}');`}
-          class="w-600 bg-repeat-x absolute top-0 bottom-0 left-0 animate-marquee motion-reduce:animate-none"
+        <h1
+          class="hidden md:block text-white absolute text-[3.1rem] leading-[120%] w-full font-display-extended uppercase font-bold justify-self-center self-center text-center"
         >
-        </div>
+          The Open Source<br />
+          <span class=""> Player for the Web </span>
+        </h1>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        <section class="flex gap-3 rounded-xl border border-light-40 dark:border-dark-80 p-6">
-          <CircleCheck size={20} className="flex-shrink-0 relative top-1" />
-          <div>
-            <h3 class="font-semibold text-lg">Preview</h3>
-            <p class="font-medium mb-3">October 28, 2025</p>
-            <p class="max-w-3xl">Vibe check. First public look, with limited features. Not production ready.</p>
-          </div>
-        </section>
-        <section class="flex gap-3 rounded-xl border border-light-40 dark:border-dark-80 p-6">
-          <div>
-            <Clock size={20} className="flex-shrink-0 relative top-1" />
-          </div>
-          <div>
-            <h3 class="font-semibold text-lg">Beta</h3>
-            <p class="font-medium mb-3">February 2026</p>
-            <p class="max-w-3xl">Core controls. Adaptive streaming with existing engines. Try it out!</p>
-          </div>
-        </section>
-        <section class="flex gap-3 rounded-xl border border-light-40 dark:border-dark-80 p-6">
-          <div>
-            <Clock size={20} className="flex-shrink-0 relative top-1" />
-          </div>
-          <div>
-            <h3 class="font-semibold text-lg">Release</h3>
-            <p class="font-medium mb-3">Mid-2026</p>
-            <p class="max-w-3xl">Stable, with all the basics: Media Chrome, Vidstack, Plyr feature parity.</p>
-          </div>
-        </section>
-        <section class="flex gap-3 rounded-xl border border-light-40 dark:border-dark-80 p-6">
-          <div>
-            <Clock size={20} className="flex-shrink-0 relative top-1" />
-          </div>
-          <div>
-            <h3 class="font-semibold text-lg">Beyond</h3>
-            <p class="font-medium mb-3">Late-2026</p>
-            <p class="max-w-3xl">Collab with the community, migrate major v8 plugins, develop streaming engines</p>
-          </div>
-        </section>
-      </div>
-    </section>
+      <p
+        class="flex justify-center md:justify-end items-center gap-2 py-2 font-display-extended uppercase font-light ml-auto text-sm"
+      >
+        VIDEO HOSTING BY
+        <MuxLogoSmall className="inline" width={"3.25"} />
+      </p>
+    </div>
+    <p
+      class="hidden md:block w-full text-h5 font-normal text-warm-gary max-w-3xl mx-auto py-20 md:px-5 text-center"
+    >
+      For over 15 years, Video.js has been the world’s web video player. Now
+      rebuilt in v10 for modern development and performance.
+    </p>
+  </header>
+  <main class="w-full">
+    <div class="w-full max-w-6xl mx-auto px-6 md:px-5">
+      <HomePageControls
+        client:idle
+        className="col-span-full my-10 sm:my-12 lg:mb-15"
+      />
+      <HomePageDemo client:idle className="" />
+      <GetStartedBanner />
+    </div>
+      <Built />
+    <RoadMap />
+    <Sponsors /> 
   </main>
   <Footer />
-  <FooterEasterEgg />
+  <FooterEasterEgg /> 
 </Base>

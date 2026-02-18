@@ -21,6 +21,95 @@
   font-style: normal;
   font-display: swap;
 }
+
+@keyframes moveLines {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(6px);
+  }
+}
+
+@keyframes grow-bar {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes grow-bg {
+  from {
+    height: 0;
+  }
+  to {
+    height: 100%;
+  }
+}
+
+@layer utilities {
+  /* Custom white overlay scrollbar utility */
+  .scrollbar-white {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-dark-manila) transparent;
+  }
+  .scrollbar-white::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-white::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-white::-webkit-scrollbar-thumb {
+    background: var(--color-dark-manila);
+    border-radius: 9999px;
+  }
+
+  .built-bg {
+    background-image: url("/built-bg-horizontal-line.svg");
+    background-repeat: repeat-y;
+    background-size: 100% 9px;
+    background-clip: content-box;
+    padding: 8px 10px 0 10px;
+    animation: grow-bg 0.9s ease-out forwards;
+  }
+
+  .data-bar {
+    height: 2.5rem;
+    background-image: url("/data-bar-white.svg");
+    background-repeat: repeat-x;
+    background-size: 6px 100%;
+    animation: grow-bar 1.5s ease-out forwards;
+  }
+
+  .data-bar-orange {
+    background-image: url("/data-bar-orange.svg");
+  }
+
+  .grid-separators::before {
+    content: "";
+    position: absolute;
+    top: 0.25rem;
+    bottom: 0.25rem;
+    left: 0%;
+    width: 1px;
+    background: var(--color-warm-gray);
+    box-shadow: 0 0 0 var(--color-warm-gray);
+  }
+
+  .grid-separators::after {
+    content: "";
+    position: absolute;
+    left: 0.25rem;
+    right: 0.25rem;
+    top: 0;
+    height: 1px;
+    background: var(--color-warm-gray);
+  }
+}
+
 @font-face {
   font-family: "Eurostile LT Pro Extended";
   src:
@@ -124,16 +213,21 @@ mark {
   --color-dark-80: #5a5850;
   --color-dark-40: #7d796a;
 
-  --color-light-100: #fbf5d8;
-  --color-light-80: #ebe4c1;
+  --color-light-100: #f6eee2;
+  --color-light-80: #f3e7d2;
   --color-light-60: #d8d2b2;
   --color-light-40: #c7c2a4;
 
-  --color-yellow: #fcb116;
-  --color-orange: #f26222;
-  --color-red: #ea3837;
-  --color-purple: #a83b71;
-  --color-blue: #3870b7;
+  --color-faded-black: #1e1d1d;
+  --color-warm-gray: #403c38;
+  --color-dark-manila: #bfb39e;
+  --color-light-manila: #f3e7d2;
+
+  --color-yellow: #ffca18;
+  --color-gold: #ffa81b;
+  --color-orange: #ff6200;
+  --color-red: #eb3132;
+  --color-magenta: #cc3566;
 
   /* Typography */
   --tracking-*: initial;
@@ -145,7 +239,7 @@ mark {
   --tracking-widest: 0.08em;
 
   --font-weight-code-normal: 400;
-  --font-weight-normal: 450;
+  --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
 

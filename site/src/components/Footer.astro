@@ -1,9 +1,9 @@
 ---
-
 import { ArrowUpRight } from 'lucide-react';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
 import Discord from './icons/Discord';
 import GitHub from './icons/GitHub';
+import { LogoMonoVersion } from './icons/Logo';
 import { ThemeToggle } from './ThemeToggle';
 
 type NavLink = {
@@ -12,7 +12,6 @@ type NavLink = {
   external?: boolean;
 };
 const navLinks: NavLink[] = [
-  { href: '/', label: 'Home' },
   { href: '/docs', label: 'Docs' },
   { href: '/blog', label: 'Blog' },
   { href: '/privacy', label: 'Privacy' },
@@ -22,59 +21,75 @@ type Props = {
   class?: string;
 };
 const { class: className } = Astro.props;
+
+const navLinkBase =
+  'hover:bg-(--color-dark-manila) transition-colors flex items-center px-5 py-2 rounded-sm font-display-extended uppercase font-bold';
 ---
 
-<footer class:list={['border-t border-light-40 dark:border-dark-80 py-6 px-3 grid gap-3', className]}>
-  <div class="flex items-center justify-between flex-col sm:flex-row gap-3 mb-2 sm:mb-0">
-    <nav class="flex flex-col sm:flex-row gap-1">
-      <div class="flex justify-center sm:justify-start">
-        {
-          navLinks.map((link) => (
-            <a href={link.href} class="intent:underline px-3 py-2 inline-flex gap-1 items-center">
-              {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
-            </a>
-          ))
-        }
-      </div>
-      <div class="flex justify-center sm:justify-start">
-        <a
-          href={GITHUB_REPO_URL}
-          class="group px-3 py-2 inline-flex items-center"
-          aria-label="GitHub"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <GitHub
-            size="1em"
-            className="text-dark-80 dark:text-light-80 group-intent:text-dark-100 dark:group-intent:text-light-40"
-          />
-        </a>
-        <a
-          href={DISCORD_INVITE_URL}
-          class="group px-3 py-2 inline-flex items-center"
-          aria-label="Discord"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Discord
-            size="1em"
-            className="text-dark-80 dark:text-light-80 group-intent:text-dark-100 dark:group-intent:text-light-40"
-          />
-        </a>
-      </div>
-    </nav>
-    <ThemeToggle client:visible />
-  </div>
+<footer
+  class:list={[
+    'w-full max-w-6xl mx-auto border-t border-faded-black pt-9 pb-11 mt-32 grid gap-3',
+    className,
+  ]}
+>
+  <div
+    class="flex items-start justify-between flex-col sm:flex-row gap-3 mb-2 sm:mb-0"
+  >
+    <div class="text-faded-black flex flex-col gap-15">
+      <nav class="flex flex-col sm:flex-row gap-1 -ml-4">
+        <div class="flex justify-center sm:justify-start">
+          {
+            navLinks.map((link) => (
+              <a href={link.href} class={navLinkBase}>
+                {link.label}{' '}
+                {link.external ? <ArrowUpRight size="1em" /> : null}
+              </a>
+            ))
+          }
+        </div>
+        <div class="flex justify-center sm:justify-start">
+          <a
+            href={DISCORD_INVITE_URL}
+            class={navLinkBase}
+            aria-label="Discord"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Discord size="1.5em" strokeWidth="0.0625em" />
+          </a>
+          <a
+            href={GITHUB_REPO_URL}
+            class={navLinkBase}
+            aria-label="GitHub"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <GitHub size="1.5em" strokeWidth="0.0625em" />
+          </a>
+        </div>
+      </nav>
+      <LogoMonoVersion width={"23"} />
+    </div>
 
-  <p class="text-sm text-center sm:text-left text-dark-40 dark:text-light-40 px-3">
-    Video.js is a free and open source HTML5 <a href="/" class="intent:decoration-wavy">video player</a>.
-    <br />The term <strong>VIDEO.JS</strong> is a registered trademark of Brightcove Inc.
-    <br />
-    &copy; 2010&ndash;{new Date().getFullYear()} Video.js contributors &nbsp;|&nbsp; Sponsored by <a
-      href="https://www.mux.com?utm_source=videojs&utm_campaign=vjs10"
-      class="underline intent:decoration-wavy"
-    >
-      Mux
-    </a>
-  </p>
+    <div class="flex flex-col items-end text-end gap-15">
+      <ThemeToggle client:visible />
+      <p class="text-sm text-right text-faded-black font-sans">
+        Video.js is a free and open source HTML5 <a href="/" class="underline"
+          >video player.</a
+        >
+        <br />
+        <a
+          href="https://www.mux.com?utm_source=videojs&utm_campaign=vjs10"
+          class="underline"
+        >
+          Video hosting and streaming sponsored by Mux
+        </a>
+
+        <br /><br />The term VIDEO.JS is a registered trademark of Brightcove
+        Inc.
+        <br />
+        &copy; 2010&ndash;{new Date().getFullYear()} Video.js contributors
+      </p>
+    </div>
+  </div>
 </footer>

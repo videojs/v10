@@ -1,16 +1,17 @@
-import { Monitor, Moon, Sun } from 'lucide-react';
-
 import { useEffect, useState } from 'react';
 import { THEME_KEY } from '@/consts';
+import Computer from './icons/Computer';
+import Moon from './icons/Moon';
+import Sun from './icons/Sun';
 import ToggleGroup from './ToggleGroup';
 
 type Preference = 'system' | 'light' | 'dark';
 type Theme = 'light' | 'dark';
 
 const themeOptions = [
-  { value: 'system' as const, label: <Monitor size={14} aria-hidden="true" />, 'aria-label': 'System' },
-  { value: 'light' as const, label: <Sun size={14} aria-hidden="true" />, 'aria-label': 'Light' },
-  { value: 'dark' as const, label: <Moon size={14} aria-hidden="true" />, 'aria-label': 'Dark' },
+  { value: 'system' as const, label: <Computer width={'1.5'} aria-hidden="true" />, 'aria-label': 'System' },
+  { value: 'light' as const, label: <Sun width={'1.5'} aria-hidden="true" />, 'aria-label': 'Light' },
+  { value: 'dark' as const, label: <Moon width={'1.5'} aria-hidden="true" />, 'aria-label': 'Dark' },
 ];
 
 function initPreference(): Preference {
@@ -90,6 +91,7 @@ export function ThemeToggle() {
         if (values.length > 0) setPreference(values[0]);
       }}
       options={themeOptions}
+      minimal
     />
   );
 }

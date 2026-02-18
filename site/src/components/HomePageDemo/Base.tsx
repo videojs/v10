@@ -42,6 +42,8 @@ export default function BaseDemo({ className }: { className?: string }) {
   const $framework = useStore(framework);
   const $skin = useStore(skin);
 
+  const tabCodeContent = 'bg-faded-black scrollbar-white m-1 mt-0';
+
   if ($framework === 'html') {
     return (
       <TabsRoot key={$framework} className={className} maxWidth={false}>
@@ -49,12 +51,15 @@ export default function BaseDemo({ className }: { className?: string }) {
           <Tab value="html" initial>
             HTML
           </Tab>
-          <Tab value="javascript">JavaScript</Tab>
+          <Tab value="javascript">
+            <span className="sm:hidden">JS</span>
+            <span className="hidden sm:inline">JavaScript</span>
+          </Tab>
         </TabsList>
-        <TabsPanel value="html" initial>
+        <TabsPanel value="html" initial className={tabCodeContent}>
           <ClientCode code={generateHTMLCode($skin)} lang="html" />
         </TabsPanel>
-        <TabsPanel value="javascript">
+        <TabsPanel value="javascript" className={tabCodeContent}>
           <ClientCode code={generateJS($skin)} lang="javascript" />
         </TabsPanel>
       </TabsRoot>
@@ -68,7 +73,7 @@ export default function BaseDemo({ className }: { className?: string }) {
           React
         </Tab>
       </TabsList>
-      <TabsPanel value="react" initial>
+      <TabsPanel value="react" initial className={tabCodeContent}>
         <ClientCode code={generateReactCode($skin)} lang="tsx" />
       </TabsPanel>
     </TabsRoot>

@@ -1,12 +1,10 @@
 ---
-
 import clsx from 'clsx';
 import { ArrowUpRight } from 'lucide-react';
 import Discord from '@/components/icons/Discord';
 import GitHub from '@/components/icons/GitHub';
-import Search from '@/components/Search';
+import Logo from '@/components/icons/Logo';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
-import FilmGrain from '../FilmGrain';
 import GetStartedLink from './GetStartedLink';
 import MobileNav from './MobileNav';
 
@@ -30,75 +28,67 @@ const currentPath = Astro.url.pathname;
 const isDocsActive = currentPath.startsWith('/docs');
 const otherNavLinks = navLinks.filter((link) => link.href !== '/docs');
 const { class: className, dark = false } = Astro.props;
+const navLinkBase =
+  'hover:bg-(--color-dark-manila) transition-colors flex items-center px-5 py-2 rounded-sm font-display-extended uppercase font-bold';
 ---
 
 <nav
   class:list={[
-    'pl-3 flex justify-between sticky top-0 z-40 border-b',
-    dark
-      ? 'bg-dark-100 text-light-80 border-dark-100 dark:border-dark-80'
-      : 'bg-light-80 border-light-40 dark:bg-dark-100 dark:border-dark-80',
+    'flex justify-between',
+    'w-full max-w-6xl mx-auto px-5 py-7 md:pt-10 md:px-5 ',
     className,
   ]}
-  style="height: var(--nav-h);"
 >
-  {/* Grain */}
-  <FilmGrain currentPath={Astro.url.pathname} />
-  {/* Logo */}
-  <a href="/" class="flex items-center px-3 text-h5">Video.js v10</a>
-
-  <Search dark={dark} class="ml-auto mr-4 sm:self-center" />
-
+  <a href="/" class="flex items-center" aria-label="Video.js v10 home">
+    <div class="block md:hidden">
+      <Logo width="10" />
+    </div>
+    <div class="hidden md:block">
+      <Logo width="14" />
+    </div>
+  </a>
   {/* Desktop nav links */}
-  <div class="hidden sm:flex -mb-px pr-3">
+  <div class="hidden sm:flex">
     <GetStartedLink
       client:idle
-      className={clsx(
-        'h-full flex items-center px-3 border-b gap-1',
-        isDocsActive ? 'border-current' : 'border-transparent intent:border-current',
-      )}
+      className={clsx(navLinkBase)}
       aria-current={isDocsActive ? 'page' : undefined}
     >
       Docs
     </GetStartedLink>
     {
       otherNavLinks.map((link) => (
-        <a
-          href={link.href}
-          class:list={[
-            'h-full flex items-center px-3 border-b gap-1',
-            link.matchPath && currentPath.startsWith(link.matchPath)
-              ? 'border-current'
-              : 'border-transparent intent:border-current',
-          ]}
-          aria-current={link.matchPath && currentPath.startsWith(link.matchPath) ? 'page' : undefined}
-        >
+        <a href={link.href} class:list={[navLinkBase]}>
           {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
         </a>
       ))
     }
     <a
-      href={GITHUB_REPO_URL}
-      class="h-full flex items-center px-3 border-b border-transparent intent:border-current"
-      aria-label="GitHub"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      <GitHub size="1.1em" strokeWidth="0.0625em" />
-    </a>
-    <a
       href={DISCORD_INVITE_URL}
-      class="h-full flex items-center px-3 border-b border-transparent intent:border-current"
+      class={clsx(navLinkBase, '!px-3')}
       aria-label="Discord"
       target="_blank"
       rel="noopener noreferrer"
     >
-      <Discord size="1.1em" strokeWidth="0.0625em" />
+      <Discord size="1.5em" strokeWidth="0.0625em" />
+    </a>
+    <a
+      href={GITHUB_REPO_URL}
+      class={clsx(navLinkBase, '!px-3')}
+      aria-label="GitHub"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <GitHub size="1.5em" strokeWidth="0.0625em" />
     </a>
   </div>
 
-  {/* Mobile nav */}
-  <!-- <MobileNav client:idle navLinks={navLinks} currentPath={currentPath} dark={dark}>
+  <MobileNav
+    client:idle
+    navLinks={navLinks}
+    currentPath={currentPath}
+    dark={dark}
+  >
     <slot name="mobile-nav" />
-  </MobileNav> -->
+  </MobileNav>
 </nav>
