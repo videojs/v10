@@ -136,7 +136,27 @@ interface MediaFullApi {
   setMediaKeys(mediaKeys: MediaKeys | null): Promise<void>; // secure context
 }
 
-interface MediaApi extends MediaBaseApi, Partial<MediaFullApi> {}
+export interface RenditionsCapability {
+  videoRenditions: VideoRenditionList;
+  audioRenditions: AudioRenditionList;
+}
+
+export interface StreamTypeCapability {
+  streamType: 'live' | 'on-demand';
+}
+
+export interface LiveEdgeCapability {
+  liveEdgeStart: number;
+}
+
+interface MediaApi extends MediaBaseApi, 
+  Partial<MediaFullApi>,
+  Partial<RenditionsCapability>,
+  Partial<StreamTypeCapability>,
+  Partial<LiveEdgeCapability>
+{
+  // ...
+}
 
 export interface MediaApiProxyTarget extends EventTarget {}
 
@@ -164,7 +184,7 @@ export class VideoApiProxy extends MediaApiProxyMixin<HTMLVideoElement>(HTMLVide
 export class AudioApiProxy extends MediaApiProxyMixin<HTMLAudioElement>(HTMLAudioElement, HTMLMediaElement, EventTarget) {}
 ```
 
-### Example of using the media API
+### Example of using the media API Proxy
 
 ```ts
 import type { MediaApiProxyTarget } from '@videojs/core';
