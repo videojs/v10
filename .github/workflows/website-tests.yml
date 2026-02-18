@@ -4,11 +4,7 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'site/**'
   pull_request:
-    paths:
-      - 'site/**'
 
 jobs:
   test:
@@ -39,4 +35,4 @@ jobs:
             ${{ runner.os }}-turbo-
 
       - name: Run website tests
-        run: turbo run test --filter=site
+        run: pnpm exec turbo run test --filter=site
