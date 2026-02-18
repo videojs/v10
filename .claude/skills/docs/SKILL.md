@@ -37,6 +37,7 @@ This skill adds writing guidance on top of those. When in doubt, the source file
 | Package README from scratch | `templates/readme.md` |
 | Code example conventions | `patterns/code-examples.md` |
 | Error documentation patterns | `patterns/error-docs.md` |
+| SEO metadata and keyword targeting | `references/seo.md` |
 | Review workflow (multi-agent) | `review/workflow.md` |
 | Review checklist (single-agent) | `review/checklist.md` |
 | Review agent prompts | `review/agents.md` |
