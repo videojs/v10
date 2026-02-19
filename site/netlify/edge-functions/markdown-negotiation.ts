@@ -1,8 +1,5 @@
 import type { Config, Context } from '@netlify/edge-functions';
 
-let tokenMap: Record<string, number> | null = null;
-let tokenMapLoaded = false;
-
 export default async (request: Request, context: Context) => {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/$/, '');
@@ -16,22 +13,7 @@ export default async (request: Request, context: Context) => {
   const headers = new Headers();
   headers.set('content-type', 'text/markdown; charset=utf-8');
   headers.set('vary', 'Accept');
-
-  // Lazy-load token manifest (built by llms-markdown integration)
-  if (!tokenMapLoaded) {
-    tokenMapLoaded = true;
-    try {
-      const res = await fetch(new URL('/llms-tokens.json', request.url));
-      if (res.ok) tokenMap = await res.json();
-    } catch {
-      // Manifest unavailable — continue without token count
-    }
-  }
-
-  const tokens = tokenMap?.[path];
-  if (tokens) {
-    headers.set('x-markdown-tokens', String(tokens));
-  }
+  headers.set('x-markdown-tokens', String(Math.ceil(body.length / 4)));
 
   return new Response(body, { status: 200, headers });
 };

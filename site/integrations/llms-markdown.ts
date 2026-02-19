@@ -17,9 +17,6 @@ export default function llmsMarkdown(): AstroIntegration {
           emDelimiter: '*',
         });
 
-        // Track token counts per page for x-markdown-tokens header
-        const tokenManifest: Record<string, number> = {};
-
         // Track all docs and blog pages for llms.txt index
         const docsPages: Array<{ pathname: string; title: string; description?: string; sort?: string }> = [];
         const blogPages: Array<{ pathname: string; title: string; description?: string; sort?: string }> = [];
@@ -76,9 +73,6 @@ export default function llmsMarkdown(): AstroIntegration {
             await mkdir(dirname(mdPath), { recursive: true });
             await writeFile(mdPath, markdown, 'utf-8');
 
-            // Track token count for content negotiation header
-            tokenManifest[`/${pathname}`] = estimateTokens(markdown);
-
             // Track for llms.txt index (with leading slash for URLs)
             if (pathname.startsWith('docs/')) {
               docsPages.push({ pathname: `/${pathname}`, title, description, sort });
@@ -97,20 +91,12 @@ export default function llmsMarkdown(): AstroIntegration {
         const llmsTxtPath = join(siteDir, 'llms.txt');
         await writeFile(llmsTxtPath, llmsTxt, 'utf-8');
 
-        // Write token manifest for edge function content negotiation
-        const tokenManifestPath = join(siteDir, 'llms-tokens.json');
-        await writeFile(tokenManifestPath, JSON.stringify(tokenManifest), 'utf-8');
-
         logger.info(
           `Generated ${docsPages.length + blogPages.length + otherPages.length} markdown files and llms.txt index`
         );
       },
     },
   };
-}
-
-function estimateTokens(text: string): number {
-  return Math.ceil(text.length / 4);
 }
 
 function generateLlmsTxt(
