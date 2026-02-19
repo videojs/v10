@@ -1,6 +1,7 @@
-import type { MediaApiProxyTarget } from '@videojs/core';
 import type { AnyConstructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
+
+import type { MediaApiProxyTarget } from '../../core/media/proxy';
 import { VideoApiProxy } from './proxy';
 
 // This is used by the web component because it needs to extend HTMLElement!
