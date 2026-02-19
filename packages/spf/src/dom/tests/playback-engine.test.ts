@@ -1385,7 +1385,7 @@ it('tracks buffer state separately for video and audio', async () => {
       return Promise.resolve(
         new Response(`#EXTM3U
 #EXT-X-VERSION:7
-#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E"
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E,mp4a.40.2",AUDIO="audio"
 http://example.com/video.m3u8
 #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",URI="http://example.com/audio.m3u8"`)
       );
