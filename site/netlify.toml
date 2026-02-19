@@ -3,6 +3,12 @@
   publish = "site/dist"
   ignore = "pnpm dlx turbo-ignore site --task=build --fallback=origin/main"
 
+# Strip trailing slashes to match Astro's trailingSlash: 'never' config
+[[redirects]]
+  from = "/*/"
+  to = "/:splat"
+  status = 301
+
 # Redirect old theme demo pages to home
 [[redirects]]
   from = "/city"
