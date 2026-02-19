@@ -1,0 +1,59 @@
+---
+title: usePlayer
+description: Hook to access the player store from within a Player Provider
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import BasicUsageDemoReact from "@/components/docs/demos/use-player/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/use-player/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/use-player/react/css/BasicUsage.css?raw";
+
+## Import
+
+```tsx
+import { usePlayer } from '@videojs/react';
+```
+
+## Usage
+
+`usePlayer` has two overloads:
+
+**Store access (no subscription)** -- returns the store instance without subscribing to changes. Use this to access actions or manually subscribe.
+
+```tsx
+function Controls() {
+  const store = usePlayer();
+  // Access actions like store.setVolume, store.play, etc.
+}
+```
+
+**Selector-based subscription** -- returns the selected value and re-renders when it changes (using shallow equality).
+
+```tsx
+function PlayButton() {
+  const paused = usePlayer((s) => s.paused);
+  return <button>{paused ? 'Play' : 'Pause'}</button>;
+}
+```
+
+`usePlayer` must be called within a Player `Provider` created by `createPlayer`. The scoped `usePlayer` returned from `createPlayer` is typed to the specific store, while the standalone export from `@videojs/react` returns an untyped store.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<UtilReference util="usePlayer" />

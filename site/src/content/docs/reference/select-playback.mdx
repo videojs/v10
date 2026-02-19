@@ -1,0 +1,47 @@
+---
+title: selectPlayback
+description: Select the playback state slice from the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+## Import
+
+```ts
+import { selectPlayback } from '@videojs/core/dom';
+```
+
+## Usage
+
+Pass `selectPlayback` to `usePlayer` (React) or `PlayerController` (HTML) to subscribe to playback state. Returns `undefined` if the playback feature is not configured.
+
+The returned state includes `paused`, `ended`, and action methods like `play`, `pause`, and `toggle`.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { usePlayer } from '@videojs/react';
+import { selectPlayback } from '@videojs/core/dom';
+
+function PlayButton() {
+  const playback = usePlayer(selectPlayback);
+  if (!playback) return null;
+  return <button onClick={playback.toggle}>{playback.paused ? 'Play' : 'Pause'}</button>;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { createPlayer, features, MediaElement } from '@videojs/html';
+import { selectPlayback } from '@videojs/core/dom';
+
+const { PlayerController, context } = createPlayer({ features: features.video });
+
+class PlayButton extends MediaElement {
+  #playback = new PlayerController(this, context, selectPlayback);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectPlayback" />

@@ -1,0 +1,52 @@
+---
+title: selectControls
+description: Select the controls state slice from the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+## Import
+
+```ts
+import { selectControls } from '@videojs/core/dom';
+```
+
+## Usage
+
+Pass `selectControls` to `usePlayer` (React) or `PlayerController` (HTML) to subscribe to controls state. Returns `undefined` if the controls feature is not configured.
+
+The returned state includes whether controls are visible and whether the user is active (interacting with the player).
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { usePlayer } from '@videojs/react';
+import { selectControls } from '@videojs/core/dom';
+
+function ControlsOverlay({ children }: { children: React.ReactNode }) {
+  const controls = usePlayer(selectControls);
+  if (!controls) return null;
+
+  return (
+    <div style={{ opacity: controls.visible ? 1 : 0 }}>
+      {children}
+    </div>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { createPlayer, features, MediaElement } from '@videojs/html';
+import { selectControls } from '@videojs/core/dom';
+
+const { PlayerController, context } = createPlayer({ features: features.video });
+
+class ControlsOverlay extends MediaElement {
+  #controls = new PlayerController(this, context, selectControls);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectControls" />

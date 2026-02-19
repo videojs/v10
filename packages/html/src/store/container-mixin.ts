@@ -9,6 +9,7 @@ export type ContainerMixin<Store extends PlayerStore> = <Class extends MediaElem
   BaseClass: Class
 ) => Class & PlayerConsumerConstructor<Store>;
 
+/** Create a mixin that consumes player context and auto-attaches media elements. */
 export function createContainerMixin<Store extends PlayerStore>(context: PlayerContext<Store>): ContainerMixin<Store> {
   return <Class extends MediaElementConstructor>(BaseClass: Class) => {
     class PlayerContainerElement extends BaseClass implements PlayerConsumer<Store>, MediaContainer {

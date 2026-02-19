@@ -1,0 +1,36 @@
+.html-player-controller-basic {
+  position: relative;
+}
+
+.html-player-controller-basic video {
+  width: 100%;
+}
+
+.html-player-controller-basic__panel {
+  display: flex;
+  gap: 16px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  align-items: center;
+}
+
+.html-player-controller-basic__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.html-player-controller-basic__actions button {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  font-size: 0.8125rem;
+}
+
+.html-player-controller-basic__state {
+  font-size: 0.8125rem;
+  color: #374151;
+  font-variant-numeric: tabular-nums;
+}

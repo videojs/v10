@@ -1,0 +1,80 @@
+---
+import { getEntry } from 'astro:content';
+import { kebabCase } from 'es-toolkit/string';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import H2 from '@/components/typography/H2Markdown.astro';
+import H3 from '@/components/typography/H3Markdown.astro';
+import H4 from '@/components/typography/H4Markdown.astro';
+import P from '@/components/typography/P.astro';
+import type { UtilReference } from '@/types/util-reference';
+import { createUtilReferenceModel } from '@/utils/utilReferenceModel';
+import InlineMarkdown from './InlineMarkdown.astro';
+import UtilParamsTable from './UtilParamsTable.astro';
+import UtilReturnTable from './UtilReturnTable.astro';
+
+interface Props {
+  util: string;
+  slug?: string;
+}
+
+const { util, slug } = Astro.props;
+
+const entry = await getEntry('utilReference', slug ?? kebabCase(util));
+const ref: UtilReference | null = entry?.data ?? null;
+if (!ref) return;
+
+const model = createUtilReferenceModel(util, ref);
+if (!model) return;
+---
+
+<ContentWidth>
+  <H2 id={model.heading.id}>{model.heading.text}</H2>
+
+  {model.isMultiOverload ? (
+    model.overloads.map((overload) => {
+      const paramsSection = overload.sections.find((s) => s.key === 'parameters');
+      const returnSection = overload.sections.find((s) => s.key === 'returnValue');
+      const hasParams = Object.keys(overload.data.parameters).length > 0;
+
+      return (
+        <>
+          <H3 id={overload.id}>Overload {overload.index}</H3>
+
+          {overload.description && (
+            <P><InlineMarkdown content={overload.description} /></P>
+          )}
+
+          {paramsSection && hasParams && (
+            <>
+              <H4 id={paramsSection.id}>{paramsSection.title}</H4>
+              <UtilParamsTable params={overload.data.parameters} utilName={util} />
+            </>
+          )}
+
+          {returnSection && (
+            <>
+              <H4 id={returnSection.id}>{returnSection.title}</H4>
+              <UtilReturnTable returnValue={overload.data.returnValue} utilName={util} />
+            </>
+          )}
+        </>
+      );
+    })
+  ) : (
+    <>
+      {model.sections.find((s) => s.key === 'parameters') && (
+        <>
+          <H3 id="parameters">Parameters</H3>
+          <UtilParamsTable params={model.overload.parameters} utilName={util} />
+        </>
+      )}
+
+      {model.sections.find((s) => s.key === 'returnValue') && (
+        <>
+          <H3 id="return-value">Return Value</H3>
+          <UtilReturnTable returnValue={model.overload.returnValue} utilName={util} />
+        </>
+      )}
+    </>
+  )}
+</ContentWidth>

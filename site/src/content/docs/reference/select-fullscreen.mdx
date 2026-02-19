@@ -1,0 +1,52 @@
+---
+title: selectFullscreen
+description: Select the fullscreen state slice from the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+## Import
+
+```ts
+import { selectFullscreen } from '@videojs/core/dom';
+```
+
+## Usage
+
+Pass `selectFullscreen` to `usePlayer` (React) or `PlayerController` (HTML) to subscribe to fullscreen state. Returns `undefined` if the fullscreen feature is not configured.
+
+The returned state includes whether fullscreen is active and its availability on the current platform.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { usePlayer } from '@videojs/react';
+import { selectFullscreen } from '@videojs/core/dom';
+
+function FullscreenButton() {
+  const fs = usePlayer(selectFullscreen);
+  if (!fs || fs.availability !== 'available') return null;
+
+  return (
+    <button onClick={fs.toggle}>
+      {fs.active ? 'Exit fullscreen' : 'Fullscreen'}
+    </button>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { createPlayer, features, MediaElement } from '@videojs/html';
+import { selectFullscreen } from '@videojs/core/dom';
+
+const { PlayerController, context } = createPlayer({ features: features.video });
+
+class FullscreenButton extends MediaElement {
+  #fullscreen = new PlayerController(this, context, selectFullscreen);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectFullscreen" />

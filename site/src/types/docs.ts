@@ -56,6 +56,7 @@ export interface Section {
   sidebarLabel: string;
   frameworks?: SupportedFramework[];
   devOnly?: boolean; // only visible in development mode
+  defaultOpen?: boolean;
   contents: Array<Guide | Section>;
 }
 

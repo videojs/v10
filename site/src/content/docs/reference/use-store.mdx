@@ -1,0 +1,59 @@
+---
+title: useStore
+description: Hook to access store state and actions with optional selector-based subscriptions
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import BasicUsageDemoReact from "@/components/docs/demos/use-store/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/use-store/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/use-store/react/css/BasicUsage.css?raw";
+
+## Import
+
+```tsx
+import { useStore } from '@videojs/store/react';
+```
+
+## Usage
+
+`useStore` has two overloads:
+
+**Without selector** -- returns the store instance directly. Does NOT subscribe to changes, so the component will not re-render when state changes. Use this to access store actions.
+
+```tsx
+function VolumeControl({ store }) {
+  const { setVolume } = useStore(store);
+
+  return <input type="range" onChange={(e) => setVolume(Number(e.target.value))} />;
+}
+```
+
+**With selector** -- returns the selected value and subscribes to changes. Re-renders when the selected value changes (using shallow equality by default). You can pass a custom comparator as the third argument.
+
+```tsx
+function TimeDisplay({ store }) {
+  const currentTime = useStore(store, (s) => s.currentTime);
+
+  return <span>{currentTime.toFixed(1)}s</span>;
+}
+```
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<UtilReference util="useStore" />

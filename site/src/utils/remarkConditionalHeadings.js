@@ -3,14 +3,16 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { kebabCase } from 'es-toolkit/string';
 import GithubSlugger from 'github-slugger';
-import { buildApiReferenceTocHeadings, createApiReferenceModel } from './apiReferenceModel';
+import { buildComponentReferenceTocHeadings, createComponentReferenceModel } from './componentReferenceModel';
+import { buildUtilReferenceTocHeadings, createUtilReferenceModel } from './utilReferenceModel';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const API_REF_DIR = path.resolve(__dirname, '../content/generated-api-reference');
+const COMPONENT_REF_DIR = path.resolve(__dirname, '../content/generated-component-reference');
+const UTIL_REF_DIR = path.resolve(__dirname, '../content/generated-util-reference');
 
-function readApiRefJson(componentName) {
+function readComponentRefJson(componentName) {
   const kebab = kebabCase(componentName);
-  const filePath = path.join(API_REF_DIR, `${kebab}.json`);
+  const filePath = path.join(COMPONENT_REF_DIR, `${kebab}.json`);
   try {
     return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   } catch {
@@ -22,7 +24,7 @@ function readApiRefJson(componentName) {
  * Remark plugin that tracks headings wrapped in FrameworkCase or StyleCase components
  * and adds conditional metadata to them.
  *
- * Also detects `<ApiReference>` components and injects heading metadata from
+ * Also detects `<ComponentReference>` components and injects heading metadata from
  * generated JSON, so component-rendered headings appear in the table of contents.
  */
 export default function remarkConditionalHeadings() {
@@ -61,8 +63,10 @@ export default function remarkConditionalHeadings() {
           }
 
           return;
-        } else if (node.name === 'ApiReference') {
-          injectApiReferenceHeadings(node, headingsWithMetadata, reservedSlugs);
+        } else if (node.name === 'ComponentReference') {
+          injectComponentReferenceHeadings(node, headingsWithMetadata, reservedSlugs);
+        } else if (node.name === 'UtilReference') {
+          injectUtilReferenceHeadings(node, headingsWithMetadata, reservedSlugs);
           return;
         }
       }
@@ -124,19 +128,48 @@ export default function remarkConditionalHeadings() {
  * For single-part components, injects "API reference".
  * For each, injects Props/State/Data attributes headings
  */
-function injectApiReferenceHeadings(node, headingsWithMetadata, reservedSlugs) {
+function injectComponentReferenceHeadings(node, headingsWithMetadata, reservedSlugs) {
   const componentAttr = node.attributes?.find((a) => a.name === 'component');
   const componentName = typeof componentAttr?.value === 'string' ? componentAttr.value : null;
   if (!componentName) return;
 
-  const json = readApiRefJson(componentName);
+  const json = readComponentRefJson(componentName);
   if (!json) return;
 
-  const apiReferenceModel = createApiReferenceModel(componentName, json);
-  const apiReferenceHeadings = buildApiReferenceTocHeadings(apiReferenceModel);
+  const componentModel = createComponentReferenceModel(componentName, json);
+  const componentHeadings = buildComponentReferenceTocHeadings(componentModel);
 
-  headingsWithMetadata.push(...apiReferenceHeadings);
-  for (const heading of apiReferenceHeadings) {
+  headingsWithMetadata.push(...componentHeadings);
+  for (const heading of componentHeadings) {
+    reservedSlugs.add(heading.slug);
+  }
+}
+
+function readUtilRefJson(slug) {
+  const filePath = path.join(UTIL_REF_DIR, `${slug}.json`);
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch {
+    return null;
+  }
+}
+
+function injectUtilReferenceHeadings(node, headingsWithMetadata, reservedSlugs) {
+  const utilAttr = node.attributes?.find((a) => a.name === 'util');
+  const utilName = typeof utilAttr?.value === 'string' ? utilAttr.value : null;
+  if (!utilName) return;
+
+  const slugAttr = node.attributes?.find((a) => a.name === 'slug');
+  const slugValue = typeof slugAttr?.value === 'string' ? slugAttr.value : null;
+
+  const json = readUtilRefJson(slugValue ?? kebabCase(utilName));
+  if (!json) return;
+
+  const utilModel = createUtilReferenceModel(utilName, json);
+  const utilHeadings = buildUtilReferenceTocHeadings(utilModel);
+
+  headingsWithMetadata.push(...utilHeadings);
+  for (const heading of utilHeadings) {
     reservedSlugs.add(heading.slug);
   }
 }

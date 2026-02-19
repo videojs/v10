@@ -1,0 +1,31 @@
+---
+title: createSelector
+description: Create a type-safe selector for a store slice's state
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```ts
+import { createSelector } from '@videojs/store';
+```
+
+## Usage
+
+`createSelector` creates a type-safe selector function for a given slice. The returned selector extracts that slice's state from the full store state, or returns `undefined` if the slice is not configured.
+
+The built-in selectors (`selectPlayback`, `selectBuffer`, etc.) are all created with `createSelector`. Use it to create selectors for custom slices.
+
+```ts
+import { createSelector } from '@videojs/store';
+import { myCustomSlice } from './my-custom-slice';
+
+const selectCustom = createSelector(myCustomSlice);
+
+// Use with usePlayer (React) or PlayerController (HTML)
+const state = selectCustom(store.state);
+// state is MyCustomState | undefined
+```
+
+<UtilReference util="createSelector" />

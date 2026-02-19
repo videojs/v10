@@ -40,6 +40,7 @@ export type UsePlayerHook<Store extends PlayerStore> = {
   <R>(selector: (state: InferStoreState<Store>) => R): R;
 };
 
+/** Create a player instance with typed store, Provider component, Container, and hooks. */
 export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
 
 export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;

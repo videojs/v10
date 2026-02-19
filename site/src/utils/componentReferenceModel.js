@@ -1,9 +1,9 @@
 /**
- * Centralized API subsection definitions.
+ * Centralized component API subsection definitions.
  *
  * Why this exists:
  * API reference headings are produced in two different places:
- * 1) rendered markup in ApiReference.astro
+ * 1) rendered markup in ComponentReference.astro
  * 2) synthetic TOC metadata in remarkConditionalHeadings
  *
  * Historically each side computed ids/slugs independently, which caused drift
@@ -76,7 +76,7 @@ function createSections(source, options) {
  * The shared model is what prevents anchor drift: ids are computed once and
  * reused verbatim by the renderer and the remark plugin.
  */
-export function createApiReferenceModel(componentName, apiReference) {
+export function createComponentReferenceModel(componentName, apiReference) {
   if (!apiReference) {
     return null;
   }
@@ -131,7 +131,7 @@ export function createApiReferenceModel(componentName, apiReference) {
  * Important: this function does not slugify heading text. It uses model ids
  * directly, so TOC slugs are guaranteed to match rendered heading ids.
  */
-export function buildApiReferenceTocHeadings(apiReferenceModel) {
+export function buildComponentReferenceTocHeadings(apiReferenceModel) {
   if (!apiReferenceModel) {
     return [];
   }

@@ -1,0 +1,59 @@
+---
+title: useButton
+description: Hook for creating accessible button components with keyboard and pointer interaction
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import BasicUsageDemoReact from "@/components/docs/demos/use-button/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/use-button/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/use-button/react/css/BasicUsage.css?raw";
+
+## Import
+
+```tsx
+import { useButton } from '@videojs/react';
+```
+
+## Usage
+
+`useButton` provides button behavior including keyboard activation and accessibility checks. It returns a `getButtonProps` function for spreading onto a `<button>` element and a `buttonRef` for validation.
+
+```tsx
+import { useButton, renderElement } from '@videojs/react';
+
+function CustomButton({ onActivate, disabled }) {
+  const { getButtonProps, buttonRef } = useButton({
+    displayName: 'CustomButton',
+    onActivate,
+    isDisabled: () => disabled,
+  });
+
+  return (
+    <button ref={buttonRef} {...getButtonProps()}>
+      Click me
+    </button>
+  );
+}
+```
+
+`getButtonProps` merges internal button props (click/keyboard handlers, disabled state) with any external props you pass in. In development mode, `buttonRef` warns if the rendered element is not a `<button>`.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<UtilReference util="useButton" />

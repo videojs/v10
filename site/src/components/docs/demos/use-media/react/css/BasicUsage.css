@@ -1,0 +1,32 @@
+.react-use-media-basic {
+  position: relative;
+}
+
+.react-use-media-basic video {
+  width: 100%;
+}
+
+.react-use-media-basic__info {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 0.8125rem;
+}
+
+.react-use-media-basic__info div {
+  display: flex;
+  gap: 8px;
+}
+
+.react-use-media-basic__info dt {
+  color: #6b7280;
+}
+
+.react-use-media-basic__info dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}

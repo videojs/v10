@@ -1,0 +1,60 @@
+---
+title: createPlayer
+description: Factory function that creates a player instance with typed store, Provider component, Container, and hooks
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import BasicUsageDemoReact from "@/components/docs/demos/create-player/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/create-player/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/create-player/react/css/BasicUsage.css?raw";
+
+## Import
+
+```tsx
+import { createPlayer, features } from '@videojs/react';
+```
+
+## Usage
+
+`createPlayer` is the entry point for setting up a Video.js player in React. It accepts a configuration object with a `features` array and returns a `Provider`, `Container`, a scoped `usePlayer` hook, and a `useMedia` hook.
+
+```tsx
+import { createPlayer, features, Video, PlayButton } from '@videojs/react';
+
+const { Provider, Container, usePlayer, useMedia } = createPlayer({
+  features: features.video,
+});
+
+function Player() {
+  return (
+    <Provider>
+      <Container>
+        <Video src="https://example.com/video.mp4" autoPlay muted playsInline />
+        <PlayButton />
+      </Container>
+    </Provider>
+  );
+}
+```
+
+The returned `usePlayer` hook is typed to the store created from the provided features, giving you full type safety for state selectors and actions.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<UtilReference util="createPlayer" />

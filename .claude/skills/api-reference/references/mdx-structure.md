@@ -2,7 +2,9 @@
 
 Structure and conventions for API reference MDX pages at `site/src/content/docs/reference/`.
 
-## Frontmatter
+## Component Pages
+
+### Frontmatter
 
 ```yaml
 ---
@@ -17,7 +19,7 @@ description: A button component for muting and unmuting audio playback
 - `frameworkTitle.html`: The `static tagName` from the HTML element file
 - `description`: One-line description of the component
 
-## Page Structure
+### Page Structure
 
 ```
 frontmatter
@@ -29,7 +31,7 @@ imports (React demos, HTML demos)
 ## Examples
 ### BasicUsage
 ### [Additional demos]
-<ApiReference component="{PascalCase}" />
+<ComponentReference component="{PascalCase}" />
 ```
 
 ## Imports Section
@@ -185,19 +187,115 @@ Key details:
 - React source tabs: `App.tsx`, `App.css`
 - HTML source tabs: `index.html`, `index.css`, `index.ts`
 
-## ApiReference Component
+### ComponentReference Component
 
 Always the last element in the file:
 
 ```mdx
-<ApiReference component="MuteButton" />
+<ComponentReference component="MuteButton" />
 ```
 
 The component auto-renders Props, State, Data Attributes for single-part and all Parts for multi-part.
 
+### Required Astro Component Imports
+
+Every component reference MDX needs these at the top of the imports:
+
+```mdx
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+```
+
+---
+
+## Util Pages
+
+Util pages document React hooks/utilities and HTML controllers/mixins. They are simpler than component pages — no demos, no anatomy.
+
+### Frontmatter
+
+```yaml
+---
+title: usePlayer
+description: Hook to access the player store from within a Player Provider
+---
+```
+
+- `title`: The exported function/class name (e.g., `usePlayer`, `PlayerController`)
+- No `frameworkTitle` — util pages are framework-specific
+- `description`: One-line description
+
+### Page Structure
+
+```
+frontmatter
+import UtilReference
+## Import
+## Usage
+<UtilReference util="{Name}" />
+```
+
+### Import Section
+
+Show the import statement for the util:
+
+```mdx
+## Import
+
+\`\`\`tsx
+import { usePlayer } from '@videojs/react';
+\`\`\`
+```
+
+### Usage Section
+
+Explain usage patterns with code examples. For multi-overload utils, document each overload:
+
+```mdx
+## Usage
+
+`usePlayer` has two overloads:
+
+**Store access (no subscription)** -- returns the store instance.
+
+\`\`\`tsx
+const store = usePlayer();
+\`\`\`
+
+**Selector-based subscription** -- returns selected state.
+
+\`\`\`tsx
+const paused = usePlayer((s) => s.paused);
+\`\`\`
+```
+
+### UtilReference Component
+
+Always the last element in the file:
+
+```mdx
+<UtilReference util="usePlayer" />
+```
+
+The component auto-renders Parameters and Return Value tables. For multi-overload utils, it renders each overload with its own sections.
+
+### Required Import
+
+```mdx
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+```
+
+---
+
 ## Sidebar Entry
 
-Add to `site/src/docs.config.ts` in the Components section, alphabetically:
+Add to `site/src/docs.config.ts` in the appropriate section, alphabetically:
+
+- **Components** — UI component reference pages
+- **Hooks & Utilities** (`frameworks: ['react']`) — React hooks and utilities
+- **Controllers & Mixins** (`frameworks: ['html']`) — HTML controllers and mixins
 
 ```ts
 {
@@ -211,15 +309,4 @@ Add to `site/src/docs.config.ts` in the Components section, alphabetically:
     // ...
   ],
 },
-```
-
-## Required Astro Component Imports
-
-Every reference MDX needs these at the top of the imports:
-
-```mdx
-import ApiReference from "@/components/docs/api-reference/ApiReference.astro";
-import FrameworkCase from "@/components/docs/FrameworkCase.astro";
-import StyleCase from "@/components/docs/StyleCase.astro";
-import Demo from "@/components/docs/demos/Demo.astro";
 ```

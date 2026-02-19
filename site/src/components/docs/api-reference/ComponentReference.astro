@@ -7,9 +7,9 @@ import H3 from '@/components/typography/H3Markdown.astro';
 import H4 from '@/components/typography/H4Markdown.astro';
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import P from '@/components/typography/P.astro';
-import type { ComponentApiReference } from '@/types/api-reference';
+import type { ComponentReference } from '@/types/component-reference';
 import { isValidFramework } from '@/types/docs';
-import { createApiReferenceModel } from '@/utils/apiReferenceModel';
+import { createComponentReferenceModel } from '@/utils/componentReferenceModel';
 import FrameworkCase from '../FrameworkCase.astro';
 import ApiDataAttrsTable from './ApiDataAttrsTable.astro';
 import ApiPropsTable from './ApiPropsTable.astro';
@@ -26,11 +26,11 @@ if (!framework || !isValidFramework(framework)) {
   throw new Error(`Invalid or missing framework param.`);
 }
 
-const entry = await getEntry('apiReference', kebabCase(component));
-const apiRef: ComponentApiReference | null = entry?.data ?? null;
+const entry = await getEntry('componentReference', kebabCase(component));
+const apiRef: ComponentReference | null = entry?.data ?? null;
 if (!apiRef) return;
 
-const apiReferenceModel = createApiReferenceModel(component, apiRef);
+const apiReferenceModel = createComponentReferenceModel(component, apiRef);
 if (!apiReferenceModel) return;
 
 const singlePropsSection = !apiReferenceModel.hasParts

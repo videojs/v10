@@ -1,0 +1,59 @@
+---
+title: StoreController
+description: Reactive controller for subscribing to store state in HTML custom elements
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```ts
+import { StoreController } from '@videojs/store/html';
+```
+
+## Usage
+
+`StoreController` is a reactive controller for accessing store state and actions in custom elements. It accepts a store instance or a context, resolving the store automatically.
+
+**Without selector** -- returns the store instance directly. Does NOT subscribe to changes. Use this to access store actions.
+
+```ts
+import { StoreController } from '@videojs/store/html';
+
+class VolumeControl extends HTMLElement {
+  #store = new StoreController(this, storeSource);
+
+  handleClick() {
+    this.#store.value.setVolume(0.5);
+  }
+}
+```
+
+**With selector** -- returns the selected value and subscribes to changes. Triggers a host update when the selected value changes (using shallow equality).
+
+```ts
+import { StoreController } from '@videojs/store/html';
+
+class PlayButton extends HTMLElement {
+  #playback = new StoreController(this, storeSource, selectPlayback);
+
+  render() {
+    const playback = this.#playback.value;
+    // Re-renders when playback state changes
+  }
+}
+```
+
+### StoreController vs PlayerController vs SnapshotController
+
+| | `StoreController` | `PlayerController` | `SnapshotController` |
+|---|---|---|---|
+| **Input** | Any store or context | Player store context | `State` container |
+| **Typed to** | Generic store | Player features | Raw state |
+| **Use case** | General-purpose store access | Player UI elements | Low-level state subscription |
+
+`PlayerController` is a typed wrapper around `StoreController` scoped to the player store. For player UI, prefer `PlayerController`. Use `StoreController` when working with a custom store outside the player system.
+
+When you pass a selector, `StoreController` internally creates a `SnapshotController` on the store's `$state` container. Without a selector, no subscription is created -- you get the store instance for imperative access to actions.
+
+<UtilReference util="StoreController" />

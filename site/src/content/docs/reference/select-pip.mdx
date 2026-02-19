@@ -1,0 +1,52 @@
+---
+title: selectPiP
+description: Select the picture-in-picture state slice from the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+## Import
+
+```ts
+import { selectPiP } from '@videojs/core/dom';
+```
+
+## Usage
+
+Pass `selectPiP` to `usePlayer` (React) or `PlayerController` (HTML) to subscribe to picture-in-picture state. Returns `undefined` if the PiP feature is not configured.
+
+The returned state includes whether PiP is active and its availability on the current platform.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { usePlayer } from '@videojs/react';
+import { selectPiP } from '@videojs/core/dom';
+
+function PiPButton() {
+  const pip = usePlayer(selectPiP);
+  if (!pip || pip.availability !== 'available') return null;
+
+  return (
+    <button onClick={pip.toggle}>
+      {pip.active ? 'Exit PiP' : 'Picture-in-Picture'}
+    </button>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { createPlayer, features, MediaElement } from '@videojs/html';
+import { selectPiP } from '@videojs/core/dom';
+
+const { PlayerController, context } = createPlayer({ features: features.video });
+
+class PiPButton extends MediaElement {
+  #pip = new PlayerController(this, context, selectPiP);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectPiP" />

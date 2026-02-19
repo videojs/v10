@@ -1,0 +1,46 @@
+---
+/**
+ * Renders the parameters table for util reference.
+ * Reuses PropRow.astro since ParamDef has the same shape as PropDef.
+ */
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+import type { ParamDef } from '@/types/util-reference';
+import PropRow from './PropRow.astro';
+
+interface Props {
+  params: Record<string, ParamDef>;
+  utilName: string;
+}
+
+const { params, utilName } = Astro.props;
+---
+
+<Table maxWidth={false} outerClass="my-6">
+    <Thead>
+        <Tr>
+            <Th>Parameter</Th>
+            <Th>Type</Th>
+            <Th>Default</Th>
+            <Th />
+        </Tr>
+    </Thead>
+    <Tbody>
+        {
+            Object.entries(params).map(([name, param]) => (
+                <PropRow
+                    name={name}
+                    type={param.type}
+                    shortType={param.shortType}
+                    description={param.description}
+                    defaultValue={param.default}
+                    required={param.required}
+                    componentName={utilName}
+                />
+            ))
+        }
+    </Tbody>
+</Table>

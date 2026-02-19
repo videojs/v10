@@ -1,0 +1,62 @@
+---
+/**
+ * Renders the return value section for util reference.
+ *
+ * Object returns with `fields`: renders a table using StateRow.
+ * Simple returns: renders an inline type description.
+ */
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import P from '@/components/typography/P.astro';
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+import type { ReturnValue } from '@/types/util-reference';
+import InlineMarkdown from './InlineMarkdown.astro';
+import StateRow from './StateRow.astro';
+
+interface Props {
+  returnValue: ReturnValue;
+  utilName: string;
+}
+
+const { returnValue, utilName } = Astro.props;
+
+const hasFields = returnValue.fields && Object.keys(returnValue.fields).length > 0;
+---
+
+{hasFields ? (
+    <Table maxWidth={false} outerClass="my-6">
+        <Thead>
+            <Tr>
+                <Th>Property</Th>
+                <Th>Type</Th>
+                <Th />
+            </Tr>
+        </Thead>
+        <Tbody>
+            {
+                Object.entries(returnValue.fields!).map(([name, field]) => (
+                    <StateRow
+                        name={name}
+                        type={field.type}
+                        shortType={field.shortType}
+                        description={field.description}
+                        componentName={`${utilName}-return`}
+                    />
+                ))
+            }
+        </Tbody>
+    </Table>
+) : (
+    <P>
+        <MarkdownCode>{returnValue.shortType ?? returnValue.type}</MarkdownCode>
+        {returnValue.description && (
+            <>
+                {" — "}
+                <InlineMarkdown content={returnValue.description} />
+            </>
+        )}
+    </P>
+)}

@@ -1,0 +1,30 @@
+.react-use-button-basic {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.react-use-button-basic__button {
+  align-self: flex-start;
+  padding: 8px 20px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #f5f5f5;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: opacity 0.2s;
+}
+
+.react-use-button-basic__button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.react-use-button-basic__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: #6b7280;
+}

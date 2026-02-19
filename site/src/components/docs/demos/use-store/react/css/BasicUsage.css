@@ -1,0 +1,66 @@
+.react-use-store-basic {
+  position: relative;
+}
+
+.react-use-store-basic video {
+  width: 100%;
+}
+
+.react-use-store-basic__panel {
+  display: flex;
+  gap: 16px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.react-use-store-basic__heading {
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+.react-use-store-basic__derived {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+.react-use-store-basic__derived div {
+  display: flex;
+  gap: 8px;
+}
+
+.react-use-store-basic__derived dt {
+  color: #6b7280;
+  min-width: 70px;
+}
+
+.react-use-store-basic__derived dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.react-use-store-basic__seek {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.react-use-store-basic__buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.react-use-store-basic__buttons button {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  font-size: 0.8125rem;
+}

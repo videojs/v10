@@ -1,0 +1,66 @@
+.react-use-player-basic {
+  position: relative;
+}
+
+.react-use-player-basic video {
+  width: 100%;
+}
+
+.react-use-player-basic__panel {
+  display: flex;
+  gap: 16px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.react-use-player-basic__heading {
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+.react-use-player-basic__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.react-use-player-basic__buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.react-use-player-basic__buttons button {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  font-size: 0.8125rem;
+}
+
+.react-use-player-basic__state {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+.react-use-player-basic__state div {
+  display: flex;
+  gap: 8px;
+}
+
+.react-use-player-basic__state dt {
+  color: #6b7280;
+  min-width: 60px;
+}
+
+.react-use-player-basic__state dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,57 @@
+---
+title: ContainerMixin
+description: Mixin that consumes player context and auto-attaches media elements
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```ts
+import { ContainerMixin } from '@videojs/html';
+```
+
+## Usage
+
+`ContainerMixin` creates a class that consumes the player store from context and automatically attaches `<video>` or `<audio>` elements found within it. It uses a `MutationObserver` to watch for media element changes and calls `store.attach()` to keep the store's media target in sync.
+
+```ts
+import { createPlayer, features, MediaElement } from '@videojs/html';
+
+const { ContainerMixin } = createPlayer({ features: features.video });
+
+class MyContainer extends ContainerMixin(MediaElement) {
+  connectedCallback() {
+    super.connectedCallback();
+    // this.store is the player store from context (or null if not connected)
+  }
+}
+
+customElements.define('my-container', MyContainer);
+```
+
+### When to use ContainerMixin
+
+Use `ContainerMixin` when the provider and container live in different elements. This is common when the store owner sits higher in the tree (e.g., a layout shell) while the media element sits deeper in a content area.
+
+For a single element that both owns the store and attaches media, use `PlayerMixin` instead.
+
+### How media discovery works
+
+On `connectedCallback`, `ContainerMixin` sets up a `MutationObserver` on its children. When a `<video>` or `<audio>` element is added or removed, it calls `store.attach({ media, container })` or cleans up the previous attachment. The observer is torn down on `disconnectedCallback`.
+
+### Split composition
+
+Pair `ContainerMixin` with `ProviderMixin` for full control over which element owns the store and which discovers the media:
+
+```ts
+const { ProviderMixin, ContainerMixin } = createPlayer({ features: features.video });
+
+// Provider owns the store, sits at the top
+class PlayerShell extends ProviderMixin(MediaElement) {}
+
+// Container discovers media, sits deeper in the tree
+class MediaRegion extends ContainerMixin(MediaElement) {}
+```
+
+<UtilReference util="ContainerMixin" />

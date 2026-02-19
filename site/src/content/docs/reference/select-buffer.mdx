@@ -1,0 +1,50 @@
+---
+title: selectBuffer
+description: Select the buffer state slice from the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+## Import
+
+```ts
+import { selectBuffer } from '@videojs/core/dom';
+```
+
+## Usage
+
+Pass `selectBuffer` to `usePlayer` (React) or `PlayerController` (HTML) to subscribe to buffer state. Returns `undefined` if the buffer feature is not configured.
+
+The returned state includes buffered ranges and percent buffered.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { usePlayer } from '@videojs/react';
+import { selectBuffer } from '@videojs/core/dom';
+
+function BufferBar() {
+  const buffer = usePlayer(selectBuffer);
+  if (!buffer) return null;
+
+  return (
+    <div style={{ width: `${buffer.percentBuffered * 100}%` }} />
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { createPlayer, features, MediaElement } from '@videojs/html';
+import { selectBuffer } from '@videojs/core/dom';
+
+const { PlayerController, context } = createPlayer({ features: features.video });
+
+class BufferBar extends MediaElement {
+  #buffer = new PlayerController(this, context, selectBuffer);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectBuffer" />
