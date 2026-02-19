@@ -34,6 +34,10 @@ describe('createPlaybackEngine', () => {
         slowTotalWeight: 0,
         bytesSampled: 0,
       },
+      bufferState: {
+        video: { segments: [] },
+        audio: { segments: [] },
+      },
     });
     expect(engine.owners.current).toEqual({});
 
