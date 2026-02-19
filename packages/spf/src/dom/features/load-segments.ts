@@ -1,5 +1,6 @@
 import type { BandwidthState } from '../../core/abr/bandwidth-estimator';
 import { sampleBandwidth } from '../../core/abr/bandwidth-estimator';
+import { getSegmentsToLoad } from '../../core/buffer/forward-buffer';
 import { combineLatest } from '../../core/reactive/combine-latest';
 import type { WritableState } from '../../core/state/create-state';
 import type { AddressableObject, Presentation, Segment } from '../../core/types';
@@ -32,6 +33,24 @@ export interface SourceBufferState {
 export interface BufferState {
   video?: SourceBufferState;
   audio?: SourceBufferState;
+}
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Resolve full Segment objects from buffer state IDs.
+ * Bridges the { id, trackId } records in SourceBufferState back to Segment
+ * objects with startTime/duration that getSegmentsToLoad requires.
+ */
+function resolveBufferedSegments(
+  allSegments: readonly Segment[],
+  bufferState: SourceBufferState | undefined
+): Segment[] {
+  if (!bufferState?.segments?.length) return [];
+  const bufferedIds = new Set(bufferState.segments.map((s) => s.id));
+  return allSegments.filter((seg) => bufferedIds.has(seg.id));
 }
 
 // ============================================================================
@@ -126,11 +145,20 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
   const track = getSelectedTrack(currentState, context.config.type);
   if (!track || !isResolvedTrack(track)) return;
 
-  const segments = track.segments;
-  if (segments.length === 0) return;
+  if (track.segments.length === 0) return;
 
-  // Build array of subtask invocation functions
   const bufferKey = context.config.type as 'video' | 'audio';
+  const bufferState = context.state.current.bufferState?.[bufferKey];
+
+  // Determine which segments the forward buffer calculator says to load
+  const bufferedSegments = resolveBufferedSegments(track.segments, bufferState);
+  const currentTime = currentState.currentTime ?? 0;
+  const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, currentTime);
+
+  if (segmentsToLoad.length === 0) return;
+
+  // Only load init segment if not already loaded for this track
+  const needsInit = bufferState?.initTrackId !== track.id;
 
   const createInitTask = () =>
     loadInitSegmentTask(
@@ -138,7 +166,7 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
       { signal: context.signal, sourceBuffer: context.sourceBuffer, state: context.state, bufferKey }
     );
 
-  const createMediaTasks = segments.map(
+  const createMediaTasks = segmentsToLoad.map(
     (segment) => () =>
       loadMediaSegmentTask(
         { segment, trackId: track.id },
@@ -146,9 +174,8 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
       )
   );
 
-  // Combine: init task first, then media segment tasks
-  // Future: Can conditionally include init or filter segments here
-  const taskFactories = [createInitTask, ...createMediaTasks];
+  // Init first (if needed), then media segments within the buffer window
+  const taskFactories = needsInit ? [createInitTask, ...createMediaTasks] : createMediaTasks;
 
   // Track current subtask (same pattern as main task tracking)
   let currentSubtask: Promise<void> | null = null;
@@ -187,6 +214,10 @@ export interface SegmentLoadingState {
   presentation?: Presentation;
   preload?: string;
   bandwidthState?: BandwidthState;
+  /** Current playback position in seconds. Defaults to 0 when undefined. */
+  currentTime?: number;
+  /** Buffer state tracking which segments have been loaded per track type. */
+  bufferState?: BufferState;
 }
 
 /**
@@ -212,27 +243,27 @@ export function canLoadSegments(state: SegmentLoadingState, owners: SegmentLoadi
  *
  * Only load if:
  * - Track is resolved (has segments)
- * - Track has at least one segment
- * - SourceBuffer is not already buffered (simple check for POC)
+ * - Forward buffer calculator says segments are needed
  */
 export function shouldLoadSegments(state: SegmentLoadingState, owners: SegmentLoadingOwners): boolean {
   if (!canLoadSegments(state, owners)) {
     return false;
   }
 
-  const track = findSelectedVideoTrack(state);
+  if (state.preload !== 'auto') {
+    return false;
+  }
+
+  const track = getSelectedTrack(state, type);
   if (!track || !isResolvedTrack(track) || track.segments.length === 0) {
     return false;
   }
 
-  // For POC: simple check - if SourceBuffer has any buffered data, skip
-  // TODO: More sophisticated buffering logic (check ranges, append new segments only)
-  const sourceBuffer = owners.videoBuffer;
-  if (sourceBuffer && sourceBuffer.buffered.length > 0) {
-    return false;
-  }
+  const bufferKey = type as 'video' | 'audio';
+  const bufferedSegments = resolveBufferedSegments(track.segments, state.bufferState?.[bufferKey]);
+  const currentTime = state.currentTime ?? 0;
 
-  return true;
+  return getSegmentsToLoad(track.segments, bufferedSegments, currentTime).length > 0;
 }
 
 /**
@@ -249,6 +280,23 @@ export function shouldLoadSegments(state: SegmentLoadingState, owners: SegmentLo
  * @example
  * const cleanup = loadSegments({ state, owners });
  */
+/**
+ * Load segments orchestration (F4 + F5).
+ *
+ * Triggers when:
+ * - Track is selected and resolved (video or audio)
+ * - SourceBuffer exists for track type
+ * - Forward buffer calculator says segments are needed
+ *
+ * Seek handling: at most one executing task and one pending slot.
+ * When a seek is detected (needed segments are completely disjoint from
+ * what the current task is loading), the current task is aborted.
+ * The latest state is always stored as pending and picked up once the
+ * current task finishes (via abort or natural completion).
+ *
+ * @example
+ * const cleanup = loadSegments({ state, owners }, { type: 'video' });
+ */
 export function loadSegments(
   {
     state,
@@ -262,33 +310,82 @@ export function loadSegments(
   const { type } = config;
   let currentTask: Promise<void> | null = null;
   let abortController: AbortController | null = null;
+  let pendingSnapshot: [SegmentLoadingState, SegmentLoadingOwners] | null = null;
+  let taskSegmentIds: Set<string> = new Set();
 
-  const cleanup = combineLatest([state, owners]).subscribe(
-    async ([currentState, currentOwners]: [SegmentLoadingState, SegmentLoadingOwners]) => {
-      if (currentTask) return; // Task already in progress
-      if (!shouldLoadSegments(currentState, currentOwners, type)) return;
+  // Runs one or more sequential task iterations, picking up pending snapshots
+  // after each completion. currentTask stays non-null for the entire duration
+  // so subscribers always feed into pendingSnapshot rather than starting a
+  // second parallel execution.
+  const runTaskLoop = async (initialState: SegmentLoadingState, initialOwners: SegmentLoadingOwners): Promise<void> => {
+    let currentState = initialState;
+    let currentOwners = initialOwners;
+
+    while (true) {
+      if (!shouldLoadSegments(currentState, currentOwners, type)) break;
 
       const sourceBuffer = currentOwners[BufferKeyByType[type]];
-      if (!sourceBuffer) return;
+      if (!sourceBuffer) break;
 
-      // Create abort controller and invoke task
+      // Track which segments this iteration intends to load (for seek detection)
+      const track = getSelectedTrack(currentState, type);
+      if (track && isResolvedTrack(track)) {
+        const bufferKey = type as 'video' | 'audio';
+        const buffered = resolveBufferedSegments(track.segments, currentState.bufferState?.[bufferKey]);
+        taskSegmentIds = new Set(
+          getSegmentsToLoad(track.segments, buffered, currentState.currentTime ?? 0).map((s) => s.id)
+        );
+      }
+
       abortController = new AbortController();
       currentTask = loadSegmentsTask(
         { currentState },
         { signal: abortController.signal, sourceBuffer, state, config: { type } }
       );
 
-      try {
-        await currentTask;
-      } finally {
-        // Cleanup orchestration state
-        currentTask = null;
-        abortController = null;
+      await currentTask;
+
+      abortController = null;
+      taskSegmentIds = new Set();
+
+      // Pick up the latest pending snapshot (if any)
+      const pending = pendingSnapshot;
+      pendingSnapshot = null;
+
+      if (!pending) break;
+
+      [currentState, currentOwners] = pending;
+    }
+
+    currentTask = null;
+  };
+
+  const cleanup = combineLatest([state, owners]).subscribe(
+    async ([currentState, currentOwners]: [SegmentLoadingState, SegmentLoadingOwners]) => {
+      if (currentTask) {
+        // Store latest state as pending (replaces any previous pending)
+        pendingSnapshot = [currentState, currentOwners];
+
+        // Seek detection: abort if the needed segments are completely disjoint
+        // from what the current task is loading (currentTime jumped to new position)
+        if (taskSegmentIds.size > 0) {
+          const track = getSelectedTrack(currentState, type);
+          if (track && isResolvedTrack(track)) {
+            const bufferKey = type as 'video' | 'audio';
+            const buffered = resolveBufferedSegments(track.segments, currentState.bufferState?.[bufferKey]);
+            const needed = getSegmentsToLoad(track.segments, buffered, currentState.currentTime ?? 0);
+            if (needed.length > 0 && needed.every((s) => !taskSegmentIds.has(s.id))) {
+              abortController?.abort();
+            }
+          }
+        }
+        return;
       }
+
+      await runTaskLoop(currentState, currentOwners);
     }
   );
 
-  // Return cleanup function that aborts pending task
   return () => {
     abortController?.abort();
     cleanup();

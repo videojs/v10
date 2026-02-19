@@ -18,6 +18,7 @@ import { setupMediaSource } from './features/setup-mediasource';
 import { setupSourceBuffer } from './features/setup-sourcebuffer';
 import { setupTextTracks } from './features/setup-text-tracks';
 import { syncTextTrackModes } from './features/sync-text-track-modes';
+import { trackCurrentTime } from './features/track-current-time';
 import { updateDuration } from './features/update-duration';
 import { destroyVttParser } from './text/parse-vtt-segment';
 
@@ -67,6 +68,9 @@ export interface PlaybackEngineState {
 
   // Buffer state (tracks loaded segments per SourceBuffer)
   bufferState?: BufferState;
+
+  // Current playback position (mirrored from mediaElement via trackCurrentTime)
+  currentTime?: number;
 }
 
 /**
@@ -198,8 +202,12 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     setupSourceBuffer({ state, owners }, { type: 'video' }),
     setupSourceBuffer({ state, owners }, { type: 'audio' }),
 
-    // 6. Load video segments (when SourceBuffer ready and track resolved)
-    loadSegments({ state, owners }),
+    // 5.5. Track currentTime from mediaElement (feeds forward buffer management)
+    trackCurrentTime({ state, owners }),
+
+    // 6. Load segments (when SourceBuffer ready and track resolved)
+    loadSegments({ state, owners }, { type: 'video' }),
+    loadSegments({ state, owners }, { type: 'audio' }),
 
     // 6.5. Signal end of stream when all segments loaded
     endOfStream({ state, owners }),
