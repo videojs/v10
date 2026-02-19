@@ -57,6 +57,11 @@ git pull upstream main
 pnpm install
 ```
 
+This also creates symlink aliases (`.opencode`, `agents`, `AGENTS.md`) so that AI coding tools other than Claude Code can discover project instructions.
+
+> [!NOTE]
+> **Windows users:** Directory symlinks use junctions and work automatically. File symlinks (e.g., `AGENTS.md → CLAUDE.md`) require [Developer Mode](https://learn.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development) enabled. If symlink creation fails, `pnpm install` will log a warning but continue normally — the canonical files (`.claude/`, `CLAUDE.md`) still work fine.
+
 Then build all workspace packages:
 
 ```sh
