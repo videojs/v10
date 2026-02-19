@@ -2,8 +2,28 @@
 
 import type { APIContext } from 'astro';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { GET as callbackHandler } from '@/pages/api/auth/callback';
-import { exchangeAuthorizationCode, seal } from '@/utils/auth';
+
+const env = vi.hoisted(() => ({
+  OAUTH_CLIENT_ID: 'test-client-id' as string | undefined,
+  OAUTH_CLIENT_SECRET: 'test-client-secret' as string | undefined,
+  OAUTH_REDIRECT_URI: 'https://example.com/callback' as string | undefined,
+  OAUTH_URL: 'https://auth.example.com' as string | undefined,
+}));
+
+vi.mock('astro:env/server', () => ({
+  get OAUTH_CLIENT_ID() {
+    return env.OAUTH_CLIENT_ID;
+  },
+  get OAUTH_CLIENT_SECRET() {
+    return env.OAUTH_CLIENT_SECRET;
+  },
+  get OAUTH_REDIRECT_URI() {
+    return env.OAUTH_REDIRECT_URI;
+  },
+  get OAUTH_URL() {
+    return env.OAUTH_URL;
+  },
+}));
 
 vi.mock('@/utils/auth', () => ({
   exchangeAuthorizationCode: vi.fn(),
@@ -11,6 +31,9 @@ vi.mock('@/utils/auth', () => ({
   SESSION_COOKIE_NAME: 'session',
   INACTIVITY_EXPIRY: 300,
 }));
+
+import { GET as callbackHandler } from '@/pages/api/auth/callback';
+import { exchangeAuthorizationCode, seal } from '@/utils/auth';
 
 const mockOAuthResponse = {
   access_token: 'mock-access-token',
@@ -49,16 +72,16 @@ describe('callback endpoint', () => {
     vi.mocked(exchangeAuthorizationCode).mockResolvedValue(mockOAuthResponse);
     vi.mocked(seal).mockResolvedValue('encrypted-session-data');
 
-    vi.stubEnv('OAUTH_CLIENT_ID', 'test-client-id');
-    vi.stubEnv('OAUTH_CLIENT_SECRET', 'test-client-secret');
-    vi.stubEnv('OAUTH_REDIRECT_URI', 'https://example.com/callback');
-    vi.stubEnv('OAUTH_URL', 'https://auth.example.com');
-    vi.stubEnv('PROD', false);
+    env.OAUTH_CLIENT_ID = 'test-client-id';
+    env.OAUTH_CLIENT_SECRET = 'test-client-secret';
+    env.OAUTH_REDIRECT_URI = 'https://example.com/callback';
+    env.OAUTH_URL = 'https://auth.example.com';
 
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
+    consoleErrorSpy.mockRestore();
     vi.unstubAllEnvs();
   });
 
@@ -110,7 +133,7 @@ describe('callback endpoint', () => {
       'OAUTH_CLIENT_ID',
       'OAUTH_CLIENT_SECRET',
     ])('should redirect to error when %s is missing', async (envVar) => {
-      vi.stubEnv(envVar, undefined);
+      env[envVar as keyof typeof env] = undefined;
 
       const mockContext = createMockContext({ code: '123', state: 'abc', storedState: 'abc' });
       await callbackHandler(mockContext);
