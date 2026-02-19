@@ -29,8 +29,8 @@ const SEEK_TIME = 10;
 
 export type MinimalVideoSkinProps = BaseSkinProps;
 
-const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button(props, ref) {
-  return <button type="button" className="media-button" ref={ref} {...props} />;
+const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
+  return <button ref={ref} type="button" className={cn('media-button', className)} {...props} />;
 });
 
 function PlayButtonIcon({ state, className, ...rest }: { state: PlayButtonState } & ComponentProps<'svg'>) {
@@ -95,7 +95,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
           <SeekButton
             seconds={-SEEK_TIME}
             render={(props) => (
-              <Button {...props}>
+              <Button {...props} className="media-button--seek">
                 <span className="media-icon__container">
                   <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
                   <span className="media-icon__label">{SEEK_TIME}</span>
@@ -107,7 +107,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
           <SeekButton
             seconds={SEEK_TIME}
             render={(props) => (
-              <Button {...props}>
+              <Button {...props} className="media-button--seek">
                 <span className="media-icon__container">
                   <SeekIcon className="media-icon media-icon--seek" />
                   <span className="media-icon__label">{SEEK_TIME}</span>
@@ -117,18 +117,18 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
           />
         </div>
 
-        <Time.Group className="media-time-group">
-          <Time.Value type="current" className="media-time-display" />
-          <span className="media-duration-display">
-            <Time.Separator />
-            <Time.Value type="duration" className="media-time-display" />
-          </span>
-        </Time.Group>
+        <span className="media-time-controls">
+          <Time.Group className="media-time">
+            <Time.Value type="current" className="media-time__value media-time__value--current" />
+            <Time.Separator className="media-time__separator" />
+            <Time.Value type="duration" className="media-time__value media-time__value--duration" />
+          </Time.Group>
 
-        {/* Temporary spacer */}
-        <div style={{ flex: '1', borderRadius: '100vh', height: '4px', background: 'oklab(1 0 0 / 0.2)' }} />
+          {/* Temporary spacer */}
+          <span className="media-slider" style={{ height: '4px', background: 'oklab(1 0 0 / 0.2)' }} />
+        </span>
 
-        <div className="media-button-group">
+        <span className="media-button-group">
           <MuteButton
             render={(props, state) => (
               <Button {...props}>
@@ -152,7 +152,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
               </Button>
             )}
           />
-        </div>
+        </span>
       </Controls.Root>
 
       <div className="media-overlay" />

@@ -29,8 +29,8 @@ const SEEK_TIME = 10;
 
 export type VideoSkinProps = BaseSkinProps;
 
-const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button(props, ref) {
-  return <button ref={ref} type="button" className="media-button" {...props} />;
+const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
+  return <button ref={ref} type="button" className={cn('media-button', className)} {...props} />;
 });
 
 function PlayButtonIcon({ state, className, ...rest }: { state: PlayButtonState } & ComponentProps<'svg'>) {
@@ -96,7 +96,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
         <SeekButton
           seconds={-SEEK_TIME}
           render={(props) => (
-            <Button {...props}>
+            <Button {...props} className="media-button--seek">
               <span className="media-icon__container">
                 <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
                 <span className="media-icon__label">{SEEK_TIME}</span>
@@ -108,7 +108,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
         <SeekButton
           seconds={SEEK_TIME}
           render={(props) => (
-            <Button {...props}>
+            <Button {...props} className="media-button--seek">
               <span className="media-icon__container">
                 <SeekIcon className="media-icon media-icon--seek" />
                 <span className="media-icon__label">{SEEK_TIME}</span>
@@ -117,11 +117,11 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
           )}
         />
 
-        <Time.Group className="media-time-group">
-          <Time.Value type="current" className="media-time-display" />
+        <Time.Group className="media-time">
+          <Time.Value type="current" className="media-time__value" />
           {/* Temporary spacer */}
-          <div style={{ flex: '1', borderRadius: '100vh', height: '4px', background: 'oklab(1 0 0 / 0.2)' }} />
-          <Time.Value type="duration" className="media-time-display" />
+          <div className="media-slider" style={{ height: '4px', background: 'oklab(1 0 0 / 0.2)' }} />
+          <Time.Value type="duration" className="media-time__value" />
         </Time.Group>
 
         <MuteButton
