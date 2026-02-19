@@ -2,33 +2,26 @@ import { useStore } from '@nanostores/react';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import type { Skin } from '@/stores/homePageDemos';
 import { framework, skin } from '@/stores/homePageDemos';
-import {
-  generateHTMLCSS,
-  generateHTMLJS,
-  generateHTMLMarkup,
-  generateReactComponent,
-  generateReactCSS as genReactCSS,
-} from '@/utils/ejectCodeGenerator';
 import ClientCode from '../Code/ClientCode';
 
 function generateReactCode(skin: Skin): string {
-  return generateReactComponent(skin);
+  return `react`;
 }
 
 function generateReactCSS(skin: Skin): string {
-  return genReactCSS(skin);
+  return `css`;
 }
 
 function generateHTMLCode(skin: Skin): string {
-  return generateHTMLMarkup(skin);
+  return `html`;
 }
 
 function generateCSS(skin: Skin): string {
-  return generateHTMLCSS(skin);
+  return `css`;
 }
 
 function generateJS(skin: Skin): string {
-  return generateHTMLJS(skin);
+  return `js`;
 }
 
 export default function EjectDemo({ className }: { className?: string }) {
