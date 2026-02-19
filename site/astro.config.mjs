@@ -24,23 +24,27 @@ export default defineConfig({
   site: SITE_URL,
   trailingSlash: 'never',
   adapter: netlify(),
+  // Server-only secrets read at runtime (not inlined at build time).
+  // All optional — the site degrades gracefully without auth/Mux configured.
+  // See site/CLAUDE.md "Environment Variables" for full documentation.
   env: {
     schema: {
-      // OAuth (optional — auth degrades gracefully without these)
+      // OAuth — powers the video uploader login flow
       OAUTH_CLIENT_ID: envField.string({ context: 'server', access: 'secret', optional: true }),
       OAUTH_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
       OAUTH_REDIRECT_URI: envField.string({ context: 'server', access: 'secret', optional: true }),
       OAUTH_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
       SESSION_COOKIE_PASSWORD: envField.string({ context: 'server', access: 'secret', optional: true }),
-      // Mux (optional — video features degrade gracefully)
-      MUX_TOKEN_ID: envField.string({ context: 'server', access: 'secret', optional: true }),
-      MUX_TOKEN_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
+      // Mux API base URL for user-authenticated actions (uploader, asset management)
       MUX_API_URL: envField.string({
         context: 'server',
         access: 'secret',
         optional: true,
         default: 'https://api.mux.com',
       }),
+      // Mux service account credentials — only used by the /api/health/mux endpoint
+      MUX_TOKEN_ID: envField.string({ context: 'server', access: 'secret', optional: true }),
+      MUX_TOKEN_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
     },
   },
   redirects: {
