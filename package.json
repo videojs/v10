@@ -16,7 +16,7 @@
   },
   "scripts": {
     "prepare": "simple-git-hooks",
-    "postinstall": "pnpm link:opencode && pnpm link:agents",
+    "postinstall": "node scripts/link-aliases.mjs",
     "build:packages": "turbo run build --filter='./packages/*'",
     "build:site": "turbo run build --filter=site",
     "build": "turbo run build",
@@ -28,8 +28,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check . --write",
     "lint:fix:file": "biome check --write",
-    "link:opencode": "[ -e .opencode ] || ln -s .claude .opencode",
-    "link:agents": "[ -e AGENTS.md ] || ln -s CLAUDE.md AGENTS.md; [ -e agents ] || ln -s .claude agents",
+    "link:aliases": "node scripts/link-aliases.mjs",
     "size": "node .github/scripts/bundle-size.js | node .github/scripts/bundle-size-report.js",
     "test": "turbo run test",
     "typecheck": "tsc --build"
