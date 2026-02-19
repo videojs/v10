@@ -35,7 +35,6 @@ export default defineConfig({
       OAUTH_REDIRECT_URI: envField.string({ context: 'server', access: 'secret', optional: true }),
       OAUTH_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
       SESSION_COOKIE_PASSWORD: envField.string({ context: 'server', access: 'secret', optional: true }),
-      // Mux API base URL for user-authenticated actions (uploader, asset management)
       MUX_API_URL: envField.string({
         context: 'server',
         access: 'secret',
