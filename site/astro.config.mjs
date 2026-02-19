@@ -8,7 +8,7 @@ import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import sentry from '@sentry/astro';
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig, fontProviders } from 'astro/config';
+import { defineConfig, envField, fontProviders } from 'astro/config';
 import checkV8Urls from './integrations/check-v8-urls';
 import llmsMarkdown from './integrations/llms-markdown';
 import pagefind from './integrations/pagefind';
@@ -24,6 +24,25 @@ export default defineConfig({
   site: SITE_URL,
   trailingSlash: 'never',
   adapter: netlify(),
+  env: {
+    schema: {
+      // OAuth (optional — auth degrades gracefully without these)
+      OAUTH_CLIENT_ID: envField.string({ context: 'server', access: 'secret', optional: true }),
+      OAUTH_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
+      OAUTH_REDIRECT_URI: envField.string({ context: 'server', access: 'secret', optional: true }),
+      OAUTH_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
+      SESSION_COOKIE_PASSWORD: envField.string({ context: 'server', access: 'secret', optional: true }),
+      // Mux (optional — video features degrade gracefully)
+      MUX_TOKEN_ID: envField.string({ context: 'server', access: 'secret', optional: true }),
+      MUX_TOKEN_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
+      MUX_API_URL: envField.string({
+        context: 'server',
+        access: 'secret',
+        optional: true,
+        default: 'https://api.mux.com',
+      }),
+    },
+  },
   redirects: {
     // Redirects are configured in netlify.toml
   },

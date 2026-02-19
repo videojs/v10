@@ -1,4 +1,5 @@
 import { ActionError, defineAction } from 'astro:actions';
+import { MUX_API_URL, MUX_TOKEN_ID, MUX_TOKEN_SECRET } from 'astro:env/server';
 import { z } from 'astro:schema';
 import Mux from '@mux/mux-node';
 
@@ -18,13 +19,13 @@ function getMuxClient(token: string | undefined) {
 
   return new Mux({
     authorizationToken: token,
-    baseURL: import.meta.env.MUX_API_URL ?? 'https://api.mux.com',
+    baseURL: MUX_API_URL,
   });
 }
 
 function getHealthMuxClient() {
-  const tokenId = process.env.MUX_TOKEN_ID || import.meta.env.MUX_TOKEN_ID;
-  const tokenSecret = process.env.MUX_TOKEN_SECRET || import.meta.env.MUX_TOKEN_SECRET;
+  const tokenId = MUX_TOKEN_ID;
+  const tokenSecret = MUX_TOKEN_SECRET;
 
   if (!tokenId || !tokenSecret) {
     throw new ActionError({
