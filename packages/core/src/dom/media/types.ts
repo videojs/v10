@@ -19,7 +19,7 @@ export type MediaBaseApi = {
 
 export type MediaApi = WithOptional<MediaBaseApi, HTMLVideoElement>;
 
-export type Media = MediaApi | HTMLMediaElement | HTMLAudioElement | HTMLVideoElement | null;
+export type Media = HTMLMediaElement | HTMLAudioElement | HTMLVideoElement;
 
 export interface MediaContainer extends HTMLElement {}
 
