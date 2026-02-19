@@ -1,11 +1,13 @@
 import type { BandwidthState } from '../../core/abr/bandwidth-estimator';
 import { sampleBandwidth } from '../../core/abr/bandwidth-estimator';
+import { calculateBackBufferFlushPoint } from '../../core/buffer/back-buffer';
 import { getSegmentsToLoad } from '../../core/buffer/forward-buffer';
 import { combineLatest } from '../../core/reactive/combine-latest';
 import type { WritableState } from '../../core/state/create-state';
 import type { AddressableObject, Presentation, Segment } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { appendSegment } from '../media/append-segment';
+import { flushBuffer } from '../media/buffer-flusher';
 import { fetchResolvable } from '../network/fetch';
 
 // ============================================================================
@@ -106,16 +108,18 @@ const loadMediaSegmentTask = async (
 
   await appendSegment(context.sourceBuffer, segmentData);
 
-  // Update bandwidth estimate
-  const currentBandwidth = context.state.current.bandwidthState!;
-  const updatedBandwidth = sampleBandwidth(currentBandwidth, downloadTime, segmentData.byteLength);
+  // Update bandwidth estimate (only when bandwidthState is initialised)
+  const currentBandwidth = context.state.current.bandwidthState;
+  const updatedBandwidth = currentBandwidth
+    ? sampleBandwidth(currentBandwidth, downloadTime, segmentData.byteLength)
+    : undefined;
 
   // Add segment to buffer state
   const currentBuffer = context.state.current.bufferState?.[context.bufferKey];
   const updatedSegments = [...(currentBuffer?.segments || []), { id: segment.id, trackId }];
 
   context.state.patch({
-    bandwidthState: updatedBandwidth,
+    ...(updatedBandwidth && { bandwidthState: updatedBandwidth }),
     bufferState: {
       ...context.state.current.bufferState,
       [context.bufferKey]: {
@@ -156,6 +160,32 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
   const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, currentTime);
 
   if (segmentsToLoad.length === 0) return;
+
+  // Back buffer management (F6): flush old segments before loading new ones.
+  // Uses bufferedSegments (what's actually appended) not track.segments, so we
+  // only flush data we've loaded — avoids spurious flushes when seeking into
+  // an unloaded region. calculateBackBufferFlushPoint returns 0 when nothing
+  // needs flushing.
+  const flushEnd = calculateBackBufferFlushPoint(bufferedSegments, currentTime);
+  if (flushEnd > 0) {
+    await flushBuffer(context.sourceBuffer, 0, flushEnd);
+
+    // Remove flushed segments from bufferState so the forward buffer
+    // calculator doesn't consider them buffered (e.g. after a backward seek).
+    const currentBufferState = context.state.current.bufferState?.[bufferKey];
+    if (currentBufferState) {
+      const remaining = currentBufferState.segments.filter((s) => {
+        const seg = track.segments.find((ts) => ts.id === s.id);
+        return seg ? seg.startTime >= flushEnd : true;
+      });
+      context.state.patch({
+        bufferState: {
+          ...context.state.current.bufferState,
+          [bufferKey]: { ...currentBufferState, segments: remaining },
+        },
+      });
+    }
+  }
 
   // Only load init segment if not already loaded for this track
   const needsInit = bufferState?.initTrackId !== track.id;
