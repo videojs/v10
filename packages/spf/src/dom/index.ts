@@ -2,6 +2,8 @@
  * DOM/Browser-specific SPF bindings
  */
 
+export type { ForwardPlayOwners } from './features/forward-play-event';
+export { forwardPlayEvent } from './features/forward-play-event';
 export { loadSegments } from './features/load-segments';
 export { loadTextTrackCues } from './features/load-text-track-cues';
 export type { CurrentTimeOwners, CurrentTimeState } from './features/track-current-time';

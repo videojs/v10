@@ -11,6 +11,7 @@ import {
 } from '../core/features/select-tracks';
 import { createState } from '../core/state/create-state';
 import { endOfStream } from './features/end-of-stream';
+import { forwardPlayEvent } from './features/forward-play-event';
 import type { BufferState } from './features/load-segments';
 import { loadSegments } from './features/load-segments';
 import { loadTextTrackCues } from './features/load-text-track-cues';
@@ -166,6 +167,11 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
 
   // Wire up orchestrations
   const cleanups = [
+    // 0. Bridge media element play event → SPF event stream
+    //    Enables preload="none" resolution via native controls / element.play()
+    // @ts-expect-error - EventStream type variance
+    forwardPlayEvent({ owners, events }),
+
     // 1. Resolve presentation (URL already in state)
     resolvePresentation({ state, events: presentationEvents }),
 
