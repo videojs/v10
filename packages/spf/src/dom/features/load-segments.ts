@@ -248,6 +248,8 @@ export interface SegmentLoadingState {
   currentTime?: number;
   /** Buffer state tracking which segments have been loaded per track type. */
   bufferState?: BufferState;
+  /** True once the user has initiated playback. Allows segment loading regardless of preload setting. */
+  playbackInitiated?: boolean;
 }
 
 /**
@@ -280,7 +282,10 @@ export function shouldLoadSegments(state: SegmentLoadingState, owners: SegmentLo
     return false;
   }
 
-  if (state.preload !== 'auto') {
+  // Load when preload allows eager loading ('auto') OR playback has been
+  // initiated by the user. preload is a startup hint, not a runtime gate —
+  // once play is triggered we load regardless of the initial preload setting.
+  if (state.preload !== 'auto' && !state.playbackInitiated) {
     return false;
   }
 

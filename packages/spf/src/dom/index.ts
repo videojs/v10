@@ -2,12 +2,12 @@
  * DOM/Browser-specific SPF bindings
  */
 
-export type { ForwardPlayOwners } from './features/forward-play-event';
-export { forwardPlayEvent } from './features/forward-play-event';
 export { loadSegments } from './features/load-segments';
 export { loadTextTrackCues } from './features/load-text-track-cues';
 export type { CurrentTimeOwners, CurrentTimeState } from './features/track-current-time';
 export { trackCurrentTime } from './features/track-current-time';
+export type { PlaybackInitiatedOwners, PlaybackInitiatedState } from './features/track-playback-initiated';
+export { trackPlaybackInitiated } from './features/track-playback-initiated';
 export type { PlaybackRateOwners, PlaybackRateState } from './features/track-playback-rate';
 export { trackPlaybackRate } from './features/track-playback-rate';
 export { appendSegment } from './media/append-segment';

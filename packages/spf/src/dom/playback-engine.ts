@@ -11,7 +11,6 @@ import {
 } from '../core/features/select-tracks';
 import { createState } from '../core/state/create-state';
 import { endOfStream } from './features/end-of-stream';
-import { forwardPlayEvent } from './features/forward-play-event';
 import type { BufferState } from './features/load-segments';
 import { loadSegments } from './features/load-segments';
 import { loadTextTrackCues } from './features/load-text-track-cues';
@@ -20,6 +19,7 @@ import { setupSourceBuffer } from './features/setup-sourcebuffer';
 import { setupTextTracks } from './features/setup-text-tracks';
 import { syncTextTrackModes } from './features/sync-text-track-modes';
 import { trackCurrentTime } from './features/track-current-time';
+import { trackPlaybackInitiated } from './features/track-playback-initiated';
 import { updateDuration } from './features/update-duration';
 import { destroyVttParser } from './text/parse-vtt-segment';
 
@@ -72,6 +72,9 @@ export interface PlaybackEngineState {
 
   // Current playback position (mirrored from mediaElement via trackCurrentTime)
   currentTime?: number;
+
+  // True once the user has initiated playback (enables segment loading regardless of preload)
+  playbackInitiated?: boolean;
 }
 
 /**
@@ -170,7 +173,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     // 0. Bridge media element play event → SPF event stream
     //    Enables preload="none" resolution via native controls / element.play()
     // @ts-expect-error - EventStream type variance
-    forwardPlayEvent({ owners, events }),
+    trackPlaybackInitiated({ state, owners, events }),
 
     // 1. Resolve presentation (URL already in state)
     resolvePresentation({ state, events: presentationEvents }),

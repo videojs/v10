@@ -188,7 +188,7 @@ try {
   log('Patching presentation URL and preload...');
   engine.state.patch({
     presentation: { url: TEST_STREAM },
-    preload: 'auto', // Triggers orchestration
+    // preload: 'auto', // Triggers orchestration
   });
 
   log('✓ Orchestration started', 'success');
