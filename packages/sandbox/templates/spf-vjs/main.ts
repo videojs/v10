@@ -5,7 +5,7 @@
 // Uses <spf-video> as the media element inside a standard VJS player.
 
 import { createPlayer, features } from '@videojs/html';
-import '@videojs/html/define/media/spf-video';
+import '@videojs/html/media/spf-video';
 
 const { PlayerElement } = createPlayer({
   features: features.video,
