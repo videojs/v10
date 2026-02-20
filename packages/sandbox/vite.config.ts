@@ -26,6 +26,8 @@ export default defineConfig({
         'react-background': resolve(__dirname, 'src/react-background/index.html'),
         'react-tailwind': resolve(__dirname, 'src/react-tailwind/index.html'),
         'spf-segment-loading': resolve(__dirname, 'src/spf-segment-loading/index.html'),
+        'spf-html': resolve(__dirname, 'src/spf-html/index.html'),
+        'spf-react': resolve(__dirname, 'src/spf-react/index.html'),
       },
     },
   },
