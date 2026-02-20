@@ -48,10 +48,11 @@ describe('createPlaybackEngine', () => {
     const engine = createPlaybackEngine();
 
     const mediaElement = document.createElement('video');
-
-    const engine = createPlaybackEngine({
-      url: 'https://example.com/playlist.m3u8',
-      mediaElement,
+    mediaElement.preload = 'auto';
+    engine.owners.patch({ mediaElement });
+    engine.state.patch({
+      presentation: { url: 'https://example.com/playlist.m3u8' },
+      preload: 'auto',
     });
 
     expect(engine.owners.current.mediaElement).toBe(mediaElement);
@@ -186,6 +187,7 @@ http://example.com/audio-seg1.m4s
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     // Initialize: patch owners and state
     engine.owners.patch({ mediaElement });
@@ -279,6 +281,7 @@ http://example.com/video-seg1.m4s
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -342,6 +345,7 @@ http://example.com/audio-seg1.m4s
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -405,6 +409,7 @@ http://example.com/video-seg1.m4s
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -540,11 +545,11 @@ http://example.com/audio-seg1.m4s
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'none';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
       presentation: { url: 'http://example.com/playlist.m3u8' },
-      preload: 'none',
     });
 
     // PHASE 1: Verify nothing auto-resolves
@@ -555,8 +560,8 @@ http://example.com/audio-seg1.m4s
     expect(state.presentation?.selectionSets).toBeUndefined();
     expect(mockFetch).not.toHaveBeenCalled();
 
-    // PHASE 2: Dispatch play event to trigger orchestrations
-    engine.events.dispatch({ type: 'play' });
+    // PHASE 2: Simulate play (via media element — sets playbackInitiated + dispatches to event stream)
+    mediaElement.dispatchEvent(new Event('play'));
 
     // Wait for complete orchestration
     await vi.waitFor(
@@ -608,12 +613,17 @@ http://example.com/seg1.m4s
         );
       }
 
+      if (url.includes('init.mp4')) {
+        return Promise.resolve(new Response(new ArrayBuffer(100)));
+      }
+
       return Promise.reject(new Error(`Unmocked URL: ${url}`));
     });
     globalThis.fetch = mockFetch;
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'metadata';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -625,25 +635,29 @@ http://example.com/seg1.m4s
       () => {
         const state = engine.state.current;
 
-        // Should resolve presentation
+        // Should resolve presentation and select/resolve track
         expect(state.presentation?.selectionSets).toBeDefined();
-
-        // Should select and resolve track (metadata includes segment list)
         expect(state.selectedVideoTrackId).toBeDefined();
 
         const videoTrack = state.presentation?.selectionSets
           ?.find((s: any) => s.type === 'video')
           ?.switchingSets?.[0]?.tracks?.find((t: any) => t.id === state.selectedVideoTrackId);
-        expect(videoTrack?.segments).toBeDefined(); // Track IS resolved with metadata
+        expect(videoTrack?.segments).toBeDefined();
+
+        // Init segment should be loaded (advances readyState to HAVE_METADATA)
+        expect(state.bufferState?.video?.initTrackId).toBeDefined();
       },
       { timeout: 2000 }
     );
 
-    // Fetches both multivariant and media playlist for metadata
-    expect(mockFetch).toHaveBeenCalledTimes(2);
-
-    // Note: preload: 'metadata' defers segment LOADING, not track resolution
-    // Track metadata (segment list) is needed for duration/seekable ranges
+    // Fetches: multivariant + media playlist + init segment
+    // Media segments NOT fetched — preload="metadata" stops at init
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+    const fetchedUrls = mockFetch.mock.calls.map((c: any[]) => {
+      const input = c[0] as RequestInfo | URL;
+      return typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+    });
+    expect(fetchedUrls).not.toContain('http://example.com/seg1.m4s');
 
     engine.destroy();
   });
@@ -684,6 +698,7 @@ http://example.com/seg1.m4s
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -781,6 +796,7 @@ http://example.com/text-es-seg1.vtt
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -878,6 +894,7 @@ http://example.com/text-es-seg1.vtt
       enableDefaultTrack: true,
     });
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -955,6 +972,7 @@ http://example.com/text-fr-seg1.vtt
       preferredSubtitleLanguage: 'fr',
     });
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -1039,6 +1057,7 @@ http://example.com/text-es-seg1.vtt
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -1132,6 +1151,7 @@ http://example.com/video-seg1.m4s
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -1236,6 +1256,7 @@ http://example.com/text-es-seg1.vtt
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -1348,6 +1369,7 @@ http://example.com/seg2.m4s
 
   const engine = createPlaybackEngine();
   const mediaElement = document.createElement('video');
+  mediaElement.preload = 'auto';
 
   engine.owners.patch({ mediaElement });
   engine.state.patch({
@@ -1423,6 +1445,7 @@ http://example.com/audio-seg1.m4s
 
   const engine = createPlaybackEngine();
   const mediaElement = document.createElement('video');
+  mediaElement.preload = 'auto';
 
   engine.owners.patch({ mediaElement });
   engine.state.patch({

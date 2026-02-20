@@ -30,6 +30,8 @@ const setupMediaSourceTask = async (
  */
 export interface MediaSourceState {
   presentation?: Presentation;
+  preload?: string;
+  playbackInitiated?: boolean;
 }
 
 /**
@@ -42,9 +44,18 @@ export interface MediaSourceOwners {
 
 /**
  * Check if we have the minimum requirements to create MediaSource.
+ *
+ * Requires mediaElement, a resolved presentation, and either eager preload
+ * or explicit playback initiation — prevents attaching a MediaSource (which
+ * triggers a browser loading spinner) before the user presses play when
+ * preload="none".
  */
 export function canSetup(state: MediaSourceState, owners: MediaSourceOwners): boolean {
-  return !isNil(owners.mediaElement) && !isNil(state.presentation?.url);
+  return (
+    !isNil(owners.mediaElement) &&
+    !isNil(state.presentation?.url) &&
+    (state.preload !== 'none' || !!state.playbackInitiated)
+  );
 }
 
 /**

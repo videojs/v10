@@ -76,8 +76,17 @@ export function syncPreloadAttribute(
   state: WritableState<PresentationState>,
   owners: WritableState<PlatformOwners>
 ): () => void {
+  let lastMediaElement: MediaElementLike | undefined;
+
   return owners.subscribe((current) => {
-    const preload = current.mediaElement?.preload || undefined;
+    const { mediaElement } = current;
+
+    if (mediaElement === lastMediaElement) return;
+    lastMediaElement = mediaElement;
+
+    const raw = mediaElement?.preload;
+    // Per spec, absent preload attribute returns '' — treat as 'auto' (browser default)
+    const preload = raw === '' ? 'auto' : raw || undefined;
     state.patch({ preload: preload as 'auto' | 'metadata' | 'none' | undefined });
   });
 }

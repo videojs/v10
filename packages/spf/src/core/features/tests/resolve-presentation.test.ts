@@ -528,7 +528,7 @@ variant1.m3u8`)
       cleanup();
     });
 
-    it('sets preload to undefined when mediaElement is removed', () => {
+    it('sets preload to undefined when mediaElement is removed', async () => {
       interface State {
         presentation?: AddressableObject | Presentation | undefined;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
@@ -538,21 +538,74 @@ variant1.m3u8`)
         mediaElement?: MediaElementLike | undefined;
       }
 
-      const state = createState<State>({
-        presentation: undefined,
-        preload: 'auto',
-      });
+      const state = createState<State>({});
+      const owners = createState<Owners>({});
+      const cleanup = syncPreloadAttribute(state, owners);
 
+      // First attach an element so lastMediaElement is set
+      const video = { preload: 'auto' } as PlatformOwners['mediaElement'];
+      owners.patch({ mediaElement: video });
+      owners.flush();
+      state.flush();
+      expect(state.current.preload).toBe('auto');
+
+      // Now remove it — should clear preload
+      owners.patch({ mediaElement: undefined });
+      owners.flush();
+      state.flush();
+
+      expect(state.current.preload).toBeUndefined();
+
+      cleanup();
+    });
+
+    it('normalizes empty string preload to "auto" (absent attribute browser default)', () => {
+      interface State {
+        preload?: 'auto' | 'metadata' | 'none' | undefined;
+      }
+      interface Owners {
+        mediaElement?: MediaElementLike | undefined;
+      }
+
+      const state = createState<State>({});
       const owners = createState<Owners>({
-        mediaElement: undefined,
+        mediaElement: { preload: '' } as MediaElementLike,
       });
 
       const cleanup = syncPreloadAttribute(state, owners);
 
-      // Remove media element
-      owners.patch({ mediaElement: undefined });
+      expect(state.current.preload).toBe('auto');
 
-      expect(state.current.preload).toBeUndefined();
+      cleanup();
+    });
+
+    it('does not re-fire on unrelated owner changes', () => {
+      interface State {
+        preload?: 'auto' | 'metadata' | 'none' | undefined;
+      }
+      interface Owners {
+        mediaElement?: MediaElementLike | undefined;
+        videoBuffer?: unknown;
+      }
+
+      const state = createState<State>({});
+      const owners = createState<Owners>({
+        mediaElement: { preload: 'auto' } as MediaElementLike,
+      });
+
+      const cleanup = syncPreloadAttribute(state, owners);
+      expect(state.current.preload).toBe('auto');
+
+      // Manually clear state to detect any spurious patch
+      (state as any).patch({ preload: undefined });
+      state.flush();
+
+      // Adding an unrelated owner should NOT re-read preload
+      owners.patch({ videoBuffer: {} });
+      owners.flush();
+      state.flush();
+
+      expect(state.current.preload).toBeUndefined(); // would be 'auto' if guard missing
 
       cleanup();
     });

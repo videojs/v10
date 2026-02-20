@@ -154,12 +154,20 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
   const bufferKey = context.config.type as 'video' | 'audio';
   const bufferState = context.state.current.bufferState?.[bufferKey];
 
-  // Determine which segments the forward buffer calculator says to load
+  // Metadata mode: load init segment only — satisfies browser's preload="metadata"
+  // contract (advances readyState to HAVE_METADATA) without buffering media data.
+  const metadataMode = currentState.preload === 'metadata' && !currentState.playbackInitiated;
+
+  // Determine which segments the forward buffer calculator says to load.
+  // Metadata mode loads no media segments — just the init segment below.
   const bufferedSegments = resolveBufferedSegments(track.segments, bufferState);
   const currentTime = currentState.currentTime ?? 0;
-  const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, currentTime);
+  const segmentsToLoad = metadataMode ? [] : getSegmentsToLoad(track.segments, bufferedSegments, currentTime);
 
-  if (segmentsToLoad.length === 0) return;
+  // Only load init segment if not already loaded for this track
+  const needsInit = bufferState?.initTrackId !== track.id;
+
+  if (!needsInit && segmentsToLoad.length === 0) return;
 
   // Back buffer management (F6): flush old segments before loading new ones.
   // Uses bufferedSegments (what's actually appended) not track.segments, so we
@@ -186,9 +194,6 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
       });
     }
   }
-
-  // Only load init segment if not already loaded for this track
-  const needsInit = bufferState?.initTrackId !== track.id;
 
   const createInitTask = () =>
     loadInitSegmentTask(
@@ -273,28 +278,40 @@ export function canLoadSegments(state: SegmentLoadingState, owners: SegmentLoadi
 /**
  * Check if we should load segments.
  *
- * Only load if:
- * - Track is resolved (has segments)
- * - Forward buffer calculator says segments are needed
+ * Three loading modes based on preload + playbackInitiated:
+ *
+ * - Full mode (preload='auto' OR playbackInitiated): load init + media segments.
+ * - Metadata mode (preload='metadata', not yet played): load init segment only.
+ *   The init segment (moov box) advances readyState to HAVE_METADATA, satisfying
+ *   the browser's preload="metadata" contract and avoiding a stuck HAVE_NOTHING state.
+ * - Blocked (preload='none' or undefined, not yet played): load nothing.
  */
 export function shouldLoadSegments(state: SegmentLoadingState, owners: SegmentLoadingOwners): boolean {
   if (!canLoadSegments(state, owners)) {
     return false;
   }
 
-  // Load when preload allows eager loading ('auto') OR playback has been
-  // initiated by the user. preload is a startup hint, not a runtime gate —
-  // once play is triggered we load regardless of the initial preload setting.
-  if (state.preload !== 'auto' && !state.playbackInitiated) {
+  const fullMode = state.preload === 'auto' || !!state.playbackInitiated;
+  const metadataMode = state.preload === 'metadata' && !state.playbackInitiated;
+
+  if (!fullMode && !metadataMode) {
     return false;
   }
 
   const track = getSelectedTrack(state, type);
-  if (!track || !isResolvedTrack(track) || track.segments.length === 0) {
+  if (!track || !isResolvedTrack(track)) {
     return false;
   }
 
   const bufferKey = type as 'video' | 'audio';
+
+  if (metadataMode) {
+    // Metadata mode: only proceed if init segment hasn't been loaded yet
+    return state.bufferState?.[bufferKey]?.initTrackId !== track.id;
+  }
+
+  // Full mode: need segments in buffer window
+  if (track.segments.length === 0) return false;
   const bufferedSegments = resolveBufferedSegments(track.segments, state.bufferState?.[bufferKey]);
   const currentTime = state.currentTime ?? 0;
 

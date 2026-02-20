@@ -1,7 +1,11 @@
 import type { BandwidthState } from '../core/abr/bandwidth-estimator';
 import { createEventStream } from '../core/events/create-event-stream';
 import { calculatePresentationDuration } from '../core/features/calculate-presentation-duration';
-import { type PresentationAction, resolvePresentation } from '../core/features/resolve-presentation';
+import {
+  type PresentationAction,
+  resolvePresentation,
+  syncPreloadAttribute,
+} from '../core/features/resolve-presentation';
 import { resolveTrack, type TrackResolutionAction } from '../core/features/resolve-track';
 import {
   selectAudioTrack,
@@ -170,8 +174,14 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
 
   // Wire up orchestrations
   const cleanups = [
-    // 0. Bridge media element play event → SPF event stream
-    //    Enables preload="none" resolution via native controls / element.play()
+    // 0a. Sync preload attribute from mediaElement → state.preload
+    //     Only re-reads when the mediaElement reference changes (lastMediaElement guard).
+    //     Normalises '' (absent attribute) to 'auto' (browser default).
+    // @ts-expect-error - WritableState type variance
+    syncPreloadAttribute(state, owners),
+
+    // 0b. Bridge media element play event → state.playbackInitiated + event stream
+    //     Enables preload="none"/"metadata" resolution via native controls / element.play()
     // @ts-expect-error - EventStream type variance
     trackPlaybackInitiated({ state, owners, events }),
 

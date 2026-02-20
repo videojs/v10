@@ -153,8 +153,39 @@ describe('shouldLoadSegments', () => {
     };
   }
 
-  it('returns false when preload is not "auto"', () => {
-    const state = makeBaseState({ preload: 'metadata' });
+  it('returns false when preload is "none"', () => {
+    const state = makeBaseState({ preload: 'none' });
+    const owners: SegmentLoadingOwners = { videoBuffer: makeSourceBuffer() };
+
+    expect(shouldLoadSegments(state, owners, 'video')).toBe(false);
+  });
+
+  it('returns false when preload is not set', () => {
+    // omit preload entirely (exactOptionalPropertyTypes — can't assign undefined)
+    const { preload: _omit, ...baseWithoutPreload } = makeBaseState();
+    const state = baseWithoutPreload as SegmentLoadingState;
+    const owners: SegmentLoadingOwners = { videoBuffer: makeSourceBuffer() };
+
+    expect(shouldLoadSegments(state, owners, 'video')).toBe(false);
+  });
+
+  // --- preload="metadata" mode ---
+
+  it('returns true for metadata mode when init segment not yet loaded', () => {
+    const state = makeBaseState({
+      preload: 'metadata',
+      bufferState: { video: { segments: [] } },
+    });
+    const owners: SegmentLoadingOwners = { videoBuffer: makeSourceBuffer() };
+
+    expect(shouldLoadSegments(state, owners, 'video')).toBe(true);
+  });
+
+  it('returns false for metadata mode when init segment already loaded', () => {
+    const state = makeBaseState({
+      preload: 'metadata',
+      bufferState: { video: { initTrackId: 'track-1', segments: [] } },
+    });
     const owners: SegmentLoadingOwners = { videoBuffer: makeSourceBuffer() };
 
     expect(shouldLoadSegments(state, owners, 'video')).toBe(false);
@@ -360,6 +391,141 @@ describe('loadSegments orchestration (F5)', () => {
       expect(fetchedUrls).not.toContain('http://example.com/s1.m4s');
       expect(fetchedUrls).not.toContain('http://example.com/init.mp4');
     });
+
+    cleanup();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// preload="metadata" — init segment only, no media segments
+// ---------------------------------------------------------------------------
+
+describe('loadSegments orchestration (metadata mode)', () => {
+  function makePresentation(segments: Segment[]) {
+    return {
+      id: 'p1',
+      url: 'http://example.com/playlist.m3u8',
+      startTime: 0,
+      duration: segments.reduce((acc, s) => acc + s.duration, 0),
+      selectionSets: [
+        {
+          id: 'ss1',
+          type: 'video' as const,
+          switchingSets: [{ id: 'sw1', type: 'video' as const, tracks: [makeResolvedVideoTrack(segments)] }],
+        },
+      ],
+    };
+  }
+
+  it('loads init segment but not media segments for preload="metadata"', async () => {
+    const segments = [makeSegment('s1', 0, 10), makeSegment('s2', 10, 10)];
+
+    const fetchedUrls: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      fetchedUrls.push(url);
+      return Promise.resolve(new Response(new ArrayBuffer(100)));
+    });
+
+    const { loadSegments } = await import('../load-segments');
+    const { createState: cs } = await import('../../../core/state/create-state');
+
+    const state = cs<SegmentLoadingState>({
+      preload: 'metadata',
+      selectedVideoTrackId: 'track-1',
+      presentation: makePresentation(segments),
+    });
+    const owners = cs<SegmentLoadingOwners>({ videoBuffer: makeSourceBuffer() });
+
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    await vi.waitFor(
+      () => {
+        expect(fetchedUrls).toContain('http://example.com/init.mp4');
+      },
+      { timeout: 2000 }
+    );
+
+    // Give time for any additional fetches that shouldn't happen
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(fetchedUrls).not.toContain('http://example.com/s1.m4s');
+    expect(fetchedUrls).not.toContain('http://example.com/s2.m4s');
+
+    cleanup();
+  });
+
+  it('sets initTrackId in bufferState after metadata init load', async () => {
+    const segments = [makeSegment('s1', 0, 10)];
+
+    globalThis.fetch = vi.fn().mockResolvedValue(new Response(new ArrayBuffer(100)));
+
+    const { loadSegments } = await import('../load-segments');
+    const { createState: cs } = await import('../../../core/state/create-state');
+
+    const state = cs<SegmentLoadingState>({
+      preload: 'metadata',
+      selectedVideoTrackId: 'track-1',
+      presentation: makePresentation(segments),
+    });
+    const owners = cs<SegmentLoadingOwners>({ videoBuffer: makeSourceBuffer() });
+
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    await vi.waitFor(
+      () => {
+        expect(state.current.bufferState?.video?.initTrackId).toBe('track-1');
+      },
+      { timeout: 2000 }
+    );
+
+    // Media segments still not loaded (segments may be undefined or empty)
+    expect(state.current.bufferState?.video?.segments?.length ?? 0).toBe(0);
+
+    cleanup();
+  });
+
+  it('loads media segments after playbackInitiated becomes true', async () => {
+    const segments = [makeSegment('s1', 0, 10)];
+
+    const fetchedUrls: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      fetchedUrls.push(url);
+      return Promise.resolve(new Response(new ArrayBuffer(100)));
+    });
+
+    const { loadSegments } = await import('../load-segments');
+    const { createState: cs } = await import('../../../core/state/create-state');
+
+    const state = cs<SegmentLoadingState>({
+      preload: 'metadata',
+      selectedVideoTrackId: 'track-1',
+      presentation: makePresentation(segments),
+    });
+    const owners = cs<SegmentLoadingOwners>({ videoBuffer: makeSourceBuffer() });
+
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    // Wait for metadata init to complete
+    await vi.waitFor(
+      () => {
+        expect(state.current.bufferState?.video?.initTrackId).toBe('track-1');
+      },
+      { timeout: 2000 }
+    );
+
+    expect(fetchedUrls).not.toContain('http://example.com/s1.m4s');
+
+    // User presses play — transition to full loading
+    state.patch({ playbackInitiated: true });
+
+    await vi.waitFor(
+      () => {
+        expect(fetchedUrls).toContain('http://example.com/s1.m4s');
+      },
+      { timeout: 2000 }
+    );
 
     cleanup();
   });

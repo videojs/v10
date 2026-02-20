@@ -25,6 +25,7 @@ vi.mock('../../media/mediasource-setup', () => ({
 describe('canSetup', () => {
   it('returns true when mediaElement and presentation.url exist', () => {
     const state: MediaSourceState = {
+      preload: 'auto',
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     };
     const owners: MediaSourceOwners = {
@@ -36,6 +37,7 @@ describe('canSetup', () => {
 
   it('returns false when mediaElement is missing', () => {
     const state: MediaSourceState = {
+      preload: 'auto',
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     };
     const owners: MediaSourceOwners = {};
@@ -61,6 +63,27 @@ describe('canSetup', () => {
     };
 
     expect(canSetup(state, owners)).toBe(false);
+  });
+
+  it('returns false when preload is "none" and playback has not been initiated', () => {
+    const state: MediaSourceState = {
+      preload: 'none',
+      presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
+    };
+    const owners: MediaSourceOwners = { mediaElement: {} as HTMLMediaElement };
+
+    expect(canSetup(state, owners)).toBe(false);
+  });
+
+  it('returns true when preload is "none" but playbackInitiated is true', () => {
+    const state: MediaSourceState = {
+      preload: 'none',
+      playbackInitiated: true,
+      presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
+    };
+    const owners: MediaSourceOwners = { mediaElement: {} as HTMLMediaElement };
+
+    expect(canSetup(state, owners)).toBe(true);
   });
 });
 
@@ -101,6 +124,7 @@ describe('setupMediaSource', () => {
     // Set up conditions
     owners.patch({ mediaElement: {} as HTMLMediaElement });
     state.patch({
+      preload: 'auto',
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
@@ -130,6 +154,7 @@ describe('setupMediaSource', () => {
 
     owners.patch({ mediaElement });
     state.patch({
+      preload: 'auto',
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
@@ -150,6 +175,7 @@ describe('setupMediaSource', () => {
 
     owners.patch({ mediaElement: {} as HTMLMediaElement });
     state.patch({
+      preload: 'auto',
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
@@ -177,6 +203,7 @@ describe('setupMediaSource', () => {
 
     owners.patch({ mediaElement: {} as HTMLMediaElement });
     state.patch({
+      preload: 'auto',
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
@@ -197,6 +224,7 @@ describe('setupMediaSource', () => {
     const cleanup = setupMediaSource({ state, owners });
 
     state.patch({
+      preload: 'auto',
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
@@ -236,6 +264,7 @@ describe('setupMediaSource', () => {
 
     owners.patch({ mediaElement: {} as HTMLMediaElement });
     state.patch({
+      preload: 'auto',
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
@@ -246,6 +275,7 @@ describe('setupMediaSource', () => {
 
     // Trigger another update (same data)
     state.patch({
+      preload: 'auto',
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
