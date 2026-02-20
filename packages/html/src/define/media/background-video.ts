@@ -1,4 +1,4 @@
-import { BackgroundVideo } from '../../media/background-video/background-video-element';
+import { BackgroundVideo } from '../../media/background-video';
 
 export class BackgroundVideoElement extends BackgroundVideo {
   static readonly tagName = 'background-video';

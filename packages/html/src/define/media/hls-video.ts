@@ -1,4 +1,4 @@
-import { HlsVideo } from '../../media/hls-video/hls-video-element';
+import { HlsVideo } from '../../media/hls-video';
 
 export class HlsVideoElement extends HlsVideo {
   static readonly tagName = 'hls-video';

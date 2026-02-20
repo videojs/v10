@@ -24,7 +24,7 @@ export const BackgroundVideo = forwardRef<HTMLVideoElement, BackgroundVideoProps
   const composedRef = useComposedRefs(ref, mediaRef);
 
   return (
-    <video ref={composedRef} {...props}>
+    <video ref={composedRef} muted autoPlay loop playsInline disableRemotePlayback disablePictureInPicture {...props}>
       {children}
     </video>
   );
