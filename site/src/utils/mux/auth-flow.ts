@@ -13,7 +13,9 @@ export interface AuthPopupOptions {
   onError: (error: string) => void;
 }
 
-const POPUP_WIDTH = 600;
+// Browsers automatically clamp popup dimensions to fit the OS work area (per MDN),
+// so no guard is needed for small screens.
+const POPUP_WIDTH = 1024;
 const POPUP_HEIGHT = 800;
 
 /**
@@ -30,14 +32,19 @@ export function initiateAuthPopup(options: AuthPopupOptions): () => void {
   const left = (window.screen.width - POPUP_WIDTH) / 2;
   const top = (window.screen.height - POPUP_HEIGHT) / 2;
 
-  const popup = window.open(
+  let authWindow = window.open(
     authorizationUrl,
     'oauth-login',
     `width=${POPUP_WIDTH},height=${POPUP_HEIGHT},left=${left},top=${top}`
   );
 
-  if (!popup) {
-    // Popup blocked - fall back to redirect
+  if (!authWindow) {
+    // Popup blocked — try opening a new tab instead (no features string = new tab)
+    authWindow = window.open(authorizationUrl, '_blank');
+  }
+
+  if (!authWindow) {
+    // Both popup and new tab blocked — last resort same-tab redirect
     window.location.href = authorizationUrl;
     return () => {};
   }
