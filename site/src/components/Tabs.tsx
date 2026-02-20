@@ -16,13 +16,14 @@
 
 import clsx from 'clsx';
 
-import { Check, Copy } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 import useIsHydrated from '@/utils/useIsHydrated';
 
 import CopyButton from './CopyButton';
+import CopyIcon from './icons/CopyIcon';
 
 interface TabsRootProps {
   children: React.ReactNode;
@@ -71,7 +72,7 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId }: T
       ref={ref}
       className={twMerge(
         clsx(
-          'rounded-lg overflow-hidden border border-light-40 dark:border-dark-80',
+          'overflow-hidden border border-faded-black rounded-xs',
           'bg-light-100 dark:bg-dark-110 flex flex-col',
           'my-6',
           maxWidth && 'w-full max-w-3xl mx-auto',
@@ -91,8 +92,8 @@ interface TabsListProps {
 }
 export function TabsList({ label, children }: TabsListProps) {
   return (
-    <div className="w-full border-b border-light-40 dark:border-dark-80 flex bg-light-80 dark:bg-dark-100 overflow-x-scroll not-content">
-      <ul data-orientation="horizontal" aria-label={label} className="flex list-none p-0 m-0">
+    <div className="w-full flex not-content p-1">
+      <ul data-orientation="horizontal" aria-label={label} className="flex list-none p-0 m-0 px-5 gap-5">
         {children}
       </ul>
       <CopyButton
@@ -100,10 +101,10 @@ export function TabsList({ label, children }: TabsListProps) {
           container: `[data-tabs-root]`,
           target: '[role="tabpanel"]:not([hidden])',
         }}
-        className="ml-auto sticky right-0 border-l border-light-40 dark:border-dark-80 h-9 w-9 flex items-center justify-center not-disabled:intent:bg-light-100 dark:not-disabled:intent:bg-dark-110 cursor-pointer disabled:cursor-wait"
-        copied={<Check size={16} />}
+        className="ml-auto sticky right-0 h-8 w-8 flex items-center justify-center cursor-pointer disabled:cursor-wait hover:bg-dark-manila transition-colors rounded-sm"
+        copied={<Check size={20} />}
       >
-        <Copy size={16} />
+        <CopyIcon size={20} />
       </CopyButton>
     </div>
   );
@@ -218,13 +219,18 @@ export function Tab({ value, children, initial }: TabProps) {
         onKeyDown={onKeyDown}
         data-value={value}
         className={clsx(
-          'flex items-center h-9 px-4 py-2 text-sm',
-          'border-x border-light-40 dark:border-dark-80',
+          'group flex items-center text-sm gap-2 uppercase font-display-extended',
           'first:-ml-px last:-mr-px -mx-[0.5px] no-underline',
-          isActive ? 'bg-light-100 dark:bg-dark-110' : 'bg-light-80 dark:bg-dark-100',
+          isActive ? 'text-orange font-bold' : 'font-faded-black',
           isHydrated ? 'cursor-pointer intent:bg-light-100 dark:intent:bg-dark-110' : 'cursor-wait'
         )}
       >
+        <span
+          className={clsx(
+            'w-3 h-3 rounded-full border-faded-black border group-hover:bg-dark-manila',
+            isActive ? 'bg-orange group-hover:bg-orange' : ''
+          )}
+        />
         {children}
       </button>
     </li>

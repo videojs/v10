@@ -14,7 +14,7 @@ export default function HomePageControls({ className }: { className?: string }) 
         className
       )}
     >
-      <div className="flex justify-end">
+      <div className="flex justify-center pb-5 md:pb-20">
         <ToggleGroup
           toggleClassName="md:text-base md:py-1"
           value={[$skin]}
@@ -28,7 +28,7 @@ export default function HomePageControls({ className }: { className?: string }) 
           aria-label="Select skin"
         />
       </div>
-      <div>
+      <div className="hidden md:flex justify-center pb-20">
         <ToggleGroup
           toggleClassName="md:text-base md:py-1"
           value={[$framework]}

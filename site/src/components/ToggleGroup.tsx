@@ -19,6 +19,7 @@ export interface ToggleGroupProps<T = string> {
   disabled?: boolean;
   'aria-label'?: string;
   multiple?: boolean;
+  minimal?: boolean;
 }
 
 export default function ToggleGroup<T extends string = string>({
@@ -30,6 +31,7 @@ export default function ToggleGroup<T extends string = string>({
   disabled,
   'aria-label': ariaLabel,
   multiple = false,
+  minimal,
 }: ToggleGroupProps<T>) {
   return (
     <BaseToggleGroup
@@ -37,38 +39,47 @@ export default function ToggleGroup<T extends string = string>({
       onValueChange={onChange}
       disabled={disabled}
       className={twMerge(
-        'inline-flex items-center gap-1 bg-light-60 dark:bg-dark-90 dark:text-light-100 border border-light-40 dark:border-dark-80 rounded-lg p-1',
+        'w-full md:w-auto inline-flex items-stretch p-1 border-2 border-gray-800 rounded-sm overflow-hidden',
         className
       )}
       aria-label={ariaLabel}
       multiple={multiple}
     >
-      {options.map((option) => {
+      {options.map((option, index) => {
         const isPressed = value.includes(option.value as T);
         const isDisabled = disabled || option.disabled;
+        const isLast = index === options.length - 1;
+        const isFirst = index === 0;
 
         return (
-          <Toggle
-            key={option.value}
-            value={option.value}
-            disabled={isDisabled}
-            className={twMerge(
-              clsx(
-                'relative',
-                'flex items-center gap-1.5 px-2.5 py-1.5 rounded text-sm',
-                isDisabled ? 'cursor-wait opacity-50' : 'cursor-pointer',
-                isPressed
-                  ? 'bg-light-80 dark:bg-dark-100'
-                  : !isDisabled
-                    ? 'intent:bg-light-80/50 dark:intent:bg-dark-100/50'
-                    : ''
-              ),
-              toggleClassName
+          <>
+            <Toggle
+              key={option.value}
+              value={option.value}
+              disabled={isDisabled}
+              className={twMerge(
+                clsx(
+                  'relative',
+                  minimal ? 'px-4' : 'px-5 md:px-10',
+                  'flex items-center justify-center py-2! text-sm tracking-wider font-display-extended uppercase font-bold',
+                  isDisabled ? 'cursor-wait opacity-50' : 'cursor-pointer',
+                  isPressed ? 'bg-faded-black text-light-manila' : 'bg-transparent'
+                ),
+                toggleClassName
+              )}
+              aria-label={option['aria-label']}
+            >
+              {option.label}
+            </Toggle>
+            {!isLast && minimal && <span className="block h-100% w-px bg-faded-black -mr-4" />}
+            {!isLast && (
+              <span className="flex px-1 gap-0.5 h-full">
+                <span className="block h-full w-px bg-faded-black" />
+                <span className="block h-full w-px bg-faded-black" />
+                <span className="block h-full w-px bg-faded-black" />
+              </span>
             )}
-            aria-label={option['aria-label']}
-          >
-            {option.label}
-          </Toggle>
+          </>
         );
       })}
     </BaseToggleGroup>

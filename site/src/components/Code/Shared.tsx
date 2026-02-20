@@ -39,7 +39,7 @@ export default function Shared({ code, lang, highlighter }: SharedProps) {
   const { class: codeClassName } = codeProps;
 
   return (
-    <pre className={clsx('shiki', preClassName)}>
+    <pre className={clsx('shiki text-white', preClassName)}>
       <code className={clsx('font-mono text-code', codeClassName)} dangerouslySetInnerHTML={{ __html: html }} />
     </pre>
   );

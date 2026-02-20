@@ -1,6 +1,4 @@
 ---
-
-
 import { Font } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 
@@ -9,7 +7,7 @@ import { SEO_SUFFIX, SITE_TITLE } from '@/consts';
 import '@/styles/globals.css';
 
 import { PreferenceSync } from '@/components/docs/PreferenceSync';
-import FilmGrain from '@/components/FilmGrain';
+import Posthog from '@/components/Posthog.astro';
 import ThemeInit from '@/components/ThemeInit.astro';
 
 interface Props {
@@ -40,7 +38,12 @@ const fullTitle =
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href={new URL('rss.xml', Astro.site)} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={SITE_TITLE}
+      href={new URL('rss.xml', Astro.site)}
+    />
     <meta name="generator" content={Astro.generator} />
 
     {/* Important stuff */}
@@ -53,9 +56,27 @@ const fullTitle =
     {/* Font preloads */}
     <Font cssVariable="--font-instrument-sans" preload />
     <Font cssVariable="--font-ibm-plex-mono" preload />
-    <link rel="preload" href="https://static.mux.com/fonts/EurostileLTProBold/font.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="https://static.mux.com/fonts/EurostileLTProExtended2/font.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="https://static.mux.com/fonts/EurostileLTProBoldExtended2/font.woff2" as="font" type="font/woff2" crossorigin />
+    <link
+      rel="preload"
+      href="https://static.mux.com/fonts/EurostileLTProBold/font.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="https://static.mux.com/fonts/EurostileLTProExtended2/font.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="https://static.mux.com/fonts/EurostileLTProBoldExtended2/font.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
 
     {/* Canonical URL */}
     <link rel="canonical" href={canonicalURL} />
@@ -70,14 +91,25 @@ const fullTitle =
     <meta property="og:url" content={Astro.url} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    {image && <meta property="og:image" content={new URL(image.src, Astro.url)} />}
+    {
+      image && (
+        <meta property="og:image" content={new URL(image.src, Astro.url)} />
+      )
+    }
 
     {/* Twitter */}
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content={Astro.url} />
     <meta property="twitter:title" content={fullTitle} />
     <meta property="twitter:description" content={description} />
-    {image && <meta property="twitter:image" content={new URL(image.src, Astro.url)} />}
+    {
+      image && (
+        <meta
+          property="twitter:image"
+          content={new URL(image.src, Astro.url)}
+        />
+      )
+    }
 
     {/* Whatever else */}
     <slot name="head" />
@@ -103,7 +135,7 @@ const fullTitle =
       ]}
     >
       <PreferenceSync client:idle />
-      <FilmGrain currentPath={Astro.url.pathname} />
+
       <slot />
     </div>
   </body>
