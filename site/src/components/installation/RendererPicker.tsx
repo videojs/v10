@@ -9,15 +9,7 @@ export default function RendererPicker() {
         <RendererSelect />
       </div>
       <div className="flex flex-col gap-4">
-        <p className="font-medium">
-          Or upload your media for free to{' '}
-          <a
-            href="https://www.mux.com/?utm_source=videojs&utm_campaign=vjs10"
-            className="underline intent:no-underline"
-          >
-            Mux
-          </a>
-        </p>
+        <p className="font-medium">Or upload your media for free to Mux</p>
         <MuxUploaderPanel />
       </div>
     </div>
