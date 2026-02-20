@@ -45,24 +45,13 @@ describe('initiateAuthPopup', () => {
     expect(addEventListenerSpy).toHaveBeenCalledWith('message', expect.any(Function));
   });
 
-  it('falls back to new tab when popup is blocked', () => {
-    // First call (popup) returns null, second call (new tab) succeeds
-    openSpy.mockReturnValueOnce(null).mockReturnValueOnce({} as Window);
-
-    initiateAuthPopup({
-      authorizationUrl: 'https://auth.example.com/oauth',
-      onSuccess: vi.fn(),
-      onError: vi.fn(),
-    });
-
-    expect(openSpy).toHaveBeenCalledTimes(2);
-    expect(openSpy).toHaveBeenNthCalledWith(2, 'https://auth.example.com/oauth', '_blank');
-  });
-
-  it('falls back to same-tab redirect when both popup and new tab are blocked', () => {
+  it('redirects when popup is blocked', () => {
     openSpy.mockReturnValue(null);
 
+    // Save original location
     const originalLocation = window.location;
+
+    // Mock location with a writable href
     const mockLocation = { ...originalLocation, href: '' };
     Object.defineProperty(window, 'location', {
       value: mockLocation,
@@ -77,46 +66,15 @@ describe('initiateAuthPopup', () => {
         onError: vi.fn(),
       });
 
-      expect(openSpy).toHaveBeenCalledTimes(2);
       expect(mockLocation.href).toBe('https://auth.example.com/oauth');
     } finally {
+      // Restore original location
       Object.defineProperty(window, 'location', {
         value: originalLocation,
         writable: true,
         configurable: true,
       });
     }
-  });
-
-  it('sets up message listener when new tab fallback is used', () => {
-    // First call (popup) returns null, second call (new tab) succeeds
-    openSpy.mockReturnValueOnce(null).mockReturnValueOnce({} as Window);
-    const onSuccess = vi.fn();
-
-    let messageHandler: ((event: MessageEvent) => void) | null = null;
-    addEventListenerSpy.mockImplementation((type: string, handler: EventListener) => {
-      if (type === 'message') {
-        messageHandler = handler as (event: MessageEvent) => void;
-      }
-    });
-
-    initiateAuthPopup({
-      authorizationUrl: 'https://auth.example.com/oauth',
-      onSuccess,
-      onError: vi.fn(),
-    });
-
-    expect(addEventListenerSpy).toHaveBeenCalledWith('message', expect.any(Function));
-
-    // Simulate auth-complete from the new tab
-    messageHandler!(
-      new MessageEvent('message', {
-        origin: window.location.origin,
-        data: { type: 'auth-complete' },
-      })
-    );
-
-    expect(onSuccess).toHaveBeenCalledTimes(1);
   });
 
   it('ignores messages from different origins', () => {

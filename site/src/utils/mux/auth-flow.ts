@@ -32,19 +32,14 @@ export function initiateAuthPopup(options: AuthPopupOptions): () => void {
   const left = (window.screen.width - POPUP_WIDTH) / 2;
   const top = (window.screen.height - POPUP_HEIGHT) / 2;
 
-  let authWindow = window.open(
+  const popup = window.open(
     authorizationUrl,
     'oauth-login',
     `width=${POPUP_WIDTH},height=${POPUP_HEIGHT},left=${left},top=${top}`
   );
 
-  if (!authWindow) {
-    // Popup blocked — try opening a new tab instead (no features string = new tab)
-    authWindow = window.open(authorizationUrl, '_blank');
-  }
-
-  if (!authWindow) {
-    // Both popup and new tab blocked — last resort same-tab redirect
+  if (!popup) {
+    // Popup blocked - fall back to redirect
     window.location.href = authorizationUrl;
     return () => {};
   }
