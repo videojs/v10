@@ -22,6 +22,7 @@ export default defineConfig({
         html: resolve(__dirname, 'src/html/index.html'),
         react: resolve(__dirname, 'src/react/index.html'),
         'spf-segment-loading': resolve(__dirname, 'src/spf-segment-loading/index.html'),
+        'spf-vjs': resolve(__dirname, 'src/spf-vjs/index.html'),
       },
     },
   },
