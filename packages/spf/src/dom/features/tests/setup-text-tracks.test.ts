@@ -48,12 +48,37 @@ describe('setupTextTracks', () => {
       expect(canSetupTextTracks(state, owners)).toBe(false);
     });
 
-    it('returns true when mediaElement and presentation resolved', () => {
+    it('returns true when mediaElement and presentation resolved with text tracks', () => {
       const state: TextTrackState = {
         presentation: {
           id: 'pres-1',
           url: 'http://example.com/playlist.m3u8',
-          selectionSets: [],
+          selectionSets: [
+            {
+              id: 'text-set',
+              type: 'text',
+              switchingSets: [
+                {
+                  id: 'text-switching',
+                  type: 'text',
+                  tracks: [
+                    {
+                      type: 'text',
+                      id: 'text-en',
+                      url: 'http://example.com/text-en.m3u8',
+                      bandwidth: 256,
+                      mimeType: 'text/vtt',
+                      codecs: [],
+                      groupId: 'subs',
+                      label: 'English',
+                      kind: 'subtitles',
+                      language: 'en',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
       };
       const owners: TextTrackOwners = {
@@ -154,21 +179,21 @@ describe('setupTextTracks', () => {
       // Verify first track element
       const track1 = mediaElement.children[0] as HTMLTrackElement;
       expect(track1.tagName).toBe('TRACK');
+      expect(track1.id).toBe('text-en');
       expect(track1.kind).toBe('subtitles');
       expect(track1.label).toBe('English');
       expect(track1.srclang).toBe('en');
       expect(track1.src).toBe('http://example.com/text-en.m3u8');
-      expect(track1.dataset.trackId).toBe('text-en');
       expect(track1.default).toBe(false);
 
       // Verify second track element
       const track2 = mediaElement.children[1] as HTMLTrackElement;
       expect(track2.tagName).toBe('TRACK');
+      expect(track2.id).toBe('text-es');
       expect(track2.kind).toBe('subtitles');
       expect(track2.label).toBe('Spanish');
       expect(track2.srclang).toBe('es');
       expect(track2.src).toBe('http://example.com/text-es.m3u8');
-      expect(track2.dataset.trackId).toBe('text-es');
       expect(track2.default).toBe(true);
 
       cleanup();

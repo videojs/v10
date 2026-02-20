@@ -7,16 +7,23 @@ vi.mock('../media/append-segment', () => ({
 }));
 
 describe('createPlaybackEngine', () => {
-  it('creates engine with state and owners', () => {
-    const mediaElement = document.createElement('video');
+  let originalFetch: typeof globalThis.fetch;
 
-    const engine = createPlaybackEngine({
-      url: 'https://example.com/playlist.m3u8',
-      mediaElement,
-    });
+  beforeEach(() => {
+    // Save original fetch
+    originalFetch = globalThis.fetch;
+  });
+
+  afterEach(() => {
+    // Restore original fetch
+    globalThis.fetch = originalFetch;
+  });
+  it('creates engine with state, owners, and events', () => {
+    const engine = createPlaybackEngine();
 
     expect(engine.state).toBeDefined();
     expect(engine.owners).toBeDefined();
+    expect(engine.events).toBeDefined();
     expect(engine.destroy).toBeDefined();
     expect(typeof engine.destroy).toBe('function');
 
@@ -55,17 +62,17 @@ describe('createPlaybackEngine', () => {
       preload: 'auto',
     });
 
+    // Wait for microtask queue to drain (patches are batched)
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+
     expect(engine.owners.current.mediaElement).toBe(mediaElement);
+    expect(engine.state.current.presentation?.url).toBe('https://example.com/playlist.m3u8');
 
     engine.destroy();
   });
 
   it('accepts custom configuration', () => {
-    const mediaElement = document.createElement('video');
-
     const engine = createPlaybackEngine({
-      url: 'https://example.com/playlist.m3u8',
-      mediaElement,
       initialBandwidth: 3_000_000,
       preferredAudioLanguage: 'es',
     });
@@ -77,24 +84,14 @@ describe('createPlaybackEngine', () => {
   });
 
   it('cleans up all orchestrations on destroy', () => {
-    const mediaElement = document.createElement('video');
-
-    const engine = createPlaybackEngine({
-      url: 'https://example.com/playlist.m3u8',
-      mediaElement,
-    });
+    const engine = createPlaybackEngine();
 
     // Should not throw
     expect(() => engine.destroy()).not.toThrow();
   });
 
   it('can be destroyed multiple times safely', () => {
-    const mediaElement = document.createElement('video');
-
-    const engine = createPlaybackEngine({
-      url: 'https://example.com/playlist.m3u8',
-      mediaElement,
-    });
+    const engine = createPlaybackEngine();
 
     engine.destroy();
 
@@ -103,13 +100,36 @@ describe('createPlaybackEngine', () => {
   });
 
   it('resolves presentation when URL and preload are patched', async () => {
-    // Mock fetch to return simple multivariant playlist
-    const mockFetch = vi.fn().mockResolvedValue(
-      new Response(`#EXTM3U
+    // Mock fetch with URL-based lookup for different playlist types
+    const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+      // Multivariant playlist
+      if (url.includes('playlist.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
 #EXT-X-VERSION:7
 #EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E",RESOLUTION=640x360
 http://example.com/video-360p.m3u8`)
-    );
+        );
+      }
+
+      // Video media playlist
+      if (url.includes('video-360p.m3u8')) {
+        return Promise.resolve(
+          new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init.mp4"
+#EXTINF:10.0,
+http://example.com/segment1.m4s
+#EXT-X-ENDLIST`)
+        );
+      }
+
+      // Fallback for unmocked URLs
+      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    });
     globalThis.fetch = mockFetch;
 
     const engine = createPlaybackEngine();
@@ -120,10 +140,7 @@ http://example.com/video-360p.m3u8`)
       preload: 'auto',
     });
 
-    // Dispatch event to trigger combineLatest
-    engine.events.dispatch({ type: 'play' });
-
-    // Wait for presentation to be resolved
+    // Wait for presentation to be resolved (no event needed - state-driven)
     await vi.waitFor(
       () => {
         const { presentation } = engine.state.current;
@@ -734,8 +751,10 @@ http://example.com/seg1.m4s
     // The resolved track should be the selected one
     expect(resolvedTracks?.[0]?.id).toBe(state.selectedVideoTrackId);
 
-    // Should only fetch: 1 multivariant + 1 media playlist (not all 3)
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    // Should fetch: 1 multivariant + 1 media playlist + init + segments
+    // (Only selected quality, not all 3 qualities)
+    // With preload: 'auto', segments are loaded immediately
+    expect(mockFetch).toHaveBeenCalledTimes(4);
 
     engine.destroy();
   });

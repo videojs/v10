@@ -1,7 +1,7 @@
 // SPF Segment Loading POC Test
 // http://localhost:5173/spf-segment-loading/
 
-import { createPlaybackEngine } from '@videojs/spf/playback-engine';
+import { createPlaybackEngine } from '@videojs/spf/dom/playback-engine';
 
 const video = document.getElementById('video') as HTMLVideoElement;
 const logsDiv = document.getElementById('logs') as HTMLDivElement;
@@ -23,8 +23,8 @@ function inspectState() {
     return;
   }
 
-  const state = engine.state.get();
-  const owners = engine.owners.get();
+  const state = engine.state.current;
+  const owners = engine.owners.current;
 
   const videoBufferRanges = owners.videoBuffer
     ? Array.from(
@@ -117,7 +117,10 @@ video.addEventListener('waiting', () => log('📺 Video: waiting', 'warning'));
 video.addEventListener('error', () => log(`📺 Video: error - ${video.error?.message}`, 'error'));
 
 // Mux test asset - short CMAF stream
-const TEST_STREAM = 'https://stream.mux.com/cmg02Moxu5B7WORo2MElg2U02p2ZyMP7Hb01d80001gHDgPE.m3u8';
+// Mad Max Fury Road Trailer (short, subtitles)
+const TEST_STREAM = 'https://stream.mux.com/JX01bG8eB4uaoV3OpDuK602rBfvdSgrMObjwuUOBn4JrQ.m3u8';
+// Mux Blue Smoke (extra short, simple)
+// const TEST_STREAM = 'https://stream.mux.com/cmg02Moxu5B7WORo2MElg2U02p2ZyMP7Hb01d80001gHDgPE.m3u8';
 
 log('=== SPF Segment Loading POC Test ===');
 log(`Test stream: ${TEST_STREAM}`);
@@ -135,16 +138,24 @@ try {
 
   // Expose for debugging in DevTools console
   (window as any).engine = engine;
-  (window as any).state = engine.state.get;
-  (window as any).owners = engine.owners.get;
+  (window as any).state = () => engine.state.current;
+  (window as any).owners = () => engine.owners.current;
 
   log('Engine exposed as window.engine');
   log('Access state: window.state()');
   log('Access owners: window.owners()');
 
-  // Subscribe to state changes for detailed logging
+  // Subscribe to state changes for detailed logging (track previous state to avoid duplicate logs)
+  const previousState = {
+    hasPresentation: false,
+    selectedVideoTrackId: undefined as string | undefined,
+    selectedAudioTrackId: undefined as string | undefined,
+    selectedTextTrackId: undefined as string | undefined,
+  };
+
   engine.state.subscribe((state) => {
-    if (state.presentation) {
+    // Only log when presentation first becomes available
+    if (state.presentation && !previousState.hasPresentation) {
       log('Presentation resolved');
       previousState.hasPresentation = true;
     }
@@ -158,24 +169,43 @@ try {
         engine.state.patch({ selectedTextTrackId: firstTextTrack.id });
       }
     }
-    if (state.selectedVideoTrackId) {
-      log('Video track selected');
+
+    // Only log when track selection changes
+    if (state.selectedVideoTrackId && state.selectedVideoTrackId !== previousState.selectedVideoTrackId) {
+      log(`Video track selected: ${state.selectedVideoTrackId}`);
+      previousState.selectedVideoTrackId = state.selectedVideoTrackId;
     }
-    if (state.selectedAudioTrackId) {
-      log('Audio track selected');
+    if (state.selectedAudioTrackId && state.selectedAudioTrackId !== previousState.selectedAudioTrackId) {
+      log(`Audio track selected: ${state.selectedAudioTrackId}`);
+      previousState.selectedAudioTrackId = state.selectedAudioTrackId;
+    }
+    if (state.selectedTextTrackId && state.selectedTextTrackId !== previousState.selectedTextTrackId) {
+      log(`Text track selected: ${state.selectedTextTrackId}`, 'success');
+      previousState.selectedTextTrackId = state.selectedTextTrackId;
     }
   });
 
-  // Subscribe to owners changes
+  // Subscribe to owners changes (track previous owners to avoid duplicate logs)
+  const previousOwners = {
+    hasMediaSource: false,
+    hasVideoBuffer: false,
+    hasAudioBuffer: false,
+  };
+
   engine.owners.subscribe((owners) => {
-    if (owners.mediaSource) {
+    // Only log when MediaSource first becomes available
+    if (owners.mediaSource && !previousOwners.hasMediaSource) {
       log(`MediaSource created: ${owners.mediaSource.readyState}`, 'success');
+      previousOwners.hasMediaSource = true;
     }
-    if (owners.videoBuffer) {
+    // Only log when SourceBuffers first become available
+    if (owners.videoBuffer && !previousOwners.hasVideoBuffer) {
       log('Video SourceBuffer created', 'success');
+      previousOwners.hasVideoBuffer = true;
     }
-    if (owners.audioBuffer) {
+    if (owners.audioBuffer && !previousOwners.hasAudioBuffer) {
       log('Audio SourceBuffer created', 'success');
+      previousOwners.hasAudioBuffer = true;
     }
   });
 

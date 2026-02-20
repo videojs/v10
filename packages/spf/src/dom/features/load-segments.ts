@@ -6,9 +6,11 @@ import { combineLatest } from '../../core/reactive/combine-latest';
 import type { WritableState } from '../../core/state/create-state';
 import type { AddressableObject, Presentation, Segment } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
+import { BufferKeyByType, getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
 import { appendSegment } from '../media/append-segment';
 import { flushBuffer } from '../media/buffer-flusher';
 import { fetchResolvable } from '../network/fetch';
+import type { MediaTrackType } from './setup-sourcebuffer';
 
 // ============================================================================
 // BUFFER STATE TYPES
@@ -244,8 +246,7 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
 /**
  * State shape for segment loading.
  */
-export interface SegmentLoadingState {
-  selectedVideoTrackId?: string;
+export interface SegmentLoadingState extends TrackSelectionState {
   presentation?: Presentation;
   preload?: string;
   bandwidthState?: BandwidthState;
@@ -262,17 +263,27 @@ export interface SegmentLoadingState {
  */
 export interface SegmentLoadingOwners {
   videoBuffer?: SourceBuffer;
+  audioBuffer?: SourceBuffer;
 }
 
 /**
  * Check if we can load segments.
  *
  * Requires:
- * - Selected video track ID exists
- * - VideoSourceBuffer exists
+ * - Selected track ID exists
+ * - SourceBuffer exists for track type
  */
-export function canLoadSegments(state: SegmentLoadingState, owners: SegmentLoadingOwners): boolean {
-  return !!state.selectedVideoTrackId && !!owners.videoBuffer;
+export function canLoadSegments(
+  state: SegmentLoadingState,
+  owners: SegmentLoadingOwners,
+  type: MediaTrackType
+): boolean {
+  const track = getSelectedTrack(state, type);
+  if (!track) return false;
+
+  const bufferKey = BufferKeyByType[type];
+  const sourceBuffer = owners[bufferKey];
+  return !!sourceBuffer;
 }
 
 /**
@@ -286,8 +297,12 @@ export function canLoadSegments(state: SegmentLoadingState, owners: SegmentLoadi
  *   the browser's preload="metadata" contract and avoiding a stuck HAVE_NOTHING state.
  * - Blocked (preload='none' or undefined, not yet played): load nothing.
  */
-export function shouldLoadSegments(state: SegmentLoadingState, owners: SegmentLoadingOwners): boolean {
-  if (!canLoadSegments(state, owners)) {
+export function shouldLoadSegments(
+  state: SegmentLoadingState,
+  owners: SegmentLoadingOwners,
+  type: MediaTrackType
+): boolean {
+  if (!canLoadSegments(state, owners, type)) {
     return false;
   }
 
@@ -322,15 +337,18 @@ export function shouldLoadSegments(state: SegmentLoadingState, owners: SegmentLo
  * Load segments orchestration (F4 + P11 POC).
  *
  * Triggers when:
- * - Video track is selected and resolved
- * - VideoSourceBuffer exists
+ * - Track is selected and resolved (video or audio)
+ * - SourceBuffer exists for track type
  * - No segments loaded yet
  *
- * Fetches and appends segments sequentially.
+ * Fetches and appends segments sequentially:
+ * 1. Initialization segment (required for fmp4)
+ * 2. Media segments
+ *
  * Continues on segment errors to provide partial playback.
  *
  * @example
- * const cleanup = loadSegments({ state, owners });
+ * const cleanup = loadSegments({ state, owners }, { type: 'video' });
  */
 /**
  * Load segments orchestration (F4 + F5).

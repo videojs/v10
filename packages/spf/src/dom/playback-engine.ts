@@ -28,19 +28,19 @@ import { updateDuration } from './features/update-duration';
 import { destroyVttParser } from './text/parse-vtt-segment';
 
 /**
+ * Union of all action types used by playback engine orchestrations.
+ * Includes synthetic @@INITIALIZE@@ event for combineLatest bootstrapping.
+ */
+export type PlaybackEngineAction =
+  | PresentationAction
+  | TrackResolutionAction
+  | TrackSelectionAction
+  | { type: '@@INITIALIZE@@' };
+
+/**
  * Configuration for the playback engine.
  */
 export interface PlaybackEngineConfig {
-  /**
-   * HLS playlist URL to load.
-   */
-  url: string;
-
-  /**
-   * HTMLMediaElement to attach MediaSource to.
-   */
-  mediaElement: HTMLMediaElement;
-
   /**
    * Initial bandwidth estimate for cold start (bits per second).
    * Default: 1 Mbps (conservative).
@@ -52,6 +52,24 @@ export interface PlaybackEngineConfig {
    * If not specified, selects first audio track.
    */
   preferredAudioLanguage?: string;
+
+  /**
+   * Preferred subtitle language (ISO 639 code, e.g., "en", "es").
+   * If specified, selects matching text track if available.
+   */
+  preferredSubtitleLanguage?: string;
+
+  /**
+   * Include FORCED subtitle tracks in selection.
+   * Default: false (follows hls.js/http-streaming pattern)
+   */
+  includeForcedTracks?: boolean;
+
+  /**
+   * Auto-select DEFAULT track (requires DEFAULT=YES + AUTOSELECT=YES in HLS).
+   * Default: false (user opt-in, matches hls.js/http-streaming)
+   */
+  enableDefaultTrack?: boolean;
 }
 
 /**
@@ -61,6 +79,7 @@ export interface PlaybackEngineConfig {
 export interface PlaybackEngineState {
   // Presentation state
   presentation?: any;
+  preload?: string;
 
   // Track selection state
   selectedVideoTrackId?: string;
@@ -115,6 +134,11 @@ export interface PlaybackEngine {
   owners: ReturnType<typeof createState<PlaybackEngineOwners>>;
 
   /**
+   * Shared event stream (for inspection/testing/triggering events).
+   */
+  events: ReturnType<typeof createEventStream<PlaybackEngineAction>>;
+
+  /**
    * Cleanup function to destroy all orchestrations.
    */
   destroy: () => void;
@@ -137,10 +161,15 @@ export interface PlaybackEngine {
  *
  * @example
  * const engine = createPlaybackEngine({
- *   url: 'https://example.com/playlist.m3u8',
- *   mediaElement: document.querySelector('video'),
  *   initialBandwidth: 2_000_000,
  *   preferredAudioLanguage: 'en',
+ * });
+ *
+ * // Initialize by patching state and owners
+ * engine.owners.patch({ mediaElement: document.querySelector('video') });
+ * engine.state.patch({
+ *   presentation: { url: 'https://example.com/playlist.m3u8' },
+ *   preload: 'auto',
  * });
  *
  * // Inspect state
@@ -166,13 +195,13 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
   });
   const owners = createState<PlaybackEngineOwners>({});
 
-  // Create event streams for orchestrations
-  const presentationEvents = createEventStream<{ type: 'play' } | { type: 'pause' } | { type: 'load'; url: string }>();
-  const videoTrackEvents = createEventStream<{ type: 'play' } | { type: 'pause' }>();
-  const audioTrackEvents = createEventStream<{ type: 'play' } | { type: 'pause' }>();
-  const trackSelectionEvents = createEventStream<{ type: 'presentation-loaded' }>();
+  // Create single shared event stream for all orchestrations
+  const events = createEventStream<PlaybackEngineAction>();
 
-  // Wire up orchestrations
+  // Wire up orchestrations (all share single event stream)
+  // Note: @ts-expect-error needed due to EventStream invariance - each orchestration expects
+  // specific event types, but shared stream has union of all types. Proper fix would
+  // require making EventStream covariant or refactoring event system.
   const cleanups = [
     // 0a. Sync preload attribute from mediaElement → state.preload
     //     Only re-reads when the mediaElement reference changes (lastMediaElement guard).
@@ -186,27 +215,46 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     trackPlaybackInitiated({ state, owners, events }),
 
     // 1. Resolve presentation (URL already in state)
-    resolvePresentation({ state, events: presentationEvents }),
+    // @ts-expect-error - EventStream type variance
+    resolvePresentation({ state, events }),
 
     // 2. Select initial tracks (when presentation loads)
     selectVideoTrack(
-      { state, owners: owners as any, events: trackSelectionEvents },
+      // @ts-expect-error - Owners and EventStream type compatibility
+      { state, owners, events },
       {
         type: 'video',
         ...(config.initialBandwidth !== undefined && { initialBandwidth: config.initialBandwidth }),
       }
     ),
     selectAudioTrack(
-      { state, owners: owners as any, events: trackSelectionEvents },
+      // @ts-expect-error - Owners and EventStream type compatibility
+      { state, owners, events },
       {
         type: 'audio',
         ...(config.preferredAudioLanguage !== undefined && { preferredAudioLanguage: config.preferredAudioLanguage }),
       }
     ),
+    selectTextTrack(
+      // @ts-expect-error - Owners and EventStream type compatibility
+      { state, owners, events },
+      {
+        type: 'text',
+        ...(config.preferredSubtitleLanguage !== undefined && {
+          preferredSubtitleLanguage: config.preferredSubtitleLanguage,
+        }),
+        ...(config.includeForcedTracks !== undefined && { includeForcedTracks: config.includeForcedTracks }),
+        ...(config.enableDefaultTrack !== undefined && { enableDefaultTrack: config.enableDefaultTrack }),
+      }
+    ),
 
     // 3. Resolve selected tracks (fetch media playlists)
-    resolveTrack({ state, events: videoTrackEvents }, { type: 'video' as const }),
-    resolveTrack({ state, events: audioTrackEvents }, { type: 'audio' as const }),
+    // @ts-expect-error - EventStream type variance
+    resolveTrack({ state, events }, { type: 'video' as const }),
+    // @ts-expect-error - EventStream type variance
+    resolveTrack({ state, events }, { type: 'audio' as const }),
+    // @ts-expect-error - EventStream type variance
+    resolveTrack({ state, events }, { type: 'text' as const }),
 
     // 3.5. Calculate presentation duration from resolved tracks
     calculatePresentationDuration({ state }),
@@ -241,13 +289,15 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     loadTextTrackCues({ state, owners }),
   ];
 
-  // Trigger initial presentation load
-  presentationEvents.dispatch({ type: 'load', url: config.url });
+  // Dispatch synthetic initialize event to satisfy combineLatest
+  // (combineLatest waits for all sources to emit before triggering listeners)
+  events.dispatch({ type: '@@INITIALIZE@@' });
 
   // Return engine instance
   return {
     state,
     owners,
+    events,
     destroy: () => {
       cleanups.forEach((cleanup) => cleanup());
       destroyVttParser();
