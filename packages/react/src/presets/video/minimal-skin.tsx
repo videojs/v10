@@ -155,6 +155,15 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
         </span>
       </Controls.Root>
 
+      {/* <div className="media-captions">
+        <div className="media-captions__container">
+          <span className="media-captions__text">An example cue</span>
+          <span className="media-captions__text">
+            <p>Another example cue with HTML</p>
+          </span>
+        </div>
+      </div> */}
+
       <div className="media-overlay" />
     </Container>
   );
