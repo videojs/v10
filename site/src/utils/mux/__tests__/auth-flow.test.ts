@@ -29,7 +29,7 @@ describe('initiateAuthPopup', () => {
     expect(openSpy).toHaveBeenCalledWith(
       'https://auth.example.com',
       'oauth-login',
-      expect.stringMatching(/width=1024,height=800/)
+      expect.stringMatching(/width=1366,height=768/)
     );
   });
 
