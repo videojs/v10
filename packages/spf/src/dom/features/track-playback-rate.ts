@@ -12,7 +12,7 @@ export interface PlaybackRateState {
  * Owners shape for playback rate tracking.
  */
 export interface PlaybackRateOwners {
-  mediaElement?: HTMLMediaElement;
+  mediaElement?: HTMLMediaElement | undefined;
 }
 
 /**

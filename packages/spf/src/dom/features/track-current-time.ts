@@ -12,7 +12,7 @@ export interface CurrentTimeState {
  * Owners shape for current time tracking.
  */
 export interface CurrentTimeOwners {
-  mediaElement?: HTMLMediaElement;
+  mediaElement?: HTMLMediaElement | undefined;
 }
 
 /**

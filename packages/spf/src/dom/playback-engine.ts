@@ -106,7 +106,7 @@ export interface PlaybackEngineState {
  */
 export interface PlaybackEngineOwners {
   // Media element
-  mediaElement?: HTMLMediaElement;
+  mediaElement?: HTMLMediaElement | undefined;
 
   // MediaSource
   mediaSource?: MediaSource;

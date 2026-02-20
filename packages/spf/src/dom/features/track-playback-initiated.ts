@@ -17,7 +17,7 @@ export interface PlaybackInitiatedState {
  * Owners shape for playback initiation tracking.
  */
 export interface PlaybackInitiatedOwners {
-  mediaElement?: HTMLMediaElement;
+  mediaElement?: HTMLMediaElement | undefined;
 }
 
 /**

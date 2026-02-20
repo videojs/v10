@@ -10,7 +10,7 @@ export interface EndOfStreamState extends TrackSelectionState {
 
 export interface EndOfStreamOwners {
   mediaSource?: MediaSource;
-  mediaElement?: HTMLMediaElement;
+  mediaElement?: HTMLMediaElement | undefined;
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
 }
