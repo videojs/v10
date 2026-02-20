@@ -450,15 +450,9 @@ importers:
       '@videojs/html':
         specifier: workspace:*
         version: link:../packages/html
-      '@videojs/html-preview':
-        specifier: workspace:*
-        version: link:../packages/__tech-preview__/html
       '@videojs/react':
         specifier: workspace:*
         version: link:../packages/react
-      '@videojs/react-preview':
-        specifier: workspace:*
-        version: link:../packages/__tech-preview__/react
       astro:
         specifier: ^5.14.4
         version: 5.16.5(@netlify/blobs@10.5.0)(@types/node@22.19.3)(@vercel/functions@2.2.13)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.53.3)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)

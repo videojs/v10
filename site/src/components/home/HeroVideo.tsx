@@ -1,24 +1,23 @@
 import { useStore } from '@nanostores/react';
-import { FrostedSkin, HlsVideo, MinimalSkin, VideoProvider } from '@videojs/react-preview';
+import { createPlayer, features, Poster } from '@videojs/react';
+import { MinimalVideoSkin, Video, VideoSkin } from '@videojs/react/video';
 import { VJS8_DEMO_VIDEO } from '@/consts';
 import { skin } from '@/stores/homePageDemos';
-import '@videojs/react-preview/skins/frosted.css';
-import '@videojs/react-preview/skins/minimal.css';
+import '@videojs/react/video/skin.css';
+import '@videojs/react/video/minimal-skin.css';
+
+const Player = createPlayer({ features: [...features.video] });
 
 export default function HeroVideo({ className, poster }: { className?: string; poster: string }) {
   const $skin = useStore(skin);
-  const SkinComponent = $skin === 'frosted' ? FrostedSkin : MinimalSkin;
+  const SkinComponent = $skin === 'frosted' ? VideoSkin : MinimalVideoSkin;
 
   return (
-    <VideoProvider>
+    <Player.Provider>
       <SkinComponent className={className}>
-        <HlsVideo
-          // @ts-expect-error -- types are incorrect
-          src={VJS8_DEMO_VIDEO.hls}
-          poster={poster}
-          playsInline
-        />
+        <Video src={VJS8_DEMO_VIDEO.mp4} playsInline />
+        <Poster src={poster} />
       </SkinComponent>
-    </VideoProvider>
+    </Player.Provider>
   );
 }

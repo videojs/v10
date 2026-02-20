@@ -5,37 +5,42 @@ import { framework, skin } from '@/stores/homePageDemos';
 import ClientCode from '../Code/ClientCode';
 
 function generateHTMLCode(skin: Skin): string {
-  const skinTag = `${skin}-skin`;
+  const skinTag = skin === 'frosted' ? 'video-skin' : 'minimal-video-skin';
+  const skinFile = skin === 'frosted' ? 'skin' : 'minimal-skin';
 
-  return `<video-provider>
+  return `<script type="module">
+  import 'https://cdn.jsdelivr.net/npm/videojs/html/video/player.js';
+  import 'https://cdn.jsdelivr.net/npm/videojs/html/video/${skinFile}.js';
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/videojs/html/video/${skinFile}.css" />
+
+<video-player>
   <${skinTag}>
-    <video src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"></video>
+    <video src="..."></video>
   </${skinTag}>
-</video-provider>`;
+</video-player>`;
 }
 
 function generateReactCode(skin: Skin): string {
-  const skinComponent = skin === 'frosted' ? 'FrostedSkin' : 'MinimalSkin';
-  const skinImport = skin === 'frosted' ? 'frosted' : 'minimal';
+  const skinComponent = skin === 'frosted' ? 'VideoSkin' : 'MinimalVideoSkin';
+  const skinCss = skin === 'frosted' ? 'skin' : 'minimal-skin';
 
-  return `// npm install @videojs/react-preview
-import { VideoProvider, ${skinComponent}, Video } from '@videojs/react-preview';
-import '@videojs/react-preview/skins/${skinImport}.css';
+  return `import { createPlayer, features, Poster } from '@videojs/react';
+import { ${skinComponent}, Video } from '@videojs/react/video';
+import '@videojs/react/video/${skinCss}.css';
 
-export const VideoPlayer = () => {
+const Player = createPlayer({ features: [...features.video] });
+
+export function VideoPlayer() {
   return (
-    <VideoProvider>
+    <Player.Provider>
       <${skinComponent}>
-        <Video src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4" />
+        <Video src="..." playsInline />
+        <Poster src="..." />
       </${skinComponent}>
-    </VideoProvider>
+    </Player.Provider>
   );
-};`;
-}
-
-function generateJS(skin: Skin): string {
-  return `// npm install @videojs/html-preview
-import '@videojs/html-preview/skins/${skin}';`;
+}`;
 }
 
 export default function BaseDemo({ className }: { className?: string }) {
@@ -49,13 +54,9 @@ export default function BaseDemo({ className }: { className?: string }) {
           <Tab value="html" initial>
             HTML
           </Tab>
-          <Tab value="javascript">JavaScript</Tab>
         </TabsList>
         <TabsPanel value="html" initial>
           <ClientCode code={generateHTMLCode($skin)} lang="html" />
-        </TabsPanel>
-        <TabsPanel value="javascript">
-          <ClientCode code={generateJS($skin)} lang="javascript" />
         </TabsPanel>
       </TabsRoot>
     );
