@@ -223,6 +223,9 @@ importers:
       '@videojs/element':
         specifier: workspace:*
         version: link:../element
+      '@videojs/spf':
+        specifier: workspace:*
+        version: link:../spf
       '@videojs/store':
         specifier: workspace:*
         version: link:../store
@@ -285,6 +288,9 @@ importers:
       '@videojs/icons':
         specifier: workspace:*
         version: link:../icons
+      '@videojs/spf':
+        specifier: workspace:*
+        version: link:../spf
       '@videojs/store':
         specifier: workspace:*
         version: link:../store
