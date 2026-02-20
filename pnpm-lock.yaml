@@ -170,6 +170,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@videojs/spf':
+        specifier: workspace:*
+        version: link:../spf
       '@videojs/store':
         specifier: workspace:*
         version: link:../store

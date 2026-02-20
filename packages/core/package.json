@@ -42,6 +42,7 @@
     "clean": "rm -rf dist types"
   },
   "dependencies": {
+    "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*",
     "hls.js": "^1.6.7"
