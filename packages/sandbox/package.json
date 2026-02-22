@@ -17,6 +17,7 @@
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
+    "@videojs/icons": "workspace:*",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@tailwindcss/vite": "^4.1.17",
