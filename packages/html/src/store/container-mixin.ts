@@ -32,7 +32,12 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
           if (records.some(hasMediaNode)) this.#attachMedia();
         });
 
-        this.#observer.observe(this, { childList: true, subtree: true });
+        this.#observer.observe(this, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['data-media-element'],
+        });
 
         this.#attachMedia();
       }
@@ -81,6 +86,11 @@ function isMediaNode(node: Node): boolean {
 }
 
 function hasMediaNode(record: MutationRecord): boolean {
+  // Attribute mutation: data-media-element was added to a descendant
+  if (record.type === 'attributes' && record.target instanceof Element) {
+    return record.target.hasAttribute('data-media-element');
+  }
+
   for (const node of record.addedNodes) {
     if (isMediaNode(node)) return true;
   }

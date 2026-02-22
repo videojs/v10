@@ -340,10 +340,6 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
         this.shadowRoot!.innerHTML = (this.constructor as typeof CustomMedia).getTemplateHTML(attrs);
       }
 
-      // Mark as a media element so VJS container discovery can find it via
-      // querySelector('[data-media-element]'), complementing 'video, audio'.
-      this.setAttribute('data-media-element', '');
-
       // Neither Chrome or Firefox support setting the muted attribute
       // after using document.createElement.
       // Get around this by setting the muted property manually.
@@ -458,6 +454,9 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
 
     connectedCallback(): void {
       this.#init();
+      // Set after #init() so the shadow root exists; safe here since
+      // connectedCallback is spec-compliant for setAttribute (unlike constructor).
+      this.setAttribute('data-media-element', '');
     }
   };
 }
