@@ -1,18 +1,22 @@
 // SPF + Video.js integration sandbox
 // http://localhost:5173/spf-vjs/
 //
-// Smoke test: SPF as the media element inside a VJS player with UI controls.
-// Validates play/pause and mute via VJS buttons wired to the SPF engine.
+// Smoke test: SPF applied to a native <video> inside a VJS player.
+//
+// The VJS ContainerMixin discovers media via querySelector('video, audio'),
+// which only works with native elements in the light DOM — not custom elements
+// whose <video> lives in shadow DOM. We therefore use a plain <video> and
+// attach SpfMedia to it imperatively after DOM insertion.
 //
 // Icon visibility is driven by data-* attributes set by the button elements:
 //   media-play-button: [data-paused], [data-ended]
 //   media-mute-button: [data-muted]
 
 import { createPlayer, features } from '@videojs/html';
-import '@videojs/html/media/spf-video';
 import '@videojs/html/ui/play-button';
 import '@videojs/html/ui/mute-button';
 import { pauseIcon, playIcon, restartIcon, volumeHighIcon, volumeOffIcon } from '@videojs/icons/html';
+import { SpfMedia } from '@videojs/spf/dom';
 
 const { PlayerElement } = createPlayer({
   features: features.video,
@@ -34,7 +38,7 @@ document.getElementById('root')!.innerHTML = html`
       width: fit-content;
     }
 
-    spf-video {
+    #media {
       width: 480px;
       aspect-ratio: 16 / 9;
       display: block;
@@ -70,11 +74,7 @@ document.getElementById('root')!.innerHTML = html`
   </style>
 
   <video-player>
-    <spf-video
-      src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8"
-      preload="auto"
-      playsinline
-    ></spf-video>
+    <video id="media" preload="auto" playsinline></video>
 
     <media-play-button>
       <span class="icon-play">${playIcon}</span>
@@ -88,3 +88,11 @@ document.getElementById('root')!.innerHTML = html`
     </media-mute-button>
   </video-player>
 `;
+
+// Attach SPF to the native <video> element after DOM insertion.
+// SpfMedia drives MSE/HLS; the VJS player store discovers the native <video>
+// via querySelector and wires up the play/mute buttons automatically.
+const videoEl = document.getElementById('media') as HTMLVideoElement;
+const spf = new SpfMedia();
+spf.attach(videoEl);
+spf.src = 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8';
