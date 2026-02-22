@@ -51,6 +51,7 @@
     "react": ">=16.8.0"
   },
   "dependencies": {
+    "@videojs/spf": "workspace:*",
     "@videojs/core": "workspace:*",
     "@videojs/icons": "workspace:*",
     "@videojs/store": "workspace:*",

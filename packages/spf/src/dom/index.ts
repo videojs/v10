@@ -10,6 +10,7 @@ export type { PlaybackInitiatedOwners, PlaybackInitiatedState } from './features
 export { trackPlaybackInitiated } from './features/track-playback-initiated';
 export type { PlaybackRateOwners, PlaybackRateState } from './features/track-playback-rate';
 export { trackPlaybackRate } from './features/track-playback-rate';
+export { SpfMedia } from './integration/videojs-adapter';
 export { appendSegment } from './media/append-segment';
 export { flushBuffer } from './media/buffer-flusher';
 export type { PlaybackEngine, PlaybackEngineConfig } from './playback-engine';

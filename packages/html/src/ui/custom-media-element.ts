@@ -454,6 +454,9 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
 
     connectedCallback(): void {
       this.#init();
+      // Set after #init() so the shadow root exists; safe here since
+      // connectedCallback is spec-compliant for setAttribute (unlike constructor).
+      this.setAttribute('data-media-element', '');
     }
   };
 }

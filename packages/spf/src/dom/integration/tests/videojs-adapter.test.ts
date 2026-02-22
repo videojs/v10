@@ -158,6 +158,90 @@ describe('SpfMedia', () => {
       result.catch(() => {});
     });
 
+    it('sets playbackInitiated on engine state when called', () => {
+      const media = new SpfMedia();
+      media.attach(document.createElement('video'));
+      media.play().catch(() => {});
+      expect(media.engine.state.current.playbackInitiated).toBe(true);
+    });
+
+    it('retries play() via loadstart when element has no src but adapter has one', async () => {
+      const media = new SpfMedia();
+      const el = document.createElement('video');
+      media.attach(el);
+      media.src = 'https://example.com/v.m3u8';
+
+      // Simulate element having no blob URL yet on first call, as if MSE
+      // hasn't attached yet, then succeed on retry
+      let playCallCount = 0;
+      const originalPlay = el.play.bind(el);
+      el.play = () => {
+        playCallCount++;
+        if (playCallCount === 1) {
+          return Promise.reject(new Error('no supported sources'));
+        }
+        return originalPlay();
+      };
+
+      const playPromise = media.play();
+
+      // Push past all pending microtasks (state flush + .catch() handler)
+      // before dispatching loadstart so the listener is registered in time
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+      // Simulate MSE attaching the blob URL
+      el.dispatchEvent(new Event('loadstart'));
+
+      await playPromise.catch(() => {});
+      expect(playCallCount).toBe(2);
+    });
+
+    it('re-throws when play() rejects and no adapter src is set', async () => {
+      const media = new SpfMedia();
+      const el = document.createElement('video');
+      media.attach(el);
+      // No src on adapter — nothing pending to wait for
+
+      const err = new Error('autoplay policy');
+      el.play = () => Promise.reject(err);
+
+      await expect(media.play()).rejects.toThrow('autoplay policy');
+    });
+
+    it('removes the pending loadstart listener on detach', async () => {
+      const media = new SpfMedia();
+      const el = document.createElement('video');
+      media.attach(el);
+      media.src = 'https://example.com/v.m3u8';
+
+      el.play = () => Promise.reject(new Error('no supported sources'));
+      media.play().catch(() => {});
+
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+      const spy = vi.spyOn(el, 'removeEventListener');
+      media.detach();
+
+      expect(spy).toHaveBeenCalledWith('loadstart', expect.any(Function));
+    });
+
+    it('removes the pending loadstart listener on destroy', async () => {
+      const media = new SpfMedia();
+      const el = document.createElement('video');
+      media.attach(el);
+      media.src = 'https://example.com/v.m3u8';
+
+      el.play = () => Promise.reject(new Error('no supported sources'));
+      media.play().catch(() => {});
+
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+      const spy = vi.spyOn(el, 'removeEventListener');
+      media.destroy();
+
+      expect(spy).toHaveBeenCalledWith('loadstart', expect.any(Function));
+    });
+
     // TODO: Add integration tests with a real HLS stream once test fixtures are
     // in place (e.g. Mux stream, WPT-style fixture server).
     // Expected: play() resolves after the media element fires 'playing'.
