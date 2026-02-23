@@ -83,7 +83,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
       />
 
       <Controls.Root className="media-controls">
-        <div className="media-button-group">
+        <span className="media-button-group">
           <PlayButton
             render={(props, state) => (
               <Button {...props}>
@@ -115,7 +115,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
               </Button>
             )}
           />
-        </div>
+        </span>
 
         <span className="media-time-controls">
           <Time.Group className="media-time">

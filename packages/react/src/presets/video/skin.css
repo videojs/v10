@@ -76,26 +76,28 @@
 .media-default-skin .media-overlay {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-flow: column nowrap;
-  align-items: start;
   pointer-events: none;
   border-radius: inherit;
   background-image: linear-gradient(to top, oklab(0 0 0 / 0.5), oklab(0 0 0 / 0.3), rgba(0, 0, 0, 0));
   backdrop-filter: saturate(1.5) brightness(0.9);
-  transition: opacity 0.15s ease-out;
-  transition-duration: 100ms;
-  transition-delay: 0ms;
-}
-.media-default-skin .media-controls:not([data-visible]) ~ .media-overlay {
   transition-delay: 500ms;
   transition-duration: 300ms;
+  transition-behavior: allow-discrete;
+  transition-property: opacity, display;
+  transition-timing-function: ease-out;
   opacity: 0;
+  display: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .media-default-skin .media-controls:not([data-visible]) ~ .media-overlay {
+  .media-default-skin .media-overlay {
     transition-duration: 100ms;
   }
+}
+.media-default-skin .media-controls[data-visible] ~ .media-overlay {
+  transition-duration: 150ms;
+  transition-delay: 0ms;
+  opacity: 1;
+  display: block;
 }
 
 /* Common Surface Styles - e.g. tooltips, popovers, controls */
@@ -161,7 +163,7 @@
     scale: 1;
   }
 }
-@container media-root (width > 42rem) {
+@container media-root (width > 40rem) {
   .media-default-skin .media-controls {
     padding: 0.25rem;
     gap: 0.125rem;
@@ -451,12 +453,12 @@
 }
 @container media-root (width > 48rem) {
   .media-default-skin .media-captions {
-    font-size: 2rem;
+    font-size: 1.875rem;
   }
 }
 @container media-root (width > 80rem) {
   .media-default-skin .media-captions {
-    font-size: 2.5rem;
+    font-size: 2.25rem;
   }
 }
 .media-default-skin .media-controls[data-visible] ~ .media-captions {

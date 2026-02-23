@@ -70,26 +70,28 @@
 .media-minimal-skin .media-overlay {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-flow: column nowrap;
-  align-items: start;
   pointer-events: none;
   border-radius: inherit;
   background-image: linear-gradient(to top, oklab(0 0 0 / 0.7), oklab(0 0 0 / 0.5) 7.5rem, rgba(0, 0, 0, 0));
-  transition-property: opacity;
-  transition-duration: 75ms;
-  transition-delay: 0ms;
-  transition-timing-function: ease-out;
-}
-.media-minimal-skin .media-controls:not([data-visible]) ~ .media-overlay {
+  backdrop-filter: saturate(1.5) brightness(0.9);
   transition-delay: 500ms;
   transition-duration: 500ms;
+  transition-behavior: allow-discrete;
+  transition-property: opacity, display;
+  transition-timing-function: ease-out;
   opacity: 0;
+  display: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .media-minimal-skin .media-controls:not([data-visible]) ~ .media-overlay {
+  .media-minimal-skin .media-overlay {
     transition-duration: 100ms;
   }
+}
+.media-minimal-skin .media-controls[data-visible] ~ .media-overlay {
+  transition-duration: 50ms;
+  transition-delay: 0ms;
+  opacity: 1;
+  display: block;
 }
 
 /* Media Control Bar UI/Styles */
@@ -126,7 +128,7 @@
     scale: 1;
   }
 }
-@container media-root (width > 640px) {
+@container media-root (width > 40rem) {
   .media-minimal-skin .media-controls {
     padding: 2.5rem 0.75rem 0.75rem 0.75rem;
     gap: 0.875rem;
@@ -174,7 +176,7 @@
   align-items: center;
   gap: 0.075rem;
 }
-@container media-root (width > 42rem) {
+@container media-root (width > 40rem) {
   .media-minimal-skin .media-button-group {
     gap: 0.125rem;
   }
@@ -452,12 +454,12 @@
 }
 @container media-root (width > 48rem) {
   .media-minimal-skin .media-captions {
-    font-size: 2rem;
+    font-size: 1.875rem;
   }
 }
 @container media-root (width > 80rem) {
   .media-minimal-skin .media-captions {
-    font-size: 2.5rem;
+    font-size: 2.25rem;
   }
 }
 .media-minimal-skin .media-controls[data-visible] ~ .media-captions {
