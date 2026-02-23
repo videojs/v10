@@ -29,14 +29,18 @@ export function SocialProof() {
     { LogoComponent: <SAPLogo width="6" />, alt: 'SAP' },
     { LogoComponent: <DropboxLogo width="6" />, alt: 'Dropbox' },
   ];
+
   return (
     <div className="bg-faded-black border border-dark-manila z-1 overflow-hidden -mb-10 relative col-span-full rounded-sm">
       <header>
         <Marquee />
       </header>
-      <div className="relative grid grid-cols-6 grid-rows-2 gap-0 z-0 -m-px">
-        {LOGOS.map((logo) => (
-          <div key={logo.alt} className="grid-separators relative flex items-center justify-center h-40">
+      <div className="relative grid grid-cols-2 md:grid-cols-6 grid-rows-2 gap-0 z-0 -m-px">
+        {LOGOS.map((logo, index) => (
+          <div
+            key={logo.alt}
+            className={`grid-separators h-auto aspect-4/3 relative flex items-center justify-center h-40${index >= 10 ? ' hidden md:flex' : ''}`}
+          >
             {logo.LogoComponent}
           </div>
         ))}

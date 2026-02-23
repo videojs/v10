@@ -49,7 +49,6 @@ export default function ToggleGroup<T extends string = string>({
         const isPressed = value.includes(option.value as T);
         const isDisabled = disabled || option.disabled;
         const isLast = index === options.length - 1;
-        const isFirst = index === 0;
 
         return (
           <>

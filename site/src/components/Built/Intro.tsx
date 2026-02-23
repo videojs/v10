@@ -1,6 +1,6 @@
 export function Intro() {
   return (
-    <div className="bg-faded-black border border-dark-manila p-15 rounded-sm">
+    <div className="bg-faded-black border border-dark-manila p-5 md:p-15 rounded-sm">
       <p className="text-base text-light-manila">
         VideoJS 10 is complete ground-up rewrite of the player for the modern web. The UI is separated from the
         underlying media renderer. Every component is independent and works together through open API contracts. We've

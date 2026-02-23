@@ -16,13 +16,13 @@ export function Marquee() {
 
   return (
     <div
-      className="col-span-full overflow-hidden py-8 border-b border-b-dark-manila relative z-1"
+      className="col-span-full overflow-hidden py-8 border-b border-b-dark-manila relative z-1 "
       aria-label="Streaming bits on millions of sites"
       role="marquee"
     >
       <div
         id="logos"
-        className="flex whitespace-nowrap animate-marquee2 text-base font-display-extended uppercase text-light-manila"
+        className="flex whitespace-nowrap animate-marquee text-base font-display-extended uppercase text-light-manila"
       >
         {items}
         {items}

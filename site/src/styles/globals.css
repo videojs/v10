@@ -40,6 +40,15 @@
   }
 }
 
+@keyframes horizontal-grow-bar {
+  from {
+    height: 0%;
+  }
+  to {
+    height: 100%;
+  }
+}
+
 @keyframes grow-bg {
   from {
     height: 0;
@@ -88,7 +97,31 @@
     background-image: url("/data-bar-orange.svg");
   }
 
-  .grid-separators::before {
+  .horizontal-bars {
+    width: 2.5rem;
+    background-image: url("/horizontal-bar-white.svg");
+    background-repeat: repeat-y;
+    background-size: 100% 6px;
+    animation: horizontal-grow-bar 1.5s ease-out forwards;
+  }
+
+  .horizontal-bars-orange {
+    background-image: url("/horizontal-bar-orange.svg");
+  }
+
+  .text-stroke-faded-black {
+    color: transparent;
+    -webkit-text-stroke: 1px var(--color-faded-black);
+  }
+
+  .text-stroke-white {
+    color: transparent;
+    -webkit-text-stroke: 1px var(--color-white);
+  }
+}
+
+@utility grid-separators {
+  &::before {
     content: "";
     position: absolute;
     top: 0.25rem;
@@ -99,7 +132,7 @@
     box-shadow: 0 0 0 var(--color-warm-gray);
   }
 
-  .grid-separators::after {
+  &::after {
     content: "";
     position: absolute;
     left: 0.25rem;
