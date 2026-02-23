@@ -6,11 +6,11 @@
 
 ## Summary
 
-This wave we completed the Video.js integration layer (O8), wired bandwidth tracking into the segment loading pipeline (F8), built forward and back buffer management (F5, F6), bridged native media element events to the SPF event stream (O6), and established a robust task deduplication pattern (O4). The architecture crossed a major threshold: SPF is now a fully integrated Video.js v10 player technology, usable via `<spf-video>` web component or `SpfVideo` React component inside standard VJS player containers with working UI controls.
+This wave we completed the Video.js integration layer (O8), wired bandwidth tracking into the segment loading pipeline (F8), built forward and back buffer management (F5, F6), bridged native media element events to the SPF event stream (O6), and established a task deduplication pattern across async features (O4). SPF can now be used via `<spf-video>` web component or `SpfVideo` React component inside a VJS player container with working UI controls, though integration-level bugs remain under investigation.
 
-Beyond planned work, we discovered and fixed a foundational gap in the VJS ContainerMixin: native `querySelector('video, audio')` excluded custom media elements entirely. We added `[data-media-element]` as a third discovery path, set it in `connectedCallback()` for spec-compliant timing, and extended the MutationObserver to watch attribute mutations as a fallback. This fix benefits `<hls-video>` and all future custom media elements — not just SPF.
+Beyond planned work, we discovered and fixed a gap in the VJS ContainerMixin: native `querySelector('video, audio')` excluded custom media elements entirely. We added `[data-media-element]` as a third discovery path, set it in `connectedCallback()` for spec-compliant timing, and extended the MutationObserver to watch attribute mutations as a fallback. The fix also applies to `<hls-video>` and other `CustomMediaMixin`-based elements.
 
-The playback engine grew from 6.06 KB to 7.62 KB gzipped (still well within 20 KB target at 38.1%), reflecting the new buffer management, bandwidth tracking, and integration layers added this wave.
+The playback engine grew from 6.06 KB to 7.62 KB gzipped (38.1% of the 20 KB target), reflecting the new buffer management, bandwidth tracking, and integration layers added this wave.
 
 ## This Wave We (Wave 3):
 
@@ -19,7 +19,7 @@ The playback engine grew from 6.06 KB to 7.62 KB gzipped (still well within 20 K
 - **Completed Forward Buffer Management (F5)** — buffer window awareness via `getSegmentsToLoad`, only fetches segments within target range
 - **Completed Back Buffer Management + Buffer Flusher (F5, P12)** — `calculateBackBufferFlushPoint`, `flushBuffer` integrated in `loadSegments`
 - **Completed Bandwidth Tracking (F8)** — `sampleBandwidth` wired into segment loading; EWMA estimator now receives real download measurements
-- **Completed Task Deduplication Pattern (O4)** — composite task pattern with hierarchical tracking, promise-based deduplication, clean phase separation across all async features
+- **Completed Task Deduplication Pattern (O4)** — composite task pattern with hierarchical tracking, promise-based deduplication across all async features
 - **Added consistent AbortSignal support** — all async features use `AbortController` for cancellation, eliminating unhandled rejections
 - **Fixed VJS ContainerMixin** — `[data-media-element]` discovery + `connectedCallback` timing fix; affects all packages, not just SPF
 - **Sandbox demos** — `spf-html` (web component) and `spf-react` with play/mute icon controls fully wired to VJS player store
@@ -32,8 +32,7 @@ The playback engine grew from 6.06 KB to 7.62 KB gzipped (still well within 20 K
 **Implementation:**
 - Composite task pattern with hierarchical tracking across all async features
 - Promise-based deduplication (replaces ad-hoc `resolving` flags)
-- Clean parameter separation: task created at module level
-- Phase separation between simple and composite orchestrations
+- Task created at module level with clean parameter separation
 
 **Pattern:**
 ```ts
@@ -117,10 +116,10 @@ return combineLatest([state, owners]).subscribe(async ([s, o]) => {
 
 ### AbortSignal + Unhandled Rejection Fixes
 
-All async orchestrations now consistently use `AbortController`:
+Async orchestrations more consistently use `AbortController`:
 - Signals passed through fetch chains
 - Cleanup functions abort in-flight work
-- No more unhandled promise rejections on destroy/navigation
+- Reduces unhandled promise rejections on destroy/navigation
 
 ### Preload-Aware Segment Loading
 
@@ -185,14 +184,14 @@ Two new end-to-end demos:
 **`/spf-react/`** — React flavour
 - `SpfVideo` inside `<Provider><Container>`
 - `<PlayButton render={...}>` + `<MuteButton render={...}>` with icon render props
-- Full VJS store wiring via `useMediaRegistration`
+- VJS store wiring via `useMediaRegistration`
 
-Both demos confirmed working end-to-end with Mux HLS stream and VJS UI controls.
+Both demos validated basic play/mute functionality with a Mux HLS stream and VJS UI controls. Known integration bugs remain to be addressed.
 
 ## Where We're At
 
 - **Wave 3 Epic:** ~60% complete (O4 ✅, O6 ✅, O8 ✅, F5 ✅, F6 ✅, F8 ✅, F17 ✅ — F9, F14, F16, F15 remaining)
-- **End-to-end VJS integration: Working** — SPF plays HLS via VJS player with UI controls in both HTML and React
+- **VJS integration: Basic playback working** — SPF plays HLS via VJS player with UI controls in both HTML and React; integration-level bugs under investigation
 - **Test Suite: 100% passing** — 562 tests, no flaky tests
 - **Bundle within target** — 7.62 KB, 12.38 KB remaining
 
