@@ -1,5 +1,6 @@
-export const SITE_TITLE = 'Video.js 10';
-export const SITE_DESCRIPTION = `For over 15 years, Video.js has been the world's web video player. Now rebuilt in v10 for modern development and performance.`;
+export const SITE_TITLE = 'Video.js';
+export const SEO_SUFFIX = 'Open Source Video Player';
+export const SITE_DESCRIPTION = `The open-source video player for React and HTML. Lightweight, accessible components built for performance and streaming.`;
 export const GITHUB_REPO_URL = 'https://github.com/videojs/v10/';
 export const DISCORD_INVITE_URL = 'https://discord.gg/JBqHh485uF';
 export const THEME_KEY = 'vjs-site-theme';

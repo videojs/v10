@@ -1,0 +1,307 @@
+import type { FullscreenButtonState, MuteButtonState, PlayButtonState } from '@videojs/core';
+import {
+  FullscreenEnterIcon,
+  FullscreenExitIcon,
+  PauseIcon,
+  PipIcon,
+  PlayIcon,
+  RestartIcon,
+  SeekIcon,
+  SpinnerIcon,
+  VolumeHighIcon,
+  VolumeLowIcon,
+  VolumeOffIcon,
+} from '@videojs/icons/react';
+import { cn } from '@videojs/utils/style';
+import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import { Container } from '@/player/context';
+import { BufferingIndicator } from '@/ui/buffering-indicator';
+import { Controls } from '@/ui/controls';
+import { FullscreenButton } from '@/ui/fullscreen-button';
+import { MuteButton } from '@/ui/mute-button';
+import { PiPButton } from '@/ui/pip-button';
+import { PlayButton } from '@/ui/play-button';
+import { SeekButton } from '@/ui/seek-button';
+import { Time } from '@/ui/time';
+import type { VideoSkinProps } from './skin';
+
+const SEEK_TIME = 10;
+
+/* ------------------------------------ Reused fragments ------------------------------------- */
+
+const surface = cn(
+  'bg-white/10',
+  'backdrop-blur-3xl backdrop-brightness-90 backdrop-saturate-150',
+  // Border and shadow
+  'ring ring-white/5 ring-inset shadow-sm shadow-black/15',
+  // Border to enhance contrast on lighter videos
+  'after:absolute after:inset-0 after:ring after:rounded-[inherit] after:ring-black/15 after:pointer-events-none after:z-10',
+  // Reduced transparency for users with preference
+  '[@media(prefers-reduced-transparency:reduce)]:bg-black/70 [@media(prefers-reduced-transparency:reduce)]:bg-black/70 [@media(prefers-reduced-transparency:reduce)]:ring-black [@media(prefers-reduced-transparency:reduce)]:after:ring-white/20',
+  // High contrast mode
+  'contrast-more:bg-black/90 contrast-more:ring-black contrast-more:after:ring-white/20'
+);
+
+const icon = cn(
+  '[grid-area:1/1] size-4.5 shrink-0',
+  'drop-shadow-[0_1px_0_var(--tw-shadow-color)] shadow-black/25',
+  'transition-discrete transition-[display,opacity] duration-150 ease-out'
+);
+
+const iconHidden = 'hidden opacity-0';
+
+/* --------------------------------------- Components ---------------------------------------- */
+
+const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
+  return (
+    <button
+      ref={ref}
+      type="button"
+      className={cn(
+        // Layout
+        'grid shrink-0 p-2 cursor-pointer bg-transparent border-none rounded-full',
+        'text-white/90 select-none',
+        'outline-2 outline-transparent -outline-offset-2',
+        'drop-shadow-[0_1px_0_var(--tw-shadow-color)] shadow-black/25',
+        // Transitions
+        'transition-[background-color,color,outline-offset] duration-150 ease-out',
+        // Hover / focus / expanded
+        'hover:bg-white/10 hover:text-white hover:no-underline',
+        'focus-visible:bg-white/10 focus-visible:text-white',
+        'focus-visible:outline-blue-500 focus-visible:outline-offset-2',
+        'aria-expanded:bg-white/10 aria-expanded:text-white',
+        // Disabled
+        'disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale',
+        className
+      )}
+      {...props}
+    />
+  );
+});
+
+function PlayButtonIcon({ state, className, ...rest }: { state: PlayButtonState } & ComponentProps<'svg'>) {
+  const { ended, paused } = state;
+  return (
+    <>
+      <RestartIcon {...rest} className={cn(className, { [iconHidden]: !ended })} />
+      <PlayIcon {...rest} className={cn(className, { [iconHidden]: ended || !paused })} />
+      <PauseIcon {...rest} className={cn(className, { [iconHidden]: paused })} />
+    </>
+  );
+}
+
+function MuteButtonIcon({ state, className, ...rest }: { state: MuteButtonState } & ComponentProps<'svg'>) {
+  const { muted, volumeLevel } = state;
+  return (
+    <>
+      <VolumeOffIcon {...rest} className={cn(className, { [iconHidden]: !muted })} />
+      <VolumeLowIcon {...rest} className={cn(className, { [iconHidden]: muted || volumeLevel !== 'low' })} />
+      <VolumeHighIcon {...rest} className={cn(className, { [iconHidden]: muted || volumeLevel === 'low' })} />
+    </>
+  );
+}
+
+function FullscreenButtonIcon({ state, className, ...rest }: { state: FullscreenButtonState } & ComponentProps<'svg'>) {
+  const { fullscreen } = state;
+  return (
+    <>
+      <FullscreenExitIcon {...rest} className={cn(className, { [iconHidden]: !fullscreen })} />
+      <FullscreenEnterIcon {...rest} className={cn(className, { [iconHidden]: fullscreen })} />
+    </>
+  );
+}
+
+/* ------------------------------------------ Skin ------------------------------------------- */
+
+export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
+  const { children, className, ...rest } = props;
+
+  return (
+    <Container
+      className={cn(
+        // Layout & containment
+        'relative isolate overflow-clip @container/media-root',
+        // Appearance
+        'rounded-[var(--media-border-radius,2rem)] bg-black',
+        'font-sans text-[0.8125rem] leading-normal subpixel-antialiased',
+        // Box-sizing reset for children
+        '**:box-border',
+        // Inner highlight ring (::before)
+        'before:absolute before:pointer-events-none before:rounded-[inherit] before:z-10',
+        'before:inset-px before:ring-1 before:ring-inset before:ring-white/15',
+        // Outer border ring (::after)
+        'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
+        'after:inset-0 after:ring-1 after:ring-inset after:ring-black/10',
+        // Video element
+        '[&>video]:block [&>video]:w-full [&>video]:h-full',
+        // Poster image
+        '[&>img]:absolute [&>img]:inset-0 [&>img]:w-full [&>img]:h-full',
+        '[&>img]:object-cover [&>img]:pointer-events-none',
+        '[&>img]:transition-opacity [&>img]:duration-[250ms]',
+        '[&>img:not([data-visible])]:opacity-0',
+        // Fullscreen
+        '[&:fullscreen]:rounded-none',
+        className
+      )}
+      {...rest}
+    >
+      {children}
+
+      <BufferingIndicator
+        render={(props, state) =>
+          state.visible ? (
+            <div
+              {...props}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 text-white"
+            >
+              <div className={cn('p-1 rounded-full', surface)}>
+                <SpinnerIcon className={icon} />
+              </div>
+            </div>
+          ) : null
+        }
+      />
+
+      <Controls.Root
+        className={cn(
+          // Peer marker for overlay/captions
+          'peer/controls',
+          // Surface
+          surface,
+          // Layout
+          'absolute @container/media-controls bottom-3 inset-x-3',
+          'p-[0.175rem] flex items-center gap-[0.075rem]',
+          'text-white rounded-full z-10',
+          // Transitions
+          'will-change-[scale,transform,filter,opacity]',
+          'transition-[scale,transform,filter,opacity] ease-out',
+          'delay-0 duration-100 origin-bottom',
+          // Hidden state
+          'not-data-[visible]:pointer-events-none not-data-[visible]:blur-[8px]',
+          'not-data-[visible]:scale-90 not-data-[visible]:opacity-0',
+          'not-data-[visible]:delay-500 not-data-[visible]:duration-300',
+          // Reduced motion + hidden
+          'motion-reduce:not-data-[visible]:duration-100',
+          'motion-reduce:not-data-[visible]:blur-none',
+          'motion-reduce:not-data-[visible]:scale-100',
+          // Wider container
+          '@2xl/media-root:p-1 @2xl/media-root:gap-0.5'
+        )}
+      >
+        <PlayButton
+          render={(props, state) => (
+            <Button {...props}>
+              <PlayButtonIcon state={state} className={icon} />
+            </Button>
+          )}
+        />
+
+        <SeekButton
+          seconds={-SEEK_TIME}
+          render={(props) => (
+            <Button {...props} className="@max-md/media-controls:hidden">
+              <span className="relative">
+                <SeekIcon className={cn(icon, '[scale:-1_1]')} />
+                <span className="absolute left-0 -bottom-0.75 text-[0.75em] font-[480]">{SEEK_TIME}</span>
+              </span>
+            </Button>
+          )}
+        />
+
+        <SeekButton
+          seconds={SEEK_TIME}
+          render={(props) => (
+            <Button {...props} className="@max-md/media-controls:hidden">
+              <span className="relative">
+                <SeekIcon className={icon} />
+                <span className="absolute right-0 -bottom-0.75 text-[0.75em] font-[480]">{SEEK_TIME}</span>
+              </span>
+            </Button>
+          )}
+        />
+
+        <Time.Group className="@container/media-time flex items-center flex-1 gap-3 px-2">
+          <Time.Value
+            type="current"
+            className="hidden @2xs/media-time:block drop-shadow-[0_1px_0_var(--tw-shadow-color)] shadow-black/25 tabular-nums"
+          />
+          {/* Temporary spacer */}
+          <div className="flex-1 h-1 rounded-full bg-white/20" />
+          <Time.Value
+            type="duration"
+            className="drop-shadow-[0_1px_0_var(--tw-shadow-color)] shadow-black/25 tabular-nums"
+          />
+        </Time.Group>
+
+        <MuteButton
+          render={(props, state) => (
+            <Button {...props}>
+              <MuteButtonIcon state={state} className={icon} />
+            </Button>
+          )}
+        />
+
+        <PiPButton
+          render={(props) => (
+            <Button {...props}>
+              <PipIcon className={icon} />
+            </Button>
+          )}
+        />
+
+        <FullscreenButton
+          render={(props, state) => (
+            <Button {...props}>
+              <FullscreenButtonIcon state={state} className={icon} />
+            </Button>
+          )}
+        />
+      </Controls.Root>
+
+      {/* <div
+        className={cn(
+          'absolute z-20 pointer-events-none text-balance text-base',
+          'inset-x-4 bottom-6',
+          'transition-transform duration-150 ease-out delay-600',
+          'motion-reduce:duration-50',
+          // Responsive font sizes
+          '@xs/media-root:text-2xl',
+          '@3xl/media-root:text-3xl',
+          '@7xl/media-root:text-4xl',
+          // Shift up when controls visible
+          'peer-data-[visible]/controls:-translate-y-12 peer-data-[visible]/controls:delay-25',
+        )}
+      >
+        <div className="max-w-[42ch] mx-auto text-center flex flex-col items-center">
+          <span className={cn(
+            'block py-0.5 px-2 text-white text-center whitespace-pre-wrap leading-1.2',
+            '[text-shadow:0_0_1px_oklab(0_0_0_/_0.7),0_0_8px_oklab(0_0_0_/_0.7)]',
+            'contrast-more:[text-shadow:none] contrast-more:[box-decoration-break:clone] contrast-more:bg-black/70',
+            '*:inline',
+          )}>
+            An example cue
+          </span>
+        </div>
+      </div> */}
+
+      <div
+        className={cn(
+          // Layout
+          'absolute inset-0 flex flex-col items-start',
+          'pointer-events-none rounded-[inherit]',
+          // Gradient overlay
+          'bg-gradient-to-t from-black/50 via-black/30 to-transparent',
+          'backdrop-saturate-150 backdrop-brightness-90',
+          // Transitions
+          'transition-opacity ease-out duration-100 delay-0',
+          // Hidden when controls hidden (peer sibling)
+          'peer-not-data-[visible]/controls:opacity-0',
+          'peer-not-data-[visible]/controls:delay-500',
+          'peer-not-data-[visible]/controls:duration-300',
+          // Reduced motion
+          'motion-reduce:peer-not-data-[visible]/controls:duration-100'
+        )}
+      />
+    </Container>
+  );
+}

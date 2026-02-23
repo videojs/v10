@@ -20,6 +20,11 @@
       "types": "./dist/dev/dom.d.ts",
       "development": "./dist/dev/dom.js",
       "default": "./dist/default/dom.js"
+    },
+    "./dom/media/*": {
+      "types": "./dist/dev/dom/media/*.d.ts",
+      "development": "./dist/dev/dom/media/*.js",
+      "default": "./dist/default/dom/media/*.js"
     }
   },
   "main": "dist/default/index.js",
@@ -38,7 +43,8 @@
   },
   "dependencies": {
     "@videojs/store": "workspace:*",
-    "@videojs/utils": "workspace:*"
+    "@videojs/utils": "workspace:*",
+    "hls.js": "^1.6.7"
   },
   "devDependencies": {
     "jsdom": "^26.1.0",

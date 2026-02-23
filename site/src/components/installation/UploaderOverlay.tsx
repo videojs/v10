@@ -73,10 +73,10 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
         <p className="text-center text-sm">
           See code below, or{' '}
           <a
-            href="https://dashboard.mux.com"
+            href="https://dashboard.mux.com/my/video/assets"
             target="_blank"
-            rel="noopener noreferrer"
             className="underline intent:no-underline"
+            rel="noopener"
           >
             manage on Mux
           </a>

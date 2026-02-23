@@ -1,10 +1,13 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, watch, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const isWatch = process.argv.includes('--watch');
+
 import { transform } from '@svgr/core';
 import { camelCase, pascalCase } from '@videojs/utils/string';
 import { transform as esbuildTransform } from 'esbuild';
-import { optimize } from 'svgo';
+import { type Config, optimize } from 'svgo';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -14,9 +17,30 @@ const DIST_DIR = join(ROOT, 'dist');
 const FRAMEWORKS = ['react', 'html'] as const;
 type Framework = (typeof FRAMEWORKS)[number];
 
-const SVGO_CONFIG = {
+const SVGO_CONFIG: Config = {
   multipass: true,
-  plugins: [],
+  plugins: [
+    {
+      name: 'preset-default',
+      params: {
+        overrides: {
+          removeViewBox: false,
+        },
+      },
+    },
+    {
+      name: 'removeAttrs',
+      params: {
+        attrs: ['^fill$', '^stroke$', '^clip-rule$', '^fill-rule$'],
+      },
+    },
+    {
+      name: 'addAttributesToSVGElement',
+      params: {
+        attributes: [{ fill: 'currentColor' }],
+      },
+    },
+  ],
 };
 
 function ensureDir(path: string): void {
@@ -44,8 +68,9 @@ function optimizeSvg(svgContent: string): string {
 }
 
 async function buildReactComponent(svgContent: string, componentName: string): Promise<{ js: string; tsx: string }> {
-  const transformOpts = {
+  const transformOpts: Parameters<typeof transform>[1] = {
     plugins: ['@svgr/plugin-svgo', '@svgr/plugin-jsx'],
+    jsxRuntime: 'automatic',
     svgoConfig: SVGO_CONFIG,
   };
 
@@ -83,7 +108,7 @@ function buildIndexTypes(icons: { name: string; varName: string }[], framework: 
 
 async function buildIconSet(setName: string): Promise<void> {
   const svgFiles = getSvgFiles(setName);
-  console.log(`  Building set: ${setName} (${svgFiles.length} icons)`);
+  console.log(`Building set: ${setName} (${svgFiles.length} icons)`);
 
   const icons = svgFiles.map((file) => ({
     name: file.replace('.svg', ''),
@@ -119,18 +144,46 @@ async function buildIconSet(setName: string): Promise<void> {
   }
 }
 
-async function main(): Promise<void> {
-  console.log('Building icons...\n');
-  cleanDist();
-
+async function build(): Promise<void> {
   const sets = getIconSets();
   console.log(`Found ${sets.length} icon sets: ${sets.join(', ')}\n`);
 
   for (const set of sets) {
     await buildIconSet(set);
   }
+}
 
+function debounce(fn: () => void, ms: number): () => void {
+  let timer: ReturnType<typeof setTimeout>;
+  return () => {
+    clearTimeout(timer);
+    timer = setTimeout(fn, ms);
+  };
+}
+
+async function main(): Promise<void> {
+  console.log('Building icons...\n');
+  cleanDist();
+  await build();
   console.log('\nBuild complete!');
+
+  if (isWatch) {
+    const rebuild = debounce(() => {
+      console.log('\nRebuilding icons...\n');
+      build()
+        .then(() => console.log('\nRebuild complete!'))
+        .catch(console.error);
+    }, 200);
+
+    watch(ASSETS_DIR, { recursive: true }, (_event, filename) => {
+      if (filename?.endsWith('.svg')) {
+        console.log(`Changed: ${filename}`);
+        rebuild();
+      }
+    });
+
+    console.log('\nWatching for changes...');
+  }
 }
 
 main().catch(console.error);

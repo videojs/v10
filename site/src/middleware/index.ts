@@ -22,6 +22,9 @@ function isGated(actionName: string | undefined) {
   // detect UNAUTHORIZED and show a login UI before uploading
   if (actionName === 'mux.createDirectUpload') return false;
 
+  // Health check uses server-side credentials, not user OAuth
+  if (actionName === 'mux.health') return false;
+
   // I don't love the magic string nature of this pattern but it's what is recommended in the docs
   return actionName.startsWith('mux');
 }

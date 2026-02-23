@@ -44,12 +44,12 @@ const jsonLdSchema = createBlogCollectionSchema({
 });
 ---
 
-<Blog title="Blog" description="Articles, announcements, news, updates, and more">
+<Blog title="Blog" description="News and updates from the Video.js open-source video player project">
   <JsonLd slot="head" schema={jsonLdSchema} />
   <header class="mb-10 md:mb-20 w-full max-w-3xl mx-auto">
     <h1 class="text-h4 md:text-h2 mb-2">Video.js Blog</h1>
     <p class="text-lg font-medium md:text-h5 text-dark-40 dark:text-light-40">
-      {page.data.length === 0 ? 'Coming soon' : 'Articles, announcements, news, updates, and more'}
+      {page.data.length === 0 ? 'Coming soon' : 'News and updates from the Video.js open-source video player project'}
     </p>
   </header>
   <div class="grid gap-10 w-full max-w-3xl mx-auto">

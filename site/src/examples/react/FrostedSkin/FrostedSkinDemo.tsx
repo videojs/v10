@@ -1,9 +1,13 @@
-import { FrostedSkin, Video, VideoProvider } from '@videojs/react-preview';
+
 import { VJS8_DEMO_VIDEO } from '@/consts';
-import '@videojs/react-preview/skins/frosted.css';
+import { createPlayer, features, Poster } from '@videojs/react';
+import { VideoSkin, Video } from '@videojs/react/video';
+import '@videojs/react/video/skin.css';
+
+const Player = createPlayer({ features: [...features.video] });
 
 /**
- * Live demo of the FrostedSkin design.
+ * Live demo of the (default) frosted video skin design.
  *
  * Features demonstrated:
  * - Glassmorphic controls with backdrop blur
@@ -14,14 +18,11 @@ import '@videojs/react-preview/skins/frosted.css';
  */
 export function FrostedSkinDemo() {
   return (
-    <VideoProvider>
-      <FrostedSkin className="w-full aspect-video rounded-3xl">
-        <Video
-          src={VJS8_DEMO_VIDEO.mp4}
-          poster={VJS8_DEMO_VIDEO.poster}
-          playsInline
-        />
-      </FrostedSkin>
-    </VideoProvider>
+    <Player.Provider>
+      <VideoSkin className="w-full aspect-video">
+        <Video src={VJS8_DEMO_VIDEO.mp4} playsInline />
+        <Poster src={VJS8_DEMO_VIDEO.poster} />
+      </VideoSkin>
+    </Player.Provider>
   );
 }

@@ -1,8 +1,9 @@
 import { existsSync, readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'tsdown';
 import buildStyles from './build/build-styles.ts';
 
-const GENERATED_ICONS_DIR = new URL('./src/icons/generated-icons', import.meta.url).pathname;
+const GENERATED_ICONS_DIR = fileURLToPath(new URL('./src/icons/generated-icons', import.meta.url));
 
 function hasGeneratedIcons(): boolean {
   if (!existsSync(GENERATED_ICONS_DIR)) return false;
@@ -23,7 +24,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   alias: {
-    '@': new URL('./src', import.meta.url).pathname,
+    '@': fileURLToPath(new URL('./src', import.meta.url)),
   },
   dts: {
     oxc: true,

@@ -1,4 +1,5 @@
 import { ActionError, defineAction } from 'astro:actions';
+import { MUX_API_URL, MUX_TOKEN_ID, MUX_TOKEN_SECRET } from 'astro:env/server';
 import { z } from 'astro:schema';
 import Mux from '@mux/mux-node';
 
@@ -18,11 +19,45 @@ function getMuxClient(token: string | undefined) {
 
   return new Mux({
     authorizationToken: token,
-    baseURL: import.meta.env.MUX_API_URL ?? 'https://api.mux.com',
+    baseURL: MUX_API_URL,
+  });
+}
+
+function getHealthMuxClient() {
+  const tokenId = MUX_TOKEN_ID;
+  const tokenSecret = MUX_TOKEN_SECRET;
+
+  if (!tokenId || !tokenSecret) {
+    throw new ActionError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'MUX_TOKEN_ID and MUX_TOKEN_SECRET must be set',
+    });
+  }
+
+  return new Mux({
+    tokenId,
+    tokenSecret,
   });
 }
 
 export const mux = {
+  /** Unauthenticated health check that verifies the Mux API proxy layer. */
+  health: defineAction({
+    handler: async () => {
+      try {
+        const muxClient = getHealthMuxClient();
+        await muxClient.video.assets.list({ limit: 0 });
+        return { ok: true };
+      } catch (error) {
+        if (error instanceof ActionError) throw error;
+
+        throw new ActionError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error instanceof Error ? error.message : 'Mux health check failed',
+        });
+      }
+    },
+  }),
   /**
    * List video assets with pagination
    *

@@ -1,8 +1,7 @@
 import { ActionError, defineAction } from 'astro:actions';
+import { OAUTH_CLIENT_ID, OAUTH_REDIRECT_URI, OAUTH_URL } from 'astro:env/server';
 import { z } from 'astro:schema';
 import { SESSION_COOKIE_NAME } from '@/utils/auth';
-
-const { OAUTH_CLIENT_ID, OAUTH_REDIRECT_URI, OAUTH_URL, PROD } = import.meta.env;
 
 export const auth = {
   /**
@@ -39,7 +38,7 @@ export const auth = {
       // Store state in a short-lived cookie for verification in the callback
       ctx.cookies.set('state', state, {
         httpOnly: true,
-        secure: PROD,
+        secure: import.meta.env.PROD,
         sameSite: 'lax',
         maxAge: 600, // Expires after 10 minutes
         path: '/',

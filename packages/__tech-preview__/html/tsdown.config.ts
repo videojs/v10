@@ -1,7 +1,8 @@
 import { readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'tsdown';
 
-const defineDir = new URL('./src/define', import.meta.url).pathname;
+const defineDir = fileURLToPath(new URL('./src/define', import.meta.url));
 const defineFiles = readdirSync(defineDir).filter(file => file.endsWith('.ts'));
 
 export default defineConfig({
@@ -22,7 +23,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   alias: {
-    '@': new URL('./src', import.meta.url).pathname,
+    '@': fileURLToPath(new URL('./src', import.meta.url)),
   },
   dts: {
     oxc: true,

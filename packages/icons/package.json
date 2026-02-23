@@ -29,6 +29,8 @@
   ],
   "scripts": {
     "build": "node --import tsx scripts/build.ts",
+    "build:watch": "pnpm run build -- --watch",
+    "dev": "pnpm run build:watch",
     "clean": "rm -rf dist"
   },
   "dependencies": {

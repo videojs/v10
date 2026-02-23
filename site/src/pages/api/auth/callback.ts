@@ -1,3 +1,4 @@
+import { OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_REDIRECT_URI, OAUTH_URL } from 'astro:env/server';
 import type { APIRoute } from 'astro';
 
 import { exchangeAuthorizationCode, INACTIVITY_EXPIRY, SESSION_COOKIE_NAME, seal } from '@/utils/auth';
@@ -15,8 +16,6 @@ export const prerender = false;
  * 4. Redirects to success or error page
  */
 export const GET: APIRoute = async ({ request, cookies, redirect }) => {
-  const { OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_REDIRECT_URI, OAUTH_URL } = import.meta.env;
-
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');

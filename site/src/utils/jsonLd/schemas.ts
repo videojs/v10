@@ -30,6 +30,12 @@ export function createTechArticleSchema(params: {
     ...(params.wordCount && { wordCount: params.wordCount }),
     ...(params.readingTime && { timeRequired: `PT${params.readingTime}M` }),
     ...(params.articleSection && { articleSection: params.articleSection }),
+    about: {
+      '@type': 'SoftwareApplication',
+      name: 'Video.js',
+      applicationCategory: 'MultimediaApplication',
+      operatingSystem: 'Web',
+    },
     author: {
       '@type': 'Organization',
       name: 'Video.js',
@@ -112,7 +118,7 @@ export function createBlogCollectionSchema(params: {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Video.js Blog',
-    description: 'Articles, announcements, news, updates, and more',
+    description: 'News and updates from the Video.js open-source video player project',
     url: params.url,
     mainEntity: {
       '@type': 'ItemList',
