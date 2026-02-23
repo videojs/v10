@@ -1,227 +1,102 @@
-# SPF - Next Session Quick Start
+# SPF - Session Status & Outstanding Tasks
 
-**Date:** February 5, 2026
-**Current Branch:** `feat/spf-wave-1-epic-384`
-**Progress:** 12/58 issues complete (21%)
-**Target:** February 27 (22 days remaining)
-
----
-
-## ✅ **Completed Issues:**
-
-### Previously Complete (5):
-1. **P1 (#391)** - Multivariant Playlist Parser ✅
-2. **P2 (#392)** - Media Playlist Parser ✅
-3. **P3 (#393)** - Playlist URL Resolution ✅
-4. **P4 (#394)** - HTTP Fetch Wrapper ✅
-5. **P15 (#405)** - Core Type Definitions ✅
-
-### Completed This Session (6):
-6. **P6 (#396)** - Bandwidth Estimator (dual EWMA, 74 tests) ✅
-7. **P7 (#397)** - Quality Selection (safety margin, 21 tests) ✅
-8. **P12 (#400)** - MediaSource Setup (browser mode!, 17 tests) ✅
-9. **P9 (#399)** - Back Buffer (keep N segments, 15 tests) ✅
-10. **P8 (#398)** - Forward Buffer (load ahead, 13 tests) ✅
-11. **P16 (#406)** - Preload Reader (normalize, 7 tests) ✅
-
-### Closed as Redundant (1):
-12. **P17 (#407)** - Media Event Helpers (using @videojs/utils/dom/listen) ✅
-
-### Deferred (1):
-- **P5 (#395)** - Fetch-Parse Pattern (deferred until F1/F3/F8 requirements clear)
-
-**Tests:** 207/207 passing
-**Bundle:** ~7KB
-**Epic Branch:** Clean and ready
+**Updated:** February 23, 2026
+**Current Branch:** `feat/spf-wave-3-epic`
+**Open Issues:** 12 issues, ~51 story points remaining
+**Target:** February 27, 2026 (4 days)
 
 ---
 
-## 🎯 **Next Up - CRITICAL:**
+## Outstanding Tasks by Wave
 
-### **O1 (#388) - Reactive State Container** ← **START HERE**
-- **Size:** M (8 story points) - largest issue yet
-- **Priority:** P0 - CRITICAL
-- **Blocks:** 40+ other issues (all orchestration + features)
-- **Complexity:** High - needs careful design
+### Wave 1 — Foundation & Pure Functions
 
-**Why O1 is critical:**
-- Foundation for ALL orchestration (O2-O13)
-- Required by ALL features (F1-F18)
-- Core reactive state management
-- Batched updates, immutable snapshots, subscriptions
+| Issue | Title | Size | Priority | Notes |
+|-------|-------|------|----------|-------|
+| [#412](https://github.com/videojs/v10/issues/412) | [T6] Test Stream Setup | S (5) | P0 | Curated Mux/Apple fixture streams |
 
-**Key concepts:**
-- `createState(initial)` → WritableState
-- `state.patch(updates)` - immutable updates
-- `state.subscribe(listener)` - reactivity
-- `queueMicrotask` for batching
-- `Object.freeze()` for immutability
-
-**Reference spike:**
-- `.archive/spf-xstate-poc/src/core/engine/context-store.ts`
-- `/Users/cpillsbury/dev/experiments/xstate-concepts-experiments/src/vjs/store/state.ts`
-
-**After O1, can do:**
-- O2 (State Batching) - already part of O1
-- O3 (Resolvables Pattern)
-- O5 (Preload Orchestrator)
-- Then features!
+**Wave 1 remaining: 5 pts**
 
 ---
 
-## 📊 **Session Stats:**
+### Wave 2 — Core Features & Orchestration
 
-**This session accomplished:**
-- 6 issues implemented
-- 1 issue closed (redundant)
-- 1 issue deferred (P5)
-- 147 new tests written
-- Browser mode infrastructure established
-- Nested tsconfig pattern implemented
-- Type safety improvements (readonly arrays, proper CMAF-HAM types)
+| Issue | Title | Size | Priority | Notes |
+|-------|-------|------|----------|-------|
+| [#409](https://github.com/videojs/v10/issues/409) | [O11] Structured Logging System | S (3) | P1 | Log levels, context metadata, configurable output |
+| [#418](https://github.com/videojs/v10/issues/418) | [O12] Performance Metrics Collector | S (3) | P1 | Startup time, buffer health, segment download metrics |
 
-**Key infrastructure:**
-- ✅ Vitest browser mode (Chromium headless)
-- ✅ Nested tsconfig (DOM types scoped to src/dom/)
-- ✅ Local squash merge workflow
-- ✅ TDD with human gates (improved adherence)
-- ✅ Tree-shakeable utils confirmed
-
-**Estimated remaining work:**
-- Pure Functions: ~3-5 hours (P10, P11, P13, P14 remaining)
-- Orchestration: ~15-20 hours (O1-O13)
-- Features: ~25-35 hours (F1-F18)
-- Testing: ~8-10 hours (T1-T10)
-
-**Total:** ~51-70 hours remaining
+**Wave 2 remaining: 6 pts**
 
 ---
 
-## 🚀 **How to Resume:**
+### Wave 3 — ABR & Integration ← **ACTIVE WAVE**
 
-### **1. Verify State:**
-```bash
-git checkout feat/spf-wave-1-epic-384
-git status  # Should be clean
-git log --oneline -10  # Should see P6, P7, P8, P9, P12, P16
-pnpm -F @videojs/spf test  # Should pass (207 tests)
-```
+| Issue | Title | Size | Priority | Notes |
+|-------|-------|------|----------|-------|
+| [#434](https://github.com/videojs/v10/issues/434) | [F9] Quality Switching | M (8) | P0 | ABR track switching — de-risked by O8/F8 being done |
+| [#436](https://github.com/videojs/v10/issues/436) | [F14] Startup Orchestration | S (3) | P0 | `preloadaware MSE + trackPlaybackInitiated` partially done |
+| [#438](https://github.com/videojs/v10/issues/438) | [F16] Video.js Events Integration | S (5) | P1 | Map SPF state → VJS events; O6 play event already bridged |
+| [#435](https://github.com/videojs/v10/issues/435) | [F10] Manual Quality API | S (5) | P1 | Requires F9 first |
+| [#441](https://github.com/videojs/v10/issues/441) | [O13] Error Detection & Reporting | S (5) | P2 | Structured error types + event emission |
+| [#404](https://github.com/videojs/v10/issues/404) | [P14] Caption Sync Validator | XS (1) | P1 | E2E test utility for caption timing |
+| [#443](https://github.com/videojs/v10/issues/443) | [T9] Coverage Tracking | S (3) | P1 | Vitest coverage enforcement in CI |
 
-### **2. Start O1 (Reactive State Container):**
-```bash
-# Use the TDD workflow skill
-/spf-implement O1
-
-# Or manually:
-git checkout -b feat/spf-o1-issue-388
-gh issue view 388 --repo videojs/v10
-# Follow TDD workflow with human gates
-```
-
-### **3. O1 Implementation Approach:**
-
-**Phase 0:** Setup branch, set issue in progress
-**Phase 1 (RED):** Write comprehensive tests
-- Reference spike: `.archive/spf-xstate-poc/src/core/engine/context-store.ts`
-- Test: patch(), subscribe(), batching, immutability, flush()
-- **STOP for review** 🚦
-
-**Phase 2 (GREEN):** Implement state container
-- Extract pattern from spike (no XState)
-- Functional approach (no factory if possible, or minimal)
-- Object.freeze(), queueMicrotask, Set for subscribers
-- **STOP for review** 🚦
-
-**Phase 3 (REFACTOR):** If needed
-**Phase 4 (MERGE):** Squash to Epic
+**Wave 3 remaining: 30 pts**
 
 ---
 
-## 📂 **Important Files:**
+### Wave 4 — Final Testing & Documentation
 
-### **Work Breakdown:**
-- `.claude/spf-breakdown/all-issues.md` - All 58 issues
-- `.claude/spf-breakdown/dependencies.md` - Dependency graph
-- `.claude/spf-breakdown/waves.md` - Timeline
+| Issue | Title | Size | Priority | Notes |
+|-------|-------|------|----------|-------|
+| [#444](https://github.com/videojs/v10/issues/444) | [F18] Minimal Documentation | S (5) | P2 | README + API reference; O8 (main dep) done |
+| [#445](https://github.com/videojs/v10/issues/445) | [T10] Performance Benchmarks | S (5) | P1 | Playwright + Performance API harness |
 
-### **Spike Reference:**
-- `.archive/spf-xstate-poc/src/core/engine/context-store.ts` - O1 reference
-- `/Users/cpillsbury/dev/experiments/xstate-concepts-experiments/` - State patterns
-- `.claude/spf-spike-reference.md` - Issue → file mapping
-
-### **Infrastructure:**
-- `packages/spf/vitest.config.ts` - Browser mode configured
-- `packages/spf/src/dom/tsconfig.json` - Nested DOM types
-- `.claude/skills/spf-implement/SKILL.md` - TDD workflow
-
-### **GitHub:**
-- **Project Board:** https://github.com/orgs/videojs/projects/7/views/2
-- **All SPF Issues:** https://github.com/videojs/v10/issues?q=is:issue+label:spf
-- **O1 Issue:** https://github.com/videojs/v10/issues/388
+**Wave 4 remaining: 10 pts**
 
 ---
 
-## 🏗️ **Architecture Established:**
+## Recommended Order for Next Session
 
-### **Patterns:**
-1. **Functional state updates** - No factory functions, immutable updates
-2. **CMAF-HAM types** - Proper Segment, Track, Presentation types
-3. **Readonly arrays** - Type-safe parameter passing
-4. **Time-based comparison** - Ready for quality switching (not ID-based)
-5. **Browser mode testing** - Real APIs, no mocks
-6. **Nested tsconfig** - DOM types scoped appropriately
-
-### **Conventions:**
-- Pure functions in `src/core/`
-- Browser APIs in `src/dom/`
-- Tests alongside implementation
-- Proper type safety (no `any`, optional chaining for arrays)
-- Subscribe pattern returns cleanup function
+1. **[#434] F9 Quality Switching** (M/8) — P0, critical path for any remaining ABR work
+2. **[#436] F14 Startup Orchestration** (S/3) — P0, partial work done, small lift
+3. **[#438] F16 Video.js Events** (S/5) — P1, unblocked by O8
+4. **[#435] F10 Manual Quality API** (S/5) — P1, requires F9
+5. **[#412] T6 Test Stream Setup** (S/5) — P0, good anytime
+6. **[#409] O11 Structured Logging** (S/3) — P1
+7. **[#418] O12 Performance Metrics** (S/3) — P1
+8. **[#441] O13 Error Detection** (S/5) — P2
+9. **[#443] T9 Coverage Tracking** (S/3) — P1
+10. **[#444] F18 Documentation** (S/5) — P2
+11. **[#445] T10 Performance Benchmarks** (S/5) — P1
+12. **[#404] P14 Caption Sync Validator** (XS/1) — P1, testing utility
 
 ---
 
-## 📈 **Progress Tracking:**
+## What's Done (Closed)
 
-**Wave 1 Target (Feb 3-10):** Pure Functions + Foundation
-- ✅ P1-P4, P6-P9, P12, P15, P16, P17 (12/18 pure functions)
-- ⏳ P5, P10, P11, P13, P14 (remaining/deferred)
-- ⏳ O1 (START NEXT SESSION)
+### Wave 1 — Complete (except T6)
+All 22 issues closed: O1, O2, O3, O10, P1–P4, P6–P13, P15–P17, T1, T4
 
-**Critical Path:**
-```
-O1 (State Container)
-  ↓
-O3 (Resolvables Pattern)
-  ↓
-F1 (Playlist Resolution Flow)
-  ↓
-F2-F5 (Track Selection → Segment Pipeline → Buffering)
-```
+### Wave 2 — Complete (except O11, O12)
+All 18 issues closed: O5–O9, F1–F8, F11–F13, T2, T3, T5, T7
+
+### Wave 3 — Mostly Done
+Closed: F6, F9→❌open, F14→❌open, F15, F16→❌open, F10→❌open, F17, O4, O13→❌open, T8, T9→❌open, P14→❌open
 
 ---
 
-## 🎯 **Quick Commands for Next Session:**
+## Quick Start
 
 ```bash
-# Resume work
-git checkout feat/spf-wave-1-epic-384
-
-# Verify clean state
-pnpm -F @videojs/spf test  # 207 tests passing
+git checkout feat/spf-wave-3-epic
 git log --oneline -5
+pnpm -F @videojs/spf test
 
-# Start O1
-git checkout -b feat/spf-o1-issue-388
-
-# View issue
-gh issue view 388 --repo videojs/v10
-
-# Reference spike
-cat .archive/spf-xstate-poc/src/core/engine/context-store.ts
-
-# Follow TDD workflow with HUMAN GATES
+# Start next issue
+/spf-implement #434
 ```
 
----
-
-**Status:** Ready for O1! Fresh session, full context, momentum established. 🚀
+**Project board:** https://github.com/orgs/videojs/projects/7
+**Open SPF issues:** https://github.com/videojs/v10/issues?q=is:issue+label:spf+is:open

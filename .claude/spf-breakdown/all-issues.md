@@ -881,7 +881,7 @@ Browser automation infrastructure using Playwright for E2E testing. Cross-browse
 
 ## [T6] Test Stream Setup
 
-**Type:** Testing | **Size:** M (8 points) | **Priority:** P0 | **Wave:** 1 | **Category:** Testing
+**Type:** Testing | **Size:** S (5 points) | **Priority:** P0 | **Wave:** 1 | **Category:** Testing
 
 ### Description
 
@@ -1626,7 +1626,7 @@ GitHub Actions workflow for running tests on every PR: unit tests, integration t
 
 ## [F9] Quality Switching
 
-**Type:** Feature | **Size:** L (13 points) | **Priority:** P0 | **Wave:** 3 | **Category:** Feature Integration
+**Type:** Feature | **Size:** M (8 points) | **Priority:** P0 | **Wave:** 3 | **Category:** Feature Integration
 
 ### Description
 
@@ -1666,7 +1666,7 @@ Switch video tracks based on bandwidth estimates. Complex feature requiring smoo
 
 ## [F14] Startup Orchestration
 
-**Type:** Feature | **Size:** M (8 points) | **Priority:** P0 | **Wave:** 3 | **Category:** Feature Integration
+**Type:** Feature | **Size:** S (3 points) | **Priority:** P0 | **Wave:** 3 | **Category:** Feature Integration
 
 ### Description
 
@@ -1734,7 +1734,7 @@ High-level playback state machine: Loading → Buffering → Playing → Paused 
 
 ## [F16] Video.js Events Integration
 
-**Type:** Integration | **Size:** M (8 points) | **Priority:** P1 | **Wave:** 3 | **Category:** Feature Integration
+**Type:** Integration | **Size:** S (5 points) | **Priority:** P1 | **Wave:** 3 | **Category:** Feature Integration
 
 ### Description
 
@@ -1940,7 +1940,7 @@ Flush old segments from back buffer to manage memory. Use back buffer strategy (
 
 ## [F10] Manual Quality API
 
-**Type:** Feature | **Size:** M (8 points) | **Priority:** P1 | **Wave:** 3 | **Category:** Feature Integration
+**Type:** Feature | **Size:** S (5 points) | **Priority:** P1 | **Wave:** 3 | **Category:** Feature Integration
 
 ### Description
 
@@ -2009,7 +2009,7 @@ Prevent duplicate resolve operations in resolvables pattern (O3). Enhancement to
 
 ## [O13] Error Detection & Reporting
 
-**Type:** Infrastructure | **Size:** M (8 points) | **Priority:** P2 | **Wave:** 3 | **Category:** Orchestration
+**Type:** Infrastructure | **Size:** S (5 points) | **Priority:** P2 | **Wave:** 3 | **Category:** Orchestration
 
 ### Description
 
@@ -2050,7 +2050,7 @@ Detect errors across SPF (network, parse, MSE), emit events, and handle graceful
 
 ## [F18] Minimal Documentation
 
-**Type:** DX | **Size:** M (8 points) | **Priority:** P2 | **Wave:** 4 | **Category:** Feature Integration
+**Type:** DX | **Size:** S (5 points) | **Priority:** P2 | **Wave:** 4 | **Category:** Feature Integration
 
 ### Description
 
@@ -2085,7 +2085,7 @@ Basic API reference and Video.js integration guide for V1 release. Enough docume
 
 ## [T10] Performance Benchmarks
 
-**Type:** Testing | **Size:** M (8 points) | **Priority:** P1 | **Wave:** 4 | **Category:** Testing
+**Type:** Testing | **Size:** S (5 points) | **Priority:** P1 | **Wave:** 4 | **Category:** Testing
 
 ### Description
 
@@ -2220,11 +2220,13 @@ Validate performance meets targets: startup time, seek time, memory usage, bundl
 
 | Category | Total Items | Story Points | XS | S | M | L |
 |----------|-------------|--------------|----|----|----|----|
-| Wave 1 | 23 | 66 | 6 | 13 | 4 | 0 |
-| Wave 2 | 20 | 108 | 1 | 7 | 11 | 1 |
-| Wave 3 | 10-15 | 64-66 | 1 | 4 | 5 | 2 |
-| Wave 4 | 5 | 35 | 0 | 1 | 4 | 0 |
-| **TOTAL** | **58** | **273-275** | **8** | **25** | **24** | **3** |
+| Wave 1 | 23 | 63 | 6 | 14 | 3 | 0 |
+| Wave 2 | 20 | 105 | 1 | 8 | 10 | 1 |
+| Wave 3 | 10-15 | 52-54 | 1 | 7 | 5 | 1 |
+| Wave 4 | 5 | 26 | 0 | 3 | 2 | 0 |
+| **TOTAL** | **58** | **246-248** | **8** | **32** | **20** | **2** |
+
+> **Note (Feb 23, 2026):** Remaining open issues were recalibrated by ~0.6× to align with team sizing norms and to reflect scope reductions from partial completions. See [#386 comment](https://github.com/videojs/v10/issues/386#issuecomment-3947379593) for details. New beta remaining: ~51 pts (was ~83).
 
 **Pure/Isolated Functions:** 17 items (was 19)
 **Orchestration:** 13 items
