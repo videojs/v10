@@ -4,17 +4,16 @@ description: Select the source state slice from the player store
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-## Import
+<FrameworkCase frameworks={["react"]}>
+Pass `selectSource` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to source state. Returns `undefined` if the source feature is not configured.
+</FrameworkCase>
 
-```ts
-import { selectSource } from '@videojs/core/dom';
-```
-
-## Usage
-
-Pass `selectSource` to `usePlayer` (React) or `PlayerController` (HTML) to subscribe to source state. Returns `undefined` if the source feature is not configured.
+<FrameworkCase frameworks={["html"]}>
+Pass `selectSource` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to source state. Returns `undefined` if the source feature is not configured.
+</FrameworkCase>
 
 The returned state includes the current `src` and `type`.
 

@@ -210,6 +210,30 @@ import Demo from "@/components/docs/demos/Demo.astro";
 
 ---
 
+## Cross-linking
+
+Link generously between related reference pages.
+
+Same-framework or cross-framework link:
+
+```mdx
+Within a player provider, <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> is usually simpler.
+```
+
+Selector page linking to framework-specific utils:
+
+```mdx
+<FrameworkCase frameworks={["react"]}>
+Pass `selectPlayback` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectPlayback` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe.
+</FrameworkCase>
+```
+
+---
+
 ## Util Pages
 
 Util pages document React hooks/utilities and HTML controllers/mixins. They are simpler than component pages — no demos, no anatomy.

@@ -53,7 +53,6 @@ export const sidebar: Sidebar = [
         sidebarLabel: 'Advanced',
         defaultOpen: false,
         contents: [
-          { slug: 'reference/merge-props' },
           { slug: 'reference/render-element' },
           { slug: 'reference/use-button' },
           { slug: 'reference/use-media-registration' },

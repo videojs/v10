@@ -4,17 +4,17 @@ description: Select the playback state slice from the player store
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-## Import
 
-```ts
-import { selectPlayback } from '@videojs/core/dom';
-```
+<FrameworkCase frameworks={["react"]}>
+Pass `selectPlayback` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to playback state. Returns `undefined` if the playback feature is not configured.
+</FrameworkCase>
 
-## Usage
-
-Pass `selectPlayback` to `usePlayer` (React) or `PlayerController` (HTML) to subscribe to playback state. Returns `undefined` if the playback feature is not configured.
+<FrameworkCase frameworks={["html"]}>
+Pass `selectPlayback` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to playback state. Returns `undefined` if the playback feature is not configured.
+</FrameworkCase>
 
 The returned state includes `paused`, `ended`, and action methods like `play`, `pause`, and `toggle`.
 

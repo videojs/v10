@@ -4,22 +4,13 @@ description: Reactive controller for subscribing to a State container in HTML cu
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
-
-## Import
-
-```ts
-import { SnapshotController } from '@videojs/store/html';
-```
-
-## Usage
+import DocsLink from "@/components/docs/DocsLink.astro";
 
 `SnapshotController` subscribes to a `State` container and triggers host updates when state changes. It has two overloads:
 
 **Full state** -- returns the entire state object. Re-renders on any state change.
 
 ```ts
-import { SnapshotController } from '@videojs/store/html';
-
 class Display extends HTMLElement {
   #state = new SnapshotController(this, sliderState);
 
@@ -33,8 +24,6 @@ class Display extends HTMLElement {
 **With selector** -- returns a derived value from state. Re-renders only when the selected value changes (using shallow equality).
 
 ```ts
-import { SnapshotController } from '@videojs/store/html';
-
 class SliderValue extends HTMLElement {
   #value = new SnapshotController(this, sliderState, (s) => s.value);
 
@@ -50,18 +39,21 @@ Use `.track(state)` to switch to a different `State` container at runtime.
 
 Both are reactive controllers, but they operate at different levels:
 
-| | `SnapshotController` | `StoreController` |
-|---|---|---|
-| **Input** | `State` container | Store instance or context |
-| **Subscribes** | Always | Only with a selector |
-| **Use case** | Subscribe to raw state changes | Access store actions and optionally subscribe |
+|                | `SnapshotController`           | <DocsLink slug="reference/store-controller">`StoreController`</DocsLink> |
+| -------------- | ------------------------------ | ------------------------------------------------------------------------ |
+| **Input**      | `State` container              | Store instance or context                                                |
+| **Subscribes** | Always                         | Only with a selector                                                     |
+| **Use case**   | Subscribe to raw state changes | Access store actions and optionally subscribe                            |
 
 `SnapshotController` is lower-level. It works with `State` containers directly -- the reactive primitives that back a store. Use it when building custom controllers or working outside the player store system.
 
-`StoreController` is higher-level. It resolves a store from a context or direct reference and internally creates a `SnapshotController` when you pass a selector. Use it for player UI elements.
+<DocsLink slug="reference/store-controller">`StoreController`</DocsLink> is
+higher-level. It resolves a store from a context or direct reference and
+internally creates a `SnapshotController` when you pass a selector. Use it for
+player UI elements.
 
 ### Lifecycle
 
-`SnapshotController` subscribes on `hostConnected()` and unsubscribes on `hostDisconnected()`. The React equivalent is `useSnapshot`.
+`SnapshotController` subscribes on `hostConnected()` and unsubscribes on `hostDisconnected()`. The React equivalent is <DocsLink slug="reference/use-snapshot">`useSnapshot`</DocsLink>.
 
 <UtilReference util="SnapshotController" />

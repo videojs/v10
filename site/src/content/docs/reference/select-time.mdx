@@ -4,17 +4,16 @@ description: Select the time state slice from the player store
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-## Import
+<FrameworkCase frameworks={["react"]}>
+Pass `selectTime` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to time state. Returns `undefined` if the time feature is not configured.
+</FrameworkCase>
 
-```ts
-import { selectTime } from '@videojs/core/dom';
-```
-
-## Usage
-
-Pass `selectTime` to `usePlayer` (React) or `PlayerController` (HTML) to subscribe to time state. Returns `undefined` if the time feature is not configured.
+<FrameworkCase frameworks={["html"]}>
+Pass `selectTime` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to time state. Returns `undefined` if the time feature is not configured.
+</FrameworkCase>
 
 The returned state includes `currentTime`, `duration`, and the `seek` action method.
 

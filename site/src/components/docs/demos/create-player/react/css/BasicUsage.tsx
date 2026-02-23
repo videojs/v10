@@ -3,11 +3,13 @@ import { Video } from '@videojs/react/video';
 
 import './BasicUsage.css';
 
-const Player = createPlayer({ features: [...features.video] });
+const { Provider, Container, usePlayer } = createPlayer({
+  features: features.video,
+});
 
 function Controls() {
-  const store = Player.usePlayer();
-  const paused = Player.usePlayer((s) => s.paused);
+  const store = usePlayer();
+  const paused = usePlayer((s) => s.paused);
 
   return (
     <div className="react-create-player-basic__controls">
@@ -24,8 +26,8 @@ function Controls() {
 
 export default function BasicUsage() {
   return (
-    <Player.Provider>
-      <Player.Container className="react-create-player-basic">
+    <Provider>
+      <Container className="react-create-player-basic">
         <Video
           src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
           autoPlay
@@ -33,7 +35,7 @@ export default function BasicUsage() {
           playsInline
         />
         <Controls />
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Provider>
   );
 }

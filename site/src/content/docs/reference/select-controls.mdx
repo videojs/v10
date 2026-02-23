@@ -4,17 +4,16 @@ description: Select the controls state slice from the player store
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-## Import
+<FrameworkCase frameworks={["react"]}>
+Pass `selectControls` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to controls state. Returns `undefined` if the controls feature is not configured.
+</FrameworkCase>
 
-```ts
-import { selectControls } from '@videojs/core/dom';
-```
-
-## Usage
-
-Pass `selectControls` to `usePlayer` (React) or `PlayerController` (HTML) to subscribe to controls state. Returns `undefined` if the controls feature is not configured.
+<FrameworkCase frameworks={["html"]}>
+Pass `selectControls` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to controls state. Returns `undefined` if the controls feature is not configured.
+</FrameworkCase>
 
 The returned state includes whether controls are visible and whether the user is active (interacting with the player).
 

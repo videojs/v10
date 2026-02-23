@@ -7,9 +7,9 @@
 }
 
 .react-use-media-basic__info {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   margin: 0;
   padding: 12px;
   background: rgba(0, 0, 0, 0.05);
@@ -24,9 +24,13 @@
 
 .react-use-media-basic__info dt {
   color: #6b7280;
+  min-width: 80px;
 }
 
 .react-use-media-basic__info dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

@@ -5,33 +5,14 @@ description: Hook to access the underlying media element from within a Player Pr
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import BasicUsageDemoReact from "@/components/docs/demos/use-media/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/use-media/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/use-media/react/css/BasicUsage.css?raw";
 
-## Import
-
-```tsx
-import { useMedia } from '@videojs/react';
-```
-
-## Usage
-
-`useMedia` returns the current `HTMLMediaElement` (or `null` if no media element has been registered yet). Use it to interact directly with the native media element when needed.
-
-```tsx
-function MediaInfo() {
-  const media = useMedia();
-
-  if (!media) return null;
-
-  return <span>Duration: {media.duration}s</span>;
-}
-```
-
-Must be called within a Player `Provider`. The media element becomes available after a `<Video>` or `<Audio>` component mounts inside the provider tree.
+`useMedia` returns the current `HTMLMediaElement` (or `null` if no media element has been registered yet). Use it to interact directly with the native media element when needed. It must be called within a Player `Provider`. The media element becomes available after a `<Video>` or `<Audio>` component mounts inside the provider tree. To register a custom media element instead of the built-in components, see <DocsLink slug="reference/use-media-registration">`useMediaRegistration`</DocsLink>.
 
 ## Examples
 
@@ -39,10 +20,12 @@ Must be called within a Player `Provider`. The media element becomes available a
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
-    <Demo files={[
-      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
-      { title: "App.css", code: basicUsageReactCss, lang: "css" },
-    ]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+        { title: "App.css", code: basicUsageReactCss, lang: "css" },
+      ]}
+    >
       <BasicUsageDemoReact client:idle />
     </Demo>
   </StyleCase>

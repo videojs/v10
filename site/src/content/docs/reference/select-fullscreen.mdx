@@ -4,17 +4,16 @@ description: Select the fullscreen state slice from the player store
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-## Import
+<FrameworkCase frameworks={["react"]}>
+Pass `selectFullscreen` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to fullscreen state. Returns `undefined` if the fullscreen feature is not configured.
+</FrameworkCase>
 
-```ts
-import { selectFullscreen } from '@videojs/core/dom';
-```
-
-## Usage
-
-Pass `selectFullscreen` to `usePlayer` (React) or `PlayerController` (HTML) to subscribe to fullscreen state. Returns `undefined` if the fullscreen feature is not configured.
+<FrameworkCase frameworks={["html"]}>
+Pass `selectFullscreen` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to fullscreen state. Returns `undefined` if the fullscreen feature is not configured.
+</FrameworkCase>
 
 The returned state includes whether fullscreen is active and its availability on the current platform.
 

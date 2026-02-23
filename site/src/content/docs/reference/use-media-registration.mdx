@@ -5,19 +5,11 @@ description: Hook to register a custom media element with the player context
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 
-## Import
-
-```tsx
-import { useMediaRegistration } from '@videojs/react';
-```
-
-## Usage
-
 `useMediaRegistration` returns a setter function for registering a media element with the player context. The built-in `<Video>` and `<Audio>` components use this internally -- you only need it when building a custom media element.
 
 ```tsx
-import { useMediaRegistration } from '@videojs/react';
-import { useRef, useEffect } from 'react';
+import { useMediaRegistration } from "@videojs/react";
+import { useRef, useEffect } from "react";
 
 function CustomMedia({ src }: { src: string }) {
   const setMedia = useMediaRegistration();
@@ -34,9 +26,9 @@ function CustomMedia({ src }: { src: string }) {
 }
 ```
 
-### Who needs this
+## Who needs this
 
-You only need `useMediaRegistration` if you're replacing the built-in `<Video>` or `<Audio>` components with a custom element. Common reasons:
+You only need `useMediaRegistration` if you're replacing the built-in `<Video>` or `<Audio>` components with a custom element. For example, if you're...
 
 - Wrapping a third-party video player
 - Using a `<canvas>` or WebGL-based renderer
@@ -44,11 +36,11 @@ You only need `useMediaRegistration` if you're replacing the built-in `<Video>` 
 
 For standard `<video>` and `<audio>` playback, use the built-in components.
 
-### Cleanup pattern
+## Cleanup pattern
 
 Always return a cleanup function that passes `null` to the setter. This detaches the media element when the component unmounts, preventing stale references in the store.
 
-### Safe outside Provider
+## Safe outside Provider
 
 Returns `undefined` when called outside a Player `Provider`. Check the return value before using it -- this avoids crashes in components that may render outside the player tree.
 

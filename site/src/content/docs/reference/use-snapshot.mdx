@@ -4,14 +4,7 @@ description: Hook to subscribe to a State container's current value
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
-
-## Import
-
-```tsx
-import { useSnapshot } from '@videojs/store/react';
-```
-
-## Usage
+import DocsLink from "@/components/docs/DocsLink.astro";
 
 `useSnapshot` subscribes to a `State` container and returns its current value, re-rendering when the value changes. It has two overloads:
 
@@ -37,13 +30,13 @@ function Count({ state }) {
 
 A `State` container is a reactive primitive that holds an object value and notifies subscribers on change. Stores are built on top of `State` containers but add features, actions, and lifecycle.
 
-| Hook | Input | Subscribes to |
-|------|-------|---------------|
-| `useSnapshot` | `State<T>` | Raw state container |
-| `useStore` | Store instance | Store-backed state with features |
+| Hook                                                       | Input          | Subscribes to                    |
+| ---------------------------------------------------------- | -------------- | -------------------------------- |
+| `useSnapshot`                                              | `State<T>`     | Raw state container              |
+| <DocsLink slug="reference/use-store">`useStore`</DocsLink> | Store instance | Store-backed state with features |
 
-Use `useSnapshot` when working with standalone `State` containers outside the player store system -- for example, custom state in component libraries. For player state, use `usePlayer` or `useStore`.
+Use `useSnapshot` when working with standalone `State` containers outside the player store system -- for example, custom state in component libraries. For player state, use <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> or <DocsLink slug="reference/use-store">`useStore`</DocsLink>.
 
-`useSnapshot` is built on `useSelector` and uses `shallowEqual` by default. The HTML equivalent is `SnapshotController`.
+`useSnapshot` is built on <DocsLink slug="reference/use-selector">`useSelector`</DocsLink> and uses `shallowEqual` by default. The HTML equivalent is `SnapshotController`.
 
 <UtilReference util="useSnapshot" />

@@ -4,19 +4,12 @@ description: Low-level hook for subscribing to derived state with customizable e
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
-
-## Import
-
-```tsx
-import { useSelector } from '@videojs/store/react';
-```
-
-## Usage
+import DocsLink from "@/components/docs/DocsLink.astro";
 
 `useSelector` is a low-level hook that subscribes to an external store using React's `useSyncExternalStore`. It accepts a `subscribe` function, a `getSnapshot` function, a `selector` to derive state, and an optional `isEqual` comparator (defaults to `shallowEqual`).
 
 ```tsx
-import { useSelector, shallowEqual } from '@videojs/store/react';
+import { useSelector, shallowEqual } from "@videojs/store/react";
 
 function TimeDisplay({ store }) {
   const time = useSelector(
@@ -26,7 +19,11 @@ function TimeDisplay({ store }) {
     shallowEqual,
   );
 
-  return <span>{time.current} / {time.duration}</span>;
+  return (
+    <span>
+      {time.current} / {time.duration}
+    </span>
+  );
 }
 ```
 
@@ -34,13 +31,13 @@ function TimeDisplay({ store }) {
 
 Both `useStore` and `useSnapshot` are built on `useSelector`:
 
-| Hook | Input | Use case |
-|------|-------|----------|
-| `useStore` | Store instance | Player and store access with selector |
-| `useSnapshot` | `State` container | Subscribe to raw state changes |
-| `useSelector` | Custom subscribe/snapshot | Full control over subscription plumbing |
+| Hook                                                             | Input                     | Use case                                |
+| ---------------------------------------------------------------- | ------------------------- | --------------------------------------- |
+| <DocsLink slug="reference/use-store">`useStore`</DocsLink>       | Store instance            | Player and store access with selector   |
+| <DocsLink slug="reference/use-snapshot">`useSnapshot`</DocsLink> | `State` container         | Subscribe to raw state changes          |
+| `useSelector`                                                    | Custom subscribe/snapshot | Full control over subscription plumbing |
 
-Prefer `useStore` for store-backed state and `useSnapshot` for `State` containers. Use `useSelector` when you need to integrate with a non-standard external source or customize the equality comparison.
+Prefer <DocsLink slug="reference/use-store">`useStore`</DocsLink> for store-backed state and <DocsLink slug="reference/use-snapshot">`useSnapshot`</DocsLink> for `State` containers. Use `useSelector` when you need to integrate with a non-standard external source or customize the equality comparison.
 
 ### Equality comparison
 

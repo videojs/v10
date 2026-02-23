@@ -1,0 +1,24 @@
+.react-use-store-access {
+  position: relative;
+}
+
+.react-use-store-access video {
+  width: 100%;
+}
+
+.react-use-store-access__controls {
+  display: flex;
+  gap: 6px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.react-use-store-access__controls button {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  font-size: 0.8125rem;
+}

@@ -4,17 +4,16 @@ description: Select the volume state slice from the player store
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-## Import
+<FrameworkCase frameworks={["react"]}>
+Pass `selectVolume` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
+</FrameworkCase>
 
-```ts
-import { selectVolume } from '@videojs/core/dom';
-```
-
-## Usage
-
-Pass `selectVolume` to `usePlayer` (React) or `PlayerController` (HTML) to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
+<FrameworkCase frameworks={["html"]}>
+Pass `selectVolume` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
+</FrameworkCase>
 
 The returned state includes `volume`, `muted`, and action methods like `setVolume` and `setMuted`.
 

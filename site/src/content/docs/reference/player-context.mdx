@@ -4,16 +4,9 @@ description: The default player context instance for consuming the player store 
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 
-## Import
-
-```ts
-import { playerContext } from '@videojs/html';
-```
-
-## Usage
-
-`playerContext` is a Web Components context token that carries the player store through the DOM tree. Provider elements publish the store to this context, and consumer elements (via `PlayerController` or `ContainerMixin`) read from it.
+`playerContext` is a Web Components context token that carries the player store through the DOM tree. Provider elements publish the store to this context, and consumer elements (via <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> or <DocsLink slug="reference/container-mixin">`ContainerMixin`</DocsLink>) read from it.
 
 Pass it as the second argument to `PlayerController`:
 
@@ -32,7 +25,7 @@ class PlayButton extends MediaElement {
 
 ### Import directly or destructure from createPlayer
 
-`createPlayer` returns a `context` property that is the same `playerContext` instance. Both approaches reference the same object:
+<DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink> returns a `context` property that is the same `playerContext` instance. Both approaches reference the same object:
 
 ```ts
 // Direct import
@@ -47,6 +40,6 @@ Use the direct import when building reusable elements that don't depend on a spe
 
 ### When you need this
 
-Most elements should use `PlayerController` (which accepts a context argument) rather than importing `playerContext` directly. Import it directly when you need to pass the context token to a lower-level API like `ContainerMixin` or `ProviderMixin`.
+Most elements should use <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> (which accepts a context argument) rather than importing `playerContext` directly. Import it directly when you need to pass the context token to a lower-level API like <DocsLink slug="reference/container-mixin">`ContainerMixin`</DocsLink> or <DocsLink slug="reference/provider-mixin">`ProviderMixin`</DocsLink>.
 
 <UtilReference util="playerContext" />
