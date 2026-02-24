@@ -437,7 +437,7 @@ const media = node.querySelector('video, audio') as HTMLMediaElement | null;
 
 JSDoc should add value, not restate what TypeScript already shows:
 
-**No redundant @param/@returns** — TypeScript signatures are the documentation:
+**No redundant @param/@returns** (exception: API reference exports — see below) — TypeScript signatures are the documentation:
 
 ```ts
 // Bad
@@ -452,7 +452,7 @@ export function animationFrame(callback: FrameRequestCallback): () => void;
 export function animationFrame(callback: FrameRequestCallback): () => void;
 ```
 
-**Single JSDoc for overloads** — Document the first overload only:
+**Single JSDoc for overloads** (exception: API reference exports — see below) — Document the first overload only:
 
 ```ts
 /** Wait for an event to occur on a target. */
@@ -481,6 +481,12 @@ export type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 export interface Media extends HTMLMediaElement {}
 export type FeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 ```
+
+**API reference exports are different** — Exports that feed the api-docs-builder (`use*` hooks, `*Controller` classes, `create*` factories, selectors, and `@public`-annotated exports) need richer JSDoc for the generated reference pages. See the `api-reference` skill → `references/util-conventions.md` for the full rules. Key differences from above:
+
+- `@param name - description` is required (the builder extracts these into parameter tables).
+- Multi-overload functions get per-overload JSDoc with `@label` tags (not a single JSDoc block).
+- `@public` opts in exports that don't match naming conventions.
 
 ## Design Documents
 

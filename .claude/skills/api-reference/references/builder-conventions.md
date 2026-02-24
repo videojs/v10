@@ -56,6 +56,10 @@ export const Value = ...;
 - **Part descriptions**: From JSDoc on React component exports in their `.tsx` files
 - **Prop/state descriptions**: From JSDoc on interface properties in the core file
 
+### Util JSDoc
+
+Util exports (hooks, controllers, factories, selectors) have their own JSDoc conventions for `@param`, `@label`, and `@public` tags. See `references/util-conventions.md` → "JSDoc Conventions".
+
 ## Common Failures
 
 The builder fails silently for many issues — data just won't appear in the JSON:

@@ -36,6 +36,94 @@ Framework-agnostic entries (`framework: null`) produce JSON without a `framework
 
 No code changes needed in the builder itself — convention over configuration.
 
+## JSDoc Conventions
+
+The builder extracts JSDoc from source exports to populate reference pages. These rules override the root CLAUDE.md "Minimal JSDoc" guidelines for API reference exports.
+
+### Summary description (required)
+
+Every util export needs a JSDoc summary. This becomes the description in the generated JSON:
+
+```ts
+/** Subscribe to the player's volume state. */
+export function useVolume(...): VolumeResult;
+```
+
+### `@param` descriptions (required for non-obvious params)
+
+Unlike internal code, API reference exports need `@param` tags so the builder can populate parameter tables. Describe intent and defaults, not types:
+
+```ts
+/**
+ * Subscribe to derived state with customizable equality check.
+ *
+ * @param subscribe - Subscribe function that returns an unsubscribe callback.
+ * @param selector - Derives a value from the snapshot.
+ * @param isEqual - Custom equality function. Defaults to `shallowEqual`.
+ */
+export function useSelector<S, R>(...): R;
+```
+
+Format: `@param name - description` (dash after name).
+
+### No `@returns`
+
+Return types are inferred from the TypeScript signature. Don't add `@returns`.
+
+### `@label` for multi-overload functions
+
+When a function has multiple overload signatures with different return types, each overload gets its own JSDoc block with an `@label` tag. The label becomes a heading in the docs:
+
+```ts
+/**
+ * Create a player instance with typed store, Provider, and hooks.
+ *
+ * @label Video
+ * @param config - Player configuration with features.
+ */
+export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
+
+/**
+ * Create a player for audio media.
+ *
+ * @label Audio
+ * @param config - Player configuration with features.
+ */
+export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;
+```
+
+Without `@label`, overloads render as "Overload 1", "Overload 2", etc.
+
+### `@label` for constructor overloads
+
+Same pattern applies to controller constructors:
+
+```ts
+/**
+ * @label Without Selector
+ * @param host - The host element that owns this controller.
+ * @param state - The State container to subscribe to.
+ */
+constructor(host: ReactiveControllerHost, state: State<T>);
+
+/**
+ * @label With Selector
+ * @param host - The host element that owns this controller.
+ * @param state - The State container to subscribe to.
+ * @param selector - Derives a value from the state.
+ */
+constructor(host: ReactiveControllerHost, state: State<T>, selector: Selector<T, R>);
+```
+
+### `@public` for non-convention exports
+
+Exports that don't match a naming convention (`use*`, `*Controller`, `create*`, `select*`) need `@public` to be discovered:
+
+```ts
+/** @public The default player context for consuming the player store. */
+export const playerContext = createContext<PlayerContextValue>(...);
+```
+
 ## Inclusion Conventions
 
 Exports are auto-included when they match these patterns:
