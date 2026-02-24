@@ -384,7 +384,9 @@ to ensure this ordering.
 becomes an overload with parameters and return value.
 
 **Controllers:** Extract constructor signatures. Each constructor becomes an overload. The
-return value describes the controller's public interface (e.g., `value` property).
+return value type uses `ClassName<TypeParams>` when the class has type parameters, or just
+`ClassName` when it has none. The return value describes the controller's public interface
+(e.g., `value` property).
 
 **Contexts (non-function, non-controller):** These are non-function, non-controller exports
 included via `@public` JSDoc. They produce a single overload with empty parameters and a

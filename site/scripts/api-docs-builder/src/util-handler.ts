@@ -360,30 +360,14 @@ function extractControllerOverloads(filePath: string, program: ts.Program, class
     const parameters: Record<string, ParamDef> = {};
 
     for (const param of decl.parameters) {
-      if (!ts.isIdentifier(param.name)) continue;
-      const name = param.name.text;
-      const isOptional = !!param.questionToken || !!param.initializer;
-
-      let typeStr = 'unknown';
-      if (param.type) {
-        typeStr = param.type.getText(sourceFile);
-      }
-
-      const abbreviated = abbreviateType(name, typeStr);
-      const description = getJSDocParamDescription(decl, name);
-
-      const entry: ParamDef = { type: abbreviated ?? typeStr };
-      if (abbreviated && typeStr !== abbreviated) entry.detailedType = typeStr;
-      if (description) entry.description = description;
-      if (!isOptional) entry.required = true;
-      if (!entry.required) delete entry.required;
-
-      parameters[name] = entry;
+      const result = buildParamEntry(param, decl, sourceFile);
+      if (result) parameters[result.name] = result.entry;
     }
 
     // Build return value with class type and public members
+    const typeParams = getClassTypeParams(classDecl!);
     const returnValue: ReturnValue = {
-      type: `${className}<${getClassTypeParams(classDecl!)}>`,
+      type: typeParams ? `${className}<${typeParams}>` : className,
     };
 
     if (Object.keys(fields).length > 0) {
@@ -395,7 +379,7 @@ function extractControllerOverloads(filePath: string, program: ts.Program, class
     // Get overload-specific JSDoc
     const label = getJSDocTagValue(decl, 'label');
     if (label) overload.label = label;
-    const jsDoc = getNodeJSDoc(decl, sourceFile);
+    const jsDoc = getNodeJSDoc(decl);
     if (jsDoc) overload.description = jsDoc;
 
     return overload;
@@ -431,7 +415,7 @@ function extractPublicMembers(
     if (ts.isGetAccessorDeclaration(member)) {
       const typeStr = member.type ? member.type.getText(sourceFile) : 'unknown';
       const abbreviated = abbreviateType(name, typeStr);
-      const description = getNodeJSDoc(member, sourceFile);
+      const description = getNodeJSDoc(member);
 
       const field: { type: string; detailedType?: string; description?: string } = { type: abbreviated ?? typeStr };
       if (abbreviated && typeStr !== abbreviated) field.detailedType = typeStr;
@@ -451,7 +435,7 @@ function extractPublicMembers(
       const retType = member.type ? member.type.getText(sourceFile) : 'void';
       const typeStr = `(${params}) => ${retType}`;
       const abbreviated = abbreviateType(name, typeStr);
-      const description = getNodeJSDoc(member, sourceFile);
+      const description = getNodeJSDoc(member);
 
       const field: { type: string; detailedType?: string; description?: string } = { type: abbreviated ?? typeStr };
       if (abbreviated && typeStr !== abbreviated) field.detailedType = typeStr;
@@ -497,7 +481,7 @@ function getOverloadDocs(filePath: string, program: ts.Program, funcName: string
     if (ts.isFunctionDeclaration(node) && node.name?.text === funcName && !node.body) {
       // This is an overload declaration
       docs.push({
-        description: getNodeJSDoc(node, sourceFile!),
+        description: getNodeJSDoc(node),
         label: getJSDocTagValue(node, 'label'),
       });
     }
@@ -508,7 +492,7 @@ function getOverloadDocs(filePath: string, program: ts.Program, funcName: string
   return docs;
 }
 
-function getNodeJSDoc(node: ts.Node, sourceFile: ts.SourceFile): string | undefined {
+function getNodeJSDoc(node: ts.Node): string | undefined {
   const jsDocNodes = (node as any).jsDoc as ts.JSDoc[] | undefined;
   if (!jsDocNodes?.length) return undefined;
 
@@ -575,6 +559,34 @@ function getJSDocTagValue(node: ts.Node, tagName: string): string | undefined {
   return undefined;
 }
 
+// ─── Shared AST Helpers ─────────────────────────────────────────────
+
+function buildParamEntry(
+  param: ts.ParameterDeclaration,
+  decl: ts.FunctionLikeDeclaration,
+  sourceFile: ts.SourceFile
+): { name: string; entry: ParamDef } | undefined {
+  if (!ts.isIdentifier(param.name)) return undefined;
+  const name = param.name.text;
+  const isOptional = !!param.questionToken || !!param.initializer;
+
+  let typeStr = 'unknown';
+  if (param.type) {
+    typeStr = param.type.getText(sourceFile);
+  }
+
+  const abbreviated = abbreviateType(name, typeStr);
+  const description = getJSDocParamDescription(decl, name);
+
+  const entry: ParamDef = { type: abbreviated ?? typeStr };
+  if (abbreviated && typeStr !== abbreviated) entry.detailedType = typeStr;
+  if (description) entry.description = description;
+  if (!isOptional) entry.required = true;
+  if (!entry.required) delete entry.required;
+
+  return { name, entry };
+}
+
 // ─── Raw TS AST: Fallback Discovery ────────────────────────────────
 
 interface RawExportInfo {
@@ -601,7 +613,7 @@ function discoverExportsFromRawAST(modulePath: string, program: ts.Program): Raw
       !node.body // overload declaration
     ) {
       const name = node.name.text;
-      const jsDoc = getNodeJSDoc(node, sourceFile!);
+      const jsDoc = getNodeJSDoc(node);
       const hasPublicTag = hasJSDocTag(node, 'public');
 
       // Only add if not already in results (first overload wins for the name)
@@ -626,7 +638,7 @@ function discoverExportsFromRawAST(modulePath: string, program: ts.Program): Raw
       !results.some((r) => r.name === node.name!.text)
     ) {
       const name = node.name.text;
-      const jsDoc = getNodeJSDoc(node, sourceFile!);
+      const jsDoc = getNodeJSDoc(node);
       const hasPublicTag = hasJSDocTag(node, 'public');
 
       results.push({
@@ -646,7 +658,7 @@ function discoverExportsFromRawAST(modulePath: string, program: ts.Program): Raw
       node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
     ) {
       const name = node.name.text;
-      const jsDoc = getNodeJSDoc(node, sourceFile!);
+      const jsDoc = getNodeJSDoc(node);
 
       results.push({
         name,
@@ -662,7 +674,7 @@ function discoverExportsFromRawAST(modulePath: string, program: ts.Program): Raw
     if (ts.isVariableStatement(node) && node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) {
       for (const decl of node.declarationList.declarations) {
         if (ts.isIdentifier(decl.name)) {
-          const jsDoc = getNodeJSDoc(node, sourceFile!);
+          const jsDoc = getNodeJSDoc(node);
           const hasPublicTag = hasJSDocTag(node, 'public');
 
           results.push({
@@ -728,25 +740,8 @@ function buildOverloadFromAST(decl: ts.FunctionDeclaration, sourceFile: ts.Sourc
   const parameters: Record<string, ParamDef> = {};
 
   for (const param of decl.parameters) {
-    if (!ts.isIdentifier(param.name)) continue;
-    const name = param.name.text;
-    const isOptional = !!param.questionToken || !!param.initializer;
-
-    let typeStr = 'unknown';
-    if (param.type) {
-      typeStr = param.type.getText(sourceFile);
-    }
-
-    const abbreviated = abbreviateType(name, typeStr);
-    const description = getJSDocParamDescription(decl, name);
-
-    const entry: ParamDef = { type: abbreviated ?? typeStr };
-    if (abbreviated && typeStr !== abbreviated) entry.detailedType = typeStr;
-    if (description) entry.description = description;
-    if (!isOptional) entry.required = true;
-    if (!entry.required) delete entry.required;
-
-    parameters[name] = entry;
+    const result = buildParamEntry(param, decl, sourceFile);
+    if (result) parameters[result.name] = result.entry;
   }
 
   let returnType = 'unknown';
@@ -766,7 +761,7 @@ function buildOverloadFromAST(decl: ts.FunctionDeclaration, sourceFile: ts.Sourc
 
   const label = getJSDocTagValue(decl, 'label');
   if (label) overload.label = label;
-  const doc = getNodeJSDoc(decl, sourceFile);
+  const doc = getNodeJSDoc(decl);
   if (doc) overload.description = doc;
 
   return overload;
@@ -800,7 +795,7 @@ function extractReturnTypeFields(
     const name = member.name.text;
     const typeStr = member.type ? member.type.getText(sourceFile) : 'unknown';
     const abbreviated = abbreviateType(name, typeStr);
-    const description = getNodeJSDoc(member, sourceFile);
+    const description = getNodeJSDoc(member);
 
     const field: { type: string; detailedType?: string; description?: string } = { type: abbreviated ?? typeStr };
     if (abbreviated && typeStr !== abbreviated) field.detailedType = typeStr;
@@ -810,6 +805,22 @@ function extractReturnTypeFields(
   }
 
   return Object.keys(fields).length > 0 ? fields : undefined;
+}
+
+// ─── Slug Resolution ───────────────────────────────────────────────
+
+function resolveSlugCollision(slug: string, framework: EntryPoint['framework'], seenSlugs: Set<string>): string {
+  if (seenSlugs.has(slug)) {
+    if (!framework) {
+      log.error(`Framework-agnostic slug collision: ${slug}`);
+    }
+    if (framework === 'react') {
+      log.error(`Unexpected: React slug "${slug}" collided — check UTIL_ENTRY_POINTS order`);
+    }
+    slug = `${framework}-${slug}`;
+  }
+  seenSlugs.add(slug);
+  return slug;
 }
 
 // ─── Discovery Pipeline ────────────────────────────────────────────
@@ -829,18 +840,7 @@ function processExport(
   if (!isUtilExport(exportNode)) return;
 
   const displayName = getDisplayName(exportNode.name);
-
-  let slug = kebabCase(displayName);
-  if (seenSlugs.has(slug)) {
-    if (!entryPoint.framework) {
-      log.error(`Framework-agnostic slug collision: ${slug}`);
-    }
-    if (entryPoint.framework === 'react') {
-      log.error(`Unexpected: React slug "${slug}" collided — check UTIL_ENTRY_POINTS order`);
-    }
-    slug = `${entryPoint.framework}-${slug}`;
-  }
-  seenSlugs.add(slug);
+  const slug = resolveSlugCollision(kebabCase(displayName), entryPoint.framework, seenSlugs);
 
   let overloads: UtilOverload[];
 
@@ -889,18 +889,7 @@ function processRawExport(
   if (!isRawUtilExport(info)) return;
 
   const displayName = getDisplayName(info.name);
-
-  let slug = kebabCase(displayName);
-  if (seenSlugs.has(slug)) {
-    if (!entryPoint.framework) {
-      log.error(`Framework-agnostic slug collision: ${slug}`);
-    }
-    if (entryPoint.framework === 'react') {
-      log.error(`Unexpected: React slug "${slug}" collided — check UTIL_ENTRY_POINTS order`);
-    }
-    slug = `${entryPoint.framework}-${slug}`;
-  }
-  seenSlugs.add(slug);
+  const slug = resolveSlugCollision(kebabCase(displayName), entryPoint.framework, seenSlugs);
 
   let overloads: UtilOverload[];
 
