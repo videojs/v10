@@ -29,5 +29,7 @@ export function PreferenceSync() {
     }
   }, [framework]);
 
-  return null;
+  // Workaround: Astro SSR logs false "Invalid hook call" when a React
+  // component with hooks returns null. See withastro/astro#12283.
+  return <></>;
 }
