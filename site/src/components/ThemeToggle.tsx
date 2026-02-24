@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
 import { THEME_KEY } from '@/consts';
-import Computer from './icons/Computer';
-import Moon from './icons/Moon';
-import Sun from './icons/Sun';
+import Computer from './icons/computer.svg?react';
+import Moon from './icons/moon.svg?react';
+import Sun from './icons/sun.svg?react';
 import ToggleGroup from './ToggleGroup';
 
 type Preference = 'system' | 'light' | 'dark';
 type Theme = 'light' | 'dark';
 
 const themeOptions = [
-  { value: 'system' as const, label: <Computer width={'1.5'} aria-hidden="true" />, 'aria-label': 'System' },
-  { value: 'light' as const, label: <Sun width={'1.5'} aria-hidden="true" />, 'aria-label': 'Light' },
-  { value: 'dark' as const, label: <Moon width={'1.5'} aria-hidden="true" />, 'aria-label': 'Dark' },
+  { value: 'system' as const, label: <Computer width="1.5rem" aria-hidden="true" />, 'aria-label': 'System' },
+  { value: 'light' as const, label: <Sun width="1.5rem" aria-hidden="true" />, 'aria-label': 'Light' },
+  { value: 'dark' as const, label: <Moon width="1.5rem" aria-hidden="true" />, 'aria-label': 'Dark' },
 ];
 
 function initPreference(): Preference {

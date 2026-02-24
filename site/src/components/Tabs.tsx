@@ -23,7 +23,7 @@ import { twMerge } from 'tailwind-merge';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 import CopyButton from './CopyButton';
-import CopyIcon from './icons/CopyIcon';
+import CopyIcon from './icons/copy-icon.svg?react';
 
 interface TabsRootProps {
   children: React.ReactNode;
@@ -104,7 +104,7 @@ export function TabsList({ label, children }: TabsListProps) {
         className="ml-auto sticky right-0 h-8 w-8 flex items-center justify-center cursor-pointer disabled:cursor-wait hover:bg-dark-manila transition-colors rounded-sm"
         copied={<Check size={20} />}
       >
-        <CopyIcon size={20} />
+        <CopyIcon width="1.25rem" height="1.25rem" />
       </CopyButton>
     </div>
   );
@@ -220,7 +220,7 @@ export function Tab({ value, children, initial }: TabProps) {
         data-value={value}
         className={clsx(
           'group flex items-center text-sm gap-2 uppercase font-display-extended',
-          'first:-ml-px last:-mr-px -mx-[0.5px] no-underline',
+          'first:-ml-px last:-mr-px -mx-0.5 no-underline',
           isActive ? 'text-orange font-bold' : 'font-faded-black',
           isHydrated ? 'cursor-pointer intent:bg-light-100 dark:intent:bg-dark-110' : 'cursor-wait'
         )}

@@ -1,9 +1,9 @@
 ---
 import { ArrowUpRight } from 'lucide-react';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
-import Discord from './icons/Discord';
-import GitHub from './icons/GitHub';
-import { LogoMonoVersion } from './icons/Logo';
+import Discord from './icons/discord.svg?react';
+import GitHub from './icons/github.svg?react';
+import LogoMonoVersion from './icons/logo-mono.svg?react';
 import { ThemeToggle } from './ThemeToggle';
 
 type NavLink = {
@@ -55,7 +55,7 @@ const navLinkBase =
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Discord size="1.5em" strokeWidth="0.0625em" />
+            <Discord width="1.5em" height="1.5em" />
           </a>
           <a
             href={GITHUB_REPO_URL}
@@ -64,7 +64,7 @@ const navLinkBase =
             target="_blank"
             rel="noopener noreferrer"
           >
-            <GitHub size="1.5em" strokeWidth="0.0625em" />
+            <GitHub width="1.5em" height="1.5em" />
           </a>
               <div class="block md:hidden ml-auto">
        <ThemeToggle client:visible />
@@ -72,7 +72,7 @@ const navLinkBase =
         </div>
       </nav>
     <div class="hidden md:block">
-      <LogoMonoVersion width={"23"} />
+      <LogoMonoVersion width="23rem" />
     </div>
     </div>
 
@@ -99,7 +99,7 @@ const navLinkBase =
       </p>
     </div>
     <div class="block md:hidden pt-20">
-      <LogoMonoVersion width={"20"} />
+      <LogoMonoVersion width="20rem" />
     </div>
   </div>
 </footer>

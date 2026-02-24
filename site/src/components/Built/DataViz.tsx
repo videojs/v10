@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import type React from 'react';
 
 export function DataViz() {
   const seconds = [0, 4, 8, 12, 16];
@@ -45,7 +46,10 @@ export function DataViz() {
           />
         ))}
       </div>
-      <div className="flex justify-between w-[calc(100% + 3rem)] -mx-1.5">
+      <div
+        className="flex justify-between w-(--width) -mx-1.5"
+        style={{ '--width': 'calc(100% + 3rem)' } as React.CSSProperties}
+      >
         {Array.from({ length: 5 }, (_, i) => (
           <div key={seconds[i]} className="text-light-manila text-center w-5 ">
             {i}s

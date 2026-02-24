@@ -1,4 +1,4 @@
-import TriangleArrow from '../icons/TriangleArrow';
+import TriangleArrow from '../icons/triangle-arrow.svg?react';
 
 const REPEAT_COUNT = 4;
 
@@ -6,7 +6,7 @@ function MarqueeItem() {
   return (
     <span className="inline-flex items-center gap-7 shrink-0 pr-7">
       <span>Streaming bits on millions of sites</span>
-      <TriangleArrow />
+      <TriangleArrow width="0.75rem" />
     </span>
   );
 }

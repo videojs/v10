@@ -53,7 +53,7 @@ const renderTitle = title ?? defaultTitles[type];
   >
   </div>
   <div class={clsx('flex-1 flex p-6 pl-4 gap-4')}>
-    <div class="shrink-0 mt-[3px]">
+    <div class="shrink-0 mt-0.75">
       <Icon
         size={18}
         className={clsx(
@@ -68,7 +68,7 @@ const renderTitle = title ?? defaultTitles[type];
     </div>
     <div class="flex-1 min-w-0">
       <p class="text-md font-semibold mb-2">{renderTitle}</p>
-      <div class="[&>.my-6]:my-2 [&>.my-12]:my-4 [&>*:last-child]:!mb-0">
+      <div class="[&>.my-6]:my-2 [&>.my-12]:my-4 [&>*:last-child]:mb-0!">
         <slot />
       </div>
     </div>

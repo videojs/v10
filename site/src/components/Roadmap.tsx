@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import { Check } from 'lucide-react';
+import type React from 'react';
 
 const milestones = [
   {
@@ -48,7 +49,7 @@ export function RoadMap() {
               <div className="relative w-auto md:w-full flex justify-center py-1">
                 <div
                   className={clsx(
-                    'relative z-10 w-10 h-10 rounded-full border-[2.5px] bg-light-manila flex items-center justify-center',
+                    'relative z-10 w-10 h-10 rounded-full border-2 bg-light-manila flex items-center justify-center',
                     milestone.completed ? 'border-orange' : 'border-dark-manila'
                   )}
                 >
@@ -56,8 +57,8 @@ export function RoadMap() {
                 </div>
               </div>
               <div className="block md:block">
-                <h3 className="text-orange font-display-extended font-bold uppercase text-[1.125rem] md:text-h5 leading-none md:mt-5 px-1">
-                  <p className="block md:hidden relative z-10 text-sm font-display-extended font-bold uppercase tracking-wider md:pb-3 text-faded-black text-[1.125rem]">
+                <h3 className="text-orange font-display-extended font-bold uppercase text-base md:text-h5 leading-none md:mt-5 px-1">
+                  <p className="block md:hidden relative z-10 font-display-extended font-bold uppercase tracking-wider md:pb-3 text-faded-black text-base">
                     {milestone.date}
                   </p>
                   {milestone.title}
@@ -68,13 +69,19 @@ export function RoadMap() {
           ))}
           <div className="hidden md:block absolute mt-5 left-0 w-full">
             <div className="absolute top-4 left-0 h-8 w-full data-bar brightness-0 z-0" />
-            <div className="absolute bg-light-manila top-4 left-0 h-8 max-w-[37.5%] data-bar data-bar-orange z-2" />
+            <div
+              className="absolute bg-light-manila top-4 left-0 h-8 data-bar data-bar-orange z-2 max-w-(--progress)"
+              style={{ '--progress': '37.5%' } as React.CSSProperties}
+            />
             <div className="absolute top-4 left-0 h-10 w-50 bg-linear-to-r from-light-manila to-transparent z-3" />
             <div className="absolute top-4 right-0 h-10 w-50 bg-linear-to-r to-light-manila from-transparent z-4" />
           </div>
           <div className="block md:hidden absolute mt-0 left-0 h-full w-10 t-0">
             <div className="absolute top-0 left-0 h-8 w-full horizontal-bars brightness-0 z-0" />
-            <div className="absolute bg-light-manila top-4 left-0 h-8 max-h-[25%] horizontal-bars horizontal-bars-orange z-2" />
+            <div
+              className="absolute bg-light-manila top-4 left-0 h-8 horizontal-bars horizontal-bars-orange z-2 max-h-(--progress)"
+              style={{ '--progress': '25%' } as React.CSSProperties}
+            />
             <div className="absolute bottom-0 right-0 w-10 h-50 bg-linear-to-b to-light-manila from-transparent z-4" />
             <div className="absolute top-0 right-0 w-10 h-20 bg-linear-to-b from-light-manila to-transparent z-4" />
           </div>

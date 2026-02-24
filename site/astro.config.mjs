@@ -9,6 +9,7 @@ import sitemap from '@astrojs/sitemap';
 import sentry from '@sentry/astro';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, fontProviders } from 'astro/config';
+import svgr from 'vite-plugin-svgr';
 import checkV8Urls from './integrations/check-v8-urls';
 import llmsMarkdown from './integrations/llms-markdown';
 import pagefind from './integrations/pagefind';
@@ -72,7 +73,7 @@ export default defineConfig({
   },
 
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss(), svgr()],
     optimizeDeps: {
       exclude: ['@videojs/react-preview', '@videojs/react', '@videojs/html'],
     },

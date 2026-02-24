@@ -7,7 +7,7 @@ import GetStartedBanner from '@/components/GetStartedBanner';
 import HomePageDemo from '@/components/HomePageDemo';
 import HeroVideo from '@/components/home/HeroVideo';
 import HomePageControls from '@/components/home/HomePageControls';
-import MuxLogoSmall from '@/components/icons/MuxLogoSmall';
+import MuxLogoSmall from '@/components/icons/mux-logo-small.svg?react';
 import NavBar from '@/components/NavBar/NavBar.astro';
 import { RoadMap } from '@/components/Roadmap';
 import { Sponsors } from '@/components/Sponsors';
@@ -32,7 +32,7 @@ const poster = `${VJS8_DEMO_VIDEO.poster}?time=0`;
       <div class="vjs relative z-10 w-full grid grid-cols-1 grid-rows-1">
         <div class="block md:hidden">
           <h1
-            class="text-faded-black text-h5 pt-20 leading-[120%] w-full font-display-extended uppercase font-bold justify-self-center self-center text-center"
+            class="text-faded-black text-h5 pt-20 leading-8 w-full font-display-extended uppercase font-bold justify-self-center self-center text-center"
           >
             The Open Source Player<br />
             <span class="text-stroke-faded-black">for the Web</span>
@@ -51,7 +51,7 @@ const poster = `${VJS8_DEMO_VIDEO.poster}?time=0`;
           poster={poster}
         />
         <h1
-          class="hidden md:block text-white absolute text-[3.1rem] leading-[120%] w-full font-display-extended uppercase font-bold justify-self-center self-center text-center"
+          class="hidden md:block text-white absolute text-h2 leading-14 w-full font-display-extended uppercase font-bold justify-self-center self-center text-center"
         >
           The Open Source<br />
         Player  <span class="text-stroke-white">for the Web</span>
@@ -61,7 +61,7 @@ const poster = `${VJS8_DEMO_VIDEO.poster}?time=0`;
         class="flex justify-center md:justify-end items-center gap-2 py-2 font-display-extended uppercase font-light ml-auto text-sm"
       >
         VIDEO HOSTING BY
-        <MuxLogoSmall className="inline" width={"3.25"} />
+        <MuxLogoSmall className="inline" width="3.25rem" />
       </p>
     </div>
     <p

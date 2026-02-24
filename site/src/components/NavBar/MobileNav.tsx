@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { ArrowUpRight, Menu, X } from 'lucide-react';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
 import FilmGrain from '../FilmGrain';
-import Logo from '../icons/Logo';
+import Logo from '../icons/logo.svg?react';
 import GetStartedLink from './GetStartedLink';
 
 interface NavLink {
@@ -56,7 +56,7 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
             )}
           >
             <Dialog.Title className="sr-only">Navigation</Dialog.Title>
-            <Logo width="10" />
+            <Logo width="10rem" />
             <Dialog.Close
               className={clsx(
                 'inline-flex items-stretch p-1 border-2 border-faded-black rounded-sm ',
