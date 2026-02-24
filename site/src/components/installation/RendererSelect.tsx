@@ -49,10 +49,10 @@ export default function RendererSelect() {
   // Auto-switch renderer when use case changes and current renderer is invalid
   useEffect(() => {
     const validValues = options.map((o) => o.value);
-    if (!validValues.includes($renderer)) {
+    if (!validValues.includes(renderer.get())) {
       renderer.set(options[0].value);
     }
-  }, [$useCase]);
+  }, [options]);
 
   return (
     <ImageRadioGroup

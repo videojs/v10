@@ -41,13 +41,6 @@ function getSkinImportParts(skin: Skin): { group: string; skinFile: string } {
   return { group: skin, skinFile: 'skin' };
 }
 
-function getPresetAccess(useCase: UseCase): string {
-  if (useCase === 'default-video') {
-    return 'presets.website';
-  }
-  return `presets['${useCase}']`;
-}
-
 function getProviderComponent(useCase: UseCase): string {
   const map: Record<UseCase, string> = {
     'default-video': 'VideoProvider',
@@ -60,7 +53,6 @@ function getProviderComponent(useCase: UseCase): string {
 function generateReactCode(useCase: UseCase, skin: Skin, renderer: Renderer, playbackId: string | null): string {
   const providerComponent = getProviderComponent(useCase);
   const rendererComponent = getRendererComponent(renderer);
-  const presetAccess = getPresetAccess(useCase);
 
   // Background video has fixed skin and subpath imports, others use skin picker value
   const isBackgroundVideo = useCase === 'background-video';
