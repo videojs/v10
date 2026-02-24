@@ -129,7 +129,7 @@ declare class CustomAudioElementClass extends HTMLAudioElement implements HTMLAu
   static getTemplateHTML: typeof getAudioTemplateHTML;
   static shadowRootOptions: ShadowRootInit;
   static Events: string[];
-  readonly nativeEl: HTMLAudioElement;
+  readonly target: HTMLAudioElement;
   attributeChangedCallback(attrName: string, oldValue?: string | null, newValue?: string | null): void;
   connectedCallback(): void;
   disconnectedCallback(): void;
@@ -142,7 +142,7 @@ declare class CustomVideoElementClass extends HTMLVideoElement implements HTMLVi
   static getTemplateHTML: typeof getVideoTemplateHTML;
   static shadowRootOptions: ShadowRootInit;
   static Events: string[];
-  readonly nativeEl: HTMLVideoElement;
+  readonly target: HTMLVideoElement;
   attributeChangedCallback(attrName: string, oldValue?: string | null, newValue?: string | null): void;
   connectedCallback(): void;
   disconnectedCallback(): void;
@@ -239,7 +239,7 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
 
     // Private fields
     #isInit = false;
-    #nativeEl: HTMLVideoElement | HTMLAudioElement | null = null;
+    #target: HTMLVideoElement | HTMLAudioElement | null = null;
     #childMap = new Map<MediaChild, MediaChild>();
     #childObserver?: MutationObserver;
 
@@ -249,7 +249,7 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
         const val = this.getAttribute(attr);
         return val === null ? false : val === '' ? true : val;
       }
-      return this.nativeEl?.[prop as keyof typeof this.nativeEl];
+      return this.target?.[prop as keyof typeof this.target];
     }
 
     set(prop: string, val: any): void {
@@ -263,15 +263,15 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
         return;
       }
 
-      if (this.nativeEl) {
+      if (this.target) {
         // @ts-expect-error
-        this.nativeEl[prop as keyof typeof this.nativeEl] = val;
+        this.target[prop as keyof typeof this.target] = val;
       }
     }
 
     call(prop: string, ...args: any[]): any {
-      const nativeFn = this.nativeEl?.[prop as keyof typeof this.nativeEl] as ((...args: any[]) => any) | undefined;
-      return nativeFn?.apply(this.nativeEl, args);
+      const nativeFn = this.target?.[prop as keyof typeof this.target] as ((...args: any[]) => any) | undefined;
+      return nativeFn?.apply(this.target, args);
     }
 
     // If the custom element is defined before the custom element's HTML is parsed
@@ -279,10 +279,10 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
     // Wait until initializing in the attributeChangedCallback or
     // connectedCallback or accessing any properties.
 
-    get nativeEl() {
+    get target() {
       this.#init();
       return (
-        this.#nativeEl ??
+        this.#target ??
         this.querySelector(':scope > [slot=media]') ??
         this.querySelector(tag) ??
         this.shadowRoot?.querySelector(tag) ??
@@ -290,8 +290,8 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
       );
     }
 
-    set nativeEl(val: HTMLVideoElement | HTMLAudioElement | null) {
-      this.#nativeEl = val;
+    set target(val: HTMLVideoElement | HTMLAudioElement | null) {
+      this.#target = val;
     }
 
     get defaultMuted() {
@@ -323,7 +323,7 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
       // Neither Chrome or Firefox support setting the muted attribute
       // after using document.createElement.
       // Get around this by setting the muted property manually.
-      this.nativeEl!.muted = this.hasAttribute('muted');
+      this.target!.muted = this.hasAttribute('muted');
 
       for (const prop of nativeElProps) {
         // @ts-expect-error
@@ -340,7 +340,7 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
     }
 
     handleEvent(event: Event): void {
-      if (event.target === this.nativeEl) {
+      if (event.target === this.target) {
         this.dispatchEvent(new CustomEvent(event.type, { detail: (event as CustomEvent).detail }));
       }
     }
@@ -361,7 +361,7 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
           this.#childMap.set(el, clone);
           this.#childObserver?.observe(el, { attributes: true });
         }
-        this.nativeEl?.append(clone);
+        this.target?.append(clone);
         this.#enableDefaultTrack(clone as HTMLTrackElement);
       });
 
@@ -426,9 +426,9 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
       }
 
       if (newValue === null) {
-        this.nativeEl?.removeAttribute(attrName);
-      } else if (this.nativeEl?.getAttribute(attrName) !== newValue) {
-        this.nativeEl?.setAttribute(attrName, newValue);
+        this.target?.removeAttribute(attrName);
+      } else if (this.target?.getAttribute(attrName) !== newValue) {
+        this.target?.setAttribute(attrName, newValue);
       }
     }
 

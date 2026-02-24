@@ -1,8 +1,8 @@
 import Hls from 'hls.js';
 
-import { type MediaDelegate, MediaDelegateMixin } from '../../core/media/delegate';
-import { MediaProxyMixin } from '../../core/media/proxy';
-import { CustomMediaMixin } from './custom-media-element';
+import { type MediaDelegate, MediaDelegateMixin } from '../../../core/media/delegate';
+import { MediaProxyMixin } from '../../../core/media/proxy';
+import { CustomMediaMixin } from '../custom-media-element';
 
 export class HlsMediaDelegate implements MediaDelegate {
   #engine = new Hls();

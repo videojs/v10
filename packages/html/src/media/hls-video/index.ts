@@ -13,7 +13,7 @@ export class HlsVideo extends HlsCustomMedia {
     // are appended after the custom element is created, we need to
     // attach the native element to the Media API after the native element
     // is appended to the DOM. This is currently not supported.
-    this.attach(this.nativeEl);
+    this.attach(this.target);
   }
 
   attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
