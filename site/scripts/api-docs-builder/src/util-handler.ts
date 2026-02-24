@@ -29,9 +29,8 @@
  *   Strategy 4 — Raw TS AST for missed classes
  *     Scans local modules for exported classes that TAE parsed but missed.
  *
- * Overload Collapsing:
- *   When a function has multiple overloads with identical return types,
- *   only the "widest" signature (most parameters) is kept.
+ * All overloads are preserved. When a function or constructor has multiple
+ * overload signatures, each becomes a separate entry in the overloads array.
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -45,7 +44,7 @@ import {
   type UtilReference,
   UtilReferenceSchema,
 } from '../../../src/types/util-reference.js';
-import { formatType, getShortPropType } from './formatter.js';
+import { abbreviateType, formatDetailedType, formatType } from './formatter.js';
 
 const PREFIX = '\x1b[35m[api-docs-builder]\x1b[0m';
 
@@ -71,6 +70,9 @@ interface EntryPoint {
 
 // ─── Entry Points ──────────────────────────────────────────────────
 
+// IMPORTANT: React entries must come before HTML entries. On slug collision,
+// the first framework keeps the bare slug; later frameworks get prefixed
+// (e.g., "create-player" for React, "html-create-player" for HTML).
 const UTIL_ENTRY_POINTS: EntryPoint[] = [
   { index: 'packages/react/src/index.ts', framework: 'react' },
   { index: 'packages/store/src/react/hooks/index.ts', framework: 'react' },
@@ -156,7 +158,12 @@ function getDisplayName(name: string): string {
 
 // ─── Extraction: Functions ─────────────────────────────────────────
 
-function extractFunctionOverloads(exportNode: tae.ExportNode, filePath: string, program: ts.Program): UtilOverload[] {
+function extractFunctionOverloads(
+  exportNode: tae.ExportNode,
+  filePath: string,
+  program: ts.Program,
+  allExports?: tae.ExportNode[]
+): UtilOverload[] {
   const funcType = exportNode.type;
   if (!(funcType instanceof tae.FunctionNode)) return [];
 
@@ -166,64 +173,75 @@ function extractFunctionOverloads(exportNode: tae.ExportNode, filePath: string, 
   // Get per-overload JSDoc from raw TS AST
   const overloadDocs = getOverloadDocs(filePath, program, exportNode.name);
 
-  // Filter to meaningful overloads: if return types differ, keep separate
-  if (signatures.length > 1) {
-    const returnTypes = signatures.map((s) => formatType(s.returnValueType, false));
-    const allSame = returnTypes.every((t) => t === returnTypes[0]);
+  const overloads = signatures.map((sig, i) =>
+    buildOverload(sig, overloadDocs[i]?.description, overloadDocs[i]?.label, allExports)
+  );
 
-    if (allSame) {
-      // Collapse: use the signature with most params
-      const widest = signatures.reduce((a, b) => (a.parameters.length >= b.parameters.length ? a : b));
-      return [buildOverload(widest, overloadDocs[signatures.indexOf(widest)])];
-    }
-  }
+  fixDegradedTypes(overloads, filePath, program, exportNode.name);
 
-  return signatures.map((sig, i) => buildOverload(sig, overloadDocs[i]));
+  return overloads;
 }
 
-function buildOverload(sig: tae.CallSignature, doc?: string): UtilOverload {
+function buildOverload(
+  sig: tae.CallSignature,
+  doc?: string,
+  label?: string,
+  allExports?: tae.ExportNode[]
+): UtilOverload {
   const parameters: Record<string, ParamDef> = {};
 
   for (const param of sig.parameters) {
-    const typeStr = formatType(param.type, param.optional);
-    const shortType = getShortPropType(param.name, typeStr);
+    const typeStr = allExports
+      ? formatDetailedType(param.type, allExports, param.optional)
+      : formatType(param.type, param.optional);
+    const abbreviated = abbreviateType(param.name, typeStr);
 
-    const entry: ParamDef = { type: typeStr };
-    if (shortType !== undefined) entry.shortType = shortType;
+    const entry: ParamDef = { type: abbreviated ?? typeStr };
+    if (abbreviated && typeStr !== abbreviated) entry.detailedType = typeStr;
     if (param.documentation?.description) entry.description = param.documentation.description;
     if (!param.optional) entry.required = true;
 
     // Clean undefined fields
-    if (entry.shortType === undefined) delete entry.shortType;
+    if (entry.detailedType === undefined) delete entry.detailedType;
     if (entry.description === undefined) delete entry.description;
     if (!entry.required) delete entry.required;
 
     parameters[param.name] = entry;
   }
 
-  const returnValue = buildReturnValue(sig.returnValueType);
+  const returnValue = buildReturnValue(sig.returnValueType, allExports);
   const overload: UtilOverload = { parameters, returnValue };
 
+  if (label) overload.label = label;
   if (doc) overload.description = doc;
 
   return overload;
 }
 
-function buildReturnValue(type: tae.AnyType): ReturnValue {
-  const typeStr = formatType(type, false);
-  const shortType = getShortPropType('return', typeStr);
+function buildReturnValue(type: tae.AnyType, allExports?: tae.ExportNode[]): ReturnValue {
+  const typeStr = allExports ? formatDetailedType(type, allExports, false) : formatType(type, false);
+  const abbreviated = abbreviateType('return', typeStr);
 
-  const result: ReturnValue = { type: typeStr };
-  if (shortType !== undefined) result.shortType = shortType;
+  const result: ReturnValue = { type: abbreviated ?? typeStr };
+  if (abbreviated && typeStr !== abbreviated) result.detailedType = typeStr;
+
+  // Resolve ExternalTypeNode via allExports before checking for ObjectNode fields
+  let resolvedType = type;
+  if (allExports && type instanceof tae.ExternalTypeNode) {
+    const resolved = allExports.find((e) => e.name === type.typeName.name && e.reexportedFrom === undefined);
+    if (resolved) resolvedType = resolved.type;
+  }
 
   // Expand object properties as fields
-  if (type instanceof tae.ObjectNode && type.properties.length > 0) {
-    const fields: Record<string, { type: string; shortType?: string; description?: string }> = {};
-    for (const prop of type.properties) {
-      const propType = formatType(prop.type, prop.optional);
-      const propShort = getShortPropType(prop.name, propType);
-      const field: { type: string; shortType?: string; description?: string } = { type: propType };
-      if (propShort !== undefined) field.shortType = propShort;
+  if (resolvedType instanceof tae.ObjectNode && resolvedType.properties.length > 0) {
+    const fields: Record<string, { type: string; detailedType?: string; description?: string }> = {};
+    for (const prop of resolvedType.properties) {
+      const propType = allExports
+        ? formatDetailedType(prop.type, allExports, prop.optional)
+        : formatType(prop.type, prop.optional);
+      const propAbbrev = abbreviateType(prop.name, propType);
+      const field: { type: string; detailedType?: string; description?: string } = { type: propAbbrev ?? propType };
+      if (propAbbrev && propType !== propAbbrev) field.detailedType = propType;
       if (prop.documentation?.description) field.description = prop.documentation.description;
       fields[prop.name] = field;
     }
@@ -231,6 +249,73 @@ function buildReturnValue(type: tae.AnyType): ReturnValue {
   }
 
   return result;
+}
+
+// ─── Degraded Type Repair ───────────────────────────────────────────
+
+function isDegradedType(type: string): boolean {
+  return /\bany\b/.test(type) || type.includes('__type');
+}
+
+function fixDegradedTypes(overloads: UtilOverload[], filePath: string, program: ts.Program, funcName: string): void {
+  const sourceFile = program.getSourceFile(filePath);
+  if (!sourceFile) return;
+
+  // Collect overload declarations (no body) and implementation fallback
+  const overloadDecls: ts.FunctionDeclaration[] = [];
+  let implDecl: ts.FunctionDeclaration | undefined;
+
+  function visit(node: ts.Node) {
+    if (ts.isFunctionDeclaration(node) && node.name?.text === funcName) {
+      if (!node.body) {
+        overloadDecls.push(node);
+      } else {
+        implDecl = node;
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(sourceFile);
+
+  const decls = overloadDecls.length > 0 ? overloadDecls : implDecl ? [implDecl] : [];
+  if (decls.length === 0) return;
+
+  for (let i = 0; i < overloads.length; i++) {
+    const overload = overloads[i]!;
+    const decl = decls[i];
+    if (!decl) continue;
+
+    // Fix degraded param types
+    for (const [paramName, paramDef] of Object.entries(overload.parameters)) {
+      const effectiveType = paramDef.detailedType ?? paramDef.type;
+      if (!isDegradedType(effectiveType)) continue;
+
+      const astParam = decl.parameters.find((p) => ts.isIdentifier(p.name) && p.name.text === paramName);
+      if (!astParam?.type) continue;
+
+      const rawType = astParam.type.getText(sourceFile);
+      const abbreviated = abbreviateType(paramName, rawType);
+      paramDef.type = abbreviated ?? rawType;
+      if (abbreviated && rawType !== abbreviated) {
+        paramDef.detailedType = rawType;
+      } else {
+        delete paramDef.detailedType;
+      }
+    }
+
+    // Fix degraded return type
+    const effectiveReturn = overload.returnValue.detailedType ?? overload.returnValue.type;
+    if (isDegradedType(effectiveReturn) && decl.type) {
+      const rawReturn = decl.type.getText(sourceFile);
+      const abbreviated = abbreviateType('return', rawReturn);
+      overload.returnValue.type = abbreviated ?? rawReturn;
+      if (abbreviated && rawReturn !== abbreviated) {
+        overload.returnValue.detailedType = rawReturn;
+      } else {
+        delete overload.returnValue.detailedType;
+      }
+    }
+  }
 }
 
 // ─── Extraction: Controllers (Classes via raw TS AST) ──────────────
@@ -284,11 +369,11 @@ function extractControllerOverloads(filePath: string, program: ts.Program, class
         typeStr = param.type.getText(sourceFile);
       }
 
-      const shortType = getShortPropType(name, typeStr);
+      const abbreviated = abbreviateType(name, typeStr);
       const description = getJSDocParamDescription(decl, name);
 
-      const entry: ParamDef = { type: typeStr };
-      if (shortType !== undefined) entry.shortType = shortType;
+      const entry: ParamDef = { type: abbreviated ?? typeStr };
+      if (abbreviated && typeStr !== abbreviated) entry.detailedType = typeStr;
       if (description) entry.description = description;
       if (!isOptional) entry.required = true;
       if (!entry.required) delete entry.required;
@@ -308,6 +393,8 @@ function extractControllerOverloads(filePath: string, program: ts.Program, class
     const overload: UtilOverload = { parameters, returnValue };
 
     // Get overload-specific JSDoc
+    const label = getJSDocTagValue(decl, 'label');
+    if (label) overload.label = label;
     const jsDoc = getNodeJSDoc(decl, sourceFile);
     if (jsDoc) overload.description = jsDoc;
 
@@ -318,8 +405,8 @@ function extractControllerOverloads(filePath: string, program: ts.Program, class
 function extractPublicMembers(
   classDecl: ts.ClassDeclaration,
   sourceFile: ts.SourceFile
-): Record<string, { type: string; shortType?: string; description?: string }> {
-  const fields: Record<string, { type: string; shortType?: string; description?: string }> = {};
+): Record<string, { type: string; detailedType?: string; description?: string }> {
+  const fields: Record<string, { type: string; detailedType?: string; description?: string }> = {};
 
   for (const member of classDecl.members) {
     // Skip private, protected, static, constructor
@@ -343,11 +430,11 @@ function extractPublicMembers(
 
     if (ts.isGetAccessorDeclaration(member)) {
       const typeStr = member.type ? member.type.getText(sourceFile) : 'unknown';
-      const shortType = getShortPropType(name, typeStr);
+      const abbreviated = abbreviateType(name, typeStr);
       const description = getNodeJSDoc(member, sourceFile);
 
-      const field: { type: string; shortType?: string; description?: string } = { type: typeStr };
-      if (shortType !== undefined) field.shortType = shortType;
+      const field: { type: string; detailedType?: string; description?: string } = { type: abbreviated ?? typeStr };
+      if (abbreviated && typeStr !== abbreviated) field.detailedType = typeStr;
       if (description) field.description = description;
 
       fields[name] = field;
@@ -363,11 +450,11 @@ function extractPublicMembers(
         .join(', ');
       const retType = member.type ? member.type.getText(sourceFile) : 'void';
       const typeStr = `(${params}) => ${retType}`;
-      const shortType = getShortPropType(name, typeStr);
+      const abbreviated = abbreviateType(name, typeStr);
       const description = getNodeJSDoc(member, sourceFile);
 
-      const field: { type: string; shortType?: string; description?: string } = { type: typeStr };
-      if (shortType !== undefined) field.shortType = shortType;
+      const field: { type: string; detailedType?: string; description?: string } = { type: abbreviated ?? typeStr };
+      if (abbreviated && typeStr !== abbreviated) field.detailedType = typeStr;
       if (description) field.description = description;
 
       fields[name] = field;
@@ -395,16 +482,24 @@ function extractContextOverload(exportNode: tae.ExportNode): UtilOverload {
 
 // ─── JSDoc Helpers ─────────────────────────────────────────────────
 
-function getOverloadDocs(filePath: string, program: ts.Program, funcName: string): (string | undefined)[] {
+interface OverloadDoc {
+  description?: string;
+  label?: string;
+}
+
+function getOverloadDocs(filePath: string, program: ts.Program, funcName: string): OverloadDoc[] {
   const sourceFile = program.getSourceFile(filePath);
   if (!sourceFile) return [];
 
-  const docs: (string | undefined)[] = [];
+  const docs: OverloadDoc[] = [];
 
   function visit(node: ts.Node) {
     if (ts.isFunctionDeclaration(node) && node.name?.text === funcName && !node.body) {
       // This is an overload declaration
-      docs.push(getNodeJSDoc(node, sourceFile!));
+      docs.push({
+        description: getNodeJSDoc(node, sourceFile!),
+        label: getJSDocTagValue(node, 'label'),
+      });
     }
     ts.forEachChild(node, visit);
   }
@@ -435,8 +530,11 @@ function getJSDocParamDescription(node: ts.Node, paramName: string): string | un
     for (const tag of doc.tags) {
       if (ts.isJSDocParameterTag(tag) && ts.isIdentifier(tag.name) && tag.name.text === paramName) {
         if (!tag.comment) return undefined;
-        if (typeof tag.comment === 'string') return tag.comment;
-        return tag.comment.map((c: ts.JSDocText | ts.JSDocLink) => ('text' in c ? c.text : '')).join('');
+        const raw =
+          typeof tag.comment === 'string'
+            ? tag.comment
+            : tag.comment.map((c: ts.JSDocText | ts.JSDocLink) => ('text' in c ? c.text : '')).join('');
+        return raw.replace(/^\s*-\s+/, '');
       }
     }
   }
@@ -455,6 +553,26 @@ function hasJSDocTag(node: ts.Node, tagName: string): boolean {
     }
   }
   return false;
+}
+
+function getJSDocTagValue(node: ts.Node, tagName: string): string | undefined {
+  const jsDocNodes = (node as any).jsDoc as ts.JSDoc[] | undefined;
+  if (!jsDocNodes?.length) return undefined;
+
+  for (const doc of jsDocNodes) {
+    if (!doc.tags) continue;
+    for (const tag of doc.tags) {
+      if (tag.tagName.text === tagName) {
+        if (!tag.comment) return undefined;
+        if (typeof tag.comment === 'string') return tag.comment.trim();
+        return tag.comment
+          .map((c: ts.JSDocText | ts.JSDocLink) => ('text' in c ? c.text : ''))
+          .join('')
+          .trim();
+      }
+    }
+  }
+  return undefined;
 }
 
 // ─── Raw TS AST: Fallback Discovery ────────────────────────────────
@@ -603,18 +721,6 @@ function extractFunctionOverloadsFromAST(filePath: string, program: ts.Program, 
   const decls = overloadDecls.length > 0 ? overloadDecls : implDecl ? [implDecl] : [];
   if (decls.length === 0) return [];
 
-  // Check if return types differ
-  if (decls.length > 1) {
-    const returnTypes = decls.map((d) => (d.type ? d.type.getText(sourceFile) : 'void'));
-    const allSame = returnTypes.every((t) => t === returnTypes[0]);
-
-    if (allSame) {
-      // Collapse to widest
-      const widest = decls.reduce((a, b) => (a.parameters.length >= b.parameters.length ? a : b));
-      return [buildOverloadFromAST(widest, sourceFile)];
-    }
-  }
-
   return decls.map((d) => buildOverloadFromAST(d, sourceFile));
 }
 
@@ -631,11 +737,11 @@ function buildOverloadFromAST(decl: ts.FunctionDeclaration, sourceFile: ts.Sourc
       typeStr = param.type.getText(sourceFile);
     }
 
-    const shortType = getShortPropType(name, typeStr);
+    const abbreviated = abbreviateType(name, typeStr);
     const description = getJSDocParamDescription(decl, name);
 
-    const entry: ParamDef = { type: typeStr };
-    if (shortType !== undefined) entry.shortType = shortType;
+    const entry: ParamDef = { type: abbreviated ?? typeStr };
+    if (abbreviated && typeStr !== abbreviated) entry.detailedType = typeStr;
     if (description) entry.description = description;
     if (!isOptional) entry.required = true;
     if (!entry.required) delete entry.required;
@@ -658,6 +764,8 @@ function buildOverloadFromAST(decl: ts.FunctionDeclaration, sourceFile: ts.Sourc
 
   const overload: UtilOverload = { parameters, returnValue };
 
+  const label = getJSDocTagValue(decl, 'label');
+  if (label) overload.label = label;
   const doc = getNodeJSDoc(decl, sourceFile);
   if (doc) overload.description = doc;
 
@@ -667,7 +775,7 @@ function buildOverloadFromAST(decl: ts.FunctionDeclaration, sourceFile: ts.Sourc
 function extractReturnTypeFields(
   returnType: string,
   sourceFile: ts.SourceFile
-): Record<string, { type: string; shortType?: string; description?: string }> | undefined {
+): Record<string, { type: string; detailedType?: string; description?: string }> | undefined {
   // Extract the base type name (strip generic parameters)
   const match = returnType.match(/^(\w+)/);
   if (!match) return undefined;
@@ -685,17 +793,17 @@ function extractReturnTypeFields(
   visit(sourceFile);
   if (!interfaceDecl) return undefined;
 
-  const fields: Record<string, { type: string; shortType?: string; description?: string }> = {};
+  const fields: Record<string, { type: string; detailedType?: string; description?: string }> = {};
   for (const member of interfaceDecl.members) {
     if (!ts.isPropertySignature(member) || !ts.isIdentifier(member.name)) continue;
 
     const name = member.name.text;
     const typeStr = member.type ? member.type.getText(sourceFile) : 'unknown';
-    const shortType = getShortPropType(name, typeStr);
+    const abbreviated = abbreviateType(name, typeStr);
     const description = getNodeJSDoc(member, sourceFile);
 
-    const field: { type: string; shortType?: string; description?: string } = { type: typeStr };
-    if (shortType !== undefined) field.shortType = shortType;
+    const field: { type: string; detailedType?: string; description?: string } = { type: abbreviated ?? typeStr };
+    if (abbreviated && typeStr !== abbreviated) field.detailedType = typeStr;
     if (description) field.description = description;
 
     fields[name] = field;
@@ -713,7 +821,8 @@ function processExport(
   program: ts.Program,
   seenKeys: Set<string>,
   seenSlugs: Set<string>,
-  entries: UtilEntry[]
+  entries: UtilEntry[],
+  allExports?: tae.ExportNode[]
 ): void {
   const key = `${entryPoint.framework}:${exportNode.name}`;
   if (seenKeys.has(key)) return;
@@ -725,6 +834,9 @@ function processExport(
   if (seenSlugs.has(slug)) {
     if (!entryPoint.framework) {
       log.error(`Framework-agnostic slug collision: ${slug}`);
+    }
+    if (entryPoint.framework === 'react') {
+      log.error(`Unexpected: React slug "${slug}" collided — check UTIL_ENTRY_POINTS order`);
     }
     slug = `${entryPoint.framework}-${slug}`;
   }
@@ -738,7 +850,7 @@ function processExport(
   } else if (!(exportNode.type instanceof tae.FunctionNode)) {
     overloads = [extractContextOverload(exportNode)];
   } else {
-    overloads = extractFunctionOverloads(exportNode, modulePath, program);
+    overloads = extractFunctionOverloads(exportNode, modulePath, program, allExports);
   }
 
   if (overloads.length === 0) {
@@ -782,6 +894,9 @@ function processRawExport(
   if (seenSlugs.has(slug)) {
     if (!entryPoint.framework) {
       log.error(`Framework-agnostic slug collision: ${slug}`);
+    }
+    if (entryPoint.framework === 'react') {
+      log.error(`Unexpected: React slug "${slug}" collided — check UTIL_ENTRY_POINTS order`);
     }
     slug = `${entryPoint.framework}-${slug}`;
   }
@@ -835,6 +950,9 @@ function discoverUtilExports(monorepoRoot: string, program: ts.Program): UtilEnt
     const modulesToScan = localModules.length > 0 ? localModules : [indexPath];
     const failedModules: string[] = [];
 
+    // Collect all TAE exports for type resolution (formatDetailedType)
+    const allExports: tae.ExportNode[] = [];
+
     // Strategy 1: TAE on local modules — primary path for hooks, factories, mixins,
     // utilities, contexts, and selectors (e.g., usePlayer, createPlayer, selectPlayback)
     for (const modulePath of modulesToScan) {
@@ -848,8 +966,10 @@ function discoverUtilExports(monorepoRoot: string, program: ts.Program): UtilEnt
         continue;
       }
 
+      allExports.push(...ast.exports);
+
       for (const exportNode of ast.exports) {
-        processExport(exportNode, modulePath, entryPoint, program, seenKeys, seenSlugs, entries);
+        processExport(exportNode, modulePath, entryPoint, program, seenKeys, seenSlugs, entries, allExports);
       }
     }
 
@@ -857,12 +977,14 @@ function discoverUtilExports(monorepoRoot: string, program: ts.Program): UtilEnt
     // (e.g., PlayerController re-exported from packages/html/src/index.ts)
     try {
       const indexAst = tae.parseFromProgram(indexPath, program);
+      allExports.push(...indexAst.exports);
+
       for (const exportNode of indexAst.exports) {
         // For controllers from the index, find the source module file for extraction
         if (exportNode.name.endsWith('Controller') && !(exportNode.type instanceof tae.FunctionNode)) {
           const sourceModule = findClassSourceModule(exportNode.name, localModules, program);
           if (sourceModule) {
-            processExport(exportNode, sourceModule, entryPoint, program, seenKeys, seenSlugs, entries);
+            processExport(exportNode, sourceModule, entryPoint, program, seenKeys, seenSlugs, entries, allExports);
           }
         }
       }

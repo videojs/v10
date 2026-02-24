@@ -5,6 +5,7 @@
  * mixins, factories, contexts, utilities). Produces heading/id data consumed
  * by both UtilReference.astro and remarkConditionalHeadings.
  */
+import { kebabCase } from 'es-toolkit/string';
 
 /**
  * Create a single source-of-truth model for util reference headings and sections.
@@ -21,7 +22,8 @@ export function createUtilReferenceModel(name, ref) {
 
   if (isMultiOverload) {
     const overloads = ref.overloads.map((overload, index) => {
-      const overloadId = `overload-${index + 1}`;
+      const label = overload.label;
+      const overloadId = label ? kebabCase(label) : `overload-${index + 1}`;
       const sections = [];
 
       if (Object.keys(overload.parameters).length > 0) {
@@ -42,6 +44,7 @@ export function createUtilReferenceModel(name, ref) {
 
       return {
         id: overloadId,
+        label,
         index: index + 1,
         description: overload.description,
         sections,
@@ -115,7 +118,7 @@ export function buildUtilReferenceTocHeadings(model) {
     for (const overload of model.overloads) {
       headings.push({
         depth: 3,
-        text: `Overload ${overload.index}`,
+        text: overload.label ?? `Overload ${overload.index}`,
         slug: overload.id,
       });
 

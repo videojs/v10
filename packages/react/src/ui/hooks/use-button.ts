@@ -33,6 +33,8 @@ export interface UseButtonReturnValue {
  *   props: [elementProps, getButtonProps],
  * });
  * ```
+ *
+ * @param params - Button configuration with activation handler and disabled check.
  */
 export function useButton(params: UseButtonParameters): UseButtonReturnValue {
   const { displayName, onActivate, isDisabled } = params;

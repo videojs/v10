@@ -54,7 +54,7 @@ export interface ComponentSource {
 export interface ExtractedProp {
   name: string;
   type: string;
-  shortType?: string;
+  detailedType?: string;
   description?: string;
   default?: string;
   required?: boolean;
@@ -74,7 +74,7 @@ export interface CoreExtraction {
  * Extraction result from data attributes file.
  */
 export interface DataAttrsExtraction {
-  attrs: Array<{ name: string; description: string }>;
+  attrs: Array<{ name: string; description: string; type?: string }>;
 }
 
 export interface HtmlExtraction {

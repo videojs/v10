@@ -16,6 +16,9 @@ export type PlayerMixin<Store extends PlayerStore> = <Class extends MediaElement
  * Creates a mixin that combines provider and container functionality.
  *
  * Use for a complete player element that owns the store and attaches media.
+ *
+ * @param context - Player context for descendant consumption.
+ * @param factory - Factory function that creates a store instance.
  */
 export function createPlayerMixin<Store extends PlayerStore>(
   context: PlayerContext<Store>,

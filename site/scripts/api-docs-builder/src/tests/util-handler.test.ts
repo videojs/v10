@@ -79,10 +79,39 @@ describe('getUtilEntries', () => {
 
   it('extracts multi-overload signatures', () => {
     const usePlayer = findByName('usePlayer', 'react');
-    expect(usePlayer!.data.overloads.length).toBeGreaterThanOrEqual(2);
+    expect(usePlayer!.data.overloads).toHaveLength(2);
 
     const useStore = findByName('useStore', 'react');
-    expect(useStore!.data.overloads.length).toBeGreaterThanOrEqual(2);
+    expect(useStore!.data.overloads).toHaveLength(2);
+  });
+
+  it('preserves overloads with identical return types', () => {
+    const useFormat = findByName('useFormat', 'react');
+    expect(useFormat).toBeDefined();
+    expect(useFormat!.data.overloads).toHaveLength(2);
+  });
+
+  it('extracts @label from overload JSDoc', () => {
+    const useFormat = findByName('useFormat', 'react');
+    expect(useFormat!.data.overloads[0]!.label).toBe('Number');
+    expect(useFormat!.data.overloads[1]!.label).toBe('String');
+  });
+
+  it('omits label when @label is not present', () => {
+    const useStore = findByName('useStore', 'react');
+    expect(useStore!.data.overloads[0]!.label).toBeUndefined();
+    expect(useStore!.data.overloads[1]!.label).toBeUndefined();
+  });
+
+  it('strips "- " prefix from controller param descriptions', () => {
+    const snapshot = findByName('SnapshotController', 'html');
+    expect(snapshot).toBeDefined();
+
+    const firstOverload = snapshot!.data.overloads[0]!;
+    const hostParam = firstOverload.parameters.host;
+    expect(hostParam).toBeDefined();
+    expect(hostParam!.description).toBe('The host element.');
+    expect(hostParam!.description).not.toMatch(/^-\s/);
   });
 
   it('extracts JSDoc descriptions', () => {

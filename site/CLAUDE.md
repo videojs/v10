@@ -554,84 +554,26 @@ vi.mock('@/types/docs', async () => {
 
 ## API Reference Generation
 
-The API docs builder extracts type information from TypeScript sources and generates JSON files used by Astro components. It produces two kinds of reference:
+> **Source of truth:** [`internal/design/site/api-docs-builder.md`](../internal/design/site/api-docs-builder.md)
+>
+> The design spec is the ground-truth for the entire pipeline — discovery, extraction, JSON schemas, reference model, and rendered output. **Any changes to the api-docs-builder must be reflected in the spec.** When implementation diverges from the spec, the spec wins.
 
-- **Component references** — props, state, data attributes for UI components
-- **Util references** — parameters, return values for hooks, controllers, mixins, and utilities
+The builder (`scripts/api-docs-builder/`) extracts type information from TypeScript sources and generates JSON for two kinds of reference:
 
-### How It Works
+- **Component references** → `src/content/generated-component-reference/{name}.json`
+- **Util references** → `src/content/generated-util-reference/{slug}.json`
 
-```
-packages/core/html/react/  → JSON → <ComponentReference /> → tables
-packages/react/html/store/ → JSON → <UtilReference />      → tables
-```
-
-**Component references:**
-1. **Builder script** (`scripts/api-docs-builder/`) parses TypeScript using `typescript-api-extractor`
-2. **Extracts** from core files: Props interface, State interface, defaultProps
-3. **Extracts** from data-attrs files: data attributes with JSDoc descriptions
-4. **Extracts** from HTML element files: Lit `tagName`
-5. **Detects** multi-part components via `packages/react/src/ui/{name}/index.parts.ts`
-6. **Extracts** part descriptions from React component JSDoc
-7. **Outputs** JSON to `src/content/generated-component-reference/{component}.json`
-
-**Util references:**
-1. Auto-discovered from package index files via naming conventions (`use*`, `*Controller`, `create*`) and `@public` JSDoc tag
-2. Builder scans React and HTML entry points, resolves local modules, extracts types via TAE and raw TS AST
-3. **Outputs** JSON to `src/content/generated-util-reference/{slug}.json`
-
-### Generated Files Are Gitignored
-
-Both `src/content/generated-component-reference/` and `src/content/generated-util-reference/` are **gitignored**. JSON files are regenerated:
-- Automatically on `pnpm dev` (via `predev` hook)
-- Automatically on `pnpm build` (via `prebuild` hook)
-- Manually via `pnpm api-docs`
+Generated files are **gitignored** and regenerated automatically on `pnpm dev` and `pnpm build`, or manually via `pnpm api-docs`.
 
 ### Usage in MDX
 
-**Component references** — for UI components (props, state, data attributes):
-
 ```mdx
 import ComponentReference from '@/components/docs/api-reference/ComponentReference.astro';
-
-<ComponentReference component="PlayButton" />
-```
-
-The component automatically handles:
-- **Single-part**: Renders Props, State, and Data Attributes sections with h3 headings
-- **Multi-part**: Renders each part with a framework-aware h3 heading, description from JSDoc, and h4 sub-sections
-
-**Util references** — for hooks, controllers, mixins, and utilities (parameters, return values):
-
-```mdx
 import UtilReference from '@/components/docs/api-reference/UtilReference.astro';
 
+<ComponentReference component="PlayButton" />
 <UtilReference util="usePlayer" />
 ```
-
-The component automatically handles:
-- **Single-overload**: Renders Parameters and Return Value as h3 sections
-- **Multi-overload**: Renders each overload as an h3 with Parameters and Return Value as h4 sub-sections
-
-### Adding a New Component
-
-When a new component is added to `packages/core/src/core/ui/`:
-1. Run `pnpm api-docs` to generate its JSON
-2. Add `<ComponentReference component="{Name}" />` to the MDX reference page
-
-For multi-part components:
-1. Ensure `packages/react/src/ui/{name}/index.parts.ts` exports each part
-2. Add JSDoc descriptions to each React component export for part descriptions
-3. Ensure each part's HTML element is at `packages/html/src/ui/{name}/{name}-{part}-element.ts`
-4. The primary part (whose element is just `{name}-element.ts`) gets the shared core props/state/data-attrs
-
-### Adding a New Util
-
-1. Export it from the appropriate package index file (`packages/react/src/index.ts` or `packages/html/src/index.ts`)
-2. Add JSDoc with a description; if it doesn't match a naming convention (`use*`, `*Controller`, `create*`), add `@public`
-3. Run `pnpm api-docs` to generate its JSON
-4. Create an MDX page with `<UtilReference util="{Name}" />`
-5. Add to the sidebar in the appropriate section (Hooks & Utilities or Controllers & Mixins)
 
 ## Custom Astro Integration: Pagefind
 

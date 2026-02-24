@@ -9,7 +9,12 @@ export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaEleme
   BaseClass: Class
 ) => Class & PlayerProviderConstructor<Store>;
 
-/** Create a mixin that provides player context to descendant elements. */
+/**
+ * Create a mixin that provides player context to descendant elements.
+ *
+ * @param context - Player context to provide to descendants.
+ * @param factory - Factory function that creates a store instance.
+ */
 export function createProviderMixin<Store extends PlayerStore>(
   context: PlayerContext<Store>,
   factory: () => Store

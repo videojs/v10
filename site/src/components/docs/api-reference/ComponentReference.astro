@@ -92,7 +92,7 @@ const singleDataAttributesSection = !apiReferenceModel.hasParts
           {partDataAttributesSection && (
             <>
               <H4 id={partDataAttributesSection.id}>{partDataAttributesSection.title}</H4>
-              <ApiDataAttrsTable dataAttributes={part.data.dataAttributes} />
+              <ApiDataAttrsTable dataAttributes={part.data.dataAttributes} componentName={part.componentName} />
             </>
           )}
         </>
@@ -128,7 +128,7 @@ const singleDataAttributesSection = !apiReferenceModel.hasParts
       {singleDataAttributesSection && (
         <>
           <H3 id={singleDataAttributesSection.id}>{singleDataAttributesSection.title}</H3>
-          <ApiDataAttrsTable dataAttributes={apiReferenceModel.data.dataAttributes} />
+          <ApiDataAttrsTable dataAttributes={apiReferenceModel.data.dataAttributes} componentName={component} />
         </>
       )}
     </>

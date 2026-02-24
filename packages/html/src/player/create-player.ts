@@ -67,11 +67,26 @@ export interface CreatePlayerResult<Store extends PlayerStore> {
  *   #playback = new PlayerController(this, context, selectPlayback);
  * }
  * ```
+ *
+ * @label Video
+ * @param config - Player configuration with features.
  */
 export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
 
+/**
+ * Creates a player factory for audio media.
+ *
+ * @label Audio
+ * @param config - Player configuration with features.
+ */
 export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;
 
+/**
+ * Creates a player factory with custom features.
+ *
+ * @label Generic
+ * @param config - Player configuration with features.
+ */
 export function createPlayer<const Features extends AnyPlayerFeature[]>(
   config: CreatePlayerConfig<Features>
 ): CreatePlayerResult<PlayerStore<Features>>;

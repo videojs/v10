@@ -13,12 +13,13 @@ export const ReturnFieldDefSchema = StateDefSchema;
 
 export const ReturnValueSchema = z.object({
   type: z.string(),
-  shortType: z.string().optional(),
+  detailedType: z.string().optional(),
   description: z.string().optional(),
   fields: z.record(z.string(), ReturnFieldDefSchema).optional(),
 });
 
 export const UtilOverloadSchema = z.object({
+  label: z.string().optional(),
   description: z.string().optional(),
   parameters: z.record(z.string(), ParamDefSchema),
   returnValue: ReturnValueSchema,

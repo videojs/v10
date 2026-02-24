@@ -19,6 +19,8 @@ const stateContext: StateContext<unknown> = {
  * const selectPlayback = createSelector(playbackSlice);
  * selectPlayback(store.state); // { paused, play, pause, ... } | undefined
  * ```
+ *
+ * @param slice - The feature slice to create a selector for.
  */
 export function createSelector<S extends AnySlice>(slice: S): (state: object) => InferSliceState<S> | undefined {
   const initialState = slice.state(stateContext);

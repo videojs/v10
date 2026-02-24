@@ -8,7 +8,7 @@ import { z } from 'astro/zod';
 
 export const PropDefSchema = z.object({
   type: z.string(),
-  shortType: z.string().optional(),
+  detailedType: z.string().optional(),
   description: z.string().optional(),
   default: z.string().optional(),
   required: z.boolean().optional(),
@@ -16,12 +16,14 @@ export const PropDefSchema = z.object({
 
 export const StateDefSchema = z.object({
   type: z.string(),
-  shortType: z.string().optional(),
+  detailedType: z.string().optional(),
   description: z.string().optional(),
 });
 
 export const DataAttrDefSchema = z.object({
   description: z.string(),
+  type: z.string().optional(),
+  detailedType: z.string().optional(),
 });
 
 export const PartReferenceSchema = z.object({

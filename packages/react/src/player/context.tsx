@@ -33,8 +33,18 @@ export function usePlayerContext(): PlayerContextValue {
   return ctx;
 }
 
-/** Access the player store from within a Player Provider. */
+/**
+ * Access the player store from within a Player Provider.
+ *
+ * @label Without Selector
+ */
 export function usePlayer(): UnknownStore;
+/**
+ * Select a value from the player store. Re-renders when the selected value changes.
+ *
+ * @label With Selector
+ * @param selector - Derives a value from the player store state.
+ */
 export function usePlayer<R>(selector: (state: UnknownState) => R): R;
 export function usePlayer<R>(selector?: (state: UnknownState) => R) {
   const { store } = usePlayerContext();

@@ -38,7 +38,18 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
   #consumer: ContextConsumer<PlayerContext<Store>, PlayerControllerHost>;
   #store: StoreController<Store, Result> | null = null;
 
+  /**
+   * @label Without Selector
+   * @param host - The host element that owns this controller.
+   * @param context - Player context to resolve the store from.
+   */
   constructor(host: PlayerControllerHost, context: PlayerContext<Store>);
+  /**
+   * @label With Selector
+   * @param host - The host element that owns this controller.
+   * @param context - Player context to resolve the store from.
+   * @param selector - Derives a value from the player store state.
+   */
   constructor(
     host: PlayerControllerHost,
     context: PlayerContext<Store>,

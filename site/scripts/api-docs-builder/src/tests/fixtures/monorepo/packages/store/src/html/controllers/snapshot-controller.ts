@@ -16,7 +16,16 @@ interface Store<S> {
 export class SnapshotController<S, R = S> implements ReactiveController {
   #host: ReactiveControllerHost;
 
+  /**
+   * @param host - The host element.
+   * @param state - The store to snapshot.
+   * @param selector - Derives a value from state.
+   */
   constructor(host: ReactiveControllerHost, state: Store<S>, selector: (state: S) => R);
+  /**
+   * @param host - The host element.
+   * @param state - The store to snapshot.
+   */
   constructor(host: ReactiveControllerHost, state: Store<S>);
   constructor(host: ReactiveControllerHost, state: Store<S>, selector?: (state: S) => R) {
     this.#host = host;

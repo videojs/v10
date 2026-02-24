@@ -45,7 +45,18 @@ export class StoreController<Store extends AnyStore, Result = Store> implements 
 
   #snapshot: SnapshotController<object, Result> | null = null;
 
+  /**
+   * @label Without Selector
+   * @param host - The host element that owns this controller.
+   * @param source - Store instance or context to resolve the store from.
+   */
   constructor(host: StoreControllerHost, source: StoreSource<Store>);
+  /**
+   * @label With Selector
+   * @param host - The host element that owns this controller.
+   * @param source - Store instance or context to resolve the store from.
+   * @param selector - Derives a value from the store state.
+   */
   constructor(
     host: StoreControllerHost,
     source: StoreSource<Store>,

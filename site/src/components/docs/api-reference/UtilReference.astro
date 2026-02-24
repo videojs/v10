@@ -38,7 +38,7 @@ if (!model) return;
 
       return (
         <>
-          <H3 id={overload.id}>Overload {overload.index}</H3>
+          <H3 id={overload.id}>{overload.label ?? `Overload ${overload.index}`}</H3>
 
           {overload.description && (
             <P><InlineMarkdown content={overload.description} /></P>
@@ -47,14 +47,14 @@ if (!model) return;
           {paramsSection && hasParams && (
             <>
               <H4 id={paramsSection.id}>{paramsSection.title}</H4>
-              <UtilParamsTable params={overload.data.parameters} utilName={util} />
+              <UtilParamsTable params={overload.data.parameters} utilName={`${util}-${overload.id}`} />
             </>
           )}
 
           {returnSection && (
             <>
               <H4 id={returnSection.id}>{returnSection.title}</H4>
-              <UtilReturnTable returnValue={overload.data.returnValue} utilName={util} />
+              <UtilReturnTable returnValue={overload.data.returnValue} utilName={`${util}-${overload.id}`} />
             </>
           )}
         </>

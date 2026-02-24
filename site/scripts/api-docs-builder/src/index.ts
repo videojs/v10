@@ -4,6 +4,7 @@ import * as ts from 'typescript';
 import * as tae from 'typescript-api-extractor';
 import { extractCore } from './core-handler.js';
 import { extractDataAttrs } from './data-attrs-handler.js';
+import { abbreviateType } from './formatter.js';
 import { extractHtml } from './html-handler.js';
 import { extractPartDescription, extractParts } from './parts-handler.js';
 import {
@@ -31,13 +32,13 @@ function buildProps(coreData: CoreExtraction): Record<string, PropDef> {
   for (const prop of coreData.props) {
     props[prop.name] = {
       type: prop.type,
-      shortType: prop.shortType,
+      detailedType: prop.detailedType,
       description: prop.description,
       default: coreData.defaultProps[prop.name] ?? prop.default,
       required: prop.required,
     };
 
-    if (props[prop.name]!.shortType === undefined) delete props[prop.name]!.shortType;
+    if (props[prop.name]!.detailedType === undefined) delete props[prop.name]!.detailedType;
     if (props[prop.name]!.description === undefined) delete props[prop.name]!.description;
     if (props[prop.name]!.default === undefined) delete props[prop.name]!.default;
     if (!props[prop.name]!.required) delete props[prop.name]!.required;
@@ -50,10 +51,10 @@ function buildState(coreData: CoreExtraction): Record<string, StateDef> {
   for (const s of coreData.state) {
     state[s.name] = {
       type: s.type,
-      shortType: s.shortType,
+      detailedType: s.detailedType,
       description: s.description,
     };
-    if (state[s.name]!.shortType === undefined) delete state[s.name]!.shortType;
+    if (state[s.name]!.detailedType === undefined) delete state[s.name]!.detailedType;
     if (state[s.name]!.description === undefined) delete state[s.name]!.description;
   }
   return state;
@@ -62,7 +63,17 @@ function buildState(coreData: CoreExtraction): Record<string, StateDef> {
 function buildDataAttrs(dataAttrsData: DataAttrsExtraction): Record<string, DataAttrDef> {
   const dataAttributes: Record<string, DataAttrDef> = {};
   for (const attr of dataAttrsData.attrs) {
-    dataAttributes[attr.name] = { description: attr.description };
+    const def: DataAttrDef = { description: attr.description };
+    if (attr.type) {
+      const abbreviated = abbreviateType(attr.name, attr.type);
+      if (abbreviated) {
+        def.type = abbreviated;
+        def.detailedType = attr.type;
+      } else {
+        def.type = attr.type;
+      }
+    }
+    dataAttributes[attr.name] = def;
   }
   return dataAttributes;
 }

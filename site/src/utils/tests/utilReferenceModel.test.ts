@@ -91,6 +91,67 @@ describe('createUtilReferenceModel', () => {
       ],
     });
   });
+  it('uses label for overload id and heading when present', () => {
+    const ref = {
+      name: 'createPlayer',
+      overloads: [
+        {
+          label: 'Video',
+          parameters: { config: { type: 'VideoConfig', required: true } },
+          returnValue: { type: 'VideoPlayer' },
+        },
+        {
+          label: 'Audio',
+          parameters: { config: { type: 'AudioConfig', required: true } },
+          returnValue: { type: 'AudioPlayer' },
+        },
+      ],
+    };
+
+    const model = createUtilReferenceModel('createPlayer', ref);
+
+    expect(model.isMultiOverload).toBe(true);
+    expect(model.overloads[0]).toMatchObject({
+      id: 'video',
+      label: 'Video',
+      index: 1,
+      sections: [
+        { key: 'parameters', id: 'video-parameters', depth: 4 },
+        { key: 'returnValue', id: 'video-return-value', depth: 4 },
+      ],
+    });
+    expect(model.overloads[1]).toMatchObject({
+      id: 'audio',
+      label: 'Audio',
+      index: 2,
+      sections: [
+        { key: 'parameters', id: 'audio-parameters', depth: 4 },
+        { key: 'returnValue', id: 'audio-return-value', depth: 4 },
+      ],
+    });
+  });
+
+  it('falls back to overload-N when label is absent', () => {
+    const ref = {
+      name: 'useStore',
+      overloads: [
+        {
+          parameters: {},
+          returnValue: { type: 'S' },
+        },
+        {
+          label: 'Selector',
+          parameters: { selector: { type: 'function', required: true } },
+          returnValue: { type: 'R' },
+        },
+      ],
+    };
+
+    const model = createUtilReferenceModel('useStore', ref);
+
+    expect(model.overloads[0]).toMatchObject({ id: 'overload-1', label: undefined });
+    expect(model.overloads[1]).toMatchObject({ id: 'selector', label: 'Selector' });
+  });
 });
 
 describe('buildUtilReferenceTocHeadings', () => {
@@ -150,6 +211,37 @@ describe('buildUtilReferenceTocHeadings', () => {
       { depth: 3, text: 'Overload 2', slug: 'overload-2' },
       { depth: 4, text: 'Parameters', slug: 'overload-2-parameters' },
       { depth: 4, text: 'Return Value', slug: 'overload-2-return-value' },
+    ]);
+  });
+
+  it('uses label text and slug in TOC headings when present', () => {
+    const ref = {
+      name: 'createPlayer',
+      overloads: [
+        {
+          label: 'Video',
+          parameters: { config: { type: 'VideoConfig', required: true } },
+          returnValue: { type: 'VideoPlayer' },
+        },
+        {
+          label: 'Audio',
+          parameters: { config: { type: 'AudioConfig', required: true } },
+          returnValue: { type: 'AudioPlayer' },
+        },
+      ],
+    };
+
+    const model = createUtilReferenceModel('createPlayer', ref);
+    const headings = buildUtilReferenceTocHeadings(model);
+
+    expect(headings).toEqual([
+      { depth: 2, text: 'API Reference', slug: 'api-reference' },
+      { depth: 3, text: 'Video', slug: 'video' },
+      { depth: 4, text: 'Parameters', slug: 'video-parameters' },
+      { depth: 4, text: 'Return Value', slug: 'video-return-value' },
+      { depth: 3, text: 'Audio', slug: 'audio' },
+      { depth: 4, text: 'Parameters', slug: 'audio-parameters' },
+      { depth: 4, text: 'Return Value', slug: 'audio-return-value' },
     ]);
   });
 });
