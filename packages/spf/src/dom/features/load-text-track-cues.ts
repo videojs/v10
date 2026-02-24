@@ -11,13 +11,27 @@ import { parseVttSegment } from '../text/parse-vtt-segment';
 /**
  * Load VTT segment subtask.
  */
+function isDuplicateCue(cue: VTTCue, textTrack: globalThis.TextTrack): boolean {
+  const { cues } = textTrack;
+  if (!cues) return false;
+  for (let i = 0; i < cues.length; i++) {
+    const existing = cues[i] as VTTCue;
+    if (existing.startTime === cue.startTime && existing.endTime === cue.endTime && existing.text === cue.text) {
+      return true;
+    }
+  }
+  return false;
+}
+
 const loadVttSegmentTask = async (
   { segment }: { segment: Segment },
   context: { textTrack: globalThis.TextTrack }
 ): Promise<void> => {
   const cues = await parseVttSegment(segment.url);
   for (const cue of cues) {
-    context.textTrack.addCue(cue);
+    if (!isDuplicateCue(cue, context.textTrack)) {
+      context.textTrack.addCue(cue);
+    }
   }
 };
 

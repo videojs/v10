@@ -181,6 +181,129 @@ describe('loadTextTrackCues', () => {
   // browser environment clears manually added cues after async operations.
   // These tests verify the orchestration logic and that parseVttSegment is called.
 
+  describe('cue deduplication', () => {
+    // Deduplication checks textTrack.cues directly. Since the vitest browser
+    // environment clears cues after async operations, we override addCue and the
+    // cues getter to maintain a persistent list across awaits for these tests.
+    function makeTrackWithPersistentCues() {
+      const trackElement = document.createElement('track');
+      const video = document.createElement('video');
+      video.appendChild(trackElement);
+      trackElement.track.mode = 'hidden';
+
+      const persistedCues: VTTCue[] = [];
+
+      const addCueSpy = vi.spyOn(trackElement.track, 'addCue').mockImplementation((cue) => {
+        persistedCues.push(cue as VTTCue);
+      });
+
+      Object.defineProperty(trackElement.track, 'cues', {
+        get: () =>
+          Object.assign(persistedCues, {
+            item: (i: number) => persistedCues[i] ?? null,
+          }) as unknown as TextTrackCueList,
+        configurable: true,
+      });
+
+      return { trackElement, addCueSpy };
+    }
+
+    it('adds all cues when there are no duplicates', async () => {
+      const { parseVttSegment } = await import('../../text/parse-vtt-segment');
+      vi.mocked(parseVttSegment)
+        .mockResolvedValueOnce([new VTTCue(0, 5, 'Cue A')])
+        .mockResolvedValueOnce([new VTTCue(5, 10, 'Cue B')])
+        .mockResolvedValueOnce([new VTTCue(10, 15, 'Cue C')]);
+
+      const { trackElement, addCueSpy } = makeTrackWithPersistentCues();
+
+      const state = createState<TextTrackCueLoadingState>({
+        selectedTextTrackId: 'text-1',
+        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(3) }]),
+      });
+      const owners = createState<TextTrackCueLoadingOwners>({
+        textTracks: new Map([['text-1', trackElement]]),
+      });
+
+      const cleanup = loadTextTrackCues({ state, owners });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(addCueSpy).toHaveBeenCalledTimes(3);
+      cleanup();
+    });
+
+    it('drops a duplicate cue from a subsequent segment', async () => {
+      const { parseVttSegment } = await import('../../text/parse-vtt-segment');
+      // Boundary-spanning cue appears in both adjacent segments per HLS spec
+      vi.mocked(parseVttSegment)
+        .mockResolvedValueOnce([new VTTCue(8, 12, 'Boundary cue')])
+        .mockResolvedValueOnce([new VTTCue(8, 12, 'Boundary cue')]);
+
+      const { trackElement, addCueSpy } = makeTrackWithPersistentCues();
+
+      const state = createState<TextTrackCueLoadingState>({
+        selectedTextTrackId: 'text-1',
+        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(2) }]),
+      });
+      const owners = createState<TextTrackCueLoadingOwners>({
+        textTracks: new Map([['text-1', trackElement]]),
+      });
+
+      const cleanup = loadTextTrackCues({ state, owners });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(addCueSpy).toHaveBeenCalledTimes(1);
+      cleanup();
+    });
+
+    it('keeps cues with identical timing but different text', async () => {
+      const { parseVttSegment } = await import('../../text/parse-vtt-segment');
+      vi.mocked(parseVttSegment)
+        .mockResolvedValueOnce([new VTTCue(0, 5, 'Hello')])
+        .mockResolvedValueOnce([new VTTCue(0, 5, 'World')]); // same timing, different text — not a duplicate
+
+      const { trackElement, addCueSpy } = makeTrackWithPersistentCues();
+
+      const state = createState<TextTrackCueLoadingState>({
+        selectedTextTrackId: 'text-1',
+        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(2) }]),
+      });
+      const owners = createState<TextTrackCueLoadingOwners>({
+        textTracks: new Map([['text-1', trackElement]]),
+      });
+
+      const cleanup = loadTextTrackCues({ state, owners });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(addCueSpy).toHaveBeenCalledTimes(2);
+      cleanup();
+    });
+
+    it('handles mixed: boundary duplicate dropped, unique cues kept', async () => {
+      const { parseVttSegment } = await import('../../text/parse-vtt-segment');
+      vi.mocked(parseVttSegment)
+        .mockResolvedValueOnce([new VTTCue(0, 8, 'Unique to seg 0'), new VTTCue(8, 12, 'Boundary cue')])
+        .mockResolvedValueOnce([new VTTCue(8, 12, 'Boundary cue'), new VTTCue(12, 20, 'Unique to seg 1')]);
+
+      const { trackElement, addCueSpy } = makeTrackWithPersistentCues();
+
+      const state = createState<TextTrackCueLoadingState>({
+        selectedTextTrackId: 'text-1',
+        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(2) }]),
+      });
+      const owners = createState<TextTrackCueLoadingOwners>({
+        textTracks: new Map([['text-1', trackElement]]),
+      });
+
+      const cleanup = loadTextTrackCues({ state, owners });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // 3 unique cues — boundary cue added only once
+      expect(addCueSpy).toHaveBeenCalledTimes(3);
+      cleanup();
+    });
+  });
+
   it('does nothing when track not selected', async () => {
     const state = createState<TextTrackCueLoadingState>({
       presentation: createMockPresentation([]),
