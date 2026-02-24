@@ -542,8 +542,8 @@ vi.mock('@/types/docs', async () => {
 ## Technology Stack
 
 - **[Astro 5.14.4](https://astro.build)**: Static site generation with island architecture
-- **[React 18](https://react.dev)**: Client-side interactive components (`client:load`)
-- **[React Compiler](https://react.dev/learn/react-compiler)**: Enabled via `babel-plugin-react-compiler` targeting React 18
+- **[React 19](https://react.dev)**: Client-side interactive components (`client:load`)
+- **[React Compiler](https://react.dev/learn/react-compiler)**: Enabled via `babel-plugin-react-compiler` targeting React 19
 - **[Tailwind v4](https://tailwindcss.com)**: CSS utility classes via `@tailwindcss/vite`
 - **[Nanostores 1.0.1](https://github.com/nanostores/nanostores)**: Cross-island state
 - **[Base UI 1.0.0-beta.4](https://base-ui.com)**: Headless accessible components
