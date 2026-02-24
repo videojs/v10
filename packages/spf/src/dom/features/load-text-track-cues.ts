@@ -4,6 +4,18 @@ import type { Presentation, Segment, TextTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { parseVttSegment } from '../text/parse-vtt-segment';
 
+function isDuplicateCue(cue: VTTCue, textTrack: globalThis.TextTrack): boolean {
+  const { cues } = textTrack;
+  if (!cues) return false;
+  for (let i = 0; i < cues.length; i++) {
+    const existing = cues[i] as VTTCue;
+    if (existing.startTime === cue.startTime && existing.endTime === cue.endTime && existing.text === cue.text) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * State shape for text track cue loading.
  */
@@ -172,7 +184,9 @@ export function loadTextTrackCues({
       const tasks = segmentsToLoad.map((segment) => async () => {
         const cues = await parseVttSegment(segment.url);
         for (const cue of cues) {
-          textTrack.addCue(cue);
+          if (!isDuplicateCue(cue, textTrack)) {
+            textTrack.addCue(cue);
+          }
         }
       });
 
