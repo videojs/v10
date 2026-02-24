@@ -50,6 +50,28 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
+  // Content negotiation: serve pre-built .md when Accept: text/markdown
+  // Previously handled by a separate Netlify edge function, but consolidated here
+  // to avoid spawning a second Deno isolate (which caused V8 OOM crashes in dev).
+  const accept = context.request.headers.get('accept');
+  if (accept?.includes('text/markdown')) {
+    const path = context.url.pathname.replace(/\/$/, '');
+    if (path.startsWith('/blog') || path.startsWith('/docs')) {
+      const mdResponse = await fetch(new URL(`${path}.md`, context.url.origin));
+      if (mdResponse.ok) {
+        const body = await mdResponse.text();
+        return new Response(body, {
+          headers: {
+            'content-type': 'text/markdown; charset=utf-8',
+            'cache-control': 'public, s-maxage=31536000',
+            vary: 'Accept',
+            'x-markdown-tokens': String(Math.ceil(body.length / 4)),
+          },
+        });
+      }
+    }
+  }
+
   const { action } = getActionContext(context);
 
   const cookie = context.cookies.get(SESSION_COOKIE_NAME);
