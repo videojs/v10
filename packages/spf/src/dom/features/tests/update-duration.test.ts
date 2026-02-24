@@ -9,6 +9,33 @@ import {
   updateDuration,
 } from '../update-duration';
 
+function makeMediaSource(duration = 0) {
+  return Object.create(MediaSource.prototype, {
+    readyState: { value: 'open', writable: true },
+    duration: { value: duration, writable: true },
+  }) as MediaSource;
+}
+
+function makeUpdatingSourceBuffer() {
+  const updateEndListeners: Array<() => void> = [];
+
+  const buffer = {
+    updating: true,
+    buffered: { length: 0, start: () => 0, end: () => 0 } as TimeRanges,
+    addEventListener: (_event: string, handler: () => void, _options?: unknown) => {
+      updateEndListeners.push(handler);
+    },
+    removeEventListener: vi.fn(),
+  } as unknown as SourceBuffer;
+
+  const finishUpdating = () => {
+    (buffer as unknown as { updating: boolean }).updating = false;
+    for (const h of updateEndListeners) h();
+  };
+
+  return { buffer, finishUpdating };
+}
+
 describe('canUpdateDuration', () => {
   it('returns true when mediaSource exists and presentation has duration', () => {
     const state: DurationUpdateState = {
@@ -260,6 +287,7 @@ describe('updateDuration', () => {
 
     const mockVideoBuffer = Object.create(SourceBuffer.prototype, {
       buffered: { value: mockBuffered, writable: false },
+      updating: { value: false, writable: true },
     });
 
     const mockMediaSource = Object.create(MediaSource.prototype, {
@@ -280,6 +308,87 @@ describe('updateDuration', () => {
     await vi.waitFor(() => {
       // Duration should be extended to match buffered range
       expect(mockMediaSource.duration).toBe(60.5);
+    });
+
+    cleanup();
+  });
+
+  it('does not throw when videoSourceBuffer is updating at moment of set', async () => {
+    const state = createState<DurationUpdateState>({});
+    const owners = createState<DurationUpdateOwners>({});
+    const cleanup = updateDuration({ state, owners });
+
+    const mockMediaSource = makeMediaSource();
+    const { buffer: mockVideoBuffer, finishUpdating } = makeUpdatingSourceBuffer();
+
+    owners.patch({ mediaSource: mockMediaSource, videoSourceBuffer: mockVideoBuffer });
+    state.patch({ presentation: { duration: 60 } as Presentation });
+
+    // Buffer finishes immediately after state change — must not throw
+    finishUpdating();
+
+    await vi.waitFor(() => {
+      expect(mockMediaSource.duration).toBe(60);
+    });
+
+    cleanup();
+  });
+
+  it('defers duration set until videoSourceBuffer finishes updating', async () => {
+    const state = createState<DurationUpdateState>({});
+    const owners = createState<DurationUpdateOwners>({});
+    const cleanup = updateDuration({ state, owners });
+
+    const mockMediaSource = makeMediaSource();
+    const { buffer: mockVideoBuffer, finishUpdating } = makeUpdatingSourceBuffer();
+
+    owners.patch({ mediaSource: mockMediaSource, videoSourceBuffer: mockVideoBuffer });
+    state.patch({ presentation: { duration: 60 } as Presentation });
+
+    // Duration must not be set while buffer is still updating
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(mockMediaSource.duration).toBe(0);
+
+    // Buffer finishes — duration should now be set
+    finishUpdating();
+
+    await vi.waitFor(() => {
+      expect(mockMediaSource.duration).toBe(60);
+    });
+
+    cleanup();
+  });
+
+  it('defers until both video and audio SourceBuffers finish updating', async () => {
+    const state = createState<DurationUpdateState>({});
+    const owners = createState<DurationUpdateOwners>({});
+    const cleanup = updateDuration({ state, owners });
+
+    const mockMediaSource = makeMediaSource();
+    const { buffer: mockVideoBuffer, finishUpdating: finishVideo } = makeUpdatingSourceBuffer();
+    const { buffer: mockAudioBuffer, finishUpdating: finishAudio } = makeUpdatingSourceBuffer();
+
+    owners.patch({
+      mediaSource: mockMediaSource,
+      videoSourceBuffer: mockVideoBuffer,
+      audioSourceBuffer: mockAudioBuffer,
+    });
+    state.patch({ presentation: { duration: 60 } as Presentation });
+
+    // Neither buffer done — duration must not be set
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(mockMediaSource.duration).toBe(0);
+
+    // Only video done — audio still updating
+    finishVideo();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(mockMediaSource.duration).toBe(0);
+
+    // Audio done — now duration should be set
+    finishAudio();
+
+    await vi.waitFor(() => {
+      expect(mockMediaSource.duration).toBe(60);
     });
 
     cleanup();
