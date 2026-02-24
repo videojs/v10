@@ -24,5 +24,7 @@ export function PreferenceUpdater({ currentFramework }: PreferenceUpdaterProps) 
     styleStore.set(style);
   }, [currentFramework]);
 
-  return null;
+  // Workaround: Astro SSR logs false "Invalid hook call" when a React
+  // component with hooks returns null. See withastro/astro#12283.
+  return <></>;
 }
