@@ -1,4 +1,4 @@
-import { CustomMediaMixin } from '../custom-media-element';
+import { CustomMediaMixin } from '@videojs/core/dom/media/custom-media-element';
 
 function getTemplateHTML(attrs: Record<string, string>) {
   return /*html*/ `

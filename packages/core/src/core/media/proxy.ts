@@ -19,12 +19,13 @@ const API_GET_SET: API_TYPE = 2;
  *
  * The `get`, `set`, and `call` methods can be overridden to provide catch-all custom behavior.
  */
-export const MediaApiProxyMixin = <T extends EventTarget>(
-  ...MediaApiTargetClasses: AnyConstructor<T extends [unknown, ...unknown[]] ? T : any>[]
+export const MediaProxyMixin = <T extends EventTarget>(
+  PrimaryClass: AnyConstructor<T>,
+  ...AdditionalClasses: AnyConstructor<EventTarget>[]
 ) => {
   class MediaApiProxy {
-    static extends(...MediaApiTargetClasses: AnyConstructor<T>[]) {
-      const props = getClassProps<T>(...MediaApiTargetClasses);
+    static extends(...MediaApiTargetClasses: AnyConstructor<any>[]) {
+      const props = getClassProps(...MediaApiTargetClasses);
 
       for (const [prop, type] of props.entries()) {
         if (prop in MediaApiProxy.prototype) continue;
@@ -81,9 +82,9 @@ export const MediaApiProxyMixin = <T extends EventTarget>(
     }
   }
 
-  MediaApiProxy.extends(...MediaApiTargetClasses);
+  MediaApiProxy.extends(PrimaryClass, ...AdditionalClasses);
 
-  return MediaApiProxy as unknown as Constructor<T> & typeof MediaApiProxy;
+  return MediaApiProxy as unknown as Constructor<T>;
 };
 
 /**

@@ -1,5 +1,3 @@
-// TODO: This should be adapted to use the MediaApiMixin as a base class.
-
 /**
  * Custom Media Element
  * Based on https://github.com/muxinc/custom-video-element - Mux - MIT License
@@ -187,6 +185,7 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
     static shadowRootOptions: ShadowRootInit = { mode: 'open' };
     static Events = Events;
     static #isDefined = false;
+    static #propsToAttrs: Set<string>;
 
     static get observedAttributes() {
       CustomMedia.#define();
@@ -202,9 +201,9 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
       if (CustomMedia.#isDefined) return;
       CustomMedia.#isDefined = true;
 
-      const propsToAttrs = new Set(CustomMedia.observedAttributes);
+      CustomMedia.#propsToAttrs = new Set(CustomMedia.observedAttributes);
       // defaultMuted maps to the muted attribute, handled manually below.
-      propsToAttrs.delete('muted');
+      CustomMedia.#propsToAttrs.delete('muted');
 
       // Passthrough native element functions from the custom element to the native element
       for (const prop of nativeElProps) {
@@ -215,53 +214,21 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
           // @ts-expect-error
           CustomMedia.prototype[prop] = function (...args: any[]) {
             this.#init();
-
-            const fn = () => {
-              if (this.call) return this.call(prop, ...args);
-              const nativeFn = this.nativeEl?.[prop] as ((...args: any[]) => any) | undefined;
-              return nativeFn?.apply(this.nativeEl, args);
-            };
-
-            return fn();
+            return this.call(prop, ...args);
           };
         } else {
           // Getter and setter configuration
           const config: PropertyDescriptor = {
             get(this: CustomMedia) {
               this.#init();
-
-              const attr = prop.toLowerCase();
-              if (propsToAttrs.has(attr)) {
-                const val = this.getAttribute(attr);
-                return val === null ? false : val === '' ? true : val;
-              }
-              return this.get?.(prop) ?? this.nativeEl?.[prop];
+              return this.get(prop);
             },
           };
 
           if (prop !== prop.toUpperCase()) {
             config.set = function (this: CustomMedia, val: any) {
               this.#init();
-
-              const attr = prop.toLowerCase();
-              if (propsToAttrs.has(attr)) {
-                if (val === true || val === false || val == null) {
-                  this.toggleAttribute(attr, Boolean(val));
-                } else {
-                  this.setAttribute(attr, val);
-                }
-                return;
-              }
-
-              if (this.set) {
-                this.set(prop, val);
-                return;
-              }
-
-              if (this.nativeEl) {
-                // @ts-expect-error
-                this.nativeEl[prop] = val;
-              }
+              this.set(prop, val);
             };
           }
 
@@ -276,9 +243,36 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
     #childMap = new Map<MediaChild, MediaChild>();
     #childObserver?: MutationObserver;
 
-    get: ((prop: string) => any) | undefined;
-    set: ((prop: string, val: any) => void) | undefined;
-    call: ((prop: string, ...args: any[]) => any) | undefined;
+    get(prop: string): any {
+      const attr = prop.toLowerCase();
+      if (CustomMedia.#propsToAttrs.has(attr)) {
+        const val = this.getAttribute(attr);
+        return val === null ? false : val === '' ? true : val;
+      }
+      return this.nativeEl?.[prop as keyof typeof this.nativeEl];
+    }
+
+    set(prop: string, val: any): void {
+      const attr = prop.toLowerCase();
+      if (CustomMedia.#propsToAttrs.has(attr)) {
+        if (val === true || val === false || val == null) {
+          this.toggleAttribute(attr, Boolean(val));
+        } else {
+          this.setAttribute(attr, val);
+        }
+        return;
+      }
+
+      if (this.nativeEl) {
+        // @ts-expect-error
+        this.nativeEl[prop as keyof typeof this.nativeEl] = val;
+      }
+    }
+
+    call(prop: string, ...args: any[]): any {
+      const nativeFn = this.nativeEl?.[prop as keyof typeof this.nativeEl] as ((...args: any[]) => any) | undefined;
+      return nativeFn?.apply(this.nativeEl, args);
+    }
 
     // If the custom element is defined before the custom element's HTML is parsed
     // no attributes will be available in the constructor (construction process).
@@ -301,27 +295,13 @@ export function CustomMediaMixin<T extends Constructor<HTMLElement>>(
     }
 
     get defaultMuted() {
-      return this.hasAttribute('muted');
+      this.#init();
+      return this.get('muted');
     }
 
     set defaultMuted(val) {
-      this.toggleAttribute('muted', val);
-    }
-
-    get src() {
-      return this.getAttribute('src');
-    }
-
-    set src(val) {
-      this.setAttribute('src', `${val}`);
-    }
-
-    get preload() {
-      return this.getAttribute('preload') ?? this.nativeEl?.preload;
-    }
-
-    set preload(val) {
-      this.setAttribute('preload', `${val}`);
+      this.#init();
+      this.set('muted', val);
     }
 
     #init(): void {

@@ -161,7 +161,7 @@ interface MediaApi extends MediaBaseApi,
 export interface MediaApiProxyTarget extends EventTarget {}
 
 // Proxy mixin that creates a MediaApi from the passed classes and proxies the methods and properties to the attached target.
-export const MediaApiProxyMixin = <T extends EventTarget>(
+export const MediaProxyMixin = <T extends EventTarget>(
   ...MediaApiTargetClasses: AnyConstructor<T extends [unknown, ...unknown[]] ? T : any>[]
 ) => class MediaApiProxy {
   // Logic that proxies media API to the media target
@@ -179,9 +179,9 @@ export const MediaApiProxyMixin = <T extends EventTarget>(
 }
 
 // Size optimized for the most common use case of proxying HTMLMediaElement.
-export class MediaApiProxy extends MediaApiProxyMixin<HTMLMediaElement>(HTMLMediaElement, EventTarget) {}
-export class VideoApiProxy extends MediaApiProxyMixin<HTMLVideoElement>(HTMLVideoElement, HTMLMediaElement, EventTarget) {}
-export class AudioApiProxy extends MediaApiProxyMixin<HTMLAudioElement>(HTMLAudioElement, HTMLMediaElement, EventTarget) {}
+export class MediaApiProxy extends MediaProxyMixin<HTMLMediaElement>(HTMLMediaElement, EventTarget) {}
+export class VideoApiProxy extends MediaProxyMixin<HTMLVideoElement>(HTMLVideoElement, HTMLMediaElement, EventTarget) {}
+export class AudioApiProxy extends MediaProxyMixin<HTMLAudioElement>(HTMLAudioElement, HTMLMediaElement, EventTarget) {}
 ```
 
 ### Example of using the media API Proxy
