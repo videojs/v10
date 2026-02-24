@@ -60,8 +60,32 @@ export function shouldUpdateDuration(state: DurationUpdateState, owners: Duratio
   // Validate duration: finite, positive, not NaN
   if (!Number.isFinite(duration) || Number.isNaN(duration) || duration <= 0) return false;
 
-  // Only update if different (avoid unnecessary sets)
-  return mediaSource!.duration !== duration;
+  // Only set duration on initial MediaSource setup, when it hasn't been set yet.
+  // A freshly opened MediaSource has duration === NaN. Once set (either by this
+  // task or by endOfStreamTask from buffered.end()), we leave it alone — attempting
+  // to re-sync a slight drift between mediaSource.duration and presentation.duration
+  // races with concurrent appendBuffer() calls from loadSegmentsTask.
+  return isNaN(mediaSource!.duration);
+}
+
+/**
+ * Wait for all currently-updating SourceBuffers to finish.
+ *
+ * The MSE spec forbids setting MediaSource.duration while any attached
+ * SourceBuffer has updating === true. This defers until all are idle.
+ */
+function waitForSourceBuffersReady(owners: DurationUpdateOwners): Promise<void> {
+  const updating = [owners.videoSourceBuffer, owners.audioSourceBuffer].filter(
+    (buf): buf is SourceBuffer => buf !== undefined && buf.updating
+  );
+
+  if (updating.length === 0) return Promise.resolve();
+
+  return Promise.all(
+    updating.map(
+      (buf) => new Promise<void>((resolve) => buf.addEventListener('updateend', () => resolve(), { once: true }))
+    )
+  ).then(() => undefined);
 }
 
 /**
@@ -75,10 +99,14 @@ export function updateDuration({
   owners: WritableState<DurationUpdateOwners>;
 }): () => void {
   return combineLatest([state, owners]).subscribe(
-    ([currentState, currentOwners]: [DurationUpdateState, DurationUpdateOwners]) => {
+    async ([currentState, currentOwners]: [DurationUpdateState, DurationUpdateOwners]) => {
       if (!shouldUpdateDuration(currentState, currentOwners)) return;
 
       const { mediaSource } = currentOwners;
+
+      // MSE spec: duration cannot be set while any SourceBuffer is updating
+      await waitForSourceBuffersReady(currentOwners);
+
       let duration = currentState.presentation!.duration!;
 
       // Get max buffered end time across all SourceBuffers
