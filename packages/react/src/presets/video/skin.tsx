@@ -17,6 +17,7 @@ import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { Controls } from '@/ui/controls';
+import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
@@ -84,10 +85,32 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
         }
       />
 
+      <ErrorDialog
+        aria-labelledby="media-error-title"
+        aria-describedby="media-error-description"
+        render={(props, { onDismiss }) => (
+          <div {...props} className="media-error">
+            <div className="media-error__dialog media-surface">
+              <div className="media-error__content">
+                <p id="media-error-title" className="media-error__title">
+                  Something went wrong.
+                </p>
+                <p id="media-error-description" className="media-error__description">
+                  An error occurred while trying to play the video. Please try again.
+                </p>
+              </div>
+              <div className="media-error__actions">
+                <Button onClick={onDismiss}>OK</Button>
+              </div>
+            </div>
+          </div>
+        )}
+      />
+
       <Controls.Root className="media-surface media-controls">
         <PlayButton
           render={(props, state) => (
-            <Button {...props}>
+            <Button {...props} className="media-button--icon">
               <PlayButtonIcon state={state} className="media-icon" />
             </Button>
           )}
@@ -96,7 +119,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
         <SeekButton
           seconds={-SEEK_TIME}
           render={(props) => (
-            <Button {...props} className="media-button--seek">
+            <Button {...props} className="media-button--icon media-button--seek">
               <span className="media-icon__container">
                 <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
                 <span className="media-icon__label">{SEEK_TIME}</span>
@@ -108,7 +131,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
         <SeekButton
           seconds={SEEK_TIME}
           render={(props) => (
-            <Button {...props} className="media-button--seek">
+            <Button {...props} className="media-button--icon media-button--seek">
               <span className="media-icon__container">
                 <SeekIcon className="media-icon media-icon--seek" />
                 <span className="media-icon__label">{SEEK_TIME}</span>
@@ -126,7 +149,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
 
         <MuteButton
           render={(props, state) => (
-            <Button {...props}>
+            <Button {...props} className="media-button--icon">
               <MuteButtonIcon state={state} className="media-icon" />
             </Button>
           )}
@@ -134,7 +157,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
 
         <PiPButton
           render={(props) => (
-            <Button {...props}>
+            <Button {...props} className="media-button--icon">
               <PipIcon className="media-icon" />
             </Button>
           )}
@@ -142,21 +165,21 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
 
         <FullscreenButton
           render={(props, state) => (
-            <Button {...props}>
+            <Button {...props} className="media-button--icon">
               <FullscreenButtonIcon state={state} className="media-icon" />
             </Button>
           )}
         />
       </Controls.Root>
 
-      {/*<div className="media-captions">
+      {/* <div className="media-captions">
         <div className="media-captions__container">
           <span className="media-captions__text">An example cue</span>
           <span className="media-captions__text">
             <p>Another example cue with HTML</p>
           </span>
         </div>
-      </div>*/}
+      </div> */}
 
       <div className="media-overlay" />
     </Container>

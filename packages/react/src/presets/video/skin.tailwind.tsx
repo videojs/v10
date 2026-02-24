@@ -17,6 +17,7 @@ import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { Controls } from '@/ui/controls';
+import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
@@ -37,14 +38,14 @@ const surface = cn(
   // Border to enhance contrast on lighter videos
   'after:absolute after:inset-0 after:ring after:rounded-[inherit] after:ring-black/15 after:pointer-events-none after:z-10',
   // Reduced transparency for users with preference
-  '[@media(prefers-reduced-transparency:reduce)]:bg-black/70 [@media(prefers-reduced-transparency:reduce)]:bg-black/70 [@media(prefers-reduced-transparency:reduce)]:ring-black [@media(prefers-reduced-transparency:reduce)]:after:ring-white/20',
+  '[@media(prefers-reduced-transparency:reduce)]:bg-black/70 [@media(prefers-reduced-transparency:reduce)]:ring-black [@media(prefers-reduced-transparency:reduce)]:after:ring-white/20',
   // High contrast mode
   'contrast-more:bg-black/90 contrast-more:ring-black contrast-more:after:ring-white/20'
 );
 
 const icon = cn(
   '[grid-area:1/1] size-4.5 shrink-0',
-  'drop-shadow-[0_1px_0_var(--tw-shadow-color)] shadow-black/25',
+  'drop-shadow-[0_1px_0_var(--tw-drop-shadow-color)] drop-shadow-black/25',
   'transition-discrete transition-[display,opacity] duration-150 ease-out'
 );
 
@@ -52,26 +53,36 @@ const iconHidden = 'hidden opacity-0';
 
 /* --------------------------------------- Components ---------------------------------------- */
 
-const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
+const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'> & { variant?: 'icon' }>(function Button(
+  { className, variant, ...props },
+  ref
+) {
   return (
     <button
       ref={ref}
       type="button"
       className={cn(
-        // Layout
-        'grid shrink-0 p-2 cursor-pointer bg-transparent border-none rounded-full',
-        'text-white/90 select-none',
+        // Shared
+        'shrink-0 border-none cursor-pointer select-none',
         'outline-2 outline-transparent -outline-offset-2',
-        'drop-shadow-[0_1px_0_var(--tw-shadow-color)] shadow-black/25',
-        // Transitions
         'transition-[background-color,color,outline-offset] duration-150 ease-out',
-        // Hover / focus / expanded
-        'hover:bg-white/10 hover:text-white hover:no-underline',
-        'focus-visible:bg-white/10 focus-visible:text-white',
-        'focus-visible:outline-blue-500 focus-visible:outline-offset-2',
-        'aria-expanded:bg-white/10 aria-expanded:text-white',
-        // Disabled
         'disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale',
+        // Variant
+        variant === 'icon'
+          ? cn(
+              'grid p-2 bg-transparent rounded-full',
+              'text-white/90',
+              'text-shadow-2xs text-shadow-black/25',
+              'hover:bg-white/10 hover:text-white hover:no-underline',
+              'focus-visible:bg-white/10 focus-visible:text-white',
+              'focus-visible:outline-blue-500 focus-visible:outline-offset-2',
+              'aria-expanded:bg-white/10 aria-expanded:text-white'
+            )
+          : cn(
+              'flex items-center justify-center py-2 px-4 bg-white rounded-full',
+              'text-black font-medium',
+              'focus-visible:outline-blue-500 focus-visible:outline-offset-2'
+            ),
         className
       )}
       {...props}
@@ -123,9 +134,11 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
         'relative isolate overflow-clip @container/media-root',
         // Appearance
         'rounded-[var(--media-border-radius,2rem)] bg-black',
-        'font-sans text-[0.8125rem] leading-normal subpixel-antialiased',
-        // Box-sizing reset for children
-        '**:box-border',
+        'font-[Inter_Variable,Inter,ui-sans-serif,system-ui,sans-serif] text-[0.8125rem] leading-normal subpixel-antialiased',
+        // Resets
+        '**:box-border **:m-0',
+        '[&_button]:font-[inherit]',
+        'motion-safe:[interpolate-size:allow-keywords]',
         // Inner highlight ring (::before)
         'before:absolute before:pointer-events-none before:rounded-[inherit] before:z-10',
         'before:inset-px before:ring-1 before:ring-inset before:ring-white/15',
@@ -162,6 +175,40 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
         }
       />
 
+      <ErrorDialog
+        aria-labelledby="media-error-title"
+        aria-describedby="media-error-description"
+        render={(props, { onDismiss }) => (
+          <div
+            {...props}
+            className="peer/error group/error absolute inset-0 z-20 items-center justify-center pointer-events-none hidden data-[visible]:flex"
+          >
+            <div
+              className={cn(
+                'hidden flex-col gap-3 max-w-72 p-3 rounded-[1.75rem] text-white text-sm pointer-events-auto',
+                'group-data-[visible]/error:flex',
+                'transition-[display,opacity,scale,transform] duration-500 delay-100 transition-discrete',
+                'starting:opacity-0 starting:scale-50',
+                'ease-[linear(0,0.034_1.5%,0.763_9.7%,1.066_13.9%,1.198_19.9%,1.184_21.8%,0.963_37.5%,0.997_50.9%,1)]',
+                surface
+              )}
+            >
+              <div className="flex flex-col gap-2 px-2 pt-2 pb-1.5">
+                <p id="media-error-title" className="font-semibold leading-tight">
+                  Something went wrong.
+                </p>
+                <p id="media-error-description" className="opacity-70">
+                  An error occurred while trying to play the video. Please try again.
+                </p>
+              </div>
+              <div className="flex gap-2 *:flex-1">
+                <Button onClick={onDismiss}>OK</Button>
+              </div>
+            </div>
+          </div>
+        )}
+      />
+
       <Controls.Root
         className={cn(
           // Peer marker for overlay/captions
@@ -190,7 +237,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
       >
         <PlayButton
           render={(props, state) => (
-            <Button {...props}>
+            <Button variant="icon" {...props}>
               <PlayButtonIcon state={state} className={icon} />
             </Button>
           )}
@@ -199,10 +246,10 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
         <SeekButton
           seconds={-SEEK_TIME}
           render={(props) => (
-            <Button {...props} className="@max-md/media-controls:hidden">
+            <Button variant="icon" {...props} className="@max-md/media-controls:hidden">
               <span className="relative">
                 <SeekIcon className={cn(icon, '[scale:-1_1]')} />
-                <span className="absolute left-0 -bottom-0.75 text-[0.75em] font-[480]">{SEEK_TIME}</span>
+                <span className="absolute left-0 -bottom-0.75 text-[0.75em] font-[480] tabular-nums">{SEEK_TIME}</span>
               </span>
             </Button>
           )}
@@ -211,10 +258,10 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
         <SeekButton
           seconds={SEEK_TIME}
           render={(props) => (
-            <Button {...props} className="@max-md/media-controls:hidden">
+            <Button variant="icon" {...props} className="@max-md/media-controls:hidden">
               <span className="relative">
                 <SeekIcon className={icon} />
-                <span className="absolute right-0 -bottom-0.75 text-[0.75em] font-[480]">{SEEK_TIME}</span>
+                <span className="absolute right-0 -bottom-0.75 text-[0.75em] font-[480] tabular-nums">{SEEK_TIME}</span>
               </span>
             </Button>
           )}
@@ -223,19 +270,16 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
         <Time.Group className="@container/media-time flex items-center flex-1 gap-3 px-2">
           <Time.Value
             type="current"
-            className="hidden @2xs/media-time:block drop-shadow-[0_1px_0_var(--tw-shadow-color)] shadow-black/25 tabular-nums"
+            className="hidden @2xs/media-time:block text-shadow-2xs text-shadow-black/25 tabular-nums"
           />
           {/* Temporary spacer */}
           <div className="flex-1 h-1 rounded-full bg-white/20" />
-          <Time.Value
-            type="duration"
-            className="drop-shadow-[0_1px_0_var(--tw-shadow-color)] shadow-black/25 tabular-nums"
-          />
+          <Time.Value type="duration" className="text-shadow-2xs text-shadow-black/25 tabular-nums" />
         </Time.Group>
 
         <MuteButton
           render={(props, state) => (
-            <Button {...props}>
+            <Button variant="icon" {...props}>
               <MuteButtonIcon state={state} className={icon} />
             </Button>
           )}
@@ -243,7 +287,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
 
         <PiPButton
           render={(props) => (
-            <Button {...props}>
+            <Button variant="icon" {...props}>
               <PipIcon className={icon} />
             </Button>
           )}
@@ -251,7 +295,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
 
         <FullscreenButton
           render={(props, state) => (
-            <Button {...props}>
+            <Button variant="icon" {...props}>
               <FullscreenButtonIcon state={state} className={icon} />
             </Button>
           )}
@@ -289,17 +333,24 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           // Layout
           'absolute inset-0 flex flex-col items-start',
           'pointer-events-none rounded-[inherit]',
-          // Gradient overlay
+          // Default: hidden
+          'opacity-0',
           'bg-gradient-to-t from-black/50 via-black/30 to-transparent',
-          'backdrop-saturate-150 backdrop-brightness-90',
+          'backdrop-blur-[0px] backdrop-saturate-150 backdrop-brightness-90',
           // Transitions
-          'transition-opacity ease-out duration-100 delay-0',
-          // Hidden when controls hidden (peer sibling)
-          'peer-not-data-[visible]/controls:opacity-0',
-          'peer-not-data-[visible]/controls:delay-500',
-          'peer-not-data-[visible]/controls:duration-300',
+          'transition-[opacity,backdrop-filter] ease-out',
+          'duration-300 delay-500',
+          // Shown when controls visible
+          'peer-data-[visible]/controls:opacity-100',
+          'peer-data-[visible]/controls:duration-150',
+          'peer-data-[visible]/controls:delay-0',
+          // Shown when error visible (+ blur)
+          'peer-data-[visible]/error:opacity-100',
+          'peer-data-[visible]/error:duration-150',
+          'peer-data-[visible]/error:delay-0',
+          'peer-data-[visible]/error:backdrop-blur-[8px]',
           // Reduced motion
-          'motion-reduce:peer-not-data-[visible]/controls:duration-100'
+          'motion-reduce:duration-100'
         )}
       />
     </Container>
