@@ -1,4 +1,4 @@
-import { Select as BaseSelect } from '@base-ui-components/react/select';
+import { Select as BaseSelect } from '@base-ui/react/select';
 import clsx from 'clsx';
 import { Check, ChevronDown } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';

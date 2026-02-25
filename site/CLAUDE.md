@@ -546,7 +546,7 @@ vi.mock('@/types/docs', async () => {
 - **[React Compiler](https://react.dev/learn/react-compiler)**: Enabled via `babel-plugin-react-compiler` targeting React 19
 - **[Tailwind v4](https://tailwindcss.com)**: CSS utility classes via `@tailwindcss/vite`
 - **[Nanostores 1.0.1](https://github.com/nanostores/nanostores)**: Cross-island state
-- **[Base UI 1.0.0-beta.4](https://base-ui.com)**: Headless accessible components
+- **[Base UI 1.2.0](https://base-ui.com)**: Headless accessible components
 - **[Pagefind 1.4.0](https://pagefind.app)**: Static search with build-time indexing
 - **[Shiki 3.13.0](https://shiki.style)**: Syntax highlighting
 - **[Vitest 3.2.4](https://vitest.dev)**: Testing framework

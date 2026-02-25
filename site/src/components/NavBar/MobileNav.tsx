@@ -1,4 +1,4 @@
-import { Dialog } from '@base-ui-components/react/dialog';
+import { Dialog } from '@base-ui/react/dialog';
 import clsx from 'clsx';
 import { ArrowUpRight, Menu, X } from 'lucide-react';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
