@@ -17,7 +17,6 @@ interface Props {
 }
 
 export default function JSPickerClient({ currentFramework, currentStyle, currentSlug }: Props) {
-  // TODO: use astro view transitions to preserve scroll position when switching from the same slug to the same slug
   const handleFrameworkChange = (newFramework: SupportedFramework | null) => {
     if (newFramework === null) return;
     if (!isValidFramework(newFramework)) return;
@@ -30,10 +29,16 @@ export default function JSPickerClient({ currentFramework, currentStyle, current
     });
 
     if (shouldReplace) {
-      // Maintaining the current slug, navigate without pushing onto the history stack
+      try {
+        sessionStorage.setItem(
+          'vjs-page-scroll',
+          JSON.stringify({ url: new URL(url, window.location.origin).pathname, scrollY: window.scrollY })
+        );
+      } catch {
+        // Ignore storage errors
+      }
       window.location.replace(url);
     } else {
-      // Changing slug, use normal navigation
       window.location.href = url;
     }
   };
