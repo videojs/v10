@@ -27,6 +27,11 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
   },
+  inputOptions: {
+    moduleTypes: {
+      '.css': 'text',
+    },
+  },
   outDir: `dist/${mode}`,
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',

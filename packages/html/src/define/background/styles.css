@@ -1,12 +1,13 @@
-.media-background-skin {
+:host {
+  display: block;
   position: relative;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  --media-object-fit: cover;
+  object-fit: var(--media-object-fit);
 }
 
-.media-background-skin > video,
-.media-background-skin > .media {
+::slotted([slot="media"]) {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -14,7 +15,8 @@
   object-fit: inherit;
 }
 
-.media-background-skin > :where(img, picture) {
+::slotted(img),
+::slotted(picture) {
   width: 100%;
   height: 100%;
   object-fit: inherit;

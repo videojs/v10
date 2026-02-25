@@ -20,6 +20,7 @@ export default defineConfig({
         main: resolve(__dirname, 'src/index.html'),
         core: resolve(__dirname, 'src/core/index.html'),
         html: resolve(__dirname, 'src/html/index.html'),
+        'html-background': resolve(__dirname, 'src/html/background/index.html'),
         react: resolve(__dirname, 'src/react/index.html'),
         'react-tailwind': resolve(__dirname, 'src/react-tailwind/index.html'),
       },

@@ -1,5 +1,3 @@
-import { CustomMediaMixin } from '@videojs/core/dom/media/custom-media-element';
-
 function getTemplateHTML(attrs: Record<string, string>) {
   return /*html*/ `
     <style>
@@ -12,7 +10,8 @@ function getTemplateHTML(attrs: Record<string, string>) {
         inset: 0;
         width: 100%;
         height: 100%;
-        object-fit: inherit;
+        object-fit: var(--media-object-fit, inherit);
+        object-position: var(--media-object-position, 50% 50%);
       }
     </style>
     <slot></slot>
@@ -20,9 +19,13 @@ function getTemplateHTML(attrs: Record<string, string>) {
   `;
 }
 
-export class BackgroundVideo extends CustomMediaMixin(HTMLElement, { tag: 'video' }) {
+// Don't extend CustomMediaMixin to save some bytes, background videos don't need the full Media API.
+export class BackgroundVideo extends HTMLElement {
   static shadowRootOptions = { mode: 'open' as ShadowRootMode };
   static getTemplateHTML = getTemplateHTML;
+  static get observedAttributes() {
+    return ['src'];
+  }
 
   constructor() {
     super();
@@ -42,6 +45,26 @@ export class BackgroundVideo extends CustomMediaMixin(HTMLElement, { tag: 'video
 
       this.shadowRoot!.innerHTML = getTemplateHTML(attrs);
     }
+
+    // Neither Chrome or Firefox support setting the muted attribute
+    // after using document.createElement.
+    // Get around this by setting the muted property manually.
+    this.target!.muted = !this.hasAttribute('nomuted');
+  }
+
+  attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
+    if (attrName === 'src' && oldValue !== newValue) {
+      this.target!.src = newValue ?? '';
+    }
+  }
+
+  get target(): HTMLVideoElement | null {
+    return (
+      this.querySelector(':scope > [slot=media]') ??
+      this.querySelector('video') ??
+      this.shadowRoot?.querySelector('video') ??
+      null
+    );
   }
 }
 
