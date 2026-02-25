@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Segment } from '../../types';
-import { DEFAULT_FORWARD_BUFFER_CONFIG, getSegmentsToLoad } from '../forward-buffer';
+import { calculateForwardFlushPoint, DEFAULT_FORWARD_BUFFER_CONFIG, getSegmentsToLoad } from '../forward-buffer';
 
 // Helper to create test segments
 const createSegment = (startTime: number, duration: number): Segment => ({
@@ -8,6 +8,51 @@ const createSegment = (startTime: number, duration: number): Segment => ({
   url: `https://example.com/seg-${startTime}.m4s`,
   startTime,
   duration,
+});
+
+describe('calculateForwardFlushPoint', () => {
+  it('returns Infinity when no segments are buffered', () => {
+    expect(calculateForwardFlushPoint([], 0)).toBe(Infinity);
+  });
+
+  it('returns Infinity when all buffered segments are within the buffer window', () => {
+    // currentTime=0, bufferDuration=30 → threshold=30. Segments at 0,6,12,18,24 are all < 30.
+    const segments = [
+      createSegment(0, 6),
+      createSegment(6, 6),
+      createSegment(12, 6),
+      createSegment(18, 6),
+      createSegment(24, 6),
+    ];
+    expect(calculateForwardFlushPoint(segments, 0)).toBe(Infinity);
+  });
+
+  it('returns the startTime of the first segment beyond the buffer window', () => {
+    // currentTime=0, bufferDuration=30 → threshold=30.
+    // Segments at 30 and 36 are at/beyond threshold — flush from 30.
+    const segments = [createSegment(0, 6), createSegment(6, 6), createSegment(30, 6), createSegment(36, 6)];
+    expect(calculateForwardFlushPoint(segments, 0)).toBe(30);
+  });
+
+  it('moves flush point as currentTime advances', () => {
+    // After playing to 10s: threshold = 10 + 30 = 40. Segment at 36 is < 40, stays.
+    // Segment at 42 is >= 40, flush from 42.
+    const segments = [createSegment(0, 6), createSegment(36, 6), createSegment(42, 6)];
+    expect(calculateForwardFlushPoint(segments, 10)).toBe(42);
+  });
+
+  it('respects custom bufferDuration', () => {
+    const config = { ...DEFAULT_FORWARD_BUFFER_CONFIG, bufferDuration: 12 };
+    // threshold = 0 + 12 = 12. Segments at 12 and beyond should be flushed.
+    const segments = [createSegment(0, 6), createSegment(6, 6), createSegment(12, 6)];
+    expect(calculateForwardFlushPoint(segments, 0, config)).toBe(12);
+  });
+
+  it('returns the earliest beyond-threshold segment when multiple exist', () => {
+    const segments = [createSegment(30, 6), createSegment(60, 6), createSegment(90, 6)];
+    // All are at/beyond threshold=30. Return the earliest (30).
+    expect(calculateForwardFlushPoint(segments, 0)).toBe(30);
+  });
 });
 
 describe('getSegmentsToLoad', () => {

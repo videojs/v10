@@ -48,6 +48,47 @@ export const DEFAULT_FORWARD_BUFFER_CONFIG: ForwardBufferConfig = {
  * const toLoad = getSegmentsToLoad(segments, buffered, 7, { bufferDuration: 24 });
  * // Returns [seg-12, seg-30] (fills gap, extends to target 31s)
  */
+/**
+ * Calculate the start time from which to flush forward buffer content.
+ *
+ * Content that starts at or beyond `currentTime + bufferDuration` is no
+ * longer needed for the current playback position and should be removed
+ * from the SourceBuffer. This prevents unbounded accumulation of scattered
+ * SourceBuffer content after seeks, which can cause QuotaExceededError on
+ * long-form content.
+ *
+ * Returns `Infinity` when nothing needs flushing (no buffered segments
+ * exist beyond the threshold).
+ *
+ * @param bufferedSegments - Segments currently tracked in the buffer model
+ * @param currentTime - Current playback position in seconds
+ * @param config - Optional forward buffer configuration
+ * @returns Start time to flush from (flush range: [flushStart, Infinity)),
+ *          or Infinity if no flush is needed
+ *
+ * @example
+ * // Playing at 0s, buffered [0,6,12,18,24,30,36], bufferDuration=30
+ * const flushStart = calculateForwardFlushPoint(segments, 0);
+ * // Returns 30 — flush [30, Infinity), keep [0, 30)
+ */
+export function calculateForwardFlushPoint(
+  bufferedSegments: readonly Segment[],
+  currentTime: number,
+  config: ForwardBufferConfig = DEFAULT_FORWARD_BUFFER_CONFIG
+): number {
+  if (bufferedSegments.length === 0) return Infinity;
+
+  const threshold = currentTime + config.bufferDuration;
+
+  // Find segments that start at or beyond the threshold
+  const beyond = bufferedSegments.filter((seg) => seg.startTime >= threshold);
+
+  if (beyond.length === 0) return Infinity;
+
+  // Flush from the earliest such segment onward
+  return Math.min(...beyond.map((seg) => seg.startTime));
+}
+
 export function getSegmentsToLoad(
   segments: readonly Segment[],
   bufferedSegments: readonly Segment[],

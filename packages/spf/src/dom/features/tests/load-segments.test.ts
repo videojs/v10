@@ -916,3 +916,204 @@ describe('loadSegments back buffer flushing', () => {
     cleanup();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Forward buffer flushing
+// ---------------------------------------------------------------------------
+
+describe('loadSegments forward buffer flushing', () => {
+  function makeControllableFetchFwd() {
+    const resolvers = new Map<string, () => void>();
+    const fetchedUrls: string[] = [];
+    const fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      fetchedUrls.push(url);
+      return new Promise<Response>((resolve) => {
+        resolvers.set(url, () => resolve(new Response(new ArrayBuffer(100))));
+      });
+    });
+    const resolveAll = () => resolvers.forEach((fn) => fn());
+    return { fetch, fetchedUrls, resolveAll };
+  }
+
+  function makeSourceBufferFwd() {
+    const listeners: Record<string, EventListener[]> = {};
+    const removedRanges: Array<[number, number]> = [];
+    return {
+      sourceBuffer: {
+        buffered: { length: 0, start: () => 0, end: () => 0 },
+        updating: false,
+        appendBuffer: vi.fn(() => {
+          setTimeout(() => {
+            for (const listener of listeners['updateend'] ?? []) listener(new Event('updateend'));
+          }, 0);
+        }),
+        remove: vi.fn((start: number, end: number) => {
+          removedRanges.push([start, end]);
+          setTimeout(() => {
+            for (const listener of listeners['updateend'] ?? []) listener(new Event('updateend'));
+          }, 0);
+        }),
+        addEventListener: vi.fn((type: string, listener: EventListener) => {
+          listeners[type] ??= [];
+          listeners[type].push(listener);
+        }),
+        removeEventListener: vi.fn((type: string, listener: EventListener) => {
+          listeners[type] = (listeners[type] ?? []).filter((l) => l !== listener);
+        }),
+      } as unknown as SourceBuffer,
+      removedRanges,
+    };
+  }
+
+  function makePresentationFwd(segments: Segment[]) {
+    return {
+      id: 'p1',
+      url: 'http://example.com/playlist.m3u8',
+      startTime: 0,
+      duration: segments.reduce((acc, s) => acc + s.duration, 0),
+      selectionSets: [
+        {
+          id: 'ss1',
+          type: 'video' as const,
+          switchingSets: [{ id: 'sw1', type: 'video' as const, tracks: [makeResolvedVideoTrack(segments)] }],
+        },
+      ],
+    };
+  }
+
+  it('flushes SourceBuffer content beyond the forward buffer window', async () => {
+    const segments = [
+      makeSegment('s1', 0, 10),
+      makeSegment('s2', 10, 10),
+      makeSegment('s3', 20, 10),
+      makeSegment('s4', 30, 10),
+      makeSegment('s5', 40, 10),
+    ];
+
+    const { fetch, resolveAll } = makeControllableFetchFwd();
+    globalThis.fetch = fetch;
+
+    const { loadSegments } = await import('../load-segments');
+    const { createState: cs } = await import('../../../core/state/create-state');
+
+    const { sourceBuffer, removedRanges } = makeSourceBufferFwd();
+
+    // bufferState already has all 5 segments (from a prior seek position)
+    const state = cs<SegmentLoadingState>({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      bufferState: {
+        video: {
+          initTrackId: 'track-1',
+          segments: segments.map((s) => ({ id: s.id, trackId: 'track-1' })),
+          completed: false,
+        },
+      },
+      presentation: makePresentationFwd(segments),
+    });
+
+    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer });
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    setTimeout(resolveAll, 10);
+
+    // At currentTime=0, window=[0,30). s4@30 and s5@40 are beyond threshold.
+    // remove(30, Infinity) should be called.
+    await vi.waitFor(
+      () => {
+        expect(removedRanges.some(([start, end]) => start === 30 && end === Infinity)).toBe(true);
+      },
+      { timeout: 3000 }
+    );
+
+    cleanup();
+  });
+
+  it('removes forward-flushed segments from bufferState', async () => {
+    const segments = [
+      makeSegment('s1', 0, 10),
+      makeSegment('s2', 10, 10),
+      makeSegment('s3', 20, 10),
+      makeSegment('s4', 30, 10),
+      makeSegment('s5', 40, 10),
+    ];
+
+    const { fetch, resolveAll } = makeControllableFetchFwd();
+    globalThis.fetch = fetch;
+
+    const { loadSegments } = await import('../load-segments');
+    const { createState: cs } = await import('../../../core/state/create-state');
+
+    const { sourceBuffer } = makeSourceBufferFwd();
+
+    const state = cs<SegmentLoadingState>({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      bufferState: {
+        video: {
+          initTrackId: 'track-1',
+          segments: segments.map((s) => ({ id: s.id, trackId: 'track-1' })),
+          completed: false,
+        },
+      },
+      presentation: makePresentationFwd(segments),
+    });
+
+    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer });
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    setTimeout(resolveAll, 10);
+
+    await vi.waitFor(
+      () => {
+        const ids = state.current.bufferState?.video?.segments.map((s) => s.id) ?? [];
+        expect(ids).not.toContain('s4');
+        expect(ids).not.toContain('s5');
+        expect(ids).toContain('s1');
+      },
+      { timeout: 3000 }
+    );
+
+    cleanup();
+  });
+
+  it('does not flush when all buffered segments are within the buffer window', async () => {
+    const segments = [makeSegment('s1', 0, 10), makeSegment('s2', 10, 10), makeSegment('s3', 20, 10)];
+
+    const { fetch, resolveAll } = makeControllableFetchFwd();
+    globalThis.fetch = fetch;
+
+    const { loadSegments } = await import('../load-segments');
+    const { createState: cs } = await import('../../../core/state/create-state');
+
+    const { sourceBuffer, removedRanges } = makeSourceBufferFwd();
+
+    const state = cs<SegmentLoadingState>({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      bufferState: {
+        video: {
+          initTrackId: 'track-1',
+          segments: segments.map((s) => ({ id: s.id, trackId: 'track-1' })),
+          completed: false,
+        },
+      },
+      presentation: makePresentationFwd(segments),
+    });
+
+    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer });
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    setTimeout(resolveAll, 10);
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(removedRanges.some(([start]) => start >= 30)).toBe(false);
+
+    cleanup();
+  });
+});
