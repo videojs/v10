@@ -29,10 +29,14 @@ export default function JSPickerClient({ currentFramework, currentStyle, current
     });
 
     if (shouldReplace) {
+      // Base UI's scroll lock transfers html.scrollTop → body.scrollTop
+      const scrollLocked = document.documentElement.hasAttribute('data-base-ui-scroll-locked');
+      const scrollY = scrollLocked ? document.body.scrollTop : window.scrollY;
+
       try {
         sessionStorage.setItem(
           'vjs-page-scroll',
-          JSON.stringify({ url: new URL(url, window.location.origin).pathname, scrollY: window.scrollY })
+          JSON.stringify({ url: new URL(url, window.location.origin).pathname, scrollY })
         );
       } catch {
         // Ignore storage errors

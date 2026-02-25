@@ -58,7 +58,7 @@ const { docsSidebarId } = Astro.props;
       if (scrollData) {
         sessionStorage.removeItem('vjs-page-scroll');
         const { url, scrollY } = JSON.parse(scrollData);
-        if (url === window.location.pathname) {
+        if (url.replace(/\/$/, '') === window.location.pathname.replace(/\/$/, '')) {
           window.scrollTo(0, scrollY);
         }
       }
