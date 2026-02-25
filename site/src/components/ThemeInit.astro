@@ -3,7 +3,7 @@ import { THEME_KEY } from '@/consts';
 ---
 
 {/* Dark mode initialization script - runs before paint to prevent FOUC */}
-<script is:inline define:vars={{ localStorageKey: THEME_KEY }}>
+<script is:inline data-astro-rerun define:vars={{ localStorageKey: THEME_KEY }}>
   if (
     typeof localStorage !== 'undefined' &&
     typeof document !== 'undefined' &&

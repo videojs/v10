@@ -14,7 +14,27 @@ const { docsSidebarId } = Astro.props;
 <script is:inline define:vars={{ docsSidebarId }}>
   const STORAGE_KEY = 'vjs-sidebar-state';
 
-  window.addEventListener('pagereveal', () => {
+  function saveSidebarState() {
+    const aside = document.getElementById(docsSidebarId);
+    if (!aside) return;
+    const detailsState = {};
+    document.querySelectorAll(`#${docsSidebarId} details[id]`).forEach((details) => {
+      detailsState[details.id] = details.open;
+    });
+
+    const state = {
+      sidebarScroll: aside.scrollTop,
+      detailsState,
+    };
+
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error('[Sidebar] Failed to save state', e);
+    }
+  }
+
+  function restoreSidebarState() {
     const aside = document.getElementById(docsSidebarId);
     if (!aside) return;
     const stored = sessionStorage.getItem(STORAGE_KEY);
@@ -49,27 +69,18 @@ const { docsSidebarId } = Astro.props;
         parent = parent.parentElement?.closest('details') ?? null;
       }
     }
-  });
+  }
 
-  window.addEventListener('pageswap', () => {
-    const aside = document.getElementById(docsSidebarId);
-    if (!aside) return;
-    const detailsState = {};
-    document.querySelectorAll(`#${docsSidebarId} details[id]`).forEach((details) => {
-      detailsState[details.id] = details.open;
-    });
+  // Native view transition events (hard refresh / initial load fallback)
+  window.addEventListener('pageswap', saveSidebarState);
+  window.addEventListener('pagereveal', restoreSidebarState);
 
-    const state = {
-      sidebarScroll: aside.scrollTop,
-      detailsState,
-    };
+  // Astro ClientRouter lifecycle events (SPA navigation)
+  document.addEventListener('astro:before-swap', saveSidebarState);
+  document.addEventListener('astro:after-swap', restoreSidebarState);
 
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (e) {
-      console.error('[Sidebar] Failed to save state', e);
-    }
-  });
+  // Restore on initial page load
+  restoreSidebarState();
 </script>
 
 {

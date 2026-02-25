@@ -1,3 +1,4 @@
+import { navigate } from 'astro:transitions/client';
 import { useStore } from '@nanostores/react';
 import { Select } from '@/components/Select';
 import { currentStyle as styleStore } from '@/stores/preferences';
@@ -35,11 +36,12 @@ export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
     });
 
     if (shouldReplace) {
-      // Maintaining the current slug, navigate without pushing onto the history stack
-      window.location.replace(url);
+      const currentScrollY = window.scrollY;
+      navigate(url, { history: 'replace' }).then(() => {
+        window.scrollTo(0, currentScrollY);
+      });
     } else {
-      // Changing slug, use normal navigation
-      window.location.href = url;
+      navigate(url);
     }
   };
 

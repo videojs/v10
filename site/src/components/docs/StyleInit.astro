@@ -28,6 +28,7 @@ const allStyles = [...new Set(Object.values(FRAMEWORK_STYLES).flat())];
 */}
 <script
   is:inline
+  data-astro-rerun
   define:vars={{ keyPrefix: STYLE_KEY_PREFIX, frameworkStyles: frameworkStylesConfig, defaultStyle: defaultStyleConfig }}
 >
   if (typeof localStorage !== 'undefined' && typeof document !== 'undefined') {

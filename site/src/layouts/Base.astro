@@ -2,6 +2,7 @@
 
 
 import { Font } from 'astro:assets';
+import { ClientRouter } from 'astro:transitions';
 import type { ImageMetadata } from 'astro';
 
 import { SEO_SUFFIX, SITE_TITLE } from '@/consts';
@@ -42,6 +43,8 @@ const fullTitle =
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href={new URL('rss.xml', Astro.site)} />
     <meta name="generator" content={Astro.generator} />
+
+    <ClientRouter />
 
     {/* Important stuff */}
     <slot name="priority-head" />
