@@ -98,7 +98,7 @@ function generateJS(useCase: UseCase, skin: Skin): string {
     return `import '@videojs/html/background/player';
 import '@videojs/html/background/skin';
 import '@videojs/html/background/skin.css';
-import '@videojs/html/media/background-video';`;
+import '@videojs/html/background/video';`;
   }
   const { group, skinFile } = getSkinImportParts(skin);
   return `import '@videojs/html/${group}/player';
