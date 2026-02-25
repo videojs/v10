@@ -1,3 +1,4 @@
+import { getSegmentsToLoad } from '../../core/buffer/forward-buffer';
 import { combineLatest } from '../../core/reactive/combine-latest';
 import type { WritableState } from '../../core/state/create-state';
 import type { Presentation, Segment, TextTrack } from '../../core/types';
@@ -44,38 +45,52 @@ const loadVttSegmentTask = async (
  */
 const loadTextTrackCuesTask = async (
   { currentState }: { currentState: TextTrackCueLoadingState },
-  context: { signal: AbortSignal; textTrack: globalThis.TextTrack }
+  context: {
+    signal: AbortSignal;
+    textTrack: globalThis.TextTrack;
+    state: WritableState<TextTrackCueLoadingState>;
+  }
 ): Promise<void> => {
   const track = findSelectedTextTrack(currentState);
   if (!track || !isResolvedTrack(track)) return;
 
-  const segments = track.segments;
+  const { segments } = track;
   if (segments.length === 0) return;
 
-  // Build array of subtask invocation functions
-  const createVttTasks = segments.map(
-    (segment) => () => loadVttSegmentTask({ segment }, { textTrack: context.textTrack })
-  );
+  const trackId = track.id;
 
-  const taskFactories = createVttTasks;
+  // Resolve segments already recorded in the state model for this track.
+  // Keyed by track ID so multiple text tracks don't interfere with each other.
+  const loadedIds = new Set((currentState.textBufferState?.[trackId]?.segments ?? []).map((s) => s.id));
+  const alreadyLoaded = segments.filter((s) => loadedIds.has(s.id));
 
-  // Track current subtask (same pattern as main task tracking)
-  let currentSubtask: Promise<void> | null = null;
+  // Apply the same forward buffer window as audio/video segment loading.
+  const currentTime = currentState.currentTime ?? 0;
+  const segmentsToLoad = getSegmentsToLoad(segments, alreadyLoaded, currentTime).filter((s) => !loadedIds.has(s.id));
 
-  // Execute subtasks sequentially
-  for (const createTask of taskFactories) {
+  if (segmentsToLoad.length === 0) return;
+
+  // Execute subtasks sequentially, recording each loaded segment in state.
+  for (const segment of segmentsToLoad) {
     if (context.signal.aborted) break;
 
-    currentSubtask = createTask();
-
     try {
-      await currentSubtask;
+      await loadVttSegmentTask({ segment }, { textTrack: context.textTrack });
+
+      // Record the loaded segment in shared state — mirrors bufferState for
+      // audio/video and supports N text tracks keyed by track ID.
+      const latest = context.state.current.textBufferState ?? {};
+      const trackState = latest[trackId] ?? { segments: [] };
+      context.state.patch({
+        textBufferState: {
+          ...latest,
+          [trackId]: { segments: [...trackState.segments, { id: segment.id }] },
+        },
+      });
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') break;
       console.error('Failed to load VTT segment:', error);
       // Continue to next segment (graceful degradation)
-    } finally {
-      currentSubtask = null;
     }
   }
 
@@ -88,11 +103,30 @@ const loadTextTrackCuesTask = async (
 // ============================================================================
 
 /**
+ * Loaded-segment record for a single text track.
+ */
+export interface TextTrackSegmentState {
+  segments: Array<{ id: string }>;
+}
+
+/**
+ * Buffer model for text track cues — keyed by track ID.
+ *
+ * Using a per-track-ID map (rather than fixed 'video'/'audio' keys) because
+ * there can be N text tracks — one per language/subtitle variant.
+ */
+export type TextTrackBufferState = Record<string, TextTrackSegmentState>;
+
+/**
  * State shape for text track cue loading.
  */
 export interface TextTrackCueLoadingState {
   selectedTextTrackId?: string;
   presentation?: Presentation;
+  /** Current playback position — used to gate VTT segment fetching to the forward buffer window. */
+  currentTime?: number;
+  /** Loaded-segment model for text tracks, keyed by track ID. */
+  textBufferState?: TextTrackBufferState;
 }
 
 /**
@@ -120,13 +154,6 @@ function findSelectedTextTrack(state: TextTrackCueLoadingState): TextTrack | und
   return track as TextTrack | undefined;
 }
 
-/**
- * Select which VTT segments to load for the current text track.
- *
- * Currently returns all segments (full track loading).
- *
- * Future enhancements:
- * - Filter based on playhead position and buffer window
 /**
  * Get the browser's TextTrack object for the selected text track.
  *
@@ -188,11 +215,6 @@ export function shouldLoadTextTrackCues(state: TextTrackCueLoadingState, owners:
     return false;
   }
 
-  // Already has cues? Skip (null means not loaded yet, length 0 means loaded but empty)
-  if (textTrack.cues !== null && textTrack.cues.length > 0) {
-    return false;
-  }
-
   return true;
 }
 
@@ -220,9 +242,19 @@ export function loadTextTrackCues({
 }): () => void {
   let currentTask: Promise<void> | null = null;
   let abortController: AbortController | null = null;
+  let lastTrackId: string | undefined;
 
   const cleanup = combineLatest([state, owners]).subscribe(
     async ([currentState, currentOwners]: [TextTrackCueLoadingState, TextTrackCueLoadingOwners]) => {
+      // Abort any in-progress task when the selected track changes.
+      // The new track's textBufferState entry will be empty, so the task
+      // naturally starts fresh without needing any explicit reset.
+      if (currentState.selectedTextTrackId !== lastTrackId) {
+        lastTrackId = currentState.selectedTextTrackId;
+        abortController?.abort();
+        currentTask = null;
+      }
+
       if (currentTask) return; // Task already in progress
       if (!shouldLoadTextTrackCues(currentState, currentOwners)) return;
 
@@ -231,7 +263,7 @@ export function loadTextTrackCues({
 
       // Create abort controller and invoke task
       abortController = new AbortController();
-      currentTask = loadTextTrackCuesTask({ currentState }, { signal: abortController.signal, textTrack });
+      currentTask = loadTextTrackCuesTask({ currentState }, { signal: abortController.signal, textTrack, state });
 
       try {
         await currentTask;

@@ -17,6 +17,7 @@ import { createState } from '../core/state/create-state';
 import { endOfStream } from './features/end-of-stream';
 import type { BufferState } from './features/load-segments';
 import { loadSegments } from './features/load-segments';
+import type { TextTrackBufferState } from './features/load-text-track-cues';
 import { loadTextTrackCues } from './features/load-text-track-cues';
 import { setupMediaSource } from './features/setup-mediasource';
 import { setupSourceBuffer } from './features/setup-sourcebuffer';
@@ -92,6 +93,9 @@ export interface PlaybackEngineState {
 
   // Buffer state (tracks loaded segments per SourceBuffer)
   bufferState?: BufferState;
+
+  // Text track buffer state (tracks loaded VTT segments per text track ID)
+  textBufferState?: TextTrackBufferState;
 
   // Current playback position (mirrored from mediaElement via trackCurrentTime)
   currentTime?: number;
