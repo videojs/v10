@@ -1,5 +1,7 @@
 import type { FullscreenButtonState, MuteButtonState, PlayButtonState } from '@videojs/core';
 import {
+  CaptionsOffIcon,
+  CaptionsOnIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -16,6 +18,7 @@ import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
+import { CaptionsButton, type CaptionsButtonState } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
@@ -94,6 +97,16 @@ function MuteButtonIcon({ state, className, ...rest }: { state: MuteButtonState 
       <VolumeOffIcon {...rest} className={cn(className, { [iconHidden]: !muted })} />
       <VolumeLowIcon {...rest} className={cn(className, { [iconHidden]: muted || volumeLevel !== 'low' })} />
       <VolumeHighIcon {...rest} className={cn(className, { [iconHidden]: muted || volumeLevel === 'low' })} />
+    </>
+  );
+}
+
+function CaptionsButtonIcon({ state, className, ...rest }: { state: CaptionsButtonState } & ComponentProps<'svg'>) {
+  const { active } = state;
+  return (
+    <>
+      <CaptionsOffIcon {...rest} className={cn(className, { [iconHidden]: active })} />
+      <CaptionsOnIcon {...rest} className={cn(className, { [iconHidden]: !active })} />
     </>
   );
 }
@@ -278,6 +291,14 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
             )}
           />
 
+          <CaptionsButton
+            render={(props, state) => (
+              <Button variant="icon" {...props}>
+                <CaptionsButtonIcon state={state} className={icon} />
+              </Button>
+            )}
+          />
+
           <PiPButton
             render={(props) => (
               <Button variant="icon" {...props}>
@@ -330,7 +351,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
           // Default: hidden
           'opacity-0',
           'bg-gradient-to-t from-black/70 via-black/50 via-[7.5rem] to-transparent',
-          'backdrop-blur-[0px] backdrop-saturate-150 backdrop-brightness-90',
+          'backdrop-blur-[0px] backdrop-saturate-120 backdrop-brightness-90',
           // Transitions
           'transition-[opacity,backdrop-filter] ease-out',
           'duration-500 delay-500',

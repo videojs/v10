@@ -1,5 +1,7 @@
 import type { FullscreenButtonState, MuteButtonState, PlayButtonState } from '@videojs/core';
 import {
+  CaptionsOffIcon,
+  CaptionsOnIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -16,6 +18,7 @@ import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
+import { CaptionsButton, type CaptionsButtonState } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
@@ -52,6 +55,16 @@ function MuteButtonIcon({ state, className, ...rest }: { state: MuteButtonState 
       <VolumeOffIcon {...rest} className={cn(className, { 'media-icon--hidden': !muted })} />
       <VolumeLowIcon {...rest} className={cn(className, { 'media-icon--hidden': muted || volumeLevel !== 'low' })} />
       <VolumeHighIcon {...rest} className={cn(className, { 'media-icon--hidden': muted || volumeLevel === 'low' })} />
+    </>
+  );
+}
+
+function CaptionsButtonIcon({ state, className, ...rest }: { state: CaptionsButtonState } & ComponentProps<'svg'>) {
+  const { active } = state;
+  return (
+    <>
+      <CaptionsOffIcon {...rest} className={cn(className, { 'media-icon--hidden': active })} />
+      <CaptionsOnIcon {...rest} className={cn(className, { 'media-icon--hidden': !active })} />
     </>
   );
 }
@@ -156,6 +169,14 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
             render={(props, state) => (
               <Button {...props} className="media-button--icon">
                 <MuteButtonIcon state={state} className="media-icon" />
+              </Button>
+            )}
+          />
+
+          <CaptionsButton
+            render={(props, state) => (
+              <Button {...props} className="media-button--icon">
+                <CaptionsButtonIcon state={state} className="media-icon" />
               </Button>
             )}
           />

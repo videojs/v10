@@ -25,19 +25,16 @@ const SVGO_CONFIG: Config = {
       params: {
         overrides: {
           removeViewBox: false,
+          convertColors: {
+            currentColor: /^black$/,
+          },
         },
       },
     },
     {
       name: 'removeAttrs',
       params: {
-        attrs: ['^fill$', '^stroke$', '^clip-rule$', '^fill-rule$'],
-      },
-    },
-    {
-      name: 'addAttributesToSVGElement',
-      params: {
-        attributes: [{ fill: 'currentColor' }],
+        attrs: ['^clip-rule$', '^fill-rule$'],
       },
     },
   ],
@@ -64,7 +61,10 @@ function getSvgFiles(setName: string): string[] {
 }
 
 function optimizeSvg(svgContent: string): string {
-  return optimize(svgContent, SVGO_CONFIG).data;
+  const optimized = optimize(svgContent, SVGO_CONFIG).data;
+  return optimized
+    .replaceAll('fill="black"', 'fill="currentColor"')
+    .replaceAll('stroke="black"', 'stroke="currentColor"');
 }
 
 async function buildReactComponent(svgContent: string, componentName: string): Promise<{ js: string; tsx: string }> {
