@@ -1,7 +1,7 @@
 import type { BandwidthState } from '../../core/abr/bandwidth-estimator';
 import { sampleBandwidth } from '../../core/abr/bandwidth-estimator';
 import { calculateBackBufferFlushPoint } from '../../core/buffer/back-buffer';
-import { getSegmentsToLoad } from '../../core/buffer/forward-buffer';
+import { calculateForwardFlushPoint, getSegmentsToLoad } from '../../core/buffer/forward-buffer';
 import { combineLatest } from '../../core/reactive/combine-latest';
 import type { WritableState } from '../../core/state/create-state';
 import type { AddressableObject, Presentation, Segment } from '../../core/types';
@@ -178,7 +178,14 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
   // Only load init segment if not already loaded for this track
   const needsInit = bufferState?.initTrackId !== track.id;
 
-  if (!needsInit && segmentsToLoad.length === 0) return;
+  // Compute forward flush point before the early-return guard. We must not
+  // bail out early when there are segments beyond the buffer window to remove,
+  // even if the load window is already fully satisfied. This is the counterpart
+  // to placing the forward-flush check in shouldLoadSegments — both need to be
+  // aware of the same "flush or load" condition. See shouldLoadSegments JSDoc.
+  const forwardFlushStart = calculateForwardFlushPoint(bufferedSegments, currentTime);
+
+  if (!needsInit && segmentsToLoad.length === 0 && forwardFlushStart === Infinity) return;
 
   // Reset completed so the end-of-stream orchestrator doesn't mistake a
   // stale last-segment ID (from a prior play-through) for a finished pipeline.
@@ -191,6 +198,28 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
         bufferState: {
           ...context.state.current.bufferState,
           [bufferKey]: { ...currentBuf, completed: false },
+        },
+      });
+    }
+  }
+
+  // Forward buffer management (B5): flush segments too far ahead of currentTime.
+  // After seeks, the SourceBuffer can accumulate scattered content from prior
+  // positions. Removing it keeps memory bounded and prevents QuotaExceededError
+  // on long-form content.
+  if (forwardFlushStart < Infinity) {
+    await flushBuffer(context.sourceBuffer, forwardFlushStart, Infinity);
+
+    const currentBufferStateForForward = context.state.current.bufferState?.[bufferKey];
+    if (currentBufferStateForForward) {
+      const remaining = currentBufferStateForForward.segments.filter((s) => {
+        const seg = track.segments.find((ts) => ts.id === s.id);
+        return seg ? seg.startTime < forwardFlushStart : true;
+      });
+      context.state.patch({
+        bufferState: {
+          ...context.state.current.bufferState,
+          [bufferKey]: { ...currentBufferStateForForward, segments: remaining },
         },
       });
     }
@@ -312,7 +341,7 @@ export function canLoadSegments(
 }
 
 /**
- * Check if we should load segments.
+ * Check if we should run a segment task (loading or flushing).
  *
  * Three loading modes based on preload + playbackInitiated:
  *
@@ -321,6 +350,19 @@ export function canLoadSegments(
  *   The init segment (moov box) advances readyState to HAVE_METADATA, satisfying
  *   the browser's preload="metadata" contract and avoiding a stuck HAVE_NOTHING state.
  * - Blocked (preload='none' or undefined, not yet played): load nothing.
+ *
+ * @note Architectural debt: this function conflates two distinct concerns —
+ * "should we load new data?" and "should we flush stale forward-buffer data?".
+ * The forward-flush check (`calculateForwardFlushPoint`) is included here
+ * because `loadSegmentsTask` owns both loading and flushing in V1, and the
+ * task must be triggered even when nothing new needs loading (e.g. after a
+ * seek-back where far-ahead content needs to be removed but the load window
+ * is already satisfied). A cleaner architecture would separate these concerns:
+ * a dedicated flush orchestrator would subscribe independently to `currentTime`
+ * changes and handle SourceBuffer trimming without coupling to the load path.
+ * The root issue is that `SourceBufferState` (and our broader buffer model) does
+ * not yet capture enough information to reason about the physical state of the
+ * SourceBuffer independently of the loading pipeline.
  */
 export function shouldLoadSegments(
   state: SegmentLoadingState,
@@ -350,12 +392,17 @@ export function shouldLoadSegments(
     return state.bufferState?.[bufferKey]?.initTrackId !== track.id;
   }
 
-  // Full mode: need segments in buffer window
+  // Full mode: run the task if there are segments to load OR stale forward
+  // content to flush. See JSDoc above for why these are combined here rather
+  // than in a separate orchestrator.
   if (track.segments.length === 0) return false;
   const bufferedSegments = resolveBufferedSegments(track.segments, state.bufferState?.[bufferKey]);
   const currentTime = state.currentTime ?? 0;
 
-  return getSegmentsToLoad(track.segments, bufferedSegments, currentTime).length > 0;
+  return (
+    getSegmentsToLoad(track.segments, bufferedSegments, currentTime).length > 0 ||
+    calculateForwardFlushPoint(bufferedSegments, currentTime) < Infinity
+  );
 }
 
 /**
