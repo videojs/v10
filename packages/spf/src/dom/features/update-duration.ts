@@ -107,6 +107,11 @@ export function updateDuration({
       // MSE spec: duration cannot be set while any SourceBuffer is updating
       await waitForSourceBuffersReady(currentOwners);
 
+      // Re-check readyState after the async wait — the endOfStream orchestrator may
+      // have called mediaSource.endOfStream() concurrently, transitioning readyState
+      // to 'ended'. Setting duration in that state throws InvalidStateError.
+      if (mediaSource!.readyState !== 'open') return;
+
       let duration = currentState.presentation!.duration!;
 
       // Get max buffered end time across all SourceBuffers

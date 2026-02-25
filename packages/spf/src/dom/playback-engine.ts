@@ -1,3 +1,4 @@
+import type { BandwidthState } from '../core/abr/bandwidth-estimator';
 import { createEventStream } from '../core/events/create-event-stream';
 import { calculatePresentationDuration } from '../core/features/calculate-presentation-duration';
 import { type PresentationAction, resolvePresentation } from '../core/features/resolve-presentation';
@@ -10,6 +11,7 @@ import {
 } from '../core/features/select-tracks';
 import { createState } from '../core/state/create-state';
 import { endOfStream } from './features/end-of-stream';
+import type { BufferState } from './features/load-segments';
 import { loadSegments } from './features/load-segments';
 import { loadTextTrackCues } from './features/load-text-track-cues';
 import { setupMediaSource } from './features/setup-mediasource';
@@ -78,6 +80,18 @@ export interface PlaybackEngineState {
   selectedAudioTrackId?: string;
   // NOTE: Text Tracks (subtitles/ccs) can be unselected
   selectedTextTrackId?: string;
+
+  // Bandwidth estimation state
+  bandwidthState?: BandwidthState;
+
+  // Buffer state (tracks loaded segments per SourceBuffer)
+  bufferState?: BufferState;
+
+  // Current playback position (mirrored from mediaElement via trackCurrentTime)
+  currentTime?: number;
+
+  // True once the user has initiated playback (enables segment loading regardless of preload)
+  playbackInitiated?: boolean;
 }
 
 /**
@@ -160,7 +174,19 @@ export interface PlaybackEngine {
  */
 export function createPlaybackEngine(config: PlaybackEngineConfig = {}): PlaybackEngine {
   // Create reactive state and owners (initially empty)
-  const state = createState<PlaybackEngineState>({});
+  const state = createState<PlaybackEngineState>({
+    bandwidthState: {
+      fastEstimate: 0,
+      fastTotalWeight: 0,
+      slowEstimate: 0,
+      slowTotalWeight: 0,
+      bytesSampled: 0,
+    },
+    bufferState: {
+      video: { segments: [], completed: false },
+      audio: { segments: [], completed: false },
+    },
+  });
   const owners = createState<PlaybackEngineOwners>({});
 
   // Create single shared event stream for all orchestrations

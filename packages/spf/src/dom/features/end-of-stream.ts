@@ -3,9 +3,11 @@ import type { WritableState } from '../../core/state/create-state';
 import type { Presentation } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
+import type { BufferState, SourceBufferState } from './load-segments';
 
 export interface EndOfStreamState extends TrackSelectionState {
   presentation?: Presentation;
+  bufferState?: BufferState;
 }
 
 export interface EndOfStreamOwners {
@@ -16,69 +18,39 @@ export interface EndOfStreamOwners {
 }
 
 /**
- * Check if a SourceBuffer has loaded all segments for its track.
+ * Check if the loading pipeline has completed for a track.
  *
- * For VOD, we check if:
- * 1. Buffer has data
- * 2. Buffer starts at 0 (beginning of stream)
- * 3. Buffer is contiguous (no gaps)
- *
- * Note: We don't check duration here because duration may be slightly off
- * from actual buffered range (which is why endOfStream() exists to correct it).
+ * Uses the `completed` flag on SourceBufferState, which is set by the
+ * loadSegments orchestrator only after its run-loop exits with nothing
+ * left to load AND the last segment's ID is confirmed in the model.
+ * The flag is reset to false whenever a new loading run begins, so a
+ * stale last-segment ID from a prior play-through cannot trigger a
+ * premature endOfStream() call.
  */
-function hasLoadedAllSegments(
-  buffer: SourceBuffer | undefined,
-  segmentCount: number,
-  expectedDuration?: number
+function isLastSegmentAppended(
+  segments: readonly { id: string }[],
+  bufferState: SourceBufferState | undefined
 ): boolean {
-  // If no segments to load, consider it complete
-  if (segmentCount === 0) return true;
-
-  // If buffer doesn't exist, segments are not loaded
-  if (!buffer) return false;
-
-  const { buffered } = buffer;
-  if (buffered.length === 0) return false;
-
-  // Must have contiguous buffer from start
-  if (buffered.start(0) !== 0) return false;
-
-  // For a complete VOD stream, we expect a single contiguous buffered range
-  // If we have gaps, segments are still loading
-  if (buffered.length > 1) return false;
-
-  // If we have expected duration, check if we're close (within 1 second tolerance)
-  // This handles the case where actual media duration differs from playlist
-  if (expectedDuration !== undefined) {
-    const bufferedEnd = buffered.end(0);
-    const tolerance = 1; // 1 second tolerance
-    return Math.abs(bufferedEnd - expectedDuration) < tolerance;
-  }
-
-  // Fallback: just check that we have data from 0
-  return true;
+  if (segments.length === 0) return true;
+  return bufferState?.completed ?? false;
 }
 
 /**
- * Check if all tracks have finished loading segments.
+ * Check if the last segment has been appended for each selected track.
+ *
+ * Handles video-only, audio-only, and video+audio scenarios.
+ * A track with no segments (e.g. unresolved) is considered not ready.
  */
-export function areAllTracksLoaded(state: EndOfStreamState, owners: EndOfStreamOwners): boolean {
+export function hasLastSegmentLoaded(state: EndOfStreamState): boolean {
   const videoTrack = state.selectedVideoTrackId ? getSelectedTrack(state, 'video') : undefined;
   const audioTrack = state.selectedAudioTrackId ? getSelectedTrack(state, 'audio') : undefined;
 
-  const { presentation } = state;
-  const expectedDuration = presentation?.duration;
-
-  // Check video track (if present)
   if (videoTrack && isResolvedTrack(videoTrack)) {
-    const videoLoaded = hasLoadedAllSegments(owners.videoBuffer, videoTrack.segments.length, expectedDuration);
-    if (!videoLoaded) return false;
+    if (!isLastSegmentAppended(videoTrack.segments, state.bufferState?.video)) return false;
   }
 
-  // Check audio track (if present)
   if (audioTrack && isResolvedTrack(audioTrack)) {
-    const audioLoaded = hasLoadedAllSegments(owners.audioBuffer, audioTrack.segments.length, expectedDuration);
-    if (!audioLoaded) return false;
+    if (!isLastSegmentAppended(audioTrack.segments, state.bufferState?.audio)) return false;
   }
 
   return true;
@@ -117,15 +89,92 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
   if (hasVideoTrack && !owners.videoBuffer) return false;
   if (hasAudioTrack && !owners.audioBuffer) return false;
 
-  // All tracks must have loaded their segments
-  if (!areAllTracksLoaded(state, owners)) return false;
+  // Last segment must be appended for each selected track
+  if (!hasLastSegmentLoaded(state)) return false;
 
   return true;
 }
 
 /**
- * Call endOfStream when all segments are loaded.
+ * Wait for all currently-updating SourceBuffers to finish.
+ * Same contract as in update-duration.ts but for EndOfStreamOwners field names.
+ */
+function waitForSourceBuffersReady(owners: EndOfStreamOwners): Promise<void> {
+  const updating = [owners.videoBuffer, owners.audioBuffer].filter(
+    (buf): buf is SourceBuffer => buf !== undefined && buf.updating
+  );
+
+  if (updating.length === 0) return Promise.resolve();
+
+  return Promise.all(
+    updating.map(
+      (buf) => new Promise<void>((resolve) => buf.addEventListener('updateend', () => resolve(), { once: true }))
+    )
+  ).then(() => undefined);
+}
+
+/**
+ * Get the highest buffered end time across all active SourceBuffers.
+ * Used to set the final duration from actual container timestamps rather
+ * than playlist metadata, which handles both shorter and longer cases.
+ */
+function getMaxBufferedEnd(owners: EndOfStreamOwners): number {
+  let max = 0;
+  for (const buf of [owners.videoBuffer, owners.audioBuffer]) {
+    if (buf && buf.buffered.length > 0) {
+      const end = buf.buffered.end(buf.buffered.length - 1);
+      if (end > max) max = end;
+    }
+  }
+  return max;
+}
+
+/**
+ * End of stream task (module-level, pure).
+ * Sets the final duration from actual buffered end time, then calls endOfStream().
+ */
+const endOfStreamTask = async (
+  { currentOwners }: { currentOwners: EndOfStreamOwners },
+  _context: {}
+): Promise<void> => {
+  const { mediaSource } = currentOwners;
+
+  // Double-check MediaSource isn't already ended (in case of race)
+  if (mediaSource!.readyState === 'ended') {
+    return;
+  }
+
+  // Wait for any in-progress SourceBuffer operations to finish before calling
+  // endOfStream() — the MSE spec forbids it while any buffer has updating === true.
+  await waitForSourceBuffersReady(currentOwners);
+
+  // Re-check after the async wait
+  if (mediaSource!.readyState !== 'open') return;
+
+  // Set the final duration from actual buffered container timestamps.
+  // This is more accurate than the playlist-derived duration and correctly
+  // handles both shorter (common with CMAF) and longer actual media durations.
+  // Per MSE spec, endOfStream() will only *increase* duration if needed, so
+  // setting it here first ensures the value from the buffer wins in all cases.
+  const bufferedEnd = getMaxBufferedEnd(currentOwners);
+  if (bufferedEnd > 0) {
+    mediaSource!.duration = bufferedEnd;
+  }
+
+  mediaSource!.endOfStream();
+
+  // Wait a frame to allow async state updates to flush
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+};
+
+/**
+ * Call endOfStream when the last segment has been appended.
  * This signals to the browser that the stream is complete.
+ *
+ * Per the MSE spec, appendBuffer() remains valid after endOfStream() —
+ * seeks that require re-appending earlier segments will still work.
+ * What becomes blocked is calling endOfStream() again, addSourceBuffer(),
+ * and MediaSource.duration updates.
  */
 export function endOfStream({
   state,
@@ -138,28 +187,23 @@ export function endOfStream({
 
   return combineLatest([state, owners]).subscribe(
     async ([currentState, currentOwners]: [EndOfStreamState, EndOfStreamOwners]) => {
-      if (hasEnded) return; // Only call once
+      if (hasEnded) {
+        // Per the MSE spec, calling appendBuffer() on a SourceBuffer when
+        // readyState is 'ended' automatically transitions it back to 'open'.
+        // This happens on seek-back after end-of-stream — allow endOfStream()
+        // to be called again once the last segment is reloaded.
+        if (currentOwners.mediaSource?.readyState !== 'open') return;
+        hasEnded = false;
+      }
       if (!shouldEndStream(currentState, currentOwners)) return;
 
-      const { mediaSource } = currentOwners;
-
-      // Double-check MediaSource isn't already ended (in case of race)
-      if (mediaSource!.readyState === 'ended') {
-        hasEnded = true;
-        return;
-      }
-
+      // Set flag before awaiting to close the re-entry window between
+      // endOfStream() being called and the async task completing.
+      hasEnded = true;
       try {
-        mediaSource!.endOfStream();
-
-        // Wait a frame before setting flag to allow async state updates to flush
-        // This prevents race conditions where multiple triggers fire before the flag is checked
-        await new Promise((resolve) => requestAnimationFrame(resolve));
-        hasEnded = true;
+        await endOfStreamTask({ currentOwners }, {});
       } catch (error) {
         console.error('Failed to call endOfStream:', error);
-        // Still set flag to prevent retry on error
-        hasEnded = true;
       }
     }
   );

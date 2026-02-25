@@ -1,11 +1,272 @@
+import type { BandwidthState } from '../../core/abr/bandwidth-estimator';
+import { sampleBandwidth } from '../../core/abr/bandwidth-estimator';
+import { calculateBackBufferFlushPoint } from '../../core/buffer/back-buffer';
+import { getSegmentsToLoad } from '../../core/buffer/forward-buffer';
 import { combineLatest } from '../../core/reactive/combine-latest';
 import type { WritableState } from '../../core/state/create-state';
-import type { Presentation, Segment } from '../../core/types';
+import type { AddressableObject, Presentation, Segment } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { BufferKeyByType, getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
 import { appendSegment } from '../media/append-segment';
+import { flushBuffer } from '../media/buffer-flusher';
 import { fetchResolvable } from '../network/fetch';
 import type { MediaTrackType } from './setup-sourcebuffer';
+
+// ============================================================================
+// BUFFER STATE TYPES
+// ============================================================================
+
+/**
+ * Buffer state for a single SourceBuffer.
+ * Tracks which init segment and media segments are loaded.
+ */
+export interface SourceBufferState {
+  /** Track ID of the loaded init segment */
+  initTrackId?: string;
+
+  /** Loaded media segments (unordered - selectors derive ordering) */
+  segments: Array<{
+    id: string;
+    trackId: string;
+  }>;
+
+  /**
+   * True when the loading pipeline ran to completion for this track —
+   * the last segment is present and there is nothing left to load.
+   * Reset to false at the start of any new loading run (e.g. seek-back)
+   * so that a stale last-segment ID from a prior play-through is not
+   * mistaken for a freshly completed pipeline.
+   */
+  completed: boolean;
+}
+
+/**
+ * Buffer state for all SourceBuffers.
+ */
+export interface BufferState {
+  video?: SourceBufferState;
+  audio?: SourceBufferState;
+}
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Resolve full Segment objects from buffer state IDs.
+ * Bridges the { id, trackId } records in SourceBufferState back to Segment
+ * objects with startTime/duration that getSegmentsToLoad requires.
+ */
+function resolveBufferedSegments(
+  allSegments: readonly Segment[],
+  bufferState: SourceBufferState | undefined
+): Segment[] {
+  if (!bufferState?.segments?.length) return [];
+  const bufferedIds = new Set(bufferState.segments.map((s) => s.id));
+  return allSegments.filter((seg) => bufferedIds.has(seg.id));
+}
+
+// ============================================================================
+// SUBTASKS (module-level)
+// ============================================================================
+
+/**
+ * Load initialization segment subtask.
+ */
+const loadInitSegmentTask = async (
+  { initialization, trackId }: { initialization: AddressableObject; trackId: string },
+  context: {
+    signal: AbortSignal;
+    sourceBuffer: SourceBuffer;
+    state: WritableState<{ bufferState?: BufferState }>;
+    bufferKey: 'video' | 'audio';
+  }
+): Promise<void> => {
+  const response = await fetchResolvable(initialization, { signal: context.signal });
+  const initData = await response.arrayBuffer();
+  await appendSegment(context.sourceBuffer, initData);
+
+  // Track init segment in buffer state
+  const currentBuffer = context.state.current.bufferState?.[context.bufferKey];
+  context.state.patch({
+    bufferState: {
+      ...context.state.current.bufferState,
+      [context.bufferKey]: {
+        ...currentBuffer,
+        initTrackId: trackId,
+      },
+    },
+  });
+};
+
+/**
+ * Load media segment subtask.
+ * Tracks download time/bytes for bandwidth and adds segment to buffer state.
+ */
+const loadMediaSegmentTask = async (
+  { segment, trackId }: { segment: Segment; trackId: string },
+  context: {
+    signal: AbortSignal;
+    sourceBuffer: SourceBuffer;
+    state: WritableState<{ bandwidthState?: BandwidthState; bufferState?: BufferState }>;
+    bufferKey: 'video' | 'audio';
+  }
+): Promise<void> => {
+  const startTime = performance.now();
+  const response = await fetchResolvable(segment, { signal: context.signal });
+  const segmentData = await response.arrayBuffer();
+  const downloadTime = performance.now() - startTime;
+
+  await appendSegment(context.sourceBuffer, segmentData);
+
+  // Update bandwidth estimate (only when bandwidthState is initialised)
+  const currentBandwidth = context.state.current.bandwidthState;
+  const updatedBandwidth = currentBandwidth
+    ? sampleBandwidth(currentBandwidth, downloadTime, segmentData.byteLength)
+    : undefined;
+
+  // Add segment to buffer state
+  const currentBuffer = context.state.current.bufferState?.[context.bufferKey];
+  const updatedSegments = [...(currentBuffer?.segments || []), { id: segment.id, trackId }];
+
+  context.state.patch({
+    ...(updatedBandwidth && { bandwidthState: updatedBandwidth }),
+    bufferState: {
+      ...context.state.current.bufferState,
+      [context.bufferKey]: {
+        ...currentBuffer,
+        segments: updatedSegments,
+      },
+    },
+  });
+};
+
+// ============================================================================
+// MAIN TASK (composite - orchestrates subtasks)
+// ============================================================================
+
+/**
+ * Load segments task (composite - orchestrates init + media segment subtasks).
+ */
+const loadSegmentsTask = async <T extends MediaTrackType>(
+  { currentState }: { currentState: SegmentLoadingState },
+  context: {
+    signal: AbortSignal;
+    sourceBuffer: SourceBuffer;
+    state: WritableState<{ bandwidthState?: BandwidthState; bufferState?: BufferState }>;
+    config: { type: T };
+  }
+): Promise<void> => {
+  const track = getSelectedTrack(currentState, context.config.type);
+  if (!track || !isResolvedTrack(track)) return;
+
+  if (track.segments.length === 0) return;
+
+  const bufferKey = context.config.type as 'video' | 'audio';
+  const bufferState = context.state.current.bufferState?.[bufferKey];
+
+  // Metadata mode: load init segment only — satisfies browser's preload="metadata"
+  // contract (advances readyState to HAVE_METADATA) without buffering media data.
+  const metadataMode = currentState.preload === 'metadata' && !currentState.playbackInitiated;
+
+  // Determine which segments the forward buffer calculator says to load.
+  // Metadata mode loads no media segments — just the init segment below.
+  const bufferedSegments = resolveBufferedSegments(track.segments, bufferState);
+  const currentTime = currentState.currentTime ?? 0;
+  const segmentsToLoad = metadataMode ? [] : getSegmentsToLoad(track.segments, bufferedSegments, currentTime);
+
+  // Only load init segment if not already loaded for this track
+  const needsInit = bufferState?.initTrackId !== track.id;
+
+  if (!needsInit && segmentsToLoad.length === 0) return;
+
+  // Reset completed so the end-of-stream orchestrator doesn't mistake a
+  // stale last-segment ID (from a prior play-through) for a finished pipeline.
+  // Only patch when transitioning true→false to avoid a spurious state change
+  // (and its subscriber side-effects) when completed is already false.
+  if (segmentsToLoad.length > 0) {
+    const currentBuf = context.state.current.bufferState?.[bufferKey];
+    if (currentBuf?.completed) {
+      context.state.patch({
+        bufferState: {
+          ...context.state.current.bufferState,
+          [bufferKey]: { ...currentBuf, completed: false },
+        },
+      });
+    }
+  }
+
+  // Back buffer management (F6): flush old segments before loading new ones.
+  // Uses bufferedSegments (what's actually appended) not track.segments, so we
+  // only flush data we've loaded — avoids spurious flushes when seeking into
+  // an unloaded region. calculateBackBufferFlushPoint returns 0 when nothing
+  // needs flushing.
+  const flushEnd = calculateBackBufferFlushPoint(bufferedSegments, currentTime);
+  if (flushEnd > 0) {
+    await flushBuffer(context.sourceBuffer, 0, flushEnd);
+
+    // Remove flushed segments from bufferState so the forward buffer
+    // calculator doesn't consider them buffered (e.g. after a backward seek).
+    const currentBufferState = context.state.current.bufferState?.[bufferKey];
+    if (currentBufferState) {
+      const remaining = currentBufferState.segments.filter((s) => {
+        const seg = track.segments.find((ts) => ts.id === s.id);
+        return seg ? seg.startTime >= flushEnd : true;
+      });
+      context.state.patch({
+        bufferState: {
+          ...context.state.current.bufferState,
+          [bufferKey]: { ...currentBufferState, segments: remaining },
+        },
+      });
+    }
+  }
+
+  const createInitTask = () =>
+    loadInitSegmentTask(
+      { initialization: track.initialization, trackId: track.id },
+      { signal: context.signal, sourceBuffer: context.sourceBuffer, state: context.state, bufferKey }
+    );
+
+  const createMediaTasks = segmentsToLoad.map(
+    (segment) => () =>
+      loadMediaSegmentTask(
+        { segment, trackId: track.id },
+        { signal: context.signal, sourceBuffer: context.sourceBuffer, state: context.state, bufferKey }
+      )
+  );
+
+  // Init first (if needed), then media segments within the buffer window
+  const taskFactories = needsInit ? [createInitTask, ...createMediaTasks] : createMediaTasks;
+
+  // Track current subtask (same pattern as main task tracking)
+  let currentSubtask: Promise<void> | null = null;
+
+  // Execute subtasks sequentially
+  for (const createTask of taskFactories) {
+    if (context.signal.aborted) break;
+
+    // Invoke task factory and store promise
+    currentSubtask = createTask();
+
+    try {
+      await currentSubtask;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') break;
+      console.error('Failed to load segment:', error);
+      // Continue to next segment (graceful degradation)
+    } finally {
+      currentSubtask = null;
+    }
+  }
+
+  // Wait a frame before completing to allow state updates to flush
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+};
+
+// ============================================================================
+// STATE & OWNERS
+// ============================================================================
 
 /**
  * State shape for segment loading.
@@ -13,6 +274,13 @@ import type { MediaTrackType } from './setup-sourcebuffer';
 export interface SegmentLoadingState extends TrackSelectionState {
   presentation?: Presentation;
   preload?: string;
+  bandwidthState?: BandwidthState;
+  /** Current playback position in seconds. Defaults to 0 when undefined. */
+  currentTime?: number;
+  /** Buffer state tracking which segments have been loaded per track type. */
+  bufferState?: BufferState;
+  /** True once the user has initiated playback. Allows segment loading regardless of preload setting. */
+  playbackInitiated?: boolean;
 }
 
 /**
@@ -21,33 +289,6 @@ export interface SegmentLoadingState extends TrackSelectionState {
 export interface SegmentLoadingOwners {
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
-}
-
-/**
- * Select which segments to load for the current track.
- *
- * Currently returns all segments (full track loading).
- *
- * Future enhancements:
- * - Filter based on playhead position and buffer ranges
- * - Skip already-loaded segments
- * - Handle live stream segment updates
- * - Apply timing offsets for discontinuities
- *
- * @param state - Current playback state (track selection, presentation)
- * @param type - Track type (video or audio)
- * @returns Array of segments to load, or empty array if track not ready
- */
-function selectSegmentsToLoad(state: SegmentLoadingState, type: MediaTrackType): Segment[] {
-  const track = getSelectedTrack(state, type);
-
-  if (!track || !isResolvedTrack(track)) {
-    return [];
-  }
-
-  // For now: load all segments
-  // TODO: Add buffering logic based on playhead position and buffer ranges
-  return track.segments;
 }
 
 /**
@@ -73,11 +314,13 @@ export function canLoadSegments(
 /**
  * Check if we should load segments.
  *
- * Only load if:
- * - preload is 'auto' (metadata only loads track info, not segments)
- * - Track is resolved (has segments)
- * - Track has at least one segment
- * - SourceBuffer is not already buffered (simple check for POC)
+ * Three loading modes based on preload + playbackInitiated:
+ *
+ * - Full mode (preload='auto' OR playbackInitiated): load init + media segments.
+ * - Metadata mode (preload='metadata', not yet played): load init segment only.
+ *   The init segment (moov box) advances readyState to HAVE_METADATA, satisfying
+ *   the browser's preload="metadata" contract and avoiding a stuck HAVE_NOTHING state.
+ * - Blocked (preload='none' or undefined, not yet played): load nothing.
  */
 export function shouldLoadSegments(
   state: SegmentLoadingState,
@@ -88,41 +331,46 @@ export function shouldLoadSegments(
     return false;
   }
 
-  // Only load segments with preload: 'auto'
-  // preload: 'metadata' should only resolve tracks, not load segments
-  if (state.preload !== 'auto') {
+  const fullMode = state.preload === 'auto' || !!state.playbackInitiated;
+  const metadataMode = state.preload === 'metadata' && !state.playbackInitiated;
+
+  if (!fullMode && !metadataMode) {
     return false;
   }
 
   const track = getSelectedTrack(state, type);
-  if (!track || !isResolvedTrack(track) || track.segments.length === 0) {
+  if (!track || !isResolvedTrack(track)) {
     return false;
   }
 
-  // For POC: simple check - if SourceBuffer has any buffered data, skip
-  // TODO: More sophisticated buffering logic (check ranges, append new segments only)
-  const bufferKey = BufferKeyByType[type];
-  const sourceBuffer = owners[bufferKey];
-  if (sourceBuffer && sourceBuffer.buffered.length > 0) {
-    return false;
+  const bufferKey = type as 'video' | 'audio';
+
+  if (metadataMode) {
+    // Metadata mode: only proceed if init segment hasn't been loaded yet
+    return state.bufferState?.[bufferKey]?.initTrackId !== track.id;
   }
 
-  return true;
+  // Full mode: need segments in buffer window
+  if (track.segments.length === 0) return false;
+  const bufferedSegments = resolveBufferedSegments(track.segments, state.bufferState?.[bufferKey]);
+  const currentTime = state.currentTime ?? 0;
+
+  return getSegmentsToLoad(track.segments, bufferedSegments, currentTime).length > 0;
 }
 
 /**
- * Load segments orchestration (F4 + P11 POC).
+ * Load segments orchestration (F4 + F5).
  *
  * Triggers when:
  * - Track is selected and resolved (video or audio)
  * - SourceBuffer exists for track type
- * - No segments loaded yet
+ * - Forward buffer calculator says segments are needed
  *
- * Fetches and appends segments sequentially:
- * 1. Initialization segment (required for fmp4)
- * 2. Media segments
- *
- * Continues on segment errors to provide partial playback.
+ * Seek handling: at most one executing task and one pending slot.
+ * When a seek is detected (needed segments are completely disjoint from
+ * what the current task is loading), the current task is aborted.
+ * The latest state is always stored as pending and picked up once the
+ * current task finishes (via abort or natural completion).
  *
  * @example
  * const cleanup = loadSegments({ state, owners }, { type: 'video' });
@@ -138,60 +386,105 @@ export function loadSegments(
   config: { type: MediaTrackType }
 ): () => void {
   const { type } = config;
-  let isLoading = false;
+  let currentTask: Promise<void> | null = null;
+  let abortController: AbortController | null = null;
+  let pendingSnapshot: [SegmentLoadingState, SegmentLoadingOwners] | null = null;
+  let taskSegmentIds: Set<string> = new Set();
 
-  const unsubscribe = combineLatest([state, owners]).subscribe(
-    async ([s, o]: [SegmentLoadingState, SegmentLoadingOwners]) => {
-      if (!shouldLoadSegments(s, o, type) || isLoading) return;
+  // Runs one or more sequential task iterations, picking up pending snapshots
+  // after each completion. currentTask stays non-null for the entire duration
+  // so subscribers always feed into pendingSnapshot rather than starting a
+  // second parallel execution.
+  const runTaskLoop = async (initialState: SegmentLoadingState, initialOwners: SegmentLoadingOwners): Promise<void> => {
+    let currentState = initialState;
+    let currentOwners = initialOwners;
 
-      const bufferKey = BufferKeyByType[type];
-      const sourceBuffer = o[bufferKey];
-      if (!sourceBuffer) return;
+    while (true) {
+      if (!shouldLoadSegments(currentState, currentOwners, type)) break;
 
-      // Determine which segments to load
-      const segmentsToLoad = selectSegmentsToLoad(s, type);
+      const sourceBuffer = currentOwners[BufferKeyByType[type]];
+      if (!sourceBuffer) break;
 
-      if (segmentsToLoad.length === 0) return;
+      // Track which segments this iteration intends to load (for seek detection)
+      const track = getSelectedTrack(currentState, type);
+      if (track && isResolvedTrack(track)) {
+        const bufferKey = type as 'video' | 'audio';
+        const buffered = resolveBufferedSegments(track.segments, currentState.bufferState?.[bufferKey]);
+        taskSegmentIds = new Set(
+          getSegmentsToLoad(track.segments, buffered, currentState.currentTime ?? 0).map((s) => s.id)
+        );
+      }
 
-      const track = getSelectedTrack(s, type);
-      if (!track || !isResolvedTrack(track)) return;
+      abortController = new AbortController();
+      currentTask = loadSegmentsTask(
+        { currentState },
+        { signal: abortController.signal, sourceBuffer, state, config: { type } }
+      );
 
-      // Create task for initialization segment (must load first!)
-      const initTask = async () => {
-        const response = await fetchResolvable(track.initialization);
-        const initData = await response.arrayBuffer();
-        await appendSegment(sourceBuffer, initData);
-      };
+      await currentTask;
 
-      // Create tasks for media segments
-      const mediaTasks = segmentsToLoad.map((segment) => async () => {
-        const response = await fetchResolvable(segment);
-        const segmentData = await response.arrayBuffer();
-        await appendSegment(sourceBuffer, segmentData);
-      });
+      abortController = null;
+      taskSegmentIds = new Set();
 
-      // Combine: init segment first, then media segments
-      const tasks = [initTask, ...mediaTasks];
+      // Pick up the latest pending snapshot (if any)
+      const pending = pendingSnapshot;
+      pendingSnapshot = null;
 
-      // Execute tasks serially
-      isLoading = true;
-      try {
-        for (const task of tasks) {
-          try {
-            await task();
-          } catch (error) {
-            // Log error but continue - partial video better than none
-            console.error('Failed to load segment:', error);
+      if (!pending) break;
+
+      [currentState, currentOwners] = pending;
+    }
+
+    // After the loop exits, check whether the loading pipeline reached the
+    // natural end of the track. If the last segment's ID is now in bufferState,
+    // mark completed so the end-of-stream orchestrator can proceed.
+    const bufferKey = type as 'video' | 'audio';
+    const latestState = state.current;
+    const latestBufState = latestState.bufferState?.[bufferKey];
+    const finalTrack = getSelectedTrack(latestState, type);
+    if (finalTrack && isResolvedTrack(finalTrack) && finalTrack.segments.length > 0) {
+      const lastSeg = finalTrack.segments[finalTrack.segments.length - 1];
+      if (lastSeg && latestBufState?.segments?.some((s) => s.id === lastSeg.id) && !latestBufState?.completed) {
+        state.patch({
+          bufferState: {
+            ...latestState.bufferState,
+            [bufferKey]: { ...latestBufState, completed: true },
+          },
+        });
+      }
+    }
+
+    currentTask = null;
+  };
+
+  const cleanup = combineLatest([state, owners]).subscribe(
+    async ([currentState, currentOwners]: [SegmentLoadingState, SegmentLoadingOwners]) => {
+      if (currentTask) {
+        // Store latest state as pending (replaces any previous pending)
+        pendingSnapshot = [currentState, currentOwners];
+
+        // Seek detection: abort if the needed segments are completely disjoint
+        // from what the current task is loading (currentTime jumped to new position)
+        if (taskSegmentIds.size > 0) {
+          const track = getSelectedTrack(currentState, type);
+          if (track && isResolvedTrack(track)) {
+            const bufferKey = type as 'video' | 'audio';
+            const buffered = resolveBufferedSegments(track.segments, currentState.bufferState?.[bufferKey]);
+            const needed = getSegmentsToLoad(track.segments, buffered, currentState.currentTime ?? 0);
+            if (needed.length > 0 && needed.every((s) => !taskSegmentIds.has(s.id))) {
+              abortController?.abort();
+            }
           }
         }
-      } finally {
-        // Wait a frame before clearing flag to allow async state updates to flush
-        // This prevents race conditions where multiple triggers fire before the flag is checked
-        await new Promise((resolve) => requestAnimationFrame(resolve));
-        isLoading = false;
+        return;
       }
+
+      await runTaskLoop(currentState, currentOwners);
     }
   );
 
-  return unsubscribe;
+  return () => {
+    abortController?.abort();
+    cleanup();
+  };
 }
