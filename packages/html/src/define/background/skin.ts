@@ -1,9 +1,7 @@
 import { ReactiveElement } from '@videojs/element';
-import styles from './styles.css';
 
 function getTemplateHTML(_attrs: Record<string, string>) {
   return /*html*/ `
-    <style>${styles}</style>
     <media-container>
       <slot name="media" slot="media"></slot>
     </media-container>

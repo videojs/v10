@@ -27,16 +27,29 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
   },
-  inputOptions: {
-    moduleTypes: {
-      '.css': 'text',
-    },
-  },
   outDir: `dist/${mode}`,
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',
   },
   dts: mode === 'dev',
+  copy: [
+    {
+      from: 'src/**/*.css',
+      to: `dist/${mode}`,
+      flatten: false,
+    },
+  ],
+  plugins: [
+    {
+      name: 'watch-css',
+      buildStart() {
+        const cssFiles = globSync('src/**/*.css');
+        for (const file of cssFiles) {
+          this.addWatchFile(file);
+        }
+      },
+    },
+  ],
 });
 
 export default defineConfig(buildModes.map((mode) => createConfig(mode)));

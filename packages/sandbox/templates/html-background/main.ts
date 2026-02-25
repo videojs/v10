@@ -1,6 +1,7 @@
 // HTML sandbox — Background video player
-// http://localhost:5173/html/background/
+// http://localhost:5173/html-background/
 
+import '@videojs/html/background/skin.css';
 import '@videojs/html/background/player';
 import '@videojs/html/background/skin';
 import '@videojs/html/background/video';
