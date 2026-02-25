@@ -9,7 +9,7 @@ import {
   updateDuration,
 } from '../update-duration';
 
-function makeMediaSource(duration = 0) {
+function makeMediaSource(duration = NaN) {
   return Object.create(MediaSource.prototype, {
     readyState: { value: 'open', writable: true },
     duration: { value: duration, writable: true },
@@ -79,12 +79,12 @@ describe('canUpdateDuration', () => {
 });
 
 describe('shouldUpdateDuration', () => {
-  it('returns true when all conditions met', () => {
+  it('returns true when MediaSource duration is NaN (initial state)', () => {
     const state: DurationUpdateState = {
       presentation: { duration: 60 } as Presentation,
     };
     const owners: DurationUpdateOwners = {
-      mediaSource: { readyState: 'open', duration: 0 } as MediaSource,
+      mediaSource: { readyState: 'open', duration: NaN } as MediaSource,
     };
 
     expect(shouldUpdateDuration(state, owners)).toBe(true);
@@ -145,6 +145,20 @@ describe('shouldUpdateDuration', () => {
     expect(shouldUpdateDuration(state, owners)).toBe(false);
   });
 
+  it('returns false when MediaSource duration is already set (non-NaN) even if different from presentation', () => {
+    // This is the TOCTOU scenario: endOfStream() set mediaSource.duration to the
+    // actual buffered end (25.28), leaving a small drift from playlist duration (25.317).
+    // shouldUpdateDuration must NOT re-fire in this case — doing so races with appendBuffer().
+    const state: DurationUpdateState = {
+      presentation: { duration: 25.317 } as Presentation,
+    };
+    const owners: DurationUpdateOwners = {
+      mediaSource: { readyState: 'open', duration: 25.28 } as MediaSource,
+    };
+
+    expect(shouldUpdateDuration(state, owners)).toBe(false);
+  });
+
   it('returns false when duration matches current MediaSource.duration', () => {
     const state: DurationUpdateState = {
       presentation: { duration: 60 } as Presentation,
@@ -164,10 +178,10 @@ describe('updateDuration', () => {
 
     const cleanup = updateDuration({ state, owners });
 
-    // Create mock with writable duration property
+    // NaN is the real initial state of a freshly opened MediaSource
     const mockMediaSource = Object.create(MediaSource.prototype, {
       readyState: { value: 'open', writable: true },
-      duration: { value: 0, writable: true },
+      duration: { value: NaN, writable: true },
     });
 
     owners.patch({ mediaSource: mockMediaSource });
@@ -182,35 +196,31 @@ describe('updateDuration', () => {
     cleanup();
   });
 
-  it('updates when presentation duration changes', async () => {
+  it('does not update again after initial set even if presentation duration changes', async () => {
+    // Once the MediaSource duration is set (no longer NaN), subsequent presentation
+    // duration changes must not trigger another set — doing so races with appendBuffer().
     const state = createState<DurationUpdateState>({});
     const owners = createState<DurationUpdateOwners>({});
 
     const cleanup = updateDuration({ state, owners });
 
-    // Create mock with writable duration property
     const mockMediaSource = Object.create(MediaSource.prototype, {
       readyState: { value: 'open', writable: true },
-      duration: { value: 0, writable: true },
+      duration: { value: NaN, writable: true },
     });
 
     owners.patch({ mediaSource: mockMediaSource });
-    state.patch({
-      presentation: { duration: 60 } as Presentation,
-    });
+    state.patch({ presentation: { duration: 60 } as Presentation });
 
     await vi.waitFor(() => {
       expect(mockMediaSource.duration).toBe(60);
     });
 
-    // Update to new duration
-    state.patch({
-      presentation: { duration: 120 } as Presentation,
-    });
+    // Simulate presentation.duration changing (e.g. recalculated) — must not re-fire
+    state.patch({ presentation: { duration: 120 } as Presentation });
 
-    await vi.waitFor(() => {
-      expect(mockMediaSource.duration).toBe(120);
-    });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(mockMediaSource.duration).toBe(60); // unchanged
 
     cleanup();
   });
@@ -232,7 +242,7 @@ describe('updateDuration', () => {
       presentation: { duration: 60 } as Presentation,
     });
 
-    expect(mockMediaSource.duration).toBe(0);
+    expect(mockMediaSource.duration).toBe(0); // unchanged — readyState guard fired first
 
     cleanup();
   });
@@ -255,7 +265,7 @@ describe('updateDuration', () => {
     state.patch({
       presentation: { duration: NaN } as Presentation,
     });
-    expect(mockMediaSource.duration).toBe(0);
+    expect(mockMediaSource.duration).toBe(0); // presentation validation guard fired
 
     // Try Infinity
     state.patch({
@@ -292,7 +302,7 @@ describe('updateDuration', () => {
 
     const mockMediaSource = Object.create(MediaSource.prototype, {
       readyState: { value: 'open', writable: true },
-      duration: { value: 0, writable: true },
+      duration: { value: NaN, writable: true },
     });
 
     owners.patch({
@@ -347,7 +357,7 @@ describe('updateDuration', () => {
 
     // Duration must not be set while buffer is still updating
     await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(mockMediaSource.duration).toBe(0);
+    expect(mockMediaSource.duration).toBeNaN();
 
     // Buffer finishes — duration should now be set
     finishUpdating();
@@ -377,12 +387,12 @@ describe('updateDuration', () => {
 
     // Neither buffer done — duration must not be set
     await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(mockMediaSource.duration).toBe(0);
+    expect(mockMediaSource.duration).toBeNaN();
 
     // Only video done — audio still updating
     finishVideo();
     await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(mockMediaSource.duration).toBe(0);
+    expect(mockMediaSource.duration).toBeNaN();
 
     // Audio done — now duration should be set
     finishAudio();
@@ -401,7 +411,7 @@ describe('updateDuration', () => {
 
     const mockMediaSource = Object.create(MediaSource.prototype, {
       readyState: { value: 'open', writable: true },
-      duration: { value: 0, writable: true },
+      duration: { value: NaN, writable: true },
     });
 
     // Attach an updating SourceBuffer so the task must await updateend
@@ -416,54 +426,37 @@ describe('updateDuration', () => {
 
     // Should resolve without throwing, and duration should NOT be set
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(mockMediaSource.duration).toBe(0);
+    expect(mockMediaSource.duration).toBeNaN();
 
     cleanup();
   });
 
-  it('handles multiple state updates correctly', async () => {
+  it('sets duration once on initial NaN state then ignores further state changes', async () => {
     const state = createState<DurationUpdateState>({});
     const owners = createState<DurationUpdateOwners>({});
 
     const cleanup = updateDuration({ state, owners });
 
-    // Create mock with writable duration property
     const mockMediaSource = Object.create(MediaSource.prototype, {
       readyState: { value: 'open', writable: true },
-      duration: { value: 0, writable: true },
+      duration: { value: NaN, writable: true },
     });
 
-    // Set mediaSource first
+    // MediaSource attached but no presentation yet — nothing happens
     owners.patch({ mediaSource: mockMediaSource });
-    expect(mockMediaSource.duration).toBe(0);
+    expect(mockMediaSource.duration).toBeNaN();
 
-    // Then set presentation with duration
-    state.patch({
-      presentation: { duration: 60 } as Presentation,
-    });
+    // Presentation with duration arrives — initial set fires
+    state.patch({ presentation: { duration: 60 } as Presentation });
 
     await vi.waitFor(() => {
       expect(mockMediaSource.duration).toBe(60);
     });
 
-    // Update duration again
-    state.patch({
-      presentation: { duration: 90 } as Presentation,
-    });
-
-    await vi.waitFor(() => {
-      expect(mockMediaSource.duration).toBe(90);
-    });
-
-    // Same duration should not trigger unnecessary set
-    const previousDuration = mockMediaSource.duration;
-    state.patch({
-      presentation: { duration: 90 } as Presentation,
-    });
-
-    // Wait a bit to ensure no change occurs
+    // Further state changes must not trigger another set
+    state.patch({ presentation: { duration: 90 } as Presentation });
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(mockMediaSource.duration).toBe(previousDuration);
+    expect(mockMediaSource.duration).toBe(60); // unchanged
 
     cleanup();
   });

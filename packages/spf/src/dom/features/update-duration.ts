@@ -60,8 +60,12 @@ export function shouldUpdateDuration(state: DurationUpdateState, owners: Duratio
   // Validate duration: finite, positive, not NaN
   if (!Number.isFinite(duration) || Number.isNaN(duration) || duration <= 0) return false;
 
-  // Only update if different (avoid unnecessary sets)
-  return mediaSource!.duration !== duration;
+  // Only set duration on initial MediaSource setup, when it hasn't been set yet.
+  // A freshly opened MediaSource has duration === NaN. Once set (either by this
+  // task or by endOfStreamTask from buffered.end()), we leave it alone — attempting
+  // to re-sync a slight drift between mediaSource.duration and presentation.duration
+  // races with concurrent appendBuffer() calls from loadSegmentsTask.
+  return isNaN(mediaSource!.duration);
 }
 
 /**
