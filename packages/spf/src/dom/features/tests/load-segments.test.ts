@@ -174,7 +174,7 @@ describe('shouldLoadSegments', () => {
   it('returns true for metadata mode when init segment not yet loaded', () => {
     const state = makeBaseState({
       preload: 'metadata',
-      bufferState: { video: { segments: [] } },
+      bufferState: { video: { segments: [], completed: false } },
     });
     const owners: SegmentLoadingOwners = { videoBuffer: makeSourceBuffer() };
 
@@ -184,7 +184,7 @@ describe('shouldLoadSegments', () => {
   it('returns false for metadata mode when init segment already loaded', () => {
     const state = makeBaseState({
       preload: 'metadata',
-      bufferState: { video: { initTrackId: 'track-1', segments: [] } },
+      bufferState: { video: { initTrackId: 'track-1', segments: [], completed: false } },
     });
     const owners: SegmentLoadingOwners = { videoBuffer: makeSourceBuffer() };
 
@@ -214,6 +214,7 @@ describe('shouldLoadSegments', () => {
             { id: 's1', trackId: 'track-1' },
             { id: 's2', trackId: 'track-1' },
           ],
+          completed: false,
         },
       },
     });
@@ -230,6 +231,7 @@ describe('shouldLoadSegments', () => {
         video: {
           initTrackId: 'track-1',
           segments: [{ id: 's1', trackId: 'track-1' }],
+          completed: false,
         },
       },
     });
@@ -241,7 +243,7 @@ describe('shouldLoadSegments', () => {
   it('returns false when currentTime is past all segments (nothing left to buffer)', () => {
     const state = makeBaseState({
       currentTime: 100, // past all content
-      bufferState: { video: { initTrackId: 'track-1', segments: [] } },
+      bufferState: { video: { initTrackId: 'track-1', segments: [], completed: false } },
     });
     const owners: SegmentLoadingOwners = { videoBuffer: makeSourceBuffer() };
 
@@ -325,7 +327,7 @@ describe('loadSegments orchestration (F5)', () => {
       selectedVideoTrackId: 'track-1',
       currentTime: 0,
       // Init already loaded for this track
-      bufferState: { video: { initTrackId: 'track-1', segments: [] } },
+      bufferState: { video: { initTrackId: 'track-1', segments: [], completed: false } },
       presentation: {
         id: 'p1',
         url: 'http://example.com/playlist.m3u8',
@@ -371,6 +373,7 @@ describe('loadSegments orchestration (F5)', () => {
         video: {
           initTrackId: 'track-1',
           segments: [{ id: 's1', trackId: 'track-1' }],
+          completed: false,
         },
       },
       presentation: {
@@ -804,6 +807,7 @@ describe('loadSegments back buffer flushing', () => {
             { id: 's3', trackId: 'track-1' },
             { id: 's4', trackId: 'track-1' },
           ],
+          completed: false,
         },
       },
       presentation: makePresentationF6(segments),
@@ -844,6 +848,7 @@ describe('loadSegments back buffer flushing', () => {
         video: {
           initTrackId: 'track-1',
           segments: [{ id: 's1', trackId: 'track-1' }],
+          completed: false,
         },
       },
       presentation: makePresentationF6(segments),
@@ -890,6 +895,7 @@ describe('loadSegments back buffer flushing', () => {
             { id: 's3', trackId: 'track-1' },
             { id: 's4', trackId: 'track-1' },
           ],
+          completed: false,
         },
       },
       presentation: makePresentationF6(segments),

@@ -394,6 +394,33 @@ describe('updateDuration', () => {
     cleanup();
   });
 
+  it('does not throw when readyState transitions to ended during the async wait', async () => {
+    const state = createState<DurationUpdateState>({});
+    const owners = createState<DurationUpdateOwners>({});
+    const cleanup = updateDuration({ state, owners });
+
+    const mockMediaSource = Object.create(MediaSource.prototype, {
+      readyState: { value: 'open', writable: true },
+      duration: { value: 0, writable: true },
+    });
+
+    // Attach an updating SourceBuffer so the task must await updateend
+    const { buffer: mockVideoBuffer, finishUpdating } = makeUpdatingSourceBuffer();
+    owners.patch({ mediaSource: mockMediaSource, videoSourceBuffer: mockVideoBuffer });
+    state.patch({ presentation: { duration: 60 } as Presentation });
+
+    // Simulate endOfStream() being called concurrently while the task is waiting —
+    // transitions readyState to 'ended' before the task can set duration
+    mockMediaSource.readyState = 'ended';
+    finishUpdating();
+
+    // Should resolve without throwing, and duration should NOT be set
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(mockMediaSource.duration).toBe(0);
+
+    cleanup();
+  });
+
   it('handles multiple state updates correctly', async () => {
     const state = createState<DurationUpdateState>({});
     const owners = createState<DurationUpdateOwners>({});

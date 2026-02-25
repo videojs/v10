@@ -189,8 +189,8 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
       bytesSampled: 0,
     },
     bufferState: {
-      video: { segments: [] },
-      audio: { segments: [] },
+      video: { segments: [], completed: false },
+      audio: { segments: [], completed: false },
     },
   });
   const owners = createState<PlaybackEngineOwners>({});
