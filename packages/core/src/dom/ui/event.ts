@@ -17,3 +17,7 @@ export interface UIPointerEvent extends UIEvent {
   pointerType: string;
   buttons: number;
 }
+
+export interface UIFocusEvent extends UIEvent {
+  relatedTarget: EventTarget | null;
+}
