@@ -5,6 +5,11 @@
   "version": "10.0.0-alpha.2",
   "description": "SVG icon library for Video.js",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/icons"
+  },
   "sideEffects": false,
   "exports": {
     "./react": {

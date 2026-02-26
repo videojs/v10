@@ -4,6 +4,11 @@
   "version": "10.0.0-alpha.2",
   "description": "HTML library for building media players",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/html"
+  },
   "main": "dist/default/index.js",
   "module": "dist/default/index.js",
   "types": "dist/dev/index.d.ts",

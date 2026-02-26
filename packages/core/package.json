@@ -4,6 +4,11 @@
   "version": "10.0.0-alpha.2",
   "description": "Core components and utilities for Video.js",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/core"
+  },
   "keywords": [
     "core",
     "media",
