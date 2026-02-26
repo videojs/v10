@@ -8,6 +8,8 @@ export interface PopoverContextValue {
   core: PopoverCore;
   popover: Popover;
   state: PopoverCore.State;
+  anchorName: string;
+  popupId: string;
 }
 
 const PopoverContext = createContext<PopoverContextValue | null>(null);

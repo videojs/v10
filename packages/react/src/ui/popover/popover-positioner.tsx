@@ -3,7 +3,7 @@
 import { PopoverDataAttrs, type PopoverState } from '@videojs/core';
 import { getAnchorPositionStyle } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
-import { forwardRef, useId, useMemo } from 'react';
+import { forwardRef, useMemo } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
@@ -15,8 +15,7 @@ export const PopoverPositioner = forwardRef(function PopoverPositioner(
   { render, className, style, ...elementProps }: PopoverPositionerProps,
   forwardedRef: ForwardedRef<HTMLDivElement>
 ) {
-  const { state } = usePopoverContext();
-  const anchorName = useId();
+  const { state, anchorName } = usePopoverContext();
 
   const positioningStyle = useMemo(
     () =>

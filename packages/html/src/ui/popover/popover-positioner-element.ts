@@ -13,7 +13,6 @@ export class PopoverPositionerElement extends MediaElement {
 
   #ctx: PopoverContextValue | null = null;
   #snapshot: SnapshotController<any> | null = null;
-  #anchorName = `popover-${Math.random().toString(36).slice(2, 8)}`;
 
   #consumer = new ContextConsumer(this, {
     context: popoverContext,
@@ -49,8 +48,8 @@ export class PopoverPositionerElement extends MediaElement {
     this.style.display = '';
     this.setAttribute('role', 'presentation');
 
-    // Apply positioning styles
-    const positioningStyle = getAnchorPositionStyle(this.#anchorName, {
+    // Apply positioning styles using the shared anchor name from context
+    const positioningStyle = getAnchorPositionStyle(ctx.anchorName, {
       side: state.side,
       align: state.align,
       sideOffset: state.sideOffset,

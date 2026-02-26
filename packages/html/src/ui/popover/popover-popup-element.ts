@@ -12,6 +12,7 @@ export class PopoverPopupElement extends MediaElement {
 
   #ctx: PopoverContextValue | null = null;
   #snapshot: SnapshotController<any> | null = null;
+  #propsApplied = false;
 
   #consumer = new ContextConsumer(this, {
     context: popoverContext,
@@ -35,16 +36,14 @@ export class PopoverPopupElement extends MediaElement {
   override connectedCallback(): void {
     super.connectedCallback();
     this.#disconnect = new AbortController();
-
-    if (this.#ctx) {
-      applyElementProps(this, this.#ctx.popover.popupProps, this.#disconnect.signal);
-    }
+    this.#propsApplied = false;
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
     this.#disconnect?.abort();
     this.#disconnect = null;
+    this.#propsApplied = false;
 
     if (this.#ctx) {
       this.#ctx.popover.setPopupElement(null);
@@ -63,9 +62,13 @@ export class PopoverPopupElement extends MediaElement {
     applyElementProps(this, ctx.core.getPopupAttrs(state));
     applyStateDataAttrs(this, state, PopoverDataAttrs);
 
-    // Re-apply popup props if first update after context arrival
-    if (this.#disconnect && !this.hasUpdated) {
+    // Set the popup ID for aria-controls linkage
+    this.id = ctx.popupId;
+
+    // Apply event props once per connection to avoid double attachment
+    if (this.#disconnect && !this.#propsApplied) {
       applyElementProps(this, ctx.popover.popupProps, this.#disconnect.signal);
+      this.#propsApplied = true;
     }
   }
 }

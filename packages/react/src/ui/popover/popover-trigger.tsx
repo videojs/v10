@@ -1,8 +1,9 @@
 'use client';
 
 import { PopoverDataAttrs, type PopoverState } from '@videojs/core';
+import { getAnchorNameStyle } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
-import { forwardRef, useCallback, useId } from 'react';
+import { forwardRef, useCallback, useMemo } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
@@ -14,8 +15,7 @@ export const PopoverTrigger = forwardRef(function PopoverTrigger(
   { render, className, style, ...elementProps }: PopoverTriggerProps,
   forwardedRef: ForwardedRef<HTMLButtonElement>
 ) {
-  const { core, popover, state } = usePopoverContext();
-  const id = useId();
+  const { core, popover, state, anchorName, popupId } = usePopoverContext();
 
   const triggerRef = useCallback(
     (el: HTMLButtonElement | null) => {
@@ -23,6 +23,8 @@ export const PopoverTrigger = forwardRef(function PopoverTrigger(
     },
     [popover]
   );
+
+  const anchorStyle = useMemo(() => getAnchorNameStyle(anchorName), [anchorName]);
 
   return renderElement(
     'button',
@@ -34,8 +36,8 @@ export const PopoverTrigger = forwardRef(function PopoverTrigger(
       props: [
         {
           type: 'button' as const,
-          id,
-          ...core.getTriggerAttrs(state),
+          style: anchorStyle,
+          ...core.getTriggerAttrs(state, popupId),
         },
         popover.triggerProps,
         elementProps,

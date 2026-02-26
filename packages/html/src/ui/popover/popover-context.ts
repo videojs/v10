@@ -9,6 +9,8 @@ export interface PopoverContextValue {
   core: PopoverCore;
   popover: Popover;
   interaction: State<PopoverCore.Interaction>;
+  anchorName: string;
+  popupId: string;
 }
 
 export type PopoverContext = Context<typeof POPOVER_CONTEXT_KEY, PopoverContextValue>;

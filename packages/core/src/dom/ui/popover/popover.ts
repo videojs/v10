@@ -55,9 +55,9 @@ export function createPopover(options: PopoverOptions): Popover {
   let triggerEl: HTMLElement | null = null;
   let popupEl: HTMLElement | null = null;
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
-  let destroyed = false;
 
-  const cleanups: (() => void)[] = [];
+  const abort = new AbortController();
+  let docAc: AbortController | null = null;
 
   // --- Hover management ---
 
@@ -84,7 +84,7 @@ export function createPopover(options: PopoverOptions): Popover {
    * its `WritableState` and callers are notified after the fact.
    */
   function applyOpen(reason: PopoverOpenChangeReason, event?: Event): void {
-    if (destroyed || state.current.open) return;
+    if (abort.signal.aborted || state.current.open) return;
 
     state.patch({ open: true, transitionStatus: 'opening' });
 
@@ -100,15 +100,20 @@ export function createPopover(options: PopoverOptions): Popover {
   }
 
   function applyClose(reason: PopoverOpenChangeReason, event?: Event): void {
-    if (destroyed || !state.current.open) return;
+    if (abort.signal.aborted || !state.current.open) return;
 
     state.patch({ transitionStatus: 'closing' });
 
+    // Double-RAF ensures the closing state is painted before we start
+    // listening for transitions, avoiding a race where getAnimations()
+    // returns nothing because the browser hasn't started them yet.
     requestAnimationFrame(() => {
-      waitForTransitions(popupEl).finally(() => {
-        if (state.current.transitionStatus !== 'closing') return;
-        tryHidePopover(popupEl);
-        state.patch({ open: false, transitionStatus: 'closed' });
+      requestAnimationFrame(() => {
+        waitForTransitions(popupEl).finally(() => {
+          if (state.current.transitionStatus !== 'closing') return;
+          tryHidePopover(popupEl);
+          state.patch({ open: false, transitionStatus: 'closed' });
+        });
       });
     });
 
@@ -133,14 +138,16 @@ export function createPopover(options: PopoverOptions): Popover {
 
     if (typeof document === 'undefined') return;
 
-    cleanups.push(
-      listen(document, 'keydown', handleDocumentKeydown),
-      listen(document, 'pointerdown', handleDocumentPointerdown, { capture: true })
-    );
+    docAc = new AbortController();
+    const signal = docAc.signal;
+
+    listen(document, 'keydown', handleDocumentKeydown, { signal });
+    listen(document, 'pointerdown', handleDocumentPointerdown, { capture: true, signal });
   }
 
   function cleanupDocumentListeners(): void {
-    for (const cleanup of cleanups.splice(0)) cleanup();
+    docAc?.abort();
+    docAc = null;
   }
 
   function handleDocumentKeydown(event: KeyboardEvent): void {
@@ -161,8 +168,9 @@ export function createPopover(options: PopoverOptions): Popover {
     applyClose('outside-click', event);
   }
 
-  // Subscribe to open state to manage document listeners
-  state.subscribe(() => {
+  // Subscribe to open state to manage document listeners.
+  // Store the unsubscribe so we can clean it up on destroy.
+  const unsubscribe = state.subscribe(() => {
     if (state.current.open) {
       setupDocumentListeners();
     } else {
@@ -197,6 +205,8 @@ export function createPopover(options: PopoverOptions): Popover {
       if (!options.openOnHover?.()) return;
 
       clearHoverTimeout();
+
+      if (!state.current.open) return;
 
       const closeDelay = options.closeDelay?.() ?? 0;
       hoverTimeout = setTimeout(() => applyClose('hover'), closeDelay);
@@ -263,8 +273,9 @@ export function createPopover(options: PopoverOptions): Popover {
   // --- Cleanup ---
 
   function destroy(): void {
-    if (destroyed) return;
-    destroyed = true;
+    if (abort.signal.aborted) return;
+    abort.abort();
+    unsubscribe();
     clearHoverTimeout();
     cleanupDocumentListeners();
     triggerEl = null;
@@ -305,7 +316,7 @@ function tryHidePopover(el: HTMLElement | null): void {
 function waitForTransitions(el: HTMLElement | null): Promise<void> {
   if (!el) return Promise.resolve();
 
-  const transitions = el.getAnimations().filter((anim) => anim instanceof CSSTransition);
+  const transitions = el.getAnimations().filter((anim) => 'transitionProperty' in anim);
 
   if (transitions.length === 0) return Promise.resolve();
 

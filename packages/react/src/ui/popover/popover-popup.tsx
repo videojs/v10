@@ -14,7 +14,7 @@ export const PopoverPopup = forwardRef(function PopoverPopup(
   { render, className, style, ...elementProps }: PopoverPopupProps,
   forwardedRef: ForwardedRef<HTMLDivElement>
 ) {
-  const { core, popover, state } = usePopoverContext();
+  const { core, popover, state, popupId } = usePopoverContext();
 
   const popupRef = useCallback(
     (el: HTMLDivElement | null) => {
@@ -30,7 +30,7 @@ export const PopoverPopup = forwardRef(function PopoverPopup(
       state,
       stateAttrMap: PopoverDataAttrs,
       ref: [forwardedRef, popupRef],
-      props: [core.getPopupAttrs(state), popover.popupProps, elementProps],
+      props: [{ id: popupId, ...core.getPopupAttrs(state) }, popover.popupProps, elementProps],
     }
   );
 });

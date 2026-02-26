@@ -1,10 +1,12 @@
 import { PopoverCore, type PopoverProps, type PopoverRootProps } from '@videojs/core';
-import { createPopover, type PopoverChangeDetails } from '@videojs/core/dom';
+import { createPopover, type Popover, type PopoverChangeDetails } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 
 import { MediaElement } from '../media-element';
 import { type PopoverContextValue, popoverContext } from './popover-context';
+
+let popoverCounter = 0;
 
 export class PopoverElement extends MediaElement {
   static readonly tagName = 'media-popover';
@@ -43,43 +45,53 @@ export class PopoverElement extends MediaElement {
   closeDelay = 0;
 
   readonly #core = new PopoverCore();
-  #popover = createPopover({
-    onOpenChange: (nextOpen: boolean, details: PopoverChangeDetails) => {
-      // Sync the `open` property so it reflects the internal state.
-      // This also triggers a re-render via Lit's reactive property system.
-      this.open = nextOpen;
-      this.dispatchEvent(new CustomEvent('open-change', { detail: { open: nextOpen, ...details } }));
-    },
-    closeOnEscape: () => this.closeOnEscape,
-    closeOnOutsideClick: () => this.closeOnOutsideClick,
-    openOnHover: () => this.openOnHover,
-    delay: () => this.delay,
-    closeDelay: () => this.closeDelay,
-  });
+  #popover: Popover | null = null;
 
   #provider = new ContextProvider(this, {
     context: popoverContext,
     initialValue: undefined as unknown as PopoverContextValue,
   });
 
+  #anchorName = `popover-${++popoverCounter}`;
+  #popupId = `media-popover-popup-${popoverCounter}`;
+
   override connectedCallback(): void {
     super.connectedCallback();
+
+    this.#popover = createPopover({
+      onOpenChange: (nextOpen: boolean, details: PopoverChangeDetails) => {
+        this.open = nextOpen;
+        this.dispatchEvent(new CustomEvent('open-change', { detail: { open: nextOpen, ...details } }));
+      },
+      closeOnEscape: () => this.closeOnEscape,
+      closeOnOutsideClick: () => this.closeOnOutsideClick,
+      openOnHover: () => this.openOnHover,
+      delay: () => this.delay,
+      closeDelay: () => this.closeDelay,
+    });
 
     this.#provider.setValue({
       core: this.#core,
       popover: this.#popover,
       interaction: this.#popover.interaction,
+      anchorName: this.#anchorName,
+      popupId: this.#popupId,
     });
 
-    // Sync initial open state
-    if (this.defaultOpen || this.open) {
+    // Determine initial open state: controlled mode uses the `open` attribute,
+    // uncontrolled mode uses `defaultOpen`.
+    const isControlled = this.hasAttribute('open');
+    const shouldOpen = isControlled ? this.open : this.defaultOpen;
+
+    if (shouldOpen) {
       this.#popover.open();
     }
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#popover.destroy();
+    this.#popover?.destroy();
+    this.#popover = null;
   }
 
   protected override willUpdate(changed: PropertyValues): void {
@@ -87,7 +99,7 @@ export class PopoverElement extends MediaElement {
     this.#core.setProps(this);
 
     // Sync controlled open state
-    if (changed.has('open')) {
+    if (this.#popover && changed.has('open')) {
       const { open: interactionOpen } = this.#popover.interaction.current;
       if (this.open !== interactionOpen) {
         if (this.open) {
