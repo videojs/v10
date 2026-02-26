@@ -1,7 +1,9 @@
 {
   "packages/core": "10.0.0-alpha.1",
+  "packages/element": "10.0.0-alpha.1",
   "packages/html": "10.0.0-alpha.1",
-  "packages/react": "10.0.0-alpha.1",
   "packages/icons": "10.0.0-alpha.1",
+  "packages/react": "10.0.0-alpha.1",
+  "packages/store": "10.0.0-alpha.1",
   "packages/utils": "10.0.0-alpha.1"
 }

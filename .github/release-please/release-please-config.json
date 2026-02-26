@@ -12,12 +12,17 @@
     {
       "type": "linked-versions",
       "groupName": "videojs",
-      "components": ["@videojs/core", "@videojs/html", "@videojs/icons", "@videojs/react", "@videojs/utils"]
+      "components": ["@videojs/core", "@videojs/element", "@videojs/html", "@videojs/icons", "@videojs/react", "@videojs/store", "@videojs/utils"]
     }
   ],
   "packages": {
     "packages/core": {
       "component": "@videojs/core",
+      "prerelease": true,
+      "versioning": "prerelease"
+    },
+    "packages/element": {
+      "component": "@videojs/element",
       "prerelease": true,
       "versioning": "prerelease"
     },
@@ -33,6 +38,11 @@
     },
     "packages/react": {
       "component": "@videojs/react",
+      "prerelease": true,
+      "versioning": "prerelease"
+    },
+    "packages/store": {
+      "component": "@videojs/store",
       "prerelease": true,
       "versioning": "prerelease"
     },
