@@ -48,13 +48,22 @@ export class PopoverPositionerElement extends MediaElement {
     this.style.display = '';
     this.setAttribute('role', 'presentation');
 
-    // Apply positioning styles using the shared anchor name from context
-    const positioningStyle = getAnchorPositionStyle(ctx.anchorName, {
+    const posOpts = {
       side: state.side,
       align: state.align,
       sideOffset: state.sideOffset,
       alignOffset: state.alignOffset,
-    });
+    };
+
+    // Measure rects for the manual fallback path.
+    // getAnchorPositionStyle auto-selects CSS Anchor Positioning
+    // when supported (ignoring rects), or uses the rects for JS fallback.
+    const triggerEl = ctx.popover.triggerElement;
+    const triggerRect = triggerEl?.getBoundingClientRect();
+    const positionerRect = this.getBoundingClientRect();
+    const boundaryRect = document.documentElement.getBoundingClientRect();
+
+    const positioningStyle = getAnchorPositionStyle(ctx.anchorName, posOpts, triggerRect, positionerRect, boundaryRect);
 
     applyStyles(this, positioningStyle);
     applyStateDataAttrs(this, state, PopoverDataAttrs);

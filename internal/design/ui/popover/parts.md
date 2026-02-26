@@ -104,10 +104,11 @@ Set by `PopoverCore.getTriggerAttrs()`:
 
 | Attribute | Value |
 | --------- | ----- |
-| `type` | `"button"` |
 | `aria-expanded` | `"true"` / `"false"` |
 | `aria-haspopup` | `"dialog"` |
 | `aria-controls` | `{popupId}` (links to popup element) |
+
+The UI layer also sets `type="button"` on the rendered element.
 
 ### Data Attributes
 
@@ -197,20 +198,17 @@ justify-self: anchor-center; /* example: align="center" */
 **Manual fallback:**
 
 ```css
-/* Applied automatically */
+/* Applied automatically via inline styles */
 position: absolute;
---media-popover-top: 85px;
---media-popover-left: 200px;
+top: 85px;
+left: 200px;
+/* Plus CSS vars for sizing constraints */
+--media-popover-anchor-width: 120px;
+--media-popover-available-width: 350px;
+/* etc. */
 ```
 
-Users must apply `top`/`left` from the CSS vars in their styles for the manual fallback:
-
-```css
-media-popover-positioner {
-  top: var(--media-popover-top);
-  left: var(--media-popover-left);
-}
-```
+Positioning is applied directly as inline `top`/`left` styles — no CSS var indirection needed. Sizing constraint CSS vars are set for user CSS to consume (e.g., `max-width: var(--media-popover-available-width)`).
 
 ### Renders
 

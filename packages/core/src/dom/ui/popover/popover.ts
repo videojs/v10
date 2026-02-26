@@ -37,6 +37,7 @@ export interface Popover {
   interaction: State<PopoverInteraction>;
   triggerProps: PopoverTriggerProps;
   popupProps: PopoverPopupProps;
+  readonly triggerElement: HTMLElement | null;
   setTriggerElement: (el: HTMLElement | null) => void;
   setPopupElement: (el: HTMLElement | null) => void;
   setBoundaryElement: (el: HTMLElement | null) => void;
@@ -303,6 +304,9 @@ export function createPopover(options: PopoverOptions): Popover {
     interaction: state,
     triggerProps,
     popupProps,
+    get triggerElement() {
+      return triggerEl;
+    },
     setTriggerElement,
     setPopupElement,
     setBoundaryElement,

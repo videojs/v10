@@ -16,8 +16,7 @@ export interface PopoverProps {
    * - `false` (default): non-modal; background content remains interactive.
    * - `true`: modal; sets `aria-modal="true"` on the popup.
    * - `'trap-focus'`: reserved for future focus-trapping behavior. Does NOT
-   *   set `aria-modal` — consumers must implement focus trapping in their
-   *   own UI layer. Once implemented, this will also set `aria-modal="true"`.
+   *   set `aria-modal` — focus trapping is behavioral, not semantic.
    */
   modal?: boolean | 'trap-focus' | undefined;
   closeOnEscape?: boolean | undefined;

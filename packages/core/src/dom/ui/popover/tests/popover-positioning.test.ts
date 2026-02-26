@@ -44,9 +44,9 @@ describe('getManualPositionStyle', () => {
     });
 
     // top = trigger.top - boundary.top - positioner.height - sideOffset = 200 - 0 - 80 - 0 = 120
-    expect(style[PopoverCSSVars.top]).toBe('120px');
+    expect(style.top).toBe('120px');
     // left = trigger.left + (trigger.width - positioner.width)/2 = 100 + (120-200)/2 = 60
-    expect(style[PopoverCSSVars.left]).toBe('60px');
+    expect(style.left).toBe('60px');
   });
 
   it('positions below trigger for side=bottom', () => {
@@ -58,7 +58,7 @@ describe('getManualPositionStyle', () => {
     });
 
     // top = trigger.bottom - boundary.top + sideOffset = 240 - 0 + 0 = 240
-    expect(style[PopoverCSSVars.top]).toBe('240px');
+    expect(style.top).toBe('240px');
   });
 
   it('positions to the left of trigger for side=left', () => {
@@ -70,7 +70,7 @@ describe('getManualPositionStyle', () => {
     });
 
     // left = trigger.left - boundary.left - positioner.width - sideOffset = 100 - 0 - 200 - 0 = -100
-    expect(style[PopoverCSSVars.left]).toBe('-100px');
+    expect(style.left).toBe('-100px');
   });
 
   it('positions to the right of trigger for side=right', () => {
@@ -82,7 +82,7 @@ describe('getManualPositionStyle', () => {
     });
 
     // left = trigger.right - boundary.left + sideOffset = 220 - 0 + 0 = 220
-    expect(style[PopoverCSSVars.left]).toBe('220px');
+    expect(style.left).toBe('220px');
   });
 
   it('applies sideOffset for top side', () => {
@@ -94,7 +94,7 @@ describe('getManualPositionStyle', () => {
     });
 
     // top = 200 - 0 - 80 - 8 = 112
-    expect(style[PopoverCSSVars.top]).toBe('112px');
+    expect(style.top).toBe('112px');
   });
 
   it('applies sideOffset for bottom side', () => {
@@ -106,7 +106,7 @@ describe('getManualPositionStyle', () => {
     });
 
     // top = 240 - 0 + 8 = 248
-    expect(style[PopoverCSSVars.top]).toBe('248px');
+    expect(style.top).toBe('248px');
   });
 
   it('aligns to start for horizontal sides', () => {
@@ -118,7 +118,7 @@ describe('getManualPositionStyle', () => {
     });
 
     // left = trigger.left - boundary.left + alignOffset = 100
-    expect(style[PopoverCSSVars.left]).toBe('100px');
+    expect(style.left).toBe('100px');
   });
 
   it('aligns to end for horizontal sides', () => {
@@ -130,7 +130,7 @@ describe('getManualPositionStyle', () => {
     });
 
     // left = trigger.right - boundary.left - positioner.width = 220 - 0 - 200 = 20
-    expect(style[PopoverCSSVars.left]).toBe('20px');
+    expect(style.left).toBe('20px');
   });
 
   it('applies alignOffset', () => {
@@ -142,7 +142,7 @@ describe('getManualPositionStyle', () => {
     });
 
     // left = trigger.left + alignOffset = 100 + 10 = 110
-    expect(style[PopoverCSSVars.left]).toBe('110px');
+    expect(style.left).toBe('110px');
   });
 
   it('aligns vertically for left/right sides', () => {
@@ -154,7 +154,7 @@ describe('getManualPositionStyle', () => {
     });
 
     // top = trigger.top - boundary.top + alignOffset = 200
-    expect(style[PopoverCSSVars.top]).toBe('200px');
+    expect(style.top).toBe('200px');
   });
 });
 
@@ -232,10 +232,10 @@ describe('getAnchorPositionStyle', () => {
       boundary
     );
 
-    expect(style[PopoverCSSVars.top]).toBe('120px');
-    expect(style[PopoverCSSVars.left]).toBe('60px');
+    expect(style.top).toBe('120px');
+    expect(style.left).toBe('60px');
     expect(style.position).toBe('absolute');
-    // Also includes CSS vars
+    // Also includes sizing CSS vars
     expect(style[PopoverCSSVars.anchorWidth]).toBe('120px');
   });
 });
