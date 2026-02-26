@@ -1,0 +1,21 @@
+import { clamp } from '@videojs/utils/number';
+
+/** Convert a pointer event position to a 0–100 percent along an element's rect. */
+export function getPercentFromPointerEvent(
+  event: { clientX: number; clientY: number },
+  rect: DOMRect,
+  orientation: 'horizontal' | 'vertical',
+  isRTL: boolean
+): number {
+  let ratio: number;
+
+  if (orientation === 'vertical') {
+    ratio = 1 - (event.clientY - rect.top) / rect.height;
+  } else if (isRTL) {
+    ratio = (rect.right - event.clientX) / rect.width;
+  } else {
+    ratio = (event.clientX - rect.left) / rect.width;
+  }
+
+  return clamp(ratio * 100, 0, 100);
+}

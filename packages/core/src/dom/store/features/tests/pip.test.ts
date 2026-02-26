@@ -1,7 +1,7 @@
 import { createStore } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import type { PlayerTarget } from '../../../media/types';
+import { createMockVideo } from '../../../tests/test-helpers';
 import { pipFeature } from '../pip';
 
 describe('pipFeature', () => {
@@ -167,7 +167,3 @@ describe('pipFeature', () => {
     });
   });
 });
-
-function createMockVideo(): HTMLVideoElement {
-  return document.createElement('video');
-}

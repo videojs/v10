@@ -1,7 +1,7 @@
 import { createStore } from '@videojs/store';
 import { describe, expect, it, vi } from 'vitest';
-
 import type { PlayerTarget } from '../../../media/types';
+import { createMockVideo } from '../../../tests/test-helpers';
 import { playbackFeature } from '../playback';
 
 describe('playbackFeature', () => {
@@ -147,29 +147,3 @@ describe('playbackFeature', () => {
     });
   });
 });
-
-function createMockVideo(
-  overrides: Partial<{
-    paused: boolean;
-    ended: boolean;
-    currentTime: number;
-    readyState: number;
-  }>
-): HTMLVideoElement {
-  const video = document.createElement('video');
-
-  if (overrides.paused !== undefined) {
-    Object.defineProperty(video, 'paused', { value: overrides.paused, writable: false, configurable: true });
-  }
-  if (overrides.ended !== undefined) {
-    Object.defineProperty(video, 'ended', { value: overrides.ended, writable: false, configurable: true });
-  }
-  if (overrides.currentTime !== undefined) {
-    video.currentTime = overrides.currentTime;
-  }
-  if (overrides.readyState !== undefined) {
-    Object.defineProperty(video, 'readyState', { value: overrides.readyState, writable: false, configurable: true });
-  }
-
-  return video;
-}
