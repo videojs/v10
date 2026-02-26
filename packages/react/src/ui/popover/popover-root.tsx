@@ -33,17 +33,22 @@ export function PopoverRoot({
   // Keep refs that always point to the latest values so the
   // createPopover closure never reads stale props.
   const onOpenChangeRef = useLatestRef(onOpenChangeProp);
+  const closeOnEscapeRef = useLatestRef(coreProps.closeOnEscape);
+  const closeOnOutsideClickRef = useLatestRef(coreProps.closeOnOutsideClick);
+  const openOnHoverRef = useLatestRef(openOnHover);
+  const delayRef = useLatestRef(delay);
+  const closeDelayRef = useLatestRef(closeDelay);
 
   const [popover] = useState(() => {
     const instance = createPopover({
       onOpenChange: (nextOpen: boolean, details: PopoverChangeDetails) => {
         onOpenChangeRef.current?.(nextOpen, details);
       },
-      closeOnEscape: () => coreProps.closeOnEscape ?? PopoverCore.defaultProps.closeOnEscape,
-      closeOnOutsideClick: () => coreProps.closeOnOutsideClick ?? PopoverCore.defaultProps.closeOnOutsideClick,
-      openOnHover: () => openOnHover,
-      delay: () => delay,
-      closeDelay: () => closeDelay,
+      closeOnEscape: () => closeOnEscapeRef.current ?? PopoverCore.defaultProps.closeOnEscape,
+      closeOnOutsideClick: () => closeOnOutsideClickRef.current ?? PopoverCore.defaultProps.closeOnOutsideClick,
+      openOnHover: () => openOnHoverRef.current,
+      delay: () => delayRef.current,
+      closeDelay: () => closeDelayRef.current,
     });
 
     // Apply defaultOpen on creation (uncontrolled only)

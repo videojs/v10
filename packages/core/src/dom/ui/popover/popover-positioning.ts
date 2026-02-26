@@ -68,11 +68,14 @@ function getAnchorPositionCSS(anchorName: string, opts: PositioningOptions): Rec
     position: 'fixed',
   };
 
-  const anchorSide = OPPOSITE_SIDE[side];
+  // The CSS inset property is the OPPOSITE of the desired side.
+  // e.g. side='top' → set `bottom: anchor(top)` so the popover's
+  // bottom edge aligns with the anchor's top edge (placing it above).
+  const insetProp = OPPOSITE_SIDE[side];
 
   // Side positioning
   if (side === 'top' || side === 'bottom') {
-    style[side] = sideOffset ? `calc(anchor(${anchorSide}) + ${sideOffset}px)` : `anchor(${anchorSide})`;
+    style[insetProp] = sideOffset ? `calc(anchor(${side}) + ${sideOffset}px)` : `anchor(${side})`;
 
     // Alignment along the cross axis
     if (align === 'start') {
@@ -84,7 +87,7 @@ function getAnchorPositionCSS(anchorName: string, opts: PositioningOptions): Rec
       if (alignOffset) style['margin-inline-start'] = `${alignOffset}px`;
     }
   } else {
-    style[side] = sideOffset ? `calc(anchor(${anchorSide}) + ${sideOffset}px)` : `anchor(${anchorSide})`;
+    style[insetProp] = sideOffset ? `calc(anchor(${side}) + ${sideOffset}px)` : `anchor(${side})`;
 
     if (align === 'start') {
       style.top = alignOffset ? `calc(anchor(top) + ${alignOffset}px)` : 'anchor(top)';
