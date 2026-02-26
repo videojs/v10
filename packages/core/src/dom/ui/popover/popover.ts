@@ -29,6 +29,7 @@ export interface PopoverTriggerProps {
 
 export interface PopoverPopupProps {
   onPointerEnter: (event: UIPointerEvent) => void;
+  onPointerLeave: (event: UIPointerEvent) => void;
   onFocusOut: (event: UIFocusEvent) => void;
 }
 
@@ -91,7 +92,7 @@ export function createPopover(options: PopoverOptions): Popover {
     tryShowPopover(popupEl);
 
     requestAnimationFrame(() => {
-      if (!state.current.open) return;
+      if (abort.signal.aborted || !state.current.open) return;
       state.patch({ transitionStatus: 'open' });
     });
 
@@ -109,7 +110,9 @@ export function createPopover(options: PopoverOptions): Popover {
     // returns nothing because the browser hasn't started them yet.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
+        if (abort.signal.aborted) return;
         waitForTransitions(popupEl).finally(() => {
+          if (abort.signal.aborted) return;
           if (state.current.transitionStatus !== 'closing') return;
           tryHidePopover(popupEl);
           state.patch({ open: false, transitionStatus: 'closed' });
@@ -169,7 +172,6 @@ export function createPopover(options: PopoverOptions): Popover {
   }
 
   // Subscribe to open state to manage document listeners.
-  // Store the unsubscribe so we can clean it up on destroy.
   const unsubscribe = state.subscribe(() => {
     if (state.current.open) {
       setupDocumentListeners();
@@ -178,14 +180,23 @@ export function createPopover(options: PopoverOptions): Popover {
     }
   });
 
+  // Centralize cleanup on abort so any call to abort.abort() is sufficient.
+  abort.signal.addEventListener('abort', () => {
+    unsubscribe();
+    clearHoverTimeout();
+    cleanupDocumentListeners();
+    triggerEl = null;
+    popupEl = null;
+  });
+
   // --- Trigger props ---
 
   const triggerProps: PopoverTriggerProps = {
     onClick(event) {
       if (state.current.open) {
-        applyClose('click', event as unknown as Event);
+        applyClose('click', event);
       } else {
-        applyOpen('click', event as unknown as Event);
+        applyOpen('click', event);
       }
     },
 
@@ -241,6 +252,17 @@ export function createPopover(options: PopoverOptions): Popover {
       clearHoverTimeout();
     },
 
+    onPointerLeave(_event) {
+      if (!options.openOnHover?.()) return;
+
+      clearHoverTimeout();
+
+      if (!state.current.open) return;
+
+      const closeDelay = options.closeDelay?.() ?? 0;
+      hoverTimeout = setTimeout(() => applyClose('hover'), closeDelay);
+    },
+
     onFocusOut(event) {
       const relatedTarget = event.relatedTarget as Node | null;
 
@@ -275,11 +297,6 @@ export function createPopover(options: PopoverOptions): Popover {
   function destroy(): void {
     if (abort.signal.aborted) return;
     abort.abort();
-    unsubscribe();
-    clearHoverTimeout();
-    cleanupDocumentListeners();
-    triggerEl = null;
-    popupEl = null;
   }
 
   return {
