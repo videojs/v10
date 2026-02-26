@@ -1,5 +1,22 @@
 # Changelog
 
+## [10.0.0-alpha.4](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-alpha.3...@videojs/html@10.0.0-alpha.4) (2026-02-26)
+
+
+### Features
+
+* add background video preset ([#607](https://github.com/videojs/v10/issues/607)) ([c2bc488](https://github.com/videojs/v10/commit/c2bc488366fd28f9a6d00dd28a4f790b5e1400ed))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-alpha.4
+    * @videojs/element bumped to 10.0.0-alpha.4
+    * @videojs/store bumped to 10.0.0-alpha.4
+    * @videojs/utils bumped to 10.0.0-alpha.4
+
 ## [10.0.0-alpha.3](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-alpha.2...@videojs/html@10.0.0-alpha.3) (2026-02-26)
 
 

@@ -1,5 +1,28 @@
 # Changelog
 
+## [10.0.0-alpha.4](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-alpha.3...@videojs/react@10.0.0-alpha.4) (2026-02-26)
+
+
+### Features
+
+* add background video preset ([#607](https://github.com/videojs/v10/issues/607)) ([c2bc488](https://github.com/videojs/v10/commit/c2bc488366fd28f9a6d00dd28a4f790b5e1400ed))
+
+
+### Bug Fixes
+
+* **react:** move @videojs/icons to devDependencies ([f09c686](https://github.com/videojs/v10/commit/f09c6861c1b2398e3f2ce2c1e711f5e08dfa1421))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-alpha.4
+    * @videojs/store bumped to 10.0.0-alpha.4
+    * @videojs/utils bumped to 10.0.0-alpha.4
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-alpha.4
+
 ## [10.0.0-alpha.3](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-alpha.2...@videojs/react@10.0.0-alpha.3) (2026-02-26)
 
 
