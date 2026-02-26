@@ -13,7 +13,7 @@ This mirrors the React architecture where `Provider`, `Container`, and media com
 
 ```tsx
 <Provider>
-  <VideoSkin>          {/* Container + UI */}
+  <VideoSkin> {/* Container + UI */}
     <Video src="..." />
   </VideoSkin>
 </Provider>
@@ -23,10 +23,9 @@ The HTML equivalent:
 
 ```html
 <video-player>
-  <media-container>
+  <video-skin> {/* Container + UI */}
     <video src="video.mp4"></video>
-    <!-- UI controls -->
-  </media-container>
+  </video-skin>
 </video-player>
 ```
 
@@ -56,7 +55,7 @@ The current architecture already exposes `ProviderMixin` and `ContainerMixin` se
 function VideoSkin() {
   return (
     <Container>
-      <Video src="..." />
+      // media slot
       <PlayButton />
       <TimeDisplay />
     </Container>
@@ -67,7 +66,7 @@ function VideoSkin() {
 ```html
 <!-- HTML: Skin = container + UI (same composition) -->
 <media-container>
-  <video src="video.mp4"></video>
+  // media slot
   <media-play-button></media-play-button>
   <media-time-display></media-time-display>
 </media-container>
