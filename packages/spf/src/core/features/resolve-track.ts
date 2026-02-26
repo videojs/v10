@@ -53,7 +53,6 @@ const resolveTrackTask = async <T extends TrackType>(
     config: TrackResolutionConfig<T>;
   }
 ): Promise<void> => {
-  const { presentation } = currentState;
   const track = getSelectedTrack(currentState, context.config.type)!;
 
   // Fetch and parse media playlist
@@ -61,8 +60,21 @@ const resolveTrackTask = async <T extends TrackType>(
   const text = await getResponseText(response);
   const mediaTrack = parseMediaPlaylist(text, track);
 
-  // Update presentation with resolved track
-  const updatedPresentation = updateTrackInPresentation(presentation!, mediaTrack);
+  // IMPORTANT: Do NOT use currentState.presentation here. Multiple tracks may
+  // be resolving concurrently (e.g. during quality switching), so
+  // currentState.presentation is the snapshot from when this task *started*
+  // and is likely already stale — a concurrent task may have already patched
+  // the presentation with its own resolved track. Using the stale snapshot
+  // would overwrite that concurrent update and lose the other track's
+  // resolution. Instead we always read state.current.presentation at patch
+  // time so we build on top of whatever has been committed so far.
+  //
+  // This is admittedly a limitation of our current architecture: the task
+  // receives a snapshot but needs live state at write time. A future
+  // improvement could make updateTrackInPresentation a pure reducer dispatched
+  // through a single serialised writer.
+  const latestPresentation = context.state.current.presentation!;
+  const updatedPresentation = updateTrackInPresentation(latestPresentation, mediaTrack);
   context.state.patch({ presentation: updatedPresentation });
 };
 
@@ -103,6 +115,13 @@ export interface TrackResolutionConfig<T extends TrackType = TrackType> {
 /**
  * Resolves unresolved tracks using reactive composition.
  *
+ * Tracks each in-flight resolution in a Map keyed by track ID. This allows
+ * multiple tracks to resolve concurrently — important for quality switching,
+ * where the selected track may change before the prior resolution completes.
+ * Deduplication ensures each track is fetched at most once at a time; if a
+ * resolution for a given ID is already pending, subsequent requests for the
+ * same ID are ignored until the first completes.
+ *
  * Uses combineLatest to compose state + events, enabling both state-driven
  * and event-driven resolution triggers.
  *
@@ -119,37 +138,36 @@ export function resolveTrack<T extends TrackType>(
   },
   config: TrackResolutionConfig<T>
 ): () => void {
-  // Task pattern: currentTask holds the promise (null when idle, Promise when running)
-  let currentTask: Promise<void> | null = null;
-  let abortController: AbortController | null = null;
+  // In-flight resolutions keyed by track ID.
+  // Each entry is the AbortController for that fetch, allowing cleanup on destroy.
+  const pending = new Map<string, AbortController>();
 
   const cleanup = combineLatest([state, events]).subscribe(async ([currentState, event]) => {
     if (!canResolve(currentState, config) || !shouldResolve(currentState, event)) return;
-    if (currentTask) return; // Task already in progress
 
-    // Create abort controller and invoke module-level task
-    abortController = new AbortController();
-    currentTask = resolveTrackTask({ currentState }, { signal: abortController.signal, state, config });
+    const track = getSelectedTrack(currentState, config.type);
+    if (!track) return;
+
+    // Already resolving this track — skip to avoid duplicate fetches.
+    if (pending.has(track.id)) return;
+
+    const abortController = new AbortController();
+    pending.set(track.id, abortController);
 
     try {
-      // Await the task promise
-      await currentTask;
+      await resolveTrackTask({ currentState }, { signal: abortController.signal, state, config });
     } catch (error) {
-      // Ignore AbortError - expected when cleanup happens
-      if (error instanceof Error && error.name === 'AbortError') {
-        return;
-      }
-      throw error;
+      if (!(error instanceof Error && error.name === 'AbortError')) throw error;
     } finally {
-      // Cleanup happens outside the task
-      currentTask = null;
-      abortController = null;
+      pending.delete(track.id);
     }
   });
 
-  // Return cleanup function that aborts pending task
   return () => {
-    abortController?.abort();
+    for (const controller of pending.values()) {
+      controller.abort();
+    }
+    pending.clear();
     cleanup();
   };
 }
