@@ -1,3 +1,7 @@
+background-video-player {
+  display: contents;
+}
+
 background-video-skin {
   display: block;
   position: relative;
