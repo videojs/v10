@@ -1,4 +1,4 @@
-import { Dialog } from '@base-ui-components/react/dialog';
+import { Dialog } from '@base-ui/react/dialog';
 import { useStore } from '@nanostores/react';
 import { useEffect, useRef, useState } from 'react';
 import { currentFramework, currentStyle } from '@/stores/preferences';

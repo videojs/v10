@@ -1,4 +1,4 @@
-import { Select as BaseSelect } from '@base-ui-components/react/select';
+import { Select as BaseSelect } from '@base-ui/react/select';
 import clsx from 'clsx';
 import { Check, ChevronDown } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
@@ -31,7 +31,7 @@ export function Select<T extends string = string>({
       <BaseSelect.Trigger
         className={twMerge(
           clsx(
-            'inline-flex items-center gap-2 bg-light-60 dark:bg-dark-90 dark:text-light-100 border border-light-40 dark:border-dark-80 rounded-lg text-sm p-2'
+            'inline-flex items-center gap-2 text-left bg-light-60 dark:bg-dark-90 dark:text-light-100 border border-light-40 dark:border-dark-80 rounded-lg text-sm p-2'
           ),
           className
         )}
@@ -50,24 +50,16 @@ export function Select<T extends string = string>({
           <BaseSelect.Popup
             className={clsx(
               'border border-light-40 dark:border-dark-80 rounded-lg bg-light-60 dark:bg-dark-80 shadow-xl text-sm',
-              'overflow-hidden'
+              'overflow-y-auto'
             )}
             style={
               {
                 minWidth: 'var(--anchor-width)',
+                maxHeight: 'var(--available-height)',
               } as React.CSSProperties
             }
           >
-            <BaseSelect.List
-              // TODO a slick transition
-              className={clsx('overflow-y-auto')}
-              style={
-                {
-                  maxHeight: 'calc(var(--available-height) - var(--spacing) * 2)',
-                  transformOrigin: 'var(--transform-origin)',
-                } as React.CSSProperties
-              }
-            >
+            <BaseSelect.List>
               {options.map((option) => (
                 <BaseSelect.Item
                   key={option.value}

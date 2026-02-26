@@ -1,7 +1,7 @@
 import { createStore } from '@videojs/store';
 import { describe, expect, it } from 'vitest';
-
 import type { PlayerTarget } from '../../../media/types';
+import { createMockVideo } from '../../../tests/test-helpers';
 import { volumeFeature } from '../volume';
 
 describe('volumeFeature', () => {
@@ -105,21 +105,3 @@ describe('volumeFeature', () => {
     });
   });
 });
-
-function createMockVideo(
-  overrides: Partial<{
-    volume: number;
-    muted: boolean;
-  }>
-): HTMLVideoElement {
-  const video = document.createElement('video');
-
-  if (overrides.volume !== undefined) {
-    video.volume = overrides.volume;
-  }
-  if (overrides.muted !== undefined) {
-    video.muted = overrides.muted;
-  }
-
-  return video;
-}

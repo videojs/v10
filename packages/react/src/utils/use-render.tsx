@@ -72,7 +72,7 @@ export function renderElement<
   element: TagName,
   componentProps: UseRenderComponentProps<State>,
   params: UseRenderParameters<State, RenderedElementType>
-): ReactElement {
+): ReactElement | null {
   const { className: classNameProp, style: styleProp, render } = componentProps;
   const { state, ref, props, stateAttrMap } = params;
 

@@ -1,7 +1,7 @@
 import { createStore } from '@videojs/store';
 import { describe, expect, it } from 'vitest';
-
 import type { PlayerTarget } from '../../../media/types';
+import { createMockVideo } from '../../../tests/test-helpers';
 import { timeFeature } from '../time';
 
 describe('timeFeature', () => {
@@ -96,7 +96,7 @@ describe('timeFeature', () => {
   describe('actions', () => {
     describe('seek', () => {
       it('sets currentTime on target and waits for seeked event', async () => {
-        const video = createMockVideo({});
+        const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
         const store = createStore<PlayerTarget>()(timeFeature);
         store.attach({ media: video, container: null });
 
@@ -112,7 +112,7 @@ describe('timeFeature', () => {
       });
 
       it('aborts pending seek on detach', async () => {
-        const video = createMockVideo({});
+        const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
         const store = createStore<PlayerTarget>()(timeFeature);
         const detach = store.attach({ media: video, container: null });
 
@@ -129,7 +129,7 @@ describe('timeFeature', () => {
       });
 
       it('supersedes previous seek when new seek starts', async () => {
-        const video = createMockVideo({});
+        const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
         const store = createStore<PlayerTarget>()(timeFeature);
         store.attach({ media: video, container: null });
 
@@ -154,28 +154,3 @@ describe('timeFeature', () => {
     });
   });
 });
-
-function createMockVideo(
-  overrides: Partial<{
-    currentTime: number;
-    duration: number;
-    readyState: number;
-  }> = {}
-): HTMLVideoElement {
-  const video = document.createElement('video');
-
-  if (overrides.currentTime !== undefined) {
-    video.currentTime = overrides.currentTime;
-  }
-  if (overrides.duration !== undefined) {
-    Object.defineProperty(video, 'duration', { value: overrides.duration, writable: false, configurable: true });
-  }
-  // Default to HAVE_METADATA so seek tests work without waiting for loadedmetadata
-  Object.defineProperty(video, 'readyState', {
-    value: overrides.readyState ?? HTMLMediaElement.HAVE_METADATA,
-    writable: false,
-    configurable: true,
-  });
-
-  return video;
-}

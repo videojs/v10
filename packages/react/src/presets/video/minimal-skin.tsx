@@ -1,5 +1,7 @@
 import type { FullscreenButtonState, MuteButtonState, PlayButtonState } from '@videojs/core';
 import {
+  CaptionsOffIcon,
+  CaptionsOnIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -16,7 +18,9 @@ import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
+import { CaptionsButton, type CaptionsButtonState } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
+import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
@@ -55,6 +59,16 @@ function MuteButtonIcon({ state, className, ...rest }: { state: MuteButtonState 
   );
 }
 
+function CaptionsButtonIcon({ state, className, ...rest }: { state: CaptionsButtonState } & ComponentProps<'svg'>) {
+  const { active } = state;
+  return (
+    <>
+      <CaptionsOffIcon {...rest} className={cn(className, { 'media-icon--hidden': active })} />
+      <CaptionsOnIcon {...rest} className={cn(className, { 'media-icon--hidden': !active })} />
+    </>
+  );
+}
+
 function FullscreenButtonIcon({ state, className, ...rest }: { state: FullscreenButtonState } & ComponentProps<'svg'>) {
   const { fullscreen } = state;
   return (
@@ -82,11 +96,33 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
         }
       />
 
+      <ErrorDialog
+        aria-labelledby="media-error-title"
+        aria-describedby="media-error-description"
+        render={(props, { onDismiss }) => (
+          <div {...props} className="media-error">
+            <div className="media-error__dialog">
+              <div className="media-error__content">
+                <p id="media-error-title" className="media-error__title">
+                  Something went wrong.
+                </p>
+                <p id="media-error-description" className="media-error__description">
+                  An error occurred while trying to play the video. Please try again.
+                </p>
+              </div>
+              <div className="media-error__actions">
+                <Button onClick={onDismiss}>OK</Button>
+              </div>
+            </div>
+          </div>
+        )}
+      />
+
       <Controls.Root className="media-controls">
         <span className="media-button-group">
           <PlayButton
             render={(props, state) => (
-              <Button {...props}>
+              <Button {...props} className="media-button--icon">
                 <PlayButtonIcon state={state} className="media-icon" />
               </Button>
             )}
@@ -95,7 +131,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
           <SeekButton
             seconds={-SEEK_TIME}
             render={(props) => (
-              <Button {...props} className="media-button--seek">
+              <Button {...props} className="media-button--icon media-button--seek">
                 <span className="media-icon__container">
                   <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
                   <span className="media-icon__label">{SEEK_TIME}</span>
@@ -107,7 +143,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
           <SeekButton
             seconds={SEEK_TIME}
             render={(props) => (
-              <Button {...props} className="media-button--seek">
+              <Button {...props} className="media-button--icon media-button--seek">
                 <span className="media-icon__container">
                   <SeekIcon className="media-icon media-icon--seek" />
                   <span className="media-icon__label">{SEEK_TIME}</span>
@@ -125,21 +161,29 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
           </Time.Group>
 
           {/* Temporary spacer */}
-          <span className="media-slider" style={{ height: '4px', background: 'oklab(1 0 0 / 0.2)' }} />
+          <span className="media-slider" style={{ height: '4px', background: 'oklch(1 0 0 / 0.2)' }} />
         </span>
 
         <span className="media-button-group">
           <MuteButton
             render={(props, state) => (
-              <Button {...props}>
+              <Button {...props} className="media-button--icon">
                 <MuteButtonIcon state={state} className="media-icon" />
+              </Button>
+            )}
+          />
+
+          <CaptionsButton
+            render={(props, state) => (
+              <Button {...props} className="media-button--icon">
+                <CaptionsButtonIcon state={state} className="media-icon" />
               </Button>
             )}
           />
 
           <PiPButton
             render={(props) => (
-              <Button {...props}>
+              <Button {...props} className="media-button--icon">
                 <PipIcon className="media-icon" />
               </Button>
             )}
@@ -147,7 +191,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
 
           <FullscreenButton
             render={(props, state) => (
-              <Button {...props}>
+              <Button {...props} className="media-button--icon">
                 <FullscreenButtonIcon state={state} className="media-icon" />
               </Button>
             )}

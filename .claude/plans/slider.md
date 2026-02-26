@@ -1,6 +1,6 @@
 # Slider Component Implementation
 
-**Status:** READY
+**Status:** PR 2 COMPLETE — PR 3 (React) and PR 4 (HTML) ready to start
 **Design Doc:** `internal/design/ui/slider/`
 **Issues:** #275 (time slider), #267 (volume slider), #269 (seek slider)
 
@@ -477,189 +477,60 @@ pnpm lint:fix:file <changed-files>
 
 ---
 
-## PR 2: DOM Layer
+## PR 2: DOM Layer — COMPLETE
 
-**Branch:** `feat/slider-dom`
-**Base:** `feat/slider-core`
+**Branch:** `slider-dom` — [PR #613](https://github.com/videojs/v10/pull/613)
+**Base:** `main` (after PR 1 merges)
 **Package:** `@videojs/core` (dom subpath)
 
-### 2.1 `UIPointerEvent` Type
+### What was built
 
-**File:** `packages/core/src/dom/ui/event.ts`
+- `createSlider()` factory with pointer drag (threshold-based), keyboard stepping, focus management, and AbortController cleanup
+- `getPercentFromPointerEvent()` extracted as a public DOM utility in `packages/core/src/dom/utils/pointer.ts`
+- `getSliderCSSVars()` and `getTimeSliderCSSVars()` CSS variable formatters
+- `UIPointerEvent` / `UIKeyboardEvent` event interfaces extended with required properties
+- Shared test infrastructure: `createMockVideo()`, `createTimeRanges()`, `createSliderState()`, `createTimeSliderState()`
+- jsdom `PointerEvent` polyfill in test setup
+- Refactored 8 feature test files to use shared helpers
+- 149 tests passing, lint clean, build clean
 
-Extend existing event types with pointer-specific properties:
+### Deviations from plan
 
-```ts
-export interface UIPointerEvent extends UIEvent {
-  clientX: number;
-  clientY: number;
-  pointerId: number;
-  pointerType: string;
-}
-```
+1. **`getPercentFromPointerEvent` extracted as public utility** — Plan had it as module-private. Extracted to `packages/core/src/dom/utils/pointer.ts` and exported from the `@videojs/core/dom` barrel so the React `useSlider` hook can reuse it without duplication.
 
-### 2.2 `createSlider()` — Interaction Factory
+2. **Widened event param type** — `getPercentFromPointerEvent` accepts `{ clientX: number; clientY: number }` instead of `UIPointerEvent`. This allows both `UIPointerEvent` (from public props) and native `PointerEvent` (from document listeners) without type casts.
 
-**File:** `packages/core/src/dom/ui/slider.ts`
+3. **Document listeners use native `PointerEvent` typing** — Internal handlers `onDocumentPointerMove` and `onDocumentPointerUp` accept native `PointerEvent` directly, eliminating `as unknown as EventListener` casts.
 
-Factory function that manages pointer and keyboard interaction state. Returns a subscribable
-`State<SliderInteraction>` plus props objects for Root and Thumb elements.
+4. **`onValueChange` guarded behind drag threshold** — Plan had `onValueChange` firing on every `pointermove`. Changed so pre-threshold moves only update `pointerPercent` for hover preview — `onValueChange` fires only once drag threshold is reached. Prevents premature seeking.
 
-**New pattern:** Unlike `createButton()` (stateless, returns plain props), `createSlider()` is
-stateful — it creates a `State<SliderInteraction>` via `createState()` from `@videojs/store`,
-has a `destroy()` lifecycle, and returns a subscription handle. This is justified because
-slider interaction is inherently stateful (drag tracking, pointer capture, percent calculation)
-unlike button activation. `@videojs/core` already depends on `@videojs/store` (`workspace:*`).
+5. **`getThumbElement` option added** — Not in original plan. Allows `createSlider` to focus the thumb on pointerdown for keyboard follow-up and screen reader tracking.
 
-```ts
-export interface SliderOptions {
-  /** Element reference for getBoundingClientRect() and pointer capture. */
-  getElement: () => HTMLElement;
+6. **`UIKeyboardEvent` extended** — Added `shiftKey` (for Shift+Arrow large step) and `metaKey` (for meta key guard on numeric 0-9).
 
-  getOrientation: () => 'horizontal' | 'vertical';
-  isRTL: () => boolean;
-  isDisabled: () => boolean;
+7. **AbortController renamed** — `ac` → `abort` per user preference.
 
-  // For keyboard: what's the current value as a percent?
-  getPercent: () => number;
-  getStepPercent: () => number;
-  getLargeStepPercent: () => number;
+8. **Shared test helpers** — Plan didn't specify these. Created `packages/core/src/dom/tests/test-helpers.ts` with importable factories and `setup.ts` with global jsdom `PointerEvent` polyfill, wired into vitest config.
 
-  onValueChange?: ((percent: number) => void) | undefined;
-  onValueCommit?: ((percent: number) => void) | undefined;
-  onDragStart?: (() => void) | undefined;
-  onDragEnd?: (() => void) | undefined;
-}
+9. **Document listener cleanup simplified** — `onDocumentPointerCancel` inlined (just calls `endDrag`), `onDocumentTouchMove` inlined as arrow function.
 
-export interface SliderRootProps {
-  onPointerDown: (event: UIPointerEvent) => void;
-  onPointerMove: (event: UIPointerEvent) => void;
-  onPointerLeave: (event: UIPointerEvent) => void;
-}
+### Files created
 
-export interface SliderThumbProps {
-  onKeyDown: (event: UIKeyboardEvent) => void;
-  onFocus: (event: UIEvent) => void;
-  onBlur: (event: UIEvent) => void;
-}
+- `packages/core/src/dom/ui/slider.ts`
+- `packages/core/src/dom/ui/slider-css-vars.ts`
+- `packages/core/src/dom/utils/pointer.ts`
+- `packages/core/src/dom/tests/setup.ts`
+- `packages/core/src/dom/tests/test-helpers.ts`
+- `packages/core/src/dom/ui/tests/slider.test.ts` (46 tests)
+- `packages/core/src/dom/ui/tests/slider-css-vars.test.ts` (7 tests)
 
-export interface SliderHandle {
-  interaction: State<SliderInteraction>;
-  rootProps: SliderRootProps;
-  thumbProps: SliderThumbProps;
-  destroy: () => void;
-}
+### Files modified
 
-export function createSlider(options: SliderOptions): SliderHandle;
-```
-
-**Behavior:**
-
-1. Creates `WritableState<SliderInteraction>` via `createState()`.
-2. **Pointer down on root:** Capture pointer, start drag. Compute percent from pointer position. Patch `{ dragging: true, dragPercent, pointerPercent }`. Call `onDragStart`. Call `onValueChange(dragPercent)`.
-3. **Pointer move:** If dragging — update `dragPercent`, call `onValueChange`. If not dragging — update `pointerPercent` only (hover preview). Patch to state.
-4. **Pointer up (window listener):** End drag. Call `onValueCommit(dragPercent)`. Call `onDragEnd`. Patch `{ dragging: false }`. Release pointer capture.
-5. **Pointer leave:** If not dragging, reset `{ pointing: false, pointerPercent: 0 }`.
-6. **Keyboard (on thumb):**
-   - `ArrowRight`/`ArrowUp`: increment by step percent
-   - `ArrowLeft`/`ArrowDown`: decrement by step percent
-   - `PageUp`: increment by large step percent
-   - `PageDown`: decrement by large step percent
-   - `Home`: go to 0%
-   - `End`: go to 100%
-   - RTL: invert horizontal arrows
-   - Vertical: Up = increase, Down = decrease
-   - Call `onValueChange` then `onValueCommit` on each key.
-7. **Focus/blur on thumb:** Patch `{ focused }`.
-8. **Disabled check:** All handlers early-return if `isDisabled()`.
-
-**Internal helper:**
-
-```ts
-function getPercentFromPointerEvent(
-  event: UIPointerEvent,
-  rect: DOMRect,
-  orientation: 'horizontal' | 'vertical',
-  isRTL: boolean
-): number;
-// Horizontal: (clientX - rect.left) / rect.width * 100, flipped for RTL.
-// Vertical: (rect.bottom - clientY) / rect.height * 100 (bottom = 0%).
-// Clamped to [0, 100].
-```
-
-**Notes:**
-- The element reference (`getElement()`) is used for `getBoundingClientRect()` in percent calculations and `setPointerCapture()`/`releasePointerCapture()` during drag. `UIPointerEvent` does not carry `target`/`currentTarget` (consistent with the existing `UIEvent` pattern) — the element reference comes from options, not events.
-- On pointerdown, the factory calls `getElement().setPointerCapture(event.pointerId)`. This means the Root element itself captures — all subsequent pointermove/pointerup events flow to it regardless of mouse position.
-- The `destroy()` function aborts internal AbortController (cleans up any listeners).
-- `onPointerMove` on the root also handles pointerup detection (via `event.buttons === 0` fallback for edge cases where pointerup fires on window but state is stale).
-- RTL detection: `isRTL()` callback (from options) should use `isRTL(element)` from `@videojs/utils/dom` (added in PR 1). Cache the result on `pointerdown` — direction doesn't change mid-drag.
-- The `onValueChange` callback can be wrapped with `rafThrottle` from `@videojs/utils/dom` by the consumer (e.g., `TimeSlider.Root` throttles seek events). The factory itself fires callbacks on every interaction.
-
-### 2.3 CSS Variable Formatting
-
-**File:** `packages/core/src/dom/ui/slider-css-vars.ts`
-
-```ts
-import { SliderCSSVars } from '../../core/ui/slider/slider-css-vars';
-import type { SliderState } from '../../core/ui/slider/slider-core';
-import type { TimeSliderState } from '../../core/ui/slider/time-slider-core';
-
-export function getSliderCSSVars(state: SliderState): Record<string, string> {
-  return {
-    [SliderCSSVars.fill]: `${state.fillPercent.toFixed(3)}%`,
-    [SliderCSSVars.pointer]: `${state.pointerPercent.toFixed(3)}%`,
-  };
-}
-
-export function getTimeSliderCSSVars(state: TimeSliderState): Record<string, string> {
-  return {
-    ...getSliderCSSVars(state),
-    [SliderCSSVars.buffer]: `${state.bufferPercent.toFixed(3)}%`,
-  };
-}
-```
-
-### 2.4 Barrel Export
-
-Add exports to `packages/core/src/dom/index.ts`:
-
-```ts
-export * from './ui/event';  // Exposes UIEvent, UIKeyboardEvent, UIPointerEvent
-export * from './ui/slider';
-export * from './ui/slider-css-vars';
-```
-
-Note: `./ui/event` is not currently exported from the barrel. Adding it exposes `UIEvent`,
-`UIKeyboardEvent`, and the new `UIPointerEvent` as public API from `@videojs/core/dom`.
-This is intentional — these types are needed by consumers building custom interaction handlers.
-
-### 2.5 Tests
-
-**File:** `packages/core/src/dom/ui/tests/slider.test.ts`
-
-- `createSlider` returns correct shape
-- Pointer down starts drag, `onDragStart` called, interaction state updates
-- Pointer move during drag calls `onValueChange` with percent
-- Pointer up calls `onValueCommit`, `onDragEnd`, drag ends
-- Pointer move without drag updates `pointerPercent` (hover)
-- Pointer leave resets pointing
-- Keyboard: arrow keys increment/decrement, Page/Home/End, RTL flip, vertical inversion
-- Disabled handlers no-op
-- Destroy cleans up
-
-**File:** `packages/core/src/dom/ui/tests/slider-css-vars.test.ts`
-
-- `getSliderCSSVars`: correct keys and 3-decimal formatting
-- `getTimeSliderCSSVars`: includes buffer var
-
-### 2.6 Verify
-
-```bash
-pnpm -F @videojs/core test src/dom/ui/tests/slider
-pnpm -F @videojs/core build
-pnpm typecheck
-pnpm lint:fix:file <changed-files>
-```
+- `packages/core/src/dom/ui/event.ts` — added `UIPointerEvent`, `shiftKey`/`metaKey` to `UIKeyboardEvent`
+- `packages/core/src/dom/index.ts` — barrel exports for event, slider, slider-css-vars
+- `packages/core/src/dom/utils/index.ts` — added `getPercentFromPointerEvent` export
+- `packages/core/vitest.config.ts` — added `setupFiles` for dom project
+- 8 feature test files — refactored to use shared `createMockVideo`/`createTimeRanges`
 
 ---
 

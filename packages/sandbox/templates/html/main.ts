@@ -1,7 +1,7 @@
 // HTML sandbox — Web player (DOM/Browser)
 // http://localhost:5173/html/
 
-import { createPlayer, features, MediaElement } from '@videojs/html';
+import { createPlayer, features } from '@videojs/html';
 
 const { PlayerElement } = createPlayer({
   features: features.video,

@@ -1,7 +1,7 @@
 import { createStore } from '@videojs/store';
 import { describe, expect, it } from 'vitest';
-
 import type { PlayerTarget } from '../../../media/types';
+import { createMockVideo, createTimeRanges } from '../../../tests/test-helpers';
 import { bufferFeature } from '../buffer';
 
 describe('bufferFeature', () => {
@@ -86,41 +86,3 @@ describe('bufferFeature', () => {
     });
   });
 });
-
-function createMockVideo(
-  overrides: Partial<{
-    buffered: TimeRanges;
-    seekable: TimeRanges;
-  }>
-): HTMLVideoElement {
-  const video = document.createElement('video');
-
-  if (overrides.buffered !== undefined) {
-    Object.defineProperty(video, 'buffered', { value: overrides.buffered, writable: false, configurable: true });
-  }
-  if (overrides.seekable !== undefined) {
-    Object.defineProperty(video, 'seekable', { value: overrides.seekable, writable: false, configurable: true });
-  }
-
-  return video;
-}
-
-function createTimeRanges(ranges: Array<[number, number]>): TimeRanges {
-  return {
-    length: ranges.length,
-    start(index: number): number {
-      const range = ranges[index];
-      if (index < 0 || index >= ranges.length || !range) {
-        throw new DOMException('Index out of range', 'IndexSizeError');
-      }
-      return range[0];
-    },
-    end(index: number): number {
-      const range = ranges[index];
-      if (index < 0 || index >= ranges.length || !range) {
-        throw new DOMException('Index out of range', 'IndexSizeError');
-      }
-      return range[1];
-    },
-  };
-}

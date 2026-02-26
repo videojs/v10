@@ -1,5 +1,5 @@
-import { Toggle } from '@base-ui-components/react/toggle';
-import { ToggleGroup as BaseToggleGroup } from '@base-ui-components/react/toggle-group';
+import { Toggle } from '@base-ui/react/toggle';
+import { ToggleGroup as BaseToggleGroup } from '@base-ui/react/toggle-group';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
