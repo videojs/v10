@@ -9,7 +9,7 @@ import MuxUploader, {
   MuxUploaderStatus,
 } from '@mux/mux-uploader-react';
 import { useCallback, useRef, useState } from 'react';
-import { muxPlaybackId, renderer } from '@/stores/installation';
+import { muxPlaybackId, renderer, sourceUrl } from '@/stores/installation';
 import { initiateAuthPopup } from '@/utils/mux/auth-flow';
 import { pollForPlaybackId } from '@/utils/mux/polling';
 import type { UploaderState } from './UploaderOverlay';
@@ -160,6 +160,7 @@ export default function MuxUploaderPanel() {
     setState('ready');
     renderer.set('mux-video');
     muxPlaybackId.set(result.playbackId);
+    sourceUrl.set(`https://stream.mux.com/${result.playbackId}.m3u8`);
   }, [uploadId]);
 
   /** Resets uploader to try again after error */

@@ -1,67 +1,113 @@
 import { useStore } from '@nanostores/react';
-import { Box } from 'lucide-react';
-import { useEffect } from 'react';
-import type { ImageRadioOption } from '@/components/ImageRadioGroup';
-import ImageRadioGroup from '@/components/ImageRadioGroup';
-import type { Renderer } from '@/stores/installation';
-import { renderer, useCase } from '@/stores/installation';
+import { useEffect, useMemo } from 'react';
+import { Select, type SelectOption } from '@/components/Select';
+import type { Renderer, UseCase } from '@/stores/installation';
+import { muxPlaybackId, renderer, sourceUrl, useCase, VALID_RENDERERS } from '@/stores/installation';
+import { articleFor, detectRenderer, extractMuxPlaybackId } from '@/utils/installation/detect-renderer';
 
-const VIDEO_RENDERERS: ImageRadioOption<Renderer>[] = [
-  { value: 'html5-video', label: 'HTML5 Video', image: <Box size={16} /> },
-  ...(
-    [
-      { value: 'cloudflare', label: 'Cloudflare', image: <Box size={16} /> },
-      { value: 'dash', label: 'DASH', image: <Box size={16} /> },
-      { value: 'hls', label: 'HLS', image: <Box size={16} /> },
-      { value: 'jwplayer', label: 'JW Player', image: <Box size={16} /> },
-      { value: 'mux-video', label: 'Mux', image: <Box size={16} /> },
-      // { value: 'shaka', label: 'Shaka', image: <Box size={16} /> },
-      { value: 'vimeo', label: 'Vimeo', image: <Box size={16} /> },
-      { value: 'wistia', label: 'Wistia', image: <Box size={16} /> },
-      { value: 'youtube', label: 'YouTube', image: <Box size={16} /> },
-    ] satisfies ImageRadioOption<Renderer>[]
-  ).sort((a, b) => a.label.localeCompare(b.label)),
-];
+const RENDERER_LABELS: Record<Renderer, string> = {
+  'background-video': 'Background Video',
+  cloudflare: 'Cloudflare',
+  dash: 'DASH',
+  hls: 'HLS',
+  'html5-audio': 'HTML5 Audio',
+  'html5-video': 'HTML5 Video',
+  jwplayer: 'JW Player',
+  'mux-audio': 'Mux',
+  'mux-background-video': 'Mux Background Video',
+  'mux-video': 'Mux',
+  spotify: 'Spotify',
+  vimeo: 'Vimeo',
+  wistia: 'Wistia',
+  youtube: 'YouTube',
+};
 
-const AUDIO_RENDERERS: ImageRadioOption<Renderer>[] = [
-  { value: 'html5-audio', label: 'HTML5 Audio', image: <Box size={16} /> },
-  { value: 'mux-audio', label: 'Mux', image: <Box size={16} /> },
-  { value: 'spotify', label: 'Spotify', image: <Box size={16} /> },
-];
+function buildOptions(useCase: UseCase): SelectOption<Renderer>[] {
+  return VALID_RENDERERS[useCase].map((r) => ({
+    value: r,
+    label: RENDERER_LABELS[r],
+  }));
+}
 
-const BACKGROUND_VIDEO_RENDERERS: ImageRadioOption<Renderer>[] = [
-  { value: 'background-video', label: 'Background Video', image: <Box size={16} /> },
-  { value: 'mux-background-video', label: 'Mux Background Video', image: <Box size={16} /> },
-];
-
-/** URL input and renderer dropdown for manual selection */
 export default function RendererSelect() {
   const $renderer = useStore(renderer);
   const $useCase = useStore(useCase);
+  const $sourceUrl = useStore(sourceUrl);
 
-  const options =
-    $useCase === 'default-audio'
-      ? AUDIO_RENDERERS
-      : $useCase === 'background-video'
-        ? BACKGROUND_VIDEO_RENDERERS
-        : VIDEO_RENDERERS;
+  const options = useMemo(() => buildOptions($useCase), [$useCase]);
+  const detection = useMemo(() => detectRenderer($sourceUrl, $useCase), [$sourceUrl, $useCase]);
 
-  // Auto-switch renderer when use case changes and current renderer is invalid
+  // Auto-select renderer when detection or use case changes
   useEffect(() => {
-    const validValues = options.map((o) => o.value);
-    if (!validValues.includes($renderer)) {
-      renderer.set(options[0].value);
+    if (detection) {
+      renderer.set(detection.renderer);
+
+      const playbackId = extractMuxPlaybackId($sourceUrl);
+      if (playbackId) {
+        muxPlaybackId.set(playbackId);
+      }
+    } else {
+      // No valid detection — ensure current renderer is valid for use case
+      const current = renderer.get();
+      const validRenderers = VALID_RENDERERS[$useCase];
+      if (!validRenderers.includes(current)) {
+        renderer.set(validRenderers[0]!);
+      }
     }
-  }, [$useCase]);
+  }, [detection, $sourceUrl, $useCase]);
+
+  const showDetectionMatch = $sourceUrl.trim() && detection && detection.renderer === $renderer;
+  const showDetectionSuggestion = $sourceUrl.trim() && detection && detection.renderer !== $renderer;
+  const showNoMatch = $sourceUrl.trim() && !detection;
 
   return (
-    <ImageRadioGroup
-      value={$renderer}
-      onChange={(value) => renderer.set(value)}
-      options={options}
-      aria-label="Select renderer"
-      size="sm"
-      labelPosition="inline"
-    />
+    <div className="flex flex-col gap-3">
+      {/* URL input */}
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="source-url-input" className="text-sm text-dark-40 dark:text-light-40">
+          Enter the URL to a video to auto-detect
+        </label>
+        <input
+          id="source-url-input"
+          type="url"
+          value={$sourceUrl}
+          onChange={(e) => sourceUrl.set(e.target.value)}
+          placeholder="https://..."
+          className="bg-light-60 dark:bg-dark-90 dark:text-light-100 border border-light-40 dark:border-dark-80 rounded-lg text-sm p-2"
+        />
+      </div>
+
+      {/* Select dropdown */}
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="renderer-select" className="text-sm text-dark-40 dark:text-light-40 flex flex-wrap gap-1">
+          {showDetectionMatch ? (
+            `This looks like ${articleFor(detection.renderer)} ${detection.label} link`
+          ) : showDetectionSuggestion ? (
+            <>
+              This looks like {articleFor(detection.renderer)} {detection.label} link.
+              <button
+                type="button"
+                onClick={() => renderer.set(detection.renderer)}
+                className="cursor-pointer underline intent:no-underline"
+              >
+                Select {detection.label}
+              </button>
+            </>
+          ) : showNoMatch ? (
+            `We couldn't detect the source type — select manually below`
+          ) : (
+            `or select manually`
+          )}
+        </label>
+        <Select
+          value={$renderer}
+          onChange={(value) => {
+            if (value) renderer.set(value);
+          }}
+          options={options}
+          aria-label="Select renderer"
+        />
+      </div>
+    </div>
   );
 }

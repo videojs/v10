@@ -2,7 +2,7 @@ import { useStore } from '@nanostores/react';
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import type { Renderer, Skin, UseCase } from '@/stores/installation';
-import { installMethod, muxPlaybackId, renderer, skin, useCase } from '@/stores/installation';
+import { installMethod, muxPlaybackId, renderer, skin, sourceUrl, useCase } from '@/stores/installation';
 
 function getRendererTag(renderer: Renderer): string {
   const map: Record<Renderer, string> = {
@@ -48,7 +48,7 @@ function getSkinTag(useCase: UseCase, skin: Skin): string {
   return map[skin];
 }
 
-function getRendererElement(renderer: Renderer, playbackId: string | null): string {
+function getRendererElement(renderer: Renderer, playbackId: string | null, url: string): string {
   const tag = getRendererTag(renderer);
 
   // When renderer is a mux variant and we have a playback ID, use playback-id attribute
@@ -56,14 +56,20 @@ function getRendererElement(renderer: Renderer, playbackId: string | null): stri
     return `<${tag} playback-id="${playbackId}"></${tag}>`;
   }
 
-  // Default: use src attribute placeholder
-  return `<${tag} src="..."></${tag}>`;
+  const src = url.trim() || '...';
+  return `<${tag} src="${src}"></${tag}>`;
 }
 
-function generateHTMLCode(useCase: UseCase, skin: Skin, renderer: Renderer, playbackId: string | null): string {
+function generateHTMLCode(
+  useCase: UseCase,
+  skin: Skin,
+  renderer: Renderer,
+  playbackId: string | null,
+  url: string
+): string {
   const providerTag = getProviderTag(useCase);
   const skinTag = getSkinTag(useCase, skin);
-  const rendererElement = getRendererElement(renderer, playbackId);
+  const rendererElement = getRendererElement(renderer, playbackId, url);
 
   return `<!--
   The PlayerProvider passes state between the UI components
@@ -112,6 +118,7 @@ export default function HTMLUsageCodeBlock() {
   const $renderer = useStore(renderer);
   const $muxPlaybackId = useStore(muxPlaybackId);
   const $installMethod = useStore(installMethod);
+  const $sourceUrl = useStore(sourceUrl);
 
   return (
     <>
@@ -134,7 +141,7 @@ export default function HTMLUsageCodeBlock() {
           </Tab>
         </TabsList>
         <TabsPanel value="html" initial>
-          <ClientCode code={generateHTMLCode($useCase, $skin, $renderer, $muxPlaybackId)} lang="html" />
+          <ClientCode code={generateHTMLCode($useCase, $skin, $renderer, $muxPlaybackId, $sourceUrl)} lang="html" />
         </TabsPanel>
       </TabsRoot>
     </>
