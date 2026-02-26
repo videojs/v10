@@ -66,6 +66,22 @@ describe('PopoverCore', () => {
 
       expect(attrs['aria-expanded']).toBe('true');
     });
+
+    it('includes aria-controls when popupId is provided', () => {
+      const core = new PopoverCore();
+      const state = core.getState(OPEN);
+      const attrs = core.getTriggerAttrs(state, 'popup-123');
+
+      expect(attrs['aria-controls']).toBe('popup-123');
+    });
+
+    it('omits aria-controls when popupId is not provided', () => {
+      const core = new PopoverCore();
+      const state = core.getState(OPEN);
+      const attrs = core.getTriggerAttrs(state);
+
+      expect(attrs).not.toHaveProperty('aria-controls');
+    });
   });
 
   describe('getPopupAttrs', () => {

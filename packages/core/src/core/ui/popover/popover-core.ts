@@ -10,6 +10,15 @@ export interface PopoverProps {
   align?: PopoverAlign | undefined;
   sideOffset?: number | undefined;
   alignOffset?: number | undefined;
+  /**
+   * Controls the modality of the popover.
+   *
+   * - `false` (default): non-modal; background content remains interactive.
+   * - `true`: modal; sets `aria-modal="true"` on the popup.
+   * - `'trap-focus'`: reserved for future focus-trapping behavior. Currently
+   *   equivalent to `true` — consumers must implement focus trapping in
+   *   their own UI layer.
+   */
   modal?: boolean | 'trap-focus' | undefined;
   closeOnEscape?: boolean | undefined;
   closeOnOutsideClick?: boolean | undefined;
@@ -73,10 +82,11 @@ export class PopoverCore {
     };
   }
 
-  getTriggerAttrs(state: PopoverState) {
+  getTriggerAttrs(state: PopoverState, popupId?: string) {
     return {
       'aria-expanded': state.open ? 'true' : 'false',
       'aria-haspopup': 'dialog',
+      ...(popupId ? { 'aria-controls': popupId } : {}),
     };
   }
 

@@ -9,11 +9,6 @@ export interface PositioningOptions {
   alignOffset: number;
 }
 
-export interface PositioningResult {
-  positionerStyle: Record<string, string>;
-  cssVars: Record<string, string>;
-}
-
 const OPPOSITE_SIDE: Record<PopoverSide, PopoverSide> = {
   top: 'bottom',
   bottom: 'top',
@@ -31,14 +26,30 @@ function detectAnchorPositioning(): boolean {
 }
 
 /**
- * Get CSS Anchor Positioning styles for the positioner element.
+ * Get positioning styles for the positioner element.
  *
  * When the browser supports CSS Anchor Positioning, returns native CSS properties.
- * Otherwise returns manual positioning based on bounding rects.
+ * When rects are provided and anchor positioning is unsupported, falls back to
+ * manual JS-computed positioning via CSS custom properties.
  */
-export function getAnchorPositionStyle(anchorName: string, opts: PositioningOptions): Record<string, string> {
+export function getAnchorPositionStyle(
+  anchorName: string,
+  opts: PositioningOptions,
+  triggerRect?: DOMRect,
+  positionerRect?: DOMRect,
+  boundaryRect?: DOMRect
+): Record<string, string> {
   if (detectAnchorPositioning()) {
     return getAnchorPositionCSS(anchorName, opts);
+  }
+
+  // JS fallback when CSS Anchor Positioning is not supported.
+  if (triggerRect && positionerRect && boundaryRect) {
+    return {
+      ...getManualPositionStyle(triggerRect, positionerRect, boundaryRect, opts),
+      ...getPopoverCSSVars(triggerRect, boundaryRect, opts.side),
+      position: 'absolute',
+    };
   }
 
   return {};
@@ -117,11 +128,11 @@ export function getPopoverCSSVars(
 }
 
 /**
- * Compute manual positioning CSS variables when CSS Anchor Positioning is not supported.
+ * Compute manual positioning when CSS Anchor Positioning is not supported.
  *
- * Returns CSS custom properties that should be set on the positioner element.
- * The consumer's CSS handles the actual positioning (e.g. `position: absolute;
- * top: var(--popover-top); left: var(--popover-left)`).
+ * Returns inline styles with CSS custom properties for top/left offsets.
+ * The consumer's CSS positions via `top: var(--media-popover-top);
+ * left: var(--media-popover-left)`.
  */
 export function getManualPositionStyle(
   triggerRect: DOMRect,
@@ -133,7 +144,8 @@ export function getManualPositionStyle(
   let top = 0;
   let left = 0;
 
-  // Side positioning (relative to boundary)
+  // Side positioning (relative to boundary).
+  // Positive sideOffset always increases distance from the trigger.
   if (side === 'top') {
     top = triggerRect.top - boundaryRect.top - positionerRect.height - sideOffset;
   } else if (side === 'bottom') {
