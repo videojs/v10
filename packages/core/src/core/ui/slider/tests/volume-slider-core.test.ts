@@ -144,5 +144,16 @@ describe('VolumeSliderCore', () => {
 
       expect(attrs['aria-label']).toBe('Sound');
     });
+
+    it('respects disabled prop', () => {
+      const core = new VolumeSliderCore({ disabled: true });
+      const state = core.getVolumeState(createMediaState({ volume: 0.5 }), createInteraction());
+
+      expect(state.disabled).toBe(true);
+
+      const attrs = core.getAttrs(state);
+      expect(attrs['aria-disabled']).toBe('true');
+      expect(attrs.tabindex).toBe(-1);
+    });
   });
 });

@@ -37,8 +37,8 @@ export class TimeSliderCore extends SliderCore {
   getTimeState(media: MediaTimeState & MediaBufferState, interaction: SliderInteraction): TimeSliderState {
     const { duration, currentTime, seeking, buffered } = media;
 
-    // Override min/max for time domain
-    super.setProps({ min: 0, max: duration, step: this.#props.step, largeStep: this.#props.largeStep });
+    // Override min/max for time domain, forwarding all user props so disabled/thumbAlignment aren't lost.
+    super.setProps({ ...this.#props, min: 0, max: duration });
 
     // Raw precision during drag for smooth scrubbing — step snapping only applies to keyboard.
     const value = interaction.dragging ? clamp((interaction.dragPercent / 100) * duration, 0, duration) : currentTime;

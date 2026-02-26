@@ -184,5 +184,34 @@ describe('TimeSliderCore', () => {
 
       expect(attrs['aria-label']).toBe('Progress');
     });
+
+    it('preserves disabled across getTimeState calls', () => {
+      const core = new TimeSliderCore({ disabled: true });
+
+      // getTimeState overrides min/max via super.setProps — disabled must survive.
+      const state = core.getTimeState(createMediaState({ duration: 300 }), createInteraction());
+
+      expect(state.disabled).toBe(true);
+
+      const attrs = core.getAttrs(state);
+      expect(attrs['aria-disabled']).toBe('true');
+      expect(attrs.tabindex).toBe(-1);
+    });
+
+    it('preserves thumbAlignment across getTimeState calls', () => {
+      const core = new TimeSliderCore({ thumbAlignment: 'edge' });
+
+      const state = core.getTimeState(createMediaState({ duration: 300 }), createInteraction());
+
+      expect(state.thumbAlignment).toBe('edge');
+    });
+
+    it('preserves orientation across getTimeState calls', () => {
+      const core = new TimeSliderCore({ orientation: 'vertical' });
+
+      const state = core.getTimeState(createMediaState({ duration: 300 }), createInteraction());
+
+      expect(state.orientation).toBe('vertical');
+    });
   });
 });

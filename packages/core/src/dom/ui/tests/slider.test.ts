@@ -63,6 +63,8 @@ function keyboardEvent(key: string, overrides: Partial<UIKeyboardEvent> = {}): U
   return {
     key,
     shiftKey: false,
+    ctrlKey: false,
+    altKey: false,
     metaKey: false,
     target: node,
     currentTarget: node,
@@ -271,6 +273,18 @@ describe('createSlider', () => {
       slider.destroy();
     });
 
+    it('releases pointer capture on pointerup', () => {
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ pointerId: 42, clientX: 50 }));
+      fireDocumentPointerUp({ clientX: 100 });
+
+      expect(el.releasePointerCapture).toHaveBeenCalledWith(42);
+
+      slider.destroy();
+    });
+
     it('calls onValueCommit on pointerup even without drag', () => {
       const onValueCommit = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
@@ -302,6 +316,18 @@ describe('createSlider', () => {
 
       slider.destroy();
     });
+
+    it('releases pointer capture on pointercancel', () => {
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ pointerId: 42, clientX: 50 }));
+      fireDocumentPointerCancel();
+
+      expect(el.releasePointerCapture).toHaveBeenCalledWith(42);
+
+      slider.destroy();
+    });
   });
 
   describe('pointer: stale drag safety', () => {
@@ -322,6 +348,40 @@ describe('createSlider', () => {
 
       expect(slider.interaction.current.dragging).toBe(false);
       expect(onDragEnd).toHaveBeenCalled();
+
+      slider.destroy();
+    });
+
+    it('releases pointer capture on stale drag', () => {
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ pointerId: 42, clientX: 50 }));
+      fireDocumentPointerMove({ clientX: 60, buttons: 0, pointerType: 'mouse' });
+
+      expect(el.releasePointerCapture).toHaveBeenCalledWith(42);
+
+      slider.destroy();
+    });
+
+    it('does not end drag for touch pointer with buttons 0', () => {
+      const onDragEnd = vi.fn();
+      const onValueChange = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onDragEnd, onValueChange }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      fireDocumentPointerMove({ clientX: 60 });
+      fireDocumentPointerMove({ clientX: 80 });
+      flush();
+      expect(slider.interaction.current.dragging).toBe(true);
+
+      // Touch with buttons=0 should NOT trigger stale drag detection
+      fireDocumentPointerMove({ clientX: 100, buttons: 0, pointerType: 'touch' });
+      flush();
+
+      expect(slider.interaction.current.dragging).toBe(true);
+      expect(onDragEnd).not.toHaveBeenCalled();
 
       slider.destroy();
     });
@@ -519,6 +579,28 @@ describe('createSlider', () => {
       const slider = createSlider(createOptions({ onValueChange }));
 
       slider.thumbProps.onKeyDown(keyboardEvent('5', { metaKey: true }));
+
+      expect(onValueChange).not.toHaveBeenCalled();
+
+      slider.destroy();
+    });
+
+    it('numeric keys do not fire when ctrlKey is held', () => {
+      const onValueChange = vi.fn();
+      const slider = createSlider(createOptions({ onValueChange }));
+
+      slider.thumbProps.onKeyDown(keyboardEvent('5', { ctrlKey: true }));
+
+      expect(onValueChange).not.toHaveBeenCalled();
+
+      slider.destroy();
+    });
+
+    it('numeric keys do not fire when altKey is held', () => {
+      const onValueChange = vi.fn();
+      const slider = createSlider(createOptions({ onValueChange }));
+
+      slider.thumbProps.onKeyDown(keyboardEvent('5', { altKey: true }));
 
       expect(onValueChange).not.toHaveBeenCalled();
 
@@ -765,6 +847,16 @@ describe('createSlider', () => {
 
       // Should not throw on repeated destroy
       expect(() => slider.destroy()).not.toThrow();
+    });
+
+    it('releases pointer capture on destroy', () => {
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ pointerId: 42, clientX: 50 }));
+      slider.destroy();
+
+      expect(el.releasePointerCapture).toHaveBeenCalledWith(42);
     });
 
     it('destroy cleans up active document listeners', () => {

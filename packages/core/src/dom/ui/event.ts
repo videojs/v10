@@ -5,6 +5,8 @@ export interface UIEvent {
 export interface UIKeyboardEvent extends UIEvent {
   key: string;
   shiftKey: boolean;
+  ctrlKey: boolean;
+  altKey: boolean;
   metaKey: boolean;
   target: Node;
   currentTarget: Node;

@@ -1,6 +1,7 @@
 import { createState, type State } from '@videojs/store';
+import { listen } from '@videojs/utils/dom';
 import { clamp, roundToStep } from '@videojs/utils/number';
-
+import { isNull } from '@videojs/utils/predicate';
 import type { SliderInteraction } from '../../core/ui/slider/slider-core';
 import { getPercentFromPointerEvent } from '../utils/pointer';
 import type { UIKeyboardEvent, UIPointerEvent } from './event';
@@ -61,11 +62,25 @@ export function createSlider(options: SliderOptions): SliderHandle {
   });
 
   const abort = new AbortController();
-  let isDragging = false;
-  let moveCount = 0;
-  let cachedRTL = false;
-  let cachedRect: DOMRect | null = null;
-  let documentCleanup: (() => void) | null = null;
+  let isDragging = false,
+    moveCount = 0,
+    cachedRTL = false,
+    cachedRect: DOMRect | null = null,
+    documentCleanup: (() => void) | null = null,
+    capturedPointerId: number | null = null;
+
+  function releaseCapture(): void {
+    if (isNull(capturedPointerId)) return;
+
+    const id = capturedPointerId;
+    capturedPointerId = null;
+
+    try {
+      options.getElement().releasePointerCapture(id);
+    } catch {
+      // Pointer may already have been released by the browser (e.g., after pointerup).
+    }
+  }
 
   function endDrag(): void {
     if (!isDragging) {
@@ -76,6 +91,11 @@ export function createSlider(options: SliderOptions): SliderHandle {
       options.onDragEnd?.();
     }
 
+    cleanup();
+  }
+
+  function cleanup() {
+    releaseCapture();
     documentCleanup?.();
     documentCleanup = null;
     cachedRect = null;
@@ -114,15 +134,15 @@ export function createSlider(options: SliderOptions): SliderHandle {
   }
 
   function addDocumentListeners(): void {
-    const docAc = new AbortController();
-    const signal = docAc.signal;
+    const abort = new AbortController();
+    const signal = abort.signal;
 
-    document.addEventListener('pointermove', onDocumentPointerMove, { passive: true, signal });
-    document.addEventListener('pointerup', onDocumentPointerUp, { signal });
-    document.addEventListener('pointercancel', endDrag, { signal });
-    document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false, signal });
+    listen(document, 'pointermove', onDocumentPointerMove, { passive: true, signal });
+    listen(document, 'pointerup', onDocumentPointerUp, { signal });
+    listen(document, 'pointercancel', endDrag, { signal });
+    listen(document, 'touchmove', (e) => e.preventDefault(), { passive: false, signal });
 
-    documentCleanup = () => docAc.abort();
+    documentCleanup = () => abort.abort();
   }
 
   // --- Root props ---
@@ -136,6 +156,8 @@ export function createSlider(options: SliderOptions): SliderHandle {
       cachedRTL = options.isRTL();
       moveCount = 0;
 
+      releaseCapture();
+      capturedPointerId = event.pointerId;
       el.setPointerCapture(event.pointerId);
 
       const percent = getPercentFromPointerEvent(event, cachedRect, options.getOrientation(), cachedRTL);
@@ -146,7 +168,6 @@ export function createSlider(options: SliderOptions): SliderHandle {
       // Focus the thumb for keyboard follow-up and screen reader tracking.
       options.getThumbElement?.()?.focus();
 
-      // Clean up any stale document listeners before adding new ones.
       documentCleanup?.();
       addDocumentListeners();
     },
@@ -187,7 +208,6 @@ export function createSlider(options: SliderOptions): SliderHandle {
       // Horizontal arrows flip for RTL. Vertical arrows are unaffected.
       const horizontalSign = rtl ? -1 : 1;
 
-      // Shift upgrades arrow keys to large step.
       const step = event.shiftKey ? largeStepPercent : stepPercent;
 
       let newPercent: number | null = null;
@@ -218,8 +238,8 @@ export function createSlider(options: SliderOptions): SliderHandle {
           newPercent = 100;
           break;
         default:
-          // Numeric keys 0-9: jump to N * 10%.
-          if (!event.metaKey && event.key >= '0' && event.key <= '9') {
+          // Suppress when any modifier is held to avoid hijacking browser/OS shortcuts.
+          if (!event.metaKey && !event.ctrlKey && !event.altKey && event.key >= '0' && event.key <= '9') {
             newPercent = Number(event.key) * 10;
           }
           break;
@@ -243,11 +263,7 @@ export function createSlider(options: SliderOptions): SliderHandle {
     },
   };
 
-  // Abort all document listeners on destroy.
-  abort.signal.addEventListener('abort', () => {
-    documentCleanup?.();
-    documentCleanup = null;
-  });
+  listen(abort.signal, 'abort', cleanup, { once: true });
 
   return {
     interaction: state,
