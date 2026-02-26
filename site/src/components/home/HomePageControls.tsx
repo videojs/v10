@@ -16,7 +16,7 @@ export default function HomePageControls({ className }: { className?: string }) 
     >
       <div className="flex justify-center pb-5 md:pb-20">
         <ToggleGroup
-          toggleClassName="md:text-base md:py-1 w-full md:w-auto"
+          toggleClassName="md:text-p2 md:py-1 w-full md:w-auto"
           value={[$skin]}
           onChange={(values) => {
             if (values.length > 0) skin.set(values[0]);
@@ -30,7 +30,7 @@ export default function HomePageControls({ className }: { className?: string }) 
       </div>
       <div className="hidden md:flex justify-center pb-20">
         <ToggleGroup
-          toggleClassName="md:text-base md:py-1"
+          toggleClassName="md:text-p2 md:py-1"
           value={[$framework]}
           onChange={(values) => {
             if (values.length > 0) framework.set(values[0]);

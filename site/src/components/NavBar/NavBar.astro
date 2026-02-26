@@ -29,7 +29,7 @@ const isDocsActive = currentPath.startsWith('/docs');
 const otherNavLinks = navLinks.filter((link) => link.href !== '/docs');
 const { class: className, dark = false } = Astro.props;
 const navLinkBase =
-  'hover:bg-(--color-dark-manila) transition-colors flex items-center px-5 py-2 rounded-sm font-display-extended uppercase font-bold';
+  'hover:bg-dark-manila dark:hover:bg-warm-gray transition-colors flex items-center px-5 py-2 rounded-sm font-display-extended uppercase font-bold';
 ---
 
 <nav

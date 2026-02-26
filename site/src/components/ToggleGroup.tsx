@@ -62,7 +62,9 @@ export default function ToggleGroup<T extends string = string>({
                   minimal ? 'px-4' : 'px-5 md:px-10',
                   'flex items-center justify-center py-2! text-sm tracking-wider font-display-extended uppercase font-bold',
                   isDisabled ? 'cursor-wait opacity-50' : 'cursor-pointer',
-                  isPressed ? 'bg-faded-black text-light-manila' : 'bg-transparent'
+                  isPressed
+                    ? 'bg-faded-black dark:bg-light-manila text-light-manila dark:text-faded-black'
+                    : 'bg-transparent'
                 ),
                 toggleClassName
               )}
@@ -70,12 +72,12 @@ export default function ToggleGroup<T extends string = string>({
             >
               {option.label}
             </Toggle>
-            {!isLast && minimal && <span className="block h-100% w-px bg-faded-black -mr-4" />}
+            {!isLast && minimal && <span className="block h-100% w-px bg-faded-black dark:bg-light-manila -mr-4" />}
             {!isLast && (
               <span className="flex px-1 gap-0.5 h-full">
-                <span className="block h-full w-px bg-faded-black" />
-                <span className="block h-full w-px bg-faded-black" />
-                <span className="block h-full w-px bg-faded-black" />
+                <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />
+                <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />
+                <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />
               </span>
             )}
           </>

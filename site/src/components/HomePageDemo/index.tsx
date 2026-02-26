@@ -15,18 +15,18 @@ export default function HomePageDemo({ className }: Props) {
 
   return (
     <section className={clsx('grid gap-x-5 gap-y-5 lg:grid-cols-2', className)}>
-      <section className="grid grid-rows-subgrid row-span-2 md:border-t border-y-faded-black py-5 md:py-10">
+      <section className="grid grid-rows-subgrid row-span-2 md:border-t border-y-faded-black dark:border-y-light-manila py-5 md:py-10">
         <header className="md:pb-5">
-          <h2 className="text-h5 text-faded-black text-center font-display-extended uppercase font-bold">
+          <h2 className="text-h5 dark:text-light-manila text-faded-black text-center font-display-extended uppercase font-bold">
             Assemble your player
           </h2>
-          <p className="text-base text-warm-gray text-center font-instrument-sans font-light">
+          <p className="text-p2 dark:text-dark-manila text-warm-gray text-center font-instrument-sans font-light">
             Feel at home with your framework, skin, and media source
           </p>
 
           <div className="flex md:hidden justify-center pt-8 w-full">
             <ToggleGroup
-              toggleClassName="md:text-base md:py-1 w-full"
+              toggleClassName="md:text-p2 md:py-1 w-full"
               value={[$framework]}
               onChange={(values) => {
                 if (values.length > 0) framework.set(values[0]);
@@ -42,18 +42,18 @@ export default function HomePageDemo({ className }: Props) {
 
         <BaseDemo className="lg:h-100 m-0" />
       </section>
-      <section className="grid grid-rows-subgrid row-span-2 md:border-t border-y-faded-black py-5 md:py-10">
+      <section className="grid grid-rows-subgrid row-span-2 md:border-t border-y-faded-black dark:border-y-light-manila py-5 md:py-10">
         <header className="md:pb-5">
-          <h2 className="text-h5 text-faded-black text-center font-display-extended uppercase font-bold">
+          <h2 className="text-h5 dark:text-light-manila text-faded-black text-center font-display-extended uppercase font-bold">
             Take full control
           </h2>
-          <p className="text-base text-warm-gray text-center font-instrument-sans font-light">
+          <p className="text-p2 dark:text-dark-manila text-warm-gray text-center font-instrument-sans font-light">
             Make your player truly your own with fully-editable components
           </p>
 
           <div className="flex md:hidden justify-center pt-8 w-full">
             <ToggleGroup
-              toggleClassName="md:text-base md:py-1 w-full"
+              toggleClassName="md:text-p2 md:py-1 w-full"
               value={[$framework]}
               onChange={(values) => {
                 if (values.length > 0) framework.set(values[0]);

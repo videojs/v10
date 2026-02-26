@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import {
   AdobeLogo,
   AmazonLogo,
@@ -39,7 +40,10 @@ export function SocialProof() {
         {LOGOS.map((logo, index) => (
           <div
             key={logo.alt}
-            className={`grid-separators h-auto aspect-4/3 relative flex items-center justify-center h-40${index >= 10 ? ' hidden md:flex' : ''}`}
+            className={clsx(
+              'grid-separators h-auto aspect-4/3 relative items-center justify-center',
+              index >= 10 ? 'hidden md:flex' : 'flex'
+            )}
           >
             {logo.LogoComponent}
           </div>

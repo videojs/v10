@@ -32,8 +32,10 @@ const milestones = [
 export function RoadMap() {
   return (
     <section className="w-full max-w-6xl mx-auto grid grid-rows-subgrid row-span-2 px-5 md:px-5">
-      <header className="py-4 border-t mb-12 border-b  border-y-faded-black">
-        <h2 className="text-h5 text-faded-black text-center font-display-extended uppercase font-bold">ROADMAP</h2>
+      <header className="py-4 border-t mb-12 border-b  border-y-faded-black dark:border-y-light-manila">
+        <h2 className="text-display-h2 text-faded-black dark:text-light-manila text-center font-display-extended uppercase font-bold">
+          ROADMAP
+        </h2>
       </header>
 
       <div className="h-full relative">
@@ -43,13 +45,13 @@ export function RoadMap() {
               key={milestone.date}
               className="flex md:flex-col gap-12 md:gap-0 md:items-center text-left md:text-center relative"
             >
-              <p className="hidden md:block relative z-10 text-sm font-display-extended font-bold uppercase tracking-wider pb-3 text-faded-black">
+              <p className="hidden md:block relative z-10 text-display-h5 font-display-extended font-bold uppercase tracking-wider pb-4 text-faded-black dark:text-light-manila">
                 {milestone.date}
               </p>
-              <div className="relative w-auto md:w-full flex justify-center py-1">
+              <div className="relative w-auto md:w-full flex justify-center py-0.5">
                 <div
                   className={clsx(
-                    'relative z-10 w-10 h-10 rounded-full border-2 bg-light-manila flex items-center justify-center',
+                    'relative z-10 w-10 h-10 rounded-full border-2 bg-light-manila dark:bg-faded-black flex items-center justify-center',
                     milestone.completed ? 'border-orange' : 'border-dark-manila'
                   )}
                 >
@@ -57,33 +59,35 @@ export function RoadMap() {
                 </div>
               </div>
               <div className="block md:block">
-                <h3 className="text-orange font-display-extended font-bold uppercase text-base md:text-h5 leading-none md:mt-5 px-1">
-                  <p className="block md:hidden relative z-10 font-display-extended font-bold uppercase tracking-wider md:pb-3 text-faded-black text-base">
+                <h3 className="text-orange font-display-extended font-bold uppercase text-display-h5 md:text-display-h3 leading-none md:mt-5 px-1">
+                  <p className="block md:hidden relative z-10 font-display-extended font-bold uppercase tracking-wider md:pb-3 text-faded-black dark:text-light-manila text-display-h5">
                     {milestone.date}
                   </p>
                   {milestone.title}
                 </h3>
-                <p className="text-base md:text-sm mt-3 max-w-55 text-warm-gray">{milestone.description}</p>
+                <p className="text-p2 md:text-p3 md:mx-auto mt-3 max-w-55 text-warm-gray dark:text-light-manila">
+                  {milestone.description}
+                </p>
               </div>
             </div>
           ))}
           <div className="hidden md:block absolute mt-5 left-0 w-full">
-            <div className="absolute top-4 left-0 h-8 w-full data-bar brightness-0 z-0" />
+            <div className="absolute top-3 left-0 h-8 w-full data-bar brightness-50 dark:brightness-100 z-0" />
             <div
-              className="absolute bg-light-manila top-4 left-0 h-8 data-bar data-bar-orange z-2 max-w-(--progress)"
-              style={{ '--progress': '37.5%' } as React.CSSProperties}
+              className="absolute bg-light-manila dark:bg-faded-black top-3 left-0 h-8 data-bar data-bar-orange z-2"
+              style={{ maxWidth: '37.5%' }}
             />
-            <div className="absolute top-4 left-0 h-10 w-50 bg-linear-to-r from-light-manila to-transparent z-3" />
-            <div className="absolute top-4 right-0 h-10 w-50 bg-linear-to-r to-light-manila from-transparent z-4" />
+            <div className="absolute top-3 left-0 h-10 w-50 bg-linear-to-r from-light-manila dark:from-faded-black to-transparent z-3" />
+            <div className="absolute top-3 right-0 h-10 w-50 bg-linear-to-r to-light-manila dark:to-faded-black from-transparent z-4" />
           </div>
           <div className="block md:hidden absolute mt-0 left-0 h-full w-10 t-0">
-            <div className="absolute top-0 left-0 h-8 w-full horizontal-bars brightness-0 z-0" />
+            <div className="absolute top-0 left-0 h-8 w-full horizontal-bars brightness-50 dark:brightness-100  z-0" />
             <div
-              className="absolute bg-light-manila top-4 left-0 h-8 horizontal-bars horizontal-bars-orange z-2 max-h-(--progress)"
-              style={{ '--progress': '25%' } as React.CSSProperties}
+              className="absolute bg-light-manila dark:bg-faded-black top-0 left-0 h-10 horizontal-bars horizontal-bars-orange z-2"
+              style={{ maxHeight: '30%' }}
             />
-            <div className="absolute bottom-0 right-0 w-10 h-50 bg-linear-to-b to-light-manila from-transparent z-4" />
-            <div className="absolute top-0 right-0 w-10 h-20 bg-linear-to-b from-light-manila to-transparent z-4" />
+            <div className="absolute bottom-0 right-0 w-10 h-50 bg-linear-to-b to-light-manila dark:to-faded-black from-transparent z-4" />
+            <div className="absolute top-0 right-0 w-10 h-20 bg-linear-to-b from-light-manila dark:from-faded-black to-transparent z-4" />
           </div>
         </div>
       </div>

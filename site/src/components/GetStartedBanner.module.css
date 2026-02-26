@@ -9,7 +9,7 @@
 @media (min-width: 768px) {
   .section {
     grid-template-rows: none;
-    grid-template-columns: 1fr 300px 16%;
+    grid-template-columns: 1fr 290px 1fr;
   }
 }
 

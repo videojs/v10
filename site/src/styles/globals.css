@@ -76,15 +76,6 @@
     border-radius: 9999px;
   }
 
-  .built-bg {
-    background-image: url("/built-bg-horizontal-line.svg");
-    background-repeat: repeat-y;
-    background-size: 100% 9px;
-    background-clip: content-box;
-    padding: 8px 10px 0 10px;
-    animation: grow-bg 0.9s ease-out forwards;
-  }
-
   .data-bar {
     height: 2.5rem;
     background-image: url("/data-bar-white.svg");
@@ -108,16 +99,34 @@
   .horizontal-bars-orange {
     background-image: url("/horizontal-bar-orange.svg");
   }
+}
 
-  .text-stroke-faded-black {
-    color: transparent;
-    -webkit-text-stroke: 1px var(--color-faded-black);
-  }
+@utility built-bg-gray {
+  background-image: url("/built-bg-horizontal-line-gray.svg");
+  background-repeat: repeat-y;
+  background-size: 100% 9px;
+  background-clip: content-box;
+  padding: 8px 10px 0 10px;
+  animation: grow-bg 0.9s ease-out forwards;
+}
 
-  .text-stroke-white {
-    color: transparent;
-    -webkit-text-stroke: 1px var(--color-white);
-  }
+@utility built-bg-black {
+  background-image: url("/built-bg-horizontal-line-black.svg");
+  background-repeat: repeat-y;
+  background-size: 100% 9px;
+  background-clip: content-box;
+  padding: 8px 10px 0 10px;
+  animation: grow-bg 0.9s ease-out forwards;
+}
+
+@utility text-stroke-faded-black {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--color-faded-black);
+}
+
+@utility text-stroke-white {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--color-light-manila);
 }
 
 @utility grid-separators {
@@ -201,13 +210,13 @@ mark {
   color: var(--color-dark-100);
 }
 
-/* shiki dark mode */
+/* shiki dark mode — needed for components using dual themes (e.g. Shared.tsx) */
 .dark .shiki,
-.dark .shiki span,
-.dark .astro-code,
-.dark .astro-code span {
+.dark .shiki span {
   /* biome-ignore lint/complexity/noImportantStyles: override shiki's inline styles */
   color: var(--shiki-dark) !important;
+  /* biome-ignore lint/complexity/noImportantStyles: override shiki's inline styles */
+  background-color: var(--shiki-dark-bg) !important;
 }
 
 /* Ok, now let's do some tailwind stuff */
@@ -275,6 +284,7 @@ mark {
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
+  --font-weight-bold: 700;
 
   --text-*: initial;
   --text-h1: 4rem; /* 64px */
@@ -314,6 +324,46 @@ mark {
   --text-sm--line-height: calc(20 / 14);
   --text-sm--letter-spacing: -0.02em;
   --text-sm--font-weight: var(--font-weight-normal);
+
+  /* Homepage display typography — Eurostile LT Pro Extended (use with font-display-extended) */
+  --text-display-h1: 3.75rem; /* 60px */
+  --text-display-h1--line-height: 1.1;
+  --text-display-h1--letter-spacing: -0.03em;
+  --text-display-h1--font-weight: var(--font-weight-bold);
+  --text-display-h2: 1.75rem; /* 28px */
+  --text-display-h2--line-height: 1;
+  --text-display-h2--letter-spacing: -0.02em;
+  --text-display-h2--font-weight: var(--font-weight-bold);
+  --text-display-h3: 1.125rem; /* 18px */
+  --text-display-h3--line-height: 1;
+  --text-display-h3--letter-spacing: 0;
+  --text-display-h3--font-weight: var(--font-weight-bold);
+  --text-display-h4: 4.125rem; /* 66px */
+  --text-display-h4--line-height: 1.15;
+  --text-display-h4--letter-spacing: 0.02em;
+  --text-display-h4--font-weight: var(--font-weight-bold);
+  --text-display-h5: 0.875rem; /* 14px */
+  --text-display-h5--line-height: 1;
+  --text-display-h5--letter-spacing: 0;
+  --text-display-h5--font-weight: var(--font-weight-normal);
+
+  /* Homepage paragraph typography — Instrument Sans (P1–P3) / IBM Plex Mono (P4) */
+  --text-p1: 1.375rem; /* 22px */
+  --text-p1--line-height: 1.5;
+  --text-p1--letter-spacing: -0.01em;
+  --text-p1--font-weight: var(--font-weight-normal);
+  --text-p2: 1rem; /* 16px */
+  --text-p2--line-height: 1.5;
+  --text-p2--letter-spacing: -0.01em;
+  --text-p2--font-weight: var(--font-weight-normal);
+  --text-p3: 0.875rem; /* 14px */
+  --text-p3--line-height: 1.5;
+  --text-p3--letter-spacing: -0.01em;
+  --text-p3--font-weight: var(--font-weight-normal);
+  --text-p4: 0.875rem; /* 14px */
+  --text-p4--line-height: 1.5;
+  --text-p4--letter-spacing: 0;
+  --text-p4--font-weight: var(--font-weight-normal);
 
   /* Notice the use of em, so that code scales with, say, headers */
   --text-code: clamp(0.875em, calc(0.8125em + 0.125rem), 0.9375em);

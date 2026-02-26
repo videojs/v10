@@ -22,7 +22,7 @@ export function Marquee() {
     >
       <div
         id="logos"
-        className="flex whitespace-nowrap animate-marquee text-base font-display-extended uppercase text-light-manila"
+        className="flex whitespace-nowrap animate-marquee text-display-h5 font-display-extended uppercase text-light-manila"
       >
         {items}
         {items}

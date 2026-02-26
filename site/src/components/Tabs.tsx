@@ -72,8 +72,8 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId }: T
       ref={ref}
       className={twMerge(
         clsx(
-          'overflow-hidden border border-faded-black rounded-xs',
-          'bg-light-100 dark:bg-dark-110 flex flex-col',
+          'overflow-hidden border border-faded-black dark:border-dark-manila rounded-xs',
+          'bg-light-manila dark:bg-faded-black flex flex-col',
           'my-6',
           maxWidth && 'w-full max-w-3xl mx-auto',
           className
@@ -222,12 +222,12 @@ export function Tab({ value, children, initial }: TabProps) {
           'group flex items-center text-sm gap-2 uppercase font-display-extended',
           'first:-ml-px last:-mr-px -mx-0.5 no-underline',
           isActive ? 'text-orange font-bold' : 'font-faded-black',
-          isHydrated ? 'cursor-pointer intent:bg-light-100 dark:intent:bg-dark-110' : 'cursor-wait'
+          isHydrated ? 'cursor-pointer' : 'cursor-wait'
         )}
       >
         <span
           className={clsx(
-            'w-3 h-3 rounded-full border-faded-black border group-hover:bg-dark-manila',
+            'w-3 h-3 rounded-full border-faded-black dark:border-light-manila border group-hover:bg-dark-manila',
             isActive ? 'bg-orange group-hover:bg-orange' : ''
           )}
         />

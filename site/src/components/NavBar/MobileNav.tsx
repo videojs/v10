@@ -22,19 +22,19 @@ export interface MobileNavProps {
 
 export default function MobileNav({ navLinks, currentPath, dark = false, children }: MobileNavProps) {
   const navLinkBase =
-    'hover:bg-(--color-dark-manila) transition-colors flex items-center justify-center px-5 py-4 font-display-extended uppercase font-bold text-h5 text-center border-t border-faded-black';
+    'hover:bg-dark-manila dark:hover:bg-warm-gray transition-colors flex items-center justify-center px-5 py-4 font-display-extended uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-dark-manila';
 
   return (
     <Dialog.Root modal>
       {/* Trigger button - hamburger menu */}
       <Dialog.Trigger
         className={clsx(
-          'inline-flex items-stretch p-1 border-2 border-faded-black rounded-sm ',
-          dark ? 'bg-light-80 text-dark-100 intent:bg-light-40' : ' '
+          'inline-flex items-stretch p-1 border-2 border-faded-black dark:border-light-manila rounded-sm md:hidden',
+          dark ? 'bg-light-manila text-faded-black intent:bg-light-manila' : ' '
         )}
         aria-label="Open navigation menu"
       >
-        <span className="text-sm font-display-extended uppercase font-bold text-light-manila bg-faded-black px-4 py-2">
+        <span className="text-sm font-display-extended uppercase font-bold text-light-manila bg-faded-black dark:bg-light-manila dark:text-faded-black px-4 py-2">
           MENU
         </span>
       </Dialog.Trigger>
@@ -45,7 +45,9 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
         <Dialog.Popup
           className={clsx(
             'fixed inset-0 z-50 flex flex-col',
-            dark ? 'bg-dark-100 text-light-100 dark' : 'bg-light-80 dark:bg-dark-100 text-dark-100 dark:text-light-100'
+            dark
+              ? 'bg-faded-black text-light-manila dark'
+              : 'bg-light-manila dark:bg-faded-black text-faded-black dark:text-light-manila'
           )}
         >
           {/* Header with close button */}
@@ -59,18 +61,18 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
             <Logo width="10rem" />
             <Dialog.Close
               className={clsx(
-                'inline-flex items-stretch p-1 border-2 border-faded-black rounded-sm ',
-                dark ? 'bg-light-80 text-dark-100 intent:bg-light-40' : ''
+                'inline-flex items-stretch p-1 border-2 border-faded-black dark:border-light-manila rounded-sm ',
+                dark ? 'bg-light-manila text-faded-black intent:bg-light-manila' : ''
               )}
               aria-label="Close navigation menu"
             >
-              <span className="text-sm font-display-extended uppercase font-bold text-light-manila bg-faded-black px-4 py-2">
+              <span className="text-sm font-display-extended uppercase font-bold text-light-manila bg-faded-black dark:bg-light-manila dark:text-faded-black px-4 py-2">
                 CLOSE
               </span>
             </Dialog.Close>
           </div>
 
-          <div className="">
+          <div className="overflow-y-auto">
             {/* Astro makes it hard to know if we have children, so, we use -mt-px to hide the border-b if we don't */}
             <div className={clsx('', dark ? 'border-dark-80' : 'border-light-40 dark:border-dark-80')}>{children}</div>
 
@@ -107,7 +109,7 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
               </a>
             </nav>
           </div>
-          <p className="text-center p-6 mt-auto text-base">The open source player for the web</p>
+          <p className="text-center p-6 mt-auto text-p2">The open source player for the web</p>
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>

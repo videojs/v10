@@ -7,7 +7,6 @@ import { SEO_SUFFIX, SITE_TITLE } from '@/consts';
 import '@/styles/globals.css';
 
 import { PreferenceSync } from '@/components/docs/PreferenceSync';
-import Posthog from '@/components/Posthog.astro';
 import ThemeInit from '@/components/ThemeInit.astro';
 
 interface Props {
@@ -120,10 +119,10 @@ const fullTitle =
     class:list={[
       'relative',
       'font-sans antialiased text-pretty text-base',
-      'bg-light-80 dark:bg-dark-100 text-dark-100 dark:text-light-100',
+      'bg-light-manila dark:bg-faded-black text-faded-black dark:text-light-manila',
       'min-w-80',
       '[--nav-h:calc(var(--spacing)*13)] sm:[--nav-h:calc(var(--spacing)*14)]',
-      'selection:bg-yellow selection:text-dark-100',
+      'selection:bg-orange selection:text-faded-black dark:selection:text-light-manila',
     ]}
   >
     <div
@@ -131,7 +130,6 @@ const fullTitle =
         // BaseUI requires body.relative and div.isolate
         'isolate',
         // background colors are applied here for a more consistent FilmGrain blending
-        'bg-light-80 dark:bg-dark-100',
       ]}
     >
       <PreferenceSync client:idle />
