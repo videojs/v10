@@ -46,16 +46,16 @@ Rationale behind popover component choices.
 
 **Rationale:** CSS Anchor Positioning is the future of popover positioning on the web. It handles overflow, scrolling, and resizing natively without JavaScript measurement. Using it as the primary strategy with a JS fallback provides the best experience on modern browsers while maintaining compatibility. The detection is cached module-level and the code paths are cleanly separated.
 
-### CSS Custom Properties as Fallback Output
+### Inline Styles for Manual Positioning
 
-**Decision:** The manual fallback outputs `--media-popover-top` and `--media-popover-left` as CSS custom properties rather than applying `top`/`left` directly via inline styles.
+**Decision:** The manual fallback applies `top` and `left` directly as inline styles on the positioner element. Sizing constraints (`anchorWidth`, `anchorHeight`, `availableWidth`, `availableHeight`) remain as CSS custom properties.
 
 **Alternatives:**
 
-- Inline `top`/`left` styles — opinionated about which CSS properties to use. Harder for users to override.
+- CSS custom properties for `top`/`left` (previous design) — adds indirection that forces users to write `top: var(--media-popover-top)` in their styles. Easy to miss, extra setup for no benefit.
 - Transform-based positioning — `transform: translate(x, y)` avoids layout but conflicts with user transforms.
 
-**Rationale:** Consistent with the slider's approach — CSS vars are output values that users consume with `var()`. Users might want `transform: translate()` instead of `top/left`, or might need to combine with other positioning logic. CSS vars let users decide. The tradeoff is that users must apply `top: var(--media-popover-top)` in their styles, but this is documented clearly and is a one-time setup.
+**Rationale:** The slider uses CSS vars for fill/pointer/buffer because parts consume those values in different ways (`width` vs `transform: scaleX()`). Popover positioning has a single correct application — there's no reason for `top`/`left` to be indirect. Inline styles just work, matching the CSS Anchor Positioning path where the browser also applies positioning directly. Sizing constraints stay as CSS vars because users genuinely need to consume them differently (`max-width`, `max-height`, custom layouts).
 
 ### Side Offset Increases Distance
 

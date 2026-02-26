@@ -133,9 +133,10 @@ export function getPopoverCSSVars(
 /**
  * Compute manual positioning when CSS Anchor Positioning is not supported.
  *
- * Returns inline styles with CSS custom properties for top/left offsets.
- * The consumer's CSS positions via `top: var(--media-popover-top);
- * left: var(--media-popover-left)`.
+ * Returns inline `top`/`left` styles directly on the positioner element.
+ * Unlike the slider (where CSS vars enable flexible consumption), popover
+ * positioning has a single correct application — there's no reason to
+ * indirect through CSS custom properties.
  */
 export function getManualPositionStyle(
   triggerRect: DOMRect,
@@ -179,7 +180,7 @@ export function getManualPositionStyle(
   }
 
   return {
-    [PopoverCSSVars.top]: `${top}px`,
-    [PopoverCSSVars.left]: `${left}px`,
+    top: `${top}px`,
+    left: `${left}px`,
   };
 }

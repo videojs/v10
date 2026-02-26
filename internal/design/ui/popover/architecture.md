@@ -150,7 +150,7 @@ export const PopoverDataAttrs = {
 
 ### CSS Custom Properties
 
-Follows the `*CSSVars` pattern established by the slider:
+Follows the `*CSSVars` pattern established by the slider. Only sizing constraints are exposed as CSS vars — positioning (`top`/`left`) is applied directly as inline styles (see [decisions.md — Inline Styles for Manual Positioning](decisions.md#inline-styles-for-manual-positioning)):
 
 ```ts
 // popover-css-vars.ts
@@ -163,12 +163,6 @@ export const PopoverCSSVars = {
   availableWidth: '--media-popover-available-width',
   /** Available height between trigger and boundary edge. */
   availableHeight: '--media-popover-available-height',
-  /** Transform origin computed from anchor position. */
-  transformOrigin: '--media-popover-transform-origin',
-  /** Computed top offset for manual positioning fallback. */
-  top: '--media-popover-top',
-  /** Computed left offset for manual positioning fallback. */
-  left: '--media-popover-left',
 } as const;
 ```
 
@@ -209,6 +203,7 @@ interface Popover {
   interaction: State<PopoverInteraction>;    // subscribable, .current
   triggerProps: PopoverTriggerProps;
   popupProps: PopoverPopupProps;
+  readonly triggerElement: HTMLElement | null;
   setTriggerElement: (el: HTMLElement | null) => void;
   setPopupElement: (el: HTMLElement | null) => void;
   setBoundaryElement: (el: HTMLElement | null) => void;
@@ -240,12 +235,12 @@ interface PopoverPopupProps {
 
 **Opening:**
 1. `open()` called (from click, hover, or focus).
-2. `onOpenChange(true, details)` fires.
+2. Interaction set to `{ open: true, transitionStatus: 'opening' }`.
 3. `el.showPopover()` — uses native Popover API.
-4. Interaction set to `{ open: true, transitionStatus: 'opening' }`.
-5. Double `requestAnimationFrame` — ensures the element is painted.
-6. Interaction set to `{ transitionStatus: 'open' }`.
-7. Document-level listeners attached (Escape, outside click).
+4. Single `requestAnimationFrame` — ensures the element is painted.
+5. Interaction set to `{ transitionStatus: 'open' }`.
+6. `onOpenChange(true, details)` fires.
+7. Document-level listeners attached reactively (subscription fires when `open` becomes true).
 
 **Closing:**
 1. `close()` called (from click, escape, outside click, hover, or blur).
@@ -257,7 +252,7 @@ interface PopoverPopupProps {
 7. Interaction set to `{ open: false, transitionStatus: 'closed' }`.
 8. Document-level listeners removed.
 
-The double-RAF + `getAnimations()` pattern ensures CSS close transitions complete before the element is hidden. See [decisions.md — Transition-Aware Closing](decisions.md#transition-aware-closing).
+Opening uses a single RAF (just needs one frame for paint). Closing uses a double-RAF + `getAnimations()` pattern to ensure CSS close transitions start and complete before the element is hidden. See [decisions.md — Transition-Aware Closing](decisions.md#transition-aware-closing).
 
 ### Document-Level Listeners
 
@@ -288,9 +283,9 @@ const abort = new AbortController();
 // All subscriptions and timers reference abort.signal
 abort.signal.addEventListener('abort', () => {
   clearTimeout(hoverTimeout);
-  unsubscribeDocumentListeners?.();
-  triggerElement = null;
-  popupElement = null;
+  cleanupDocumentListeners();
+  triggerEl = null;
+  popupEl = null;
 });
 
 function destroy(): void {
@@ -345,23 +340,15 @@ When CSS Anchor Positioning is not supported, positions are computed in JavaScri
 
 ```css
 position: absolute;
---media-popover-top: 85px;
---media-popover-left: 200px;
+top: 85px;
+left: 200px;
 --media-popover-anchor-width: 120px;
 --media-popover-anchor-height: 40px;
 --media-popover-available-width: 350px;
 --media-popover-available-height: 280px;
---media-popover-transform-origin: center bottom;
 ```
 
-Users must apply the position values in their CSS:
-
-```css
-media-popover-positioner {
-  top: var(--media-popover-top);
-  left: var(--media-popover-left);
-}
-```
+Positioning (`top`/`left`) is applied directly as inline styles. No user CSS is needed for placement. Sizing constraint CSS vars are available for optional use (e.g., `max-width: var(--media-popover-available-width)`).
 
 ### Positioning Functions
 

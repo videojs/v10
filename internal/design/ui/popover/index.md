@@ -86,7 +86,7 @@ See [architecture.md](architecture.md) for internals.
 
 ## CSS Custom Properties
 
-Popovers expose positioning values as CSS custom properties on the positioner element. These are **output values** for the manual positioning fallback. When CSS Anchor Positioning is natively supported, the browser handles placement and these vars are not set.
+Popovers expose sizing constraint values as CSS custom properties on the positioner element. These are **output values** for the manual positioning fallback. When CSS Anchor Positioning is natively supported, the browser handles placement and these vars are not set.
 
 | Property | Example | Description |
 | -------- | ------- | ----------- |
@@ -94,31 +94,18 @@ Popovers expose positioning values as CSS custom properties on the positioner el
 | `--media-popover-anchor-height` | `40px` | Anchor element's height. |
 | `--media-popover-available-width` | `350px` | Available width between trigger and boundary edge. |
 | `--media-popover-available-height` | `280px` | Available height between trigger and boundary edge. |
-| `--media-popover-transform-origin` | `center bottom` | Transform origin computed from anchor position. |
-| `--media-popover-top` | `85px` | Computed top offset for manual positioning. |
-| `--media-popover-left` | `200px` | Computed left offset for manual positioning. |
+
+Positioning (`top`/`left`) is applied directly as inline styles on the positioner — no CSS var indirection. Unlike the slider (where parts consume continuous values in different ways), popover positioning has a single correct application.
 
 ```css
-/* Manual positioning fallback (when CSS Anchor Positioning is not supported) */
-media-popover-positioner {
-  position: absolute;
-  top: var(--media-popover-top);
-  left: var(--media-popover-left);
-}
-
 /* Constrain popup size to available space */
 media-popover-popup {
   max-width: var(--media-popover-available-width);
   max-height: var(--media-popover-available-height);
 }
-
-/* Animate from the anchor point */
-media-popover-popup {
-  transform-origin: var(--media-popover-transform-origin);
-}
 ```
 
-When CSS Anchor Positioning is supported, the positioner receives native CSS properties (`position-anchor`, `anchor()` functions) and the `--media-popover-top`/`--media-popover-left` vars are not needed.
+When CSS Anchor Positioning is supported, the positioner receives native CSS properties (`position-anchor`, `anchor()` functions) and the CSS vars above are not set.
 
 ## Data Attributes
 
