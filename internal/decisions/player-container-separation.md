@@ -23,7 +23,7 @@ The HTML equivalent:
 
 ```html
 <video-player>
-  <video-skin> {/* Container + UI */}
+  <video-skin> <!-- Container + UI -->
     <video src="video.mp4"></video>
   </video-skin>
 </video-player>
