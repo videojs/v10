@@ -1,6 +1,11 @@
 import '@videojs/react/background/skin.css';
-import { BackgroundVideo, BackgroundVideoProvider, BackgroundVideoSkin } from '@videojs/react/background';
+import { createPlayer, features } from '@videojs/react';
+import { BackgroundVideo, BackgroundVideoSkin } from '@videojs/react/background';
 import { createRoot } from 'react-dom/client';
+
+const { Provider: BackgroundVideoProvider } = createPlayer({
+  features: features.background,
+});
 
 export function App() {
   return (
