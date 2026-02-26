@@ -1,5 +1,22 @@
 # Changelog
 
+## [10.0.0-alpha.2](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-alpha.1...@videojs/html@10.0.0-alpha.2) (2026-02-26)
+
+
+### Miscellaneous Chores
+
+* **@videojs/html:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-alpha.2
+    * @videojs/element bumped to 10.0.0-alpha.2
+    * @videojs/store bumped to 10.0.0-alpha.2
+    * @videojs/utils bumped to 10.0.0-alpha.2
+
 ## [10.0.0-alpha.1](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-alpha.0...@videojs/html@10.0.0-alpha.1) (2026-02-26)
 
 
