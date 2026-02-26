@@ -1,3 +1,5 @@
+import { namedNodeMapToObject } from '@videojs/utils/dom';
+
 function getTemplateHTML(attrs: Record<string, string>) {
   return /*html*/ `
     <style>
@@ -66,14 +68,6 @@ export class BackgroundVideo extends HTMLElement {
       null
     );
   }
-}
-
-function namedNodeMapToObject(namedNodeMap: NamedNodeMap) {
-  const obj: Record<string, string> = {};
-  for (const attr of namedNodeMap) {
-    obj[attr.name] = attr.value;
-  }
-  return obj;
 }
 
 const VideoAttributes = [

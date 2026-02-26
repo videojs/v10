@@ -1,4 +1,5 @@
 import { ReactiveElement } from '@videojs/element';
+import { namedNodeMapToObject } from '@videojs/utils/dom';
 
 function getTemplateHTML(_attrs: Record<string, string>) {
   return /*html*/ `
@@ -21,14 +22,6 @@ export class BackgroundVideoSkinElement extends ReactiveElement {
       this.shadowRoot!.innerHTML = getTemplateHTML(namedNodeMapToObject(this.attributes));
     }
   }
-}
-
-function namedNodeMapToObject(namedNodeMap: NamedNodeMap) {
-  const obj: Record<string, string> = {};
-  for (const attr of namedNodeMap) {
-    obj[attr.name] = attr.value;
-  }
-  return obj;
 }
 
 customElements.define(BackgroundVideoSkinElement.tagName, BackgroundVideoSkinElement);
