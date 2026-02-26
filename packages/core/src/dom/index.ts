@@ -4,6 +4,8 @@ export * from './store/features';
 export * from './store/selectors';
 export * from './ui/button';
 export * from './ui/event';
+export * from './ui/popover/popover';
+export * from './ui/popover/popover-positioning';
 export * from './ui/slider';
 export * from './ui/slider-css-vars';
 export * from './ui/thumbnail';

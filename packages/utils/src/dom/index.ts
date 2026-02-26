@@ -7,7 +7,13 @@ export { listen } from './listen';
 export { isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement } from './predicates';
 export { type RafThrottled, rafThrottle } from './raf-throttle';
 export { getSlottedElement, querySlot } from './slotted';
-export { supportsAnimationFrame, supportsIdleCallback } from './supports';
+export { applyStyles } from './style';
+export {
+  supportsAnchorPositioning,
+  supportsAnimationFrame,
+  supportsIdleCallback,
+  supportsPopoverAPI,
+} from './supports';
 export { findTrackElement } from './text-track';
 export { serializeTimeRanges } from './time-ranges';
 export type { CustomElement, CustomElementCallbacks } from './types';
