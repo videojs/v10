@@ -1,5 +1,5 @@
 import { useStore } from '@nanostores/react';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { Select, type SelectOption } from '@/components/Select';
 import type { Renderer, UseCase } from '@/stores/installation';
 import { muxPlaybackId, renderer, sourceUrl, useCase, VALID_RENDERERS } from '@/stores/installation';
@@ -34,8 +34,8 @@ export default function RendererSelect() {
   const $useCase = useStore(useCase);
   const $sourceUrl = useStore(sourceUrl);
 
-  const options = useMemo(() => buildOptions($useCase), [$useCase]);
-  const detection = useMemo(() => detectRenderer($sourceUrl, $useCase), [$sourceUrl, $useCase]);
+  const options = buildOptions($useCase);
+  const detection = detectRenderer($sourceUrl, $useCase);
 
   // Auto-select renderer when detection or use case changes
   useEffect(() => {
