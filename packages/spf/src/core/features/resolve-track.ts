@@ -5,6 +5,7 @@ import { combineLatest } from '../reactive/combine-latest';
 import type { WritableState } from '../state/create-state';
 import type { Presentation, ResolvedTrack, TrackType } from '../types';
 import { isResolvedTrack } from '../types';
+import { generateId } from '../utils/generate-id';
 import { getSelectedTrack, type TrackSelectionState } from '../utils/track-selection';
 
 /**
@@ -42,61 +43,74 @@ export function shouldResolve(_state: TrackResolutionState, _event: TrackResolut
 }
 
 // ============================================================================
-// Task interface + implementation
+// Generic Task
 // ============================================================================
 
 /**
- * Minimal contract for a schedulable unit of async work.
- * Tasks must be identifiable, runnable, and abortable.
+ * Configuration for a Task.
  */
-interface Task {
+interface TaskConfig {
+  /**
+   * Identifier for this task.
+   * - string: used as-is
+   * - () => string: called once at construction time
+   * - undefined: a unique ID is generated via generateId()
+   */
+  id?: string | (() => string);
+
+  /**
+   * Optional external AbortSignal to compose with the task's internal one.
+   * The task's work will be aborted when either the internal controller (via
+   * abort()) or this external signal fires — whichever comes first.
+   *
+   * Composition uses AbortSignal.any(), which produces a new signal that fires
+   * when any of its sources are aborted. The internal AbortController is always
+   * present so the task can still be aborted independently regardless of whether
+   * an external signal is provided.
+   */
+  signal?: AbortSignal;
+}
+
+/**
+ * Minimal contract for a schedulable unit of async work.
+ */
+interface TaskLike {
   readonly id: string;
   run(): Promise<void>;
   abort(): void;
 }
 
 /**
- * Resolves a single unresolved track by fetching and parsing its media
- * playlist, then patching the presentation with the resolved track.
+ * Generic reusable task that wraps an async run function.
  *
- * The track to resolve is passed directly from the scheduling subscriber,
- * which has already determined the correct track via getSelectedTrack.
- * This keeps the task focused: it only needs the track and writable state.
+ * Owns its own AbortController so it can always be aborted independently.
+ * Optionally composes an external AbortSignal so that a parent's cancellation
+ * (e.g. engine cleanup) propagates into the task's work without requiring the
+ * caller to track the task separately.
  */
-class TrackResolutionTask implements Task {
+class Task implements TaskLike {
+  readonly id: string;
   readonly #abortController = new AbortController();
+  readonly #signal: AbortSignal;
 
-  // biome-ignore lint/suspicious/noExplicitAny: PartiallyResolved<T> union is unwieldy here; typed at the call site
   constructor(
-    private readonly track: any,
-    private readonly state: WritableState<TrackResolutionState>
+    private readonly runFn: (signal: AbortSignal) => Promise<void>,
+    config?: TaskConfig
   ) {
-    this.id = track.id;
+    const rawId = config?.id;
+    this.id = typeof rawId === 'function' ? rawId() : (rawId ?? generateId());
+
+    // Compose the internal signal with the optional external signal.
+    // AbortSignal.any() produces a signal that fires when either source aborts,
+    // letting the caller's signal propagate into the task's work (e.g. on engine
+    // cleanup) while still allowing the task to be aborted independently via abort().
+    this.#signal = config?.signal
+      ? AbortSignal.any([this.#abortController.signal, config.signal])
+      : this.#abortController.signal;
   }
 
-  readonly id: string;
-
   async run(): Promise<void> {
-    const response = await fetchResolvable(this.track, { signal: this.#abortController.signal });
-    const text = await getResponseText(response);
-    const mediaTrack = parseMediaPlaylist(text, this.track);
-
-    // IMPORTANT: Read state.current.presentation at patch time, not from a
-    // captured snapshot. Multiple TrackResolutionTasks may be running
-    // concurrently (one per track being resolved), so the snapshot from
-    // construction time may already be stale by the time a task completes —
-    // a sibling task may have already patched the presentation with its own
-    // resolved track. Using the snapshot would overwrite that update and lose
-    // the other track's resolution. Reading live state ensures each task
-    // builds on top of whatever has been committed so far.
-    //
-    // This is a limitation of the current architecture: tasks receive a
-    // snapshot at scheduling time but need live state at write time. A future
-    // improvement could dispatch resolved tracks through a single serialised
-    // writer (e.g. a reducer pattern) to eliminate this hazard entirely.
-    const latestPresentation = this.state.current.presentation!;
-    const updatedPresentation = updateTrackInPresentation(latestPresentation, mediaTrack);
-    this.state.patch({ presentation: updatedPresentation });
+    return this.runFn(this.#signal);
   }
 
   abort(): void {
@@ -109,20 +123,16 @@ class TrackResolutionTask implements Task {
 // ============================================================================
 
 /**
- * Runs tasks concurrently, keyed by an arbitrary identifier.
+ * Runs tasks concurrently, deduplicated by the id passed to schedule().
  *
- * Deduplicates by key — if a task for a given key is already in flight,
- * subsequent schedule() calls for that key are silently ignored until the
- * first task completes. This prevents duplicate network requests when state
- * changes fire the scheduling subscriber multiple times for the same track.
- *
- * Tasks are stored in the pending map so abortAll() can cancel any in-flight
- * work (e.g. on engine cleanup).
+ * If a task for a given id is already in flight, subsequent schedule() calls
+ * for that id are silently ignored until the first task completes. Tasks are
+ * stored so abortAll() can cancel any in-flight work (e.g. on engine cleanup).
  */
 class ConcurrentRunner {
-  readonly #pending = new Map<string, Task>();
+  readonly #pending = new Map<string, TaskLike>();
 
-  schedule(task: Task, id: string): void {
+  schedule(task: TaskLike, id: string): void {
     if (this.#pending.has(id)) return;
 
     this.#pending.set(id, task);
@@ -184,7 +194,7 @@ export interface TrackResolutionConfig<T extends TrackType = TrackType> {
  * Resolves unresolved tracks using reactive composition.
  *
  * The subscribe closure is pure scheduling logic: it checks conditions and
- * creates a task for the selected track when appropriate. The ConcurrentRunner
+ * creates a Task for the selected track when appropriate. The ConcurrentRunner
  * handles all concurrency concerns — deduplication, parallel execution, and
  * cleanup.
  *
@@ -201,6 +211,9 @@ export function resolveTrack<T extends TrackType>(
   },
   config: TrackResolutionConfig<T>
 ): () => void {
+  // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
+  // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
+  // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
   const runner = new ConcurrentRunner();
 
   const cleanup = combineLatest([state, events]).subscribe(([currentState, event]) => {
@@ -209,7 +222,37 @@ export function resolveTrack<T extends TrackType>(
     const track = getSelectedTrack(currentState, config.type);
     if (!track) return;
 
-    runner.schedule(new TrackResolutionTask(track, state), track.id);
+    const resolvedTrack = track;
+
+    runner.schedule(
+      // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createResolveTrackTask(track, context, config)),
+      // likely eventually passed down via config or a new "definitions" argument (CJP).
+      new Task(
+        async (signal) => {
+          const response = await fetchResolvable(resolvedTrack, { signal });
+          const text = await getResponseText(response);
+          const mediaTrack = parseMediaPlaylist(text, resolvedTrack);
+
+          // IMPORTANT: Read state.current.presentation at patch time, not from the
+          // captured currentState snapshot. Multiple Tasks may be running concurrently
+          // (one per track being resolved), so the snapshot is likely already stale by
+          // the time a task completes — a sibling task may have already patched the
+          // presentation with its own resolved track. Using the snapshot would overwrite
+          // that update and lose the other track's resolution. Reading live state ensures
+          // each task builds on top of whatever has been committed so far.
+          //
+          // This is a limitation of the current architecture: tasks receive a snapshot
+          // at scheduling time but need live state at write time. A future improvement
+          // could dispatch resolved tracks through a single serialised writer (e.g. a
+          // reducer pattern) to eliminate this hazard entirely.
+          const latestPresentation = state.current.presentation!;
+          const updatedPresentation = updateTrackInPresentation(latestPresentation, mediaTrack);
+          state.patch({ presentation: updatedPresentation });
+        },
+        { id: track.id }
+      ),
+      track.id
+    );
   });
 
   return () => {
