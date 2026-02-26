@@ -290,18 +290,18 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           <Time.Value type="duration" className="text-shadow-2xs text-shadow-black/25 tabular-nums" />
         </Time.Group>
 
-        <CaptionsButton
-          render={(props, state) => (
-            <Button variant="icon" {...props}>
-              <CaptionsButtonIcon state={state} className={icon} />
-            </Button>
-          )}
-        />
-
         <MuteButton
           render={(props, state) => (
             <Button variant="icon" {...props}>
               <MuteButtonIcon state={state} className={icon} />
+            </Button>
+          )}
+        />
+
+        <CaptionsButton
+          render={(props, state) => (
+            <Button variant="icon" {...props}>
+              <CaptionsButtonIcon state={state} className={icon} />
             </Button>
           )}
         />

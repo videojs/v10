@@ -25,6 +25,8 @@ const CaptionButtonDataAttrs = {
 
 export interface CaptionsButtonProps extends UIComponentProps<'button', CaptionsButtonState>, CaptionButtonCoreProps {}
 
+const DEBUG = false;
+
 /**
  * A button that toggles captions.
  *
@@ -55,6 +57,8 @@ export const CaptionsButton = forwardRef(function CaptionsButton(
     onActivate: () => setIsActive((active) => !active), // FIXME: Replace with actual toggle logic
     isDisabled: () => disabled ?? false,
   });
+
+  if (!DEBUG) return null;
 
   return renderElement(
     'button',
