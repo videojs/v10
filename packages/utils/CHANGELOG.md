@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.0-alpha.3](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-alpha.2...@videojs/utils@10.0.0-alpha.3) (2026-02-26)
+
+
+### Bug Fixes
+
+* **cd:** add repository field to all packages for provenance verification ([b723589](https://github.com/videojs/v10/commit/b72358904a78a9403df16d77936d4a1f41a64bfe))
+
 ## [10.0.0-alpha.2](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-alpha.1...@videojs/utils@10.0.0-alpha.2) (2026-02-26)
 
 
