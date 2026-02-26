@@ -41,42 +41,110 @@ export function shouldResolve(_state: TrackResolutionState, _event: TrackResolut
   return true;
 }
 
+// ============================================================================
+// Task interface + implementation
+// ============================================================================
+
 /**
- * Resolution task function (module-level, pure).
- * Fetches and parses media playlist for a track, then updates presentation.
+ * Minimal contract for a schedulable unit of async work.
+ * Tasks must be identifiable, runnable, and abortable.
  */
-const resolveTrackTask = async <T extends TrackType>(
-  { currentState }: { currentState: TrackResolutionState },
-  context: {
-    signal: AbortSignal;
-    state: WritableState<TrackResolutionState>;
-    config: TrackResolutionConfig<T>;
+interface Task {
+  readonly id: string;
+  run(): Promise<void>;
+  abort(): void;
+}
+
+/**
+ * Resolves a single unresolved track by fetching and parsing its media
+ * playlist, then patching the presentation with the resolved track.
+ *
+ * The track to resolve is passed directly from the scheduling subscriber,
+ * which has already determined the correct track via getSelectedTrack.
+ * This keeps the task focused: it only needs the track and writable state.
+ */
+class TrackResolutionTask implements Task {
+  readonly #abortController = new AbortController();
+
+  // biome-ignore lint/suspicious/noExplicitAny: PartiallyResolved<T> union is unwieldy here; typed at the call site
+  constructor(
+    private readonly track: any,
+    private readonly state: WritableState<TrackResolutionState>
+  ) {
+    this.id = track.id;
   }
-): Promise<void> => {
-  const track = getSelectedTrack(currentState, context.config.type)!;
 
-  // Fetch and parse media playlist
-  const response = await fetchResolvable(track, { signal: context.signal });
-  const text = await getResponseText(response);
-  const mediaTrack = parseMediaPlaylist(text, track);
+  readonly id: string;
 
-  // IMPORTANT: Do NOT use currentState.presentation here. Multiple tracks may
-  // be resolving concurrently (e.g. during quality switching), so
-  // currentState.presentation is the snapshot from when this task *started*
-  // and is likely already stale — a concurrent task may have already patched
-  // the presentation with its own resolved track. Using the stale snapshot
-  // would overwrite that concurrent update and lose the other track's
-  // resolution. Instead we always read state.current.presentation at patch
-  // time so we build on top of whatever has been committed so far.
-  //
-  // This is admittedly a limitation of our current architecture: the task
-  // receives a snapshot but needs live state at write time. A future
-  // improvement could make updateTrackInPresentation a pure reducer dispatched
-  // through a single serialised writer.
-  const latestPresentation = context.state.current.presentation!;
-  const updatedPresentation = updateTrackInPresentation(latestPresentation, mediaTrack);
-  context.state.patch({ presentation: updatedPresentation });
-};
+  async run(): Promise<void> {
+    const response = await fetchResolvable(this.track, { signal: this.#abortController.signal });
+    const text = await getResponseText(response);
+    const mediaTrack = parseMediaPlaylist(text, this.track);
+
+    // IMPORTANT: Read state.current.presentation at patch time, not from a
+    // captured snapshot. Multiple TrackResolutionTasks may be running
+    // concurrently (one per track being resolved), so the snapshot from
+    // construction time may already be stale by the time a task completes —
+    // a sibling task may have already patched the presentation with its own
+    // resolved track. Using the snapshot would overwrite that update and lose
+    // the other track's resolution. Reading live state ensures each task
+    // builds on top of whatever has been committed so far.
+    //
+    // This is a limitation of the current architecture: tasks receive a
+    // snapshot at scheduling time but need live state at write time. A future
+    // improvement could dispatch resolved tracks through a single serialised
+    // writer (e.g. a reducer pattern) to eliminate this hazard entirely.
+    const latestPresentation = this.state.current.presentation!;
+    const updatedPresentation = updateTrackInPresentation(latestPresentation, mediaTrack);
+    this.state.patch({ presentation: updatedPresentation });
+  }
+
+  abort(): void {
+    this.#abortController.abort();
+  }
+}
+
+// ============================================================================
+// Concurrent runner
+// ============================================================================
+
+/**
+ * Runs tasks concurrently, keyed by an arbitrary identifier.
+ *
+ * Deduplicates by key — if a task for a given key is already in flight,
+ * subsequent schedule() calls for that key are silently ignored until the
+ * first task completes. This prevents duplicate network requests when state
+ * changes fire the scheduling subscriber multiple times for the same track.
+ *
+ * Tasks are stored in the pending map so abortAll() can cancel any in-flight
+ * work (e.g. on engine cleanup).
+ */
+class ConcurrentRunner {
+  readonly #pending = new Map<string, Task>();
+
+  schedule(task: Task, id: string): void {
+    if (this.#pending.has(id)) return;
+
+    this.#pending.set(id, task);
+    task
+      .run()
+      .catch((error) => {
+        if (!(error instanceof Error && error.name === 'AbortError')) throw error;
+      })
+      .finally(() => {
+        this.#pending.delete(id);
+      });
+  }
+
+  abortAll(): void {
+    for (const task of this.#pending.values()) task.abort();
+    this.#pending.clear();
+  }
+}
+
+// ============================================================================
+// Public API
+// ============================================================================
 
 /**
  * Updates a track within a presentation (immutably).
@@ -115,15 +183,10 @@ export interface TrackResolutionConfig<T extends TrackType = TrackType> {
 /**
  * Resolves unresolved tracks using reactive composition.
  *
- * Tracks each in-flight resolution in a Map keyed by track ID. This allows
- * multiple tracks to resolve concurrently — important for quality switching,
- * where the selected track may change before the prior resolution completes.
- * Deduplication ensures each track is fetched at most once at a time; if a
- * resolution for a given ID is already pending, subsequent requests for the
- * same ID are ignored until the first completes.
- *
- * Uses combineLatest to compose state + events, enabling both state-driven
- * and event-driven resolution triggers.
+ * The subscribe closure is pure scheduling logic: it checks conditions and
+ * creates a task for the selected track when appropriate. The ConcurrentRunner
+ * handles all concurrency concerns — deduplication, parallel execution, and
+ * cleanup.
  *
  * Generic version that works for video, audio, or text tracks based on config.
  * Type parameter T is inferred from config.type (use 'as const' for inference).
@@ -138,36 +201,19 @@ export function resolveTrack<T extends TrackType>(
   },
   config: TrackResolutionConfig<T>
 ): () => void {
-  // In-flight resolutions keyed by track ID.
-  // Each entry is the AbortController for that fetch, allowing cleanup on destroy.
-  const pending = new Map<string, AbortController>();
+  const runner = new ConcurrentRunner();
 
-  const cleanup = combineLatest([state, events]).subscribe(async ([currentState, event]) => {
+  const cleanup = combineLatest([state, events]).subscribe(([currentState, event]) => {
     if (!canResolve(currentState, config) || !shouldResolve(currentState, event)) return;
 
     const track = getSelectedTrack(currentState, config.type);
     if (!track) return;
 
-    // Already resolving this track — skip to avoid duplicate fetches.
-    if (pending.has(track.id)) return;
-
-    const abortController = new AbortController();
-    pending.set(track.id, abortController);
-
-    try {
-      await resolveTrackTask({ currentState }, { signal: abortController.signal, state, config });
-    } catch (error) {
-      if (!(error instanceof Error && error.name === 'AbortError')) throw error;
-    } finally {
-      pending.delete(track.id);
-    }
+    runner.schedule(new TrackResolutionTask(track, state), track.id);
   });
 
   return () => {
-    for (const controller of pending.values()) {
-      controller.abort();
-    }
-    pending.clear();
+    runner.abortAll();
     cleanup();
   };
 }
