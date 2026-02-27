@@ -10,7 +10,7 @@ Rationale behind popover component choices.
 
 **HTML (single element):** The popover is a self-contained `<media-popover>` custom element. The trigger is an external element linked via the `commandfor` attribute (W3C Invoker Commands pattern). The popover element acts as both the popup container and the positioned element.
 
-**React (compound pattern):** The popover uses Root (state/context provider, no DOM), Trigger (button), Positioner (transparent pass-through, no DOM), Popup (positioned dialog with Popover API), Arrow (decorative caret).
+**React (compound pattern):** The popover uses Root (state/context provider, no DOM), Trigger (button), Popup (positioned dialog with Popover API), Arrow (decorative caret).
 
 **Alternatives:**
 
@@ -31,16 +31,16 @@ Rationale behind popover component choices.
 
 **Rationale:** `commandfor` is a W3C standard pattern (Invoker Commands) for linking a button to the element it controls. It works in both document and shadow root contexts via `getRootNode().querySelector()`. The trigger can be any element, placed anywhere in the DOM — not just a direct child. This matches the tech preview's approach and is the most flexible option.
 
-### Positioner as Transparent Pass-Through (React)
+### No Positioner Element (React)
 
-**Decision:** `Popover.Positioner` renders no DOM element — it returns `children` directly. Positioning logic lives on `PopoverPopup`.
+**Decision:** React has no Positioner component. Positioning logic lives directly on `PopoverPopup` — the element that enters the top layer via `showPopover()`.
 
 **Alternatives:**
 
-- Positioner renders a `<div>` with positioning styles — this was the original design, but the popup enters the top layer via `showPopover()`, which removes it from its parent's layout context. Positioning styles on a wrapper outside the top layer have no effect.
-- Remove Positioner entirely — would break API compatibility for consumers already using `<Popover.Positioner>`.
+- Positioner renders a `<div>` with positioning styles (Radix/Base UI approach) — the popup enters the top layer via `showPopover()`, which removes it from its parent's layout context. Positioning styles on a wrapper outside the top layer have no effect on the popup.
+- Positioner as a transparent pass-through — adds a no-op component to the API with no benefit.
 
-**Rationale:** The Popover API's top-layer promotion is the root cause: `showPopover()` moves the popup element to a layer above everything else, disconnected from its parent's positioning context. Styles on the Positioner wrapper have no effect. Moving positioning to the Popup (the element that actually enters the top layer) is the correct fix. Keeping Positioner as a pass-through preserves the compound API shape without adding unnecessary DOM.
+**Rationale:** The Popover API's top-layer promotion makes a positioning wrapper useless: `showPopover()` moves the popup element above everything else, disconnected from its parent's positioning context. Positioning must be applied to the element that enters the top layer (the Popup). A separate Positioner would either be misleading (if it renders a div that does nothing) or pointless (if it's a pass-through).
 
 ### Root Renders No DOM
 
@@ -340,17 +340,6 @@ requestAnimationFrame(() => {
 - `Dialog` — already the role, using it as the name conflates DOM structure with ARIA semantics.
 
 **Rationale:** "Popup" directly communicates what the element is — the thing that pops up. Combined with the native Popover API naming (`showPopover()`/`hidePopover()`), it creates a consistent mental model.
-
-### `Positioner` Kept for API Compatibility
-
-**Decision:** `Popover.Positioner` is kept in the React API even though it's now a transparent pass-through.
-
-**Alternatives:**
-
-- Remove Positioner entirely — breaks existing consumer code that wraps `Popover.Popup` in `Popover.Positioner`.
-- Deprecation warning — adds noise for a harmless component.
-
-**Rationale:** Keeping the Positioner as a no-op pass-through preserves backward compatibility at zero cost. Consumers who wrote `<Popover.Positioner><Popover.Popup>...</Popover.Popup></Popover.Positioner>` continue to work unchanged. New consumers can omit it if they prefer.
 
 ## Open Questions
 
