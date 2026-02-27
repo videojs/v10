@@ -11,110 +11,60 @@ Button for cycling through playback speeds. Displays the current rate and advanc
 
 Users want to speed up or slow down video playback. A button that cycles through preset rates is a common pattern — compact, one-click, no menu required.
 
-Three things are needed:
+Two things are needed:
 
 1. **Store feature** — `playbackRate` isn't tracked in the store yet. No state, no selector, no action.
-2. **ReactiveElement enhancement** — `ReactiveElement` can't handle array attributes. If we want an interface like `rates="1 1.25 1.5 1.75 2"`, then prop needs a way to handle that.
-3. **Button component** — Three-layer implementation (Core + HTML + React) following existing button patterns.
+2. **Button component** — Three-layer implementation (Core + HTML + React) following existing button patterns.
 
-## Store: Extend `MediaPlaybackState`
+## Store: New `MediaPlaybackRateState`
 
-Playback rate should go in the existing playback feature — it's a property of playback, not a separate concern. (Very open to pushback; alternatives discussed below.)
+Playback rate gets its own feature and state slice — separate from `MediaPlaybackState`.
 
-### State Addition
+### State
 
 ```ts
-export interface MediaPlaybackState {
-  paused: boolean;
-  ended: boolean;
-  started: boolean;
-  waiting: boolean;
-  playbackRate: number; // new
-  play(): Promise<void>;
-  pause(): void;
-  changePlaybackRate(rate: number): void; // new
+export interface MediaPlaybackRateState {
+  readonly playbackRates: readonly number[];
+  playbackRate: number;
+  setPlaybackRate(rate: number): void;
 }
 ```
 
-### Feature Addition
+`playbackRates` is a readonly array of available rates, statically set to `[1, 1.2, 1.5, 1.7, 2]` for now. Later, providers can populate this dynamically (e.g., YouTube's `getAvailablePlaybackRates`).
+
+### Feature
 
 ```ts
-// In playbackFeature
-state: ({ target }): MediaPlaybackState => ({
-  // ... existing state
-  playbackRate: 1,
-  changePlaybackRate(rate: number) {
-    target().media.playbackRate = rate;
+const DEFAULT_RATES: readonly number[] = [1, 1.2, 1.5, 1.7, 2];
+
+export const playbackRateFeature = createFeature({
+  state: ({ target }): MediaPlaybackRateState => ({
+    playbackRates: DEFAULT_RATES,
+    playbackRate: 1,
+    setPlaybackRate(rate: number) {
+      target().media.playbackRate = rate;
+    },
+  }),
+
+  attach({ target, signal, set }) {
+    const { media } = target;
+
+    const sync = () => set({ playbackRate: media.playbackRate });
+
+    listen(media, "ratechange", sync, { signal });
   },
-}),
-
-attach({ target, signal, set }) {
-  const { media } = target;
-
-  const sync = () =>
-    set({
-      // ... existing sync
-      playbackRate: media.playbackRate,
-    });
-
-  // ... existing listeners
-  listen(media, 'ratechange', sync, { signal });
-},
+});
 ```
 
-### Why Not a Separate Feature
+### Why a Separate Feature
 
-**Alternatives:**
+The alternative is extending `playbackFeature` — adding `playbackRate` and `setPlaybackRate` to existing `MediaPlaybackState`. Conceptually cohesive since rate is a property of playback, and the native API puts it on the same `HTMLMediaElement`. But coupling means every playback subscriber re-renders on rate change, and the state can't independently track capability/support.
 
-- **New `playbackRateFeature`** — Separate selector, separate state slice.
-- **Extend `playbackFeature`** — Add `playbackRate` and `changePlaybackRate` to existing state.
+A separate feature wins out ([per review](https://github.com/videojs/v10/pull/624#discussion_r2861102031)):
 
-**Decision:** Extend `playbackFeature`.
-
-**Rationale:**
-
-- Conceptually cohesive — rate is a property of playback. The native API puts it on the same `HTMLMediaElement` alongside `play()`/`pause()`.
-- Already listens to related events — adding `ratechange` fits naturally.
-- Reduces selector proliferation — a separate `selectPlaybackRate` for one property is heavy. Consumers using `selectPlayback` get rate for free.
-- Rate changes are rare — minimal re-render concern from including it in the playback slice.
-
-## ReactiveElement: `converter` Option
-
-`ReactiveElement` only handles `String`, `Boolean`, and `Number` property types — no `Array`. The `rates` attribute (`rates="0.5 1 1.5 2"`) needs custom handling. I propose a `converter` option:
-
-### `PropertyDeclaration` Change
-
-```ts
-export interface PropertyDeclaration {
-  readonly type?: typeof String | typeof Boolean | typeof Number;
-  readonly attribute?: string;
-  /** Custom attribute-to-property conversion. When set, `type` is ignored. */
-  readonly converter?: (value: string | null) => unknown;
-}
-```
-
-### `attributeChangedCallback` Change
-
-One branch before the existing type checks:
-
-```ts
-if (decl.converter) {
-  value = decl.converter(newValue);
-} else if (decl.type === Boolean) {
-  // ... existing logic unchanged
-}
-```
-
-### Alternatives
-
-- **Property-only (no attribute)** — Skip the attribute entirely; set `rates` only via JS (`el.rates = [1, 1.5, 2]`). This is the standard web component convention for complex types (arrays, objects). Rejected because a space-separated attribute is easy to author in HTML and follows existing precedent (`srcset`, Media Chrome's `rates`). A property-only API forces consumers to write JS just to configure rates, which undermines the declarative HTML story.
-- **Custom getter** — `get rates()` parsing the attribute manually. Class getters are non-enumerable, so `setProps(this)` silently skips `rates` and the `satisfies` constraint needs `Exclude`. Two one-off exceptions to standard patterns.
-- **`AttributeTokenList`** — Media Chrome's approach. A `DOMTokenList`-like class that syncs a space-separated attribute, with `add`/`remove`/`toggle` per token. More infrastructure, and still needs conversion to `number[]` for the Core.
-- **`Array` as a built-in type** with `JSON.parse` default — One of Lit's approaches, alongside `converter`. Produces `rates='[1, 1.5, 2]'` in HTML, which is awkward for HTML authors. Honestly, though, my favorite of the rejected ideas.
-
-### Rationale
-
-The `converter` option is ~10 lines of implementation in `ReactiveElement`, follows one of [Lit's established pattern](https://lit.dev/docs/components/properties/), and is general purpose — any future property needing custom attribute parsing (comma-separated lists, enums with validation, etc.) uses the same mechanism.
+- **Self-contained capability** — Rate support varies by provider (e.g., Vimeo required Pro, YouTube exposes `getAvailablePlaybackRates`). A separate feature can later track availability without bloating the playback state.
+- **Used independently in UI** — The playback rate button only needs rate state, not `paused`/`ended`/`waiting`.
+- **Granular contracts** — Aligns with the pattern of capability-scoped features.
 
 ## Component
 
@@ -135,20 +85,12 @@ import { PlaybackRateButton } from "@videojs/react";
 <PlaybackRateButton
   render={(props, state) => <button {...props}>{state.rate}x</button>}
 />;
-
-{
-  /* Custom rates */
-}
-<PlaybackRateButton rates={[0.5, 1, 1.5, 2]} />;
 ```
 
 #### HTML
 
 ```html
 <media-playback-rate-button></media-playback-rate-button>
-
-<!-- Custom rates -->
-<media-playback-rate-button rates="0.5 1 1.5 2"></media-playback-rate-button>
 ```
 
 ```css
@@ -162,13 +104,12 @@ media-playback-rate-button::after {
 
 #### Props
 
-| Prop       | Type                                                     | Default                 | Description                                                                      |
-| ---------- | -------------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------- |
-| `rates`    | `number[]`                                               | `[1, 1.2, 1.5, 1.7, 2]` | Playback rates to cycle through. Space-separated in HTML: `rates="0.5 1 1.5 2"`. |
-| `label`    | `string \| ((state: PlaybackRateButtonState) => string)` | —                       | Custom accessible label. Falls back to default text.                             |
-| `disabled` | `boolean`                                                | `false`                 | Disables interaction.                                                            |
+| Prop       | Type                                                     | Default | Description                                          |
+| ---------- | -------------------------------------------------------- | ------- | ---------------------------------------------------- |
+| `label`    | `string \| ((state: PlaybackRateButtonState) => string)` | —       | Custom accessible label. Falls back to default text. |
+| `disabled` | `boolean`                                                | `false` | Disables interaction.                                |
 
-Default rates match [Media Chrome](https://www.media-chrome.org/docs/en/components/media-playback-rate-button).
+No `rates` prop — rates are sourced from `playbackRates` in the [store](#store-new-mediaplaybackratestate). A consumer-facing prop is [deferred](#deferred-custom-rates-prop) until provider rate constraints are sorted out.
 
 #### Data Attributes
 
@@ -184,69 +125,34 @@ interface PlaybackRateButtonState {
 }
 ```
 
-#### HTML Element `rates` Declaration
-
-With the `converter` from the ReactiveElement section, `rates` goes into `static properties` like every other prop.
-
-```ts
-static override properties = {
-  rates: {
-    converter(value) {
-      const defaults = PlaybackRateButtonCore.defaultProps.rates;
-      if (!value) return defaults;
-      const parsed = value.split(/\s+/).map(Number).filter((n) => !Number.isNaN(n));
-      return parsed.length > 0 ? parsed : defaults;
-    },
-  },
-  label: { type: String },
-  disabled: { type: Boolean },
-} satisfies PropertyDeclarationMap<keyof PlaybackRateButtonCore.Props>;
-```
-
-Filters invalid tokens (e.g., `rates="1 1.f 2"` → `[1, 2]`). Falls back to defaults if nothing valid remains. Space-separated is the natural HTML pattern (like `srcset`, Media Chrome's `rates`).
-
 ### Behavior
 
-On click, advance to the next rate in the list. Wrap to the beginning after the last rate:
+On click, advance to the next rate in the `playbackRates` list. Wrap to the beginning after the last rate:
 
 ```
-rates = [1, 1.2, 1.5, 1.7, 2]
+playbackRates = [1, 1.2, 1.5, 1.7, 2]
 
 Click: 1 → 1.2 → 1.5 → 1.7 → 2 → 1 → ...
 ```
 
-If the current rate isn't in the list (e.g., set programmatically to `0.75`), jump to the first rate in array order that's greater than the current rate. If none is greater, wrap to the first rate.
+If the current rate isn't in the list (e.g., set programmatically to `0.75`), find the first rate in array order that's greater. If none is greater, wrap to the first rate.
 
 #### `cycle` method
 
 ```ts
-cycle(media: MediaPlaybackState): void {
+cycle(media: MediaPlaybackRateState): void {
   if (this.#props.disabled) return;
-  const { rates } = this.#props;
-  if (rates.length === 0) return;
+  const { playbackRates, playbackRate } = media;
+  if (playbackRates.length === 0) return;
 
-  const idx = rates.indexOf(media.playbackRate);
-  // If current rate isn't in the list, find the first rate in array order
-  // that's greater. If none, wrap to the first rate.
+  const idx = playbackRates.indexOf(playbackRate);
   const next = idx === -1
-    ? rates.find((r) => r > media.playbackRate) ?? rates[0]
-    : rates[(idx + 1) % rates.length];
+    ? playbackRates.find((r) => r > playbackRate) ?? playbackRates[0]
+    : playbackRates[(idx + 1) % playbackRates.length];
 
-  media.changePlaybackRate(next);
+  media.setPlaybackRate(next);
 }
 ```
-
-Out-of-list lookup respects array order (not numeric order) — consistent with the no-sort decision. If `rates = [2, 1, 1.5]` and the current rate is `1.2`, the next rate is `2` (first in array order that's greater), not `1.5` (smallest greater value).
-
-#### Edge Cases
-
-**Empty rates:** `defaults()` keeps an empty array since it's defined, so `rates: []` would pass through. The `cycle` method early-returns if `rates` is empty.
-
-**No auto-sorting:** Rates are cycled in the order provided — not sorted. Media Chrome sorts with `.sort((a, b) => a - b)`, but, in accordance with our headless ethos, we defer to the consumer's order. This allows non-linear sequences (e.g., `[1, 2, 1.5]`) if desired. If a consumer wants ascending order, they pass ascending order.
-
-#### Alternatives considered
-
-**`min`/`max`/`step`:** [Vidstack's speed slider](https://vidstack.io/docs/wc/player/components/sliders/speed-slider/) uses scalar `min`/`max`/`step` props to define a continuous range — sidestepping array attributes entirely. But a cycle button with explicit `rates` gives consumers more control: non-uniform spacing (e.g., `[0.5, 1, 1.5, 2, 3]`), arbitrary ordering, and skipping unwanted values. A slider is a complementary component, not a replacement.
 
 ## Accessibility
 
@@ -261,6 +167,49 @@ Out-of-list lookup respects array order (not numeric order) — consistent with 
 
 - `aria-label`: Default `"Playback rate {rate}"` (e.g., `"Playback rate 1.5"`). Updates on rate change. Matches Media Chrome's format.
 - `aria-disabled`: Present when `disabled` prop is true.
+
+## Deferred: Custom `rates` Prop
+
+Custom rates are intentionally deferred ([per review](https://github.com/videojs/v10/pull/624#discussion_r2861088551)). Some providers only support specific playback rates (e.g., [YouTube's `getAvailablePlaybackRates`](https://developers.google.com/youtube/iframe_api_reference#getAvailablePlaybackRates)), so exposing a consumer-facing `rates` prop without accounting for provider constraints could lead to broken UX. The store's `playbackRates` array is the right place — providers can populate it dynamically in the future.
+
+When we're ready to expose custom rates, the following research applies:
+
+**Proposed API:** `<PlaybackRateButton rates={[0.5, 1, 1.5, 2]} />` in React, `rates="0.5 1 1.5 2"` (space-separated) in HTML. A component `rates` prop would override the store's `playbackRates` for that instance.
+
+**ReactiveElement `converter`:** The HTML attribute needs a `converter` option on `ReactiveElement` since it only handles `String`, `Boolean`, and `Number` today. The proposed approach adds a `converter` function to `PropertyDeclaration`, aligning with [Lit's converter API](https://lit.dev/docs/v1/components/properties/#conversion-converter) (~10 lines of implementation). General-purpose for any future attribute needing custom parsing.
+
+```ts
+export interface PropertyDeclaration {
+  readonly type?: typeof String | typeof Boolean | typeof Number;
+  readonly attribute?: string;
+  readonly converter?: (value: string | null) => unknown;
+}
+```
+
+Element declaration with `converter`:
+
+```ts
+static override properties = {
+  rates: {
+    converter(value) {
+      const defaults = PlaybackRateButtonCore.defaultProps.rates;
+      if (!value) return defaults;
+      const parsed = value.split(/\s+/).map(Number).filter((n) => !Number.isNaN(n));
+      return parsed.length > 0 ? parsed : defaults;
+    },
+  },
+};
+```
+
+**No auto-sorting:** Rates are cycled in array order, not sorted numerically. Media Chrome sorts with `.sort((a, b) => a - b)`, but we respect the consumer's order. Non-linear sequences (e.g., `[1, 2, 1.5]`) are valid.
+
+**Alternatives explored:**
+
+- **Property-only (no attribute)** — Standard web component convention for complex types, but forces JS-only configuration and undermines the declarative HTML story.
+- **Custom getter** — Non-enumerable, breaks `setProps(this)` and `satisfies` constraint.
+- **`AttributeTokenList`** — Media Chrome's `DOMTokenList`-like approach. More infrastructure than needed.
+- **`Array` built-in type with `JSON.parse`** — Produces `rates='[1, 1.5, 2]'` which is awkward for HTML authors.
+- **`min`/`max`/`step`** — [Vidstack's approach](https://vidstack.io/docs/wc/player/components/sliders/speed-slider/) for continuous ranges. Doesn't allow non-uniform spacing or arbitrary ordering.
 
 ## References
 
