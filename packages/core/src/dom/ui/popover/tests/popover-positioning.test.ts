@@ -5,6 +5,7 @@ import {
   getAnchorPositionStyle,
   getManualPositionStyle,
   getPopoverCSSVars,
+  type ManualOffsets,
 } from '../popover-positioning';
 
 // Mock supportsAnchorPositioning for deterministic tests.
@@ -35,12 +36,7 @@ describe('getManualPositionStyle', () => {
   const popup = makeDOMRect(0, 0, 200, 80);
 
   it('positions above trigger for side=top', () => {
-    const style = getManualPositionStyle(trigger, popup, {
-      side: 'top',
-      align: 'center',
-      sideOffset: 0,
-      alignOffset: 0,
-    });
+    const style = getManualPositionStyle(trigger, popup, { side: 'top', align: 'center' });
 
     // top = trigger.top - popup.height = 200 - 80 = 120
     expect(style.top).toBe('120px');
@@ -49,108 +45,66 @@ describe('getManualPositionStyle', () => {
   });
 
   it('positions below trigger for side=bottom', () => {
-    const style = getManualPositionStyle(trigger, popup, {
-      side: 'bottom',
-      align: 'center',
-      sideOffset: 0,
-      alignOffset: 0,
-    });
+    const style = getManualPositionStyle(trigger, popup, { side: 'bottom', align: 'center' });
 
     // top = trigger.bottom = 240
     expect(style.top).toBe('240px');
   });
 
   it('positions to the left of trigger for side=left', () => {
-    const style = getManualPositionStyle(trigger, popup, {
-      side: 'left',
-      align: 'center',
-      sideOffset: 0,
-      alignOffset: 0,
-    });
+    const style = getManualPositionStyle(trigger, popup, { side: 'left', align: 'center' });
 
     // left = trigger.left - popup.width = 100 - 200 = -100
     expect(style.left).toBe('-100px');
   });
 
   it('positions to the right of trigger for side=right', () => {
-    const style = getManualPositionStyle(trigger, popup, {
-      side: 'right',
-      align: 'center',
-      sideOffset: 0,
-      alignOffset: 0,
-    });
+    const style = getManualPositionStyle(trigger, popup, { side: 'right', align: 'center' });
 
     // left = trigger.right = 220
     expect(style.left).toBe('220px');
   });
 
-  it('applies sideOffset for top side', () => {
-    const style = getManualPositionStyle(trigger, popup, {
-      side: 'top',
-      align: 'center',
-      sideOffset: 8,
-      alignOffset: 0,
-    });
+  it('applies sideOffset from resolved CSS vars', () => {
+    const offsets: ManualOffsets = { sideOffset: 8, alignOffset: 0 };
+    const style = getManualPositionStyle(trigger, popup, { side: 'top', align: 'center' }, offsets);
 
     // top = 200 - 80 - 8 = 112
     expect(style.top).toBe('112px');
   });
 
   it('applies sideOffset for bottom side', () => {
-    const style = getManualPositionStyle(trigger, popup, {
-      side: 'bottom',
-      align: 'center',
-      sideOffset: 8,
-      alignOffset: 0,
-    });
+    const offsets: ManualOffsets = { sideOffset: 8, alignOffset: 0 };
+    const style = getManualPositionStyle(trigger, popup, { side: 'bottom', align: 'center' }, offsets);
 
     // top = 240 + 8 = 248
     expect(style.top).toBe('248px');
   });
 
   it('aligns to start for horizontal sides', () => {
-    const style = getManualPositionStyle(trigger, popup, {
-      side: 'top',
-      align: 'start',
-      sideOffset: 0,
-      alignOffset: 0,
-    });
+    const style = getManualPositionStyle(trigger, popup, { side: 'top', align: 'start' });
 
     // left = trigger.left = 100
     expect(style.left).toBe('100px');
   });
 
   it('aligns to end for horizontal sides', () => {
-    const style = getManualPositionStyle(trigger, popup, {
-      side: 'top',
-      align: 'end',
-      sideOffset: 0,
-      alignOffset: 0,
-    });
+    const style = getManualPositionStyle(trigger, popup, { side: 'top', align: 'end' });
 
     // left = trigger.right - popup.width = 220 - 200 = 20
     expect(style.left).toBe('20px');
   });
 
-  it('applies alignOffset', () => {
-    const style = getManualPositionStyle(trigger, popup, {
-      side: 'top',
-      align: 'start',
-      sideOffset: 0,
-      alignOffset: 10,
-    });
+  it('applies alignOffset from resolved CSS vars', () => {
+    const offsets: ManualOffsets = { sideOffset: 0, alignOffset: 10 };
+    const style = getManualPositionStyle(trigger, popup, { side: 'top', align: 'start' }, offsets);
 
     // left = trigger.left + alignOffset = 100 + 10 = 110
     expect(style.left).toBe('110px');
   });
 
   it('aligns vertically for left/right sides', () => {
-    const style = getManualPositionStyle(trigger, popup, {
-      side: 'right',
-      align: 'start',
-      sideOffset: 0,
-      alignOffset: 0,
-    });
+    const style = getManualPositionStyle(trigger, popup, { side: 'right', align: 'start' });
 
     // top = trigger.top = 200
     expect(style.top).toBe('200px');
@@ -208,12 +162,7 @@ describe('getAnchorNameStyle', () => {
 
 describe('getAnchorPositionStyle', () => {
   it('returns empty object when anchor positioning unsupported and no rects', () => {
-    const style = getAnchorPositionStyle('my-anchor', {
-      side: 'top',
-      align: 'center',
-      sideOffset: 0,
-      alignOffset: 0,
-    });
+    const style = getAnchorPositionStyle('my-anchor', { side: 'top', align: 'center' });
 
     expect(style).toEqual({});
   });
@@ -223,13 +172,7 @@ describe('getAnchorPositionStyle', () => {
     const trigger = makeDOMRect(100, 200, 120, 40);
     const positioner = makeDOMRect(0, 0, 200, 80);
 
-    const style = getAnchorPositionStyle(
-      'my-anchor',
-      { side: 'top', align: 'center', sideOffset: 0, alignOffset: 0 },
-      trigger,
-      positioner,
-      boundary
-    );
+    const style = getAnchorPositionStyle('my-anchor', { side: 'top', align: 'center' }, trigger, positioner, boundary);
 
     expect(style.top).toBe('120px');
     expect(style.left).toBe('60px');
@@ -242,6 +185,9 @@ describe('getAnchorPositionStyle', () => {
 // Tests the CSS anchor positioning path via getAnchorPositionStyle with
 // a fresh module import where supportsAnchorPositioning returns true.
 describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
+  const SIDE_VAR = 'var(--media-popover-side-offset, 0px)';
+  const ALIGN_VAR = 'var(--media-popover-align-offset, 0px)';
+
   async function importWithAnchorSupport() {
     vi.resetModules();
     vi.doMock('@videojs/utils/dom', async (importOriginal) => {
@@ -254,105 +200,82 @@ describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
 
   it('includes position-anchor and position: fixed', async () => {
     const getStyle = await importWithAnchorSupport();
-    const style = getStyle('my-popover', { side: 'top', align: 'center', sideOffset: 0, alignOffset: 0 });
+    const style = getStyle('my-popover', { side: 'top', align: 'center' });
 
     expect(style['position-anchor']).toBe('--my-popover');
     expect(style.position).toBe('fixed');
   });
 
-  it('places popover above trigger for side=top', async () => {
+  it('places popover above trigger for side=top using CSS var offset', async () => {
     const getStyle = await importWithAnchorSupport();
-    const style = getStyle('a', { side: 'top', align: 'center', sideOffset: 0, alignOffset: 0 });
+    const style = getStyle('a', { side: 'top', align: 'center' });
 
-    // bottom inset anchored to the trigger's top edge
-    expect(style.bottom).toBe('anchor(top)');
+    expect(style.bottom).toBe(`calc(anchor(top) + ${SIDE_VAR})`);
     expect(style.top).toBeUndefined();
     expect(style['justify-self']).toBe('anchor-center');
+    expect(style['margin-inline-start']).toBe(ALIGN_VAR);
   });
 
   it('places popover below trigger for side=bottom', async () => {
     const getStyle = await importWithAnchorSupport();
-    const style = getStyle('a', { side: 'bottom', align: 'center', sideOffset: 0, alignOffset: 0 });
+    const style = getStyle('a', { side: 'bottom', align: 'center' });
 
-    // top inset anchored to the trigger's bottom edge
-    expect(style.top).toBe('anchor(bottom)');
+    expect(style.top).toBe(`calc(anchor(bottom) + ${SIDE_VAR})`);
     expect(style.bottom).toBeUndefined();
   });
 
   it('places popover to the left for side=left', async () => {
     const getStyle = await importWithAnchorSupport();
-    const style = getStyle('a', { side: 'left', align: 'center', sideOffset: 0, alignOffset: 0 });
+    const style = getStyle('a', { side: 'left', align: 'center' });
 
-    // right inset anchored to the trigger's left edge
-    expect(style.right).toBe('anchor(left)');
+    expect(style.right).toBe(`calc(anchor(left) + ${SIDE_VAR})`);
     expect(style.left).toBeUndefined();
   });
 
   it('places popover to the right for side=right', async () => {
     const getStyle = await importWithAnchorSupport();
-    const style = getStyle('a', { side: 'right', align: 'center', sideOffset: 0, alignOffset: 0 });
+    const style = getStyle('a', { side: 'right', align: 'center' });
 
-    // left inset anchored to the trigger's right edge
-    expect(style.left).toBe('anchor(right)');
+    expect(style.left).toBe(`calc(anchor(right) + ${SIDE_VAR})`);
     expect(style.right).toBeUndefined();
   });
 
-  it('applies sideOffset for side=top', async () => {
+  it('aligns to start with CSS var offset for top/bottom sides', async () => {
     const getStyle = await importWithAnchorSupport();
-    const style = getStyle('a', { side: 'top', align: 'center', sideOffset: 8, alignOffset: 0 });
+    const style = getStyle('a', { side: 'top', align: 'start' });
 
-    expect(style.bottom).toBe('calc(anchor(top) + 8px)');
-  });
-
-  it('applies sideOffset for side=bottom', async () => {
-    const getStyle = await importWithAnchorSupport();
-    const style = getStyle('a', { side: 'bottom', align: 'center', sideOffset: 8, alignOffset: 0 });
-
-    expect(style.top).toBe('calc(anchor(bottom) + 8px)');
-  });
-
-  it('aligns to start for top/bottom sides', async () => {
-    const getStyle = await importWithAnchorSupport();
-    const style = getStyle('a', { side: 'top', align: 'start', sideOffset: 0, alignOffset: 0 });
-
-    expect(style.left).toBe('anchor(left)');
+    expect(style.left).toBe(`calc(anchor(left) + ${ALIGN_VAR})`);
     expect(style.right).toBeUndefined();
   });
 
-  it('aligns to end for top/bottom sides', async () => {
+  it('aligns to end with CSS var offset for top/bottom sides', async () => {
     const getStyle = await importWithAnchorSupport();
-    const style = getStyle('a', { side: 'bottom', align: 'end', sideOffset: 0, alignOffset: 0 });
+    const style = getStyle('a', { side: 'bottom', align: 'end' });
 
-    expect(style.right).toBe('anchor(right)');
+    expect(style.right).toBe(`calc(anchor(right) + ${ALIGN_VAR})`);
     expect(style.left).toBeUndefined();
   });
 
-  it('applies alignOffset for start alignment', async () => {
+  it('uses anchor-center and margin for center alignment', async () => {
     const getStyle = await importWithAnchorSupport();
-    const style = getStyle('a', { side: 'top', align: 'start', sideOffset: 0, alignOffset: 4 });
-
-    expect(style.left).toBe('calc(anchor(left) + 4px)');
-  });
-
-  it('applies center alignment with alignOffset via margin', async () => {
-    const getStyle = await importWithAnchorSupport();
-    const style = getStyle('a', { side: 'top', align: 'center', sideOffset: 0, alignOffset: 6 });
+    const style = getStyle('a', { side: 'top', align: 'center' });
 
     expect(style['justify-self']).toBe('anchor-center');
-    expect(style['margin-inline-start']).toBe('6px');
+    expect(style['margin-inline-start']).toBe(ALIGN_VAR);
   });
 
   it('aligns vertically for left/right sides', async () => {
     const getStyle = await importWithAnchorSupport();
-    const style = getStyle('a', { side: 'left', align: 'start', sideOffset: 0, alignOffset: 0 });
+    const style = getStyle('a', { side: 'left', align: 'start' });
 
-    expect(style.top).toBe('anchor(top)');
+    expect(style.top).toBe(`calc(anchor(top) + ${ALIGN_VAR})`);
   });
 
   it('uses align-self for center on left/right sides', async () => {
     const getStyle = await importWithAnchorSupport();
-    const style = getStyle('a', { side: 'right', align: 'center', sideOffset: 0, alignOffset: 0 });
+    const style = getStyle('a', { side: 'right', align: 'center' });
 
     expect(style['align-self']).toBe('anchor-center');
+    expect(style['margin-block-start']).toBe(ALIGN_VAR);
   });
 });

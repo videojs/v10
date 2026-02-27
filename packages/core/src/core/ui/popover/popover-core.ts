@@ -8,8 +8,6 @@ export type PopoverAlign = 'start' | 'center' | 'end';
 export interface PopoverProps {
   side?: PopoverSide | undefined;
   align?: PopoverAlign | undefined;
-  sideOffset?: number | undefined;
-  alignOffset?: number | undefined;
   /**
    * Controls the modality of the popover.
    *
@@ -44,8 +42,6 @@ export interface PopoverInteraction {
 export interface PopoverState extends PopoverInteraction {
   side: PopoverSide;
   align: PopoverAlign;
-  sideOffset: number;
-  alignOffset: number;
   modal: boolean | 'trap-focus';
   collisionPadding: number;
 }
@@ -54,8 +50,6 @@ export class PopoverCore {
   static readonly defaultProps: NonNullableObject<PopoverProps> = {
     side: 'top',
     align: 'center',
-    sideOffset: 0,
-    alignOffset: 0,
     modal: false,
     closeOnEscape: true,
     closeOnOutsideClick: true,
@@ -78,8 +72,6 @@ export class PopoverCore {
       transitionStatus: interaction.transitionStatus,
       side: this.#props.side,
       align: this.#props.align,
-      sideOffset: this.#props.sideOffset,
-      alignOffset: this.#props.alignOffset,
       modal: this.#props.modal,
       collisionPadding: this.#props.collisionPadding,
     };

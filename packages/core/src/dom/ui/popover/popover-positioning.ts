@@ -5,6 +5,9 @@ import { PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
 export interface PositioningOptions {
   side: PopoverSide;
   align: PopoverAlign;
+}
+
+export interface ManualOffsets {
   sideOffset: number;
   alignOffset: number;
 }
@@ -28,16 +31,21 @@ function detectAnchorPositioning(): boolean {
 /**
  * Get positioning styles for the positioner element.
  *
- * When the browser supports CSS Anchor Positioning, returns native CSS properties.
+ * When the browser supports CSS Anchor Positioning, returns native CSS properties
+ * that reference `var(--media-popover-side-offset, 0px)` and
+ * `var(--media-popover-align-offset, 0px)` — no JS offset values needed.
+ *
  * When rects are provided and anchor positioning is unsupported, falls back to
- * manual JS-computed positioning via CSS custom properties.
+ * manual JS-computed positioning. The caller must resolve offset CSS vars via
+ * `getComputedStyle` and pass them as `offsets`.
  */
 export function getAnchorPositionStyle(
   anchorName: string,
   opts: PositioningOptions,
   triggerRect?: DOMRect,
   positionerRect?: DOMRect,
-  boundaryRect?: DOMRect
+  boundaryRect?: DOMRect,
+  offsets?: ManualOffsets
 ): Record<string, string> {
   if (detectAnchorPositioning()) {
     return getAnchorPositionCSS(anchorName, opts);
@@ -45,8 +53,9 @@ export function getAnchorPositionStyle(
 
   // JS fallback when CSS Anchor Positioning is not supported.
   if (triggerRect && positionerRect) {
+    const resolved: ManualOffsets = offsets ?? { sideOffset: 0, alignOffset: 0 };
     return {
-      ...getManualPositionStyle(triggerRect, positionerRect, opts),
+      ...getManualPositionStyle(triggerRect, positionerRect, opts, resolved),
       ...(boundaryRect ? getPopoverCSSVars(triggerRect, boundaryRect, opts.side) : {}),
       position: 'fixed',
       // Reset UA [popover] defaults (inset: 0; margin: auto) which would
@@ -65,8 +74,11 @@ export function getAnchorNameStyle(anchorName: string): Record<string, string> {
   return { 'anchor-name': `--${anchorName}` };
 }
 
+const SIDE_OFFSET_VAR = `var(${PopoverCSSVars.sideOffset}, 0px)`;
+const ALIGN_OFFSET_VAR = `var(${PopoverCSSVars.alignOffset}, 0px)`;
+
 function getAnchorPositionCSS(anchorName: string, opts: PositioningOptions): Record<string, string> {
-  const { side, align, sideOffset, alignOffset } = opts;
+  const { side, align } = opts;
   const style: Record<string, string> = {
     'position-anchor': `--${anchorName}`,
     position: 'fixed',
@@ -87,29 +99,30 @@ function getAnchorPositionCSS(anchorName: string, opts: PositioningOptions): Rec
   // bottom edge aligns with the anchor's top edge (placing it above).
   const insetProp = OPPOSITE_SIDE[side];
 
-  // Side positioning
+  // Side positioning — always use calc() with the CSS var so the offset
+  // is resolved at paint time without any JS round-trip.
   if (side === 'top' || side === 'bottom') {
-    style[insetProp] = sideOffset ? `calc(anchor(${side}) + ${sideOffset}px)` : `anchor(${side})`;
+    style[insetProp] = `calc(anchor(${side}) + ${SIDE_OFFSET_VAR})`;
 
     // Alignment along the cross axis
     if (align === 'start') {
-      style.left = alignOffset ? `calc(anchor(left) + ${alignOffset}px)` : 'anchor(left)';
+      style.left = `calc(anchor(left) + ${ALIGN_OFFSET_VAR})`;
     } else if (align === 'end') {
-      style.right = alignOffset ? `calc(anchor(right) + ${alignOffset}px)` : 'anchor(right)';
+      style.right = `calc(anchor(right) + ${ALIGN_OFFSET_VAR})`;
     } else {
       style['justify-self'] = 'anchor-center';
-      if (alignOffset) style['margin-inline-start'] = `${alignOffset}px`;
+      style['margin-inline-start'] = ALIGN_OFFSET_VAR;
     }
   } else {
-    style[insetProp] = sideOffset ? `calc(anchor(${side}) + ${sideOffset}px)` : `anchor(${side})`;
+    style[insetProp] = `calc(anchor(${side}) + ${SIDE_OFFSET_VAR})`;
 
     if (align === 'start') {
-      style.top = alignOffset ? `calc(anchor(top) + ${alignOffset}px)` : 'anchor(top)';
+      style.top = `calc(anchor(top) + ${ALIGN_OFFSET_VAR})`;
     } else if (align === 'end') {
-      style.bottom = alignOffset ? `calc(anchor(bottom) + ${alignOffset}px)` : 'anchor(bottom)';
+      style.bottom = `calc(anchor(bottom) + ${ALIGN_OFFSET_VAR})`;
     } else {
       style['align-self'] = 'anchor-center';
-      if (alignOffset) style['margin-block-start'] = `${alignOffset}px`;
+      style['margin-block-start'] = ALIGN_OFFSET_VAR;
     }
   }
 
@@ -150,13 +163,18 @@ export function getPopoverCSSVars(
  * Returns inline `top`/`left` styles in **viewport coordinates** for use
  * with `position: fixed` (the popup is in the top layer). All rects from
  * `getBoundingClientRect()` are already viewport-relative.
+ *
+ * Offsets are resolved by the caller from CSS custom properties via
+ * `getComputedStyle()` and passed as `offsets`.
  */
 export function getManualPositionStyle(
   triggerRect: DOMRect,
   popupRect: DOMRect,
-  opts: PositioningOptions
+  opts: PositioningOptions,
+  offsets: ManualOffsets = { sideOffset: 0, alignOffset: 0 }
 ): Record<string, string> {
-  const { side, align, sideOffset, alignOffset } = opts;
+  const { side, align } = opts;
+  const { sideOffset, alignOffset } = offsets;
   let top = 0;
   let left = 0;
 
@@ -194,5 +212,17 @@ export function getManualPositionStyle(
   return {
     top: `${top}px`,
     left: `${left}px`,
+  };
+}
+
+/**
+ * Read `--media-popover-side-offset` and `--media-popover-align-offset`
+ * from the popup element's computed style, returning numeric pixel values.
+ */
+export function resolveOffsets(el: Element): ManualOffsets {
+  const computed = getComputedStyle(el);
+  return {
+    sideOffset: Number.parseFloat(computed.getPropertyValue(PopoverCSSVars.sideOffset)) || 0,
+    alignOffset: Number.parseFloat(computed.getPropertyValue(PopoverCSSVars.alignOffset)) || 0,
   };
 }

@@ -6,7 +6,7 @@ Rationale behind popover component choices.
 
 ### Platform-Specific Component Structure
 
-**Decision:** HTML uses a single `<media-popover>` element. React uses a five-part compound pattern (Root, Trigger, Positioner, Popup, Arrow).
+**Decision:** HTML uses a single `<media-popover>` element. React uses a four-part compound pattern (Root, Trigger, Popup, Arrow).
 
 **HTML (single element):** The popover is a self-contained `<media-popover>` custom element. The trigger is an external element linked via the `commandfor` attribute (W3C Invoker Commands pattern). The popover element acts as both the popup container and the positioned element.
 
@@ -104,6 +104,32 @@ Rationale behind popover component choices.
 - Transform-based positioning — `transform: translate(x, y)` avoids layout but conflicts with user transforms.
 
 **Rationale:** The slider uses CSS vars for fill/pointer/buffer because parts consume those values in different ways (`width` vs `transform: scaleX()`). Popover positioning has a single correct application — there's no reason for `top`/`left` to be indirect. Inline styles just work, matching the CSS Anchor Positioning path where the browser also applies positioning directly. Sizing constraints stay as CSS vars because users genuinely need to consume them differently (`max-width`, `max-height`, custom layouts).
+
+### Offsets as CSS Custom Properties
+
+**Decision:** `sideOffset` and `alignOffset` are CSS-custom-property-only (`--media-popover-side-offset`, `--media-popover-align-offset`). There are no JS props, no HTML attributes, no `PopoverProps` fields for offsets.
+
+**Alternatives:**
+
+- JS props (Radix/Base UI approach) — most libraries use `sideOffset`/`alignOffset` as component props because they predate CSS Anchor Positioning and do all positioning in JavaScript. This requires an extra JS-to-CSS round-trip and adds props to the API surface.
+- Both props and CSS vars — redundant, ambiguous precedence.
+- Margin-only — works for some cases but doesn't compose with `calc(anchor(...))` expressions.
+
+**Rationale:** Our CSS Anchor Positioning path can inline `var(--media-popover-side-offset, 0px)` directly into `calc(anchor(top) + var(...))` — zero JS needed. The browser resolves the variable at paint time. For the manual fallback, `getComputedStyle()` reads the resolved value. This is marginal cost since the fallback already does DOM measurement. CSS vars are the natural primitive for CSS-consumed values, and they compose with media queries, container queries, and cascade layers.
+
+```css
+/* Set offset in CSS — works for both anchor and manual paths */
+media-popover {
+  --media-popover-side-offset: 8px;
+}
+
+/* Responsive offset */
+@media (max-width: 600px) {
+  media-popover {
+    --media-popover-side-offset: 4px;
+  }
+}
+```
 
 ### Side Offset Increases Distance
 
