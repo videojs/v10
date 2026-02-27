@@ -84,8 +84,6 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
 
   return (
     <Container className={cn('media-minimal-skin', className)} {...rest}>
-      {children}
-
       <BufferingIndicator
         render={(props, state) =>
           state.visible ? (
@@ -209,6 +207,8 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
       </div> */}
 
       <div className="media-overlay" />
+
+      {children}
     </Container>
   );
 }

@@ -574,15 +574,7 @@
   z-index: 20;
   font-size: 1rem;
   text-wrap: balance;
-  /* The delay must account for the controls delay/duration */
-  transition: transform 150ms ease-out;
-  transition-delay: 600ms;
   pointer-events: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .media-default-skin .media-captions {
-    transition-duration: 50ms;
-  }
 }
 .media-default-skin .media-captions__container {
   display: flex;
@@ -631,8 +623,33 @@
   }
 }
 
-/* Shift captions up when controls visible */
+/* Caption shifting styles (custom and native) */
+.media-default-skin {
+  --media-caption-track-delay: 600ms;
+  --media-caption-track-y: -0.5rem;
+}
+.media-default-skin:has(.media-controls[data-visible]) {
+  --media-caption-track-delay: 25ms;
+  --media-caption-track-y: -3.5rem;
+}
+.media-default-skin .media-captions,
+.media-default-skin video::-webkit-media-text-track-container {
+  /* NOTE: The delay must account for the controls delay/duration */
+  transition: transform 150ms ease-out;
+  transition-delay: var(--media-caption-track-delay);
+}
+.media-default-skin video::-webkit-media-text-track-container {
+  transform: translateY(var(--media-caption-track-y)) scale(0.98);
+  z-index: 1;
+  font-family: inherit;
+}
+/* When controls are visible, shift captions up to avoid overlap */
 .media-default-skin .media-controls[data-visible] ~ .media-captions {
-  transform: translateY(-3rem);
-  transition-delay: 25ms;
+  transform: translateY(calc(var(--media-caption-track-y) - 0.5rem));
+}
+@media (prefers-reduced-motion: reduce) {
+  .media-default-skin .media-captions,
+  .media-default-skin video::-webkit-media-text-track-container {
+    transition-duration: 50ms;
+  }
 }

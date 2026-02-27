@@ -84,8 +84,6 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
 
   return (
     <Container className={cn('media-default-skin', className)} {...rest}>
-      {children}
-
       <BufferingIndicator
         render={(props, state) =>
           state.visible ? (
@@ -203,6 +201,8 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       </div> */}
 
       <div className="media-overlay" />
+
+      {children}
     </Container>
   );
 }

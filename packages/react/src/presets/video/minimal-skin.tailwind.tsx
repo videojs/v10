@@ -149,14 +149,27 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
         '[&>img]:object-cover [&>img]:pointer-events-none',
         '[&>img]:transition-opacity [&>img]:duration-[250ms]',
         '[&>img:not([data-visible])]:opacity-0',
+        // Caption track CSS variables (consumed by native track container below)
+        '[--media-caption-track-delay:600ms]',
+        '[--media-caption-track-y:-0.5rem]',
+        'has-[[data-controls][data-visible]]:[--media-caption-track-delay:25ms]',
+        'has-[[data-controls][data-visible]]:[--media-caption-track-y:-3.5rem]',
+        // Native caption track container
+        '[&_video::-webkit-media-text-track-container]:transition-transform',
+        '[&_video::-webkit-media-text-track-container]:duration-150',
+        '[&_video::-webkit-media-text-track-container]:ease-out',
+        '[&_video::-webkit-media-text-track-container]:delay-(--media-caption-track-delay)',
+        '[&_video::-webkit-media-text-track-container]:translate-y-(--media-caption-track-y)',
+        '[&_video::-webkit-media-text-track-container]:scale-98',
+        '[&_video::-webkit-media-text-track-container]:z-1',
+        '[&_video::-webkit-media-text-track-container]:font-[inherit]',
+        'motion-reduce:[&_video::-webkit-media-text-track-container]:duration-50',
         // Fullscreen
         '[&:fullscreen]:rounded-none',
         className
       )}
       {...rest}
     >
-      {children}
-
       <BufferingIndicator
         render={(props, state) =>
           state.visible ? (
@@ -203,6 +216,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
       />
 
       <Controls.Root
+        data-controls="" // Used as a hook for Tailwind has-[] styles
         className={cn(
           // Peer marker for overlay/captions
           'peer/controls',
@@ -368,6 +382,8 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
           'motion-reduce:duration-100'
         )}
       />
+
+      {children}
     </Container>
   );
 }
