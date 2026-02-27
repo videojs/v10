@@ -165,8 +165,9 @@ export class GifMedia extends EventTarget {
     this.#elapsed += delta;
 
     const frame = this.#frames[this.#frameIndex];
-    // GIF frame delay is in centiseconds (1/100s); convert to ms
-    const frameDelay = Math.max((frame?.delay ?? 10) * 10, 20);
+    // gifuct-js already converts GCE centiseconds → ms internally
+    // (and clamps 0-delay frames to 100ms, matching browser behavior)
+    const frameDelay = frame?.delay ?? 100;
 
     if (this.#elapsed >= frameDelay) {
       this.#elapsed -= frameDelay;
