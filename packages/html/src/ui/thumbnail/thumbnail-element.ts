@@ -1,13 +1,13 @@
 import {
   type MediaTextTrackState,
   mapCuesToThumbnails,
-  type ThumbnailConstraints,
   ThumbnailCore,
   ThumbnailDataAttrs,
   type ThumbnailImage,
   type ThumbnailResizeResult,
 } from '@videojs/core';
-import { applyElementProps, applyStateDataAttrs, selectTextTrack } from '@videojs/core/dom';
+import type { ThumbnailHandle } from '@videojs/core/dom';
+import { applyElementProps, applyStateDataAttrs, createThumbnail, selectTextTrack } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { playerContext } from '../../player/context';
@@ -28,18 +28,24 @@ export class ThumbnailElement extends MediaElement {
 
   static override properties = {
     time: { type: Number },
-  } satisfies PropertyDeclarationMap<'time'>;
+    crossOrigin: { type: String, attribute: 'crossorigin' },
+    loading: { type: String },
+    fetchPriority: { type: String, attribute: 'fetchpriority' },
+  } satisfies PropertyDeclarationMap<keyof ThumbnailCore.Props>;
 
   time = 0;
+  crossOrigin: ThumbnailCore.Props['crossOrigin'];
+  loading: ThumbnailCore.Props['loading'];
+  fetchPriority: ThumbnailCore.Props['fetchPriority'];
 
   readonly #core = new ThumbnailCore();
   readonly #img = document.createElement('img');
   readonly #textTracks = new PlayerController(this, playerContext, selectTextTrack);
 
   #thumbnails: ThumbnailImage[] = [];
+  #externalThumbnails: ThumbnailImage[] | undefined;
   #lastTextTrack: MediaTextTrackState | undefined;
-  #imgNaturalWidth = 0;
-  #imgNaturalHeight = 0;
+  #handle: ThumbnailHandle | null = null;
 
   constructor() {
     super();
@@ -54,68 +60,96 @@ export class ThumbnailElement extends MediaElement {
     this.#img.setAttribute('part', 'img');
     this.#img.setAttribute('aria-hidden', 'true');
     this.#img.setAttribute('decoding', 'async');
-    this.#img.addEventListener('load', this.#onImgLoad);
     shadow.appendChild(this.#img);
   }
 
-  #onImgLoad = () => {
-    this.#imgNaturalWidth = this.#img.naturalWidth;
-    this.#imgNaturalHeight = this.#img.naturalHeight;
+  /**
+   * Set thumbnail images directly, bypassing the automatic `<track>` detection.
+   * When set, this takes priority over the text track path.
+   */
+  get thumbnails(): ThumbnailImage[] | undefined {
+    return this.#externalThumbnails;
+  }
+
+  set thumbnails(value: ThumbnailImage[] | undefined) {
+    this.#externalThumbnails = value;
     this.requestUpdate();
-  };
+  }
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+
+    this.#handle = createThumbnail({
+      getContainer: () => this,
+      getImg: () => this.#img,
+      onStateChange: () => this.requestUpdate(),
+    });
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#handle?.destroy();
+    this.#handle = null;
+  }
 
   protected override update(changed: PropertyValues): void {
     super.update(changed);
 
-    const textTrack = this.#textTracks.value;
+    // Resolve thumbnails: external prop takes priority over auto <track> path.
+    if (this.#externalThumbnails) {
+      this.#thumbnails = this.#externalThumbnails;
+    } else {
+      const textTrack = this.#textTracks.value;
 
-    if (textTrack !== this.#lastTextTrack) {
-      this.#lastTextTrack = textTrack;
-      this.#thumbnails =
-        textTrack && textTrack.thumbnailCues.length > 0
-          ? mapCuesToThumbnails(textTrack.thumbnailCues, textTrack.thumbnailTrackSrc ?? undefined)
-          : [];
+      if (textTrack !== this.#lastTextTrack) {
+        this.#lastTextTrack = textTrack;
+        this.#thumbnails =
+          textTrack && textTrack.thumbnailCues.length > 0
+            ? mapCuesToThumbnails(textTrack.thumbnailCues, textTrack.thumbnailTrackSrc ?? undefined)
+            : [];
+      }
     }
 
     const thumbnail = this.#core.findActiveThumbnail(this.#thumbnails, this.time);
-    const state = this.#core.getState(false, false, thumbnail);
 
-    applyElementProps(this, this.#core.getAttrs(state));
-    applyStateDataAttrs(this, state, ThumbnailDataAttrs);
+    // Sync img attributes from element properties.
+    applyElementProps(this.#img, {
+      crossorigin: this.crossOrigin || undefined,
+      loading: this.loading,
+      fetchpriority: this.fetchPriority,
+    });
+
+    // Track src changes via the handle.
+    this.#handle?.updateSrc(thumbnail?.url);
 
     if (!thumbnail) {
       this.#img.removeAttribute('src');
       this.#resetStyles();
+
+      const state = this.#core.getState(false, false, undefined);
+      applyElementProps(this, this.#core.getAttrs(state));
+      applyStateDataAttrs(this, state, ThumbnailDataAttrs);
       return;
     }
 
+    // Set the img src directly (imperative DOM).
     if (this.#img.getAttribute('src') !== thumbnail.url) {
       this.#img.src = thumbnail.url;
     }
 
-    if (this.#imgNaturalWidth && this.#imgNaturalHeight) {
-      const constraints = this.#parseConstraints();
-      const result = this.#core.resize(thumbnail, this.#imgNaturalWidth, this.#imgNaturalHeight, constraints);
+    const handle = this.#handle;
+    const state = this.#core.getState(handle?.loading ?? false, handle?.error ?? false, thumbnail);
+    applyElementProps(this, this.#core.getAttrs(state));
+    applyStateDataAttrs(this, state, ThumbnailDataAttrs);
+
+    if (handle?.naturalWidth && handle.naturalHeight) {
+      const constraints = handle.readConstraints();
+      const result = this.#core.resize(thumbnail, handle.naturalWidth, handle.naturalHeight, constraints);
 
       if (result) {
         this.#applyResize(result);
       }
     }
-  }
-
-  #parseConstraints(): ThumbnailConstraints {
-    const computed = getComputedStyle(this);
-    const minW = parseFloat(computed.minWidth);
-    const maxW = parseFloat(computed.maxWidth);
-    const minH = parseFloat(computed.minHeight);
-    const maxH = parseFloat(computed.maxHeight);
-
-    return {
-      minWidth: Number.isFinite(minW) ? minW : 0,
-      maxWidth: Number.isFinite(maxW) ? maxW : Infinity,
-      minHeight: Number.isFinite(minH) ? minH : 0,
-      maxHeight: Number.isFinite(maxH) ? maxH : Infinity,
-    };
   }
 
   #applyResize(result: ThumbnailResizeResult): void {
