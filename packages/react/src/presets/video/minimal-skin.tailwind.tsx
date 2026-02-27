@@ -33,9 +33,26 @@ const SEEK_TIME = 10;
 
 /* ------------------------------------ Reused fragments ------------------------------------- */
 
+// TBD: Should these live in an inline style (easier to use) or go shadcn style and add it to their stylesheet?
+const defaultStyles = {
+  '--color-primary': 'var(--media-color-primary, oklch(1 0 0))',
+  '--color-on-primary': `color(from var(--color-primary) xyz
+    clamp(0, (.36 / y - 1) * infinity, 1)
+    clamp(0, (.36 / y - 1) * infinity, 1)
+    clamp(0, (.36 / y - 1) * infinity, 1)
+    / 1
+  )`,
+  '--color-primary-shadow': `color(from var(--color-primary) xyz
+    round(up, min(1, max(0, 0.18 - y)))
+    round(up, min(1, max(0, 0.18 - y)))
+    round(up, min(1, max(0, 0.18 - y)))
+    / 0.2
+  )`,
+} as const;
+
 const icon = cn(
   '[grid-area:1/1] size-4.5',
-  'drop-shadow-[0_1px_0_var(--tw-drop-shadow-color)] drop-shadow-black/25',
+  'drop-shadow-[0_1px_0_var(--color-primary-shadow)]',
   'transition-discrete transition-[display,opacity] duration-150 ease-out'
 );
 
@@ -61,16 +78,16 @@ const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'> & { varian
         variant === 'icon'
           ? cn(
               'grid p-2.5 bg-transparent rounded-md',
-              'text-white',
-              'hover:text-white/80 hover:no-underline',
-              'focus-visible:text-white/80',
-              'focus-visible:outline-white focus-visible:outline-offset-2',
-              'aria-expanded:text-white/80'
+              'text-[color:var(--color-primary)]',
+              'hover:text-[color:color-mix(in_oklch,var(--color-primary)_80%,transparent)] hover:no-underline',
+              'focus-visible:text-[color:color-mix(in_oklch,var(--color-primary)_80%,transparent)]',
+              'focus-visible:outline-[var(--color-primary)] focus-visible:outline-offset-2',
+              'aria-expanded:text-[color:color-mix(in_oklch,var(--color-primary)_80%,transparent)]'
             )
           : cn(
-              'flex items-center justify-center py-2 px-4 bg-white rounded-lg',
-              'text-black font-medium',
-              'focus-visible:outline-white focus-visible:outline-offset-2'
+              'flex items-center justify-center py-2 px-4 bg-[var(--color-primary)] rounded-lg',
+              'text-[color:var(--color-on-primary)] font-medium',
+              'focus-visible:outline-[var(--color-primary)] focus-visible:outline-offset-2'
             ),
         className
       )}
@@ -124,7 +141,7 @@ function FullscreenButtonIcon({ state, className, ...rest }: { state: Fullscreen
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNode {
-  const { children, className, ...rest } = props;
+  const { children, className, style, ...rest } = props;
 
   return (
     <Container
@@ -135,8 +152,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
         'rounded-[var(--media-border-radius,0.75rem)] bg-black',
         'font-[Inter_Variable,Inter,ui-sans-serif,system-ui,sans-serif] text-[0.8125rem] leading-normal subpixel-antialiased',
         // Resets
-        '**:box-border **:m-0',
-        '[&_button]:font-[inherit]',
+        // NOTE: Some styles are omitted from the vanilla CSS because Tailwind has it's own reset.
         'motion-safe:[interpolate-size:allow-keywords]',
         // Outer border ring (::after only)
         'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
@@ -168,6 +184,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
         '[&:fullscreen]:rounded-none',
         className
       )}
+      style={{ ...defaultStyles, ...style }}
       {...rest}
     >
       <BufferingIndicator
@@ -175,7 +192,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
           state.visible ? (
             <div
               {...props}
-              className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 text-white"
+              className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 text-[color:var(--color-primary)]"
             >
               <SpinnerIcon className={icon} />
             </div>
@@ -205,7 +222,9 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 <p id="media-error-title" className="font-semibold leading-tight">
                   Something went wrong.
                 </p>
-                <p id="media-error-description">An error occurred while trying to play the video. Please try again.</p>
+                <p id="media-error-description" className="opacity-70">
+                  An error occurred while trying to play the video. Please try again.
+                </p>
               </div>
               <div className="flex gap-2 *:flex-1">
                 <Button onClick={onDismiss}>OK</Button>
@@ -223,7 +242,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
           // Layout
           'absolute @container/media-controls bottom-0 inset-x-0',
           'pt-8 px-1.5 pb-1.5 flex items-center gap-2',
-          'text-white z-10',
+          'text-[color:var(--color-primary)] z-10',
           // Transitions
           'will-change-[translate,filter,opacity]',
           'transition-[translate,filter,opacity] ease-out',
@@ -283,12 +302,23 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
           <Time.Group className="flex items-center gap-1">
             <Time.Value
               type="current"
-              className={cn('hidden tabular-nums text-shadow-2xs text-shadow-black/25', '@md/media-controls:inline')}
+              className={cn(
+                'hidden tabular-nums [text-shadow:0_1px_0_var(--color-primary-shadow)]',
+                '@md/media-controls:inline'
+              )}
             />
-            <Time.Separator className={cn('hidden', '@md/media-controls:inline @md/media-controls:text-white/50')} />
+            <Time.Separator
+              className={cn(
+                'hidden',
+                '@md/media-controls:inline @md/media-controls:text-[color:color-mix(in_oklch,var(--color-primary)_60%,transparent)]'
+              )}
+            />
             <Time.Value
               type="duration"
-              className={cn('tabular-nums text-shadow-2xs text-shadow-black/25', '@md/media-controls:text-white/50')}
+              className={cn(
+                'tabular-nums [text-shadow:0_1px_0_var(--color-primary-shadow)]',
+                '@md/media-controls:text-[color:color-mix(in_oklch,var(--color-primary)_60%,transparent)]'
+              )}
             />
           </Time.Group>
 

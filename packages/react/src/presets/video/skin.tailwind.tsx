@@ -33,6 +33,23 @@ const SEEK_TIME = 10;
 
 /* ------------------------------------ Reused fragments ------------------------------------- */
 
+// TBD: Should these live in an inline style (easier to use) or go shadcn style and add it to their stylesheet?
+const defaultStyles = {
+  '--color-primary': 'var(--media-color-primary, oklch(1 0 0))',
+  '--color-on-primary': `color(from var(--color-primary) xyz
+    clamp(0, (.36 / y - 1) * infinity, 1)
+    clamp(0, (.36 / y - 1) * infinity, 1)
+    clamp(0, (.36 / y - 1) * infinity, 1)
+    / 1
+  )`,
+  '--color-primary-shadow': `color(from var(--color-primary) xyz
+    round(up, min(1, max(0, 0.18 - y)))
+    round(up, min(1, max(0, 0.18 - y)))
+    round(up, min(1, max(0, 0.18 - y)))
+    / 0.2
+  )`,
+} as const;
+
 const surface = cn(
   'bg-white/10',
   'backdrop-blur-3xl backdrop-brightness-90 backdrop-saturate-150',
@@ -48,7 +65,7 @@ const surface = cn(
 
 const icon = cn(
   '[grid-area:1/1] size-4.5 shrink-0',
-  'drop-shadow-[0_1px_0_var(--tw-drop-shadow-color)] drop-shadow-black/25',
+  'drop-shadow-[0_1px_0_var(--color-primary-shadow)]',
   'transition-discrete transition-[display,opacity] duration-150 ease-out'
 );
 
@@ -74,17 +91,17 @@ const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'> & { varian
         variant === 'icon'
           ? cn(
               'grid p-2 bg-transparent rounded-full',
-              'text-white/90',
-              'text-shadow-2xs text-shadow-black/25',
-              'hover:bg-white/10 hover:text-white hover:no-underline',
-              'focus-visible:bg-white/10 focus-visible:text-white',
-              'focus-visible:outline-blue-500 focus-visible:outline-offset-2',
-              'aria-expanded:bg-white/10 aria-expanded:text-white'
+              'text-[color:var(--color-primary)]',
+              '[text-shadow:0_1px_0_var(--color-primary-shadow)]',
+              'hover:bg-white/10 hover:no-underline',
+              'focus-visible:bg-white/10',
+              'focus-visible:outline-[var(--color-primary)] focus-visible:outline-offset-2',
+              'aria-expanded:bg-white/10'
             )
           : cn(
-              'flex items-center justify-center py-2 px-4 bg-white rounded-full',
-              'text-black font-medium',
-              'focus-visible:outline-blue-500 focus-visible:outline-offset-2'
+              'flex items-center justify-center py-2 px-4 bg-[var(--color-primary)] rounded-full',
+              'text-[color:var(--color-on-primary)] font-medium',
+              'focus-visible:outline-[var(--color-primary)] focus-visible:outline-offset-2'
             ),
         className
       )}
@@ -138,7 +155,7 @@ function FullscreenButtonIcon({ state, className, ...rest }: { state: Fullscreen
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
-  const { children, className, ...rest } = props;
+  const { children, className, style, ...rest } = props;
 
   return (
     <Container
@@ -149,8 +166,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
         'rounded-[var(--media-border-radius,2rem)] bg-black',
         'font-[Inter_Variable,Inter,ui-sans-serif,system-ui,sans-serif] text-[0.8125rem] leading-normal subpixel-antialiased',
         // Resets
-        '**:box-border **:m-0',
-        '[&_button]:font-[inherit]',
+        // NOTE: Some styles are omitted from the vanilla CSS because Tailwind has it's own reset.
         'motion-safe:[interpolate-size:allow-keywords]',
         // Inner highlight ring (::before)
         'before:absolute before:pointer-events-none before:rounded-[inherit] before:z-10',
@@ -184,6 +200,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
         '[&:fullscreen]:rounded-none',
         className
       )}
+      style={{ ...defaultStyles, ...style }}
       {...rest}
     >
       <BufferingIndicator
@@ -191,7 +208,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           state.visible ? (
             <div
               {...props}
-              className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 text-white"
+              className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 text-[color:var(--color-primary)]"
             >
               <div className={cn('p-1 rounded-full', surface)}>
                 <SpinnerIcon className={icon} />
@@ -245,7 +262,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           // Layout
           'absolute @container/media-controls bottom-3 inset-x-3',
           'p-[0.175rem] flex items-center gap-[0.075rem]',
-          'text-white rounded-full z-10',
+          'text-[color:var(--color-primary)] rounded-full z-10',
           // Transitions
           'will-change-[scale,transform,filter,opacity]',
           'transition-[scale,transform,filter,opacity] ease-out',
@@ -297,11 +314,11 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
         <Time.Group className="@container/media-time flex items-center flex-1 gap-3 px-2">
           <Time.Value
             type="current"
-            className="hidden @2xs/media-time:block text-shadow-2xs text-shadow-black/25 tabular-nums"
+            className="hidden @2xs/media-time:block [text-shadow:0_1px_0_var(--color-primary-shadow)] tabular-nums"
           />
           {/* Temporary spacer */}
           <div className="flex-1 h-1 rounded-full bg-white/20" />
-          <Time.Value type="duration" className="text-shadow-2xs text-shadow-black/25 tabular-nums" />
+          <Time.Value type="duration" className="[text-shadow:0_1px_0_var(--color-primary-shadow)] tabular-nums" />
         </Time.Group>
 
         <MuteButton
