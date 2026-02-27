@@ -44,11 +44,15 @@ export function getAnchorPositionStyle(
   }
 
   // JS fallback when CSS Anchor Positioning is not supported.
-  if (triggerRect && positionerRect && boundaryRect) {
+  if (triggerRect && positionerRect) {
     return {
-      ...getManualPositionStyle(triggerRect, positionerRect, boundaryRect, opts),
-      ...getPopoverCSSVars(triggerRect, boundaryRect, opts.side),
-      position: 'absolute',
+      ...getManualPositionStyle(triggerRect, positionerRect, opts),
+      ...(boundaryRect ? getPopoverCSSVars(triggerRect, boundaryRect, opts.side) : {}),
+      position: 'fixed',
+      // Reset UA [popover] defaults (inset: 0; margin: auto) which would
+      // otherwise conflict with computed positioning.
+      inset: 'auto',
+      margin: '0',
     };
   }
 
@@ -66,6 +70,16 @@ function getAnchorPositionCSS(anchorName: string, opts: PositioningOptions): Rec
   const style: Record<string, string> = {
     'position-anchor': `--${anchorName}`,
     position: 'fixed',
+    // Reset UA [popover] defaults (inset: 0; margin: auto) and any
+    // stale properties from a previous side/align configuration.
+    // applyStyles() only sets properties — it never removes old ones —
+    // so we emit a complete set of resets every time.
+    inset: 'auto',
+    margin: '0',
+    'justify-self': 'normal',
+    'align-self': 'normal',
+    'margin-inline-start': '0',
+    'margin-block-start': '0',
   };
 
   // The CSS inset property is the OPPOSITE of the desired side.
@@ -133,49 +147,47 @@ export function getPopoverCSSVars(
 /**
  * Compute manual positioning when CSS Anchor Positioning is not supported.
  *
- * Returns inline `top`/`left` styles directly on the positioner element.
- * Unlike the slider (where CSS vars enable flexible consumption), popover
- * positioning has a single correct application — there's no reason to
- * indirect through CSS custom properties.
+ * Returns inline `top`/`left` styles in **viewport coordinates** for use
+ * with `position: fixed` (the popup is in the top layer). All rects from
+ * `getBoundingClientRect()` are already viewport-relative.
  */
 export function getManualPositionStyle(
   triggerRect: DOMRect,
-  positionerRect: DOMRect,
-  boundaryRect: DOMRect,
+  popupRect: DOMRect,
   opts: PositioningOptions
 ): Record<string, string> {
   const { side, align, sideOffset, alignOffset } = opts;
   let top = 0;
   let left = 0;
 
-  // Side positioning (relative to boundary).
+  // Side positioning in viewport coordinates.
   // Positive sideOffset always increases distance from the trigger.
   if (side === 'top') {
-    top = triggerRect.top - boundaryRect.top - positionerRect.height - sideOffset;
+    top = triggerRect.top - popupRect.height - sideOffset;
   } else if (side === 'bottom') {
-    top = triggerRect.bottom - boundaryRect.top + sideOffset;
+    top = triggerRect.bottom + sideOffset;
   } else if (side === 'left') {
-    left = triggerRect.left - boundaryRect.left - positionerRect.width - sideOffset;
+    left = triggerRect.left - popupRect.width - sideOffset;
   } else {
-    left = triggerRect.right - boundaryRect.left + sideOffset;
+    left = triggerRect.right + sideOffset;
   }
 
   // Alignment along cross axis
   if (side === 'top' || side === 'bottom') {
     if (align === 'start') {
-      left = triggerRect.left - boundaryRect.left + alignOffset;
+      left = triggerRect.left + alignOffset;
     } else if (align === 'end') {
-      left = triggerRect.right - boundaryRect.left - positionerRect.width + alignOffset;
+      left = triggerRect.right - popupRect.width + alignOffset;
     } else {
-      left = triggerRect.left - boundaryRect.left + (triggerRect.width - positionerRect.width) / 2 + alignOffset;
+      left = triggerRect.left + (triggerRect.width - popupRect.width) / 2 + alignOffset;
     }
   } else {
     if (align === 'start') {
-      top = triggerRect.top - boundaryRect.top + alignOffset;
+      top = triggerRect.top + alignOffset;
     } else if (align === 'end') {
-      top = triggerRect.bottom - boundaryRect.top - positionerRect.height + alignOffset;
+      top = triggerRect.bottom - popupRect.height + alignOffset;
     } else {
-      top = triggerRect.top - boundaryRect.top + (triggerRect.height - positionerRect.height) / 2 + alignOffset;
+      top = triggerRect.top + (triggerRect.height - popupRect.height) / 2 + alignOffset;
     }
   }
 
