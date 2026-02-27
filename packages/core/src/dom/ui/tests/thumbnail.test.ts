@@ -1,0 +1,321 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { type CreateThumbnailOptions, createThumbnail } from '../thumbnail';
+
+// --- ResizeObserver stub (jsdom lacks it) ---
+
+class ResizeObserverStub {
+  callback: ResizeObserverCallback;
+  static instances: ResizeObserverStub[] = [];
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+    ResizeObserverStub.instances.push(this);
+  }
+
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+
+vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+
+afterEach(() => {
+  ResizeObserverStub.instances.length = 0;
+});
+
+// --- Helpers ---
+
+function createMockImg(): HTMLImageElement {
+  const img = document.createElement('img');
+
+  Object.defineProperty(img, 'naturalWidth', { value: 2560, writable: true, configurable: true });
+  Object.defineProperty(img, 'naturalHeight', { value: 1600, writable: true, configurable: true });
+
+  return img;
+}
+
+function createMockContainer(): HTMLElement {
+  return document.createElement('div');
+}
+
+function createOptions(overrides: Partial<CreateThumbnailOptions> = {}): CreateThumbnailOptions {
+  return {
+    getContainer: () => createMockContainer(),
+    getImg: () => createMockImg(),
+    onStateChange: vi.fn(),
+    ...overrides,
+  };
+}
+
+describe('createThumbnail', () => {
+  describe('initial state', () => {
+    it('starts with loading false and error false', () => {
+      const handle = createThumbnail(createOptions());
+
+      expect(handle.loading).toBe(false);
+      expect(handle.error).toBe(false);
+
+      handle.destroy();
+    });
+
+    it('starts with zero natural dimensions', () => {
+      const handle = createThumbnail(createOptions());
+
+      expect(handle.naturalWidth).toBe(0);
+      expect(handle.naturalHeight).toBe(0);
+
+      handle.destroy();
+    });
+  });
+
+  describe('updateSrc', () => {
+    it('sets loading to true when given a new non-empty URL', () => {
+      const handle = createThumbnail(createOptions());
+
+      handle.updateSrc('sprite.jpg');
+
+      expect(handle.loading).toBe(true);
+      expect(handle.error).toBe(false);
+
+      handle.destroy();
+    });
+
+    it('does nothing when called with the same URL', () => {
+      const handle = createThumbnail(createOptions());
+
+      handle.updateSrc('sprite.jpg');
+      expect(handle.loading).toBe(true);
+
+      // Simulate load completing.
+      handle.updateSrc('sprite.jpg');
+
+      // Should still be loading — same URL, no-op.
+      expect(handle.loading).toBe(true);
+
+      handle.destroy();
+    });
+
+    it('resets state when URL changes to empty', () => {
+      const handle = createThumbnail(createOptions());
+
+      handle.updateSrc('sprite.jpg');
+      expect(handle.loading).toBe(true);
+
+      handle.updateSrc(undefined);
+
+      expect(handle.loading).toBe(false);
+      expect(handle.error).toBe(false);
+      expect(handle.naturalWidth).toBe(0);
+      expect(handle.naturalHeight).toBe(0);
+
+      handle.destroy();
+    });
+
+    it('resets loading when URL changes to a different URL', () => {
+      const handle = createThumbnail(createOptions());
+
+      handle.updateSrc('sprite-1.jpg');
+      expect(handle.loading).toBe(true);
+
+      handle.updateSrc('sprite-2.jpg');
+
+      expect(handle.loading).toBe(true);
+      expect(handle.error).toBe(false);
+
+      handle.destroy();
+    });
+  });
+
+  describe('img events', () => {
+    it('updates natural dimensions and clears loading on img load', () => {
+      const img = createMockImg();
+      const onStateChange = vi.fn();
+
+      const handle = createThumbnail(
+        createOptions({
+          getImg: () => img,
+          onStateChange,
+        })
+      );
+
+      handle.updateSrc('sprite.jpg');
+      expect(handle.loading).toBe(true);
+
+      img.dispatchEvent(new Event('load'));
+
+      expect(handle.loading).toBe(false);
+      expect(handle.error).toBe(false);
+      expect(handle.naturalWidth).toBe(2560);
+      expect(handle.naturalHeight).toBe(1600);
+      expect(onStateChange).toHaveBeenCalled();
+
+      handle.destroy();
+    });
+
+    it('handles src change: load first image, change src, load second image', () => {
+      const img = createMockImg();
+      const onStateChange = vi.fn();
+
+      const handle = createThumbnail(
+        createOptions({
+          getImg: () => img,
+          onStateChange,
+        })
+      );
+
+      // First image loads successfully.
+      handle.updateSrc('sprite-1.jpg');
+      img.dispatchEvent(new Event('load'));
+
+      expect(handle.loading).toBe(false);
+      expect(handle.naturalWidth).toBe(2560);
+
+      // Src changes — loading resets.
+      handle.updateSrc('sprite-2.jpg');
+      expect(handle.loading).toBe(true);
+
+      // Second image loads — same listener catches it.
+      Object.defineProperty(img, 'naturalWidth', { value: 1280, configurable: true });
+      Object.defineProperty(img, 'naturalHeight', { value: 720, configurable: true });
+      img.dispatchEvent(new Event('load'));
+
+      expect(handle.loading).toBe(false);
+      expect(handle.naturalWidth).toBe(1280);
+      expect(handle.naturalHeight).toBe(720);
+
+      handle.destroy();
+    });
+
+    it('sets error on img error', () => {
+      const img = createMockImg();
+      const onStateChange = vi.fn();
+
+      const handle = createThumbnail(
+        createOptions({
+          getImg: () => img,
+          onStateChange,
+        })
+      );
+
+      handle.updateSrc('bad.jpg');
+      img.dispatchEvent(new Event('error'));
+
+      expect(handle.loading).toBe(false);
+      expect(handle.error).toBe(true);
+      expect(onStateChange).toHaveBeenCalled();
+
+      handle.destroy();
+    });
+
+    it('stops listening to img events after destroy', () => {
+      const img = createMockImg();
+      const onStateChange = vi.fn();
+
+      const handle = createThumbnail(
+        createOptions({
+          getImg: () => img,
+          onStateChange,
+        })
+      );
+
+      // Trigger lazy binding so listeners are actually attached.
+      handle.updateSrc('sprite.jpg');
+
+      handle.destroy();
+      onStateChange.mockClear();
+
+      img.dispatchEvent(new Event('load'));
+
+      expect(onStateChange).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('readConstraints', () => {
+    it('returns default constraints when no container', () => {
+      const handle = createThumbnail(
+        createOptions({
+          getContainer: () => null,
+        })
+      );
+
+      const constraints = handle.readConstraints();
+
+      expect(constraints).toEqual({
+        minWidth: 0,
+        maxWidth: Infinity,
+        minHeight: 0,
+        maxHeight: Infinity,
+      });
+
+      handle.destroy();
+    });
+  });
+
+  describe('connect', () => {
+    it('binds img and ResizeObserver lazily after elements become available', () => {
+      let img: HTMLImageElement | null = null;
+      let container: HTMLElement | null = null;
+      const onStateChange = vi.fn();
+
+      const handle = createThumbnail(
+        createOptions({
+          getContainer: () => container,
+          getImg: () => img,
+          onStateChange,
+        })
+      );
+
+      // Before elements exist: no observer created.
+      expect(ResizeObserverStub.instances).toHaveLength(0);
+
+      // Simulate elements becoming available (like React refs after mount).
+      img = createMockImg();
+      container = createMockContainer();
+
+      handle.connect();
+
+      // ResizeObserver should now be set up.
+      expect(ResizeObserverStub.instances).toHaveLength(1);
+      expect(ResizeObserverStub.instances[0]!.observe).toHaveBeenCalledWith(container);
+
+      handle.destroy();
+    });
+
+    it('detects already-loaded img on connect', () => {
+      const img = createMockImg();
+      // Mark the img as already complete (cached image).
+      Object.defineProperty(img, 'complete', { value: true, configurable: true });
+
+      const onStateChange = vi.fn();
+
+      const handle = createThumbnail(
+        createOptions({
+          getImg: () => img,
+          onStateChange,
+        })
+      );
+
+      handle.updateSrc('sprite.jpg');
+      onStateChange.mockClear();
+
+      handle.connect();
+
+      expect(handle.loading).toBe(false);
+      expect(handle.naturalWidth).toBe(2560);
+      expect(handle.naturalHeight).toBe(1600);
+      expect(onStateChange).toHaveBeenCalledOnce();
+
+      handle.destroy();
+    });
+  });
+
+  describe('destroy', () => {
+    it('can be called multiple times safely', () => {
+      const handle = createThumbnail(createOptions());
+
+      handle.destroy();
+      handle.destroy();
+    });
+  });
+});

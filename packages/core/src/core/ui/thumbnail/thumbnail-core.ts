@@ -1,10 +1,31 @@
 import type {
   ThumbnailConstraints,
+  ThumbnailCrossOrigin,
+  ThumbnailFetchPriority,
   ThumbnailImage,
-  ThumbnailProps,
+  ThumbnailLoading,
   ThumbnailResizeResult,
-  ThumbnailState,
 } from './types';
+
+export interface ThumbnailProps {
+  /** Time in seconds to display the thumbnail for. */
+  time?: number | undefined;
+  /** CORS setting forwarded to the inner `<img>`. */
+  crossOrigin?: ThumbnailCrossOrigin | undefined;
+  /** Image loading strategy forwarded to the inner `<img>`. */
+  loading?: ThumbnailLoading | undefined;
+  /** Image fetch priority hint forwarded to the inner `<img>`. */
+  fetchPriority?: ThumbnailFetchPriority | undefined;
+}
+
+export interface ThumbnailState {
+  /** The thumbnail image is loading. */
+  loading: boolean;
+  /** The thumbnail image failed to load. */
+  error: boolean;
+  /** No thumbnail is available and not loading — the component should be hidden. */
+  hidden: boolean;
+}
 
 export class ThumbnailCore {
   findActiveThumbnail(thumbnails: ThumbnailImage[], time: number): ThumbnailImage | undefined {
@@ -27,6 +48,31 @@ export class ThumbnailCore {
     }
 
     return result;
+  }
+
+  /**
+   * Parse CSS constraint strings into numeric `ThumbnailConstraints`.
+   *
+   * Accepts any object with string `minWidth`/`maxWidth`/`minHeight`/`maxHeight`
+   * properties — `CSSStyleDeclaration` satisfies this structurally.
+   */
+  parseConstraints(raw: {
+    minWidth: string;
+    maxWidth: string;
+    minHeight: string;
+    maxHeight: string;
+  }): ThumbnailConstraints {
+    const minW = parseFloat(raw.minWidth);
+    const maxW = parseFloat(raw.maxWidth);
+    const minH = parseFloat(raw.minHeight);
+    const maxH = parseFloat(raw.maxHeight);
+
+    return {
+      minWidth: Number.isFinite(minW) ? minW : 0,
+      maxWidth: Number.isFinite(maxW) ? maxW : Infinity,
+      minHeight: Number.isFinite(minH) ? minH : 0,
+      maxHeight: Number.isFinite(maxH) ? maxH : Infinity,
+    };
   }
 
   /**

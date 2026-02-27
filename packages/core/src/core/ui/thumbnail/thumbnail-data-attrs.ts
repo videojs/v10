@@ -1,5 +1,5 @@
 import type { StateAttrMap } from '../types';
-import type { ThumbnailState } from './types';
+import type { ThumbnailState } from './thumbnail-core';
 
 export const ThumbnailDataAttrs = {
   loading: 'data-loading',

@@ -14,26 +14,11 @@ export interface ThumbnailImage {
 
 export type ThumbnailSrc = string | ThumbnailImage[] | null;
 
-export type CrossOriginValue = 'anonymous' | 'use-credentials' | '' | null;
+export type ThumbnailCrossOrigin = 'anonymous' | 'use-credentials' | '' | null;
 
-export interface ThumbnailProps {
-  /** Thumbnail source — a VTT URL, JSON storyboard URL, or pre-parsed array. */
-  src?: ThumbnailSrc | undefined;
-  /** Time in seconds to display the thumbnail for. */
-  time?: number | undefined;
-  /** CORS setting for the thumbnail source and images. */
-  crossOrigin?: CrossOriginValue | undefined;
-  /** Image loading strategy. */
-  loading?: 'eager' | 'lazy' | undefined;
-  /** Image fetch priority hint. */
-  fetchPriority?: 'high' | 'low' | 'auto' | undefined;
-}
+export type ThumbnailLoading = 'eager' | 'lazy';
 
-export interface ThumbnailState {
-  loading: boolean;
-  error: boolean;
-  hidden: boolean;
-}
+export type ThumbnailFetchPriority = 'high' | 'low' | 'auto';
 
 export interface ThumbnailConstraints {
   minWidth: number;
@@ -51,5 +36,3 @@ export interface ThumbnailResizeResult {
   offsetX: number;
   offsetY: number;
 }
-
-export type { MediaTextCue } from '../../media/state';

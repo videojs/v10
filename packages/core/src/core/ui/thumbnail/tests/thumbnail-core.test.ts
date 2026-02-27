@@ -301,4 +301,42 @@ describe('ThumbnailCore', () => {
       expect(attrs['aria-hidden']).toBe('true');
     });
   });
+
+  describe('parseConstraints', () => {
+    it('parses valid numeric strings', () => {
+      const core = new ThumbnailCore();
+      const result = core.parseConstraints({
+        minWidth: '100px',
+        maxWidth: '200px',
+        minHeight: '50px',
+        maxHeight: '150px',
+      });
+
+      expect(result).toEqual({ minWidth: 100, maxWidth: 200, minHeight: 50, maxHeight: 150 });
+    });
+
+    it('defaults non-finite values to 0 for min and Infinity for max', () => {
+      const core = new ThumbnailCore();
+      const result = core.parseConstraints({
+        minWidth: 'none',
+        maxWidth: 'none',
+        minHeight: '',
+        maxHeight: '',
+      });
+
+      expect(result).toEqual({ minWidth: 0, maxWidth: Infinity, minHeight: 0, maxHeight: Infinity });
+    });
+
+    it('handles mixed valid and invalid values', () => {
+      const core = new ThumbnailCore();
+      const result = core.parseConstraints({
+        minWidth: '0px',
+        maxWidth: '128px',
+        minHeight: 'none',
+        maxHeight: 'none',
+      });
+
+      expect(result).toEqual({ minWidth: 0, maxWidth: 128, minHeight: 0, maxHeight: Infinity });
+    });
+  });
 });

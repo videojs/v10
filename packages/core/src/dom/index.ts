@@ -6,4 +6,5 @@ export * from './ui/button';
 export * from './ui/event';
 export * from './ui/slider';
 export * from './ui/slider-css-vars';
+export * from './ui/thumbnail';
 export * from './utils';
