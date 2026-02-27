@@ -50,6 +50,7 @@ export const playbackRateFeature = createFeature({
     const { media } = target;
 
     const sync = () => set({ playbackRate: media.playbackRate });
+    sync();
 
     listen(media, "ratechange", sync, { signal });
   },
@@ -83,7 +84,7 @@ import { PlaybackRateButton } from "@videojs/react";
   /* With rate display */
 }
 <PlaybackRateButton
-  render={(props, state) => <button {...props}>{state.rate}x</button>}
+  render={(props, state) => <button {...props}>{state.rate}&times;</button>}
 />;
 ```
 
@@ -96,7 +97,7 @@ import { PlaybackRateButton } from "@videojs/react";
 ```css
 /* Rate display via CSS */
 media-playback-rate-button::after {
-  content: attr(data-rate) "x";
+  content: attr(data-rate) "\00D7";
 }
 ```
 

@@ -4,6 +4,7 @@ import type {
   MediaControlsState,
   MediaFullscreenState,
   MediaPictureInPictureState,
+  MediaPlaybackRateState,
   MediaPlaybackState,
   MediaSourceState,
   MediaTimeState,
@@ -44,6 +45,7 @@ export type AnyPlayerStore = Store<PlayerTarget, object>;
 
 export type VideoFeatures = [
   PlayerFeature<MediaPlaybackState>,
+  PlayerFeature<MediaPlaybackRateState>,
   PlayerFeature<MediaVolumeState>,
   PlayerFeature<MediaTimeState>,
   PlayerFeature<MediaSourceState>,
@@ -55,6 +57,7 @@ export type VideoFeatures = [
 
 export type AudioFeatures = [
   PlayerFeature<MediaPlaybackState>,
+  PlayerFeature<MediaPlaybackRateState>,
   PlayerFeature<MediaVolumeState>,
   PlayerFeature<MediaTimeState>,
   PlayerFeature<MediaSourceState>,

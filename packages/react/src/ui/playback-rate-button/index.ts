@@ -1,5 +1,1 @@
-export {
-  PlaybackRateButton,
-  type PlaybackRateButtonProps,
-  type PlaybackRateButtonState,
-} from './playback-rate-button';
+export { PlaybackRateButton, type PlaybackRateButtonProps } from './playback-rate-button';

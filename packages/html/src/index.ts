@@ -23,6 +23,7 @@ export * from './ui/media-element';
 export { MuteButtonElement } from './ui/mute-button/mute-button-element';
 export { PiPButtonElement } from './ui/pip-button/pip-button-element';
 export { PlayButtonElement } from './ui/play-button/play-button-element';
+export { PlaybackRateButtonElement } from './ui/playback-rate-button/playback-rate-button-element';
 export { PosterElement } from './ui/poster/poster-element';
 export { SeekButtonElement } from './ui/seek-button/seek-button-element';
 export { TimeElement } from './ui/time/time-element';

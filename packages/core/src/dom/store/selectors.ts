@@ -5,6 +5,7 @@ import { controlsFeature } from './features/controls';
 import { fullscreenFeature } from './features/fullscreen';
 import { pipFeature } from './features/pip';
 import { playbackFeature } from './features/playback';
+import { playbackRateFeature } from './features/playback-rate';
 import { sourceFeature } from './features/source';
 import { timeFeature } from './features/time';
 import { volumeFeature } from './features/volume';
@@ -19,6 +20,8 @@ export const selectFullscreen = createSelector(fullscreenFeature);
 export const selectPiP = createSelector(pipFeature);
 /** Select the playback state (paused, ended, play, pause, toggle). */
 export const selectPlayback = createSelector(playbackFeature);
+/** Select the playback rate state (playbackRate, playbackRates, setPlaybackRate). */
+export const selectPlaybackRate = createSelector(playbackRateFeature);
 /** Select the source state (src, type). */
 export const selectSource = createSelector(sourceFeature);
 /** Select the time state (currentTime, duration, seek). */

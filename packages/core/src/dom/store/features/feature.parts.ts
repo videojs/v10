@@ -4,6 +4,7 @@ import { controlsFeature } from './controls';
 import { fullscreenFeature } from './fullscreen';
 import { pipFeature } from './pip';
 import { playbackFeature } from './playback';
+import { playbackRateFeature } from './playback-rate';
 import { sourceFeature } from './source';
 import { timeFeature } from './time';
 import { volumeFeature } from './volume';
@@ -15,6 +16,7 @@ export {
   fullscreenFeature as fullscreen,
   pipFeature as pip,
   playbackFeature as playback,
+  playbackRateFeature as playbackRate,
   sourceFeature as source,
   timeFeature as time,
   volumeFeature as volume,
@@ -22,6 +24,7 @@ export {
 
 export const video: VideoFeatures = [
   playbackFeature,
+  playbackRateFeature,
   volumeFeature,
   timeFeature,
   sourceFeature,
@@ -31,7 +34,14 @@ export const video: VideoFeatures = [
   controlsFeature,
 ];
 
-export const audio: AudioFeatures = [playbackFeature, volumeFeature, timeFeature, sourceFeature, bufferFeature];
+export const audio: AudioFeatures = [
+  playbackFeature,
+  playbackRateFeature,
+  volumeFeature,
+  timeFeature,
+  sourceFeature,
+  bufferFeature,
+];
 
 // TODO: Add background video features (e.g., playback, source, buffer)
 export const background: BackgroundFeatures = [];

@@ -4,6 +4,7 @@ export * as features from './feature.parts';
 export * from './fullscreen';
 export * from './pip';
 export * from './playback';
+export * from './playback-rate';
 export * from './source';
 export * from './time';
 export * from './volume';

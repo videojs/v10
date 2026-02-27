@@ -170,6 +170,27 @@ export interface MediaControlsState {
   controlsVisible: boolean;
 }
 
+export interface MediaPlaybackRateState {
+  /**
+   * Available playback rates.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/playbackRate
+   */
+  readonly playbackRates: readonly number[];
+  /**
+   * Current playback rate.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/playbackRate
+   */
+  playbackRate: number;
+  /**
+   * Set the playback rate.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/playbackRate
+   */
+  setPlaybackRate(rate: number): void;
+}
+
 export interface MediaPictureInPictureState {
   /**
    * Whether picture-in-picture mode is currently active.

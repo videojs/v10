@@ -1,38 +1,21 @@
 'use client';
 
-import type { StateAttrMap } from '@videojs/core';
+import { PlaybackRateButtonCore, PlaybackRateButtonDataAttrs } from '@videojs/core';
+import { logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
 
+import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useButton } from '../hooks/use-button';
 
-const RATES = [0.5, 1, 1.2, 1.5, 1.7, 2] as const;
-
-// FIXME: Replace with state/props from core.
-export type PlaybackRateButtonState = {
-  rate: (typeof RATES)[number];
-};
-type PlaybackRateButtonCoreProps = {
-  /** Custom label for the button. */
-  label?: string | ((state: PlaybackRateButtonState) => string) | undefined;
-  /** Whether the button is disabled. */
-  disabled?: boolean | undefined;
-};
-const PlaybackRateButtonDataAttrs = {
-  /** Present when the playback rate is active. */
-  rate: 'data-playback-rate',
-} as const satisfies StateAttrMap<PlaybackRateButtonState>;
-
 export interface PlaybackRateButtonProps
-  extends UIComponentProps<'button', PlaybackRateButtonState>,
-    PlaybackRateButtonCoreProps {}
-
-const DEBUG = true;
+  extends UIComponentProps<'button', PlaybackRateButtonCore.State>,
+    PlaybackRateButtonCore.Props {}
 
 /**
- * A button that toggles playback rate.
+ * A button that cycles through playback rates.
  *
  * @example
  * ```tsx
@@ -53,37 +36,37 @@ export const PlaybackRateButton = forwardRef(function PlaybackRateButton(
 ) {
   const { render, className, style, label, disabled, ...elementProps } = componentProps;
 
-  // FIXME: Replace with actual playback rate state
-  const [rate, setRate] = useState<PlaybackRateButtonState['rate']>(1);
+  const playbackRate = usePlayer(selectPlaybackRate);
+
+  const [core] = useState(() => new PlaybackRateButtonCore());
+  core.setProps({ label, disabled });
 
   const { getButtonProps, buttonRef } = useButton({
     displayName: 'PlaybackRateButton',
-    onActivate: () =>
-      setRate((currentRate) => {
-        // FIXME: Replace with actual toggle logic
-        const rates: PlaybackRateButtonState['rate'][] = [...RATES];
-        const currentIndex = rates.indexOf(currentRate);
-        const nextIndex = (currentIndex + 1) % rates.length;
-        return rates[nextIndex] ?? 1;
-      }),
-    isDisabled: () => disabled ?? false,
+    onActivate: () => core.cycle(playbackRate!),
+    isDisabled: () => disabled || !playbackRate,
   });
 
-  if (!DEBUG) return null;
+  if (!playbackRate) {
+    if (__DEV__) logMissingFeature('PlaybackRateButton', 'playbackRate');
+    return null;
+  }
+
+  const state = core.getState(playbackRate);
 
   return renderElement(
     'button',
     { render, className, style },
     {
-      state: { rate }, // FIXME: Replace with actual toggle logic
+      state,
       stateAttrMap: PlaybackRateButtonDataAttrs,
       ref: [forwardedRef, buttonRef],
-      props: [elementProps, getButtonProps()],
+      props: [core.getAttrs(state), elementProps, getButtonProps()],
     }
   );
 });
 
 export namespace PlaybackRateButton {
   export type Props = PlaybackRateButtonProps;
-  export type State = PlaybackRateButtonState;
+  export type State = PlaybackRateButtonCore.State;
 }

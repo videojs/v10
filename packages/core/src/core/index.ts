@@ -12,6 +12,8 @@ export * from './ui/pip-button/pip-button-core';
 export * from './ui/pip-button/pip-button-data-attrs';
 export * from './ui/play-button/play-button-core';
 export * from './ui/play-button/play-button-data-attrs';
+export * from './ui/playback-rate-button/playback-rate-button-core';
+export * from './ui/playback-rate-button/playback-rate-button-data-attrs';
 export * from './ui/poster/poster-core';
 export * from './ui/poster/poster-data-attrs';
 export * from './ui/seek-button/seek-button-core';

@@ -1,0 +1,47 @@
+---
+title: selectPlaybackRate
+description: Select the playback rate state slice from the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectPlaybackRate` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to playback rate state. Returns `undefined` if the playback rate feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectPlaybackRate` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to playback rate state. Returns `undefined` if the playback rate feature is not configured.
+</FrameworkCase>
+
+The returned state includes `playbackRate`, `playbackRates`, and the `setPlaybackRate` action.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { usePlayer } from '@videojs/react';
+import { selectPlaybackRate } from '@videojs/core/dom';
+
+function RateDisplay() {
+  const rate = usePlayer(selectPlaybackRate);
+  if (!rate) return null;
+
+  return <span>{rate.playbackRate}x</span>;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { createPlayer, features, MediaElement } from '@videojs/html';
+import { selectPlaybackRate } from '@videojs/core/dom';
+
+const { PlayerController, context } = createPlayer({ features: features.video });
+
+class RateDisplay extends MediaElement {
+  #rate = new PlayerController(this, context, selectPlaybackRate);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectPlaybackRate" />
