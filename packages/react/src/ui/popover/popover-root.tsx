@@ -59,7 +59,11 @@ export function PopoverRoot({
     return instance;
   });
 
-  const anchorName = useId();
+  // useId() returns values like `:r0:` which contain colons — invalid
+  // in CSS <dashed-ident> tokens (used by anchor-name / position-anchor).
+  // Strip non-alphanumeric/underscore/hyphen characters to produce a
+  // safe identifier.
+  const anchorName = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const popupId = useId();
 
   // Sync controlled open prop -> internal interaction state.

@@ -26,6 +26,11 @@ export const PopoverTrigger = forwardRef(function PopoverTrigger(
 
   const anchorStyle = useMemo(() => getAnchorNameStyle(anchorName), [anchorName]);
 
+  // Remap DOM focus events to React synthetic event names.
+  // createPopover() uses onFocusIn/onFocusOut (matching DOM focusin/focusout),
+  // but React maps those to onFocus/onBlur.
+  const { onFocusIn, onFocusOut, ...restTriggerProps } = popover.triggerProps;
+
   return renderElement(
     'button',
     { render, className, style },
@@ -39,7 +44,7 @@ export const PopoverTrigger = forwardRef(function PopoverTrigger(
           style: anchorStyle,
           ...core.getTriggerAttrs(state, popupId),
         },
-        popover.triggerProps,
+        { ...restTriggerProps, onFocus: onFocusIn, onBlur: onFocusOut },
         elementProps,
       ],
     }

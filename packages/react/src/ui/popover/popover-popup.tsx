@@ -71,18 +71,38 @@ export const PopoverPopup = forwardRef(function PopoverPopup(
       return;
     }
 
-    const triggerEl = popover.triggerElement;
-    const popupEl = internalRef.current;
-    if (!triggerEl || !popupEl) return;
+    function measure(): void {
+      const triggerEl = popover.triggerElement;
+      const popupEl = internalRef.current;
+      if (!triggerEl || !popupEl) return;
 
-    const triggerRect = triggerEl.getBoundingClientRect();
-    const popupRect = popupEl.getBoundingClientRect();
-    const boundaryRect = document.documentElement.getBoundingClientRect();
-    const offsets = resolveOffsets(popupEl);
+      const triggerRect = triggerEl.getBoundingClientRect();
+      const popupRect = popupEl.getBoundingClientRect();
+      const boundaryRect = document.documentElement.getBoundingClientRect();
+      const offsets = resolveOffsets(popupEl);
 
-    setManualStyle(
-      toReactStyle(getAnchorPositionStyle(anchorName, posOpts, triggerRect, popupRect, boundaryRect, offsets))
-    );
+      setManualStyle(
+        toReactStyle(getAnchorPositionStyle(anchorName, posOpts, triggerRect, popupRect, boundaryRect, offsets))
+      );
+    }
+
+    measure();
+
+    // Recompute on scroll/resize so the popover tracks its trigger.
+    let rafId = 0;
+    function reposition(): void {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(measure);
+    }
+
+    window.addEventListener('scroll', reposition, { capture: true, passive: true });
+    window.addEventListener('resize', reposition);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', reposition, true);
+      window.removeEventListener('resize', reposition);
+    };
   }, [state.open, state.transitionStatus, anchorName, posOpts, popover]);
 
   // Anchor path uses computed styles; manual path uses measured styles;
@@ -94,6 +114,9 @@ export const PopoverPopup = forwardRef(function PopoverPopup(
   if (!state.open && state.transitionStatus === 'closed') {
     return null;
   }
+
+  // Remap DOM focus events to React synthetic event names.
+  const { onFocusOut, ...restPopupProps } = popover.popupProps;
 
   return renderElement(
     'div',
@@ -108,7 +131,7 @@ export const PopoverPopup = forwardRef(function PopoverPopup(
           style: positioningStyle,
           ...core.getPopupAttrs(state),
         },
-        popover.popupProps,
+        { ...restPopupProps, onBlur: onFocusOut },
         elementProps,
       ],
     }
