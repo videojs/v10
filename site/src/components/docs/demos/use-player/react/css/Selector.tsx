@@ -1,10 +1,10 @@
-import { createPlayer, features, usePlayer } from '@videojs/react';
-import { Video } from '@videojs/react/video';
+import { createPlayer, usePlayer } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
 
 import './Selector.css';
 
 const { Provider, Container } = createPlayer({
-  features: features.video,
+  features: videoFeatures,
 });
 
 function StateDisplay() {

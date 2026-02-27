@@ -19,7 +19,7 @@ describe('createPlayer', () => {
   });
 
   it('resolves spread video features to VideoPlayerStore', () => {
-    const result = createPlayer({ features: [...videoFeatures] });
+    const result = createPlayer({ features: videoFeatures });
 
     assertType<CreatePlayerResult<VideoPlayerStore>>(result);
   });

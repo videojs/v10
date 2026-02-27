@@ -1,10 +1,10 @@
 
 import { VJS8_DEMO_VIDEO } from '@/consts';
-import { createPlayer, features, Poster } from '@videojs/react';
-import { VideoSkin, Video } from '@videojs/react/video';
+import { createPlayer, Poster } from '@videojs/react';
+import { VideoSkin, Video, videoFeatures } from '@videojs/react/video';
 import '@videojs/react/video/skin.css';
 
-const Player = createPlayer({ features: [...features.video] });
+const Player = createPlayer({ features: videoFeatures });
 
 /**
  * Live demo of the (default) frosted video skin design.

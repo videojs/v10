@@ -19,7 +19,7 @@ Any <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> o
 Use `ProviderMixin` separate from <DocsLink slug="reference/container-mixin">`ContainerMixin`</DocsLink> when the store owner is a different element from the one containing the media. This is common in complex layouts:
 
 ```ts
-const { ProviderMixin, ContainerMixin } = createPlayer({ features: features.video });
+const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
 
 // Layout shell owns the store
 class AppShell extends ProviderMixin(MediaElement) {}
@@ -31,7 +31,7 @@ class VideoRegion extends ContainerMixin(MediaElement) {}
 When a single element should handle both responsibilities, compose the mixins directly:
 
 ```ts
-const { ProviderMixin, ContainerMixin } = createPlayer({ features: features.video });
+const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
 
 class VideoPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {}
 ```

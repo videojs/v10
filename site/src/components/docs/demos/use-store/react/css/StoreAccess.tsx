@@ -1,10 +1,10 @@
-import { createPlayer, features, usePlayer, useStore } from '@videojs/react';
-import { Video } from '@videojs/react/video';
+import { createPlayer, usePlayer, useStore } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
 
 import './StoreAccess.css';
 
 const { Provider, Container } = createPlayer({
-  features: features.video,
+  features: videoFeatures,
 });
 
 function SeekControls() {

@@ -15,7 +15,8 @@ import basicUsageHtmlTs from "@/components/docs/demos/html-create-player/html/cs
 `createPlayer` is the entry point for setting up a Video.js player with HTML custom elements. It accepts a configuration object with a `features` array and returns a typed <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>, `context`, `ProviderMixin`, `ContainerMixin`, and a `create` store factory.
 
 ```ts
-import { createPlayer, features, MediaElement } from '@videojs/html';
+import { createPlayer, MediaElement } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
 
 const {
   PlayerController,
@@ -23,7 +24,7 @@ const {
   ProviderMixin,
   ContainerMixin,
   create,
-} = createPlayer({ features: features.video });
+} = createPlayer({ features: videoFeatures });
 
 // Provider element: owns and publishes the store
 class VideoPlayer extends ProviderMixin(MediaElement) {}
@@ -45,7 +46,7 @@ const {
   context,
   ProviderMixin,
   ContainerMixin,
-} = createPlayer({ features: features.video });
+} = createPlayer({ features: videoFeatures });
 
 class VideoPlayer extends ProviderMixin(MediaElement) {}
 class MediaContainer extends ContainerMixin(MediaElement) {}
@@ -54,7 +55,7 @@ class MediaContainer extends ContainerMixin(MediaElement) {}
 Use a single composed element when the same element should both own the store and attach media:
 
 ```ts
-const { ProviderMixin, ContainerMixin } = createPlayer({ features: features.video });
+const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
 
 class VideoPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {}
 ```

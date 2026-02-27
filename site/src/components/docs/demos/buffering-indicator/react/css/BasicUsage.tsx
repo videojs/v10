@@ -1,9 +1,9 @@
-import { BufferingIndicator, createPlayer, features } from '@videojs/react';
-import { Video } from '@videojs/react/video';
+import { BufferingIndicator, createPlayer } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
 
 import './BasicUsage.css';
 
-const Player = createPlayer({ features: [...features.video] });
+const Player = createPlayer({ features: videoFeatures });
 
 export default function BasicUsage() {
   return (

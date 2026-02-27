@@ -1,10 +1,10 @@
-import { createPlayer, features } from '@videojs/react';
-import { Video } from '@videojs/react/video';
+import { createPlayer } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
 
 import './BasicUsage.css';
 
 const { Provider, Container, usePlayer } = createPlayer({
-  features: features.video,
+  features: videoFeatures,
 });
 
 function Controls() {

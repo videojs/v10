@@ -1,9 +1,9 @@
-import { createPlayer, features, PiPButton } from '@videojs/react';
-import { Video } from '@videojs/react/video';
+import { createPlayer, PiPButton } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
 
 import './BasicUsage.css';
 
-const Player = createPlayer({ features: [...features.video] });
+const Player = createPlayer({ features: videoFeatures });
 
 export default function BasicUsage() {
   return (

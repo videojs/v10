@@ -3,14 +3,14 @@ import {
   applyStateDataAttrs,
   createButton,
   createPlayer,
-  features,
   MediaElement,
   selectPlayback,
 } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
 import '@videojs/html/media/container';
 
 const { ProviderMixin, PlayerController, context } = createPlayer({
-  features: [...features.video],
+  features: videoFeatures,
 });
 
 class VideoPlayer extends ProviderMixin(MediaElement) {

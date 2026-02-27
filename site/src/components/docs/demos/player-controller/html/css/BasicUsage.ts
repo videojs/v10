@@ -1,8 +1,9 @@
-import { applyElementProps, createButton, createPlayer, features, MediaElement } from '@videojs/html';
+import { applyElementProps, createButton, createPlayer, MediaElement } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
 import '@videojs/html/media/container';
 
 const { ProviderMixin, PlayerController, context } = createPlayer({
-  features: [...features.video],
+  features: videoFeatures,
 });
 
 class DemoPlayer extends ProviderMixin(MediaElement) {

@@ -32,11 +32,11 @@ A modern, glassy design with backdrop blur effects and polished interactions.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { createPlayer, features, Poster } from '@videojs/react';
-import { VideoSkin, Video } from '@videojs/react/video';
+import { createPlayer, Poster } from '@videojs/react';
+import { VideoSkin, Video, videoFeatures } from '@videojs/react/video';
 import '@videojs/react/video/skin.css';
 
-const Player = createPlayer({ features: [...features.video] });
+const Player = createPlayer({ features: videoFeatures });
 
 export function VideoPlayer() {
   return (
@@ -70,11 +70,11 @@ A clean, straightforward design that focuses on simplicity and clarity.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { createPlayer, features, Poster } from '@videojs/react';
-import { MinimalVideoSkin, Video } from '@videojs/react/video';
+import { createPlayer, Poster } from '@videojs/react';
+import { MinimalVideoSkin, Video, videoFeatures } from '@videojs/react/video';
 import '@videojs/react/video/minimal-skin.css';
 
-const Player = createPlayer({ features: [...features.video] });
+const Player = createPlayer({ features: videoFeatures });
 
 export function VideoPlayer() {
   return (

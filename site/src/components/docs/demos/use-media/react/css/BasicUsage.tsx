@@ -1,10 +1,10 @@
-import { createPlayer, features, useMedia } from '@videojs/react';
-import { Video } from '@videojs/react/video';
+import { createPlayer, useMedia } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
 
 import './BasicUsage.css';
 
 const { Provider, Container } = createPlayer({
-  features: features.video,
+  features: videoFeatures,
 });
 
 function MediaInfo() {

@@ -12,13 +12,14 @@ import DocsLink from "@/components/docs/DocsLink.astro";
 Old:
 
 ```ts
-const { PlayerElement, PlayerMixin } = createPlayer({ features: features.video });
+const { PlayerElement } = createPlayer({ features: videoFeatures });
+customElements.define('video-player', PlayerElement);
 ```
 
 New:
 
 ```ts
-const { ProviderMixin, ContainerMixin } = createPlayer({ features: features.video });
+const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
 
 // Split elements
 class VideoPlayer extends ProviderMixin(MediaElement) {}

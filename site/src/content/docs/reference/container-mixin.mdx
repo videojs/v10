@@ -15,7 +15,7 @@ Use `ContainerMixin` when the <DocsLink slug="reference/provider-mixin">provider
 For a single element that both owns the store and attaches media, compose both mixins on the same base class:
 
 ```ts
-const { ProviderMixin, ContainerMixin } = createPlayer({ features: features.video });
+const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
 
 class VideoPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {}
 ```
@@ -29,7 +29,7 @@ On `connectedCallback`, `ContainerMixin` sets up a `MutationObserver` on its chi
 Pair `ContainerMixin` with <DocsLink slug="reference/provider-mixin">`ProviderMixin`</DocsLink> for full control over which element owns the store and which discovers the media:
 
 ```ts
-const { ProviderMixin, ContainerMixin } = createPlayer({ features: features.video });
+const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
 
 // Provider owns the store, sits at the top
 class PlayerShell extends ProviderMixin(MediaElement) {}

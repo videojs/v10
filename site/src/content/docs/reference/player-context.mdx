@@ -12,6 +12,7 @@ Pass it as the second argument to `PlayerController`:
 
 ```ts
 import { PlayerController, MediaElement, playerContext, selectPlayback } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
 
 class PlayButton extends MediaElement {
   #playback = new PlayerController(this, playerContext, selectPlayback);
@@ -32,7 +33,7 @@ class PlayButton extends MediaElement {
 import { playerContext } from '@videojs/html';
 
 // Destructured — identical object
-const { context } = createPlayer({ features: features.video });
+const { context } = createPlayer({ features: videoFeatures });
 context === playerContext; // true
 ```
 
