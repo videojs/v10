@@ -1,0 +1,19 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_707_481)">
+<circle cx="60" cy="60" r="59.5" fill="currentColor" className="stroke-faded-black dark:stroke-light-manila" stroke="#1E1D1D"/>
+<path d="M107 33.8867L112 31" className="stroke-faded-black dark:stroke-light-manila" stroke="#1E1D1D"/>
+<path d="M13 33.8867L8 31" className="stroke-faded-black dark:stroke-light-manila" stroke="#1E1D1D"/>
+<path d="M13 86L8 88.8867" className="stroke-faded-black dark:stroke-light-manila" stroke="#1E1D1D"/>
+<path d="M107 86L112 88.8867" className="stroke-faded-black dark:stroke-light-manila" stroke="#1E1D1D"/>
+<path d="M6.5 60C6.5 30.4528 30.4528 6.5 60 6.5C89.5472 6.5 113.5 30.4528 113.5 60C113.5 89.5472 89.5472 113.5 60 113.5C30.4528 113.5 6.5 89.5472 6.5 60Z" fill="currentColor" className="stroke-faded-black dark:stroke-light-manila" stroke="#1E1D1D"/>
+<path d="M87 54L87 48C87 43.5817 83.4183 40 79 40L41 40C36.5817 40 33 43.5817 33 48L33 54" className="stroke-faded-black dark:stroke-light-manila" stroke="#1E1D1D"/>
+<path d="M33 14L33 106" className="stroke-faded-black dark:stroke-light-manila" className="stroke-faded-black dark:stroke-light-manila" stroke="#1E1D1D" stroke-linecap="round"/>
+<path d="M87 14L87 106" className="stroke-faded-black dark:stroke-light-manila" stroke="#1E1D1D" stroke-linecap="round"/>
+<path d="M61.5 6.5C62.0523 6.5 62.5 6.94772 62.5 7.5L62.5 25C62.5 26.3807 61.3807 27.5 60 27.5C58.6193 27.5 57.5 26.3807 57.5 25L57.5 7.5C57.5 6.94771 57.9477 6.5 58.5 6.5L61.5 6.5Z" fill="#FF6200" className="stroke-faded-black dark:stroke-light-manila" stroke="#1E1D1D"/>
+</g>
+<defs>
+<clipPath id="clip0_707_481">
+<rect width="120" height="120" fill="currentColor"/>
+</clipPath>
+</defs>
+</svg>

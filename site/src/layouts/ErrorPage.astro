@@ -1,29 +1,45 @@
 ---
+import DialNav from '@/components/DialNav';
 import Footer from '@/components/Footer.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
-import GetStartedLink from '@/components/NavBar/GetStartedLink';
 import NavBar from '@/components/NavBar/NavBar.astro';
 import Base from '@/layouts/Base.astro';
 
 interface Props {
   title: string;
   description: string;
-  heading: string;
+  code?: string;
+  message?: string;
 }
 
-const { title, description, heading } = Astro.props;
+const { title, description, code = '404', message = 'NOT FOUND' } = Astro.props;
 ---
 
 <Base {title} {description}>
   <div class="min-h-screen flex flex-col">
     <NavBar />
-    <main class="flex-1 px-6 md:px-10 py-10 sm:py-14 flex items-center justify-center">
-      <div class="text-center flex flex-col items-center gap-4">
-        <h1 class="text-h2 md:text-h1">{heading}</h1>
-        <div class="text-lg flex flex-col items-center gap-2">
-          <a href="/" class="intent:underline">Go home</a>
-          <GetStartedLink client:idle className="intent:underline">Read the docs</GetStartedLink>
+    <main class="w-full">
+      <div class="w-full max-w-6xl mx-auto px-5 py-10 md:pt-32 md:pb-16 grid md:flex gap-8 justify-between">
+        <div class="flex flex-col leading-none">
+          <h1 class="font-display-extended text-display-h2 md:text-display-h1 font-bold text-faded-black dark:text-light-manila">
+            {code}
+          </h1>
+          <h2 class="font-display-extended text-display-h2 md:text-display-h1 font-bold text-stroke-faded-black dark:text-stroke-white">
+            {message}
+          </h2>
         </div>
+        <DialNav
+          client:load
+          left={[
+            { href: '/', label: 'HOME', angle: -70 },
+            { href: '/docs', label: 'DOCS', angle: -110 },
+          ]}
+          right={[
+            { href: 'https://mux.com', label: 'MUX.COM', angle: 70 },
+            { href: 'https://mux.com/blog', label: 'BLOG', angle: 110 },
+          ]}
+        />
+
       </div>
     </main>
     <Footer />
