@@ -26,12 +26,16 @@ export class HlsMediaDelegate implements MediaDelegate {
 
 // This is used by the web component because it needs to extend HTMLElement!
 export class HlsCustomMedia extends MediaDelegateMixin(
-  CustomMediaMixin(HTMLElement, { tag: 'video' }),
+  CustomMediaMixin(globalThis.HTMLElement ?? class {}, { tag: 'video' }),
   HlsMediaDelegate
 ) {}
 
 // This is used by the React component.
 export class HlsMedia extends MediaDelegateMixin(
-  MediaProxyMixin(HTMLVideoElement, HTMLMediaElement, EventTarget),
+  MediaProxyMixin(
+    globalThis.HTMLVideoElement ?? class {},
+    globalThis.HTMLMediaElement ?? class {},
+    globalThis.EventTarget ?? class {}
+  ),
   HlsMediaDelegate
 ) {}
