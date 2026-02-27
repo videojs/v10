@@ -40,6 +40,7 @@ export { PlayButton, type PlayButtonProps } from './ui/play-button/play-button';
 export { PlaybackRateButton, type PlaybackRateButtonProps } from './ui/playback-rate-button/playback-rate-button';
 export { Poster, type PosterProps } from './ui/poster/poster';
 export { SeekButton, type SeekButtonProps } from './ui/seek-button/seek-button';
+export { Thumbnail, type ThumbnailProps } from './ui/thumbnail/thumbnail';
 export { Time } from './ui/time';
 
 // Utilities
