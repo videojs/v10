@@ -51,13 +51,13 @@ type PopoverAlign = 'start' | 'center' | 'end';
 interface PopoverProps {
   side?: PopoverSide;            // default: 'top'
   align?: PopoverAlign;          // default: 'center'
-  sideOffset?: number;           // default: 0
-  alignOffset?: number;          // default: 0
   modal?: boolean | 'trap-focus'; // default: false
   closeOnEscape?: boolean;       // default: true
   closeOnOutsideClick?: boolean; // default: true
   collisionPadding?: number;     // default: 0
 }
+// Offsets (sideOffset, alignOffset) are CSS-var-only — not props.
+// Set via --media-popover-side-offset / --media-popover-align-offset.
 
 interface PopoverRootProps extends PopoverProps {
   open?: boolean;                // controlled
@@ -153,18 +153,22 @@ export const PopoverDataAttrs = {
 
 ### CSS Custom Properties
 
-Follows the `*CSSVars` pattern established by the slider. Only sizing constraints are exposed as CSS vars — positioning (`top`/`left`) is applied directly as inline styles (see [decisions.md — Inline Styles for Manual Positioning](decisions.md#inline-styles-for-manual-positioning)):
+Follows the `*CSSVars` pattern established by the slider. Offset CSS vars are **inputs** (set by the user); sizing constraint CSS vars are **outputs** (set by the manual fallback). Positioning (`top`/`left`) is applied directly as inline styles (see [decisions.md — Inline Styles for Manual Positioning](decisions.md#inline-styles-for-manual-positioning)):
 
 ```ts
 // popover-css-vars.ts
 export const PopoverCSSVars = {
-  /** Anchor element's width. */
+  /** Distance from trigger along side axis (input). */
+  sideOffset: '--media-popover-side-offset',
+  /** Offset along alignment axis (input). */
+  alignOffset: '--media-popover-align-offset',
+  /** Anchor element's width (output). */
   anchorWidth: '--media-popover-anchor-width',
-  /** Anchor element's height. */
+  /** Anchor element's height (output). */
   anchorHeight: '--media-popover-anchor-height',
-  /** Available width between trigger and boundary edge. */
+  /** Available width between trigger and boundary edge (output). */
   availableWidth: '--media-popover-available-width',
-  /** Available height between trigger and boundary edge. */
+  /** Available height between trigger and boundary edge (output). */
   availableHeight: '--media-popover-available-height',
 } as const;
 ```
@@ -339,7 +343,16 @@ Side mapping — the popover sits on the **opposite** side of the anchor edge:
 | `left` | `right` | `anchor(left)` |
 | `right` | `left` | `anchor(right)` |
 
-`sideOffset` is applied via `calc()` on the side property. `alignOffset` is applied via `margin-inline-start` or `margin-block-start` for center alignment, or `calc()` on the alignment anchor function for start/end.
+Offsets use CSS custom properties inlined in `calc()` expressions — no JS needed on the CSS anchor path:
+
+```css
+/* side=top, align=center */
+bottom: calc(anchor(top) + var(--media-popover-side-offset, 0px));
+justify-self: anchor-center;
+margin-inline-start: var(--media-popover-align-offset, 0px);
+```
+
+For start/end alignment, `alignOffset` is applied via `calc()` on the alignment anchor function.
 
 ### Manual Positioning (Fallback)
 
@@ -371,13 +384,26 @@ In both platforms, positioning is applied to the same element that calls `showPo
 ### Positioning Functions
 
 ```ts
-// Main entry — auto-selects strategy
+interface PositioningOptions {
+  side: PopoverSide;
+  align: PopoverAlign;
+}
+
+interface ManualOffsets {
+  sideOffset: number;
+  alignOffset: number;
+}
+
+// Main entry — auto-selects strategy.
+// CSS anchor path uses var() for offsets (no JS values needed).
+// Manual path requires resolved offsets from getComputedStyle().
 function getAnchorPositionStyle(
   anchorName: string,
   opts: PositioningOptions,
   triggerRect?: DOMRect,
   positionerRect?: DOMRect,
   boundaryRect?: DOMRect,
+  offsets?: ManualOffsets,
 ): Record<string, string>;
 
 // Anchor-name style for trigger element
@@ -394,12 +420,15 @@ function getPopoverCSSVars(
 function getManualPositionStyle(
   triggerRect: DOMRect,
   positionerRect: DOMRect,
-  boundaryRect: DOMRect,
   opts: PositioningOptions,
+  offsets?: ManualOffsets,
 ): Record<string, string>;
+
+// Resolve offset CSS vars from computed style
+function resolveOffsets(el: Element): ManualOffsets;
 ```
 
-`getAnchorPositionStyle` checks `supportsAnchorPositioning()` and delegates to the CSS anchor path (no rects needed) or the manual path (rects required). The result is cached per module at the `_supportsAnchorPositioning` variable.
+`getAnchorPositionStyle` checks `supportsAnchorPositioning()` and delegates to the CSS anchor path (no rects needed, offsets via `var()`) or the manual path (rects required, offsets resolved from `getComputedStyle()`). The detection result is cached per module at the `_supportsAnchorPositioning` variable.
 
 ## Data Flow
 

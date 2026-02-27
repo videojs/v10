@@ -7,6 +7,7 @@ import {
   getAnchorPositionStyle,
   type Popover,
   type PopoverChangeDetails,
+  resolveOffsets,
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { SnapshotController } from '@videojs/store/html';
@@ -26,8 +27,6 @@ export class PopoverElement extends MediaElement {
     defaultOpen: { type: Boolean, attribute: 'default-open' },
     side: { type: String },
     align: { type: String },
-    sideOffset: { type: Number, attribute: 'side-offset' },
-    alignOffset: { type: Number, attribute: 'align-offset' },
     modal: { type: String },
     closeOnEscape: { type: Boolean, attribute: 'close-on-escape' },
     closeOnOutsideClick: { type: Boolean, attribute: 'close-on-outside-click' },
@@ -45,8 +44,6 @@ export class PopoverElement extends MediaElement {
   // Core props
   side = PopoverCore.defaultProps.side;
   align = PopoverCore.defaultProps.align;
-  sideOffset = PopoverCore.defaultProps.sideOffset;
-  alignOffset = PopoverCore.defaultProps.alignOffset;
   modal: PopoverProps['modal'] = PopoverCore.defaultProps.modal;
   closeOnEscape = PopoverCore.defaultProps.closeOnEscape;
   closeOnOutsideClick = PopoverCore.defaultProps.closeOnOutsideClick;
@@ -155,19 +152,18 @@ export class PopoverElement extends MediaElement {
 
     // Apply positioning styles to self.
     // CSS Anchor Positioning is used when supported; otherwise falls
-    // back to JS-computed absolute positioning from measured rects.
-    const posOpts = {
-      side: state.side,
-      align: state.align,
-      sideOffset: state.sideOffset,
-      alignOffset: state.alignOffset,
-    };
+    // back to JS-computed fixed positioning from measured rects.
+    // Offsets are CSS-var-only: the CSS anchor path references
+    // var(--media-popover-side-offset) directly; the manual fallback
+    // resolves them from getComputedStyle().
+    const posOpts = { side: state.side, align: state.align };
     const triggerRect = this.#currentTrigger?.getBoundingClientRect();
     const selfRect = this.getBoundingClientRect();
     const boundaryEl = this.#findBoundary();
     const boundaryRect = boundaryEl?.getBoundingClientRect() ?? document.documentElement.getBoundingClientRect();
+    const offsets = resolveOffsets(this);
 
-    applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, selfRect, boundaryRect));
+    applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, selfRect, boundaryRect, offsets));
   }
 
   // --- Trigger discovery ---

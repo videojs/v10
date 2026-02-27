@@ -11,8 +11,6 @@ describe('PopoverCore', () => {
 
     expect(state.side).toBe('top');
     expect(state.align).toBe('center');
-    expect(state.sideOffset).toBe(0);
-    expect(state.alignOffset).toBe(0);
     expect(state.modal).toBe(false);
   });
 
@@ -29,12 +27,11 @@ describe('PopoverCore', () => {
   });
 
   it('applies custom props', () => {
-    const core = new PopoverCore({ side: 'bottom', align: 'start', sideOffset: 8 });
+    const core = new PopoverCore({ side: 'bottom', align: 'start' });
     const state = core.getState(OPEN);
 
     expect(state.side).toBe('bottom');
     expect(state.align).toBe('start');
-    expect(state.sideOffset).toBe(8);
   });
 
   it('updates props via setProps', () => {

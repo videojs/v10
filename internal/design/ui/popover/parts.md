@@ -29,8 +29,6 @@ import { Popover } from '@videojs/react';
 | `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled). |
 | `side` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'top'` | Preferred side relative to trigger. |
 | `align` | `'start' \| 'center' \| 'end'` | `'center'` | Alignment along the specified side. |
-| `sideOffset` | `number` | `0` | Distance from trigger along the side axis (px). |
-| `alignOffset` | `number` | `0` | Offset along the alignment axis (px). |
 | `collisionPadding` | `number` | `0` | Minimum distance from boundary edges (px). |
 | `modal` | `boolean \| 'trap-focus'` | `false` | Modal behavior. See [index.md — Modal Behavior](index.md#modal-behavior). |
 | `closeOnEscape` | `boolean` | `true` | Close on Escape key. |
@@ -82,8 +80,6 @@ import '@videojs/html/ui/popover';
 | `default-open` | Boolean | `false` | `defaultOpen` prop |
 | `side` | String | `'top'` | `side` prop |
 | `align` | String | `'center'` | `align` prop |
-| `side-offset` | Number | `0` | `sideOffset` prop |
-| `align-offset` | Number | `0` | `alignOffset` prop |
 | `collision-padding` | Number | `0` | `collisionPadding` prop |
 | `collision-boundary` | String | — | Element ID for boundary lookup |
 | `modal` | String | `false` | `modal` prop |

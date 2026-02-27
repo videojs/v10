@@ -1,7 +1,7 @@
 'use client';
 
 import { PopoverDataAttrs, type PopoverState } from '@videojs/core';
-import { getAnchorPositionStyle } from '@videojs/core/dom';
+import { getAnchorPositionStyle, resolveOffsets } from '@videojs/core/dom';
 import { supportsAnchorPositioning } from '@videojs/utils/dom';
 import type { CSSProperties, ForwardedRef } from 'react';
 import { forwardRef, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -53,15 +53,7 @@ export const PopoverPopup = forwardRef(function PopoverPopup(
 
   // --- Positioning ---
 
-  const posOpts = useMemo(
-    () => ({
-      side: state.side,
-      align: state.align,
-      sideOffset: state.sideOffset,
-      alignOffset: state.alignOffset,
-    }),
-    [state.side, state.align, state.sideOffset, state.alignOffset]
-  );
+  const posOpts = useMemo(() => ({ side: state.side, align: state.align }), [state.side, state.align]);
 
   // CSS Anchor Positioning — computed from state, no measurement needed.
   const anchorStyle = useMemo(() => {
@@ -86,8 +78,11 @@ export const PopoverPopup = forwardRef(function PopoverPopup(
     const triggerRect = triggerEl.getBoundingClientRect();
     const popupRect = popupEl.getBoundingClientRect();
     const boundaryRect = document.documentElement.getBoundingClientRect();
+    const offsets = resolveOffsets(popupEl);
 
-    setManualStyle(toReactStyle(getAnchorPositionStyle(anchorName, posOpts, triggerRect, popupRect, boundaryRect)));
+    setManualStyle(
+      toReactStyle(getAnchorPositionStyle(anchorName, posOpts, triggerRect, popupRect, boundaryRect, offsets))
+    );
   }, [state.open, state.transitionStatus, anchorName, posOpts, popover]);
 
   // Anchor path uses computed styles; manual path uses measured styles;

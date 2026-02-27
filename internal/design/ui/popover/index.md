@@ -90,12 +90,33 @@ See [architecture.md](architecture.md) for internals.
 
 Popovers expose sizing constraint values as CSS custom properties on the popup element. These are **output values** for the manual positioning fallback. When CSS Anchor Positioning is natively supported, the browser handles placement and these vars are not set.
 
+### Offset Variables (Input)
+
+| Property | Default | Description |
+| -------- | ------- | ----------- |
+| `--media-popover-side-offset` | `0px` | Distance from trigger along the side axis. |
+| `--media-popover-align-offset` | `0px` | Offset along the alignment axis. |
+
+These are **input values** — set them in CSS to control positioning. The CSS Anchor Positioning path inlines `var(--media-popover-side-offset, 0px)` directly in `calc()` expressions. The manual fallback reads resolved values via `getComputedStyle()`.
+
+```css
+/* Push the popup 8px away from the trigger */
+media-popover,
+[data-popover-popup] {
+  --media-popover-side-offset: 8px;
+}
+```
+
+### Sizing Variables (Output)
+
 | Property | Example | Description |
 | -------- | ------- | ----------- |
 | `--media-popover-anchor-width` | `120px` | Anchor element's width. |
 | `--media-popover-anchor-height` | `40px` | Anchor element's height. |
 | `--media-popover-available-width` | `350px` | Available width between trigger and boundary edge. |
 | `--media-popover-available-height` | `280px` | Available height between trigger and boundary edge. |
+
+These are **output values** set by the manual positioning fallback for CSS-based sizing constraints. When CSS Anchor Positioning is natively supported, the browser handles placement and these vars are not set.
 
 Positioning (`top`/`left`) is applied directly as inline styles on the popup element — no CSS var indirection. Unlike the slider (where parts consume continuous values in different ways), popover positioning has a single correct application.
 
@@ -107,8 +128,6 @@ media-popover,
   max-height: var(--media-popover-available-height);
 }
 ```
-
-When CSS Anchor Positioning is supported, the popup receives native CSS properties (`position-anchor`, `anchor()` functions) and the CSS vars above are not set.
 
 ## Data Attributes
 
