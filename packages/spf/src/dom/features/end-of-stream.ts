@@ -49,44 +49,21 @@ export interface EndOfStreamOwners {
 // refills or other mid-stream appends briefly re-open the MediaSource while
 // the user is far from the end.
 //
-// ## Current implementation (known limitation)
-//
-// The current implementation uses a `completed` flag on SourceBufferState
-// rather than checking segment IDs directly against any resolved track.
-// `completed` is set by the loadSegments run-loop when it exits after
-// loading the last segment of the *currently selected* track — a reasonable
-// proxy but one that couples end-of-stream detection to track selection.
-//
-// This creates a gap during quality switches: `completed` can remain true
-// from the prior track while the new track is still unresolved, which would
-// cause a premature endOfStream() call. The unresolved-track guard in
-// hasLastSegmentLoaded patches this symptom.
-//
-// The intended refactor is to replace the `completed` check with a direct
-// segment ID lookup (does bufferState.{video,audio}.segments contain the
-// last segment ID of any resolved track?) combined with the currentTime
-// gate, eliminating the dependency on the selected track entirely.
-
 /**
- * Check if the loading pipeline has completed for a track.
+ * Check if the last segment of a track has been appended to a SourceBuffer.
  *
- * Uses the `completed` flag on SourceBufferState, which is set by the
- * loadSegments orchestrator only after its run-loop exits with nothing
- * left to load AND the last segment's ID is confirmed in the model.
- * The flag is reset to false whenever a new loading run begins, so a
- * stale last-segment ID from a prior play-through cannot trigger a
- * premature endOfStream() call.
- *
- * @todo Replace with a direct segment ID lookup against any resolved track
- * combined with a currentTime gate. See the ## When to call endOfStream()
- * comment above.
+ * Checks by segment ID rather than a pipeline flag, so it is robust across
+ * quality switches (different tracks have different segment IDs) and
+ * back-buffer flushes (flushed segment IDs are removed from the model).
  */
 function isLastSegmentAppended(
   segments: readonly { id: string }[],
   bufferState: SourceBufferState | undefined
 ): boolean {
   if (segments.length === 0) return true;
-  return bufferState?.completed ?? false;
+  const lastSeg = segments[segments.length - 1];
+  if (!lastSeg) return false;
+  return bufferState?.segments.some((s) => s.id === lastSeg.id) ?? false;
 }
 
 /**
@@ -100,9 +77,9 @@ export function hasLastSegmentLoaded(state: EndOfStreamState): boolean {
   const audioTrack = state.selectedAudioTrackId ? getSelectedTrack(state, 'audio') : undefined;
 
   // An unresolved track means we don't yet know its segments — cannot be done.
-  // This guards against premature endOfStream() during a quality switch, where
-  // selectedVideoTrackId has changed to a new track whose playlist hasn't been
-  // fetched yet, while the old buffer's completed flag is still true.
+  // Fast-paths the quality-switch window: when selectedVideoTrackId has changed
+  // to a new (unresolved) track, we cannot yet determine if its last segment
+  // is loaded.
   if (videoTrack && !isResolvedTrack(videoTrack)) return false;
   if (audioTrack && !isResolvedTrack(audioTrack)) return false;
 

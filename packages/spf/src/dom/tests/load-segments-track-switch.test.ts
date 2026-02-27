@@ -107,7 +107,6 @@ describe('loadSegments — track switch', () => {
             { id: 'a1', trackId: 'track-a' },
             { id: 'a2', trackId: 'track-a' },
           ],
-          completed: false,
         },
       } as BufferState,
     });
@@ -157,7 +156,6 @@ describe('loadSegments — track switch', () => {
         video: {
           initTrackId: undefined as string | undefined,
           segments: [],
-          completed: false,
         },
       } as BufferState,
     });

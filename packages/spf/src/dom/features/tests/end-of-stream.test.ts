@@ -68,8 +68,8 @@ function makePresentation(videoTrack: VideoTrack, id = 'pres-1'): Presentation {
   } as unknown as Presentation;
 }
 
-function bufferStateWithSegments(ids: string[], type: 'video' | 'audio' = 'video', completed = false): BufferState {
-  return { [type]: { segments: ids.map((id) => ({ id, trackId: 'video-1' })), completed } };
+function bufferStateWithSegments(ids: string[], type: 'video' | 'audio' = 'video'): BufferState {
+  return { [type]: { segments: ids.map((id) => ({ id, trackId: 'video-1' })) } };
 }
 
 // ============================================================================
@@ -101,44 +101,47 @@ describe('hasLastSegmentLoaded', () => {
     expect(hasLastSegmentLoaded({ presentation: { id: 'p', url: 'x' } as Presentation })).toBe(true);
   });
 
-  it('returns false when completed is false (loading in progress)', () => {
+  it('returns false when last segment ID is not in bufferState', () => {
     const track = makeResolvedVideoTrack(4);
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video', false),
+      // seg-3 (the last segment) is missing
+      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2'], 'video'),
     };
     expect(hasLastSegmentLoaded(state)).toBe(false);
   });
 
-  it('returns false when completed is false even if last segment ID is present (seek-back scenario)', () => {
+  it('returns true when last segment ID is present (seek-back scenario)', () => {
     const track = makeResolvedVideoTrack(10);
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      // last segment is in model from previous play-through, but pipeline is mid-reload
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-7', 'seg-8', 'seg-9'], 'video', false),
-    };
-    expect(hasLastSegmentLoaded(state)).toBe(false);
-  });
-
-  it('returns true when completed is true', () => {
-    const track = makeResolvedVideoTrack(4);
-    const state: EndOfStreamState = {
-      selectedVideoTrackId: 'video-1',
-      presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video', true),
+      // Last segment is in the SourceBuffer from a prior play-through (pipeline mid-reload).
+      // Per the MSE spec, if the last segment is physically present calling endOfStream
+      // is correct regardless of where the loading pipeline currently is.
+      bufferState: bufferStateWithSegments(['seg-0', 'seg-7', 'seg-8', 'seg-9'], 'video'),
     };
     expect(hasLastSegmentLoaded(state)).toBe(true);
   });
 
-  it('returns true after back-buffer flushing when completed is true', () => {
+  it('returns true when last segment ID is in bufferState', () => {
+    const track = makeResolvedVideoTrack(4);
+    const state: EndOfStreamState = {
+      selectedVideoTrackId: 'video-1',
+      presentation: makePresentation(track),
+      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video'),
+    };
+    expect(hasLastSegmentLoaded(state)).toBe(true);
+  });
+
+  it('returns true after back-buffer flushing when last segment ID remains', () => {
     const track = makeResolvedVideoTrack(10);
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      // early segments flushed, completed set after pipeline finished
-      bufferState: bufferStateWithSegments(['seg-7', 'seg-8', 'seg-9'], 'video', true),
+      // early segments flushed, last segment still present
+      bufferState: bufferStateWithSegments(['seg-7', 'seg-8', 'seg-9'], 'video'),
     };
     expect(hasLastSegmentLoaded(state)).toBe(true);
   });
@@ -148,12 +151,12 @@ describe('hasLastSegmentLoaded', () => {
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments([], 'video', false),
+      bufferState: bufferStateWithSegments([], 'video'),
     };
     expect(hasLastSegmentLoaded(state)).toBe(true);
   });
 
-  it('returns false when video completed but audio not completed', () => {
+  it('returns false when video last segment is loaded but audio last segment is not', () => {
     const videoTrack = makeResolvedVideoTrack(4);
     const presentation = {
       id: 'pres-1',
@@ -182,8 +185,8 @@ describe('hasLastSegmentLoaded', () => {
       selectedAudioTrackId: 'audio-1',
       presentation,
       bufferState: {
-        video: { segments: [{ id: 'seg-3', trackId: 'video-1' }], completed: true },
-        audio: { segments: [{ id: 'audio-seg-0', trackId: 'audio-1' }], completed: false },
+        video: { segments: [{ id: 'seg-3', trackId: 'video-1' }] },
+        audio: { segments: [{ id: 'audio-seg-0', trackId: 'audio-1' }] },
       },
     };
     expect(hasLastSegmentLoaded(state)).toBe(false);
@@ -243,22 +246,22 @@ describe('shouldEndStream', () => {
     expect(shouldEndStream(state, { mediaSource: makeMediaSource(), videoBuffer: makeSourceBuffer() })).toBe(false);
   });
 
-  it('returns true when completed and pipeline has finished', () => {
+  it('returns true when last segment is in bufferState', () => {
     const track = makeResolvedVideoTrack(4);
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video', true),
+      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video'),
     };
     expect(shouldEndStream(state, { mediaSource: makeMediaSource(), videoBuffer: makeSourceBuffer() })).toBe(true);
   });
 
-  it('returns true after back-buffer flushing when completed is true', () => {
+  it('returns true after back-buffer flushing when last segment ID remains', () => {
     const track = makeResolvedVideoTrack(10);
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-7', 'seg-8', 'seg-9'], 'video', true),
+      bufferState: bufferStateWithSegments(['seg-7', 'seg-8', 'seg-9'], 'video'),
     };
     expect(shouldEndStream(state, { mediaSource: makeMediaSource(), videoBuffer: makeSourceBuffer() })).toBe(true);
   });
@@ -276,7 +279,7 @@ describe('endOfStream', () => {
     const state = createState<EndOfStreamState>({
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video', true),
+      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video'),
     });
     const owners = createState<EndOfStreamOwners>({
       mediaSource: mockMs,
@@ -299,8 +302,8 @@ describe('endOfStream', () => {
     const state = createState<EndOfStreamState>({
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      // Simulates the observed bug: back buffer flushed, only last few segments remain
-      bufferState: bufferStateWithSegments(['seg-7', 'seg-8', 'seg-9'], 'video', true),
+      // Back buffer flushed, only last few segments remain — last segment still present
+      bufferState: bufferStateWithSegments(['seg-7', 'seg-8', 'seg-9'], 'video'),
     });
     const owners = createState<EndOfStreamOwners>({
       mediaSource: mockMs,
@@ -328,7 +331,7 @@ describe('endOfStream', () => {
     const state = createState<EndOfStreamState>({
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video', true),
+      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video'),
     });
     const owners = createState<EndOfStreamOwners>({
       mediaSource: mockMs,
@@ -379,7 +382,7 @@ describe('endOfStream', () => {
     const state = createState<EndOfStreamState>({
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video', true),
+      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video'),
     });
     const owners = createState<EndOfStreamOwners>({
       mediaSource: mockMs,
@@ -396,8 +399,9 @@ describe('endOfStream', () => {
     // Simulate seek-back: appendBuffer() re-opens the MediaSource per MSE spec
     (mockMs as unknown as { readyState: string }).readyState = 'open';
 
-    // Simulate the pipeline completing again after the seek (completed: true)
-    state.patch({ bufferState: bufferStateWithSegments(['seg-2', 'seg-3'], 'video', true) });
+    // Trigger a state change. The last segment (seg-3) is still in the buffer
+    // (back-buffer flush removed early segments) so endOfStream fires immediately.
+    state.patch({ bufferState: bufferStateWithSegments(['seg-2', 'seg-3'], 'video') });
 
     // endOfStream() should be called again
     await vi.waitFor(() => {
@@ -414,7 +418,7 @@ describe('endOfStream', () => {
     const state = createState<EndOfStreamState>({
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video', true),
+      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video'),
     });
     const owners = createState<EndOfStreamOwners>({
       mediaSource: mockMs,
@@ -458,8 +462,8 @@ describe('endOfStream', () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(mockMs.endOfStream).not.toHaveBeenCalled();
 
-    // Pipeline completed — loadSegments sets completed: true after last segment
-    state.patch({ bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video', true) });
+    // Last segment appended — loadSegments adds it to bufferState.segments
+    state.patch({ bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video') });
 
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);

@@ -81,7 +81,6 @@ const completedBuffer: SourceBufferState = {
     { id: 'seg-1', trackId: 'some-track' },
     { id: 'seg-2', trackId: 'some-track' },
   ],
-  completed: true,
 };
 
 // ============================================================================
@@ -90,7 +89,7 @@ const completedBuffer: SourceBufferState = {
 
 describe('hasLastSegmentLoaded', () => {
   describe('resolved tracks', () => {
-    it('returns true when all segments are loaded (completed=true)', () => {
+    it('returns true when last segment ID is in bufferState', () => {
       const state: EndOfStreamState = {
         presentation: makeResolvedPresentation('v1'),
         selectedVideoTrackId: 'v1',
@@ -99,12 +98,13 @@ describe('hasLastSegmentLoaded', () => {
       expect(hasLastSegmentLoaded(state)).toBe(true);
     });
 
-    it('returns false when segments not yet fully loaded (completed=false)', () => {
+    it('returns false when last segment ID is not in bufferState', () => {
       const state: EndOfStreamState = {
         presentation: makeResolvedPresentation('v1'),
         selectedVideoTrackId: 'v1',
+        // only seg-1 present; seg-2 (the last segment) is missing
         bufferState: {
-          video: { initTrackId: 'v1', segments: [{ id: 'seg-1', trackId: 'v1' }], completed: false },
+          video: { initTrackId: 'v1', segments: [{ id: 'seg-1', trackId: 'v1' }] },
         } as BufferState,
       };
       expect(hasLastSegmentLoaded(state)).toBe(false);
@@ -113,15 +113,14 @@ describe('hasLastSegmentLoaded', () => {
 
   describe('unresolved tracks — quality switch scenario', () => {
     it('returns false when selectedVideoTrackId points to an unresolved track', () => {
-      // This is the Bug 2 scenario: ABR switched track ID to a new (unresolved)
-      // track, but the old video buffer still has completed=true. Without the fix,
-      // hasLastSegmentLoaded returns true, causing premature endOfStream.
+      // Quality switch scenario: ABR switched selectedVideoTrackId to a new
+      // (unresolved) track. The old track's segments are still in the buffer, but
+      // since the new track is unresolved we cannot know if its end is covered.
       const state: EndOfStreamState = {
         presentation: makeUnresolvedPresentation('new-track'),
         selectedVideoTrackId: 'new-track',
         bufferState: {
-          // Old track's completed flag is still true
-          video: completedBuffer,
+          video: completedBuffer, // old track's segments still in buffer
         } as BufferState,
       };
       expect(hasLastSegmentLoaded(state)).toBe(false);

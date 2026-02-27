@@ -29,15 +29,6 @@ export interface SourceBufferState {
     id: string;
     trackId: string;
   }>;
-
-  /**
-   * True when the loading pipeline ran to completion for this track —
-   * the last segment is present and there is nothing left to load.
-   * Reset to false at the start of any new loading run (e.g. seek-back)
-   * so that a stale last-segment ID from a prior play-through is not
-   * mistaken for a freshly completed pipeline.
-   */
-  completed: boolean;
 }
 
 /**
@@ -201,27 +192,11 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
     context.state.patch({
       bufferState: {
         ...context.state.current.bufferState,
-        [bufferKey]: { initTrackId: undefined, segments: [], completed: false },
+        [bufferKey]: { initTrackId: undefined, segments: [] },
       },
     });
   } else {
     // Normal path: selective forward/back buffer management.
-
-    // Reset completed so the end-of-stream orchestrator doesn't mistake a
-    // stale last-segment ID (from a prior play-through) for a finished pipeline.
-    // Only patch when transitioning true→false to avoid a spurious state change
-    // (and its subscriber side-effects) when completed is already false.
-    if (segmentsToLoad.length > 0) {
-      const currentBuf = context.state.current.bufferState?.[bufferKey];
-      if (currentBuf?.completed) {
-        context.state.patch({
-          bufferState: {
-            ...context.state.current.bufferState,
-            [bufferKey]: { ...currentBuf, completed: false },
-          },
-        });
-      }
-    }
 
     // Forward buffer management (B5): flush segments too far ahead of currentTime.
     if (forwardFlushStart < Infinity) {
@@ -512,24 +487,6 @@ export function loadSegments(
     }
 
     // After the loop exits, check whether the loading pipeline reached the
-    // natural end of the track. If the last segment's ID is now in bufferState,
-    // mark completed so the end-of-stream orchestrator can proceed.
-    const bufferKey = type as 'video' | 'audio';
-    const latestState = state.current;
-    const latestBufState = latestState.bufferState?.[bufferKey];
-    const finalTrack = getSelectedTrack(latestState, type);
-    if (finalTrack && isResolvedTrack(finalTrack) && finalTrack.segments.length > 0) {
-      const lastSeg = finalTrack.segments[finalTrack.segments.length - 1];
-      if (lastSeg && latestBufState?.segments?.some((s) => s.id === lastSeg.id) && !latestBufState?.completed) {
-        state.patch({
-          bufferState: {
-            ...latestState.bufferState,
-            [bufferKey]: { ...latestBufState, completed: true },
-          },
-        });
-      }
-    }
-
     currentTask = null;
   };
 
