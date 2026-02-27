@@ -1,15 +1,21 @@
 // React & Tailwind Sandbox
 // http://localhost:5173/react-tailwind/
 
-import { createPlayer, features } from '@videojs/react';
-import { MinimalVideoSkinTailwind, Video, type VideoSkinProps, VideoSkinTailwind } from '@videojs/react/video';
+import { createPlayer } from '@videojs/react';
+import {
+  MinimalVideoSkinTailwind,
+  Video,
+  type VideoSkinProps,
+  VideoSkinTailwind,
+  videoFeatures,
+} from '@videojs/react/video';
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { SKINS } from '../constants';
 import type { Skin } from '../types';
 
 const { Provider } = createPlayer({
-  features: features.video,
+  features: videoFeatures,
 });
 
 function SkinComponent({ skin, ...props }: { skin: Skin } & VideoSkinProps) {

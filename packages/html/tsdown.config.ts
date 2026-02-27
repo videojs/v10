@@ -13,10 +13,18 @@ const defineEntries = Object.fromEntries(
   })
 );
 
+const presetEntries = Object.fromEntries(
+  globSync('src/presets/*.ts').map((file) => {
+    const key = file.replace('src/', '').replace('.ts', '');
+    return [key, file];
+  })
+);
+
 const createConfig = (mode: BuildMode): UserConfig => ({
   entry: {
     index: 'src/index.ts',
     ...defineEntries,
+    ...presetEntries,
   },
   platform: 'browser',
   format: 'es',

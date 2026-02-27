@@ -24,6 +24,39 @@
       "development": "./dist/dev/index.js",
       "default": "./dist/default/index.js"
     },
+    "./video": {
+      "types": "./dist/dev/presets/video.d.ts",
+      "development": "./dist/dev/presets/video.js",
+      "default": "./dist/default/presets/video.js"
+    },
+    "./video/*.css": "./dist/default/define/video/*.css",
+    "./video/*": {
+      "types": "./dist/dev/define/video/*.d.ts",
+      "development": "./dist/dev/define/video/*.js",
+      "default": "./dist/default/define/video/*.js"
+    },
+    "./audio": {
+      "types": "./dist/dev/presets/audio.d.ts",
+      "development": "./dist/dev/presets/audio.js",
+      "default": "./dist/default/presets/audio.js"
+    },
+    "./audio/*.css": "./dist/default/define/audio/*.css",
+    "./audio/*": {
+      "types": "./dist/dev/define/audio/*.d.ts",
+      "development": "./dist/dev/define/audio/*.js",
+      "default": "./dist/default/define/audio/*.js"
+    },
+    "./background": {
+      "types": "./dist/dev/presets/background.d.ts",
+      "development": "./dist/dev/presets/background.js",
+      "default": "./dist/default/presets/background.js"
+    },
+    "./background/*.css": "./dist/default/define/background/*.css",
+    "./background/*": {
+      "types": "./dist/dev/define/background/*.d.ts",
+      "development": "./dist/dev/define/background/*.js",
+      "default": "./dist/default/define/background/*.js"
+    },
     "./ui/*": {
       "types": "./dist/dev/define/ui/*.d.ts",
       "development": "./dist/dev/define/ui/*.js",

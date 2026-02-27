@@ -40,11 +40,11 @@ export interface CreatePlayerResult<Store extends PlayerStore> {
  *
  * @example
  * ```ts
- * import { features } from '@videojs/core/dom';
  * import { createPlayer, MediaElement } from '@videojs/html';
+ * import { videoFeatures } from '@videojs/html/video';
  *
  * const { ProviderMixin, ContainerMixin, PlayerController, context } = createPlayer({
- *   features: features.video,
+ *   features: videoFeatures,
  * });
  *
  * // Provider element: owns the store, provides context to descendants

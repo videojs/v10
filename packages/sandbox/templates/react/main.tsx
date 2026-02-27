@@ -1,8 +1,8 @@
 // React sandbox — React player
 // http://localhost:5173/react/
 
-import { createPlayer, features } from '@videojs/react';
-import { Video } from '@videojs/react/video';
+import { createPlayer } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { SKINS } from '../constants';
@@ -10,7 +10,7 @@ import type { Skin } from '../types';
 import { SkinComponent } from './skins';
 
 const { Provider } = createPlayer({
-  features: features.video,
+  features: videoFeatures,
 });
 
 function App() {
