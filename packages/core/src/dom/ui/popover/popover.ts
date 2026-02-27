@@ -303,7 +303,6 @@ export function createPopover(options: PopoverOptions): Popover {
   // --- Cleanup ---
 
   function destroy(): void {
-    if (abort.signal.aborted) return;
     abort.abort();
   }
 
