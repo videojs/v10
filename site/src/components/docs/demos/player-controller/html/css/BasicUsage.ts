@@ -1,10 +1,11 @@
 import { applyElementProps, createButton, createPlayer, features, MediaElement } from '@videojs/html';
+import '@videojs/html/media/container';
 
-const { PlayerElement, PlayerController, context } = createPlayer({
+const { ProviderMixin, PlayerController, context } = createPlayer({
   features: [...features.video],
 });
 
-class DemoPlayer extends PlayerElement {
+class DemoPlayer extends ProviderMixin(MediaElement) {
   static readonly tagName = 'demo-ctrl-player';
 }
 

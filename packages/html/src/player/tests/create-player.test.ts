@@ -1,6 +1,7 @@
 import { features } from '@videojs/core/dom';
 import { describe, expect, it } from 'vitest';
 
+import { MediaElement } from '../../ui/media-element';
 import { createPlayer } from '../create-player';
 
 describe('createPlayer', () => {
@@ -10,8 +11,6 @@ describe('createPlayer', () => {
     expect(result.context).toBeDefined();
     expect(result.create).toBeInstanceOf(Function);
     expect(result.PlayerController).toBeDefined();
-    expect(result.PlayerElement).toBeDefined();
-    expect(result.PlayerMixin).toBeInstanceOf(Function);
     expect(result.ProviderMixin).toBeInstanceOf(Function);
     expect(result.ContainerMixin).toBeInstanceOf(Function);
   });
@@ -25,11 +24,20 @@ describe('createPlayer', () => {
     expect(store.destroy).toBeInstanceOf(Function);
   });
 
-  it('PlayerElement is a valid custom element class', () => {
-    const { PlayerElement } = createPlayer({ features: features.video });
+  it('ProviderMixin produces a valid custom element class', () => {
+    const { ProviderMixin } = createPlayer({ features: features.video });
+    const ProviderElement = ProviderMixin(MediaElement);
 
-    expect(typeof PlayerElement).toBe('function');
-    expect(PlayerElement.prototype).toBeDefined();
+    expect(typeof ProviderElement).toBe('function');
+    expect(ProviderElement.prototype).toBeDefined();
+  });
+
+  it('ContainerMixin produces a valid custom element class', () => {
+    const { ContainerMixin } = createPlayer({ features: features.video });
+    const ContainerElement = ContainerMixin(MediaElement);
+
+    expect(typeof ContainerElement).toBe('function');
+    expect(ContainerElement.prototype).toBeDefined();
   });
 
   it('creates audio player with expected exports', () => {
@@ -38,8 +46,6 @@ describe('createPlayer', () => {
     expect(result.context).toBeDefined();
     expect(result.create).toBeInstanceOf(Function);
     expect(result.PlayerController).toBeDefined();
-    expect(result.PlayerElement).toBeDefined();
-    expect(result.PlayerMixin).toBeInstanceOf(Function);
     expect(result.ProviderMixin).toBeInstanceOf(Function);
     expect(result.ContainerMixin).toBeInstanceOf(Function);
   });
@@ -50,8 +56,6 @@ describe('createPlayer', () => {
     expect(result.context).toBeDefined();
     expect(result.create).toBeInstanceOf(Function);
     expect(result.PlayerController).toBeDefined();
-    expect(result.PlayerElement).toBeDefined();
-    expect(result.PlayerMixin).toBeInstanceOf(Function);
     expect(result.ProviderMixin).toBeInstanceOf(Function);
     expect(result.ContainerMixin).toBeInstanceOf(Function);
   });

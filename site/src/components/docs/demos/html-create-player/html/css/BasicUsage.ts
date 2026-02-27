@@ -7,12 +7,13 @@ import {
   MediaElement,
   selectPlayback,
 } from '@videojs/html';
+import '@videojs/html/media/container';
 
-const { PlayerElement, PlayerController, context } = createPlayer({
+const { ProviderMixin, PlayerController, context } = createPlayer({
   features: [...features.video],
 });
 
-class VideoPlayer extends PlayerElement {
+class VideoPlayer extends ProviderMixin(MediaElement) {
   static readonly tagName = 'demo-video-player';
 }
 

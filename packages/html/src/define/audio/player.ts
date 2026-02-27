@@ -1,11 +1,13 @@
 import { features } from '@videojs/core/dom';
 import { createPlayer } from '../../player/create-player';
+import { MediaElement } from '../../ui/media-element';
+import '../media/container';
 
-const { PlayerElement } = createPlayer({
+const { ProviderMixin } = createPlayer({
   features: features.audio,
 });
 
-export class AudioPlayerElement extends PlayerElement {
+export class AudioPlayerElement extends ProviderMixin(MediaElement) {
   static readonly tagName = 'audio-player';
 }
 
