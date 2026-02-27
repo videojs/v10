@@ -1,0 +1,177 @@
+name: API Reference Sync
+
+on:
+  # Weekly audit on Monday mornings
+  schedule:
+    - cron: '0 6 * * 1'
+
+  # When package source changes land on main
+  push:
+    branches: [main]
+    paths:
+      - 'packages/core/src/**'
+      - 'packages/html/src/**'
+      - 'packages/react/src/**'
+      - 'packages/store/src/**'
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Check for existing sync PR
+        id: existing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pr=$(gh pr list --head agent/api-reference-sync --json number --jq '.[0].number // empty')
+          echo "pr_number=${pr}" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if sync PR already open
+        if: steps.existing.outputs.pr_number != ''
+        run: |
+          echo "Sync PR #${{ steps.existing.outputs.pr_number }} already open, skipping."
+          exit 0
+
+      - name: Create agent branch
+        if: steps.existing.outputs.pr_number == ''
+        run: |
+          git checkout -b agent/api-reference-sync
+          git push origin agent/api-reference-sync 2>/dev/null || true
+
+      - name: Setup pnpm
+        if: steps.existing.outputs.pr_number == ''
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        if: steps.existing.outputs.pr_number == ''
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        if: steps.existing.outputs.pr_number == ''
+        run: pnpm install
+
+      - name: Cache turbo build setup
+        if: steps.existing.outputs.pr_number == ''
+        uses: actions/cache@v5
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Build packages
+        if: steps.existing.outputs.pr_number == ''
+        run: pnpm build:packages
+
+      - name: Generate API docs JSON
+        if: steps.existing.outputs.pr_number == ''
+        run: pnpm -F site api-docs
+
+      - name: Sync API references with Claude
+        if: steps.existing.outputs.pr_number == ''
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            BRANCH: agent/api-reference-sync
+
+            You are an API reference sync agent for the Video.js 10 monorepo.
+            Read CLAUDE.md at the repo root for coding conventions.
+            Load the `api-reference` skill from `.claude/skills/api-reference/SKILL.md`
+            for the exact page structure, demo conventions, and builder rules.
+
+            ## Context
+
+            The api-docs-builder has just run. Generated JSON files are in:
+            - `site/src/content/generated-component-reference/*.json`
+            - `site/src/content/generated-util-reference/*.json`
+
+            Existing reference pages are in:
+            - `site/src/content/docs/reference/*.mdx`
+
+            The sidebar config is in `site/src/docs.config.ts`.
+
+            ## Your task
+
+            ### 1. Discover gaps
+
+            List all generated component JSON files and check which ones have a
+            corresponding MDX reference page. Report your findings.
+
+            ### 2. Scaffold new reference pages
+
+            For each component with generated JSON but NO reference page:
+            - Create the MDX page at `site/src/content/docs/reference/{name}.mdx`
+            - Create 6 demo files (HTML + React) following the patterns from
+              existing reference pages like `poster.mdx` or `controls.mdx`
+            - Add a sidebar entry in `site/src/docs.config.ts` (alphabetical order)
+
+            ### 3. Audit existing reference pages
+
+            For each component that already has a reference page:
+            - Compare the generated JSON (props, state, data attributes) against
+              the page's anatomy section and demos
+            - If props were added/removed/renamed, update the anatomy code snippets
+            - If data attributes changed, update the Styling section
+            - If the page references APIs that no longer exist, fix the references
+            - Leave well-written prose (Behavior, Accessibility) unchanged unless
+              it references stale API names
+
+            ### 4. Check sidebar completeness
+
+            Verify every file in `site/src/content/docs/reference/` has a sidebar
+            entry in `site/src/docs.config.ts`. Add any missing entries.
+
+            ### 5. Verify
+
+            Run `pnpm -F site build` to confirm the site builds with your changes.
+            Fix any build errors.
+
+            ### 6. Commit and open PR
+
+            If you made any changes:
+            - Commit with message `docs(site): sync API reference pages`
+            - Push branch: `git push origin agent/api-reference-sync`
+            - Open a PR:
+              ```
+              gh pr create \
+                --title "docs(site): sync API reference pages" \
+                --body "Automated API reference sync.
+
+              ## Changes
+              <list what was added/updated/fixed>" \
+                --base main \
+                --head agent/api-reference-sync
+              ```
+
+            If everything is already up to date, just output "All API references
+            are in sync." and do not create a PR.
+
+            ## Rules
+
+            - Follow the exact file structure documented in the api-reference skill.
+            - Use existing reference pages as templates — match their style.
+            - Do not modify package source code — only site/ files.
+            - Do not modify CLAUDE.md, workflow files, or CI configuration.
+
+          claude_args: |
+            --allowedTools "Read,Write,Edit,Glob,Grep,Bash(pnpm:*),Bash(git:*),Bash(gh:*),Bash(ls:*),Bash(cat:*)"

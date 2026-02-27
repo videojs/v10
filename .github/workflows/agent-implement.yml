@@ -1,0 +1,121 @@
+name: Agent Implementation
+
+on:
+  issues:
+    types: [labeled]
+  repository_dispatch:
+    types: [agent_task]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue number to implement
+        required: true
+        type: number
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+jobs:
+  implement:
+    # Run when the "agent" label is added, or via dispatch
+    if: >
+      (github.event_name == 'issues' && github.event.label.name == 'agent') ||
+      github.event_name == 'repository_dispatch' ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Resolve issue number
+        id: issue
+        run: |
+          if [ "${{ github.event_name }}" = "issues" ]; then
+            echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "number=${{ inputs.issue_number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "number=${{ github.event.client_payload.issue_number }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Create agent branch
+        run: git checkout -b agent/${{ steps.issue.outputs.number }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Cache turbo build setup
+        uses: actions/cache@v5
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Build packages
+        run: pnpm build:packages
+
+      - name: Implement with Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            ISSUE: ${{ steps.issue.outputs.number }}
+            BRANCH: agent/${{ steps.issue.outputs.number }}
+
+            You are an autonomous implementation agent for the Video.js 10 monorepo.
+            Read CLAUDE.md at the repo root — it contains all coding conventions,
+            naming rules, and the dev workflow you must follow.
+
+            ## Your task
+
+            1. Read the issue: `gh issue view ${{ steps.issue.outputs.number }}`
+            2. Understand what needs to be done. If the issue lacks sufficient detail
+               to proceed, comment on the issue explaining what's missing and stop.
+            3. Explore the relevant code to understand the current state.
+            4. Implement the change following all conventions in CLAUDE.md.
+            5. Write or update tests for any new/changed behavior.
+            6. Verify your work:
+               - `pnpm typecheck` — fix all type errors
+               - Run tests for affected packages: `pnpm -F <pkg> test`
+               - Lint changed files: `pnpm lint:fix:file <file>`
+            7. Commit with a conventional commit message (the repo uses commitlint).
+               Use the appropriate type (feat, fix, refactor, etc.) and scope.
+            8. Push the branch:
+               `git push origin agent/${{ steps.issue.outputs.number }}`
+            9. Open a PR:
+               ```
+               gh pr create \
+                 --title "<conventional commit title>" \
+                 --body "Closes #${{ steps.issue.outputs.number }}" \
+                 --base main \
+                 --head agent/${{ steps.issue.outputs.number }}
+               ```
+
+            ## Rules
+
+            - ONE focused change per commit. Don't mix unrelated updates.
+            - Never skip typecheck, tests, or lint.
+            - If you can't complete the task, comment on the issue with what you found
+              and what's blocking you, then stop.
+            - Do not modify CLAUDE.md, workflow files, or CI configuration.
+
+          claude_args: |
+            --allowedTools "Read,Write,Edit,Glob,Grep,Bash(pnpm:*),Bash(git:*),Bash(gh:*),Bash(node:*),Bash(npx:*)"
