@@ -873,4 +873,224 @@ describe('createSlider', () => {
       expect(onDragEnd).not.toHaveBeenCalled();
     });
   });
+
+  describe('seekThrottle', () => {
+    it('does not fire onValueCommit during drag when seekThrottle is 0', () => {
+      const onValueCommit = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, seekThrottle: 0 }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      onValueCommit.mockClear();
+
+      // Pass drag threshold
+      fireDocumentPointerMove({ clientX: 60 });
+      fireDocumentPointerMove({ clientX: 80 });
+      fireDocumentPointerMove({ clientX: 100 });
+
+      expect(onValueCommit).not.toHaveBeenCalled();
+
+      slider.destroy();
+    });
+
+    it('fires throttled onValueCommit during drag when seekThrottle > 0', () => {
+      vi.useFakeTimers();
+
+      const onValueCommit = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, seekThrottle: 100 }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      onValueCommit.mockClear();
+
+      // Pass drag threshold and continue dragging
+      fireDocumentPointerMove({ clientX: 60 });
+      fireDocumentPointerMove({ clientX: 80 });
+      fireDocumentPointerMove({ clientX: 100 });
+      fireDocumentPointerMove({ clientX: 120 });
+
+      // Not yet — throttle hasn't fired
+      expect(onValueCommit).not.toHaveBeenCalled();
+
+      // Advance timer past throttle
+      vi.advanceTimersByTime(100);
+
+      expect(onValueCommit).toHaveBeenCalledOnce();
+      // Should have the latest drag percent (120/200 = 60%)
+      expect(onValueCommit).toHaveBeenCalledWith(60);
+
+      slider.destroy();
+      vi.useRealTimers();
+    });
+
+    it('uses trailing-edge: batches rapid moves into one commit', () => {
+      vi.useFakeTimers();
+
+      const onValueCommit = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, seekThrottle: 100 }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      onValueCommit.mockClear();
+
+      // Pass threshold
+      fireDocumentPointerMove({ clientX: 60 });
+      fireDocumentPointerMove({ clientX: 80 });
+
+      // Multiple rapid moves during drag
+      fireDocumentPointerMove({ clientX: 100 });
+      fireDocumentPointerMove({ clientX: 120 });
+      fireDocumentPointerMove({ clientX: 140 });
+
+      vi.advanceTimersByTime(100);
+
+      // Only one commit with the latest value (140/200 = 70%)
+      expect(onValueCommit).toHaveBeenCalledOnce();
+      expect(onValueCommit).toHaveBeenCalledWith(70);
+
+      slider.destroy();
+      vi.useRealTimers();
+    });
+
+    it('fires another throttled commit after the first one completes', () => {
+      vi.useFakeTimers();
+
+      const onValueCommit = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, seekThrottle: 100 }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      onValueCommit.mockClear();
+
+      // Pass threshold and drag
+      fireDocumentPointerMove({ clientX: 60 });
+      fireDocumentPointerMove({ clientX: 80 });
+      vi.advanceTimersByTime(100);
+      expect(onValueCommit).toHaveBeenCalledOnce();
+
+      // Continue dragging — should schedule another throttle
+      fireDocumentPointerMove({ clientX: 140 });
+      vi.advanceTimersByTime(100);
+
+      expect(onValueCommit).toHaveBeenCalledTimes(2);
+      expect(onValueCommit).toHaveBeenLastCalledWith(70);
+
+      slider.destroy();
+      vi.useRealTimers();
+    });
+
+    it('cancels throttle and fires final unthrottled commit on pointerup', () => {
+      vi.useFakeTimers();
+
+      const onValueCommit = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, seekThrottle: 100 }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      onValueCommit.mockClear();
+
+      // Pass threshold and drag
+      fireDocumentPointerMove({ clientX: 60 });
+      fireDocumentPointerMove({ clientX: 80 });
+      fireDocumentPointerMove({ clientX: 120 });
+
+      // Release before throttle fires
+      fireDocumentPointerUp({ clientX: 150 });
+
+      // Final commit with release position (150/200 = 75%)
+      expect(onValueCommit).toHaveBeenCalledOnce();
+      expect(onValueCommit).toHaveBeenCalledWith(75);
+
+      // Advancing timer should NOT fire a stale throttled commit
+      vi.advanceTimersByTime(200);
+      expect(onValueCommit).toHaveBeenCalledOnce();
+
+      slider.destroy();
+      vi.useRealTimers();
+    });
+
+    it('cancels throttle on destroy', () => {
+      vi.useFakeTimers();
+
+      const onValueCommit = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, seekThrottle: 100 }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      onValueCommit.mockClear();
+
+      // Pass threshold
+      fireDocumentPointerMove({ clientX: 60 });
+      fireDocumentPointerMove({ clientX: 80 });
+
+      slider.destroy();
+
+      // Advancing timer should NOT fire
+      vi.advanceTimersByTime(200);
+      expect(onValueCommit).not.toHaveBeenCalled();
+
+      vi.useRealTimers();
+    });
+
+    it('cancels throttle on pointercancel', () => {
+      vi.useFakeTimers();
+
+      const onValueCommit = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, seekThrottle: 100 }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      onValueCommit.mockClear();
+
+      // Pass threshold
+      fireDocumentPointerMove({ clientX: 60 });
+      fireDocumentPointerMove({ clientX: 80 });
+
+      fireDocumentPointerCancel();
+
+      // Advancing timer should NOT fire
+      vi.advanceTimersByTime(200);
+      expect(onValueCommit).not.toHaveBeenCalled();
+
+      slider.destroy();
+      vi.useRealTimers();
+    });
+
+    it('does not throttle keyboard commits', () => {
+      const onValueCommit = vi.fn();
+      const slider = createSlider(createOptions({ getPercent: () => 50, onValueCommit, seekThrottle: 100 }));
+
+      slider.thumbProps.onKeyDown(keyboardEvent('ArrowRight'));
+
+      // Keyboard commits fire immediately, not throttled
+      expect(onValueCommit).toHaveBeenCalledOnce();
+      expect(onValueCommit).toHaveBeenCalledWith(51);
+
+      slider.destroy();
+    });
+
+    it('defaults seekThrottle to 0 when not provided', () => {
+      vi.useFakeTimers();
+
+      const onValueCommit = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      // No seekThrottle option — should default to 0 (disabled)
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      onValueCommit.mockClear();
+
+      fireDocumentPointerMove({ clientX: 60 });
+      fireDocumentPointerMove({ clientX: 80 });
+      fireDocumentPointerMove({ clientX: 100 });
+
+      vi.advanceTimersByTime(200);
+
+      // No throttled commits — default is disabled
+      expect(onValueCommit).not.toHaveBeenCalled();
+
+      slider.destroy();
+      vi.useRealTimers();
+    });
+  });
 });

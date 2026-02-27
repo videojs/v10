@@ -28,6 +28,7 @@ import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
+import { TimeSlider } from '@/ui/time-slider';
 import type { BaseSkinProps } from '../types';
 
 const SEEK_TIME = 10;
@@ -154,8 +155,13 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
 
         <Time.Group className="media-time">
           <Time.Value type="current" className="media-time__value" />
-          {/* Temporary spacer */}
-          <div className="media-slider" style={{ height: '4px', background: 'oklab(1 0 0 / 0.2)' }} />
+          <TimeSlider.Root className="media-slider">
+            <TimeSlider.Track className="media-slider__track">
+              <TimeSlider.Buffer className="media-slider__buffer" />
+              <TimeSlider.Fill className="media-slider__fill" />
+            </TimeSlider.Track>
+            <TimeSlider.Thumb className="media-slider__thumb" />
+          </TimeSlider.Root>
           <Time.Value type="duration" className="media-time__value" />
         </Time.Group>
 

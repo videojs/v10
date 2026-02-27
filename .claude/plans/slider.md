@@ -1,6 +1,6 @@
 # Slider Component Implementation
 
-**Status:** PR 2 COMPLETE — PR 3 (React) and PR 4 (HTML) ready to start
+**Status:** PR 3 COMPLETE — PR 4 (HTML) ready to start
 **Design Doc:** `internal/design/ui/slider/`
 **Issues:** #275 (time slider), #267 (volume slider), #269 (seek slider)
 
@@ -534,11 +534,68 @@ pnpm lint:fix:file <changed-files>
 
 ---
 
-## PR 3: React Components
+## PR 3: React Components — COMPLETE
 
 **Branch:** `feat/slider-react`
 **Base:** `feat/slider-dom`
 **Package:** `@videojs/react`
+
+### What was built
+
+- `useSlider` generic hook wrapping `createSlider()` + `useSnapshot` for React lifecycle
+- `SliderProvider` / `useSliderContext` — first component-level React context in the codebase (children need interaction state from `createSlider()`, not player store state)
+- 6 generic parts: `SliderRoot`, `SliderTrack`, `SliderFill`, `SliderBuffer`, `SliderThumb`, `SliderValue`
+- `TimeSliderRoot` and `VolumeSliderRoot` domain roots connecting to player store via `usePlayer`
+- Barrel files with compound namespace pattern (`Slider.*`, `TimeSlider.*`, `VolumeSlider.*`)
+- `useLatestRef` utility for stable callback refs
+- `SliderCore.props` getter added to core package
+- Shared test helpers (`createMockStore`, `createPlayerWrapper`) in `packages/react/src/testing/mocks.tsx`
+- Skin presets updated with real `TimeSlider` compound components
+- 38 new tests (22 slider + 8 time-slider + 8 volume-slider), all 139 React tests passing
+- Sandbox page with standalone slider, vertical, disabled, thumbAlignment demo, TimeSlider with video, VolumeSlider horizontal + vertical
+
+### Deviations from plan
+
+1. **`useSlider` is generic over state type** — Plan showed `UseSliderResult` returning `SliderState`. Implementation uses `<State extends SliderState>` generic so domain roots get proper `TimeSliderState` / `VolumeSliderState` typing.
+2. **`thumbRef` threaded through context** — Not in plan. Required so `createSlider` can programmatically focus the thumb on pointerdown.
+3. **Domain roots don't compose on `SliderRoot`** — Plan implied composition. Each domain root has different state sources, cores, CSS var functions, and hardwired callbacks, making composition impractical.
+4. **Domain barrel re-exports simplified** — Plan showed explicit re-exports of each part. Implementation uses `export * from '../slider/index.parts'` then overrides `Root` only.
+5. **Context uses `.Provider` pattern** — React 19's direct `<Context value={...}>` isn't supported by the rolldown bundler. Uses `<Context.Provider value={...}>`.
+6. **`getAttrs` in context** — Not in plan. Justified for `SliderThumb` to get domain-specific ARIA attrs without knowing which core it's using.
+7. **Shared test helpers extracted** — Plan didn't specify. Created `packages/react/src/testing/mocks.tsx` with `vi.hoisted()` pattern for mock data.
+
+### Files created
+
+- `packages/react/src/utils/use-latest-ref.ts`
+- `packages/react/src/ui/slider/slider-context.tsx`
+- `packages/react/src/ui/hooks/use-slider.ts`
+- `packages/react/src/ui/slider/slider-root.tsx`
+- `packages/react/src/ui/slider/slider-track.tsx`
+- `packages/react/src/ui/slider/slider-fill.tsx`
+- `packages/react/src/ui/slider/slider-buffer.tsx`
+- `packages/react/src/ui/slider/slider-thumb.tsx`
+- `packages/react/src/ui/slider/slider-value.tsx`
+- `packages/react/src/ui/slider/index.ts` + `index.parts.ts`
+- `packages/react/src/ui/time-slider/time-slider-root.tsx`
+- `packages/react/src/ui/time-slider/index.ts` + `index.parts.ts`
+- `packages/react/src/ui/volume-slider/volume-slider-root.tsx`
+- `packages/react/src/ui/volume-slider/index.ts` + `index.parts.ts`
+- `packages/react/src/testing/mocks.tsx`
+- `packages/react/src/ui/slider/tests/slider.test.tsx` (22 tests)
+- `packages/react/src/ui/time-slider/tests/time-slider.test.tsx` (8 tests)
+- `packages/react/src/ui/volume-slider/tests/volume-slider.test.tsx` (8 tests)
+
+### Files modified
+
+- `packages/core/src/core/ui/slider/slider-core.ts` — added `get props()` getter
+- `packages/react/src/index.ts` — added Slider/TimeSlider/VolumeSlider/useSlider exports
+- `packages/react/src/presets/video/skin.tsx` — replaced placeholder with TimeSlider compound
+- `packages/react/src/presets/video/minimal-skin.tsx` — same replacement
+- `packages/react/src/player/tests/context.test.tsx` — updated to use shared `createMockStore`
+- `packages/sandbox/vite.config.ts` — added `react-slider` input
+- `packages/sandbox/src/index.html` — added nav link
+
+### Original plan (for reference)
 
 ### 3.1 Slider Context
 

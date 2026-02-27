@@ -1,0 +1,166 @@
+'use client';
+
+import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
+import { getTimeSliderCSSVars, logMissingFeature, selectBuffer, selectTime } from '@videojs/core/dom';
+import { formatTime } from '@videojs/utils/time';
+import type { ForwardedRef } from 'react';
+import { forwardRef, useRef, useState } from 'react';
+
+import { usePlayer } from '../../player/context';
+import type { UIComponentProps } from '../../utils/types';
+import { useLatestRef } from '../../utils/use-latest-ref';
+import { renderElement } from '../../utils/use-render';
+import { useSlider } from '../hooks/use-slider';
+import { SliderProvider } from '../slider/slider-context';
+
+export interface TimeSliderRootProps extends UIComponentProps<'div', TimeSliderCore.State> {
+  label?: string | undefined;
+  step?: number | undefined;
+  largeStep?: number | undefined;
+  disabled?: boolean | undefined;
+  thumbAlignment?: 'center' | 'edge' | undefined;
+  /** Trailing-edge throttle (ms) for seek requests during drag. Default `100`. `0` disables. */
+  seekThrottle?: number | undefined;
+  onDragStart?: (() => void) | undefined;
+  onDragEnd?: (() => void) | undefined;
+}
+
+export const TimeSliderRoot = forwardRef(function TimeSliderRoot(
+  componentProps: TimeSliderRootProps,
+  forwardedRef: ForwardedRef<HTMLDivElement>
+) {
+  const {
+    render,
+    className,
+    style,
+    label,
+    step = 1,
+    largeStep = 10,
+    disabled,
+    thumbAlignment,
+    seekThrottle = 100,
+    onDragStart,
+    onDragEnd,
+    ...elementProps
+  } = componentProps;
+
+  const time = usePlayer(selectTime);
+  const buffer = usePlayer(selectBuffer);
+
+  const [core] = useState(() => new TimeSliderCore());
+  core.setProps({ label, step, largeStep, disabled, thumbAlignment });
+
+  // Keep a ref to the latest media state for callbacks that fire outside the render cycle.
+  const mediaRef = useLatestRef(time && buffer ? { ...time, ...buffer } : null);
+
+  // Holds the target time (seconds) between commit and seek completion, preventing the slider
+  // from snapping back to the stale `currentTime` while the async seek settles.
+  const pendingSeekRef = useRef<number | null>(null);
+
+  const duration = time?.duration ?? 0;
+  const range = duration || 1;
+
+  const { state, rootRef, thumbRef, rootElement, thumbElement, rootProps, thumbProps } =
+    useSlider<TimeSliderCore.State>({
+      computeState: (interaction) => {
+        if (!time || !buffer) {
+          return core.getState(interaction, 0) as TimeSliderCore.State;
+        }
+
+        const baseState = core.getTimeState({ ...time, ...buffer }, interaction);
+
+        // After drag release, `dragging` resets before the async seek completes. Hold the
+        // slider at the committed position until `currentTime` catches up.
+        const pending = pendingSeekRef.current;
+        if (!interaction.dragging && pending !== null) {
+          if (Math.abs(time.currentTime - pending) < 0.5) {
+            // Seek landed — clear pending.
+            pendingSeekRef.current = null;
+          } else {
+            const d = time.duration || 1;
+            const fillPercent = (pending / d) * 100;
+            return { ...baseState, value: pending, fillPercent };
+          }
+        }
+
+        return baseState;
+      },
+      getPercent: () => (duration > 0 ? ((time?.currentTime ?? 0) / duration) * 100 : 0),
+      getStepPercent: () => (step / range) * 100,
+      getLargeStepPercent: () => (largeStep / range) * 100,
+      orientation: 'horizontal',
+      disabled,
+      seekThrottle,
+      onValueChange: (percent) => {
+        // Track the target position for visual hold during pointer interaction.
+        const media = mediaRef.current;
+        if (media) {
+          pendingSeekRef.current = (percent / 100) * (media.duration || 0);
+        }
+      },
+      onValueCommit: (percent) => {
+        const media = mediaRef.current;
+        if (!media) return;
+        const seconds = (percent / 100) * (media.duration || 0);
+        pendingSeekRef.current = seconds;
+        // seek() is async — catch rejection if the media target isn't attached yet.
+        media.seek(seconds).catch(() => {
+          pendingSeekRef.current = null;
+        });
+      },
+      onDragStart,
+      onDragEnd,
+    });
+
+  if (!time) {
+    if (__DEV__) logMissingFeature('TimeSlider', 'time');
+    return null;
+  }
+
+  // Adjust CSS var percents for edge thumb alignment (requires DOM measurement).
+  const rootEl = rootElement.current;
+  const thumbEl = thumbElement.current;
+  let cssState = state as TimeSliderCore.State;
+
+  if (state.thumbAlignment === 'edge' && rootEl && thumbEl) {
+    const isH = state.orientation === 'horizontal';
+    const thumbSize = isH ? thumbEl.offsetWidth : thumbEl.offsetHeight;
+    const trackSize = isH ? rootEl.offsetWidth : rootEl.offsetHeight;
+    cssState = {
+      ...cssState,
+      fillPercent: core.adjustPercentForAlignment(state.fillPercent, thumbSize, trackSize),
+      pointerPercent: core.adjustPercentForAlignment(state.pointerPercent, thumbSize, trackSize),
+    };
+  }
+
+  const cssVars = getTimeSliderCSSVars(cssState);
+
+  return (
+    <SliderProvider
+      value={{
+        state,
+        thumbRef,
+        thumbProps,
+        stateAttrMap: TimeSliderDataAttrs,
+        getAttrs: (s) => core.getAttrs(s as TimeSliderCore.State),
+        formatValue: (value) => formatTime(value, duration),
+      }}
+    >
+      {renderElement(
+        'div',
+        { render, className, style },
+        {
+          state,
+          stateAttrMap: TimeSliderDataAttrs,
+          ref: [forwardedRef, rootRef],
+          props: [{ style: cssVars }, rootProps, elementProps],
+        }
+      )}
+    </SliderProvider>
+  );
+});
+
+export namespace TimeSliderRoot {
+  export type Props = TimeSliderRootProps;
+  export type State = TimeSliderCore.State;
+}

@@ -67,6 +67,10 @@ export class SliderCore {
 
   #props = { ...SliderCore.defaultProps };
 
+  get props(): Readonly<NonNullableObject<SliderProps>> {
+    return this.#props;
+  }
+
   constructor(props?: SliderProps) {
     if (props) this.setProps(props);
   }
