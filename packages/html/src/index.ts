@@ -25,6 +25,7 @@ export { PlayButtonElement } from './ui/play-button/play-button-element';
 export { PlaybackRateButtonElement } from './ui/playback-rate-button/playback-rate-button-element';
 export { PosterElement } from './ui/poster/poster-element';
 export { SeekButtonElement } from './ui/seek-button/seek-button-element';
+export { ThumbnailElement } from './ui/thumbnail/thumbnail-element';
 export { TimeElement } from './ui/time/time-element';
 export { TimeGroupElement } from './ui/time/time-group-element';
 export { TimeSeparatorElement } from './ui/time/time-separator-element';
