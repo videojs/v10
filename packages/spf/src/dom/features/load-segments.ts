@@ -178,6 +178,10 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
   // Only load init segment if not already loaded for this track
   const needsInit = bufferState?.initTrackId !== track.id;
 
+  // Track switch detection: needsInit AND a prior track was loaded (initTrackId set).
+  // A first-time load has initTrackId undefined; a track switch has a stale ID.
+  const isTrackSwitch = needsInit && !!bufferState?.initTrackId;
+
   // Compute forward flush point before the early-return guard. We must not
   // bail out early when there are segments beyond the buffer window to remove,
   // even if the load window is already fully satisfied. This is the counterpart
@@ -187,67 +191,75 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
 
   if (!needsInit && segmentsToLoad.length === 0 && forwardFlushStart === Infinity) return;
 
-  // Reset completed so the end-of-stream orchestrator doesn't mistake a
-  // stale last-segment ID (from a prior play-through) for a finished pipeline.
-  // Only patch when transitioning true→false to avoid a spurious state change
-  // (and its subscriber side-effects) when completed is already false.
-  if (segmentsToLoad.length > 0) {
-    const currentBuf = context.state.current.bufferState?.[bufferKey];
-    if (currentBuf?.completed) {
-      context.state.patch({
-        bufferState: {
-          ...context.state.current.bufferState,
-          [bufferKey]: { ...currentBuf, completed: false },
-        },
-      });
+  if (isTrackSwitch) {
+    // Quality switch: flush the entire SourceBuffer so the old track's init
+    // and media segments don't coexist with the new track's content.
+    // resolveBufferedSegments() returns [] for a new track (different segment IDs),
+    // so the normal forward/back-flush logic would be a no-op — this explicit full
+    // flush ensures a clean SourceBuffer state before the new init is appended.
+    await flushBuffer(context.sourceBuffer, 0, Infinity);
+    context.state.patch({
+      bufferState: {
+        ...context.state.current.bufferState,
+        [bufferKey]: { initTrackId: undefined, segments: [], completed: false },
+      },
+    });
+  } else {
+    // Normal path: selective forward/back buffer management.
+
+    // Reset completed so the end-of-stream orchestrator doesn't mistake a
+    // stale last-segment ID (from a prior play-through) for a finished pipeline.
+    // Only patch when transitioning true→false to avoid a spurious state change
+    // (and its subscriber side-effects) when completed is already false.
+    if (segmentsToLoad.length > 0) {
+      const currentBuf = context.state.current.bufferState?.[bufferKey];
+      if (currentBuf?.completed) {
+        context.state.patch({
+          bufferState: {
+            ...context.state.current.bufferState,
+            [bufferKey]: { ...currentBuf, completed: false },
+          },
+        });
+      }
     }
-  }
 
-  // Forward buffer management (B5): flush segments too far ahead of currentTime.
-  // After seeks, the SourceBuffer can accumulate scattered content from prior
-  // positions. Removing it keeps memory bounded and prevents QuotaExceededError
-  // on long-form content.
-  if (forwardFlushStart < Infinity) {
-    await flushBuffer(context.sourceBuffer, forwardFlushStart, Infinity);
+    // Forward buffer management (B5): flush segments too far ahead of currentTime.
+    if (forwardFlushStart < Infinity) {
+      await flushBuffer(context.sourceBuffer, forwardFlushStart, Infinity);
 
-    const currentBufferStateForForward = context.state.current.bufferState?.[bufferKey];
-    if (currentBufferStateForForward) {
-      const remaining = currentBufferStateForForward.segments.filter((s) => {
-        const seg = track.segments.find((ts) => ts.id === s.id);
-        return seg ? seg.startTime < forwardFlushStart : true;
-      });
-      context.state.patch({
-        bufferState: {
-          ...context.state.current.bufferState,
-          [bufferKey]: { ...currentBufferStateForForward, segments: remaining },
-        },
-      });
+      const currentBufferStateForForward = context.state.current.bufferState?.[bufferKey];
+      if (currentBufferStateForForward) {
+        const remaining = currentBufferStateForForward.segments.filter((s) => {
+          const seg = track.segments.find((ts) => ts.id === s.id);
+          return seg ? seg.startTime < forwardFlushStart : true;
+        });
+        context.state.patch({
+          bufferState: {
+            ...context.state.current.bufferState,
+            [bufferKey]: { ...currentBufferStateForForward, segments: remaining },
+          },
+        });
+      }
     }
-  }
 
-  // Back buffer management (F6): flush old segments before loading new ones.
-  // Uses bufferedSegments (what's actually appended) not track.segments, so we
-  // only flush data we've loaded — avoids spurious flushes when seeking into
-  // an unloaded region. calculateBackBufferFlushPoint returns 0 when nothing
-  // needs flushing.
-  const flushEnd = calculateBackBufferFlushPoint(bufferedSegments, currentTime);
-  if (flushEnd > 0) {
-    await flushBuffer(context.sourceBuffer, 0, flushEnd);
+    // Back buffer management (F6): flush old segments before loading new ones.
+    const flushEnd = calculateBackBufferFlushPoint(bufferedSegments, currentTime);
+    if (flushEnd > 0) {
+      await flushBuffer(context.sourceBuffer, 0, flushEnd);
 
-    // Remove flushed segments from bufferState so the forward buffer
-    // calculator doesn't consider them buffered (e.g. after a backward seek).
-    const currentBufferState = context.state.current.bufferState?.[bufferKey];
-    if (currentBufferState) {
-      const remaining = currentBufferState.segments.filter((s) => {
-        const seg = track.segments.find((ts) => ts.id === s.id);
-        return seg ? seg.startTime >= flushEnd : true;
-      });
-      context.state.patch({
-        bufferState: {
-          ...context.state.current.bufferState,
-          [bufferKey]: { ...currentBufferState, segments: remaining },
-        },
-      });
+      const currentBufferState = context.state.current.bufferState?.[bufferKey];
+      if (currentBufferState) {
+        const remaining = currentBufferState.segments.filter((s) => {
+          const seg = track.segments.find((ts) => ts.id === s.id);
+          return seg ? seg.startTime >= flushEnd : true;
+        });
+        context.state.patch({
+          bufferState: {
+            ...context.state.current.bufferState,
+            [bufferKey]: { ...currentBufferState, segments: remaining },
+          },
+        });
+      }
     }
   }
 

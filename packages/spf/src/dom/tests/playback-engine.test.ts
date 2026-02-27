@@ -42,8 +42,8 @@ describe('createPlaybackEngine', () => {
         bytesSampled: 0,
       },
       bufferState: {
-        video: { segments: [] },
-        audio: { segments: [] },
+        video: { segments: [], completed: false },
+        audio: { segments: [], completed: false },
       },
     });
     expect(engine.owners.current).toEqual({});
