@@ -57,6 +57,8 @@ export function createPopover(options: PopoverOptions): Popover {
   let triggerEl: HTMLElement | null = null;
   let popupEl: HTMLElement | null = null;
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
+  let rafId1 = 0;
+  let rafId2 = 0;
 
   const abort = new AbortController();
   let docAc: AbortController | null = null;
@@ -92,7 +94,8 @@ export function createPopover(options: PopoverOptions): Popover {
 
     tryShowPopover(popupEl);
 
-    requestAnimationFrame(() => {
+    rafId1 = requestAnimationFrame(() => {
+      rafId1 = 0;
       if (abort.signal.aborted || !state.current.open) return;
       state.patch({ transitionStatus: 'open' });
     });
@@ -109,8 +112,10 @@ export function createPopover(options: PopoverOptions): Popover {
     // Double-RAF ensures the closing state is painted before we start
     // listening for transitions, avoiding a race where getAnimations()
     // returns nothing because the browser hasn't started them yet.
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
+    rafId1 = requestAnimationFrame(() => {
+      rafId1 = 0;
+      rafId2 = requestAnimationFrame(() => {
+        rafId2 = 0;
         if (abort.signal.aborted) return;
         waitForTransitions(popupEl).finally(() => {
           if (abort.signal.aborted) return;
@@ -185,6 +190,8 @@ export function createPopover(options: PopoverOptions): Popover {
   abort.signal.addEventListener('abort', () => {
     unsubscribe();
     clearHoverTimeout();
+    cancelAnimationFrame(rafId1);
+    cancelAnimationFrame(rafId2);
     cleanupDocumentListeners();
     triggerEl = null;
     popupEl = null;
@@ -282,6 +289,12 @@ export function createPopover(options: PopoverOptions): Popover {
   }
 
   function setPopupElement(el: HTMLElement | null): void {
+    // Hide the old element before clearing the reference so it
+    // doesn't remain visually shown via the Popover API.
+    if (!el && popupEl && state.current.open) {
+      tryHidePopover(popupEl);
+    }
+
     popupEl = el;
 
     if (el) {
@@ -303,6 +316,7 @@ export function createPopover(options: PopoverOptions): Popover {
   // --- Cleanup ---
 
   function destroy(): void {
+    if (abort.signal.aborted) return;
     abort.abort();
   }
 
