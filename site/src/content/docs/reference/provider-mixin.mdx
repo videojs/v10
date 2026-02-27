@@ -28,6 +28,12 @@ class AppShell extends ProviderMixin(MediaElement) {}
 class VideoRegion extends ContainerMixin(MediaElement) {}
 ```
 
-When a single element should handle both, use <DocsLink slug="reference/player-mixin">`PlayerMixin`</DocsLink> instead.
+When a single element should handle both responsibilities, compose the mixins directly:
+
+```ts
+const { ProviderMixin, ContainerMixin } = createPlayer({ features: features.video });
+
+class VideoPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {}
+```
 
 <UtilReference util="ProviderMixin" />

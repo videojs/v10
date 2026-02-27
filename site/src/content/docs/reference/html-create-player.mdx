@@ -6,33 +6,60 @@ description: Factory function that creates a player instance with typed store, m
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
-import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import BasicUsageDemoHtml from "@/components/docs/demos/html-create-player/html/css/BasicUsage.astro";
 import basicUsageHtml from "@/components/docs/demos/html-create-player/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/html-create-player/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/html-create-player/html/css/BasicUsage.ts?raw";
 
-`createPlayer` is the entry point for setting up a Video.js player with HTML custom elements. It accepts a configuration object with a `features` array and returns everything needed to build a player: a pre-composed `PlayerElement`, typed <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>, `context`, individual mixins, and a `create` factory.
+`createPlayer` is the entry point for setting up a Video.js player with HTML custom elements. It accepts a configuration object with a `features` array and returns a typed <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>, `context`, `ProviderMixin`, `ContainerMixin`, and a `create` store factory.
 
 ```ts
 import { createPlayer, features, MediaElement } from '@videojs/html';
 
 const {
-  PlayerElement,
   PlayerController,
   context,
-  PlayerMixin,
   ProviderMixin,
   ContainerMixin,
   create,
 } = createPlayer({ features: features.video });
 
-// Register the pre-composed player element
-customElements.define('video-player', PlayerElement);
+// Provider element: owns and publishes the store
+class VideoPlayer extends ProviderMixin(MediaElement) {}
+
+// Container element: discovers <video>/<audio> and calls store.attach()
+class MediaContainer extends ContainerMixin(MediaElement) {}
+
+customElements.define('video-player', VideoPlayer);
+customElements.define('media-container', MediaContainer);
 ```
 
-The simplest approach is to register `PlayerElement` directly. For custom behavior, use the individual mixins to compose your own element classes.
+### Composition patterns
+
+Use split elements (recommended for reusable skins/layouts):
+
+```ts
+const {
+  PlayerController,
+  context,
+  ProviderMixin,
+  ContainerMixin,
+} = createPlayer({ features: features.video });
+
+class VideoPlayer extends ProviderMixin(MediaElement) {}
+class MediaContainer extends ContainerMixin(MediaElement) {}
+```
+
+Use a single composed element when the same element should both own the store and attach media:
+
+```ts
+const { ProviderMixin, ContainerMixin } = createPlayer({ features: features.video });
+
+class VideoPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {}
+```
+
+When using the built-in defined elements (`@videojs/html/video/player`, etc.), `media-container` is expected as the first child and UI should live inside it.
 
 ## Examples
 

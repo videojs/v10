@@ -12,7 +12,13 @@ import DocsLink from "@/components/docs/DocsLink.astro";
 
 Use `ContainerMixin` when the <DocsLink slug="reference/provider-mixin">provider</DocsLink> and container live in different elements. This is common when the store owner sits higher in the tree (e.g., a layout shell) while the media element sits deeper in a content area.
 
-For a single element that both owns the store and attaches media, use <DocsLink slug="reference/player-mixin">`PlayerMixin`</DocsLink> instead.
+For a single element that both owns the store and attaches media, compose both mixins on the same base class:
+
+```ts
+const { ProviderMixin, ContainerMixin } = createPlayer({ features: features.video });
+
+class VideoPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {}
+```
 
 ### How media discovery works
 
