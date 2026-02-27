@@ -13,29 +13,32 @@ import { isRTL } from '@videojs/utils/dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLatestRef } from '../../utils/use-latest-ref';
 
-export interface UseSliderOptions<State extends SliderState = SliderState> {
+export interface UseSliderOptions<State extends SliderState = SliderState>
+  extends Pick<
+    SliderOptions,
+    | 'getPercent'
+    | 'getStepPercent'
+    | 'getLargeStepPercent'
+    | 'commitThrottle'
+    | 'onValueChange'
+    | 'onValueCommit'
+    | 'onDragStart'
+    | 'onDragEnd'
+  > {
   computeState: (interaction: SliderInteraction) => State;
-  getPercent: () => number;
-  getStepPercent: () => number;
-  getLargeStepPercent: () => number;
   orientation?: 'horizontal' | 'vertical' | undefined;
   disabled?: boolean | undefined;
-  /** Trailing-edge throttle (ms) for `onValueCommit` during drag. Default `0` (disabled). */
-  seekThrottle?: number | undefined;
-  onValueChange?: ((percent: number) => void) | undefined;
-  onValueCommit?: ((percent: number) => void) | undefined;
-  onDragStart?: (() => void) | undefined;
-  onDragEnd?: (() => void) | undefined;
+  /** Adjust a raw 0–100 percent for thumb alignment. Called for fill and pointer percents. */
+  adjustPercent?: ((rawPercent: number, thumbSize: number, trackSize: number) => number) | undefined;
+  /** Compute CSS variable map from the (possibly alignment-adjusted) state. */
+  getCSSVars: (state: State) => Record<string, string>;
 }
 
 export interface UseSliderReturnValue<State extends SliderState = SliderState> {
   state: State;
+  cssVars: Record<string, string>;
   rootRef: React.RefCallback<HTMLElement>;
   thumbRef: React.RefCallback<HTMLElement>;
-  /** Direct access to the root element for DOM measurement. */
-  rootElement: React.RefObject<HTMLElement | null>;
-  /** Direct access to the thumb element for DOM measurement. */
-  thumbElement: React.RefObject<HTMLElement | null>;
   rootProps: SliderRootProps;
   thumbProps: SliderThumbProps;
 }
@@ -66,7 +69,7 @@ export function useSlider<State extends SliderState = SliderState>(
       getPercent: () => optionsRef.current.getPercent(),
       getStepPercent: () => optionsRef.current.getStepPercent(),
       getLargeStepPercent: () => optionsRef.current.getLargeStepPercent(),
-      seekThrottle: optionsRef.current.seekThrottle,
+      commitThrottle: optionsRef.current.commitThrottle,
       onValueChange: (percent) => optionsRef.current.onValueChange?.(percent),
       onValueCommit: (percent) => optionsRef.current.onValueCommit?.(percent),
       onDragStart: () => optionsRef.current.onDragStart?.(),
@@ -85,21 +88,38 @@ export function useSlider<State extends SliderState = SliderState>(
   // Compute derived state from interaction + caller-provided projection.
   const state = options.computeState(interaction);
 
+  // Adjust CSS var percents for edge thumb alignment when DOM elements are available.
+  const rootEl = rootElementRef.current;
+  const thumbEl = thumbElementRef.current;
+  let cssState = state;
+
+  if (state.thumbAlignment === 'edge' && rootEl && thumbEl && options.adjustPercent) {
+    const isHorizontal = state.orientation === 'horizontal';
+    const thumbSize = isHorizontal ? thumbEl.offsetWidth : thumbEl.offsetHeight;
+    const trackSize = isHorizontal ? rootEl.offsetWidth : rootEl.offsetHeight;
+    cssState = {
+      ...state,
+      fillPercent: options.adjustPercent(state.fillPercent, thumbSize, trackSize),
+      pointerPercent: options.adjustPercent(state.pointerPercent, thumbSize, trackSize),
+    };
+  }
+
+  const cssVars = options.getCSSVars(cssState);
+
   // Ref callbacks for root and thumb elements.
-  const rootRef = useCallback((el: HTMLElement | null) => {
-    rootElementRef.current = el;
+  const rootRef = useCallback((element: HTMLElement | null) => {
+    rootElementRef.current = element;
   }, []);
 
-  const thumbRef = useCallback((el: HTMLElement | null) => {
-    thumbElementRef.current = el;
+  const thumbRef = useCallback((element: HTMLElement | null) => {
+    thumbElementRef.current = element;
   }, []);
 
   return {
     state,
+    cssVars,
     rootRef,
     thumbRef,
-    rootElement: rootElementRef,
-    thumbElement: thumbElementRef,
     rootProps: slider.rootProps,
     thumbProps: slider.thumbProps,
   };

@@ -28,7 +28,6 @@ import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
-import { TimeSlider } from '@/ui/time-slider';
 import type { BaseSkinProps } from '../types';
 
 const SEEK_TIME = 10;
@@ -160,13 +159,8 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
             <Time.Value type="duration" className="media-time__value media-time__value--duration" />
           </Time.Group>
 
-          <TimeSlider.Root className="media-slider">
-            <TimeSlider.Track className="media-slider__track">
-              <TimeSlider.Buffer className="media-slider__buffer" />
-              <TimeSlider.Fill className="media-slider__fill" />
-            </TimeSlider.Track>
-            <TimeSlider.Thumb className="media-slider__thumb" />
-          </TimeSlider.Root>
+          {/* Temporary spacer */}
+          <span className="media-slider" style={{ height: '4px', background: 'oklch(1 0 0 / 0.2)' }} />
         </span>
 
         <span className="media-button-group">

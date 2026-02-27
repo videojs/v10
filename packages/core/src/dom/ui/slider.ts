@@ -1,5 +1,6 @@
 import { createState, type State } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
+import { throttle } from '@videojs/utils/function';
 import { clamp, roundToStep } from '@videojs/utils/number';
 import { isNull } from '@videojs/utils/predicate';
 import type { SliderInteraction } from '../../core/ui/slider/slider-core';
@@ -29,7 +30,7 @@ export interface SliderOptions {
    * `onValueCommit` fires periodically while dragging, then a final unthrottled
    * commit fires on pointer release. `0` (default) disables — commits only on release.
    */
-  seekThrottle?: number | undefined;
+  commitThrottle?: number | undefined;
 
   onValueChange?: ((percent: number) => void) | undefined;
   onValueCommit?: ((percent: number) => void) | undefined;
@@ -69,32 +70,17 @@ export function createSlider(options: SliderOptions): SliderHandle {
   });
 
   const abort = new AbortController();
-  const seekThrottle = options.seekThrottle ?? 0;
+  const commitThrottleMs = options.commitThrottle ?? 0;
 
   let isDragging = false,
     moveCount = 0,
     cachedRTL = false,
     cachedRect: DOMRect | null = null,
     documentCleanup: (() => void) | null = null,
-    capturedPointerId: number | null = null,
-    throttleTimer: ReturnType<typeof setTimeout> | null = null,
-    latestCommitPercent = 0;
+    capturedPointerId: number | null = null;
 
-  function throttledCommit(percent: number): void {
-    latestCommitPercent = percent;
-    if (throttleTimer !== null) return;
-    throttleTimer = setTimeout(() => {
-      throttleTimer = null;
-      options.onValueCommit?.(latestCommitPercent);
-    }, seekThrottle);
-  }
-
-  function cancelThrottle(): void {
-    if (throttleTimer !== null) {
-      clearTimeout(throttleTimer);
-      throttleTimer = null;
-    }
-  }
+  const throttledCommit =
+    commitThrottleMs > 0 ? throttle((percent: number) => options.onValueCommit?.(percent), commitThrottleMs) : null;
 
   function releaseCapture(): void {
     if (isNull(capturedPointerId)) return;
@@ -122,7 +108,7 @@ export function createSlider(options: SliderOptions): SliderHandle {
   }
 
   function cleanup() {
-    cancelThrottle();
+    throttledCommit?.cancel();
     releaseCapture();
     documentCleanup?.();
     documentCleanup = null;
@@ -145,11 +131,11 @@ export function createSlider(options: SliderOptions): SliderHandle {
       state.patch({ dragging: true, dragPercent: percent, pointerPercent: percent });
       options.onDragStart?.();
       options.onValueChange?.(percent);
-      if (seekThrottle > 0) throttledCommit(percent);
+      throttledCommit?.(percent);
     } else if (isDragging) {
       state.patch({ dragPercent: percent, pointerPercent: percent });
       options.onValueChange?.(percent);
-      if (seekThrottle > 0) throttledCommit(percent);
+      throttledCommit?.(percent);
     } else {
       // Below drag threshold — update hover preview only.
       state.patch({ pointerPercent: percent });
@@ -160,7 +146,7 @@ export function createSlider(options: SliderOptions): SliderHandle {
     const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation(), cachedRTL);
 
     // Cancel pending throttled commit before the final unthrottled one.
-    cancelThrottle();
+    throttledCommit?.cancel();
     options.onValueCommit?.(percent);
     endDrag();
   }

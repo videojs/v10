@@ -50,59 +50,43 @@ export const VolumeSliderRoot = forwardRef(function VolumeSliderRoot(
   // Keep a ref to the latest volume state for callbacks.
   const mediaRef = useLatestRef(volume);
 
-  const { state, rootRef, thumbRef, rootElement, thumbElement, rootProps, thumbProps } =
-    useSlider<VolumeSliderCore.State>({
-      computeState: (interaction) => {
-        if (!volume) {
-          return core.getState(interaction, 0) as VolumeSliderCore.State;
-        }
-        return core.getVolumeState(volume, interaction);
-      },
-      getPercent: () => (volume ? volume.volume * 100 : 0),
-      getStepPercent: () => step,
-      getLargeStepPercent: () => largeStep,
-      orientation,
-      disabled,
-      onValueChange: (percent) => {
-        try {
-          mediaRef.current?.changeVolume(percent / 100);
-        } catch {
-          // Silently ignore — media target may not be attached yet.
-        }
-      },
-      onValueCommit: (percent) => {
-        try {
-          mediaRef.current?.changeVolume(percent / 100);
-        } catch {
-          // Silently ignore — media target may not be attached yet.
-        }
-      },
-      onDragStart,
-      onDragEnd,
-    });
+  const { state, cssVars, rootRef, thumbRef, rootProps, thumbProps } = useSlider<VolumeSliderCore.State>({
+    computeState: (interaction) => {
+      if (!volume) {
+        return core.getState(interaction, 0) as VolumeSliderCore.State;
+      }
+      return core.getVolumeState(volume, interaction);
+    },
+    getPercent: () => (volume ? volume.volume * 100 : 0),
+    getStepPercent: () => step,
+    getLargeStepPercent: () => largeStep,
+    orientation,
+    disabled,
+    adjustPercent: (rawPercent, thumbSize, trackSize) =>
+      core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
+    getCSSVars: getSliderCSSVars,
+    onValueChange: (percent) => {
+      try {
+        mediaRef.current?.changeVolume(percent / 100);
+      } catch {
+        // Silently ignore — media target may not be attached yet.
+      }
+    },
+    onValueCommit: (percent) => {
+      try {
+        mediaRef.current?.changeVolume(percent / 100);
+      } catch {
+        // Silently ignore — media target may not be attached yet.
+      }
+    },
+    onDragStart,
+    onDragEnd,
+  });
 
   if (!volume) {
     if (__DEV__) logMissingFeature('VolumeSlider', 'volume');
     return null;
   }
-
-  // Adjust CSS var percents for edge thumb alignment (requires DOM measurement).
-  const rootEl = rootElement.current;
-  const thumbEl = thumbElement.current;
-  let cssState = state;
-
-  if (state.thumbAlignment === 'edge' && rootEl && thumbEl) {
-    const isH = state.orientation === 'horizontal';
-    const thumbSize = isH ? thumbEl.offsetWidth : thumbEl.offsetHeight;
-    const trackSize = isH ? rootEl.offsetWidth : rootEl.offsetHeight;
-    cssState = {
-      ...state,
-      fillPercent: core.adjustPercentForAlignment(state.fillPercent, thumbSize, trackSize),
-      pointerPercent: core.adjustPercentForAlignment(state.pointerPercent, thumbSize, trackSize),
-    };
-  }
-
-  const cssVars = getSliderCSSVars(cssState);
 
   return (
     <SliderProvider
@@ -111,7 +95,7 @@ export const VolumeSliderRoot = forwardRef(function VolumeSliderRoot(
         thumbRef,
         thumbProps,
         stateAttrMap: SliderDataAttrs,
-        getAttrs: (s) => core.getAttrs(s as VolumeSliderCore.State),
+        getAttrs: (sliderState) => core.getAttrs(sliderState as VolumeSliderCore.State),
         formatValue: (value) => `${Math.round(value)}%`,
       }}
     >

@@ -49,10 +49,9 @@ export const SliderRoot = forwardRef(function SliderRoot(
 
   const {
     state,
+    cssVars,
     rootRef,
     thumbRef: sliderThumbRef,
-    rootElement,
-    thumbElement,
     rootProps,
     thumbProps,
   } = useSlider({
@@ -62,29 +61,14 @@ export const SliderRoot = forwardRef(function SliderRoot(
     getLargeStepPercent: () => (resolvedLargeStep / range) * 100,
     orientation,
     disabled,
+    adjustPercent: (rawPercent, thumbSize, trackSize) =>
+      core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
+    getCSSVars: getSliderCSSVars,
     onValueChange: (percent) => onValueChange?.(core.valueFromPercent(percent)),
     onValueCommit: (percent) => onValueCommit?.(core.valueFromPercent(percent)),
     onDragStart,
     onDragEnd,
   });
-
-  // Adjust CSS var percents for edge thumb alignment (requires DOM measurement).
-  const rootEl = rootElement.current;
-  const thumbEl = thumbElement.current;
-  let cssState = state;
-
-  if (state.thumbAlignment === 'edge' && rootEl && thumbEl) {
-    const isH = state.orientation === 'horizontal';
-    const thumbSize = isH ? thumbEl.offsetWidth : thumbEl.offsetHeight;
-    const trackSize = isH ? rootEl.offsetWidth : rootEl.offsetHeight;
-    cssState = {
-      ...state,
-      fillPercent: core.adjustPercentForAlignment(state.fillPercent, thumbSize, trackSize),
-      pointerPercent: core.adjustPercentForAlignment(state.pointerPercent, thumbSize, trackSize),
-    };
-  }
-
-  const cssVars = getSliderCSSVars(cssState);
 
   return (
     <SliderProvider
@@ -93,7 +77,7 @@ export const SliderRoot = forwardRef(function SliderRoot(
         thumbRef: sliderThumbRef,
         thumbProps,
         stateAttrMap: SliderDataAttrs,
-        getAttrs: (s) => core.getAttrs(s),
+        getAttrs: (sliderState) => core.getAttrs(sliderState),
         formatValue: undefined,
       }}
     >

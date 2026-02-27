@@ -874,11 +874,11 @@ describe('createSlider', () => {
     });
   });
 
-  describe('seekThrottle', () => {
-    it('does not fire onValueCommit during drag when seekThrottle is 0', () => {
+  describe('commitThrottle', () => {
+    it('does not fire onValueCommit during drag when commitThrottle is 0', () => {
       const onValueCommit = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, seekThrottle: 0 }));
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, commitThrottle: 0 }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueCommit.mockClear();
@@ -893,12 +893,12 @@ describe('createSlider', () => {
       slider.destroy();
     });
 
-    it('fires throttled onValueCommit during drag when seekThrottle > 0', () => {
+    it('fires throttled onValueCommit during drag when commitThrottle > 0', () => {
       vi.useFakeTimers();
 
       const onValueCommit = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, seekThrottle: 100 }));
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, commitThrottle: 100 }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueCommit.mockClear();
@@ -928,7 +928,7 @@ describe('createSlider', () => {
 
       const onValueCommit = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, seekThrottle: 100 }));
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, commitThrottle: 100 }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueCommit.mockClear();
@@ -957,7 +957,7 @@ describe('createSlider', () => {
 
       const onValueCommit = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, seekThrottle: 100 }));
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, commitThrottle: 100 }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueCommit.mockClear();
@@ -984,7 +984,7 @@ describe('createSlider', () => {
 
       const onValueCommit = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, seekThrottle: 100 }));
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, commitThrottle: 100 }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueCommit.mockClear();
@@ -1014,7 +1014,7 @@ describe('createSlider', () => {
 
       const onValueCommit = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, seekThrottle: 100 }));
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, commitThrottle: 100 }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueCommit.mockClear();
@@ -1037,7 +1037,7 @@ describe('createSlider', () => {
 
       const onValueCommit = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, seekThrottle: 100 }));
+      const slider = createSlider(createOptions({ getElement: () => el, onValueCommit, commitThrottle: 100 }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       onValueCommit.mockClear();
@@ -1058,7 +1058,7 @@ describe('createSlider', () => {
 
     it('does not throttle keyboard commits', () => {
       const onValueCommit = vi.fn();
-      const slider = createSlider(createOptions({ getPercent: () => 50, onValueCommit, seekThrottle: 100 }));
+      const slider = createSlider(createOptions({ getPercent: () => 50, onValueCommit, commitThrottle: 100 }));
 
       slider.thumbProps.onKeyDown(keyboardEvent('ArrowRight'));
 
@@ -1069,12 +1069,12 @@ describe('createSlider', () => {
       slider.destroy();
     });
 
-    it('defaults seekThrottle to 0 when not provided', () => {
+    it('defaults commitThrottle to 0 when not provided', () => {
       vi.useFakeTimers();
 
       const onValueCommit = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
-      // No seekThrottle option — should default to 0 (disabled)
+      // No commitThrottle option — should default to 0 (disabled)
       const slider = createSlider(createOptions({ getElement: () => el, onValueCommit }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
