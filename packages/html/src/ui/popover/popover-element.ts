@@ -1,4 +1,4 @@
-import { PopoverCore, PopoverDataAttrs, type PopoverProps, type PopoverRootProps } from '@videojs/core';
+import { PopoverCore, PopoverDataAttrs, type PopoverProps } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -9,15 +9,11 @@ import {
   type PopoverChangeDetails,
   resolveOffsets,
 } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyValues } from '@videojs/element';
 import { SnapshotController } from '@videojs/store/html';
 import { applyStyles } from '@videojs/utils/dom';
 
 import { MediaElement } from '../media-element';
-
-export interface PopoverElementProps extends PopoverRootProps {
-  collisionBoundary?: string | undefined;
-}
 
 export class PopoverElement extends MediaElement {
   static readonly tagName = 'media-popover';
@@ -33,9 +29,7 @@ export class PopoverElement extends MediaElement {
     openOnHover: { type: Boolean, attribute: 'open-on-hover' },
     delay: { type: Number },
     closeDelay: { type: Number, attribute: 'close-delay' },
-    collisionPadding: { type: Number, attribute: 'collision-padding' },
-    collisionBoundary: { type: String, attribute: 'collision-boundary' },
-  } satisfies PropertyDeclarationMap<keyof PopoverElementProps>;
+  };
 
   // Controlled/uncontrolled
   open = false;
@@ -47,15 +41,11 @@ export class PopoverElement extends MediaElement {
   modal: PopoverProps['modal'] = PopoverCore.defaultProps.modal;
   closeOnEscape = PopoverCore.defaultProps.closeOnEscape;
   closeOnOutsideClick = PopoverCore.defaultProps.closeOnOutsideClick;
-  collisionPadding = PopoverCore.defaultProps.collisionPadding;
 
   // Hover props
   openOnHover = false;
   delay = 300;
   closeDelay = 0;
-
-  // HTML-only: element ID for collision boundary lookup
-  collisionBoundary: string | null = null;
 
   readonly #core = new PopoverCore();
   #popover: Popover | null = null;
@@ -159,8 +149,7 @@ export class PopoverElement extends MediaElement {
     const posOpts = { side: state.side, align: state.align };
     const triggerRect = this.#currentTrigger?.getBoundingClientRect();
     const selfRect = this.getBoundingClientRect();
-    const boundaryEl = this.#findBoundary();
-    const boundaryRect = boundaryEl?.getBoundingClientRect() ?? document.documentElement.getBoundingClientRect();
+    const boundaryRect = document.documentElement.getBoundingClientRect();
     const offsets = resolveOffsets(this);
 
     applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, selfRect, boundaryRect, offsets));
@@ -198,13 +187,5 @@ export class PopoverElement extends MediaElement {
     this.#triggerAc?.abort();
     this.#triggerAc = null;
     this.#currentTrigger = null;
-  }
-
-  // --- Boundary lookup ---
-
-  #findBoundary(): HTMLElement | null {
-    if (!this.collisionBoundary) return null;
-    const root = this.getRootNode() as Document | ShadowRoot;
-    return root.getElementById(this.collisionBoundary);
   }
 }

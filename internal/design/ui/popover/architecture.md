@@ -54,7 +54,6 @@ interface PopoverProps {
   modal?: boolean | 'trap-focus'; // default: false
   closeOnEscape?: boolean;       // default: true
   closeOnOutsideClick?: boolean; // default: true
-  collisionPadding?: number;     // default: 0
 }
 // Offsets (sideOffset, alignOffset) are CSS-var-only — not props.
 // Set via --media-popover-side-offset / --media-popover-align-offset.

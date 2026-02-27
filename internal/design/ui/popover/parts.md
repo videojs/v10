@@ -29,7 +29,6 @@ import { Popover } from '@videojs/react';
 | `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled). |
 | `side` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'top'` | Preferred side relative to trigger. |
 | `align` | `'start' \| 'center' \| 'end'` | `'center'` | Alignment along the specified side. |
-| `collisionPadding` | `number` | `0` | Minimum distance from boundary edges (px). |
 | `modal` | `boolean \| 'trap-focus'` | `false` | Modal behavior. See [index.md — Modal Behavior](index.md#modal-behavior). |
 | `closeOnEscape` | `boolean` | `true` | Close on Escape key. |
 | `closeOnOutsideClick` | `boolean` | `true` | Close on click outside trigger and popup. |
@@ -80,8 +79,6 @@ import '@videojs/html/ui/popover';
 | `default-open` | Boolean | `false` | `defaultOpen` prop |
 | `side` | String | `'top'` | `side` prop |
 | `align` | String | `'center'` | `align` prop |
-| `collision-padding` | Number | `0` | `collisionPadding` prop |
-| `collision-boundary` | String | — | Element ID for boundary lookup |
 | `modal` | String | `false` | `modal` prop |
 | `close-on-escape` | Boolean | `true` | `closeOnEscape` prop |
 | `close-on-outside-click` | Boolean | `true` | `closeOnOutsideClick` prop |
@@ -132,10 +129,6 @@ On the discovered trigger:
 ### Positioning
 
 Positioning styles are applied directly to the `<media-popover>` element. The element IS the popup that enters the top layer via the Popover API. See the [Positioning section in architecture.md](architecture.md#positioning) for details on CSS Anchor vs manual fallback.
-
-### Collision Boundary
-
-The `collision-boundary` attribute accepts an element ID. The referenced element's bounding rect is used as the boundary for manual positioning. When not set, defaults to `document.documentElement`.
 
 ### Renders
 
