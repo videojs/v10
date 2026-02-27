@@ -400,7 +400,7 @@ function getAnchorPositionStyle(
   anchorName: string,
   opts: PositioningOptions,
   triggerRect?: DOMRect,
-  positionerRect?: DOMRect,
+  popupRect?: DOMRect,
   boundaryRect?: DOMRect,
   offsets?: ManualOffsets,
 ): Record<string, string>;
@@ -418,7 +418,7 @@ function getPopoverCSSVars(
 // Manual JS computation
 function getManualPositionStyle(
   triggerRect: DOMRect,
-  positionerRect: DOMRect,
+  popupRect: DOMRect,
   opts: PositioningOptions,
   offsets?: ManualOffsets,
 ): Record<string, string>;
@@ -507,7 +507,6 @@ packages/core/src/core/ui/popover/
 ├── popover-core.ts             # PopoverCore class
 ├── popover-css-vars.ts         # PopoverCSSVars constant
 ├── popover-data-attrs.ts       # PopoverDataAttrs constant
-├── index.ts                    # barrel exports
 └── tests/
     └── popover-core.test.ts
 
