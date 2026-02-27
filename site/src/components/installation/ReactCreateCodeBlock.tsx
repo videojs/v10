@@ -41,18 +41,39 @@ function getSkinImportParts(skin: Skin): { group: string; skinFile: string } {
   return { group: skin, skinFile: 'skin' };
 }
 
-function getProviderComponent(useCase: UseCase): string {
+function getUseCaseFeatures(useCase: UseCase): string {
   const map: Record<UseCase, string> = {
-    'default-video': 'VideoProvider',
-    'default-audio': 'AudioProvider',
-    'background-video': 'BackgroundVideoProvider',
+    'default-video': 'video',
+    'default-audio': 'audio',
+    'background-video': 'background',
   };
   return map[useCase];
 }
 
+function isPresetRenderer(renderer: Renderer): boolean {
+  return renderer === 'html5-video' || renderer === 'html5-audio' || renderer === 'background-video';
+}
+
+function getRendererMediaSubpath(renderer: Renderer): string {
+  const map: Partial<Record<Renderer, string>> = {
+    cloudflare: 'cloudflare-video',
+    dash: 'dash-video',
+    hls: 'hls-video',
+    jwplayer: 'jwplayer-video',
+    'mux-audio': 'mux-audio',
+    'mux-background-video': 'mux-background-video',
+    'mux-video': 'mux-video',
+    spotify: 'spotify-audio',
+    vimeo: 'vimeo-video',
+    wistia: 'wistia-video',
+    youtube: 'youtube-video',
+  };
+  return map[renderer] ?? renderer;
+}
+
 function generateReactCode(useCase: UseCase, skin: Skin, renderer: Renderer, playbackId: string | null): string {
-  const providerComponent = getProviderComponent(useCase);
   const rendererComponent = getRendererComponent(renderer);
+  const featureType = getUseCaseFeatures(useCase);
 
   // Background video has fixed skin and subpath imports, others use skin picker value
   const isBackgroundVideo = useCase === 'background-video';
@@ -61,7 +82,20 @@ function generateReactCode(useCase: UseCase, skin: Skin, renderer: Renderer, pla
   const skinCssImport = isBackgroundVideo
     ? '@videojs/react/background/skin.css'
     : `@videojs/react/${group}/${skinFile}.css`;
-  const componentImportPath = isBackgroundVideo ? '@videojs/react/background' : '@videojs/react';
+
+  // Preset subpath where skin + default media components live
+  const presetSubpath = isBackgroundVideo ? 'background' : group;
+
+  // Skin and media imports — preset renderers share a subpath with the skin
+  let presetImport: string;
+  let mediaImport: string | null = null;
+
+  if (isPresetRenderer(renderer)) {
+    presetImport = `import { ${skinComponent}, ${rendererComponent} } from '@videojs/react/${presetSubpath}';`;
+  } else {
+    presetImport = `import { ${skinComponent} } from '@videojs/react/${presetSubpath}';`;
+    mediaImport = `import { ${rendererComponent} } from '@videojs/react/media/${getRendererMediaSubpath(renderer)}';`;
+  }
 
   // Determine props based on renderer + playbackId
   const isMuxWithPlaybackId =
@@ -74,27 +108,26 @@ function generateReactCode(useCase: UseCase, skin: Skin, renderer: Renderer, pla
     ? `<${rendererComponent} playbackId={playbackId} />`
     : `<${rendererComponent} src={src} />`;
 
-  return `import '${skinCssImport}';
-import { ${providerComponent}, ${skinComponent}, ${rendererComponent} } from '${componentImportPath}';
+  const imports = [
+    `import '${skinCssImport}';`,
+    `import { createPlayer, features } from '@videojs/react';`,
+    presetImport,
+    ...(mediaImport ? [mediaImport] : []),
+  ].join('\n');
+
+  return `${imports}
+
+const Player = createPlayer({ features: features.${featureType} });
 
 ${propsInterface}
 
 export const MyPlayer = ({ ${destructuredProp} }: MyPlayerProps) => {
   return (
-    {/* The Provider passes state between the UI components
-        and the Media, and makes fully custom UIs possible.
-        Does not render its own HTML element. */}
-    <${providerComponent}>
-      {/* Skins contain the entire player UI and are easily swappable.
-          They can each be "ejected" for full control and customization
-          of UI components. */}
+    <Player.Provider>
       <${skinComponent}>
-        {/* Media are players without UIs, handling networking
-            and display of the media.
-            They are easily swappable to handle different sources. */}
         ${rendererJsx}
       </${skinComponent}>
-    </${providerComponent}>
+    </Player.Provider>
   );
 };`;
 }
