@@ -17,6 +17,56 @@ export interface EndOfStreamOwners {
   audioBuffer?: SourceBuffer;
 }
 
+// ## When to call endOfStream()
+//
+// Per the MSE spec, endOfStream() should be called once the last media
+// segments — temporally speaking — have been completely appended to all
+// active SourceBuffers. Specifically it signals two things:
+//   1. The temporally latest segments for both audio and video have been
+//      appended (i.e. the buffer covers the end of the stream content).
+//   2. The MediaSource will transition from 'open' to 'ended'. Appending
+//      additional (earlier) segments after this — e.g. for a seek-back or
+//      back-buffer refill — will re-open the MediaSource, at which point
+//      endOfStream() must be called again once loading reaches the end.
+//
+// The browser uses this signal to finalise MediaSource.duration and allow
+// the media element to fire the `ended` event. Without it, playback stalls
+// at the end of the buffered range waiting for data that will never arrive.
+//
+// The "any track" qualifier is intentional: per the HLS spec, all renditions
+// in a switching set are time-aligned, so the last segment of any rendition
+// covers the same end-of-stream content. We don't need to be tied to the
+// currently selected track.
+//
+// The right long-term condition is therefore:
+//   - The last segment of the video content (from any resolved video track)
+//     has been completely appended to the video SourceBuffer, AND
+//   - The last segment of the audio content (from any resolved audio track)
+//     has been completely appended to the audio SourceBuffer (when active), AND
+//   - currentTime is within the time range of that last segment.
+//
+// The currentTime gate prevents unnecessary re-invocations when back-buffer
+// refills or other mid-stream appends briefly re-open the MediaSource while
+// the user is far from the end.
+//
+// ## Current implementation (known limitation)
+//
+// The current implementation uses a `completed` flag on SourceBufferState
+// rather than checking segment IDs directly against any resolved track.
+// `completed` is set by the loadSegments run-loop when it exits after
+// loading the last segment of the *currently selected* track — a reasonable
+// proxy but one that couples end-of-stream detection to track selection.
+//
+// This creates a gap during quality switches: `completed` can remain true
+// from the prior track while the new track is still unresolved, which would
+// cause a premature endOfStream() call. The unresolved-track guard in
+// hasLastSegmentLoaded patches this symptom.
+//
+// The intended refactor is to replace the `completed` check with a direct
+// segment ID lookup (does bufferState.{video,audio}.segments contain the
+// last segment ID of any resolved track?) combined with the currentTime
+// gate, eliminating the dependency on the selected track entirely.
+
 /**
  * Check if the loading pipeline has completed for a track.
  *
@@ -26,6 +76,10 @@ export interface EndOfStreamOwners {
  * The flag is reset to false whenever a new loading run begins, so a
  * stale last-segment ID from a prior play-through cannot trigger a
  * premature endOfStream() call.
+ *
+ * @todo Replace with a direct segment ID lookup against any resolved track
+ * combined with a currentTime gate. See the ## When to call endOfStream()
+ * comment above.
  */
 function isLastSegmentAppended(
   segments: readonly { id: string }[],
@@ -44,6 +98,13 @@ function isLastSegmentAppended(
 export function hasLastSegmentLoaded(state: EndOfStreamState): boolean {
   const videoTrack = state.selectedVideoTrackId ? getSelectedTrack(state, 'video') : undefined;
   const audioTrack = state.selectedAudioTrackId ? getSelectedTrack(state, 'audio') : undefined;
+
+  // An unresolved track means we don't yet know its segments — cannot be done.
+  // This guards against premature endOfStream() during a quality switch, where
+  // selectedVideoTrackId has changed to a new track whose playlist hasn't been
+  // fetched yet, while the old buffer's completed flag is still true.
+  if (videoTrack && !isResolvedTrack(videoTrack)) return false;
+  if (audioTrack && !isResolvedTrack(audioTrack)) return false;
 
   if (videoTrack && isResolvedTrack(videoTrack)) {
     if (!isLastSegmentAppended(videoTrack.segments, state.bufferState?.video)) return false;
