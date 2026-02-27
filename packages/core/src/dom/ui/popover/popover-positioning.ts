@@ -43,7 +43,7 @@ export function getAnchorPositionStyle(
   anchorName: string,
   opts: PositioningOptions,
   triggerRect?: DOMRect,
-  positionerRect?: DOMRect,
+  popupRect?: DOMRect,
   boundaryRect?: DOMRect,
   offsets?: ManualOffsets
 ): Record<string, string> {
@@ -52,10 +52,10 @@ export function getAnchorPositionStyle(
   }
 
   // JS fallback when CSS Anchor Positioning is not supported.
-  if (triggerRect && positionerRect) {
+  if (triggerRect && popupRect) {
     const resolved: ManualOffsets = offsets ?? { sideOffset: 0, alignOffset: 0 };
     return {
-      ...getManualPositionStyle(triggerRect, positionerRect, opts, resolved),
+      ...getManualPositionStyle(triggerRect, popupRect, opts, resolved),
       ...(boundaryRect ? getPopoverCSSVars(triggerRect, boundaryRect, opts.side) : {}),
       position: 'fixed',
       // Reset UA [popover] defaults (inset: 0; margin: auto) which would
