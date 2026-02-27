@@ -1,4 +1,4 @@
-import { PopoverCore, PopoverDataAttrs, type PopoverProps } from '@videojs/core';
+import { PopoverCore, PopoverDataAttrs, type PopoverInteraction, type PopoverProps } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -23,7 +23,7 @@ export class PopoverElement extends MediaElement {
     defaultOpen: { type: Boolean, attribute: 'default-open' },
     side: { type: String },
     align: { type: String },
-    modal: { type: String },
+    modal: { type: Boolean },
     closeOnEscape: { type: Boolean, attribute: 'close-on-escape' },
     closeOnOutsideClick: { type: Boolean, attribute: 'close-on-outside-click' },
     openOnHover: { type: Boolean, attribute: 'open-on-hover' },
@@ -49,6 +49,7 @@ export class PopoverElement extends MediaElement {
 
   readonly #core = new PopoverCore();
   #popover: Popover | null = null;
+  #snapshot: SnapshotController<PopoverInteraction> | null = null;
 
   // Cleanup controllers
   #disconnect: AbortController | null = null;
@@ -78,9 +79,13 @@ export class PopoverElement extends MediaElement {
     applyElementProps(this, this.#popover.popupProps, this.#disconnect.signal);
 
     // Subscribe to interaction state for reactive updates.
-    // The controller adds itself to the host and triggers requestUpdate()
-    // on state changes — no need to store the reference.
-    new SnapshotController(this, this.#popover.interaction);
+    // Reuse the controller across connect/disconnect cycles to avoid
+    // leaking stale controllers in the host's controller set.
+    if (this.#snapshot) {
+      this.#snapshot.track(this.#popover.interaction);
+    } else {
+      this.#snapshot = new SnapshotController(this, this.#popover.interaction);
+    }
 
     // Determine initial open state: controlled mode uses the `open`
     // attribute, uncontrolled mode uses `defaultOpen`.
