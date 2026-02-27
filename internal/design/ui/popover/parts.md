@@ -79,7 +79,7 @@ import '@videojs/html/ui/popover';
 | `default-open` | Boolean | `false` | `defaultOpen` prop |
 | `side` | String | `'top'` | `side` prop |
 | `align` | String | `'center'` | `align` prop |
-| `modal` | String | `false` | `modal` prop |
+| `modal` | Boolean | `false` | `modal` prop |
 | `close-on-escape` | Boolean | `true` | `closeOnEscape` prop |
 | `close-on-outside-click` | Boolean | `true` | `closeOnOutsideClick` prop |
 | `open-on-hover` | Boolean | `false` | `openOnHover` prop |
@@ -123,6 +123,7 @@ On the discovered trigger:
 | Attribute | Values | Description |
 | --------- | ------ | ----------- |
 | `data-open` | present/absent | Popover is open. |
+| `data-transition-status` | `closed` / `opening` / `open` / `closing` | Current transition phase. |
 | `data-side` | `top` / `bottom` / `left` / `right` | Current positioning side. |
 | `data-align` | `start` / `center` / `end` | Current alignment. |
 
@@ -180,6 +181,7 @@ The UI layer also sets `type="button"` on the rendered element.
 | Attribute | Values | Description |
 | --------- | ------ | ----------- |
 | `data-open` | present/absent | Popover is open. |
+| `data-transition-status` | `closed` / `opening` / `open` / `closing` | Current transition phase. |
 | `data-side` | `top` / `bottom` / `left` / `right` | Current positioning side. |
 | `data-align` | `start` / `center` / `end` | Current alignment. |
 
@@ -243,6 +245,7 @@ Set by `PopoverCore.getPopupAttrs()`:
 | Attribute | Values | Description |
 | --------- | ------ | ----------- |
 | `data-open` | present/absent | Popover is open. |
+| `data-transition-status` | `closed` / `opening` / `open` / `closing` | Current transition phase. |
 | `data-side` | `top` / `bottom` / `left` / `right` | Current positioning side. |
 | `data-align` | `start` / `center` / `end` | Current alignment. |
 
@@ -330,6 +333,7 @@ Plus all native `<div>` props.
 | Attribute | Values | Description |
 | --------- | ------ | ----------- |
 | `data-open` | present/absent | Popover is open. |
+| `data-transition-status` | `closed` / `opening` / `open` / `closing` | Current transition phase. |
 | `data-side` | `top` / `bottom` / `left` / `right` | Current positioning side. |
 | `data-align` | `start` / `center` / `end` | Current alignment. |
 
@@ -338,26 +342,27 @@ Plus all native `<div>` props.
 Use `data-side` to rotate the arrow based on popover position:
 
 ```css
-[data-popover-arrow] {
+/* Target the arrow via className on <Popover.Arrow className="popover-arrow"> */
+.popover-arrow {
   width: 10px;
   height: 10px;
   background: white;
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
 }
 
-[data-popover-arrow][data-side="top"] {
+.popover-arrow[data-side="top"] {
   transform: rotate(180deg);
 }
 
-[data-popover-arrow][data-side="bottom"] {
+.popover-arrow[data-side="bottom"] {
   transform: rotate(0deg);
 }
 
-[data-popover-arrow][data-side="left"] {
+.popover-arrow[data-side="left"] {
   transform: rotate(90deg);
 }
 
-[data-popover-arrow][data-side="right"] {
+.popover-arrow[data-side="right"] {
   transform: rotate(-90deg);
 }
 ```

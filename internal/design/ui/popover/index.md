@@ -101,8 +101,7 @@ These are **input values** — set them in CSS to control positioning. The CSS A
 
 ```css
 /* Push the popup 8px away from the trigger */
-media-popover,
-[data-popover-popup] {
+media-popover {
   --media-popover-side-offset: 8px;
 }
 ```
@@ -122,8 +121,7 @@ Positioning (`top`/`left`) is applied directly as inline styles on the popup ele
 
 ```css
 /* Constrain popup size to available space */
-media-popover,
-[data-popover-popup] {
+media-popover {
   max-width: var(--media-popover-available-width);
   max-height: var(--media-popover-available-height);
 }
@@ -136,6 +134,7 @@ State is exposed through data attributes for CSS targeting. In HTML, applied to 
 | Attribute | Values | When |
 | --------- | ------ | ---- |
 | `data-open` | present/absent | Popover is open. |
+| `data-transition-status` | `closed` / `opening` / `open` / `closing` | Current transition phase. |
 | `data-side` | `top` / `bottom` / `left` / `right` | Which side the popover is positioned relative to the trigger. |
 | `data-align` | `start` / `center` / `end` | How the popover is aligned along the specified side. |
 
@@ -145,9 +144,10 @@ media-popover[data-side="top"] {
   /* arrow or content adjustments */
 }
 
-/* Style trigger when popover is open (React) */
-[data-popover-trigger][data-open] {
-  background: rgba(255, 255, 255, 0.2);
+/* Animate popover open/close via transition status */
+media-popover[data-transition-status="opening"],
+media-popover[data-transition-status="open"] {
+  opacity: 1;
 }
 ```
 
