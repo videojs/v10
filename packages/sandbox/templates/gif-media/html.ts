@@ -36,25 +36,9 @@ export class GifMediaElement extends HTMLElement {
     if (name === 'src') this.#gifMedia.src = value ?? '';
   }
 
-  // Media interface — duck-typed for feature system
+  // Minimal media interface — only what playbackFeature actually needs
   get paused(): boolean {
     return this.#gifMedia.paused;
-  }
-
-  get ended(): boolean {
-    return this.#gifMedia.ended;
-  }
-
-  get currentTime(): number {
-    return this.#gifMedia.currentTime;
-  }
-
-  get duration(): number {
-    return this.#gifMedia.duration;
-  }
-
-  get readyState(): number {
-    return this.#gifMedia.readyState;
   }
 
   play(): Promise<void> {
@@ -63,10 +47,6 @@ export class GifMediaElement extends HTMLElement {
 
   pause(): void {
     this.#gifMedia.pause();
-  }
-
-  load(): void {
-    this.#gifMedia.load();
   }
 
   // EventTarget delegation so listen() calls in features work correctly

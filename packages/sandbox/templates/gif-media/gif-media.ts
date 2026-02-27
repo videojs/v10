@@ -1,40 +1,20 @@
-import type { ParsedFrame } from 'gifuct-js';
+import type { ParsedFrame, ParsedGif } from 'gifuct-js';
 import { decompressFrames, parseGIF } from 'gifuct-js';
 
 export class GifMedia extends EventTarget {
   #src = '';
   #paused = true;
-  #readyState = 0;
+  #gif: ParsedGif | null = null;
   #frames: ParsedFrame[] = [];
   #frameIndex = 0;
   #canvas: HTMLCanvasElement | null = null;
   #tempCanvas: HTMLCanvasElement | null = null;
   #rafId: number | null = null;
-  #lastTime: number | null = null;
-  #elapsed = 0;
-  #gifWidth = 0;
-  #gifHeight = 0;
-  #loadAbort: AbortController | null = null;
+  #nextFrameAt = 0;
+  #loadGen = 0;
 
   get paused(): boolean {
     return this.#paused;
-  }
-
-  get ended(): boolean {
-    return false;
-  }
-
-  get currentTime(): number {
-    return 0;
-  }
-
-  get readyState(): number {
-    return this.#readyState;
-  }
-
-  get duration(): number {
-    if (this.#frames.length === 0) return 0;
-    return this.#frames.reduce((sum, f) => sum + f.delay * 10, 0) / 1000;
   }
 
   get src(): string {
@@ -50,11 +30,12 @@ export class GifMedia extends EventTarget {
 
   play(): Promise<void> {
     this.#paused = false;
-    if (this.#readyState >= 4) {
+    if (this.#frames.length > 0) {
       this.#start();
       this.dispatchEvent(new Event('play'));
       this.dispatchEvent(new Event('playing'));
     }
+    // If frames aren't loaded yet, #load() will start + dispatch when ready
     return Promise.resolve();
   }
 
@@ -65,21 +46,17 @@ export class GifMedia extends EventTarget {
     this.dispatchEvent(new Event('pause'));
   }
 
-  load(): void {
-    if (this.#src) this.#load(this.#src);
-  }
-
   attach(canvas: HTMLCanvasElement): void {
     this.detach();
     this.#canvas = canvas;
     this.#tempCanvas = document.createElement('canvas');
 
-    if (this.#gifWidth > 0) {
-      canvas.width = this.#gifWidth;
-      canvas.height = this.#gifHeight;
+    if (this.#gif) {
+      canvas.width = this.#gif.lsd.width;
+      canvas.height = this.#gif.lsd.height;
     }
 
-    if (this.#readyState >= 4 && this.#frames.length > 0) {
+    if (this.#frames.length > 0) {
       this.#drawFrame();
       if (!this.#paused) this.#start();
     }
@@ -92,37 +69,28 @@ export class GifMedia extends EventTarget {
   }
 
   #reset(): void {
-    this.#loadAbort?.abort();
-    this.#loadAbort = null;
+    this.#loadGen++;
     this.#stop();
+    this.#gif = null;
     this.#frames = [];
     this.#frameIndex = 0;
-    this.#elapsed = 0;
-    this.#readyState = 0;
-    this.#gifWidth = 0;
-    this.#gifHeight = 0;
   }
 
   async #load(src: string): Promise<void> {
-    this.#loadAbort?.abort();
-    const abort = new AbortController();
-    this.#loadAbort = abort;
-
+    const gen = this.#loadGen;
     try {
-      const resp = await fetch(src, { signal: abort.signal });
+      const resp = await fetch(src);
+      if (gen !== this.#loadGen) return;
       const buffer = await resp.arrayBuffer();
-
-      if (abort.signal.aborted) return;
+      if (gen !== this.#loadGen) return;
 
       const gif = parseGIF(buffer);
+      this.#gif = gif;
       this.#frames = decompressFrames(gif, true);
-      this.#gifWidth = gif.lsd.width;
-      this.#gifHeight = gif.lsd.height;
-      this.#readyState = 4;
 
       if (this.#canvas) {
-        this.#canvas.width = this.#gifWidth;
-        this.#canvas.height = this.#gifHeight;
+        this.#canvas.width = gif.lsd.width;
+        this.#canvas.height = gif.lsd.height;
         this.#drawFrame();
       }
 
@@ -131,8 +99,8 @@ export class GifMedia extends EventTarget {
         this.dispatchEvent(new Event('play'));
         this.dispatchEvent(new Event('playing'));
       }
-    } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') return;
+    } catch {
+      if (gen !== this.#loadGen) return;
       this.dispatchEvent(new Event('error'));
     }
   }
@@ -140,8 +108,7 @@ export class GifMedia extends EventTarget {
   #start(): void {
     if (!this.#canvas || this.#frames.length === 0) return;
     this.#stop();
-    this.#lastTime = null;
-    this.#elapsed = 0;
+    this.#nextFrameAt = performance.now() + (this.#frames[this.#frameIndex]?.delay ?? 100);
     this.#rafId = requestAnimationFrame(this.#tick);
   }
 
@@ -150,31 +117,15 @@ export class GifMedia extends EventTarget {
       cancelAnimationFrame(this.#rafId);
       this.#rafId = null;
     }
-    this.#lastTime = null;
   }
 
   #tick = (timestamp: number): void => {
     if (this.#paused || !this.#canvas) return;
-
-    if (this.#lastTime === null) {
-      this.#lastTime = timestamp;
-    }
-
-    const delta = timestamp - this.#lastTime;
-    this.#lastTime = timestamp;
-    this.#elapsed += delta;
-
-    const frame = this.#frames[this.#frameIndex];
-    // gifuct-js already converts GCE centiseconds → ms internally
-    // (and clamps 0-delay frames to 100ms, matching browser behavior)
-    const frameDelay = frame?.delay ?? 100;
-
-    if (this.#elapsed >= frameDelay) {
-      this.#elapsed -= frameDelay;
+    if (timestamp >= this.#nextFrameAt) {
       this.#frameIndex = (this.#frameIndex + 1) % this.#frames.length;
+      this.#nextFrameAt = timestamp + (this.#frames[this.#frameIndex]?.delay ?? 100);
       this.#drawFrame();
     }
-
     this.#rafId = requestAnimationFrame(this.#tick);
   };
 
