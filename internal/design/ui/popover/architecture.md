@@ -29,12 +29,9 @@ Internal structure of the popover component system.
   │                       │             │                            │
   │  Popover.Root         │             │  <media-popover>           │
   │  Popover.Trigger      │             │  (self-contained)          │
-  │  Popover.Positioner*  │             │                            │
   │  Popover.Popup        │             │                            │
   │  Popover.Arrow        │             │                            │
   └───────────────────────┘             └────────────────────────────┘
-
-  * Positioner is a transparent pass-through (no DOM element)
 ```
 
 State flows top-down: Core computes state and ARIA -> DOM layer handles open/close interaction and positioning -> UI renders.
@@ -436,7 +433,6 @@ function getManualPositionStyle(
   │                                                              │
   │  Children read context:                                      │
   │  → Trigger: ARIA attrs, data attrs, anchor-name style        │
-  │  → Positioner: pass-through (no DOM, returns children)       │
   │  → Popup: positioning + dialog role + popover API + events   │
   │  → Arrow: data attrs only                                    │
   └─────────────────────────────────────────────────────────────┘
@@ -500,11 +496,10 @@ packages/core/src/dom/ui/popover/
 ```
 packages/react/src/ui/popover/
 ├── index.ts                    # export * as Popover from './index.parts'
-├── index.parts.ts              # export { Root, Trigger, Positioner, Popup, Arrow }
+├── index.parts.ts              # export { Root, Trigger, Popup, Arrow }
 ├── popover-context.tsx         # PopoverContext, usePopoverContext
 ├── popover-root.tsx            # Popover.Root (provider, no DOM)
 ├── popover-trigger.tsx         # Popover.Trigger (<button>)
-├── popover-positioner.tsx      # Popover.Positioner (pass-through, no DOM)
 ├── popover-popup.tsx           # Popover.Popup (<div>, positioning + popover API)
 └── popover-arrow.tsx           # Popover.Arrow (<div>)
 ```

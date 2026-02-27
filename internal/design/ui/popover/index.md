@@ -28,7 +28,7 @@ These all share mechanics (open/close, positioning relative to a trigger, keyboa
 
 Requirements:
 
-- Compound and composable — users assemble parts, omit what they don't need
+- Composable — users assemble parts, omit what they don't need
 - Headless — no baked-in styles, CSS custom properties for positioning output
 - Accessible — `role="dialog"`, `aria-expanded` on trigger, keyboard Escape to close
 - Two interaction modes — click-to-toggle and hover-to-open (with configurable delays)
@@ -45,12 +45,10 @@ import { Popover } from '@videojs/react';
 
 <Popover.Root>
   <Popover.Trigger>Settings</Popover.Trigger>
-  <Popover.Positioner>
-    <Popover.Popup>
-      <Popover.Arrow />
-      {/* popover content */}
-    </Popover.Popup>
-  </Popover.Positioner>
+  <Popover.Popup>
+    <Popover.Arrow />
+    {/* popover content */}
+  </Popover.Popup>
 </Popover.Root>
 ```
 
@@ -143,7 +141,7 @@ Click the trigger to toggle open/close. Closes on Escape key or outside click.
 ```tsx
 <Popover.Root>
   <Popover.Trigger>Settings</Popover.Trigger>
-  {/* ... */}
+  <Popover.Popup>{/* ... */}</Popover.Popup>
 </Popover.Root>
 ```
 
@@ -154,7 +152,7 @@ Set `openOnHover` to open on pointer enter with configurable delays. Falls back 
 ```tsx
 <Popover.Root openOnHover delay={300} closeDelay={100}>
   <Popover.Trigger>Volume</Popover.Trigger>
-  {/* ... */}
+  <Popover.Popup>{/* ... */}</Popover.Popup>
 </Popover.Root>
 ```
 
@@ -162,7 +160,7 @@ Pointer entering the popup cancels pending close — users can move from trigger
 
 ## Accessibility
 
-The Trigger carries `aria-expanded` and `aria-haspopup="dialog"`, linked to the Popup via `aria-controls`. The Popup carries `role="dialog"` with conditional `aria-modal`.
+The trigger carries `aria-expanded` and `aria-haspopup="dialog"`, linked to the popup via `aria-controls`. The popup carries `role="dialog"` with conditional `aria-modal`.
 
 ```html
 <!-- Trigger with ARIA (applied automatically by <media-popover>) -->

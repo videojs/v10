@@ -1,6 +1,6 @@
 # Parts
 
-Full API for every part. HTML uses a single `<media-popover>` element. React uses a compound pattern with five parts.
+Full API for every part. HTML uses a single `<media-popover>` element. React uses a compound pattern with four parts.
 
 ## Root (React Only)
 
@@ -216,30 +216,6 @@ React: `<button>` with ARIA, data attrs, anchor-name style, and event handlers.
 
 ---
 
-## Positioner (React Only)
-
-Transparent pass-through component. In the current architecture, positioning lives on `PopoverPopup` (the element that enters the top layer via the Popover API). The Positioner is kept for backward compatibility and API symmetry but renders no DOM element.
-
-### React
-
-```tsx
-<Popover.Positioner>
-  <Popover.Popup>{/* ... */}</Popover.Popup>
-</Popover.Positioner>
-```
-
-### Props
-
-| Prop | Type | Default | Description |
-| ---- | ---- | ------- | ----------- |
-| `children` | `ReactNode` | — | Child elements (passed through). |
-
-### Renders
-
-React: No DOM element. Returns children directly.
-
----
-
 ## Popup (React Only)
 
 Content container. Carries the dialog role, positioning styles, and receives the native Popover API (`popover="manual"`). Handles visibility gating — returns `null` when closed and transitions complete.
@@ -413,14 +389,12 @@ import { Popover } from '@videojs/react';
 // Components
 Popover.Root
 Popover.Trigger
-Popover.Positioner  // transparent pass-through (no DOM)
-Popover.Popup       // positioned popup (enters top layer)
+Popover.Popup
 Popover.Arrow
 
 // Types (via namespace)
 Popover.RootProps
 Popover.TriggerProps
-Popover.PositionerProps
 Popover.PopupProps
 Popover.ArrowProps
 

@@ -1,9 +1,5 @@
 export { PopoverArrow as Arrow, type PopoverArrowProps as ArrowProps } from './popover-arrow';
 export { type PopoverContextValue, usePopoverContext } from './popover-context';
 export { PopoverPopup as Popup, type PopoverPopupProps as PopupProps } from './popover-popup';
-export {
-  PopoverPositioner as Positioner,
-  type PopoverPositionerProps as PositionerProps,
-} from './popover-positioner';
 export { PopoverRoot as Root, type PopoverRootProps as RootProps } from './popover-root';
 export { PopoverTrigger as Trigger, type PopoverTriggerProps as TriggerProps } from './popover-trigger';
