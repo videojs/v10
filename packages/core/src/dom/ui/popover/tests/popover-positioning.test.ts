@@ -31,110 +31,109 @@ function makeDOMRect(x: number, y: number, width: number, height: number): DOMRe
 }
 
 describe('getManualPositionStyle', () => {
-  const boundary = makeDOMRect(0, 0, 800, 600);
   const trigger = makeDOMRect(100, 200, 120, 40);
-  const positioner = makeDOMRect(0, 0, 200, 80);
+  const popup = makeDOMRect(0, 0, 200, 80);
 
   it('positions above trigger for side=top', () => {
-    const style = getManualPositionStyle(trigger, positioner, boundary, {
+    const style = getManualPositionStyle(trigger, popup, {
       side: 'top',
       align: 'center',
       sideOffset: 0,
       alignOffset: 0,
     });
 
-    // top = trigger.top - boundary.top - positioner.height - sideOffset = 200 - 0 - 80 - 0 = 120
+    // top = trigger.top - popup.height = 200 - 80 = 120
     expect(style.top).toBe('120px');
-    // left = trigger.left + (trigger.width - positioner.width)/2 = 100 + (120-200)/2 = 60
+    // left = trigger.left + (trigger.width - popup.width)/2 = 100 + (120-200)/2 = 60
     expect(style.left).toBe('60px');
   });
 
   it('positions below trigger for side=bottom', () => {
-    const style = getManualPositionStyle(trigger, positioner, boundary, {
+    const style = getManualPositionStyle(trigger, popup, {
       side: 'bottom',
       align: 'center',
       sideOffset: 0,
       alignOffset: 0,
     });
 
-    // top = trigger.bottom - boundary.top + sideOffset = 240 - 0 + 0 = 240
+    // top = trigger.bottom = 240
     expect(style.top).toBe('240px');
   });
 
   it('positions to the left of trigger for side=left', () => {
-    const style = getManualPositionStyle(trigger, positioner, boundary, {
+    const style = getManualPositionStyle(trigger, popup, {
       side: 'left',
       align: 'center',
       sideOffset: 0,
       alignOffset: 0,
     });
 
-    // left = trigger.left - boundary.left - positioner.width - sideOffset = 100 - 0 - 200 - 0 = -100
+    // left = trigger.left - popup.width = 100 - 200 = -100
     expect(style.left).toBe('-100px');
   });
 
   it('positions to the right of trigger for side=right', () => {
-    const style = getManualPositionStyle(trigger, positioner, boundary, {
+    const style = getManualPositionStyle(trigger, popup, {
       side: 'right',
       align: 'center',
       sideOffset: 0,
       alignOffset: 0,
     });
 
-    // left = trigger.right - boundary.left + sideOffset = 220 - 0 + 0 = 220
+    // left = trigger.right = 220
     expect(style.left).toBe('220px');
   });
 
   it('applies sideOffset for top side', () => {
-    const style = getManualPositionStyle(trigger, positioner, boundary, {
+    const style = getManualPositionStyle(trigger, popup, {
       side: 'top',
       align: 'center',
       sideOffset: 8,
       alignOffset: 0,
     });
 
-    // top = 200 - 0 - 80 - 8 = 112
+    // top = 200 - 80 - 8 = 112
     expect(style.top).toBe('112px');
   });
 
   it('applies sideOffset for bottom side', () => {
-    const style = getManualPositionStyle(trigger, positioner, boundary, {
+    const style = getManualPositionStyle(trigger, popup, {
       side: 'bottom',
       align: 'center',
       sideOffset: 8,
       alignOffset: 0,
     });
 
-    // top = 240 - 0 + 8 = 248
+    // top = 240 + 8 = 248
     expect(style.top).toBe('248px');
   });
 
   it('aligns to start for horizontal sides', () => {
-    const style = getManualPositionStyle(trigger, positioner, boundary, {
+    const style = getManualPositionStyle(trigger, popup, {
       side: 'top',
       align: 'start',
       sideOffset: 0,
       alignOffset: 0,
     });
 
-    // left = trigger.left - boundary.left + alignOffset = 100
+    // left = trigger.left = 100
     expect(style.left).toBe('100px');
   });
 
   it('aligns to end for horizontal sides', () => {
-    const style = getManualPositionStyle(trigger, positioner, boundary, {
+    const style = getManualPositionStyle(trigger, popup, {
       side: 'top',
       align: 'end',
       sideOffset: 0,
       alignOffset: 0,
     });
 
-    // left = trigger.right - boundary.left - positioner.width = 220 - 0 - 200 = 20
+    // left = trigger.right - popup.width = 220 - 200 = 20
     expect(style.left).toBe('20px');
   });
 
   it('applies alignOffset', () => {
-    const style = getManualPositionStyle(trigger, positioner, boundary, {
+    const style = getManualPositionStyle(trigger, popup, {
       side: 'top',
       align: 'start',
       sideOffset: 0,
@@ -146,14 +145,14 @@ describe('getManualPositionStyle', () => {
   });
 
   it('aligns vertically for left/right sides', () => {
-    const style = getManualPositionStyle(trigger, positioner, boundary, {
+    const style = getManualPositionStyle(trigger, popup, {
       side: 'right',
       align: 'start',
       sideOffset: 0,
       alignOffset: 0,
     });
 
-    // top = trigger.top - boundary.top + alignOffset = 200
+    // top = trigger.top = 200
     expect(style.top).toBe('200px');
   });
 });
@@ -234,7 +233,7 @@ describe('getAnchorPositionStyle', () => {
 
     expect(style.top).toBe('120px');
     expect(style.left).toBe('60px');
-    expect(style.position).toBe('absolute');
+    expect(style.position).toBe('fixed');
     // Also includes sizing CSS vars
     expect(style[PopoverCSSVars.anchorWidth]).toBe('120px');
   });
