@@ -442,6 +442,39 @@ export function loadSegments(
   let pendingSnapshot: [SegmentLoadingState, SegmentLoadingOwners] | null = null;
   let taskSegmentIds: Set<string> = new Set();
 
+  // ---------------------------------------------------------------------------
+  // TEMPORARY: Diagnostic logging for seek-stall investigation.
+  // Remove before merging back to feat/spf-f9-issue-434.
+  //
+  // HOW TO USE:
+  // 1. Open the spf-segment-loading sandbox (http://localhost:5173/spf-segment-loading/)
+  // 2. In DevTools console, filter by "[spf:load-video]" or "[spf:load-audio]"
+  // 3. Play the video, then seek rapidly to different positions
+  // 4. When the player gets stuck (spinner, no progress), stop seeking and
+  //    look at the last log lines.
+  //
+  // HEALTHY seek sequence looks like:
+  //   subscriber:fired        { taskActive: true, t: 15.3 }
+  //   subscriber:pending-stored
+  //   subscriber:seek-abort   { loading: [...], needed: [...] }   ← abort fired
+  //   subscriber:fired        { taskActive: false, t: 15.3 }      ← task ended
+  //   loop:start              { t: 15.3 }
+  //   loop:task-start         { segments: ['seg-6', 'seg-7', ...] }
+  //   loop:task-done
+  //   loop:exit — no pending snapshot
+  //   loop:currentTask=null
+  //
+  // STALL signatures to look for:
+  //   A) "loop:exit — shouldLoadSegments=false" with empty buffer at currentTime
+  //      → shouldLoadSegments thinks nothing is needed but buffer is actually empty
+  //   B) "subscriber:seek-check-skipped (taskSegmentIds empty)" during a seek
+  //      → seek was not detected; task may finish and find shouldLoadSegments=false
+  //        for the stale pending snapshot
+  //   C) "loop:currentTask=null" with no subsequent "subscriber:fired"
+  //      → loop exited but no further state change re-triggered the subscriber
+  // ---------------------------------------------------------------------------
+  const dbg = (...args: unknown[]) => console.log(`[spf:load-${type}]`, ...args);
+
   // Runs one or more sequential task iterations, picking up pending snapshots
   // after each completion. currentTask stays non-null for the entire duration
   // so subscribers always feed into pendingSnapshot rather than starting a
@@ -450,11 +483,23 @@ export function loadSegments(
     let currentState = initialState;
     let currentOwners = initialOwners;
 
+    dbg('loop:start', { t: currentState.currentTime });
+
     while (true) {
-      if (!shouldLoadSegments(currentState, currentOwners, type)) break;
+      if (!shouldLoadSegments(currentState, currentOwners, type)) {
+        dbg('loop:exit — shouldLoadSegments=false', {
+          t: currentState.currentTime,
+          canLoad: canLoadSegments(currentState, currentOwners, type),
+          hasTrack: !!getSelectedTrack(currentState, type),
+        });
+        break;
+      }
 
       const sourceBuffer = currentOwners[BufferKeyByType[type]];
-      if (!sourceBuffer) break;
+      if (!sourceBuffer) {
+        dbg('loop:exit — no sourceBuffer');
+        break;
+      }
 
       // Track which segments this iteration intends to load (for seek detection)
       const track = getSelectedTrack(currentState, type);
@@ -466,6 +511,8 @@ export function loadSegments(
         );
       }
 
+      dbg('loop:task-start', { t: currentState.currentTime, segments: [...taskSegmentIds] });
+
       abortController = new AbortController();
       currentTask = loadSegmentsTask(
         { currentState },
@@ -474,6 +521,8 @@ export function loadSegments(
 
       await currentTask;
 
+      dbg('loop:task-done', { aborted: abortController === null });
+
       abortController = null;
       taskSegmentIds = new Set();
 
@@ -481,31 +530,56 @@ export function loadSegments(
       const pending = pendingSnapshot;
       pendingSnapshot = null;
 
-      if (!pending) break;
+      if (!pending) {
+        dbg('loop:exit — no pending snapshot');
+        break;
+      }
 
+      dbg('loop:pending-pickup', { t: pending[0].currentTime });
       [currentState, currentOwners] = pending;
     }
 
     // After the loop exits, check whether the loading pipeline reached the
     currentTask = null;
+    dbg('loop:currentTask=null');
   };
 
   const cleanup = combineLatest([state, owners]).subscribe(
     async ([currentState, currentOwners]: [SegmentLoadingState, SegmentLoadingOwners]) => {
+      dbg('subscriber:fired', {
+        taskActive: !!currentTask,
+        t: currentState.currentTime,
+        canLoad: canLoadSegments(currentState, currentOwners, type),
+      });
+
       if (currentTask) {
         // Store latest state as pending (replaces any previous pending)
         pendingSnapshot = [currentState, currentOwners];
+        dbg('subscriber:pending-stored', { t: currentState.currentTime });
 
         // Seek detection: abort if the needed segments are completely disjoint
         // from what the current task is loading (currentTime jumped to new position)
-        if (taskSegmentIds.size > 0) {
+        if (taskSegmentIds.size === 0) {
+          dbg('subscriber:seek-check-skipped (taskSegmentIds empty — init loading?)');
+        } else {
           const track = getSelectedTrack(currentState, type);
           if (track && isResolvedTrack(track)) {
             const bufferKey = type as 'video' | 'audio';
             const buffered = resolveBufferedSegments(track.segments, currentState.bufferState?.[bufferKey]);
             const needed = getSegmentsToLoad(track.segments, buffered, currentState.currentTime ?? 0);
             if (needed.length > 0 && needed.every((s) => !taskSegmentIds.has(s.id))) {
+              dbg('subscriber:seek-abort', {
+                t: currentState.currentTime,
+                loading: [...taskSegmentIds],
+                needed: needed.map((s) => s.id),
+              });
               abortController?.abort();
+            } else {
+              dbg('subscriber:seek-no-abort', {
+                t: currentState.currentTime,
+                needed: needed.map((s) => s.id),
+                overlap: needed.filter((s) => taskSegmentIds.has(s.id)).map((s) => s.id),
+              });
             }
           }
         }
