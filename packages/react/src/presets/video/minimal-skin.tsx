@@ -25,6 +25,7 @@ import { FullscreenButton } from '@/ui/fullscreen-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
+import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
 import type { BaseSkinProps } from '../types';
@@ -163,6 +164,14 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
         </span>
 
         <span className="media-button-group">
+          <PlaybackRateButton
+            render={(props, state) => (
+              <Button {...props} className="media-button--icon media-button--playback-rate">
+                <span>{state.rate}&times;</span>
+              </Button>
+            )}
+          />
+
           <MuteButton
             render={(props, state) => (
               <Button {...props} className="media-button--icon">

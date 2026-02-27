@@ -25,6 +25,7 @@ import { FullscreenButton } from '@/ui/fullscreen-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
+import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
 import type { MinimalVideoSkinProps } from './minimal-skin';
@@ -53,14 +54,14 @@ const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'> & { varian
       type="button"
       className={cn(
         // Shared
-        'shrink-0 border-none cursor-pointer select-none',
+        'items-center justify-center shrink-0 border-none cursor-pointer select-none',
         'outline-2 outline-transparent -outline-offset-2',
         'transition-[background-color,color,outline-offset] duration-150 ease-out',
         'disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale',
         // Variant
         variant === 'icon'
           ? cn(
-              'grid p-2.5 bg-transparent rounded-md',
+              'grid w-[2.375rem] aspect-square bg-transparent rounded-md',
               'text-white',
               'hover:text-white/80 hover:no-underline',
               'focus-visible:text-white/80',
@@ -68,7 +69,7 @@ const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'> & { varian
               'aria-expanded:text-white/80'
             )
           : cn(
-              'flex items-center justify-center py-2 px-4 bg-white rounded-lg',
+              'flex py-2 px-4 bg-white rounded-lg',
               'text-black font-medium',
               'focus-visible:outline-white focus-visible:outline-offset-2'
             ),
@@ -297,6 +298,14 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
         </span>
 
         <span className={cn('flex items-center gap-[0.075rem]', '@2xl/media-root:gap-0.5')}>
+          <PlaybackRateButton
+            render={(props, state) => (
+              <Button variant="icon" {...props} className="p-0">
+                <span className="w-[4ch] tabular-nums">{state.rate}&times;</span>
+              </Button>
+            )}
+          />
+
           <MuteButton
             render={(props, state) => (
               <Button variant="icon" {...props}>

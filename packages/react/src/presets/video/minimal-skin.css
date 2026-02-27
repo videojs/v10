@@ -346,7 +346,9 @@
 /* Icon button variant */
 .media-minimal-skin .media-button--icon {
   display: grid;
-  padding: 0.625rem;
+  width: 2.375rem;
+  padding: 0;
+  aspect-ratio: 1;
   background: transparent;
   color: oklch(1 0 0);
 }
@@ -367,6 +369,15 @@
   }
 }
 
+/* Playback rate button */
+.media-minimal-skin .media-button--playback-rate {
+  padding: 0;
+}
+.media-minimal-skin .media-button--playback-rate span {
+  width: 4ch;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ==========================================================================
    Icons
    ========================================================================== */
@@ -375,6 +386,7 @@
   position: relative;
 }
 .media-minimal-skin .media-icon {
+  flex-shrink: 0;
   grid-area: 1 / 1;
   width: 18px;
   height: 18px;

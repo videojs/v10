@@ -25,6 +25,7 @@ import { FullscreenButton } from '@/ui/fullscreen-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
+import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
 import type { BaseSkinProps } from '../types';
@@ -157,6 +158,14 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
           <div className="media-slider" style={{ height: '4px', background: 'oklab(1 0 0 / 0.2)' }} />
           <Time.Value type="duration" className="media-time__value" />
         </Time.Group>
+
+        <PlaybackRateButton
+          render={(props, state) => (
+            <Button {...props} className="media-button--icon media-button--playback-rate">
+              <span>{state.rate}&times;</span>
+            </Button>
+          )}
+        />
 
         <MuteButton
           render={(props, state) => (
