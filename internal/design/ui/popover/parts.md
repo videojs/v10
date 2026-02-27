@@ -1,8 +1,8 @@
 # Parts
 
-Full API for every compound part.
+Full API for every part. HTML uses a single `<media-popover>` element. React uses a compound pattern with five parts.
 
-## Root
+## Root (React Only)
 
 Provider component. Owns popover state, creates the `createPopover()` interaction instance, provides context to children. Renders no DOM element — children handle their own rendering.
 
@@ -31,6 +31,7 @@ import { Popover } from '@videojs/react';
 | `align` | `'start' \| 'center' \| 'end'` | `'center'` | Alignment along the specified side. |
 | `sideOffset` | `number` | `0` | Distance from trigger along the side axis (px). |
 | `alignOffset` | `number` | `0` | Offset along the alignment axis (px). |
+| `collisionPadding` | `number` | `0` | Minimum distance from boundary edges (px). |
 | `modal` | `boolean \| 'trap-focus'` | `false` | Modal behavior. See [index.md — Modal Behavior](index.md#modal-behavior). |
 | `closeOnEscape` | `boolean` | `true` | Close on Escape key. |
 | `closeOnOutsideClick` | `boolean` | `true` | Close on click outside trigger and popup. |
@@ -44,41 +45,116 @@ import { Popover } from '@videojs/react';
 | -------- | --------- | ----------- |
 | `onOpenChange` | `(open: boolean, details: PopoverChangeDetails) => void` | Fired on every open/close state change. `details.reason` indicates the trigger: `'click'`, `'hover'`, `'focus'`, `'escape'`, `'outside-click'`, `'blur'`. |
 
-### Events (HTML)
+### Renders
 
-`<media-popover>` dispatches a custom DOM event on state change. Bubbles.
+React: No DOM element. Provider only.
+
+---
+
+## `<media-popover>` (HTML Only)
+
+Single self-contained custom element. Acts as both the popup container and the positioned element. Discovers its trigger externally via the `commandfor` attribute (W3C Invoker Commands pattern). Manages ARIA on both itself and the trigger, handles positioning, and dispatches events.
+
+### HTML
+
+```ts
+import '@videojs/html/ui/popover';
+```
+
+```html
+<button commandfor="settings-popover">Settings</button>
+
+<media-popover
+  id="settings-popover"
+  side="top"
+  align="center"
+  close-on-escape
+>
+  <!-- popover content -->
+</media-popover>
+```
+
+### Attributes
+
+| Attribute | Type | Default | Maps to |
+| --------- | ---- | ------- | ------- |
+| `open` | Boolean | `false` | `open` prop |
+| `default-open` | Boolean | `false` | `defaultOpen` prop |
+| `side` | String | `'top'` | `side` prop |
+| `align` | String | `'center'` | `align` prop |
+| `side-offset` | Number | `0` | `sideOffset` prop |
+| `align-offset` | Number | `0` | `alignOffset` prop |
+| `collision-padding` | Number | `0` | `collisionPadding` prop |
+| `collision-boundary` | String | — | Element ID for boundary lookup |
+| `modal` | String | `false` | `modal` prop |
+| `close-on-escape` | Boolean | `true` | `closeOnEscape` prop |
+| `close-on-outside-click` | Boolean | `true` | `closeOnOutsideClick` prop |
+| `open-on-hover` | Boolean | `false` | `openOnHover` prop |
+| `delay` | Number | `300` | `delay` prop |
+| `close-delay` | Number | `0` | `closeDelay` prop |
+
+### Events
 
 | Event | Detail | Fires when |
 | ----- | ------ | ---------- |
 | `open-change` | `{ open: boolean, reason: string, event?: Event }` | Popover opens or closes. |
 
-### HTML Attributes
+### Trigger Discovery
 
-`<media-popover>` observes these attributes:
+The element finds its trigger by querying the root node for `[commandfor="${this.id}"]`. This works in both document and shadow root contexts. When a trigger is found:
 
-| Attribute | Type | Maps to |
-| --------- | ---- | ------- |
-| `open` | Boolean | `open` prop |
-| `default-open` | Boolean | `defaultOpen` prop |
-| `side` | String | `side` prop |
-| `align` | String | `align` prop |
-| `side-offset` | Number | `sideOffset` prop |
-| `align-offset` | Number | `alignOffset` prop |
-| `modal` | String | `modal` prop |
-| `close-on-escape` | Boolean | `closeOnEscape` prop |
-| `close-on-outside-click` | Boolean | `closeOnOutsideClick` prop |
-| `open-on-hover` | Boolean | `openOnHover` prop |
-| `delay` | Number | `delay` prop |
-| `close-delay` | Number | `closeDelay` prop |
+1. Event handlers (`onClick`, `onPointerEnter`, `onPointerLeave`, `onFocusIn`, `onFocusOut`) are applied to the trigger.
+2. ARIA attributes (`aria-expanded`, `aria-haspopup`, `aria-controls`) are applied to the trigger.
+3. `anchor-name` CSS property is applied to the trigger (for CSS Anchor Positioning).
+4. When the trigger changes or disconnects, old ARIA attributes are cleaned up.
+
+### ARIA (automatic)
+
+On the popover element itself:
+
+| Attribute | Value |
+| --------- | ----- |
+| `role` | `"dialog"` |
+| `aria-modal` | `"true"` only when `modal === true` |
+
+On the discovered trigger:
+
+| Attribute | Value |
+| --------- | ----- |
+| `aria-expanded` | `"true"` / `"false"` |
+| `aria-haspopup` | `"dialog"` |
+| `aria-controls` | `{popover-id}` (the popover's `id`) |
+
+### Data Attributes
+
+| Attribute | Values | Description |
+| --------- | ------ | ----------- |
+| `data-open` | present/absent | Popover is open. |
+| `data-side` | `top` / `bottom` / `left` / `right` | Current positioning side. |
+| `data-align` | `start` / `center` / `end` | Current alignment. |
+
+### Positioning
+
+Positioning styles are applied directly to the `<media-popover>` element. The element IS the popup that enters the top layer via the Popover API. See the [Positioning section in architecture.md](architecture.md#positioning) for details on CSS Anchor vs manual fallback.
+
+### Collision Boundary
+
+The `collision-boundary` attribute accepts an element ID. The referenced element's bounding rect is used as the boundary for manual positioning. When not set, defaults to `document.documentElement`.
 
 ### Renders
 
-React: No DOM element. Provider only.
-HTML: `<media-popover>` custom element (context provider).
+A single `<media-popover>` custom element. No child elements are generated — users compose content directly inside.
+
+### Registration
+
+```ts
+// @videojs/html/ui/popover
+// Registers: media-popover
+```
 
 ---
 
-## Trigger
+## Trigger (React Only)
 
 Button that controls the popover. Carries all ARIA attributes for the trigger role.
 
@@ -137,13 +213,12 @@ Applied from `createPopover().triggerProps`:
 ### Renders
 
 React: `<button>` with ARIA, data attrs, anchor-name style, and event handlers.
-HTML: `<media-popover-trigger>` custom element.
 
 ---
 
-## Positioner
+## Positioner (React Only)
 
-Positioning wrapper between trigger and popup. Handles CSS Anchor Positioning or manual fallback styles. Conditionally removed from the DOM when fully closed (not open and transition complete).
+Transparent pass-through component. In the current architecture, positioning lives on `PopoverPopup` (the element that enters the top layer via the Popover API). The Positioner is kept for backward compatibility and API symmetry but renders no DOM element.
 
 ### React
 
@@ -157,69 +232,17 @@ Positioning wrapper between trigger and popup. Handles CSS Anchor Positioning or
 
 | Prop | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
-| `render` | `RenderProp<PopoverState>` | — | Custom render element. |
-| `className` | `string \| (state: PopoverState) => string` | — | Class name, optionally reactive. |
-| `style` | `CSSProperties \| (state: PopoverState) => CSSProperties` | — | Inline style, optionally reactive. |
-
-Plus all native `<div>` props.
-
-### Visibility
-
-Returns `null` (React) or sets `display: none` (HTML) when `!state.open && state.transitionStatus === 'closed'`. This means the positioner remains in the DOM during close transitions, allowing CSS animations to complete before removal.
-
-### ARIA
-
-| Attribute | Value |
-| --------- | ----- |
-| `role` | `"presentation"` |
-
-### Data Attributes
-
-| Attribute | Values | Description |
-| --------- | ------ | ----------- |
-| `data-open` | present/absent | Popover is open. |
-| `data-side` | `top` / `bottom` / `left` / `right` | Current positioning side. |
-| `data-align` | `start` / `center` / `end` | Current alignment. |
-
-### Positioning
-
-Receives computed positioning styles from `getAnchorPositionStyle()`:
-
-**CSS Anchor Positioning (when supported):**
-
-```css
-/* Applied automatically */
-position: fixed;
-position-anchor: --popover-1;
-bottom: anchor(top);        /* example: side="top" */
-justify-self: anchor-center; /* example: align="center" */
-```
-
-**Manual fallback:**
-
-```css
-/* Applied automatically via inline styles */
-position: absolute;
-top: 85px;
-left: 200px;
-/* Plus CSS vars for sizing constraints */
---media-popover-anchor-width: 120px;
---media-popover-available-width: 350px;
-/* etc. */
-```
-
-Positioning is applied directly as inline `top`/`left` styles — no CSS var indirection needed. Sizing constraint CSS vars are set for user CSS to consume (e.g., `max-width: var(--media-popover-available-width)`).
+| `children` | `ReactNode` | — | Child elements (passed through). |
 
 ### Renders
 
-React: `<div>` with positioning styles.
-HTML: `<media-popover-positioner>` custom element.
+React: No DOM element. Returns children directly.
 
 ---
 
-## Popup
+## Popup (React Only)
 
-Content container. Carries the dialog role and receives the native Popover API (`popover="manual"`).
+Content container. Carries the dialog role, positioning styles, and receives the native Popover API (`popover="manual"`). Handles visibility gating — returns `null` when closed and transitions complete.
 
 ### React
 
@@ -258,6 +281,39 @@ Set by `PopoverCore.getPopupAttrs()`:
 | `data-side` | `top` / `bottom` / `left` / `right` | Current positioning side. |
 | `data-align` | `start` / `center` / `end` | Current alignment. |
 
+### Positioning
+
+PopoverPopup handles all positioning logic. It applies computed styles from `getAnchorPositionStyle()` directly:
+
+**CSS Anchor Positioning (when supported):**
+
+```css
+/* Applied automatically */
+position: fixed;
+position-anchor: --settings-popover;
+bottom: anchor(top);        /* example: side="top" */
+justify-self: anchor-center; /* example: align="center" */
+```
+
+**Manual fallback:**
+
+```css
+/* Applied automatically via inline styles */
+position: absolute;
+top: 85px;
+left: 200px;
+/* Plus CSS vars for sizing constraints */
+--media-popover-anchor-width: 120px;
+--media-popover-available-width: 350px;
+/* etc. */
+```
+
+Manual positioning is computed in a `useLayoutEffect` — measure rects after layout, before paint.
+
+### Visibility
+
+Returns `null` when `!state.open && state.transitionStatus === 'closed'`. This means the popup remains in the DOM during close transitions, allowing CSS animations to complete before removal.
+
 ### Popover API
 
 `createPopover()` automatically sets `popover="manual"` on the popup element and calls `showPopover()`/`hidePopover()` to open/close. This uses the native [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API) for top-layer rendering without requiring z-index management.
@@ -274,12 +330,11 @@ Applied from `createPopover().popupProps`:
 
 ### Renders
 
-React: `<div>` with `popover="manual"`, dialog role, and event handlers.
-HTML: `<media-popover-popup>` custom element.
+React: `<div>` with positioning styles, `popover="manual"`, dialog role, and event handlers.
 
 ---
 
-## Arrow
+## Arrow (React Only)
 
 Visual arrow/caret pointing toward the trigger. Purely decorative — hidden from assistive technology.
 
@@ -318,26 +373,26 @@ Plus all native `<div>` props.
 Use `data-side` to rotate the arrow based on popover position:
 
 ```css
-media-popover-arrow {
+[data-popover-arrow] {
   width: 10px;
   height: 10px;
   background: white;
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
 }
 
-media-popover-arrow[data-side="top"] {
+[data-popover-arrow][data-side="top"] {
   transform: rotate(180deg);
 }
 
-media-popover-arrow[data-side="bottom"] {
+[data-popover-arrow][data-side="bottom"] {
   transform: rotate(0deg);
 }
 
-media-popover-arrow[data-side="left"] {
+[data-popover-arrow][data-side="left"] {
   transform: rotate(90deg);
 }
 
-media-popover-arrow[data-side="right"] {
+[data-popover-arrow][data-side="right"] {
   transform: rotate(-90deg);
 }
 ```
@@ -345,7 +400,6 @@ media-popover-arrow[data-side="right"] {
 ### Renders
 
 React: `<div>` with `aria-hidden="true"`.
-HTML: `<media-popover-arrow>` custom element.
 
 ---
 
@@ -359,8 +413,8 @@ import { Popover } from '@videojs/react';
 // Components
 Popover.Root
 Popover.Trigger
-Popover.Positioner
-Popover.Popup
+Popover.Positioner  // transparent pass-through (no DOM)
+Popover.Popup       // positioned popup (enters top layer)
 Popover.Arrow
 
 // Types (via namespace)
@@ -381,19 +435,13 @@ Popover.PopoverContextValue
 
 | Part | Tag |
 | ---- | --- |
-| Root | `<media-popover>` |
-| Trigger | `<media-popover-trigger>` |
-| Positioner | `<media-popover-positioner>` |
-| Popup | `<media-popover-popup>` |
-| Arrow | `<media-popover-arrow>` |
+| Popover | `<media-popover>` |
 
 ### Registration
 
-All elements registered in a single entry point:
+Single element registered in a single entry point:
 
 ```ts
 // @videojs/html/ui/popover
-// Registers: media-popover, media-popover-trigger,
-//   media-popover-positioner, media-popover-popup,
-//   media-popover-arrow
+// Registers: media-popover
 ```

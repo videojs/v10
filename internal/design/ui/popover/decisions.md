@@ -4,20 +4,47 @@ Rationale behind popover component choices.
 
 ## Component Structure
 
-### Five-Part Compound (Root, Trigger, Positioner, Popup, Arrow)
+### Platform-Specific Component Structure
 
-**Decision:** The popover uses a five-part compound structure: Root (state/context provider, no DOM), Trigger (button), Positioner (positioning wrapper), Popup (dialog content), Arrow (decorative caret).
+**Decision:** HTML uses a single `<media-popover>` element. React uses a five-part compound pattern (Root, Trigger, Positioner, Popup, Arrow).
+
+**HTML (single element):** The popover is a self-contained `<media-popover>` custom element. The trigger is an external element linked via the `commandfor` attribute (W3C Invoker Commands pattern). The popover element acts as both the popup container and the positioned element.
+
+**React (compound pattern):** The popover uses Root (state/context provider, no DOM), Trigger (button), Positioner (transparent pass-through, no DOM), Popup (positioned dialog with Popover API), Arrow (decorative caret).
 
 **Alternatives:**
 
-- Three-part (Trigger, Content, Arrow) — simpler, but conflates positioning and content concerns. Radix uses this approach with `PopoverContent` handling both positioning and rendering.
-- Trigger + Popup only — minimal, but positioning styles applied directly to content prevents independent styling of the positioned container vs. the visual popup.
+- Same compound structure for both platforms — would require 5 HTML custom elements (`<media-popover>`, `<media-popover-trigger>`, `<media-popover-positioner>`, `<media-popover-popup>`, `<media-popover-arrow>`). This conflicted with the tech preview API surface and felt overly verbose for HTML usage.
+- Single element for both platforms — React benefits from compound composition where each part can receive independent props, refs, and event handlers.
 
-**Rationale:** Separating Positioner from Popup gives users independent control over positioning strategy (absolute/fixed, anchor CSS) and content styling (background, border, padding). The positioner handles geometry; the popup handles appearance. This matches Base UI's architecture. Root as a provider-only component (no DOM) avoids adding a wrapper element to the rendered output.
+**Rationale:** Different platforms have different ergonomic needs. HTML custom elements work best as self-contained units — a single `<media-popover>` with `commandfor`-based trigger discovery matches the W3C Invoker Commands pattern and the tech preview API. React benefits from compound composition — users can place refs on individual parts, pass custom event handlers, and compose exactly the structure they need. The shared `PopoverCore` and `createPopover()` layers ensure identical behavior.
+
+### `commandfor` Trigger Discovery (HTML)
+
+**Decision:** In HTML, the trigger is discovered by querying `[commandfor="${this.id}"]` on the root node.
+
+**Alternatives:**
+
+- Require a `<media-popover-trigger>` child element — adds markup verbosity, requires custom element registration.
+- Manual `trigger-id` attribute — requires the trigger to have an `id`, adds coupling.
+- Slot-based approach — `<slot name="trigger">` would work in Shadow DOM but adds complexity for Light DOM usage.
+
+**Rationale:** `commandfor` is a W3C standard pattern (Invoker Commands) for linking a button to the element it controls. It works in both document and shadow root contexts via `getRootNode().querySelector()`. The trigger can be any element, placed anywhere in the DOM — not just a direct child. This matches the tech preview's approach and is the most flexible option.
+
+### Positioner as Transparent Pass-Through (React)
+
+**Decision:** `Popover.Positioner` renders no DOM element — it returns `children` directly. Positioning logic lives on `PopoverPopup`.
+
+**Alternatives:**
+
+- Positioner renders a `<div>` with positioning styles — this was the original design, but the popup enters the top layer via `showPopover()`, which removes it from its parent's layout context. Positioning styles on a wrapper outside the top layer have no effect.
+- Remove Positioner entirely — would break API compatibility for consumers already using `<Popover.Positioner>`.
+
+**Rationale:** The Popover API's top-layer promotion is the root cause: `showPopover()` moves the popup element to a layer above everything else, disconnected from its parent's positioning context. Styles on the Positioner wrapper have no effect. Moving positioning to the Popup (the element that actually enters the top layer) is the correct fix. Keeping Positioner as a pass-through preserves the compound API shape without adding unnecessary DOM.
 
 ### Root Renders No DOM
 
-**Decision:** `Popover.Root` in React renders no DOM element — it's a context provider only. In HTML, `<media-popover>` is a custom element (so it exists in the DOM) but its role is purely providing context.
+**Decision:** `Popover.Root` in React renders no DOM element — it's a context provider only. In HTML, `<media-popover>` is the popup element itself (no separate root/context provider).
 
 **Alternatives:**
 
@@ -46,9 +73,30 @@ Rationale behind popover component choices.
 
 **Rationale:** CSS Anchor Positioning is the future of popover positioning on the web. It handles overflow, scrolling, and resizing natively without JavaScript measurement. Using it as the primary strategy with a JS fallback provides the best experience on modern browsers while maintaining compatibility. The detection is cached module-level and the code paths are cleanly separated.
 
+### Positioning on the Popup Element
+
+**Decision:** Both HTML and React apply positioning styles to the popup element (the element that calls `showPopover()` and enters the top layer), not to a separate positioning wrapper.
+
+**Alternatives:**
+
+- Positioning on a wrapper `<div>` (original compound design) — the wrapper stays in normal document flow while the popup element is promoted to the top layer. The wrapper's positioning styles have no effect on the top-layer element.
+
+**Rationale:** The native Popover API promotes the popup element to the top layer, removing it from its parent's layout context. Any positioning applied to a parent/wrapper element is ignored. This is why the original 5-element compound pattern broke — the `<media-popover-positioner>` had the positioning styles but `<media-popover-popup>` (with `popover="manual"`) was in the top layer and couldn't see them.
+
+### Anchor Name from Element ID
+
+**Decision:** The CSS anchor name is derived from the popover's `id` attribute (HTML) or a generated unique ID (React). E.g., `--settings-popover`.
+
+**Alternatives:**
+
+- Incrementing counter (`--popover-1`, `--popover-2`) — less readable in DevTools.
+- Random ID — unpredictable, harder to debug.
+
+**Rationale:** Using the element's `id` makes anchor names human-readable and predictable. In DevTools, seeing `position-anchor: --settings-popover` is immediately understandable. Matches the tech preview pattern.
+
 ### Inline Styles for Manual Positioning
 
-**Decision:** The manual fallback applies `top` and `left` directly as inline styles on the positioner element. Sizing constraints (`anchorWidth`, `anchorHeight`, `availableWidth`, `availableHeight`) remain as CSS custom properties.
+**Decision:** The manual fallback applies `top` and `left` directly as inline styles on the popup element. Sizing constraints (`anchorWidth`, `anchorHeight`, `availableWidth`, `availableHeight`) remain as CSS custom properties.
 
 **Alternatives:**
 
@@ -149,11 +197,11 @@ createPopover({
 
 **Alternatives:**
 
-- Boolean `open` only — no way to track transition lifecycle. Positioner would be removed immediately, cutting off CSS transitions.
+- Boolean `open` only — no way to track transition lifecycle. Popup would be removed immediately, cutting off CSS transitions.
 - Separate `animating` boolean — doesn't distinguish opening from closing.
 - `transitionStatus` only, no `open` boolean — requires checking `status !== 'closed'` everywhere instead of `open`.
 
-**Rationale:** The positioner must stay in the DOM during the `closing` phase so CSS transitions can complete. `transitionStatus` enables this: `Positioner` returns `null` only when `!open && transitionStatus === 'closed'`. Having both `open` and `transitionStatus` is intentional — `open` is the semantic state (is the popover logically open?), `transitionStatus` is the animation state.
+**Rationale:** The popup must stay in the DOM during the `closing` phase so CSS transitions can complete. `transitionStatus` enables this: `Popup` returns `null` only when `!open && transitionStatus === 'closed'`. Having both `open` and `transitionStatus` is intentional — `open` is the semantic state (is the popover logically open?), `transitionStatus` is the animation state.
 
 ### Transition-Aware Closing
 
@@ -217,7 +265,7 @@ requestAnimationFrame(() => {
 
 ### `aria-controls` Links Trigger to Popup
 
-**Decision:** Trigger has `aria-controls={popupId}`, where `popupId` is a unique ID set on the Popup element.
+**Decision:** Trigger has `aria-controls={popupId}`, where `popupId` is the popover element's `id` (HTML) or a generated unique ID (React).
 
 **Alternatives:**
 
@@ -225,12 +273,6 @@ requestAnimationFrame(() => {
 - No linking — screen readers can't programmatically navigate from trigger to popup.
 
 **Rationale:** `aria-controls` is the standard way to indicate that a button controls a specific element. Combined with `aria-expanded` and `aria-haspopup`, it gives assistive technology a complete picture of the trigger-popup relationship.
-
-### Positioner is `role="presentation"`
-
-**Decision:** The Positioner element has `role="presentation"` — it's a positioning wrapper with no semantic meaning.
-
-**Rationale:** The Positioner exists purely for CSS positioning. It sits between the trigger and the dialog but has no semantic role. `role="presentation"` correctly removes it from the accessibility tree so screen readers don't announce an extra element.
 
 ### Arrow is `aria-hidden="true"`
 
@@ -252,6 +294,12 @@ requestAnimationFrame(() => {
 
 **Rationale:** `popover="manual"` gives us top-layer rendering (above all other content, no z-index needed) without auto-dismiss behavior. We control open/close entirely through `createPopover()`. The Popover API has broad browser support (Chrome 114+, Firefox 125+, Safari 17+) which aligns with Video.js 10's browser targets.
 
+### `setPopupElement` Calls `showPopover` When Already Open
+
+**Decision:** When `setPopupElement(el)` is called and the interaction state is already open, the factory automatically calls `tryShowPopover(el)` on the new element.
+
+**Rationale:** In React, state changes trigger re-renders. When `open()` is called, it sets interaction to `{ open: true }`, which causes a re-render, which mounts `PopoverPopup`, which calls `setPopupElement`. But `applyOpen()` (which calls `showPopover`) already ran synchronously during `open()` — at that point, the popup element wasn't mounted yet. Without this fix, the popup would be logically open but never shown in the top layer.
+
 ### Document Listeners Scoped to Open State
 
 **Decision:** Escape and outside-click listeners are attached when the popover opens and removed when it closes.
@@ -265,30 +313,25 @@ requestAnimationFrame(() => {
 
 ### Controlled and Uncontrolled Modes
 
-**Decision:** Both React and HTML support controlled (`open` prop) and uncontrolled (`defaultOpen` prop) modes. The `onOpenChange` callback fires for both.
+**Decision:** Both React and HTML support controlled (`open` prop/attribute) and uncontrolled (`defaultOpen` prop/attribute) modes. The `onOpenChange` callback (React) / `open-change` event (HTML) fires for both.
 
 **Controlled mode:** External state syncs to internal interaction state. When `open` prop changes, `popover.open()` / `popover.close()` is called.
 
 **Uncontrolled mode:** `defaultOpen` is applied once at creation. Internal state manages everything.
 
-**Rationale:** Standard React pattern. Some consumers need external control (e.g., "close all popovers when video plays"). Others just want a self-managing popover. Both get the same `onOpenChange` callback for observation.
+**Rationale:** Standard React pattern. Some consumers need external control (e.g., "close all popovers when video plays"). Others just want a self-managing popover. Both get the same callback/event for observation.
 
 ### Single Registration Entry Point
 
-**Decision:** All 5 popover elements are registered in a single entry point (`@videojs/html/ui/popover`).
+**Decision:** The single `<media-popover>` element is registered in a single entry point (`@videojs/html/ui/popover`).
 
-**Alternatives:**
-
-- Separate registration per part — too much ceremony for a component where all parts are always used together.
-- Split registration (basic + arrow, like slider splits basic + preview) — arrow is lightweight, no reason to separate.
-
-**Rationale:** Unlike slider (where preview involves heavy positioning logic and is genuinely optional), all popover parts are lightweight and typically used together. A single import keeps things simple.
+**Rationale:** There's only one element to register. The entry point follows the same pattern as other UI components.
 
 ## Naming
 
 ### `Popup` Not `Content`
 
-**Decision:** `Popover.Popup` / `<media-popover-popup>`.
+**Decision:** `Popover.Popup` / `<media-popover>`.
 
 **Alternatives:**
 
@@ -298,17 +341,16 @@ requestAnimationFrame(() => {
 
 **Rationale:** "Popup" directly communicates what the element is — the thing that pops up. Combined with the native Popover API naming (`showPopover()`/`hidePopover()`), it creates a consistent mental model.
 
-### `Positioner` Not `Anchor` or `Float`
+### `Positioner` Kept for API Compatibility
 
-**Decision:** `Popover.Positioner` / `<media-popover-positioner>`.
+**Decision:** `Popover.Positioner` is kept in the React API even though it's now a transparent pass-through.
 
 **Alternatives:**
 
-- `Anchor` — confusing because the trigger is the anchor element. The positioner is positioned *by* the anchor.
-- `Float` — implies Floating UI, which we don't use.
-- No positioner (positioning on Popup directly) — conflates positioning and content styling.
+- Remove Positioner entirely — breaks existing consumer code that wraps `Popover.Popup` in `Popover.Positioner`.
+- Deprecation warning — adds noise for a harmless component.
 
-**Rationale:** "Positioner" clearly communicates purpose: it's the element that handles positioning. Matches Base UI's naming.
+**Rationale:** Keeping the Positioner as a no-op pass-through preserves backward compatibility at zero cost. Consumers who wrote `<Popover.Positioner><Popover.Popup>...</Popover.Popup></Popover.Positioner>` continue to work unchanged. New consumers can omit it if they prefer.
 
 ## Open Questions
 
