@@ -21,6 +21,7 @@ export interface PopoverProps {
   modal?: boolean | 'trap-focus' | undefined;
   closeOnEscape?: boolean | undefined;
   closeOnOutsideClick?: boolean | undefined;
+  collisionPadding?: number | undefined;
 }
 
 export interface PopoverRootProps extends PopoverProps {
@@ -46,6 +47,7 @@ export interface PopoverState extends PopoverInteraction {
   sideOffset: number;
   alignOffset: number;
   modal: boolean | 'trap-focus';
+  collisionPadding: number;
 }
 
 export class PopoverCore {
@@ -57,6 +59,7 @@ export class PopoverCore {
     modal: false,
     closeOnEscape: true,
     closeOnOutsideClick: true,
+    collisionPadding: 0,
   };
 
   #props = { ...PopoverCore.defaultProps };
@@ -78,6 +81,7 @@ export class PopoverCore {
       sideOffset: this.#props.sideOffset,
       alignOffset: this.#props.alignOffset,
       modal: this.#props.modal,
+      collisionPadding: this.#props.collisionPadding,
     };
   }
 

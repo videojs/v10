@@ -25,16 +25,21 @@ Internal structure of the popover component system.
               │                                         │
   ┌───────────▼───────────┐             ┌───────────────▼────────────┐
   │   @videojs/react      │             │   @videojs/html            │
+  │   (compound pattern)  │             │   (single element)         │
   │                       │             │                            │
   │  Popover.Root         │             │  <media-popover>           │
-  │  Popover.Trigger      │             │  <media-popover-trigger>   │
-  │  Popover.Positioner   │             │  <media-popover-positioner>│
-  │  Popover.Popup        │             │  <media-popover-popup>     │
-  │  Popover.Arrow        │             │  <media-popover-arrow>     │
+  │  Popover.Trigger      │             │  (self-contained)          │
+  │  Popover.Positioner*  │             │                            │
+  │  Popover.Popup        │             │                            │
+  │  Popover.Arrow        │             │                            │
   └───────────────────────┘             └────────────────────────────┘
+
+  * Positioner is a transparent pass-through (no DOM element)
 ```
 
 State flows top-down: Core computes state and ARIA -> DOM layer handles open/close interaction and positioning -> UI renders.
+
+**Platform-specific architecture:** HTML uses a single `<media-popover>` element that is both the popup and positioned container. React uses a compound pattern where `PopoverPopup` handles positioning, Popover API, and ARIA. See [decisions.md — Platform-Specific Component Structure](decisions.md#platform-specific-component-structure).
 
 ## PopoverCore
 
@@ -54,6 +59,7 @@ interface PopoverProps {
   modal?: boolean | 'trap-focus'; // default: false
   closeOnEscape?: boolean;       // default: true
   closeOnOutsideClick?: boolean; // default: true
+  collisionPadding?: number;     // default: 0
 }
 
 interface PopoverRootProps extends PopoverProps {
@@ -115,7 +121,7 @@ class PopoverCore {
 {
   'aria-expanded': 'true',
   'aria-haspopup': 'dialog',
-  'aria-controls': 'media-popover-popup-1',
+  'aria-controls': 'settings-popover',
 }
 ```
 
@@ -231,6 +237,10 @@ interface PopoverPopupProps {
 }
 ```
 
+### `setPopupElement` and Open Timing
+
+When `setPopupElement(el)` is called and the interaction is already open (`open: true`), the factory automatically calls `showPopover()` on the new element. This handles the React timing issue where the popup mounts _after_ the state changes to open (Root calls `open()`, which sets interaction to open, which triggers re-render, which mounts Popup, which calls `setPopupElement`).
+
 ### Open/Close Lifecycle
 
 **Opening:**
@@ -307,14 +317,16 @@ When supported, positioning is handled entirely by the browser. No JavaScript me
 **Trigger receives:**
 
 ```css
-anchor-name: --popover-1;
+anchor-name: --settings-popover;
 ```
 
-**Positioner receives:**
+The anchor name is derived from the popover's `id` (HTML) or a generated unique ID (React).
+
+**Popup element receives:**
 
 ```css
 position: fixed;
-position-anchor: --popover-1;
+position-anchor: --settings-popover;
 /* Side placement (e.g., side="top"): */
 bottom: anchor(top);
 /* Alignment (e.g., align="center"): */
@@ -336,7 +348,7 @@ Side mapping — the popover sits on the **opposite** side of the anchor edge:
 
 When CSS Anchor Positioning is not supported, positions are computed in JavaScript from element `DOMRect`s.
 
-**Positioner receives:**
+**Popup element receives:**
 
 ```css
 position: absolute;
@@ -349,6 +361,15 @@ left: 200px;
 ```
 
 Positioning (`top`/`left`) is applied directly as inline styles. No user CSS is needed for placement. Sizing constraint CSS vars are available for optional use (e.g., `max-width: var(--media-popover-available-width)`).
+
+### Where Positioning Is Applied
+
+| Platform | Element receiving positioning styles |
+| -------- | ----------------------------------- |
+| HTML | `<media-popover>` (the element IS the popup) |
+| React | `PopoverPopup` `<div>` (the element that enters the top layer) |
+
+In both platforms, positioning is applied to the same element that calls `showPopover()`. This is essential because the top layer is outside the normal document flow — positioning a wrapper element that isn't in the top layer would have no effect on the popup.
 
 ### Positioning Functions
 
@@ -415,8 +436,8 @@ function getManualPositionStyle(
   │                                                              │
   │  Children read context:                                      │
   │  → Trigger: ARIA attrs, data attrs, anchor-name style        │
-  │  → Positioner: positioning styles, conditional visibility    │
-  │  → Popup: dialog role, popover API, event handlers           │
+  │  → Positioner: pass-through (no DOM, returns children)       │
+  │  → Popup: positioning + dialog role + popover API + events   │
   │  → Arrow: data attrs only                                    │
   └─────────────────────────────────────────────────────────────┘
 ```
@@ -426,33 +447,30 @@ function getManualPositionStyle(
 ```
                     ┌─── createPopover() ────────────────┐
                     │  interaction (State)                │ ← subscribe → requestUpdate()
-                    │  triggerProps                       │ → <media-popover-trigger>
-                    │  popupProps                         │ → <media-popover-popup>
+                    │  triggerProps                       │ → discovered trigger element
+                    │  popupProps                         │ → self (<media-popover>)
                     └──────────────┬─────────────────────┘
                                    │
   ┌────────────────────────────────┼──────────────────────────────┐
   │                                │                              │
   interaction.current       onClick(event)                 onOpenChange:
-  │                                                        dispatches 'open-change'
+  │                         (on trigger)                   dispatches 'open-change'
   │                                                        CustomEvent
   │
   ▼
   ┌─────────────────────────────────────────────────────────────────┐
-  │  PopoverElement (ContextProvider)                                │
+  │  PopoverElement (self-contained)                                 │
   │                                                                  │
-  │  willUpdate():                                                   │
-  │    core.setProps(this);                                          │
-  │    sync controlled open prop → popover.open() / popover.close() │
+  │  connectedCallback():                                            │
+  │    createPopover() + setPopupElement(this)                       │
+  │    applyElementProps(this, popupProps)  ← popup events on self   │
+  │    new SnapshotController(this, interaction)                     │
   │                                                                  │
-  │  Provides via context:                                           │
-  │  { core, popover, interaction, anchorName, popupId }             │
-  │                                                                  │
-  │  Children (ContextConsumer):                                     │
-  │  → Trigger: applyElementProps(ARIA), applyStateDataAttrs,       │
-  │             applyStyles(anchorName), triggerProps once           │
-  │  → Positioner: applyStyles(positioning), display toggle         │
-  │  → Popup: applyElementProps(ARIA), popupProps once, id          │
-  │  → Arrow: applyStateDataAttrs, aria-hidden                      │
+  │  update():                                                       │
+  │    #findTrigger() → querySelector('[commandfor="${this.id}"]')   │
+  │    #syncTrigger() → apply triggerProps + ARIA to trigger         │
+  │    applyStyles(this, getAnchorPositionStyle(...))                │
+  │    applyElementProps(this, popupAttrs) + applyStateDataAttrs     │
   └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -486,8 +504,8 @@ packages/react/src/ui/popover/
 ├── popover-context.tsx         # PopoverContext, usePopoverContext
 ├── popover-root.tsx            # Popover.Root (provider, no DOM)
 ├── popover-trigger.tsx         # Popover.Trigger (<button>)
-├── popover-positioner.tsx      # Popover.Positioner (<div>)
-├── popover-popup.tsx           # Popover.Popup (<div>)
+├── popover-positioner.tsx      # Popover.Positioner (pass-through, no DOM)
+├── popover-popup.tsx           # Popover.Popup (<div>, positioning + popover API)
 └── popover-arrow.tsx           # Popover.Arrow (<div>)
 ```
 
@@ -495,55 +513,53 @@ packages/react/src/ui/popover/
 
 ```
 packages/html/src/ui/popover/
-├── popover-context.ts          # PopoverContext (Symbol-keyed)
-├── popover-element.ts          # <media-popover> (root, context provider)
-├── popover-trigger-element.ts  # <media-popover-trigger>
-├── popover-positioner-element.ts # <media-popover-positioner>
-├── popover-popup-element.ts    # <media-popover-popup>
-└── popover-arrow-element.ts    # <media-popover-arrow>
+└── popover-element.ts          # <media-popover> (self-contained)
 
 packages/html/src/define/ui/
-└── popover.ts                  # customElements.define() for all 5 elements
+└── popover.ts                  # customElements.define() for media-popover
 ```
 
-## HTML Elements
+## HTML Element
 
-### Context Flow
+### Trigger Discovery
 
-`PopoverElement` creates the `createPopover()` instance and provides context via `ContextProvider` using a Symbol key (`@videojs/popover`). Child elements subscribe via `ContextConsumer`.
-
-The context value includes the raw `State<PopoverInteraction>` (not a pre-computed snapshot like React). Each child computes state via `core.getState(interaction.current)` in its update cycle, driven by `SnapshotController` which calls `requestUpdate()` on state changes.
-
-### Event Binding
-
-Child elements apply event handler props **once per connection** using a `#propsApplied` flag and an `AbortController` signal for cleanup:
+`PopoverElement` finds its trigger via `commandfor` attribute linkage:
 
 ```ts
-// In context callback (runs once per connection)
-if (!this.#propsApplied) {
-  applyElementProps(this, popover.triggerProps, this.#disconnect.signal);
-  this.#propsApplied = true;
+#findTrigger(): HTMLElement | null {
+  if (!this.id) return null;
+  const root = this.getRootNode() as Document | ShadowRoot;
+  return root.querySelector(`[commandfor="${this.id}"]`);
 }
 ```
 
-This prevents double-binding if the context callback fires multiple times. The abort signal ensures listeners are cleaned up on `disconnectedCallback`.
+This works in both document and shadow root contexts. The trigger is re-discovered on every update cycle, so dynamically added triggers are supported.
 
-### Unique IDs
+### Trigger Lifecycle
 
-HTML elements use an incrementing counter for unique anchor names and popup IDs:
+When a new trigger is discovered (or the trigger changes):
+
+1. Old trigger: ARIA attributes (`aria-expanded`, `aria-haspopup`, `aria-controls`) are removed, event handlers are aborted.
+2. New trigger: `setTriggerElement(el)` registers it with the popover, event handlers are applied via `applyElementProps`, ARIA and anchor-name styles are applied on each update.
+
+### Self-Positioning
+
+The element applies positioning styles to itself — it IS the popup:
 
 ```ts
-// In PopoverElement.connectedCallback()
-const id = counter++;
-this.#anchorName = `popover-${id}`;
-this.#popupId = `media-popover-popup-${id}`;
+// In update():
+applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, selfRect, boundaryRect));
 ```
 
-React uses `useId()` for the same purpose.
+The anchor name is derived from the element's `id`, making it human-readable (e.g., `--settings-popover` instead of `--popover-1`).
 
 ### Registration
 
-All 5 elements are registered together in a single entry point (`@videojs/html/ui/popover`). Unlike slider (where preview is opt-in), all popover parts are lightweight enough to register together.
+Single element registered in a single entry point (`@videojs/html/ui/popover`):
+
+```ts
+customElements.define('media-popover', PopoverElement);
+```
 
 ## Constraints
 
@@ -552,5 +568,6 @@ All 5 elements are registered together in a single entry point (`@videojs/html/u
 - Positioning functions accept `DOMRect` values as parameters, not reading them internally (except via `supportsAnchorPositioning()` feature detection)
 - CSS custom properties are output-only — manual positioning fallback values
 - The native Popover API (`popover="manual"`, `showPopover()`, `hidePopover()`) handles top-layer rendering — no z-index management needed
-- Close transition waits for CSS animations to finish — the positioner stays in the DOM during the `closing` phase
+- Positioning must be applied to the same element that enters the top layer (the popup) — not a wrapper outside the top layer
+- Close transition waits for CSS animations to finish — the popup stays in the DOM during the `closing` phase
 - Document-level listeners (Escape, outside click) are scoped to open state — not attached when closed

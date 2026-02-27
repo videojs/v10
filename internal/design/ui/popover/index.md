@@ -61,16 +61,20 @@ import '@videojs/html/ui/popover';
 ```
 
 ```html
-<media-popover>
-  <media-popover-trigger>Settings</media-popover-trigger>
-  <media-popover-positioner>
-    <media-popover-popup>
-      <media-popover-arrow></media-popover-arrow>
-      <!-- popover content -->
-    </media-popover-popup>
-  </media-popover-positioner>
+<!-- Trigger is an external element linked via commandfor -->
+<button commandfor="settings-popover">Settings</button>
+
+<media-popover
+  id="settings-popover"
+  side="top"
+  align="center"
+  close-on-escape
+>
+  <!-- popover content -->
 </media-popover>
 ```
+
+HTML uses a **single `<media-popover>` element** that is both the popup and the positioned container. The trigger is an external element linked via the `commandfor` attribute (W3C Invoker Commands pattern). This matches the tech-preview API surface.
 
 ## Layers
 
@@ -86,7 +90,7 @@ See [architecture.md](architecture.md) for internals.
 
 ## CSS Custom Properties
 
-Popovers expose sizing constraint values as CSS custom properties on the positioner element. These are **output values** for the manual positioning fallback. When CSS Anchor Positioning is natively supported, the browser handles placement and these vars are not set.
+Popovers expose sizing constraint values as CSS custom properties on the popup element. These are **output values** for the manual positioning fallback. When CSS Anchor Positioning is natively supported, the browser handles placement and these vars are not set.
 
 | Property | Example | Description |
 | -------- | ------- | ----------- |
@@ -95,21 +99,22 @@ Popovers expose sizing constraint values as CSS custom properties on the positio
 | `--media-popover-available-width` | `350px` | Available width between trigger and boundary edge. |
 | `--media-popover-available-height` | `280px` | Available height between trigger and boundary edge. |
 
-Positioning (`top`/`left`) is applied directly as inline styles on the positioner — no CSS var indirection. Unlike the slider (where parts consume continuous values in different ways), popover positioning has a single correct application.
+Positioning (`top`/`left`) is applied directly as inline styles on the popup element — no CSS var indirection. Unlike the slider (where parts consume continuous values in different ways), popover positioning has a single correct application.
 
 ```css
 /* Constrain popup size to available space */
-media-popover-popup {
+media-popover,
+[data-popover-popup] {
   max-width: var(--media-popover-available-width);
   max-height: var(--media-popover-available-height);
 }
 ```
 
-When CSS Anchor Positioning is supported, the positioner receives native CSS properties (`position-anchor`, `anchor()` functions) and the CSS vars above are not set.
+When CSS Anchor Positioning is supported, the popup receives native CSS properties (`position-anchor`, `anchor()` functions) and the CSS vars above are not set.
 
 ## Data Attributes
 
-State is exposed through data attributes for CSS targeting. Applied to the trigger and all child parts (Positioner, Popup, Arrow).
+State is exposed through data attributes for CSS targeting. In HTML, applied to the `<media-popover>` element. In React, applied to all compound parts.
 
 | Attribute | Values | When |
 | --------- | ------ | ---- |
@@ -118,17 +123,13 @@ State is exposed through data attributes for CSS targeting. Applied to the trigg
 | `data-align` | `start` / `center` / `end` | How the popover is aligned along the specified side. |
 
 ```css
-/* Rotate arrow based on side */
-media-popover-arrow[data-side="top"] {
-  transform: rotate(180deg);
+/* Style popover based on side */
+media-popover[data-side="top"] {
+  /* arrow or content adjustments */
 }
 
-media-popover-arrow[data-side="bottom"] {
-  transform: rotate(0deg);
-}
-
-/* Style trigger when popover is open */
-media-popover-trigger[data-open] {
+/* Style trigger when popover is open (React) */
+[data-popover-trigger][data-open] {
   background: rgba(255, 255, 255, 0.2);
 }
 ```
@@ -164,20 +165,20 @@ Pointer entering the popup cancels pending close — users can move from trigger
 The Trigger carries `aria-expanded` and `aria-haspopup="dialog"`, linked to the Popup via `aria-controls`. The Popup carries `role="dialog"` with conditional `aria-modal`.
 
 ```html
-<media-popover>
-  <media-popover-trigger
-    aria-expanded="true"
-    aria-haspopup="dialog"
-    aria-controls="media-popover-popup-1">
-    Settings
-  </media-popover-trigger>
-  <media-popover-positioner role="presentation">
-    <media-popover-popup
-      id="media-popover-popup-1"
-      role="dialog">
-      <!-- content -->
-    </media-popover-popup>
-  </media-popover-positioner>
+<!-- Trigger with ARIA (applied automatically by <media-popover>) -->
+<button
+  commandfor="settings-popover"
+  aria-expanded="true"
+  aria-haspopup="dialog"
+  aria-controls="settings-popover">
+  Settings
+</button>
+
+<!-- Popover element IS the popup -->
+<media-popover
+  id="settings-popover"
+  role="dialog">
+  <!-- content -->
 </media-popover>
 ```
 

@@ -1,12 +1,22 @@
-import { PopoverCore, type PopoverProps, type PopoverRootProps } from '@videojs/core';
-import { createPopover, type Popover, type PopoverChangeDetails } from '@videojs/core/dom';
+import { PopoverCore, PopoverDataAttrs, type PopoverProps, type PopoverRootProps } from '@videojs/core';
+import {
+  applyElementProps,
+  applyStateDataAttrs,
+  createPopover,
+  getAnchorNameStyle,
+  getAnchorPositionStyle,
+  type Popover,
+  type PopoverChangeDetails,
+} from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
-import { ContextProvider } from '@videojs/element/context';
+import { SnapshotController } from '@videojs/store/html';
+import { applyStyles } from '@videojs/utils/dom';
 
 import { MediaElement } from '../media-element';
-import { type PopoverContextValue, popoverContext } from './popover-context';
 
-let popoverCounter = 0;
+export interface PopoverElementProps extends PopoverRootProps {
+  collisionBoundary?: string | undefined;
+}
 
 export class PopoverElement extends MediaElement {
   static readonly tagName = 'media-popover';
@@ -24,7 +34,9 @@ export class PopoverElement extends MediaElement {
     openOnHover: { type: Boolean, attribute: 'open-on-hover' },
     delay: { type: Number },
     closeDelay: { type: Number, attribute: 'close-delay' },
-  } satisfies PropertyDeclarationMap<keyof PopoverRootProps>;
+    collisionPadding: { type: Number, attribute: 'collision-padding' },
+    collisionBoundary: { type: String, attribute: 'collision-boundary' },
+  } satisfies PropertyDeclarationMap<keyof PopoverElementProps>;
 
   // Controlled/uncontrolled
   open = false;
@@ -38,25 +50,27 @@ export class PopoverElement extends MediaElement {
   modal: PopoverProps['modal'] = PopoverCore.defaultProps.modal;
   closeOnEscape = PopoverCore.defaultProps.closeOnEscape;
   closeOnOutsideClick = PopoverCore.defaultProps.closeOnOutsideClick;
+  collisionPadding = PopoverCore.defaultProps.collisionPadding;
 
   // Hover props
   openOnHover = false;
   delay = 300;
   closeDelay = 0;
 
+  // HTML-only: element ID for collision boundary lookup
+  collisionBoundary: string | null = null;
+
   readonly #core = new PopoverCore();
   #popover: Popover | null = null;
 
-  #provider = new ContextProvider(this, {
-    context: popoverContext,
-    initialValue: undefined as unknown as PopoverContextValue,
-  });
-
-  #anchorName = `popover-${++popoverCounter}`;
-  #popupId = `media-popover-popup-${popoverCounter}`;
+  // Cleanup controllers
+  #disconnect: AbortController | null = null;
+  #triggerAc: AbortController | null = null;
+  #currentTrigger: HTMLElement | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
+    this.#disconnect = new AbortController();
 
     this.#popover = createPopover({
       onOpenChange: (nextOpen: boolean, details: PopoverChangeDetails) => {
@@ -70,16 +84,19 @@ export class PopoverElement extends MediaElement {
       closeDelay: () => this.closeDelay,
     });
 
-    this.#provider.setValue({
-      core: this.#core,
-      popover: this.#popover,
-      interaction: this.#popover.interaction,
-      anchorName: this.#anchorName,
-      popupId: this.#popupId,
-    });
+    // Register self as the popup element — the element IS the popup.
+    this.#popover.setPopupElement(this);
 
-    // Determine initial open state: controlled mode uses the `open` attribute,
-    // uncontrolled mode uses `defaultOpen`.
+    // Apply popup event handlers (pointerenter/leave, focusout) to self.
+    applyElementProps(this, this.#popover.popupProps, this.#disconnect.signal);
+
+    // Subscribe to interaction state for reactive updates.
+    // The controller adds itself to the host and triggers requestUpdate()
+    // on state changes — no need to store the reference.
+    new SnapshotController(this, this.#popover.interaction);
+
+    // Determine initial open state: controlled mode uses the `open`
+    // attribute, uncontrolled mode uses `defaultOpen`.
     const isControlled = this.hasAttribute('open');
     const shouldOpen = isControlled ? this.open : this.defaultOpen;
 
@@ -90,8 +107,11 @@ export class PopoverElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.#cleanupTrigger();
     this.#popover?.destroy();
     this.#popover = null;
+    this.#disconnect?.abort();
+    this.#disconnect = null;
   }
 
   protected override willUpdate(changed: PropertyValues): void {
@@ -113,6 +133,82 @@ export class PopoverElement extends MediaElement {
 
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
-    // Root element doesn't render — children consume context
+    if (!this.#popover) return;
+
+    // Discover trigger via commandfor linkage.
+    const triggerEl = this.#findTrigger();
+    this.#syncTrigger(triggerEl);
+
+    // Derive state from core + interaction.
+    const interaction = this.#popover.interaction.current;
+    const state = this.#core.getState(interaction);
+
+    // Apply popup ARIA and data attributes to self.
+    applyElementProps(this, this.#core.getPopupAttrs(state));
+    applyStateDataAttrs(this, state, PopoverDataAttrs);
+
+    // Apply trigger ARIA and anchor-name to the discovered trigger.
+    if (this.#currentTrigger) {
+      applyElementProps(this.#currentTrigger, this.#core.getTriggerAttrs(state, this.id));
+      applyStyles(this.#currentTrigger, getAnchorNameStyle(this.id));
+    }
+
+    // Apply positioning styles to self.
+    // CSS Anchor Positioning is used when supported; otherwise falls
+    // back to JS-computed absolute positioning from measured rects.
+    const posOpts = {
+      side: state.side,
+      align: state.align,
+      sideOffset: state.sideOffset,
+      alignOffset: state.alignOffset,
+    };
+    const triggerRect = this.#currentTrigger?.getBoundingClientRect();
+    const selfRect = this.getBoundingClientRect();
+    const boundaryEl = this.#findBoundary();
+    const boundaryRect = boundaryEl?.getBoundingClientRect() ?? document.documentElement.getBoundingClientRect();
+
+    applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, selfRect, boundaryRect));
+  }
+
+  // --- Trigger discovery ---
+
+  #findTrigger(): HTMLElement | null {
+    if (!this.id) return null;
+    const root = this.getRootNode() as Document | ShadowRoot;
+    return root.querySelector<HTMLElement>(`[commandfor="${this.id}"]`);
+  }
+
+  #syncTrigger(triggerEl: HTMLElement | null): void {
+    if (triggerEl === this.#currentTrigger) return;
+
+    this.#cleanupTrigger();
+    this.#currentTrigger = triggerEl;
+    this.#popover?.setTriggerElement(triggerEl);
+
+    if (triggerEl && this.#popover) {
+      this.#triggerAc = new AbortController();
+      applyElementProps(triggerEl, this.#popover.triggerProps, this.#triggerAc.signal);
+    }
+  }
+
+  #cleanupTrigger(): void {
+    // Remove ARIA attributes from the old trigger to avoid stale state.
+    if (this.#currentTrigger) {
+      this.#currentTrigger.removeAttribute('aria-expanded');
+      this.#currentTrigger.removeAttribute('aria-haspopup');
+      this.#currentTrigger.removeAttribute('aria-controls');
+    }
+
+    this.#triggerAc?.abort();
+    this.#triggerAc = null;
+    this.#currentTrigger = null;
+  }
+
+  // --- Boundary lookup ---
+
+  #findBoundary(): HTMLElement | null {
+    if (!this.collisionBoundary) return null;
+    const root = this.getRootNode() as Document | ShadowRoot;
+    return root.getElementById(this.collisionBoundary);
   }
 }
