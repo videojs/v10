@@ -7,6 +7,7 @@ import { pipFeature } from './features/pip';
 import { playbackFeature } from './features/playback';
 import { playbackRateFeature } from './features/playback-rate';
 import { sourceFeature } from './features/source';
+import { textTrackFeature } from './features/text-track';
 import { timeFeature } from './features/time';
 import { volumeFeature } from './features/volume';
 
@@ -24,6 +25,8 @@ export const selectPlayback = createSelector(playbackFeature);
 export const selectPlaybackRate = createSelector(playbackRateFeature);
 /** Select the source state (src, type). */
 export const selectSource = createSelector(sourceFeature);
+/** Select the text track state (chapters cues, thumbnail cues). */
+export const selectTextTrack = createSelector(textTrackFeature);
 /** Select the time state (currentTime, duration, seek). */
 export const selectTime = createSelector(timeFeature);
 /** Select the volume state (volume, muted, setVolume, setMuted). */

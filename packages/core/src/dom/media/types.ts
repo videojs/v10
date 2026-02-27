@@ -7,6 +7,7 @@ import type {
   MediaPlaybackRateState,
   MediaPlaybackState,
   MediaSourceState,
+  MediaTextTrackState,
   MediaTimeState,
   MediaVolumeState,
 } from '../../core/media/state';
@@ -53,6 +54,7 @@ export type VideoFeatures = [
   PlayerFeature<MediaFullscreenState>,
   PlayerFeature<MediaPictureInPictureState>,
   PlayerFeature<MediaControlsState>,
+  PlayerFeature<MediaTextTrackState>,
 ];
 
 export type AudioFeatures = [

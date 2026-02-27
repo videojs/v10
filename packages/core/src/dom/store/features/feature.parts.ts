@@ -6,6 +6,7 @@ import { pipFeature } from './pip';
 import { playbackFeature } from './playback';
 import { playbackRateFeature } from './playback-rate';
 import { sourceFeature } from './source';
+import { textTrackFeature } from './text-track';
 import { timeFeature } from './time';
 import { volumeFeature } from './volume';
 
@@ -18,6 +19,7 @@ export {
   playbackFeature as playback,
   playbackRateFeature as playbackRate,
   sourceFeature as source,
+  textTrackFeature as textTrack,
   timeFeature as time,
   volumeFeature as volume,
 };
@@ -32,6 +34,7 @@ export const video: VideoFeatures = [
   fullscreenFeature,
   pipFeature,
   controlsFeature,
+  textTrackFeature,
 ];
 
 export const audio: AudioFeatures = [
