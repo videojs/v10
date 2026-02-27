@@ -9,7 +9,7 @@ import {
   type PopoverChangeDetails,
   resolveOffsets,
 } from '@videojs/core/dom';
-import type { PropertyValues } from '@videojs/element';
+import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { SnapshotController } from '@videojs/store/html';
 import { applyStyles } from '@videojs/utils/dom';
 
@@ -29,11 +29,11 @@ export class PopoverElement extends MediaElement {
     openOnHover: { type: Boolean, attribute: 'open-on-hover' },
     delay: { type: Number },
     closeDelay: { type: Number, attribute: 'close-delay' },
-  };
+  } satisfies PropertyDeclarationMap<keyof PopoverCore.RootProps>;
 
   // Controlled/uncontrolled
-  open = false;
-  defaultOpen = false;
+  open = PopoverCore.defaultRootProps.open;
+  defaultOpen = PopoverCore.defaultRootProps.defaultOpen;
 
   // Core props
   side = PopoverCore.defaultProps.side;
@@ -42,10 +42,10 @@ export class PopoverElement extends MediaElement {
   closeOnEscape = PopoverCore.defaultProps.closeOnEscape;
   closeOnOutsideClick = PopoverCore.defaultProps.closeOnOutsideClick;
 
-  // Hover props
-  openOnHover = false;
-  delay = 300;
-  closeDelay = 0;
+  // Interaction props
+  openOnHover = PopoverCore.defaultRootProps.openOnHover;
+  delay = PopoverCore.defaultRootProps.delay;
+  closeDelay = PopoverCore.defaultRootProps.closeDelay;
 
   readonly #core = new PopoverCore();
   #popover: Popover | null = null;

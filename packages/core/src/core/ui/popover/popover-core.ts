@@ -53,6 +53,14 @@ export class PopoverCore {
     closeOnOutsideClick: true,
   };
 
+  static readonly defaultRootProps: NonNullableObject<Omit<PopoverRootProps, keyof PopoverProps>> = {
+    open: false,
+    defaultOpen: false,
+    openOnHover: false,
+    delay: 300,
+    closeDelay: 0,
+  };
+
   #props = { ...PopoverCore.defaultProps };
 
   constructor(props?: PopoverProps) {

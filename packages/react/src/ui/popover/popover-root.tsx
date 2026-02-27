@@ -17,11 +17,11 @@ export interface PopoverRootProps extends CorePopoverRootProps {
 
 export function PopoverRoot({
   open: controlledOpen,
-  defaultOpen = false,
+  defaultOpen = PopoverCore.defaultRootProps.defaultOpen,
   onOpenChange: onOpenChangeProp,
-  openOnHover = false,
-  delay = 300,
-  closeDelay = 0,
+  openOnHover = PopoverCore.defaultRootProps.openOnHover,
+  delay = PopoverCore.defaultRootProps.delay,
+  closeDelay = PopoverCore.defaultRootProps.closeDelay,
   children,
   ...coreProps
 }: PopoverRootProps): ReactNode {
