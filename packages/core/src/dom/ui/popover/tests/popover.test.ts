@@ -6,7 +6,6 @@ describe('createPopover', () => {
   it('starts closed', () => {
     const { popover } = createTestPopover();
     expect(popover.interaction.current.open).toBe(false);
-    expect(popover.interaction.current.transitionStatus).toBe('closed');
   });
 
   describe('open/close', () => {
@@ -16,11 +15,20 @@ describe('createPopover', () => {
       popover.open();
 
       expect(popover.interaction.current.open).toBe(true);
-      expect(popover.interaction.current.transitionStatus).toBe('opening');
       expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'click' });
     });
 
-    it('updates interaction state and calls onOpenChange when closing', () => {
+    it('sets data-starting-style on popup element when opening', () => {
+      const { popover } = createTestPopover();
+      const el = document.createElement('div');
+      popover.setPopupElement(el);
+
+      popover.open();
+
+      expect(el.hasAttribute('data-starting-style')).toBe(true);
+    });
+
+    it('calls onOpenChange when closing', () => {
       const { popover, onOpenChange } = createTestPopover();
 
       popover.open();
@@ -28,9 +36,20 @@ describe('createPopover', () => {
 
       popover.close();
 
-      // open stays true until transition completes (closing → closed)
-      expect(popover.interaction.current.transitionStatus).toBe('closing');
+      // open stays true until close animation completes
+      expect(popover.interaction.current.open).toBe(true);
       expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'click' });
+    });
+
+    it('sets data-ending-style on popup element when closing', () => {
+      const { popover } = createTestPopover();
+      const el = document.createElement('div');
+      popover.setPopupElement(el);
+
+      popover.open();
+      popover.close();
+
+      expect(el.hasAttribute('data-ending-style')).toBe(true);
     });
 
     it('does not call onOpenChange if already open', () => {
@@ -61,6 +80,20 @@ describe('createPopover', () => {
     });
   });
 
+  describe('onOpenChangeComplete', () => {
+    it('fires after open animation completes', () => {
+      const onOpenChangeComplete = vi.fn();
+      const { popover } = createTestPopover({ onOpenChangeComplete });
+      const el = document.createElement('div');
+      popover.setPopupElement(el);
+
+      popover.open();
+
+      // Not called synchronously
+      expect(onOpenChangeComplete).not.toHaveBeenCalled();
+    });
+  });
+
   describe('triggerProps', () => {
     it('opens on click when closed', () => {
       const { popover, onOpenChange } = createTestPopover();
@@ -80,8 +113,23 @@ describe('createPopover', () => {
 
       popover.triggerProps.onClick({ preventDefault: vi.fn() } as unknown as UIEvent);
 
-      expect(popover.interaction.current.transitionStatus).toBe('closing');
+      // open stays true until close animation completes
+      expect(popover.interaction.current.open).toBe(true);
       expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'click' }));
+    });
+
+    it('re-opens on click during close animation', () => {
+      const { popover, onOpenChange } = createTestPopover();
+
+      popover.open();
+      popover.close();
+      onOpenChange.mockClear();
+
+      // Click during close animation should re-open
+      popover.triggerProps.onClick({ preventDefault: vi.fn() } as unknown as UIEvent);
+
+      expect(popover.interaction.current.open).toBe(true);
+      expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
     });
   });
 

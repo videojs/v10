@@ -47,17 +47,14 @@ export interface PopoverRootProps extends PopoverProps {
 /**
  * Interaction state managed by `createPopover()` via `createState()`.
  * The UI layer subscribes to this but never writes it directly.
+ *
+ * Animation lifecycle is handled via CSS data attributes on the popup
+ * element (`data-starting-style`, `data-ending-style`, `data-open`)
+ * rather than JS state — see `createPopover()`.
  */
 export interface PopoverInteraction {
   /** Whether the popover is currently open. */
   open: boolean;
-  /**
-   * Current transition phase. Follows the lifecycle:
-   * `closed` → `opening` → `open` → `closing` → `closed`.
-   *
-   * Use `data-transition-status` in CSS to animate enter/exit.
-   */
-  transitionStatus: 'closed' | 'opening' | 'open' | 'closing';
 }
 
 /**
@@ -103,7 +100,6 @@ export class PopoverCore {
   getState(interaction: PopoverInteraction): PopoverState {
     return {
       open: interaction.open,
-      transitionStatus: interaction.transitionStatus,
       side: this.#props.side,
       align: this.#props.align,
       modal: this.#props.modal,

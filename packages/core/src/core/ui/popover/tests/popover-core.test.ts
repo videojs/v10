@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { PopoverCore, type PopoverInteraction } from '../popover-core';
 
-const CLOSED: PopoverInteraction = { open: false, transitionStatus: 'closed' };
-const OPEN: PopoverInteraction = { open: true, transitionStatus: 'open' };
+const CLOSED: PopoverInteraction = { open: false };
+const OPEN: PopoverInteraction = { open: true };
 
 describe('PopoverCore', () => {
   it('uses default props', () => {
@@ -19,11 +19,9 @@ describe('PopoverCore', () => {
 
     const closed = core.getState(CLOSED);
     expect(closed.open).toBe(false);
-    expect(closed.transitionStatus).toBe('closed');
 
     const open = core.getState(OPEN);
     expect(open.open).toBe(true);
-    expect(open.transitionStatus).toBe('open');
   });
 
   it('applies custom props', () => {
