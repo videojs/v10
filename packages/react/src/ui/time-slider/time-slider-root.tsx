@@ -15,12 +15,9 @@ import { SliderProvider } from '../slider/slider-context';
 
 const noopSeek = (): Promise<number> => Promise.resolve(0);
 
-export interface TimeSliderRootProps extends UIComponentProps<'div', TimeSliderCore.State> {
-  label?: string | undefined;
-  step?: number | undefined;
-  largeStep?: number | undefined;
-  disabled?: boolean | undefined;
-  thumbAlignment?: 'center' | 'edge' | undefined;
+export interface TimeSliderRootProps
+  extends UIComponentProps<'div', TimeSliderCore.State>,
+    Pick<TimeSliderCore.Props, 'label' | 'step' | 'largeStep' | 'disabled' | 'thumbAlignment'> {
   /** Trailing-edge throttle (ms) for seek requests during drag. Default `100`. `0` disables. */
   commitThrottle?: number | undefined;
   onDragStart?: (() => void) | undefined;
