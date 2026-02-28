@@ -1,7 +1,6 @@
 'use client';
 
 import { PopoverDataAttrs, type PopoverState } from '@videojs/core';
-import type { ForwardedRef } from 'react';
 import { forwardRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
@@ -10,9 +9,9 @@ import { usePopoverContext } from './popover-context';
 
 export interface PopoverArrowProps extends UIComponentProps<'div', PopoverState> {}
 
-export const PopoverArrow = forwardRef(function PopoverArrow(
-  { render, className, style, ...elementProps }: PopoverArrowProps,
-  forwardedRef: ForwardedRef<HTMLDivElement>
+export const PopoverArrow = forwardRef<HTMLDivElement, PopoverArrowProps>(function PopoverArrow(
+  { render, className, style, ...elementProps },
+  forwardedRef
 ) {
   const { state } = usePopoverContext();
 

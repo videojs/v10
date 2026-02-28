@@ -4,9 +4,10 @@ import { type PopoverProps as CorePopoverProps, PopoverCore } from '@videojs/cor
 import { createPopover, createTransitionHandler, type PopoverChangeDetails } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useLatestRef } from '../../utils/use-latest-ref';
+import { useSafeId } from '../../utils/use-safe-id';
 import { PopoverContextProvider } from './popover-context';
 
 export interface PopoverRootProps extends CorePopoverProps {
@@ -67,18 +68,14 @@ export function PopoverRoot({
     return instance;
   });
 
-  // useId() returns values like `:r0:` which contain colons — invalid
-  // in CSS <dashed-ident> tokens (used by anchor-name / position-anchor).
-  // Strip non-alphanumeric/underscore/hyphen characters to produce a
-  // safe identifier.
-  const anchorName = useId().replace(/[^a-zA-Z0-9_-]/g, '');
-  const popupId = useId();
+  const anchorName = useSafeId();
+  const popupId = useSafeId('popup-');
 
   // Sync controlled open prop -> internal interaction state.
   useEffect(() => {
     if (controlledOpen === undefined) return;
 
-    const { open: interactionOpen } = popover.interaction.current;
+    const { active: interactionOpen } = popover.interaction.current;
     if (controlledOpen === interactionOpen) return;
 
     if (controlledOpen) {

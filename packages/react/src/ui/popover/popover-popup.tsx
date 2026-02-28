@@ -3,7 +3,7 @@
 import { PopoverDataAttrs, type PopoverState } from '@videojs/core';
 import { getAnchorPositionStyle, resolveOffsets } from '@videojs/core/dom';
 import { supportsAnchorPositioning } from '@videojs/utils/dom';
-import type { CSSProperties, ForwardedRef } from 'react';
+import type { CSSProperties } from 'react';
 import { forwardRef, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
@@ -15,9 +15,9 @@ export interface PopoverPopupProps extends UIComponentProps<'div', PopoverState>
 
 const POPOVER_RESET: CSSProperties = { position: 'fixed', inset: 'auto', margin: 0 };
 
-export const PopoverPopup = forwardRef(function PopoverPopup(
-  { render, className, style, ...elementProps }: PopoverPopupProps,
-  forwardedRef: ForwardedRef<HTMLDivElement>
+export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(function PopoverPopup(
+  { render, className, style, ...elementProps },
+  forwardedRef
 ) {
   const { core, popover, state, anchorName, popupId } = usePopoverContext();
   const internalRef = useRef<HTMLDivElement>(null);

@@ -2,7 +2,6 @@
 
 import { PopoverDataAttrs, type PopoverState } from '@videojs/core';
 import { getAnchorNameStyle } from '@videojs/core/dom';
-import type { ForwardedRef } from 'react';
 import { forwardRef, useCallback, useMemo } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
@@ -11,9 +10,9 @@ import { usePopoverContext } from './popover-context';
 
 export interface PopoverTriggerProps extends UIComponentProps<'button', PopoverState> {}
 
-export const PopoverTrigger = forwardRef(function PopoverTrigger(
-  { render, className, style, ...elementProps }: PopoverTriggerProps,
-  forwardedRef: ForwardedRef<HTMLButtonElement>
+export const PopoverTrigger = forwardRef<HTMLButtonElement, PopoverTriggerProps>(function PopoverTrigger(
+  { render, className, style, ...elementProps },
+  forwardedRef
 ) {
   const { core, popover, state, anchorName, popupId } = usePopoverContext();
 
