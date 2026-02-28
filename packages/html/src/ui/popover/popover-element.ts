@@ -3,6 +3,7 @@ import {
   applyElementProps,
   applyStateDataAttrs,
   createPopover,
+  createTransitionHandler,
   getAnchorNameStyle,
   getAnchorPositionStyle,
   type PopoverChangeDetails,
@@ -61,6 +62,7 @@ export class PopoverElement extends MediaElement {
     this.#disconnect = new AbortController();
 
     this.#popover = createPopover({
+      transition: createTransitionHandler(),
       onOpenChange: (nextOpen: boolean, details: PopoverChangeDetails) => {
         this.open = nextOpen;
         this.dispatchEvent(new CustomEvent('open-change', { detail: { open: nextOpen, ...details } }));
