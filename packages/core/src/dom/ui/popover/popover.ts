@@ -3,82 +3,47 @@ import { listen } from '@videojs/utils/dom';
 import type { PopoverInteraction } from '../../../core/ui/popover/popover-core';
 import type { UIFocusEvent, UIPointerEvent } from '../event';
 
-/** What triggered the open state change. */
 export type PopoverOpenChangeReason = 'click' | 'hover' | 'focus' | 'escape' | 'outside-click' | 'blur';
 
-/** Detail payload passed to `onOpenChange` callbacks. */
 export interface PopoverChangeDetails {
-  /** What caused the state change. */
   reason: PopoverOpenChangeReason;
-  /** The originating DOM event, when available. */
   event?: Event;
 }
 
-/** Configuration for `createPopover()`. Callbacks are read lazily so props stay current. */
 export interface PopoverOptions {
-  /** Called when the open state changes (fires immediately, before animations). */
   onOpenChange: (open: boolean, details: PopoverChangeDetails) => void;
-  /**
-   * Called after open/close animations complete.
-   * For open: fires after `data-starting-style` is removed (1 RAF).
-   * For close: fires after CSS transitions finish and the popover is hidden.
-   */
+  /** Fires after open/close animations complete. */
   onOpenChangeComplete?: (open: boolean) => void;
-  /** Return current `closeOnEscape` prop value. */
   closeOnEscape: () => boolean;
-  /** Return current `closeOnOutsideClick` prop value. */
   closeOnOutsideClick: () => boolean;
-  /** Return current `openOnHover` prop value. */
   openOnHover?: () => boolean;
-  /** Return current `delay` prop value (ms). */
   delay?: () => number;
-  /** Return current `closeDelay` prop value (ms). */
   closeDelay?: () => number;
 }
 
-/** Event handlers to spread onto the trigger element. */
 export interface PopoverTriggerProps {
-  /** Toggle open/close on click. */
   onClick: (event: UIEvent) => void;
-  /** Start hover-open delay (when `openOnHover` is enabled). */
   onPointerEnter: (event: UIPointerEvent) => void;
-  /** Start hover-close delay (when `openOnHover` is enabled). */
   onPointerLeave: (event: UIPointerEvent) => void;
-  /** Open on focus (when `openOnHover` is enabled). */
   onFocusIn: (event: UIFocusEvent) => void;
-  /** Close on blur unless focus moved within trigger or popup. */
   onFocusOut: (event: UIFocusEvent) => void;
 }
 
-/** Event handlers to spread onto the popup element. */
 export interface PopoverPopupProps {
-  /** Cancel pending close when pointer enters popup. */
   onPointerEnter: (event: UIPointerEvent) => void;
-  /** Start hover-close delay when pointer leaves popup. */
   onPointerLeave: (event: UIPointerEvent) => void;
-  /** Close on blur unless focus moved within trigger or popup. */
   onFocusOut: (event: UIFocusEvent) => void;
 }
 
-/** Handle returned by `createPopover()` for controlling the popover lifecycle. */
 export interface PopoverHandle {
-  /** Reactive interaction state. Subscribe to this for UI updates. */
   interaction: State<PopoverInteraction>;
-  /** Event handlers to spread onto the trigger element. */
   triggerProps: PopoverTriggerProps;
-  /** Event handlers to spread onto the popup element. */
   popupProps: PopoverPopupProps;
-  /** The currently registered trigger element. */
   readonly triggerElement: HTMLElement | null;
-  /** Register the trigger element for focus/hover tracking and outside-click detection. */
   setTriggerElement: (el: HTMLElement | null) => void;
-  /** Register the popup element. Sets `popover="manual"` and manages show/hide. */
   setPopupElement: (el: HTMLElement | null) => void;
-  /** Imperatively open the popover. */
   open: (reason?: PopoverOpenChangeReason) => void;
-  /** Imperatively close the popover. */
   close: (reason?: PopoverOpenChangeReason) => void;
-  /** Tear down all listeners, timers, and state subscriptions. */
   destroy: () => void;
 }
 
