@@ -55,7 +55,7 @@ describe('casing', () => {
       expect(kebabCase('margin')).toBe('margin');
     });
 
-    it('preserves CSS custom properties', () => {
+    it('does not special-case CSS custom properties', () => {
       expect(kebabCase('--media-popover-offset')).toBe('--media-popover-offset');
     });
   });
