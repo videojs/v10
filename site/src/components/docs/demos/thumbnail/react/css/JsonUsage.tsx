@@ -1,8 +1,6 @@
-import { createPlayer, Thumbnail } from '@videojs/react';
+import { Thumbnail } from '@videojs/react';
 
 import './JsonUsage.css';
-
-const Player = createPlayer({ features: [] });
 
 const THUMBNAILS = [
   {
@@ -23,10 +21,8 @@ const THUMBNAILS = [
 
 export default function JsonUsage() {
   return (
-    <Player.Provider>
-      <div className="react-thumbnail-json-array">
-        <Thumbnail className="react-thumbnail-json-array__thumbnail" thumbnails={THUMBNAILS} time={12} />
-      </div>
-    </Player.Provider>
+    <div className="react-thumbnail-json-array">
+      <Thumbnail className="react-thumbnail-json-array__thumbnail" thumbnails={THUMBNAILS} time={12} />
+    </div>
   );
 }

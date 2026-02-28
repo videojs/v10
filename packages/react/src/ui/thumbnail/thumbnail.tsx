@@ -11,7 +11,7 @@ import { createThumbnail, selectTextTrack } from '@videojs/core/dom';
 import type { CSSProperties } from 'react';
 import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 
-import { usePlayer } from '../../player/context';
+import { useOptionalPlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 
@@ -36,7 +36,7 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
   const [core] = useState(() => new ThumbnailCore());
   const divRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
-  const textTrack = usePlayer(selectTextTrack);
+  const textTrack = useOptionalPlayer(selectTextTrack);
 
   // Force re-render when the handle's state changes (img load/error, resize).
   const [, setRenderToken] = useState(0);

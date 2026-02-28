@@ -1,8 +1,6 @@
-import { createPlayer, Thumbnail } from '@videojs/react';
+import { Thumbnail } from '@videojs/react';
 
 import './JsonSpriteUsage.css';
-
-const Player = createPlayer({ features: [] });
 
 const THUMBNAILS = [
   {
@@ -32,10 +30,8 @@ const THUMBNAILS = [
 
 export default function JsonSpriteUsage() {
   return (
-    <Player.Provider>
-      <div className="react-thumbnail-json-sprite-array">
-        <Thumbnail className="react-thumbnail-json-sprite-array__thumbnail" thumbnails={THUMBNAILS} time={12} />
-      </div>
-    </Player.Provider>
+    <div className="react-thumbnail-json-sprite-array">
+      <Thumbnail className="react-thumbnail-json-sprite-array__thumbnail" thumbnails={THUMBNAILS} time={12} />
+    </div>
   );
 }

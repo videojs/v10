@@ -15,6 +15,11 @@ export interface PlayerContextValue {
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
+const EMPTY_UNSUBSCRIBE = () => {};
+const EMPTY_STORE = {
+  state: {} as UnknownState,
+  subscribe: () => EMPTY_UNSUBSCRIBE,
+} as Pick<UnknownStore, 'state' | 'subscribe'>;
 
 export function PlayerContextProvider({
   value,
@@ -49,6 +54,23 @@ export function usePlayer<R>(selector: (state: UnknownState) => R): R;
 export function usePlayer<R>(selector?: (state: UnknownState) => R) {
   const { store } = usePlayerContext();
   return useStore(store, selector as any);
+}
+
+/**
+ * Access player state when available, but return `undefined` outside Provider.
+ *
+ * This is useful for components that can operate without player context
+ * (e.g. they accept fully explicit props as a fallback).
+ */
+/** @label Without Selector */
+export function useOptionalPlayer(): UnknownStore | undefined;
+/** @label With Selector */
+export function useOptionalPlayer<R>(selector: (state: UnknownState) => R): R | undefined;
+export function useOptionalPlayer<R>(selector?: (state: UnknownState) => R) {
+  const ctx = useContext(PlayerContext);
+  const store = (ctx?.store ?? (EMPTY_STORE as unknown as UnknownStore)) as UnknownStore;
+  const value = useStore(store, (ctx ? selector : undefined) as any);
+  return ctx ? value : undefined;
 }
 
 /** Access the media element from within a Player Provider. */
