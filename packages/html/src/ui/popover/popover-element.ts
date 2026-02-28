@@ -30,23 +30,18 @@ export class PopoverElement extends MediaElement {
     openOnHover: { type: Boolean, attribute: 'open-on-hover' },
     delay: { type: Number },
     closeDelay: { type: Number, attribute: 'close-delay' },
-  } satisfies PropertyDeclarationMap<keyof PopoverCore.RootProps>;
+  } satisfies PropertyDeclarationMap<keyof PopoverCore.Props>;
 
-  // Controlled/uncontrolled
-  open = PopoverCore.defaultRootProps.open;
-  defaultOpen = PopoverCore.defaultRootProps.defaultOpen;
-
-  // Core props
+  open = PopoverCore.defaultProps.open;
+  defaultOpen = PopoverCore.defaultProps.defaultOpen;
   side = PopoverCore.defaultProps.side;
   align = PopoverCore.defaultProps.align;
   modal: PopoverProps['modal'] = PopoverCore.defaultProps.modal;
   closeOnEscape = PopoverCore.defaultProps.closeOnEscape;
   closeOnOutsideClick = PopoverCore.defaultProps.closeOnOutsideClick;
-
-  // Interaction props
-  openOnHover = PopoverCore.defaultRootProps.openOnHover;
-  delay = PopoverCore.defaultRootProps.delay;
-  closeDelay = PopoverCore.defaultRootProps.closeDelay;
+  openOnHover = PopoverCore.defaultProps.openOnHover;
+  delay = PopoverCore.defaultProps.delay;
+  closeDelay = PopoverCore.defaultProps.closeDelay;
 
   readonly #core = new PopoverCore();
   #popover: PopoverHandle | null = null;
