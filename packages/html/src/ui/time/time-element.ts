@@ -27,7 +27,12 @@ export class TimeElement extends MediaElement {
 
   constructor() {
     super();
+
     this.#signSpan.setAttribute('aria-hidden', 'true');
+    this.#signSpan.hidden = true;
+
+    this.appendChild(this.#signSpan);
+    this.appendChild(this.#textNode);
   }
 
   override connectedCallback(): void {
@@ -52,24 +57,9 @@ export class TimeElement extends MediaElement {
 
     const state = this.#core.getState(media);
 
-    if (state.negative) {
-      this.#signSpan.textContent = this.negativeSign;
-      this.#textNode.textContent = state.text;
-
-      // Append elements if not already in DOM
-      if (!this.#signSpan.parentNode) {
-        this.textContent = '';
-        this.appendChild(this.#signSpan);
-        this.appendChild(this.#textNode);
-      }
-    } else {
-      // Remove sign span if present, use direct text
-      if (this.#signSpan.parentNode) {
-        this.#signSpan.remove();
-        this.#textNode.remove();
-      }
-      this.textContent = state.text;
-    }
+    this.#signSpan.hidden = !state.negative;
+    this.#signSpan.textContent = state.negative ? this.negativeSign : '';
+    this.#textNode.textContent = state.text;
 
     applyElementProps(this, this.#core.getAttrs(state));
     applyStateDataAttrs(this, state, TimeDataAttrs);
