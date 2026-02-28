@@ -198,11 +198,11 @@ describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
     return mod.getAnchorPositionStyle;
   }
 
-  it('includes position-anchor and position: fixed', async () => {
+  it('includes positionAnchor and position: fixed', async () => {
     const getStyle = await importWithAnchorSupport();
     const style = getStyle('my-popover', { side: 'top', align: 'center' });
 
-    expect(style['position-anchor']).toBe('--my-popover');
+    expect(style.positionAnchor).toBe('--my-popover');
     expect(style.position).toBe('fixed');
   });
 
@@ -212,8 +212,8 @@ describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
 
     expect(style.bottom).toBe(`calc(anchor(top) + ${SIDE_VAR})`);
     expect(style.top).toBeUndefined();
-    expect(style['justify-self']).toBe('anchor-center');
-    expect(style['margin-inline-start']).toBe(ALIGN_VAR);
+    expect(style.justifySelf).toBe('anchor-center');
+    expect(style.marginInlineStart).toBe(ALIGN_VAR);
   });
 
   it('places popover below trigger for side=bottom', async () => {
@@ -260,8 +260,8 @@ describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
     const getStyle = await importWithAnchorSupport();
     const style = getStyle('a', { side: 'top', align: 'center' });
 
-    expect(style['justify-self']).toBe('anchor-center');
-    expect(style['margin-inline-start']).toBe(ALIGN_VAR);
+    expect(style.justifySelf).toBe('anchor-center');
+    expect(style.marginInlineStart).toBe(ALIGN_VAR);
   });
 
   it('aligns vertically for left/right sides', async () => {
@@ -271,11 +271,11 @@ describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
     expect(style.top).toBe(`calc(anchor(top) + ${ALIGN_VAR})`);
   });
 
-  it('uses align-self for center on left/right sides', async () => {
+  it('uses alignSelf for center on left/right sides', async () => {
     const getStyle = await importWithAnchorSupport();
     const style = getStyle('a', { side: 'right', align: 'center' });
 
-    expect(style['align-self']).toBe('anchor-center');
-    expect(style['margin-block-start']).toBe(ALIGN_VAR);
+    expect(style.alignSelf).toBe('anchor-center');
+    expect(style.marginBlockStart).toBe(ALIGN_VAR);
   });
 });

@@ -33,20 +33,19 @@ export interface PopoverPopupProps {
   onFocusOut: (event: UIFocusEvent) => void;
 }
 
-export interface Popover {
+export interface PopoverHandle {
   interaction: State<PopoverInteraction>;
   triggerProps: PopoverTriggerProps;
   popupProps: PopoverPopupProps;
   readonly triggerElement: HTMLElement | null;
   setTriggerElement: (el: HTMLElement | null) => void;
   setPopupElement: (el: HTMLElement | null) => void;
-  setBoundaryElement: (el: HTMLElement | null) => void;
   open: (reason?: PopoverOpenChangeReason) => void;
   close: (reason?: PopoverOpenChangeReason) => void;
   destroy: () => void;
 }
 
-export function createPopover(options: PopoverOptions): Popover {
+export function createPopover(options: PopoverOptions): PopoverHandle {
   const { onOpenChange, closeOnEscape, closeOnOutsideClick } = options;
 
   const state = createState<PopoverInteraction>({
@@ -222,6 +221,7 @@ export function createPopover(options: PopoverOptions): Popover {
 
     onPointerLeave(_event) {
       if (!options.openOnHover?.()) return;
+      if (!canHover()) return;
 
       clearHoverTimeout();
 
@@ -309,10 +309,6 @@ export function createPopover(options: PopoverOptions): Popover {
     }
   }
 
-  function setBoundaryElement(_el: HTMLElement | null): void {
-    // Reserved for future positioning constraint logic.
-  }
-
   // --- Cleanup ---
 
   function destroy(): void {
@@ -329,7 +325,6 @@ export function createPopover(options: PopoverOptions): Popover {
     },
     setTriggerElement,
     setPopupElement,
-    setBoundaryElement,
     open,
     close,
     destroy,

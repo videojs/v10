@@ -19,17 +19,8 @@ const OPPOSITE_SIDE: Record<PopoverSide, PopoverSide> = {
   right: 'left',
 };
 
-let _supportsAnchorPositioning: boolean | null = null;
-
-function detectAnchorPositioning(): boolean {
-  if (_supportsAnchorPositioning === null) {
-    _supportsAnchorPositioning = supportsAnchorPositioning();
-  }
-  return _supportsAnchorPositioning;
-}
-
 /**
- * Get positioning styles for the positioner element.
+ * Get positioning styles for the popup element.
  *
  * When the browser supports CSS Anchor Positioning, returns native CSS properties
  * that reference `var(--media-popover-side-offset, 0px)` and
@@ -38,6 +29,10 @@ function detectAnchorPositioning(): boolean {
  * When rects are provided and anchor positioning is unsupported, falls back to
  * manual JS-computed positioning. The caller must resolve offset CSS vars via
  * `getComputedStyle` and pass them as `offsets`.
+ *
+ * Returns camelCase keys for standard CSS properties and `--*` keys for
+ * custom properties — compatible with both React's `style` prop and
+ * `applyStyles()` from `@videojs/utils/dom`.
  */
 export function getAnchorPositionStyle(
   anchorName: string,
@@ -47,7 +42,7 @@ export function getAnchorPositionStyle(
   boundaryRect?: DOMRect,
   offsets?: ManualOffsets
 ): Record<string, string> {
-  if (detectAnchorPositioning()) {
+  if (supportsAnchorPositioning()) {
     return getAnchorPositionCSS(anchorName, opts);
   }
 
@@ -70,8 +65,8 @@ export function getAnchorPositionStyle(
 
 /** Generate style to set on the trigger for CSS Anchor Positioning. */
 export function getAnchorNameStyle(anchorName: string): Record<string, string> {
-  if (!detectAnchorPositioning()) return {};
-  return { 'anchor-name': `--${anchorName}` };
+  if (!supportsAnchorPositioning()) return {};
+  return { anchorName: `--${anchorName}` };
 }
 
 const SIDE_OFFSET_VAR = `var(${PopoverCSSVars.sideOffset}, 0px)`;
@@ -80,7 +75,7 @@ const ALIGN_OFFSET_VAR = `var(${PopoverCSSVars.alignOffset}, 0px)`;
 function getAnchorPositionCSS(anchorName: string, opts: PositioningOptions): Record<string, string> {
   const { side, align } = opts;
   const style: Record<string, string> = {
-    'position-anchor': `--${anchorName}`,
+    positionAnchor: `--${anchorName}`,
     position: 'fixed',
     // Reset UA [popover] defaults (inset: 0; margin: auto) and any
     // stale properties from a previous side/align configuration.
@@ -88,10 +83,10 @@ function getAnchorPositionCSS(anchorName: string, opts: PositioningOptions): Rec
     // so we emit a complete set of resets every time.
     inset: 'auto',
     margin: '0',
-    'justify-self': 'normal',
-    'align-self': 'normal',
-    'margin-inline-start': '0',
-    'margin-block-start': '0',
+    justifySelf: 'normal',
+    alignSelf: 'normal',
+    marginInlineStart: '0',
+    marginBlockStart: '0',
   };
 
   // The CSS inset property is the OPPOSITE of the desired side.
@@ -110,8 +105,8 @@ function getAnchorPositionCSS(anchorName: string, opts: PositioningOptions): Rec
     } else if (align === 'end') {
       style.right = `calc(anchor(right) + ${ALIGN_OFFSET_VAR})`;
     } else {
-      style['justify-self'] = 'anchor-center';
-      style['margin-inline-start'] = ALIGN_OFFSET_VAR;
+      style.justifySelf = 'anchor-center';
+      style.marginInlineStart = ALIGN_OFFSET_VAR;
     }
   } else {
     style[insetProp] = `calc(anchor(${side}) + ${SIDE_OFFSET_VAR})`;
@@ -121,8 +116,8 @@ function getAnchorPositionCSS(anchorName: string, opts: PositioningOptions): Rec
     } else if (align === 'end') {
       style.bottom = `calc(anchor(bottom) + ${ALIGN_OFFSET_VAR})`;
     } else {
-      style['align-self'] = 'anchor-center';
-      style['margin-block-start'] = ALIGN_OFFSET_VAR;
+      style.alignSelf = 'anchor-center';
+      style.marginBlockStart = ALIGN_OFFSET_VAR;
     }
   }
 
@@ -130,7 +125,7 @@ function getAnchorPositionCSS(anchorName: string, opts: PositioningOptions): Rec
 }
 
 /**
- * Compute CSS variables for the positioner element.
+ * Compute CSS variables for the popup element.
  *
  * These enable CSS-based sizing constraints relative to the anchor/boundary.
  */
