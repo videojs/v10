@@ -1,6 +1,6 @@
 'use client';
 
-import { type PopoverRootProps as CorePopoverRootProps, PopoverCore } from '@videojs/core';
+import { type PopoverProps as CorePopoverProps, PopoverCore } from '@videojs/core';
 import { createPopover, createTransitionHandler, type PopoverChangeDetails } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
@@ -9,7 +9,7 @@ import { useEffect, useId, useState } from 'react';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { PopoverContextProvider } from './popover-context';
 
-export interface PopoverRootProps extends CorePopoverRootProps {
+export interface PopoverRootProps extends CorePopoverProps {
   /** Called when the popover open state changes (fires immediately, before animations). */
   onOpenChange?: (open: boolean, details: PopoverChangeDetails) => void;
   /** Called after open/close animations complete. */
@@ -19,12 +19,12 @@ export interface PopoverRootProps extends CorePopoverRootProps {
 
 export function PopoverRoot({
   open: controlledOpen,
-  defaultOpen = PopoverCore.defaultRootProps.defaultOpen,
+  defaultOpen = PopoverCore.defaultProps.defaultOpen,
   onOpenChange: onOpenChangeProp,
   onOpenChangeComplete: onOpenChangeCompleteProp,
-  openOnHover = PopoverCore.defaultRootProps.openOnHover,
-  delay = PopoverCore.defaultRootProps.delay,
-  closeDelay = PopoverCore.defaultRootProps.closeDelay,
+  openOnHover = PopoverCore.defaultProps.openOnHover,
+  delay = PopoverCore.defaultProps.delay,
+  closeDelay = PopoverCore.defaultProps.closeDelay,
   children,
   ...coreProps
 }: PopoverRootProps): ReactNode {
