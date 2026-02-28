@@ -5,7 +5,7 @@ import './BasicUsage.css';
 
 const Player = createPlayer({ features: videoFeatures });
 
-export default function BasicUsage() {
+export default function TextTrackUsage() {
   return (
     <Player.Provider>
       <Player.Container className="react-thumbnail-text-track">

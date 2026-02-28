@@ -1,7 +1,5 @@
 import { Thumbnail } from '@videojs/react';
 
-import './JsonSpriteUsage.css';
-
 const THUMBNAILS = [
   {
     url: 'https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/storyboard.jpg',
@@ -29,9 +27,5 @@ const THUMBNAILS = [
 ];
 
 export default function JsonSpriteUsage() {
-  return (
-    <div className="react-thumbnail-json-sprite-array">
-      <Thumbnail className="react-thumbnail-json-sprite-array__thumbnail" thumbnails={THUMBNAILS} time={12} />
-    </div>
-  );
+  return <Thumbnail thumbnails={THUMBNAILS} time={12} style={{ maxWidth: 240 }} />;
 }

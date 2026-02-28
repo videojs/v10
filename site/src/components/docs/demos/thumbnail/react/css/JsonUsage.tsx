@@ -1,7 +1,5 @@
 import { Thumbnail } from '@videojs/react';
 
-import './JsonUsage.css';
-
 const THUMBNAILS = [
   {
     url: 'https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/thumbnail.jpg?time=0',
@@ -20,9 +18,5 @@ const THUMBNAILS = [
 ];
 
 export default function JsonUsage() {
-  return (
-    <div className="react-thumbnail-json-array">
-      <Thumbnail className="react-thumbnail-json-array__thumbnail" thumbnails={THUMBNAILS} time={12} />
-    </div>
-  );
+  return <Thumbnail thumbnails={THUMBNAILS} time={12} style={{ maxWidth: 240 }} />;
 }

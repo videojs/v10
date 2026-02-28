@@ -11,7 +11,7 @@ type DemoThumbnailImage = {
 
 type ThumbnailDemoElement = HTMLElement & { thumbnails?: DemoThumbnailImage[] };
 
-const thumbnail = document.querySelector<ThumbnailDemoElement>('.html-thumbnail-json-sprite-array__thumbnail');
+const thumbnail = document.querySelector<ThumbnailDemoElement>('media-thumbnail');
 if (thumbnail) {
   thumbnail.thumbnails = [
     {
