@@ -80,6 +80,14 @@ describe('PopoverCore', () => {
   });
 
   describe('getPopupAttrs', () => {
+    it('returns popover manual attribute', () => {
+      const core = new PopoverCore();
+      const state = core.getState(OPEN);
+      const attrs = core.getPopupAttrs(state);
+
+      expect(attrs.popover).toBe('manual');
+    });
+
     it('returns dialog role', () => {
       const core = new PopoverCore();
       const state = core.getState(OPEN);

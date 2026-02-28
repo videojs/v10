@@ -299,8 +299,6 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
     popupEl = el;
 
     if (el) {
-      el.setAttribute('popover', 'manual');
-
       // If the interaction is already open (e.g., React mount after state
       // change), show the popover now. In `applyOpen` the element may not
       // have been in the DOM yet, so the earlier `tryShowPopover` was a no-op.

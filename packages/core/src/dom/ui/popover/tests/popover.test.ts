@@ -138,12 +138,13 @@ describe('createPopover', () => {
       // Should not throw
     });
 
-    it('sets popup element with popover attribute', () => {
+    it('sets and clears popup element', () => {
       const { popover } = createTestPopover();
       const el = document.createElement('div');
 
       popover.setPopupElement(el);
-      expect(el.getAttribute('popover')).toBe('manual');
+      popover.setPopupElement(null);
+      // Should not throw
     });
   });
 

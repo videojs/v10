@@ -94,6 +94,7 @@ export class PopoverCore {
 
   getPopupAttrs(state: PopoverState) {
     return {
+      popover: 'manual' as const,
       role: 'dialog',
       'aria-modal': state.modal === true ? 'true' : undefined,
     };
