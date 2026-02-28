@@ -79,14 +79,14 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
   /**
    * The transition handler manages animation lifecycle via `createState`:
    *
-   * **Open:** `transition.open()` patches `{ open: true, status: 'starting' }`.
+   * **Open:** `transition.open()` patches `{ active: true, status: 'starting' }`.
    * After one RAF it patches `{ status: 'idle' }` and the promise resolves.
    * Frameworks render `data-starting-style` / `data-ending-style` via
    * `getPopupAttrs(state)` — no imperative DOM mutation needed.
    *
    * **Close:** `transition.close(el)` patches `{ status: 'ending' }` (keeping
-   * `open: true` so the element stays mounted). After a double-RAF it waits
-   * for `getAnimations()` to settle, then patches `{ open: false, status: 'idle' }`.
+   * `active: true` so the element stays mounted). After a double-RAF it waits
+   * for `getAnimations()` to settle, then patches `{ active: false, status: 'idle' }`.
    *
    * `onOpenChange` fires immediately (before animations).
    * `onOpenChangeComplete` fires after animations finish.
@@ -94,18 +94,18 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
   function applyOpen(reason: PopoverOpenChangeReason, event?: Event): void {
     if (abort.signal.aborted) return;
 
-    const { open, status } = state.current;
+    const { active, status } = state.current;
 
     // If a close animation is in progress, cancel it and re-open.
-    // If already open and not closing, bail.
-    if (open && status !== 'ending') return;
+    // If already active and not closing, bail.
+    if (active && status !== 'ending') return;
 
     if (status === 'ending') {
       transition.cancel();
     }
 
     transition.open().then(() => {
-      if (abort.signal.aborted || !state.current.open) return;
+      if (abort.signal.aborted || !state.current.active) return;
       options.onOpenChangeComplete?.(true);
     });
 
@@ -116,8 +116,8 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
   }
 
   function applyClose(reason: PopoverOpenChangeReason, event?: Event): void {
-    const { open, status } = state.current;
-    if (abort.signal.aborted || !open || status === 'ending') return;
+    const { active, status } = state.current;
+    if (abort.signal.aborted || !active || status === 'ending') return;
 
     transition.close(popupEl).then(() => {
       if (abort.signal.aborted) return;
@@ -159,14 +159,14 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
   }
 
   function handleDocumentKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape' && closeOnEscape() && state.current.open) {
+    if (event.key === 'Escape' && closeOnEscape() && state.current.active) {
       event.preventDefault();
       applyClose('escape', event);
     }
   }
 
   function handleDocumentPointerdown(event: PointerEvent): void {
-    if (!closeOnOutsideClick() || !state.current.open) return;
+    if (!closeOnOutsideClick() || !state.current.active) return;
 
     const target = event.target as Node | null;
     if (!target) return;
@@ -178,7 +178,7 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
 
   // Subscribe to open state to manage document listeners.
   const unsubscribe = state.subscribe(() => {
-    if (state.current.open) {
+    if (state.current.active) {
       setupDocumentListeners();
     } else {
       cleanupDocumentListeners();
@@ -201,7 +201,7 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
     onClick(event) {
       // During a close animation (open=true, status=ending), treat
       // the click as a re-open rather than a second close attempt.
-      if (state.current.open && state.current.status !== 'ending') {
+      if (state.current.active && state.current.status !== 'ending') {
         applyClose('click', event);
       } else {
         applyOpen('click', event);
@@ -214,7 +214,7 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
 
       clearHoverTimeout();
 
-      if (state.current.open) return;
+      if (state.current.active) return;
 
       const delay = options.delay?.() ?? 300;
       hoverTimeout = setTimeout(() => applyOpen('hover'), delay);
@@ -226,7 +226,7 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
 
       clearHoverTimeout();
 
-      if (!state.current.open) return;
+      if (!state.current.active) return;
 
       const closeDelay = options.closeDelay?.() ?? 0;
       hoverTimeout = setTimeout(() => applyClose('hover'), closeDelay);
@@ -266,7 +266,7 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
 
       clearHoverTimeout();
 
-      if (!state.current.open) return;
+      if (!state.current.active) return;
 
       const closeDelay = options.closeDelay?.() ?? 0;
       hoverTimeout = setTimeout(() => applyClose('hover'), closeDelay);
@@ -292,7 +292,7 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
   function setPopupElement(el: HTMLElement | null): void {
     // Hide the old element before clearing the reference so it
     // doesn't remain visually shown via the Popover API.
-    if (!el && popupEl && state.current.open) {
+    if (!el && popupEl && state.current.active) {
       tryHidePopover(popupEl);
     }
 
@@ -304,7 +304,7 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
       // If the interaction is already open (e.g., React mount after state
       // change), show the popover now. In `applyOpen` the element may not
       // have been in the DOM yet, so the earlier `tryShowPopover` was a no-op.
-      if (state.current.open) {
+      if (state.current.active) {
         tryShowPopover(el);
       }
     }

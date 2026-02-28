@@ -4,7 +4,7 @@ import { createTransitionHandler } from '../transition';
 describe('createTransitionHandler', () => {
   it('starts with idle state', () => {
     const handler = createTransitionHandler();
-    expect(handler.state.current).toEqual({ open: false, status: 'idle' });
+    expect(handler.state.current).toEqual({ active: false, status: 'idle' });
   });
 
   describe('open', () => {
@@ -13,7 +13,7 @@ describe('createTransitionHandler', () => {
 
       handler.open();
 
-      expect(handler.state.current).toEqual({ open: true, status: 'starting' });
+      expect(handler.state.current).toEqual({ active: true, status: 'starting' });
     });
 
     it('transitions to idle after one RAF', async () => {
@@ -27,7 +27,7 @@ describe('createTransitionHandler', () => {
       });
 
       await promise;
-      expect(handler.state.current).toEqual({ open: true, status: 'idle' });
+      expect(handler.state.current).toEqual({ active: true, status: 'idle' });
     });
   });
 
@@ -41,7 +41,7 @@ describe('createTransitionHandler', () => {
 
       handler.close(el);
 
-      expect(handler.state.current).toEqual({ open: true, status: 'ending' });
+      expect(handler.state.current).toEqual({ active: true, status: 'ending' });
     });
 
     it('keeps open true during close animation', () => {
@@ -51,7 +51,7 @@ describe('createTransitionHandler', () => {
       handler.open();
       handler.close(el);
 
-      expect(handler.state.current.open).toBe(true);
+      expect(handler.state.current.active).toBe(true);
       expect(handler.state.current.status).toBe('ending');
     });
 
@@ -64,11 +64,11 @@ describe('createTransitionHandler', () => {
       expect(handler.state.current.status).toBe('ending');
 
       await vi.waitFor(() => {
-        expect(handler.state.current.open).toBe(false);
+        expect(handler.state.current.active).toBe(false);
       });
 
       await promise;
-      expect(handler.state.current).toEqual({ open: false, status: 'idle' });
+      expect(handler.state.current).toEqual({ active: false, status: 'idle' });
     });
   });
 
@@ -89,7 +89,7 @@ describe('createTransitionHandler', () => {
       handler.open();
       handler.cancel();
 
-      expect(handler.state.current.open).toBe(true);
+      expect(handler.state.current.active).toBe(true);
       expect(handler.state.current.status).toBe('idle');
     });
 
@@ -114,7 +114,7 @@ describe('createTransitionHandler', () => {
 
       // open() still patches synchronously (state.patch runs before the RAF guard),
       // but the RAF callback won't fire the idle transition.
-      expect(handler.state.current.open).toBe(true);
+      expect(handler.state.current.active).toBe(true);
     });
 
     it('is idempotent', () => {

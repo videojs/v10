@@ -13,16 +13,16 @@ export interface TransitionHandler {
 /**
  * Manages open/close transition lifecycle via `createState`.
  *
- * **Open:** patches `{ open: true, status: 'starting' }`, then after one
+ * **Open:** patches `{ active: true, status: 'starting' }`, then after one
  * RAF patches `{ status: 'idle' }` so the browser paints the initial
  * state before transitioning.
  *
- * **Close:** patches `{ status: 'ending' }` (keeping `open: true` so the
+ * **Close:** patches `{ status: 'ending' }` (keeping `active: true` so the
  * element stays mounted), then after a double-RAF waits for
- * `getAnimations()` to settle before patching `{ open: false, status: 'idle' }`.
+ * `getAnimations()` to settle before patching `{ active: false, status: 'idle' }`.
  */
 export function createTransitionHandler(): TransitionHandler {
-  const state = createState<TransitionState>({ open: false, status: 'idle' });
+  const state = createState<TransitionState>({ active: false, status: 'idle' });
 
   let destroyed = false;
   let rafId1 = 0;
@@ -34,12 +34,12 @@ export function createTransitionHandler(): TransitionHandler {
     rafId1 = 0;
     rafId2 = 0;
 
-    state.patch({ open: true, status: 'starting' });
+    state.patch({ active: true, status: 'starting' });
 
     return new Promise<void>((resolve) => {
       rafId1 = requestAnimationFrame(() => {
         rafId1 = 0;
-        if (destroyed || !state.current.open) return resolve();
+        if (destroyed || !state.current.active) return resolve();
         state.patch({ status: 'idle' });
         resolve();
       });
@@ -62,7 +62,7 @@ export function createTransitionHandler(): TransitionHandler {
           if (destroyed) return resolve();
           waitForAnimations(el).finally(() => {
             if (destroyed || state.current.status !== 'ending') return resolve();
-            state.patch({ open: false, status: 'idle' });
+            state.patch({ active: false, status: 'idle' });
             resolve();
           });
         });

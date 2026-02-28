@@ -1,6 +1,6 @@
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-import type { TransitionFlags, TransitionState } from '../transition';
+import type { TransitionFlags, TransitionState, TransitionStatus } from '../transition';
 import { getTransitionFlags } from '../transition';
 
 export type PopoverSide = 'top' | 'bottom' | 'left' | 'right';
@@ -34,14 +34,18 @@ export interface PopoverProps {
   closeDelay?: number | undefined;
 }
 
+/**
+ * The raw transition state managed by `createTransitionHandler`. Uses `active`
+ * (not `open`) to distinguish the generic transition state machine from the
+ * domain-specific `PopoverState.open`.
+ */
 export interface PopoverInteraction extends TransitionState {}
 
-export interface PopoverState extends PopoverInteraction, TransitionFlags {
-  /** Resolved side the popup is positioned on. */
+export interface PopoverState extends TransitionFlags {
+  open: boolean;
+  status: TransitionStatus;
   side: PopoverSide;
-  /** Resolved alignment along the trigger's edge. */
   align: PopoverAlign;
-  /** Resolved modal mode. */
   modal: boolean | 'trap-focus';
 }
 
@@ -71,7 +75,7 @@ export class PopoverCore {
 
   getState(interaction: PopoverInteraction): PopoverState {
     return {
-      open: interaction.open,
+      open: interaction.active,
       status: interaction.status,
       side: this.#props.side,
       align: this.#props.align,
