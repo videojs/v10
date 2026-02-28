@@ -70,12 +70,12 @@ describe('PopoverCore', () => {
       expect(attrs['aria-controls']).toBe('popup-123');
     });
 
-    it('omits aria-controls when popupId is not provided', () => {
+    it('returns undefined aria-controls when popupId is not provided', () => {
       const core = new PopoverCore();
       const state = core.getState(OPEN);
       const attrs = core.getTriggerAttrs(state);
 
-      expect(attrs).not.toHaveProperty('aria-controls');
+      expect(attrs['aria-controls']).toBeUndefined();
     });
   });
 

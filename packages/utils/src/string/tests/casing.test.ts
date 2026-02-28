@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { camelCase, pascalCase } from '../casing';
+import { camelCase, kebabCase, pascalCase } from '../casing';
 
 describe('casing', () => {
   describe('pascalCase', () => {
@@ -39,6 +39,24 @@ describe('casing', () => {
 
     it('converts snake_case', () => {
       expect(camelCase('hello_world')).toBe('helloWorld');
+    });
+  });
+
+  describe('kebabCase', () => {
+    it('converts camelCase', () => {
+      expect(kebabCase('positionAnchor')).toBe('position-anchor');
+    });
+
+    it('converts PascalCase', () => {
+      expect(kebabCase('PositionAnchor')).toBe('-position-anchor');
+    });
+
+    it('preserves lowercase', () => {
+      expect(kebabCase('margin')).toBe('margin');
+    });
+
+    it('preserves CSS custom properties', () => {
+      expect(kebabCase('--media-popover-offset')).toBe('--media-popover-offset');
     });
   });
 });

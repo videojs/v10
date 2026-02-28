@@ -78,7 +78,7 @@ export class PopoverCore {
     return {
       'aria-expanded': state.open ? 'true' : 'false',
       'aria-haspopup': 'dialog',
-      ...(popupId ? { 'aria-controls': popupId } : {}),
+      'aria-controls': popupId,
     };
   }
 
