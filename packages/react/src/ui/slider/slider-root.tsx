@@ -12,8 +12,8 @@ import { SliderProvider } from './slider-context';
 
 export interface SliderRootProps extends UIComponentProps<'div', SliderCore.State>, SliderCore.Props {
   value?: number | undefined;
-  onValueChange?: ((percent: number) => void) | undefined;
-  onValueCommit?: ((percent: number) => void) | undefined;
+  onValueChange?: ((value: number) => void) | undefined;
+  onValueCommit?: ((value: number) => void) | undefined;
   onDragStart?: (() => void) | undefined;
   onDragEnd?: (() => void) | undefined;
 }
@@ -74,6 +74,7 @@ export const SliderRoot = forwardRef(function SliderRoot(
     <SliderProvider
       value={{
         state,
+        pointerValue: core.valueFromPercent(state.pointerPercent),
         thumbRef: sliderThumbRef,
         thumbProps,
         stateAttrMap: SliderDataAttrs,

@@ -106,7 +106,7 @@ describe('useOptionalPlayer', () => {
   });
 
   it('returns selected state inside Provider', () => {
-    const store = createMockStore();
+    const store = createMockStore({ paused: true });
     const value: PlayerContextValue = { store: store as any, media: null, setMedia: vi.fn() };
 
     const { result } = renderHook(() => useOptionalPlayer((state: any) => state.paused), {

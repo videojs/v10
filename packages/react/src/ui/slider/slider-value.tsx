@@ -22,9 +22,9 @@ export const SliderValue = forwardRef(function SliderValue(
   const context = useSliderContext();
   if (!context) return null;
 
-  const { state, formatValue } = context;
+  const { state, pointerValue, formatValue } = context;
 
-  const rawValue = type === 'pointer' ? state.pointerPercent : state.value;
+  const rawValue = type === 'pointer' ? pointerValue : state.value;
 
   const text = format ? format(rawValue) : formatValue ? formatValue(rawValue, type) : String(Math.round(rawValue));
 

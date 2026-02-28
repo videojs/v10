@@ -7,6 +7,8 @@ import { createContext, useContext } from 'react';
 
 export interface SliderContextValue {
   state: SliderState;
+  /** Pointer position converted to the value domain (not 0–100 percent). */
+  pointerValue: number;
   thumbRef: RefCallback<HTMLElement>;
   thumbProps: SliderThumbProps;
   stateAttrMap: StateAttrMap<SliderState>;
