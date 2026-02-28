@@ -13,6 +13,7 @@ export interface ManualOffsets {
 }
 
 export interface PopoverPositionStyle {
+  [key: string]: string | undefined;
   positionAnchor?: string;
   position?: string;
   inset?: string;
