@@ -1,4 +1,5 @@
 import { createState, type State } from '@videojs/store';
+import { noop } from '@videojs/utils/function';
 import type { TransitionState } from '../../core/ui/transition';
 
 export interface TransitionHandler {
@@ -99,8 +100,5 @@ function waitForAnimations(el: HTMLElement | null): Promise<void> {
 
   if (animations.length === 0) return Promise.resolve();
 
-  return Promise.all(animations.map((a) => a.finished)).then(
-    () => {},
-    () => {}
-  );
+  return Promise.all(animations.map((a) => a.finished)).then(noop, noop);
 }
