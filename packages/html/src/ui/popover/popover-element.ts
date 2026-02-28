@@ -110,7 +110,7 @@ export class PopoverElement extends MediaElement {
 
     // Sync controlled open state
     if (this.#popover && changed.has('open')) {
-      const { open: interactionOpen } = this.#popover.interaction.current;
+      const { active: interactionOpen } = this.#popover.interaction.current;
       if (this.open !== interactionOpen) {
         if (this.open) {
           this.#popover.open();
