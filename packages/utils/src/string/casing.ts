@@ -5,3 +5,7 @@ export function pascalCase(str: string): string {
 export function camelCase(str: string): string {
   return pascalCase(str).replace(/^(.)/, (_, c) => c.toLowerCase());
 }
+
+export function kebabCase(str: string): string {
+  return str.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
+}
