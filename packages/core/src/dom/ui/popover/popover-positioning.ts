@@ -1,6 +1,6 @@
 import { supportsAnchorPositioning } from '@videojs/utils/dom';
 import type { PopoverAlign, PopoverSide } from '../../../core/ui/popover/popover-core';
-import { PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
+import { type PopoverCSSVarKey, PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
 
 export interface PositioningOptions {
   side: PopoverSide;
@@ -10,6 +10,21 @@ export interface PositioningOptions {
 export interface ManualOffsets {
   sideOffset: number;
   alignOffset: number;
+}
+
+export interface PopoverPositionStyle {
+  positionAnchor?: string;
+  position?: string;
+  inset?: string;
+  margin?: string;
+  justifySelf?: string;
+  alignSelf?: string;
+  marginInlineStart?: string;
+  marginBlockStart?: string;
+  top?: string;
+  bottom?: string;
+  left?: string;
+  right?: string;
 }
 
 const OPPOSITE_SIDE: Record<PopoverSide, PopoverSide> = {
@@ -41,7 +56,7 @@ export function getAnchorPositionStyle(
   popupRect?: DOMRect,
   boundaryRect?: DOMRect,
   offsets?: ManualOffsets
-): Record<string, string> {
+): PopoverPositionStyle & Partial<Record<PopoverCSSVarKey, string>> {
   if (supportsAnchorPositioning()) {
     return getAnchorPositionCSS(anchorName, opts);
   }
@@ -64,7 +79,7 @@ export function getAnchorPositionStyle(
 }
 
 /** Generate style to set on the trigger for CSS Anchor Positioning. */
-export function getAnchorNameStyle(anchorName: string): Record<string, string> {
+export function getAnchorNameStyle(anchorName: string) {
   if (!supportsAnchorPositioning()) return {};
   return { anchorName: `--${anchorName}` };
 }
@@ -72,9 +87,9 @@ export function getAnchorNameStyle(anchorName: string): Record<string, string> {
 const SIDE_OFFSET_VAR = `var(${PopoverCSSVars.sideOffset}, 0px)`;
 const ALIGN_OFFSET_VAR = `var(${PopoverCSSVars.alignOffset}, 0px)`;
 
-function getAnchorPositionCSS(anchorName: string, opts: PositioningOptions): Record<string, string> {
+function getAnchorPositionCSS(anchorName: string, opts: PositioningOptions): PopoverPositionStyle {
   const { side, align } = opts;
-  const style: Record<string, string> = {
+  const style: PopoverPositionStyle = {
     positionAnchor: `--${anchorName}`,
     position: 'fixed',
     // Reset UA [popover] defaults (inset: 0; margin: auto) and any
@@ -133,8 +148,8 @@ export function getPopoverCSSVars(
   triggerRect: DOMRect,
   boundaryRect: DOMRect,
   side: PopoverSide
-): Record<string, string> {
-  const vars: Record<string, string> = {};
+): Partial<Record<PopoverCSSVarKey, string>> {
+  const vars: Partial<Record<PopoverCSSVarKey, string>> = {};
 
   vars[PopoverCSSVars.anchorWidth] = `${triggerRect.width}px`;
   vars[PopoverCSSVars.anchorHeight] = `${triggerRect.height}px`;
@@ -167,7 +182,7 @@ export function getManualPositionStyle(
   popupRect: DOMRect,
   opts: PositioningOptions,
   offsets: ManualOffsets = { sideOffset: 0, alignOffset: 0 }
-): Record<string, string> {
+) {
   const { side, align } = opts;
   const { sideOffset, alignOffset } = offsets;
   let top = 0;
