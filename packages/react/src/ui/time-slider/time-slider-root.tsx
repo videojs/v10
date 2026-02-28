@@ -13,6 +13,8 @@ import { renderElement } from '../../utils/use-render';
 import { useSlider } from '../hooks/use-slider';
 import { SliderProvider } from '../slider/slider-context';
 
+const noopSeek = (): Promise<number> => Promise.resolve(0);
+
 export interface TimeSliderRootProps extends UIComponentProps<'div', TimeSliderCore.State> {
   label?: string | undefined;
   step?: number | undefined;
@@ -63,7 +65,10 @@ export const TimeSliderRoot = forwardRef(function TimeSliderRoot(
   const { state, cssVars, rootRef, thumbRef, rootProps, thumbProps } = useSlider<TimeSliderCore.State>({
     computeState: (interaction) => {
       if (!time || !buffer) {
-        return core.getState(interaction, 0) as TimeSliderCore.State;
+        return core.getTimeState(
+          { currentTime: 0, duration: 0, seeking: false, seek: noopSeek, buffered: [], seekable: [] },
+          interaction
+        );
       }
 
       const baseState = core.getTimeState({ ...time, ...buffer }, interaction);
@@ -123,6 +128,7 @@ export const TimeSliderRoot = forwardRef(function TimeSliderRoot(
     <SliderProvider
       value={{
         state,
+        pointerValue: core.valueFromPercent(state.pointerPercent),
         thumbRef,
         thumbProps,
         stateAttrMap: TimeSliderDataAttrs,
