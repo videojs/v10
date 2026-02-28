@@ -12,7 +12,7 @@ import {
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { SnapshotController } from '@videojs/store/html';
-import { applyStyles } from '@videojs/utils/dom';
+import { applyStyles, supportsAnchorPositioning } from '@videojs/utils/dom';
 
 import { MediaElement } from '../media-element';
 
@@ -83,14 +83,15 @@ export class PopoverElement extends MediaElement {
     } else {
       this.#snapshot = new SnapshotController(this, this.#popover.interaction);
     }
+  }
 
-    // Determine initial open state: controlled mode uses the `open`
-    // attribute, uncontrolled mode uses `defaultOpen`.
-    const isControlled = this.hasAttribute('open');
-    const shouldOpen = isControlled ? this.open : this.defaultOpen;
+  protected override firstUpdated(changed: PropertyValues): void {
+    super.firstUpdated(changed);
 
-    if (shouldOpen) {
-      this.#popover.open();
+    // Uncontrolled mode: open if `defaultOpen` is set. Controlled `open`
+    // is already synced by `willUpdate` on the first render cycle.
+    if (this.defaultOpen && !this.open) {
+      this.#popover?.open();
     }
   }
 
@@ -146,15 +147,19 @@ export class PopoverElement extends MediaElement {
     if (!state.open) return;
 
     // Apply positioning styles to self.
-    // CSS Anchor Positioning is used when supported; otherwise falls
-    // back to JS-computed fixed positioning from measured rects.
     const posOpts = { side: state.side, align: state.align };
-    const triggerRect = this.#currentTrigger?.getBoundingClientRect();
-    const selfRect = this.getBoundingClientRect();
-    const boundaryRect = document.documentElement.getBoundingClientRect();
-    const offsets = resolveOffsets(this);
 
-    applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, selfRect, boundaryRect, offsets));
+    if (supportsAnchorPositioning()) {
+      // Native CSS Anchor Positioning — no JS rect measurements needed.
+      applyStyles(this, getAnchorPositionStyle(this.id, posOpts));
+    } else {
+      // JS fallback: measure rects and resolve CSS var offsets.
+      const triggerRect = this.#currentTrigger?.getBoundingClientRect();
+      const selfRect = this.getBoundingClientRect();
+      const boundaryRect = document.documentElement.getBoundingClientRect();
+      const offsets = resolveOffsets(this);
+      applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, selfRect, boundaryRect, offsets));
+    }
   }
 
   // --- Trigger discovery ---
@@ -179,11 +184,14 @@ export class PopoverElement extends MediaElement {
   }
 
   #cleanupTrigger(): void {
-    // Remove ARIA attributes from the old trigger to avoid stale state.
     if (this.#currentTrigger) {
-      this.#currentTrigger.removeAttribute('aria-expanded');
-      this.#currentTrigger.removeAttribute('aria-haspopup');
-      this.#currentTrigger.removeAttribute('aria-controls');
+      // Remove ARIA attributes and anchor-name style from the old trigger.
+      applyElementProps(this.#currentTrigger, {
+        'aria-expanded': undefined,
+        'aria-haspopup': undefined,
+        'aria-controls': undefined,
+      });
+      this.#currentTrigger.style.removeProperty('anchor-name');
     }
 
     this.#triggerAc?.abort();
