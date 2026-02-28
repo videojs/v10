@@ -12,6 +12,14 @@ import { renderElement } from '../../utils/use-render';
 import { useSlider } from '../hooks/use-slider';
 import { SliderProvider } from '../slider/slider-context';
 
+const noopVolume = {
+  volume: 0,
+  muted: false,
+  volumeAvailability: 'unsupported' as const,
+  changeVolume: () => 0,
+  toggleMute: () => false,
+};
+
 export interface VolumeSliderRootProps extends UIComponentProps<'div', VolumeSliderCore.State> {
   label?: string | undefined;
   orientation?: 'horizontal' | 'vertical' | undefined;
@@ -48,12 +56,12 @@ export const VolumeSliderRoot = forwardRef(function VolumeSliderRoot(
   core.setProps({ label, orientation, step, largeStep, disabled, thumbAlignment });
 
   // Keep a ref to the latest volume state for callbacks.
-  const mediaRef = useLatestRef(volume);
+  const volumeRef = useLatestRef(volume);
 
   const { state, cssVars, rootRef, thumbRef, rootProps, thumbProps } = useSlider<VolumeSliderCore.State>({
     computeState: (interaction) => {
       if (!volume) {
-        return core.getState(interaction, 0) as VolumeSliderCore.State;
+        return core.getVolumeState(noopVolume, interaction);
       }
       return core.getVolumeState(volume, interaction);
     },
@@ -66,18 +74,10 @@ export const VolumeSliderRoot = forwardRef(function VolumeSliderRoot(
       core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
     getCSSVars: getSliderCSSVars,
     onValueChange: (percent) => {
-      try {
-        mediaRef.current?.changeVolume(percent / 100);
-      } catch {
-        // Silently ignore — media target may not be attached yet.
-      }
+      volumeRef.current?.changeVolume(percent / 100);
     },
     onValueCommit: (percent) => {
-      try {
-        mediaRef.current?.changeVolume(percent / 100);
-      } catch {
-        // Silently ignore — media target may not be attached yet.
-      }
+      volumeRef.current?.changeVolume(percent / 100);
     },
     onDragStart,
     onDragEnd,
@@ -92,6 +92,7 @@ export const VolumeSliderRoot = forwardRef(function VolumeSliderRoot(
     <SliderProvider
       value={{
         state,
+        pointerValue: core.valueFromPercent(state.pointerPercent),
         thumbRef,
         thumbProps,
         stateAttrMap: SliderDataAttrs,
