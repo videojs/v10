@@ -1,6 +1,7 @@
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-import type { TransitionState } from '../types';
+import type { TransitionFlags, TransitionState } from '../transition';
+import { getTransitionFlags } from '../transition';
 
 export type PopoverSide = 'top' | 'bottom' | 'left' | 'right';
 
@@ -35,17 +36,13 @@ export interface PopoverProps {
 
 export interface PopoverInteraction extends TransitionState {}
 
-export interface PopoverState extends PopoverInteraction {
+export interface PopoverState extends PopoverInteraction, TransitionFlags {
   /** Resolved side the popup is positioned on. */
   side: PopoverSide;
   /** Resolved alignment along the trigger's edge. */
   align: PopoverAlign;
   /** Resolved modal mode. */
   modal: boolean | 'trap-focus';
-  /** Whether the open animation is in progress. */
-  startingStyle: boolean;
-  /** Whether the close animation is in progress. */
-  endingStyle: boolean;
 }
 
 export class PopoverCore {
@@ -73,16 +70,13 @@ export class PopoverCore {
   }
 
   getState(interaction: PopoverInteraction): PopoverState {
-    const { status } = interaction;
-
     return {
       open: interaction.open,
-      status,
+      status: interaction.status,
       side: this.#props.side,
       align: this.#props.align,
       modal: this.#props.modal,
-      startingStyle: status === 'starting',
-      endingStyle: status === 'ending',
+      ...getTransitionFlags(interaction.status),
     };
   }
 

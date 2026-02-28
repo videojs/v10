@@ -113,29 +113,29 @@ describe('PopoverCore', () => {
     });
   });
 
-  describe('transition style flags', () => {
-    it('sets startingStyle when status is starting', () => {
+  describe('transition flags', () => {
+    it('sets transitionStarting when status is starting', () => {
       const core = new PopoverCore();
       const state = core.getState({ open: true, status: 'starting' });
 
-      expect(state.startingStyle).toBe(true);
-      expect(state.endingStyle).toBe(false);
+      expect(state.transitionStarting).toBe(true);
+      expect(state.transitionEnding).toBe(false);
     });
 
-    it('sets endingStyle when status is ending', () => {
+    it('sets transitionEnding when status is ending', () => {
       const core = new PopoverCore();
       const state = core.getState({ open: true, status: 'ending' });
 
-      expect(state.startingStyle).toBe(false);
-      expect(state.endingStyle).toBe(true);
+      expect(state.transitionStarting).toBe(false);
+      expect(state.transitionEnding).toBe(true);
     });
 
     it('both false when status is idle', () => {
       const core = new PopoverCore();
       const state = core.getState(OPEN);
 
-      expect(state.startingStyle).toBe(false);
-      expect(state.endingStyle).toBe(false);
+      expect(state.transitionStarting).toBe(false);
+      expect(state.transitionEnding).toBe(false);
     });
   });
 });

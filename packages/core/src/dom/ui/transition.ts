@@ -1,5 +1,5 @@
 import { createState, type State } from '@videojs/store';
-import type { TransitionState } from '../../core/ui/types';
+import type { TransitionState } from '../../core/ui/transition';
 
 export interface TransitionHandler {
   state: State<TransitionState>;

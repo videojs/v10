@@ -33,4 +33,5 @@ export * from './ui/thumbnail/thumbnail-media-fragment';
 export * from './ui/thumbnail/types';
 export * from './ui/time/time-core';
 export * from './ui/time/time-data-attrs';
+export * from './ui/transition';
 export * from './ui/types';
