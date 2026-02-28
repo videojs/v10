@@ -20,13 +20,9 @@ const noopVolume = {
   toggleMute: () => false,
 };
 
-export interface VolumeSliderRootProps extends UIComponentProps<'div', VolumeSliderCore.State> {
-  label?: string | undefined;
-  orientation?: 'horizontal' | 'vertical' | undefined;
-  step?: number | undefined;
-  largeStep?: number | undefined;
-  disabled?: boolean | undefined;
-  thumbAlignment?: 'center' | 'edge' | undefined;
+export interface VolumeSliderRootProps
+  extends UIComponentProps<'div', VolumeSliderCore.State>,
+    Pick<VolumeSliderCore.Props, 'label' | 'orientation' | 'step' | 'largeStep' | 'disabled' | 'thumbAlignment'> {
   onDragStart?: (() => void) | undefined;
   onDragEnd?: (() => void) | undefined;
 }
