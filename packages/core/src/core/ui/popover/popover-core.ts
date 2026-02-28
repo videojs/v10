@@ -1,12 +1,17 @@
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
+/** Which side of the trigger the popup is placed on. */
 export type PopoverSide = 'top' | 'bottom' | 'left' | 'right';
 
+/** Alignment of the popup along the cross axis of the trigger. */
 export type PopoverAlign = 'start' | 'center' | 'end';
 
+/** Configuration props shared by all popover platform layers. */
 export interface PopoverProps {
+  /** Which side of the trigger to place the popup. @defaultValue `'top'` */
   side?: PopoverSide | undefined;
+  /** Alignment along the cross axis. @defaultValue `'center'` */
   align?: PopoverAlign | undefined;
   /**
    * Controls the modality of the popover.
@@ -15,17 +20,27 @@ export interface PopoverProps {
    * - `true`: modal; sets `aria-modal="true"` on the popup.
    * - `'trap-focus'`: reserved for future focus-trapping behavior. Does NOT
    *   set `aria-modal` — focus trapping is behavioral, not semantic.
+   *
+   * @defaultValue `false`
    */
   modal?: boolean | 'trap-focus' | undefined;
+  /** Close when the Escape key is pressed. @defaultValue `true` */
   closeOnEscape?: boolean | undefined;
+  /** Close when clicking outside the trigger and popup. @defaultValue `true` */
   closeOnOutsideClick?: boolean | undefined;
 }
 
+/** Root-level props that extend `PopoverProps` with open state and hover behavior. */
 export interface PopoverRootProps extends PopoverProps {
+  /** Controlled open state. When set, the consumer owns open/close transitions. */
   open?: boolean | undefined;
+  /** Initial open state for uncontrolled mode. @defaultValue `false` */
   defaultOpen?: boolean | undefined;
+  /** Open the popover on pointer hover (requires `(hover: hover)` media). @defaultValue `false` */
   openOnHover?: boolean | undefined;
+  /** Delay in ms before opening on hover. @defaultValue `300` */
   delay?: number | undefined;
+  /** Delay in ms before closing after pointer leaves. @defaultValue `0` */
   closeDelay?: number | undefined;
 }
 
@@ -34,13 +49,27 @@ export interface PopoverRootProps extends PopoverProps {
  * The UI layer subscribes to this but never writes it directly.
  */
 export interface PopoverInteraction {
+  /** Whether the popover is currently open. */
   open: boolean;
+  /**
+   * Current transition phase. Follows the lifecycle:
+   * `closed` → `opening` → `open` → `closing` → `closed`.
+   *
+   * Use `data-transition-status` in CSS to animate enter/exit.
+   */
   transitionStatus: 'closed' | 'opening' | 'open' | 'closing';
 }
 
+/**
+ * Full popover state, combining interaction state with resolved configuration.
+ * Platform layers derive this via `PopoverCore.getState()`.
+ */
 export interface PopoverState extends PopoverInteraction {
+  /** Resolved placement side. */
   side: PopoverSide;
+  /** Resolved cross-axis alignment. */
   align: PopoverAlign;
+  /** Resolved modality. */
   modal: boolean | 'trap-focus';
 }
 
