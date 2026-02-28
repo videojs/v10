@@ -1,5 +1,6 @@
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
+import type { TransitionState } from '../types';
 
 export type PopoverSide = 'top' | 'bottom' | 'left' | 'right';
 
@@ -28,9 +29,7 @@ export interface PopoverRootProps extends PopoverProps {
   closeDelay?: number | undefined;
 }
 
-export interface PopoverInteraction {
-  open: boolean;
-}
+export interface PopoverInteraction extends TransitionState {}
 
 export interface PopoverState extends PopoverInteraction {
   side: PopoverSide;
@@ -68,6 +67,7 @@ export class PopoverCore {
   getState(interaction: PopoverInteraction): PopoverState {
     return {
       open: interaction.open,
+      status: interaction.status,
       side: this.#props.side,
       align: this.#props.align,
       modal: this.#props.modal,
@@ -86,6 +86,8 @@ export class PopoverCore {
     return {
       role: 'dialog',
       'aria-modal': state.modal === true ? 'true' : undefined,
+      'data-starting-style': state.status === 'starting' ? '' : undefined,
+      'data-ending-style': state.status === 'ending' ? '' : undefined,
     };
   }
 }

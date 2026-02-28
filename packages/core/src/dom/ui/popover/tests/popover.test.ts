@@ -5,7 +5,7 @@ import { createTestPopover } from './popover-helpers';
 describe('createPopover', () => {
   it('starts closed', () => {
     const { popover } = createTestPopover();
-    expect(popover.interaction.current.open).toBe(false);
+    expect(popover.interaction.current).toEqual({ open: false, status: 'idle' });
   });
 
   describe('open/close', () => {
@@ -18,14 +18,12 @@ describe('createPopover', () => {
       expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'click' });
     });
 
-    it('sets data-starting-style on popup element when opening', () => {
+    it('transitions to starting status when opening', () => {
       const { popover } = createTestPopover();
-      const el = document.createElement('div');
-      popover.setPopupElement(el);
 
       popover.open();
 
-      expect(el.hasAttribute('data-starting-style')).toBe(true);
+      expect(popover.interaction.current).toEqual({ open: true, status: 'starting' });
     });
 
     it('calls onOpenChange when closing', () => {
@@ -41,15 +39,13 @@ describe('createPopover', () => {
       expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'click' });
     });
 
-    it('sets data-ending-style on popup element when closing', () => {
+    it('transitions to ending status when closing', () => {
       const { popover } = createTestPopover();
-      const el = document.createElement('div');
-      popover.setPopupElement(el);
 
       popover.open();
       popover.close();
 
-      expect(el.hasAttribute('data-ending-style')).toBe(true);
+      expect(popover.interaction.current).toEqual({ open: true, status: 'ending' });
     });
 
     it('does not call onOpenChange if already open', () => {
@@ -84,8 +80,6 @@ describe('createPopover', () => {
     it('fires after open animation completes', () => {
       const onOpenChangeComplete = vi.fn();
       const { popover } = createTestPopover({ onOpenChangeComplete });
-      const el = document.createElement('div');
-      popover.setPopupElement(el);
 
       popover.open();
 
@@ -129,6 +123,7 @@ describe('createPopover', () => {
       popover.triggerProps.onClick({ preventDefault: vi.fn() } as unknown as UIEvent);
 
       expect(popover.interaction.current.open).toBe(true);
+      expect(popover.interaction.current.status).not.toBe('ending');
       expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
     });
   });

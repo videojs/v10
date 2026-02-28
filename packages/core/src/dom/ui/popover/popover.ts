@@ -1,7 +1,8 @@
-import { createState, type State } from '@videojs/store';
+import type { State } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 import type { PopoverInteraction } from '../../../core/ui/popover/popover-core';
 import type { UIFocusEvent, UIPointerEvent } from '../event';
+import type { TransitionHandler } from '../transition';
 
 export type PopoverOpenChangeReason = 'click' | 'hover' | 'focus' | 'escape' | 'outside-click' | 'blur';
 
@@ -11,6 +12,7 @@ export interface PopoverChangeDetails {
 }
 
 export interface PopoverOptions {
+  transition: TransitionHandler;
   onOpenChange: (open: boolean, details: PopoverChangeDetails) => void;
   /** Fires after open/close animations complete. */
   onOpenChangeComplete?: (open: boolean) => void;
@@ -48,16 +50,13 @@ export interface PopoverHandle {
 }
 
 export function createPopover(options: PopoverOptions): PopoverHandle {
-  const { onOpenChange, closeOnEscape, closeOnOutsideClick } = options;
+  const { transition, onOpenChange, closeOnEscape, closeOnOutsideClick } = options;
 
-  const state = createState<PopoverInteraction>({ open: false });
+  const state = transition.state;
 
   let triggerEl: HTMLElement | null = null;
   let popupEl: HTMLElement | null = null;
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
-  let closing = false;
-  let rafId1 = 0;
-  let rafId2 = 0;
 
   const abort = new AbortController();
   let docAc: AbortController | null = null;
@@ -78,17 +77,16 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
   // --- Open/close ---
 
   /**
-   * Animation lifecycle uses CSS data attributes instead of JS state:
+   * The transition handler manages animation lifecycle via `createState`:
    *
-   * **Open:** `data-starting-style` is set before `showPopover()` so
-   * the browser paints the initial (hidden) state. One RAF later the
-   * attribute is removed, triggering the CSS transition to the final
-   * (visible) state.
+   * **Open:** `transition.open()` patches `{ open: true, status: 'starting' }`.
+   * After one RAF it patches `{ status: 'idle' }` and the promise resolves.
+   * Frameworks render `data-starting-style` / `data-ending-style` via
+   * `getPopupAttrs(state)` — no imperative DOM mutation needed.
    *
-   * **Close:** `data-ending-style` is set to trigger the CSS transition
-   * to the hidden state. After a double-RAF (to let the browser start
-   * transitions) we wait for `getAnimations()` to settle, then hide
-   * the popover and patch `open: false`.
+   * **Close:** `transition.close(el)` patches `{ status: 'ending' }` (keeping
+   * `open: true` so the element stays mounted). After a double-RAF it waits
+   * for `getAnimations()` to settle, then patches `{ open: false, status: 'idle' }`.
    *
    * `onOpenChange` fires immediately (before animations).
    * `onOpenChangeComplete` fires after animations finish.
@@ -96,62 +94,35 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
   function applyOpen(reason: PopoverOpenChangeReason, event?: Event): void {
     if (abort.signal.aborted) return;
 
+    const { open, status } = state.current;
+
     // If a close animation is in progress, cancel it and re-open.
     // If already open and not closing, bail.
-    if (state.current.open && !closing) return;
+    if (open && status !== 'ending') return;
 
-    // Cancel any in-progress close so the finalizer won't run.
-    if (closing) {
-      closing = false;
-      popupEl?.removeAttribute('data-ending-style');
+    if (status === 'ending') {
+      transition.cancel();
     }
 
-    // Set data-starting-style BEFORE showing so the browser paints
-    // the initial (pre-transition) state.
-    popupEl?.setAttribute('data-starting-style', '');
-
-    state.patch({ open: true });
-    tryShowPopover(popupEl);
-
-    rafId1 = requestAnimationFrame(() => {
-      rafId1 = 0;
+    transition.open().then(() => {
       if (abort.signal.aborted || !state.current.open) return;
-      // Remove data-starting-style so the element transitions to its
-      // natural (open) styles.
-      popupEl?.removeAttribute('data-starting-style');
       options.onOpenChangeComplete?.(true);
     });
+
+    tryShowPopover(popupEl);
 
     const details: PopoverChangeDetails = event ? { reason, event } : { reason };
     onOpenChange(true, details);
   }
 
   function applyClose(reason: PopoverOpenChangeReason, event?: Event): void {
-    if (abort.signal.aborted || !state.current.open || closing) return;
+    const { open, status } = state.current;
+    if (abort.signal.aborted || !open || status === 'ending') return;
 
-    closing = true;
-
-    // Set data-ending-style to trigger the CSS transition to the
-    // hidden state. The element stays in the DOM (open: true) so
-    // the exit animation is visible.
-    popupEl?.setAttribute('data-ending-style', '');
-
-    // Double-RAF ensures the browser has started CSS transitions
-    // before we query getAnimations().
-    rafId1 = requestAnimationFrame(() => {
-      rafId1 = 0;
-      rafId2 = requestAnimationFrame(() => {
-        rafId2 = 0;
-        if (abort.signal.aborted) return;
-        waitForAnimations(popupEl).finally(() => {
-          if (abort.signal.aborted || !closing) return;
-          closing = false;
-          popupEl?.removeAttribute('data-ending-style');
-          tryHidePopover(popupEl);
-          state.patch({ open: false });
-          options.onOpenChangeComplete?.(false);
-        });
-      });
+    transition.close(popupEl).then(() => {
+      if (abort.signal.aborted) return;
+      tryHidePopover(popupEl);
+      options.onOpenChangeComplete?.(false);
     });
 
     const details: PopoverChangeDetails = event ? { reason, event } : { reason };
@@ -218,9 +189,7 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
   abort.signal.addEventListener('abort', () => {
     unsubscribe();
     clearHoverTimeout();
-    closing = false;
-    cancelAnimationFrame(rafId1);
-    cancelAnimationFrame(rafId2);
+    transition.destroy();
     cleanupDocumentListeners();
     triggerEl = null;
     popupEl = null;
@@ -230,9 +199,9 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
 
   const triggerProps: PopoverTriggerProps = {
     onClick(event) {
-      // During a close animation (open=true, closing=true), treat
+      // During a close animation (open=true, status=ending), treat
       // the click as a re-open rather than a second close attempt.
-      if (state.current.open && !closing) {
+      if (state.current.open && state.current.status !== 'ending') {
         applyClose('click', event);
       } else {
         applyOpen('click', event);
@@ -379,17 +348,4 @@ function tryHidePopover(el: HTMLElement | null): void {
   } catch {
     // Element may not support popover API or may already be hidden
   }
-}
-
-function waitForAnimations(el: HTMLElement | null): Promise<void> {
-  if (!el) return Promise.resolve();
-
-  const animations = el.getAnimations();
-
-  if (animations.length === 0) return Promise.resolve();
-
-  return Promise.all(animations.map((a) => a.finished)).then(
-    () => {},
-    () => {}
-  );
 }

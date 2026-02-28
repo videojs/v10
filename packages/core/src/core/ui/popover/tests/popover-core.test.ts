@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { PopoverCore, type PopoverInteraction } from '../popover-core';
 
-const CLOSED: PopoverInteraction = { open: false };
-const OPEN: PopoverInteraction = { open: true };
+const CLOSED: PopoverInteraction = { open: false, status: 'idle' };
+const OPEN: PopoverInteraction = { open: true, status: 'idle' };
 
 describe('PopoverCore', () => {
   it('uses default props', () => {
@@ -110,6 +110,33 @@ describe('PopoverCore', () => {
       const attrs = core.getPopupAttrs(state);
 
       expect(attrs['aria-modal']).toBeUndefined();
+    });
+
+    it('includes data-starting-style when status is starting', () => {
+      const core = new PopoverCore();
+      const state = core.getState({ open: true, status: 'starting' });
+      const attrs = core.getPopupAttrs(state);
+
+      expect(attrs['data-starting-style']).toBe('');
+      expect(attrs['data-ending-style']).toBeUndefined();
+    });
+
+    it('includes data-ending-style when status is ending', () => {
+      const core = new PopoverCore();
+      const state = core.getState({ open: true, status: 'ending' });
+      const attrs = core.getPopupAttrs(state);
+
+      expect(attrs['data-starting-style']).toBeUndefined();
+      expect(attrs['data-ending-style']).toBe('');
+    });
+
+    it('omits transition attrs when status is idle', () => {
+      const core = new PopoverCore();
+      const state = core.getState(OPEN);
+      const attrs = core.getPopupAttrs(state);
+
+      expect(attrs['data-starting-style']).toBeUndefined();
+      expect(attrs['data-ending-style']).toBeUndefined();
     });
   });
 });
