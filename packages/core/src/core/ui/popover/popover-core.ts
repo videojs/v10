@@ -7,9 +7,9 @@ export type PopoverSide = 'top' | 'bottom' | 'left' | 'right';
 export type PopoverAlign = 'start' | 'center' | 'end';
 
 export interface PopoverProps {
-  /** Which side of the trigger the popup appears on. @defaultValue `'top'` */
+  /** Which side of the trigger the popup appears on. */
   side?: PopoverSide | undefined;
-  /** Alignment of the popup along the trigger's edge. @defaultValue `'center'` */
+  /** Alignment of the popup along the trigger's edge. */
   align?: PopoverAlign | undefined;
   /**
    * - `false` (default): non-modal; background content remains interactive.
@@ -17,19 +17,19 @@ export interface PopoverProps {
    * - `'trap-focus'`: reserved for future focus-trapping behavior.
    */
   modal?: boolean | 'trap-focus' | undefined;
-  /** Close the popup when the Escape key is pressed. @defaultValue `true` */
+  /** Close the popup when the Escape key is pressed. */
   closeOnEscape?: boolean | undefined;
-  /** Close the popup when clicking outside the trigger and popup. @defaultValue `true` */
+  /** Close the popup when clicking outside the trigger and popup. */
   closeOnOutsideClick?: boolean | undefined;
   /** Controlled open state. When set, the consumer is responsible for toggling. */
   open?: boolean | undefined;
-  /** Initial open state for uncontrolled usage. @defaultValue `false` */
+  /** Initial open state for uncontrolled usage. */
   defaultOpen?: boolean | undefined;
-  /** Open the popup on pointer hover instead of click. @defaultValue `false` */
+  /** Open the popup on pointer hover instead of click. */
   openOnHover?: boolean | undefined;
-  /** Delay in ms before opening on hover. @defaultValue `300` */
+  /** Delay in ms before opening on hover. */
   delay?: number | undefined;
-  /** Delay in ms before closing after pointer leaves. @defaultValue `0` */
+  /** Delay in ms before closing after pointer leaves. */
   closeDelay?: number | undefined;
 }
 
@@ -42,6 +42,10 @@ export interface PopoverState extends PopoverInteraction {
   align: PopoverAlign;
   /** Resolved modal mode. */
   modal: boolean | 'trap-focus';
+  /** Whether the open animation is in progress. */
+  startingStyle: boolean;
+  /** Whether the close animation is in progress. */
+  endingStyle: boolean;
 }
 
 export class PopoverCore {
@@ -69,12 +73,16 @@ export class PopoverCore {
   }
 
   getState(interaction: PopoverInteraction): PopoverState {
+    const { status } = interaction;
+
     return {
       open: interaction.open,
-      status: interaction.status,
+      status,
       side: this.#props.side,
       align: this.#props.align,
       modal: this.#props.modal,
+      startingStyle: status === 'starting',
+      endingStyle: status === 'ending',
     };
   }
 
@@ -90,8 +98,6 @@ export class PopoverCore {
     return {
       role: 'dialog',
       'aria-modal': state.modal === true ? 'true' : undefined,
-      'data-starting-style': state.status === 'starting' ? '' : undefined,
-      'data-ending-style': state.status === 'ending' ? '' : undefined,
     };
   }
 }

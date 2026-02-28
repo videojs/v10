@@ -111,32 +111,31 @@ describe('PopoverCore', () => {
 
       expect(attrs['aria-modal']).toBeUndefined();
     });
+  });
 
-    it('includes data-starting-style when status is starting', () => {
+  describe('transition style flags', () => {
+    it('sets startingStyle when status is starting', () => {
       const core = new PopoverCore();
       const state = core.getState({ open: true, status: 'starting' });
-      const attrs = core.getPopupAttrs(state);
 
-      expect(attrs['data-starting-style']).toBe('');
-      expect(attrs['data-ending-style']).toBeUndefined();
+      expect(state.startingStyle).toBe(true);
+      expect(state.endingStyle).toBe(false);
     });
 
-    it('includes data-ending-style when status is ending', () => {
+    it('sets endingStyle when status is ending', () => {
       const core = new PopoverCore();
       const state = core.getState({ open: true, status: 'ending' });
-      const attrs = core.getPopupAttrs(state);
 
-      expect(attrs['data-starting-style']).toBeUndefined();
-      expect(attrs['data-ending-style']).toBe('');
+      expect(state.startingStyle).toBe(false);
+      expect(state.endingStyle).toBe(true);
     });
 
-    it('omits transition attrs when status is idle', () => {
+    it('both false when status is idle', () => {
       const core = new PopoverCore();
       const state = core.getState(OPEN);
-      const attrs = core.getPopupAttrs(state);
 
-      expect(attrs['data-starting-style']).toBeUndefined();
-      expect(attrs['data-ending-style']).toBeUndefined();
+      expect(state.startingStyle).toBe(false);
+      expect(state.endingStyle).toBe(false);
     });
   });
 });
