@@ -1,0 +1,213 @@
+---
+title: Thumbnail
+frameworkTitle:
+  html: media-thumbnail
+description: Time-based thumbnail preview component for timeline scrubbing and hover previews
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import TextTrackDemoReact from "@/components/docs/demos/thumbnail/react/css/BasicUsage";
+import textTrackReactTsx from "@/components/docs/demos/thumbnail/react/css/BasicUsage.tsx?raw";
+import textTrackReactCss from "@/components/docs/demos/thumbnail/react/css/BasicUsage.css?raw";
+import JsonDemoReact from "@/components/docs/demos/thumbnail/react/css/JsonUsage";
+import jsonReactTsx from "@/components/docs/demos/thumbnail/react/css/JsonUsage.tsx?raw";
+import jsonReactCss from "@/components/docs/demos/thumbnail/react/css/JsonUsage.css?raw";
+import JsonSpriteDemoReact from "@/components/docs/demos/thumbnail/react/css/JsonSpriteUsage";
+import jsonSpriteReactTsx from "@/components/docs/demos/thumbnail/react/css/JsonSpriteUsage.tsx?raw";
+import jsonSpriteReactCss from "@/components/docs/demos/thumbnail/react/css/JsonSpriteUsage.css?raw";
+
+{/* HTML demos */}
+import TextTrackDemoHtml from "@/components/docs/demos/thumbnail/html/css/BasicUsage.astro";
+import textTrackHtml from "@/components/docs/demos/thumbnail/html/css/BasicUsage.html?raw";
+import textTrackHtmlCss from "@/components/docs/demos/thumbnail/html/css/BasicUsage.css?raw";
+import textTrackHtmlTs from "@/components/docs/demos/thumbnail/html/css/BasicUsage.ts?raw";
+import JsonDemoHtml from "@/components/docs/demos/thumbnail/html/css/JsonUsage.astro";
+import jsonHtml from "@/components/docs/demos/thumbnail/html/css/JsonUsage.html?raw";
+import jsonHtmlCss from "@/components/docs/demos/thumbnail/html/css/JsonUsage.css?raw";
+import jsonHtmlTs from "@/components/docs/demos/thumbnail/html/css/JsonUsage.ts?raw";
+import JsonSpriteDemoHtml from "@/components/docs/demos/thumbnail/html/css/JsonSpriteUsage.astro";
+import jsonSpriteHtml from "@/components/docs/demos/thumbnail/html/css/JsonSpriteUsage.html?raw";
+import jsonSpriteHtmlCss from "@/components/docs/demos/thumbnail/html/css/JsonSpriteUsage.css?raw";
+import jsonSpriteHtmlTs from "@/components/docs/demos/thumbnail/html/css/JsonSpriteUsage.ts?raw";
+
+## Quick Start: Video Track
+
+`Thumbnail` can read thumbnail cues directly from your video track. Add a `<track>` with `kind="metadata"` and `label="thumbnails"` to your media element.
+
+Mux provides this as `storyboard.vtt`:
+
+`https://image.mux.com/{PLAYBACK_ID}/storyboard.vtt`
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <Video src="video.mp4">
+    <track
+      kind="metadata"
+      label="thumbnails"
+      src="https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/storyboard.vtt"
+      default
+    />
+  </Video>
+  <Thumbnail time={12} />
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <video src="video.mp4">
+    <track
+      kind="metadata"
+      label="thumbnails"
+      src="https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/storyboard.vtt"
+      default
+    />
+  </video>
+  <media-thumbnail time="12"></media-thumbnail>
+  ```
+</FrameworkCase>
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <Thumbnail time={12} />
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-thumbnail time="12"></media-thumbnail>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+`Thumbnail` resolves an image for the current `time`.
+
+Supported source formats:
+
+- Text track: `<track kind="metadata" label="thumbnails" src="...vtt">`
+- JSON array: `{ url, startTime, endTime? }[]`
+- JSON sprite array: `{ url, startTime, endTime?, width, height, coords }[]`
+
+In React, `Thumbnail` always reads player context, so JSON examples still use `Player.Provider` even when no media/track is involved.
+
+The component picks the latest thumbnail whose `startTime` is less than or equal to the current `time`, then scales/clips sprite tiles to fit CSS min/max constraints while preserving aspect ratio.
+
+## Styling
+
+Use state data attributes for pure CSS styling:
+
+```css
+media-thumbnail[data-hidden] {
+  display: none;
+}
+
+media-thumbnail[data-loading] {
+  opacity: 0.6;
+}
+
+media-thumbnail[data-error] {
+  outline: 1px solid #ef4444;
+}
+```
+
+## Accessibility
+
+`Thumbnail` is decorative by default (`aria-hidden="true"`). It is intended for visual preview UX (for example, timeline hover previews) rather than primary accessible content.
+
+## Examples
+
+### Text Track (VTT)
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: textTrackReactTsx, lang: "tsx" },
+        { title: "App.css", code: textTrackReactCss, lang: "css" },
+      ]}
+    >
+      <TextTrackDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: textTrackHtml, lang: "html" },
+        { title: "index.css", code: textTrackHtmlCss, lang: "css" },
+        { title: "index.ts", code: textTrackHtmlTs, lang: "ts" },
+      ]}
+    >
+      <TextTrackDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+### JSON Array
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: jsonReactTsx, lang: "tsx" },
+        { title: "App.css", code: jsonReactCss, lang: "css" },
+      ]}
+    >
+      <JsonDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: jsonHtml, lang: "html" },
+        { title: "index.css", code: jsonHtmlCss, lang: "css" },
+        { title: "index.ts", code: jsonHtmlTs, lang: "ts" },
+      ]}
+    >
+      <JsonDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+### JSON Sprite Array
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: jsonSpriteReactTsx, lang: "tsx" },
+        { title: "App.css", code: jsonSpriteReactCss, lang: "css" },
+      ]}
+    >
+      <JsonSpriteDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: jsonSpriteHtml, lang: "html" },
+        { title: "index.css", code: jsonSpriteHtmlCss, lang: "css" },
+        { title: "index.ts", code: jsonSpriteHtmlTs, lang: "ts" },
+      ]}
+    >
+      <JsonSpriteDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="Thumbnail" />

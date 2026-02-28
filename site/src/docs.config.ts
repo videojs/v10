@@ -39,6 +39,7 @@ export const sidebar: Sidebar = [
       { slug: 'reference/playback-rate-button' },
       { slug: 'reference/poster' },
       { slug: 'reference/seek-button' },
+      { slug: 'reference/thumbnail' },
       { slug: 'reference/time' },
     ],
   },
