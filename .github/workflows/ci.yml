@@ -71,6 +71,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
+      - name: Build packages for type resolution
+        run: pnpm build:packages
+
       - name: Typecheck
         run: pnpm typecheck
 
