@@ -26,9 +26,11 @@ import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
+import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
+import { VolumeSlider } from '@/ui/volume-slider';
 import type { VideoSkinProps } from './skin';
 
 const SEEK_TIME = 10;
@@ -136,6 +138,94 @@ function FullscreenButtonIcon({ state, className, ...rest }: { state: Fullscreen
     </>
   );
 }
+
+const SliderRoot = forwardRef<HTMLDivElement, ComponentProps<'div'>>(function SliderRoot({ className, ...props }, ref) {
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'group/slider relative flex flex-1 items-center justify-center rounded-full outline-none',
+        // Horizontal
+        'data-[orientation=horizontal]:min-w-20 data-[orientation=horizontal]:w-full data-[orientation=horizontal]:h-5',
+        // Vertical
+        'data-[orientation=vertical]:w-5 data-[orientation=vertical]:h-20',
+        className
+      )}
+      {...props}
+    />
+  );
+});
+
+const SliderTrack = forwardRef<HTMLDivElement, ComponentProps<'div'>>(function SliderTrack(
+  { className, ...props },
+  ref
+) {
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'relative isolate overflow-hidden bg-white/20 rounded-[inherit]',
+        'shadow-[0_0_0_1px_oklch(0_0_0/0.05)] select-none',
+        // Horizontal
+        'data-[orientation=horizontal]:w-full data-[orientation=horizontal]:h-1',
+        // Vertical
+        'data-[orientation=vertical]:w-1 data-[orientation=vertical]:h-full',
+        className
+      )}
+      {...props}
+    />
+  );
+});
+
+const SliderFill = forwardRef<HTMLDivElement, ComponentProps<'div'>>(function SliderFill({ className, ...props }, ref) {
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'absolute rounded-[inherit] pointer-events-none bg-white',
+        // Horizontal
+        'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0 data-[orientation=horizontal]:w-(--media-slider-fill)',
+        // Vertical
+        'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:h-(--media-slider-fill)',
+        className
+      )}
+      {...props}
+    />
+  );
+});
+
+const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persistent?: boolean }>(function SliderThumb(
+  { persistent, className, ...props },
+  ref
+) {
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'z-10 absolute -translate-x-1/2 -translate-y-1/2',
+        'bg-white rounded-full',
+        'ring ring-black/10 shadow-sm shadow-black/15',
+        'transition-[opacity,height,width,outline-offset] duration-150 ease-out select-none',
+        'outline-2 outline-transparent -outline-offset-2',
+        'focus-visible:outline-blue-500 focus-visible:outline-offset-2',
+        // Horizontal
+        'data-[orientation=horizontal]:top-1/2 data-[orientation=horizontal]:left-(--media-slider-fill)',
+        // Vertical
+        'data-[orientation=vertical]:left-1/2 data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill))]',
+        // Visibility
+        persistent
+          ? 'size-3'
+          : cn(
+              'size-2.5',
+              'opacity-0 focus-visible:opacity-100 group-hover/slider:opacity-100',
+              'group-active/slider:size-3'
+            ),
+        className
+      )}
+      {...props}
+    />
+  );
+});
 
 /* ------------------------------------------ Skin ------------------------------------------- */
 
@@ -301,34 +391,12 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
             type="current"
             className="hidden @2xs/media-time:block text-shadow-2xs text-shadow-black/25 tabular-nums"
           />
-          <TimeSlider.Root
-            className={cn(
-              'group/slider relative flex items-center justify-center flex-1 rounded-full outline-none',
-              'min-w-20 w-full h-5'
-            )}
-          >
-            <TimeSlider.Track
-              className={cn(
-                'relative isolate overflow-hidden bg-white/20 rounded-[inherit]',
-                'shadow-[0_0_0_1px_oklch(0_0_0/0.05)] select-none',
-                'w-full h-1'
-              )}
-            >
-              <TimeSlider.Fill className="absolute inset-y-0 left-0 rounded-[inherit] pointer-events-none bg-white w-(--media-slider-fill)" />
+          <TimeSlider.Root render={(props) => <SliderRoot {...props} />}>
+            <TimeSlider.Track render={(props) => <SliderTrack {...props} />}>
+              <TimeSlider.Fill render={(props) => <SliderFill {...props} />} />
               <TimeSlider.Buffer className="absolute inset-y-0 left-0 rounded-[inherit] pointer-events-none bg-white/20 w-(--media-slider-buffer) transition-[width] duration-250 ease-out" />
             </TimeSlider.Track>
-            <TimeSlider.Thumb
-              className={cn(
-                'z-10 absolute top-1/2 left-(--media-slider-fill) -translate-x-1/2 -translate-y-1/2',
-                'size-2.5 bg-white rounded-full',
-                'ring ring-black/10 shadow-sm shadow-black/15',
-                'opacity-0 transition-[opacity,height,width,outline-offset] duration-150 ease-out select-none',
-                'outline-2 outline-transparent -outline-offset-2',
-                'focus-visible:outline-blue-500 focus-visible:outline-offset-2 focus-visible:opacity-100',
-                'group-hover/slider:opacity-100',
-                'group-active/slider:size-3'
-              )}
-            />
+            <TimeSlider.Thumb render={(props) => <SliderThumb {...props} />} />
           </TimeSlider.Root>
           <Time.Value type="duration" className="text-shadow-2xs text-shadow-black/25 tabular-nums" />
         </Time.Group>
@@ -341,13 +409,46 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           )}
         />
 
-        <MuteButton
-          render={(props, state) => (
-            <Button variant="icon" {...props}>
-              <MuteButtonIcon state={state} className={icon} />
-            </Button>
-          )}
-        />
+        <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+          <Popover.Trigger
+            render={
+              <MuteButton
+                render={(props, state) => (
+                  <Button variant="icon" {...props}>
+                    <MuteButtonIcon state={state} className={icon} />
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Popover.Popup
+            className={cn(
+              // Reset & offset
+              'm-0 border-0 [--media-popover-side-offset:0.5rem]',
+              // Volume popup
+              'py-2.5 px-1 rounded-full',
+              // Surface
+              surface,
+              // Animation
+              'opacity-100 scale-100 origin-bottom blur-none',
+              'transition-[transform,scale,opacity,filter] duration-200',
+              'data-[starting-style]:opacity-0 data-[starting-style]:scale-0 data-[starting-style]:blur-[8px]',
+              'data-[ending-style]:opacity-0 data-[ending-style]:scale-0 data-[ending-style]:blur-[8px]',
+              'data-[instant]:duration-0'
+            )}
+          >
+            <VolumeSlider.Root
+              orientation="vertical"
+              thumbAlignment="edge"
+              render={(props) => <SliderRoot {...props} />}
+            >
+              <VolumeSlider.Track render={(props) => <SliderTrack {...props} />}>
+                <VolumeSlider.Fill render={(props) => <SliderFill {...props} />} />
+              </VolumeSlider.Track>
+              <VolumeSlider.Thumb render={(props) => <SliderThumb persistent {...props} />} />
+            </VolumeSlider.Root>
+          </Popover.Popup>
+        </Popover.Root>
 
         <CaptionsButton
           render={(props, state) => (

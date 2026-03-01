@@ -26,9 +26,11 @@ import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
+import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
+import { VolumeSlider } from '@/ui/volume-slider';
 import type { BaseSkinProps } from '../types';
 
 const SEEK_TIME = 10;
@@ -173,13 +175,28 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
           )}
         />
 
-        <MuteButton
-          render={(props, state) => (
-            <Button {...props} className="media-button--icon">
-              <MuteButtonIcon state={state} className="media-icon" />
-            </Button>
-          )}
-        />
+        <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+          <Popover.Trigger
+            render={
+              <MuteButton
+                render={(props, state) => (
+                  <Button {...props} className="media-button--icon">
+                    <MuteButtonIcon state={state} className="media-icon" />
+                  </Button>
+                )}
+                {...props}
+              />
+            }
+          />
+          <Popover.Popup className="media-surface media-popup media-popup--volume media-popup-animation">
+            <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
+              <VolumeSlider.Track className="media-slider__track">
+                <VolumeSlider.Fill className="media-slider__fill" />
+              </VolumeSlider.Track>
+              <VolumeSlider.Thumb className="media-slider__thumb media-slider__thumb--persistent" />
+            </VolumeSlider.Root>
+          </Popover.Popup>
+        </Popover.Root>
 
         <CaptionsButton
           render={(props, state) => (

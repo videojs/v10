@@ -467,8 +467,6 @@
 /* Thumb */
 .media-minimal-skin .media-slider__thumb {
   position: absolute;
-  top: 50%;
-  left: var(--media-slider-fill, 0%);
   transform: translate(-50%, -50%);
   z-index: 10;
   width: 0.75rem;
@@ -489,12 +487,21 @@
   outline: 2px solid transparent;
   outline-offset: -2px;
 }
+.media-minimal-skin .media-slider__thumb[data-orientation="horizontal"] {
+  top: 50%;
+  left: var(--media-slider-fill);
+}
+.media-minimal-skin .media-slider__thumb[data-orientation="vertical"] {
+  left: 50%;
+  top: calc(100% - var(--media-slider-fill));
+}
 .media-minimal-skin .media-slider__thumb:focus-visible {
   outline-color: oklch(1 0 0);
   outline-offset: 2px;
 }
 .media-minimal-skin .media-slider:hover .media-slider__thumb,
-.media-minimal-skin .media-slider:focus-within .media-slider__thumb {
+.media-minimal-skin .media-slider:focus-within .media-slider__thumb,
+.media-minimal-skin .media-slider__thumb--persistent {
   opacity: 1;
   scale: 1;
 }
@@ -503,10 +510,18 @@
 .media-minimal-skin .media-slider__buffer,
 .media-minimal-skin .media-slider__fill {
   position: absolute;
-  inset-block: 0;
-  left: 0;
   border-radius: inherit;
   pointer-events: none;
+}
+.media-minimal-skin .media-slider__buffer[data-orientation="horizontal"],
+.media-minimal-skin .media-slider__fill[data-orientation="horizontal"] {
+  inset-block: 0;
+  left: 0;
+}
+.media-minimal-skin .media-slider__buffer[data-orientation="vertical"],
+.media-minimal-skin .media-slider__fill[data-orientation="vertical"] {
+  inset-inline: 0;
+  bottom: 0;
 }
 
 /* Buffer */
@@ -519,7 +534,12 @@
 /* Fill */
 .media-minimal-skin .media-slider__fill {
   background-color: oklch(1 0 0);
-  width: var(--media-slider-fill, 0%);
+}
+.media-minimal-skin .media-slider__fill[data-orientation="horizontal"] {
+  width: var(--media-slider-fill);
+}
+.media-minimal-skin .media-slider__fill[data-orientation="vertical"] {
+  height: var(--media-slider-fill);
 }
 
 /* Time display within slider */
@@ -549,11 +569,14 @@
   transition-duration: 0ms;
 }
 
-.media-minimal-skin .media-popover-popup {
+.media-minimal-skin .media-popup {
   margin: 0;
-  padding: 0.5rem;
   border: 0;
   background: transparent;
+  --media-popover-side-offset: 0.5rem;
+}
+.media-minimal-skin .media-popup--volume {
+  padding: 0.25rem;
 }
 
 /* ==========================================================================
