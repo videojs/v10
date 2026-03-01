@@ -2,8 +2,8 @@ name: CI
 
 on:
   push:
-    branches-ignore:
-      - 'rfc/**'
+    branches:
+      - main
   pull_request:
     branches-ignore:
       - 'rfc/**'
