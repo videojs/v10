@@ -28,6 +28,7 @@ import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
+import { TimeSlider } from '@/ui/time-slider';
 import type { MinimalVideoSkinProps } from './minimal-skin';
 
 const SEEK_TIME = 10;
@@ -293,8 +294,35 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
             />
           </Time.Group>
 
-          {/* Temporary spacer */}
-          <span className="flex-1 h-[3px] rounded-full bg-white/20" />
+          <TimeSlider.Root
+            className={cn(
+              'group/slider relative flex items-center justify-center flex-1 rounded-full outline-none',
+              'min-w-20 w-full h-5'
+            )}
+          >
+            <TimeSlider.Track
+              className={cn(
+                'relative isolate overflow-hidden bg-white/20 rounded-[inherit]',
+                'shadow-[0_0_0_1px_oklch(0_0_0/0.05)] select-none',
+                'w-full h-0.75'
+              )}
+            >
+              <TimeSlider.Fill className="absolute inset-y-0 left-0 rounded-[inherit] pointer-events-none bg-white w-(--media-slider-fill)" />
+              <TimeSlider.Buffer className="absolute inset-y-0 left-0 rounded-[inherit] pointer-events-none bg-white/20 w-(--media-slider-buffer) transition-[width] duration-250 ease-out" />
+            </TimeSlider.Track>
+            <TimeSlider.Thumb
+              className={cn(
+                'z-10 absolute top-1/2 left-(--media-slider-fill) -translate-x-1/2 -translate-y-1/2',
+                'size-3 bg-white rounded-full origin-center',
+                'ring ring-black/10 shadow-sm shadow-black/15',
+                'opacity-0 scale-70 transition-[opacity,scale,outline-offset] duration-150 ease-out select-none',
+                'outline-2 outline-transparent -outline-offset-2',
+                'focus-visible:outline-white focus-visible:outline-offset-2',
+                'group-hover/slider:opacity-100 group-hover/slider:scale-100',
+                'group-focus-within/slider:opacity-100 group-focus-within/slider:scale-100'
+              )}
+            />
+          </TimeSlider.Root>
         </span>
 
         <span className={cn('flex items-center gap-[0.075rem]', '@2xl/media-root:gap-0.5')}>

@@ -104,6 +104,7 @@
 .media-default-skin .media-overlay {
   position: absolute;
   inset: 0;
+  z-index: 1;
   border-radius: inherit;
   background-image: linear-gradient(to top, oklch(0 0 0 / 0.5), oklch(0 0 0 / 0.3), oklch(0 0 0 / 0));
   backdrop-filter: blur(0) saturate(1.2) brightness(0.9);
@@ -465,10 +466,7 @@
   overflow: hidden;
   background-color: oklch(1 0 0 / 0.2);
   border-radius: inherit;
-  outline: 2px solid transparent;
-  outline-offset: -2px;
   box-shadow: 0 0 0 1px oklch(0 0 0 / 0.05);
-  transition: outline-offset 150ms ease-out;
   user-select: none;
 }
 .media-default-skin .media-slider__track[data-orientation="horizontal"] {
@@ -479,14 +477,14 @@
   width: 0.25rem;
   height: 100%;
 }
-.media-default-skin .media-slider:focus-visible .media-slider__track {
-  outline-color: oklch(62.3% 0.214 259.815);
-  outline-offset: 6px;
-}
 
 /* Thumb */
 .media-default-skin .media-slider__thumb {
   z-index: 10;
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill);
+  transform: translate(-50%, -50%);
   width: 0.625rem;
   height: 0.625rem;
   background-color: oklch(1 0 0);
@@ -496,36 +494,47 @@
     0 1px 3px 0 oklch(0 0 0 / 0.15),
     0 1px 2px -1px oklch(0 0 0 / 0.15);
   opacity: 0;
-  transition-property: opacity, height, width;
+  transition-property: opacity, height, width, outline-offset;
   transition-duration: 150ms;
   transition-timing-function: ease-out;
   user-select: none;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
 }
-.media-default-skin .media-slider__thumb:active {
+.media-default-skin .media-slider__thumb:focus-visible {
+  outline-color: oklch(62.3% 0.214 259.815);
+  outline-offset: 2px;
+}
+.media-default-skin .media-slider:active .media-slider__thumb {
   width: 0.75rem;
   height: 0.75rem;
 }
 .media-default-skin .media-slider:hover .media-slider__thumb,
-.media-default-skin .media-slider:focus-within .media-slider__thumb {
+.media-default-skin .media-slider__thumb:focus-visible {
   opacity: 1;
 }
-.media-default-skin .media-slider__track[data-orientation="horizontal"] .media-slider__thumb {
-  cursor: ew-resize;
-}
-.media-default-skin .media-slider__track[data-orientation="vertical"] .media-slider__thumb {
-  cursor: ns-resize;
+
+/* Shared track fills */
+.media-default-skin .media-slider__buffer,
+.media-default-skin .media-slider__fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  border-radius: inherit;
+  pointer-events: none;
 }
 
-/* Pointer (hover preview) */
-.media-default-skin .media-slider__pointer {
+/* Buffer */
+.media-default-skin .media-slider__buffer {
   background-color: oklch(1 0 0 / 0.2);
-  border-radius: inherit;
+  width: var(--media-slider-buffer);
+  transition: width 0.25s ease-out;
 }
 
-/* Progress fill */
-.media-default-skin .media-slider__progress {
+/* Fill */
+.media-default-skin .media-slider__fill {
   background-color: oklch(1 0 0);
-  border-radius: inherit;
+  width: var(--media-slider-fill);
 }
 
 /* Time display within slider */

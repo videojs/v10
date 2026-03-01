@@ -101,6 +101,7 @@
 .media-minimal-skin .media-overlay {
   position: absolute;
   inset: 0;
+  z-index: 1;
   border-radius: inherit;
   background-image: linear-gradient(to top, oklch(0 0 0 / 0.7), oklch(0 0 0 / 0.5) 7.5rem, oklch(0 0 0 / 0));
   backdrop-filter: blur(0) saturate(1.2) brightness(0.9);
@@ -451,10 +452,7 @@
   overflow: hidden;
   background-color: oklch(1 0 0 / 0.2);
   border-radius: inherit;
-  outline: 2px solid transparent;
-  outline-offset: -2px;
   box-shadow: 0 0 0 1px oklch(0 0 0 / 0.05);
-  transition: outline-offset 150ms ease-out;
   user-select: none;
 }
 .media-minimal-skin .media-slider__track[data-orientation="horizontal"] {
@@ -465,13 +463,13 @@
   width: 0.1875rem;
   height: 100%;
 }
-.media-minimal-skin .media-slider:focus-visible .media-slider__track {
-  outline-color: oklch(1 0 0);
-  outline-offset: 6px;
-}
 
 /* Thumb */
 .media-minimal-skin .media-slider__thumb {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill, 0%);
+  transform: translate(-50%, -50%);
   z-index: 10;
   width: 0.75rem;
   height: 0.75rem;
@@ -484,32 +482,44 @@
   opacity: 0;
   scale: 0.7;
   transform-origin: center;
-  transition-property: opacity, scale;
+  transition-property: opacity, scale, outline-offset;
   transition-duration: 150ms;
   transition-timing-function: ease-out;
   user-select: none;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+}
+.media-minimal-skin .media-slider__thumb:focus-visible {
+  outline-color: oklch(1 0 0);
+  outline-offset: 2px;
 }
 .media-minimal-skin .media-slider:hover .media-slider__thumb,
 .media-minimal-skin .media-slider:focus-within .media-slider__thumb {
   opacity: 1;
   scale: 1;
 }
-.media-minimal-skin .media-slider__track[data-orientation="horizontal"] .media-slider__thumb {
-  cursor: ew-resize;
-}
-.media-minimal-skin .media-slider__track[data-orientation="vertical"] .media-slider__thumb {
-  cursor: ns-resize;
-}
 
-/* Pointer (hidden in minimal skin) */
-.media-minimal-skin .media-slider__pointer {
-  display: none;
-}
-
-/* Progress fill */
-.media-minimal-skin .media-slider__progress {
-  background-color: oklch(1 0 0);
+/* Shared track fills */
+.media-minimal-skin .media-slider__buffer,
+.media-minimal-skin .media-slider__fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
   border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Buffer */
+.media-minimal-skin .media-slider__buffer {
+  background-color: oklch(1 0 0 / 0.2);
+  width: var(--media-slider-buffer, 0%);
+  transition: width 0.25s ease-out;
+}
+
+/* Fill */
+.media-minimal-skin .media-slider__fill {
+  background-color: oklch(1 0 0);
+  width: var(--media-slider-fill, 0%);
 }
 
 /* Time display within slider */
