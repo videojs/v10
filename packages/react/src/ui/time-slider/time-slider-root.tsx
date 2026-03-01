@@ -14,11 +14,7 @@ import { SliderProvider } from '../slider/slider-context';
 
 const noopSeek = (): Promise<number> => Promise.resolve(0);
 
-export interface TimeSliderRootProps
-  extends UIComponentProps<'div', TimeSliderCore.State>,
-    Pick<TimeSliderCore.Props, 'label' | 'step' | 'largeStep' | 'disabled' | 'thumbAlignment'> {
-  /** Trailing-edge throttle (ms) for seek requests during drag. Default `100`. `0` disables. */
-  commitThrottle?: number | undefined;
+export interface TimeSliderRootProps extends UIComponentProps<'div', TimeSliderCore.State>, TimeSliderCore.Props {
   onDragStart?: (() => void) | undefined;
   onDragEnd?: (() => void) | undefined;
 }
@@ -30,11 +26,12 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       className,
       style,
       label,
-      step = 1,
-      largeStep = 10,
+      commitThrottle = TimeSliderCore.defaultProps.commitThrottle,
+      step = TimeSliderCore.defaultProps.step,
+      largeStep = TimeSliderCore.defaultProps.largeStep,
+      orientation,
       disabled,
       thumbAlignment,
-      commitThrottle = 100,
       onDragStart,
       onDragEnd,
       ...elementProps
@@ -44,7 +41,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
     const buffer = usePlayer(selectBuffer);
 
     const [core] = useState(() => new TimeSliderCore());
-    core.setProps({ label, step, largeStep, disabled, thumbAlignment });
+    core.setProps({ label, step, largeStep, orientation, disabled, thumbAlignment });
 
     // Keep a ref to the latest media state for callbacks that fire outside the render cycle.
     const mediaRef = useLatestRef(time && buffer ? { ...time, ...buffer } : null);
@@ -86,7 +83,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       getPercent: () => (duration > 0 ? ((time?.currentTime ?? 0) / duration) * 100 : 0),
       getStepPercent: () => (step / range) * 100,
       getLargeStepPercent: () => (largeStep / range) * 100,
-      orientation: 'horizontal',
+      orientation,
       disabled,
       commitThrottle,
       adjustPercent: (rawPercent, thumbSize, trackSize) =>

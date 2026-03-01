@@ -38,3 +38,4 @@ export { ThumbnailElement } from './ui/thumbnail/thumbnail-element';
 export { TimeElement } from './ui/time/time-element';
 export { TimeGroupElement } from './ui/time/time-group-element';
 export { TimeSeparatorElement } from './ui/time/time-separator-element';
+export { TimeSliderElement } from './ui/time-slider/time-slider-element';

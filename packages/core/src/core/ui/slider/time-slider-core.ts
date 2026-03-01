@@ -4,11 +4,13 @@ import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaBufferState, MediaTimeState } from '../../media/state';
-import { SliderCore, type SliderInteraction, type SliderProps, type SliderState } from './slider-core';
+import { type SliderBaseProps, SliderCore, type SliderInteraction, type SliderState } from './slider-core';
 
-export interface TimeSliderProps extends SliderProps {
+export interface TimeSliderProps extends SliderBaseProps {
   /** Accessible label for the slider. */
   label?: string | undefined;
+  /** Trailing-edge throttle (ms) for seek requests during drag. */
+  commitThrottle?: number | undefined;
 }
 
 export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'currentTime' | 'duration' | 'seeking'> {
@@ -16,10 +18,16 @@ export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'curr
   bufferPercent: number;
 }
 
+// @ts-expect-error — defaultProps shape differs from base (domain sliders omit value/min/max)
 export class TimeSliderCore extends SliderCore {
-  static override readonly defaultProps: NonNullableObject<TimeSliderProps> = {
-    ...SliderCore.defaultProps,
+  static readonly defaultProps: NonNullableObject<TimeSliderProps> = {
+    step: SliderCore.defaultProps.step,
+    largeStep: SliderCore.defaultProps.largeStep,
+    orientation: SliderCore.defaultProps.orientation,
+    disabled: SliderCore.defaultProps.disabled,
+    thumbAlignment: SliderCore.defaultProps.thumbAlignment,
     label: 'Seek',
+    commitThrottle: 100,
   };
 
   #props = { ...TimeSliderCore.defaultProps };
