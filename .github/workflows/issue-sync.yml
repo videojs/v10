@@ -46,10 +46,6 @@ jobs:
             - Body:
               ${{ github.event.pull_request.body }}
 
-            Tooling constraints:
-            - Use GitHub tools and/or GitHub CLI (`gh`) for repository data and updates.
-            - Do not use WebSearch or WebFetch.
-
             Tasks:
             1. Identify issues this PR references or could reasonably affect.
             - Start with explicit references in the PR body/title (e.g., Fixes #123, Closes #123, Related #123).
