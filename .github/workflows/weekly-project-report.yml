@@ -26,6 +26,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: |
             --model sonnet
             --max-turns 25
@@ -39,6 +40,8 @@ jobs:
 
             Generate the weekly report, write the JSON to /tmp/report.json, then post it to Slack.
         env:
+          # PAT with read:project scope — required for org-level Projects v2 GraphQL.
+          # The automatic GITHUB_TOKEN does not have project board access.
           GH_TOKEN: ${{ secrets.PROJECT_GITHUB_TOKEN }}
           WEEKLY_REPORT_SLACK_WEBHOOK_URL: ${{ secrets.WEEKLY_REPORT_SLACK_WEBHOOK_URL }}
 
