@@ -1,0 +1,156 @@
+import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
+import {
+  applyStateDataAttrs,
+  createSlider,
+  getTimeSliderCSSVars,
+  logMissingFeature,
+  type SliderHandle,
+  selectBuffer,
+  selectTime,
+} from '@videojs/core/dom';
+import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import { ContextProvider } from '@videojs/element/context';
+import { applyStyles, isRTL } from '@videojs/utils/dom';
+
+import { playerContext } from '../../player/context';
+import { PlayerController } from '../../player/player-controller';
+import { MediaElement } from '../media-element';
+import { sliderContext } from '../slider/slider-context';
+
+export class TimeSliderElement extends MediaElement {
+  static readonly tagName = 'media-time-slider';
+
+  static override properties = {
+    label: { type: String },
+    commitThrottle: { type: Number, attribute: 'commit-throttle' },
+    step: { type: Number },
+    largeStep: { type: Number, attribute: 'large-step' },
+    orientation: { type: String },
+    disabled: { type: Boolean },
+    thumbAlignment: { type: String, attribute: 'thumb-alignment' },
+  } satisfies PropertyDeclarationMap<keyof TimeSliderCore.Props>;
+
+  label = TimeSliderCore.defaultProps.label;
+  commitThrottle = TimeSliderCore.defaultProps.commitThrottle;
+  step = TimeSliderCore.defaultProps.step;
+  largeStep = TimeSliderCore.defaultProps.largeStep;
+  orientation = TimeSliderCore.defaultProps.orientation;
+  disabled = TimeSliderCore.defaultProps.disabled;
+  thumbAlignment = TimeSliderCore.defaultProps.thumbAlignment;
+
+  readonly #core = new TimeSliderCore();
+  readonly #provider = new ContextProvider(this, { context: sliderContext });
+  readonly #timeState = new PlayerController(this, playerContext, selectTime);
+  readonly #bufferState = new PlayerController(this, playerContext, selectBuffer);
+
+  #slider: SliderHandle | null = null;
+  #disconnect: AbortController | null = null;
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+
+    this.#disconnect = new AbortController();
+    const signal = this.#disconnect.signal;
+
+    this.#slider = createSlider({
+      getElement: () => this,
+      getThumbElement: () => this.querySelector<HTMLElement>('media-slider-thumb'),
+      getOrientation: () => this.orientation,
+      isRTL: () => isRTL(this),
+      isDisabled: () => this.disabled || !this.#timeState.value,
+      getPercent: () => {
+        const media = this.#timeState.value;
+        if (!media) return 0;
+        return this.#core.percentFromValue(media.currentTime);
+      },
+      getStepPercent: () => {
+        const { step, min, max } = this.#core.props;
+        const range = max - min;
+        return range > 0 ? (step / range) * 100 : 0;
+      },
+      getLargeStepPercent: () => {
+        const { largeStep, min, max } = this.#core.props;
+        const range = max - min;
+        return range > 0 ? (largeStep / range) * 100 : 0;
+      },
+      onValueChange: () => {
+        // Visual update only — CSS vars are refreshed in update().
+      },
+      onValueCommit: (percent) => {
+        this.#seek(percent);
+      },
+      commitThrottle: this.commitThrottle,
+      onDragStart: () => {
+        this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
+      },
+      onDragEnd: () => {
+        this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
+      },
+    });
+
+    this.#slider.interaction.subscribe(() => this.requestUpdate(), { signal });
+
+    // Prevent default touch gestures and text selection during interaction.
+    this.style.touchAction = 'none';
+    this.style.userSelect = 'none';
+
+    if (__DEV__ && !this.#timeState.value) {
+      logMissingFeature(TimeSliderElement.tagName, 'time');
+    }
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#slider?.destroy();
+    this.#slider = null;
+    this.#disconnect?.abort();
+    this.#disconnect = null;
+  }
+
+  protected override willUpdate(_changed: PropertyValues): void {
+    super.willUpdate(_changed);
+    this.#core.setProps(this);
+  }
+
+  protected override update(_changed: PropertyValues): void {
+    super.update(_changed);
+    if (!this.#slider) return;
+
+    const time = this.#timeState.value;
+    const buffer = this.#bufferState.value;
+    if (!time) return;
+
+    const interaction = this.#slider.interaction.current;
+    const media = { ...time, ...(buffer ?? { buffered: [], seekable: [] }) };
+    const state = this.#core.getTimeState(media, interaction);
+    const cssVars = getTimeSliderCSSVars(state);
+
+    applyStyles(this, cssVars);
+
+    // Domain-specific data attributes on root (includes data-seeking).
+    applyStateDataAttrs(this, state, TimeSliderDataAttrs);
+
+    // Provide context to child elements with base slider data attrs.
+    this.#provider.setValue({
+      state,
+      pointerValue: this.#core.valueFromPercent(state.pointerPercent),
+      thumbAttrs: this.#core.getAttrs(state),
+      thumbProps: this.#slider.thumbProps,
+      formatValue: (value) => formatTime(value),
+    });
+  }
+
+  #seek(percent: number): void {
+    const media = this.#timeState.value;
+    if (!media) return;
+    const time = this.#core.valueFromPercent(percent);
+    media.seek(time);
+  }
+}
+
+function formatTime(seconds: number): string {
+  const total = Math.round(seconds);
+  const minutes = Math.floor(total / 60);
+  const secs = total % 60;
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+}
