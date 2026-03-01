@@ -29,6 +29,19 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          settings: |
+            {
+              "permissions": {
+                "allow": [
+                  "Bash(gh:*)"
+                ],
+                "deny": [
+                  "WebSearch",
+                  "WebFetch"
+                ]
+              }
+            }
           claude_args: |
             --model sonnet
             --max-turns 12
@@ -40,6 +53,12 @@ jobs:
             - Title: ${{ github.event.pull_request.title }}
             - URL: ${{ github.event.pull_request.html_url }}
             - Merged by: ${{ github.event.pull_request.merged_by.login }}
+            - Body:
+              ${{ github.event.pull_request.body }}
+
+            Tooling constraints:
+            - Use GitHub tools and/or GitHub CLI (`gh`) for repository data and updates.
+            - Do not use WebSearch or WebFetch.
 
             Tasks:
             1. Identify issues this PR references or could reasonably affect.
