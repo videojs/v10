@@ -18,8 +18,8 @@ and early structure pointing in the direction we want to go with Video.js v10 (s
 ## Timeline
 
 - **Technical Preview (Complete):** Initial showcase for Demuxed.
-- **Alpha (Current - Jan 2026):** [See milestone](https://github.com/videojs/v10/milestone/3)
-- **Beta (Feb 2026):** [See milestone](https://github.com/videojs/v10/milestone/1)
+- **Alpha (Jan–Feb 2026):** [See milestone](https://github.com/videojs/v10/milestone/3) ← Current
+- **Beta (Mar 2026):** [See milestone](https://github.com/videojs/v10/milestone/1)
 - **GA (Mid 2026):** [See milestone](https://github.com/videojs/v10/milestone/2)
 - **Video.js (End of 2026):** Video.js core/contrib parity and supported plugins migrated.
 
