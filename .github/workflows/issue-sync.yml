@@ -5,6 +5,7 @@ on:
     types: [closed]
 
 permissions:
+  actions: read
   contents: read
   pull-requests: read
   issues: write
@@ -30,21 +31,11 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          settings: |
-            {
-              "permissions": {
-                "allow": [
-                  "Bash(gh:*)"
-                ],
-                "deny": [
-                  "WebSearch",
-                  "WebFetch"
-                ]
-              }
-            }
           claude_args: |
             --model sonnet
             --max-turns 12
+            --allowedTools "Bash(gh:*)"
+            --disallowedTools "WebSearch" "WebFetch"
           prompt: |
             A pull request was merged and you are the issue follow-up agent.
 
