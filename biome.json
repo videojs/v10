@@ -60,7 +60,17 @@
         "noUnusedVariables": "warn",
         "noUnusedImports": "warn",
         "noUnusedFunctionParameters": "off",
-        "useExhaustiveDependencies": "warn"
+        "useExhaustiveDependencies": {
+          "level": "warn",
+          "options": {
+            "hooks": [
+              {
+                "name": "useForceRender",
+                "stableResult": true
+              }
+            ]
+          }
+        }
       },
       "a11y": {
         "noSvgWithoutTitle": "warn"

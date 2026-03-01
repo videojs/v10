@@ -10,7 +10,8 @@ import {
 } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import { isRTL } from '@videojs/utils/dom';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useForceRender } from '@/utils/use-force-render';
 import { useLatestRef } from '../../utils/use-latest-ref';
 
 export interface UseSliderOptions<State extends SliderState = SliderState>
@@ -57,6 +58,7 @@ export function useSlider<State extends SliderState = SliderState>(
 
   const rootElementRef = useRef<HTMLElement | null>(null);
   const thumbElementRef = useRef<HTMLElement | null>(null);
+  const forceRender = useForceRender();
 
   // Lazy-init the slider handle. Stable across re-renders.
   const [slider] = useState<SliderHandle>(() => {
@@ -81,6 +83,14 @@ export function useSlider<State extends SliderState = SliderState>(
 
   // Cleanup on unmount.
   useEffect(() => () => slider.destroy(), [slider]);
+
+  // Force a synchronous re-render after mount so edge thumb alignment
+  // can read DOM measurements from the now-populated element refs.
+  useLayoutEffect(() => {
+    if (rootElementRef.current && thumbElementRef.current) {
+      forceRender();
+    }
+  }, []);
 
   // Subscribe to interaction state.
   const interaction = useSnapshot(slider.interaction);
