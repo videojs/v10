@@ -34,8 +34,7 @@ jobs:
           claude_args: |
             --model sonnet
             --max-turns 12
-            --allowedTools "Bash(gh:*)"
-            --disallowedTools "WebSearch" "WebFetch"
+            --allowedTools "Bash(gh:*)" "WebSearch" "WebFetch"
           prompt: |
             A pull request was merged and you are the issue follow-up agent.
 
