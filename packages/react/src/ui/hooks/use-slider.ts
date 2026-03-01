@@ -11,7 +11,7 @@ import {
 import { useSnapshot } from '@videojs/store/react';
 import { isRTL } from '@videojs/utils/dom';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useForceRender } from '@/utils/use-force-render';
+import { useForceRender } from '../../utils/use-force-render';
 import { useLatestRef } from '../../utils/use-latest-ref';
 
 export interface UseSliderOptions<State extends SliderState = SliderState>
