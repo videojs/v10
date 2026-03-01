@@ -7,8 +7,6 @@ import type { MediaBufferState, MediaTimeState } from '../../media/state';
 import { type SliderBaseProps, SliderCore, type SliderInteraction, type SliderState } from './slider-core';
 
 export interface TimeSliderProps extends SliderBaseProps {
-  /** Accessible label for the slider. */
-  label?: string | undefined;
   /** Trailing-edge throttle (ms) for seek requests during drag. */
   commitThrottle?: number | undefined;
 }
@@ -65,6 +63,10 @@ export class TimeSliderCore extends SliderCore {
     };
   }
 
+  override getLabel(state: SliderState): string {
+    return super.getLabel(state) || 'Seek';
+  }
+
   override getAttrs(state: TimeSliderState) {
     const base = super.getAttrs(state);
     const currentPhrase = formatTimeAsPhrase(state.value);
@@ -73,7 +75,6 @@ export class TimeSliderCore extends SliderCore {
 
     return {
       ...base,
-      'aria-label': this.#props.label,
       'aria-valuetext': valuetext,
     };
   }

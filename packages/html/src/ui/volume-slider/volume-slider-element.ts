@@ -1,39 +1,43 @@
-import { SliderCore, SliderDataAttrs } from '@videojs/core';
-import { applyStateDataAttrs, createSlider, getSliderCSSVars, type SliderHandle } from '@videojs/core/dom';
+import { SliderDataAttrs, VolumeSliderCore } from '@videojs/core';
+import {
+  applyStateDataAttrs,
+  createSlider,
+  getSliderCSSVars,
+  logMissingFeature,
+  type SliderHandle,
+  selectVolume,
+} from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
 
+import { playerContext } from '../../player/context';
+import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
-import { sliderContext } from './slider-context';
+import { sliderContext } from '../slider/slider-context';
 
-export class SliderElement extends MediaElement {
-  static readonly tagName = 'media-slider';
+export class VolumeSliderElement extends MediaElement {
+  static readonly tagName = 'media-volume-slider';
 
   static override properties = {
     label: { type: String },
-    value: { type: Number },
-    min: { type: Number },
-    max: { type: Number },
     step: { type: Number },
     largeStep: { type: Number, attribute: 'large-step' },
     orientation: { type: String },
     disabled: { type: Boolean },
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
-  } satisfies PropertyDeclarationMap<keyof SliderCore.Props>;
+  } satisfies PropertyDeclarationMap<keyof VolumeSliderCore.Props>;
 
-  label = SliderCore.defaultProps.label;
-  value = SliderCore.defaultProps.value;
-  min = SliderCore.defaultProps.min;
-  max = SliderCore.defaultProps.max;
-  step = SliderCore.defaultProps.step;
-  largeStep = SliderCore.defaultProps.largeStep;
-  orientation = SliderCore.defaultProps.orientation;
-  disabled = SliderCore.defaultProps.disabled;
-  thumbAlignment = SliderCore.defaultProps.thumbAlignment;
+  label = VolumeSliderCore.defaultProps.label;
+  step = VolumeSliderCore.defaultProps.step;
+  largeStep = VolumeSliderCore.defaultProps.largeStep;
+  orientation = VolumeSliderCore.defaultProps.orientation;
+  disabled = VolumeSliderCore.defaultProps.disabled;
+  thumbAlignment = VolumeSliderCore.defaultProps.thumbAlignment;
 
-  readonly #core = new SliderCore();
+  readonly #core = new VolumeSliderCore();
   readonly #provider = new ContextProvider(this, { context: sliderContext });
+  readonly #volumeState = new PlayerController(this, playerContext, selectVolume);
 
   #slider: SliderHandle | null = null;
   #disconnect: AbortController | null = null;
@@ -49,8 +53,12 @@ export class SliderElement extends MediaElement {
       getThumbElement: () => this.querySelector<HTMLElement>('media-slider-thumb'),
       getOrientation: () => this.orientation,
       isRTL: () => isRTL(this),
-      isDisabled: () => this.disabled,
-      getPercent: () => this.#core.percentFromValue(this.value),
+      isDisabled: () => this.disabled || !this.#volumeState.value,
+      getPercent: () => {
+        const media = this.#volumeState.value;
+        if (!media) return 0;
+        return media.volume * 100;
+      },
       getStepPercent: () => {
         const { step, min, max } = this.#core.props;
         const range = max - min;
@@ -62,12 +70,10 @@ export class SliderElement extends MediaElement {
         return range > 0 ? (largeStep / range) * 100 : 0;
       },
       onValueChange: (percent) => {
-        this.value = this.#core.valueFromPercent(percent);
-        this.dispatchEvent(new CustomEvent('value-change', { detail: { value: this.value }, bubbles: true }));
+        this.#setVolume(percent);
       },
       onValueCommit: (percent) => {
-        this.value = this.#core.valueFromPercent(percent);
-        this.dispatchEvent(new CustomEvent('value-commit', { detail: { value: this.value }, bubbles: true }));
+        this.#setVolume(percent);
       },
       onDragStart: () => {
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
@@ -82,6 +88,10 @@ export class SliderElement extends MediaElement {
     // Prevent default touch gestures and text selection during interaction.
     this.style.touchAction = 'none';
     this.style.userSelect = 'none';
+
+    if (__DEV__ && !this.#volumeState.value) {
+      logMissingFeature(VolumeSliderElement.tagName, 'volume');
+    }
   }
 
   override disconnectedCallback(): void {
@@ -101,21 +111,30 @@ export class SliderElement extends MediaElement {
     super.update(_changed);
     if (!this.#slider) return;
 
+    const media = this.#volumeState.value;
+    if (!media) return;
+
     const interaction = this.#slider.interaction.current;
-    const state = this.#core.getState(interaction, this.value);
+    const state = this.#core.getVolumeState(media, interaction);
     const cssVars = getSliderCSSVars(state);
 
     applyStyles(this, cssVars);
 
-    // Apply state data attributes to the root element.
+    // Apply data attributes to root.
     applyStateDataAttrs(this, state, SliderDataAttrs);
 
-    // Provide context to child elements (thumb, value, track, etc.).
+    // Provide context to child elements.
     this.#provider.setValue({
       state,
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
       thumbAttrs: this.#core.getAttrs(state),
       thumbProps: this.#slider.thumbProps,
+      formatValue: (value) => `${Math.round(value)}%`,
     });
+  }
+
+  #setVolume(percent: number): void {
+    const media = this.#volumeState.value;
+    media?.changeVolume(this.#core.valueFromPercent(percent) / 100);
   }
 }

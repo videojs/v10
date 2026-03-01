@@ -1,9 +1,12 @@
 import { clamp, roundToStep } from '@videojs/utils/number';
 import { defaults } from '@videojs/utils/object';
+import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 /** Shared configuration for all slider variants. */
 export interface SliderBaseProps {
+  /** Custom label for the slider. */
+  label?: string | ((state: SliderState) => string) | undefined;
   /** Step increment for value changes (arrow keys). */
   step?: number | undefined;
   /** Large step increment (Page Up/Down keys). */
@@ -62,6 +65,7 @@ export interface SliderState {
 
 export class SliderCore {
   static readonly defaultProps: NonNullableObject<SliderProps> = {
+    label: '',
     value: 0,
     min: 0,
     max: 100,
@@ -102,11 +106,25 @@ export class SliderCore {
     };
   }
 
+  getLabel(state: SliderState): string {
+    const { label } = this.#props;
+
+    if (isFunction(label)) {
+      const customLabel = label(state);
+      if (customLabel) return customLabel;
+    } else if (label) {
+      return label;
+    }
+
+    return '';
+  }
+
   getAttrs(state: SliderState) {
     return {
       role: 'slider',
       tabindex: state.disabled ? -1 : 0,
       autocomplete: 'off',
+      'aria-label': this.getLabel(state),
       'aria-valuemin': this.#props.min,
       'aria-valuemax': this.#props.max,
       'aria-valuenow': state.value,

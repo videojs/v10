@@ -25,6 +25,7 @@ export const SliderRoot = forwardRef(function SliderRoot(
     render,
     className,
     style,
+    label,
     min,
     max,
     step,
@@ -41,7 +42,7 @@ export const SliderRoot = forwardRef(function SliderRoot(
   } = componentProps;
 
   const [core] = useState(() => new SliderCore());
-  core.setProps({ min, max, step, largeStep, orientation, disabled, thumbAlignment });
+  core.setProps({ label, min, max, step, largeStep, orientation, disabled, thumbAlignment });
 
   const { min: resolvedMin, max: resolvedMax, step: resolvedStep, largeStep: resolvedLargeStep } = core.props;
   const range = resolvedMax - resolvedMin || 1;

@@ -17,6 +17,7 @@ describe('SliderCore', () => {
   describe('defaultProps', () => {
     it('has expected defaults', () => {
       expect(SliderCore.defaultProps).toEqual({
+        label: '',
         value: 0,
         min: 0,
         max: 100,
@@ -88,6 +89,32 @@ describe('SliderCore', () => {
     });
   });
 
+  describe('getLabel', () => {
+    it('returns empty string by default', () => {
+      const core = new SliderCore();
+      const state = core.getState(createInteraction(), 50);
+      expect(core.getLabel(state)).toBe('');
+    });
+
+    it('returns custom string label', () => {
+      const core = new SliderCore({ label: 'Brightness' });
+      const state = core.getState(createInteraction(), 50);
+      expect(core.getLabel(state)).toBe('Brightness');
+    });
+
+    it('calls function label with state', () => {
+      const core = new SliderCore({ label: (state) => (state.dragging ? 'Dragging' : 'Idle') });
+      expect(core.getLabel(core.getState(createInteraction({ dragging: true }), 0))).toBe('Dragging');
+      expect(core.getLabel(core.getState(createInteraction(), 0))).toBe('Idle');
+    });
+
+    it('falls through when function returns empty string', () => {
+      const core = new SliderCore({ label: () => '' });
+      const state = core.getState(createInteraction(), 0);
+      expect(core.getLabel(state)).toBe('');
+    });
+  });
+
   describe('getAttrs', () => {
     it('returns aria attributes', () => {
       const core = new SliderCore();
@@ -97,6 +124,7 @@ describe('SliderCore', () => {
       expect(attrs.role).toBe('slider');
       expect(attrs.tabindex).toBe(0);
       expect(attrs.autocomplete).toBe('off');
+      expect(attrs['aria-label']).toBe('');
       expect(attrs['aria-valuemin']).toBe(0);
       expect(attrs['aria-valuemax']).toBe(100);
       expect(attrs['aria-valuenow']).toBe(50);

@@ -30,6 +30,7 @@ describe('SliderElement', () => {
 
   it('initializes with default property values', () => {
     const slider = createElement(SliderElement);
+    expect(slider.label).toBe('');
     expect(slider.value).toBe(0);
     expect(slider.min).toBe(0);
     expect(slider.max).toBe(100);

@@ -28,10 +28,15 @@ function createMediaState(overrides: Partial<MediaVolumeState> = {}): MediaVolum
 
 describe('VolumeSliderCore', () => {
   describe('defaultProps', () => {
-    it('extends SliderCore defaults with label', () => {
-      expect(VolumeSliderCore.defaultProps.label).toBe('Volume');
-      expect(VolumeSliderCore.defaultProps.min).toBe(0);
-      expect(VolumeSliderCore.defaultProps.max).toBe(100);
+    it('has expected defaults', () => {
+      expect(VolumeSliderCore.defaultProps).toEqual({
+        step: 1,
+        largeStep: 10,
+        orientation: 'horizontal',
+        disabled: false,
+        thumbAlignment: 'center',
+        label: 'Volume',
+      });
     });
   });
 

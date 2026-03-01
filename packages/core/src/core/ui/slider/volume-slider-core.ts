@@ -2,22 +2,22 @@ import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaVolumeState } from '../../media/state';
-import { SliderCore, type SliderInteraction, type SliderProps, type SliderState } from './slider-core';
+import { type SliderBaseProps, SliderCore, type SliderInteraction, type SliderState } from './slider-core';
 
-export interface VolumeSliderProps extends SliderProps {
-  /** Accessible label for the slider. */
-  label?: string | undefined;
-}
+export interface VolumeSliderProps extends SliderBaseProps {}
 
 export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, 'volume' | 'muted'> {}
 
+// @ts-expect-error — defaultProps shape differs from base (domain sliders omit value/min/max)
 export class VolumeSliderCore extends SliderCore {
-  static override readonly defaultProps: NonNullableObject<VolumeSliderProps> = {
-    ...SliderCore.defaultProps,
+  static readonly defaultProps: NonNullableObject<VolumeSliderProps> = {
     label: 'Volume',
+    step: SliderCore.defaultProps.step,
+    largeStep: SliderCore.defaultProps.largeStep,
+    orientation: SliderCore.defaultProps.orientation,
+    disabled: SliderCore.defaultProps.disabled,
+    thumbAlignment: SliderCore.defaultProps.thumbAlignment,
   };
-
-  #props = { ...VolumeSliderCore.defaultProps };
 
   constructor(props?: VolumeSliderProps) {
     super();
@@ -25,8 +25,7 @@ export class VolumeSliderCore extends SliderCore {
   }
 
   override setProps(props: VolumeSliderProps): void {
-    this.#props = defaults(props, VolumeSliderCore.defaultProps);
-    super.setProps(props);
+    super.setProps(defaults(props, VolumeSliderCore.defaultProps));
   }
 
   getVolumeState(media: MediaVolumeState, interaction: SliderInteraction): VolumeSliderState {
@@ -43,13 +42,16 @@ export class VolumeSliderCore extends SliderCore {
     };
   }
 
+  override getLabel(state: SliderState): string {
+    return super.getLabel(state) || 'Volume';
+  }
+
   override getAttrs(state: VolumeSliderState) {
     const base = super.getAttrs(state);
     const valuetext = `${Math.round(state.value)} percent${state.muted ? ', muted' : ''}`;
 
     return {
       ...base,
-      'aria-label': this.#props.label,
       'aria-valuetext': valuetext,
     };
   }
