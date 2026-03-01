@@ -11,7 +11,6 @@ import { useSlider } from '../hooks/use-slider';
 import { SliderProvider } from './slider-context';
 
 export interface SliderRootProps extends UIComponentProps<'div', SliderCore.State>, SliderCore.Props {
-  value?: number | undefined;
   onValueChange?: ((value: number) => void) | undefined;
   onValueCommit?: ((value: number) => void) | undefined;
   onDragStart?: (() => void) | undefined;

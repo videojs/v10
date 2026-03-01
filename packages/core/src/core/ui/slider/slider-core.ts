@@ -2,11 +2,8 @@ import { clamp, roundToStep } from '@videojs/utils/number';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-export interface SliderProps {
-  /** Minimum value of the slider range. */
-  min?: number | undefined;
-  /** Maximum value of the slider range. */
-  max?: number | undefined;
+/** Shared configuration for all slider variants. */
+export interface SliderBaseProps {
   /** Step increment for value changes (arrow keys). */
   step?: number | undefined;
   /** Large step increment (Page Up/Down keys). */
@@ -17,6 +14,15 @@ export interface SliderProps {
   disabled?: boolean | undefined;
   /** How the thumb aligns at the track edges. `edge` constrains the thumb within track bounds. */
   thumbAlignment?: 'center' | 'edge' | undefined;
+}
+
+export interface SliderProps extends SliderBaseProps {
+  /** Current slider value. */
+  value?: number | undefined;
+  /** Minimum value of the slider range. */
+  min?: number | undefined;
+  /** Maximum value of the slider range. */
+  max?: number | undefined;
 }
 
 /** Current pointer/drag interaction state, typically provided by a DOM controller. */
@@ -56,6 +62,7 @@ export interface SliderState {
 
 export class SliderCore {
   static readonly defaultProps: NonNullableObject<SliderProps> = {
+    value: 0,
     min: 0,
     max: 100,
     step: 1,

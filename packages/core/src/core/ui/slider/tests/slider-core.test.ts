@@ -17,6 +17,7 @@ describe('SliderCore', () => {
   describe('defaultProps', () => {
     it('has expected defaults', () => {
       expect(SliderCore.defaultProps).toEqual({
+        value: 0,
         min: 0,
         max: 100,
         step: 1,
