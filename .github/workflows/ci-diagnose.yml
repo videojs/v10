@@ -1,0 +1,93 @@
+name: CI Failure Diagnosis
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: ci-diagnosis-${{ github.event.workflow_run.id }}
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Extract run context
+        id: context
+        run: |
+          pr_number="$(jq -r '.workflow_run.pull_requests[0].number // empty' "$GITHUB_EVENT_PATH")"
+          echo "pr_number=${pr_number}" >> "$GITHUB_OUTPUT"
+
+      - name: Skip non-PR runs
+        if: steps.context.outputs.pr_number == ''
+        run: echo "Failed CI run is not attached to a pull request. Skipping PR diagnosis comment."
+
+      - name: Run Claude CI diagnostician
+        if: steps.context.outputs.pr_number != ''
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: |
+            --model opus
+            --max-turns 18
+            --allowedTools "Bash(gh:*)" "WebSearch" "WebFetch"
+          prompt: |
+            You are the CI failure diagnosis agent for this repository.
+
+            Failed run context:
+            - Run ID: ${{ github.event.workflow_run.id }}
+            - Run URL: ${{ github.event.workflow_run.html_url }}
+            - Workflow: ${{ github.event.workflow_run.name }}
+            - Conclusion: ${{ github.event.workflow_run.conclusion }}
+            - Head SHA: ${{ github.event.workflow_run.head_sha }}
+            - PR Number: #${{ steps.context.outputs.pr_number }}
+            - PR URL: https://github.com/${{ github.repository }}/pull/${{ steps.context.outputs.pr_number }}
+
+            Tasks:
+            1. Diagnose what failed by inspecting the failed workflow run and failed jobs using `gh` (jobs, steps, and logs).
+            2. Focus issue types on: lint, typecheck, build, test, link.
+            3. If there are multiple issues, include only actionable root causes (max 3 rows). Collapse duplicates.
+            4. For each actionable issue, include:
+            - file (or nearest path/scope when file is unavailable),
+            - issue type,
+            - concise failure description.
+            5. If the failure is only simple lint/style warnings, keep it brief and generic; do not enumerate every file.
+            6. Avoid noise:
+            - Do not post redundant comments.
+            - Use one comment per CI run.
+            - If a comment already exists with marker `<!-- ci-diagnosis:run-${{ github.event.workflow_run.id }} -->`, update it instead of creating a new one.
+            - Do not include stack traces or long command output in comments.
+
+            Post or update a single PR comment on #${{ steps.context.outputs.pr_number }} using this template exactly:
+
+            <!-- ci-diagnosis:run-${{ github.event.workflow_run.id }} -->
+            ### CI Failure Diagnosis
+            - Run: ${{ github.event.workflow_run.html_url }}
+            - Commit: `${{ github.event.workflow_run.head_sha }}`
+
+            | File | Type | What failed |
+            | --- | --- | --- |
+            | ... | lint\|typecheck\|build\|test\|link | ... |
+
+            Rules for output:
+            - Keep the table concise and actionable.
+            - Keep "What failed" to one short sentence.
+            - If only simple lint/style noise exists, use one row:
+              `| (various) | lint | Simple lint/style warnings only. |`
+            - If failure cause is not determinable from logs, use one row with best evidence and next diagnostic step.

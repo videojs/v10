@@ -10,10 +10,8 @@ interface ReactiveController {
 
 /** Manages the video player lifecycle. */
 export class PlayerController implements ReactiveController {
-  #host: ReactiveControllerHost;
-
   constructor(host: ReactiveControllerHost) {
-    this.#host = host;
+    host.addController(this);
   }
 
   /** Whether the player is ready. */

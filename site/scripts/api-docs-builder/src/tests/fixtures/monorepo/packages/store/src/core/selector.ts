@@ -1,7 +1,3 @@
-interface Store<S> {
-  getState(): S;
-}
-
 type SelectorFn<S, R> = (state: S) => R;
 
 /** Create a memoized selector function. */
