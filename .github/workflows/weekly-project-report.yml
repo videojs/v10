@@ -42,7 +42,7 @@ jobs:
         env:
           # PAT with read:project scope — required for org-level Projects v2 GraphQL.
           # The automatic GITHUB_TOKEN does not have project board access.
-          GH_TOKEN: ${{ secrets.PROJECT_GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PROJECT_GH_TOKEN }}
           WEEKLY_REPORT_SLACK_WEBHOOK_URL: ${{ secrets.WEEKLY_REPORT_SLACK_WEBHOOK_URL }}
 
       - name: Alert Slack on failure
