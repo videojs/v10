@@ -18,8 +18,58 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sync:
+  # ─── Job 0: Lightweight shell gate ───────────────────────────────────
+  analyze:
     if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main')
+    runs-on: ubuntu-latest
+
+    outputs:
+      has_changes: ${{ steps.check.outputs.has_changes }}
+      pr_number: ${{ steps.context.outputs.pr_number }}
+      pr_title: ${{ steps.context.outputs.pr_title }}
+      pr_url: ${{ steps.context.outputs.pr_url }}
+      pr_body: ${{ steps.context.outputs.pr_body }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set PR context
+        id: context
+        run: |
+          echo "pr_number=${{ github.event.pull_request.number || '' }}" >> "$GITHUB_OUTPUT"
+          echo "pr_title=${{ github.event.pull_request.title || '' }}" >> "$GITHUB_OUTPUT"
+          echo "pr_url=${{ github.event.pull_request.html_url || '' }}" >> "$GITHUB_OUTPUT"
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "pr_body<<$EOF" >> "$GITHUB_OUTPUT"
+          echo "${{ github.event.pull_request.body || '' }}" >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Check for API-relevant changes
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "workflow_dispatch — full scan"
+            exit 0
+          fi
+
+          CHANGED=$(gh pr diff ${{ github.event.pull_request.number }} --name-only || true)
+
+          if echo "$CHANGED" | grep -qE '^packages/(core/src/core/(ui|selectors)|html/src/ui|react/src/ui|store/src)/'; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "API-relevant files changed"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "No API-relevant changes detected"
+          fi
+
+  # ─── Job 1: MDX prose drift (Claude Opus) ───────────────────────────
+  reference-copy:
+    needs: analyze
+    if: needs.analyze.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -28,81 +78,204 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run Claude API reference sync
+      - name: Check reference copy drift
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: |
             --model opus
-            --max-turns 28
+            --max-turns 20
             --allowedTools "Bash(pnpm:*)" "Bash(node:*)" "Bash(git:*)" "Bash(gh:*)" "Bash(cat:*)" "Bash(rg:*)"
           prompt: |
-            You are the API reference sync agent.
+            You are the API reference copy-sync agent.
+            Your sole job: detect drift between auto-generated API JSON and hand-written MDX prose in reference pages.
 
             Trigger context:
             - Event: ${{ github.event_name }}
-            - PR Number: #${{ github.event.pull_request.number || '' }}
-            - PR Title: ${{ github.event.pull_request.title || '' }}
-            - PR URL: ${{ github.event.pull_request.html_url || '' }}
+            - PR Number: #${{ needs.analyze.outputs.pr_number }}
+            - PR Title: ${{ needs.analyze.outputs.pr_title }}
+            - PR URL: ${{ needs.analyze.outputs.pr_url }}
             - PR Body:
-              ${{ github.event.pull_request.body || '' }}
-
-            Rules:
-            - This workflow may create/update issues and PRs for API-reference drift.
-            - Focus only on API-reference synchronization and directly related docs metadata.
-            - Do not create noise issues or unrelated refactors.
+              ${{ needs.analyze.outputs.pr_body }}
 
             Load context before acting:
             - Read `CLAUDE.md` and `.claude/skills/README.md`.
             - Load and follow these skills in order:
               1. `.claude/skills/api-reference/SKILL.md`
               2. `.claude/skills/docs/SKILL.md`
-              3. `.claude/skills/api/SKILL.md`
-              4. `.claude/skills/gh-issue/SKILL.md`
-              5. `.claude/skills/commit-pr/SKILL.md`
+              3. `.claude/skills/commit-pr/SKILL.md`
 
-            Analyze API-doc drift:
-            - Inspect merged PR changed files plus linked/closing issues.
-            - Determine impacted components/utils across core/html/react.
+            Step 1 — Identify impacted components:
+            - Use `gh pr diff ${{ needs.analyze.outputs.pr_number }} --name-only` (or `git log` for workflow_dispatch) to find which components/utils changed.
+            - Focus only on those components for the rest of the analysis.
+
+            Step 2 — Build API JSON:
             - Run `pnpm install` and `pnpm -C site api-docs`.
-            - Compare generated API JSON with docs in `site/src/content/docs/reference/`.
-            - Check `site/src/docs.config.ts` for missing/stale sidebar entries.
-            - Validate conventions: props/state/data attrs/css vars and JSDoc completeness for interface fields.
+            - The generated JSON files are the source of truth — they are always current.
 
-            Create/update issues only when drift exists:
-            - Create/update one canonical issue per component using `.github/templates/api-reference-update-issue.md`.
+            Step 3 — Compare JSON against MDX:
+            - For each impacted component, compare the generated API JSON with the hand-written MDX in `site/src/content/docs/reference/`.
+            - "Drift" means the MDX prose doesn't match the JSON. Look for:
+              - Missing or removed props/state fields in prose sections.
+              - Outdated descriptions that contradict JSON.
+              - Missing data attributes in Styling sections.
+              - Stale type signatures in prose.
+              - Missing sidebar entry in `site/src/docs.config.ts`.
+            - For new components with no MDX yet: open an issue noting scaffold is needed, don't attempt it.
+
+            Step 4 — Create/update issues and PRs:
+            - Create/update one canonical issue per component using `.github/templates/reference-copy-issue.md`.
             - Issue title: `docs(site): {component_name} api reference update`.
-            - Keep at most one active canonical issue per component (across all source PRs).
+            - Keep at most one active canonical issue per component.
             - If a canonical issue exists, update it and append new trigger references.
-            - If only stale duplicates exist and cannot be safely normalized, close them with reason and open one canonical replacement.
-            - Include triggering PR(s) and linked source issue(s), if any.
             - Fully render template fields; no placeholders.
-            - Include concise implementation notes in the issue body (target files + drift-specific tasks + validation commands).
-
-            Issue body requirements:
-            - Fill `API Changes Summary` and `Out-of-Sync Docs` tables.
-            - Do not request runnable examples/demos for API reference pages.
-            - Provide concise usage-guidance scaffolding based on API surface and likely user intent.
-            - Keep issue content human-focused; no hidden agent-only instruction blocks.
-
-            Create/update PRs for actionable components:
-            - If drift is clear/actionable, create or update one canonical PR per component tied to the canonical issue.
+            - If drift is clear and actionable, create or update one canonical PR per component.
             - PR title: `docs(site): {component_name} api reference update`.
-            - PR body must use `.github/templates/api-reference-update-pr.md`:
-              - line 1: `closes #{{ISSUE_NUMBER}}`
-              - line 2: short concise description
-            - Search for existing open PR for the same component title and update it instead of opening duplicates.
-            - If duplicate open PRs exist for the same component, keep one canonical PR and close stale duplicates with a short reason.
-            - Keep each PR scoped to a single issue/component.
-            - Do not open a PR when analysis is uncertain.
+            - PR body must use `.github/templates/api-reference-update-pr.md`.
+            - Do not open a PR when analysis is uncertain — use `triage` label instead.
 
-            Labels and planning metadata:
-            - Required labels: `docs`, `api`, `site`.
-            - Recommended label: `components`.
-            - Add `test` only if test updates are needed.
-            - Certainty routing:
-              - uncertain/ambiguous: add `triage`
-              - actionable: do not add `triage`
-            - If linked source issue(s) have milestone/project assignments, copy them when possible.
-            - If project assignment fails due permissions/platform limits, note that explicitly in issue body.
+            Labels:
+            - Required: `docs`, `api`, `site`, `reference:copy`.
+            - Add `components` for component pages.
+            - Add `triage` when uncertain.
+
+            Scope restrictions:
+            - ONLY check `site/src/content/docs/reference/` — no demos, no concept pages.
+            - Do NOT check demo code (separate job handles that).
+            - Do NOT check concept/how-to pages (separate job handles that).
+
+  # ─── Job 2: Demo code drift (Claude Sonnet) ─────────────────────────
+  reference-demos:
+    needs: analyze
+    if: needs.analyze.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check demo code drift
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: |
+            --model sonnet
+            --max-turns 14
+            --allowedTools "Bash(git:*)" "Bash(gh:*)" "Bash(cat:*)" "Bash(rg:*)"
+          prompt: |
+            You are the API reference demo-sync agent.
+            Your sole job: check if demo code uses APIs that changed in a recent PR.
+
+            Trigger context:
+            - Event: ${{ github.event_name }}
+            - PR Number: #${{ needs.analyze.outputs.pr_number }}
+            - PR Title: ${{ needs.analyze.outputs.pr_title }}
+            - PR URL: ${{ needs.analyze.outputs.pr_url }}
+
+            Load context before acting:
+            - Read `CLAUDE.md`.
+
+            Step 1 — Identify impacted components:
+            - Use `gh pr diff ${{ needs.analyze.outputs.pr_number }} --name-only` (or `git log` for workflow_dispatch) to find which components changed.
+            - Then use `gh pr diff ${{ needs.analyze.outputs.pr_number }}` to see what specifically changed in their APIs (renamed props, removed options, changed signatures, new data attributes).
+
+            Step 2 — Check demos:
+            - For each impacted component, read all demo files in `site/src/components/docs/demos/{component}/`.
+            - Check both `html/css/` and `react/css/` variants.
+            - Look for: renamed props, removed options, changed signatures, deprecated patterns, new data attributes demos should show.
+            - Skip components with no demo directory.
+
+            Step 3 — Create/update issues:
+            - Create issues ONLY (no PRs — demo fixes need human judgment).
+            - Use `.github/templates/reference-demos-issue.md`.
+            - Issue title: `docs(site): {component_name} demo code update`.
+            - Keep at most one active canonical issue per component.
+            - If a canonical issue exists, update it and append new trigger references.
+            - Fully render template fields; no placeholders.
+            - Do NOT create an issue if no drift is found.
+
+            Labels (always all of these):
+            - `docs`, `api`, `site`, `reference:demos`, `components`, `triage`.
+
+            Scope restrictions:
+            - ONLY check `site/src/components/docs/demos/` — no MDX prose, no concept pages.
+            - Do NOT check reference page content (separate job handles that).
+            - Do NOT check concept/how-to pages (separate job handles that).
+
+  # ─── Job 3: Cross-site references (Claude Sonnet) ───────────────────
+  cross-site-refs:
+    needs: analyze
+    if: needs.analyze.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check cross-site references
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: |
+            --model sonnet
+            --max-turns 14
+            --allowedTools "Bash(git:*)" "Bash(gh:*)" "Bash(cat:*)" "Bash(rg:*)"
+          prompt: |
+            You are the cross-site reference sync agent.
+            Your sole job: find mentions of changed APIs in docs OUTSIDE `/reference/` that may be stale.
+
+            Trigger context:
+            - Event: ${{ github.event_name }}
+            - PR Number: #${{ needs.analyze.outputs.pr_number }}
+            - PR Title: ${{ needs.analyze.outputs.pr_title }}
+            - PR URL: ${{ needs.analyze.outputs.pr_url }}
+
+            Load context before acting:
+            - Read `CLAUDE.md`.
+
+            Step 1 — Identify changed APIs:
+            - Use `gh pr diff ${{ needs.analyze.outputs.pr_number }} --name-only` (or `git log` for workflow_dispatch) to find which components/utils changed.
+            - Then use `gh pr diff ${{ needs.analyze.outputs.pr_number }}` to identify the specific API changes (renamed props, removed exports, changed signatures, etc.).
+            - Build a list of API names to search for (PascalCase, camelCase, kebab-case, `media-{name}` variants).
+
+            Step 2 — Grep for references:
+            - Run targeted `rg` commands to find files mentioning changed APIs in:
+              - `site/src/content/docs/concepts/`
+              - `site/src/content/docs/how-to/`
+              - `packages/*/README.md`
+            - Search for all name variants (kebab, PascalCase, camelCase, `media-{name}` element names).
+            - Do NOT search in `site/src/content/docs/reference/` (separate job handles that).
+            - Do NOT search in `site/src/components/docs/demos/` (separate job handles that).
+
+            Step 3 — Analyze hits:
+            - For each file with grep hits, read the surrounding context and determine:
+              - `high` confidence: definitely stale (references removed/renamed API by old name).
+              - `medium` confidence: likely stale (references API whose behavior changed).
+              - `low` confidence / false positive: grep hit in unrelated context.
+            - Be conservative — include borderline cases for human review.
+            - Discard clear false positives.
+
+            Step 4 — Create/update triage issues:
+            - Create issues ONLY (no PRs).
+            - Use `.github/templates/cross-site-refs-issue.md`.
+            - Issue title: `docs(site): cross-site api references update`.
+            - Group related APIs into one issue when they affect the same files.
+            - Keep at most one active canonical issue (search for existing open issues with `drift-type:cross-site-refs` in body).
+            - If a canonical issue exists, update it and append new trigger references.
+            - Fully render template fields; no placeholders.
+            - Do NOT create an issue if no stale references are found.
+
+            Labels (always all of these):
+            - `docs`, `site`, `cross-ref`, `triage`.
+
+            Scope restrictions:
+            - ONLY check docs outside `/reference/` and package READMEs.
+            - Do NOT check reference pages (separate job handles that).
+            - Do NOT check demo files (separate job handles that).
