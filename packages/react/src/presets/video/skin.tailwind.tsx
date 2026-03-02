@@ -177,16 +177,33 @@ const SliderTrack = forwardRef<HTMLDivElement, ComponentProps<'div'>>(function S
   );
 });
 
-const SliderFill = forwardRef<HTMLDivElement, ComponentProps<'div'>>(function SliderFill({ className, ...props }, ref) {
+const SliderFill = forwardRef<HTMLDivElement, ComponentProps<'div'> & { type?: 'fill' | 'buffer' }>(function SliderFill(
+  { type = 'fill', className, ...props },
+  ref
+) {
   return (
     <div
       ref={ref}
       className={cn(
-        'absolute rounded-[inherit] pointer-events-none bg-white',
+        'absolute rounded-[inherit] pointer-events-none',
+        {
+          'bg-white': type === 'fill',
+          'bg-white/20 duration-250 ease-out': type === 'buffer',
+        },
         // Horizontal
-        'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0 data-[orientation=horizontal]:w-(--media-slider-fill)',
+        `data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0`,
+        {
+          'data-[orientation=horizontal]:w-(--media-slider-fill)': type === 'fill',
+          'data-[orientation=horizontal]:transition-[width] data-[orientation=horizontal]:w-(--media-slider-buffer)':
+            type === 'buffer',
+        },
         // Vertical
-        'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:h-(--media-slider-fill)',
+        `data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0`,
+        {
+          'data-[orientation=vertical]:h-(--media-slider-fill)': type === 'fill',
+          'data-[orientation=vertical]:transition-[height] data-[orientation=vertical]:h-(--media-slider-buffer)':
+            type === 'buffer',
+        },
         className
       )}
       {...props}
@@ -394,7 +411,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           <TimeSlider.Root render={(props) => <SliderRoot {...props} />}>
             <TimeSlider.Track render={(props) => <SliderTrack {...props} />}>
               <TimeSlider.Fill render={(props) => <SliderFill {...props} />} />
-              <TimeSlider.Buffer className="absolute inset-y-0 left-0 rounded-[inherit] pointer-events-none bg-white/20 w-(--media-slider-buffer) transition-[width] duration-250 ease-out" />
+              <TimeSlider.Buffer render={(props) => <SliderFill type="buffer" {...props} />} />
             </TimeSlider.Track>
             <TimeSlider.Thumb render={(props) => <SliderThumb {...props} />} />
           </TimeSlider.Root>

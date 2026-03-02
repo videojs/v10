@@ -189,7 +189,6 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                       <MuteButtonIcon state={state} className="media-icon" />
                     </Button>
                   )}
-                  {...props}
                 />
               }
             />

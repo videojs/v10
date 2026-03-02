@@ -84,19 +84,19 @@ export function useSlider<State extends SliderState = SliderState>(
   // Cleanup on unmount.
   useEffect(() => () => slider.destroy(), [slider]);
 
-  // Force a synchronous re-render after mount so edge thumb alignment
-  // can read DOM measurements from the now-populated element refs.
-  useLayoutEffect(() => {
-    if (rootElementRef.current && thumbElementRef.current) {
-      forceRender();
-    }
-  }, []);
-
   // Subscribe to interaction state.
   const interaction = useSnapshot(slider.interaction);
 
   // Compute derived state from interaction + caller-provided projection.
   const state = options.computeState(interaction);
+
+  // Force a synchronous re-render after mount so edge thumb alignment
+  // can read DOM measurements from the now-populated element refs.
+  useLayoutEffect(() => {
+    if (state.thumbAlignment === 'edge' && rootElementRef.current && thumbElementRef.current) {
+      forceRender();
+    }
+  }, [state.thumbAlignment]);
 
   // Adjust CSS var percents for edge thumb alignment when DOM elements are available.
   const rootEl = rootElementRef.current;
