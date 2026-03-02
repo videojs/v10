@@ -35,7 +35,7 @@ jobs:
           track_progress: true
           use_sticky_comment: true
           claude_args: |
-            --model sonnet
+            --model opus
             --max-turns 20
           prompt: |
             You are the issue-to-PR implementation agent for this repository.
