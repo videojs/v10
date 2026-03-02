@@ -1,0 +1,108 @@
+name: API Reference Sync
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [closed]
+
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
+  issues: write
+  repository-projects: write
+  id-token: write
+
+concurrency:
+  group: api-reference-sync-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude API reference sync
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: |
+            --model opus
+            --max-turns 28
+            --allowedTools "Bash(pnpm:*)" "Bash(node:*)" "Bash(git:*)" "Bash(gh:*)" "Bash(cat:*)" "Bash(rg:*)"
+          prompt: |
+            You are the API reference sync agent.
+
+            Trigger context:
+            - Event: ${{ github.event_name }}
+            - PR Number: #${{ github.event.pull_request.number || '' }}
+            - PR Title: ${{ github.event.pull_request.title || '' }}
+            - PR URL: ${{ github.event.pull_request.html_url || '' }}
+            - PR Body:
+              ${{ github.event.pull_request.body || '' }}
+
+            Rules:
+            - This workflow may create/update issues and PRs for API-reference drift.
+            - Focus only on API-reference synchronization and directly related docs metadata.
+            - Do not create noise issues or unrelated refactors.
+
+            Load context before acting:
+            - Read `CLAUDE.md` and `.claude/skills/README.md`.
+            - Load and follow these skills in order:
+              1. `.claude/skills/api-reference/SKILL.md`
+              2. `.claude/skills/docs/SKILL.md`
+              3. `.claude/skills/api/SKILL.md`
+              4. `.claude/skills/gh-issue/SKILL.md`
+              5. `.claude/skills/commit-pr/SKILL.md`
+
+            Analyze API-doc drift:
+            - Inspect merged PR changed files plus linked/closing issues.
+            - Determine impacted components/utils across core/html/react.
+            - Run `pnpm install` and `pnpm -C site api-docs`.
+            - Compare generated API JSON with docs in `site/src/content/docs/reference/`.
+            - Check `site/src/docs.config.ts` for missing/stale sidebar entries.
+            - Validate conventions: props/state/data attrs/css vars and JSDoc completeness for interface fields.
+
+            Create/update issues only when drift exists:
+            - Create/update one canonical issue per component using `.github/templates/api-reference-update-issue.md`.
+            - Issue title: `docs(site): {component_name} api reference update`.
+            - Keep at most one active canonical issue per component (across all source PRs).
+            - If a canonical issue exists, update it and append new trigger references.
+            - If only stale duplicates exist and cannot be safely normalized, close them with reason and open one canonical replacement.
+            - Include triggering PR(s) and linked source issue(s), if any.
+            - Fully render template fields; no placeholders.
+            - Include concise implementation notes in the issue body (target files + drift-specific tasks + validation commands).
+
+            Issue body requirements:
+            - Fill `API Changes Summary` and `Out-of-Sync Docs` tables.
+            - Do not request runnable examples/demos for API reference pages.
+            - Provide concise usage-guidance scaffolding based on API surface and likely user intent.
+            - Keep issue content human-focused; no hidden agent-only instruction blocks.
+
+            Create/update PRs for actionable components:
+            - If drift is clear/actionable, create or update one canonical PR per component tied to the canonical issue.
+            - PR title: `docs(site): {component_name} api reference update`.
+            - PR body must use `.github/templates/api-reference-update-pr.md`:
+              - line 1: `closes #{{ISSUE_NUMBER}}`
+              - line 2: short concise description
+            - Search for existing open PR for the same component title and update it instead of opening duplicates.
+            - If duplicate open PRs exist for the same component, keep one canonical PR and close stale duplicates with a short reason.
+            - Keep each PR scoped to a single issue/component.
+            - Do not open a PR when analysis is uncertain.
+
+            Labels and planning metadata:
+            - Required labels: `docs`, `api`, `site`.
+            - Recommended label: `components`.
+            - Add `test` only if test updates are needed.
+            - Certainty routing:
+              - uncertain/ambiguous: add `triage`
+              - actionable: do not add `triage`
+            - If linked source issue(s) have milestone/project assignments, copy them when possible.
+            - If project assignment fails due permissions/platform limits, note that explicitly in issue body.
