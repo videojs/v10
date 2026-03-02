@@ -44,12 +44,16 @@ export default function llmsMarkdown(): AstroIntegration {
               continue;
             }
 
-            // For each content element, remove [data-llms-ignore] descendants
+            // For each content element, strip non-content elements before conversion
             const contentParts: string[] = [];
             contentElements.forEach((contentEl) => {
               const clone = contentEl.cloneNode(true) as Element;
               const ignoreElements = clone.querySelectorAll('[data-llms-ignore]');
               ignoreElements.forEach((el) => el.remove());
+              // Remove script and style tags (includes Astro island hydration scripts)
+              for (const tag of clone.querySelectorAll('script, style')) {
+                tag.remove();
+              }
               contentParts.push(clone.innerHTML);
             });
 
