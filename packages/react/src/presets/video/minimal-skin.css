@@ -527,15 +527,14 @@
 /* Buffer */
 .media-minimal-skin .media-slider__buffer {
   background-color: oklch(1 0 0 / 0.2);
-  width: var(--media-slider-buffer, 0%);
   transition-duration: 0.25s;
   transition-timing-function: ease-out;
 }
-.media-default-skin .media-slider__buffer[data-orientation="horizontal"] {
+.media-minimal-skin .media-slider__buffer[data-orientation="horizontal"] {
   width: var(--media-slider-buffer);
   transition-property: width;
 }
-.media-default-skin .media-slider__buffer[data-orientation="vertical"] {
+.media-minimal-skin .media-slider__buffer[data-orientation="vertical"] {
   height: var(--media-slider-buffer);
   transition-property: height;
 }
