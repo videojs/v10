@@ -1,0 +1,78 @@
+name: Issue To PR
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+concurrency:
+  group: issue-to-pr-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  implement:
+    if: github.event.issue.pull_request == null && github.event.label.name == 'agent:implement'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude issue implementer
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          label_trigger: agent:implement
+          track_progress: true
+          use_sticky_comment: true
+          claude_args: |
+            --model sonnet
+            --max-turns 20
+          prompt: |
+            You are the issue-to-PR implementation agent for this repository.
+
+            Issue context:
+            - Number: #${{ github.event.issue.number }}
+            - Title: ${{ github.event.issue.title }}
+            - URL: ${{ github.event.issue.html_url }}
+            - Labels:
+              ${{ toJson(github.event.issue.labels) }}
+            - Body:
+              ${{ github.event.issue.body }}
+
+            Goal:
+            - Implement the requested change from this issue.
+            - Run appropriate checks.
+            - Open a PR for human review.
+
+            Execution policy:
+            1. Assess scope and verify if an open PR already exists for this issue.
+            - If an open PR already covers this issue, do not create a duplicate PR; leave a concise issue comment with the existing PR link and what remains.
+            2. If implementable, make a focused change set with tests for behavior changes.
+            3. Run relevant checks before opening a PR:
+            - At minimum run `pnpm typecheck`.
+            - Run targeted tests for affected package(s). If targeted scope is unclear, run broader tests as needed.
+            - Run lint where needed (`pnpm lint` or file-targeted lint checks).
+            4. If checks fail, iterate to fix failures before opening PR.
+            5. Open a PR with:
+            - Clear summary of what changed.
+            - Explicit link back to this issue.
+            - Validation section with commands run and pass/fail results.
+            6. Leave a concise issue comment with PR link and current status.
+            7. If blocked by missing requirements or impossible constraints:
+            - Do not open a speculative PR.
+            - Leave a concise issue comment describing blocker(s), required input, and next action.
+
+            Quality constraints:
+            - Keep changes minimal and aligned with repository conventions.
+            - Do not add unrelated refactors.
+            - Be explicit and concise in PR/issue communication.
