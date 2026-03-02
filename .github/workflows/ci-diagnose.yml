@@ -37,8 +37,20 @@ jobs:
         if: steps.context.outputs.pr_number == ''
         run: echo "Failed CI run is not attached to a pull request. Skipping PR diagnosis comment."
 
-      - name: Run Claude CI diagnostician
+      - name: Check org membership
         if: steps.context.outputs.pr_number != ''
+        id: auth
+        run: |
+          if gh api orgs/videojs/members/${{ github.event.workflow_run.actor.login }} --silent 2>/dev/null; then
+            echo "authorized=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "authorized=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Claude CI diagnostician
+        if: steps.context.outputs.pr_number != '' && steps.auth.outputs.authorized == 'true'
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
