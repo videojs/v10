@@ -51,6 +51,7 @@ describe('createComponentReferenceModel', () => {
       props: {},
       state: {},
       dataAttributes: {},
+      cssCustomProperties: {},
       platforms: {},
       parts: {
         root: {
@@ -67,10 +68,12 @@ describe('createComponentReferenceModel', () => {
               description: 'Visible',
             },
           },
+          cssCustomProperties: {},
           platforms: {
             html: {
               tagName: 'media-controls',
             },
+            react: {},
           },
         },
         group: {
@@ -78,7 +81,10 @@ describe('createComponentReferenceModel', () => {
           props: {},
           state: {},
           dataAttributes: {},
-          platforms: {},
+          cssCustomProperties: {},
+          platforms: {
+            react: {},
+          },
         },
       },
     };
@@ -99,6 +105,7 @@ describe('createComponentReferenceModel', () => {
             react: 'Root',
             html: 'media-controls',
           },
+          frameworks: ['html', 'react'],
           componentName: 'Controls.Root',
           sections: [
             {
@@ -123,6 +130,7 @@ describe('createComponentReferenceModel', () => {
             react: 'Group',
             html: 'Group',
           },
+          frameworks: ['react'],
           componentName: 'Controls.Group',
           sections: [],
         },
@@ -138,6 +146,7 @@ describe('buildComponentReferenceTocHeadings', () => {
       props: {},
       state: {},
       dataAttributes: {},
+      cssCustomProperties: {},
       platforms: {},
       parts: {
         root: {
@@ -153,10 +162,12 @@ describe('buildComponentReferenceTocHeadings', () => {
               description: 'Visible',
             },
           },
+          cssCustomProperties: {},
           platforms: {
             html: {
               tagName: 'media-controls',
             },
+            react: {},
           },
         },
       },
@@ -194,6 +205,55 @@ describe('buildComponentReferenceTocHeadings', () => {
         text: 'Data attributes',
         slug: 'root-data-attributes',
         tocKind: 'api-reference-subsection',
+      },
+    ]);
+  });
+
+  it('filters part headings by framework and adds frameworks to single-platform subsections', () => {
+    const apiReference = {
+      name: 'Popover',
+      props: {},
+      state: {},
+      dataAttributes: {},
+      cssCustomProperties: {},
+      platforms: {},
+      parts: {
+        trigger: {
+          name: 'Trigger',
+          props: {
+            onClick: { type: '() => void' },
+          },
+          state: {},
+          dataAttributes: {},
+          cssCustomProperties: {},
+          platforms: {
+            react: {},
+          },
+        },
+      },
+    };
+
+    const model = createComponentReferenceModel('Popover', apiReference);
+    const headings = buildComponentReferenceTocHeadings(model);
+
+    expect(headings).toEqual([
+      {
+        depth: 2,
+        text: 'API Reference',
+        slug: 'api-reference',
+      },
+      {
+        depth: 3,
+        text: 'Trigger',
+        slug: 'trigger',
+        frameworks: ['react'],
+      },
+      {
+        depth: 4,
+        text: 'Props',
+        slug: 'trigger-props',
+        tocKind: 'api-reference-subsection',
+        frameworks: ['react'],
       },
     ]);
   });

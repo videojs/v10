@@ -11,6 +11,7 @@ import type { ComponentReference } from '@/types/component-reference';
 import { isValidFramework } from '@/types/docs';
 import { createComponentReferenceModel } from '@/utils/componentReferenceModel';
 import FrameworkCase from '../FrameworkCase.astro';
+import ApiCSSVarsTable from './ApiCSSVarsTable.astro';
 import ApiDataAttrsTable from './ApiDataAttrsTable.astro';
 import ApiPropsTable from './ApiPropsTable.astro';
 import ApiStateTable from './ApiStateTable.astro';
@@ -42,6 +43,9 @@ const singleStateSection = !apiReferenceModel.hasParts
 const singleDataAttributesSection = !apiReferenceModel.hasParts
   ? apiReferenceModel.sections.find((section) => section.key === 'dataAttributes')
   : null;
+const singleCssCustomPropertiesSection = !apiReferenceModel.hasParts
+  ? apiReferenceModel.sections.find((section) => section.key === 'cssCustomProperties')
+  : null;
 ---
 
 <ContentWidth>
@@ -52,9 +56,10 @@ const singleDataAttributesSection = !apiReferenceModel.hasParts
       const partPropsSection = part.sections.find((section) => section.key === 'props');
       const partStateSection = part.sections.find((section) => section.key === 'state');
       const partDataAttributesSection = part.sections.find((section) => section.key === 'dataAttributes');
+      const partCssCustomPropertiesSection = part.sections.find((section) => section.key === 'cssCustomProperties');
 
       return (
-        <>
+        <FrameworkCase frameworks={part.frameworks}>
           <H3 id={part.id}>
             <FrameworkCase frameworks={["react"]}>{part.labelByFramework.react}</FrameworkCase>
             <FrameworkCase frameworks={["html"]}>{part.labelByFramework.html}</FrameworkCase>
@@ -95,7 +100,14 @@ const singleDataAttributesSection = !apiReferenceModel.hasParts
               <ApiDataAttrsTable dataAttributes={part.data.dataAttributes} componentName={part.componentName} />
             </>
           )}
-        </>
+
+          {partCssCustomPropertiesSection && (
+            <>
+              <H4 id={partCssCustomPropertiesSection.id}>{partCssCustomPropertiesSection.title}</H4>
+              <ApiCSSVarsTable cssCustomProperties={part.data.cssCustomProperties} componentName={part.componentName} />
+            </>
+          )}
+        </FrameworkCase>
       );
     })
   ) : (
@@ -129,6 +141,13 @@ const singleDataAttributesSection = !apiReferenceModel.hasParts
         <>
           <H3 id={singleDataAttributesSection.id}>{singleDataAttributesSection.title}</H3>
           <ApiDataAttrsTable dataAttributes={apiReferenceModel.data.dataAttributes} componentName={component} />
+        </>
+      )}
+
+      {singleCssCustomPropertiesSection && (
+        <>
+          <H3 id={singleCssCustomPropertiesSection.id}>{singleCssCustomPropertiesSection.title}</H3>
+          <ApiCSSVarsTable cssCustomProperties={apiReferenceModel.data.cssCustomProperties} componentName={component} />
         </>
       )}
     </>

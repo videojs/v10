@@ -1,0 +1,41 @@
+---
+/**
+ * Renders the CSS custom properties table for API reference.
+ */
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+import type { CSSVarDef } from '@/types/component-reference';
+import CSSVarRow from './CSSVarRow.astro';
+
+interface Props {
+  cssCustomProperties: Record<string, CSSVarDef>;
+  componentName: string;
+}
+
+const { cssCustomProperties, componentName } = Astro.props;
+
+const vars = Object.entries(cssCustomProperties);
+---
+
+<Table maxWidth={false} outerClass="my-6">
+    <Thead>
+        <Tr>
+            <Th>Variable</Th>
+            <Th />
+        </Tr>
+    </Thead>
+    <Tbody>
+        {
+            vars.map(([name, def]) => (
+                <CSSVarRow
+                    name={name}
+                    description={def.description}
+                    componentName={componentName}
+                />
+            ))
+        }
+    </Tbody>
+</Table>

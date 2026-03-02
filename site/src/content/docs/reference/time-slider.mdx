@@ -1,0 +1,104 @@
+---
+title: TimeSlider
+frameworkTitle:
+  html: media-time-slider
+description: A slider component for seeking through media playback time
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/time-slider/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/time-slider/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/time-slider/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/time-slider/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/time-slider/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/time-slider/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/time-slider/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<TimeSlider.Root />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-time-slider></media-time-slider>
+```
+</FrameworkCase>
+
+## Behavior
+
+Displays and controls the current playback position. Dragging the slider seeks the media. The fill level reflects `currentTime / duration` as a percentage, and the buffer level shows how much media has been buffered.
+
+Seeking is throttled via the `commitThrottle` prop (default 100ms) to avoid overwhelming the media element during drag operations.
+
+## Styling
+
+Use CSS custom properties to style the fill, pointer, and buffer levels:
+
+```css
+media-time-slider::before {
+  width: calc(var(--media-slider-fill) * 1%);
+}
+```
+
+| CSS Variable | Description |
+|-------------|-------------|
+| `--media-slider-fill` | Current playback position as 0–100 |
+| `--media-slider-pointer` | Pointer hover position as 0–100 |
+| `--media-slider-buffer` | Buffered amount as 0–100 |
+
+Use `data-seeking` to style during active seek operations:
+
+```css
+media-time-slider[data-seeking] {
+  opacity: 0.8;
+}
+```
+
+## Accessibility
+
+Renders with `role="slider"` and automatic `aria-label` of "Seek". Override with the `label` prop. Keyboard controls:
+
+- <kbd>Arrow Left</kbd> / <kbd>Arrow Right</kbd>: step by `step` increment
+- <kbd>Page Up</kbd> / <kbd>Page Down</kbd>: step by `largeStep` increment
+- <kbd>Home</kbd>: seek to start
+- <kbd>End</kbd>: seek to end
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="TimeSlider" />

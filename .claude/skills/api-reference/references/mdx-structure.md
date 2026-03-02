@@ -195,7 +195,7 @@ Always the last element in the file:
 <ComponentReference component="MuteButton" />
 ```
 
-The component auto-renders Props, State, Data Attributes for single-part and all Parts for multi-part.
+The component auto-renders Props, State, Data Attributes, and CSS Custom Properties for single-part and all Parts for multi-part. For multi-part components, React-only parts are hidden in HTML docs via framework filtering.
 
 ### Required Astro Component Imports
 

@@ -81,6 +81,20 @@ describe('extractParts', () => {
 
     expect(result).toEqual([{ name: 'Root', localName: 'ControlsRoot', source: './controls-root' }]);
   });
+
+  it('includes non-local re-exports (caller is responsible for filtering)', () => {
+    const code = `
+      export { Root, type RootProps } from './slider-root';
+      export { Thumb, type ThumbProps } from '../slider/index.parts';
+    `;
+    const program = createTestProgram(code);
+    const result = extractParts('test.ts', program);
+
+    expect(result).toEqual([
+      { name: 'Root', localName: 'Root', source: './slider-root' },
+      { name: 'Thumb', localName: 'Thumb', source: '../slider/index.parts' },
+    ]);
+  });
 });
 
 describe('extractPartDescription', () => {

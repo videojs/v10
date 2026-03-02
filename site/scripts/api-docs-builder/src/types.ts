@@ -4,6 +4,7 @@
  */
 export type {
   ComponentReference,
+  CSSVarDef,
   DataAttrDef,
   PartReference,
   PropDef,
@@ -42,6 +43,8 @@ export interface ComponentSource {
   corePath?: string;
   /** Path to data attrs file */
   dataAttrsPath?: string;
+  /** Path to CSS vars file */
+  cssVarsPath?: string;
   /** Path to HTML element file */
   htmlPath?: string;
   /** Path to index.parts.ts (if multi-part) */
@@ -75,6 +78,10 @@ export interface CoreExtraction {
  */
 export interface DataAttrsExtraction {
   attrs: Array<{ name: string; description: string; type?: string }>;
+}
+
+export interface CSSVarsExtraction {
+  vars: Array<{ name: string; description: string }>;
 }
 
 export interface HtmlExtraction {

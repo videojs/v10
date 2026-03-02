@@ -37,10 +37,13 @@ export const sidebar: Sidebar = [
       { slug: 'reference/pip-button' },
       { slug: 'reference/play-button' },
       { slug: 'reference/playback-rate-button' },
+      { slug: 'reference/popover' },
       { slug: 'reference/poster' },
       { slug: 'reference/seek-button' },
       { slug: 'reference/thumbnail' },
       { slug: 'reference/time' },
+      { slug: 'reference/time-slider' },
+      { slug: 'reference/volume-slider' },
     ],
   },
   {

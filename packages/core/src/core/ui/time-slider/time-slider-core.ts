@@ -4,7 +4,7 @@ import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaBufferState, MediaTimeState } from '../../media/state';
-import { type SliderBaseProps, SliderCore, type SliderInteraction, type SliderState } from './slider-core';
+import { type SliderBaseProps, SliderCore, type SliderInteraction, type SliderState } from '../slider/slider-core';
 
 export interface TimeSliderProps extends SliderBaseProps {
   /** Trailing-edge throttle (ms) for seek requests during drag. */

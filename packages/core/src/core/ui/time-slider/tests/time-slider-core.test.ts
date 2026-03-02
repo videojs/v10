@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { MediaBufferState, MediaTimeState } from '../../../media/state';
-import type { SliderInteraction } from '../slider-core';
+import type { SliderInteraction } from '../../slider/slider-core';
 import { TimeSliderCore } from '../time-slider-core';
 
 type TimeSliderMedia = MediaTimeState & MediaBufferState;

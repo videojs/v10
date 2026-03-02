@@ -2,7 +2,7 @@ import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaVolumeState } from '../../media/state';
-import { type SliderBaseProps, SliderCore, type SliderInteraction, type SliderState } from './slider-core';
+import { type SliderBaseProps, SliderCore, type SliderInteraction, type SliderState } from '../slider/slider-core';
 
 export interface VolumeSliderProps extends SliderBaseProps {}
 

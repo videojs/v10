@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { MediaVolumeState } from '../../../media/state';
-import type { SliderInteraction } from '../slider-core';
+import type { SliderInteraction } from '../../slider/slider-core';
 import { VolumeSliderCore } from '../volume-slider-core';
 
 function createInteraction(overrides: Partial<SliderInteraction> = {}): SliderInteraction {

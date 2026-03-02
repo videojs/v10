@@ -39,7 +39,7 @@ export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
 export { PiPButton, type PiPButtonProps } from './ui/pip-button/pip-button';
 export { PlayButton, type PlayButtonProps } from './ui/play-button/play-button';
 export { PlaybackRateButton, type PlaybackRateButtonProps } from './ui/playback-rate-button/playback-rate-button';
-export { Popover } from './ui/popover';
+export { Popover, type PopoverContextValue, usePopoverContext } from './ui/popover';
 export { Poster, type PosterProps } from './ui/poster/poster';
 export { SeekButton, type SeekButtonProps } from './ui/seek-button/seek-button';
 export { Slider } from './ui/slider';

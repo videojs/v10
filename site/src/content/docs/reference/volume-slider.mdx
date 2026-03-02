@@ -1,0 +1,93 @@
+---
+title: VolumeSlider
+frameworkTitle:
+  html: media-volume-slider
+description: A slider component for controlling media playback volume
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/volume-slider/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/volume-slider/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/volume-slider/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/volume-slider/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/volume-slider/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/volume-slider/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/volume-slider/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<VolumeSlider.Root />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-volume-slider></media-volume-slider>
+```
+</FrameworkCase>
+
+## Behavior
+
+Controls the media volume level. The slider maps its 0–100 internal range to the media's 0–1 volume scale. When the media is muted, the fill level drops to 0 regardless of the stored volume value.
+
+## Styling
+
+Use CSS custom properties to style the fill and pointer levels:
+
+```css
+media-volume-slider::before {
+  width: calc(var(--media-slider-fill) * 1%);
+}
+```
+
+| CSS Variable | Description |
+|-------------|-------------|
+| `--media-slider-fill` | Current volume level as 0–100 |
+| `--media-slider-pointer` | Pointer hover position as 0–100 |
+
+## Accessibility
+
+Renders with `role="slider"` and automatic `aria-label` of "Volume". Override with the `label` prop. Keyboard controls:
+
+- <kbd>Arrow Left</kbd> / <kbd>Arrow Right</kbd>: step by `step` increment
+- <kbd>Page Up</kbd> / <kbd>Page Down</kbd>: step by `largeStep` increment
+- <kbd>Home</kbd>: set volume to 0
+- <kbd>End</kbd>: set volume to max
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="VolumeSlider" />

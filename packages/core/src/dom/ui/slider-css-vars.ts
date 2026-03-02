@@ -1,6 +1,6 @@
 import type { SliderState } from '../../core/ui/slider/slider-core';
 import { SliderCSSVars } from '../../core/ui/slider/slider-css-vars';
-import type { TimeSliderState } from '../../core/ui/slider/time-slider-core';
+import type { TimeSliderState } from '../../core/ui/time-slider/time-slider-core';
 
 export function getSliderCSSVars(state: SliderState): Record<string, string> {
   return {

@@ -8,6 +8,7 @@ Naming and file placement conventions required by the api-docs-builder at `site/
 |------|------|---------|
 | Core | `packages/core/src/core/ui/{name}/{name}-core.ts` | Props, State, defaultProps |
 | Data attrs | `packages/core/src/core/ui/{name}/{name}-data-attrs.ts` | Data attribute definitions |
+| CSS vars | `packages/core/src/core/ui/{name}/{name}-css-vars.ts` | CSS custom property definitions (optional) |
 | HTML element | `packages/html/src/ui/{name}/{name}-element.ts` | Custom element with `static tagName` |
 | React parts | `packages/react/src/ui/{name}/index.parts.ts` | Multi-part detection (optional) |
 
@@ -21,6 +22,7 @@ The builder derives PascalCase from kebab-case using `kebabCase` from es-toolkit
 | State interface | `PlayButtonState` |
 | Core class | `PlayButtonCore` |
 | Data attrs export | `PlayButtonDataAttrs` |
+| CSS vars export | `PlayButtonCSSVars` |
 | HTML element class | `PlayButtonElement` |
 | HTML tag name | `static tagName = 'media-play-button'` |
 
@@ -40,9 +42,15 @@ Use overrides only when the standard conversion fails (e.g., acronyms like PiP).
 
 **Detection**: Presence of `packages/react/src/ui/{name}/index.parts.ts`.
 
-**Primary part identification**: The part whose HTML element file is `{name}-element.ts` (not `{name}-{part}-element.ts`). The primary part receives the shared core props/state/data-attrs.
+**Non-local re-export filtering**: Only exports with source paths starting with `./` are treated as parts. Re-exports from other directories (e.g., `../slider/index.parts`) are filtered out. This prevents domain variant components (TimeSlider, VolumeSlider) from inheriting base component parts.
+
+**Single-part fallback**: When filtering leaves only one part (typically Root), the component uses single-part mode — the remaining part's props/state/data-attrs are promoted to the top level, not nested under `parts`.
+
+**Primary part identification**: The part whose React source file instantiates the component's Core class (matches `new \w+Core\(`). The primary part receives the shared core props/state/data-attrs/css-vars.
 
 **Non-primary parts**: Each gets its own element file at `{name}-{part}-element.ts`. Element class must be `{Name}{Part}Element` (e.g., `TimeGroupElement`).
+
+**Framework-divergent parts**: All parts get `platforms.react`. Parts with a matching HTML element file also get `platforms.html`. The renderer filters parts by framework — React-only parts are hidden in HTML docs.
 
 **Part descriptions**: Extracted from JSDoc on the React component export:
 ```tsx
@@ -70,6 +78,7 @@ The builder fails silently for many issues — data just won't appear in the JSO
 | Empty props | Interface not named `{PascalCase}Props` |
 | Empty state | Interface not named `{PascalCase}State` |
 | No data attributes | File missing or export not named `{PascalCase}DataAttrs` |
+| No CSS vars | File missing or export not named `{PascalCase}CSSVars` |
 | No HTML tag | Element file missing or no `static tagName` |
 | No part descriptions | Missing JSDoc on React component exports |
 | Wrong PascalCase | Need a `NAME_OVERRIDES` entry |

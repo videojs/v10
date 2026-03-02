@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import * as ts from 'typescript';
 import * as tae from 'typescript-api-extractor';
 import { extractCore } from './core-handler.js';
+import { extractCSSVars } from './css-vars-handler.js';
 import { extractDataAttrs } from './data-attrs-handler.js';
 import { abbreviateType } from './formatter.js';
 import { extractHtml } from './html-handler.js';
@@ -12,6 +13,8 @@ import {
   ComponentReferenceSchema,
   type ComponentSource,
   type CoreExtraction,
+  type CSSVarDef,
+  type CSSVarsExtraction,
   type DataAttrDef,
   type DataAttrsExtraction,
   type PartReference,
@@ -78,6 +81,14 @@ function buildDataAttrs(dataAttrsData: DataAttrsExtraction): Record<string, Data
   return dataAttributes;
 }
 
+function buildCSSVars(cssVarsData: CSSVarsExtraction): Record<string, CSSVarDef> {
+  const cssCustomProperties: Record<string, CSSVarDef> = {};
+  for (const v of cssVarsData.vars) {
+    cssCustomProperties[v.name] = { description: v.description };
+  }
+  return cssCustomProperties;
+}
+
 // Magenta prefix - visible on both light and dark terminals
 const PREFIX = '\x1b[35m[api-docs-builder]\x1b[0m';
 
@@ -118,6 +129,7 @@ function discoverComponents(): ComponentSource[] {
     // Look for core file
     const coreFile = path.join(componentDir, `${dir.name}-core.ts`);
     const dataAttrsFile = path.join(componentDir, `${dir.name}-data-attrs.ts`);
+    const cssVarsFile = path.join(componentDir, `${dir.name}-css-vars.ts`);
 
     // Look for HTML element file
     const htmlFile = path.join(HTML_UI_PATH, dir.name, `${dir.name}-element.ts`);
@@ -133,6 +145,10 @@ function discoverComponents(): ComponentSource[] {
 
     if (fs.existsSync(dataAttrsFile)) {
       source.dataAttrsPath = dataAttrsFile;
+    }
+
+    if (fs.existsSync(cssVarsFile)) {
+      source.cssVarsPath = cssVarsFile;
     }
 
     if (fs.existsSync(htmlFile)) {
@@ -163,6 +179,7 @@ function createProgram(sources: ComponentSource[]): ts.Program {
   for (const source of sources) {
     if (source.corePath) files.push(source.corePath);
     if (source.dataAttrsPath) files.push(source.dataAttrsPath);
+    if (source.cssVarsPath) files.push(source.cssVarsPath);
     if (source.htmlPath) files.push(source.htmlPath);
     if (source.partsIndexPath) files.push(source.partsIndexPath);
 
@@ -216,6 +233,9 @@ function buildSingleComponentReference(source: ComponentSource, program: ts.Prog
   // Extract data attributes
   const dataAttrsData = source.dataAttrsPath ? extractDataAttrs(source.dataAttrsPath, program, source.name) : null;
 
+  // Extract CSS custom properties
+  const cssVarsData = source.cssVarsPath ? extractCSSVars(source.cssVarsPath, program, source.name) : null;
+
   // Extract HTML element info
   const htmlData = source.htmlPath ? extractHtml(source.htmlPath, program, source.name) : null;
 
@@ -226,6 +246,7 @@ function buildSingleComponentReference(source: ComponentSource, program: ts.Prog
     props: buildProps(coreData),
     state: buildState(coreData),
     dataAttributes: dataAttrsData ? buildDataAttrs(dataAttrsData) : {},
+    cssCustomProperties: cssVarsData ? buildCSSVars(cssVarsData) : {},
     platforms: {},
   };
 
@@ -243,14 +264,27 @@ function buildSingleComponentReference(source: ComponentSource, program: ts.Prog
 }
 
 /**
+ * Check if a React source file instantiates a Core class (matches `new \w+Core\(`).
+ */
+function instantiatesCore(filePath: string): boolean {
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    return /new \w+Core\(/.test(content);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Discover parts and match them to HTML element files.
  *
  * Matching algorithm:
  * 1. Parse `index.parts.ts` for named exports -> part names and source paths
- * 2. Derive kebab segment from source: `./time-value` -> strip `./time-` prefix -> `value`
- * 3. For each part, look for `{name}-{kebab}-element.ts` in HTML dir (e.g., `time-group-element.ts`)
- * 4. The part with NO matching `{name}-{kebab}-element.ts` but where `{name}-element.ts` exists -> primary part
- * 5. Primary part gets: shared core file, shared data-attrs, main element (`{name}-element.ts`)
+ * 2. Filter out non-local re-exports (sources not starting with './')
+ * 3. Derive kebab segment from source: `./time-value` -> strip `./time-` prefix -> `value`
+ * 4. For each part, look for `{name}-{kebab}-element.ts` in HTML dir
+ * 5. Primary part: the part whose React source file instantiates the Core class
+ * 6. Primary part gets: shared core file, shared data-attrs/css-vars, main element
  */
 function discoverParts(source: ComponentSource, program: ts.Program): PartSource[] {
   if (!source.partsIndexPath) return [];
@@ -258,33 +292,29 @@ function discoverParts(source: ComponentSource, program: ts.Program): PartSource
   const partExports = extractParts(source.partsIndexPath, program);
   if (partExports.length === 0) return [];
 
+  // Filter out non-local re-exports (e.g., from '../slider/index.parts')
+  const localExports = partExports.filter((p) => p.source.startsWith('./'));
+
+  if (localExports.length === 0) return [];
+
   const componentKebab = source.kebab;
   const htmlDir = path.join(HTML_UI_PATH, componentKebab);
 
   const parts: PartSource[] = [];
-  let hasPrimary = false;
 
-  for (const partExport of partExports) {
+  for (const partExport of localExports) {
     const kebab = partKebabFromSource(partExport.source, componentKebab);
 
     // Look for sub-part element file: {component}-{part}-element.ts
     const subPartElementFile = path.join(htmlDir, `${componentKebab}-${kebab}-element.ts`);
     const hasSubPartElement = fs.existsSync(subPartElementFile);
 
-    // Primary part: no matching sub-part element, main element exists, and first match wins.
-    const isPrimary = !hasSubPartElement && !!source.htmlPath && !hasPrimary;
-
-    if (!hasSubPartElement && !!source.htmlPath && hasPrimary) {
-      log.warn(
-        `${source.name}: Part "${partExport.name}" also matches primary criteria and was skipped (first-match-wins)`
-      );
-    }
-
-    if (isPrimary) hasPrimary = true;
-
     // Resolve React source path for JSDoc description extraction
-    const reactFile = path.join(path.dirname(source.partsIndexPath), `${partExport.source.replace('./', '')}.tsx`);
+    const reactFile = path.join(path.dirname(source.partsIndexPath!), `${partExport.source.replace('./', '')}.tsx`);
     const reactPath = fs.existsSync(reactFile) ? reactFile : undefined;
+
+    // Primary detection: the part whose React source instantiates the Core class
+    const isPrimary = !!reactPath && instantiatesCore(reactPath);
 
     const part: PartSource = {
       name: partExport.name,
@@ -295,15 +325,21 @@ function discoverParts(source: ComponentSource, program: ts.Program): PartSource
       reactPath,
     };
 
-    if (!part.htmlPath) {
-      log.warn(`${source.name}: Part "${partExport.name}" has no matching HTML element file`);
-    }
-
     parts.push(part);
   }
 
-  if (!hasPrimary) {
-    log.warn(`${source.name}: No primary part identified (expected one part to use ${componentKebab}-element.ts)`);
+  const primaryCount = parts.filter((p) => p.isPrimary).length;
+  if (primaryCount === 0) {
+    log.warn(`${source.name}: No primary part identified (no part instantiates a Core class)`);
+  } else if (primaryCount > 1) {
+    log.warn(`${source.name}: Multiple parts instantiate Core — only the first will be treated as primary`);
+    let foundFirst = false;
+    for (const p of parts) {
+      if (p.isPrimary) {
+        if (foundFirst) p.isPrimary = false;
+        foundFirst = true;
+      }
+    }
   }
 
   // Primary part first so it appears first in the docs.
@@ -313,17 +349,21 @@ function discoverParts(source: ComponentSource, program: ts.Program): PartSource
 /**
  * Build the API reference for a multi-part component.
  *
- * Multi-part components have empty top-level props/state/dataAttributes.
+ * Multi-part components have empty top-level props/state/dataAttributes/cssCustomProperties.
  * All data is in the `parts` record.
  *
  * For the primary part:
  * - Props and state come from the shared core file (`{name}-core.ts`)
  * - Data attributes come from the shared data-attrs file (`{name}-data-attrs.ts`)
+ * - CSS custom properties come from the shared css-vars file (`{name}-css-vars.ts`)
  * - HTML tag comes from the main element file (`{name}-element.ts`)
  *
  * For non-primary parts:
- * - Props, state, and data attributes are empty (no dedicated core file)
+ * - Props, state, data attributes, and CSS vars are empty (no dedicated core file)
  * - HTML tag comes from their sub-part element file (`{name}-{part}-element.ts`)
+ *
+ * All parts get `platforms.react` (they come from `index.parts.ts`).
+ * Parts with matching HTML element files also get `platforms.html`.
  */
 function buildMultiPartReference(
   source: ComponentSource,
@@ -340,9 +380,10 @@ function buildMultiPartReference(
       : undefined;
 
     if (part.isPrimary) {
-      // Primary part: extract from shared core and data-attrs
+      // Primary part: extract from shared core, data-attrs, and css-vars
       const coreData = source.corePath ? extractCore(source.corePath, program, source.name) : null;
       const dataAttrsData = source.dataAttrsPath ? extractDataAttrs(source.dataAttrsPath, program, source.name) : null;
+      const cssVarsData = source.cssVarsPath ? extractCSSVars(source.cssVarsPath, program, source.name) : null;
 
       const elementName = `${source.name}Element`;
       const htmlData = part.htmlPath ? extractHtml(part.htmlPath, program, source.name, elementName) : null;
@@ -353,7 +394,8 @@ function buildMultiPartReference(
         props: coreData ? sortProps(buildProps(coreData)) : {},
         state: coreData ? buildState(coreData) : {},
         dataAttributes: dataAttrsData ? buildDataAttrs(dataAttrsData) : {},
-        platforms: {},
+        cssCustomProperties: cssVarsData ? buildCSSVars(cssVarsData) : {},
+        platforms: { react: {} },
       };
 
       if (!partRef.description) delete partRef.description;
@@ -373,7 +415,8 @@ function buildMultiPartReference(
         props: {},
         state: {},
         dataAttributes: {},
-        platforms: {},
+        cssCustomProperties: {},
+        platforms: { react: {} },
       };
 
       if (!partRef.description) delete partRef.description;
@@ -390,6 +433,7 @@ function buildMultiPartReference(
     props: {},
     state: {},
     dataAttributes: {},
+    cssCustomProperties: {},
     platforms: {},
     parts: partsRecord,
   };
@@ -401,7 +445,8 @@ function buildMultiPartReference(
 function buildComponentReference(source: ComponentSource, program: ts.Program): ComponentReference | null {
   if (source.partsIndexPath) {
     const parts = discoverParts(source, program);
-    if (parts.length > 0) {
+    // Single-part fallback: when filtering leaves only 1 part, use single-part mode
+    if (parts.length > 1) {
       return buildMultiPartReference(source, program, parts);
     }
   }

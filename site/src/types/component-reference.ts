@@ -26,18 +26,24 @@ export const DataAttrDefSchema = z.object({
   detailedType: z.string().optional(),
 });
 
+export const CSSVarDefSchema = z.object({
+  description: z.string(),
+});
+
 export const PartReferenceSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   props: z.record(z.string(), PropDefSchema),
   state: z.record(z.string(), StateDefSchema),
   dataAttributes: z.record(z.string(), DataAttrDefSchema),
+  cssCustomProperties: z.record(z.string(), CSSVarDefSchema),
   platforms: z.object({
     html: z
       .object({
         tagName: z.string(),
       })
       .optional(),
+    react: z.object({}).optional(),
   }),
 });
 
@@ -48,5 +54,6 @@ export const ComponentReferenceSchema = PartReferenceSchema.extend({
 export type PropDef = z.infer<typeof PropDefSchema>;
 export type StateDef = z.infer<typeof StateDefSchema>;
 export type DataAttrDef = z.infer<typeof DataAttrDefSchema>;
+export type CSSVarDef = z.infer<typeof CSSVarDefSchema>;
 export type PartReference = z.infer<typeof PartReferenceSchema>;
 export type ComponentReference = z.infer<typeof ComponentReferenceSchema>;

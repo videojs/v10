@@ -1,5 +1,5 @@
+import { SliderDataAttrs } from '../slider/slider-data-attrs';
 import type { StateAttrMap } from '../types';
-import { SliderDataAttrs } from './slider-data-attrs';
 import type { TimeSliderState } from './time-slider-core';
 
 export const TimeSliderDataAttrs = {

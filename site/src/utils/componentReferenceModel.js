@@ -29,6 +29,12 @@ const API_REFERENCE_SUBSECTIONS = Object.freeze([
     singleId: 'data-attributes',
     suffix: 'data-attributes',
   },
+  {
+    key: 'cssCustomProperties',
+    title: 'CSS custom properties',
+    singleId: 'css-custom-properties',
+    suffix: 'css-custom-properties',
+  },
 ]);
 
 export const API_REFERENCE_SUBSECTION_TITLES = Object.freeze(API_REFERENCE_SUBSECTIONS.map((section) => section.title));
@@ -93,6 +99,7 @@ export function createComponentReferenceModel(componentName, apiReference) {
         react: part.name,
         html: part.platforms?.html?.tagName ?? part.name,
       },
+      frameworks: [...(part.platforms?.html ? ['html'] : []), ...(part.platforms?.react ? ['react'] : [])],
       sections: createSections(part, { forPart: true, partId }),
       data: part,
     }));
@@ -146,18 +153,23 @@ export function buildComponentReferenceTocHeadings(apiReferenceModel) {
 
   if (apiReferenceModel.hasParts) {
     for (const part of apiReferenceModel.parts) {
-      headings.push({
-        depth: 3,
-        text: part.labelByFramework.react,
-        slug: part.id,
-        frameworks: ['react'],
-      });
-      headings.push({
-        depth: 3,
-        text: part.labelByFramework.html,
-        slug: part.id,
-        frameworks: ['html'],
-      });
+      // Only emit headings for frameworks the part supports
+      if (part.frameworks.includes('react')) {
+        headings.push({
+          depth: 3,
+          text: part.labelByFramework.react,
+          slug: part.id,
+          frameworks: ['react'],
+        });
+      }
+      if (part.frameworks.includes('html')) {
+        headings.push({
+          depth: 3,
+          text: part.labelByFramework.html,
+          slug: part.id,
+          frameworks: ['html'],
+        });
+      }
 
       for (const section of part.sections) {
         headings.push({
@@ -165,6 +177,7 @@ export function buildComponentReferenceTocHeadings(apiReferenceModel) {
           text: section.title,
           slug: section.id,
           tocKind: section.tocKind,
+          ...(part.frameworks.length < 2 ? { frameworks: part.frameworks } : {}),
         });
       }
     }
