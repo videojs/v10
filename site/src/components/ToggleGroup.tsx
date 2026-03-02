@@ -39,11 +39,13 @@ export default function ToggleGroup<T extends string = string>({
       onValueChange={onChange}
       disabled={disabled}
       className={twMerge(
-        'w-full md:w-auto inline-flex items-stretch p-1 border-2 border-gray-800 rounded-sm overflow-hidden',
+        minimal ? 'flex gap-0' : 'grid md:w-100% md:max-w-96',
+        'w-full items-stretch p-0.75 border border-gray-800 rounded-sm overflow-hidden',
         className
       )}
       aria-label={ariaLabel}
       multiple={multiple}
+      style={{ gridTemplateColumns: '1fr auto 1fr' }}
     >
       {options.map((option, index) => {
         const isPressed = value.includes(option.value as T);
@@ -72,9 +74,9 @@ export default function ToggleGroup<T extends string = string>({
             >
               {option.label}
             </Toggle>
-            {!isLast && minimal && <span className="block h-100% w-px bg-faded-black dark:bg-light-manila -mr-4" />}
-            {!isLast && (
-              <span className="flex px-1 gap-0.5 h-full">
+            {!isLast && minimal && <span className="block h-100% w-px bg-faded-black dark:bg-light-manila" />}
+            {!isLast && !minimal && (
+              <span className="flex px-1 gap-0.75 h-full">
                 <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />
                 <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />
                 <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />

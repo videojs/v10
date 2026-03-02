@@ -4,10 +4,10 @@ import ArrowIcon from './icons/arrow.svg?react';
 export default function GetStartedBanner() {
   return (
     <section
-      className={`${styles.section} relative mb-5 text-center md:text-left grid items-center gap-4 md:gap-6 bg-faded-black dark:bg-light-manila px-4 md:px-8 py-4 md:py-12 text-light-manila dark:text-faded-black`}
+      className={`${styles.section} relative mb-5 text-center md:text-left grid items-center gap-4 md:gap-6 h-68 md:h-30 bg-faded-black dark:bg-light-manila px-4 md:px-8 py-4  text-light-manila dark:text-faded-black`}
     >
       <h2
-        className={`${styles.text} relative md:flex text-center pt-4 md:pt-0 md:text-left z-10 font-display-extended text-display-h2 md:text-display-h1 uppercase font-bold gap-2 md:gap-4 transition-colors duration-300`}
+        className={`${styles.text} relative md:flex text-center pt-4 md:pt-0 md:text-left z-10 font-display-extended text-display-h1-mobile md:text-display-h1 uppercase font-bold gap-2 md:gap-4 transition-colors duration-300`}
       >
         <span className="">Get</span>
         <br className="md:hidden" />

@@ -92,7 +92,7 @@ interface TabsListProps {
 }
 export function TabsList({ label, children }: TabsListProps) {
   return (
-    <div className="w-full flex not-content p-1">
+    <div className="w-full flex not-content p-0">
       <ul data-orientation="horizontal" aria-label={label} className="flex list-none p-0 m-0 px-5 gap-5">
         {children}
       </ul>
@@ -101,7 +101,7 @@ export function TabsList({ label, children }: TabsListProps) {
           container: `[data-tabs-root]`,
           target: '[role="tabpanel"]:not([hidden])',
         }}
-        className="ml-auto sticky right-0 h-8 w-8 flex items-center justify-center cursor-pointer disabled:cursor-wait hover:bg-dark-manila transition-colors rounded-sm"
+        className="ml-auto sticky right-0 h-6.5 w-6.5 mx-3 my-2 flex items-center justify-center cursor-pointer disabled:cursor-wait hover:bg-dark-manila transition-colors rounded-sm"
         copied={<Check size={20} />}
       >
         <CopyIcon width="1.25rem" height="1.25rem" />

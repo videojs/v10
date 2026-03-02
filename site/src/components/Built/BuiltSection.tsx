@@ -4,10 +4,10 @@ import { SocialProof } from './SocialProof';
 
 export function Built() {
   return (
-    <section className="w-full bg-faded-black dark:bg-warm-gray relative pt-20 mt-30 mb-30 border-t border-faded-black">
+    <section className="w-full bg-faded-black dark:bg-warm-gray relative pt-20 mt-30 mb-40 border-t border-faded-black">
       <div className="absolute w-full -mt-20 built-bg-gray dark:built-bg-black z-0"></div>
-      <div className="w-full max-w-6xl mx-auto px-6 md:px-5 -mt-33.5 md:-mt-30 z-1 relative">
-        <header className="relative flex flex-col justify-center items-center text-center mb-10 p-4 md:h-20 h-27">
+      <div className="w-full max-w-295 mx-auto px-6 md:px-5 -mt-33.5 md:-mt-30 z-1 relative">
+        <header className="relative flex flex-col justify-center items-center text-center mb-10 p-4 md:h-20 h-27 rounded-sm overflow-hidden">
           <div className="absolute z-0 inset-0 grid bg-faded-black" style={{ gridTemplateRows: '1fr auto 1fr' }}>
             <div className="bg-gold" />
             <div className="h-0.5 bg-faded-black" />

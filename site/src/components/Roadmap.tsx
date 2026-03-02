@@ -1,6 +1,6 @@
 import clsx from 'clsx';
-import { Check } from 'lucide-react';
 import type React from 'react';
+import Check from './icons/check.svg?react';
 
 const milestones = [
   {
@@ -31,7 +31,7 @@ const milestones = [
 
 export function RoadMap() {
   return (
-    <section className="w-full max-w-6xl mx-auto grid grid-rows-subgrid row-span-2 px-5 md:px-5">
+    <section className="w-full max-w-295 mx-auto grid grid-rows-subgrid row-span-2 px-5 md:px-5 md:mb-20 ">
       <header className="py-4 border-t mb-12 border-b  border-y-faded-black dark:border-y-light-manila">
         <h2 className="text-display-h2 text-faded-black dark:text-light-manila text-center font-display-extended uppercase font-bold">
           ROADMAP
@@ -39,7 +39,7 @@ export function RoadMap() {
       </header>
 
       <div className="h-full relative">
-        <div className="grid md:grid-cols-4 gap-12 relative md:pb-10 mb-10 md:mb-0">
+        <div className="grid md:grid-cols-4 gap-15 md:gap-12 relative md:pb-10 mb-10 md:mb-0">
           {milestones.map((milestone, i) => (
             <div
               key={milestone.date}
@@ -51,21 +51,21 @@ export function RoadMap() {
               <div className="relative w-auto md:w-full flex justify-center py-0.5">
                 <div
                   className={clsx(
-                    'relative z-10 w-10 h-10 rounded-full border-2 bg-light-manila dark:bg-faded-black flex items-center justify-center',
+                    'relative z-10 w-10 h-10 rounded-full border bg-light-manila dark:bg-faded-black flex items-center justify-center',
                     milestone.completed ? 'border-orange' : 'border-dark-manila'
                   )}
                 >
-                  {milestone.completed && <Check size={16} strokeWidth={2.5} className="text-orange" />}
+                  {milestone.completed && <Check width={'1.03rem'} className="text-orange" />}
                 </div>
               </div>
-              <div className="block md:block">
-                <h3 className="text-orange font-display-extended font-bold uppercase text-display-h5 md:text-display-h3 leading-none md:mt-5 px-1">
-                  <p className="block md:hidden relative z-10 font-display-extended font-bold uppercase tracking-wider md:pb-3 text-faded-black dark:text-light-manila text-display-h5">
-                    {milestone.date}
-                  </p>
+              <div>
+                <p className="block md:hidden relative z-10 font-display-extended font-bold uppercase tracking-wider text-faded-black dark:text-light-manila text-p2">
+                  {milestone.date}
+                </p>
+                <h3 className="text-orange font-display-extended font-bold uppercase text-display-h3 md:text-display-h2 leading-none md:mt-5 md:px-1">
                   {milestone.title}
                 </h3>
-                <p className="text-p2 md:text-p3 md:mx-auto mt-3 max-w-55 text-warm-gray dark:text-light-manila">
+                <p className="text-p2 md:text-p3 md:mx-auto mt-2.5 max-w-55 text-warm-gray dark:text-light-manila">
                   {milestone.description}
                 </p>
               </div>

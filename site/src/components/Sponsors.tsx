@@ -1,18 +1,33 @@
+import type { ComponentType, SVGProps } from 'react';
 import MuxLogo from './icons/mux-logo.svg?react';
 import BrightcoveLogo from './icons/sponsors/brightcove.svg?react';
 import BrowserStackLogo from './icons/sponsors/browserstack.svg?react';
 import FastlyLogo from './icons/sponsors/fastly.svg?react';
 import NetlifyLogo from './icons/sponsors/netlify.svg?react';
 
+type SponsorItem = {
+  Logo: ComponentType<SVGProps<SVGSVGElement>>;
+  label: string;
+  width: string;
+  className?: string;
+};
+
+const sponsors: SponsorItem[] = [
+  { Logo: FastlyLogo, label: 'CDN', width: '7.8rem', className: 'bg-blue' },
+  { Logo: BrightcoveLogo, label: 'EMERITUS SPONSOR', width: '11rem' },
+  { Logo: BrowserStackLogo, label: 'DEVICE TESTING', width: '12rem' },
+  { Logo: NetlifyLogo, label: 'STATIC HOSTING', width: '11rem' },
+];
+
 export function Sponsors() {
   return (
-    <section className="w-full max-w-6xl mx-auto grid grid-rows-subgrid row-span-2 px-5 md:px-5">
+    <section className="w-full max-w-295 mx-auto grid grid-rows-subgrid row-span-2 px-5 md:px-5">
       <header className="py-4 border-t border-b-0  border-y-faded-black dark:border-y-light-manila">
         <h2 className="text-display-h2 text-faded-black dark:text-light-manila text-center font-display-extended uppercase font-bold border-b-0">
           SPONSORS
         </h2>
       </header>
-      <div className="border border-faded-black dark:border-light-manila p-2 grid grid-cols-1 md:grid-cols-2 text-light-manila dark:text-faded-black rounded-sm">
+      <div className="md:items-center border border-faded-black dark:border-light-manila p-2 grid grid-cols-1 md:grid-cols-2 text-light-manila dark:text-faded-black rounded-sm min-h-77.5 h-max">
         <div className="bg-faded-black dark:bg-warm-gray dark:text-light-manila flex items-center justify-center aspect-5/3 md:aspect-auto md:h-full">
           <div className="hidden md:block">
             <MuxLogo width="12rem" />
@@ -21,7 +36,7 @@ export function Sponsors() {
             <MuxLogo width="10rem" />
           </div>
         </div>
-        <div className="flex flex-col gap-2 p-2.5 md:p-15">
+        <div className="flex flex-col gap-2 p-2.5 md:px-15">
           <h3 className="md:border-0 py-3 mb:py-0 text-center md:text-left border-b border-dark-manila dark:border-warm-gray mb-2.5 md:mb-0 text-display-h5 text-orange font-display-extended uppercase font-bold">
             CORPORATE SHEPHERD
           </h3>
@@ -33,51 +48,29 @@ export function Sponsors() {
           </p>
         </div>
       </div>
-      <div className="gap-4 md:gap-0 md:border border-faded-black dark:border-light-manila grid text-fa dark:text-light-manila rounded-sm mt-5 md:grid-cols-4 z-0 relative h-max overflow-hidden">
-        <div className="px-2.5 md:px-0 rounded-sm border md:border-0 border-faded-black dark:border-light-manila h-auto bg-blue">
-          <div className="md:grid-separators md:h-full relative aspect-5/3 flex items-center justify-center -m-0.5">
-            <FastlyLogo width="7.8rem" />
-          </div>
-          <h3 className="block md:hidden relative -m-0.5 border-t border-dark-manila text-orange font-display-extended font-bold uppercase text-display-h5 text-center py-5">
-            CDN
-          </h3>
+      <div className="md:border md:border-faded-black dark:border-light-manila rounded-sm mt-5 z-0 relative h-max overflow-hidden">
+        <div className="md:border gap-4 md:grid-separator-container md:gap-0 md:border-light-manila dark:border-faded-black grid text-fa dark:text-light-manila md:grid-cols-4">
+          {sponsors.map(({ Logo, label, width, className }) => (
+            <div
+              key={label}
+              className={`px-2.5 md:px-0 rounded-sm border md:border-0 border-faded-black dark:border-light-manila md:border-dark-manila md:dark:border-light-manila h-auto${className ? ` ${className}` : ''}`}
+            >
+              <div className="md:grid-separators md:h-full relative aspect-5/3 flex items-center justify-center bg-light-manila dark:bg-faded-black">
+                <Logo width={width} />
+              </div>
+              <h3 className="block md:hidden relative border-t border-dark-manila text-orange font-display-extended font-bold uppercase text-display-h5 text-center py-5 ">
+                {label}
+              </h3>
+            </div>
+          ))}
+          {sponsors.map(({ label }) => (
+            <div key={label} className="border-dark-manila hidden md:block ">
+              <h3 className="md:grid-separators relative bg-light-manila dark:bg-faded-black text-orange font-display-extended font-bold uppercase text-display-h5 text-center py-5">
+                {label}
+              </h3>
+            </div>
+          ))}
         </div>
-        <div className="px-2.5 md:px-0 rounded-sm border md:border-0 border-faded-black dark:border-light-manila">
-          <div className="md:grid-separators md:h-full relative aspect-5/3 flex items-center justify-center -m-0.5">
-            <BrightcoveLogo width="11rem" />
-          </div>
-          <h3 className="block md:hidden relative -m-0.5 border-t border-dark-manila text-orange font-display-extended font-bold uppercase text-display-h5 text-center py-5">
-            EMERITUS SPONSOR
-          </h3>
-        </div>
-        <div className="px-2.5 md:px-0 rounded-sm border md:border-0 border-faded-black dark:border-light-manila">
-          <div className="md:grid-separators md:h-full relative aspect-5/3 flex items-center justify-center -m-0.5">
-            <BrowserStackLogo width="12rem" />
-          </div>
-          <h3 className="block md:hidden relative -m-0.5 border-t border-dark-manila text-orange font-display-extended font-bold uppercase text-display-h5 text-center py-5">
-            DEVICE TESTING
-          </h3>
-        </div>
-        <div className="px-2.5 md:px-0 rounded-sm border md:border-0 border-faded-black dark:border-light-manila">
-          <div className="md:grid-separators md:h-full relative aspect-5/3 flex items-center justify-center -m-0.5">
-            <NetlifyLogo width="11rem" />
-          </div>
-          <h3 className="block md:hidden relative -m-0.5 border-t border-dark-manila text-orange font-display-extended font-bold uppercase text-display-h5 text-center py-5">
-            STATIC HOSTING
-          </h3>
-        </div>
-        <h3 className="hidden md:block md:grid-separators relative -m-0.5 text-orange font-display-extended font-bold uppercase text-display-h5 text-center py-5">
-          CDN
-        </h3>
-        <h3 className="hidden md:block md:grid-separators relative -m-0.5 text-orange font-display-extended font-bold uppercase text-display-h5 text-center py-5">
-          EMERITUS SPONSOR
-        </h3>
-        <h3 className="hidden md:block md:grid-separators relative -m-0.5 text-orange font-display-extended font-bold uppercase text-display-h5 text-center py-5">
-          DEVICE TESTING
-        </h3>
-        <h3 className="hidden md:block md:grid-separators relative -m-0.5 text-orange font-display-extended font-bold uppercase text-display-h5 text-center py-5">
-          STATIC HOSTING
-        </h3>
       </div>
     </section>
   );

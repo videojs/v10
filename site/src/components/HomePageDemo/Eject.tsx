@@ -35,7 +35,7 @@ export default function EjectDemo({ className }: { className?: string }) {
   const $framework = useStore(framework);
   const $skin = useStore(skin);
 
-  const tabCodeContent = 'bg-faded-black scrollbar-white dark:bg-warm-gray m-1 mt-0';
+  const tabCodeContent = 'bg-faded-black scrollbar-white dark:bg-warm-gray m-2.5 mt-0';
 
   if ($framework === 'html') {
     return (

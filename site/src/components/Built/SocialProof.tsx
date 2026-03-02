@@ -33,15 +33,15 @@ export function SocialProof() {
 
   return (
     <div className="bg-faded-black border border-dark-manila z-1 overflow-hidden -mb-10 relative col-span-full rounded-sm">
-      <header>
+      <header className="px-2.5">
         <Marquee />
       </header>
-      <div className="relative grid grid-cols-2 md:grid-cols-6 grid-rows-2 gap-0 z-0 -m-px">
+      <div className="relative grid grid-cols-2 md:grid-cols-6 grid-rows-2 gap-0 z-0 grid-separator-container border-faded-black">
         {LOGOS.map((logo, index) => (
           <div
             key={logo.alt}
             className={clsx(
-              'grid-separators h-auto aspect-4/3 relative items-center justify-center',
+              'grid-separators w-full h-auto aspect-4/3 relative items-center justify-center border-warm-gray bg-faded-black',
               index >= 10 ? 'hidden md:flex' : 'flex'
             )}
           >
