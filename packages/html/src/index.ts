@@ -15,6 +15,7 @@ export * from './store/provider-mixin';
 export * from './store/types';
 // UI Components
 export { BufferingIndicatorElement } from './ui/buffering-indicator/buffering-indicator-element';
+export { CaptionsButtonElement } from './ui/captions-button/captions-button-element';
 export { ControlsElement } from './ui/controls/controls-element';
 export { ControlsGroupElement } from './ui/controls/controls-group-element';
 export { FullscreenButtonElement } from './ui/fullscreen-button/fullscreen-button-element';
