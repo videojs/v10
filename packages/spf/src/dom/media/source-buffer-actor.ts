@@ -66,6 +66,99 @@ function snapshotBuffered(buffered: TimeRanges): BufferedRange[] {
 }
 
 // =============================================================================
+// Message task factories
+// =============================================================================
+
+// Context is read lazily via getCtx at task execution time — not at creation
+// time — so each task always operates on the most recent context regardless of
+// when it was scheduled.
+
+interface MessageTaskOptions {
+  signal: AbortSignal;
+  getCtx: () => SourceBufferActorContext;
+  sourceBuffer: SourceBuffer;
+}
+
+function appendInitTask(
+  message: AppendInitMessage,
+  { signal, getCtx, sourceBuffer }: MessageTaskOptions
+): Task<SourceBufferActorContext> {
+  return new Task(
+    async (taskSignal) => {
+      const ctx = getCtx();
+      if (taskSignal.aborted) return ctx;
+      await appendSegment(sourceBuffer, message.data);
+      // No abort check here: the physical SourceBuffer has been modified, so
+      // the model must be updated to match regardless of signal state.
+      return { ...ctx, initTrackId: message.meta.trackId };
+    },
+    { signal }
+  );
+}
+
+function appendSegmentTask(
+  message: AppendSegmentMessage,
+  { signal, getCtx, sourceBuffer }: MessageTaskOptions
+): Task<SourceBufferActorContext> {
+  return new Task(
+    async (taskSignal) => {
+      const ctx = getCtx();
+      if (taskSignal.aborted) return ctx;
+      await appendSegment(sourceBuffer, message.data);
+      // No abort check here: the physical SourceBuffer has been modified, so
+      // the model must be updated to match regardless of signal state.
+      const { meta } = message;
+      const newEnd = meta.startTime + meta.duration;
+      const filtered = ctx.segments.filter((s) => !(s.startTime < newEnd && s.startTime + s.duration > meta.startTime));
+      return {
+        ...ctx,
+        segments: [
+          ...filtered,
+          { id: meta.id, startTime: meta.startTime, duration: meta.duration, trackId: meta.trackId },
+        ],
+        bufferedRanges: snapshotBuffered(sourceBuffer.buffered),
+      };
+    },
+    { signal }
+  );
+}
+
+function removeTask(
+  message: RemoveMessage,
+  { signal, getCtx, sourceBuffer }: MessageTaskOptions
+): Task<SourceBufferActorContext> {
+  return new Task(
+    async (taskSignal) => {
+      const ctx = getCtx();
+      if (taskSignal.aborted) return ctx;
+      await flushBuffer(sourceBuffer, message.start, message.end);
+      // No abort check here: the physical SourceBuffer has been modified, so
+      // the model must be updated to match regardless of signal state.
+      const { start, end } = message;
+      const filtered = ctx.segments.filter((s) => !(s.startTime < end && s.startTime + s.duration > start));
+      return { ...ctx, segments: filtered, bufferedRanges: snapshotBuffered(sourceBuffer.buffered) };
+    },
+    { signal }
+  );
+}
+
+type MessageTaskFactory<T extends SourceBufferMessage> = (
+  message: T,
+  options: MessageTaskOptions
+) => Task<SourceBufferActorContext>;
+
+const messageTaskFactories = {
+  'append-init': appendInitTask,
+  'append-segment': appendSegmentTask,
+  remove: removeTask,
+} satisfies { [K in SourceBufferMessage['type']]: MessageTaskFactory<Extract<SourceBufferMessage, { type: K }>> };
+
+function messageToTask(message: SourceBufferMessage, options: MessageTaskOptions): Task<SourceBufferActorContext> {
+  const factory = messageTaskFactories[message.type] as MessageTaskFactory<typeof message>;
+  return factory(message, options);
+}
+
+// =============================================================================
 // Implementation
 // =============================================================================
 
@@ -77,67 +170,6 @@ export function createSourceBufferActor(sourceBuffer: SourceBuffer): SourceBuffe
 
   let destroyed = false;
   const runner = new SerialRunner();
-
-  // Translates a message into a Task. Context is read lazily via getCtx at
-  // task execution time — not at creation time — so the task always operates
-  // on the most recent context regardless of when it was scheduled.
-  function messageToTask(
-    message: SourceBufferMessage,
-    signal: AbortSignal,
-    getCtx: () => SourceBufferActorContext
-  ): Task<SourceBufferActorContext> {
-    if (message.type === 'append-init') {
-      return new Task(
-        async (taskSignal) => {
-          const ctx = getCtx();
-          if (taskSignal.aborted) return ctx;
-          await appendSegment(sourceBuffer, message.data);
-          if (taskSignal.aborted) return ctx;
-          return { ...ctx, initTrackId: message.meta.trackId };
-        },
-        { signal }
-      );
-    }
-
-    if (message.type === 'append-segment') {
-      return new Task(
-        async (taskSignal) => {
-          const ctx = getCtx();
-          if (taskSignal.aborted) return ctx;
-          await appendSegment(sourceBuffer, message.data);
-          if (taskSignal.aborted) return ctx;
-          const { meta } = message;
-          const newEnd = meta.startTime + meta.duration;
-          const filtered = ctx.segments.filter(
-            (s) => !(s.startTime < newEnd && s.startTime + s.duration > meta.startTime)
-          );
-          return {
-            ...ctx,
-            segments: [
-              ...filtered,
-              { id: meta.id, startTime: meta.startTime, duration: meta.duration, trackId: meta.trackId },
-            ],
-            bufferedRanges: snapshotBuffered(sourceBuffer.buffered),
-          };
-        },
-        { signal }
-      );
-    }
-
-    // 'remove'
-    return new Task(
-      async (taskSignal) => {
-        const ctx = getCtx();
-        if (taskSignal.aborted) return ctx;
-        await flushBuffer(sourceBuffer, message.start, message.end);
-        if (taskSignal.aborted) return ctx;
-        const { start, end } = message;
-        const filtered = ctx.segments.filter((s) => !(s.startTime < end && s.startTime + s.duration > start));
-        return { ...ctx, segments: filtered, bufferedRanges: snapshotBuffered(sourceBuffer.buffered) };
-      },
-      { signal }
-    );
-  }
 
   // Applies the completed context atomically with the idle transition and
   // flushes synchronously so consumers observe the final snapshot when their
@@ -173,7 +205,7 @@ export function createSourceBufferActor(sourceBuffer: SourceBuffer): SourceBuffe
       // tick is rejected — the actor is now committed to this operation.
       state.patch({ status: 'updating' });
 
-      const task = messageToTask(message, signal, () => state.current.context);
+      const task = messageToTask(message, { signal, getCtx: () => state.current.context, sourceBuffer });
 
       return runner.schedule(task).then(applyResult).catch(handleError);
     },
@@ -197,14 +229,18 @@ export function createSourceBufferActor(sourceBuffer: SourceBuffer): SourceBuffe
       let workingCtx = state.current.context;
 
       for (const message of messages.slice(0, -1)) {
-        const task = messageToTask(message, signal, () => workingCtx);
+        const task = messageToTask(message, { signal, getCtx: () => workingCtx, sourceBuffer });
         const result = runner.schedule(task);
         result.then((newCtx) => {
           workingCtx = newCtx;
         });
       }
 
-      const lastTask = messageToTask(messages[messages.length - 1]!, signal, () => workingCtx);
+      const lastTask = messageToTask(messages[messages.length - 1]!, {
+        signal,
+        getCtx: () => workingCtx,
+        sourceBuffer,
+      });
       return runner.schedule(lastTask).then(applyResult).catch(handleError);
     },
 
