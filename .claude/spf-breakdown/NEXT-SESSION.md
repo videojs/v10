@@ -1,102 +1,78 @@
 # SPF - Session Status & Outstanding Tasks
 
-**Updated:** February 23, 2026
-**Current Branch:** `feat/spf-wave-3-epic`
-**Open Issues:** 12 issues, ~51 story points remaining
-**Target:** February 27, 2026 (4 days)
+**Updated:** February 27, 2026
+**Current Branch:** `feat/spf-f9-issue-434` (not yet pushed to remote)
+**Parent Branch:** `feat/spf-wave-3-epic`
 
 ---
 
-## Outstanding Tasks by Wave
+## What We Completed This Session
 
-### Wave 1 — Foundation & Pure Functions
+### Committed to `feat/spf-f9-issue-434`
 
-| Issue | Title | Size | Priority | Notes |
-|-------|-------|------|----------|-------|
-| [#412](https://github.com/videojs/v10/issues/412) | [T6] Test Stream Setup | S (5) | P0 | Curated Mux/Apple fixture streams |
+| Commit | Description |
+|--------|-------------|
+| `09c9ce4a` | `fix(spf): flush SourceBuffer on track switch before loading new init` — Bug fix 3: full `[0, Infinity)` flush + bufferState reset on `isTrackSwitch` detection |
+| `53400288` | `refactor(spf): replace completed flag with segment ID check in end-of-stream` — Bug fix 2 refactor: removed `SourceBufferState.completed` entirely, `isLastSegmentAppended` now checks segment IDs |
 
-**Wave 1 remaining: 5 pts**
+### Key Architectural Decisions
 
----
+**Bug Fix 3** (`load-segments.ts`):
+- `isTrackSwitch` = `needsInit && !!bufferState?.initTrackId`
+- On track switch: `flushBuffer(sb, 0, Infinity)` + `bufferState[key] = { initTrackId: undefined, segments: [] }`
+- Normal path: no change to flush logic
 
-### Wave 2 — Core Features & Orchestration
-
-| Issue | Title | Size | Priority | Notes |
-|-------|-------|------|----------|-------|
-| [#409](https://github.com/videojs/v10/issues/409) | [O11] Structured Logging System | S (3) | P1 | Log levels, context metadata, configurable output |
-| [#418](https://github.com/videojs/v10/issues/418) | [O12] Performance Metrics Collector | S (3) | P1 | Startup time, buffer health, segment download metrics |
-
-**Wave 2 remaining: 6 pts**
-
----
-
-### Wave 3 — ABR & Integration ← **ACTIVE WAVE**
-
-| Issue | Title | Size | Priority | Notes |
-|-------|-------|------|----------|-------|
-| [#434](https://github.com/videojs/v10/issues/434) | [F9] Quality Switching | M (8) | P0 | ABR track switching — de-risked by O8/F8 being done |
-| [#436](https://github.com/videojs/v10/issues/436) | [F14] Startup Orchestration | S (3) | P0 | `preloadaware MSE + trackPlaybackInitiated` partially done |
-| [#438](https://github.com/videojs/v10/issues/438) | [F16] Video.js Events Integration | S (5) | P1 | Map SPF state → VJS events; O6 play event already bridged |
-| [#435](https://github.com/videojs/v10/issues/435) | [F10] Manual Quality API | S (5) | P1 | Requires F9 first |
-| [#441](https://github.com/videojs/v10/issues/441) | [O13] Error Detection & Reporting | S (5) | P2 | Structured error types + event emission |
-| [#404](https://github.com/videojs/v10/issues/404) | [P14] Caption Sync Validator | XS (1) | P1 | E2E test utility for caption timing |
-| [#443](https://github.com/videojs/v10/issues/443) | [T9] Coverage Tracking | S (3) | P1 | Vitest coverage enforcement in CI |
-
-**Wave 3 remaining: 30 pts**
+**Bug Fix 2 refactor** (`end-of-stream.ts`):
+- Removed `completed: boolean` from `SourceBufferState` entirely
+- `isLastSegmentAppended` now checks: is the last segment ID of the selected track's segments present in `bufferState.segments`?
+- Track switch flush (B3) ensures empty bufferState after switch → correctly returns false until new segments loaded
+- No `currentTime` gate needed: if last segment is physically in the buffer, calling endOfStream is MSE-spec-correct regardless of playback position
+- Removed all `completed` reset/set logic from `loadSegments` run loop
 
 ---
 
-### Wave 4 — Final Testing & Documentation
+## Current Branch Summary (all commits)
 
-| Issue | Title | Size | Priority | Notes |
-|-------|-------|------|----------|-------|
-| [#444](https://github.com/videojs/v10/issues/444) | [F18] Minimal Documentation | S (5) | P2 | README + API reference; O8 (main dep) done |
-| [#445](https://github.com/videojs/v10/issues/445) | [T10] Performance Benchmarks | S (5) | P1 | Playwright + Performance API harness |
-
-**Wave 4 remaining: 10 pts**
-
----
-
-## Recommended Order for Next Session
-
-1. **[#434] F9 Quality Switching** (M/8) — P0, critical path for any remaining ABR work
-2. **[#436] F14 Startup Orchestration** (S/3) — P0, partial work done, small lift
-3. **[#438] F16 Video.js Events** (S/5) — P1, unblocked by O8
-4. **[#435] F10 Manual Quality API** (S/5) — P1, requires F9
-5. **[#412] T6 Test Stream Setup** (S/5) — P0, good anytime
-6. **[#409] O11 Structured Logging** (S/3) — P1
-7. **[#418] O12 Performance Metrics** (S/3) — P1
-8. **[#441] O13 Error Detection** (S/5) — P2
-9. **[#443] T9 Coverage Tracking** (S/3) — P1
-10. **[#444] F18 Documentation** (S/5) — P2
-11. **[#445] T10 Performance Benchmarks** (S/5) — P1
-12. **[#404] P14 Caption Sync Validator** (XS/1) — P1, testing utility
+| Commit | Description |
+|--------|-------------|
+| `cd4d0dd0` | `feat(spf): quality switching orchestration (F9)` — core `switchQuality` orchestration, NOT yet wired into playback engine |
+| `fe0ccf3d` / `e85ae1b6` | `refactor(spf): concurrent track resolution keyed by track ID` |
+| `4cf36563` | `refactor(spf): generic Task with id + composed AbortSignal` |
+| `33acdc84` | `fix(spf): guard premature endOfStream() when selected track is unresolved` |
+| `09c9ce4a` | `fix(spf): flush SourceBuffer on track switch before loading new init` |
+| `53400288` | `refactor(spf): replace completed flag with segment ID check in end-of-stream` |
 
 ---
 
-## What's Done (Closed)
+## Known Architectural Debt
 
-### Wave 1 — Complete (except T6)
-All 22 issues closed: O1, O2, O3, O10, P1–P4, P6–P13, P15–P17, T1, T4
+- **`shouldLoadSegments` mixes loading + flushing concerns** — see JSDoc in `load-segments.ts`
+- **`textBufferState` not yet wired to `endOfStream`** — fine for V1
+- **`resolveTrackTask` stale-snapshot hazard** — reads `state.current.presentation` at patch time; large comment in `resolve-track.ts` explains why and points to future reducer approach
+- **`switchQuality` not integrated** — wired in separately once pipeline is stable
+- **`selectVideoTrack`/`selectAudioTrack` still use `tracks[0]`** — should use `pickVideoTrack`/`pickAudioTrack` once quality switching is integrated and stable
 
-### Wave 2 — Complete (except O11, O12)
-All 18 issues closed: O5–O9, F1–F8, F11–F13, T2, T3, T5, T7
+---
 
-### Wave 3 — Mostly Done
-Closed: F6, F9→❌open, F14→❌open, F15, F16→❌open, F10→❌open, F17, O4, O13→❌open, T8, T9→❌open, P14→❌open
+## Next Steps
+
+The branch is now ready to push and review. Outstanding work before merging `feat/spf-f9-issue-434`:
+
+1. **Integrate `switchQuality` into `playback-engine.ts`** — the orchestration exists but isn't wired
+2. **Wire `selectVideoTrack`/`selectAudioTrack` to use `pickVideoTrack`/`pickAudioTrack`** — currently still `tracks[0]`
+3. **Push branch + open PR against `feat/spf-wave-3-epic`**
+
+Or, if the F9 orchestration wiring is deferred to a later PR, push what's here as a bug-fix + refactor PR.
 
 ---
 
 ## Quick Start
 
 ```bash
-git checkout feat/spf-wave-3-epic
-git log --oneline -5
+git checkout feat/spf-f9-issue-434
+git log --oneline -8
 pnpm -F @videojs/spf test
-
-# Start next issue
-/spf-implement #434
 ```
 
-**Project board:** https://github.com/orgs/videojs/projects/7
+**Project board:** https://github.com/orgs/videojs/projects/7/views/2?filterQuery=milestone%3ABeta+assignee%3Acjpillsbury
 **Open SPF issues:** https://github.com/videojs/v10/issues?q=is:issue+label:spf+is:open

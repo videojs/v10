@@ -26,6 +26,7 @@ import { syncTextTrackModes } from './features/sync-text-track-modes';
 import { trackCurrentTime } from './features/track-current-time';
 import { trackPlaybackInitiated } from './features/track-playback-initiated';
 import { updateDuration } from './features/update-duration';
+import { createSourceBufferActor, type SourceBufferActor } from './media/source-buffer-actor';
 import { destroyVttParser } from './text/parse-vtt-segment';
 
 /**
@@ -272,6 +273,38 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     // 5. Setup SourceBuffers (when MediaSource ready and tracks resolved)
     setupSourceBuffer({ state, owners }, { type: 'video' }),
     setupSourceBuffer({ state, owners }, { type: 'audio' }),
+
+    // 5.5. Wire SourceBufferActors (created/destroyed with their SourceBuffers).
+    //      Actors are local variables — not in owners — to avoid triggering extra
+    //      notification cycles on loadSegments and other owners subscribers.
+    //      Snapshot bridging into state is deferred to Phase 2, when loadSegments
+    //      routes operations through the actor and consumers need the reactive state.
+    (() => {
+      let videoActor: SourceBufferActor | null = null;
+      let audioActor: SourceBufferActor | null = null;
+
+      const unsubOwners = owners.subscribe((current) => {
+        if (current.videoBuffer && !videoActor) {
+          videoActor = createSourceBufferActor(current.videoBuffer);
+        } else if (!current.videoBuffer && videoActor) {
+          videoActor.destroy();
+          videoActor = null;
+        }
+
+        if (current.audioBuffer && !audioActor) {
+          audioActor = createSourceBufferActor(current.audioBuffer);
+        } else if (!current.audioBuffer && audioActor) {
+          audioActor.destroy();
+          audioActor = null;
+        }
+      });
+
+      return () => {
+        unsubOwners();
+        videoActor?.destroy();
+        audioActor?.destroy();
+      };
+    })(),
 
     // 5.5. Track currentTime from mediaElement (feeds forward buffer management)
     trackCurrentTime({ state, owners }),

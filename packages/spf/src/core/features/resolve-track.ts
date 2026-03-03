@@ -3,9 +3,9 @@ import type { EventStream } from '../events/create-event-stream';
 import { parseMediaPlaylist } from '../hls/parse-media-playlist';
 import { combineLatest } from '../reactive/combine-latest';
 import type { WritableState } from '../state/create-state';
+import { ConcurrentRunner, Task } from '../task';
 import type { Presentation, ResolvedTrack, TrackType } from '../types';
 import { isResolvedTrack } from '../types';
-import { generateId } from '../utils/generate-id';
 import { getSelectedTrack, type TrackSelectionState } from '../utils/track-selection';
 
 /**
@@ -40,116 +40,6 @@ export function canResolve<T extends TrackType>(
  */
 export function shouldResolve(_state: TrackResolutionState, _event: TrackResolutionAction): boolean {
   return true;
-}
-
-// ============================================================================
-// Generic Task
-// ============================================================================
-
-/**
- * Configuration for a Task.
- */
-interface TaskConfig {
-  /**
-   * Identifier for this task.
-   * - string: used as-is
-   * - () => string: called once at construction time
-   * - undefined: a unique ID is generated via generateId()
-   */
-  id?: string | (() => string);
-
-  /**
-   * Optional external AbortSignal to compose with the task's internal one.
-   * The task's work will be aborted when either the internal controller (via
-   * abort()) or this external signal fires — whichever comes first.
-   *
-   * Composition uses AbortSignal.any(), which produces a new signal that fires
-   * when any of its sources are aborted. The internal AbortController is always
-   * present so the task can still be aborted independently regardless of whether
-   * an external signal is provided.
-   */
-  signal?: AbortSignal;
-}
-
-/**
- * Minimal contract for a schedulable unit of async work.
- */
-interface TaskLike {
-  readonly id: string;
-  run(): Promise<void>;
-  abort(): void;
-}
-
-/**
- * Generic reusable task that wraps an async run function.
- *
- * Owns its own AbortController so it can always be aborted independently.
- * Optionally composes an external AbortSignal so that a parent's cancellation
- * (e.g. engine cleanup) propagates into the task's work without requiring the
- * caller to track the task separately.
- */
-class Task implements TaskLike {
-  readonly id: string;
-  readonly #abortController = new AbortController();
-  readonly #signal: AbortSignal;
-
-  constructor(
-    private readonly runFn: (signal: AbortSignal) => Promise<void>,
-    config?: TaskConfig
-  ) {
-    const rawId = config?.id;
-    this.id = typeof rawId === 'function' ? rawId() : (rawId ?? generateId());
-
-    // Compose the internal signal with the optional external signal.
-    // AbortSignal.any() produces a signal that fires when either source aborts,
-    // letting the caller's signal propagate into the task's work (e.g. on engine
-    // cleanup) while still allowing the task to be aborted independently via abort().
-    this.#signal = config?.signal
-      ? AbortSignal.any([this.#abortController.signal, config.signal])
-      : this.#abortController.signal;
-  }
-
-  async run(): Promise<void> {
-    return this.runFn(this.#signal);
-  }
-
-  abort(): void {
-    this.#abortController.abort();
-  }
-}
-
-// ============================================================================
-// Concurrent runner
-// ============================================================================
-
-/**
- * Runs tasks concurrently, deduplicated by the id passed to schedule().
- *
- * If a task for a given id is already in flight, subsequent schedule() calls
- * for that id are silently ignored until the first task completes. Tasks are
- * stored so abortAll() can cancel any in-flight work (e.g. on engine cleanup).
- */
-class ConcurrentRunner {
-  readonly #pending = new Map<string, TaskLike>();
-
-  schedule(task: TaskLike, id: string): void {
-    if (this.#pending.has(id)) return;
-
-    this.#pending.set(id, task);
-    task
-      .run()
-      .catch((error) => {
-        if (!(error instanceof Error && error.name === 'AbortError')) throw error;
-      })
-      .finally(() => {
-        this.#pending.delete(id);
-      });
-  }
-
-  abortAll(): void {
-    for (const task of this.#pending.values()) task.abort();
-    this.#pending.clear();
-  }
 }
 
 // ============================================================================
@@ -250,8 +140,7 @@ export function resolveTrack<T extends TrackType>(
           state.patch({ presentation: updatedPresentation });
         },
         { id: track.id }
-      ),
-      track.id
+      )
     );
   });
 
