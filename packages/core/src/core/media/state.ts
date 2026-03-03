@@ -197,6 +197,13 @@ export interface MediaTextCue {
   text: string;
 }
 
+export interface MediaSubtitleTrack {
+  kind: 'captions' | 'subtitles';
+  label: string;
+  language: string;
+  showing: boolean;
+}
+
 export interface MediaTextTrackState {
   /** Cues from the first `kind="chapters"` track. */
   chaptersCues: MediaTextCue[];
@@ -204,6 +211,12 @@ export interface MediaTextTrackState {
   thumbnailCues: MediaTextCue[];
   /** The `<track>` element's `src` for resolving relative cue text URLs. */
   thumbnailTrackSrc: string | null;
+  /** Caption/subtitle tracks that can be selected or toggled. */
+  subtitlesList: MediaSubtitleTrack[];
+  /** Whether captions/subtitles are currently enabled. */
+  subtitlesShowing: boolean;
+  /** Toggle captions/subtitles visibility. Returns the new enabled value. */
+  toggleSubtitles(forceShow?: boolean): boolean;
 }
 
 export interface MediaPictureInPictureState {

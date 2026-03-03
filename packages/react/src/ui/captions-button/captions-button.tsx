@@ -1,31 +1,20 @@
 'use client';
 
-import type { StateAttrMap } from '@videojs/core';
+import { CaptionsButtonCore, CaptionsButtonDataAttrs } from '@videojs/core';
+import { logMissingFeature, selectTextTrack } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
 
+import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useButton } from '../hooks/use-button';
 
-// FIXME: Replace with state/props from core.
-export type CaptionsButtonState = {
-  active: boolean;
-};
-type CaptionButtonCoreProps = {
-  /** Custom label for the button. */
-  label?: string | ((state: CaptionsButtonState) => string) | undefined;
-  /** Whether the button is disabled. */
-  disabled?: boolean | undefined;
-};
-const CaptionButtonDataAttrs = {
-  /** Present when the captions are active. */
-  active: 'data-active',
-} as const satisfies StateAttrMap<CaptionsButtonState>;
+export type CaptionsButtonState = CaptionsButtonCore.State;
 
-export interface CaptionsButtonProps extends UIComponentProps<'button', CaptionsButtonState>, CaptionButtonCoreProps {}
-
-const DEBUG = false;
+export interface CaptionsButtonProps
+  extends UIComponentProps<'button', CaptionsButtonState>,
+    CaptionsButtonCore.Props {}
 
 /**
  * A button that toggles captions.
@@ -37,7 +26,7 @@ const DEBUG = false;
  * <CaptionsButton
  *   render={(props, state) => (
  *     <button {...props}>
- *       {state.active ? <CaptionsOnIcon /> : <CaptionsOffIcon />}
+ *       {state.subtitlesShowing ? <CaptionsOnIcon /> : <CaptionsOffIcon />}
  *     </button>
  *   )}
  * />
@@ -49,30 +38,39 @@ export const CaptionsButton = forwardRef(function CaptionsButton(
 ) {
   const { render, className, style, label, disabled, ...elementProps } = componentProps;
 
-  // FIXME: Replace with actual captions state
-  const [isActive, setIsActive] = useState(false);
+  const textTrack = usePlayer(selectTextTrack);
+
+  const [core] = useState(() => new CaptionsButtonCore());
+  core.setProps({ label, disabled });
 
   const { getButtonProps, buttonRef } = useButton({
     displayName: 'CaptionsButton',
-    onActivate: () => setIsActive((active) => !active), // FIXME: Replace with actual toggle logic
-    isDisabled: () => disabled ?? false,
+    onActivate: () => core.toggle(textTrack!),
+    isDisabled: () => disabled || !textTrack,
   });
 
-  if (!DEBUG) return null;
+  if (!textTrack) {
+    if (__DEV__) logMissingFeature('CaptionsButton', 'textTrack');
+    return null;
+  }
+
+  if (!textTrack.subtitlesList.length) return null;
+
+  const state = core.getState(textTrack);
 
   return renderElement(
     'button',
     { render, className, style },
     {
-      state: { active: isActive }, // FIXME: Replace with actual toggle logic
-      stateAttrMap: CaptionButtonDataAttrs,
+      state,
+      stateAttrMap: CaptionsButtonDataAttrs,
       ref: [forwardedRef, buttonRef],
-      props: [elementProps, getButtonProps(), { 'aria-pressed': isActive }],
+      props: [core.getAttrs(state), elementProps, getButtonProps()],
     }
   );
 });
 
 export namespace CaptionsButton {
   export type Props = CaptionsButtonProps;
-  export type State = CaptionsButtonState;
+  export type State = CaptionsButtonCore.State;
 }
