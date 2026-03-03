@@ -487,10 +487,24 @@ export function loadSegments(
 
     while (true) {
       if (!shouldLoadSegments(currentState, currentOwners, type)) {
+        const _track = getSelectedTrack(currentState, type);
+        const _bufKey = type as 'video' | 'audio';
+        const _bufState = currentState.bufferState?.[_bufKey];
+        const _buffered = _track && isResolvedTrack(_track) ? resolveBufferedSegments(_track.segments, _bufState) : [];
+        const _needed =
+          _track && isResolvedTrack(_track)
+            ? getSegmentsToLoad(_track.segments, _buffered, currentState.currentTime ?? 0)
+            : [];
         dbg('loop:exit — shouldLoadSegments=false', {
           t: currentState.currentTime,
           canLoad: canLoadSegments(currentState, currentOwners, type),
-          hasTrack: !!getSelectedTrack(currentState, type),
+          hasTrack: !!_track,
+          modelSegmentStartTimes: (_bufState?.segments ?? []).map((s) => {
+            const seg = _track && isResolvedTrack(_track) ? _track.segments.find((ts) => ts.id === s.id) : undefined;
+            return seg ? seg.startTime : `${s.id}(unresolved)`;
+          }),
+          bufferedStartTimes: _buffered.map((s) => s.startTime),
+          needed: _needed.map((s) => s.startTime),
         });
         break;
       }
