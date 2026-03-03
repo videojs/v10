@@ -1,6 +1,6 @@
 import { ControlsElement } from '../../ui/controls/controls-element';
 
-import './controls-group';
+export { ControlsGroupElement } from './controls-group';
 
 customElements.define(ControlsElement.tagName, ControlsElement);
 

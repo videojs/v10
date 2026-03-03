@@ -1,7 +1,7 @@
 import { TimeElement } from '../../ui/time/time-element';
 
-import './time-group';
-import './time-separator';
+export { TimeGroupElement } from './time-group';
+export { TimeSeparatorElement } from './time-separator';
 
 customElements.define(TimeElement.tagName, TimeElement);
 

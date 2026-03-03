@@ -71,7 +71,6 @@ export const sidebar: Sidebar = [
     contents: [
       { slug: 'reference/html-create-player', sidebarLabel: 'createPlayer' },
       { slug: 'reference/player-controller' },
-      { slug: 'reference/player-mixin', sidebarLabel: 'PlayerMixin (removed)' },
       {
         sidebarLabel: 'Advanced',
         defaultOpen: false,

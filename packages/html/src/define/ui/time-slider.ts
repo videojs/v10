@@ -1,10 +1,10 @@
 import { TimeSliderElement } from '../../ui/time-slider/time-slider-element';
 
-import './slider-buffer';
-import './slider-fill';
-import './slider-thumb';
-import './slider-track';
-import './slider-value';
+export { SliderBufferElement } from './slider-buffer';
+export { SliderFillElement } from './slider-fill';
+export { SliderThumbElement } from './slider-thumb';
+export { SliderTrackElement } from './slider-track';
+export { SliderValueElement } from './slider-value';
 
 customElements.define(TimeSliderElement.tagName, TimeSliderElement);
 
