@@ -24,6 +24,17 @@
   to = "/"
   status = 308
 
+# Redirect old v8 guides to legacy site
+[[redirects]]
+  from = "/guides"
+  to = "https://legacy.videojs.org/guides"
+  status = 308
+
+[[redirects]]
+  from = "/guides/*"
+  to = "https://legacy.videojs.org/guides/:splat"
+  status = 308
+
 # Redirect old tags pages to blog (no tag filtering in v10)
 [[redirects]]
   from = "/tags"
