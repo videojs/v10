@@ -7,8 +7,7 @@ export class GifMedia extends EventTarget {
   #gif: ParsedGif | null = null;
   #frames: ParsedFrame[] = [];
   #frameIndex = 0;
-  #canvas: HTMLCanvasElement | null = null;
-  #tempCanvas: HTMLCanvasElement | null = null;
+  #render: { canvas: HTMLCanvasElement; tempCanvas: HTMLCanvasElement } | null = null;
   #rafId: number | null = null;
   #nextFrameAt = 0;
   #loadGen = 0;
@@ -29,6 +28,8 @@ export class GifMedia extends EventTarget {
   }
 
   play(): Promise<void> {
+    if (!this.#paused) return Promise.resolve();
+    if (!this.#src) return Promise.reject(new DOMException('No media src', 'NotSupportedError'));
     this.#paused = false;
     if (this.#frames.length > 0) {
       this.#start();
@@ -48,8 +49,7 @@ export class GifMedia extends EventTarget {
 
   attach(canvas: HTMLCanvasElement): void {
     this.detach();
-    this.#canvas = canvas;
-    this.#tempCanvas = document.createElement('canvas');
+    this.#render = { canvas, tempCanvas: document.createElement('canvas') };
 
     if (this.#gif) {
       canvas.width = this.#gif.lsd.width;
@@ -64,8 +64,7 @@ export class GifMedia extends EventTarget {
 
   detach(): void {
     this.#stop();
-    this.#canvas = null;
-    this.#tempCanvas = null;
+    this.#render = null;
   }
 
   #reset(): void {
@@ -88,9 +87,9 @@ export class GifMedia extends EventTarget {
       this.#gif = gif;
       this.#frames = decompressFrames(gif, true);
 
-      if (this.#canvas) {
-        this.#canvas.width = gif.lsd.width;
-        this.#canvas.height = gif.lsd.height;
+      if (this.#render) {
+        this.#render.canvas.width = gif.lsd.width;
+        this.#render.canvas.height = gif.lsd.height;
         this.#drawFrame();
       }
 
@@ -106,9 +105,9 @@ export class GifMedia extends EventTarget {
   }
 
   #start(): void {
-    if (!this.#canvas || this.#frames.length === 0) return;
+    if (!this.#render) return;
     this.#stop();
-    this.#nextFrameAt = performance.now() + (this.#frames[this.#frameIndex]?.delay ?? 100);
+    this.#nextFrameAt = performance.now() + (this.#frames[this.#frameIndex]!.delay ?? 100);
     this.#rafId = requestAnimationFrame(this.#tick);
   }
 
@@ -120,33 +119,28 @@ export class GifMedia extends EventTarget {
   }
 
   #tick = (timestamp: number): void => {
-    if (this.#paused || !this.#canvas) return;
     if (timestamp >= this.#nextFrameAt) {
       this.#frameIndex = (this.#frameIndex + 1) % this.#frames.length;
-      this.#nextFrameAt = timestamp + (this.#frames[this.#frameIndex]?.delay ?? 100);
+      this.#nextFrameAt = timestamp + (this.#frames[this.#frameIndex]!.delay ?? 100);
       this.#drawFrame();
     }
     this.#rafId = requestAnimationFrame(this.#tick);
   };
 
   #drawFrame(): void {
-    const canvas = this.#canvas;
-    const frame = this.#frames[this.#frameIndex];
-    if (!canvas || !frame || !this.#tempCanvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
+    if (!this.#render) return;
+    const { canvas, tempCanvas } = this.#render;
+    const frame = this.#frames[this.#frameIndex]!;
+    const ctx = canvas.getContext('2d')!;
     const { left, top, width, height } = frame.dims;
 
-    if (frame.disposalType === 2) {
-      ctx.clearRect(left, top, width, height);
-    }
+    if (frame.disposalType === 2) ctx.clearRect(left, top, width, height);
 
-    this.#tempCanvas.width = width;
-    this.#tempCanvas.height = height;
-    const tempCtx = this.#tempCanvas.getContext('2d')!;
-    tempCtx.putImageData(new ImageData(frame.patch as Uint8ClampedArray<ArrayBuffer>, width, height), 0, 0);
-    ctx.drawImage(this.#tempCanvas, left, top);
+    tempCanvas.width = width;
+    tempCanvas.height = height;
+    tempCanvas
+      .getContext('2d')!
+      .putImageData(new ImageData(frame.patch as Uint8ClampedArray<ArrayBuffer>, width, height), 0, 0);
+    ctx.drawImage(tempCanvas, left, top);
   }
 }
