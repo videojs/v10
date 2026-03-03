@@ -24,7 +24,7 @@ export type RemoveMessage = { type: 'remove'; start: number; end: number };
 export type SourceBufferMessage = AppendInitMessage | AppendSegmentMessage | RemoveMessage;
 
 /** Finite (bounded) operational modes of the actor. */
-export type SourceBufferActorStatus = 'idle' | 'updating';
+export type SourceBufferActorStatus = 'idle' | 'updating' | 'destroyed';
 
 /** Non-finite (extended) data managed by the actor — the XState "context". */
 export interface SourceBufferActorContext {
@@ -168,19 +168,27 @@ export function createSourceBufferActor(sourceBuffer: SourceBuffer): SourceBuffe
     context: { segments: [], bufferedRanges: [], initTrackId: undefined },
   });
 
-  let destroyed = false;
   const runner = new SerialRunner();
 
   // Applies the completed context atomically with the idle transition and
   // flushes synchronously so consumers observe the final snapshot when their
   // awaited Promise resolves.
+  // If the actor was destroyed while the operation was in flight, preserve
+  // 'destroyed' — do not regress to 'idle'.
   function applyResult(newContext: SourceBufferActorContext): void {
-    state.patch({ status: 'idle', context: newContext });
+    const status = state.current.status === 'destroyed' ? 'destroyed' : 'idle';
+    state.patch({ status, context: newContext });
     state.flush();
   }
 
   function handleError(e: unknown): never {
-    state.patch({ status: 'idle' });
+    // TODO: QuotaExceededError and other SourceBuffer errors leave the physical
+    // buffer in an unknown partial state while context goes unchanged. A future
+    // improvement should detect QuotaExceededError specifically and use total
+    // bytes-in-buffer as a heuristic to identify the effective buffer capacity,
+    // enabling targeted flush-and-retry rather than silent model drift.
+    const status = state.current.status === 'destroyed' ? 'destroyed' : 'idle';
+    state.patch({ status });
     state.flush();
     throw e;
   }
@@ -195,10 +203,8 @@ export function createSourceBufferActor(sourceBuffer: SourceBuffer): SourceBuffe
     },
 
     send(message: SourceBufferMessage, signal: AbortSignal): Promise<void> {
-      if (destroyed || state.current.status !== 'idle') {
-        return Promise.reject(
-          new SourceBufferActorError(`send() called while actor is ${destroyed ? 'destroyed' : 'updating'}`)
-        );
+      if (state.current.status !== 'idle') {
+        return Promise.reject(new SourceBufferActorError(`send() called while actor is ${state.current.status}`));
       }
 
       // Transition synchronously so any subsequent send/batch within the same
@@ -211,10 +217,8 @@ export function createSourceBufferActor(sourceBuffer: SourceBuffer): SourceBuffe
     },
 
     batch(messages: SourceBufferMessage[], signal: AbortSignal): Promise<void> {
-      if (destroyed || state.current.status !== 'idle') {
-        return Promise.reject(
-          new SourceBufferActorError(`batch() called while actor is ${destroyed ? 'destroyed' : 'updating'}`)
-        );
+      if (state.current.status !== 'idle') {
+        return Promise.reject(new SourceBufferActorError(`batch() called while actor is ${state.current.status}`));
       }
 
       if (messages.length === 0) return Promise.resolve();
@@ -226,6 +230,16 @@ export function createSourceBufferActor(sourceBuffer: SourceBuffer): SourceBuffe
       // workingCtx threads the result of each task into the next without
       // patching shared state between steps — context is only written to state
       // atomically when the last task completes.
+      //
+      // workingCtx is captured here (synchronously after status → 'updating'),
+      // so it reflects the current context at the moment the batch was accepted.
+      // This is correct: status is now 'updating' so no other sender can modify
+      // context between this line and the first task executing.
+      //
+      // NOTE: if an intermediate task fails (e.g. SourceBuffer error event),
+      // workingCtx is not updated for that step and subsequent tasks in the
+      // batch will operate on a stale context. This is an edge case — happy-path
+      // appends do not fail — but worth revisiting if MSE error recovery lands.
       let workingCtx = state.current.context;
 
       for (const message of messages.slice(0, -1)) {
@@ -245,7 +259,8 @@ export function createSourceBufferActor(sourceBuffer: SourceBuffer): SourceBuffe
     },
 
     destroy(): void {
-      destroyed = true;
+      state.patch({ status: 'destroyed' });
+      state.flush();
       runner.destroy();
     },
   };
