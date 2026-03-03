@@ -7,8 +7,9 @@ Vite-based playground for testing and developing Video.js 10 integrations. Each 
 | Name                | Description                            |
 | ------------------- | -------------------------------------- |
 | `core`              | Framework-agnostic core API            |
-| `html`              | Web player with HTML custom elements   |
+| `html`              | HTML player with skin switching        |
 | `html-background`   | Full-screen background video (HTML)    |
+| `html-tailwind`     | HTML player styled with Tailwind CSS   |
 | `react`             | React player with skin switching       |
 | `react-tailwind`    | React player styled with Tailwind CSS  |
 | `react-background`  | Full-screen background video (React)   |

@@ -10,7 +10,9 @@
     "url": "https://github.com/videojs/v10",
     "directory": "packages/icons"
   },
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/element/**/*.js"
+  ],
   "exports": {
     "./react": {
       "types": "./dist/react/default/index.d.ts",
@@ -27,6 +29,18 @@
     "./html/*": {
       "types": "./dist/html/*/index.d.ts",
       "default": "./dist/html/*/index.js"
+    },
+    "./render": {
+      "types": "./dist/render/default/index.d.ts",
+      "default": "./dist/render/default/index.js"
+    },
+    "./render/*": {
+      "types": "./dist/render/*/index.d.ts",
+      "default": "./dist/render/*/index.js"
+    },
+    "./element": {
+      "types": "./dist/element/index.d.ts",
+      "default": "./dist/element/index.js"
     }
   },
   "files": [

@@ -19,15 +19,27 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
     class PlayerContainerElement extends BaseClass implements PlayerConsumer<Store>, MediaContainer {
       #detach = noop;
       #observer: MutationObserver | null = null;
+      #contextStore: Store | null = null;
 
-      #consumer = new ContextConsumer(this, {
-        context,
-        callback: () => this.#attachMedia(),
-        subscribe: true,
-      });
+      constructor(...args: any[]) {
+        super(...args);
+
+        // Created in the constructor body (after all field initializers) so
+        // that #contextStore's private slot exists if the callback fires
+        // synchronously — which happens when the element is already connected.
+        // The host's controller list keeps the consumer alive; no field needed.
+        new ContextConsumer(this, {
+          context,
+          callback: (value) => {
+            this.#contextStore = value ?? null;
+            this.#attachMedia();
+          },
+          subscribe: true,
+        });
+      }
 
       get store(): Store | null {
-        return this.#consumer.value ?? null;
+        return this.#contextStore;
       }
 
       override connectedCallback() {
@@ -50,8 +62,9 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
       }
 
       #attachMedia() {
-        // Store will be overridden and set by provider mixin if consumer is empty.
-        const store = this.#consumer.value ?? this.store;
+        // Prefer the cached context value; fall back to `this.store` which
+        // ProviderMixin overrides when both mixins are applied to one element.
+        const store = this.#contextStore ?? this.store;
         if (!store) return;
 
         const media = this.querySelector<HTMLMediaElement>('video, audio');

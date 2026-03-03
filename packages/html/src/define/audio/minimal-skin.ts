@@ -4,8 +4,8 @@ function getTemplateHTML() {
   return /*html*/ `<div></div>`;
 }
 
-export class AudioSkinElement extends ReactiveElement {
-  static readonly tagName = 'audio-skin';
+export class MinimalAudioSkinElement extends ReactiveElement {
+  static readonly tagName = 'audio-minimal-skin';
   static getTemplateHTML = getTemplateHTML;
 
   constructor() {
@@ -17,10 +17,10 @@ export class AudioSkinElement extends ReactiveElement {
   }
 }
 
-customElements.define(AudioSkinElement.tagName, AudioSkinElement);
+customElements.define(MinimalAudioSkinElement.tagName, MinimalAudioSkinElement);
 
 declare global {
   interface HTMLElementTagNameMap {
-    [AudioSkinElement.tagName]: AudioSkinElement;
+    [MinimalAudioSkinElement.tagName]: MinimalAudioSkinElement;
   }
 }

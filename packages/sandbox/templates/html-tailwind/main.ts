@@ -1,9 +1,9 @@
-// HTML sandbox — Web player with skin switching
-// http://localhost:5173/html/
+// HTML & Tailwind sandbox — Web player with Tailwind skins
+// http://localhost:5173/html-tailwind/
 
 import '@videojs/html/video/player';
-import '@videojs/html/video/skin';
-import '@videojs/html/video/minimal-skin';
+import '@videojs/html/video/skin.tailwind';
+import '@videojs/html/video/minimal-skin.tailwind';
 import { SKINS } from '../constants';
 import type { Skin } from '../types';
 
@@ -12,30 +12,12 @@ const html = String.raw;
 const VIDEO_SRC = 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4';
 
 const skinTags: Record<Skin, string> = {
-  default: 'video-skin',
-  minimal: 'video-minimal-skin',
+  default: 'video-skin-tailwind',
+  minimal: 'video-minimal-skin-tailwind',
 };
-
-const stylesheets: Record<Skin, string> = {
-  default: new URL('@videojs/html/video/skin.css', import.meta.url).href,
-  minimal: new URL('@videojs/html/video/minimal-skin.css', import.meta.url).href,
-};
-
-let currentLink: HTMLLinkElement | null = null;
-
-function loadStylesheet(url: string) {
-  currentLink?.remove();
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = url;
-  document.head.appendChild(link);
-  currentLink = link;
-}
 
 function render(skin: Skin) {
   const tag = skinTags[skin];
-
-  loadStylesheet(stylesheets[skin]);
 
   document.getElementById('player')!.innerHTML = html`
     <video-player>

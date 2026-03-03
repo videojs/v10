@@ -1,4 +1,3 @@
-import type { FullscreenButtonState, MuteButtonState, PlayButtonState } from '@videojs/core';
 import {
   CaptionsOffIcon,
   CaptionsOnIcon,
@@ -18,7 +17,7 @@ import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
-import { CaptionsButton, type CaptionsButtonState } from '@/ui/captions-button';
+import { CaptionsButton } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
@@ -41,63 +40,19 @@ const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function 
   return <button ref={ref} type="button" className={cn('media-button', className)} {...props} />;
 });
 
-function PlayButtonIcon({ state, className, ...rest }: { state: PlayButtonState } & ComponentProps<'svg'>) {
-  const { ended, paused } = state;
-  return (
-    <>
-      <RestartIcon {...rest} className={cn(className, { 'media-icon--hidden': !ended })} />
-      <PlayIcon {...rest} className={cn(className, { 'media-icon--hidden': ended || !paused })} />
-      <PauseIcon {...rest} className={cn(className, { 'media-icon--hidden': paused })} />
-    </>
-  );
-}
-
-function MuteButtonIcon({ state, className, ...rest }: { state: MuteButtonState } & ComponentProps<'svg'>) {
-  const { muted, volumeLevel } = state;
-  return (
-    <>
-      <VolumeOffIcon {...rest} className={cn(className, { 'media-icon--hidden': !muted })} />
-      <VolumeLowIcon {...rest} className={cn(className, { 'media-icon--hidden': muted || volumeLevel !== 'low' })} />
-      <VolumeHighIcon {...rest} className={cn(className, { 'media-icon--hidden': muted || volumeLevel === 'low' })} />
-    </>
-  );
-}
-
-function CaptionsButtonIcon({ state, className, ...rest }: { state: CaptionsButtonState } & ComponentProps<'svg'>) {
-  const { active } = state;
-  return (
-    <>
-      <CaptionsOffIcon {...rest} className={cn(className, { 'media-icon--hidden': active })} />
-      <CaptionsOnIcon {...rest} className={cn(className, { 'media-icon--hidden': !active })} />
-    </>
-  );
-}
-
-function FullscreenButtonIcon({ state, className, ...rest }: { state: FullscreenButtonState } & ComponentProps<'svg'>) {
-  const { fullscreen } = state;
-  return (
-    <>
-      <FullscreenExitIcon {...rest} className={cn(className, { 'media-icon--hidden': !fullscreen })} />
-      <FullscreenEnterIcon {...rest} className={cn(className, { 'media-icon--hidden': fullscreen })} />
-    </>
-  );
-}
-
 export function VideoSkin(props: VideoSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 
   return (
     <Container className={cn('media-default-skin', className)} {...rest}>
       <BufferingIndicator
-        render={(props, state) =>
-          state.visible ? (
-            <div {...props} className="media-buffering-indicator">
-              <div className="media-surface">
-                <SpinnerIcon className="media-icon" />
-              </div>
+        render={(props) => (
+          <div {...props} className="media-buffering-indicator">
+            <div className="media-surface">
+              <SpinnerIcon className="media-icon" />
             </div>
-          ) : null
-        }
+          </div>
+        )}
       />
 
       <ErrorDialog
@@ -124,9 +79,11 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
 
       <Controls.Root className="media-surface media-controls">
         <PlayButton
-          render={(props, state) => (
-            <Button {...props} className="media-button--icon">
-              <PlayButtonIcon state={state} className="media-icon" />
+          render={(props) => (
+            <Button {...props} className="media-button--icon media-button--play">
+              <RestartIcon className="media-icon media-icon--restart" />
+              <PlayIcon className="media-icon media-icon--play" />
+              <PauseIcon className="media-icon media-icon--pause" />
             </Button>
           )}
         />
@@ -168,20 +125,18 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
         </Time.Group>
 
         <PlaybackRateButton
-          render={(props, state) => (
-            <Button {...props} className="media-button--icon media-button--playback-rate">
-              <span>{state.rate}&times;</span>
-            </Button>
-          )}
+          render={(props) => <Button {...props} className="media-button--icon media-button--playback-rate" />}
         />
 
         <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
           <Popover.Trigger
             render={
               <MuteButton
-                render={(props, state) => (
-                  <Button {...props} className="media-button--icon">
-                    <MuteButtonIcon state={state} className="media-icon" />
+                render={(props) => (
+                  <Button {...props} className="media-button--icon media-button--mute">
+                    <VolumeOffIcon className="media-icon media-icon--volume-off" />
+                    <VolumeLowIcon className="media-icon media-icon--volume-low" />
+                    <VolumeHighIcon className="media-icon media-icon--volume-high" />
                   </Button>
                 )}
               />
@@ -198,9 +153,10 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
         </Popover.Root>
 
         <CaptionsButton
-          render={(props, state) => (
-            <Button {...props} className="media-button--icon">
-              <CaptionsButtonIcon state={state} className="media-icon" />
+          render={(props) => (
+            <Button {...props} className="media-button--icon media-button--captions">
+              <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+              <CaptionsOnIcon className="media-icon media-icon--captions-on" />
             </Button>
           )}
         />
@@ -214,9 +170,10 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
         />
 
         <FullscreenButton
-          render={(props, state) => (
-            <Button {...props} className="media-button--icon">
-              <FullscreenButtonIcon state={state} className="media-icon" />
+          render={(props) => (
+            <Button {...props} className="media-button--icon media-button--fullscreen">
+              <FullscreenEnterIcon className="media-icon media-icon--fullscreen-enter" />
+              <FullscreenExitIcon className="media-icon media-icon--fullscreen-exit" />
             </Button>
           )}
         />
