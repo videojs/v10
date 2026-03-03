@@ -23,6 +23,11 @@
 }
 
 .react-popover-basic__popup {
+  /* Reset UA [popover] defaults */
+  margin: 0;
+  border: 0;
+  --media-popover-side-offset: 8px;
+
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);
   color: white;

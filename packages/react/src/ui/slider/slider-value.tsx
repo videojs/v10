@@ -9,10 +9,13 @@ import { renderElement } from '../../utils/use-render';
 import { useSliderContext } from './slider-context';
 
 export interface SliderValueProps extends UIComponentProps<'output', SliderState> {
+  /** Which slider value to display: the current position or the pointer position. */
   type?: 'current' | 'pointer' | undefined;
+  /** Custom formatter for the displayed value. Overrides the root's `formatValue`. */
   format?: ((value: number) => string) | undefined;
 }
 
+/** Displays a formatted text representation of the slider value. Renders an `<output>` element. */
 export const SliderValue = forwardRef(function SliderValue(
   componentProps: SliderValueProps,
   forwardedRef: ForwardedRef<HTMLOutputElement>

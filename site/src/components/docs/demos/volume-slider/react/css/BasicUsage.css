@@ -6,6 +6,20 @@
   width: 100%;
 }
 
+.react-volume-slider-basic__mute-button {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  color: black;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  padding-block: 8px;
+  padding-inline: 20px;
+  cursor: pointer;
+}
+
 .react-volume-slider-basic__slider {
   position: absolute;
   bottom: 10px;
@@ -24,7 +38,7 @@
   top: 0;
   left: 0;
   height: 100%;
-  width: calc(var(--media-slider-fill) * 1%);
+  width: var(--media-slider-fill);
   background: white;
   border-radius: 9999px;
   pointer-events: none;

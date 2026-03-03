@@ -15,6 +15,7 @@ export interface PopoverPopupProps extends UIComponentProps<'div', PopoverState>
 
 const POPOVER_RESET: CSSProperties = { position: 'fixed', inset: 'auto', margin: 0 };
 
+/** Container for the popover content. Positioned relative to the trigger using CSS anchor positioning with a JavaScript fallback. */
 export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(function PopoverPopup(
   { render, className, style, ...elementProps },
   forwardedRef

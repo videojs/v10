@@ -29,6 +29,10 @@ export interface PartSource {
   htmlPath?: string;
   /** Path to React component file (for JSDoc description extraction). */
   reactPath?: string;
+  /** Path to data-attrs file for shared data attributes (sub-parts only). */
+  dataAttrsPath?: string;
+  /** PascalCase component name for data-attrs variable lookup (e.g., "Slider"). */
+  dataAttrsComponentName?: string;
 }
 
 /**

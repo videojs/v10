@@ -1,0 +1,10 @@
+---
+import HtmlDemo from '@/components/docs/demos/HtmlDemo.astro';
+import html from './WithParts.html?raw';
+import './WithParts.css';
+---
+
+<HtmlDemo html={html} />
+<script>
+  import './WithParts.ts';
+</script>

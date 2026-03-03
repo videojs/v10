@@ -10,6 +10,7 @@ import { usePopoverContext } from './popover-context';
 
 export interface PopoverTriggerProps extends UIComponentProps<'button', PopoverState> {}
 
+/** Button that toggles the popover visibility. Renders a `<button>` element. */
 export const PopoverTrigger = forwardRef<HTMLButtonElement, PopoverTriggerProps>(function PopoverTrigger(
   { render, className, style, ...elementProps },
   forwardedRef

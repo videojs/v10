@@ -1,4 +1,6 @@
-.html-popover-basic {
+.html-popover-basic,
+.html-popover-basic media-container {
+  display: block;
   position: relative;
 }
 
@@ -22,8 +24,7 @@
   cursor: pointer;
 }
 
-.html-popover-basic__popup {
-  display: none;
+.html-popover-basic__popover {
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);
   color: white;
@@ -31,8 +32,4 @@
   padding: 12px 16px;
   font-size: 14px;
   white-space: nowrap;
-}
-
-.html-popover-basic__popover[data-open] .html-popover-basic__popup {
-  display: block;
 }

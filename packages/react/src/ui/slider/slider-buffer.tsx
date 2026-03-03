@@ -10,6 +10,7 @@ import { useSliderContext } from './slider-context';
 
 export interface SliderBufferProps extends UIComponentProps<'div', SliderState> {}
 
+/** Displays the buffered range on the slider track. */
 export const SliderBuffer = forwardRef(function SliderBuffer(
   componentProps: SliderBufferProps,
   forwardedRef: ForwardedRef<HTMLDivElement>

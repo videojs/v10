@@ -6,8 +6,8 @@ rendered documentation tables. When implementation diverges from this spec, this
 Inspired by [Base UI](https://github.com/mui/base-ui)'s API reference system. Base UI generates one JSON
 file per component part, and each part gets its own props and data-attributes tables. Our system
 aspires to the same philosophy but has a known architectural limitation: a single Props/State
-interface per component at the core level means only one part (the "primary") can own props and
-state. Non-primary parts are documented with a tag name and description only.
+interface per component at the core level means only one part (the "primary") can own core-level props
+and state. Non-primary parts get shared data attributes, custom React-specific props, and a description.
 
 **Principles:**
 
@@ -307,14 +307,19 @@ state type, the builder falls back to the existing `@type` JSDoc tag extraction.
 
 The builder discovers parts from `index.parts.ts` and matches them to HTML element files.
 
-**Non-local re-export filtering:** Parts discovered from `index.parts.ts` skip re-exports
-from other directories — sources not starting with `./` are filtered out. This means a
-component like TimeSlider whose `index.parts.ts` re-exports parts from `../slider/index.parts`
-will have those re-exports filtered, leaving only locally-defined parts (e.g., Root).
+**Re-exported parts:** When `index.parts.ts` re-exports parts from another component (source
+path doesn't start with `./`), the builder resolves the re-export back to its origin. It
+parses the origin's `index.parts.ts`, matches each re-exported name to the original local
+export, then derives the kebab segment and HTML element file from the **origin component** —
+not the current one. Re-exported parts are never primary. For example, TimeSlider re-exports
+Buffer, Fill, Thumb, Track, and Value from `../slider/index.parts`; each resolves to the
+Slider component's HTML element files (`slider-buffer-element.ts`, etc.).
 
-**Single-part fallback:** When filtering leaves only one part, the component uses single-part
-mode. The remaining part (typically Root) becomes the top-level component — its props/state/
-data-attrs/CSS-vars are promoted to the component level, not nested under `parts`.
+**Single-part fallback:** When all exports are local and filtering leaves only one part, the
+component uses single-part mode. The remaining part (typically Root) becomes the top-level
+component — its props/state/data-attrs/CSS-vars are promoted to the component level, not
+nested under `parts`. Components with re-exported parts (like TimeSlider and VolumeSlider)
+always produce multi-part output since the re-exports are resolved rather than filtered.
 
 **Primary vs. sub-part convention:**
 
@@ -329,17 +334,30 @@ Sub-part element files use the naming convention `{component}-{part}-element.ts`
 
 **Part-to-element matching:**
 
-For each named export in `index.parts.ts` (after non-local filtering):
+For each local named export in `index.parts.ts`:
 1. Derive kebab segment from the export's source path (e.g., `./time-value` → `value`)
 2. Look for `{component}-{part}-element.ts` in the HTML directory
 3. If found → sub-part (gets its own tag name)
 4. If not found AND `{component}-element.ts` exists → check via Core-instantiation for primary
 
+For re-exported parts: use the origin component's kebab and HTML directory for element file
+lookup. The element class name is derived from the filename convention (`kebabToPascal` of the
+basename, e.g., `slider-buffer-element.ts` → `SliderBufferElement`), not from the current
+component's PascalCase name. This same convention-based derivation is also used for local
+non-primary parts.
+
 **What the primary part gets:** The shared core Props, State, data attributes, CSS custom
 properties, and the root element's tag name.
 
-**What sub-parts get:** Their own tag name, a description (from React component JSDoc), and
-empty props/state/dataAttributes/cssCustomProperties.
+**What sub-parts get:** Their own tag name, a description (from React JSDoc), shared data
+attributes from the component's `*-data-attrs.ts` file (when the sub-part's React source
+references `stateAttrMap`), and custom React-specific props (own members on the
+`{LocalName}Props` interface, excluding inherited `UIComponentProps` members and `children`).
+State and CSS custom properties remain empty.
+
+For re-exported sub-parts, data attributes come from the **origin** component's data-attrs file
+(e.g., TimeSlider.Fill uses Slider's data-attrs, not TimeSlider's), because the builder can't
+resolve spread entries and the origin file has the complete set that sub-parts inherit.
 
 **What the top-level component gets:** Empty props, state, dataAttributes, cssCustomProperties,
 and empty platforms. All meaningful data lives in the `parts` record.
@@ -351,9 +369,9 @@ entry are shown. This handles cases like Popover where Arrow, Popup, and Trigger
 React-only compound parts with no HTML element counterparts.
 
 > **Known limitation:** Our architecture has a single Props/State interface per component at the
-> core level, so only the primary part can own them. In Base UI, each part has its own props
-> independently. If a sub-part needs its own props in the future, the core architecture would
-> need per-part interfaces.
+> core level, so only the primary part can own core-level props and state. Sub-parts can declare
+> custom React-specific props (e.g., `SliderValueProps.type`), which the builder extracts from
+> the React source. In Base UI, each part has its own props independently.
 
 ### 2c. Util discovery
 

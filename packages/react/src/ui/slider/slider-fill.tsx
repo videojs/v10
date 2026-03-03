@@ -10,6 +10,7 @@ import { useSliderContext } from './slider-context';
 
 export interface SliderFillProps extends UIComponentProps<'div', SliderState> {}
 
+/** Displays the filled portion from start to the current value. */
 export const SliderFill = forwardRef(function SliderFill(
   componentProps: SliderFillProps,
   forwardedRef: ForwardedRef<HTMLDivElement>

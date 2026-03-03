@@ -22,7 +22,7 @@
   top: 0;
   left: 0;
   height: 100%;
-  width: calc(var(--media-slider-fill) * 1%);
+  width: var(--media-slider-fill);
   background: white;
   pointer-events: none;
 }

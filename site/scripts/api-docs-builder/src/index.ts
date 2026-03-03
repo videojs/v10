@@ -7,7 +7,7 @@ import { extractCSSVars } from './css-vars-handler.js';
 import { extractDataAttrs } from './data-attrs-handler.js';
 import { abbreviateType } from './formatter.js';
 import { extractHtml } from './html-handler.js';
-import { extractPartDescription, extractParts } from './parts-handler.js';
+import { extractPartDescription, extractParts, extractSubPartProps } from './parts-handler.js';
 import {
   type ComponentReference,
   ComponentReferenceSchema,
@@ -206,6 +206,40 @@ function createProgram(sources: ComponentSource[]): ts.Program {
           files.push(fullPath);
         }
       }
+
+      // Include origin component files for re-exported parts
+      const partsSource = fs.readFileSync(source.partsIndexPath, 'utf-8');
+      const nonLocalImports = partsSource.match(/from\s+['"]([^.][^'"]*)['"]/g);
+      if (nonLocalImports) {
+        for (const match of nonLocalImports) {
+          const importPath = match.replace(/from\s+['"]/, '').replace(/['"]$/, '');
+          const originDir = path.resolve(path.dirname(source.partsIndexPath), importPath, '..');
+          const originKebab = path.basename(originDir);
+
+          // Include origin HTML element files
+          const originHtmlDir = path.join(HTML_UI_PATH, originKebab);
+          if (fs.existsSync(originHtmlDir)) {
+            const originElementFiles = fs.readdirSync(originHtmlDir).filter((f) => f.endsWith('-element.ts'));
+            for (const file of originElementFiles) {
+              const fullPath = path.join(originHtmlDir, file);
+              if (!files.includes(fullPath)) {
+                files.push(fullPath);
+              }
+            }
+          }
+
+          // Include origin React .tsx files for JSDoc description extraction
+          if (fs.existsSync(originDir)) {
+            const originReactFiles = fs.readdirSync(originDir).filter((f) => f.endsWith('.tsx'));
+            for (const file of originReactFiles) {
+              const fullPath = path.join(originDir, file);
+              if (!files.includes(fullPath)) {
+                files.push(fullPath);
+              }
+            }
+          }
+        }
+      }
     }
   }
 
@@ -275,6 +309,14 @@ function instantiatesCore(filePath: string): boolean {
   }
 }
 
+function usesDataAttrs(filePath: string): boolean {
+  try {
+    return fs.readFileSync(filePath, 'utf-8').includes('stateAttrMap');
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Discover parts and match them to HTML element files.
  *
@@ -292,16 +334,17 @@ function discoverParts(source: ComponentSource, program: ts.Program): PartSource
   const partExports = extractParts(source.partsIndexPath, program);
   if (partExports.length === 0) return [];
 
-  // Filter out non-local re-exports (e.g., from '../slider/index.parts')
   const localExports = partExports.filter((p) => p.source.startsWith('./'));
+  const nonLocalExports = partExports.filter((p) => !p.source.startsWith('./'));
 
-  if (localExports.length === 0) return [];
+  if (localExports.length === 0 && nonLocalExports.length === 0) return [];
 
   const componentKebab = source.kebab;
   const htmlDir = path.join(HTML_UI_PATH, componentKebab);
 
   const parts: PartSource[] = [];
 
+  // Process local exports
   for (const partExport of localExports) {
     const kebab = partKebabFromSource(partExport.source, componentKebab);
 
@@ -316,6 +359,8 @@ function discoverParts(source: ComponentSource, program: ts.Program): PartSource
     // Primary detection: the part whose React source instantiates the Core class
     const isPrimary = !!reactPath && instantiatesCore(reactPath);
 
+    const subPartUsesDataAttrs = !isPrimary && !!reactPath && usesDataAttrs(reactPath);
+
     const part: PartSource = {
       name: partExport.name,
       localName: partExport.localName,
@@ -323,9 +368,80 @@ function discoverParts(source: ComponentSource, program: ts.Program): PartSource
       isPrimary,
       htmlPath: hasSubPartElement ? subPartElementFile : isPrimary ? source.htmlPath : undefined,
       reactPath,
+      dataAttrsPath: subPartUsesDataAttrs ? source.dataAttrsPath : undefined,
+      dataAttrsComponentName: subPartUsesDataAttrs ? source.name : undefined,
     };
 
     parts.push(part);
+  }
+
+  // Resolve re-exported parts from other components
+  if (nonLocalExports.length > 0) {
+    // Group by source module path
+    const bySource = new Map<string, typeof nonLocalExports>();
+    for (const exp of nonLocalExports) {
+      const list = bySource.get(exp.source) ?? [];
+      list.push(exp);
+      bySource.set(exp.source, list);
+    }
+
+    const partsDir = path.dirname(source.partsIndexPath!);
+
+    for (const [sourcePath, exports] of bySource) {
+      // Resolve the origin index.parts.ts file
+      const originPartsFile = path.resolve(partsDir, `${sourcePath}.ts`);
+      if (!fs.existsSync(originPartsFile)) {
+        log.warn(`${source.name}: Re-export source not found: ${originPartsFile}`);
+        continue;
+      }
+
+      // Derive origin component kebab from directory name
+      const originKebab = path.basename(path.dirname(originPartsFile));
+      const originHtmlDir = path.join(HTML_UI_PATH, originKebab);
+      const originReactDir = path.dirname(originPartsFile);
+
+      // Parse origin's exports to match re-exported names to original local exports
+      const originExports = extractParts(originPartsFile, program);
+
+      for (const reExport of exports) {
+        // Find the matching export in the origin file
+        const originExport = originExports.find((o) => o.name === reExport.name);
+        if (!originExport) {
+          log.warn(`${source.name}: Re-exported part "${reExport.name}" not found in ${originPartsFile}`);
+          continue;
+        }
+
+        // Derive kebab from the origin export's source path
+        const kebab = partKebabFromSource(originExport.source, originKebab);
+
+        // Look for element file in origin's HTML directory
+        const subPartElementFile = path.join(originHtmlDir, `${originKebab}-${kebab}-element.ts`);
+        const hasSubPartElement = fs.existsSync(subPartElementFile);
+
+        // Resolve React source from origin component for JSDoc description
+        const reactFile = path.join(originReactDir, `${originExport.source.replace('./', '')}.tsx`);
+        const reactPath = fs.existsSync(reactFile) ? reactFile : undefined;
+
+        const reExportUsesDataAttrs = !!reactPath && usesDataAttrs(reactPath);
+        const originDataAttrsFile = path.join(CORE_UI_PATH, originKebab, `${originKebab}-data-attrs.ts`);
+        const originDataAttrsPath =
+          reExportUsesDataAttrs && fs.existsSync(originDataAttrsFile) ? originDataAttrsFile : undefined;
+        const originComponentName = originDataAttrsPath ? kebabToPascal(originKebab) : undefined;
+
+        const part: PartSource = {
+          name: reExport.name,
+          localName: originExport.localName,
+          kebab,
+          isPrimary: false, // Re-exported parts are never primary
+          htmlPath: hasSubPartElement ? subPartElementFile : undefined,
+          reactPath,
+          dataAttrsPath: originDataAttrsPath,
+          dataAttrsComponentName: originComponentName,
+        };
+
+        parts.push(part);
+      }
+    }
   }
 
   const primaryCount = parts.filter((p) => p.isPrimary).length;
@@ -405,16 +521,24 @@ function buildMultiPartReference(
 
       partsRecord[part.kebab] = partRef;
     } else {
-      // Non-primary part: extract only HTML tag
-      const elementName = `${source.name}${part.name}Element`;
-      const htmlData = part.htmlPath ? extractHtml(part.htmlPath, program, source.name, elementName) : null;
+      // Non-primary part: extract HTML tag, shared data attributes, and custom React props
+      const elementName = part.htmlPath ? kebabToPascal(path.basename(part.htmlPath, '.ts')) : undefined;
+      const htmlData =
+        part.htmlPath && elementName ? extractHtml(part.htmlPath, program, source.name, elementName) : null;
+
+      const dataAttrsData =
+        part.dataAttrsPath && part.dataAttrsComponentName
+          ? extractDataAttrs(part.dataAttrsPath, program, part.dataAttrsComponentName)
+          : null;
+
+      const subPartProps = part.reactPath ? extractSubPartProps(part.reactPath, program, part.localName) : {};
 
       const partRef: PartReference = {
         name: part.name,
         description,
-        props: {},
+        props: sortProps(subPartProps),
         state: {},
-        dataAttributes: {},
+        dataAttributes: dataAttrsData ? buildDataAttrs(dataAttrsData) : {},
         cssCustomProperties: {},
         platforms: { react: {} },
       };

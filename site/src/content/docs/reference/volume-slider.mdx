@@ -11,28 +11,28 @@ import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
 
 {/* React demos */}
-import BasicUsageDemoReact from "@/components/docs/demos/volume-slider/react/css/BasicUsage";
-import basicUsageReactTsx from "@/components/docs/demos/volume-slider/react/css/BasicUsage.tsx?raw";
-import basicUsageReactCss from "@/components/docs/demos/volume-slider/react/css/BasicUsage.css?raw";
+import WithPartsDemoReact from "@/components/docs/demos/volume-slider/react/css/WithParts";
+import withPartsReactTsx from "@/components/docs/demos/volume-slider/react/css/WithParts.tsx?raw";
+import withPartsReactCss from "@/components/docs/demos/volume-slider/react/css/WithParts.css?raw";
 
 {/* HTML demos */}
-import BasicUsageDemoHtml from "@/components/docs/demos/volume-slider/html/css/BasicUsage.astro";
-import basicUsageHtml from "@/components/docs/demos/volume-slider/html/css/BasicUsage.html?raw";
-import basicUsageHtmlCss from "@/components/docs/demos/volume-slider/html/css/BasicUsage.css?raw";
-import basicUsageHtmlTs from "@/components/docs/demos/volume-slider/html/css/BasicUsage.ts?raw";
+import WithPartsDemoHtml from "@/components/docs/demos/volume-slider/html/css/WithParts.astro";
+import withPartsHtml from "@/components/docs/demos/volume-slider/html/css/WithParts.html?raw";
+import withPartsHtmlCss from "@/components/docs/demos/volume-slider/html/css/WithParts.css?raw";
+import withPartsHtmlTs from "@/components/docs/demos/volume-slider/html/css/WithParts.ts?raw";
 
 ## Anatomy
 
 <FrameworkCase frameworks={["react"]}>
-```tsx
-<VolumeSlider.Root />
-```
+  ```tsx
+  <VolumeSlider.Root />
+  ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-```html
-<media-volume-slider></media-volume-slider>
-```
+  ```html
+  <media-volume-slider></media-volume-slider>
+  ```
 </FrameworkCase>
 
 ## Behavior
@@ -41,18 +41,13 @@ Controls the media volume level. The slider maps its 0–100 internal range to t
 
 ## Styling
 
-Use CSS custom properties to style the fill and pointer levels:
+Use [CSS custom properties](#css-custom-properties) to style the fill and pointer levels:
 
 ```css
 media-volume-slider::before {
   width: calc(var(--media-slider-fill) * 1%);
 }
 ```
-
-| CSS Variable | Description |
-|-------------|-------------|
-| `--media-slider-fill` | Current volume level as 0–100 |
-| `--media-slider-pointer` | Pointer hover position as 0–100 |
 
 ## Accessibility
 
@@ -65,27 +60,31 @@ Renders with `role="slider"` and automatic `aria-label` of "Volume". Override wi
 
 ## Examples
 
-### Basic Usage
+Nest sub-components for full control over the slider's DOM structure. This example includes a track, fill bar, draggable thumb, and a tooltip that shows the volume percentage on hover.
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
-    <Demo files={[
-      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
-      { title: "App.css", code: basicUsageReactCss, lang: "css" },
-    ]}>
-      <BasicUsageDemoReact client:idle />
+    <Demo
+      files={[
+        { title: "App.tsx", code: withPartsReactTsx, lang: "tsx" },
+        { title: "App.css", code: withPartsReactCss, lang: "css" },
+      ]}
+    >
+      <WithPartsDemoReact client:idle />
     </Demo>
   </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
   <StyleCase styles={["css"]}>
-    <Demo files={[
-      { title: "index.html", code: basicUsageHtml, lang: "html" },
-      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
-      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
-    ]}>
-      <BasicUsageDemoHtml />
+    <Demo
+      files={[
+        { title: "index.html", code: withPartsHtml, lang: "html" },
+        { title: "index.css", code: withPartsHtmlCss, lang: "css" },
+        { title: "index.ts", code: withPartsHtmlTs, lang: "ts" },
+      ]}
+    >
+      <WithPartsDemoHtml />
     </Demo>
   </StyleCase>
 </FrameworkCase>

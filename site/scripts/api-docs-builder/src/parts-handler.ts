@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 import * as tae from 'typescript-api-extractor';
+import type { PropDef } from './types.js';
 
 export interface PartExport {
   /** PascalCase exported part name (e.g., "Value", "Group", "Separator"). */
@@ -71,4 +72,44 @@ export function extractPartDescription(filePath: string, program: ts.Program, pa
   let desc = component?.documentation?.description;
   if (desc) desc = desc.replace(/\n*@example[\s\S]*$/, '').trim();
   return desc || undefined;
+}
+
+/**
+ * Extract custom React-specific props from a sub-part's Props interface.
+ *
+ * Walks syntactic own members of `{localName}Props` (excluding inherited
+ * `UIComponentProps` members and `children`).
+ */
+export function extractSubPartProps(filePath: string, program: ts.Program, localName: string): Record<string, PropDef> {
+  const sourceFile = program.getSourceFile(filePath);
+  if (!sourceFile) return {};
+  const checker = program.getTypeChecker();
+  const props: Record<string, PropDef> = {};
+
+  ts.forEachChild(sourceFile, function visit(node) {
+    if (ts.isInterfaceDeclaration(node) && node.name.text === `${localName}Props`) {
+      for (const member of node.members) {
+        if (!ts.isPropertySignature(member) || !member.name || !ts.isIdentifier(member.name)) continue;
+        const name = member.name.text;
+        if (name === 'children' || !member.type) continue;
+
+        let typeStr = checker.typeToString(checker.getTypeFromTypeNode(member.type));
+        if (member.questionToken) typeStr = typeStr.replace(/ \| undefined$/, '');
+
+        const propDef: PropDef = { type: typeStr };
+
+        const symbol = checker.getSymbolAtLocation(member.name);
+        if (symbol) {
+          const docs = symbol.getDocumentationComment(checker);
+          const desc = docs.map((d) => d.text).join('');
+          if (desc) propDef.description = desc;
+        }
+
+        props[name] = propDef;
+      }
+    }
+    ts.forEachChild(node, visit);
+  });
+
+  return props;
 }

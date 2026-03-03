@@ -10,6 +10,7 @@ import { useSliderContext } from './slider-context';
 
 export interface SliderTrackProps extends UIComponentProps<'div', SliderState> {}
 
+/** Contains the slider's visual track and interactive hit zone. */
 export const SliderTrack = forwardRef(function SliderTrack(
   componentProps: SliderTrackProps,
   forwardedRef: ForwardedRef<HTMLDivElement>

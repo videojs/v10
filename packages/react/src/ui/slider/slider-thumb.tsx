@@ -10,6 +10,7 @@ import { useSliderContext } from './slider-context';
 
 export interface SliderThumbProps extends UIComponentProps<'div', SliderState> {}
 
+/** Draggable handle for setting the slider value. Receives focus and handles keyboard interaction. */
 export const SliderThumb = forwardRef(function SliderThumb(
   componentProps: SliderThumbProps,
   forwardedRef: ForwardedRef<HTMLDivElement>

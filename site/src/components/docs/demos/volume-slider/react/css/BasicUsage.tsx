@@ -1,4 +1,4 @@
-import { createPlayer, VolumeSlider } from '@videojs/react';
+import { createPlayer, MuteButton, VolumeSlider } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
 import './BasicUsage.css';
@@ -15,6 +15,10 @@ export default function BasicUsage() {
           muted
           playsInline
           loop
+        />
+        <MuteButton
+          className="react-volume-slider-basic__mute-button"
+          render={(props, state) => <button {...props}>{state.muted ? 'Unmute' : 'Mute'}</button>}
         />
         <VolumeSlider.Root className="react-volume-slider-basic__slider" />
       </Player.Container>
