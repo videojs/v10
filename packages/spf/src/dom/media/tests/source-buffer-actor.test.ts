@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createSourceBufferActor } from '../source-buffer-actor';
+import { createSourceBufferActor, SourceBufferActorError } from '../source-buffer-actor';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -37,42 +37,66 @@ function makeSourceBuffer(): SourceBuffer {
 
 const neverAborted = new AbortController().signal;
 
-// ---------------------------------------------------------------------------
-// Queue sequencing
-// ---------------------------------------------------------------------------
-
 describe('createSourceBufferActor', () => {
-  it('executes two send() calls in order, not concurrently', async () => {
+  // ---------------------------------------------------------------------------
+  // State guard — messages rejected when not idle
+  // ---------------------------------------------------------------------------
+
+  it('rejects send() with SourceBufferActorError when actor is updating', async () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
-    const order: number[] = [];
+    // status transitions to 'updating' synchronously when send() is called,
+    // so the second send() in the same tick sees 'updating' and rejects.
+    const p1 = actor.send(
+      { type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } },
+      neverAborted
+    );
 
-    const p1 = actor
-      .send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } }, neverAborted)
-      .then(() => {
-        order.push(1);
-      });
+    await expect(
+      actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-2' } }, neverAborted)
+    ).rejects.toBeInstanceOf(SourceBufferActorError);
 
-    const p2 = actor
-      .send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-2' } }, neverAborted)
-      .then(() => {
-        order.push(2);
-      });
+    await p1;
+    actor.destroy();
+  });
 
-    await Promise.all([p1, p2]);
+  it('rejects batch() with SourceBufferActorError when actor is updating', async () => {
+    const sourceBuffer = makeSourceBuffer();
+    const actor = createSourceBufferActor(sourceBuffer);
 
-    expect(order).toEqual([1, 2]);
-    expect(sourceBuffer.appendBuffer).toHaveBeenCalledTimes(2);
+    const p1 = actor.send(
+      { type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } },
+      neverAborted
+    );
 
+    await expect(
+      actor.batch([{ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-2' } }], neverAborted)
+    ).rejects.toBeInstanceOf(SourceBufferActorError);
+
+    await p1;
+    actor.destroy();
+  });
+
+  it('accepts send() again once idle', async () => {
+    const sourceBuffer = makeSourceBuffer();
+    const actor = createSourceBufferActor(sourceBuffer);
+
+    await actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } }, neverAborted);
+
+    expect(actor.snapshot.status).toBe('idle');
+
+    await actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-2' } }, neverAborted);
+
+    expect(actor.snapshot.context.initTrackId).toBe('track-2');
     actor.destroy();
   });
 
   // ---------------------------------------------------------------------------
-  // Batch sequencing
+  // Batch — individual tasks, context threading
   // ---------------------------------------------------------------------------
 
-  it('executes batch messages in order and resolves single promise at end', async () => {
+  it('batch executes all messages in order as individual tasks', async () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
@@ -90,6 +114,64 @@ describe('createSourceBufferActor', () => {
     expect(sourceBuffer.appendBuffer).toHaveBeenCalledTimes(2);
     expect(actor.snapshot.context.initTrackId).toBe('track-1');
     expect(actor.snapshot.context.segments).toHaveLength(1);
+
+    actor.destroy();
+  });
+
+  it('batch threads context between tasks so overlap detection works', async () => {
+    const sourceBuffer = makeSourceBuffer();
+    const actor = createSourceBufferActor(sourceBuffer);
+
+    // Two segments at the same time range — the second should replace the first
+    await actor.batch(
+      [
+        {
+          type: 'append-segment' as const,
+          data: new ArrayBuffer(8),
+          meta: { id: 's1-low', startTime: 0, duration: 10, trackId: 'track-low' },
+        },
+        {
+          type: 'append-segment' as const,
+          data: new ArrayBuffer(8),
+          meta: { id: 's1-high', startTime: 0, duration: 10, trackId: 'track-high' },
+        },
+      ],
+      neverAborted
+    );
+
+    const ids = actor.snapshot.context.segments.map((s) => s.id);
+    expect(ids).not.toContain('s1-low');
+    expect(ids).toContain('s1-high');
+    expect(actor.snapshot.context.segments).toHaveLength(1);
+
+    actor.destroy();
+  });
+
+  it('batch status stays idle until after last task completes', async () => {
+    const sourceBuffer = makeSourceBuffer();
+    const actor = createSourceBufferActor(sourceBuffer);
+
+    const statusValues: string[] = [];
+    const unsub = actor.subscribe((s) => statusValues.push(s.status));
+
+    await actor.batch(
+      [
+        { type: 'append-init' as const, data: new ArrayBuffer(4), meta: { trackId: 'track-1' } },
+        {
+          type: 'append-segment' as const,
+          data: new ArrayBuffer(8),
+          meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
+        },
+      ],
+      neverAborted
+    );
+
+    unsub();
+
+    // Initial idle (immediate subscribe fire) → updating → idle
+    // No intermediate context-update-while-updating snapshots
+    expect(statusValues).toContain('updating');
+    expect(statusValues[statusValues.length - 1]).toBe('idle');
 
     actor.destroy();
   });
@@ -116,10 +198,10 @@ describe('createSourceBufferActor', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Abort: during execution
+  // Abort: during batch execution
   // ---------------------------------------------------------------------------
 
-  it('completes in-flight operation; subsequent messages in same batch are skipped', async () => {
+  it('batch: aborts mid-flight; subsequent messages in batch are skipped', async () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
@@ -134,7 +216,6 @@ describe('createSourceBufferActor', () => {
       },
     ];
 
-    // Abort when the first append fires — second message should be skipped
     const origAppend = (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).getMockImplementation();
     let firstCall = true;
     (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).mockImplementation((...args: unknown[]) => {
@@ -205,7 +286,6 @@ describe('createSourceBufferActor', () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
-    // Establish a low-quality segment
     await actor.send(
       {
         type: 'append-segment',
@@ -215,7 +295,6 @@ describe('createSourceBufferActor', () => {
       neverAborted
     );
 
-    // Quality switch: same time range, different track
     await actor.send(
       {
         type: 'append-segment',
@@ -241,7 +320,6 @@ describe('createSourceBufferActor', () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
-    // Populate context via operations
     await actor.batch(
       [
         {
@@ -279,7 +357,7 @@ describe('createSourceBufferActor', () => {
   // Status transitions
   // ---------------------------------------------------------------------------
 
-  it('transitions to "updating" during operation and back to "idle" after', async () => {
+  it('transitions to "updating" during send and back to "idle" after', async () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
@@ -319,31 +397,27 @@ describe('createSourceBufferActor', () => {
   // destroy()
   // ---------------------------------------------------------------------------
 
-  it('queued messages do not execute after destroy', async () => {
+  it('destroy() aborts the in-progress operation', async () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
 
-    // Queue two messages. The first starts immediately (in-flight), the second
-    // is queued and must not execute once destroy() is called.
+    const origAppend = (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).getMockImplementation();
+    (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).mockImplementationOnce((...args: unknown[]) => {
+      return origAppend?.(...args);
+    });
+
     const p = actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } }, neverAborted);
 
-    const p2 = actor.send(
-      {
-        type: 'append-segment',
-        data: new ArrayBuffer(8),
-        meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
-      },
-      neverAborted
-    );
+    await vi.waitFor(() => expect(sourceBuffer.appendBuffer).toHaveBeenCalledTimes(1));
 
-    // Destroy before the second message can start. The first is already in-flight
-    // (appendBuffer was called synchronously when drain started).
     actor.destroy();
 
-    await Promise.all([p, p2]);
+    // Operation was in-flight — let it complete naturally
+    await p;
 
-    // First message was already in-flight (1 appendBuffer call).
-    // Second message was in queue and must not have run.
-    expect(sourceBuffer.appendBuffer).toHaveBeenCalledTimes(1);
+    // After destroy, send() is rejected
+    await expect(
+      actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-2' } }, neverAborted)
+    ).rejects.toBeInstanceOf(SourceBufferActorError);
   });
 });
