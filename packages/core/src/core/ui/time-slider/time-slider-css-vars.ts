@@ -1,3 +1,5 @@
+// Values from SliderCSSVars — duplicated because the api-docs-builder extracts
+// JSDoc from the object literal, so we need component-specific descriptions here.
 /** CSS custom property names for time slider visual state. */
 export const TimeSliderCSSVars = {
   /** Fill level percentage (0–100), representing current playback position. */
