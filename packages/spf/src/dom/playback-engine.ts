@@ -26,7 +26,6 @@ import { syncTextTrackModes } from './features/sync-text-track-modes';
 import { trackCurrentTime } from './features/track-current-time';
 import { trackPlaybackInitiated } from './features/track-playback-initiated';
 import { updateDuration } from './features/update-duration';
-import { createSourceBufferActor, type SourceBufferActor } from './media/source-buffer-actor';
 import { destroyVttParser } from './text/parse-vtt-segment';
 
 /**
@@ -274,39 +273,25 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     setupSourceBuffer({ state, owners }, { type: 'video' }),
     setupSourceBuffer({ state, owners }, { type: 'audio' }),
 
-    // 5.5. Wire SourceBufferActors (created/destroyed with their SourceBuffers).
-    //      Actors are local variables — not in owners — to avoid triggering extra
-    //      notification cycles on loadSegments and other owners subscribers.
-    //      Snapshot bridging into state is deferred to Phase 2, when loadSegments
-    //      routes operations through the actor and consumers need the reactive state.
-    (() => {
-      let videoActor: SourceBufferActor | null = null;
-      let audioActor: SourceBufferActor | null = null;
-
-      const unsubOwners = owners.subscribe((current) => {
-        if (current.videoBuffer && !videoActor) {
-          videoActor = createSourceBufferActor(current.videoBuffer);
-        } else if (!current.videoBuffer && videoActor) {
-          videoActor.destroy();
-          videoActor = null;
-        }
-
-        if (current.audioBuffer && !audioActor) {
-          audioActor = createSourceBufferActor(current.audioBuffer);
-        } else if (!current.audioBuffer && audioActor) {
-          audioActor.destroy();
-          audioActor = null;
-        }
-      });
-
-      return () => {
-        unsubOwners();
-        videoActor?.destroy();
-        audioActor?.destroy();
-      };
-    })(),
-
     // 5.5. Track currentTime from mediaElement (feeds forward buffer management)
+    //
+    // NOTE: SourceBufferActor wiring is intentionally absent here in Phase 1.
+    //
+    // Attempting to wire actors into the engine at this layer revealed a
+    // brittleness in the current architecture: every patch to `owners` —
+    // regardless of which field changed — wakes up ALL combineLatest subscribers
+    // (loadSegments, endOfStream, etc.). Storing actor references in owners
+    // caused loadSegments to re-evaluate mid-task, store a spurious pending
+    // state, and run a second loading cycle on completion.
+    //
+    // This means any future feature that needs to introduce new reactive state
+    // alongside SourceBuffers faces the same hazard. The right fix is for
+    // loadSegments (and other orchestrations) to route their MSE operations
+    // through the actor directly, at which point the actor lifecycle is
+    // co-located with its consumer rather than managed centrally here.
+    //
+    // Actor wiring will be introduced in Phase 2 as part of the loadSegments
+    // refactor. See .claude/plans/spf/buffer-state-shadow-actual-model.md.
     trackCurrentTime({ state, owners }),
 
     // 6. Load segments (when SourceBuffer ready and track resolved)
