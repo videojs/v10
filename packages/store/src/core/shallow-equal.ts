@@ -1,4 +1,4 @@
-export type Selector<State, Result> = (state: State) => Result;
+export type Selector<State, Result> = ((state: State) => Result) & { displayName?: string };
 
 export type Comparator<T> = (a: T, b: T) => boolean;
 

@@ -14,7 +14,7 @@ interface MediaButtonConfig<Core extends UICore> {
   displayName: string;
   core: { new (): Core; defaultProps: Record<string, unknown> };
   stateAttrMap: StateAttrMap<object>;
-  selector: Selector<object, InferMediaState<Core> | undefined> & { displayName?: string };
+  selector: Selector<object, InferMediaState<Core> | undefined>;
   action: (core: Core, state: InferMediaState<Core>) => void;
 }
 

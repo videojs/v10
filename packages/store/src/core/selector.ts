@@ -1,6 +1,7 @@
 import { pick } from '@videojs/utils/object';
 import { AbortControllerRegistry } from './abort-controller-registry';
 import { throwNoTargetError } from './errors';
+import type { Selector } from './shallow-equal';
 import type { AnySlice, InferSliceState, StateContext } from './slice';
 
 const stateContext: StateContext<unknown> = {
@@ -23,9 +24,7 @@ const stateContext: StateContext<unknown> = {
  *
  * @param slice - The slice to create a selector for.
  */
-export function createSelector<S extends AnySlice>(
-  slice: S
-): ((state: object) => InferSliceState<S> | undefined) & { displayName?: string } {
+export function createSelector<S extends AnySlice>(slice: S): Selector<object, InferSliceState<S> | undefined> {
   const initialState = slice.state(stateContext);
   const keys = Object.keys(initialState as object);
 
