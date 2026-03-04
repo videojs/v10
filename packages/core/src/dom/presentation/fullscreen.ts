@@ -49,12 +49,12 @@ export function isElementFullscreen(container: HTMLElement | null, media: HTMLMe
 }
 
 /**
- * Enter fullscreen mode.
+ * Request fullscreen mode.
  *
  * Tries container first (to show custom UI), falls back to media element
  * for platforms that only support video fullscreen (iOS Safari).
  */
-export async function enterFullscreen(container: HTMLElement | null, media: HTMLMediaElement): Promise<void> {
+export async function requestFullscreen(container: HTMLElement | null, media: HTMLMediaElement): Promise<void> {
   const video = media as WebKitVideoElement;
 
   // Try container first (standard and WebKit APIs)

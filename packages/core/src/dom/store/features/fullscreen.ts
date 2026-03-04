@@ -3,10 +3,10 @@ import { listen } from '@videojs/utils/dom';
 import type { MediaFullscreenState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import {
-  enterFullscreen,
   exitFullscreen,
   isElementFullscreen,
   isFullscreenSupported,
+  requestFullscreen,
 } from '../../presentation/fullscreen';
 import { exitPiP, isPiPActive } from '../../presentation/pip';
 import type { WebKitVideoElement } from '../../presentation/types';
@@ -25,7 +25,7 @@ export const fullscreenFeature = definePlayerFeature({
         await exitPiP(media);
       }
 
-      return enterFullscreen(container, media);
+      return requestFullscreen(container, media);
     },
 
     async exitFullscreen() {
