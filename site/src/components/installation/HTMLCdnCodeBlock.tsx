@@ -9,22 +9,25 @@ function getSkinImportParts(skin: Skin): { group: string; skinFile: string } {
   return { group: skin, skinFile: 'skin' };
 }
 
+// jsdelivr doesn't resolve Node package exports, so we use the full file path
+const CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html@next/dist/default/define';
+
 function generateCdnCode(useCase: UseCase, skin: Skin): string {
   if (useCase === 'background-video') {
     return `<script>
-  import 'https://cdn.jsdelivr.net/npm/videojs/html/background/player.js';
-  import 'https://cdn.jsdelivr.net/npm/videojs/html/background/skin.js';
+  import '${CDN_BASE}/background/player.js';
+  import '${CDN_BASE}/background/skin.js';
 </script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/videojs/html/background/skin.css" />`;
+<link rel="stylesheet" href="${CDN_BASE}/background/skin.css" />`;
   }
 
   const { group, skinFile } = getSkinImportParts(skin);
 
   return `<script>
-  import 'https://cdn.jsdelivr.net/npm/videojs/html/${group}/player.js';
-  import 'https://cdn.jsdelivr.net/npm/videojs/html/${group}/${skinFile}.js';
+  import '${CDN_BASE}/${group}/player.js';
+  import '${CDN_BASE}/${group}/${skinFile}.js';
 </script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/videojs/html/${group}/${skinFile}.css" />`;
+<link rel="stylesheet" href="${CDN_BASE}/${group}/${skinFile}.css" />`;
 }
 
 export default function HTMLCdnCodeBlock() {

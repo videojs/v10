@@ -2,25 +2,25 @@ import { useStore } from '@nanostores/react';
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import type { Renderer, Skin, UseCase } from '@/stores/installation';
-import { installMethod, muxPlaybackId, renderer, skin, sourceUrl, useCase } from '@/stores/installation';
+import { installMethod, renderer, skin, sourceUrl, useCase } from '@/stores/installation';
 
 function getRendererTag(renderer: Renderer): string {
   const map: Record<Renderer, string> = {
     'background-video': 'background-video',
-    cloudflare: 'cloudflare-video',
-    dash: 'dash-video',
+    // cloudflare: 'cloudflare-video',
+    // dash: 'dash-video',
     hls: 'hls-video',
     'html5-audio': 'audio',
     'html5-video': 'video',
-    jwplayer: 'jwplayer-video',
-    'mux-audio': 'mux-audio',
-    'mux-background-video': 'mux-background-video',
-    'mux-video': 'mux-video',
+    // jwplayer: 'jwplayer-video',
+    // 'mux-audio': 'mux-audio',
+    // 'mux-background-video': 'mux-background-video',
+    // 'mux-video': 'mux-video',
     // shaka: 'shaka-video',
-    spotify: 'spotify-audio',
-    vimeo: 'vimeo-video',
-    wistia: 'wistia-video',
-    youtube: 'youtube-video',
+    // spotify: 'spotify-audio',
+    // vimeo: 'vimeo-video',
+    // wistia: 'wistia-video',
+    // youtube: 'youtube-video',
   };
   return map[renderer];
 }
@@ -42,34 +42,22 @@ function getSkinTag(useCase: UseCase, skin: Skin): string {
   const map: Record<Skin, string> = {
     video: 'video-skin',
     audio: 'audio-skin',
-    'minimal-video': 'minimal-video-skin',
-    'minimal-audio': 'minimal-audio-skin',
+    'minimal-video': 'video-minimal-skin',
+    'minimal-audio': 'audio-minimal-skin',
   };
   return map[skin];
 }
 
-function getRendererElement(renderer: Renderer, playbackId: string | null, url: string): string {
+function getRendererElement(renderer: Renderer, url: string): string {
   const tag = getRendererTag(renderer);
-
-  // When renderer is a mux variant and we have a playback ID, use playback-id attribute
-  if ((renderer === 'mux-video' || renderer === 'mux-audio' || renderer === 'mux-background-video') && playbackId) {
-    return `<${tag} playback-id="${playbackId}"></${tag}>`;
-  }
-
   const src = url.trim() || '...';
   return `<${tag} src="${src}"></${tag}>`;
 }
 
-function generateHTMLCode(
-  useCase: UseCase,
-  skin: Skin,
-  renderer: Renderer,
-  playbackId: string | null,
-  url: string
-): string {
+function generateHTMLCode(useCase: UseCase, skin: Skin, renderer: Renderer, url: string): string {
   const providerTag = getProviderTag(useCase);
   const skinTag = getSkinTag(useCase, skin);
-  const rendererElement = getRendererElement(renderer, playbackId, url);
+  const rendererElement = getRendererElement(renderer, url);
 
   return `<!--
   The PlayerProvider passes state between the UI components
@@ -99,24 +87,37 @@ function getSkinImportParts(skin: Skin): { group: string; skinFile: string } {
   return { group: skin, skinFile: 'skin' };
 }
 
-function generateJS(useCase: UseCase, skin: Skin): string {
+function getMediaImportSubpath(renderer: Renderer): string | null {
+  const map: Partial<Record<Renderer, string>> = {
+    hls: 'hls-video',
+    // 'mux-audio': 'mux-audio',
+    // 'mux-background-video': 'mux-background-video',
+    // 'mux-video': 'mux-video',
+  };
+  return map[renderer] ?? null;
+}
+
+function generateJS(useCase: UseCase, skin: Skin, renderer: Renderer): string {
   if (useCase === 'background-video') {
+    const mediaSubpath = getMediaImportSubpath(renderer);
+    const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
     return `import '@videojs/html/background/player';
 import '@videojs/html/background/skin';
 import '@videojs/html/background/skin.css';
-import '@videojs/html/background/video';`;
+import '@videojs/html/background/video';${mediaImport}`;
   }
   const { group, skinFile } = getSkinImportParts(skin);
+  const mediaSubpath = getMediaImportSubpath(renderer);
+  const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
   return `import '@videojs/html/${group}/player';
 import '@videojs/html/${group}/${skinFile}';
-import '@videojs/html/${group}/${skinFile}.css';`;
+import '@videojs/html/${group}/${skinFile}.css';${mediaImport}`;
 }
 
 export default function HTMLUsageCodeBlock() {
   const $useCase = useStore(useCase);
   const $skin = useStore(skin);
   const $renderer = useStore(renderer);
-  const $muxPlaybackId = useStore(muxPlaybackId);
   const $installMethod = useStore(installMethod);
   const $sourceUrl = useStore(sourceUrl);
 
@@ -130,7 +131,7 @@ export default function HTMLUsageCodeBlock() {
             </Tab>
           </TabsList>
           <TabsPanel value="javascript" initial>
-            <ClientCode code={generateJS($useCase, $skin)} lang="javascript" />
+            <ClientCode code={generateJS($useCase, $skin, $renderer)} lang="javascript" />
           </TabsPanel>
         </TabsRoot>
       )}
@@ -141,7 +142,7 @@ export default function HTMLUsageCodeBlock() {
           </Tab>
         </TabsList>
         <TabsPanel value="html" initial>
-          <ClientCode code={generateHTMLCode($useCase, $skin, $renderer, $muxPlaybackId, $sourceUrl)} lang="html" />
+          <ClientCode code={generateHTMLCode($useCase, $skin, $renderer, $sourceUrl)} lang="html" />
         </TabsPanel>
       </TabsRoot>
     </>
