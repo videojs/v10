@@ -35,6 +35,7 @@ export { SliderElement } from './ui/slider/slider-element';
 export type { SliderEventMap, SliderValueEventDetail } from './ui/slider/slider-events';
 export { SliderFillElement } from './ui/slider/slider-fill-element';
 export { SliderThumbElement } from './ui/slider/slider-thumb-element';
+export { SliderThumbnailElement } from './ui/slider/slider-thumbnail-element';
 export { SliderTrackElement } from './ui/slider/slider-track-element';
 export { SliderValueElement } from './ui/slider/slider-value-element';
 export { ThumbnailElement } from './ui/thumbnail/thumbnail-element';
