@@ -1,4 +1,4 @@
-import { type StateAttrMap, TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
+import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
 import {
   applyStateDataAttrs,
   createSlider,
@@ -125,7 +125,7 @@ export class TimeSliderElement extends MediaElement {
     // Provide context to child elements with base slider data attrs.
     this.#provider.setValue({
       state,
-      stateAttrMap: TimeSliderDataAttrs as StateAttrMap<object>,
+      stateAttrMap: TimeSliderDataAttrs,
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
       thumbAttrs: this.#core.getAttrs(state),
       thumbProps: this.#slider.thumbProps,

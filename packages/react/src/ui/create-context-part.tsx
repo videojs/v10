@@ -8,27 +8,24 @@ import type { UIComponentProps } from '../utils/types';
 import { renderElement } from '../utils/use-render';
 
 /** Shape that compound context values must satisfy for parts to consume. */
-interface PartContextValue {
-  state: object;
-  stateAttrMap: StateAttrMap<object>;
+interface PartContextValue<State extends object> {
+  state: State;
+  stateAttrMap: StateAttrMap<State>;
 }
 
-interface ContextPartConfig {
+interface ContextPartConfig<State extends object> {
   displayName: string;
   tag: keyof React.JSX.IntrinsicElements;
-  useContext: () => PartContextValue | undefined;
+  useContext: () => PartContextValue<State> | undefined;
   staticProps?: Record<string, unknown>;
 }
 
 /**
  * Creates a compound-component part that consumes context and applies
  * data attributes from `ctx.state` + `ctx.stateAttrMap`.
- *
- * The `State` generic controls the public component props type
- * (e.g. what `className` callbacks receive).
  */
 export function createContextPart<State extends object>(
-  config: ContextPartConfig
+  config: ContextPartConfig<State>
 ): ForwardRefExoticComponent<UIComponentProps<typeof config.tag, State> & RefAttributes<HTMLElement>> {
   const { displayName, tag, useContext, staticProps } = config;
 

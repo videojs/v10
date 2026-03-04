@@ -5,9 +5,9 @@ import type { PropertyValues } from '@videojs/element';
 import { MediaElement } from './media-element';
 
 /** Shape that compound context values must satisfy for parts to consume. */
-export interface PartContextValue {
-  state: object;
-  stateAttrMap: StateAttrMap<object>;
+export interface PartContextValue<State extends object> {
+  state: State;
+  stateAttrMap: StateAttrMap<State>;
 }
 
 /**
@@ -23,12 +23,12 @@ export interface PartContextValue {
  * }
  * ```
  */
-export abstract class ContextPartElement extends MediaElement {
-  protected abstract readonly consumer: { value?: PartContextValue | undefined };
+export abstract class ContextPartElement<State extends object = object> extends MediaElement {
+  protected abstract readonly consumer: { value?: PartContextValue<State> | undefined };
 
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
     const ctx = this.consumer.value;
-    if (ctx) applyStateDataAttrs(this, ctx.state, ctx.stateAttrMap as StateAttrMap<object>);
+    if (ctx) applyStateDataAttrs(this, ctx.state, ctx.stateAttrMap);
   }
 }

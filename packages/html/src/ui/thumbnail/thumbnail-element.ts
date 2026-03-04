@@ -6,7 +6,7 @@ import {
   type ThumbnailImage,
   type ThumbnailResizeResult,
 } from '@videojs/core';
-import type { ThumbnailHandle } from '@videojs/core/dom';
+import type { ThumbnailApi } from '@videojs/core/dom';
 import { applyElementProps, applyStateDataAttrs, createThumbnail, selectTextTrack } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
@@ -45,7 +45,7 @@ export class ThumbnailElement extends MediaElement {
   #thumbnails: ThumbnailImage[] = [];
   #externalThumbnails: ThumbnailImage[] | undefined;
   #lastTextTrack: MediaTextTrackState | undefined;
-  #handle: ThumbnailHandle | null = null;
+  #handle: ThumbnailApi | null = null;
 
   constructor() {
     super();

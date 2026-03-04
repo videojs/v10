@@ -1,4 +1,4 @@
-import { ControlsCore, ControlsDataAttrs, type StateAttrMap } from '@videojs/core';
+import { ControlsCore, ControlsDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectControls } from '@videojs/core/dom';
 import type { PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
@@ -36,7 +36,7 @@ export class ControlsElement extends MediaElement {
 
     this.#provider.setValue({
       state,
-      stateAttrMap: ControlsDataAttrs as StateAttrMap<object>,
+      stateAttrMap: ControlsDataAttrs,
     });
   }
 }

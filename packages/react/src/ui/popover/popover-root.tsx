@@ -1,7 +1,7 @@
 'use client';
 
 import { type PopoverProps as CorePopoverProps, PopoverCore, PopoverDataAttrs } from '@videojs/core';
-import { createPopover, createTransitionHandler, type PopoverChangeDetails } from '@videojs/core/dom';
+import { createPopover, createTransition, type PopoverChangeDetails } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
@@ -46,7 +46,7 @@ export function PopoverRoot({
 
   const [popover] = useState(() => {
     const instance = createPopover({
-      transition: createTransitionHandler(),
+      transition: createTransition(),
       onOpenChange: (nextOpen: boolean, details: PopoverChangeDetails) => {
         onOpenChangeRef.current?.(nextOpen, details);
       },

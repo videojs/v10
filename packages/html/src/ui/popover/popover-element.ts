@@ -3,11 +3,11 @@ import {
   applyElementProps,
   applyStateDataAttrs,
   createPopover,
-  createTransitionHandler,
+  createTransition,
   getAnchorNameStyle,
   getAnchorPositionStyle,
+  type PopoverApi,
   type PopoverChangeDetails,
-  type PopoverHandle,
   resolveOffsets,
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
@@ -44,7 +44,7 @@ export class PopoverElement extends MediaElement {
   closeDelay = PopoverCore.defaultProps.closeDelay;
 
   readonly #core = new PopoverCore();
-  #popover: PopoverHandle | null = null;
+  #popover: PopoverApi | null = null;
   #snapshot: SnapshotController<PopoverInput> | null = null;
 
   // Cleanup controllers
@@ -57,7 +57,7 @@ export class PopoverElement extends MediaElement {
     this.#disconnect = new AbortController();
 
     this.#popover = createPopover({
-      transition: createTransitionHandler(),
+      transition: createTransition(),
       onOpenChange: (nextOpen: boolean, details: PopoverChangeDetails) => {
         this.open = nextOpen;
         this.dispatchEvent(new CustomEvent('open-change', { detail: { open: nextOpen, ...details } }));

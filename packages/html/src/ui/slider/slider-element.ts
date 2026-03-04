@@ -1,4 +1,4 @@
-import { SliderCore, SliderDataAttrs, type StateAttrMap } from '@videojs/core';
+import { SliderCore, SliderDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, createSlider, getSliderCSSVars, type SliderApi } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
@@ -105,7 +105,7 @@ export class SliderElement extends MediaElement {
     // Provide context to child elements (thumb, value, track, etc.).
     this.#provider.setValue({
       state,
-      stateAttrMap: SliderDataAttrs as StateAttrMap<object>,
+      stateAttrMap: SliderDataAttrs,
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
       thumbAttrs: this.#core.getAttrs(state),
       thumbProps: this.#slider.thumbProps,

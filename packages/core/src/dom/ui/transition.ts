@@ -2,7 +2,7 @@ import { createState, type State } from '@videojs/store';
 import { noop } from '@videojs/utils/function';
 import type { TransitionState } from '../../core/ui/transition';
 
-export interface TransitionHandler {
+export interface TransitionApi {
   state: State<TransitionState>;
   open(): Promise<void>;
   close(el: HTMLElement | null): Promise<void>;
@@ -21,7 +21,7 @@ export interface TransitionHandler {
  * element stays mounted), then after a double-RAF waits for
  * `getAnimations()` to settle before patching `{ active: false, status: 'idle' }`.
  */
-export function createTransitionHandler(): TransitionHandler {
+export function createTransition(): TransitionApi {
   const state = createState<TransitionState>({ active: false, status: 'idle' });
 
   let destroyed = false;

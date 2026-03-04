@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createTransitionHandler } from '../transition';
+import { createTransition } from '../transition';
 
-describe('createTransitionHandler', () => {
+describe('createTransition', () => {
   it('starts with idle state', () => {
-    const handler = createTransitionHandler();
+    const handler = createTransition();
     expect(handler.state.current).toEqual({ active: false, status: 'idle' });
   });
 
   describe('open', () => {
     it('patches open and starting status synchronously', () => {
-      const handler = createTransitionHandler();
+      const handler = createTransition();
 
       handler.open();
 
@@ -17,7 +17,7 @@ describe('createTransitionHandler', () => {
     });
 
     it('transitions to idle after one RAF', async () => {
-      const handler = createTransitionHandler();
+      const handler = createTransition();
 
       const promise = handler.open();
       expect(handler.state.current.status).toBe('starting');
@@ -33,7 +33,7 @@ describe('createTransitionHandler', () => {
 
   describe('close', () => {
     it('patches ending status synchronously', () => {
-      const handler = createTransitionHandler();
+      const handler = createTransition();
       const el = document.createElement('div');
 
       // Open first
@@ -45,7 +45,7 @@ describe('createTransitionHandler', () => {
     });
 
     it('keeps open true during close animation', () => {
-      const handler = createTransitionHandler();
+      const handler = createTransition();
       const el = document.createElement('div');
 
       handler.open();
@@ -56,7 +56,7 @@ describe('createTransitionHandler', () => {
     });
 
     it('handles null element gracefully', async () => {
-      const handler = createTransitionHandler();
+      const handler = createTransition();
 
       handler.open();
       const promise = handler.close(null);
@@ -74,7 +74,7 @@ describe('createTransitionHandler', () => {
 
   describe('cancel', () => {
     it('resets status to idle', () => {
-      const handler = createTransitionHandler();
+      const handler = createTransition();
 
       handler.open();
       expect(handler.state.current.status).toBe('starting');
@@ -84,7 +84,7 @@ describe('createTransitionHandler', () => {
     });
 
     it('preserves open state', () => {
-      const handler = createTransitionHandler();
+      const handler = createTransition();
 
       handler.open();
       handler.cancel();
@@ -94,7 +94,7 @@ describe('createTransitionHandler', () => {
     });
 
     it('is a no-op when already idle', () => {
-      const handler = createTransitionHandler();
+      const handler = createTransition();
       const callback = vi.fn();
 
       handler.state.subscribe(callback);
@@ -107,7 +107,7 @@ describe('createTransitionHandler', () => {
 
   describe('destroy', () => {
     it('prevents further open calls from updating state', () => {
-      const handler = createTransitionHandler();
+      const handler = createTransition();
 
       handler.destroy();
       handler.open();
@@ -118,7 +118,7 @@ describe('createTransitionHandler', () => {
     });
 
     it('is idempotent', () => {
-      const handler = createTransitionHandler();
+      const handler = createTransition();
 
       handler.destroy();
       handler.destroy(); // should not throw

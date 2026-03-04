@@ -2,7 +2,7 @@ import type { State } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 import type { PopoverInput } from '../../../core/ui/popover/popover-core';
 import type { UIFocusEvent, UIPointerEvent } from '../event';
-import type { TransitionHandler } from '../transition';
+import type { TransitionApi } from '../transition';
 
 export type PopoverOpenChangeReason = 'click' | 'hover' | 'focus' | 'escape' | 'outside-click' | 'blur';
 
@@ -12,7 +12,7 @@ export interface PopoverChangeDetails {
 }
 
 export interface PopoverOptions {
-  transition: TransitionHandler;
+  transition: TransitionApi;
   onOpenChange: (open: boolean, details: PopoverChangeDetails) => void;
   /** Fires after open/close animations complete. */
   onOpenChangeComplete?: (open: boolean) => void;
@@ -37,7 +37,7 @@ export interface PopoverPopupProps {
   onFocusOut: (event: UIFocusEvent) => void;
 }
 
-export interface PopoverHandle {
+export interface PopoverApi {
   input: State<PopoverInput>;
   triggerProps: PopoverTriggerProps;
   popupProps: PopoverPopupProps;
@@ -49,7 +49,7 @@ export interface PopoverHandle {
   destroy: () => void;
 }
 
-export function createPopover(options: PopoverOptions): PopoverHandle {
+export function createPopover(options: PopoverOptions): PopoverApi {
   const { transition, onOpenChange, closeOnEscape, closeOnOutsideClick } = options;
 
   const state = transition.state;

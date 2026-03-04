@@ -36,7 +36,7 @@ export interface PopoverProps {
 }
 
 /**
- * The raw transition state managed by `createTransitionHandler`. Uses `active`
+ * The raw transition state managed by `createTransition`. Uses `active`
  * (not `open`) to distinguish the generic transition state machine from the
  * domain-specific `PopoverState.open`.
  */

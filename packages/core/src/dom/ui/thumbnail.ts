@@ -8,7 +8,7 @@ export interface CreateThumbnailOptions {
   onStateChange: () => void;
 }
 
-export interface ThumbnailHandle {
+export interface ThumbnailApi {
   readonly loading: boolean;
   readonly error: boolean;
   readonly naturalWidth: number;
@@ -19,7 +19,7 @@ export interface ThumbnailHandle {
   destroy(): void;
 }
 
-export function createThumbnail(options: CreateThumbnailOptions): ThumbnailHandle {
+export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
   const { getContainer, getImg, onStateChange } = options;
   const core = new ThumbnailCore();
   const abort = new AbortController();
