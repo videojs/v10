@@ -49,7 +49,7 @@ export class PopoverElement extends MediaElement {
 
   // Cleanup controllers
   #disconnect: AbortController | null = null;
-  #triggerAc: AbortController | null = null;
+  #triggerAbort: AbortController | null = null;
   #currentTrigger: HTMLElement | null = null;
 
   override connectedCallback(): void {
@@ -73,7 +73,7 @@ export class PopoverElement extends MediaElement {
     this.#popover.setPopupElement(this);
 
     // Apply popup event handlers (pointerenter/leave, focusout) to self.
-    applyElementProps(this, this.#popover.popupProps, this.#disconnect.signal);
+    applyElementProps(this, this.#popover.popupProps, { signal: this.#disconnect.signal });
 
     // Subscribe to interaction state for reactive updates.
     // Reuse the controller across connect/disconnect cycles to avoid
@@ -178,8 +178,8 @@ export class PopoverElement extends MediaElement {
     this.#popover?.setTriggerElement(triggerEl);
 
     if (triggerEl && this.#popover) {
-      this.#triggerAc = new AbortController();
-      applyElementProps(triggerEl, this.#popover.triggerProps, this.#triggerAc.signal);
+      this.#triggerAbort = new AbortController();
+      applyElementProps(triggerEl, this.#popover.triggerProps, { signal: this.#triggerAbort.signal });
     }
   }
 
@@ -194,8 +194,8 @@ export class PopoverElement extends MediaElement {
       this.#currentTrigger.style.removeProperty('anchor-name');
     }
 
-    this.#triggerAc?.abort();
-    this.#triggerAc = null;
+    this.#triggerAbort?.abort();
+    this.#triggerAbort = null;
     this.#currentTrigger = null;
   }
 }

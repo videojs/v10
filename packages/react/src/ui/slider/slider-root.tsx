@@ -44,9 +44,6 @@ export const SliderRoot = forwardRef(function SliderRoot(
   const [core] = useState(() => new SliderCore());
   core.setProps({ label, min, max, step, largeStep, orientation, disabled, thumbAlignment });
 
-  const { min: resolvedMin, max: resolvedMax, step: resolvedStep, largeStep: resolvedLargeStep } = core.props;
-  const range = resolvedMax - resolvedMin || 1;
-
   const {
     state,
     cssVars,
@@ -55,10 +52,13 @@ export const SliderRoot = forwardRef(function SliderRoot(
     rootProps,
     thumbProps,
   } = useSlider({
-    computeState: (interaction) => core.getState(interaction, value),
+    computeState: (input) => {
+      core.setInput(input);
+      return core.getSliderState(value);
+    },
     getPercent: () => core.percentFromValue(value),
-    getStepPercent: () => (resolvedStep / range) * 100,
-    getLargeStepPercent: () => (resolvedLargeStep / range) * 100,
+    getStepPercent: () => core.getStepPercent(),
+    getLargeStepPercent: () => core.getLargeStepPercent(),
     orientation,
     disabled,
     adjustPercent: (rawPercent, thumbSize, trackSize) =>

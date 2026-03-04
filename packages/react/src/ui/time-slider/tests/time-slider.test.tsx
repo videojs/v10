@@ -12,9 +12,9 @@ import { TimeSliderRoot } from '../time-slider-root';
 
 // --- Hoisted mock data (available inside vi.mock factories) ---
 
-const { mockSliderHandle, mockTimeState, mockBufferState } = vi.hoisted(() => ({
-  mockSliderHandle: () => ({
-    interaction: {
+const { mockSliderApi, mockTimeState, mockBufferState } = vi.hoisted(() => ({
+  mockSliderApi: () => ({
+    input: {
       current: {
         pointerPercent: 0,
         dragPercent: 0,
@@ -52,7 +52,7 @@ const { mockSliderHandle, mockTimeState, mockBufferState } = vi.hoisted(() => ({
 
 vi.mock('@videojs/core/dom', async (importOriginal) => {
   const orig: Record<string, unknown> = await importOriginal();
-  return { ...orig, createSlider: vi.fn(mockSliderHandle) };
+  return { ...orig, createSlider: vi.fn(mockSliderApi) };
 });
 
 vi.mock('@videojs/store/react', () => ({

@@ -2,6 +2,7 @@ export * from './abort-controller-registry';
 export { combine } from './combine';
 export * from './config';
 export * from './errors';
+export type { NamedSelector } from './selector';
 export { createSelector } from './selector';
 export type { Comparator, Selector } from './shallow-equal';
 export { shallowEqual } from './shallow-equal';

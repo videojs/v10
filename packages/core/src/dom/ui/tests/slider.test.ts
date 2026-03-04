@@ -95,12 +95,12 @@ describe('createSlider', () => {
   });
 
   describe('shape', () => {
-    it('returns interaction, rootProps, thumbProps, and destroy', () => {
+    it('returns state, rootProps, thumbProps, and destroy', () => {
       const slider = createSlider(createOptions());
 
-      expect(slider.interaction).toBeDefined();
-      expect(slider.interaction.current).toBeDefined();
-      expect(slider.interaction.subscribe).toBeTypeOf('function');
+      expect(slider.input).toBeDefined();
+      expect(slider.input.current).toBeDefined();
+      expect(slider.input.subscribe).toBeTypeOf('function');
       expect(slider.rootProps.onPointerDown).toBeTypeOf('function');
       expect(slider.rootProps.onPointerMove).toBeTypeOf('function');
       expect(slider.rootProps.onPointerLeave).toBeTypeOf('function');
@@ -112,10 +112,10 @@ describe('createSlider', () => {
       slider.destroy();
     });
 
-    it('has correct initial interaction state', () => {
+    it('has correct initial state', () => {
       const slider = createSlider(createOptions());
 
-      expect(slider.interaction.current).toEqual({
+      expect(slider.input.current).toEqual({
         pointerPercent: 0,
         dragPercent: 0,
         dragging: false,
@@ -135,8 +135,8 @@ describe('createSlider', () => {
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 100 }));
       flush();
 
-      expect(slider.interaction.current.pointing).toBe(true);
-      expect(slider.interaction.current.pointerPercent).toBe(50);
+      expect(slider.input.current.pointing).toBe(true);
+      expect(slider.input.current.pointerPercent).toBe(50);
 
       slider.destroy();
     });
@@ -185,7 +185,7 @@ describe('createSlider', () => {
       flush();
 
       expect(onValueChange).not.toHaveBeenCalled();
-      expect(slider.interaction.current.pointing).toBe(false);
+      expect(slider.input.current.pointing).toBe(false);
 
       slider.destroy();
     });
@@ -202,13 +202,13 @@ describe('createSlider', () => {
       // First move — below threshold
       fireDocumentPointerMove({ clientX: 60 });
       flush();
-      expect(slider.interaction.current.dragging).toBe(false);
+      expect(slider.input.current.dragging).toBe(false);
       expect(onDragStart).not.toHaveBeenCalled();
 
       // Second move — meets threshold
       fireDocumentPointerMove({ clientX: 80 });
       flush();
-      expect(slider.interaction.current.dragging).toBe(true);
+      expect(slider.input.current.dragging).toBe(true);
       expect(onDragStart).toHaveBeenCalledOnce();
 
       slider.destroy();
@@ -246,7 +246,7 @@ describe('createSlider', () => {
       fireDocumentPointerMove({ clientX: 100 });
       flush();
 
-      expect(slider.interaction.current.dragPercent).toBe(50);
+      expect(slider.input.current.dragPercent).toBe(50);
 
       slider.destroy();
     });
@@ -267,8 +267,8 @@ describe('createSlider', () => {
 
       expect(onValueCommit).toHaveBeenCalledWith(50);
       expect(onDragEnd).toHaveBeenCalled();
-      expect(slider.interaction.current.dragging).toBe(false);
-      expect(slider.interaction.current.pointing).toBe(false);
+      expect(slider.input.current.dragging).toBe(false);
+      expect(slider.input.current.pointing).toBe(false);
 
       slider.destroy();
     });
@@ -312,7 +312,7 @@ describe('createSlider', () => {
       flush();
 
       expect(onDragEnd).toHaveBeenCalled();
-      expect(slider.interaction.current.dragging).toBe(false);
+      expect(slider.input.current.dragging).toBe(false);
 
       slider.destroy();
     });
@@ -340,13 +340,13 @@ describe('createSlider', () => {
       fireDocumentPointerMove({ clientX: 60 });
       fireDocumentPointerMove({ clientX: 80 });
       flush();
-      expect(slider.interaction.current.dragging).toBe(true);
+      expect(slider.input.current.dragging).toBe(true);
 
       // Stale: buttons = 0, mouse pointer
       fireDocumentPointerMove({ clientX: 100, buttons: 0, pointerType: 'mouse' });
       flush();
 
-      expect(slider.interaction.current.dragging).toBe(false);
+      expect(slider.input.current.dragging).toBe(false);
       expect(onDragEnd).toHaveBeenCalled();
 
       slider.destroy();
@@ -374,13 +374,13 @@ describe('createSlider', () => {
       fireDocumentPointerMove({ clientX: 60 });
       fireDocumentPointerMove({ clientX: 80 });
       flush();
-      expect(slider.interaction.current.dragging).toBe(true);
+      expect(slider.input.current.dragging).toBe(true);
 
       // Touch with buttons=0 should NOT trigger stale drag detection
       fireDocumentPointerMove({ clientX: 100, buttons: 0, pointerType: 'touch' });
       flush();
 
-      expect(slider.interaction.current.dragging).toBe(true);
+      expect(slider.input.current.dragging).toBe(true);
       expect(onDragEnd).not.toHaveBeenCalled();
 
       slider.destroy();
@@ -395,8 +395,8 @@ describe('createSlider', () => {
       slider.rootProps.onPointerMove(pointerEvent({ clientX: 60 }));
       flush();
 
-      expect(slider.interaction.current.pointing).toBe(true);
-      expect(slider.interaction.current.pointerPercent).toBe(30);
+      expect(slider.input.current.pointing).toBe(true);
+      expect(slider.input.current.pointerPercent).toBe(30);
 
       slider.destroy();
     });
@@ -409,8 +409,8 @@ describe('createSlider', () => {
       slider.rootProps.onPointerLeave(pointerEvent());
       flush();
 
-      expect(slider.interaction.current.pointing).toBe(false);
-      expect(slider.interaction.current.pointerPercent).toBe(0);
+      expect(slider.input.current.pointing).toBe(false);
+      expect(slider.input.current.pointerPercent).toBe(0);
 
       slider.destroy();
     });
@@ -423,12 +423,12 @@ describe('createSlider', () => {
       fireDocumentPointerMove({ clientX: 60 });
       fireDocumentPointerMove({ clientX: 80 });
       flush();
-      expect(slider.interaction.current.dragging).toBe(true);
+      expect(slider.input.current.dragging).toBe(true);
 
       slider.rootProps.onPointerLeave(pointerEvent());
       flush();
 
-      expect(slider.interaction.current.pointing).toBe(true);
+      expect(slider.input.current.pointing).toBe(true);
 
       slider.destroy();
     });
@@ -761,7 +761,7 @@ describe('createSlider', () => {
       slider.thumbProps.onFocus();
       flush();
 
-      expect(slider.interaction.current.focused).toBe(true);
+      expect(slider.input.current.focused).toBe(true);
 
       slider.destroy();
     });
@@ -773,7 +773,7 @@ describe('createSlider', () => {
       slider.thumbProps.onBlur();
       flush();
 
-      expect(slider.interaction.current.focused).toBe(false);
+      expect(slider.input.current.focused).toBe(false);
 
       slider.destroy();
     });
@@ -788,7 +788,7 @@ describe('createSlider', () => {
       slider.rootProps.onPointerDown(pointerEvent({ clientY: 25 }));
       flush();
 
-      expect(slider.interaction.current.pointerPercent).toBe(75);
+      expect(slider.input.current.pointerPercent).toBe(75);
 
       slider.destroy();
     });
@@ -800,7 +800,7 @@ describe('createSlider', () => {
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       flush();
 
-      expect(slider.interaction.current.pointerPercent).toBe(25);
+      expect(slider.input.current.pointerPercent).toBe(25);
 
       slider.destroy();
     });
@@ -817,7 +817,7 @@ describe('createSlider', () => {
       flush();
 
       // Same result as vertical + LTR — RTL has no effect.
-      expect(slider.interaction.current.pointerPercent).toBe(75);
+      expect(slider.input.current.pointerPercent).toBe(75);
 
       slider.destroy();
     });
@@ -833,7 +833,7 @@ describe('createSlider', () => {
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       flush();
 
-      expect(slider.interaction.current.pointerPercent).toBe(75);
+      expect(slider.input.current.pointerPercent).toBe(75);
 
       slider.destroy();
     });

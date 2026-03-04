@@ -3,6 +3,7 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaFullscreenState } from '../../media/state';
+import type { UICore } from '../types';
 
 export interface FullscreenButtonProps {
   /** Custom label for the button. */
@@ -16,7 +17,7 @@ export interface FullscreenButtonState extends Pick<MediaFullscreenState, 'fulls
   availability: MediaFullscreenState['fullscreenAvailability'];
 }
 
-export class FullscreenButtonCore {
+export class FullscreenButtonCore implements UICore<FullscreenButtonProps, FullscreenButtonState> {
   static readonly defaultProps: NonNullableObject<FullscreenButtonProps> = {
     label: '',
     disabled: false,

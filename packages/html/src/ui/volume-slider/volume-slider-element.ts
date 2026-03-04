@@ -4,7 +4,7 @@ import {
   createSlider,
   getSliderCSSVars,
   logMissingFeature,
-  type SliderHandle,
+  type SliderApi,
   selectVolume,
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
@@ -39,7 +39,7 @@ export class VolumeSliderElement extends MediaElement {
   readonly #provider = new ContextProvider(this, { context: sliderContext });
   readonly #volumeState = new PlayerController(this, playerContext, selectVolume);
 
-  #slider: SliderHandle | null = null;
+  #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
 
   override connectedCallback(): void {
@@ -59,16 +59,8 @@ export class VolumeSliderElement extends MediaElement {
         if (!media) return 0;
         return media.volume * 100;
       },
-      getStepPercent: () => {
-        const { step, min, max } = this.#core.props;
-        const range = max - min;
-        return range > 0 ? (step / range) * 100 : 0;
-      },
-      getLargeStepPercent: () => {
-        const { largeStep, min, max } = this.#core.props;
-        const range = max - min;
-        return range > 0 ? (largeStep / range) * 100 : 0;
-      },
+      getStepPercent: () => this.#core.getStepPercent(),
+      getLargeStepPercent: () => this.#core.getLargeStepPercent(),
       onValueChange: (percent) => {
         this.#setVolume(percent);
       },
@@ -83,14 +75,14 @@ export class VolumeSliderElement extends MediaElement {
       },
     });
 
-    this.#slider.interaction.subscribe(() => this.requestUpdate(), { signal });
+    this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
 
     // Prevent default touch gestures and text selection during interaction.
     this.style.touchAction = 'none';
     this.style.userSelect = 'none';
 
     if (__DEV__ && !this.#volumeState.value) {
-      logMissingFeature(VolumeSliderElement.tagName, 'volume');
+      logMissingFeature(this.localName, this.#volumeState.featureName!);
     }
   }
 
@@ -114,8 +106,8 @@ export class VolumeSliderElement extends MediaElement {
     const media = this.#volumeState.value;
     if (!media) return;
 
-    const interaction = this.#slider.interaction.current;
-    const state = this.#core.getVolumeState(media, interaction);
+    this.#core.setInput(this.#slider.input.current);
+    const state = this.#core.getState(media);
     const cssVars = getSliderCSSVars(state);
 
     applyStyles(this, cssVars);

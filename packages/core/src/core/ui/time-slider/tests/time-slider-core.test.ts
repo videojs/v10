@@ -1,12 +1,12 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { MediaBufferState, MediaTimeState } from '../../../media/state';
-import type { SliderInteraction } from '../../slider/slider-core';
+import type { SliderInput } from '../../slider/slider-core';
 import { TimeSliderCore } from '../time-slider-core';
 
 type TimeSliderMedia = MediaTimeState & MediaBufferState;
 
-function createInteraction(overrides: Partial<SliderInteraction> = {}): SliderInteraction {
+function createInput(overrides: Partial<SliderInput> = {}): SliderInput {
   return {
     pointerPercent: 0,
     dragPercent: 0,
@@ -44,10 +44,11 @@ describe('TimeSliderCore', () => {
     });
   });
 
-  describe('getTimeState', () => {
+  describe('getState', () => {
     it('uses currentTime as value when not dragging', () => {
       const core = new TimeSliderCore();
-      const state = core.getTimeState(createMediaState({ currentTime: 90, duration: 300 }), createInteraction());
+      core.setInput(createInput());
+      const state = core.getState(createMediaState({ currentTime: 90, duration: 300 }));
 
       expect(state.value).toBe(90);
       expect(state.currentTime).toBe(90);
@@ -57,10 +58,8 @@ describe('TimeSliderCore', () => {
 
     it('uses drag percent for value when dragging', () => {
       const core = new TimeSliderCore();
-      const state = core.getTimeState(
-        createMediaState({ currentTime: 90, duration: 300 }),
-        createInteraction({ dragging: true, dragPercent: 50 })
-      );
+      core.setInput(createInput({ dragging: true, dragPercent: 50 }));
+      const state = core.getState(createMediaState({ currentTime: 90, duration: 300 }));
 
       expect(state.value).toBe(150); // 50% of 300
       expect(state.dragging).toBe(true);
@@ -69,10 +68,8 @@ describe('TimeSliderCore', () => {
 
     it('uses raw precision during drag for smooth scrubbing', () => {
       const core = new TimeSliderCore();
-      const state = core.getTimeState(
-        createMediaState({ currentTime: 0, duration: 10 }),
-        createInteraction({ dragging: true, dragPercent: 33.333 })
-      );
+      core.setInput(createInput({ dragging: true, dragPercent: 33.333 }));
+      const state = core.getState(createMediaState({ currentTime: 0, duration: 10 }));
 
       // 33.333% of 10 = 3.3333, NOT snapped to step (which would be 3)
       expect(state.value).toBeCloseTo(3.3333, 3);
@@ -80,22 +77,23 @@ describe('TimeSliderCore', () => {
 
     it('computes buffer percent from buffered ranges', () => {
       const core = new TimeSliderCore();
-      const state = core.getTimeState(createMediaState({ duration: 200, buffered: [[0, 100]] }), createInteraction());
+      core.setInput(createInput());
+      const state = core.getState(createMediaState({ duration: 200, buffered: [[0, 100]] }));
 
       expect(state.bufferPercent).toBe(50); // 100/200 * 100
     });
 
     it('uses end of the furthest buffered range', () => {
       const core = new TimeSliderCore();
-      const state = core.getTimeState(
+      core.setInput(createInput());
+      const state = core.getState(
         createMediaState({
           duration: 200,
           buffered: [
             [0, 50],
             [60, 150],
           ],
-        }),
-        createInteraction()
+        })
       );
 
       expect(state.bufferPercent).toBe(75); // 150/200 * 100
@@ -103,28 +101,32 @@ describe('TimeSliderCore', () => {
 
     it('returns 0 buffer percent when no buffered ranges', () => {
       const core = new TimeSliderCore();
-      const state = core.getTimeState(createMediaState({ duration: 200, buffered: [] }), createInteraction());
+      core.setInput(createInput());
+      const state = core.getState(createMediaState({ duration: 200, buffered: [] }));
 
       expect(state.bufferPercent).toBe(0);
     });
 
     it('returns 0 buffer percent when duration is 0', () => {
       const core = new TimeSliderCore();
-      const state = core.getTimeState(createMediaState({ duration: 0, buffered: [] }), createInteraction());
+      core.setInput(createInput());
+      const state = core.getState(createMediaState({ duration: 0, buffered: [] }));
 
       expect(state.bufferPercent).toBe(0);
     });
 
     it('passes through seeking state', () => {
       const core = new TimeSliderCore();
-      const state = core.getTimeState(createMediaState({ seeking: true }), createInteraction());
+      core.setInput(createInput());
+      const state = core.getState(createMediaState({ seeking: true }));
 
       expect(state.seeking).toBe(true);
     });
 
     it('sets min to 0 and max to duration', () => {
       const core = new TimeSliderCore();
-      const state = core.getTimeState(createMediaState({ duration: 600 }), createInteraction());
+      core.setInput(createInput());
+      const state = core.getState(createMediaState({ duration: 600 }));
 
       const attrs = core.getAttrs(state);
       expect(attrs['aria-valuemin']).toBe(0);
@@ -133,7 +135,8 @@ describe('TimeSliderCore', () => {
 
     it('handles zero duration', () => {
       const core = new TimeSliderCore();
-      const state = core.getTimeState(createMediaState({ currentTime: 0, duration: 0 }), createInteraction());
+      core.setInput(createInput());
+      const state = core.getState(createMediaState({ currentTime: 0, duration: 0 }));
 
       expect(state.fillPercent).toBe(0);
       expect(state.value).toBe(0);
@@ -143,7 +146,8 @@ describe('TimeSliderCore', () => {
   describe('getAttrs', () => {
     it('returns aria-label and aria-valuetext', () => {
       const core = new TimeSliderCore();
-      const state = core.getTimeState(createMediaState({ currentTime: 90, duration: 300 }), createInteraction());
+      core.setInput(createInput());
+      const state = core.getState(createMediaState({ currentTime: 90, duration: 300 }));
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('Seek');
@@ -153,7 +157,8 @@ describe('TimeSliderCore', () => {
 
     it('uses custom label', () => {
       const core = new TimeSliderCore({ label: 'Scrub' });
-      const state = core.getTimeState(createMediaState({ currentTime: 0, duration: 300 }), createInteraction());
+      core.setInput(createInput());
+      const state = core.getState(createMediaState({ currentTime: 0, duration: 300 }));
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('Scrub');
@@ -161,7 +166,8 @@ describe('TimeSliderCore', () => {
 
     it('shows both times when duration is 0', () => {
       const core = new TimeSliderCore();
-      const state = core.getTimeState(createMediaState({ currentTime: 0, duration: 0 }), createInteraction());
+      core.setInput(createInput());
+      const state = core.getState(createMediaState({ currentTime: 0, duration: 0 }));
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-valuetext']).toBe('0 seconds of 0 seconds');
@@ -169,14 +175,154 @@ describe('TimeSliderCore', () => {
 
     it('includes dragged value in valuetext', () => {
       const core = new TimeSliderCore();
-      const state = core.getTimeState(
-        createMediaState({ currentTime: 0, duration: 300 }),
-        createInteraction({ dragging: true, dragPercent: 50 })
-      );
+      core.setInput(createInput({ dragging: true, dragPercent: 50 }));
+      const state = core.getState(createMediaState({ currentTime: 0, duration: 300 }));
       const attrs = core.getAttrs(state);
 
       // value is 150 (50% of 300) → "2 minutes, 30 seconds of 5 minutes"
       expect(attrs['aria-valuetext']).toBe('2 minutes, 30 seconds of 5 minutes');
+    });
+  });
+
+  describe('commitSeek', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('holds slider at pending position until seek resolves', async () => {
+      const core = new TimeSliderCore();
+      const media = createMediaState({ currentTime: 10, duration: 300 });
+      let resolveSeek!: (value: number) => void;
+      const seek = vi.fn(
+        () =>
+          new Promise<number>((r) => {
+            resolveSeek = r;
+          })
+      );
+
+      // Initialize min/max from duration so valueFromPercent is correct.
+      core.setInput(createInput());
+      core.getState(media);
+
+      core.commitSeek(50, seek);
+
+      // Pending seek holds value/fillPercent at target (50% of 300 = 150s).
+      core.setInput(createInput());
+      const state = core.getState(media);
+      expect(state.value).toBe(150);
+      expect(state.fillPercent).toBe(50);
+
+      // After seek resolves, pending is cleared.
+      resolveSeek(150);
+      await vi.advanceTimersByTimeAsync(0);
+
+      core.setInput(createInput());
+      const after = core.getState(createMediaState({ currentTime: 150, duration: 300 }));
+      expect(after.value).toBe(150);
+      expect(after.fillPercent).toBe(50);
+    });
+
+    it('clears pending on seek rejection', async () => {
+      const core = new TimeSliderCore();
+      const media = createMediaState({ currentTime: 0, duration: 100 });
+      core.setInput(createInput());
+      core.getState(media);
+
+      const seek = vi.fn(() => Promise.reject(new Error('detached')));
+      core.commitSeek(50, seek);
+
+      core.setInput(createInput());
+      const during = core.getState(media);
+      expect(during.value).toBe(50);
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      core.setInput(createInput());
+      const after = core.getState(media);
+      expect(after.value).toBe(0);
+    });
+
+    it('clears pending after safety timeout', async () => {
+      const core = new TimeSliderCore();
+      const media = createMediaState({ currentTime: 0, duration: 100 });
+      core.setInput(createInput());
+      core.getState(media);
+
+      const seek = vi.fn(() => new Promise<number>(() => {})); // never resolves
+      core.commitSeek(50, seek);
+
+      core.setInput(createInput());
+      const during = core.getState(media);
+      expect(during.value).toBe(50);
+
+      await vi.advanceTimersByTimeAsync(5_000);
+
+      core.setInput(createInput());
+      const after = core.getState(media);
+      expect(after.value).toBe(0);
+    });
+
+    it('does not hold position during drag', () => {
+      const core = new TimeSliderCore();
+      const media = createMediaState({ currentTime: 10, duration: 100 });
+      core.setInput(createInput());
+      core.getState(media);
+
+      core.commitSeek(
+        50,
+        vi.fn(() => new Promise<number>(() => {}))
+      );
+
+      core.setInput(createInput({ dragging: true, dragPercent: 80 }));
+      const state = core.getState(media);
+      expect(state.value).toBe(80);
+    });
+
+    it('subsequent commitSeek replaces previous pending', async () => {
+      const core = new TimeSliderCore();
+      const media = createMediaState({ currentTime: 0, duration: 100 });
+      core.setInput(createInput());
+      core.getState(media);
+
+      core.commitSeek(
+        50,
+        vi.fn(() => new Promise<number>(() => {}))
+      );
+
+      core.setInput(createInput());
+      const first = core.getState(media);
+      expect(first.value).toBe(50);
+
+      core.commitSeek(
+        80,
+        vi.fn(() => Promise.resolve(80))
+      );
+
+      core.setInput(createInput());
+      const second = core.getState(media);
+      expect(second.value).toBe(80);
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      core.setInput(createInput());
+      const after = core.getState(createMediaState({ currentTime: 80, duration: 100 }));
+      expect(after.value).toBe(80);
+    });
+
+    it('calls seek with the correct time in seconds', () => {
+      const core = new TimeSliderCore();
+      const media = createMediaState({ duration: 200 });
+      core.setInput(createInput());
+      core.getState(media);
+
+      const seek = vi.fn(() => Promise.resolve(100));
+      core.commitSeek(50, seek);
+
+      expect(seek).toHaveBeenCalledWith(100); // 50% of 200
     });
   });
 
@@ -185,17 +331,19 @@ describe('TimeSliderCore', () => {
       const core = new TimeSliderCore();
       core.setProps({ label: 'Progress' });
 
-      const state = core.getTimeState(createMediaState({ currentTime: 0, duration: 100 }), createInteraction());
+      core.setInput(createInput());
+      const state = core.getState(createMediaState({ currentTime: 0, duration: 100 }));
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('Progress');
     });
 
-    it('preserves disabled across getTimeState calls', () => {
+    it('preserves disabled across getState calls', () => {
       const core = new TimeSliderCore({ disabled: true });
 
-      // getTimeState overrides min/max via super.setProps — disabled must survive.
-      const state = core.getTimeState(createMediaState({ duration: 300 }), createInteraction());
+      // getState overrides min/max via super.setProps — disabled must survive.
+      core.setInput(createInput());
+      const state = core.getState(createMediaState({ duration: 300 }));
 
       expect(state.disabled).toBe(true);
 
@@ -204,18 +352,20 @@ describe('TimeSliderCore', () => {
       expect(attrs.tabindex).toBe(-1);
     });
 
-    it('preserves thumbAlignment across getTimeState calls', () => {
+    it('preserves thumbAlignment across getState calls', () => {
       const core = new TimeSliderCore({ thumbAlignment: 'edge' });
 
-      const state = core.getTimeState(createMediaState({ duration: 300 }), createInteraction());
+      core.setInput(createInput());
+      const state = core.getState(createMediaState({ duration: 300 }));
 
       expect(state.thumbAlignment).toBe('edge');
     });
 
-    it('preserves orientation across getTimeState calls', () => {
+    it('preserves orientation across getState calls', () => {
       const core = new TimeSliderCore({ orientation: 'vertical' });
 
-      const state = core.getTimeState(createMediaState({ duration: 300 }), createInteraction());
+      core.setInput(createInput());
+      const state = core.getState(createMediaState({ duration: 300 }));
 
       expect(state.orientation).toBe('vertical');
     });

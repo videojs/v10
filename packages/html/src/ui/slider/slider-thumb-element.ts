@@ -38,7 +38,7 @@ export class SliderThumbElement extends MediaElement {
 
     // Apply keyboard and focus handlers once — they don't change per slider instance.
     if (!this.#thumbPropsApplied && this.#disconnect) {
-      applyElementProps(this, ctx.thumbProps, this.#disconnect.signal);
+      applyElementProps(this, ctx.thumbProps, { signal: this.#disconnect.signal });
       this.#thumbPropsApplied = true;
     }
 

@@ -4,7 +4,8 @@ import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaBufferState, MediaTimeState } from '../../media/state';
-import { type SliderBaseProps, SliderCore, type SliderInteraction, type SliderState } from '../slider/slider-core';
+import { type SliderBaseProps, SliderCore, type SliderState } from '../slider/slider-core';
+import type { UICore } from '../types';
 
 export interface TimeSliderProps extends SliderBaseProps {
   /** Trailing-edge throttle (ms) for seek requests during drag. */
@@ -12,12 +13,13 @@ export interface TimeSliderProps extends SliderBaseProps {
 }
 
 export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'currentTime' | 'duration' | 'seeking'> {
-  /** Buffered amount as a percentage of duration (0–100). */
   bufferPercent: number;
 }
 
-// @ts-expect-error — defaultProps shape differs from base (domain sliders omit value/min/max)
-export class TimeSliderCore extends SliderCore {
+/** Max time (ms) to hold the pending seek position before giving up. */
+const PENDING_SEEK_TIMEOUT = 5_000;
+
+export class TimeSliderCore extends SliderCore implements UICore<TimeSliderProps, TimeSliderState> {
   static readonly defaultProps: NonNullableObject<TimeSliderProps> = {
     step: SliderCore.defaultProps.step,
     largeStep: SliderCore.defaultProps.largeStep,
@@ -29,6 +31,8 @@ export class TimeSliderCore extends SliderCore {
   };
 
   #props = { ...TimeSliderCore.defaultProps };
+  #pendingSeekTime: number | null = null;
+  #pendingSeekTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(props?: TimeSliderProps) {
     super();
@@ -40,27 +44,50 @@ export class TimeSliderCore extends SliderCore {
     super.setProps({ ...props, min: 0 });
   }
 
-  getTimeState(media: MediaTimeState & MediaBufferState, interaction: SliderInteraction): TimeSliderState {
+  /**
+   * Commit a seek at the given percent. Holds the slider at the target position
+   * until the seek resolves, preventing visual snap-back to stale `currentTime`.
+   */
+  commitSeek(percent: number, seek: (time: number) => Promise<number>): void {
+    const seconds = this.valueFromPercent(percent);
+    this.#setPendingSeek(seconds);
+    seek(seconds).then(
+      () => this.#clearPendingSeek(),
+      () => this.#clearPendingSeek()
+    );
+  }
+
+  getState(media: MediaTimeState & MediaBufferState): TimeSliderState {
     const { duration, currentTime, seeking, buffered } = media;
+    const { dragging, dragPercent } = this.input;
 
     // Override min/max for time domain, forwarding all user props so disabled/thumbAlignment aren't lost.
     super.setProps({ ...this.#props, min: 0, max: duration });
 
     // Raw precision during drag for smooth scrubbing — step snapping only applies to keyboard.
-    const value = interaction.dragging ? clamp((interaction.dragPercent / 100) * duration, 0, duration) : currentTime;
-    const base = super.getState(interaction, value);
+    const value = dragging ? clamp((dragPercent / 100) * duration, 0, duration) : currentTime;
+    const base = super.getSliderState(value);
 
     // Use end of the furthest buffered range
     const bufferedEnd = buffered.length > 0 ? buffered[buffered.length - 1]![1] : 0;
     const bufferPercent = duration > 0 ? (bufferedEnd / duration) * 100 : 0;
 
-    return {
+    const state: TimeSliderState = {
       ...base,
       currentTime,
       duration,
       seeking,
       bufferPercent,
     };
+
+    // Hold slider at committed position while the async seek settles.
+    const pending = this.#pendingSeekTime;
+    if (!dragging && pending !== null) {
+      const dur = duration || 1;
+      return { ...state, value: pending, fillPercent: (pending / dur) * 100 };
+    }
+
+    return state;
   }
 
   override getLabel(state: SliderState): string {
@@ -77,6 +104,25 @@ export class TimeSliderCore extends SliderCore {
       ...base,
       'aria-valuetext': valuetext,
     };
+  }
+
+  #setPendingSeek(time: number): void {
+    this.#pendingSeekTime = time;
+
+    if (this.#pendingSeekTimer !== null) {
+      clearTimeout(this.#pendingSeekTimer);
+    }
+
+    this.#pendingSeekTimer = setTimeout(() => this.#clearPendingSeek(), PENDING_SEEK_TIMEOUT);
+  }
+
+  #clearPendingSeek(): void {
+    this.#pendingSeekTime = null;
+
+    if (this.#pendingSeekTimer !== null) {
+      clearTimeout(this.#pendingSeekTimer);
+      this.#pendingSeekTimer = null;
+    }
   }
 }
 

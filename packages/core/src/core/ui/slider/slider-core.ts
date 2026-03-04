@@ -29,7 +29,7 @@ export interface SliderProps extends SliderBaseProps {
 }
 
 /** Current pointer/drag interaction state, typically provided by a DOM controller. */
-export interface SliderInteraction {
+export interface SliderInput {
   /** Pointer position as a percentage of the track (0–100). */
   pointerPercent: number;
   /** Drag position as a percentage of the track (0–100). */
@@ -64,11 +64,8 @@ export interface SliderState {
 }
 
 export class SliderCore {
-  static readonly defaultProps: NonNullableObject<SliderProps> = {
+  static readonly defaultProps: NonNullableObject<SliderBaseProps> = {
     label: '',
-    value: 0,
-    min: 0,
-    max: 100,
     step: 1,
     largeStep: 10,
     orientation: 'horizontal',
@@ -76,10 +73,30 @@ export class SliderCore {
     thumbAlignment: 'center',
   };
 
-  #props = { ...SliderCore.defaultProps };
+  static readonly defaultSliderProps: NonNullableObject<SliderProps> = {
+    ...SliderCore.defaultProps,
+    value: 0,
+    min: 0,
+    max: 100,
+  };
+
+  static readonly defaultInput: SliderInput = {
+    pointerPercent: 0,
+    dragPercent: 0,
+    dragging: false,
+    pointing: false,
+    focused: false,
+  };
+
+  #props = { ...SliderCore.defaultSliderProps };
+  #input: SliderInput = { ...SliderCore.defaultInput };
 
   get props(): Readonly<NonNullableObject<SliderProps>> {
     return this.#props;
+  }
+
+  get input(): Readonly<SliderInput> {
+    return this.#input;
   }
 
   constructor(props?: SliderProps) {
@@ -87,19 +104,24 @@ export class SliderCore {
   }
 
   setProps(props: SliderProps): void {
-    this.#props = defaults(props, SliderCore.defaultProps);
+    this.#props = defaults(props, SliderCore.defaultSliderProps);
   }
 
-  getState(interaction: SliderInteraction, value: number): SliderState {
+  setInput(input: SliderInput): void {
+    this.#input = input;
+  }
+
+  getSliderState(value: number): SliderState {
     const { orientation, disabled, thumbAlignment } = this.#props;
+    const { pointerPercent, dragging, pointing, focused } = this.#input;
 
     return {
       value,
       fillPercent: this.percentFromValue(value),
-      pointerPercent: interaction.pointerPercent,
-      dragging: interaction.dragging,
-      pointing: interaction.pointing,
-      interactive: interaction.dragging || interaction.pointing || interaction.focused,
+      pointerPercent,
+      dragging,
+      pointing,
+      interactive: dragging || pointing || focused,
       orientation,
       disabled,
       thumbAlignment,
@@ -145,6 +167,20 @@ export class SliderCore {
     return ((value - min) / (max - min)) * 100;
   }
 
+  /** Step as a percentage of the slider range. */
+  getStepPercent(): number {
+    const { step, min, max } = this.#props;
+    const range = max - min;
+    return range > 0 ? (step / range) * 100 : 0;
+  }
+
+  /** Large step as a percentage of the slider range. */
+  getLargeStepPercent(): number {
+    const { largeStep, min, max } = this.#props;
+    const range = max - min;
+    return range > 0 ? (largeStep / range) * 100 : 0;
+  }
+
   adjustPercentForAlignment(rawPercent: number, thumbSize: number, trackSize: number): number {
     if (this.#props.thumbAlignment === 'center' || trackSize === 0) {
       return rawPercent;
@@ -160,5 +196,5 @@ export class SliderCore {
 export namespace SliderCore {
   export type Props = SliderProps;
   export type State = SliderState;
-  export type Interaction = SliderInteraction;
+  export type Input = SliderInput;
 }

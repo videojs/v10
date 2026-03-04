@@ -50,15 +50,16 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     const volumeRef = useLatestRef(volume);
 
     const { state, cssVars, rootRef, thumbRef, rootProps, thumbProps } = useSlider<VolumeSliderCore.State>({
-      computeState: (interaction) => {
+      computeState: (input) => {
+        core.setInput(input);
         if (!volume) {
-          return core.getVolumeState(noopVolume, interaction);
+          return core.getState(noopVolume);
         }
-        return core.getVolumeState(volume, interaction);
+        return core.getState(volume);
       },
       getPercent: () => (volume ? volume.volume * 100 : 0),
-      getStepPercent: () => step,
-      getLargeStepPercent: () => largeStep,
+      getStepPercent: () => core.getStepPercent(),
+      getLargeStepPercent: () => core.getLargeStepPercent(),
       orientation,
       disabled,
       adjustPercent: (rawPercent, thumbSize, trackSize) =>

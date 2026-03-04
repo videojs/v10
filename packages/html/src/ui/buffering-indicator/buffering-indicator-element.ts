@@ -30,7 +30,7 @@ export class BufferingIndicatorElement extends MediaElement {
     });
 
     if (__DEV__ && !this.#state.value) {
-      logMissingFeature(BufferingIndicatorElement.tagName, 'playback');
+      logMissingFeature(this.localName, this.#state.featureName!);
     }
   }
 

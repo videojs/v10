@@ -9,9 +9,9 @@ import { SliderThumb } from '../slider-thumb';
 import { SliderTrack } from '../slider-track';
 import { SliderValue } from '../slider-value';
 
-const { mockSliderHandle } = vi.hoisted(() => ({
-  mockSliderHandle: () => ({
-    interaction: {
+const { mockSliderApi } = vi.hoisted(() => ({
+  mockSliderApi: () => ({
+    input: {
       current: {
         pointerPercent: 0,
         dragPercent: 0,
@@ -37,7 +37,7 @@ const { mockSliderHandle } = vi.hoisted(() => ({
 
 vi.mock('@videojs/core/dom', async (importOriginal) => {
   const orig: Record<string, unknown> = await importOriginal();
-  return { ...orig, createSlider: vi.fn(mockSliderHandle) };
+  return { ...orig, createSlider: vi.fn(mockSliderApi) };
 });
 
 vi.mock('@videojs/store/react', () => ({

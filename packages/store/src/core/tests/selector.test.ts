@@ -26,7 +26,7 @@ describe('createSelector', () => {
   });
 
   it('selects slice state from store state', () => {
-    const selectVolume = createSelector(volumeSlice);
+    const selectVolume = createSelector('volume', volumeSlice);
     const state = { volume: 0.5, muted: true, setVolume: () => 0.5 };
 
     const selected = selectVolume(state);
@@ -39,7 +39,7 @@ describe('createSelector', () => {
   });
 
   it('returns undefined when slice is not configured', () => {
-    const selectVolume = createSelector(volumeSlice);
+    const selectVolume = createSelector('volume', volumeSlice);
     const state = { paused: true, ended: false }; // No volume keys
 
     const selected = selectVolume(state);
@@ -48,8 +48,8 @@ describe('createSelector', () => {
   });
 
   it('creates separate selectors for different slices', () => {
-    const selectVolume = createSelector(volumeSlice);
-    const selectPlayback = createSelector(playbackSlice);
+    const selectVolume = createSelector('volume', volumeSlice);
+    const selectPlayback = createSelector('playback', playbackSlice);
     const state = {
       volume: 0.75,
       muted: false,
@@ -73,7 +73,7 @@ describe('createSelector', () => {
   });
 
   it('returns stable references when state values are the same', () => {
-    const selectVolume = createSelector(volumeSlice);
+    const selectVolume = createSelector('volume', volumeSlice);
     const setVolume = () => 1;
     const state1 = { volume: 1, muted: false, setVolume };
     const state2 = { volume: 1, muted: false, setVolume };
@@ -85,5 +85,11 @@ describe('createSelector', () => {
     expect(selected1).not.toBe(selected2);
     // But structurally equal (for shallowEqual comparison)
     expect(selected1).toEqual(selected2);
+  });
+
+  it('exposes featureName on the selector', () => {
+    const selectVolume = createSelector('volume', volumeSlice);
+
+    expect(selectVolume.featureName).toBe('volume');
   });
 });

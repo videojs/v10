@@ -1,5 +1,5 @@
 import { SliderCore, SliderDataAttrs } from '@videojs/core';
-import { applyStateDataAttrs, createSlider, getSliderCSSVars, type SliderHandle } from '@videojs/core/dom';
+import { applyStateDataAttrs, createSlider, getSliderCSSVars, type SliderApi } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
@@ -22,20 +22,20 @@ export class SliderElement extends MediaElement {
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
   } satisfies PropertyDeclarationMap<keyof SliderCore.Props>;
 
-  label = SliderCore.defaultProps.label;
-  value = SliderCore.defaultProps.value;
-  min = SliderCore.defaultProps.min;
-  max = SliderCore.defaultProps.max;
-  step = SliderCore.defaultProps.step;
-  largeStep = SliderCore.defaultProps.largeStep;
-  orientation = SliderCore.defaultProps.orientation;
-  disabled = SliderCore.defaultProps.disabled;
-  thumbAlignment = SliderCore.defaultProps.thumbAlignment;
+  label = SliderCore.defaultSliderProps.label;
+  value = SliderCore.defaultSliderProps.value;
+  min = SliderCore.defaultSliderProps.min;
+  max = SliderCore.defaultSliderProps.max;
+  step = SliderCore.defaultSliderProps.step;
+  largeStep = SliderCore.defaultSliderProps.largeStep;
+  orientation = SliderCore.defaultSliderProps.orientation;
+  disabled = SliderCore.defaultSliderProps.disabled;
+  thumbAlignment = SliderCore.defaultSliderProps.thumbAlignment;
 
   readonly #core = new SliderCore();
   readonly #provider = new ContextProvider(this, { context: sliderContext });
 
-  #slider: SliderHandle | null = null;
+  #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
 
   override connectedCallback(): void {
@@ -51,16 +51,8 @@ export class SliderElement extends MediaElement {
       isRTL: () => isRTL(this),
       isDisabled: () => this.disabled,
       getPercent: () => this.#core.percentFromValue(this.value),
-      getStepPercent: () => {
-        const { step, min, max } = this.#core.props;
-        const range = max - min;
-        return range > 0 ? (step / range) * 100 : 0;
-      },
-      getLargeStepPercent: () => {
-        const { largeStep, min, max } = this.#core.props;
-        const range = max - min;
-        return range > 0 ? (largeStep / range) * 100 : 0;
-      },
+      getStepPercent: () => this.#core.getStepPercent(),
+      getLargeStepPercent: () => this.#core.getLargeStepPercent(),
       onValueChange: (percent) => {
         this.value = this.#core.valueFromPercent(percent);
         this.dispatchEvent(new CustomEvent('value-change', { detail: { value: this.value }, bubbles: true }));
@@ -77,7 +69,7 @@ export class SliderElement extends MediaElement {
       },
     });
 
-    this.#slider.interaction.subscribe(() => this.requestUpdate(), { signal });
+    this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
 
     // Prevent default touch gestures and text selection during interaction.
     this.style.touchAction = 'none';
@@ -101,8 +93,8 @@ export class SliderElement extends MediaElement {
     super.update(_changed);
     if (!this.#slider) return;
 
-    const interaction = this.#slider.interaction.current;
-    const state = this.#core.getState(interaction, this.value);
+    this.#core.setInput(this.#slider.input.current);
+    const state = this.#core.getSliderState(this.value);
     const cssVars = getSliderCSSVars(state);
 
     applyStyles(this, cssVars);

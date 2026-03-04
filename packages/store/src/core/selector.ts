@@ -8,6 +8,11 @@ const stateContext: StateContext<unknown> = {
   signals: new AbortControllerRegistry(),
 };
 
+export interface NamedSelector<State, Result> {
+  (state: State): Result;
+  featureName: string;
+}
+
 /**
  * Create a type-safe selector for a slice's state.
  *
@@ -16,22 +21,33 @@ const stateContext: StateContext<unknown> = {
  *
  * @example
  * ```ts
- * const selectPlayback = createSelector(playbackSlice);
+ * const selectPlayback = createSelector('playback', playbackSlice);
  * selectPlayback(store.state); // { paused, play, pause, ... } | undefined
+ * selectPlayback.featureName; // 'playback'
  * ```
  *
+ * @param name - Human-readable name for the feature (used in dev warnings).
  * @param slice - The feature slice to create a selector for.
  */
-export function createSelector<S extends AnySlice>(slice: S): (state: object) => InferSliceState<S> | undefined {
+export function createSelector<S extends AnySlice>(
+  name: string,
+  slice: S
+): NamedSelector<object, InferSliceState<S> | undefined> {
   const initialState = slice.state(stateContext);
   const keys = Object.keys(initialState as object);
 
   const firstKey = keys[0];
-  if (!firstKey) return () => undefined;
 
-  return (state) => {
-    // WARN: Could be the source of a bug if two slices have overlapping state keys
-    if (!(firstKey in state)) return undefined;
-    return pick(state as Record<string, unknown>, keys) as InferSliceState<S>;
-  };
+  if (!firstKey) {
+    return Object.assign(() => undefined, { featureName: name });
+  }
+
+  return Object.assign(
+    (state: object) => {
+      // WARN: Could be the source of a bug if two slices have overlapping state keys
+      if (!(firstKey in state)) return undefined;
+      return pick(state as Record<string, unknown>, keys) as InferSliceState<S>;
+    },
+    { featureName: name }
+  );
 }

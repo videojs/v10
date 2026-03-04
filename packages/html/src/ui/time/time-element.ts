@@ -39,7 +39,7 @@ export class TimeElement extends MediaElement {
     super.connectedCallback();
 
     if (__DEV__ && !this.#state.value) {
-      logMissingFeature(TimeElement.tagName, 'time');
+      logMissingFeature(this.localName, this.#state.featureName!);
     }
   }
 

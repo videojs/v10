@@ -1,9 +1,9 @@
 'use client';
 
-import type { SliderInteraction, SliderState } from '@videojs/core';
+import type { SliderInput, SliderState } from '@videojs/core';
 import {
   createSlider,
-  type SliderHandle,
+  type SliderApi,
   type SliderOptions,
   type SliderRootProps,
   type SliderThumbProps,
@@ -26,7 +26,7 @@ export interface UseSliderOptions<State extends SliderState = SliderState>
     | 'onDragStart'
     | 'onDragEnd'
   > {
-  computeState: (interaction: SliderInteraction) => State;
+  computeState: (input: SliderInput) => State;
   orientation?: 'horizontal' | 'vertical' | undefined;
   disabled?: boolean | undefined;
   /** Adjust a raw 0–100 percent for thumb alignment. Called for fill and pointer percents. */
@@ -61,7 +61,7 @@ export function useSlider<State extends SliderState = SliderState>(
   const forceRender = useForceRender();
 
   // Lazy-init the slider handle. Stable across re-renders.
-  const [slider] = useState<SliderHandle>(() => {
+  const [slider] = useState<SliderApi>(() => {
     const stableOptions: SliderOptions = {
       getElement: () => rootElementRef.current!,
       getThumbElement: () => thumbElementRef.current,
@@ -84,11 +84,11 @@ export function useSlider<State extends SliderState = SliderState>(
   // Cleanup on unmount.
   useEffect(() => () => slider.destroy(), [slider]);
 
-  // Subscribe to interaction state.
-  const interaction = useSnapshot(slider.interaction);
+  // Subscribe to slider input state.
+  const input = useSnapshot(slider.input);
 
-  // Compute derived state from interaction + caller-provided projection.
-  const state = options.computeState(interaction);
+  // Compute derived state from input + caller-provided projection.
+  const state = options.computeState(input);
 
   // Force a synchronous re-render after mount so edge thumb alignment
   // can read DOM measurements from the now-populated element refs.

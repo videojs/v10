@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { SliderCore, type SliderInteraction } from '../slider-core';
+import { SliderCore, type SliderInput } from '../slider-core';
 
-function createInteraction(overrides: Partial<SliderInteraction> = {}): SliderInteraction {
+function createInput(overrides: Partial<SliderInput> = {}): SliderInput {
   return {
     pointerPercent: 0,
     dragPercent: 0,
@@ -15,8 +15,19 @@ function createInteraction(overrides: Partial<SliderInteraction> = {}): SliderIn
 
 describe('SliderCore', () => {
   describe('defaultProps', () => {
-    it('has expected defaults', () => {
+    it('has expected base defaults', () => {
       expect(SliderCore.defaultProps).toEqual({
+        label: '',
+        step: 1,
+        largeStep: 10,
+        orientation: 'horizontal',
+        disabled: false,
+        thumbAlignment: 'center',
+      });
+    });
+
+    it('has expected slider defaults', () => {
+      expect(SliderCore.defaultSliderProps).toEqual({
         label: '',
         value: 0,
         min: 0,
@@ -30,10 +41,11 @@ describe('SliderCore', () => {
     });
   });
 
-  describe('getState', () => {
+  describe('getSliderState', () => {
     it('returns state with defaults', () => {
       const core = new SliderCore();
-      const state = core.getState(createInteraction(), 50);
+      core.setInput(createInput());
+      const state = core.getSliderState(50);
 
       expect(state.value).toBe(50);
       expect(state.fillPercent).toBe(50);
@@ -48,13 +60,15 @@ describe('SliderCore', () => {
 
     it('computes fillPercent from value', () => {
       const core = new SliderCore({ min: 0, max: 200 });
-      const state = core.getState(createInteraction(), 100);
+      core.setInput(createInput());
+      const state = core.getSliderState(100);
       expect(state.fillPercent).toBe(50);
     });
 
-    it('passes through interaction state', () => {
+    it('passes through input state', () => {
       const core = new SliderCore();
-      const state = core.getState(createInteraction({ dragging: true, pointing: true, pointerPercent: 75 }), 30);
+      core.setInput(createInput({ dragging: true, pointing: true, pointerPercent: 75 }));
+      const state = core.getSliderState(30);
 
       expect(state.dragging).toBe(true);
       expect(state.pointing).toBe(true);
@@ -64,25 +78,29 @@ describe('SliderCore', () => {
 
     it('interactive is true when only dragging', () => {
       const core = new SliderCore();
-      const state = core.getState(createInteraction({ dragging: true }), 0);
+      core.setInput(createInput({ dragging: true }));
+      const state = core.getSliderState(0);
       expect(state.interactive).toBe(true);
     });
 
     it('interactive is true when only pointing', () => {
       const core = new SliderCore();
-      const state = core.getState(createInteraction({ pointing: true }), 0);
+      core.setInput(createInput({ pointing: true }));
+      const state = core.getSliderState(0);
       expect(state.interactive).toBe(true);
     });
 
     it('interactive is true when only focused', () => {
       const core = new SliderCore();
-      const state = core.getState(createInteraction({ focused: true }), 0);
+      core.setInput(createInput({ focused: true }));
+      const state = core.getSliderState(0);
       expect(state.interactive).toBe(true);
     });
 
     it('uses custom orientation and disabled', () => {
       const core = new SliderCore({ orientation: 'vertical', disabled: true });
-      const state = core.getState(createInteraction(), 0);
+      core.setInput(createInput());
+      const state = core.getSliderState(0);
 
       expect(state.orientation).toBe('vertical');
       expect(state.disabled).toBe(true);
@@ -92,25 +110,32 @@ describe('SliderCore', () => {
   describe('getLabel', () => {
     it('returns empty string by default', () => {
       const core = new SliderCore();
-      const state = core.getState(createInteraction(), 50);
+      core.setInput(createInput());
+      const state = core.getSliderState(50);
       expect(core.getLabel(state)).toBe('');
     });
 
     it('returns custom string label', () => {
       const core = new SliderCore({ label: 'Brightness' });
-      const state = core.getState(createInteraction(), 50);
+      core.setInput(createInput());
+      const state = core.getSliderState(50);
       expect(core.getLabel(state)).toBe('Brightness');
     });
 
     it('calls function label with state', () => {
       const core = new SliderCore({ label: (state) => (state.dragging ? 'Dragging' : 'Idle') });
-      expect(core.getLabel(core.getState(createInteraction({ dragging: true }), 0))).toBe('Dragging');
-      expect(core.getLabel(core.getState(createInteraction(), 0))).toBe('Idle');
+
+      core.setInput(createInput({ dragging: true }));
+      expect(core.getLabel(core.getSliderState(0))).toBe('Dragging');
+
+      core.setInput(createInput());
+      expect(core.getLabel(core.getSliderState(0))).toBe('Idle');
     });
 
     it('falls through when function returns empty string', () => {
       const core = new SliderCore({ label: () => '' });
-      const state = core.getState(createInteraction(), 0);
+      core.setInput(createInput());
+      const state = core.getSliderState(0);
       expect(core.getLabel(state)).toBe('');
     });
   });
@@ -118,7 +143,8 @@ describe('SliderCore', () => {
   describe('getAttrs', () => {
     it('returns aria attributes', () => {
       const core = new SliderCore();
-      const state = core.getState(createInteraction(), 50);
+      core.setInput(createInput());
+      const state = core.getSliderState(50);
       const attrs = core.getAttrs(state);
 
       expect(attrs.role).toBe('slider');
@@ -134,7 +160,8 @@ describe('SliderCore', () => {
 
     it('sets tabindex -1 and aria-disabled when disabled', () => {
       const core = new SliderCore({ disabled: true });
-      const state = core.getState(createInteraction(), 0);
+      core.setInput(createInput());
+      const state = core.getSliderState(0);
       const attrs = core.getAttrs(state);
 
       expect(attrs.tabindex).toBe(-1);
@@ -143,7 +170,8 @@ describe('SliderCore', () => {
 
     it('uses custom min and max', () => {
       const core = new SliderCore({ min: 10, max: 50 });
-      const state = core.getState(createInteraction(), 30);
+      core.setInput(createInput());
+      const state = core.getSliderState(30);
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-valuemin']).toBe(10);
@@ -244,7 +272,8 @@ describe('SliderCore', () => {
       const core = new SliderCore();
       core.setProps({ min: 10, max: 50 });
 
-      const state = core.getState(createInteraction(), 30);
+      core.setInput(createInput());
+      const state = core.getSliderState(30);
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-valuemin']).toBe(10);

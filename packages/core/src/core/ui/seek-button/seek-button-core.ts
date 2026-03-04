@@ -3,6 +3,7 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTimeState } from '../../media/state';
+import type { UICore } from '../types';
 
 export interface SeekButtonProps {
   /** Seconds to seek. Positive = forward, negative = backward. Default `30`. */
@@ -22,7 +23,7 @@ export interface SeekButtonState {
   direction: SeekButtonDirection;
 }
 
-export class SeekButtonCore {
+export class SeekButtonCore implements UICore<SeekButtonProps, SeekButtonState> {
   static readonly defaultProps: NonNullableObject<SeekButtonProps> = {
     seconds: 30,
     label: '',

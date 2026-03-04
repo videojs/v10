@@ -33,7 +33,7 @@ export type PlayerControllerHost = ReactiveControllerHost & HTMLElement;
  */
 export class PlayerController<Store extends PlayerStore, Result = Store> implements ReactiveController {
   readonly #host: PlayerControllerHost;
-  readonly #selector: Selector<InferStoreState<Store>, Result> | undefined;
+  readonly #selector: (Selector<InferStoreState<Store>, Result> & { featureName?: string }) | undefined;
 
   #consumer: ContextConsumer<PlayerContext<Store>, PlayerControllerHost>;
   #store: StoreController<Store, Result> | null = null;
@@ -81,6 +81,10 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
 
     // With selector: use StoreController
     return this.#store?.value;
+  }
+
+  get featureName(): string | undefined {
+    return this.#selector?.featureName;
   }
 
   hostConnected(): void {

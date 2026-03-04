@@ -3,7 +3,7 @@ import { listen } from '@videojs/utils/dom';
 import { throttle } from '@videojs/utils/function';
 import { clamp, roundToStep } from '@videojs/utils/number';
 import { isNull } from '@videojs/utils/predicate';
-import type { SliderInteraction } from '../../core/ui/slider/slider-core';
+import type { SliderInput } from '../../core/ui/slider/slider-core';
 import { getPercentFromPointerEvent } from '../utils/pointer';
 import type { UIKeyboardEvent, UIPointerEvent } from './event';
 
@@ -50,8 +50,8 @@ export interface SliderThumbProps {
   onBlur: () => void;
 }
 
-export interface SliderHandle {
-  interaction: State<SliderInteraction>;
+export interface SliderApi {
+  input: State<SliderInput>;
   rootProps: SliderRootProps;
   thumbProps: SliderThumbProps;
   destroy: () => void;
@@ -60,8 +60,8 @@ export interface SliderHandle {
 /** Intentional drag threshold — number of pointermove events before drag starts. */
 const DRAG_THRESHOLD = 2;
 
-export function createSlider(options: SliderOptions): SliderHandle {
-  const state = createState<SliderInteraction>({
+export function createSlider(options: SliderOptions): SliderApi {
+  const input = createState<SliderInput>({
     pointerPercent: 0,
     dragPercent: 0,
     dragging: false,
@@ -97,10 +97,10 @@ export function createSlider(options: SliderOptions): SliderHandle {
 
   function endDrag(): void {
     if (!isDragging) {
-      state.patch({ pointing: false, pointerPercent: 0 });
+      input.patch({ pointing: false, pointerPercent: 0 });
     } else {
       isDragging = false;
-      state.patch({ dragging: false, pointing: false, pointerPercent: 0 });
+      input.patch({ dragging: false, pointing: false, pointerPercent: 0 });
       options.onDragEnd?.();
     }
 
@@ -128,17 +128,17 @@ export function createSlider(options: SliderOptions): SliderHandle {
 
     if (!isDragging && moveCount >= DRAG_THRESHOLD) {
       isDragging = true;
-      state.patch({ dragging: true, dragPercent: percent, pointerPercent: percent });
+      input.patch({ dragging: true, dragPercent: percent, pointerPercent: percent });
       options.onDragStart?.();
       options.onValueChange?.(percent);
       throttledCommit?.(percent);
     } else if (isDragging) {
-      state.patch({ dragPercent: percent, pointerPercent: percent });
+      input.patch({ dragPercent: percent, pointerPercent: percent });
       options.onValueChange?.(percent);
       throttledCommit?.(percent);
     } else {
       // Below drag threshold — update hover preview only.
-      state.patch({ pointerPercent: percent });
+      input.patch({ pointerPercent: percent });
     }
   }
 
@@ -180,7 +180,7 @@ export function createSlider(options: SliderOptions): SliderHandle {
 
       const percent = getPercentFromPointerEvent(event, cachedRect, options.getOrientation(), cachedRTL);
 
-      state.patch({ pointing: true, pointerPercent: percent, dragPercent: percent });
+      input.patch({ pointing: true, pointerPercent: percent, dragPercent: percent });
       options.onValueChange?.(percent);
 
       // Focus the thumb for keyboard follow-up and screen reader tracking.
@@ -197,12 +197,12 @@ export function createSlider(options: SliderOptions): SliderHandle {
       const rect = el.getBoundingClientRect();
       const percent = getPercentFromPointerEvent(event, rect, options.getOrientation(), options.isRTL());
 
-      state.patch({ pointing: true, pointerPercent: percent });
+      input.patch({ pointing: true, pointerPercent: percent });
     },
 
     onPointerLeave() {
       if (isDragging) return;
-      state.patch({ pointing: false, pointerPercent: 0 });
+      input.patch({ pointing: false, pointerPercent: 0 });
     },
   };
 
@@ -266,25 +266,25 @@ export function createSlider(options: SliderOptions): SliderHandle {
       if (newPercent !== null) {
         event.preventDefault();
         newPercent = clamp(newPercent, 0, 100);
-        state.patch({ pointerPercent: newPercent, dragPercent: newPercent });
+        input.patch({ pointerPercent: newPercent, dragPercent: newPercent });
         options.onValueChange?.(newPercent);
         options.onValueCommit?.(newPercent);
       }
     },
 
     onFocus() {
-      state.patch({ focused: true });
+      input.patch({ focused: true });
     },
 
     onBlur() {
-      state.patch({ focused: false });
+      input.patch({ focused: false });
     },
   };
 
   listen(abort.signal, 'abort', cleanup, { once: true });
 
   return {
-    interaction: state,
+    input,
     rootProps,
     thumbProps,
     destroy() {

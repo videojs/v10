@@ -17,8 +17,10 @@ export { BufferingIndicatorElement } from './ui/buffering-indicator/buffering-in
 export { ControlsElement } from './ui/controls/controls-element';
 export { ControlsGroupElement } from './ui/controls/controls-group-element';
 export { FullscreenButtonElement } from './ui/fullscreen-button/fullscreen-button-element';
+export { MediaButtonElement } from './ui/media-button-element';
 // Primitives
 export * from './ui/media-element';
+export { MediaUIElement } from './ui/media-ui-element';
 export { MuteButtonElement } from './ui/mute-button/mute-button-element';
 export { PiPButtonElement } from './ui/pip-button/pip-button-element';
 export { PlayButtonElement } from './ui/play-button/play-button-element';
