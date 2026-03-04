@@ -3,7 +3,7 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { WebKitDocument, WebKitFullscreenElement, WebKitVideoElement } from './types';
 
 /** Check if the Fullscreen API is supported on this platform. */
-export function isFullscreenSupported(): boolean {
+export function isFullscreenEnabled(): boolean {
   const doc = document as WebKitDocument;
 
   // Standard API or WebKit prefix
@@ -27,7 +27,7 @@ export function getFullscreenElement(): Element | null {
  *
  * Uses `:fullscreen` pseudo-class which works across Shadow DOM boundaries.
  */
-export function isElementFullscreen(container: HTMLElement | null, media: HTMLMediaElement): boolean {
+export function isFullscreenElement(container: HTMLElement | null, media: HTMLMediaElement): boolean {
   const video = media as WebKitVideoElement;
 
   // iOS Safari video-only fullscreen

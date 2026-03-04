@@ -4,8 +4,8 @@ import type { MediaFullscreenState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import {
   exitFullscreen,
-  isElementFullscreen,
-  isFullscreenSupported,
+  isFullscreenElement,
+  isFullscreenEnabled,
   requestFullscreen,
 } from '../../presentation/fullscreen';
 import { exitPictureInPicture, isPictureInPictureElement } from '../../presentation/pip';
@@ -37,12 +37,12 @@ export const fullscreenFeature = definePlayerFeature({
     const { media, container } = target;
 
     set({
-      fullscreenAvailability: isFullscreenSupported() ? 'available' : 'unsupported',
+      fullscreenAvailability: isFullscreenEnabled() ? 'available' : 'unsupported',
     });
 
     const sync = () =>
       set({
-        fullscreen: isElementFullscreen(container, media),
+        fullscreen: isFullscreenElement(container, media),
       });
 
     sync();

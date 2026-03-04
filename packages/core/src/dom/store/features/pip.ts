@@ -2,7 +2,7 @@ import { listen } from '@videojs/utils/dom';
 
 import type { MediaPictureInPictureState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
-import { exitFullscreen, isElementFullscreen } from '../../presentation/fullscreen';
+import { exitFullscreen, isFullscreenElement } from '../../presentation/fullscreen';
 import {
   exitPictureInPicture,
   isPictureInPictureElement,
@@ -21,7 +21,7 @@ export const pipFeature = definePlayerFeature({
       const { media, container } = target();
 
       // Exit fullscreen first if active
-      if (isElementFullscreen(container, media)) {
+      if (isFullscreenElement(container, media)) {
         await exitFullscreen();
       }
 
