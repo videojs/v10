@@ -1,5 +1,20 @@
 # Changelog
 
+## [10.0.0-alpha.7](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-alpha.6...@videojs/core@10.0.0-alpha.7) (2026-03-04)
+
+
+### Miscellaneous Chores
+
+* **@videojs/core:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/store bumped to 10.0.0-alpha.7
+    * @videojs/utils bumped to 10.0.0-alpha.7
+
 ## [10.0.0-alpha.6](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-alpha.5...@videojs/core@10.0.0-alpha.6) (2026-03-04)
 
 
