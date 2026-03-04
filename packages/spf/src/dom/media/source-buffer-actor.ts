@@ -108,8 +108,12 @@ function appendSegmentTask(
       // No abort check here: the physical SourceBuffer has been modified, so
       // the model must be updated to match regardless of signal state.
       const { meta } = message;
-      const newEnd = meta.startTime + meta.duration;
-      const filtered = ctx.segments.filter((s) => !(s.startTime < newEnd && s.startTime + s.duration > meta.startTime));
+      // Remove any existing entry at the same start time (same "slot" in the
+      // timeline), then record the new segment. Assumes time-aligned segments
+      // across playlists. The epsilon guards against floating-point drift in
+      // parsed timestamps.
+      const EPSILON = 0.0001;
+      const filtered = ctx.segments.filter((s) => Math.abs(s.startTime - meta.startTime) >= EPSILON);
       return {
         ...ctx,
         segments: [
@@ -162,10 +166,13 @@ function messageToTask(message: SourceBufferMessage, options: MessageTaskOptions
 // Implementation
 // =============================================================================
 
-export function createSourceBufferActor(sourceBuffer: SourceBuffer): SourceBufferActor {
+export function createSourceBufferActor(
+  sourceBuffer: SourceBuffer,
+  initialContext?: Partial<SourceBufferActorContext>
+): SourceBufferActor {
   const state = createState<SourceBufferActorSnapshot>({
     status: 'idle',
-    context: { segments: [], bufferedRanges: [], initTrackId: undefined },
+    context: { segments: [], bufferedRanges: [], initTrackId: undefined, ...initialContext },
   });
 
   const runner = new SerialRunner();

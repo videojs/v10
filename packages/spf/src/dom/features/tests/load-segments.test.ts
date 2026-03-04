@@ -42,14 +42,14 @@ function makeSourceBuffer(): SourceBuffer {
     updating: false,
     appendBuffer: vi.fn(() => {
       setTimeout(() => {
-        for (const listener of listeners['updateend'] ?? []) {
+        for (const listener of listeners.updateend ?? []) {
           listener(new Event('updateend'));
         }
       }, 0);
     }),
     remove: vi.fn(() => {
       setTimeout(() => {
-        for (const listener of listeners['updateend'] ?? []) {
+        for (const listener of listeners.updateend ?? []) {
           listener(new Event('updateend'));
         }
       }, 0);
@@ -730,7 +730,7 @@ describe('loadSegments back buffer flushing', () => {
         updating: false,
         appendBuffer: vi.fn(() => {
           setTimeout(() => {
-            for (const listener of listeners['updateend'] ?? []) {
+            for (const listener of listeners.updateend ?? []) {
               listener(new Event('updateend'));
             }
           }, 0);
@@ -738,7 +738,7 @@ describe('loadSegments back buffer flushing', () => {
         remove: vi.fn((start: number, end: number) => {
           removedRanges.push([start, end]);
           setTimeout(() => {
-            for (const listener of listeners['updateend'] ?? []) {
+            for (const listener of listeners.updateend ?? []) {
               listener(new Event('updateend'));
             }
           }, 0);
@@ -829,7 +829,10 @@ describe('loadSegments back buffer flushing', () => {
   it('does not flush when back buffer is within the keep threshold', async () => {
     const segments = [makeSegment('s1', 0, 10), makeSegment('s2', 10, 10), makeSegment('s3', 20, 10)];
 
-    globalThis.fetch = vi.fn().mockResolvedValue(new Response(new ArrayBuffer(100)));
+    // Use mockImplementation (not mockResolvedValue) so each fetch call gets a
+    // fresh Response — reusing the same Response object causes the second
+    // .arrayBuffer() call to throw "body stream already read".
+    globalThis.fetch = vi.fn().mockImplementation(() => Promise.resolve(new Response(new ArrayBuffer(100))));
 
     const { loadSegments } = await import('../load-segments');
     const { createState: cs } = await import('../../../core/state/create-state');
@@ -939,13 +942,13 @@ describe('loadSegments forward buffer flushing', () => {
         updating: false,
         appendBuffer: vi.fn(() => {
           setTimeout(() => {
-            for (const listener of listeners['updateend'] ?? []) listener(new Event('updateend'));
+            for (const listener of listeners.updateend ?? []) listener(new Event('updateend'));
           }, 0);
         }),
         remove: vi.fn((start: number, end: number) => {
           removedRanges.push([start, end]);
           setTimeout(() => {
-            for (const listener of listeners['updateend'] ?? []) listener(new Event('updateend'));
+            for (const listener of listeners.updateend ?? []) listener(new Event('updateend'));
           }, 0);
         }),
         addEventListener: vi.fn((type: string, listener: EventListener) => {
