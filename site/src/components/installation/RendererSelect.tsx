@@ -2,24 +2,24 @@ import { useStore } from '@nanostores/react';
 import { useEffect } from 'react';
 import { Select, type SelectOption } from '@/components/Select';
 import type { Renderer, UseCase } from '@/stores/installation';
-import { muxPlaybackId, renderer, sourceUrl, useCase, VALID_RENDERERS } from '@/stores/installation';
-import { articleFor, detectRenderer, extractMuxPlaybackId } from '@/utils/installation/detect-renderer';
+import { renderer, sourceUrl, useCase, VALID_RENDERERS } from '@/stores/installation';
+import { articleFor, detectRenderer } from '@/utils/installation/detect-renderer';
 
 const RENDERER_LABELS: Record<Renderer, string> = {
   'background-video': 'Background Video',
-  cloudflare: 'Cloudflare',
-  dash: 'DASH',
+  // cloudflare: 'Cloudflare',
+  // dash: 'DASH',
   hls: 'HLS',
   'html5-audio': 'HTML5 Audio',
   'html5-video': 'HTML5 Video',
-  jwplayer: 'JW Player',
-  'mux-audio': 'Mux',
-  'mux-background-video': 'Mux Background Video',
-  'mux-video': 'Mux',
-  spotify: 'Spotify',
-  vimeo: 'Vimeo',
-  wistia: 'Wistia',
-  youtube: 'YouTube',
+  // jwplayer: 'JW Player',
+  // 'mux-audio': 'Mux',
+  // 'mux-background-video': 'Mux Background Video',
+  // 'mux-video': 'Mux',
+  // spotify: 'Spotify',
+  // vimeo: 'Vimeo',
+  // wistia: 'Wistia',
+  // youtube: 'YouTube',
 };
 
 function buildOptions(useCase: UseCase): SelectOption<Renderer>[] {
@@ -36,16 +36,15 @@ export default function RendererSelect() {
 
   const options = buildOptions($useCase);
   const detection = detectRenderer($sourceUrl, $useCase);
+  const detectedRenderer = detection?.renderer ?? null;
 
-  // Auto-select renderer when detection or use case changes
+  // Auto-select renderer when the detected renderer or use case changes.
+  // Uses the primitive `detectedRenderer` string instead of the `detection`
+  // object to avoid re-firing on every render (new object reference each time),
+  // which would override manual dropdown selection.
   useEffect(() => {
-    if (detection) {
-      renderer.set(detection.renderer);
-
-      const playbackId = extractMuxPlaybackId($sourceUrl);
-      if (playbackId) {
-        muxPlaybackId.set(playbackId);
-      }
+    if (detectedRenderer) {
+      renderer.set(detectedRenderer);
     } else {
       // No valid detection — ensure current renderer is valid for use case
       const current = renderer.get();
@@ -54,7 +53,7 @@ export default function RendererSelect() {
         renderer.set(validRenderers[0]!);
       }
     }
-  }, [detection, $sourceUrl, $useCase]);
+  }, [detectedRenderer, $useCase]);
 
   const showDetectionMatch = $sourceUrl.trim() && detection && detection.renderer === $renderer;
   const showDetectionSuggestion = $sourceUrl.trim() && detection && detection.renderer !== $renderer;
