@@ -1,5 +1,6 @@
 import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
 import {
+  applyElementProps,
   applyStateDataAttrs,
   createSlider,
   getTimeSliderCSSVars,
@@ -79,6 +80,7 @@ export class TimeSliderElement extends MediaElement {
       },
     });
 
+    applyElementProps(this, this.#slider.rootProps, { signal });
     this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
 
     // Prevent default touch gestures and text selection during interaction.
@@ -115,7 +117,23 @@ export class TimeSliderElement extends MediaElement {
     const media = { ...time, ...(buffer ?? { buffered: [], seekable: [] }) };
     this.#core.setMedia(media);
     const state = this.#core.getState();
-    const cssVars = getTimeSliderCSSVars(state);
+
+    let cssState = state;
+    if (state.thumbAlignment === 'edge') {
+      const thumb = this.querySelector<HTMLElement>('media-slider-thumb');
+      if (thumb) {
+        const isHorizontal = state.orientation === 'horizontal';
+        const thumbSize = isHorizontal ? thumb.offsetWidth : thumb.offsetHeight;
+        const trackSize = isHorizontal ? this.offsetWidth : this.offsetHeight;
+        cssState = {
+          ...state,
+          fillPercent: this.#core.adjustPercentForAlignment(state.fillPercent, thumbSize, trackSize),
+          pointerPercent: this.#core.adjustPercentForAlignment(state.pointerPercent, thumbSize, trackSize),
+        };
+      }
+    }
+
+    const cssVars = getTimeSliderCSSVars(cssState);
 
     applyStyles(this, cssVars);
 

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SliderBufferElement } from '../slider-buffer-element';
 import { SliderElement } from '../slider-element';
 import { SliderFillElement } from '../slider-fill-element';
@@ -105,6 +105,27 @@ describe('SliderElement', () => {
     await slider.updateComplete;
 
     expect(slider.style.getPropertyValue('--media-slider-fill')).toBe('75.000%');
+  });
+
+  it('binds rootProps pointer events on connect', async () => {
+    const slider = createElement(SliderElement);
+    slider.value = 0;
+
+    document.body.appendChild(slider);
+    await slider.updateComplete;
+
+    // Stub setPointerCapture/releasePointerCapture (not available in happy-dom).
+    slider.setPointerCapture = vi.fn();
+    slider.releasePointerCapture = vi.fn();
+
+    const spy = vi.fn();
+    slider.addEventListener('value-change', spy);
+
+    // Simulate pointerdown on the slider element.
+    slider.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, clientX: 50, clientY: 0 }));
+
+    // pointerdown triggers onValueChange via rootProps.
+    expect(spy).toHaveBeenCalled();
   });
 
   it('supports vertical orientation', async () => {
