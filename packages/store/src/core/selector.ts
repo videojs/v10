@@ -29,15 +29,17 @@ export function createSelector<S extends AnySlice>(slice: S): Selector<object, I
   const keys = Object.keys(initialState as object);
 
   const firstKey = keys[0];
-  const meta: { displayName?: string } = slice.name ? { displayName: slice.name } : {};
 
   if (!firstKey) {
-    return Object.assign(() => undefined, meta);
+    return Object.assign(() => undefined, { displayName: slice.name });
   }
 
-  return Object.assign((state: object) => {
-    // WARN: Could be the source of a bug if two slices have overlapping state keys
-    if (!(firstKey in state)) return undefined;
-    return pick(state as Record<string, unknown>, keys) as InferSliceState<S>;
-  }, meta);
+  return Object.assign(
+    (state: object) => {
+      // WARN: Could be the source of a bug if two slices have overlapping state keys
+      if (!(firstKey in state)) return undefined;
+      return pick(state as Record<string, unknown>, keys) as InferSliceState<S>;
+    },
+    { displayName: slice.name }
+  );
 }
