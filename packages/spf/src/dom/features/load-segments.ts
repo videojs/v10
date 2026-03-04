@@ -1,10 +1,9 @@
-import type { BandwidthState } from '../../core/abr/bandwidth-estimator';
-import { sampleBandwidth } from '../../core/abr/bandwidth-estimator';
+import { type BandwidthState, sampleBandwidth } from '../../core/abr/bandwidth-estimator';
 import { calculateBackBufferFlushPoint } from '../../core/buffer/back-buffer';
 import { calculateForwardFlushPoint, getSegmentsToLoad } from '../../core/buffer/forward-buffer';
 import { combineLatest } from '../../core/reactive/combine-latest';
-import type { WritableState } from '../../core/state/create-state';
-import type { Presentation, Segment } from '../../core/types';
+import { createState, type WritableState } from '../../core/state/create-state';
+import type { AddressableObject, Presentation, Segment } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { BufferKeyByType, getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
 import {
@@ -12,8 +11,40 @@ import {
   type SourceBufferActor,
   type SourceBufferMessage,
 } from '../media/source-buffer-actor';
-import { fetchResolvable } from '../network/fetch';
+import { fetchResolvableBytes } from '../network/fetch';
 import type { MediaTrackType } from './setup-sourcebuffer';
+
+// ============================================================================
+// TRACKED FETCH
+// ============================================================================
+
+/**
+ * Creates a fetch function that transparently samples bandwidth after each
+ * completed request. Callers receive bytes; throughput tracking is invisible.
+ *
+ * The returned function closes over `throughput` — sampling and model updates
+ * happen internally with no action required at the call site.
+ *
+ * `onSample` is an optional callback invoked after each sample is recorded,
+ * used for bridging throughput state outward (e.g. migration bridge to global
+ * state). A callback is used rather than a subscription so that no immediate
+ * fire occurs at setup time — subscriptions fire on registration and would
+ * trigger spurious state changes before any work has started.
+ */
+function createTrackedFetch(
+  throughput: WritableState<BandwidthState>,
+  onSample?: (next: BandwidthState) => void
+): (addressable: AddressableObject, options?: RequestInit) => Promise<ArrayBuffer> {
+  return async (addressable, options) => {
+    const start = performance.now();
+    const data = await fetchResolvableBytes(addressable, options);
+    const elapsed = performance.now() - start;
+    const next = sampleBandwidth(throughput.current, elapsed, data.byteLength);
+    throughput.patch(next);
+    onSample?.(next);
+    return data;
+  };
+}
 
 // ============================================================================
 // BUFFER STATE TYPES
@@ -81,7 +112,8 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
   context: {
     signal: AbortSignal;
     actor: SourceBufferActor;
-    state: WritableState<{ bandwidthState?: BandwidthState; bufferState?: BufferState }>;
+    fetchBytes: (addressable: AddressableObject, options?: RequestInit) => Promise<ArrayBuffer>;
+    state: WritableState<{ bufferState?: BufferState }>;
     config: { type: T };
   }
 ): Promise<void> => {
@@ -161,24 +193,13 @@ const loadSegmentsTask = async <T extends MediaTrackType>(
     let initData: ArrayBuffer | null = null;
     if (needsInit) {
       if (context.signal.aborted) return;
-      const response = await fetchResolvable(track.initialization, { signal: context.signal });
-      initData = await response.arrayBuffer();
+      initData = await context.fetchBytes(track.initialization, { signal: context.signal });
     }
 
     const fetchedSegments: Array<{ segment: Segment; data: ArrayBuffer }> = [];
     for (const segment of segmentsToLoad) {
       if (context.signal.aborted) break;
-      const startTime = performance.now();
-      const response = await fetchResolvable(segment, { signal: context.signal });
-      const data = await response.arrayBuffer();
-      const elapsed = performance.now() - startTime;
-
-      // Bandwidth sample immediately after each fetch so ABR sees fresh data.
-      const currentBandwidth = context.state.current.bandwidthState;
-      if (currentBandwidth) {
-        context.state.patch({ bandwidthState: sampleBandwidth(currentBandwidth, elapsed, data.byteLength) });
-      }
-
+      const data = await context.fetchBytes(segment, { signal: context.signal });
       fetchedSegments.push({ segment, data });
     }
 
@@ -375,6 +396,36 @@ export function loadSegments(
   const { type } = config;
   const bufferKey = type as 'video' | 'audio';
 
+  // Local throughput state — owns BandwidthState for this track's fetch loop.
+  // Sampling is handled transparently inside fetchBytes; callers never touch it.
+  //
+  // MIGRATION BRIDGE: the onSample callback below keeps global state.bandwidthState
+  // in sync so ABR (selectVideoTrack) continues to work unchanged. Remove this
+  // bridge once ABR reads from throughput directly.
+  //
+  // A callback is used (not a subscription) because subscriptions fire immediately
+  // on registration, which would cause a spurious state.patch before any work
+  // starts and trigger unnecessary combineLatest re-evaluations.
+  //
+  // The bridge is only installed when bandwidthState was initially configured,
+  // preserving the previous behaviour of not writing bandwidthState in contexts
+  // (e.g. tests) where it was never set.
+  const initialBandwidth = state.current.bandwidthState;
+  const throughput = createState<BandwidthState>(
+    initialBandwidth ?? {
+      fastEstimate: 0,
+      fastTotalWeight: 0,
+      slowEstimate: 0,
+      slowTotalWeight: 0,
+      bytesSampled: 0,
+    }
+  );
+
+  const fetchBytes = createTrackedFetch(
+    throughput,
+    initialBandwidth !== undefined ? (next) => state.patch({ bandwidthState: next }) : undefined
+  );
+
   // SourceBufferActor lifecycle — co-located with its consumer to avoid
   // triggering extra notification cycles on other owners subscribers.
   // Managed in a dedicated owners subscription registered before the main
@@ -444,7 +495,7 @@ export function loadSegments(
       abortController = new AbortController();
       currentTask = loadSegmentsTask(
         { currentState },
-        { signal: abortController.signal, actor, state, config: { type } }
+        { signal: abortController.signal, actor, fetchBytes, state, config: { type } }
       );
 
       try {
