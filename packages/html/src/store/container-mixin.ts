@@ -51,6 +51,10 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
 
         this.#observer.observe(this, { childList: true, subtree: true });
 
+        // Slotted media elements don't appear in the container's subtree,
+        // so listen for slot reassignments to pick them up.
+        this.addEventListener('slotchange', this.#onSlotChange);
+
         this.#attachMedia();
       }
 
@@ -58,7 +62,23 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
         super.disconnectedCallback();
         this.#observer?.disconnect();
         this.#observer = null;
+        this.removeEventListener('slotchange', this.#onSlotChange);
         this.#detach();
+      }
+
+      #onSlotChange = () => {
+        this.#attachMedia();
+      };
+
+      #getSlottedMedia(): HTMLMediaElement | null {
+        const slot = this.querySelector<HTMLSlotElement>('slot[name="media"]');
+        if (!slot) return null;
+
+        for (const el of slot.assignedElements({ flatten: true })) {
+          if (el instanceof HTMLMediaElement) return el;
+        }
+
+        return null;
       }
 
       #attachMedia() {
@@ -67,7 +87,7 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
         const store = this.#contextStore ?? this.store;
         if (!store) return;
 
-        const media = this.querySelector<HTMLMediaElement>('video, audio');
+        const media = this.querySelector<HTMLMediaElement>('video, audio') ?? this.#getSlottedMedia();
 
         if (!media) {
           this.#detach();

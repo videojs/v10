@@ -1,0 +1,76 @@
+/* ==========================================================================
+   Error Dialog
+   ========================================================================== */
+
+.media-minimal-skin .media-error {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.media-minimal-skin .media-error__dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 16rem;
+  padding: 1rem;
+  color: oklch(1 0 0);
+  font-size: 0.875rem;
+  text-shadow: 0 1px 0 oklch(0 0 0 / 0.5);
+  transition-property: opacity, transform;
+  transition-duration: 500ms;
+  transition-delay: 100ms;
+  transition-timing-function: linear(
+    0,
+    0.034 1.5%,
+    0.763 9.7%,
+    1.066 13.9%,
+    1.198 19.9%,
+    1.184 21.8%,
+    0.963 37.5%,
+    0.997 50.9%,
+    1
+  );
+
+  /* Simple, fast transition for reduced motion users */
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: 100ms;
+    transition-delay: 0ms;
+    transition-timing-function: ease-out;
+  }
+}
+
+.media-minimal-skin .media-error[data-starting-style] .media-error__dialog,
+.media-minimal-skin .media-error[data-ending-style] .media-error__dialog {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.media-minimal-skin .media-error__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.375rem 0;
+}
+
+.media-minimal-skin .media-error__title {
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.media-minimal-skin .media-error__description {
+  opacity: 0.7;
+}
+
+.media-minimal-skin .media-error__actions {
+  display: flex;
+  gap: 0.5rem;
+
+  & > * {
+    flex: 1;
+  }
+}

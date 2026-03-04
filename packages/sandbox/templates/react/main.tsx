@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { SKINS } from '../constants';
 import type { Skin } from '../types';
+import { useSkinSwitcher } from '../utils/use-skin-switcher';
 import { SkinComponent } from './skins';
 
 const { Provider } = createPlayer({
@@ -20,7 +21,7 @@ const HLS_SOURCES = [
 ];
 
 function App() {
-  const [skin, setSkin] = useState<Skin>('default');
+  const [skin, setSkin] = useSkinSwitcher();
   const [src, setSrc] = useState(HLS_SOURCES[0]);
 
   return (

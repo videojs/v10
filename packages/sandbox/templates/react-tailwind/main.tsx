@@ -9,10 +9,10 @@ import {
   VideoSkinTailwind,
   videoFeatures,
 } from '@videojs/react/video';
-import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { SKINS } from '../constants';
 import type { Skin } from '../types';
+import { useSkinSwitcher } from '../utils/use-skin-switcher';
 
 const { Provider } = createPlayer({
   features: videoFeatures,
@@ -28,7 +28,7 @@ function SkinComponent({ skin, ...props }: { skin: Skin } & VideoSkinProps) {
 }
 
 function App() {
-  const [skin, setSkin] = useState<Skin>('default');
+  const [skin, setSkin] = useSkinSwitcher();
 
   return (
     <div className="flex flex-col justify-center items-center gap-4 my-4">

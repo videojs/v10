@@ -1,0 +1,21 @@
+/* ==========================================================================
+   Icons
+   ========================================================================== */
+
+.media-minimal-skin .media-icon__container {
+  position: relative;
+}
+.media-minimal-skin .media-icon {
+  display: block;
+  flex-shrink: 0;
+  grid-area: 1 / 1;
+  width: 18px;
+  height: 18px;
+  transition-behavior: allow-discrete;
+  transition-property: display, opacity;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+.media-minimal-skin .media-icon--flipped {
+  scale: -1 1;
+}

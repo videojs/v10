@@ -1,0 +1,13 @@
+/* ==========================================================================
+   Tooltips
+   ========================================================================== */
+
+.media-default-skin .media-tooltip {
+  white-space: nowrap;
+}
+.media-default-skin .media-tooltip-popup {
+  padding: 0.25rem 0.625rem;
+  border-radius: calc(infinity * 1px);
+  color: oklch(1 0 0);
+  font-size: 0.75rem;
+}

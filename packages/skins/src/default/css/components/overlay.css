@@ -1,0 +1,32 @@
+/* ==========================================================================
+   Overlay / Scrim
+   ========================================================================== */
+
+.media-default-skin .media-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: linear-gradient(to top, oklch(0 0 0 / 0.5), oklch(0 0 0 / 0.3), oklch(0 0 0 / 0));
+  backdrop-filter: blur(0) saturate(1.2) brightness(0.9);
+  opacity: 0;
+  transition-property: opacity, backdrop-filter;
+  transition-duration: 300ms;
+  transition-delay: 500ms;
+  transition-timing-function: ease-out;
+  pointer-events: none;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: 100ms;
+  }
+}
+
+.media-default-skin .media-controls[data-visible] ~ .media-overlay,
+.media-default-skin .media-error[data-open] ~ .media-overlay {
+  opacity: 1;
+  transition-duration: 150ms;
+  transition-delay: 0ms;
+}
+
+.media-default-skin .media-error[data-open] ~ .media-overlay {
+  backdrop-filter: blur(8px) saturate(1.2) brightness(0.9);
+}
