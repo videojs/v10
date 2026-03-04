@@ -1,8 +1,8 @@
 'use client';
 
 import type { PopoverState } from '@videojs/core';
-import { getAnchorNameStyle } from '@videojs/core/dom';
-import { forwardRef, useCallback, useMemo } from 'react';
+import { supportsAnchorPositioning } from '@videojs/utils/dom';
+import { forwardRef, useCallback } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
@@ -20,11 +20,12 @@ export const PopoverTrigger = forwardRef<HTMLButtonElement, PopoverTriggerProps>
   const triggerRef = useCallback(
     (el: HTMLButtonElement | null) => {
       popover.setTriggerElement(el);
+      if (el && supportsAnchorPositioning()) {
+        el.style.setProperty('anchor-name', `--${anchorName}`);
+      }
     },
-    [popover]
+    [popover, anchorName]
   );
-
-  const anchorStyle = useMemo(() => getAnchorNameStyle(anchorName), [anchorName]);
 
   // Remap DOM focus events to React synthetic event names.
   // createPopover() uses onFocusIn/onFocusOut (matching DOM focusin/focusout),
@@ -41,7 +42,6 @@ export const PopoverTrigger = forwardRef<HTMLButtonElement, PopoverTriggerProps>
       props: [
         {
           type: 'button' as const,
-          style: anchorStyle,
           ...core.getTriggerAttrs(state, popupId),
         },
         { ...restTriggerProps, onFocus: onFocusIn, onBlur: onFocusOut },
