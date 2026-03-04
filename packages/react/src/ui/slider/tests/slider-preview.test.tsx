@@ -106,16 +106,15 @@ describe('SliderPreview', () => {
     expect(el.style.left).toContain('max(');
   });
 
-  it('applies unclamped left style when noClamp is set', () => {
+  it('applies unclamped left style when overflow is visible', () => {
     const { container } = render(
       <SliderRoot>
-        <SliderPreview data-testid="preview" noClamp />
+        <SliderPreview data-testid="preview" overflow="visible" />
       </SliderRoot>
     );
 
     const el = container.querySelector('[data-testid="preview"]') as HTMLElement;
     expect(el.style.left).toContain('calc(var(--media-slider-pointer)');
-    // Should not contain clamping functions
     expect(el.style.left).not.toContain('min(');
   });
 

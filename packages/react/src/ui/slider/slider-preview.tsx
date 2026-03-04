@@ -9,8 +9,8 @@ import { renderElement } from '../../utils/use-render';
 import { useSliderContext } from './context';
 
 export interface SliderPreviewProps extends UIComponentProps<'div', SliderState> {
-  /** Disable boundary clamping so the preview can extend beyond the slider edges. */
-  noClamp?: boolean | undefined;
+  /** How the preview handles the slider boundaries. `'clamp'` keeps the preview within bounds, `'visible'` allows it to extend beyond the edges. */
+  overflow?: 'clamp' | 'visible' | undefined;
 }
 
 /** Positioning container for preview content that tracks the pointer along the slider. */
@@ -18,7 +18,7 @@ export const SliderPreview = forwardRef(function SliderPreview(
   componentProps: SliderPreviewProps,
   forwardedRef: ForwardedRef<HTMLDivElement>
 ) {
-  const { render, className, style, noClamp, ...elementProps } = componentProps;
+  const { render, className, style, overflow = 'clamp', ...elementProps } = componentProps;
 
   const context = useSliderContext();
   const { state } = context;
@@ -42,9 +42,10 @@ export const SliderPreview = forwardRef(function SliderPreview(
 
   const positionStyle: CSSProperties = {
     position: 'absolute',
-    left: noClamp
-      ? `calc(var(--media-slider-pointer) - ${halfWidth}px)`
-      : `min(max(0px, calc(var(--media-slider-pointer) - ${halfWidth}px)), calc(100% - ${width}px))`,
+    left:
+      overflow === 'visible'
+        ? `calc(var(--media-slider-pointer) - ${halfWidth}px)`
+        : `min(max(0px, calc(var(--media-slider-pointer) - ${halfWidth}px)), calc(100% - ${width}px))`,
     width: 'max-content',
     pointerEvents: 'none',
   };
