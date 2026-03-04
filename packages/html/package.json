@@ -89,13 +89,13 @@
   "dependencies": {
     "@videojs/core": "workspace:*",
     "@videojs/element": "workspace:*",
-    "@videojs/skins": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",
     "@videojs/icons": "workspace:*",
+    "@videojs/skins": "workspace:*",
     "happy-dom": "^18.0.1",
     "tsdown": "^0.20.3",
     "typescript": "^5.9.3",

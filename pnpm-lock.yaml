@@ -220,9 +220,6 @@ importers:
       '@videojs/element':
         specifier: workspace:*
         version: link:../element
-      '@videojs/skins':
-        specifier: workspace:*
-        version: link:../skins
       '@videojs/store':
         specifier: workspace:*
         version: link:../store
@@ -236,6 +233,9 @@ importers:
       '@videojs/icons':
         specifier: workspace:*
         version: link:../icons
+      '@videojs/skins':
+        specifier: workspace:*
+        version: link:../skins
       happy-dom:
         specifier: ^18.0.1
         version: 18.0.1
@@ -285,9 +285,6 @@ importers:
       '@videojs/core':
         specifier: workspace:*
         version: link:../core
-      '@videojs/skins':
-        specifier: workspace:*
-        version: link:../skins
       '@videojs/store':
         specifier: workspace:*
         version: link:../store
@@ -304,6 +301,9 @@ importers:
       '@videojs/icons':
         specifier: workspace:*
         version: link:../icons
+      '@videojs/skins':
+        specifier: workspace:*
+        version: link:../skins
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0
@@ -10575,7 +10575,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.3)(@vitest/ui@3.2.4)(happy-dom@18.0.1)(jiti@2.6.1)(jsdom@27.3.0(postcss@8.5.6))(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2)
+      vitest: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.3)(@vitest/ui@3.2.4)(happy-dom@18.0.1)(jiti@2.6.1)(jsdom@26.1.0)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2)
 
   '@vitest/utils@3.2.4':
     dependencies:
