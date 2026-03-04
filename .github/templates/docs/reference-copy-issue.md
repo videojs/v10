@@ -13,6 +13,11 @@ The hand-written MDX reference page for `{{COMPONENT_NAME}}` has drifted from th
 - Triggering PR(s): {{SOURCE_PR_URLS}}
 - Triggering issue(s): {{SOURCE_PR_ISSUE_URLS}}
 
+## API Changes Summary
+| Surface | Change Type | Before | After | Source |
+|---|---|---|---|---|
+{{API_CHANGES_TABLE_ROWS}}
+
 ## Out-of-Sync Docs
 | MDX File | Section | Drift Type | Current (MDX) | Expected (from JSON) | Action |
 |---|---|---|---|---|---|

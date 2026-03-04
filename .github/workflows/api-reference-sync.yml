@@ -66,8 +66,8 @@ jobs:
             echo "No API-relevant changes detected"
           fi
 
-  # ─── Job 1: MDX prose drift (Claude Opus) ───────────────────────────
-  reference-copy:
+  # ─── Job 1: Reference copy drift (Claude Opus) ──────────────────────
+  docs-reference-copy:
     needs: analyze
     if: needs.analyze.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
@@ -125,7 +125,7 @@ jobs:
             - For new components with no MDX yet: open an issue noting scaffold is needed, don't attempt it.
 
             Step 4 — Create/update issues and PRs:
-            - Create/update one canonical issue per component using `.github/templates/reference-copy-issue.md`.
+            - Create/update one canonical issue per component using `.github/templates/docs/reference-copy-issue.md`.
             - Issue title: `docs(site): {component_name} api reference update`.
             - Keep at most one active canonical issue per component.
             - If a canonical issue exists, update it and append new trigger references.
@@ -136,7 +136,7 @@ jobs:
             - Do not open a PR when analysis is uncertain — use `triage` label instead.
 
             Labels:
-            - Required: `docs`, `api`, `site`, `reference:copy`.
+            - Required: `docs`, `api`, `site`, `docs:reference-copy`.
             - Add `components` for component pages.
             - Add `triage` when uncertain.
 
@@ -146,7 +146,7 @@ jobs:
             - Do NOT check concept/how-to pages (separate job handles that).
 
   # ─── Job 2: Demo code drift (Claude Sonnet) ─────────────────────────
-  reference-demos:
+  docs-demos:
     needs: analyze
     if: needs.analyze.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
@@ -191,7 +191,7 @@ jobs:
 
             Step 3 — Create/update issues:
             - Create issues ONLY (no PRs — demo fixes need human judgment).
-            - Use `.github/templates/reference-demos-issue.md`.
+            - Use `.github/templates/docs/demos-issue.md`.
             - Issue title: `docs(site): {component_name} demo code update`.
             - Keep at most one active canonical issue per component.
             - If a canonical issue exists, update it and append new trigger references.
@@ -199,15 +199,15 @@ jobs:
             - Do NOT create an issue if no drift is found.
 
             Labels (always all of these):
-            - `docs`, `api`, `site`, `reference:demos`, `components`, `triage`.
+            - `docs`, `api`, `site`, `docs:demos`, `components`, `triage`.
 
             Scope restrictions:
             - ONLY check `site/src/components/docs/demos/` — no MDX prose, no concept pages.
             - Do NOT check reference page content (separate job handles that).
             - Do NOT check concept/how-to pages (separate job handles that).
 
-  # ─── Job 3: Cross-site references (Claude Sonnet) ───────────────────
-  cross-site-refs:
+  # ─── Job 3: Guide references drift (Claude Sonnet) ──────────────────
+  docs-guide-references:
     needs: analyze
     if: needs.analyze.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
@@ -264,7 +264,7 @@ jobs:
 
             Step 4 — Create/update triage issues:
             - Create issues ONLY (no PRs).
-            - Use `.github/templates/cross-site-refs-issue.md`.
+            - Use `.github/templates/docs/guide-references-issue.md`.
             - Issue title: `docs(site): cross-site api references update`.
             - Group related APIs into one issue when they affect the same files.
             - Keep at most one active canonical issue (search for existing open issues with `drift-type:cross-site-refs` in body).
@@ -273,7 +273,7 @@ jobs:
             - Do NOT create an issue if no stale references are found.
 
             Labels (always all of these):
-            - `docs`, `site`, `cross-ref`, `triage`.
+            - `docs`, `site`, `docs:guide-references`, `triage`.
 
             Scope restrictions:
             - ONLY check docs outside `/reference/` and package READMEs.
