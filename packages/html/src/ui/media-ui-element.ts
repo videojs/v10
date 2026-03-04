@@ -5,6 +5,7 @@ import type { PropertyValues } from '@videojs/element';
 import type { PlayerController } from '../player/player-controller';
 import { MediaElement } from './media-element';
 
+/** Abstract base for HTML custom elements that display media state with data attributes. */
 export abstract class MediaUIElement<Core extends UICore> extends MediaElement {
   protected abstract readonly core: Core;
   protected abstract readonly stateAttrMap: StateAttrMap<InferComponentState<Core>>;
@@ -13,8 +14,8 @@ export abstract class MediaUIElement<Core extends UICore> extends MediaElement {
   override connectedCallback(): void {
     super.connectedCallback();
 
-    if (__DEV__ && !this.mediaState.value && this.mediaState.featureName) {
-      logMissingFeature(this.localName, this.mediaState.featureName);
+    if (__DEV__ && !this.mediaState.value && this.mediaState.displayName) {
+      logMissingFeature(this.localName, this.mediaState.displayName);
     }
   }
 

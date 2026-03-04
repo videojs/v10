@@ -60,6 +60,7 @@ export interface SliderState {
   thumbAlignment: 'center' | 'edge';
 }
 
+/** Base slider logic: value mapping, ARIA attrs, and step calculations. */
 export class SliderCore {
   static readonly defaultProps: NonNullableObject<SliderProps> = {
     label: '',

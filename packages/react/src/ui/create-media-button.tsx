@@ -2,7 +2,7 @@
 
 import type { InferMediaState, StateAttrMap, UICore } from '@videojs/core';
 import { logMissingFeature } from '@videojs/core/dom';
-import type { NamedSelector } from '@videojs/store';
+import type { Selector } from '@videojs/store';
 import type { ForwardedRef, ForwardRefExoticComponent, RefAttributes } from 'react';
 import { forwardRef, useState } from 'react';
 
@@ -14,7 +14,7 @@ interface MediaButtonConfig<Core extends UICore> {
   displayName: string;
   core: { new (): Core; defaultProps: Record<string, unknown> };
   stateAttrMap: StateAttrMap<object>;
-  selector: NamedSelector<object, InferMediaState<Core> | undefined>;
+  selector: Selector<object, InferMediaState<Core> | undefined> & { displayName?: string };
   action: (core: Core, state: InferMediaState<Core>) => void;
 }
 
@@ -60,7 +60,7 @@ export function createMediaButton<ComponentProps extends object>() {
       });
 
       if (!feature) {
-        if (__DEV__) logMissingFeature(displayName, selector.featureName);
+        if (__DEV__) logMissingFeature(displayName, selector.displayName ?? displayName);
         return null;
       }
 

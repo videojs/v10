@@ -5,6 +5,7 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import type { PlayerController } from '../player/player-controller';
 import { MediaElement } from './media-element';
 
+/** Abstract base for HTML custom elements that render a media-control button. */
 export abstract class MediaButtonElement<Core extends UICore> extends MediaElement {
   static override properties: PropertyDeclarationMap = {
     label: { type: String },
@@ -34,8 +35,8 @@ export abstract class MediaButtonElement<Core extends UICore> extends MediaEleme
 
     applyElementProps(this, buttonProps, { signal: this.#disconnect.signal });
 
-    if (__DEV__ && !this.mediaState.value && this.mediaState.featureName) {
-      logMissingFeature(this.localName, this.mediaState.featureName);
+    if (__DEV__ && !this.mediaState.value && this.mediaState.displayName) {
+      logMissingFeature(this.localName, this.mediaState.displayName);
     }
   }
 

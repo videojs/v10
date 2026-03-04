@@ -1,7 +1,7 @@
 import type { PlayerStore } from '@videojs/core/dom';
 import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
-import type { InferStoreState, NamedSelector } from '@videojs/store';
+import type { InferStoreState, Selector } from '@videojs/store';
 import { StoreController } from '@videojs/store/html';
 
 import type { PlayerContext } from './context';
@@ -33,7 +33,7 @@ export type PlayerControllerHost = ReactiveControllerHost & HTMLElement;
  */
 export class PlayerController<Store extends PlayerStore, Result = Store> implements ReactiveController {
   readonly #host: PlayerControllerHost;
-  readonly #selector: NamedSelector<InferStoreState<Store>, Result> | undefined;
+  readonly #selector: (Selector<InferStoreState<Store>, Result> & { displayName?: string }) | undefined;
 
   #consumer: ContextConsumer<PlayerContext<Store>, PlayerControllerHost>;
   #store: StoreController<Store, Result> | null = null;
@@ -53,12 +53,12 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
   constructor(
     host: PlayerControllerHost,
     context: PlayerContext<Store>,
-    selector: NamedSelector<InferStoreState<Store>, Result>
+    selector: Selector<InferStoreState<Store>, Result> & { displayName?: string }
   );
   constructor(
     host: PlayerControllerHost,
     context: PlayerContext<Store>,
-    selector?: NamedSelector<InferStoreState<Store>, Result>
+    selector?: Selector<InferStoreState<Store>, Result> & { displayName?: string }
   ) {
     this.#host = host;
     this.#selector = selector;
@@ -83,8 +83,8 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
     return this.#store?.value;
   }
 
-  get featureName(): string | undefined {
-    return this.#selector?.featureName;
+  get displayName(): string | undefined {
+    return this.#selector?.displayName;
   }
 
   hostConnected(): void {

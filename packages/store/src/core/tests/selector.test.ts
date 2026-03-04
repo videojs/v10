@@ -89,9 +89,29 @@ describe('createSelector', () => {
     expect(selected1).toEqual(selected2);
   });
 
-  it('exposes featureName on the selector', () => {
+  it('exposes displayName from slice name', () => {
     const selectVolume = createSelector(volumeSlice);
 
-    expect(selectVolume.featureName).toBe('volume');
+    expect(selectVolume.displayName).toBe('volume');
+  });
+
+  it('omits displayName when slice has no name', () => {
+    const unnamedSlice = defineSlice<MockMedia>()({
+      state: () => ({ paused: true }),
+    });
+    const selector = createSelector(unnamedSlice);
+
+    expect(selector.displayName).toBeUndefined();
+  });
+
+  it('returns undefined for empty-state slice', () => {
+    const emptySlice = defineSlice<MockMedia>()({
+      name: 'empty',
+      state: () => ({}),
+    });
+    const selector = createSelector(emptySlice);
+
+    expect(selector({})).toBeUndefined();
+    expect(selector.displayName).toBe('empty');
   });
 });

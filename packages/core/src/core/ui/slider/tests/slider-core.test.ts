@@ -256,6 +256,40 @@ describe('SliderCore', () => {
     });
   });
 
+  describe('getStepPercent', () => {
+    it('returns step as a percentage of the range', () => {
+      const core = new SliderCore({ step: 1, min: 0, max: 100 });
+      expect(core.getStepPercent()).toBe(1);
+    });
+
+    it('handles custom ranges', () => {
+      const core = new SliderCore({ step: 5, min: 0, max: 50 });
+      expect(core.getStepPercent()).toBe(10);
+    });
+
+    it('returns 0 when range is 0', () => {
+      const core = new SliderCore({ step: 1, min: 50, max: 50 });
+      expect(core.getStepPercent()).toBe(0);
+    });
+  });
+
+  describe('getLargeStepPercent', () => {
+    it('returns large step as a percentage of the range', () => {
+      const core = new SliderCore({ largeStep: 10, min: 0, max: 100 });
+      expect(core.getLargeStepPercent()).toBe(10);
+    });
+
+    it('handles custom ranges', () => {
+      const core = new SliderCore({ largeStep: 25, min: 0, max: 50 });
+      expect(core.getLargeStepPercent()).toBe(50);
+    });
+
+    it('returns 0 when range is 0', () => {
+      const core = new SliderCore({ largeStep: 10, min: 50, max: 50 });
+      expect(core.getLargeStepPercent()).toBe(0);
+    });
+  });
+
   describe('setProps', () => {
     it('updates props after construction', () => {
       const core = new SliderCore();

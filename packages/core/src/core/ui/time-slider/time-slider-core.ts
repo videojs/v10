@@ -22,9 +22,7 @@ export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'curr
   bufferPercent: number;
 }
 
-/** Max time (ms) to hold the pending seek position before giving up. */
-const PENDING_SEEK_TIMEOUT = 5_000;
-
+/** Time-domain slider: maps media time/buffer state to slider state. */
 export class TimeSliderCore extends SliderCore {
   static override readonly defaultProps: NonNullableObject<TimeSliderProps> = {
     ...SliderCore.defaultProps,
@@ -33,8 +31,6 @@ export class TimeSliderCore extends SliderCore {
   };
 
   #props = { ...TimeSliderCore.defaultProps };
-  #pendingSeekTime: number | null = null;
-  #pendingSeekTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(props?: TimeSliderProps) {
     super();
@@ -44,19 +40,6 @@ export class TimeSliderCore extends SliderCore {
   override setProps(props: TimeSliderProps): void {
     this.#props = defaults(props, TimeSliderCore.defaultProps);
     super.setProps({ ...props, min: 0 });
-  }
-
-  /**
-   * Commit a seek at the given percent. Holds the slider at the target position
-   * until the seek resolves, preventing visual snap-back to stale `currentTime`.
-   */
-  commitSeek(percent: number, seek: (time: number) => Promise<number>): void {
-    const seconds = this.valueFromPercent(percent);
-    this.#setPendingSeek(seconds);
-    seek(seconds).then(
-      () => this.#clearPendingSeek(),
-      () => this.#clearPendingSeek()
-    );
   }
 
   getState(media: MediaTimeState & MediaBufferState): TimeSliderState {
@@ -74,22 +57,13 @@ export class TimeSliderCore extends SliderCore {
     const bufferedEnd = buffered.length > 0 ? buffered[buffered.length - 1]![1] : 0;
     const bufferPercent = duration > 0 ? (bufferedEnd / duration) * 100 : 0;
 
-    const state: TimeSliderState = {
+    return {
       ...base,
       currentTime,
       duration,
       seeking,
       bufferPercent,
     };
-
-    // Hold slider at committed position while the async seek settles.
-    const pending = this.#pendingSeekTime;
-    if (!dragging && pending !== null) {
-      const dur = duration || 1;
-      return { ...state, value: pending, fillPercent: (pending / dur) * 100 };
-    }
-
-    return state;
   }
 
   override getLabel(state: SliderState): string {
@@ -106,25 +80,6 @@ export class TimeSliderCore extends SliderCore {
       ...base,
       'aria-valuetext': valuetext,
     };
-  }
-
-  #setPendingSeek(time: number): void {
-    this.#pendingSeekTime = time;
-
-    if (this.#pendingSeekTimer !== null) {
-      clearTimeout(this.#pendingSeekTimer);
-    }
-
-    this.#pendingSeekTimer = setTimeout(() => this.#clearPendingSeek(), PENDING_SEEK_TIMEOUT);
-  }
-
-  #clearPendingSeek(): void {
-    this.#pendingSeekTime = null;
-
-    if (this.#pendingSeekTimer !== null) {
-      clearTimeout(this.#pendingSeekTimer);
-      this.#pendingSeekTimer = null;
-    }
   }
 }
 

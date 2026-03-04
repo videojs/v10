@@ -15,6 +15,7 @@ export interface VolumeSliderProps extends SliderProps {
 
 export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, 'volume' | 'muted'> {}
 
+/** Volume-domain slider: maps media volume/mute state to slider state. */
 export class VolumeSliderCore extends SliderCore {
   static override readonly defaultProps: NonNullableObject<VolumeSliderProps> = {
     ...SliderCore.defaultProps,

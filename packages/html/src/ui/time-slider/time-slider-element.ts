@@ -68,7 +68,7 @@ export class TimeSliderElement extends MediaElement {
       getLargeStepPercent: () => this.#core.getLargeStepPercent(),
       onValueCommit: (percent) => {
         const media = this.#timeState.value;
-        if (media) this.#core.commitSeek(percent, (t) => media.seek(t));
+        if (media) media.seek(this.#core.valueFromPercent(percent));
       },
       commitThrottle: this.commitThrottle,
       onDragStart: () => {
@@ -86,7 +86,7 @@ export class TimeSliderElement extends MediaElement {
     this.style.userSelect = 'none';
 
     if (__DEV__ && !this.#timeState.value) {
-      logMissingFeature(this.localName, this.#timeState.featureName!);
+      logMissingFeature(this.localName, this.#timeState.displayName!);
     }
   }
 

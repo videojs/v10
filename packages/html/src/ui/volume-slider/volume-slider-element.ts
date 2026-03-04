@@ -82,7 +82,7 @@ export class VolumeSliderElement extends MediaElement {
     this.style.userSelect = 'none';
 
     if (__DEV__ && !this.#volumeState.value) {
-      logMissingFeature(this.localName, this.#volumeState.featureName!);
+      logMissingFeature(this.localName, this.#volumeState.displayName!);
     }
   }
 

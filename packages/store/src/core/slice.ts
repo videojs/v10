@@ -47,6 +47,7 @@ export interface StateContext<Target> {
 // ----------------------------------------
 
 export interface SliceConfig<Target, State> {
+  /** Debug label. Used as `displayName` on selectors created from this slice. */
   name?: string;
   state: (ctx: StateContext<Target>) => State;
   attach?: (ctx: AttachContext<Target, State>) => void;
@@ -60,11 +61,10 @@ export type AnySlice<Target = any> = Slice<Target, any>;
 // Factory
 // ----------------------------------------
 
-export function defineSlice<Target>(): {
-  <State>(config: SliceConfig<Target, State> & { name: string }): Slice<Target, State> & { name: string };
-  <State>(config: SliceConfig<Target, State>): Slice<Target, State>;
-} {
-  return (config: any) => config;
+export type SliceFactory<Target> = <State>(config: SliceConfig<Target, State>) => Slice<Target, State>;
+
+export function defineSlice<Target>(): SliceFactory<Target> {
+  return (config) => config;
 }
 
 // ----------------------------------------
