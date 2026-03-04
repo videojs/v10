@@ -58,9 +58,9 @@ export abstract class MediaButtonElement<Core extends MediaUIComponent> extends 
 
     if (!media) return;
 
-    this.core.setMedia(media as never);
+    this.core.setMedia(media);
     const state = this.core.getState();
     applyElementProps(this, this.core.getAttrs?.(state) ?? {});
-    applyStateDataAttrs(this, state, this.stateAttrMap as StateAttrMap<object>);
+    applyStateDataAttrs(this, state, this.stateAttrMap);
   }
 }

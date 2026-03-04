@@ -9,7 +9,7 @@ import { usePopoverContext } from './context';
 export interface PopoverArrowProps extends UIComponentProps<'div', PopoverState> {}
 
 /** Decorative arrow pointing from the popup toward the trigger. Hidden from assistive technology. */
-export const PopoverArrow = createContextPart<PopoverArrowProps>({
+export const PopoverArrow = createContextPart<PopoverArrowProps, PopoverState>({
   displayName: 'PopoverArrow',
   tag: 'div',
   useContext: usePopoverContext,

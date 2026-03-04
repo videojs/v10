@@ -64,7 +64,7 @@ export function createMediaButton<ComponentProps extends object>() {
         return null;
       }
 
-      core.setMedia(feature as never);
+      core.setMedia(feature);
       const state = core.getState() as object & Record<string, unknown>;
 
       return renderElement('button', { render, className, style } as Parameters<typeof renderElement>[1], {

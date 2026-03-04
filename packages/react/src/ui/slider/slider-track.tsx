@@ -9,7 +9,7 @@ import { useSliderContext } from './context';
 export interface SliderTrackProps extends UIComponentProps<'div', SliderState> {}
 
 /** Contains the slider's visual track and interactive hit zone. */
-export const SliderTrack = createContextPart<SliderTrackProps>({
+export const SliderTrack = createContextPart<SliderTrackProps, SliderState>({
   displayName: 'SliderTrack',
   tag: 'div',
   useContext: useSliderContext,

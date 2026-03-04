@@ -15,7 +15,7 @@ export interface MediaUIComponent<Props = {}, State extends object = object> ext
 }
 
 /** Extracts the media state parameter type from a core's `setMedia` method. */
-export type InferMediaState<Core> = Core extends { setMedia(media: infer M): void } ? M : never;
+export type InferMediaState<Core extends MediaUIComponent> = Parameters<Core['setMedia']>[0];
 
 /** Extracts the component state return type from a core's `getState` method. */
-export type InferComponentState<Core> = Core extends { getState(): infer S } ? S : never;
+export type InferComponentState<Core extends UIComponent> = ReturnType<Core['getState']>;

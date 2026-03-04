@@ -9,7 +9,7 @@ import { useSliderContext } from './context';
 export interface SliderFillProps extends UIComponentProps<'div', SliderState> {}
 
 /** Displays the filled portion from start to the current value. */
-export const SliderFill = createContextPart<SliderFillProps>({
+export const SliderFill = createContextPart<SliderFillProps, SliderState>({
   displayName: 'SliderFill',
   tag: 'div',
   useContext: useSliderContext,

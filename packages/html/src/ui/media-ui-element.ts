@@ -26,8 +26,8 @@ export abstract class MediaUIElement<Core extends MediaUIComponent> extends Medi
 
     if (!media) return;
 
-    this.core.setMedia(media as never);
+    this.core.setMedia(media);
     const state = this.core.getState();
-    applyStateDataAttrs(this, state, this.stateAttrMap as StateAttrMap<object>);
+    applyStateDataAttrs(this, state, this.stateAttrMap);
   }
 }
