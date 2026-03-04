@@ -1,6 +1,7 @@
 import { SliderBufferElement } from '../../ui/slider/slider-buffer-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(SliderBufferElement.tagName, SliderBufferElement);
+safeDefine(SliderBufferElement);
 
 declare global {
   interface HTMLElementTagNameMap {

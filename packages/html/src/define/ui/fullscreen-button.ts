@@ -1,6 +1,7 @@
 import { FullscreenButtonElement } from '../../ui/fullscreen-button/fullscreen-button-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(FullscreenButtonElement.tagName, FullscreenButtonElement);
+safeDefine(FullscreenButtonElement);
 
 declare global {
   interface HTMLElementTagNameMap {

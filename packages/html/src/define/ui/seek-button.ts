@@ -1,6 +1,7 @@
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(SeekButtonElement.tagName, SeekButtonElement);
+safeDefine(SeekButtonElement);
 
 declare global {
   interface HTMLElementTagNameMap {

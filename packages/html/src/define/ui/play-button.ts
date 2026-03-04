@@ -1,6 +1,7 @@
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(PlayButtonElement.tagName, PlayButtonElement);
+safeDefine(PlayButtonElement);
 
 declare global {
   interface HTMLElementTagNameMap {

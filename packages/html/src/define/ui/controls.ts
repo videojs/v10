@@ -1,8 +1,9 @@
 import { ControlsElement } from '../../ui/controls/controls-element';
+import { ControlsGroupElement } from '../../ui/controls/controls-group-element';
+import { safeDefine } from '../safe-define';
 
-import './controls-group';
-
-customElements.define(ControlsElement.tagName, ControlsElement);
+safeDefine(ControlsElement);
+safeDefine(ControlsGroupElement);
 
 declare global {
   interface HTMLElementTagNameMap {

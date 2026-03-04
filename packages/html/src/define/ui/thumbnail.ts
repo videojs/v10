@@ -1,6 +1,7 @@
 import { ThumbnailElement } from '../../ui/thumbnail/thumbnail-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(ThumbnailElement.tagName, ThumbnailElement);
+safeDefine(ThumbnailElement);
 
 declare global {
   interface HTMLElementTagNameMap {

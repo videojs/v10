@@ -1,10 +1,11 @@
 import { BackgroundVideo } from '../../media/background-video';
+import { safeDefine } from '../safe-define';
 
 export class BackgroundVideoElement extends BackgroundVideo {
   static readonly tagName = 'background-video';
 }
 
-customElements.define(BackgroundVideoElement.tagName, BackgroundVideoElement);
+safeDefine(BackgroundVideoElement);
 
 declare global {
   interface HTMLElementTagNameMap {

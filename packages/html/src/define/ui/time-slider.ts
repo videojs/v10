@@ -1,12 +1,18 @@
+import { SliderBufferElement } from '../../ui/slider/slider-buffer-element';
+import { SliderFillElement } from '../../ui/slider/slider-fill-element';
+import { SliderThumbElement } from '../../ui/slider/slider-thumb-element';
+import { SliderTrackElement } from '../../ui/slider/slider-track-element';
+import { SliderValueElement } from '../../ui/slider/slider-value-element';
 import { TimeSliderElement } from '../../ui/time-slider/time-slider-element';
+import { safeDefine } from '../safe-define';
 
-import './slider-buffer';
-import './slider-fill';
-import './slider-thumb';
-import './slider-track';
-import './slider-value';
-
-customElements.define(TimeSliderElement.tagName, TimeSliderElement);
+// Parent slider first — sub-elements consume its context.
+safeDefine(TimeSliderElement);
+safeDefine(SliderBufferElement);
+safeDefine(SliderFillElement);
+safeDefine(SliderThumbElement);
+safeDefine(SliderTrackElement);
+safeDefine(SliderValueElement);
 
 declare global {
   interface HTMLElementTagNameMap {

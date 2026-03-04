@@ -1,6 +1,7 @@
 import { PiPButtonElement } from '../../ui/pip-button/pip-button-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(PiPButtonElement.tagName, PiPButtonElement);
+safeDefine(PiPButtonElement);
 
 declare global {
   interface HTMLElementTagNameMap {

@@ -7,10 +7,12 @@ type BuildMode = 'dev' | 'default';
 const buildModes: BuildMode[] = ['dev', 'default'];
 
 const defineEntries = Object.fromEntries(
-  globSync('src/define/**/*.ts').map((file) => {
-    const key = file.replace('src/', '').replace('.ts', '');
-    return [key, file];
-  })
+  globSync('src/define/**/*.ts')
+    .filter((file) => !file.includes('.test.'))
+    .map((file) => {
+      const key = file.replace('src/', '').replace('.ts', '');
+      return [key, file];
+    })
 );
 
 const presetEntries = Object.fromEntries(

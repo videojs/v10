@@ -1,6 +1,7 @@
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(MuteButtonElement.tagName, MuteButtonElement);
+safeDefine(MuteButtonElement);
 
 declare global {
   interface HTMLElementTagNameMap {

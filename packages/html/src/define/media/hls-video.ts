@@ -1,10 +1,11 @@
 import { HlsVideo } from '../../media/hls-video';
+import { safeDefine } from '../safe-define';
 
 export class HlsVideoElement extends HlsVideo {
   static readonly tagName = 'hls-video';
 }
 
-customElements.define(HlsVideoElement.tagName, HlsVideoElement);
+safeDefine(HlsVideoElement);
 
 declare global {
   interface HTMLElementTagNameMap {
