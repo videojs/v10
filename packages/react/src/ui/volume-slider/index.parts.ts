@@ -1,6 +1,8 @@
 export {
   Fill,
   type FillProps,
+  Preview,
+  type PreviewProps,
   Thumb,
   type ThumbProps,
   Track,
