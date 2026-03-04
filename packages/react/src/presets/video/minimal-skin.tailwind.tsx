@@ -13,7 +13,7 @@ import {
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@videojs/icons/react/minimal';
-import { playbackRate } from '@videojs/skins/video/default.tailwind';
+import { playbackRate } from '@videojs/skins/default/tailwind/video.tailwind';
 import {
   bufferingIndicator,
   button,
@@ -30,7 +30,7 @@ import {
   seek,
   slider,
   time,
-} from '@videojs/skins/video/minimal.tailwind';
+} from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container } from '@/player/context';

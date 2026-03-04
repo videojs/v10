@@ -1,0 +1,24 @@
+/* ==========================================================================
+   Reset
+   ========================================================================== */
+
+.media-default-skin *,
+.media-default-skin *::before,
+.media-default-skin *::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+.media-default-skin img,
+.media-default-skin video,
+.media-default-skin svg {
+  display: block;
+  max-width: 100%;
+}
+.media-default-skin button {
+  font: inherit;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .media-default-skin {
+    interpolate-size: allow-keywords;
+  }
+}

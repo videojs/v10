@@ -1,0 +1,43 @@
+/* ==========================================================================
+   Popups & Animations
+   ========================================================================== */
+
+.media-default-skin .media-popup-animation {
+  transition-property: transform, scale, opacity, filter;
+  transition-duration: 200ms;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transform: scale(0);
+    filter: blur(8px);
+  }
+
+  &[data-instant] {
+    transition-duration: 0ms;
+  }
+
+  &[data-side="top"] {
+    transform-origin: bottom;
+  }
+  &[data-side="bottom"] {
+    transform-origin: top;
+  }
+  &[data-side="left"] {
+    transform-origin: right;
+  }
+  &[data-side="right"] {
+    transform-origin: left;
+  }
+}
+
+.media-default-skin .media-popup {
+  margin: 0;
+  border: 0;
+  color: inherit;
+  --media-popover-side-offset: 0.5rem;
+}
+.media-default-skin .media-popup--volume {
+  padding: 0.625rem 0.25rem;
+  border-radius: calc(infinity * 1px);
+}

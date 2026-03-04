@@ -1,0 +1,47 @@
+@import "../../shared/audio-icon-state.css";
+@import "./components/reset.css";
+@import "./components/root.css";
+@import "./components/buffering.css";
+@import "./components/error.css";
+@import "./components/controls.css";
+@import "./components/time.css";
+@import "./components/buttons.css";
+@import "./components/icons.css";
+@import "./components/slider.css";
+@import "./components/popup.css";
+@import "./components/tooltip.css";
+
+/* ==========================================================================
+  Controls
+  ========================================================================== */
+
+.media-minimal-skin--audio {
+  --media-controls-background-color: oklch(1 0 0);
+  --media-controls-border-color: oklch(0 0 0 / 0.1);
+  --media-controls-text-color: oklch(0 0 0);
+
+  @media (prefers-color-scheme: dark) {
+    --media-controls-background-color: oklch(0 0 0);
+    --media-controls-border-color: oklch(1 0 0 / 0.1);
+    --media-controls-text-color: oklch(1 0 0);
+  }
+}
+.media-minimal-skin--audio .media-controls {
+  gap: 0.5rem;
+  padding: 0.375rem;
+  background-color: var(--media-controls-background-color);
+  backdrop-filter: blur(8px) brightness(0.98) saturate(1.2);
+  border-radius: var(--media-border-radius, 0.75rem);
+  color: var(--media-controls-text-color);
+  box-shadow: 0 0 0 1px var(--media-controls-border-color);
+}
+
+/* ==========================================================================
+   Popups & Animations
+   ========================================================================== */
+
+.media-minimal-skin--audio .media-popup--volume {
+  background: linear-gradient(to left, var(--media-controls-background-color) 80%, transparent 100%);
+  padding: 0.5rem 0 0.5rem 4rem;
+  --media-popover-side-offset: 0.75rem;
+}

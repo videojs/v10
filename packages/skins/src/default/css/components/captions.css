@@ -1,0 +1,91 @@
+/* ==========================================================================
+   Captions
+   ========================================================================== */
+
+.media-default-skin .media-captions {
+  position: absolute;
+  inset: auto 1rem 1.5rem 1rem;
+  z-index: 20;
+  font-size: 1rem;
+  text-wrap: balance;
+  pointer-events: none;
+
+  @container media-root (width > 20rem) {
+    font-size: 1.5rem;
+  }
+
+  @container media-root (width > 48rem) {
+    font-size: 1.875rem;
+  }
+
+  @container media-root (width > 80rem) {
+    font-size: 2.25rem;
+  }
+}
+
+.media-default-skin .media-captions__container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 42ch;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.media-default-skin .media-captions__text {
+  display: block;
+  padding: 0.125rem 0.5rem;
+  color: oklch(1 0 0);
+  text-shadow:
+    0 0 1px oklch(0 0 0 / 0.7),
+    0 0 8px oklch(0 0 0 / 0.7);
+  text-align: center;
+  white-space: pre-wrap;
+  line-height: 1.2;
+
+  @media (prefers-contrast: more) {
+    background: oklch(0 0 0 / 0.7);
+    text-shadow: none;
+    box-decoration-break: clone;
+  }
+
+  & > * {
+    display: inline;
+  }
+}
+
+/* Caption shifting styles (custom and native) */
+.media-default-skin {
+  --media-caption-track-delay: 600ms;
+  --media-caption-track-y: -0.5rem;
+
+  &:has(.media-controls[data-visible]) {
+    --media-caption-track-delay: 25ms;
+    --media-caption-track-y: -3.5rem;
+  }
+}
+
+.media-default-skin .media-captions,
+.media-default-skin video::-webkit-media-text-track-container {
+  /* NOTE: The delay must account for the controls delay/duration */
+  transition: transform 150ms ease-out;
+  transition-delay: var(--media-caption-track-delay);
+}
+
+.media-default-skin video::-webkit-media-text-track-container {
+  transform: translateY(var(--media-caption-track-y)) scale(0.98);
+  z-index: 1;
+  font-family: inherit;
+}
+
+/* When controls are visible, shift captions up to avoid overlap */
+.media-default-skin .media-controls[data-visible] ~ .media-captions {
+  transform: translateY(calc(var(--media-caption-track-y) - 0.5rem));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-default-skin .media-captions,
+  .media-default-skin video::-webkit-media-text-track-container {
+    transition-duration: 50ms;
+  }
+}

@@ -29,7 +29,7 @@ import {
   seek,
   slider,
   time,
-} from '@videojs/skins/video/default.tailwind';
+} from '@videojs/skins/default/tailwind/video.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container } from '@/player/context';

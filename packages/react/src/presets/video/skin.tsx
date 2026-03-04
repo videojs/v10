@@ -54,7 +54,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 
   return (
-    <Container className={cn('media-default-skin', className)} {...rest}>
+    <Container className={cn('media-default-skin media-default-skin--video', className)} {...rest}>
       <BufferingIndicator
         render={(props) => (
           <div {...props} className="media-buffering-indicator">
