@@ -4,7 +4,8 @@ export * from '@videojs/core/dom';
 // Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
-
+// Media
+export { MediaContainerElement } from './media/container-element';
 // Player
 export * from './player/context';
 export * from './player/create-player';

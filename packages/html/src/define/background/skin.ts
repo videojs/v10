@@ -1,5 +1,6 @@
 import { ReactiveElement } from '@videojs/element';
 import { namedNodeMapToObject } from '@videojs/utils/dom';
+import { safeDefine } from '../safe-define';
 
 function getTemplateHTML(_attrs: Record<string, string>) {
   return /*html*/ `
@@ -24,7 +25,7 @@ export class BackgroundVideoSkinElement extends ReactiveElement {
   }
 }
 
-customElements.define(BackgroundVideoSkinElement.tagName, BackgroundVideoSkinElement);
+safeDefine(BackgroundVideoSkinElement);
 
 declare global {
   interface HTMLElementTagNameMap {

@@ -1,6 +1,7 @@
 import { SliderValueElement } from '../../ui/slider/slider-value-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(SliderValueElement.tagName, SliderValueElement);
+safeDefine(SliderValueElement);
 
 declare global {
   interface HTMLElementTagNameMap {

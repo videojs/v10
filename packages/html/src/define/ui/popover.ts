@@ -1,6 +1,7 @@
 import { PopoverElement } from '../../ui/popover/popover-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(PopoverElement.tagName, PopoverElement);
+safeDefine(PopoverElement);
 
 declare global {
   interface HTMLElementTagNameMap {

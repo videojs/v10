@@ -1,6 +1,7 @@
 import { PosterElement } from '../../ui/poster/poster-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(PosterElement.tagName, PosterElement);
+safeDefine(PosterElement);
 
 declare global {
   interface HTMLElementTagNameMap {

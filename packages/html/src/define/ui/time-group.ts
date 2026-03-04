@@ -1,6 +1,7 @@
 import { TimeGroupElement } from '../../ui/time/time-group-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(TimeGroupElement.tagName, TimeGroupElement);
+safeDefine(TimeGroupElement);
 
 declare global {
   interface HTMLElementTagNameMap {

@@ -1,6 +1,7 @@
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(BufferingIndicatorElement.tagName, BufferingIndicatorElement);
+safeDefine(BufferingIndicatorElement);
 
 declare global {
   interface HTMLElementTagNameMap {

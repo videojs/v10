@@ -1,6 +1,7 @@
 import { SliderTrackElement } from '../../ui/slider/slider-track-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(SliderTrackElement.tagName, SliderTrackElement);
+safeDefine(SliderTrackElement);
 
 declare global {
   interface HTMLElementTagNameMap {

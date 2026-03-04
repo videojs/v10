@@ -1,6 +1,7 @@
 import { TimeSeparatorElement } from '../../ui/time/time-separator-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(TimeSeparatorElement.tagName, TimeSeparatorElement);
+safeDefine(TimeSeparatorElement);
 
 declare global {
   interface HTMLElementTagNameMap {

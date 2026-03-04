@@ -1,6 +1,7 @@
 import { SliderFillElement } from '../../ui/slider/slider-fill-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(SliderFillElement.tagName, SliderFillElement);
+safeDefine(SliderFillElement);
 
 declare global {
   interface HTMLElementTagNameMap {

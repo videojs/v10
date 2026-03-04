@@ -1,6 +1,7 @@
 import { SliderThumbElement } from '../../ui/slider/slider-thumb-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(SliderThumbElement.tagName, SliderThumbElement);
+safeDefine(SliderThumbElement);
 
 declare global {
   interface HTMLElementTagNameMap {
