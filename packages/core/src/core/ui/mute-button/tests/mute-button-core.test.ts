@@ -10,7 +10,7 @@ function createMediaState(overrides: Partial<MediaVolumeState> = {}): MediaVolum
     muted: false,
     volumeAvailability: 'available',
     changeVolume: vi.fn((v: number) => v),
-    toggleMute: vi.fn(() => false),
+    toggleMuted: vi.fn(() => false),
     ...overrides,
   };
 }
@@ -108,18 +108,18 @@ describe('MuteButtonCore', () => {
   });
 
   describe('toggle', () => {
-    it('calls toggleMute', () => {
+    it('calls toggleMuted', () => {
       const core = new MuteButtonCore();
       const media = createMediaState();
       core.toggle(media);
-      expect(media.toggleMute).toHaveBeenCalled();
+      expect(media.toggleMuted).toHaveBeenCalled();
     });
 
     it('does nothing when disabled', () => {
       const core = new MuteButtonCore({ disabled: true });
       const media = createMediaState();
       core.toggle(media);
-      expect(media.toggleMute).not.toHaveBeenCalled();
+      expect(media.toggleMuted).not.toHaveBeenCalled();
     });
   });
 });

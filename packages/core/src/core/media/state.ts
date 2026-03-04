@@ -68,7 +68,7 @@ export interface MediaVolumeState {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/muted
    */
-  toggleMute(): boolean;
+  toggleMuted(): boolean;
 }
 
 export interface MediaTimeState {

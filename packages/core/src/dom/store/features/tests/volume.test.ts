@@ -80,13 +80,13 @@ describe('volumeFeature', () => {
       });
     });
 
-    describe('toggleMute', () => {
+    describe('toggleMuted', () => {
       it('toggles mute from false to true', async () => {
         const video = createMockVideo({ muted: false });
         const store = createStore<PlayerTarget>()(volumeFeature);
         store.attach({ media: video, container: null });
 
-        const result = await store.toggleMute();
+        const result = await store.toggleMuted();
 
         expect(video.muted).toBe(true);
         expect(result).toBe(true);
@@ -97,7 +97,7 @@ describe('volumeFeature', () => {
         const store = createStore<PlayerTarget>()(volumeFeature);
         store.attach({ media: video, container: null });
 
-        const result = await store.toggleMute();
+        const result = await store.toggleMuted();
 
         expect(video.muted).toBe(false);
         expect(result).toBe(false);

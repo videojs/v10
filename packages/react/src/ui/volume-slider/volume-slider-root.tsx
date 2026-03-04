@@ -16,7 +16,7 @@ const noopVolume = {
   muted: false,
   volumeAvailability: 'unsupported' as const,
   changeVolume: () => 0,
-  toggleMute: () => false,
+  toggleMuted: () => false,
 };
 
 export interface VolumeSliderRootProps extends UIComponentProps<'div', VolumeSliderCore.State>, VolumeSliderCore.Props {

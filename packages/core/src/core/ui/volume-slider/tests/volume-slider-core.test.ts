@@ -21,7 +21,7 @@ function createMediaState(overrides: Partial<MediaVolumeState> = {}): MediaVolum
     muted: false,
     volumeAvailability: 'available',
     changeVolume: vi.fn((v: number) => v),
-    toggleMute: vi.fn(() => false),
+    toggleMuted: vi.fn(() => false),
     ...overrides,
   };
 }

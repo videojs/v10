@@ -40,7 +40,7 @@ const { mockSliderApi, mockVolumeState } = vi.hoisted(() => ({
     muted: false,
     volumeAvailability: 'available' as const,
     changeVolume: vi.fn(),
-    toggleMute: vi.fn(),
+    toggleMuted: vi.fn(),
   },
 }));
 

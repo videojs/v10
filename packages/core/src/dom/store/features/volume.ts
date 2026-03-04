@@ -16,7 +16,7 @@ export const volumeFeature = definePlayerFeature({
       return media.volume;
     },
 
-    toggleMute() {
+    toggleMuted() {
       const { media } = target();
       media.muted = !media.muted;
       return media.muted;
