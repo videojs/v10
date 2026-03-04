@@ -1,0 +1,98 @@
+---
+import clsx from 'clsx';
+import { ArrowUpRight } from 'lucide-react';
+import Discord from '@/components/icons/discord.svg?react';
+import GitHub from '@/components/icons/github.svg?react';
+import LogoDocs from '@/components/icons/logo-docs.svg?react';
+import Search from '@/components/Search';
+import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
+import GetStartedLink from './GetStartedLink';
+import MobileNav from './MobileNav';
+
+export interface Props {
+  dark?: boolean;
+  class?: string;
+}
+
+type NavLink = {
+  href: string;
+  label: string;
+  matchPath: string | null;
+  external?: boolean;
+};
+const navLinks: NavLink[] = [
+  { href: '/docs', label: 'Docs', matchPath: '/docs' },
+  { href: '/blog', label: 'Blog', matchPath: '/blog' },
+];
+
+const currentPath = Astro.url.pathname;
+const isDocsActive = currentPath.startsWith('/docs');
+const otherNavLinks = navLinks.filter((link) => link.href !== '/docs');
+const { class: className, dark = false } = Astro.props;
+const navLinkBase =
+  'hover:bg-dark-manila dark:hover:bg-warm-gray transition-colors flex items-center px-5 py-2 rounded-sm font-display-extended uppercase font-bold my-1';
+---
+
+<nav
+  class:list={[
+    'flex justify-between',
+    'w-full mx-auto px-5 md:pt-00 md:px-5 items-center border-b border-b-75-manila dark:border-b-light-manila sticky top-0 z-30 bg-light-manila',
+    className,
+  ]}
+  style='min-height: 54px;'
+>
+  <a href="/" class="flex items-center" aria-label="Video.js v10 home">
+    <div class="block md:hidden">
+      <LogoDocs width="10rem" />
+    </div>
+    <div class="hidden md:block">
+      <LogoDocs />
+    </div>
+  </a>
+   <Search dark={dark} class="ml-auto mr-4 sm:self-center" />
+  {/* Desktop nav links */}
+  <div class="hidden md:flex h-full">
+    <GetStartedLink
+      client:idle
+      className={clsx(navLinkBase, isDocsActive ? 'text-orange z-10 relative' : '')}
+      aria-current={isDocsActive ? 'page' : undefined}
+    >
+      Docs
+      <hr class='bg-orange absolute -bottom-1 left-0 right-0 h-px'/>
+    </GetStartedLink>
+    {
+      otherNavLinks.map((link) => (
+        <a href={link.href} class:list={[navLinkBase]}>
+          {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
+        </a>
+      ))
+    }
+    <a
+      href={DISCORD_INVITE_URL}
+      class={clsx(navLinkBase, '!px-3')}
+      aria-label="Discord"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <Discord width="1.5em" height="1.5em" />
+    </a>
+    <a
+      href={GITHUB_REPO_URL}
+      class={clsx(navLinkBase, '!px-3')}
+      aria-label="GitHub"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <GitHub width="1.5em" height="1.5em" />
+    </a>
+  </div>
+
+  <MobileNav
+    client:idle
+    navLinks={navLinks}
+    currentPath={currentPath}
+    dark={dark}
+  >
+    <slot name="mobile-nav" />
+  </MobileNav>
+</nav>

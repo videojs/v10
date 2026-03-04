@@ -8,7 +8,7 @@ import StyleInit from '@/components/docs/StyleInit.astro';
 import FilmGrain from '@/components/FilmGrain';
 import Footer from '@/components/Footer.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
-import NavBar from '@/components/NavBar/NavBar.astro';
+import NavBarDocs from '@/components/NavBar/NavBarDocs.astro';
 import { FRAMEWORK_LABELS, type SupportedFramework } from '@/types/docs';
 import { getDocTitle } from '@/utils/docs/title';
 import Base from './Base.astro';
@@ -41,15 +41,14 @@ const docsSidebarId = 'docs-sidebar';
     class="grid grid-cols-1 md:grid-cols-(--md-grid-cols) lg:grid-cols-(--lg-grid-cols) min-h-screen"
     style="--md-grid-cols: calc(var(--spacing) * 70) 1fr;--lg-grid-cols: calc(var(--spacing) * 75) 1fr;grid-template-rows:auto minmax(0,1fr);"
   >
-    <NavBar class="col-span-full">
+    <NavBarDocs class="col-span-full">
       <DocsSidebar slot="mobile-nav" framework={framework} docTitles={docTitles} />
-    </NavBar>
+    </NavBarDocs>
     <aside
       id={docsSidebarId}
-      class="hidden md:flex flex-col md:border-r border-light-40 dark:border-dark-80 z-10 sticky overflow-y-scroll"
+      class="hidden md:flex flex-col md:border-r border-75-manila dark:border-dark-80 z-10 sticky overflow-y-auto"
       style="top: var(--nav-h); max-height: calc(100vh - var(--nav-h));"
     >
-      <FilmGrain currentPath={Astro.url.pathname} />
       <DocsSidebar framework={framework} docTitles={docTitles} class="flex-1">
         <Selectors client:idle currentFramework={framework} currentSlug={slug} />
       </DocsSidebar>
@@ -57,8 +56,8 @@ const docsSidebarId = 'docs-sidebar';
     <div>
       <div class="flex flex-col" style="min-height:calc(100vh - var(--nav-h));">
         <slot />
-        <Footer class="mt-auto" />
       </div>
+      <Footer class="mt-auto" />
       <FooterEasterEgg class="md:col-start-2" />
     </div>
   </div>

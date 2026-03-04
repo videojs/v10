@@ -24,8 +24,7 @@ const { class: className, dark } = Astro.props;
 <SearchClient
   client:load
   className={clsx(
-    'inline-flex items-center gap-2 cursor-pointer min-h-6 px-2 sm:border intent:border-current rounded-full',
-    dark ? 'border-dark-80' : 'border-light-40 dark:border-dark-80',
+    'inline-flex items-center gap-2 cursor-pointer min-h-6 px-2 sm:border intent:border-current rounded-full border-faded-black dark:border-light-manila',
     className,
   )}
   baseUrl={baseUrl}

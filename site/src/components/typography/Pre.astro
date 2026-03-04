@@ -24,13 +24,13 @@ const value = 'code';
       <slot />
     </Tag>
   ) : (
-    <TabsRoot client:visible>
-      <TabsList client:visible label={`${label} code`}>
-        <Tab client:visible value={value} initial>
+    <TabsRoot variant='docs' client:visible>
+      <TabsList client:visible label={`${label} code`} variant='docs'>
+        <Tab client:visible value={value} initial variant='docs'>
           {label}
         </Tab>
       </TabsList>
-      <TabsPanel client:visible value={value} initial>
+      <TabsPanel client:visible value={value} initial variant='docs'>
         <Tag class={className} {...props}>
           <slot />
         </Tag>

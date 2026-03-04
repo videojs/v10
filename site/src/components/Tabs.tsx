@@ -25,13 +25,16 @@ import useIsHydrated from '@/utils/useIsHydrated';
 import CopyButton from './CopyButton';
 import CopyIcon from './icons/copy-icon.svg?react';
 
+export type TabsVariant = 'homepage' | 'docs';
+
 interface TabsRootProps {
   children: React.ReactNode;
   maxWidth?: boolean;
   className?: string;
   id?: string;
+  variant?: TabsVariant;
 }
-export function TabsRoot({ children, maxWidth = true, className, id: propId }: TabsRootProps) {
+export function TabsRoot({ children, maxWidth = true, className, id: propId, variant = 'homepage' }: TabsRootProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isHydrated = useIsHydrated();
   /**
@@ -72,9 +75,8 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId }: T
       ref={ref}
       className={twMerge(
         clsx(
-          'overflow-hidden border border-faded-black dark:border-dark-manila rounded-xs',
-          'bg-light-manila dark:bg-faded-black flex flex-col',
-          'my-6',
+          'overflow-hidden flex flex-col my-6 border border-faded-black dark:border-dark-manila rounded-xs bg-light-manila dark:bg-faded-black',
+          variant === 'docs' && 'border p-2.5',
           maxWidth && 'w-full max-w-3xl mx-auto',
           className
         )
@@ -89,11 +91,16 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId }: T
 interface TabsListProps {
   label: string;
   children: React.ReactNode;
+  variant?: TabsVariant;
 }
-export function TabsList({ label, children }: TabsListProps) {
+export function TabsList({ label, children, variant = 'homepage' }: TabsListProps) {
   return (
-    <div className="w-full flex not-content p-0">
-      <ul data-orientation="horizontal" aria-label={label} className="flex list-none p-0 m-0 px-5 gap-5">
+    <div className={clsx('w-full flex not-content p-0', variant === 'docs' && 'mb-2.5 p-0')}>
+      <ul
+        data-orientation="horizontal"
+        aria-label={label}
+        className={clsx('flex list-none p-0 m-0 px-5 gap-5', variant === 'docs' && 'gap-0! px-0!')}
+      >
         {children}
       </ul>
       <CopyButton
@@ -101,7 +108,11 @@ export function TabsList({ label, children }: TabsListProps) {
           container: `[data-tabs-root]`,
           target: '[role="tabpanel"]:not([hidden])',
         }}
-        className="ml-auto sticky right-0 h-6.5 w-6.5 mx-3 my-2 flex items-center justify-center cursor-pointer disabled:cursor-wait hover:bg-dark-manila transition-colors rounded-sm"
+        className={clsx(
+          'ml-auto sticky right-0 h-6.5 w-6.5 flex items-center justify-center cursor-pointer disabled:cursor-wait hover:bg-dark-manila transition-colors rounded-sm',
+          variant === 'docs' && 'mx-3',
+          variant === 'homepage' && 'mx-3 my-2'
+        )}
         copied={<Check size={20} />}
       >
         <CopyIcon width="1.25rem" height="1.25rem" />
@@ -114,8 +125,9 @@ interface TabProps {
   value: string;
   children: React.ReactNode;
   initial?: boolean;
+  variant?: TabsVariant;
 }
-export function Tab({ value, children, initial }: TabProps) {
+export function Tab({ value, children, initial, variant = 'homepage' }: TabProps) {
   const isHydrated = useIsHydrated();
   const ref = useRef<HTMLButtonElement>(null);
   const [isActive, setIsActive] = useState(initial);
@@ -208,7 +220,11 @@ export function Tab({ value, children, initial }: TabProps) {
   }, []);
 
   return (
-    <li key={value} role="presentation" className="flex">
+    <li
+      key={value}
+      role="presentation"
+      className={clsx('flex', variant === 'docs' && 'first:border-l first:border-l-75-manila relative z-1')}
+    >
       <button
         ref={ref}
         type="button"
@@ -219,18 +235,24 @@ export function Tab({ value, children, initial }: TabProps) {
         onKeyDown={onKeyDown}
         data-value={value}
         className={clsx(
-          'group flex items-center text-sm gap-2 uppercase font-display-extended',
-          'first:-ml-px last:-mr-px -mx-0.5 no-underline',
-          isActive ? 'text-orange font-bold' : 'font-faded-black',
+          'group flex items-center gap-2 text-p3',
+          '  no-underline',
+          variant === 'homepage' &&
+            (isActive ? 'text-orange font-bold uppercase font-display-extended' : 'uppercase font-display-extended'),
+          variant === 'docs' && 'px-2.5 border border-75-manila border-l-0 z-0 h-7',
+          variant === 'docs' && (isActive ? 'bg-50-manila font-bold' : ''),
           isHydrated ? 'cursor-pointer' : 'cursor-wait'
         )}
       >
-        <span
-          className={clsx(
-            'w-3 h-3 rounded-full border-faded-black dark:border-light-manila border group-hover:bg-dark-manila',
-            isActive ? 'bg-orange group-hover:bg-orange' : ''
-          )}
-        />
+        {variant === 'homepage' && (
+          <span
+            className={clsx(
+              'w-3 h-3 rounded-full border group-hover:bg-dark-manila',
+              variant === 'homepage' && 'border-faded-black dark:border-light-manila',
+              isActive && 'bg-orange group-hover:bg-orange'
+            )}
+          />
+        )}
         {children}
       </button>
     </li>
@@ -242,8 +264,9 @@ interface TabsPanelProps {
   children: React.ReactNode;
   initial?: boolean;
   className?: string;
+  variant?: TabsVariant;
 }
-export function TabsPanel({ value, children, initial, className }: TabsPanelProps) {
+export function TabsPanel({ value, children, initial, className, variant = 'homepage' }: TabsPanelProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isActive, setIsActive] = useState(initial);
 
@@ -278,7 +301,10 @@ export function TabsPanel({ value, children, initial, className }: TabsPanelProp
       role="tabpanel"
       hidden={!isActive}
       data-value={value}
-      className={twMerge(clsx('overflow-scroll p-6 max-h-96 flex-1'), className)}
+      className={twMerge(
+        clsx('overflow-scroll p-6 max-h-96 flex-1', variant === 'docs' && 'bg-faded-black scrollbar-white'),
+        className
+      )}
     >
       {children}
     </div>

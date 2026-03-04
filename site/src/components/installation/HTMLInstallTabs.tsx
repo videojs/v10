@@ -34,29 +34,37 @@ export default function HTMLInstallTabs() {
 
   return (
     <div ref={ref}>
-      <TabsRoot>
-        <TabsList label="Installation">
-          <Tab value="cdn" initial>
-            cdn
+      <TabsRoot variant="docs">
+        <TabsList label="Installation" variant="docs">
+          <Tab value="cdn" initial variant="docs">
+            cdns
           </Tab>
-          <Tab value="npm">npm</Tab>
-          <Tab value="pnpm">pnpm</Tab>
-          <Tab value="yarn">yarn</Tab>
-          <Tab value="bun">bun</Tab>
+          <Tab value="npm" variant="docs">
+            npm
+          </Tab>
+          <Tab value="pnpm" variant="docs">
+            pnpm
+          </Tab>
+          <Tab value="yarn" variant="docs">
+            yarn
+          </Tab>
+          <Tab value="bun" variant="docs">
+            bun
+          </Tab>
         </TabsList>
-        <TabsPanel value="cdn" initial>
+        <TabsPanel value="cdn" initial variant="docs">
           <HTMLCdnCodeBlock />
         </TabsPanel>
-        <TabsPanel value="npm">
+        <TabsPanel value="npm" variant="docs">
           <ClientCode code="npm install @videojs/html" lang="bash" />
         </TabsPanel>
-        <TabsPanel value="pnpm">
+        <TabsPanel value="pnpm" variant="docs">
           <ClientCode code="pnpm add @videojs/html" lang="bash" />
         </TabsPanel>
-        <TabsPanel value="yarn">
+        <TabsPanel value="yarn" variant="docs">
           <ClientCode code="yarn add @videojs/html" lang="bash" />
         </TabsPanel>
-        <TabsPanel value="bun">
+        <TabsPanel value="bun" variant="docs">
           <ClientCode code="bun add @videojs/html" lang="bash" />
         </TabsPanel>
       </TabsRoot>

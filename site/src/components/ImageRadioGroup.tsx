@@ -64,11 +64,11 @@ export default function ImageRadioGroup<T extends string = string>({
                 'relative flex items-center justify-center aspect-square',
                 size === 'sm' && 'rounded-lg',
                 size === 'md' && 'rounded-xl',
-                'border border-light-40 dark:border-dark-80',
+                'border border-75-manila dark:border-75-manila',
                 isSelected
-                  ? 'bg-light-60 dark:bg-dark-90'
+                  ? 'bg-dark-manila'
                   : !isDisabled &&
-                      'bg-light-80 dark:bg-dark-100 group-intent:bg-light-60/50 dark:group-intent:bg-dark-90/50',
+                      'bg-light-80 dark:bg-dark-100 group-intent:bg-light-60/50 dark:group-intent:bg-50-manila',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow/50'
               )}
               style={{

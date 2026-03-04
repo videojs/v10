@@ -61,7 +61,7 @@ export default function ToggleGroup<T extends string = string>({
               className={twMerge(
                 clsx(
                   'relative',
-                  minimal ? 'px-4' : 'px-5 md:px-10',
+                  minimal ? 'px-4' : '',
                   'flex items-center justify-center py-2! text-sm tracking-wider font-display-extended uppercase font-bold',
                   isDisabled ? 'cursor-wait opacity-50' : 'cursor-pointer',
                   isPressed

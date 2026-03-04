@@ -1,7 +1,7 @@
 import { Select as BaseSelect } from '@base-ui-components/react/select';
 import clsx from 'clsx';
-import { Check, ChevronDown } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
+import Check from '@/components/icons/dropdown-arrow.svg?react';
 
 export interface SelectOption<T = string> {
   value: T | null;
@@ -31,7 +31,7 @@ export function Select<T extends string = string>({
       <BaseSelect.Trigger
         className={twMerge(
           clsx(
-            'inline-flex items-center gap-2 bg-light-60 dark:bg-dark-90 dark:text-light-100 border border-light-40 dark:border-dark-80 rounded-lg text-sm p-2'
+            'inline-flex items-center gap-2 bg-50-manila dark:bg-dark-manila text-faded-black dark:text-light-manila border border-black dark:border-dark-manila rounded-sm text-p3 p-2'
           ),
           className
         )}
@@ -41,7 +41,7 @@ export function Select<T extends string = string>({
         <BaseSelect.Value className="flex-1 min-w-0 truncate" />
         &nbsp;
         <BaseSelect.Icon>
-          <ChevronDown size={12} />
+          <Check width={'1rem'} />
         </BaseSelect.Icon>
       </BaseSelect.Trigger>
 
@@ -83,7 +83,7 @@ export function Select<T extends string = string>({
                 >
                   <BaseSelect.ItemText>{option.label}</BaseSelect.ItemText>
                   <BaseSelect.ItemIndicator className="ml-auto inline-flex items-center">
-                    <Check size={16} />
+                    <Check width={'1rem'} />
                   </BaseSelect.ItemIndicator>
                 </BaseSelect.Item>
               ))}
