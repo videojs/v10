@@ -1,22 +1,15 @@
 'use client';
 
-import type { StateAttrMap } from '@videojs/core';
-import type { ForwardedRef, ForwardRefExoticComponent, RefAttributes } from 'react';
+import type { ForwardedRef, ForwardRefExoticComponent } from 'react';
 import { forwardRef } from 'react';
 
-import type { UIComponentProps } from '../utils/types';
+import type { renderElement as renderElementFn } from '../utils/use-render';
 import { renderElement } from '../utils/use-render';
 
-/** Shape that compound context values must satisfy for parts to consume. */
-interface PartContextValue<State extends object> {
-  state: State;
-  stateAttrMap: StateAttrMap<State>;
-}
-
-interface ContextPartConfig<State extends object> {
+interface ContextPartConfig {
   displayName: string;
   tag: keyof React.JSX.IntrinsicElements;
-  useContext: () => PartContextValue<State>;
+  useContext: () => { state: object; stateAttrMap: object };
   staticProps?: Record<string, unknown>;
 }
 
@@ -24,20 +17,17 @@ interface ContextPartConfig<State extends object> {
  * Creates a compound-component part that consumes context and applies
  * data attributes from `ctx.state` + `ctx.stateAttrMap`.
  */
-export function createContextPart<State extends object>(
-  config: ContextPartConfig<State>
-): ForwardRefExoticComponent<UIComponentProps<typeof config.tag, State> & RefAttributes<HTMLElement>> {
+export function createContextPart<Props extends object>(config: ContextPartConfig): ForwardRefExoticComponent<Props> {
   const { displayName, tag, useContext, staticProps } = config;
 
   const Component = forwardRef(function ContextPart(
     componentProps: Record<string, unknown>,
-    forwardedRef: ForwardedRef<HTMLElement>
+    forwardedRef: ForwardedRef<Element>
   ) {
     const { render, className, style, ...elementProps } = componentProps;
-
     const context = useContext();
 
-    return renderElement(tag, { render, className, style } as Parameters<typeof renderElement>[1], {
+    return renderElement(tag, { render, className, style } as renderElementFn.ComponentProps<object>, {
       state: context.state,
       stateAttrMap: context.stateAttrMap,
       ref: forwardedRef,
@@ -47,5 +37,5 @@ export function createContextPart<State extends object>(
 
   Component.displayName = displayName;
 
-  return Component as ForwardRefExoticComponent<UIComponentProps<typeof tag, State> & RefAttributes<HTMLElement>>;
+  return Component as ForwardRefExoticComponent<Props>;
 }
