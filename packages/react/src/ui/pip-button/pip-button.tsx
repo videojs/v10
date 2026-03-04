@@ -9,7 +9,7 @@ import { createMediaButton } from '../create-media-button';
 export interface PiPButtonProps extends UIComponentProps<'button', PiPButtonCore.State>, PiPButtonCore.Props {}
 
 /** A button that toggles picture-in-picture. */
-export const PiPButton = createMediaButton<PiPButtonProps>()({
+export const PiPButton = createMediaButton<PiPButtonCore, PiPButtonProps>({
   displayName: 'PiPButton',
   core: PiPButtonCore,
   stateAttrMap: PiPButtonDataAttrs,

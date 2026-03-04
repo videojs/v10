@@ -9,7 +9,7 @@ import { createMediaButton } from '../create-media-button';
 export interface MuteButtonProps extends UIComponentProps<'button', MuteButtonCore.State>, MuteButtonCore.Props {}
 
 /** A button that toggles mute state. */
-export const MuteButton = createMediaButton<MuteButtonProps>()({
+export const MuteButton = createMediaButton<MuteButtonCore, MuteButtonProps>({
   displayName: 'MuteButton',
   core: MuteButtonCore,
   stateAttrMap: MuteButtonDataAttrs,

@@ -9,7 +9,7 @@ describe('createPopover', () => {
   });
 
   describe('open/close', () => {
-    it('updates interaction state and calls onOpenChange when opening', () => {
+    it('updates input state and calls onOpenChange when opening', () => {
       const { popover, onOpenChange } = createTestPopover();
 
       popover.open();

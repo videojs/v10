@@ -24,7 +24,7 @@ export interface PlayButtonProps extends UIComponentProps<'button', PlayButtonCo
  * />
  * ```
  */
-export const PlayButton = createMediaButton<PlayButtonProps>()({
+export const PlayButton = createMediaButton<PlayButtonCore, PlayButtonProps>({
   displayName: 'PlayButton',
   core: PlayButtonCore,
   stateAttrMap: PlayButtonDataAttrs,

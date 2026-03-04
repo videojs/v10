@@ -45,10 +45,10 @@ export interface UseSliderReturnValue<State extends SliderState = SliderState> {
 }
 
 /**
- * Manages slider interaction lifecycle for React.
+ * Manages slider input lifecycle for React.
  *
  * Wraps `createSlider()` from `@videojs/core/dom` and subscribes to its
- * interaction state via `useSnapshot`. Returns split props for the root
+ * input state via `useSnapshot`. Returns split props for the root
  * (pointer events) and thumb (keyboard/focus) elements.
  */
 export function useSlider<State extends SliderState = SliderState>(

@@ -1,4 +1,3 @@
-import { SliderDataAttrs } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs } from '@videojs/core/dom';
 import type { PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
@@ -46,6 +45,6 @@ export class SliderThumbElement extends MediaElement {
     applyElementProps(this, ctx.thumbAttrs);
 
     // Apply state data attributes.
-    applyStateDataAttrs(this, ctx.state, SliderDataAttrs);
+    applyStateDataAttrs(this, ctx.state, ctx.stateAttrMap);
   }
 }

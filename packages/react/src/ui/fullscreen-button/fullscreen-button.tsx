@@ -11,7 +11,7 @@ export interface FullscreenButtonProps
     FullscreenButtonCore.Props {}
 
 /** A button that toggles fullscreen. */
-export const FullscreenButton = createMediaButton<FullscreenButtonProps>()({
+export const FullscreenButton = createMediaButton<FullscreenButtonCore, FullscreenButtonProps>({
   displayName: 'FullscreenButton',
   core: FullscreenButtonCore,
   stateAttrMap: FullscreenButtonDataAttrs,

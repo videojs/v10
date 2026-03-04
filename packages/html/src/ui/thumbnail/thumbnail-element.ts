@@ -119,7 +119,7 @@ export class ThumbnailElement extends MediaElement {
       fetchpriority: this.fetchPriority,
     });
 
-    // Track src changes via the handle.
+    // Track src changes via the thumbnail API.
     this.#api?.updateSrc(thumbnail?.url);
 
     if (!thumbnail) {

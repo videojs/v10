@@ -25,7 +25,7 @@ export interface SeekButtonProps extends UIComponentProps<'button', SeekButtonCo
  * />
  * ```
  */
-export const SeekButton = createMediaButton<SeekButtonProps>()({
+export const SeekButton = createMediaButton<SeekButtonCore, SeekButtonProps>({
   displayName: 'SeekButton',
   core: SeekButtonCore,
   stateAttrMap: SeekButtonDataAttrs,

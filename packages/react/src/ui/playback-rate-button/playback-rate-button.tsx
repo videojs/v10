@@ -26,7 +26,7 @@ export interface PlaybackRateButtonProps
  * />
  * ```
  */
-export const PlaybackRateButton = createMediaButton<PlaybackRateButtonProps>()({
+export const PlaybackRateButton = createMediaButton<PlaybackRateButtonCore, PlaybackRateButtonProps>({
   displayName: 'PlaybackRateButton',
   core: PlaybackRateButtonCore,
   stateAttrMap: PlaybackRateButtonDataAttrs,
