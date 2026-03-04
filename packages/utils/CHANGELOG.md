@@ -1,5 +1,14 @@
 # Changelog
 
+## [10.0.0-alpha.5](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-alpha.4...@videojs/utils@10.0.0-alpha.5) (2026-03-04)
+
+
+### Features
+
+* **core:** add popover component ([#615](https://github.com/videojs/v10/issues/615)) ([44188d4](https://github.com/videojs/v10/commit/44188d4823d687bae2806f38e199e9719ff05083))
+* **core:** add thumbnail component and text track store feature ([#643](https://github.com/videojs/v10/issues/643)) ([7bae887](https://github.com/videojs/v10/commit/7bae887920a71665fdd24a2f0aca0718de062084))
+* **react:** add slider component ([#644](https://github.com/videojs/v10/issues/644)) ([2f8ca09](https://github.com/videojs/v10/commit/2f8ca094ad5bc5bafc5435c2e97bca58c6d29b5d))
+
 ## [10.0.0-alpha.4](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-alpha.3...@videojs/utils@10.0.0-alpha.4) (2026-02-26)
 
 

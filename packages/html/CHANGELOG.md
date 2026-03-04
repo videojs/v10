@@ -1,5 +1,35 @@
 # Changelog
 
+## [10.0.0-alpha.5](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-alpha.4...@videojs/html@10.0.0-alpha.5) (2026-03-04)
+
+
+### Features
+
+* **html:** add popover element ([#652](https://github.com/videojs/v10/issues/652)) ([bebd03f](https://github.com/videojs/v10/commit/bebd03ff2b533c590c679088a16ae1898b575919))
+* **html:** add slider element ([#655](https://github.com/videojs/v10/issues/655)) ([d5df015](https://github.com/videojs/v10/commit/d5df0150b3aef21c15d3a65c015bb6058e95ce53))
+* **html:** add thumbnail element ([#646](https://github.com/videojs/v10/issues/646)) ([8457b12](https://github.com/videojs/v10/commit/8457b1241c0c382abb6efd70f125081413df8a93))
+* **html:** add time slider element ([#656](https://github.com/videojs/v10/issues/656)) ([26c7395](https://github.com/videojs/v10/commit/26c7395cd0fe7e2fe8a8020ffae40cf81ffb3974))
+* **html:** add volume slider element ([#657](https://github.com/videojs/v10/issues/657)) ([92b7c2a](https://github.com/videojs/v10/commit/92b7c2ac184d12c780ba1a1bb6f064782b77422a))
+* **packages:** add PlaybackRateButton to core, html, and react ([#642](https://github.com/videojs/v10/issues/642)) ([0180828](https://github.com/videojs/v10/commit/0180828df91ad74f885906223fa7d359f1a2641a))
+* **react:** add popover component ([#653](https://github.com/videojs/v10/issues/653)) ([ed43d52](https://github.com/videojs/v10/commit/ed43d52f8fa347acb9dd62f8458a8324e3506fd1))
+* **skin:** implement default and minimal skins for HTML player ([#698](https://github.com/videojs/v10/issues/698)) ([c5cafae](https://github.com/videojs/v10/commit/c5cafae57ff34d13f79d11862b82f10414bdcd40))
+
+
+### Bug Fixes
+
+* **html:** prevent tsdown from stripping custom element registrations ([#703](https://github.com/videojs/v10/issues/703)) ([9a5dfab](https://github.com/videojs/v10/commit/9a5dfab4e8d0e095ea08e8a46973ad57cb1b6820))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-alpha.5
+    * @videojs/element bumped to 10.0.0-alpha.5
+    * @videojs/icons bumped to 10.0.0-alpha.5
+    * @videojs/store bumped to 10.0.0-alpha.5
+    * @videojs/utils bumped to 10.0.0-alpha.5
+
 ## [10.0.0-alpha.4](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-alpha.3...@videojs/html@10.0.0-alpha.4) (2026-02-26)
 
 

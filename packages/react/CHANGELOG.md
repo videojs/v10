@@ -1,5 +1,45 @@
 # Changelog
 
+## [10.0.0-alpha.5](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-alpha.4...@videojs/react@10.0.0-alpha.5) (2026-03-04)
+
+
+### Features
+
+* **html:** add slider element ([#655](https://github.com/videojs/v10/issues/655)) ([d5df015](https://github.com/videojs/v10/commit/d5df0150b3aef21c15d3a65c015bb6058e95ce53))
+* **html:** add time slider element ([#656](https://github.com/videojs/v10/issues/656)) ([26c7395](https://github.com/videojs/v10/commit/26c7395cd0fe7e2fe8a8020ffae40cf81ffb3974))
+* **html:** add volume slider element ([#657](https://github.com/videojs/v10/issues/657)) ([92b7c2a](https://github.com/videojs/v10/commit/92b7c2ac184d12c780ba1a1bb6f064782b77422a))
+* **packages:** add PlaybackRateButton to core, html, and react ([#642](https://github.com/videojs/v10/issues/642)) ([0180828](https://github.com/videojs/v10/commit/0180828df91ad74f885906223fa7d359f1a2641a))
+* **react:** add playback rate button component ([#639](https://github.com/videojs/v10/issues/639)) ([3305fb3](https://github.com/videojs/v10/commit/3305fb3db6f3c89a2ff4fcc3f657e54ddfcbc700))
+* **react:** add popover component ([#653](https://github.com/videojs/v10/issues/653)) ([ed43d52](https://github.com/videojs/v10/commit/ed43d52f8fa347acb9dd62f8458a8324e3506fd1))
+* **react:** add slider component ([#644](https://github.com/videojs/v10/issues/644)) ([2f8ca09](https://github.com/videojs/v10/commit/2f8ca094ad5bc5bafc5435c2e97bca58c6d29b5d))
+* **react:** add thumbnail component ([#648](https://github.com/videojs/v10/issues/648)) ([40606ff](https://github.com/videojs/v10/commit/40606ff1885f44138fe7f70abcda6ef3bee32413))
+* **react:** add time slider component ([#647](https://github.com/videojs/v10/issues/647)) ([158378a](https://github.com/videojs/v10/commit/158378ac731db302b3d1f309de9d93f0f8fc92f2))
+* **react:** orientation-aware buffer styling and slider improvements ([#671](https://github.com/videojs/v10/issues/671)) ([86b2f4d](https://github.com/videojs/v10/commit/86b2f4d3b426ce8747af234f2d0f4c4a3ec402ec))
+* **react:** port time slider styling into video skin presets ([#666](https://github.com/videojs/v10/issues/666)) ([ebb75f5](https://github.com/videojs/v10/commit/ebb75f5863f137511f6fc75bb7fbf528d45b0d9b))
+* **react:** port volume popover and slider styling into skin presets ([#667](https://github.com/videojs/v10/issues/667)) ([6a1edda](https://github.com/videojs/v10/commit/6a1eddadd00b5d9aee45fb774b3d8f953d5c6dcd))
+* **react:** support native caption track shifting in video skins ([#636](https://github.com/videojs/v10/issues/636)) ([ac346db](https://github.com/videojs/v10/commit/ac346dbbd68443558ae16e4c81a28c8c605ae687))
+* **site:** add TimeSlider, VolumeSlider, Popover API references ([#685](https://github.com/videojs/v10/issues/685)) ([8ab596e](https://github.com/videojs/v10/commit/8ab596ea30291d48962684203d153c689e1b0fec))
+* **skin:** implement default and minimal skins for HTML player ([#698](https://github.com/videojs/v10/issues/698)) ([c5cafae](https://github.com/videojs/v10/commit/c5cafae57ff34d13f79d11862b82f10414bdcd40))
+
+
+### Bug Fixes
+
+* **react:** correct buffer selector names in minimal skin CSS ([#672](https://github.com/videojs/v10/issues/672)) ([12277fd](https://github.com/videojs/v10/commit/12277fdac89cc1251f1518b92411f15d1386793a))
+* **react:** use relative import path for useForceRender ([#669](https://github.com/videojs/v10/issues/669)) ([e3d7f4b](https://github.com/videojs/v10/commit/e3d7f4b277182a32ae57b4ce73fa190d774c5730))
+* revert preset provider ([#631](https://github.com/videojs/v10/issues/631)) ([5f1cafa](https://github.com/videojs/v10/commit/5f1cafaa25b8a58e06aae00f2ea1495c2aae2916))
+* **skin:** temporarily hide the caption button ([#629](https://github.com/videojs/v10/issues/629)) ([0666d52](https://github.com/videojs/v10/commit/0666d526b1eb4de6af12a7710e119c588019c19f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-alpha.5
+    * @videojs/store bumped to 10.0.0-alpha.5
+    * @videojs/utils bumped to 10.0.0-alpha.5
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-alpha.5
+
 ## [10.0.0-alpha.4](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-alpha.3...@videojs/react@10.0.0-alpha.4) (2026-02-26)
 
 
