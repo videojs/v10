@@ -4,6 +4,7 @@ import type { MediaTextCue, MediaTextTrackState } from '../../../core/media/stat
 import { definePlayerFeature } from '../../feature';
 
 export const textTrackFeature = definePlayerFeature({
+  name: 'textTrack',
   state: (): MediaTextTrackState => ({
     chaptersCues: [],
     thumbnailCues: [],

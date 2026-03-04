@@ -29,15 +29,15 @@ export class TimeSliderElement extends MediaElement {
     orientation: { type: String },
     disabled: { type: Boolean },
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
-  } satisfies PropertyDeclarationMap<keyof TimeSliderCore.Props>;
+  } satisfies PropertyDeclarationMap<Exclude<keyof TimeSliderCore.Props, 'value' | 'min' | 'max'>>;
 
-  label = TimeSliderCore.defaultBaseProps.label;
-  commitThrottle = TimeSliderCore.defaultBaseProps.commitThrottle;
-  step = TimeSliderCore.defaultBaseProps.step;
-  largeStep = TimeSliderCore.defaultBaseProps.largeStep;
-  orientation = TimeSliderCore.defaultBaseProps.orientation;
-  disabled = TimeSliderCore.defaultBaseProps.disabled;
-  thumbAlignment = TimeSliderCore.defaultBaseProps.thumbAlignment;
+  label = TimeSliderCore.defaultProps.label;
+  commitThrottle = TimeSliderCore.defaultProps.commitThrottle;
+  step = TimeSliderCore.defaultProps.step;
+  largeStep = TimeSliderCore.defaultProps.largeStep;
+  orientation = TimeSliderCore.defaultProps.orientation;
+  disabled = TimeSliderCore.defaultProps.disabled;
+  thumbAlignment = TimeSliderCore.defaultProps.thumbAlignment;
 
   readonly #core = new TimeSliderCore();
   readonly #provider = new ContextProvider(this, { context: sliderContext });

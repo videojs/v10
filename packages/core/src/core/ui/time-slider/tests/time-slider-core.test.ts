@@ -32,13 +32,16 @@ function createMediaState(overrides: Partial<TimeSliderMedia> = {}): TimeSliderM
 describe('TimeSliderCore', () => {
   describe('defaultProps', () => {
     it('has expected defaults', () => {
-      expect(TimeSliderCore.defaultBaseProps).toEqual({
+      expect(TimeSliderCore.defaultProps).toEqual({
+        label: 'Seek',
         step: 1,
         largeStep: 10,
         orientation: 'horizontal',
         disabled: false,
         thumbAlignment: 'center',
-        label: 'Seek',
+        value: 0,
+        min: 0,
+        max: 100,
         commitThrottle: 100,
       });
     });

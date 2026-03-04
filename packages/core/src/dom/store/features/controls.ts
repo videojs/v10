@@ -8,6 +8,7 @@ const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
 
 export const controlsFeature = definePlayerFeature({
+  name: 'controls',
   state: (): MediaControlsState => ({
     userActive: true,
     controlsVisible: true,

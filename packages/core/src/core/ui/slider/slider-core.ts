@@ -3,8 +3,8 @@ import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-/** Shared configuration for all slider variants. */
-export interface SliderBaseProps {
+/** Configuration shared by all slider variants. */
+export interface SliderProps {
   /** Custom label for the slider. */
   label?: string | ((state: SliderState) => string) | undefined;
   /** Step increment for value changes (arrow keys). */
@@ -17,9 +17,6 @@ export interface SliderBaseProps {
   disabled?: boolean | undefined;
   /** How the thumb aligns at the track edges. `edge` constrains the thumb within track bounds. */
   thumbAlignment?: 'center' | 'edge' | undefined;
-}
-
-export interface SliderProps extends SliderBaseProps {
   /** Current slider value. */
   value?: number | undefined;
   /** Minimum value of the slider range. */
@@ -64,17 +61,13 @@ export interface SliderState {
 }
 
 export class SliderCore {
-  static readonly defaultBaseProps: NonNullableObject<SliderBaseProps> = {
+  static readonly defaultProps: NonNullableObject<SliderProps> = {
     label: '',
     step: 1,
     largeStep: 10,
     orientation: 'horizontal',
     disabled: false,
     thumbAlignment: 'center',
-  };
-
-  static readonly defaultProps: NonNullableObject<SliderProps> = {
-    ...SliderCore.defaultBaseProps,
     value: 0,
     min: 0,
     max: 100,

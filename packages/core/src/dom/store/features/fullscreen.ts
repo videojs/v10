@@ -12,6 +12,7 @@ import { exitPiP, isPiPActive } from '../../presentation/pip';
 import type { WebKitVideoElement } from '../../presentation/types';
 
 export const fullscreenFeature = definePlayerFeature({
+  name: 'fullscreen',
   state: ({ target }): MediaFullscreenState => ({
     fullscreen: false,
     fullscreenAvailability: 'unavailable',

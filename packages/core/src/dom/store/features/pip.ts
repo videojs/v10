@@ -7,6 +7,7 @@ import { enterPiP, exitPiP, isPiPActive, isPiPSupported } from '../../presentati
 import type { WebKitVideoElement } from '../../presentation/types';
 
 export const pipFeature = definePlayerFeature({
+  name: 'pip',
   state: ({ target }): MediaPictureInPictureState => ({
     pip: false,
     pipAvailability: 'unavailable',

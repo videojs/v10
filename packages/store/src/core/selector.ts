@@ -21,16 +21,14 @@ export interface NamedSelector<State, Result> {
  *
  * @example
  * ```ts
- * const selectPlayback = createSelector('playback', playbackSlice);
+ * const selectPlayback = createSelector(playbackSlice);
  * selectPlayback(store.state); // { paused, play, pause, ... } | undefined
  * selectPlayback.featureName; // 'playback'
  * ```
  *
- * @param name - Human-readable name for the feature (used in dev warnings).
- * @param slice - The feature slice to create a selector for.
+ * @param slice - The named feature slice to create a selector for.
  */
-export function createSelector<S extends AnySlice>(
-  name: string,
+export function createSelector<S extends AnySlice & { name: string }>(
   slice: S
 ): NamedSelector<object, InferSliceState<S> | undefined> {
   const initialState = slice.state(stateContext);
@@ -39,7 +37,7 @@ export function createSelector<S extends AnySlice>(
   const firstKey = keys[0];
 
   if (!firstKey) {
-    return Object.assign(() => undefined, { featureName: name });
+    return Object.assign(() => undefined, { featureName: slice.name });
   }
 
   return Object.assign(
@@ -48,6 +46,6 @@ export function createSelector<S extends AnySlice>(
       if (!(firstKey in state)) return undefined;
       return pick(state as Record<string, unknown>, keys) as InferSliceState<S>;
     },
-    { featureName: name }
+    { featureName: slice.name }
   );
 }

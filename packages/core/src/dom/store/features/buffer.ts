@@ -4,6 +4,7 @@ import type { MediaBufferState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 
 export const bufferFeature = definePlayerFeature({
+  name: 'buffer',
   state: (): MediaBufferState => ({
     buffered: [],
     seekable: [],

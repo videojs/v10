@@ -4,14 +4,21 @@ import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaBufferState, MediaTimeState } from '../../media/state';
-import { type SliderBaseProps, SliderCore, type SliderState } from '../slider/slider-core';
+import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
 
-export interface TimeSliderProps extends SliderBaseProps {
+export interface TimeSliderProps extends SliderProps {
+  /** @internal Derived from `currentTime` — not user-settable. */
+  value?: number | undefined;
+  /** @internal Always 0 — not user-settable. */
+  min?: number | undefined;
+  /** @internal Derived from `duration` — not user-settable. */
+  max?: number | undefined;
   /** Trailing-edge throttle (ms) for seek requests during drag. */
   commitThrottle?: number | undefined;
 }
 
 export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'currentTime' | 'duration' | 'seeking'> {
+  /** Buffered amount as a percentage of duration (0–100). */
   bufferPercent: number;
 }
 
@@ -19,17 +26,13 @@ export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'curr
 const PENDING_SEEK_TIMEOUT = 5_000;
 
 export class TimeSliderCore extends SliderCore {
-  static override readonly defaultBaseProps: NonNullableObject<TimeSliderProps> = {
-    step: SliderCore.defaultBaseProps.step,
-    largeStep: SliderCore.defaultBaseProps.largeStep,
-    orientation: SliderCore.defaultBaseProps.orientation,
-    disabled: SliderCore.defaultBaseProps.disabled,
-    thumbAlignment: SliderCore.defaultBaseProps.thumbAlignment,
+  static override readonly defaultProps: NonNullableObject<TimeSliderProps> = {
+    ...SliderCore.defaultProps,
     label: 'Seek',
     commitThrottle: 100,
   };
 
-  #props = { ...TimeSliderCore.defaultBaseProps };
+  #props = { ...TimeSliderCore.defaultProps };
   #pendingSeekTime: number | null = null;
   #pendingSeekTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -39,7 +42,7 @@ export class TimeSliderCore extends SliderCore {
   }
 
   override setProps(props: TimeSliderProps): void {
-    this.#props = defaults(props, TimeSliderCore.defaultBaseProps);
+    this.#props = defaults(props, TimeSliderCore.defaultProps);
     super.setProps({ ...props, min: 0 });
   }
 

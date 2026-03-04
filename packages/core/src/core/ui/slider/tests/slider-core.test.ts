@@ -15,18 +15,7 @@ function createInput(overrides: Partial<SliderInput> = {}): SliderInput {
 
 describe('SliderCore', () => {
   describe('defaultProps', () => {
-    it('has expected base defaults', () => {
-      expect(SliderCore.defaultBaseProps).toEqual({
-        label: '',
-        step: 1,
-        largeStep: 10,
-        orientation: 'horizontal',
-        disabled: false,
-        thumbAlignment: 'center',
-      });
-    });
-
-    it('has expected slider defaults', () => {
+    it('has expected defaults', () => {
       expect(SliderCore.defaultProps).toEqual({
         label: '',
         value: 0,

@@ -4,6 +4,7 @@ import type { MediaPlaybackState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 
 export const playbackFeature = definePlayerFeature({
+  name: 'playback',
   state: ({ target }): MediaPlaybackState => ({
     paused: true,
     ended: false,

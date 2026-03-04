@@ -8,6 +8,7 @@ interface MockMedia {
 
 describe('createSelector', () => {
   const volumeSlice = defineSlice<MockMedia>()({
+    name: 'volume',
     state: ({ target }) => ({
       volume: 1,
       muted: false,
@@ -19,6 +20,7 @@ describe('createSelector', () => {
   });
 
   const playbackSlice = defineSlice<MockMedia>()({
+    name: 'playback',
     state: () => ({
       paused: true,
       ended: false,
@@ -26,7 +28,7 @@ describe('createSelector', () => {
   });
 
   it('selects slice state from store state', () => {
-    const selectVolume = createSelector('volume', volumeSlice);
+    const selectVolume = createSelector(volumeSlice);
     const state = { volume: 0.5, muted: true, setVolume: () => 0.5 };
 
     const selected = selectVolume(state);
@@ -39,7 +41,7 @@ describe('createSelector', () => {
   });
 
   it('returns undefined when slice is not configured', () => {
-    const selectVolume = createSelector('volume', volumeSlice);
+    const selectVolume = createSelector(volumeSlice);
     const state = { paused: true, ended: false }; // No volume keys
 
     const selected = selectVolume(state);
@@ -48,8 +50,8 @@ describe('createSelector', () => {
   });
 
   it('creates separate selectors for different slices', () => {
-    const selectVolume = createSelector('volume', volumeSlice);
-    const selectPlayback = createSelector('playback', playbackSlice);
+    const selectVolume = createSelector(volumeSlice);
+    const selectPlayback = createSelector(playbackSlice);
     const state = {
       volume: 0.75,
       muted: false,
@@ -73,7 +75,7 @@ describe('createSelector', () => {
   });
 
   it('returns stable references when state values are the same', () => {
-    const selectVolume = createSelector('volume', volumeSlice);
+    const selectVolume = createSelector(volumeSlice);
     const setVolume = () => 1;
     const state1 = { volume: 1, muted: false, setVolume };
     const state2 = { volume: 1, muted: false, setVolume };
@@ -88,7 +90,7 @@ describe('createSelector', () => {
   });
 
   it('exposes featureName on the selector', () => {
-    const selectVolume = createSelector('volume', volumeSlice);
+    const selectVolume = createSelector(volumeSlice);
 
     expect(selectVolume.featureName).toBe('volume');
   });

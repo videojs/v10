@@ -6,6 +6,7 @@ import { hasMetadata } from '../../media/predicate';
 import { signalKeys } from '../signal-keys';
 
 export const timeFeature = definePlayerFeature({
+  name: 'time',
   state: ({ target, signals }): MediaTimeState => ({
     currentTime: 0,
     duration: 0,

@@ -6,6 +6,7 @@ import { definePlayerFeature } from '../../feature';
 const DEFAULT_RATES: readonly number[] = [1, 1.2, 1.5, 1.7, 2];
 
 export const playbackRateFeature = definePlayerFeature({
+  name: 'playbackRate',
   state: ({ target }): MediaPlaybackRateState => ({
     playbackRates: DEFAULT_RATES,
     playbackRate: 1,
