@@ -32,16 +32,26 @@ export default function llmsMarkdown(): AstroIntegration {
 
         logger.info('Generating LLM-optimized markdown files...');
 
+        // Standalone error pages emit e.g. 404.html, not 404/index.html
+        const SKIP_PAGES = new Set(['404', '500']);
+
         for (const page of pages) {
           const { pathname } = page;
+
+          if (SKIP_PAGES.has(pathname.replace(/\/$/, ''))) continue;
 
           try {
             // Construct path to HTML file
             const htmlPath = join(siteDir, pathname, 'index.html');
             const html = await readFile(htmlPath, 'utf-8');
 
+            // Strip styles before JSDOM to avoid "Could not parse CSS stylesheet" warnings
+            const cleanHtml = html
+              .replace(/<style[\s\S]*?<\/style>/gi, '')
+              .replace(/<link[^>]*rel=["']stylesheet["'][^>]*\/?>/gi, '');
+
             // Parse HTML with jsdom
-            const dom = new JSDOM(html);
+            const dom = new JSDOM(cleanHtml);
             const document = dom.window.document;
 
             // Check if page has llms content
