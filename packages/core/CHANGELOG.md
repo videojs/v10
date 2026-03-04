@@ -1,5 +1,20 @@
 # Changelog
 
+## [10.0.0-alpha.6](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-alpha.5...@videojs/core@10.0.0-alpha.6) (2026-03-04)
+
+
+### Bug Fixes
+
+* **core:** use camelCase attribute names in slider for react ([#708](https://github.com/videojs/v10/issues/708)) ([4e1f3af](https://github.com/videojs/v10/commit/4e1f3af2d71bfdacbd35e1363ecb8221e24558a3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/store bumped to 10.0.0-alpha.6
+    * @videojs/utils bumped to 10.0.0-alpha.6
+
 ## [10.0.0-alpha.5](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-alpha.4...@videojs/core@10.0.0-alpha.5) (2026-03-04)
 
 

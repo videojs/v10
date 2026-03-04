@@ -1,5 +1,23 @@
 # Changelog
 
+## [10.0.0-alpha.6](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-alpha.5...@videojs/react@10.0.0-alpha.6) (2026-03-04)
+
+
+### Miscellaneous Chores
+
+* **@videojs/react:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-alpha.6
+    * @videojs/store bumped to 10.0.0-alpha.6
+    * @videojs/utils bumped to 10.0.0-alpha.6
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-alpha.6
+
 ## [10.0.0-alpha.5](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-alpha.4...@videojs/react@10.0.0-alpha.5) (2026-03-04)
 
 
