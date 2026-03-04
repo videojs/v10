@@ -3,6 +3,7 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPictureInPictureState } from '../../media/state';
+
 export interface PiPButtonProps {
   /** Custom label for the button. */
   label?: string | ((state: PiPButtonState) => string) | undefined;

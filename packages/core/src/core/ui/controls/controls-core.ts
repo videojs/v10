@@ -1,4 +1,5 @@
 import type { MediaControlsState } from '../../media/state';
+
 export interface ControlsState {
   visible: boolean;
   userActive: boolean;

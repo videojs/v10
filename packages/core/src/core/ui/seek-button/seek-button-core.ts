@@ -3,6 +3,7 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTimeState } from '../../media/state';
+
 export interface SeekButtonProps {
   /** Seconds to seek. Positive = forward, negative = backward. Default `30`. */
   seconds?: number | undefined;

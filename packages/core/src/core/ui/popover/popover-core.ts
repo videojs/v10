@@ -3,6 +3,7 @@ import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { TransitionFlags, TransitionState, TransitionStatus } from '../transition';
 import { getTransitionFlags } from '../transition';
+
 export type PopoverSide = 'top' | 'bottom' | 'left' | 'right';
 
 export type PopoverAlign = 'start' | 'center' | 'end';

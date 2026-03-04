@@ -4,6 +4,7 @@ import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '@videojs/u
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTimeState } from '../../media/state';
+
 /** Time display type. */
 export type TimeType = 'current' | 'duration' | 'remaining';
 

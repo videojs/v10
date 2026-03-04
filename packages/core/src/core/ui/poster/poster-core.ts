@@ -1,4 +1,5 @@
 import type { MediaPlaybackState } from '../../media/state';
+
 export interface PosterState {
   visible: boolean;
 }

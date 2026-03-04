@@ -3,6 +3,7 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaFullscreenState } from '../../media/state';
+
 export interface FullscreenButtonProps {
   /** Custom label for the button. */
   label?: string | ((state: FullscreenButtonState) => string) | undefined;

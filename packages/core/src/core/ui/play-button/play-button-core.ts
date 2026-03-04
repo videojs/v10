@@ -3,6 +3,7 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackState } from '../../media/state';
+
 export interface PlayButtonProps {
   /** Custom label for the button. */
   label?: string | ((state: PlayButtonState) => string) | undefined;

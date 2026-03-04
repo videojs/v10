@@ -3,6 +3,7 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackRateState } from '../../media/state';
+
 export interface PlaybackRateButtonProps {
   /** Custom label for the button. */
   label?: string | ((state: PlaybackRateButtonState) => string) | undefined;

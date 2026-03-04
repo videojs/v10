@@ -3,6 +3,7 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaVolumeState } from '../../media/state';
+
 export type VolumeLevel = 'off' | 'low' | 'medium' | 'high';
 
 export interface MuteButtonProps {
