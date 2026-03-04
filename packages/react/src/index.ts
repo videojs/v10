@@ -47,6 +47,7 @@ export type { SliderBufferProps } from './ui/slider/slider-buffer';
 export type { SliderFillProps } from './ui/slider/slider-fill';
 export type { SliderRootProps } from './ui/slider/slider-root';
 export type { SliderThumbProps } from './ui/slider/slider-thumb';
+export type { SliderThumbnailProps } from './ui/slider/slider-thumbnail';
 export type { SliderTrackProps } from './ui/slider/slider-track';
 export type { SliderValueProps } from './ui/slider/slider-value';
 export { Thumbnail, type ThumbnailProps } from './ui/thumbnail/thumbnail';
