@@ -36,13 +36,16 @@ jobs:
 
       - name: Set PR context
         id: context
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title || '' }}
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
         run: |
           echo "pr_number=${{ github.event.pull_request.number || '' }}" >> "$GITHUB_OUTPUT"
-          echo "pr_title=${{ github.event.pull_request.title || '' }}" >> "$GITHUB_OUTPUT"
+          echo "pr_title=$PR_TITLE" >> "$GITHUB_OUTPUT"
           echo "pr_url=${{ github.event.pull_request.html_url || '' }}" >> "$GITHUB_OUTPUT"
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           echo "pr_body<<$EOF" >> "$GITHUB_OUTPUT"
-          echo "${{ github.event.pull_request.body || '' }}" >> "$GITHUB_OUTPUT"
+          echo "$PR_BODY" >> "$GITHUB_OUTPUT"
           echo "$EOF" >> "$GITHUB_OUTPUT"
 
       - name: Check for API-relevant changes
