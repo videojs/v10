@@ -3,20 +3,19 @@ import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaVolumeState } from '../../media/state';
 import { type SliderBaseProps, SliderCore, type SliderState } from '../slider/slider-core';
-import type { UICore } from '../types';
 
 export interface VolumeSliderProps extends SliderBaseProps {}
 
 export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, 'volume' | 'muted'> {}
 
-export class VolumeSliderCore extends SliderCore implements UICore<VolumeSliderProps, VolumeSliderState> {
-  static readonly defaultProps: NonNullableObject<VolumeSliderProps> = {
+export class VolumeSliderCore extends SliderCore {
+  static override readonly defaultBaseProps: NonNullableObject<VolumeSliderProps> = {
     label: 'Volume',
-    step: SliderCore.defaultProps.step,
-    largeStep: SliderCore.defaultProps.largeStep,
-    orientation: SliderCore.defaultProps.orientation,
-    disabled: SliderCore.defaultProps.disabled,
-    thumbAlignment: SliderCore.defaultProps.thumbAlignment,
+    step: SliderCore.defaultBaseProps.step,
+    largeStep: SliderCore.defaultBaseProps.largeStep,
+    orientation: SliderCore.defaultBaseProps.orientation,
+    disabled: SliderCore.defaultBaseProps.disabled,
+    thumbAlignment: SliderCore.defaultBaseProps.thumbAlignment,
   };
 
   constructor(props?: VolumeSliderProps) {
@@ -25,7 +24,7 @@ export class VolumeSliderCore extends SliderCore implements UICore<VolumeSliderP
   }
 
   override setProps(props: VolumeSliderProps): void {
-    super.setProps(defaults(props, VolumeSliderCore.defaultProps));
+    super.setProps(defaults(props, VolumeSliderCore.defaultBaseProps));
   }
 
   getState(media: MediaVolumeState): VolumeSliderState {

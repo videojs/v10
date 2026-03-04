@@ -3,8 +3,6 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackRateState } from '../../media/state';
-import type { UICore } from '../types';
-
 export interface PlaybackRateButtonProps {
   /** Custom label for the button. */
   label?: string | ((state: PlaybackRateButtonState) => string) | undefined;
@@ -16,7 +14,7 @@ export interface PlaybackRateButtonState {
   rate: number;
 }
 
-export class PlaybackRateButtonCore implements UICore<PlaybackRateButtonProps, PlaybackRateButtonState> {
+export class PlaybackRateButtonCore {
   static readonly defaultProps: NonNullableObject<PlaybackRateButtonProps> = {
     label: '',
     disabled: false,

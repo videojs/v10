@@ -3,8 +3,6 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackState } from '../../media/state';
-import type { UICore } from '../types';
-
 export interface PlayButtonProps {
   /** Custom label for the button. */
   label?: string | ((state: PlayButtonState) => string) | undefined;
@@ -14,7 +12,7 @@ export interface PlayButtonProps {
 
 export interface PlayButtonState extends Pick<MediaPlaybackState, 'paused' | 'ended' | 'started'> {}
 
-export class PlayButtonCore implements UICore<PlayButtonProps, PlayButtonState> {
+export class PlayButtonCore {
   static readonly defaultProps: NonNullableObject<PlayButtonProps> = {
     label: '',
     disabled: false,

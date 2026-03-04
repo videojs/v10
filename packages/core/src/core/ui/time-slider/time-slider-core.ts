@@ -5,7 +5,6 @@ import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaBufferState, MediaTimeState } from '../../media/state';
 import { type SliderBaseProps, SliderCore, type SliderState } from '../slider/slider-core';
-import type { UICore } from '../types';
 
 export interface TimeSliderProps extends SliderBaseProps {
   /** Trailing-edge throttle (ms) for seek requests during drag. */
@@ -19,18 +18,18 @@ export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'curr
 /** Max time (ms) to hold the pending seek position before giving up. */
 const PENDING_SEEK_TIMEOUT = 5_000;
 
-export class TimeSliderCore extends SliderCore implements UICore<TimeSliderProps, TimeSliderState> {
-  static readonly defaultProps: NonNullableObject<TimeSliderProps> = {
-    step: SliderCore.defaultProps.step,
-    largeStep: SliderCore.defaultProps.largeStep,
-    orientation: SliderCore.defaultProps.orientation,
-    disabled: SliderCore.defaultProps.disabled,
-    thumbAlignment: SliderCore.defaultProps.thumbAlignment,
+export class TimeSliderCore extends SliderCore {
+  static override readonly defaultBaseProps: NonNullableObject<TimeSliderProps> = {
+    step: SliderCore.defaultBaseProps.step,
+    largeStep: SliderCore.defaultBaseProps.largeStep,
+    orientation: SliderCore.defaultBaseProps.orientation,
+    disabled: SliderCore.defaultBaseProps.disabled,
+    thumbAlignment: SliderCore.defaultBaseProps.thumbAlignment,
     label: 'Seek',
     commitThrottle: 100,
   };
 
-  #props = { ...TimeSliderCore.defaultProps };
+  #props = { ...TimeSliderCore.defaultBaseProps };
   #pendingSeekTime: number | null = null;
   #pendingSeekTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -40,7 +39,7 @@ export class TimeSliderCore extends SliderCore implements UICore<TimeSliderProps
   }
 
   override setProps(props: TimeSliderProps): void {
-    this.#props = defaults(props, TimeSliderCore.defaultProps);
+    this.#props = defaults(props, TimeSliderCore.defaultBaseProps);
     super.setProps({ ...props, min: 0 });
   }
 

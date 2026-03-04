@@ -3,8 +3,6 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPictureInPictureState } from '../../media/state';
-import type { UICore } from '../types';
-
 export interface PiPButtonProps {
   /** Custom label for the button. */
   label?: string | ((state: PiPButtonState) => string) | undefined;
@@ -17,7 +15,7 @@ export interface PiPButtonState extends Pick<MediaPictureInPictureState, 'pip'> 
   availability: MediaPictureInPictureState['pipAvailability'];
 }
 
-export class PiPButtonCore implements UICore<PiPButtonProps, PiPButtonState> {
+export class PiPButtonCore {
   static readonly defaultProps: NonNullableObject<PiPButtonProps> = {
     label: '',
     disabled: false,

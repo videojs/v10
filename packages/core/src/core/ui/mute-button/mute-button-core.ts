@@ -3,8 +3,6 @@ import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaVolumeState } from '../../media/state';
-import type { UICore } from '../types';
-
 export type VolumeLevel = 'off' | 'low' | 'medium' | 'high';
 
 export interface MuteButtonProps {
@@ -25,7 +23,7 @@ export interface MuteButtonState extends Pick<MediaVolumeState, 'muted'> {
   volumeLevel: VolumeLevel;
 }
 
-export class MuteButtonCore implements UICore<MuteButtonProps, MuteButtonState> {
+export class MuteButtonCore {
   static readonly defaultProps: NonNullableObject<MuteButtonProps> = {
     label: '',
     disabled: false,

@@ -4,8 +4,6 @@ import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '@videojs/u
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTimeState } from '../../media/state';
-import type { UICore } from '../types';
-
 /** Time display type. */
 export type TimeType = 'current' | 'duration' | 'remaining';
 
@@ -39,7 +37,7 @@ const DEFAULT_LABELS: Record<TimeType, string> = {
   remaining: 'Remaining',
 };
 
-export class TimeCore implements UICore<TimeProps, TimeState> {
+export class TimeCore {
   static readonly defaultProps: NonNullableObject<TimeProps> = {
     type: 'current',
     negativeSign: '-',

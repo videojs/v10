@@ -1,11 +1,9 @@
 import type { MediaPlaybackState } from '../../media/state';
-import type { UICore } from '../types';
-
 export interface PosterState {
   visible: boolean;
 }
 
-export class PosterCore implements UICore<{}, PosterState> {
+export class PosterCore {
   getState(media: MediaPlaybackState): PosterState {
     return {
       visible: !media.started,

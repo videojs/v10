@@ -64,7 +64,7 @@ export interface SliderState {
 }
 
 export class SliderCore {
-  static readonly defaultProps: NonNullableObject<SliderBaseProps> = {
+  static readonly defaultBaseProps: NonNullableObject<SliderBaseProps> = {
     label: '',
     step: 1,
     largeStep: 10,
@@ -73,8 +73,8 @@ export class SliderCore {
     thumbAlignment: 'center',
   };
 
-  static readonly defaultSliderProps: NonNullableObject<SliderProps> = {
-    ...SliderCore.defaultProps,
+  static readonly defaultProps: NonNullableObject<SliderProps> = {
+    ...SliderCore.defaultBaseProps,
     value: 0,
     min: 0,
     max: 100,
@@ -88,7 +88,7 @@ export class SliderCore {
     focused: false,
   };
 
-  #props = { ...SliderCore.defaultSliderProps };
+  #props = { ...SliderCore.defaultProps };
   #input: SliderInput = { ...SliderCore.defaultInput };
 
   get props(): Readonly<NonNullableObject<SliderProps>> {
@@ -104,7 +104,7 @@ export class SliderCore {
   }
 
   setProps(props: SliderProps): void {
-    this.#props = defaults(props, SliderCore.defaultSliderProps);
+    this.#props = defaults(props, SliderCore.defaultProps);
   }
 
   setInput(input: SliderInput): void {

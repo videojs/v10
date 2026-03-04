@@ -28,12 +28,12 @@ export class VolumeSliderElement extends MediaElement {
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
   } satisfies PropertyDeclarationMap<keyof VolumeSliderCore.Props>;
 
-  label = VolumeSliderCore.defaultProps.label;
-  step = VolumeSliderCore.defaultProps.step;
-  largeStep = VolumeSliderCore.defaultProps.largeStep;
-  orientation = VolumeSliderCore.defaultProps.orientation;
-  disabled = VolumeSliderCore.defaultProps.disabled;
-  thumbAlignment = VolumeSliderCore.defaultProps.thumbAlignment;
+  label = VolumeSliderCore.defaultBaseProps.label;
+  step = VolumeSliderCore.defaultBaseProps.step;
+  largeStep = VolumeSliderCore.defaultBaseProps.largeStep;
+  orientation = VolumeSliderCore.defaultBaseProps.orientation;
+  disabled = VolumeSliderCore.defaultBaseProps.disabled;
+  thumbAlignment = VolumeSliderCore.defaultBaseProps.thumbAlignment;
 
   readonly #core = new VolumeSliderCore();
   readonly #provider = new ContextProvider(this, { context: sliderContext });

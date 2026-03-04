@@ -3,8 +3,6 @@ import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { TransitionFlags, TransitionState, TransitionStatus } from '../transition';
 import { getTransitionFlags } from '../transition';
-import type { UICore } from '../types';
-
 export type PopoverSide = 'top' | 'bottom' | 'left' | 'right';
 
 export type PopoverAlign = 'start' | 'center' | 'end';
@@ -51,7 +49,7 @@ export interface PopoverState extends TransitionFlags {
   modal: boolean | 'trap-focus';
 }
 
-export class PopoverCore implements UICore<PopoverProps, PopoverState> {
+export class PopoverCore {
   static readonly defaultProps: NonNullableObject<PopoverProps> = {
     side: 'top',
     align: 'center',

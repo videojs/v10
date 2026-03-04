@@ -29,7 +29,7 @@ function createMediaState(overrides: Partial<MediaVolumeState> = {}): MediaVolum
 describe('VolumeSliderCore', () => {
   describe('defaultProps', () => {
     it('has expected defaults', () => {
-      expect(VolumeSliderCore.defaultProps).toEqual({
+      expect(VolumeSliderCore.defaultBaseProps).toEqual({
         step: 1,
         largeStep: 10,
         orientation: 'horizontal',

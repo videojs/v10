@@ -32,7 +32,7 @@ function createMediaState(overrides: Partial<TimeSliderMedia> = {}): TimeSliderM
 describe('TimeSliderCore', () => {
   describe('defaultProps', () => {
     it('has expected defaults', () => {
-      expect(TimeSliderCore.defaultProps).toEqual({
+      expect(TimeSliderCore.defaultBaseProps).toEqual({
         step: 1,
         largeStep: 10,
         orientation: 'horizontal',

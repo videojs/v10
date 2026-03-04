@@ -22,15 +22,15 @@ export class SliderElement extends MediaElement {
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
   } satisfies PropertyDeclarationMap<keyof SliderCore.Props>;
 
-  label = SliderCore.defaultSliderProps.label;
-  value = SliderCore.defaultSliderProps.value;
-  min = SliderCore.defaultSliderProps.min;
-  max = SliderCore.defaultSliderProps.max;
-  step = SliderCore.defaultSliderProps.step;
-  largeStep = SliderCore.defaultSliderProps.largeStep;
-  orientation = SliderCore.defaultSliderProps.orientation;
-  disabled = SliderCore.defaultSliderProps.disabled;
-  thumbAlignment = SliderCore.defaultSliderProps.thumbAlignment;
+  label = SliderCore.defaultProps.label;
+  value = SliderCore.defaultProps.value;
+  min = SliderCore.defaultProps.min;
+  max = SliderCore.defaultProps.max;
+  step = SliderCore.defaultProps.step;
+  largeStep = SliderCore.defaultProps.largeStep;
+  orientation = SliderCore.defaultProps.orientation;
+  disabled = SliderCore.defaultProps.disabled;
+  thumbAlignment = SliderCore.defaultProps.thumbAlignment;
 
   readonly #core = new SliderCore();
   readonly #provider = new ContextProvider(this, { context: sliderContext });
