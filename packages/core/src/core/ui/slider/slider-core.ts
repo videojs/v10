@@ -138,8 +138,8 @@ export class SliderCore {
   getAttrs(state: SliderState) {
     return {
       role: 'slider',
-      tabindex: state.disabled ? -1 : 0,
-      autocomplete: 'off',
+      tabIndex: state.disabled ? -1 : 0,
+      autoComplete: 'off',
       'aria-label': this.getLabel(state),
       'aria-valuemin': this.#props.min,
       'aria-valuemax': this.#props.max,

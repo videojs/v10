@@ -137,8 +137,8 @@ describe('SliderCore', () => {
       const attrs = core.getAttrs(state);
 
       expect(attrs.role).toBe('slider');
-      expect(attrs.tabindex).toBe(0);
-      expect(attrs.autocomplete).toBe('off');
+      expect(attrs.tabIndex).toBe(0);
+      expect(attrs.autoComplete).toBe('off');
       expect(attrs['aria-label']).toBe('');
       expect(attrs['aria-valuemin']).toBe(0);
       expect(attrs['aria-valuemax']).toBe(100);
@@ -153,7 +153,7 @@ describe('SliderCore', () => {
       const state = core.getSliderState(0);
       const attrs = core.getAttrs(state);
 
-      expect(attrs.tabindex).toBe(-1);
+      expect(attrs.tabIndex).toBe(-1);
       expect(attrs['aria-disabled']).toBe('true');
     });
 

@@ -226,7 +226,7 @@ describe('TimeSliderCore', () => {
 
       const attrs = core.getAttrs(state);
       expect(attrs['aria-disabled']).toBe('true');
-      expect(attrs.tabindex).toBe(-1);
+      expect(attrs.tabIndex).toBe(-1);
     });
 
     it('preserves thumbAlignment across getState calls', () => {
