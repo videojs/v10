@@ -933,12 +933,35 @@ describe('loadSegments forward buffer flushing', () => {
     return { fetch, fetchedUrls, resolveAll };
   }
 
-  function makeSourceBufferFwd() {
+  function makeSourceBufferFwd(initialRanges: Array<[number, number]> = []) {
     const listeners: Record<string, EventListener[]> = {};
     const removedRanges: Array<[number, number]> = [];
+    let ranges = [...initialRanges];
+
+    const clipRanges = (start: number, end: number) => {
+      const next: Array<[number, number]> = [];
+      for (const [s, e] of ranges) {
+        if (e <= start || s >= end) {
+          next.push([s, e]);
+        } else {
+          if (s < start) next.push([s, start]);
+          if (e > end) next.push([end, e]);
+        }
+      }
+      ranges = next;
+    };
+
     return {
       sourceBuffer: {
-        buffered: { length: 0, start: () => 0, end: () => 0 },
+        get buffered() {
+          return {
+            get length() {
+              return ranges.length;
+            },
+            start: (i: number) => ranges[i]![0],
+            end: (i: number) => ranges[i]![1],
+          } as TimeRanges;
+        },
         updating: false,
         appendBuffer: vi.fn(() => {
           setTimeout(() => {
@@ -947,6 +970,7 @@ describe('loadSegments forward buffer flushing', () => {
         }),
         remove: vi.fn((start: number, end: number) => {
           removedRanges.push([start, end]);
+          clipRanges(start, end);
           setTimeout(() => {
             for (const listener of listeners.updateend ?? []) listener(new Event('updateend'));
           }, 0);
@@ -1042,7 +1066,9 @@ describe('loadSegments forward buffer flushing', () => {
     const { loadSegments } = await import('../load-segments');
     const { createState: cs } = await import('../../../core/state/create-state');
 
-    const { sourceBuffer } = makeSourceBufferFwd();
+    // Seed buffered ranges to match the pre-seeded bufferState so the actor
+    // can correctly determine which segments remain after the forward flush.
+    const { sourceBuffer } = makeSourceBufferFwd([[0, 50]]);
 
     const state = cs<SegmentLoadingState>({
       preload: 'auto',

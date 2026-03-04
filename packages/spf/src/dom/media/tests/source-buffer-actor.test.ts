@@ -5,20 +5,54 @@ import { createSourceBufferActor, SourceBufferActorError } from '../source-buffe
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeSourceBuffer(): SourceBuffer {
+/**
+ * Creates a minimal SourceBuffer mock.
+ *
+ * Pass `appendRanges` to simulate realistic buffered state: each entry is
+ * added to `buffered` in sequence as `appendBuffer` is called. `remove()`
+ * clips the ranges to match what a real SourceBuffer would report, enabling
+ * the midpoint-based segment model logic in removeTask to be tested correctly.
+ */
+function makeSourceBuffer(appendRanges: Array<[number, number]> = []): SourceBuffer {
   const listeners: Record<string, EventListener[]> = {};
+  let appendIndex = 0;
+  let ranges: Array<[number, number]> = [];
+
+  const clipRanges = (start: number, end: number) => {
+    const next: Array<[number, number]> = [];
+    for (const [s, e] of ranges) {
+      if (e <= start || s >= end) {
+        next.push([s, e]);
+      } else {
+        if (s < start) next.push([s, start]);
+        if (e > end) next.push([end, e]);
+      }
+    }
+    ranges = next;
+  };
 
   return {
-    buffered: { length: 0, start: () => 0, end: () => 0 } as TimeRanges,
+    get buffered() {
+      return {
+        get length() {
+          return ranges.length;
+        },
+        start: (i: number) => ranges[i]![0],
+        end: (i: number) => ranges[i]![1],
+      } as TimeRanges;
+    },
     updating: false,
     appendBuffer: vi.fn(() => {
+      const range = appendRanges[appendIndex++];
+      if (range) ranges.push(range);
       setTimeout(() => {
         for (const listener of listeners.updateend ?? []) {
           listener(new Event('updateend'));
         }
       }, 0);
     }),
-    remove: vi.fn(() => {
+    remove: vi.fn((start: number, end: number) => {
+      clipRanges(start, end);
       setTimeout(() => {
         for (const listener of listeners.updateend ?? []) {
           listener(new Event('updateend'));
@@ -316,8 +350,13 @@ describe('createSourceBufferActor', () => {
   // remove
   // ---------------------------------------------------------------------------
 
-  it('removes overlapping segments from context and transitions back to idle', async () => {
-    const sourceBuffer = makeSourceBuffer();
+  it('removes segments whose midpoint falls outside the post-flush buffered ranges', async () => {
+    // Provide append ranges so the mock can simulate realistic buffered state.
+    const sourceBuffer = makeSourceBuffer([
+      [0, 10],
+      [10, 20],
+      [20, 30],
+    ]);
     const actor = createSourceBufferActor(sourceBuffer);
 
     await actor.batch(
@@ -341,9 +380,10 @@ describe('createSourceBufferActor', () => {
       neverAborted
     );
 
-    await actor.send({ type: 'remove', start: 0, end: 15 }, neverAborted);
+    // Remove at a segment boundary so midpoints cleanly fall inside or outside.
+    await actor.send({ type: 'remove', start: 0, end: 20 }, neverAborted);
 
-    expect(sourceBuffer.remove).toHaveBeenCalledWith(0, 15);
+    expect(sourceBuffer.remove).toHaveBeenCalledWith(0, 20);
     const ids = actor.snapshot.context.segments.map((s) => s.id);
     expect(ids).not.toContain('s1');
     expect(ids).not.toContain('s2');

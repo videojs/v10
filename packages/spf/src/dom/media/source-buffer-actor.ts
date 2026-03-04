@@ -138,9 +138,17 @@ function removeTask(
       await flushBuffer(sourceBuffer, message.start, message.end);
       // No abort check here: the physical SourceBuffer has been modified, so
       // the model must be updated to match regardless of signal state.
-      const { start, end } = message;
-      const filtered = ctx.segments.filter((s) => !(s.startTime < end && s.startTime + s.duration > start));
-      return { ...ctx, segments: filtered, bufferedRanges: snapshotBuffered(sourceBuffer.buffered) };
+      //
+      // Use the post-flush buffered ranges as ground truth. A segment is kept
+      // in the model only if its midpoint falls within a buffered range.
+      // Midpoint-based membership handles flush boundaries that don't align
+      // exactly with segment edges without over-removing adjacent segments.
+      const bufferedRanges = snapshotBuffered(sourceBuffer.buffered);
+      const filtered = ctx.segments.filter((s) => {
+        const midpoint = s.startTime + s.duration / 2;
+        return bufferedRanges.some((r) => midpoint >= r.start && midpoint < r.end);
+      });
+      return { ...ctx, segments: filtered, bufferedRanges };
     },
     { signal }
   );
