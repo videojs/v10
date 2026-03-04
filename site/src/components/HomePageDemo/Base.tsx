@@ -25,11 +25,11 @@ function generateReactCode(skin: Skin): string {
   const skinComponent = skin === 'frosted' ? 'VideoSkin' : 'MinimalVideoSkin';
   const skinCss = skin === 'frosted' ? 'skin' : 'minimal-skin';
 
-  return `import { createPlayer, features, Poster } from '@videojs/react';
-import { ${skinComponent}, Video } from '@videojs/react/video';
+  return `import { createPlayer, Poster } from '@videojs/react';
+import { ${skinComponent}, Video, videoFeatures } from '@videojs/react/video';
 import '@videojs/react/video/${skinCss}.css';
 
-const Player = createPlayer({ features: [...features.video] });
+const Player = createPlayer({ features: [...videoFeatures] });
 
 export function VideoPlayer() {
   return (
