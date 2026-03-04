@@ -1,5 +1,6 @@
 import { SliderDataAttrs, VolumeSliderCore } from '@videojs/core';
 import {
+  adjustStateForEdgeAlignment,
   applyElementProps,
   applyStateDataAttrs,
   createSlider,
@@ -112,21 +113,12 @@ export class VolumeSliderElement extends MediaElement {
     this.#core.setMedia(media);
     const state = this.#core.getState();
 
-    let cssState = state;
-    if (state.thumbAlignment === 'edge') {
-      const thumb = this.querySelector<HTMLElement>('media-slider-thumb');
-      if (thumb) {
-        const isHorizontal = state.orientation === 'horizontal';
-        const thumbSize = isHorizontal ? thumb.offsetWidth : thumb.offsetHeight;
-        const trackSize = isHorizontal ? this.offsetWidth : this.offsetHeight;
-        cssState = {
-          ...state,
-          fillPercent: this.#core.adjustPercentForAlignment(state.fillPercent, thumbSize, trackSize),
-          pointerPercent: this.#core.adjustPercentForAlignment(state.pointerPercent, thumbSize, trackSize),
-        };
-      }
-    }
-
+    const cssState = adjustStateForEdgeAlignment(
+      state,
+      this,
+      this.querySelector<HTMLElement>('media-slider-thumb'),
+      (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize)
+    );
     const cssVars = getSliderCSSVars(cssState);
 
     applyStyles(this, cssVars);

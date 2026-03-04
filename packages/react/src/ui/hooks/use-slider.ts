@@ -2,6 +2,7 @@
 
 import type { SliderInput, SliderState } from '@videojs/core';
 import {
+  adjustStateForEdgeAlignment,
   createSlider,
   type SliderApi,
   type SliderOptions,
@@ -99,20 +100,9 @@ export function useSlider<State extends SliderState = SliderState>(
   }, [state.thumbAlignment]);
 
   // Adjust CSS var percents for edge thumb alignment when DOM elements are available.
-  const rootEl = rootElementRef.current;
-  const thumbEl = thumbElementRef.current;
-  let cssState = state;
-
-  if (state.thumbAlignment === 'edge' && rootEl && thumbEl && options.adjustPercent) {
-    const isHorizontal = state.orientation === 'horizontal';
-    const thumbSize = isHorizontal ? thumbEl.offsetWidth : thumbEl.offsetHeight;
-    const trackSize = isHorizontal ? rootEl.offsetWidth : rootEl.offsetHeight;
-    cssState = {
-      ...state,
-      fillPercent: options.adjustPercent(state.fillPercent, thumbSize, trackSize),
-      pointerPercent: options.adjustPercent(state.pointerPercent, thumbSize, trackSize),
-    };
-  }
+  const cssState = options.adjustPercent
+    ? adjustStateForEdgeAlignment(state, rootElementRef.current, thumbElementRef.current, options.adjustPercent)
+    : state;
 
   const cssVars = options.getCSSVars(cssState);
 
