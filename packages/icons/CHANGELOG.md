@@ -1,5 +1,19 @@
 # Changelog
 
+## [10.0.0-alpha.5](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-alpha.4...@videojs/icons@10.0.0-alpha.5) (2026-03-04)
+
+
+### Features
+
+* **skin:** implement default and minimal skins for HTML player ([#698](https://github.com/videojs/v10/issues/698)) ([c5cafae](https://github.com/videojs/v10/commit/c5cafae57ff34d13f79d11862b82f10414bdcd40))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-alpha.5
+
 ## [10.0.0-alpha.4](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-alpha.3...@videojs/icons@10.0.0-alpha.4) (2026-02-26)
 
 
