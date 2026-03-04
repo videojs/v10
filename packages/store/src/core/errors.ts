@@ -26,7 +26,11 @@ export function isStoreError(error: unknown): error is StoreError {
 }
 
 export function throwNoTargetError(): never {
-  throw new StoreError('NO_TARGET');
+  throw new StoreError('NO_TARGET', {
+    message:
+      'NO_TARGET — No media element found. Make sure your media element ' +
+      '(e.g., <video>, <hls-video>) has slot="media" so it can be discovered by the player.',
+  });
 }
 
 export function throwDestroyedError(): never {
