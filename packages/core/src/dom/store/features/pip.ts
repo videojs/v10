@@ -3,7 +3,12 @@ import { listen } from '@videojs/utils/dom';
 import type { MediaPictureInPictureState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { exitFullscreen, isElementFullscreen } from '../../presentation/fullscreen';
-import { enterPiP, exitPiP, isPiPActive, isPiPSupported } from '../../presentation/pip';
+import {
+  exitPictureInPicture,
+  isPictureInPictureElement,
+  isPictureInPictureEnabled,
+  requestPictureInPicture,
+} from '../../presentation/pip';
 import type { WebKitVideoElement } from '../../presentation/types';
 
 export const pipFeature = definePlayerFeature({
@@ -12,7 +17,7 @@ export const pipFeature = definePlayerFeature({
     pip: false,
     pipAvailability: 'unavailable',
 
-    async requestPiP() {
+    async requestPictureInPicture() {
       const { media, container } = target();
 
       // Exit fullscreen first if active
@@ -20,12 +25,12 @@ export const pipFeature = definePlayerFeature({
         await exitFullscreen();
       }
 
-      return enterPiP(media);
+      return requestPictureInPicture(media);
     },
 
-    async exitPiP() {
+    async exitPictureInPicture() {
       const { media } = target();
-      return exitPiP(media);
+      return exitPictureInPicture(media);
     },
   }),
 
@@ -33,12 +38,12 @@ export const pipFeature = definePlayerFeature({
     const { media } = target;
 
     set({
-      pipAvailability: isPiPSupported() ? 'available' : 'unsupported',
+      pipAvailability: isPictureInPictureEnabled() ? 'available' : 'unsupported',
     });
 
     const sync = () =>
       set({
-        pip: isPiPActive(media),
+        pip: isPictureInPictureElement(media),
       });
 
     sync();

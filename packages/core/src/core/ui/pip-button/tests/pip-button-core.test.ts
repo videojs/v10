@@ -8,8 +8,8 @@ function createMediaState(overrides: Partial<MediaPictureInPictureState> = {}): 
   return {
     pip: false,
     pipAvailability: 'available',
-    requestPiP: vi.fn(async () => {}),
-    exitPiP: vi.fn(async () => {}),
+    requestPictureInPicture: vi.fn(async () => {}),
+    exitPictureInPicture: vi.fn(async () => {}),
     ...overrides,
   };
 }
@@ -82,38 +82,38 @@ describe('PiPButtonCore', () => {
   });
 
   describe('toggle', () => {
-    it('calls requestPiP when not in PiP', async () => {
+    it('calls requestPictureInPicture when not in PiP', async () => {
       const core = new PiPButtonCore();
       const media = createMediaState({ pip: false });
       await core.toggle(media);
-      expect(media.requestPiP).toHaveBeenCalled();
+      expect(media.requestPictureInPicture).toHaveBeenCalled();
     });
 
-    it('calls exitPiP when in PiP', async () => {
+    it('calls exitPictureInPicture when in PiP', async () => {
       const core = new PiPButtonCore();
       const media = createMediaState({ pip: true });
       await core.toggle(media);
-      expect(media.exitPiP).toHaveBeenCalled();
+      expect(media.exitPictureInPicture).toHaveBeenCalled();
     });
 
     it('does nothing when disabled', async () => {
       const core = new PiPButtonCore({ disabled: true });
       const media = createMediaState();
       await core.toggle(media);
-      expect(media.requestPiP).not.toHaveBeenCalled();
+      expect(media.requestPictureInPicture).not.toHaveBeenCalled();
     });
 
     it('does nothing when unsupported', async () => {
       const core = new PiPButtonCore();
       const media = createMediaState({ pipAvailability: 'unsupported' });
       await core.toggle(media);
-      expect(media.requestPiP).not.toHaveBeenCalled();
+      expect(media.requestPictureInPicture).not.toHaveBeenCalled();
     });
 
     it('catches PiP errors silently', async () => {
       const core = new PiPButtonCore();
       const media = createMediaState({
-        requestPiP: vi.fn(async () => {
+        requestPictureInPicture: vi.fn(async () => {
           throw new Error('permission denied');
         }),
       });

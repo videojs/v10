@@ -7,7 +7,7 @@ import type { WebKitVideoElement } from './types';
  *
  * Note: Safari PWAs don't support PiP even though the API exists.
  */
-export function isPiPSupported(): boolean {
+export function isPictureInPictureEnabled(): boolean {
   // Check standard PiP API
   if (document.pictureInPictureEnabled) {
     // Safari PWAs have the API but it doesn't work
@@ -24,7 +24,7 @@ export function isPiPSupported(): boolean {
 /**
  * Check if Picture-in-Picture is currently active for a media element.
  */
-export function isPiPActive(media: HTMLMediaElement): boolean {
+export function isPictureInPictureElement(media: HTMLMediaElement): boolean {
   // Standard PiP API
   if (document.pictureInPictureElement === media) {
     return true;
@@ -36,12 +36,12 @@ export function isPiPActive(media: HTMLMediaElement): boolean {
 }
 
 /**
- * Enter Picture-in-Picture mode.
+ * Request Picture-in-Picture mode.
  *
  * Uses standard API where available, falls back to iOS Safari's
  * WebKit presentation mode.
  */
-export async function enterPiP(media: HTMLMediaElement): Promise<void> {
+export async function requestPictureInPicture(media: HTMLMediaElement): Promise<void> {
   const video = media as HTMLVideoElement & WebKitVideoElement;
 
   // Standard PiP API (only available on HTMLVideoElement)
@@ -65,7 +65,7 @@ export async function enterPiP(media: HTMLMediaElement): Promise<void> {
  * Uses standard API where available, falls back to iOS Safari's
  * WebKit presentation mode.
  */
-export async function exitPiP(media?: HTMLMediaElement): Promise<void> {
+export async function exitPictureInPicture(media?: HTMLMediaElement): Promise<void> {
   // Standard PiP API
   if (document.pictureInPictureElement && isFunction(document.exitPictureInPicture)) {
     await document.exitPictureInPicture();

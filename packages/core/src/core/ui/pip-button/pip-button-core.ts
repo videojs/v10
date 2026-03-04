@@ -71,9 +71,9 @@ export class PiPButtonCore {
 
     try {
       if (media.pip) {
-        await media.exitPiP();
+        await media.exitPictureInPicture();
       } else {
-        await media.requestPiP();
+        await media.requestPictureInPicture();
       }
     } catch {
       // PiP requests can fail (user gesture required, permissions, etc.)

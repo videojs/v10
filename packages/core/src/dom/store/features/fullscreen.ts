@@ -8,7 +8,7 @@ import {
   isFullscreenSupported,
   requestFullscreen,
 } from '../../presentation/fullscreen';
-import { exitPiP, isPiPActive } from '../../presentation/pip';
+import { exitPictureInPicture, isPictureInPictureElement } from '../../presentation/pip';
 import type { WebKitVideoElement } from '../../presentation/types';
 
 export const fullscreenFeature = definePlayerFeature({
@@ -21,8 +21,8 @@ export const fullscreenFeature = definePlayerFeature({
       const { media, container } = target();
 
       // Exit PiP first if active (browser behavior is inconsistent)
-      if (isPiPActive(media)) {
-        await exitPiP(media);
+      if (isPictureInPictureElement(media)) {
+        await exitPictureInPicture(media);
       }
 
       return requestFullscreen(container, media);
