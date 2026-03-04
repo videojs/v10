@@ -45,7 +45,7 @@ export class ThumbnailElement extends MediaElement {
   #thumbnails: ThumbnailImage[] = [];
   #externalThumbnails: ThumbnailImage[] | undefined;
   #lastTextTrack: MediaTextTrackState | undefined;
-  #handle: ThumbnailApi | null = null;
+  #api: ThumbnailApi | null = null;
 
   constructor() {
     super();
@@ -79,7 +79,7 @@ export class ThumbnailElement extends MediaElement {
   override connectedCallback(): void {
     super.connectedCallback();
 
-    this.#handle = createThumbnail({
+    this.#api = createThumbnail({
       getContainer: () => this,
       getImg: () => this.#img,
       onStateChange: () => this.requestUpdate(),
@@ -88,8 +88,8 @@ export class ThumbnailElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#handle?.destroy();
-    this.#handle = null;
+    this.#api?.destroy();
+    this.#api = null;
   }
 
   protected override update(changed: PropertyValues): void {
@@ -120,7 +120,7 @@ export class ThumbnailElement extends MediaElement {
     });
 
     // Track src changes via the handle.
-    this.#handle?.updateSrc(thumbnail?.url);
+    this.#api?.updateSrc(thumbnail?.url);
 
     if (!thumbnail) {
       this.#img.removeAttribute('src');
@@ -137,14 +137,14 @@ export class ThumbnailElement extends MediaElement {
       this.#img.src = thumbnail.url;
     }
 
-    const handle = this.#handle;
-    const state = this.#core.getState(handle?.loading ?? false, handle?.error ?? false, thumbnail);
+    const api = this.#api;
+    const state = this.#core.getState(api?.loading ?? false, api?.error ?? false, thumbnail);
     applyElementProps(this, this.#core.getAttrs(state));
     applyStateDataAttrs(this, state, ThumbnailDataAttrs);
 
-    if (handle?.naturalWidth && handle.naturalHeight) {
-      const constraints = handle.readConstraints();
-      const result = this.#core.resize(thumbnail, handle.naturalWidth, handle.naturalHeight, constraints);
+    if (api?.naturalWidth && api.naturalHeight) {
+      const constraints = api.readConstraints();
+      const result = this.#core.resize(thumbnail, api.naturalWidth, api.naturalHeight, constraints);
 
       if (result) {
         this.#applyResize(result);
