@@ -9,13 +9,23 @@
  * shared minification and compression, avoiding the inflated totals you get
  * from summing independently-measured subpaths.
  *
+ * Also measures:
+ * - Skin scenarios: Absolute sizes for complete skin bundles (root + skin subpath)
+ * - UI components: Individual component sizes from @videojs/html/ui/*
+ *
  * Usage: node .github/scripts/bundle-size.js [--json output.json]
  */
 
 import { build } from 'esbuild';
 import { brotliCompressSync, constants } from 'node:zlib';
-import { readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
-import { resolve, dirname, join } from 'node:path';
+import {
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+  existsSync,
+  statSync,
+} from 'node:fs';
+import { resolve, dirname, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -27,8 +37,8 @@ const SKIP_PACKAGES = new Set(['sandbox', '__tech-preview__', 'react-native']);
 /**
  * @typedef {object} SizeEntry
  * @property {string} name
- * @property {number} size - Root: brotli size. Subpath: marginal cost over root.
- * @property {'root' | 'subpath'} type
+ * @property {number} size - Root: brotli size. Subpath: marginal cost over root. Scenario/UI: absolute size.
+ * @property {'root' | 'subpath' | 'skin' | 'ui'} type
  */
 
 /** Bundle entry points with esbuild and return the minified + brotli size. */
@@ -66,6 +76,41 @@ function resolveDefault(exportValue) {
     return exportValue.default ?? null;
   }
   return null;
+}
+
+/** Expand wildcard exports by scanning the filesystem. */
+function expandWildcardExport(pkgDir, pattern, exportValue) {
+  // Pattern like "./ui/*" with value like { default: "./dist/default/define/ui/*.js" }
+  const defaultPath = resolveDefault(exportValue);
+  if (!defaultPath) return [];
+
+  // Extract the directory from the pattern (e.g., "./dist/default/define/ui")
+  const pathWithoutWildcard = defaultPath.replace('*', '');
+  const dir = resolve(pkgDir, dirname(pathWithoutWildcard));
+
+  if (!existsSync(dir)) return [];
+
+  const results = [];
+  const exportPrefix = pattern.replace('*', ''); // e.g., "./ui/"
+
+  for (const file of readdirSync(dir)) {
+    // Only .js files, skip .map and .d.ts
+    if (!file.endsWith('.js') || file.endsWith('.d.ts')) continue;
+
+    const filePath = join(dir, file);
+    if (!statSync(filePath).isFile()) continue;
+
+    // Skip empty files
+    if (readFileSync(filePath, 'utf8').trim().length === 0) continue;
+
+    const name = basename(file, '.js');
+    results.push({
+      exportKey: `${exportPrefix}${name}`,
+      path: filePath,
+    });
+  }
+
+  return results;
 }
 
 /** Discover packages and their entry points from the filesystem. */
@@ -142,9 +187,16 @@ async function main() {
   /** @type {SizeEntry[]} */
   const results = [];
 
+  // Track @videojs/html for skin and UI measurements
+  let htmlPkg = null;
+
   for (const pkg of packages) {
     const rootSize = await measure([pkg.rootPath], pkg.external);
     results.push({ name: pkg.name, size: rootSize, type: 'root' });
+
+    if (pkg.name === '@videojs/html') {
+      htmlPkg = { ...pkg, rootSize };
+    }
 
     for (const sub of pkg.subpaths) {
       const combinedSize = await measure(
@@ -154,6 +206,57 @@ async function main() {
       const marginal = combinedSize - rootSize;
 
       results.push({ name: sub.name, size: marginal, type: 'subpath' });
+    }
+  }
+
+  // Measure skin scenarios (absolute sizes for complete skin bundles)
+  if (htmlPkg) {
+    const skinSubpaths = ['video', 'audio', 'background'];
+
+    for (const skin of skinSubpaths) {
+      const subpath = htmlPkg.subpaths.find(
+        (s) => s.name === `@videojs/html/${skin}`,
+      );
+      if (subpath) {
+        // Measure absolute size (root + skin together)
+        const absoluteSize = await measure(
+          [htmlPkg.rootPath, subpath.path],
+          htmlPkg.external,
+        );
+        // Use ~skin suffix to distinguish from marginal subpath entries
+        results.push({
+          name: `@videojs/html/${skin}~skin`,
+          size: absoluteSize,
+          type: 'skin',
+        });
+      }
+    }
+
+    // Measure individual UI components
+    const htmlDir = join(PACKAGES_DIR, 'html');
+    const pkgJson = JSON.parse(
+      readFileSync(join(htmlDir, 'package.json'), 'utf8'),
+    );
+
+    // Find the ./ui/* wildcard export
+    const uiExport = pkgJson.exports['./ui/*'];
+    if (uiExport) {
+      const uiComponents = expandWildcardExport(htmlDir, './ui/*', uiExport);
+
+      for (const component of uiComponents) {
+        // Measure each UI component as standalone (with root as shared deps)
+        const componentSize = await measure(
+          [htmlPkg.rootPath, component.path],
+          htmlPkg.external,
+        );
+        const marginalSize = componentSize - htmlPkg.rootSize;
+
+        results.push({
+          name: `@videojs/html${component.exportKey.slice(1)}`,
+          size: marginalSize,
+          type: 'ui',
+        });
+      }
     }
   }
 

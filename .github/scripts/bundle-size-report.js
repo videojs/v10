@@ -60,12 +60,25 @@ function deltaBar(current, previous, maxAbsPct) {
 function groupByPackage(entries) {
   const groups = new Map();
   for (const entry of entries) {
+    // Skip skin and ui entries from package grouping (they're reported separately)
+    if (entry.type === 'skin' || entry.type === 'ui') continue;
+
     const match = entry.name.match(/^@videojs\/([^/]+)/);
     const pkg = match ? match[1] : 'other';
     if (!groups.has(pkg)) groups.set(pkg, []);
     groups.get(pkg).push(entry);
   }
   return groups;
+}
+
+/** Extract skin entries (absolute sizes). */
+function getSkinEntries(entries) {
+  return entries.filter((e) => e.type === 'skin');
+}
+
+/** Extract UI component entries. */
+function getUIEntries(entries) {
+  return entries.filter((e) => e.type === 'ui');
 }
 
 function computePackageData(groups, baseMap) {
@@ -195,6 +208,77 @@ function generateComparisonReport(current, base) {
     }
   }
 
+  // Skins section (absolute sizes)
+  const skinEntries = getSkinEntries(current);
+  const skinsSection = [];
+
+  if (skinEntries.length > 0) {
+    skinsSection.push('#### Skins');
+    skinsSection.push('');
+    skinsSection.push(
+      'Absolute bundle sizes when importing a skin (includes all dependencies).',
+    );
+    skinsSection.push('');
+    skinsSection.push('| Skin | Base | PR | Diff | % | |');
+    skinsSection.push('|---|--:|--:|--:|--:|:-:|');
+
+    for (const entry of skinEntries) {
+      // Strip the ~skin suffix for display, keep it for lookup
+      const skinName = entry.name.replace('@videojs/html/', '').replace('~skin', '');
+      const prev = baseMap[entry.name];
+      const d = formatDelta(entry.size, prev);
+      skinsSection.push(
+        `| \`${skinName}\` | ${prev !== undefined ? formatBytes(prev) : '—'} | **${formatBytes(entry.size)}** | ${d.bytes} | ${d.pct} | ${statusIcon(entry.size, prev)} |`,
+      );
+    }
+    skinsSection.push('');
+  }
+
+  // UI Components section
+  const uiEntries = getUIEntries(current);
+  const uiSection = [];
+
+  if (uiEntries.length > 0) {
+    uiSection.push('#### UI Components');
+    uiSection.push('');
+    uiSection.push(
+      'Marginal size of each UI component (additional bytes on top of `@videojs/html`).',
+    );
+    uiSection.push('');
+    uiSection.push('<details>');
+    uiSection.push('<summary>Component breakdown</summary>');
+    uiSection.push('');
+    uiSection.push('| Component | Base | PR | Diff | % | |');
+    uiSection.push('|---|--:|--:|--:|--:|:-:|');
+
+    // Sort by size (largest first)
+    const sortedUI = [...uiEntries].sort((a, b) => b.size - a.size);
+
+    for (const entry of sortedUI) {
+      const componentName = entry.name.replace('@videojs/html/ui/', '');
+      const prev = baseMap[entry.name];
+      const d = formatDelta(entry.size, prev);
+      uiSection.push(
+        `| \`${componentName}\` | ${prev !== undefined ? formatBytes(prev) : '—'} | **${formatBytes(entry.size)}** | ${d.bytes} | ${d.pct} | ${statusIcon(entry.size, prev)} |`,
+      );
+    }
+
+    const uiTotal = uiEntries.reduce((s, e) => s + e.size, 0);
+    const uiBaseTotal = uiEntries.reduce(
+      (s, e) => s + (baseMap[e.name] ?? 0),
+      0,
+    );
+    const hasUIBase = uiEntries.some((e) => baseMap[e.name] !== undefined);
+    const uiDelta = formatDelta(uiTotal, hasUIBase ? uiBaseTotal : undefined);
+    uiSection.push(
+      `| **total** | **${hasUIBase ? formatBytes(uiBaseTotal) : '—'}** | **${formatBytes(uiTotal)}** | **${hasUIBase ? uiDelta.bytes : '—'}** | **${hasUIBase ? uiDelta.pct : ''}** | |`,
+    );
+
+    uiSection.push('');
+    uiSection.push('</details>');
+    uiSection.push('');
+  }
+
   const grandDelta = formatDelta(grandTotalCurrent, grandTotalBase);
 
   const marker = '<!-- bundle-size-report -->';
@@ -209,6 +293,8 @@ function generateComparisonReport(current, base) {
     '---',
     '',
     ...details,
+    ...skinsSection,
+    ...uiSection,
     '---',
     '',
     '<details>',
@@ -217,6 +303,7 @@ function generateComparisonReport(current, base) {
     'Sizes are minified + brotli, measured with esbuild.',
     'Package totals are computed as root size + marginal subpath costs.',
     'Subpath marginal cost = (root + subpath bundled together) − root alone.',
+    'Skin sizes are absolute (total bundle size when importing).',
     '',
     '| Icon | Meaning |',
     '|---|---|',
@@ -338,6 +425,45 @@ function generateLocalReport(current) {
 
       lines.push(printTable(rows));
     }
+  }
+
+  // Skins section
+  const skinEntries = getSkinEntries(current);
+  if (skinEntries.length > 0) {
+    lines.push('');
+    lines.push(ansi.bold('Skins (absolute sizes)'));
+
+    const skinRows = [['Skin', 'Size']];
+    for (const entry of skinEntries) {
+      // Strip the ~skin suffix for display
+      const skinName = entry.name.replace('@videojs/html/', '').replace('~skin', '');
+      skinRows.push([{ text: skinName, style: ansi.cyan }, colorSize(entry.size)]);
+    }
+    lines.push(printTable(skinRows));
+  }
+
+  // UI Components section
+  const uiEntries = getUIEntries(current);
+  if (uiEntries.length > 0) {
+    lines.push('');
+    lines.push(ansi.bold('UI Components (marginal sizes)'));
+
+    const uiRows = [['Component', 'Size']];
+    // Sort by size (largest first)
+    const sortedUI = [...uiEntries].sort((a, b) => b.size - a.size);
+    for (const entry of sortedUI) {
+      const componentName = entry.name.replace('@videojs/html/ui/', '');
+      uiRows.push([
+        { text: componentName, style: ansi.cyan },
+        colorSize(entry.size),
+      ]);
+    }
+    const uiTotal = uiEntries.reduce((s, e) => s + e.size, 0);
+    uiRows.push([
+      { text: 'total', style: ansi.bold },
+      { text: formatBytes(uiTotal), style: ansi.bold },
+    ]);
+    lines.push(printTable(uiRows));
   }
 
   lines.push('');
