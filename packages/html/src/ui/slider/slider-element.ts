@@ -5,7 +5,7 @@ import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
 
 import { MediaElement } from '../media-element';
-import { sliderContext } from './slider-context';
+import { sliderContext } from './context';
 
 export class SliderElement extends MediaElement {
   static readonly tagName = 'media-slider';

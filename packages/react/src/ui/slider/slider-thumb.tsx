@@ -6,7 +6,7 @@ import { forwardRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { useSliderContext } from './slider-context';
+import { useSliderContext } from './context';
 
 export interface SliderThumbProps extends UIComponentProps<'div', SliderState> {}
 
@@ -18,8 +18,6 @@ export const SliderThumb = forwardRef(function SliderThumb(
   const { render, className, style, ...elementProps } = componentProps;
 
   const context = useSliderContext();
-  if (!context) return null;
-
   const { state, thumbRef, thumbProps, getAttrs } = context;
   const attrs = getAttrs(state);
 

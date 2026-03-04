@@ -14,7 +14,7 @@ import { applyStyles, isRTL } from '@videojs/utils/dom';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
-import { sliderContext } from '../slider/slider-context';
+import { sliderContext } from '../slider/context';
 
 export class VolumeSliderElement extends MediaElement {
   static readonly tagName = 'media-volume-slider';

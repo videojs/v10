@@ -16,7 +16,7 @@ import { formatTime } from '@videojs/utils/time';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
-import { sliderContext } from '../slider/slider-context';
+import { sliderContext } from '../slider/context';
 
 export class TimeSliderElement extends MediaElement {
   static readonly tagName = 'media-time-slider';

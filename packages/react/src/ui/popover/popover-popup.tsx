@@ -9,7 +9,7 @@ import { forwardRef, useCallback, useLayoutEffect, useMemo, useRef, useState } f
 import type { UIComponentProps } from '../../utils/types';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { renderElement } from '../../utils/use-render';
-import { usePopoverContext } from './popover-context';
+import { usePopoverContext } from './context';
 
 export interface PopoverPopupProps extends UIComponentProps<'div', PopoverState> {}
 

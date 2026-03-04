@@ -17,13 +17,13 @@ export interface PartContextValue<State extends object> {
  * Subclasses only need to declare the `consumer` property:
  *
  * ```ts
- * export class SliderTrackElement extends ContextPartElement {
+ * export class SliderTrackElement extends ContextPartElement<SliderState> {
  *   static readonly tagName = 'media-slider-track';
  *   protected readonly consumer = new ContextConsumer(this, { context: sliderContext, subscribe: true });
  * }
  * ```
  */
-export abstract class ContextPartElement<State extends object = object> extends MediaElement {
+export abstract class ContextPartElement<State extends object> extends MediaElement {
   protected abstract readonly consumer: { value?: PartContextValue<State> | undefined };
 
   protected override update(_changed: PropertyValues): void {

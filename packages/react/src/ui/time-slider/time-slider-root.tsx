@@ -10,7 +10,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { renderElement } from '../../utils/use-render';
 import { useSlider } from '../hooks/use-slider';
-import { SliderProvider } from '../slider/slider-context';
+import { SliderProvider } from '../slider/context';
 
 const noopSeek = (): Promise<number> => Promise.resolve(0);
 

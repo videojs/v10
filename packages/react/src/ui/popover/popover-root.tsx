@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
-import { PopoverContextProvider } from './popover-context';
+import { PopoverContextProvider } from './context';
 
 export interface PopoverRootProps extends CorePopoverProps {
   /** Called when the popover open state changes (fires immediately, before animations). */

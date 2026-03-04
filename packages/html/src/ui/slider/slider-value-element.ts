@@ -4,7 +4,7 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
 import { MediaElement } from '../media-element';
-import { sliderContext } from './slider-context';
+import { sliderContext } from './context';
 
 export class SliderValueElement extends MediaElement {
   static readonly tagName = 'media-slider-value';

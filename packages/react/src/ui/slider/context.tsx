@@ -16,12 +16,14 @@ export interface SliderContextValue {
   formatValue?: ((value: number, type: 'current' | 'pointer') => string) | undefined;
 }
 
-const SliderContext = createContext<SliderContextValue | undefined>(undefined);
+const SliderContext = createContext<SliderContextValue | null>(null);
 
 export function SliderProvider({ value, children }: { value: SliderContextValue; children: React.ReactNode }) {
   return <SliderContext.Provider value={value}>{children}</SliderContext.Provider>;
 }
 
-export function useSliderContext(): SliderContextValue | undefined {
-  return useContext(SliderContext);
+export function useSliderContext(): SliderContextValue {
+  const ctx = useContext(SliderContext);
+  if (!ctx) throw new Error('Slider compound components must be used within a Slider.Root');
+  return ctx;
 }

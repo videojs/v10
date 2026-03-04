@@ -4,7 +4,7 @@ import type { PopoverState } from '@videojs/core';
 
 import type { UIComponentProps } from '../../utils/types';
 import { createContextPart } from '../create-context-part';
-import { usePopoverContext } from './popover-context';
+import { usePopoverContext } from './context';
 
 export interface PopoverArrowProps extends UIComponentProps<'div', PopoverState> {}
 

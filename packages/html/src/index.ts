@@ -28,8 +28,8 @@ export { PlaybackRateButtonElement } from './ui/playback-rate-button/playback-ra
 export { PopoverElement } from './ui/popover/popover-element';
 export { PosterElement } from './ui/poster/poster-element';
 export { SeekButtonElement } from './ui/seek-button/seek-button-element';
+export { type SliderContextValue, sliderContext } from './ui/slider/context';
 export { SliderBufferElement } from './ui/slider/slider-buffer-element';
-export { type SliderContextValue, sliderContext } from './ui/slider/slider-context';
 export { SliderElement } from './ui/slider/slider-element';
 export type { SliderEventMap, SliderValueEventDetail } from './ui/slider/slider-events';
 export { SliderFillElement } from './ui/slider/slider-fill-element';

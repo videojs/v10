@@ -8,7 +8,7 @@ import { forwardRef, useState } from 'react';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { ControlsContextProvider } from './controls-context';
+import { ControlsContextProvider } from './context';
 
 export interface ControlsRootProps extends UIComponentProps<'div', ControlsCore.State> {
   children?: ReactNode | undefined;

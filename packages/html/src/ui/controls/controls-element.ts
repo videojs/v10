@@ -6,7 +6,7 @@ import { ContextProvider } from '@videojs/element/context';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
-import { controlsContext } from './controls-context';
+import { controlsContext } from './context';
 
 export class ControlsElement extends MediaElement {
   static readonly tagName = 'media-controls';

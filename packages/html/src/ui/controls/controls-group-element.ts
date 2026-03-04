@@ -1,9 +1,10 @@
+import type { ControlsState } from '@videojs/core';
 import { ContextConsumer } from '@videojs/element/context';
 
 import { ContextPartElement } from '../context-part-element';
-import { controlsContext } from './controls-context';
+import { controlsContext } from './context';
 
-export class ControlsGroupElement extends ContextPartElement {
+export class ControlsGroupElement extends ContextPartElement<ControlsState> {
   static readonly tagName = 'media-controls-group';
 
   protected readonly consumer = new ContextConsumer(this, { context: controlsContext, subscribe: true });

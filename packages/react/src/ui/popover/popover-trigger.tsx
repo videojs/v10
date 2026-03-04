@@ -6,7 +6,7 @@ import { forwardRef, useCallback, useMemo } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { usePopoverContext } from './popover-context';
+import { usePopoverContext } from './context';
 
 export interface PopoverTriggerProps extends UIComponentProps<'button', PopoverState> {}
 

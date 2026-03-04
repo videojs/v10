@@ -16,7 +16,7 @@ interface PartContextValue<State extends object> {
 interface ContextPartConfig<State extends object> {
   displayName: string;
   tag: keyof React.JSX.IntrinsicElements;
-  useContext: () => PartContextValue<State> | undefined;
+  useContext: () => PartContextValue<State>;
   staticProps?: Record<string, unknown>;
 }
 
@@ -36,7 +36,6 @@ export function createContextPart<State extends object>(
     const { render, className, style, ...elementProps } = componentProps;
 
     const context = useContext();
-    if (!context) return null;
 
     return renderElement(tag, { render, className, style } as Parameters<typeof renderElement>[1], {
       state: context.state,

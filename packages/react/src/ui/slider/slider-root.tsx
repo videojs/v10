@@ -8,7 +8,7 @@ import { forwardRef, useState } from 'react';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useSlider } from '../hooks/use-slider';
-import { SliderProvider } from './slider-context';
+import { SliderProvider } from './context';
 
 export interface SliderRootProps extends UIComponentProps<'div', SliderCore.State>, SliderCore.Props {
   onValueChange?: ((value: number) => void) | undefined;

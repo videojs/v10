@@ -8,10 +8,12 @@ export interface ControlsContextValue {
   stateAttrMap: StateAttrMap<ControlsState>;
 }
 
-const ControlsContext = createContext<ControlsContextValue | undefined>(undefined);
+const ControlsContext = createContext<ControlsContextValue | null>(null);
 
 export const ControlsContextProvider = ControlsContext.Provider;
 
-export function useControlsContext(): ControlsContextValue | undefined {
-  return useContext(ControlsContext);
+export function useControlsContext(): ControlsContextValue {
+  const ctx = useContext(ControlsContext);
+  if (!ctx) throw new Error('Controls compound components must be used within a Controls.Root');
+  return ctx;
 }

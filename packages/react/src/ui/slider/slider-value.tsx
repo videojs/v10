@@ -6,7 +6,7 @@ import { forwardRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { useSliderContext } from './slider-context';
+import { useSliderContext } from './context';
 
 export interface SliderValueProps extends UIComponentProps<'output', SliderState> {
   /** Which slider value to display: the current position or the pointer position. */
@@ -23,8 +23,6 @@ export const SliderValue = forwardRef(function SliderValue(
   const { render, className, style, type = 'current', format, ...elementProps } = componentProps;
 
   const context = useSliderContext();
-  if (!context) return null;
-
   const { state, pointerValue, formatValue } = context;
 
   const rawValue = type === 'pointer' ? pointerValue : state.value;

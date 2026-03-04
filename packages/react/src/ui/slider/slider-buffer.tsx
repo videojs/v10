@@ -4,7 +4,7 @@ import type { SliderState } from '@videojs/core';
 
 import type { UIComponentProps } from '../../utils/types';
 import { createContextPart } from '../create-context-part';
-import { useSliderContext } from './slider-context';
+import { useSliderContext } from './context';
 
 export interface SliderBufferProps extends UIComponentProps<'div', SliderState> {}
 
