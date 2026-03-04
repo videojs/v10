@@ -1,7 +1,12 @@
-import { MediaElement } from '../media-element';
+import { ContextConsumer } from '@videojs/element/context';
 
-export class ControlsGroupElement extends MediaElement {
+import { ContextPartElement } from '../context-part-element';
+import { controlsContext } from './controls-context';
+
+export class ControlsGroupElement extends ContextPartElement {
   static readonly tagName = 'media-controls-group';
+
+  protected readonly consumer = new ContextConsumer(this, { context: controlsContext, subscribe: true });
 
   override connectedCallback(): void {
     super.connectedCallback();

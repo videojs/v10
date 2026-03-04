@@ -52,7 +52,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       computeState: (input) => {
         core.setInput(input);
         if (!time || !buffer) {
-          return core.getState({
+          core.setMedia({
             currentTime: 0,
             duration: 0,
             seeking: false,
@@ -60,9 +60,11 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
             buffered: [],
             seekable: [],
           });
+        } else {
+          core.setMedia({ ...time, ...buffer });
         }
 
-        return core.getState({ ...time, ...buffer });
+        return core.getState();
       },
       getPercent: () => (duration > 0 ? ((time?.currentTime ?? 0) / duration) * 100 : 0),
       getStepPercent: () => core.getStepPercent(),

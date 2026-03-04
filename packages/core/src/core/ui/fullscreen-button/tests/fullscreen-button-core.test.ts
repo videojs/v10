@@ -27,7 +27,8 @@ describe('FullscreenButtonCore', () => {
     it('projects fullscreen and availability', () => {
       const core = new FullscreenButtonCore();
       const media = createMediaState({ fullscreen: true });
-      const state = core.getState(media);
+      core.setMedia(media);
+      const state = core.getState();
 
       expect(state.fullscreen).toBe(true);
       expect(state.availability).toBe('available');
@@ -35,7 +36,8 @@ describe('FullscreenButtonCore', () => {
 
     it('reflects unsupported availability', () => {
       const core = new FullscreenButtonCore();
-      const state = core.getState(createMediaState({ fullscreenAvailability: 'unsupported' }));
+      core.setMedia(createMediaState({ fullscreenAvailability: 'unsupported' }));
+      const state = core.getState();
 
       expect(state.availability).toBe('unsupported');
     });

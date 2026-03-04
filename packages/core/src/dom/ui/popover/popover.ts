@@ -1,6 +1,6 @@
 import type { State } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
-import type { PopoverInteraction } from '../../../core/ui/popover/popover-core';
+import type { PopoverInput } from '../../../core/ui/popover/popover-core';
 import type { UIFocusEvent, UIPointerEvent } from '../event';
 import type { TransitionHandler } from '../transition';
 
@@ -38,7 +38,7 @@ export interface PopoverPopupProps {
 }
 
 export interface PopoverHandle {
-  interaction: State<PopoverInteraction>;
+  input: State<PopoverInput>;
   triggerProps: PopoverTriggerProps;
   popupProps: PopoverPopupProps;
   readonly triggerElement: HTMLElement | null;
@@ -316,7 +316,7 @@ export function createPopover(options: PopoverOptions): PopoverHandle {
   }
 
   return {
-    interaction: state,
+    input: state,
     triggerProps,
     popupProps,
     get triggerElement() {

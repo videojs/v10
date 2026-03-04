@@ -23,6 +23,7 @@ export class PiPButtonCore {
   };
 
   #props = { ...PiPButtonCore.defaultProps };
+  #media: MediaPictureInPictureState | null = null;
 
   constructor(props?: PiPButtonProps) {
     if (props) this.setProps(props);
@@ -52,7 +53,12 @@ export class PiPButtonCore {
     };
   }
 
-  getState(media: MediaPictureInPictureState): PiPButtonState {
+  setMedia(media: MediaPictureInPictureState): void {
+    this.#media = media;
+  }
+
+  getState(): PiPButtonState {
+    const media = this.#media!;
     return {
       pip: media.pip,
       availability: media.pipAvailability,

@@ -51,7 +51,8 @@ describe('TimeSliderCore', () => {
     it('uses currentTime as value when not dragging', () => {
       const core = new TimeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ currentTime: 90, duration: 300 }));
+      core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
+      const state = core.getState();
 
       expect(state.value).toBe(90);
       expect(state.currentTime).toBe(90);
@@ -62,7 +63,8 @@ describe('TimeSliderCore', () => {
     it('uses drag percent for value when dragging', () => {
       const core = new TimeSliderCore();
       core.setInput(createInput({ dragging: true, dragPercent: 50 }));
-      const state = core.getState(createMediaState({ currentTime: 90, duration: 300 }));
+      core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
+      const state = core.getState();
 
       expect(state.value).toBe(150); // 50% of 300
       expect(state.dragging).toBe(true);
@@ -72,7 +74,8 @@ describe('TimeSliderCore', () => {
     it('uses raw precision during drag for smooth scrubbing', () => {
       const core = new TimeSliderCore();
       core.setInput(createInput({ dragging: true, dragPercent: 33.333 }));
-      const state = core.getState(createMediaState({ currentTime: 0, duration: 10 }));
+      core.setMedia(createMediaState({ currentTime: 0, duration: 10 }));
+      const state = core.getState();
 
       // 33.333% of 10 = 3.3333, NOT snapped to step (which would be 3)
       expect(state.value).toBeCloseTo(3.3333, 3);
@@ -81,7 +84,8 @@ describe('TimeSliderCore', () => {
     it('computes buffer percent from buffered ranges', () => {
       const core = new TimeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ duration: 200, buffered: [[0, 100]] }));
+      core.setMedia(createMediaState({ duration: 200, buffered: [[0, 100]] }));
+      const state = core.getState();
 
       expect(state.bufferPercent).toBe(50); // 100/200 * 100
     });
@@ -89,7 +93,7 @@ describe('TimeSliderCore', () => {
     it('uses end of the furthest buffered range', () => {
       const core = new TimeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(
+      core.setMedia(
         createMediaState({
           duration: 200,
           buffered: [
@@ -98,6 +102,7 @@ describe('TimeSliderCore', () => {
           ],
         })
       );
+      const state = core.getState();
 
       expect(state.bufferPercent).toBe(75); // 150/200 * 100
     });
@@ -105,7 +110,8 @@ describe('TimeSliderCore', () => {
     it('returns 0 buffer percent when no buffered ranges', () => {
       const core = new TimeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ duration: 200, buffered: [] }));
+      core.setMedia(createMediaState({ duration: 200, buffered: [] }));
+      const state = core.getState();
 
       expect(state.bufferPercent).toBe(0);
     });
@@ -113,7 +119,8 @@ describe('TimeSliderCore', () => {
     it('returns 0 buffer percent when duration is 0', () => {
       const core = new TimeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ duration: 0, buffered: [] }));
+      core.setMedia(createMediaState({ duration: 0, buffered: [] }));
+      const state = core.getState();
 
       expect(state.bufferPercent).toBe(0);
     });
@@ -121,7 +128,8 @@ describe('TimeSliderCore', () => {
     it('passes through seeking state', () => {
       const core = new TimeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ seeking: true }));
+      core.setMedia(createMediaState({ seeking: true }));
+      const state = core.getState();
 
       expect(state.seeking).toBe(true);
     });
@@ -129,7 +137,8 @@ describe('TimeSliderCore', () => {
     it('sets min to 0 and max to duration', () => {
       const core = new TimeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ duration: 600 }));
+      core.setMedia(createMediaState({ duration: 600 }));
+      const state = core.getState();
 
       const attrs = core.getAttrs(state);
       expect(attrs['aria-valuemin']).toBe(0);
@@ -139,7 +148,8 @@ describe('TimeSliderCore', () => {
     it('handles zero duration', () => {
       const core = new TimeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ currentTime: 0, duration: 0 }));
+      core.setMedia(createMediaState({ currentTime: 0, duration: 0 }));
+      const state = core.getState();
 
       expect(state.fillPercent).toBe(0);
       expect(state.value).toBe(0);
@@ -150,7 +160,8 @@ describe('TimeSliderCore', () => {
     it('returns aria-label and aria-valuetext', () => {
       const core = new TimeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ currentTime: 90, duration: 300 }));
+      core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
+      const state = core.getState();
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('Seek');
@@ -161,7 +172,8 @@ describe('TimeSliderCore', () => {
     it('uses custom label', () => {
       const core = new TimeSliderCore({ label: 'Scrub' });
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ currentTime: 0, duration: 300 }));
+      core.setMedia(createMediaState({ currentTime: 0, duration: 300 }));
+      const state = core.getState();
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('Scrub');
@@ -170,7 +182,8 @@ describe('TimeSliderCore', () => {
     it('shows both times when duration is 0', () => {
       const core = new TimeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ currentTime: 0, duration: 0 }));
+      core.setMedia(createMediaState({ currentTime: 0, duration: 0 }));
+      const state = core.getState();
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-valuetext']).toBe('0 seconds of 0 seconds');
@@ -179,7 +192,8 @@ describe('TimeSliderCore', () => {
     it('includes dragged value in valuetext', () => {
       const core = new TimeSliderCore();
       core.setInput(createInput({ dragging: true, dragPercent: 50 }));
-      const state = core.getState(createMediaState({ currentTime: 0, duration: 300 }));
+      core.setMedia(createMediaState({ currentTime: 0, duration: 300 }));
+      const state = core.getState();
       const attrs = core.getAttrs(state);
 
       // value is 150 (50% of 300) → "2 minutes, 30 seconds of 5 minutes"
@@ -193,7 +207,8 @@ describe('TimeSliderCore', () => {
       core.setProps({ label: 'Progress' });
 
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ currentTime: 0, duration: 100 }));
+      core.setMedia(createMediaState({ currentTime: 0, duration: 100 }));
+      const state = core.getState();
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('Progress');
@@ -204,7 +219,8 @@ describe('TimeSliderCore', () => {
 
       // getState overrides min/max via super.setProps — disabled must survive.
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ duration: 300 }));
+      core.setMedia(createMediaState({ duration: 300 }));
+      const state = core.getState();
 
       expect(state.disabled).toBe(true);
 
@@ -217,7 +233,8 @@ describe('TimeSliderCore', () => {
       const core = new TimeSliderCore({ thumbAlignment: 'edge' });
 
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ duration: 300 }));
+      core.setMedia(createMediaState({ duration: 300 }));
+      const state = core.getState();
 
       expect(state.thumbAlignment).toBe('edge');
     });
@@ -226,7 +243,8 @@ describe('TimeSliderCore', () => {
       const core = new TimeSliderCore({ orientation: 'vertical' });
 
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ duration: 300 }));
+      core.setMedia(createMediaState({ duration: 300 }));
+      const state = core.getState();
 
       expect(state.orientation).toBe('vertical');
     });

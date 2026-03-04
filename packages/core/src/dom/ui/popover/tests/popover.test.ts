@@ -5,7 +5,7 @@ import { createTestPopover } from './popover-helpers';
 describe('createPopover', () => {
   it('starts closed', () => {
     const { popover } = createTestPopover();
-    expect(popover.interaction.current).toEqual({ active: false, status: 'idle' });
+    expect(popover.input.current).toEqual({ active: false, status: 'idle' });
   });
 
   describe('open/close', () => {
@@ -14,7 +14,7 @@ describe('createPopover', () => {
 
       popover.open();
 
-      expect(popover.interaction.current.active).toBe(true);
+      expect(popover.input.current.active).toBe(true);
       expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'click' });
     });
 
@@ -23,7 +23,7 @@ describe('createPopover', () => {
 
       popover.open();
 
-      expect(popover.interaction.current).toEqual({ active: true, status: 'starting' });
+      expect(popover.input.current).toEqual({ active: true, status: 'starting' });
     });
 
     it('calls onOpenChange when closing', () => {
@@ -35,7 +35,7 @@ describe('createPopover', () => {
       popover.close();
 
       // active stays true until close animation completes
-      expect(popover.interaction.current.active).toBe(true);
+      expect(popover.input.current.active).toBe(true);
       expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'click' });
     });
 
@@ -45,7 +45,7 @@ describe('createPopover', () => {
       popover.open();
       popover.close();
 
-      expect(popover.interaction.current).toEqual({ active: true, status: 'ending' });
+      expect(popover.input.current).toEqual({ active: true, status: 'ending' });
     });
 
     it('does not call onOpenChange if already open', () => {
@@ -95,7 +95,7 @@ describe('createPopover', () => {
 
       popover.triggerProps.onClick(event);
 
-      expect(popover.interaction.current.active).toBe(true);
+      expect(popover.input.current.active).toBe(true);
       expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
     });
 
@@ -108,7 +108,7 @@ describe('createPopover', () => {
       popover.triggerProps.onClick({ preventDefault: vi.fn() } as unknown as UIEvent);
 
       // active stays true until close animation completes
-      expect(popover.interaction.current.active).toBe(true);
+      expect(popover.input.current.active).toBe(true);
       expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'click' }));
     });
 
@@ -122,8 +122,8 @@ describe('createPopover', () => {
       // Click during close animation should re-open
       popover.triggerProps.onClick({ preventDefault: vi.fn() } as unknown as UIEvent);
 
-      expect(popover.interaction.current.active).toBe(true);
-      expect(popover.interaction.current.status).not.toBe('ending');
+      expect(popover.input.current.active).toBe(true);
+      expect(popover.input.current.status).not.toBe('ending');
       expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
     });
   });
@@ -156,7 +156,7 @@ describe('createPopover', () => {
       popover.open();
 
       expect(onOpenChange).not.toHaveBeenCalled();
-      expect(popover.interaction.current.active).toBe(false);
+      expect(popover.input.current.active).toBe(false);
     });
   });
 
@@ -165,13 +165,13 @@ describe('createPopover', () => {
       const { popover } = createTestPopover();
       const callback = vi.fn();
 
-      popover.interaction.subscribe(callback);
+      popover.input.subscribe(callback);
 
       popover.open();
       flush();
 
       expect(callback).toHaveBeenCalled();
-      expect(popover.interaction.current.active).toBe(true);
+      expect(popover.input.current.active).toBe(true);
     });
   });
 });

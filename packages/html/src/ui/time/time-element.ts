@@ -55,7 +55,8 @@ export class TimeElement extends MediaElement {
 
     if (!media) return;
 
-    const state = this.#core.getState(media);
+    this.#core.setMedia(media);
+    const state = this.#core.getState();
 
     this.#signSpan.hidden = !state.negative;
     this.#signSpan.textContent = state.negative ? this.negativeSign : '';

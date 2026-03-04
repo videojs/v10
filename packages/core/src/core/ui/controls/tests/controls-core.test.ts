@@ -9,43 +9,50 @@ describe('ControlsCore', () => {
       const core = new ControlsCore();
       const media = createControlsState({ controlsVisible: true });
 
-      expect(core.getState(media)).toEqual({ visible: true, userActive: true });
+      core.setMedia(media);
+      expect(core.getState()).toEqual({ visible: true, userActive: true });
     });
 
     it('returns visible: false when controlsVisible is false', () => {
       const core = new ControlsCore();
       const media = createControlsState({ controlsVisible: false });
 
-      expect(core.getState(media)).toEqual({ visible: false, userActive: true });
+      core.setMedia(media);
+      expect(core.getState()).toEqual({ visible: false, userActive: true });
     });
 
     it('returns userActive: false when userActive is false', () => {
       const core = new ControlsCore();
       const media = createControlsState({ userActive: false });
 
-      expect(core.getState(media)).toEqual({ visible: true, userActive: false });
+      core.setMedia(media);
+      expect(core.getState()).toEqual({ visible: true, userActive: false });
     });
 
     it('projects visible and userActive independently', () => {
       const core = new ControlsCore();
 
       // All four quadrants of the 2x2 boolean matrix
-      expect(core.getState(createControlsState({ controlsVisible: true, userActive: true }))).toEqual({
+      core.setMedia(createControlsState({ controlsVisible: true, userActive: true }));
+      expect(core.getState()).toEqual({
         visible: true,
         userActive: true,
       });
 
-      expect(core.getState(createControlsState({ controlsVisible: true, userActive: false }))).toEqual({
+      core.setMedia(createControlsState({ controlsVisible: true, userActive: false }));
+      expect(core.getState()).toEqual({
         visible: true,
         userActive: false,
       });
 
-      expect(core.getState(createControlsState({ controlsVisible: false, userActive: true }))).toEqual({
+      core.setMedia(createControlsState({ controlsVisible: false, userActive: true }));
+      expect(core.getState()).toEqual({
         visible: false,
         userActive: true,
       });
 
-      expect(core.getState(createControlsState({ controlsVisible: false, userActive: false }))).toEqual({
+      core.setMedia(createControlsState({ controlsVisible: false, userActive: false }));
+      expect(core.getState()).toEqual({
         visible: false,
         userActive: false,
       });
@@ -53,7 +60,8 @@ describe('ControlsCore', () => {
 
     it('returns only primitive values', () => {
       const core = new ControlsCore();
-      const state = core.getState(createControlsState());
+      core.setMedia(createControlsState());
+      const state = core.getState();
 
       const functionKeys = Object.entries(state).filter(([, value]) => typeof value === 'function');
       expect(functionKeys).toHaveLength(0);

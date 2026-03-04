@@ -1,14 +1,14 @@
 'use client';
 
+import type { ControlsCore } from '@videojs/core';
 import type { ForwardedRef, ReactNode } from 'react';
 import { forwardRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
+import { useControlsContext } from './controls-context';
 
-type GroupState = Record<string, never>;
-
-export interface ControlsGroupProps extends UIComponentProps<'div', GroupState> {
+export interface ControlsGroupProps extends UIComponentProps<'div', ControlsCore.State> {
   children?: ReactNode | undefined;
 }
 
@@ -19,15 +19,15 @@ export const ControlsGroup = forwardRef(function ControlsGroup(
 ) {
   const { render, className, style, children, ...elementProps } = componentProps;
 
+  const context = useControlsContext();
   const role = elementProps['aria-label'] || elementProps['aria-labelledby'] ? 'group' : undefined;
-
-  const state: GroupState = {};
 
   return renderElement(
     'div',
     { render, className, style },
     {
-      state,
+      state: context?.state ?? ({} as ControlsCore.State),
+      stateAttrMap: context?.stateAttrMap,
       ref: [forwardedRef],
       props: [{ role, children }, elementProps],
     }

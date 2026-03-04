@@ -47,7 +47,8 @@ describe('VolumeSliderCore', () => {
     it('maps volume 0-1 to 0-100 percent', () => {
       const core = new VolumeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ volume: 0.75 }));
+      core.setMedia(createMediaState({ volume: 0.75 }));
+      const state = core.getState();
 
       expect(state.value).toBe(75);
       expect(state.fillPercent).toBe(75);
@@ -57,7 +58,8 @@ describe('VolumeSliderCore', () => {
     it('returns 0 when volume is 0', () => {
       const core = new VolumeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ volume: 0 }));
+      core.setMedia(createMediaState({ volume: 0 }));
+      const state = core.getState();
 
       expect(state.value).toBe(0);
       expect(state.fillPercent).toBe(0);
@@ -66,7 +68,8 @@ describe('VolumeSliderCore', () => {
     it('returns 100 when volume is 1', () => {
       const core = new VolumeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ volume: 1 }));
+      core.setMedia(createMediaState({ volume: 1 }));
+      const state = core.getState();
 
       expect(state.value).toBe(100);
       expect(state.fillPercent).toBe(100);
@@ -75,7 +78,8 @@ describe('VolumeSliderCore', () => {
     it('sets fillPercent to 0 when muted', () => {
       const core = new VolumeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ volume: 0.75, muted: true }));
+      core.setMedia(createMediaState({ volume: 0.75, muted: true }));
+      const state = core.getState();
 
       expect(state.value).toBe(75);
       expect(state.fillPercent).toBe(0);
@@ -85,7 +89,8 @@ describe('VolumeSliderCore', () => {
     it('uses drag percent for value when dragging', () => {
       const core = new VolumeSliderCore();
       core.setInput(createInput({ dragging: true, dragPercent: 40 }));
-      const state = core.getState(createMediaState({ volume: 0.75 }));
+      core.setMedia(createMediaState({ volume: 0.75 }));
+      const state = core.getState();
 
       expect(state.value).toBe(40);
       expect(state.dragging).toBe(true);
@@ -95,7 +100,8 @@ describe('VolumeSliderCore', () => {
     it('preserves muted state', () => {
       const core = new VolumeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ volume: 0.5, muted: false }));
+      core.setMedia(createMediaState({ volume: 0.5, muted: false }));
+      const state = core.getState();
 
       expect(state.muted).toBe(false);
     });
@@ -105,7 +111,8 @@ describe('VolumeSliderCore', () => {
     it('returns aria-label and aria-valuetext', () => {
       const core = new VolumeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ volume: 0.75 }));
+      core.setMedia(createMediaState({ volume: 0.75 }));
+      const state = core.getState();
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('Volume');
@@ -116,7 +123,8 @@ describe('VolumeSliderCore', () => {
     it('includes muted in valuetext when muted', () => {
       const core = new VolumeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ volume: 0.5, muted: true }));
+      core.setMedia(createMediaState({ volume: 0.5, muted: true }));
+      const state = core.getState();
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-valuetext']).toBe('50 percent, muted');
@@ -125,7 +133,8 @@ describe('VolumeSliderCore', () => {
     it('rounds value in valuetext', () => {
       const core = new VolumeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ volume: 0.333 }));
+      core.setMedia(createMediaState({ volume: 0.333 }));
+      const state = core.getState();
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-valuetext']).toBe('33 percent');
@@ -134,7 +143,8 @@ describe('VolumeSliderCore', () => {
     it('uses custom label', () => {
       const core = new VolumeSliderCore({ label: 'Audio' });
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ volume: 1 }));
+      core.setMedia(createMediaState({ volume: 1 }));
+      const state = core.getState();
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('Audio');
@@ -143,7 +153,8 @@ describe('VolumeSliderCore', () => {
     it('shows 0 percent when volume is 0', () => {
       const core = new VolumeSliderCore();
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ volume: 0 }));
+      core.setMedia(createMediaState({ volume: 0 }));
+      const state = core.getState();
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-valuetext']).toBe('0 percent');
@@ -156,7 +167,8 @@ describe('VolumeSliderCore', () => {
       core.setProps({ label: 'Sound' });
 
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ volume: 0.5 }));
+      core.setMedia(createMediaState({ volume: 0.5 }));
+      const state = core.getState();
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('Sound');
@@ -165,7 +177,8 @@ describe('VolumeSliderCore', () => {
     it('respects disabled prop', () => {
       const core = new VolumeSliderCore({ disabled: true });
       core.setInput(createInput());
-      const state = core.getState(createMediaState({ volume: 0.5 }));
+      core.setMedia(createMediaState({ volume: 0.5 }));
+      const state = core.getState();
 
       expect(state.disabled).toBe(true);
 

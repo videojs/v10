@@ -6,7 +6,14 @@ export interface ControlsState {
 }
 
 export class ControlsCore {
-  getState(media: MediaControlsState): ControlsState {
+  #media: MediaControlsState | null = null;
+
+  setMedia(media: MediaControlsState): void {
+    this.#media = media;
+  }
+
+  getState(): ControlsState {
+    const media = this.#media!;
     return {
       visible: media.controlsVisible,
       userActive: media.userActive,

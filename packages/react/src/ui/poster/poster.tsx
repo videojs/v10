@@ -40,11 +40,13 @@ export const Poster = forwardRef(function Poster(
     return null;
   }
 
+  core.setMedia(playback);
+
   return renderElement(
     'img',
     { render, className, style },
     {
-      state: core.getState(playback),
+      state: core.getState(),
       stateAttrMap: PosterDataAttrs,
       ref: [forwardedRef],
       props: [elementProps],

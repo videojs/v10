@@ -1,6 +1,6 @@
 'use client';
 
-import type { PopoverCore } from '@videojs/core';
+import type { PopoverCore, StateAttrMap } from '@videojs/core';
 import type { PopoverHandle } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';
 
@@ -8,6 +8,7 @@ export interface PopoverContextValue {
   core: PopoverCore;
   popover: PopoverHandle;
   state: PopoverCore.State;
+  stateAttrMap: StateAttrMap<PopoverCore.State>;
   anchorName: string;
   popupId: string;
 }

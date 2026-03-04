@@ -1,4 +1,4 @@
-import { PopoverCore, PopoverDataAttrs, type PopoverInteraction, type PopoverProps } from '@videojs/core';
+import { PopoverCore, PopoverDataAttrs, type PopoverInput, type PopoverProps } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -45,7 +45,7 @@ export class PopoverElement extends MediaElement {
 
   readonly #core = new PopoverCore();
   #popover: PopoverHandle | null = null;
-  #snapshot: SnapshotController<PopoverInteraction> | null = null;
+  #snapshot: SnapshotController<PopoverInput> | null = null;
 
   // Cleanup controllers
   #disconnect: AbortController | null = null;
@@ -79,9 +79,9 @@ export class PopoverElement extends MediaElement {
     // Reuse the controller across connect/disconnect cycles to avoid
     // leaking stale controllers in the host's controller set.
     if (this.#snapshot) {
-      this.#snapshot.track(this.#popover.interaction);
+      this.#snapshot.track(this.#popover.input);
     } else {
-      this.#snapshot = new SnapshotController(this, this.#popover.interaction);
+      this.#snapshot = new SnapshotController(this, this.#popover.input);
     }
   }
 
@@ -110,7 +110,7 @@ export class PopoverElement extends MediaElement {
 
     // Sync controlled open state
     if (this.#popover && changed.has('open')) {
-      const { active: interactionOpen } = this.#popover.interaction.current;
+      const { active: interactionOpen } = this.#popover.input.current;
       if (this.open !== interactionOpen) {
         if (this.open) {
           this.#popover.open();
@@ -129,9 +129,10 @@ export class PopoverElement extends MediaElement {
     const triggerEl = this.#findTrigger();
     this.#syncTrigger(triggerEl);
 
-    // Derive state from core + interaction.
-    const interaction = this.#popover.interaction.current;
-    const state = this.#core.getState(interaction);
+    // Derive state from core + input.
+    const input = this.#popover.input.current;
+    this.#core.setInput(input);
+    const state = this.#core.getState();
 
     // Apply popup ARIA and data attributes to self.
     applyElementProps(this, this.#core.getPopupAttrs(state));

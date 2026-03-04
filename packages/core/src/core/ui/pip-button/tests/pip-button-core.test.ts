@@ -27,7 +27,8 @@ describe('PiPButtonCore', () => {
     it('projects pip and availability', () => {
       const core = new PiPButtonCore();
       const media = createMediaState({ pip: true });
-      const state = core.getState(media);
+      core.setMedia(media);
+      const state = core.getState();
 
       expect(state.pip).toBe(true);
       expect(state.availability).toBe('available');
@@ -35,7 +36,8 @@ describe('PiPButtonCore', () => {
 
     it('reflects unsupported availability', () => {
       const core = new PiPButtonCore();
-      const state = core.getState(createMediaState({ pipAvailability: 'unsupported' }));
+      core.setMedia(createMediaState({ pipAvailability: 'unsupported' }));
+      const state = core.getState();
 
       expect(state.availability).toBe('unsupported');
     });

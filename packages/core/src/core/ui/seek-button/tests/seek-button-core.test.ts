@@ -26,13 +26,15 @@ describe('SeekButtonCore', () => {
   describe('setProps', () => {
     it('uses default props', () => {
       const core = new SeekButtonCore();
-      const state = core.getState(createMediaState());
+      core.setMedia(createMediaState());
+      const state = core.getState();
       expect(state.direction).toBe('forward');
     });
 
     it('accepts constructor props', () => {
       const core = new SeekButtonCore({ seconds: -10 });
-      const state = core.getState(createMediaState());
+      core.setMedia(createMediaState());
+      const state = core.getState();
       expect(state.direction).toBe('backward');
     });
 
@@ -46,26 +48,26 @@ describe('SeekButtonCore', () => {
   describe('getState', () => {
     it('projects seeking from media state', () => {
       const core = new SeekButtonCore();
-      const state = core.getState(createMediaState({ seeking: true }));
-      expect(state.seeking).toBe(true);
+      core.setMedia(createMediaState({ seeking: true }));
+      expect(core.getState().seeking).toBe(true);
     });
 
     it('derives forward direction from positive seconds', () => {
       const core = new SeekButtonCore({ seconds: 15 });
-      const state = core.getState(createMediaState());
-      expect(state.direction).toBe('forward');
+      core.setMedia(createMediaState());
+      expect(core.getState().direction).toBe('forward');
     });
 
     it('derives backward direction from negative seconds', () => {
       const core = new SeekButtonCore({ seconds: -15 });
-      const state = core.getState(createMediaState());
-      expect(state.direction).toBe('backward');
+      core.setMedia(createMediaState());
+      expect(core.getState().direction).toBe('backward');
     });
 
     it('defaults to forward direction', () => {
       const core = new SeekButtonCore();
-      const state = core.getState(createMediaState());
-      expect(state.direction).toBe('forward');
+      core.setMedia(createMediaState());
+      expect(core.getState().direction).toBe('forward');
     });
   });
 

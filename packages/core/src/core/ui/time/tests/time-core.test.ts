@@ -17,13 +17,15 @@ describe('TimeCore', () => {
   describe('setProps', () => {
     it('uses default props', () => {
       const core = new TimeCore();
-      const state = core.getState(createMediaState());
+      core.setMedia(createMediaState());
+      const state = core.getState();
       expect(state.type).toBe('current');
     });
 
     it('accepts custom props', () => {
       const core = new TimeCore({ type: 'duration' });
-      const state = core.getState(createMediaState());
+      core.setMedia(createMediaState());
+      const state = core.getState();
       expect(state.type).toBe('duration');
     });
   });
@@ -31,7 +33,8 @@ describe('TimeCore', () => {
   describe('getState', () => {
     it('returns current time state', () => {
       const core = new TimeCore({ type: 'current' });
-      const state = core.getState(createMediaState({ currentTime: 90 }));
+      core.setMedia(createMediaState({ currentTime: 90 }));
+      const state = core.getState();
 
       expect(state.type).toBe('current');
       expect(state.seconds).toBe(90);
@@ -43,7 +46,8 @@ describe('TimeCore', () => {
 
     it('returns duration state', () => {
       const core = new TimeCore({ type: 'duration' });
-      const state = core.getState(createMediaState({ duration: 300 }));
+      core.setMedia(createMediaState({ duration: 300 }));
+      const state = core.getState();
 
       expect(state.type).toBe('duration');
       expect(state.seconds).toBe(300);
@@ -55,7 +59,8 @@ describe('TimeCore', () => {
 
     it('returns remaining time state', () => {
       const core = new TimeCore({ type: 'remaining' });
-      const state = core.getState(createMediaState({ currentTime: 90, duration: 300 }));
+      core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
+      const state = core.getState();
 
       expect(state.type).toBe('remaining');
       expect(state.seconds).toBe(-210); // 90 - 300
@@ -67,7 +72,8 @@ describe('TimeCore', () => {
 
     it('returns unsigned text regardless of negativeSign prop', () => {
       const core = new TimeCore({ type: 'remaining', negativeSign: '−' });
-      const state = core.getState(createMediaState({ currentTime: 90, duration: 300 }));
+      core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
+      const state = core.getState();
 
       expect(state.negative).toBe(true);
       expect(state.text).toBe('3:30');
@@ -75,7 +81,8 @@ describe('TimeCore', () => {
 
     it('is not negative when remaining time is zero', () => {
       const core = new TimeCore({ type: 'remaining' });
-      const state = core.getState(createMediaState({ currentTime: 300, duration: 300 }));
+      core.setMedia(createMediaState({ currentTime: 300, duration: 300 }));
+      const state = core.getState();
 
       expect(state.seconds).toBe(0);
       expect(state.negative).toBe(false);
@@ -84,7 +91,8 @@ describe('TimeCore', () => {
 
     it('shows hours when duration has hours', () => {
       const core = new TimeCore({ type: 'current' });
-      const state = core.getState(createMediaState({ currentTime: 90, duration: 3700 }));
+      core.setMedia(createMediaState({ currentTime: 90, duration: 3700 }));
+      const state = core.getState();
 
       expect(state.text).toBe('0:01:30');
     });
@@ -93,25 +101,29 @@ describe('TimeCore', () => {
   describe('getLabel', () => {
     it('returns default label for current', () => {
       const core = new TimeCore({ type: 'current' });
-      const state = core.getState(createMediaState());
+      core.setMedia(createMediaState());
+      const state = core.getState();
       expect(core.getLabel(state)).toBe('Current time');
     });
 
     it('returns default label for duration', () => {
       const core = new TimeCore({ type: 'duration' });
-      const state = core.getState(createMediaState());
+      core.setMedia(createMediaState());
+      const state = core.getState();
       expect(core.getLabel(state)).toBe('Duration');
     });
 
     it('returns default label for remaining', () => {
       const core = new TimeCore({ type: 'remaining' });
-      const state = core.getState(createMediaState());
+      core.setMedia(createMediaState());
+      const state = core.getState();
       expect(core.getLabel(state)).toBe('Remaining');
     });
 
     it('returns custom string label', () => {
       const core = new TimeCore({ type: 'current', label: 'Position' });
-      const state = core.getState(createMediaState());
+      core.setMedia(createMediaState());
+      const state = core.getState();
       expect(core.getLabel(state)).toBe('Position');
     });
 
@@ -120,7 +132,8 @@ describe('TimeCore', () => {
         type: 'current',
         label: (state) => `Time: ${state.text}`,
       });
-      const state = core.getState(createMediaState({ currentTime: 90 }));
+      core.setMedia(createMediaState({ currentTime: 90 }));
+      const state = core.getState();
       expect(core.getLabel(state)).toBe('Time: 1:30');
     });
   });
@@ -128,7 +141,8 @@ describe('TimeCore', () => {
   describe('getAttrs', () => {
     it('returns aria attributes', () => {
       const core = new TimeCore({ type: 'current' });
-      const state = core.getState(createMediaState({ currentTime: 90 }));
+      core.setMedia(createMediaState({ currentTime: 90 }));
+      const state = core.getState();
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('Current time');
@@ -137,7 +151,8 @@ describe('TimeCore', () => {
 
     it('includes remaining suffix in valuetext', () => {
       const core = new TimeCore({ type: 'remaining' });
-      const state = core.getState(createMediaState({ currentTime: 90, duration: 300 }));
+      core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
+      const state = core.getState();
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('Remaining');

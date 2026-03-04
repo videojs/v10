@@ -1,4 +1,4 @@
-import type { InferComponentState, InferMediaState, StateAttrMap, UICore } from '@videojs/core';
+import type { InferComponentState, InferMediaState, MediaUIComponent, StateAttrMap } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, createButton, logMissingFeature } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
@@ -6,7 +6,7 @@ import type { PlayerController } from '../player/player-controller';
 import { MediaElement } from './media-element';
 
 /** Abstract base for HTML custom elements that render a media-control button. */
-export abstract class MediaButtonElement<Core extends UICore> extends MediaElement {
+export abstract class MediaButtonElement<Core extends MediaUIComponent> extends MediaElement {
   static override properties: PropertyDeclarationMap = {
     label: { type: String },
     disabled: { type: Boolean },
@@ -58,7 +58,8 @@ export abstract class MediaButtonElement<Core extends UICore> extends MediaEleme
 
     if (!media) return;
 
-    const state = this.core.getState(media as never);
+    this.core.setMedia(media as never);
+    const state = this.core.getState();
     applyElementProps(this, this.core.getAttrs?.(state) ?? {});
     applyStateDataAttrs(this, state, this.stateAttrMap as StateAttrMap<object>);
   }

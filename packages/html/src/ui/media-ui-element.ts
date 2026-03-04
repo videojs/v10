@@ -1,4 +1,4 @@
-import type { InferComponentState, InferMediaState, StateAttrMap, UICore } from '@videojs/core';
+import type { InferComponentState, InferMediaState, MediaUIComponent, StateAttrMap } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature } from '@videojs/core/dom';
 import type { PropertyValues } from '@videojs/element';
 
@@ -6,7 +6,7 @@ import type { PlayerController } from '../player/player-controller';
 import { MediaElement } from './media-element';
 
 /** Abstract base for HTML custom elements that display media state with data attributes. */
-export abstract class MediaUIElement<Core extends UICore> extends MediaElement {
+export abstract class MediaUIElement<Core extends MediaUIComponent> extends MediaElement {
   protected abstract readonly core: Core;
   protected abstract readonly stateAttrMap: StateAttrMap<InferComponentState<Core>>;
   protected abstract readonly mediaState: PlayerController<any, InferMediaState<Core> | undefined>;
@@ -26,7 +26,8 @@ export abstract class MediaUIElement<Core extends UICore> extends MediaElement {
 
     if (!media) return;
 
-    const state = this.core.getState(media as never);
+    this.core.setMedia(media as never);
+    const state = this.core.getState();
     applyStateDataAttrs(this, state, this.stateAttrMap as StateAttrMap<object>);
   }
 }

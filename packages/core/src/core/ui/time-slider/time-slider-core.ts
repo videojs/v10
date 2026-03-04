@@ -31,6 +31,7 @@ export class TimeSliderCore extends SliderCore {
   };
 
   #props = { ...TimeSliderCore.defaultProps };
+  #media: (MediaTimeState & MediaBufferState) | null = null;
 
   constructor(props?: TimeSliderProps) {
     super();
@@ -42,7 +43,12 @@ export class TimeSliderCore extends SliderCore {
     super.setProps({ ...props, min: 0 });
   }
 
-  getState(media: MediaTimeState & MediaBufferState): TimeSliderState {
+  setMedia(media: MediaTimeState & MediaBufferState): void {
+    this.#media = media;
+  }
+
+  getState(): TimeSliderState {
+    const media = this.#media!;
     const { duration, currentTime, seeking, buffered } = media;
     const { dragging, dragPercent } = this.input;
 

@@ -44,7 +44,8 @@ describe('PlayButtonCore', () => {
     it('projects data fields from media state', () => {
       const core = new PlayButtonCore();
       const media = createMediaState({ paused: true, ended: false, started: true });
-      const state = core.getState(media);
+      core.setMedia(media);
+      const state = core.getState();
 
       expect(state.paused).toBe(true);
       expect(state.ended).toBe(false);
@@ -53,7 +54,8 @@ describe('PlayButtonCore', () => {
 
     it('reflects playing state', () => {
       const core = new PlayButtonCore();
-      const state = core.getState(createMediaState({ paused: false, started: true }));
+      core.setMedia(createMediaState({ paused: false, started: true }));
+      const state = core.getState();
 
       expect(state.paused).toBe(false);
       expect(state.started).toBe(true);

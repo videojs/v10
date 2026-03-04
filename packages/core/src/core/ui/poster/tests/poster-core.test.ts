@@ -21,7 +21,8 @@ describe('PosterCore', () => {
       const core = new PosterCore();
       const media = createMediaState({ started: false });
 
-      const state = core.getState(media);
+      core.setMedia(media);
+      const state = core.getState();
 
       expect(state.visible).toBe(true);
     });
@@ -30,7 +31,8 @@ describe('PosterCore', () => {
       const core = new PosterCore();
       const media = createMediaState({ started: true });
 
-      const state = core.getState(media);
+      core.setMedia(media);
+      const state = core.getState();
 
       expect(state.visible).toBe(false);
     });
@@ -39,7 +41,8 @@ describe('PosterCore', () => {
       const core = new PosterCore();
       const media = createMediaState();
 
-      const state = core.getState(media);
+      core.setMedia(media);
+      const state = core.getState();
 
       expect(state).toEqual({ visible: true });
 
@@ -51,23 +54,28 @@ describe('PosterCore', () => {
       const core = new PosterCore();
 
       // Started but paused - should not be visible
-      expect(core.getState(createMediaState({ started: true, paused: true })).visible).toBe(false);
+      core.setMedia(createMediaState({ started: true, paused: true }));
+      expect(core.getState().visible).toBe(false);
 
       // Started and playing - should not be visible
-      expect(core.getState(createMediaState({ started: true, paused: false })).visible).toBe(false);
+      core.setMedia(createMediaState({ started: true, paused: false }));
+      expect(core.getState().visible).toBe(false);
 
       // Not started and paused - should be visible
-      expect(core.getState(createMediaState({ started: false, paused: true })).visible).toBe(true);
+      core.setMedia(createMediaState({ started: false, paused: true }));
+      expect(core.getState().visible).toBe(true);
     });
 
     it('visibility is independent of ended state', () => {
       const core = new PosterCore();
 
       // Started and ended - should not be visible (started takes precedence)
-      expect(core.getState(createMediaState({ started: true, ended: true })).visible).toBe(false);
+      core.setMedia(createMediaState({ started: true, ended: true }));
+      expect(core.getState().visible).toBe(false);
 
       // Not started and ended (edge case) - should be visible
-      expect(core.getState(createMediaState({ started: false, ended: true })).visible).toBe(true);
+      core.setMedia(createMediaState({ started: false, ended: true }));
+      expect(core.getState().visible).toBe(true);
     });
   });
 });

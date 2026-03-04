@@ -22,6 +22,8 @@ export class VolumeSliderCore extends SliderCore {
     label: 'Volume',
   };
 
+  #media: MediaVolumeState | null = null;
+
   constructor(props?: VolumeSliderProps) {
     super();
     if (props) this.setProps(props);
@@ -31,7 +33,12 @@ export class VolumeSliderCore extends SliderCore {
     super.setProps(defaults(props, VolumeSliderCore.defaultProps));
   }
 
-  getState(media: MediaVolumeState): VolumeSliderState {
+  setMedia(media: MediaVolumeState): void {
+    this.#media = media;
+  }
+
+  getState(): VolumeSliderState {
+    const media = this.#media!;
     const { volume, muted } = media;
     const { dragging, dragPercent } = this.input;
     const volumePercent = volume * 100;

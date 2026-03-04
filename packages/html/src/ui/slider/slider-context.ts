@@ -1,10 +1,12 @@
-import type { SliderState } from '@videojs/core';
+import type { SliderState, StateAttrMap } from '@videojs/core';
 import type { SliderThumbProps } from '@videojs/core/dom';
 import { createContext } from '@videojs/element/context';
 
 export interface SliderContextValue {
   /** Base slider state — children use this for data attributes and value display. */
   state: SliderState;
+  /** Maps state keys to `data-*` attribute names for part elements. */
+  stateAttrMap: StateAttrMap<SliderState>;
   /** Domain value at the current pointer position (e.g., seconds for time, percent for volume). */
   pointerValue: number;
   /** ARIA attributes for the thumb element (role, tabindex, aria-value*, etc.). */

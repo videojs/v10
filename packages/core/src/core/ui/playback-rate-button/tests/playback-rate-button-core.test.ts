@@ -25,7 +25,8 @@ describe('PlaybackRateButtonCore', () => {
     it('projects playbackRate to rate', () => {
       const core = new PlaybackRateButtonCore();
       const media = createMediaState({ playbackRate: 1.5 });
-      const state = core.getState(media);
+      core.setMedia(media);
+      const state = core.getState();
 
       expect(state.rate).toBe(1.5);
     });

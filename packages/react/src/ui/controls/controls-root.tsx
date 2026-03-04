@@ -8,6 +8,7 @@ import { forwardRef, useState } from 'react';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
+import { ControlsContextProvider } from './controls-context';
 
 export interface ControlsRootProps extends UIComponentProps<'div', ControlsCore.State> {
   children?: ReactNode | undefined;
@@ -29,17 +30,22 @@ export const ControlsRoot = forwardRef(function ControlsRoot(
     return null;
   }
 
-  const state = core.getState(controls);
+  core.setMedia(controls);
+  const state = core.getState();
 
-  return renderElement(
-    'div',
-    { render, className, style },
-    {
-      state,
-      stateAttrMap: ControlsDataAttrs,
-      ref: [forwardedRef],
-      props: [{ children }, elementProps],
-    }
+  return (
+    <ControlsContextProvider value={{ state, stateAttrMap: ControlsDataAttrs }}>
+      {renderElement(
+        'div',
+        { render, className, style },
+        {
+          state,
+          stateAttrMap: ControlsDataAttrs,
+          ref: [forwardedRef],
+          props: [{ children }, elementProps],
+        }
+      )}
+    </ControlsContextProvider>
   );
 });
 

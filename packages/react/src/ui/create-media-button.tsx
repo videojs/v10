@@ -1,6 +1,6 @@
 'use client';
 
-import type { InferMediaState, StateAttrMap, UICore } from '@videojs/core';
+import type { InferMediaState, MediaUIComponent, StateAttrMap } from '@videojs/core';
 import { logMissingFeature } from '@videojs/core/dom';
 import type { Selector } from '@videojs/store';
 import type { ForwardedRef, ForwardRefExoticComponent, RefAttributes } from 'react';
@@ -10,7 +10,7 @@ import { usePlayer } from '../player/context';
 import { renderElement } from '../utils/use-render';
 import { useButton } from './hooks/use-button';
 
-interface MediaButtonConfig<Core extends UICore> {
+interface MediaButtonConfig<Core extends MediaUIComponent> {
   displayName: string;
   core: { new (): Core; defaultProps: Record<string, unknown> };
   stateAttrMap: StateAttrMap<object>;
@@ -23,7 +23,7 @@ interface MediaButtonConfig<Core extends UICore> {
  * while `Core` is inferred from the config.
  */
 export function createMediaButton<ComponentProps extends object>() {
-  return <Core extends Required<UICore>>(
+  return <Core extends Required<MediaUIComponent>>(
     config: MediaButtonConfig<Core>
   ): ForwardRefExoticComponent<ComponentProps & RefAttributes<HTMLButtonElement>> => {
     const { displayName, core: CoreClass, stateAttrMap, selector, action } = config;
@@ -64,7 +64,8 @@ export function createMediaButton<ComponentProps extends object>() {
         return null;
       }
 
-      const state = core.getState(feature) as object & Record<string, unknown>;
+      core.setMedia(feature as never);
+      const state = core.getState() as object & Record<string, unknown>;
 
       return renderElement('button', { render, className, style } as Parameters<typeof renderElement>[1], {
         state,

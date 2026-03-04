@@ -1,4 +1,4 @@
-import { SliderDataAttrs, VolumeSliderCore } from '@videojs/core';
+import { SliderDataAttrs, type StateAttrMap, VolumeSliderCore } from '@videojs/core';
 import {
   applyStateDataAttrs,
   createSlider,
@@ -107,7 +107,8 @@ export class VolumeSliderElement extends MediaElement {
     if (!media) return;
 
     this.#core.setInput(this.#slider.input.current);
-    const state = this.#core.getState(media);
+    this.#core.setMedia(media);
+    const state = this.#core.getState();
     const cssVars = getSliderCSSVars(state);
 
     applyStyles(this, cssVars);
@@ -118,6 +119,7 @@ export class VolumeSliderElement extends MediaElement {
     // Provide context to child elements.
     this.#provider.setValue({
       state,
+      stateAttrMap: SliderDataAttrs as StateAttrMap<object>,
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
       thumbAttrs: this.#core.getAttrs(state),
       thumbProps: this.#slider.thumbProps,

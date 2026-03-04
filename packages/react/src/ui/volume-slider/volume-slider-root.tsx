@@ -52,10 +52,8 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     const { state, cssVars, rootRef, thumbRef, rootProps, thumbProps } = useSlider<VolumeSliderCore.State>({
       computeState: (input) => {
         core.setInput(input);
-        if (!volume) {
-          return core.getState(noopVolume);
-        }
-        return core.getState(volume);
+        core.setMedia(volume ?? noopVolume);
+        return core.getState();
       },
       getPercent: () => (volume ? volume.volume * 100 : 0),
       getStepPercent: () => core.getStepPercent(),

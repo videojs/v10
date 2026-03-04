@@ -22,6 +22,7 @@ export class PlaybackRateButtonCore {
   };
 
   #props = { ...PlaybackRateButtonCore.defaultProps };
+  #media: MediaPlaybackRateState | null = null;
 
   constructor(props?: PlaybackRateButtonProps) {
     if (props) this.setProps(props);
@@ -51,7 +52,12 @@ export class PlaybackRateButtonCore {
     };
   }
 
-  getState(media: MediaPlaybackRateState): PlaybackRateButtonState {
+  setMedia(media: MediaPlaybackRateState): void {
+    this.#media = media;
+  }
+
+  getState(): PlaybackRateButtonState {
+    const media = this.#media!;
     return {
       rate: media.playbackRate,
     };
