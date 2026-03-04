@@ -51,7 +51,7 @@ function getSkinTag(useCase: UseCase, skin: Skin): string {
 function getRendererElement(renderer: Renderer, url: string): string {
   const tag = getRendererTag(renderer);
   const src = url.trim() || '...';
-  return `<${tag} src="${src}"></${tag}>`;
+  return `<${tag} slot="media" src="${src}"></${tag}>`;
 }
 
 function generateHTMLCode(useCase: UseCase, skin: Skin, renderer: Renderer, url: string): string {
