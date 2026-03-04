@@ -770,7 +770,7 @@ All generic parts consume `SliderContext` for data attributes. Each is a thin `f
 - **Feature guard:** `if (!volume) { if (__DEV__) logMissingFeature('VolumeSlider', 'volume'); return null; }`
 - Lazy-inits `VolumeSliderCore`, calls `setProps`.
 - Calls `useSlider` with `computeState = (interaction) => core.getVolumeState(interaction, mediaState)`.
-- `onValueChange`: calls `mediaState.changeVolume(core.valueFromPercent(percent) / 100)` immediately. Volume changes are cheap and instant — no throttle.
+- `onValueChange`: calls `mediaState.setVolume(core.valueFromPercent(percent) / 100)` immediately. Volume changes are cheap and instant — no throttle.
 - `onValueCommit`: same as `onValueChange` (no separate commit behavior for volume).
 - Provides `SliderContext` with percentage formatting: `formatValue = (value) => Math.round(value) + '%'`.
 - Uses `SliderDataAttrs` for state-to-data-attr mapping.
@@ -887,7 +887,7 @@ Update `packages/sandbox/src/react/main.tsx` (or create a new route) with a work
 
 - Renders with mocked player store.
 - Fill is 0 when muted.
-- `changeVolume` called on value change.
+- `setVolume` called on value change.
 - `aria-valuetext` includes muted state.
 
 ### 3.9 Verify
@@ -1250,7 +1250,7 @@ export class VolumeSliderElement extends MediaElement {
     super.connectedCallback();
     // 1. Create AbortController
     // 2. Create slider via createSlider({ getElement: () => this, ... })
-    // 3. onValueChange: volumeState.changeVolume(percent / 100)
+    // 3. onValueChange: volumeState.setVolume(percent / 100)
     // 4. Apply rootProps via applyElementProps(this, rootProps, signal)
     // 5. Subscribe: slider.interaction.subscribe(() => this.requestUpdate(), { signal })
     // 6. Provide sliderContext via ContextProvider

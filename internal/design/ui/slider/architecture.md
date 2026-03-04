@@ -536,7 +536,7 @@ The `SliderCSSVars` constant stays in `@videojs/core` (alongside `SliderDataAttr
 | --- | --- | --- |
 | `dragging`, `pointing`, `focused`, `pointerPercent`, `dragPercent` | `interaction: State<SliderInteraction>` | Managed internally. UI subscribes and reads `.current`. |
 | `onValueChange(percent)` | React: `props.onValueChange(value)` / HTML: `CustomEvent('value-change')` | Generic root exposes. Domain roots handle internally. |
-| `onValueCommit(percent)` | React: `props.onValueCommit(value)` / HTML: `CustomEvent('value-commit')` | Generic root exposes. Domain roots handle internally (`time.seek()`, `volume.changeVolume()`). |
+| `onValueCommit(percent)` | React: `props.onValueCommit(value)` / HTML: `CustomEvent('value-commit')` | Generic root exposes. Domain roots handle internally (`time.seek()`, `volume.setVolume()`). |
 | Drag start/end | React: `props.onDragStart()` / HTML: `CustomEvent('drag-start')` | All roots expose. Controls feature uses to pause auto-hide. |
 
 ### User-Facing Surface by Component

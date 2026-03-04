@@ -99,7 +99,7 @@ const volumeSlice = defineSlice<HTMLMediaElement>()({
 
 // Infer types from the slice
 type VolumeState = InferSliceState<typeof volumeSlice>;
-// { volume: number; muted: boolean; changeVolume: ...; toggleMuted: ... }
+// { volume: number; muted: boolean; setVolume: ...; toggleMuted: ... }
 ```
 
 ### Combining Slices
@@ -138,7 +138,7 @@ state: ({ target }) => ({
   volume: 1,
 
   // Action
-  changeVolume(volume: number) {
+  setVolume(volume: number) {
     const media = target();
     media.volume = volume;
     return media.volume;

@@ -129,6 +129,6 @@ export class VolumeSliderElement extends MediaElement {
 
   #setVolume(percent: number): void {
     const media = this.#volumeState.value;
-    media?.changeVolume(this.#core.valueFromPercent(percent) / 100);
+    media?.setVolume(this.#core.valueFromPercent(percent) / 100);
   }
 }

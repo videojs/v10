@@ -62,7 +62,7 @@ export interface MediaVolumeState {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/volume
    */
-  changeVolume(volume: number): number;
+  setVolume(volume: number): number;
   /**
    * Toggle mute state. Returns the new muted value.
    *
