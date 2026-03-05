@@ -196,11 +196,11 @@ function generateComparisonReport(current, base) {
     lines.push(`## ${pkgIcon} @videojs/${pkg}`);
     lines.push('');
 
-    // Only show entries whose size actually changed (must exist in both)
+    // Only show entries with a meaningful size change (>300 B, must exist in both)
     const changed = entries.filter((e) => {
       const prev = baseMap[e.name];
       if (prev === undefined) return false;
-      return e.size !== prev;
+      return Math.abs(e.size - prev) > 300;
     });
 
     if (changed.length === 0) {
