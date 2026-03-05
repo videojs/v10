@@ -15,8 +15,8 @@ const noopVolume = {
   volume: 0,
   muted: false,
   volumeAvailability: 'unsupported' as const,
-  changeVolume: () => 0,
-  toggleMute: () => false,
+  setVolume: () => 0,
+  toggleMuted: () => false,
 };
 
 export interface VolumeSliderRootProps extends UIComponentProps<'div', VolumeSliderCore.State>, VolumeSliderCore.Props {
@@ -64,10 +64,10 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
         core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
       getCSSVars: getSliderCSSVars,
       onValueChange: (percent) => {
-        volumeRef.current?.changeVolume(percent / 100);
+        volumeRef.current?.setVolume(percent / 100);
       },
       onValueCommit: (percent) => {
-        volumeRef.current?.changeVolume(percent / 100);
+        volumeRef.current?.setVolume(percent / 100);
       },
       onDragStart,
       onDragEnd,

@@ -14,7 +14,7 @@ const CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html@next/dist/default/d
 
 function generateCdnCode(useCase: UseCase, skin: Skin): string {
   if (useCase === 'background-video') {
-    return `<script>
+    return `<script type="module">
   import '${CDN_BASE}/background/player.js';
   import '${CDN_BASE}/background/skin.js';
 </script>
@@ -23,7 +23,7 @@ function generateCdnCode(useCase: UseCase, skin: Skin): string {
 
   const { group, skinFile } = getSkinImportParts(skin);
 
-  return `<script>
+  return `<script type="module">
   import '${CDN_BASE}/${group}/player.js';
   import '${CDN_BASE}/${group}/${skinFile}.js';
 </script>

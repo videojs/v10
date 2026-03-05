@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createSliderState, createTimeSliderState } from '../../tests/test-helpers';
-import { getSliderCSSVars, getTimeSliderCSSVars } from '../slider-css-vars';
+import { getSliderCSSVars, getSliderPreviewStyle, getTimeSliderCSSVars } from '../slider-css-vars';
 
 describe('getSliderCSSVars', () => {
   it('returns fill and pointer CSS vars with 3-decimal precision', () => {
@@ -53,5 +53,38 @@ describe('getTimeSliderCSSVars', () => {
     const vars = getTimeSliderCSSVars(createTimeSliderState({ bufferPercent: 33.33333 }));
 
     expect(vars['--media-slider-buffer']).toBe('33.333%');
+  });
+});
+
+describe('getSliderPreviewStyle', () => {
+  it('returns structural positioning properties', () => {
+    const style = getSliderPreviewStyle(100, 'clamp');
+
+    expect(style.position).toBe('absolute');
+    expect(style.width).toBe('max-content');
+    expect(style.pointerEvents).toBe('none');
+  });
+
+  it('clamps left within slider bounds by default', () => {
+    const style = getSliderPreviewStyle(100, 'clamp');
+
+    expect(style.left).toContain('min(');
+    expect(style.left).toContain('max(');
+    expect(style.left).toContain('var(--media-slider-pointer)');
+    expect(style.left).toContain('50px');
+    expect(style.left).toContain('100px');
+  });
+
+  it('uses unclamped calc when overflow is visible', () => {
+    const style = getSliderPreviewStyle(100, 'visible');
+
+    expect(style.left).toBe('calc(var(--media-slider-pointer) - 50px)');
+    expect(style.left).not.toContain('min(');
+  });
+
+  it('handles zero width', () => {
+    const style = getSliderPreviewStyle(0, 'clamp');
+
+    expect(style.left).toContain('0px');
   });
 });

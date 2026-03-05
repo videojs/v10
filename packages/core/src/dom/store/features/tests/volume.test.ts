@@ -47,13 +47,13 @@ describe('volumeFeature', () => {
   });
 
   describe('actions', () => {
-    describe('changeVolume', () => {
+    describe('setVolume', () => {
       it('sets volume on target', async () => {
         const video = createMockVideo({});
         const store = createStore<PlayerTarget>()(volumeFeature);
         store.attach({ media: video, container: null });
 
-        const result = await store.changeVolume(0.7);
+        const result = await store.setVolume(0.7);
 
         expect(video.volume).toBe(0.7);
         expect(result).toBe(0.7);
@@ -64,7 +64,7 @@ describe('volumeFeature', () => {
         const store = createStore<PlayerTarget>()(volumeFeature);
         store.attach({ media: video, container: null });
 
-        await store.changeVolume(-0.5);
+        await store.setVolume(-0.5);
 
         expect(video.volume).toBe(0);
       });
@@ -74,19 +74,19 @@ describe('volumeFeature', () => {
         const store = createStore<PlayerTarget>()(volumeFeature);
         store.attach({ media: video, container: null });
 
-        await store.changeVolume(1.5);
+        await store.setVolume(1.5);
 
         expect(video.volume).toBe(1);
       });
     });
 
-    describe('toggleMute', () => {
+    describe('toggleMuted', () => {
       it('toggles mute from false to true', async () => {
         const video = createMockVideo({ muted: false });
         const store = createStore<PlayerTarget>()(volumeFeature);
         store.attach({ media: video, container: null });
 
-        const result = await store.toggleMute();
+        const result = await store.toggleMuted();
 
         expect(video.muted).toBe(true);
         expect(result).toBe(true);
@@ -97,7 +97,7 @@ describe('volumeFeature', () => {
         const store = createStore<PlayerTarget>()(volumeFeature);
         store.attach({ media: video, container: null });
 
-        const result = await store.toggleMute();
+        const result = await store.toggleMuted();
 
         expect(video.muted).toBe(false);
         expect(result).toBe(false);

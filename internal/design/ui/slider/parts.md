@@ -608,7 +608,7 @@ These attributes are provided by Root to the Thumb element via context:
 
 #### Behavior
 
-- `VolumeSlider.Root` calls `volume.changeVolume(value / 100)` from `onValueChange` — every pointermove and keyboard step triggers an immediate volume update. `onValueCommit` is not used; volume changes are cheap and instant, so there's no need for a separate commit step or throttling.
+- `VolumeSlider.Root` calls `volume.setVolume(value / 100)` from `onValueChange` — every pointermove and keyboard step triggers an immediate volume update. `onValueCommit` is not used; volume changes are cheap and instant, so there's no need for a separate commit step or throttling.
 - When muted, fill shows 0% but `aria-valuenow` shows the actual volume. `aria-valuetext` communicates both: `"75 percent, muted"`.
 
 #### Events (HTML)

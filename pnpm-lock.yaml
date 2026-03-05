@@ -220,12 +220,6 @@ importers:
       '@videojs/element':
         specifier: workspace:*
         version: link:../element
-      '@videojs/icons':
-        specifier: workspace:*
-        version: link:../icons
-      '@videojs/skins':
-        specifier: workspace:*
-        version: link:../skins
       '@videojs/store':
         specifier: workspace:*
         version: link:../store
@@ -236,6 +230,12 @@ importers:
       '@testing-library/dom':
         specifier: ^10.4.0
         version: 10.4.1
+      '@videojs/icons':
+        specifier: workspace:*
+        version: link:../icons
+      '@videojs/skins':
+        specifier: workspace:*
+        version: link:../skins
       happy-dom:
         specifier: ^18.0.1
         version: 18.0.1
@@ -285,9 +285,6 @@ importers:
       '@videojs/core':
         specifier: workspace:*
         version: link:../core
-      '@videojs/skins':
-        specifier: workspace:*
-        version: link:../skins
       '@videojs/store':
         specifier: workspace:*
         version: link:../store
@@ -304,6 +301,9 @@ importers:
       '@videojs/icons':
         specifier: workspace:*
         version: link:../icons
+      '@videojs/skins':
+        specifier: workspace:*
+        version: link:../skins
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0

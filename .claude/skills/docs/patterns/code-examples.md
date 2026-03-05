@@ -60,7 +60,7 @@ const store: Store<HTMLMediaElement, VolumeState> = createStore<HTMLMediaElement
 import type { InferSliceState } from '@videojs/store';
 
 type VolumeState = InferSliceState<typeof volumeSlice>;
-// { volume: number; muted: boolean; setVolume: ...; toggleMute: ... }
+// { volume: number; muted: boolean; setVolume: ...; toggleMuted: ... }
 ```
 
 ### Show Type Imports

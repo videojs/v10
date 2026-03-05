@@ -3,6 +3,8 @@ export {
   type BufferProps,
   Fill,
   type FillProps,
+  Preview,
+  type PreviewProps,
   Thumb,
   type ThumbProps,
   Track,

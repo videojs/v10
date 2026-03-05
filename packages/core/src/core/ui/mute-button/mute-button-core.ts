@@ -75,7 +75,7 @@ export class MuteButtonCore {
 
   toggle(media: MediaVolumeState): void {
     if (this.#props.disabled) return;
-    media.toggleMute();
+    media.toggleMuted();
   }
 }
 

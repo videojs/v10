@@ -26,8 +26,11 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
   const popupRef = useCallback(
     (el: HTMLDivElement | null) => {
       popover.setPopupElement(el);
+      if (el && supportsAnchorPositioning()) {
+        el.style.setProperty('position-anchor', `--${anchorName}`);
+      }
     },
-    [popover]
+    [popover, anchorName]
   );
 
   const composedRef = useComposedRefs(forwardedRef, popupRef, internalRef);
@@ -37,11 +40,12 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
   const posOpts = useMemo(() => ({ side: state.side, align: state.align }), [state.side, state.align]);
 
   // CSS Anchor Positioning — computed from state, no measurement needed.
-  // getAnchorPositionStyle returns camelCase keys, directly compatible
-  // with React's style prop.
+  // `position-anchor` is set imperatively in the ref callback above
+  // because React's style prop silently drops unrecognised CSS properties.
   const anchorStyle = useMemo(() => {
     if (!supportsAnchorPositioning()) return null;
-    return getAnchorPositionStyle(anchorName, posOpts) as CSSProperties;
+    const { positionAnchor: _, ...rest } = getAnchorPositionStyle(anchorName, posOpts);
+    return rest as CSSProperties;
   }, [anchorName, posOpts]);
 
   // Manual fallback — measure rects after layout, before paint.

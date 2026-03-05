@@ -978,7 +978,7 @@ const audioFeature = defineFeature<HTMLMediaElement>()(
     },
     
     // Action - sync
-    toggleMute() {
+    toggleMuted() {
       const t = target();
       t.muted = !t.muted;
     },
@@ -1019,7 +1019,7 @@ store.pause()        // Promise<void>
 // Actions - sync (no Promise)
 store.seek(30)       // void
 store.setVolume(0.5) // void
-store.toggleMute()   // void
+store.toggleMuted()   // void
 
 // Actions - state only
 store.getEffectiveVolume()  // number

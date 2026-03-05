@@ -1,5 +1,43 @@
 # Changelog
 
+## [10.0.0-alpha.7](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-alpha.6...@videojs/html@10.0.0-alpha.7) (2026-03-04)
+
+
+### Bug Fixes
+
+* **html,react:** move @videojs/skins to devDependencies ([#716](https://github.com/videojs/v10/issues/716)) ([55b49ef](https://github.com/videojs/v10/commit/55b49efd82281815abe1e26eb764dfe914bb8208))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-alpha.7
+    * @videojs/element bumped to 10.0.0-alpha.7
+    * @videojs/store bumped to 10.0.0-alpha.7
+    * @videojs/utils bumped to 10.0.0-alpha.7
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-alpha.7
+
+## [10.0.0-alpha.6](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-alpha.5...@videojs/html@10.0.0-alpha.6) (2026-03-04)
+
+
+### Bug Fixes
+
+* **html:** move @videojs/icons to devDependencies ([#712](https://github.com/videojs/v10/issues/712)) ([391cf5e](https://github.com/videojs/v10/commit/391cf5e42b93e46386169a010b250704e4d23117))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-alpha.6
+    * @videojs/element bumped to 10.0.0-alpha.6
+    * @videojs/store bumped to 10.0.0-alpha.6
+    * @videojs/utils bumped to 10.0.0-alpha.6
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-alpha.6
+
 ## [10.0.0-alpha.5](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-alpha.4...@videojs/html@10.0.0-alpha.5) (2026-03-04)
 
 

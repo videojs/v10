@@ -33,7 +33,7 @@ class PlayerActions extends MediaElement {
 
     bind(playBtn, () => this.#player.value?.play());
     bind(pauseBtn, () => this.#player.value?.pause());
-    bind(volumeBtn, () => this.#player.value?.changeVolume(0.5));
+    bind(volumeBtn, () => this.#player.value?.setVolume(0.5));
   }
 
   override disconnectedCallback(): void {

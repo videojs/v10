@@ -62,13 +62,13 @@ export interface MediaVolumeState {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/volume
    */
-  changeVolume(volume: number): number;
+  setVolume(volume: number): number;
   /**
    * Toggle mute state. Returns the new muted value.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/muted
    */
-  toggleMute(): boolean;
+  toggleMuted(): boolean;
 }
 
 export interface MediaTimeState {
@@ -224,11 +224,11 @@ export interface MediaPictureInPictureState {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/requestPictureInPicture
    */
-  requestPiP(): Promise<void>;
+  requestPictureInPicture(): Promise<void>;
   /**
    * Exit picture-in-picture mode.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/exitPictureInPicture
    */
-  exitPiP(): Promise<void>;
+  exitPictureInPicture(): Promise<void>;
 }

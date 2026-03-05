@@ -10,13 +10,13 @@ export const volumeFeature = definePlayerFeature({
     muted: false,
     volumeAvailability: 'unavailable',
 
-    changeVolume(volume: number) {
+    setVolume(volume: number) {
       const { media } = target();
       media.volume = Math.max(0, Math.min(1, volume));
       return media.volume;
     },
 
-    toggleMute() {
+    toggleMuted() {
       const { media } = target();
       media.muted = !media.muted;
       return media.muted;

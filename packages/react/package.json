@@ -1,7 +1,7 @@
 {
   "name": "@videojs/react",
   "type": "module",
-  "version": "10.0.0-alpha.5",
+  "version": "10.0.0-alpha.7",
   "description": "React library for building media players",
   "license": "Apache-2.0",
   "repository": {
@@ -47,13 +47,13 @@
   },
   "dependencies": {
     "@videojs/core": "workspace:*",
-    "@videojs/skins": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
     "@videojs/icons": "workspace:*",
+    "@videojs/skins": "workspace:*",
     "@types/react": "^19.2.7",
     "jsdom": "^26.1.0",
     "react": "^19.2.1",
