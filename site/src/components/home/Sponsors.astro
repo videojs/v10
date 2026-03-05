@@ -1,0 +1,76 @@
+---
+import clsx from 'clsx';
+import type { ComponentType, SVGProps } from 'react';
+import MuxLogo from '../icons/mux-logo.svg?react';
+import BrightcoveLogo from '../icons/sponsors/brightcove.svg?react';
+import BrowserStackLogo from '../icons/sponsors/browserstack.svg?react';
+import FastlyLogo from '../icons/sponsors/fastly.svg?react';
+import NetlifyLogo from '../icons/sponsors/netlify.svg?react';
+
+type SponsorItem = {
+  Logo: ComponentType<SVGProps<SVGSVGElement>>;
+  label: string;
+  width: string;
+  className?: string;
+};
+
+const sponsors: SponsorItem[] = [
+  { Logo: FastlyLogo, label: 'CDN', width: '7.8rem' },
+  { Logo: BrightcoveLogo, label: 'Emeritus Sponsor', width: '11rem' },
+  { Logo: BrowserStackLogo, label: 'Device Testing', width: '12rem' },
+  { Logo: NetlifyLogo, label: 'Static Hosting', width: '11rem' },
+];
+---
+<section class="w-full max-w-305 mx-auto px-5 grid grid-rows-subgrid row-span-2">
+  <header class="py-4 border-t border-b-0 border-y-faded-black dark:border-y-light-manila">
+    <h2 class="text-h2 text-faded-black dark:text-light-manila text-center font-display-extended uppercase font-bold border-b-0">
+      Sponsors
+    </h2>
+  </header>
+  <div class="md:items-center border border-faded-black dark:border-light-manila p-2 grid grid-cols-1 md:grid-cols-2 text-light-manila dark:text-faded-black rounded-xs">
+    <div class="bg-faded-black dark:bg-warm-gray dark:text-light-manila flex items-center justify-center h-45 md:min-h-74 md:h-full">
+      <div class="relative w-40 md:w-48">
+        <MuxLogo width="100%" />
+      </div>
+    </div>
+    <div class="flex flex-col gap-2 p-2.5 md:px-15">
+      <h3 class="md:border-0 py-3 md:py-0 text-center md:text-left border-b border-dark-manila dark:border-warm-gray mb-2.5 md:mb-0 text-h5 text-orange font-display-extended uppercase font-bold">
+        Corporate Shepherd
+      </h3>
+      <p class="text-p2 text-warm-gray dark:text-light-manila">
+        The role of Corporate Shepherd is held by the company that has been elected by the Video.js Technical
+        Steering Committee (TSC) to be a steward of the project and make significant investment into the development
+        of Video.js. The role is currently held by Mux, taking over for Brigthcove in 2025. Mux is a leader in
+        streaming video technology and was founded by Steve Heffernan, the creator of Video.js.
+      </p>
+    </div>
+  </div>
+  <div class="md:border md:border-faded-black dark:border-light-manila rounded-xs mt-5 z-0 relative h-max overflow-hidden">
+    <div class="md:border gap-4 md:grid-separator-container md:gap-0 md:border-light-manila dark:border-faded-black grid dark:text-light-manila md:grid-cols-4">
+      {sponsors.map(({ Logo, label, width, className }) => (
+        <div
+          class={clsx(
+            'px-2.5 md:px-0 rounded-xs border md:border-0 border-faded-black dark:border-light-manila md:border-dark-manila md:dark:border-light-manila h-auto',
+            className
+          )}
+        >
+          <div class="md:grid-separators md:h-37.5 relative h-32.5 flex items-center justify-center bg-light-manila dark:bg-faded-black">
+          <div class="max-w-full mx-2.5" style={{ width }}>
+              <Logo width="100%"/>
+          </div>
+          </div>
+          <h3 class="block md:hidden relative border-t border-dark-manila text-orange font-display-extended font-bold uppercase text-h5 text-center py-5">
+            {label}
+          </h3>
+        </div>
+      ))}
+      {sponsors.map(({ label }) => (
+        <div class="border-dark-manila hidden md:block">
+          <h3 class="md:grid-separators grid grid-cols-1 items-center relative bg-light-manila dark:bg-faded-black text-orange font-display-extended font-bold uppercase text-h5 text-center px-2.5 py-5 h-full">
+            {label}
+          </h3>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

@@ -28,45 +28,37 @@ const currentPath = Astro.url.pathname;
 const isDocsActive = currentPath.startsWith('/docs');
 const otherNavLinks = navLinks.filter((link) => link.href !== '/docs');
 const { class: className, dark = false } = Astro.props;
-const navLinkBase =
-  'hover:bg-dark-manila dark:hover:bg-warm-gray transition-colors flex items-center px-5 py-2 rounded-sm font-display-extended uppercase font-bold';
 ---
 
 <nav
   class:list={[
     'flex justify-between',
-    'w-full max-w-295 mx-auto px-5 py-7 md:pt-00 md:px-5 items-center',
+    'w-full max-w-305 mx-auto py-7 md:py-10 px-5 items-center',
     className,
   ]}
-  style='min-height: 120px;'
 >
-  <a href="/" class="flex items-center" aria-label="Video.js v10 home">
-    <div class="block md:hidden">
-      <Logo width="10rem" />
-    </div>
-    <div class="hidden md:block">
-      <Logo width="14rem" />
-    </div>
+  <a href="/" class="flex items-center w-40 lg:w-56" aria-label="Video.js v10 home">
+    <Logo width="100%" />
   </a>
   {/* Desktop nav links */}
   <div class="hidden md:flex">
     <GetStartedLink
       client:idle
-      className={clsx(navLinkBase)}
+      className={clsx('hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center px-5 py-2 rounded-xs font-display-extended uppercase font-bold')}
       aria-current={isDocsActive ? 'page' : undefined}
     >
       Docs
     </GetStartedLink>
     {
       otherNavLinks.map((link) => (
-        <a href={link.href} class:list={[navLinkBase]}>
+        <a href={link.href} class:list={['hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center px-5 py-2 rounded-xs font-display-extended uppercase font-bold']}>
           {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
         </a>
       ))
     }
     <a
       href={DISCORD_INVITE_URL}
-      class={clsx(navLinkBase, '!px-3')}
+      class={clsx('hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center px-3 py-2 rounded-xs font-display-extended uppercase font-bold')}
       aria-label="Discord"
       target="_blank"
       rel="noopener noreferrer"
@@ -75,7 +67,7 @@ const navLinkBase =
     </a>
     <a
       href={GITHUB_REPO_URL}
-      class={clsx(navLinkBase, '!px-3')}
+      class={clsx('hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center px-3 py-2 rounded-xs font-display-extended uppercase font-bold')}
       aria-label="GitHub"
       target="_blank"
       rel="noopener noreferrer"

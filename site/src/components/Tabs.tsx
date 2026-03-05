@@ -109,7 +109,7 @@ export function TabsList({ label, children, variant = 'homepage' }: TabsListProp
           target: '[role="tabpanel"]:not([hidden])',
         }}
         className={clsx(
-          'ml-auto sticky right-0 h-6.5 w-6.5 flex items-center justify-center cursor-pointer disabled:cursor-wait hover:bg-dark-manila transition-colors rounded-sm',
+          'ml-auto sticky right-0 h-6.5 w-6.5 flex items-center justify-center cursor-pointer disabled:cursor-wait hover:bg-dark-manila rounded-sm',
           variant === 'docs' && 'mx-3',
           variant === 'homepage' && 'mx-3 my-2'
         )}

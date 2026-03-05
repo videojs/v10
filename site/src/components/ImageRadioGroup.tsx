@@ -58,13 +58,13 @@ export default function ImageRadioGroup<T extends string = string>({
                   ? 'bg-dark-manila'
                   : !isDisabled &&
                       'bg-light-80 dark:bg-dark-100 group-intent:bg-light-60/50 dark:group-intent:bg-50-manila',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow/50'
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bright-yellow/50'
               )}
             >
               <Radio.Indicator className="sr-only" />
               <div className="flex items-center justify-center w-full h-full">{option.image}</div>
             </div>
-            <span className={clsx('text-sm', isSelected && 'font-medium')}>{option.label}</span>
+            <span className={clsx('text-p3', isSelected && 'font-medium')}>{option.label}</span>
           </Radio.Root>
         );
       })}

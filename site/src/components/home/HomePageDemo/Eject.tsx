@@ -2,7 +2,7 @@ import { useStore } from '@nanostores/react';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import type { Skin } from '@/stores/homePageDemos';
 import { framework, skin } from '@/stores/homePageDemos';
-import ClientCode from '../Code/ClientCode';
+import ClientCode from '../../Code/ClientCode';
 
 function generateReactCode(skin: Skin): string {
   return `react`;

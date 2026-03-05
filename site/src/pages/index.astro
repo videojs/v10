@@ -1,16 +1,17 @@
 ---
 
-import { Built } from '@/components/Built/BuiltSection';
 import Footer from '@/components/Footer.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
-import GetStartedBanner from '@/components/GetStartedBanner';
-import HomePageDemo from '@/components/HomePageDemo';
+import Built from '@/components/home/Built/BuiltSection.astro';
+import FrameworkControl from '@/components/home/FrameworkControl';
+import GetStartedBanner from '@/components/home/GetStartedBanner.astro';
 import HeroVideo from '@/components/home/HeroVideo';
-import HomePageControls from '@/components/home/HomePageControls';
+import HomePageDemo from '@/components/home/HomePageDemo/HomePageDemo.astro';
+import RoadMap from '@/components/home/Roadmap.astro';
+import SkinControl from '@/components/home/SkinControl';
+import Sponsors from '@/components/home/Sponsors.astro';
 import MuxLogoSmall from '@/components/icons/mux-logo-small.svg?react';
 import NavBar from '@/components/NavBar/NavBar.astro';
-import { RoadMap } from '@/components/Roadmap';
-import { Sponsors } from '@/components/Sponsors';
 import { SITE_DESCRIPTION, SITE_TITLE, VJS8_DEMO_VIDEO } from '@/consts';
 import Base from '@/layouts/Base.astro';
 
@@ -27,63 +28,48 @@ const poster = `${VJS8_DEMO_VIDEO.poster}?time=0`;
     slot="priority-head"
   />
   <NavBar />
-  <header class="relative flex flex-col">
-    <div class="w-full max-w-295 mx-auto px-5 md:px-6">
-      <div class="vjs relative z-10 w-full grid grid-cols-1 grid-rows-1">
-        <div class="block md:hidden">
-          <h1
-            class="text-faded-black dark:text-light-manila text-display-h2 pt-20 leading-8 w-full font-display-extended uppercase font-bold justify-self-center self-center text-center"
-          >
-            The Open Source Player<br />
-            <span class="text-stroke-faded-black dark:text-stroke-white">for the Web</span>
-          </h1>
-          <p
-            class="w-full text-p2 font-normal text-warm-gray dark:text-light-manila max-w-3xl mx-auto pt-5 pb-20 md:px-5 text-center"
-          >
-            For over 15 years, Video.js has been the world’s web video player.
-            Now rebuilt in v10 for modern development and performance.
-          </p>
-        </div>
-
-        <HeroVideo
-          client:load
-          className="aspect-video rounded-3xl bg-dark-80 dark:bg-dark-40 shadow-2xl"
-          poster={poster}
-        />
-        <h1
-          class="hidden md:block text-white absolute text-display-h1 leading-14 w-full font-display-extended uppercase font-bold justify-self-center self-center text-center"
-        >
-          The Open Source<br />
-        Player  <span class="text-stroke-white">for the Web</span>
-        </h1>
-      </div>
-      <p
-        class="flex justify-center md:justify-end items-center gap-2 py-3 px-6.5 font-display-extended uppercase font-light ml-auto text-display-h5"
-      >
-        VIDEO HOSTING BY
-        <MuxLogoSmall className="inline" width="3.25rem" />
-      </p>
-    </div>
-    <p
-      class="hidden md:block w-full text-p1 font-normal text-warm-gary max-w-3xl mx-auto py-20 md:px-5 text-center"
+  <header class="relative grid grid-cols-1 [grid-template-areas:var(--grid-template-areas)] md:[grid-template-areas:var(--md-grid-template-areas)] w-full max-w-305 mx-auto px-5 pt-19 pb-11 md:py-0"
+    style="--grid-template-areas: 'title' 'description' 'video' 'mux'; --md-grid-template-areas: 'video' 'mux' 'description'"
+  >
+    <h1
+    class="text-h2 lg:text-h1 z-10 w-full font-display-extended uppercase justify-self-center self-center md:text-light-manila text-center text-balance mb-5 md:mb-0 md:px-5 [grid-area:var(--grid-area)] md:[grid-area:var(--md-grid-area)]"
+    style="--grid-area: title; --md-grid-area: video;"
     >
-      For over 15 years, Video.js has been the world’s web video player. Now
-      rebuilt in v10 for modern development and performance.
+        The Open Source Player <br class="lg:hidden"/><span class="text-stroke-faded-black md:text-stroke-light-manila">for the Web</span>
+    </h1>
+    {/* the additional px-5 is intentional */}
+    <p
+    class="w-full text-p2 lg:text-p1 font-normal text-warm-gray dark:text-light-manila mx-auto text-center px-5 mb-20 md:mb-25 text-balance max-w-195"
+    style="grid-area:description"
+    >
+    For over 15 years, Video.js has been the world’s web video player.
+    Now rebuilt in v10 for modern development and performance.
+    </p>
+
+    <HeroVideo
+        client:load
+        className="aspect-2/1 mb-3 md:aspect-1180/570 md:mb-4"
+        style={{ gridArea: 'video' }}
+        poster={poster}
+    />
+    <p
+    class="flex items-center justify-center md:justify-end md:pr-6 md:font-display-extended md:uppercase gap-2.5 md:mb-20 md:text-(length:--md-text)"
+    style="grid-area:mux;--md-text:0.75rem;"
+    >
+     Video hosting by <MuxLogoSmall className="inline" width="3.25rem" />
     </p>
   </header>
-  <main class="w-full">
-    <div class="w-full max-w-295 mx-auto px-6 md:px-5">
-      <HomePageControls
-        client:idle
-        className="col-span-full my-10 sm:my-12 lg:mb-15"
-      />
-      <HomePageDemo client:idle className="" />
-      <GetStartedBanner />
-    </div>
+  <main>
+      <section class="grid grid-cols-1 md:grid-cols-2 items-center justify-center gap-9 mb-25 w-full max-w-305 mx-auto px-5">
+          <SkinControl client:idle />
+          <FrameworkControl client:idle className="hidden md:grid" />
+      </section>
+        <HomePageDemo />
+        <GetStartedBanner />
      <Built />
      <RoadMap />
-    <Sponsors /> 
+    <Sponsors />
   </main>
  <Footer />
-  <FooterEasterEgg /> 
+  <FooterEasterEgg />
 </Base>

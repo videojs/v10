@@ -46,7 +46,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
         <button
           type="button"
           onClick={onLogin}
-          className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-yellow text-dark-100 rounded-lg text-sm font-medium intent:bg-yellow/70 transition-colors"
+          className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-bright-yellow text-dark-100 rounded-lg text-sm font-medium intent:bg-bright-yellow/70"
         >
           Sign up or log in
         </button>
@@ -57,7 +57,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
   if (state === 'preparing') {
     return (
       <OverlayWrapper>
-        <div className="w-6 h-6 border-2 border-yellow border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-bright-yellow border-t-transparent rounded-full animate-spin" />
         <p className="text-sm">Preparing video...</p>
       </OverlayWrapper>
     );

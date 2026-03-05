@@ -68,7 +68,7 @@ function getGroupRotate(depth: number) {
         style={depth ? `margin-left: calc(var(--spacing) * ${(depth - 1) * 4})` : ``}
       >
         <span class="flex-1">{item.sidebarLabel}</span>
-        <DropdownIcon width={"0.65rem"} className={`transition-all ease-in ${getGroupRotate(depth)}`} />
+        <DropdownIcon width={"0.65rem"} className={getGroupRotate(depth)} />
       </summary>
       <div>
         {item.contents.map((contentItem) => (

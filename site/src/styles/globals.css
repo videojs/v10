@@ -22,40 +22,77 @@
   font-display: swap;
 }
 
-@keyframes moveLines {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(6px);
-  }
+@font-face {
+  font-family: "Eurostile LT Pro Extended";
+  src:
+    url("https://static.mux.com/fonts/EurostileLTProExtended2/font.woff2") format("woff2"),
+    url("https://static.mux.com/fonts/EurostileLTProExtended2/font.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  /* the metrics of this font are wack, so, let's block instead of swap. TODO precompute metrics */
+  font-display: block;
+}
+@font-face {
+  font-family: "Eurostile LT Pro Extended";
+  src:
+    url("https://static.mux.com/fonts/EurostileLTProBoldExtended2/font.woff2") format("woff2"),
+    url("https://static.mux.com/fonts/EurostileLTProBoldExtended2/font.woff") format("woff");
+  font-weight: bold;
+  font-style: normal;
+  /* the metrics of this font are wack, so, let's block instead of swap. TODO precompute metrics */
+  font-display: block;
 }
 
-@keyframes grow-bar {
-  from {
-    width: 0%;
-  }
-  to {
-    width: 100%;
-  }
+/* before we begin with tailwind, let's go over some global rules */
+/* nested lists should have lower-alpha style */
+.list-decimal .list-decimal {
+  list-style-type: lower-alpha;
 }
 
-@keyframes horizontal-grow-bar {
-  from {
-    height: 0%;
-  }
-  to {
-    height: 100%;
-  }
+/* slightly thinner decorations */
+* {
+  text-decoration-thickness: max(0.05em, 0.05rem);
 }
 
-@keyframes grow-bg {
-  from {
-    height: 0;
+/* global text decoration offset */
+.font-sans {
+  text-underline-offset: 0.25em;
+}
+.font-mono {
+  text-underline-offset: 0.125em;
+}
+
+/* no ligatures in code... */
+.font-mono {
+  font-variant-ligatures: none;
+}
+
+/* stuff should leave room for the nav when scroll margining */
+[id] {
+  scroll-margin-top: calc(var(--nav-h) + var(--spacing) * 5 + var(--scroll-mt, 0px));
+}
+
+/* basic HTML elements */
+b,
+strong {
+  font-weight: var(--font-weight-semibold);
+}
+mark {
+  background-color: var(--color-bright-yellow);
+  color: var(--color-dark-100);
+}
+
+/* Ok, now let's do some tailwind stuff */
+@custom-variant intent (&:hover,
+&:focus-within);
+@custom-variant supports-container {
+  @supports (container: size) {
+    @slot;
   }
-  to {
-    height: 100%;
-  }
+}
+@custom-variant dark (&:where(.dark, .dark *));
+.dark * {
+  color-scheme: dark;
 }
 
 @layer utilities {
@@ -99,6 +136,24 @@
   .horizontal-bars-orange {
     background-image: url("/horizontal-bar-orange.svg");
   }
+
+  @keyframes grow-bar {
+    from {
+      width: 0%;
+    }
+    to {
+      width: 100%;
+    }
+  }
+
+  @keyframes horizontal-grow-bar {
+    from {
+      height: 0%;
+    }
+    to {
+      height: 100%;
+    }
+  }
 }
 
 @utility built-bg-gray {
@@ -122,11 +177,25 @@
 @utility text-stroke-faded-black {
   color: transparent;
   -webkit-text-stroke: 1.5px var(--color-faded-black);
+  -webkit-text-stroke: clamp(1px, 0.035em, 1.5px) var(--color-faded-black);
 }
 
-@utility text-stroke-white {
+.text-stroke-faded-black::selection {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--color-faded-black);
+  -webkit-text-stroke: clamp(1px, 0.035em, 1.5px) var(--color-faded-black);
+}
+
+@utility text-stroke-light-manila {
   color: transparent;
   -webkit-text-stroke: 1.5px var(--color-light-manila);
+  -webkit-text-stroke: clamp(1px, 0.035em, 1.5px) var(--color-light-manila);
+}
+
+.text-stroke-light-manila::selection {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--color-faded-black);
+  -webkit-text-stroke: clamp(1px, 0.035em, 1.5px) var(--color-faded-black);
 }
 
 @utility grid-separator-container {
@@ -162,84 +231,13 @@
   }
 }
 
-@font-face {
-  font-family: "Eurostile LT Pro Extended";
-  src:
-    url("https://static.mux.com/fonts/EurostileLTProExtended2/font.woff2") format("woff2"),
-    url("https://static.mux.com/fonts/EurostileLTProExtended2/font.woff") format("woff");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Eurostile LT Pro Extended";
-  src:
-    url("https://static.mux.com/fonts/EurostileLTProBoldExtended2/font.woff2") format("woff2"),
-    url("https://static.mux.com/fonts/EurostileLTProBoldExtended2/font.woff") format("woff");
-  font-weight: bold;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* before we begin with tailwind, let's go over some global rules */
-/* nested lists should have lower-alpha style */
-.list-decimal .list-decimal {
-  list-style-type: lower-alpha;
-}
-
-/* slightly thinner decorations */
-* {
-  text-decoration-thickness: max(0.05em, 0.05rem);
-}
-
-/* global text decoration offset */
-.font-sans {
-  text-underline-offset: 0.25em;
-}
-.font-mono {
-  text-underline-offset: 0.125em;
-}
-
-/* no ligatures in code... */
-.font-mono {
-  font-variant-ligatures: none;
-}
-
-/* stuff should leave room for the nav when scroll margining */
-[id] {
-  scroll-margin-top: calc(var(--nav-h) + var(--spacing) * 5 + var(--scroll-mt, 0px));
-}
-
-/* basic HTML elements */
-b,
-strong {
-  font-weight: var(--font-weight-semibold);
-}
-mark {
-  background-color: var(--color-yellow);
-  color: var(--color-dark-100);
-}
-
-/* shiki dark mode — needed for components using dual themes (e.g. Shared.tsx) */
-.dark .shiki,
-.dark .shiki span {
-  /* biome-ignore lint/complexity/noImportantStyles: override shiki's inline styles */
-  color: var(--shiki-dark) !important;
-  /* biome-ignore lint/complexity/noImportantStyles: override shiki's inline styles */
-  background-color: var(--shiki-dark-bg) !important;
-}
-
-/* Ok, now let's do some tailwind stuff */
-@custom-variant intent (&:hover,
-&:focus-within);
-@custom-variant supports-container {
-  @supports (container: size) {
-    @slot;
+@keyframes grow-bg {
+  from {
+    height: 0;
   }
-}
-@custom-variant dark (&:where(.dark, .dark *));
-.dark * {
-  color-scheme: dark;
+  to {
+    height: 100%;
+  }
 }
 
 /* theme inline tells tailwind to reference the value of these properties */
@@ -277,7 +275,7 @@ mark {
   --color-50-manila: #dcd2bb;
   --color-75-manila: #ccc3ab;
 
-  --color-yellow: #ffca18;
+  --color-bright-yellow: #ffca18;
   --color-gold: #ffa81b;
   --color-orange: #ff6200;
   --color-red: #eb3132;
@@ -285,115 +283,60 @@ mark {
 
   /* Typography */
   --tracking-*: initial;
-  --tracking-tighter: -0.04em;
-  --tracking-tight: -0.02em;
+  --tracking-tightest: -0.03em;
+  --tracking-tighter: -0.02em;
+  --tracking-tight: -0.01em;
   --tracking-normal: 0;
-  --tracking-wide: 0.02em;
-  --tracking-wider: 0.04em;
-  --tracking-widest: 0.08em;
-
-  --font-weight-code-normal: 400;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
 
   --text-*: initial;
-  --text-h1: 4rem; /* 64px */
-  --text-h1--line-height: 1;
-  --text-h1--letter-spacing: -0.04em;
-  --text-h1--font-weight: var(--font-weight-semibold);
-  --text-h2: 3rem; /* 48px */
-  --text-h2--line-height: calc(56 / 48);
-  --text-h2--letter-spacing: -0.04em;
-  --text-h2--font-weight: var(--font-weight-semibold);
-  --text-h3: 2.5rem; /* 40px */
+
+  --text-h1: 3.75rem; /* 60px */
+  --text-h1--line-height: 1.1;
+  --text-h1--letter-spacing: var(--tracking-tightest);
+  --text-h1--font-weight: var(--font-weight-bold);
+
+  --text-h2: 1.75rem; /* 28px */
+  --text-h2--line-height: 1;
+  --text-h2--letter-spacing: var(--tracking-tighter);
+  --text-h2--font-weight: var(--font-weight-bold);
+
+  --text-h3: 1.125rem; /* 18px */
   --text-h3--line-height: 1;
-  --text-h3--letter-spacing: -0.04em;
-  --text-h3--font-weight: var(--font-weight-semibold);
-  --text-h4: 2rem; /* 32px */
-  --text-h4--line-height: calc(40 / 32);
-  --text-h4--letter-spacing: -0.02em;
-  --text-h4--font-weight: var(--font-weight-semibold);
-  --text-h5: 1.75rem; /* 28px */
-  --text-h5--line-height: calc(32 / 24);
-  --text-h5--letter-spacing: -0.02em;
-  --text-h5--font-weight: var(--font-weight-medium);
+  --text-h3--letter-spacing: var(--tracking-normal);
+  --text-h3--font-weight: var(--font-weight-bold);
 
-  --text-lg: 1.25rem; /* 20px */
-  --text-lg--line-height: calc(28 / 20);
-  --text-lg--letter-spacing: -0.02em;
-  --text-lg--font-weight: var(--font-weight-normal);
-  --text-md: 1.125rem; /* 18px */
-  --text-md--line-height: calc(26 / 18);
-  --text-md--letter-spacing: -0.02em;
-  --text-md--font-weight: var(--font-weight-normal);
-  --text-base: 1rem; /* 16px */
-  --text-base--line-height: calc(24 / 16);
-  --text-base--letter-spacing: -0.02em;
-  --text-base--font-weight: var(--font-weight-normal);
-  --text-sm: 0.875rem; /* 14px */
-  --text-sm--line-height: calc(20 / 14);
-  --text-sm--letter-spacing: -0.02em;
-  --text-sm--font-weight: var(--font-weight-normal);
+  --text-h4: 0.875rem; /* 14px */
+  --text-h4--line-height: 1;
+  --text-h4--letter-spacing: var(--tracking-normal);
+  --text-h4--font-weight: var(--font-weight-bold);
 
-  /* Homepage display typography — Eurostile LT Pro Extended (use with font-display-extended) */
-  --text-display-h1: 3.75rem; /* 60px */
-  --text-display-h1--line-height: 1.1;
-  --text-display-h1--letter-spacing: -0.03em;
-  --text-display-h1--font-weight: var(--font-weight-bold);
-  --text-display-h1-mobile: 2.375rem; /* 38px */
-  --text-display-h1-mobile--line-height: 1.1;
-  --text-display-h1-mobile--letter-spacing: -0.03em;
-  --text-display-h1-mobile--font-weight: var(--font-weight-bold);
-  --text-display-h2: 1.75rem; /* 28px */
-  --text-display-h2--line-height: 1;
-  --text-display-h2--letter-spacing: -0.02em;
-  --text-display-h2--font-weight: var(--font-weight-bold);
-  --text-display-h3: 1.125rem; /* 18px */
-  --text-display-h3--line-height: 1;
-  --text-display-h3--letter-spacing: 0;
-  --text-display-h3--font-weight: var(--font-weight-bold);
-  --text-display-h4: 4.125rem; /* 66px */
-  --text-display-h4--line-height: 1.15;
-  --text-display-h4--letter-spacing: 0.02em;
-  --text-display-h4--font-weight: var(--font-weight-bold);
-  --text-display-h5: 0.875rem; /* 14px */
-  --text-display-h5--line-height: 1;
-  --text-display-h5--letter-spacing: 0;
-  --text-display-h5--font-weight: var(--font-weight-normal);
+  --text-h5: 0.875rem; /* 14px */
+  --text-h5--line-height: 1;
+  --text-h5--letter-spacing: var(--tracking-normal);
+  --text-h5--font-weight: var(--font-weight-normal);
 
-  /* Homepage paragraph typography — Instrument Sans (P1–P3) / IBM Plex Mono (P4) */
   --text-p1: 1.375rem; /* 22px */
   --text-p1--line-height: 1.5;
-  --text-p1--letter-spacing: -0.01em;
+  --text-p1--letter-spacing: var(--tracking-tight);
   --text-p1--font-weight: var(--font-weight-normal);
+
   --text-p2: 1rem; /* 16px */
   --text-p2--line-height: 1.5;
-  --text-p2--letter-spacing: -0.01em;
+  --text-p2--letter-spacing: var(--tracking-normal);
   --text-p2--font-weight: var(--font-weight-normal);
+
   --text-p3: 0.875rem; /* 14px */
   --text-p3--line-height: 1.5;
-  --text-p3--letter-spacing: -0.01em;
+  --text-p3--letter-spacing: var(--tracking-normal);
   --text-p3--font-weight: var(--font-weight-normal);
-  --text-p4: 0.875rem; /* 14px */
-  --text-p4--line-height: 1.5;
-  --text-p4--letter-spacing: 0;
-  --text-p4--font-weight: var(--font-weight-normal);
 
-  /* Notice the use of em, so that code scales with, say, headers */
-  --text-code: clamp(0.875em, calc(0.8125em + 0.125rem), 0.9375em);
+  --text-code: 0.875em; /* 14px */
   --text-code--line-height: inherit;
-  --text-code--letter-spacing: -0.02em;
-  --text-code--font-weight: var(--font-weight-code-normal);
-  /* if you don't want this scaling, use text-base-code */
-  --text-base-code: 0.9375rem;
-  --text-base-code--line-height: calc(28 / 16);
-  --text-base-code--letter-spacing: -0.02em;
-  --text-base-code--font-weight: var(--font-weight-code-normal);
+  --text-code--letter-spacing: var(--tracking-normal);
+  --text-code--font-weight: var(--font-weight-normal);
 
   /* animations */
-  --animate-marquee: marquee 40s linear infinite;
+  --animate-marquee: marquee 30s linear infinite;
   @keyframes marquee {
     from {
       transform: translate3d(-50%, 0, 0);

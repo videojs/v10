@@ -8,13 +8,24 @@ import '@videojs/react/video/minimal-skin.css';
 
 const Player = createPlayer({ features: [...videoFeatures] });
 
-export default function HeroVideo({ className, poster }: { className?: string; poster: string }) {
+export default function HeroVideo({
+  className,
+  poster,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+  poster: string;
+}) {
   const $skin = useStore(skin);
   const SkinComponent = $skin === 'frosted' ? VideoSkin : MinimalVideoSkin;
 
   return (
     <Player.Provider>
-      <SkinComponent className={className}>
+      <SkinComponent
+        className={className}
+        style={{ '--media-border-radius': `calc(var(--spacing) * 6)`, ...style } as React.CSSProperties}
+      >
         <Video src={VJS8_DEMO_VIDEO.mp4} playsInline />
         <Poster src={poster} />
       </SkinComponent>

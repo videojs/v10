@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { useRef, useState } from 'react';
 import Dial from '@/components/icons/dial.svg?react';
 
@@ -52,7 +53,7 @@ export default function DialNav({ left, right }: DialNavProps) {
             key={link.href}
             href={link.href}
             onClick={(e) => handleClick(e, link)}
-            className={`${linkClass} justify-end pr-15 -mr-12 bg-50-manila dark:bg-black`}
+            className={clsx(linkClass, 'justify-end pr-15 -mr-12 bg-50-manila dark:bg-black')}
           >
             {link.label}
             <span
@@ -83,7 +84,7 @@ export default function DialNav({ left, right }: DialNavProps) {
             key={link.href}
             href={link.href}
             onClick={(e) => handleClick(e, link)}
-            className={`${linkClass} pl-15 -ml-12 bg-50-manila dark:bg-black`}
+            className={clsx(linkClass, 'pl-15 -ml-12 bg-50-manila dark:bg-black')}
           >
             <span
               className="w-2.5 h-2.5 rounded-full border border-faded-black dark:border-light-manila"

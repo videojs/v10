@@ -21,36 +21,32 @@ type Props = {
   class?: string;
 };
 const { class: className } = Astro.props;
-
-const navLinkBase =
-  'hover:bg-dark-manila dark:hover:bg-warm-gray transition-colors flex items-center px-2 md:px-5 py-2 rounded-sm font-display-extended uppercase font-bold';
 ---
 
 <footer
   class:list={[
-    'w-full max-w-295 mx-auto px-5 md:px-5 md:pt-0 pb-11 mt-30 md:mt-32 grid gap-3',
+    'w-full max-w-305 mx-auto px-5 md:pt-0 pb-11 mt-30 md:mt-32 grid gap-3',
     className,
   ]}
 >
-  <div
-    class="items-start md:items-start justify-between  md:flex-row gap-3 mb-2 sm:mb-0 md:border-t border-faded-black dark:border-light-manila pt-5"
+  <nav
+    class="items-start md:items-start justify-between md:flex-row gap-3 mb-2 sm:mb-0 md:border-t border-faded-black dark:border-light-manila pt-5"
   >
-    <div class="text-faded-black dark:text-light-manila justify-between md:flex flex-row gap-15 w-full md:w-auto">
-      <nav class="flex flex-col md:flex-row gap-0 md:-ml-5">
+    <nav class="text-faded-black dark:text-light-manila flex flex-col md:flex-row gap-0 md:-ml-5">
         <div class="flex md:justify-center justify-between border-b border-faded-black dark:border-light-manila md:border-0 pb-3 pt-3 md:pt-0 md:pb-0 border-t">
           {
             navLinks.map((link) => (
-              <a href={link.href} class={navLinkBase}>
+              <a href={link.href} class='hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center px-2 md:px-5 py-2 rounded-sm font-display-extended uppercase font-bold'>
                 {link.label}{' '}
                 {link.external ? <ArrowUpRight size="1em" /> : null}
               </a>
             ))
           }
         </div>
-        <div class="flex gap-4 justify-start md:justify-center pt-5 pb-8 md:gap-0 md:py-0 md:pb-0 ">
+        <div class="flex-1 flex gap-4 justify-start md:justify-center pt-5 pb-8 md:gap-0 md:py-0 md:pb-0 ">
           <a
             href={DISCORD_INVITE_URL}
-            class={navLinkBase}
+            class='hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center px-2 md:px-5 py-2 rounded-xs font-display-extended uppercase font-bold'
             aria-label="Discord"
             target="_blank"
             rel="noopener noreferrer"
@@ -59,35 +55,28 @@ const navLinkBase =
           </a>
           <a
             href={GITHUB_REPO_URL}
-            class={navLinkBase}
+            class='hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center px-2 md:px-5 py-2 rounded-xs font-display-extended uppercase font-bold'
             aria-label="GitHub"
             target="_blank"
             rel="noopener noreferrer"
           >
             <GitHub width="1.5em" height="1.5em" />
           </a>
-                       <div class="block md:hidden ml-auto">
-        <ThemeToggle client:visible />
-      </div>
-            
-          
+          <div class="ml-auto">
+              <ThemeToggle client:visible />
+          </div>
+
+
         </div>
 
-      </nav>
-      <div class="w-max-content hidden md:block ml-auto">
-       <ThemeToggle client:visible />
-    </div>
-    </div>
-    </div>
+    </nav>
 
-    <div class="flex justify-between text-end gap-15 md:mt-15 mt-10">
-   <div class="hidden md:block">
-      <LogoMonoVersion width="23rem" />
+    <div class="flex flex-col-reverse lg:flex-row justify-between text-end gap-15 md:mt-15 mt-10">
+   <div class="relative w-80 lg:w-92">
+      <LogoMonoVersion width="100%" />
     </div>
-      <p class="text-p2 text-left md:text-right text-faded-black dark:text-light-manila font-sans">
-        Video.js is a free and open source HTML5 <a href="/" class="underline"
-          >video player.</a
-        >
+      <p class="text-p2 text-left lg:text-right text-faded-black dark:text-light-manila font-sans">
+        Video.js is a free and open source HTML5 <a href="/" class="underline">video player.</a>
         <br />
         <a
           href="https://www.mux.com?utm_source=videojs&utm_campaign=vjs10"
@@ -101,9 +90,6 @@ const navLinkBase =
         <br />
         &copy; 2010&ndash;{new Date().getFullYear()} Video.js contributors
       </p>
-    </div>
-    <div class="block md:hidden md:pt-20 pt-30">
-      <LogoMonoVersion width="20rem" />
     </div>
   </div>
 </footer>

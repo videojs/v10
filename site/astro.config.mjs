@@ -87,8 +87,8 @@ export default defineConfig({
     syntaxHighlight: 'shiki',
     shikiConfig: {
       themes: {
-        light: 'gruvbox-light-hard',
-        dark: 'gruvbox-dark-medium',
+        light: 'gruvbox-dark-hard',
+        dark: 'gruvbox-dark-soft',
       },
       // TODO more shiki transformers
       transformers: [shikiTransformMetadata],

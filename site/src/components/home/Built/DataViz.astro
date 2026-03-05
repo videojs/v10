@@ -1,0 +1,55 @@
+---
+import clsx from 'clsx';
+
+const seconds = [0, 5, 10, 15, 20];
+---
+<div class="bg-faded-black border border-dark-manila p-5 md:p-10 lg:p-15 rounded-xs">
+  <header class="text-p2">
+    <h3 class="font-bold text-light-manila">Download speeds</h3>
+    <span class="text-dark-manila whitespace-nowrap">(based on slow 4G connection)</span>
+  </header>
+  <p class="inline-block mt-6 md:hidden text-h5 items-center py-0.5 px-8 rounded-full bg-faded-black border border-light-manila text-center text-light-manila font-display-extended uppercase font-bold">
+    VJS 8
+  </p>
+  <div class="mb-2 mt-4 md:mt-5 md:mb-2.5 w-full data-bar" />
+  <div class="flex items-center gap-2.5">
+    <p class="hidden md:flex min-w-30 text-h5 items-center py-0.5 justify-center rounded-full bg-faded-black border border-light-manila text-center text-light-manila font-display-extended uppercase font-bold">
+      VJS 8
+    </p>
+    <p class="text-h5 text-center text-light-manila font-display-extended uppercase flex gap-1 lg:gap-2.5">
+      <span class="font-bold">3.96s</span>
+      <span>/</span>
+      <span class="whitespace-nowrap">722 KB</span>
+    </p>
+  </div>
+  <p class="inline-block mt-6 md:hidden text-h5 items-center py-0.5 px-8 rounded-full bg-faded-black border text-orange text-center border-orange font-display-extended uppercase font-bold">
+    VJS 10
+  </p>
+  <div class="mb-2 mt-4 md:mt-5 md:mb-2.5 data-bar data-bar-orange" style="max-width: 32.25%" />
+
+  <div class="flex items-center gap-2.5">
+    <p class="hidden md:flex min-w-30 items-center text-h5 py-0 justify-center rounded-full bg-faded-black border border-orange text-center text-orange font-display-extended uppercase font-bold">
+      VJS 10
+    </p>
+    <p class="text-h5 2xl text-center text-orange font-display-extended uppercase flex gap-1 lg:gap-2.5">
+        <span class="font-bold">1.29s</span>
+      <span>/</span>
+      <span class="whitespace-nowrap">198 KB</span>
+    </p>
+  </div>
+
+  <div class="flex justify-between w-full px-1 pt-4 pb-2">
+    {Array.from({ length: 21 }, (_, i) => (
+      <div
+        class={clsx('w-px h-4', seconds.includes(i) ? 'bg-light-manila' : 'bg-warm-gray')}
+      />
+    ))}
+  </div>
+  <div class="flex justify-between -mx-1.5" style="width: calc(100% + 0.85rem)">
+    {Array.from({ length: 5 }, (_, i) => (
+      <div class="text-p3 text-light-manila text-center w-5">
+        {i}s
+      </div>
+    ))}
+  </div>
+</div>

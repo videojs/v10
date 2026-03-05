@@ -12,7 +12,7 @@ export default function Shared({ code, lang, highlighter }: SharedProps) {
   const hast = highlighter.codeToHast(code, {
     lang,
     themes: {
-      light: 'gruvbox-dark-soft',
+      light: 'gruvbox-dark-hard',
       dark: 'gruvbox-dark-soft',
     },
   });

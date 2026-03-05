@@ -1,6 +1,7 @@
 import { Toggle } from '@base-ui/react/toggle';
 import { ToggleGroup as BaseToggleGroup } from '@base-ui/react/toggle-group';
 import clsx from 'clsx';
+import { Fragment } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 export interface ToggleOption<T = string> {
@@ -39,8 +40,8 @@ export default function ToggleGroup<T extends string = string>({
       onValueChange={onChange}
       disabled={disabled}
       className={twMerge(
-        minimal ? 'flex gap-0' : 'grid md:w-100% md:max-w-96',
-        'w-full items-stretch p-0.75 border border-gray-800 rounded-sm overflow-hidden',
+        minimal ? 'flex gap-0' : 'grid max-w-95 mx-auto',
+        'w-full items-stretch p-0.75 border rounded-xs',
         className
       )}
       aria-label={ariaLabel}
@@ -53,16 +54,16 @@ export default function ToggleGroup<T extends string = string>({
         const isLast = index === options.length - 1;
 
         return (
-          <>
+          <Fragment key={option.value as string}>
             <Toggle
-              key={option.value}
               value={option.value}
               disabled={isDisabled}
               className={twMerge(
                 clsx(
                   'relative',
-                  minimal ? 'px-4' : '',
-                  'flex items-center justify-center py-2! text-sm tracking-wider font-display-extended uppercase font-bold',
+                  'flex items-center justify-center font-display-extended tracking-normal leading-none uppercase font-bold',
+                  minimal ? 'px-3 py-2' : 'px-4 py-3',
+                  'text-(length:--text) md:text-h4',
                   isDisabled ? 'cursor-wait opacity-50' : 'cursor-pointer',
                   isPressed
                     ? 'bg-faded-black dark:bg-light-manila text-light-manila dark:text-faded-black'
@@ -70,11 +71,12 @@ export default function ToggleGroup<T extends string = string>({
                 ),
                 toggleClassName
               )}
+              style={{ '--text': '0.75rem' } as React.CSSProperties}
               aria-label={option['aria-label']}
             >
               {option.label}
             </Toggle>
-            {!isLast && minimal && <span className="block h-100% w-px bg-faded-black dark:bg-light-manila" />}
+            {!isLast && minimal && <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />}
             {!isLast && !minimal && (
               <span className="flex px-1 gap-0.75 h-full">
                 <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />
@@ -82,7 +84,7 @@ export default function ToggleGroup<T extends string = string>({
                 <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />
               </span>
             )}
-          </>
+          </Fragment>
         );
       })}
     </BaseToggleGroup>

@@ -2,7 +2,7 @@ import { useStore } from '@nanostores/react';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import type { Skin } from '@/stores/homePageDemos';
 import { framework, skin } from '@/stores/homePageDemos';
-import ClientCode from '../Code/ClientCode';
+import ClientCode from '../../Code/ClientCode';
 
 function generateHTMLCode(skin: Skin): string {
   const skinTag = skin === 'frosted' ? 'video-skin' : 'video-minimal-skin';
@@ -47,8 +47,6 @@ export default function BaseDemo({ className }: { className?: string }) {
   const $framework = useStore(framework);
   const $skin = useStore(skin);
 
-  const tabCodeContent = 'bg-faded-black scrollbar-white dark:bg-warm-gray m-2.5 mt-0';
-
   if ($framework === 'html') {
     return (
       <TabsRoot key={$framework} className={className} maxWidth={false}>
@@ -57,7 +55,7 @@ export default function BaseDemo({ className }: { className?: string }) {
             HTML
           </Tab>
         </TabsList>
-        <TabsPanel value="html" initial className={tabCodeContent}>
+        <TabsPanel value="html" initial className="bg-faded-black scrollbar-white dark:bg-warm-gray m-2.5 mt-0">
           <ClientCode code={generateHTMLCode($skin)} lang="html" />
         </TabsPanel>
       </TabsRoot>
@@ -71,7 +69,7 @@ export default function BaseDemo({ className }: { className?: string }) {
           React
         </Tab>
       </TabsList>
-      <TabsPanel value="react" initial className={tabCodeContent}>
+      <TabsPanel value="react" initial className="bg-faded-black scrollbar-white dark:bg-warm-gray m-2.5 mt-0">
         <ClientCode code={generateReactCode($skin)} lang="tsx" />
       </TabsPanel>
     </TabsRoot>

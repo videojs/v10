@@ -204,7 +204,7 @@ export default function MuxUploaderPanel() {
         <MuxUploaderFileSelect muxUploader="mux-uploader">
           <button
             type="button"
-            className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-faded-black text-light-manila dark:bg-light-manila dark:text-faded-black rounded-lg text-sm font-medium intent:bg-orange intent:text-faded-black transition-colors"
+            className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-faded-black text-light-manila dark:bg-light-manila dark:text-faded-black rounded-lg text-sm font-medium intent:bg-orange intent:text-faded-black"
           >
             Select a file
           </button>
