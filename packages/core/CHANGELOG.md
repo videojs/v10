@@ -1,5 +1,31 @@
 # Changelog
 
+## [10.0.0-alpha.8](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-alpha.7...@videojs/core@10.0.0-alpha.8) (2026-03-05)
+
+
+### Features
+
+* **core:** add alert dialog with dismiss layer and transitions ([#743](https://github.com/videojs/v10/issues/743)) ([a80cf4e](https://github.com/videojs/v10/commit/a80cf4e06aaa6adfd5e916b4789cb40ac15ef9cf))
+* **core:** add AlertDialog data attributes ([#738](https://github.com/videojs/v10/issues/738)) ([e2334a3](https://github.com/videojs/v10/commit/e2334a3767c8f9474d44c8baa25512041392e363))
+* **core:** add error feature ([#713](https://github.com/videojs/v10/issues/713)) ([879d55d](https://github.com/videojs/v10/commit/879d55d1d216aac9f31f3fb22e2e31fde55a002b))
+* **core:** add tooltip  ([#734](https://github.com/videojs/v10/issues/734)) ([b69a2f9](https://github.com/videojs/v10/commit/b69a2f9994eaf14f4f2bf64643d8fc18e901b365))
+* **html:** add tooltip element ([#735](https://github.com/videojs/v10/issues/735)) ([e9fbaec](https://github.com/videojs/v10/commit/e9fbaece87c39c0adc41070159fd7e6f75f0e1da))
+* **react:** add slider preview component ([#710](https://github.com/videojs/v10/issues/710)) ([db75697](https://github.com/videojs/v10/commit/db7569711e5a571f6af421987c8490c3de37ed78))
+* small state and naming fixes  ([#719](https://github.com/videojs/v10/issues/719)) ([5c42245](https://github.com/videojs/v10/commit/5c422452e4b547dc00f13082b755ea12d1860f21))
+
+
+### Bug Fixes
+
+* **html:** slider interaction and edge alignment broken ([#721](https://github.com/videojs/v10/issues/721)) ([ff12296](https://github.com/videojs/v10/commit/ff122963553e23a58614c9c808763208fd893df1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/store bumped to 10.0.0-alpha.8
+    * @videojs/utils bumped to 10.0.0-alpha.8
+
 ## [10.0.0-alpha.7](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-alpha.6...@videojs/core@10.0.0-alpha.7) (2026-03-04)
 
 

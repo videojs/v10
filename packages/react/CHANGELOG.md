@@ -1,5 +1,33 @@
 # Changelog
 
+## [10.0.0-alpha.8](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-alpha.7...@videojs/react@10.0.0-alpha.8) (2026-03-05)
+
+
+### Features
+
+* **react:** add slider preview component ([#710](https://github.com/videojs/v10/issues/710)) ([db75697](https://github.com/videojs/v10/commit/db7569711e5a571f6af421987c8490c3de37ed78))
+* **react:** add slider thumbnail component ([#722](https://github.com/videojs/v10/issues/722)) ([a6405e9](https://github.com/videojs/v10/commit/a6405e9278bc6e627cc1186f2af227941a1e55c0))
+* **react:** add tooltip component ([#736](https://github.com/videojs/v10/issues/736)) ([ae754ee](https://github.com/videojs/v10/commit/ae754eec8f3136be08026e08fbf404b4f0f7126e))
+* small state and naming fixes  ([#719](https://github.com/videojs/v10/issues/719)) ([5c42245](https://github.com/videojs/v10/commit/5c422452e4b547dc00f13082b755ea12d1860f21))
+
+
+### Bug Fixes
+
+* **html:** slider interaction and edge alignment broken ([#721](https://github.com/videojs/v10/issues/721)) ([ff12296](https://github.com/videojs/v10/commit/ff122963553e23a58614c9c808763208fd893df1))
+* **react:** set anchor-name and position-anchor imperatively in popover ([#715](https://github.com/videojs/v10/issues/715)) ([070d094](https://github.com/videojs/v10/commit/070d0944448fae4fd8ec140a13c5c073c31ccdc4))
+* **react:** strict mode support ([#742](https://github.com/videojs/v10/issues/742)) ([44d874d](https://github.com/videojs/v10/commit/44d874ddc225b9b8aaf6d8689bdb48ef0ac729fb))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-alpha.8
+    * @videojs/store bumped to 10.0.0-alpha.8
+    * @videojs/utils bumped to 10.0.0-alpha.8
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-alpha.8
+
 ## [10.0.0-alpha.7](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-alpha.6...@videojs/react@10.0.0-alpha.7) (2026-03-04)
 
 
