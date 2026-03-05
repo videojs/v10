@@ -2,10 +2,17 @@
   "name": "@videojs/icons",
   "type": "module",
   "private": true,
-  "version": "0.1.0-alpha.1",
+  "version": "10.0.0-alpha.7",
   "description": "SVG icon library for Video.js",
   "license": "Apache-2.0",
-  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/icons"
+  },
+  "sideEffects": [
+    "./dist/element/**/*.js"
+  ],
   "exports": {
     "./react": {
       "types": "./dist/react/default/index.d.ts",
@@ -22,6 +29,18 @@
     "./html/*": {
       "types": "./dist/html/*/index.d.ts",
       "default": "./dist/html/*/index.js"
+    },
+    "./render": {
+      "types": "./dist/render/default/index.d.ts",
+      "default": "./dist/render/default/index.js"
+    },
+    "./render/*": {
+      "types": "./dist/render/*/index.d.ts",
+      "default": "./dist/render/*/index.js"
+    },
+    "./element": {
+      "types": "./dist/element/index.d.ts",
+      "default": "./dist/element/index.js"
     }
   },
   "files": [
@@ -29,6 +48,8 @@
   ],
   "scripts": {
     "build": "node --import tsx scripts/build.ts",
+    "build:watch": "pnpm run build -- --watch",
+    "dev": "pnpm run build:watch",
     "clean": "rm -rf dist"
   },
   "dependencies": {

@@ -31,6 +31,7 @@ export class MuteButtonCore {
   };
 
   #props = { ...MuteButtonCore.defaultProps };
+  #media: MediaVolumeState | null = null;
 
   constructor(props?: MuteButtonProps) {
     if (props) this.setProps(props);
@@ -60,7 +61,12 @@ export class MuteButtonCore {
     };
   }
 
-  getState(media: MediaVolumeState): MuteButtonState {
+  setMedia(media: MediaVolumeState): void {
+    this.#media = media;
+  }
+
+  getState(): MuteButtonState {
+    const media = this.#media!;
     return {
       muted: media.muted,
       volumeLevel: getVolumeLevel(media),
@@ -69,7 +75,7 @@ export class MuteButtonCore {
 
   toggle(media: MediaVolumeState): void {
     if (this.#props.disabled) return;
-    media.toggleMute();
+    media.toggleMuted();
   }
 }
 

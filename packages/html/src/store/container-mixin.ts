@@ -9,20 +9,37 @@ export type ContainerMixin<Store extends PlayerStore> = <Class extends MediaElem
   BaseClass: Class
 ) => Class & PlayerConsumerConstructor<Store>;
 
+/**
+ * Create a mixin that consumes player context and auto-attaches media elements.
+ *
+ * @param context - Player context to consume from an ancestor provider.
+ */
 export function createContainerMixin<Store extends PlayerStore>(context: PlayerContext<Store>): ContainerMixin<Store> {
   return <Class extends MediaElementConstructor>(BaseClass: Class) => {
     class PlayerContainerElement extends BaseClass implements PlayerConsumer<Store>, MediaContainer {
       #detach = noop;
       #observer: MutationObserver | null = null;
+      #contextStore: Store | null = null;
 
-      #consumer = new ContextConsumer(this, {
-        context,
-        callback: () => this.#attachMedia(),
-        subscribe: true,
-      });
+      constructor(...args: any[]) {
+        super(...args);
+
+        // Created in the constructor body (after all field initializers) so
+        // that #contextStore's private slot exists if the callback fires
+        // synchronously — which happens when the element is already connected.
+        // The host's controller list keeps the consumer alive; no field needed.
+        new ContextConsumer(this, {
+          context,
+          callback: (value) => {
+            this.#contextStore = value ?? null;
+            this.#attachMedia();
+          },
+          subscribe: true,
+        });
+      }
 
       get store(): Store | null {
-        return this.#consumer.value ?? null;
+        return this.#contextStore;
       }
 
       override connectedCallback() {
@@ -45,8 +62,9 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
       }
 
       #attachMedia() {
-        // Store will be overridden and set by provider mixin if consumer is empty.
-        const store = this.#consumer.value ?? this.store;
+        // Prefer the cached context value; fall back to `this.store` which
+        // ProviderMixin overrides when both mixins are applied to one element.
+        const store = this.#contextStore ?? this.store;
         if (!store) return;
 
         const media = this.querySelector<HTMLMediaElement>('video, audio');

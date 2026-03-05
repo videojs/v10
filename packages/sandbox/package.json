@@ -6,23 +6,33 @@
   "scripts": {
     "dev": "tsx setup.ts && vite",
     "build": "tsx setup.ts && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sync": "tsx scripts/sync.ts"
   },
   "dependencies": {
     "@videojs/core": "workspace:*",
     "@videojs/html": "workspace:*",
+    "@videojs/icons": "workspace:*",
     "@videojs/react": "workspace:*",
+    "@videojs/skins": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.2.0",
+    "@types/fs-extra": "^11.0.4",
+    "@types/prompts": "^2.4.9",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@tailwindcss/vite": "^4.1.17",
-    "@vitejs/plugin-react": "^4.0.0",
-    "tailwindcss": "^4.1.17",
+    "@vitejs/plugin-react": "^5.1.4",
+    "chalk": "^5.6.2",
+    "diff": "^8.0.3",
+    "dir-compare": "^5.0.0",
+    "fs-extra": "^11.3.3",
+    "prompts": "^2.4.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "tailwindcss": "^4.2.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",
     "vite": "^6.0.0"

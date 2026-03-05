@@ -6,20 +6,19 @@ import DetailRow from './DetailRow.astro';
 interface Props {
   name: string;
   type: string;
-  shortType?: string;
+  detailedType?: string;
   description?: string;
   defaultValue?: string;
   required?: boolean;
   componentName: string;
 }
 
-const { name, type, shortType, description, defaultValue, required, componentName } = Astro.props;
+const { name, type, detailedType, description, defaultValue, required, componentName } = Astro.props;
 
-const displayType = shortType ?? type;
 const id = `${componentName}-${name}`;
 ---
 
-<DetailRow id={id} name={name} type={type} shortType={shortType} description={description} colspan={4}>
+<DetailRow id={id} name={name} type={type} detailedType={detailedType} description={description} colspan={4}>
     <Td class="align-top">
         <MarkdownCode>
             {name}
@@ -27,7 +26,7 @@ const id = `${componentName}-${name}`;
         </MarkdownCode>
     </Td>
     <Td class="align-top">
-        <MarkdownCode>{displayType}</MarkdownCode>
+        <MarkdownCode>{type}</MarkdownCode>
     </Td>
     <Td class="align-top">
         <MarkdownCode>

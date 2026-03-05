@@ -13,8 +13,10 @@ export interface AuthPopupOptions {
   onError: (error: string) => void;
 }
 
-const POPUP_WIDTH = 600;
-const POPUP_HEIGHT = 800;
+// Browsers automatically clamp popup dimensions to fit the OS work area (per MDN),
+// so no guard is needed for small screens.
+const POPUP_WIDTH = 1366;
+const POPUP_HEIGHT = 768;
 
 /**
  * Opens a centered OAuth popup and listens for completion.

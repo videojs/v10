@@ -1,0 +1,95 @@
+.html-time-slider-parts,
+.html-time-slider-parts media-container {
+  display: block;
+  position: relative;
+}
+
+.html-time-slider-parts video {
+  width: 100%;
+}
+
+.html-time-slider-parts__slider {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  height: 20px;
+  cursor: pointer;
+}
+
+.html-time-slider-parts__track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  transition: height 150ms ease;
+}
+
+.html-time-slider-parts__slider[data-interactive] .html-time-slider-parts__track {
+  height: 6px;
+}
+
+.html-time-slider-parts__buffer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: var(--media-slider-buffer);
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 9999px;
+}
+
+.html-time-slider-parts__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: var(--media-slider-fill);
+  background: white;
+  border-radius: 9999px;
+}
+
+.html-time-slider-parts__thumb {
+  position: absolute;
+  left: var(--media-slider-fill);
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  transform: translateX(-50%) scale(0);
+  transition: transform 150ms ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.html-time-slider-parts__slider[data-interactive] .html-time-slider-parts__thumb {
+  transform: translateX(-50%) scale(1);
+}
+
+.html-time-slider-parts__slider[data-dragging] .html-time-slider-parts__thumb {
+  transform: translateX(-50%) scale(1.1);
+}
+
+.html-time-slider-parts__value {
+  position: absolute;
+  left: var(--media-slider-pointer);
+  bottom: 100%;
+  transform: translateX(-50%);
+  margin-bottom: 6px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.html-time-slider-parts__slider[data-pointing] .html-time-slider-parts__value {
+  opacity: 1;
+}

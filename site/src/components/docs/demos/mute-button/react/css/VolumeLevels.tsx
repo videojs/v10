@@ -1,9 +1,9 @@
-import { createPlayer, features, MuteButton } from '@videojs/react';
-import { Video } from '@videojs/react/video';
+import { createPlayer, MuteButton } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
 
 import './VolumeLevels.css';
 
-const Player = createPlayer({ features: [...features.video] });
+const Player = createPlayer({ features: videoFeatures });
 
 export default function VolumeLevels() {
   return (

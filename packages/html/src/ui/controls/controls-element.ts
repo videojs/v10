@@ -1,34 +1,42 @@
 import { ControlsCore, ControlsDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectControls } from '@videojs/core/dom';
 import type { PropertyValues } from '@videojs/element';
+import { ContextProvider } from '@videojs/element/context';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
+import { controlsContext } from './context';
 
 export class ControlsElement extends MediaElement {
   static readonly tagName = 'media-controls';
 
   readonly #core = new ControlsCore();
-  readonly #state = new PlayerController(this, playerContext, selectControls);
+  readonly #mediaState = new PlayerController(this, playerContext, selectControls);
+  readonly #provider = new ContextProvider(this, { context: controlsContext });
 
   override connectedCallback(): void {
     super.connectedCallback();
 
-    if (__DEV__ && !this.#state.value) {
-      logMissingFeature(ControlsElement.tagName, 'controls');
+    if (__DEV__ && !this.#mediaState.value && this.#mediaState.displayName) {
+      logMissingFeature(this.localName, this.#mediaState.displayName);
     }
   }
 
-  protected override update(changed: PropertyValues): void {
-    super.update(changed);
+  protected override update(_changed: PropertyValues): void {
+    super.update(_changed);
 
-    const controls = this.#state.value;
+    const media = this.#mediaState.value;
+    if (!media) return;
 
-    if (!controls) {
-      return;
-    }
+    this.#core.setMedia(media);
+    const state = this.#core.getState();
 
-    applyStateDataAttrs(this, this.#core.getState(controls), ControlsDataAttrs);
+    applyStateDataAttrs(this, state, ControlsDataAttrs);
+
+    this.#provider.setValue({
+      state,
+      stateAttrMap: ControlsDataAttrs,
+    });
   }
 }

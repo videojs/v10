@@ -1,9 +1,14 @@
 {
   "name": "@videojs/html",
   "type": "module",
-  "version": "0.1.0-alpha.1",
+  "version": "10.0.0-alpha.7",
   "description": "HTML library for building media players",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/html"
+  },
   "main": "dist/default/index.js",
   "module": "dist/default/index.js",
   "types": "dist/dev/index.d.ts",
@@ -19,16 +24,34 @@
       "development": "./dist/dev/index.js",
       "default": "./dist/default/index.js"
     },
+    "./video": {
+      "types": "./dist/dev/presets/video.d.ts",
+      "development": "./dist/dev/presets/video.js",
+      "default": "./dist/default/presets/video.js"
+    },
+    "./video/*.css": "./dist/default/define/video/*.css",
     "./video/*": {
       "types": "./dist/dev/define/video/*.d.ts",
       "development": "./dist/dev/define/video/*.js",
       "default": "./dist/default/define/video/*.js"
     },
+    "./audio": {
+      "types": "./dist/dev/presets/audio.d.ts",
+      "development": "./dist/dev/presets/audio.js",
+      "default": "./dist/default/presets/audio.js"
+    },
+    "./audio/*.css": "./dist/default/define/audio/*.css",
     "./audio/*": {
       "types": "./dist/dev/define/audio/*.d.ts",
       "development": "./dist/dev/define/audio/*.js",
       "default": "./dist/default/define/audio/*.js"
     },
+    "./background": {
+      "types": "./dist/dev/presets/background.d.ts",
+      "development": "./dist/dev/presets/background.js",
+      "default": "./dist/default/presets/background.js"
+    },
+    "./background/*.css": "./dist/default/define/background/*.css",
     "./background/*": {
       "types": "./dist/dev/define/background/*.d.ts",
       "development": "./dist/dev/define/background/*.js",
@@ -48,6 +71,12 @@
       "types": "./dist/dev/define/media/*.d.ts",
       "development": "./dist/dev/define/media/*.js",
       "default": "./dist/default/define/media/*.js"
+    },
+    "./*.css": "./dist/default/define/*.css",
+    "./*": {
+      "types": "./dist/dev/define/*.d.ts",
+      "development": "./dist/dev/define/*.js",
+      "default": "./dist/default/define/*.js"
     }
   },
   "scripts": {
@@ -65,6 +94,8 @@
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",
+    "@videojs/icons": "workspace:*",
+    "@videojs/skins": "workspace:*",
     "happy-dom": "^18.0.1",
     "tsdown": "^0.20.3",
     "typescript": "^5.9.3",

@@ -24,10 +24,10 @@ function App() {
 }
 
 // ✅ Complete — copy, paste, run
-import { createPlayer, features, PlayButton } from '@videojs/react';
-import { Video } from '@videojs/react/video';
+import { createPlayer, PlayButton } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
 
-const Player = createPlayer({ features: [...features.video] });
+const Player = createPlayer({ features: videoFeatures });
 
 function App() {
   return (
@@ -60,7 +60,7 @@ const store: Store<HTMLMediaElement, VolumeState> = createStore<HTMLMediaElement
 import type { InferSliceState } from '@videojs/store';
 
 type VolumeState = InferSliceState<typeof volumeSlice>;
-// { volume: number; muted: boolean; setVolume: ...; toggleMute: ... }
+// { volume: number; muted: boolean; setVolume: ...; toggleMuted: ... }
 ```
 
 ### Show Type Imports
@@ -78,10 +78,10 @@ Site pages use `<FrameworkCase>` and `<StyleCase>` to show code per framework. N
 **React:**
 
 ```tsx
-import { createPlayer, features, PlayButton } from '@videojs/react';
-import { Video } from '@videojs/react/video';
+import { createPlayer, PlayButton } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
 
-const Player = createPlayer({ features: [...features.video] });
+const Player = createPlayer({ features: videoFeatures });
 
 export default function BasicUsage() {
   return (
@@ -224,11 +224,11 @@ Show which file code belongs to when multiple files are involved:
 
 ````markdown
 ```tsx title="App.tsx"
-import { createPlayer, features, PlayButton } from '@videojs/react';
-import { Video } from '@videojs/react/video';
+import { createPlayer, PlayButton } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
 import './App.css';
 
-const Player = createPlayer({ features: [...features.video] });
+const Player = createPlayer({ features: videoFeatures });
 
 export default function App() {
   return (

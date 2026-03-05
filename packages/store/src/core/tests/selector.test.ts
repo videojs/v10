@@ -8,6 +8,7 @@ interface MockMedia {
 
 describe('createSelector', () => {
   const volumeSlice = defineSlice<MockMedia>()({
+    name: 'volume',
     state: ({ target }) => ({
       volume: 1,
       muted: false,
@@ -19,6 +20,7 @@ describe('createSelector', () => {
   });
 
   const playbackSlice = defineSlice<MockMedia>()({
+    name: 'playback',
     state: () => ({
       paused: true,
       ended: false,
@@ -85,5 +87,31 @@ describe('createSelector', () => {
     expect(selected1).not.toBe(selected2);
     // But structurally equal (for shallowEqual comparison)
     expect(selected1).toEqual(selected2);
+  });
+
+  it('exposes displayName from slice name', () => {
+    const selectVolume = createSelector(volumeSlice);
+
+    expect(selectVolume.displayName).toBe('volume');
+  });
+
+  it('omits displayName when slice has no name', () => {
+    const unnamedSlice = defineSlice<MockMedia>()({
+      state: () => ({ paused: true }),
+    });
+    const selector = createSelector(unnamedSlice);
+
+    expect(selector.displayName).toBeUndefined();
+  });
+
+  it('returns undefined for empty-state slice', () => {
+    const emptySlice = defineSlice<MockMedia>()({
+      name: 'empty',
+      state: () => ({}),
+    });
+    const selector = createSelector(emptySlice);
+
+    expect(selector({})).toBeUndefined();
+    expect(selector.displayName).toBe('empty');
   });
 });

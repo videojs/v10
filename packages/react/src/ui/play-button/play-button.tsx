@@ -1,14 +1,10 @@
 'use client';
 
 import { PlayButtonCore, PlayButtonDataAttrs } from '@videojs/core';
-import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
-import type { ForwardedRef } from 'react';
-import { forwardRef, useState } from 'react';
+import { selectPlayback } from '@videojs/core/dom';
 
-import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
-import { renderElement } from '../../utils/use-render';
-import { useButton } from '../hooks/use-button';
+import { createMediaButton } from '../create-media-button';
 
 export interface PlayButtonProps extends UIComponentProps<'button', PlayButtonCore.State>, PlayButtonCore.Props {}
 
@@ -28,40 +24,12 @@ export interface PlayButtonProps extends UIComponentProps<'button', PlayButtonCo
  * />
  * ```
  */
-export const PlayButton = forwardRef(function PlayButton(
-  componentProps: PlayButtonProps,
-  forwardedRef: ForwardedRef<HTMLButtonElement>
-) {
-  const { render, className, style, label, disabled, ...elementProps } = componentProps;
-
-  const playback = usePlayer(selectPlayback);
-
-  const [core] = useState(() => new PlayButtonCore());
-  core.setProps({ label, disabled });
-
-  const { getButtonProps, buttonRef } = useButton({
-    displayName: 'PlayButton',
-    onActivate: () => core.toggle(playback!),
-    isDisabled: () => disabled || !playback,
-  });
-
-  if (!playback) {
-    if (__DEV__) logMissingFeature('PlayButton', 'playback');
-    return null;
-  }
-
-  const state = core.getState(playback);
-
-  return renderElement(
-    'button',
-    { render, className, style },
-    {
-      state,
-      stateAttrMap: PlayButtonDataAttrs,
-      ref: [forwardedRef, buttonRef],
-      props: [core.getAttrs(state), elementProps, getButtonProps()],
-    }
-  );
+export const PlayButton = createMediaButton<PlayButtonCore, PlayButtonProps>({
+  displayName: 'PlayButton',
+  core: PlayButtonCore,
+  stateAttrMap: PlayButtonDataAttrs,
+  selector: selectPlayback,
+  action: (core, state) => core.toggle(state),
 });
 
 export namespace PlayButton {

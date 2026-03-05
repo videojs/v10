@@ -1,0 +1,79 @@
+---
+title: createPlayer
+description: Factory function that creates a player instance with typed store, mixins, and controller for HTML custom elements
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import BasicUsageDemoHtml from "@/components/docs/demos/html-create-player/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/html-create-player/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/html-create-player/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/html-create-player/html/css/BasicUsage.ts?raw";
+
+`createPlayer` is the entry point for setting up a Video.js player with HTML custom elements. It accepts a configuration object with a `features` array and returns a typed <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>, `context`, `ProviderMixin`, `ContainerMixin`, and a `create` store factory.
+
+```ts
+import { createPlayer, MediaElement } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const {
+  PlayerController,
+  context,
+  ProviderMixin,
+  ContainerMixin,
+  create,
+} = createPlayer({ features: videoFeatures });
+
+// Provider element: owns and publishes the store
+class VideoPlayer extends ProviderMixin(MediaElement) {}
+
+// Container element: discovers <video>/<audio> and calls store.attach()
+class MediaContainer extends ContainerMixin(MediaElement) {}
+
+customElements.define('video-player', VideoPlayer);
+customElements.define('media-container', MediaContainer);
+```
+
+### Composition patterns
+
+Use split elements (recommended for reusable skins/layouts):
+
+```ts
+const {
+  PlayerController,
+  context,
+  ProviderMixin,
+  ContainerMixin,
+} = createPlayer({ features: videoFeatures });
+
+class VideoPlayer extends ProviderMixin(MediaElement) {}
+class MediaContainer extends ContainerMixin(MediaElement) {}
+```
+
+Use a single composed element when the same element should both own the store and attach media:
+
+```ts
+const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
+
+class VideoPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {}
+```
+
+When using the built-in defined elements (`@videojs/html/video/player`, etc.), `media-container` is expected as the first child and UI should live inside it.
+
+## Examples
+
+### Basic Usage
+
+<StyleCase styles={["css"]}>
+  <Demo files={[
+    { title: "index.html", code: basicUsageHtml, lang: "html" },
+    { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+    { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+  ]}>
+    <BasicUsageDemoHtml />
+  </Demo>
+</StyleCase>
+
+<UtilReference util="createPlayer" slug="html-create-player" />

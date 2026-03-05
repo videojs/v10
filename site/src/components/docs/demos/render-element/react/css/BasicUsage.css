@@ -1,0 +1,36 @@
+.react-render-element-basic {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.react-render-element-basic__toggle {
+  align-self: flex-start;
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #f5f5f5;
+  cursor: pointer;
+}
+
+.react-render-element-basic__tags {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.react-render-element-basic__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  background: #e5e7eb;
+  color: #374151;
+  transition: all 0.2s ease;
+}
+
+.react-render-element-basic__tag--active {
+  background: #3b82f6;
+  color: white;
+}

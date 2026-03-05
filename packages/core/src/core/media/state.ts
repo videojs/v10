@@ -62,13 +62,13 @@ export interface MediaVolumeState {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/volume
    */
-  changeVolume(volume: number): number;
+  setVolume(volume: number): number;
   /**
    * Toggle mute state. Returns the new muted value.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/muted
    */
-  toggleMute(): boolean;
+  toggleMuted(): boolean;
 }
 
 export interface MediaTimeState {
@@ -170,6 +170,68 @@ export interface MediaControlsState {
   controlsVisible: boolean;
 }
 
+export interface MediaPlaybackRateState {
+  /**
+   * Available playback rates.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/playbackRate
+   */
+  readonly playbackRates: readonly number[];
+  /**
+   * Current playback rate.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/playbackRate
+   */
+  playbackRate: number;
+  /**
+   * Set the playback rate.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/playbackRate
+   */
+  setPlaybackRate(rate: number): void;
+}
+
+export interface MediaTextCue {
+  startTime: number;
+  endTime: number;
+  text: string;
+}
+
+export interface MediaTextTrackState {
+  /** Cues from the first `kind="chapters"` track. */
+  chaptersCues: MediaTextCue[];
+  /** Cues from the first `kind="metadata" label="thumbnails"` track. */
+  thumbnailCues: MediaTextCue[];
+  /** The `<track>` element's `src` for resolving relative cue text URLs. */
+  thumbnailTrackSrc: string | null;
+}
+
+export interface MediaError {
+  /**
+   * The error code (mirrors MediaError.code constants).
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/MediaError/code
+   */
+  code: number;
+  /**
+   * A human-readable error message.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/MediaError/message
+   */
+  message: string;
+}
+
+export interface MediaErrorState {
+  /**
+   * The current media error, or null if none.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/error
+   */
+  error: MediaError | null;
+  /** Dismiss the current error by clearing it. */
+  dismissError(): void;
+}
+
 export interface MediaPictureInPictureState {
   /**
    * Whether picture-in-picture mode is currently active.
@@ -188,11 +250,11 @@ export interface MediaPictureInPictureState {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/requestPictureInPicture
    */
-  requestPiP(): Promise<void>;
+  requestPictureInPicture(): Promise<void>;
   /**
    * Exit picture-in-picture mode.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/exitPictureInPicture
    */
-  exitPiP(): Promise<void>;
+  exitPictureInPicture(): Promise<void>;
 }

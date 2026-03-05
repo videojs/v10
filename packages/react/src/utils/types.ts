@@ -6,7 +6,7 @@ export type HTMLProps<T = any> = React.HTMLAttributes<T> & {
 };
 
 /** Render function signature - receives props and state, returns element. */
-export type RenderFunction<Props, State> = (props: Props, state: State) => ReactElement;
+export type RenderFunction<Props, State> = (props: Props, state: State) => ReactElement | null;
 
 /** Render prop - either a React element or a render function. */
 export type RenderProp<State> = ReactElement | RenderFunction<HTMLProps, State>;

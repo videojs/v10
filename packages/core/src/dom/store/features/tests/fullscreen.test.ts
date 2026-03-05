@@ -1,7 +1,7 @@
 import { createStore } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import type { PlayerTarget } from '../../../media/types';
+import { createMockVideo } from '../../../tests/test-helpers';
 import { fullscreenFeature } from '../fullscreen';
 
 describe('fullscreenFeature', () => {
@@ -217,7 +217,3 @@ describe('fullscreenFeature', () => {
     });
   });
 });
-
-function createMockVideo(): HTMLVideoElement {
-  return document.createElement('video');
-}

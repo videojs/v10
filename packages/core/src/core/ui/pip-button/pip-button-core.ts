@@ -23,6 +23,7 @@ export class PiPButtonCore {
   };
 
   #props = { ...PiPButtonCore.defaultProps };
+  #media: MediaPictureInPictureState | null = null;
 
   constructor(props?: PiPButtonProps) {
     if (props) this.setProps(props);
@@ -42,7 +43,7 @@ export class PiPButtonCore {
       return label;
     }
 
-    return state.pip ? 'Exit PiP' : 'Enter PiP';
+    return state.pip ? 'Exit picture-in-picture' : 'Enter picture-in-picture';
   }
 
   getAttrs(state: PiPButtonState) {
@@ -52,7 +53,12 @@ export class PiPButtonCore {
     };
   }
 
-  getState(media: MediaPictureInPictureState): PiPButtonState {
+  setMedia(media: MediaPictureInPictureState): void {
+    this.#media = media;
+  }
+
+  getState(): PiPButtonState {
+    const media = this.#media!;
     return {
       pip: media.pip,
       availability: media.pipAvailability,
@@ -65,9 +71,9 @@ export class PiPButtonCore {
 
     try {
       if (media.pip) {
-        await media.exitPiP();
+        await media.exitPictureInPicture();
       } else {
-        await media.requestPiP();
+        await media.requestPictureInPicture();
       }
     } catch {
       // PiP requests can fail (user gesture required, permissions, etc.)

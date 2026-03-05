@@ -1,5 +1,5 @@
 import type { AudioPlayerStore, PlayerStore, PlayerTarget, VideoPlayerStore } from '@videojs/core/dom';
-import { definePlayerFeature, features } from '@videojs/core/dom';
+import { audioFeatures, definePlayerFeature, videoFeatures } from '@videojs/core/dom';
 import type { Slice } from '@videojs/store';
 import { assertType, describe, it } from 'vitest';
 
@@ -7,19 +7,19 @@ import { type CreatePlayerResult, createPlayer } from '../create-player';
 
 describe('createPlayer', () => {
   it('resolves video features to VideoPlayerStore', () => {
-    const result = createPlayer({ features: features.video });
+    const result = createPlayer({ features: videoFeatures });
 
     assertType<CreatePlayerResult<VideoPlayerStore>>(result);
   });
 
   it('resolves audio features to AudioPlayerStore', () => {
-    const result = createPlayer({ features: features.audio });
+    const result = createPlayer({ features: audioFeatures });
 
     assertType<CreatePlayerResult<AudioPlayerStore>>(result);
   });
 
   it('resolves spread video features to VideoPlayerStore', () => {
-    const result = createPlayer({ features: [...features.video] });
+    const result = createPlayer({ features: videoFeatures });
 
     assertType<CreatePlayerResult<VideoPlayerStore>>(result);
   });
@@ -48,11 +48,11 @@ describe('createPlayer', () => {
     });
 
     const result = createPlayer({
-      features: [...features.video, analyticsFeature],
+      features: [...videoFeatures, analyticsFeature],
     });
 
     // Extended features fall through to the generic overload
-    assertType<CreatePlayerResult<PlayerStore<[...typeof features.video, typeof analyticsFeature]>>>(result);
+    assertType<CreatePlayerResult<PlayerStore<[...typeof videoFeatures, typeof analyticsFeature]>>>(result);
   });
 
   it('resolves extended audio features to generic PlayerStore', () => {
@@ -65,9 +65,9 @@ describe('createPlayer', () => {
     });
 
     const result = createPlayer({
-      features: [...features.audio, analyticsFeature],
+      features: [...audioFeatures, analyticsFeature],
     });
 
-    assertType<CreatePlayerResult<PlayerStore<[...typeof features.audio, typeof analyticsFeature]>>>(result);
+    assertType<CreatePlayerResult<PlayerStore<[...typeof audioFeatures, typeof analyticsFeature]>>>(result);
   });
 });

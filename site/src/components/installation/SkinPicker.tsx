@@ -25,10 +25,10 @@ export default function SkinPicker() {
   // Auto-switch skin when use case changes and current skin is invalid
   useEffect(() => {
     const validValues = options.map((o) => o.value);
-    if (!validValues.includes($skin)) {
+    if (!validValues.includes(skin.get())) {
       skin.set(options[0].value);
     }
-  }, [$useCase]);
+  }, [options]);
 
   return (
     <ImageRadioGroup value={$skin} onChange={(value) => skin.set(value)} options={options} aria-label="Select skin" />

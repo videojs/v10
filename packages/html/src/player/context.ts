@@ -10,4 +10,9 @@ export type PlayerContext<Store extends PlayerStore = AnyPlayerStore> = Context<
   PlayerContextValue<Store>
 >;
 
+/**
+ * The default player context instance for consuming the player store in controllers.
+ *
+ * @public
+ */
 export const playerContext = createContext<PlayerContextValue, typeof PLAYER_CONTEXT_KEY>(PLAYER_CONTEXT_KEY);

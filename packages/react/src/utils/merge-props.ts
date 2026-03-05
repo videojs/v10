@@ -93,6 +93,7 @@ function mergeOne<T extends ElementType>(
  * - style: merged objects (external wins conflicts)
  * - other: last one wins
  *
+ * @public
  * @example
  * ```ts
  * const merged = mergeProps(

@@ -1,59 +1,96 @@
 import * as tae from 'typescript-api-extractor';
 import { describe, expect, it } from 'vitest';
-import { formatDetailedType, formatProperties, formatType, getShortPropType } from '../formatter';
+import { abbreviateType, formatDetailedType, formatProperties, formatType } from '../formatter';
 
-describe('getShortPropType', () => {
+describe('abbreviateType', () => {
+  it("returns 'function' for pure function types (no union)", () => {
+    expect(abbreviateType('selector', '((state: UnknownState) => R)')).toBe('function');
+    expect(abbreviateType('subscribe', '((state: State) => void)')).toBe('function');
+    expect(abbreviateType('isEqual', '((a: R, b: R) => boolean)')).toBe('function');
+    expect(abbreviateType('config', '((options: Options) => Config)')).toBe('function');
+  });
+
+  it("returns 'function' for function types with union return", () => {
+    expect(abbreviateType('selector', '(state: object) => InferSliceState<S> | undefined')).toBe('function');
+    expect(abbreviateType('selector', '(state: object) => string | undefined')).toBe('function');
+  });
+
+  it("returns 'undefined | function' for true top-level union of undefined and function", () => {
+    expect(abbreviateType('selector', '((state: object) => string) | undefined')).toBe('undefined | function');
+  });
+
   it("returns 'function' for callback props (onX with =>)", () => {
-    expect(getShortPropType('onClick', '(event: Event) => void')).toBe('function');
-    expect(getShortPropType('onChange', '(value: string) => void')).toBe('function');
+    expect(abbreviateType('onClick', '(event: Event) => void')).toBe('function');
+    expect(abbreviateType('onChange', '(value: string) => void')).toBe('function');
   });
 
   it("returns 'function' for getter props (getX with =>)", () => {
-    expect(getShortPropType('getValue', '() => string')).toBe('function');
-    expect(getShortPropType('getState', '() => State')).toBe('function');
+    expect(abbreviateType('getValue', '() => string')).toBe('function');
+    expect(abbreviateType('getState', '() => State')).toBe('function');
   });
 
   it("returns 'string | function' for className with =>", () => {
-    expect(getShortPropType('className', 'string | ((state: State) => string)')).toBe('string | function');
+    expect(abbreviateType('className', 'string | ((state: State) => string)')).toBe('string | function');
   });
 
   it("returns 'CSSProperties | function' for style with =>", () => {
-    expect(getShortPropType('style', 'CSSProperties | ((state: State) => CSSProperties)')).toBe(
+    expect(abbreviateType('style', 'CSSProperties | ((state: State) => CSSProperties)')).toBe(
       'CSSProperties | function'
     );
   });
 
   it("returns 'ReactElement | function' for render with =>", () => {
-    expect(getShortPropType('render', 'ReactElement | ((state: State) => ReactElement)')).toBe(
-      'ReactElement | function'
-    );
+    expect(abbreviateType('render', 'ReactElement | ((state: State) => ReactElement)')).toBe('ReactElement | function');
   });
 
   it('returns undefined for simple types (boolean, string, number)', () => {
-    expect(getShortPropType('disabled', 'boolean')).toBeUndefined();
-    expect(getShortPropType('label', 'string')).toBeUndefined();
-    expect(getShortPropType('count', 'number')).toBeUndefined();
+    expect(abbreviateType('disabled', 'boolean')).toBeUndefined();
+    expect(abbreviateType('label', 'string')).toBeUndefined();
+    expect(abbreviateType('count', 'number')).toBeUndefined();
   });
 
   it('returns undefined for short unions (< 3 members and < 40 chars)', () => {
-    expect(getShortPropType('size', "'small' | 'large'")).toBeUndefined();
-    expect(getShortPropType('value', 'string | number')).toBeUndefined();
+    expect(abbreviateType('size', "'small' | 'large'")).toBeUndefined();
+    expect(abbreviateType('value', 'string | number')).toBeUndefined();
   });
 
   it("returns 'type | function' for short callback unions (< 40 chars, 2 members)", () => {
     const type = 'string | ((state: TimeState) => string)';
-    expect(getShortPropType('label', type)).toBe('string | function');
+    expect(abbreviateType('label', type)).toBe('string | function');
   });
 
   it("returns 'type | function' for unions containing functions", () => {
     const type = "string | ((state: State) => string) | 'auto'";
-    expect(getShortPropType('label', type)).toBe("string | 'auto' | function");
+    expect(abbreviateType('label', type)).toBe("string | 'auto' | function");
   });
 
   it('returns undefined for complex unions (NOT "Union")', () => {
     // Complex union with 3+ members, no function
     const complexUnion = "'small' | 'medium' | 'large' | 'xlarge'";
-    expect(getShortPropType('size', complexUnion)).toBeUndefined();
+    expect(abbreviateType('size', complexUnion)).toBeUndefined();
+  });
+
+  it('returns "object" for object literals > 40 chars', () => {
+    const longObject = '{ volume: number; muted: boolean; level: string }';
+    expect(longObject.length).toBeGreaterThan(40);
+    expect(abbreviateType('result', longObject)).toBe('object');
+  });
+
+  it('returns undefined for object literals <= 40 chars', () => {
+    const shortObject = '{ x: number; y: number }';
+    expect(abbreviateType('point', shortObject)).toBeUndefined();
+  });
+
+  it('truncates other types > 40 chars', () => {
+    const longType = "'option-a' | 'option-b' | 'option-c' | 'option-d' | 'option-e'";
+    expect(longType.length).toBeGreaterThan(40);
+    expect(abbreviateType('choice', longType)).toBe(`${longType.slice(0, 37)}...`);
+  });
+
+  it('returns undefined for other types <= 40 chars', () => {
+    const shortType = "'small' | 'medium' | 'large' | 'xlarge'";
+    expect(shortType.length).toBeLessThanOrEqual(40);
+    expect(abbreviateType('size', shortType)).toBeUndefined();
   });
 });
 
@@ -100,7 +137,7 @@ describe('formatProperties', () => {
     const result = formatProperties(props);
 
     expect(result.simple).toEqual({ type: 'boolean' });
-    expect(Object.keys(result.simple!)).not.toContain('shortType');
+    expect(Object.keys(result.simple!)).not.toContain('detailedType');
     expect(Object.keys(result.simple!)).not.toContain('default');
     expect(Object.keys(result.simple!)).not.toContain('required');
   });
@@ -151,7 +188,7 @@ describe('formatProperties', () => {
     expect(result.type?.type).toBe("'current' | 'duration' | 'remaining'");
   });
 
-  it('sets shortType for callback props', () => {
+  it('sets abbreviated type and detailedType for callback props', () => {
     const fnType = createFunctionNode([
       {
         parameters: [
@@ -176,7 +213,8 @@ describe('formatProperties', () => {
 
     const result = formatProperties([prop]);
 
-    expect(result.onClick?.shortType).toBe('function');
+    expect(result.onClick?.type).toBe('function');
+    expect(result.onClick?.detailedType).toBe('((event: Event) => void)');
   });
 });
 
@@ -352,6 +390,27 @@ describe('formatType', () => {
     expect(formatType(node, false)).toBe('T');
   });
 
+  it('returns type name for TypeParameterNode with large union constraint (>5 members)', () => {
+    const largeUnion = createUnionNode([
+      createLiteralNode("'a'"),
+      createLiteralNode("'b'"),
+      createLiteralNode("'c'"),
+      createLiteralNode("'d'"),
+      createLiteralNode("'e'"),
+      createLiteralNode("'f'"),
+    ]);
+    const node = createTypeParameterNode('TagName', largeUnion);
+
+    expect(formatType(node, false)).toBe('TagName');
+  });
+
+  it('expands TypeParameterNode with small union constraint (<=5 members)', () => {
+    const smallUnion = createUnionNode([createLiteralNode("'a'"), createLiteralNode("'b'"), createLiteralNode("'c'")]);
+    const node = createTypeParameterNode('T', smallUnion);
+
+    expect(formatType(node, false)).toBe("'a' | 'b' | 'c'");
+  });
+
   // --- UnionNode with typeName ---
 
   it('formats UnionNode with typeName as fully qualified name', () => {
@@ -363,10 +422,10 @@ describe('formatType', () => {
 
   // --- ObjectNode edge cases ---
 
-  it('formats empty ObjectNode as {}', () => {
+  it('formats empty ObjectNode as object', () => {
     const node = createObjectNode([]);
 
-    expect(formatType(node, false)).toBe('{}');
+    expect(formatType(node, false)).toBe('object');
   });
 
   // --- Unknown node ---
@@ -391,12 +450,27 @@ describe('formatType', () => {
 
   // --- TypeParameterNode constraint flattening in union ---
 
-  it('flattens TypeParameterNode constraint in union', () => {
+  it('flattens TypeParameterNode constraint in union when small (<=5 members)', () => {
     const constraintUnion = createUnionNode([createIntrinsicNode('string'), createIntrinsicNode('number')]);
     const typeParam = createTypeParameterNode('T', constraintUnion);
     const union = createUnionNode([typeParam, createIntrinsicNode('boolean')]);
 
     expect(formatType(union, false)).toBe('string | number | boolean');
+  });
+
+  it('does not flatten TypeParameterNode constraint in union when large (>5 members)', () => {
+    const largeConstraint = createUnionNode([
+      createLiteralNode("'a'"),
+      createLiteralNode("'b'"),
+      createLiteralNode("'c'"),
+      createLiteralNode("'d'"),
+      createLiteralNode("'e'"),
+      createLiteralNode("'f'"),
+    ]);
+    const typeParam = createTypeParameterNode('TagName', largeConstraint);
+    const union = createUnionNode([typeParam, createIntrinsicNode('boolean')]);
+
+    expect(formatType(union, false)).toBe('TagName | boolean');
   });
 });
 

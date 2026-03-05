@@ -24,8 +24,16 @@ const noopSubscribe = () => noop;
  * }
  * ```
  */
+/** @label Without Selector */
 export function useStore<S extends AnyStore>(store: S): S;
 
+/**
+ * Select a value from the store. Re-renders when the selected value changes (shallowEqual).
+ *
+ * @label With Selector
+ * @param selector - Derives a value from the store state.
+ * @param isEqual - Custom equality function. Defaults to `shallowEqual`.
+ */
 export function useStore<S extends AnyStore, R>(
   store: S,
   selector: Selector<InferStoreState<S>, R>,

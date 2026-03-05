@@ -1,16 +1,17 @@
 /**
  * Re-export types from the shared schema.
- * The shared schema in src/types/api-reference.ts is the single source of truth.
+ * The shared schema in src/types/component-reference.ts is the single source of truth.
  */
 export type {
-  ComponentApiReference,
+  ComponentReference,
+  CSSVarDef,
   DataAttrDef,
-  PartApiReference,
+  PartReference,
   PropDef,
   StateDef,
-} from '../../../src/types/api-reference.js';
+} from '../../../src/types/component-reference.js';
 
-export { ComponentApiReferenceSchema, PartApiReferenceSchema } from '../../../src/types/api-reference.js';
+export { ComponentReferenceSchema, PartReferenceSchema } from '../../../src/types/component-reference.js';
 
 /**
  * Discovered part within a multi-part component.
@@ -28,6 +29,10 @@ export interface PartSource {
   htmlPath?: string;
   /** Path to React component file (for JSDoc description extraction). */
   reactPath?: string;
+  /** Path to data-attrs file for shared data attributes (sub-parts only). */
+  dataAttrsPath?: string;
+  /** PascalCase component name for data-attrs variable lookup (e.g., "Slider"). */
+  dataAttrsComponentName?: string;
 }
 
 /**
@@ -42,6 +47,8 @@ export interface ComponentSource {
   corePath?: string;
   /** Path to data attrs file */
   dataAttrsPath?: string;
+  /** Path to CSS vars file */
+  cssVarsPath?: string;
   /** Path to HTML element file */
   htmlPath?: string;
   /** Path to index.parts.ts (if multi-part) */
@@ -54,7 +61,7 @@ export interface ComponentSource {
 export interface ExtractedProp {
   name: string;
   type: string;
-  shortType?: string;
+  detailedType?: string;
   description?: string;
   default?: string;
   required?: boolean;
@@ -74,7 +81,11 @@ export interface CoreExtraction {
  * Extraction result from data attributes file.
  */
 export interface DataAttrsExtraction {
-  attrs: Array<{ name: string; description: string }>;
+  attrs: Array<{ name: string; description: string; type?: string }>;
+}
+
+export interface CSSVarsExtraction {
+  vars: Array<{ name: string; description: string }>;
 }
 
 export interface HtmlExtraction {

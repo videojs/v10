@@ -10,7 +10,7 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
-    exclude: ['@videojs/core', '@videojs/html', '@videojs/react', '@videojs/store', '@videojs/utils'],
+    exclude: ['@videojs/core', '@videojs/html', '@videojs/icons', '@videojs/react', '@videojs/store', '@videojs/utils'],
   },
   build: {
     outDir: resolve(__dirname, 'dist'),
@@ -20,7 +20,11 @@ export default defineConfig({
         main: resolve(__dirname, 'src/index.html'),
         core: resolve(__dirname, 'src/core/index.html'),
         html: resolve(__dirname, 'src/html/index.html'),
+        'html-background': resolve(__dirname, 'src/html-background/index.html'),
+        'html-tailwind': resolve(__dirname, 'src/html-tailwind/index.html'),
         react: resolve(__dirname, 'src/react/index.html'),
+        'react-background': resolve(__dirname, 'src/react-background/index.html'),
+        'react-tailwind': resolve(__dirname, 'src/react-tailwind/index.html'),
       },
     },
   },

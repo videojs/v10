@@ -24,5 +24,6 @@ export function PreferenceUpdater({ currentFramework }: PreferenceUpdaterProps) 
     styleStore.set(style);
   }, [currentFramework]);
 
-  return null;
+  // biome-ignore lint/complexity/noUselessFragments: Astro SSR logs false "Invalid hook call" when a React component with hooks returns null. See withastro/astro#12283.
+  return <></>;
 }

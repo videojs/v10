@@ -1,10 +1,13 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, watch, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const isWatch = process.argv.includes('--watch');
+
 import { transform } from '@svgr/core';
 import { camelCase, pascalCase } from '@videojs/utils/string';
 import { transform as esbuildTransform } from 'esbuild';
-import { optimize } from 'svgo';
+import { type Config, optimize } from 'svgo';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -12,11 +15,28 @@ const ASSETS_DIR = join(ROOT, 'src/assets');
 const DIST_DIR = join(ROOT, 'dist');
 
 const FRAMEWORKS = ['react', 'html'] as const;
-type Framework = (typeof FRAMEWORKS)[number];
 
-const SVGO_CONFIG = {
+const SVGO_CONFIG: Config = {
   multipass: true,
-  plugins: [],
+  plugins: [
+    {
+      name: 'preset-default',
+      params: {
+        overrides: {
+          removeViewBox: false,
+          convertColors: {
+            currentColor: /^black$/,
+          },
+        },
+      },
+    },
+    {
+      name: 'removeAttrs',
+      params: {
+        attrs: ['^clip-rule$', '^fill-rule$'],
+      },
+    },
+  ],
 };
 
 function ensureDir(path: string): void {
@@ -40,12 +60,16 @@ function getSvgFiles(setName: string): string[] {
 }
 
 function optimizeSvg(svgContent: string): string {
-  return optimize(svgContent, SVGO_CONFIG).data;
+  const optimized = optimize(svgContent, SVGO_CONFIG).data;
+  return optimized
+    .replaceAll('fill="black"', 'fill="currentColor"')
+    .replaceAll('stroke="black"', 'stroke="currentColor"');
 }
 
 async function buildReactComponent(svgContent: string, componentName: string): Promise<{ js: string; tsx: string }> {
-  const transformOpts = {
+  const transformOpts: Parameters<typeof transform>[1] = {
     plugins: ['@svgr/plugin-svgo', '@svgr/plugin-jsx'],
+    jsxRuntime: 'automatic',
     svgoConfig: SVGO_CONFIG,
   };
 
@@ -62,17 +86,133 @@ function buildHtmlExport(svgContent: string, varName: string): string {
   return `export const ${varName} = \`${optimizeSvg(svgContent)}\`;\n`;
 }
 
-function buildIndexExports(icons: { name: string; varName: string }[], framework: Framework): string {
+function buildRenderModule(icons: { name: string; content: string }[]): string {
+  const entries = icons.map(({ name, content }) => `  "${name}": \`${optimizeSvg(content)}\``).join(',\n');
+  return [
+    `const icons = {\n${entries},\n};`,
+    ``,
+    `export function renderIcon(name, attrs) {`,
+    `  const svg = icons[name];`,
+    `  if (!svg) return '';`,
+    `  if (!attrs) return svg;`,
+    `  const attrStr = Object.entries(attrs)`,
+    `    .map(([k, v]) => \` \${k}="\${v}"\`)`,
+    `    .join('');`,
+    `  return svg.replace('<svg', \`<svg\${attrStr}\`);`,
+    `}`,
+    ``,
+  ].join('\n');
+}
+
+function buildRenderTypes(iconNames: string[]): string {
+  const union = iconNames.map((name) => `'${name}'`).join(' | ');
+  return [
+    `export type IconName = ${union};`,
+    ``,
+    `export declare function renderIcon(`,
+    `  name: IconName,`,
+    `  attrs?: Record<string, string>,`,
+    `): string;`,
+    ``,
+  ].join('\n');
+}
+
+function buildIconMap(icons: { name: string; content: string }[]): string {
+  const entries = icons.map(({ name, content }) => `  "${name}": \`${optimizeSvg(content)}\``).join(',\n');
+  return `export const icons = {\n${entries},\n};\n`;
+}
+
+function buildElementIndex(sets: string[]): string {
+  const varName = (set: string) => `${camelCase(set)}Icons`;
+  const imports = sets.map((set) => `import { icons as ${varName(set)} } from './${set}/icons.js';`).join('\n');
+  const registers = sets.map((set) => `MediaIconElement.register('${set}', ${varName(set)});`).join('\n');
+
+  return [
+    `import { MediaIconElement } from './base.js';`,
+    imports,
+    ``,
+    `if (!customElements.get('media-icon')) {`,
+    `  customElements.define('media-icon', MediaIconElement);`,
+    `}`,
+    ``,
+    registers,
+    ``,
+  ].join('\n');
+}
+
+function buildElementBase(): string {
+  return [
+    `export class MediaIconElement extends HTMLElement {`,
+    `  static #families = new Map();`,
+    ``,
+    `  static register(family, icons) {`,
+    `    const map = MediaIconElement.#families.get(family) ?? new Map();`,
+    `    for (const [name, svg] of Object.entries(icons)) {`,
+    `      map.set(name, svg);`,
+    `    }`,
+    `    MediaIconElement.#families.set(family, map);`,
+    `  }`,
+    ``,
+    `  static get observedAttributes() {`,
+    `    return ['name', 'family'];`,
+    `  }`,
+    ``,
+    `  attributeChangedCallback() {`,
+    `    this.#render();`,
+    `  }`,
+    ``,
+    `  connectedCallback() {`,
+    `    this.#render();`,
+    `  }`,
+    ``,
+    `  #render() {`,
+    `    const name = this.getAttribute('name');`,
+    `    if (!name) return;`,
+    ``,
+    `    const family = this.getAttribute('family') || 'default';`,
+    `    const icons = MediaIconElement.#families.get(family);`,
+    `    const svg = icons?.get(name);`,
+    `    if (!svg) return;`,
+    ``,
+    `    this.innerHTML = svg;`,
+    `  }`,
+    `}`,
+    ``,
+  ].join('\n');
+}
+
+function buildElementBaseTypes(): string {
+  return [
+    `export type IconMap = Record<string, string>;`,
+    ``,
+    `export declare class MediaIconElement extends HTMLElement {`,
+    `  static register(family: string, icons: IconMap): void;`,
+    `  connectedCallback(): void;`,
+    `  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;`,
+    `}`,
+    ``,
+    `declare global {`,
+    `  interface HTMLElementTagNameMap {`,
+    `    'media-icon': MediaIconElement;`,
+    `  }`,
+    `}`,
+    ``,
+  ].join('\n');
+}
+
+function buildIndexExports(icons: { name: string; varName: string }[], framework: 'react' | 'html'): string {
   return icons
-    .map(({ name, varName }) =>
-      framework === 'react'
-        ? `export { default as ${pascalCase(varName)}Icon } from './${name}.js';`
-        : `export { ${camelCase(varName)}Icon } from './${name}.js';`
-    )
+    .map(({ name, varName }) => {
+      if (framework === 'react') {
+        return `export { default as ${pascalCase(varName)}Icon } from './${name}.js';`;
+      }
+
+      return `export { ${camelCase(varName)}Icon } from './${name}.js';`;
+    })
     .join('\n');
 }
 
-function buildIndexTypes(icons: { name: string; varName: string }[], framework: Framework): string {
+function buildIndexTypes(icons: { name: string; varName: string }[], framework: 'react' | 'html'): string {
   const types = icons.map(({ varName }) =>
     framework === 'react'
       ? `export declare const ${pascalCase(varName)}Icon: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & React.RefAttributes<SVGSVGElement>>;`
@@ -81,9 +221,20 @@ function buildIndexTypes(icons: { name: string; varName: string }[], framework: 
   return `/// <reference types="react" />\n${types.join('\n')}\n`;
 }
 
+function ensureElementBase(): void {
+  const baseDir = join(DIST_DIR, 'element');
+  ensureDir(baseDir);
+
+  const basePath = join(baseDir, 'base.js');
+  if (!existsSync(basePath)) {
+    writeFileSync(basePath, buildElementBase());
+    writeFileSync(join(baseDir, 'base.d.ts'), buildElementBaseTypes());
+  }
+}
+
 async function buildIconSet(setName: string): Promise<void> {
   const svgFiles = getSvgFiles(setName);
-  console.log(`  Building set: ${setName} (${svgFiles.length} icons)`);
+  console.log(`Building set: ${setName} (${svgFiles.length} icons)`);
 
   const icons = svgFiles.map((file) => ({
     name: file.replace('.svg', ''),
@@ -91,6 +242,7 @@ async function buildIconSet(setName: string): Promise<void> {
     content: readFileSync(join(ASSETS_DIR, setName, file), 'utf8'),
   }));
 
+  // Build react and html per-icon modules
   for (const framework of FRAMEWORKS) {
     const outDir = join(DIST_DIR, framework, setName);
     ensureDir(outDir);
@@ -117,12 +269,23 @@ async function buildIconSet(setName: string): Promise<void> {
     writeFileSync(join(outDir, 'index.js'), buildIndexExports(icons, framework));
     writeFileSync(join(outDir, 'index.d.ts'), buildIndexTypes(icons, framework));
   }
+
+  // Build render module
+  const renderDir = join(DIST_DIR, 'render', setName);
+  ensureDir(renderDir);
+  writeFileSync(join(renderDir, 'index.js'), buildRenderModule(icons));
+  writeFileSync(join(renderDir, 'index.d.ts'), buildRenderTypes(icons.map((i) => i.name)));
+
+  // Build element: icon map per family (no per-set index)
+  ensureElementBase();
+  const elementDir = join(DIST_DIR, 'element', setName);
+  ensureDir(elementDir);
+
+  writeFileSync(join(elementDir, 'icons.js'), buildIconMap(icons));
+  writeFileSync(join(elementDir, 'icons.d.ts'), `export declare const icons: Record<string, string>;\n`);
 }
 
-async function main(): Promise<void> {
-  console.log('Building icons...\n');
-  cleanDist();
-
+async function build(): Promise<void> {
   const sets = getIconSets();
   console.log(`Found ${sets.length} icon sets: ${sets.join(', ')}\n`);
 
@@ -130,7 +293,43 @@ async function main(): Promise<void> {
     await buildIconSet(set);
   }
 
+  // Build unified element index that registers all families
+  const elementDir = join(DIST_DIR, 'element');
+  writeFileSync(join(elementDir, 'index.js'), buildElementIndex(sets));
+  writeFileSync(join(elementDir, 'index.d.ts'), `export {};\n`);
+}
+
+function debounce(fn: () => void, ms: number): () => void {
+  let timer: ReturnType<typeof setTimeout>;
+  return () => {
+    clearTimeout(timer);
+    timer = setTimeout(fn, ms);
+  };
+}
+
+async function main(): Promise<void> {
+  console.log('Building icons...\n');
+  cleanDist();
+  await build();
   console.log('\nBuild complete!');
+
+  if (isWatch) {
+    const rebuild = debounce(() => {
+      console.log('\nRebuilding icons...\n');
+      build()
+        .then(() => console.log('\nRebuild complete!'))
+        .catch(console.error);
+    }, 200);
+
+    watch(ASSETS_DIR, { recursive: true }, (_event, filename) => {
+      if (filename?.endsWith('.svg')) {
+        console.log(`Changed: ${filename}`);
+        rebuild();
+      }
+    });
+
+    console.log('\nWatching for changes...');
+  }
 }
 
 main().catch(console.error);

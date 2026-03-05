@@ -1,9 +1,9 @@
-import { createPlayer, features, Time } from '@videojs/react';
-import { Video } from '@videojs/react/video';
+import { createPlayer, Time } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
 
 import './CustomSeparator.css';
 
-const Player = createPlayer({ features: [...features.video] });
+const Player = createPlayer({ features: videoFeatures });
 
 export default function CustomSeparator() {
   return (

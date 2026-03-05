@@ -1,24 +1,25 @@
 ---
 name: api-reference
 description: >-
-  Scaffold API reference documentation for Video.js 10 components. Validates
-  the api-docs-builder output, checks design docs and linked PRs for context,
-  creates the MDX reference page with anatomy, prose sections, demos, and the
-  ApiReference component. Triggers: "api reference", "reference page",
-  "scaffold api docs", "add api docs", "component reference".
+  Scaffold API reference documentation for Video.js 10 components and utility
+  APIs. Validates the api-docs-builder output, checks design docs and linked
+  PRs for context, creates the MDX reference page with anatomy, prose sections,
+  demos, and the ComponentReference/UtilReference component. Triggers: "api
+  reference", "reference page", "scaffold api docs", "add api docs",
+  "component reference", "util reference", "hook reference".
 ---
 
 # API Reference
 
-Scaffold a complete API reference page for a Video.js 10 component.
+Scaffold a complete API reference page for a Video.js 10 component or utility API.
 
 ## Usage
 
 ```
-/api-reference [component-name]
+/api-reference [name]
 ```
 
-- `component-name` (optional): kebab-case component name (e.g., `play-button`). If omitted, will prompt.
+- `name` (optional): kebab-case component name (e.g., `play-button`) or util name (e.g., `use-player`). If omitted, will prompt.
 
 ## Arguments
 
@@ -31,6 +32,7 @@ Load these files based on task:
 | Need | Load |
 |------|------|
 | Builder naming conventions | `references/builder-conventions.md` |
+| Util conventions | `references/util-conventions.md` |
 | MDX page structure | `references/mdx-structure.md` |
 | Demo file patterns | `references/demo-patterns.md` |
 | Component libraries reference | `docs` skill → `references/component-libraries.md` |
@@ -38,7 +40,7 @@ Load these files based on task:
 | Accessibility | `aria` skill |
 | Design docs | `internal/design/` |
 
-## Your Tasks
+## Component Reference Workflow
 
 ### Step 1: Gather context
 
@@ -54,7 +56,7 @@ Accept component name as argument (kebab-case).
 ### Step 2: Validate api-docs-builder compatibility
 
 1. Run `pnpm -F site api-docs` and check for errors
-2. Read the generated JSON at `site/src/content/generated-api-reference/{name}.json`
+2. Read the generated JSON at `site/src/content/generated-component-reference/{name}.json`
 3. Verify the JSON has expected sections (props, state, dataAttributes, platforms.html.tagName)
 4. For multi-part: verify each part appears in `parts` with correct names
 
@@ -88,8 +90,35 @@ Load `references/mdx-structure.md` for the full structure template.
 
 1. Create `site/src/content/docs/reference/{name}.mdx`
 2. Add to sidebar in `site/src/docs.config.ts` (alphabetically within Components section)
-3. Structure: frontmatter → imports → Anatomy → prose sections → Examples → `<ApiReference />`
+3. Structure: frontmatter → imports → Anatomy → prose sections → Examples → `<ComponentReference />`
 4. Run `pnpm dev` from root and verify the page renders in both HTML and React framework modes
+
+## Util Reference Workflow
+
+For hooks, controllers, mixins, factories, and utilities. Load `references/util-conventions.md` for full details.
+
+### Step 1: Ensure auto-discovery can find the util
+
+1. The util must be exported from one of the scanned package index files (`packages/react/src/index.ts`, `packages/html/src/index.ts`, or the store subpath indexes)
+2. Add JSDoc with a description to the source export
+3. If the export doesn't match a naming convention (`use*`, `*Controller`, `create*`), add `@public` to its JSDoc
+
+Load `references/util-conventions.md` for the full inclusion and classification rules.
+
+### Step 2: Generate and validate JSON
+
+1. Run `pnpm -F site api-docs` and check for errors
+2. Read the generated JSON at `site/src/content/generated-util-reference/{slug}.json`
+3. Verify it has the expected overloads, parameters, and return value
+
+### Step 3: Create MDX page
+
+1. Create `site/src/content/docs/reference/{slug}.mdx`
+2. Structure: frontmatter → `import UtilReference` → `## Import` → `## Usage` → `<UtilReference util="..." />`
+3. Add to sidebar in `site/src/docs.config.ts`:
+   - React utils → "Hooks & Utilities" section (`frameworks: ['react']`)
+   - HTML utils → "Controllers & Mixins" section (`frameworks: ['html']`)
+4. Run `pnpm dev` and verify the page renders correctly
 
 ## Related Skills
 

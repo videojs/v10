@@ -1,7 +1,7 @@
 import { createStore } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import type { PlayerTarget } from '../../../media/types';
+import { createMockVideo } from '../../../tests/test-helpers';
 import { pipFeature } from '../pip';
 
 describe('pipFeature', () => {
@@ -85,19 +85,19 @@ describe('pipFeature', () => {
   });
 
   describe('actions', () => {
-    it('requestPiP() calls requestPictureInPicture on video', async () => {
+    it('requestPictureInPicture() calls requestPictureInPicture on video', async () => {
       const video = createMockVideo();
       video.requestPictureInPicture = vi.fn().mockResolvedValue({});
 
       const store = createStore<PlayerTarget>()(pipFeature);
       store.attach({ media: video, container: null });
 
-      await store.requestPiP();
+      await store.requestPictureInPicture();
 
       expect(video.requestPictureInPicture).toHaveBeenCalled();
     });
 
-    it('exitPiP() calls document.exitPictureInPicture', async () => {
+    it('exitPictureInPicture() calls document.exitPictureInPicture', async () => {
       const originalExit = document.exitPictureInPicture;
       document.exitPictureInPicture = vi.fn().mockResolvedValue(undefined);
 
@@ -113,7 +113,7 @@ describe('pipFeature', () => {
       const store = createStore<PlayerTarget>()(pipFeature);
       store.attach({ media: video, container: null });
 
-      await store.exitPiP();
+      await store.exitPictureInPicture();
 
       expect(document.exitPictureInPicture).toHaveBeenCalled();
 
@@ -122,7 +122,7 @@ describe('pipFeature', () => {
   });
 
   describe('transitions', () => {
-    it('requestPiP() exits fullscreen first if active', async () => {
+    it('requestPictureInPicture() exits fullscreen first if active', async () => {
       const originalExit = document.exitFullscreen;
       document.exitFullscreen = vi.fn().mockResolvedValue(undefined);
 
@@ -140,7 +140,7 @@ describe('pipFeature', () => {
       const store = createStore<PlayerTarget>()(pipFeature);
       store.attach({ media: video, container });
 
-      await store.requestPiP();
+      await store.requestPictureInPicture();
 
       expect(document.exitFullscreen).toHaveBeenCalled();
       expect(video.requestPictureInPicture).toHaveBeenCalled();
@@ -148,7 +148,7 @@ describe('pipFeature', () => {
       document.exitFullscreen = originalExit;
     });
 
-    it('requestPiP() does not exit fullscreen if not active', async () => {
+    it('requestPictureInPicture() does not exit fullscreen if not active', async () => {
       const originalExit = document.exitFullscreen;
       document.exitFullscreen = vi.fn().mockResolvedValue(undefined);
 
@@ -158,7 +158,7 @@ describe('pipFeature', () => {
       const store = createStore<PlayerTarget>()(pipFeature);
       store.attach({ media: video, container: null });
 
-      await store.requestPiP();
+      await store.requestPictureInPicture();
 
       expect(document.exitFullscreen).not.toHaveBeenCalled();
       expect(video.requestPictureInPicture).toHaveBeenCalled();
@@ -167,7 +167,3 @@ describe('pipFeature', () => {
     });
   });
 });
-
-function createMockVideo(): HTMLVideoElement {
-  return document.createElement('video');
-}

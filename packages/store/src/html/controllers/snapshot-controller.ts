@@ -25,7 +25,18 @@ export class SnapshotController<T extends object, R = T> implements ReactiveCont
   #cached: R | undefined;
   #unsubscribe = noop;
 
+  /**
+   * @label Without Selector
+   * @param host - The host element that owns this controller.
+   * @param state - The State container to subscribe to.
+   */
   constructor(host: ReactiveControllerHost, state: State<T>);
+  /**
+   * @label With Selector
+   * @param host - The host element that owns this controller.
+   * @param state - The State container to subscribe to.
+   * @param selector - Derives a value from the state.
+   */
   constructor(host: ReactiveControllerHost, state: State<T>, selector: Selector<T, R>);
   constructor(host: ReactiveControllerHost, state: State<T>, selector?: Selector<T, R>) {
     this.#host = host;

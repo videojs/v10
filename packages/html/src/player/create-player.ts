@@ -11,11 +11,8 @@ import { combine, createStore } from '@videojs/store';
 
 import { type ContainerMixin, createContainerMixin } from '../store/container-mixin';
 import { createProviderMixin, type ProviderMixin } from '../store/provider-mixin';
-import type { PlayerElementConstructor } from '../store/types';
-import { MediaElement } from '../ui/media-element';
 import { type PlayerContext, playerContext } from './context';
 import { PlayerController } from './player-controller';
-import { createPlayerMixin, type PlayerMixin } from './player-mixin';
 
 export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
   features: Features;
@@ -31,12 +28,6 @@ export interface CreatePlayerResult<Store extends PlayerStore> {
   /** Player controller bound to this player's context. */
   PlayerController: PlayerController.Constructor<Store>;
 
-  /** Pre-composed player element ready for customElements.define(). */
-  PlayerElement: PlayerElementConstructor<Store>;
-
-  /** Mixin for a complete player element (provider + container). */
-  PlayerMixin: PlayerMixin<Store>;
-
   /** Mixin that provides player context to descendants. */
   ProviderMixin: ProviderMixin<Store>;
 
@@ -49,29 +40,42 @@ export interface CreatePlayerResult<Store extends PlayerStore> {
  *
  * @example
  * ```ts
- * import { features } from '@videojs/core/dom';
  * import { createPlayer, MediaElement } from '@videojs/html';
+ * import { videoFeatures } from '@videojs/html/video';
  *
- * const { PlayerElement, PlayerController, context } = createPlayer({
- *   features: features.video,
+ * const { ProviderMixin, ContainerMixin, PlayerController, context } = createPlayer({
+ *   features: videoFeatures,
  * });
  *
- * // Simple: register pre-composed PlayerElement
- * customElements.define('video-player', PlayerElement);
- *
- * // Custom: extend with PlayerMixin
- * class MyPlayer extends PlayerMixin(MediaElement) {}
+ * // Provider element: owns the store, provides context to descendants
+ * class VideoPlayer extends ProviderMixin(MediaElement) {}
+ * customElements.define('video-player', VideoPlayer);
  *
  * // Control element with selector
  * class PlayButton extends MediaElement {
  *   #playback = new PlayerController(this, context, selectPlayback);
  * }
  * ```
+ *
+ * @label Video
+ * @param config - Player configuration with features.
  */
 export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
 
+/**
+ * Creates a player factory for audio media.
+ *
+ * @label Audio
+ * @param config - Player configuration with features.
+ */
 export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;
 
+/**
+ * Creates a player factory with custom features.
+ *
+ * @label Generic
+ * @param config - Player configuration with features.
+ */
 export function createPlayer<const Features extends AnyPlayerFeature[]>(
   config: CreatePlayerConfig<Features>
 ): CreatePlayerResult<PlayerStore<Features>>;
@@ -83,8 +87,6 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     return createStore<PlayerTarget>()(slice);
   }
 
-  const PlayerMixin = createPlayerMixin<PlayerStore>(playerContext, create);
-  const PlayerElement = PlayerMixin(MediaElement);
   const ProviderMixin = createProviderMixin<PlayerStore>(playerContext, create);
   const ContainerMixin = createContainerMixin<PlayerStore>(playerContext);
 
@@ -92,8 +94,6 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     context: playerContext,
     create,
     PlayerController,
-    PlayerElement,
-    PlayerMixin,
     ProviderMixin,
     ContainerMixin,
   };

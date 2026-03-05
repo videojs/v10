@@ -30,6 +30,7 @@ export class SeekButtonCore {
   };
 
   #props = { ...SeekButtonCore.defaultProps };
+  #media: MediaTimeState | null = null;
 
   constructor(props?: SeekButtonProps) {
     if (props) this.setProps(props);
@@ -60,7 +61,12 @@ export class SeekButtonCore {
     };
   }
 
-  getState(media: MediaTimeState): SeekButtonState {
+  setMedia(media: MediaTimeState): void {
+    this.#media = media;
+  }
+
+  getState(): SeekButtonState {
+    const media = this.#media!;
     return {
       seeking: media.seeking,
       direction: this.#props.seconds < 0 ? 'backward' : 'forward',

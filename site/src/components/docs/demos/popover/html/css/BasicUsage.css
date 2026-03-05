@@ -1,0 +1,35 @@
+.html-popover-basic,
+.html-popover-basic media-container {
+  display: block;
+  position: relative;
+}
+
+.html-popover-basic video {
+  width: 100%;
+}
+
+.html-popover-basic__bar {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+}
+
+.html-popover-basic__trigger {
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  color: black;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.html-popover-basic__popover {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  color: white;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  white-space: nowrap;
+}

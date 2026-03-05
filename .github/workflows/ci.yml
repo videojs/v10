@@ -2,14 +2,14 @@ name: CI
 
 on:
   push:
-    branches-ignore:
-      - 'rfc/**'
+    branches:
+      - main
   pull_request:
     branches-ignore:
       - 'rfc/**'
 
 jobs:
-  build:
+  install:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,11 +22,123 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies (cache warm-up)
+        run: pnpm install --frozen-lockfile
+
+  lint:
+    needs: install
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Lint
+        run: pnpm lint
+
+  typecheck:
+    needs: install
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Build packages for type resolution
+        run: pnpm build:packages
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+  test:
+    needs: install
+    name: Test (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - '@videojs/core'
+          - '@videojs/store'
+          - '@videojs/utils'
+          - '@videojs/element'
+          - '@videojs/html'
+          - '@videojs/react'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Cache turbo test setup
+        uses: actions/cache@v5
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-test-${{ github.sha }}-${{ matrix.package }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-test-
+            ${{ runner.os }}-turbo-
+
+      - name: Test package
+        run: pnpm turbo run test --filter="${{ matrix.package }}"
+
+  build:
+    needs: install
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Cache turbo build setup
         uses: actions/cache@v5

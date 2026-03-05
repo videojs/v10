@@ -46,6 +46,7 @@ export class TimeCore {
   };
 
   #props = { ...TimeCore.defaultProps };
+  #media: MediaTimeState | null = null;
 
   constructor(props?: TimeProps) {
     if (props) this.setProps(props);
@@ -55,7 +56,12 @@ export class TimeCore {
     this.#props = defaults(props, TimeCore.defaultProps);
   }
 
-  #getSeconds(media: MediaTimeState): number {
+  setMedia(media: MediaTimeState): void {
+    this.#media = media;
+  }
+
+  #getSeconds(): number {
+    const media = this.#media!;
     const { type } = this.#props;
     switch (type) {
       case 'current':
@@ -69,14 +75,15 @@ export class TimeCore {
     }
   }
 
-  #getText(media: MediaTimeState): string {
-    const seconds = this.#getSeconds(media);
+  #getText(): string {
+    const media = this.#media!;
+    const seconds = this.#getSeconds();
     return formatTime(Math.abs(seconds), media.duration);
   }
 
-  #getPhrase(media: MediaTimeState): string {
+  #getPhrase(): string {
     const { type } = this.#props;
-    const seconds = this.#getSeconds(media);
+    const seconds = this.#getSeconds();
 
     if (type === 'remaining') {
       // Use negative to trigger "remaining" suffix
@@ -86,8 +93,8 @@ export class TimeCore {
     return formatTimeAsPhrase(seconds);
   }
 
-  #getDatetime(media: MediaTimeState): string {
-    const seconds = this.#getSeconds(media);
+  #getDatetime(): string {
+    const seconds = this.#getSeconds();
     return secondsToIsoDuration(Math.abs(seconds));
   }
 
@@ -111,15 +118,15 @@ export class TimeCore {
     };
   }
 
-  getState(media: MediaTimeState): TimeState {
-    const seconds = this.#getSeconds(media);
+  getState(): TimeState {
+    const seconds = this.#getSeconds();
     return {
       type: this.#props.type,
       seconds,
       negative: this.#props.type === 'remaining' && seconds < 0,
-      text: this.#getText(media),
-      phrase: this.#getPhrase(media),
-      datetime: this.#getDatetime(media),
+      text: this.#getText(),
+      phrase: this.#getPhrase(),
+      datetime: this.#getDatetime(),
     };
   }
 }

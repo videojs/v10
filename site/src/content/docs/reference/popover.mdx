@@ -1,0 +1,127 @@
+---
+title: Popover
+frameworkTitle:
+  html: media-popover
+description: A popover component for displaying contextual content anchored to a trigger
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/popover/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/popover/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/popover/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/popover/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/popover/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/popover/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/popover/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <Popover.Root>
+    <Popover.Trigger>Open</Popover.Trigger>
+    <Popover.Popup>
+      <Popover.Arrow />
+      Content
+    </Popover.Popup>
+  </Popover.Root>
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-popover>
+    <button>Open</button>
+    <div>Content</div>
+  </media-popover>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+Displays contextual content anchored to a trigger element. By default, opens on click and closes when clicking outside, pressing <kbd>Escape</kbd>, or when the trigger loses focus.
+
+Set `openOnHover` to open on pointer hover instead of click. Use `delay` and `closeDelay` to control timing for hover interactions.
+
+The `side` and `align` props control popup placement relative to the trigger. The popup repositions automatically to stay within viewport bounds.
+
+<FrameworkCase frameworks={["react"]}>
+  In React, the component is composed from four parts: `Root` manages state,
+  `Trigger` toggles the popover, `Popup` contains the content, and `Arrow`
+  renders a directional arrow.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  In HTML, the `media-popover` element wraps a trigger (first child button) and
+  popup content (second child). The element manages open/close state and
+  positioning automatically.
+</FrameworkCase>
+
+## Styling
+
+Use [CSS custom properties](#root-css-custom-properties) for positioning offsets:
+
+```css
+media-popover {
+  --media-popover-side-offset: 8px;
+  --media-popover-align-offset: 0px;
+}
+```
+
+Style based on open state and transition phases:
+
+```css
+media-popover[data-open] .popup {
+  display: block;
+}
+media-popover[data-starting-style] .popup {
+  opacity: 0;
+}
+media-popover[data-ending-style] .popup {
+  opacity: 0;
+}
+```
+
+## Accessibility
+
+The trigger receives `aria-expanded` reflecting the open state. When `modal` is set, the popup receives `aria-modal="true"`. Closing via <kbd>Escape</kbd> is enabled by default and can be disabled with `closeOnEscape={false}`.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+        { title: "App.css", code: basicUsageReactCss, lang: "css" },
+      ]}
+    >
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: basicUsageHtml, lang: "html" },
+        { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+        { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+      ]}
+    >
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="Popover" />

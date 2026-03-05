@@ -1,0 +1,9 @@
+@import "@videojs/skins/audio/default.css";
+
+audio-player {
+  display: contents;
+}
+
+audio-skin {
+  display: contents;
+}

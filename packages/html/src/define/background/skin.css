@@ -1,0 +1,27 @@
+background-video-player {
+  display: contents;
+}
+
+background-video-skin {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  --media-object-fit: cover;
+  object-fit: var(--media-object-fit);
+}
+
+background-video-skin > [slot="media"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: inherit;
+}
+
+background-video-skin > img,
+background-video-skin > picture {
+  width: 100%;
+  height: 100%;
+  object-fit: inherit;
+}

@@ -1,0 +1,31 @@
+.react-use-player-selector {
+  position: relative;
+}
+
+.react-use-player-selector video {
+  width: 100%;
+}
+
+.react-use-player-selector__state {
+  display: flex;
+  gap: 16px;
+  padding: 12px;
+  margin: 0;
+  font-size: 0.8125rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.react-use-player-selector__state div {
+  display: flex;
+  gap: 8px;
+}
+
+.react-use-player-selector__state dt {
+  color: #6b7280;
+}
+
+.react-use-player-selector__state dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}

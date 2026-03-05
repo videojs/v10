@@ -39,16 +39,10 @@ jobs:
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         uses: pnpm/action-setup@v4
 
-      - name: read node version from the .nvmrc file
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: echo ::set-output name=NODE_VERSION::$(cat .nvmrc)
-        shell: bash
-        id: nvmrc
       - uses: actions/setup-node@v5
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
-          node-version: ${{steps.nvmrc.outputs.NODE_VERSION}}
-          # this line is required for the setup-node action to be able to run the npm publish below.
+          node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install
@@ -75,5 +69,3 @@ jobs:
       - name: Publish
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm -r publish --filter "./packages/*" publish --access public --provenance --tag next --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

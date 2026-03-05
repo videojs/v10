@@ -1,7 +1,9 @@
 {
-  "packages/core": "0.1.0-preview.10",
-  "packages/html": "0.1.0-preview.10",
-  "packages/react": "0.1.0-preview.10",
-  "packages/icons": "0.1.0-preview.10",
-  "packages/utils": "0.1.0-preview.10"
+  "packages/core": "10.0.0-alpha.7",
+  "packages/element": "10.0.0-alpha.7",
+  "packages/html": "10.0.0-alpha.7",
+  "packages/icons": "10.0.0-alpha.7",
+  "packages/react": "10.0.0-alpha.7",
+  "packages/store": "10.0.0-alpha.7",
+  "packages/utils": "10.0.0-alpha.7"
 }

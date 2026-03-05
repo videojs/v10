@@ -3,15 +3,16 @@ import { listen } from '@videojs/utils/dom';
 import type { MediaFullscreenState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import {
-  enterFullscreen,
   exitFullscreen,
-  isElementFullscreen,
-  isFullscreenSupported,
+  isFullscreenElement,
+  isFullscreenEnabled,
+  requestFullscreen,
 } from '../../presentation/fullscreen';
-import { exitPiP, isPiPActive } from '../../presentation/pip';
+import { exitPictureInPicture, isPictureInPictureElement } from '../../presentation/pip';
 import type { WebKitVideoElement } from '../../presentation/types';
 
 export const fullscreenFeature = definePlayerFeature({
+  name: 'fullscreen',
   state: ({ target }): MediaFullscreenState => ({
     fullscreen: false,
     fullscreenAvailability: 'unavailable',
@@ -20,11 +21,11 @@ export const fullscreenFeature = definePlayerFeature({
       const { media, container } = target();
 
       // Exit PiP first if active (browser behavior is inconsistent)
-      if (isPiPActive(media)) {
-        await exitPiP(media);
+      if (isPictureInPictureElement(media)) {
+        await exitPictureInPicture(media);
       }
 
-      return enterFullscreen(container, media);
+      return requestFullscreen(container, media);
     },
 
     async exitFullscreen() {
@@ -36,12 +37,12 @@ export const fullscreenFeature = definePlayerFeature({
     const { media, container } = target;
 
     set({
-      fullscreenAvailability: isFullscreenSupported() ? 'available' : 'unsupported',
+      fullscreenAvailability: isFullscreenEnabled() ? 'available' : 'unsupported',
     });
 
     const sync = () =>
       set({
-        fullscreen: isElementFullscreen(container, media),
+        fullscreen: isFullscreenElement(container, media),
       });
 
     sync();

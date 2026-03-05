@@ -1,7 +1,7 @@
 import { createStore, flush } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import type { PlayerTarget } from '../../../media/types';
+import { createMockVideo } from '../../../tests/test-helpers';
 import { controlsFeature } from '../controls';
 
 const IDLE_DELAY = 2000;
@@ -362,33 +362,6 @@ describe('controlsFeature', () => {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function createMockVideo(
-  overrides: Partial<{
-    paused: boolean;
-    ended: boolean;
-    currentTime: number;
-    readyState: number;
-    tagName: string;
-  }> = {}
-): HTMLVideoElement {
-  const video = document.createElement(overrides.tagName === 'AUDIO' ? 'audio' : 'video') as HTMLVideoElement;
-
-  if (overrides.paused !== undefined) {
-    Object.defineProperty(video, 'paused', { value: overrides.paused, configurable: true });
-  }
-  if (overrides.ended !== undefined) {
-    Object.defineProperty(video, 'ended', { value: overrides.ended, configurable: true });
-  }
-  if (overrides.currentTime !== undefined) {
-    video.currentTime = overrides.currentTime;
-  }
-  if (overrides.readyState !== undefined) {
-    Object.defineProperty(video, 'readyState', { value: overrides.readyState, configurable: true });
-  }
-
-  return video;
-}
 
 function createContainer(): HTMLElement {
   return document.createElement('div');

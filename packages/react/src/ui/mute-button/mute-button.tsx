@@ -1,54 +1,20 @@
 'use client';
 
 import { MuteButtonCore, MuteButtonDataAttrs } from '@videojs/core';
-import { logMissingFeature, selectVolume } from '@videojs/core/dom';
-import type { ForwardedRef } from 'react';
-import { forwardRef, useState } from 'react';
+import { selectVolume } from '@videojs/core/dom';
 
-import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
-import { renderElement } from '../../utils/use-render';
-import { useButton } from '../hooks/use-button';
+import { createMediaButton } from '../create-media-button';
 
 export interface MuteButtonProps extends UIComponentProps<'button', MuteButtonCore.State>, MuteButtonCore.Props {}
 
-/**
- * A button that toggles mute state.
- */
-export const MuteButton = forwardRef(function MuteButton(
-  componentProps: MuteButtonProps,
-  forwardedRef: ForwardedRef<HTMLButtonElement>
-) {
-  const { render, className, style, label, disabled, ...elementProps } = componentProps;
-
-  const volume = usePlayer(selectVolume);
-
-  const [core] = useState(() => new MuteButtonCore());
-  core.setProps({ label, disabled });
-
-  const { getButtonProps, buttonRef } = useButton({
-    displayName: 'MuteButton',
-    onActivate: () => core.toggle(volume!),
-    isDisabled: () => disabled || !volume,
-  });
-
-  if (!volume) {
-    if (__DEV__) logMissingFeature('MuteButton', 'volume');
-    return null;
-  }
-
-  const state = core.getState(volume);
-
-  return renderElement(
-    'button',
-    { render, className, style },
-    {
-      state,
-      stateAttrMap: MuteButtonDataAttrs,
-      ref: [forwardedRef, buttonRef],
-      props: [core.getAttrs(state), elementProps, getButtonProps()],
-    }
-  );
+/** A button that toggles mute state. */
+export const MuteButton = createMediaButton<MuteButtonCore, MuteButtonProps>({
+  displayName: 'MuteButton',
+  core: MuteButtonCore,
+  stateAttrMap: MuteButtonDataAttrs,
+  selector: selectVolume,
+  action: (core, state) => core.toggle(state),
 });
 
 export namespace MuteButton {

@@ -1,0 +1,95 @@
+---
+title: PlaybackRateButton
+frameworkTitle:
+  html: media-playback-rate-button
+description: A button that cycles through playback speed rates
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/playback-rate-button/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/playback-rate-button/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/playback-rate-button/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/playback-rate-button/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/playback-rate-button/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/playback-rate-button/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/playback-rate-button/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<PlaybackRateButton />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-playback-rate-button></media-playback-rate-button>
+```
+</FrameworkCase>
+
+## Behavior
+
+Cycles through playback rates on click. The default rate list is `[1, 1.2, 1.5, 1.7, 2]`. After the last rate, it wraps back to the first. If the current rate isn't in the list (e.g., set programmatically), the button jumps to the next rate greater than the current one.
+
+## Styling
+
+Display the current rate using the `data-rate` attribute:
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-playback-rate-button::after {
+  content: attr(data-rate) "\00D7";
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+Use the `render` prop for rate display:
+
+```tsx
+<PlaybackRateButton
+  render={(props, state) => <button {...props}>{state.rate}&times;</button>}
+/>
+```
+</FrameworkCase>
+
+## Accessibility
+
+Renders a `<button>` with an automatic `aria-label` of `"Playback rate {rate}"` (e.g., `"Playback rate 1.5"`). Override with the `label` prop. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="PlaybackRateButton" />

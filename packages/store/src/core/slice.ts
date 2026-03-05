@@ -40,6 +40,8 @@ export interface StateContext<Target> {
    *   (e.g., loading a new source cancels pending seeks).
    */
   signals: AbortControllerRegistry;
+  /** Patch the slice state. Safe to use inside action closures (not during `state()` init). */
+  set: (partial: Record<string, unknown>) => void;
 }
 
 // ----------------------------------------
@@ -47,6 +49,8 @@ export interface StateContext<Target> {
 // ----------------------------------------
 
 export interface SliceConfig<Target, State> {
+  /** Debug label. Used as `displayName` on selectors created from this slice. */
+  name?: string;
   state: (ctx: StateContext<Target>) => State;
   attach?: (ctx: AttachContext<Target, State>) => void;
 }

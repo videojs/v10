@@ -6,5 +6,5 @@
     "declaration": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*", "dist/**/*"]
+  "include": ["src/**/*"]
 }

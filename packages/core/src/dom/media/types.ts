@@ -1,17 +1,28 @@
 import type { AnySlice, Slice, Store, UnionSliceState } from '@videojs/store';
-
 import type {
   MediaBufferState,
   MediaControlsState,
+  MediaErrorState,
   MediaFullscreenState,
   MediaPictureInPictureState,
+  MediaPlaybackRateState,
   MediaPlaybackState,
   MediaSourceState,
+  MediaTextTrackState,
   MediaTimeState,
   MediaVolumeState,
 } from '../../core/media/state';
 
-export interface Media extends HTMLMediaElement {}
+type WithOptional<Required, Full> = Required & Partial<Omit<Full, keyof Required>>;
+
+export type MediaBaseApi = {
+  play: () => Promise<void>;
+  paused: boolean;
+};
+
+export type MediaApi = WithOptional<MediaBaseApi, HTMLVideoElement>;
+
+export type Media = HTMLMediaElement | HTMLAudioElement | HTMLVideoElement;
 
 export interface MediaContainer extends HTMLElement {}
 
@@ -36,6 +47,7 @@ export type AnyPlayerStore = Store<PlayerTarget, object>;
 
 export type VideoFeatures = [
   PlayerFeature<MediaPlaybackState>,
+  PlayerFeature<MediaPlaybackRateState>,
   PlayerFeature<MediaVolumeState>,
   PlayerFeature<MediaTimeState>,
   PlayerFeature<MediaSourceState>,
@@ -43,10 +55,13 @@ export type VideoFeatures = [
   PlayerFeature<MediaFullscreenState>,
   PlayerFeature<MediaPictureInPictureState>,
   PlayerFeature<MediaControlsState>,
+  PlayerFeature<MediaTextTrackState>,
+  PlayerFeature<MediaErrorState>,
 ];
 
 export type AudioFeatures = [
   PlayerFeature<MediaPlaybackState>,
+  PlayerFeature<MediaPlaybackRateState>,
   PlayerFeature<MediaVolumeState>,
   PlayerFeature<MediaTimeState>,
   PlayerFeature<MediaSourceState>,

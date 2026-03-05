@@ -1,15 +1,20 @@
-import { features } from '@videojs/core/dom';
+import { audioFeatures } from '@videojs/core/dom';
+import { MediaContainerElement } from '../../media/container-element';
 import { createPlayer } from '../../player/create-player';
+import { MediaElement } from '../../ui/media-element';
+import { safeDefine } from '../safe-define';
 
-const { PlayerElement } = createPlayer({
-  features: features.audio,
+const { ProviderMixin } = createPlayer({
+  features: audioFeatures,
 });
 
-export class AudioPlayerElement extends PlayerElement {
+export class AudioPlayerElement extends ProviderMixin(MediaElement) {
   static readonly tagName = 'audio-player';
 }
 
-customElements.define(AudioPlayerElement.tagName, AudioPlayerElement);
+// Provider must be defined before consumer for context handshake during upgrade.
+safeDefine(AudioPlayerElement);
+safeDefine(MediaContainerElement);
 
 declare global {
   interface HTMLElementTagNameMap {

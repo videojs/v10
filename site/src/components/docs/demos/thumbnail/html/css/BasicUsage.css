@@ -1,0 +1,24 @@
+.html-thumbnail-text-track {
+  position: relative;
+  display: block;
+  max-width: 280px;
+}
+
+.html-thumbnail-text-track__media {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.html-thumbnail-text-track__thumbnail {
+  display: block;
+  width: auto;
+  min-width: 0;
+  max-width: 240px;
+}
+
+.html-thumbnail-text-track__thumbnail[data-hidden] {
+  display: none;
+}

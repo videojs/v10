@@ -2,24 +2,17 @@ import { render, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { createMockStore } from '../../testing/mocks';
 import {
   Container,
   PlayerContextProvider,
   type PlayerContextValue,
   useMedia,
   useMediaRegistration,
+  useOptionalPlayer,
   usePlayer,
   usePlayerContext,
 } from '../context';
-
-function createMockStore() {
-  return {
-    state: { paused: true, volume: 1 },
-    attach: vi.fn(() => vi.fn()),
-    subscribe: vi.fn(() => vi.fn()),
-    destroy: vi.fn(),
-  };
-}
 
 function createWrapper(value: PlayerContextValue) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -80,6 +73,47 @@ describe('usePlayer', () => {
     });
 
     expect(result.current).toBe(store);
+  });
+});
+
+describe('useOptionalPlayer', () => {
+  it('returns undefined outside Provider', () => {
+    const { result } = renderHook(() => useOptionalPlayer());
+    expect(result.current).toBeUndefined();
+  });
+
+  it('returns undefined outside Provider with selector', () => {
+    const { result } = renderHook(() => useOptionalPlayer((state: any) => state.paused));
+    expect(result.current).toBeUndefined();
+  });
+
+  it('does not run selector outside Provider', () => {
+    const selector = vi.fn(() => true);
+    const { result } = renderHook(() => useOptionalPlayer(selector));
+    expect(result.current).toBeUndefined();
+    expect(selector).not.toHaveBeenCalled();
+  });
+
+  it('returns store inside Provider', () => {
+    const store = createMockStore();
+    const value: PlayerContextValue = { store: store as any, media: null, setMedia: vi.fn() };
+
+    const { result } = renderHook(() => useOptionalPlayer(), {
+      wrapper: createWrapper(value),
+    });
+
+    expect(result.current).toBe(store);
+  });
+
+  it('returns selected state inside Provider', () => {
+    const store = createMockStore({ paused: true });
+    const value: PlayerContextValue = { store: store as any, media: null, setMedia: vi.fn() };
+
+    const { result } = renderHook(() => useOptionalPlayer((state: any) => state.paused), {
+      wrapper: createWrapper(value),
+    });
+
+    expect(result.current).toBe(true);
   });
 });
 

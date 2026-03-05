@@ -4,6 +4,7 @@ import type { MediaSourceState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 
 export const sourceFeature = definePlayerFeature({
+  name: 'source',
   state: ({ target, signals }): MediaSourceState => ({
     source: null,
     canPlay: false,

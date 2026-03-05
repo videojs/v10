@@ -58,6 +58,16 @@ describe('routing utilities', () => {
     frameworks: ['html'] satisfies MockFramework[],
   };
 
+  // Guide with no own restrictions, but lives inside a react-only section
+  const guideInReactSection: Guide = {
+    slug: 'reference/react-hook',
+  };
+
+  // Guide with no own restrictions, but lives inside an html-only section
+  const guideInHtmlSection: Guide = {
+    slug: 'reference/html-controller',
+  };
+
   const mockSidebar: Sidebar = [
     {
       sidebarLabel: 'Getting started',
@@ -66,6 +76,16 @@ describe('routing utilities', () => {
     {
       sidebarLabel: 'Concepts',
       contents: [guideReactOnly],
+    },
+    {
+      sidebarLabel: 'Hooks',
+      frameworks: ['react'] satisfies MockFramework[],
+      contents: [guideInReactSection],
+    },
+    {
+      sidebarLabel: 'Controllers',
+      frameworks: ['html'] satisfies MockFramework[],
+      contents: [guideInHtmlSection],
     },
     guideHtmlOnly,
   ];
@@ -187,6 +207,21 @@ describe('routing utilities', () => {
         expect(result.shouldReplace).toBe(false);
         expect(result.reason).toContain('changed slug');
       });
+
+      it('should change slug when guide inherits framework restriction from section', () => {
+        const result = resolveFrameworkChange(
+          {
+            currentFramework: 'html',
+            currentSlug: 'reference/html-controller', // in html-only section
+            newFramework: 'react',
+          },
+          mockSidebar
+        );
+
+        expect(result.selectedSlug).not.toBe('reference/html-controller');
+        expect(result.slugChanged).toBe(true);
+        expect(result.shouldReplace).toBe(false);
+      });
     });
 
     describe('validation', () => {
@@ -263,6 +298,19 @@ describe('routing utilities', () => {
         expect(result.selectedSlug).toBe('concepts/react-only');
         expect(result.priorityLevel).toBe(2);
         expect(result.reason).toContain('Priority 2');
+      });
+
+      it('should fall back when guide inherits framework restriction from section', () => {
+        const result = resolveDocsLinkUrl(
+          {
+            targetSlug: 'reference/react-hook', // in react-only section, no own restriction
+            contextFramework: 'html',
+          },
+          mockSidebar
+        );
+
+        expect(result.selectedFramework).toBe('react');
+        expect(result.priorityLevel).toBe(2);
       });
     });
 

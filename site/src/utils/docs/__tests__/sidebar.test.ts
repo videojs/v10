@@ -331,15 +331,76 @@ describe('sidebar utilities', () => {
 
   describe('getValidFrameworksForGuide', () => {
     it('should return all frameworks when guide has no restrictions', () => {
-      const result = getValidFrameworksForGuide(mockGuide3);
+      const result = getValidFrameworksForGuide(mockGuide3, mockSidebar);
 
       expect(result).toEqual(expect.arrayContaining(['html', 'react']));
     });
 
-    it('should return only restricted frameworks', () => {
-      const result = getValidFrameworksForGuide(mockGuide2);
+    it('should return only restricted frameworks from guide itself', () => {
+      const result = getValidFrameworksForGuide(mockGuide2, mockSidebar);
 
       expect(result).toEqual(['react']);
+    });
+
+    it('should inherit framework restrictions from parent section', () => {
+      const unrestricted: Guide = { slug: 'child-guide' };
+      const sidebar: Sidebar = [
+        {
+          sidebarLabel: 'React Only Section',
+          frameworks: ['react'] satisfies MockFramework[],
+          contents: [unrestricted],
+        },
+      ];
+
+      const result = getValidFrameworksForGuide(unrestricted, sidebar);
+
+      expect(result).toEqual(['react']);
+    });
+
+    it('should intersect guide and ancestor section restrictions', () => {
+      const guideWithOwn: Guide = {
+        slug: 'both-restricted',
+        frameworks: ['html', 'react'] satisfies MockFramework[],
+      };
+      const sidebar: Sidebar = [
+        {
+          sidebarLabel: 'HTML Only Section',
+          frameworks: ['html'] satisfies MockFramework[],
+          contents: [guideWithOwn],
+        },
+      ];
+
+      const result = getValidFrameworksForGuide(guideWithOwn, sidebar);
+
+      expect(result).toEqual(['html']);
+    });
+
+    it('should inherit restrictions through deeply nested sections', () => {
+      const deepGuide: Guide = { slug: 'deep-guide' };
+      const sidebar: Sidebar = [
+        {
+          sidebarLabel: 'Level 1',
+          frameworks: ['react'] satisfies MockFramework[],
+          contents: [
+            {
+              sidebarLabel: 'Level 2',
+              contents: [deepGuide],
+            },
+          ],
+        },
+      ];
+
+      const result = getValidFrameworksForGuide(deepGuide, sidebar);
+
+      expect(result).toEqual(['react']);
+    });
+
+    it('should return all frameworks when guide is not found in sidebar', () => {
+      const orphan: Guide = { slug: 'not-in-sidebar' };
+
+      const result = getValidFrameworksForGuide(orphan, mockSidebar);
+
+      expect(result).toEqual(expect.arrayContaining(['html', 'react']));
     });
   });
 

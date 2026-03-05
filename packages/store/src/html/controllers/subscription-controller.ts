@@ -42,6 +42,11 @@ export class SubscriptionController<Store extends AnyStore, Value> implements Re
 
   #unsubscribe = noop;
 
+  /**
+   * @param host - The host element that owns this controller.
+   * @param source - Store instance or context to resolve the store from.
+   * @param config - Subscription and value extraction configuration.
+   */
   constructor(
     host: SubscriptionControllerHost,
     source: StoreSource<Store>,

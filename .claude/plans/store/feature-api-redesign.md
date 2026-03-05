@@ -165,7 +165,7 @@ export const volumeFeature = defineFeature<HTMLMediaElement>()({
   state: ({ task }) => ({
     volume: 1,
     muted: false,
-    changeVolume(volume: number) {
+    setVolume(volume: number) {
       return task({ key: 'volume', handler: ({ target }) => { target.volume = volume; } });
     },
   }),
@@ -180,7 +180,7 @@ export const volumeFeature = defineFeature<HTMLMediaElement>()({
   state: ({ task, target }) => ({
     volume: 1,
     muted: false,
-    changeVolume(volume: number) {
+    setVolume(volume: number) {
       return task({ key: 'volume', handler: () => { target().volume = volume; } });
     },
   }),

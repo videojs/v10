@@ -23,6 +23,7 @@ export class FullscreenButtonCore {
   };
 
   #props = { ...FullscreenButtonCore.defaultProps };
+  #media: MediaFullscreenState | null = null;
 
   constructor(props?: FullscreenButtonProps) {
     if (props) this.setProps(props);
@@ -52,7 +53,12 @@ export class FullscreenButtonCore {
     };
   }
 
-  getState(media: MediaFullscreenState): FullscreenButtonState {
+  setMedia(media: MediaFullscreenState): void {
+    this.#media = media;
+  }
+
+  getState(): FullscreenButtonState {
+    const media = this.#media!;
     return {
       fullscreen: media.fullscreen,
       availability: media.fullscreenAvailability,

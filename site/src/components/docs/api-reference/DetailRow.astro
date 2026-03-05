@@ -19,14 +19,14 @@ interface Props {
   id: string;
   name: string;
   type: string;
-  shortType?: string;
+  detailedType?: string;
   description?: string;
   colspan: number;
 }
 
-const { id, name, type, shortType, description, colspan } = Astro.props;
+const { id, name, type, detailedType, description, colspan } = Astro.props;
 
-const hasDetail = Boolean(shortType || description);
+const hasDetail = Boolean(detailedType || description);
 ---
 
 <Tr
@@ -38,25 +38,22 @@ const hasDetail = Boolean(shortType || description);
     )}
 >
     <slot />
-    {
-        hasDetail && (
-            <Td class="align-top">
-                <button
-                    aria-expanded="false"
-                    aria-controls={`${id}-detail`}
-                    aria-label={`Details for ${name}`}
-                    data-detail-toggle
+        <Td class="align-top">
+        {
+            hasDetail && (<button
+                aria-expanded="false"
+                aria-controls={`${id}-detail`}
+                aria-label={`Details for ${name}`}
+                data-detail-toggle
+            >
+                <span
+                    aria-hidden="true"
+                    class="inline-block group-data-expanded:rotate-90"
                 >
-                    <span
-                        aria-hidden="true"
-                        class="inline-block group-data-expanded:rotate-90"
-                    >
-                        ▸
-                    </span>
-                </button>
-            </Td>
-        )
-    }
+                    ▸
+                </span>
+            </button>)}
+        </Td>
 </Tr>
 
 {
@@ -74,14 +71,14 @@ const hasDetail = Boolean(shortType || description);
                             </>
                         )}
 
-                        {(type || shortType) && (
+                        {detailedType && (
                             <>
                                 <dt class="text-dark-40 dark:text-light-40">
                                     Type
                                 </dt>
                                 <dd>
                                     <MarkdownCode>
-                                        {type || shortType}
+                                        {detailedType}
                                     </MarkdownCode>
                                 </dd>
                             </>

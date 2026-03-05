@@ -9,8 +9,8 @@ function createMediaState(overrides: Partial<MediaVolumeState> = {}): MediaVolum
     volume: 1,
     muted: false,
     volumeAvailability: 'available',
-    changeVolume: vi.fn((v: number) => v),
-    toggleMute: vi.fn(() => false),
+    setVolume: vi.fn((v: number) => v),
+    toggleMuted: vi.fn(() => false),
     ...overrides,
   };
 }
@@ -28,7 +28,8 @@ describe('MuteButtonCore', () => {
     it('projects muted and volumeLevel', () => {
       const core = new MuteButtonCore();
       const media = createMediaState({ muted: false, volume: 1 });
-      const state = core.getState(media);
+      core.setMedia(media);
+      const state = core.getState();
 
       expect(state.muted).toBe(false);
       expect(state.volumeLevel).toBe('high');
@@ -36,7 +37,8 @@ describe('MuteButtonCore', () => {
 
     it('returns off when muted', () => {
       const core = new MuteButtonCore();
-      const state = core.getState(createMediaState({ muted: true, volume: 0.8 }));
+      core.setMedia(createMediaState({ muted: true, volume: 0.8 }));
+      const state = core.getState();
 
       expect(state.muted).toBe(true);
       expect(state.volumeLevel).toBe('off');
@@ -44,26 +46,26 @@ describe('MuteButtonCore', () => {
 
     it('returns off when volume is 0', () => {
       const core = new MuteButtonCore();
-      const state = core.getState(createMediaState({ volume: 0 }));
-      expect(state.volumeLevel).toBe('off');
+      core.setMedia(createMediaState({ volume: 0 }));
+      expect(core.getState().volumeLevel).toBe('off');
     });
 
     it('returns low when volume < 0.5', () => {
       const core = new MuteButtonCore();
-      const state = core.getState(createMediaState({ volume: 0.3 }));
-      expect(state.volumeLevel).toBe('low');
+      core.setMedia(createMediaState({ volume: 0.3 }));
+      expect(core.getState().volumeLevel).toBe('low');
     });
 
     it('returns medium when volume < 0.75', () => {
       const core = new MuteButtonCore();
-      const state = core.getState(createMediaState({ volume: 0.6 }));
-      expect(state.volumeLevel).toBe('medium');
+      core.setMedia(createMediaState({ volume: 0.6 }));
+      expect(core.getState().volumeLevel).toBe('medium');
     });
 
     it('returns high when volume >= 0.75', () => {
       const core = new MuteButtonCore();
-      const state = core.getState(createMediaState({ volume: 0.75 }));
-      expect(state.volumeLevel).toBe('high');
+      core.setMedia(createMediaState({ volume: 0.75 }));
+      expect(core.getState().volumeLevel).toBe('high');
     });
   });
 
@@ -106,18 +108,18 @@ describe('MuteButtonCore', () => {
   });
 
   describe('toggle', () => {
-    it('calls toggleMute', () => {
+    it('calls toggleMuted', () => {
       const core = new MuteButtonCore();
       const media = createMediaState();
       core.toggle(media);
-      expect(media.toggleMute).toHaveBeenCalled();
+      expect(media.toggleMuted).toHaveBeenCalled();
     });
 
     it('does nothing when disabled', () => {
       const core = new MuteButtonCore({ disabled: true });
       const media = createMediaState();
       core.toggle(media);
-      expect(media.toggleMute).not.toHaveBeenCalled();
+      expect(media.toggleMuted).not.toHaveBeenCalled();
     });
   });
 });

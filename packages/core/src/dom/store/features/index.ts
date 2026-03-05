@@ -1,9 +1,13 @@
 export * from './buffer';
 export * from './controls';
+export * from './error';
 export * as features from './feature.parts';
 export * from './fullscreen';
 export * from './pip';
 export * from './playback';
+export * from './playback-rate';
+export * from './presets';
 export * from './source';
+export * from './text-track';
 export * from './time';
 export * from './volume';

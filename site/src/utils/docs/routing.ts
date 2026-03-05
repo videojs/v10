@@ -1,7 +1,7 @@
 import { sidebar as defaultSidebar } from '@/docs.config';
 import type { Sidebar, SupportedFramework } from '@/types/docs';
 import { DEFAULT_FRAMEWORK, isValidFramework } from '@/types/docs';
-import { findFirstGuide, findGuideBySlug, getValidFrameworksForGuide, isItemVisible } from './sidebar';
+import { findFirstGuide, findGuideBySlug, getValidFrameworksForGuide } from './sidebar';
 
 /**
  * Build a docs URL from framework and guide slug components.
@@ -135,7 +135,8 @@ export function resolveFrameworkChange(
   let reason: string;
 
   const guide = findGuideBySlug(currentSlug, sidebar);
-  if (guide && isItemVisible(guide, selectedFramework)) {
+  const validFrameworks = guide ? getValidFrameworksForGuide(guide, sidebar) : [];
+  if (guide && validFrameworks.includes(selectedFramework)) {
     // Current slug is visible in the new framework
     selectedSlug = currentSlug;
     shouldReplace = true;
@@ -211,7 +212,7 @@ export function resolveDocsLinkUrl(input: DocsLinkInput, sidebar: Sidebar = defa
   let reason: string;
 
   // Priority 1: Try current framework
-  const validFrameworks = getValidFrameworksForGuide(guide);
+  const validFrameworks = getValidFrameworksForGuide(guide, sidebar);
   if (validFrameworks.includes(contextFramework)) {
     selectedFramework = contextFramework;
     priorityLevel = 1;

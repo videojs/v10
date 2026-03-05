@@ -4,18 +4,19 @@ import type { MediaFeatureAvailability, MediaVolumeState } from '../../../core/m
 import { definePlayerFeature } from '../../feature';
 
 export const volumeFeature = definePlayerFeature({
+  name: 'volume',
   state: ({ target }): MediaVolumeState => ({
     volume: 1,
     muted: false,
     volumeAvailability: 'unavailable',
 
-    changeVolume(volume: number) {
+    setVolume(volume: number) {
       const { media } = target();
       media.volume = Math.max(0, Math.min(1, volume));
       return media.volume;
     },
 
-    toggleMute() {
+    toggleMuted() {
       const { media } = target();
       media.muted = !media.muted;
       return media.muted;

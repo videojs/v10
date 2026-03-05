@@ -1,70 +1,18 @@
-import { FullscreenButtonCore, FullscreenButtonDataAttrs } from '@videojs/core';
-import {
-  applyElementProps,
-  applyStateDataAttrs,
-  createButton,
-  logMissingFeature,
-  selectFullscreen,
-} from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import { FullscreenButtonCore, FullscreenButtonDataAttrs, type MediaFullscreenState } from '@videojs/core';
+import { selectFullscreen } from '@videojs/core/dom';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { MediaButtonElement } from '../media-button-element';
 
-export class FullscreenButtonElement extends MediaElement {
+export class FullscreenButtonElement extends MediaButtonElement<FullscreenButtonCore> {
   static readonly tagName = 'media-fullscreen-button';
 
-  static override properties = {
-    label: { type: String },
-    disabled: { type: Boolean },
-  } satisfies PropertyDeclarationMap<keyof FullscreenButtonCore.Props>;
+  protected readonly core = new FullscreenButtonCore();
+  protected readonly stateAttrMap = FullscreenButtonDataAttrs;
+  protected readonly mediaState = new PlayerController(this, playerContext, selectFullscreen);
 
-  label = FullscreenButtonCore.defaultProps.label;
-  disabled = FullscreenButtonCore.defaultProps.disabled;
-
-  readonly #core = new FullscreenButtonCore();
-  readonly #state = new PlayerController(this, playerContext, selectFullscreen);
-
-  #disconnect: AbortController | null = null;
-
-  override connectedCallback(): void {
-    super.connectedCallback();
-
-    this.#disconnect = new AbortController();
-
-    const buttonProps = createButton({
-      onActivate: () => this.#core.toggle(this.#state.value!),
-      isDisabled: () => this.disabled || !this.#state.value,
-    });
-
-    applyElementProps(this, buttonProps, this.#disconnect.signal);
-
-    if (__DEV__ && !this.#state.value) {
-      logMissingFeature(FullscreenButtonElement.tagName, 'fullscreen');
-    }
-  }
-
-  override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this.#disconnect?.abort();
-    this.#disconnect = null;
-  }
-
-  protected override willUpdate(changed: PropertyValues): void {
-    super.willUpdate(changed);
-    this.#core.setProps(this);
-  }
-
-  protected override update(changed: PropertyValues): void {
-    super.update(changed);
-
-    const media = this.#state.value;
-
-    if (!media) return;
-
-    const state = this.#core.getState(media);
-    applyElementProps(this, this.#core.getAttrs(state));
-    applyStateDataAttrs(this, state, FullscreenButtonDataAttrs);
+  protected activate(state: MediaFullscreenState): void {
+    this.core.toggle(state);
   }
 }

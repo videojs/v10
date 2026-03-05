@@ -5,7 +5,14 @@ export interface PosterState {
 }
 
 export class PosterCore {
-  getState(media: MediaPlaybackState): PosterState {
+  #media: MediaPlaybackState | null = null;
+
+  setMedia(media: MediaPlaybackState): void {
+    this.#media = media;
+  }
+
+  getState(): PosterState {
+    const media = this.#media!;
     return {
       visible: !media.started,
     };

@@ -1,0 +1,67 @@
+name: Issue Sync
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+  issues: write
+  id-token: write
+
+concurrency:
+  group: issue-sync-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  follow-up-issues:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude issue follow-up
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: |
+            --model sonnet
+            --max-turns 12
+            --allowedTools "Bash(gh:*)" "WebSearch" "WebFetch"
+          prompt: |
+            A pull request was merged and you are the issue follow-up agent.
+
+            PR context:
+            - Number: #${{ github.event.pull_request.number }}
+            - Title: ${{ github.event.pull_request.title }}
+            - URL: ${{ github.event.pull_request.html_url }}
+            - Merged by: ${{ github.event.pull_request.merged_by.login }}
+            - Body:
+              ${{ github.event.pull_request.body }}
+
+            Tasks:
+            1. Identify issues this PR references or could reasonably affect.
+            - Start with explicit references in the PR body/title (e.g., Fixes #123, Closes #123, Related #123).
+            - Also inspect cross-references and obvious directly related open issues.
+            2. For each related issue:
+            - Update task lists/checklists/todos when the merged PR clearly completes specific items.
+            - Add a concise follow-up comment only when it is informative (e.g., completed scope, remaining scope, blocker, or misalignment).
+            - If fully completed, close the issue with a clear completion note.
+            - If partially completed, keep it open and note exactly what remains.
+            3. Detect and call out misalignment:
+            - Identify mismatches between issue state, checklists, labels, status notes, and the merged PR outcome.
+            - When misalignment exists, post one focused comment that explains the mismatch and the recommended correction.
+            4. Avoid noise:
+            - Do not add comments unless they provide clear value or new information.
+            - Do not add duplicate comments if an equivalent follow-up comment already exists.
+            - Do not close issues with remaining unchecked or unresolved work.
+            - If there are no related issues or no meaningful updates, do not comment.
+
+            Keep all comments concise and action-oriented.

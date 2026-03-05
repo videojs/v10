@@ -146,7 +146,8 @@ site/
 │   ├── content/             # Content collections (blog/, docs/, authors.json)
 │   ├── layouts/             # Page layouts (Base, Blog, Docs, Markdown)
 │   ├── pages/               # Route pages (file-based routing)
-│   ├── content/generated-api-reference/ # Generated API reference JSON (gitignored)
+│   ├── content/generated-component-reference/ # Generated component reference JSON (gitignored)
+│   ├── content/generated-util-reference/      # Generated util reference JSON (gitignored)
 │   ├── stores/              # Nanostores for cross-island state
 │   ├── styles/              # Global CSS, Tailwind imports
 │   ├── types/               # TypeScript type definitions
@@ -541,11 +542,11 @@ vi.mock('@/types/docs', async () => {
 ## Technology Stack
 
 - **[Astro 5.14.4](https://astro.build)**: Static site generation with island architecture
-- **[React 18](https://react.dev)**: Client-side interactive components (`client:load`)
-- **[React Compiler](https://react.dev/learn/react-compiler)**: Enabled via `babel-plugin-react-compiler` targeting React 18
+- **[React 19](https://react.dev)**: Client-side interactive components (`client:load`)
+- **[React Compiler](https://react.dev/learn/react-compiler)**: Enabled via `babel-plugin-react-compiler` targeting React 19
 - **[Tailwind v4](https://tailwindcss.com)**: CSS utility classes via `@tailwindcss/vite`
 - **[Nanostores 1.0.1](https://github.com/nanostores/nanostores)**: Cross-island state
-- **[Base UI 1.0.0-beta.4](https://base-ui.com)**: Headless accessible components
+- **[Base UI 1.2.0](https://base-ui.com)**: Headless accessible components
 - **[Pagefind 1.4.0](https://pagefind.app)**: Static search with build-time indexing
 - **[Shiki 3.13.0](https://shiki.style)**: Syntax highlighting
 - **[Vitest 3.2.4](https://vitest.dev)**: Testing framework
@@ -553,57 +554,26 @@ vi.mock('@/types/docs', async () => {
 
 ## API Reference Generation
 
-The API docs builder extracts type information from TypeScript sources and generates JSON files used by Astro components.
+> **Source of truth:** [`internal/design/site/api-docs-builder.md`](../internal/design/site/api-docs-builder.md)
+>
+> The design spec is the ground-truth for the entire pipeline — discovery, extraction, JSON schemas, reference model, and rendered output. **Any changes to the api-docs-builder must be reflected in the spec.** When implementation diverges from the spec, the spec wins.
 
-### How It Works
+The builder (`scripts/api-docs-builder/`) extracts type information from TypeScript sources and generates JSON for two kinds of reference:
 
-```
-packages/core/html/react/  → JSON → <ApiReference /> → tables
-```
+- **Component references** → `src/content/generated-component-reference/{name}.json`
+- **Util references** → `src/content/generated-util-reference/{slug}.json`
 
-1. **Builder script** (`scripts/api-docs-builder/`) parses TypeScript using `typescript-api-extractor`
-2. **Extracts** from core files: Props interface, State interface, defaultProps
-3. **Extracts** from data-attrs files: data attributes with JSDoc descriptions
-4. **Extracts** from HTML element files: Lit `tagName`
-5. **Detects** multi-part components via `packages/react/src/ui/{name}/index.parts.ts`
-6. **Extracts** part descriptions from React component JSDoc
-7. **Outputs** JSON to `src/content/generated-api-reference/{component}.json`
-8. **`<ApiReference />`** Astro component renders the JSON as tables
-
-### Generated Files Are Gitignored
-
-The `src/content/generated-api-reference/` directory is **gitignored**. JSON files are regenerated:
-- Automatically on `pnpm dev` (via `predev` hook)
-- Automatically on `pnpm build` (via `prebuild` hook)
-- Manually via `pnpm api-docs`
+Generated files are **gitignored** and regenerated automatically on `pnpm dev` and `pnpm build`, or manually via `pnpm api-docs`.
 
 ### Usage in MDX
 
-Use the unified `<ApiReference />` component for both single-part and multi-part components:
-
 ```mdx
-import ApiReference from '@/components/docs/api-reference/ApiReference.astro';
+import ComponentReference from '@/components/docs/api-reference/ComponentReference.astro';
+import UtilReference from '@/components/docs/api-reference/UtilReference.astro';
 
-<ApiReference component="PlayButton" />
+<ComponentReference component="PlayButton" />
+<UtilReference util="usePlayer" />
 ```
-
-The component automatically handles:
-- **Single-part**: Renders Props, State, and Data Attributes sections with h3 headings
-- **Multi-part**: Renders each part with a framework-aware h3 heading, description from JSDoc, and h4 sub-sections
-
-### Adding a New Component
-
-When a new component is added to `packages/core/src/core/ui/`:
-1. Run `pnpm api-docs` to generate its JSON
-2. Add `<ApiReference component="{Name}" />` to the MDX reference page
-
-For multi-part components:
-1. Ensure `packages/react/src/ui/{name}/index.parts.ts` exports each part
-2. Add JSDoc descriptions to each React component export for part descriptions
-3. Ensure each part's HTML element is at `packages/html/src/ui/{name}/{name}-{part}-element.ts`
-4. The primary part (whose element is just `{name}-element.ts`) gets the shared core props/state/data-attrs
-
-See `scripts/api-docs-builder/README.md` for full documentation.
 
 ## Custom Astro Integration: Pagefind
 
@@ -677,7 +647,7 @@ OAuth and Mux integration exist to support the **video uploader** on the install
 Four plugins transform MDX content during build. Registered in `astro.config.mjs`:
 
 **`remarkConditionalHeadings`** (`src/utils/remarkConditionalHeadings.js`)
-Walks the MDX AST and tracks headings inside `<FrameworkCase>` / `<StyleCase>` components, attaching conditional metadata (which frameworks/styles a heading belongs to). Also reads `<ApiReference>` component props, loads the generated JSON, and injects heading entries so API reference sections appear in the table of contents. Outputs to `frontmatter.conditionalHeadings`.
+Walks the MDX AST and tracks headings inside `<FrameworkCase>` / `<StyleCase>` components, attaching conditional metadata (which frameworks/styles a heading belongs to). Also reads `<ComponentReference>` and `<UtilReference>` component props, loads the generated JSON, and injects heading entries so API reference sections appear in the table of contents. Outputs to `frontmatter.conditionalHeadings`.
 
 **`remarkReadingTime`** (`src/utils/remarkReadingTime.mjs`)
 Calculates reading time and injects `frontmatter.minutesRead` (text) and `frontmatter.readingTimeMinutes` (number).

@@ -1,0 +1,113 @@
+.html-volume-slider-parts,
+.html-volume-slider-parts media-container {
+  display: block;
+  position: relative;
+}
+
+.html-volume-slider-parts video {
+  width: 100%;
+}
+
+.html-volume-slider-parts__mute-button {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  color: black;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  padding-block: 8px;
+  padding-inline: 20px;
+  cursor: pointer;
+}
+
+.html-volume-slider-parts__mute-button .show-when-muted {
+  display: none;
+}
+.html-volume-slider-parts__mute-button .show-when-unmuted {
+  display: none;
+}
+.html-volume-slider-parts__mute-button[data-muted] .show-when-muted {
+  display: inline;
+}
+.html-volume-slider-parts__mute-button:not([data-muted]) .show-when-unmuted {
+  display: inline;
+}
+
+.html-volume-slider-parts__slider {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 100px;
+  display: flex;
+  align-items: center;
+  height: 20px;
+  cursor: pointer;
+}
+
+.html-volume-slider-parts__track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  border-radius: 9999px;
+  transition: height 150ms ease;
+}
+
+.html-volume-slider-parts__slider[data-interactive] .html-volume-slider-parts__track {
+  height: 6px;
+}
+
+.html-volume-slider-parts__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: var(--media-slider-fill);
+  background: white;
+  border-radius: 9999px;
+}
+
+.html-volume-slider-parts__thumb {
+  position: absolute;
+  left: var(--media-slider-fill);
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  transform: translateX(-50%) scale(0);
+  transition: transform 150ms ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.html-volume-slider-parts__slider[data-interactive] .html-volume-slider-parts__thumb {
+  transform: translateX(-50%) scale(1);
+}
+
+.html-volume-slider-parts__slider[data-dragging] .html-volume-slider-parts__thumb {
+  transform: translateX(-50%) scale(1.1);
+}
+
+.html-volume-slider-parts__value {
+  position: absolute;
+  left: var(--media-slider-pointer);
+  bottom: 100%;
+  transform: translateX(-50%);
+  margin-bottom: 6px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.html-volume-slider-parts__slider[data-pointing] .html-volume-slider-parts__value {
+  opacity: 1;
+}

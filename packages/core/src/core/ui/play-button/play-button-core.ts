@@ -20,6 +20,7 @@ export class PlayButtonCore {
   };
 
   #props = { ...PlayButtonCore.defaultProps };
+  #media: MediaPlaybackState | null = null;
 
   constructor(props?: PlayButtonProps) {
     if (props) this.setProps(props);
@@ -50,7 +51,12 @@ export class PlayButtonCore {
     };
   }
 
-  getState(media: MediaPlaybackState): PlayButtonState {
+  setMedia(media: MediaPlaybackState): void {
+    this.#media = media;
+  }
+
+  getState(): PlayButtonState {
+    const media = this.#media!;
     return {
       paused: media.paused,
       ended: media.ended,

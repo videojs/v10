@@ -1,3 +1,8 @@
-import type { PropsWithChildren } from 'react';
+import type { CSSProperties, PropsWithChildren } from 'react';
 
-export type BaseSkinProps = PropsWithChildren;
+export type BaseSkinProps<T = unknown> = PropsWithChildren<
+  T & {
+    style?: CSSProperties;
+    className?: string;
+  }
+>;

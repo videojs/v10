@@ -1,0 +1,56 @@
+---
+title: useStore
+description: Hook to access store state and actions with optional selector-based subscriptions
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import StoreAccessDemoReact from "@/components/docs/demos/use-store/react/css/StoreAccess";
+import storeAccessReactTsx from "@/components/docs/demos/use-store/react/css/StoreAccess.tsx?raw";
+import storeAccessReactCss from "@/components/docs/demos/use-store/react/css/StoreAccess.css?raw";
+import SelectorDemoReact from "@/components/docs/demos/use-store/react/css/Selector";
+import selectorReactTsx from "@/components/docs/demos/use-store/react/css/Selector.tsx?raw";
+import selectorReactCss from "@/components/docs/demos/use-store/react/css/Selector.css?raw";
+
+`useStore` subscribes to a store instance directly. It has the same two overloads as <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> — without a selector for store access, or with a selector for reactive state. Within a player provider, `usePlayer` is usually simpler since it reads the store from context. Reach for `useStore` when you have a store instance directly or need to derive computed values from the store.
+
+## Examples
+
+### Store Access
+
+Call `useStore(store)` without a selector to get the store instance back for imperative actions. The component does not subscribe to state changes.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: storeAccessReactTsx, lang: "tsx" },
+        { title: "App.css", code: storeAccessReactCss, lang: "css" },
+      ]}
+    >
+      <StoreAccessDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+### Selector Subscription
+
+Pass a selector to derive and subscribe to computed values from the store. The component re-renders when the derived value changes, using shallow equality by default.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: selectorReactTsx, lang: "tsx" },
+        { title: "App.css", code: selectorReactCss, lang: "css" },
+      ]}
+    >
+      <SelectorDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<UtilReference util="useStore" />

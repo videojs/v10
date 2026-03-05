@@ -54,6 +54,7 @@ function getElementRef(element: ReactElement): Ref<unknown> | undefined {
  * - Ref composition
  * - className/style as functions of state
  *
+ * @public
  * @example
  * ```tsx
  * return renderElement('button', componentProps, {
@@ -71,7 +72,7 @@ export function renderElement<
   element: TagName,
   componentProps: UseRenderComponentProps<State>,
   params: UseRenderParameters<State, RenderedElementType>
-): ReactElement {
+): ReactElement | null {
   const { className: classNameProp, style: styleProp, render } = componentProps;
   const { state, ref, props, stateAttrMap } = params;
 

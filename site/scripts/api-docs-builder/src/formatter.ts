@@ -3,11 +3,40 @@ import * as tae from 'typescript-api-extractor';
 import type { PropDef } from './types.js';
 
 /**
+ * Detect if a type string is a single function type (vs a top-level union).
+ *
+ * Tracks bracket depth to find the matching `)` for the opening `(` of the parameter list,
+ * then checks if `=>` follows. Returns `false` for top-level unions that happen to contain
+ * a function member (e.g., `((state: object) => string) | undefined`).
+ */
+function isFunctionType(type: string): boolean {
+  if (!type.startsWith('(')) return false;
+  let depth = 0;
+  for (let i = 0; i < type.length; i++) {
+    if (type[i] === '(' || type[i] === '{' || type[i] === '[') depth++;
+    else if (type[i] === ')' || type[i] === '}' || type[i] === ']') depth--;
+    if (depth === 0) {
+      return type
+        .slice(i + 1)
+        .trimStart()
+        .startsWith('=>');
+    }
+  }
+  return false;
+}
+
+/**
  * Get abbreviated type for display in collapsed rows.
  *
- * Returns `shortType` when abbreviation adds value, `undefined` otherwise.
+ * Returns an abbreviated string when abbreviation adds value, `undefined` otherwise.
  */
-export function getShortPropType(name: string, type: string): string | undefined {
+export function abbreviateType(name: string, type: string): string | undefined {
+  // Pure function types (no union) → "function"
+  // Also matches function types whose return is a union (e.g., `(state: object) => X | undefined`)
+  if (type.includes('=>') && (!type.includes(' | ') || isFunctionType(type))) {
+    return 'function';
+  }
+
   // Callbacks → "function"
   if (/^(on|get)[A-Z]/.test(name) && type.includes('=>')) {
     return 'function';
@@ -29,6 +58,11 @@ export function getShortPropType(name: string, type: string): string | undefined
     return undefined;
   }
 
+  // Object literal > 40 chars → "object"
+  if (type.startsWith('{ ') && type.length > 40) {
+    return 'object';
+  }
+
   // Short unions (less than 3 members and under 40 chars) → no abbreviation
   if (!type.includes(' | ') || (type.split(' | ').length < 3 && type.length < 40 && !type.includes('=>'))) {
     return undefined;
@@ -42,6 +76,11 @@ export function getShortPropType(name: string, type: string): string | undefined
       return `${nonFunctionParts.join(' | ')} | function`;
     }
     return 'function';
+  }
+
+  // Any other type > 40 chars → truncated for display, full in detailedType
+  if (type.length > 40) {
+    return `${type.slice(0, 37)}...`;
   }
 
   // Complex unions → no abbreviation needed (show full type)
@@ -60,13 +99,13 @@ export function formatProperties(props: tae.PropertyNode[], allExports?: tae.Exp
     // Skip props marked with @ignore
     if (prop.documentation?.hasTag('ignore')) continue;
 
-    const formattedType = allExports
+    const expandedType = allExports
       ? formatDetailedType(prop.type, allExports, prop.optional)
       : formatType(prop.type, prop.optional);
-    const shortType = getShortPropType(prop.name, formattedType);
+    const abbreviated = abbreviateType(prop.name, expandedType);
 
-    const entry: PropDef = { type: formattedType };
-    if (shortType !== undefined) entry.shortType = shortType;
+    const entry: PropDef = { type: abbreviated ?? expandedType };
+    if (abbreviated && expandedType !== abbreviated) entry.detailedType = expandedType;
     if (prop.documentation?.defaultValue !== undefined) entry.default = prop.documentation.defaultValue;
     if (!prop.optional) entry.required = true;
     if (prop.documentation?.description !== undefined) entry.description = prop.documentation.description;
@@ -114,7 +153,11 @@ export function formatDetailedType(
       if (t instanceof tae.UnionNode) {
         return t.typeName ? t : t.types;
       }
-      if (t instanceof tae.TypeParameterNode && t.constraint instanceof tae.UnionNode) {
+      if (
+        t instanceof tae.TypeParameterNode &&
+        t.constraint instanceof tae.UnionNode &&
+        t.constraint.types.length <= 5
+      ) {
         return t.constraint.types;
       }
       return t;
@@ -171,7 +214,11 @@ export function formatType(type: tae.AnyType, removeUndefined: boolean): string 
       if (t instanceof tae.UnionNode) {
         return t.typeName ? t : t.types;
       }
-      if (t instanceof tae.TypeParameterNode && t.constraint instanceof tae.UnionNode) {
+      if (
+        t instanceof tae.TypeParameterNode &&
+        t.constraint instanceof tae.UnionNode &&
+        t.constraint.types.length <= 5
+      ) {
         return t.constraint.types;
       }
       return t;
@@ -198,7 +245,7 @@ export function formatType(type: tae.AnyType, removeUndefined: boolean): string 
     }
 
     if (type.properties.length === 0) {
-      return '{}';
+      return 'object';
     }
 
     return `{ ${type.properties.map((m) => `${m.name}${m.optional ? '?' : ''}: ${formatType(m.type, m.optional)}`).join('; ')} }`;
@@ -239,7 +286,10 @@ export function formatType(type: tae.AnyType, removeUndefined: boolean): string 
   }
 
   if (type instanceof tae.TypeParameterNode) {
-    return type.constraint !== undefined ? formatType(type.constraint, removeUndefined) : type.name;
+    if (type.constraint === undefined) return type.name;
+    // Large union constraints (e.g., keyof JSX.IntrinsicElements) — show the parameter name
+    if (type.constraint instanceof tae.UnionNode && type.constraint.types.length > 5) return type.name;
+    return formatType(type.constraint, removeUndefined);
   }
 
   return 'unknown';

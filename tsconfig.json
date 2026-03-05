@@ -16,7 +16,7 @@
     { "path": "packages/core" },
     { "path": "packages/core/src/dom" },
 
-    { "path": "packages/icons" },
+    { "path": "packages/skins" },
 
     { "path": "packages/html" },
     { "path": "packages/react" }

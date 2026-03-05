@@ -18,14 +18,18 @@ export const sidebar: Sidebar = [
       { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
     ],
   },
-  {
-    sidebarLabel: 'Concepts',
-    contents: [{ slug: 'concepts/architecture' }, { slug: 'concepts/skins' }, { slug: 'concepts/ui-components' }],
-  },
-  {
-    sidebarLabel: 'How to',
-    contents: [{ slug: 'how-to/customize-skins' }],
-  },
+  // {
+  //   sidebarLabel: 'Concepts',
+  //   contents: [
+  //     { slug: 'concepts/architecture' },
+  //     { slug: 'concepts/skins' },
+  //     { slug: 'concepts/ui-components' }
+  //   ],
+  // },
+  // {
+  //   sidebarLabel: 'How to',
+  //   contents: [{ slug: 'how-to/customize-skins' }],
+  // },
   {
     sidebarLabel: 'Components',
     contents: [
@@ -36,9 +40,71 @@ export const sidebar: Sidebar = [
       { slug: 'reference/mute-button' },
       { slug: 'reference/pip-button' },
       { slug: 'reference/play-button' },
+      { slug: 'reference/playback-rate-button' },
+      { slug: 'reference/popover' },
       { slug: 'reference/poster' },
       { slug: 'reference/seek-button' },
+      { slug: 'reference/thumbnail' },
       { slug: 'reference/time' },
+      { slug: 'reference/time-slider' },
+      { slug: 'reference/volume-slider' },
+    ],
+  },
+  {
+    sidebarLabel: 'Hooks & Utilities',
+    frameworks: ['react'],
+    contents: [
+      { slug: 'reference/create-player' },
+      { slug: 'reference/use-player' },
+      { slug: 'reference/use-media' },
+      { slug: 'reference/use-store' },
+      {
+        sidebarLabel: 'Advanced',
+        defaultOpen: false,
+        contents: [
+          { slug: 'reference/render-element' },
+          { slug: 'reference/use-button' },
+          { slug: 'reference/use-media-registration' },
+          { slug: 'reference/use-player-context' },
+          { slug: 'reference/use-selector' },
+          { slug: 'reference/use-snapshot' },
+        ],
+      },
+    ],
+  },
+  {
+    sidebarLabel: 'Controllers & Mixins',
+    frameworks: ['html'],
+    contents: [
+      { slug: 'reference/html-create-player', sidebarLabel: 'createPlayer' },
+      { slug: 'reference/player-controller' },
+      { slug: 'reference/player-mixin', sidebarLabel: 'PlayerMixin (removed)' },
+      {
+        sidebarLabel: 'Advanced',
+        defaultOpen: false,
+        contents: [
+          { slug: 'reference/container-mixin' },
+          { slug: 'reference/player-context' },
+          { slug: 'reference/provider-mixin' },
+          { slug: 'reference/snapshot-controller' },
+          { slug: 'reference/store-controller' },
+        ],
+      },
+    ],
+  },
+  {
+    sidebarLabel: 'Selectors',
+    contents: [
+      { slug: 'reference/create-selector' },
+      { slug: 'reference/select-buffer' },
+      { slug: 'reference/select-controls' },
+      { slug: 'reference/select-fullscreen' },
+      { slug: 'reference/select-pip', sidebarLabel: 'selectPiP' },
+      { slug: 'reference/select-playback' },
+      { slug: 'reference/select-playback-rate' },
+      { slug: 'reference/select-source' },
+      { slug: 'reference/select-time' },
+      { slug: 'reference/select-volume' },
     ],
   },
 ];

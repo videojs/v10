@@ -3,7 +3,16 @@ import { type Comparator, type Selector, shallowEqual } from '../../core/shallow
 
 export type { Comparator, Selector };
 
-/** Subscribe to derived state with customizable equality check. */
+/**
+ * Subscribe to derived state with customizable equality check.
+ *
+ * Low-level hook used internally by `useStore` and `useSnapshot`.
+ *
+ * @param subscribe - Subscribe function that returns an unsubscribe callback.
+ * @param getSnapshot - Returns the current snapshot value.
+ * @param selector - Derives a value from the snapshot.
+ * @param isEqual - Custom equality function. Defaults to `shallowEqual`.
+ */
 export function useSelector<S, R>(
   subscribe: (cb: () => void) => () => void,
   getSnapshot: () => S,

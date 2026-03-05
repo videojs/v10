@@ -1,7 +1,7 @@
 import { combine, createStore } from '@videojs/store';
 import { describe, expect, it, vi } from 'vitest';
-
 import type { PlayerTarget } from '../../../media/types';
+import { createMockVideo } from '../../../tests/test-helpers';
 import { sourceFeature } from '../source';
 import { timeFeature } from '../time';
 
@@ -142,25 +142,3 @@ describe('sourceFeature', () => {
     });
   });
 });
-
-function createMockVideo(
-  overrides: Partial<{
-    currentSrc: string;
-    src: string;
-    readyState: number;
-  }>
-): HTMLVideoElement {
-  const video = document.createElement('video');
-
-  if (overrides.currentSrc !== undefined) {
-    Object.defineProperty(video, 'currentSrc', { value: overrides.currentSrc, writable: false, configurable: true });
-  }
-  if (overrides.src !== undefined) {
-    video.src = overrides.src;
-  }
-  if (overrides.readyState !== undefined) {
-    Object.defineProperty(video, 'readyState', { value: overrides.readyState, writable: false, configurable: true });
-  }
-
-  return video;
-}

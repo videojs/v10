@@ -1,0 +1,37 @@
+.html-create-player-basic {
+  position: relative;
+}
+
+.html-create-player-basic video {
+  width: 100%;
+}
+
+.html-create-player-basic__button {
+  padding-block: 8px;
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  color: black;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  padding-inline: 20px;
+  cursor: pointer;
+}
+
+.html-create-player-basic__button .show-when-paused {
+  display: none;
+}
+
+.html-create-player-basic__button .show-when-playing {
+  display: none;
+}
+
+.html-create-player-basic__button[data-paused] .show-when-paused {
+  display: inline;
+}
+
+.html-create-player-basic__button:not([data-paused]) .show-when-playing {
+  display: inline;
+}

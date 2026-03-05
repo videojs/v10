@@ -178,19 +178,27 @@ export function getSectionsForGuide(slug: string, sidebarToSearch: Sidebar = sid
 }
 
 /**
- * Get all valid frameworks for a guide.
- * Returns the frameworks the guide is restricted to, or all frameworks if it has no restrictions.
- *
- * @param guide - The guide to check
- * @returns Array of valid frameworks for this guide
+ * Get all valid frameworks for a guide, accounting for ancestor section restrictions.
+ * Walks the sidebar tree to find the guide and intersects `frameworks` from every
+ * ancestor section along the path, then applies the guide's own restriction on top.
  */
-export function getValidFrameworksForGuide(guide: Guide): SupportedFramework[] {
-  // If guide has no framework restrictions, all frameworks are valid
-  if (!guide.frameworks) {
-    return Object.keys(FRAMEWORK_STYLES) as SupportedFramework[];
+export function getValidFrameworksForGuide(guide: Guide, sidebarToSearch: Sidebar = sidebar): SupportedFramework[] {
+  const allFrameworks = Object.keys(FRAMEWORK_STYLES) as SupportedFramework[];
+
+  function findWithRestrictions(items: Sidebar, inherited: SupportedFramework[]): SupportedFramework[] | null {
+    for (const item of items) {
+      if (isSection(item)) {
+        const sectionFrameworks = item.frameworks ? inherited.filter((f) => item.frameworks!.includes(f)) : inherited;
+        const result = findWithRestrictions(item.contents, sectionFrameworks);
+        if (result) return result;
+      } else if (item.slug === guide.slug) {
+        return item.frameworks ? inherited.filter((f) => item.frameworks!.includes(f)) : inherited;
+      }
+    }
+    return null;
   }
 
-  return guide.frameworks;
+  return findWithRestrictions(sidebarToSearch, allFrameworks) ?? allFrameworks;
 }
 
 /**

@@ -12,7 +12,8 @@ export function TableOfContents({ headings }: TableOfContentsProps) {
   const activeId = useActiveHeading(filteredHeadings);
 
   if (filteredHeadings.length === 0) {
-    return null;
+    // biome-ignore lint/complexity/noUselessFragments: Astro SSR logs false "Invalid hook call" when a React component with hooks returns null. See withastro/astro#12283.
+    return <></>;
   }
 
   return (

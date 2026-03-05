@@ -40,10 +40,28 @@ export type UsePlayerHook<Store extends PlayerStore> = {
   <R>(selector: (state: InferStoreState<Store>) => R): R;
 };
 
+/**
+ * Create a player instance with typed store, Provider component, Container, and hooks.
+ *
+ * @label Video
+ * @param config - Player configuration with features and optional display name.
+ */
 export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
 
+/**
+ * Create a player for audio media.
+ *
+ * @label Audio
+ * @param config - Player configuration with features and optional display name.
+ */
 export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;
 
+/**
+ * Create a player with custom features.
+ *
+ * @label Generic
+ * @param config - Player configuration with features and optional display name.
+ */
 export function createPlayer<const Features extends AnyPlayerFeature[]>(
   config: CreatePlayerConfig<Features>
 ): CreatePlayerResult<PlayerStore<Features>>;

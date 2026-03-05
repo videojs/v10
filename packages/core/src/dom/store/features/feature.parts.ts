@@ -1,12 +1,15 @@
-import type { AudioFeatures, BackgroundFeatures, VideoFeatures } from '../../media/types';
 import { bufferFeature } from './buffer';
 import { controlsFeature } from './controls';
 import { fullscreenFeature } from './fullscreen';
 import { pipFeature } from './pip';
 import { playbackFeature } from './playback';
+import { playbackRateFeature } from './playback-rate';
 import { sourceFeature } from './source';
+import { textTrackFeature } from './text-track';
 import { timeFeature } from './time';
 import { volumeFeature } from './volume';
+
+export { audioFeatures, backgroundFeatures, videoFeatures } from './presets';
 
 // Short aliases
 export {
@@ -15,23 +18,9 @@ export {
   fullscreenFeature as fullscreen,
   pipFeature as pip,
   playbackFeature as playback,
+  playbackRateFeature as playbackRate,
   sourceFeature as source,
+  textTrackFeature as textTrack,
   timeFeature as time,
   volumeFeature as volume,
 };
-
-export const video: VideoFeatures = [
-  playbackFeature,
-  volumeFeature,
-  timeFeature,
-  sourceFeature,
-  bufferFeature,
-  fullscreenFeature,
-  pipFeature,
-  controlsFeature,
-];
-
-export const audio: AudioFeatures = [playbackFeature, volumeFeature, timeFeature, sourceFeature, bufferFeature];
-
-// TODO: Add background video features (e.g., playback, source, buffer)
-export const background: BackgroundFeatures = [];

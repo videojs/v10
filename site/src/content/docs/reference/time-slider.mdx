@@ -1,0 +1,102 @@
+---
+title: TimeSlider
+frameworkTitle:
+  html: media-time-slider
+description: A slider component for seeking through media playback time
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import WithPartsDemoReact from "@/components/docs/demos/time-slider/react/css/WithParts";
+import withPartsReactTsx from "@/components/docs/demos/time-slider/react/css/WithParts.tsx?raw";
+import withPartsReactCss from "@/components/docs/demos/time-slider/react/css/WithParts.css?raw";
+
+{/* HTML demos */}
+import WithPartsDemoHtml from "@/components/docs/demos/time-slider/html/css/WithParts.astro";
+import withPartsHtml from "@/components/docs/demos/time-slider/html/css/WithParts.html?raw";
+import withPartsHtmlCss from "@/components/docs/demos/time-slider/html/css/WithParts.css?raw";
+import withPartsHtmlTs from "@/components/docs/demos/time-slider/html/css/WithParts.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <TimeSlider.Root />
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-time-slider></media-time-slider>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+Displays and controls the current playback position. Dragging the slider seeks the media. The fill level reflects `currentTime / duration` as a percentage, and the buffer level shows how much media has been buffered.
+
+Seeking is throttled via the `commitThrottle` prop (default 100ms) to avoid overwhelming the media element during drag operations.
+
+## Styling
+
+Use [CSS custom properties](#root-css-custom-properties) to style the fill, pointer, and buffer levels:
+
+```css
+media-time-slider::before {
+  width: calc(var(--media-slider-fill) * 1%);
+}
+```
+
+Use `data-seeking` to style during active seek operations:
+
+```css
+media-time-slider[data-seeking] {
+  opacity: 0.8;
+}
+```
+
+## Accessibility
+
+Renders with `role="slider"` and automatic `aria-label` of "Seek". Override with the `label` prop. Keyboard controls:
+
+- <kbd>Arrow Left</kbd> / <kbd>Arrow Right</kbd>: step by `step` increment
+- <kbd>Page Up</kbd> / <kbd>Page Down</kbd>: step by `largeStep` increment
+- <kbd>Home</kbd>: seek to start
+- <kbd>End</kbd>: seek to end
+
+## Examples
+
+Nest sub-components for full control over the slider's DOM structure. This example includes a track, fill bar, buffer indicator, draggable thumb, and a tooltip that shows the pointed-at time.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: withPartsReactTsx, lang: "tsx" },
+        { title: "App.css", code: withPartsReactCss, lang: "css" },
+      ]}
+    >
+      <WithPartsDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: withPartsHtml, lang: "html" },
+        { title: "index.css", code: withPartsHtmlCss, lang: "css" },
+        { title: "index.ts", code: withPartsHtmlTs, lang: "ts" },
+      ]}
+    >
+      <WithPartsDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="TimeSlider" />

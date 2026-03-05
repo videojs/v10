@@ -1,12 +1,12 @@
 ---
 title: Write reference pages
-description: How to create component API reference pages for the Video.js documentation site
+description: How to create API reference pages for the Video.js documentation site
 ---
 
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-This guide covers how to create component reference pages — the API documentation under `reference/` in the docs sidebar.
+This guide covers how to create API reference pages — both component references and util references (hooks, controllers, mixins) under `reference/` in the docs sidebar.
 
 <Aside type="tip">
 Reference pages are scaffolded with the `api-reference` Claude skill. Run `/api-reference play-button` to generate a reference page interactively.
@@ -24,13 +24,13 @@ The component should be feature-complete enough that its props, state, and data 
 
 ## Generate the API reference JSON
 
-The api-docs-builder extracts type information from TypeScript sources and outputs JSON files that the `<ApiReference />` component renders as tables.
+The api-docs-builder extracts type information from TypeScript sources and outputs JSON files that `<ComponentReference />` and `<UtilReference />` components render as tables.
 
 ```bash
 pnpm -F site api-docs
 ```
 
-This generates JSON to `site/src/content/generated-api-reference/{name}.json`. These files are gitignored and regenerated automatically on `pnpm dev` and `pnpm build`.
+This generates JSON to `site/src/content/generated-component-reference/{name}.json` and `site/src/content/generated-util-reference/{name}.json`. These files are gitignored and regenerated automatically on `pnpm dev` and `pnpm build`.
 
 ### Builder naming conventions
 
@@ -127,7 +127,7 @@ Use `frameworkTitle` to show the HTML custom element tag name when the HTML fram
 ### Imports
 
 ```tsx
-import ApiReference from "@/components/docs/api-reference/ApiReference.astro";
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
 
@@ -166,17 +166,84 @@ After imports, the page follows this order:
    - **Accessibility** — ARIA attributes, keyboard interactions
    - Other sections as appropriate
 3. **Examples** — at least BasicUsage, wrapped in `<Demo>` with `<FrameworkCase>`
-4. **`<ApiReference />`** — renders the generated JSON as props, state, and data attribute tables
+4. **`<ComponentReference />`** — renders the generated JSON as props, state, and data attribute tables
 
 ```mdx
-<ApiReference component="PlayButton" />
+<ComponentReference component="PlayButton" />
 ```
 
 The component automatically handles single-part and multi-part layouts.
 
+## Create a util reference page
+
+Util reference pages document React hooks/utilities and HTML controllers/mixins. Unlike component pages, they don't have demos or anatomy sections.
+
+### Structure
+
+```mdx
+---
+title: usePlayer
+description: Hook to access the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+\`\`\`tsx
+import { usePlayer } from '@videojs/react';
+\`\`\`
+
+## Usage
+
+Explain usage patterns, overloads, and code examples.
+
+<UtilReference util="usePlayer" />
+```
+
+### Key differences from component pages
+
+- No `frameworkTitle` — util pages are framework-specific (React-only or HTML-only)
+- No demos or anatomy — focus on import, usage examples, and the generated reference tables
+- Use `<UtilReference util="..." />` instead of `<ComponentReference component="..." />`
+- The `util` prop takes the PascalCase or camelCase name (e.g., `"usePlayer"`, `"PlayerController"`)
+
+### Util auto-discovery rules
+
+The builder discovers utils from package entry points two ways:
+
+**Naming conventions** (no tag needed):
+- `use*` hooks: `usePlayer`, `useMedia`
+- `*Controller` classes: `PlayerController`, `StoreController`
+- `create*` factories and mixins: `createPlayer`, `createProviderMixin`
+- `select*` selectors: `selectPlayback`, `selectVolume`
+
+**`@public` JSDoc tag** (everything else):
+- Utilities that don't match a convention: `mergeProps`, `renderElement`
+- Context objects: `playerContext`
+
+If your export matches a naming convention, skip the `@public` tag.
+
+### The slug prop
+
+The `util` prop takes the export name (`"usePlayer"`, `"PlayerController"`). If the generated JSON slug doesn't match `kebabCase(util)` -- like the HTML `createPlayer` whose slug is `html-create-player` -- pass `slug` explicitly:
+
+```mdx
+<UtilReference util="createPlayer" slug="html-create-player" />
+```
+
+### Generated JSON
+
+Util reference JSON is at `site/src/content/generated-util-reference/{slug}.json`. The builder generates it from the discovery pipeline in `site/scripts/api-docs-builder/src/util-handler.ts`.
+
 ## Add to the sidebar
 
-Open `site/src/docs.config.ts` and add your page alphabetically within the Components section:
+Open `site/src/docs.config.ts` and add your page alphabetically within the appropriate section:
+
+- **Components** — UI component reference pages
+- **Selectors** — State selectors (visible to both frameworks)
+- **Hooks & Utilities** (`frameworks: ['react']`) — React hooks and utilities
+- **Controllers & Mixins** (`frameworks: ['html']`) — HTML controllers and mixins
 
 ```ts
 {
@@ -200,6 +267,11 @@ Open `site/src/docs.config.ts` and add your page alphabetically within the Compo
 
 For reference, look at existing pages:
 
+**Component pages:**
 - <DocsLink slug="reference/play-button">PlayButton</DocsLink> — single-part, interactive
 - <DocsLink slug="reference/controls">Controls</DocsLink> — behavior-heavy (auto-hide)
 - <DocsLink slug="reference/time">Time</DocsLink> — multi-part, formatting
+
+**Util pages:**
+- <DocsLink slug="reference/use-player">usePlayer</DocsLink> — React hook, multi-overload
+- <DocsLink slug="reference/player-controller">PlayerController</DocsLink> — HTML controller

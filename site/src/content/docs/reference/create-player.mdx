@@ -1,0 +1,35 @@
+---
+title: createPlayer
+description: Factory function that creates a player instance with typed store, Provider component, Container, and hooks
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import BasicUsageDemoReact from "@/components/docs/demos/create-player/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/create-player/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/create-player/react/css/BasicUsage.css?raw";
+
+`createPlayer` is the entry point for setting up a Video.js player in React. It accepts a configuration object with a `features` array and returns hooks and components for building a player.
+
+The hook is typed according to the provided features, giving you full type safety for state selectors and actions.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+        { title: "App.css", code: basicUsageReactCss, lang: "css" },
+      ]}
+    >
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<UtilReference util="createPlayer" />

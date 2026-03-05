@@ -37,7 +37,8 @@ export const Value = forwardRef(function Value(
     return null;
   }
 
-  const state = core.getState(time);
+  core.setMedia(time);
+  const state = core.getState();
 
   const content = state.negative ? (
     <>

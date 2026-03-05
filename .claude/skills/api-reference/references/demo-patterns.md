@@ -118,12 +118,12 @@ Import registration for:
 ### .tsx (component)
 
 ```tsx
-import { createPlayer, features, MuteButton } from '@videojs/react';
-import { Video } from '@videojs/react/video';
+import { createPlayer, MuteButton } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
 
 import './BasicUsage.css';
 
-const Player = createPlayer({ features: [...features.video] });
+const Player = createPlayer({ features: videoFeatures });
 
 export default function BasicUsage() {
   return (
@@ -150,7 +150,7 @@ export default function BasicUsage() {
 
 Key patterns:
 
-- `createPlayer({ features: [...features.video] })` creates the player
+- `createPlayer({ features: videoFeatures })` creates the player
 - Video attributes: `autoPlay muted playsInline loop` (React camelCase)
 - `render` prop for state-based rendering: `render={(props, state) => ...}`
 - Spread `{...props}` on the rendered element for accessibility attributes

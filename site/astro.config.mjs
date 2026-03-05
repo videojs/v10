@@ -8,7 +8,7 @@ import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import sentry from '@sentry/astro';
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig, fontProviders } from 'astro/config';
+import { defineConfig, envField, fontProviders } from 'astro/config';
 import svgr from 'vite-plugin-svgr';
 import checkV8Urls from './integrations/check-v8-urls';
 import llmsMarkdown from './integrations/llms-markdown';
@@ -25,6 +25,28 @@ export default defineConfig({
   site: SITE_URL,
   trailingSlash: 'never',
   adapter: netlify(),
+  // Server-only secrets read at runtime (not inlined at build time).
+  // All optional — the site degrades gracefully without auth/Mux configured.
+  // See site/CLAUDE.md "Environment Variables" for full documentation.
+  env: {
+    schema: {
+      // OAuth — powers the video uploader login flow
+      OAUTH_CLIENT_ID: envField.string({ context: 'server', access: 'secret', optional: true }),
+      OAUTH_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
+      OAUTH_REDIRECT_URI: envField.string({ context: 'server', access: 'secret', optional: true }),
+      OAUTH_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
+      SESSION_COOKIE_PASSWORD: envField.string({ context: 'server', access: 'secret', optional: true }),
+      MUX_API_URL: envField.string({
+        context: 'server',
+        access: 'secret',
+        optional: true,
+        default: 'https://api.mux.com',
+      }),
+      // Mux service account credentials — only used by the /api/health/mux endpoint
+      MUX_TOKEN_ID: envField.string({ context: 'server', access: 'secret', optional: true }),
+      MUX_TOKEN_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
+    },
+  },
   redirects: {
     // Redirects are configured in netlify.toml
   },
@@ -36,14 +58,21 @@ export default defineConfig({
     }),
     mdx({ extendMarkdownConfig: true }),
     sitemap({
-      customPages: [`${SITE_URL}/llms.txt`],
+      // llms-markdown.ts auto-generates per-framework sub-indexes, but sitemap
+      // entries are hardcoded here. Add a new line when adding a framework.
+      customPages: [
+        `${SITE_URL}/llms.txt`,
+        `${SITE_URL}/blog/llms.txt`,
+        `${SITE_URL}/docs/framework/html/llms.txt`,
+        `${SITE_URL}/docs/framework/react/llms.txt`,
+      ],
     }),
     pagefind(),
     llmsMarkdown(),
     checkV8Urls(),
     react({
       babel: {
-        plugins: [['babel-plugin-react-compiler', { target: '18' }]],
+        plugins: [['babel-plugin-react-compiler', { target: '19' }]],
       },
     }),
   ],
@@ -75,7 +104,7 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss(), svgr()],
     optimizeDeps: {
-      exclude: ['@videojs/react-preview', '@videojs/react', '@videojs/html'],
+      exclude: ['@videojs/react', '@videojs/html'],
     },
     resolve: {
       dedupe: ['react', 'react-dom'],

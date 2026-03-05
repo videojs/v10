@@ -132,10 +132,22 @@ unsubscribe();
 
 ```markdown
 // ✅ Natural
-See [Events](/concepts/events) for the full list.
+See <DocsLink slug="concepts/events">Events</DocsLink> for the full list.
 
 // ❌ Awkward
 For more information about events, please refer to the Events page.
+```
+
+### Cross-link reference pages generously
+
+When a reference page mentions another API by name, link to it. Readers exploring one API often need context from related APIs. Link the first prose mention per page — don't link inside code blocks.
+
+```markdown
+// ✅ Linked
+Within a player provider, <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> is usually simpler.
+
+// ❌ Unlinked
+Within a player provider, `usePlayer` is usually simpler.
 ```
 
 ## Length guidelines

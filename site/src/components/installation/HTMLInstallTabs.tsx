@@ -56,16 +56,16 @@ export default function HTMLInstallTabs() {
           <HTMLCdnCodeBlock />
         </TabsPanel>
         <TabsPanel value="npm" variant="docs">
-          <ClientCode code="npm install @videojs/html" lang="bash" />
+          <ClientCode code="npm install @videojs/html@next" lang="bash" />
         </TabsPanel>
         <TabsPanel value="pnpm" variant="docs">
-          <ClientCode code="pnpm add @videojs/html" lang="bash" />
+          <ClientCode code="pnpm add @videojs/html@next" lang="bash" />
         </TabsPanel>
         <TabsPanel value="yarn" variant="docs">
-          <ClientCode code="yarn add @videojs/html" lang="bash" />
+          <ClientCode code="yarn add @videojs/html@next" lang="bash" />
         </TabsPanel>
         <TabsPanel value="bun" variant="docs">
-          <ClientCode code="bun add @videojs/html" lang="bash" />
+          <ClientCode code="bun add @videojs/html@next" lang="bash" />
         </TabsPanel>
       </TabsRoot>
     </div>

@@ -1,4 +1,17 @@
 {
   "enabledMcpjsonServers": ["astro-docs"],
-  "enableAllProjectMcpServers": true
+  "enableAllProjectMcpServers": true,
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx -y gh-setup-hooks",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  }
 }

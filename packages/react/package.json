@@ -1,9 +1,14 @@
 {
   "name": "@videojs/react",
   "type": "module",
-  "version": "0.1.0-alpha.1",
+  "version": "10.0.0-alpha.7",
   "description": "React library for building media players",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/react"
+  },
   "main": "dist/default/index.js",
   "module": "dist/default/index.js",
   "types": "dist/dev/index.d.ts",
@@ -17,21 +22,16 @@
       "development": "./dist/dev/index.js",
       "default": "./dist/default/index.js"
     },
+    "./media/*": {
+      "types": "./dist/dev/media/*/index.d.ts",
+      "development": "./dist/dev/media/*/index.js",
+      "default": "./dist/default/media/*/index.js"
+    },
     "./*.css": "./dist/default/presets/*.css",
-    "./audio": {
-      "types": "./dist/dev/presets/audio/index.d.ts",
-      "development": "./dist/dev/presets/audio/index.js",
-      "default": "./dist/default/presets/audio/index.js"
-    },
-    "./background": {
-      "types": "./dist/dev/presets/background/index.d.ts",
-      "development": "./dist/dev/presets/background/index.js",
-      "default": "./dist/default/presets/background/index.js"
-    },
-    "./video": {
-      "types": "./dist/dev/presets/video/index.d.ts",
-      "development": "./dist/dev/presets/video/index.js",
-      "default": "./dist/default/presets/video/index.js"
+    "./*": {
+      "types": "./dist/dev/presets/*/index.d.ts",
+      "development": "./dist/dev/presets/*/index.js",
+      "default": "./dist/default/presets/*/index.js"
     }
   },
   "scripts": {
@@ -52,6 +52,8 @@
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
+    "@videojs/icons": "workspace:*",
+    "@videojs/skins": "workspace:*",
     "@types/react": "^19.2.7",
     "jsdom": "^26.1.0",
     "react": "^19.2.1",
