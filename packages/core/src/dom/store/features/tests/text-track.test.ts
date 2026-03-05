@@ -159,8 +159,8 @@ describe('textTrackFeature', () => {
       store.attach({ media: video, container: null });
 
       expect(store.state.subtitlesList).toEqual([
-        { kind: 'subtitles', label: 'English', language: 'en', showing: true },
-        { kind: 'captions', label: 'CC', language: 'en', showing: false },
+        { kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' },
+        { kind: 'captions', label: 'CC', language: 'en', mode: 'disabled' },
       ]);
     });
 
