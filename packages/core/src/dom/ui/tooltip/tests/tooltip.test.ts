@@ -1,6 +1,6 @@
 import { flush } from '@videojs/store';
 import { describe, expect, it, vi } from 'vitest';
-import { createTooltipGroup } from '../tooltip-group';
+import { TooltipGroupCore } from '../../../../core/ui/tooltip/tooltip-group-core';
 import { createTestTooltip } from './tooltip-helpers';
 
 describe('createTooltip', () => {
@@ -137,11 +137,11 @@ describe('createTooltip', () => {
 
   describe('group integration', () => {
     it('notifies group on open/close', () => {
-      const group = createTooltipGroup();
+      const group = new TooltipGroupCore();
       const notifyOpen = vi.spyOn(group, 'notifyOpen');
       const notifyClose = vi.spyOn(group, 'notifyClose');
 
-      const { tooltip } = createTestTooltip({ group });
+      const { tooltip } = createTestTooltip({ group: () => group });
 
       tooltip.open();
       expect(notifyOpen).toHaveBeenCalled();

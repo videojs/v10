@@ -1,3 +1,4 @@
+import type { TooltipGroupCore } from '../../../core/ui/tooltip/tooltip-group-core';
 import {
   createPopover,
   type PopoverApi,
@@ -7,7 +8,6 @@ import {
   type PopoverTriggerProps,
 } from '../popover/popover';
 import type { TransitionApi } from '../transition';
-import type { TooltipGroupApi } from './tooltip-group';
 
 export type TooltipOpenChangeReason = 'hover' | 'focus' | 'escape' | 'blur';
 
@@ -24,7 +24,7 @@ export interface TooltipOptions {
   closeDelay?: () => number;
   disableHoverablePopup?: () => boolean;
   disabled?: () => boolean;
-  group?: TooltipGroupApi;
+  group?: () => TooltipGroupCore | undefined;
 }
 
 export interface TooltipTriggerProps extends Omit<PopoverTriggerProps, 'onClick'> {}
@@ -47,14 +47,13 @@ const REASON_MAP: Partial<Record<string, TooltipOpenChangeReason>> = {
 };
 
 export function createTooltip(options: TooltipOptions): TooltipApi {
-  const { group } = options;
-
   const popoverOpts: PopoverOptions = {
     transition: options.transition,
     onOpenChange(open: boolean, details: PopoverChangeDetails) {
       const reason = REASON_MAP[details.reason];
       if (!reason) return;
 
+      const group = options.group?.();
       if (open) group?.notifyOpen();
       else group?.notifyClose();
 
@@ -65,10 +64,14 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     closeOnOutsideClick: () => false,
     openOnHover: () => true,
     delay: () => {
+      const group = options.group?.();
       if (group?.shouldSkipDelay()) return 0;
       return options.delay?.() ?? group?.delay ?? 600;
     },
-    closeDelay: () => options.closeDelay?.() ?? group?.closeDelay ?? 0,
+    closeDelay: () => {
+      const group = options.group?.();
+      return options.closeDelay?.() ?? group?.closeDelay ?? 0;
+    },
   };
 
   if (options.onOpenChangeComplete) {

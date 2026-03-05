@@ -36,6 +36,7 @@ export * from './ui/time-slider/time-slider-data-attrs';
 export * from './ui/tooltip/tooltip-core';
 export * from './ui/tooltip/tooltip-css-vars';
 export * from './ui/tooltip/tooltip-data-attrs';
+export * from './ui/tooltip/tooltip-group-core';
 export * from './ui/transition';
 export * from './ui/types';
 export * from './ui/volume-slider/volume-slider-core';
