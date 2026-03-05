@@ -69,8 +69,8 @@ export interface State<T> {
  * Writable state interface with patch capability.
  */
 export interface WritableState<T> extends State<T> {
-  /** Update state with partial object */
-  patch(partial: Partial<T>): void;
+  /** Update state with partial object (for object state) or full value (for primitive state) */
+  patch(partial: T extends object ? Partial<T> : T): void;
 
   /** Subscribe to full-state changes */
   subscribe(listener: StateListener<T>): () => void;
@@ -124,7 +124,7 @@ class StateContainer<T> implements WritableState<T> {
   #selectorListeners = new Set<SelectorEntry<T, unknown>>();
 
   constructor(initial: T, config?: StateConfig<T>) {
-    this.#current = { ...initial };
+    this.#current = typeof initial === 'object' && initial !== null ? ({ ...initial } as T) : initial;
     this.#equalityFn = config?.equalityFn ?? defaultEquality;
   }
 
@@ -133,20 +133,30 @@ class StateContainer<T> implements WritableState<T> {
     return this.#pending ?? this.#current;
   }
 
-  patch(partial: Partial<T>): void {
+  patch(partial: T extends object ? Partial<T> : T): void {
     const base = this.#pending ?? this.#current;
-    const next = { ...base };
 
+    if (typeof base !== 'object' || base === null) {
+      // Primitive state: replace the whole value
+      const value = partial as T;
+      if (!Object.is(base, value)) {
+        this.#pending = value;
+        this.#scheduleFlush();
+      }
+      return;
+    }
+
+    const next = { ...base } as T;
     let changed = false;
 
     // Apply partial updates with change detection
     for (const key in partial) {
       if (!Object.hasOwn(partial, key)) continue;
 
-      const value = partial[key];
+      const value = (partial as Partial<T>)[key as keyof T];
 
-      if (!Object.is(base[key], value)) {
-        next[key] = value!;
+      if (!Object.is((base as Partial<T>)[key as keyof T], value)) {
+        (next as Partial<T>)[key as keyof T] = value;
         changed = true;
       }
     }

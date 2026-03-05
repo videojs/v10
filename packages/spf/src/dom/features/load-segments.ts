@@ -81,34 +81,6 @@ export interface SegmentLoadingOwners {
 }
 
 // ============================================================================
-// LOAD DECISION HELPERS
-// ============================================================================
-
-/**
- * Check if the preconditions for segment loading are met.
- *
- * Requires:
- * - Selected track exists AND is fully resolved (has segments + init URL)
- * - SourceBufferActor exists in owners for this track type
- *
- * Note: track selection changes before playbackInitiated are not supported.
- * If selectedTrackId changes before play starts, the actor has not yet been
- * created (setup-sourcebuffer fires after track resolution), so this will
- * return false until the new track resolves and its actor appears in owners.
- */
-export function canLoadSegments(
-  state: SegmentLoadingState,
-  owners: SegmentLoadingOwners,
-  type: MediaTrackType
-): boolean {
-  const track = getSelectedTrack(state, type);
-  if (!track || !isResolvedTrack(track)) return false;
-
-  const actorKey = ActorKeyByType[type];
-  return !!owners[actorKey];
-}
-
-// ============================================================================
 // STATE SELECTOR
 // ============================================================================
 
@@ -122,16 +94,21 @@ type LoadingInputs = {
   currentTime: number | undefined;
   /** @TODO cleanup type precision via inference+generics */
   track: ReturnType<typeof getSelectedTrack>;
+  segmentsCanLoad: boolean;
 };
 
-function selectLoadingInputs(s: SegmentLoadingState, type: MediaTrackType): LoadingInputs {
-  const { playbackInitiated, preload, currentTime } = s;
-  const track = getSelectedTrack(s, type);
+function selectLoadingInputs(
+  [segmentsCanLoad, state]: [boolean, SegmentLoadingState],
+  type: MediaTrackType
+): LoadingInputs {
+  const { playbackInitiated, preload, currentTime } = state;
+  const track = getSelectedTrack(state, type);
   return {
     playbackInitiated,
     preload,
     currentTime,
     track,
+    segmentsCanLoad,
   };
 }
 
@@ -151,7 +128,6 @@ function selectLoadingInputs(s: SegmentLoadingState, type: MediaTrackType): Load
  *   resolvedTrackId changes (track switch or previously-unresolved track
  *   resolving) and currentTime changes both trigger. preload is irrelevant.
  */
-/** @TODO move to module scope */
 const segmentStartFor = (currentTime: number | undefined, track: ResolvedTrack | undefined) => {
   if (currentTime == null) return undefined;
   return track?.segments.find(
@@ -167,6 +143,7 @@ const segmentStartFor = (currentTime: number | undefined, track: ResolvedTrack |
  * This IS the shouldLoadSegments logic, expressed as an equality function.
  */
 function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boolean {
+  if (!curState.segmentsCanLoad) return true;
   // Haven't started playback. Only care about preload changes.
   if (!curState.playbackInitiated) {
     if (curState.preload === 'none') return true; // blocked — equal, don't fire
@@ -263,42 +240,49 @@ export function loadSegments(
     initialBandwidth !== undefined ? (next) => state.patch({ bandwidthState: next }) : undefined
   );
 
-  let segmentLoader: SegmentLoaderActor | null = null;
+  const segmentLoader = createState<SegmentLoaderActor | undefined>(undefined);
 
   // SegmentLoaderActor lifecycle — watch only the actor key in owners so this
   // subscription does not fire on unrelated owners changes.
   const unsubActorLifecycle = owners.subscribe(
     (o) => o[actorKey],
     (actor) => {
-      if (actor && !segmentLoader) {
-        segmentLoader = createSegmentLoaderActor(actor, fetchBytes);
-      } else if (!actor && segmentLoader) {
-        segmentLoader.destroy();
-        segmentLoader = null;
+      if (actor) {
+        segmentLoader.patch(createSegmentLoaderActor(actor, fetchBytes));
+      } else if (!actor && segmentLoader.current) {
+        segmentLoader.current.destroy();
+        segmentLoader.patch(undefined);
       }
+      return () => {
+        segmentLoader.current?.destroy();
+        segmentLoader.patch(undefined);
+      };
     }
   );
 
-  let segmentsCanLoad = false;
-  const unsubscribeCanLoadSegments = combineLatest([state, owners]).subscribe(([currentState, currentOwners]) => {
-    segmentsCanLoad = canLoadSegments(currentState, currentOwners, type);
-  });
+  const segmentsCanLoad = createState<boolean>(false);
+  const unsubscribeCanLoadSegments = combineLatest([state, segmentLoader]).subscribe(
+    ([currentState, currentSegmentLoader]) => {
+      const track = getSelectedTrack(currentState, type);
+      const trackResolved = !!track && isResolvedTrack(track);
+      const segmentLoaderActorExists = !!currentSegmentLoader;
+      segmentsCanLoad.patch(trackResolved && segmentLoaderActorExists);
+    }
+  );
 
-  const unsubscribeShouldLoadSegments = state.subscribe(
-    (state) => selectLoadingInputs(state, type),
+  const unsubscribeShouldLoadSegments = combineLatest([segmentsCanLoad, state]).subscribe(
+    ([segmentsCanLoad, state]) => selectLoadingInputs([segmentsCanLoad, state], type),
     ({ preload, playbackInitiated, currentTime, track }) => {
-      if (!segmentsCanLoad || !segmentLoader) return;
       const fullMode = preload === 'auto' || !!playbackInitiated;
 
       if (!fullMode) {
         // Metadata mode: init only, no range.
-        // @ts-expect-error
-        segmentLoader.send({ type: 'load', track });
+        /** @ts-expect-error */
+        segmentLoader.current?.send({ type: 'load', track });
       } else {
-        segmentLoader.send({
+        segmentLoader.current?.send({
           type: 'load',
-
-          // @ts-expect-error
+          /** @ts-expect-error */
           track,
           range: {
             start: currentTime as number,
@@ -313,9 +297,6 @@ export function loadSegments(
   return () => {
     unsubscribeCanLoadSegments();
     unsubscribeShouldLoadSegments();
-    segmentLoader?.destroy();
-    segmentLoader = null;
-    owners.current[actorKey]?.destroy();
     unsubActorLifecycle();
   };
 }
