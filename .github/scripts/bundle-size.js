@@ -340,7 +340,15 @@ async function main() {
         continue;
       }
 
-      const size = await measure([sub.path], pkg.external);
+      // UI components are marginal over root (they share base element classes).
+      // Everything else is standalone.
+      let size;
+      if (cat === 'ui') {
+        const combined = await measure([pkg.rootPath, sub.path], pkg.external);
+        size = combined - rootSize;
+      } else {
+        size = await measure([sub.path], pkg.external);
+      }
 
       results.push({
         name: sub.name,
