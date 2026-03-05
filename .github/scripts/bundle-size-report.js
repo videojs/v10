@@ -163,12 +163,22 @@ function generateComparisonReport(current, base) {
   const groups = groupByPackage(current);
 
   const lines = [];
+  const pkgIcons = {
+    core: '🧩',
+    element: '🏷️',
+    html: '🎨',
+    react: '⚛️',
+    store: '📦',
+    utils: '🔧',
+  };
+
   lines.push('<!-- bundle-size-report -->');
-  lines.push('## 📦 Bundle Size Report');
+  lines.push('# 📦 Bundle Size Report');
   lines.push('');
 
   for (const [pkg, entries] of groups) {
-    lines.push(`#### @videojs/${pkg}`);
+    const icon = pkgIcons[pkg] ?? '📦';
+    lines.push(`## ${icon} @videojs/${pkg}`);
     lines.push('');
 
     // Only show entries whose size actually changed (must exist in both)
