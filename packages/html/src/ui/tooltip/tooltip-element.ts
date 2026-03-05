@@ -11,10 +11,12 @@ import {
   type TooltipChangeDetails,
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import { ContextConsumer } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning } from '@videojs/utils/dom';
 
 import { MediaElement } from '../media-element';
+import { tooltipGroupContext } from './context';
 
 export class TooltipElement extends MediaElement {
   static readonly tagName = 'media-tooltip';
@@ -40,6 +42,7 @@ export class TooltipElement extends MediaElement {
   disabled = TooltipCore.defaultProps.disabled;
 
   readonly #core = new TooltipCore();
+  readonly #groupConsumer = new ContextConsumer(this, { context: tooltipGroupContext });
   #tooltip: TooltipApi | null = null;
   #snapshot: SnapshotController<TooltipInput> | null = null;
 
@@ -62,6 +65,8 @@ export class TooltipElement extends MediaElement {
       closeDelay: () => this.closeDelay,
       disableHoverablePopup: () => this.disableHoverablePopup,
       disabled: () => this.disabled,
+      // Lazy getter — group may arrive after connect via context.
+      group: () => this.#groupConsumer.value,
     });
 
     // Register self as the popup element — the element IS the popup.
