@@ -14,6 +14,11 @@ export * from './store/container-mixin';
 export * from './store/provider-mixin';
 export * from './store/types';
 // UI Components
+export { AlertDialogCloseElement } from './ui/alert-dialog/alert-dialog-close-element';
+export { AlertDialogDescriptionElement } from './ui/alert-dialog/alert-dialog-description-element';
+export { AlertDialogElement } from './ui/alert-dialog/alert-dialog-element';
+export { AlertDialogTitleElement } from './ui/alert-dialog/alert-dialog-title-element';
+export { type AlertDialogContextValue, alertDialogContext } from './ui/alert-dialog/context';
 export { BufferingIndicatorElement } from './ui/buffering-indicator/buffering-indicator-element';
 export { CaptionsButtonElement } from './ui/captions-button/captions-button-element';
 export { ControlsElement } from './ui/controls/controls-element';
