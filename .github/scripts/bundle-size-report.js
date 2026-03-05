@@ -135,7 +135,11 @@ function generateCategoryBreakdowns(entries, pkg) {
       }
     }
 
-    lines.push('');
+    if (cat === 'entry') {
+      lines.push('*Subpath sizes are marginal over the root entry point.*');
+      lines.push('');
+    }
+
     lines.push('</details>');
     lines.push('');
   }
@@ -236,11 +240,10 @@ function generateComparisonReport(current, base) {
   lines.push('<details>');
   lines.push('<summary>ℹ️ How to interpret</summary>');
   lines.push('');
-  lines.push('Sizes are minified + brotli.');
+  lines.push('All sizes are minified + brotli.');
   lines.push(
-    'JS subpath sizes are the marginal bytes on top of the root entry point.',
+    'Entry subpath sizes are marginal over the root entry point. All other sizes are standalone totals.',
   );
-  lines.push('CSS sizes are minified + brotli-compressed.');
   lines.push('');
   lines.push('| Icon | Meaning |');
   lines.push('|---|---|');

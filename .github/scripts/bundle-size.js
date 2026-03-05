@@ -1,13 +1,12 @@
 /**
- * Measures bundle sizes for all packages, computing marginal subpath costs.
+ * Measures bundle sizes for all packages.
  *
  * Auto-discovers packages from `packages/`, reads their `exports` field to find
  * entry points, and externalizes `peerDependencies`.
  *
- * For packages with subpaths, each subpath is bundled together with the root
- * entry point. The marginal cost is: (root + subpath) - root. This captures
- * shared minification and compression, avoiding the inflated totals you get
- * from summing independently-measured subpaths.
+ * Entry subpaths (presets like /video, /audio, /background) are measured as
+ * marginal over root: (root + subpath) - root. All other subpaths are measured
+ * as standalone totals.
  *
  * Wildcard exports (e.g., `./ui/*`, `./media/⁕/index.js`) are resolved to
  * actual files on disk. Supports both file-level (`*.js`) and directory-level
@@ -324,14 +323,22 @@ async function main() {
         continue;
       }
 
-      const combinedSize = await measure(
-        [pkg.rootPath, sub.path],
-        pkg.external,
-      );
+      // Entry subpaths are marginal over root (incremental cost of a preset).
+      // Everything else is standalone (total cost including all dependencies).
+      let size;
+      if (cat === 'entry') {
+        const combinedSize = await measure(
+          [pkg.rootPath, sub.path],
+          pkg.external,
+        );
+        size = combinedSize - rootSize;
+      } else {
+        size = await measure([sub.path], pkg.external);
+      }
 
       results.push({
         name: sub.name,
-        size: combinedSize - rootSize,
+        size,
         type: 'subpath',
         ...(cat ? { category: cat } : {}),
         format: 'js',
