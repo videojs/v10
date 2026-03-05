@@ -1,6 +1,6 @@
 ---
 status: draft
-date: 2026-03-04
+date: 2026-03-05
 ---
 
 # SPF Segment Loading Pipeline
@@ -24,140 +24,117 @@ constraints that interact badly:
    any point — mid-fetch, mid-append, between segments.
 
 3. **The decision to load more segments depends on what's already loaded.** A
-   reactive subscriber (`shouldLoadSegments`) checks state on every tick to
-   decide whether to trigger a new task. If that state is transiently wrong —
-   because an abort left it half-updated — the player stalls or re-fetches
-   data it already has.
+   reactive subscriber decides whether to trigger a new task. If that state is
+   transiently wrong — because an abort left it half-updated — the player stalls
+   or re-fetches data it already has.
 
 ---
 
-## Moving Pieces
+## Current Architecture
+
+### setupSourceBuffer
+
+[`setup-sourcebuffer.ts`](../../../packages/spf/src/dom/features/setup-sourcebuffer.ts)
+
+Creates a `SourceBuffer` and its `SourceBufferActor` together in a single
+`owners.patch` so both arrive simultaneously in owners. No extra notification
+cycle is required.
+
+---
 
 ### SourceBufferActor
 
 [`source-buffer-actor.ts`](../../../packages/spf/src/dom/media/source-buffer-actor.ts)
 
-Wraps a single `SourceBuffer` and serializes all operations against it. Owns
-an internal model (its _context_) of what is currently in the buffer:
+Wraps a single `SourceBuffer` and serializes all operations against it. Owned
+by `owners` (not by `loadSegments`), making it accessible to any subscriber
+that needs to observe buffer state.
 
 ```ts
 interface SourceBufferActorContext {
-  initTrackId?: string;            // which track's init segment is loaded
-  segments: SegmentRecord[];       // media segments with timing metadata
+  initTrackId?: string;
+  segments: SegmentRecord[];       // with timing metadata
   bufferedRanges: BufferedRange[]; // snapshot of sourceBuffer.buffered
 }
 ```
 
-Operations are submitted as typed messages (`append-init`, `append-segment`,
-`remove`) via `send()` (single) or `batch()` (atomic group). The context is
-only updated after a message executes — never mid-operation.
+Operations via `send()` / `batch()`. Context updated atomically per operation.
 
-**Why an actor?** A raw `SourceBuffer` has no model. Callers previously
-patched `state.bufferState` inline after each operation; an abort anywhere in
-a multi-step task left state partially updated. The actor collapses that into
-a single atomic update per `send`/`batch` call.
-
-**Lifecycle.** The actor is created when a `SourceBuffer` becomes available
-and destroyed when it is removed. It lives inside `loadSegments`, co-located
-with its only consumer. It is _not_ wired at the engine level: every
-`owners` patch wakes all `combineLatest` subscribers; actor creation at the
-engine would cause spurious mid-task re-evaluations.
+**Segment model:**
+- `appendSegmentTask` deduplicates by `startTime` with epsilon (time-aligned assumption).
+- `removeTask` retains segments whose midpoint falls within post-flush `buffered` ranges.
 
 ---
 
-### loadSegments
+### SegmentLoaderActor
+
+[`segment-loader-actor.ts`](../../../packages/spf/src/dom/features/segment-loader-actor.ts)
+
+Receives typed load messages and owns all execution: removes, fetches, appends,
+seek detection, and task scheduling.
+
+**Message protocol:**
+
+```ts
+{ type: 'load', track: VideoTrack | AudioTrack, range?: { start: number; end: number } }
+```
+
+- No `range` → init-only (metadata preload mode)
+- With `range` → load init + segments overlapping `[start, end]`
+
+**Internal state:** task loop with `currentTask`, `pendingMessage`, `taskSegmentIds`,
+`abortController` closure variables. Seek detection compares incoming segment IDs
+against `taskSegmentIds`; aborts if completely disjoint.
+
+**Current execution model (step 1 — batch):** fetches all segments then appends
+all segments. Streaming (fetch-append per segment) is a known pending improvement.
+
+**Dependencies at construction:** `sourceBufferActor` (shared ref), `fetchBytes`
+(tracked fetch closure).
+
+---
+
+### loadSegments (Reactor)
 
 [`load-segments.ts`](../../../packages/spf/src/dom/features/load-segments.ts)
 
-The orchestrator. Subscribes to `combineLatest([state, owners])` and runs a
-task loop that loads and flushes segments for one track type (video or audio).
+A thin Reactor layer. Watches relevant state changes and sends `'load'` messages
+to the `SegmentLoaderActor`. Does not own task execution.
 
-**Task loop invariant:** at most one executing task and one pending snapshot.
-When a state change arrives while a task is in flight, the new snapshot
-displaces any previous pending one. When the task finishes, the loop picks up
-the pending snapshot (if any) and re-evaluates.
+**Trigger mechanism:** uses `state.subscribe(selectLoadingInputs, handler, { equalityFn: loadingInputsEq })`
+rather than a broad `combineLatest`. Only fires when meaningful inputs change.
 
-**Seek detection.** Before starting each task iteration, the loop records
-which segment IDs it intends to load (`taskSegmentIds`). If a state change
-arrives mid-task where all _needed_ segments are completely disjoint from
-`taskSegmentIds`, the current task is aborted. This is a conservative check:
-overlapping segment sets are left to complete.
+**`selectLoadingInputs`** — plain pick: `{ playbackInitiated, preload, currentTime, track }`.
 
----
+**`loadingInputsEq`** — encodes the condition hierarchy directly. This IS the
+`shouldLoadSegments` logic expressed as an equality function:
+- Pre-play: only `preload` changes matter; `currentTime` does not trigger
+- `!playbackInitiated → playbackInitiated`: fires unless `preload === 'auto'`
+  (suppressed: message was already full-range pre-play)
+- Post-play: `resolvedTrackId` and `segmentStartFor(currentTime)` trigger
 
-### loadSegmentsTask
+**`segmentsCanLoad`** — closure boolean; updated via `combineLatest([state, owners])`
+watching `canLoadSegments(state, owners, type)`.
 
-The individual unit of work. Runs in three phases:
+**`canLoadSegments`** — exported pure function; preconditions only: resolved track
++ `SourceBufferActor` in owners.
 
-```
-Phase 1 — Remove   →  Phase 2 — Fetch   →  Phase 3 — Append
-(actor.send/batch)     (network I/O)         (actor.send/batch)
-```
+**Actor lifecycle:** `owners.subscribe((o) => o[actorKey], ...)` — creates
+`SegmentLoaderActor` when actor appears, destroys on removal.
 
-**Phase 1 (Remove).** All `remove` operations are submitted to the actor
-_before_ any network I/O. This ensures the buffer model is consistent with the
-physical `SourceBuffer` even if the signal is aborted mid-fetch.
-
-**Phase 2 (Fetch).** Sequential network I/O. Abortable at any fetch boundary.
-Bandwidth is sampled immediately after each segment fetch so ABR sees fresh
-data.
-
-**Phase 3 (Append).** Init + media segments are batched to the actor. If the
-signal was aborted during Phase 2, init data is still appended (it is codec
-metadata — position-independent, and appending it avoids a redundant re-fetch
-on the next task). Media segments fetched for the wrong seek position are
-dropped.
-
-**State sync.** A `try/finally` calls `syncActorToState()` at task exit
-regardless of success, abort, or error. This pushes the actor's context into
-`state.bufferState` so external consumers see up-to-date state after the task
-completes.
+**Message derivation:**
+- `!playbackInitiated && preload === 'metadata'` → `{ type: 'load', track }` (no range)
+- Full mode → `{ type: 'load', track, range: { start: currentTime, end: currentTime + bufferDuration } }`
 
 ---
 
-### state.bufferState
+### fetchBytes / throughput
 
-Part of `PlaybackEngineState`. Tracks which segments have been loaded per
-track type:
+`createTrackedFetch` produces a `fetchBytes` closure. Bandwidth sampling is
+invisible to callers; throughput is owned locally as `WritableState<BandwidthState>`.
 
-```ts
-interface BufferState {
-  video?: SourceBufferState;
-  audio?: SourceBufferState;
-}
-
-interface SourceBufferState {
-  initTrackId?: string;
-  segments: Array<{ id: string; trackId: string }>;
-}
-```
-
-This is a _projection_ of the actor's context into global state. It is written
-exclusively by `syncActorToState` at task exit.
-
-**Who reads it:**
-
-| Consumer | What it needs |
-|---|---|
-| `shouldLoadSegments` | Which segments are loaded, to avoid re-fetching |
-| `loadSegmentsTask` | `initTrackId` (needsInit), segment list (bufferedSegments) |
-| `endOfStream` | Whether the last segment of the presentation has been loaded |
-
----
-
-### shouldLoadSegments
-
-A pure function that inspects `state` and `owners` to decide whether a
-segment-loading task should run. Called at the top of every task loop
-iteration and from the `combineLatest` subscriber.
-
-Checks: track selected and resolved → SourceBuffer exists → preload mode
-allows loading → forward buffer window has unloaded segments OR stale forward
-content needs flushing.
-
-**Architectural note.** `shouldLoadSegments` lives inside `loadSegments`
-where `actor` is in scope. It currently reads from `state.bufferState` rather
-than `actor.snapshot.context`. See [Open Questions](#open-questions).
+**Migration bridge:** `onSample` callback publishes to `state.bandwidthState`
+so ABR continues to work. Remove once ABR reads from throughput directly.
 
 ---
 
@@ -165,53 +142,45 @@ than `actor.snapshot.context`. See [Open Questions](#open-questions).
 
 [`end-of-stream.ts`](../../../packages/spf/src/dom/features/end-of-stream.ts)
 
-A separate `combineLatest` subscriber that watches `[state, owners]` and calls
-`mediaSource.endOfStream()` once the last segment of every selected track has
-been appended.
+Watches `[state, owners]` via `combineLatest` AND subscribes to actor snapshot
+changes directly (via `owners.subscribe` → actor subscription chain). Fires when
+the last segment of every selected track appears in `owners.videoBufferActor
+.snapshot.context.segments`.
 
-**How it detects completion.** It checks `state.bufferState` for whether the
-last segment ID of each resolved track appears in the loaded segments list.
-This is ID-based (not range-based) so it is robust across quality switches and
-back-buffer flushes.
-
-**MediaSource reopen.** Calling `appendBuffer()` on a SourceBuffer after
-`endOfStream()` transitions the `MediaSource` back to `'open'`. The
-`endOfStream` subscription monitors for this and re-signals when conditions
-are met again (seek-back past what was buffered).
-
-**Why this matters for rearchitecture.** `endOfStream` is an _external_
-consumer of buffer state — it has no access to the actor. Any change to how
-buffer state is published to global state must account for this subscriber
-still being able to determine "has the last segment loaded?"
+No longer reads `state.bufferState` — that field no longer exists in global state.
 
 ---
 
 ## Data Flow
 
 ```
-                         ┌─────────────────────────────────────────┐
-                         │            loadSegments                  │
-                         │                                          │
-  state + owners ──────► │  combineLatest subscriber                │
-                         │       │                                  │
-                         │       ├─ shouldLoadSegments?             │
-                         │       │       reads: state.bufferState   │
-                         │       │                                  │
-                         │       └─► runTaskLoop                    │
-                         │               │                          │
-                         │               └─► loadSegmentsTask       │
-                         │                       │                  │
-                         │                Phase 1: actor.remove     │
-                         │                Phase 2: fetch            │
-                         │                Phase 3: actor.append     │
-                         │                       │                  │
-                         │                       └─ finally:        │
-                         │                syncActorToState()        │
-                         │                writes: state.bufferState │
-                         └─────────────────────────────────────────┘
-
-  state.bufferState ───► shouldLoadSegments (next iteration)
-  state.bufferState ───► endOfStream (separate subscriber)
+state changes (track resolved, preload, playbackInitiated, currentTime)
+         │
+         │  state.subscribe(selectLoadingInputs, handler, { equalityFn: loadingInputsEq })
+         │  fires only on meaningful tier-appropriate changes
+         ▼
+  loadSegments Reactor
+         │
+         │  segmentsCanLoad gate (combineLatest → canLoadSegments boolean)
+         │
+         ▼
+  segmentLoader.send({ type: 'load', track, range? })
+         │
+         ▼
+  ┌────────────────────────────────────────────────────┐
+  │              SegmentLoaderActor                     │
+  │  task loop + seek detection                         │
+  │  executeTask: removes → fetch-all → append-all      │
+  │  (batch mode — streaming is a pending improvement)  │
+  └────────────────┬───────────────────────┬────────────┘
+                   │ fetchBytes            │ send/batch
+                   ▼                       ▼
+         throughput (local)      SourceBufferActor (in owners)
+                                        │
+                                 owners.videoBufferActor
+                                        │
+                              endOfStream subscribes here
+                              (actor snapshot changes trigger)
 ```
 
 ---
@@ -219,22 +188,22 @@ still being able to determine "has the last segment loaded?"
 ## Key Invariants
 
 1. **One operation at a time.** The actor rejects `send`/`batch` while
-   `status === 'updating'`. Only one task runs at a time in the loop.
+   `status === 'updating'`.
 
-2. **Atomic model updates.** The actor's context changes only when an
-   operation completes. `state.bufferState` changes only when `syncActorToState`
-   runs (task exit).
+2. **Atomic model updates.** The actor's context changes only when an operation
+   completes. No intermediate states are observable.
 
-3. **Remove before fetch.** Phase 1 completes before Phase 2 begins. The
-   buffer model reflects removes even if the task is aborted during the fetch.
+3. **Remove before fetch.** Removes execute before any network I/O inside
+   `executeTask`. The buffer model reflects removes even if the task is aborted
+   during fetch.
 
 4. **Init is always committed.** Once init data is in hand, it is appended
-   to the actor regardless of signal state. Prevents redundant re-fetches
-   after seek-abort.
+   regardless of signal state (using a fresh signal if needed). Prevents
+   redundant re-fetches after seek-abort.
 
-5. **endOfStream sees consistent state.** Because `syncActorToState` runs in
-   `finally`, `state.bufferState` always reflects a completed-task snapshot
-   when `endOfStream` evaluates.
+5. **endOfStream sees live actor state.** By subscribing to actor snapshot
+   changes directly, `endOfStream` reacts when a segment is appended — not
+   only when `state` or `owners` change structurally.
 
 ---
 
@@ -243,186 +212,115 @@ still being able to determine "has the last segment loaded?"
 ### Actor as SourceBuffer abstraction
 
 **Decision:** Wrap `SourceBuffer` in an actor that serializes operations and
-owns the buffer model, rather than calling `appendBuffer`/`remove` directly.
+owns the buffer model.
 
-**Alternatives:**
-- **Direct calls + inline state patches** — Simple, but leaves state
-  partially updated on abort. The original stall bug.
-- **Direct calls + local accumulator + try/finally** — Fixes atomicity without
-  an actor, but loses the serialization and model-tracking benefits.
-
-**Rationale:** The actor provides a clean boundary: callers submit _intent_
-(messages), the actor ensures serial execution and model consistency. The
-`batch()` API makes multi-step operations (remove + append) atomic from the
-caller's perspective.
+**Rationale:** Callers previously patched `state.bufferState` inline; an abort
+left state partially updated (the original stall bug). The actor gives a single
+atomic update per operation.
 
 ---
 
-### syncActorToState at task exit, not on every actor transition
+### SourceBufferActor in owners (not in loadSegments)
 
-**Decision:** Sync actor context → `state.bufferState` once at task exit via
-`try/finally`, not via a `subscribe` bridge on the actor.
+**Decision:** `setupSourceBuffer` creates the actor alongside the SourceBuffer
+in a single `owners.patch`. The actor is accessible to any subscriber via owners.
 
-**Alternatives:**
-- **Subscribe bridge on actor** — Fires on every idle transition. Causes
-  intermediate fires _between_ the remove phase and append phase of a single
-  task. `shouldLoadSegments` sees a state with removes applied but appends
-  not yet applied, triggering spurious re-evaluations.
+**Rationale:** When the actor lived inside `loadSegments`, `endOfStream` had no
+way to observe it. Moving to owners lets `endOfStream` subscribe directly,
+eliminating `syncActorToState` and `state.bufferState` entirely.
 
-**Rationale:** Intermediate states are an implementation detail. External
-consumers should only observe stable snapshots — after a complete task
-unit, not between its internal steps.
+---
+
+### Selector-based subscription in Reactor
+
+**Decision:** Replace `combineLatest([state, owners])` with
+`state.subscribe(selector, handler, { equalityFn })` where the equality function
+encodes the condition hierarchy for when a new message should be sent.
+
+**Rationale:** `combineLatest` fired on every state change, including unrelated
+ones. The equality function IS `shouldLoadSegments` — it returns `true` (equal,
+don't fire) or `false` (changed, fire) based on the current tier and what
+actually changed.
 
 ---
 
 ### Segment model: time-aligned deduplication
 
-**Decision:** When tracking appended segments, deduplicate by `startTime`
-(with a small epsilon) rather than interval overlap.
+**Decision:** Deduplicate appended segments by `startTime` with epsilon.
 
-**Alternatives:**
-- **Interval overlap** — Removes any segment whose time range overlaps the
-  new segment. Inaccurate for non-boundary flushes (partial physical overlap
-  is not modeled).
-- **ID-based** — Correct for same-track re-appends but doesn't handle
-  cross-track deduplication (different IDs for same time slot).
-
-**Rationale:** Current playlists are time-aligned across quality levels.
-A segment at the same `startTime` is definitionally the same slot.
+**Rationale:** Current playlists are time-aligned. Same `startTime` = same slot.
 Non-boundary flushes are not yet in scope.
 
 ---
 
-### Segment model: post-flush bufferedRanges for removes
+### Segment model: post-flush bufferedRanges
 
-**Decision:** After a `remove` operation, retain only segments whose midpoint
-falls within the post-flush `sourceBuffer.buffered` ranges.
+**Decision:** After `remove`, retain segments whose midpoint falls within
+post-flush `sourceBuffer.buffered`.
 
-**Alternatives:**
-- **Interval arithmetic** — Remove segments whose range overlaps the remove
-  range. Inaccurate when the remove is not at a segment boundary.
-
-**Rationale:** `sourceBuffer.buffered` is the ground truth. Midpoint
-membership is a good heuristic for "is this segment still meaningfully in
-the buffer?" without requiring knowledge of exact flush boundaries.
-Non-boundary flushes are not yet in scope.
+**Rationale:** `sourceBuffer.buffered` is the ground truth.
 
 ---
 
-## Architectural Tensions
+## Open Questions / Pending Work
 
-The current implementation works but has several compounding tensions that
-make it brittle and hard to reason about as complexity grows.
+### Streaming refactor (highest priority)
 
-### The subscribe problem
+`executeTask` still batches all fetches before any appends. This delays
+playback startup. Change to: fetch s1 → append s1 → fetch s2 → append s2.
+The atomicity concern that originally motivated batching no longer applies
+(no subscribe bridge means no intermediate observable states).
 
-`combineLatest([state, owners])` fires on _any_ state change, including writes
-that `loadSegments` itself produces (`bufferState`, `bandwidthState`). The
-subscriber callback is doing multiple jobs at once: checking conditions,
-managing task state, detecting seeks, and storing pending snapshots. There is
-no named relationship between a trigger and its effect — everything is an
-implicit, ad-hoc callback.
+### Broken load-segments.test.ts
 
-`create-state.ts` already supports selector-based subscriptions that only fire
-when a specific slice changes. These are not yet used in `loadSegments`.
+Tests still import `shouldLoadSegments` (removed) and use the old `canLoadSegments`
+semantics. Needs updating to reflect the new Reactor model.
 
-### The ephemeral task problem
+### WIP cleanup
 
-`loadSegmentsTask` is a one-shot async function: created, runs, discarded.
-The work it represents — deciding what to remove, fetching segments, appending
-to the buffer — is actually a meaningful, observable operation with phases and
-progress. Nothing outside the function can observe where it is or what it has
-committed. If it is aborted, its partial progress is only communicated via
-`syncActorToState` at exit.
+Two commits (`c1d259a1`, `c2d6490a`) have `@ts-expect-error` and `@TODO` markers
+on the `track` field in `LoadingInputs`. Type precision needs improving — the
+track type from `getSelectedTrack` is too broad (includes unresolved tracks).
 
-### The two-representation problem
+### SegmentLoaderActor → full streaming + continue/preempt
 
-The actor context (`SourceBufferActorContext`) holds rich data — segment IDs,
-timing, buffered ranges. `state.bufferState` holds an impoverished projection
-— IDs only, no timing. This forces `resolveBufferedSegments` as a bridge
-everywhere timing is needed for window calculations. The two representations
-are in sync at task boundaries but represent the same underlying truth.
+The SegmentLoaderActor was built as step 1 (batch mode, existing task loop).
+The target architecture (streaming, pending-list model, continue vs. preempt)
+is documented in the "Candidate Architecture" below but not yet implemented.
 
-### The coupled concerns problem
+### Bandwidth bridge
 
-`loadSegments` currently owns: trigger evaluation, task scheduling, network
-I/O, bandwidth sampling, SourceBuffer coordination, and state publication.
-Bandwidth sampling (ABR feedback) is an accidental side effect of the fetch
-loop — its output (`bandwidthState`) has nothing to do with SourceBuffer
-management but is produced from the same code path.
+`createTrackedFetch` still publishes to `state.bandwidthState` via `onSample`.
+Remove once ABR reads from throughput directly.
+
+### preload='auto' seek-before-play
+
+Known limitation: if the user seeks before pressing play with `preload='auto'`,
+the `playbackInitiated` transition is suppressed (message was already full-range
+pre-play). The first re-send is delayed until the next segment boundary crossing
+post-play. Documented in `loadSegments` JSDoc.
 
 ---
 
-## Candidate Architecture
+## Target Architecture (not yet fully implemented)
 
-The following decomposition has emerged from design discussion. It is the
-current direction — not yet implemented, but concrete enough to build toward.
+The following describes where the architecture is heading. Parts are built
+(Reactor thinning, actors in owners); parts are still future work.
 
----
-
-### The Reactor _(replaces the current `loadSegments` subscriber)_
-
-A thin wiring layer. Watches for meaningful state changes and sends a typed
-message to the SegmentLoaderActor when the loading assignment changes. Owns no
-persistent state of its own.
-
-**Watches:**
-- Track selection and resolution (a resolved `ResolvedTrack` becomes available)
-- `currentTime` changes that shift the buffer window meaningfully
-- `preload` / `playbackInitiated` (gate on whether loading should happen at all)
-
-**Computes:**
-- `start = currentTime`
-- `end = currentTime + bufferDuration` (or `currentTime` on a fresh seek before
-  back-buffer data has accumulated)
-
-**Sends:**
+### Message protocol (implemented)
 
 ```ts
-{ type: 'load', track: ResolvedTrack, start: number, end: number }
+{ type: 'load', track: VideoTrack | AudioTrack, range?: { start: number; end: number } }
 ```
 
-`start` and `end` are raw time values — no segment snapping. The actor maps
-them onto segment boundaries internally.
-
-The Reactor does **not** know about segments, buffer state, or flushing.
-It waits until the track is resolved before sending — track resolution is a
-natural gate that the Reactor already handles, keeping that concern out of the
-actor entirely.
-
----
-
-### SegmentLoaderActor _(new)_
-
-A persistent actor that receives load assignments and owns all execution logic.
-
-**Construction-time dependencies:**
-- `sourceBufferActor: SourceBufferActor` — shared reference, not owned
-- `fetchBytes` — the tracked-fetch closure (owns throughput sampling)
-
-**Message protocol:**
-
-```ts
-{ type: 'load', track: ResolvedTrack, start: number, end: number }
-```
-
-`start` and `end` are raw time values. The actor maps them onto segment
-boundaries by filtering `track.segments` to those overlapping `[start, end]`.
-
----
-
-**Status:**
-
-```
-'idle' | 'working' | 'destroyed'
-```
+### SegmentLoaderActor — target execution model (not yet built)
 
 **Context (non-finite state):**
 
 ```ts
 {
-  assignment: { track: ResolvedTrack; start: number; end: number } | null;
-  pending: PendingOp[];  // pending[0] is in-flight when status === 'working'
+  assignment: { track; start: number; end: number } | null;
+  pending: PendingOp[];  // pending[0] is in-flight when working
 }
 
 type PendingOp =
@@ -430,239 +328,30 @@ type PendingOp =
   | { type: 'append-segment'; segment: Segment };
 ```
 
-`pending[0]` doubles as the in-flight item — it is the operation currently
-executing. `pending[1...]` are queued but not yet started. When `pending` is
-empty the actor transitions to `'idle'`.
-
-Remove/flush operations are handled as a prerequisite step before the pending
-list is populated (see Execution below) and are not tracked as pending items.
-More granular remove tracking is deferred — a known gap for the continue path
-when the flush range changes mid-execution.
-
----
-
-**On receiving a `'load'` message:**
-
-1. Compute the target segment set: `track.segments` filtered to `[start, end]`
+**On `'load'` message:**
+1. Filter `track.segments` to `[start, end]`
 2. Check `sourceBufferActor.snapshot.context` for committed segments
-3. Decide: **continue** or **preempt**
+3. **Continue** (same track, overlapping range): keep `pending[0]`, revise `pending[1...]`
+4. **Preempt** (track switch or disjoint seek): abort signal, clear pending, rebuild
 
-**Continue** — same `track.id`, new range overlaps or extends current work.
-- Keep `pending[0]` (in-flight, cannot be safely interrupted)
-- Rebuild `pending[1...]` from the updated target set, excluding committed
-  segments and `pending[0]`
-- Add any new segments that entered the window; drop any that left
+**Execution — streaming:**
+1. Removes upfront (committed segments outside range, or full flush on track switch)
+2. Populate pending: init + segments in range not yet committed
+3. Worker loop: `pending[0]` → fetch + append → shift → repeat
 
-**Preempt** — `track.id` changed (track/quality switch) or new range is
-completely disjoint from current work (large seek).
-- Abort the current abort signal (interrupts `pending[0]` at its next
-  checkpoint — fetch boundaries and actor send boundaries respect the signal)
-- Clear `pending`
-- SourceBufferActor always finishes its current physical operation regardless
-  (browser constraint: `appendBuffer`/`remove` cannot be cancelled mid-execution)
-- Rebuild from scratch for the new assignment
-
----
-
-**Execution (streaming, not batch):**
-
-1. **Removes** — computed upfront from committed context vs. `[start, end]`.
-   Segments committed but outside the range → `sourceBufferActor.send(remove)`.
-   Track switch (`track.id` changed) → `sourceBufferActor.send(remove, 0, Infinity)`.
-   Removes complete before the pending list is populated.
-
-2. **Populate pending** — init (if `initTrackId !== track.id`) + segments in
-   `[start, end]` not yet committed, in chronological order.
-
-3. **Worker loop** — while `pending` is non-empty:
-   - `pending[0]` is the current operation
-   - If `append-init`: `fetchBytes(init)` → `sourceBufferActor.send(append-init)`
-   - If `append-segment`: `fetchBytes(segment)` → `sourceBufferActor.send(append-segment)`
-   - On completion: shift `pending`, continue
-   - At each await boundary: check abort signal; if aborted, stop
-
-Each segment is streamed — fetched and appended before the next fetch begins.
-This restores startup latency vs. the current batch approach and lets the
-pending list be revised between operations.
-
----
-
-### SourceBufferActor _(exists — no changes for now)_
-
-Serializes SourceBuffer operations and owns the rich committed buffer model.
-No changes needed for the initial SegmentLoaderActor implementation.
-
-The SegmentLoaderActor tracks its own in-flight and pending state internally
-(`pending[0]` = in-flight, `pending[1...]` = queued). Since the
-SegmentLoaderActor is the sole sender to SourceBufferActor, it always has
-perfect knowledge of what it has submitted — there is no need for
-SourceBufferActor to echo this back.
-
-Committed state (`sourceBufferActor.snapshot.context.segments`) remains the
-ground truth for what is physically in the buffer. The SegmentLoaderActor
-reads this directly when computing the delta for a new assignment.
-
-**Future enhancement:** expose pending/queued state with segment IDs for
-finer-grained introspection. Deferred until a concrete need emerges.
-
----
-
-### SerialRunner _(exists — no changes for now)_
-
-The streaming execution model (one segment at a time, each fetch+append
-awaited before the next begins) means there is at most one operation queued
-in SourceBufferActor at any time. The current SerialRunner is sufficient.
-
-`abortAll()` handles teardown. The pending list in SegmentLoaderActor's
-context replaces the need for per-task cancellation at the runner level.
-
-**Future enhancement:** a real named queue with per-task cancellation by ID,
-enabling finer-grained preemption. Deferred — the state-as-queue approach in
-SegmentLoaderActor makes this unnecessary for the initial implementation.
-
----
-
-### fetchBytes / throughput _(exists — recently extracted)_
-
-`createTrackedFetch` produces a `fetchBytes` closure that transparently samples
-bandwidth and owns `BandwidthState` locally. Passed to the SegmentLoaderActor
-at construction. No changes needed here.
-
-**Migration bridge:** currently publishes to `state.bandwidthState` via an
-`onSample` callback so ABR continues to work. Remove once ABR reads from
-throughput directly.
-
----
-
-### Candidate Composition
+### Condition hierarchy for Reactor trigger (implemented)
 
 ```
-State changes (track resolved, currentTime, preload)
-         │
-         │  Reactor — watches relevant slices only
-         ▼
-  { type: 'load', track, start, end }
-         │
-         ▼
-  ┌────────────────────────────────────────────────────────┐
-  │               SegmentLoaderActor                        │
-  │                                                         │
-  │  context: { assignment, pending: PendingOp[] }          │
-  │  pending[0] = in-flight  pending[1...] = queued         │
-  │                                                         │
-  │  on 'load': continue (revise pending) or preempt        │
-  │  worker loop: removes upfront → stream fetch+append     │
-  └──────────┬──────────────────────────────┬──────────────┘
-             │ fetchBytes(segment)           │ send(append/remove)
-             ▼                              ▼
-  ┌──────────────────┐        ┌─────────────────────────┐
-  │  fetchBytes      │        │   SourceBufferActor      │
-  │  (throughput,    │        │   committed context      │
-  │   local state)   │        │   (unchanged)            │
-  └──────────────────┘        └────────────┬────────────┘
-                                           │
-                                 narrow publication
-                                 (segment IDs only)
-                                           │
-                                           ▼
-                               state.bufferState ──► endOfStream
+!playbackInitiated
+  preload==='none'      → dormant
+  preload==='metadata'  → fires on transition to 'metadata'
+  preload==='auto'      → fires on transition to 'auto'
+
+!playbackInitiated → playbackInitiated
+  preload !== 'auto'    → trigger
+  preload === 'auto'    → suppressed (seek-before-play is a known limitation)
+
+playbackInitiated
+  resolvedTrackId changes         → trigger
+  segmentStartFor(currentTime) changes → trigger
 ```
-
----
-
-### Wiring and lifecycle
-
-The SegmentLoaderActor is created when a SourceBufferActor becomes available
-(i.e. when the SourceBuffer appears in owners) and destroyed when the
-SourceBuffer is removed. The Reactor manages this lifecycle, passing the
-SourceBufferActor reference at construction. Actor dependencies are
-construction-time injections — not discovered through state.
-
----
-
-## Open Questions
-
-### SourceBufferActor lifecycle ownership
-
-The SegmentLoaderActor receives a SourceBufferActor reference at construction.
-Something external must manage that lifecycle — creating it when the
-SourceBuffer appears, destroying it when the SourceBuffer is removed, and
-passing the reference to the SegmentLoaderActor. The Reactor is the current
-candidate, but this creates a dependency between the Reactor and the
-SourceBufferActor that didn't exist in the simpler designs. Worth making
-explicit before implementation.
-
-### What does endOfStream actually need?
-
-`endOfStream` reads `state.bufferState[type].segments` to check whether the
-last segment of each track has been appended. Its needs are minimal — just
-"is this segment ID in the buffer?" — but it sits outside the SegmentLoaderActor
-and has no direct access to SourceBufferActor.
-
-Options:
-1. Keep the current `state.bufferState` projection — narrow write surface, no
-   change to endOfStream
-2. Have the SegmentLoaderActor publish a targeted `bufferComplete` signal when
-   the full `[start, end]` range has been loaded — endOfStream subscribes to
-   this instead of the full segment list
-3. Make SourceBufferActor accessible outside the loading pipeline so endOfStream
-   can query it directly
-
-Option 1 is the lowest-friction path for now. Option 2 is the cleanest
-long-term but requires the SegmentLoaderActor to know when it's "done."
-
-### Batch vs. streaming (resolved in principle, not yet in code)
-
-The current `loadSegmentsTask` batches all fetches before any appends.
-This was motivated by atomicity concerns that don't apply — `syncActorToState`
-fires at task exit, so intermediate actor state is never observable externally.
-
-The new SegmentLoaderActor uses streaming: fetch s1 → append s1 → fetch s2 →
-append s2. This restores startup latency, lowers peak memory, and is the
-natural model for a persistent actor that tracks per-segment progress.
-
-The current implementation should be migrated to streaming before (or as part
-of) the SegmentLoaderActor work.
-
-### continue vs. preempt: remove/flush revision
-
-The continue/preempt decision and execution model is resolved for segment
-operations. The remaining open question is what happens when a new assignment
-arrives and the required removes have *changed* relative to what was computed
-upfront.
-
-Example: actor computed `remove(30, Infinity)` for the prior assignment, but
-it's already in-flight. New assignment shifts the window — `remove(40, Infinity)`
-would be more appropriate. Since physical removes cannot be cancelled, the
-actor finishes the in-flight remove and may need a corrective operation after.
-
-This is an edge case with bounded consequences and is deferred. Track as a
-known gap in the current design.
-
-### Migration path
-
-The current `loadSegments` is a monolithic feature that will be decomposed
-incrementally. Each step should be independently shippable and leave the system
-in a working state.
-
-**Step 1 — Streaming refactor (near-term, independent)**
-Change `loadSegmentsTask` from batch (all fetches then all appends) to
-streaming (fetch s1 → append s1 → fetch s2 → append s2). No architecture
-change — just execution model. Directly improves startup latency and removes
-the batch complexity from the current code.
-
-**Step 2 — Build SegmentLoaderActor**
-Implement the new actor with its message protocol, pending list model, and
-continue/preempt logic. `loadSegments` (the current Reactor) continues to
-drive it via messages. The actor owns execution; the existing subscriber loop
-is replaced by message sends.
-
-**Step 3 — Thin the Reactor**
-Remove the remaining task loop, `shouldLoadSegments`, `taskSegmentIds`, and
-`abortController` from `loadSegments`. It becomes purely: watch state, compute
-`start`/`end`, send `'load'` messages. The actor owns everything else.
-
-**Step 4 — Resolve endOfStream**
-With the Reactor thinned, revisit how `endOfStream` gets the signal it needs.
-Options remain: keep `state.bufferState` projection (lowest friction), or have
-the SegmentLoaderActor publish a narrower completion signal.
