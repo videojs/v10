@@ -1394,8 +1394,6 @@ http://example.com/seg2.m4s
 
   await vi.waitFor(
     () => {
-      const state = engine.state.current;
-
       // Buffer state now lives in the SourceBufferActor (in owners), not in state.
       const videoCtx = engine.owners.current.videoBufferActor?.snapshot.context;
 
@@ -1473,8 +1471,6 @@ http://example.com/audio-seg1.m4s
 
   await vi.waitFor(
     () => {
-      const state = engine.state.current;
-
       // Buffer state now lives in the SourceBufferActors (in owners), not in state.
       const videoCtx = engine.owners.current.videoBufferActor?.snapshot.context;
       const audioCtx = engine.owners.current.audioBufferActor?.snapshot.context;

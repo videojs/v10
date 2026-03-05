@@ -1,7 +1,8 @@
+import { combineLatest } from '../../all';
 import { type BandwidthState, sampleBandwidth } from '../../core/abr/bandwidth-estimator';
 import { DEFAULT_FORWARD_BUFFER_CONFIG } from '../../core/buffer/forward-buffer';
 import { createState, type WritableState } from '../../core/state/create-state';
-import type { AddressableObject, Presentation, Segment } from '../../core/types';
+import type { AddressableObject, Presentation, ResolvedTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
 import type { SourceBufferActor } from '../media/source-buffer-actor';
@@ -50,27 +51,6 @@ function createTrackedFetch(
     onSample?.(next);
     return data;
   };
-}
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-/**
- * Find the start time of the segment that contains `currentTime`.
- * Returns the startTime of the last segment whose startTime ≤ currentTime,
- * or null if no segment precedes or matches currentTime.
- *
- * Assumes segments are ordered by startTime (standard for HLS/DASH playlists).
- * O(n) scan — negligible at the fire rate of the segment boundary selector.
- */
-function segmentStartTimeFor(currentTime: number, segments: readonly Segment[]): number | null {
-  let result: number | null = null;
-  for (const seg of segments) {
-    if (seg.startTime <= currentTime) result = seg.startTime;
-    else break;
-  }
-  return result;
 }
 
 // ============================================================================
@@ -128,74 +108,77 @@ export function canLoadSegments(
   return !!owners[actorKey];
 }
 
-/**
- * Check if loading is enabled in the current preload/playback mode.
- *
- * Three modes:
- * - Full mode (preload='auto' OR playbackInitiated): load init + media segments.
- * - Metadata mode (preload='metadata', !playbackInitiated): load init only.
- * - Blocked (preload='none' or unset, !playbackInitiated): load nothing.
- *
- * Note: this is a mode gate only — it does not check whether there is actual
- * work to do (e.g. which segments are missing). The SegmentLoaderActor owns
- * that decision.
- */
-export function shouldLoadSegments(state: SegmentLoadingState, type: MediaTrackType): boolean {
-  const fullMode = state.preload === 'auto' || !!state.playbackInitiated;
-  const metadataMode = state.preload === 'metadata' && !state.playbackInitiated;
-  return fullMode || metadataMode;
-}
-
 // ============================================================================
 // STATE SELECTOR
 // ============================================================================
 
 /**
- * Discriminated union representing the dimensions tracked by the state selector.
- *
- * Pre-play tier (!playbackInitiated):
- *   - Only preload matters (determines mode and whether loading is enabled).
- *   - currentTime changes do NOT trigger re-sends (range is based on
- *     currentTime at trigger time, but we don't react to it changing).
- *   - Track selection changes are not supported in this tier; the actor
- *     lifecycle (actor appearing in owners) handles the initial trigger when
- *     the track resolves and its SourceBuffer+actor are created.
- *
- * Playing tier (playbackInitiated):
- *   - preload is irrelevant (always full mode).
- *   - resolvedTrackId: fires on track switch or when an unresolved track
- *     resolves (null when selected track is not yet resolved).
- *   - segmentStart: fires only when the playhead crosses a segment boundary,
- *     keeping send frequency to ~1 per segment duration rather than every tick.
+ * The subset of state that drives segment loading decisions.
+ * A plain "pick" with one derived field (resolved track ID).
  */
-type SegmentLoadingKey =
-  | { playing: false; preload: string | undefined }
-  | { playing: true; resolvedTrackId: string | null; segmentStart: number | null };
+type LoadingInputs = {
+  playbackInitiated: boolean | undefined;
+  preload: string | undefined;
+  currentTime: number | undefined;
+  /** @TODO cleanup type precision via inference+generics */
+  track: ReturnType<typeof getSelectedTrack>;
+};
 
-function makeSegmentLoadingKey(s: SegmentLoadingState, type: MediaTrackType): SegmentLoadingKey {
-  if (!s.playbackInitiated) {
-    return { playing: false, preload: s.preload };
-  }
-
+function selectLoadingInputs(s: SegmentLoadingState, type: MediaTrackType): LoadingInputs {
+  const { playbackInitiated, preload, currentTime } = s;
   const track = getSelectedTrack(s, type);
-  const resolvedTrackId = track && isResolvedTrack(track) ? track.id : null;
-  const currentTime = s.currentTime ?? 0;
-  const segments = resolvedTrackId && isResolvedTrack(track!) ? track!.segments : [];
-
   return {
-    playing: true,
-    resolvedTrackId,
-    segmentStart: segmentStartTimeFor(currentTime, segments as readonly Segment[]),
+    playbackInitiated,
+    preload,
+    currentTime,
+    track,
   };
 }
 
-function segmentLoadingKeyEq(a: SegmentLoadingKey, b: SegmentLoadingKey): boolean {
-  if (a.playing !== b.playing) return false;
-  if (!a.playing && !b.playing) return a.preload === b.preload;
-  if (a.playing && b.playing) {
-    return a.resolvedTrackId === b.resolvedTrackId && a.segmentStart === b.segmentStart;
+/**
+ * Equality function encoding the condition hierarchy for relevant changes.
+ *
+ * Pre-play (!playbackInitiated):
+ *   Only preload changes matter. currentTime and resolvedTrackId are ignored
+ *   (track changes not supported pre-play; currentTime value is used at
+ *   trigger time but changes don't re-trigger).
+ *
+ * playbackInitiated transition:
+ *   Always fires (handled in the subscriber; preload='auto' suppression
+ *   applied there since equality functions have no memory of prior values).
+ *
+ * Post-play (playbackInitiated):
+ *   resolvedTrackId changes (track switch or previously-unresolved track
+ *   resolving) and currentTime changes both trigger. preload is irrelevant.
+ */
+function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boolean {
+  // Haven't started playback. Only care about preload changes for now.
+  if (!curState.playbackInitiated) {
+    if (curState.preload === 'none') return false;
+    return curState.preload !== prevState.preload;
   }
-  return false;
+  if (!prevState.playbackInitiated && curState.playbackInitiated) {
+    if (prevState.preload !== 'auto') return true;
+  }
+
+  // Playback has initiated (whether or not it just transitioned to this is irrelevant)
+  if (prevState.track?.id !== curState.track?.id) {
+    return !!curState.track && isResolvedTrack(curState.track);
+  }
+
+  /** @TODO move this function def */
+  /** @TODO cleanup type precision via inference+generics */
+  const segmentStartFor = (currentTime: number | undefined, track: ResolvedTrack | undefined) => {
+    if (currentTime == null) return undefined;
+    return track?.segments.find(
+      ({ startTime, duration }, i, segments) =>
+        currentTime >= startTime && (currentTime < startTime + duration || i === segments.length - 1)
+    )?.startTime;
+  };
+  return (
+    segmentStartFor(prevState.currentTime, prevState.track as ResolvedTrack) !==
+    segmentStartFor(curState.currentTime, curState.track as ResolvedTrack)
+  );
 }
 
 // ============================================================================
@@ -270,34 +253,6 @@ export function loadSegments(
 
   let segmentLoader: SegmentLoaderActor | null = null;
 
-  // Derive and send a load message if all conditions are met.
-  const tryToSend = () => {
-    if (!segmentLoader) return;
-    const currentState = state.current;
-    const currentOwners = owners.current;
-
-    if (!canLoadSegments(currentState, currentOwners, type)) return;
-    if (!shouldLoadSegments(currentState, type)) return;
-
-    const track = getSelectedTrack(currentState, type)!;
-    const fullMode = currentState.preload === 'auto' || !!currentState.playbackInitiated;
-
-    if (!fullMode) {
-      // Metadata mode: init only, no range.
-      segmentLoader.send({ type: 'load', track });
-    } else {
-      const currentTime = currentState.currentTime ?? 0;
-      segmentLoader.send({
-        type: 'load',
-        track,
-        range: {
-          start: currentTime,
-          end: currentTime + DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration,
-        },
-      });
-    }
-  };
-
   // SegmentLoaderActor lifecycle — watch only the actor key in owners so this
   // subscription does not fire on unrelated owners changes.
   const unsubActorLifecycle = owners.subscribe(
@@ -305,7 +260,6 @@ export function loadSegments(
     (actor) => {
       if (actor && !segmentLoader) {
         segmentLoader = createSegmentLoaderActor(actor, fetchBytes);
-        tryToSend();
       } else if (!actor && segmentLoader) {
         segmentLoader.destroy();
         segmentLoader = null;
@@ -313,35 +267,43 @@ export function loadSegments(
     }
   );
 
-  // Track previous playbackInitiated to detect the !playing→playing transition
-  // and apply the preload='auto' suppression logic.
-  let prevPlaybackInitiated = !!state.current.playbackInitiated;
+  let segmentsCanLoad = false;
+  const unsubscribeCanLoadSegments = combineLatest([state, owners]).subscribe(([currentState, currentOwners]) => {
+    segmentsCanLoad = canLoadSegments(currentState, currentOwners, type);
+  });
 
-  // State selector — fires only when a dimension relevant to the current tier
-  // changes. See SegmentLoadingKey and the condition hierarchy in the JSDoc above.
-  const unsubState = state.subscribe(
-    (s) => makeSegmentLoadingKey(s, type),
-    () => {
-      const currentState = state.current;
+  const unsubscribeShouldLoadSegments = state.subscribe(
+    (state) => selectLoadingInputs(state, type),
+    ({ preload, playbackInitiated, currentTime, track }) => {
+      if (!segmentsCanLoad || !segmentLoader) return;
+      const fullMode = preload === 'auto' || !!playbackInitiated;
 
-      const isPlayTransition = !prevPlaybackInitiated && !!currentState.playbackInitiated;
-      prevPlaybackInitiated = !!currentState.playbackInitiated;
+      if (!fullMode) {
+        // Metadata mode: init only, no range.
+        // @ts-expect-error
+        segmentLoader.send({ type: 'load', track });
+      } else {
+        segmentLoader.send({
+          type: 'load',
 
-      // Suppress the playbackInitiated transition when preload='auto': the actor
-      // was already receiving full-range messages in the pre-play phase.
-      // See KNOWN LIMITATION in JSDoc above regarding seek-before-play.
-      if (isPlayTransition && currentState.preload === 'auto') return;
-
-      tryToSend();
+          // @ts-expect-error
+          track,
+          range: {
+            start: currentTime as number,
+            end: (currentTime as number) + DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration,
+          },
+        });
+      }
     },
-    { equalityFn: segmentLoadingKeyEq }
+    { equalityFn: loadingInputsEq }
   );
 
   return () => {
+    unsubscribeCanLoadSegments();
+    unsubscribeShouldLoadSegments();
     segmentLoader?.destroy();
     segmentLoader = null;
     owners.current[actorKey]?.destroy();
     unsubActorLifecycle();
-    unsubState();
   };
 }
