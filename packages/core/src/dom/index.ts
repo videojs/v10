@@ -10,6 +10,5 @@ export * from './ui/slider';
 export * from './ui/slider-css-vars';
 export * from './ui/thumbnail';
 export * from './ui/tooltip/tooltip';
-export * from './ui/tooltip/tooltip-group';
 export * from './ui/transition';
 export * from './utils';
