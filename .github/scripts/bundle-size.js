@@ -4,9 +4,7 @@
  * Auto-discovers packages from `packages/`, reads their `exports` field to find
  * entry points, and externalizes `peerDependencies`.
  *
- * Preset subpaths (/video, /audio, /background) are measured as marginal over
- * root: (root + subpath) - root. All other subpaths are measured as standalone
- * totals.
+ * All sizes are standalone totals (minified + brotli).
  *
  * Wildcard exports (e.g., `./ui/*`, `./media/⁕/index.js`) are resolved to
  * actual files on disk. Supports both file-level (`*.js`) and directory-level
@@ -342,18 +340,7 @@ async function main() {
         continue;
       }
 
-      // Preset subpaths are marginal over root (incremental cost of a preset).
-      // Everything else is standalone (total cost including all dependencies).
-      let size;
-      if (cat === 'preset') {
-        const combinedSize = await measure(
-          [pkg.rootPath, sub.path],
-          pkg.external,
-        );
-        size = combinedSize - rootSize;
-      } else {
-        size = await measure([sub.path], pkg.external);
-      }
+      const size = await measure([sub.path], pkg.external);
 
       results.push({
         name: sub.name,

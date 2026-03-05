@@ -135,11 +135,6 @@ function generateCategoryBreakdowns(entries, pkg) {
       }
     }
 
-    if (cat === 'preset') {
-      lines.push('*Subpath sizes are marginal over the root entry point.*');
-      lines.push('');
-    }
-
     lines.push('</details>');
     lines.push('');
   }
@@ -240,10 +235,7 @@ function generateComparisonReport(current, base) {
   lines.push('<details>');
   lines.push('<summary>ℹ️ How to interpret</summary>');
   lines.push('');
-  lines.push('All sizes are minified + brotli.');
-  lines.push(
-    'Preset subpath sizes are marginal over the root entry point. All other sizes are standalone totals.',
-  );
+  lines.push('All sizes are standalone totals (minified + brotli).');
   lines.push('');
   lines.push('| Icon | Meaning |');
   lines.push('|---|---|');

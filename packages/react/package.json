@@ -27,6 +27,24 @@
       "development": "./dist/dev/media/*/index.js",
       "default": "./dist/default/media/*/index.js"
     },
+    "./video/*.css": "./dist/default/presets/video/*.css",
+    "./video/*": {
+      "types": "./dist/dev/presets/video/*.d.ts",
+      "development": "./dist/dev/presets/video/*.js",
+      "default": "./dist/default/presets/video/*.js"
+    },
+    "./audio/*.css": "./dist/default/presets/audio/*.css",
+    "./audio/*": {
+      "types": "./dist/dev/presets/audio/*.d.ts",
+      "development": "./dist/dev/presets/audio/*.js",
+      "default": "./dist/default/presets/audio/*.js"
+    },
+    "./background/*.css": "./dist/default/presets/background/*.css",
+    "./background/*": {
+      "types": "./dist/dev/presets/background/*.d.ts",
+      "development": "./dist/dev/presets/background/*.js",
+      "default": "./dist/default/presets/background/*.js"
+    },
     "./*.css": "./dist/default/presets/*.css",
     "./*": {
       "types": "./dist/dev/presets/*/index.d.ts",
