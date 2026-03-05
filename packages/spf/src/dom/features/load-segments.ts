@@ -151,32 +151,44 @@ function selectLoadingInputs(s: SegmentLoadingState, type: MediaTrackType): Load
  *   resolvedTrackId changes (track switch or previously-unresolved track
  *   resolving) and currentTime changes both trigger. preload is irrelevant.
  */
+/** @TODO move to module scope */
+const segmentStartFor = (currentTime: number | undefined, track: ResolvedTrack | undefined) => {
+  if (currentTime == null) return undefined;
+  return track?.segments.find(
+    ({ startTime, duration }, i, segments) =>
+      currentTime >= startTime && (currentTime < startTime + duration || i === segments.length - 1)
+  )?.startTime;
+};
+
+/**
+ * Returns true when the inputs are equal (no meaningful change — don't fire).
+ * Returns false when the inputs differ in a way that requires a new message.
+ *
+ * This IS the shouldLoadSegments logic, expressed as an equality function.
+ */
 function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boolean {
-  // Haven't started playback. Only care about preload changes for now.
+  // Haven't started playback. Only care about preload changes.
   if (!curState.playbackInitiated) {
-    if (curState.preload === 'none') return false;
-    return curState.preload !== prevState.preload;
+    if (curState.preload === 'none') return true; // blocked — equal, don't fire
+    return curState.preload === prevState.preload; // equal if preload unchanged
   }
+  // Transition: !playbackInitiated → playbackInitiated
   if (!prevState.playbackInitiated && curState.playbackInitiated) {
-    if (prevState.preload !== 'auto') return true;
+    if (prevState.preload !== 'auto') return false; // fire — message shape changes
+    // preload was 'auto': fall through to segment comparison (suppress if same position)
   }
 
-  // Playback has initiated (whether or not it just transitioned to this is irrelevant)
-  if (prevState.track?.id !== curState.track?.id) {
-    return !!curState.track && isResolvedTrack(curState.track);
-  }
+  // Don't treat as a change if we don't (yet) have a currently resolved track.
+  if (!curState.track || !isResolvedTrack(curState.track)) return true;
 
-  /** @TODO move this function def */
-  /** @TODO cleanup type precision via inference+generics */
-  const segmentStartFor = (currentTime: number | undefined, track: ResolvedTrack | undefined) => {
-    if (currentTime == null) return undefined;
-    return track?.segments.find(
-      ({ startTime, duration }, i, segments) =>
-        currentTime >= startTime && (currentTime < startTime + duration || i === segments.length - 1)
-    )?.startTime;
-  };
+  // If we *do* have a currently resolved track, treat as a change if the track ids have changed
+  if (prevState.track?.id !== curState.track.id && isResolvedTrack(curState.track)) return false;
+
+  // Finally, if playback has initiated *and* we have a resolved track, check if currentTime
+  // has changed "significantly" (based on segment time range boundaries) and treat as a change
+  // if so (regardless of whether or not the track has changed)
   return (
-    segmentStartFor(prevState.currentTime, prevState.track as ResolvedTrack) !==
+    segmentStartFor(prevState.currentTime, curState.track as ResolvedTrack) ===
     segmentStartFor(curState.currentTime, curState.track as ResolvedTrack)
   );
 }
