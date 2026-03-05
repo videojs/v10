@@ -1,6 +1,5 @@
 import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
 import {
-  adjustStateForEdgeAlignment,
   applyElementProps,
   applyStateDataAttrs,
   createSlider,
@@ -79,6 +78,7 @@ export class TimeSliderElement extends MediaElement {
       onDragEnd: () => {
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
+      adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),
     });
 
     applyElementProps(this, this.#slider.rootProps, { signal });
@@ -119,13 +119,7 @@ export class TimeSliderElement extends MediaElement {
     this.#core.setMedia(media);
     const state = this.#core.getState();
 
-    const cssState = adjustStateForEdgeAlignment(
-      state,
-      this,
-      this.querySelector<HTMLElement>('media-slider-thumb'),
-      (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize)
-    );
-    const cssVars = getTimeSliderCSSVars(cssState);
+    const cssVars = getTimeSliderCSSVars(this.#slider.adjustForAlignment(state));
 
     applyStyles(this, cssVars);
 

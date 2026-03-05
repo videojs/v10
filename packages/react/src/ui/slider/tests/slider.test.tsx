@@ -10,7 +10,11 @@ import { SliderTrack } from '../slider-track';
 import { SliderValue } from '../slider-value';
 
 const { mockSliderApi } = vi.hoisted(() => ({
-  mockSliderApi: () => ({
+  mockSliderApi: (options?: {
+    getElement?: () => HTMLElement;
+    getThumbElement?: () => HTMLElement | null;
+    adjustPercent?: (raw: number, thumb: number, track: number) => number;
+  }) => ({
     input: {
       current: {
         pointerPercent: 0,
@@ -30,6 +34,22 @@ const { mockSliderApi } = vi.hoisted(() => ({
       onKeyDown: vi.fn(),
       onFocus: vi.fn(),
       onBlur: vi.fn(),
+    },
+    adjustForAlignment<
+      S extends { thumbAlignment?: string; orientation?: string; fillPercent: number; pointerPercent: number },
+    >(state: S): S {
+      if (!options?.adjustPercent || state.thumbAlignment !== 'edge') return state;
+      const thumbEl = options.getThumbElement?.();
+      if (!thumbEl) return state;
+      const rootEl = options.getElement!();
+      const isHorizontal = state.orientation === 'horizontal';
+      const thumbSize = isHorizontal ? thumbEl.offsetWidth : thumbEl.offsetHeight;
+      const trackSize = isHorizontal ? rootEl.offsetWidth : rootEl.offsetHeight;
+      return {
+        ...state,
+        fillPercent: options.adjustPercent(state.fillPercent, thumbSize, trackSize),
+        pointerPercent: options.adjustPercent(state.pointerPercent, thumbSize, trackSize),
+      };
     },
     destroy: vi.fn(),
   }),

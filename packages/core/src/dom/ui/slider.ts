@@ -3,7 +3,7 @@ import { listen } from '@videojs/utils/dom';
 import { throttle } from '@videojs/utils/function';
 import { clamp, roundToStep } from '@videojs/utils/number';
 import { isNull } from '@videojs/utils/predicate';
-import type { SliderInput } from '../../core/ui/slider/slider-core';
+import type { SliderInput, SliderState } from '../../core/ui/slider/slider-core';
 import { getPercentFromPointerEvent } from '../utils/pointer';
 import type { UIKeyboardEvent, UIPointerEvent } from './event';
 
@@ -32,6 +32,9 @@ export interface SliderOptions {
    */
   commitThrottle?: number | undefined;
 
+  /** Adjust a raw 0–100 percent for thumb alignment. Enables `adjustForAlignment()`. */
+  adjustPercent?: ((rawPercent: number, thumbSize: number, trackSize: number) => number) | undefined;
+
   onValueChange?: ((percent: number) => void) | undefined;
   onValueCommit?: ((percent: number) => void) | undefined;
   onDragStart?: (() => void) | undefined;
@@ -54,6 +57,12 @@ export interface SliderApi {
   input: State<SliderInput>;
   rootProps: SliderRootProps;
   thumbProps: SliderThumbProps;
+  /**
+   * Adjust `fillPercent` and `pointerPercent` for edge thumb alignment using
+   * live DOM measurements from the root/thumb elements. No-op when
+   * `adjustPercent` was not provided or `thumbAlignment` is not `'edge'`.
+   */
+  adjustForAlignment: <S extends SliderState>(state: S) => S;
   destroy: () => void;
 }
 
@@ -281,12 +290,31 @@ export function createSlider(options: SliderOptions): SliderApi {
     },
   };
 
+  function adjustForAlignment<S extends SliderState>(state: S): S {
+    if (!options.adjustPercent || state.thumbAlignment !== 'edge') return state;
+
+    const rootEl = options.getElement();
+    const thumbEl = options.getThumbElement?.();
+    if (!thumbEl) return state;
+
+    const isHorizontal = state.orientation === 'horizontal';
+    const thumbSize = isHorizontal ? thumbEl.offsetWidth : thumbEl.offsetHeight;
+    const trackSize = isHorizontal ? rootEl.offsetWidth : rootEl.offsetHeight;
+
+    return {
+      ...state,
+      fillPercent: options.adjustPercent(state.fillPercent, thumbSize, trackSize),
+      pointerPercent: options.adjustPercent(state.pointerPercent, thumbSize, trackSize),
+    };
+  }
+
   listen(abort.signal, 'abort', cleanup, { once: true });
 
   return {
     input,
     rootProps,
     thumbProps,
+    adjustForAlignment,
     destroy() {
       abort.abort();
     },

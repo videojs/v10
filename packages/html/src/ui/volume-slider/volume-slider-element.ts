@@ -1,6 +1,5 @@
 import { SliderDataAttrs, VolumeSliderCore } from '@videojs/core';
 import {
-  adjustStateForEdgeAlignment,
   applyElementProps,
   applyStateDataAttrs,
   createSlider,
@@ -75,6 +74,7 @@ export class VolumeSliderElement extends MediaElement {
       onDragEnd: () => {
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
+      adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),
     });
 
     applyElementProps(this, this.#slider.rootProps, { signal });
@@ -113,13 +113,7 @@ export class VolumeSliderElement extends MediaElement {
     this.#core.setMedia(media);
     const state = this.#core.getState();
 
-    const cssState = adjustStateForEdgeAlignment(
-      state,
-      this,
-      this.querySelector<HTMLElement>('media-slider-thumb'),
-      (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize)
-    );
-    const cssVars = getSliderCSSVars(cssState);
+    const cssVars = getSliderCSSVars(this.#slider.adjustForAlignment(state));
 
     applyStyles(this, cssVars);
 
