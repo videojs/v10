@@ -1,0 +1,57 @@
+'use client';
+
+import type { TooltipState } from '@videojs/core';
+import { supportsAnchorPositioning } from '@videojs/utils/dom';
+import { forwardRef, useCallback } from 'react';
+
+import type { UIComponentProps } from '../../utils/types';
+import { renderElement } from '../../utils/use-render';
+import { useTooltipContext } from './context';
+
+export interface TooltipTriggerProps extends UIComponentProps<'button', TooltipState> {}
+
+/** Element that triggers the tooltip on hover and focus. Renders a `<button>` element. */
+export const TooltipTrigger = forwardRef<HTMLButtonElement, TooltipTriggerProps>(function TooltipTrigger(
+  { render, className, style, ...elementProps },
+  forwardedRef
+) {
+  const { core, tooltip, state, stateAttrMap, anchorName, popupId } = useTooltipContext();
+
+  const triggerRef = useCallback(
+    (el: HTMLButtonElement | null) => {
+      tooltip.setTriggerElement(el);
+      if (el && supportsAnchorPositioning()) {
+        el.style.setProperty('anchor-name', `--${anchorName}`);
+      }
+    },
+    [tooltip, anchorName]
+  );
+
+  // Remap DOM focus events to React synthetic event names.
+  // createTooltip() uses onFocusIn/onFocusOut (matching DOM focusin/focusout),
+  // but React maps those to onFocus/onBlur.
+  const { onFocusIn, onFocusOut, ...restTriggerProps } = tooltip.triggerProps;
+
+  return renderElement(
+    'button',
+    { render, className, style },
+    {
+      state,
+      stateAttrMap,
+      ref: [forwardedRef, triggerRef],
+      props: [
+        {
+          type: 'button' as const,
+          ...core.getTriggerAttrs(state, popupId),
+        },
+        { ...restTriggerProps, onFocus: onFocusIn, onBlur: onFocusOut },
+        elementProps,
+      ],
+    }
+  );
+});
+
+export namespace TooltipTrigger {
+  export type Props = TooltipTriggerProps;
+  export type State = TooltipState;
+}
