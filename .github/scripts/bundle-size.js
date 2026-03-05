@@ -4,9 +4,9 @@
  * Auto-discovers packages from `packages/`, reads their `exports` field to find
  * entry points, and externalizes `peerDependencies`.
  *
- * Entry subpaths (presets like /video, /audio, /background) are measured as
- * marginal over root: (root + subpath) - root. All other subpaths are measured
- * as standalone totals.
+ * Preset subpaths (/video, /audio, /background) are measured as marginal over
+ * root: (root + subpath) - root. All other subpaths are measured as standalone
+ * totals.
  *
  * Wildcard exports (e.g., `./ui/*`, `./media/⁕/index.js`) are resolved to
  * actual files on disk. Supports both file-level (`*.js`) and directory-level
@@ -15,7 +15,7 @@
  * CSS files are minified with esbuild then brotli-compressed.
  *
  * Each entry includes a `category` field for grouped reporting in html/react:
- * entry, media, player, skin, ui, or feature.
+ * preset, media, player, skin, ui, or feature.
  *
  * Usage: node .github/scripts/bundle-size.js [--json output.json]
  */
@@ -51,7 +51,7 @@ const CATEGORIZED_PACKAGES = new Set(['html', 'react']);
  * @property {string} name
  * @property {number} size
  * @property {'root' | 'subpath'} type
- * @property {string} [category] - media, player, skin, ui, entry, feature (only for html/react)
+ * @property {string} [category] - preset, media, player, skin, ui, feature (only for html/react)
  * @property {'js' | 'css'} format
  */
 
@@ -123,7 +123,7 @@ function categorize(name) {
   if (name.endsWith('.css')) return 'skin';
 
   if (subpath === '' || /^\/(video|audio|background)$/.test(subpath)) {
-    return 'entry';
+    return 'preset';
   }
   if (subpath.startsWith('/media/')) return 'media';
   if (subpath.startsWith('/ui/')) return 'ui';
@@ -323,10 +323,10 @@ async function main() {
         continue;
       }
 
-      // Entry subpaths are marginal over root (incremental cost of a preset).
+      // Preset subpaths are marginal over root (incremental cost of a preset).
       // Everything else is standalone (total cost including all dependencies).
       let size;
-      if (cat === 'entry') {
+      if (cat === 'preset') {
         const combinedSize = await measure(
           [pkg.rootPath, sub.path],
           pkg.external,

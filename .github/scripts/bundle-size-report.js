@@ -78,20 +78,20 @@ function entryLabel(entryName, pkg) {
 // ---------------------------------------------------------------------------
 
 const CATEGORY_ORDER = [
+  'preset',
   'media',
   'player',
   'skin',
   'ui',
-  'entry',
   'feature',
 ];
 
 const CATEGORY_LABELS = {
+  preset: 'Presets',
   media: 'Media',
   player: 'Players',
   skin: 'Skins',
   ui: 'UI Components',
-  entry: 'Entries',
   feature: 'Features',
 };
 
@@ -135,7 +135,7 @@ function generateCategoryBreakdowns(entries, pkg) {
       }
     }
 
-    if (cat === 'entry') {
+    if (cat === 'preset') {
       lines.push('*Subpath sizes are marginal over the root entry point.*');
       lines.push('');
     }
@@ -242,7 +242,7 @@ function generateComparisonReport(current, base) {
   lines.push('');
   lines.push('All sizes are minified + brotli.');
   lines.push(
-    'Entry subpath sizes are marginal over the root entry point. All other sizes are standalone totals.',
+    'Preset subpath sizes are marginal over the root entry point. All other sizes are standalone totals.',
   );
   lines.push('');
   lines.push('| Icon | Meaning |');
