@@ -46,6 +46,20 @@ const SKIP_PACKAGES = new Set([
 /** Packages that get categorized breakdowns in the report. */
 const CATEGORIZED_PACKAGES = new Set(['html', 'react']);
 
+/** UI compound component parts — excluded from the report. */
+const UI_PARTS = new Set([
+  'controls-group',
+  'slider-buffer',
+  'slider-fill',
+  'slider-thumb',
+  'slider-thumbnail',
+  'slider-track',
+  'slider-value',
+  'time-group',
+  'time-separator',
+  'tooltip-group',
+]);
+
 /**
  * @typedef {object} SizeEntry
  * @property {string} name
@@ -126,7 +140,12 @@ function categorize(name) {
     return 'preset';
   }
   if (subpath.startsWith('/media/')) return 'media';
-  if (subpath.startsWith('/ui/')) return 'ui';
+  if (subpath.startsWith('/ui/')) {
+    // Skip compound component parts — only show main entries
+    const uiName = subpath.slice('/ui/'.length);
+    if (UI_PARTS.has(uiName)) return '_skip';
+    return 'ui';
+  }
   if (subpath.startsWith('/feature/')) return 'feature';
 
   // Match skin entries but exclude internal utilities like skin-mixin
