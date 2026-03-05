@@ -28,7 +28,10 @@ describe('CaptionsButtonCore', () => {
   describe('getState', () => {
     it('projects captions', () => {
       const core = new CaptionsButtonCore();
-      const media = createMediaState({ subtitlesShowing: true, subtitlesList: [{}] as any });
+      const media = createMediaState({
+        subtitlesShowing: true,
+        subtitlesList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' }],
+      });
       core.setMedia(media);
       const state = core.getState();
 
@@ -37,7 +40,11 @@ describe('CaptionsButtonCore', () => {
 
     it('returns available when subtitles exist', () => {
       const core = new CaptionsButtonCore();
-      core.setMedia(createMediaState({ subtitlesList: [{}] as any }));
+      core.setMedia(
+        createMediaState({
+          subtitlesList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
+        })
+      );
 
       expect(core.getState().availability).toBe('available');
     });
