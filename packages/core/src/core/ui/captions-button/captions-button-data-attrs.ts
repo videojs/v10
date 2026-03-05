@@ -3,5 +3,7 @@ import type { CaptionsButtonState } from './captions-button-core';
 
 export const CaptionsButtonDataAttrs = {
   /** Present when captions are enabled. */
-  subtitlesShowing: 'data-subtitles-showing',
+  subtitlesShowing: 'data-active',
+  /** Indicates captions availability (`available` or `unavailable`). */
+  availability: 'data-availability',
 } as const satisfies StateAttrMap<CaptionsButtonState>;

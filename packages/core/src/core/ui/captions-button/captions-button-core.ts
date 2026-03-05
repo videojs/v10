@@ -11,7 +11,9 @@ export interface CaptionsButtonProps {
   disabled?: boolean | undefined;
 }
 
-export interface CaptionsButtonState extends Pick<MediaTextTrackState, 'subtitlesShowing'> {}
+export interface CaptionsButtonState extends Pick<MediaTextTrackState, 'subtitlesShowing'> {
+  availability: 'available' | 'unavailable';
+}
 
 export class CaptionsButtonCore {
   static readonly defaultProps: NonNullableObject<CaptionsButtonProps> = {
@@ -20,6 +22,7 @@ export class CaptionsButtonCore {
   };
 
   #props = { ...CaptionsButtonCore.defaultProps };
+  #media: MediaTextTrackState | null = null;
 
   constructor(props?: CaptionsButtonProps) {
     if (props) this.setProps(props);
@@ -49,9 +52,15 @@ export class CaptionsButtonCore {
     };
   }
 
-  getState(media: MediaTextTrackState): CaptionsButtonState {
+  setMedia(media: MediaTextTrackState): void {
+    this.#media = media;
+  }
+
+  getState(): CaptionsButtonState {
+    const media = this.#media!;
     return {
       subtitlesShowing: media.subtitlesShowing,
+      availability: media.subtitlesList.length > 0 ? 'available' : 'unavailable',
     };
   }
 

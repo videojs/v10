@@ -1,6 +1,6 @@
 import { findTrackElement, getSubtitlesTracks, listen } from '@videojs/utils/dom';
 
-import type { MediaSubtitleTrack, MediaTextCue, MediaTextTrackState } from '../../../core/media/state';
+import type { MediaTextCue, MediaTextTrack, MediaTextTrackState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 
 export const textTrackFeature = definePlayerFeature({
@@ -37,7 +37,7 @@ export const textTrackFeature = definePlayerFeature({
 
       let chaptersTrack: TextTrack | null = null;
       let thumbnailTrack: TextTrack | null = null;
-      const subtitlesList: MediaSubtitleTrack[] = [];
+      const subtitlesList: MediaTextTrack<'subtitles' | 'captions'>[] = [];
       let subtitlesShowing = false;
 
       for (let i = 0; i < media.textTracks.length; i++) {
@@ -50,7 +50,7 @@ export const textTrackFeature = definePlayerFeature({
             kind: track.kind,
             label: track.label,
             language: track.language,
-            showing,
+            mode: track.mode,
           });
 
           if (showing) {

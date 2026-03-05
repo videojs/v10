@@ -1,1 +1,1 @@
-export { CaptionsButton, type CaptionsButtonProps, type CaptionsButtonState } from './captions-button';
+export { CaptionsButton, type CaptionsButtonProps } from './captions-button';

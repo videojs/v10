@@ -19,6 +19,7 @@ function createMediaState(overrides: Partial<MediaTextTrackState> = {}): MediaTe
 function createState(overrides: Partial<CaptionsButtonState> = {}): CaptionsButtonState {
   return {
     subtitlesShowing: false,
+    availability: 'available',
     ...overrides,
   };
 }
@@ -27,10 +28,25 @@ describe('CaptionsButtonCore', () => {
   describe('getState', () => {
     it('projects captions', () => {
       const core = new CaptionsButtonCore();
-      const media = createMediaState({ subtitlesShowing: true });
-      const state = core.getState(media);
+      const media = createMediaState({ subtitlesShowing: true, subtitlesList: [{}] as any });
+      core.setMedia(media);
+      const state = core.getState();
 
       expect(state.subtitlesShowing).toBe(true);
+    });
+
+    it('returns available when subtitles exist', () => {
+      const core = new CaptionsButtonCore();
+      core.setMedia(createMediaState({ subtitlesList: [{}] as any }));
+
+      expect(core.getState().availability).toBe('available');
+    });
+
+    it('returns unavailable when no subtitles', () => {
+      const core = new CaptionsButtonCore();
+      core.setMedia(createMediaState({ subtitlesList: [] }));
+
+      expect(core.getState().availability).toBe('unavailable');
     });
   });
 
