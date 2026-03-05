@@ -12,6 +12,16 @@ export interface ManualOffsets {
   alignOffset: number;
 }
 
+/** CSS custom property names for anchor-based positioning. */
+export interface PositioningCSSVars {
+  sideOffset: string;
+  alignOffset: string;
+  anchorWidth: string;
+  anchorHeight: string;
+  availableWidth: string;
+  availableHeight: string;
+}
+
 export interface PopoverPositionStyle {
   [key: string]: string | undefined;
   positionAnchor?: string;
@@ -39,8 +49,8 @@ const OPPOSITE_SIDE: Record<PopoverSide, PopoverSide> = {
  * Get positioning styles for the popup element.
  *
  * When the browser supports CSS Anchor Positioning, returns native CSS properties
- * that reference `var(--media-popover-side-offset, 0px)` and
- * `var(--media-popover-align-offset, 0px)` — no JS offset values needed.
+ * that reference the provided CSS var names for side/align offsets — no JS offset
+ * values needed.
  *
  * When rects are provided and anchor positioning is unsupported, falls back to
  * manual JS-computed positioning. The caller must resolve offset CSS vars via
@@ -56,10 +66,11 @@ export function getAnchorPositionStyle(
   triggerRect?: DOMRect,
   popupRect?: DOMRect,
   boundaryRect?: DOMRect,
-  offsets?: ManualOffsets
-): PopoverPositionStyle & Partial<Record<PopoverCSSVarKey, string>> {
+  offsets?: ManualOffsets,
+  cssVars: PositioningCSSVars = PopoverCSSVars
+): PopoverPositionStyle & Record<string, string | undefined> {
   if (supportsAnchorPositioning()) {
-    return getAnchorPositionCSS(anchorName, opts);
+    return getAnchorPositionCSS(anchorName, opts, cssVars);
   }
 
   // JS fallback when CSS Anchor Positioning is not supported.
@@ -67,7 +78,7 @@ export function getAnchorPositionStyle(
     const resolved: ManualOffsets = offsets ?? { sideOffset: 0, alignOffset: 0 };
     return {
       ...getManualPositionStyle(triggerRect, popupRect, opts, resolved),
-      ...(boundaryRect ? getPopoverCSSVars(triggerRect, boundaryRect, opts.side) : {}),
+      ...(boundaryRect ? getPositioningCSSVars(triggerRect, boundaryRect, opts.side, cssVars) : {}),
       position: 'fixed',
       // Reset UA [popover] defaults (inset: 0; margin: auto) which would
       // otherwise conflict with computed positioning.
@@ -85,10 +96,13 @@ export function getAnchorNameStyle(anchorName: string) {
   return { anchorName: `--${anchorName}` };
 }
 
-const SIDE_OFFSET_VAR = `var(${PopoverCSSVars.sideOffset}, 0px)`;
-const ALIGN_OFFSET_VAR = `var(${PopoverCSSVars.alignOffset}, 0px)`;
-
-function getAnchorPositionCSS(anchorName: string, opts: PositioningOptions): PopoverPositionStyle {
+function getAnchorPositionCSS(
+  anchorName: string,
+  opts: PositioningOptions,
+  cssVars: PositioningCSSVars = PopoverCSSVars
+): PopoverPositionStyle {
+  const SIDE_OFFSET_VAR = `var(${cssVars.sideOffset}, 0px)`;
+  const ALIGN_OFFSET_VAR = `var(${cssVars.alignOffset}, 0px)`;
   const { side, align } = opts;
   const style: PopoverPositionStyle = {
     positionAnchor: `--${anchorName}`,
@@ -141,31 +155,42 @@ function getAnchorPositionCSS(anchorName: string, opts: PositioningOptions): Pop
 }
 
 /**
- * Compute CSS variables for the popup element.
+ * Compute CSS variables for sizing constraints relative to the anchor/boundary.
  *
- * These enable CSS-based sizing constraints relative to the anchor/boundary.
+ * Accepts a `cssVars` map so the same logic works for both popover
+ * (`--media-popover-*`) and tooltip (`--media-tooltip-*`) namespaces.
  */
+export function getPositioningCSSVars(
+  triggerRect: DOMRect,
+  boundaryRect: DOMRect,
+  side: PopoverSide,
+  cssVars: PositioningCSSVars = PopoverCSSVars
+): Record<string, string> {
+  const vars: Record<string, string> = {};
+
+  vars[cssVars.anchorWidth] = `${triggerRect.width}px`;
+  vars[cssVars.anchorHeight] = `${triggerRect.height}px`;
+
+  if (side === 'top' || side === 'bottom') {
+    vars[cssVars.availableHeight] =
+      side === 'top' ? `${triggerRect.top - boundaryRect.top}px` : `${boundaryRect.bottom - triggerRect.bottom}px`;
+    vars[cssVars.availableWidth] = `${boundaryRect.width}px`;
+  } else {
+    vars[cssVars.availableWidth] =
+      side === 'left' ? `${triggerRect.left - boundaryRect.left}px` : `${boundaryRect.right - triggerRect.right}px`;
+    vars[cssVars.availableHeight] = `${boundaryRect.height}px`;
+  }
+
+  return vars;
+}
+
+/** @deprecated Use `getPositioningCSSVars` instead. */
 export function getPopoverCSSVars(
   triggerRect: DOMRect,
   boundaryRect: DOMRect,
   side: PopoverSide
 ): Partial<Record<PopoverCSSVarKey, string>> {
-  const vars: Partial<Record<PopoverCSSVarKey, string>> = {};
-
-  vars[PopoverCSSVars.anchorWidth] = `${triggerRect.width}px`;
-  vars[PopoverCSSVars.anchorHeight] = `${triggerRect.height}px`;
-
-  if (side === 'top' || side === 'bottom') {
-    vars[PopoverCSSVars.availableHeight] =
-      side === 'top' ? `${triggerRect.top - boundaryRect.top}px` : `${boundaryRect.bottom - triggerRect.bottom}px`;
-    vars[PopoverCSSVars.availableWidth] = `${boundaryRect.width}px`;
-  } else {
-    vars[PopoverCSSVars.availableWidth] =
-      side === 'left' ? `${triggerRect.left - boundaryRect.left}px` : `${boundaryRect.right - triggerRect.right}px`;
-    vars[PopoverCSSVars.availableHeight] = `${boundaryRect.height}px`;
-  }
-
-  return vars;
+  return getPositioningCSSVars(triggerRect, boundaryRect, side, PopoverCSSVars);
 }
 
 /**
@@ -227,13 +252,13 @@ export function getManualPositionStyle(
 }
 
 /**
- * Read `--media-popover-side-offset` and `--media-popover-align-offset`
- * from the popup element's computed style, returning numeric pixel values.
+ * Read side-offset and align-offset CSS custom properties from the
+ * popup element's computed style, returning numeric pixel values.
  */
-export function resolveOffsets(el: Element): ManualOffsets {
+export function resolveOffsets(el: Element, cssVars: PositioningCSSVars = PopoverCSSVars): ManualOffsets {
   const computed = getComputedStyle(el);
   return {
-    sideOffset: Number.parseFloat(computed.getPropertyValue(PopoverCSSVars.sideOffset)) || 0,
-    alignOffset: Number.parseFloat(computed.getPropertyValue(PopoverCSSVars.alignOffset)) || 0,
+    sideOffset: Number.parseFloat(computed.getPropertyValue(cssVars.sideOffset)) || 0,
+    alignOffset: Number.parseFloat(computed.getPropertyValue(cssVars.alignOffset)) || 0,
   };
 }
