@@ -1,7 +1,9 @@
 'use client';
 
 import type { SliderState } from '@videojs/core';
-import type { CSSProperties, ForwardedRef } from 'react';
+import type { SliderPreviewOverflow } from '@videojs/core/dom';
+import { getSliderPreviewStyle } from '@videojs/core/dom';
+import type { ForwardedRef } from 'react';
 import { forwardRef, useEffect, useRef, useState } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
@@ -10,7 +12,7 @@ import { useSliderContext } from './context';
 
 export interface SliderPreviewProps extends UIComponentProps<'div', SliderState> {
   /** How the preview handles the slider boundaries. `'clamp'` keeps the preview within bounds, `'visible'` allows it to extend beyond the edges. */
-  overflow?: 'clamp' | 'visible' | undefined;
+  overflow?: SliderPreviewOverflow | undefined;
 }
 
 /** Positioning container for preview content that tracks the pointer along the slider. */
@@ -38,17 +40,7 @@ export const SliderPreview = forwardRef(function SliderPreview(
     return () => observer.disconnect();
   }, []);
 
-  const halfWidth = width / 2;
-
-  const positionStyle: CSSProperties = {
-    position: 'absolute',
-    left:
-      overflow === 'visible'
-        ? `calc(var(--media-slider-pointer) - ${halfWidth}px)`
-        : `min(max(0px, calc(var(--media-slider-pointer) - ${halfWidth}px)), calc(100% - ${width}px))`,
-    width: 'max-content',
-    pointerEvents: 'none',
-  };
+  const positionStyle = getSliderPreviewStyle(width, overflow);
 
   return renderElement(
     'div',

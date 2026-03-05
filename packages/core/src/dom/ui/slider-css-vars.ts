@@ -15,3 +15,31 @@ export function getTimeSliderCSSVars(state: TimeSliderState): Record<string, str
     [SliderCSSVars.buffer]: `${state.bufferPercent.toFixed(3)}%`,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Slider Preview
+// ---------------------------------------------------------------------------
+
+export type SliderPreviewOverflow = 'clamp' | 'visible';
+
+export interface SliderPreviewStyle {
+  position: 'absolute';
+  left: string;
+  width: 'max-content';
+  pointerEvents: 'none';
+}
+
+/** Compute structural positioning styles for a slider preview element. */
+export function getSliderPreviewStyle(width: number, overflow: SliderPreviewOverflow): SliderPreviewStyle {
+  const halfWidth = width / 2;
+
+  return {
+    position: 'absolute',
+    left:
+      overflow === 'visible'
+        ? `calc(var(${SliderCSSVars.pointer}) - ${halfWidth}px)`
+        : `min(max(0px, calc(var(${SliderCSSVars.pointer}) - ${halfWidth}px)), calc(100% - ${width}px))`,
+    width: 'max-content',
+    pointerEvents: 'none',
+  };
+}
