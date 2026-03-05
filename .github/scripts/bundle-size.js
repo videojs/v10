@@ -9,16 +9,19 @@
  * shared minification and compression, avoiding the inflated totals you get
  * from summing independently-measured subpaths.
  *
- * Wildcard exports (e.g., `./ui/*`) are resolved to actual files on disk.
- * CSS files are measured by brotli-compressing them directly (no esbuild).
+ * Wildcard exports (e.g., `./ui/*`, `./media/⁕/index.js`) are resolved to
+ * actual files on disk. Supports both file-level (`*.js`) and directory-level
+ * (`⁕/index.js`) wildcards.
  *
- * Each entry includes a `category` field for grouped reporting:
- * entry, media, player, skin, ui, feature, or other.
+ * CSS files are minified with esbuild then brotli-compressed.
+ *
+ * Each entry includes a `category` field for grouped reporting in html/react:
+ * entry, media, player, skin, ui, or feature.
  *
  * Usage: node .github/scripts/bundle-size.js [--json output.json]
  */
 
-import { build } from 'esbuild';
+import { build, transform } from 'esbuild';
 import { brotliCompressSync, constants } from 'node:zlib';
 import {
   readFileSync,
@@ -41,12 +44,15 @@ const SKIP_PACKAGES = new Set([
   'icons',
 ]);
 
+/** Packages that get categorized breakdowns in the report. */
+const CATEGORIZED_PACKAGES = new Set(['html', 'react']);
+
 /**
  * @typedef {object} SizeEntry
  * @property {string} name
  * @property {number} size
  * @property {'root' | 'subpath'} type
- * @property {string} category - entry, media, player, skin, ui, feature, other
+ * @property {string} [category] - media, player, skin, ui, entry, feature (only for html/react)
  * @property {'js' | 'css'} format
  */
 
@@ -59,7 +65,6 @@ async function measure(entryPoints, external = []) {
     treeShaking: true,
     format: 'esm',
     write: false,
-    metafile: true,
     outdir: '/tmp/bundle-size-out',
     external,
     logLevel: 'silent',
@@ -75,10 +80,11 @@ async function measure(entryPoints, external = []) {
   return compressed.length;
 }
 
-/** Brotli-compress a CSS file and return its size. */
-function measureCSS(filePath) {
+/** Minify a CSS file with esbuild then brotli-compress it. */
+async function measureCSS(filePath) {
   const content = readFileSync(filePath, 'utf8');
-  const compressed = brotliCompressSync(Buffer.from(content), {
+  const result = await transform(content, { loader: 'css', minify: true });
+  const compressed = brotliCompressSync(Buffer.from(result.code), {
     params: {
       [constants.BROTLI_PARAM_QUALITY]: constants.BROTLI_MAX_QUALITY,
     },
@@ -98,10 +104,24 @@ function resolveDefault(exportValue) {
   return null;
 }
 
-/** Categorize an entry by its full name (e.g. `@videojs/html/ui/play-button`). */
+/**
+ * Categorize an entry by its full name.
+ *
+ * Returns a category string for html/react packages, undefined for other
+ * packages (they use flat breakdowns), or '_skip' for internal entries
+ * in categorized packages that should be excluded.
+ */
 function categorize(name) {
-  const match = name.match(/^@videojs\/[^/]+(\/.*)?$/);
-  const subpath = match?.[1] ?? '';
+  const match = name.match(/^@videojs\/([^/]+)(\/.*)?$/);
+  if (!match) return undefined;
+
+  const pkg = match[1];
+  const subpath = match[2] ?? '';
+
+  if (!CATEGORIZED_PACKAGES.has(pkg)) return undefined;
+
+  // CSS files are always skin-related
+  if (name.endsWith('.css')) return 'skin';
 
   if (subpath === '' || /^\/(video|audio|background)$/.test(subpath)) {
     return 'entry';
@@ -109,37 +129,73 @@ function categorize(name) {
   if (subpath.startsWith('/media/')) return 'media';
   if (subpath.startsWith('/ui/')) return 'ui';
   if (subpath.startsWith('/feature/')) return 'feature';
-  if (/skin/i.test(subpath)) return 'skin';
+
+  // Match skin entries but exclude internal utilities like skin-mixin
+  if (/skin/i.test(subpath) && !/mixin/i.test(subpath)) return 'skin';
+
   if (/\/player$/.test(subpath)) return 'player';
-  return 'other';
+
+  // Unrecognized entry in a categorized package (internal utility) — skip
+  return '_skip';
 }
 
-/** Resolve a wildcard export key to actual files on disk. */
+/**
+ * Resolve a wildcard export key to actual files on disk.
+ *
+ * Handles both file-level wildcards (e.g., `./ui/*.js` where `*` is a
+ * filename stem) and directory-level wildcards (e.g., `./media/⁕/index.js`
+ * where `*` is a directory name).
+ */
 function resolveWildcard(pkgDir, exportKey, exportValue) {
   const defaultPath = resolveDefault(exportValue);
   if (!defaultPath) return [];
 
   const isCSS = exportKey.endsWith('.css');
-  const ext = isCSS ? '.css' : '.js';
+  const fullPattern = resolve(pkgDir, defaultPath);
 
-  const dir = dirname(resolve(pkgDir, defaultPath));
-  if (!existsSync(dir)) return [];
+  const starIdx = fullPattern.indexOf('*');
+  if (starIdx === -1) return [];
 
-  return readdirSync(dir, { withFileTypes: true })
-    .filter((d) => d.isFile() && d.name.endsWith(ext))
+  // Find the directory that contains the wildcard
+  const lastSlash = fullPattern.lastIndexOf('/', starIdx);
+  const scanDir = fullPattern.slice(0, lastSlash);
+  const prefix = fullPattern.slice(lastSlash + 1, starIdx);
+  const suffix = fullPattern.slice(starIdx + 1);
+
+  if (!existsSync(scanDir)) return [];
+
+  // Directory pattern: `*/index.js` — * is a directory name
+  // File pattern: `*.js` — * is a filename stem
+  const isDirectoryPattern = suffix.startsWith('/');
+
+  return readdirSync(scanDir, { withFileTypes: true })
     .filter((d) => {
-      if (d.name.includes('.test.')) return false;
-      return readFileSync(join(dir, d.name), 'utf8').trim().length > 0;
+      if (!d.name.startsWith(prefix)) return false;
+      return isDirectoryPattern ? d.isDirectory() : d.isFile();
     })
-    .sort((a, b) => a.name.localeCompare(b.name))
+    .filter((d) => {
+      if (isDirectoryPattern) return true;
+      // For file patterns, the filename must end with the suffix
+      return d.name.endsWith(suffix);
+    })
     .map((d) => {
-      const stem = basename(d.name, ext);
-      return {
-        exportKey: exportKey.replace('*', stem),
-        path: join(dir, d.name),
-        isCSS,
-      };
-    });
+      const stem = isDirectoryPattern
+        ? d.name.slice(prefix.length)
+        : d.name.slice(prefix.length, d.name.length - suffix.length);
+      const fullPath = fullPattern.replace('*', stem);
+      return { stem, fullPath };
+    })
+    .filter(({ fullPath }) => {
+      if (!existsSync(fullPath)) return false;
+      if (fullPath.includes('.test.')) return false;
+      return readFileSync(fullPath, 'utf8').trim().length > 0;
+    })
+    .sort((a, b) => a.stem.localeCompare(b.stem))
+    .map(({ stem, fullPath }) => ({
+      exportKey: exportKey.replace('*', stem),
+      path: fullPath,
+      isCSS,
+    }));
 }
 
 /** Discover packages and their entry points from the filesystem. */
@@ -228,32 +284,41 @@ async function main() {
     const isRootCSS = pkg.rootPath.endsWith('.css');
 
     if (isRootCSS) {
+      const cat = categorize(pkg.name);
+      if (cat === '_skip') continue;
+
       results.push({
         name: pkg.name,
-        size: measureCSS(pkg.rootPath),
+        size: await measureCSS(pkg.rootPath),
         type: 'root',
-        category: categorize(pkg.name),
+        ...(cat ? { category: cat } : {}),
         format: 'css',
       });
       continue;
     }
+
+    const rootCat = categorize(pkg.name);
+    if (rootCat === '_skip') continue;
 
     const rootSize = await measure([pkg.rootPath], pkg.external);
     results.push({
       name: pkg.name,
       size: rootSize,
       type: 'root',
-      category: categorize(pkg.name),
+      ...(rootCat ? { category: rootCat } : {}),
       format: 'js',
     });
 
     for (const sub of pkg.subpaths) {
+      const cat = categorize(sub.name);
+      if (cat === '_skip') continue;
+
       if (sub.isCSS) {
         results.push({
           name: sub.name,
-          size: measureCSS(sub.path),
+          size: await measureCSS(sub.path),
           type: 'subpath',
-          category: categorize(sub.name),
+          ...(cat ? { category: cat } : {}),
           format: 'css',
         });
         continue;
@@ -268,7 +333,7 @@ async function main() {
         name: sub.name,
         size: combinedSize - rootSize,
         type: 'subpath',
-        category: categorize(sub.name),
+        ...(cat ? { category: cat } : {}),
         format: 'js',
       });
     }

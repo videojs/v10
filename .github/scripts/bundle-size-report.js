@@ -7,7 +7,7 @@
  * When --base is omitted, generates a local report showing current sizes.
  * When --base is provided, generates a comparison report with diffs.
  *
- * Reads JSON arrays of { name, size, type, category, format } entries
+ * Reads JSON arrays of { name, size, type, category?, format } entries
  * produced by bundle-size.js.
  */
 
@@ -27,10 +27,10 @@ function formatDelta(current, previous) {
   const diff = current - previous;
   if (diff === 0) return { bytes: '0 B', pct: '0%' };
   const sign = diff > 0 ? '+' : '-';
-  const pct = Math.abs((diff / previous) * 100).toFixed(1);
+  const pct = previous === 0 ? '∞' : Math.abs((diff / previous) * 100).toFixed(1);
   return {
     bytes: `${sign}${formatBytes(Math.abs(diff))}`,
-    pct: `${sign}${pct}%`,
+    pct: previous === 0 ? `${sign}∞%` : `${sign}${pct}%`,
   };
 }
 
@@ -39,9 +39,13 @@ function statusIcon(current, previous) {
   const diff = current - previous;
   if (diff === 0) return '✅';
   if (diff < 0) return '🔽';
+  if (previous === 0) return '🔴';
   const pct = (diff / previous) * 100;
   return pct > 10 ? '🔴' : '🔺';
 }
+
+/** Preferred display order for packages. Unlisted packages sort to the end. */
+const PACKAGE_ORDER = ['html', 'react', 'core', 'element', 'store', 'utils'];
 
 /** Group entries by package: @videojs/html/ui/x → html */
 function groupByPackage(entries) {
@@ -52,7 +56,15 @@ function groupByPackage(entries) {
     if (!groups.has(pkg)) groups.set(pkg, []);
     groups.get(pkg).push(entry);
   }
-  return groups;
+
+  const sorted = new Map();
+  for (const pkg of PACKAGE_ORDER) {
+    if (groups.has(pkg)) sorted.set(pkg, groups.get(pkg));
+  }
+  for (const [pkg, entries] of groups) {
+    if (!sorted.has(pkg)) sorted.set(pkg, entries);
+  }
+  return sorted;
 }
 
 /** Display label for an entry relative to its package. */
@@ -72,7 +84,6 @@ const CATEGORY_ORDER = [
   'ui',
   'entry',
   'feature',
-  'other',
 ];
 
 const CATEGORY_LABELS = {
@@ -82,13 +93,13 @@ const CATEGORY_LABELS = {
   ui: 'UI Components',
   entry: 'Entries',
   feature: 'Features',
-  other: 'Other',
 };
 
 function generateCategoryBreakdowns(entries, pkg) {
   const byCategory = new Map();
   for (const entry of entries) {
-    const cat = entry.category ?? 'other';
+    const cat = entry.category;
+    if (!cat) continue;
     if (!byCategory.has(cat)) byCategory.set(cat, []);
     byCategory.get(cat).push(entry);
   }
@@ -132,7 +143,7 @@ function generateCategoryBreakdowns(entries, pkg) {
   return lines;
 }
 
-/** Flat size-only breakdown for non-html packages with multiple entries. */
+/** Flat size-only breakdown for packages without categories. */
 function generateFlatBreakdown(entries, pkg) {
   const lines = [];
 
@@ -177,8 +188,8 @@ function generateComparisonReport(current, base) {
   lines.push('');
 
   for (const [pkg, entries] of groups) {
-    const icon = pkgIcons[pkg] ?? '📦';
-    lines.push(`## ${icon} @videojs/${pkg}`);
+    const pkgIcon = pkgIcons[pkg] ?? '📦';
+    lines.push(`## ${pkgIcon} @videojs/${pkg}`);
     lines.push('');
 
     // Only show entries whose size actually changed (must exist in both)
@@ -199,18 +210,18 @@ function generateComparisonReport(current, base) {
         const el = entryLabel(entry.name, pkg);
         const prev = baseMap[entry.name];
         const d = formatDelta(entry.size, prev);
-        const icon = statusIcon(entry.size, prev);
+        const status = statusIcon(entry.size, prev);
         const baseSize = prev !== undefined ? formatBytes(prev) : '—';
         lines.push(
-          `| ${el} | ${baseSize} | ${formatBytes(entry.size)} | ${d.bytes} | ${d.pct} | ${icon} |`,
+          `| ${el} | ${baseSize} | ${formatBytes(entry.size)} | ${d.bytes} | ${d.pct} | ${status} |`,
         );
       }
 
       lines.push('');
     }
 
-    // Category breakdowns for @videojs/html
-    const hasCategories = pkg === 'html' && entries.some((e) => e.category);
+    // Category breakdowns for packages with categories (html, react)
+    const hasCategories = entries.some((e) => e.category);
     if (hasCategories) {
       lines.push(...generateCategoryBreakdowns(entries, pkg));
     } else if (entries.length > 1) {
@@ -229,7 +240,7 @@ function generateComparisonReport(current, base) {
   lines.push(
     'JS subpath sizes are the marginal bytes on top of the root entry point.',
   );
-  lines.push('CSS sizes are standalone brotli-compressed.');
+  lines.push('CSS sizes are minified + brotli-compressed.');
   lines.push('');
   lines.push('| Icon | Meaning |');
   lines.push('|---|---|');
@@ -315,12 +326,13 @@ function generateLocalReport(current) {
     lines.push('');
     lines.push(ansi.bold(`@videojs/${pkg}`));
 
-    const hasCategories = pkg === 'html' && entries.some((e) => e.category);
+    const hasCategories = entries.some((e) => e.category);
 
     if (hasCategories) {
       const byCategory = new Map();
       for (const entry of entries) {
-        const cat = entry.category ?? 'other';
+        const cat = entry.category;
+        if (!cat) continue;
         if (!byCategory.has(cat)) byCategory.set(cat, []);
         byCategory.get(cat).push(entry);
       }
