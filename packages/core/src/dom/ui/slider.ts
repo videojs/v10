@@ -31,10 +31,8 @@ export interface SliderOptions {
    * commit fires on pointer release. `0` (default) disables — commits only on release.
    */
   commitThrottle?: number | undefined;
-
   /** Adjust a raw 0–100 percent for thumb alignment. Enables `adjustForAlignment()`. */
   adjustPercent?: ((rawPercent: number, thumbSize: number, trackSize: number) => number) | undefined;
-
   onValueChange?: ((percent: number) => void) | undefined;
   onValueCommit?: ((percent: number) => void) | undefined;
   onDragStart?: (() => void) | undefined;
