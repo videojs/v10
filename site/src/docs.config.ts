@@ -18,14 +18,10 @@ export const sidebar: Sidebar = [
       { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
     ],
   },
-  // {
-  //   sidebarLabel: 'Concepts',
-  //   contents: [
-  //     { slug: 'concepts/architecture' },
-  //     { slug: 'concepts/skins' },
-  //     { slug: 'concepts/ui-components' }
-  //   ],
-  // },
+  {
+    sidebarLabel: 'Concepts',
+    contents: [{ slug: 'concepts/skins' }],
+  },
   // {
   //   sidebarLabel: 'How to',
   //   contents: [{ slug: 'how-to/customize-skins' }],
