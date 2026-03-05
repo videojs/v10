@@ -135,6 +135,11 @@ function generateCategoryBreakdowns(entries, pkg) {
       }
     }
 
+    if (cat === 'ui') {
+      lines.push('');
+      lines.push('*Sizes are marginal over the root entry point.*');
+    }
+
     lines.push('</details>');
     lines.push('');
   }
