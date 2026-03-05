@@ -10,12 +10,15 @@ import { useAlertDialogContext } from './context';
 export interface AlertDialogCloseProps extends UIComponentProps<'button', AlertDialogCore.State> {}
 
 export const AlertDialogClose = forwardRef<HTMLButtonElement, AlertDialogCloseProps>(function AlertDialogClose(
-  { render, className, style, ...elementProps },
+  { render, className, style, disabled, ...elementProps },
   forwardedRef
 ) {
   const { dialog, state } = useAlertDialogContext();
 
-  const handleClick = useCallback(() => dialog.close(), [dialog]);
+  const handleClick = useCallback(() => {
+    if (disabled) return;
+    dialog.close();
+  }, [dialog, disabled]);
 
   return renderElement(
     'button',
@@ -23,7 +26,7 @@ export const AlertDialogClose = forwardRef<HTMLButtonElement, AlertDialogClosePr
     {
       state,
       ref: [forwardedRef],
-      props: [{ type: 'button' as const, onClick: handleClick }, elementProps],
+      props: [{ type: 'button' as const, disabled, onClick: handleClick }, elementProps],
     }
   );
 });
