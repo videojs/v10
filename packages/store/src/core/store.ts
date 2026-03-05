@@ -38,6 +38,7 @@ export function createStore<Target = unknown>(): <State>(
         return target!;
       },
       signals,
+      set: (partial) => state.patch(partial as Partial<State>),
     } satisfies StateContext<Target>);
 
     state = createState(initialState);

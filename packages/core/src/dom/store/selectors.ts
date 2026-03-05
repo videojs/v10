@@ -2,6 +2,7 @@ import { createSelector } from '@videojs/store';
 
 import { bufferFeature } from './features/buffer';
 import { controlsFeature } from './features/controls';
+import { errorFeature } from './features/error';
 import { fullscreenFeature } from './features/fullscreen';
 import { pipFeature } from './features/pip';
 import { playbackFeature } from './features/playback';
@@ -15,6 +16,8 @@ import { volumeFeature } from './features/volume';
 export const selectBuffer = createSelector(bufferFeature);
 /** Select the controls state (controls visible, user-active). */
 export const selectControls = createSelector(controlsFeature);
+/** Select the error state (error, dismissed, dismissError). */
+export const selectError = createSelector(errorFeature);
 /** Select the fullscreen state (fullscreen active, availability). */
 export const selectFullscreen = createSelector(fullscreenFeature);
 /** Select the PiP state (picture-in-picture active, availability). */

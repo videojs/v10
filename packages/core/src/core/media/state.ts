@@ -206,6 +206,32 @@ export interface MediaTextTrackState {
   thumbnailTrackSrc: string | null;
 }
 
+export interface MediaError {
+  /**
+   * The error code (mirrors MediaError.code constants).
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/MediaError/code
+   */
+  code: number;
+  /**
+   * A human-readable error message.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/MediaError/message
+   */
+  message: string;
+}
+
+export interface MediaErrorState {
+  /**
+   * The current media error, or null if none.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/error
+   */
+  error: MediaError | null;
+  /** Dismiss the current error by clearing it. */
+  dismissError(): void;
+}
+
 export interface MediaPictureInPictureState {
   /**
    * Whether picture-in-picture mode is currently active.
