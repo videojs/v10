@@ -22,15 +22,8 @@ export function getTimeSliderCSSVars(state: TimeSliderState): Record<string, str
 
 export type SliderPreviewOverflow = 'clamp' | 'visible';
 
-export interface SliderPreviewStyle {
-  position: 'absolute';
-  left: string;
-  width: 'max-content';
-  pointerEvents: 'none';
-}
-
 /** Compute structural positioning styles for a slider preview element. */
-export function getSliderPreviewStyle(width: number, overflow: SliderPreviewOverflow): SliderPreviewStyle {
+export function getSliderPreviewStyle(width: number, overflow: SliderPreviewOverflow) {
   const halfWidth = width / 2;
 
   return {
