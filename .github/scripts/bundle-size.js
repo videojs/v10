@@ -271,6 +271,24 @@ function discoverPackages() {
       }
     }
 
+    // For categorized packages, scan dist/ui/ for components not already
+    // discovered from exports (e.g., React tree-shakes UI from root).
+    if (rootPath && CATEGORIZED_PACKAGES.has(dirName)) {
+      const uiDir = join(dirname(rootPath), 'ui');
+      if (existsSync(uiDir)) {
+        const existing = new Set(subpaths.map((s) => s.name));
+        for (const d of readdirSync(uiDir, { withFileTypes: true })) {
+          if (!d.isDirectory()) continue;
+          if (UI_PARTS.has(d.name)) continue;
+          const indexPath = join(uiDir, d.name, 'index.js');
+          if (!existsSync(indexPath)) continue;
+          const name = `${pkgName}/ui/${d.name}`;
+          if (existing.has(name)) continue;
+          subpaths.push({ name, path: indexPath, isCSS: false });
+        }
+      }
+    }
+
     if (rootPath) {
       packages.push({ name: pkgName, rootPath, external, subpaths });
     } else if (subpaths.length > 0) {
