@@ -149,10 +149,10 @@ function generateComparisonReport(current, base) {
     lines.push(`**@videojs/${pkg}**`);
     lines.push('');
 
-    // Only show entries with a non-zero diff (or new entries)
+    // Only show entries whose size actually changed (must exist in both)
     const changed = entries.filter((e) => {
       const prev = baseMap[e.name];
-      if (prev === undefined) return true;
+      if (prev === undefined) return false;
       return e.size !== prev;
     });
 
