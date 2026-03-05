@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { PartiallyResolvedVideoTrack, Presentation, VideoSelectionSet } from '../../core/types';
-import type { EndOfStreamState } from '../features/end-of-stream';
+import type { EndOfStreamOwners, EndOfStreamState } from '../features/end-of-stream';
 import { hasLastSegmentLoaded } from '../features/end-of-stream';
-import type { BufferState, SourceBufferState } from '../features/load-segments';
+import { createSourceBufferActor } from '../media/source-buffer-actor';
 
 // ============================================================================
 // Helpers
@@ -75,13 +75,25 @@ const makeUnresolvedPresentation = (trackId: string): Presentation =>
     startTime: 0,
   }) as Presentation;
 
-const completedBuffer: SourceBufferState = {
-  initTrackId: 'some-track',
-  segments: [
-    { id: 'seg-1', trackId: 'some-track' },
-    { id: 'seg-2', trackId: 'some-track' },
-  ],
-};
+/** Create a mock SourceBuffer that satisfies the interface for actor construction. */
+function makeMockSourceBuffer(): SourceBuffer {
+  return {
+    buffered: { length: 0, start: () => 0, end: () => 0 } as TimeRanges,
+    updating: false,
+    appendBuffer: () => {},
+    remove: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  } as unknown as SourceBuffer;
+}
+
+/** Create a SourceBufferActor pre-seeded with the given segment IDs. */
+function makeActorWithSegments(segmentIds: string[], trackId = 'some-track') {
+  return createSourceBufferActor(makeMockSourceBuffer(), {
+    initTrackId: trackId,
+    segments: segmentIds.map((id, i) => ({ id, startTime: i * 10, duration: 10, trackId })),
+  });
+}
 
 // ============================================================================
 // hasLastSegmentLoaded
@@ -89,25 +101,27 @@ const completedBuffer: SourceBufferState = {
 
 describe('hasLastSegmentLoaded', () => {
   describe('resolved tracks', () => {
-    it('returns true when last segment ID is in bufferState', () => {
+    it('returns true when last segment ID is in actor context', () => {
       const state: EndOfStreamState = {
         presentation: makeResolvedPresentation('v1'),
         selectedVideoTrackId: 'v1',
-        bufferState: { video: completedBuffer } as BufferState,
       };
-      expect(hasLastSegmentLoaded(state)).toBe(true);
+      const owners: EndOfStreamOwners = {
+        videoBufferActor: makeActorWithSegments(['seg-1', 'seg-2'], 'v1'),
+      };
+      expect(hasLastSegmentLoaded(state, owners)).toBe(true);
     });
 
-    it('returns false when last segment ID is not in bufferState', () => {
+    it('returns false when last segment ID is not in actor context', () => {
       const state: EndOfStreamState = {
         presentation: makeResolvedPresentation('v1'),
         selectedVideoTrackId: 'v1',
-        // only seg-1 present; seg-2 (the last segment) is missing
-        bufferState: {
-          video: { initTrackId: 'v1', segments: [{ id: 'seg-1', trackId: 'v1' }] },
-        } as BufferState,
       };
-      expect(hasLastSegmentLoaded(state)).toBe(false);
+      // only seg-1 present; seg-2 (the last segment) is missing
+      const owners: EndOfStreamOwners = {
+        videoBufferActor: makeActorWithSegments(['seg-1'], 'v1'),
+      };
+      expect(hasLastSegmentLoaded(state, owners)).toBe(false);
     });
   });
 
@@ -119,15 +133,16 @@ describe('hasLastSegmentLoaded', () => {
       const state: EndOfStreamState = {
         presentation: makeUnresolvedPresentation('new-track'),
         selectedVideoTrackId: 'new-track',
-        bufferState: {
-          video: completedBuffer, // old track's segments still in buffer
-        } as BufferState,
       };
-      expect(hasLastSegmentLoaded(state)).toBe(false);
+      // Actor has old track's segments — but the track is unresolved so we
+      // return false before even checking the actor.
+      const owners: EndOfStreamOwners = {
+        videoBufferActor: makeActorWithSegments(['seg-1', 'seg-2'], 'some-track'),
+      };
+      expect(hasLastSegmentLoaded(state, owners)).toBe(false);
     });
 
     it('returns false when selectedAudioTrackId points to an unresolved track', () => {
-      // Audio equivalent of the above
       const state: EndOfStreamState = {
         presentation: {
           id: 'pres',
@@ -159,11 +174,11 @@ describe('hasLastSegmentLoaded', () => {
           startTime: 0,
         } as unknown as Presentation,
         selectedAudioTrackId: 'audio-new',
-        bufferState: {
-          audio: completedBuffer,
-        } as BufferState,
       };
-      expect(hasLastSegmentLoaded(state)).toBe(false);
+      const owners: EndOfStreamOwners = {
+        audioBufferActor: makeActorWithSegments(['seg-1', 'seg-2'], 'some-track'),
+      };
+      expect(hasLastSegmentLoaded(state, owners)).toBe(false);
     });
   });
 
@@ -171,9 +186,8 @@ describe('hasLastSegmentLoaded', () => {
     it('returns true when no tracks are selected', () => {
       const state: EndOfStreamState = {
         presentation: makeResolvedPresentation('v1'),
-        bufferState: {} as BufferState,
       };
-      expect(hasLastSegmentLoaded(state)).toBe(true);
+      expect(hasLastSegmentLoaded(state, {})).toBe(true);
     });
   });
 });

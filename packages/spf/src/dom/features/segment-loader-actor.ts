@@ -2,7 +2,6 @@ import { calculateBackBufferFlushPoint } from '../../core/buffer/back-buffer';
 import { calculateForwardFlushPoint, getSegmentsToLoad } from '../../core/buffer/forward-buffer';
 import type { AddressableObject, AudioTrack, Segment, VideoTrack } from '../../core/types';
 import type { SourceBufferActor, SourceBufferMessage } from '../media/source-buffer-actor';
-import type { MediaTrackType } from './setup-sourcebuffer';
 
 // ============================================================================
 // BUFFER STATE TYPES
@@ -60,22 +59,6 @@ export interface SegmentLoaderActor {
 }
 
 // ============================================================================
-// MIGRATION ARTIFACT
-// ============================================================================
-
-/**
- * Minimal state interface required by the actor during migration.
- *
- * The actor syncs its buffer model to global state so endOfStream continues
- * to work without changes. Remove this dependency once endOfStream reads
- * from SourceBufferActor directly.
- */
-interface MigrationState {
-  current: { bufferState?: BufferState };
-  patch(update: { bufferState?: BufferState }): void;
-}
-
-// ============================================================================
 // IMPLEMENTATION
 // ============================================================================
 
@@ -92,38 +75,16 @@ interface MigrationState {
  *
  * @param sourceBufferActor - Shared SourceBufferActor reference (not owned)
  * @param fetchBytes - Tracked fetch closure (owns throughput sampling)
- * @param state - Global state reference (migration artifact for syncActorToState)
- * @param config - Track type configuration
  */
 export function createSegmentLoaderActor(
   sourceBufferActor: SourceBufferActor,
-  fetchBytes: (addressable: AddressableObject, options?: RequestInit) => Promise<ArrayBuffer>,
-  state: MigrationState,
-  config: { type: MediaTrackType }
+  fetchBytes: (addressable: AddressableObject, options?: RequestInit) => Promise<ArrayBuffer>
 ): SegmentLoaderActor {
-  const bufferKey = config.type as 'video' | 'audio';
-
   let currentTask: Promise<void> | null = null;
   let abortController: AbortController | null = null;
   let pendingMessage: SegmentLoaderMessage | null = null;
   let taskSegmentIds: Set<string> = new Set();
   let destroyed = false;
-
-  // Sync SourceBufferActor committed context → global state.bufferState.
-  // Migration artifact: allows endOfStream to read buffer state without
-  // access to the actor. Remove once endOfStream reads from SourceBufferActor.
-  const syncActorToState = () => {
-    const ctx = sourceBufferActor.snapshot.context;
-    state.patch({
-      bufferState: {
-        ...state.current.bufferState,
-        [bufferKey]: {
-          initTrackId: ctx.initTrackId,
-          segments: ctx.segments.map((s) => ({ id: s.id, trackId: s.trackId })),
-        },
-      },
-    });
-  };
 
   // Resolve full Segment objects from the actor's committed context.
   // Uses actor context directly (has timing), avoiding the resolveBufferedSegments bridge.
@@ -147,80 +108,76 @@ export function createSegmentLoaderActor(
 
     if (!needsInit && segmentsToLoad.length === 0 && forwardFlushStart === Infinity) return;
 
-    try {
-      // Phase 1: Remove
-      const removeMessages: SourceBufferMessage[] = [];
-      if (isTrackSwitch) {
-        removeMessages.push({ type: 'remove', start: 0, end: Infinity });
-      } else {
-        if (forwardFlushStart < Infinity) {
-          removeMessages.push({ type: 'remove', start: forwardFlushStart, end: Infinity });
-        }
-        const flushEnd = calculateBackBufferFlushPoint(bufferedSegments, currentTime);
-        if (flushEnd > 0) {
-          removeMessages.push({ type: 'remove', start: 0, end: flushEnd });
-        }
+    // Phase 1: Remove
+    const removeMessages: SourceBufferMessage[] = [];
+    if (isTrackSwitch) {
+      removeMessages.push({ type: 'remove', start: 0, end: Infinity });
+    } else {
+      if (forwardFlushStart < Infinity) {
+        removeMessages.push({ type: 'remove', start: forwardFlushStart, end: Infinity });
       }
-
-      if (removeMessages.length > 0) {
-        if (removeMessages.length === 1) {
-          await sourceBufferActor.send(removeMessages[0]!, signal);
-        } else {
-          await sourceBufferActor.batch(removeMessages, signal);
-        }
-        if (signal.aborted) return;
+      const flushEnd = calculateBackBufferFlushPoint(bufferedSegments, currentTime);
+      if (flushEnd > 0) {
+        removeMessages.push({ type: 'remove', start: 0, end: flushEnd });
       }
-
-      // Phase 2: Fetch
-      let initData: ArrayBuffer | null = null;
-      if (needsInit) {
-        if (signal.aborted) return;
-        initData = await fetchBytes(track.initialization, { signal });
-      }
-
-      const fetchedSegments: Array<{ segment: Segment; data: ArrayBuffer }> = [];
-      for (const segment of segmentsToLoad) {
-        if (signal.aborted) break;
-        const data = await fetchBytes(segment, { signal });
-        fetchedSegments.push({ segment, data });
-      }
-
-      // Phase 3: Append
-      const appendMessages: SourceBufferMessage[] = [];
-
-      if (initData) {
-        appendMessages.push({ type: 'append-init', data: initData, meta: { trackId: track.id } });
-      }
-
-      if (!signal.aborted) {
-        for (const { segment, data } of fetchedSegments) {
-          appendMessages.push({
-            type: 'append-segment',
-            data,
-            meta: {
-              id: segment.id,
-              startTime: segment.startTime,
-              duration: segment.duration,
-              trackId: track.id,
-            },
-          });
-        }
-      }
-
-      if (appendMessages.length === 0) return;
-
-      const appendSignal = signal.aborted ? new AbortController().signal : signal;
-
-      if (appendMessages.length === 1) {
-        await sourceBufferActor.send(appendMessages[0]!, appendSignal);
-      } else {
-        await sourceBufferActor.batch(appendMessages, appendSignal);
-      }
-
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-    } finally {
-      syncActorToState();
     }
+
+    if (removeMessages.length > 0) {
+      if (removeMessages.length === 1) {
+        await sourceBufferActor.send(removeMessages[0]!, signal);
+      } else {
+        await sourceBufferActor.batch(removeMessages, signal);
+      }
+      if (signal.aborted) return;
+    }
+
+    // Phase 2: Fetch
+    let initData: ArrayBuffer | null = null;
+    if (needsInit) {
+      if (signal.aborted) return;
+      initData = await fetchBytes(track.initialization, { signal });
+    }
+
+    const fetchedSegments: Array<{ segment: Segment; data: ArrayBuffer }> = [];
+    for (const segment of segmentsToLoad) {
+      if (signal.aborted) break;
+      const data = await fetchBytes(segment, { signal });
+      fetchedSegments.push({ segment, data });
+    }
+
+    // Phase 3: Append
+    const appendMessages: SourceBufferMessage[] = [];
+
+    if (initData) {
+      appendMessages.push({ type: 'append-init', data: initData, meta: { trackId: track.id } });
+    }
+
+    if (!signal.aborted) {
+      for (const { segment, data } of fetchedSegments) {
+        appendMessages.push({
+          type: 'append-segment',
+          data,
+          meta: {
+            id: segment.id,
+            startTime: segment.startTime,
+            duration: segment.duration,
+            trackId: track.id,
+          },
+        });
+      }
+    }
+
+    if (appendMessages.length === 0) return;
+
+    const appendSignal = signal.aborted ? new AbortController().signal : signal;
+
+    if (appendMessages.length === 1) {
+      await sourceBufferActor.send(appendMessages[0]!, appendSignal);
+    } else {
+      await sourceBufferActor.batch(appendMessages, appendSignal);
+    }
+
+    await new Promise((resolve) => requestAnimationFrame(resolve));
   };
 
   // Run the task loop for an initial message, picking up pending messages after

@@ -3,11 +3,10 @@ import type { WritableState } from '../../core/state/create-state';
 import type { Presentation } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
-import type { BufferState, SourceBufferState } from './load-segments';
+import type { SourceBufferActor } from '../media/source-buffer-actor';
 
 export interface EndOfStreamState extends TrackSelectionState {
   presentation?: Presentation;
-  bufferState?: BufferState;
 }
 
 export interface EndOfStreamOwners {
@@ -15,6 +14,8 @@ export interface EndOfStreamOwners {
   mediaElement?: HTMLMediaElement | undefined;
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
+  videoBufferActor?: SourceBufferActor;
+  audioBufferActor?: SourceBufferActor;
 }
 
 // ## When to call endOfStream()
@@ -56,14 +57,11 @@ export interface EndOfStreamOwners {
  * quality switches (different tracks have different segment IDs) and
  * back-buffer flushes (flushed segment IDs are removed from the model).
  */
-function isLastSegmentAppended(
-  segments: readonly { id: string }[],
-  bufferState: SourceBufferState | undefined
-): boolean {
+function isLastSegmentAppended(segments: readonly { id: string }[], actor: SourceBufferActor | undefined): boolean {
   if (segments.length === 0) return true;
   const lastSeg = segments[segments.length - 1];
   if (!lastSeg) return false;
-  return bufferState?.segments.some((s) => s.id === lastSeg.id) ?? false;
+  return actor?.snapshot.context.segments.some((s) => s.id === lastSeg.id) ?? false;
 }
 
 /**
@@ -72,7 +70,7 @@ function isLastSegmentAppended(
  * Handles video-only, audio-only, and video+audio scenarios.
  * A track with no segments (e.g. unresolved) is considered not ready.
  */
-export function hasLastSegmentLoaded(state: EndOfStreamState): boolean {
+export function hasLastSegmentLoaded(state: EndOfStreamState, owners: EndOfStreamOwners): boolean {
   const videoTrack = state.selectedVideoTrackId ? getSelectedTrack(state, 'video') : undefined;
   const audioTrack = state.selectedAudioTrackId ? getSelectedTrack(state, 'audio') : undefined;
 
@@ -84,11 +82,11 @@ export function hasLastSegmentLoaded(state: EndOfStreamState): boolean {
   if (audioTrack && !isResolvedTrack(audioTrack)) return false;
 
   if (videoTrack && isResolvedTrack(videoTrack)) {
-    if (!isLastSegmentAppended(videoTrack.segments, state.bufferState?.video)) return false;
+    if (!isLastSegmentAppended(videoTrack.segments, owners.videoBufferActor)) return false;
   }
 
   if (audioTrack && isResolvedTrack(audioTrack)) {
-    if (!isLastSegmentAppended(audioTrack.segments, state.bufferState?.audio)) return false;
+    if (!isLastSegmentAppended(audioTrack.segments, owners.audioBufferActor)) return false;
   }
 
   return true;
@@ -128,7 +126,7 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
   if (hasAudioTrack && !owners.audioBuffer) return false;
 
   // Last segment must be appended for each selected track
-  if (!hasLastSegmentLoaded(state)) return false;
+  if (!hasLastSegmentLoaded(state, owners)) return false;
 
   return true;
 }
@@ -222,27 +220,60 @@ export function endOfStream({
   owners: WritableState<EndOfStreamOwners>;
 }): () => void {
   let hasEnded = false;
+  const activeActorUnsubs: Array<() => void> = [];
 
-  return combineLatest([state, owners]).subscribe(
-    async ([currentState, currentOwners]: [EndOfStreamState, EndOfStreamOwners]) => {
-      if (hasEnded) {
-        // Per the MSE spec, calling appendBuffer() on a SourceBuffer when
-        // readyState is 'ended' automatically transitions it back to 'open'.
-        // This happens on seek-back after end-of-stream — allow endOfStream()
-        // to be called again once the last segment is reloaded.
-        if (currentOwners.mediaSource?.readyState !== 'open') return;
-        hasEnded = false;
-      }
-      if (!shouldEndStream(currentState, currentOwners)) return;
-
-      // Set flag before awaiting to close the re-entry window between
-      // endOfStream() being called and the async task completing.
-      hasEnded = true;
-      try {
-        await endOfStreamTask({ currentOwners }, {});
-      } catch (error) {
-        console.error('Failed to call endOfStream:', error);
-      }
+  const runEvaluate = async () => {
+    const currentState = state.current;
+    const currentOwners = owners.current;
+    if (hasEnded) {
+      // Per the MSE spec, calling appendBuffer() on a SourceBuffer when
+      // readyState is 'ended' automatically transitions it back to 'open'.
+      // This happens on seek-back after end-of-stream — allow endOfStream()
+      // to be called again once the last segment is reloaded.
+      if (currentOwners.mediaSource?.readyState !== 'open') return;
+      hasEnded = false;
     }
-  );
+    if (!shouldEndStream(currentState, currentOwners)) return;
+
+    // Set flag before awaiting to close the re-entry window between
+    // endOfStream() being called and the async task completing.
+    hasEnded = true;
+    try {
+      await endOfStreamTask({ currentOwners }, {});
+    } catch (error) {
+      console.error('Failed to call endOfStream:', error);
+    }
+  };
+
+  // Subscribe to actor snapshot changes so endOfStream re-evaluates when a
+  // segment is appended (actor context updated), not just on state/owners changes.
+  // Re-subscribe whenever owners changes (actors may have appeared or changed).
+  const cleanupOwners = owners.subscribe((currentOwners) => {
+    activeActorUnsubs.forEach((u) => u());
+    activeActorUnsubs.length = 0;
+
+    for (const actor of [currentOwners.videoBufferActor, currentOwners.audioBufferActor]) {
+      if (!actor) continue;
+      // Skip the immediate fire — the combineLatest subscription handles the
+      // initial evaluation. Only react to subsequent snapshot changes.
+      let isFirst = true;
+      activeActorUnsubs.push(
+        actor.subscribe(() => {
+          if (isFirst) {
+            isFirst = false;
+            return;
+          }
+          runEvaluate();
+        })
+      );
+    }
+  });
+
+  const cleanupCombineLatest = combineLatest([state, owners]).subscribe(async () => runEvaluate());
+
+  return () => {
+    activeActorUnsubs.forEach((u) => u());
+    cleanupOwners();
+    cleanupCombineLatest();
+  };
 }

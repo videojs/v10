@@ -6,10 +6,10 @@ import {
 } from '../../core/buffer/forward-buffer';
 import { combineLatest } from '../../core/reactive/combine-latest';
 import { createState, type WritableState } from '../../core/state/create-state';
-import type { AddressableObject, Presentation, Segment } from '../../core/types';
+import type { AddressableObject, Presentation } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { BufferKeyByType, getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
-import { createSourceBufferActor, type SourceBufferActor } from '../media/source-buffer-actor';
+import type { SourceBufferActor } from '../media/source-buffer-actor';
 import { fetchResolvableBytes } from '../network/fetch';
 import {
   type BufferState,
@@ -22,6 +22,12 @@ import type { MediaTrackType } from './setup-sourcebuffer';
 // Re-export buffer state types for consumers that import them from this module.
 export type { BufferState, SourceBufferState };
 
+// Map track type to SourceBufferActor owner property key.
+const ActorKeyByType = {
+  video: 'videoBufferActor',
+  audio: 'audioBufferActor',
+} as const;
+
 // ============================================================================
 // TRACKED FETCH
 // ============================================================================
@@ -29,9 +35,6 @@ export type { BufferState, SourceBufferState };
 /**
  * Creates a fetch function that transparently samples bandwidth after each
  * completed request. Callers receive bytes; throughput tracking is invisible.
- *
- * The returned function closes over `throughput` — sampling and model updates
- * happen internally with no action required at the call site.
  *
  * `onSample` is an optional callback invoked after each sample is recorded,
  * used for bridging throughput state outward (e.g. migration bridge to global
@@ -55,24 +58,6 @@ function createTrackedFetch(
 }
 
 // ============================================================================
-// HELPERS
-// ============================================================================
-
-/**
- * Resolve full Segment objects from buffer state IDs.
- * Used by shouldLoadSegments to bridge state.bufferState (ID-only) back to
- * Segment objects with timing for window calculations.
- */
-function resolveBufferedSegments(
-  allSegments: readonly Segment[],
-  bufferState: SourceBufferState | undefined
-): Segment[] {
-  if (!bufferState?.segments?.length) return [];
-  const bufferedIds = new Set(bufferState.segments.map((s) => s.id));
-  return allSegments.filter((seg) => bufferedIds.has(seg.id));
-}
-
-// ============================================================================
 // STATE & OWNERS
 // ============================================================================
 
@@ -85,8 +70,6 @@ export interface SegmentLoadingState extends TrackSelectionState {
   bandwidthState?: BandwidthState;
   /** Current playback position in seconds. Defaults to 0 when undefined. */
   currentTime?: number;
-  /** Buffer state tracking which segments have been loaded per track type. */
-  bufferState?: BufferState;
   /** True once the user has initiated playback. Allows segment loading regardless of preload setting. */
   playbackInitiated?: boolean;
 }
@@ -97,6 +80,8 @@ export interface SegmentLoadingState extends TrackSelectionState {
 export interface SegmentLoadingOwners {
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
+  videoBufferActor?: SourceBufferActor;
+  audioBufferActor?: SourceBufferActor;
 }
 
 // ============================================================================
@@ -130,17 +115,10 @@ export function canLoadSegments(
  *
  * - Full mode (preload='auto' OR playbackInitiated): load init + media segments.
  * - Metadata mode (preload='metadata', not yet played): load init segment only.
- *   The init segment (moov box) advances readyState to HAVE_METADATA, satisfying
- *   the browser's preload="metadata" contract and avoiding a stuck HAVE_NOTHING state.
  * - Blocked (preload='none' or undefined, not yet played): load nothing.
  *
- * @note Architectural debt: this function conflates two distinct concerns —
- * "should we load new data?" and "should we flush stale forward-buffer data?".
- * The forward-flush check (`calculateForwardFlushPoint`) is included here
- * because the actor owns both loading and flushing in V1, and the message
- * must be sent even when nothing new needs loading (e.g. after a seek-back
- * where far-ahead content needs to be removed but the load window is already
- * satisfied). See segment-loader-actor.ts for the flush logic.
+ * Reads live buffer state from SourceBufferActor (via owners) rather than
+ * from a stale state projection.
  */
 export function shouldLoadSegments(
   state: SegmentLoadingState,
@@ -163,14 +141,18 @@ export function shouldLoadSegments(
     return false;
   }
 
-  const bufferKey = type as 'video' | 'audio';
+  const actorKey = ActorKeyByType[type];
+  const actor = owners[actorKey];
 
   if (metadataMode) {
-    return state.bufferState?.[bufferKey]?.initTrackId !== track.id;
+    return actor?.snapshot.context.initTrackId !== track.id;
   }
 
+  // Full mode: check actor context directly (has timing — no bridge needed).
   if (track.segments.length === 0) return false;
-  const bufferedSegments = resolveBufferedSegments(track.segments, state.bufferState?.[bufferKey]);
+  const actorCtx = actor?.snapshot.context;
+  const bufferedIds = new Set(actorCtx?.segments.map((s) => s.id) ?? []);
+  const bufferedSegments = track.segments.filter((s) => bufferedIds.has(s.id));
   const currentTime = state.currentTime ?? 0;
 
   return (
@@ -187,8 +169,9 @@ export function shouldLoadSegments(
  * Load segments orchestration — Reactor layer.
  *
  * Watches state and owners for meaningful changes, then sends typed load
- * messages to a SegmentLoaderActor. The actor owns all execution logic:
- * removes, fetches, appends, seek detection, and task scheduling.
+ * messages to a SegmentLoaderActor. The actor (created by setupSourceBuffer
+ * alongside its SourceBuffer) is received via owners — this file no longer
+ * creates or destroys SourceBufferActors.
  *
  * Loading modes are interpreted here and encoded into the message shape:
  * - Metadata mode (preload='metadata', !playbackInitiated): no range → actor
@@ -210,7 +193,7 @@ export function loadSegments(
   config: { type: MediaTrackType }
 ): () => void {
   const { type } = config;
-  const bufferKey = type as 'video' | 'audio';
+  const actorKey = ActorKeyByType[type];
 
   // Local throughput state — owns BandwidthState for this track's fetch loop.
   // Sampling is handled transparently inside fetchBytes; callers never touch it.
@@ -218,14 +201,6 @@ export function loadSegments(
   // MIGRATION BRIDGE: the onSample callback below keeps global state.bandwidthState
   // in sync so ABR (selectVideoTrack) continues to work unchanged. Remove this
   // bridge once ABR reads from throughput directly.
-  //
-  // A callback is used (not a subscription) because subscriptions fire immediately
-  // on registration, which would cause a spurious state.patch before any work
-  // starts and trigger unnecessary combineLatest re-evaluations.
-  //
-  // The bridge is only installed when bandwidthState was initially configured,
-  // preserving the previous behaviour of not writing bandwidthState in contexts
-  // (e.g. tests) where it was never set.
   const initialBandwidth = state.current.bandwidthState;
   const throughput = createState<BandwidthState>(
     initialBandwidth ?? {
@@ -242,41 +217,18 @@ export function loadSegments(
     initialBandwidth !== undefined ? (next) => state.patch({ bandwidthState: next }) : undefined
   );
 
-  // SourceBufferActor + SegmentLoaderActor lifecycle.
-  // Both are created together when a SourceBuffer becomes available and
-  // destroyed together when it is removed. The SegmentLoaderActor receives
-  // the SourceBufferActor as a construction-time dependency.
-  let sourceBufferActorInstance: SourceBufferActor | null = null;
+  // SegmentLoaderActor lifecycle — driven by SourceBufferActor appearing in owners.
+  // SourceBufferActor is created by setupSourceBuffer alongside its SourceBuffer
+  // in a single owners.patch, so both arrive simultaneously.
   let segmentLoader: SegmentLoaderActor | null = null;
 
   const unsubActorLifecycle = owners.subscribe((currentOwners) => {
-    const sourceBuffer = currentOwners[BufferKeyByType[type]];
-    if (sourceBuffer && !sourceBufferActorInstance) {
-      // Seed the SourceBufferActor's initial context from existing bufferState
-      // so it starts consistent with whatever was already loaded before this
-      // actor was created (e.g. tests that pre-seed state, session restore).
-      const existingBufState = state.current.bufferState?.[bufferKey];
-      const existingTrack = getSelectedTrack(state.current, type);
-      const initialContext =
-        existingBufState && existingTrack && isResolvedTrack(existingTrack)
-          ? {
-              initTrackId: existingBufState.initTrackId,
-              segments: existingBufState.segments.flatMap((bs) => {
-                const seg = existingTrack.segments.find((s) => s.id === bs.id);
-                return seg
-                  ? [{ id: seg.id, startTime: seg.startTime, duration: seg.duration, trackId: bs.trackId }]
-                  : [];
-              }),
-            }
-          : undefined;
-
-      sourceBufferActorInstance = createSourceBufferActor(sourceBuffer, initialContext);
-      segmentLoader = createSegmentLoaderActor(sourceBufferActorInstance, fetchBytes, state, config);
-    } else if (!sourceBuffer && sourceBufferActorInstance) {
-      segmentLoader?.destroy();
+    const actor = currentOwners[actorKey];
+    if (actor && !segmentLoader) {
+      segmentLoader = createSegmentLoaderActor(actor, fetchBytes);
+    } else if (!actor && segmentLoader) {
+      segmentLoader.destroy();
       segmentLoader = null;
-      sourceBufferActorInstance.destroy();
-      sourceBufferActorInstance = null;
     }
   });
 
@@ -312,8 +264,8 @@ export function loadSegments(
   return () => {
     segmentLoader?.destroy();
     segmentLoader = null;
-    sourceBufferActorInstance?.destroy();
-    sourceBufferActorInstance = null;
+    // Destroy the SourceBufferActor that was created by setupSourceBuffer.
+    owners.current[actorKey]?.destroy();
     unsubActorLifecycle();
     cleanup();
   };

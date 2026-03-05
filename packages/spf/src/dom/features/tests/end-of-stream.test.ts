@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createState } from '../../../core/state/create-state';
 import type { Presentation, Segment, VideoTrack } from '../../../core/types';
+import { createSourceBufferActor, type SourceBufferActor } from '../../media/source-buffer-actor';
 import {
   canEndStream,
   type EndOfStreamOwners,
@@ -9,7 +10,6 @@ import {
   hasLastSegmentLoaded,
   shouldEndStream,
 } from '../end-of-stream';
-import type { BufferState } from '../load-segments';
 
 // ============================================================================
 // Mock helpers
@@ -24,16 +24,29 @@ function makeMediaSource(overrides: { readyState?: string; duration?: number } =
   return ms;
 }
 
-function makeSourceBuffer(bufferedRanges: Array<[number, number]> = []): SourceBuffer {
-  const timeRanges = {
-    length: bufferedRanges.length,
-    start: (i: number) => bufferedRanges[i]![0],
-    end: (i: number) => bufferedRanges[i]![1],
-  } as TimeRanges;
-  return Object.create(SourceBuffer.prototype, {
-    updating: { value: false, writable: true },
-    buffered: { value: timeRanges, writable: false },
-  }) as SourceBuffer;
+function makeSourceBuffer(): SourceBuffer {
+  const listeners: Record<string, EventListener[]> = {};
+  return {
+    buffered: { length: 0, start: () => 0, end: () => 0 } as TimeRanges,
+    updating: false,
+    appendBuffer: vi.fn(() => {
+      setTimeout(() => {
+        for (const listener of listeners.updateend ?? []) listener(new Event('updateend'));
+      }, 0);
+    }),
+    remove: vi.fn(() => {
+      setTimeout(() => {
+        for (const listener of listeners.updateend ?? []) listener(new Event('updateend'));
+      }, 0);
+    }),
+    addEventListener: vi.fn((type: string, listener: EventListener) => {
+      listeners[type] ??= [];
+      listeners[type].push(listener);
+    }),
+    removeEventListener: vi.fn((type: string, listener: EventListener) => {
+      listeners[type] = (listeners[type] ?? []).filter((l) => l !== listener);
+    }),
+  } as unknown as SourceBuffer;
 }
 
 function makeSegments(count: number): Segment[] {
@@ -68,8 +81,20 @@ function makePresentation(videoTrack: VideoTrack, id = 'pres-1'): Presentation {
   } as unknown as Presentation;
 }
 
-function bufferStateWithSegments(ids: string[], type: 'video' | 'audio' = 'video'): BufferState {
-  return { [type]: { segments: ids.map((id) => ({ id, trackId: 'video-1' })) } };
+/**
+ * Create a SourceBufferActor pre-seeded with the given segment IDs.
+ * Uses a fresh SourceBuffer mock; segments get timing derived from their index.
+ */
+function makeActorWithSegments(segmentIds: string[], trackId = 'video-1'): SourceBufferActor {
+  return createSourceBufferActor(makeSourceBuffer(), {
+    initTrackId: trackId,
+    segments: segmentIds.map((id, i) => ({
+      id,
+      startTime: i * 2.5,
+      duration: 2.5,
+      trackId,
+    })),
+  });
 }
 
 // ============================================================================
@@ -98,18 +123,20 @@ describe('canEndStream', () => {
 
 describe('hasLastSegmentLoaded', () => {
   it('returns true when no tracks are selected', () => {
-    expect(hasLastSegmentLoaded({ presentation: { id: 'p', url: 'x' } as Presentation })).toBe(true);
+    expect(hasLastSegmentLoaded({ presentation: { id: 'p', url: 'x' } as Presentation }, {})).toBe(true);
   });
 
-  it('returns false when last segment ID is not in bufferState', () => {
+  it('returns false when last segment ID is not in actor context', () => {
     const track = makeResolvedVideoTrack(4);
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      // seg-3 (the last segment) is missing
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2'], 'video'),
     };
-    expect(hasLastSegmentLoaded(state)).toBe(false);
+    // seg-3 (the last segment) is missing
+    const owners: EndOfStreamOwners = {
+      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2']),
+    };
+    expect(hasLastSegmentLoaded(state, owners)).toBe(false);
   });
 
   it('returns true when last segment ID is present (seek-back scenario)', () => {
@@ -117,22 +144,24 @@ describe('hasLastSegmentLoaded', () => {
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      // Last segment is in the SourceBuffer from a prior play-through (pipeline mid-reload).
-      // Per the MSE spec, if the last segment is physically present calling endOfStream
-      // is correct regardless of where the loading pipeline currently is.
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-7', 'seg-8', 'seg-9'], 'video'),
     };
-    expect(hasLastSegmentLoaded(state)).toBe(true);
+    // Last segment is in the SourceBuffer from a prior play-through.
+    const owners: EndOfStreamOwners = {
+      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-7', 'seg-8', 'seg-9']),
+    };
+    expect(hasLastSegmentLoaded(state, owners)).toBe(true);
   });
 
-  it('returns true when last segment ID is in bufferState', () => {
+  it('returns true when last segment ID is in actor context', () => {
     const track = makeResolvedVideoTrack(4);
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video'),
     };
-    expect(hasLastSegmentLoaded(state)).toBe(true);
+    const owners: EndOfStreamOwners = {
+      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
+    };
+    expect(hasLastSegmentLoaded(state, owners)).toBe(true);
   });
 
   it('returns true after back-buffer flushing when last segment ID remains', () => {
@@ -140,10 +169,12 @@ describe('hasLastSegmentLoaded', () => {
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      // early segments flushed, last segment still present
-      bufferState: bufferStateWithSegments(['seg-7', 'seg-8', 'seg-9'], 'video'),
     };
-    expect(hasLastSegmentLoaded(state)).toBe(true);
+    // Early segments flushed, last segment still present
+    const owners: EndOfStreamOwners = {
+      videoBufferActor: makeActorWithSegments(['seg-7', 'seg-8', 'seg-9']),
+    };
+    expect(hasLastSegmentLoaded(state, owners)).toBe(true);
   });
 
   it('returns true when track has no segments', () => {
@@ -151,9 +182,11 @@ describe('hasLastSegmentLoaded', () => {
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments([], 'video'),
     };
-    expect(hasLastSegmentLoaded(state)).toBe(true);
+    const owners: EndOfStreamOwners = {
+      videoBufferActor: makeActorWithSegments([]),
+    };
+    expect(hasLastSegmentLoaded(state, owners)).toBe(true);
   });
 
   it('returns false when video last segment is loaded but audio last segment is not', () => {
@@ -184,12 +217,12 @@ describe('hasLastSegmentLoaded', () => {
       selectedVideoTrackId: 'video-1',
       selectedAudioTrackId: 'audio-1',
       presentation,
-      bufferState: {
-        video: { segments: [{ id: 'seg-3', trackId: 'video-1' }] },
-        audio: { segments: [{ id: 'audio-seg-0', trackId: 'audio-1' }] },
-      },
     };
-    expect(hasLastSegmentLoaded(state)).toBe(false);
+    const owners: EndOfStreamOwners = {
+      videoBufferActor: makeActorWithSegments(['seg-3'], 'video-1'),
+      audioBufferActor: makeActorWithSegments(['audio-seg-0'], 'audio-1'),
+    };
+    expect(hasLastSegmentLoaded(state, owners)).toBe(false);
   });
 });
 
@@ -203,10 +236,13 @@ describe('shouldEndStream', () => {
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
     };
     expect(
-      shouldEndStream(state, { mediaSource: makeMediaSource({ readyState: 'ended' }), videoBuffer: makeSourceBuffer() })
+      shouldEndStream(state, {
+        mediaSource: makeMediaSource({ readyState: 'ended' }),
+        videoBuffer: makeSourceBuffer(),
+        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
+      })
     ).toBe(false);
   });
 
@@ -215,13 +251,13 @@ describe('shouldEndStream', () => {
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
     };
     expect(
       shouldEndStream(state, {
         mediaSource: makeMediaSource(),
         mediaElement: document.createElement('video'), // readyState = HAVE_NOTHING
         videoBuffer: makeSourceBuffer(),
+        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
       })
     ).toBe(false);
   });
@@ -231,7 +267,6 @@ describe('shouldEndStream', () => {
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
     };
     expect(shouldEndStream(state, { mediaSource: makeMediaSource() })).toBe(false);
   });
@@ -241,19 +276,29 @@ describe('shouldEndStream', () => {
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1']), // last segment (seg-3) missing
     };
-    expect(shouldEndStream(state, { mediaSource: makeMediaSource(), videoBuffer: makeSourceBuffer() })).toBe(false);
+    expect(
+      shouldEndStream(state, {
+        mediaSource: makeMediaSource(),
+        videoBuffer: makeSourceBuffer(),
+        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1']), // last segment (seg-3) missing
+      })
+    ).toBe(false);
   });
 
-  it('returns true when last segment is in bufferState', () => {
+  it('returns true when last segment is in actor context', () => {
     const track = makeResolvedVideoTrack(4);
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video'),
     };
-    expect(shouldEndStream(state, { mediaSource: makeMediaSource(), videoBuffer: makeSourceBuffer() })).toBe(true);
+    expect(
+      shouldEndStream(state, {
+        mediaSource: makeMediaSource(),
+        videoBuffer: makeSourceBuffer(),
+        videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
+      })
+    ).toBe(true);
   });
 
   it('returns true after back-buffer flushing when last segment ID remains', () => {
@@ -261,9 +306,14 @@ describe('shouldEndStream', () => {
     const state: EndOfStreamState = {
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-7', 'seg-8', 'seg-9'], 'video'),
     };
-    expect(shouldEndStream(state, { mediaSource: makeMediaSource(), videoBuffer: makeSourceBuffer() })).toBe(true);
+    expect(
+      shouldEndStream(state, {
+        mediaSource: makeMediaSource(),
+        videoBuffer: makeSourceBuffer(),
+        videoBufferActor: makeActorWithSegments(['seg-7', 'seg-8', 'seg-9']),
+      })
+    ).toBe(true);
   });
 });
 
@@ -279,11 +329,11 @@ describe('endOfStream', () => {
     const state = createState<EndOfStreamState>({
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video'),
     });
     const owners = createState<EndOfStreamOwners>({
       mediaSource: mockMs,
       videoBuffer: makeSourceBuffer(),
+      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
     });
 
     const cleanup = endOfStream({ state, owners });
@@ -302,12 +352,12 @@ describe('endOfStream', () => {
     const state = createState<EndOfStreamState>({
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      // Back buffer flushed, only last few segments remain — last segment still present
-      bufferState: bufferStateWithSegments(['seg-7', 'seg-8', 'seg-9'], 'video'),
     });
+    // Back buffer flushed, only last few segments remain — last segment still present
     const owners = createState<EndOfStreamOwners>({
       mediaSource: mockMs,
       videoBuffer: makeSourceBuffer(),
+      videoBufferActor: makeActorWithSegments(['seg-7', 'seg-8', 'seg-9']),
     });
 
     const cleanup = endOfStream({ state, owners });
@@ -331,11 +381,11 @@ describe('endOfStream', () => {
     const state = createState<EndOfStreamState>({
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video'),
     });
     const owners = createState<EndOfStreamOwners>({
       mediaSource: mockMs,
       videoBuffer: makeSourceBuffer(),
+      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
     });
 
     const cleanup = endOfStream({ state, owners });
@@ -360,11 +410,11 @@ describe('endOfStream', () => {
     const state = createState<EndOfStreamState>({
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1']), // missing seg-3
     });
     const owners = createState<EndOfStreamOwners>({
       mediaSource: mockMs,
       videoBuffer: makeSourceBuffer(),
+      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1']), // missing seg-3
     });
 
     const cleanup = endOfStream({ state, owners });
@@ -382,11 +432,11 @@ describe('endOfStream', () => {
     const state = createState<EndOfStreamState>({
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video'),
     });
     const owners = createState<EndOfStreamOwners>({
       mediaSource: mockMs,
       videoBuffer: makeSourceBuffer(),
+      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
     });
 
     const cleanup = endOfStream({ state, owners });
@@ -399,9 +449,8 @@ describe('endOfStream', () => {
     // Simulate seek-back: appendBuffer() re-opens the MediaSource per MSE spec
     (mockMs as unknown as { readyState: string }).readyState = 'open';
 
-    // Trigger a state change. The last segment (seg-3) is still in the buffer
-    // (back-buffer flush removed early segments) so endOfStream fires immediately.
-    state.patch({ bufferState: bufferStateWithSegments(['seg-2', 'seg-3'], 'video') });
+    // Patch owners with a new actor that still has the last segment
+    owners.patch({ videoBufferActor: makeActorWithSegments(['seg-2', 'seg-3']) });
 
     // endOfStream() should be called again
     await vi.waitFor(() => {
@@ -418,11 +467,11 @@ describe('endOfStream', () => {
     const state = createState<EndOfStreamState>({
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video'),
     });
     const owners = createState<EndOfStreamOwners>({
       mediaSource: mockMs,
       videoBuffer: makeSourceBuffer(),
+      videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
     });
 
     const cleanup = endOfStream({ state, owners });
@@ -443,18 +492,29 @@ describe('endOfStream', () => {
     cleanup();
   });
 
-  it('calls endOfStream() when bufferState is updated to include the last segment', async () => {
+  it('calls endOfStream() when actor context is updated to include the last segment', async () => {
     const track = makeResolvedVideoTrack(4);
     const mockMs = makeMediaSource();
+    const neverAborted = new AbortController().signal;
 
     const state = createState<EndOfStreamState>({
       selectedVideoTrackId: 'video-1',
       presentation: makePresentation(track),
-      bufferState: bufferStateWithSegments(['seg-0', 'seg-1']), // not done yet
+    });
+
+    // Start with only first two segments loaded
+    const sourceBuffer = makeSourceBuffer();
+    const actor = createSourceBufferActor(sourceBuffer, {
+      initTrackId: 'video-1',
+      segments: [
+        { id: 'seg-0', startTime: 0, duration: 2.5, trackId: 'video-1' },
+        { id: 'seg-1', startTime: 2.5, duration: 2.5, trackId: 'video-1' },
+      ],
     });
     const owners = createState<EndOfStreamOwners>({
       mediaSource: mockMs,
-      videoBuffer: makeSourceBuffer(),
+      videoBuffer: sourceBuffer,
+      videoBufferActor: actor,
     });
 
     const cleanup = endOfStream({ state, owners });
@@ -462,8 +522,23 @@ describe('endOfStream', () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(mockMs.endOfStream).not.toHaveBeenCalled();
 
-    // Last segment appended — loadSegments adds it to bufferState.segments
-    state.patch({ bufferState: bufferStateWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3'], 'video') });
+    // Append the last two segments via the actor — this updates actor context
+    // and triggers the actor subscribers that endOfStream watches.
+    await actor.batch(
+      [
+        {
+          type: 'append-segment',
+          data: new ArrayBuffer(8),
+          meta: { id: 'seg-2', startTime: 5, duration: 2.5, trackId: 'video-1' },
+        },
+        {
+          type: 'append-segment',
+          data: new ArrayBuffer(8),
+          meta: { id: 'seg-3', startTime: 7.5, duration: 2.5, trackId: 'video-1' },
+        },
+      ],
+      neverAborted
+    );
 
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);

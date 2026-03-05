@@ -5,6 +5,13 @@ import type { Presentation, ResolvedTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { BufferKeyByType, getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
 import { createSourceBuffer } from '../media/mediasource-setup';
+import { createSourceBufferActor, type SourceBufferActor } from '../media/source-buffer-actor';
+
+/** Map track type to SourceBufferActor owner property key. */
+const ActorKeyByType = {
+  video: 'videoBufferActor',
+  audio: 'audioBufferActor',
+} as const;
 
 /**
  * Media track type for SourceBuffer setup.
@@ -27,12 +34,14 @@ const setupSourceBufferTask = async <T extends MediaTrackType>(
 
   const mimeCodec = buildMimeCodec(track);
 
-  // Create SourceBuffer
+  // Create SourceBuffer and its actor together — single owners.patch so
+  // subscribers see both arrive at the same time with no intermediate state.
   const buffer = createSourceBuffer(currentOwners.mediaSource!, mimeCodec);
+  const actor = createSourceBufferActor(buffer);
 
-  // Update owners with buffer reference
   const bufferKey = BufferKeyByType[context.config.type];
-  context.owners.patch({ [bufferKey]: buffer });
+  const actorKey = ActorKeyByType[context.config.type];
+  context.owners.patch({ [bufferKey]: buffer, [actorKey]: actor });
 
   // Wait a frame to allow async state updates to flush
   await new Promise((resolve) => requestAnimationFrame(resolve));
@@ -54,6 +63,8 @@ export interface SourceBufferOwners {
   mediaSource?: MediaSource;
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
+  videoBufferActor?: SourceBufferActor;
+  audioBufferActor?: SourceBufferActor;
 }
 
 /**

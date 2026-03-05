@@ -41,10 +41,6 @@ describe('createPlaybackEngine', () => {
         slowTotalWeight: 0,
         bytesSampled: 0,
       },
-      bufferState: {
-        video: { segments: [] },
-        audio: { segments: [] },
-      },
     });
     expect(engine.owners.current).toEqual({});
 
@@ -662,7 +658,7 @@ http://example.com/seg1.m4s
         expect(videoTrack?.segments).toBeDefined();
 
         // Init segment should be loaded (advances readyState to HAVE_METADATA)
-        expect(state.bufferState?.video?.initTrackId).toBeDefined();
+        expect(engine.owners.current.videoBufferActor?.snapshot.context.initTrackId).toBeDefined();
       },
       { timeout: 2000 }
     );
@@ -751,10 +747,10 @@ http://example.com/seg1.m4s
     // The resolved track should be the selected one
     expect(resolvedTracks?.[0]?.id).toBe(state.selectedVideoTrackId);
 
-    // Should fetch: 1 multivariant + 1 media playlist + init + segments
-    // (Only selected quality, not all 3 qualities)
-    // With preload: 'auto', segments are loaded immediately
-    expect(mockFetch).toHaveBeenCalledTimes(4);
+    // Should fetch: 1 multivariant + 1 media playlist + init attempt
+    // (Only selected quality, not all 3 qualities; init.mp4 is attempted but
+    // rejected by the mock — segment is not attempted since init fails first)
+    expect(mockFetch).toHaveBeenCalledTimes(3);
 
     engine.destroy();
   });
@@ -1400,15 +1396,18 @@ http://example.com/seg2.m4s
     () => {
       const state = engine.state.current;
 
+      // Buffer state now lives in the SourceBufferActor (in owners), not in state.
+      const videoCtx = engine.owners.current.videoBufferActor?.snapshot.context;
+
       // Should have init segment tracked (by track ID)
-      expect(state.bufferState?.video?.initTrackId).toBeDefined();
+      expect(videoCtx?.initTrackId).toBeDefined();
 
       // Should have media segments tracked
-      expect(state.bufferState?.video?.segments).toBeDefined();
-      expect(state.bufferState?.video?.segments?.length).toBeGreaterThan(0);
+      expect(videoCtx?.segments).toBeDefined();
+      expect(videoCtx?.segments?.length).toBeGreaterThan(0);
 
       // Each segment should have id and trackId
-      const firstSegment = state.bufferState?.video?.segments?.[0];
+      const firstSegment = videoCtx?.segments?.[0];
       expect(firstSegment?.id).toBeDefined();
       expect(firstSegment?.trackId).toBeDefined();
     },
@@ -1476,17 +1475,21 @@ http://example.com/audio-seg1.m4s
     () => {
       const state = engine.state.current;
 
-      // Both video and audio should have buffer state
-      expect(state.bufferState?.video).toBeDefined();
-      expect(state.bufferState?.audio).toBeDefined();
+      // Buffer state now lives in the SourceBufferActors (in owners), not in state.
+      const videoCtx = engine.owners.current.videoBufferActor?.snapshot.context;
+      const audioCtx = engine.owners.current.audioBufferActor?.snapshot.context;
+
+      // Both video and audio actors should exist
+      expect(videoCtx).toBeDefined();
+      expect(audioCtx).toBeDefined();
 
       // Each should track init segments (by track ID)
-      expect(state.bufferState?.video?.initTrackId).toBeDefined();
-      expect(state.bufferState?.audio?.initTrackId).toBeDefined();
+      expect(videoCtx?.initTrackId).toBeDefined();
+      expect(audioCtx?.initTrackId).toBeDefined();
 
       // Each should track media segments independently
-      expect(state.bufferState?.video?.segments?.length).toBeGreaterThan(0);
-      expect(state.bufferState?.audio?.segments?.length).toBeGreaterThan(0);
+      expect(videoCtx?.segments?.length).toBeGreaterThan(0);
+      expect(audioCtx?.segments?.length).toBeGreaterThan(0);
     },
     { timeout: 3000 }
   );

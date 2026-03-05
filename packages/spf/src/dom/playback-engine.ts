@@ -15,7 +15,6 @@ import {
 } from '../core/features/select-tracks';
 import { createState } from '../core/state/create-state';
 import { endOfStream } from './features/end-of-stream';
-import type { BufferState } from './features/load-segments';
 import { loadSegments } from './features/load-segments';
 import type { TextTrackBufferState } from './features/load-text-track-cues';
 import { loadTextTrackCues } from './features/load-text-track-cues';
@@ -26,6 +25,7 @@ import { syncTextTrackModes } from './features/sync-text-track-modes';
 import { trackCurrentTime } from './features/track-current-time';
 import { trackPlaybackInitiated } from './features/track-playback-initiated';
 import { updateDuration } from './features/update-duration';
+import type { SourceBufferActor } from './media/source-buffer-actor';
 import { destroyVttParser } from './text/parse-vtt-segment';
 
 /**
@@ -91,9 +91,6 @@ export interface PlaybackEngineState {
   // Bandwidth estimation state
   bandwidthState?: BandwidthState;
 
-  // Buffer state (tracks loaded segments per SourceBuffer)
-  bufferState?: BufferState;
-
   // Text track buffer state (tracks loaded VTT segments per text track ID)
   textBufferState?: TextTrackBufferState;
 
@@ -115,9 +112,11 @@ export interface PlaybackEngineOwners {
   // MediaSource
   mediaSource?: MediaSource;
 
-  // SourceBuffers
+  // SourceBuffers and their actors (created together by setupSourceBuffer)
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
+  videoBufferActor?: SourceBufferActor;
+  audioBufferActor?: SourceBufferActor;
 
   // Text tracks (track elements by ID)
   textTracks?: Map<string, HTMLTrackElement>;
@@ -191,10 +190,6 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
       slowEstimate: 0,
       slowTotalWeight: 0,
       bytesSampled: 0,
-    },
-    bufferState: {
-      video: { segments: [] },
-      audio: { segments: [] },
     },
   });
   const owners = createState<PlaybackEngineOwners>({});

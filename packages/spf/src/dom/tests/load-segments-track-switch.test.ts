@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createState } from '../../core/state/create-state';
 import type { Presentation, VideoSelectionSet } from '../../core/types';
-import type { BufferState, SegmentLoadingOwners, SegmentLoadingState } from '../features/load-segments';
+import type { SegmentLoadingOwners, SegmentLoadingState } from '../features/load-segments';
 import { loadSegments } from '../features/load-segments';
+import { createSourceBufferActor } from '../media/source-buffer-actor';
 
 // ============================================================================
 // Mocks
@@ -77,7 +78,11 @@ describe('loadSegments — track switch', () => {
 
   beforeEach(() => {
     originalFetch = globalThis.fetch;
-    globalThis.fetch = vi.fn().mockResolvedValue(new Response(new ArrayBuffer(100), { status: 200 }));
+    // Use mockImplementation so each call gets a fresh Response (avoiding
+    // "body stream already read" errors when multiple fetches occur).
+    globalThis.fetch = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(new Response(new ArrayBuffer(100), { status: 200 })));
   });
 
   afterEach(() => {
@@ -95,27 +100,27 @@ describe('loadSegments — track switch', () => {
 
     const videoBuffer = makeMockSourceBuffer();
 
+    // Pre-seed actor with track-a already loaded
+    const videoBufferActor = createSourceBufferActor(videoBuffer, {
+      initTrackId: 'track-a',
+      segments: [
+        { id: 'a1', startTime: 0, duration: 10, trackId: 'track-a' },
+        { id: 'a2', startTime: 10, duration: 10, trackId: 'track-a' },
+      ],
+    });
+
     const state = createState<SegmentLoadingState>({
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
       currentTime: 5,
-      bufferState: {
-        video: {
-          initTrackId: 'track-a', // Old track was loaded
-          segments: [
-            { id: 'a1', trackId: 'track-a' },
-            { id: 'a2', trackId: 'track-a' },
-          ],
-        },
-      } as BufferState,
     });
 
-    const owners = createState<SegmentLoadingOwners>({ videoBuffer });
+    const owners = createState<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
 
     const cleanup = loadSegments({ state, owners }, { type: 'video' });
 
-    // Wait for initial load attempt to settle
+    // Wait for initial evaluation to settle (track-a already fully loaded — no work needed)
     await new Promise((r) => setTimeout(r, 20));
 
     // ABR switches to track B
@@ -128,12 +133,9 @@ describe('loadSegments — track switch', () => {
     expect(flushSpy).toHaveBeenCalledWith(videoBuffer, 0, Infinity);
 
     // After the full flush, the old track's data should be gone.
-    // initTrackId will be 'track-b' once the new init segment is loaded,
-    // but old track-a segments should not persist.
-    const bufState = state.current.bufferState?.video;
-    expect(bufState?.initTrackId).not.toBe('track-a'); // old track cleared
-    const oldSegmentIds = ['a1', 'a2'];
-    const hasOldSegments = bufState?.segments.some((s) => oldSegmentIds.includes(s.id));
+    const ctx = owners.current.videoBufferActor?.snapshot.context;
+    expect(ctx?.initTrackId).not.toBe('track-a');
+    const hasOldSegments = ctx?.segments.some((s) => ['a1', 'a2'].includes(s.id));
     expect(hasOldSegments).toBeFalsy();
 
     cleanup();
@@ -147,20 +149,17 @@ describe('loadSegments — track switch', () => {
     const presentation = makePresentation(trackA);
     const videoBuffer = makeMockSourceBuffer();
 
+    // Actor starts fresh (no prior track)
+    const videoBufferActor = createSourceBufferActor(videoBuffer);
+
     const state = createState<SegmentLoadingState>({
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
       currentTime: 0,
-      bufferState: {
-        video: {
-          initTrackId: undefined as string | undefined,
-          segments: [],
-        },
-      } as BufferState,
     });
 
-    const owners = createState<SegmentLoadingOwners>({ videoBuffer });
+    const owners = createState<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
 
     const cleanup = loadSegments({ state, owners }, { type: 'video' });
     await new Promise((r) => setTimeout(r, 50));
