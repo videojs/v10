@@ -1,6 +1,7 @@
 import type { State } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 import type { PopoverInput } from '../../../core/ui/popover/popover-core';
+import { createDismissLayer } from '../dismiss-layer';
 import type { UIFocusEvent, UIPointerEvent } from '../event';
 import type { TransitionApi } from '../transition';
 
@@ -50,16 +51,25 @@ export interface PopoverApi {
 }
 
 export function createPopover(options: PopoverOptions): PopoverApi {
-  const { transition, onOpenChange, closeOnEscape, closeOnOutsideClick } = options;
-
-  const state = transition.state;
+  const { onOpenChange, closeOnOutsideClick } = options;
 
   let triggerEl: HTMLElement | null = null;
   let popupEl: HTMLElement | null = null;
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  const abort = new AbortController();
-  let docAc: AbortController | null = null;
+  const layer = createDismissLayer({
+    transition: options.transition,
+    closeOnEscape: options.closeOnEscape,
+    onEscapeDismiss(event) {
+      event.preventDefault();
+      applyClose('escape', event);
+    },
+    onDocumentActive(signal) {
+      listen(document, 'pointerdown', handleDocumentPointerdown, { capture: true, signal });
+    },
+  });
+
+  const state = layer.input;
 
   // --- Hover management ---
 
@@ -92,41 +102,32 @@ export function createPopover(options: PopoverOptions): PopoverApi {
    * `onOpenChangeComplete` fires after animations finish.
    */
   function applyOpen(reason: PopoverOpenChangeReason, event?: Event): void {
-    if (abort.signal.aborted) return;
-
-    const { active, status } = state.current;
-
-    // If a close animation is in progress, cancel it and re-open.
-    // If already active and not closing, bail.
-    if (active && status !== 'ending') return;
-
-    if (status === 'ending') {
-      transition.cancel();
-    }
-
-    transition.open().then(() => {
-      if (abort.signal.aborted || !state.current.active) return;
-      options.onOpenChangeComplete?.(true);
-    });
+    const opening = layer.open();
+    if (!opening) return;
 
     tryShowPopover(popupEl);
 
     const details: PopoverChangeDetails = event ? { reason, event } : { reason };
     onOpenChange(true, details);
+
+    opening.then(() => {
+      if (layer.signal.aborted || !state.current.active) return;
+      options.onOpenChangeComplete?.(true);
+    });
   }
 
   function applyClose(reason: PopoverOpenChangeReason, event?: Event): void {
-    const { active, status } = state.current;
-    if (abort.signal.aborted || !active || status === 'ending') return;
-
-    transition.close(popupEl).then(() => {
-      if (abort.signal.aborted) return;
-      tryHidePopover(popupEl);
-      options.onOpenChangeComplete?.(false);
-    });
+    const closing = layer.close(popupEl);
+    if (!closing) return;
 
     const details: PopoverChangeDetails = event ? { reason, event } : { reason };
     onOpenChange(false, details);
+
+    closing.then(() => {
+      if (layer.signal.aborted) return;
+      tryHidePopover(popupEl);
+      options.onOpenChangeComplete?.(false);
+    });
   }
 
   // --- Imperative API ---
@@ -139,31 +140,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     applyClose(reason);
   }
 
-  // --- Document-level listeners (scoped to open state) ---
-
-  function setupDocumentListeners(): void {
-    cleanupDocumentListeners();
-
-    if (typeof document === 'undefined') return;
-
-    docAc = new AbortController();
-    const signal = docAc.signal;
-
-    listen(document, 'keydown', handleDocumentKeydown, { signal });
-    listen(document, 'pointerdown', handleDocumentPointerdown, { capture: true, signal });
-  }
-
-  function cleanupDocumentListeners(): void {
-    docAc?.abort();
-    docAc = null;
-  }
-
-  function handleDocumentKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape' && closeOnEscape() && state.current.active) {
-      event.preventDefault();
-      applyClose('escape', event);
-    }
-  }
+  // --- Outside-click handler ---
 
   function handleDocumentPointerdown(event: PointerEvent): void {
     if (!closeOnOutsideClick() || !state.current.active) return;
@@ -176,21 +153,9 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     applyClose('outside-click', event);
   }
 
-  // Subscribe to open state to manage document listeners.
-  const unsubscribe = state.subscribe(() => {
-    if (state.current.active) {
-      setupDocumentListeners();
-    } else {
-      cleanupDocumentListeners();
-    }
-  });
-
-  // Centralize cleanup on abort so any call to abort.abort() is sufficient.
-  abort.signal.addEventListener('abort', () => {
-    unsubscribe();
+  // Cleanup hover timeout on destroy.
+  layer.signal.addEventListener('abort', () => {
     clearHoverTimeout();
-    transition.destroy();
-    cleanupDocumentListeners();
     triggerEl = null;
     popupEl = null;
   });
@@ -308,13 +273,6 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     }
   }
 
-  // --- Cleanup ---
-
-  function destroy(): void {
-    if (abort.signal.aborted) return;
-    abort.abort();
-  }
-
   return {
     input: state,
     triggerProps,
@@ -326,7 +284,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     setPopupElement,
     open,
     close,
-    destroy,
+    destroy: layer.destroy,
   };
 }
 
