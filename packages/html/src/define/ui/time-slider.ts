@@ -1,5 +1,6 @@
 import { SliderBufferElement } from '../../ui/slider/slider-buffer-element';
 import { SliderFillElement } from '../../ui/slider/slider-fill-element';
+import { SliderPreviewElement } from '../../ui/slider/slider-preview-element';
 import { SliderThumbElement } from '../../ui/slider/slider-thumb-element';
 import { SliderThumbnailElement } from '../../ui/slider/slider-thumbnail-element';
 import { SliderTrackElement } from '../../ui/slider/slider-track-element';
@@ -11,6 +12,7 @@ import { safeDefine } from '../safe-define';
 safeDefine(TimeSliderElement);
 safeDefine(SliderBufferElement);
 safeDefine(SliderFillElement);
+safeDefine(SliderPreviewElement);
 safeDefine(SliderThumbElement);
 safeDefine(SliderThumbnailElement);
 safeDefine(SliderTrackElement);
