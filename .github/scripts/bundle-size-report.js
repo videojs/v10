@@ -103,7 +103,7 @@ function generateCategoryBreakdowns(entries, pkg) {
     const isSkin = cat === 'skin';
 
     lines.push('<details>');
-    lines.push(`<summary>${label} (${catEntries.length})</summary>`);
+    lines.push(`<summary><b>${label} (${catEntries.length})</b></summary>`);
     lines.push('');
 
     if (isSkin) {
@@ -132,6 +132,28 @@ function generateCategoryBreakdowns(entries, pkg) {
   return lines;
 }
 
+/** Flat size-only breakdown for non-html packages with multiple entries. */
+function generateFlatBreakdown(entries, pkg) {
+  const lines = [];
+
+  lines.push('<details>');
+  lines.push(`<summary><b>Entries (${entries.length})</b></summary>`);
+  lines.push('');
+  lines.push('| Entry | Size |');
+  lines.push('|---|--:|');
+
+  for (const entry of entries) {
+    const el = entryLabel(entry.name, pkg);
+    lines.push(`| ${el} | ${formatBytes(entry.size)} |`);
+  }
+
+  lines.push('');
+  lines.push('</details>');
+  lines.push('');
+
+  return lines;
+}
+
 // ---------------------------------------------------------------------------
 // Comparison report (CI — PR vs base)
 // ---------------------------------------------------------------------------
@@ -142,11 +164,11 @@ function generateComparisonReport(current, base) {
 
   const lines = [];
   lines.push('<!-- bundle-size-report -->');
-  lines.push('### 📦 Bundle Size Report');
+  lines.push('## 📦 Bundle Size Report');
   lines.push('');
 
   for (const [pkg, entries] of groups) {
-    lines.push(`**@videojs/${pkg}**`);
+    lines.push(`#### @videojs/${pkg}`);
     lines.push('');
 
     // Only show entries whose size actually changed (must exist in both)
@@ -178,8 +200,12 @@ function generateComparisonReport(current, base) {
     }
 
     // Category breakdowns for @videojs/html
-    if (pkg === 'html' && entries.some((e) => e.category)) {
+    const hasCategories = pkg === 'html' && entries.some((e) => e.category);
+    if (hasCategories) {
       lines.push(...generateCategoryBreakdowns(entries, pkg));
+    } else if (entries.length > 1) {
+      // Flat breakdown for other packages with multiple entries
+      lines.push(...generateFlatBreakdown(entries, pkg));
     }
   }
 
