@@ -113,6 +113,7 @@ describe('loadSegments — track switch', () => {
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
+      playbackInitiated: true, // track switches are an ABR concern during playback
       currentTime: 5,
     });
 

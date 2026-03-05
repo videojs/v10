@@ -130,72 +130,7 @@ function makeSourceBufferWithActor(
 // ---------------------------------------------------------------------------
 
 describe('canLoadSegments', () => {
-  it('returns false when no video track is selected', () => {
-    const state: SegmentLoadingState = { preload: 'auto' };
-    const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners: SegmentLoadingOwners = { videoBuffer: sourceBuffer, videoBufferActor: actor };
-
-    expect(canLoadSegments(state, owners, 'video')).toBe(false);
-  });
-
-  it('returns false when no SourceBuffer exists for type', () => {
-    const segments = [makeSegment('s1', 0)];
-    const state: SegmentLoadingState = {
-      preload: 'auto',
-      selectedVideoTrackId: 'track-1',
-      presentation: {
-        id: 'p1',
-        url: 'http://example.com/playlist.m3u8',
-        startTime: 0,
-        duration: 10,
-        selectionSets: [
-          {
-            id: 'ss1',
-            type: 'video',
-            switchingSets: [{ id: 'sw1', type: 'video', tracks: [makeResolvedVideoTrack(segments)] }],
-          },
-        ],
-      },
-    };
-    const owners: SegmentLoadingOwners = {};
-
-    expect(canLoadSegments(state, owners, 'video')).toBe(false);
-  });
-
-  it('returns true when track is selected and SourceBuffer exists', () => {
-    const segments = [makeSegment('s1', 0)];
-    const state: SegmentLoadingState = {
-      preload: 'auto',
-      selectedVideoTrackId: 'track-1',
-      presentation: {
-        id: 'p1',
-        url: 'http://example.com/playlist.m3u8',
-        startTime: 0,
-        duration: 10,
-        selectionSets: [
-          {
-            id: 'ss1',
-            type: 'video',
-            switchingSets: [{ id: 'sw1', type: 'video', tracks: [makeResolvedVideoTrack(segments)] }],
-          },
-        ],
-      },
-    };
-    const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners: SegmentLoadingOwners = { videoBuffer: sourceBuffer, videoBufferActor: actor };
-
-    expect(canLoadSegments(state, owners, 'video')).toBe(true);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// shouldLoadSegments
-// ---------------------------------------------------------------------------
-
-describe('shouldLoadSegments', () => {
-  const twoSegments = [makeSegment('s1', 0, 10), makeSegment('s2', 10, 10)];
-
-  function makeBaseState(overrides: Partial<SegmentLoadingState> = {}): SegmentLoadingState {
+  function makeResolvedState(overrides: Partial<SegmentLoadingState> = {}): SegmentLoadingState {
     return {
       preload: 'auto',
       selectedVideoTrackId: 'track-1',
@@ -203,12 +138,12 @@ describe('shouldLoadSegments', () => {
         id: 'p1',
         url: 'http://example.com/playlist.m3u8',
         startTime: 0,
-        duration: 20,
+        duration: 10,
         selectionSets: [
           {
             id: 'ss1',
             type: 'video',
-            switchingSets: [{ id: 'sw1', type: 'video', tracks: [makeResolvedVideoTrack(twoSegments)] }],
+            switchingSets: [{ id: 'sw1', type: 'video', tracks: [makeResolvedVideoTrack([makeSegment('s1', 0)])] }],
           },
         ],
       },
@@ -216,92 +151,103 @@ describe('shouldLoadSegments', () => {
     };
   }
 
-  it('returns false when preload is "none"', () => {
-    const state = makeBaseState({ preload: 'none' });
+  it('returns false when no track is selected', () => {
+    const state: SegmentLoadingState = { preload: 'auto' };
     const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners: SegmentLoadingOwners = { videoBuffer: sourceBuffer, videoBufferActor: actor };
-
-    expect(shouldLoadSegments(state, owners, 'video')).toBe(false);
+    expect(canLoadSegments(state, { videoBuffer: sourceBuffer, videoBufferActor: actor }, 'video')).toBe(false);
   });
 
-  it('returns false when preload is not set', () => {
-    const { preload: _omit, ...baseWithoutPreload } = makeBaseState();
-    const state = baseWithoutPreload as SegmentLoadingState;
+  it('returns false when track is selected but not yet resolved', () => {
+    // Partially resolved track (no segments field)
+    const state: SegmentLoadingState = {
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      presentation: {
+        id: 'p1',
+        url: 'http://example.com/playlist.m3u8',
+        startTime: 0,
+        selectionSets: [
+          {
+            id: 'ss1',
+            type: 'video',
+            switchingSets: [
+              {
+                id: 'sw1',
+                type: 'video',
+                tracks: [
+                  {
+                    id: 'track-1',
+                    type: 'video' as const,
+                    url: 'http://example.com/video.m3u8',
+                    mimeType: 'video/mp4',
+                    bandwidth: 1_000_000,
+                    codecs: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
     const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners: SegmentLoadingOwners = { videoBuffer: sourceBuffer, videoBufferActor: actor };
-
-    expect(shouldLoadSegments(state, owners, 'video')).toBe(false);
+    expect(canLoadSegments(state, { videoBuffer: sourceBuffer, videoBufferActor: actor }, 'video')).toBe(false);
   });
 
-  // --- preload="metadata" mode ---
+  it('returns false when actor is missing from owners', () => {
+    const state = makeResolvedState();
+    const { sourceBuffer } = makeSourceBufferWithActor();
+    // owners has videoBuffer but no videoBufferActor
+    expect(canLoadSegments(state, { videoBuffer: sourceBuffer }, 'video')).toBe(false);
+  });
 
-  it('returns true for metadata mode when init segment not yet loaded', () => {
-    const state = makeBaseState({ preload: 'metadata' });
-    // Actor has no initTrackId — init needs loading
+  it('returns true when track is resolved and actor is in owners', () => {
+    const state = makeResolvedState();
     const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners: SegmentLoadingOwners = { videoBuffer: sourceBuffer, videoBufferActor: actor };
+    expect(canLoadSegments(state, { videoBuffer: sourceBuffer, videoBufferActor: actor }, 'video')).toBe(true);
+  });
+});
 
-    expect(shouldLoadSegments(state, owners, 'video')).toBe(true);
+// ---------------------------------------------------------------------------
+// shouldLoadSegments
+// ---------------------------------------------------------------------------
+//
+// shouldLoadSegments is now a pure mode gate — it answers "is loading enabled
+// in the current preload/playbackInitiated state?" with no reference to actor
+// context or buffer state. The SegmentLoaderActor decides whether there is
+// actual work to do.
+
+describe('shouldLoadSegments', () => {
+  // blocked states
+  it('returns false when preload is "none" and !playbackInitiated', () => {
+    expect(shouldLoadSegments({ preload: 'none' }, 'video')).toBe(false);
   });
 
-  it('returns false for metadata mode when init segment already loaded', () => {
-    const state = makeBaseState({ preload: 'metadata' });
-    // Actor already has initTrackId for this track
-    const { sourceBuffer, actor } = makeSourceBufferWithActor([], [], 'track-1');
-    const owners: SegmentLoadingOwners = { videoBuffer: sourceBuffer, videoBufferActor: actor };
-
-    expect(shouldLoadSegments(state, owners, 'video')).toBe(false);
+  it('returns false when preload is unset and !playbackInitiated', () => {
+    expect(shouldLoadSegments({}, 'video')).toBe(false);
   });
 
-  it('returns false when no SourceBuffer', () => {
-    const state = makeBaseState();
-    expect(shouldLoadSegments(state, {}, 'video')).toBe(false);
+  // metadata mode
+  it('returns true when preload is "metadata" and !playbackInitiated', () => {
+    expect(shouldLoadSegments({ preload: 'metadata' }, 'video')).toBe(true);
   });
 
-  it('returns true when buffer window has unloaded segments (no currentTime)', () => {
-    const state = makeBaseState();
-    const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners: SegmentLoadingOwners = { videoBuffer: sourceBuffer, videoBufferActor: actor };
-
-    // No currentTime → defaults to 0 → both segments [0-10, 10-20] are in [0, 30s] window
-    expect(shouldLoadSegments(state, owners, 'video')).toBe(true);
+  // auto preload
+  it('returns true when preload is "auto" and !playbackInitiated', () => {
+    expect(shouldLoadSegments({ preload: 'auto' }, 'video')).toBe(true);
   });
 
-  it('returns false when all segments in buffer window are already buffered', () => {
-    const state = makeBaseState({ currentTime: 0 });
-    const { sourceBuffer, actor } = makeSourceBufferWithActor(
-      [],
-      [
-        { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
-        { id: 's2', startTime: 10, duration: 10, trackId: 'track-1' },
-      ],
-      'track-1'
-    );
-    const owners: SegmentLoadingOwners = { videoBuffer: sourceBuffer, videoBufferActor: actor };
-
-    expect(shouldLoadSegments(state, owners, 'video')).toBe(false);
+  // playbackInitiated overrides preload
+  it('returns true when playbackInitiated regardless of preload="none"', () => {
+    expect(shouldLoadSegments({ preload: 'none', playbackInitiated: true }, 'video')).toBe(true);
   });
 
-  it('returns true when currentTime advances and a new segment enters the window', () => {
-    // Only s1 is buffered; s2 starts at 10s. currentTime=5, window=[5,35] → s2 needed
-    const state = makeBaseState({ currentTime: 5 });
-    const { sourceBuffer, actor } = makeSourceBufferWithActor(
-      [],
-      [{ id: 's1', startTime: 0, duration: 10, trackId: 'track-1' }],
-      'track-1'
-    );
-    const owners: SegmentLoadingOwners = { videoBuffer: sourceBuffer, videoBufferActor: actor };
-
-    expect(shouldLoadSegments(state, owners, 'video')).toBe(true);
+  it('returns true when playbackInitiated regardless of unset preload', () => {
+    expect(shouldLoadSegments({ playbackInitiated: true }, 'video')).toBe(true);
   });
 
-  it('returns false when currentTime is past all segments (nothing left to buffer)', () => {
-    const state = makeBaseState({ currentTime: 100 });
-    const { sourceBuffer, actor } = makeSourceBufferWithActor([], [], 'track-1');
-    const owners: SegmentLoadingOwners = { videoBuffer: sourceBuffer, videoBufferActor: actor };
-
-    // getSegmentsToLoad: window=[100, 130], no segments overlap → nothing to load
-    expect(shouldLoadSegments(state, owners, 'video')).toBe(false);
+  it('returns true when playbackInitiated with preload="metadata"', () => {
+    expect(shouldLoadSegments({ preload: 'metadata', playbackInitiated: true }, 'video')).toBe(true);
   });
 });
 
@@ -636,6 +582,7 @@ describe('loadSegments seek handling', () => {
 
     const state = cs<SegmentLoadingState>({
       preload: 'auto',
+      playbackInitiated: true, // seeks are a post-play concern; currentTime only tracked when playing
       selectedVideoTrackId: 'track-1',
       currentTime: 0,
       presentation: makePresentation(segments),
@@ -672,6 +619,7 @@ describe('loadSegments seek handling', () => {
 
     const state = cs<SegmentLoadingState>({
       preload: 'auto',
+      playbackInitiated: true, // seeks are a post-play concern; currentTime only tracked when playing
       selectedVideoTrackId: 'track-1',
       currentTime: 0,
       presentation: makePresentation(segments),
@@ -715,6 +663,7 @@ describe('loadSegments seek handling', () => {
 
     const state = cs<SegmentLoadingState>({
       preload: 'auto',
+      playbackInitiated: true, // currentTime advances are only tracked post-play
       selectedVideoTrackId: 'track-1',
       currentTime: 0,
       presentation: makePresentation(segments),
