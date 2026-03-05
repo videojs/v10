@@ -9,26 +9,45 @@
  * shared minification and compression, avoiding the inflated totals you get
  * from summing independently-measured subpaths.
  *
+ * Wildcard exports (e.g., `./ui/*`) are resolved to actual files on disk.
+ * CSS files are measured by brotli-compressing them directly (no esbuild).
+ *
+ * Each entry includes a `category` field for grouped reporting:
+ * entry, media, player, skin, ui, feature, or other.
+ *
  * Usage: node .github/scripts/bundle-size.js [--json output.json]
  */
 
 import { build } from 'esbuild';
 import { brotliCompressSync, constants } from 'node:zlib';
-import { readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
-import { resolve, dirname, join } from 'node:path';
+import {
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+  existsSync,
+} from 'node:fs';
+import { resolve, dirname, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '../..');
 const PACKAGES_DIR = join(ROOT, 'packages');
 
-const SKIP_PACKAGES = new Set(['sandbox', '__tech-preview__', 'react-native']);
+const SKIP_PACKAGES = new Set([
+  'sandbox',
+  '__tech-preview__',
+  'react-native',
+  'skins',
+  'icons',
+]);
 
 /**
  * @typedef {object} SizeEntry
  * @property {string} name
- * @property {number} size - Root: brotli size. Subpath: marginal cost over root.
+ * @property {number} size
  * @property {'root' | 'subpath'} type
+ * @property {string} category - entry, media, player, skin, ui, feature, other
+ * @property {'js' | 'css'} format
  */
 
 /** Bundle entry points with esbuild and return the minified + brotli size. */
@@ -56,6 +75,17 @@ async function measure(entryPoints, external = []) {
   return compressed.length;
 }
 
+/** Brotli-compress a CSS file and return its size. */
+function measureCSS(filePath) {
+  const content = readFileSync(filePath, 'utf8');
+  const compressed = brotliCompressSync(Buffer.from(content), {
+    params: {
+      [constants.BROTLI_PARAM_QUALITY]: constants.BROTLI_MAX_QUALITY,
+    },
+  });
+  return compressed.length;
+}
+
 /**
  * Resolve the `default` condition from an export value.
  * Handles both `{ default: "./dist/..." }` objects and plain string values.
@@ -66,6 +96,50 @@ function resolveDefault(exportValue) {
     return exportValue.default ?? null;
   }
   return null;
+}
+
+/** Categorize an entry by its full name (e.g. `@videojs/html/ui/play-button`). */
+function categorize(name) {
+  const match = name.match(/^@videojs\/[^/]+(\/.*)?$/);
+  const subpath = match?.[1] ?? '';
+
+  if (subpath === '' || /^\/(video|audio|background)$/.test(subpath)) {
+    return 'entry';
+  }
+  if (subpath.startsWith('/media/')) return 'media';
+  if (subpath.startsWith('/ui/')) return 'ui';
+  if (subpath.startsWith('/feature/')) return 'feature';
+  if (/skin/i.test(subpath)) return 'skin';
+  if (/\/player$/.test(subpath)) return 'player';
+  return 'other';
+}
+
+/** Resolve a wildcard export key to actual files on disk. */
+function resolveWildcard(pkgDir, exportKey, exportValue) {
+  const defaultPath = resolveDefault(exportValue);
+  if (!defaultPath) return [];
+
+  const isCSS = exportKey.endsWith('.css');
+  const ext = isCSS ? '.css' : '.js';
+
+  const dir = dirname(resolve(pkgDir, defaultPath));
+  if (!existsSync(dir)) return [];
+
+  return readdirSync(dir, { withFileTypes: true })
+    .filter((d) => d.isFile() && d.name.endsWith(ext))
+    .filter((d) => {
+      if (d.name.includes('.test.')) return false;
+      return readFileSync(join(dir, d.name), 'utf8').trim().length > 0;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((d) => {
+      const stem = basename(d.name, ext);
+      return {
+        exportKey: exportKey.replace('*', stem),
+        path: join(dir, d.name),
+        isCSS,
+      };
+    });
 }
 
 /** Discover packages and their entry points from the filesystem. */
@@ -91,8 +165,16 @@ function discoverPackages() {
     const subpaths = [];
 
     for (const [key, value] of Object.entries(pkgJson.exports)) {
-      // Skip wildcard exports (side-effect registration files)
-      if (key.includes('*')) continue;
+      if (key.includes('*')) {
+        for (const r of resolveWildcard(pkgDir, key, value)) {
+          subpaths.push({
+            name: `${pkgName}${r.exportKey.slice(1)}`,
+            path: r.path,
+            isCSS: r.isCSS,
+          });
+        }
+        continue;
+      }
 
       const defaultPath = resolveDefault(value);
       if (!defaultPath) continue;
@@ -112,12 +194,12 @@ function discoverPackages() {
         subpaths.push({
           name: `${pkgName}${key.slice(1)}`,
           path: absolutePath,
+          isCSS: false,
         });
       }
     }
 
     if (rootPath) {
-      // Package with a root export (and optional subpaths)
       packages.push({ name: pkgName, rootPath, external, subpaths });
     } else if (subpaths.length > 0) {
       // Package with only subpath exports (e.g., @videojs/utils)
@@ -143,17 +225,52 @@ async function main() {
   const results = [];
 
   for (const pkg of packages) {
+    const isRootCSS = pkg.rootPath.endsWith('.css');
+
+    if (isRootCSS) {
+      results.push({
+        name: pkg.name,
+        size: measureCSS(pkg.rootPath),
+        type: 'root',
+        category: categorize(pkg.name),
+        format: 'css',
+      });
+      continue;
+    }
+
     const rootSize = await measure([pkg.rootPath], pkg.external);
-    results.push({ name: pkg.name, size: rootSize, type: 'root' });
+    results.push({
+      name: pkg.name,
+      size: rootSize,
+      type: 'root',
+      category: categorize(pkg.name),
+      format: 'js',
+    });
 
     for (const sub of pkg.subpaths) {
+      if (sub.isCSS) {
+        results.push({
+          name: sub.name,
+          size: measureCSS(sub.path),
+          type: 'subpath',
+          category: categorize(sub.name),
+          format: 'css',
+        });
+        continue;
+      }
+
       const combinedSize = await measure(
         [pkg.rootPath, sub.path],
         pkg.external,
       );
-      const marginal = combinedSize - rootSize;
 
-      results.push({ name: sub.name, size: marginal, type: 'subpath' });
+      results.push({
+        name: sub.name,
+        size: combinedSize - rootSize,
+        type: 'subpath',
+        category: categorize(sub.name),
+        format: 'js',
+      });
     }
   }
 
