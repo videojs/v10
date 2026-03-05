@@ -34,6 +34,7 @@ const { mockSliderApi, mockTimeState, mockBufferState } = vi.hoisted(() => ({
       onFocus: vi.fn(),
       onBlur: vi.fn(),
     },
+    adjustForAlignment: <S,>(state: S): S => state,
     destroy: vi.fn(),
   }),
   mockTimeState: {

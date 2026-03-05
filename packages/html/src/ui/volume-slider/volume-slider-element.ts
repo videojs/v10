@@ -1,5 +1,6 @@
 import { SliderDataAttrs, VolumeSliderCore } from '@videojs/core';
 import {
+  applyElementProps,
   applyStateDataAttrs,
   createSlider,
   getSliderCSSVars,
@@ -73,8 +74,10 @@ export class VolumeSliderElement extends MediaElement {
       onDragEnd: () => {
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
+      adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),
     });
 
+    applyElementProps(this, this.#slider.rootProps, { signal });
     this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
 
     // Prevent default touch gestures and text selection during interaction.
@@ -109,7 +112,8 @@ export class VolumeSliderElement extends MediaElement {
     this.#core.setInput(this.#slider.input.current);
     this.#core.setMedia(media);
     const state = this.#core.getState();
-    const cssVars = getSliderCSSVars(state);
+
+    const cssVars = getSliderCSSVars(this.#slider.adjustForAlignment(state));
 
     applyStyles(this, cssVars);
 

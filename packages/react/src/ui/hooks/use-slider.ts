@@ -72,6 +72,7 @@ export function useSlider<State extends SliderState = SliderState>(
       getStepPercent: () => optionsRef.current.getStepPercent(),
       getLargeStepPercent: () => optionsRef.current.getLargeStepPercent(),
       commitThrottle: optionsRef.current.commitThrottle,
+      adjustPercent: optionsRef.current.adjustPercent,
       onValueChange: (percent) => optionsRef.current.onValueChange?.(percent),
       onValueCommit: (percent) => optionsRef.current.onValueCommit?.(percent),
       onDragStart: () => optionsRef.current.onDragStart?.(),
@@ -98,23 +99,8 @@ export function useSlider<State extends SliderState = SliderState>(
     }
   }, [state.thumbAlignment]);
 
-  // Adjust CSS var percents for edge thumb alignment when DOM elements are available.
-  const rootEl = rootElementRef.current;
-  const thumbEl = thumbElementRef.current;
-  let cssState = state;
-
-  if (state.thumbAlignment === 'edge' && rootEl && thumbEl && options.adjustPercent) {
-    const isHorizontal = state.orientation === 'horizontal';
-    const thumbSize = isHorizontal ? thumbEl.offsetWidth : thumbEl.offsetHeight;
-    const trackSize = isHorizontal ? rootEl.offsetWidth : rootEl.offsetHeight;
-    cssState = {
-      ...state,
-      fillPercent: options.adjustPercent(state.fillPercent, thumbSize, trackSize),
-      pointerPercent: options.adjustPercent(state.pointerPercent, thumbSize, trackSize),
-    };
-  }
-
-  const cssVars = options.getCSSVars(cssState);
+  // Adjust CSS var percents for edge thumb alignment using live DOM measurements.
+  const cssVars = options.getCSSVars(slider.adjustForAlignment(state));
 
   // Ref callbacks for root and thumb elements.
   const rootRef = useCallback((element: HTMLElement | null) => {

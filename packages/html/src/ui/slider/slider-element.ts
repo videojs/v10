@@ -1,5 +1,11 @@
 import { SliderCore, SliderDataAttrs } from '@videojs/core';
-import { applyStateDataAttrs, createSlider, getSliderCSSVars, type SliderApi } from '@videojs/core/dom';
+import {
+  applyElementProps,
+  applyStateDataAttrs,
+  createSlider,
+  getSliderCSSVars,
+  type SliderApi,
+} from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
@@ -67,8 +73,10 @@ export class SliderElement extends MediaElement {
       onDragEnd: () => {
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
+      adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),
     });
 
+    applyElementProps(this, this.#slider.rootProps, { signal });
     this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
 
     // Prevent default touch gestures and text selection during interaction.
@@ -95,7 +103,8 @@ export class SliderElement extends MediaElement {
 
     this.#core.setInput(this.#slider.input.current);
     const state = this.#core.getSliderState(this.value);
-    const cssVars = getSliderCSSVars(state);
+
+    const cssVars = getSliderCSSVars(this.#slider.adjustForAlignment(state));
 
     applyStyles(this, cssVars);
 

@@ -27,6 +27,7 @@ const { mockSliderApi, mockThumbnailApi } = vi.hoisted(() => ({
       onFocus: vi.fn(),
       onBlur: vi.fn(),
     },
+    adjustForAlignment: <S,>(state: S): S => state,
     destroy: vi.fn(),
   }),
   mockThumbnailApi: () => ({

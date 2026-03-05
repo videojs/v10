@@ -1,5 +1,6 @@
 import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
 import {
+  applyElementProps,
   applyStateDataAttrs,
   createSlider,
   getTimeSliderCSSVars,
@@ -77,8 +78,10 @@ export class TimeSliderElement extends MediaElement {
       onDragEnd: () => {
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
+      adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),
     });
 
+    applyElementProps(this, this.#slider.rootProps, { signal });
     this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
 
     // Prevent default touch gestures and text selection during interaction.
@@ -115,7 +118,8 @@ export class TimeSliderElement extends MediaElement {
     const media = { ...time, ...(buffer ?? { buffered: [], seekable: [] }) };
     this.#core.setMedia(media);
     const state = this.#core.getState();
-    const cssVars = getTimeSliderCSSVars(state);
+
+    const cssVars = getTimeSliderCSSVars(this.#slider.adjustForAlignment(state));
 
     applyStyles(this, cssVars);
 
