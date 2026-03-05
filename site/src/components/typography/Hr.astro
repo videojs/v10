@@ -12,4 +12,10 @@ type Props<Tag extends HTMLTag = 'hr'> = Polymorphic<{ as: Tag }> & {
 const { as: Tag = 'hr', maxWidth = true, class: className, ...props } = Astro.props;
 ---
 
-<Tag class={twMerge(clsx('border-t border-light-40 my-12', maxWidth && 'max-w-3xl mx-auto'), className)} {...props} />
+<Tag
+  class={twMerge(
+    clsx("border-t border-light-40 my-12", maxWidth && "max-w-3xl mx-auto"),
+    className,
+  )}
+  {...props}
+/>

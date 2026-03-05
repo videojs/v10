@@ -70,7 +70,12 @@
       "prettier": { "allowed": false }
     },
     "Astro": {
-      "formatter": { "language_server": { "name": "biome" } },
+      "formatter": {
+        "external": {
+          "command": "npx",
+          "arguments": ["prettier", "--stdin-filepath", "{buffer_path}"]
+        }
+      },
       "code_actions_on_format": {
         "source.fixAll.biome": true,
         "source.organizeImports.biome": true

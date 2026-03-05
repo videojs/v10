@@ -35,11 +35,11 @@ const navLinkBase =
 
 <nav
   class:list={[
-    'flex justify-between',
-    'w-full mx-auto px-5 md:pt-00 md:px-5 items-center border-b border-b-75-manila dark:border-75-manila sticky top-0 z-30 bg-light-manila dark:bg-faded-black',
+    "flex justify-between",
+    "w-full mx-auto px-5 md:pt-00 md:px-5 items-center border-b border-b-75-manila dark:border-75-manila sticky top-0 z-30 bg-light-manila dark:bg-faded-black",
     className,
   ]}
-  style='min-height: 54px;'
+  style="min-height: 54px;"
 >
   <a href="/" class="flex items-center" aria-label="Video.js v10 home">
     <div class="block md:hidden">
@@ -49,16 +49,19 @@ const navLinkBase =
       <LogoDocs />
     </div>
   </a>
-   <Search dark={dark} class="ml-auto mr-4 sm:self-center" />
+  <Search dark={dark} class="ml-auto mr-4 sm:self-center" />
   {/* Desktop nav links */}
   <div class="hidden md:flex h-full">
     <GetStartedLink
       client:idle
-      className={clsx(navLinkBase, isDocsActive ? 'text-orange z-10 relative' : '')}
-      aria-current={isDocsActive ? 'page' : undefined}
+      className={clsx(
+        navLinkBase,
+        isDocsActive ? "text-orange z-10 relative" : "",
+      )}
+      aria-current={isDocsActive ? "page" : undefined}
     >
       Docs
-      <hr class='bg-orange absolute -bottom-1 left-0 right-0 h-px'/>
+      <hr class="bg-orange absolute -bottom-1 left-0 right-0 h-px" />
     </GetStartedLink>
     {
       otherNavLinks.map((link) => (
@@ -69,7 +72,7 @@ const navLinkBase =
     }
     <a
       href={DISCORD_INVITE_URL}
-      class={clsx(navLinkBase, '!px-3')}
+      class={clsx(navLinkBase, "!px-3")}
       aria-label="Discord"
       target="_blank"
       rel="noopener noreferrer"
@@ -78,7 +81,7 @@ const navLinkBase =
     </a>
     <a
       href={GITHUB_REPO_URL}
-      class={clsx(navLinkBase, '!px-3')}
+      class={clsx(navLinkBase, "!px-3")}
       aria-label="GitHub"
       target="_blank"
       rel="noopener noreferrer"

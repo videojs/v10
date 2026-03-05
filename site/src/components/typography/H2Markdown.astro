@@ -5,6 +5,6 @@ import H4 from './H4.astro';
 const { class: className, ...props } = Astro.props;
 ---
 
-<H4 as="h2" class:list={['mt-18 [&+h3]:mt-6', className]} {...props}>
+<H4 as="h2" class:list={["mt-18 [&+h3]:mt-6", className]} {...props}>
   <slot />
 </H4>

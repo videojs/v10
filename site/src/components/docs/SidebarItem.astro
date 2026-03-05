@@ -51,45 +51,53 @@ function getGroupRotate(depth: number) {
     <details
       id={slugger.slug(item.sidebarLabel)}
       open={isActive || item.defaultOpen !== false}
-      class:list={[
-        getGroup(depth),
-        depth === 0 && 'my-4 first:mt-0',
-      ]}
+      class:list={[getGroup(depth), depth === 0 && "my-4 first:mt-0"]}
     >
       <summary
         class:list={[
-          'py-2 flex items-center gap-4 text-display-h5 tracking-wider font-display-extended uppercase font-bold text-faded-black dark:text-light-manila',
-          'cursor-pointer',
-          depth === 0 && '',
-          depth > 0 && 'border-l pl-4',
-          isActive ? 'border-orange' : 'border-light-40 dark:border-dark-manila',
-          getGroupMargin(depth)
+          "py-2 flex items-center gap-4 text-display-h5 tracking-wider font-display-extended uppercase font-bold text-faded-black dark:text-light-manila",
+          "cursor-pointer",
+          depth === 0 && "",
+          depth > 0 && "border-l pl-4",
+          isActive
+            ? "border-orange"
+            : "border-light-40 dark:border-dark-manila",
+          getGroupMargin(depth),
         ]}
-        style={depth ? `margin-left: calc(var(--spacing) * ${(depth - 1) * 4})` : ``}
+        style={
+          depth ? `margin-left: calc(var(--spacing) * ${(depth - 1) * 4})` : ``
+        }
       >
         <span class="flex-1">{item.sidebarLabel}</span>
         <DropdownIcon width={"0.65rem"} className={getGroupRotate(depth)} />
       </summary>
       <div>
         {item.contents.map((contentItem) => (
-          <Astro.self item={contentItem} framework={framework} docTitles={docTitles} depth={depth + 1} />
+          <Astro.self
+            item={contentItem}
+            framework={framework}
+            docTitles={docTitles}
+            depth={depth + 1}
+          />
         ))}
       </div>
     </details>
   ) : (
     <a
-      aria-current={isActive ? 'page' : undefined}
+      aria-current={isActive ? "page" : undefined}
       class:list={[
-        'py-2 flex items-center gap-4 text-p3 text-faded-black dark:text-light-manila',
-        'cursor-pointer',
-        depth === 0 && 'font-medium',
-        depth > 0 && 'border-l pl-4',
-        isActive ? 'border-orange ' : 'border-75-manila dark:border-dark-manila',
+        "py-2 flex items-center gap-4 text-p3 text-faded-black dark:text-light-manila",
+        "cursor-pointer",
+        depth === 0 && "font-medium",
+        depth > 0 && "border-l pl-4",
+        isActive
+          ? "border-orange "
+          : "border-75-manila dark:border-dark-manila",
       ]}
       style={`margin-left: calc(var(--spacing) * ${(depth - 1) * 4})`}
       href={`/docs/framework/${framework}/${item.slug}`}
     >
-      {item.devOnly ? '[Dev only] ' : ''}
+      {item.devOnly ? "[Dev only] " : ""}
       {item.sidebarLabel || docTitles.get(item.slug) || item.slug}
     </a>
   )

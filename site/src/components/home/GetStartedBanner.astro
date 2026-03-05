@@ -3,29 +3,34 @@ import clsx from 'clsx';
 import ArrowIcon from '../icons/arrow.svg?react';
 import GetStartedLink from '../NavBar/GetStartedLink';
 ---
+
 <section
-  class='w-full max-w-305 mx-auto px-5 py-2.5 lg:px-0 relative lg:flex items-center text-center lg:text-left bg-faded-black dark:bg-light-manila text-light-manila dark:text-faded-black has-[a:hover]:text-faded-black dark:has-[a:hover]:text-light-manila transition-colors duration-200 lg:duration-300 group mb-20 lg:mb-30'
+  class="w-full max-w-305 mx-auto px-5 py-2.5 lg:px-0 relative lg:flex items-center text-center lg:text-left bg-faded-black dark:bg-light-manila text-light-manila dark:text-faded-black has-[a:hover]:text-faded-black dark:has-[a:hover]:text-light-manila transition-colors duration-200 lg:duration-300 group mb-20 lg:mb-30"
 >
-<div
+  <div
     class="z-0 absolute bg-orange bottom-2.5 left-2.5 right-2.5 top-(--top) group-has-[a:hover]:top-2.5 lg:top-2.5 lg:left-(--lg-left) lg:group-has-[a:hover]:left-2.5 duration-200 lg:duration-300"
     style={{
-      '--top': 'calc(100% - var(--spacing) * 15 - var(--spacing) * 2.5)',
-      '--lg-left': 'calc(100% - var(--spacing) * 40 - var(--spacing) * 2.5)',
-      transitionProperty: 'top, left'
+      "--top": "calc(100% - var(--spacing) * 15 - var(--spacing) * 2.5)",
+      "--lg-left": "calc(100% - var(--spacing) * 40 - var(--spacing) * 2.5)",
+      transitionProperty: "top, left",
     }}
-/>
+  >
+  </div>
   <h2
     class={clsx(
-      'relative z-10 font-display-extended uppercase font-bold text-h1 text-(length:--text) xl:text-h1 my-2.5 lg:m-0 px-2.5 lg:pr-14 lg:pl-9'
+      "relative z-10 font-display-extended uppercase font-bold text-h1 text-(length:--text) xl:text-h1 my-2.5 lg:m-0 px-2.5 lg:pr-14 lg:pl-9",
     )}
-    style={{ '--text': '2.375rem'}}
+    style={{ "--text": "2.375rem" }}
   >
     Get<br class="md:hidden" />
-    <span class='text-stroke-light-manila dark:text-stroke-faded-black group-has-[a:hover]:text-stroke-faded-black dark:group-has-[a:hover]:text-stroke-light-manila duration-200 lg:duration-300' style={{ transitionProperty: '-webkit-text-stroke'}}>Started</span>
+    <span
+      class="text-stroke-light-manila dark:text-stroke-faded-black group-has-[a:hover]:text-stroke-faded-black dark:group-has-[a:hover]:text-stroke-light-manila duration-200 lg:duration-300"
+      style={{ transitionProperty: "-webkit-text-stroke" }}>Started</span
+    >
   </h2>
   <p
     class={clsx(
-      'relative z-10 text-p2 mb-8 lg:mb-0 lg:max-w-54 px-2.5 lg:px-0'
+      "relative z-10 text-p2 mb-8 lg:mb-0 lg:max-w-54 px-2.5 lg:px-0",
     )}
   >
     Everything you need to install and launch your player
@@ -34,7 +39,7 @@ import GetStartedLink from '../NavBar/GetStartedLink';
   <GetStartedLink
     client:idle
     className={clsx(
-      'ml-auto relative z-10 flex items-center justify-center h-15 lg:h-25 lg:w-40 lg:pr-2.5'
+      "ml-auto relative z-10 flex items-center justify-center h-15 lg:h-25 lg:w-40 lg:pr-2.5",
     )}
   >
     <ArrowIcon width="3.8rem" />

@@ -66,6 +66,8 @@
     "@vitest/ui": "^3.2.4",
     "babel-plugin-react-compiler": "1.0.0",
     "jsdom": "^27.0.0",
+    "prettier": "^3.8.1",
+    "prettier-plugin-astro": "^0.14.1",
     "sirv": "^3.0.2",
     "tsx": "^4.20.3",
     "turndown": "^7.2.2",

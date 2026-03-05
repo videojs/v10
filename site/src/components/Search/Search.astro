@@ -24,19 +24,23 @@ const { class: className, dark } = Astro.props;
 <SearchClient
   client:load
   className={clsx(
-    'inline-flex items-center gap-2 cursor-pointer min-h-6 px-2 sm:border intent:border-current rounded-full border-faded-black dark:border-light-manila',
+    "inline-flex items-center gap-2 cursor-pointer min-h-6 px-2 sm:border intent:border-current rounded-full border-faded-black dark:border-light-manila",
     className,
   )}
   baseUrl={baseUrl}
   bundlePath={bundlePath}
   searchId="pagefind-ui"
   searchStyle={{
-    '--search-icon-url': `url('data:image/svg+xml;utf8,${encodeURIComponent(searchIconString)}')`,
+    "--search-icon-url": `url('data:image/svg+xml;utf8,${encodeURIComponent(searchIconString)}')`,
   } as React.CSSProperties}
 >
   <SearchIcon class="w-4 h-4 sm:w-3 sm:h-3" />
-  <kbd data-platform-key="default" class="font-sans text-sm hidden sm:inline">Ctrl K</kbd>
-  <kbd data-platform-key="mac" class="font-sans text-sm hidden sm:inline">⌘K</kbd>
+  <kbd data-platform-key="default" class="font-sans text-sm hidden sm:inline"
+    >Ctrl K</kbd
+  >
+  <kbd data-platform-key="mac" class="font-sans text-sm hidden sm:inline"
+    >⌘K</kbd
+  >
 </SearchClient>
 
 {
@@ -49,18 +53,22 @@ const { class: className, dark } = Astro.props;
 }
 <script is:inline>
   (() => {
-    const defaultPlatformKey = document.querySelector('kbd[data-platform-key="default"]');
-    const macPlatformKey = document.querySelector('kbd[data-platform-key="mac"]');
+    const defaultPlatformKey = document.querySelector(
+      'kbd[data-platform-key="default"]',
+    );
+    const macPlatformKey = document.querySelector(
+      'kbd[data-platform-key="mac"]',
+    );
     if (/Mac|iPhone|iPod|iPad/i.test(navigator.platform)) {
-      if (defaultPlatformKey) defaultPlatformKey.style.display = 'none';
+      if (defaultPlatformKey) defaultPlatformKey.style.display = "none";
     } else {
-      if (macPlatformKey) macPlatformKey.style.display = 'none';
+      if (macPlatformKey) macPlatformKey.style.display = "none";
     }
   })();
 </script>
 
 <style is:global>
-  @import url('@pagefind/default-ui/css/ui.css');
+  @import url("@pagefind/default-ui/css/ui.css");
 
   #pagefind-ui {
     --pagefind-ui-scale: 1;

@@ -19,27 +19,32 @@ const { title, description, code = '404', message = 'NOT FOUND' } = Astro.props;
   <div class="min-h-screen flex flex-col">
     <NavBar />
     <main class="w-full">
-      <div class="w-full max-w-295 mx-auto px-5 py-10 md:pt-32 md:pb-16 grid md:flex gap-8 justify-between">
+      <div
+        class="w-full max-w-295 mx-auto px-5 py-10 md:pt-32 md:pb-16 grid md:flex gap-8 justify-between"
+      >
         <div class="flex flex-col leading-none">
-          <h1 class="font-display-extended text-display-h2 md:text-display-h1 font-bold text-faded-black dark:text-light-manila">
+          <h1
+            class="font-display-extended text-display-h2 md:text-display-h1 font-bold text-faded-black dark:text-light-manila"
+          >
             {code}
           </h1>
-          <h2 class="font-display-extended text-display-h2 md:text-display-h1 font-bold text-stroke-faded-black dark:text-stroke-light-manila">
+          <h2
+            class="font-display-extended text-display-h2 md:text-display-h1 font-bold text-stroke-faded-black dark:text-stroke-light-manila"
+          >
             {message}
           </h2>
         </div>
         <DialNav
           client:load
           left={[
-            { href: '/', label: 'HOME', angle: -70 },
-            { href: '/docs', label: 'DOCS', angle: -110 },
+            { href: "/", label: "HOME", angle: -70 },
+            { href: "/docs", label: "DOCS", angle: -110 },
           ]}
           right={[
-            { href: 'https://mux.com', label: 'MUX.COM', angle: 70 },
-            { href: 'https://mux.com/blog', label: 'BLOG', angle: 110 },
+            { href: "https://mux.com", label: "MUX.COM", angle: 70 },
+            { href: "https://mux.com/blog", label: "BLOG", angle: 110 },
           ]}
         />
-
       </div>
     </main>
     <Footer />

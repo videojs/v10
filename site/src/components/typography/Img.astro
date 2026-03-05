@@ -9,4 +9,4 @@ const { class: className, ...rest } = Astro.props;
 ---
 
 {/* @ts-expect-error tbh I don't know how to tell ts that inferSize is ok */}
-<Image class={twMerge('my-12', className)} inferSize {...rest} />
+<Image class={twMerge("my-12", className)} inferSize {...rest} />

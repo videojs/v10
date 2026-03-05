@@ -5,29 +5,35 @@ import { THEME_KEY } from '@/consts';
 {/* Dark mode initialization script - runs before paint to prevent FOUC */}
 <script is:inline define:vars={{ localStorageKey: THEME_KEY }}>
   if (
-    typeof localStorage !== 'undefined' &&
-    typeof document !== 'undefined' &&
-    typeof document.documentElement !== 'undefined'
+    typeof localStorage !== "undefined" &&
+    typeof document !== "undefined" &&
+    typeof document.documentElement !== "undefined"
   ) {
     let localStorageValue = localStorage[localStorageKey];
-    const isValidKey = localStorageValue === 'light' || localStorageValue === 'dark' || localStorageValue === 'system';
+    const isValidKey =
+      localStorageValue === "light" ||
+      localStorageValue === "dark" ||
+      localStorageValue === "system";
     if (!localStorageValue || !isValidKey) {
-      localStorage[localStorageKey] = 'system';
-      localStorageValue = 'system';
+      localStorage[localStorageKey] = "system";
+      localStorageValue = "system";
     }
     let isDark = false;
-    if (localStorageValue === 'dark') {
-      document.documentElement.classList.add('dark');
+    if (localStorageValue === "dark") {
+      document.documentElement.classList.add("dark");
       isDark = true;
-    } else if (localStorageValue === 'system') {
-      if (typeof window.matchMedia !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.documentElement.classList.add('dark');
+    } else if (localStorageValue === "system") {
+      if (
+        typeof window.matchMedia !== "undefined" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches
+      ) {
+        document.documentElement.classList.add("dark");
         isDark = true;
       }
     }
     const themeColorMeta = document.querySelector('meta[name="theme-color"]');
     if (themeColorMeta) {
-      themeColorMeta.setAttribute('content', isDark ? '#393836' : '#ebe4c1');
+      themeColorMeta.setAttribute("content", isDark ? "#393836" : "#ebe4c1");
     }
   }
 </script>

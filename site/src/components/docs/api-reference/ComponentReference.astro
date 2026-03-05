@@ -51,105 +51,152 @@ const singleCssCustomPropertiesSection = !apiReferenceModel.hasParts
 <ContentWidth>
   <H2 id={apiReferenceModel.heading.id}>{apiReferenceModel.heading.text}</H2>
 
-  {apiReferenceModel.hasParts ? (
-    apiReferenceModel.parts.map((part) => {
-      const partPropsSection = part.sections.find((section) => section.key === 'props');
-      const partStateSection = part.sections.find((section) => section.key === 'state');
-      const partDataAttributesSection = part.sections.find((section) => section.key === 'dataAttributes');
-      const partCssCustomPropertiesSection = part.sections.find((section) => section.key === 'cssCustomProperties');
+  {
+    apiReferenceModel.hasParts ? (
+      apiReferenceModel.parts.map((part) => {
+        const partPropsSection = part.sections.find(
+          (section) => section.key === "props",
+        );
+        const partStateSection = part.sections.find(
+          (section) => section.key === "state",
+        );
+        const partDataAttributesSection = part.sections.find(
+          (section) => section.key === "dataAttributes",
+        );
+        const partCssCustomPropertiesSection = part.sections.find(
+          (section) => section.key === "cssCustomProperties",
+        );
 
-      return (
-        <FrameworkCase frameworks={part.frameworks}>
-          <H3 id={part.id}>
-            <FrameworkCase frameworks={["react"]}>{part.labelByFramework.react}</FrameworkCase>
-            <FrameworkCase frameworks={["html"]}>{part.labelByFramework.html}</FrameworkCase>
-          </H3>
+        return (
+          <FrameworkCase frameworks={part.frameworks}>
+            <H3 id={part.id}>
+              <FrameworkCase frameworks={["react"]}>
+                {part.labelByFramework.react}
+              </FrameworkCase>
+              <FrameworkCase frameworks={["html"]}>
+                {part.labelByFramework.html}
+              </FrameworkCase>
+            </H3>
 
-          {part.description && (
-            <P><InlineMarkdown content={part.description} /></P>
-          )}
-
-          {partPropsSection && (
-            <>
-              <H4 id={partPropsSection.id}>{partPropsSection.title}</H4>
-              <ApiPropsTable props={part.data.props} componentName={part.componentName} />
-            </>
-          )}
-
-          {partStateSection && (
-            <>
-              <H4 id={partStateSection.id}>{partStateSection.title}</H4>
+            {part.description && (
               <P>
-                <FrameworkCase frameworks={["react"]}>
-                  State is accessible via the{" "}
-                  <MarkdownCode>render</MarkdownCode>,{" "}
-                  <MarkdownCode>className</MarkdownCode>, and{" "}
-                  <MarkdownCode>style</MarkdownCode> props.
-                </FrameworkCase>
-                <FrameworkCase frameworks={["html"]}>
-                  State is reflected as data attributes for CSS styling.
-                </FrameworkCase>
+                <InlineMarkdown content={part.description} />
               </P>
-              <ApiStateTable state={part.data.state} componentName={part.componentName} />
-            </>
-          )}
+            )}
 
-          {partDataAttributesSection && (
-            <>
-              <H4 id={partDataAttributesSection.id}>{partDataAttributesSection.title}</H4>
-              <ApiDataAttrsTable dataAttributes={part.data.dataAttributes} componentName={part.componentName} />
-            </>
-          )}
+            {partPropsSection && (
+              <>
+                <H4 id={partPropsSection.id}>{partPropsSection.title}</H4>
+                <ApiPropsTable
+                  props={part.data.props}
+                  componentName={part.componentName}
+                />
+              </>
+            )}
 
-          {partCssCustomPropertiesSection && (
-            <>
-              <H4 id={partCssCustomPropertiesSection.id}>{partCssCustomPropertiesSection.title}</H4>
-              <ApiCSSVarsTable cssCustomProperties={part.data.cssCustomProperties} componentName={part.componentName} />
-            </>
-          )}
-        </FrameworkCase>
-      );
-    })
-  ) : (
-    <>
-      {singlePropsSection && (
-        <>
-          <H3 id={singlePropsSection.id}>{singlePropsSection.title}</H3>
-          <ApiPropsTable props={apiReferenceModel.data.props} componentName={component} />
-        </>
-      )}
+            {partStateSection && (
+              <>
+                <H4 id={partStateSection.id}>{partStateSection.title}</H4>
+                <P>
+                  <FrameworkCase frameworks={["react"]}>
+                    State is accessible via the{" "}
+                    <MarkdownCode>render</MarkdownCode>,{" "}
+                    <MarkdownCode>className</MarkdownCode>, and{" "}
+                    <MarkdownCode>style</MarkdownCode> props.
+                  </FrameworkCase>
+                  <FrameworkCase frameworks={["html"]}>
+                    State is reflected as data attributes for CSS styling.
+                  </FrameworkCase>
+                </P>
+                <ApiStateTable
+                  state={part.data.state}
+                  componentName={part.componentName}
+                />
+              </>
+            )}
 
-      {singleStateSection && (
-        <>
-          <H3 id={singleStateSection.id}>{singleStateSection.title}</H3>
-          <P>
-            <FrameworkCase frameworks={["react"]}>
-              State is accessible via the{" "}
-              <MarkdownCode>render</MarkdownCode>,{" "}
-              <MarkdownCode>className</MarkdownCode>, and{" "}
-              <MarkdownCode>style</MarkdownCode> props.
-            </FrameworkCase>
-            <FrameworkCase frameworks={["html"]}>
-              State is reflected as data attributes for CSS styling.
-            </FrameworkCase>
-          </P>
-          <ApiStateTable state={apiReferenceModel.data.state} componentName={component} />
-        </>
-      )}
+            {partDataAttributesSection && (
+              <>
+                <H4 id={partDataAttributesSection.id}>
+                  {partDataAttributesSection.title}
+                </H4>
+                <ApiDataAttrsTable
+                  dataAttributes={part.data.dataAttributes}
+                  componentName={part.componentName}
+                />
+              </>
+            )}
 
-      {singleDataAttributesSection && (
-        <>
-          <H3 id={singleDataAttributesSection.id}>{singleDataAttributesSection.title}</H3>
-          <ApiDataAttrsTable dataAttributes={apiReferenceModel.data.dataAttributes} componentName={component} />
-        </>
-      )}
+            {partCssCustomPropertiesSection && (
+              <>
+                <H4 id={partCssCustomPropertiesSection.id}>
+                  {partCssCustomPropertiesSection.title}
+                </H4>
+                <ApiCSSVarsTable
+                  cssCustomProperties={part.data.cssCustomProperties}
+                  componentName={part.componentName}
+                />
+              </>
+            )}
+          </FrameworkCase>
+        );
+      })
+    ) : (
+      <>
+        {singlePropsSection && (
+          <>
+            <H3 id={singlePropsSection.id}>{singlePropsSection.title}</H3>
+            <ApiPropsTable
+              props={apiReferenceModel.data.props}
+              componentName={component}
+            />
+          </>
+        )}
 
-      {singleCssCustomPropertiesSection && (
-        <>
-          <H3 id={singleCssCustomPropertiesSection.id}>{singleCssCustomPropertiesSection.title}</H3>
-          <ApiCSSVarsTable cssCustomProperties={apiReferenceModel.data.cssCustomProperties} componentName={component} />
-        </>
-      )}
-    </>
-  )}
+        {singleStateSection && (
+          <>
+            <H3 id={singleStateSection.id}>{singleStateSection.title}</H3>
+            <P>
+              <FrameworkCase frameworks={["react"]}>
+                State is accessible via the <MarkdownCode>render</MarkdownCode>,{" "}
+                <MarkdownCode>className</MarkdownCode>, and{" "}
+                <MarkdownCode>style</MarkdownCode> props.
+              </FrameworkCase>
+              <FrameworkCase frameworks={["html"]}>
+                State is reflected as data attributes for CSS styling.
+              </FrameworkCase>
+            </P>
+            <ApiStateTable
+              state={apiReferenceModel.data.state}
+              componentName={component}
+            />
+          </>
+        )}
+
+        {singleDataAttributesSection && (
+          <>
+            <H3 id={singleDataAttributesSection.id}>
+              {singleDataAttributesSection.title}
+            </H3>
+            <ApiDataAttrsTable
+              dataAttributes={apiReferenceModel.data.dataAttributes}
+              componentName={component}
+            />
+          </>
+        )}
+
+        {singleCssCustomPropertiesSection && (
+          <>
+            <H3 id={singleCssCustomPropertiesSection.id}>
+              {singleCssCustomPropertiesSection.title}
+            </H3>
+            <ApiCSSVarsTable
+              cssCustomProperties={apiReferenceModel.data.cssCustomProperties}
+              componentName={component}
+            />
+          </>
+        )}
+      </>
+    )
+  }
 </ContentWidth>

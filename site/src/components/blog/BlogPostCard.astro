@@ -15,19 +15,27 @@ const { post, authors, asLink } = Astro.props;
 
 <article>
   <a href={`/blog/${post.id}`} class="group grid max-w-3xl">
-    <time datetime={post.data.pubDate.toISOString()} class="text-dark-40 dark:text-light-40 mb-2">
+    <time
+      datetime={post.data.pubDate.toISOString()}
+      class="text-dark-40 dark:text-light-40 mb-2"
+    >
       <FormattedDate date={post.data.pubDate} />
     </time>
     <div class="mb-3">
-      <h2 class="text-lg font-medium md:text-h4 group-intent:underline mb-1">{post.data.title}</h2>
-      <p class="font-medium text-dark-40 dark:text-light-40">{post.data.description}</p>
+      <h2 class="text-lg font-medium md:text-h4 group-intent:underline mb-1">
+        {post.data.title}
+      </h2>
+      <p class="font-medium text-dark-40 dark:text-light-40">
+        {post.data.description}
+      </p>
     </div>
     {
       authors.length > 0 && (
         <div class="text-dark-40 dark:text-light-40">
-          {new Intl.ListFormat('en', { style: 'long', type: 'conjunction' }).format(
-            authors.map((author) => author.data.name),
-          )}
+          {new Intl.ListFormat("en", {
+            style: "long",
+            type: "conjunction",
+          }).format(authors.map((author) => author.data.name))}
         </div>
       )
     }

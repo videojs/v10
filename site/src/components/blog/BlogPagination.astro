@@ -10,7 +10,10 @@ interface Props {
 const { page } = Astro.props;
 ---
 
-<nav aria-label="Blog pagination" class="w-full max-w-3xl mx-auto mt-10 flex items-center justify-end gap-4">
+<nav
+  aria-label="Blog pagination"
+  class="w-full max-w-3xl mx-auto mt-10 flex items-center justify-end gap-4"
+>
   <span>
     Page {page.currentPage} of {page.lastPage}
   </span>

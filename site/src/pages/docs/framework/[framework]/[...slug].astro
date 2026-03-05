@@ -95,11 +95,11 @@ const jsonLdSchema = createTechArticleSchema({
   <JsonLd slot="head" schema={jsonLdSchema} />
   <main
     class:list={[
-      'flex-1',
-      'grid grid-cols-1 xl:grid-cols-(--xl-grid-cols)',
-      '[grid-template-areas:var(--grid-template-areas)] xl:[grid-template-areas:var(--xl-grid-template-areas)]',
-      'grid-rows-(--grid-rows) xl:grid-rows-1',
-      '[--scroll-mt:var(--mobile-toc-h)] xl:[--scroll-mt:0px]',
+      "flex-1",
+      "grid grid-cols-1 xl:grid-cols-(--xl-grid-cols)",
+      "[grid-template-areas:var(--grid-template-areas)] xl:[grid-template-areas:var(--xl-grid-template-areas)]",
+      "grid-rows-(--grid-rows) xl:grid-rows-1",
+      "[--scroll-mt:var(--mobile-toc-h)] xl:[--scroll-mt:0px]",
     ]}
     style="
       --xl-grid-cols: minmax(0, 1fr) calc(var(--spacing) * 59);
@@ -118,7 +118,10 @@ const jsonLdSchema = createTechArticleSchema({
     >
       <TableOfContents client:idle headings={filteredHeadings} />
     </div>
-    <div class="@container px-6 lg:px-12 flex flex-col" style="grid-area: article;">
+    <div
+      class="@container px-6 lg:px-12 flex flex-col"
+      style="grid-area: article;"
+    >
       <article
         class="mb-18 flex-1"
         data-pagefind-body
@@ -131,8 +134,8 @@ const jsonLdSchema = createTechArticleSchema({
       >
         <header
           class:list={[
-            'border-b border-light-40 dark:border-dark-80 max-w-3xl mx-auto py-8 mb-8',
-            'flex flex-col lg:flex-row gap-4 items-start lg:items-end justify-between',
+            "border-b border-light-40 dark:border-dark-80 max-w-3xl mx-auto py-8 mb-8",
+            "flex flex-col lg:flex-row gap-4 items-start lg:items-end justify-between",
           ]}
         >
           <div>
@@ -144,7 +147,12 @@ const jsonLdSchema = createTechArticleSchema({
         <Content components={{ ...defaultMarkdownComponents }} />
       </article>
       <footer class="mb-18 grid gap-5">
-        <DocsNavigation prev={prev} next={next} framework={framework} docTitles={docTitles} />
+        <DocsNavigation
+          prev={prev}
+          next={next}
+          framework={framework}
+          docTitles={docTitles}
+        />
         <EditPageButton filePath={`site/src/content/docs/${doc.id}.mdx`} />
       </footer>
     </div>

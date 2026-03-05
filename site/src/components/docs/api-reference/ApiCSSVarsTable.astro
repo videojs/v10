@@ -21,21 +21,21 @@ const vars = Object.entries(cssCustomProperties);
 ---
 
 <Table maxWidth={false} outerClass="my-6">
-    <Thead>
-        <Tr>
-            <Th>Variable</Th>
-            <Th />
-        </Tr>
-    </Thead>
-    <Tbody>
-        {
-            vars.map(([name, def]) => (
-                <CSSVarRow
-                    name={name}
-                    description={def.description}
-                    componentName={componentName}
-                />
-            ))
-        }
-    </Tbody>
+  <Thead>
+    <Tr>
+      <Th>Variable</Th>
+      <Th />
+    </Tr>
+  </Thead>
+  <Tbody>
+    {
+      vars.map(([name, def]) => (
+        <CSSVarRow
+          name={name}
+          description={def.description}
+          componentName={componentName}
+        />
+      ))
+    }
+  </Tbody>
 </Table>

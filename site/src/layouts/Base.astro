@@ -41,7 +41,7 @@ const fullTitle =
       rel="alternate"
       type="application/rss+xml"
       title={SITE_TITLE}
-      href={new URL('rss.xml', Astro.site)}
+      href={new URL("rss.xml", Astro.site)}
     />
     <meta name="generator" content={Astro.generator} />
 
@@ -117,18 +117,18 @@ const fullTitle =
   </head>
   <body
     class:list={[
-      'relative',
-      'antialiased text-pretty text-p2 font-sans',
-      'bg-light-manila dark:bg-faded-black text-faded-black dark:text-light-manila',
-      'min-w-80',
-      '[--nav-h:calc(var(--spacing)*13)] sm:[--nav-h:calc(var(--spacing)*14)]',
-      'selection:bg-gold selection:text-faded-black dark:selection:text-light-manila',
+      "relative",
+      "antialiased text-pretty text-p2 font-sans",
+      "bg-light-manila dark:bg-faded-black text-faded-black dark:text-light-manila",
+      "min-w-80",
+      "[--nav-h:calc(var(--spacing)*13)] sm:[--nav-h:calc(var(--spacing)*14)]",
+      "selection:bg-gold selection:text-faded-black dark:selection:text-light-manila",
     ]}
   >
     <div
       class:list={[
         // BaseUI requires body.relative and div.isolate
-        'isolate',
+        "isolate",
         // background colors are applied here for a more consistent FilmGrain blending
       ]}
     >
