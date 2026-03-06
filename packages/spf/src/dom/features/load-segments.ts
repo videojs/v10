@@ -48,6 +48,7 @@ function createTrackedFetch(
     const elapsed = performance.now() - start;
     const next = sampleBandwidth(throughput.current, elapsed, data.byteLength);
     throughput.patch(next);
+    throughput.flush();
     onSample?.(next);
     return data;
   };
