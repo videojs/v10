@@ -1,7 +1,3 @@
-export function supportsPopoverAPI(): boolean {
-  return typeof HTMLElement !== 'undefined' && 'popover' in HTMLElement.prototype;
-}
-
 export function tryShowPopover(el: HTMLElement | null): void {
   try {
     el?.showPopover?.();

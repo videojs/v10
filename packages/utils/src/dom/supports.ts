@@ -9,3 +9,7 @@ export function supportsAnimationFrame(): boolean {
 export function supportsAnchorPositioning(): boolean {
   return typeof CSS !== 'undefined' && CSS.supports('anchor-name: --a');
 }
+
+export function supportsPopoverAPI(): boolean {
+  return typeof HTMLElement !== 'undefined' && 'popover' in HTMLElement.prototype;
+}
