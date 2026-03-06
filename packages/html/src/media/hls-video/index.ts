@@ -27,7 +27,7 @@ export class HlsVideo extends HlsCustomMedia {
   }
 
   disconnectedCallback(): void {
-    super.disconnectedCallback();
+    super.disconnectedCallback?.();
 
     if (!this.hasAttribute('keep-alive')) {
       this.destroy();
