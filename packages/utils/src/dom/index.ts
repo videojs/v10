@@ -14,6 +14,6 @@ export {
   supportsIdleCallback,
   supportsPopoverAPI,
 } from './supports';
-export { findTrackElement } from './text-track';
+export { findTrackElement, getSubtitlesTracks, getTextTracksList } from './text-track';
 export { serializeTimeRanges } from './time-ranges';
 export type { CustomElement, CustomElementCallbacks } from './types';

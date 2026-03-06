@@ -191,10 +191,41 @@ export interface MediaPlaybackRateState {
   setPlaybackRate(rate: number): void;
 }
 
+/**
+ * A text cue.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/VTTCue
+ */
 export interface MediaTextCue {
   startTime: number;
   endTime: number;
   text: string;
+}
+
+/**
+ * The kind of text track.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack/kind
+ */
+export type TextTrackKind = 'subtitles' | 'captions' | 'descriptions' | 'chapters' | 'metadata';
+
+/**
+ * The mode of a text track.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack/mode
+ */
+export type TextTrackMode = 'showing' | 'disabled' | 'hidden';
+
+/**
+ * A text track.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack
+ */
+export interface MediaTextTrack<Kind extends TextTrackKind> {
+  kind: Kind;
+  label: string;
+  language: string;
+  mode: TextTrackMode;
 }
 
 export interface MediaTextTrackState {
@@ -204,6 +235,12 @@ export interface MediaTextTrackState {
   thumbnailCues: MediaTextCue[];
   /** The `<track>` element's `src` for resolving relative cue text URLs. */
   thumbnailTrackSrc: string | null;
+  /** Caption/subtitle tracks that can be selected or toggled. */
+  subtitlesList: MediaTextTrack<'subtitles' | 'captions'>[];
+  /** Whether captions/subtitles are currently enabled. */
+  subtitlesShowing: boolean;
+  /** Toggle captions/subtitles visibility. Returns the new enabled value. */
+  toggleSubtitles(forceShow?: boolean): boolean;
 }
 
 export interface MediaError {

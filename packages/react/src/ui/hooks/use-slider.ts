@@ -10,7 +10,8 @@ import {
 } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import { isRTL } from '@videojs/utils/dom';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useDestroy } from '../../utils/use-destroy';
 import { useForceRender } from '../../utils/use-force-render';
 import { useLatestRef } from '../../utils/use-latest-ref';
 
@@ -82,8 +83,7 @@ export function useSlider<State extends SliderState = SliderState>(
     return createSlider(stableOptions);
   });
 
-  // Cleanup on unmount.
-  useEffect(() => () => slider.destroy(), [slider]);
+  useDestroy(slider);
 
   // Subscribe to slider input state.
   const input = useSnapshot(slider.input);

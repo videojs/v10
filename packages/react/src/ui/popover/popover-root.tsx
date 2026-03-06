@@ -6,6 +6,7 @@ import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
+import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { PopoverContextProvider } from './context';
@@ -85,8 +86,7 @@ export function PopoverRoot({
     }
   }, [controlledOpen, popover]);
 
-  // Cleanup on unmount
-  useEffect(() => () => popover.destroy(), [popover]);
+  useDestroy(popover);
 
   const input = useSnapshot(popover.input);
   core.setInput(input);

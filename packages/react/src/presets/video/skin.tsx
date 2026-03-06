@@ -19,7 +19,6 @@ import { Container } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
-import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
@@ -31,6 +30,7 @@ import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { VolumeSlider } from '@/ui/volume-slider';
 import type { BaseSkinProps } from '../types';
+import { ErrorDialog } from './error-dialog';
 
 const SEEK_TIME = 10;
 
@@ -39,6 +39,16 @@ export type VideoSkinProps = BaseSkinProps;
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
   return <button ref={ref} type="button" className={cn('media-button', className)} {...props} />;
 });
+
+const errorClasses = {
+  root: 'media-error',
+  dialog: 'media-error__dialog media-surface',
+  content: 'media-error__content',
+  title: 'media-error__title',
+  description: 'media-error__description',
+  actions: 'media-error__actions',
+  close: 'media-button',
+};
 
 export function VideoSkin(props: VideoSkinProps): ReactNode {
   const { children, className, ...rest } = props;
@@ -55,27 +65,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
         )}
       />
 
-      <ErrorDialog
-        aria-labelledby="media-error-title"
-        aria-describedby="media-error-description"
-        render={(props, { onDismiss }) => (
-          <div {...props} className="media-error">
-            <div className="media-error__dialog media-surface">
-              <div className="media-error__content">
-                <p id="media-error-title" className="media-error__title">
-                  Something went wrong.
-                </p>
-                <p id="media-error-description" className="media-error__description">
-                  An error occurred while trying to play the video. Please try again.
-                </p>
-              </div>
-              <div className="media-error__actions">
-                <Button onClick={onDismiss}>OK</Button>
-              </div>
-            </div>
-          </div>
-        )}
-      />
+      <ErrorDialog classes={errorClasses} />
 
       <Controls.Root className="media-surface media-controls">
         <PlayButton

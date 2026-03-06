@@ -1,5 +1,32 @@
 # Changelog
 
+## [10.0.0-alpha.8](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-alpha.7...@videojs/html@10.0.0-alpha.8) (2026-03-05)
+
+
+### Features
+
+* **html:** add slider preview element ([#733](https://github.com/videojs/v10/issues/733)) ([7548a8e](https://github.com/videojs/v10/commit/7548a8e4a1cc87e1a702ef24d5559427f26e91ef))
+* **html:** add slider thumbnail element ([#714](https://github.com/videojs/v10/issues/714)) ([32ee304](https://github.com/videojs/v10/commit/32ee304da4893f0c9271a25cf3fc81b84fccc399))
+* **html:** add tooltip element ([#735](https://github.com/videojs/v10/issues/735)) ([e9fbaec](https://github.com/videojs/v10/commit/e9fbaece87c39c0adc41070159fd7e6f75f0e1da))
+* small state and naming fixes  ([#719](https://github.com/videojs/v10/issues/719)) ([5c42245](https://github.com/videojs/v10/commit/5c422452e4b547dc00f13082b755ea12d1860f21))
+
+
+### Bug Fixes
+
+* **html:** slider interaction and edge alignment broken ([#721](https://github.com/videojs/v10/issues/721)) ([ff12296](https://github.com/videojs/v10/commit/ff122963553e23a58614c9c808763208fd893df1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-alpha.8
+    * @videojs/element bumped to 10.0.0-alpha.8
+    * @videojs/store bumped to 10.0.0-alpha.8
+    * @videojs/utils bumped to 10.0.0-alpha.8
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-alpha.8
+
 ## [10.0.0-alpha.7](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-alpha.6...@videojs/html@10.0.0-alpha.7) (2026-03-04)
 
 

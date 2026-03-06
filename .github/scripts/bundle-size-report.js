@@ -1,26 +1,21 @@
 /**
- * Generates a markdown bundle size report from measurement JSON data.
+ * Generates a bundle size report from measurement JSON data.
  *
  * Usage:
  *   node bundle-size-report.js --pr pr-size.json [--base base-size.json]
  *
- * When --base is omitted, generates a report showing current sizes only (no diff).
- * When --base is provided, generates a comparison report with diffs and status icons.
+ * When --base is omitted, generates a local report showing current sizes.
+ * When --base is provided, generates a comparison report with diffs.
  *
- * Reads JSON arrays of { name, size, type } entries produced by bundle-size.js.
+ * Reads JSON arrays of { name, size, type, category?, format } entries
+ * produced by bundle-size.js.
  */
 
 import { readFileSync } from 'node:fs';
 
-const ESC = '\x1b[';
-const ansi = {
-  bold: (s) => `${ESC}1m${s}${ESC}22m`,
-  dim: (s) => `${ESC}2m${s}${ESC}22m`,
-  cyan: (s) => `${ESC}36m${s}${ESC}39m`,
-  yellow: (s) => `${ESC}33m${s}${ESC}39m`,
-  white: (s) => `${ESC}37m${s}${ESC}39m`,
-  green: (s) => `${ESC}32m${s}${ESC}39m`,
-};
+// ---------------------------------------------------------------------------
+// Shared helpers
+// ---------------------------------------------------------------------------
 
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -32,10 +27,10 @@ function formatDelta(current, previous) {
   const diff = current - previous;
   if (diff === 0) return { bytes: '0 B', pct: '0%' };
   const sign = diff > 0 ? '+' : '-';
-  const pct = Math.abs((diff / previous) * 100).toFixed(1);
+  const pct = previous === 0 ? '∞' : Math.abs((diff / previous) * 100).toFixed(1);
   return {
     bytes: `${sign}${formatBytes(Math.abs(diff))}`,
-    pct: `${sign}${pct}%`,
+    pct: previous === 0 ? `${sign}∞%` : `${sign}${pct}%`,
   };
 }
 
@@ -44,19 +39,15 @@ function statusIcon(current, previous) {
   const diff = current - previous;
   if (diff === 0) return '✅';
   if (diff < 0) return '🔽';
+  if (previous === 0) return '🔴';
   const pct = (diff / previous) * 100;
   return pct > 10 ? '🔴' : '🔺';
 }
 
-function deltaBar(current, previous, maxAbsPct) {
-  const width = 8;
-  if (previous === undefined || maxAbsPct === 0) return '░'.repeat(width);
-  const pct = Math.abs(((current - previous) / previous) * 100);
-  const filled = Math.round((pct / maxAbsPct) * width);
-  return '█'.repeat(filled) + '░'.repeat(width - filled);
-}
+/** Preferred display order for packages. Unlisted packages sort to the end. */
+const PACKAGE_ORDER = ['html', 'react', 'core', 'element', 'store', 'utils'];
 
-/** Group entries by package: @videojs/utils/* -> utils, @videojs/store/* -> store */
+/** Group entries by package: @videojs/html/ui/x → html */
 function groupByPackage(entries) {
   const groups = new Map();
   for (const entry of entries) {
@@ -65,179 +56,225 @@ function groupByPackage(entries) {
     if (!groups.has(pkg)) groups.set(pkg, []);
     groups.get(pkg).push(entry);
   }
-  return groups;
+
+  const sorted = new Map();
+  for (const pkg of PACKAGE_ORDER) {
+    if (groups.has(pkg)) sorted.set(pkg, groups.get(pkg));
+  }
+  for (const [pkg, entries] of groups) {
+    if (!sorted.has(pkg)) sorted.set(pkg, entries);
+  }
+  return sorted;
 }
 
-function computePackageData(groups, baseMap) {
-  const pkgData = [];
-  let grandTotalCurrent = 0;
-  let grandTotalBase = 0;
+/** Display label for an entry relative to its package. */
+function entryLabel(entryName, pkg) {
+  const subpath = entryName.replace(`@videojs/${pkg}`, '');
+  return subpath === '' ? '`.`' : `\`${subpath}\``;
+}
 
-  for (const [pkg, entries] of groups) {
-    const rootEntries = entries.filter((e) => e.type === 'root');
-    const subEntries = entries.filter((e) => e.type === 'subpath');
+// ---------------------------------------------------------------------------
+// Category breakdown (size-only, collapsed <details>)
+// ---------------------------------------------------------------------------
 
-    const pkgTotalCurrent =
-      rootEntries.reduce((s, e) => s + e.size, 0) +
-      subEntries.reduce((s, e) => s + e.size, 0);
+const CATEGORY_ORDER = [
+  'preset',
+  'media',
+  'player',
+  'skin',
+  'ui',
+  'feature',
+];
 
-    const pkgTotalBase =
-      rootEntries.reduce((s, e) => s + (baseMap[e.name] ?? 0), 0) +
-      subEntries.reduce((s, e) => s + (baseMap[e.name] ?? 0), 0);
+const CATEGORY_LABELS = {
+  preset: 'Presets',
+  media: 'Media',
+  player: 'Players',
+  skin: 'Skins',
+  ui: 'UI Components',
+  feature: 'Features',
+};
 
-    const hasBase = entries.some((e) => baseMap[e.name] !== undefined);
-    grandTotalCurrent += pkgTotalCurrent;
-    grandTotalBase += pkgTotalBase;
-
-    pkgData.push({
-      pkg,
-      entries,
-      rootEntries,
-      subEntries,
-      pkgTotalCurrent,
-      pkgTotalBase,
-      hasBase,
-    });
+function generateCategoryBreakdowns(entries, pkg) {
+  const byCategory = new Map();
+  for (const entry of entries) {
+    const cat = entry.category;
+    if (!cat) continue;
+    if (!byCategory.has(cat)) byCategory.set(cat, []);
+    byCategory.get(cat).push(entry);
   }
 
-  return { pkgData, grandTotalCurrent, grandTotalBase };
+  const lines = [];
+
+  for (const cat of CATEGORY_ORDER) {
+    const catEntries = byCategory.get(cat);
+    if (!catEntries || catEntries.length === 0) continue;
+
+    const label = CATEGORY_LABELS[cat] ?? cat;
+    const isSkin = cat === 'skin';
+
+    lines.push('<details>');
+    lines.push(`<summary><b>${label} (${catEntries.length})</b></summary>`);
+    lines.push('');
+
+    if (isSkin) {
+      lines.push('| Entry | Type | Size |');
+      lines.push('|---|---|--:|');
+    } else {
+      lines.push('| Entry | Size |');
+      lines.push('|---|--:|');
+    }
+
+    for (const entry of catEntries) {
+      const el = entryLabel(entry.name, pkg);
+      const fmt = entry.format ?? 'js';
+      if (isSkin) {
+        lines.push(`| ${el} | ${fmt} | ${formatBytes(entry.size)} |`);
+      } else {
+        lines.push(`| ${el} | ${formatBytes(entry.size)} |`);
+      }
+    }
+
+    if (cat === 'ui') {
+      lines.push('');
+      lines.push('*Sizes are marginal over the root entry point.*');
+    }
+
+    lines.push('</details>');
+    lines.push('');
+  }
+
+  return lines;
 }
 
-/** Generate a comparison report (PR vs base). */
+/** Flat size-only breakdown for packages without categories. */
+function generateFlatBreakdown(entries, pkg) {
+  const lines = [];
+
+  lines.push('<details>');
+  lines.push(`<summary><b>Entries (${entries.length})</b></summary>`);
+  lines.push('');
+  lines.push('| Entry | Size |');
+  lines.push('|---|--:|');
+
+  for (const entry of entries) {
+    const el = entryLabel(entry.name, pkg);
+    lines.push(`| ${el} | ${formatBytes(entry.size)} |`);
+  }
+
+  lines.push('');
+  lines.push('</details>');
+  lines.push('');
+
+  return lines;
+}
+
+// ---------------------------------------------------------------------------
+// Comparison report (CI — PR vs base)
+// ---------------------------------------------------------------------------
+
 function generateComparisonReport(current, base) {
   const baseMap = Object.fromEntries(base.map((e) => [e.name, e.size]));
   const groups = groupByPackage(current);
-  const { pkgData, grandTotalCurrent, grandTotalBase } = computePackageData(
-    groups,
-    baseMap,
-  );
 
-  const maxAbsPct = Math.max(
-    ...pkgData.map((p) => {
-      if (!p.hasBase || p.pkgTotalBase === 0) return 0;
-      return Math.abs(
-        ((p.pkgTotalCurrent - p.pkgTotalBase) / p.pkgTotalBase) * 100,
-      );
-    }),
-  );
+  const lines = [];
+  const pkgIcons = {
+    core: '🧩',
+    element: '🏷️',
+    html: '🎨',
+    react: '⚛️',
+    store: '📦',
+    utils: '🔧',
+  };
 
-  // Overview table
-  const overview = [];
-  overview.push('| Package | Size | Diff | | % | |');
-  overview.push('|---|--:|--:|---|--:|:-:|');
+  lines.push('<!-- bundle-size-report -->');
+  lines.push('# 📦 Bundle Size Report');
+  lines.push('');
 
-  for (const p of pkgData) {
-    const d = formatDelta(
-      p.pkgTotalCurrent,
-      p.hasBase ? p.pkgTotalBase : undefined,
-    );
-    const icon = p.hasBase
-      ? statusIcon(p.pkgTotalCurrent, p.pkgTotalBase)
-      : '';
-    const bar = `\`${deltaBar(p.pkgTotalCurrent, p.hasBase ? p.pkgTotalBase : undefined, maxAbsPct)}\``;
-    overview.push(
-      `| **@videojs/${p.pkg}** | **${formatBytes(p.pkgTotalCurrent)}** | ${p.hasBase ? d.bytes : '—'} | ${bar} | ${p.hasBase ? d.pct : ''} | ${icon} |`,
-    );
-  }
+  for (const [pkg, entries] of groups) {
+    const pkgIcon = pkgIcons[pkg] ?? '📦';
+    lines.push(`## ${pkgIcon} @videojs/${pkg}`);
+    lines.push('');
 
-  // Detail sections — only for packages with multiple entries
-  const details = [];
-  const pkgsWithSubs = pkgData.filter((p) => p.entries.length > 1);
+    // Only show entries with a meaningful size change (>300 B, must exist in both)
+    const changed = entries.filter((e) => {
+      const prev = baseMap[e.name];
+      if (prev === undefined) return false;
+      return Math.abs(e.size - prev) > 300;
+    });
 
-  if (pkgsWithSubs.length > 0) {
-    details.push('#### Entry Breakdown');
-    details.push('');
-    details.push(
-      'Subpath sizes are the additional bytes on top of the root entry point, measured by bundling root + subpath together and subtracting the root-only size.',
-    );
-    details.push('');
+    if (changed.length === 0) {
+      lines.push('(no changes)');
+      lines.push('');
+    } else {
+      lines.push('| Path | Base | PR | Diff | % | |');
+      lines.push('|---|--:|--:|--:|--:|:-:|');
 
-    for (const p of pkgsWithSubs) {
-      const {
-        pkg,
-        rootEntries,
-        subEntries,
-        pkgTotalCurrent,
-        pkgTotalBase,
-        hasBase,
-      } = p;
-
-      details.push('<details>');
-      details.push(`<summary><code>@videojs/${pkg}</code></summary>`);
-      details.push('');
-      details.push('| Entry | Base | PR | Diff | % | |');
-      details.push('|---|--:|--:|--:|--:|:-:|');
-
-      for (const entry of [...rootEntries, ...subEntries]) {
-        const displayName =
-          entry.name.replace(`@videojs/${pkg}`, '') || '.';
-        const label = displayName === '.' ? displayName : `.${displayName}`;
+      for (const entry of changed) {
+        const el = entryLabel(entry.name, pkg);
         const prev = baseMap[entry.name];
         const d = formatDelta(entry.size, prev);
-        details.push(
-          `| \`${label}\` | ${prev !== undefined ? formatBytes(prev) : '—'} | **${formatBytes(entry.size)}** | ${d.bytes} | ${d.pct} | ${statusIcon(entry.size, prev)} |`,
+        const status = statusIcon(entry.size, prev);
+        const baseSize = prev !== undefined ? formatBytes(prev) : '—';
+        lines.push(
+          `| ${el} | ${baseSize} | ${formatBytes(entry.size)} | ${d.bytes} | ${d.pct} | ${status} |`,
         );
       }
 
-      if (rootEntries.length + subEntries.length > 1) {
-        const d = formatDelta(
-          pkgTotalCurrent,
-          hasBase ? pkgTotalBase : undefined,
-        );
-        details.push(
-          `| **total** | **${hasBase ? formatBytes(pkgTotalBase) : '—'}** | **${formatBytes(pkgTotalCurrent)}** | **${hasBase ? d.bytes : '—'}** | **${hasBase ? d.pct : ''}** | |`,
-        );
-      }
+      lines.push('');
+    }
 
-      details.push('');
-      details.push('</details>');
-      details.push('');
+    // Category breakdowns for packages with categories (html, react)
+    const hasCategories = entries.some((e) => e.category);
+    if (hasCategories) {
+      lines.push(...generateCategoryBreakdowns(entries, pkg));
+    } else if (entries.length > 1) {
+      // Flat breakdown for other packages with multiple entries
+      lines.push(...generateFlatBreakdown(entries, pkg));
     }
   }
 
-  const grandDelta = formatDelta(grandTotalCurrent, grandTotalBase);
+  // Footer
+  lines.push('---');
+  lines.push('');
+  lines.push('<details>');
+  lines.push('<summary>ℹ️ How to interpret</summary>');
+  lines.push('');
+  lines.push('All sizes are standalone totals (minified + brotli).');
+  lines.push('');
+  lines.push('| Icon | Meaning |');
+  lines.push('|---|---|');
+  lines.push('| ✅ | No change |');
+  lines.push('| 🔺 | Increased ≤ 10% |');
+  lines.push('| 🔴 | Increased > 10% |');
+  lines.push('| 🔽 | Decreased |');
+  lines.push('| 🆕 | New (no baseline) |');
+  lines.push('');
+  lines.push('Run `pnpm size` locally to check current sizes.');
+  lines.push('</details>');
 
-  const marker = '<!-- bundle-size-report -->';
-  return [
-    marker,
-    '### 📦 Bundle Size Report',
-    '',
-    ...overview,
-    '',
-    `**Total: ${formatBytes(grandTotalCurrent)}**${grandTotalBase ? ` · ${grandDelta.bytes} · ${grandDelta.pct}` : ''}`,
-    '',
-    '---',
-    '',
-    ...details,
-    '---',
-    '',
-    '<details>',
-    '<summary>ℹ️ How to interpret</summary>',
-    '',
-    'Sizes are minified + brotli, measured with esbuild.',
-    'Package totals are computed as root size + marginal subpath costs.',
-    'Subpath marginal cost = (root + subpath bundled together) − root alone.',
-    '',
-    '| Icon | Meaning |',
-    '|---|---|',
-    '| ✅ | No change |',
-    '| 🔺 | Increased ≤ 10% |',
-    '| 🔴 | Increased > 10% |',
-    '| 🔽 | Decreased |',
-    '| 🆕 | New (no baseline) |',
-    '',
-    'Run `pnpm size` locally to check current sizes.',
-    '</details>',
-  ].join('\n');
+  return lines.join('\n');
 }
+
+// ---------------------------------------------------------------------------
+// Local report (terminal — ANSI colored)
+// ---------------------------------------------------------------------------
+
+const ESC = '\x1b[';
+const ansi = {
+  bold: (s) => `${ESC}1m${s}${ESC}22m`,
+  dim: (s) => `${ESC}2m${s}${ESC}22m`,
+  cyan: (s) => `${ESC}36m${s}${ESC}39m`,
+  yellow: (s) => `${ESC}33m${s}${ESC}39m`,
+  white: (s) => `${ESC}37m${s}${ESC}39m`,
+  green: (s) => `${ESC}32m${s}${ESC}39m`,
+};
 
 /**
  * Render rows as a padded, aligned table for terminal output.
  *
  * Each row is an array of cell values. Cells can be plain strings or
- * `{ text, style }` objects where `style` is a ansi chain (e.g. ansi.bold).
- * Alignment and padding use the plain text width; ANSI codes are ignored.
- *
+ * `{ text, style }` objects where `style` is an ansi function.
  * The first row is treated as a dim header.
  */
 function printTable(rows) {
@@ -258,24 +295,22 @@ function printTable(rows) {
   const sep = ansi.dim(
     `─${widths.map((w) => '─'.repeat(w)).join('─┼─')}─`,
   );
-  const lines = [];
+  const out = [];
 
   for (let r = 0; r < rows.length; r++) {
     const cells = rows[r].map((cell, i) => {
       const t = text(cell);
       const padded =
         i === cols - 1 ? t.padStart(widths[i]) : t.padEnd(widths[i]);
-      // Header row is dim, data rows use their own style
       return r === 0 ? ansi.dim(padded) : style(cell)(padded);
     });
-    lines.push(` ${cells.join(ansi.dim(' │ '))} `);
-    if (r === 0) lines.push(sep);
+    out.push(` ${cells.join(ansi.dim(' │ '))} `);
+    if (r === 0) out.push(sep);
   }
 
-  return lines.join('\n');
+  return out.join('\n');
 }
 
-/** Color a size value based on magnitude. */
 function colorSize(bytes) {
   const text = formatBytes(bytes);
   if (bytes >= 5 * 1024) return { text, style: ansi.yellow };
@@ -283,59 +318,70 @@ function colorSize(bytes) {
   return { text, style: ansi.green };
 }
 
-/** Generate a local-only report (no base comparison). */
 function generateLocalReport(current) {
   const groups = groupByPackage(current);
-
-  const overviewRows = [['Package', 'Size']];
-  let grandTotal = 0;
-  const pkgsWithSubs = [];
+  const lines = [];
 
   for (const [pkg, entries] of groups) {
-    const rootEntries = entries.filter((e) => e.type === 'root');
-    const subEntries = entries.filter((e) => e.type === 'subpath');
+    lines.push('');
+    lines.push(ansi.bold(`@videojs/${pkg}`));
 
-    const pkgTotal =
-      rootEntries.reduce((s, e) => s + e.size, 0) +
-      subEntries.reduce((s, e) => s + e.size, 0);
+    const hasCategories = entries.some((e) => e.category);
 
-    grandTotal += pkgTotal;
-    overviewRows.push([
-      { text: `@videojs/${pkg}`, style: ansi.bold },
-      colorSize(pkgTotal),
-    ]);
+    if (hasCategories) {
+      const byCategory = new Map();
+      for (const entry of entries) {
+        const cat = entry.category;
+        if (!cat) continue;
+        if (!byCategory.has(cat)) byCategory.set(cat, []);
+        byCategory.get(cat).push(entry);
+      }
 
-    if (entries.length > 1) {
-      pkgsWithSubs.push({ pkg, rootEntries, subEntries, pkgTotal });
-    }
-  }
+      for (const cat of CATEGORY_ORDER) {
+        const catEntries = byCategory.get(cat);
+        if (!catEntries || catEntries.length === 0) continue;
 
-  const lines = [];
-  lines.push('');
-  lines.push(printTable(overviewRows));
-  lines.push('');
-  lines.push(ansi.bold(`Total: ${formatBytes(grandTotal)}`));
+        const label = CATEGORY_LABELS[cat] ?? cat;
+        const isSkin = cat === 'skin';
 
-  if (pkgsWithSubs.length > 0) {
-    for (const { pkg, rootEntries, subEntries, pkgTotal } of pkgsWithSubs) {
-      lines.push('');
-      lines.push(ansi.bold(`@videojs/${pkg}`));
+        lines.push('');
+        lines.push(`  ${ansi.dim(label)}`);
 
+        const header = isSkin
+          ? ['Entry', 'Type', 'Size']
+          : ['Entry', 'Size'];
+        const rows = [header];
+
+        for (const entry of catEntries) {
+          const subpath =
+            entry.name.replace(`@videojs/${pkg}`, '') || '.';
+          const fmt = entry.format ?? 'js';
+          if (isSkin) {
+            rows.push([
+              { text: subpath, style: ansi.cyan },
+              { text: fmt, style: ansi.dim },
+              colorSize(entry.size),
+            ]);
+          } else {
+            rows.push([
+              { text: subpath, style: ansi.cyan },
+              colorSize(entry.size),
+            ]);
+          }
+        }
+
+        lines.push(printTable(rows));
+      }
+    } else {
       const rows = [['Entry', 'Size']];
-      for (const entry of [...rootEntries, ...subEntries]) {
-        const displayName =
+      for (const entry of entries) {
+        const subpath =
           entry.name.replace(`@videojs/${pkg}`, '') || '.';
-        const label = displayName === '.' ? displayName : `.${displayName}`;
         rows.push([
-          { text: label, style: ansi.cyan },
+          { text: subpath, style: ansi.cyan },
           colorSize(entry.size),
         ]);
       }
-      rows.push([
-        { text: 'total', style: ansi.bold },
-        { text: formatBytes(pkgTotal), style: ansi.bold },
-      ]);
-
       lines.push(printTable(rows));
     }
   }
@@ -346,6 +392,10 @@ function generateLocalReport(current) {
 
   return lines.join('\n');
 }
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
 
 function main() {
   const args = process.argv.slice(2);

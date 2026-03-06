@@ -1,9 +1,9 @@
 {
-  "packages/core": "10.0.0-alpha.7",
-  "packages/element": "10.0.0-alpha.7",
-  "packages/html": "10.0.0-alpha.7",
-  "packages/icons": "10.0.0-alpha.7",
-  "packages/react": "10.0.0-alpha.7",
-  "packages/store": "10.0.0-alpha.7",
-  "packages/utils": "10.0.0-alpha.7"
+  "packages/core": "10.0.0-alpha.8",
+  "packages/element": "10.0.0-alpha.8",
+  "packages/html": "10.0.0-alpha.8",
+  "packages/icons": "10.0.0-alpha.8",
+  "packages/react": "10.0.0-alpha.8",
+  "packages/store": "10.0.0-alpha.8",
+  "packages/utils": "10.0.0-alpha.8"
 }

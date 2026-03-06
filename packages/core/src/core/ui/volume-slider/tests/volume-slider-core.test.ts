@@ -105,6 +105,16 @@ describe('VolumeSliderCore', () => {
 
       expect(state.muted).toBe(false);
     });
+
+    it('derives muted as true when volume is 0 and not muted', () => {
+      const core = new VolumeSliderCore();
+      core.setInput(createInput());
+      core.setMedia(createMediaState({ volume: 0, muted: false }));
+      const state = core.getState();
+
+      expect(state.muted).toBe(true);
+      expect(state.fillPercent).toBe(0);
+    });
   });
 
   describe('getAttrs', () => {
@@ -150,14 +160,14 @@ describe('VolumeSliderCore', () => {
       expect(attrs['aria-label']).toBe('Audio');
     });
 
-    it('shows 0 percent when volume is 0', () => {
+    it('shows 0 percent muted when volume is 0', () => {
       const core = new VolumeSliderCore();
       core.setInput(createInput());
       core.setMedia(createMediaState({ volume: 0 }));
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe('0 percent');
+      expect(attrs['aria-valuetext']).toBe('0 percent, muted');
     });
   });
 

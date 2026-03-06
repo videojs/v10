@@ -1,5 +1,24 @@
 # Changelog
 
+## [10.0.0-alpha.8](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-alpha.7...@videojs/store@10.0.0-alpha.8) (2026-03-05)
+
+
+### Features
+
+* **core:** add error feature ([#713](https://github.com/videojs/v10/issues/713)) ([879d55d](https://github.com/videojs/v10/commit/879d55d1d216aac9f31f3fb22e2e31fde55a002b))
+* small state and naming fixes  ([#719](https://github.com/videojs/v10/issues/719)) ([5c42245](https://github.com/videojs/v10/commit/5c422452e4b547dc00f13082b755ea12d1860f21))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-alpha.8
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-alpha.8
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-alpha.8
+
 ## [10.0.0-alpha.7](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-alpha.6...@videojs/store@10.0.0-alpha.7) (2026-03-04)
 
 

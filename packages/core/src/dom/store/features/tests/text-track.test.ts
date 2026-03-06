@@ -16,6 +16,23 @@ function createVideo(): HTMLVideoElement {
   return document.createElement('video');
 }
 
+function mockTextTracks(video: HTMLVideoElement, tracks: TextTrack[]): void {
+  const list: Partial<TextTrackList> & Record<number, TextTrack> = { length: tracks.length };
+
+  for (const [index, track] of tracks.entries()) {
+    list[index] = track;
+  }
+
+  Object.defineProperty(video, 'textTracks', {
+    configurable: true,
+    value: list as TextTrackList,
+  });
+}
+
+function createMockTrack(kind: TextTrackKind, mode: TextTrackMode = 'disabled'): TextTrack {
+  return { kind, mode, label: '', language: '' } as TextTrack;
+}
+
 describe('textTrackFeature', () => {
   describe('initial state', () => {
     it('has empty initial state', () => {
@@ -26,6 +43,8 @@ describe('textTrackFeature', () => {
       expect(store.state.chaptersCues).toEqual([]);
       expect(store.state.thumbnailCues).toEqual([]);
       expect(store.state.thumbnailTrackSrc).toBeNull();
+      expect(store.state.subtitlesList).toEqual([]);
+      expect(store.state.subtitlesShowing).toBe(false);
     });
   });
 
@@ -118,6 +137,62 @@ describe('textTrackFeature', () => {
       if (store.state.thumbnailTrackSrc !== null) {
         expect(store.state.thumbnailTrackSrc).toBe('https://cdn.example.com/thumbnails.vtt');
       }
+    });
+
+    it('sets subtitlesShowing when a subtitles track is showing', () => {
+      const video = createVideo();
+      mockTextTracks(video, [createMockTrack('subtitles', 'showing')]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.subtitlesShowing).toBe(true);
+    });
+
+    it('exposes subtitlesList from captions/subtitles tracks', () => {
+      const video = createVideo();
+      const subtitlesTrack = { kind: 'subtitles', mode: 'showing', label: 'English', language: 'en' } as TextTrack;
+      const captionsTrack = { kind: 'captions', mode: 'disabled', label: 'CC', language: 'en' } as TextTrack;
+      mockTextTracks(video, [subtitlesTrack, captionsTrack, createMockTrack('metadata', 'showing')]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.subtitlesList).toEqual([
+        { kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' },
+        { kind: 'captions', label: 'CC', language: 'en', mode: 'disabled' },
+      ]);
+    });
+
+    it('toggleSubtitles() enables and disables caption/subtitle tracks', () => {
+      const video = createVideo();
+      const subtitlesTrack = createMockTrack('subtitles');
+      const captionsTrack = createMockTrack('captions');
+      mockTextTracks(video, [subtitlesTrack, captionsTrack]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      const enabled = store.state.toggleSubtitles();
+      expect(enabled).toBe(true);
+      expect(subtitlesTrack.mode).toBe('showing');
+      expect(captionsTrack.mode).toBe('showing');
+
+      const disabled = store.state.toggleSubtitles(false);
+      expect(disabled).toBe(false);
+      expect(subtitlesTrack.mode).toBe('disabled');
+      expect(captionsTrack.mode).toBe('disabled');
+    });
+
+    it('toggleSubtitles() returns false when no subtitle tracks exist', () => {
+      const video = createVideo();
+      const metadataTrack = createMockTrack('metadata', 'showing');
+      mockTextTracks(video, [metadataTrack]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.toggleSubtitles()).toBe(false);
     });
 
     it('stops updating after destroy', () => {
