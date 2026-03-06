@@ -125,7 +125,7 @@ function appendSegmentTask(
             startTime: meta.startTime,
             duration: meta.duration,
             trackId: meta.trackId,
-            trackBandwidth: meta.trackBandwidth,
+            ...(meta.trackBandwidth !== undefined && { trackBandwidth: meta.trackBandwidth }),
           },
         ],
         bufferedRanges: snapshotBuffered(sourceBuffer.buffered),

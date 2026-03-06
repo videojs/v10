@@ -291,7 +291,6 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     trackCurrentTime({ state, owners }),
 
     // 5.75. ABR quality switching (reacts to bandwidth samples from loadSegments)
-    // @ts-expect-error - WritableState type variance
     switchQuality({ state }),
 
     // 6. Load segments (when SourceBuffer ready and track resolved)
