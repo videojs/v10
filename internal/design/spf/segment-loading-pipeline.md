@@ -283,6 +283,15 @@ rather than two separate paths. Deferred.
 `createTrackedFetch` still publishes to `state.bandwidthState` via `onSample`.
 Remove once ABR reads from throughput directly.
 
+**Current behaviour (as of this session):**
+- Only **video** segment fetches sample bandwidth — audio is excluded (audio segments
+  are smaller and would add noise relative to their weight).
+- `state.flush()` is called immediately after each sample so `switchQuality` fires
+  before the next fetch starts rather than waiting for the microtask queue.
+- Raw EWMA values (`fastEstimate`/`slowEstimate`) start near-zero; zero-factor
+  correction (`estimate / (1 - alpha^totalWeight)`) must be applied to get the
+  true estimate — this is what `getBandwidthEstimate` does internally.
+
 ### preload='auto' seek-before-play
 
 Known limitation: if the user seeks before pressing play with `preload='auto'`,

@@ -86,6 +86,15 @@ function updateNowPlayingQuality() {
   }
 }
 
+// Mirrors getBandwidthEstimate logic from bandwidth-estimator.ts.
+// Raw fastEstimate/slowEstimate start near-zero because EWMA initialises at 0;
+// zero-factor correction scales them back to the true estimate.
+function correctedEstimate(estimate: number, totalWeight: number, halfLife: number): number {
+  if (totalWeight === 0) return 0;
+  const alpha = Math.exp(Math.log(0.5) / halfLife);
+  return estimate / (1 - alpha ** totalWeight);
+}
+
 function updateThroughputDisplay() {
   if (!engine) return;
   const bs = engine.state.current.bandwidthState;
@@ -100,9 +109,8 @@ function updateThroughputDisplay() {
     throughputDiv.className = 'warming';
     return;
   }
-  // Display raw fast/slow EWMA values (not zero-factor corrected — close enough for debug)
-  const fast = bs.fastEstimate;
-  const slow = bs.slowEstimate;
+  const fast = correctedEstimate(bs.fastEstimate, bs.fastTotalWeight, 2);
+  const slow = correctedEstimate(bs.slowEstimate, bs.slowTotalWeight, 5);
   const est = Math.min(fast, slow);
   throughputDiv.textContent = `📶 Est: ${formatBandwidth(est)}  (fast: ${formatBandwidth(fast)}, slow: ${formatBandwidth(slow)})`;
   throughputDiv.className = 'has-data';
