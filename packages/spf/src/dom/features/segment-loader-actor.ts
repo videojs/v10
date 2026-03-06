@@ -65,6 +65,10 @@ export type SegmentLoaderMessage = {
  *
  * Derived from SourceBufferMessage types by removing `data` and adding
  * a fetch URL via AddressableObject.
+ *
+ * @todo Rename — "LoadTask" risks confusion with the `Task` class used for
+ * SourceBufferActor scheduling. These are closer to operation descriptors or
+ * messages than tasks in that sense.
  */
 export type LoadTask =
   | (Omit<AppendInitMessage, 'data'> & AddressableObject)
@@ -119,6 +123,8 @@ export function createSegmentLoaderActor(
    * Translate a load message into an ordered LoadTask list based on committed
    * actor state. In-flight awareness is handled separately in send().
    *
+   * @todo Rename alongside LoadTask (e.g. planOps).
+   *
    * Case 1 — Removes: forward and back buffer flush points, segment-aligned.
    *   No flush on track switch: appending new content overwrites existing buffer
    *   ranges, and the actor's time-aligned deduplication keeps the segment model
@@ -171,6 +177,8 @@ export function createSegmentLoaderActor(
    * Execute a single LoadTask: fetch (if needed) then forward to SourceBufferActor.
    * Sets/clears in-flight tracking around async operations so send() can make
    * accurate continue/preempt decisions at any point during execution.
+   *
+   * @todo Rename alongside LoadTask (e.g. executeOp).
    */
   const executeLoadTask = async (task: LoadTask): Promise<void> => {
     const signal = abortController!.signal;
