@@ -49,7 +49,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     // Keep a ref to the latest volume state for callbacks.
     const volumeRef = useLatestRef(volume);
 
-    const { state, cssVars, rootRef, thumbRef, rootProps, thumbProps } = useSlider<VolumeSliderCore.State>({
+    const { state, cssVars, rootRef, thumbRef, rootProps, rootStyle, thumbProps } = useSlider<VolumeSliderCore.State>({
       computeState: (input) => {
         core.setInput(input);
         core.setMedia(volume ?? noopVolume);
@@ -97,7 +97,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
             state,
             stateAttrMap: SliderDataAttrs,
             ref: [forwardedRef, rootRef],
-            props: [{ style: cssVars }, rootProps, elementProps],
+            props: [{ style: { ...cssVars, ...rootStyle } }, rootProps, elementProps],
           }
         )}
       </SliderProvider>

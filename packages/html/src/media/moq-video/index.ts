@@ -1,7 +1,8 @@
-import * as Moq from '@moq/lite';
 import * as Watch from '@moq/watch';
 
-import { CustomMediaMixin } from '@videojs/core/dom/media/custom-media-element';
+const Moq = Watch.Lite;
+
+import { CustomMediaMixin } from '@videojs/core/dom/media/custom-media-element/index';
 
 const CustomVideo = CustomMediaMixin(globalThis.HTMLElement ?? class {}, { tag: 'video' });
 

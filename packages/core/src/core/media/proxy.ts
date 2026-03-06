@@ -1,12 +1,7 @@
 import type { AnyConstructor, Constructor } from '@videojs/utils/types';
+import { defineClassPropHooks } from '../utils/define-class-prop-hooks';
 
 export interface MediaApiProxyTarget extends EventTarget {}
-
-type API_TYPE = 0 | 1 | 2;
-
-const API_METHOD: API_TYPE = 0;
-const API_GET: API_TYPE = 1;
-const API_GET_SET: API_TYPE = 2;
 
 /**
  * This mixin creates an API from the passed classes and proxies the methods and properties to the attached target.
@@ -24,32 +19,6 @@ export const MediaProxyMixin = <T extends EventTarget>(
   ...AdditionalClasses: AnyConstructor<EventTarget>[]
 ) => {
   class MediaApiProxy {
-    static extends(...MediaApiTargetClasses: AnyConstructor<any>[]) {
-      const props = getClassProps(...MediaApiTargetClasses);
-
-      for (const [prop, type] of props.entries()) {
-        if (prop in MediaApiProxy.prototype) continue;
-
-        const config: PropertyDescriptor = {};
-        if (type === API_METHOD) {
-          config.value = function (this: MediaApiProxy, ...args: any[]) {
-            return this.call(prop as keyof MediaApiProxyTarget, ...args);
-          };
-        } else if (type === API_GET || type === API_GET_SET) {
-          config.get = function (this: MediaApiProxy) {
-            return this.get(prop as keyof MediaApiProxyTarget);
-          };
-          if (type === API_GET_SET) {
-            config.set = function (this: MediaApiProxy, val: any) {
-              this.set(prop as keyof MediaApiProxyTarget, val);
-            };
-          }
-        }
-
-        Object.defineProperty(MediaApiProxy.prototype, prop, config);
-      }
-    }
-
     #target: MediaApiProxyTarget | null = null;
 
     get target() {
@@ -82,30 +51,9 @@ export const MediaProxyMixin = <T extends EventTarget>(
     }
   }
 
-  MediaApiProxy.extends(PrimaryClass, ...AdditionalClasses);
+  for (const Class of [PrimaryClass, ...AdditionalClasses]) {
+    defineClassPropHooks(MediaApiProxy, Class.prototype);
+  }
 
   return MediaApiProxy as unknown as Constructor<T>;
 };
-
-/**
- * Helper function to get the methods, getters, and setters from a class prototype.
- */
-export function getClassProps<T extends EventTarget>(...Classes: AnyConstructor<T>[]) {
-  const props = new Map<keyof T, API_TYPE>();
-  for (const Class of Classes) {
-    const names = Object.getOwnPropertyNames(Class.prototype) as (keyof T)[];
-    for (const name of names) {
-      const descriptor = Object.getOwnPropertyDescriptor(Class.prototype, name);
-      if (typeof descriptor?.value === 'function') {
-        props.set(name, API_METHOD);
-      } else if (typeof descriptor?.get === 'function') {
-        if (typeof descriptor?.set === 'function') {
-          props.set(name, API_GET_SET);
-        } else {
-          props.set(name, API_GET);
-        }
-      }
-    }
-  }
-  return props;
-}

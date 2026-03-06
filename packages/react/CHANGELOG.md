@@ -1,5 +1,60 @@
 # Changelog
 
+## [10.0.0-alpha.9](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-alpha.8...@videojs/react@10.0.0-alpha.9) (2026-03-06)
+
+
+### Features
+
+* add subtitles handling + captions core ([#692](https://github.com/videojs/v10/issues/692)) ([5c11606](https://github.com/videojs/v10/commit/5c116065a91ed04753bb2cb83e72dd6471f75ced))
+* **html:** add alert dialog element ([#741](https://github.com/videojs/v10/issues/741)) ([5fc52aa](https://github.com/videojs/v10/commit/5fc52aa969292a8b8f636b532ac5ff27b082b222))
+* **react:** add alert dialog component ([#739](https://github.com/videojs/v10/issues/739)) ([536c86d](https://github.com/videojs/v10/commit/536c86d9d1b648f4e1b94b7a55b17735cc0ea03c))
+* **react:** add alert dialog to video skin ([#747](https://github.com/videojs/v10/issues/747)) ([5dfc67e](https://github.com/videojs/v10/commit/5dfc67ed02d92512b500c4461898050988e291a8))
+
+
+### Bug Fixes
+
+* **ci:** rework bundle size report ([#745](https://github.com/videojs/v10/issues/745)) ([9f456f5](https://github.com/videojs/v10/commit/9f456f572f340f88b7e3e57316dd284e48631f78))
+* destroy hls.js instance on media unmount ([#749](https://github.com/videojs/v10/issues/749)) ([c4e8bbd](https://github.com/videojs/v10/commit/c4e8bbd3a2bcb66027c64faf8de0ec61d22c84fa))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-alpha.9
+    * @videojs/store bumped to 10.0.0-alpha.9
+    * @videojs/utils bumped to 10.0.0-alpha.9
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-alpha.9
+
+## [10.0.0-alpha.8](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-alpha.7...@videojs/react@10.0.0-alpha.8) (2026-03-05)
+
+
+### Features
+
+* **react:** add slider preview component ([#710](https://github.com/videojs/v10/issues/710)) ([db75697](https://github.com/videojs/v10/commit/db7569711e5a571f6af421987c8490c3de37ed78))
+* **react:** add slider thumbnail component ([#722](https://github.com/videojs/v10/issues/722)) ([a6405e9](https://github.com/videojs/v10/commit/a6405e9278bc6e627cc1186f2af227941a1e55c0))
+* **react:** add tooltip component ([#736](https://github.com/videojs/v10/issues/736)) ([ae754ee](https://github.com/videojs/v10/commit/ae754eec8f3136be08026e08fbf404b4f0f7126e))
+* small state and naming fixes  ([#719](https://github.com/videojs/v10/issues/719)) ([5c42245](https://github.com/videojs/v10/commit/5c422452e4b547dc00f13082b755ea12d1860f21))
+
+
+### Bug Fixes
+
+* **html:** slider interaction and edge alignment broken ([#721](https://github.com/videojs/v10/issues/721)) ([ff12296](https://github.com/videojs/v10/commit/ff122963553e23a58614c9c808763208fd893df1))
+* **react:** set anchor-name and position-anchor imperatively in popover ([#715](https://github.com/videojs/v10/issues/715)) ([070d094](https://github.com/videojs/v10/commit/070d0944448fae4fd8ec140a13c5c073c31ccdc4))
+* **react:** strict mode support ([#742](https://github.com/videojs/v10/issues/742)) ([44d874d](https://github.com/videojs/v10/commit/44d874ddc225b9b8aaf6d8689bdb48ef0ac729fb))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-alpha.8
+    * @videojs/store bumped to 10.0.0-alpha.8
+    * @videojs/utils bumped to 10.0.0-alpha.8
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-alpha.8
+
 ## [10.0.0-alpha.7](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-alpha.6...@videojs/react@10.0.0-alpha.7) (2026-03-04)
 
 

@@ -50,6 +50,15 @@ describe('MuteButtonCore', () => {
       expect(core.getState().volumeLevel).toBe('off');
     });
 
+    it('derives muted as true when volume is 0 and not muted', () => {
+      const core = new MuteButtonCore();
+      core.setMedia(createMediaState({ volume: 0, muted: false }));
+      const state = core.getState();
+
+      expect(state.muted).toBe(true);
+      expect(state.volumeLevel).toBe('off');
+    });
+
     it('returns low when volume < 0.5', () => {
       const core = new MuteButtonCore();
       core.setMedia(createMediaState({ volume: 0.3 }));

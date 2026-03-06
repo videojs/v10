@@ -78,6 +78,7 @@ export class ThumbnailElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+    if (this.destroyed) return;
 
     this.#api = createThumbnail({
       getContainer: () => this,
@@ -88,8 +89,11 @@ export class ThumbnailElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+  }
+
+  override destroyCallback(): void {
     this.#api?.destroy();
-    this.#api = null;
+    super.destroyCallback();
   }
 
   protected override update(changed: PropertyValues): void {

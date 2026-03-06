@@ -1,5 +1,64 @@
 # Changelog
 
+## [10.0.0-alpha.9](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-alpha.8...@videojs/html@10.0.0-alpha.9) (2026-03-06)
+
+
+### Features
+
+* add subtitles handling + captions core ([#692](https://github.com/videojs/v10/issues/692)) ([5c11606](https://github.com/videojs/v10/commit/5c116065a91ed04753bb2cb83e72dd6471f75ced))
+* **html:** add alert dialog element ([#741](https://github.com/videojs/v10/issues/741)) ([5fc52aa](https://github.com/videojs/v10/commit/5fc52aa969292a8b8f636b532ac5ff27b082b222))
+
+
+### Bug Fixes
+
+* delegate not defining Delegate props ([#751](https://github.com/videojs/v10/issues/751)) ([c61fcdc](https://github.com/videojs/v10/commit/c61fcdcc3a64f8a4ef32ec3fd332f1ec5cdbb311))
+* destroy hls.js instance on media unmount ([#749](https://github.com/videojs/v10/issues/749)) ([c4e8bbd](https://github.com/videojs/v10/commit/c4e8bbd3a2bcb66027c64faf8de0ec61d22c84fa))
+* **html:** add destroy ([#748](https://github.com/videojs/v10/issues/748)) ([3f11424](https://github.com/videojs/v10/commit/3f11424b182f9889a572590e38219e6289f544c2))
+
+
+### Reverts
+
+* **html:** remove double raf hls destroy ([#754](https://github.com/videojs/v10/issues/754)) ([dce16ae](https://github.com/videojs/v10/commit/dce16ae5fd414563e6788b506e11bd1cff568870))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-alpha.9
+    * @videojs/element bumped to 10.0.0-alpha.9
+    * @videojs/store bumped to 10.0.0-alpha.9
+    * @videojs/utils bumped to 10.0.0-alpha.9
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-alpha.9
+
+## [10.0.0-alpha.8](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-alpha.7...@videojs/html@10.0.0-alpha.8) (2026-03-05)
+
+
+### Features
+
+* **html:** add slider preview element ([#733](https://github.com/videojs/v10/issues/733)) ([7548a8e](https://github.com/videojs/v10/commit/7548a8e4a1cc87e1a702ef24d5559427f26e91ef))
+* **html:** add slider thumbnail element ([#714](https://github.com/videojs/v10/issues/714)) ([32ee304](https://github.com/videojs/v10/commit/32ee304da4893f0c9271a25cf3fc81b84fccc399))
+* **html:** add tooltip element ([#735](https://github.com/videojs/v10/issues/735)) ([e9fbaec](https://github.com/videojs/v10/commit/e9fbaece87c39c0adc41070159fd7e6f75f0e1da))
+* small state and naming fixes  ([#719](https://github.com/videojs/v10/issues/719)) ([5c42245](https://github.com/videojs/v10/commit/5c422452e4b547dc00f13082b755ea12d1860f21))
+
+
+### Bug Fixes
+
+* **html:** slider interaction and edge alignment broken ([#721](https://github.com/videojs/v10/issues/721)) ([ff12296](https://github.com/videojs/v10/commit/ff122963553e23a58614c9c808763208fd893df1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-alpha.8
+    * @videojs/element bumped to 10.0.0-alpha.8
+    * @videojs/store bumped to 10.0.0-alpha.8
+    * @videojs/utils bumped to 10.0.0-alpha.8
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-alpha.8
+
 ## [10.0.0-alpha.7](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-alpha.6...@videojs/html@10.0.0-alpha.7) (2026-03-04)
 
 

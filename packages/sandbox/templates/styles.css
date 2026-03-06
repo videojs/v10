@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../src";
 @source "../templates";
 /* NOTE: This is non-standard since you'd usually eject the Tailwind skin into your own project and not import it from node_modules. */
 @source "../node_modules/@videojs/skins";

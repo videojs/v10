@@ -1,14 +1,32 @@
-import { findTrackElement, listen } from '@videojs/utils/dom';
+import { findTrackElement, getTextTrackList, listen } from '@videojs/utils/dom';
 
-import type { MediaTextCue, MediaTextTrackState } from '../../../core/media/state';
+import type { MediaTextCue, MediaTextTrack, MediaTextTrackState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 
 export const textTrackFeature = definePlayerFeature({
   name: 'textTrack',
-  state: (): MediaTextTrackState => ({
+  state: ({ target }): MediaTextTrackState => ({
     chaptersCues: [],
     thumbnailCues: [],
     thumbnailTrackSrc: null,
+    textTrackList: [],
+    subtitlesShowing: false,
+    toggleSubtitles(forceShow?: boolean) {
+      const subtitlesTracks = getTextTrackList(
+        target().media,
+        (track) => track.kind === 'subtitles' || track.kind === 'captions'
+      );
+      if (!subtitlesTracks.length) return false;
+
+      const showing = subtitlesTracks.some((track: TextTrack) => track.mode === 'showing');
+      const nextShowing = forceShow ?? !showing;
+
+      for (const track of subtitlesTracks) {
+        track.mode = nextShowing ? 'showing' : 'disabled';
+      }
+
+      return nextShowing;
+    },
   }),
 
   attach({ target, signal, set }) {
@@ -22,11 +40,24 @@ export const textTrackFeature = definePlayerFeature({
 
       let chaptersTrack: TextTrack | null = null;
       let thumbnailTrack: TextTrack | null = null;
+      const textTrackList: MediaTextTrack<TextTrackKind>[] = [];
+      let subtitlesShowing = false;
 
       for (let i = 0; i < media.textTracks.length; i++) {
         const track = media.textTracks[i]!;
         if (!chaptersTrack && track.kind === 'chapters') chaptersTrack = track;
         if (!thumbnailTrack && track.kind === 'metadata' && track.label === 'thumbnails') thumbnailTrack = track;
+
+        textTrackList.push({
+          kind: track.kind,
+          label: track.label,
+          language: track.language,
+          mode: track.mode,
+        });
+
+        if ((track.kind === 'captions' || track.kind === 'subtitles') && track.mode === 'showing') {
+          subtitlesShowing = true;
+        }
       }
 
       // VTTCue extends TextTrackCue with `text` — cast via `unknown` since
@@ -47,13 +78,13 @@ export const textTrackFeature = definePlayerFeature({
       // Listen for <track> load events on tracks that don't have cues yet.
       // `addtrack` fires before cues are parsed — we need the `load` event
       // on the <track> element to know when cues are ready.
-      for (const trackEl of media.querySelectorAll('track')) {
+      for (const trackEl of media.querySelectorAll?.('track') ?? []) {
         if (!trackEl.track?.cues?.length) {
           listen(trackEl, 'load', sync, { signal: trackCleanup.signal });
         }
       }
 
-      set({ chaptersCues, thumbnailCues, thumbnailTrackSrc });
+      set({ chaptersCues, thumbnailCues, thumbnailTrackSrc, textTrackList, subtitlesShowing });
     }
 
     sync();

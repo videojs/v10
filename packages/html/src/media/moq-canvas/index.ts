@@ -1,5 +1,6 @@
-import * as Moq from '@moq/lite';
 import * as Watch from '@moq/watch';
+
+const Moq = Watch.Lite;
 
 /** Shim that wraps MoQ's BufferedRanges array as a TimeRanges-like object. */
 function createTimeRanges(ranges: Array<{ start: number; end: number }>): TimeRanges {

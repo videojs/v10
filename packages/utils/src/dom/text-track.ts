@@ -5,3 +5,12 @@ export function findTrackElement(media: HTMLMediaElement, track: TextTrack): HTM
   }
   return null;
 }
+
+export function getTextTrackList(media: HTMLMediaElement, filterPred: (textTrack: TextTrack) => boolean): TextTrack[] {
+  if (!media?.textTracks) return [];
+  return (Array.from(media.textTracks) as TextTrack[]).filter(filterPred).sort(sortByTextTrackKind);
+}
+
+function sortByTextTrackKind(a: TextTrack, b: TextTrack): number {
+  return a.kind >= b.kind ? 1 : -1;
+}

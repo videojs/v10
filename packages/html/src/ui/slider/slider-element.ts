@@ -46,6 +46,7 @@ export class SliderElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+    if (this.destroyed) return;
 
     this.#disconnect = new AbortController();
     const signal = this.#disconnect.signal;
@@ -77,19 +78,19 @@ export class SliderElement extends MediaElement {
     });
 
     applyElementProps(this, this.#slider.rootProps, { signal });
+    applyStyles(this, this.#slider.rootStyle);
     this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
-
-    // Prevent default touch gestures and text selection during interaction.
-    this.style.touchAction = 'none';
-    this.style.userSelect = 'none';
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#slider?.destroy();
-    this.#slider = null;
     this.#disconnect?.abort();
     this.#disconnect = null;
+  }
+
+  override destroyCallback(): void {
+    this.#slider?.destroy();
+    super.destroyCallback();
   }
 
   protected override willUpdate(_changed: PropertyValues): void {

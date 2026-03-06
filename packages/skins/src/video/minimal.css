@@ -123,12 +123,12 @@
   }
 }
 .media-minimal-skin .media-controls[data-visible] ~ .media-overlay,
-.media-minimal-skin .media-error[data-visible] ~ .media-overlay {
+.media-minimal-skin .media-error[data-open] ~ .media-overlay {
   opacity: 1;
   transition-duration: 150ms;
   transition-delay: 0ms;
 }
-.media-minimal-skin .media-error[data-visible] ~ .media-overlay {
+.media-minimal-skin .media-error[data-open] ~ .media-overlay {
   backdrop-filter: blur(8px) saturate(1.2) brightness(0.9);
 }
 
@@ -155,9 +155,6 @@
    ========================================================================== */
 
 .media-minimal-skin .media-error {
-  display: none;
-}
-.media-minimal-skin .media-error[data-visible] {
   position: absolute;
   inset: 0;
   z-index: 20;
@@ -167,11 +164,20 @@
   pointer-events: none;
 }
 .media-minimal-skin .media-error__dialog {
-  display: none;
-  transition-property: display, opacity, transform;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 16rem;
+  padding: 1rem;
+  color: oklch(1 0 0);
+  font-size: 0.875rem;
+  text-shadow: 0 1px 0 oklch(0 0 0 / 0.5);
+  pointer-events: auto;
+  opacity: 1;
+  transform: scale(1);
+  transition-property: opacity, transform;
   transition-duration: 500ms;
   transition-delay: 100ms;
-  transition-behavior: allow-discrete;
   transition-timing-function: linear(
     0,
     0.034 1.5%,
@@ -184,24 +190,10 @@
     1
   );
 }
-.media-minimal-skin .media-error[data-visible] .media-error__dialog {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  max-width: 16rem;
-  padding: 1rem;
-  color: oklch(1 0 0);
-  font-size: 0.875rem;
-  text-shadow: 0 1px 0 oklch(0 0 0 / 0.5);
-  pointer-events: auto;
-  transform: scale(1);
-  opacity: 1;
-  color: oklch(1 0 0);
-
-  @starting-style {
-    transform: scale(0.5);
-    opacity: 0;
-  }
+.media-minimal-skin .media-error[data-starting-style] .media-error__dialog,
+.media-minimal-skin .media-error[data-ending-style] .media-error__dialog {
+  opacity: 0;
+  transform: scale(0.5);
 }
 .media-minimal-skin .media-error__content {
   display: flex;

@@ -1,5 +1,57 @@
 # Changelog
 
+## [10.0.0-alpha.9](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-alpha.8...@videojs/core@10.0.0-alpha.9) (2026-03-06)
+
+
+### Features
+
+* add subtitles handling + captions core ([#692](https://github.com/videojs/v10/issues/692)) ([5c11606](https://github.com/videojs/v10/commit/5c116065a91ed04753bb2cb83e72dd6471f75ced))
+
+
+### Bug Fixes
+
+* **core:** auto-unmute on volume change and restore volume on unmute ([#752](https://github.com/videojs/v10/issues/752)) ([4466d0a](https://github.com/videojs/v10/commit/4466d0a15c2be9d1a0c23dace95cbd079d228d97))
+* **core:** derive effective mute state for volume UI components ([#753](https://github.com/videojs/v10/issues/753)) ([14bcdc8](https://github.com/videojs/v10/commit/14bcdc833f0a09bb3ca92d8a02e68b6802aeebac))
+* **core:** use double-RAF in transition open to enable entry animations ([#755](https://github.com/videojs/v10/issues/755)) ([7b6b301](https://github.com/videojs/v10/commit/7b6b3019dfaa41e34970e5827bd2ba21c7712fbe))
+* delegate not defining Delegate props ([#751](https://github.com/videojs/v10/issues/751)) ([c61fcdc](https://github.com/videojs/v10/commit/c61fcdcc3a64f8a4ef32ec3fd332f1ec5cdbb311))
+* destroy hls.js instance on media unmount ([#749](https://github.com/videojs/v10/issues/749)) ([c4e8bbd](https://github.com/videojs/v10/commit/c4e8bbd3a2bcb66027c64faf8de0ec61d22c84fa))
+* ssr issue with hls.js ([#758](https://github.com/videojs/v10/issues/758)) ([bcc492f](https://github.com/videojs/v10/commit/bcc492f63f8d3e248b3cbba67cbc516420270920))
+* textTrackList and optimize ([#760](https://github.com/videojs/v10/issues/760)) ([04e98f4](https://github.com/videojs/v10/commit/04e98f4007dcc5957ff4b646482036da49e1efd4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/store bumped to 10.0.0-alpha.9
+    * @videojs/utils bumped to 10.0.0-alpha.9
+
+## [10.0.0-alpha.8](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-alpha.7...@videojs/core@10.0.0-alpha.8) (2026-03-05)
+
+
+### Features
+
+* **core:** add alert dialog with dismiss layer and transitions ([#743](https://github.com/videojs/v10/issues/743)) ([a80cf4e](https://github.com/videojs/v10/commit/a80cf4e06aaa6adfd5e916b4789cb40ac15ef9cf))
+* **core:** add AlertDialog data attributes ([#738](https://github.com/videojs/v10/issues/738)) ([e2334a3](https://github.com/videojs/v10/commit/e2334a3767c8f9474d44c8baa25512041392e363))
+* **core:** add error feature ([#713](https://github.com/videojs/v10/issues/713)) ([879d55d](https://github.com/videojs/v10/commit/879d55d1d216aac9f31f3fb22e2e31fde55a002b))
+* **core:** add tooltip  ([#734](https://github.com/videojs/v10/issues/734)) ([b69a2f9](https://github.com/videojs/v10/commit/b69a2f9994eaf14f4f2bf64643d8fc18e901b365))
+* **html:** add tooltip element ([#735](https://github.com/videojs/v10/issues/735)) ([e9fbaec](https://github.com/videojs/v10/commit/e9fbaece87c39c0adc41070159fd7e6f75f0e1da))
+* **react:** add slider preview component ([#710](https://github.com/videojs/v10/issues/710)) ([db75697](https://github.com/videojs/v10/commit/db7569711e5a571f6af421987c8490c3de37ed78))
+* small state and naming fixes  ([#719](https://github.com/videojs/v10/issues/719)) ([5c42245](https://github.com/videojs/v10/commit/5c422452e4b547dc00f13082b755ea12d1860f21))
+
+
+### Bug Fixes
+
+* **html:** slider interaction and edge alignment broken ([#721](https://github.com/videojs/v10/issues/721)) ([ff12296](https://github.com/videojs/v10/commit/ff122963553e23a58614c9c808763208fd893df1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/store bumped to 10.0.0-alpha.8
+    * @videojs/utils bumped to 10.0.0-alpha.8
+
 ## [10.0.0-alpha.7](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-alpha.6...@videojs/core@10.0.0-alpha.7) (2026-03-04)
 
 

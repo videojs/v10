@@ -1,7 +1,7 @@
 {
   "name": "@videojs/react",
   "type": "module",
-  "version": "10.0.0-alpha.7",
+  "version": "10.0.0-alpha.9",
   "description": "React library for building media players",
   "license": "Apache-2.0",
   "repository": {
@@ -27,11 +27,38 @@
       "development": "./dist/dev/media/*/index.js",
       "default": "./dist/default/media/*/index.js"
     },
-    "./*.css": "./dist/default/presets/*.css",
-    "./*": {
-      "types": "./dist/dev/presets/*/index.d.ts",
-      "development": "./dist/dev/presets/*/index.js",
-      "default": "./dist/default/presets/*/index.js"
+    "./video": {
+      "types": "./dist/dev/presets/video/index.d.ts",
+      "development": "./dist/dev/presets/video/index.js",
+      "default": "./dist/default/presets/video/index.js"
+    },
+    "./video/*.css": "./dist/default/presets/video/*.css",
+    "./video/*": {
+      "types": "./dist/dev/presets/video/*.d.ts",
+      "development": "./dist/dev/presets/video/*.js",
+      "default": "./dist/default/presets/video/*.js"
+    },
+    "./audio": {
+      "types": "./dist/dev/presets/audio/index.d.ts",
+      "development": "./dist/dev/presets/audio/index.js",
+      "default": "./dist/default/presets/audio/index.js"
+    },
+    "./audio/*.css": "./dist/default/presets/audio/*.css",
+    "./audio/*": {
+      "types": "./dist/dev/presets/audio/*.d.ts",
+      "development": "./dist/dev/presets/audio/*.js",
+      "default": "./dist/default/presets/audio/*.js"
+    },
+    "./background": {
+      "types": "./dist/dev/presets/background/index.d.ts",
+      "development": "./dist/dev/presets/background/index.js",
+      "default": "./dist/default/presets/background/index.js"
+    },
+    "./background/*.css": "./dist/default/presets/background/*.css",
+    "./background/*": {
+      "types": "./dist/dev/presets/background/*.d.ts",
+      "development": "./dist/dev/presets/background/*.js",
+      "default": "./dist/default/presets/background/*.js"
     }
   },
   "scripts": {

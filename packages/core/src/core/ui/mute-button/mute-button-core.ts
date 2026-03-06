@@ -68,7 +68,7 @@ export class MuteButtonCore {
   getState(): MuteButtonState {
     const media = this.#media!;
     return {
-      muted: media.muted,
+      muted: media.muted || media.volume === 0,
       volumeLevel: getVolumeLevel(media),
     };
   }

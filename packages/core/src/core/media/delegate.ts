@@ -1,5 +1,7 @@
 import type { Constructor } from '@videojs/utils/types';
 
+import { defineClassPropHooks } from '../utils/define-class-prop-hooks';
+
 export interface MediaDelegate {
   attach?(target: EventTarget): void;
   detach?(): void;
@@ -52,11 +54,16 @@ export function MediaDelegateMixin<Base extends Constructor<any>, Delegate exten
     }
   }
 
+  for (let proto = DelegateClass.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
+    defineClassPropHooks(DelegateMedia, proto);
+  }
+
   return DelegateMedia as unknown as Constructor<
-    InstanceType<Base> & {
-      attach(target: EventTarget): void;
-      detach(): void;
-    }
+    InstanceType<Base> &
+      InstanceType<Delegate> & {
+        attach(target: EventTarget): void;
+        detach(): void;
+      }
   > &
     Omit<Base, 'prototype'>;
 }

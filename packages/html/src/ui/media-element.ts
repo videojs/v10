@@ -1,6 +1,7 @@
-import { ReactiveElement } from '@videojs/element';
+import { DestroyMixin, ReactiveElement } from '@videojs/element';
 import type { Constructor } from '@videojs/utils/types';
 
-export class MediaElement extends ReactiveElement {}
+/** Base class for interactive media UI elements. */
+export class MediaElement extends DestroyMixin(ReactiveElement) {}
 
 export interface MediaElementConstructor extends Constructor<MediaElement> {}
