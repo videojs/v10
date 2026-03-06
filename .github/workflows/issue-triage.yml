@@ -1,7 +1,7 @@
 name: Issue Triage
 on:
   issues:
-    types: [opened, edited, reopened]
+    types: [opened, edited, reopened, labeled]
 
 permissions:
   actions: read
@@ -14,8 +14,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  label-for-triage:
+    if: >
+      github.event.action != 'labeled' &&
+      !github.event.issue.pull_request &&
+      !contains(fromJSON('["MEMBER","OWNER","COLLABORATOR"]'), github.event.issue.author_association)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add triage label for non-members
+        run: gh issue edit ${{ github.event.issue.number }} --add-label "triage" --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   triage:
-    if: github.event.issue.pull_request == null
+    if: >
+      !github.event.issue.pull_request && (
+        (github.event.action == 'labeled' && github.event.label.name == 'agent:triage') ||
+        (github.event.action != 'labeled' && contains(fromJSON('["MEMBER","OWNER","COLLABORATOR"]'), github.event.issue.author_association))
+      )
     runs-on: ubuntu-latest
 
     steps:
