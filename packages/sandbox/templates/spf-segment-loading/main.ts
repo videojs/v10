@@ -1,15 +1,43 @@
 // SPF Segment Loading POC Test
 // http://localhost:5173/spf-segment-loading/
+//
+// Supported query params:
+//   src=<url>            Stream URL (overrides TEST_STREAM default)
+//   muted=true           Start muted
+//   autoplay=true        Start with autoplay enabled
+//   preload=auto|metadata|none  Initial preload mode
 
 import { createPlaybackEngine } from '@videojs/spf/dom/playback-engine';
 
+// ── DOM refs ──────────────────────────────────────────────────────────────────
 const video = document.getElementById('video') as HTMLVideoElement;
 const logsDiv = document.getElementById('logs') as HTMLDivElement;
 const stateDiv = document.getElementById('state') as HTMLDivElement;
 const renditionButtonsDiv = document.getElementById('rendition-buttons') as HTMLDivElement;
 const resolutionListDiv = document.getElementById('resolution-list') as HTMLDivElement;
 const nowPlayingQualityDiv = document.getElementById('now-playing-quality') as HTMLDivElement;
+const throughputDiv = document.getElementById('throughput-display') as HTMLDivElement;
+const srcInput = document.getElementById('src-input') as HTMLInputElement;
+const setSrcBtn = document.getElementById('set-src') as HTMLButtonElement;
+const mutedToggle = document.getElementById('muted-toggle') as HTMLInputElement;
+const autoplayToggle = document.getElementById('autoplay-toggle') as HTMLInputElement;
+const preloadSelect = document.getElementById('preload-select') as HTMLSelectElement;
 
+// ── Query params ──────────────────────────────────────────────────────────────
+const DEFAULT_STREAM = 'https://stream.mux.com/JX01bG8eB4uaoV3OpDuK602rBfvdSgrMObjwuUOBn4JrQ.m3u8';
+const params = new URLSearchParams(window.location.search);
+const INITIAL_SRC = params.get('src') ?? DEFAULT_STREAM;
+const INITIAL_MUTED = params.get('muted') === 'true';
+const INITIAL_AUTOPLAY = params.get('autoplay') === 'true';
+const INITIAL_PRELOAD = (params.get('preload') as 'auto' | 'metadata' | 'none') ?? 'none';
+
+// Apply initial query-param values to UI
+srcInput.value = INITIAL_SRC;
+mutedToggle.checked = INITIAL_MUTED;
+autoplayToggle.checked = INITIAL_AUTOPLAY;
+preloadSelect.value = INITIAL_PRELOAD;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function log(msg: string, type: 'info' | 'success' | 'error' | 'warning' = 'info') {
   const timestamp = new Date().toLocaleTimeString();
   console.log(`[${timestamp}] ${msg}`);
@@ -29,6 +57,7 @@ function getVideoTracks(state: ReturnType<typeof engine.state.current>) {
   return state.presentation?.selectionSets?.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ?? [];
 }
 
+// ── Display functions ─────────────────────────────────────────────────────────
 function updateNowPlayingQuality() {
   if (!engine) return;
   const segments = engine.owners.current.videoBufferActor?.snapshot.context.segments ?? [];
@@ -41,6 +70,28 @@ function updateNowPlayingQuality() {
     nowPlayingQualityDiv.textContent = '';
     nowPlayingQualityDiv.className = '';
   }
+}
+
+function updateThroughputDisplay() {
+  if (!engine) return;
+  const bs = engine.state.current.bandwidthState;
+  if (!bs || bs.bytesSampled === 0) {
+    throughputDiv.textContent = '📶 Throughput: no samples yet';
+    throughputDiv.className = '';
+    return;
+  }
+  const minBytes = 128_000;
+  if (bs.bytesSampled < minBytes) {
+    throughputDiv.textContent = `📶 Warming up: ${(bs.bytesSampled / 1000).toFixed(0)} KB sampled`;
+    throughputDiv.className = 'warming';
+    return;
+  }
+  // Display raw fast/slow EWMA values (not zero-factor corrected — close enough for debug)
+  const fast = bs.fastEstimate;
+  const slow = bs.slowEstimate;
+  const est = Math.min(fast, slow);
+  throughputDiv.textContent = `📶 Est: ${formatBandwidth(est)}  (fast: ${formatBandwidth(fast)}, slow: ${formatBandwidth(slow)})`;
+  throughputDiv.className = 'has-data';
 }
 
 function renderRenditionPicker() {
@@ -56,7 +107,6 @@ function renderRenditionPicker() {
 
   renditionButtonsDiv.innerHTML = '';
 
-  // ABR / Manual mode status row
   const statusRow = document.createElement('div');
   statusRow.className = 'abr-status';
   const modeLabel = document.createElement('span');
@@ -65,6 +115,7 @@ function renderRenditionPicker() {
   statusRow.appendChild(modeLabel);
   if (isManual) {
     const enableBtn = document.createElement('button');
+    enableBtn.type = 'button';
     enableBtn.className = 'enable-abr-btn';
     enableBtn.textContent = 'Enable ABR';
     enableBtn.addEventListener('click', () => {
@@ -78,18 +129,16 @@ function renderRenditionPicker() {
   for (const track of tracks) {
     const isSelected = track.id === state.selectedVideoTrackId;
     const btn = document.createElement('button');
-    btn.className = 'rendition-btn' + (isSelected ? (isManual ? ' selected-manual' : ' selected-abr') : '');
-
+    btn.type = 'button';
+    btn.className = `rendition-btn${isSelected ? (isManual ? ' selected-manual' : ' selected-abr') : ''}`;
     const res = 'width' in track && track.width && track.height ? `${track.width}×${track.height} @ ` : '';
     const badge = isSelected ? (isManual ? ' 🔒' : ' ⟳') : '';
     btn.textContent = `${res}${formatBandwidth(track.bandwidth)}${badge}`;
     btn.title = track.id;
-
     btn.addEventListener('click', () => {
       log(`Manual rendition select: ${formatBandwidth(track.bandwidth)} (ABR disabled)`, 'warning');
       engine.state.patch({ selectedVideoTrackId: track.id, abrDisabled: true });
     });
-
     renditionButtonsDiv.appendChild(btn);
   }
 }
@@ -109,11 +158,9 @@ function renderResolutionStatus() {
     const isResolved = 'segments' in track;
     const item = document.createElement('div');
     item.className = `resolution-item ${isResolved ? 'resolved' : 'unresolved'}`;
-
     const res = 'width' in track && track.width && track.height ? `${track.width}×${track.height} ` : '';
     item.textContent = `${isResolved ? '✓' : '○'} ${res}${formatBandwidth(track.bandwidth)}`;
     item.title = track.id;
-
     resolutionListDiv.appendChild(item);
   }
 }
@@ -123,7 +170,6 @@ function inspectState() {
     stateDiv.innerHTML = '<h2>State Inspector</h2><div class="error">Engine not initialized</div>';
     return;
   }
-
   const state = engine.state.current;
   const owners = engine.owners.current;
 
@@ -143,7 +189,7 @@ function inspectState() {
       ).join('\n  ')
     : 'N/A';
 
-  const html = `
+  stateDiv.innerHTML = `
     <h2>State Inspector</h2>
 
     <h3>Playback State</h3>
@@ -188,76 +234,25 @@ function inspectState() {
     <div>paused: ${video.paused}</div>
     <div>ended: ${video.ended}</div>
   `;
-
-  stateDiv.innerHTML = html;
 }
 
-// Event handlers
-document.getElementById('play')!.addEventListener('click', () => {
-  video
-    .play()
-    .then(() => {
-      log('Video play() succeeded', 'success');
-    })
-    .catch((err) => {
-      log(`Video play() failed: ${err.message}`, 'error');
-    });
-});
-
-document.getElementById('pause')!.addEventListener('click', () => {
-  video.pause();
-  log('Video paused');
-});
-
-document.getElementById('inspect')!.addEventListener('click', inspectState);
-
-document.getElementById('clearLogs')!.addEventListener('click', () => {
-  logsDiv.innerHTML = '';
-});
-
-// Video element event listeners
-video.addEventListener('loadstart', () => log('📺 Video: loadstart'));
-video.addEventListener('loadedmetadata', () => log('📺 Video: loadedmetadata', 'success'));
-video.addEventListener('loadeddata', () => log('📺 Video: loadeddata', 'success'));
-video.addEventListener('canplay', () => log('📺 Video: canplay', 'success'));
-video.addEventListener('canplaythrough', () => log('📺 Video: canplaythrough', 'success'));
-video.addEventListener('playing', () => log('📺 Video: playing', 'success'));
-video.addEventListener('timeupdate', updateNowPlayingQuality);
-video.addEventListener('pause', () => log('📺 Video: pause'));
-video.addEventListener('waiting', () => log('📺 Video: waiting', 'warning'));
-video.addEventListener('ended', () => log('📺 Video: ended ✅ endOfStream() worked!', 'success'));
-video.addEventListener('error', () => log(`📺 Video: error - ${video.error?.message}`, 'error'));
-
-// Mux test asset - short CMAF stream
-// Mad Max Fury Road Trailer (short, subtitles)
-const TEST_STREAM = 'https://stream.mux.com/JX01bG8eB4uaoV3OpDuK602rBfvdSgrMObjwuUOBn4JrQ.m3u8';
-// Mux Blue Smoke (extra short, simple)
-// const TEST_STREAM = 'https://stream.mux.com/cmg02Moxu5B7WORo2MElg2U02p2ZyMP7Hb01d80001gHDgPE.m3u8';
-
+// ── Engine ────────────────────────────────────────────────────────────────────
 log('=== SPF Segment Loading POC Test ===');
-log(`Test stream: ${TEST_STREAM}`);
-log('Creating playback engine...');
+log(`Stream: ${INITIAL_SRC}`);
 
 let engine: ReturnType<typeof createPlaybackEngine>;
 
 try {
-  engine = createPlaybackEngine({
-    initialBandwidth: 1000000, // 1 Mbps
-  });
+  engine = createPlaybackEngine({ initialBandwidth: 1_000_000 });
 
   log('✓ Engine created', 'success');
-
-  // Expose for debugging in DevTools console
   (window as any).engine = engine;
   (window as any).state = () => engine.state.current;
   (window as any).owners = () => engine.owners.current;
+  log('Exposed as window.engine / window.state() / window.owners()');
 
-  log('Engine exposed as window.engine');
-  log('Access state: window.state()');
-  log('Access owners: window.owners()');
-
-  // Subscribe to state changes for detailed logging
-  const previousState = {
+  // ── State subscriptions ──────────────────────────────────────────────────
+  const prev = {
     hasPresentation: false,
     selectedVideoTrackId: undefined as string | undefined,
     selectedAudioTrackId: undefined as string | undefined,
@@ -265,61 +260,63 @@ try {
   };
 
   engine.state.subscribe((state) => {
-    if (state.presentation && !previousState.hasPresentation) {
+    if (state.presentation && !prev.hasPresentation) {
       log('Presentation resolved');
-      previousState.hasPresentation = true;
+      prev.hasPresentation = true;
     }
 
-    // Auto-select first text track if available
+    // Auto-select first text track
     if (state.presentation && !state.selectedTextTrackId && state.presentation.selectionSets) {
       const textSet = state.presentation.selectionSets.find((s) => s.type === 'text');
-      const firstTextTrack = textSet?.switchingSets?.[0]?.tracks?.[0];
-      if (firstTextTrack) {
-        log(`Auto-selecting text track: ${firstTextTrack.id}`);
-        engine.state.patch({ selectedTextTrackId: firstTextTrack.id });
+      const firstText = textSet?.switchingSets?.[0]?.tracks?.[0];
+      if (firstText) {
+        log(`Auto-selecting text track: ${firstText.id}`);
+        engine.state.patch({ selectedTextTrackId: firstText.id });
       }
     }
 
-    if (state.selectedVideoTrackId && state.selectedVideoTrackId !== previousState.selectedVideoTrackId) {
+    if (state.selectedVideoTrackId && state.selectedVideoTrackId !== prev.selectedVideoTrackId) {
       const mode = state.abrDisabled ? '(manual)' : '(ABR)';
       log(`Video track selected ${mode}: ${state.selectedVideoTrackId}`);
-      previousState.selectedVideoTrackId = state.selectedVideoTrackId;
+      prev.selectedVideoTrackId = state.selectedVideoTrackId;
     }
-    if (state.selectedAudioTrackId && state.selectedAudioTrackId !== previousState.selectedAudioTrackId) {
+    if (state.selectedAudioTrackId && state.selectedAudioTrackId !== prev.selectedAudioTrackId) {
       log(`Audio track selected: ${state.selectedAudioTrackId}`);
-      previousState.selectedAudioTrackId = state.selectedAudioTrackId;
+      prev.selectedAudioTrackId = state.selectedAudioTrackId;
     }
-    if (state.selectedTextTrackId && state.selectedTextTrackId !== previousState.selectedTextTrackId) {
+    if (state.selectedTextTrackId && state.selectedTextTrackId !== prev.selectedTextTrackId) {
       log(`Text track selected: ${state.selectedTextTrackId}`, 'success');
-      previousState.selectedTextTrackId = state.selectedTextTrackId;
+      prev.selectedTextTrackId = state.selectedTextTrackId;
     }
   });
 
-  // Subscribe to owners changes
-  const previousOwners = {
-    hasMediaSource: false,
-    hasVideoBuffer: false,
-    hasAudioBuffer: false,
-  };
+  // Throughput display — update whenever bandwidthState changes
+  engine.state.subscribe(
+    (s) => s.bandwidthState,
+    () => updateThroughputDisplay()
+  );
+
+  // ── Owners subscriptions ─────────────────────────────────────────────────
+  const prevOwners = { hasMediaSource: false, hasVideoBuffer: false, hasAudioBuffer: false };
 
   engine.owners.subscribe((owners) => {
-    if (owners.mediaSource && !previousOwners.hasMediaSource) {
+    if (owners.mediaSource && !prevOwners.hasMediaSource) {
       log(`MediaSource created: ${owners.mediaSource.readyState}`, 'success');
-      previousOwners.hasMediaSource = true;
+      prevOwners.hasMediaSource = true;
     }
-    if (owners.videoBuffer && !previousOwners.hasVideoBuffer) {
+    if (owners.videoBuffer && !prevOwners.hasVideoBuffer) {
       log('Video SourceBuffer created', 'success');
-      previousOwners.hasVideoBuffer = true;
+      prevOwners.hasVideoBuffer = true;
 
-      // Spy on remove() to confirm what ranges are actually being flushed
-      const origVideoRemove = owners.videoBuffer.remove.bind(owners.videoBuffer);
+      const origRemove = owners.videoBuffer.remove.bind(owners.videoBuffer);
       owners.videoBuffer.remove = (start: number, end: number) => {
-        const endStr = end === Infinity ? '∞' : end.toFixed(2);
-        log(`📹 Video SourceBuffer.remove(${start.toFixed(2)}s → ${endStr}s)`, 'warning');
-        return origVideoRemove(start, end);
+        log(
+          `📹 Video SourceBuffer.remove(${start.toFixed(2)}s → ${end === Infinity ? '∞' : end.toFixed(2)}s)`,
+          'warning'
+        );
+        return origRemove(start, end);
       };
 
-      // Log buffered ranges after each update
       owners.videoBuffer.addEventListener('updateend', () => {
         const buf = owners.videoBuffer;
         if (!buf) return;
@@ -330,15 +327,17 @@ try {
         log(`📹 Video buffered: ${ranges.join(' ') || '(empty)'}`, 'info');
       });
     }
-    if (owners.audioBuffer && !previousOwners.hasAudioBuffer) {
+    if (owners.audioBuffer && !prevOwners.hasAudioBuffer) {
       log('Audio SourceBuffer created', 'success');
-      previousOwners.hasAudioBuffer = true;
+      prevOwners.hasAudioBuffer = true;
 
-      const origAudioRemove = owners.audioBuffer.remove.bind(owners.audioBuffer);
+      const origRemove = owners.audioBuffer.remove.bind(owners.audioBuffer);
       owners.audioBuffer.remove = (start: number, end: number) => {
-        const endStr = end === Infinity ? '∞' : end.toFixed(2);
-        log(`🔊 Audio SourceBuffer.remove(${start.toFixed(2)}s → ${endStr}s)`, 'warning');
-        return origAudioRemove(start, end);
+        log(
+          `🔊 Audio SourceBuffer.remove(${start.toFixed(2)}s → ${end === Infinity ? '∞' : end.toFixed(2)}s)`,
+          'warning'
+        );
+        return origRemove(start, end);
       };
 
       owners.audioBuffer.addEventListener('updateend', () => {
@@ -359,7 +358,7 @@ try {
     () => renderRenditionPicker()
   );
 
-  // Re-render both panels when presentation changes (tracks added or resolved)
+  // Re-render both panels when presentation changes
   engine.state.subscribe(
     (s) => s.presentation,
     () => {
@@ -370,22 +369,79 @@ try {
 
   log('✓ State subscriptions active', 'success');
 
-  engine.owners.patch({ mediaElement: video });
+  // ── Wire media element ───────────────────────────────────────────────────
+  video.muted = INITIAL_MUTED;
+  video.autoplay = INITIAL_AUTOPLAY;
 
+  engine.owners.patch({ mediaElement: video });
   engine.state.patch({
-    presentation: { url: TEST_STREAM },
-    // preload: 'auto',
+    presentation: { url: INITIAL_SRC },
+    preload: INITIAL_PRELOAD,
   });
 
   log('✓ Orchestration started', 'success');
-  log('Watch console and DevTools for segment loading activity');
-  log('Video should start playing once segments load');
 
   // Auto-inspect periodically
-  setInterval(() => {
-    inspectState();
-  }, 3000);
+  setInterval(inspectState, 3000);
 } catch (error) {
   log(`✗ Error creating engine: ${(error as Error).message}`, 'error');
   console.error(error);
 }
+
+// ── Event handlers ────────────────────────────────────────────────────────────
+document.getElementById('play')!.addEventListener('click', () => {
+  video
+    .play()
+    .then(() => log('play() succeeded', 'success'))
+    .catch((e) => log(`play() failed: ${e.message}`, 'error'));
+});
+document.getElementById('pause')!.addEventListener('click', () => {
+  video.pause();
+  log('Video paused');
+});
+document.getElementById('inspect')!.addEventListener('click', inspectState);
+document.getElementById('clearLogs')!.addEventListener('click', () => {
+  logsDiv.innerHTML = '';
+});
+
+setSrcBtn.addEventListener('click', () => {
+  const url = srcInput.value.trim();
+  if (!url) return;
+  log(`Setting src: ${url}`, 'info');
+  engine.state.patch({
+    presentation: { url },
+    selectedVideoTrackId: undefined,
+    selectedAudioTrackId: undefined,
+    selectedTextTrackId: undefined,
+    abrDisabled: false,
+  });
+});
+
+mutedToggle.addEventListener('change', () => {
+  video.muted = mutedToggle.checked;
+  log(`Muted: ${mutedToggle.checked}`);
+});
+
+autoplayToggle.addEventListener('change', () => {
+  video.autoplay = autoplayToggle.checked;
+  log(`Autoplay: ${autoplayToggle.checked}`);
+});
+
+preloadSelect.addEventListener('change', () => {
+  const value = preloadSelect.value as 'auto' | 'metadata' | 'none';
+  engine.state.patch({ preload: value });
+  log(`Preload: ${value}`);
+});
+
+// ── Video element events ──────────────────────────────────────────────────────
+video.addEventListener('timeupdate', updateNowPlayingQuality);
+video.addEventListener('loadstart', () => log('📺 Video: loadstart'));
+video.addEventListener('loadedmetadata', () => log('📺 Video: loadedmetadata', 'success'));
+video.addEventListener('loadeddata', () => log('📺 Video: loadeddata', 'success'));
+video.addEventListener('canplay', () => log('📺 Video: canplay', 'success'));
+video.addEventListener('canplaythrough', () => log('📺 Video: canplaythrough', 'success'));
+video.addEventListener('playing', () => log('📺 Video: playing', 'success'));
+video.addEventListener('pause', () => log('📺 Video: pause'));
+video.addEventListener('waiting', () => log('📺 Video: waiting', 'warning'));
+video.addEventListener('ended', () => log('📺 Video: ended ✅ endOfStream() worked!', 'success'));
+video.addEventListener('error', () => log(`📺 Video: error - ${video.error?.message}`, 'error'));
