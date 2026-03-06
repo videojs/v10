@@ -90,7 +90,7 @@ describe('loadSegments — track switch', () => {
     vi.clearAllMocks();
   });
 
-  it('flushes entire SourceBuffer and resets bufferState when track switches', async () => {
+  it('does not flush SourceBuffer on track switch; new content overwrites old via deduplication', async () => {
     const { flushBuffer } = await import('../media/buffer-flusher');
     const flushSpy = vi.mocked(flushBuffer);
 
@@ -130,14 +130,21 @@ describe('loadSegments — track switch', () => {
     // Wait for task to process track switch
     await new Promise((r) => setTimeout(r, 50));
 
-    // flushBuffer(0, Infinity) should have been called to clear old track content
-    expect(flushSpy).toHaveBeenCalledWith(videoBuffer, 0, Infinity);
+    // No full flush: new content overwrites existing buffer ranges in-place.
+    expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);
 
-    // After the full flush, the old track's data should be gone.
+    // New track-b init should be committed.
     const ctx = owners.current.videoBufferActor?.snapshot.context;
-    expect(ctx?.initTrackId).not.toBe('track-a');
+    expect(ctx?.initTrackId).toBe('track-b');
+
+    // Old track-a segments should be gone: time-aligned deduplication replaces
+    // each a* entry when b* is appended at the same startTime.
     const hasOldSegments = ctx?.segments.some((s) => ['a1', 'a2'].includes(s.id));
     expect(hasOldSegments).toBeFalsy();
+
+    // New track-b segments should be present.
+    const hasNewSegments = ctx?.segments.some((s) => ['b1', 'b2'].includes(s.id));
+    expect(hasNewSegments).toBeTruthy();
 
     cleanup();
   });

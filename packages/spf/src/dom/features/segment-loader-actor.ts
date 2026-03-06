@@ -1,7 +1,12 @@
 import { calculateBackBufferFlushPoint } from '../../core/buffer/back-buffer';
 import { calculateForwardFlushPoint, getSegmentsToLoad } from '../../core/buffer/forward-buffer';
 import type { AddressableObject, AudioTrack, Segment, VideoTrack } from '../../core/types';
-import type { SourceBufferActor, SourceBufferMessage } from '../media/source-buffer-actor';
+import type {
+  AppendInitMessage,
+  AppendSegmentMessage,
+  RemoveMessage,
+  SourceBufferActor,
+} from '../media/source-buffer-actor';
 
 // ============================================================================
 // BUFFER STATE TYPES
@@ -50,6 +55,23 @@ export type SegmentLoaderMessage = {
 };
 
 // ============================================================================
+// LOAD TASK
+// ============================================================================
+
+/**
+ * A LoadTask is the intent to perform one unit of SegmentLoader work.
+ * Unlike SourceBufferMessage, fetch-based tasks carry a URL rather than
+ * pre-fetched data — the runner fetches and appends them in sequence.
+ *
+ * Derived from SourceBufferMessage types by removing `data` and adding
+ * a fetch URL via AddressableObject.
+ */
+export type LoadTask =
+  | (Omit<AppendInitMessage, 'data'> & AddressableObject)
+  | (Omit<AppendSegmentMessage, 'data'> & AddressableObject)
+  | RemoveMessage;
+
+// ============================================================================
 // ACTOR INTERFACE
 // ============================================================================
 
@@ -65,13 +87,14 @@ export interface SegmentLoaderActor {
 /**
  * Creates a SegmentLoaderActor for one track type (video or audio).
  *
- * The actor receives load assignments via `send()` and owns all execution:
- * removes, fetches, and appends. It coordinates with the SourceBufferActor
- * for all physical SourceBuffer operations.
+ * Receives load assignments via `send()` and owns all execution: planning,
+ * removes, fetches, and appends. Coordinates with the SourceBufferActor for
+ * all physical SourceBuffer operations.
  *
- * Step 1 implementation: behaviour is identical to the previous loadSegmentsTask
- * — batch fetch then batch append. The actor boundary is established here;
- * streaming and continue/preempt logic are future steps.
+ * Planning (Cases 1–3) happens in `send()` on every incoming message, producing
+ * an ordered LoadTask list. The runner drains that list sequentially. When a new
+ * message arrives mid-run, send() replans and either continues the in-flight
+ * operation (if still needed) or preempts it.
  *
  * @param sourceBufferActor - Shared SourceBufferActor reference (not owned)
  * @param fetchBytes - Tracked fetch closure (owns throughput sampling)
@@ -80,180 +103,183 @@ export function createSegmentLoaderActor(
   sourceBufferActor: SourceBufferActor,
   fetchBytes: (addressable: AddressableObject, options?: RequestInit) => Promise<ArrayBuffer>
 ): SegmentLoaderActor {
-  let currentTask: Promise<void> | null = null;
+  let pendingTasks: LoadTask[] | null = null;
+  let inFlightInitTrackId: string | null = null;
+  let inFlightSegmentId: string | null = null;
   let abortController: AbortController | null = null;
-  let pendingMessage: SegmentLoaderMessage | null = null;
-  let taskSegmentIds: Set<string> = new Set();
+  let running = false;
   let destroyed = false;
 
-  // Resolve full Segment objects from the actor's committed context.
-  // Uses actor context directly (has timing), avoiding the resolveBufferedSegments bridge.
   const getBufferedSegments = (allSegments: readonly Segment[]): Segment[] => {
     const bufferedIds = new Set(sourceBufferActor.snapshot.context.segments.map((s) => s.id));
     return allSegments.filter((s) => bufferedIds.has(s.id));
   };
 
-  // Execute one load task for the given message.
-  // Step 1: batch fetch-then-append, identical behaviour to the previous loadSegmentsTask.
-  const executeTask = async (message: SegmentLoaderMessage, signal: AbortSignal): Promise<void> => {
+  /**
+   * Translate a load message into an ordered LoadTask list based on committed
+   * actor state. In-flight awareness is handled separately in send().
+   *
+   * Case 1 — Removes: forward and back buffer flush points, segment-aligned.
+   *   No flush on track switch: appending new content overwrites existing buffer
+   *   ranges, and the actor's time-aligned deduplication keeps the segment model
+   *   accurate as new segments arrive.
+   *
+   * Case 2 — Init: schedule if not yet committed for this track.
+   *
+   * Case 3 — Segments: all segments in the load window not yet committed.
+   */
+  const planTasks = (message: SegmentLoaderMessage): LoadTask[] => {
     const { track, range } = message;
+    const actorCtx = sourceBufferActor.snapshot.context;
     const bufferedSegments = getBufferedSegments(track.segments);
     const currentTime = range?.start ?? 0;
-    const segmentsToLoad = range ? getSegmentsToLoad(track.segments, bufferedSegments, currentTime) : [];
+    const tasks: LoadTask[] = [];
 
-    const actorCtx = sourceBufferActor.snapshot.context;
-    const needsInit = actorCtx.initTrackId !== track.id;
-    const isTrackSwitch = needsInit && !!actorCtx.initTrackId;
-    const forwardFlushStart = calculateForwardFlushPoint(bufferedSegments, currentTime);
-
-    if (!needsInit && segmentsToLoad.length === 0 && forwardFlushStart === Infinity) return;
-
-    // Phase 1: Remove
-    const removeMessages: SourceBufferMessage[] = [];
-    if (isTrackSwitch) {
-      removeMessages.push({ type: 'remove', start: 0, end: Infinity });
-    } else {
+    // Case 1: Removes
+    if (range) {
+      const forwardFlushStart = calculateForwardFlushPoint(bufferedSegments, currentTime);
       if (forwardFlushStart < Infinity) {
-        removeMessages.push({ type: 'remove', start: forwardFlushStart, end: Infinity });
+        tasks.push({ type: 'remove', start: forwardFlushStart, end: Infinity });
       }
-      const flushEnd = calculateBackBufferFlushPoint(bufferedSegments, currentTime);
-      if (flushEnd > 0) {
-        removeMessages.push({ type: 'remove', start: 0, end: flushEnd });
+      const backFlushEnd = calculateBackBufferFlushPoint(bufferedSegments, currentTime);
+      if (backFlushEnd > 0) {
+        tasks.push({ type: 'remove', start: 0, end: backFlushEnd });
       }
     }
 
-    if (removeMessages.length > 0) {
-      if (removeMessages.length === 1) {
-        await sourceBufferActor.send(removeMessages[0]!, signal);
-      } else {
-        await sourceBufferActor.batch(removeMessages, signal);
-      }
-      if (signal.aborted) return;
+    // Case 2: Init
+    if (actorCtx.initTrackId !== track.id) {
+      tasks.push({ type: 'append-init', meta: { trackId: track.id }, url: track.initialization.url });
     }
 
-    // Phase 2: Fetch
-    let initData: ArrayBuffer | null = null;
-    if (needsInit) {
-      if (signal.aborted) return;
-      initData = await fetchBytes(track.initialization, { signal });
-    }
-
-    const fetchedSegments: Array<{ segment: Segment; data: ArrayBuffer }> = [];
-    for (const segment of segmentsToLoad) {
-      if (signal.aborted) break;
-      const data = await fetchBytes(segment, { signal });
-      fetchedSegments.push({ segment, data });
-    }
-
-    // Phase 3: Append
-    const appendMessages: SourceBufferMessage[] = [];
-
-    if (initData) {
-      appendMessages.push({ type: 'append-init', data: initData, meta: { trackId: track.id } });
-    }
-
-    if (!signal.aborted) {
-      for (const { segment, data } of fetchedSegments) {
-        appendMessages.push({
+    // Case 3: Segments
+    if (range) {
+      const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, currentTime);
+      for (const segment of segmentsToLoad) {
+        tasks.push({
           type: 'append-segment',
-          data,
-          meta: {
-            id: segment.id,
-            startTime: segment.startTime,
-            duration: segment.duration,
-            trackId: track.id,
-          },
+          meta: { id: segment.id, startTime: segment.startTime, duration: segment.duration, trackId: track.id },
+          url: segment.url,
         });
       }
     }
 
-    if (appendMessages.length === 0) return;
-
-    const appendSignal = signal.aborted ? new AbortController().signal : signal;
-
-    if (appendMessages.length === 1) {
-      await sourceBufferActor.send(appendMessages[0]!, appendSignal);
-    } else {
-      await sourceBufferActor.batch(appendMessages, appendSignal);
-    }
-
-    await new Promise((resolve) => requestAnimationFrame(resolve));
+    return tasks;
   };
 
-  // Run the task loop for an initial message, picking up pending messages after
-  // each task completes. Mirrors the previous runTaskLoop pattern.
-  const runLoop = async (initialMessage: SegmentLoaderMessage): Promise<void> => {
-    let current = initialMessage;
-
-    while (true) {
-      if (destroyed) break;
-
-      // Check whether there is actually work to do for this message.
-      const bufferedSegments = getBufferedSegments(current.track.segments);
-      const currentTime = current.range?.start ?? 0;
-      const actorCtx = sourceBufferActor.snapshot.context;
-      const needsInit = actorCtx.initTrackId !== current.track.id;
-
-      if (!needsInit) {
-        if (!current.range) break; // metadata mode: init already loaded, nothing more to do
-        const segmentsToLoad = getSegmentsToLoad(current.track.segments, bufferedSegments, currentTime);
-        const forwardFlushStart = calculateForwardFlushPoint(bufferedSegments, currentTime);
-        if (segmentsToLoad.length === 0 && forwardFlushStart === Infinity) break;
+  /**
+   * Execute a single LoadTask: fetch (if needed) then forward to SourceBufferActor.
+   * Sets/clears in-flight tracking around async operations so send() can make
+   * accurate continue/preempt decisions at any point during execution.
+   */
+  const executeLoadTask = async (task: LoadTask): Promise<void> => {
+    const signal = abortController!.signal;
+    try {
+      if (task.type === 'remove') {
+        await sourceBufferActor.send(task, signal);
+        return;
       }
 
-      // Track intended segment IDs for seek detection in send().
-      if (current.range) {
-        taskSegmentIds = new Set(
-          getSegmentsToLoad(current.track.segments, bufferedSegments, currentTime).map((s) => s.id)
-        );
-      } else {
-        taskSegmentIds = new Set();
+      if (task.type === 'append-init') {
+        inFlightInitTrackId = task.meta.trackId;
+        if (!signal.aborted) {
+          const data = await fetchBytes(task, { signal });
+          // Init is always committed once fetched — use a fresh signal if needed.
+          const appendSignal = signal.aborted ? new AbortController().signal : signal;
+          await sourceBufferActor.send({ type: 'append-init', data, meta: task.meta }, appendSignal);
+        }
+        return;
       }
 
-      abortController = new AbortController();
-      currentTask = executeTask(current, abortController.signal);
+      // append-segment
+      inFlightSegmentId = task.meta.id;
+      if (!signal.aborted) {
+        const data = await fetchBytes(task, { signal });
+        if (!signal.aborted) {
+          await sourceBufferActor.send({ type: 'append-segment', data, meta: task.meta }, signal);
+        }
+      }
+    } finally {
+      inFlightInitTrackId = null;
+      inFlightSegmentId = null;
+    }
+  };
+
+  /**
+   * Drain the scheduled task list sequentially.
+   * After each task completes, checks for a pending replacement plan from send().
+   * If the signal was aborted and no new plan arrived, stops immediately.
+   */
+  const runScheduled = async (initialTasks: LoadTask[]): Promise<void> => {
+    running = true;
+    abortController = new AbortController();
+    let scheduled = initialTasks;
+
+    while (scheduled.length > 0 && !destroyed) {
+      const task = scheduled[0]!;
+      scheduled = scheduled.slice(1);
 
       try {
-        await currentTask;
+        await executeLoadTask(task);
       } catch (error) {
-        if (!(error instanceof Error && error.name === 'AbortError')) {
-          console.error('Unexpected error in segment loader task:', error);
+        if (error instanceof Error && error.name === 'AbortError') {
+          // Abort is handled in the post-task check below.
+        } else {
+          console.error('Unexpected error in segment loader:', error);
+          // Non-abort error (e.g. network failure on init): don't continue with
+          // remaining tasks in this sequence — they depend on the failed step.
+          // A pending replacement plan (if any) will still be picked up below.
+          scheduled = [];
         }
       }
 
-      abortController = null;
-      taskSegmentIds = new Set();
-
-      const pending = pendingMessage;
-      pendingMessage = null;
-
-      if (!pending) break;
-      current = pending;
+      if (pendingTasks !== null) {
+        // A new plan arrived while this task was running — switch to it.
+        scheduled = pendingTasks;
+        pendingTasks = null;
+        abortController = new AbortController();
+      } else if (abortController.signal.aborted) {
+        // Aborted with no replacement plan — stop.
+        break;
+      }
     }
 
-    currentTask = null;
+    abortController = null;
+    running = false;
   };
 
   return {
     send(message: SegmentLoaderMessage) {
       if (destroyed) return;
 
-      if (currentTask) {
-        pendingMessage = message;
+      const allTasks = planTasks(message);
 
-        // Seek detection: if needed segments are completely disjoint from what
-        // the current task is loading, abort to restart at the new position.
-        if (taskSegmentIds.size > 0 && message.range) {
-          const buffered = getBufferedSegments(message.track.segments);
-          const needed = getSegmentsToLoad(message.track.segments, buffered, message.range.start);
-          if (needed.length > 0 && needed.every((s) => !taskSegmentIds.has(s.id))) {
-            abortController?.abort();
-          }
-        }
+      if (!running) {
+        if (allTasks.length === 0) return;
+        runScheduled(allTasks);
         return;
       }
 
-      runLoop(message);
+      // Determine whether the in-flight operation is still needed for the new plan.
+      const inFlightStillNeeded =
+        (inFlightSegmentId !== null &&
+          allTasks.some((t) => t.type === 'append-segment' && t.meta.id === inFlightSegmentId)) ||
+        (inFlightInitTrackId !== null &&
+          allTasks.some((t) => t.type === 'append-init' && t.meta.trackId === inFlightInitTrackId));
+
+      if (inFlightStillNeeded) {
+        // Continue: the in-flight operation covers something the new plan needs.
+        // Queue everything except the in-flight item — it will complete on its own.
+        pendingTasks = allTasks.filter(
+          (t) =>
+            !(t.type === 'append-segment' && t.meta.id === inFlightSegmentId) &&
+            !(t.type === 'append-init' && t.meta.trackId === inFlightInitTrackId)
+        );
+      } else {
+        // Preempt: in-flight work is not needed for the new plan. Abort and replan.
+        pendingTasks = allTasks;
+        abortController?.abort();
+      }
     },
 
     destroy() {
