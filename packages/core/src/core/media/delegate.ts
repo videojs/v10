@@ -53,10 +53,11 @@ export function MediaDelegateMixin<Base extends Constructor<any>, Delegate exten
   }
 
   return DelegateMedia as unknown as Constructor<
-    InstanceType<Base> & {
-      attach(target: EventTarget): void;
-      detach(): void;
-    }
+    InstanceType<Base> &
+      InstanceType<Delegate> & {
+        attach(target: EventTarget): void;
+        detach(): void;
+      }
   > &
     Omit<Base, 'prototype'>;
 }

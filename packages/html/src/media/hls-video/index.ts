@@ -25,4 +25,12 @@ export class HlsVideo extends HlsCustomMedia {
       this.src = newValue ?? '';
     }
   }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    if (!this.hasAttribute('keep-alive')) {
+      this.destroy();
+    }
+  }
 }

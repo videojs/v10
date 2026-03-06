@@ -28,6 +28,10 @@ export class HlsMediaDelegateBase implements MediaDelegate {
     this.#engine.detachMedia();
   }
 
+  destroy(): void {
+    this.#engine.destroy();
+  }
+
   set src(src: string) {
     this.#engine.loadSource(src);
   }
