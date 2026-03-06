@@ -128,6 +128,25 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
   // Last segment must be appended for each selected track
   if (!hasLastSegmentLoaded(state, owners)) return false;
 
+  // currentTime must have reached the last segment. Guards against re-ending
+  // the stream when a back-buffer remove() re-opens the MediaSource while the
+  // user is far from the end (remove() re-opens 'ended' → 'open' per MSE spec,
+  // same as appendBuffer()).
+  if (mediaElement) {
+    const videoTrack = hasVideoTrack ? getSelectedTrack(state, 'video') : undefined;
+    const audioTrack = hasAudioTrack ? getSelectedTrack(state, 'audio') : undefined;
+    const refTrack =
+      videoTrack && isResolvedTrack(videoTrack)
+        ? videoTrack
+        : audioTrack && isResolvedTrack(audioTrack)
+          ? audioTrack
+          : undefined;
+    if (refTrack && refTrack.segments.length > 0) {
+      const lastSeg = refTrack.segments[refTrack.segments.length - 1]!;
+      if (mediaElement.currentTime < lastSeg.startTime) return false;
+    }
+  }
+
   return true;
 }
 
