@@ -386,11 +386,13 @@ try {
   // ── Wire media element ───────────────────────────────────────────────────
   video.muted = INITIAL_MUTED;
   video.autoplay = INITIAL_AUTOPLAY;
+  // Set preload on the element BEFORE patching owners so syncPreloadAttribute
+  // reads the correct value rather than the hardcoded "none" from the HTML.
+  video.preload = INITIAL_PRELOAD;
 
   engine.owners.patch({ mediaElement: video });
   engine.state.patch({
     presentation: { url: INITIAL_SRC },
-    preload: INITIAL_PRELOAD,
   });
 
   log('✓ Orchestration started', 'success');
