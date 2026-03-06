@@ -69,6 +69,98 @@
         padding: 2px 0;
         border-bottom: 1px solid #eee;
       }
+      #rendition-picker,
+      #resolution-status {
+        margin: 20px 0;
+        padding: 15px;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+      #rendition-picker h2,
+      #resolution-status h2 {
+        margin-top: 0;
+        font-size: 14px;
+      }
+      #rendition-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .rendition-btn {
+        padding: 6px 12px;
+        cursor: pointer;
+        border: 2px solid #999;
+        background: #fff;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 11px;
+      }
+      .rendition-btn:hover {
+        border-color: #555;
+        background: #eee;
+      }
+      .rendition-btn.selected-abr {
+        border-color: #0070f3;
+        background: #e6f0ff;
+        font-weight: bold;
+      }
+      .rendition-btn.selected-manual {
+        border-color: #d97706;
+        background: #fef3c7;
+        font-weight: bold;
+      }
+      .abr-status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        font-size: 12px;
+      }
+      .mode-abr { color: #0070f3; font-weight: bold; }
+      .mode-manual { color: #d97706; font-weight: bold; }
+      .enable-abr-btn {
+        padding: 4px 10px;
+        font-size: 11px;
+        cursor: pointer;
+        border: 1px solid #0070f3;
+        background: #e6f0ff;
+        color: #0070f3;
+        border-radius: 4px;
+      }
+      .enable-abr-btn:hover { background: #cce0ff; }
+      #resolution-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .resolution-item {
+        padding: 4px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 11px;
+      }
+      .resolution-item.resolved {
+        border-color: green;
+        color: green;
+      }
+      .resolution-item.unresolved {
+        border-color: #aaa;
+        color: #888;
+      }
+      #now-playing-quality {
+        font-size: 12px;
+        font-family: monospace;
+        color: #555;
+        margin-top: -14px;
+        margin-bottom: 10px;
+      }
+      #now-playing-quality.has-quality {
+        color: #0070f3;
+        font-weight: bold;
+      }
       .error {
         color: red;
         font-weight: bold;
@@ -86,13 +178,25 @@
     <p>Testing segment loading pipeline with real Mux HLS stream</p>
 
     <div id="controls">
-      <button id="play">Play</button>
-      <button id="pause">Pause</button>
-      <button id="inspect">Inspect State</button>
-      <button id="clearLogs">Clear Logs</button>
+      <button type="button" id="play">Play</button>
+      <button type="button" id="pause">Pause</button>
+      <button type="button" id="inspect">Inspect State</button>
+      <button type="button" id="clearLogs">Clear Logs</button>
     </div>
 
-    <video id="video" controls></video>
+    <!-- biome-ignore lint/a11y/useMediaCaption: test harness, captions managed by SPF -->
+    <video id="video" controls preload="none"></video>
+    <div id="now-playing-quality"></div>
+
+    <div id="rendition-picker">
+      <h2>Video Renditions</h2>
+      <div id="rendition-buttons">Waiting for presentation…</div>
+    </div>
+
+    <div id="resolution-status">
+      <h2>Track Resolution Status</h2>
+      <div id="resolution-list">Waiting for presentation…</div>
+    </div>
 
     <div id="state">
       <h2>State Inspector</h2>
