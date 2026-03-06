@@ -119,6 +119,11 @@ mark {
     background-repeat: repeat-x;
     background-size: auto 100%;
     animation: grow-bar 1.5s ease-out forwards;
+    animation-play-state: paused;
+  }
+
+  [data-animate] .data-bar {
+    animation-play-state: running;
   }
 
   .data-bar-orange {
@@ -131,6 +136,11 @@ mark {
     background-repeat: repeat-y;
     background-size: 100% 6px;
     animation: horizontal-grow-bar 1.5s ease-out forwards;
+    animation-play-state: paused;
+  }
+
+  [data-animate] .horizontal-bars {
+    animation-play-state: running;
   }
 
   .horizontal-bars-orange {
@@ -294,6 +304,11 @@ mark {
   --text-h1--line-height: 1.1;
   --text-h1--letter-spacing: var(--tracking-tightest);
   --text-h1--font-weight: var(--font-weight-bold);
+
+  --text-h15: 2.375rem; /* 38px */
+  --text-h15--line-height: 1.1;
+  --text-h15--letter-spacing: var(--tracking-tightest);
+  --text-h15--font-weight: var(--font-weight-bold);
 
   --text-h2: 1.75rem; /* 28px */
   --text-h2--line-height: 1;

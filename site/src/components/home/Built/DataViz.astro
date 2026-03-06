@@ -1,11 +1,13 @@
 ---
 import clsx from 'clsx';
+import { AnimatedBars } from '../AnimatedBars';
 
 const seconds = [0, 5, 10, 15, 20];
 ---
 
-<div
-  class="rounded-xs border border-dark-manila bg-faded-black p-5 md:p-10 lg:p-15"
+<AnimatedBars
+  className="rounded-xs border border-dark-manila bg-faded-black p-5 md:p-10 lg:p-15"
+  client:idle
 >
   <header class="text-p2">
     <h3 class="font-bold text-light-manila">Download speeds</h3>
@@ -78,4 +80,4 @@ const seconds = [0, 5, 10, 15, 20];
       ))
     }
   </div>
-</div>
+</AnimatedBars>

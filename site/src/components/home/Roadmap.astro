@@ -1,6 +1,7 @@
 ---
 import clsx from 'clsx';
 import Check from '../icons/check.svg?react';
+import { AnimatedBars } from './AnimatedBars';
 
 const milestones = [
   {
@@ -75,7 +76,10 @@ const milestones = [
           </div>
         ))
       }
-      <div class="absolute left-0 mt-5 hidden w-full md:block">
+      <AnimatedBars
+        className="absolute left-0 mt-5 hidden w-full md:block"
+        client:idle
+      >
         <div
           class="data-bar absolute top-3 left-0 z-0 h-8 w-full brightness-50 dark:brightness-100"
         >
@@ -93,8 +97,11 @@ const milestones = [
           class="absolute top-3 right-0 z-4 h-10 w-50 bg-linear-to-r from-transparent to-light-manila dark:to-faded-black"
         >
         </div>
-      </div>
-      <div class="absolute top-0 left-0 mt-0 block h-full w-10 md:hidden">
+      </AnimatedBars>
+      <AnimatedBars
+        className="absolute top-0 left-0 mt-0 block h-full w-10 md:hidden"
+        client:idle
+      >
         <div
           class="horizontal-bars absolute top-0 left-0 z-0 h-8 w-full brightness-50 dark:brightness-100"
         >
@@ -112,7 +119,7 @@ const milestones = [
           class="absolute top-0 right-0 z-4 h-20 w-10 bg-linear-to-b from-light-manila to-transparent dark:from-faded-black"
         >
         </div>
-      </div>
+      </AnimatedBars>
     </div>
   </div>
 </section>
