@@ -13,9 +13,9 @@ export interface TransitionApi {
 /**
  * Manages open/close transition lifecycle via `createState`.
  *
- * **Open:** patches `{ active: true, status: 'starting' }`, then after one
- * RAF patches `{ status: 'idle' }` so the browser paints the initial
- * state before transitioning.
+ * **Open:** patches `{ active: true, status: 'starting' }`, then after a
+ * double-RAF patches `{ status: 'idle' }` so the browser paints the
+ * initial ("from") state before transitioning.
  *
  * **Close:** patches `{ status: 'ending' }` (keeping `active: true` so the
  * element stays mounted), then after a double-RAF waits for
@@ -39,9 +39,12 @@ export function createTransition(): TransitionApi {
     return new Promise<void>((resolve) => {
       rafId1 = requestAnimationFrame(() => {
         rafId1 = 0;
-        if (destroyed || !state.current.active) return resolve();
-        state.patch({ status: 'idle' });
-        resolve();
+        rafId2 = requestAnimationFrame(() => {
+          rafId2 = 0;
+          if (destroyed || !state.current.active) return resolve();
+          state.patch({ status: 'idle' });
+          resolve();
+        });
       });
     });
   }

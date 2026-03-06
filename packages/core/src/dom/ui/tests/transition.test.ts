@@ -16,7 +16,7 @@ describe('createTransition', () => {
       expect(handler.state.current).toEqual({ active: true, status: 'starting' });
     });
 
-    it('transitions to idle after one RAF', async () => {
+    it('transitions to idle after a double-RAF', async () => {
       const handler = createTransition();
 
       const promise = handler.open();
