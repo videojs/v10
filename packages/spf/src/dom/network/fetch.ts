@@ -55,6 +55,21 @@ export async function fetchResolvable(addressable: AddressableObject, options?: 
 }
 
 /**
+ * Fetch resolvable as bytes.
+ *
+ * Convenience wrapper around fetchResolvable that resolves the body as an
+ * ArrayBuffer. Use this when you need the raw bytes (e.g. segment appends).
+ * For text or streaming consumption, use fetchResolvable directly.
+ */
+export async function fetchResolvableBytes(
+  addressable: AddressableObject,
+  options?: RequestInit
+): Promise<ArrayBuffer> {
+  const response = await fetchResolvable(addressable, options);
+  return response.arrayBuffer();
+}
+
+/**
  * Extract text from Response.
  *
  * Accepts minimal Response-like object (just needs text() method).

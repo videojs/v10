@@ -1,6 +1,7 @@
 import type { BandwidthState } from '../core/abr/bandwidth-estimator';
 import { createEventStream } from '../core/events/create-event-stream';
 import { calculatePresentationDuration } from '../core/features/calculate-presentation-duration';
+import { switchQuality } from '../core/features/quality-switching';
 import {
   type PresentationAction,
   resolvePresentation,
@@ -15,7 +16,6 @@ import {
 } from '../core/features/select-tracks';
 import { createState } from '../core/state/create-state';
 import { endOfStream } from './features/end-of-stream';
-import type { BufferState } from './features/load-segments';
 import { loadSegments } from './features/load-segments';
 import type { TextTrackBufferState } from './features/load-text-track-cues';
 import { loadTextTrackCues } from './features/load-text-track-cues';
@@ -26,6 +26,7 @@ import { syncTextTrackModes } from './features/sync-text-track-modes';
 import { trackCurrentTime } from './features/track-current-time';
 import { trackPlaybackInitiated } from './features/track-playback-initiated';
 import { updateDuration } from './features/update-duration';
+import type { SourceBufferActor } from './media/source-buffer-actor';
 import { destroyVttParser } from './text/parse-vtt-segment';
 
 /**
@@ -91,9 +92,6 @@ export interface PlaybackEngineState {
   // Bandwidth estimation state
   bandwidthState?: BandwidthState;
 
-  // Buffer state (tracks loaded segments per SourceBuffer)
-  bufferState?: BufferState;
-
   // Text track buffer state (tracks loaded VTT segments per text track ID)
   textBufferState?: TextTrackBufferState;
 
@@ -115,9 +113,11 @@ export interface PlaybackEngineOwners {
   // MediaSource
   mediaSource?: MediaSource;
 
-  // SourceBuffers
+  // SourceBuffers and their actors (created together by setupSourceBuffer)
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
+  videoBufferActor?: SourceBufferActor;
+  audioBufferActor?: SourceBufferActor;
 
   // Text tracks (track elements by ID)
   textTracks?: Map<string, HTMLTrackElement>;
@@ -191,10 +191,6 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
       slowEstimate: 0,
       slowTotalWeight: 0,
       bytesSampled: 0,
-    },
-    bufferState: {
-      video: { segments: [], completed: false },
-      audio: { segments: [], completed: false },
     },
   });
   const owners = createState<PlaybackEngineOwners>({});
@@ -274,7 +270,28 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     setupSourceBuffer({ state, owners }, { type: 'audio' }),
 
     // 5.5. Track currentTime from mediaElement (feeds forward buffer management)
+    //
+    // NOTE: SourceBufferActor wiring is intentionally absent here in Phase 1.
+    //
+    // Attempting to wire actors into the engine at this layer revealed a
+    // brittleness in the current architecture: every patch to `owners` —
+    // regardless of which field changed — wakes up ALL combineLatest subscribers
+    // (loadSegments, endOfStream, etc.). Storing actor references in owners
+    // caused loadSegments to re-evaluate mid-task, store a spurious pending
+    // state, and run a second loading cycle on completion.
+    //
+    // This means any future feature that needs to introduce new reactive state
+    // alongside SourceBuffers faces the same hazard. The right fix is for
+    // loadSegments (and other orchestrations) to route their MSE operations
+    // through the actor directly, at which point the actor lifecycle is
+    // co-located with its consumer rather than managed centrally here.
+    //
+    // Actor wiring will be introduced in Phase 2 as part of the loadSegments
+    // refactor. See .claude/plans/spf/buffer-state-shadow-actual-model.md.
     trackCurrentTime({ state, owners }),
+
+    // 5.75. ABR quality switching (reacts to bandwidth samples from loadSegments)
+    switchQuality({ state }),
 
     // 6. Load segments (when SourceBuffer ready and track resolved)
     loadSegments({ state, owners }, { type: 'video' }),
