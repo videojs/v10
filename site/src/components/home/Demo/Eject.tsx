@@ -43,22 +43,13 @@ export default function EjectDemo({ className }: { className?: string }) {
             <span className="hidden sm:inline">JavaScript</span>
           </Tab>
         </TabsList>
-        <TabsPanel
-          variant="expanded"
-          value="html"
-          initial
-          className="bg-faded-black scrollbar-white dark:bg-soot m-2.5 mt-0"
-        >
+        <TabsPanel variant="expanded" value="html" initial className="bg-faded-black dark:bg-soot m-2.5 mt-0">
           <ClientCode code={generateHTMLCode($skin)} lang="html" />
         </TabsPanel>
-        <TabsPanel variant="expanded" value="css" className="bg-faded-black scrollbar-white dark:bg-soot m-2.5 mt-0">
+        <TabsPanel variant="expanded" value="css" className="bg-faded-black dark:bg-soot m-2.5 mt-0">
           <ClientCode code={generateCSS($skin)} lang="css" />
         </TabsPanel>
-        <TabsPanel
-          variant="expanded"
-          value="javascript"
-          className="bg-faded-black scrollbar-white dark:bg-soot m-2.5 mt-0"
-        >
+        <TabsPanel variant="expanded" value="javascript" className="bg-faded-black dark:bg-soot m-2.5 mt-0">
           <ClientCode code={generateJS($skin)} lang="javascript" />
         </TabsPanel>
       </TabsRoot>
@@ -75,15 +66,10 @@ export default function EjectDemo({ className }: { className?: string }) {
           CSS
         </Tab>
       </TabsList>
-      <TabsPanel
-        variant="expanded"
-        value="react"
-        initial
-        className="bg-faded-black scrollbar-white dark:bg-soot m-2.5 mt-0"
-      >
+      <TabsPanel variant="expanded" value="react" initial className="bg-faded-black dark:bg-soot m-2.5 mt-0">
         <ClientCode code={generateReactCode($skin)} lang="tsx" />
       </TabsPanel>
-      <TabsPanel variant="expanded" value="css" className="bg-faded-black scrollbar-white dark:bg-soot m-2.5 mt-0">
+      <TabsPanel variant="expanded" value="css" className="bg-faded-black dark:bg-soot m-2.5 mt-0">
         <ClientCode code={generateReactCSS($skin)} lang="css" />
       </TabsPanel>
     </TabsRoot>

@@ -23,7 +23,7 @@ const { class: className } = Astro.props;
 <SearchClient
   client:load
   className={clsx(
-    "inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-full border-faded-black px-2 sm:border dark:border-manila-light intent:border-manila-dark",
+    "inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-full border-faded-black px-2 sm:border dark:border-manila-dark intent:border-manila-dark dark:intent:border-warm-gray",
     className,
   )}
   baseUrl={baseUrl}
@@ -82,23 +82,20 @@ const { class: className } = Astro.props;
   }
 
   .dark #pagefind-ui {
-    --pagefind-ui-text: var(--color-light-80);
-    --pagefind-ui-background: var(
-      --color-dark-100
-    ); /* TODO(old-color): dark-100 */
-    --pagefind-ui-border: var(--color-dark-80); /* TODO(old-color): dark-80 */
+    --pagefind-ui-text: var(--color-manila-light);
+    --pagefind-ui-background: var(--color-warm-gray);
+    --pagefind-ui-border: var(--color-soot);
   }
 
   #pagefind-ui .pagefind-ui__form::before {
     -webkit-mask-image: var(--search-icon-url);
     mask-image: var(--search-icon-url);
   }
-  /* TODO(old-type): text-lg */
   #pagefind-ui .pagefind-ui__search-input {
-    font-size: var(--text-lg);
-    line-height: var(--text-lg--line-height);
-    letter-spacing: var(--text-lg--letter-spacing);
-    font-weight: var(--text-lg--font-weight);
+    font-size: var(--text-p1);
+    line-height: var(--text-p1--line-height);
+    letter-spacing: var(--text-p1--letter-spacing);
+    font-weight: var(--text-p1--font-weight);
   }
   #pagefind-ui .pagefind-ui__filter-block {
     border-bottom: solid 1px var(--pagefind-ui-border);

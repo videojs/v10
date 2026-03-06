@@ -16,8 +16,7 @@ const { framework, docTitles, class: className } = Astro.props;
 const filteredSidebar = filterSidebar(framework);
 ---
 
-{/* TODO(old-color): light-80, dark-100 */}
-<div class={clsx("bg-light-80 dark:bg-dark-100", className)}>
+<div class={clsx("bg-manila-light dark:bg-faded-black", className)}>
   <slot />
   <PreferenceUpdater client:idle currentFramework={framework} />
   <nav class="p-6">

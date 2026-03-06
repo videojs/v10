@@ -70,8 +70,7 @@ const hasDetail = Boolean(detailedType || description);
           >
             {description && (
               <>
-                {/* TODO(old-color): dark-40, light-40 */}
-                <dt class="text-dark-40 dark:text-light-40">Description</dt>
+                <dt class="font-bold">Description</dt>
                 <dd>
                   <InlineMarkdown content={description} />
                 </dd>
@@ -80,8 +79,7 @@ const hasDetail = Boolean(detailedType || description);
 
             {detailedType && (
               <>
-                {/* TODO(old-color): dark-40, light-40 */}
-                <dt class="text-dark-40 dark:text-light-40">Type</dt>
+                <dt class="font-bold">Type</dt>
                 <dd>
                   <MarkdownCode>{detailedType}</MarkdownCode>
                 </dd>

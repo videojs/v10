@@ -39,7 +39,7 @@ const renderTitle = title ?? defaultTitles[type];
 <aside
   class={twMerge(
     clsx(
-      "mx-auto my-6 flex w-full max-w-3xl overflow-hidden rounded-xs border border-manila-75 dark:border-manila-dark",
+      "mx-auto my-6 flex w-full max-w-3xl overflow-hidden rounded-xs border border-manila-75 dark:border-warm-gray",
     ),
     className,
   )}
@@ -69,8 +69,7 @@ const renderTitle = title ?? defaultTitles[type];
       />
     </div>
     <div class="min-w-0 flex-1">
-      {/* TODO(old-type): text-md */}
-      <p class="text-md mb-2 font-bold">{renderTitle}</p>
+      <p class="mb-2 font-bold">{renderTitle}</p>
       <div class="[&>*:last-child]:mb-0! [&>.my-12]:my-4 [&>.my-6]:my-2">
         <slot />
       </div>

@@ -17,19 +17,16 @@ interface Props {
 const { files } = Astro.props;
 ---
 
-{/* TODO(old-color): light-40, dark-80 */}
 <div
-  class="border-light-40 dark:border-dark-80 mx-auto my-6 flex w-full max-w-3xl flex-col overflow-hidden rounded-xs border"
+  class="mx-auto my-6 flex w-full max-w-3xl flex-col overflow-hidden rounded-xs border border-faded-black dark:border-manila-dark"
 >
-  {/* TODO(old-color): light-80, dark-100 */}
-  <div class="bg-light-80 dark:bg-dark-100 relative z-20">
+  <div class="relative z-20 bg-manila-light dark:bg-faded-black">
     <slot />
   </div>
-  {/* TODO(old-color): light-40, dark-80 */}
   <TabsRoot
     client:idle
     maxWidth={false}
-    className="border-light-40 dark:border-dark-80 my-0 rounded-none border-0 border-t"
+    className="my-0 rounded-none border-0 border-t border-faded-black dark:border-manila-dark"
   >
     <TabsList client:idle label="Demo source code">
       {

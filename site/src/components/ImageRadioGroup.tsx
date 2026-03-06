@@ -53,12 +53,10 @@ export default function ImageRadioGroup<T extends string = string>({
             <div
               className={clsx(
                 'relative flex items-center justify-center aspect-square w-full rounded-xs',
-                'border border-manila-75 dark:border-manila-75',
+                'border border-manila-75 dark:border-warm-gray',
                 isSelected
-                  ? 'bg-manila-dark'
-                  : !isDisabled &&
-                      // TODO(old-color): light-80, dark-100, light-60
-                      'bg-light-80 dark:bg-dark-100 group-intent:bg-light-60/50 dark:group-intent:bg-manila-50',
+                  ? 'bg-manila-75 dark:bg-warm-gray'
+                  : !isDisabled && 'group-intent:bg-manila-50 dark:group-intent:bg-soot',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bright-yellow/50'
               )}
             >

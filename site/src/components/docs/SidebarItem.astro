@@ -59,9 +59,7 @@ function getGroupRotate(depth: number) {
           "cursor-pointer",
           depth === 0 ? "font-display text-h4 uppercase" : "text-p3",
           depth > 0 && "border-l pl-4",
-          isActive
-            ? "border-orange"
-            : "border-manila-75 dark:border-manila-dark",
+          isActive ? "border-orange" : "border-manila-75 dark:border-warm-gray",
           getGroupMargin(depth),
         ]}
         style={
@@ -91,7 +89,7 @@ function getGroupRotate(depth: number) {
         depth === 0 && "font-bold",
         depth > 0 && "border-l pl-4",
         depth > 0 && isActive && "font-bold",
-        isActive ? "border-orange" : "border-manila-75 dark:border-manila-dark",
+        isActive ? "border-orange" : "border-manila-75 dark:border-warm-gray",
       ]}
       style={`margin-left: calc(var(--spacing) * ${(depth - 1) * 4})`}
       href={`/docs/framework/${framework}/${item.slug}`}

@@ -7,8 +7,7 @@
  */
 export const shared = {
   a: 'underline intent:no-underline',
-  // TODO(old-color): light-100, dark-110, light-100, light-40, dark-80
-  code: 'border border-manila-75 bg-manila-25 dark:border-dark-80 px-1 rounded font-mono text-code normal-case',
+  code: 'border border-manila-75 bg-manila-25 dark:bg-soot dark:border-warm-gray px-1 rounded font-mono text-code normal-case',
   codeBlock: 'font-mono text-code',
   em: 'font-bold',
   li: 'text-p2',

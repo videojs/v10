@@ -184,7 +184,7 @@
 
   mark {
     background-color: var(--color-bright-yellow);
-    color: var(--color-dark-100); /* TODO(old-color): dark-100 */
+    color: var(--color-faded-black);
   }
 
   .dark * {
@@ -192,18 +192,8 @@
   }
 }
 
-@utility scrollbar-white {
-  scrollbar-width: thin;
+* {
   scrollbar-color: var(--color-manila-dark) transparent;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
 
   &::-webkit-scrollbar-thumb {
     background: var(--color-manila-dark);

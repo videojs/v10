@@ -112,7 +112,7 @@ export function TabsList({ label, children, variant = 'compact' }: TabsListProps
           target: '[role="tabpanel"]:not([hidden])',
         }}
         className={clsx(
-          'ml-auto sticky right-0 h-7 px-2.5 flex items-center justify-center cursor-pointer disabled:cursor-wait hover:bg-manila-dark rounded-xs'
+          'ml-auto sticky right-0 h-7 px-2.5 flex items-center justify-center cursor-pointer disabled:cursor-wait intent:bg-warm-gray rounded-xs'
         )}
         copied={<Check size={20} />}
       >
@@ -237,7 +237,9 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
           variant === 'expanded' && 'uppercase font-display',
           variant === 'expanded' && isActive && 'text-orange',
           variant === 'compact' && 'px-2.5 z-0 h-7',
-          variant === 'compact' && isActive ? 'bg-manila-50' : 'intent:bg-manila-dark',
+          variant === 'compact' && isActive
+            ? 'bg-manila-50 dark:bg-warm-gray'
+            : 'intent:bg-manila-dark dark:intent:bg-soot',
           isHydrated ? 'cursor-pointer' : 'cursor-wait'
         )}
       >
@@ -303,7 +305,7 @@ export function TabsPanel({ value, children, initial, className, variant = 'comp
       hidden={!isActive}
       data-value={value}
       className={twMerge(
-        clsx('overflow-scroll p-6 max-h-96 flex-1', variant === 'compact' && 'bg-faded-black scrollbar-white'),
+        clsx('overflow-scroll p-6 max-h-96 flex-1', variant === 'compact' && 'bg-faded-black dark:bg-soot'),
         className
       )}
     >

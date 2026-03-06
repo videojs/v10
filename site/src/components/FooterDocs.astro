@@ -25,7 +25,7 @@ const { class: className } = Astro.props;
 
 <footer class:list={["mt-30 grid gap-3 pb-11 lg:mt-32 lg:pt-0", className]}>
   <nav
-    class="mb-2 items-start justify-between gap-3 border-faded-black px-5 pt-5 sm:mb-0 lg:flex-row lg:items-start lg:border-t lg:px-10 dark:border-manila-light"
+    class="mb-2 items-start justify-between gap-3 border-faded-black px-5 pt-5 sm:mb-0 lg:flex-row lg:items-start lg:border-t lg:px-10 dark:border-warm-gray"
   >
     <nav
       class="flex flex-col gap-0 text-faded-black lg:-ml-5 lg:flex-row dark:text-manila-light"
@@ -66,7 +66,7 @@ const { class: className } = Astro.props;
           <GitHub width="1.5em" height="1.5em" />
         </a>
         <div class="ml-auto">
-          <ThemeToggle client:visible />
+          <ThemeToggle client:idle />
         </div>
       </div>
     </nav>

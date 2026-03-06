@@ -10,9 +10,11 @@ type Props<Tag extends HTMLTag = 'tr'> = Polymorphic<{ as: Tag }> & {
 const { as: Tag = 'tr', class: className, ...props } = Astro.props;
 ---
 
-{/* TODO(old-color): light-40, dark-80 */}
 <Tag
-  class={twMerge("border-b border-manila-dark dark:border-dark-80", className)}
+  class={twMerge(
+    "border-b border-manila-dark dark:border-warm-gray",
+    className,
+  )}
   {...props}
 >
   <slot />

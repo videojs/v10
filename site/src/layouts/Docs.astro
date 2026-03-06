@@ -60,10 +60,9 @@ const docsSidebarId = 'docs-sidebar';
         docTitles={docTitles}
       />
     </NavBarDocs>
-    {/* TODO(old-color): dark-80 */}
     <aside
       id={docsSidebarId}
-      class="dark:border-dark-80 sticky z-10 hidden flex-col overflow-y-auto border-manila-75 md:flex md:border-r"
+      class="sticky z-10 hidden flex-col overflow-y-auto border-manila-75 md:flex md:border-r dark:border-warm-gray"
       style="top: var(--nav-h); max-height: calc(100vh - var(--nav-h));"
     >
       <DocsSidebar framework={framework} docTitles={docTitles} class="flex-1">

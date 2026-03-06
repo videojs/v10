@@ -32,7 +32,7 @@ export function Select<T extends string = string>({
       <BaseSelect.Trigger
         className={twMerge(
           clsx(
-            'inline-flex items-center gap-2 bg-manila-50 dark:bg-manila-dark intent:bg-manila-dark text-faded-black dark:text-manila-light border border-manila-dark rounded-xs text-p3 p-2 text-left'
+            'inline-flex items-center gap-2 bg-manila-50 dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot border border-manila-dark dark:border-warm-gray rounded-xs text-p3 p-2 text-left'
           ),
           className
         )}
@@ -50,7 +50,7 @@ export function Select<T extends string = string>({
         <BaseSelect.Positioner sideOffset={4} className="z-50">
           <BaseSelect.Popup
             className={clsx(
-              'border border-manila-dark rounded-xs bg-manila-light dark:bg-dark-80 shadow-xl text-p3',
+              'border border-manila-dark dark:border-soot rounded-xs bg-manila-light dark:bg-soot shadow-xl text-p3',
               'overflow-y-auto'
             )}
             style={
@@ -70,10 +70,8 @@ export function Select<T extends string = string>({
                     'flex items-center gap-2 p-2',
                     option.disabled
                       ? 'opacity-50 cursor-default'
-                      : // TODO(old-color): light-80, dark-100
-                        'cursor-pointer intent:bg-manila-75 dark:intent:bg-dark-100',
-                    // TODO(old-color): light-80, dark-100
-                    option.value === value && 'bg-manila-75 dark:bg-dark-100'
+                      : 'cursor-pointer intent:bg-manila-75 dark:intent:bg-warm-gray',
+                    option.value === value && 'bg-manila-75 dark:bg-warm-gray'
                   )}
                 >
                   <BaseSelect.ItemText>{option.label}</BaseSelect.ItemText>

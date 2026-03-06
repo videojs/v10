@@ -16,18 +16,16 @@ const { as: Tag = 'table', maxWidth = true, outerClass, class: className, ...pro
   class={twMerge(clsx("my-12", maxWidth && "mx-auto max-w-3xl"), outerClass)}
 >
   <div class="-mx-6 flex overflow-x-auto">
-    {/* TODO(old-color): light-80, dark-100 */}
     <div
-      class="dark:from-dark-100 pointer-events-none sticky left-0 z-10 shrink-0 basis-6 bg-linear-to-r from-manila-light to-transparent"
+      class="pointer-events-none sticky left-0 z-10 shrink-0 basis-6 bg-linear-to-r from-manila-light to-transparent dark:from-faded-black"
       aria-hidden="true"
     >
     </div>
     <Tag class={twMerge("w-full border-collapse", className)} {...props}>
       <slot />
     </Tag>
-    {/* TODO(old-color): manila-light, dark-100 */}
     <div
-      class="dark:from-dark-100 pointer-events-none sticky right-0 z-10 shrink-0 basis-6 bg-linear-to-l from-manila-light to-transparent"
+      class="pointer-events-none sticky right-0 z-10 shrink-0 basis-6 bg-linear-to-l from-manila-light to-transparent dark:from-faded-black"
       aria-hidden="true"
     >
     </div>
