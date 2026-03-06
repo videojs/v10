@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.0.0-alpha.9](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-alpha.8...@videojs/utils@10.0.0-alpha.9) (2026-03-06)
+
+
+### Features
+
+* add subtitles handling + captions core ([#692](https://github.com/videojs/v10/issues/692)) ([5c11606](https://github.com/videojs/v10/commit/5c116065a91ed04753bb2cb83e72dd6471f75ced))
+
+
+### Bug Fixes
+
+* textTrackList and optimize ([#760](https://github.com/videojs/v10/issues/760)) ([04e98f4](https://github.com/videojs/v10/commit/04e98f4007dcc5957ff4b646482036da49e1efd4))
+
 ## [10.0.0-alpha.8](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-alpha.7...@videojs/utils@10.0.0-alpha.8) (2026-03-05)
 
 
