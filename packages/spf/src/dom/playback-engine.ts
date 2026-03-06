@@ -92,10 +92,10 @@ export interface PlaybackEngineState {
   // Bandwidth estimation state
   bandwidthState?: BandwidthState;
 
-  // ABR control — set to false to suppress automatic quality switching (manual selection mode).
+  // ABR control — set to true to suppress automatic quality switching (manual selection mode).
   // TODO: replace with separate manualVideoTrackId / abrVideoTrackId fields so the two
   // concerns don't share a field; see quality-switching.ts for the full design note.
-  abrEnabled?: boolean;
+  abrDisabled?: boolean;
 
   // Text track buffer state (tracks loaded VTT segments per text track ID)
   textBufferState?: TextTrackBufferState;
