@@ -236,20 +236,20 @@ export function loadSegments(
     }
   );
 
-  const fetchBytes = createTrackedFetch(
-    throughput,
-    // Only bridge video samples to shared bandwidthState. Audio segments are
-    // small and TTFB-dominated — mixing them in produces brief low-estimate
-    // spikes that cause spurious ABR quality flickers.
-    type === 'video' && initialBandwidth !== undefined
-      ? (next) => {
-          state.patch({ bandwidthState: next });
-          // Flush immediately so switchQuality sees the new estimate before the
-          // next segment fetch starts, rather than waiting for the microtask queue.
-          state.flush();
-        }
-      : undefined
-  );
+  const fetchBytes =
+    type === 'video'
+      ? createTrackedFetch(
+          throughput,
+          initialBandwidth !== undefined
+            ? (next) => {
+                state.patch({ bandwidthState: next });
+                // Flush immediately so switchQuality sees the new estimate before the
+                // next segment fetch starts, rather than waiting for the microtask queue.
+                state.flush();
+              }
+            : undefined
+        )
+      : fetchResolvableBytes;
 
   const segmentLoader = createState<SegmentLoaderActor | undefined>(undefined);
 
