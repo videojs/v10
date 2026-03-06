@@ -54,6 +54,8 @@ export class PopoverElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+    if (this.destroyed) return;
+
     this.#disconnect = new AbortController();
 
     this.#popover = createPopover({
@@ -97,11 +99,14 @@ export class PopoverElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#cleanupTrigger();
-    this.#popover?.destroy();
-    this.#popover = null;
     this.#disconnect?.abort();
     this.#disconnect = null;
+  }
+
+  override destroyCallback(): void {
+    this.#cleanupTrigger();
+    this.#popover?.destroy();
+    super.destroyCallback();
   }
 
   protected override willUpdate(changed: PropertyValues): void {
