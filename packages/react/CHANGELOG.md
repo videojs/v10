@@ -1,5 +1,32 @@
 # Changelog
 
+## [10.0.0-alpha.9](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-alpha.8...@videojs/react@10.0.0-alpha.9) (2026-03-06)
+
+
+### Features
+
+* add subtitles handling + captions core ([#692](https://github.com/videojs/v10/issues/692)) ([5c11606](https://github.com/videojs/v10/commit/5c116065a91ed04753bb2cb83e72dd6471f75ced))
+* **html:** add alert dialog element ([#741](https://github.com/videojs/v10/issues/741)) ([5fc52aa](https://github.com/videojs/v10/commit/5fc52aa969292a8b8f636b532ac5ff27b082b222))
+* **react:** add alert dialog component ([#739](https://github.com/videojs/v10/issues/739)) ([536c86d](https://github.com/videojs/v10/commit/536c86d9d1b648f4e1b94b7a55b17735cc0ea03c))
+* **react:** add alert dialog to video skin ([#747](https://github.com/videojs/v10/issues/747)) ([5dfc67e](https://github.com/videojs/v10/commit/5dfc67ed02d92512b500c4461898050988e291a8))
+
+
+### Bug Fixes
+
+* **ci:** rework bundle size report ([#745](https://github.com/videojs/v10/issues/745)) ([9f456f5](https://github.com/videojs/v10/commit/9f456f572f340f88b7e3e57316dd284e48631f78))
+* destroy hls.js instance on media unmount ([#749](https://github.com/videojs/v10/issues/749)) ([c4e8bbd](https://github.com/videojs/v10/commit/c4e8bbd3a2bcb66027c64faf8de0ec61d22c84fa))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-alpha.9
+    * @videojs/store bumped to 10.0.0-alpha.9
+    * @videojs/utils bumped to 10.0.0-alpha.9
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-alpha.9
+
 ## [10.0.0-alpha.8](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-alpha.7...@videojs/react@10.0.0-alpha.8) (2026-03-05)
 
 
