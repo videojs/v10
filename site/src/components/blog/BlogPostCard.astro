@@ -17,12 +17,12 @@ const { post, authors, asLink } = Astro.props;
   <a href={`/blog/${post.id}`} class="group grid max-w-3xl">
     <time
       datetime={post.data.pubDate.toISOString()}
-      class="text-dark-40 dark:text-light-40 mb-2"
+      class="mb-2 text-dark-40 dark:text-light-40"
     >
       <FormattedDate date={post.data.pubDate} />
     </time>
     <div class="mb-3">
-      <h2 class="text-lg font-medium md:text-h4 group-intent:underline mb-1">
+      <h2 class="text-lg mb-1 font-medium group-intent:underline md:text-h4">
         {post.data.title}
       </h2>
       <p class="font-medium text-dark-40 dark:text-light-40">

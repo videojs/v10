@@ -113,13 +113,13 @@ const jsonLdSchema = createTechArticleSchema({
       <Selectors client:idle currentFramework={framework} currentSlug={slug} />
     </div>
     <div
-      class="sticky overflow-y-auto z-30"
+      class="sticky z-30 overflow-y-auto"
       style="grid-area: toc; top: var(--nav-h); max-height: calc(100vh - var(--nav-h));"
     >
       <TableOfContents client:idle headings={filteredHeadings} />
     </div>
     <div
-      class="@container px-6 lg:px-12 flex flex-col"
+      class="@container flex flex-col px-6 lg:px-12"
       style="grid-area: article;"
     >
       <article
@@ -134,8 +134,8 @@ const jsonLdSchema = createTechArticleSchema({
       >
         <header
           class:list={[
-            "border-b border-light-40 dark:border-dark-80 max-w-3xl mx-auto py-8 mb-8",
-            "flex flex-col lg:flex-row gap-4 items-start lg:items-end justify-between",
+            "mx-auto mb-8 max-w-3xl border-b border-light-40 py-8 dark:border-dark-80",
+            "flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-end",
           ]}
         >
           <div>

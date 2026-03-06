@@ -24,7 +24,7 @@ const { class: className, dark } = Astro.props;
 <SearchClient
   client:load
   className={clsx(
-    "inline-flex items-center gap-2 cursor-pointer min-h-6 px-2 sm:border intent:border-current rounded-full border-faded-black dark:border-light-manila",
+    "inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-full border-faded-black px-2 sm:border dark:border-light-manila intent:border-current",
     className,
   )}
   baseUrl={baseUrl}
@@ -34,11 +34,11 @@ const { class: className, dark } = Astro.props;
     "--search-icon-url": `url('data:image/svg+xml;utf8,${encodeURIComponent(searchIconString)}')`,
   } as React.CSSProperties}
 >
-  <SearchIcon class="w-4 h-4 sm:w-3 sm:h-3" />
-  <kbd data-platform-key="default" class="font-sans text-sm hidden sm:inline"
+  <SearchIcon class="h-4 w-4 sm:h-3 sm:w-3" />
+  <kbd data-platform-key="default" class="text-sm hidden font-sans sm:inline"
     >Ctrl K</kbd
   >
-  <kbd data-platform-key="mac" class="font-sans text-sm hidden sm:inline"
+  <kbd data-platform-key="mac" class="text-sm hidden font-sans sm:inline"
     >⌘K</kbd
   >
 </SearchClient>

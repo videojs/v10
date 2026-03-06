@@ -5,28 +5,28 @@ const seconds = [0, 5, 10, 15, 20];
 ---
 
 <div
-  class="bg-faded-black border border-dark-manila p-5 md:p-10 lg:p-15 rounded-xs"
+  class="rounded-xs border border-dark-manila bg-faded-black p-5 md:p-10 lg:p-15"
 >
   <header class="text-p2">
     <h3 class="font-bold text-light-manila">Download speeds</h3>
-    <span class="text-dark-manila whitespace-nowrap"
+    <span class="whitespace-nowrap text-dark-manila"
       >(based on slow 4G connection)</span
     >
   </header>
   <p
-    class="inline-block mt-6 md:hidden text-h5 items-center py-0.5 px-8 rounded-full bg-faded-black border border-light-manila text-center text-light-manila font-display-extended uppercase font-bold"
+    class="mt-6 inline-block items-center rounded-full border border-light-manila bg-faded-black px-8 py-0.5 text-center font-display-extended text-h5 font-bold text-light-manila uppercase md:hidden"
   >
     VJS 8
   </p>
-  <div class="mb-2 mt-4 md:mt-5 md:mb-2.5 w-full data-bar"></div>
+  <div class="data-bar mt-4 mb-2 w-full md:mt-5 md:mb-2.5"></div>
   <div class="flex items-center gap-2.5">
     <p
-      class="hidden md:flex min-w-30 text-h5 items-center py-0.5 justify-center rounded-full bg-faded-black border border-light-manila text-center text-light-manila font-display-extended uppercase font-bold"
+      class="hidden min-w-30 items-center justify-center rounded-full border border-light-manila bg-faded-black py-0.5 text-center font-display-extended text-h5 font-bold text-light-manila uppercase md:flex"
     >
       VJS 8
     </p>
     <p
-      class="text-h5 text-center text-light-manila font-display-extended uppercase flex gap-1 lg:gap-2.5"
+      class="flex gap-1 text-center font-display-extended text-h5 text-light-manila uppercase lg:gap-2.5"
     >
       <span class="font-bold">3.96s</span>
       <span>/</span>
@@ -34,24 +34,24 @@ const seconds = [0, 5, 10, 15, 20];
     </p>
   </div>
   <p
-    class="inline-block mt-6 md:hidden text-h5 items-center py-0.5 px-8 rounded-full bg-faded-black border text-orange text-center border-orange font-display-extended uppercase font-bold"
+    class="mt-6 inline-block items-center rounded-full border border-orange bg-faded-black px-8 py-0.5 text-center font-display-extended text-h5 font-bold text-orange uppercase md:hidden"
   >
     VJS 10
   </p>
   <div
-    class="mb-2 mt-4 md:mt-5 md:mb-2.5 data-bar data-bar-orange"
+    class="data-bar data-bar-orange mt-4 mb-2 md:mt-5 md:mb-2.5"
     style="max-width: 32.25%"
   >
   </div>
 
   <div class="flex items-center gap-2.5">
     <p
-      class="hidden md:flex min-w-30 items-center text-h5 py-0 justify-center rounded-full bg-faded-black border border-orange text-center text-orange font-display-extended uppercase font-bold"
+      class="hidden min-w-30 items-center justify-center rounded-full border border-orange bg-faded-black py-0 text-center font-display-extended text-h5 font-bold text-orange uppercase md:flex"
     >
       VJS 10
     </p>
     <p
-      class="text-h5 2xl text-center text-orange font-display-extended uppercase flex gap-1 lg:gap-2.5"
+      class="2xl flex gap-1 text-center font-display-extended text-h5 text-orange uppercase lg:gap-2.5"
     >
       <span class="font-bold">1.29s</span>
       <span>/</span>
@@ -59,22 +59,22 @@ const seconds = [0, 5, 10, 15, 20];
     </p>
   </div>
 
-  <div class="flex justify-between w-full px-1 pt-4 pb-2">
+  <div class="flex w-full justify-between px-1 pt-4 pb-2">
     {
       Array.from({ length: 21 }, (_, i) => (
         <div
           class={clsx(
-            "w-px h-4",
+            "h-4 w-px",
             seconds.includes(i) ? "bg-light-manila" : "bg-warm-gray",
           )}
         />
       ))
     }
   </div>
-  <div class="flex justify-between -mx-1.5" style="width: calc(100% + 0.85rem)">
+  <div class="-mx-1.5 flex justify-between" style="width: calc(100% + 0.85rem)">
     {
       Array.from({ length: 5 }, (_, i) => (
-        <div class="text-p3 text-light-manila text-center w-5">{i}s</div>
+        <div class="w-5 text-center text-p3 text-light-manila">{i}s</div>
       ))
     }
   </div>

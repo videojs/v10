@@ -13,11 +13,11 @@ import AuthResult from '@/layouts/AuthResult.astro';
     slot="action"
     data-action="home"
     href="/"
-    class="hidden items-center gap-1 intent:underline group"
+    class="group hidden items-center gap-1 intent:underline"
   >
     <ArrowLeft
       size="1em"
-      className="group-intent:-translate-x-1 transition-transform"
+      className="transition-transform group-intent:-translate-x-1"
     />
     Back to Home
   </a>
@@ -25,9 +25,9 @@ import AuthResult from '@/layouts/AuthResult.astro';
     slot="action"
     data-action="close"
     type="button"
-    class="hidden items-center gap-1 intent:underline group"
+    class="group hidden items-center gap-1 intent:underline"
   >
-    <X size="1em" className="group-intent:scale-110 transition-transform" />
+    <X size="1em" className="transition-transform group-intent:scale-110" />
     Close
   </button>
 </AuthResult>

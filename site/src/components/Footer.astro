@@ -25,24 +25,24 @@ const { class: className } = Astro.props;
 
 <footer
   class:list={[
-    "w-full max-w-305 mx-auto px-5 md:pt-0 pb-11 mt-30 md:mt-32 grid gap-3",
+    "mx-auto mt-30 grid w-full max-w-305 gap-3 px-5 pb-11 md:mt-32 md:pt-0",
     className,
   ]}
 >
   <nav
-    class="items-start md:items-start justify-between md:flex-row gap-3 mb-2 sm:mb-0 md:border-t border-faded-black dark:border-light-manila pt-5"
+    class="mb-2 items-start justify-between gap-3 border-faded-black pt-5 sm:mb-0 md:flex-row md:items-start md:border-t dark:border-light-manila"
   >
     <nav
-      class="text-faded-black dark:text-light-manila flex flex-col md:flex-row gap-0 md:-ml-5"
+      class="flex flex-col gap-0 text-faded-black md:-ml-5 md:flex-row dark:text-light-manila"
     >
       <div
-        class="flex md:justify-center justify-between border-b border-faded-black dark:border-light-manila md:border-0 pb-3 pt-3 md:pt-0 md:pb-0 border-t"
+        class="flex justify-between border-t border-b border-faded-black pt-3 pb-3 md:justify-center md:border-0 md:pt-0 md:pb-0 dark:border-light-manila"
       >
         {
           navLinks.map((link) => (
             <a
               href={link.href}
-              class="hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center px-2 md:px-5 py-2 rounded-sm font-display-extended uppercase font-bold"
+              class="flex items-center rounded-sm px-2 py-2 font-display-extended font-bold uppercase hover:bg-dark-manila md:px-5 dark:hover:bg-warm-gray"
             >
               {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
             </a>
@@ -50,11 +50,11 @@ const { class: className } = Astro.props;
         }
       </div>
       <div
-        class="flex-1 flex gap-4 justify-start md:justify-center pt-5 pb-8 md:gap-0 md:py-0 md:pb-0"
+        class="flex flex-1 justify-start gap-4 pt-5 pb-8 md:justify-center md:gap-0 md:py-0 md:pb-0"
       >
         <a
           href={DISCORD_INVITE_URL}
-          class="hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center px-2 md:px-5 py-2 rounded-xs font-display-extended uppercase font-bold"
+          class="flex items-center rounded-xs px-2 py-2 font-display-extended font-bold uppercase hover:bg-dark-manila md:px-5 dark:hover:bg-warm-gray"
           aria-label="Discord"
           target="_blank"
           rel="noopener noreferrer"
@@ -63,7 +63,7 @@ const { class: className } = Astro.props;
         </a>
         <a
           href={GITHUB_REPO_URL}
-          class="hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center px-2 md:px-5 py-2 rounded-xs font-display-extended uppercase font-bold"
+          class="flex items-center rounded-xs px-2 py-2 font-display-extended font-bold uppercase hover:bg-dark-manila md:px-5 dark:hover:bg-warm-gray"
           aria-label="GitHub"
           target="_blank"
           rel="noopener noreferrer"
@@ -77,13 +77,13 @@ const { class: className } = Astro.props;
     </nav>
 
     <div
-      class="flex flex-col-reverse lg:flex-row justify-between text-end gap-15 md:mt-15 mt-10"
+      class="mt-10 flex flex-col-reverse justify-between gap-15 text-end md:mt-15 lg:flex-row"
     >
       <div class="relative w-80 lg:w-92">
         <LogoMonoVersion width="100%" />
       </div>
       <p
-        class="text-p2 text-left lg:text-right text-faded-black dark:text-light-manila font-sans"
+        class="text-left font-sans text-p2 text-faded-black lg:text-right dark:text-light-manila"
       >
         Video.js is a free and open source HTML5 <a href="/" class="underline"
           >video player.</a

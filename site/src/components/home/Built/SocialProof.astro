@@ -33,19 +33,19 @@ const LOGOS = [
 ---
 
 <div
-  class="bg-faded-black border border-dark-manila z-1 overflow-hidden -mb-12.5 md:-mb-10 relative col-span-full rounded-xs"
+  class="relative z-1 col-span-full -mb-12.5 overflow-hidden rounded-xs border border-dark-manila bg-faded-black md:-mb-10"
 >
   <header class="px-2.5">
     <Marquee />
   </header>
   <div
-    class="relative grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 auto-rows-auto gap-0 z-0 grid-separator-container border-faded-black"
+    class="grid-separator-container relative z-0 grid auto-rows-auto grid-cols-2 gap-0 border-faded-black md:grid-cols-4 lg:grid-cols-6"
   >
     {
       LOGOS.map((logo, index) => (
         <div
           class={clsx(
-            "h-27.5 md:h-32 lg:h-40 grid-separators w-full relative items-center justify-center border-warm-gray bg-faded-black",
+            "grid-separators relative h-27.5 w-full items-center justify-center border-warm-gray bg-faded-black md:h-32 lg:h-40",
             index >= 10 ? "hidden md:flex" : "flex",
           )}
         >

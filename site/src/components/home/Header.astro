@@ -17,11 +17,11 @@ const poster = `${VJS10_DEMO_VIDEO.poster}?time=0`;
   slot="priority-head"
 />
 <header
-  class="relative grid grid-cols-1 [grid-template-areas:var(--grid-template-areas)] md:[grid-template-areas:var(--md-grid-template-areas)] w-full max-w-305 mx-auto px-5 pt-19 md:py-0 mb-25"
+  class="relative mx-auto mb-25 grid w-full max-w-305 grid-cols-1 px-5 pt-19 [grid-template-areas:var(--grid-template-areas)] md:py-0 md:[grid-template-areas:var(--md-grid-template-areas)]"
   style="--grid-template-areas: 'title' 'description' 'video' 'mux' 'control'; --md-grid-template-areas: 'video' 'mux' 'description' 'control'"
 >
   <h1
-    class="text-h2 lg:text-h1 z-10 w-full font-display-extended uppercase justify-self-center self-center md:text-light-manila text-center text-balance mb-5 md:mb-0 md:px-5 [grid-area:var(--grid-area)] md:[grid-area:var(--md-grid-area)]"
+    class="z-10 mb-5 w-full self-center justify-self-center text-center font-display-extended text-h2 text-balance uppercase [grid-area:var(--grid-area)] md:mb-0 md:px-5 md:text-light-manila md:[grid-area:var(--md-grid-area)] lg:text-h1"
     style="--grid-area: title; --md-grid-area: video;"
   >
     The Open Source Player <br class="lg:hidden" /><span
@@ -31,7 +31,7 @@ const poster = `${VJS10_DEMO_VIDEO.poster}?time=0`;
   </h1>
   {/* the additional px-5 is intentional */}
   <p
-    class="w-full text-p2 lg:text-p1 font-normal text-warm-gray dark:text-light-manila mx-auto text-center px-5 mb-20 md:mb-25 text-balance max-w-195"
+    class="mx-auto mb-20 w-full max-w-195 px-5 text-center text-p2 font-normal text-balance text-warm-gray md:mb-25 lg:text-p1 dark:text-light-manila"
     style="grid-area:description"
   >
     For over 15 years, Video.js has been the world's web video player. Now
@@ -40,18 +40,18 @@ const poster = `${VJS10_DEMO_VIDEO.poster}?time=0`;
 
   <HeroVideo
     client:load
-    className="aspect-2/1 mb-3 md:aspect-1180/570 md:mb-4"
+    className="mb-3 aspect-2/1 md:mb-4 md:aspect-1180/570"
     style={{ gridArea: "video" }}
     poster={poster}
   />
   <p
-    class="flex items-center justify-center md:justify-end md:pr-6 md:font-display-extended md:uppercase gap-2.5 md:mb-20 md:text-(length:--md-text) mb-11"
+    class="mb-11 flex items-center justify-center gap-2.5 md:mb-20 md:justify-end md:pr-6 md:font-display-extended md:text-(length:--md-text) md:uppercase"
     style="grid-area:mux;--md-text:0.75rem;"
   >
     Video hosting by <MuxLogoSmall className="inline" width="3.25rem" />
   </p>
   <div
-    class="grid grid-cols-1 md:grid-cols-2 items-center justify-center gap-9"
+    class="grid grid-cols-1 items-center justify-center gap-9 md:grid-cols-2"
     style="grid-area:control"
   >
     <SkinControl client:idle />

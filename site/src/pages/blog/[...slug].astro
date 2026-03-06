@@ -53,10 +53,10 @@ const jsonLdSchema = createBlogPostingSchema({
     data-pagefind-filter="site[data-site]"
   >
     <header
-      class="border-b border-light-40 dark:border-dark-80 max-w-3xl mx-auto pb-10 mb-10 relative"
+      class="relative mx-auto mb-10 max-w-3xl border-b border-light-40 pb-10 dark:border-dark-80"
     >
       <div
-        class="font-medium md:text-lg text-dark-40 dark:text-light-40 flex gap-4 mb-1"
+        class="md:text-lg mb-1 flex gap-4 font-medium text-dark-40 dark:text-light-40"
       >
         <FormattedDate
           data-pagefind-sort={`date:${post.data.pubDate.toISOString()}`}
@@ -67,8 +67,8 @@ const jsonLdSchema = createBlogPostingSchema({
           >{remarkPluginFrontmatter.minutesRead}</span
         >
       </div>
-      <h1 class="text-h4 md:text-h2 mb-2">{post.data.title}</h1>
-      <div class="font-medium md:text-lg text-dark-40 dark:text-light-40">
+      <h1 class="mb-2 text-h4 md:text-h2">{post.data.title}</h1>
+      <div class="md:text-lg font-medium text-dark-40 dark:text-light-40">
         By {
           new Intl.ListFormat("en", { style: "long", type: "conjunction" })
             .formatToParts(authors.map((author) => author.data.name))
@@ -77,7 +77,7 @@ const jsonLdSchema = createBlogPostingSchema({
                 // inline-block removes the whitespace that prettier+astro adds around the text
                 <a
                   href={`/blog/authors/${authors.find((a) => a.data.name === part.value)?.id}`}
-                  class="intent:underline inline-block"
+                  class="inline-block intent:underline"
                   data-pagefind-meta="author"
                 >
                   {part.value}

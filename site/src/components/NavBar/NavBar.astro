@@ -33,13 +33,13 @@ const { class: className, dark = false } = Astro.props;
 <nav
   class:list={[
     "flex justify-between",
-    "w-full max-w-305 mx-auto py-7 md:py-10 px-5 items-center",
+    "mx-auto w-full max-w-305 items-center px-5 py-7 md:py-10",
     className,
   ]}
 >
   <a
     href="/"
-    class="flex items-center w-40 lg:w-56"
+    class="flex w-40 items-center lg:w-56"
     aria-label="Video.js v10 home"
   >
     <Logo width="100%" />
@@ -49,7 +49,7 @@ const { class: className, dark = false } = Astro.props;
     <GetStartedLink
       client:idle
       className={clsx(
-        "hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center px-5 py-2 rounded-xs font-display-extended uppercase font-bold",
+        "flex items-center rounded-xs px-5 py-2 font-display-extended font-bold uppercase hover:bg-dark-manila dark:hover:bg-warm-gray",
       )}
       aria-current={isDocsActive ? "page" : undefined}
     >
@@ -60,7 +60,7 @@ const { class: className, dark = false } = Astro.props;
         <a
           href={link.href}
           class:list={[
-            "hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center px-5 py-2 rounded-xs font-display-extended uppercase font-bold",
+            "flex items-center rounded-xs px-5 py-2 font-display-extended font-bold uppercase hover:bg-dark-manila dark:hover:bg-warm-gray",
           ]}
         >
           {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
@@ -70,7 +70,7 @@ const { class: className, dark = false } = Astro.props;
     <a
       href={DISCORD_INVITE_URL}
       class={clsx(
-        "hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center px-3 py-2 rounded-xs font-display-extended uppercase font-bold",
+        "flex items-center rounded-xs px-3 py-2 font-display-extended font-bold uppercase hover:bg-dark-manila dark:hover:bg-warm-gray",
       )}
       aria-label="Discord"
       target="_blank"
@@ -81,7 +81,7 @@ const { class: className, dark = false } = Astro.props;
     <a
       href={GITHUB_REPO_URL}
       class={clsx(
-        "hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center px-3 py-2 rounded-xs font-display-extended uppercase font-bold",
+        "flex items-center rounded-xs px-3 py-2 font-display-extended font-bold uppercase hover:bg-dark-manila dark:hover:bg-warm-gray",
       )}
       aria-label="GitHub"
       target="_blank"

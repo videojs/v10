@@ -23,22 +23,22 @@ const sponsors: SponsorItem[] = [
 ---
 
 <section
-  class="w-full max-w-305 mx-auto px-5 grid grid-rows-subgrid row-span-2"
+  class="row-span-2 mx-auto grid w-full max-w-305 grid-rows-subgrid px-5"
 >
   <header
-    class="py-4 border-t border-b-0 border-y-faded-black dark:border-y-light-manila"
+    class="border-t border-b-0 border-y-faded-black py-4 dark:border-y-light-manila"
   >
     <h2
-      class="text-h2 text-faded-black dark:text-light-manila text-center font-display-extended uppercase font-bold border-b-0"
+      class="border-b-0 text-center font-display-extended text-h2 font-bold text-faded-black uppercase dark:text-light-manila"
     >
       Sponsors
     </h2>
   </header>
   <div
-    class="md:items-center border border-faded-black dark:border-light-manila p-2 grid grid-cols-1 md:grid-cols-2 text-light-manila dark:text-faded-black rounded-xs"
+    class="grid grid-cols-1 rounded-xs border border-faded-black p-2 text-light-manila md:grid-cols-2 md:items-center dark:border-light-manila dark:text-faded-black"
   >
     <div
-      class="bg-faded-black dark:bg-warm-gray dark:text-light-manila flex items-center justify-center h-45 md:min-h-74 md:h-full"
+      class="flex h-45 items-center justify-center bg-faded-black md:h-full md:min-h-74 dark:bg-warm-gray dark:text-light-manila"
     >
       <div class="relative w-40 md:w-48">
         <MuxLogo width="100%" />
@@ -46,7 +46,7 @@ const sponsors: SponsorItem[] = [
     </div>
     <div class="flex flex-col gap-2 p-2.5 md:px-15">
       <h3
-        class="md:border-0 py-3 md:py-0 text-center md:text-left border-b border-dark-manila dark:border-warm-gray mb-2.5 md:mb-0 text-h5 text-orange font-display-extended uppercase font-bold"
+        class="mb-2.5 border-b border-dark-manila py-3 text-center font-display-extended text-h5 font-bold text-orange uppercase md:mb-0 md:border-0 md:py-0 md:text-left dark:border-warm-gray"
       >
         Corporate Shepherd
       </h3>
@@ -61,25 +61,25 @@ const sponsors: SponsorItem[] = [
     </div>
   </div>
   <div
-    class="md:border md:border-faded-black dark:border-light-manila rounded-xs mt-5 z-0 relative h-max overflow-hidden"
+    class="relative z-0 mt-5 h-max overflow-hidden rounded-xs md:border md:border-faded-black dark:border-light-manila"
   >
     <div
-      class="md:border gap-4 md:grid-separator-container md:gap-0 md:border-light-manila dark:border-faded-black grid dark:text-light-manila md:grid-cols-4"
+      class="grid gap-4 md:grid-separator-container md:grid-cols-4 md:gap-0 md:border md:border-light-manila dark:border-faded-black dark:text-light-manila"
     >
       {
         sponsors.map(({ Logo, label, width, className }) => (
           <div
             class={clsx(
-              "px-2.5 md:px-0 rounded-xs border md:border-0 border-faded-black dark:border-light-manila md:border-dark-manila md:dark:border-light-manila h-auto",
+              "h-auto rounded-xs border border-faded-black px-2.5 md:border-0 md:border-dark-manila md:px-0 dark:border-light-manila md:dark:border-light-manila",
               className,
             )}
           >
-            <div class="md:grid-separators md:h-37.5 relative h-32.5 flex items-center justify-center bg-light-manila dark:bg-faded-black">
-              <div class="max-w-full mx-2.5" style={{ width }}>
+            <div class="relative flex h-32.5 items-center justify-center bg-light-manila md:grid-separators md:h-37.5 dark:bg-faded-black">
+              <div class="mx-2.5 max-w-full" style={{ width }}>
                 <Logo width="100%" />
               </div>
             </div>
-            <h3 class="block md:hidden relative border-t border-dark-manila text-orange font-display-extended font-bold uppercase text-h5 text-center py-5">
+            <h3 class="relative block border-t border-dark-manila py-5 text-center font-display-extended text-h5 font-bold text-orange uppercase md:hidden">
               {label}
             </h3>
           </div>
@@ -87,8 +87,8 @@ const sponsors: SponsorItem[] = [
       }
       {
         sponsors.map(({ label }) => (
-          <div class="border-dark-manila hidden md:block">
-            <h3 class="md:grid-separators grid grid-cols-1 items-center relative bg-light-manila dark:bg-faded-black text-orange font-display-extended font-bold uppercase text-h5 text-center px-2.5 py-5 h-full">
+          <div class="hidden border-dark-manila md:block">
+            <h3 class="relative grid h-full grid-cols-1 items-center bg-light-manila px-2.5 py-5 text-center font-display-extended text-h5 font-bold text-orange uppercase md:grid-separators dark:bg-faded-black">
               {label}
             </h3>
           </div>

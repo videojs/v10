@@ -36,7 +36,7 @@ const navLinkBase =
 <nav
   class:list={[
     "flex justify-between",
-    "w-full mx-auto px-5 md:pt-00 md:px-5 items-center border-b border-b-75-manila dark:border-75-manila sticky top-0 z-30 bg-light-manila dark:bg-faded-black",
+    "md:pt-00 sticky top-0 z-30 mx-auto w-full items-center border-b border-b-75-manila bg-light-manila px-5 md:px-5 dark:border-75-manila dark:bg-faded-black",
     className,
   ]}
   style="min-height: 54px;"
@@ -49,19 +49,19 @@ const navLinkBase =
       <LogoDocs />
     </div>
   </a>
-  <Search dark={dark} class="ml-auto mr-4 sm:self-center" />
+  <Search dark={dark} class="mr-4 ml-auto sm:self-center" />
   {/* Desktop nav links */}
-  <div class="hidden md:flex h-full">
+  <div class="hidden h-full md:flex">
     <GetStartedLink
       client:idle
       className={clsx(
         navLinkBase,
-        isDocsActive ? "text-orange z-10 relative" : "",
+        isDocsActive ? "relative z-10 text-orange" : "",
       )}
       aria-current={isDocsActive ? "page" : undefined}
     >
       Docs
-      <hr class="bg-orange absolute -bottom-1 left-0 right-0 h-px" />
+      <hr class="absolute right-0 -bottom-1 left-0 h-px bg-orange" />
     </GetStartedLink>
     {
       otherNavLinks.map((link) => (

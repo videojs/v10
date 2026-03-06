@@ -49,9 +49,9 @@ const jsonLdSchema = createBlogCollectionSchema({
   description="News and updates from the Video.js open-source video player project"
 >
   <JsonLd slot="head" schema={jsonLdSchema} />
-  <header class="mb-10 md:mb-20 w-full max-w-3xl mx-auto">
-    <h1 class="text-h4 md:text-h2 mb-2">Video.js Blog</h1>
-    <p class="text-lg font-medium md:text-h5 text-dark-40 dark:text-light-40">
+  <header class="mx-auto mb-10 w-full max-w-3xl md:mb-20">
+    <h1 class="mb-2 text-h4 md:text-h2">Video.js Blog</h1>
+    <p class="text-lg font-medium text-dark-40 md:text-h5 dark:text-light-40">
       {
         page.data.length === 0
           ? "Coming soon"
@@ -59,7 +59,7 @@ const jsonLdSchema = createBlogCollectionSchema({
       }
     </p>
   </header>
-  <div class="grid gap-10 w-full max-w-3xl mx-auto">
+  <div class="mx-auto grid w-full max-w-3xl gap-10">
     {
       page.data.map((post) => (
         <BlogPostCard post={post} authors={post.authors} />

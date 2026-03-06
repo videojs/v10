@@ -42,7 +42,7 @@ const docsSidebarId = 'docs-sidebar';
     <slot name="head" slot="head" />
   </Fragment>
   <div
-    class="grid grid-cols-1 md:grid-cols-(--md-grid-cols) lg:grid-cols-(--lg-grid-cols) min-h-screen"
+    class="grid min-h-screen grid-cols-1 md:grid-cols-(--md-grid-cols) lg:grid-cols-(--lg-grid-cols)"
     style="--md-grid-cols: calc(var(--spacing) * 70) 1fr;--lg-grid-cols: calc(var(--spacing) * 75) 1fr;grid-template-rows:auto minmax(0,1fr);"
   >
     <NavBarDocs class="col-span-full">
@@ -54,7 +54,7 @@ const docsSidebarId = 'docs-sidebar';
     </NavBarDocs>
     <aside
       id={docsSidebarId}
-      class="hidden md:flex flex-col md:border-r border-75-manila dark:border-dark-80 z-10 sticky overflow-y-auto"
+      class="sticky z-10 hidden flex-col overflow-y-auto border-75-manila md:flex md:border-r dark:border-dark-80"
       style="top: var(--nav-h); max-height: calc(100vh - var(--nav-h));"
     >
       <DocsSidebar framework={framework} docTitles={docTitles} class="flex-1">

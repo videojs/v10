@@ -1,5 +1,7 @@
 {
-  "plugins": ["prettier-plugin-astro"],
+  "plugins": ["prettier-plugin-astro", "prettier-plugin-tailwindcss"],
+  "tailwindStylesheet": "./site/src/styles/globals.css",
+  "tailwindFunctions": ["clsx"],
   "overrides": [
     {
       "files": "*.astro",

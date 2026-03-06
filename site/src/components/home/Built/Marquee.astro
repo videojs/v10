@@ -6,17 +6,17 @@ const items = Array.from({ length: REPEAT_COUNT });
 ---
 
 <div
-  class="col-span-full overflow-hidden py-8 border-b border-b-dark-manila relative z-1"
+  class="relative z-1 col-span-full overflow-hidden border-b border-b-dark-manila py-8"
   aria-label="Streaming bits on millions of sites"
   role="marquee"
 >
   <div
     id="logos"
-    class="flex whitespace-nowrap animate-marquee text-h5 font-display-extended uppercase text-light-manila"
+    class="flex animate-marquee font-display-extended text-h5 whitespace-nowrap text-light-manila uppercase"
   >
     {
       [...items, ...items].map(() => (
-        <span class="inline-flex items-center gap-7 shrink-0 pr-7">
+        <span class="inline-flex shrink-0 items-center gap-7 pr-7">
           <span>Streaming bits on millions of sites</span>
           <TriangleArrow width="0.75rem" />
         </span>

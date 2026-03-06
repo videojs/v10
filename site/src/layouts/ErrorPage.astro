@@ -16,20 +16,20 @@ const { title, description, code = '404', message = 'NOT FOUND' } = Astro.props;
 ---
 
 <Base {title} {description}>
-  <div class="min-h-screen flex flex-col">
+  <div class="flex min-h-screen flex-col">
     <NavBar />
     <main class="w-full">
       <div
-        class="w-full max-w-295 mx-auto px-5 py-10 md:pt-32 md:pb-16 grid md:flex gap-8 justify-between"
+        class="mx-auto grid w-full max-w-295 justify-between gap-8 px-5 py-10 md:flex md:pt-32 md:pb-16"
       >
         <div class="flex flex-col leading-none">
           <h1
-            class="font-display-extended text-display-h2 md:text-display-h1 font-bold text-faded-black dark:text-light-manila"
+            class="text-display-h2 md:text-display-h1 font-display-extended font-bold text-faded-black dark:text-light-manila"
           >
             {code}
           </h1>
           <h2
-            class="font-display-extended text-display-h2 md:text-display-h1 font-bold text-stroke-faded-black dark:text-stroke-light-manila"
+            class="text-display-h2 md:text-display-h1 font-display-extended font-bold text-stroke-faded-black dark:text-stroke-light-manila"
           >
             {message}
           </h2>

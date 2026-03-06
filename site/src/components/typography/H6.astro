@@ -15,8 +15,8 @@ const { as: Tag = 'h6', maxWidth = true, class: className, ...props } = Astro.pr
 <Tag
   class={twMerge(
     clsx(
-      "text-base font-medium @3xl:text-lg my-6",
-      maxWidth && "max-w-3xl mx-auto",
+      "text-base @3xl:text-lg my-6 font-medium",
+      maxWidth && "mx-auto max-w-3xl",
     ),
     className,
   )}

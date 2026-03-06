@@ -15,9 +15,9 @@ const { as: Tag = 'table', maxWidth = true, outerClass, class: className, ...pro
 <div
   class={twMerge(clsx("my-12", maxWidth && "mx-auto max-w-3xl"), outerClass)}
 >
-  <div class="overflow-x-auto flex -mx-6">
+  <div class="-mx-6 flex overflow-x-auto">
     <div
-      class="sticky left-0 z-10 shrink-0 basis-6 bg-linear-to-r from-light-80 dark:from-dark-100 to-transparent pointer-events-none"
+      class="pointer-events-none sticky left-0 z-10 shrink-0 basis-6 bg-linear-to-r from-light-80 to-transparent dark:from-dark-100"
       aria-hidden="true"
     >
     </div>
@@ -25,7 +25,7 @@ const { as: Tag = 'table', maxWidth = true, outerClass, class: className, ...pro
       <slot />
     </Tag>
     <div
-      class="sticky right-0 z-10 shrink-0 basis-6 bg-linear-to-l from-light-80 dark:from-dark-100 to-transparent pointer-events-none"
+      class="pointer-events-none sticky right-0 z-10 shrink-0 basis-6 bg-linear-to-l from-light-80 to-transparent dark:from-dark-100"
       aria-hidden="true"
     >
     </div>
