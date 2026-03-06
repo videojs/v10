@@ -43,7 +43,7 @@ describe('textTrackFeature', () => {
       expect(store.state.chaptersCues).toEqual([]);
       expect(store.state.thumbnailCues).toEqual([]);
       expect(store.state.thumbnailTrackSrc).toBeNull();
-      expect(store.state.subtitlesList).toEqual([]);
+      expect(store.state.textTrackList).toEqual([]);
       expect(store.state.subtitlesShowing).toBe(false);
     });
   });
@@ -149,18 +149,20 @@ describe('textTrackFeature', () => {
       expect(store.state.subtitlesShowing).toBe(true);
     });
 
-    it('exposes subtitlesList from captions/subtitles tracks', () => {
+    it('exposes textTrackList for all track kinds', () => {
       const video = createVideo();
       const subtitlesTrack = { kind: 'subtitles', mode: 'showing', label: 'English', language: 'en' } as TextTrack;
       const captionsTrack = { kind: 'captions', mode: 'disabled', label: 'CC', language: 'en' } as TextTrack;
-      mockTextTracks(video, [subtitlesTrack, captionsTrack, createMockTrack('metadata', 'showing')]);
+      const metadataTrack = createMockTrack('metadata', 'showing');
+      mockTextTracks(video, [subtitlesTrack, captionsTrack, metadataTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
       store.attach({ media: video, container: null });
 
-      expect(store.state.subtitlesList).toEqual([
+      expect(store.state.textTrackList).toEqual([
         { kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' },
         { kind: 'captions', label: 'CC', language: 'en', mode: 'disabled' },
+        { kind: 'metadata', label: '', language: '', mode: 'showing' },
       ]);
     });
 

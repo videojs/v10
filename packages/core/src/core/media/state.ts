@@ -235,8 +235,8 @@ export interface MediaTextTrackState {
   thumbnailCues: MediaTextCue[];
   /** The `<track>` element's `src` for resolving relative cue text URLs. */
   thumbnailTrackSrc: string | null;
-  /** Caption/subtitle tracks that can be selected or toggled. */
-  subtitlesList: MediaTextTrack<'subtitles' | 'captions'>[];
+  /** All text tracks available on the media element. */
+  textTrackList: MediaTextTrack<TextTrackKind>[];
   /** Whether captions/subtitles are currently enabled. */
   subtitlesShowing: boolean;
   /** Toggle captions/subtitles visibility. Returns the new enabled value. */

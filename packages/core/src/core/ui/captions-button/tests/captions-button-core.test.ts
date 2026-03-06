@@ -9,7 +9,7 @@ function createMediaState(overrides: Partial<MediaTextTrackState> = {}): MediaTe
     chaptersCues: [],
     thumbnailCues: [],
     thumbnailTrackSrc: null,
-    subtitlesList: [],
+    textTrackList: [],
     subtitlesShowing: false,
     toggleSubtitles: vi.fn(() => true),
     ...overrides,
@@ -30,7 +30,7 @@ describe('CaptionsButtonCore', () => {
       const core = new CaptionsButtonCore();
       const media = createMediaState({
         subtitlesShowing: true,
-        subtitlesList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' }],
+        textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' }],
       });
       core.setMedia(media);
       const state = core.getState();
@@ -42,7 +42,10 @@ describe('CaptionsButtonCore', () => {
       const core = new CaptionsButtonCore();
       core.setMedia(
         createMediaState({
-          subtitlesList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
+          textTrackList: [
+            { kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' },
+            { kind: 'metadata', label: 'thumbnails', language: '', mode: 'hidden' },
+          ],
         })
       );
 
@@ -51,7 +54,9 @@ describe('CaptionsButtonCore', () => {
 
     it('returns unavailable when no subtitles', () => {
       const core = new CaptionsButtonCore();
-      core.setMedia(createMediaState({ subtitlesList: [] }));
+      core.setMedia(
+        createMediaState({ textTrackList: [{ kind: 'metadata', label: 'thumbnails', language: '', mode: 'hidden' }] })
+      );
 
       expect(core.getState().availability).toBe('unavailable');
     });
