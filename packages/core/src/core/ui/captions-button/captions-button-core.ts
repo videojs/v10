@@ -60,7 +60,9 @@ export class CaptionsButtonCore {
     const media = this.#media!;
     return {
       subtitlesShowing: media.subtitlesShowing,
-      availability: media.subtitlesList.length > 0 ? 'available' : 'unavailable',
+      availability: media.textTrackList.some((t) => t.kind === 'captions' || t.kind === 'subtitles')
+        ? 'available'
+        : 'unavailable',
     };
   }
 

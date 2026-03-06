@@ -1,4 +1,4 @@
-import { findTrackElement, getSubtitlesTracks, listen } from '@videojs/utils/dom';
+import { findTrackElement, getTextTrackList, listen } from '@videojs/utils/dom';
 
 import type { MediaTextCue, MediaTextTrack, MediaTextTrackState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
@@ -9,10 +9,13 @@ export const textTrackFeature = definePlayerFeature({
     chaptersCues: [],
     thumbnailCues: [],
     thumbnailTrackSrc: null,
-    subtitlesList: [],
+    textTrackList: [],
     subtitlesShowing: false,
     toggleSubtitles(forceShow?: boolean) {
-      const subtitlesTracks = getSubtitlesTracks(target().media);
+      const subtitlesTracks = getTextTrackList(
+        target().media,
+        (track) => track.kind === 'subtitles' || track.kind === 'captions'
+      );
       if (!subtitlesTracks.length) return false;
 
       const showing = subtitlesTracks.some((track: TextTrack) => track.mode === 'showing');
@@ -37,25 +40,23 @@ export const textTrackFeature = definePlayerFeature({
 
       let chaptersTrack: TextTrack | null = null;
       let thumbnailTrack: TextTrack | null = null;
-      const subtitlesList: MediaTextTrack<'subtitles' | 'captions'>[] = [];
+      const textTrackList: MediaTextTrack<TextTrackKind>[] = [];
       let subtitlesShowing = false;
 
       for (let i = 0; i < media.textTracks.length; i++) {
         const track = media.textTracks[i]!;
         if (!chaptersTrack && track.kind === 'chapters') chaptersTrack = track;
         if (!thumbnailTrack && track.kind === 'metadata' && track.label === 'thumbnails') thumbnailTrack = track;
-        if (track.kind === 'captions' || track.kind === 'subtitles') {
-          const showing = track.mode === 'showing';
-          subtitlesList.push({
-            kind: track.kind,
-            label: track.label,
-            language: track.language,
-            mode: track.mode,
-          });
 
-          if (showing) {
-            subtitlesShowing = true;
-          }
+        textTrackList.push({
+          kind: track.kind,
+          label: track.label,
+          language: track.language,
+          mode: track.mode,
+        });
+
+        if ((track.kind === 'captions' || track.kind === 'subtitles') && track.mode === 'showing') {
+          subtitlesShowing = true;
         }
       }
 
@@ -83,7 +84,7 @@ export const textTrackFeature = definePlayerFeature({
         }
       }
 
-      set({ chaptersCues, thumbnailCues, thumbnailTrackSrc, subtitlesList, subtitlesShowing });
+      set({ chaptersCues, thumbnailCues, thumbnailTrackSrc, textTrackList, subtitlesShowing });
     }
 
     sync();
