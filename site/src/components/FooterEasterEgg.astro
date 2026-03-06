@@ -1,6 +1,6 @@
 ---
 interface Props {
-  variant?: 'short' | 'normal';
+  variant?: 'extra-short' | 'short' | 'normal';
   class?: string;
 }
 const { variant = 'normal', class: className } = Astro.props;
@@ -9,7 +9,7 @@ const { variant = 'normal', class: className } = Astro.props;
 <div
   class:list={[
     "relative grid",
-    variant === "short" ? "h-25" : "h-52",
+    variant === "extra-short" ? "h-20" : variant === "short" ? "h-25" : "h-52",
     className,
   ]}
   style="grid-template-rows: 80fr 60fr 45fr 20fr 10fr"

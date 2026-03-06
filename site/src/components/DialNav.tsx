@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import { useRef, useState } from 'react';
-import Dial from '@/components/icons/dial.svg?react';
+import DialInner from '@/components/icons/dial-inner.svg?react';
+import DialOuter from '@/components/icons/dial-outer.svg?react';
 
 type Link = { href: string; label: string; angle: number };
 
@@ -10,10 +11,6 @@ export interface DialNavProps {
 }
 
 const TRANSITION_MS = 450;
-
-// TODO(old-type): text-display-h5
-const linkClass =
-  'flex rounded-xs min-w-44 items-center gap-2 px-6 py-3 text-display-h5 font-display-compact font-bold uppercase text-faded-black dark:text-manila-light';
 
 export default function DialNav({ left, right }: DialNavProps) {
   const [activeAngle, setActiveAngle] = useState<number | null>(null);
@@ -38,6 +35,7 @@ export default function DialNav({ left, right }: DialNavProps) {
     };
   }
 
+  // design
   const needleStyle: React.CSSProperties = {
     transformBox: 'view-box',
     transformOrigin: '50% 50%',
@@ -54,7 +52,10 @@ export default function DialNav({ left, right }: DialNavProps) {
             key={link.href}
             href={link.href}
             onClick={(e) => handleClick(e, link)}
-            className={clsx(linkClass, 'justify-end pr-15 -mr-12 bg-manila-50 dark:bg-black')}
+            className={clsx(
+              'flex rounded-xs min-w-44 items-center gap-2 px-6 py-6 text-h5 font-display-compact font-bold uppercase text-faded-black dark:text-manila-light',
+              'justify-end pr-15 -mr-12 bg-manila-50 dark:bg-black'
+            )}
           >
             {link.label}
             <span
@@ -69,14 +70,14 @@ export default function DialNav({ left, right }: DialNavProps) {
         key={left[0].href}
         href={left[0].href}
         onClick={(e) => handleClick(e, left[0])}
-        className="w-20 h-20 md:w-24 md:h-24 shrink-0 relative z-10 text-manila-light dark:text-faded-black"
+        className="w-20 h-20 md:w-32 md:h-32 shrink-0 relative z-10 text-manila-light dark:text-faded-black"
       >
-        <Dial
-          style={needleStyle}
+        <DialOuter
           className="outline-8 rounded-full outline-manila-dark dark:outline-faded-black"
           width={'100%'}
           height={'auto'}
         />
+        <DialInner style={needleStyle} className="absolute inset-0" width={'100%'} height={'auto'} />
       </a>
 
       <div className="flex flex-col gap-2">
@@ -85,7 +86,10 @@ export default function DialNav({ left, right }: DialNavProps) {
             key={link.href}
             href={link.href}
             onClick={(e) => handleClick(e, link)}
-            className={clsx(linkClass, 'pl-15 -ml-12 bg-manila-50 dark:bg-black')}
+            className={clsx(
+              'flex rounded-xs min-w-44 items-center gap-2 px-6 py-6 text-h5 font-display-compact font-bold uppercase text-faded-black dark:text-manila-light',
+              'pl-15 -ml-12 bg-manila-50 dark:bg-black'
+            )}
           >
             <span
               className="w-2.5 h-2.5 rounded-full border border-faded-black dark:border-manila-light"

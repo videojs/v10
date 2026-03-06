@@ -5,6 +5,7 @@ import Discord from '@/components/icons/discord.svg?react';
 import GitHub from '@/components/icons/github.svg?react';
 import Logo from '@/components/icons/logo.svg?react';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
+import Search from '../Search';
 import GetStartedLink from './GetStartedLink';
 import MobileNav from './MobileNav';
 
@@ -44,6 +45,7 @@ const { class: className, dark = false } = Astro.props;
   >
     <Logo width="100%" />
   </a>
+  <Search class="mr-4 ml-auto sm:self-center" />
   {/* Desktop nav links */}
   <div class="hidden md:flex">
     <GetStartedLink
@@ -91,12 +93,7 @@ const { class: className, dark = false } = Astro.props;
     </a>
   </div>
 
-  <MobileNav
-    client:idle
-    navLinks={navLinks}
-    currentPath={currentPath}
-    dark={dark}
-  >
+  <MobileNav client:idle navLinks={navLinks} currentPath={currentPath}>
     <slot name="mobile-nav" />
   </MobileNav>
 </nav>

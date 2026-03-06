@@ -98,6 +98,11 @@
   --text-h2--letter-spacing: var(--tracking-tighter);
   --text-h2--font-weight: var(--font-weight-bold);
 
+  --text-h25: 1.5rem; /* 24px */
+  --text-h25--line-height: 1;
+  --text-h25--letter-spacing: var(--tracking-tighter);
+  --text-h25--font-weight: var(--font-weight-bold);
+
   --text-h3: 1.125rem; /* 18px */
   --text-h3--line-height: 1;
   --text-h3--letter-spacing: var(--tracking-normal);
@@ -161,6 +166,11 @@
 
   * {
     text-decoration-thickness: max(0.05em, 0.05rem);
+  }
+
+  .font-display,
+  .font-display-compact {
+    text-underline-offset: 0.25em;
   }
 
   .font-sans {

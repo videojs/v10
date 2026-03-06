@@ -20,43 +20,39 @@ const { page } = Astro.props;
   <span class="grid grid-cols-2 gap-1">
     {
       page.url.prev ? (
-        /* TODO(old-color): light-40, dark-40 */
         <a
           href={page.url.prev}
           aria-label={`Go to page ${page.currentPage - 1}`}
-          class="border-light-40 intent:border-dark-40 grid items-center rounded-xs border p-2"
+          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 dark:border-soot dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
         >
-          <ChevronDown size={12} className="rotate-90" />
+          <ChevronDown size={16} className="rotate-90" />
         </a>
       ) : (
-        /* TODO(old-color): light-40 */
         <button
           disabled
           aria-label="Previous page (unavailable)"
-          class="border-light-40 grid items-center rounded-xs border p-2 opacity-40"
+          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 opacity-40 dark:border-soot dark:bg-warm-gray"
         >
-          <ChevronDown size={12} className="rotate-90" />
+          <ChevronDown size={16} className="rotate-90" />
         </button>
       )
     }
     {
       page.url.next ? (
-        /* TODO(old-color): light-40, dark-40 */
         <a
           href={page.url.next}
           aria-label={`Go to page ${page.currentPage + 1}`}
-          class="border-light-40 intent:border-dark-40 grid items-center rounded-xs border p-2"
+          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 dark:border-soot dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
         >
-          <ChevronDown size={12} className="-rotate-90" />
+          <ChevronDown size={16} className="-rotate-90" />
         </a>
       ) : (
-        /* TODO(old-color): light-40 */
         <button
           disabled
           aria-label="Next page (unavailable)"
-          class="border-light-40 grid items-center rounded-xs border p-2 opacity-40"
+          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 opacity-40 dark:border-soot dark:bg-warm-gray"
         >
-          <ChevronDown size={12} className="-rotate-90" />
+          <ChevronDown size={16} className="-rotate-90" />
         </button>
       )
     }

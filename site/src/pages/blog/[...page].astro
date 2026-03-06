@@ -5,6 +5,7 @@ import { getCollection, getEntries } from 'astro:content';
 import type { GetStaticPaths, Page } from 'astro';
 import BlogPagination from '@/components/blog/BlogPagination.astro';
 import BlogPostCard from '@/components/blog/BlogPostCard.astro';
+import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import JsonLd from '@/components/JsonLd.astro';
 import Blog from '@/layouts/Blog.astro';
 import { createBlogCollectionSchema } from '@/utils/jsonLd/schemas';
@@ -49,17 +50,22 @@ const jsonLdSchema = createBlogCollectionSchema({
   description="News and updates from the Video.js open-source video player project"
 >
   <JsonLd slot="head" schema={jsonLdSchema} />
-  <header class="mx-auto mb-10 w-full max-w-3xl md:mb-20">
-    <h1 class="mb-2 text-h4 md:text-h2">Video.js Blog</h1>
-    {/* TODO(old-color): dark-40, light-40 */}
-    {/* TODO(old-type): text-lg */}
-    <p class="text-lg text-dark-40 dark:text-light-40 font-bold md:text-h5">
-      {
-        page.data.length === 0
-          ? "Coming soon"
-          : "News and updates from the Video.js open-source video player project"
-      }
-    </p>
+  <header
+    class="mx-auto mb-10 w-full max-w-4xl overflow-hidden rounded-xs border border-manila-dark text-center md:mb-20 dark:border-transparent dark:bg-soot"
+  >
+    <div class="mx-auto max-w-3xl px-5 py-20">
+      <h1 class="mb-4 font-display text-h2 uppercase lg:text-h1">
+        Video.js Blog
+      </h1>
+      <p class="font-display text-h5 leading-tight text-balance">
+        {
+          page.data.length === 0
+            ? "Coming soon"
+            : "News and updates from the Video.js open-source video player project"
+        }
+      </p>
+    </div>
+    <FooterEasterEgg variant="extra-short" />
   </header>
   <div class="mx-auto grid w-full max-w-3xl gap-10">
     {

@@ -18,11 +18,9 @@ const { title, subtitle, description } = Astro.props;
   <NavBar />
   <main class="mt-10 px-6 pb-24 md:mt-20 md:px-10">
     <article class="@container">
-      {/* TODO(old-color): light-40, dark-40 */}
       <header class="border-light-40 mx-auto mb-10 max-w-3xl border-b pb-10">
-        <h1 class="mb-2 text-h4 md:text-h2">{title}</h1>
-        {/* TODO(old-type): text-lg */}
-        <div class="md:text-lg text-dark-40 font-bold">{description}</div>
+        <h1 class="mb-2 font-display text-h2 uppercase">{title}</h1>
+        <p class="">{description}</p>
       </header>
       <slot />
     </article>

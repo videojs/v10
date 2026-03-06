@@ -16,22 +16,20 @@ const { title, description, code = '404', message = 'NOT FOUND' } = Astro.props;
 ---
 
 <Base {title} {description}>
-  <div class="flex min-h-screen flex-col">
+  <div class="flex flex-col" style={{ minHeight: "80dvh" }}>
     <NavBar />
     <main class="w-full">
       <div
-        class="mx-auto grid w-full max-w-295 justify-between gap-8 px-5 py-10 md:flex md:pt-32 md:pb-16"
+        class="mx-auto grid w-full max-w-305 justify-between gap-8 px-5 py-10 md:flex md:pt-32 md:pb-16"
       >
         <div class="flex flex-col leading-none">
-          {/* TODO(old-type): text-display-h2, text-display-h1 */}
           <h1
-            class="text-display-h2 md:text-display-h1 font-display font-bold text-faded-black dark:text-manila-light"
+            class="font-display text-h2 font-bold text-faded-black md:text-h1 dark:text-manila-light"
           >
             {code}
           </h1>
-          {/* TODO(old-type): text-display-h2, text-display-h1 */}
           <h2
-            class="text-display-h2 md:text-display-h1 font-display font-bold text-stroke-faded-black dark:text-stroke-manila-light"
+            class="font-display text-h2 font-bold text-stroke-faded-black md:text-h1 dark:text-stroke-manila-light"
           >
             {message}
           </h2>
@@ -39,17 +37,21 @@ const { title, description, code = '404', message = 'NOT FOUND' } = Astro.props;
         <DialNav
           client:load
           left={[
-            { href: "/", label: "HOME", angle: -70 },
-            { href: "/docs", label: "DOCS", angle: -110 },
+            { href: "/", label: "Home", angle: -60 },
+            { href: "/docs", label: "Docs", angle: -120 },
           ]}
           right={[
-            { href: "https://mux.com", label: "MUX.COM", angle: 70 },
-            { href: "https://mux.com/blog", label: "BLOG", angle: 110 },
+            {
+              href: "https://mux.com?utm_source=videojs&utm_campaign=vjs10",
+              label: "mux.com",
+              angle: 60,
+            },
+            { href: "/blog", label: "Blog", angle: 120 },
           ]}
         />
       </div>
     </main>
-    <Footer />
   </div>
+  <Footer />
   <FooterEasterEgg />
 </Base>
