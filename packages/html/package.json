@@ -87,6 +87,8 @@
     "clean": "rm -rf dist types"
   },
   "dependencies": {
+    "@moq/lite": "^0.1.5",
+    "@moq/watch": "^0.2.2",
     "@videojs/core": "workspace:*",
     "@videojs/element": "workspace:*",
     "@videojs/store": "workspace:*",
