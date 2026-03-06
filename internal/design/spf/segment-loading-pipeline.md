@@ -264,29 +264,19 @@ post-flush `sourceBuffer.buffered`.
 
 ## Open Questions / Pending Work
 
-### Streaming refactor (highest priority)
+### LoadTask naming
 
-`executeTask` still batches all fetches before any appends. This delays
-playback startup. Change to: fetch s1 → append s1 → fetch s2 → append s2.
-The atomicity concern that originally motivated batching no longer applies
-(no subscribe bridge means no intermediate observable states).
+`LoadTask`, `planTasks`, `executeLoadTask` risk confusion with the `Task` class
+used in SourceBufferActor scheduling. These are closer to operation descriptors.
+`@todo` markers exist in the code; rename when convenient (e.g. `SegmentLoaderOp`).
 
-### Broken load-segments.test.ts
+### endOfStream reactor cleanup
 
-Tests still import `shouldLoadSegments` (removed) and use the old `canLoadSegments`
-semantics. Needs updating to reflect the new Reactor model.
-
-### WIP cleanup
-
-Two commits (`c1d259a1`, `c2d6490a`) have `@ts-expect-error` and `@TODO` markers
-on the `track` field in `LoadingInputs`. Type precision needs improving — the
-track type from `getSelectedTrack` is too broad (includes unresolved tracks).
-
-### SegmentLoaderActor → full streaming + continue/preempt
-
-The SegmentLoaderActor was built as step 1 (batch mode, existing task loop).
-The target architecture (streaming, pending-list model, continue vs. preempt)
-is documented in the "Candidate Architecture" below but not yet implemented.
+`endOfStream.ts` subscribes to actor snapshots and uses `combineLatest` for
+state/owners. The `waitForSourceBuffersReady` and `shouldEndStream` now use
+actor status correctly, but the overall subscription structure (actor unsubs,
+combineLatest) could be simplified — e.g. a single actor-aware subscription
+rather than two separate paths. Deferred.
 
 ### Bandwidth bridge
 
@@ -313,31 +303,35 @@ The following describes where the architecture is heading. Parts are built
 { type: 'load', track: VideoTrack | AudioTrack, range?: { start: number; end: number } }
 ```
 
-### SegmentLoaderActor — target execution model (not yet built)
+### SegmentLoaderActor — current execution model
 
-**Context (non-finite state):**
+Planning happens in `send()` via `planTasks()`, producing an ordered `LoadTask[]`.
+The runner (`runScheduled`) drains the list sequentially — one fetch+append per task.
+This is already streaming: fetch s1 → append s1 → fetch s2 → append s2.
+
+**`LoadTask` type** — derived from `SourceBufferMessage` minus `data`, plus fetch URL:
 
 ```ts
-{
-  assignment: { track; start: number; end: number } | null;
-  pending: PendingOp[];  // pending[0] is in-flight when working
-}
-
-type PendingOp =
-  | { type: 'append-init'; init: AddressableObject; trackId: string }
-  | { type: 'append-segment'; segment: Segment };
+type LoadTask =
+  | (Omit<AppendInitMessage, 'data'> & AddressableObject)   // fetch-then-append init
+  | (Omit<AppendSegmentMessage, 'data'> & AddressableObject) // fetch-then-append segment
+  | RemoveMessage;                                           // direct actor send
 ```
 
-**On `'load'` message:**
-1. Filter `track.segments` to `[start, end]`
-2. Check `sourceBufferActor.snapshot.context` for committed segments
-3. **Continue** (same track, overlapping range): keep `pending[0]`, revise `pending[1...]`
-4. **Preempt** (track switch or disjoint seek): abort signal, clear pending, rebuild
+**Planning (Cases 1–3):**
+1. **Removes** — forward and back buffer flush points (segment-aligned). No flush on
+   track switch: appending overwrites; actor deduplication keeps the segment model accurate.
+2. **Init** — schedule if `actorCtx.initTrackId !== track.id`.
+3. **Segments** — `getSegmentsToLoad` window minus already-committed segments.
 
-**Execution — streaming:**
-1. Removes upfront (committed segments outside range, or full flush on track switch)
-2. Populate pending: init + segments in range not yet committed
-3. Worker loop: `pending[0]` → fetch + append → shift → repeat
+**Continue vs. preempt (in `send()`):**
+- `inFlightInitTrackId` / `inFlightSegmentId` track what's currently being processed.
+- If the in-flight item is needed by the new plan → **continue**: filter it from
+  `pendingTasks`, let it complete, pick up the rest.
+- Otherwise → **preempt**: abort, use full new plan as `pendingTasks`.
+
+**Non-abort errors** (e.g. network failure on init): clear remaining scheduled tasks;
+a pending replacement plan from `send()` is still picked up.
 
 ### Condition hierarchy for Reactor trigger (implemented)
 
