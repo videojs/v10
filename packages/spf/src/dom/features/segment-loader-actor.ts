@@ -206,9 +206,16 @@ export function createSegmentLoaderActor(
         inFlightInitTrackId = task.meta.trackId;
         if (!signal.aborted) {
           const data = await fetchBytes(task, { signal });
-          // Init is always committed once fetched — use a fresh signal if needed.
-          const appendSignal = signal.aborted ? new AbortController().signal : signal;
-          await sourceBufferActor.send({ type: 'append-init', data, meta: task.meta }, appendSignal);
+          // For seeks on the same track: commit even if aborted — avoids re-fetching the
+          // same init next time. For track switches: don't commit the old track's init;
+          // the new track's init follows in pendingTasks.
+          const isTrackSwitch = pendingTasks?.some(
+            (t) => t.type === 'append-init' && t.meta.trackId !== task.meta.trackId
+          );
+          if (!signal.aborted || !isTrackSwitch) {
+            const appendSignal = signal.aborted ? new AbortController().signal : signal;
+            await sourceBufferActor.send({ type: 'append-init', data, meta: task.meta }, appendSignal);
+          }
         }
         return;
       }
