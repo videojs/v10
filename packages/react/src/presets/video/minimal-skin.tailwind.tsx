@@ -37,7 +37,6 @@ import { Container } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
-import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
@@ -48,6 +47,7 @@ import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { VolumeSlider } from '@/ui/volume-slider';
+import { ErrorDialog } from './error-dialog';
 import type { MinimalVideoSkinProps } from './minimal-skin';
 
 const SEEK_TIME = 10;
@@ -105,6 +105,15 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
   );
 });
 
+const errorClasses = {
+  root: error.root,
+  dialog: error.dialog,
+  content: error.content,
+  title: error.title,
+  actions: error.actions,
+  close: cn(button.base, button.default),
+};
+
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNode {
@@ -120,25 +129,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
         )}
       />
 
-      <ErrorDialog
-        aria-labelledby="media-error-title"
-        aria-describedby="media-error-description"
-        render={(props, { onDismiss }) => (
-          <div {...props} className={error.root}>
-            <div className={error.dialog}>
-              <div className={error.content}>
-                <p id="media-error-title" className={error.title}>
-                  Something went wrong.
-                </p>
-                <p id="media-error-description">An error occurred while trying to play the video. Please try again.</p>
-              </div>
-              <div className={error.actions}>
-                <Button onClick={onDismiss}>OK</Button>
-              </div>
-            </div>
-          </div>
-        )}
-      />
+      <ErrorDialog classes={errorClasses} />
 
       <Controls.Root
         data-controls="" // Used as a hook for Tailwind has-[] styles

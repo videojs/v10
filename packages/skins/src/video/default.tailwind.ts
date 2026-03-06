@@ -201,10 +201,10 @@ export const overlay = cn(
   'peer-data-visible/controls:duration-150',
   'peer-data-visible/controls:delay-0',
   // Shown when error visible (+ blur)
-  'peer-data-visible/error:opacity-100',
-  'peer-data-visible/error:duration-150',
-  'peer-data-visible/error:delay-0',
-  'peer-data-visible/error:backdrop-blur-sm',
+  'peer-data-open/error:opacity-100',
+  'peer-data-open/error:duration-150',
+  'peer-data-open/error:delay-0',
+  'peer-data-open/error:backdrop-blur-sm',
   // Reduced motion
   'motion-reduce:duration-100'
 );
@@ -215,13 +215,13 @@ export const bufferingIndicator = {
 };
 
 export const error = {
-  root: 'peer/error group/error absolute inset-0 z-20 items-center justify-center pointer-events-none hidden data-[visible]:flex',
+  root: 'peer/error group/error absolute inset-0 z-20 flex items-center justify-center pointer-events-none',
   dialog: cn(
-    'hidden flex-col gap-3 max-w-72 p-3 rounded-[1.75rem] text-white text-sm pointer-events-auto',
-    'group-data-visible/error:flex',
-    'transition-[display,opacity,scale,transform] duration-500 delay-100 transition-discrete',
-    'starting:opacity-0 starting:scale-50',
+    'flex flex-col gap-3 max-w-72 p-3 rounded-[1.75rem] text-white text-sm pointer-events-auto',
+    'transition-[opacity,transform] duration-500 delay-100',
     'ease-[linear(0,0.034_1.5%,0.763_9.7%,1.066_13.9%,1.198_19.9%,1.184_21.8%,0.963_37.5%,0.997_50.9%,1)]',
+    'group-data-[starting-style]/error:opacity-0 group-data-[starting-style]/error:scale-50',
+    'group-data-[ending-style]/error:opacity-0 group-data-[ending-style]/error:scale-50',
     surface
   ),
   content: 'flex flex-col gap-2 px-2 pt-2 pb-1.5',
