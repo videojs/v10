@@ -59,6 +59,92 @@ const UI_PARTS = new Set([
 ]);
 
 /**
+ * Preset virtual bundle definitions.
+ *
+ * Each preset combines skin + player (HTML) or skin + media + features (React)
+ * into a single virtual entry to measure realistic per-skin configuration costs.
+ *
+ * @type {Array<{ label: string, preset: string, skin: string, hls: boolean }>}
+ */
+const PRESET_CONFIGS = [
+  { label: '/video (default)', preset: 'video', skin: 'skin', hls: false },
+  { label: '/video (default + hls)', preset: 'video', skin: 'skin', hls: true },
+  { label: '/video (minimal)', preset: 'video', skin: 'minimal-skin', hls: false },
+  { label: '/video (minimal + hls)', preset: 'video', skin: 'minimal-skin', hls: true },
+  { label: '/audio (default)', preset: 'audio', skin: 'skin', hls: false },
+  { label: '/audio (minimal)', preset: 'audio', skin: 'minimal-skin', hls: false },
+  { label: '/background', preset: 'background', skin: 'skin', hls: false },
+];
+
+/**
+ * Export name lookup tables for preset virtual bundles.
+ *
+ * Each key is `{preset}/{variant}` where variant is 'skin', 'player', 'media',
+ * 'hls-media', or 'features'. Values are `{ path, name }` where path is relative
+ * to the package dist/default/ directory and name is the exported identifier.
+ */
+const PRESET_EXPORTS = {
+  html: {
+    'video/skin': { path: 'define/video/skin.js', name: 'VideoSkinElement' },
+    'video/minimal-skin': { path: 'define/video/minimal-skin.js', name: 'MinimalVideoSkinElement' },
+    'video/player': { path: 'define/video/player.js', name: 'VideoPlayerElement' },
+    'audio/skin': { path: 'define/audio/skin.js', name: 'AudioSkinElement' },
+    'audio/minimal-skin': { path: 'define/audio/minimal-skin.js', name: 'MinimalAudioSkinElement' },
+    'audio/player': { path: 'define/audio/player.js', name: 'AudioPlayerElement' },
+    'background/skin': { path: 'define/background/skin.js', name: 'BackgroundVideoSkinElement' },
+    'background/player': { path: 'define/background/player.js', name: 'BackgroundVideoPlayerElement' },
+    'hls-media': { path: 'define/media/hls-video.js', name: 'HlsVideoElement' },
+  },
+  react: {
+    'video/skin': { path: 'presets/video/skin.js', name: 'VideoSkin' },
+    'video/minimal-skin': { path: 'presets/video/minimal-skin.js', name: 'MinimalVideoSkin' },
+    'video/media': { path: 'media/video.js', name: 'Video' },
+    'audio/skin': { path: 'presets/audio/skin.js', name: 'AudioSkin' },
+    'audio/minimal-skin': { path: 'presets/audio/minimal-skin.js', name: 'MinimalAudioSkin' },
+    'audio/media': { path: 'media/audio.js', name: 'Audio' },
+    'background/skin': { path: 'presets/background/skin.js', name: 'BackgroundVideoSkin' },
+    'background/media': { path: 'media/background-video/index.js', name: 'BackgroundVideo' },
+    'hls-media': { path: 'media/hls-video/index.js', name: 'HlsVideo' },
+    'video/features': { path: '../../../core/dist/default/dom/store/features/presets.js', name: 'videoFeatures' },
+    'audio/features': { path: '../../../core/dist/default/dom/store/features/presets.js', name: 'audioFeatures' },
+    'background/features': { path: '../../../core/dist/default/dom/store/features/presets.js', name: 'backgroundFeatures' },
+  },
+};
+
+/**
+ * Build virtual entry source code for a preset configuration.
+ *
+ * Returns an import/export string that re-exports the skin, player/media,
+ * features, and optional HLS media for the given preset. Returns null if
+ * any required file is missing on disk.
+ */
+function buildPresetEntry(pkgShortName, config, distDir) {
+  const table = PRESET_EXPORTS[pkgShortName];
+  if (!table) return null;
+
+  const lines = [];
+
+  function addExport(key) {
+    const entry = table[key];
+    // Key not in lookup → not applicable for this package type (e.g., HTML
+    // has no media/features entries). Skip without aborting.
+    if (!entry) return true;
+    const fullPath = resolve(distDir, entry.path);
+    if (!existsSync(fullPath)) return false;
+    lines.push(`export { ${entry.name} } from './${entry.path}';`);
+    return true;
+  }
+
+  if (!addExport(`${config.preset}/${config.skin}`)) return null;
+  if (!addExport(`${config.preset}/player`)) return null;
+  if (!addExport(`${config.preset}/media`)) return null;
+  if (!addExport(`${config.preset}/features`)) return null;
+  if (config.hls && !addExport('hls-media')) return null;
+
+  return lines.length > 0 ? lines.join('\n') : null;
+}
+
+/**
  * @typedef {object} SizeEntry
  * @property {string} name
  * @property {number} size
@@ -103,6 +189,30 @@ async function measureCSS(filePath) {
   return compressed.length;
 }
 
+/** Bundle a virtual entry (source string) with esbuild and return the minified + brotli size. */
+async function measureVirtual(code, resolveDir, external = []) {
+  const result = await build({
+    stdin: { contents: code, resolveDir, loader: 'js' },
+    bundle: true,
+    minify: true,
+    treeShaking: true,
+    format: 'esm',
+    write: false,
+    outdir: '/tmp/bundle-size-out',
+    external,
+    logLevel: 'silent',
+  });
+
+  const output = result.outputFiles.map((f) => f.text).join('');
+  const compressed = brotliCompressSync(Buffer.from(output), {
+    params: {
+      [constants.BROTLI_PARAM_QUALITY]: constants.BROTLI_MAX_QUALITY,
+    },
+  });
+
+  return compressed.length;
+}
+
 /**
  * Resolve the `default` condition from an export value.
  * Handles both `{ default: "./dist/..." }` objects and plain string values.
@@ -134,8 +244,10 @@ function categorize(name) {
   // CSS files are always skin-related
   if (name.endsWith('.css')) return 'skin';
 
+  // Root and combined preset entries are skipped — the presets category is
+  // populated by virtual bundles measured separately.
   if (subpath === '' || /^\/(video|audio|background)$/.test(subpath)) {
-    return 'preset';
+    return '_skip';
   }
   if (subpath.startsWith('/media/')) return 'media';
   if (subpath.startsWith('/ui/')) {
@@ -332,16 +444,21 @@ async function main() {
     }
 
     const rootCat = categorize(pkg.name);
-    if (rootCat === '_skip') continue;
 
+    // Always measure root — needed for UI marginal calculations even when
+    // the root itself is excluded from results (categorized packages skip
+    // root because presets are measured as virtual bundles instead).
     const rootSize = await measure([pkg.rootPath], pkg.external);
-    results.push({
-      name: pkg.name,
-      size: rootSize,
-      type: 'root',
-      ...(rootCat ? { category: rootCat } : {}),
-      format: 'js',
-    });
+
+    if (rootCat !== '_skip') {
+      results.push({
+        name: pkg.name,
+        size: rootSize,
+        type: 'root',
+        ...(rootCat ? { category: rootCat } : {}),
+        format: 'js',
+      });
+    }
 
     for (const sub of pkg.subpaths) {
       const cat = categorize(sub.name);
@@ -375,6 +492,26 @@ async function main() {
         ...(cat ? { category: cat } : {}),
         format: 'js',
       });
+    }
+
+    // Measure preset virtual bundles for categorized packages.
+    const pkgShortName = pkg.name.replace('@videojs/', '');
+    if (CATEGORIZED_PACKAGES.has(pkgShortName)) {
+      const distDir = dirname(pkg.rootPath);
+
+      for (const config of PRESET_CONFIGS) {
+        const code = buildPresetEntry(pkgShortName, config, distDir);
+        if (!code) continue;
+
+        const size = await measureVirtual(code, distDir, pkg.external);
+        results.push({
+          name: `${pkg.name}${config.label}`,
+          size,
+          type: 'subpath',
+          category: 'preset',
+          format: 'js',
+        });
+      }
     }
   }
 
