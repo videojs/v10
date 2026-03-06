@@ -30,11 +30,7 @@ export class HlsVideo extends HlsCustomMedia {
     super.disconnectedCallback?.();
 
     if (!this.hasAttribute('keep-alive')) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (!this.isConnected) this.destroy();
-        });
-      });
+      this.destroy();
     }
   }
 }
