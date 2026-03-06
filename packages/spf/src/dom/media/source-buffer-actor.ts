@@ -16,6 +16,8 @@ export interface BufferedRange {
 
 export type AppendSegmentMeta = Pick<Segment, 'id' | 'startTime' | 'duration'> & {
   trackId: Track['id'];
+  /** Declared track bandwidth in bps (from playlist BANDWIDTH attribute). */
+  trackBandwidth?: number;
 };
 
 export type AppendInitMessage = { type: 'append-init'; data: ArrayBuffer; meta: { trackId: Track['id'] } };
@@ -29,7 +31,7 @@ export type SourceBufferActorStatus = 'idle' | 'updating' | 'destroyed';
 /** Non-finite (extended) data managed by the actor — the XState "context". */
 export interface SourceBufferActorContext {
   initTrackId?: string | undefined;
-  segments: Array<Pick<Segment, 'id' | 'startTime' | 'duration'> & { trackId: Track['id'] }>;
+  segments: Array<Pick<Segment, 'id' | 'startTime' | 'duration'> & { trackId: Track['id']; trackBandwidth?: number }>;
   bufferedRanges: BufferedRange[];
 }
 
@@ -118,7 +120,13 @@ function appendSegmentTask(
         ...ctx,
         segments: [
           ...filtered,
-          { id: meta.id, startTime: meta.startTime, duration: meta.duration, trackId: meta.trackId },
+          {
+            id: meta.id,
+            startTime: meta.startTime,
+            duration: meta.duration,
+            trackId: meta.trackId,
+            trackBandwidth: meta.trackBandwidth,
+          },
         ],
         bufferedRanges: snapshotBuffered(sourceBuffer.buffered),
       };

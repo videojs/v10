@@ -160,11 +160,25 @@ export function createSegmentLoaderActor(
 
     // Case 3: Segments
     if (range) {
-      const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, currentTime);
+      const EPSILON = 0.0001;
+      const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, currentTime).filter((seg) => {
+        // Quality-aware filter: skip segments already covered by equal-or-higher-quality
+        // content in the actor context. Preserves buffered high-quality content during
+        // ABR downgrades; loads during upgrades and for uncovered positions.
+        const existing = actorCtx.segments.find((s) => Math.abs(s.startTime - seg.startTime) < EPSILON);
+        if (!existing?.trackBandwidth || !track.bandwidth) return true;
+        return track.bandwidth > existing.trackBandwidth;
+      });
       for (const segment of segmentsToLoad) {
         tasks.push({
           type: 'append-segment',
-          meta: { id: segment.id, startTime: segment.startTime, duration: segment.duration, trackId: track.id },
+          meta: {
+            id: segment.id,
+            startTime: segment.startTime,
+            duration: segment.duration,
+            trackId: track.id,
+            trackBandwidth: track.bandwidth,
+          },
           url: segment.url,
         });
       }
