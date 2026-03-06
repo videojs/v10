@@ -97,7 +97,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
             state,
             stateAttrMap: SliderDataAttrs,
             ref: [forwardedRef, rootRef],
-            props: [{ style: cssVars }, rootProps, elementProps],
+            props: [{ style: { ...cssVars, touchAction: 'none', userSelect: 'none' } }, rootProps, elementProps],
           }
         )}
       </SliderProvider>

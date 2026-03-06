@@ -107,7 +107,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
             state,
             stateAttrMap: TimeSliderDataAttrs,
             ref: [forwardedRef, rootRef],
-            props: [{ style: cssVars }, rootProps, elementProps],
+            props: [{ style: { ...cssVars, touchAction: 'none', userSelect: 'none' } }, rootProps, elementProps],
           }
         )}
       </SliderProvider>
