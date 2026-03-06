@@ -1,6 +1,7 @@
 import type { BandwidthState } from '../core/abr/bandwidth-estimator';
 import { createEventStream } from '../core/events/create-event-stream';
 import { calculatePresentationDuration } from '../core/features/calculate-presentation-duration';
+import { switchQuality } from '../core/features/quality-switching';
 import {
   type PresentationAction,
   resolvePresentation,
@@ -288,6 +289,10 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     // Actor wiring will be introduced in Phase 2 as part of the loadSegments
     // refactor. See .claude/plans/spf/buffer-state-shadow-actual-model.md.
     trackCurrentTime({ state, owners }),
+
+    // 5.75. ABR quality switching (reacts to bandwidth samples from loadSegments)
+    // @ts-expect-error - WritableState type variance
+    switchQuality({ state }),
 
     // 6. Load segments (when SourceBuffer ready and track resolved)
     loadSegments({ state, owners }, { type: 'video' }),
