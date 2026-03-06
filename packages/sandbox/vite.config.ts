@@ -18,7 +18,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'src/index.html'),
-        core: resolve(__dirname, 'src/core/index.html'),
         html: resolve(__dirname, 'src/html/index.html'),
         'html-background': resolve(__dirname, 'src/html-background/index.html'),
         'html-tailwind': resolve(__dirname, 'src/html-tailwind/index.html'),

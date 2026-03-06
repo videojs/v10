@@ -7,36 +7,38 @@ import '@videojs/html/video/minimal-skin.tailwind';
 import { SKINS } from '../constants';
 import type { Skin } from '../types';
 
-const html = String.raw;
+const player = document.getElementById('player');
+const select = document.getElementById('skin-select') as HTMLSelectElement | null;
 
-const VIDEO_SRC = 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4';
+if (player && select) {
+  const html = String.raw;
 
-const skinTags: Record<Skin, string> = {
-  default: 'video-skin-tailwind',
-  minimal: 'video-minimal-skin-tailwind',
-};
+  const VIDEO_SRC = 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4';
 
-function render(skin: Skin) {
-  const tag = skinTags[skin];
+  const skinTags: Record<Skin, string> = {
+    default: 'video-skin-tailwind',
+    minimal: 'video-minimal-skin-tailwind',
+  };
 
-  document.getElementById('player')!.innerHTML = html`
-    <video-player>
-      <${tag}>
-        <video slot="media" src="${VIDEO_SRC}"></video>
-      </${tag}>
-    </video-player>
-  `;
+  function render(skin: Skin) {
+    const tag = skinTags[skin];
+
+    player!.innerHTML = html`
+      <video-player>
+        <${tag}>
+          <video slot="media" src="${VIDEO_SRC}"></video>
+        </${tag}>
+      </video-player>
+    `;
+  }
+
+  for (const skin of SKINS) {
+    const option = document.createElement('option');
+    option.value = skin;
+    option.textContent = skin;
+    select.appendChild(option);
+  }
+  select.addEventListener('change', () => render(select.value as Skin));
+
+  render('default');
 }
-
-// Skin switcher
-const select = document.getElementById('skin-select') as HTMLSelectElement;
-for (const skin of SKINS) {
-  const option = document.createElement('option');
-  option.value = skin;
-  option.textContent = skin;
-  select.appendChild(option);
-}
-select.addEventListener('change', () => render(select.value as Skin));
-
-// Initial render
-render('default');

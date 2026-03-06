@@ -7,6 +7,19 @@
     <link rel="stylesheet" href="../styles.css" />
   </head>
   <body>
+    <a
+      id="home-link"
+      href="/"
+      class="fixed top-3 left-4 hidden text-xs font-mono text-neutral-400 hover:text-neutral-700 transition-colors"
+      aria-label="Back to sandbox home"
+    >
+      &larr; More examples
+    </a>
+    <script>
+      if (window.self === window.top) {
+        document.getElementById('home-link').style.display = 'inline';
+      }
+    </script>
     <div class="flex flex-col justify-center items-center gap-4 my-4">
       <select id="skin-select" aria-label="Skin"></select>
       <div id="player" class="w-full aspect-video max-w-4xl mx-auto"></div>
