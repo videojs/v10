@@ -70,6 +70,28 @@ const makeMockSourceBuffer = () => {
 };
 
 // ============================================================================
+// Helpers
+// ============================================================================
+
+function makeControllableFetch() {
+  const resolvers = new Map<string, () => void>();
+  const fetchedUrls: string[] = [];
+
+  const fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+    fetchedUrls.push(url);
+    return new Promise<Response>((resolve) => {
+      resolvers.set(url, () => resolve(new Response(new ArrayBuffer(100), { status: 200 })));
+    });
+  });
+
+  const resolve = (url: string) => resolvers.get(url)?.();
+  const resolveAll = () => resolvers.forEach((fn) => fn());
+
+  return { fetch, fetchedUrls, resolve, resolveAll };
+}
+
+// ============================================================================
 // Track switch — Bug 3
 // ============================================================================
 
@@ -145,6 +167,105 @@ describe('loadSegments — track switch', () => {
     // New track-b segments should be present.
     const hasNewSegments = ctx?.segments.some((s) => ['b1', 'b2'].includes(s.id));
     expect(hasNewSegments).toBeTruthy();
+
+    cleanup();
+  });
+
+  it('preempts in-flight fetch when track switches; loads new track init', async () => {
+    const { fetch: controllableFetch, fetchedUrls, resolve } = makeControllableFetch();
+    globalThis.fetch = controllableFetch;
+
+    const trackA = makeResolvedVideoTrack('track-a', [seg('a1', 0), seg('a2', 10)]);
+    const trackB = makeResolvedVideoTrack('track-b', [seg('b1', 0), seg('b2', 10)]);
+    const presentation = makePresentation(trackA, trackB);
+    const videoBuffer = makeMockSourceBuffer();
+    const videoBufferActor = createSourceBufferActor(videoBuffer);
+
+    const state = createState<SegmentLoadingState>({
+      presentation,
+      selectedVideoTrackId: 'track-a',
+      preload: 'auto',
+      playbackInitiated: true,
+      currentTime: 0,
+    });
+
+    const owners = createState<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    // Wait for track-a init fetch to start (but leave it pending)
+    await vi.waitFor(() => expect(fetchedUrls).toContain('https://example.com/track-a-init.mp4'));
+
+    // Switch tracks while track-a init is still in-flight
+    state.patch({ selectedVideoTrackId: 'track-b' });
+
+    // Unblock the pending init fetch so the runner can progress
+    resolve('https://example.com/track-a-init.mp4');
+
+    // track-b init should be fetched after the preempt
+    await vi.waitFor(() => expect(fetchedUrls).toContain('https://example.com/track-b-init.mp4'), {
+      timeout: 3000,
+    });
+
+    resolve('https://example.com/track-b-init.mp4');
+
+    await vi.waitFor(() => expect(owners.current.videoBufferActor?.snapshot.context.initTrackId).toBe('track-b'), {
+      timeout: 3000,
+    });
+
+    cleanup();
+  });
+
+  it('loads segments at currentTime position when track switches mid-playback', async () => {
+    const segments = [seg('b1', 0), seg('b2', 10), seg('b3', 20), seg('b4', 30), seg('b5', 40), seg('b6', 50)];
+    const trackA = makeResolvedVideoTrack('track-a', [seg('a1', 0), seg('a2', 10)]);
+    const trackB = makeResolvedVideoTrack('track-b', segments);
+    const presentation = makePresentation(trackA, trackB);
+    const videoBuffer = makeMockSourceBuffer();
+
+    // Pre-seed actor: track-a fully loaded, playing at t=25
+    const videoBufferActor = createSourceBufferActor(videoBuffer, {
+      initTrackId: 'track-a',
+      segments: [
+        { id: 'a1', startTime: 0, duration: 10, trackId: 'track-a' },
+        { id: 'a2', startTime: 10, duration: 10, trackId: 'track-a' },
+      ],
+    });
+
+    const state = createState<SegmentLoadingState>({
+      presentation,
+      selectedVideoTrackId: 'track-a',
+      preload: 'auto',
+      playbackInitiated: true,
+      currentTime: 25,
+    });
+
+    const owners = createState<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    await new Promise((r) => setTimeout(r, 20));
+
+    // Switch to track-b at currentTime=25
+    state.patch({ selectedVideoTrackId: 'track-b' });
+
+    const fetchedUrls: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      fetchedUrls.push(url);
+      return Promise.resolve(new Response(new ArrayBuffer(100), { status: 200 }));
+    });
+
+    // Segments at or past currentTime=25 should be loaded (b3@20 overlaps [25,55), b4-b6)
+    await vi.waitFor(
+      () => {
+        expect(fetchedUrls).toContain('https://example.com/b3.m4s');
+        expect(fetchedUrls).toContain('https://example.com/b4.m4s');
+      },
+      { timeout: 3000 }
+    );
+
+    // Segments before currentTime=25 should NOT be loaded (b1@0 and b2@10 end before 25)
+    expect(fetchedUrls).not.toContain('https://example.com/b1.m4s');
+    expect(fetchedUrls).not.toContain('https://example.com/b2.m4s');
 
     cleanup();
   });
