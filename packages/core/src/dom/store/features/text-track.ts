@@ -1,4 +1,4 @@
-import { findTrackElement, getSubtitlesTracks, listen } from '@videojs/utils/dom';
+import { findTrackElement, getTextTrackList, listen } from '@videojs/utils/dom';
 
 import type { MediaTextCue, MediaTextTrack, MediaTextTrackState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
@@ -12,7 +12,10 @@ export const textTrackFeature = definePlayerFeature({
     textTrackList: [],
     subtitlesShowing: false,
     toggleSubtitles(forceShow?: boolean) {
-      const subtitlesTracks = getSubtitlesTracks(target().media);
+      const subtitlesTracks = getTextTrackList(
+        target().media,
+        (track) => track.kind === 'subtitles' || track.kind === 'captions'
+      );
       if (!subtitlesTracks.length) return false;
 
       const showing = subtitlesTracks.some((track: TextTrack) => track.mode === 'showing');

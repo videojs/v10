@@ -6,18 +6,9 @@ export function findTrackElement(media: HTMLMediaElement, track: TextTrack): HTM
   return null;
 }
 
-export function getSubtitlesTracks(media: HTMLMediaElement): TextTrack[] {
-  if (!media?.textTracks) return [];
-  return (Array.from(media.textTracks) as TextTrack[]).filter(isSubtitleTrack).sort(sortByTextTrackKind);
-}
-
 export function getTextTrackList(media: HTMLMediaElement, filterPred: (textTrack: TextTrack) => boolean): TextTrack[] {
   if (!media?.textTracks) return [];
-  return (Array.from(media.textTracks) as TextTrack[]).filter(filterPred);
-}
-
-function isSubtitleTrack(textTrack: TextTrack): boolean {
-  return textTrack.kind === 'subtitles' || textTrack.kind === 'captions';
+  return (Array.from(media.textTracks) as TextTrack[]).filter(filterPred).sort(sortByTextTrackKind);
 }
 
 function sortByTextTrackKind(a: TextTrack, b: TextTrack): number {
