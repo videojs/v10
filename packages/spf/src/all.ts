@@ -131,3 +131,13 @@ export {
   shouldResolve,
   syncPreloadAttribute,
 } from './core/features/resolve-presentation';
+
+// =============================================================================
+// Features (F9 - Quality Switching)
+// =============================================================================
+
+export type {
+  QualitySwitchingConfig,
+  QualitySwitchingState,
+} from './core/features/quality-switching';
+export { DEFAULT_SWITCHING_CONFIG, switchQuality } from './core/features/quality-switching';
