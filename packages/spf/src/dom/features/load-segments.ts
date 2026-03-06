@@ -48,6 +48,7 @@ function createTrackedFetch(
     const elapsed = performance.now() - start;
     const next = sampleBandwidth(throughput.current, elapsed, data.byteLength);
     throughput.patch(next);
+    throughput.flush();
     onSample?.(next);
     return data;
   };
@@ -237,7 +238,14 @@ export function loadSegments(
 
   const fetchBytes = createTrackedFetch(
     throughput,
-    initialBandwidth !== undefined ? (next) => state.patch({ bandwidthState: next }) : undefined
+    initialBandwidth !== undefined
+      ? (next) => {
+          state.patch({ bandwidthState: next });
+          // Flush immediately so switchQuality sees the new estimate before the
+          // next segment fetch starts, rather than waiting for the microtask queue.
+          state.flush();
+        }
+      : undefined
   );
 
   const segmentLoader = createState<SegmentLoaderActor | undefined>(undefined);
