@@ -28,12 +28,14 @@ export const volumeFeature = definePlayerFeature({
 
     toggleMuted() {
       const { media } = target();
-      const willUnmute = media.muted;
-      media.muted = !media.muted;
+      const effectivelyMuted = media.muted || media.volume === 0;
 
-      // Restore a sensible volume when unmuting at zero.
-      if (willUnmute && media.volume === 0) {
-        media.volume = UNMUTE_VOLUME;
+      if (effectivelyMuted) {
+        media.muted = false;
+        // Restore a sensible volume when unmuting at zero.
+        if (media.volume === 0) media.volume = UNMUTE_VOLUME;
+      } else {
+        media.muted = true;
       }
 
       return media.muted;

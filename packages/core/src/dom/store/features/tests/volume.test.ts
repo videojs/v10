@@ -114,25 +114,27 @@ describe('volumeFeature', () => {
     });
 
     describe('toggleMuted', () => {
-      it('toggles mute from false to true', async () => {
-        const video = createMockVideo({ muted: false });
+      it('mutes when unmuted with volume > 0', async () => {
+        const video = createMockVideo({ muted: false, volume: 0.8 });
         const store = createStore<PlayerTarget>()(volumeFeature);
         store.attach({ media: video, container: null });
 
         const result = await store.toggleMuted();
 
         expect(video.muted).toBe(true);
+        expect(video.volume).toBe(0.8);
         expect(result).toBe(true);
       });
 
-      it('toggles mute from true to false', async () => {
-        const video = createMockVideo({ muted: true });
+      it('unmutes when muted with volume > 0', async () => {
+        const video = createMockVideo({ muted: true, volume: 0.6 });
         const store = createStore<PlayerTarget>()(volumeFeature);
         store.attach({ media: video, container: null });
 
         const result = await store.toggleMuted();
 
         expect(video.muted).toBe(false);
+        expect(video.volume).toBe(0.6);
         expect(result).toBe(false);
       });
 
@@ -147,26 +149,16 @@ describe('volumeFeature', () => {
         expect(video.volume).toBe(0.25);
       });
 
-      it('preserves volume when unmuting with volume > 0', async () => {
-        const video = createMockVideo({ muted: true, volume: 0.6 });
+      it('unmutes and restores volume when volume is 0 and not muted', async () => {
+        const video = createMockVideo({ muted: false, volume: 0 });
         const store = createStore<PlayerTarget>()(volumeFeature);
         store.attach({ media: video, container: null });
 
-        await store.toggleMuted();
+        const result = await store.toggleMuted();
 
         expect(video.muted).toBe(false);
-        expect(video.volume).toBe(0.6);
-      });
-
-      it('does not change volume when muting', async () => {
-        const video = createMockVideo({ muted: false, volume: 0.8 });
-        const store = createStore<PlayerTarget>()(volumeFeature);
-        store.attach({ media: video, container: null });
-
-        await store.toggleMuted();
-
-        expect(video.muted).toBe(true);
-        expect(video.volume).toBe(0.8);
+        expect(video.volume).toBe(0.25);
+        expect(result).toBe(false);
       });
     });
   });
