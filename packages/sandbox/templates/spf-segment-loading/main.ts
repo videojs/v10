@@ -8,6 +8,7 @@ const logsDiv = document.getElementById('logs') as HTMLDivElement;
 const stateDiv = document.getElementById('state') as HTMLDivElement;
 const renditionButtonsDiv = document.getElementById('rendition-buttons') as HTMLDivElement;
 const resolutionListDiv = document.getElementById('resolution-list') as HTMLDivElement;
+const nowPlayingQualityDiv = document.getElementById('now-playing-quality') as HTMLDivElement;
 
 function log(msg: string, type: 'info' | 'success' | 'error' | 'warning' = 'info') {
   const timestamp = new Date().toLocaleTimeString();
@@ -26,6 +27,20 @@ function formatBandwidth(bps: number): string {
 
 function getVideoTracks(state: ReturnType<typeof engine.state.current>) {
   return state.presentation?.selectionSets?.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ?? [];
+}
+
+function updateNowPlayingQuality() {
+  if (!engine) return;
+  const segments = engine.owners.current.videoBufferActor?.snapshot.context.segments ?? [];
+  const t = video.currentTime;
+  const current = segments.find((s) => t >= s.startTime && t < s.startTime + s.duration);
+  if (current?.trackBandwidth) {
+    nowPlayingQualityDiv.textContent = `▶ Now playing: ${formatBandwidth(current.trackBandwidth)}`;
+    nowPlayingQualityDiv.className = 'has-quality';
+  } else {
+    nowPlayingQualityDiv.textContent = '';
+    nowPlayingQualityDiv.className = '';
+  }
 }
 
 function renderRenditionPicker() {
@@ -207,6 +222,7 @@ video.addEventListener('loadeddata', () => log('📺 Video: loadeddata', 'succes
 video.addEventListener('canplay', () => log('📺 Video: canplay', 'success'));
 video.addEventListener('canplaythrough', () => log('📺 Video: canplaythrough', 'success'));
 video.addEventListener('playing', () => log('📺 Video: playing', 'success'));
+video.addEventListener('timeupdate', updateNowPlayingQuality);
 video.addEventListener('pause', () => log('📺 Video: pause'));
 video.addEventListener('waiting', () => log('📺 Video: waiting', 'warning'));
 video.addEventListener('ended', () => log('📺 Video: ended ✅ endOfStream() worked!', 'success'));

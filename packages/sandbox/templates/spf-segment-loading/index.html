@@ -150,6 +150,17 @@
         border-color: #aaa;
         color: #888;
       }
+      #now-playing-quality {
+        font-size: 12px;
+        font-family: monospace;
+        color: #555;
+        margin-top: -14px;
+        margin-bottom: 10px;
+      }
+      #now-playing-quality.has-quality {
+        color: #0070f3;
+        font-weight: bold;
+      }
       .error {
         color: red;
         font-weight: bold;
@@ -175,6 +186,7 @@
 
     <!-- biome-ignore lint/a11y/useMediaCaption: test harness, captions managed by SPF -->
     <video id="video" controls preload="none"></video>
+    <div id="now-playing-quality"></div>
 
     <div id="rendition-picker">
       <h2>Video Renditions</h2>
