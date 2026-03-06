@@ -125,6 +125,12 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
   if (hasVideoTrack && !owners.videoBuffer) return false;
   if (hasAudioTrack && !owners.audioBuffer) return false;
 
+  // SourceBufferActors must be idle — setting duration while a SourceBuffer is
+  // updating throws InvalidStateError. The actor subscriber in endOfStream() will
+  // re-evaluate when each actor transitions back to idle.
+  if (owners.videoBufferActor?.snapshot.status === 'updating') return false;
+  if (owners.audioBufferActor?.snapshot.status === 'updating') return false;
+
   // Last segment must be appended for each selected track
   if (!hasLastSegmentLoaded(state, owners)) return false;
 
@@ -151,19 +157,28 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
 }
 
 /**
- * Wait for all currently-updating SourceBuffers to finish.
- * Same contract as in update-duration.ts but for EndOfStreamOwners field names.
+ * Wait for all currently-updating SourceBufferActors to finish.
+ * Uses actor status rather than raw SourceBuffer.updating so the wait is
+ * aligned with the same abstraction that owns all buffer operations.
  */
 function waitForSourceBuffersReady(owners: EndOfStreamOwners): Promise<void> {
-  const updating = [owners.videoBuffer, owners.audioBuffer].filter(
-    (buf): buf is SourceBuffer => buf !== undefined && buf.updating
+  const updatingActors = [owners.videoBufferActor, owners.audioBufferActor].filter(
+    (actor): actor is SourceBufferActor => actor !== undefined && actor.snapshot.status === 'updating'
   );
 
-  if (updating.length === 0) return Promise.resolve();
+  if (updatingActors.length === 0) return Promise.resolve();
 
   return Promise.all(
-    updating.map(
-      (buf) => new Promise<void>((resolve) => buf.addEventListener('updateend', () => resolve(), { once: true }))
+    updatingActors.map(
+      (actor) =>
+        new Promise<void>((resolve) => {
+          const unsub = actor.subscribe((snapshot) => {
+            if (snapshot.status !== 'updating') {
+              unsub();
+              resolve();
+            }
+          });
+        })
     )
   ).then(() => undefined);
 }
