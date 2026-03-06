@@ -4,7 +4,7 @@ import type { CuesParsedData, NonNativeTextTracksData } from 'hls.js';
 import Hls from 'hls.js';
 
 interface HlsEngineHost {
-  readonly engine: Hls;
+  readonly engine: Hls | null;
   attach?(target: EventTarget): void;
   detach?(): void;
 }
@@ -43,6 +43,8 @@ export function HlsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost>>
 
       const { signal } = this.#disconnect;
       const { engine } = this;
+      if (!engine) return;
+
       const media = this.#target!;
 
       const onTracksFound = (_event: string, data: NonNativeTextTracksData) => {

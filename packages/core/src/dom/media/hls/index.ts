@@ -14,30 +14,30 @@ const defaultConfig = {
 };
 
 export class HlsMediaDelegateBase implements MediaDelegate {
-  #engine = new Hls(defaultConfig);
+  #engine = Hls.isSupported() ? new Hls(defaultConfig) : null;
 
-  get engine(): Hls {
+  get engine(): Hls | null {
     return this.#engine;
   }
 
   attach(target: EventTarget): void {
-    this.#engine.attachMedia(target as HTMLMediaElement);
+    this.#engine?.attachMedia(target as HTMLMediaElement);
   }
 
   detach(): void {
-    this.#engine.detachMedia();
+    this.#engine?.detachMedia();
   }
 
   destroy(): void {
-    this.#engine.destroy();
+    this.#engine?.destroy();
   }
 
   set src(src: string) {
-    this.#engine.loadSource(src);
+    this.#engine?.loadSource(src);
   }
 
   get src(): string {
-    return this.#engine.url ?? '';
+    return this.#engine?.url ?? '';
   }
 }
 
