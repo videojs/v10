@@ -52,11 +52,13 @@ const jsonLdSchema = createBlogPostingSchema({
     data-site="blog"
     data-pagefind-filter="site[data-site]"
   >
+    {/* TODO(old-color): light-40, dark-80, dark-40, light-40 */}
     <header
-      class="relative mx-auto mb-10 max-w-3xl border-b border-light-40 pb-10 dark:border-dark-80"
+      class="border-light-40 dark:border-dark-80 relative mx-auto mb-10 max-w-3xl border-b pb-10"
     >
+      {/* TODO(old-type): text-lg */}
       <div
-        class="md:text-lg mb-1 flex gap-4 font-medium text-dark-40 dark:text-light-40"
+        class="md:text-lg text-dark-40 dark:text-light-40 mb-1 flex gap-4 font-bold"
       >
         <FormattedDate
           data-pagefind-sort={`date:${post.data.pubDate.toISOString()}`}
@@ -68,7 +70,9 @@ const jsonLdSchema = createBlogPostingSchema({
         >
       </div>
       <h1 class="mb-2 text-h4 md:text-h2">{post.data.title}</h1>
-      <div class="md:text-lg font-medium text-dark-40 dark:text-light-40">
+      {/* TODO(old-color): dark-40, light-40 */}
+      {/* TODO(old-type): text-lg */}
+      <div class="md:text-lg text-dark-40 dark:text-light-40 font-bold">
         By {
           new Intl.ListFormat("en", { style: "long", type: "conjunction" })
             .formatToParts(authors.map((author) => author.data.name))

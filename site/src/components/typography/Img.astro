@@ -2,7 +2,7 @@
 
 import { Image } from 'astro:assets';
 import type { ComponentProps } from 'astro/types';
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from '@/utils/twMerge';
 
 type Props = ComponentProps<typeof Image>;
 const { class: className, ...rest } = Astro.props;

@@ -1,7 +1,8 @@
 import { Select as BaseSelect } from '@base-ui/react/select';
 import clsx from 'clsx';
-import { twMerge } from 'tailwind-merge';
-import Check from '@/components/icons/dropdown-arrow.svg?react';
+import Check from '@/components/icons/check.svg?react';
+import DropdownArrow from '@/components/icons/dropdown-arrow.svg?react';
+import { twMerge } from '@/utils/twMerge';
 
 export interface SelectOption<T = string> {
   value: T | null;
@@ -31,7 +32,7 @@ export function Select<T extends string = string>({
       <BaseSelect.Trigger
         className={twMerge(
           clsx(
-            'inline-flex items-center gap-2 bg-50-manila dark:bg-dark-manila text-faded-black dark:text-light-manila border border-black dark:border-dark-manila rounded-sm text-p3 p-2'
+            'inline-flex items-center gap-2 bg-manila-50 dark:bg-manila-dark intent:bg-manila-dark text-faded-black dark:text-manila-light border border-manila-dark rounded-xs text-p3 p-2 text-left'
           ),
           className
         )}
@@ -41,7 +42,7 @@ export function Select<T extends string = string>({
         <BaseSelect.Value className="flex-1 min-w-0 truncate" />
         &nbsp;
         <BaseSelect.Icon>
-          <Check width={'1rem'} />
+          <DropdownArrow width={'1rem'} />
         </BaseSelect.Icon>
       </BaseSelect.Trigger>
 
@@ -49,7 +50,7 @@ export function Select<T extends string = string>({
         <BaseSelect.Positioner sideOffset={4} className="z-50">
           <BaseSelect.Popup
             className={clsx(
-              'border border-light-40 dark:border-dark-80 rounded-lg bg-light-60 dark:bg-dark-80 shadow-xl text-sm',
+              'border border-manila-dark rounded-xs bg-manila-light dark:bg-dark-80 shadow-xl text-p3',
               'overflow-y-auto'
             )}
             style={
@@ -69,8 +70,10 @@ export function Select<T extends string = string>({
                     'flex items-center gap-2 p-2',
                     option.disabled
                       ? 'opacity-50 cursor-default'
-                      : 'cursor-pointer intent:bg-light-80 dark:intent:bg-dark-100',
-                    option.value === value && 'bg-light-80 dark:bg-dark-100'
+                      : // TODO(old-color): light-80, dark-100
+                        'cursor-pointer intent:bg-manila-75 dark:intent:bg-dark-100',
+                    // TODO(old-color): light-80, dark-100
+                    option.value === value && 'bg-manila-75 dark:bg-dark-100'
                   )}
                 >
                   <BaseSelect.ItemText>{option.label}</BaseSelect.ItemText>

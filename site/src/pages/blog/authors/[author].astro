@@ -57,18 +57,21 @@ const jsonLdSchema = createProfilePageSchema({
       : undefined}
   >
     {
+      /* TODO(old-color): light-40, light-100, dark-80, dark-110 */
       author.data.avatar && (
         <img
           src={author.data.avatar}
           alt={author.data.name}
-          class="row-span-3 h-24 w-24 rounded-full border border-light-40 bg-light-100 md:h-36 md:w-36 dark:border-dark-80 dark:bg-dark-110"
+          class="border-light-40 bg-light-100 dark:border-dark-80 dark:bg-dark-110 row-span-3 h-24 w-24 rounded-full border md:h-36 md:w-36"
         />
       )
     }
     <h1 class="mb-1 text-h2">{author.data.name}</h1>
     {
+      /* TODO(old-color): dark-80, light-80 */
+      /* TODO(old-type): text-lg */
       author.data.bio && (
-        <p class="text-lg mb-4 text-dark-80 dark:text-light-80">
+        <p class="text-lg text-dark-80 dark:text-light-80 mb-4">
           {author.data.bio}
         </p>
       )

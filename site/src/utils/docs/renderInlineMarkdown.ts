@@ -1,6 +1,6 @@
 import { Marked, type MarkedExtension, type Tokens } from 'marked';
-import { twMerge } from 'tailwind-merge';
 import { shared } from '@/components/typography/styles';
+import { twMerge } from '@/utils/twMerge';
 
 const classes = {
   p: 'mt-3 first:mt-0',

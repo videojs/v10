@@ -63,7 +63,8 @@ export default function RendererSelect() {
     <div className="flex flex-col gap-3">
       {/* URL input */}
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="source-url-input" className="text-sm text-dark-40 dark:text-light-40">
+        {/* TODO(old-color): dark-40, light-40 */}
+        <label htmlFor="source-url-input" className="text-p3 text-dark-40 dark:text-light-40">
           Enter the URL to a video to auto-detect
         </label>
         <input
@@ -72,13 +73,15 @@ export default function RendererSelect() {
           value={$sourceUrl}
           onChange={(e) => sourceUrl.set(e.target.value)}
           placeholder="https://..."
-          className="bg-light-60 dark:bg-dark-90 dark:text-light-100 border border-light-40 dark:border-dark-80 rounded-lg text-sm p-2"
+          // TODO(old-color): light-60, dark-90, light-100, light-40, dark-80
+          className="bg-manila-50 dark:bg-dark-90 border border-manila-75 dark:border-dark-80 rounded-xs text-p3 p-2"
         />
       </div>
 
       {/* Select dropdown */}
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="renderer-select" className="text-sm text-dark-40 dark:text-light-40 flex flex-wrap gap-1">
+        {/* TODO(old-color): dark-40, light-40 */}
+        <label htmlFor="renderer-select" className="text-p3 text-dark-40 dark:text-light-40 flex flex-wrap gap-1">
           {showDetectionMatch ? (
             `This looks like ${articleFor(detection.renderer)} ${detection.label} link`
           ) : showDetectionSuggestion ? (

@@ -16,15 +16,14 @@ const bundlePath = join(baseUrl, 'pagefind/');
 
 interface Props {
   class?: string;
-  dark: boolean;
 }
-const { class: className, dark } = Astro.props;
+const { class: className } = Astro.props;
 ---
 
 <SearchClient
   client:load
   className={clsx(
-    "inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-full border-faded-black px-2 sm:border dark:border-light-manila intent:border-current",
+    "inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-full border-faded-black px-2 sm:border dark:border-manila-light intent:border-manila-dark",
     className,
   )}
   baseUrl={baseUrl}
@@ -35,10 +34,10 @@ const { class: className, dark } = Astro.props;
   } as React.CSSProperties}
 >
   <SearchIcon class="h-4 w-4 sm:h-3 sm:w-3" />
-  <kbd data-platform-key="default" class="text-sm hidden font-sans sm:inline"
+  <kbd data-platform-key="default" class="hidden font-display text-h4 sm:inline"
     >Ctrl K</kbd
   >
-  <kbd data-platform-key="mac" class="text-sm hidden font-sans sm:inline"
+  <kbd data-platform-key="mac" class="hidden font-display text-h4 sm:inline"
     >⌘K</kbd
   >
 </SearchClient>
@@ -72,26 +71,29 @@ const { class: className, dark } = Astro.props;
 
   #pagefind-ui {
     --pagefind-ui-scale: 1;
-    --pagefind-ui-primary: var(--color-bright-yellow);
-    --pagefind-ui-text: var(--color-dark-100);
-    --pagefind-ui-background: var(--color-light-100);
-    --pagefind-ui-border: var(--color-light-40);
+    --pagefind-ui-primary: var(--color-gold);
+    --pagefind-ui-text: var(--color-faded-black);
+    --pagefind-ui-background: var(--color-manila-50);
+    --pagefind-ui-border: var(--color-manila-75);
     --pagefind-ui-tag: green;
     --pagefind-ui-border-width: 1px;
-    --pagefind-ui-border-radius: var(--radius-lg);
+    --pagefind-ui-border-radius: var(--radius-xs);
     --pagefind-ui-font: inherit;
   }
 
   .dark #pagefind-ui {
     --pagefind-ui-text: var(--color-light-80);
-    --pagefind-ui-background: var(--color-dark-100);
-    --pagefind-ui-border: var(--color-dark-80);
+    --pagefind-ui-background: var(
+      --color-dark-100
+    ); /* TODO(old-color): dark-100 */
+    --pagefind-ui-border: var(--color-dark-80); /* TODO(old-color): dark-80 */
   }
 
   #pagefind-ui .pagefind-ui__form::before {
     -webkit-mask-image: var(--search-icon-url);
     mask-image: var(--search-icon-url);
   }
+  /* TODO(old-type): text-lg */
   #pagefind-ui .pagefind-ui__search-input {
     font-size: var(--text-lg);
     line-height: var(--text-lg--line-height);
@@ -106,14 +108,14 @@ const { class: className, dark } = Astro.props;
   }
   #pagefind-ui .pagefind-ui__result-title,
   #pagefind-ui .pagefind-ui__filter-name {
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-bold);
   }
   #pagefind-ui .pagefind-ui__result-nested .pagefind-ui__result-link::before {
     font-weight: var(--font-weight-normal);
     font-size: 0.9em;
   }
   #pagefind-ui mark {
-    background-color: var(--color-bright-yellow);
-    color: var(--color-dark-100);
+    background-color: var(--color-gold);
+    color: var(--color-faded-black);
   }
 </style>

@@ -2,7 +2,7 @@
 
 import clsx from 'clsx';
 import { Info, Lightbulb, OctagonX, TriangleAlert } from 'lucide-react';
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from '@/utils/twMerge';
 
 type AsideType = 'note' | 'tip' | 'caution' | 'danger';
 
@@ -39,7 +39,7 @@ const renderTitle = title ?? defaultTitles[type];
 <aside
   class={twMerge(
     clsx(
-      "mx-auto my-6 flex w-full max-w-3xl overflow-hidden rounded-sm border border-75-manila dark:border-dark-manila",
+      "mx-auto my-6 flex w-full max-w-3xl overflow-hidden rounded-xs border border-manila-75 dark:border-manila-dark",
     ),
     className,
   )}
@@ -47,8 +47,8 @@ const renderTitle = title ?? defaultTitles[type];
   <div
     class={clsx(
       "w-2 self-stretch",
-      type === "note" && "bg-blue",
-      type === "tip" && "bg-purple",
+      type === "note" && "bg-magenta",
+      type === "tip" && "bg-magenta",
       type === "caution" && "bg-orange",
       type === "danger" && "bg-red",
     )}
@@ -60,8 +60,8 @@ const renderTitle = title ?? defaultTitles[type];
         size={18}
         className={clsx(
           clsx(
-            type === "note" && "text-blue",
-            type === "tip" && "text-purple",
+            type === "note" && "text-magenta",
+            type === "tip" && "text-magenta",
             type === "caution" && "text-orange",
             type === "danger" && "text-red",
           ),
@@ -69,7 +69,8 @@ const renderTitle = title ?? defaultTitles[type];
       />
     </div>
     <div class="min-w-0 flex-1">
-      <p class="text-md mb-2 font-semibold">{renderTitle}</p>
+      {/* TODO(old-type): text-md */}
+      <p class="text-md mb-2 font-bold">{renderTitle}</p>
       <div class="[&>*:last-child]:mb-0! [&>.my-12]:my-4 [&>.my-6]:my-2">
         <slot />
       </div>

@@ -50,7 +50,7 @@
   --font-sans: var(--font-instrument-sans);
   --font-mono: var(--font-ibm-plex-mono);
   --font-display-compact: "Eurostile LT Pro", sans-serif;
-  --font-display-extended: "Eurostile LT Pro Extended", sans-serif;
+  --font-display: "Eurostile LT Pro Extended", sans-serif;
 }
 
 @theme {
@@ -59,25 +59,14 @@
   --color-white: white;
   --color-black: black;
 
-  /*--color-dark-110: #2a2928;
-  --color-dark-100: #393836;
-  --color-dark-90: #494741;
-  --color-dark-80: #5a5850;
-  --color-dark-40: #7d796a;
-
-  --color-light-100: #f6eee2;
-  --color-light-80: #f3e7d2;
-  --color-light-60: #d8d2b2;
-  --color-light-40: #c7c2a4;*/
-
   --color-faded-black: #1e1d1d;
-  --color-dark-soft: #32302f;
+  --color-soot: #32302f;
   --color-warm-gray: #403c38;
-  --color-dark-manila: #bfb39e;
-
-  --color-light-manila: #f3e7d2;
-  --color-50-manila: #dcd2bb;
-  --color-75-manila: #ccc3ab;
+  --color-manila-dark: #bfb39e;
+  --color-manila-75: #ccc3ab;
+  --color-manila-50: #dcd2bb;
+  --color-manila-25: #e7ddc6;
+  --color-manila-light: #f3e7d2;
 
   --color-bright-yellow: #ffca18;
   --color-gold: #ffa81b;
@@ -184,6 +173,7 @@
   }
 
   [id] {
+    /* this only works where nav-h is defined. currently, docs */
     scroll-margin-top: calc(var(--nav-h) + var(--spacing) * 5 + var(--scroll-mt, 0px));
   }
 
@@ -194,7 +184,7 @@
 
   mark {
     background-color: var(--color-bright-yellow);
-    color: var(--color-dark-100);
+    color: var(--color-dark-100); /* TODO(old-color): dark-100 */
   }
 
   .dark * {
@@ -204,7 +194,7 @@
 
 @utility scrollbar-white {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-dark-manila) transparent;
+  scrollbar-color: var(--color-manila-dark) transparent;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -216,7 +206,7 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--color-dark-manila);
+    background: var(--color-manila-dark);
     border-radius: 9999px;
   }
 }
@@ -283,10 +273,10 @@
   }
 }
 
-@utility text-stroke-light-manila {
+@utility text-stroke-manila-light {
   color: transparent;
-  -webkit-text-stroke: 1.5px var(--color-light-manila);
-  -webkit-text-stroke: clamp(1px, 0.035em, 1.5px) var(--color-light-manila);
+  -webkit-text-stroke: 1.5px var(--color-manila-light);
+  -webkit-text-stroke: clamp(1px, 0.035em, 1.5px) var(--color-manila-light);
 
   &::selection {
     color: transparent;

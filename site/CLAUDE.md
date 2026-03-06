@@ -85,6 +85,7 @@ The `intent:` variant is defined as:
 <div style="transform: rotate(45deg)">Content</div>
 
 <!-- ❌ WORSE: Arbitrary variant -->
+<div class="transform-[rotate(45deg)]">Content</div>
 <div class="[transform:rotate(45deg)]">Content</div>
 ```
 

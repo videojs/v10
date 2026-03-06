@@ -9,7 +9,7 @@ describe('renderInlineMarkdown', () => {
   it('unwraps a single paragraph', () => {
     const result = renderInlineMarkdown('Hello **world**.');
     expect(result).not.toMatch(/^<p/);
-    expect(result).toContain('<strong class="font-semibold">world</strong>');
+    expect(result).toContain('<strong class="font-bold">world</strong>');
   });
 
   it('preserves multiple paragraphs', () => {
@@ -29,12 +29,12 @@ describe('renderInlineMarkdown', () => {
 
   it('renders strong text', () => {
     const result = renderInlineMarkdown('**bold text**');
-    expect(result).toContain('<strong class="font-semibold">bold text</strong>');
+    expect(result).toContain('<strong class="font-bold">bold text</strong>');
   });
 
   it('renders emphasized text', () => {
     const result = renderInlineMarkdown('*italic text*');
-    expect(result).toContain('<em class="font-medium">italic text</em>');
+    expect(result).toContain('<em class="font-bold">italic text</em>');
   });
 
   it('renders links with correct classes', () => {

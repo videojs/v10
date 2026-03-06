@@ -11,8 +11,9 @@ export interface DialNavProps {
 
 const TRANSITION_MS = 450;
 
+// TODO(old-type): text-display-h5
 const linkClass =
-  'flex rounded-xs min-w-44 items-center gap-2 px-6 py-3 text-display-h5 font-display-compact font-bold uppercase text-faded-black dark:text-light-manila';
+  'flex rounded-xs min-w-44 items-center gap-2 px-6 py-3 text-display-h5 font-display-compact font-bold uppercase text-faded-black dark:text-manila-light';
 
 export default function DialNav({ left, right }: DialNavProps) {
   const [activeAngle, setActiveAngle] = useState<number | null>(null);
@@ -53,11 +54,11 @@ export default function DialNav({ left, right }: DialNavProps) {
             key={link.href}
             href={link.href}
             onClick={(e) => handleClick(e, link)}
-            className={clsx(linkClass, 'justify-end pr-15 -mr-12 bg-50-manila dark:bg-black')}
+            className={clsx(linkClass, 'justify-end pr-15 -mr-12 bg-manila-50 dark:bg-black')}
           >
             {link.label}
             <span
-              className="w-2.5 h-2.5 rounded-full border border-faded-black dark:border-light-manila"
+              className="w-2.5 h-2.5 rounded-full border border-faded-black dark:border-manila-light"
               style={dotStyle(link.href)}
             />
           </a>
@@ -68,11 +69,11 @@ export default function DialNav({ left, right }: DialNavProps) {
         key={left[0].href}
         href={left[0].href}
         onClick={(e) => handleClick(e, left[0])}
-        className="w-20 h-20 md:w-24 md:h-24 shrink-0 relative z-10 text-light-manila dark:text-faded-black"
+        className="w-20 h-20 md:w-24 md:h-24 shrink-0 relative z-10 text-manila-light dark:text-faded-black"
       >
         <Dial
           style={needleStyle}
-          className="outline-8 rounded-full outline-dark-manila dark:outline-faded-black"
+          className="outline-8 rounded-full outline-manila-dark dark:outline-faded-black"
           width={'100%'}
           height={'auto'}
         />
@@ -84,10 +85,10 @@ export default function DialNav({ left, right }: DialNavProps) {
             key={link.href}
             href={link.href}
             onClick={(e) => handleClick(e, link)}
-            className={clsx(linkClass, 'pl-15 -ml-12 bg-50-manila dark:bg-black')}
+            className={clsx(linkClass, 'pl-15 -ml-12 bg-manila-50 dark:bg-black')}
           >
             <span
-              className="w-2.5 h-2.5 rounded-full border border-faded-black dark:border-light-manila"
+              className="w-2.5 h-2.5 rounded-full border border-faded-black dark:border-manila-light"
               style={dotStyle(link.href)}
             />
             {link.label}

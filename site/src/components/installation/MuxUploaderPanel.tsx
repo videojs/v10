@@ -176,7 +176,8 @@ export default function MuxUploaderPanel() {
   }, []);
 
   return (
-    <div className="flex-1 relative rounded-xl border border-dashed border-light-40 overflow-hidden dark:border-dark-80">
+    // TODO(old-color): light-40, dark-80
+    <div className="flex-1 relative rounded-xs border border-dashed border-light-40 overflow-hidden dark:border-dark-80">
       <MuxUploader
         ref={uploaderRef}
         id="mux-uploader"
@@ -195,16 +196,19 @@ export default function MuxUploaderPanel() {
         overlay
         overlayText="Let it go"
       >
-        <span slot="heading" className="text-lg font-medium mb-2">
+        {/* TODO(old-type): text-lg */}
+        <span slot="heading" className="text-lg font-bold mb-2">
           Drop a video
         </span>
-        <span slot="separator" className="text-sm block text-dark-40 dark:text-light-40 mb-3">
+        {/* TODO(old-color): dark-40, light-40 */}
+        <span slot="separator" className="text-p3 block text-dark-40 dark:text-light-40 mb-3">
           — or —
         </span>
         <MuxUploaderFileSelect muxUploader="mux-uploader">
           <button
             type="button"
-            className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-faded-black text-light-manila dark:bg-light-manila dark:text-faded-black rounded-lg text-sm font-medium intent:bg-orange intent:text-faded-black"
+            // TODO(old-type): text-p3
+            className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black rounded-xs text-p3 font-bold intent:bg-orange intent:text-faded-black"
           >
             Select a file
           </button>

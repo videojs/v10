@@ -1,6 +1,18 @@
+---
+interface Props {
+  variant?: 'short' | 'normal';
+  class?: string;
+}
+const { variant = 'normal', class: className } = Astro.props;
+---
+
 <div
-  class="relative grid h-52"
-  style="grid-template-rows: 80px 60px 45px 20px 10px"
+  class:list={[
+    "relative grid",
+    variant === "short" ? "h-25" : "h-52",
+    className,
+  ]}
+  style="grid-template-rows: 80fr 60fr 45fr 20fr 10fr"
 >
   <div class="bg-bright-yellow"></div>
   <div class="bg-gold"></div>

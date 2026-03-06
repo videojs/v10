@@ -6,29 +6,29 @@ const seconds = [0, 5, 10, 15, 20];
 ---
 
 <AnimatedBars
-  className="rounded-xs border border-dark-manila bg-faded-black p-5 md:p-10 lg:p-15"
+  className="rounded-xs border border-manila-dark bg-faded-black p-5 md:p-10 lg:p-15"
   client:idle
 >
   <header class="text-p2">
-    <h3 class="font-bold text-light-manila">Download speeds</h3>
-    <span class="whitespace-nowrap text-dark-manila"
+    <h3 class="font-bold text-manila-light">Download speeds</h3>
+    <span class="whitespace-nowrap text-manila-dark"
       >(based on slow 4G connection)</span
     >
   </header>
   <p
-    class="mt-6 inline-block items-center rounded-full border border-light-manila bg-faded-black px-8 py-0.5 text-center font-display-extended text-h5 font-bold text-light-manila uppercase md:hidden"
+    class="mt-6 inline-block items-center rounded-full border border-manila-light bg-faded-black px-8 py-0.5 text-center font-display text-h5 font-bold text-manila-light uppercase md:hidden"
   >
     VJS 8
   </p>
-  <div class="data-bar mt-4 mb-2 w-full md:mt-5 md:mb-2.5"></div>
+  <div class="mt-4 mb-2 data-bar w-full md:mt-5 md:mb-2.5"></div>
   <div class="flex items-center gap-2.5">
     <p
-      class="hidden min-w-30 items-center justify-center rounded-full border border-light-manila bg-faded-black py-0.5 text-center font-display-extended text-h5 font-bold text-light-manila uppercase md:flex"
+      class="hidden min-w-30 items-center justify-center rounded-full border border-manila-light bg-faded-black py-0.5 text-center font-display text-h5 font-bold text-manila-light uppercase md:flex"
     >
       VJS 8
     </p>
     <p
-      class="flex gap-1 text-center font-display-extended text-h5 text-light-manila uppercase lg:gap-2.5"
+      class="flex gap-1 text-center font-display text-h5 text-manila-light uppercase lg:gap-2.5"
     >
       <span class="font-bold">3.96s</span>
       <span>/</span>
@@ -36,24 +36,24 @@ const seconds = [0, 5, 10, 15, 20];
     </p>
   </div>
   <p
-    class="mt-6 inline-block items-center rounded-full border border-orange bg-faded-black px-8 py-0.5 text-center font-display-extended text-h5 font-bold text-orange uppercase md:hidden"
+    class="mt-6 inline-block items-center rounded-full border border-orange bg-faded-black px-8 py-0.5 text-center font-display text-h5 font-bold text-orange uppercase md:hidden"
   >
     VJS 10
   </p>
   <div
-    class="data-bar data-bar-orange mt-4 mb-2 md:mt-5 md:mb-2.5"
+    class="mt-4 mb-2 data-bar data-bar-orange md:mt-5 md:mb-2.5"
     style="max-width: 32.25%"
   >
   </div>
 
   <div class="flex items-center gap-2.5">
     <p
-      class="hidden min-w-30 items-center justify-center rounded-full border border-orange bg-faded-black py-0 text-center font-display-extended text-h5 font-bold text-orange uppercase md:flex"
+      class="hidden min-w-30 items-center justify-center rounded-full border border-orange bg-faded-black py-0 text-center font-display text-h5 font-bold text-orange uppercase md:flex"
     >
       VJS 10
     </p>
     <p
-      class="2xl flex gap-1 text-center font-display-extended text-h5 text-orange uppercase lg:gap-2.5"
+      class="2xl flex gap-1 text-center font-display text-h5 text-orange uppercase lg:gap-2.5"
     >
       <span class="font-bold">1.29s</span>
       <span>/</span>
@@ -67,7 +67,7 @@ const seconds = [0, 5, 10, 15, 20];
         <div
           class={clsx(
             "h-4 w-px",
-            seconds.includes(i) ? "bg-light-manila" : "bg-warm-gray",
+            seconds.includes(i) ? "bg-manila-light" : "bg-warm-gray",
           )}
         />
       ))
@@ -76,7 +76,7 @@ const seconds = [0, 5, 10, 15, 20];
   <div class="-mx-1.5 flex justify-between" style="width: calc(100% + 0.85rem)">
     {
       Array.from({ length: 5 }, (_, i) => (
-        <div class="w-5 text-center text-p3 text-light-manila">{i}s</div>
+        <div class="w-5 text-center text-p3 text-manila-light">{i}s</div>
       ))
     }
   </div>

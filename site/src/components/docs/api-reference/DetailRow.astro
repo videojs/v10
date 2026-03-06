@@ -34,7 +34,7 @@ const hasDetail = Boolean(detailedType || description);
   data-detail-row
   class={clsx(
     hasDetail &&
-      "group cursor-pointer data-expanded:border-transparent dark:data-expanded:border-transparent intent:bg-light-60 dark:intent:bg-dark-110",
+      "group intent:bg-light-60 dark:intent:bg-dark-110 cursor-pointer data-expanded:border-transparent dark:data-expanded:border-transparent" /* TODO(old-color): light-60, dark-110 */,
   )}
 >
   <slot />
@@ -70,6 +70,7 @@ const hasDetail = Boolean(detailedType || description);
           >
             {description && (
               <>
+                {/* TODO(old-color): dark-40, light-40 */}
                 <dt class="text-dark-40 dark:text-light-40">Description</dt>
                 <dd>
                   <InlineMarkdown content={description} />
@@ -79,6 +80,7 @@ const hasDetail = Boolean(detailedType || description);
 
             {detailedType && (
               <>
+                {/* TODO(old-color): dark-40, light-40 */}
                 <dt class="text-dark-40 dark:text-light-40">Type</dt>
                 <dd>
                   <MarkdownCode>{detailedType}</MarkdownCode>

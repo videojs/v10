@@ -47,21 +47,17 @@ export default function EjectDemo({ className }: { className?: string }) {
           variant="expanded"
           value="html"
           initial
-          className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0"
+          className="bg-faded-black scrollbar-white dark:bg-soot m-2.5 mt-0"
         >
           <ClientCode code={generateHTMLCode($skin)} lang="html" />
         </TabsPanel>
-        <TabsPanel
-          variant="expanded"
-          value="css"
-          className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0"
-        >
+        <TabsPanel variant="expanded" value="css" className="bg-faded-black scrollbar-white dark:bg-soot m-2.5 mt-0">
           <ClientCode code={generateCSS($skin)} lang="css" />
         </TabsPanel>
         <TabsPanel
           variant="expanded"
           value="javascript"
-          className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0"
+          className="bg-faded-black scrollbar-white dark:bg-soot m-2.5 mt-0"
         >
           <ClientCode code={generateJS($skin)} lang="javascript" />
         </TabsPanel>
@@ -83,11 +79,11 @@ export default function EjectDemo({ className }: { className?: string }) {
         variant="expanded"
         value="react"
         initial
-        className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0"
+        className="bg-faded-black scrollbar-white dark:bg-soot m-2.5 mt-0"
       >
         <ClientCode code={generateReactCode($skin)} lang="tsx" />
       </TabsPanel>
-      <TabsPanel variant="expanded" value="css" className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0">
+      <TabsPanel variant="expanded" value="css" className="bg-faded-black scrollbar-white dark:bg-soot m-2.5 mt-0">
         <ClientCode code={generateReactCSS($skin)} lang="css" />
       </TabsPanel>
     </TabsRoot>

@@ -51,7 +51,9 @@ const jsonLdSchema = createBlogCollectionSchema({
   <JsonLd slot="head" schema={jsonLdSchema} />
   <header class="mx-auto mb-10 w-full max-w-3xl md:mb-20">
     <h1 class="mb-2 text-h4 md:text-h2">Video.js Blog</h1>
-    <p class="text-lg font-medium text-dark-40 md:text-h5 dark:text-light-40">
+    {/* TODO(old-color): dark-40, light-40 */}
+    {/* TODO(old-type): text-lg */}
+    <p class="text-lg text-dark-40 dark:text-light-40 font-bold md:text-h5">
       {
         page.data.length === 0
           ? "Coming soon"

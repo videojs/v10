@@ -2,7 +2,7 @@ import { Toggle } from '@base-ui/react/toggle';
 import { ToggleGroup as BaseToggleGroup } from '@base-ui/react/toggle-group';
 import clsx from 'clsx';
 import { Fragment } from 'react';
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from '@/utils/twMerge';
 
 export interface ToggleOption<T = string> {
   value: T;
@@ -61,12 +61,12 @@ export default function ToggleGroup<T extends string = string>({
               className={twMerge(
                 clsx(
                   'relative',
-                  'flex items-center justify-center font-display-extended tracking-normal leading-none uppercase font-bold',
+                  'flex items-center justify-center font-display tracking-normal leading-none uppercase font-bold',
                   minimal ? 'px-3 py-2' : 'px-4 py-3',
                   'text-(length:--text) md:text-h4',
                   isDisabled ? 'cursor-wait opacity-50' : 'cursor-pointer',
                   isPressed
-                    ? 'bg-faded-black dark:bg-light-manila text-light-manila dark:text-faded-black'
+                    ? 'bg-faded-black dark:bg-manila-light text-manila-light dark:text-faded-black'
                     : 'bg-transparent'
                 ),
                 toggleClassName
@@ -76,12 +76,12 @@ export default function ToggleGroup<T extends string = string>({
             >
               {option.label}
             </Toggle>
-            {!isLast && minimal && <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />}
+            {!isLast && minimal && <span className="block h-full w-px bg-faded-black dark:bg-manila-light" />}
             {!isLast && !minimal && (
               <span className="flex px-0.75 gap-0.75 h-full">
-                <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />
-                <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />
-                <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />
+                <span className="block h-full w-px bg-faded-black dark:bg-manila-light" />
+                <span className="block h-full w-px bg-faded-black dark:bg-manila-light" />
+                <span className="block h-full w-px bg-faded-black dark:bg-manila-light" />
               </span>
             )}
           </Fragment>

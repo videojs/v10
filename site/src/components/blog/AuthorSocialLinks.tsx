@@ -67,7 +67,8 @@ export function AuthorSocialLinks({ socialLinks, className }: AuthorSocialLinksP
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`${config.label} profile`}
-                  className="inline-flex items-center justify-center p-2 rounded-lg intent:text-dark-40 dark:text-light-40"
+                  // TODO(old-color): dark-40, light-40
+                  className="inline-flex items-center justify-center p-2 rounded-xs intent:text-dark-40 dark:text-light-40"
                 >
                   <Icon size={20} strokeWidth={1.5} />
                 </a>

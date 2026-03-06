@@ -79,6 +79,23 @@
   },
   "overrides": [
     {
+      "includes": ["site/src/**", "!site/src/utils/twMerge.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "tailwind-merge": "Use '@/utils/twMerge' instead — it's configured for our custom theme."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["packages/element/**"],
       "linter": {
         "rules": {

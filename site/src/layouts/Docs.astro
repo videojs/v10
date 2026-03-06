@@ -6,7 +6,7 @@ import DocsSidebarRestoration from '@/components/docs/DocsSidebarRestoration.ast
 import { Selectors } from '@/components/docs/Selectors';
 import StyleInit from '@/components/docs/StyleInit.astro';
 import FilmGrain from '@/components/FilmGrain';
-import Footer from '@/components/Footer.astro';
+import Footer from '@/components/FooterDocs.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import NavBarDocs from '@/components/NavBar/NavBarDocs.astro';
 import { FRAMEWORK_LABELS, type SupportedFramework } from '@/types/docs';
@@ -42,8 +42,16 @@ const docsSidebarId = 'docs-sidebar';
     <slot name="head" slot="head" />
   </Fragment>
   <div
-    class="grid min-h-screen grid-cols-1 md:grid-cols-(--md-grid-cols) lg:grid-cols-(--lg-grid-cols)"
-    style="--md-grid-cols: calc(var(--spacing) * 70) 1fr;--lg-grid-cols: calc(var(--spacing) * 75) 1fr;grid-template-rows:auto minmax(0,1fr);"
+    class:list={[
+      "grid min-h-screen grid-cols-1",
+      "md:grid-cols-(--md-grid-cols) lg:grid-cols-(--lg-grid-cols)",
+      "[--nav-h:calc(var(--spacing)*13)] sm:[--nav-h:calc(var(--spacing)*13.5)]",
+    ]}
+    style={{
+      "--md-grid-cols": `calc(var(--spacing) * 70) minmax(0,1fr)`,
+      "--lg-grid-cols": `calc(var(--spacing) * 75) minmax(0,1fr)`,
+      "grid-template-rows": "auto minmax(0,1fr)",
+    }}
   >
     <NavBarDocs class="col-span-full">
       <DocsSidebar
@@ -52,9 +60,10 @@ const docsSidebarId = 'docs-sidebar';
         docTitles={docTitles}
       />
     </NavBarDocs>
+    {/* TODO(old-color): dark-80 */}
     <aside
       id={docsSidebarId}
-      class="sticky z-10 hidden flex-col overflow-y-auto border-75-manila md:flex md:border-r dark:border-dark-80"
+      class="dark:border-dark-80 sticky z-10 hidden flex-col overflow-y-auto border-manila-75 md:flex md:border-r"
       style="top: var(--nav-h); max-height: calc(100vh - var(--nav-h));"
     >
       <DocsSidebar framework={framework} docTitles={docTitles} class="flex-1">
@@ -70,7 +79,7 @@ const docsSidebarId = 'docs-sidebar';
         <slot />
       </div>
       <Footer class="mt-auto" />
-      <FooterEasterEgg class="md:col-start-2" />
+      <FooterEasterEgg variant="short" class="md:col-start-2" />
     </div>
   </div>
 </Base>

@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from '@/utils/twMerge';
 import texture from './texture.svg?raw';
 
 const textureUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(texture)}`;

@@ -17,7 +17,7 @@ function OverlayWrapper({ children, className }: { children: React.ReactNode; cl
     <div
       className={clsx(
         'absolute inset-0 flex flex-col items-center justify-center gap-3',
-        'bg-light-80 dark:bg-dark-100',
+        'bg-light-80 dark:bg-dark-100', // TODO(old-color): light-80, dark-100
         className
       )}
     >
@@ -42,11 +42,12 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
   if (state === 'needs_login') {
     return (
       <OverlayWrapper>
-        <p className="text-sm font-medium">To upload this video to Mux&hellip;</p>
+        <p className="text-p3 font-bold">To upload this video to Mux&hellip;</p>
         <button
           type="button"
           onClick={onLogin}
-          className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-bright-yellow text-dark-100 rounded-lg text-sm font-medium intent:bg-bright-yellow/70"
+          // TODO(old-color): dark-100
+          className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-bright-yellow text-dark-100 rounded-xs text-p3 font-bold intent:bg-bright-yellow/70"
         >
           Sign up or log in
         </button>
@@ -58,7 +59,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
     return (
       <OverlayWrapper>
         <div className="w-6 h-6 border-2 border-bright-yellow border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm">Preparing video...</p>
+        <p className="text-p3">Preparing video...</p>
       </OverlayWrapper>
     );
   }
@@ -67,10 +68,10 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
     return (
       <OverlayWrapper>
         <div className="flex items-center gap-2">
-          <CheckCircle size={18} className="text-orange text-sm" />
-          <p className="font-medium">Ready to play</p>
+          <CheckCircle size={18} className="text-orange text-p3" />
+          <p className="font-bold">Ready to play</p>
         </div>
-        <p className="text-center text-sm">
+        <p className="text-center text-p3">
           See code below, or{' '}
           <a
             href="https://dashboard.mux.com/my/video/assets"
@@ -89,11 +90,11 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
   if (state === 'polling_error') {
     return (
       <OverlayWrapper className="border-solid border-red">
-        <p className="text-sm text-red">
+        <p className="text-p3 text-red">
           Error preparing video:
           {error}
         </p>
-        <button type="button" onClick={onRetry} className="text-sm underline intent:no-underline">
+        <button type="button" onClick={onRetry} className="text-p3 underline intent:no-underline">
           Try again
         </button>
       </OverlayWrapper>

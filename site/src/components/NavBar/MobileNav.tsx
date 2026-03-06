@@ -15,24 +15,22 @@ interface NavLink {
 export interface MobileNavProps {
   navLinks: NavLink[];
   currentPath: string;
-  dark?: boolean;
   children?: React.ReactNode;
 }
 
-export default function MobileNav({ navLinks, currentPath, dark = false, children }: MobileNavProps) {
+export default function MobileNav({ navLinks, currentPath, children }: MobileNavProps) {
   return (
     <Dialog.Root modal>
       {/* Trigger button - hamburger menu */}
       <Dialog.Trigger
         className={clsx(
           'md:hidden',
-          'inline-flex items-stretch p-0.75 border-2 border-faded-black dark:border-light-manila rounded-xs',
-          dark ? 'bg-light-manila text-faded-black intent:bg-light-manila' : ' '
+          'inline-flex items-stretch p-0.75 border-2 border-faded-black dark:border-manila-light rounded-xs'
         )}
         aria-label="Open navigation menu"
       >
         <span
-          className="font-display-extended tracking-normal leading-none uppercase font-bold text-light-manila bg-faded-black dark:bg-light-manila dark:text-faded-black px-4 py-2.5"
+          className="font-display tracking-normal leading-none uppercase font-bold text-manila-light bg-faded-black dark:bg-manila-light dark:text-faded-black px-4 py-2.5"
           style={{ fontSize: '0.75rem' }}
         >
           Menu
@@ -45,29 +43,21 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
         <Dialog.Popup
           className={clsx(
             'fixed inset-0 z-50 flex flex-col',
-            dark
-              ? 'bg-faded-black text-light-manila dark'
-              : 'bg-light-manila dark:bg-faded-black text-faded-black dark:text-light-manila'
+            'bg-manila-light dark:bg-faded-black text-faded-black dark:text-manila-light'
           )}
         >
           {/* Header with close button */}
-          <div
-            className={clsx(
-              'flex justify-between items-center px-5 py-7',
-              dark ? 'border-dark-80' : 'border-light-40 dark:border-dark-80'
-            )}
-          >
+          <div className={clsx('flex justify-between items-center px-5 py-7')}>
             <Dialog.Title className="sr-only">Navigation</Dialog.Title>
             <Logo width="10rem" />
             <Dialog.Close
               className={clsx(
-                'inline-flex items-stretch p-0.75 border-2 border-faded-black dark:border-light-manila rounded-xs',
-                dark ? 'bg-light-manila text-faded-black intent:bg-light-manila' : ''
+                'inline-flex items-stretch p-0.75 border-2 border-faded-black dark:border-manila-light rounded-xs'
               )}
               aria-label="Close navigation menu"
             >
               <span
-                className="font-display-extended tracking-normal leading-none uppercase font-bold text-light-manila bg-faded-black dark:bg-light-manila dark:text-faded-black px-4 py-2.5"
+                className="font-display tracking-normal leading-none uppercase font-bold text-manila-light bg-faded-black dark:bg-manila-light dark:text-faded-black px-4 py-2.5"
                 style={{ fontSize: '0.75rem' }}
               >
                 Close
@@ -76,14 +66,14 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
           </div>
 
           <div className="overflow-y-auto">
-            <div className={clsx('', dark ? 'border-dark-80' : 'border-light-40 dark:border-dark-80')}>{children}</div>
+            <div className={clsx('')}>{children}</div>
             {/* Navigation links */}
             <nav className="flex flex-col p-5">
               {navLinks.map((link) => {
                 const isActive = link.matchPath && currentPath.startsWith(link.matchPath);
                 const className = clsx(
-                  'intent:bg-dark-manila dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display-extended uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-dark-manila',
-                  isActive ? 'text-stroke-faded-black dark:text-stroke-light-manila' : ''
+                  'intent:bg-manila-dark dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-manila-dark',
+                  isActive ? 'text-stroke-faded-black dark:text-stroke-manila-light' : ''
                 );
 
                 if (link.href === '/docs') {
@@ -108,7 +98,7 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
               <a
                 href={DISCORD_INVITE_URL}
                 className={clsx(
-                  'intent:bg-dark-manila dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display-extended uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-dark-manila'
+                  'intent:bg-manila-dark dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-manila-dark'
                 )}
                 target="_blank"
               >
@@ -117,7 +107,7 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
               <a
                 href={GITHUB_REPO_URL}
                 className={clsx(
-                  'intent:bg-dark-manila dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display-extended uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-dark-manila',
+                  'intent:bg-manila-dark dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-manila-dark',
                   'border-b'
                 )}
                 target="_blank"

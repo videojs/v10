@@ -20,18 +20,20 @@ const { page } = Astro.props;
   <span class="grid grid-cols-2 gap-1">
     {
       page.url.prev ? (
+        /* TODO(old-color): light-40, dark-40 */
         <a
           href={page.url.prev}
           aria-label={`Go to page ${page.currentPage - 1}`}
-          class="grid items-center rounded-lg border border-light-40 p-2 intent:border-dark-40"
+          class="border-light-40 intent:border-dark-40 grid items-center rounded-xs border p-2"
         >
           <ChevronDown size={12} className="rotate-90" />
         </a>
       ) : (
+        /* TODO(old-color): light-40 */
         <button
           disabled
           aria-label="Previous page (unavailable)"
-          class="grid items-center rounded-lg border border-light-40 p-2 opacity-40"
+          class="border-light-40 grid items-center rounded-xs border p-2 opacity-40"
         >
           <ChevronDown size={12} className="rotate-90" />
         </button>
@@ -39,18 +41,20 @@ const { page } = Astro.props;
     }
     {
       page.url.next ? (
+        /* TODO(old-color): light-40, dark-40 */
         <a
           href={page.url.next}
           aria-label={`Go to page ${page.currentPage + 1}`}
-          class="grid items-center rounded-lg border border-light-40 p-2 intent:border-dark-40"
+          class="border-light-40 intent:border-dark-40 grid items-center rounded-xs border p-2"
         >
           <ChevronDown size={12} className="-rotate-90" />
         </a>
       ) : (
+        /* TODO(old-color): light-40 */
         <button
           disabled
           aria-label="Next page (unavailable)"
-          class="grid items-center rounded-lg border border-light-40 p-2 opacity-40"
+          class="border-light-40 grid items-center rounded-xs border p-2 opacity-40"
         >
           <ChevronDown size={12} className="-rotate-90" />
         </button>

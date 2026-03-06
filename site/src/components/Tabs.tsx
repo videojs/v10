@@ -18,7 +18,7 @@ import clsx from 'clsx';
 
 import { Check } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from '@/utils/twMerge';
 
 import useIsHydrated from '@/utils/useIsHydrated';
 
@@ -75,8 +75,8 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId, var
       ref={ref}
       className={twMerge(
         clsx(
-          'overflow-hidden flex flex-col my-6 border border-faded-black dark:border-dark-manila rounded-xs bg-light-manila dark:bg-faded-black',
-          variant === 'compact' && 'border p-2.5',
+          'overflow-hidden flex flex-col my-6 border border-faded-black dark:border-manila-dark rounded-xs bg-manila-light dark:bg-faded-black',
+          variant === 'compact' && 'border px-2.5 pb-2.5',
           maxWidth && 'w-full max-w-3xl mx-auto',
           className
         )
@@ -95,11 +95,14 @@ interface TabsListProps {
 }
 export function TabsList({ label, children, variant = 'compact' }: TabsListProps) {
   return (
-    <div className={clsx('w-full flex items-center p-0 h-12', variant === 'compact' ? 'mb-2.5 p-0' : 'px-2.5')}>
+    <div className={clsx('w-full flex items-center p-0 h-12', variant === 'compact' ? 'p-0' : 'px-2.5')}>
       <ul
         data-orientation="horizontal"
         aria-label={label}
-        className={clsx('flex list-none p-0 m-0', variant === 'compact' ? 'gap-0' : 'gap-5 px-2.5')}
+        className={clsx(
+          'flex list-none p-0 m-0',
+          variant === 'compact' ? 'gap-0 border-y border-l border-manila-75' : 'gap-5 px-2.5'
+        )}
       >
         {children}
       </ul>
@@ -109,7 +112,7 @@ export function TabsList({ label, children, variant = 'compact' }: TabsListProps
           target: '[role="tabpanel"]:not([hidden])',
         }}
         className={clsx(
-          'ml-auto sticky right-0 h-7 px-2.5 flex items-center justify-center cursor-pointer disabled:cursor-wait hover:bg-dark-manila rounded-xs'
+          'ml-auto sticky right-0 h-7 px-2.5 flex items-center justify-center cursor-pointer disabled:cursor-wait hover:bg-manila-dark rounded-xs'
         )}
         copied={<Check size={20} />}
       >
@@ -218,11 +221,7 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
   }, []);
 
   return (
-    <li
-      key={value}
-      role="presentation"
-      className={clsx('flex', variant === 'compact' && 'first:border-l first:border-l-75-manila relative z-1')}
-    >
+    <li key={value} role="presentation" className={clsx('flex', variant === 'compact' && 'border-r border-manila-75')}>
       <button
         ref={ref}
         type="button"
@@ -235,18 +234,18 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
         className={clsx(
           'group flex items-center gap-2 text-p3',
           'no-underline',
-          variant === 'expanded' && 'uppercase font-display-extended',
+          variant === 'expanded' && 'uppercase font-display',
           variant === 'expanded' && isActive && 'text-orange',
-          variant === 'compact' && 'px-2.5 border border-75-manila border-l-0 z-0 h-7',
-          variant === 'compact' && isActive && 'bg-50-manila',
+          variant === 'compact' && 'px-2.5 z-0 h-7',
+          variant === 'compact' && isActive ? 'bg-manila-50' : 'intent:bg-manila-dark',
           isHydrated ? 'cursor-pointer' : 'cursor-wait'
         )}
       >
         {variant === 'expanded' && (
           <span
             className={clsx(
-              'w-3 h-3 rounded-full border group-hover:bg-dark-manila',
-              variant === 'expanded' && 'border-faded-black dark:border-light-manila',
+              'w-3 h-3 rounded-full border group-hover:bg-manila-dark',
+              variant === 'expanded' && 'border-faded-black dark:border-manila-light',
               isActive && 'bg-orange group-hover:bg-orange'
             )}
           />

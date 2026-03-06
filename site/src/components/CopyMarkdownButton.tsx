@@ -87,8 +87,9 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
       disabled={disabled}
       onClick={handleCopy}
       className={clsx(
-        'relative border border-light-40 dark:border-dark-80 px-3 py-1 rounded-lg whitespace-nowrap text-sm',
-        state.status === 'idle' && 'intent:border-dark-40 dark:intent:border-dark-40',
+        // TODO(old-color): light-40, dark-80, dark-40
+        'relative border border-manila-75 bg-manila-50 dark:border-dark-80 px-3 py-1 rounded-xs whitespace-nowrap text-p3',
+        state.status === 'idle' && 'intent:bg-manila-dark dark:intent:border-dark-40',
         state.status === 'loading' ? 'opacity-70' : 'cursor-100',
         disabled ? 'cursor-wait' : 'cursor-pointer',
         className

@@ -59,7 +59,7 @@ export default function BaseDemo({ className }: { className?: string }) {
           variant="expanded"
           value="html"
           initial
-          className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0"
+          className="bg-faded-black scrollbar-white dark:bg-soot m-2.5 mt-0"
         >
           <ClientCode code={generateHTMLCode($skin)} lang="html" />
         </TabsPanel>
@@ -78,7 +78,7 @@ export default function BaseDemo({ className }: { className?: string }) {
         variant="expanded"
         value="react"
         initial
-        className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0"
+        className="bg-faded-black scrollbar-white dark:bg-soot m-2.5 mt-0"
       >
         <ClientCode code={generateReactCode($skin)} lang="tsx" />
       </TabsPanel>
