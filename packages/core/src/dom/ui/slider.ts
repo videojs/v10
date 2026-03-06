@@ -46,6 +46,11 @@ export interface SliderRootProps {
   onLostPointerCapture: () => void;
 }
 
+export interface SliderRootStyle extends Record<string, string> {
+  touchAction: string;
+  userSelect: string;
+}
+
 export interface SliderThumbProps {
   onKeyDown: (event: UIKeyboardEvent) => void;
   onFocus: () => void;
@@ -55,7 +60,7 @@ export interface SliderThumbProps {
 export interface SliderApi {
   input: State<SliderInput>;
   rootProps: SliderRootProps;
-  rootStyle: Record<string, string>;
+  rootStyle: SliderRootStyle;
   thumbProps: SliderThumbProps;
   /**
    * Adjust `fillPercent` and `pointerPercent` for edge thumb alignment using
@@ -299,7 +304,7 @@ export function createSlider(options: SliderOptions): SliderApi {
     };
   }
 
-  const rootStyle: Record<string, string> = { touchAction: 'none', userSelect: 'none' };
+  const rootStyle: SliderRootStyle = { touchAction: 'none', userSelect: 'none' };
 
   return {
     input,

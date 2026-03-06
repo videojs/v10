@@ -6,6 +6,7 @@ import {
   type SliderApi,
   type SliderOptions,
   type SliderRootProps,
+  type SliderRootStyle,
   type SliderThumbProps,
 } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
@@ -42,7 +43,7 @@ export interface UseSliderReturnValue<State extends SliderState = SliderState> {
   rootRef: React.RefCallback<HTMLElement>;
   thumbRef: React.RefCallback<HTMLElement>;
   rootProps: SliderRootProps;
-  rootStyle: Record<string, string>;
+  rootStyle: SliderRootStyle;
   thumbProps: SliderThumbProps;
 }
 
