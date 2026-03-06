@@ -7,8 +7,8 @@
  * When --base is omitted, generates a local report showing current sizes.
  * When --base is provided, generates a comparison report with diffs.
  *
- * Reads JSON arrays of { name, size, type, category?, format } entries
- * produced by bundle-size.js.
+ * Reads JSON arrays of { name, size, type, category?, format, standaloneSize? }
+ * entries produced by bundle-size.js.
  */
 
 import { readFileSync } from 'node:fs';
@@ -175,7 +175,23 @@ function generateFlatBreakdown(entries, pkg) {
 
 function generateComparisonReport(current, base) {
   const baseMap = Object.fromEntries(base.map((e) => [e.name, e.size]));
+  const currentMap = Object.fromEntries(current.map((e) => [e.name, e.size]));
+
+  // Standalone size lookups — used to gate UI component diffs.
+  // UI marginal sizes shift when root content changes (brotli compression is
+  // non-linear), so we compare standalone sizes to decide IF a component
+  // actually changed, then display the marginal diff.
+  const baseStandaloneMap = Object.fromEntries(
+    base.map((e) => [e.name, e.standaloneSize ?? e.size]),
+  );
+  const currentStandaloneMap = Object.fromEntries(
+    current.map((e) => [e.name, e.standaloneSize ?? e.size]),
+  );
+
   const groups = groupByPackage(current);
+
+  // Build a set of all base entries grouped by package so we can detect removals
+  const baseGroups = groupByPackage(base);
 
   const lines = [];
   const pkgIcons = {
@@ -191,19 +207,38 @@ function generateComparisonReport(current, base) {
   lines.push('# 📦 Bundle Size Report');
   lines.push('');
 
-  for (const [pkg, entries] of groups) {
+  // Collect all package names from both sides
+  const allPackages = new Set([...groups.keys(), ...baseGroups.keys()]);
+  const orderedPackages = [];
+  for (const pkg of PACKAGE_ORDER) {
+    if (allPackages.has(pkg)) orderedPackages.push(pkg);
+  }
+  for (const pkg of allPackages) {
+    if (!orderedPackages.includes(pkg)) orderedPackages.push(pkg);
+  }
+
+  for (const pkg of orderedPackages) {
+    const entries = groups.get(pkg) ?? [];
+    const baseEntries = baseGroups.get(pkg) ?? [];
     const pkgIcon = pkgIcons[pkg] ?? '📦';
     lines.push(`## ${pkgIcon} @videojs/${pkg}`);
     lines.push('');
 
-    // Only show entries with a meaningful size change (>300 B, must exist in both)
+    // Entries with meaningful size changes (>300 B threshold).
+    // For UI components, gate on standalone size to filter out phantom diffs
+    // caused by brotli compression shifts when root content changes.
     const changed = entries.filter((e) => {
-      const prev = baseMap[e.name];
-      if (prev === undefined) return false;
-      return Math.abs(e.size - prev) > 300;
+      const prevStandalone = baseStandaloneMap[e.name];
+      // New entry — always surface
+      if (prevStandalone === undefined) return true;
+      const curStandalone = currentStandaloneMap[e.name];
+      return Math.abs(curStandalone - prevStandalone) > 300;
     });
 
-    if (changed.length === 0) {
+    // Entries that existed in base but are missing in PR (removed)
+    const removed = baseEntries.filter((e) => currentMap[e.name] === undefined);
+
+    if (changed.length === 0 && removed.length === 0) {
       lines.push('(no changes)');
       lines.push('');
     } else {
@@ -218,6 +253,13 @@ function generateComparisonReport(current, base) {
         const baseSize = prev !== undefined ? formatBytes(prev) : '—';
         lines.push(
           `| ${el} | ${baseSize} | ${formatBytes(entry.size)} | ${d.bytes} | ${d.pct} | ${status} |`,
+        );
+      }
+
+      for (const entry of removed) {
+        const el = entryLabel(entry.name, pkg);
+        lines.push(
+          `| ${el} | ${formatBytes(entry.size)} | — | −${formatBytes(entry.size)} | −100% | 🗑️ |`,
         );
       }
 
