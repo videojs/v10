@@ -78,7 +78,7 @@ export default function ToggleGroup<T extends string = string>({
             </Toggle>
             {!isLast && minimal && <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />}
             {!isLast && !minimal && (
-              <span className="flex px-1 gap-0.75 h-full">
+              <span className="flex px-0.75 gap-0.75 h-full">
                 <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />
                 <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />
                 <span className="block h-full w-px bg-faded-black dark:bg-light-manila" />

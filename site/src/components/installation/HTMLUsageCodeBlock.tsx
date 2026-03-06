@@ -124,24 +124,24 @@ export default function HTMLUsageCodeBlock() {
   return (
     <>
       {$installMethod !== 'cdn' && (
-        <TabsRoot maxWidth={false} variant="docs">
-          <TabsList label="HTML implementation" variant="docs">
-            <Tab value="javascript" initial variant="docs">
+        <TabsRoot maxWidth={false}>
+          <TabsList label="HTML implementation">
+            <Tab value="javascript" initial>
               JavaScript
             </Tab>
           </TabsList>
-          <TabsPanel value="javascript" initial variant="docs">
+          <TabsPanel value="javascript" initial>
             <ClientCode code={generateJS($useCase, $skin, $renderer)} lang="javascript" />
           </TabsPanel>
         </TabsRoot>
       )}
-      <TabsRoot maxWidth={false} variant="docs">
-        <TabsList label="HTML implementation" variant="docs">
-          <Tab value="html" initial variant="docs">
+      <TabsRoot maxWidth={false}>
+        <TabsList label="HTML implementation">
+          <Tab value="html" initial>
             HTML
           </Tab>
         </TabsList>
-        <TabsPanel value="html" initial variant="docs">
+        <TabsPanel value="html" initial>
           <ClientCode code={generateHTMLCode($useCase, $skin, $renderer, $sourceUrl)} lang="html" />
         </TabsPanel>
       </TabsRoot>

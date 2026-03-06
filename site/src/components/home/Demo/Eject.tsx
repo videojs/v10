@@ -30,24 +30,39 @@ export default function EjectDemo({ className }: { className?: string }) {
 
   if ($framework === 'html') {
     return (
-      <TabsRoot key={$framework} className={className} maxWidth={false}>
-        <TabsList label="HTML implementation">
-          <Tab value="html" initial>
+      <TabsRoot variant="expanded" key={$framework} className={className} maxWidth={false}>
+        <TabsList variant="expanded" label="HTML implementation">
+          <Tab variant="expanded" value="html" initial>
             HTML
           </Tab>
-          <Tab value="css">CSS</Tab>
-          <Tab value="javascript">
+          <Tab variant="expanded" value="css">
+            CSS
+          </Tab>
+          <Tab variant="expanded" value="javascript">
             <span className="sm:hidden">JS</span>
             <span className="hidden sm:inline">JavaScript</span>
           </Tab>
         </TabsList>
-        <TabsPanel value="html" initial className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0">
+        <TabsPanel
+          variant="expanded"
+          value="html"
+          initial
+          className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0"
+        >
           <ClientCode code={generateHTMLCode($skin)} lang="html" />
         </TabsPanel>
-        <TabsPanel value="css" className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0">
+        <TabsPanel
+          variant="expanded"
+          value="css"
+          className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0"
+        >
           <ClientCode code={generateCSS($skin)} lang="css" />
         </TabsPanel>
-        <TabsPanel value="javascript" className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0">
+        <TabsPanel
+          variant="expanded"
+          value="javascript"
+          className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0"
+        >
           <ClientCode code={generateJS($skin)} lang="javascript" />
         </TabsPanel>
       </TabsRoot>
@@ -55,17 +70,24 @@ export default function EjectDemo({ className }: { className?: string }) {
   }
 
   return (
-    <TabsRoot key={$framework} className={className} maxWidth={false}>
-      <TabsList label="React implementation">
-        <Tab value="react" initial>
+    <TabsRoot variant="expanded" key={$framework} className={className} maxWidth={false}>
+      <TabsList variant="expanded" label="React implementation">
+        <Tab variant="expanded" value="react" initial>
           React
         </Tab>
-        <Tab value="css">CSS</Tab>
+        <Tab variant="expanded" value="css">
+          CSS
+        </Tab>
       </TabsList>
-      <TabsPanel value="react" initial className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0">
+      <TabsPanel
+        variant="expanded"
+        value="react"
+        initial
+        className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0"
+      >
         <ClientCode code={generateReactCode($skin)} lang="tsx" />
       </TabsPanel>
-      <TabsPanel value="css" className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0">
+      <TabsPanel variant="expanded" value="css" className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0">
         <ClientCode code={generateReactCSS($skin)} lang="css" />
       </TabsPanel>
     </TabsRoot>

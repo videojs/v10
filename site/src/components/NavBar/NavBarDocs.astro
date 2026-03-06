@@ -29,8 +29,6 @@ const currentPath = Astro.url.pathname;
 const isDocsActive = currentPath.startsWith('/docs');
 const otherNavLinks = navLinks.filter((link) => link.href !== '/docs');
 const { class: className, dark = false } = Astro.props;
-const navLinkBase =
-  'hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center px-5 py-2 rounded-xs font-display-extended uppercase font-bold my-1';
 ---
 
 <nav
@@ -55,7 +53,7 @@ const navLinkBase =
     <GetStartedLink
       client:idle
       className={clsx(
-        navLinkBase,
+        "my-1 flex items-center rounded-xs px-5 py-2 font-display-extended font-bold uppercase intent:bg-dark-manila dark:intent:bg-warm-gray",
         isDocsActive ? "relative z-10 text-orange" : "",
       )}
       aria-current={isDocsActive ? "page" : undefined}
@@ -65,14 +63,21 @@ const navLinkBase =
     </GetStartedLink>
     {
       otherNavLinks.map((link) => (
-        <a href={link.href} class:list={[navLinkBase]}>
+        <a
+          href={link.href}
+          class:list={[
+            "my-1 flex items-center rounded-xs px-5 py-2 font-display-extended font-bold uppercase intent:bg-dark-manila dark:intent:bg-warm-gray",
+          ]}
+        >
           {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
         </a>
       ))
     }
     <a
       href={DISCORD_INVITE_URL}
-      class={clsx(navLinkBase, "!px-3")}
+      class={clsx(
+        "my-1 flex items-center rounded-xs px-3 py-2 font-display-extended font-bold uppercase intent:bg-dark-manila dark:intent:bg-warm-gray",
+      )}
       aria-label="Discord"
       target="_blank"
       rel="noopener noreferrer"
@@ -81,7 +86,9 @@ const navLinkBase =
     </a>
     <a
       href={GITHUB_REPO_URL}
-      class={clsx(navLinkBase, "!px-3")}
+      class={clsx(
+        "my-1 flex items-center rounded-xs px-3 py-2 font-display-extended font-bold uppercase intent:bg-dark-manila dark:intent:bg-warm-gray",
+      )}
       aria-label="GitHub"
       target="_blank"
       rel="noopener noreferrer"

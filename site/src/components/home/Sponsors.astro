@@ -10,15 +10,16 @@ import NetlifyLogo from '../icons/sponsors/netlify.svg?react';
 type SponsorItem = {
   Logo: ComponentType<SVGProps<SVGSVGElement>>;
   label: string;
+  href: string;
   width: string;
   className?: string;
 };
 
 const sponsors: SponsorItem[] = [
-  { Logo: FastlyLogo, label: 'CDN', width: '7.8rem' },
-  { Logo: BrightcoveLogo, label: 'Emeritus Sponsor', width: '11rem' },
-  { Logo: BrowserStackLogo, label: 'Device Testing', width: '12rem' },
-  { Logo: NetlifyLogo, label: 'Static Hosting', width: '11rem' },
+  { Logo: FastlyLogo, label: 'CDN', href: 'https://fastly.com/', width: '7.8rem' },
+  { Logo: BrightcoveLogo, label: 'Emeritus Sponsor', href: 'https://brightcove.com/', width: '11rem' },
+  { Logo: BrowserStackLogo, label: 'Device Testing', href: 'https://browserstack.com/', width: '12rem' },
+  { Logo: NetlifyLogo, label: 'Static Hosting', href: 'https://netlify.com/', width: '11rem' },
 ];
 ---
 
@@ -37,13 +38,16 @@ const sponsors: SponsorItem[] = [
   <div
     class="grid grid-cols-1 rounded-xs border border-faded-black p-2 text-light-manila md:grid-cols-2 md:items-center dark:border-light-manila dark:text-faded-black"
   >
-    <div
+    <a
+      href="https://www.mux.com?utm_source=videojs&utm_campaign=vjs10"
+      target="_blank"
+      rel="noopener"
       class="flex h-45 items-center justify-center bg-faded-black md:h-full md:min-h-74 dark:bg-warm-gray dark:text-light-manila"
     >
       <div class="relative w-40 md:w-48">
         <MuxLogo width="100%" />
       </div>
-    </div>
+    </a>
     <div class="flex flex-col gap-2 p-2.5 md:px-15">
       <h3
         class="mb-2.5 border-b border-dark-manila py-3 text-center font-display-extended text-h5 font-bold text-orange uppercase md:mb-0 md:border-0 md:py-0 md:text-left dark:border-warm-gray"
@@ -67,18 +71,23 @@ const sponsors: SponsorItem[] = [
       class="grid gap-4 md:grid-separator-container md:grid-cols-4 md:gap-0 md:border md:border-light-manila dark:border-faded-black dark:text-light-manila"
     >
       {
-        sponsors.map(({ Logo, label, width, className }) => (
+        sponsors.map(({ Logo, label, href, width, className }) => (
           <div
             class={clsx(
               "h-auto rounded-xs border border-faded-black px-2.5 md:border-0 md:border-dark-manila md:px-0 dark:border-light-manila md:dark:border-warm-gray",
               className,
             )}
           >
-            <div class="relative flex h-32.5 items-center justify-center bg-light-manila md:grid-separators md:h-37.5 dark:bg-faded-black">
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener"
+              class="relative flex h-32.5 items-center justify-center bg-light-manila md:grid-separators md:h-37.5 dark:bg-faded-black"
+            >
               <div class="mx-2.5 max-w-full" style={{ width }}>
                 <Logo width="100%" />
               </div>
-            </div>
+            </a>
             <h3 class="relative block border-t border-dark-manila py-5 text-center font-display-extended text-h5 font-bold text-orange uppercase md:hidden">
               {label}
             </h3>

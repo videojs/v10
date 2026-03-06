@@ -82,7 +82,7 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
               {navLinks.map((link) => {
                 const isActive = link.matchPath && currentPath.startsWith(link.matchPath);
                 const className = clsx(
-                  'hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display-extended uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-dark-manila',
+                  'intent:bg-dark-manila dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display-extended uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-dark-manila',
                   isActive ? 'text-stroke-faded-black dark:text-stroke-light-manila' : ''
                 );
 
@@ -108,7 +108,7 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
               <a
                 href={DISCORD_INVITE_URL}
                 className={clsx(
-                  'hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display-extended uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-dark-manila'
+                  'intent:bg-dark-manila dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display-extended uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-dark-manila'
                 )}
                 target="_blank"
               >
@@ -117,7 +117,7 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
               <a
                 href={GITHUB_REPO_URL}
                 className={clsx(
-                  'hover:bg-dark-manila dark:hover:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display-extended uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-dark-manila',
+                  'intent:bg-dark-manila dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display-extended uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-dark-manila',
                   'border-b'
                 )}
                 target="_blank"

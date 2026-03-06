@@ -49,7 +49,7 @@ const { class: className, dark = false } = Astro.props;
     <GetStartedLink
       client:idle
       className={clsx(
-        "flex items-center rounded-xs px-5 py-2 font-display-extended font-bold uppercase hover:bg-dark-manila dark:hover:bg-warm-gray",
+        "flex items-center rounded-xs px-5 py-2 font-display-extended font-bold uppercase intent:bg-dark-manila dark:intent:bg-warm-gray",
       )}
       aria-current={isDocsActive ? "page" : undefined}
     >
@@ -60,7 +60,7 @@ const { class: className, dark = false } = Astro.props;
         <a
           href={link.href}
           class:list={[
-            "flex items-center rounded-xs px-5 py-2 font-display-extended font-bold uppercase hover:bg-dark-manila dark:hover:bg-warm-gray",
+            "flex items-center rounded-xs px-5 py-2 font-display-extended font-bold uppercase intent:bg-dark-manila dark:intent:bg-warm-gray",
           ]}
         >
           {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
@@ -70,7 +70,7 @@ const { class: className, dark = false } = Astro.props;
     <a
       href={DISCORD_INVITE_URL}
       class={clsx(
-        "flex items-center rounded-xs px-3 py-2 font-display-extended font-bold uppercase hover:bg-dark-manila dark:hover:bg-warm-gray",
+        "flex items-center rounded-xs px-3 py-2 font-display-extended font-bold uppercase intent:bg-dark-manila dark:intent:bg-warm-gray",
       )}
       aria-label="Discord"
       target="_blank"
@@ -81,7 +81,7 @@ const { class: className, dark = false } = Astro.props;
     <a
       href={GITHUB_REPO_URL}
       class={clsx(
-        "flex items-center rounded-xs px-3 py-2 font-display-extended font-bold uppercase hover:bg-dark-manila dark:hover:bg-warm-gray",
+        "flex items-center rounded-xs px-3 py-2 font-display-extended font-bold uppercase intent:bg-dark-manila dark:intent:bg-warm-gray",
       )}
       aria-label="GitHub"
       target="_blank"

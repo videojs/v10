@@ -25,7 +25,7 @@ import useIsHydrated from '@/utils/useIsHydrated';
 import CopyButton from './CopyButton';
 import CopyIcon from './icons/copy-icon.svg?react';
 
-export type TabsVariant = 'homepage' | 'docs';
+export type TabsVariant = 'expanded' | 'compact';
 
 interface TabsRootProps {
   children: React.ReactNode;
@@ -34,7 +34,7 @@ interface TabsRootProps {
   id?: string;
   variant?: TabsVariant;
 }
-export function TabsRoot({ children, maxWidth = true, className, id: propId, variant = 'homepage' }: TabsRootProps) {
+export function TabsRoot({ children, maxWidth = true, className, id: propId, variant = 'compact' }: TabsRootProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isHydrated = useIsHydrated();
   /**
@@ -76,7 +76,7 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId, var
       className={twMerge(
         clsx(
           'overflow-hidden flex flex-col my-6 border border-faded-black dark:border-dark-manila rounded-xs bg-light-manila dark:bg-faded-black',
-          variant === 'docs' && 'border p-2.5',
+          variant === 'compact' && 'border p-2.5',
           maxWidth && 'w-full max-w-3xl mx-auto',
           className
         )
@@ -93,13 +93,13 @@ interface TabsListProps {
   children: React.ReactNode;
   variant?: TabsVariant;
 }
-export function TabsList({ label, children, variant = 'homepage' }: TabsListProps) {
+export function TabsList({ label, children, variant = 'compact' }: TabsListProps) {
   return (
-    <div className={clsx('w-full flex not-content p-0', variant === 'docs' && 'mb-2.5 p-0')}>
+    <div className={clsx('w-full flex items-center p-0 h-12', variant === 'compact' ? 'mb-2.5 p-0' : 'px-2.5')}>
       <ul
         data-orientation="horizontal"
         aria-label={label}
-        className={clsx('flex list-none p-0 m-0 px-5 gap-5', variant === 'docs' && 'gap-0! px-0!')}
+        className={clsx('flex list-none p-0 m-0', variant === 'compact' ? 'gap-0' : 'gap-5 px-2.5')}
       >
         {children}
       </ul>
@@ -109,9 +109,7 @@ export function TabsList({ label, children, variant = 'homepage' }: TabsListProp
           target: '[role="tabpanel"]:not([hidden])',
         }}
         className={clsx(
-          'ml-auto sticky right-0 h-6.5 w-6.5 flex items-center justify-center cursor-pointer disabled:cursor-wait hover:bg-dark-manila rounded-sm',
-          variant === 'docs' && 'mx-3',
-          variant === 'homepage' && 'mx-3 my-2'
+          'ml-auto sticky right-0 h-7 px-2.5 flex items-center justify-center cursor-pointer disabled:cursor-wait hover:bg-dark-manila rounded-xs'
         )}
         copied={<Check size={20} />}
       >
@@ -127,7 +125,7 @@ interface TabProps {
   initial?: boolean;
   variant?: TabsVariant;
 }
-export function Tab({ value, children, initial, variant = 'homepage' }: TabProps) {
+export function Tab({ value, children, initial, variant = 'compact' }: TabProps) {
   const isHydrated = useIsHydrated();
   const ref = useRef<HTMLButtonElement>(null);
   const [isActive, setIsActive] = useState(initial);
@@ -223,7 +221,7 @@ export function Tab({ value, children, initial, variant = 'homepage' }: TabProps
     <li
       key={value}
       role="presentation"
-      className={clsx('flex', variant === 'docs' && 'first:border-l first:border-l-75-manila relative z-1')}
+      className={clsx('flex', variant === 'compact' && 'first:border-l first:border-l-75-manila relative z-1')}
     >
       <button
         ref={ref}
@@ -236,24 +234,28 @@ export function Tab({ value, children, initial, variant = 'homepage' }: TabProps
         data-value={value}
         className={clsx(
           'group flex items-center gap-2 text-p3',
-          '  no-underline',
-          variant === 'homepage' &&
-            (isActive ? 'text-orange font-bold uppercase font-display-extended' : 'uppercase font-display-extended'),
-          variant === 'docs' && 'px-2.5 border border-75-manila border-l-0 z-0 h-7',
-          variant === 'docs' && (isActive ? 'bg-50-manila font-bold' : ''),
+          'no-underline',
+          variant === 'expanded' && 'uppercase font-display-extended',
+          variant === 'expanded' && isActive && 'text-orange',
+          variant === 'compact' && 'px-2.5 border border-75-manila border-l-0 z-0 h-7',
+          variant === 'compact' && isActive && 'bg-50-manila',
           isHydrated ? 'cursor-pointer' : 'cursor-wait'
         )}
       >
-        {variant === 'homepage' && (
+        {variant === 'expanded' && (
           <span
             className={clsx(
               'w-3 h-3 rounded-full border group-hover:bg-dark-manila',
-              variant === 'homepage' && 'border-faded-black dark:border-light-manila',
+              variant === 'expanded' && 'border-faded-black dark:border-light-manila',
               isActive && 'bg-orange group-hover:bg-orange'
             )}
           />
         )}
-        {children}
+        <span className="relative">
+          {/* to prevent layout shift on state change, we have an invisible bold version of the text preserving space */}
+          <span className="font-bold invisible">{children}</span>
+          <span className={clsx('absolute top-0 left-0', isActive && 'font-bold')}>{children}</span>
+        </span>
       </button>
     </li>
   );
@@ -266,7 +268,7 @@ interface TabsPanelProps {
   className?: string;
   variant?: TabsVariant;
 }
-export function TabsPanel({ value, children, initial, className, variant = 'homepage' }: TabsPanelProps) {
+export function TabsPanel({ value, children, initial, className, variant = 'compact' }: TabsPanelProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isActive, setIsActive] = useState(initial);
 
@@ -302,7 +304,7 @@ export function TabsPanel({ value, children, initial, className, variant = 'home
       hidden={!isActive}
       data-value={value}
       className={twMerge(
-        clsx('overflow-scroll p-6 max-h-96 flex-1', variant === 'docs' && 'bg-faded-black scrollbar-white'),
+        clsx('overflow-scroll p-6 max-h-96 flex-1', variant === 'compact' && 'bg-faded-black scrollbar-white'),
         className
       )}
     >

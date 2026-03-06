@@ -42,7 +42,7 @@ const { class: className } = Astro.props;
           navLinks.map((link) => (
             <a
               href={link.href}
-              class="flex items-center rounded-sm px-2 py-2 font-display-extended font-bold uppercase hover:bg-dark-manila md:px-5 dark:hover:bg-warm-gray"
+              class="flex items-center rounded-xs px-2 py-2 font-display-extended font-bold uppercase md:px-5 intent:bg-dark-manila dark:intent:bg-warm-gray"
             >
               {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
             </a>
@@ -54,7 +54,7 @@ const { class: className } = Astro.props;
       >
         <a
           href={DISCORD_INVITE_URL}
-          class="flex items-center rounded-xs px-2 py-2 font-display-extended font-bold uppercase hover:bg-dark-manila md:px-5 dark:hover:bg-warm-gray"
+          class="flex items-center rounded-xs px-2 py-2 font-display-extended font-bold uppercase md:px-5 intent:bg-dark-manila dark:intent:bg-warm-gray"
           aria-label="Discord"
           target="_blank"
           rel="noopener noreferrer"
@@ -63,7 +63,7 @@ const { class: className } = Astro.props;
         </a>
         <a
           href={GITHUB_REPO_URL}
-          class="flex items-center rounded-xs px-2 py-2 font-display-extended font-bold uppercase hover:bg-dark-manila md:px-5 dark:hover:bg-warm-gray"
+          class="flex items-center rounded-xs px-2 py-2 font-display-extended font-bold uppercase md:px-5 intent:bg-dark-manila dark:intent:bg-warm-gray"
           aria-label="GitHub"
           target="_blank"
           rel="noopener noreferrer"
@@ -83,15 +83,16 @@ const { class: className } = Astro.props;
         <LogoMonoVersion width="100%" />
       </div>
       <p
-        class="text-left font-sans text-p2 text-faded-black lg:text-right dark:text-light-manila"
+        class="flex-1 text-left font-sans text-p2 text-faded-black lg:text-right dark:text-light-manila"
       >
-        Video.js is a free and open source HTML5 <a href="/" class="underline"
-          >video player.</a
+        Video.js is a free and open source HTML5 <a
+          href="/"
+          class="underline intent:no-underline">video player.</a
         >
         <br />
         <a
           href="https://www.mux.com?utm_source=videojs&utm_campaign=vjs10"
-          class="underline"
+          class="underline intent:no-underline"
         >
           Video hosting and streaming sponsored by Mux
         </a>
