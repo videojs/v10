@@ -55,7 +55,7 @@ export default function BaseDemo({ className }: { className?: string }) {
             HTML
           </Tab>
         </TabsList>
-        <TabsPanel value="html" initial className="bg-faded-black scrollbar-white dark:bg-warm-gray m-2.5 mt-0">
+        <TabsPanel value="html" initial className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0">
           <ClientCode code={generateHTMLCode($skin)} lang="html" />
         </TabsPanel>
       </TabsRoot>
@@ -69,7 +69,7 @@ export default function BaseDemo({ className }: { className?: string }) {
           React
         </Tab>
       </TabsList>
-      <TabsPanel value="react" initial className="bg-faded-black scrollbar-white dark:bg-warm-gray m-2.5 mt-0">
+      <TabsPanel value="react" initial className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0">
         <ClientCode code={generateReactCode($skin)} lang="tsx" />
       </TabsPanel>
     </TabsRoot>

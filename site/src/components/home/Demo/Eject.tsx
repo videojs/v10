@@ -28,8 +28,6 @@ export default function EjectDemo({ className }: { className?: string }) {
   const $framework = useStore(framework);
   const $skin = useStore(skin);
 
-  const tabCodeContent = 'bg-faded-black scrollbar-white dark:bg-warm-gray m-2.5 mt-0';
-
   if ($framework === 'html') {
     return (
       <TabsRoot key={$framework} className={className} maxWidth={false}>
@@ -43,13 +41,13 @@ export default function EjectDemo({ className }: { className?: string }) {
             <span className="hidden sm:inline">JavaScript</span>
           </Tab>
         </TabsList>
-        <TabsPanel value="html" initial className={tabCodeContent}>
+        <TabsPanel value="html" initial className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0">
           <ClientCode code={generateHTMLCode($skin)} lang="html" />
         </TabsPanel>
-        <TabsPanel value="css" className={tabCodeContent}>
+        <TabsPanel value="css" className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0">
           <ClientCode code={generateCSS($skin)} lang="css" />
         </TabsPanel>
-        <TabsPanel value="javascript" className={tabCodeContent}>
+        <TabsPanel value="javascript" className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0">
           <ClientCode code={generateJS($skin)} lang="javascript" />
         </TabsPanel>
       </TabsRoot>
@@ -64,10 +62,10 @@ export default function EjectDemo({ className }: { className?: string }) {
         </Tab>
         <Tab value="css">CSS</Tab>
       </TabsList>
-      <TabsPanel value="react" initial className={tabCodeContent}>
+      <TabsPanel value="react" initial className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0">
         <ClientCode code={generateReactCode($skin)} lang="tsx" />
       </TabsPanel>
-      <TabsPanel value="css" className={tabCodeContent}>
+      <TabsPanel value="css" className="bg-faded-black scrollbar-white dark:bg-dark-soft m-2.5 mt-0">
         <ClientCode code={generateReactCSS($skin)} lang="css" />
       </TabsPanel>
     </TabsRoot>

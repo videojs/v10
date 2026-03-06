@@ -70,7 +70,7 @@ const sponsors: SponsorItem[] = [
         sponsors.map(({ Logo, label, width, className }) => (
           <div
             class={clsx(
-              "h-auto rounded-xs border border-faded-black px-2.5 md:border-0 md:border-dark-manila md:px-0 dark:border-light-manila md:dark:border-light-manila",
+              "h-auto rounded-xs border border-faded-black px-2.5 md:border-0 md:border-dark-manila md:px-0 dark:border-light-manila md:dark:border-warm-gray",
               className,
             )}
           >
@@ -87,7 +87,7 @@ const sponsors: SponsorItem[] = [
       }
       {
         sponsors.map(({ label }) => (
-          <div class="hidden border-dark-manila md:block">
+          <div class="hidden border-dark-manila md:block dark:border-warm-gray">
             <h3 class="relative grid h-full grid-cols-1 items-center bg-light-manila px-2.5 py-5 text-center font-display-extended text-h5 font-bold text-orange uppercase md:grid-separators dark:bg-faded-black">
               {label}
             </h3>

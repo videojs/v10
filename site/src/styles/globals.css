@@ -267,7 +267,7 @@ mark {
   --color-white: white;
   --color-black: black;
 
-  --color-dark-110: #2a2928;
+  /*--color-dark-110: #2a2928;
   --color-dark-100: #393836;
   --color-dark-90: #494741;
   --color-dark-80: #5a5850;
@@ -276,11 +276,13 @@ mark {
   --color-light-100: #f6eee2;
   --color-light-80: #f3e7d2;
   --color-light-60: #d8d2b2;
-  --color-light-40: #c7c2a4;
+  --color-light-40: #c7c2a4;*/
 
   --color-faded-black: #1e1d1d;
+  --color-dark-soft: #32302f;
   --color-warm-gray: #403c38;
   --color-dark-manila: #bfb39e;
+
   --color-light-manila: #f3e7d2;
   --color-50-manila: #dcd2bb;
   --color-75-manila: #ccc3ab;
