@@ -98,6 +98,15 @@ export class SliderElement extends MediaElement {
     this.#core.setProps(this);
   }
 
+  protected override firstUpdated(_changed: PropertyValues): void {
+    super.firstUpdated(_changed);
+    // Re-apply CSS vars now that the element has layout for edge measurement.
+    if (this.thumbAlignment === 'edge' && this.#slider) {
+      const state = this.#core.getSliderState(this.value);
+      applyStyles(this, getSliderCSSVars(this.#slider.adjustForAlignment(state)));
+    }
+  }
+
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
     if (!this.#slider) return;
