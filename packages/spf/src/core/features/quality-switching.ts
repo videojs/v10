@@ -11,6 +11,13 @@ export interface QualitySwitchingState {
   presentation?: Presentation;
   bandwidthState?: BandwidthState;
   selectedVideoTrackId?: string;
+  // TODO: abrDisabled is a blunt instrument — it requires callers to know they're
+  // competing with ABR and explicitly opt out. A better long-term design would
+  // separate ABR selection (abrVideoTrackId) from manual selection (manualVideoTrackId)
+  // and derive the effective selectedVideoTrackId as manualVideoTrackId ?? abrVideoTrackId.
+  // That way the two concerns never write to the same field and consumers are unchanged.
+  /** When true, ABR quality switching is suppressed. Use for manual quality selection. */
+  abrDisabled?: boolean;
 }
 
 /**
@@ -93,8 +100,9 @@ export function switchQuality(
   let firstMeaningfulFire = true;
 
   return state.subscribe((currentState: QualitySwitchingState) => {
-    const { presentation, bandwidthState, selectedVideoTrackId } = currentState;
+    const { presentation, bandwidthState, selectedVideoTrackId, abrDisabled } = currentState;
 
+    if (abrDisabled === true) return;
     if (!presentation || !bandwidthState) return;
 
     const videoTracks = getVideoTracks(presentation);
