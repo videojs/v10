@@ -58,6 +58,25 @@
         border-radius: 4px;
       }
 
+      /* ── Share URL ── */
+      #share-url-section {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        font-size: 11px;
+        font-family: monospace;
+      }
+      #share-link {
+        color: #0070f3;
+        text-decoration: none;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 520px;
+      }
+      #share-link:hover { text-decoration: underline; }
+
       /* ── Main controls ── */
       #controls { margin-bottom: 10px; }
       button {
@@ -178,6 +197,11 @@
           <option value="auto">auto</option>
         </select>
       </label>
+    </div>
+
+    <div id="share-url-section">
+      🔗 <a id="share-link" href="#" target="_blank" rel="noopener">current page</a>
+      <button type="button" id="open-new-tab">Open in new tab ↗</button>
     </div>
 
     <div id="controls">

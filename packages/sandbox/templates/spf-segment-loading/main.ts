@@ -22,6 +22,7 @@ const setSrcBtn = document.getElementById('set-src') as HTMLButtonElement;
 const mutedToggle = document.getElementById('muted-toggle') as HTMLInputElement;
 const autoplayToggle = document.getElementById('autoplay-toggle') as HTMLInputElement;
 const preloadSelect = document.getElementById('preload-select') as HTMLSelectElement;
+const shareLink = document.getElementById('share-link') as HTMLAnchorElement;
 
 // ── Query params ──────────────────────────────────────────────────────────────
 const DEFAULT_STREAM = 'https://stream.mux.com/JX01bG8eB4uaoV3OpDuK602rBfvdSgrMObjwuUOBn4JrQ.m3u8';
@@ -36,6 +37,7 @@ srcInput.value = INITIAL_SRC;
 mutedToggle.checked = INITIAL_MUTED;
 autoplayToggle.checked = INITIAL_AUTOPLAY;
 preloadSelect.value = INITIAL_PRELOAD;
+updateShareUrl();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function log(msg: string, type: 'info' | 'success' | 'error' | 'warning' = 'info') {
@@ -58,6 +60,18 @@ function getVideoTracks(state: ReturnType<typeof engine.state.current>) {
 }
 
 // ── Display functions ─────────────────────────────────────────────────────────
+function updateShareUrl() {
+  const p = new URLSearchParams();
+  const src = srcInput.value.trim();
+  if (src && src !== DEFAULT_STREAM) p.set('src', src);
+  if (mutedToggle.checked) p.set('muted', 'true');
+  if (autoplayToggle.checked) p.set('autoplay', 'true');
+  if (preloadSelect.value !== 'none') p.set('preload', preloadSelect.value);
+  const url = `${window.location.origin}${window.location.pathname}${p.size > 0 ? `?${p}` : ''}`;
+  shareLink.href = url;
+  shareLink.textContent = url;
+}
+
 function updateNowPlayingQuality() {
   if (!engine) return;
   const segments = engine.owners.current.videoBufferActor?.snapshot.context.segments ?? [];
@@ -415,22 +429,32 @@ setSrcBtn.addEventListener('click', () => {
     selectedTextTrackId: undefined,
     abrDisabled: false,
   });
+  updateShareUrl();
 });
+
+srcInput.addEventListener('input', updateShareUrl);
 
 mutedToggle.addEventListener('change', () => {
   video.muted = mutedToggle.checked;
   log(`Muted: ${mutedToggle.checked}`);
+  updateShareUrl();
 });
 
 autoplayToggle.addEventListener('change', () => {
   video.autoplay = autoplayToggle.checked;
   log(`Autoplay: ${autoplayToggle.checked}`);
+  updateShareUrl();
 });
 
 preloadSelect.addEventListener('change', () => {
   const value = preloadSelect.value as 'auto' | 'metadata' | 'none';
   engine.state.patch({ preload: value });
   log(`Preload: ${value}`);
+  updateShareUrl();
+});
+
+document.getElementById('open-new-tab')!.addEventListener('click', () => {
+  window.open(shareLink.href, '_blank', 'noopener');
 });
 
 // ── Video element events ──────────────────────────────────────────────────────
