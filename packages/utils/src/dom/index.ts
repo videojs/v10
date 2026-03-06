@@ -10,6 +10,6 @@ export { type RafThrottled, rafThrottle } from './raf-throttle';
 export { getSlottedElement, querySlot } from './slotted';
 export { applyStyles } from './style';
 export { supportsAnchorPositioning, supportsAnimationFrame, supportsIdleCallback } from './supports';
-export { findTrackElement, getSubtitlesTracks, getTextTracksList } from './text-track';
+export { findTrackElement } from './text-track';
 export { serializeTimeRanges } from './time-ranges';
 export type { CustomElement, CustomElementCallbacks } from './types';
