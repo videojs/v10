@@ -1,5 +1,5 @@
 
-import { VJS8_DEMO_VIDEO } from '@/consts';
+import { VJS10_DEMO_VIDEO } from '@/consts';
 import { createPlayer, Poster } from '@videojs/react';
 import { VideoSkin, Video, videoFeatures } from '@videojs/react/video';
 import '@videojs/react/video/skin.css';
@@ -20,8 +20,8 @@ export function FrostedSkinDemo() {
   return (
     <Player.Provider>
       <VideoSkin className="w-full aspect-video">
-        <Video src={VJS8_DEMO_VIDEO.mp4} playsInline />
-        <Poster src={VJS8_DEMO_VIDEO.poster} />
+        <Video src={VJS10_DEMO_VIDEO.mp4} playsInline />
+        <Poster src={VJS10_DEMO_VIDEO.poster} />
       </VideoSkin>
     </Player.Provider>
   );

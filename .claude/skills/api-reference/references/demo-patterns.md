@@ -52,7 +52,7 @@ The `.astro` wrapper is required because only Astro `<script>` tags go through V
 ```html
 <video-player class="html-mute-button-basic">
     <video
-        src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
+        src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
         autoplay
         muted
         playsinline
@@ -130,7 +130,7 @@ export default function BasicUsage() {
     <Player.Provider>
       <Player.Container className="react-mute-button-basic">
         <Video
-          src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
+          src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
           autoPlay
           muted
           playsInline
@@ -253,8 +253,8 @@ render={(props, state) => (
 
 ## Video Sources
 
-- **Video**: `https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4`
-- **Poster**: `https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/thumbnail.jpg`
+- **Video**: `https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4`
+- **Poster**: `https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.jpg`
 
 ## Base Button Styles
 

@@ -10,7 +10,7 @@ export default function BasicUsage() {
     <Player.Provider>
       <Player.Container className="react-controls-basic">
         <Video
-          src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
+          src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
           autoPlay
           muted
           playsInline

@@ -3,74 +3,21 @@
 import Footer from '@/components/Footer.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import Built from '@/components/home/Built/BuiltSection.astro';
-import FrameworkControl from '@/components/home/FrameworkControl';
+import Demo from '@/components/home/Demo/Demo';
 import GetStartedBanner from '@/components/home/GetStartedBanner.astro';
-import HeroVideo from '@/components/home/HeroVideo';
-import HomePageDemo from '@/components/home/HomePageDemo/HomePageDemo.astro';
+import Header from '@/components/home/Header.astro';
 import RoadMap from '@/components/home/Roadmap.astro';
-import SkinControl from '@/components/home/SkinControl';
 import Sponsors from '@/components/home/Sponsors.astro';
-import MuxLogoSmall from '@/components/icons/mux-logo-small.svg?react';
 import NavBar from '@/components/NavBar/NavBar.astro';
-import { SITE_DESCRIPTION, SITE_TITLE, VJS8_DEMO_VIDEO } from '@/consts';
+import { SITE_DESCRIPTION, SITE_TITLE } from '@/consts';
 import Base from '@/layouts/Base.astro';
-
-const poster = `${VJS8_DEMO_VIDEO.poster}?time=0`;
 ---
 
 <Base title={SITE_TITLE} description={SITE_DESCRIPTION}>
-  <link
-    rel="preload"
-    href={poster}
-    as="image"
-    type="image/webp"
-    fetchpriority="high"
-    slot="priority-head"
-  />
   <NavBar />
-  <header
-    class="relative grid grid-cols-1 [grid-template-areas:var(--grid-template-areas)] md:[grid-template-areas:var(--md-grid-template-areas)] w-full max-w-305 mx-auto px-5 pt-19 pb-11 md:py-0"
-    style="--grid-template-areas: 'title' 'description' 'video' 'mux'; --md-grid-template-areas: 'video' 'mux' 'description'"
-  >
-    <h1
-      class="text-h2 lg:text-h1 z-10 w-full font-display-extended uppercase justify-self-center self-center md:text-light-manila text-center text-balance mb-5 md:mb-0 md:px-5 [grid-area:var(--grid-area)] md:[grid-area:var(--md-grid-area)]"
-      style="--grid-area: title; --md-grid-area: video;"
-    >
-      The Open Source Player <br class="lg:hidden" /><span
-        class="text-stroke-faded-black md:text-stroke-light-manila"
-        >for the Web</span
-      >
-    </h1>
-    {/* the additional px-5 is intentional */}
-    <p
-      class="w-full text-p2 lg:text-p1 font-normal text-warm-gray dark:text-light-manila mx-auto text-center px-5 mb-20 md:mb-25 text-balance max-w-195"
-      style="grid-area:description"
-    >
-      For over 15 years, Video.js has been the world’s web video player. Now
-      rebuilt in v10 for modern development and performance.
-    </p>
-
-    <HeroVideo
-      client:load
-      className="aspect-2/1 mb-3 md:aspect-1180/570 md:mb-4"
-      style={{ gridArea: "video" }}
-      poster={poster}
-    />
-    <p
-      class="flex items-center justify-center md:justify-end md:pr-6 md:font-display-extended md:uppercase gap-2.5 md:mb-20 md:text-(length:--md-text)"
-      style="grid-area:mux;--md-text:0.75rem;"
-    >
-      Video hosting by <MuxLogoSmall className="inline" width="3.25rem" />
-    </p>
-  </header>
+  <Header />
   <main>
-    <section
-      class="grid grid-cols-1 md:grid-cols-2 items-center justify-center gap-9 mb-25 w-full max-w-305 mx-auto px-5"
-    >
-      <SkinControl client:idle />
-      <FrameworkControl client:idle className="hidden md:grid" />
-    </section>
-    <HomePageDemo />
+    <Demo client:idle />
     <GetStartedBanner />
     <Built />
     <RoadMap />
