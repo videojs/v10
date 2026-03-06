@@ -1,5 +1,5 @@
 import type { State } from '@videojs/store';
-import { listen } from '@videojs/utils/dom';
+import { listen, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 import type { PopoverInput } from '../../../core/ui/popover/popover-core';
 import { createDismissLayer } from '../dismiss-layer';
 import type { UIFocusEvent, UIPointerEvent } from '../event';
@@ -104,8 +104,6 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   function applyOpen(reason: PopoverOpenChangeReason, event?: Event): void {
     const opening = layer.open();
     if (!opening) return;
-
-    tryShowPopover(popupEl);
 
     const details: PopoverChangeDetails = event ? { reason, event } : { reason };
     onOpenChange(true, details);
@@ -286,22 +284,4 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     close,
     destroy: layer.destroy,
   };
-}
-
-// --- Popover API helpers ---
-
-function tryShowPopover(el: HTMLElement | null): void {
-  try {
-    el?.showPopover?.();
-  } catch {
-    // Element may not support popover API
-  }
-}
-
-function tryHidePopover(el: HTMLElement | null): void {
-  try {
-    el?.hidePopover?.();
-  } catch {
-    // Element may not support popover API or may already be hidden
-  }
 }
