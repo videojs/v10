@@ -2,7 +2,7 @@
 
 import type { HTMLTag, Polymorphic } from 'astro/types';
 import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from '@/utils/twMerge';
 
 type Props<Tag extends HTMLTag = 'h4'> = Polymorphic<{ as: Tag }> & {
   maxWidth?: boolean;
@@ -14,10 +14,11 @@ const { as: Tag = 'h4', maxWidth = true, class: className, ...props } = Astro.pr
 
 <Tag
   class={twMerge(
-    clsx('text-lg font-medium @lg:text-h5 @3xl:text-h4 mb-6 mt-12', maxWidth && 'max-w-3xl mx-auto'),
+    clsx("mt-12 mb-6 text-p2 font-bold", maxWidth && "mx-auto max-w-3xl"),
     className,
   )}
   {...props}
+  style={{ fontSize: "1.125rem" }}
 >
   <slot />
 </Tag>

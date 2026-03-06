@@ -2,7 +2,7 @@
 
 import clsx from 'clsx';
 import { Info, Lightbulb, OctagonX, TriangleAlert } from 'lucide-react';
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from '@/utils/twMerge';
 
 type AsideType = 'note' | 'tip' | 'caution' | 'danger';
 
@@ -38,37 +38,39 @@ const renderTitle = title ?? defaultTitles[type];
 
 <aside
   class={twMerge(
-    clsx('w-full max-w-3xl mx-auto flex my-6 rounded-lg overflow-hidden border border-light-40 dark:border-dark-80 '),
+    clsx(
+      "mx-auto my-6 flex w-full max-w-3xl overflow-hidden rounded-xs border border-manila-75 dark:border-warm-gray",
+    ),
     className,
   )}
 >
   <div
     class={clsx(
-      'w-2 self-stretch',
-      type === 'note' && 'bg-blue',
-      type === 'tip' && 'bg-purple',
-      type === 'caution' && 'bg-orange',
-      type === 'danger' && 'bg-red',
+      "w-2 self-stretch",
+      type === "note" && "bg-magenta",
+      type === "tip" && "bg-magenta",
+      type === "caution" && "bg-orange",
+      type === "danger" && "bg-red",
     )}
   >
   </div>
-  <div class={clsx('flex-1 flex p-6 pl-4 gap-4')}>
-    <div class="shrink-0 mt-[3px]">
+  <div class={clsx("flex flex-1 gap-4 p-6 pl-4")}>
+    <div class="mt-0.75 shrink-0">
       <Icon
         size={18}
         className={clsx(
           clsx(
-            type === 'note' && 'text-blue',
-            type === 'tip' && ' text-purple',
-            type === 'caution' && 'text-orange',
-            type === 'danger' && 'text-red',
+            type === "note" && "text-magenta",
+            type === "tip" && "text-magenta",
+            type === "caution" && "text-orange",
+            type === "danger" && "text-red",
           ),
         )}
       />
     </div>
-    <div class="flex-1 min-w-0">
-      <p class="text-md font-semibold mb-2">{renderTitle}</p>
-      <div class="[&>.my-6]:my-2 [&>.my-12]:my-4 [&>*:last-child]:!mb-0">
+    <div class="min-w-0 flex-1">
+      <p class="mb-2 font-bold">{renderTitle}</p>
+      <div class="[&>*:last-child]:mb-0! [&>.my-12]:my-4 [&>.my-6]:my-2">
         <slot />
       </div>
     </div>

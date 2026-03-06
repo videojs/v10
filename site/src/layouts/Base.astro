@@ -1,6 +1,4 @@
 ---
-
-
 import { Font } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 
@@ -9,7 +7,6 @@ import { SEO_SUFFIX, SITE_TITLE } from '@/consts';
 import '@/styles/globals.css';
 
 import { PreferenceSync } from '@/components/docs/PreferenceSync';
-import FilmGrain from '@/components/FilmGrain';
 import ThemeInit from '@/components/ThemeInit.astro';
 
 interface Props {
@@ -40,7 +37,12 @@ const fullTitle =
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href={new URL('rss.xml', Astro.site)} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={SITE_TITLE}
+      href={new URL("rss.xml", Astro.site)}
+    />
     <meta name="generator" content={Astro.generator} />
 
     {/* Important stuff */}
@@ -53,9 +55,27 @@ const fullTitle =
     {/* Font preloads */}
     <Font cssVariable="--font-instrument-sans" preload />
     <Font cssVariable="--font-ibm-plex-mono" preload />
-    <link rel="preload" href="https://static.mux.com/fonts/EurostileLTProBold/font.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="https://static.mux.com/fonts/EurostileLTProExtended2/font.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="https://static.mux.com/fonts/EurostileLTProBoldExtended2/font.woff2" as="font" type="font/woff2" crossorigin />
+    <link
+      rel="preload"
+      href="https://static.mux.com/fonts/EurostileLTProBold/font.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="https://static.mux.com/fonts/EurostileLTProExtended2/font.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="https://static.mux.com/fonts/EurostileLTProBoldExtended2/font.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
 
     {/* Canonical URL */}
     <link rel="canonical" href={canonicalURL} />
@@ -70,14 +90,25 @@ const fullTitle =
     <meta property="og:url" content={Astro.url} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    {image && <meta property="og:image" content={new URL(image.src, Astro.url)} />}
+    {
+      image && (
+        <meta property="og:image" content={new URL(image.src, Astro.url)} />
+      )
+    }
 
     {/* Twitter */}
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content={Astro.url} />
     <meta property="twitter:title" content={fullTitle} />
     <meta property="twitter:description" content={description} />
-    {image && <meta property="twitter:image" content={new URL(image.src, Astro.url)} />}
+    {
+      image && (
+        <meta
+          property="twitter:image"
+          content={new URL(image.src, Astro.url)}
+        />
+      )
+    }
 
     {/* Whatever else */}
     <slot name="head" />
@@ -86,24 +117,22 @@ const fullTitle =
   </head>
   <body
     class:list={[
-      'relative',
-      'font-sans antialiased text-pretty text-base',
-      'bg-light-80 dark:bg-dark-100 text-dark-100 dark:text-light-100',
-      'min-w-80',
-      '[--nav-h:calc(var(--spacing)*13)] sm:[--nav-h:calc(var(--spacing)*14)]',
-      'selection:bg-yellow selection:text-dark-100',
+      "relative",
+      "font-sans text-p2 text-pretty antialiased",
+      "bg-manila-light text-faded-black dark:bg-faded-black dark:text-manila-light",
+      "min-w-80",
+      "selection:bg-gold selection:text-faded-black",
     ]}
   >
     <div
       class:list={[
         // BaseUI requires body.relative and div.isolate
-        'isolate',
+        "isolate",
         // background colors are applied here for a more consistent FilmGrain blending
-        'bg-light-80 dark:bg-dark-100',
       ]}
     >
       <PreferenceSync client:idle />
-      <FilmGrain currentPath={Astro.url.pathname} />
+
       <slot />
     </div>
   </body>

@@ -1,0 +1,4 @@
+# Prettier is only used for Astro template formatting.
+# Biome handles everything else.
+*.*
+!*.astro

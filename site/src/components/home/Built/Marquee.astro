@@ -1,0 +1,26 @@
+---
+import TriangleArrow from '../../icons/triangle-arrow.svg?react';
+
+const REPEAT_COUNT = 4;
+const items = Array.from({ length: REPEAT_COUNT });
+---
+
+<div
+  class="relative z-1 col-span-full overflow-hidden border-b border-b-manila-dark py-8"
+  aria-label="Streaming bits on millions of sites"
+  role="marquee"
+>
+  <div
+    id="logos"
+    class="flex animate-marquee font-display text-h5 whitespace-nowrap text-manila-light uppercase"
+  >
+    {
+      [...items, ...items].map(() => (
+        <span class="inline-flex shrink-0 items-center gap-7 pr-7">
+          <span>Streaming bits on millions of sites</span>
+          <TriangleArrow width="0.75rem" />
+        </span>
+      ))
+    }
+  </div>
+</div>

@@ -2,7 +2,7 @@ import { useStore } from '@nanostores/react';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import type { Skin } from '@/stores/homePageDemos';
 import { framework, skin } from '@/stores/homePageDemos';
-import ClientCode from '../Code/ClientCode';
+import ClientCode from '../../Code/ClientCode';
 
 function generateHTMLCode(skin: Skin): string {
   const skinTag = skin === 'frosted' ? 'video-skin' : 'video-minimal-skin';
@@ -49,13 +49,13 @@ export default function BaseDemo({ className }: { className?: string }) {
 
   if ($framework === 'html') {
     return (
-      <TabsRoot key={$framework} className={className} maxWidth={false}>
-        <TabsList label="HTML implementation">
-          <Tab value="html" initial>
+      <TabsRoot variant="expanded" key={$framework} className={className} maxWidth={false}>
+        <TabsList variant="expanded" label="HTML implementation">
+          <Tab variant="expanded" value="html" initial>
             HTML
           </Tab>
         </TabsList>
-        <TabsPanel value="html" initial>
+        <TabsPanel variant="expanded" value="html" initial className="bg-faded-black dark:bg-soot m-2.5 mt-0">
           <ClientCode code={generateHTMLCode($skin)} lang="html" />
         </TabsPanel>
       </TabsRoot>
@@ -63,13 +63,13 @@ export default function BaseDemo({ className }: { className?: string }) {
   }
 
   return (
-    <TabsRoot key={$framework} className={className} maxWidth={false}>
-      <TabsList label="React implementation">
-        <Tab value="react" initial>
+    <TabsRoot variant="expanded" key={$framework} className={className} maxWidth={false}>
+      <TabsList variant="expanded" label="React implementation">
+        <Tab variant="expanded" value="react" initial>
           React
         </Tab>
       </TabsList>
-      <TabsPanel value="react" initial>
+      <TabsPanel variant="expanded" value="react" initial className="bg-faded-black dark:bg-soot m-2.5 mt-0">
         <ClientCode code={generateReactCode($skin)} lang="tsx" />
       </TabsPanel>
     </TabsRoot>

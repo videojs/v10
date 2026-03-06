@@ -10,8 +10,13 @@ const { filePath } = Astro.props;
 const editUrl = `${GITHUB_REPO_URL}edit/main/${filePath}`;
 ---
 
-<div class="w-full max-w-3xl mx-auto">
-  <a href={editUrl} target="_blank" rel="noopener noreferrer" class="underline intent:no-underline text-sm">
+<div class="mx-auto w-full max-w-3xl">
+  <a
+    href={editUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    class="text-p3 underline intent:no-underline"
+  >
     Edit page
   </a>
 </div>

@@ -45,30 +45,43 @@ const jsonLdSchema = createProfilePageSchema({
 });
 ---
 
-<Blog title={[author.data.name, 'Blog']} description={`Posts by ${author.data.name} on the Video.js blog`}>
+<Blog
+  title={[author.data.name, "Blog"]}
+  description={`Posts by ${author.data.name} on the Video.js blog`}
+>
   <JsonLd slot="head" schema={jsonLdSchema} />
   <header
-    class="mb-10 w-full max-w-3xl mx-auto grid gap-y-5 gap-x-10 grid-cols-1 md:grid-cols-(--md-grid-cols)"
-    style={author.data.avatar ? '--md-grid-cols: auto minmax(0, 1fr);' : undefined}
+    class="mx-auto mb-10 grid w-full max-w-3xl grid-cols-1 gap-x-10 md:grid-cols-(--md-grid-cols)"
+    style={author.data.avatar
+      ? "--md-grid-cols: auto minmax(0, 1fr);"
+      : undefined}
   >
     {
       author.data.avatar && (
         <img
           src={author.data.avatar}
           alt={author.data.name}
-          class="w-24 h-24 md:w-36 md:h-36 rounded-full border border-light-40 dark:border-dark-80 bg-light-100 dark:bg-dark-110 row-span-3"
+          class="row-span-3 h-24 w-24 rounded-full border border-current md:h-36 md:w-36"
         />
       )
     }
-    <h1 class="text-h2 mb-1">{author.data.name}</h1>
-    {author.data.bio && <p class="text-lg text-dark-80 dark:text-light-80 mb-4">{author.data.bio}</p>}
+    <h1 class="mb-1 font-display text-h15 uppercase">{author.data.name}</h1>
+    {author.data.bio && <p class="mb-4">{author.data.bio}</p>}
     {
       author.data.socialLinks && (
-        <AuthorSocialLinks client:idle socialLinks={author.data.socialLinks} className="flex gap-2" />
+        <AuthorSocialLinks
+          client:idle
+          socialLinks={author.data.socialLinks}
+          className="flex gap-2"
+        />
       )
     }
   </header>
-  <section class="w-full max-w-3xl mx-auto grid gap-10">
-    {postsWithAuthors.map((post) => <BlogPostCard post={post} authors={post.authors} />)}
+  <section class="mx-auto grid w-full max-w-3xl gap-10">
+    {
+      postsWithAuthors.map((post) => (
+        <BlogPostCard post={post} authors={post.authors} />
+      ))
+    }
   </section>
 </Blog>

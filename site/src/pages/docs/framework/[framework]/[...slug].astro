@@ -8,7 +8,7 @@ import { Selectors } from '@/components/docs/Selectors';
 import { TableOfContents } from '@/components/docs/TableOfContents';
 import JsonLd from '@/components/JsonLd.astro';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
-import H3 from '@/components/typography/H3.astro';
+import H2Markdown from '@/components/typography/H2Markdown.astro';
 import DocsLayout from '@/layouts/Docs.astro';
 import type { SupportedFramework } from '@/types/docs';
 import { SUPPORTED_FRAMEWORKS } from '@/types/docs';
@@ -95,11 +95,11 @@ const jsonLdSchema = createTechArticleSchema({
   <JsonLd slot="head" schema={jsonLdSchema} />
   <main
     class:list={[
-      'flex-1',
-      'grid grid-cols-1 xl:grid-cols-(--xl-grid-cols)',
-      '[grid-template-areas:var(--grid-template-areas)] xl:[grid-template-areas:var(--xl-grid-template-areas)]',
-      'grid-rows-(--grid-rows) xl:grid-rows-1',
-      '[--scroll-mt:var(--mobile-toc-h)] xl:[--scroll-mt:0px]',
+      "flex-1",
+      "grid grid-cols-1 xl:grid-cols-(--xl-grid-cols)",
+      "[grid-template-areas:var(--grid-template-areas)] xl:[grid-template-areas:var(--xl-grid-template-areas)]",
+      "grid-rows-(--grid-rows) xl:grid-rows-1",
+      "[--scroll-mt:var(--mobile-toc-h)] xl:[--scroll-mt:0px]",
     ]}
     style="
       --xl-grid-cols: minmax(0, 1fr) calc(var(--spacing) * 59);
@@ -113,12 +113,15 @@ const jsonLdSchema = createTechArticleSchema({
       <Selectors client:idle currentFramework={framework} currentSlug={slug} />
     </div>
     <div
-      class="sticky overflow-y-auto z-30"
+      class="sticky z-20 overflow-y-auto"
       style="grid-area: toc; top: var(--nav-h); max-height: calc(100vh - var(--nav-h));"
     >
       <TableOfContents client:idle headings={filteredHeadings} />
     </div>
-    <div class="@container px-6 lg:px-12 flex flex-col" style="grid-area: article;">
+    <div
+      class="@container flex flex-col px-6 lg:px-12"
+      style="grid-area: article;"
+    >
       <article
         class="mb-18 flex-1"
         data-pagefind-body
@@ -131,20 +134,27 @@ const jsonLdSchema = createTechArticleSchema({
       >
         <header
           class:list={[
-            'border-b border-light-40 dark:border-dark-80 max-w-3xl mx-auto py-8 mb-8',
-            'flex flex-col lg:flex-row gap-4 items-start lg:items-end justify-between',
+            "mx-auto mb-8 max-w-3xl border-b border-manila-75 py-8 dark:border-warm-gray",
+            "flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-end",
           ]}
         >
           <div>
-            <H3 as="h1" class="mt-0 mb-2">{getDocTitle(doc, framework)}</H3>
-            <p class="@lg:font-medium">{doc.data.description}</p>
+            <H2Markdown as="h1" class="mt-0 mb-4"
+              >{getDocTitle(doc, framework)}</H2Markdown
+            >
+            <p class="text-p2">{doc.data.description}</p>
           </div>
           <CopyMarkdownButton client:idle />
         </header>
         <Content components={{ ...defaultMarkdownComponents }} />
       </article>
       <footer class="mb-18 grid gap-5">
-        <DocsNavigation prev={prev} next={next} framework={framework} docTitles={docTitles} />
+        <DocsNavigation
+          prev={prev}
+          next={next}
+          framework={framework}
+          docTitles={docTitles}
+        />
         <EditPageButton filePath={`site/src/content/docs/${doc.id}.mdx`} />
       </footer>
     </div>

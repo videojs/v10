@@ -1,5 +1,4 @@
 import { createState, type State } from '@videojs/store';
-import { listen } from '@videojs/utils/dom';
 import { throttle } from '@videojs/utils/function';
 import { clamp, roundToStep } from '@videojs/utils/number';
 import { isNull } from '@videojs/utils/predicate';
@@ -42,7 +41,14 @@ export interface SliderOptions {
 export interface SliderRootProps {
   onPointerDown: (event: UIPointerEvent) => void;
   onPointerMove: (event: UIPointerEvent) => void;
+  onPointerUp: (event: UIPointerEvent) => void;
   onPointerLeave: (event: UIPointerEvent) => void;
+  onLostPointerCapture: () => void;
+}
+
+export interface SliderRootStyle extends Record<string, string> {
+  touchAction: string;
+  userSelect: string;
 }
 
 export interface SliderThumbProps {
@@ -54,6 +60,7 @@ export interface SliderThumbProps {
 export interface SliderApi {
   input: State<SliderInput>;
   rootProps: SliderRootProps;
+  rootStyle: SliderRootStyle;
   thumbProps: SliderThumbProps;
   /**
    * Adjust `fillPercent` and `pointerPercent` for edge thumb alignment using
@@ -83,7 +90,6 @@ export function createSlider(options: SliderOptions): SliderApi {
     moveCount = 0,
     cachedRTL = false,
     cachedRect: DOMRect | null = null,
-    documentCleanup: (() => void) | null = null,
     capturedPointerId: number | null = null;
 
   const throttledCommit =
@@ -116,58 +122,8 @@ export function createSlider(options: SliderOptions): SliderApi {
 
   function cleanup() {
     throttledCommit?.cancel();
-    releaseCapture();
-    documentCleanup?.();
-    documentCleanup = null;
+    capturedPointerId = null;
     cachedRect = null;
-  }
-
-  function onDocumentPointerMove(event: PointerEvent): void {
-    // Stale drag safety: if buttons === 0 for non-touch, browser lost the pointerup.
-    if (event.pointerType !== 'touch' && event.buttons === 0) {
-      endDrag();
-      return;
-    }
-
-    moveCount++;
-
-    const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation(), cachedRTL);
-
-    if (!isDragging && moveCount >= DRAG_THRESHOLD) {
-      isDragging = true;
-      input.patch({ dragging: true, dragPercent: percent, pointerPercent: percent });
-      options.onDragStart?.();
-      options.onValueChange?.(percent);
-      throttledCommit?.(percent);
-    } else if (isDragging) {
-      input.patch({ dragPercent: percent, pointerPercent: percent });
-      options.onValueChange?.(percent);
-      throttledCommit?.(percent);
-    } else {
-      // Below drag threshold — update hover preview only.
-      input.patch({ pointerPercent: percent });
-    }
-  }
-
-  function onDocumentPointerUp(event: PointerEvent): void {
-    const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation(), cachedRTL);
-
-    // Cancel pending throttled commit before the final unthrottled one.
-    throttledCommit?.cancel();
-    options.onValueCommit?.(percent);
-    endDrag();
-  }
-
-  function addDocumentListeners(): void {
-    const abort = new AbortController();
-    const signal = abort.signal;
-
-    listen(document, 'pointermove', onDocumentPointerMove, { passive: true, signal });
-    listen(document, 'pointerup', onDocumentPointerUp, { signal });
-    listen(document, 'pointercancel', endDrag, { signal });
-    listen(document, 'touchmove', (e) => e.preventDefault(), { passive: false, signal });
-
-    documentCleanup = () => abort.abort();
   }
 
   // --- Root props ---
@@ -192,14 +148,42 @@ export function createSlider(options: SliderOptions): SliderApi {
 
       // Focus the thumb for keyboard follow-up and screen reader tracking.
       options.getThumbElement?.()?.focus();
-
-      documentCleanup?.();
-      addDocumentListeners();
     },
 
     onPointerMove(event) {
-      if (options.isDisabled() || isDragging) return;
+      if (options.isDisabled()) return;
 
+      // Pointer is captured — this is a drag-related move.
+      if (!isNull(capturedPointerId)) {
+        // Stale drag safety: if buttons === 0 for non-touch, browser lost the pointerup.
+        if (event.pointerType !== 'touch' && event.buttons === 0) {
+          endDrag();
+          return;
+        }
+
+        moveCount++;
+
+        const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation(), cachedRTL);
+
+        if (!isDragging && moveCount >= DRAG_THRESHOLD) {
+          isDragging = true;
+          input.patch({ dragging: true, dragPercent: percent, pointerPercent: percent });
+          options.onDragStart?.();
+          options.onValueChange?.(percent);
+          throttledCommit?.(percent);
+        } else if (isDragging) {
+          input.patch({ dragPercent: percent, pointerPercent: percent });
+          options.onValueChange?.(percent);
+          throttledCommit?.(percent);
+        } else {
+          // Below drag threshold — update hover preview only.
+          input.patch({ pointerPercent: percent });
+        }
+
+        return;
+      }
+
+      // No capture — hover preview.
       const el = options.getElement();
       const rect = el.getBoundingClientRect();
       const percent = getPercentFromPointerEvent(event, rect, options.getOrientation(), options.isRTL());
@@ -207,9 +191,23 @@ export function createSlider(options: SliderOptions): SliderApi {
       input.patch({ pointing: true, pointerPercent: percent });
     },
 
+    onPointerUp(event) {
+      if (isNull(capturedPointerId)) return;
+
+      const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation(), cachedRTL);
+
+      // Cancel pending throttled commit before the final unthrottled one.
+      throttledCommit?.cancel();
+      options.onValueCommit?.(percent);
+    },
+
     onPointerLeave() {
-      if (isDragging) return;
+      if (!isNull(capturedPointerId)) return;
       input.patch({ pointing: false, pointerPercent: 0 });
+    },
+
+    onLostPointerCapture() {
+      endDrag();
     },
   };
 
@@ -306,15 +304,19 @@ export function createSlider(options: SliderOptions): SliderApi {
     };
   }
 
-  listen(abort.signal, 'abort', cleanup, { once: true });
+  const rootStyle: SliderRootStyle = { touchAction: 'none', userSelect: 'none' };
 
   return {
     input,
     rootProps,
+    rootStyle,
     thumbProps,
     adjustForAlignment,
     destroy() {
+      if (abort.signal.aborted) return;
       abort.abort();
+      releaseCapture();
+      cleanup();
     },
   };
 }

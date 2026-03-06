@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.0-alpha.9](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-alpha.8...@videojs/element@10.0.0-alpha.9) (2026-03-06)
+
+
+### Bug Fixes
+
+* **html:** add destroy ([#748](https://github.com/videojs/v10/issues/748)) ([3f11424](https://github.com/videojs/v10/commit/3f11424b182f9889a572590e38219e6289f544c2))
+
 ## [10.0.0-alpha.8](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-alpha.7...@videojs/element@10.0.0-alpha.8) (2026-03-05)
 
 

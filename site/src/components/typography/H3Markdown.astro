@@ -1,10 +1,10 @@
 ---
 
-import H5 from './H5.astro';
+import H3 from './H3.astro';
 
 const { class: className, ...props } = Astro.props;
 ---
 
-<H5 as="h3" class:list={['mt-12', className]} {...props}>
+<H3 as="h3" class:list={["mt-12", className]} {...props}>
   <slot />
-</H5>
+</H3>

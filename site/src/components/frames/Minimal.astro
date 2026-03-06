@@ -1,6 +1,6 @@
 ---
 
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from '@/utils/twMerge';
 
 /**
  * Minimal frame component for wrapping documentation demos.
@@ -30,7 +30,7 @@ const marginClass = margins === 'lg' ? 'my-12' : 'my-6';
 
 <div
   class={twMerge(
-    'relative w-full max-w-3xl mx-auto flex rounded-lg overflow-hidden border border-light-40 dark:border-dark-80 bg-light-100 dark:bg-dark-110',
+    "relative w-full max-w-3xl mx-auto flex rounded-xs overflow-hidden border border-faded-black dark:border-manila-dark",
     marginClass,
     className,
   )}

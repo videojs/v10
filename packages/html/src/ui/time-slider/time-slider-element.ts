@@ -83,11 +83,8 @@ export class TimeSliderElement extends MediaElement {
     });
 
     applyElementProps(this, this.#slider.rootProps, { signal });
+    applyStyles(this, this.#slider.rootStyle);
     this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
-
-    // Prevent default touch gestures and text selection during interaction.
-    this.style.touchAction = 'none';
-    this.style.userSelect = 'none';
 
     if (__DEV__ && !this.#timeState.value) {
       logMissingFeature(this.localName, this.#timeState.displayName!);

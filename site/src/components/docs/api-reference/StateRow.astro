@@ -16,11 +16,18 @@ const { name, type, detailedType, description, componentName } = Astro.props;
 const id = `${componentName}-state-${name}`;
 ---
 
-<DetailRow id={id} name={name} type={type} detailedType={detailedType} description={description} colspan={3}>
-    <Td class="align-top">
-        <MarkdownCode>{name}</MarkdownCode>
-    </Td>
-    <Td class="align-top">
-        <MarkdownCode>{type}</MarkdownCode>
-    </Td>
+<DetailRow
+  id={id}
+  name={name}
+  type={type}
+  detailedType={detailedType}
+  description={description}
+  colspan={3}
+>
+  <Td class="align-top">
+    <MarkdownCode>{name}</MarkdownCode>
+  </Td>
+  <Td class="align-top">
+    <MarkdownCode>{type}</MarkdownCode>
+  </Td>
 </DetailRow>

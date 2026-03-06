@@ -72,12 +72,12 @@ export default function Search({ children, className, baseUrl, bundlePath, searc
         {children}
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 flex items-start justify-center bg-dark-110/20 backdrop-blur-xs z-50">
+        <Dialog.Backdrop className="fixed inset-0 flex items-start justify-center bg-faded-black/20 backdrop-blur-xs z-50">
           <Dialog.Popup
             initialFocus={false} // pagefind.autofocus = true
             id={searchId}
             ref={searchRef}
-            className="w-full max-w-5xl mx-4 mb-4 p-4 rounded-3xl bg-light-80 dark:bg-dark-110 overflow-y-scroll overflow-x-hidden"
+            className="w-full max-w-5xl mx-4 mb-4 p-4 rounded-xs bg-manila-light dark:bg-faded-black dark:border-warm-gray border-manila-75 border overflow-y-scroll overflow-x-hidden"
             style={{
               minHeight: '50svh',
               maxHeight: '75svh',

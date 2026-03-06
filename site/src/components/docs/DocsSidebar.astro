@@ -16,10 +16,14 @@ const { framework, docTitles, class: className } = Astro.props;
 const filteredSidebar = filterSidebar(framework);
 ---
 
-<div class={clsx('bg-light-80 dark:bg-dark-100', className)}>
+<div class={clsx("bg-manila-light dark:bg-faded-black", className)}>
   <slot />
   <PreferenceUpdater client:idle currentFramework={framework} />
   <nav class="p-6">
-    {filteredSidebar.map((item) => <SidebarItem item={item} framework={framework} docTitles={docTitles} />)}
+    {
+      filteredSidebar.map((item) => (
+        <SidebarItem item={item} framework={framework} docTitles={docTitles} />
+      ))
+    }
   </nav>
 </div>

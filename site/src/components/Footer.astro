@@ -1,9 +1,9 @@
 ---
-
 import { ArrowUpRight } from 'lucide-react';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
-import Discord from './icons/Discord';
-import GitHub from './icons/GitHub';
+import Discord from './icons/discord.svg?react';
+import GitHub from './icons/github.svg?react';
+import LogoMonoVersion from './icons/logo-mono.svg?react';
 import { ThemeToggle } from './ThemeToggle';
 
 type NavLink = {
@@ -12,7 +12,6 @@ type NavLink = {
   external?: boolean;
 };
 const navLinks: NavLink[] = [
-  { href: '/', label: 'Home' },
   { href: '/docs', label: 'Docs' },
   { href: '/blog', label: 'Blog' },
   { href: '/privacy', label: 'Privacy' },
@@ -24,57 +23,84 @@ type Props = {
 const { class: className } = Astro.props;
 ---
 
-<footer class:list={['border-t border-light-40 dark:border-dark-80 py-6 px-3 grid gap-3', className]}>
-  <div class="flex items-center justify-between flex-col sm:flex-row gap-3 mb-2 sm:mb-0">
-    <nav class="flex flex-col sm:flex-row gap-1">
-      <div class="flex justify-center sm:justify-start">
+<footer
+  class:list={[
+    "mx-auto mt-30 grid w-full max-w-305 gap-3 px-5 pb-11 md:mt-32 md:pt-0",
+    className,
+  ]}
+>
+  <nav
+    class="mb-2 items-start justify-between gap-3 border-faded-black pt-5 sm:mb-0 md:flex-row md:items-start md:border-t dark:border-manila-light"
+  >
+    <nav
+      class="flex flex-col gap-0 text-faded-black md:-ml-5 md:flex-row dark:text-manila-light"
+    >
+      <div
+        class="flex justify-between border-t border-b border-faded-black pt-3 pb-3 md:justify-center md:border-0 md:pt-0 md:pb-0 dark:border-manila-light"
+      >
         {
           navLinks.map((link) => (
-            <a href={link.href} class="intent:underline px-3 py-2 inline-flex gap-1 items-center">
+            <a
+              href={link.href}
+              class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+            >
               {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
             </a>
           ))
         }
       </div>
-      <div class="flex justify-center sm:justify-start">
-        <a
-          href={GITHUB_REPO_URL}
-          class="group px-3 py-2 inline-flex items-center"
-          aria-label="GitHub"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <GitHub
-            size="1em"
-            className="text-dark-80 dark:text-light-80 group-intent:text-dark-100 dark:group-intent:text-light-40"
-          />
-        </a>
+      <div
+        class="flex flex-1 justify-start gap-4 pt-5 pb-8 md:justify-center md:gap-0 md:py-0 md:pb-0"
+      >
         <a
           href={DISCORD_INVITE_URL}
-          class="group px-3 py-2 inline-flex items-center"
+          class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
           aria-label="Discord"
           target="_blank"
           rel="noopener noreferrer"
         >
-          <Discord
-            size="1em"
-            className="text-dark-80 dark:text-light-80 group-intent:text-dark-100 dark:group-intent:text-light-40"
-          />
+          <Discord width="1.5em" height="1.5em" />
         </a>
+        <a
+          href={GITHUB_REPO_URL}
+          class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+          aria-label="GitHub"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <GitHub width="1.5em" height="1.5em" />
+        </a>
+        <div class="ml-auto">
+          <ThemeToggle client:idle />
+        </div>
       </div>
     </nav>
-    <ThemeToggle client:visible />
-  </div>
 
-  <p class="text-sm text-center sm:text-left text-dark-40 dark:text-light-40 px-3">
-    Video.js is a free and open source HTML5 <a href="/" class="intent:decoration-wavy">video player</a>.
-    <br />The term <strong>VIDEO.JS</strong> is a registered trademark of Brightcove Inc.
-    <br />
-    &copy; 2010&ndash;{new Date().getFullYear()} Video.js contributors &nbsp;|&nbsp; Sponsored by <a
-      href="https://www.mux.com?utm_source=videojs&utm_campaign=vjs10"
-      class="underline intent:decoration-wavy"
+    <div
+      class="mt-10 flex flex-col-reverse justify-between gap-15 text-end md:mt-15 lg:flex-row"
     >
-      Mux
-    </a>
-  </p>
+      <div class="relative w-80 lg:w-92">
+        <LogoMonoVersion width="100%" />
+      </div>
+      <p
+        class="flex-1 text-left font-sans text-p2 text-faded-black lg:text-right dark:text-manila-light"
+      >
+        Video.js is a free and open source HTML5 <a
+          href="/"
+          class="underline intent:no-underline">video player.</a
+        >
+        <br />
+        Video hosting and streaming <a
+          href="https://www.mux.com?utm_source=videojs&utm_campaign=vjs10"
+          class="underline intent:no-underline"
+          >sponsored by Mux
+        </a>
+
+        <br /><br />The term VIDEO.JS is a registered trademark of Brightcove
+        Inc.
+        <br />
+        &copy; 2010&ndash;{new Date().getFullYear()} Video.js contributors
+      </p>
+    </div>
+  </nav>
 </footer>

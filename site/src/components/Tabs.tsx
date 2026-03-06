@@ -16,21 +16,25 @@
 
 import clsx from 'clsx';
 
-import { Check, Copy } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from '@/utils/twMerge';
 
 import useIsHydrated from '@/utils/useIsHydrated';
 
 import CopyButton from './CopyButton';
+import CopyIcon from './icons/copy-icon.svg?react';
+
+export type TabsVariant = 'expanded' | 'compact';
 
 interface TabsRootProps {
   children: React.ReactNode;
   maxWidth?: boolean;
   className?: string;
   id?: string;
+  variant?: TabsVariant;
 }
-export function TabsRoot({ children, maxWidth = true, className, id: propId }: TabsRootProps) {
+export function TabsRoot({ children, maxWidth = true, className, id: propId, variant = 'compact' }: TabsRootProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isHydrated = useIsHydrated();
   /**
@@ -71,9 +75,8 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId }: T
       ref={ref}
       className={twMerge(
         clsx(
-          'rounded-lg overflow-hidden border border-light-40 dark:border-dark-80',
-          'bg-light-100 dark:bg-dark-110 flex flex-col',
-          'my-6',
+          'overflow-hidden flex flex-col my-6 border border-faded-black dark:border-manila-dark rounded-xs bg-manila-light dark:bg-faded-black',
+          variant === 'compact' && 'border px-2.5 pb-2.5',
           maxWidth && 'w-full max-w-3xl mx-auto',
           className
         )
@@ -88,11 +91,19 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId }: T
 interface TabsListProps {
   label: string;
   children: React.ReactNode;
+  variant?: TabsVariant;
 }
-export function TabsList({ label, children }: TabsListProps) {
+export function TabsList({ label, children, variant = 'compact' }: TabsListProps) {
   return (
-    <div className="w-full border-b border-light-40 dark:border-dark-80 flex bg-light-80 dark:bg-dark-100 overflow-x-scroll not-content">
-      <ul data-orientation="horizontal" aria-label={label} className="flex list-none p-0 m-0">
+    <div className={clsx('w-full flex items-center p-0 h-12', variant === 'compact' ? 'p-0' : 'px-2.5')}>
+      <ul
+        data-orientation="horizontal"
+        aria-label={label}
+        className={clsx(
+          'flex list-none p-0 m-0',
+          variant === 'compact' ? 'gap-0 border-y border-l border-manila-75' : 'gap-5 px-2.5'
+        )}
+      >
         {children}
       </ul>
       <CopyButton
@@ -100,10 +111,12 @@ export function TabsList({ label, children }: TabsListProps) {
           container: `[data-tabs-root]`,
           target: '[role="tabpanel"]:not([hidden])',
         }}
-        className="ml-auto sticky right-0 border-l border-light-40 dark:border-dark-80 h-9 w-9 flex items-center justify-center not-disabled:intent:bg-light-100 dark:not-disabled:intent:bg-dark-110 cursor-pointer disabled:cursor-wait"
-        copied={<Check size={16} />}
+        className={clsx(
+          'ml-auto sticky right-0 h-7 px-2.5 flex items-center justify-center cursor-pointer disabled:cursor-wait intent:bg-warm-gray rounded-xs'
+        )}
+        copied={<Check size={20} />}
       >
-        <Copy size={16} />
+        <CopyIcon width="1.25rem" height="1.25rem" />
       </CopyButton>
     </div>
   );
@@ -113,8 +126,9 @@ interface TabProps {
   value: string;
   children: React.ReactNode;
   initial?: boolean;
+  variant?: TabsVariant;
 }
-export function Tab({ value, children, initial }: TabProps) {
+export function Tab({ value, children, initial, variant = 'compact' }: TabProps) {
   const isHydrated = useIsHydrated();
   const ref = useRef<HTMLButtonElement>(null);
   const [isActive, setIsActive] = useState(initial);
@@ -207,7 +221,7 @@ export function Tab({ value, children, initial }: TabProps) {
   }, []);
 
   return (
-    <li key={value} role="presentation" className="flex">
+    <li key={value} role="presentation" className={clsx('flex', variant === 'compact' && 'border-r border-manila-75')}>
       <button
         ref={ref}
         type="button"
@@ -218,14 +232,31 @@ export function Tab({ value, children, initial }: TabProps) {
         onKeyDown={onKeyDown}
         data-value={value}
         className={clsx(
-          'flex items-center h-9 px-4 py-2 text-sm',
-          'border-x border-light-40 dark:border-dark-80',
-          'first:-ml-px last:-mr-px -mx-[0.5px] no-underline',
-          isActive ? 'bg-light-100 dark:bg-dark-110' : 'bg-light-80 dark:bg-dark-100',
-          isHydrated ? 'cursor-pointer intent:bg-light-100 dark:intent:bg-dark-110' : 'cursor-wait'
+          'group flex items-center gap-2 text-p3',
+          'no-underline',
+          variant === 'expanded' && 'uppercase font-display',
+          variant === 'expanded' && isActive && 'text-orange',
+          variant === 'compact' && 'px-2.5 z-0 h-7',
+          variant === 'compact' && isActive
+            ? 'bg-manila-50 dark:bg-warm-gray'
+            : 'intent:bg-manila-dark dark:intent:bg-soot',
+          isHydrated ? 'cursor-pointer' : 'cursor-wait'
         )}
       >
-        {children}
+        {variant === 'expanded' && (
+          <span
+            className={clsx(
+              'w-3 h-3 rounded-full border group-hover:bg-manila-dark',
+              variant === 'expanded' && 'border-faded-black dark:border-manila-light',
+              isActive && 'bg-orange group-hover:bg-orange'
+            )}
+          />
+        )}
+        <span className="relative">
+          {/* to prevent layout shift on state change, we have an invisible bold version of the text preserving space */}
+          <span className="font-bold invisible">{children}</span>
+          <span className={clsx('absolute top-0 left-0', isActive && 'font-bold')}>{children}</span>
+        </span>
       </button>
     </li>
   );
@@ -236,8 +267,9 @@ interface TabsPanelProps {
   children: React.ReactNode;
   initial?: boolean;
   className?: string;
+  variant?: TabsVariant;
 }
-export function TabsPanel({ value, children, initial, className }: TabsPanelProps) {
+export function TabsPanel({ value, children, initial, className, variant = 'compact' }: TabsPanelProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isActive, setIsActive] = useState(initial);
 
@@ -272,7 +304,10 @@ export function TabsPanel({ value, children, initial, className }: TabsPanelProp
       role="tabpanel"
       hidden={!isActive}
       data-value={value}
-      className={twMerge(clsx('overflow-scroll p-6 max-h-96 flex-1'), className)}
+      className={twMerge(
+        clsx('overflow-scroll p-6 max-h-96 flex-1', variant === 'compact' && 'bg-faded-black dark:bg-soot'),
+        className
+      )}
     >
       {children}
     </div>

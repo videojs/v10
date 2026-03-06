@@ -2,7 +2,7 @@ import { Radio } from '@base-ui/react/radio';
 import { RadioGroup } from '@base-ui/react/radio-group';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from '@/utils/twMerge';
 
 export interface ImageRadioOption<T = string> {
   value: T;
@@ -52,19 +52,18 @@ export default function ImageRadioGroup<T extends string = string>({
           >
             <div
               className={clsx(
-                'relative flex items-center justify-center aspect-square w-full rounded-xl',
-                'border border-light-40 dark:border-dark-80',
+                'relative flex items-center justify-center aspect-square w-full rounded-xs',
+                'border border-manila-75 dark:border-warm-gray',
                 isSelected
-                  ? 'bg-light-60 dark:bg-dark-90'
-                  : !isDisabled &&
-                      'bg-light-80 dark:bg-dark-100 group-intent:bg-light-60/50 dark:group-intent:bg-dark-90/50',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow/50'
+                  ? 'bg-manila-75 dark:bg-warm-gray'
+                  : !isDisabled && 'group-intent:bg-manila-50 dark:group-intent:bg-soot',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bright-yellow/50'
               )}
             >
               <Radio.Indicator className="sr-only" />
               <div className="flex items-center justify-center w-full h-full">{option.image}</div>
             </div>
-            <span className={clsx('text-sm', isSelected && 'font-medium')}>{option.label}</span>
+            <span className={clsx('text-p3', isSelected && 'font-bold')}>{option.label}</span>
           </Radio.Root>
         );
       })}

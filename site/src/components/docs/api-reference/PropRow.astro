@@ -18,19 +18,26 @@ const { name, type, detailedType, description, defaultValue, required, component
 const id = `${componentName}-${name}`;
 ---
 
-<DetailRow id={id} name={name} type={type} detailedType={detailedType} description={description} colspan={4}>
-    <Td class="align-top">
-        <MarkdownCode>
-            {name}
-            {required && <span class="text-orange">*</span>}
-        </MarkdownCode>
-    </Td>
-    <Td class="align-top">
-        <MarkdownCode>{type}</MarkdownCode>
-    </Td>
-    <Td class="align-top">
-        <MarkdownCode>
-            {defaultValue ?? "—"}
-        </MarkdownCode>
-    </Td>
+<DetailRow
+  id={id}
+  name={name}
+  type={type}
+  detailedType={detailedType}
+  description={description}
+  colspan={4}
+>
+  <Td class="align-top">
+    <MarkdownCode>
+      {name}
+      {required && <span class="text-orange">*</span>}
+    </MarkdownCode>
+  </Td>
+  <Td class="align-top">
+    <MarkdownCode>{type}</MarkdownCode>
+  </Td>
+  <Td class="align-top">
+    <MarkdownCode>
+      {defaultValue ?? "—"}
+    </MarkdownCode>
+  </Td>
 </DetailRow>

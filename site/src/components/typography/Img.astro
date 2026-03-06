@@ -2,11 +2,11 @@
 
 import { Image } from 'astro:assets';
 import type { ComponentProps } from 'astro/types';
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from '@/utils/twMerge';
 
 type Props = ComponentProps<typeof Image>;
 const { class: className, ...rest } = Astro.props;
 ---
 
 {/* @ts-expect-error tbh I don't know how to tell ts that inferSize is ok */}
-<Image class={twMerge('my-12', className)} inferSize {...rest} />
+<Image class={twMerge("my-12", className)} inferSize {...rest} />

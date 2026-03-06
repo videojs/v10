@@ -7,11 +7,11 @@
  */
 export const shared = {
   a: 'underline intent:no-underline',
-  code: 'bg-light-100 dark:bg-dark-110 dark:text-light-100 border border-light-40 dark:border-dark-80 px-1 rounded font-mono text-code',
+  code: 'border border-manila-75 bg-manila-25 dark:bg-soot dark:border-warm-gray px-1 rounded font-mono text-code normal-case',
   codeBlock: 'font-mono text-code',
-  em: 'font-medium',
-  li: 'text-base',
+  em: 'font-bold',
+  li: 'text-p2',
   ol: 'list-decimal list-outside pl-6 space-y-1',
-  strong: 'font-semibold',
+  strong: 'font-bold',
   ul: 'list-disc list-outside pl-6 space-y-1',
 } as const;

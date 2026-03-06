@@ -1,0 +1,48 @@
+---
+import clsx from 'clsx';
+import ArrowIcon from '../icons/arrow.svg?react';
+import GetStartedLink from '../NavBar/GetStartedLink';
+---
+
+<section class="mx-auto w-full max-w-305 px-5">
+  <div
+    class="group relative mb-20 items-center bg-faded-black py-2.5 text-center text-manila-light transition-colors duration-200 has-[a:hover]:text-faded-black lg:mb-30 lg:flex lg:text-left lg:duration-300 dark:bg-manila-light dark:text-faded-black dark:has-[a:hover]:text-manila-light"
+  >
+    <div
+      class="absolute top-(--top) right-2.5 bottom-2.5 left-2.5 z-0 bg-orange duration-200 group-has-[a:hover]:top-2.5 lg:top-2.5 lg:left-(--lg-left) lg:duration-300 lg:group-has-[a:hover]:left-2.5 dark:bg-black"
+      style={{
+        "--top": "calc(100% - var(--spacing) * 15 - var(--spacing) * 2.5)",
+        "--lg-left": "calc(100% - var(--spacing) * 40 - var(--spacing) * 2.5)",
+        transitionProperty: "top, left",
+      }}
+    >
+    </div>
+    <h2
+      class={clsx(
+        "relative z-10 my-2.5 px-2.5 font-display text-h15 uppercase lg:m-0 lg:pr-14 lg:pl-9 xl:text-h1",
+      )}
+    >
+      Get<br class="md:hidden" />
+      <span
+        class="text-stroke-manila-light duration-200 group-has-[a:hover]:text-stroke-faded-black lg:duration-300 dark:text-stroke-faded-black dark:group-has-[a:hover]:text-stroke-manila-light"
+        style={{ transitionProperty: "-webkit-text-stroke" }}>Started</span
+      >
+    </h2>
+    <p
+      class={clsx(
+        "relative z-10 mb-8 px-2.5 text-p2 lg:mb-0 lg:max-w-54 lg:px-0",
+      )}
+    >
+      Everything you need to install and launch your player
+    </p>
+
+    <GetStartedLink
+      client:idle
+      className={clsx(
+        "relative z-10 ml-auto flex h-15 items-center justify-center text-faded-black lg:h-25 lg:w-40 lg:pr-2.5 dark:text-orange",
+      )}
+    >
+      <ArrowIcon width="3.8rem" />
+    </GetStartedLink>
+  </div>
+</section>

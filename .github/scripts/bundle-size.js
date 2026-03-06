@@ -151,6 +151,7 @@ function buildPresetEntry(pkgShortName, config, distDir) {
  * @property {'root' | 'subpath'} type
  * @property {string} [category] - preset, media, player, skin, ui, feature (only for html/react)
  * @property {'js' | 'css'} format
+ * @property {number} [standaloneSize] - For UI components: standalone size used for stable diff gating
  */
 
 /** Bundle entry points with esbuild and return the minified + brotli size. */
@@ -475,12 +476,16 @@ async function main() {
         continue;
       }
 
-      // UI components are marginal over root (they share base element classes).
-      // Everything else is standalone.
+      // UI components are measured as marginal over root (size) for display,
+      // plus standalone (standaloneSize) for stable cross-build diff gating.
+      // Marginal sizes shift when root content changes due to brotli
+      // compression non-linearity, so diffs must gate on standalone.
       let size;
+      let standaloneSize;
       if (cat === 'ui') {
         const combined = await measure([pkg.rootPath, sub.path], pkg.external);
-        size = combined - rootSize;
+        size = Math.max(0, combined - rootSize);
+        standaloneSize = await measure([sub.path], pkg.external);
       } else {
         size = await measure([sub.path], pkg.external);
       }
@@ -491,6 +496,7 @@ async function main() {
         type: 'subpath',
         ...(cat ? { category: cat } : {}),
         format: 'js',
+        ...(standaloneSize !== undefined ? { standaloneSize } : {}),
       });
     }
 

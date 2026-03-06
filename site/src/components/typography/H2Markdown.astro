@@ -1,10 +1,14 @@
 ---
 
-import H4 from './H4.astro';
+import H2 from './H2.astro';
 
 const { class: className, ...props } = Astro.props;
 ---
 
-<H4 as="h2" class:list={['mt-18 [&+h3]:mt-6', className]} {...props}>
+<H2
+  as="h2"
+  class:list={["mt-18 [&+.contents>h3]:mt-6 [&+h3]:mt-6", className]}
+  {...props}
+>
   <slot />
-</H4>
+</H2>

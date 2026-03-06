@@ -37,7 +37,7 @@ export default function HTMLInstallTabs() {
       <TabsRoot>
         <TabsList label="Installation">
           <Tab value="cdn" initial>
-            cdn
+            cdns
           </Tab>
           <Tab value="npm">npm</Tab>
           <Tab value="pnpm">pnpm</Tab>

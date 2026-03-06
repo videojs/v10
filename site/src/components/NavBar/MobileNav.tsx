@@ -1,8 +1,8 @@
 import { Dialog } from '@base-ui/react/dialog';
 import clsx from 'clsx';
-import { ArrowUpRight, Menu, X } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
-import FilmGrain from '../FilmGrain';
+import Logo from '../icons/logo.svg?react';
 import GetStartedLink from './GetStartedLink';
 
 interface NavLink {
@@ -15,24 +15,26 @@ interface NavLink {
 export interface MobileNavProps {
   navLinks: NavLink[];
   currentPath: string;
-  dark?: boolean;
   children?: React.ReactNode;
 }
 
-export default function MobileNav({ navLinks, currentPath, dark = false, children }: MobileNavProps) {
+export default function MobileNav({ navLinks, currentPath, children }: MobileNavProps) {
   return (
     <Dialog.Root modal>
       {/* Trigger button - hamburger menu */}
       <Dialog.Trigger
         className={clsx(
-          'md:hidden flex items-center justify-center p-3 h-full aspect-square',
-          dark
-            ? 'bg-light-80 text-dark-100 intent:bg-light-40'
-            : 'bg-dark-100 dark:bg-light-80 text-light-80 dark:text-dark-100 intent:bg-dark-80 dark:intent:bg-light-40'
+          'md:hidden',
+          'inline-flex items-stretch p-0.75 border-2 border-faded-black dark:border-manila-light rounded-xs'
         )}
         aria-label="Open navigation menu"
       >
-        <Menu size={24} />
+        <span
+          className="font-display tracking-normal leading-none uppercase font-bold text-manila-light bg-faded-black dark:bg-manila-light dark:text-faded-black px-4 py-2.5"
+          style={{ fontSize: '0.75rem' }}
+        >
+          Menu
+        </span>
       </Dialog.Trigger>
 
       {/* Portal renders outside DOM hierarchy */}
@@ -41,44 +43,38 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
         <Dialog.Popup
           className={clsx(
             'fixed inset-0 z-50 flex flex-col',
-            dark ? 'bg-dark-100 text-light-100 dark' : 'bg-light-80 dark:bg-dark-100 text-dark-100 dark:text-light-100'
+            'bg-manila-light dark:bg-faded-black text-faded-black dark:text-manila-light'
           )}
         >
-          <FilmGrain currentPath={currentPath} />
           {/* Header with close button */}
-          <div
-            className={clsx(
-              'flex justify-between items-center pl-3 border-b',
-              dark ? 'border-dark-80' : 'border-light-40 dark:border-dark-80'
-            )}
-            style={{ height: 'var(--nav-h)' }}
-          >
+          <div className={clsx('flex justify-between items-center px-5 py-7')}>
             <Dialog.Title className="sr-only">Navigation</Dialog.Title>
-            <p className="text-h5 px-3">Video.js v10</p>
+            <Logo width="10rem" />
             <Dialog.Close
               className={clsx(
-                'flex items-center justify-center p-3 h-full aspect-square',
-                dark
-                  ? 'bg-light-80 text-dark-100 intent:bg-light-40'
-                  : 'bg-dark-100 text-light-80 intent:bg-dark-80 dark:bg-light-80 dark:text-dark-100 dark:intent:bg-light-40'
+                'inline-flex items-stretch p-0.75 border-2 border-faded-black dark:border-manila-light rounded-xs'
               )}
               aria-label="Close navigation menu"
             >
-              <X size={24} />
+              <span
+                className="font-display tracking-normal leading-none uppercase font-bold text-manila-light bg-faded-black dark:bg-manila-light dark:text-faded-black px-4 py-2.5"
+                style={{ fontSize: '0.75rem' }}
+              >
+                Close
+              </span>
             </Dialog.Close>
           </div>
 
-          <div className="overflow-y-scroll">
-            {/* Astro makes it hard to know if we have children, so, we use -mt-px to hide the border-b if we don't */}
-            <div className={clsx('-mt-px border-b', dark ? 'border-dark-80' : 'border-light-40 dark:border-dark-80')}>
-              {children}
-            </div>
-
+          <div className="overflow-y-auto">
+            <div className={clsx('')}>{children}</div>
             {/* Navigation links */}
-            <nav className="flex flex-col py-3">
+            <nav className="flex flex-col p-5">
               {navLinks.map((link) => {
                 const isActive = link.matchPath && currentPath.startsWith(link.matchPath);
-                const className = clsx('text-lg px-6 py-3', isActive ? 'underline' : 'intent:underline');
+                const className = clsx(
+                  'intent:bg-manila-dark dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-manila-dark',
+                  isActive ? 'text-stroke-faded-black dark:text-stroke-manila-light' : ''
+                );
 
                 if (link.href === '/docs') {
                   return (
@@ -99,17 +95,28 @@ export default function MobileNav({ navLinks, currentPath, dark = false, childre
                   </a>
                 );
               })}
-              <a href={GITHUB_REPO_URL} className="text-lg px-6 py-3 inline-flex items-center gap-1 intent:underline">
-                GitHub <ArrowUpRight size="1em" />
-              </a>
               <a
                 href={DISCORD_INVITE_URL}
-                className="text-lg px-6 py-3 inline-flex items-center gap-1 intent:underline"
+                className={clsx(
+                  'intent:bg-manila-dark dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-manila-dark'
+                )}
+                target="_blank"
               >
-                Discord <ArrowUpRight size="1em" />
+                Discord
+              </a>
+              <a
+                href={GITHUB_REPO_URL}
+                className={clsx(
+                  'intent:bg-manila-dark dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-manila-dark',
+                  'border-b'
+                )}
+                target="_blank"
+              >
+                GitHub
               </a>
             </nav>
           </div>
+          <p className="text-center p-6 mt-auto text-p2">The open source player for the web</p>
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>

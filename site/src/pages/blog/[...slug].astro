@@ -37,7 +37,11 @@ const jsonLdSchema = createBlogPostingSchema({
 });
 ---
 
-<Blog title={[post.data.title, 'Blog']} description={post.data.description} canonical={post.data.canonical}>
+<Blog
+  title={[post.data.title, "Blog"]}
+  description={post.data.description}
+  canonical={post.data.canonical}
+>
   <JsonLd slot="head" schema={jsonLdSchema} />
   <article
     class="@container"
@@ -48,23 +52,32 @@ const jsonLdSchema = createBlogPostingSchema({
     data-site="blog"
     data-pagefind-filter="site[data-site]"
   >
-    <header class="border-b border-light-40 dark:border-dark-80 max-w-3xl mx-auto pb-10 mb-10 relative">
-      <div class="font-medium md:text-lg text-dark-40 dark:text-light-40 flex gap-4 mb-1">
-        <FormattedDate data-pagefind-sort={`date:${post.data.pubDate.toISOString()}`} date={post.data.pubDate} />
+    <header
+      class="relative mx-auto mb-10 max-w-3xl border-y border-faded-black py-10 dark:border-manila-light"
+    >
+      <div
+        class="mb-3 flex gap-4 font-display text-h4 font-bold text-orange uppercase"
+      >
+        <FormattedDate
+          data-pagefind-sort={`date:${post.data.pubDate.toISOString()}`}
+          date={post.data.pubDate}
+        />
         <span>&bull;</span>
-        <span data-pagefind-ignore data-llms-ignore>{remarkPluginFrontmatter.minutesRead}</span>
+        <span data-pagefind-ignore data-llms-ignore
+          >{remarkPluginFrontmatter.minutesRead}</span
+        >
       </div>
-      <h1 class="text-h4 md:text-h2 mb-2">{post.data.title}</h1>
-      <div class="font-medium md:text-lg text-dark-40 dark:text-light-40">
+      <h1 class="mb-2 font-display text-h15 uppercase">{post.data.title}</h1>
+      <div class="">
         By {
-          new Intl.ListFormat('en', { style: 'long', type: 'conjunction' })
+          new Intl.ListFormat("en", { style: "long", type: "conjunction" })
             .formatToParts(authors.map((author) => author.data.name))
             .map((part) =>
-              part.type === 'element' ? (
+              part.type === "element" ? (
                 // inline-block removes the whitespace that prettier+astro adds around the text
                 <a
                   href={`/blog/authors/${authors.find((a) => a.data.name === part.value)?.id}`}
-                  class="intent:underline inline-block"
+                  class="inline-block intent:underline"
                   data-pagefind-meta="author"
                 >
                   {part.value}

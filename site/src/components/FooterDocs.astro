@@ -1,0 +1,92 @@
+---
+import { ArrowUpRight } from 'lucide-react';
+import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
+import Discord from './icons/discord.svg?react';
+import GitHub from './icons/github.svg?react';
+import LogoMonoVersion from './icons/logo-mono.svg?react';
+import { ThemeToggle } from './ThemeToggle';
+
+type NavLink = {
+  href: string;
+  label: string;
+  external?: boolean;
+};
+const navLinks: NavLink[] = [
+  { href: '/docs', label: 'Docs' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/privacy', label: 'Privacy' },
+];
+
+type Props = {
+  class?: string;
+};
+const { class: className } = Astro.props;
+---
+
+<footer class:list={["mt-30 grid gap-3 pb-11 lg:mt-32 lg:pt-0", className]}>
+  <nav
+    class="mb-2 items-start justify-between gap-3 border-faded-black px-5 pt-5 sm:mb-0 lg:flex-row lg:items-start lg:border-t lg:px-10 dark:border-warm-gray"
+  >
+    <nav
+      class="flex flex-col gap-0 text-faded-black lg:-ml-5 lg:flex-row dark:text-manila-light"
+    >
+      <div
+        class="flex justify-between border-t border-b border-faded-black pt-3 pb-3 lg:justify-center lg:border-0 lg:pt-0 lg:pb-0 dark:border-manila-light"
+      >
+        {
+          navLinks.map((link) => (
+            <a
+              href={link.href}
+              class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase lg:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+            >
+              {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
+            </a>
+          ))
+        }
+      </div>
+      <div
+        class="flex flex-1 justify-start gap-4 pt-5 pb-8 lg:justify-center lg:gap-0 lg:py-0 lg:pb-0"
+      >
+        <a
+          href={DISCORD_INVITE_URL}
+          class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase lg:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+          aria-label="Discord"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Discord width="1.5em" height="1.5em" />
+        </a>
+        <a
+          href={GITHUB_REPO_URL}
+          class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase lg:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+          aria-label="GitHub"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <GitHub width="1.5em" height="1.5em" />
+        </a>
+        <div class="ml-auto">
+          <ThemeToggle client:idle />
+        </div>
+      </div>
+    </nav>
+
+    <p
+      class="mt-10 text-left font-sans text-p2 text-faded-black dark:text-manila-light"
+    >
+      Video.js is a free and open source HTML5 <a
+        href="/"
+        class="underline intent:no-underline">video player.</a
+      >
+      <br class="xl:hidden" />Video hosting and streaming <a
+        href="https://www.mux.com?utm_source=videojs&utm_campaign=vjs10"
+        class="underline intent:no-underline"
+        >sponsored by Mux.
+      </a>
+      <br />
+      The term VIDEO.JS is a registered trademark of Brightcove Inc. <br
+        class="xl:hidden"
+      />&copy; 2010&ndash;{new Date().getFullYear()} Video.js contributors
+    </p>
+  </nav>
+</footer>

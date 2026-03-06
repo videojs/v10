@@ -1,7 +1,7 @@
 ---
 
 import type { HTMLTag, Polymorphic } from 'astro/types';
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from '@/utils/twMerge';
 
 type Props<Tag extends HTMLTag = 'td'> = Polymorphic<{ as: Tag }> & {
   class?: string;
@@ -10,6 +10,6 @@ type Props<Tag extends HTMLTag = 'td'> = Polymorphic<{ as: Tag }> & {
 const { as: Tag = 'td', class: className, ...props } = Astro.props;
 ---
 
-<Tag class={twMerge('px-6 py-3 text-base', className)} {...props}>
+<Tag class={twMerge("px-6 py-3 text-p2", className)} {...props}>
   <slot />
 </Tag>

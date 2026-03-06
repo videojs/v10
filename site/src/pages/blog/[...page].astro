@@ -5,6 +5,7 @@ import { getCollection, getEntries } from 'astro:content';
 import type { GetStaticPaths, Page } from 'astro';
 import BlogPagination from '@/components/blog/BlogPagination.astro';
 import BlogPostCard from '@/components/blog/BlogPostCard.astro';
+import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import JsonLd from '@/components/JsonLd.astro';
 import Blog from '@/layouts/Blog.astro';
 import { createBlogCollectionSchema } from '@/utils/jsonLd/schemas';
@@ -44,16 +45,34 @@ const jsonLdSchema = createBlogCollectionSchema({
 });
 ---
 
-<Blog title="Blog" description="News and updates from the Video.js open-source video player project">
+<Blog
+  title="Blog"
+  description="News and updates from the Video.js open-source video player project"
+>
   <JsonLd slot="head" schema={jsonLdSchema} />
-  <header class="mb-10 md:mb-20 w-full max-w-3xl mx-auto">
-    <h1 class="text-h4 md:text-h2 mb-2">Video.js Blog</h1>
-    <p class="text-lg font-medium md:text-h5 text-dark-40 dark:text-light-40">
-      {page.data.length === 0 ? 'Coming soon' : 'News and updates from the Video.js open-source video player project'}
-    </p>
+  <header
+    class="mx-auto mb-10 w-full max-w-4xl overflow-hidden rounded-xs border border-manila-dark text-center md:mb-20 dark:border-transparent dark:bg-soot"
+  >
+    <div class="mx-auto max-w-3xl px-5 py-20">
+      <h1 class="mb-4 font-display text-h2 uppercase lg:text-h1">
+        Video.js Blog
+      </h1>
+      <p class="font-display text-h5 leading-tight text-balance">
+        {
+          page.data.length === 0
+            ? "Coming soon"
+            : "News and updates from the Video.js open-source video player project"
+        }
+      </p>
+    </div>
+    <FooterEasterEgg variant="extra-short" />
   </header>
-  <div class="grid gap-10 w-full max-w-3xl mx-auto">
-    {page.data.map((post) => <BlogPostCard post={post} authors={post.authors} />)}
+  <div class="mx-auto grid w-full max-w-3xl gap-10">
+    {
+      page.data.map((post) => (
+        <BlogPostCard post={post} authors={post.authors} />
+      ))
+    }
   </div>
   {page.lastPage > 1 && <BlogPagination page={page} />}
 </Blog>

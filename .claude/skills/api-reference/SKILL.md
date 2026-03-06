@@ -80,8 +80,8 @@ Create at least a BasicUsage demo in both HTML and React. Load `references/demo-
 - Follow BEM naming: `{framework}-{component}-{variant}__{element}`
 - CSS uses data-attribute selectors for state-based styling
 - React uses `render` prop for state-based rendering
-- Video source: `https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4`
-- Poster image: `https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/thumbnail.jpg`
+- Video source: `https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4`
+- Poster image: `https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.jpg`
 - Consider additional demos for features not covered by BasicUsage
 
 ### Step 5: Create MDX reference page

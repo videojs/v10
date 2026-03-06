@@ -2,7 +2,7 @@ import { Thumbnail } from '@videojs/react';
 
 const THUMBNAILS = [
   {
-    url: 'https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/storyboard.jpg',
+    url: 'https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/storyboard.jpg',
     startTime: 0,
     endTime: 10,
     width: 284,
@@ -10,7 +10,7 @@ const THUMBNAILS = [
     coords: { x: 0, y: 0 },
   },
   {
-    url: 'https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/storyboard.jpg',
+    url: 'https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/storyboard.jpg',
     startTime: 10,
     endTime: 20,
     width: 284,
@@ -18,7 +18,7 @@ const THUMBNAILS = [
     coords: { x: 284, y: 0 },
   },
   {
-    url: 'https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/storyboard.jpg',
+    url: 'https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/storyboard.jpg',
     startTime: 20,
     width: 284,
     height: 160,

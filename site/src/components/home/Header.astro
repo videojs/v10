@@ -1,0 +1,64 @@
+---
+import FrameworkControl from '@/components/home/FrameworkControl';
+import HeroVideo from '@/components/home/HeroVideo';
+import SkinControl from '@/components/home/SkinControl';
+import MuxLogoSmall from '@/components/icons/mux-logo-small.svg?react';
+import { VJS10_DEMO_VIDEO } from '@/consts';
+
+const poster = `${VJS10_DEMO_VIDEO.poster}?time=0`;
+---
+
+<link
+  rel="preload"
+  href={poster}
+  as="image"
+  type="image/webp"
+  fetchpriority="high"
+  slot="priority-head"
+/>
+<header
+  class="relative mx-auto mb-25 grid w-full max-w-305 grid-cols-1 px-5 pt-19 [grid-template-areas:var(--grid-template-areas)] md:py-0 md:[grid-template-areas:var(--md-grid-template-areas)]"
+  style="--grid-template-areas: 'title' 'description' 'video' 'mux' 'control'; --md-grid-template-areas: 'video' 'mux' 'description' 'control'"
+>
+  <h1
+    class="z-10 mb-5 w-full self-center justify-self-center text-center font-display text-h2 text-balance uppercase [grid-area:var(--grid-area)] md:mb-0 md:px-5 md:text-h15 md:text-manila-light md:[grid-area:var(--md-grid-area)] lg:text-h1"
+    style="--grid-area: title; --md-grid-area: video;"
+  >
+    The Open Source Player <br class="lg:hidden" /><span
+      class="text-stroke-faded-black md:text-stroke-manila-light"
+      >for the Web</span
+    >
+  </h1>
+  {/* the additional px-5 is intentional */}
+  <p
+    class="mx-auto mb-20 w-full max-w-195 px-5 text-center text-p2 text-balance text-warm-gray md:mb-25 lg:text-p1 dark:text-manila-light"
+    style="grid-area:description"
+  >
+    For over 15 years, Video.js has been the world's web video player. Now
+    rebuilt in v10 for modern development and performance.
+  </p>
+
+  <HeroVideo
+    client:load
+    className="mb-3 aspect-2/1 md:mb-4 md:aspect-1180/570"
+    style={{ gridArea: "video" }}
+    poster={poster}
+  />
+  <p
+    class="mb-11 flex items-center justify-center gap-2.5 md:mb-20 md:justify-end md:pr-6 md:font-display md:text-(length:--md-text) md:uppercase"
+    style="grid-area:mux;--md-text:0.75rem;"
+  >
+    Video hosting by <a
+      href="https://www.mux.com?utm_source=videojs&utm_campaign=vjs10"
+      target="_blank"
+      rel="noopener"><MuxLogoSmall className="inline" width="3.25rem" /></a
+    >
+  </p>
+  <div
+    class="grid grid-cols-1 items-center justify-center gap-9 md:grid-cols-2"
+    style="grid-area:control"
+  >
+    <SkinControl client:idle />
+    <FrameworkControl client:idle className="hidden md:grid" />
+  </div>
+</header>

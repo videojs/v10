@@ -1,7 +1,7 @@
 ---
 import type { HTMLTag, Polymorphic } from 'astro/types';
 import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from '@/utils/twMerge';
 
 type Props<Tag extends HTMLTag = 'table'> = Polymorphic<{ as: Tag }> & {
   maxWidth?: boolean;
@@ -12,20 +12,22 @@ type Props<Tag extends HTMLTag = 'table'> = Polymorphic<{ as: Tag }> & {
 const { as: Tag = 'table', maxWidth = true, outerClass, class: className, ...props } = Astro.props;
 ---
 
-<div class={twMerge(clsx("my-12", maxWidth && "mx-auto max-w-3xl"), outerClass)}>
-    <div class="overflow-x-auto flex -mx-6">
-        <div
-            class="sticky left-0 z-10 shrink-0 basis-6 bg-linear-to-r from-light-80 dark:from-dark-100 to-transparent pointer-events-none"
-            aria-hidden="true"
-        >
-        </div>
-        <Tag class={twMerge("w-full border-collapse", className)} {...props}>
-            <slot />
-        </Tag>
-        <div
-            class="sticky right-0 z-10 shrink-0 basis-6 bg-linear-to-l from-light-80 dark:from-dark-100 to-transparent pointer-events-none"
-            aria-hidden="true"
-        >
-        </div>
+<div
+  class={twMerge(clsx("my-12", maxWidth && "mx-auto max-w-3xl"), outerClass)}
+>
+  <div class="-mx-6 flex overflow-x-auto">
+    <div
+      class="pointer-events-none sticky left-0 z-10 shrink-0 basis-6 bg-linear-to-r from-manila-light to-transparent dark:from-faded-black"
+      aria-hidden="true"
+    >
     </div>
+    <Tag class={twMerge("w-full border-collapse", className)} {...props}>
+      <slot />
+    </Tag>
+    <div
+      class="pointer-events-none sticky right-0 z-10 shrink-0 basis-6 bg-linear-to-l from-manila-light to-transparent dark:from-faded-black"
+      aria-hidden="true"
+    >
+    </div>
+  </div>
 </div>

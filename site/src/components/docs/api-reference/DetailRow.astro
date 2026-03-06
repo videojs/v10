@@ -30,94 +30,92 @@ const hasDetail = Boolean(detailedType || description);
 ---
 
 <Tr
-    id={id}
-    data-detail-row
-    class={clsx(
-        hasDetail &&
-            "group cursor-pointer intent:bg-light-60 dark:intent:bg-dark-110 data-expanded:border-transparent dark:data-expanded:border-transparent",
-    )}
+  id={id}
+  data-detail-row
+  class={clsx(
+    hasDetail &&
+      "group cursor-pointer data-expanded:border-transparent dark:data-expanded:border-transparent intent:bg-manila-75 dark:intent:bg-soot",
+  )}
 >
-    <slot />
-        <Td class="align-top">
-        {
-            hasDetail && (<button
-                aria-expanded="false"
-                aria-controls={`${id}-detail`}
-                aria-label={`Details for ${name}`}
-                data-detail-toggle
-            >
-                <span
-                    aria-hidden="true"
-                    class="inline-block group-data-expanded:rotate-90"
-                >
-                    ▸
-                </span>
-            </button>)}
-        </Td>
+  <slot />
+  <Td class="align-top">
+    {
+      hasDetail && (
+        <button
+          aria-expanded="false"
+          aria-controls={`${id}-detail`}
+          aria-label={`Details for ${name}`}
+          data-detail-toggle
+        >
+          <span
+            aria-hidden="true"
+            class="inline-block group-data-expanded:rotate-90"
+          >
+            ▸
+          </span>
+        </button>
+      )
+    }
+  </Td>
 </Tr>
 
 {
-    hasDetail && (
-        <Tr id={`${id}-detail`} hidden>
-            <Td colspan={String(colspan)} class="p-0">
-                <div class="px-6 py-4">
-                    <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3">
-                        {description && (
-                            <>
-                                <dt class="text-dark-40 dark:text-light-40">
-                                    Description
-                                </dt>
-                                <dd><InlineMarkdown content={description} /></dd>
-                            </>
-                        )}
+  hasDetail && (
+    <Tr id={`${id}-detail`} hidden>
+      <Td colspan={String(colspan)} class="p-0">
+        <div class="px-6 py-4">
+          <dl
+            class="grid grid-cols-(--cols) gap-x-6 gap-y-3"
+            style="--cols: auto 1fr"
+          >
+            {description && (
+              <>
+                <dt class="font-bold">Description</dt>
+                <dd>
+                  <InlineMarkdown content={description} />
+                </dd>
+              </>
+            )}
 
-                        {detailedType && (
-                            <>
-                                <dt class="text-dark-40 dark:text-light-40">
-                                    Type
-                                </dt>
-                                <dd>
-                                    <MarkdownCode>
-                                        {detailedType}
-                                    </MarkdownCode>
-                                </dd>
-                            </>
-                        )}
-                    </dl>
-                </div>
-            </Td>
-        </Tr>
-    )
+            {detailedType && (
+              <>
+                <dt class="font-bold">Type</dt>
+                <dd>
+                  <MarkdownCode>{detailedType}</MarkdownCode>
+                </dd>
+              </>
+            )}
+          </dl>
+        </div>
+      </Td>
+    </Tr>
+  )
 }
 
 <script>
-    document
-        .querySelectorAll<HTMLButtonElement>("[data-detail-toggle]")
-        .forEach((button) => {
-            button.addEventListener("click", () => {
-                const expanded =
-                    button.getAttribute("aria-expanded") === "true";
-                button.setAttribute("aria-expanded", String(!expanded));
+  document
+    .querySelectorAll<HTMLButtonElement>("[data-detail-toggle]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        const expanded = button.getAttribute("aria-expanded") === "true";
+        button.setAttribute("aria-expanded", String(!expanded));
 
-                const row =
-                    button.closest<HTMLTableRowElement>("[data-detail-row]");
-                if (row) row.toggleAttribute("data-expanded", !expanded);
+        const row = button.closest<HTMLTableRowElement>("[data-detail-row]");
+        if (row) row.toggleAttribute("data-expanded", !expanded);
 
-                const detail = document.getElementById(
-                    button.getAttribute("aria-controls")!,
-                );
-                if (detail) detail.hidden = expanded;
-            });
-        });
+        const detail = document.getElementById(
+          button.getAttribute("aria-controls")!,
+        );
+        if (detail) detail.hidden = expanded;
+      });
+    });
 
-    document
-        .querySelectorAll<HTMLTableRowElement>("[data-detail-row]")
-        .forEach((row) => {
-            row.addEventListener("click", (e) => {
-                if ((e.target as Element).closest("a, button")) return;
-                row.querySelector<HTMLButtonElement>(
-                    "[data-detail-toggle]",
-                )?.click();
-            });
-        });
+  document
+    .querySelectorAll<HTMLTableRowElement>("[data-detail-row]")
+    .forEach((row) => {
+      row.addEventListener("click", (e) => {
+        if ((e.target as Element).closest("a, button")) return;
+        row.querySelector<HTMLButtonElement>("[data-detail-toggle]")?.click();
+      });
+    });
 </script>

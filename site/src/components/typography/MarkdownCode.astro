@@ -1,6 +1,6 @@
 ---
 import type { HTMLTag, Polymorphic } from 'astro/types';
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from '@/utils/twMerge';
 
 import { shared } from './styles';
 
@@ -17,13 +17,13 @@ const isCodeBlock = codeBlock === 'true';
 ---
 
 {
-    isCodeBlock ? (
-        <Tag class={twMerge(shared.codeBlock, className)} {...props}>
-            <slot />
-        </Tag>
-    ) : (
-        <Tag class={twMerge(shared.code, className)} {...props}>
-            <slot />
-        </Tag>
-    )
+  isCodeBlock ? (
+    <Tag class={twMerge(shared.codeBlock, className)} {...props}>
+      <slot />
+    </Tag>
+  ) : (
+    <Tag class={twMerge(shared.code, className)} {...props}>
+      <slot />
+    </Tag>
+  )
 }

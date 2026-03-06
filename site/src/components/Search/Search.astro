@@ -16,28 +16,30 @@ const bundlePath = join(baseUrl, 'pagefind/');
 
 interface Props {
   class?: string;
-  dark: boolean;
 }
-const { class: className, dark } = Astro.props;
+const { class: className } = Astro.props;
 ---
 
 <SearchClient
   client:load
   className={clsx(
-    'inline-flex items-center gap-2 cursor-pointer min-h-6 px-2 sm:border intent:border-current rounded-full',
-    dark ? 'border-dark-80' : 'border-light-40 dark:border-dark-80',
+    "inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-full border-faded-black px-2 sm:border dark:border-manila-dark intent:border-manila-dark dark:intent:border-warm-gray",
     className,
   )}
   baseUrl={baseUrl}
   bundlePath={bundlePath}
   searchId="pagefind-ui"
   searchStyle={{
-    '--search-icon-url': `url('data:image/svg+xml;utf8,${encodeURIComponent(searchIconString)}')`,
+    "--search-icon-url": `url('data:image/svg+xml;utf8,${encodeURIComponent(searchIconString)}')`,
   } as React.CSSProperties}
 >
-  <SearchIcon class="w-4 h-4 sm:w-3 sm:h-3" />
-  <kbd data-platform-key="default" class="font-sans text-sm hidden sm:inline">Ctrl K</kbd>
-  <kbd data-platform-key="mac" class="font-sans text-sm hidden sm:inline">⌘K</kbd>
+  <SearchIcon class="h-4 w-4 sm:h-3 sm:w-3" />
+  <kbd data-platform-key="default" class="hidden font-display text-h4 sm:inline"
+    >Ctrl K</kbd
+  >
+  <kbd data-platform-key="mac" class="hidden font-display text-h4 sm:inline"
+    >⌘K</kbd
+  >
 </SearchClient>
 
 {
@@ -50,35 +52,39 @@ const { class: className, dark } = Astro.props;
 }
 <script is:inline>
   (() => {
-    const defaultPlatformKey = document.querySelector('kbd[data-platform-key="default"]');
-    const macPlatformKey = document.querySelector('kbd[data-platform-key="mac"]');
+    const defaultPlatformKey = document.querySelector(
+      'kbd[data-platform-key="default"]',
+    );
+    const macPlatformKey = document.querySelector(
+      'kbd[data-platform-key="mac"]',
+    );
     if (/Mac|iPhone|iPod|iPad/i.test(navigator.platform)) {
-      if (defaultPlatformKey) defaultPlatformKey.style.display = 'none';
+      if (defaultPlatformKey) defaultPlatformKey.style.display = "none";
     } else {
-      if (macPlatformKey) macPlatformKey.style.display = 'none';
+      if (macPlatformKey) macPlatformKey.style.display = "none";
     }
   })();
 </script>
 
 <style is:global>
-  @import url('@pagefind/default-ui/css/ui.css');
+  @import url("@pagefind/default-ui/css/ui.css");
 
   #pagefind-ui {
     --pagefind-ui-scale: 1;
-    --pagefind-ui-primary: var(--color-yellow);
-    --pagefind-ui-text: var(--color-dark-100);
-    --pagefind-ui-background: var(--color-light-100);
-    --pagefind-ui-border: var(--color-light-40);
+    --pagefind-ui-primary: var(--color-gold);
+    --pagefind-ui-text: var(--color-faded-black);
+    --pagefind-ui-background: var(--color-manila-50);
+    --pagefind-ui-border: var(--color-manila-75);
     --pagefind-ui-tag: green;
     --pagefind-ui-border-width: 1px;
-    --pagefind-ui-border-radius: var(--radius-lg);
+    --pagefind-ui-border-radius: var(--radius-xs);
     --pagefind-ui-font: inherit;
   }
 
   .dark #pagefind-ui {
-    --pagefind-ui-text: var(--color-light-80);
-    --pagefind-ui-background: var(--color-dark-100);
-    --pagefind-ui-border: var(--color-dark-80);
+    --pagefind-ui-text: var(--color-manila-light);
+    --pagefind-ui-background: var(--color-warm-gray);
+    --pagefind-ui-border: var(--color-soot);
   }
 
   #pagefind-ui .pagefind-ui__form::before {
@@ -86,10 +92,10 @@ const { class: className, dark } = Astro.props;
     mask-image: var(--search-icon-url);
   }
   #pagefind-ui .pagefind-ui__search-input {
-    font-size: var(--text-lg);
-    line-height: var(--text-lg--line-height);
-    letter-spacing: var(--text-lg--letter-spacing);
-    font-weight: var(--text-lg--font-weight);
+    font-size: var(--text-p2);
+    line-height: var(--text-p2--line-height);
+    letter-spacing: var(--text-p2--letter-spacing);
+    font-weight: var(--text-p2--font-weight);
   }
   #pagefind-ui .pagefind-ui__filter-block {
     border-bottom: solid 1px var(--pagefind-ui-border);
@@ -99,14 +105,14 @@ const { class: className, dark } = Astro.props;
   }
   #pagefind-ui .pagefind-ui__result-title,
   #pagefind-ui .pagefind-ui__filter-name {
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-bold);
   }
   #pagefind-ui .pagefind-ui__result-nested .pagefind-ui__result-link::before {
     font-weight: var(--font-weight-normal);
     font-size: 0.9em;
   }
   #pagefind-ui mark {
-    background-color: var(--color-yellow);
-    color: var(--color-dark-100);
+    background-color: var(--color-gold);
+    color: var(--color-faded-black);
   }
 </style>

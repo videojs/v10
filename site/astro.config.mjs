@@ -9,6 +9,7 @@ import sitemap from '@astrojs/sitemap';
 import sentry from '@sentry/astro';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, envField, fontProviders } from 'astro/config';
+import svgr from 'vite-plugin-svgr';
 import checkV8Urls from './integrations/check-v8-urls';
 import llmsMarkdown from './integrations/llms-markdown';
 import pagefind from './integrations/pagefind';
@@ -86,8 +87,8 @@ export default defineConfig({
     syntaxHighlight: 'shiki',
     shikiConfig: {
       themes: {
-        light: 'gruvbox-light-hard',
-        dark: 'gruvbox-dark-medium',
+        light: 'gruvbox-dark-hard',
+        dark: 'gruvbox-dark-soft',
       },
       // TODO more shiki transformers
       transformers: [shikiTransformMetadata],
@@ -101,7 +102,7 @@ export default defineConfig({
   },
 
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss(), svgr()],
     optimizeDeps: {
       exclude: ['@videojs/react', '@videojs/html'],
     },

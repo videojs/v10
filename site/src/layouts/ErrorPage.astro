@@ -1,32 +1,57 @@
 ---
+import DialNav from '@/components/DialNav';
 import Footer from '@/components/Footer.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
-import GetStartedLink from '@/components/NavBar/GetStartedLink';
 import NavBar from '@/components/NavBar/NavBar.astro';
 import Base from '@/layouts/Base.astro';
 
 interface Props {
   title: string;
   description: string;
-  heading: string;
+  code?: string;
+  message?: string;
 }
 
-const { title, description, heading } = Astro.props;
+const { title, description, code = '404', message = 'NOT FOUND' } = Astro.props;
 ---
 
 <Base {title} {description}>
-  <div class="min-h-screen flex flex-col">
+  <div class="flex flex-col" style={{ minHeight: "80dvh" }}>
     <NavBar />
-    <main class="flex-1 px-6 md:px-10 py-10 sm:py-14 flex items-center justify-center">
-      <div class="text-center flex flex-col items-center gap-4">
-        <h1 class="text-h2 md:text-h1">{heading}</h1>
-        <div class="text-lg flex flex-col items-center gap-2">
-          <a href="/" class="intent:underline">Go home</a>
-          <GetStartedLink client:idle className="intent:underline">Read the docs</GetStartedLink>
+    <main class="w-full">
+      <div
+        class="mx-auto grid w-full max-w-305 justify-between gap-8 px-5 py-10 md:flex md:pt-32 md:pb-16"
+      >
+        <div class="flex flex-col leading-none">
+          <h1
+            class="font-display text-h2 font-bold text-faded-black md:text-h1 dark:text-manila-light"
+          >
+            {code}
+          </h1>
+          <h2
+            class="font-display text-h2 font-bold text-stroke-faded-black md:text-h1 dark:text-stroke-manila-light"
+          >
+            {message}
+          </h2>
         </div>
+        <DialNav
+          client:load
+          left={[
+            { href: "/", label: "Home", angle: -60 },
+            { href: "/docs", label: "Docs", angle: -120 },
+          ]}
+          right={[
+            {
+              href: "https://mux.com?utm_source=videojs&utm_campaign=vjs10",
+              label: "mux.com",
+              angle: 60,
+            },
+            { href: "/blog", label: "Blog", angle: 120 },
+          ]}
+        />
       </div>
     </main>
-    <Footer />
   </div>
+  <Footer />
   <FooterEasterEgg />
 </Base>
