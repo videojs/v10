@@ -42,6 +42,7 @@ export interface UseSliderReturnValue<State extends SliderState = SliderState> {
   rootRef: React.RefCallback<HTMLElement>;
   thumbRef: React.RefCallback<HTMLElement>;
   rootProps: SliderRootProps;
+  rootStyle: Record<string, string>;
   thumbProps: SliderThumbProps;
 }
 
@@ -117,6 +118,7 @@ export function useSlider<State extends SliderState = SliderState>(
     rootRef,
     thumbRef,
     rootProps: slider.rootProps,
+    rootStyle: slider.rootStyle,
     thumbProps: slider.thumbProps,
   };
 }
