@@ -1,5 +1,20 @@
 # Changelog
 
+## [10.0.0-alpha.10](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-alpha.9...@videojs/core@10.0.0-alpha.10) (2026-03-07)
+
+
+### Bug Fixes
+
+* **html:** apply popover data attributes before showing via popover API ([#763](https://github.com/videojs/v10/issues/763)) ([206bc9b](https://github.com/videojs/v10/commit/206bc9b4ae914176e50c1708c272c75d90a12286))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/store bumped to 10.0.0-alpha.10
+    * @videojs/utils bumped to 10.0.0-alpha.10
+
 ## [10.0.0-alpha.9](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-alpha.8...@videojs/core@10.0.0-alpha.9) (2026-03-06)
 
 
