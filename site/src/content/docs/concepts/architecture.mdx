@@ -1,0 +1,132 @@
+---
+title: Architecture
+description: How Video.js players are structured — state, UI, and media
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Video.js v10 is built around a three-part architecture that separates concerns and maximizes flexibility. Each part is designed to work independently or together, allowing you to use as much or as little of Video.js as you need.
+
+## 1. State management
+
+<FrameworkCase frameworks={["react"]}>
+State is handled by a `Player.Provider`, which creates a central state store that all components can access. When you wrap your player in a `Player.Provider`, the components automatically connect to the state.
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+State is handled by a `video-player` element, which creates a central state store that all components can access. Child components can automatically connect to the state of the `video-player` element.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player.Provider>
+  {/* All components inside automatically connect to state */}
+</Player.Provider>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <!-- All components inside automatically connect to state -->
+</video-player>
+```
+</FrameworkCase>
+
+## 2. User interface
+
+Use a prebuilt **Skin** or build your own from the individual **UI Components**.
+
+### Skins
+Complete, pre-designed player UIs that package components and styles together:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player.Provider>
+  <VideoSkin>
+    <Video src="video.mp4" />
+  </VideoSkin>
+</Player.Provider>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <video-skin>
+    <video src="video.mp4"></video>
+  </video-skin>
+</video-player>
+```
+</FrameworkCase>
+
+<DocsLink slug="concepts/skins">Learn more about skins →</DocsLink>
+
+### UI Components
+
+Skins are a good starting point. However, if you want more control you can build your own UI from the individual UI Components, usually staring from the "open" version of the skin.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player.Provider>
+
+  <MediaContainer>
+    <Video src="video.mp4" />
+    <MediaControls>
+      <PlayButton />
+      ...
+    </MediaControls>
+  </MediaContainer>
+
+</Player.Provider>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+
+  <media-container> 
+    <video src="video.mp4"></video>
+    <media-controls>
+      <media-play-button></media-play-button>
+      ...
+    </media-controls>
+  </media-container>
+
+</video-player>
+```
+</FrameworkCase>
+
+{/* <DocsLink slug="concepts/ui-components">Learn more about UI components →</DocsLink> */}
+
+## 3. Media
+
+Media components are the components that actually display your media. They're essentially "players with no UI". They handle the video/audio rendering and expose a consistent API.
+Medias can be format specific (HLS, DASH), service specific (YouTube, Vimeo, Mux), or use case specific (BackgroundVideo). 
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player.Provider>
+  <VideoSkin>
+
+    <YoutubeVideo src="https://www.youtube.com/watch?v=WtA-IWdLMN0" />
+
+  </VideoSkin>
+</Player.Provider>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <video-skin> 
+
+    <youtube-video src="https://www.youtube.com/watch?v=WtA-IWdLMN0"></youtube-video>
+
+  </video-skin>
+</video-player>
+```
+</FrameworkCase>
+
+## See Also
+
+- UI Components — The primitives skins are built from [LINK ME]
+- Features — State and behavior bundles [LINK ME]
