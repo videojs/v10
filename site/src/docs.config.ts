@@ -20,7 +20,7 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'Concepts',
-    contents: [{ slug: 'concepts/skins' }],
+    contents: [{ slug: 'concepts/architecture' }, { slug: 'concepts/skins' }],
   },
   // {
   //   sidebarLabel: 'How to',
