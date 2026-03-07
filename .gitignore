@@ -143,6 +143,7 @@ bun.lockb
 # -------------------------
 # AI Agent Config (Generated)
 # -------------------------
+.claude/settings.local.json
 .opencode
 AGENTS.md
 agents
