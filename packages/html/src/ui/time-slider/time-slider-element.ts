@@ -107,6 +107,14 @@ export class TimeSliderElement extends MediaElement {
     this.#core.setProps(this);
   }
 
+  protected override firstUpdated(_changed: PropertyValues): void {
+    super.firstUpdated(_changed);
+    if (this.thumbAlignment === 'edge' && this.#slider) {
+      const state = this.#core.getState();
+      applyStyles(this, getTimeSliderCSSVars(this.#slider.adjustForAlignment(state)));
+    }
+  }
+
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
     if (!this.#slider) return;

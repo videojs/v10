@@ -131,6 +131,12 @@ export function createSlider(options: SliderOptions): SliderApi {
     onPointerDown(event) {
       if (options.isDisabled()) return;
 
+      // Prevent the browser's default mousedown focus behavior. Without this,
+      // clicking a non-focusable child (e.g. the track) causes the browser to
+      // move focus away from the thumb after our programmatic `focus()` call,
+      // which can trigger unrelated `focusout` handlers (e.g. popover close).
+      event.preventDefault();
+
       const el = options.getElement();
 
       cachedRect = el.getBoundingClientRect();
