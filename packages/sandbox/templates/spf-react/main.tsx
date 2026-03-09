@@ -6,11 +6,12 @@
 // the store discovers it without any querySelector involved.
 
 import { PauseIcon, PlayIcon, RestartIcon, VolumeHighIcon, VolumeOffIcon } from '@videojs/icons/react';
-import { Container, createPlayer, features, MuteButton, PlayButton } from '@videojs/react';
+import { Container, createPlayer, MuteButton, PlayButton } from '@videojs/react';
 import { SpfVideo } from '@videojs/react/media/spf-video';
+import { videoFeatures } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
 
-const { Provider } = createPlayer({ features: features.video });
+const { Provider } = createPlayer({ features: videoFeatures });
 
 const buttonStyle: React.CSSProperties = {
   background: 'none',
