@@ -22,10 +22,10 @@
       "development": "./dist/dom/index.js",
       "default": "./dist/dom/index.js"
     },
-    "./dom/playback-engine": {
-      "types": "./dist/dom/playback-engine.d.ts",
-      "development": "./dist/dom/playback-engine.js",
-      "default": "./dist/dom/playback-engine.js"
+    "./playback-engine": {
+      "types": "./dist/dom/playback-engine/index.d.ts",
+      "development": "./dist/dom/playback-engine/index.js",
+      "default": "./dist/dom/playback-engine/index.js"
     }
   },
   "main": "dist/index.js",

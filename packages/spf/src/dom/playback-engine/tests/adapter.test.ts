@@ -15,7 +15,7 @@
  * Future: consider web-platform-tests (wpt) fixtures for deeper spec coverage.
  */
 import { describe, expect, it, vi } from 'vitest';
-import { SpfMedia } from '../videojs-adapter';
+import { SpfMedia } from '../adapter';
 
 describe('SpfMedia', () => {
   // ---------------------------------------------------------------------------

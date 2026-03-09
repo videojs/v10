@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createPlaybackEngine, type PlaybackEngineState } from '../playback-engine';
+import { createPlaybackEngine, type PlaybackEngineState } from '../playback-engine/engine';
 
 // Mock appendSegment to succeed without real MP4 data
 vi.mock('../media/append-segment', () => ({

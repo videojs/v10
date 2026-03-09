@@ -1,33 +1,33 @@
-import type { BandwidthState } from '../core/abr/bandwidth-estimator';
-import { createEventStream } from '../core/events/create-event-stream';
-import { calculatePresentationDuration } from '../core/features/calculate-presentation-duration';
-import { switchQuality } from '../core/features/quality-switching';
+import type { BandwidthState } from '../../core/abr/bandwidth-estimator';
+import { createEventStream } from '../../core/events/create-event-stream';
+import { calculatePresentationDuration } from '../../core/features/calculate-presentation-duration';
+import { switchQuality } from '../../core/features/quality-switching';
 import {
   type PresentationAction,
   resolvePresentation,
   syncPreloadAttribute,
-} from '../core/features/resolve-presentation';
-import { resolveTrack, type TrackResolutionAction } from '../core/features/resolve-track';
+} from '../../core/features/resolve-presentation';
+import { resolveTrack, type TrackResolutionAction } from '../../core/features/resolve-track';
 import {
   selectAudioTrack,
   selectTextTrack,
   selectVideoTrack,
   type TrackSelectionAction,
-} from '../core/features/select-tracks';
-import { createState } from '../core/state/create-state';
-import { endOfStream } from './features/end-of-stream';
-import { loadSegments } from './features/load-segments';
-import type { TextTrackBufferState } from './features/load-text-track-cues';
-import { loadTextTrackCues } from './features/load-text-track-cues';
-import { setupMediaSource } from './features/setup-mediasource';
-import { setupSourceBuffer } from './features/setup-sourcebuffer';
-import { setupTextTracks } from './features/setup-text-tracks';
-import { syncTextTrackModes } from './features/sync-text-track-modes';
-import { trackCurrentTime } from './features/track-current-time';
-import { trackPlaybackInitiated } from './features/track-playback-initiated';
-import { updateDuration } from './features/update-duration';
-import type { SourceBufferActor } from './media/source-buffer-actor';
-import { destroyVttParser } from './text/parse-vtt-segment';
+} from '../../core/features/select-tracks';
+import { createState } from '../../core/state/create-state';
+import { endOfStream } from '../features/end-of-stream';
+import { loadSegments } from '../features/load-segments';
+import type { TextTrackBufferState } from '../features/load-text-track-cues';
+import { loadTextTrackCues } from '../features/load-text-track-cues';
+import { setupMediaSource } from '../features/setup-mediasource';
+import { setupSourceBuffer } from '../features/setup-sourcebuffer';
+import { setupTextTracks } from '../features/setup-text-tracks';
+import { syncTextTrackModes } from '../features/sync-text-track-modes';
+import { trackCurrentTime } from '../features/track-current-time';
+import { trackPlaybackInitiated } from '../features/track-playback-initiated';
+import { updateDuration } from '../features/update-duration';
+import type { SourceBufferActor } from '../media/source-buffer-actor';
+import { destroyVttParser } from '../text/parse-vtt-segment';
 
 /**
  * Union of all action types used by playback engine orchestrations.

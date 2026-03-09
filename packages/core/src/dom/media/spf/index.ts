@@ -1,4 +1,4 @@
-import { SpfMedia as SpfMediaDelegate } from '@videojs/spf/dom';
+import { SpfMedia as SpfMediaDelegate } from '@videojs/spf/playback-engine';
 import { MediaDelegateMixin } from '../../../core/media/delegate';
 import { MediaProxyMixin } from '../../../core/media/proxy';
 import { CustomMediaMixin } from '../custom-media-element';

@@ -7,7 +7,7 @@
 //   autoplay=true        Start with autoplay enabled
 //   preload=auto|metadata|none  Initial preload mode
 
-import { createPlaybackEngine } from '@videojs/spf/dom/playback-engine';
+import { createPlaybackEngine } from '@videojs/spf/playback-engine';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const video = document.getElementById('video') as HTMLVideoElement;

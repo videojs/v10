@@ -1,5 +1,5 @@
-import type { PlaybackEngineConfig } from '../playback-engine';
-import { createPlaybackEngine, type PlaybackEngine } from '../playback-engine';
+import type { PlaybackEngineConfig } from './engine';
+import { createPlaybackEngine, type PlaybackEngine } from './engine';
 
 /**
  * HTMLMediaElement-compatible adapter for the SPF playback engine.
