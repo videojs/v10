@@ -6,5 +6,5 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx"
   },
-  "include": ["src", "scripts", "templates", "types"]
+  "include": ["src", "templates", "scripts", "types"]
 }
