@@ -1,10 +1,10 @@
-# SPF Implementation Status - February 13, 2026
+# SPF Implementation Status - February 22, 2026
 
 ## Executive Summary
 
-The SPF (Small Playback Framework) package has made significant progress with **foundation infrastructure and core features** implemented. The codebase demonstrates a reactive architecture using state management, event streams, and orchestration patterns. However, **segment loading, ABR switching, and Video.js integration** remain unimplemented.
+The SPF (Small Playback Framework) package has made significant progress. The Video.js adapter (O8) is now implemented — SPF is fully integrated with Video.js v10 via `SpfMedia`, `<spf-video>` web component, and `SpfVideo` React component. Segment loading, ABR switching, and additional orchestration features remain in progress.
 
-**Overall Completion:** ~40% of planned issues completed or partially completed
+**Overall Completion:** ~55% of planned issues completed or partially completed
 
 ---
 
@@ -507,7 +507,7 @@ packages/spf/src/
 - **O4 - Task Deduplication:** ⚠️ Manual `resolving` flags in features, not abstracted
 - **O5 - Preload Orchestrator:** ⚠️ Logic exists in resolve-presentation.ts but not separate orchestrator
 - **O6 - Media Event Orchestrator:** ❌ No event listener coordination
-- **O8 - Video.js Adapter:** ❌ NOT STARTED - critical blocker
+- **O8 - Video.js Adapter:** ✅ COMPLETE — `SpfMedia` adapter, `SpfMediaMixin`/`SpfMedia` in core, `<spf-video>` web component, `SpfVideo` React component, spf-html + spf-react sandboxes
 - **O9 - Resource Cleanup Manager:** ⚠️ Cleanup functions returned but no Disposer pattern
 - **O11 - Structured Logging System:** ❌ No logging infrastructure
 - **O12 - Performance Metrics Collector:** ❌ No metrics tracking
@@ -589,7 +589,7 @@ packages/spf/src/
 | O5 - Preload Orchestrator | ⚠️ Integrated | resolve-presentation.ts |
 | O6 - Media Event Orchestrator | ❌ Not implemented | - |
 | O7 - Event Bus | ⚠️ Different | create-event-stream.ts |
-| O8 - Video.js Adapter | ❌ Not implemented | - |
+| O8 - Video.js Adapter | ✅ Complete | SpfMedia (spf), SpfMediaMixin (core), spf-video (html), SpfVideo (react) |
 | O9 - Resource Cleanup | ⚠️ Partial | (cleanup functions) |
 | O10 - Module Structure | ✅ Complete | (directory structure) |
 | O11 - Logging System | ❌ Not implemented | - |
@@ -777,8 +777,8 @@ These are needed for a production-ready player:
 
 **Critical Gap:** The missing segment loading pipeline (F4, P11) is the primary blocker preventing actual video playback. Once this is implemented, the other features (buffer management, seeking, ABR) can be layered on top.
 
-**Video.js Integration:** The lack of O8 (Video.js Adapter) means SPF cannot be used with Video.js yet, which is a requirement for the V1 demo.
+**Video.js Integration:** O8 is complete — SPF is now usable with Video.js v10 via `<spf-video>` (HTML) and `SpfVideo` (React). Sandbox demos confirm end-to-end playback with VJS controls.
 
-**Estimated Work Remaining:** ~60% of features need implementation, with F4/P11 being the highest priority followed by O6/O8.
+**Estimated Work Remaining:** ~45% of features need implementation. F4/P11 (segment pipeline) and remaining wave-3 items are the current priority.
 
 **Timeline Risk:** Original target was Feb 27. Given the remaining work, that deadline is at risk unless focused effort is applied to the critical path items.

@@ -315,6 +315,139 @@ http://example.com/subtitle1.webvtt
   });
 });
 
+describe('resolveTrack — concurrent resolution', () => {
+  it('resolves both tracks concurrently when selectedTrackId changes mid-resolution', async () => {
+    // Verifies the concurrent Map-based model: when the selected track changes
+    // while a prior resolution is in flight, both tracks resolve independently
+    // without aborting each other. Each track ID is fetched at most once.
+    const trackA: PartiallyResolvedVideoTrack = {
+      type: 'video',
+      id: 'track-a',
+      url: 'http://example.com/track-a.m3u8',
+      bandwidth: 4_000_000,
+      mimeType: 'video/mp4',
+      codecs: [],
+    };
+    const trackB: PartiallyResolvedVideoTrack = {
+      type: 'video',
+      id: 'track-b',
+      url: 'http://example.com/track-b.m3u8',
+      bandwidth: 600_000,
+      mimeType: 'video/mp4',
+      codecs: [],
+    };
+
+    const presentation: Presentation = {
+      id: 'pres-1',
+      url: 'http://example.com/playlist.m3u8',
+      selectionSets: [
+        {
+          id: 'video-set',
+          type: 'video',
+          switchingSets: [{ id: 'sw-1', type: 'video', tracks: [trackA, trackB] }],
+        },
+      ],
+      startTime: 0,
+    };
+
+    const state = createState<TrackResolutionState>({
+      presentation,
+      selectedVideoTrackId: 'track-a',
+    });
+    const events = createEventStream<TrackResolutionAction>();
+
+    const makePlaylist = (segUrl: string) => `#EXTM3U
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+${segUrl}
+#EXT-X-ENDLIST`;
+
+    // Both fetches resolve immediately — concurrent resolution, no abort.
+    global.fetch = vi.fn().mockImplementation((requestOrUrl: Request | string) => {
+      const url = requestOrUrl instanceof Request ? requestOrUrl.url : requestOrUrl;
+      if (url.includes('track-a')) return Promise.resolve(new Response(makePlaylist('http://example.com/a-seg1.m4s')));
+      return Promise.resolve(new Response(makePlaylist('http://example.com/b-seg1.m4s')));
+    });
+
+    const cleanup = resolveTrack({ state, events }, { type: 'video' as const });
+    events.dispatch({ type: 'pause' });
+
+    // While track-a resolution is in flight, switch to track-b.
+    state.patch({ selectedVideoTrackId: 'track-b' });
+
+    // Both tracks should be resolved (concurrently, neither aborts the other).
+    await vi.waitFor(() => {
+      const pres = state.current.presentation!;
+      expect(isResolvedTrack(findTrackById(pres, 'track-a')!)).toBe(true);
+      expect(isResolvedTrack(findTrackById(pres, 'track-b')!)).toBe(true);
+    });
+
+    // Each track URL should have been fetched exactly once.
+    const fetchedUrls = vi.mocked(global.fetch).mock.calls.map((call) => {
+      const arg = call[0];
+      return arg instanceof Request ? arg.url : String(arg);
+    });
+    expect(fetchedUrls.filter((u) => u.includes('track-a'))).toHaveLength(1);
+    expect(fetchedUrls.filter((u) => u.includes('track-b'))).toHaveLength(1);
+
+    cleanup();
+  });
+
+  it('does not fetch the same track twice when state changes rapidly', async () => {
+    const trackA: PartiallyResolvedVideoTrack = {
+      type: 'video',
+      id: 'track-a',
+      url: 'http://example.com/track-a.m3u8',
+      bandwidth: 2_000_000,
+      mimeType: 'video/mp4',
+      codecs: [],
+    };
+
+    const presentation: Presentation = {
+      id: 'pres-1',
+      url: 'http://example.com/playlist.m3u8',
+      selectionSets: [
+        {
+          id: 'video-set',
+          type: 'video',
+          switchingSets: [{ id: 'sw-1', type: 'video', tracks: [trackA] }],
+        },
+      ],
+      startTime: 0,
+    };
+
+    const state = createState<TrackResolutionState>({
+      presentation,
+      selectedVideoTrackId: 'track-a',
+    });
+    const events = createEventStream<TrackResolutionAction>();
+
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(`#EXTM3U
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+http://example.com/a-seg1.m4s
+#EXT-X-ENDLIST`)
+    );
+
+    const cleanup = resolveTrack({ state, events }, { type: 'video' as const });
+    events.dispatch({ type: 'pause' });
+
+    // Trigger multiple state changes while track-a is resolving.
+    state.patch({ selectedVideoTrackId: 'track-a' });
+    state.patch({ selectedVideoTrackId: 'track-a' });
+
+    await vi.waitFor(() => {
+      expect(isResolvedTrack(findTrackById(state.current.presentation!, 'track-a')!)).toBe(true);
+    });
+
+    // Should only have been fetched once despite multiple state triggers.
+    expect(vi.mocked(global.fetch)).toHaveBeenCalledTimes(1);
+
+    cleanup();
+  });
+});
+
 // Helper to find track by ID in presentation
 function findTrackById(presentation: Presentation, trackId: string): PartiallyResolvedVideoTrack | any | undefined {
   for (const selectionSet of presentation.selectionSets) {

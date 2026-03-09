@@ -1,11 +1,62 @@
-import { combineLatest } from '../../core/reactive/combine-latest';
-import type { WritableState } from '../../core/state/create-state';
-import type { Presentation, Segment } from '../../core/types';
+import { combineLatest } from '../../all';
+import { type BandwidthState, sampleBandwidth } from '../../core/abr/bandwidth-estimator';
+import { DEFAULT_FORWARD_BUFFER_CONFIG } from '../../core/buffer/forward-buffer';
+import { createState, type WritableState } from '../../core/state/create-state';
+import type { AddressableObject, Presentation, ResolvedTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
-import { BufferKeyByType, getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
-import { appendSegment } from '../media/append-segment';
-import { fetchResolvable } from '../network/fetch';
+import { getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
+import type { SourceBufferActor } from '../media/source-buffer-actor';
+import { fetchResolvableBytes } from '../network/fetch';
+import {
+  type BufferState,
+  createSegmentLoaderActor,
+  type SegmentLoaderActor,
+  type SourceBufferState,
+} from './segment-loader-actor';
 import type { MediaTrackType } from './setup-sourcebuffer';
+
+// Re-export buffer state types for consumers that import them from this module.
+export type { BufferState, SourceBufferState };
+
+// Map track type to SourceBufferActor owner property key.
+const ActorKeyByType = {
+  video: 'videoBufferActor',
+  audio: 'audioBufferActor',
+} as const;
+
+// ============================================================================
+// TRACKED FETCH
+// ============================================================================
+
+/**
+ * Creates a fetch function that transparently samples bandwidth after each
+ * completed request. Callers receive bytes; throughput tracking is invisible.
+ *
+ * `onSample` is an optional callback invoked after each sample is recorded,
+ * used for bridging throughput state outward (e.g. migration bridge to global
+ * state). A callback is used rather than a subscription so that no immediate
+ * fire occurs at setup time — subscriptions fire on registration and would
+ * trigger spurious state changes before any work has started.
+ */
+function createTrackedFetch(
+  throughput: WritableState<BandwidthState>,
+  onSample?: (next: BandwidthState) => void
+): (addressable: AddressableObject, options?: RequestInit) => Promise<ArrayBuffer> {
+  return async (addressable, options) => {
+    const start = performance.now();
+    const data = await fetchResolvableBytes(addressable, options);
+    const elapsed = performance.now() - start;
+    const next = sampleBandwidth(throughput.current, elapsed, data.byteLength);
+    throughput.patch(next);
+    throughput.flush();
+    onSample?.(next);
+    return data;
+  };
+}
+
+// ============================================================================
+// STATE & OWNERS
+// ============================================================================
 
 /**
  * State shape for segment loading.
@@ -13,6 +64,11 @@ import type { MediaTrackType } from './setup-sourcebuffer';
 export interface SegmentLoadingState extends TrackSelectionState {
   presentation?: Presentation;
   preload?: string;
+  bandwidthState?: BandwidthState;
+  /** Current playback position in seconds. Defaults to 0 when undefined. */
+  currentTime?: number;
+  /** True once the user has initiated playback. Allows segment loading regardless of preload setting. */
+  playbackInitiated?: boolean;
 }
 
 /**
@@ -21,108 +77,131 @@ export interface SegmentLoadingState extends TrackSelectionState {
 export interface SegmentLoadingOwners {
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
+  videoBufferActor?: SourceBufferActor;
+  audioBufferActor?: SourceBufferActor;
 }
 
-/**
- * Select which segments to load for the current track.
- *
- * Currently returns all segments (full track loading).
- *
- * Future enhancements:
- * - Filter based on playhead position and buffer ranges
- * - Skip already-loaded segments
- * - Handle live stream segment updates
- * - Apply timing offsets for discontinuities
- *
- * @param state - Current playback state (track selection, presentation)
- * @param type - Track type (video or audio)
- * @returns Array of segments to load, or empty array if track not ready
- */
-function selectSegmentsToLoad(state: SegmentLoadingState, type: MediaTrackType): Segment[] {
-  const track = getSelectedTrack(state, type);
-
-  if (!track || !isResolvedTrack(track)) {
-    return [];
-  }
-
-  // For now: load all segments
-  // TODO: Add buffering logic based on playhead position and buffer ranges
-  return track.segments;
-}
+// ============================================================================
+// STATE SELECTOR
+// ============================================================================
 
 /**
- * Check if we can load segments.
- *
- * Requires:
- * - Selected track ID exists
- * - SourceBuffer exists for track type
+ * The subset of state that drives segment loading decisions.
+ * A plain "pick" with one derived field (resolved track ID).
  */
-export function canLoadSegments(
-  state: SegmentLoadingState,
-  owners: SegmentLoadingOwners,
+type LoadingInputs = {
+  playbackInitiated: boolean | undefined;
+  preload: string | undefined;
+  currentTime: number | undefined;
+  /** @TODO cleanup type precision via inference+generics */
+  track: ReturnType<typeof getSelectedTrack>;
+  segmentsCanLoad: boolean;
+};
+
+function selectLoadingInputs(
+  [segmentsCanLoad, state]: [boolean, SegmentLoadingState],
   type: MediaTrackType
-): boolean {
+): LoadingInputs {
+  const { playbackInitiated, preload, currentTime } = state;
   const track = getSelectedTrack(state, type);
-  if (!track) return false;
-
-  const bufferKey = BufferKeyByType[type];
-  const sourceBuffer = owners[bufferKey];
-  return !!sourceBuffer;
+  return {
+    playbackInitiated,
+    preload,
+    currentTime,
+    track,
+    segmentsCanLoad,
+  };
 }
 
 /**
- * Check if we should load segments.
+ * Equality function encoding the condition hierarchy for relevant changes.
  *
- * Only load if:
- * - preload is 'auto' (metadata only loads track info, not segments)
- * - Track is resolved (has segments)
- * - Track has at least one segment
- * - SourceBuffer is not already buffered (simple check for POC)
+ * Pre-play (!playbackInitiated):
+ *   Only preload changes matter. currentTime and resolvedTrackId are ignored
+ *   (track changes not supported pre-play; currentTime value is used at
+ *   trigger time but changes don't re-trigger).
+ *
+ * playbackInitiated transition:
+ *   Always fires (handled in the subscriber; preload='auto' suppression
+ *   applied there since equality functions have no memory of prior values).
+ *
+ * Post-play (playbackInitiated):
+ *   resolvedTrackId changes (track switch or previously-unresolved track
+ *   resolving) and currentTime changes both trigger. preload is irrelevant.
  */
-export function shouldLoadSegments(
-  state: SegmentLoadingState,
-  owners: SegmentLoadingOwners,
-  type: MediaTrackType
-): boolean {
-  if (!canLoadSegments(state, owners, type)) {
-    return false;
-  }
-
-  // Only load segments with preload: 'auto'
-  // preload: 'metadata' should only resolve tracks, not load segments
-  if (state.preload !== 'auto') {
-    return false;
-  }
-
-  const track = getSelectedTrack(state, type);
-  if (!track || !isResolvedTrack(track) || track.segments.length === 0) {
-    return false;
-  }
-
-  // For POC: simple check - if SourceBuffer has any buffered data, skip
-  // TODO: More sophisticated buffering logic (check ranges, append new segments only)
-  const bufferKey = BufferKeyByType[type];
-  const sourceBuffer = owners[bufferKey];
-  if (sourceBuffer && sourceBuffer.buffered.length > 0) {
-    return false;
-  }
-
-  return true;
-}
+const segmentStartFor = (currentTime: number | undefined, track: ResolvedTrack | undefined) => {
+  if (currentTime == null) return undefined;
+  return track?.segments.find(
+    ({ startTime, duration }, i, segments) =>
+      currentTime >= startTime && (currentTime < startTime + duration || i === segments.length - 1)
+  )?.startTime;
+};
 
 /**
- * Load segments orchestration (F4 + P11 POC).
+ * Returns true when the inputs are equal (no meaningful change — don't fire).
+ * Returns false when the inputs differ in a way that requires a new message.
  *
- * Triggers when:
- * - Track is selected and resolved (video or audio)
- * - SourceBuffer exists for track type
- * - No segments loaded yet
+ * This IS the shouldLoadSegments logic, expressed as an equality function.
+ */
+function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boolean {
+  if (!curState.segmentsCanLoad) return true;
+  // Haven't started playback. Only care about preload changes.
+  if (!curState.playbackInitiated) {
+    if (curState.preload === 'none') return true; // blocked — equal, don't fire
+    return curState.preload === prevState.preload; // equal if preload unchanged
+  }
+  // Transition: !playbackInitiated → playbackInitiated
+  if (!prevState.playbackInitiated && curState.playbackInitiated) {
+    if (prevState.preload !== 'auto') return false; // fire — message shape changes
+    // preload was 'auto': fall through to segment comparison (suppress if same position)
+  }
+
+  // Don't treat as a change if we don't (yet) have a currently resolved track.
+  if (!curState.track || !isResolvedTrack(curState.track)) return true;
+
+  // If we *do* have a currently resolved track, treat as a change if the track ids have changed
+  if (prevState.track?.id !== curState.track.id && isResolvedTrack(curState.track)) return false;
+
+  // Finally, if playback has initiated *and* we have a resolved track, check if currentTime
+  // has changed "significantly" (based on segment time range boundaries) and treat as a change
+  // if so (regardless of whether or not the track has changed)
+  return (
+    segmentStartFor(prevState.currentTime, curState.track as ResolvedTrack) ===
+    segmentStartFor(curState.currentTime, curState.track as ResolvedTrack)
+  );
+}
+
+// ============================================================================
+// REACTOR
+// ============================================================================
+
+/**
+ * Load segments orchestration — Reactor layer.
  *
- * Fetches and appends segments sequentially:
- * 1. Initialization segment (required for fmp4)
- * 2. Media segments
+ * Sends typed load messages to a SegmentLoaderActor when relevant conditions
+ * change. Uses targeted subscriptions rather than broad combineLatest so only
+ * meaningful state changes trigger evaluation.
  *
- * Continues on segment errors to provide partial playback.
+ * Condition hierarchy (see SegmentLoadingKey for detail):
+ *
+ *   !playbackInitiated
+ *     preload==='none' (or unset)  → dormant; no trigger
+ *     preload==='metadata'         → trigger on transition to 'metadata'
+ *     preload==='auto'             → trigger on transition to 'auto'
+ *
+ *   !playbackInitiated → playbackInitiated
+ *     preload !== 'auto'           → trigger (message shape changes)
+ *     preload === 'auto'           → suppressed (was already full-range mode;
+ *                                    let segmentStart take over post-play)
+ *                                    KNOWN LIMITATION: seek-before-play with
+ *                                    preload='auto' is not supported — if the
+ *                                    user seeks before pressing play, the
+ *                                    first re-send is delayed until the next
+ *                                    segment boundary crossing post-play.
+ *
+ *   playbackInitiated
+ *     resolvedTrackId changes      → trigger
+ *     segmentStart(currentTime) changes → trigger (segment boundary only)
  *
  * @example
  * const cleanup = loadSegments({ state, owners }, { type: 'video' });
@@ -138,60 +217,97 @@ export function loadSegments(
   config: { type: MediaTrackType }
 ): () => void {
   const { type } = config;
-  let isLoading = false;
+  const actorKey = ActorKeyByType[type];
 
-  const unsubscribe = combineLatest([state, owners]).subscribe(
-    async ([s, o]: [SegmentLoadingState, SegmentLoadingOwners]) => {
-      if (!shouldLoadSegments(s, o, type) || isLoading) return;
-
-      const bufferKey = BufferKeyByType[type];
-      const sourceBuffer = o[bufferKey];
-      if (!sourceBuffer) return;
-
-      // Determine which segments to load
-      const segmentsToLoad = selectSegmentsToLoad(s, type);
-
-      if (segmentsToLoad.length === 0) return;
-
-      const track = getSelectedTrack(s, type);
-      if (!track || !isResolvedTrack(track)) return;
-
-      // Create task for initialization segment (must load first!)
-      const initTask = async () => {
-        const response = await fetchResolvable(track.initialization);
-        const initData = await response.arrayBuffer();
-        await appendSegment(sourceBuffer, initData);
-      };
-
-      // Create tasks for media segments
-      const mediaTasks = segmentsToLoad.map((segment) => async () => {
-        const response = await fetchResolvable(segment);
-        const segmentData = await response.arrayBuffer();
-        await appendSegment(sourceBuffer, segmentData);
-      });
-
-      // Combine: init segment first, then media segments
-      const tasks = [initTask, ...mediaTasks];
-
-      // Execute tasks serially
-      isLoading = true;
-      try {
-        for (const task of tasks) {
-          try {
-            await task();
-          } catch (error) {
-            // Log error but continue - partial video better than none
-            console.error('Failed to load segment:', error);
-          }
-        }
-      } finally {
-        // Wait a frame before clearing flag to allow async state updates to flush
-        // This prevents race conditions where multiple triggers fire before the flag is checked
-        await new Promise((resolve) => requestAnimationFrame(resolve));
-        isLoading = false;
-      }
+  // Local throughput state — owns BandwidthState for this track's fetch loop.
+  // Sampling is handled transparently inside fetchBytes; callers never touch it.
+  //
+  // MIGRATION BRIDGE: the onSample callback below keeps global state.bandwidthState
+  // in sync so ABR (selectVideoTrack) continues to work unchanged. Remove this
+  // bridge once ABR reads from throughput directly.
+  const initialBandwidth = state.current.bandwidthState;
+  const throughput = createState<BandwidthState>(
+    initialBandwidth ?? {
+      fastEstimate: 0,
+      fastTotalWeight: 0,
+      slowEstimate: 0,
+      slowTotalWeight: 0,
+      bytesSampled: 0,
     }
   );
 
-  return unsubscribe;
+  const fetchBytes =
+    type === 'video'
+      ? createTrackedFetch(
+          throughput,
+          initialBandwidth !== undefined
+            ? (next) => {
+                state.patch({ bandwidthState: next });
+                // Flush immediately so switchQuality sees the new estimate before the
+                // next segment fetch starts, rather than waiting for the microtask queue.
+                state.flush();
+              }
+            : undefined
+        )
+      : fetchResolvableBytes;
+
+  const segmentLoader = createState<SegmentLoaderActor | undefined>(undefined);
+
+  // SegmentLoaderActor lifecycle — watch only the actor key in owners so this
+  // subscription does not fire on unrelated owners changes.
+  const unsubActorLifecycle = owners.subscribe(
+    (o) => o[actorKey],
+    (actor) => {
+      if (actor) {
+        segmentLoader.patch(createSegmentLoaderActor(actor, fetchBytes));
+      } else if (!actor && segmentLoader.current) {
+        segmentLoader.current.destroy();
+        segmentLoader.patch(undefined);
+      }
+      return () => {
+        segmentLoader.current?.destroy();
+        segmentLoader.patch(undefined);
+      };
+    }
+  );
+
+  const segmentsCanLoad = createState<boolean>(false);
+  const unsubscribeCanLoadSegments = combineLatest([state, segmentLoader]).subscribe(
+    ([currentState, currentSegmentLoader]) => {
+      const track = getSelectedTrack(currentState, type);
+      const trackResolved = !!track && isResolvedTrack(track);
+      const segmentLoaderActorExists = !!currentSegmentLoader;
+      segmentsCanLoad.patch(trackResolved && segmentLoaderActorExists);
+    }
+  );
+
+  const unsubscribeShouldLoadSegments = combineLatest([segmentsCanLoad, state]).subscribe(
+    ([segmentsCanLoad, state]) => selectLoadingInputs([segmentsCanLoad, state], type),
+    ({ preload, playbackInitiated, currentTime, track }) => {
+      const fullMode = preload === 'auto' || !!playbackInitiated;
+
+      if (!fullMode) {
+        // Metadata mode: init only, no range.
+        /** @ts-expect-error */
+        segmentLoader.current?.send({ type: 'load', track });
+      } else {
+        segmentLoader.current?.send({
+          type: 'load',
+          /** @ts-expect-error */
+          track,
+          range: {
+            start: currentTime as number,
+            end: (currentTime as number) + DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration,
+          },
+        });
+      }
+    },
+    { equalityFn: loadingInputsEq }
+  );
+
+  return () => {
+    unsubscribeCanLoadSegments();
+    unsubscribeShouldLoadSegments();
+    unsubActorLifecycle();
+  };
 }

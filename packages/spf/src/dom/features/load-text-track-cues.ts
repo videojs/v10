@@ -1,8 +1,114 @@
+import { getSegmentsToLoad } from '../../core/buffer/forward-buffer';
 import { combineLatest } from '../../core/reactive/combine-latest';
 import type { WritableState } from '../../core/state/create-state';
 import type { Presentation, Segment, TextTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { parseVttSegment } from '../text/parse-vtt-segment';
+
+function isDuplicateCue(cue: VTTCue, textTrack: globalThis.TextTrack): boolean {
+  const { cues } = textTrack;
+  if (!cues) return false;
+  for (let i = 0; i < cues.length; i++) {
+    const existing = cues[i] as VTTCue;
+    if (existing.startTime === cue.startTime && existing.endTime === cue.endTime && existing.text === cue.text) {
+      return true;
+    }
+  }
+  return false;
+}
+
+const loadVttSegmentTask = async (
+  { segment }: { segment: Segment },
+  context: { textTrack: globalThis.TextTrack }
+): Promise<void> => {
+  const cues = await parseVttSegment(segment.url);
+  for (const cue of cues) {
+    if (!isDuplicateCue(cue, context.textTrack)) {
+      context.textTrack.addCue(cue);
+    }
+  }
+};
+
+// ============================================================================
+// MAIN TASK (composite - orchestrates subtasks)
+// ============================================================================
+
+/**
+ * Load text track cues task (composite - orchestrates VTT segment subtasks).
+ */
+const loadTextTrackCuesTask = async (
+  { currentState }: { currentState: TextTrackCueLoadingState },
+  context: {
+    signal: AbortSignal;
+    textTrack: globalThis.TextTrack;
+    state: WritableState<TextTrackCueLoadingState>;
+  }
+): Promise<void> => {
+  const track = findSelectedTextTrack(currentState);
+  if (!track || !isResolvedTrack(track)) return;
+
+  const { segments } = track;
+  if (segments.length === 0) return;
+
+  const trackId = track.id;
+
+  // Resolve segments already recorded in the state model for this track.
+  // Keyed by track ID so multiple text tracks don't interfere with each other.
+  const loadedIds = new Set((currentState.textBufferState?.[trackId]?.segments ?? []).map((s) => s.id));
+  const alreadyLoaded = segments.filter((s) => loadedIds.has(s.id));
+
+  // Apply the same forward buffer window as audio/video segment loading.
+  const currentTime = currentState.currentTime ?? 0;
+  const segmentsToLoad = getSegmentsToLoad(segments, alreadyLoaded, currentTime).filter((s) => !loadedIds.has(s.id));
+
+  if (segmentsToLoad.length === 0) return;
+
+  // Execute subtasks sequentially, recording each loaded segment in state.
+  for (const segment of segmentsToLoad) {
+    if (context.signal.aborted) break;
+
+    try {
+      await loadVttSegmentTask({ segment }, { textTrack: context.textTrack });
+
+      // Record the loaded segment in shared state — mirrors bufferState for
+      // audio/video and supports N text tracks keyed by track ID.
+      const latest = context.state.current.textBufferState ?? {};
+      const trackState = latest[trackId] ?? { segments: [] };
+      context.state.patch({
+        textBufferState: {
+          ...latest,
+          [trackId]: { segments: [...trackState.segments, { id: segment.id }] },
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') break;
+      console.error('Failed to load VTT segment:', error);
+      // Continue to next segment (graceful degradation)
+    }
+  }
+
+  // Wait a frame before completing to allow state updates to flush
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+};
+
+// ============================================================================
+// STATE & OWNERS
+// ============================================================================
+
+/**
+ * Loaded-segment record for a single text track.
+ */
+export interface TextTrackSegmentState {
+  segments: Array<{ id: string }>;
+}
+
+/**
+ * Buffer model for text track cues — keyed by track ID.
+ *
+ * Using a per-track-ID map (rather than fixed 'video'/'audio' keys) because
+ * there can be N text tracks — one per language/subtitle variant.
+ */
+export type TextTrackBufferState = Record<string, TextTrackSegmentState>;
 
 /**
  * State shape for text track cue loading.
@@ -10,6 +116,10 @@ import { parseVttSegment } from '../text/parse-vtt-segment';
 export interface TextTrackCueLoadingState {
   selectedTextTrackId?: string;
   presentation?: Presentation;
+  /** Current playback position — used to gate VTT segment fetching to the forward buffer window. */
+  currentTime?: number;
+  /** Loaded-segment model for text tracks, keyed by track ID. */
+  textBufferState?: TextTrackBufferState;
 }
 
 /**
@@ -35,32 +145,6 @@ function findSelectedTextTrack(state: TextTrackCueLoadingState): TextTrack | und
   const track = textSet.switchingSets[0].tracks.find((t) => t.id === state.selectedTextTrackId);
 
   return track as TextTrack | undefined;
-}
-
-/**
- * Select which VTT segments to load for the current text track.
- *
- * Currently returns all segments (full track loading).
- *
- * Future enhancements:
- * - Filter based on playhead position and buffer window
- * - Skip already-loaded segments (avoid re-downloading)
- * - Handle live stream segment updates
- * - Apply timing offsets for discontinuities
- *
- * @param state - Current playback state (track selection, presentation)
- * @returns Array of segments to load, or empty array if track not ready
- */
-function selectSegmentsToLoad(state: TextTrackCueLoadingState): Segment[] {
-  const track = findSelectedTextTrack(state);
-
-  if (!track || !isResolvedTrack(track)) {
-    return [];
-  }
-
-  // For now: load all segments
-  // TODO: Add buffering logic based on playhead position and buffer ranges
-  return track.segments;
 }
 
 /**
@@ -107,7 +191,7 @@ export function canLoadTextTrackCues(state: TextTrackCueLoadingState, owners: Te
  * Only load if:
  * - Track is resolved (has segments)
  * - Track has at least one segment
- * - Track element has no cues yet
+ * - Track element exists
  */
 export function shouldLoadTextTrackCues(state: TextTrackCueLoadingState, owners: TextTrackCueLoadingOwners): boolean {
   if (!canLoadTextTrackCues(state, owners)) {
@@ -124,11 +208,6 @@ export function shouldLoadTextTrackCues(state: TextTrackCueLoadingState, owners:
     return false;
   }
 
-  // Already has cues? Skip (null means not loaded yet, length 0 means loaded but empty)
-  if (textTrack.cues !== null && textTrack.cues.length > 0) {
-    return false;
-  }
-
   return true;
 }
 
@@ -139,10 +218,10 @@ export function shouldLoadTextTrackCues(state: TextTrackCueLoadingState, owners:
  * - Text track is selected
  * - Track is resolved (has segments)
  * - Track element exists
- * - Track has no cues yet
  *
- * Fetches and parses VTT segments, then adds cues to the track incrementally.
- * Continues on segment errors to provide partial subtitles.
+ * Fetches and parses VTT segments within the forward buffer window, then adds
+ * cues to the track incrementally. Continues on segment errors to provide
+ * partial subtitles.
  *
  * @example
  * const cleanup = loadTextTrackCues({ state, owners });
@@ -154,46 +233,37 @@ export function loadTextTrackCues({
   state: WritableState<TextTrackCueLoadingState>;
   owners: WritableState<TextTrackCueLoadingOwners>;
 }): () => void {
-  let isLoading = false;
+  let currentTask: Promise<void> | null = null;
+  let abortController: AbortController | null = null;
+  let lastTrackId: string | undefined;
 
-  const unsubscribe = combineLatest([state, owners]).subscribe(
-    async ([s, o]: [TextTrackCueLoadingState, TextTrackCueLoadingOwners]) => {
-      if (!shouldLoadTextTrackCues(s, o) || isLoading) return;
+  const cleanup = combineLatest([state, owners]).subscribe(
+    async ([currentState, currentOwners]: [TextTrackCueLoadingState, TextTrackCueLoadingOwners]) => {
+      // Abort any in-progress task when the selected track changes.
+      // The new track's textBufferState entry will be empty, so the task
+      // naturally starts fresh without needing any explicit reset.
+      if (currentState.selectedTextTrackId !== lastTrackId) {
+        lastTrackId = currentState.selectedTextTrackId;
+        abortController?.abort();
+        currentTask = null;
+      }
 
-      const textTrack = getSelectedTextTrackFromOwners(s, o);
+      if (currentTask) return; // Task already in progress
+      if (!shouldLoadTextTrackCues(currentState, currentOwners)) return;
+
+      const textTrack = getSelectedTextTrackFromOwners(currentState, currentOwners);
       if (!textTrack) return;
 
-      // Determine which segments to load
-      const segmentsToLoad = selectSegmentsToLoad(s);
-
-      if (segmentsToLoad.length === 0) return;
-
-      // Map segments to async task functions
-      const tasks = segmentsToLoad.map((segment) => async () => {
-        const cues = await parseVttSegment(segment.url);
-        for (const cue of cues) {
-          textTrack.addCue(cue);
-        }
+      // Create abort controller and invoke task
+      abortController = new AbortController();
+      currentTask = loadTextTrackCuesTask(
+        { currentState },
+        { signal: abortController.signal, textTrack, state }
+      ).finally(() => {
+        currentTask = null;
       });
-
-      // Execute tasks serially
-      isLoading = true;
-      try {
-        for (const task of tasks) {
-          try {
-            await task();
-          } catch (error) {
-            // Log error but continue - partial subtitles better than none
-            console.error(`Failed to load VTT segment:`, error);
-          }
-        }
-      } finally {
-        // Wait a frame before clearing flag to allow async state updates to flush
-        await new Promise((resolve) => requestAnimationFrame(resolve));
-        isLoading = false;
-      }
     }
   );
 
-  return unsubscribe;
+  return cleanup;
 }

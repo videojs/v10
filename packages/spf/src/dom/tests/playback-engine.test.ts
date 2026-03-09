@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createPlaybackEngine, type PlaybackEngineState } from '../playback-engine';
+import { createPlaybackEngine, type PlaybackEngineState } from '../playback-engine/engine';
+
+// Mock appendSegment to succeed without real MP4 data
+vi.mock('../media/append-segment', () => ({
+  appendSegment: vi.fn().mockResolvedValue(undefined),
+}));
 
 describe('createPlaybackEngine', () => {
   let originalFetch: typeof globalThis.fetch;
@@ -28,7 +33,15 @@ describe('createPlaybackEngine', () => {
   it('initializes with empty state and owners', () => {
     const engine = createPlaybackEngine();
 
-    expect(engine.state.current).toEqual({});
+    expect(engine.state.current).toEqual({
+      bandwidthState: {
+        fastEstimate: 0,
+        fastTotalWeight: 0,
+        slowEstimate: 0,
+        slowTotalWeight: 0,
+        bytesSampled: 0,
+      },
+    });
     expect(engine.owners.current).toEqual({});
 
     engine.destroy();
@@ -38,6 +51,7 @@ describe('createPlaybackEngine', () => {
     const engine = createPlaybackEngine();
 
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
     engine.owners.patch({ mediaElement });
     engine.state.patch({
       presentation: { url: 'https://example.com/playlist.m3u8' },
@@ -186,6 +200,7 @@ http://example.com/audio-seg1.m4s
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     // Initialize: patch owners and state
     engine.owners.patch({ mediaElement });
@@ -279,6 +294,7 @@ http://example.com/video-seg1.m4s
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -342,6 +358,7 @@ http://example.com/audio-seg1.m4s
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -405,6 +422,7 @@ http://example.com/video-seg1.m4s
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -540,11 +558,11 @@ http://example.com/audio-seg1.m4s
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'none';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
       presentation: { url: 'http://example.com/playlist.m3u8' },
-      preload: 'none',
     });
 
     // PHASE 1: Verify nothing auto-resolves
@@ -555,8 +573,8 @@ http://example.com/audio-seg1.m4s
     expect(state.presentation?.selectionSets).toBeUndefined();
     expect(mockFetch).not.toHaveBeenCalled();
 
-    // PHASE 2: Dispatch play event to trigger orchestrations
-    engine.events.dispatch({ type: 'play' });
+    // PHASE 2: Simulate play (via media element — sets playbackInitiated + dispatches to event stream)
+    mediaElement.dispatchEvent(new Event('play'));
 
     // Wait for complete orchestration
     await vi.waitFor(
@@ -608,12 +626,17 @@ http://example.com/seg1.m4s
         );
       }
 
+      if (url.includes('init.mp4')) {
+        return Promise.resolve(new Response(new ArrayBuffer(100)));
+      }
+
       return Promise.reject(new Error(`Unmocked URL: ${url}`));
     });
     globalThis.fetch = mockFetch;
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'metadata';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -625,25 +648,29 @@ http://example.com/seg1.m4s
       () => {
         const state = engine.state.current;
 
-        // Should resolve presentation
+        // Should resolve presentation and select/resolve track
         expect(state.presentation?.selectionSets).toBeDefined();
-
-        // Should select and resolve track (metadata includes segment list)
         expect(state.selectedVideoTrackId).toBeDefined();
 
         const videoTrack = state.presentation?.selectionSets
           ?.find((s: any) => s.type === 'video')
           ?.switchingSets?.[0]?.tracks?.find((t: any) => t.id === state.selectedVideoTrackId);
-        expect(videoTrack?.segments).toBeDefined(); // Track IS resolved with metadata
+        expect(videoTrack?.segments).toBeDefined();
+
+        // Init segment should be loaded (advances readyState to HAVE_METADATA)
+        expect(engine.owners.current.videoBufferActor?.snapshot.context.initTrackId).toBeDefined();
       },
       { timeout: 2000 }
     );
 
-    // Fetches both multivariant and media playlist for metadata
-    expect(mockFetch).toHaveBeenCalledTimes(2);
-
-    // Note: preload: 'metadata' defers segment LOADING, not track resolution
-    // Track metadata (segment list) is needed for duration/seekable ranges
+    // Fetches: multivariant + media playlist + init segment
+    // Media segments NOT fetched — preload="metadata" stops at init
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+    const fetchedUrls = mockFetch.mock.calls.map((c: any[]) => {
+      const input = c[0] as RequestInfo | URL;
+      return typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+    });
+    expect(fetchedUrls).not.toContain('http://example.com/seg1.m4s');
 
     engine.destroy();
   });
@@ -684,6 +711,7 @@ http://example.com/seg1.m4s
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -719,10 +747,10 @@ http://example.com/seg1.m4s
     // The resolved track should be the selected one
     expect(resolvedTracks?.[0]?.id).toBe(state.selectedVideoTrackId);
 
-    // Should fetch: 1 multivariant + 1 media playlist + init + segments
-    // (Only selected quality, not all 3 qualities)
-    // With preload: 'auto', segments are loaded immediately
-    expect(mockFetch).toHaveBeenCalledTimes(4);
+    // Should fetch: 1 multivariant + 1 media playlist + init attempt
+    // (Only selected quality, not all 3 qualities; init.mp4 is attempted but
+    // rejected by the mock — segment is not attempted since init fails first)
+    expect(mockFetch).toHaveBeenCalledTimes(3);
 
     engine.destroy();
   });
@@ -783,6 +811,7 @@ http://example.com/text-es-seg1.vtt
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -880,6 +909,7 @@ http://example.com/text-es-seg1.vtt
       enableDefaultTrack: true,
     });
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -957,6 +987,7 @@ http://example.com/text-fr-seg1.vtt
       preferredSubtitleLanguage: 'fr',
     });
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -1041,6 +1072,7 @@ http://example.com/text-es-seg1.vtt
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -1134,6 +1166,7 @@ http://example.com/video-seg1.m4s
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -1238,6 +1271,7 @@ http://example.com/text-es-seg1.vtt
 
     const engine = createPlaybackEngine();
     const mediaElement = document.createElement('video');
+    mediaElement.preload = 'auto';
 
     engine.owners.patch({ mediaElement });
     engine.state.patch({
@@ -1311,4 +1345,150 @@ http://example.com/text-es-seg1.vtt
 
     engine.destroy();
   });
+});
+
+it('tracks buffer state for video segments', async () => {
+  const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+    if (url.includes('playlist.m3u8')) {
+      return Promise.resolve(
+        new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E"
+http://example.com/video.m3u8`)
+      );
+    }
+
+    if (url.includes('video.m3u8')) {
+      return Promise.resolve(
+        new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="http://example.com/init.mp4"
+#EXTINF:10.0,
+http://example.com/seg1.m4s
+#EXTINF:10.0,
+http://example.com/seg2.m4s
+#EXT-X-ENDLIST`)
+      );
+    }
+
+    if (url.includes('init.mp4') || url.includes('.m4s')) {
+      return Promise.resolve(new Response(new ArrayBuffer(1000)));
+    }
+
+    return Promise.reject(new Error(`Unmocked URL: ${url}`));
+  });
+  globalThis.fetch = mockFetch;
+
+  const engine = createPlaybackEngine();
+  const mediaElement = document.createElement('video');
+  mediaElement.preload = 'auto';
+
+  engine.owners.patch({ mediaElement });
+  engine.state.patch({
+    presentation: { url: 'http://example.com/playlist.m3u8' },
+    preload: 'auto',
+  });
+
+  await vi.waitFor(
+    () => {
+      // Buffer state now lives in the SourceBufferActor (in owners), not in state.
+      const videoCtx = engine.owners.current.videoBufferActor?.snapshot.context;
+
+      // Should have init segment tracked (by track ID)
+      expect(videoCtx?.initTrackId).toBeDefined();
+
+      // Should have media segments tracked
+      expect(videoCtx?.segments).toBeDefined();
+      expect(videoCtx?.segments?.length).toBeGreaterThan(0);
+
+      // Each segment should have id and trackId
+      const firstSegment = videoCtx?.segments?.[0];
+      expect(firstSegment?.id).toBeDefined();
+      expect(firstSegment?.trackId).toBeDefined();
+    },
+    { timeout: 3000 }
+  );
+
+  engine.destroy();
+});
+
+it('tracks buffer state separately for video and audio', async () => {
+  const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
+    if (url.includes('playlist.m3u8')) {
+      return Promise.resolve(
+        new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,CODECS="avc1.42E01E,mp4a.40.2",AUDIO="audio"
+http://example.com/video.m3u8
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",URI="http://example.com/audio.m3u8"`)
+      );
+    }
+
+    if (url.includes('video.m3u8')) {
+      return Promise.resolve(
+        new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MAP:URI="http://example.com/init-video.mp4"
+#EXTINF:10.0,
+http://example.com/video-seg1.m4s
+#EXT-X-ENDLIST`)
+      );
+    }
+
+    if (url.includes('audio.m3u8')) {
+      return Promise.resolve(
+        new Response(`#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MAP:URI="http://example.com/init-audio.mp4"
+#EXTINF:10.0,
+http://example.com/audio-seg1.m4s
+#EXT-X-ENDLIST`)
+      );
+    }
+
+    if (url.includes('.mp4') || url.includes('.m4s')) {
+      return Promise.resolve(new Response(new ArrayBuffer(1000)));
+    }
+
+    return Promise.reject(new Error(`Unmocked URL: ${url}`));
+  });
+  globalThis.fetch = mockFetch;
+
+  const engine = createPlaybackEngine();
+  const mediaElement = document.createElement('video');
+  mediaElement.preload = 'auto';
+
+  engine.owners.patch({ mediaElement });
+  engine.state.patch({
+    presentation: { url: 'http://example.com/playlist.m3u8' },
+    preload: 'auto',
+  });
+
+  await vi.waitFor(
+    () => {
+      // Buffer state now lives in the SourceBufferActors (in owners), not in state.
+      const videoCtx = engine.owners.current.videoBufferActor?.snapshot.context;
+      const audioCtx = engine.owners.current.audioBufferActor?.snapshot.context;
+
+      // Both video and audio actors should exist
+      expect(videoCtx).toBeDefined();
+      expect(audioCtx).toBeDefined();
+
+      // Each should track init segments (by track ID)
+      expect(videoCtx?.initTrackId).toBeDefined();
+      expect(audioCtx?.initTrackId).toBeDefined();
+
+      // Each should track media segments independently
+      expect(videoCtx?.segments?.length).toBeGreaterThan(0);
+      expect(audioCtx?.segments?.length).toBeGreaterThan(0);
+    },
+    { timeout: 3000 }
+  );
+
+  engine.destroy();
 });

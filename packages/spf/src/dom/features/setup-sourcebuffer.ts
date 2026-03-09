@@ -5,12 +5,47 @@ import type { Presentation, ResolvedTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { BufferKeyByType, getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
 import { createSourceBuffer } from '../media/mediasource-setup';
+import { createSourceBufferActor, type SourceBufferActor } from '../media/source-buffer-actor';
+
+/** Map track type to SourceBufferActor owner property key. */
+const ActorKeyByType = {
+  video: 'videoBufferActor',
+  audio: 'audioBufferActor',
+} as const;
 
 /**
  * Media track type for SourceBuffer setup.
  * Text tracks are excluded as they don't use MSE SourceBuffers.
  */
 export type MediaTrackType = 'video' | 'audio';
+
+/**
+ * Setup SourceBuffer task (module-level, pure).
+ * Creates SourceBuffer for resolved track and waits a frame before completing.
+ */
+const setupSourceBufferTask = async <T extends MediaTrackType>(
+  { currentState, currentOwners }: { currentState: SourceBufferState; currentOwners: SourceBufferOwners },
+  context: { owners: WritableState<SourceBufferOwners>; config: SourceBufferConfig<T> }
+): Promise<void> => {
+  // Wait for track to be resolved with codecs before creating SourceBuffer
+  const track = getSelectedTrack(currentState, context.config.type);
+  if (!track || !isResolvedTrack(track)) return;
+  if (!track.codecs || track.codecs.length === 0) return;
+
+  const mimeCodec = buildMimeCodec(track);
+
+  // Create SourceBuffer and its actor together — single owners.patch so
+  // subscribers see both arrive at the same time with no intermediate state.
+  const buffer = createSourceBuffer(currentOwners.mediaSource!, mimeCodec);
+  const actor = createSourceBufferActor(buffer);
+
+  const bufferKey = BufferKeyByType[context.config.type];
+  const actorKey = ActorKeyByType[context.config.type];
+  context.owners.patch({ [bufferKey]: buffer, [actorKey]: actor });
+
+  // Wait a frame to allow async state updates to flush
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+};
 
 /**
  * State shape for SourceBuffer setup.
@@ -28,6 +63,8 @@ export interface SourceBufferOwners {
   mediaSource?: MediaSource;
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
+  videoBufferActor?: SourceBufferActor;
+  audioBufferActor?: SourceBufferActor;
 }
 
 /**
@@ -117,34 +154,26 @@ export function setupSourceBuffer<T extends MediaTrackType>(
   },
   config: SourceBufferConfig<T>
 ): () => void {
-  let settingUp = false;
+  let currentTask: Promise<void> | null = null;
 
-  return combineLatest([state, owners]).subscribe(async ([s, o]: [SourceBufferState, SourceBufferOwners]) => {
-    // Check orchestration conditions (track selected, MediaSource open)
-    if (settingUp) return;
-    if (!canSetupBuffer(s, o, config.type) || !shouldSetupBuffer(o, config.type)) return;
+  const cleanup = combineLatest([state, owners]).subscribe(
+    async ([currentState, currentOwners]: [SourceBufferState, SourceBufferOwners]) => {
+      // Check orchestration conditions (track selected, MediaSource open)
+      if (currentTask) return; // Task already in progress
+      if (!canSetupBuffer(currentState, currentOwners, config.type) || !shouldSetupBuffer(currentOwners, config.type))
+        return;
 
-    try {
-      settingUp = true;
+      // Invoke task (no abort needed - synchronous SourceBuffer creation + frame wait)
+      currentTask = setupSourceBufferTask({ currentState, currentOwners }, { owners, config });
 
-      // Wait for track to be resolved with codecs before creating SourceBuffer
-      const track = getSelectedTrack(s, config.type);
-      if (!track || !isResolvedTrack(track)) return;
-      if (!track.codecs || track.codecs.length === 0) return;
-
-      const mimeCodec = buildMimeCodec(track);
-
-      // Create SourceBuffer
-      const buffer = createSourceBuffer(o.mediaSource!, mimeCodec);
-
-      // Update owners with buffer reference
-      const bufferKey = BufferKeyByType[config.type];
-      owners.patch({ [bufferKey]: buffer });
-
-      // Wait a frame before clearing flag to allow async state updates to flush
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-    } finally {
-      settingUp = false;
+      try {
+        await currentTask;
+      } finally {
+        // Cleanup orchestration state
+        currentTask = null;
+      }
     }
-  });
+  );
+
+  return cleanup;
 }

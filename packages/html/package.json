@@ -87,6 +87,7 @@
     "clean": "rm -rf dist types"
   },
   "dependencies": {
+    "@videojs/spf": "workspace:*",
     "@videojs/core": "workspace:*",
     "@videojs/element": "workspace:*",
     "@videojs/store": "workspace:*",

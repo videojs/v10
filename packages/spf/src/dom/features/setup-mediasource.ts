@@ -15,7 +15,7 @@ export interface MediaSourceState {
  * Owners shape for MediaSource setup.
  */
 export interface MediaSourceOwners {
-  mediaElement?: HTMLMediaElement;
+  mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
 }
 

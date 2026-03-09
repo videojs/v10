@@ -14,7 +14,7 @@ export interface TextTrackState {
  * Owners shape for text track setup.
  */
 export interface TextTrackOwners {
-  mediaElement?: HTMLMediaElement;
+  mediaElement?: HTMLMediaElement | undefined;
   textTracks?: Map<string, HTMLTrackElement>;
 }
 

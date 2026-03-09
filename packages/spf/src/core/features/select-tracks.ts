@@ -296,7 +296,6 @@ export function selectVideoTrack(
   let selecting = false;
 
   return state.subscribe(async (currentState: TrackSelectionState) => {
-    /** @TODO figure out reactive model for ABR cases (CJP) */
     if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config) || selecting) return;
 
     try {

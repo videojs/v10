@@ -668,7 +668,7 @@ describe('selectVideoTrack', () => {
     cleanup();
   });
 
-  it.skip('uses custom bandwidth configuration', async () => {
+  it.skip('uses bandwidth configuration for initial selection', async () => {
     const videoTracks: PartiallyResolvedVideoTrack[] = [
       {
         type: 'video',

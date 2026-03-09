@@ -49,7 +49,12 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
           if (records.some(hasMediaNode)) this.#attachMedia();
         });
 
-        this.#observer.observe(this, { childList: true, subtree: true });
+        this.#observer.observe(this, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['data-media-element'],
+        });
 
         // Slotted media elements don't appear in the container's subtree,
         // so listen for slot reassignments to pick them up.
@@ -87,7 +92,7 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
         const store = this.#contextStore ?? this.store;
         if (!store) return;
 
-        const media = this.querySelector<HTMLMediaElement>('video, audio') ?? this.#getSlottedMedia();
+        const media = this.querySelector<HTMLMediaElement>('video, audio, [data-media-element]') ?? this.#getSlottedMedia();
 
         if (!media) {
           this.#detach();
@@ -115,10 +120,15 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
 }
 
 function isMediaNode(node: Node): boolean {
-  return node instanceof HTMLMediaElement;
+  return node instanceof HTMLMediaElement || (node instanceof Element && node.hasAttribute('data-media-element'));
 }
 
 function hasMediaNode(record: MutationRecord): boolean {
+  // Attribute mutation: data-media-element was added to a descendant
+  if (record.type === 'attributes' && record.target instanceof Element) {
+    return record.target.hasAttribute('data-media-element');
+  }
+
   for (const node of record.addedNodes) {
     if (isMediaNode(node)) return true;
   }

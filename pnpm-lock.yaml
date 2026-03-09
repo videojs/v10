@@ -68,6 +68,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@videojs/spf':
+        specifier: workspace:*
+        version: link:../spf
       '@videojs/store':
         specifier: workspace:*
         version: link:../store
@@ -118,6 +121,9 @@ importers:
       '@videojs/element':
         specifier: workspace:*
         version: link:../element
+      '@videojs/spf':
+        specifier: workspace:*
+        version: link:../spf
       '@videojs/store':
         specifier: workspace:*
         version: link:../store
@@ -183,6 +189,9 @@ importers:
       '@videojs/core':
         specifier: workspace:*
         version: link:../core
+      '@videojs/spf':
+        specifier: workspace:*
+        version: link:../spf
       '@videojs/store':
         specifier: workspace:*
         version: link:../store
