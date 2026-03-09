@@ -1,5 +1,4 @@
 export * from './feature';
-export * from './media/simple-hls';
 export * from './media/types';
 export * from './store/features';
 export * from './store/selectors';
