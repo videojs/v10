@@ -8,14 +8,14 @@
 //   media-play-button: [data-paused], [data-ended]
 //   media-mute-button: [data-muted]
 
-import { createPlayer, features } from '@videojs/html';
+import { createPlayer, videoFeatures } from '@videojs/html';
 import '@videojs/html/media/spf-video';
 import '@videojs/html/ui/play-button';
 import '@videojs/html/ui/mute-button';
 import { pauseIcon, playIcon, restartIcon, volumeHighIcon, volumeOffIcon } from '@videojs/icons/html';
 
 const { PlayerElement } = createPlayer({
-  features: features.video,
+  features: videoFeatures,
 });
 
 customElements.define('video-player', PlayerElement);
