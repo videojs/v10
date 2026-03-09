@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { useRef, useState } from 'react';
 import DialInner from '@/components/icons/dial-inner.svg?react';
 import DialOuter from '@/components/icons/dial-outer.svg?react';
+import GetStartedLink from '@/components/NavBar/GetStartedLink';
 
 type Link = { href: string; label: string; angle: number };
 
@@ -17,13 +18,14 @@ export default function DialNav({ left, right }: DialNavProps) {
   const [activeHref, setActiveHref] = useState<string | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function handleClick(e: React.MouseEvent, link: Link) {
+  function handleClick(e: React.MouseEvent<HTMLAnchorElement>, link: Link) {
     e.preventDefault();
+    const resolvedHref = e.currentTarget.href;
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setActiveAngle(link.angle);
     setActiveHref(link.href);
     timeoutRef.current = setTimeout(() => {
-      window.location.href = link.href;
+      window.location.href = resolvedHref;
     }, TRANSITION_MS);
   }
 
@@ -47,57 +49,78 @@ export default function DialNav({ left, right }: DialNavProps) {
     <div className="flex items-center gap-0">
       {/* Left links */}
       <div className="flex flex-col gap-2">
-        {left.map((link) => (
-          <a
-            key={link.href}
-            href={link.href}
-            onClick={(e) => handleClick(e, link)}
-            className={clsx(
-              'flex rounded-xs min-w-44 items-center gap-2 px-6 py-6 text-h5 font-display-compact font-bold uppercase text-faded-black dark:text-manila-light',
-              'justify-end pr-15 -mr-12 bg-manila-50 dark:bg-black'
-            )}
-          >
-            {link.label}
-            <span
-              className="w-2.5 h-2.5 rounded-full border border-faded-black dark:border-manila-light"
-              style={dotStyle(link.href)}
-            />
-          </a>
-        ))}
+        {left.map((link) => {
+          const Tag = link.href === '/docs' ? GetStartedLink : 'a';
+          return (
+            <Tag
+              key={link.href}
+              href={link.href}
+              onClick={(e) => handleClick(e, link)}
+              className={clsx(
+                'flex rounded-xs min-w-44 items-center gap-2 px-6 py-6 text-h5 font-display-compact font-bold uppercase text-faded-black dark:text-manila-light',
+                'justify-end pr-15 -mr-12 bg-manila-50 dark:bg-black'
+              )}
+            >
+              {link.label}
+              <span
+                className="w-2.5 h-2.5 rounded-full border border-faded-black dark:border-manila-light"
+                style={dotStyle(link.href)}
+              />
+            </Tag>
+          );
+        })}
       </div>
 
-      <a
-        key={left[0].href}
-        href={left[0].href}
-        onClick={(e) => handleClick(e, left[0])}
-        className="w-20 h-20 md:w-32 md:h-32 shrink-0 relative z-10 text-manila-light dark:text-faded-black"
-      >
-        <DialOuter
-          className="outline-8 rounded-full outline-manila-dark dark:outline-faded-black"
-          width={'100%'}
-          height={'auto'}
-        />
-        <DialInner style={needleStyle} className="absolute inset-0" width={'100%'} height={'auto'} />
-      </a>
+      {left[0].href === '/docs' ? (
+        <GetStartedLink
+          key={left[0].href}
+          onClick={(e) => handleClick(e, left[0])}
+          className="w-20 h-20 md:w-32 md:h-32 shrink-0 relative z-10 text-manila-light dark:text-faded-black"
+        >
+          <DialOuter
+            className="outline-8 rounded-full outline-manila-dark dark:outline-faded-black"
+            width={'100%'}
+            height={'auto'}
+          />
+          <DialInner style={needleStyle} className="absolute inset-0" width={'100%'} height={'auto'} />
+        </GetStartedLink>
+      ) : (
+        <a
+          key={left[0].href}
+          href={left[0].href}
+          onClick={(e) => handleClick(e, left[0])}
+          className="w-20 h-20 md:w-32 md:h-32 shrink-0 relative z-10 text-manila-light dark:text-faded-black"
+        >
+          <DialOuter
+            className="outline-8 rounded-full outline-manila-dark dark:outline-faded-black"
+            width={'100%'}
+            height={'auto'}
+          />
+          <DialInner style={needleStyle} className="absolute inset-0" width={'100%'} height={'auto'} />
+        </a>
+      )}
 
       <div className="flex flex-col gap-2">
-        {right.map((link) => (
-          <a
-            key={link.href}
-            href={link.href}
-            onClick={(e) => handleClick(e, link)}
-            className={clsx(
-              'flex rounded-xs min-w-44 items-center gap-2 px-6 py-6 text-h5 font-display-compact font-bold uppercase text-faded-black dark:text-manila-light',
-              'pl-15 -ml-12 bg-manila-50 dark:bg-black'
-            )}
-          >
-            <span
-              className="w-2.5 h-2.5 rounded-full border border-faded-black dark:border-manila-light"
-              style={dotStyle(link.href)}
-            />
-            {link.label}
-          </a>
-        ))}
+        {right.map((link) => {
+          const Tag = link.href === '/docs' ? GetStartedLink : 'a';
+          return (
+            <Tag
+              key={link.href}
+              href={link.href}
+              onClick={(e) => handleClick(e, link)}
+              className={clsx(
+                'flex rounded-xs min-w-44 items-center gap-2 px-6 py-6 text-h5 font-display-compact font-bold uppercase text-faded-black dark:text-manila-light',
+                'pl-15 -ml-12 bg-manila-50 dark:bg-black'
+              )}
+            >
+              <span
+                className="w-2.5 h-2.5 rounded-full border border-faded-black dark:border-manila-light"
+                style={dotStyle(link.href)}
+              />
+              {link.label}
+            </Tag>
+          );
+        })}
       </div>
     </div>
   );
