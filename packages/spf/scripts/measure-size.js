@@ -22,9 +22,9 @@ if (measureAll) {
   label = 'All Exports';
   bundlePath = './dist/all.js';
 } else if (measureEngine) {
-  entry = 'dom/playback-engine.ts';
+  entry = 'dom/playback-engine/index.ts';
   label = 'Playback Engine';
-  bundlePath = './dist/playback-engine.js';
+  bundlePath = './dist/index.js';
 } else {
   entry = 'index.ts';
   label = 'Public API';
