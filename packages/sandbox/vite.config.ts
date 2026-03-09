@@ -10,7 +10,17 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
-    exclude: ['@videojs/core', '@videojs/html', '@videojs/icons', '@videojs/react', '@videojs/spf', '@videojs/store', '@videojs/utils'],
+    exclude: [
+      '@videojs/core',
+      '@videojs/html',
+      '@videojs/icons',
+      '@videojs/react',
+      '@videojs/spf',
+      '@videojs/spf/dom',
+      '@videojs/spf/playback-engine',
+      '@videojs/store',
+      '@videojs/utils',
+    ],
   },
   build: {
     outDir: resolve(__dirname, 'dist'),
