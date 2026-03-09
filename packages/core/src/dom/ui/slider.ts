@@ -36,6 +36,8 @@ export interface SliderOptions {
   onValueCommit?: ((percent: number) => void) | undefined;
   onDragStart?: (() => void) | undefined;
   onDragEnd?: (() => void) | undefined;
+  /** Called when the root element resizes (e.g. gains layout inside a popover). */
+  onResize?: (() => void) | undefined;
 }
 
 export interface SliderRootProps {
@@ -304,6 +306,13 @@ export function createSlider(options: SliderOptions): SliderApi {
     };
   }
 
+  let resizeObserver: ResizeObserver | null = null;
+
+  if (options.onResize) {
+    resizeObserver = new ResizeObserver(() => options.onResize!());
+    resizeObserver.observe(options.getElement());
+  }
+
   const rootStyle: SliderRootStyle = { touchAction: 'none', userSelect: 'none' };
 
   return {
@@ -315,6 +324,7 @@ export function createSlider(options: SliderOptions): SliderApi {
     destroy() {
       if (abort.signal.aborted) return;
       abort.abort();
+      resizeObserver?.disconnect();
       releaseCapture();
       cleanup();
     },
