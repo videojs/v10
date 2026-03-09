@@ -8,6 +8,7 @@ import StyleInit from '@/components/docs/StyleInit.astro';
 import FilmGrain from '@/components/FilmGrain';
 import Footer from '@/components/FooterDocs.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
+import LegacyBanner from '@/components/LegacyBanner.astro';
 import NavBarDocs from '@/components/NavBar/NavBarDocs.astro';
 import { FRAMEWORK_LABELS, type SupportedFramework } from '@/types/docs';
 import { getDocTitle } from '@/utils/docs/title';
@@ -41,6 +42,7 @@ const docsSidebarId = 'docs-sidebar';
     <DocsSidebarRestoration docsSidebarId={docsSidebarId} />
     <slot name="head" slot="head" />
   </Fragment>
+  <LegacyBanner />
   <div
     class:list={[
       "grid min-h-screen grid-cols-1",

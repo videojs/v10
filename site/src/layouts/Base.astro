@@ -6,6 +6,7 @@ import { SEO_SUFFIX, SITE_TITLE } from '@/consts';
 
 import '@/styles/globals.css';
 
+import BannerInit from '@/components/BannerInit.astro';
 import { PreferenceSync } from '@/components/docs/PreferenceSync';
 import ThemeInit from '@/components/ThemeInit.astro';
 
@@ -114,6 +115,7 @@ const fullTitle =
     <slot name="head" />
 
     <ThemeInit />
+    <BannerInit />
   </head>
   <body
     class:list={[

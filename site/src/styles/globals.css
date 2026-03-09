@@ -159,6 +159,7 @@
   }
 }
 @custom-variant dark (&:where(.dark, .dark *));
+@custom-variant banner-dismissed (&:where(.banner-dismissed, .banner-dismissed *));
 
 @layer base {
   .list-decimal .list-decimal {

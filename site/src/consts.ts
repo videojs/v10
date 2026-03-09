@@ -4,6 +4,7 @@ export const SITE_DESCRIPTION = `The open-source video player for React and HTML
 export const GITHUB_REPO_URL = 'https://github.com/videojs/v10/';
 export const DISCORD_INVITE_URL = 'https://discord.gg/JBqHh485uF';
 export const THEME_KEY = 'vjs-site-theme';
+export const BANNER_DISMISS_KEY = 'vjs-legacy-banner-dismissed';
 
 /**
  * Video source for demos and examples throughout the site,

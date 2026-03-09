@@ -15,6 +15,7 @@ type NavLink = {
 const navLinks: NavLink[] = [
   { href: '/blog', label: 'Blog' },
   { href: '/privacy', label: 'Privacy' },
+  { href: 'https://legacy.videojs.org', label: 'V8', external: true },
 ];
 
 type Props = {
@@ -36,7 +37,7 @@ const { class: className } = Astro.props;
       class="flex flex-col gap-0 text-faded-black md:-ml-5 md:flex-row dark:text-manila-light"
     >
       <div
-        class="flex justify-between border-t border-b border-faded-black pt-3 pb-3 md:justify-center md:border-0 md:pt-0 md:pb-0 dark:border-manila-light"
+        class="flex flex-wrap justify-between gap-2 border-t border-b border-faded-black pt-3 pb-3 md:justify-center md:border-0 md:pt-0 md:pb-0 dark:border-manila-light"
       >
         <GetStartedLink
           client:idle
@@ -48,7 +49,7 @@ const { class: className } = Astro.props;
           navLinks.map((link) => (
             <a
               href={link.href}
-              class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+              class="flex items-center gap-1.5 rounded-xs px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
             >
               {link.label} {link.external ? <ArrowUpRight size="1em" /> : null}
             </a>
