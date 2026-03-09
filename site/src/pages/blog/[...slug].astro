@@ -56,18 +56,20 @@ const jsonLdSchema = createBlogPostingSchema({
       class="relative mx-auto mb-10 max-w-3xl border-y border-faded-black py-10 dark:border-manila-light"
     >
       <div
-        class="mb-3 flex gap-4 font-display text-h4 font-bold text-orange uppercase"
+        class="mb-3 flex flex-col gap-2 font-display text-h4 font-bold text-orange uppercase sm:flex-row sm:gap-4"
       >
         <FormattedDate
           data-pagefind-sort={`date:${post.data.pubDate.toISOString()}`}
           date={post.data.pubDate}
         />
-        <span>&bull;</span>
+        <span class="hidden sm:inline">&bull;</span>
         <span data-pagefind-ignore data-llms-ignore
           >{remarkPluginFrontmatter.minutesRead}</span
         >
       </div>
-      <h1 class="mb-2 font-display text-h15 uppercase">{post.data.title}</h1>
+      <h1 class="mb-2 font-display text-h2 uppercase sm:text-h15">
+        {post.data.title}
+      </h1>
       <div class="">
         By {
           new Intl.ListFormat("en", { style: "long", type: "conjunction" })

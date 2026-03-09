@@ -45,15 +45,17 @@ const poster = `${VJS10_DEMO_VIDEO.poster}?time=0`;
     poster={poster}
   />
   <p
-    class="mb-11 flex items-center justify-center gap-2.5 md:mb-20 md:justify-end md:pr-6 md:font-display md:text-(length:--md-text) md:uppercase"
-    style="grid-area:mux;--md-text:0.75rem;"
+    class="mb-11 flex items-center justify-center gap-1.5 text-p3 md:mb-20 md:justify-end md:gap-2 md:pr-6 md:font-display md:text-(length:--md-text) md:uppercase"
+    style="grid-area:mux;--md-text:0.6875rem;"
   >
     Video hosting sponsored by <a
-      class="inline-flex"
+      class="relative inline-flex w-11 items-center justify-center md:w-12.5"
       href="https://www.mux.com?utm_source=videojs&utm_campaign=vjs10"
       target="_blank"
-      rel="noopener"><MuxLogoSmall width="3.25rem" /></a
+      rel="noopener"
     >
+      <MuxLogoSmall width="100%" />
+    </a>
   </p>
   <div
     class="grid grid-cols-1 items-center justify-center gap-9 md:grid-cols-2"

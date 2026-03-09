@@ -15,13 +15,13 @@ const { as: Tag = 'h3', maxWidth = true, class: className, ...props } = Astro.pr
 <Tag
   class={twMerge(
     clsx(
-      "mt-12 mb-6 font-display text-h3 [&+.contents>h4]:mt-6 [&+h4]:mt-6",
+      "mt-12 mb-6 font-display text-h3 @lg:text-(length:--lg-text) [&+.contents>h4]:mt-6 [&+h4]:mt-6",
       maxWidth && "mx-auto max-w-3xl",
     ),
     className,
   )}
   {...props}
-  style={{ fontSize: "1.25rem" }}
+  style={{ "--lg-text": "1.25rem" }}
 >
   <slot />
 </Tag>
