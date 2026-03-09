@@ -16,8 +16,6 @@ export default defineConfig({
       '@videojs/icons',
       '@videojs/react',
       '@videojs/spf',
-      '@videojs/spf/dom',
-      '@videojs/spf/playback-engine',
       '@videojs/store',
       '@videojs/utils',
     ],
