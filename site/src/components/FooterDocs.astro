@@ -1,6 +1,6 @@
 ---
 import { ArrowUpRight } from 'lucide-react';
-import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
+import { DISCORD_INVITE_URL, GITHUB_REPO_URL, MUX_URL } from '@/consts';
 import Discord from './icons/discord.svg?react';
 import GitHub from './icons/github.svg?react';
 import LogoMonoVersion from './icons/logo-mono.svg?react';
@@ -85,7 +85,7 @@ const { class: className } = Astro.props;
         class="underline intent:no-underline">video player.</a
       >
       <br class="xl:hidden" />Video hosting and streaming <a
-        href="https://www.mux.com?utm_source=videojs&utm_campaign=vjs10"
+        href={MUX_URL}
         class="underline intent:no-underline"
         >sponsored by Mux.
       </a>

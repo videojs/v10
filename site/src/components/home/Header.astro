@@ -3,7 +3,7 @@ import FrameworkControl from '@/components/home/FrameworkControl';
 import HeroVideo from '@/components/home/HeroVideo';
 import SkinControl from '@/components/home/SkinControl';
 import MuxLogoSmall from '@/components/icons/mux-logo-small.svg?react';
-import { VJS10_DEMO_VIDEO } from '@/consts';
+import { MUX_URL, VJS10_DEMO_VIDEO } from '@/consts';
 
 const poster = `${VJS10_DEMO_VIDEO.poster}?time=0`;
 ---
@@ -50,7 +50,7 @@ const poster = `${VJS10_DEMO_VIDEO.poster}?time=0`;
   >
     Video hosting sponsored by <a
       class="relative inline-flex w-11 items-center justify-center md:w-12.5"
-      href="https://www.mux.com?utm_source=videojs&utm_campaign=vjs10"
+      href={MUX_URL}
       target="_blank"
       rel="noopener"
     >
