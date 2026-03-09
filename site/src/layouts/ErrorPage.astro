@@ -3,6 +3,7 @@ import DialNav from '@/components/DialNav';
 import Footer from '@/components/Footer.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import NavBar from '@/components/NavBar/NavBar.astro';
+import { MUX_URL } from '@/consts';
 import Base from '@/layouts/Base.astro';
 
 interface Props {
@@ -42,7 +43,7 @@ const { title, description, code = '404', message = 'NOT FOUND' } = Astro.props;
           ]}
           right={[
             {
-              href: "https://mux.com?utm_source=videojs&utm_campaign=vjs10",
+              href: MUX_URL,
               label: "mux.com",
               angle: 60,
             },

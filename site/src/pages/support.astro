@@ -1,0 +1,92 @@
+---
+import { ArrowUpRight } from 'lucide-react';
+import Footer from '@/components/Footer.astro';
+import NavBar from '@/components/NavBar/NavBar.astro';
+import { GITHUB_REPO_URL, MUX_SUPPORT_URL } from '@/consts';
+import Base from '@/layouts/Base.astro';
+
+const tiles = [
+  {
+    title: 'Community Support',
+    body: 'No promises or guarantees.',
+    cta: { label: 'Submit an issue', href: `${GITHUB_REPO_URL}issues/new/choose` },
+  },
+  {
+    title: 'Contribute',
+    body: "We're excited to help you!",
+    cta: { label: 'Check out the docs.', href: `${GITHUB_REPO_URL}blob/main/CONTRIBUTING.md` },
+  },
+  {
+    title: 'Offer a Bounty',
+    body: 'Create a bid for your feature to be built or bug to be fixed. Community members can then elect to do the work.',
+    cta: { label: 'More details coming soon' },
+  },
+  {
+    title: 'Enterprise-grade',
+    body: ['Provided by Mux', 'Starting at $20k/yr.'],
+    cta: {
+      label: 'Get in touch',
+      href: MUX_SUPPORT_URL,
+    },
+  },
+] as const;
+---
+
+<Base
+  title="Support"
+  description="Get help with Video.js — from community support and contributing to bounties and enterprise-grade service."
+>
+  <NavBar />
+  <main class="mx-auto w-full max-w-305 px-5 pt-10 pb-20 md:pt-20">
+    <header
+      class="mb-12 border-y border-faded-black py-4 dark:border-manila-light"
+    >
+      <h1
+        class="text-center font-display text-h2 text-faded-black uppercase dark:text-manila-light"
+      >
+        Support
+      </h1>
+    </header>
+
+    <div
+      class="grid auto-rows-auto grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4"
+    >
+      {
+        tiles.map((tile) => (
+          <div class="row-span-3 grid grid-rows-subgrid rounded-xs border border-faded-black p-5 dark:border-manila-light">
+            <h2 class="font-display text-h3 leading-tight text-faded-black uppercase dark:text-manila-light">
+              {tile.title}
+            </h2>
+            {Array.isArray(tile.body) ? (
+              <div class="text-p2 text-warm-gray dark:text-manila-dark">
+                {tile.body.map((line, i) => (
+                  <p class={i < tile.body.length - 1 ? "mb-2" : ""}>{line}</p>
+                ))}
+              </div>
+            ) : (
+              <p class="text-p2 text-warm-gray dark:text-manila-dark">
+                {tile.body}
+              </p>
+            )}
+            {tile.cta.href ? (
+              <a
+                href={tile.cta.href}
+                target="_blank"
+                rel="noopener"
+                class="inline-flex items-center gap-1 self-end rounded-xs border border-manila-75 bg-manila-50 px-4 py-2.5 text-p3 dark:border-soot dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
+              >
+                {tile.cta.label}
+                <ArrowUpRight size="1em" />
+              </a>
+            ) : (
+              <span class="inline-flex items-center gap-1 self-end rounded-xs border border-manila-75 px-4 py-2.5 text-p3 text-warm-gray dark:border-soot dark:text-manila-dark">
+                {tile.cta.label}
+              </span>
+            )}
+          </div>
+        ))
+      }
+    </div>
+  </main>
+  <Footer />
+</Base>
