@@ -1,5 +1,0 @@
-@layer theme, base, components, utilities;
-@import 'tailwindcss/theme.css' layer(theme) prefix(vjs);
-@import 'tailwindcss/utilities.css' layer(utilities) prefix(vjs);
-/* Custom variants used by the frosted skin */
-@custom-variant reduced-transparency @media (prefers-reduced-transparency: reduce);

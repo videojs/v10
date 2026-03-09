@@ -1,6 +1,7 @@
 ---
 import clsx from 'clsx';
 import type { ComponentType, SVGProps } from 'react';
+import { MUX_URL } from '@/consts';
 import MuxLogo from '../icons/mux-logo.svg?react';
 import BrightcoveLogo from '../icons/sponsors/brightcove.svg?react';
 import BrowserStackLogo from '../icons/sponsors/browserstack.svg?react';
@@ -37,7 +38,7 @@ const sponsors: SponsorItem[] = [
     class="grid grid-cols-1 rounded-xs border border-faded-black p-2 text-manila-light md:grid-cols-2 md:items-center dark:border-manila-light dark:text-faded-black"
   >
     <a
-      href="https://www.mux.com?utm_source=videojs&utm_campaign=vjs10"
+      href={MUX_URL}
       target="_blank"
       rel="noopener"
       class="flex h-45 items-center justify-center bg-faded-black md:h-full md:min-h-74 dark:bg-soot dark:text-manila-light"

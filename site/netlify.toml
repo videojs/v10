@@ -45,3 +45,9 @@
   from = "/tags/*"
   to = "/blog"
   status = 307
+
+# Redirect old support URL to new page
+[[redirects]]
+  from = "/html5-video-support"
+  to = "/support"
+  status = 307

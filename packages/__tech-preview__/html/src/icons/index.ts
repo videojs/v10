@@ -1,9 +1,0 @@
-import './media-fullscreen-enter-alt-icon';
-import './media-fullscreen-enter-icon';
-import './media-fullscreen-exit-alt-icon';
-import './media-fullscreen-exit-icon';
-import './media-pause-icon';
-import './media-play-icon';
-import './media-volume-high-icon';
-import './media-volume-low-icon';
-import './media-volume-off-icon';

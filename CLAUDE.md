@@ -19,9 +19,6 @@ Refer to **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** for setup, development, and 
 | `packages/react-native` | React Native player integration layer.                              |
 | `site/`                 | Astro‑based docs and website.                                       |
 
-IGNORE `packages/__tech-preview__/` — it's legacy code from the Demuxed demo. Don't reference or
-modify it when working in other packages.
-
 ### Dependency Hierarchy
 
 ```text

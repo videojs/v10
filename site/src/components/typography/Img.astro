@@ -5,8 +5,16 @@ import type { ComponentProps } from 'astro/types';
 import { twMerge } from '@/utils/twMerge';
 
 type Props = ComponentProps<typeof Image>;
-const { class: className, ...rest } = Astro.props;
+const { class: className, src, ...rest } = Astro.props;
+
+const isRemote = typeof src === 'string' && src.startsWith('http');
 ---
 
-{/* @ts-expect-error tbh I don't know how to tell ts that inferSize is ok */}
-<Image class={twMerge("my-8", className)} inferSize {...rest} />
+{
+  isRemote ? (
+    <img class={twMerge("my-8", className)} src={src} {...rest} />
+  ) : (
+    // @ts-expect-error tbh I don't know how to tell ts that inferSize is ok
+    <Image class={twMerge("my-8", className)} inferSize src={src} {...rest} />
+  )
+}

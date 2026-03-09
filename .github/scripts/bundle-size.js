@@ -35,7 +35,6 @@ const PACKAGES_DIR = join(ROOT, 'packages');
 
 const SKIP_PACKAGES = new Set([
   'sandbox',
-  '__tech-preview__',
   'react-native',
   'skins',
   'icons',
