@@ -1,0 +1,87 @@
+@import "../../shared/video-icon-state.css";
+@import "./components/reset.css";
+@import "./components/root.css";
+@import "./components/surface.css";
+@import "./components/media.css";
+@import "./components/overlay.css";
+@import "./components/buffering.css";
+@import "./components/error.css";
+@import "./components/controls.css";
+@import "./components/time.css";
+@import "./components/buttons.css";
+@import "./components/icons.css";
+@import "./components/slider.css";
+@import "./components/popup.css";
+@import "./components/tooltip.css";
+@import "./components/captions.css";
+
+/* ==========================================================================
+   Root
+   ========================================================================== */
+
+.media-default-skin--video {
+  background: oklch(0 0 0);
+  --media-border-color: oklch(0 0 0 / 0.1);
+  --media-surface-background-color: oklch(1 0 0 / 0.1);
+  --media-surface-inner-border-color: oklch(1 0 0 / 0.05);
+  --media-surface-outer-border-color: oklch(0 0 0 / 0.1);
+  --media-surface-shadow-color: oklch(0 0 0 / 0.15);
+  --media-surface-backdrop-filter: blur(64px) brightness(0.9) saturate(1.5);
+
+  @media (prefers-color-scheme: dark) {
+    --media-border-color: oklch(1 0 0 / 0.1);
+  }
+
+  /* Inner border ring */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px var(--media-border-color);
+    pointer-events: none;
+  }
+}
+
+/* ==========================================================================
+   Controls (hide/show behavior)
+   ========================================================================== */
+
+.media-default-skin--video .media-controls {
+  position: absolute;
+  bottom: 0.75rem;
+  inset-inline: 0.75rem;
+  z-index: 10;
+  will-change: scale, transform, filter, opacity;
+  transition-property: scale, transform, filter, opacity;
+  transition-duration: 100ms;
+  transition-delay: 0ms;
+  transition-timing-function: ease-out;
+  transform-origin: bottom;
+  color: oklch(1 0 0);
+
+  &:not([data-visible]) {
+    opacity: 0;
+    scale: 0.9;
+    filter: blur(8px);
+    transition-duration: 300ms;
+    transition-delay: 500ms;
+    pointer-events: none;
+
+    @media (prefers-reduced-motion: reduce) {
+      scale: 1;
+      filter: blur(0);
+      transition-duration: 100ms;
+    }
+  }
+}
+
+/* ==========================================================================
+   Sliders
+   ========================================================================== */
+
+.media-default-skin--video .media-slider__track {
+  background-color: oklch(1 0 0 / 0.2);
+  box-shadow: 0 0 0 1px oklch(0 0 0 / 0.05);
+}

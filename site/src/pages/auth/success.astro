@@ -1,6 +1,6 @@
 ---
 import { ArrowLeft } from 'lucide-react';
-
+import GetStartedLink from '@/components/NavBar/GetStartedLink';
 import AuthResult from '@/layouts/AuthResult.astro';
 ---
 
@@ -9,9 +9,9 @@ import AuthResult from '@/layouts/AuthResult.astro';
   description="You may close this window."
   variant="success"
 >
-  <a
+  <GetStartedLink
     slot="action"
-    href="/docs"
+    client:load
     class="group inline-flex items-center gap-1 intent:underline"
   >
     <ArrowLeft
@@ -19,7 +19,7 @@ import AuthResult from '@/layouts/AuthResult.astro';
       className="transition-transform group-intent:-translate-x-1"
     />
     Return to docs
-  </a>
+  </GetStartedLink>
 </AuthResult>
 
 <script>

@@ -1,0 +1,26 @@
+/* ==========================================================================
+   Native Caption Bridge
+   ---------------------------------------------------------------------------
+   Receives CSS custom properties set by any skin and applies them to the
+   native WebKit text track container on the slotted <video> element.
+
+   This stylesheet MUST live in the light DOM because ::slotted() cannot be
+   chained with vendor pseudo-elements like ::-webkit-media-text-track-container.
+
+   CSS custom properties cascade through the shadow DOM boundary, so skins
+   define the values and this bridge reads them.
+   ========================================================================== */
+
+.media-skin > video::-webkit-media-text-track-container {
+  transition: transform var(--media-caption-track-duration, 150ms) ease-out;
+  transition-delay: var(--media-caption-track-delay, 600ms);
+  transform: translateY(var(--media-caption-track-y, 0)) scale(0.98);
+  z-index: var(--media-caption-track-z, 1);
+  font-family: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-skin > video::-webkit-media-text-track-container {
+    transition-duration: 50ms;
+  }
+}

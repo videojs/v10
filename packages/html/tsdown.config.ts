@@ -1,8 +1,10 @@
-import { globSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { globSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
+import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.mjs';
+import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.mjs';
 
 type BuildMode = 'dev' | 'default';
 
@@ -53,39 +55,7 @@ const createConfig = (mode: BuildMode): UserConfig => ({
     __DEV__: mode === 'dev' ? 'true' : 'false',
   },
   dts: mode === 'dev',
-  plugins: [
-    {
-      name: 'copy-css',
-      buildStart() {
-        for (const file of globSync('src/**/*.css')) {
-          this.addWatchFile(file);
-        }
-        for (const file of globSync(join(skinsDir, '**/*.css'))) {
-          this.addWatchFile(file);
-        }
-      },
-      writeBundle() {
-        for (const file of globSync('src/**/*.css')) {
-          let content = readFileSync(file, 'utf-8');
-
-          // Resolve @import from @videojs/skins by inlining the CSS (including nested relative imports)
-          content = content.replace(/@import\s+['"]@videojs\/skins\/([^'"]+)['"]\s*;/g, (_, importPath) => {
-            const skinsFile = resolve(skinsDir, importPath);
-            let skinsContent = readFileSync(skinsFile, 'utf-8');
-            // Resolve relative @import within the skins CSS
-            skinsContent = skinsContent.replace(/@import\s+['"]\.\/([^'"]+)['"]\s*;/g, (__, relPath) =>
-              readFileSync(resolve(dirname(skinsFile), relPath), 'utf-8')
-            );
-            return skinsContent;
-          });
-
-          const outFile = join(`dist/${mode}`, file.replace(/^src\//, ''));
-          mkdirSync(dirname(outFile), { recursive: true });
-          writeFileSync(outFile, content);
-        }
-      },
-    },
-  ],
+  plugins: [copyCssPlugin({ skinsDir, outDir: `dist/${mode}` }), inlineCssPlugin({ skinsDir })],
 });
 
 export default defineConfig(buildModes.map((mode) => createConfig(mode)));

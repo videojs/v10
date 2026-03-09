@@ -1,0 +1,53 @@
+@import "../../shared/audio-icon-state.css";
+@import "./components/reset.css";
+@import "./components/root.css";
+@import "./components/surface.css";
+@import "./components/buffering.css";
+@import "./components/error.css";
+@import "./components/controls.css";
+@import "./components/time.css";
+@import "./components/buttons.css";
+@import "./components/icons.css";
+@import "./components/slider.css";
+@import "./components/popup.css";
+@import "./components/tooltip.css";
+
+/* ==========================================================================
+   Root
+   ========================================================================== */
+
+.media-default-skin--audio {
+  --media-border-color: oklch(0 0 0 / 0.1);
+  --media-surface-background-color: oklch(1 0 0 / 0.5);
+  --media-surface-inner-border-color: oklch(1 0 0 / 0.1);
+  --media-surface-outer-border-color: oklch(0 0 0 / 0.05);
+  --media-surface-shadow-color: oklch(0 0 0 / 0.15);
+  --media-surface-backdrop-filter: blur(8px) brightness(0.98) saturate(1.2);
+
+  @media (prefers-color-scheme: dark) {
+    --media-border-color: oklch(1 0 0 / 0.1);
+    --media-surface-background-color: oklch(0 0 0 / 0.4);
+  }
+}
+
+/* ==========================================================================
+   Controls
+   ========================================================================== */
+
+.media-default-skin--audio .media-controls {
+  @media (prefers-color-scheme: dark) {
+    color: oklch(1 0 0);
+  }
+}
+
+/* ==========================================================================
+   Sliders
+   ========================================================================== */
+.media-default-skin--audio .media-slider__track {
+  background-color: oklch(0 0 0 / 0.1);
+
+  @media (prefers-color-scheme: dark) {
+    background-color: oklch(1 0 0 / 0.2);
+    box-shadow: 0 0 0 1px oklch(0 0 0 / 0.05);
+  }
+}

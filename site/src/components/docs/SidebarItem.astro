@@ -57,7 +57,9 @@ function getGroupRotate(depth: number) {
         class:list={[
           "flex items-center gap-4 py-2 text-faded-black dark:text-manila-light",
           "cursor-pointer",
-          depth === 0 ? "font-display text-h4 uppercase" : "text-p3",
+          depth === 0
+            ? "font-display text-h4 leading-tight uppercase"
+            : "text-p3",
           depth > 0 && "border-l pl-4",
           isActive ? "border-orange" : "border-manila-75 dark:border-warm-gray",
           getGroupMargin(depth),

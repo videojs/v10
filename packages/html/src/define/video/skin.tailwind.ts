@@ -16,13 +16,14 @@ import {
   seek,
   slider,
   time,
-} from '@videojs/skins/video/default.tailwind';
+} from '@videojs/skins/default/tailwind/video.tailwind';
 import { cn } from '@videojs/utils/style';
 import { SkinMixin } from '../skin-mixin';
 
 // Side-effect imports: register all custom elements used in the template.
 import '../media/container';
 import '../ui/buffering-indicator';
+import '../ui/captions-button';
 import '../ui/controls';
 import '../ui/fullscreen-button';
 import '../ui/mute-button';
@@ -39,14 +40,16 @@ const SEEK_TIME = 10;
 
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="${root}">
+    <media-container class="${root(true)}">
+      <slot name="media"></slot>
+
       <media-buffering-indicator class="${bufferingIndicator.root}">
         <div class="${bufferingIndicator.container}">
           ${renderIcon('spinner')}
         </div>
       </media-buffering-indicator>
 
-      <div class="${error.root}" role="alertdialog" aria-labelledby="media-error-title" aria-describedby="media-error-description">
+      <!--<div class="${error.root}" role="alertdialog" aria-labelledby="media-error-title" aria-describedby="media-error-description">
         <div class="${error.dialog}">
           <div class="${error.content}">
             <p id="media-error-title" class="${error.title}">Something went wrong.</p>
@@ -56,7 +59,7 @@ function getTemplateHTML() {
             <button type="button" class="${cn(button.base, button.default)}">OK</button>
           </div>
         </div>
-      </div>
+      </div>-->
 
       <media-controls data-controls="" class="${controls}">
         <media-play-button class="${cn(button.base, button.icon, iconState.play.button)}">
@@ -94,13 +97,13 @@ function getTemplateHTML() {
         <media-playback-rate-button class="${cn(button.base, button.icon, playbackRate.button)}">
         </media-playback-rate-button>
 
-        <media-mute-button commandfor="volume-popover" class="${cn(button.base, button.icon, iconState.mute.button)}">
+        <media-mute-button commandfor="video-volume-popover" class="${cn(button.base, button.icon, iconState.mute.button)}">
           ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
           ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
           ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
         </media-mute-button>
 
-        <media-popover id="volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="${cn(popup.base, popup.volume)}">
+        <media-popover id="video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="${cn(popup.base, popup.volume)}">
           <media-volume-slider class="${slider.root}" orientation="vertical" thumb-alignment="edge">
             <media-slider-track class="${slider.track}">
               <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
@@ -109,10 +112,10 @@ function getTemplateHTML() {
           </media-volume-slider>
         </media-popover>
 
-        <!--<button type="button" class="${cn(button.base, button.icon)}" aria-label="Captions">
-          ${renderIcon('captions-off', { class: icon })}
-          ${renderIcon('captions-on', { class: icon })}
-        </button>-->
+        <media-captions-button class="${cn(button.base, button.icon, iconState.captions.button)}">
+          ${renderIcon('captions-off', { class: cn(icon, iconState.captions.off) })}
+          ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
+        </media-captions-button>
 
         <media-pip-button class="${cn(button.base, button.icon)}">
           ${renderIcon('pip', { class: icon })}
@@ -125,8 +128,6 @@ function getTemplateHTML() {
       </media-controls>
 
       <div class="${overlay}"></div>
-
-      <slot name="media"></slot>
     </media-container>
   `;
 }

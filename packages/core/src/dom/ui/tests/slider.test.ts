@@ -178,6 +178,28 @@ describe('createSlider', () => {
       slider.destroy();
     });
 
+    it('calls preventDefault to suppress default focus behavior', () => {
+      const slider = createSlider(createOptions());
+
+      const event = pointerEvent();
+      slider.rootProps.onPointerDown(event);
+
+      expect(event.preventDefault).toHaveBeenCalled();
+
+      slider.destroy();
+    });
+
+    it('does not call preventDefault when disabled', () => {
+      const slider = createSlider(createOptions({ isDisabled: () => true }));
+
+      const event = pointerEvent();
+      slider.rootProps.onPointerDown(event);
+
+      expect(event.preventDefault).not.toHaveBeenCalled();
+
+      slider.destroy();
+    });
+
     it('does nothing when disabled', () => {
       const onValueChange = vi.fn();
       const slider = createSlider(createOptions({ isDisabled: () => true, onValueChange }));

@@ -11,7 +11,7 @@ export const shared = {
   codeBlock: 'font-mono text-code',
   em: 'font-bold',
   li: 'text-p2',
-  ol: 'list-decimal list-outside pl-6 space-y-1',
+  ol: 'list-decimal list-outside pl-4 space-y-1',
   strong: 'font-bold',
-  ul: 'list-disc list-outside pl-6 space-y-1',
+  ul: 'list-disc list-outside pl-4 space-y-1',
 } as const;

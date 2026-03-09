@@ -19,7 +19,11 @@ const { title, subtitle, description } = Astro.props;
   <main class="mt-10 px-6 pb-24 md:mt-20 md:px-10">
     <article class="@container">
       <header class="border-light-40 mx-auto mb-10 max-w-3xl border-b pb-10">
-        <h1 class="mb-2 font-display text-h2 uppercase">{title}</h1>
+        <h1
+          class="mb-2 font-display text-h2 leading-tight uppercase @lg:text-h25"
+        >
+          {title}
+        </h1>
         <p class="">{description}</p>
       </header>
       <slot />

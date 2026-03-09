@@ -16,7 +16,7 @@ const { as: Tag = 'ol', maxWidth = true, class: className, ...props } = Astro.pr
 <Tag
   class={twMerge(
     shared.ol,
-    clsx("mb-6", maxWidth && "mx-auto max-w-3xl"),
+    clsx("mb-4", maxWidth && "mx-auto max-w-3xl"),
     className,
   )}
   {...props}

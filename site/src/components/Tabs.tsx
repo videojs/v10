@@ -75,7 +75,7 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId, var
       ref={ref}
       className={twMerge(
         clsx(
-          'overflow-hidden flex flex-col my-6 border border-faded-black dark:border-manila-dark rounded-xs bg-manila-light dark:bg-faded-black',
+          'overflow-hidden flex flex-col my-8 border border-faded-black dark:border-manila-dark rounded-xs bg-manila-light dark:bg-faded-black',
           variant === 'compact' && 'border px-2.5 pb-2.5',
           maxWidth && 'w-full max-w-3xl mx-auto',
           className
@@ -112,7 +112,7 @@ export function TabsList({ label, children, variant = 'compact' }: TabsListProps
           target: '[role="tabpanel"]:not([hidden])',
         }}
         className={clsx(
-          'ml-auto sticky right-0 h-7 px-2.5 flex items-center justify-center cursor-pointer disabled:cursor-wait intent:bg-warm-gray rounded-xs'
+          'ml-auto sticky right-0 h-7 px-2.5 flex items-center justify-center cursor-pointer disabled:cursor-wait intent:bg-manila-dark dark:intent:bg-warm-gray rounded-xs'
         )}
         copied={<Check size={20} />}
       >

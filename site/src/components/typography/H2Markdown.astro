@@ -7,7 +7,7 @@ const { class: className, ...props } = Astro.props;
 
 <H2
   as="h2"
-  class:list={["mt-18 [&+.contents>h3]:mt-6 [&+h3]:mt-6", className]}
+  class:list={["[&+.contents>h3]:mt-8 [&+h3]:mt-8", className]}
   {...props}
 >
   <slot />

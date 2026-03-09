@@ -25,7 +25,7 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
   return (
     <div
       className={clsx(
-        'border-y md:border-t-0 border-manila-75 dark:border-warm-gray bg-manila-light dark:bg-faded-black px-6 lg:px-12 flex items-center',
+        'border-b border-manila-75 dark:border-warm-gray bg-manila-light dark:bg-faded-black px-6 lg:px-12 flex items-center',
         className
       )}
       style={{ height: 'var(--mobile-toc-h)' }}

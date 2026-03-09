@@ -115,8 +115,8 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
                 GitHub
               </a>
             </nav>
+            <p className="text-center p-6 mt-auto text-p2">The open source player for the web</p>
           </div>
-          <p className="text-center p-6 mt-auto text-p2">The open source player for the web</p>
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>

@@ -45,6 +45,20 @@ const fullTitle =
     />
     <meta name="generator" content={Astro.generator} />
 
+    {/* Google Analytics (cookieless) */}
+    <script
+      is:inline
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-WTF4CZJSGP"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-WTF4CZJSGP", { client_storage: "none" });
+    </script>
+
     {/* Important stuff */}
     <slot name="priority-head" />
 

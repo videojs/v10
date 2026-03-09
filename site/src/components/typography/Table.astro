@@ -12,12 +12,10 @@ type Props<Tag extends HTMLTag = 'table'> = Polymorphic<{ as: Tag }> & {
 const { as: Tag = 'table', maxWidth = true, outerClass, class: className, ...props } = Astro.props;
 ---
 
-<div
-  class={twMerge(clsx("my-12", maxWidth && "mx-auto max-w-3xl"), outerClass)}
->
-  <div class="-mx-6 flex overflow-x-auto">
+<div class={twMerge(clsx("my-8", maxWidth && "mx-auto max-w-3xl"), outerClass)}>
+  <div class="-mx-4 flex overflow-x-auto">
     <div
-      class="pointer-events-none sticky left-0 z-10 shrink-0 basis-6 bg-linear-to-r from-manila-light to-transparent dark:from-faded-black"
+      class="pointer-events-none sticky left-0 z-10 shrink-0 basis-4 bg-linear-to-r from-manila-light to-transparent dark:from-faded-black"
       aria-hidden="true"
     >
     </div>
@@ -25,7 +23,7 @@ const { as: Tag = 'table', maxWidth = true, outerClass, class: className, ...pro
       <slot />
     </Tag>
     <div
-      class="pointer-events-none sticky right-0 z-10 shrink-0 basis-6 bg-linear-to-l from-manila-light to-transparent dark:from-faded-black"
+      class="pointer-events-none sticky right-0 z-10 shrink-0 basis-4 bg-linear-to-l from-manila-light to-transparent dark:from-faded-black"
       aria-hidden="true"
     >
     </div>

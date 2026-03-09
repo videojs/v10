@@ -16,7 +16,8 @@
     "@videojs/react": "workspace:*",
     "@videojs/skins": "workspace:*",
     "@videojs/store": "workspace:*",
-    "@videojs/utils": "workspace:*"
+    "@videojs/utils": "workspace:*",
+    "wouter": "^3.0.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.0",

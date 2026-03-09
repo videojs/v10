@@ -1,7 +1,7 @@
 import { Dialog } from '@base-ui/react/dialog';
 import { useStore } from '@nanostores/react';
 import { useEffect, useRef, useState } from 'react';
-import { currentFramework, currentStyle } from '@/stores/preferences';
+import { currentFramework } from '@/stores/preferences';
 
 interface SearchProps {
   children: React.ReactNode;
@@ -14,7 +14,6 @@ interface SearchProps {
 export default function Search({ children, className, baseUrl, bundlePath, searchId, searchStyle }: SearchProps) {
   const [open, setOpen] = useState(false);
   const framework = useStore(currentFramework);
-  const style = useStore(currentStyle);
   const searchRef = useRef<HTMLDivElement>(null);
 
   // load Pagefind when opened
@@ -37,14 +36,13 @@ export default function Search({ children, className, baseUrl, bundlePath, searc
       });
       search.triggerFilters({
         framework: [framework],
-        style: [style],
       });
     };
     init();
     return () => {
       search.destroy();
     };
-  }, [baseUrl, bundlePath, framework, open, searchId, style]);
+  }, [baseUrl, bundlePath, framework, open, searchId]);
 
   // open with cmd+k or ctrl+k
   useEffect(() => {

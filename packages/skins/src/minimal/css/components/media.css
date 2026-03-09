@@ -1,0 +1,30 @@
+/* ==========================================================================
+   Media Element
+   ========================================================================== */
+
+.media-minimal-skin ::slotted(video),
+.media-minimal-skin video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--media-border-radius, 0.75rem);
+}
+
+/* ==========================================================================
+   Poster Image
+   ========================================================================== */
+
+.media-minimal-skin > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+  transition: opacity 0.25s;
+  pointer-events: none;
+
+  &:not([data-visible]) {
+    opacity: 0;
+  }
+}

@@ -1,0 +1,27 @@
+/* ==========================================================================
+   Tooltips
+   ========================================================================== */
+
+.media-minimal-skin .media-tooltip {
+  white-space: nowrap;
+}
+
+.media-minimal-skin .media-tooltip-popup {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  background-color: oklch(1 0 0 / 0.1);
+  backdrop-filter: blur(64px) brightness(0.9) saturate(1.5);
+  box-shadow:
+    0 4px 6px -1px oklch(0 0 0 / 0.1),
+    0 2px 4px -2px oklch(0 0 0 / 0.1);
+  color: oklch(1 0 0);
+  font-size: 0.75rem;
+
+  @media (prefers-reduced-transparency: reduce) {
+    background-color: oklch(0 0 0 / 0.7);
+  }
+
+  @media (prefers-contrast: more) {
+    background-color: oklch(0 0 0 / 0.9);
+  }
+}

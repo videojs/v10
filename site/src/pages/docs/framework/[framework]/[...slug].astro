@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { getCollection, render } from 'astro:content';
+import clsx from 'clsx';
 import CopyMarkdownButton from '@/components/CopyMarkdownButton';
 import DocsNavigation from '@/components/docs/DocsNavigation.astro';
 import EditPageButton from '@/components/docs/EditPageButton.astro';
@@ -89,6 +90,9 @@ const jsonLdSchema = createTechArticleSchema({
   readingTime: remarkPluginFrontmatter.readingTimeMinutes,
   articleSection: sections.length > 0 ? sections.join(' > ') : undefined,
 });
+
+// Leaving this in in case we change our minds
+// const isCamelOrPascalCase = (str: string) => /[a-z][A-Z]/.test(str);
 ---
 
 <DocsLayout doc={doc} framework={framework} slug={slug}>
@@ -139,9 +143,16 @@ const jsonLdSchema = createTechArticleSchema({
           ]}
         >
           <div>
-            <H2Markdown as="h1" class="mt-0 mb-4"
-              >{getDocTitle(doc, framework)}</H2Markdown
+            <H2Markdown
+              as="h1"
+              class={clsx(
+                "mt-0 mb-4 text-h25 @lg:text-h2",
+                // leaving this in in case we change our minds
+                // isCamelOrPascalCase(getDocTitle(doc, framework)) && "normal-case",
+              )}
             >
+              {getDocTitle(doc, framework)}
+            </H2Markdown>
             <p class="text-p2">{doc.data.description}</p>
           </div>
           <CopyMarkdownButton client:idle />

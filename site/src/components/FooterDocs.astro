@@ -1,9 +1,10 @@
 ---
 import { ArrowUpRight } from 'lucide-react';
-import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
+import { DISCORD_INVITE_URL, GITHUB_REPO_URL, MUX_URL } from '@/consts';
 import Discord from './icons/discord.svg?react';
 import GitHub from './icons/github.svg?react';
 import LogoMonoVersion from './icons/logo-mono.svg?react';
+import GetStartedLink from './NavBar/GetStartedLink';
 import { ThemeToggle } from './ThemeToggle';
 
 type NavLink = {
@@ -12,7 +13,6 @@ type NavLink = {
   external?: boolean;
 };
 const navLinks: NavLink[] = [
-  { href: '/docs', label: 'Docs' },
   { href: '/blog', label: 'Blog' },
   { href: '/privacy', label: 'Privacy' },
 ];
@@ -33,6 +33,12 @@ const { class: className } = Astro.props;
       <div
         class="flex justify-between border-t border-b border-faded-black pt-3 pb-3 lg:justify-center lg:border-0 lg:pt-0 lg:pb-0 dark:border-manila-light"
       >
+        <GetStartedLink
+          client:idle
+          className="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase lg:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+        >
+          Docs
+        </GetStartedLink>
         {
           navLinks.map((link) => (
             <a
@@ -79,7 +85,7 @@ const { class: className } = Astro.props;
         class="underline intent:no-underline">video player.</a
       >
       <br class="xl:hidden" />Video hosting and streaming <a
-        href="https://www.mux.com?utm_source=videojs&utm_campaign=vjs10"
+        href={MUX_URL}
         class="underline intent:no-underline"
         >sponsored by Mux.
       </a>

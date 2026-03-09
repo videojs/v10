@@ -7,6 +7,8 @@ import prompts from 'prompts';
 
 const SOURCE = './src';
 const TEMPLATES = './templates';
+// Some file always live in src
+const IGNORE = new Set(['index.html', 'main.tsx']);
 
 function colorizePatch(patch: string): string {
   return patch
@@ -38,7 +40,12 @@ console.log(chalk.bold(`\nComparing ${SOURCE} → ${TEMPLATES}\n`));
 const res = compareSync(SOURCE, TEMPLATES, { compareContent: true });
 
 const changes = (res.diffSet ?? []).filter(
-  (d) => d.state !== 'equal' && d.type1 !== 'directory' && d.type2 !== 'directory'
+  (d) =>
+    d.state !== 'equal' &&
+    d.type1 !== 'directory' &&
+    d.type2 !== 'directory' &&
+    !IGNORE.has(d.name1 ?? '') &&
+    !IGNORE.has(d.name2 ?? '')
 );
 
 if (changes.length === 0) {

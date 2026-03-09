@@ -39,7 +39,7 @@ const renderTitle = title ?? defaultTitles[type];
 <aside
   class={twMerge(
     clsx(
-      "mx-auto my-6 flex w-full max-w-3xl overflow-hidden rounded-xs border border-manila-75 dark:border-warm-gray",
+      "mx-auto my-4 flex w-full max-w-3xl overflow-hidden rounded-xs border border-manila-75 dark:border-warm-gray",
     ),
     className,
   )}
@@ -54,7 +54,7 @@ const renderTitle = title ?? defaultTitles[type];
     )}
   >
   </div>
-  <div class={clsx("flex flex-1 gap-4 p-6 pl-4")}>
+  <div class={clsx("flex flex-1 gap-4 p-4 pl-4")}>
     <div class="mt-0.75 shrink-0">
       <Icon
         size={18}
@@ -70,7 +70,7 @@ const renderTitle = title ?? defaultTitles[type];
     </div>
     <div class="min-w-0 flex-1">
       <p class="mb-2 font-bold">{renderTitle}</p>
-      <div class="[&>*:last-child]:mb-0! [&>.my-12]:my-4 [&>.my-6]:my-2">
+      <div class="[&>*:last-child]:mb-0! [&>.my-4]:my-2 [&>.my-8]:my-4">
         <slot />
       </div>
     </div>

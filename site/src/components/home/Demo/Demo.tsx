@@ -23,7 +23,7 @@ export default function Demo() {
         <FrameworkControl className="mb-5 md:hidden" />
         <BaseDemo className="lg:h-100 m-0" />
       </section>
-      <section className="grid lg:grid-rows-subgrid row-span-4 lg:border-t lg:py-10 border-y border-faded-black dark:border-manila-light">
+      <section className="grid lg:grid-rows-subgrid row-span-4 lg:border-t lg:py-10 border-faded-black dark:border-manila-light">
         <h2 className="text-h2 dark:text-manila-light text-faded-black text-center font-display uppercase mb-2.5 lg:mb-1.25">
           Take full control
         </h2>

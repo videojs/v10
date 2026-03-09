@@ -75,6 +75,7 @@ export class SliderElement extends MediaElement {
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
       adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),
+      onResize: () => this.requestUpdate(),
     });
 
     applyElementProps(this, this.#slider.rootProps, { signal });

@@ -1,0 +1,36 @@
+/* ==========================================================================
+   Time Controls & Display
+   ========================================================================== */
+
+.media-minimal-skin .media-time-controls {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  flex: 1;
+  gap: 0.75rem;
+}
+.media-minimal-skin .media-time {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.media-minimal-skin .media-time__value {
+  font-variant-numeric: tabular-nums;
+}
+.media-minimal-skin .media-time__value--current,
+.media-minimal-skin .media-time__separator {
+  display: none;
+}
+@container media-controls (width > 28rem) {
+  .media-minimal-skin .media-time-controls {
+    flex-direction: row;
+  }
+  .media-minimal-skin .media-time__value--duration,
+  .media-minimal-skin .media-time__separator {
+    color: oklch(from currentColor l c h / 0.6);
+  }
+  .media-minimal-skin .media-time__value--current,
+  .media-minimal-skin .media-time__separator {
+    display: inline;
+  }
+}

@@ -7,6 +7,7 @@ export const twMerge = extendTailwindMerge({
         'text-h1',
         'text-h15',
         'text-h2',
+        'text-h25',
         'text-h3',
         'text-h4',
         'text-h5',

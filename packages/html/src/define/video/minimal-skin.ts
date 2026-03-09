@@ -1,6 +1,7 @@
 import { ReactiveElement } from '@videojs/element';
 import { renderIcon } from '@videojs/icons/render/minimal';
-import { SkinMixin } from '../skin-mixin';
+import { createStyles, SkinMixin } from '../skin-mixin';
+import styles from './minimal-skin.css?inline';
 
 // Side-effect imports: register all custom elements used in the template.
 import '../media/container';
@@ -21,12 +22,14 @@ const SEEK_TIME = 10;
 
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="media-minimal-skin">
+    <media-container class="media-minimal-skin media-minimal-skin--video">
+      <slot name="media"></slot>
+
       <media-buffering-indicator class="media-buffering-indicator">
         ${renderIcon('spinner', { class: 'media-icon' })}
       </media-buffering-indicator>
 
-      <div class="media-error" role="alertdialog" aria-labelledby="media-error-title" aria-describedby="media-error-description">
+      <!--<div class="media-error" role="alertdialog" aria-labelledby="media-error-title" aria-describedby="media-error-description">
         <div class="media-error__dialog">
           <div class="media-error__content">
             <p id="media-error-title" class="media-error__title">Something went wrong.</p>
@@ -36,7 +39,7 @@ function getTemplateHTML() {
             <button type="button" class="media-button">OK</button>
           </div>
         </div>
-      </div>
+      </div>-->
 
       <media-controls class="media-controls">
         <span class="media-button-group">
@@ -81,13 +84,13 @@ function getTemplateHTML() {
           <media-playback-rate-button class="media-button media-button--icon media-button--playback-rate">
           </media-playback-rate-button>
 
-          <media-mute-button commandfor="volume-popover" class="media-button media-button--icon media-button--mute">
+          <media-mute-button commandfor="video-volume-popover" class="media-button media-button--icon media-button--mute">
             ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
             ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
             ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
           </media-mute-button>
 
-          <media-popover id="volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="media-surface media-popup media-popup--volume media-popup-animation">
+          <media-popover id="video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="media-surface media-popup media-popup--volume media-popup-animation">
             <media-volume-slider class="media-slider" orientation="vertical" thumb-alignment="edge">
               <media-slider-track class="media-slider__track">
                 <media-slider-fill class="media-slider__fill"></media-slider-fill>
@@ -113,14 +116,13 @@ function getTemplateHTML() {
       </media-controls>
 
       <div class="media-overlay"></div>
-
-      <slot name="media"></slot>
     </media-container>
   `;
 }
 
 export class MinimalVideoSkinElement extends SkinMixin(ReactiveElement) {
   static readonly tagName = 'video-minimal-skin';
+  static styles = createStyles(styles);
   static getTemplateHTML = getTemplateHTML;
 }
 
