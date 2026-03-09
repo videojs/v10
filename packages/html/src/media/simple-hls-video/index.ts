@@ -1,6 +1,6 @@
-import { SpfCustomMedia } from '@videojs/core/dom/media/spf';
+import { SimpleHlsCustomMedia } from '@videojs/core/dom/media/simple-hls';
 
-export class SpfVideo extends SpfCustomMedia {
+export class SimpleHlsVideo extends SimpleHlsCustomMedia {
   static getTemplateHTML(attrs: Record<string, string>): string {
     const { src, ...rest } = attrs;
     // biome-ignore lint/complexity/noThisInStatic: intentional use of super

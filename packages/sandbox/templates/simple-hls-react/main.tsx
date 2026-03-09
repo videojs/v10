@@ -1,13 +1,13 @@
-// SPF + Video.js integration sandbox — React
-// http://localhost:5173/spf-react/
+// SimpleHlsVideo + Video.js integration sandbox — React
+// http://localhost:5173/simple-hls-react/
 //
-// React equivalent of the spf-html sandbox: SPF inside a VJS player with
-// play/mute controls. SpfVideo registers itself via useMediaRegistration so
-// the store discovers it without any querySelector involved.
+// React equivalent of the simple-hls-html sandbox: SimpleHlsVideo inside a VJS
+// player with play/mute controls. SimpleHlsVideo registers itself via
+// useMediaRegistration so the store discovers it without any querySelector.
 
 import { PauseIcon, PlayIcon, RestartIcon, VolumeHighIcon, VolumeOffIcon } from '@videojs/icons/react';
 import { Container, createPlayer, MuteButton, PlayButton } from '@videojs/react';
-import { SpfVideo } from '@videojs/react/media/spf-video';
+import { SimpleHlsVideo } from '@videojs/react/media/simple-hls-video';
 import { videoFeatures } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
 
@@ -37,7 +37,7 @@ function App() {
         }}
       >
         <Container>
-          <SpfVideo
+          <SimpleHlsVideo
             src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8"
             preload="auto"
             playsInline

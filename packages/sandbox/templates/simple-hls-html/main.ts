@@ -1,15 +1,15 @@
-// SPF + Video.js integration sandbox
-// http://localhost:5173/spf-vjs/
+// SimpleHlsVideo + Video.js integration sandbox
+// http://localhost:5173/simple-hls-html/
 //
-// Tests SPF fully integrated into a VJS player with UI controls.
-// <spf-video> is discovered by ContainerMixin via [data-media-element].
+// Tests SimpleHlsVideo fully integrated into a VJS player with UI controls.
+// <simple-hls-video> is discovered by ContainerMixin via [data-media-element].
 //
 // Icon visibility is driven by data-* attributes set by the button elements:
 //   media-play-button: [data-paused], [data-ended]
 //   media-mute-button: [data-muted]
 
 import '@videojs/html/video/player';
-import '@videojs/html/media/spf-video';
+import '@videojs/html/media/simple-hls-video';
 import '@videojs/html/ui/play-button';
 import '@videojs/html/ui/mute-button';
 import { pauseIcon, playIcon, restartIcon, volumeHighIcon, volumeOffIcon } from '@videojs/icons/html';
@@ -30,7 +30,7 @@ document.getElementById('root')!.innerHTML = html`
       display: contents;
     }
 
-    spf-video {
+    simple-hls-video {
       width: 640px;
       aspect-ratio: 16 / 9;
       display: block;
@@ -82,11 +82,11 @@ document.getElementById('root')!.innerHTML = html`
 
   <div class="player-wrapper">
     <video-player>
-      <spf-video
+      <simple-hls-video
         src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8"
         preload="auto"
         playsinline
-      ></spf-video>
+      ></simple-hls-video>
 
       <div class="control-bar">
         <media-play-button>

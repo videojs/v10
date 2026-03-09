@@ -1,4 +1,4 @@
-import { SpfMedia } from '@videojs/core/dom/media/spf';
+import { SimpleHlsMedia } from '@videojs/core/dom/media/simple-hls';
 import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
 import { forwardRef, useEffect, useMemo } from 'react';
 import { useMediaRegistration } from '../../player/context';
@@ -6,12 +6,12 @@ import { attachMediaElement } from '../../utils/attach-media-element';
 import { mediaProps } from '../../utils/media-props';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 
-// TODO: mediaProps uses media.preload which SpfMedia does not yet expose.
-// Add preload getter/setter to SpfMedia as a follow-up.
-export type SpfVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElement>>;
+// TODO: mediaProps uses media.preload which SimpleHlsMedia does not yet expose.
+// Add preload getter/setter to SimpleHlsMedia as a follow-up.
+export type SimpleHlsVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElement>>;
 
-export const SpfVideo = forwardRef<HTMLVideoElement, SpfVideoProps>(({ children, ...props }, ref) => {
-  const mediaApi = useMemo(() => new SpfMedia(), []);
+export const SimpleHlsVideo = forwardRef<HTMLVideoElement, SimpleHlsVideoProps>(({ children, ...props }, ref) => {
+  const mediaApi = useMemo(() => new SimpleHlsMedia(), []);
   const setMedia = useMediaRegistration();
 
   useEffect(() => {
@@ -26,4 +26,4 @@ export const SpfVideo = forwardRef<HTMLVideoElement, SpfVideoProps>(({ children,
   );
 });
 
-export default SpfVideo;
+export default SimpleHlsVideo;
