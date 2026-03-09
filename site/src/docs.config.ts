@@ -35,6 +35,7 @@ export const sidebar: Sidebar = [
     contents: [
       // sorted alphabetically
       { slug: 'reference/buffering-indicator' },
+      { slug: 'reference/captions-button' },
       { slug: 'reference/controls' },
       { slug: 'reference/fullscreen-button' },
       { slug: 'reference/mute-button' },

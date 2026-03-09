@@ -1,0 +1,92 @@
+---
+title: CaptionsButton
+frameworkTitle:
+  html: media-captions-button
+description: Accessible captions toggle button with availability detection and state reflection
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/captions-button/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/captions-button/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/captions-button/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/captions-button/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/captions-button/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/captions-button/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/captions-button/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<CaptionsButton />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-captions-button></media-captions-button>
+```
+</FrameworkCase>
+
+## Behavior
+
+Toggles captions and subtitles on and off. The button checks the media's text track list for tracks with `kind="captions"` or `kind="subtitles"` and reflects availability via `data-availability`.
+
+When no caption or subtitle tracks are present, `data-availability="unavailable"` is set. Use this to hide the button when there are no tracks to toggle.
+
+## Styling
+
+Style the button based on active state:
+
+```css
+media-captions-button[data-active] .icon-on { display: inline; }
+media-captions-button:not([data-active]) .icon-off { display: inline; }
+```
+
+Hide when no caption tracks are available:
+
+```css
+media-captions-button[data-availability="unavailable"] {
+  display: none;
+}
+```
+
+## Accessibility
+
+Renders a `<button>` with an automatic `aria-label`: "Disable captions" when active, "Enable captions" when inactive. Override with the `label` prop. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="CaptionsButton" />
