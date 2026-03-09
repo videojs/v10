@@ -35,6 +35,8 @@ export interface PopoverTriggerProps {
 export interface PopoverPopupProps {
   onPointerEnter: (event: UIPointerEvent) => void;
   onPointerLeave: (event: UIPointerEvent) => void;
+  onGotPointerCapture: (event: UIPointerEvent) => void;
+  onLostPointerCapture: (event: UIPointerEvent) => void;
   onFocusOut: (event: UIFocusEvent) => void;
 }
 
@@ -56,6 +58,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   let triggerEl: HTMLElement | null = null;
   let popupEl: HTMLElement | null = null;
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
+  const capturedPointers = new Set<number>();
 
   const layer = createDismissLayer({
     transition: options.transition,
@@ -154,6 +157,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   // Cleanup hover timeout on destroy.
   layer.signal.addEventListener('abort', () => {
     clearHoverTimeout();
+    capturedPointers.clear();
     triggerEl = null;
     popupEl = null;
   });
@@ -227,12 +231,24 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     onPointerLeave(_event) {
       if (!options.openOnHover?.()) return;
 
+      // A descendant has pointer capture (e.g. slider drag). The leave is
+      // synthetic — the pointer hasn't actually left — so don't close.
+      if (capturedPointers.size > 0) return;
+
       clearHoverTimeout();
 
       if (!state.current.active) return;
 
       const closeDelay = options.closeDelay?.() ?? 0;
       hoverTimeout = setTimeout(() => applyClose('hover'), closeDelay);
+    },
+
+    onGotPointerCapture(event) {
+      capturedPointers.add(event.pointerId);
+    },
+
+    onLostPointerCapture(event) {
+      capturedPointers.delete(event.pointerId);
     },
 
     onFocusOut(event) {
