@@ -2,13 +2,14 @@
 // http://localhost:5173/simple-hls-html/
 //
 // Tests SimpleHlsVideo fully integrated into a VJS player with UI controls.
-// <simple-hls-video> is discovered by ContainerMixin via [data-media-element].
+// <media-container> wraps <simple-hls-video> and attaches it to the player store.
 //
 // Icon visibility is driven by data-* attributes set by the button elements:
 //   media-play-button: [data-paused], [data-ended]
 //   media-mute-button: [data-muted]
 
 import '@videojs/html/video/player';
+import '@videojs/html/media/container';
 import '@videojs/html/media/simple-hls-video';
 import '@videojs/html/ui/play-button';
 import '@videojs/html/ui/mute-button';
@@ -82,11 +83,13 @@ document.getElementById('root')!.innerHTML = html`
 
   <div class="player-wrapper">
     <video-player>
-      <simple-hls-video
-        src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8"
-        preload="auto"
-        playsinline
-      ></simple-hls-video>
+      <media-container style="display: contents;">
+        <simple-hls-video
+          src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8"
+          preload="auto"
+          playsinline
+        ></simple-hls-video>
+      </media-container>
 
       <div class="control-bar">
         <media-play-button>
