@@ -47,11 +47,23 @@ The poster is visible before playback starts. Once the user plays or seeks, the 
 
 Style the poster with the `[data-visible]` attribute:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 media-poster:not([data-visible]) {
   display: none;
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders an `<img>` with the same data attributes. Add a `className` and use it as the selector:
+
+```css
+.poster:not([data-visible]) {
+  display: none;
+}
+```
+</FrameworkCase>
 
 You control the child `<img>` — this means `srcset`, `sizes`, `loading="lazy"`, and framework image components all work naturally.
 

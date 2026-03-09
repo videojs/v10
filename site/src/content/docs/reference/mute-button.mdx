@@ -54,19 +54,41 @@ Toggles mute on and off, and exposes a derived `volumeLevel` based on the curren
 
 Style the button based on muted state:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 media-mute-button[data-muted] .icon-muted { display: inline; }
 media-mute-button:not([data-muted]) .icon-unmuted { display: inline; }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders a `<button>` with the same data attributes. Add a `className` and use it as the selector:
+
+```css
+.mute-button[data-muted] .icon-muted { display: inline; }
+.mute-button:not([data-muted]) .icon-unmuted { display: inline; }
+```
+</FrameworkCase>
 
 Use `data-volume-level` for multi-level icon switching:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 media-mute-button[data-volume-level="off"] .icon-off { display: inline; }
 media-mute-button[data-volume-level="low"] .icon-low { display: inline; }
 media-mute-button[data-volume-level="medium"] .icon-medium { display: inline; }
 media-mute-button[data-volume-level="high"] .icon-high { display: inline; }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+.mute-button[data-volume-level="off"] .icon-off { display: inline; }
+.mute-button[data-volume-level="low"] .icon-low { display: inline; }
+.mute-button[data-volume-level="medium"] .icon-medium { display: inline; }
+.mute-button[data-volume-level="high"] .icon-high { display: inline; }
+```
+</FrameworkCase>
 
 ## Accessibility
 
