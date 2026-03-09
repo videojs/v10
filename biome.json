@@ -132,8 +132,7 @@
       "!**/dist",
       "!**/examples",
       "!**/styles/vjs.css",
-      "!**/packages/*/types",
-      "!**/packages/__tech-preview__"
+      "!**/packages/*/types"
     ]
   }
 }
