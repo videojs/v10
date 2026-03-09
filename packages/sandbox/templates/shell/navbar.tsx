@@ -53,10 +53,12 @@ export function Navbar({
   sources,
 }: NavbarProps) {
   return (
-    <header className="shrink-0 border-b border-zinc-200 bg-white flex items-center px-4 h-14 gap-6">
-      <span className="text-sm font-semibold tracking-tight whitespace-nowrap text-zinc-950">Video.js v10</span>
+    <header className="shrink-0 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex items-center px-4 h-14 gap-6">
+      <span className="text-sm font-semibold tracking-tight whitespace-nowrap text-zinc-950 dark:text-zinc-50">
+        Video.js v10
+      </span>
 
-      <div className="h-5 w-px bg-zinc-200" />
+      <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-800" />
 
       <div className="flex items-center gap-4">
         <Select
@@ -106,7 +108,7 @@ export function Navbar({
           href="https://github.com/videojs/v10"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center size-8 rounded-md text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100 transition-colors"
+          className="inline-flex items-center justify-center size-8 rounded-md text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
         >
           <span className="sr-only">GitHub repository</span>
           <svg
@@ -145,13 +147,13 @@ type SelectProps = {
 function Select({ label, value, onChange, options, disabled }: SelectProps) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[13px] font-medium text-zinc-500">{label}</span>
+      <span className="text-[13px] font-medium text-zinc-500 dark:text-zinc-400">{label}</span>
       <div className="relative">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          className="h-8 appearance-none rounded-md border-none bg-clip-border ring ring-zinc-800/10 bg-white pl-3 pr-8 text-[13px] font-medium text-zinc-950 shadow-xs shadow-black/20 transition-colors hover:bg-zinc-50 focus:outline-2 focus:outline-zinc-950 focus:outline-offset-2 disabled:pointer-events-none disabled:opacity-50"
+          className="h-8 appearance-none rounded-md border-none bg-clip-border ring ring-zinc-800/10 dark:ring-white/10 bg-white dark:bg-zinc-900 pl-3 pr-8 text-[13px] font-medium text-zinc-950 dark:text-zinc-50 shadow-xs shadow-black/20 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900 focus:outline-2 focus:outline-zinc-950 dark:focus:outline-zinc-50 focus:outline-offset-2 disabled:pointer-events-none disabled:opacity-50"
         >
           {options.map((opt) => (
             <option key={opt.value} value={opt.value} disabled={opt.disabled}>
@@ -160,7 +162,7 @@ function Select({ label, value, onChange, options, disabled }: SelectProps) {
           ))}
         </select>
         <svg
-          className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500"
+          className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500 dark:text-zinc-400"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           fill="none"

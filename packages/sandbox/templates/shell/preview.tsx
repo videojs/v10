@@ -12,12 +12,12 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
   const openUrl = `${pagePath}?skin=${encodeURIComponent(skin)}&source=${encodeURIComponent(source)}`;
 
   return (
-    <main className="flex-1 min-h-0 relative bg-zinc-50">
+    <main className="flex-1 min-h-0 relative bg-zinc-50 dark:bg-zinc-900">
       <a
         href={openUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 h-7 rounded-md bg-clip-border ring ring-zinc-800/10 bg-white px-2.5 text-xs font-medium text-zinc-600 shadow-xs shadow-black/20 transition-colors hover:bg-zinc-50 hover:text-zinc-950"
+        className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 h-7 rounded-md bg-clip-border ring ring-zinc-800/10 dark:ring-white/10 bg-white dark:bg-zinc-800 px-2.5 text-xs font-medium text-zinc-600 dark:text-zinc-300 shadow-xs shadow-black/20 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-zinc-50"
         title="Open in new tab"
       >
         Open
