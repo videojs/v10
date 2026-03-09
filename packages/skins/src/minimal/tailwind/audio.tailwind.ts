@@ -36,6 +36,19 @@ export const controls = cn(
 );
 
 /* ==========================================================================
+   Tooltip State (audio: play only)
+   ========================================================================== */
+
+export const tooltipState = {
+  play: {
+    wrapper: 'contents group/play-tip',
+    replay: 'hidden group-has-data-ended/play-tip:block',
+    play: 'hidden group-[:has([data-paused]):not(:has([data-ended]))]/play-tip:block',
+    pause: 'hidden group-[:not(:has([data-paused])):not(:has([data-ended]))]/play-tip:block',
+  },
+};
+
+/* ==========================================================================
    Popup
    ========================================================================== */
 

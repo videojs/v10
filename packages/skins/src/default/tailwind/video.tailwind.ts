@@ -142,3 +142,4 @@ export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { seek } from './components/seek';
 export { time } from './components/time';
+export { tooltipState } from './components/tooltip-state';

@@ -1,4 +1,5 @@
 @import "../../shared/video-icon-state.css";
+@import "../../shared/tooltip-state.css";
 @import "./components/reset.css";
 @import "./components/root.css";
 @import "./components/surface.css";
@@ -12,7 +13,6 @@
 @import "./components/icons.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
-@import "./components/tooltip.css";
 @import "./components/captions.css";
 
 /* ==========================================================================

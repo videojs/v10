@@ -109,3 +109,4 @@ export { iconState } from './components/icon-state';
 export { overlay } from './components/overlay';
 export { seek } from './components/seek';
 export { time } from './components/time';
+export { tooltipState } from './components/tooltip-state';

@@ -32,7 +32,7 @@ import {
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
-import { Container } from '@/player/context';
+import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
@@ -45,6 +45,7 @@ import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
+import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { ErrorDialog } from './error-dialog';
 import type { VideoSkinProps } from './skin';
@@ -114,6 +115,28 @@ const errorClasses = {
   close: cn(button.base, button.default),
 };
 
+function PlayLabel(): ReactNode {
+  const paused = usePlayer((s) => Boolean(s.paused));
+  const ended = usePlayer((s) => Boolean(s.ended));
+  if (ended) return <>Replay</>;
+  return paused ? <>Play</> : <>Pause</>;
+}
+
+function CaptionsLabel(): ReactNode {
+  const active = usePlayer((s) => Boolean(s.subtitlesShowing));
+  return active ? <>Disable captions</> : <>Enable captions</>;
+}
+
+function PiPLabel(): ReactNode {
+  const pip = usePlayer((s) => Boolean(s.pip));
+  return pip ? <>Exit picture-in-picture</> : <>Enter picture-in-picture</>;
+}
+
+function FullscreenLabel(): ReactNode {
+  const fullscreen = usePlayer((s) => Boolean(s.fullscreen));
+  return fullscreen ? <>Exit fullscreen</> : <>Enter fullscreen</>;
+}
+
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
@@ -139,39 +162,62 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
         data-controls="" // Used as a hook for Tailwind has-[] styles
         className={controls}
       >
-        <PlayButton
-          render={(props) => (
-            <Button variant="icon" {...props} className={iconState.play.button}>
-              <RestartIcon className={cn(icon, iconState.play.restart)} />
-              <PlayIcon className={cn(icon, iconState.play.play)} />
-              <PauseIcon className={cn(icon, iconState.play.pause)} />
-            </Button>
-          )}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <PlayButton
+                render={(props) => (
+                  <Button variant="icon" {...props} className={iconState.play.button}>
+                    <RestartIcon className={cn(icon, iconState.play.restart)} />
+                    <PlayIcon className={cn(icon, iconState.play.play)} />
+                    <PauseIcon className={cn(icon, iconState.play.pause)} />
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>
+            <PlayLabel />
+          </Tooltip.Popup>
+        </Tooltip.Root>
 
-        <SeekButton
-          seconds={-SEEK_TIME}
-          render={(props) => (
-            <Button variant="icon" {...props} className={seek.button}>
-              <span className={iconContainer}>
-                <SeekIcon className={cn(icon, iconFlipped)} />
-                <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
-              </span>
-            </Button>
-          )}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <SeekButton
+                seconds={-SEEK_TIME}
+                render={(props) => (
+                  <Button variant="icon" {...props} className={seek.button}>
+                    <span className={iconContainer}>
+                      <SeekIcon className={cn(icon, iconFlipped)} />
+                      <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
+                    </span>
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+        </Tooltip.Root>
 
-        <SeekButton
-          seconds={SEEK_TIME}
-          render={(props) => (
-            <Button variant="icon" {...props} className={seek.button}>
-              <span className={iconContainer}>
-                <SeekIcon className={icon} />
-                <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
-              </span>
-            </Button>
-          )}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <SeekButton
+                seconds={SEEK_TIME}
+                render={(props) => (
+                  <Button variant="icon" {...props} className={seek.button}>
+                    <span className={iconContainer}>
+                      <SeekIcon className={icon} />
+                      <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
+                    </span>
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+        </Tooltip.Root>
 
         <Time.Group className={time.group}>
           <Time.Value type="current" className={time.current} />
@@ -185,7 +231,16 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           <Time.Value type="duration" className={time.duration} />
         </Time.Group>
 
-        <PlaybackRateButton render={(props) => <Button variant="icon" {...props} className={playbackRate.button} />} />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <PlaybackRateButton
+                render={(props) => <Button variant="icon" {...props} className={playbackRate.button} />}
+              />
+            }
+          />
+          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
+        </Tooltip.Root>
 
         <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
           <Popover.Trigger
@@ -201,7 +256,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Popover.Popup className={cn(popup.base, popup.volume)}>
+          <Popover.Popup className={cn(popup.base, popup.popover, popup.volume)}>
             <VolumeSlider.Root
               orientation="vertical"
               thumbAlignment="edge"
@@ -215,31 +270,58 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           </Popover.Popup>
         </Popover.Root>
 
-        <CaptionsButton
-          render={(props) => (
-            <Button variant="icon" {...props} className={iconState.captions.button}>
-              <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
-              <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
-            </Button>
-          )}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <CaptionsButton
+                render={(props) => (
+                  <Button variant="icon" {...props} className={iconState.captions.button}>
+                    <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
+                    <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>
+            <CaptionsLabel />
+          </Tooltip.Popup>
+        </Tooltip.Root>
 
-        <PiPButton
-          render={(props) => (
-            <Button variant="icon" {...props}>
-              <PipIcon className={icon} />
-            </Button>
-          )}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <PiPButton
+                render={(props) => (
+                  <Button variant="icon" {...props}>
+                    <PipIcon className={icon} />
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>
+            <PiPLabel />
+          </Tooltip.Popup>
+        </Tooltip.Root>
 
-        <FullscreenButton
-          render={(props) => (
-            <Button variant="icon" {...props} className={iconState.fullscreen.button}>
-              <FullscreenEnterIcon className={cn(icon, iconState.fullscreen.enter)} />
-              <FullscreenExitIcon className={cn(icon, iconState.fullscreen.exit)} />
-            </Button>
-          )}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <FullscreenButton
+                render={(props) => (
+                  <Button variant="icon" {...props} className={iconState.fullscreen.button}>
+                    <FullscreenEnterIcon className={cn(icon, iconState.fullscreen.enter)} />
+                    <FullscreenExitIcon className={cn(icon, iconState.fullscreen.exit)} />
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>
+            <FullscreenLabel />
+          </Tooltip.Popup>
+        </Tooltip.Root>
       </Controls.Root>
 
       {/* <div className={captions.root}>

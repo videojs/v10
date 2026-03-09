@@ -13,6 +13,7 @@ import {
   seek,
   slider,
   time,
+  tooltipState,
 } from '@videojs/skins/default/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { SkinMixin } from '../skin-mixin';
@@ -26,6 +27,7 @@ import '../ui/popover';
 import '../ui/seek-button';
 import '../ui/time';
 import '../ui/time-slider';
+import '../ui/tooltip';
 import '../ui/volume-slider';
 
 const SEEK_TIME = 10;
@@ -36,25 +38,38 @@ function getTemplateHTML() {
       <slot name="media"></slot>
 
       <div class="${controls}">
-        <media-play-button class="${cn(button.base, button.icon, iconState.play.button)}">
-          ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
-          ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
-          ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
-        </media-play-button>
+        <span class="${tooltipState.play.wrapper}">
+          <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.icon, iconState.play.button)}">
+            ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
+            ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
+            ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
+          </media-play-button>
+          <media-tooltip id="play-tooltip" side="top" class="${cn(popup.base, popup.tooltip)}">
+            <span class="${tooltipState.play.replay}">Replay</span>
+            <span class="${tooltipState.play.play}">Play</span>
+            <span class="${tooltipState.play.pause}">Pause</span>
+          </media-tooltip>
+        </span>
 
-        <media-seek-button seconds="${-SEEK_TIME}" class="${cn(button.base, button.icon, seek.button)}">
+        <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.icon, seek.button)}">
           <span class="${iconContainer}">
             ${renderIcon('seek', { class: cn(icon, iconFlipped) })}
             <span class="${cn(seek.label, seek.labelBackward)}">${SEEK_TIME}</span>
           </span>
         </media-seek-button>
+        <media-tooltip id="seek-backward-tooltip" side="top" class="${cn(popup.base, popup.tooltip)}">
+          Seek backward ${SEEK_TIME} seconds
+        </media-tooltip>
 
-        <media-seek-button seconds="${SEEK_TIME}" class="${cn(button.base, button.icon, seek.button)}">
+        <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.icon, seek.button)}">
           <span class="${iconContainer}">
             ${renderIcon('seek', { class: icon })}
             <span class="${cn(seek.label, seek.labelForward)}">${SEEK_TIME}</span>
           </span>
         </media-seek-button>
+        <media-tooltip id="seek-forward-tooltip" side="top" class="${cn(popup.base, popup.tooltip)}">
+          Seek forward ${SEEK_TIME} seconds
+        </media-tooltip>
 
         <media-time-group class="${time.group}">
           <media-time type="current" class="${time.current}"></media-time>
@@ -68,8 +83,10 @@ function getTemplateHTML() {
           <media-time type="duration" class="${time.duration}"></media-time>
         </media-time-group>
 
-        <media-playback-rate-button class="${cn(button.base, button.icon, playbackRate.button)}">
-        </media-playback-rate-button>
+        <media-playback-rate-button commandfor="playback-rate-tooltip"  class="${cn(button.base, button.icon, playbackRate.button)}"></media-playback-rate-button>
+        <media-tooltip id="playback-rate-tooltip" side="top" class="${cn(popup.base, popup.tooltip)}">
+          Toggle playback rate
+        </media-tooltip>
 
         <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.icon, iconState.mute.button)}">
           ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
@@ -77,7 +94,7 @@ function getTemplateHTML() {
           ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
         </media-mute-button>
 
-        <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="${cn(popup.base, popup.volume)}">
+        <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="${cn(popup.base, popup.popover, popup.volume)}">
           <media-volume-slider class="${slider.root}" orientation="vertical" thumb-alignment="edge">
             <media-slider-track class="${slider.track}">
               <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>

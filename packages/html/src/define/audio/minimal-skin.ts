@@ -12,6 +12,7 @@ import '../ui/popover';
 import '../ui/seek-button';
 import '../ui/time';
 import '../ui/time-slider';
+import '../ui/tooltip';
 import '../ui/volume-slider';
 
 const SEEK_TIME = 10;
@@ -23,25 +24,36 @@ function getTemplateHTML() {
 
       <div class="media-controls">
         <span class="media-button-group">
-          <media-play-button class="media-button media-button--icon media-button--play">
+          <media-play-button commandfor="play-tooltip" class="media-button media-button--icon media-button--play">
             ${renderIcon('restart', { class: 'media-icon media-icon--restart' })}
             ${renderIcon('play', { class: 'media-icon media-icon--play' })}
             ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
           </media-play-button>
+          <media-tooltip id="play-tooltip" side="top" class="media-popup media-popup--tooltip">
+            <span class="media-tooltip-label media-tooltip-label--replay">Replay</span>
+            <span class="media-tooltip-label media-tooltip-label--play">Play</span>
+            <span class="media-tooltip-label media-tooltip-label--pause">Pause</span>
+          </media-tooltip>
 
-          <media-seek-button seconds="${-SEEK_TIME}" class="media-button media-button--icon media-button--seek">
+          <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="media-button media-button--icon media-button--seek">
             <span class="media-icon__container">
               ${renderIcon('seek', { class: 'media-icon media-icon--seek media-icon--flipped' })}
               <span class="media-icon__label">${SEEK_TIME}</span>
             </span>
           </media-seek-button>
+          <media-tooltip id="seek-backward-tooltip" side="top" class="media-popup media-popup--tooltip">
+            Seek backward ${SEEK_TIME} seconds
+          </media-tooltip>
 
-          <media-seek-button seconds="${SEEK_TIME}" class="media-button media-button--icon media-button--seek">
+          <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="media-button media-button--icon media-button--seek">
             <span class="media-icon__container">
               ${renderIcon('seek', { class: 'media-icon media-icon--seek' })}
               <span class="media-icon__label">${SEEK_TIME}</span>
             </span>
           </media-seek-button>
+          <media-tooltip id="seek-forward-tooltip" side="top" class="media-popup media-popup--tooltip">
+            Seek forward ${SEEK_TIME} seconds
+          </media-tooltip>
         </span>
 
         <span class="media-time-controls">
@@ -61,8 +73,11 @@ function getTemplateHTML() {
         </span>
 
         <span class="media-button-group">
-          <media-playback-rate-button class="media-button media-button--icon media-button--playback-rate">
+          <media-playback-rate-button commandfor="playback-rate-tooltip"  class="media-button media-button--icon media-button--playback-rate">
           </media-playback-rate-button>
+          <media-tooltip id="playback-rate-tooltip" side="top" class="media-popup media-popup--tooltip">
+            Toggle playback rate
+          </media-tooltip>
 
           <media-mute-button commandfor="audio-volume-popover" class="media-button media-button--icon media-button--mute">
             ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
@@ -70,7 +85,7 @@ function getTemplateHTML() {
             ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
           </media-mute-button>
 
-          <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" class="media-surface media-popup media-popup--volume media-popup-animation">
+          <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" class="media-popup media-popup--popover media-popup--volume">
             <media-volume-slider class="media-slider" orientation="horizontal" thumb-alignment="edge">
               <media-slider-track class="media-slider__track">
                 <media-slider-fill class="media-slider__fill"></media-slider-fill>

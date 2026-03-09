@@ -14,6 +14,7 @@ import {
   seek,
   slider,
   time,
+  tooltipState,
 } from '@videojs/skins/minimal/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { SkinMixin } from '../skin-mixin';
@@ -27,6 +28,7 @@ import '../ui/popover';
 import '../ui/seek-button';
 import '../ui/time';
 import '../ui/time-slider';
+import '../ui/tooltip';
 import '../ui/volume-slider';
 
 const SEEK_TIME = 10;
@@ -38,25 +40,38 @@ function getTemplateHTML() {
 
       <div class="${controls}">
         <span class="${buttonGroup}">
-          <media-play-button class="${cn(button.base, button.icon, iconState.play.button)}">
-            ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
-            ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
-            ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
-          </media-play-button>
+          <span class="${tooltipState.play.wrapper}">
+            <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.icon, iconState.play.button)}">
+              ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
+              ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
+              ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
+            </media-play-button>
+            <media-tooltip id="play-tooltip" side="top" class="${cn(popup.base, popup.tooltip)}">
+              <span class="${tooltipState.play.replay}">Replay</span>
+              <span class="${tooltipState.play.play}">Play</span>
+              <span class="${tooltipState.play.pause}">Pause</span>
+            </media-tooltip>
+          </span>
 
-          <media-seek-button seconds="${-SEEK_TIME}" class="${cn(button.base, button.icon, seek.button)}">
+          <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.icon, seek.button)}">
             <span class="${iconContainer}">
               ${renderIcon('seek', { class: cn(icon, iconFlipped) })}
               <span class="${cn(seek.label, seek.labelBackward)}">${SEEK_TIME}</span>
             </span>
           </media-seek-button>
+          <media-tooltip id="seek-backward-tooltip" side="top" class="${cn(popup.base, popup.tooltip)}">
+            Seek backward ${SEEK_TIME} seconds
+          </media-tooltip>
 
-          <media-seek-button seconds="${SEEK_TIME}" class="${cn(button.base, button.icon, seek.button)}">
+          <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.icon, seek.button)}">
             <span class="${iconContainer}">
               ${renderIcon('seek', { class: icon })}
               <span class="${cn(seek.label, seek.labelForward)}">${SEEK_TIME}</span>
             </span>
           </media-seek-button>
+          <media-tooltip id="seek-forward-tooltip" side="top" class="${cn(popup.base, popup.tooltip)}">
+            Seek forward ${SEEK_TIME} seconds
+          </media-tooltip>
         </span>
 
         <span class="${time.controls}">
@@ -76,8 +91,11 @@ function getTemplateHTML() {
         </span>
 
         <span class="${buttonGroup}">
-          <media-playback-rate-button class="${cn(button.base, button.icon, playbackRate.button)}">
+          <media-playback-rate-button commandfor="playback-rate-tooltip"  class="${cn(button.base, button.icon, playbackRate.button)}">
           </media-playback-rate-button>
+          <media-tooltip id="playback-rate-tooltip" side="top" class="${cn(popup.base, popup.tooltip)}">
+            Toggle playback rate
+          </media-tooltip>
 
           <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.icon, iconState.mute.button)}">
             ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}

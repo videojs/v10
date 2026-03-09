@@ -1,8 +1,12 @@
 /* ==========================================================================
-   Popups & Animations
+   Popups & Tooltips
    ========================================================================== */
 
-.media-default-skin .media-popup-animation {
+.media-default-skin .media-popup {
+  margin: 0;
+  border: 0;
+  color: inherit;
+  overflow: visible;
   transition-property: transform, scale, opacity, filter;
   transition-duration: 200ms;
 
@@ -31,12 +35,18 @@
   }
 }
 
-.media-default-skin .media-popup {
-  margin: 0;
-  border: 0;
-  color: inherit;
+.media-default-skin .media-popup--popover {
   --media-popover-side-offset: 0.5rem;
 }
+
+.media-default-skin .media-popup--tooltip {
+  padding: 0.25rem 0.625rem;
+  border-radius: calc(infinity * 1px);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  --media-tooltip-side-offset: 0.5rem;
+}
+
 .media-default-skin .media-popup--volume {
   padding: 0.625rem 0.25rem;
   border-radius: calc(infinity * 1px);

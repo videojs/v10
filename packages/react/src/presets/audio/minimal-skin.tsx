@@ -9,7 +9,7 @@ import {
 } from '@videojs/icons/react/minimal';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
-import { Container } from '@/player/context';
+import { Container, usePlayer } from '@/player/context';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
@@ -17,6 +17,7 @@ import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
+import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import type { BaseSkinProps } from '../types';
 
@@ -28,6 +29,13 @@ const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function 
   return <button ref={ref} type="button" className={cn('media-button', className)} {...props} />;
 });
 
+function PlayLabel(): ReactNode {
+  const paused = usePlayer((s) => Boolean(s.paused));
+  const ended = usePlayer((s) => Boolean(s.ended));
+  if (ended) return <>Replay</>;
+  return paused ? <>Play</> : <>Pause</>;
+}
+
 export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 
@@ -37,39 +45,64 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
 
       <div className="media-controls">
         <span className="media-button-group">
-          <PlayButton
-            render={(props) => (
-              <Button {...props} className="media-button--icon media-button--play">
-                <RestartIcon className="media-icon media-icon--restart" />
-                <PlayIcon className="media-icon media-icon--play" />
-                <PauseIcon className="media-icon media-icon--pause" />
-              </Button>
-            )}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <PlayButton
+                  render={(props) => (
+                    <Button {...props} className="media-button--icon media-button--play">
+                      <RestartIcon className="media-icon media-icon--restart" />
+                      <PlayIcon className="media-icon media-icon--play" />
+                      <PauseIcon className="media-icon media-icon--pause" />
+                    </Button>
+                  )}
+                />
+              }
+            />
+            <Tooltip.Popup className="media-popup media-popup--tooltip">
+              <PlayLabel />
+            </Tooltip.Popup>
+          </Tooltip.Root>
 
-          <SeekButton
-            seconds={-SEEK_TIME}
-            render={(props) => (
-              <Button {...props} className="media-button--icon media-button--seek">
-                <span className="media-icon__container">
-                  <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
-                  <span className="media-icon__label">{SEEK_TIME}</span>
-                </span>
-              </Button>
-            )}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <SeekButton
+                  seconds={-SEEK_TIME}
+                  render={(props) => (
+                    <Button {...props} className="media-button--icon media-button--seek">
+                      <span className="media-icon__container">
+                        <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
+                        <span className="media-icon__label">{SEEK_TIME}</span>
+                      </span>
+                    </Button>
+                  )}
+                />
+              }
+            />
+            <Tooltip.Popup className="media-popup media-popup--tooltip">
+              Seek backward {SEEK_TIME} seconds
+            </Tooltip.Popup>
+          </Tooltip.Root>
 
-          <SeekButton
-            seconds={SEEK_TIME}
-            render={(props) => (
-              <Button {...props} className="media-button--icon media-button--seek">
-                <span className="media-icon__container">
-                  <SeekIcon className="media-icon media-icon--seek" />
-                  <span className="media-icon__label">{SEEK_TIME}</span>
-                </span>
-              </Button>
-            )}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <SeekButton
+                  seconds={SEEK_TIME}
+                  render={(props) => (
+                    <Button {...props} className="media-button--icon media-button--seek">
+                      <span className="media-icon__container">
+                        <SeekIcon className="media-icon media-icon--seek" />
+                        <span className="media-icon__label">{SEEK_TIME}</span>
+                      </span>
+                    </Button>
+                  )}
+                />
+              }
+            />
+            <Tooltip.Popup className="media-popup media-popup--tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+          </Tooltip.Root>
         </span>
 
         <span className="media-time-controls">
@@ -89,9 +122,16 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
         </span>
 
         <span className="media-button-group">
-          <PlaybackRateButton
-            render={(props) => <Button {...props} className="media-button--icon media-button--playback-rate" />}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <PlaybackRateButton
+                  render={(props) => <Button {...props} className="media-button--icon media-button--playback-rate" />}
+                />
+              }
+            />
+            <Tooltip.Popup className="media-popup media-popup--tooltip">Toggle playback rate</Tooltip.Popup>
+          </Tooltip.Root>
 
           <Popover.Root openOnHover delay={200} closeDelay={100} side="left">
             <Popover.Trigger
@@ -107,7 +147,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                 />
               }
             />
-            <Popover.Popup className="media-surface media-popup media-popup--volume media-popup-animation">
+            <Popover.Popup className="media-popup media-popup--popover media-popup--volume">
               <VolumeSlider.Root className="media-slider" orientation="horizontal" thumbAlignment="edge">
                 <VolumeSlider.Track className="media-slider__track">
                   <VolumeSlider.Fill className="media-slider__fill" />

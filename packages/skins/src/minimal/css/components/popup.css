@@ -2,7 +2,11 @@
    Popups & Animations
    ========================================================================== */
 
-.media-minimal-skin .media-popup-animation {
+.media-minimal-skin .media-popup {
+  margin: 0;
+  border: 0;
+  color: inherit;
+  overflow: visible;
   transition-property: transform, scale, opacity, filter;
   transition-duration: 200ms;
 
@@ -31,8 +35,23 @@
   }
 }
 
-.media-minimal-skin .media-popup {
-  margin: 0;
-  border: 0;
-  color: inherit;
+.media-minimal-skin .media-popup--tooltip {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  background-color: oklch(1 0 0 / 0.1);
+  backdrop-filter: blur(64px) brightness(0.9) saturate(1.5);
+  box-shadow:
+    0 4px 6px -1px oklch(0 0 0 / 0.1),
+    0 2px 4px -2px oklch(0 0 0 / 0.1);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  --media-tooltip-side-offset: 0.5rem;
+
+  @media (prefers-reduced-transparency: reduce) {
+    background-color: oklch(0 0 0 / 0.7);
+  }
+
+  @media (prefers-contrast: more) {
+    background-color: oklch(0 0 0 / 0.9);
+  }
 }

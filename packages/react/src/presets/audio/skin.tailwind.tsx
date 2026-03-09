@@ -23,7 +23,7 @@ import {
 } from '@videojs/skins/default/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
-import { Container } from '@/player/context';
+import { Container, usePlayer } from '@/player/context';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
@@ -31,6 +31,7 @@ import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
+import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import type { AudioSkinProps } from './skin';
 
@@ -89,6 +90,13 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
   );
 });
 
+function PlayLabel(): ReactNode {
+  const paused = usePlayer((s) => Boolean(s.paused));
+  const ended = usePlayer((s) => Boolean(s.ended));
+  if (ended) return <>Replay</>;
+  return paused ? <>Play</> : <>Pause</>;
+}
+
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
@@ -99,39 +107,62 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
       {children}
 
       <div className={controls}>
-        <PlayButton
-          render={(props) => (
-            <Button variant="icon" {...props} className={iconState.play.button}>
-              <RestartIcon className={cn(icon, iconState.play.restart)} />
-              <PlayIcon className={cn(icon, iconState.play.play)} />
-              <PauseIcon className={cn(icon, iconState.play.pause)} />
-            </Button>
-          )}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <PlayButton
+                render={(props) => (
+                  <Button variant="icon" {...props} className={iconState.play.button}>
+                    <RestartIcon className={cn(icon, iconState.play.restart)} />
+                    <PlayIcon className={cn(icon, iconState.play.play)} />
+                    <PauseIcon className={cn(icon, iconState.play.pause)} />
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>
+            <PlayLabel />
+          </Tooltip.Popup>
+        </Tooltip.Root>
 
-        <SeekButton
-          seconds={-SEEK_TIME}
-          render={(props) => (
-            <Button variant="icon" {...props} className={seek.button}>
-              <span className={iconContainer}>
-                <SeekIcon className={cn(icon, iconFlipped)} />
-                <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
-              </span>
-            </Button>
-          )}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <SeekButton
+                seconds={-SEEK_TIME}
+                render={(props) => (
+                  <Button variant="icon" {...props} className={seek.button}>
+                    <span className={iconContainer}>
+                      <SeekIcon className={cn(icon, iconFlipped)} />
+                      <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
+                    </span>
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+        </Tooltip.Root>
 
-        <SeekButton
-          seconds={SEEK_TIME}
-          render={(props) => (
-            <Button variant="icon" {...props} className={seek.button}>
-              <span className={iconContainer}>
-                <SeekIcon className={icon} />
-                <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
-              </span>
-            </Button>
-          )}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <SeekButton
+                seconds={SEEK_TIME}
+                render={(props) => (
+                  <Button variant="icon" {...props} className={seek.button}>
+                    <span className={iconContainer}>
+                      <SeekIcon className={icon} />
+                      <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
+                    </span>
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+        </Tooltip.Root>
 
         <Time.Group className={time.group}>
           <Time.Value type="current" className={time.current} />
@@ -145,7 +176,16 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
           <Time.Value type="duration" className={time.duration} />
         </Time.Group>
 
-        <PlaybackRateButton render={(props) => <Button variant="icon" {...props} className={playbackRate.button} />} />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <PlaybackRateButton
+                render={(props) => <Button variant="icon" {...props} className={playbackRate.button} />}
+              />
+            }
+          />
+          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
+        </Tooltip.Root>
 
         <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
           <Popover.Trigger
@@ -161,7 +201,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
               />
             }
           />
-          <Popover.Popup className={cn(popup.base, popup.volume)}>
+          <Popover.Popup className={cn(popup.base, popup.popover, popup.volume)}>
             <VolumeSlider.Root
               orientation="vertical"
               thumbAlignment="edge"
