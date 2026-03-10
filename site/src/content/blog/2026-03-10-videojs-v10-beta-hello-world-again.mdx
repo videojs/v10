@@ -50,7 +50,7 @@ function App() {
 }
 ```
 
-## <small>Bundle</small>
+## &lt;small&gt;Bundle&lt;/small&gt;
 
 One of the biggest complaints about video players today is their file size, often weighing in around 1MB minified and hundreds of KB gzipped. Players are sneakily-complex applications so there's only so many bytes you can shave off, but legacy players were built in times before smart bundlers, tree shaking, and other size-saving opportunities. They carry with them many features you may not be actively using.
 
@@ -108,7 +108,7 @@ Comparing engines to engines you get a clearer picture of the story. The other e
 | Shaka ([custom build](https://github.com/shaka-project/shaka-player/blob/main/build/README.md) **) | 350.0 | 115.0 | ** Shaka can be made smaller with a Closure Compiler custom build, not an npm import. This build size targets "simple" ABR. | ✅ |
 | HLS.js-light | 328.5 | 103.4 | Removes DRM, subs, alt-audio, CMCD, interstitials | ✅ |
 |  |  |  |  |  |
-| **SPF-composed engine** | **TBD** | **12.1** | Includes only what's needed for "simple" ABR | ✅ |
+| **SPF-composed engine** | **38.5** | **12.1** | Includes only what's needed for "simple" ABR | ✅ |
 
 To be clear, the immediate goal isn't for SPF to replace the full-featured engines like HLS.js for advanced streaming use cases, and in fact v10 works with all these streaming engines today. The goal is to achieve much smaller file sizes for common, simpler use cases. At the same time we think a lot more sites and apps could benefit from simple ABR, and we want SPF to lower the file size cost of using it.
 
