@@ -8,6 +8,7 @@ import '@/styles/globals.css';
 
 import BannerInit from '@/components/BannerInit.astro';
 import { PreferenceSync } from '@/components/docs/PreferenceSync';
+import LegacyBanner from '@/components/LegacyBanner.astro';
 import ThemeInit from '@/components/ThemeInit.astro';
 
 interface Props {
@@ -155,6 +156,7 @@ const fullTitle =
     >
       <PreferenceSync client:idle />
 
+      <LegacyBanner />
       <slot />
     </div>
   </body>
