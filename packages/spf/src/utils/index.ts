@@ -1,3 +1,0 @@
-/**
- * Shared SPF utilities
- */
