@@ -1,10 +1,17 @@
 import { useStore } from '@nanostores/react';
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
+import { VJS10_DEMO_VIDEO } from '@/consts';
+import type { Renderer } from '@/stores/installation';
 import { renderer, sourceUrl } from '@/stores/installation';
 
-function generateUsageCode(url: string): string {
-  const playerProp = url.trim() ? `src="${url.trim()}"` : 'src="https://example.com/video.mp4"';
+function getDefaultSourceUrl(renderer: Renderer): string {
+  return renderer === 'hls' ? VJS10_DEMO_VIDEO.hls : VJS10_DEMO_VIDEO.mp4;
+}
+
+function generateUsageCode(url: string, renderer: Renderer): string {
+  const source = url.trim() || getDefaultSourceUrl(renderer);
+  const playerProp = `src="${source}"`;
 
   return `import { MyPlayer } from '../components/player';
 
@@ -19,7 +26,7 @@ export const HomePage = () => {
 }
 
 export default function ReactUsageCodeBlock() {
-  useStore(renderer);
+  const $renderer = useStore(renderer);
   const $sourceUrl = useStore(sourceUrl);
 
   return (
@@ -30,7 +37,7 @@ export default function ReactUsageCodeBlock() {
         </Tab>
       </TabsList>
       <TabsPanel value="react" initial>
-        <ClientCode code={generateUsageCode($sourceUrl)} lang="tsx" />
+        <ClientCode code={generateUsageCode($sourceUrl, $renderer)} lang="tsx" />
       </TabsPanel>
     </TabsRoot>
   );
