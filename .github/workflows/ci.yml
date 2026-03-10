@@ -150,3 +150,6 @@ jobs:
 
       - name: Build
         run: pnpm build:packages
+
+      - name: Build CDN bundles
+        run: pnpm build:cdn
