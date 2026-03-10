@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import { CheckCircle } from 'lucide-react';
+import { MUX_URL } from '@/consts';
 
 export type UploaderState = 'idle' | 'needs_login' | 'uploading' | 'preparing' | 'ready' | 'polling_error';
 
@@ -44,7 +45,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
       <OverlayWrapper>
         <p className="text-p3 font-bold">
           To upload this video to{' '}
-          <a href="https://mux.com" target="_blank" rel="noopener" className="underline intent:no-underline">
+          <a href={MUX_URL} target="_blank" rel="noopener" className="underline intent:no-underline">
             Mux
           </a>
           &hellip;
