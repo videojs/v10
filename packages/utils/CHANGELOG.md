@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.0.0-alpha.10](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-alpha.9...@videojs/utils@10.0.0-alpha.10) (2026-03-10)
+
+
+### Features
+
+* **skin:** add audio skins for HTML and React presets ([#772](https://github.com/videojs/v10/issues/772)) ([d751fda](https://github.com/videojs/v10/commit/d751fdabea9782b9f6c73aaebfb93ed393e488f7))
+
+
+### Bug Fixes
+
+* **html:** apply popover data attributes before showing via popover API ([#763](https://github.com/videojs/v10/issues/763)) ([206bc9b](https://github.com/videojs/v10/commit/206bc9b4ae914176e50c1708c272c75d90a12286))
+
 ## [10.0.0-alpha.9](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-alpha.8...@videojs/utils@10.0.0-alpha.9) (2026-03-06)
 
 

@@ -1,5 +1,31 @@
 # Changelog
 
+## [10.0.0-alpha.10](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-alpha.9...@videojs/core@10.0.0-alpha.10) (2026-03-10)
+
+
+### Features
+
+* **spf:** initial push of SPF ([#784](https://github.com/videojs/v10/issues/784)) ([27a3993](https://github.com/videojs/v10/commit/27a3993fb20af0523e42b0d03c70a6f5a465d144))
+
+
+### Bug Fixes
+
+* **core:** optimistic current time update on seek to prevent slider snap-back ([#799](https://github.com/videojs/v10/issues/799)) ([c605df5](https://github.com/videojs/v10/commit/c605df50f61e7e50067133e4e79458607fb4d3a9))
+* **core:** prevent slider track click from closing popover ([#776](https://github.com/videojs/v10/issues/776)) ([c20d884](https://github.com/videojs/v10/commit/c20d88493281f68e4716195fde59ec6134421902))
+* **core:** use composedPath for popover outside-click detection ([#806](https://github.com/videojs/v10/issues/806)) ([747d159](https://github.com/videojs/v10/commit/747d15910be039413b658a00438f5edbdb7f19f6))
+* **html:** apply popover data attributes before showing via popover API ([#763](https://github.com/videojs/v10/issues/763)) ([206bc9b](https://github.com/videojs/v10/commit/206bc9b4ae914176e50c1708c272c75d90a12286))
+* **html:** thumb edge alignment jump ([#766](https://github.com/videojs/v10/issues/766)) ([d53e239](https://github.com/videojs/v10/commit/d53e239b7b59ad0d86ef961e19342c80568fe02d))
+* **slider:** keep pointer position after pointerleave ([#807](https://github.com/videojs/v10/issues/807)) ([cd019cb](https://github.com/videojs/v10/commit/cd019cbbf2444d3643438f1cd7b3ee05efc2350f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-alpha.10
+    * @videojs/store bumped to 10.0.0-alpha.10
+    * @videojs/utils bumped to 10.0.0-alpha.10
+
 ## [10.0.0-alpha.9](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-alpha.8...@videojs/core@10.0.0-alpha.9) (2026-03-06)
 
 
