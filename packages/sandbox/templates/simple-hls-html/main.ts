@@ -82,6 +82,7 @@ document.getElementById('root')!.innerHTML = html`
     <video-player>
       <media-container style="display: contents;">
         <simple-hls-video
+          slot="media"
           src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8"
           preload="auto"
           playsinline
