@@ -29,7 +29,7 @@ function generateReactCode(skin: Skin): string {
 import { ${skinComponent}, Video, videoFeatures } from '@videojs/react/video';
 import '@videojs/react/video/${skinCss}.css';
 
-const Player = createPlayer({ features: [...videoFeatures] });
+const Player = createPlayer({ features: videoFeatures });
 
 export function VideoPlayer() {
   return (

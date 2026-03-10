@@ -6,7 +6,7 @@ import { skin } from '@/stores/homePageDemos';
 import '@videojs/react/video/skin.css';
 import '@videojs/react/video/minimal-skin.css';
 
-const Player = createPlayer({ features: [...videoFeatures] });
+const Player = createPlayer({ features: videoFeatures });
 
 export default function HeroVideo({
   className,
