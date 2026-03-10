@@ -21,7 +21,7 @@ const SEEK_TIME = 10;
 function getTemplateHTML() {
   return /*html*/ `
     <media-container class="media-default-skin media-default-skin--audio">
-      <slot name="media"></slot>
+      <slot name="media" slot="media"></slot>
 
       <div class="media-surface media-controls">
         <media-tooltip-group>

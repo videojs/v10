@@ -10,6 +10,7 @@ export * from './ui/controls/controls-core';
 export * from './ui/controls/controls-data-attrs';
 export * from './ui/fullscreen-button/fullscreen-button-core';
 export * from './ui/fullscreen-button/fullscreen-button-data-attrs';
+export * from './ui/gesture/gesture-core';
 export * from './ui/mute-button/mute-button-core';
 export * from './ui/mute-button/mute-button-data-attrs';
 export * from './ui/pip-button/pip-button-core';

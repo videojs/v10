@@ -26,7 +26,7 @@ const SEEK_TIME = 10;
 function getTemplateHTML() {
   return /*html*/ `
     <media-container class="media-default-skin media-default-skin--video">
-      <slot name="media"></slot>
+      <slot name="media" slot="media"></slot>
 
       <media-buffering-indicator class="media-buffering-indicator">
         <div class="media-surface">
