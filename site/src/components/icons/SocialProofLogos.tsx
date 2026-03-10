@@ -76,7 +76,15 @@ export const AmazonLogo = ({ width = '1', ...props }: IconProps) => {
 };
 export const AwgeLogo = ({ width = '1', ...props }: IconProps) => {
   return (
-    <svg width="128" height="36" viewBox="0 0 128 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      aria-label="Awge Logo"
+      role="img"
+      width="128"
+      height="36"
+      viewBox="0 0 128 36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -108,7 +116,15 @@ export const ZoomLogo = ({ width = '1', ...props }: IconProps) => {
 };
 export const CourseraLogo = ({ width = '1', ...props }: IconProps) => {
   return (
-    <svg width="120" height="17" viewBox="0 0 120 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      aria-label="Coursera Logo"
+      role="img"
+      width="120"
+      height="17"
+      viewBox="0 0 120 17"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -156,7 +172,15 @@ export const ConsumerReports = ({ width = '1', ...props }: IconProps) => {
 };
 export const TheOnionLogo = ({ width = '1', ...props }: IconProps) => {
   return (
-    <svg width="130" height="21" viewBox="0 0 130 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      aria-label="The Onion Logo"
+      role="img"
+      width="130"
+      height="21"
+      viewBox="0 0 130 21"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path
         fillRule="evenodd"
         clipRule="evenodd"

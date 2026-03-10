@@ -65,7 +65,7 @@ export function shouldUpdateDuration(state: DurationUpdateState, owners: Duratio
   // task or by endOfStreamTask from buffered.end()), we leave it alone — attempting
   // to re-sync a slight drift between mediaSource.duration and presentation.duration
   // races with concurrent appendBuffer() calls from loadSegmentsTask.
-  return isNaN(mediaSource!.duration);
+  return Number.isNaN(mediaSource!.duration);
 }
 
 /**
@@ -76,7 +76,7 @@ export function shouldUpdateDuration(state: DurationUpdateState, owners: Duratio
  */
 function waitForSourceBuffersReady(owners: DurationUpdateOwners): Promise<void> {
   const updating = [owners.videoSourceBuffer, owners.audioSourceBuffer].filter(
-    (buf): buf is SourceBuffer => buf !== undefined && buf.updating
+    (buf): buf is SourceBuffer => buf?.updating
   );
 
   if (updating.length === 0) return Promise.resolve();

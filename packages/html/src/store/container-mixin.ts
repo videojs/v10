@@ -92,7 +92,8 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
         const store = this.#contextStore ?? this.store;
         if (!store) return;
 
-        const media = this.querySelector<HTMLMediaElement>('video, audio, [data-media-element]') ?? this.#getSlottedMedia();
+        const media =
+          this.querySelector<HTMLMediaElement>('video, audio, [data-media-element]') ?? this.#getSlottedMedia();
 
         if (!media) {
           this.#detach();

@@ -205,7 +205,7 @@ function getMaxBufferedEnd(owners: EndOfStreamOwners): number {
  */
 const endOfStreamTask = async (
   { currentOwners }: { currentOwners: EndOfStreamOwners },
-  _context: {}
+  _context: object
 ): Promise<void> => {
   const { mediaSource } = currentOwners;
 
