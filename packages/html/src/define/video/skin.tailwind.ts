@@ -4,7 +4,6 @@ import {
   bufferingIndicator,
   button,
   controls,
-  error,
   icon,
   iconContainer,
   iconFlipped,
@@ -50,18 +49,6 @@ function getTemplateHTML() {
           ${renderIcon('spinner')}
         </div>
       </media-buffering-indicator>
-
-      <!--<div class="${error.root}" role="alertdialog" aria-labelledby="media-error-title" aria-describedby="media-error-description">
-        <div class="${error.dialog}">
-          <div class="${error.content}">
-            <p id="media-error-title" class="${error.title}">Something went wrong.</p>
-            <p id="media-error-description" class="${error.description}">An error occurred while trying to play the video. Please try again.</p>
-          </div>
-          <div class="${error.actions}">
-            <button type="button" class="${cn(button.base, button.default)}">OK</button>
-          </div>
-        </div>
-      </div>-->
 
       <media-controls data-controls="" class="${controls}">
         <span class="${tooltipState.play.wrapper}">

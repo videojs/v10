@@ -30,18 +30,6 @@ function getTemplateHTML() {
         ${renderIcon('spinner', { class: 'media-icon' })}
       </media-buffering-indicator>
 
-      <!--<div class="media-error" role="alertdialog" aria-labelledby="media-error-title" aria-describedby="media-error-description">
-        <div class="media-error__dialog">
-          <div class="media-error__content">
-            <p id="media-error-title" class="media-error__title">Something went wrong.</p>
-            <p id="media-error-description" class="media-error__description">An error occurred while trying to play the video. Please try again.</p>
-          </div>
-          <div class="media-error__actions">
-            <button type="button" class="media-button">OK</button>
-          </div>
-        </div>
-      </div>-->
-
       <media-controls class="media-controls">
         <span class="media-button-group">
           <media-play-button commandfor="play-tooltip" class="media-button media-button--icon media-button--play">
