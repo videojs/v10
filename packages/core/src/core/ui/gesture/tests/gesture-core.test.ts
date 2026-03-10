@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { MediaPlaybackState } from '../../../media/state';
-import { ALLOWED_COMMANDS, ALLOWED_TYPES, GestureCore } from '../gesture-core';
+import { ALLOWED_GESTURE_COMMANDS, ALLOWED_GESTURE_TYPES, GestureCore } from '../gesture-core';
 
 function createMediaState(overrides: Partial<MediaPlaybackState> = {}): MediaPlaybackState {
   return {
@@ -18,11 +18,11 @@ function createMediaState(overrides: Partial<MediaPlaybackState> = {}): MediaPla
 describe('GestureCore', () => {
   describe('defaultProps', () => {
     it('defaults type to first allowed type', () => {
-      expect(GestureCore.defaultProps.type).toBe(ALLOWED_TYPES[0]);
+      expect(GestureCore.defaultProps.type).toBe(ALLOWED_GESTURE_TYPES[0]);
     });
 
     it('defaults command to first allowed command', () => {
-      expect(GestureCore.defaultProps.command).toBe(ALLOWED_COMMANDS[0]);
+      expect(GestureCore.defaultProps.command).toBe(ALLOWED_GESTURE_COMMANDS[0]);
     });
   });
 

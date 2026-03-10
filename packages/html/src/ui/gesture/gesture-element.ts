@@ -1,7 +1,6 @@
-import { ALLOWED_TYPES, GestureCore } from '@videojs/core';
+import { ALLOWED_GESTURE_TYPES, GestureCore } from '@videojs/core';
 import { selectPlayback } from '@videojs/core/dom';
 import type { PropertyValues } from '@videojs/element';
-import { closestComposedNode } from '@videojs/utils/dom';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -18,7 +17,8 @@ export class GestureElement extends MediaElement {
   command = GestureCore.defaultProps.command;
 
   readonly #core = new GestureCore();
-  readonly #mediaState = new PlayerController(this, playerContext, selectPlayback);
+  readonly #player = new PlayerController(this, playerContext);
+  readonly #playback = new PlayerController(this, playerContext, selectPlayback);
 
   #disconnect: AbortController | null = null;
 
@@ -40,11 +40,13 @@ export class GestureElement extends MediaElement {
     if (changed.has('type') || changed.has('command')) {
       this.#core.setProps({ type: this.type, command: this.command });
 
-      if (changed.has('type') && ALLOWED_TYPES.includes(this.type)) {
+      if (changed.has('type') && ALLOWED_GESTURE_TYPES.includes(this.type)) {
         this.#disconnect?.abort();
         this.#disconnect = new AbortController();
         const { signal } = this.#disconnect;
-        closestComposedNode(this, 'media-container')?.addEventListener(this.type, this.#handleEvent, { signal });
+
+        const container = this.#player.value?.target?.container;
+        container?.addEventListener(this.type, this.#handleEvent, { signal });
       }
     }
   }
@@ -55,7 +57,7 @@ export class GestureElement extends MediaElement {
     const allowList = ['video'];
     if (!composedTarget || !allowList.includes(composedTarget?.localName)) return;
 
-    const media = this.#mediaState.value;
+    const media = this.#playback.value;
     if (!media) return;
 
     this.#core.activate(media);

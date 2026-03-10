@@ -8,6 +8,7 @@ import '../media/container';
 import '../ui/buffering-indicator';
 import '../ui/controls';
 import '../ui/fullscreen-button';
+import '../ui/gesture';
 import '../ui/mute-button';
 import '../ui/pip-button';
 import '../ui/play-button';
@@ -29,6 +30,8 @@ function getTemplateHTML() {
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>
+
+      <media-gesture type="pointerup" command="toggle-paused"></media-gesture>
 
       <media-poster>
         <slot name="poster"></slot>
