@@ -10,6 +10,7 @@ import { TableOfContents } from '@/components/docs/TableOfContents';
 import JsonLd from '@/components/JsonLd.astro';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
 import H2Markdown from '@/components/typography/H2Markdown.astro';
+import { PRODUCTION_URL } from '@/consts';
 import DocsLayout from '@/layouts/Docs.astro';
 import type { SupportedFramework } from '@/types/docs';
 import { SUPPORTED_FRAMEWORKS } from '@/types/docs';
@@ -81,7 +82,7 @@ const docTitles = new Map(allDocs.map((d) => [d.id, getDocTitle(d, framework)]))
 const sections = getSectionsForGuide(slug, filterSidebar(framework));
 
 // Build JSON-LD schema for TechArticle
-const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const pageUrl = new URL(Astro.url.pathname, PRODUCTION_URL).toString();
 const jsonLdSchema = createTechArticleSchema({
   title: getDocTitle(doc, framework),
   description: doc.data.description,

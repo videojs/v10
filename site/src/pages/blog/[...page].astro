@@ -7,6 +7,7 @@ import BlogPagination from '@/components/blog/BlogPagination.astro';
 import BlogPostCard from '@/components/blog/BlogPostCard.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import JsonLd from '@/components/JsonLd.astro';
+import { PRODUCTION_URL } from '@/consts';
 import Blog from '@/layouts/Blog.astro';
 import { createBlogCollectionSchema } from '@/utils/jsonLd/schemas';
 
@@ -37,11 +38,11 @@ interface Props {
 const { page } = Astro.props;
 
 // Build JSON-LD schema for CollectionPage
-const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const pageUrl = new URL(Astro.url.pathname, PRODUCTION_URL).toString();
 const jsonLdSchema = createBlogCollectionSchema({
   url: pageUrl,
   posts: page.data,
-  siteUrl: Astro.site!.toString(),
+  siteUrl: PRODUCTION_URL,
 });
 ---
 

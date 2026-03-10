@@ -5,6 +5,7 @@ import { getCollection, getEntries } from 'astro:content';
 import { AuthorSocialLinks } from '@/components/blog/AuthorSocialLinks';
 import BlogPostCard from '@/components/blog/BlogPostCard.astro';
 import JsonLd from '@/components/JsonLd.astro';
+import { PRODUCTION_URL } from '@/consts';
 import Blog from '@/layouts/Blog.astro';
 import { createProfilePageSchema } from '@/utils/jsonLd/schemas';
 
@@ -36,12 +37,12 @@ const postsWithAuthors = await Promise.all(
 );
 
 // Build JSON-LD schema for ProfilePage
-const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const pageUrl = new URL(Astro.url.pathname, PRODUCTION_URL).toString();
 const jsonLdSchema = createProfilePageSchema({
   url: pageUrl,
   author,
   posts: authorPosts,
-  siteUrl: Astro.site!.toString(),
+  siteUrl: PRODUCTION_URL,
 });
 ---
 

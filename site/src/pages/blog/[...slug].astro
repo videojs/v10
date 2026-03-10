@@ -5,6 +5,7 @@ import { getCollection, getEntries, render } from 'astro:content';
 import FormattedDate from '@/components/FormattedDate.astro';
 import JsonLd from '@/components/JsonLd.astro';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
+import { PRODUCTION_URL } from '@/consts';
 import Blog from '@/layouts/Blog.astro';
 import { createBlogPostingSchema } from '@/utils/jsonLd/schemas';
 
@@ -31,7 +32,7 @@ const ogImageUrl = post.data.ogImage
   : undefined;
 
 // Build JSON-LD schema for BlogPosting
-const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const pageUrl = new URL(Astro.url.pathname, PRODUCTION_URL).toString();
 const jsonLdSchema = createBlogPostingSchema({
   title: post.data.title,
   description: post.data.description,
@@ -40,7 +41,7 @@ const jsonLdSchema = createBlogPostingSchema({
   updatedDate: post.data.updatedDate,
   readingTime: remarkPluginFrontmatter.readingTimeMinutes,
   authors,
-  siteUrl: Astro.site!.toString(),
+  siteUrl: PRODUCTION_URL,
   image: ogImageUrl,
 });
 ---
