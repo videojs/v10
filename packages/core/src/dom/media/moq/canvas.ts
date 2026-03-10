@@ -2,45 +2,30 @@ import * as Watch from '@moq/watch';
 
 const Moq = Watch.Lite;
 
-function createTimeRanges(ranges: Array<{ start: number; end: number }>): TimeRanges {
-  return {
-    get length() {
-      return ranges.length;
-    },
-    start(index: number) {
-      if (index < 0 || index >= ranges.length) throw new DOMException('Index out of bounds', 'IndexSizeError');
-      return ranges[index]!.start / 1000;
-    },
-    end(index: number) {
-      if (index < 0 || index >= ranges.length) throw new DOMException('Index out of bounds', 'IndexSizeError');
-      return ranges[index]!.end / 1000;
-    },
-  };
-}
-
 const EMPTY_TIME_RANGES = createTimeRanges([]);
 
-const TEMPLATE = globalThis.document?.createElement('template');
-if (TEMPLATE) {
-  TEMPLATE.innerHTML = /*html*/ `
-    <style>
-      :host {
-        display: inline-block;
-        line-height: 0;
-      }
-      canvas {
-        max-width: 100%;
-        max-height: 100%;
-        min-width: 100%;
-        min-height: 100%;
-        object-fit: var(--media-object-fit, contain);
-        object-position: var(--media-object-position, 50% 50%);
-      }
-    </style>
-    <canvas part="canvas"></canvas>
-  `;
-}
+const TEMPLATE = document.createElement('template');
 
+TEMPLATE.innerHTML = /*html*/ `
+  <style>
+    :host {
+      display: inline-block;
+      line-height: 0;
+    }
+    canvas {
+      max-width: 100%;
+      max-height: 100%;
+      min-width: 100%;
+      min-height: 100%;
+      object-fit: var(--media-object-fit, contain);
+      object-position: var(--media-object-position, 50% 50%);
+    }
+  </style>
+  <canvas part="canvas"></canvas>
+`;
+
+// Close everything when this element is garbage collected.
+// There's no destructor for web components so this is the best we can do.
 const cleanup = new FinalizationRegistry<Watch.Signals.Effect>((signals) => signals.close());
 
 /**
@@ -53,32 +38,58 @@ const cleanup = new FinalizationRegistry<Watch.Signals.Effect>((signals) => sign
 export class MoqCanvas extends (globalThis.HTMLElement ?? class {}) {
   static readonly observedAttributes = ['src', 'name', 'muted', 'volume', 'autoplay'] as const;
 
+  // A MoQ connection that is automatically re-established on drop.
   #connection = new Moq.Connection.Reload({
+    // Immediately start connecting once a URL is set, even if not in the DOM.
     enabled: true,
   });
 
+  // The MoQ broadcast being fetched.
   #broadcast = new Watch.Broadcast({
     connection: this.#connection.established,
+    // Start fetching the catalog even if not in the DOM.
     enabled: true,
+    // Default to an empty namespace, so the player can work with just a URL.
     name: Moq.Path.empty(),
   });
 
+  // NOTE: We're using the advanced WebCodecs backend to improve tree-shaking.
+  // ex. A moq-audio element would omit the video stuff.
+
+  // Used to synchronize audio and video playback.
+  // NOTE: Sync will be pushed into the props next version.
   #sync = new Watch.Sync();
 
+  // Create a source, decoder, and renderer for video.
   #videoSource = new Watch.Video.Source(this.#sync, { broadcast: this.#broadcast });
   #videoDecoder = new Watch.Video.Decoder(this.#videoSource);
-  #videoRenderer!: Watch.Video.Renderer;
+  #videoRenderer: Watch.Video.Renderer;
 
+  // Create a source, decoder, and emitter for audio.
   #audioSource = new Watch.Audio.Source(this.#sync, { broadcast: this.#broadcast });
   #audioDecoder = new Watch.Audio.Decoder(this.#audioSource);
   #audioEmitter = new Watch.Audio.Emitter(this.#audioDecoder, { paused: false });
 
-  #canvas!: HTMLCanvasElement;
+  #canvas: HTMLCanvasElement;
 
   #signals = new Watch.Signals.Effect();
 
   constructor() {
     super();
+
+    // Mark as media element for container discovery.
+    this.setAttribute('data-media', '');
+
+    const shadow = this.attachShadow({ mode: 'open' });
+    shadow.appendChild(TEMPLATE.content.cloneNode(true));
+
+    const canvas = shadow.querySelector('canvas');
+    if (!canvas) throw new Error('Missing <canvas> in shadow DOM template');
+    this.#canvas = canvas;
+    this.#videoRenderer = new Watch.Video.Renderer(this.#videoDecoder, {
+      canvas: this.#canvas,
+      paused: false,
+    });
 
     cleanup.register(this, this.#signals);
     this.#signals.cleanup(() => {
@@ -91,17 +102,6 @@ export class MoqCanvas extends (globalThis.HTMLElement ?? class {}) {
       this.#audioDecoder.close();
       this.#audioEmitter.close();
       this.#videoRenderer.close();
-    });
-
-    this.setAttribute('data-media', '');
-
-    const shadow = this.attachShadow({ mode: 'open' });
-    shadow.appendChild(TEMPLATE!.content.cloneNode(true));
-
-    this.#canvas = shadow.querySelector('canvas')!;
-    this.#videoRenderer = new Watch.Video.Renderer(this.#videoDecoder, {
-      canvas: this.#canvas,
-      paused: false,
     });
 
     this.#signals.subscribe(this.#broadcast.status, (status) => {
@@ -159,6 +159,8 @@ export class MoqCanvas extends (globalThis.HTMLElement ?? class {}) {
       }
     }
   }
+
+  // --- HTMLMediaElement-like interface ---
 
   get src(): string {
     return this.#connection.url.peek()?.toString() ?? '';
@@ -312,4 +314,22 @@ export class MoqCanvas extends (globalThis.HTMLElement ?? class {}) {
   }
 
   set poster(_value: string) {}
+}
+
+function createTimeRanges(ranges: Array<{ start: number; end: number }>): TimeRanges {
+  return {
+    get length() {
+      return ranges.length;
+    },
+    start(index: number) {
+      const range = ranges.at(index);
+      if (!range) throw new DOMException('Index out of bounds', 'IndexSizeError');
+      return range.start / 1000;
+    },
+    end(index: number) {
+      const range = ranges.at(index);
+      if (!range) throw new DOMException('Index out of bounds', 'IndexSizeError');
+      return range.end / 1000;
+    },
+  };
 }
