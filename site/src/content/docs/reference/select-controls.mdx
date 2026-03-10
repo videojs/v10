@@ -19,8 +19,7 @@ The returned state includes whether controls are visible and whether the user is
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { usePlayer } from '@videojs/react';
-import { selectControls } from '@videojs/core/dom';
+import { selectControls, usePlayer } from '@videojs/react';
 
 function ControlsOverlay({ children }: { children: React.ReactNode }) {
   const controls = usePlayer(selectControls);
@@ -37,15 +36,13 @@ function ControlsOverlay({ children }: { children: React.ReactNode }) {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import { createPlayer, MediaElement } from '@videojs/html';
+import { createPlayer, selectControls } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
-import { selectControls } from '@videojs/core/dom';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const player = createPlayer({ features: videoFeatures });
 
-class ControlsOverlay extends MediaElement {
-  #controls = new PlayerController(this, context, selectControls);
-}
+// In a controller host (custom element/class):
+const controls = new player.PlayerController(host, player.context, selectControls).value;
 ```
 </FrameworkCase>
 

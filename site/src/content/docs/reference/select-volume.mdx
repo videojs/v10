@@ -19,8 +19,7 @@ The returned state includes `volume`, `muted`, and action methods like `setVolum
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { usePlayer } from '@videojs/react';
-import { selectVolume } from '@videojs/core/dom';
+import { selectVolume, usePlayer } from '@videojs/react';
 
 function VolumeSlider() {
   const vol = usePlayer(selectVolume);
@@ -42,15 +41,13 @@ function VolumeSlider() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import { createPlayer, MediaElement } from '@videojs/html';
+import { createPlayer, selectVolume } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
-import { selectVolume } from '@videojs/core/dom';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const player = createPlayer({ features: videoFeatures });
 
-class VolumeSlider extends MediaElement {
-  #volume = new PlayerController(this, context, selectVolume);
-}
+// In a controller host (custom element/class):
+const volume = new player.PlayerController(host, player.context, selectVolume).value;
 ```
 </FrameworkCase>
 

@@ -19,8 +19,7 @@ The returned state includes `playbackRate`, `playbackRates`, and the `setPlaybac
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { usePlayer } from '@videojs/react';
-import { selectPlaybackRate } from '@videojs/core/dom';
+import { selectPlaybackRate, usePlayer } from '@videojs/react';
 
 function RateDisplay() {
   const rate = usePlayer(selectPlaybackRate);
@@ -33,15 +32,13 @@ function RateDisplay() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import { createPlayer, MediaElement } from '@videojs/html';
+import { createPlayer, selectPlaybackRate } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
-import { selectPlaybackRate } from '@videojs/core/dom';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const player = createPlayer({ features: videoFeatures });
 
-class RateDisplay extends MediaElement {
-  #rate = new PlayerController(this, context, selectPlaybackRate);
-}
+// In a controller host (custom element/class):
+const rate = new player.PlayerController(host, player.context, selectPlaybackRate).value;
 ```
 </FrameworkCase>
 

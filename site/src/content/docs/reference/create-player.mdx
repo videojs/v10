@@ -15,6 +15,14 @@ import basicUsageReactCss from "@/components/docs/demos/create-player/react/css/
 
 The hook is typed according to the provided features, giving you full type safety for state selectors and actions.
 
+```tsx
+import { createPlayer } from '@videojs/react';
+import { videoFeatures } from '@videojs/react/video';
+
+const player = createPlayer({ features: videoFeatures });
+const { Provider, Container, usePlayer, useMedia } = player;
+```
+
 ## Examples
 
 ### Basic Usage

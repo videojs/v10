@@ -20,8 +20,7 @@ The returned state includes `paused`, `ended`, and action methods like `play`, `
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { usePlayer } from '@videojs/react';
-import { selectPlayback } from '@videojs/core/dom';
+import { selectPlayback, usePlayer } from '@videojs/react';
 
 function PlayButton() {
   const playback = usePlayer(selectPlayback);
@@ -33,15 +32,13 @@ function PlayButton() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import { createPlayer, MediaElement } from '@videojs/html';
+import { createPlayer, selectPlayback } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
-import { selectPlayback } from '@videojs/core/dom';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const player = createPlayer({ features: videoFeatures });
 
-class PlayButton extends MediaElement {
-  #playback = new PlayerController(this, context, selectPlayback);
-}
+// In a controller host (custom element/class):
+const playback = new player.PlayerController(host, player.context, selectPlayback).value;
 ```
 </FrameworkCase>
 
