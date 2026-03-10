@@ -33,18 +33,6 @@ function getTemplateHTML() {
         </div>
       </media-buffering-indicator>
 
-      <!--<div class="media-error" role="alertdialog" aria-labelledby="media-error-title" aria-describedby="media-error-description">
-        <div class="media-error__dialog media-surface">
-          <div class="media-error__content">
-            <p id="media-error-title" class="media-error__title">Something went wrong.</p>
-            <p id="media-error-description" class="media-error__description">An error occurred while trying to play the video. Please try again.</p>
-          </div>
-          <div class="media-error__actions">
-            <button type="button" class="media-button">OK</button>
-          </div>
-        </div>
-      </div>-->
-
       <media-controls class="media-surface media-controls">
         <media-play-button commandfor="play-tooltip" class="media-button media-button--icon media-button--play">
           ${renderIcon('restart', { class: 'media-icon media-icon--restart' })}
