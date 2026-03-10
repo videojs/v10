@@ -7,6 +7,10 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".netlify/**"]
     },
+    "build:cdn": {
+      "dependsOn": ["build"],
+      "outputs": ["cdn/**"]
+    },
     "dev": {
       "dependsOn": ["^build"],
       "cache": false,

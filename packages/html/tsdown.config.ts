@@ -5,6 +5,7 @@ import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.mjs';
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.mjs';
+import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.mjs';
 
 type BuildMode = 'dev' | 'default';
 
@@ -55,7 +56,11 @@ const createConfig = (mode: BuildMode): UserConfig => ({
     __DEV__: mode === 'dev' ? 'true' : 'false',
   },
   dts: mode === 'dev',
-  plugins: [copyCssPlugin({ skinsDir, outDir: `dist/${mode}` }), inlineCssPlugin({ skinsDir })],
+  plugins: [
+    copyCssPlugin({ skinsDir, outDir: `dist/${mode}` }),
+    inlineCssPlugin({ skinsDir, minify: mode !== 'dev' }),
+    inlineTemplatePlugin({ minify: mode !== 'dev' }),
+  ],
 });
 
 export default defineConfig(buildModes.map((mode) => createConfig(mode)));

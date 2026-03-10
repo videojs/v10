@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
+import { transform } from 'lightningcss';
 import { resolveImports } from './resolve-css-imports.mjs';
 
 const INLINE_PREFIX = 'inline-css:';
@@ -11,10 +12,10 @@ const INLINE_SUFFIX = '?inline';
  * modules exporting the resolved CSS string. Mirrors the Vite `?inline`
  * convention so the same source works in both Vite dev and tsdown builds.
  *
- * @param {{ skinsDir: string; rootDir?: string }} options
+ * @param {{ skinsDir: string; rootDir?: string; minify?: boolean }} options
  */
 export function inlineCssPlugin(options) {
-  const { skinsDir, rootDir = process.cwd() } = options;
+  const { skinsDir, rootDir = process.cwd(), minify = true } = options;
 
   return {
     name: 'inline-css',
@@ -37,7 +38,17 @@ export function inlineCssPlugin(options) {
       const rel = id.slice(INLINE_PREFIX.length).replace(/\.js$/, '.css');
       const file = resolve(rootDir, rel);
       const raw = readFileSync(file, 'utf-8');
-      const resolved = resolveImports(raw, dirname(file), skinsDir);
+      let resolved = resolveImports(raw, dirname(file), skinsDir);
+
+      if (minify) {
+        const { code } = transform({
+          filename: file,
+          code: Buffer.from(resolved),
+          minify: true,
+        });
+
+        resolved = code.toString();
+      }
 
       return { code: `export default ${JSON.stringify(resolved)};`, moduleSideEffects: false };
     },

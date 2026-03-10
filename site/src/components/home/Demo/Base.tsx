@@ -5,15 +5,14 @@ import type { Skin } from '@/stores/homePageDemos';
 import { framework, skin } from '@/stores/homePageDemos';
 import ClientCode from '../../Code/ClientCode';
 
+const CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn';
+
 function generateHTMLCode(skin: Skin): string {
   const skinTag = skin === 'default' ? 'video-skin' : 'video-minimal-skin';
-  const skinFile = skin === 'default' ? 'skin' : 'minimal-skin';
+  const cdnFile = skin === 'default' ? 'video' : 'video-minimal';
 
-  return `<script type="module">
-  import 'https://cdn.jsdelivr.net/npm/videojs/html/video/player.js';
-  import 'https://cdn.jsdelivr.net/npm/videojs/html/video/${skinFile}.js';
-</script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/videojs/html/video/${skinFile}.css" />
+  return `<script type="module" src="${CDN_BASE}/${cdnFile}.js"></script>
+<link rel="stylesheet" href="${CDN_BASE}/${cdnFile}.css" />
 
 <video-player>
   <${skinTag}>
