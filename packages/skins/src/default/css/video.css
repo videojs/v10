@@ -1,5 +1,5 @@
-@import "../../shared/video-icon-state.css";
-@import "../../shared/tooltip-state.css";
+@import "../../shared/video/icon-state.css";
+@import "../../shared/video/tooltip-state.css";
 @import "./components/reset.css";
 @import "./components/root.css";
 @import "./components/surface.css";

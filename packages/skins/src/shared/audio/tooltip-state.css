@@ -1,0 +1,23 @@
+/* ==========================================================================
+   Tooltip Label State Visibility for Audio Skins
+
+   Data-attribute-driven visibility rules for multi-state tooltip labels.
+   Uses adjacent sibling selectors to match button state → tooltip content.
+   ========================================================================== */
+
+/* --- All multi-state labels hidden by default --- */
+
+.media-tooltip-label {
+  display: none;
+}
+
+/* --- Active label per state --- */
+
+/* Play: ended → replay */
+.media-button--play[data-ended] + .media-tooltip-label--replay,
+/* Play: paused (not ended) → play */
+.media-button--play:not([data-ended])[data-paused] + .media-tooltip-label--play,
+/* Play: playing (not paused, not ended) → pause */
+.media-button--play:not([data-paused]):not([data-ended]) + .media-tooltip-label--pause {
+  display: block;
+}
