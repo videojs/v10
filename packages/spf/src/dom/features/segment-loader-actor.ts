@@ -85,6 +85,27 @@ export interface SegmentLoaderActor {
 }
 
 // ============================================================================
+// HELPERS
+// ============================================================================
+
+/** Collect an AsyncIterable<Uint8Array> into a single ArrayBuffer. */
+async function collectBytes(iterable: AsyncIterable<Uint8Array>): Promise<ArrayBuffer> {
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+  for await (const chunk of iterable) {
+    chunks.push(chunk);
+    totalBytes += chunk.byteLength;
+  }
+  const result = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return result.buffer;
+}
+
+// ============================================================================
 // IMPLEMENTATION
 // ============================================================================
 
@@ -105,7 +126,7 @@ export interface SegmentLoaderActor {
  */
 export function createSegmentLoaderActor(
   sourceBufferActor: SourceBufferActor,
-  fetchBytes: (addressable: AddressableObject, options?: RequestInit) => Promise<ArrayBuffer>
+  fetchBytes: (addressable: AddressableObject, options?: RequestInit) => Promise<AsyncIterable<Uint8Array>>
 ): SegmentLoaderActor {
   let pendingTasks: LoadTask[] | null = null;
   let inFlightInitTrackId: string | null = null;
@@ -210,7 +231,11 @@ export function createSegmentLoaderActor(
       if (task.type === 'append-init') {
         inFlightInitTrackId = task.meta.trackId;
         if (!signal.aborted) {
-          const data = await fetchBytes(task, { signal });
+          // Init segments are small and have commit logic that depends on the
+          // full buffer being available before deciding whether to append (same-
+          // track seek vs track-switch). Await headers eagerly, then collect all
+          // chunks before making that decision.
+          const data = await collectBytes(await fetchBytes(task, { signal }));
           // For seeks on the same track: commit even if aborted — avoids re-fetching the
           // same init next time. For track switches: don't commit the old track's init;
           // the new track's init follows in pendingTasks.
@@ -225,12 +250,14 @@ export function createSegmentLoaderActor(
         return;
       }
 
-      // append-segment
+      // append-segment: await headers eagerly (starts the HTTP connection and
+      // records the fetch in observers like tests), then pass the body stream
+      // directly to the actor so chunks are appended as they arrive.
       inFlightSegmentId = task.meta.id;
       if (!signal.aborted) {
-        const data = await fetchBytes(task, { signal });
+        const stream = await fetchBytes(task, { signal });
         if (!signal.aborted) {
-          await sourceBufferActor.send({ type: 'append-segment', data, meta: task.meta }, signal);
+          await sourceBufferActor.send({ type: 'append-segment', data: stream, meta: task.meta }, signal);
         }
       }
     } finally {
