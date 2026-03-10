@@ -115,7 +115,9 @@ export function createSegmentLoaderActor(
   let destroyed = false;
 
   const getBufferedSegments = (allSegments: readonly Segment[]): Segment[] => {
-    const bufferedIds = new Set(sourceBufferActor.snapshot.context.segments.map((s) => s.id));
+    // Exclude partial segments — they are still being streamed and must not be
+    // treated as fully buffered for load planning or buffer window calculations.
+    const bufferedIds = new Set(sourceBufferActor.snapshot.context.segments.filter((s) => !s.partial).map((s) => s.id));
     return allSegments.filter((s) => bufferedIds.has(s.id));
   };
 
@@ -166,6 +168,9 @@ export function createSegmentLoaderActor(
         // content in the actor context. Preserves buffered high-quality content during
         // ABR downgrades; loads during upgrades and for uncovered positions.
         const existing = actorCtx.segments.find((s) => Math.abs(s.startTime - seg.startTime) < EPSILON);
+        // Partial segments are still streaming — treat as not buffered so they
+        // are always re-planned (avoids relying on incomplete data).
+        if (existing?.partial) return true;
         if (!existing?.trackBandwidth || !track.bandwidth) return true;
         return track.bandwidth > existing.trackBandwidth;
       });

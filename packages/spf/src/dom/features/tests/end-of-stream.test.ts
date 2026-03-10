@@ -189,6 +189,41 @@ describe('hasLastSegmentLoaded', () => {
     expect(hasLastSegmentLoaded(state, owners)).toBe(true);
   });
 
+  it('returns false when last segment is present but marked partial', () => {
+    const track = makeResolvedVideoTrack(4);
+    const state: EndOfStreamState = {
+      selectedVideoTrackId: 'video-1',
+      presentation: makePresentation(track),
+    };
+    // Last segment (seg-3) is in context but still streaming
+    const actor = createSourceBufferActor(makeSourceBuffer(), {
+      initTrackId: 'video-1',
+      segments: [
+        { id: 'seg-0', startTime: 0, duration: 2.5, trackId: 'video-1' },
+        { id: 'seg-1', startTime: 2.5, duration: 2.5, trackId: 'video-1' },
+        { id: 'seg-2', startTime: 5, duration: 2.5, trackId: 'video-1' },
+        { id: 'seg-3', startTime: 7.5, duration: 2.5, trackId: 'video-1', partial: true },
+      ],
+    });
+    expect(hasLastSegmentLoaded(state, { videoBufferActor: actor })).toBe(false);
+  });
+
+  it('returns true when last segment is present and partial is cleared', () => {
+    const track = makeResolvedVideoTrack(4);
+    const state: EndOfStreamState = {
+      selectedVideoTrackId: 'video-1',
+      presentation: makePresentation(track),
+    };
+    const actor = createSourceBufferActor(makeSourceBuffer(), {
+      initTrackId: 'video-1',
+      segments: [
+        { id: 'seg-2', startTime: 5, duration: 2.5, trackId: 'video-1' },
+        { id: 'seg-3', startTime: 7.5, duration: 2.5, trackId: 'video-1' }, // partial: undefined = complete
+      ],
+    });
+    expect(hasLastSegmentLoaded(state, { videoBufferActor: actor })).toBe(true);
+  });
+
   it('returns false when video last segment is loaded but audio last segment is not', () => {
     const videoTrack = makeResolvedVideoTrack(4);
     const presentation = {

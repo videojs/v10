@@ -437,6 +437,158 @@ describe('createSourceBufferActor', () => {
   // destroy()
   // ---------------------------------------------------------------------------
 
+  // ---------------------------------------------------------------------------
+  // Partial segment state — streaming AsyncIterable appends
+  // ---------------------------------------------------------------------------
+
+  it('does not emit a partial snapshot for ArrayBuffer appends', async () => {
+    const sourceBuffer = makeSourceBuffer([[0, 10]]);
+    const actor = createSourceBufferActor(sourceBuffer);
+
+    const snapshots: (typeof actor.snapshot)[] = [];
+    const unsub = actor.subscribe((s) => snapshots.push(s));
+
+    await actor.send(
+      {
+        type: 'append-segment',
+        data: new ArrayBuffer(8),
+        meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
+      },
+      neverAborted
+    );
+    unsub();
+
+    const hadPartial = snapshots.some((s) => s.context.segments.some((seg) => seg.partial));
+    expect(hadPartial).toBe(false);
+
+    actor.destroy();
+  });
+
+  it('emits a partial:true snapshot before completing a streaming append', async () => {
+    const sourceBuffer = makeSourceBuffer([[0, 10]]);
+    const actor = createSourceBufferActor(sourceBuffer);
+
+    const snapshots: (typeof actor.snapshot)[] = [];
+    const unsub = actor.subscribe((s) =>
+      snapshots.push({ ...s, context: { ...s.context, segments: [...s.context.segments] } })
+    );
+
+    async function* twoChunks() {
+      yield new Uint8Array(4);
+      yield new Uint8Array(4);
+    }
+
+    await actor.send(
+      { type: 'append-segment', data: twoChunks(), meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' } },
+      neverAborted
+    );
+    unsub();
+
+    const partialSnapshot = snapshots.find((s) =>
+      s.context.segments.some((seg) => seg.id === 's1' && seg.partial === true)
+    );
+    expect(partialSnapshot).toBeDefined();
+
+    actor.destroy();
+  });
+
+  it('clears partial flag on segment after streaming append completes', async () => {
+    const sourceBuffer = makeSourceBuffer([[0, 10]]);
+    const actor = createSourceBufferActor(sourceBuffer);
+
+    async function* oneChunk() {
+      yield new Uint8Array(8);
+    }
+
+    await actor.send(
+      { type: 'append-segment', data: oneChunk(), meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' } },
+      neverAborted
+    );
+
+    const seg = actor.snapshot.context.segments.find((s) => s.id === 's1');
+    expect(seg).toBeDefined();
+    expect(seg?.partial).toBeUndefined();
+
+    actor.destroy();
+  });
+
+  it('leaves partial:true entry in context when streaming append is aborted', async () => {
+    // Use a controllable iterable that pauses, allowing abort mid-stream
+    let resolveFirst: () => void;
+    const firstChunkReady = new Promise<void>((r) => {
+      resolveFirst = r;
+    });
+
+    async function* pausingStream() {
+      yield new Uint8Array(4);
+      // Pause here — abort will fire before the second chunk
+      await firstChunkReady;
+      yield new Uint8Array(4);
+    }
+
+    const sourceBuffer = makeSourceBuffer([
+      [0, 5],
+      [5, 10],
+    ]);
+    const actor = createSourceBufferActor(sourceBuffer);
+    const ac = new AbortController();
+
+    const pending = actor.send(
+      {
+        type: 'append-segment',
+        data: pausingStream(),
+        meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
+      },
+      ac.signal
+    );
+
+    // Wait until partial state is emitted (first chunk queued)
+    await vi.waitFor(() => {
+      expect(actor.snapshot.context.segments.some((s) => s.id === 's1' && s.partial === true)).toBe(true);
+    });
+
+    // Abort — the stream is paused waiting for resolveFirst
+    ac.abort();
+    resolveFirst!();
+
+    // Let the task settle (it will reject with AbortError — swallow it)
+    await pending.catch(() => {});
+
+    // partial: true entry should remain — accurately reflects data in SourceBuffer
+    const seg = actor.snapshot.context.segments.find((s) => s.id === 's1');
+    expect(seg).toBeDefined();
+    expect(seg?.partial).toBe(true);
+
+    actor.destroy();
+  });
+
+  it('replaces a partial:true entry when the same segment is fully re-appended', async () => {
+    const sourceBuffer = makeSourceBuffer([[0, 10]]);
+    const actor = createSourceBufferActor(sourceBuffer);
+
+    // First: put a partial segment in context via initialContext shortcut
+    const actorWithPartial = createSourceBufferActor(sourceBuffer, {
+      segments: [{ id: 's1', startTime: 0, duration: 10, trackId: 'track-1', partial: true }],
+    });
+
+    // Now fully append the same segment (ArrayBuffer path — atomic, no partial)
+    await actorWithPartial.send(
+      {
+        type: 'append-segment',
+        data: new ArrayBuffer(8),
+        meta: { id: 's1', startTime: 0, duration: 10, trackId: 'track-1' },
+      },
+      neverAborted
+    );
+
+    const seg = actorWithPartial.snapshot.context.segments.find((s) => s.id === 's1');
+    expect(seg).toBeDefined();
+    expect(seg?.partial).toBeUndefined();
+
+    actorWithPartial.destroy();
+    actor.destroy();
+  });
+
   it('destroy() aborts the in-progress operation', async () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
