@@ -23,6 +23,13 @@ const post = Astro.props;
 const { Content, remarkPluginFrontmatter } = await render(post);
 const authors = await getEntries(post.data.authors);
 
+// Resolve OG image URL for JSON-LD
+const ogImageUrl = post.data.ogImage
+  ? typeof post.data.ogImage === 'string'
+    ? post.data.ogImage
+    : new URL(post.data.ogImage.src, Astro.url).toString()
+  : undefined;
+
 // Build JSON-LD schema for BlogPosting
 const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
 const jsonLdSchema = createBlogPostingSchema({
@@ -34,6 +41,7 @@ const jsonLdSchema = createBlogPostingSchema({
   readingTime: remarkPluginFrontmatter.readingTimeMinutes,
   authors,
   siteUrl: Astro.site!.toString(),
+  image: ogImageUrl,
 });
 ---
 
@@ -41,6 +49,8 @@ const jsonLdSchema = createBlogPostingSchema({
   title={[post.data.title, "Blog"]}
   description={post.data.description}
   canonical={post.data.canonical}
+  image={post.data.ogImage}
+  twitterImage={post.data.twitterImage}
 >
   <JsonLd slot="head" schema={jsonLdSchema} />
   <article

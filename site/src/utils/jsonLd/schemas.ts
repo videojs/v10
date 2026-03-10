@@ -63,6 +63,7 @@ export function createBlogPostingSchema(params: {
   readingTime?: number;
   authors: CollectionEntry<'authors'>[];
   siteUrl: string;
+  image?: string;
 }): WithContext<BlogPosting> {
   return {
     '@context': 'https://schema.org',
@@ -70,6 +71,7 @@ export function createBlogPostingSchema(params: {
     headline: params.title,
     description: params.description,
     url: params.url,
+    ...(params.image && { image: params.image }),
     datePublished: params.pubDate.toISOString(),
     ...(params.updatedDate && { dateModified: params.updatedDate.toISOString() }),
     ...(params.wordCount && { wordCount: params.wordCount }),

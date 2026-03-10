@@ -1,5 +1,6 @@
 ---
 
+import type { ImageMetadata } from 'astro';
 import Footer from '@/components/Footer.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import NavBar from '@/components/NavBar/NavBar.astro';
@@ -9,12 +10,20 @@ interface Props {
   title: string | string[];
   description: string;
   canonical?: string;
+  image?: ImageMetadata | string;
+  twitterImage?: ImageMetadata | string;
 }
 
-const { title, description, canonical } = Astro.props;
+const { title, description, canonical, image, twitterImage } = Astro.props;
 ---
 
-<Base title={title} description={description} canonical={canonical}>
+<Base
+  title={title}
+  description={description}
+  canonical={canonical}
+  image={image}
+  twitterImage={twitterImage}
+>
   <slot name="head" slot="head" />
   <div class="flex min-h-screen flex-col">
     <NavBar />

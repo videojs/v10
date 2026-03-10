@@ -14,14 +14,22 @@ import ThemeInit from '@/components/ThemeInit.astro';
 interface Props {
   title: string | string[];
   description: string;
-  image?: ImageMetadata;
+  image?: ImageMetadata | string;
+  twitterImage?: ImageMetadata | string;
   canonical?: string;
   suffix?: string;
 }
 const { canonical, suffix } = Astro.props;
 const canonicalURL = canonical || new URL(Astro.url.pathname, Astro.site);
 
-const { title, description, image } = Astro.props;
+const { title, description, image, twitterImage } = Astro.props;
+
+function resolveImageUrl(img: ImageMetadata | string): string {
+  if (typeof img === 'string') return img;
+  return new URL(img.src, Astro.url).toString();
+}
+
+const resolvedTwitterImage = twitterImage ?? image;
 
 const seoSuffix = suffix ?? SEO_SUFFIX;
 const pageTitle = Array.isArray(title) ? title.join(' | ') : title;
@@ -112,11 +120,7 @@ const fullTitle =
     <meta property="og:url" content={Astro.url} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    {
-      image && (
-        <meta property="og:image" content={new URL(image.src, Astro.url)} />
-      )
-    }
+    {image && <meta property="og:image" content={resolveImageUrl(image)} />}
 
     {/* Twitter */}
     <meta property="twitter:card" content="summary_large_image" />
@@ -124,10 +128,10 @@ const fullTitle =
     <meta property="twitter:title" content={fullTitle} />
     <meta property="twitter:description" content={description} />
     {
-      image && (
+      resolvedTwitterImage && (
         <meta
           property="twitter:image"
-          content={new URL(image.src, Astro.url)}
+          content={resolveImageUrl(resolvedTwitterImage)}
         />
       )
     }
