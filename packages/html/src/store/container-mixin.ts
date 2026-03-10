@@ -18,8 +18,8 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
   return <Class extends MediaElementConstructor>(BaseClass: Class) => {
     class PlayerContainerElement extends BaseClass implements PlayerConsumer<Store>, MediaContainer {
       #detach = noop;
-      #contextStore: Store | null = null;
       #observer: MutationObserver | null = null;
+      #contextStore: Store | null = null;
 
       constructor(...args: any[]) {
         super(...args);
