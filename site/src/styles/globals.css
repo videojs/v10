@@ -218,7 +218,7 @@
   background-image: url("/data-bar-white.svg");
   background-repeat: repeat-x;
   background-size: auto 100%;
-  animation: grow-bar 1.5s ease-out forwards;
+  animation: grow-bar var(--data-bar-duration, 1.5s) ease-out forwards;
   animation-play-state: paused;
 
   [data-animate] & {
