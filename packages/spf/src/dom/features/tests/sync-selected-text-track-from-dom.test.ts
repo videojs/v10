@@ -100,6 +100,64 @@ describe('syncSelectedTextTrackFromDom', () => {
     cleanup();
   });
 
+  it('clears textBufferState for the deselected track when disabling', async () => {
+    // When mode='disabled' clears native cues, textBufferState must be reset so
+    // segments are re-fetched if the user re-enables captions.
+    const mediaElement = document.createElement('video');
+    const trackEl = createSubtitleTrack(mediaElement, 'track-en');
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const state = createState<SelectedTextTrackFromDomState>({
+      selectedTextTrackId: 'track-en',
+      textBufferState: {
+        'track-en': { segments: [{ id: 'seg-0' }, { id: 'seg-1' }] },
+      },
+    });
+    const owners = createState<SelectedTextTrackFromDomOwners>({ mediaElement });
+
+    const cleanup = syncSelectedTextTrackFromDom({ state, owners });
+
+    trackEl.track.mode = 'disabled';
+    mediaElement.textTracks.dispatchEvent(new Event('change'));
+
+    await vi.waitFor(() => {
+      expect(state.current.selectedTextTrackId).toBeUndefined();
+      expect(state.current.textBufferState?.['track-en']).toBeUndefined();
+    });
+
+    cleanup();
+  });
+
+  it('does not modify textBufferState for other tracks when disabling one', async () => {
+    const mediaElement = document.createElement('video');
+    const trackEl = createSubtitleTrack(mediaElement, 'track-en');
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const state = createState<SelectedTextTrackFromDomState>({
+      selectedTextTrackId: 'track-en',
+      textBufferState: {
+        'track-en': { segments: [{ id: 'seg-0' }] },
+        'track-fr': { segments: [{ id: 'seg-0' }] },
+      },
+    });
+    const owners = createState<SelectedTextTrackFromDomOwners>({ mediaElement });
+
+    const cleanup = syncSelectedTextTrackFromDom({ state, owners });
+
+    trackEl.track.mode = 'disabled';
+    mediaElement.textTracks.dispatchEvent(new Event('change'));
+
+    await vi.waitFor(() => {
+      expect(state.current.textBufferState?.['track-en']).toBeUndefined();
+    });
+
+    expect(state.current.textBufferState?.['track-fr']).toEqual({ segments: [{ id: 'seg-0' }] });
+
+    cleanup();
+  });
+
   it('ignores non-subtitle/caption track kinds', async () => {
     const mediaElement = document.createElement('video');
     const chapterEl = document.createElement('track');
