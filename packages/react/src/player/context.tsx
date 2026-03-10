@@ -4,7 +4,8 @@ import type { Media, MediaContainer } from '@videojs/core/dom';
 import type { UnknownState, UnknownStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { Dispatch, HTMLAttributes, ReactNode, SetStateAction } from 'react';
-import { createContext, forwardRef, useContext, useEffect, useRef } from 'react';
+import { Children, createContext, forwardRef, isValidElement, useContext, useEffect, useRef } from 'react';
+import { Gesture } from '../ui/gesture/gesture';
 
 import { useComposedRefs } from '../utils/use-composed-refs';
 
@@ -108,6 +109,8 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
   const internalRef = useRef<HTMLDivElement>(null);
   const composedRef = useComposedRefs(ref, internalRef);
 
+  const hasGestureChild = Children.toArray(children).some((child) => isValidElement(child) && child.type === Gesture);
+
   useEffect(() => {
     setContainer?.(internalRef.current);
     return () => setContainer?.(null);
@@ -115,6 +118,7 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
 
   return (
     <div ref={composedRef} {...props}>
+      {!hasGestureChild && <Gesture type="pointerup" command="toggle-paused" />}
       {children}
     </div>
   );

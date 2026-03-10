@@ -37,6 +37,7 @@ export { Controls } from './ui/controls';
 export type { ControlsGroupProps } from './ui/controls/controls-group';
 export type { ControlsRootProps } from './ui/controls/controls-root';
 export { FullscreenButton, type FullscreenButtonProps } from './ui/fullscreen-button/fullscreen-button';
+export { Gesture, type GestureProps } from './ui/gesture/gesture';
 export { useButton } from './ui/hooks/use-button';
 export { useSlider } from './ui/hooks/use-slider';
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
