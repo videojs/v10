@@ -15,10 +15,11 @@ type NavbarProps = {
   onSourceChange: (value: string) => void;
   availableSources: readonly SourceId[];
   isBackgroundVideo: boolean;
+  isSimpleHlsVideo: boolean;
   platforms: readonly Platform[];
   stylings: readonly Styling[];
   presets: readonly Preset[];
-  sources: Record<SourceId, { label: string; url: string; type: string }>;
+  sources: Record<SourceId, { label: string; url: string; type: string; subType?: string }>;
 };
 
 const SKIN_OPTIONS: readonly Skin[] = ['default', 'minimal'] satisfies readonly (typeof SKINS)[number][];
@@ -31,6 +32,7 @@ const PLATFORM_LABELS: Record<Platform, string> = {
 const PRESET_LABELS: Record<Preset, string> = {
   video: 'Video',
   'hls-video': 'HlsVideo',
+  'simple-hls-video': 'SimpleHlsVideo',
   audio: 'Audio',
   'background-video': 'Background Video',
 };
@@ -48,6 +50,7 @@ export function Navbar({
   onSourceChange,
   availableSources,
   isBackgroundVideo,
+  isSimpleHlsVideo,
   platforms,
   stylings,
   presets,
@@ -99,7 +102,13 @@ export function Navbar({
           label="Source"
           value={source}
           onChange={onSourceChange}
-          options={availableSources.map((id) => ({ value: id, label: sources[id].label }))}
+          options={
+            isSimpleHlsVideo
+              ? availableSources
+                  .filter((id) => sources[id].subType === 'mp4')
+                  .map((id) => ({ value: id, label: sources[id].label }))
+              : availableSources.map((id) => ({ value: id, label: sources[id].label }))
+          }
           disabled={isBackgroundVideo}
         />
       </div>

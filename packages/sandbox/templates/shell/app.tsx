@@ -91,6 +91,7 @@ export function App() {
         onSourceChange={handleSourceChange}
         availableSources={availableSources}
         isBackgroundVideo={preset === 'background-video'}
+        isSimpleHlsVideo={preset === 'simple-hls-video'}
         platforms={PLATFORMS}
         stylings={STYLINGS}
         presets={PRESETS}
