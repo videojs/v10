@@ -39,18 +39,14 @@ members:
 
 ## Contributing
 
-We'd love for you to join our community channels above and give us feedback! Keep in mind this is a technical preview
-and we're working on a lot of polish over the coming months. Feedback on any of the following
-would help us:
+We'd love for you to join our community channels above and give us feedback! Feedback on any of the following would help us:
 
 - Player skin designs
-- Architecture and general approach
-- Initial embed code and component structure
+- Component structures and APIs
 - Package structure and exports
 - Repo, workspace, contributor guides
-- Component structures and APIs
 
-Please see our [contributing guide](./CONTRIBUTING.md) for getting setup locally and making code or docs changes.
+Please see our [contributing guide](./CONTRIBUTING.md) for getting set up locally and making code or docs changes.
 
 ## Code of Conduct
 
