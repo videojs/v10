@@ -1,5 +1,26 @@
 # Changelog
 
+## [10.0.0-alpha.10](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-alpha.9...@videojs/react@10.0.0-alpha.10) (2026-03-10)
+
+
+### Features
+
+* **skin:** add audio skins for HTML and React presets ([#772](https://github.com/videojs/v10/issues/772)) ([d751fda](https://github.com/videojs/v10/commit/d751fdabea9782b9f6c73aaebfb93ed393e488f7))
+* **skin:** port tooltip styling from tech preview ([#800](https://github.com/videojs/v10/issues/800)) ([6b6566e](https://github.com/videojs/v10/commit/6b6566e2540b4ad9fcd9b2a8e6c767f5f7e4072f))
+* **spf:** initial push of SPF ([#784](https://github.com/videojs/v10/issues/784)) ([27a3993](https://github.com/videojs/v10/commit/27a3993fb20af0523e42b0d03c70a6f5a465d144))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-alpha.10
+    * @videojs/core bumped to 10.0.0-alpha.10
+    * @videojs/store bumped to 10.0.0-alpha.10
+    * @videojs/utils bumped to 10.0.0-alpha.10
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-alpha.10
+
 ## [10.0.0-alpha.9](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-alpha.8...@videojs/react@10.0.0-alpha.9) (2026-03-06)
 
 

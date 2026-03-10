@@ -1,5 +1,19 @@
 # Changelog
 
+## [10.0.0-alpha.10](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-alpha.9...@videojs/icons@10.0.0-alpha.10) (2026-03-10)
+
+
+### Features
+
+* **skin:** add audio skins for HTML and React presets ([#772](https://github.com/videojs/v10/issues/772)) ([d751fda](https://github.com/videojs/v10/commit/d751fdabea9782b9f6c73aaebfb93ed393e488f7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-alpha.10
+
 ## [10.0.0-alpha.9](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-alpha.8...@videojs/icons@10.0.0-alpha.9) (2026-03-06)
 
 
