@@ -1,14 +1,12 @@
 import { createPlayer, Time } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-import './CustomSeparator.css';
-
 const Player = createPlayer({ features: videoFeatures });
 
 export default function CustomSeparator() {
   return (
     <Player.Provider>
-      <Player.Container className="react-time-custom-separator">
+      <Player.Container className="video-player">
         <Video
           src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
           autoPlay
@@ -16,7 +14,7 @@ export default function CustomSeparator() {
           playsInline
           loop
         />
-        <Time.Group className="react-time-custom-separator__group">
+        <Time.Group className="media-time-group">
           <Time.Value type="current" />
           <Time.Separator> of </Time.Separator>
           <Time.Value type="duration" />

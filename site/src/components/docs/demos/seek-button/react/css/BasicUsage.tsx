@@ -1,14 +1,12 @@
 import { createPlayer, SeekButton } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-import './BasicUsage.css';
-
 const Player = createPlayer({ features: videoFeatures });
 
 export default function BasicUsage() {
   return (
     <Player.Provider>
-      <Player.Container className="react-seek-button-basic">
+      <Player.Container className="video-player">
         <Video
           src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
           autoPlay
@@ -16,10 +14,10 @@ export default function BasicUsage() {
           playsInline
           loop
         />
-        <div className="react-seek-button-basic__buttons">
+        <div className="buttons">
           <SeekButton
             seconds={-5}
-            className="react-seek-button-basic__button"
+            className="media-seek-button"
             render={(props, state) => (
               <button {...props}>
                 {state.direction === 'backward' ? '\u23EA' : '\u23E9'} {5}s
@@ -28,7 +26,7 @@ export default function BasicUsage() {
           />
           <SeekButton
             seconds={10}
-            className="react-seek-button-basic__button"
+            className="media-seek-button"
             render={(props, state) => (
               <button {...props}>
                 {10}s {state.direction === 'forward' ? '\u23E9' : '\u23EA'}

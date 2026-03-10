@@ -1,14 +1,12 @@
 import { createPlayer, Popover } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-import './BasicUsage.css';
-
 const Player = createPlayer({ features: videoFeatures });
 
 export default function BasicUsage() {
   return (
     <Player.Provider>
-      <Player.Container className="react-popover-basic">
+      <Player.Container className="video-player">
         <Video
           src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
           autoPlay
@@ -16,12 +14,12 @@ export default function BasicUsage() {
           playsInline
           loop
         />
-        <div className="react-popover-basic__bar">
+        <div className="bar">
           <Popover.Root>
-            <Popover.Trigger className="react-popover-basic__trigger">Settings</Popover.Trigger>
-            <Popover.Popup className="react-popover-basic__popup">
-              <Popover.Arrow className="react-popover-basic__arrow" />
-              <div className="react-popover-basic__content">Popover content</div>
+            <Popover.Trigger className="media-popover-trigger">Settings</Popover.Trigger>
+            <Popover.Popup className="media-popover-popup">
+              <Popover.Arrow className="media-popover-arrow" />
+              <div className="content">Popover content</div>
             </Popover.Popup>
           </Popover.Root>
         </div>

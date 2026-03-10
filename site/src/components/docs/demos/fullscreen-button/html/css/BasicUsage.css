@@ -1,13 +1,13 @@
-.html-fullscreen-button-basic {
+.video-player {
   display: block;
   position: relative;
 }
 
-.html-fullscreen-button-basic video {
+.video-player video {
   width: 100%;
 }
 
-.html-fullscreen-button-basic__button {
+.media-fullscreen-button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;
@@ -21,15 +21,15 @@
   cursor: pointer;
 }
 
-.html-fullscreen-button-basic__button .show-when-fullscreen {
+.media-fullscreen-button .show-when-fullscreen {
   display: none;
 }
-.html-fullscreen-button-basic__button .show-when-not-fullscreen {
+.media-fullscreen-button .show-when-not-fullscreen {
   display: none;
 }
-.html-fullscreen-button-basic__button[data-fullscreen] .show-when-fullscreen {
+.media-fullscreen-button[data-fullscreen] .show-when-fullscreen {
   display: inline;
 }
-.html-fullscreen-button-basic__button:not([data-fullscreen]) .show-when-not-fullscreen {
+.media-fullscreen-button:not([data-fullscreen]) .show-when-not-fullscreen {
   display: inline;
 }

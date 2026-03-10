@@ -1,18 +1,18 @@
-.react-popover-basic {
+.video-player {
   position: relative;
 }
 
-.react-popover-basic video {
+.video-player video {
   width: 100%;
 }
 
-.react-popover-basic__bar {
+.bar {
   position: absolute;
   bottom: 10px;
   left: 10px;
 }
 
-.react-popover-basic__trigger {
+.media-popover-trigger {
   padding: 6px 16px;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
@@ -22,7 +22,7 @@
   cursor: pointer;
 }
 
-.react-popover-basic__popup {
+.media-popover-popup {
   /* Reset UA [popover] defaults */
   margin: 0;
   border: 0;
@@ -36,10 +36,10 @@
   font-size: 14px;
 }
 
-.react-popover-basic__arrow {
+.media-popover-arrow {
   fill: rgba(0, 0, 0, 0.85);
 }
 
-.react-popover-basic__content {
+.content {
   white-space: nowrap;
 }

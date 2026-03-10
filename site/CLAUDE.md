@@ -185,26 +185,28 @@ src/components/docs/demos/
 ├── HtmlDemo.astro          # Renders raw HTML via set:html
 └── {component}/{framework}/{style}/
     ├── BasicUsage.tsx      # React: component (+ .css)
-    ├── BasicUsage.astro    # HTML: Astro wrapper (renders HTML, imports CSS, bundles script)
+    ├── BasicUsage.astro    # HTML: Astro wrapper (renders HTML and bundles script)
     ├── BasicUsage.html     # HTML: markup only, no <style> or <script>
-    ├── BasicUsage.css      # HTML: styles (imported by .astro wrapper for live demo)
+    ├── BasicUsage.css      # HTML: styles (shown in source tab; live-scoped by Demo.astro)
     └── BasicUsage.ts       # HTML: side-effect imports for custom element registration
 ```
 
-### CSS Scoping with BEM
+### CSS Scoping and Class Naming
 
-Demos use BEM class names for scoping. Block = `{component}-{variant}`, element = `__{part}`:
+Demos use component-mapped class names (not BEM). Scoping is applied automatically by `Demo.astro` at render time, so demo source files should stay clean:
 
 ```
-.play-button-basic              /* block */
-.play-button-basic__button      /* element */
+.video-player { ... }
+.media-play-button { ... }
 ```
 
-React `.css` and HTML `.css` files for the same demo should use identical BEM names.
+- Inner class names should map to component/tag names where possible (example: `media-container`, `media-play-button`, `media-time-slider`)
+- For non-component wrappers (`div`, `button`, etc.), use short semantic names (`controls`, `panel`, `toggle`, `tag`)
+- React `.css` and HTML `.css` files for the same demo should use the same class names
 
 ### React Demos
 
-A `.tsx` component + `.css` file. Rendered as an Astro island via `client:idle`, displayed as source via `?raw`:
+A `.tsx` component + `.css` file. The component is rendered as an Astro island via `client:idle`; CSS is injected/scoped by `Demo.astro` from the `files` prop.
 
 ```mdx
 import BasicUsageDemo from "@/components/docs/demos/play-button/react/css/BasicUsage";
@@ -223,12 +225,11 @@ import basicUsageCss from "@/components/docs/demos/play-button/react/css/BasicUs
 
 Four files per demo: `.html` (markup only), `.css` (styles), `.ts` (custom element registration), and `.astro` (wrapper that ties them together). The `.astro` wrapper is needed because only Astro `<script>` tags go through Vite's bundling pipeline — MDX `<script>` tags compile as JSX and aren't bundled.
 
-**`.astro` wrapper** (imports CSS for live demo, renders HTML, bundles the `.ts` script):
+**`.astro` wrapper** (renders HTML and bundles the `.ts` script):
 ```astro
 ---
 import HtmlDemo from '@/components/docs/demos/HtmlDemo.astro';
 import html from './BasicUsage.html?raw';
-import './BasicUsage.css';
 ---
 <HtmlDemo html={html} />
 <script>
@@ -257,16 +258,16 @@ import basicUsageHtmlTs from "@/components/docs/demos/play-button/html/css/Basic
 HTML custom elements expose state via `data-*` attributes. Use CSS to toggle labels:
 
 ```html
-<media-play-button class="play-button-basic__button">
+<media-play-button class="media-play-button">
   <span class="show-when-paused">Play</span>
   <span class="show-when-playing">Pause</span>
 </media-play-button>
 ```
 ```css
-.play-button-basic__button .show-when-paused { display: none; }
-.play-button-basic__button .show-when-playing { display: none; }
-.play-button-basic__button[data-paused] .show-when-paused { display: inline; }
-.play-button-basic__button:not([data-paused]) .show-when-playing { display: inline; }
+.media-play-button .show-when-paused { display: none; }
+.media-play-button .show-when-playing { display: none; }
+.media-play-button[data-paused] .show-when-paused { display: inline; }
+.media-play-button:not([data-paused]) .show-when-playing { display: inline; }
 ```
 
 The React equivalent uses the `render` prop: `render={(props, state) => <button {...props}>{state.paused ? 'Play' : 'Pause'}</button>}`.

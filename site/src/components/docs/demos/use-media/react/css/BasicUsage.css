@@ -1,12 +1,12 @@
-.react-use-media-basic {
+.video-player {
   position: relative;
 }
 
-.react-use-media-basic video {
+.video-player video {
   width: 100%;
 }
 
-.react-use-media-basic__info {
+.info {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -17,17 +17,17 @@
   font-size: 0.8125rem;
 }
 
-.react-use-media-basic__info div {
+.info div {
   display: flex;
   gap: 8px;
 }
 
-.react-use-media-basic__info dt {
+.info dt {
   color: #6b7280;
   min-width: 80px;
 }
 
-.react-use-media-basic__info dd {
+.info dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
   overflow: hidden;

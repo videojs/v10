@@ -54,7 +54,7 @@ Each reference page needs at least a BasicUsage demo in both HTML and React.
 
 ```
 src/components/docs/demos/{name}/html/css/
-├── BasicUsage.astro    # Wrapper: imports CSS, renders HTML, bundles script
+├── BasicUsage.astro    # Wrapper: renders HTML and bundles script
 ├── BasicUsage.html     # Markup only (no <style> or <script>)
 ├── BasicUsage.css      # Styles
 └── BasicUsage.ts       # Side-effect imports for custom element registration
@@ -66,7 +66,6 @@ The `.astro` wrapper ties everything together:
 ---
 import HtmlDemo from '@/components/docs/demos/HtmlDemo.astro';
 import html from './BasicUsage.html?raw';
-import './BasicUsage.css';
 ---
 <HtmlDemo html={html} />
 <script>
@@ -82,19 +81,18 @@ src/components/docs/demos/{name}/react/css/
 └── BasicUsage.css      # Styles
 ```
 
-### BEM naming
+### CSS naming and scoping
 
-Use BEM class names for CSS scoping. The block name follows the pattern `{framework}-{component}-{variant}`:
+Use component-mapped class names (no BEM). Keep demo CSS source clean; demo scoping is handled automatically by the shared `Demo.astro` shell.
 
 ```css
-/* HTML demo */
-.html-play-button-basic__button { /* ... */ }
-
-/* React demo */
-.react-play-button-basic__button { /* ... */ }
+.video-player { /* ... */ }
+.media-play-button { /* ... */ }
 ```
 
-React and HTML demos for the same variant should use matching BEM structures.
+- Inner classes should map to component/tag names where possible (`media-container`, `media-play-button`, `media-time-slider`)
+- For generic wrappers, use short semantic names (`controls`, `panel`, `toggle`)
+- React and HTML demos for the same variant should use the same class names
 
 ### Video and poster sources
 

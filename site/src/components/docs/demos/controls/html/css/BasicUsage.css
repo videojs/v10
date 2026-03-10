@@ -1,13 +1,13 @@
-.html-controls-basic {
+.video-player {
   display: block;
   position: relative;
 }
 
-.html-controls-basic video {
+.video-player video {
   width: 100%;
 }
 
-.html-controls-basic__root {
+.media-controls {
   position: absolute;
   inset: 0;
   display: flex;
@@ -18,15 +18,15 @@
   transition: opacity 0.25s;
 }
 
-.html-controls-basic__root:not([data-visible]) {
+.media-controls:not([data-visible]) {
   opacity: 0;
 }
 
-.html-controls-basic__bottom {
+.media-controls-group {
   pointer-events: auto;
 }
 
-.html-controls-basic__time {
+.media-time {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -40,14 +40,14 @@
   font-size: 14px;
 }
 
-.html-controls-basic__bottom {
+.media-controls-group {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
 }
 
-.html-controls-basic__button {
+.media-play-button {
   padding-block: 8px;
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(10px);
@@ -59,15 +59,15 @@
   cursor: pointer;
 }
 
-.html-controls-basic__button .show-when-paused,
-.html-controls-basic__button .show-when-playing {
+.media-play-button .show-when-paused,
+.media-play-button .show-when-playing {
   display: none;
 }
 
-.html-controls-basic__play[data-paused] .show-when-paused {
+.play[data-paused] .show-when-paused {
   display: inline;
 }
 
-.html-controls-basic__play:not([data-paused]) .show-when-playing {
+.play:not([data-paused]) .show-when-playing {
   display: inline;
 }

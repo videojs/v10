@@ -1,12 +1,12 @@
-.html-play-button-basic {
+.video-player {
   position: relative;
 }
 
-.html-play-button-basic video {
+.video-player video {
   width: 100%;
 }
 
-.html-play-button-basic__button {
+.media-play-button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;
@@ -20,27 +20,27 @@
   cursor: pointer;
 }
 
-.html-play-button-basic__button .show-when-paused {
+.media-play-button .show-when-paused {
   display: none;
 }
-.html-play-button-basic__button .show-when-playing {
+.media-play-button .show-when-playing {
   display: none;
 }
-.html-play-button-basic__button .show-when-ended {
+.media-play-button .show-when-ended {
   display: none;
 }
-.html-play-button-basic__button[data-paused]:not([data-ended]) .show-when-paused {
+.media-play-button[data-paused]:not([data-ended]) .show-when-paused {
   display: inline;
 }
-.html-play-button-basic__button:not([data-paused]) .show-when-playing {
+.media-play-button:not([data-paused]) .show-when-playing {
   display: inline;
 }
-.html-play-button-basic__button[data-ended] .show-when-ended {
+.media-play-button[data-ended] .show-when-ended {
   display: inline;
 }
-.html-play-button-basic__button[data-ended] .show-when-paused {
+.media-play-button[data-ended] .show-when-paused {
   display: none;
 }
-.html-play-button-basic__button[data-ended] .show-when-playing {
+.media-play-button[data-ended] .show-when-playing {
   display: none;
 }
