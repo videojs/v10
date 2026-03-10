@@ -1,4 +1,4 @@
-import type { Skin } from '@app/types';
+import type { Skin } from '../../types';
 
 const videoStylesheets: Record<Skin, string> = {
   default: new URL('@videojs/html/video/skin.css', import.meta.url).href,

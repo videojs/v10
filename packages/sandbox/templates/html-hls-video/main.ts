@@ -21,7 +21,7 @@ function render() {
   loadVideoStylesheets(currentSkin);
 
   document.getElementById('root')!.innerHTML = html`
-    <video-player class="contents">
+    <video-player>
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
         <hls-video slot="media" src="${SOURCES[currentSource].url}"></hls-video>
       </${tag}>
