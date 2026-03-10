@@ -112,10 +112,10 @@ export function createSlider(options: SliderOptions): SliderApi {
 
   function endDrag(): void {
     if (!isDragging) {
-      input.patch({ pointing: false, pointerPercent: 0 });
+      input.patch({ pointing: false });
     } else {
       isDragging = false;
-      input.patch({ dragging: false, pointing: false, pointerPercent: 0 });
+      input.patch({ dragging: false, pointing: false });
       options.onDragEnd?.();
     }
 
@@ -211,7 +211,7 @@ export function createSlider(options: SliderOptions): SliderApi {
 
     onPointerLeave() {
       if (!isNull(capturedPointerId)) return;
-      input.patch({ pointing: false, pointerPercent: 0 });
+      input.patch({ pointing: false });
     },
 
     onLostPointerCapture() {

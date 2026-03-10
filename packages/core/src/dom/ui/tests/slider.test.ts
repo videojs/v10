@@ -348,7 +348,7 @@ describe('createSlider', () => {
       flush();
 
       expect(slider.input.current.pointing).toBe(false);
-      expect(slider.input.current.pointerPercent).toBe(0);
+      expect(slider.input.current.pointerPercent).toBe(25);
 
       slider.destroy();
     });
@@ -413,7 +413,7 @@ describe('createSlider', () => {
       slider.destroy();
     });
 
-    it('resets on pointerleave', () => {
+    it('clears pointing on pointerleave and keeps last pointerPercent', () => {
       const el = createMockElement({ left: 0, width: 200 });
       const slider = createSlider(createOptions({ getElement: () => el }));
 
@@ -422,7 +422,7 @@ describe('createSlider', () => {
       flush();
 
       expect(slider.input.current.pointing).toBe(false);
-      expect(slider.input.current.pointerPercent).toBe(0);
+      expect(slider.input.current.pointerPercent).toBe(30);
 
       slider.destroy();
     });
