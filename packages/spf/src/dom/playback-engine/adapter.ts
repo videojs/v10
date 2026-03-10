@@ -7,28 +7,36 @@ import { createPlaybackEngine, type PlaybackEngine } from './engine';
  * Implements the src/play() contract per the WHATWG HTML spec so that SPF can
  * be used anywhere a media element API is expected.
  *
- * The engine is created once at construction and reused across src changes and
- * mediaElement swaps — attach/detach only update the owner reference.
+ * A new engine is created on every src assignment — this fully tears down all
+ * state, SourceBuffers, and in-flight requests from the previous source before
+ * the next one begins. The media element reference is preserved across src
+ * changes and re-applied to the new engine automatically.
  *
  * @example
  * const media = new SpfMedia({ preferredAudioLanguage: 'en' });
  * media.attach(document.querySelector('video'));
  * media.src = 'https://stream.mux.com/abc123.m3u8';
  *
- * // Later, swap element without recreating the engine:
- * media.attach(otherVideoElement);
+ * // Change source — old engine is destroyed, new one starts clean:
+ * media.src = 'https://stream.mux.com/xyz456.m3u8';
  *
  * // Explicit teardown:
  * media.destroy();
  */
 export class SpfMedia {
-  readonly engine: PlaybackEngine;
+  #engine: PlaybackEngine;
+  #config: PlaybackEngineConfig;
 
   /** Pending loadstart listener from a deferred play() retry, if any. */
   #loadstartListener: (() => void) | null = null;
 
   constructor(config: PlaybackEngineConfig = {}) {
-    this.engine = createPlaybackEngine(config);
+    this.#config = config;
+    this.#engine = createPlaybackEngine(config);
+  }
+
+  get engine(): PlaybackEngine {
+    return this.#engine;
   }
 
   // ---------------------------------------------------------------------------
@@ -36,33 +44,43 @@ export class SpfMedia {
   // ---------------------------------------------------------------------------
 
   attach(mediaElement: HTMLMediaElement): void {
-    this.engine.owners.patch({ mediaElement });
+    this.#engine.owners.patch({ mediaElement });
   }
 
   detach(): void {
     this.#cancelPendingPlay();
-    this.engine.owners.patch({ mediaElement: undefined });
+    this.#engine.owners.patch({ mediaElement: undefined });
   }
 
   destroy(): void {
     this.#cancelPendingPlay();
-    this.engine.destroy();
+    this.#engine.destroy();
   }
 
   // ---------------------------------------------------------------------------
   // src — synchronous IDL attribute (WHATWG §4.8.11.2)
-  // Setting src synchronously triggers the load algorithm via state patch.
-  // The URL is derived from state — no separate field needed.
+  // Each assignment destroys the current engine and starts a fresh one, exactly
+  // as the browser's load algorithm resets all media element state on src change.
   // ---------------------------------------------------------------------------
 
   get src(): string {
-    return this.engine.state.current.presentation?.url ?? '';
+    return this.#engine.state.current.presentation?.url ?? '';
   }
 
   set src(value: string) {
-    this.engine.state.patch({
-      presentation: value ? { url: value } : undefined,
-    });
+    const prevMediaElement = this.#engine.owners.current.mediaElement;
+
+    this.#cancelPendingPlay();
+    this.#engine.destroy();
+    this.#engine = createPlaybackEngine(this.#config);
+
+    if (prevMediaElement) {
+      this.#engine.owners.patch({ mediaElement: prevMediaElement });
+    }
+
+    if (value) {
+      this.#engine.state.patch({ presentation: { url: value } });
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -71,13 +89,13 @@ export class SpfMedia {
   // ---------------------------------------------------------------------------
 
   play(): Promise<void> {
-    const { mediaElement } = this.engine.owners.current;
+    const { mediaElement } = this.#engine.owners.current;
     if (!mediaElement) {
       return Promise.reject(new Error('SpfMedia: no media element attached'));
     }
 
     // Signal play intent — enables loading even with preload="none"
-    this.engine.state.patch({ playbackInitiated: true });
+    this.#engine.state.patch({ playbackInitiated: true });
 
     return mediaElement.play().catch((err: unknown) => {
       // If we have a pending HLS source, the rejection may be because MSE
@@ -103,7 +121,7 @@ export class SpfMedia {
 
   #cancelPendingPlay(): void {
     if (!this.#loadstartListener) return;
-    const { mediaElement } = this.engine.owners.current;
+    const { mediaElement } = this.#engine.owners.current;
     mediaElement?.removeEventListener('loadstart', this.#loadstartListener);
     this.#loadstartListener = null;
   }

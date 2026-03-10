@@ -98,7 +98,9 @@ export function updateDuration({
   state: WritableState<DurationUpdateState>;
   owners: WritableState<DurationUpdateOwners>;
 }): () => void {
-  return combineLatest([state, owners]).subscribe(
+  let destroyed = false;
+
+  const unsubscribe = combineLatest([state, owners]).subscribe(
     async ([currentState, currentOwners]: [DurationUpdateState, DurationUpdateOwners]) => {
       if (!shouldUpdateDuration(currentState, currentOwners)) return;
 
@@ -107,10 +109,9 @@ export function updateDuration({
       // MSE spec: duration cannot be set while any SourceBuffer is updating
       await waitForSourceBuffersReady(currentOwners);
 
-      // Re-check readyState after the async wait — the endOfStream orchestrator may
-      // have called mediaSource.endOfStream() concurrently, transitioning readyState
-      // to 'ended'. Setting duration in that state throws InvalidStateError.
-      if (mediaSource!.readyState !== 'open') return;
+      // Re-check after async wait: destroyed, or readyState changed (e.g. endOfStream
+      // already called endOfStream(), transitioning 'open' → 'ended').
+      if (destroyed || mediaSource!.readyState !== 'open') return;
 
       let duration = currentState.presentation!.duration!;
 
@@ -127,4 +128,9 @@ export function updateDuration({
       mediaSource!.duration = duration;
     }
   );
+
+  return () => {
+    destroyed = true;
+    unsubscribe();
+  };
 }

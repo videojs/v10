@@ -98,6 +98,43 @@ describe('SpfMedia', () => {
       expect(media.engine).toBe(engine);
     });
 
+    it('creates a new engine when src is set', () => {
+      const media = new SpfMedia();
+      const initial = media.engine;
+      media.src = 'https://example.com/v1.m3u8';
+      expect(media.engine).not.toBe(initial);
+    });
+
+    it('destroys the old engine when src changes', () => {
+      const media = new SpfMedia();
+      media.src = 'https://example.com/v1.m3u8';
+      const spy = vi.spyOn(media.engine, 'destroy');
+      media.src = 'https://example.com/v2.m3u8';
+      expect(spy).toHaveBeenCalledOnce();
+    });
+
+    it('re-attaches the media element to the new engine when src changes', () => {
+      const media = new SpfMedia();
+      const el = document.createElement('video');
+      media.attach(el);
+      media.src = 'https://example.com/v1.m3u8';
+      expect(media.engine.owners.current.mediaElement).toBe(el);
+    });
+
+    it('cancels pending play listener when src changes', async () => {
+      const media = new SpfMedia();
+      const el = document.createElement('video');
+      media.attach(el);
+      media.src = 'https://example.com/v1.m3u8';
+      el.play = () => Promise.reject(new Error('no supported sources'));
+      media.play().catch(() => {});
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+      const spy = vi.spyOn(el, 'removeEventListener');
+      media.src = 'https://example.com/v2.m3u8';
+      expect(spy).toHaveBeenCalledWith('loadstart', expect.any(Function));
+    });
+
     it('sets mediaElement in owners when attached', () => {
       const media = new SpfMedia();
       const el = document.createElement('video');

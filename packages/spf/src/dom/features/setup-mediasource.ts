@@ -52,13 +52,15 @@ export function setupMediaSource({
   owners: WritableState<MediaSourceOwners>;
 }): () => void {
   let settingUp = false;
+  let abortController: AbortController | null = null;
 
-  return combineLatest([state, owners]).subscribe(
+  const unsubscribe = combineLatest([state, owners]).subscribe(
     async ([currentState, currentOwners]: [MediaSourceState, MediaSourceOwners]) => {
       if (!canSetup(currentState, currentOwners) || !shouldSetup(currentState, currentOwners) || settingUp) return;
 
       try {
         settingUp = true;
+        abortController = new AbortController();
 
         // Create MediaSource
         // Note: ManagedMediaSource (Safari) requires disableRemotePlayback and
@@ -69,14 +71,21 @@ export function setupMediaSource({
         // Attach to element
         attachMediaSource(mediaSource, currentOwners.mediaElement!);
 
-        // Wait for sourceopen
-        await waitForSourceOpen(mediaSource);
+        // Wait for sourceopen — aborted if destroy() is called before it fires
+        await waitForSourceOpen(mediaSource, abortController.signal);
 
-        // Update owners with created MediaSource
         owners.patch({ mediaSource });
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        throw error;
       } finally {
         settingUp = false;
       }
     }
   );
+
+  return () => {
+    abortController?.abort();
+    unsubscribe();
+  };
 }

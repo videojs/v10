@@ -254,9 +254,11 @@ export function endOfStream({
   owners: WritableState<EndOfStreamOwners>;
 }): () => void {
   let hasEnded = false;
+  let destroyed = false;
   const activeActorUnsubs: Array<() => void> = [];
 
   const runEvaluate = async () => {
+    if (destroyed) return;
     const currentState = state.current;
     const currentOwners = owners.current;
     if (hasEnded) {
@@ -306,6 +308,7 @@ export function endOfStream({
   const cleanupCombineLatest = combineLatest([state, owners]).subscribe(async () => runEvaluate());
 
   return () => {
+    destroyed = true;
     activeActorUnsubs.forEach((u) => u());
     cleanupOwners();
     cleanupCombineLatest();

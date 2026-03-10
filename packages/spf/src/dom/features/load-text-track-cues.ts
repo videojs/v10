@@ -275,5 +275,8 @@ export function loadTextTrackCues({
     }
   );
 
-  return cleanup;
+  return () => {
+    abortController?.abort();
+    cleanup();
+  };
 }
