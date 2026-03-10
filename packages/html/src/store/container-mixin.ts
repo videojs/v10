@@ -19,6 +19,7 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
     class PlayerContainerElement extends BaseClass implements PlayerConsumer<Store>, MediaContainer {
       #detach = noop;
       #contextStore: Store | null = null;
+      #observer: MutationObserver | null = null;
 
       constructor(...args: any[]) {
         super(...args);
@@ -58,10 +59,14 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
         // Slotted media elements don't appear in the container's subtree,
         // so listen for slot reassignments to pick them up.
         this.addEventListener('slotchange', this.#onSlotChange);
+
+        this.#attachMedia();
       }
 
       override disconnectedCallback() {
         super.disconnectedCallback();
+        this.#observer?.disconnect();
+        this.#observer = null;
         this.removeEventListener('slotchange', this.#onSlotChange);
         this.#detach();
       }
@@ -71,13 +76,14 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
       };
 
       #getSlottedMedia(): HTMLMediaElement | null {
-        const media = this.querySelector(':scope > [slot=media]');
+        const slot = this.querySelector<HTMLSlotElement>('slot[name="media"]');
+        if (!slot) return null;
 
         for (const el of slot.assignedElements({ flatten: true })) {
           if (isMediaElement(el)) return el as HTMLMediaElement;
         }
 
-        return media as HTMLMediaElement | null;
+        return null;
       }
 
       #findMediaElement(): HTMLMediaElement | null {

@@ -5,7 +5,7 @@ import { safeDefine } from '../safe-define';
 function getTemplateHTML(_attrs: Record<string, string>) {
   return /*html*/ `
     <media-container>
-      <slot name="media" slot="media"></slot>
+      <slot name="media"></slot>
     </media-container>
   `;
 }

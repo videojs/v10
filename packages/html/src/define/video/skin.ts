@@ -9,6 +9,7 @@ import '../ui/buffering-indicator';
 import '../ui/captions-button';
 import '../ui/controls';
 import '../ui/fullscreen-button';
+import '../ui/gesture';
 import '../ui/mute-button';
 import '../ui/pip-button';
 import '../ui/play-button';
@@ -26,7 +27,9 @@ const SEEK_TIME = 10;
 function getTemplateHTML() {
   return /*html*/ `
     <media-container class="media-default-skin media-default-skin--video">
-      <slot name="media" slot="media"></slot>
+      <slot name="media"></slot>
+
+      <media-gesture type="pointerup" command="toggle-paused"></media-gesture>
 
       <media-buffering-indicator class="media-buffering-indicator">
         <div class="media-surface">

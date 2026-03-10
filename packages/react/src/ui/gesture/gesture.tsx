@@ -1,55 +1,62 @@
 'use client';
 
-import { ALLOWED_TYPES, GestureCore } from '@videojs/core';
-import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
+import { ALLOWED_GESTURE_TYPES, GestureCore } from '@videojs/core';
+import { logMissingFeature, type PlayerTarget, selectPlayback } from '@videojs/core/dom';
 import type { HTMLAttributes } from 'react';
-import { forwardRef, useEffect, useRef, useState } from 'react';
-
-import { usePlayer } from '../../player/context';
-import { useComposedRefs } from '../../utils/use-composed-refs';
+import { useEffect, useState } from 'react';
+import { usePlayer, usePlayerContext } from '../../player/context';
 
 export interface GestureProps extends HTMLAttributes<HTMLDivElement>, GestureCore.Props {}
 
-export const Gesture = forwardRef<HTMLDivElement, GestureProps>(function Gesture({ type, command, ...props }, ref) {
-  const internalRef = useRef<HTMLDivElement>(null);
-  const composedRef = useComposedRefs(ref, internalRef);
-
+export function Gesture({ type, command, ...props }: GestureProps) {
   const [gestureCore] = useState(() => new GestureCore());
   gestureCore.setProps({ type, command, ...props });
 
+  const { store } = usePlayerContext();
   const playback = usePlayer(selectPlayback);
 
   useEffect(() => {
-    const el = internalRef.current;
-    const parent = el?.parentElement;
-    if (!parent) return;
-    if (!ALLOWED_TYPES.includes(type)) return;
+    if (!ALLOWED_GESTURE_TYPES.includes(type)) return;
 
     const controller = new AbortController();
 
-    parent.addEventListener(
-      type,
-      (event) => {
-        const composedTarget = event.composedPath()?.[0] as Element | undefined;
-        const allowList = ['video'];
-        if (!composedTarget || !allowList.includes(composedTarget?.localName)) return;
+    const attach = () => {
+      controller.abort();
 
-        if (!playback) return;
-        gestureCore.activate(playback);
-      },
-      { signal: controller.signal }
-    );
+      const container = (store.target as PlayerTarget | null)?.container;
+      if (!container) return;
 
-    return () => controller.abort();
-  }, [playback, gestureCore, type]);
+      container.addEventListener(
+        type,
+        (event) => {
+          const composedTarget = event.composedPath()?.[0] as Element | undefined;
+          const allowList = ['video'];
+          if (!composedTarget || !allowList.includes(composedTarget?.localName)) return;
+
+          if (!playback) return;
+          gestureCore.activate(playback);
+        },
+        { signal: controller.signal }
+      );
+    };
+
+    attach();
+
+    const unsubscribe = store.subscribe(attach);
+
+    return () => {
+      controller.abort();
+      unsubscribe();
+    };
+  }, [store, playback, gestureCore, type]);
 
   if (!playback) {
-    if (__DEV__) logMissingFeature('Poster', 'playback');
+    if (__DEV__) logMissingFeature('Gesture', 'playback');
     return null;
   }
 
-  return <div ref={composedRef} style={{ display: 'contents' }} {...props} />;
-});
+  return null;
+}
 
 if (__DEV__) Gesture.displayName = 'Gesture';
 

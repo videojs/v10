@@ -2,18 +2,21 @@ import { defaults } from '@videojs/utils/object';
 
 import type { MediaPlaybackState } from '../../media/state';
 
-export const ALLOWED_TYPES = ['pointerup'] as const;
-export const ALLOWED_COMMANDS = ['toggle-paused'] as const;
+export const ALLOWED_GESTURE_TYPES = ['pointerup'] as const;
+export const ALLOWED_GESTURE_COMMANDS = ['toggle-paused'] as const;
+
+export type GestureType = (typeof ALLOWED_GESTURE_TYPES)[number];
+export type GestureCommand = (typeof ALLOWED_GESTURE_COMMANDS)[number];
 
 export interface GestureProps {
-  type: (typeof ALLOWED_TYPES)[number];
-  command: (typeof ALLOWED_COMMANDS)[number];
+  type: GestureType;
+  command: GestureCommand;
 }
 
 export class GestureCore {
   static readonly defaultProps: GestureProps = {
-    type: ALLOWED_TYPES[0],
-    command: ALLOWED_COMMANDS[0],
+    type: ALLOWED_GESTURE_TYPES[0],
+    command: ALLOWED_GESTURE_COMMANDS[0],
   };
 
   #props = { ...GestureCore.defaultProps };
@@ -27,7 +30,7 @@ export class GestureCore {
   }
 
   async activate(media: MediaPlaybackState): Promise<void> {
-    if (!ALLOWED_TYPES.includes(this.#props.type)) return;
+    if (!ALLOWED_GESTURE_TYPES.includes(this.#props.type)) return;
 
     if (this.#props.command === 'toggle-paused') {
       if (media.paused || media.ended) {
