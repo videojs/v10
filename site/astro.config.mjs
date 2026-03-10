@@ -24,7 +24,9 @@ const SITE_URL = 'https://v10.videojs.org';
 export default defineConfig({
   site: SITE_URL,
   trailingSlash: 'never',
-  adapter: netlify(),
+  adapter: netlify({
+    devFeatures: { images: false },
+  }),
   // Server-only secrets read at runtime (not inlined at build time).
   // All optional — the site degrades gracefully without auth/Mux configured.
   // See site/CLAUDE.md "Environment Variables" for full documentation.
