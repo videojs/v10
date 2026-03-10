@@ -42,7 +42,13 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
   if (state === 'needs_login') {
     return (
       <OverlayWrapper>
-        <p className="text-p3 font-bold">To upload this video to Mux&hellip;</p>
+        <p className="text-p3 font-bold">
+          To upload this video to{' '}
+          <a href="https://mux.com" target="_blank" rel="noopener" className="underline intent:no-underline">
+            Mux
+          </a>
+          &hellip;
+        </p>
         <button
           type="button"
           onClick={onLogin}
