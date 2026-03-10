@@ -15,9 +15,10 @@ import PropRow from './PropRow.astro';
 interface Props {
   props: Record<string, PropDef>;
   componentName: string;
+  showAttributeName?: boolean;
 }
 
-const { props, componentName } = Astro.props;
+const { props, componentName, showAttributeName } = Astro.props;
 ---
 
 <Table maxWidth={false} outerClass="my-6">
@@ -39,6 +40,7 @@ const { props, componentName } = Astro.props;
           description={prop.description}
           defaultValue={prop.default}
           required={prop.required}
+          showAttributeName={showAttributeName}
           componentName={componentName}
         />
       ))

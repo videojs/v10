@@ -33,6 +33,7 @@ if (!apiRef) return;
 
 const apiReferenceModel = createComponentReferenceModel(component, apiRef);
 if (!apiReferenceModel) return;
+const showAttributeName = framework === 'html';
 
 const singlePropsSection = !apiReferenceModel.hasParts
   ? apiReferenceModel.sections.find((section) => section.key === 'props')
@@ -90,6 +91,7 @@ const singleCssCustomPropertiesSection = !apiReferenceModel.hasParts
                 <ApiPropsTable
                   props={part.data.props}
                   componentName={part.componentName}
+                  showAttributeName={showAttributeName}
                 />
               </>
             )}
@@ -149,6 +151,7 @@ const singleCssCustomPropertiesSection = !apiReferenceModel.hasParts
             <ApiPropsTable
               props={apiReferenceModel.data.props}
               componentName={component}
+              showAttributeName={showAttributeName}
             />
           </>
         )}

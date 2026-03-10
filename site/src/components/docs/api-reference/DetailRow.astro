@@ -19,14 +19,15 @@ interface Props {
   id: string;
   name: string;
   type: string;
+  attributeName?: string;
   detailedType?: string;
   description?: string;
   colspan: number;
 }
 
-const { id, name, type, detailedType, description, colspan } = Astro.props;
+const { id, name, type, attributeName, detailedType, description, colspan } = Astro.props;
 
-const hasDetail = Boolean(detailedType || description);
+const hasDetail = Boolean(attributeName || detailedType || description);
 ---
 
 <Tr
@@ -68,6 +69,15 @@ const hasDetail = Boolean(detailedType || description);
             class="grid grid-cols-(--cols) gap-x-6 gap-y-3"
             style="--cols: auto 1fr"
           >
+            {attributeName && (
+              <>
+                <dt class="font-bold">Attribute Name:</dt>
+                <dd>
+                  <MarkdownCode>{attributeName}</MarkdownCode>
+                </dd>
+              </>
+            )}
+
             {description && (
               <>
                 <dt class="font-bold">Description</dt>
