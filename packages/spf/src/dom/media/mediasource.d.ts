@@ -7,7 +7,14 @@
  * Provides better lifecycle management for background tabs and picture-in-picture.
  */
 declare global {
-  interface ManagedMediaSource extends MediaSource {}
+  interface ManagedMediaSource extends MediaSource {
+    /** True when the browser wants the app to be streaming data. */
+    readonly streaming: boolean;
+    addEventListener(type: 'startstreaming', listener: EventListener): void;
+    addEventListener(type: 'endstreaming', listener: EventListener): void;
+    removeEventListener(type: 'startstreaming', listener: EventListener): void;
+    removeEventListener(type: 'endstreaming', listener: EventListener): void;
+  }
 
   const ManagedMediaSource:
     | {

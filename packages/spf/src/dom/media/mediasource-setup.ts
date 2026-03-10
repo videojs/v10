@@ -88,6 +88,10 @@ export function attachMediaSource(mediaSource: MediaSource, mediaElement: HTMLMe
   const isManagedMediaSource = supportsManagedMediaSource() && mediaSource instanceof ManagedMediaSource!;
 
   if (isManagedMediaSource) {
+    // ManagedMediaSource requires disableRemotePlayback — without it Safari
+    // will not fire sourceopen.
+    (mediaElement as HTMLMediaElement & { disableRemotePlayback: boolean }).disableRemotePlayback = true;
+
     // Use srcObject for ManagedMediaSource
     (mediaElement as HTMLMediaElement & { srcObject: MediaSource | null }).srcObject = mediaSource;
 
