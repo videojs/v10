@@ -1,4 +1,5 @@
 import '@videojs/html/video/player';
+import '@videojs/html/media/hls-video';
 import '@videojs/html/video/skin';
 import '@videojs/html/video/minimal-skin';
 import { CSS_SKIN_TAGS } from '../shared/html/skin-tags';
