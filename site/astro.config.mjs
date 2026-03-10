@@ -98,7 +98,7 @@ export default defineConfig({
   },
 
   image: {
-    domains: ['image.mux.com'],
+    domains: ['image.mux.com', '66.media.tumblr.com'],
   },
 
   vite: {
