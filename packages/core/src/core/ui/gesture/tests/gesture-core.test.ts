@@ -18,12 +18,10 @@ function createMediaState(overrides: Partial<MediaPlaybackState> = {}): MediaPla
 describe('GestureCore', () => {
   describe('defaultProps', () => {
     it('defaults type to first allowed type', () => {
-      const core = new GestureCore();
       expect(GestureCore.defaultProps.type).toBe(ALLOWED_TYPES[0]);
     });
 
     it('defaults command to first allowed command', () => {
-      const core = new GestureCore();
       expect(GestureCore.defaultProps.command).toBe(ALLOWED_COMMANDS[0]);
     });
   });
