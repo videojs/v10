@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { MediaPlaybackState } from '../../../media/state';
-import { GestureCore } from '../gesture-core';
+import { ALLOWED_COMMANDS, ALLOWED_TYPES, GestureCore } from '../gesture-core';
 
 function createMediaState(overrides: Partial<MediaPlaybackState> = {}): MediaPlaybackState {
   return {
@@ -16,21 +16,24 @@ function createMediaState(overrides: Partial<MediaPlaybackState> = {}): MediaPla
 }
 
 describe('GestureCore', () => {
+  describe('defaultProps', () => {
+    it('defaults type to first allowed type', () => {
+      const core = new GestureCore();
+      expect(GestureCore.defaultProps.type).toBe(ALLOWED_TYPES[0]);
+    });
+
+    it('defaults command to first allowed command', () => {
+      const core = new GestureCore();
+      expect(GestureCore.defaultProps.command).toBe(ALLOWED_COMMANDS[0]);
+    });
+  });
+
   describe('setProps', () => {
-    it('uses default props', () => {
-      const core = new GestureCore();
-      expect(core.disabled).toBe(false);
-    });
-
     it('accepts constructor props', () => {
-      const core = new GestureCore({ disabled: true });
-      expect(core.disabled).toBe(true);
-    });
-
-    it('updates via setProps', () => {
-      const core = new GestureCore();
-      core.setProps({ disabled: true });
-      expect(core.disabled).toBe(true);
+      const core = new GestureCore({ type: 'pointerup', command: 'toggle-paused' });
+      const media = createMediaState({ paused: true });
+      core.activate(media);
+      expect(media.play).toHaveBeenCalled();
     });
   });
 
@@ -56,12 +59,13 @@ describe('GestureCore', () => {
       expect(media.play).toHaveBeenCalled();
     });
 
-    it('does nothing when disabled', async () => {
+    it('does nothing for an invalid type', async () => {
       const core = new GestureCore();
-      core.setProps({ disabled: true });
+      core.setProps({ type: 'invalid' as any, command: 'toggle-paused' });
       const media = createMediaState({ paused: true });
       await core.activate(media);
       expect(media.play).not.toHaveBeenCalled();
+      expect(media.pause).not.toHaveBeenCalled();
     });
   });
 });
