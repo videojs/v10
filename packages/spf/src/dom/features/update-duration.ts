@@ -76,7 +76,7 @@ export function shouldUpdateDuration(state: DurationUpdateState, owners: Duratio
  */
 function waitForSourceBuffersReady(owners: DurationUpdateOwners): Promise<void> {
   const updating = [owners.videoSourceBuffer, owners.audioSourceBuffer].filter(
-    (buf): buf is SourceBuffer => buf?.updating
+    (buf): buf is SourceBuffer => buf?.updating === true
   );
 
   if (updating.length === 0) return Promise.resolve();
