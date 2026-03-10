@@ -901,3 +901,155 @@ describe('loadSegments forward buffer flushing', () => {
     cleanup();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Streaming bandwidth tracking
+// ---------------------------------------------------------------------------
+
+describe('loadSegments bandwidth tracking', () => {
+  function makeStreamingFetch(chunks: Uint8Array[]) {
+    return vi.fn().mockImplementation(() => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          for (const chunk of chunks) controller.enqueue(chunk);
+          controller.close();
+        },
+      });
+      return Promise.resolve(new Response(body));
+    });
+  }
+
+  it('samples bandwidth per chunk and updates state.bandwidthState', async () => {
+    const chunkSize = 50_000; // 50 KB — below 128 KB default, so whole segment = one flush
+    const numChunks = 3;
+    const chunks = Array.from({ length: numChunks }, () => new Uint8Array(chunkSize).fill(1));
+
+    globalThis.fetch = makeStreamingFetch(chunks);
+
+    const { loadSegments } = await import('../load-segments');
+    const { createState: cs } = await import('../../../core/state/create-state');
+
+    const segment = { id: 's1', url: 'http://example.com/s1.m4s', startTime: 0, duration: 10 };
+    const track = {
+      type: 'video' as const,
+      id: 'track-1',
+      url: 'http://example.com/video.m3u8',
+      mimeType: 'video/mp4',
+      codecs: ['avc1.42E01E'],
+      bandwidth: 1_000_000,
+      initialization: { url: 'http://example.com/init.mp4' },
+      segments: [segment],
+      startTime: 0,
+      duration: 10,
+    };
+
+    // Seeding bandwidthState activates the onSample bridge → state.bandwidthState updates
+    const initialBandwidth = {
+      fastEstimate: 0,
+      fastTotalWeight: 0,
+      slowEstimate: 0,
+      slowTotalWeight: 0,
+      bytesSampled: 0,
+    };
+
+    const state = cs<SegmentLoadingState>({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      bandwidthState: initialBandwidth,
+      presentation: {
+        id: 'p1',
+        url: 'http://example.com/playlist.m3u8',
+        startTime: 0,
+        duration: 10,
+        selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
+      },
+    });
+
+    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
+
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    // Wait for both init and segment to be appended (actor context will have 1 segment)
+    await vi.waitFor(
+      () => {
+        expect(owners.current.videoBufferActor?.snapshot.context.segments).toHaveLength(1);
+      },
+      { timeout: 3000 }
+    );
+
+    // All bytes (init + segment) should be counted in bytesSampled
+    const totalExpected = chunkSize * numChunks * 2; // init fetch + segment fetch, each 3×50KB
+    expect(state.current.bandwidthState?.bytesSampled).toBeGreaterThan(0);
+    expect(state.current.bandwidthState?.bytesSampled).toBeLessThanOrEqual(totalExpected);
+
+    cleanup();
+  });
+
+  it('appended data matches the concatenated streaming chunks', async () => {
+    const part1 = new Uint8Array([1, 2, 3, 4]);
+    const part2 = new Uint8Array([5, 6, 7, 8]);
+
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(part1);
+          controller.enqueue(part2);
+          controller.close();
+        },
+      });
+      return Promise.resolve(new Response(body));
+    });
+
+    const { loadSegments } = await import('../load-segments');
+    const { createState: cs } = await import('../../../core/state/create-state');
+
+    const segment = { id: 's1', url: 'http://example.com/s1.m4s', startTime: 0, duration: 10 };
+    const track = {
+      type: 'video' as const,
+      id: 'track-1',
+      url: 'http://example.com/video.m3u8',
+      mimeType: 'video/mp4',
+      codecs: ['avc1.42E01E'],
+      bandwidth: 500_000,
+      initialization: { url: 'http://example.com/init.mp4' },
+      segments: [segment],
+      startTime: 0,
+      duration: 10,
+    };
+
+    const state = cs<SegmentLoadingState>({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      presentation: {
+        id: 'p1',
+        url: 'http://example.com/playlist.m3u8',
+        startTime: 0,
+        duration: 10,
+        selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
+      },
+    });
+
+    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
+
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    await vi.waitFor(
+      () => {
+        expect(owners.current.videoBufferActor?.snapshot.context.segments).toHaveLength(1);
+      },
+      { timeout: 3000 }
+    );
+
+    // Each response body yields [1,2,3,4,5,6,7,8] — both init and segment appends should match
+    const calls = (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).mock.calls;
+    for (const [data] of calls) {
+      expect(Array.from(new Uint8Array(data as ArrayBuffer))).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    }
+
+    cleanup();
+  });
+});

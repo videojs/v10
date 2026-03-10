@@ -6,7 +6,7 @@ import type { AddressableObject, Presentation, ResolvedTrack } from '../../core/
 import { isResolvedTrack } from '../../core/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
 import type { SourceBufferActor } from '../media/source-buffer-actor';
-import { fetchResolvableBytes } from '../network/fetch';
+import { fetchResolvableBytes, fetchResolvableStream } from '../network/fetch';
 import {
   type BufferState,
   createSegmentLoaderActor,
@@ -43,14 +43,28 @@ function createTrackedFetch(
   onSample?: (next: BandwidthState) => void
 ): (addressable: AddressableObject, options?: RequestInit) => Promise<ArrayBuffer> {
   return async (addressable, options) => {
-    const start = performance.now();
-    const data = await fetchResolvableBytes(addressable, options);
-    const elapsed = performance.now() - start;
-    const next = sampleBandwidth(throughput.current, elapsed, data.byteLength);
-    throughput.patch(next);
-    throughput.flush();
-    onSample?.(next);
-    return data;
+    const chunks: Uint8Array[] = [];
+    let totalBytes = 0;
+    let chunkStart = performance.now();
+
+    for await (const chunk of fetchResolvableStream(addressable, options)) {
+      const elapsed = performance.now() - chunkStart;
+      const next = sampleBandwidth(throughput.current, elapsed, chunk.byteLength);
+      throughput.patch(next);
+      throughput.flush();
+      onSample?.(next);
+      chunks.push(chunk);
+      totalBytes += chunk.byteLength;
+      chunkStart = performance.now();
+    }
+
+    const result = new Uint8Array(totalBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      result.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return result.buffer;
   };
 }
 
