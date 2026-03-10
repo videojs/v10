@@ -22,6 +22,7 @@ import { loadTextTrackCues } from '../features/load-text-track-cues';
 import { setupMediaSource } from '../features/setup-mediasource';
 import { setupSourceBuffer } from '../features/setup-sourcebuffer';
 import { setupTextTracks } from '../features/setup-text-tracks';
+import { syncSelectedTextTrackFromDom } from '../features/sync-selected-text-track-from-dom';
 import { syncTextTrackModes } from '../features/sync-text-track-modes';
 import { trackCurrentTime } from '../features/track-current-time';
 import { trackPlaybackInitiated } from '../features/track-playback-initiated';
@@ -310,6 +311,12 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
 
     // 8. Sync text track modes (when track selected and track elements created)
     syncTextTrackModes({ state, owners }),
+
+    // 8.5. Bridge DOM text track mode changes → selectedTextTrackId
+    //      Detects when external code (e.g. captions button via toggleSubtitles())
+    //      sets a subtitle/caption track to 'showing' and reflects that into SPF
+    //      state, which in turn drives loadTextTrackCues.
+    syncSelectedTextTrackFromDom({ state, owners }),
 
     // 9. Load text track cues (when track resolved and mode set)
     loadTextTrackCues({ state, owners }),
