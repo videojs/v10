@@ -42,6 +42,7 @@ for (const mode of buildModes) {
       dts: false,
       minify: isProd,
       noExternal: [/.*/],
+      inlineOnly: false,
       treeshake: {
         moduleSideEffects: [{ test: /\/define\//, sideEffects: true }],
       },
