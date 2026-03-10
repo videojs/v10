@@ -1,0 +1,41 @@
+.react-tooltip-basic {
+  position: relative;
+}
+
+.react-tooltip-basic video {
+  width: 100%;
+}
+
+.react-tooltip-basic__bar {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+}
+
+.react-tooltip-basic__trigger {
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  color: black;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.react-tooltip-basic__popup {
+  --media-tooltip-side-offset: 8px;
+  margin: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  color: white;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.react-tooltip-basic__arrow {
+  fill: rgba(0, 0, 0, 0.85);
+}

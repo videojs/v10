@@ -1,0 +1,154 @@
+---
+title: Tooltip
+frameworkTitle:
+  html: media-tooltip
+description: A tooltip component for displaying contextual labels on hover and focus
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/tooltip/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/tooltip/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/tooltip/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/tooltip/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/tooltip/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/tooltip/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/tooltip/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <Tooltip.Root>
+    <Tooltip.Trigger>Hover me</Tooltip.Trigger>
+    <Tooltip.Popup>
+      <Tooltip.Arrow />
+      Label text
+    </Tooltip.Popup>
+  </Tooltip.Root>
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <button commandfor="my-tooltip">Hover me</button>
+  <media-tooltip id="my-tooltip">Label text</media-tooltip>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+Displays a short label anchored to a trigger element. Opens after a configurable `delay` (default 600ms) on hover or immediately on focus. Closes when the pointer leaves or focus moves away, with an optional `closeDelay`.
+
+The `side` and `align` props control placement relative to the trigger. Positioning uses CSS Anchor Positioning where supported, with a JavaScript measurement fallback.
+
+<FrameworkCase frameworks={["react"]}>
+  In React, the component is composed from four parts: `Root` manages state and context,
+  `Trigger` renders a button that activates the tooltip, `Popup` contains the label content,
+  and `Arrow` renders a decorative pointer. Wrap multiple tooltips in a `Tooltip.Provider`
+  to coordinate open/close timing across a group.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  In HTML, the `<media-tooltip>` element is the popup itself. Link it to a trigger using
+  the `commandfor` attribute on any button, pointing to the tooltip's `id`. The element
+  discovers its trigger automatically and manages open/close state, ARIA attributes, and
+  positioning.
+</FrameworkCase>
+
+## Styling
+
+Use [CSS custom properties](#provider-css-custom-properties) for positioning offsets:
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-tooltip {
+  --media-tooltip-side-offset: 8px;
+  --media-tooltip-align-offset: 0px;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders standard DOM elements with the same data attributes and CSS custom properties. Add a `className` and use it as the selector:
+
+```css
+.tooltip-popup {
+  --media-tooltip-side-offset: 8px;
+  --media-tooltip-align-offset: 0px;
+}
+```
+</FrameworkCase>
+
+Style based on open state and transition phases:
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-tooltip[data-open] {
+  display: block;
+}
+media-tooltip[data-starting-style] {
+  opacity: 0;
+}
+media-tooltip[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+.tooltip-popup[data-open] {
+  display: block;
+}
+.tooltip-popup[data-starting-style] {
+  opacity: 0;
+}
+.tooltip-popup[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+## Accessibility
+
+The trigger receives `aria-describedby` pointing to the popup when open. The popup renders with `role="tooltip"` and `popover="manual"`. Tooltips open on focus and close when focus leaves, ensuring keyboard-only users can access the label.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+        { title: "App.css", code: basicUsageReactCss, lang: "css" },
+      ]}
+    >
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: basicUsageHtml, lang: "html" },
+        { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+        { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+      ]}
+    >
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="Tooltip" />

@@ -1,0 +1,174 @@
+---
+title: Slider
+frameworkTitle:
+  html: media-slider
+description: A composable slider component with track, fill, thumb, preview, and value parts
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/slider/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/slider/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/slider/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/slider/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/slider/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/slider/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/slider/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <Slider.Root>
+    <Slider.Track>
+      <Slider.Fill />
+    </Slider.Track>
+    <Slider.Thumb />
+    <Slider.Preview>
+      <Slider.Value type="pointer" />
+    </Slider.Preview>
+  </Slider.Root>
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-slider>
+    <media-slider-track>
+      <media-slider-fill></media-slider-fill>
+    </media-slider-track>
+    <media-slider-thumb></media-slider-thumb>
+    <media-slider-preview>
+      <media-slider-value type="pointer"></media-slider-value>
+    </media-slider-preview>
+  </media-slider>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+The base Slider provides a generic range input. It manages value, pointer tracking, and drag interactions. Domain-specific sliders like <DocsLink slug="reference/time-slider">TimeSlider</DocsLink> and <DocsLink slug="reference/volume-slider">VolumeSlider</DocsLink> extend this with media-specific bindings.
+
+Nest sub-components for full control over the DOM structure. All parts are optional — use only what you need:
+
+| Part | Purpose |
+|------|---------|
+| **Track** | Visual track and interactive hit zone |
+| **Fill** | Filled portion from start to current value |
+| **Buffer** | Buffered range indicator (used by TimeSlider) |
+| **Thumb** | Draggable handle, receives focus and keyboard events |
+| **Preview** | Positioning container that tracks the pointer |
+| **Thumbnail** | Shows a video thumbnail at the pointer position (used by TimeSlider) |
+| **Value** | Displays a formatted text value (`"current"` or `"pointer"`) |
+
+## Styling
+
+Use [CSS custom properties](#root-css-custom-properties) to position fill, thumb, and preview elements:
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-slider-fill {
+  width: calc(var(--media-slider-fill) * 1%);
+}
+
+media-slider-thumb {
+  left: calc(var(--media-slider-fill) * 1%);
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders standard DOM elements with the same data attributes and CSS custom properties. Add a `className` and use it as the selector:
+
+```css
+.slider-fill {
+  width: calc(var(--media-slider-fill) * 1%);
+}
+
+.slider-thumb {
+  left: calc(var(--media-slider-fill) * 1%);
+}
+```
+</FrameworkCase>
+
+Style based on interaction state:
+
+| Attribute | Description |
+|-----------|-------------|
+| `data-interactive` | Present when dragging or pointing |
+| `data-dragging` | Present during active drag |
+| `data-pointing` | Present when pointer is over the slider |
+| `data-disabled` | Present when the slider is disabled |
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-slider[data-interactive] media-slider-track {
+  height: 6px;
+}
+media-slider[data-pointing] media-slider-preview {
+  opacity: 1;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+.slider[data-interactive] .slider-track {
+  height: 6px;
+}
+.slider[data-pointing] .slider-preview {
+  opacity: 1;
+}
+```
+</FrameworkCase>
+
+## Accessibility
+
+Renders with `role="slider"` and automatic ARIA attributes (`aria-valuemin`, `aria-valuemax`, `aria-valuenow`, `aria-valuetext`). Override the label with the `label` prop. Keyboard controls:
+
+- <kbd>Arrow Left</kbd> / <kbd>Arrow Right</kbd>: step by `step` increment
+- <kbd>Page Up</kbd> / <kbd>Page Down</kbd>: step by `largeStep` increment
+- <kbd>Home</kbd>: jump to minimum
+- <kbd>End</kbd>: jump to maximum
+
+## Examples
+
+### Basic Usage
+
+A slider with track, fill, thumb, and a pointer-tracking preview value.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+        { title: "App.css", code: basicUsageReactCss, lang: "css" },
+      ]}
+    >
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: basicUsageHtml, lang: "html" },
+        { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+        { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+      ]}
+    >
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="Slider" />
