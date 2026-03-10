@@ -2,7 +2,8 @@
    Popups & Animations
    ========================================================================== */
 
-.media-minimal-skin .media-popup {
+.media-minimal-skin .media-popover,
+.media-minimal-skin .media-tooltip {
   margin: 0;
   border: 0;
   color: inherit;
@@ -35,7 +36,7 @@
   }
 }
 
-.media-minimal-skin .media-popup--tooltip {
+.media-minimal-skin .media-tooltip {
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
   background-color: oklch(1 0 0 / 0.1);

@@ -58,7 +58,7 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className="media-surface media-popup media-popup--tooltip">
+          <Tooltip.Popup className="media-surface media-tooltip">
             <PlayLabel />
           </Tooltip.Popup>
         </Tooltip.Root>
@@ -79,9 +79,7 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className="media-surface media-popup media-popup--tooltip">
-            Seek backward {SEEK_TIME} seconds
-          </Tooltip.Popup>
+          <Tooltip.Popup className="media-surface media-tooltip">Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
         </Tooltip.Root>
 
         <Tooltip.Root side="top">
@@ -100,9 +98,7 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className="media-surface media-popup media-popup--tooltip">
-            Seek forward {SEEK_TIME} seconds
-          </Tooltip.Popup>
+          <Tooltip.Popup className="media-surface media-tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
         </Tooltip.Root>
 
         <Time.Group className="media-time">
@@ -125,7 +121,7 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className="media-surface media-popup media-popup--tooltip">Toggle playback rate</Tooltip.Popup>
+          <Tooltip.Popup className="media-surface media-tooltip">Toggle playback rate</Tooltip.Popup>
         </Tooltip.Root>
 
         <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
@@ -142,7 +138,7 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
               />
             }
           />
-          <Popover.Popup className="media-surface media-popup media-popup--popover media-popup--volume">
+          <Popover.Popup className="media-surface media-popover media-popover--volume">
             <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
               <VolumeSlider.Track className="media-slider__track">
                 <VolumeSlider.Fill className="media-slider__fill" />

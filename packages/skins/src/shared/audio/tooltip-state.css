@@ -14,10 +14,12 @@
 /* --- Active label per state --- */
 
 /* Play: ended → replay */
-.media-button--play[data-ended] + .media-tooltip-label--replay,
+.media-button--play[data-ended] + .media-tooltip .media-tooltip-label--replay,
 /* Play: paused (not ended) → play */
-.media-button--play:not([data-ended])[data-paused] + .media-tooltip-label--play,
+  .media-button--play:not([data-ended])[data-paused] + .media-tooltip
+  .media-tooltip-label--play,
 /* Play: playing (not paused, not ended) → pause */
-.media-button--play:not([data-paused]):not([data-ended]) + .media-tooltip-label--pause {
+  .media-button--play:not([data-paused]):not([data-ended]) + .media-tooltip
+  .media-tooltip-label--pause {
   display: block;
 }

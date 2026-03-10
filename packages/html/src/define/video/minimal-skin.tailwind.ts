@@ -70,7 +70,7 @@ function getTemplateHTML() {
               ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
               ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
             </media-play-button>
-            <media-tooltip id="play-tooltip" side="top" class="${cn(popup.base, popup.tooltip)}">
+            <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}">
               <span class="${tooltipState.play.replay}">Replay</span>
               <span class="${tooltipState.play.play}">Play</span>
               <span class="${tooltipState.play.pause}">Pause</span>
@@ -83,7 +83,7 @@ function getTemplateHTML() {
               <span class="${cn(seek.label, seek.labelBackward)}">${SEEK_TIME}</span>
             </span>
           </media-seek-button>
-          <media-tooltip id="seek-backward-tooltip" side="top" class="${cn(popup.base, popup.tooltip)}">
+          <media-tooltip id="seek-backward-tooltip" side="top" class="${cn(popup.tooltip)}">
             Seek backward ${SEEK_TIME} seconds
           </media-tooltip>
 
@@ -93,7 +93,7 @@ function getTemplateHTML() {
               <span class="${cn(seek.label, seek.labelForward)}">${SEEK_TIME}</span>
             </span>
           </media-seek-button>
-          <media-tooltip id="seek-forward-tooltip" side="top" class="${cn(popup.base, popup.tooltip)}">
+          <media-tooltip id="seek-forward-tooltip" side="top" class="${cn(popup.tooltip)}">
             Seek forward ${SEEK_TIME} seconds
           </media-tooltip>
         </span>
@@ -117,7 +117,7 @@ function getTemplateHTML() {
         <span class="${buttonGroup}">
           <media-playback-rate-button commandfor="playback-rate-tooltip"  class="${cn(button.base, button.icon, playbackRate.button)}">
           </media-playback-rate-button>
-          <media-tooltip id="playback-rate-tooltip" side="top" class="${cn(popup.base, popup.tooltip)}">
+          <media-tooltip id="playback-rate-tooltip" side="top" class="${cn(popup.tooltip)}">
             Toggle playback rate
           </media-tooltip>
 
@@ -127,7 +127,7 @@ function getTemplateHTML() {
             ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
           </media-mute-button>
 
-          <media-popover id="video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="${cn(popup.base, popup.volume)}">
+          <media-popover id="video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="${cn(popup.volume)}">
             <media-volume-slider class="${slider.root}" orientation="vertical" thumb-alignment="edge">
               <media-slider-track class="${slider.track}">
                 <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
@@ -141,7 +141,7 @@ function getTemplateHTML() {
               ${renderIcon('captions-off', { class: cn(icon, iconState.captions.off) })}
               ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
             </media-captions-button>
-            <media-tooltip id="captions-tooltip" side="top" class="${cn(popup.base, popup.tooltip)}">
+            <media-tooltip id="captions-tooltip" side="top" class="${cn(popup.tooltip)}">
               <span class="${tooltipState.captions.enable}">Enable captions</span>
               <span class="${tooltipState.captions.disable}">Disable captions</span>
             </media-tooltip>
@@ -151,7 +151,7 @@ function getTemplateHTML() {
             <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.icon)}">
               ${renderIcon('pip', { class: icon })}
             </media-pip-button>
-            <media-tooltip id="pip-tooltip" side="top" class="${cn(popup.base, popup.tooltip)}">
+            <media-tooltip id="pip-tooltip" side="top" class="${cn(popup.tooltip)}">
               <span class="${tooltipState.pip.enter}">Enter picture-in-picture</span>
               <span class="${tooltipState.pip.exit}">Exit picture-in-picture</span>
             </media-tooltip>
@@ -162,7 +162,7 @@ function getTemplateHTML() {
               ${renderIcon('fullscreen-enter', { class: cn(icon, iconState.fullscreen.enter) })}
               ${renderIcon('fullscreen-exit', { class: cn(icon, iconState.fullscreen.exit) })}
             </media-fullscreen-button>
-            <media-tooltip id="fullscreen-tooltip" side="top" class="${cn(popup.base, popup.tooltip)}">
+            <media-tooltip id="fullscreen-tooltip" side="top" class="${cn(popup.tooltip)}">
               <span class="${tooltipState.fullscreen.enter}">Enter fullscreen</span>
               <span class="${tooltipState.fullscreen.exit}">Exit fullscreen</span>
             </media-tooltip>

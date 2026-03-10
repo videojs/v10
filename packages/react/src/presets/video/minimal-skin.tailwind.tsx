@@ -175,7 +175,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 />
               }
             />
-            <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>
+            <Tooltip.Popup className={cn(popup.tooltip)}>
               <PlayLabel />
             </Tooltip.Popup>
           </Tooltip.Root>
@@ -196,7 +196,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 />
               }
             />
-            <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+            <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
           </Tooltip.Root>
 
           <Tooltip.Root side="top">
@@ -215,7 +215,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 />
               }
             />
-            <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+            <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
           </Tooltip.Root>
         </span>
 
@@ -244,7 +244,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 />
               }
             />
-            <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
+            <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
           </Tooltip.Root>
 
           <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
@@ -261,7 +261,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 />
               }
             />
-            <Popover.Popup className={cn(popup.base, popup.volume)}>
+            <Popover.Popup className={cn(popup.volume)}>
               <VolumeSlider.Root
                 orientation="vertical"
                 thumbAlignment="edge"
@@ -288,7 +288,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 />
               }
             />
-            <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>
+            <Tooltip.Popup className={cn(popup.tooltip)}>
               <CaptionsLabel />
             </Tooltip.Popup>
           </Tooltip.Root>
@@ -305,7 +305,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 />
               }
             />
-            <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>
+            <Tooltip.Popup className={cn(popup.tooltip)}>
               <PiPLabel />
             </Tooltip.Popup>
           </Tooltip.Root>
@@ -323,7 +323,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 />
               }
             />
-            <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>
+            <Tooltip.Popup className={cn(popup.tooltip)}>
               <FullscreenLabel />
             </Tooltip.Popup>
           </Tooltip.Root>

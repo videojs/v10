@@ -176,7 +176,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>
+          <Tooltip.Popup className={cn(popup.tooltip)}>
             <PlayLabel />
           </Tooltip.Popup>
         </Tooltip.Root>
@@ -197,7 +197,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+          <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
         </Tooltip.Root>
 
         <Tooltip.Root side="top">
@@ -216,7 +216,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+          <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
         </Tooltip.Root>
 
         <Time.Group className={time.group}>
@@ -239,7 +239,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
+          <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
         </Tooltip.Root>
 
         <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
@@ -256,7 +256,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Popover.Popup className={cn(popup.base, popup.popover, popup.volume)}>
+          <Popover.Popup className={cn(popup.popover, popup.volume)}>
             <VolumeSlider.Root
               orientation="vertical"
               thumbAlignment="edge"
@@ -283,7 +283,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>
+          <Tooltip.Popup className={cn(popup.tooltip)}>
             <CaptionsLabel />
           </Tooltip.Popup>
         </Tooltip.Root>
@@ -300,7 +300,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>
+          <Tooltip.Popup className={cn(popup.tooltip)}>
             <PiPLabel />
           </Tooltip.Popup>
         </Tooltip.Root>
@@ -318,7 +318,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>
+          <Tooltip.Popup className={cn(popup.tooltip)}>
             <FullscreenLabel />
           </Tooltip.Popup>
         </Tooltip.Root>

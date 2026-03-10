@@ -51,7 +51,7 @@ function getTemplateHTML() {
           ${renderIcon('play', { class: 'media-icon media-icon--play' })}
           ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
         </media-play-button>
-        <media-tooltip id="play-tooltip" side="top" class="media-surface media-popup media-popup--tooltip">
+        <media-tooltip id="play-tooltip" side="top" class="media-surface media-tooltip">
           <span class="media-tooltip-label media-tooltip-label--replay">Replay</span>
           <span class="media-tooltip-label media-tooltip-label--play">Play</span>
           <span class="media-tooltip-label media-tooltip-label--pause">Pause</span>
@@ -63,7 +63,7 @@ function getTemplateHTML() {
             <span class="media-icon__label">${SEEK_TIME}</span>
           </span>
         </media-seek-button>
-        <media-tooltip id="seek-backward-tooltip" side="top" class="media-surface media-popup media-popup--tooltip">
+        <media-tooltip id="seek-backward-tooltip" side="top" class="media-surface media-tooltip">
           Seek backward ${SEEK_TIME} seconds
         </media-tooltip>
 
@@ -73,7 +73,7 @@ function getTemplateHTML() {
             <span class="media-icon__label">${SEEK_TIME}</span>
           </span>
         </media-seek-button>
-        <media-tooltip id="seek-forward-tooltip" side="top" class="media-surface media-popup media-popup--tooltip">
+        <media-tooltip id="seek-forward-tooltip" side="top" class="media-surface media-tooltip">
           Seek forward ${SEEK_TIME} seconds
         </media-tooltip>
 
@@ -90,7 +90,7 @@ function getTemplateHTML() {
         </media-time-group>
 
         <media-playback-rate-button commandfor="playback-rate-tooltip"  class="media-button media-button--icon media-button--playback-rate"></media-playback-rate-button>
-        <media-tooltip id="playback-rate-tooltip" side="top" class="media-surface media-popup media-popup--tooltip">
+        <media-tooltip id="playback-rate-tooltip" side="top" class="media-surface media-tooltip">
           Toggle playback rate
         </media-tooltip>
 
@@ -100,7 +100,7 @@ function getTemplateHTML() {
           ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
         </media-mute-button>
 
-        <media-popover id="video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="media-surface media-popup media-popup--popover media-popup--volume">
+        <media-popover id="video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="media-surface media-popover media-popover--volume">
           <media-volume-slider class="media-slider" orientation="vertical" thumb-alignment="edge">
             <media-slider-track class="media-slider__track">
               <media-slider-fill class="media-slider__fill"></media-slider-fill>
@@ -113,7 +113,7 @@ function getTemplateHTML() {
           ${renderIcon('captions-off', { class: 'media-icon media-icon--captions-off' })}
           ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
         </media-captions-button>
-        <media-tooltip id="captions-tooltip" side="top" class="media-surface media-popup media-popup--tooltip">
+        <media-tooltip id="captions-tooltip" side="top" class="media-surface media-tooltip">
           <span class="media-tooltip-label media-tooltip-label--enable-captions">Enable captions</span>
           <span class="media-tooltip-label media-tooltip-label--disable-captions">Disable captions</span>
         </media-tooltip>
@@ -121,7 +121,7 @@ function getTemplateHTML() {
         <media-pip-button commandfor="pip-tooltip" class="media-button media-button--icon">
           ${renderIcon('pip', { class: 'media-icon' })}
         </media-pip-button>
-        <media-tooltip id="pip-tooltip" side="top" class="media-surface media-popup media-popup--tooltip">
+        <media-tooltip id="pip-tooltip" side="top" class="media-surface media-tooltip">
           <span class="media-tooltip-label media-tooltip-label--enter-pip">Enter picture-in-picture</span>
           <span class="media-tooltip-label media-tooltip-label--exit-pip">Exit picture-in-picture</span>
         </media-tooltip>
@@ -130,7 +130,7 @@ function getTemplateHTML() {
           ${renderIcon('fullscreen-enter', { class: 'media-icon media-icon--fullscreen-enter' })}
           ${renderIcon('fullscreen-exit', { class: 'media-icon media-icon--fullscreen-exit' })}
         </media-fullscreen-button>
-        <media-tooltip id="fullscreen-tooltip" side="top" class="media-surface media-popup media-popup--tooltip">
+        <media-tooltip id="fullscreen-tooltip" side="top" class="media-surface media-tooltip">
           <span class="media-tooltip-label media-tooltip-label--enter-fullscreen">Enter fullscreen</span>
           <span class="media-tooltip-label media-tooltip-label--exit-fullscreen">Exit fullscreen</span>
         </media-tooltip>

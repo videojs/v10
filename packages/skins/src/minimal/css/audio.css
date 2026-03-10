@@ -40,7 +40,7 @@
    Popups & Animations
    ========================================================================== */
 
-.media-minimal-skin--audio .media-popup--volume {
+.media-minimal-skin--audio .media-popover--volume {
   background: linear-gradient(to left, var(--media-controls-background-color) 80%, transparent 100%);
   padding: 0.5rem 0 0.5rem 4rem;
   --media-popover-side-offset: 0.75rem;

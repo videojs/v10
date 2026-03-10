@@ -59,7 +59,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                 />
               }
             />
-            <Tooltip.Popup className="media-popup media-popup--tooltip">
+            <Tooltip.Popup className="media-tooltip">
               <PlayLabel />
             </Tooltip.Popup>
           </Tooltip.Root>
@@ -80,9 +80,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                 />
               }
             />
-            <Tooltip.Popup className="media-popup media-popup--tooltip">
-              Seek backward {SEEK_TIME} seconds
-            </Tooltip.Popup>
+            <Tooltip.Popup className="media-tooltip">Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
           </Tooltip.Root>
 
           <Tooltip.Root side="top">
@@ -101,7 +99,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                 />
               }
             />
-            <Tooltip.Popup className="media-popup media-popup--tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+            <Tooltip.Popup className="media-tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
           </Tooltip.Root>
         </span>
 
@@ -130,7 +128,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                 />
               }
             />
-            <Tooltip.Popup className="media-popup media-popup--tooltip">Toggle playback rate</Tooltip.Popup>
+            <Tooltip.Popup className="media-tooltip">Toggle playback rate</Tooltip.Popup>
           </Tooltip.Root>
 
           <Popover.Root openOnHover delay={200} closeDelay={100} side="left">
@@ -147,7 +145,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                 />
               }
             />
-            <Popover.Popup className="media-popup media-popup--popover media-popup--volume">
+            <Popover.Popup className="media-popover media-popover--volume">
               <VolumeSlider.Root className="media-slider" orientation="horizontal" thumbAlignment="edge">
                 <VolumeSlider.Track className="media-slider__track">
                   <VolumeSlider.Fill className="media-slider__fill" />

@@ -94,7 +94,7 @@
    Popups & Animations
    ========================================================================== */
 
-.media-minimal-skin--video .media-popup--volume {
+.media-minimal-skin--video .media-popover--volume {
   --media-popover-side-offset: 0.5rem;
   background: transparent;
   padding: 0.25rem;

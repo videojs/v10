@@ -76,7 +76,8 @@ export const tooltipState = {
 
 export const popup = {
   ...basePopup,
-  base: cn(basePopup.base, surface),
+  popover: cn(surface, basePopup.popover),
+  tooltip: cn(surface, basePopup.tooltip),
 };
 
 /* ==========================================================================

@@ -107,7 +107,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className="media-surface media-popup media-popup--tooltip">
+          <Tooltip.Popup className="media-surface media-tooltip">
             <PlayLabel />
           </Tooltip.Popup>
         </Tooltip.Root>
@@ -128,9 +128,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className="media-surface media-popup media-popup--tooltip">
-            Seek backward {SEEK_TIME} seconds
-          </Tooltip.Popup>
+          <Tooltip.Popup className="media-surface media-tooltip">Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
         </Tooltip.Root>
 
         <Tooltip.Root side="top">
@@ -149,9 +147,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className="media-surface media-popup media-popup--tooltip">
-            Seek forward {SEEK_TIME} seconds
-          </Tooltip.Popup>
+          <Tooltip.Popup className="media-surface media-tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
         </Tooltip.Root>
 
         <Time.Group className="media-time">
@@ -174,7 +170,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className="media-surface media-popup media-popup--tooltip">Toggle playback rate</Tooltip.Popup>
+          <Tooltip.Popup className="media-surface media-tooltip">Toggle playback rate</Tooltip.Popup>
         </Tooltip.Root>
 
         <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
@@ -191,7 +187,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Popover.Popup className="media-surface media-popup media-popup--popover media-popup--volume">
+          <Popover.Popup className="media-surface media-popover media-popover--volume">
             <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
               <VolumeSlider.Track className="media-slider__track">
                 <VolumeSlider.Fill className="media-slider__fill" />
@@ -214,7 +210,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className="media-surface media-popup media-popup--tooltip">
+          <Tooltip.Popup className="media-surface media-tooltip">
             <CaptionsLabel />
           </Tooltip.Popup>
         </Tooltip.Root>
@@ -231,7 +227,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className="media-surface media-popup media-popup--tooltip">
+          <Tooltip.Popup className="media-surface media-tooltip">
             <PiPLabel />
           </Tooltip.Popup>
         </Tooltip.Root>
@@ -249,7 +245,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Tooltip.Popup className="media-surface media-popup media-popup--tooltip">
+          <Tooltip.Popup className="media-surface media-tooltip">
             <FullscreenLabel />
           </Tooltip.Popup>
         </Tooltip.Root>

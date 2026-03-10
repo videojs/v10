@@ -2,7 +2,8 @@
    Popups & Tooltips
    ========================================================================== */
 
-.media-default-skin .media-popup {
+.media-default-skin .media-popover,
+.media-default-skin .media-tooltip {
   margin: 0;
   border: 0;
   color: inherit;
@@ -35,19 +36,18 @@
   }
 }
 
-.media-default-skin .media-popup--popover {
+.media-default-skin .media-popover {
   --media-popover-side-offset: 0.5rem;
 }
+.media-default-skin .media-popover--volume {
+  padding: 0.625rem 0.25rem;
+  border-radius: calc(infinity * 1px);
+}
 
-.media-default-skin .media-popup--tooltip {
+.media-default-skin .media-tooltip {
   padding: 0.25rem 0.625rem;
   border-radius: calc(infinity * 1px);
   font-size: 0.75rem;
   white-space: nowrap;
   --media-tooltip-side-offset: 0.5rem;
-}
-
-.media-default-skin .media-popup--volume {
-  padding: 0.625rem 0.25rem;
-  border-radius: calc(infinity * 1px);
 }

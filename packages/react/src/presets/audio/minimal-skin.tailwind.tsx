@@ -123,7 +123,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
                 />
               }
             />
-            <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>
+            <Tooltip.Popup className={cn(popup.tooltip)}>
               <PlayLabel />
             </Tooltip.Popup>
           </Tooltip.Root>
@@ -144,7 +144,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
                 />
               }
             />
-            <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+            <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
           </Tooltip.Root>
 
           <Tooltip.Root side="top">
@@ -163,7 +163,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
                 />
               }
             />
-            <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+            <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
           </Tooltip.Root>
         </span>
 
@@ -192,7 +192,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
                 />
               }
             />
-            <Tooltip.Popup className={cn(popup.base, popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
+            <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
           </Tooltip.Root>
 
           <Popover.Root openOnHover delay={200} closeDelay={100} side="left">
@@ -209,7 +209,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
                 />
               }
             />
-            <Popover.Popup className={cn(popup.base, popup.volume)}>
+            <Popover.Popup className={cn(popup.volume)}>
               <VolumeSlider.Root
                 orientation="horizontal"
                 thumbAlignment="edge"

@@ -6,14 +6,14 @@ export const tooltipState = {
     pause: 'hidden group-[:not(:has([data-paused])):not(:has([data-ended]))]/play-tip:block',
   },
   fullscreen: {
-    wrapper: 'contents group/fs-tip',
-    enter: 'hidden group-[:not(:has([data-fullscreen]))]/fs-tip:block',
-    exit: 'hidden group-has-data-fullscreen/fs-tip:block',
+    wrapper: 'contents group/fullscreen-tip',
+    enter: 'hidden group-[:not(:has([data-fullscreen]))]/fullscreen-tip:block',
+    exit: 'hidden group-has-data-fullscreen/fullscreen-tip:block',
   },
   captions: {
-    wrapper: 'contents group/cc-tip',
-    enable: 'hidden group-[:not(:has([data-active]))]/cc-tip:block',
-    disable: 'hidden group-has-data-active/cc-tip:block',
+    wrapper: 'contents group/captions-tip',
+    enable: 'hidden group-[:not(:has([data-active]))]/captions-tip:block',
+    disable: 'hidden group-has-data-active/captions-tip:block',
   },
   pip: {
     wrapper: 'contents group/pip-tip',
