@@ -15,16 +15,8 @@ interface Props {
   componentName: string;
 }
 
-const {
-  name,
-  type,
-  detailedType,
-  description,
-  defaultValue,
-  required,
-  showAttributeName,
-  componentName,
-} = Astro.props;
+const { name, type, detailedType, description, defaultValue, required, showAttributeName, componentName } =
+  Astro.props;
 
 const id = `${componentName}-${name}`;
 const attributeName = showAttributeName ? kebabCase(name) : undefined;
