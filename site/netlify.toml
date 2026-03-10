@@ -51,3 +51,19 @@
   from = "/html5-video-support"
   to = "/support"
   status = 307
+
+# Misc v8 stragglers
+[[redirects]]
+  from = "/getting-started"
+  to = "/docs"
+  status = 307
+
+[[redirects]]
+  from = "/advanced"
+  to = "/docs"
+  status = 307
+
+[[redirects]]
+  from = "/plugins"
+  to = "/docs"
+  status = 307

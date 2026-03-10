@@ -1,6 +1,6 @@
 # Video.js Website
 
-For docs, blog, and more: [v10.videojs.org](https://v10.videojs.org).
+For docs, blog, and more: [videojs.org](https://videojs.org).
 
 Mostly a standard [Astro](https://astro.build/) project.
 
@@ -10,7 +10,7 @@ Mostly a standard [Astro](https://astro.build/) project.
 ## Project Structure
 
 ```text
-├── public/                  # Static assets served as v10.videojs.org/[filename]
+├── public/                  # Static assets served as videojs.org/[filename]
 ├── scripts/
 │  └── api-docs-builder/     # Generates API reference JSON from TypeScript sources
 ├── integrations/            # Custom Astro integrations (pagefind, llms-markdown, etc.)

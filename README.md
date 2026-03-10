@@ -57,8 +57,8 @@ participating in this project you agree to abide by its terms.
 [v10-discussion]: https://github.com/videojs/video.js/discussions/9035
 [heff-presentation]: https://players.brightcove.net/3737230800001/eyILA5XG7K_default/index.html?videoId=6379311036112
 [coc]: https://github.com/videojs/video.js/blob/main/CODE_OF_CONDUCT.md
-[site]: http://v10.videojs.org
-[docs]: http://v10.videojs.org/docs
+[site]: http://videojs.org
+[docs]: http://videojs.org/docs
 [package]: https://www.npmjs.com/package/@videojs/core
 [package-badge]: https://img.shields.io/npm/v/@videojs/core?label=@videojs/core
 [discord]: https://discord.gg/JBqHh485uF

@@ -18,7 +18,7 @@ import remarkConditionalHeadings from './src/utils/remarkConditionalHeadings';
 import { remarkReadingTime } from './src/utils/remarkReadingTime.mjs';
 import shikiTransformMetadata from './src/utils/shikiTransformMetadata';
 
-const SITE_URL = 'https://v10.videojs.org';
+const SITE_URL = 'https://videojs.org';
 
 // https://astro.build/config
 export default defineConfig({
