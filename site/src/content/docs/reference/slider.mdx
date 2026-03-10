@@ -54,21 +54,10 @@ import basicUsageHtmlTs from "@/components/docs/demos/slider/html/css/BasicUsage
 
 ## Behavior
 
-The base Slider is a **controlled component** — you must provide `value` and `onValueChange` to drive it. It manages pointer tracking and drag interactions but does not hold internal state. Domain-specific sliders like <DocsLink slug="reference/time-slider">TimeSlider</DocsLink> and <DocsLink slug="reference/volume-slider">VolumeSlider</DocsLink> handle this automatically via the player store.
+The base Slider provides a generic range input. It manages value, pointer tracking, and drag interactions. Domain-specific sliders like <DocsLink slug="reference/time-slider">TimeSlider</DocsLink> and <DocsLink slug="reference/volume-slider">VolumeSlider</DocsLink> extend this with media-specific bindings.
 
 The slider supports vertical orientation via the `orientation` prop (defaults to `"horizontal"`).
 
-Nest sub-components for full control over the DOM structure. All parts are optional — use only what you need:
-
-| Part | Purpose |
-|------|---------|
-| **Track** | Visual track and interactive hit zone |
-| **Fill** | Filled portion from start to current value |
-| **Buffer** | Buffered range indicator (used by TimeSlider) |
-| **Thumb** | Draggable handle, receives focus and keyboard events |
-| **Preview** | Positioning container that tracks the pointer |
-| **Thumbnail** | Shows a video thumbnail at the pointer position (used by TimeSlider) |
-| **Value** | Displays a formatted text value (`"current"` or `"pointer"`) |
 
 ## Styling
 
@@ -87,7 +76,7 @@ media-slider-thumb {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-React renders standard DOM elements with the same data attributes and CSS custom properties. Add a `className` and use it as the selector:
+React renders standard DOM elements. Add a `className` to style them:
 
 ```css
 .slider-fill {
