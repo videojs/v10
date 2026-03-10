@@ -27,11 +27,13 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'src/index.html'),
         'html-video': resolve(__dirname, 'src/html-video/index.html'),
+        'html-hls-video': resolve(__dirname, 'src/html-hls-video/index.html'),
         'html-audio': resolve(__dirname, 'src/html-audio/index.html'),
         'html-video-tailwind': resolve(__dirname, 'src/html-video-tailwind/index.html'),
         'html-audio-tailwind': resolve(__dirname, 'src/html-audio-tailwind/index.html'),
         'html-background-video': resolve(__dirname, 'src/html-background-video/index.html'),
         'react-video': resolve(__dirname, 'src/react-video/index.html'),
+        'react-hls-video': resolve(__dirname, 'src/react-hls-video/index.html'),
         'react-audio': resolve(__dirname, 'src/react-audio/index.html'),
         'react-video-tailwind': resolve(__dirname, 'src/react-video-tailwind/index.html'),
         'react-audio-tailwind': resolve(__dirname, 'src/react-audio-tailwind/index.html'),

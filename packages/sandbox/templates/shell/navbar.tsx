@@ -30,6 +30,7 @@ const PLATFORM_LABELS: Record<Platform, string> = {
 
 const PRESET_LABELS: Record<Preset, string> = {
   video: 'Video',
+  'hls-video': 'HlsVideo',
   audio: 'Audio',
   'background-video': 'Background Video',
 };
