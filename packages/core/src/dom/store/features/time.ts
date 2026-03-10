@@ -7,7 +7,7 @@ import { signalKeys } from '../signal-keys';
 
 export const timeFeature = definePlayerFeature({
   name: 'time',
-  state: ({ target, signals }): MediaTimeState => ({
+  state: ({ target, signals, set }): MediaTimeState => ({
     currentTime: 0,
     duration: 0,
     seeking: false,
@@ -23,6 +23,12 @@ export const timeFeature = definePlayerFeature({
 
       // Perform the seek and wait for it to complete.
       const clampedTime = Math.max(0, Math.min(time, media.duration || Infinity));
+
+      // Optimistic update: reflect the target position immediately so UI consumers
+      // (e.g. time slider) don't snap back to the old currentTime while waiting
+      // for the browser's async seeking/seeked events.
+      set({ currentTime: clampedTime, seeking: true });
+
       media.currentTime = clampedTime;
       await onEvent(media, 'seeked', { signal }).catch(noop);
 
