@@ -4,6 +4,11 @@
   "version": "10.0.0-alpha.10",
   "description": "Stream Processing Framework for Video.js 10",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/spf"
+  },
   "keywords": [
     "video",
     "hls",
