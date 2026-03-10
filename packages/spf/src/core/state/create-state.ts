@@ -151,7 +151,6 @@ class StateContainer<T> implements WritableState<T> {
 
     // Apply partial updates with change detection
     for (const key in partial) {
-      // biome-ignore lint/suspicious/noExplicitAny: T may be a primitive; `partial` is object-shaped at this branch
       if (!Object.hasOwn(partial as any, key)) continue;
 
       const value = (partial as Partial<T>)[key as keyof T];

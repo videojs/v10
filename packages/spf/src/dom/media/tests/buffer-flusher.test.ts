@@ -8,7 +8,7 @@ function makeSourceBuffer(): SourceBuffer {
     updating: false,
     remove: vi.fn(() => {
       setTimeout(() => {
-        for (const listener of listeners['updateend'] ?? []) {
+        for (const listener of listeners.updateend ?? []) {
           listener(new Event('updateend'));
         }
       }, 0);
@@ -45,7 +45,7 @@ describe('flushBuffer', () => {
       updating: true,
       remove: vi.fn(() => {
         setTimeout(() => {
-          for (const listener of listeners['updateend'] ?? []) {
+          for (const listener of listeners.updateend ?? []) {
             listener(new Event('updateend'));
           }
         }, 0);
@@ -82,7 +82,7 @@ describe('flushBuffer', () => {
       updating: false,
       remove: vi.fn(() => {
         setTimeout(() => {
-          for (const listener of listeners['error'] ?? []) {
+          for (const listener of listeners.error ?? []) {
             listener(new Event('error'));
           }
         }, 0);

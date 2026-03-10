@@ -76,7 +76,7 @@ try {
   const percentOfTarget = ((gzippedSize / 1024 / targetKB) * 100).toFixed(1);
 
   // Display results
-  console.log('\n' + '='.repeat(50));
+  console.log(`\n${'='.repeat(50)}`);
   console.log(`📊 Bundle Size Report - ${label}`);
   console.log('='.repeat(50));
   console.log(`Minified:            ${formatSize(minifiedSize)}`);
@@ -85,7 +85,7 @@ try {
   console.log(`Target:              ${targetKB} KB (minified + gzipped)`);
   console.log(`Used:                ${percentOfTarget}%`);
   console.log(`Remaining:           ${formatSize(targetKB * 1024 - gzippedSize)}`);
-  console.log('='.repeat(50) + '\n');
+  console.log(`${'='.repeat(50)}\n`);
 
   // Status indicator
   if (gzippedSize / 1024 > targetKB) {

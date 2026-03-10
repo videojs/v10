@@ -265,24 +265,20 @@
 
 @utility text-stroke-faded-black {
   color: transparent;
-  -webkit-text-stroke: 1.5px var(--color-faded-black);
   -webkit-text-stroke: clamp(1px, 0.035em, 1.5px) var(--color-faded-black);
 
   &::selection {
     color: transparent;
-    -webkit-text-stroke: 1.5px var(--color-faded-black);
     -webkit-text-stroke: clamp(1px, 0.035em, 1.5px) var(--color-faded-black);
   }
 }
 
 @utility text-stroke-manila-light {
   color: transparent;
-  -webkit-text-stroke: 1.5px var(--color-manila-light);
   -webkit-text-stroke: clamp(1px, 0.035em, 1.5px) var(--color-manila-light);
 
   &::selection {
     color: transparent;
-    -webkit-text-stroke: 1.5px var(--color-faded-black);
     -webkit-text-stroke: clamp(1px, 0.035em, 1.5px) var(--color-faded-black);
   }
 }
