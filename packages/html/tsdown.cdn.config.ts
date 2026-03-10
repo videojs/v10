@@ -1,7 +1,13 @@
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
+import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.mjs';
+import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.mjs';
 
 type BuildMode = 'dev' | 'prod';
+
+const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
 
 const buildModes: BuildMode[] = ['dev', 'prod'];
 
@@ -24,6 +30,8 @@ for (const mode of buildModes) {
   for (const { src, name } of entries) {
     const outName = mode === 'dev' ? `${name}.dev` : name;
 
+    const isProd = mode === 'prod';
+
     configs.push({
       entry: { [outName]: src },
       platform: 'browser',
@@ -32,10 +40,19 @@ for (const mode of buildModes) {
       sourcemap: true,
       clean: false,
       dts: false,
-      minify: mode === 'prod',
+      minify: isProd,
       noExternal: [/.*/],
-      inlineOnly: false,
+      treeshake: {
+        moduleSideEffects: [{ test: /\/define\//, sideEffects: true }],
+      },
       outDir: 'cdn',
+      alias: {
+        '@': new URL('./src', import.meta.url).pathname,
+      },
+      define: {
+        __DEV__: isProd ? 'false' : 'true',
+      },
+      plugins: [inlineCssPlugin({ skinsDir, minify: isProd }), inlineTemplatePlugin({ minify: isProd })],
       inputOptions:
         mode === 'dev'
           ? {

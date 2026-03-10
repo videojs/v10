@@ -9,6 +9,5 @@
     "declarationDir": "types",
     "useDefineForClassFields": false
   },
-  "include": ["src"],
-  "exclude": ["src/cdn"]
+  "include": ["src"]
 }

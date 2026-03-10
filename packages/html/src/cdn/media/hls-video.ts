@@ -1,1 +1,1 @@
-import '@videojs/html/media/hls-video';
+import '../../define/media/hls-video';

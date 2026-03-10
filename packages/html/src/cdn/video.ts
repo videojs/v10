@@ -1,2 +1,2 @@
-import '@videojs/html/video/player';
-import '@videojs/html/video/skin';
+import '../define/video/player';
+import '../define/video/skin';
