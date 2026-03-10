@@ -13,7 +13,7 @@ import {
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@videojs/icons/react/minimal';
-import { playbackRate } from '@videojs/skins/video/default.tailwind';
+import { playbackRate } from '@videojs/skins/default/tailwind/video.tailwind';
 import {
   bufferingIndicator,
   button,
@@ -30,10 +30,10 @@ import {
   seek,
   slider,
   time,
-} from '@videojs/skins/video/minimal.tailwind';
+} from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
-import { Container } from '@/player/context';
+import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
@@ -46,6 +46,7 @@ import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
+import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { ErrorDialog } from './error-dialog';
 import type { MinimalVideoSkinProps } from './minimal-skin';
@@ -114,13 +115,37 @@ const errorClasses = {
   close: cn(button.base, button.default),
 };
 
+function PlayLabel(): ReactNode {
+  const paused = usePlayer((s) => Boolean(s.paused));
+  const ended = usePlayer((s) => Boolean(s.ended));
+  if (ended) return <>Replay</>;
+  return paused ? <>Play</> : <>Pause</>;
+}
+
+function CaptionsLabel(): ReactNode {
+  const active = usePlayer((s) => Boolean(s.subtitlesShowing));
+  return active ? <>Disable captions</> : <>Enable captions</>;
+}
+
+function PiPLabel(): ReactNode {
+  const pip = usePlayer((s) => Boolean(s.pip));
+  return pip ? <>Exit picture-in-picture</> : <>Enter picture-in-picture</>;
+}
+
+function FullscreenLabel(): ReactNode {
+  const fullscreen = usePlayer((s) => Boolean(s.fullscreen));
+  return fullscreen ? <>Exit fullscreen</> : <>Enter fullscreen</>;
+}
+
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 
   return (
-    <Container className={cn(root, className)} {...rest}>
+    <Container className={cn(root(false), className)} {...rest}>
+      {children}
+
       <BufferingIndicator
         render={(props) => (
           <div {...props} className={bufferingIndicator}>
@@ -136,39 +161,62 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
         className={controls}
       >
         <span className={buttonGroup}>
-          <PlayButton
-            render={(props) => (
-              <Button variant="icon" {...props} className={iconState.play.button}>
-                <RestartIcon className={cn(icon, iconState.play.restart)} />
-                <PlayIcon className={cn(icon, iconState.play.play)} />
-                <PauseIcon className={cn(icon, iconState.play.pause)} />
-              </Button>
-            )}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <PlayButton
+                  render={(props) => (
+                    <Button variant="icon" {...props} className={iconState.play.button}>
+                      <RestartIcon className={cn(icon, iconState.play.restart)} />
+                      <PlayIcon className={cn(icon, iconState.play.play)} />
+                      <PauseIcon className={cn(icon, iconState.play.pause)} />
+                    </Button>
+                  )}
+                />
+              }
+            />
+            <Tooltip.Popup className={cn(popup.tooltip)}>
+              <PlayLabel />
+            </Tooltip.Popup>
+          </Tooltip.Root>
 
-          <SeekButton
-            seconds={-SEEK_TIME}
-            render={(props) => (
-              <Button variant="icon" {...props} className={seek.button}>
-                <span className={iconContainer}>
-                  <SeekIcon className={cn(icon, iconFlipped)} />
-                  <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
-                </span>
-              </Button>
-            )}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <SeekButton
+                  seconds={-SEEK_TIME}
+                  render={(props) => (
+                    <Button variant="icon" {...props} className={seek.button}>
+                      <span className={iconContainer}>
+                        <SeekIcon className={cn(icon, iconFlipped)} />
+                        <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
+                      </span>
+                    </Button>
+                  )}
+                />
+              }
+            />
+            <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+          </Tooltip.Root>
 
-          <SeekButton
-            seconds={SEEK_TIME}
-            render={(props) => (
-              <Button variant="icon" {...props} className={seek.button}>
-                <span className={iconContainer}>
-                  <SeekIcon className={icon} />
-                  <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
-                </span>
-              </Button>
-            )}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <SeekButton
+                  seconds={SEEK_TIME}
+                  render={(props) => (
+                    <Button variant="icon" {...props} className={seek.button}>
+                      <span className={iconContainer}>
+                        <SeekIcon className={icon} />
+                        <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
+                      </span>
+                    </Button>
+                  )}
+                />
+              }
+            />
+            <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+          </Tooltip.Root>
         </span>
 
         <span className={time.controls}>
@@ -188,9 +236,16 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
         </span>
 
         <span className={buttonGroup}>
-          <PlaybackRateButton
-            render={(props) => <Button variant="icon" {...props} className={playbackRate.button} />}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <PlaybackRateButton
+                  render={(props) => <Button variant="icon" {...props} className={playbackRate.button} />}
+                />
+              }
+            />
+            <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
+          </Tooltip.Root>
 
           <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
             <Popover.Trigger
@@ -206,7 +261,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 />
               }
             />
-            <Popover.Popup className={cn(popup.base, popup.volume)}>
+            <Popover.Popup className={cn(popup.volume)}>
               <VolumeSlider.Root
                 orientation="vertical"
                 thumbAlignment="edge"
@@ -220,31 +275,58 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
             </Popover.Popup>
           </Popover.Root>
 
-          <CaptionsButton
-            render={(props) => (
-              <Button variant="icon" {...props} className={iconState.captions.button}>
-                <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
-                <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
-              </Button>
-            )}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <CaptionsButton
+                  render={(props) => (
+                    <Button variant="icon" {...props} className={iconState.captions.button}>
+                      <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
+                      <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
+                    </Button>
+                  )}
+                />
+              }
+            />
+            <Tooltip.Popup className={cn(popup.tooltip)}>
+              <CaptionsLabel />
+            </Tooltip.Popup>
+          </Tooltip.Root>
 
-          <PiPButton
-            render={(props) => (
-              <Button variant="icon" {...props}>
-                <PipIcon className={icon} />
-              </Button>
-            )}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <PiPButton
+                  render={(props) => (
+                    <Button variant="icon" {...props}>
+                      <PipIcon className={icon} />
+                    </Button>
+                  )}
+                />
+              }
+            />
+            <Tooltip.Popup className={cn(popup.tooltip)}>
+              <PiPLabel />
+            </Tooltip.Popup>
+          </Tooltip.Root>
 
-          <FullscreenButton
-            render={(props) => (
-              <Button variant="icon" {...props} className={iconState.fullscreen.button}>
-                <FullscreenEnterIcon className={cn(icon, iconState.fullscreen.enter)} />
-                <FullscreenExitIcon className={cn(icon, iconState.fullscreen.exit)} />
-              </Button>
-            )}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <FullscreenButton
+                  render={(props) => (
+                    <Button variant="icon" {...props} className={iconState.fullscreen.button}>
+                      <FullscreenEnterIcon className={cn(icon, iconState.fullscreen.enter)} />
+                      <FullscreenExitIcon className={cn(icon, iconState.fullscreen.exit)} />
+                    </Button>
+                  )}
+                />
+              }
+            />
+            <Tooltip.Popup className={cn(popup.tooltip)}>
+              <FullscreenLabel />
+            </Tooltip.Popup>
+          </Tooltip.Root>
         </span>
       </Controls.Root>
 
@@ -257,8 +339,6 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
       </div> */}
 
       <div className={overlay} />
-
-      {children}
     </Container>
   );
 }

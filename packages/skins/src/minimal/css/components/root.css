@@ -1,0 +1,22 @@
+/* ==========================================================================
+   Root Container
+   ========================================================================== */
+
+.media-minimal-skin {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  container: media-root / inline-size;
+  border-radius: var(--media-border-radius, 0.75rem);
+  font-family:
+    Inter Variable,
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  letter-spacing: normal;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}

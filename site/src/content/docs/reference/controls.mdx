@@ -50,6 +50,7 @@ User activity is tracked via pointer movement, keyboard input, and focus events 
 ## Styling
 By default, controls have the following styles:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 /* Click-through: clicks pass through controls to video beneath */
 media-controls {
@@ -69,10 +70,41 @@ media-controls:not([data-visible]) {
   opacity: 0;
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders `<div>` elements with the same data attributes. Add a `className` and use it as the selector:
+
+```css
+/* Click-through: clicks pass through controls to video beneath */
+.controls {
+  pointer-events: none;
+}
+
+.controls-group {
+  pointer-events: auto;
+}
+
+/* Fade transition */
+.controls {
+  transition: opacity 0.25s;
+}
+
+.controls:not([data-visible]) {
+  opacity: 0;
+}
+```
+</FrameworkCase>
 
 ## Accessibility
 
+<FrameworkCase frameworks={["html"]}>
 No ARIA role is applied to `<media-controls>` — it is a layout wrapper, not a landmark. `<media-controls-group>` automatically receives `role="group"` when an `aria-label` or `aria-labelledby` attribute is provided; otherwise no role is assigned.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+No ARIA role is applied to `Controls.Root` — it is a layout wrapper, not a landmark. `Controls.Group` automatically receives `role="group"` when an `aria-label` or `aria-labelledby` attribute is provided; otherwise no role is assigned.
+</FrameworkCase>
 
 ## Examples
 

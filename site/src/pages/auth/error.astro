@@ -4,31 +4,48 @@ import { ArrowLeft, X } from 'lucide-react';
 import AuthResult from '@/layouts/AuthResult.astro';
 ---
 
-<AuthResult title="Authentication Failed" description="Please try again..." variant="error">
-  <a slot="action" data-action="home" href="/" class="hidden items-center gap-1 intent:underline group">
-    <ArrowLeft size="1em" className="group-intent:-translate-x-1 transition-transform" />
+<AuthResult
+  title="Authentication Failed"
+  description="Please try again..."
+  variant="error"
+>
+  <a
+    slot="action"
+    data-action="home"
+    href="/"
+    class="group hidden items-center gap-1 intent:underline"
+  >
+    <ArrowLeft
+      size="1em"
+      className="transition-transform group-intent:-translate-x-1"
+    />
     Back to Home
   </a>
-  <button slot="action" data-action="close" type="button" class="hidden items-center gap-1 intent:underline group">
-    <X size="1em" className="group-intent:scale-110 transition-transform" />
+  <button
+    slot="action"
+    data-action="close"
+    type="button"
+    class="group hidden items-center gap-1 intent:underline"
+  >
+    <X size="1em" className="transition-transform group-intent:scale-110" />
     Close
   </button>
 </AuthResult>
 
 <script>
   const isPopup = Boolean(window.opener);
-  const actionContainer = document.querySelector('[data-action-container]');
+  const actionContainer = document.querySelector("[data-action-container]");
   const homeAction = document.querySelector('[data-action="home"]');
   const closeAction = document.querySelector('[data-action="close"]');
 
   if (isPopup && closeAction) {
-    closeAction.classList.remove('hidden');
-    closeAction.classList.add('inline-flex');
-    closeAction.addEventListener('click', () => window.close());
+    closeAction.classList.remove("hidden");
+    closeAction.classList.add("inline-flex");
+    closeAction.addEventListener("click", () => window.close());
   } else if (homeAction) {
-    homeAction.classList.remove('hidden');
-    homeAction.classList.add('inline-flex');
+    homeAction.classList.remove("hidden");
+    homeAction.classList.add("inline-flex");
   }
 
-  actionContainer?.classList.remove('invisible');
+  actionContainer?.classList.remove("invisible");
 </script>

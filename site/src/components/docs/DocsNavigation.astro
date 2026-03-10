@@ -16,18 +16,18 @@ function getGuideUrl(framework: SupportedFramework, slug: string): string {
 }
 ---
 
-<nav class="w-full max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-5">
+<nav class="mx-auto grid w-full max-w-3xl grid-cols-1 gap-5 md:grid-cols-2">
   {
     prev ? (
       <a
         href={getGuideUrl(framework, prev.slug)}
-        class="grid items-center gap-x-2 p-4 border border-light-40 dark:border-dark-80 rounded-lg intent:border-dark-40 dark:intent:border-dark-40"
+        class="grid items-center gap-x-2 rounded-xs border border-manila-75 bg-manila-50 p-4 dark:border-soot dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
         style="grid-template-areas: 'empty direction' 'icon title'; grid-template-columns: auto minmax(0,1fr); grid-template-rows: auto minmax(0,1fr);"
       >
-        <div class="text-sm text-dark-80 dark:text-light-40" style="grid-area: direction;">
+        <div class="text-p3" style="grid-area: direction;">
           Previous
         </div>
-        <div class="text-base font-medium text-balance" style="grid-area: title">
+        <div class="text-p2 font-bold text-balance" style="grid-area: title">
           {prev.sidebarLabel || docTitles.get(prev.slug)}
         </div>
         <div style="grid-area: icon">
@@ -42,13 +42,13 @@ function getGuideUrl(framework: SupportedFramework, slug: string): string {
     next ? (
       <a
         href={getGuideUrl(framework, next.slug)}
-        class="grid items-center gap-x-2 p-4 border border-light-40 dark:border-dark-80 rounded-lg intent:border-dark-40 text-right dark:intent:border-dark-40"
+        class="grid items-center gap-x-2 rounded-xs border border-manila-75 bg-manila-50 p-4 text-right dark:border-soot dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
         style="grid-template-areas: 'direction empty' 'title icon';grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto minmax(0,1fr);"
       >
-        <div class="text-sm text-dark-80 dark:text-light-40" style="grid-area: direction;">
+        <div class="text-p3" style="grid-area: direction;">
           Next
         </div>
-        <div class="text-base font-medium text-balance" style="grid-area: title">
+        <div class="text-p2 font-bold text-balance" style="grid-area: title">
           {next.sidebarLabel || docTitles.get(next.slug)}
         </div>
         <div style="grid-area: icon">

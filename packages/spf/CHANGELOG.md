@@ -1,0 +1,73 @@
+# Changelog
+
+## [10.0.0-beta.2](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.1...@videojs/spf@10.0.0-beta.2) (2026-03-10)
+
+
+### Miscellaneous Chores
+
+* **@videojs/spf:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.2
+
+## [10.0.0-beta.1](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.0...@videojs/spf@10.0.0-beta.1) (2026-03-10)
+
+
+### Features
+
+* **spf:** basic ManagedMediaSource support for Safari ([#843](https://github.com/videojs/v10/issues/843)) ([4bd2875](https://github.com/videojs/v10/commit/4bd287515fa118b6a337e9af9494596e2055decf))
+* **spf:** initial push of SPF ([#784](https://github.com/videojs/v10/issues/784)) ([27a3993](https://github.com/videojs/v10/commit/27a3993fb20af0523e42b0d03c70a6f5a465d144))
+
+
+### Bug Fixes
+
+* **packages:** set release-please manifest and package versions to beta.0 ([#850](https://github.com/videojs/v10/issues/850)) ([e085a0d](https://github.com/videojs/v10/commit/e085a0d73af0c142e0c0a371337daae98fdbaac9))
+* **spf:** add missing repository field ([#844](https://github.com/videojs/v10/issues/844)) ([32b1299](https://github.com/videojs/v10/commit/32b1299be1e794d9c9f34ede6af5016d7e349998))
+* **spf:** fix async teardown leaks and recreate engine on src change ([#841](https://github.com/videojs/v10/issues/841)) ([f50d509](https://github.com/videojs/v10/commit/f50d509749522f48e66a8b5a5a98fa2255195ba8))
+* **spf:** prefer MediaSource over ManagedMediaSource ([#838](https://github.com/videojs/v10/issues/838)) ([54f71d6](https://github.com/videojs/v10/commit/54f71d62aa925f8eb5a7f8399ae0374f313774ea))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.1
+
+## [10.0.0-alpha.11](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-alpha.10...@videojs/spf@10.0.0-alpha.11) (2026-03-10)
+
+
+### Features
+
+* **spf:** basic ManagedMediaSource support for Safari ([#843](https://github.com/videojs/v10/issues/843)) ([4bd2875](https://github.com/videojs/v10/commit/4bd287515fa118b6a337e9af9494596e2055decf))
+
+
+### Bug Fixes
+
+* **spf:** add missing repository field ([#844](https://github.com/videojs/v10/issues/844)) ([32b1299](https://github.com/videojs/v10/commit/32b1299be1e794d9c9f34ede6af5016d7e349998))
+* **spf:** fix async teardown leaks and recreate engine on src change ([#841](https://github.com/videojs/v10/issues/841)) ([f50d509](https://github.com/videojs/v10/commit/f50d509749522f48e66a8b5a5a98fa2255195ba8))
+* **spf:** prefer MediaSource over ManagedMediaSource ([#838](https://github.com/videojs/v10/issues/838)) ([54f71d6](https://github.com/videojs/v10/commit/54f71d62aa925f8eb5a7f8399ae0374f313774ea))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-alpha.11
+
+## 10.0.0-alpha.10 (2026-03-10)
+
+
+### Features
+
+* **spf:** initial push of SPF ([#784](https://github.com/videojs/v10/issues/784)) ([27a3993](https://github.com/videojs/v10/commit/27a3993fb20af0523e42b0d03c70a6f5a465d144))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-alpha.10

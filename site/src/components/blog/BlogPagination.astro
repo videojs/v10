@@ -10,7 +10,10 @@ interface Props {
 const { page } = Astro.props;
 ---
 
-<nav aria-label="Blog pagination" class="w-full max-w-3xl mx-auto mt-10 flex items-center justify-end gap-4">
+<nav
+  aria-label="Blog pagination"
+  class="mx-auto mt-10 flex w-full max-w-3xl items-center justify-end gap-4"
+>
   <span>
     Page {page.currentPage} of {page.lastPage}
   </span>
@@ -20,17 +23,17 @@ const { page } = Astro.props;
         <a
           href={page.url.prev}
           aria-label={`Go to page ${page.currentPage - 1}`}
-          class="grid items-center p-2 border border-light-40 rounded-lg intent:border-dark-40"
+          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 dark:border-soot dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
         >
-          <ChevronDown size={12} className="rotate-90" />
+          <ChevronDown size={16} className="rotate-90" />
         </a>
       ) : (
         <button
           disabled
           aria-label="Previous page (unavailable)"
-          class="grid items-center p-2 border border-light-40 rounded-lg opacity-40"
+          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 opacity-40 dark:border-soot dark:bg-warm-gray"
         >
-          <ChevronDown size={12} className="rotate-90" />
+          <ChevronDown size={16} className="rotate-90" />
         </button>
       )
     }
@@ -39,17 +42,17 @@ const { page } = Astro.props;
         <a
           href={page.url.next}
           aria-label={`Go to page ${page.currentPage + 1}`}
-          class="grid items-center p-2 border border-light-40 rounded-lg intent:border-dark-40"
+          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 dark:border-soot dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
         >
-          <ChevronDown size={12} className="-rotate-90" />
+          <ChevronDown size={16} className="-rotate-90" />
         </a>
       ) : (
         <button
           disabled
           aria-label="Next page (unavailable)"
-          class="grid items-center p-2 border border-light-40 rounded-lg opacity-40"
+          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 opacity-40 dark:border-soot dark:bg-warm-gray"
         >
-          <ChevronDown size={12} className="-rotate-90" />
+          <ChevronDown size={16} className="-rotate-90" />
         </button>
       )
     }

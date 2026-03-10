@@ -1,0 +1,17 @@
+/* ==========================================================================
+   Buffering Indicator
+   ========================================================================== */
+
+.media-minimal-skin .media-buffering-indicator {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: oklch(1 0 0);
+  pointer-events: none;
+
+  &[data-visible] {
+    display: flex;
+  }
+}

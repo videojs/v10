@@ -148,6 +148,92 @@ describe('createPopover', () => {
     });
   });
 
+  describe('outside-click', () => {
+    it('does not close when clicking inside the popup', () => {
+      const { popover, onOpenChange } = createTestPopover();
+      const popup = document.createElement('div');
+      const child = document.createElement('button');
+      popup.appendChild(child);
+      document.body.appendChild(popup);
+
+      popover.setPopupElement(popup);
+      popover.open();
+      flush();
+      onOpenChange.mockClear();
+
+      child.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
+
+      expect(onOpenChange).not.toHaveBeenCalled();
+
+      popover.destroy();
+      popup.remove();
+    });
+
+    it('closes when clicking outside the popup', () => {
+      const { popover, onOpenChange } = createTestPopover();
+      const popup = document.createElement('div');
+      const outside = document.createElement('div');
+      document.body.appendChild(popup);
+      document.body.appendChild(outside);
+
+      popover.setPopupElement(popup);
+      popover.open();
+      flush();
+      onOpenChange.mockClear();
+
+      outside.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
+
+      expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'outside-click' }));
+
+      popover.destroy();
+      popup.remove();
+      outside.remove();
+    });
+
+    it('does not close when clicking inside the trigger', () => {
+      const { popover, onOpenChange } = createTestPopover();
+      const trigger = document.createElement('button');
+      document.body.appendChild(trigger);
+
+      popover.setTriggerElement(trigger);
+      popover.open();
+      flush();
+      onOpenChange.mockClear();
+
+      trigger.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
+
+      expect(onOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
+
+      popover.destroy();
+      trigger.remove();
+    });
+
+    it('uses composedPath to detect clicks inside a Shadow DOM popup', () => {
+      const { popover, onOpenChange } = createTestPopover();
+      const host = document.createElement('div');
+      const shadow = host.attachShadow({ mode: 'open' });
+      const popup = document.createElement('div');
+      const child = document.createElement('button');
+      popup.appendChild(child);
+      shadow.appendChild(popup);
+      document.body.appendChild(host);
+
+      popover.setPopupElement(popup);
+      popover.open();
+      flush();
+      onOpenChange.mockClear();
+
+      // Clicking the child inside the shadow tree — event.target at
+      // document level is the shadow host, but composedPath includes popup.
+      child.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
+
+      expect(onOpenChange).not.toHaveBeenCalled();
+
+      popover.destroy();
+      host.remove();
+    });
+  });
+
   describe('destroy', () => {
     it('prevents further open/close calls', () => {
       const { popover, onOpenChange } = createTestPopover();

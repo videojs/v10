@@ -12,7 +12,7 @@ import {
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { SnapshotController } from '@videojs/store/html';
-import { applyStyles, supportsAnchorPositioning } from '@videojs/utils/dom';
+import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 
 import { MediaElement } from '../media-element';
 
@@ -142,6 +142,14 @@ export class PopoverElement extends MediaElement {
     // Apply popup ARIA and data attributes to self.
     applyElementProps(this, this.#core.getPopupAttrs(state));
     applyStateDataAttrs(this, state, PopoverDataAttrs);
+
+    // Show/hide via Popover API AFTER data attributes are applied so
+    // `data-starting-style` is present before the first visible frame.
+    if (state.open) {
+      tryShowPopover(this);
+    } else {
+      tryHidePopover(this);
+    }
 
     // Apply trigger ARIA and anchor-name to the discovered trigger.
     if (this.#currentTrigger) {

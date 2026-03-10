@@ -35,7 +35,7 @@ import jsonSpriteHtmlTs from "@/components/docs/demos/thumbnail/html/css/JsonSpr
 
 `Thumbnail` can read thumbnail cues directly from your video track. Add a `<track>` with `kind="metadata"` and `label="thumbnails"` to your media element.
 
-Mux provides this as `storyboard.vtt`:
+[Mux](https://www.mux.com?utm_source=videojs&utm_campaign=vjs10) provides this as `storyboard.vtt`:
 
 `https://image.mux.com/{PLAYBACK_ID}/storyboard.vtt`
 
@@ -45,7 +45,7 @@ Mux provides this as `storyboard.vtt`:
     <track
       kind="metadata"
       label="thumbnails"
-      src="https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/storyboard.vtt"
+      src="https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/storyboard.vtt"
       default
     />
   </Video>
@@ -59,7 +59,7 @@ Mux provides this as `storyboard.vtt`:
     <track
       kind="metadata"
       label="thumbnails"
-      src="https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/storyboard.vtt"
+      src="https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/storyboard.vtt"
       default
     />
   </video>
@@ -99,6 +99,7 @@ The component picks the latest thumbnail whose `startTime` is less than or equal
 
 Use state data attributes for pure CSS styling:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 media-thumbnail[data-hidden] {
   display: none;
@@ -112,6 +113,25 @@ media-thumbnail[data-error] {
   outline: 1px solid #ef4444;
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders a `<div>` with the same data attributes. Add a `className` and use it as the selector:
+
+```css
+.thumbnail[data-hidden] {
+  display: none;
+}
+
+.thumbnail[data-loading] {
+  opacity: 0.6;
+}
+
+.thumbnail[data-error] {
+  outline: 1px solid #ef4444;
+}
+```
+</FrameworkCase>
 
 ## Accessibility
 

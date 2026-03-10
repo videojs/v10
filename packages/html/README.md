@@ -2,7 +2,7 @@
 
 [![package-badge]][package]
 
-> **⚠️ Alpha - SUBJECT TO CHANGE** Not recommended for production use.
+> **⚠️ Beta** Close to stable. Experimental adoption in real projects.
 
 ## Overview
 
@@ -23,6 +23,6 @@ members:
 [Apache-2.0](./LICENSE)
 
 [package]: https://www.npmjs.com/package/@videojs/html
-[package-badge]: https://img.shields.io/npm/v/@videojs/html/next?label=@videojs/html@next
+[package-badge]: https://img.shields.io/npm/v/@videojs/html?label=@videojs/html
 [discord]: https://discord.gg/JBqHh485uF
 [gh-discussions]: https://github.com/videojs/v10/discussions

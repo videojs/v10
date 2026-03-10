@@ -1,6 +1,7 @@
 import { isPlainObject, isString } from '../predicate';
 
-type ClassValue = string | Record<string, unknown> | undefined;
+type ClassPrimitive = string | Record<string, unknown> | undefined;
+type ClassValue = ClassPrimitive | readonly string[] | readonly ClassPrimitive[];
 
 /**
  * A (very basic) utility to merge class names and make them a little easier to read.
@@ -17,7 +18,7 @@ type ClassValue = string | Record<string, unknown> | undefined;
 export function cn(...classes: ClassValue[]): string {
   const result: string[] = [];
 
-  for (const value of classes) {
+  for (const value of classes.flat()) {
     if (isString(value) && value) {
       result.push(value);
     } else if (isPlainObject(value)) {

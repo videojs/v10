@@ -39,12 +39,12 @@ export function createTechArticleSchema(params: {
     author: {
       '@type': 'Organization',
       name: 'Video.js',
-      url: 'https://v10.videojs.org',
+      url: 'https://videojs.org',
     },
     publisher: {
       '@type': 'Organization',
       name: 'Video.js',
-      url: 'https://v10.videojs.org',
+      url: 'https://videojs.org',
     },
     inLanguage: 'en-US',
   };
@@ -96,7 +96,7 @@ export function createBlogPostingSchema(params: {
     publisher: {
       '@type': 'Organization',
       name: 'Video.js',
-      url: 'https://v10.videojs.org',
+      url: 'https://videojs.org',
     },
     inLanguage: 'en-US',
     mainEntityOfPage: {
@@ -132,7 +132,7 @@ export function createBlogCollectionSchema(params: {
     publisher: {
       '@type': 'Organization',
       name: 'Video.js',
-      url: 'https://v10.videojs.org',
+      url: 'https://videojs.org',
     },
     inLanguage: 'en-US',
   };
@@ -180,7 +180,7 @@ export function createAuthorCollectionSchema(params: {
     publisher: {
       '@type': 'Organization',
       name: 'Video.js',
-      url: 'https://v10.videojs.org',
+      url: 'https://videojs.org',
     },
     inLanguage: 'en-US',
   };
@@ -232,7 +232,7 @@ export function createProfilePageSchema(params: {
     publisher: {
       '@type': 'Organization',
       name: 'Video.js',
-      url: 'https://v10.videojs.org',
+      url: 'https://videojs.org',
     },
     inLanguage: 'en-US',
   };

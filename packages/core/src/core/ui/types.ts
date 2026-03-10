@@ -3,14 +3,14 @@ export type StateAttrMap<State> = {
 };
 
 /** Constraint for core UI classes that compute component state. */
-export interface UIComponent<Props = {}, State extends object = object> {
+export interface UIComponent<Props = object, State extends object = object> {
   getState(): State;
   setProps?(props: Props): void;
   getAttrs?(state: State): object;
 }
 
 /** Constraint for core UI classes that derive component state from media state. */
-export interface MediaUIComponent<Props = {}, State extends object = object> extends UIComponent<Props, State> {
+export interface MediaUIComponent<Props = object, State extends object = object> extends UIComponent<Props, State> {
   setMedia(media: object): void;
 }
 

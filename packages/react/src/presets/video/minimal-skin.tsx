@@ -15,7 +15,7 @@ import {
 } from '@videojs/icons/react/minimal';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
-import { Container } from '@/player/context';
+import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
@@ -28,6 +28,7 @@ import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
+import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import type { BaseSkinProps } from '../types';
 import { ErrorDialog } from './error-dialog';
@@ -50,11 +51,35 @@ const errorClasses = {
   close: 'media-button',
 };
 
+function PlayLabel(): ReactNode {
+  const paused = usePlayer((s) => Boolean(s.paused));
+  const ended = usePlayer((s) => Boolean(s.ended));
+  if (ended) return <>Replay</>;
+  return paused ? <>Play</> : <>Pause</>;
+}
+
+function CaptionsLabel(): ReactNode {
+  const active = usePlayer((s) => Boolean(s.subtitlesShowing));
+  return active ? <>Disable captions</> : <>Enable captions</>;
+}
+
+function PiPLabel(): ReactNode {
+  const pip = usePlayer((s) => Boolean(s.pip));
+  return pip ? <>Exit picture-in-picture</> : <>Enter picture-in-picture</>;
+}
+
+function FullscreenLabel(): ReactNode {
+  const fullscreen = usePlayer((s) => Boolean(s.fullscreen));
+  return fullscreen ? <>Exit fullscreen</> : <>Enter fullscreen</>;
+}
+
 export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 
   return (
-    <Container className={cn('media-minimal-skin', className)} {...rest}>
+    <Container className={cn('media-minimal-skin media-minimal-skin--video', className)} {...rest}>
+      {children}
+
       <BufferingIndicator
         render={(props) => (
           <div {...props} className="media-buffering-indicator">
@@ -67,39 +92,62 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
 
       <Controls.Root className="media-controls">
         <span className="media-button-group">
-          <PlayButton
-            render={(props) => (
-              <Button {...props} className="media-button--icon media-button--play">
-                <RestartIcon className="media-icon media-icon--restart" />
-                <PlayIcon className="media-icon media-icon--play" />
-                <PauseIcon className="media-icon media-icon--pause" />
-              </Button>
-            )}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <PlayButton
+                  render={(props) => (
+                    <Button {...props} className="media-button--icon media-button--play">
+                      <RestartIcon className="media-icon media-icon--restart" />
+                      <PlayIcon className="media-icon media-icon--play" />
+                      <PauseIcon className="media-icon media-icon--pause" />
+                    </Button>
+                  )}
+                />
+              }
+            />
+            <Tooltip.Popup className="media-tooltip">
+              <PlayLabel />
+            </Tooltip.Popup>
+          </Tooltip.Root>
 
-          <SeekButton
-            seconds={-SEEK_TIME}
-            render={(props) => (
-              <Button {...props} className="media-button--icon media-button--seek">
-                <span className="media-icon__container">
-                  <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
-                  <span className="media-icon__label">{SEEK_TIME}</span>
-                </span>
-              </Button>
-            )}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <SeekButton
+                  seconds={-SEEK_TIME}
+                  render={(props) => (
+                    <Button {...props} className="media-button--icon media-button--seek">
+                      <span className="media-icon__container">
+                        <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
+                        <span className="media-icon__label">{SEEK_TIME}</span>
+                      </span>
+                    </Button>
+                  )}
+                />
+              }
+            />
+            <Tooltip.Popup className="media-tooltip">Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+          </Tooltip.Root>
 
-          <SeekButton
-            seconds={SEEK_TIME}
-            render={(props) => (
-              <Button {...props} className="media-button--icon media-button--seek">
-                <span className="media-icon__container">
-                  <SeekIcon className="media-icon media-icon--seek" />
-                  <span className="media-icon__label">{SEEK_TIME}</span>
-                </span>
-              </Button>
-            )}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <SeekButton
+                  seconds={SEEK_TIME}
+                  render={(props) => (
+                    <Button {...props} className="media-button--icon media-button--seek">
+                      <span className="media-icon__container">
+                        <SeekIcon className="media-icon media-icon--seek" />
+                        <span className="media-icon__label">{SEEK_TIME}</span>
+                      </span>
+                    </Button>
+                  )}
+                />
+              }
+            />
+            <Tooltip.Popup className="media-tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+          </Tooltip.Root>
         </span>
 
         <span className="media-time-controls">
@@ -119,9 +167,16 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
         </span>
 
         <span className="media-button-group">
-          <PlaybackRateButton
-            render={(props) => <Button {...props} className="media-button--icon media-button--playback-rate" />}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <PlaybackRateButton
+                  render={(props) => <Button {...props} className="media-button--icon media-button--playback-rate" />}
+                />
+              }
+            />
+            <Tooltip.Popup className="media-tooltip">Toggle playback rate</Tooltip.Popup>
+          </Tooltip.Root>
 
           <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
             <Popover.Trigger
@@ -137,7 +192,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                 />
               }
             />
-            <Popover.Popup className="media-surface media-popup media-popup--volume media-popup-animation">
+            <Popover.Popup className="media-popover media-popover--volume">
               <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
                 <VolumeSlider.Track className="media-slider__track">
                   <VolumeSlider.Fill className="media-slider__fill" />
@@ -147,31 +202,58 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
             </Popover.Popup>
           </Popover.Root>
 
-          <CaptionsButton
-            render={(props) => (
-              <Button {...props} className="media-button--icon media-button--captions">
-                <CaptionsOffIcon className="media-icon media-icon--captions-off" />
-                <CaptionsOnIcon className="media-icon media-icon--captions-on" />
-              </Button>
-            )}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <CaptionsButton
+                  render={(props) => (
+                    <Button {...props} className="media-button--icon media-button--captions">
+                      <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+                      <CaptionsOnIcon className="media-icon media-icon--captions-on" />
+                    </Button>
+                  )}
+                />
+              }
+            />
+            <Tooltip.Popup className="media-tooltip">
+              <CaptionsLabel />
+            </Tooltip.Popup>
+          </Tooltip.Root>
 
-          <PiPButton
-            render={(props) => (
-              <Button {...props} className="media-button--icon">
-                <PipIcon className="media-icon" />
-              </Button>
-            )}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <PiPButton
+                  render={(props) => (
+                    <Button {...props} className="media-button--icon">
+                      <PipIcon className="media-icon" />
+                    </Button>
+                  )}
+                />
+              }
+            />
+            <Tooltip.Popup className="media-tooltip">
+              <PiPLabel />
+            </Tooltip.Popup>
+          </Tooltip.Root>
 
-          <FullscreenButton
-            render={(props) => (
-              <Button {...props} className="media-button--icon media-button--fullscreen">
-                <FullscreenEnterIcon className="media-icon media-icon--fullscreen-enter" />
-                <FullscreenExitIcon className="media-icon media-icon--fullscreen-exit" />
-              </Button>
-            )}
-          />
+          <Tooltip.Root side="top">
+            <Tooltip.Trigger
+              render={
+                <FullscreenButton
+                  render={(props) => (
+                    <Button {...props} className="media-button--icon media-button--fullscreen">
+                      <FullscreenEnterIcon className="media-icon media-icon--fullscreen-enter" />
+                      <FullscreenExitIcon className="media-icon media-icon--fullscreen-exit" />
+                    </Button>
+                  )}
+                />
+              }
+            />
+            <Tooltip.Popup className="media-tooltip">
+              <FullscreenLabel />
+            </Tooltip.Popup>
+          </Tooltip.Root>
         </span>
       </Controls.Root>
 
@@ -185,8 +267,6 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
       </div> */}
 
       <div className="media-overlay" />
-
-      {children}
     </Container>
   );
 }

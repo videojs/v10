@@ -16,9 +16,9 @@ const { title, description, canonical } = Astro.props;
 
 <Base title={title} description={description} canonical={canonical}>
   <slot name="head" slot="head" />
-  <div class="min-h-screen flex flex-col">
+  <div class="flex min-h-screen flex-col">
     <NavBar />
-    <main class="px-6 md:px-10 mt-10 md:mt-20 pb-20 md:pb-30">
+    <main class="mt-10 px-6 pb-20 md:mt-20 md:px-10 md:pb-30">
       <slot />
     </main>
     <Footer class="mt-auto" />

@@ -3,7 +3,10 @@ export const SEO_SUFFIX = 'Open Source Video Player';
 export const SITE_DESCRIPTION = `The open-source video player for React and HTML. Lightweight, accessible components built for performance and streaming.`;
 export const GITHUB_REPO_URL = 'https://github.com/videojs/v10/';
 export const DISCORD_INVITE_URL = 'https://discord.gg/JBqHh485uF';
+export const MUX_URL = 'https://www.mux.com?utm_source=videojs&utm_campaign=vjs10';
+export const MUX_SUPPORT_URL = 'https://www.mux.com/sales-contact?form=sales&utm_source=videojs&utm_campaign=vjs10';
 export const THEME_KEY = 'vjs-site-theme';
+export const BANNER_DISMISS_KEY = 'vjs-legacy-banner-dismissed';
 
 /**
  * Video source for demos and examples throughout the site,
@@ -21,4 +24,11 @@ export const VJS8_DEMO_VIDEO: VideoSource = {
   hls: 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8',
   mp4: 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4',
   poster: 'https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/thumbnail.webp',
+};
+
+export const VJS10_DEMO_VIDEO: VideoSource = {
+  id: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM',
+  hls: 'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8',
+  mp4: 'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4',
+  poster: 'https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.webp',
 };

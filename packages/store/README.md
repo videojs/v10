@@ -2,7 +2,7 @@
 
 [![package-badge]][package]
 
-> **⚠️ Alpha - SUBJECT TO CHANGE** Not recommended for production use.
+> **⚠️ Beta** Close to stable. Experimental adoption in real projects.
 
 A reactive store for managing state owned by external systems. Built for media players, streaming libraries, and real-time systems where you don't own the state.
 
@@ -377,6 +377,6 @@ members:
 [Apache-2.0](./LICENSE)
 
 [package]: https://www.npmjs.com/package/@videojs/store
-[package-badge]: https://img.shields.io/npm/v/@videojs/store/next?label=@videojs/store@next
+[package-badge]: https://img.shields.io/npm/v/@videojs/store?label=@videojs/store
 [discord]: https://discord.gg/JBqHh485uF
 [gh-discussions]: https://github.com/videojs/v10/discussions

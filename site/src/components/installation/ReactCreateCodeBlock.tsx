@@ -109,7 +109,9 @@ function generateReactCode(useCase: UseCase, skin: Skin, renderer: Renderer): st
     ...(mediaImport ? [mediaImport] : []),
   ].join('\n');
 
-  return `${imports}
+  return `'use client';
+
+${imports}
 
 const Player = createPlayer({ features: ${featureType} });
 

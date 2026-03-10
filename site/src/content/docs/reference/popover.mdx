@@ -68,15 +68,29 @@ The `side` and `align` props control popup placement relative to the trigger. Th
 
 Use [CSS custom properties](#root-css-custom-properties) for positioning offsets:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 media-popover {
   --media-popover-side-offset: 8px;
   --media-popover-align-offset: 0px;
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders standard DOM elements with the same data attributes and CSS custom properties. Add a `className` and use it as the selector:
+
+```css
+.popover {
+  --media-popover-side-offset: 8px;
+  --media-popover-align-offset: 0px;
+}
+```
+</FrameworkCase>
 
 Style based on open state and transition phases:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 media-popover[data-open] .popup {
   display: block;
@@ -88,6 +102,21 @@ media-popover[data-ending-style] .popup {
   opacity: 0;
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+.popover[data-open] .popup {
+  display: block;
+}
+.popover[data-starting-style] .popup {
+  opacity: 0;
+}
+.popover[data-ending-style] .popup {
+  opacity: 0;
+}
+```
+</FrameworkCase>
 
 ## Accessibility
 

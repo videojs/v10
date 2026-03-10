@@ -43,6 +43,7 @@ PlayButton is a three-state button: **play**, **pause**, and **replay**. When me
 
 Style with the `[data-paused]` and `[data-ended]` attributes to show/hide play/pause/replay icons based on state. For example:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 /* Paused (but not ended) */
 media-play-button[data-paused]:not([data-ended]) .play-icon { display: inline; }
@@ -53,13 +54,38 @@ media-play-button:not([data-paused]) .pause-icon { display: inline; }
 /* Ended */
 media-play-button[data-ended] .replay-icon { display: inline; }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders a `<button>` with the same data attributes. Add a `className` and use it as the selector:
+
+```css
+/* Paused (but not ended) */
+.play-button[data-paused]:not([data-ended]) .play-icon { display: inline; }
+
+/* Playing */
+.play-button:not([data-paused]) .pause-icon { display: inline; }
+
+/* Ended */
+.play-button[data-ended] .replay-icon { display: inline; }
+```
+</FrameworkCase>
 
 After first play, the `data-started` attribute is added and remains present until a new source is loaded. Use this to hide the play button when media hasn't started yet:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 /* Hide play button before first play */
 media-play-button:not([data-started]) .play-icon { display: none; }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+/* Hide play button before first play */
+.play-button:not([data-started]) .play-icon { display: none; }
+```
+</FrameworkCase>
 
 ## Accessibility
 

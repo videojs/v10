@@ -1,0 +1,23 @@
+/* ==========================================================================
+   Controls
+   ========================================================================== */
+
+.media-default-skin .media-controls {
+  container: media-controls / inline-size;
+  display: flex;
+  align-items: center;
+  gap: 0.075rem;
+  padding: 0.175rem;
+  border-radius: calc(infinity * 1px);
+  --media-controls-current-shadow-color: oklch(from currentColor 0 0 0 / clamp(0, calc((l - 0.5) * 0.5), 0.25));
+  --media-controls-current-shadow-color-subtle: oklch(
+    from var(--media-controls-current-shadow-color) l c h /
+    calc(alpha * 0.4)
+  );
+  text-shadow: 0 0 1px var(--media-controls-current-shadow-color);
+
+  @container media-root (width > 40rem) {
+    gap: 0.125rem;
+    padding: 0.25rem;
+  }
+}

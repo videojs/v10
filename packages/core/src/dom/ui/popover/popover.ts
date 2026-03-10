@@ -1,5 +1,5 @@
 import type { State } from '@videojs/store';
-import { listen } from '@videojs/utils/dom';
+import { listen, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 import type { PopoverInput } from '../../../core/ui/popover/popover-core';
 import { createDismissLayer } from '../dismiss-layer';
 import type { UIFocusEvent, UIPointerEvent } from '../event';
@@ -35,6 +35,8 @@ export interface PopoverTriggerProps {
 export interface PopoverPopupProps {
   onPointerEnter: (event: UIPointerEvent) => void;
   onPointerLeave: (event: UIPointerEvent) => void;
+  onGotPointerCapture: (event: UIPointerEvent) => void;
+  onLostPointerCapture: (event: UIPointerEvent) => void;
   onFocusOut: (event: UIFocusEvent) => void;
 }
 
@@ -56,6 +58,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   let triggerEl: HTMLElement | null = null;
   let popupEl: HTMLElement | null = null;
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
+  const capturedPointers = new Set<number>();
 
   const layer = createDismissLayer({
     transition: options.transition,
@@ -105,8 +108,6 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     const opening = layer.open();
     if (!opening) return;
 
-    tryShowPopover(popupEl);
-
     const details: PopoverChangeDetails = event ? { reason, event } : { reason };
     onOpenChange(true, details);
 
@@ -145,10 +146,12 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   function handleDocumentPointerdown(event: PointerEvent): void {
     if (!closeOnOutsideClick() || !state.current.active) return;
 
-    const target = event.target as Node | null;
-    if (!target) return;
+    // Use composedPath so the check works when the popup lives inside a
+    // Shadow DOM tree. event.target is retargeted to the shadow host when
+    // the listener is on document, so contains() would always fail.
+    const path = event.composedPath();
 
-    if (triggerEl?.contains(target) || popupEl?.contains(target)) return;
+    if ((triggerEl && path.includes(triggerEl)) || (popupEl && path.includes(popupEl))) return;
 
     applyClose('outside-click', event);
   }
@@ -156,6 +159,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   // Cleanup hover timeout on destroy.
   layer.signal.addEventListener('abort', () => {
     clearHoverTimeout();
+    capturedPointers.clear();
     triggerEl = null;
     popupEl = null;
   });
@@ -229,12 +233,24 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     onPointerLeave(_event) {
       if (!options.openOnHover?.()) return;
 
+      // A descendant has pointer capture (e.g. slider drag). The leave is
+      // synthetic — the pointer hasn't actually left — so don't close.
+      if (capturedPointers.size > 0) return;
+
       clearHoverTimeout();
 
       if (!state.current.active) return;
 
       const closeDelay = options.closeDelay?.() ?? 0;
       hoverTimeout = setTimeout(() => applyClose('hover'), closeDelay);
+    },
+
+    onGotPointerCapture(event) {
+      capturedPointers.add(event.pointerId);
+    },
+
+    onLostPointerCapture(event) {
+      capturedPointers.delete(event.pointerId);
     },
 
     onFocusOut(event) {
@@ -286,22 +302,4 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     close,
     destroy: layer.destroy,
   };
-}
-
-// --- Popover API helpers ---
-
-function tryShowPopover(el: HTMLElement | null): void {
-  try {
-    el?.showPopover?.();
-  } catch {
-    // Element may not support popover API
-  }
-}
-
-function tryHidePopover(el: HTMLElement | null): void {
-  try {
-    el?.hidePopover?.();
-  } catch {
-    // Element may not support popover API or may already be hidden
-  }
 }

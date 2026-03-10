@@ -21,24 +21,24 @@ const stateEntries = Object.entries(state);
 ---
 
 <Table maxWidth={false} outerClass="my-6">
-    <Thead>
-        <Tr>
-            <Th>Property</Th>
-            <Th>Type</Th>
-            <Th />
-        </Tr>
-    </Thead>
-    <Tbody>
-        {
-            stateEntries.map(([name, def]) => (
-                <StateRow
-                    name={name}
-                    type={def.type}
-                    detailedType={def.detailedType}
-                    description={def.description}
-                    componentName={componentName}
-                />
-            ))
-        }
-    </Tbody>
+  <Thead>
+    <Tr>
+      <Th>Property</Th>
+      <Th>Type</Th>
+      <Th />
+    </Tr>
+  </Thead>
+  <Tbody>
+    {
+      stateEntries.map(([name, def]) => (
+        <StateRow
+          name={name}
+          type={def.type}
+          detailedType={def.detailedType}
+          description={def.description}
+          componentName={componentName}
+        />
+      ))
+    }
+  </Tbody>
 </Table>

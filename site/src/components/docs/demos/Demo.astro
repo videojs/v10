@@ -17,22 +17,32 @@ interface Props {
 const { files } = Astro.props;
 ---
 
-<div class="my-6 w-full max-w-3xl mx-auto flex flex-col rounded-lg overflow-hidden border border-light-40 dark:border-dark-80">
-  <div class="relative z-20 bg-light-80 dark:bg-dark-100">
+<div
+  class="mx-auto my-6 flex w-full max-w-3xl flex-col overflow-hidden rounded-xs border border-faded-black dark:border-manila-dark"
+>
+  <div class="relative z-20 bg-manila-light dark:bg-faded-black">
     <slot />
   </div>
-  <TabsRoot client:idle maxWidth={false} className="my-0 rounded-none border-0 border-t border-light-40 dark:border-dark-80">
+  <TabsRoot
+    client:idle
+    maxWidth={false}
+    className="my-0 rounded-none border-0 border-t border-faded-black dark:border-manila-dark"
+  >
     <TabsList client:idle label="Demo source code">
-      {files.map((file, i) => (
-        <Tab client:idle value={file.title} initial={i === 0}>
-          {file.title}
-        </Tab>
-      ))}
+      {
+        files.map((file, i) => (
+          <Tab client:idle value={file.title} initial={i === 0}>
+            {file.title}
+          </Tab>
+        ))
+      }
     </TabsList>
-    {files.map((file, i) => (
-      <TabsPanel client:idle value={file.title} initial={i === 0}>
-        <ServerCode code={file.code} lang={file.lang} />
-      </TabsPanel>
-    ))}
+    {
+      files.map((file, i) => (
+        <TabsPanel client:idle value={file.title} initial={i === 0}>
+          <ServerCode code={file.code} lang={file.lang} />
+        </TabsPanel>
+      ))
+    }
   </TabsRoot>
 </div>

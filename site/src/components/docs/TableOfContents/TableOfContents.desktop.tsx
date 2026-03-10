@@ -23,19 +23,14 @@ export function TableOfContentsDesktop({ headings, activeId, onNavigate, classNa
   return (
     <nav ref={navRef} className={clsx('', className)}>
       <div className="py-8 pr-6">
-        <h2 className="text-sm mb-3 font-semibold">On this page</h2>
+        <h2 className="text-p3 mb-3 font-bold">On this page</h2>
         <ul className="space-y-3">
           {headings.map((heading) => (
             <li key={heading.slug}>
               <a
                 href={`#${heading.slug}`}
                 onClick={(e) => handleClick(e, heading.slug)}
-                className={clsx(
-                  'text-sm block',
-                  activeId === heading.slug
-                    ? 'text-dark-100 dark:text-light-100'
-                    : 'text-dark-40 dark:text-light-40 intent:text-dark-100 dark:intent:text-light-100'
-                )}
+                className={clsx('text-p3 block', activeId === heading.slug && 'font-bold')}
                 style={{ paddingLeft: `calc(${heading.depth - 2} * var(--spacing) * 4)` }}
               >
                 {heading.text}

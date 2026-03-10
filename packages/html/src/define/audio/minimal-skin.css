@@ -1,11 +1,1 @@
-.media-minimal-skin {
-  color: var(--media-color, red);
-}
-
-audio-player {
-  display: contents;
-}
-
-audio-minimal-skin {
-  display: contents;
-}
+@import "@videojs/skins/minimal/css/audio.css";

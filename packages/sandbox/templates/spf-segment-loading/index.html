@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sandbox — SPF Segment Loading POC</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <style>
+      body {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        font-family: monospace;
+      }
+      h1 { margin-bottom: 6px; }
+      p { margin: 0 0 12px; }
+
+      video {
+        margin: 12px 0 4px;
+        border: 2px solid #333;
+        display: block;
+        width: 100%;
+        max-width: 640px;
+      }
+
+      /* ── Src controls ── */
+      #src-controls {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+        align-items: center;
+      }
+      #src-input {
+        flex: 1;
+        max-width: 540px;
+        padding: 6px 10px;
+        font-family: monospace;
+        font-size: 12px;
+        border: 1px solid #999;
+        border-radius: 4px;
+      }
+
+      /* ── Playback config ── */
+      #playback-config {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 10px;
+        font-size: 12px;
+      }
+      #playback-config label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+      #playback-config select {
+        font-family: monospace;
+        font-size: 12px;
+        padding: 2px 6px;
+        border: 1px solid #999;
+        border-radius: 4px;
+      }
+
+      /* ── Share URL ── */
+      #share-url-section {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        font-size: 11px;
+        font-family: monospace;
+      }
+      #share-link {
+        color: #0070f3;
+        text-decoration: none;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 520px;
+      }
+      #share-link:hover { text-decoration: underline; }
+
+      /* ── Main controls ── */
+      #controls { margin-bottom: 10px; }
+      button {
+        padding: 8px 16px;
+        margin-right: 8px;
+        cursor: pointer;
+        border: 1px solid #333;
+        background: #f0f0f0;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+      }
+      button:hover { background: #e0e0e0; }
+
+      /* ── Video info strip ── */
+      #now-playing-quality {
+        font-size: 12px;
+        font-family: monospace;
+        color: #555;
+        margin-bottom: 2px;
+      }
+      #now-playing-quality.has-quality { color: #0070f3; font-weight: bold; }
+      #throughput-display {
+        font-size: 12px;
+        font-family: monospace;
+        color: #555;
+        margin-bottom: 12px;
+      }
+      #throughput-display.has-data { color: #16a34a; }
+      #throughput-display.warming { color: #d97706; }
+
+      /* ── Rendition / resolution panels ── */
+      #rendition-picker,
+      #resolution-status {
+        margin: 16px 0;
+        padding: 12px 15px;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+      #rendition-picker h2, #resolution-status h2 { margin-top: 0; font-size: 14px; }
+
+      #rendition-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+      .rendition-btn {
+        padding: 6px 12px;
+        cursor: pointer;
+        border: 2px solid #999;
+        background: #fff;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 11px;
+      }
+      .rendition-btn:hover { border-color: #555; background: #eee; }
+      .rendition-btn.selected-abr  { border-color: #0070f3; background: #e6f0ff; font-weight: bold; }
+      .rendition-btn.selected-manual { border-color: #d97706; background: #fef3c7; font-weight: bold; }
+
+      .abr-status { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+      .mode-abr    { color: #0070f3; font-weight: bold; }
+      .mode-manual { color: #d97706; font-weight: bold; }
+      .enable-abr-btn {
+        padding: 4px 10px; font-size: 11px; cursor: pointer;
+        border: 1px solid #0070f3; background: #e6f0ff; color: #0070f3; border-radius: 4px;
+      }
+      .enable-abr-btn:hover { background: #cce0ff; }
+
+      #resolution-list { display: flex; flex-wrap: wrap; gap: 8px; }
+      .resolution-item {
+        padding: 4px 10px; border: 1px solid #ccc; border-radius: 4px;
+        font-family: monospace; font-size: 11px;
+      }
+      .resolution-item.resolved   { border-color: green; color: green; }
+      .resolution-item.unresolved { border-color: #aaa; color: #888; }
+
+      /* ── Logs ── */
+      #logs-section { margin: 16px 0; }
+      #logs-section h2 { font-size: 14px; margin-bottom: 6px; }
+      #logs {
+        background: #f5f5f5; padding: 10px; border: 1px solid #ddd; border-radius: 4px;
+        max-height: 400px; overflow-y: auto; font-size: 12px;
+      }
+      #logs div { padding: 2px 0; border-bottom: 1px solid #eee; }
+
+      /* ── State inspector ── */
+      #state {
+        background: #f5f5f5; padding: 15px; margin: 16px 0;
+        border: 1px solid #ddd; border-radius: 4px; font-size: 12px;
+      }
+      #state h2 { margin-top: 0; font-size: 14px; }
+      #state pre {
+        margin: 10px 0; padding: 10px; background: #fff;
+        border: 1px solid #ddd; border-radius: 4px; overflow-x: auto;
+      }
+
+      /* ── Log colours ── */
+      .error   { color: red; font-weight: bold; }
+      .success { color: green; }
+      .warning { color: orange; }
+    </style>
+  </head>
+  <body>
+    <h1>SPF Segment Loading POC Test</h1>
+    <p>Testing segment loading pipeline with real Mux HLS stream</p>
+
+    <div id="src-controls">
+      <input type="text" id="src-input" placeholder="Stream URL…" />
+      <button type="button" id="set-src">Set Src</button>
+    </div>
+
+    <div id="playback-config">
+      <label><input type="checkbox" id="muted-toggle" /> Muted</label>
+      <label><input type="checkbox" id="autoplay-toggle" /> Autoplay</label>
+      <label>
+        Preload:
+        <select id="preload-select">
+          <option value="none">none</option>
+          <option value="metadata">metadata</option>
+          <option value="auto">auto</option>
+        </select>
+      </label>
+    </div>
+
+    <div id="share-url-section">
+      🔗 <a id="share-link" href="#" target="_blank" rel="noopener">current page</a>
+      <button type="button" id="open-new-tab">Open in new tab ↗</button>
+    </div>
+
+    <div id="controls">
+      <button type="button" id="play">Play</button>
+      <button type="button" id="pause">Pause</button>
+      <button type="button" id="inspect">Inspect State</button>
+      <button type="button" id="clearLogs">Clear Logs</button>
+    </div>
+
+    <!-- biome-ignore lint/a11y/useMediaCaption: test harness, captions managed by SPF -->
+    <video id="video" controls preload="none"></video>
+    <div id="now-playing-quality"></div>
+    <div id="throughput-display"></div>
+
+    <div id="rendition-picker">
+      <h2>Video Renditions</h2>
+      <div id="rendition-buttons">Waiting for presentation…</div>
+    </div>
+
+    <div id="resolution-status">
+      <h2>Track Resolution Status</h2>
+      <div id="resolution-list">Waiting for presentation…</div>
+    </div>
+
+    <div id="logs-section">
+      <h2>Logs</h2>
+      <div id="logs"></div>
+    </div>
+
+    <div id="state">
+      <h2>State Inspector</h2>
+      <div>Click "Inspect State" to view engine state</div>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

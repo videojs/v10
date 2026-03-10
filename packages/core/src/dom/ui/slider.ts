@@ -36,6 +36,8 @@ export interface SliderOptions {
   onValueCommit?: ((percent: number) => void) | undefined;
   onDragStart?: (() => void) | undefined;
   onDragEnd?: (() => void) | undefined;
+  /** Called when the root element resizes (e.g. gains layout inside a popover). */
+  onResize?: (() => void) | undefined;
 }
 
 export interface SliderRootProps {
@@ -110,10 +112,10 @@ export function createSlider(options: SliderOptions): SliderApi {
 
   function endDrag(): void {
     if (!isDragging) {
-      input.patch({ pointing: false, pointerPercent: 0 });
+      input.patch({ pointing: false });
     } else {
       isDragging = false;
-      input.patch({ dragging: false, pointing: false, pointerPercent: 0 });
+      input.patch({ dragging: false, pointing: false });
       options.onDragEnd?.();
     }
 
@@ -130,6 +132,12 @@ export function createSlider(options: SliderOptions): SliderApi {
   const rootProps: SliderRootProps = {
     onPointerDown(event) {
       if (options.isDisabled()) return;
+
+      // Prevent the browser's default mousedown focus behavior. Without this,
+      // clicking a non-focusable child (e.g. the track) causes the browser to
+      // move focus away from the thumb after our programmatic `focus()` call,
+      // which can trigger unrelated `focusout` handlers (e.g. popover close).
+      event.preventDefault();
 
       const el = options.getElement();
 
@@ -203,7 +211,7 @@ export function createSlider(options: SliderOptions): SliderApi {
 
     onPointerLeave() {
       if (!isNull(capturedPointerId)) return;
-      input.patch({ pointing: false, pointerPercent: 0 });
+      input.patch({ pointing: false });
     },
 
     onLostPointerCapture() {
@@ -304,6 +312,13 @@ export function createSlider(options: SliderOptions): SliderApi {
     };
   }
 
+  let resizeObserver: ResizeObserver | null = null;
+
+  if (options.onResize) {
+    resizeObserver = new ResizeObserver(() => options.onResize!());
+    resizeObserver.observe(options.getElement());
+  }
+
   const rootStyle: SliderRootStyle = { touchAction: 'none', userSelect: 'none' };
 
   return {
@@ -315,6 +330,7 @@ export function createSlider(options: SliderOptions): SliderApi {
     destroy() {
       if (abort.signal.aborted) return;
       abort.abort();
+      resizeObserver?.disconnect();
       releaseCapture();
       cleanup();
     },

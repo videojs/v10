@@ -43,20 +43,43 @@ Toggles fullscreen mode. Detects platform support through `availability` — whe
 
 You can style the button based on fullscreen state:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 /* In fullscreen */
 media-fullscreen-button[data-fullscreen] {
   background: red;
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders a `<button>` with the same data attributes. Add a `className` and use it as the selector:
+
+```css
+/* In fullscreen */
+.fullscreen-button[data-fullscreen] {
+  background: red;
+}
+```
+</FrameworkCase>
 
 Consider hiding the button when unsupported:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 media-fullscreen-button[data-availability="unsupported"] {
   display: none;
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+.fullscreen-button[data-availability="unsupported"] {
+  display: none;
+}
+```
+</FrameworkCase>
 
 ## Accessibility
 

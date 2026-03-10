@@ -1,4 +1,5 @@
 ---
+import { kebabCase } from 'es-toolkit/string';
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import Td from '@/components/typography/Td.astro';
 import DetailRow from './DetailRow.astro';
@@ -10,27 +11,37 @@ interface Props {
   description?: string;
   defaultValue?: string;
   required?: boolean;
+  showAttributeName?: boolean;
   componentName: string;
 }
 
-const { name, type, detailedType, description, defaultValue, required, componentName } = Astro.props;
+const { name, type, detailedType, description, defaultValue, required, showAttributeName, componentName } = Astro.props;
 
 const id = `${componentName}-${name}`;
+const attributeName = showAttributeName ? kebabCase(name) : undefined;
 ---
 
-<DetailRow id={id} name={name} type={type} detailedType={detailedType} description={description} colspan={4}>
-    <Td class="align-top">
-        <MarkdownCode>
-            {name}
-            {required && <span class="text-orange">*</span>}
-        </MarkdownCode>
-    </Td>
-    <Td class="align-top">
-        <MarkdownCode>{type}</MarkdownCode>
-    </Td>
-    <Td class="align-top">
-        <MarkdownCode>
-            {defaultValue ?? "—"}
-        </MarkdownCode>
-    </Td>
+<DetailRow
+  id={id}
+  name={name}
+  type={type}
+  attributeName={attributeName}
+  detailedType={detailedType}
+  description={description}
+  colspan={4}
+>
+  <Td class="align-top">
+    <MarkdownCode>
+      {name}
+      {required && <span class="text-orange">*</span>}
+    </MarkdownCode>
+  </Td>
+  <Td class="align-top">
+    <MarkdownCode>{type}</MarkdownCode>
+  </Td>
+  <Td class="align-top">
+    <MarkdownCode>
+      {defaultValue ?? "—"}
+    </MarkdownCode>
+  </Td>
 </DetailRow>

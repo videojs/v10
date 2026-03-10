@@ -4,18 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sandbox</title>
+    <link rel="preconnect" href="https://rsms.me/" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body class="p-8 font-mono text-neutral-900">
-    <h1 class="text-2xl font-bold mb-6">Sandbox</h1>
-    <ul class="flex gap-4">
-      <li><a href="/core/" class="text-blue-600 underline hover:text-blue-800">Core</a></li>
-      <li><a href="/html/" class="text-blue-600 underline hover:text-blue-800">HTML</a></li>
-      <li><a href="/html-background/" class="text-blue-600 underline hover:text-blue-800">HTML Background</a></li>
-      <li><a href="/html-tailwind/" class="text-blue-600 underline hover:text-blue-800">HTML & Tailwind</a></li>
-      <li><a href="/react/" class="text-blue-600 underline hover:text-blue-800">React</a></li>
-      <li><a href="/react-background/" class="text-blue-600 underline hover:text-blue-800">React Background</a></li>
-      <li><a href="/react-tailwind/" class="text-blue-600 underline hover:text-blue-800">React & Tailwind</a></li>
-    </ul>
+  <body class="font-sans text-zinc-950 antialiased h-screen overflow-hidden">
+    <div id="root" class="h-full"></div>
+    <script type="module" src="./main.tsx"></script>
   </body>
 </html>

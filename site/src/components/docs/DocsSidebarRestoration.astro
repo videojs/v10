@@ -12,9 +12,9 @@ const { docsSidebarId } = Astro.props;
 ---
 
 <script is:inline define:vars={{ docsSidebarId }}>
-  const STORAGE_KEY = 'vjs-sidebar-state';
+  const STORAGE_KEY = "vjs-sidebar-state";
 
-  window.addEventListener('pagereveal', () => {
+  window.addEventListener("pagereveal", () => {
     // Restore sidebar state
     const aside = document.getElementById(docsSidebarId);
     if (aside) {
@@ -29,36 +29,40 @@ const { docsSidebarId } = Astro.props;
           }
 
           if (state.detailsState) {
-            document.querySelectorAll(`#${docsSidebarId} details[id]`).forEach((details) => {
-              const savedState = state.detailsState[details.id];
-              if (savedState !== undefined) {
-                details.open = savedState;
-              }
-            });
+            document
+              .querySelectorAll(`#${docsSidebarId} details[id]`)
+              .forEach((details) => {
+                const savedState = state.detailsState[details.id];
+                if (savedState !== undefined) {
+                  details.open = savedState;
+                }
+              });
           }
         } catch (e) {
-          console.error('[Sidebar] Failed to restore state', e);
+          console.error("[Sidebar] Failed to restore state", e);
         }
       }
 
       // Auto-expand sections containing active link (override saved state)
       const activeLink = aside.querySelector('a[aria-current="page"]');
       if (activeLink) {
-        let parent = activeLink.closest('details');
+        let parent = activeLink.closest("details");
         while (parent && aside.contains(parent)) {
           parent.open = true;
-          parent = parent.parentElement?.closest('details') ?? null;
+          parent = parent.parentElement?.closest("details") ?? null;
         }
       }
     }
 
     // Restore page scroll position (set by framework switch)
     try {
-      const scrollData = sessionStorage.getItem('vjs-page-scroll');
+      const scrollData = sessionStorage.getItem("vjs-page-scroll");
       if (scrollData) {
-        sessionStorage.removeItem('vjs-page-scroll');
+        sessionStorage.removeItem("vjs-page-scroll");
         const { url, scrollY } = JSON.parse(scrollData);
-        if (url.replace(/\/$/, '') === window.location.pathname.replace(/\/$/, '')) {
+        if (
+          url.replace(/\/$/, "") === window.location.pathname.replace(/\/$/, "")
+        ) {
           window.scrollTo(0, scrollY);
         }
       }
@@ -67,13 +71,15 @@ const { docsSidebarId } = Astro.props;
     }
   });
 
-  window.addEventListener('pageswap', () => {
+  window.addEventListener("pageswap", () => {
     const aside = document.getElementById(docsSidebarId);
     if (!aside) return;
     const detailsState = {};
-    document.querySelectorAll(`#${docsSidebarId} details[id]`).forEach((details) => {
-      detailsState[details.id] = details.open;
-    });
+    document
+      .querySelectorAll(`#${docsSidebarId} details[id]`)
+      .forEach((details) => {
+        detailsState[details.id] = details.open;
+      });
 
     const state = {
       sidebarScroll: aside.scrollTop,
@@ -83,7 +89,7 @@ const { docsSidebarId } = Astro.props;
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
-      console.error('[Sidebar] Failed to save state', e);
+      console.error("[Sidebar] Failed to save state", e);
     }
   });
 </script>

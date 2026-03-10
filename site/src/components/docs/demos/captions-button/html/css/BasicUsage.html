@@ -1,0 +1,18 @@
+<video-player class="html-captions-button-basic">
+    <media-container>
+        <video
+            slot="media"
+            src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+            autoplay
+            muted
+            playsinline
+            loop
+        >
+            <track kind="captions" src="/docs/demos/captions-button/captions.vtt" srclang="en" label="English" />
+        </video>
+        <media-captions-button class="html-captions-button-basic__button">
+            <span class="show-when-active">Captions Off</span>
+            <span class="show-when-inactive">Captions On</span>
+        </media-captions-button>
+    </media-container>
+</video-player>

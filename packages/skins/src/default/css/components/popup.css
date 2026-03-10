@@ -1,0 +1,53 @@
+/* ==========================================================================
+   Popups & Tooltips
+   ========================================================================== */
+
+.media-default-skin .media-popover,
+.media-default-skin .media-tooltip {
+  margin: 0;
+  border: 0;
+  color: inherit;
+  overflow: visible;
+  transition-property: transform, scale, opacity, filter;
+  transition-duration: 200ms;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transform: scale(0);
+    filter: blur(8px);
+  }
+
+  &[data-instant] {
+    transition-duration: 0ms;
+  }
+
+  &[data-side="top"] {
+    transform-origin: bottom;
+  }
+  &[data-side="bottom"] {
+    transform-origin: top;
+  }
+  &[data-side="left"] {
+    transform-origin: right;
+  }
+  &[data-side="right"] {
+    transform-origin: left;
+  }
+}
+
+.media-default-skin .media-popover {
+  --media-popover-side-offset: 0.5rem;
+}
+.media-default-skin .media-popover--volume {
+  padding: 0.625rem 0.25rem;
+  border-radius: calc(infinity * 1px);
+}
+
+.media-default-skin .media-tooltip {
+  padding: 0.25rem 0.625rem;
+  border-radius: calc(infinity * 1px);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  --media-tooltip-side-offset: 0.5rem;
+}

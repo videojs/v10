@@ -31,58 +31,60 @@ const hasFields = returnValue.fields && Object.keys(returnValue.fields).length >
 const hasDetail = !hasFields && Boolean(returnValue.detailedType || returnValue.description);
 ---
 
-{hasFields ? (
+{
+  hasFields ? (
     <Table maxWidth={false} outerClass="my-6">
-        <Thead>
-            <Tr>
-                <Th>Property</Th>
-                <Th>Type</Th>
-                <Th />
-            </Tr>
-        </Thead>
-        <Tbody>
-            {
-                Object.entries(returnValue.fields!).map(([name, field]) => (
-                    <StateRow
-                        name={name}
-                        type={field.type}
-                        detailedType={field.detailedType}
-                        description={field.description}
-                        componentName={`${utilName}-return`}
-                    />
-                ))
-            }
-        </Tbody>
+      <Thead>
+        <Tr>
+          <Th>Property</Th>
+          <Th>Type</Th>
+          <Th />
+        </Tr>
+      </Thead>
+      <Tbody>
+        {Object.entries(returnValue.fields!).map(([name, field]) => (
+          <StateRow
+            name={name}
+            type={field.type}
+            detailedType={field.detailedType}
+            description={field.description}
+            componentName={`${utilName}-return`}
+          />
+        ))}
+      </Tbody>
     </Table>
-) : hasDetail ? (
+  ) : hasDetail ? (
     <Table maxWidth={false} outerClass="my-6">
-        <Thead>
-            <Tr>
-                <Th>Type</Th>
-                <Th />
-            </Tr>
-        </Thead>
-        <Tbody>
-            <DetailRow
-                id={`${utilName}-return-type`}
-                name="return type"
-                type={returnValue.type}
-                detailedType={returnValue.detailedType}
-                description={returnValue.description}
-                colspan={2}
-            >
-                <Td><MarkdownCode>{returnValue.type}</MarkdownCode></Td>
-            </DetailRow>
-        </Tbody>
+      <Thead>
+        <Tr>
+          <Th>Type</Th>
+          <Th />
+        </Tr>
+      </Thead>
+      <Tbody>
+        <DetailRow
+          id={`${utilName}-return-type`}
+          name="return type"
+          type={returnValue.type}
+          detailedType={returnValue.detailedType}
+          description={returnValue.description}
+          colspan={2}
+        >
+          <Td>
+            <MarkdownCode>{returnValue.type}</MarkdownCode>
+          </Td>
+        </DetailRow>
+      </Tbody>
     </Table>
-) : (
+  ) : (
     <P>
-        <MarkdownCode>{returnValue.type}</MarkdownCode>
-        {returnValue.description && (
-            <>
-                {" — "}
-                <InlineMarkdown content={returnValue.description} />
-            </>
-        )}
+      <MarkdownCode>{returnValue.type}</MarkdownCode>
+      {returnValue.description && (
+        <>
+          {" — "}
+          <InlineMarkdown content={returnValue.description} />
+        </>
+      )}
     </P>
-)}
+  )
+}

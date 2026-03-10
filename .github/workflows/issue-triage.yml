@@ -59,14 +59,14 @@ jobs:
             3. Escalate uncertainty:
             - Add `triage` label when classification is ambiguous, conflicting, or needs human judgment.
             4. Suggest docs/resources when helpful:
-            - Use https://v10.videojs.org/llms.txt as the primary source to discover relevant docs links.
+            - Use https://videojs.org/llms.txt as the primary source to discover relevant docs links.
             - If likely already documented, suggest 1-3 relevant docs links with a short reason.
             - Prioritize repository/site docs over random sources.
             5. Ask for missing critical info only when needed:
             - If reproduction or environment details are insufficient, post a short targeted follow-up.
             6. Help users unblock when issue is about usage:
             - If the issue suggests the user is struggling to achieve something with the library, provide practical guidance.
-            - Suggest the most relevant documented approach with 1-3 links (from https://v10.videojs.org/llms.txt discovery).
+            - Suggest the most relevant documented approach with 1-3 links (from https://videojs.org/llms.txt discovery).
             - Include concise next steps or a minimal example/snippet when it materially helps.
             - If docs appear incomplete or unclear, call that out and add `triage` for human follow-up.
             7. Planning recommendations (comment-only):

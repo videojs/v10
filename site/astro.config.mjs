@@ -9,6 +9,7 @@ import sitemap from '@astrojs/sitemap';
 import sentry from '@sentry/astro';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, envField, fontProviders } from 'astro/config';
+import svgr from 'vite-plugin-svgr';
 import checkV8Urls from './integrations/check-v8-urls';
 import llmsMarkdown from './integrations/llms-markdown';
 import pagefind from './integrations/pagefind';
@@ -17,13 +18,15 @@ import remarkConditionalHeadings from './src/utils/remarkConditionalHeadings';
 import { remarkReadingTime } from './src/utils/remarkReadingTime.mjs';
 import shikiTransformMetadata from './src/utils/shikiTransformMetadata';
 
-const SITE_URL = 'https://v10.videojs.org';
+const SITE_URL = 'https://videojs.org';
 
 // https://astro.build/config
 export default defineConfig({
   site: SITE_URL,
   trailingSlash: 'never',
-  adapter: netlify(),
+  adapter: netlify({
+    devFeatures: { images: false },
+  }),
   // Server-only secrets read at runtime (not inlined at build time).
   // All optional — the site degrades gracefully without auth/Mux configured.
   // See site/CLAUDE.md "Environment Variables" for full documentation.
@@ -86,8 +89,8 @@ export default defineConfig({
     syntaxHighlight: 'shiki',
     shikiConfig: {
       themes: {
-        light: 'gruvbox-light-hard',
-        dark: 'gruvbox-dark-medium',
+        light: 'gruvbox-dark-hard',
+        dark: 'gruvbox-dark-soft',
       },
       // TODO more shiki transformers
       transformers: [shikiTransformMetadata],
@@ -98,10 +101,17 @@ export default defineConfig({
 
   image: {
     domains: ['image.mux.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '66.media.tumblr.com',
+        pathname: '/tumblr_mdgad5rr0S1qzc111.png',
+      },
+    ],
   },
 
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss(), svgr()],
     optimizeDeps: {
       exclude: ['@videojs/react', '@videojs/html'],
     },

@@ -5,3 +5,7 @@
 @source "../node_modules/@videojs/skins";
 @source "../node_modules/@videojs/html";
 @source "../node_modules/@videojs/react";
+
+@theme {
+  --font-sans: InterVariable, Inter, ui-sans-serif, system-ui, sans-serif;
+}

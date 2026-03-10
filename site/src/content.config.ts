@@ -124,4 +124,18 @@ const utilReference = defineCollection({
   schema: UtilReferenceSchema,
 });
 
-export const collections = { blog, docs, authors, componentReference, utilReference };
+const ejectedSkins = defineCollection({
+  loader: file('./src/content/ejected-skins.json'),
+  schema: z.object({
+    id: z.string(),
+    name: z.string(),
+    platform: z.enum(['html', 'react']),
+    style: z.enum(['css', 'tailwind']),
+    html: z.string().optional(),
+    tsx: z.string().optional(),
+    jsx: z.string().optional(),
+    css: z.string().optional(),
+  }),
+});
+
+export const collections = { blog, docs, authors, componentReference, utilReference, ejectedSkins };

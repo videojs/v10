@@ -85,6 +85,7 @@ The `intent:` variant is defined as:
 <div style="transform: rotate(45deg)">Content</div>
 
 <!-- ❌ WORSE: Arbitrary variant -->
+<div class="transform-[rotate(45deg)]">Content</div>
 <div class="[transform:rotate(45deg)]">Content</div>
 ```
 
@@ -98,7 +99,7 @@ import clsx from 'clsx';
 <button class={clsx(
   'text-base bg-dark-100',
   isActive && 'bg-dark-80',
-  isPrimary ? 'text-yellow' : 'text-light-100'
+  isPrimary ? 'text-bright-yellow' : 'text-light-100'
 )}>
   Click me
 </button>
