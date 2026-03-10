@@ -146,10 +146,12 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   function handleDocumentPointerdown(event: PointerEvent): void {
     if (!closeOnOutsideClick() || !state.current.active) return;
 
-    const target = event.target as Node | null;
-    if (!target) return;
+    // Use composedPath so the check works when the popup lives inside a
+    // Shadow DOM tree. event.target is retargeted to the shadow host when
+    // the listener is on document, so contains() would always fail.
+    const path = event.composedPath();
 
-    if (triggerEl?.contains(target) || popupEl?.contains(target)) return;
+    if ((triggerEl && path.includes(triggerEl)) || (popupEl && path.includes(popupEl))) return;
 
     applyClose('outside-click', event);
   }
