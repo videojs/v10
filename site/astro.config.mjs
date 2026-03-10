@@ -98,7 +98,14 @@ export default defineConfig({
   },
 
   image: {
-    domains: ['image.mux.com', '66.media.tumblr.com'],
+    domains: ['image.mux.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '66.media.tumblr.com',
+        pathname: '/tumblr_mdgad5rr0S1qzc111.png',
+      },
+    ],
   },
 
   vite: {
