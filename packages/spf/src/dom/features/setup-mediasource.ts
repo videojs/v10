@@ -61,7 +61,10 @@ export function setupMediaSource({
         settingUp = true;
 
         // Create MediaSource
-        const mediaSource = createMediaSource({ preferManaged: true });
+        // Note: ManagedMediaSource (Safari) requires disableRemotePlayback and
+        // startstreaming/endstreaming event handling that SPF doesn't yet implement.
+        // Use standard MediaSource until ManagedMediaSource support is added.
+        const mediaSource = createMediaSource();
 
         // Attach to element
         attachMediaSource(mediaSource, currentOwners.mediaElement!);

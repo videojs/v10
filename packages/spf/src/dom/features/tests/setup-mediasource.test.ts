@@ -106,7 +106,7 @@ describe('setupMediaSource', () => {
 
     // Wait for async operation
     await vi.waitFor(() => {
-      expect(createMediaSource).toHaveBeenCalledWith({ preferManaged: true });
+      expect(createMediaSource).toHaveBeenCalledWith();
     });
 
     cleanup();
