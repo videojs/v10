@@ -1,5 +1,23 @@
 # Changelog
 
+## [10.0.0-alpha.12](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-alpha.11...@videojs/store@10.0.0-alpha.12) (2026-03-10)
+
+
+### Bug Fixes
+
+* **packages:** update package READMEs for beta ([#848](https://github.com/videojs/v10/issues/848)) ([9562a0e](https://github.com/videojs/v10/commit/9562a0ecca212034759d7cc948d4b3f0bc7a19c3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-alpha.12
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-alpha.12
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-alpha.12
+
 ## [10.0.0-alpha.11](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-alpha.10...@videojs/store@10.0.0-alpha.11) (2026-03-10)
 
 

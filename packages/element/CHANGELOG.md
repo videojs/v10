@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.0-alpha.12](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-alpha.11...@videojs/element@10.0.0-alpha.12) (2026-03-10)
+
+
+### Bug Fixes
+
+* **packages:** update package READMEs for beta ([#848](https://github.com/videojs/v10/issues/848)) ([9562a0e](https://github.com/videojs/v10/commit/9562a0ecca212034759d7cc948d4b3f0bc7a19c3))
+
 ## [10.0.0-alpha.11](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-alpha.10...@videojs/element@10.0.0-alpha.11) (2026-03-10)
 
 
