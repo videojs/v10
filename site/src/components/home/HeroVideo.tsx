@@ -1,6 +1,7 @@
 import { useStore } from '@nanostores/react';
 import { createPlayer, Poster } from '@videojs/react';
-import { MinimalVideoSkin, Video, VideoSkin, videoFeatures } from '@videojs/react/video';
+import { HlsVideo } from '@videojs/react/media/hls-video';
+import { MinimalVideoSkin, VideoSkin, videoFeatures } from '@videojs/react/video';
 import { VJS10_DEMO_VIDEO } from '@/consts';
 import { skin } from '@/stores/homePageDemos';
 import '@videojs/react/video/skin.css';
@@ -26,7 +27,7 @@ export default function HeroVideo({
         className={className}
         style={{ '--media-border-radius': `calc(var(--spacing) * 6)`, ...style } as React.CSSProperties}
       >
-        <Video src={VJS10_DEMO_VIDEO.mp4} playsInline style={{ objectFit: 'cover' }} />
+        <HlsVideo src={VJS10_DEMO_VIDEO.hls} playsInline style={{ objectFit: 'cover' }} />
         <Poster src={poster} />
       </SkinComponent>
     </Player.Provider>
