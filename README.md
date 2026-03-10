@@ -6,10 +6,9 @@
 
 Modern, modular, and composable media player framework for Web and React.
 
-🚧 Alpha - not recommended for production. 🚧
+🚧 Beta - close to stable. Experimental adoption in real projects. 🚧
 
-Thanks for checking out the project! It's in its early stages and currently a mix of prototyping
-and early structure pointing in the direction we want to go with Video.js v10 (so be kind 🙏).
+Video.js v10 is close to stable. Try it out in real projects and share your feedback 🙏.
 
 - Read our [design documents][rfcs].
 - Read the [v10 discussion topic][v10-discussion].
@@ -18,8 +17,8 @@ and early structure pointing in the direction we want to go with Video.js v10 (s
 ## Timeline
 
 - **Technical Preview (Complete):** Initial showcase for Demuxed.
-- **Alpha (Jan–Feb 2026):** [See milestone](https://github.com/videojs/v10/milestone/3) ← Current
-- **Beta (Mar 2026):** [See milestone](https://github.com/videojs/v10/milestone/1)
+- **Alpha (Jan–Feb 2026):** [See milestone](https://github.com/videojs/v10/milestone/3)
+- **Beta (Mar 2026):** [See milestone](https://github.com/videojs/v10/milestone/1) ← Current
 - **GA (Mid 2026):** [See milestone](https://github.com/videojs/v10/milestone/2)
 - **Video.js (End of 2026):** Video.js core/contrib parity and supported plugins migrated.
 
@@ -65,7 +64,7 @@ participating in this project you agree to abide by its terms.
 [site]: http://v10.videojs.org
 [docs]: http://v10.videojs.org/docs
 [package]: https://www.npmjs.com/package/@videojs/core
-[package-badge]: https://img.shields.io/npm/v/@videojs/core/next?label=@videojs/core@next
+[package-badge]: https://img.shields.io/npm/v/@videojs/core?label=@videojs/core
 [discord]: https://discord.gg/JBqHh485uF
 [discord-badge]: https://img.shields.io/discord/507627062434070529?color=%235865F2&label=%20&logo=discord&logoColor=white
 [gh-discussions]: https://github.com/videojs/v10/discussions

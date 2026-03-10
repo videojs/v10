@@ -10,7 +10,7 @@ function getSkinImportParts(skin: Skin): { group: string; skinFile: string } {
 }
 
 // jsdelivr doesn't resolve Node package exports, so we use the full file path
-const CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html@next/dist/default/define';
+const CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html/dist/default/define';
 
 function generateCdnCode(useCase: UseCase, skin: Skin): string {
   if (useCase === 'background-video') {
