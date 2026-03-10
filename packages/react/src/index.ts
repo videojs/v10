@@ -14,6 +14,7 @@ export {
   type ContainerProps,
   type PlayerContextValue,
   useMedia,
+  useMediaContainer,
   useMediaRegistration,
   usePlayer,
   usePlayerContext,
