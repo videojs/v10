@@ -56,7 +56,7 @@ describe('ChunkedStreamIterable', () => {
     const stream = makeStream(bytes(64));
     const chunks = await collect(new ChunkedStreamIterable(stream, { minChunkSize }));
     expect(chunks).toHaveLength(1);
-    expect(chunks[0].length).toBe(64);
+    expect(chunks[0]!.length).toBe(64);
   });
 
   it('yields a single chunk when it exceeds minChunkSize', async () => {
@@ -64,7 +64,7 @@ describe('ChunkedStreamIterable', () => {
     const stream = makeStream(bytes(100));
     const chunks = await collect(new ChunkedStreamIterable(stream, { minChunkSize }));
     expect(chunks).toHaveLength(1);
-    expect(chunks[0].length).toBe(100);
+    expect(chunks[0]!.length).toBe(100);
   });
 
   it('accumulates small chunks until minChunkSize is met', async () => {
@@ -73,7 +73,7 @@ describe('ChunkedStreamIterable', () => {
     const stream = makeStream(bytes(30, 1), bytes(30, 2), bytes(30, 3));
     const chunks = await collect(new ChunkedStreamIterable(stream, { minChunkSize }));
     expect(chunks).toHaveLength(1);
-    expect(chunks[0].length).toBe(90);
+    expect(chunks[0]!.length).toBe(90);
   });
 
   it('flushes remaining bytes on stream end even if below minChunkSize', async () => {
@@ -81,7 +81,7 @@ describe('ChunkedStreamIterable', () => {
     const stream = makeStream(bytes(50));
     const chunks = await collect(new ChunkedStreamIterable(stream, { minChunkSize }));
     expect(chunks).toHaveLength(1);
-    expect(chunks[0].length).toBe(50);
+    expect(chunks[0]!.length).toBe(50);
   });
 
   it('preserves all bytes across multiple yielded chunks', async () => {
@@ -99,7 +99,7 @@ describe('ChunkedStreamIterable', () => {
     const stream = makeStream(a, b);
     const chunks = await collect(new ChunkedStreamIterable(stream, { minChunkSize }));
     expect(chunks).toHaveLength(1);
-    expect(Array.from(chunks[0])).toEqual([1, 2, 3, 4]);
+    expect(Array.from(chunks[0]!)).toEqual([1, 2, 3, 4]);
   });
 
   it('yields nothing for an empty stream', async () => {
@@ -147,8 +147,8 @@ describe('ChunkedStreamIterable', () => {
     const stream = makeStream(bytes(60, 1), bytes(70, 2), bytes(80, 3));
     const chunks = await collect(new ChunkedStreamIterable(stream, { minChunkSize }));
     expect(chunks).toHaveLength(3);
-    expect(chunks[0].length).toBe(60);
-    expect(chunks[1].length).toBe(70);
-    expect(chunks[2].length).toBe(80);
+    expect(chunks[0]!.length).toBe(60);
+    expect(chunks[1]!.length).toBe(70);
+    expect(chunks[2]!.length).toBe(80);
   });
 });

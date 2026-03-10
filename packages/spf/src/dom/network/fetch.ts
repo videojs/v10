@@ -88,7 +88,7 @@ export async function* fetchResolvableStream(
   const { minChunkSize, ...fetchOptions } = options ?? {};
   const response = await fetchResolvable(addressable, fetchOptions);
   if (!response.body) throw new Error('Response has no body');
-  yield* new ChunkedStreamIterable(response.body, { minChunkSize });
+  yield* new ChunkedStreamIterable(response.body, ...(minChunkSize !== undefined ? [{ minChunkSize }] : []));
 }
 
 /**

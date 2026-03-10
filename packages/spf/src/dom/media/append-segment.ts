@@ -33,7 +33,7 @@ export async function appendSegment(sourceBuffer: SourceBuffer, data: AppendData
   }
 }
 
-async function appendChunk(sourceBuffer: SourceBuffer, data: ArrayBuffer): Promise<void> {
+async function appendChunk(sourceBuffer: SourceBuffer, data: ArrayBuffer | Uint8Array<ArrayBufferLike>): Promise<void> {
   if (sourceBuffer.updating) {
     await new Promise<void>((resolve) => {
       const onUpdateEnd = () => {
@@ -64,7 +64,7 @@ async function appendChunk(sourceBuffer: SourceBuffer, data: ArrayBuffer): Promi
     sourceBuffer.addEventListener('error', onError);
 
     try {
-      sourceBuffer.appendBuffer(data);
+      sourceBuffer.appendBuffer(data as ArrayBuffer);
     } catch (error) {
       cleanup();
       reject(error);
