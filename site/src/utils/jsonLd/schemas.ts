@@ -80,7 +80,7 @@ export function createBlogPostingSchema(params: {
       (author): Person => ({
         '@type': 'Person',
         name: author.data.name,
-        url: author.data.socialLinks?.website || `${params.siteUrl}blog/authors/${author.id}`,
+        url: author.data.socialLinks?.website || `${params.siteUrl}/blog/authors/${author.id}`,
         ...(author.data.bio && { description: author.data.bio }),
         ...(author.data.avatar && { image: author.data.avatar }),
         ...(author.data.socialLinks && {
@@ -128,7 +128,7 @@ export function createBlogCollectionSchema(params: {
       itemListElement: params.posts.map((post, index) => ({
         '@type': 'ListItem',
         position: index + 1,
-        url: `${params.siteUrl}blog/${post.id}`,
+        url: `${params.siteUrl}/blog/${post.id}`,
       })),
     },
     publisher: {
@@ -163,7 +163,7 @@ export function createAuthorCollectionSchema(params: {
         item: {
           '@type': 'Person',
           name: author.data.name,
-          url: `${params.siteUrl}blog/authors/${author.id}`,
+          url: `${params.siteUrl}/blog/authors/${author.id}`,
           ...(author.data.bio && { description: author.data.bio }),
           ...(author.data.avatar && { image: author.data.avatar }),
           ...(author.data.socialLinks && {
@@ -218,7 +218,7 @@ export function createProfilePageSchema(params: {
       publishedWorks: params.posts.map((post) => ({
         '@type': 'BlogPosting',
         headline: post.data.title,
-        url: `${params.siteUrl}blog/${post.id}`,
+        url: `${params.siteUrl}/blog/${post.id}`,
         datePublished: post.data.pubDate.toISOString(),
       })),
     }),
