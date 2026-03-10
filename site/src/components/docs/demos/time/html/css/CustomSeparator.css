@@ -1,12 +1,12 @@
-.html-time-custom-separator {
+.video-player {
   position: relative;
 }
 
-.html-time-custom-separator video {
+.video-player video {
   width: 100%;
 }
 
-.html-time-custom-separator__group {
+.media-time-group {
   display: flex;
   align-items: center;
   gap: 4px;

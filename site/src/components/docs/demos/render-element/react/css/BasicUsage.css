@@ -1,11 +1,11 @@
-.react-render-element-basic {
+.render-element {
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 16px;
 }
 
-.react-render-element-basic__toggle {
+.toggle {
   align-self: flex-start;
   padding: 6px 16px;
   border-radius: 6px;
@@ -14,13 +14,13 @@
   cursor: pointer;
 }
 
-.react-render-element-basic__tags {
+.tags {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
 }
 
-.react-render-element-basic__tag {
+.tag {
   display: inline-flex;
   align-items: center;
   padding: 6px 12px;
@@ -30,7 +30,7 @@
   transition: all 0.2s ease;
 }
 
-.react-render-element-basic__tag--active {
+.tag-active {
   background: #3b82f6;
   color: white;
 }

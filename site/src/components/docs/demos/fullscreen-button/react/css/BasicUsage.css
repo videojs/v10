@@ -1,12 +1,12 @@
-.react-fullscreen-button-basic {
+.video-player {
   position: relative;
 }
 
-.react-fullscreen-button-basic video {
+.video-player video {
   width: 100%;
 }
 
-.react-fullscreen-button-basic__button {
+.media-fullscreen-button {
   padding-block: 8px;
   position: absolute;
   bottom: 10px;

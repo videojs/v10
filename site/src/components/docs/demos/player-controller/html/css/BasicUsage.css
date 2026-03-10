@@ -1,12 +1,12 @@
-.html-player-controller-basic {
+.video-player {
   position: relative;
 }
 
-.html-player-controller-basic video {
+.video-player video {
   width: 100%;
 }
 
-.html-player-controller-basic__panel {
+.panel {
   display: flex;
   gap: 16px;
   padding: 12px;
@@ -15,12 +15,12 @@
   align-items: center;
 }
 
-.html-player-controller-basic__actions {
+.controller-actions {
   display: flex;
   gap: 6px;
 }
 
-.html-player-controller-basic__actions button {
+.controller-actions button {
   padding: 4px 12px;
   border-radius: 6px;
   border: 1px solid #ccc;
@@ -29,7 +29,7 @@
   font-size: 0.8125rem;
 }
 
-.html-player-controller-basic__state {
+.controller-state {
   font-size: 0.8125rem;
   color: #374151;
   font-variant-numeric: tabular-nums;

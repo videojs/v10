@@ -1,18 +1,18 @@
-.react-create-player-basic {
+.video-player {
   position: relative;
 }
 
-.react-create-player-basic video {
+.video-player video {
   width: 100%;
 }
 
-.react-create-player-basic__controls {
+.controls {
   position: absolute;
   bottom: 10px;
   left: 10px;
 }
 
-.react-create-player-basic__button {
+.button {
   padding-block: 8px;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
