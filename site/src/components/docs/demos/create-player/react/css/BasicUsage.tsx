@@ -11,11 +11,7 @@ function Controls() {
 
   return (
     <div className="controls">
-      <button
-        type="button"
-        className="button"
-        onClick={() => (paused ? store.play() : store.pause())}
-      >
+      <button type="button" className="button" onClick={() => (paused ? store.play() : store.pause())}>
         {paused ? 'Play' : 'Pause'}
       </button>
     </div>

@@ -16,9 +16,7 @@ export default function BasicUsage() {
         />
         <BufferingIndicator
           className="media-buffering-indicator"
-          render={(props, state) => (
-            <div {...props}>{state.visible && <div className="spinner" />}</div>
-          )}
+          render={(props, state) => <div {...props}>{state.visible && <div className="spinner" />}</div>}
         />
       </Player.Container>
     </Player.Provider>
