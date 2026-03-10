@@ -421,7 +421,14 @@ All content must be written in **MDX format** to support:
   authors: string[];      // Reference to authors.json
   canonical?: string;     // Canonical URL override
   devOnly?: boolean;      // Show only in development
+  ogImage?: ImageMetadata | string;   // Local image or external URL
+  twitterImage?: ImageMetadata | string; // Falls back to ogImage
 }
+```
+
+**OG images** go in `src/assets/blog/{date-slug}/og.png`. Reference from frontmatter with a relative path:
+```yaml
+ogImage: '../../assets/blog/2026-03-10-my-post/og.png'
 ```
 
 ### Docs Collection (`src/content/docs/`)
