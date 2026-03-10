@@ -63,7 +63,7 @@ export default function ImageRadioGroup<T extends string = string>({
               <Radio.Indicator className="sr-only" />
               <div className="flex items-center justify-center w-full h-full">{option.image}</div>
             </div>
-            <span className={clsx('text-p3', isSelected && 'font-bold')}>{option.label}</span>
+            <span className={clsx('text-center text-p3', isSelected && 'font-bold')}>{option.label}</span>
           </Radio.Root>
         );
       })}
