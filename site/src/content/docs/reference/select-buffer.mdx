@@ -34,13 +34,14 @@ function BufferBar() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import { createPlayer, selectBuffer } from '@videojs/html';
+import { createPlayer, MediaElement, selectBuffer } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const player = createPlayer({ features: videoFeatures });
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
 
-// In a controller host (custom element/class):
-const buffer = new player.PlayerController(host, player.context, selectBuffer).value;
+class BufferBar extends MediaElement {
+  readonly #buffer = new PlayerController(this, context, selectBuffer);
+}
 ```
 </FrameworkCase>
 

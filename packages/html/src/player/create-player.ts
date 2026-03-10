@@ -40,11 +40,21 @@ export interface CreatePlayerResult<Store extends PlayerStore> {
  *
  * @example
  * ```ts
- * import { createPlayer } from '@videojs/html';
+ * import { createPlayer, MediaElement, selectPlayback } from '@videojs/html';
  * import { videoFeatures } from '@videojs/html/video';
  *
- * const player = createPlayer({ features: videoFeatures });
- * const { create, context, PlayerController, ProviderMixin, ContainerMixin } = player;
+ * const { ProviderMixin, ContainerMixin, PlayerController, context } = createPlayer({
+ *   features: videoFeatures,
+ * });
+ *
+ * // Provider element: owns the store, provides context to descendants
+ * class VideoPlayer extends ProviderMixin(MediaElement) {}
+ * customElements.define('video-player', VideoPlayer);
+ *
+ * // Control element with selector
+ * class PlayButton extends MediaElement {
+ *   #playback = new PlayerController(this, context, selectPlayback);
+ * }
  * ```
  *
  * @label Video

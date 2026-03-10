@@ -36,13 +36,14 @@ function PiPButton() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import { createPlayer, selectPiP } from '@videojs/html';
+import { createPlayer, MediaElement, selectPiP } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const player = createPlayer({ features: videoFeatures });
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
 
-// In a controller host (custom element/class):
-const pip = new player.PlayerController(host, player.context, selectPiP).value;
+class PiPButton extends MediaElement {
+  readonly #pip = new PlayerController(this, context, selectPiP);
+}
 ```
 </FrameworkCase>
 

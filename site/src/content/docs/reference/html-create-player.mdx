@@ -15,11 +15,21 @@ import basicUsageHtmlTs from "@/components/docs/demos/html-create-player/html/cs
 `createPlayer` is the entry point for setting up a Video.js player with HTML custom elements. It accepts a configuration object with a `features` array and returns a typed <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>, `context`, `ProviderMixin`, `ContainerMixin`, and a `create` store factory.
 
 ```ts
-import { createPlayer } from '@videojs/html';
+import { createPlayer, MediaElement, selectPlayback } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const player = createPlayer({ features: videoFeatures });
-const { create, context, PlayerController, ProviderMixin, ContainerMixin } = player;
+const { ProviderMixin, ContainerMixin, PlayerController, context } = createPlayer({
+  features: videoFeatures,
+});
+
+// Provider element: owns the store, provides context to descendants
+class VideoPlayer extends ProviderMixin(MediaElement) {}
+customElements.define('video-player', VideoPlayer);
+
+// Control element with selector
+class PlayButton extends MediaElement {
+  #playback = new PlayerController(this, context, selectPlayback);
+}
 ```
 
 `PlayerController`, `ProviderMixin`, and `ContainerMixin` are intended for controller hosts and custom-element composition. Keep wiring minimal in utility examples, and build concrete elements where needed.

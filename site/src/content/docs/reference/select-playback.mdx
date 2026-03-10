@@ -32,13 +32,14 @@ function PlayButton() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import { createPlayer, selectPlayback } from '@videojs/html';
+import { createPlayer, MediaElement, selectPlayback } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const player = createPlayer({ features: videoFeatures });
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
 
-// In a controller host (custom element/class):
-const playback = new player.PlayerController(host, player.context, selectPlayback).value;
+class PlayButton extends MediaElement {
+  readonly #playback = new PlayerController(this, context, selectPlayback);
+}
 ```
 </FrameworkCase>
 

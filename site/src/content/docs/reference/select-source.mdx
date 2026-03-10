@@ -32,13 +32,14 @@ function SourceInfo() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import { createPlayer, selectSource } from '@videojs/html';
+import { createPlayer, MediaElement, selectSource } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const player = createPlayer({ features: videoFeatures });
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
 
-// In a controller host (custom element/class):
-const source = new player.PlayerController(host, player.context, selectSource).value;
+class SourceInfo extends MediaElement {
+  readonly #source = new PlayerController(this, context, selectSource);
+}
 ```
 </FrameworkCase>
 
