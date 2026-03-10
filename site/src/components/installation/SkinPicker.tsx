@@ -7,12 +7,12 @@ import type { Skin } from '@/stores/installation';
 import { skin, useCase } from '@/stores/installation';
 
 const VIDEO_SKINS: ImageRadioOption<Skin>[] = [
-  { value: 'video', label: 'Default Video', image: <Sparkles size={32} /> },
+  { value: 'video', label: 'Video', image: <Sparkles size={32} /> },
   { value: 'minimal-video', label: 'Minimal', image: <Minus size={32} /> },
 ];
 
 const AUDIO_SKINS: ImageRadioOption<Skin>[] = [
-  { value: 'audio', label: 'Default Audio', image: <Sparkles size={32} /> },
+  { value: 'audio', label: 'Audio', image: <Sparkles size={32} /> },
   { value: 'minimal-audio', label: 'Minimal', image: <Minus size={32} /> },
 ];
 
