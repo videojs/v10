@@ -6,12 +6,12 @@ import { BANNER_DISMISS_KEY } from '@/consts';
   data-legacy-banner
   class:list={[
     "banner-dismissed:hidden",
-    "flex items-center justify-center gap-2 px-5 py-2 text-p2",
+    "relative py-2 text-p2",
     "border-b border-manila-75 bg-manila-50 text-faded-black",
     "dark:border-soot dark:bg-warm-gray dark:text-manila-light",
   ]}
 >
-  <p>
+  <p class="px-12 text-center">
     Using Video.js v8 or earlier?{" "}
     <a
       href="https://legacy.videojs.org"
@@ -25,6 +25,7 @@ import { BANNER_DISMISS_KEY } from '@/consts';
     data-legacy-banner-dismiss
     aria-label="Dismiss banner"
     class:list={[
+      "absolute top-1/2 right-2 -translate-y-1/2",
       "shrink-0 cursor-pointer rounded p-2 intent:bg-manila-light dark:intent:bg-faded-black",
     ]}
   >
