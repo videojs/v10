@@ -1,3 +1,4 @@
+import { MUX_URL } from '@/consts';
 import MuxUploaderPanel from './MuxUploaderPanel';
 import RendererSelect from './RendererSelect';
 
@@ -11,7 +12,7 @@ export default function RendererPicker() {
       <div className="flex flex-col gap-4">
         <p className="font-bold">
           Or upload your media for free to{' '}
-          <a href="https://mux.com" target="_blank" rel="noopener" className="underline intent:no-underline">
+          <a href={MUX_URL} target="_blank" rel="noopener" className="underline intent:no-underline">
             Mux
           </a>
         </p>
