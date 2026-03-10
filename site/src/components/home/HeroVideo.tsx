@@ -18,7 +18,7 @@ export default function HeroVideo({
   poster: string;
 }) {
   const $skin = useStore(skin);
-  const SkinComponent = $skin === 'frosted' ? VideoSkin : MinimalVideoSkin;
+  const SkinComponent = $skin === 'default' ? VideoSkin : MinimalVideoSkin;
 
   return (
     <Player.Provider>

@@ -1,5 +1,7 @@
 ---
 
+import { getEntry } from 'astro:content';
+import ServerCode from '@/components/Code/ServerCode.astro';
 import Footer from '@/components/Footer.astro';
 import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import Built from '@/components/home/Built/BuiltSection.astro';
@@ -11,13 +13,51 @@ import Sponsors from '@/components/home/Sponsors.astro';
 import NavBar from '@/components/NavBar/NavBar.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '@/consts';
 import Base from '@/layouts/Base.astro';
+
+const defaultVideo = (await getEntry('ejectedSkins', 'default-video'))!.data;
+const defaultVideoReact = (await getEntry('ejectedSkins', 'default-video-react'))!.data;
+const minimalVideo = (await getEntry('ejectedSkins', 'minimal-video'))!.data;
+const minimalVideoReact = (await getEntry('ejectedSkins', 'minimal-video-react'))!.data;
 ---
 
 <Base title={SITE_TITLE} description={SITE_DESCRIPTION}>
   <NavBar />
   <Header />
   <main>
-    <Demo client:idle />
+    <Demo client:idle>
+      <ServerCode
+        slot="defaultHtmlCode"
+        code={defaultVideo.html!}
+        lang="html"
+      />
+      <ServerCode slot="defaultHtmlCss" code={defaultVideo.css!} lang="css" />
+      <ServerCode
+        slot="defaultReactCode"
+        code={defaultVideoReact.tsx!}
+        lang="tsx"
+      />
+      <ServerCode
+        slot="defaultReactCss"
+        code={defaultVideoReact.css!}
+        lang="css"
+      />
+      <ServerCode
+        slot="minimalHtmlCode"
+        code={minimalVideo.html!}
+        lang="html"
+      />
+      <ServerCode slot="minimalHtmlCss" code={minimalVideo.css!} lang="css" />
+      <ServerCode
+        slot="minimalReactCode"
+        code={minimalVideoReact.tsx!}
+        lang="tsx"
+      />
+      <ServerCode
+        slot="minimalReactCss"
+        code={minimalVideoReact.css!}
+        lang="css"
+      />
+    </Demo>
     <GetStartedBanner />
     <Built />
     <RoadMap />

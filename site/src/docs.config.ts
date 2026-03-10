@@ -26,10 +26,10 @@ export const sidebar: Sidebar = [
   //     { slug: 'concepts/ui-components' }
   //   ],
   // },
-  // {
-  //   sidebarLabel: 'How to',
-  //   contents: [{ slug: 'how-to/customize-skins' }],
-  // },
+  {
+    sidebarLabel: 'How to',
+    contents: [{ slug: 'how-to/customize-skins' }],
+  },
   {
     sidebarLabel: 'Components',
     contents: [
