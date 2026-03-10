@@ -5,8 +5,8 @@ import { framework, skin } from '@/stores/homePageDemos';
 import ClientCode from '../../Code/ClientCode';
 
 function generateHTMLCode(skin: Skin): string {
-  const skinTag = skin === 'frosted' ? 'video-skin' : 'video-minimal-skin';
-  const skinFile = skin === 'frosted' ? 'skin' : 'minimal-skin';
+  const skinTag = skin === 'default' ? 'video-skin' : 'video-minimal-skin';
+  const skinFile = skin === 'default' ? 'skin' : 'minimal-skin';
 
   return `<script type="module">
   import 'https://cdn.jsdelivr.net/npm/videojs/html/video/player.js';
@@ -22,8 +22,8 @@ function generateHTMLCode(skin: Skin): string {
 }
 
 function generateReactCode(skin: Skin): string {
-  const skinComponent = skin === 'frosted' ? 'VideoSkin' : 'MinimalVideoSkin';
-  const skinCss = skin === 'frosted' ? 'skin' : 'minimal-skin';
+  const skinComponent = skin === 'default' ? 'VideoSkin' : 'MinimalVideoSkin';
+  const skinCss = skin === 'default' ? 'skin' : 'minimal-skin';
 
   return `import { createPlayer, Poster } from '@videojs/react';
 import { ${skinComponent}, Video, videoFeatures } from '@videojs/react/video';

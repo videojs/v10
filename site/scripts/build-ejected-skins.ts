@@ -14,10 +14,17 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import ts from 'typescript';
-import { resolveImports } from '../plugins/resolve-css-imports.mjs';
+import { resolveImports } from '../../build/plugins/resolve-css-imports.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '../..');
+
+const PREFIX = '\x1b[35m[ejected-skins]\x1b[0m';
+const log = {
+  info: (...args: unknown[]) => console.log(PREFIX, ...args),
+  warn: (...args: unknown[]) => console.warn(PREFIX, '\x1b[33mwarn:\x1b[0m', ...args),
+  error: (...args: unknown[]) => console.error(PREFIX, '\x1b[31merror:\x1b[0m', ...args),
+};
 
 /** Resolve a `@videojs/*` package specifier to its built dist file URL. */
 function pkgDistUrl(specifier: string): string {
@@ -538,7 +545,7 @@ async function inlineReactIcons(source: string): Promise<string> {
     const iconName = componentToIconName(componentName);
     const rawSvg = iconsMap[iconName];
     if (!rawSvg) {
-      console.warn(`    Warning: no SVG found for ${componentName} (icon: ${iconName})`);
+      log.warn(`No SVG found for ${componentName} (icon: ${iconName})`);
       continue;
     }
     const jsxSvg = svgToJsx(rawSvg);
@@ -749,12 +756,12 @@ async function processReactSkin(skin: ReactSkinDef): Promise<{ tsx: string; jsx:
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
-  console.log('Building ejected skins...\n');
+  log.info('Building ejected skins...\n');
 
   const entries: EjectedSkinEntry[] = [];
 
   for (const skin of SKINS) {
-    console.log(`  Processing: ${skin.id}`);
+    log.info(`Processing: ${skin.id}`);
 
     const entry: EjectedSkinEntry = {
       id: skin.id,
@@ -782,10 +789,10 @@ async function main(): Promise<void> {
   mkdirSync(dirname(OUTPUT), { recursive: true });
   writeFileSync(OUTPUT, `${JSON.stringify(entries, null, 2)}\n`);
 
-  console.log(`\nWrote ${entries.length} entries to ${OUTPUT}`);
+  log.info(`✅ Wrote ${entries.length} entries to ${OUTPUT}`);
 }
 
 main().catch((err) => {
-  console.error(err);
+  log.error(err);
   process.exit(1);
 });

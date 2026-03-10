@@ -13,7 +13,7 @@ export default function SkinControl({ className }: { className?: string }) {
         if (values.length > 0) skin.set(values[0]);
       }}
       options={[
-        { value: 'frosted', label: 'Frosted' },
+        { value: 'default', label: 'Default' },
         { value: 'minimal', label: 'Minimal' },
       ]}
       aria-label="Select skin"

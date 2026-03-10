@@ -2,6 +2,17 @@ import FrameworkControl from '../FrameworkControl';
 import BaseDemo from './Base';
 import EjectDemo from './Eject';
 
+interface DemoProps {
+  defaultHtmlCode: React.ReactNode;
+  defaultHtmlCss: React.ReactNode;
+  defaultReactCode: React.ReactNode;
+  defaultReactCss: React.ReactNode;
+  minimalHtmlCode: React.ReactNode;
+  minimalHtmlCss: React.ReactNode;
+  minimalReactCode: React.ReactNode;
+  minimalReactCss: React.ReactNode;
+}
+
 /**
  * Both BaseDemo and EjectDemo use ClientCode which has a top-level await (Shiki highlighter).
  * If they're in separate Astro islands, Safari may throw a hydration error.
@@ -9,7 +20,7 @@ import EjectDemo from './Eject';
  *
  * Keep them in a single island to work around this.
  */
-export default function Demo() {
+export default function Demo(props: DemoProps) {
   return (
     <section className="grid gap-y-20 lg:gap-y-0 gap-x-5 lg:grid-cols-2 mb-10 lg:mb-0 w-full max-w-305 mx-auto px-5">
       <section className="grid lg:grid-rows-subgrid row-span-4 lg:border-t lg:py-10 border-faded-black dark:border-manila-light">
@@ -31,7 +42,17 @@ export default function Demo() {
           Make your player truly your own with fully-editable components
         </p>
         <FrameworkControl className="mb-5 md:hidden" />
-        <EjectDemo className="lg:h-100 m-0" />
+        <EjectDemo
+          className="lg:h-100 m-0"
+          defaultHtmlCode={props.defaultHtmlCode}
+          defaultHtmlCss={props.defaultHtmlCss}
+          defaultReactCode={props.defaultReactCode}
+          defaultReactCss={props.defaultReactCss}
+          minimalHtmlCode={props.minimalHtmlCode}
+          minimalHtmlCss={props.minimalHtmlCss}
+          minimalReactCode={props.minimalReactCode}
+          minimalReactCss={props.minimalReactCss}
+        />
       </section>
     </section>
   );
