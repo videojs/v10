@@ -33,7 +33,8 @@
     "size": "node .github/scripts/bundle-size.js | node .github/scripts/bundle-size-report.js",
     "test": "turbo run test",
     "format:astro": "prettier --write 'site/src/**/*.astro'",
-    "typecheck": "tsc --build"
+    "typecheck": "tsc --build",
+    "build:ejected-skins": "node --import tsx build/scripts/build-ejected-skins.ts"
   },
   "devDependencies": {
     "@actions/core": "^3.0.0",
