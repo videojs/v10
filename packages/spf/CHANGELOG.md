@@ -1,5 +1,19 @@
 # Changelog
 
+## [10.0.0-beta.2](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.1...@videojs/spf@10.0.0-beta.2) (2026-03-10)
+
+
+### Miscellaneous Chores
+
+* **@videojs/spf:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.2
+
 ## [10.0.0-beta.1](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.0...@videojs/spf@10.0.0-beta.1) (2026-03-10)
 
 

@@ -1,5 +1,25 @@
 # Changelog
 
+## [10.0.0-beta.2](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.1...@videojs/html@10.0.0-beta.2) (2026-03-10)
+
+
+### Features
+
+* **html:** add CDN bundles and inline template minification ([#827](https://github.com/videojs/v10/issues/827)) ([40807b2](https://github.com/videojs/v10/commit/40807b2e3ace6fe81512fb899a18d901765811d4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.2
+    * @videojs/core bumped to 10.0.0-beta.2
+    * @videojs/element bumped to 10.0.0-beta.2
+    * @videojs/store bumped to 10.0.0-beta.2
+    * @videojs/utils bumped to 10.0.0-beta.2
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.2
+
 ## [10.0.0-beta.1](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.0...@videojs/html@10.0.0-beta.1) (2026-03-10)
 
 
