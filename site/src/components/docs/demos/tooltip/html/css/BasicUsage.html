@@ -1,6 +1,7 @@
 <video-player class="html-tooltip-basic">
     <media-container>
         <video
+            slot="media"
             src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
             autoplay
             muted
@@ -9,7 +10,7 @@
         ></video>
         <div class="html-tooltip-basic__bar">
             <button type="button" commandfor="tooltip-demo" class="html-tooltip-basic__trigger">Hover me</button>
-            <media-tooltip id="tooltip-demo" class="html-tooltip-basic__tooltip">
+            <media-tooltip id="tooltip-demo" class="html-tooltip-basic__popup">
                 Tooltip content
             </media-tooltip>
         </div>

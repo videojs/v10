@@ -24,7 +24,7 @@
   cursor: pointer;
 }
 
-.html-tooltip-basic__tooltip {
+.html-tooltip-basic__popup {
   --media-tooltip-side-offset: 8px;
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);

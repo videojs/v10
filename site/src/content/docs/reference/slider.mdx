@@ -54,7 +54,9 @@ import basicUsageHtmlTs from "@/components/docs/demos/slider/html/css/BasicUsage
 
 ## Behavior
 
-The base Slider provides a generic range input. It manages value, pointer tracking, and drag interactions. Domain-specific sliders like <DocsLink slug="reference/time-slider">TimeSlider</DocsLink> and <DocsLink slug="reference/volume-slider">VolumeSlider</DocsLink> extend this with media-specific bindings.
+The base Slider is a **controlled component** — you must provide `value` and `onValueChange` to drive it. It manages pointer tracking and drag interactions but does not hold internal state. Domain-specific sliders like <DocsLink slug="reference/time-slider">TimeSlider</DocsLink> and <DocsLink slug="reference/volume-slider">VolumeSlider</DocsLink> handle this automatically via the player store.
+
+The slider supports vertical orientation via the `orientation` prop (defaults to `"horizontal"`).
 
 Nest sub-components for full control over the DOM structure. All parts are optional — use only what you need:
 
@@ -75,11 +77,11 @@ Use [CSS custom properties](#root-css-custom-properties) to position fill, thumb
 <FrameworkCase frameworks={["html"]}>
 ```css
 media-slider-fill {
-  width: calc(var(--media-slider-fill) * 1%);
+  width: var(--media-slider-fill);
 }
 
 media-slider-thumb {
-  left: calc(var(--media-slider-fill) * 1%);
+  left: var(--media-slider-fill);
 }
 ```
 </FrameworkCase>
@@ -89,23 +91,16 @@ React renders standard DOM elements with the same data attributes and CSS custom
 
 ```css
 .slider-fill {
-  width: calc(var(--media-slider-fill) * 1%);
+  width: var(--media-slider-fill);
 }
 
 .slider-thumb {
-  left: calc(var(--media-slider-fill) * 1%);
+  left: var(--media-slider-fill);
 }
 ```
 </FrameworkCase>
 
-Style based on interaction state:
-
-| Attribute | Description |
-|-----------|-------------|
-| `data-interactive` | Present when dragging or pointing |
-| `data-dragging` | Present during active drag |
-| `data-pointing` | Present when pointer is over the slider |
-| `data-disabled` | Present when the slider is disabled |
+Style based on [interaction state](#root-data-attributes):
 
 <FrameworkCase frameworks={["html"]}>
 ```css

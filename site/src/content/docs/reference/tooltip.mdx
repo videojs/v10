@@ -64,7 +64,7 @@ The `side` and `align` props control placement relative to the trigger. Position
 
 ## Styling
 
-Use [CSS custom properties](#provider-css-custom-properties) for positioning offsets:
+Use [CSS custom properties](#root-css-custom-properties) for positioning offsets:
 
 <FrameworkCase frameworks={["html"]}>
 ```css
@@ -99,6 +99,12 @@ media-tooltip[data-starting-style] {
 media-tooltip[data-ending-style] {
   opacity: 0;
 }
+media-tooltip[data-side="top"] {
+  transform-origin: bottom center;
+}
+media-tooltip[data-side="bottom"] {
+  transform-origin: top center;
+}
 ```
 </FrameworkCase>
 
@@ -112,6 +118,12 @@ media-tooltip[data-ending-style] {
 }
 .tooltip-popup[data-ending-style] {
   opacity: 0;
+}
+.tooltip-popup[data-side="top"] {
+  transform-origin: bottom center;
+}
+.tooltip-popup[data-side="bottom"] {
+  transform-origin: top center;
 }
 ```
 </FrameworkCase>
