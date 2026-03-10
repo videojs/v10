@@ -87,6 +87,16 @@ const loadTextTrackCuesTask = async (
     }
   }
 
+  // Chrome bug: after a track goes through mode='disabled' (which clears cues) and back
+  // to 'showing', cues added to the track aren't activated. Re-adding all cues forces
+  // Chrome to re-process them. Safe no-op in other browsers.
+  // Mirrors the workaround in HlsMediaTextTracksMixin (packages/core/src/dom/media/hls/text-tracks.ts).
+  if (context.textTrack.mode === 'showing' && context.textTrack.cues) {
+    Array.from(context.textTrack.cues).forEach((cue) => {
+      context.textTrack.addCue(cue);
+    });
+  }
+
   // Wait a frame before completing to allow state updates to flush
   await new Promise((resolve) => requestAnimationFrame(resolve));
 };
