@@ -218,6 +218,7 @@
   background-image: url("/data-bar-white.svg");
   background-repeat: repeat-x;
   background-size: auto 100%;
+  transform-origin: left center;
   animation: grow-bar var(--data-bar-duration, 1.5s) ease-out forwards;
   animation-play-state: paused;
 
@@ -319,10 +320,10 @@
 
 @keyframes grow-bar {
   from {
-    width: 0%;
+    transform: scaleX(0);
   }
   to {
-    width: 100%;
+    transform: scaleX(1);
   }
 }
 
