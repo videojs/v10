@@ -36,41 +36,6 @@ export const slider = {
 };
 
 /* ==========================================================================
-   Icon State (audio: play + mute only)
-   ========================================================================== */
-
-export const iconState = {
-  play: {
-    button: 'group',
-    restart: 'hidden opacity-0 group-data-ended:block group-data-ended:opacity-100',
-    play: 'hidden opacity-0 group-not-data-ended:group-data-paused:block group-not-data-ended:group-data-paused:opacity-100',
-    pause:
-      'hidden opacity-0 group-not-data-paused:group-not-data-ended:block group-not-data-paused:group-not-data-ended:opacity-100',
-  },
-  mute: {
-    button: 'group',
-    volumeOff: 'hidden opacity-0 group-data-muted:block group-data-muted:opacity-100',
-    volumeLow:
-      'hidden opacity-0 group-not-data-muted:group-data-[volume-level=low]:block group-not-data-muted:group-data-[volume-level=low]:opacity-100',
-    volumeHigh:
-      'hidden opacity-0 group-not-data-muted:group-not-data-[volume-level=low]:block group-not-data-muted:group-not-data-[volume-level=low]:opacity-100',
-  },
-};
-
-/* ==========================================================================
-   Tooltip State (audio: play only)
-   ========================================================================== */
-
-export const tooltipState = {
-  play: {
-    wrapper: 'contents group/play-tip',
-    replay: 'hidden group-has-data-ended/play-tip:block',
-    play: 'hidden group-[:has([data-paused]):not(:has([data-ended]))]/play-tip:block',
-    pause: 'hidden group-[:not(:has([data-paused])):not(:has([data-ended]))]/play-tip:block',
-  },
-};
-
-/* ==========================================================================
    Popup (with audio surface)
    ========================================================================== */
 
@@ -102,6 +67,8 @@ export const error = {
    Shared components (no overrides)
    ========================================================================== */
 
+export { iconState } from '../../shared/tailwind/icon-state';
+export { tooltipState } from '../../shared/tailwind/tooltip-state';
 export { button } from './components/button';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
 export { playbackRate } from './components/playback-rate';

@@ -99,13 +99,13 @@ export const popup = {
    Shared components (no overrides)
    ========================================================================== */
 
+export { iconState } from '../../shared/tailwind/icon-state';
+export { tooltipState } from '../../shared/tailwind/tooltip-state';
 export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { error } from './components/error';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
-export { iconState } from './components/icon-state';
 export { overlay } from './components/overlay';
 export { seek } from './components/seek';
 export { time } from './components/time';
-export { tooltipState } from './components/tooltip-state';

@@ -135,11 +135,11 @@ export const error = {
    Shared components (no overrides)
    ========================================================================== */
 
+export { iconState } from '../../shared/tailwind/icon-state';
+export { tooltipState } from '../../shared/tailwind/tooltip-state';
 export { button } from './components/button';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
-export { iconState } from './components/icon-state';
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { seek } from './components/seek';
 export { time } from './components/time';
-export { tooltipState } from './components/tooltip-state';

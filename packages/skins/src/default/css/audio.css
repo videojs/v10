@@ -1,5 +1,5 @@
-@import "../../shared/audio/icon-state.css";
-@import "../../shared/audio/tooltip-state.css";
+@import "../../shared/css/audio/icon-state.css";
+@import "../../shared/css/audio/tooltip-state.css";
 @import "./components/reset.css";
 @import "./components/root.css";
 @import "./components/surface.css";
