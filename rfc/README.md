@@ -36,7 +36,70 @@ status: draft
 
 # Title
 
-Content...
+## Problem Statement
+
+What are we trying to solve?
+What user or system behavior is driving this question?
+What happens if we do nothing?
+
+## Customer Salience
+
+Before proposing solutions, assess how much this actually matters to customers.
+
+**Who is affected?**
+- Viewers of the player?
+- Player integrators?
+- Open source contributors?
+- Skin creators / player engineers?
+- New users?
+
+**How many customers are realistically impacted?**
+- Nearly everyone?
+- A meaningful minority?
+- A small edge case group?
+
+**How strongly would they feel about it?**
+- Would they notice?
+- Would it mildly annoy them?
+- Would it meaningfully degrade their experience?
+- Would it prevent them from using the product?
+
+Are we reacting to a hypothetical user or to current observable behavior?
+
+## Options Considered
+
+For each option:
+
+**Option N: Name**
+
+Describe the approach clearly and concretely.
+
+- What does this enable?
+- What does it constrain?
+- Does it meaningfully increase complexity?
+- Does it create tight coupling or future rigidity?
+- Is it reversible? If we are wrong, how painful is it to change course?
+
+Be honest about tradeoffs. Avoid overstating benefits or minimizing costs.
+
+## Recommendation
+
+Choose one option. Explain why it is the right tradeoff given:
+
+- The actual level of customer salience
+- Product direction
+- Technical consequences
+- Urgency
+
+If customer impact is low, explain why we should avoid over-optimizing. If it is high, explain why the investment is justified.
+
+## Final Decision
+
+*(Completed after review)*
+
+**Decision:**
+**Rationale:**
+**Date:**
 ```
 
 When implemented, add implementation details:
