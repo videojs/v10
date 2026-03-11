@@ -1,7 +1,7 @@
 // Always https://videojs.org. Unlike Astro.site, which varies per deploy
 // (e.g. deploy preview URLs), this is stable for canonical URLs and other
 // references that must always point to production.
-export const PRODUCTION_URL = 'https://videojs.org';
+export const PRODUCTION_URL = new URL('https://videojs.org');
 export const SITE_TITLE = 'Video.js';
 export const SEO_SUFFIX = 'Open Source Video Player';
 export const SITE_DESCRIPTION = `The open-source video player for React and HTML. Lightweight, accessible components built for performance and streaming.`;

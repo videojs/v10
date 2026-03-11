@@ -42,7 +42,7 @@ const pageUrl = new URL(Astro.url.pathname, PRODUCTION_URL).toString();
 const jsonLdSchema = createBlogCollectionSchema({
   url: pageUrl,
   posts: page.data,
-  siteUrl: PRODUCTION_URL,
+  siteUrl: PRODUCTION_URL.toString(),
 });
 ---
 

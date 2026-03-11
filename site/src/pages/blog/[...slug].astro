@@ -41,7 +41,7 @@ const jsonLdSchema = createBlogPostingSchema({
   updatedDate: post.data.updatedDate,
   readingTime: remarkPluginFrontmatter.readingTimeMinutes,
   authors,
-  siteUrl: PRODUCTION_URL,
+  siteUrl: PRODUCTION_URL.toString(),
   image: ogImageUrl,
 });
 ---
