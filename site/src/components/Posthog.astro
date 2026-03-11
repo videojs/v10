@@ -27,7 +27,6 @@
                 }));
             }
             (((p = t.createElement("script")).type = "text/javascript"),
-              (p.crossOrigin = "anonymous"),
               (p.async = !0),
               (p.src =
                 s.api_host.replace(".i.posthog.com", "-assets.i.posthog.com") +
@@ -52,7 +51,7 @@
                   return u.toString(1) + ".people (stub)";
                 },
                 o =
-                  "init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug getPageviewId".split(
+                  "init capture register register_once register_for_session unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group identify setPersonProperties setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags resetGroups onFeatureFlags addFeatureFlagsHandler onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep".split(
                     " ",
                   ),
                 n = 0;
@@ -64,9 +63,10 @@
           }),
           (e.__SV = 1));
       })(document, window.posthog || []);
-      posthog.init("phc_eRJJlqKslFHAu7Y5eOSiRIHvHvZYq10FGC9KivVcQM7", {
+      posthog.init("phc_5gaDOyX1jWPR1n7JAiGiHdwXwGwfsknwdj1ILI2IiBr", {
         api_host: "/ph",
         ui_host: "https://us.posthog.com",
+        defaults: "2026-01-30",
         cookieless_mode: "always",
       });
     }
