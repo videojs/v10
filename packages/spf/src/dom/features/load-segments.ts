@@ -7,7 +7,7 @@ import { isResolvedTrack } from '../../core/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
 import type { SourceBufferActor } from '../media/source-buffer-actor';
 import { ChunkedStreamIterable } from '../network/chunked-stream-iterable';
-import { fetchResolvable } from '../network/fetch';
+import { fetchResolvable, fetchResolvableBytes } from '../network/fetch';
 import {
   type BufferState,
   createSegmentLoaderActor,
@@ -281,7 +281,7 @@ export function loadSegments(
     (o) => o[actorKey],
     (actor) => {
       if (actor) {
-        segmentLoader.patch(createSegmentLoaderActor(actor, fetchBytes));
+        segmentLoader.patch(createSegmentLoaderActor(actor, fetchBytes, fetchResolvableBytes));
       } else if (!actor && segmentLoader.current) {
         segmentLoader.current.destroy();
         segmentLoader.patch(undefined);

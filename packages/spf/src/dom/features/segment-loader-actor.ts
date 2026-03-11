@@ -85,27 +85,6 @@ export interface SegmentLoaderActor {
 }
 
 // ============================================================================
-// HELPERS
-// ============================================================================
-
-/** Collect an AsyncIterable<Uint8Array> into a single ArrayBuffer. */
-async function collectBytes(iterable: AsyncIterable<Uint8Array>): Promise<ArrayBuffer> {
-  const chunks: Uint8Array[] = [];
-  let totalBytes = 0;
-  for await (const chunk of iterable) {
-    chunks.push(chunk);
-    totalBytes += chunk.byteLength;
-  }
-  const result = new Uint8Array(totalBytes);
-  let offset = 0;
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return result.buffer;
-}
-
-// ============================================================================
 // IMPLEMENTATION
 // ============================================================================
 
@@ -122,11 +101,14 @@ async function collectBytes(iterable: AsyncIterable<Uint8Array>): Promise<ArrayB
  * operation (if still needed) or preempts it.
  *
  * @param sourceBufferActor - Shared SourceBufferActor reference (not owned)
- * @param fetchBytes - Tracked fetch closure (owns throughput sampling)
+ * @param fetchBytes - Tracked fetch closure for media segments (owns throughput sampling)
+ * @param fetchInitBytes - Fetch closure for init segments; uses arrayBuffer() to
+ *   avoid streaming overhead and ensure atomic delivery before playback begins
  */
 export function createSegmentLoaderActor(
   sourceBufferActor: SourceBufferActor,
-  fetchBytes: (addressable: AddressableObject, options?: RequestInit) => Promise<AsyncIterable<Uint8Array>>
+  fetchBytes: (addressable: AddressableObject, options?: RequestInit) => Promise<AsyncIterable<Uint8Array>>,
+  fetchInitBytes: (addressable: AddressableObject, options?: RequestInit) => Promise<ArrayBuffer>
 ): SegmentLoaderActor {
   let pendingTasks: LoadTask[] | null = null;
   let inFlightInitTrackId: string | null = null;
@@ -233,9 +215,10 @@ export function createSegmentLoaderActor(
         if (!signal.aborted) {
           // Init segments are small and have commit logic that depends on the
           // full buffer being available before deciding whether to append (same-
-          // track seek vs track-switch). Await headers eagerly, then collect all
-          // chunks before making that decision.
-          const data = await collectBytes(await fetchBytes(task, { signal }));
+          // track seek vs track-switch). Use arrayBuffer() for an atomic,
+          // synchronous delivery — avoids streaming overhead and the timing
+          // race in Firefox where mozHasAudio is evaluated before init lands.
+          const data = await fetchInitBytes(task, { signal });
           // For seeks on the same track: commit even if aborted — avoids re-fetching the
           // same init next time. For track switches: don't commit the old track's init;
           // the new track's init follows in pendingTasks.
