@@ -7,45 +7,11 @@ import { BufferKeyByType, getSelectedTrack, type TrackSelectionState } from '../
 import { createSourceBuffer } from '../media/mediasource-setup';
 import { createSourceBufferActor, type SourceBufferActor } from '../media/source-buffer-actor';
 
-/** Map track type to SourceBufferActor owner property key. */
-const ActorKeyByType = {
-  video: 'videoBufferActor',
-  audio: 'audioBufferActor',
-} as const;
-
 /**
  * Media track type for SourceBuffer setup.
  * Text tracks are excluded as they don't use MSE SourceBuffers.
  */
 export type MediaTrackType = 'video' | 'audio';
-
-/**
- * Setup SourceBuffer task (module-level, pure).
- * Creates SourceBuffer for resolved track and waits a frame before completing.
- */
-const setupSourceBufferTask = async <T extends MediaTrackType>(
-  { currentState, currentOwners }: { currentState: SourceBufferState; currentOwners: SourceBufferOwners },
-  context: { owners: WritableState<SourceBufferOwners>; config: SourceBufferConfig<T> }
-): Promise<void> => {
-  // Wait for track to be resolved with codecs before creating SourceBuffer
-  const track = getSelectedTrack(currentState, context.config.type);
-  if (!track || !isResolvedTrack(track)) return;
-  if (!track.codecs || track.codecs.length === 0) return;
-
-  const mimeCodec = buildMimeCodec(track);
-
-  // Create SourceBuffer and its actor together — single owners.patch so
-  // subscribers see both arrive at the same time with no intermediate state.
-  const buffer = createSourceBuffer(currentOwners.mediaSource!, mimeCodec);
-  const actor = createSourceBufferActor(buffer);
-
-  const bufferKey = BufferKeyByType[context.config.type];
-  const actorKey = ActorKeyByType[context.config.type];
-  context.owners.patch({ [bufferKey]: buffer, [actorKey]: actor });
-
-  // Wait a frame to allow async state updates to flush
-  await new Promise((resolve) => requestAnimationFrame(resolve));
-};
 
 /**
  * State shape for SourceBuffer setup.
@@ -121,57 +87,71 @@ export function shouldSetupBuffer(owners: SourceBufferOwners, type: MediaTrackTy
 }
 
 /**
- * Configuration for SourceBuffer setup.
- */
-export interface SourceBufferConfig<T extends MediaTrackType = MediaTrackType> {
-  type: T;
-}
-
-/**
- * Setup SourceBuffer orchestration.
+ * Setup all needed SourceBuffers as a single coordinated operation.
  *
- * Triggers when:
- * - MediaSource exists and is in 'open' state
- * - Track is selected (same condition as resolveTrack)
+ * Waits until ALL selected tracks (video and/or audio) are resolved with
+ * codecs, then creates every SourceBuffer in one synchronous block before
+ * patching owners. This guarantees that downstream consumers (e.g.
+ * loadSegments) never see a partial set of SourceBuffers — preventing the
+ * Firefox bug where appending to a video SourceBuffer before the audio
+ * SourceBuffer exists causes mozHasAudio to be permanently false.
  *
- * Creates SourceBuffer when track becomes resolved with codecs.
- * This allows setupSourceBuffer to run in parallel with resolveTrack.
+ * Handles video-only, audio-only, and combined presentations correctly:
+ * only the tracks that are actually selected are waited on and created.
  *
- * Note: Text tracks don't use SourceBuffers and should be handled separately.
- *
- * Generic over track type - create one orchestration per track type:
  * @example
- * const videoCleanup = setupSourceBuffer({ state, owners }, { type: 'video' });
- * const audioCleanup = setupSourceBuffer({ state, owners }, { type: 'audio' });
+ * const cleanup = setupSourceBuffers({ state, owners });
  */
-export function setupSourceBuffer<T extends MediaTrackType>(
-  {
-    state,
-    owners,
-  }: {
-    state: WritableState<SourceBufferState>;
-    owners: WritableState<SourceBufferOwners>;
-  },
-  config: SourceBufferConfig<T>
-): () => void {
-  let currentTask: Promise<void> | null = null;
+export function setupSourceBuffers({
+  state,
+  owners,
+}: {
+  state: WritableState<SourceBufferState>;
+  owners: WritableState<SourceBufferOwners>;
+}): () => void {
+  let setupDone = false;
 
   const cleanup = combineLatest([state, owners]).subscribe(
     async ([currentState, currentOwners]: [SourceBufferState, SourceBufferOwners]) => {
-      // Check orchestration conditions (track selected, MediaSource open)
-      if (currentTask) return; // Task already in progress
-      if (!canSetupBuffer(currentState, currentOwners, config.type) || !shouldSetupBuffer(currentOwners, config.type))
-        return;
+      if (setupDone) return;
+      if (!currentOwners.mediaSource) return;
 
-      // Invoke task (no abort needed - synchronous SourceBuffer creation + frame wait)
-      currentTask = setupSourceBufferTask({ currentState, currentOwners }, { owners, config });
+      const videoSelected = !!currentState.selectedVideoTrackId;
+      const audioSelected = !!currentState.selectedAudioTrackId;
 
-      try {
-        await currentTask;
-      } finally {
-        // Cleanup orchestration state
-        currentTask = null;
+      if (!videoSelected && !audioSelected) return;
+
+      const videoTrack = videoSelected ? getSelectedTrack(currentState, 'video') : null;
+      const audioTrack = audioSelected ? getSelectedTrack(currentState, 'audio') : null;
+
+      // Wait until every selected track is resolved with codecs before
+      // creating any SourceBuffer. This is the coordination guarantee.
+      if (videoSelected && (!videoTrack || !isResolvedTrack(videoTrack) || !videoTrack.codecs?.length)) return;
+      if (audioSelected && (!audioTrack || !isResolvedTrack(audioTrack) || !audioTrack.codecs?.length)) return;
+
+      setupDone = true;
+
+      // Create all SourceBuffers synchronously — no await between addSourceBuffer
+      // calls — then patch owners once so subscribers see all buffers simultaneously.
+      const patch: Partial<SourceBufferOwners> = {};
+
+      if (videoSelected && videoTrack && isResolvedTrack(videoTrack)) {
+        const buffer = createSourceBuffer(currentOwners.mediaSource!, buildMimeCodec(videoTrack));
+        patch.videoBuffer = buffer;
+        patch.videoBufferActor = createSourceBufferActor(buffer);
       }
+
+      if (audioSelected && audioTrack && isResolvedTrack(audioTrack)) {
+        const buffer = createSourceBuffer(currentOwners.mediaSource!, buildMimeCodec(audioTrack));
+        patch.audioBuffer = buffer;
+        patch.audioBufferActor = createSourceBufferActor(buffer);
+      }
+
+      owners.patch(patch);
+
+      // Wait a frame to allow async state updates to flush before downstream
+      // orchestrations (loadSegments) begin reacting to the new owners.
+      await new Promise((resolve) => requestAnimationFrame(resolve));
     }
   );
 
