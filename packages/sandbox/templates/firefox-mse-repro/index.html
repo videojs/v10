@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Firefox MSE Init Order Repro</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: monospace; font-size: 13px; background: #1a1a1a; color: #e0e0e0; padding: 16px; }
+      h1 { font-size: 15px; margin-bottom: 4px; color: #fff; }
+      .subtitle { color: #888; font-size: 11px; margin-bottom: 14px; }
+      h2 { font-size: 11px; font-weight: bold; margin: 12px 0 5px; color: #aaa; text-transform: uppercase; letter-spacing: 0.05em; }
+      .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      video { width: 100%; aspect-ratio: 16/9; background: #000; display: block; }
+      .state { background: #222; border-radius: 3px; padding: 6px 8px; margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 16px; }
+      .state-row { display: flex; justify-content: space-between; font-size: 11px; }
+      .state-key { color: #777; }
+      .val { color: #6cf; }
+      .val-true { color: #6f6; }
+      .val-false { color: #f66; }
+      .val-none { color: #666; }
+      .btns { display: flex; flex-wrap: wrap; gap: 5px; margin: 5px 0; }
+      button {
+        background: #2a2a2a; color: #ccc; border: 1px solid #444; border-radius: 3px;
+        padding: 4px 10px; cursor: pointer; font-family: monospace; font-size: 11px;
+      }
+      button:hover:not(:disabled) { background: #383838; border-color: #666; }
+      button:disabled { opacity: 0.35; cursor: default; }
+      button.ok { background: #162516; border-color: #3a6a3a; color: #8f8; }
+      button.bad { background: #251616; border-color: #6a3a3a; color: #f88; }
+      .log { background: #111; border-radius: 3px; padding: 6px 8px; height: 500px; overflow-y: auto; font-size: 11px; line-height: 1.7; }
+      .info { color: #6cf; }
+      .ok { color: #6f6; }
+      .err { color: #f66; }
+      .warn { color: #fa6; }
+      .sep { color: #555; border-top: 1px solid #2a2a2a; margin-top: 2px; padding-top: 4px; }
+      input { background: #222; border: 1px solid #444; color: #e0e0e0; padding: 4px 8px; border-radius: 3px; font-family: monospace; font-size: 11px; width: 100%; }
+      .scenario { background: #1e1e1e; border: 1px solid #333; border-radius: 3px; padding: 8px; margin: 5px 0; }
+      .scenario p { color: #888; font-size: 11px; margin-bottom: 5px; line-height: 1.4; }
+      .codec-info { background: #1a2a1a; border: 1px solid #2a4a2a; border-radius: 3px; padding: 6px 8px; margin: 5px 0; font-size: 11px; color: #8a8; display: none; }
+      .codec-info.visible { display: block; }
+    </style>
+  </head>
+  <body>
+    <h1>Firefox MSE Init Segment Order Reproduction</h1>
+    <p class="subtitle">
+      Tests whether appending a video media segment before audio init causes <code>mozHasAudio = false</code> in Firefox.
+    </p>
+
+    <div class="layout">
+      <div>
+        <video id="video" controls muted playsinline></video>
+
+        <div class="state" id="state"></div>
+
+        <h2>1 · Load HLS Playlist</h2>
+        <input id="url" type="text" value="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8" />
+        <div class="btns" style="margin-top:5px">
+          <button id="btn-parse" type="button">Parse HLS</button>
+          <button id="btn-reset" type="button">Reset All</button>
+        </div>
+        <div class="codec-info" id="codec-info"></div>
+
+        <h2>2 · Manual Setup</h2>
+        <div class="btns">
+          <button id="btn-ms" type="button" disabled>Create MediaSource</button>
+          <button id="btn-vsb" type="button" disabled>Add Video SB</button>
+          <button id="btn-asb" type="button" disabled>Add Audio SB</button>
+        </div>
+
+        <h2>3 · Manual Steps</h2>
+        <div class="btns">
+          <button id="btn-vinit" type="button" disabled>Append Video Init</button>
+          <button id="btn-ainit" type="button" disabled>Append Audio Init</button>
+        </div>
+        <div class="btns">
+          <button id="btn-vseg" type="button" disabled>Append Video Seg 1</button>
+          <button id="btn-aseg" type="button" disabled>Append Audio Seg 1</button>
+          <button id="btn-play" type="button" disabled>▶ Play</button>
+        </div>
+
+        <h2>4 · Test Scenarios</h2>
+
+        <div class="scenario">
+          <p>✓ <strong>Correct order</strong>: Both inits committed, then media segments.</p>
+          <button id="btn-test-ok" type="button" class="ok" disabled>Run: Correct Order</button>
+        </div>
+
+        <div class="scenario">
+          <p>
+            ✗ <strong>Bug trigger</strong>: Video init → video segment 1 →
+            then audio init → audio segment 1.<br>
+            In Firefox this should leave <code>mozHasAudio = false</code>.
+          </p>
+          <button id="btn-test-bad" type="button" class="bad" disabled>Run: Video Seg Before Audio Init</button>
+        </div>
+      </div>
+
+      <div>
+        <h2>Log</h2>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
