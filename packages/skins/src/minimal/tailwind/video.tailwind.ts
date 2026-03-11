@@ -102,7 +102,6 @@ export const popup = {
 export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
-export { captions } from './components/captions';
 export { error } from './components/error';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
 export { iconState } from './components/icon-state';

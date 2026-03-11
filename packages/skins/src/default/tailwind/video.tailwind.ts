@@ -136,7 +136,6 @@ export const error = {
    ========================================================================== */
 
 export { button } from './components/button';
-export { captions } from './components/captions';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
 export { iconState } from './components/icon-state';
 export { overlay } from './components/overlay';
