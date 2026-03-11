@@ -324,14 +324,6 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
         </Tooltip.Root>
       </Controls.Root>
 
-      {/* <div className={captions.root}>
-        <div className={captions.container}>
-          <span className={captions.cue}>
-            An example cue
-          </span>
-        </div>
-      </div> */}
-
       <div className={overlay} />
     </Container>
   );
