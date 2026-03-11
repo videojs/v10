@@ -30,7 +30,7 @@
   gap: 0.5rem;
   padding: 0.375rem;
   background-color: var(--media-controls-background-color);
-  backdrop-filter: blur(8px) brightness(0.98) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.5);
   border-radius: var(--media-border-radius, 0.75rem);
   color: var(--media-controls-text-color);
   box-shadow: 0 0 0 1px var(--media-controls-border-color);

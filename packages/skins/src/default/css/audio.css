@@ -22,7 +22,7 @@
   --media-surface-inner-border-color: oklch(1 0 0 / 0.1);
   --media-surface-outer-border-color: oklch(0 0 0 / 0.05);
   --media-surface-shadow-color: oklch(0 0 0 / 0.15);
-  --media-surface-backdrop-filter: blur(8px) brightness(0.98) saturate(1.2);
+  --media-surface-backdrop-filter: blur(16px) saturate(1.5);
 
   @media (prefers-color-scheme: dark) {
     --media-border-color: oklch(1 0 0 / 0.1);

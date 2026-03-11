@@ -59,7 +59,7 @@ export const root = (isShadowDOM: boolean) =>
 export const surface = cn(
   baseSurface,
   'bg-white/10',
-  'backdrop-brightness-90 backdrop-saturate-150 backdrop-blur-3xl',
+  'backdrop-saturate-150 backdrop-blur-lg',
   // Border and shadow
   'ring-white/5 shadow-black/10',
   // Border to enhance contrast on lighter videos

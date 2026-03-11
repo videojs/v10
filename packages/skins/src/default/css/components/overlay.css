@@ -7,7 +7,7 @@
   inset: 0;
   border-radius: inherit;
   background-image: linear-gradient(to top, oklch(0 0 0 / 0.5), oklch(0 0 0 / 0.3), oklch(0 0 0 / 0));
-  backdrop-filter: blur(0) saturate(1.2) brightness(0.9);
+  backdrop-filter: blur(0) saturate(1.5);
   opacity: 0;
   transition-property: opacity, backdrop-filter;
   transition-duration: 300ms;
@@ -28,5 +28,5 @@
 }
 
 .media-default-skin .media-error[data-open] ~ .media-overlay {
-  backdrop-filter: blur(8px) saturate(1.2) brightness(0.9);
+  backdrop-filter: blur(16px) saturate(1.5);
 }

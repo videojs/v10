@@ -7,7 +7,7 @@ export const overlay = cn(
   // Default: hidden
   'opacity-0',
   'bg-linear-to-t from-black/70 via-black/50 via-[7.5rem] to-transparent',
-  'backdrop-blur-none backdrop-saturate-120 backdrop-brightness-90',
+  'backdrop-blur-none backdrop-saturate-150',
   // Transitions
   'transition-[opacity,backdrop-filter] ease-out',
   'duration-500 delay-500',
@@ -19,7 +19,7 @@ export const overlay = cn(
   'peer-data-open/error:opacity-100',
   'peer-data-open/error:duration-150',
   'peer-data-open/error:delay-0',
-  'peer-data-open/error:backdrop-blur',
+  'peer-data-open/error:backdrop-blur-lg',
   // Reduced motion
   'motion-reduce:duration-100'
 );
