@@ -143,6 +143,8 @@ function isMediaSlotElement(node: Node): boolean {
 }
 
 function hasMediaElement(record: MutationRecord): boolean {
+  if (isMediaSlotElement(record.target)) return true;
+
   for (const node of record.addedNodes) {
     if (isMediaElement(node) || isMediaSlotElement(node)) return true;
   }
