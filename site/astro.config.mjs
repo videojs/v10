@@ -17,14 +17,15 @@ import remarkConditionalHeadings from './src/utils/remarkConditionalHeadings';
 import { remarkReadingTime } from './src/utils/remarkReadingTime.mjs';
 import shikiTransformMetadata from './src/utils/shikiTransformMetadata';
 
-// Astro docs say `site` should be "your final, deployed URL", but we override
-// it per-deploy so that generated absolute URLs (OG images, RSS, etc.) resolve
-// correctly on Netlify deploy previews. On production, DEPLOY_PRIME_URL is the
-// primary site URL so it's equivalent.
+// On production deploys, use the custom domain — DEPLOY_PRIME_URL always returns
+// the Netlify subdomain (e.g. main--vjs10-site.netlify.app), not the custom
+// domain. On deploy previews, use DEPLOY_PRIME_URL so OG images point to a
+// reachable URL for crawlers.
 //
 // For URLs that must always point to production regardless of deploy context
 // (e.g. canonical, JSON-LD), use PRODUCTION_URL from src/consts.ts instead.
-const SITE_URL = process.env.DEPLOY_PRIME_URL || 'https://videojs.org';
+const SITE_URL =
+  process.env.CONTEXT === 'production' ? 'https://videojs.org' : process.env.DEPLOY_PRIME_URL || 'https://videojs.org';
 
 // https://astro.build/config
 export default defineConfig({
