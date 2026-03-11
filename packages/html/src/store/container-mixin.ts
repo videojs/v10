@@ -108,7 +108,7 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
         }
 
         if (isCustomMediaElement(media)) {
-          globalThis.customElements.upgrade(media);
+          globalThis.customElements?.upgrade?.(media);
         }
 
         const target: PlayerTarget = {
