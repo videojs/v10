@@ -101,14 +101,16 @@ export interface SegmentLoaderActor {
  * operation (if still needed) or preempts it.
  *
  * @param sourceBufferActor - Shared SourceBufferActor reference (not owned)
- * @param fetchBytes - Tracked fetch closure for media segments (owns throughput sampling)
- * @param fetchInitBytes - Fetch closure for init segments; uses arrayBuffer() to
- *   avoid streaming overhead and ensure atomic delivery before playback begins
+ * @param fetchBytes - Tracked fetch closure (owns throughput sampling for segments).
+ *   Accepts an optional `minChunkSize` in options; init segments pass `Infinity`
+ *   so the entire body accumulates as one chunk before appending.
  */
 export function createSegmentLoaderActor(
   sourceBufferActor: SourceBufferActor,
-  fetchBytes: (addressable: AddressableObject, options?: RequestInit) => Promise<AsyncIterable<Uint8Array>>,
-  fetchInitBytes: (addressable: AddressableObject, options?: RequestInit) => Promise<ArrayBuffer>
+  fetchBytes: (
+    addressable: AddressableObject,
+    options?: RequestInit & { minChunkSize?: number }
+  ) => Promise<AsyncIterable<Uint8Array>>
 ): SegmentLoaderActor {
   let pendingTasks: LoadTask[] | null = null;
   let inFlightInitTrackId: string | null = null;
@@ -213,12 +215,12 @@ export function createSegmentLoaderActor(
       if (task.type === 'append-init') {
         inFlightInitTrackId = task.meta.trackId;
         if (!signal.aborted) {
-          // Init segments are small and have commit logic that depends on the
-          // full buffer being available before deciding whether to append (same-
-          // track seek vs track-switch). Use arrayBuffer() for an atomic,
-          // synchronous delivery — avoids streaming overhead and the timing
-          // race in Firefox where mozHasAudio is evaluated before init lands.
-          const data = await fetchInitBytes(task, { signal });
+          // Init segments are small and need the full body before the
+          // same-track-seek vs track-switch commit decision can be made.
+          // minChunkSize: Infinity causes ChunkedStreamIterable to accumulate
+          // all chunks and yield exactly one — equivalent to arrayBuffer() but
+          // through the same streaming path as media segments.
+          const data = await fetchBytes(task, { signal, minChunkSize: Infinity });
           // For seeks on the same track: commit even if aborted — avoids re-fetching the
           // same init next time. For track switches: don't commit the old track's init;
           // the new track's init follows in pendingTasks.

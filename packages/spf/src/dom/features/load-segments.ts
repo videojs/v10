@@ -6,8 +6,8 @@ import type { AddressableObject, Presentation, ResolvedTrack } from '../../core/
 import { isResolvedTrack } from '../../core/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
 import type { SourceBufferActor } from '../media/source-buffer-actor';
-import { ChunkedStreamIterable } from '../network/chunked-stream-iterable';
-import { fetchResolvable, fetchResolvableBytes } from '../network/fetch';
+import { ChunkedStreamIterable, type ChunkedStreamIterableOptions } from '../network/chunked-stream-iterable';
+import { fetchResolvable } from '../network/fetch';
 import {
   type BufferState,
   createSegmentLoaderActor,
@@ -41,18 +41,24 @@ const ActorKeyByType = {
  *
  * `onSample` bridges throughput state outward; see Phase 2 comment for detail.
  */
+type FetchOptions = RequestInit & ChunkedStreamIterableOptions;
+
 function createTrackedFetch(
   throughput: WritableState<BandwidthState>,
   onSample?: (next: BandwidthState) => void
-): (addressable: AddressableObject, options?: RequestInit) => Promise<AsyncIterable<Uint8Array>> {
+): (addressable: AddressableObject, options?: FetchOptions) => Promise<AsyncIterable<Uint8Array>> {
   return async (addressable, options) => {
-    const response = await fetchResolvable(addressable, options);
+    const { minChunkSize, ...fetchOptions } = options ?? {};
+    const response = await fetchResolvable(addressable, fetchOptions);
     if (!response.body) throw new Error('Response has no body');
     const body = response.body;
     return {
       [Symbol.asyncIterator]: async function* () {
         let chunkStart = performance.now();
-        for await (const chunk of new ChunkedStreamIterable(body)) {
+        for await (const chunk of new ChunkedStreamIterable(
+          body,
+          ...(minChunkSize !== undefined ? [{ minChunkSize }] : [])
+        )) {
           const elapsed = performance.now() - chunkStart;
           const next = sampleBandwidth(throughput.current, elapsed, chunk.byteLength);
           throughput.patch(next);
@@ -69,11 +75,14 @@ function createTrackedFetch(
 /**
  * Non-tracking fetch: eagerly starts the request and returns the response body
  * as a lazy chunk iterable. Used for audio tracks which don't sample bandwidth.
+ * Pass `minChunkSize: Infinity` to accumulate the full body as a single chunk
+ * (equivalent to arrayBuffer() but through the same streaming path).
  */
-async function fetchStream(addressable: AddressableObject, options?: RequestInit): Promise<AsyncIterable<Uint8Array>> {
-  const response = await fetchResolvable(addressable, options);
+async function fetchStream(addressable: AddressableObject, options?: FetchOptions): Promise<AsyncIterable<Uint8Array>> {
+  const { minChunkSize, ...fetchOptions } = options ?? {};
+  const response = await fetchResolvable(addressable, fetchOptions);
   if (!response.body) throw new Error('Response has no body');
-  return new ChunkedStreamIterable(response.body);
+  return new ChunkedStreamIterable(response.body, ...(minChunkSize !== undefined ? [{ minChunkSize }] : []));
 }
 
 // ============================================================================
@@ -281,7 +290,7 @@ export function loadSegments(
     (o) => o[actorKey],
     (actor) => {
       if (actor) {
-        segmentLoader.patch(createSegmentLoaderActor(actor, fetchBytes, fetchResolvableBytes));
+        segmentLoader.patch(createSegmentLoaderActor(actor, fetchBytes));
       } else if (!actor && segmentLoader.current) {
         segmentLoader.current.destroy();
         segmentLoader.patch(undefined);
