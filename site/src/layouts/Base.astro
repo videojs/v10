@@ -9,6 +9,7 @@ import '@/styles/globals.css';
 import BannerInit from '@/components/BannerInit.astro';
 import { PreferenceSync } from '@/components/docs/PreferenceSync';
 import LegacyBanner from '@/components/LegacyBanner.astro';
+import Posthog from '@/components/Posthog.astro';
 import ThemeInit from '@/components/ThemeInit.astro';
 
 interface Props {
@@ -55,25 +56,8 @@ const fullTitle =
     />
     <meta name="generator" content={Astro.generator} />
 
-    {/* Google Analytics (cookieless) */}
-    <script
-      is:inline
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-WTF4CZJSGP"></script>
-    <script is:inline>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("consent", "default", {
-        analytics_storage: "denied",
-        ad_storage: "denied",
-        ad_user_data: "denied",
-        ad_personalization: "denied",
-      });
-      gtag("js", new Date());
-      gtag("config", "G-WTF4CZJSGP");
-    </script>
+    {/* Analytics (production only) */}
+    {import.meta.env.PROD && <Posthog />}
 
     {/* Important stuff */}
     <slot name="priority-head" />
