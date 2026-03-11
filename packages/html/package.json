@@ -89,6 +89,7 @@
     "clean": "rm -rf dist cdn types"
   },
   "dependencies": {
+    "@moq/watch": "^0.2.2",
     "@videojs/spf": "workspace:*",
     "@videojs/core": "workspace:*",
     "@videojs/element": "workspace:*",

@@ -93,7 +93,8 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
         if (!store) return;
 
         const media =
-          this.querySelector<HTMLMediaElement>('video, audio, [data-media-element]') ?? this.#getSlottedMedia();
+          this.querySelector<HTMLMediaElement>('video, audio, [data-media-element], [data-media]') ??
+          this.#getSlottedMedia();
 
         if (!media) {
           this.#detach();
@@ -121,7 +122,10 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
 }
 
 function isMediaNode(node: Node): boolean {
-  return node instanceof HTMLMediaElement || (node instanceof Element && node.hasAttribute('data-media-element'));
+  return (
+    node instanceof HTMLMediaElement ||
+    (node instanceof Element && (node.hasAttribute('data-media-element') || node.hasAttribute('data-media')))
+  );
 }
 
 function hasMediaNode(record: MutationRecord): boolean {
