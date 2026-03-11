@@ -117,14 +117,20 @@ const fullTitle =
 
     {/* Open Graph / Facebook */}
     <meta property="og:type" content="website" />
-    <meta property="og:url" content={Astro.url} />
+    <meta
+      property="og:url"
+      content={new URL(Astro.url.pathname, PRODUCTION_URL)}
+    />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     {image && <meta property="og:image" content={resolveImageUrl(image)} />}
 
     {/* Twitter */}
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content={Astro.url} />
+    <meta
+      property="twitter:url"
+      content={new URL(Astro.url.pathname, PRODUCTION_URL)}
+    />
     <meta property="twitter:title" content={fullTitle} />
     <meta property="twitter:description" content={description} />
     {
