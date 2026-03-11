@@ -10,7 +10,6 @@ import sentry from '@sentry/astro';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, envField, fontProviders } from 'astro/config';
 import svgr from 'vite-plugin-svgr';
-import checkV8Urls from './integrations/check-v8-urls';
 import llmsMarkdown from './integrations/llms-markdown';
 import pagefind from './integrations/pagefind';
 import rehypePrepareCodeBlocks from './src/utils/rehypePrepareCodeBlocks';
@@ -78,7 +77,6 @@ export default defineConfig({
     }),
     pagefind(),
     llmsMarkdown(),
-    checkV8Urls(),
     react({
       babel: {
         plugins: [['babel-plugin-react-compiler', { target: '19' }]],

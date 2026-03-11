@@ -164,10 +164,9 @@ See [CLAUDE.md](CLAUDE.md) for details on each plugin.
 
 ## Custom Integrations
 
-Three custom Astro integrations in `integrations/`:
+Two custom Astro integrations in `integrations/`:
 
 - **pagefind** — Indexes HTML after build for static search; serves previous index in dev
 - **llms-markdown** — Generates LLM-optimized `.md` files and `llms.txt` index from `[data-llms-content]` elements
-- **check-v8-urls** — Audits Video.js v8 URL migration coverage at build time
 
 See [CLAUDE.md](CLAUDE.md) for implementation details.

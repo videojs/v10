@@ -166,8 +166,7 @@ site/
 ├── public/                  # Static assets (served untransformed)
 ├── integrations/            # Custom Astro integrations
 │   ├── pagefind.ts          # Pagefind search integration
-│   ├── llms-markdown.ts     # LLM-optimized markdown generation
-│   └── check-v8-urls.ts     # v8 URL migration audit
+│   └── llms-markdown.ts     # LLM-optimized markdown generation
 ├── astro.config.mjs         # Astro configuration
 ├── tsconfig.json            # TypeScript config with path aliases
 └── vitest.config.ts         # Test configuration
