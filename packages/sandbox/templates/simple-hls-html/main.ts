@@ -28,10 +28,6 @@ document.getElementById('root')!.innerHTML = html`
       overflow: hidden;
     }
 
-    video-player {
-      display: contents;
-    }
-
     simple-hls-video {
       width: 640px;
       aspect-ratio: 16 / 9;

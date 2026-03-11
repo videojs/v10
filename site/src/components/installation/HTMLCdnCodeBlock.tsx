@@ -13,6 +13,14 @@ function getCdnFileName(useCase: UseCase, skin: Skin): string {
 }
 
 function generateCdnCode(useCase: UseCase, skin: Skin): string {
+  if (useCase === 'background-video') {
+    return `<script type="module">
+  import '${CDN_BASE}/background/player.js';
+  import '${CDN_BASE}/background/skin.js';
+</script>
+<link rel="stylesheet" href="${CDN_BASE}/background/skin.css" />`;
+  }
+
   const name = getCdnFileName(useCase, skin);
 
   return `<script type="module" src="${CDN_BASE}/${name}.js"></script>

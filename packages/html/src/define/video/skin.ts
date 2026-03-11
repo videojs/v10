@@ -106,7 +106,7 @@ function getTemplateHTML() {
           <span class="media-tooltip-label media-tooltip-label--disable-captions">Disable captions</span>
         </media-tooltip>
 
-        <media-pip-button commandfor="pip-tooltip" class="media-button media-button--icon">
+        <media-pip-button commandfor="pip-tooltip" class="media-button media-button--icon media-button--pip">
           ${renderIcon('pip', { class: 'media-icon' })}
         </media-pip-button>
         <media-tooltip id="pip-tooltip" side="top" class="media-surface media-tooltip">

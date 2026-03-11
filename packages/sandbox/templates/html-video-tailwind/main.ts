@@ -20,7 +20,7 @@ function render() {
   const tag = TAILWIND_SKIN_TAGS[currentSkin].video;
 
   document.getElementById('root')!.innerHTML = html`
-    <video-player class="contents">
+    <video-player>
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
         <video slot="media" src="${SOURCES[currentSource].url}"></video>
       </${tag}>
