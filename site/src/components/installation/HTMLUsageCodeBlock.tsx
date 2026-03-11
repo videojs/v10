@@ -49,10 +49,15 @@ function getSkinTag(useCase: UseCase, skin: Skin): string {
   return map[skin];
 }
 
+function isVideoLikeRenderer(renderer: Renderer): boolean {
+  return renderer === 'html5-video' || renderer === 'hls' || renderer === 'background-video';
+}
+
 function getRendererElement(renderer: Renderer, url: string): string {
   const tag = getRendererTag(renderer);
   const src = url.trim() || getDefaultSourceUrl(renderer);
-  return `<${tag} slot="media" src="${src}"></${tag}>`;
+  const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
+  return `<${tag} slot="media" src="${src}"${playsInline}></${tag}>`;
 }
 
 function getDefaultSourceUrl(renderer: Renderer): string {
