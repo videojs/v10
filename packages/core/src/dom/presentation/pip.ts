@@ -2,6 +2,15 @@ import { isFunction } from '@videojs/utils/predicate';
 
 import type { WebKitVideoElement } from './types';
 
+type MediaWithTarget = HTMLMediaElement & {
+  target?: unknown;
+};
+
+function resolveMediaTarget(media: HTMLMediaElement): HTMLMediaElement {
+  const target = (media as MediaWithTarget).target;
+  return target instanceof HTMLMediaElement ? target : media;
+}
+
 /**
  * Check if Picture-in-Picture is supported on this platform.
  *
@@ -25,13 +34,15 @@ export function isPictureInPictureEnabled(): boolean {
  * Check if Picture-in-Picture is currently active for a media element.
  */
 export function isPictureInPictureElement(media: HTMLMediaElement): boolean {
+  const target = resolveMediaTarget(media);
+
   // Standard PiP API
-  if (document.pictureInPictureElement === media) {
+  if (document.pictureInPictureElement === target) {
     return true;
   }
 
   // iOS Safari WebKit presentation mode
-  const video = media as WebKitVideoElement;
+  const video = target as WebKitVideoElement;
   return video.webkitPresentationMode === 'picture-in-picture';
 }
 
@@ -42,7 +53,8 @@ export function isPictureInPictureElement(media: HTMLMediaElement): boolean {
  * WebKit presentation mode.
  */
 export async function requestPictureInPicture(media: HTMLMediaElement): Promise<void> {
-  const video = media as HTMLVideoElement & WebKitVideoElement;
+  const target = resolveMediaTarget(media);
+  const video = target as HTMLVideoElement & WebKitVideoElement;
 
   // Standard PiP API (only available on HTMLVideoElement)
   if (isFunction(video.requestPictureInPicture)) {
@@ -67,15 +79,21 @@ export async function requestPictureInPicture(media: HTMLMediaElement): Promise<
  */
 export async function exitPictureInPicture(media?: HTMLMediaElement): Promise<void> {
   // Standard PiP API
-  if (document.pictureInPictureElement && isFunction(document.exitPictureInPicture)) {
-    await document.exitPictureInPicture();
-    return;
+  if (isFunction(document.exitPictureInPicture)) {
+    try {
+      await document.exitPictureInPicture();
+      return;
+    } catch {
+      // Some engines expose a partial standard API. Fall back to WebKit mode.
+    }
   }
 
   // iOS Safari WebKit presentation mode
   if (media) {
-    const video = media as WebKitVideoElement;
-    if (video.webkitPresentationMode === 'picture-in-picture' && isFunction(video.webkitSetPresentationMode)) {
+    const target = resolveMediaTarget(media);
+    const video = target as WebKitVideoElement;
+    const mode = video.webkitPresentationMode;
+    if (isFunction(video.webkitSetPresentationMode) && (!mode || mode === 'picture-in-picture')) {
       video.webkitSetPresentationMode('inline');
       return;
     }
