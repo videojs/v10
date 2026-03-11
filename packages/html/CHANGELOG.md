@@ -1,5 +1,26 @@
 # Changelog
 
+## [10.0.0-beta.3](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.2...@videojs/html@10.0.0-beta.3) (2026-03-11)
+
+
+### Bug Fixes
+
+* **html:** fix html container sizing ([#881](https://github.com/videojs/v10/issues/881)) ([abf8753](https://github.com/videojs/v10/commit/abf8753fe61430122c9d3df40e559ecff3aef3c3))
+* **html:** remove commented error dialog blocks from video skins ([#865](https://github.com/videojs/v10/issues/865)) ([669694a](https://github.com/videojs/v10/commit/669694ab20342f3722a1c168fb1adc0e102f696d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.3
+    * @videojs/core bumped to 10.0.0-beta.3
+    * @videojs/element bumped to 10.0.0-beta.3
+    * @videojs/store bumped to 10.0.0-beta.3
+    * @videojs/utils bumped to 10.0.0-beta.3
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.3
+
 ## [10.0.0-beta.2](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.1...@videojs/html@10.0.0-beta.2) (2026-03-10)
 
 

@@ -1,5 +1,21 @@
 # Changelog
 
+## [10.0.0-beta.3](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.2...@videojs/core@10.0.0-beta.3) (2026-03-11)
+
+
+### Bug Fixes
+
+* **core:** resolve pip state against media target ([#883](https://github.com/videojs/v10/issues/883)) ([45a312e](https://github.com/videojs/v10/commit/45a312e0162bc66983eb7f41701a1bf28019736f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.3
+    * @videojs/store bumped to 10.0.0-beta.3
+    * @videojs/utils bumped to 10.0.0-beta.3
+
 ## [10.0.0-beta.2](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.1...@videojs/core@10.0.0-beta.2) (2026-03-10)
 
 

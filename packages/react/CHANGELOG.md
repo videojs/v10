@@ -1,5 +1,24 @@
 # Changelog
 
+## [10.0.0-beta.3](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.2...@videojs/react@10.0.0-beta.3) (2026-03-11)
+
+
+### Bug Fixes
+
+* **skins:** remove legacy caption markup artifacts ([#882](https://github.com/videojs/v10/issues/882)) ([85266ba](https://github.com/videojs/v10/commit/85266bab3b5b01a6cf6d769a16f662bffa57c208))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.3
+    * @videojs/core bumped to 10.0.0-beta.3
+    * @videojs/store bumped to 10.0.0-beta.3
+    * @videojs/utils bumped to 10.0.0-beta.3
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.3
+
 ## [10.0.0-beta.2](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.1...@videojs/react@10.0.0-beta.2) (2026-03-10)
 
 
