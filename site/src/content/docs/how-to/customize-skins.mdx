@@ -1,0 +1,53 @@
+---
+title: Customize Skins
+description: Learn how to customize Video.js v10 skins by copying and modifying them
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import EjectedSkin from '@/components/docs/EjectedSkin.astro';
+
+Video.js v10 comes with pre-built skins like Default and Minimal. If you'd like to customize them you can fully customize them by "ejecting" the code and making it your own.
+
+While eventually we’ll have a CLI that will eject skins in your preferred framework and style, for now we invite you to try it out with these copy-paste-ready implementations.
+
+{/* TODO: Add StyleCase for tailwind variants once tailwind is a supported style (see #840) */}
+
+## Default Video Skin
+
+<FrameworkCase frameworks={["react"]}>
+  <EjectedSkin id="default-video-react" />
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <EjectedSkin id="default-video" />
+</FrameworkCase>
+
+## Default Audio Skin
+
+<FrameworkCase frameworks={["react"]}>
+  <EjectedSkin id="default-audio-react" />
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <EjectedSkin id="default-audio" />
+</FrameworkCase>
+
+## Minimal Video Skin
+
+<FrameworkCase frameworks={["react"]}>
+  <EjectedSkin id="minimal-video-react" />
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <EjectedSkin id="minimal-video" />
+</FrameworkCase>
+
+## Minimal Audio Skin
+
+<FrameworkCase frameworks={["react"]}>
+  <EjectedSkin id="minimal-audio-react" />
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <EjectedSkin id="minimal-audio" />
+</FrameworkCase>

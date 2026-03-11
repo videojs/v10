@@ -1,7 +1,8 @@
 {
   // We use Biome for linting and formatting.
   "eslint.enable": false,
-  "prettier.enable": false,
+  // Prettier is enabled only for Astro template formatting (biome handles frontmatter).
+  "prettier.enable": true,
   "editor.formatOnSave": true,
 
   // Auto fix
@@ -15,9 +16,15 @@
 
   "biome.requireConfiguration": true,
   "editor.defaultFormatter": "biomejs.biome",
-  "typescript.tsdk": "node_modules/typescript/lib",
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
 
   "[astro]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[css]": {
     "editor.defaultFormatter": "biomejs.biome"
   }
 }

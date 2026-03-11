@@ -1,6 +1,6 @@
 # Video.js Website
 
-For docs, blog, and more: [v10.videojs.org](https://v10.videojs.org).
+For docs, blog, and more: [videojs.org](https://videojs.org).
 
 Mostly a standard [Astro](https://astro.build/) project.
 
@@ -10,7 +10,7 @@ Mostly a standard [Astro](https://astro.build/) project.
 ## Project Structure
 
 ```text
-├── public/                  # Static assets served as v10.videojs.org/[filename]
+├── public/                  # Static assets served as videojs.org/[filename]
 ├── scripts/
 │  └── api-docs-builder/     # Generates API reference JSON from TypeScript sources
 ├── integrations/            # Custom Astro integrations (pagefind, llms-markdown, etc.)
@@ -164,10 +164,9 @@ See [CLAUDE.md](CLAUDE.md) for details on each plugin.
 
 ## Custom Integrations
 
-Three custom Astro integrations in `integrations/`:
+Two custom Astro integrations in `integrations/`:
 
 - **pagefind** — Indexes HTML after build for static search; serves previous index in dev
 - **llms-markdown** — Generates LLM-optimized `.md` files and `llms.txt` index from `[data-llms-content]` elements
-- **check-v8-urls** — Audits Video.js v8 URL migration coverage at build time
 
 See [CLAUDE.md](CLAUDE.md) for implementation details.

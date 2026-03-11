@@ -36,6 +36,12 @@ const SVGO_CONFIG: Config = {
         attrs: ['^clip-rule$', '^fill-rule$'],
       },
     },
+    {
+      name: 'addAttributesToSVGElement',
+      params: {
+        attributes: [{ 'aria-hidden': 'true' }],
+      },
+    },
   ],
 };
 

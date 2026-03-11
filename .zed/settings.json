@@ -70,12 +70,12 @@
       "prettier": { "allowed": false }
     },
     "Astro": {
-      "formatter": { "language_server": { "name": "biome" } },
+      "formatter": "prettier",
       "code_actions_on_format": {
         "source.fixAll.biome": true,
         "source.organizeImports.biome": true
       },
-      "prettier": { "allowed": false }
+      "prettier": { "allowed": true }
     }
   }
 }

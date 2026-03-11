@@ -48,7 +48,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
 
     const duration = time?.duration ?? 0;
 
-    const { state, cssVars, rootRef, thumbRef, rootProps, thumbProps } = useSlider<TimeSliderCore.State>({
+    const { state, cssVars, rootRef, thumbRef, rootProps, rootStyle, thumbProps } = useSlider<TimeSliderCore.State>({
       computeState: (input) => {
         core.setInput(input);
         if (!time || !buffer) {
@@ -107,7 +107,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
             state,
             stateAttrMap: TimeSliderDataAttrs,
             ref: [forwardedRef, rootRef],
-            props: [{ style: cssVars }, rootProps, elementProps],
+            props: [{ style: { ...cssVars, ...rootStyle } }, rootProps, elementProps],
           }
         )}
       </SliderProvider>

@@ -1,6 +1,7 @@
 import { useStore } from '@nanostores/react';
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
+import { VJS10_DEMO_VIDEO } from '@/consts';
 import type { Renderer, Skin, UseCase } from '@/stores/installation';
 import { installMethod, renderer, skin, sourceUrl, useCase } from '@/stores/installation';
 
@@ -50,8 +51,20 @@ function getSkinTag(useCase: UseCase, skin: Skin): string {
 
 function getRendererElement(renderer: Renderer, url: string): string {
   const tag = getRendererTag(renderer);
-  const src = url.trim() || '...';
+  const src = url.trim() || getDefaultSourceUrl(renderer);
   return `<${tag} slot="media" src="${src}"></${tag}>`;
+}
+
+function getDefaultSourceUrl(renderer: Renderer): string {
+  switch (renderer) {
+    case 'hls':
+      return VJS10_DEMO_VIDEO.hls;
+    case 'background-video':
+    case 'html5-audio':
+    case 'html5-video':
+    default:
+      return VJS10_DEMO_VIDEO.mp4;
+  }
 }
 
 function generateHTMLCode(useCase: UseCase, skin: Skin, renderer: Renderer, url: string): string {

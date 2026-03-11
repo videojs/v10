@@ -1,7 +1,8 @@
 import { Select as BaseSelect } from '@base-ui/react/select';
 import clsx from 'clsx';
-import { Check, ChevronDown } from 'lucide-react';
-import { twMerge } from 'tailwind-merge';
+import Check from '@/components/icons/check.svg?react';
+import DropdownArrow from '@/components/icons/dropdown-arrow.svg?react';
+import { twMerge } from '@/utils/twMerge';
 
 export interface SelectOption<T = string> {
   value: T | null;
@@ -31,7 +32,7 @@ export function Select<T extends string = string>({
       <BaseSelect.Trigger
         className={twMerge(
           clsx(
-            'inline-flex items-center gap-2 text-left bg-light-60 dark:bg-dark-90 dark:text-light-100 border border-light-40 dark:border-dark-80 rounded-lg text-sm p-2'
+            'inline-flex items-center gap-2 bg-manila-50 dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot border border-manila-dark dark:border-warm-gray rounded-xs text-p3 p-2 text-left'
           ),
           className
         )}
@@ -41,7 +42,7 @@ export function Select<T extends string = string>({
         <BaseSelect.Value className="flex-1 min-w-0 truncate" />
         &nbsp;
         <BaseSelect.Icon>
-          <ChevronDown size={12} />
+          <DropdownArrow width={'1rem'} />
         </BaseSelect.Icon>
       </BaseSelect.Trigger>
 
@@ -49,7 +50,7 @@ export function Select<T extends string = string>({
         <BaseSelect.Positioner sideOffset={4} className="z-50">
           <BaseSelect.Popup
             className={clsx(
-              'border border-light-40 dark:border-dark-80 rounded-lg bg-light-60 dark:bg-dark-80 shadow-xl text-sm',
+              'border border-manila-dark dark:border-soot rounded-xs bg-manila-light dark:bg-soot shadow-xl text-p3',
               'overflow-y-auto'
             )}
             style={
@@ -69,13 +70,13 @@ export function Select<T extends string = string>({
                     'flex items-center gap-2 p-2',
                     option.disabled
                       ? 'opacity-50 cursor-default'
-                      : 'cursor-pointer intent:bg-light-80 dark:intent:bg-dark-100',
-                    option.value === value && 'bg-light-80 dark:bg-dark-100'
+                      : 'cursor-pointer intent:bg-manila-75 dark:intent:bg-warm-gray',
+                    option.value === value && 'bg-manila-75 dark:bg-warm-gray'
                   )}
                 >
                   <BaseSelect.ItemText>{option.label}</BaseSelect.ItemText>
                   <BaseSelect.ItemIndicator className="ml-auto inline-flex items-center">
-                    <Check size={16} />
+                    <Check width={'1rem'} />
                   </BaseSelect.ItemIndicator>
                 </BaseSelect.Item>
               ))}

@@ -6,11 +6,13 @@ import {
   type SliderApi,
   type SliderOptions,
   type SliderRootProps,
+  type SliderRootStyle,
   type SliderThumbProps,
 } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import { isRTL } from '@videojs/utils/dom';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useDestroy } from '../../utils/use-destroy';
 import { useForceRender } from '../../utils/use-force-render';
 import { useLatestRef } from '../../utils/use-latest-ref';
 
@@ -41,6 +43,7 @@ export interface UseSliderReturnValue<State extends SliderState = SliderState> {
   rootRef: React.RefCallback<HTMLElement>;
   thumbRef: React.RefCallback<HTMLElement>;
   rootProps: SliderRootProps;
+  rootStyle: SliderRootStyle;
   thumbProps: SliderThumbProps;
 }
 
@@ -82,8 +85,7 @@ export function useSlider<State extends SliderState = SliderState>(
     return createSlider(stableOptions);
   });
 
-  // Cleanup on unmount.
-  useEffect(() => () => slider.destroy(), [slider]);
+  useDestroy(slider);
 
   // Subscribe to slider input state.
   const input = useSnapshot(slider.input);
@@ -117,6 +119,7 @@ export function useSlider<State extends SliderState = SliderState>(
     rootRef,
     thumbRef,
     rootProps: slider.rootProps,
+    rootStyle: slider.rootStyle,
     thumbProps: slider.thumbProps,
   };
 }

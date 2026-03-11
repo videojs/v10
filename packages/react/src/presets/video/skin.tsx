@@ -15,11 +15,10 @@ import {
 } from '@videojs/icons/react';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
-import { Container } from '@/player/context';
+import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
-import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
@@ -29,8 +28,10 @@ import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
+import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import type { BaseSkinProps } from '../types';
+import { ErrorDialog } from './error-dialog';
 
 const SEEK_TIME = 10;
 
@@ -40,11 +41,45 @@ const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function 
   return <button ref={ref} type="button" className={cn('media-button', className)} {...props} />;
 });
 
+const errorClasses = {
+  root: 'media-error',
+  dialog: 'media-error__dialog media-surface',
+  content: 'media-error__content',
+  title: 'media-error__title',
+  description: 'media-error__description',
+  actions: 'media-error__actions',
+  close: 'media-button',
+};
+
+function PlayLabel(): ReactNode {
+  const paused = usePlayer((s) => Boolean(s.paused));
+  const ended = usePlayer((s) => Boolean(s.ended));
+  if (ended) return <>Replay</>;
+  return paused ? <>Play</> : <>Pause</>;
+}
+
+function CaptionsLabel(): ReactNode {
+  const active = usePlayer((s) => Boolean(s.subtitlesShowing));
+  return active ? <>Disable captions</> : <>Enable captions</>;
+}
+
+function PiPLabel(): ReactNode {
+  const pip = usePlayer((s) => Boolean(s.pip));
+  return pip ? <>Exit picture-in-picture</> : <>Enter picture-in-picture</>;
+}
+
+function FullscreenLabel(): ReactNode {
+  const fullscreen = usePlayer((s) => Boolean(s.fullscreen));
+  return fullscreen ? <>Exit fullscreen</> : <>Enter fullscreen</>;
+}
+
 export function VideoSkin(props: VideoSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 
   return (
-    <Container className={cn('media-default-skin', className)} {...rest}>
+    <Container className={cn('media-default-skin media-default-skin--video', className)} {...rest}>
+      {children}
+
       <BufferingIndicator
         render={(props) => (
           <div {...props} className="media-buffering-indicator">
@@ -55,62 +90,65 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
         )}
       />
 
-      <ErrorDialog
-        aria-labelledby="media-error-title"
-        aria-describedby="media-error-description"
-        render={(props, { onDismiss }) => (
-          <div {...props} className="media-error">
-            <div className="media-error__dialog media-surface">
-              <div className="media-error__content">
-                <p id="media-error-title" className="media-error__title">
-                  Something went wrong.
-                </p>
-                <p id="media-error-description" className="media-error__description">
-                  An error occurred while trying to play the video. Please try again.
-                </p>
-              </div>
-              <div className="media-error__actions">
-                <Button onClick={onDismiss}>OK</Button>
-              </div>
-            </div>
-          </div>
-        )}
-      />
+      <ErrorDialog classes={errorClasses} />
 
       <Controls.Root className="media-surface media-controls">
-        <PlayButton
-          render={(props) => (
-            <Button {...props} className="media-button--icon media-button--play">
-              <RestartIcon className="media-icon media-icon--restart" />
-              <PlayIcon className="media-icon media-icon--play" />
-              <PauseIcon className="media-icon media-icon--pause" />
-            </Button>
-          )}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <PlayButton
+                render={(props) => (
+                  <Button {...props} className="media-button--icon media-button--play">
+                    <RestartIcon className="media-icon media-icon--restart" />
+                    <PlayIcon className="media-icon media-icon--play" />
+                    <PauseIcon className="media-icon media-icon--pause" />
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Tooltip.Popup className="media-surface media-tooltip">
+            <PlayLabel />
+          </Tooltip.Popup>
+        </Tooltip.Root>
 
-        <SeekButton
-          seconds={-SEEK_TIME}
-          render={(props) => (
-            <Button {...props} className="media-button--icon media-button--seek">
-              <span className="media-icon__container">
-                <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
-                <span className="media-icon__label">{SEEK_TIME}</span>
-              </span>
-            </Button>
-          )}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <SeekButton
+                seconds={-SEEK_TIME}
+                render={(props) => (
+                  <Button {...props} className="media-button--icon media-button--seek">
+                    <span className="media-icon__container">
+                      <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
+                      <span className="media-icon__label">{SEEK_TIME}</span>
+                    </span>
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Tooltip.Popup className="media-surface media-tooltip">Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+        </Tooltip.Root>
 
-        <SeekButton
-          seconds={SEEK_TIME}
-          render={(props) => (
-            <Button {...props} className="media-button--icon media-button--seek">
-              <span className="media-icon__container">
-                <SeekIcon className="media-icon media-icon--seek" />
-                <span className="media-icon__label">{SEEK_TIME}</span>
-              </span>
-            </Button>
-          )}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <SeekButton
+                seconds={SEEK_TIME}
+                render={(props) => (
+                  <Button {...props} className="media-button--icon media-button--seek">
+                    <span className="media-icon__container">
+                      <SeekIcon className="media-icon media-icon--seek" />
+                      <span className="media-icon__label">{SEEK_TIME}</span>
+                    </span>
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Tooltip.Popup className="media-surface media-tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+        </Tooltip.Root>
 
         <Time.Group className="media-time">
           <Time.Value type="current" className="media-time__value" />
@@ -124,9 +162,16 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
           <Time.Value type="duration" className="media-time__value" />
         </Time.Group>
 
-        <PlaybackRateButton
-          render={(props) => <Button {...props} className="media-button--icon media-button--playback-rate" />}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <PlaybackRateButton
+                render={(props) => <Button {...props} className="media-button--icon media-button--playback-rate" />}
+              />
+            }
+          />
+          <Tooltip.Popup className="media-surface media-tooltip">Toggle playback rate</Tooltip.Popup>
+        </Tooltip.Root>
 
         <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
           <Popover.Trigger
@@ -142,7 +187,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
               />
             }
           />
-          <Popover.Popup className="media-surface media-popup media-popup--volume media-popup-animation">
+          <Popover.Popup className="media-surface media-popover media-popover--volume">
             <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
               <VolumeSlider.Track className="media-slider__track">
                 <VolumeSlider.Fill className="media-slider__fill" />
@@ -152,45 +197,61 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
           </Popover.Popup>
         </Popover.Root>
 
-        <CaptionsButton
-          render={(props) => (
-            <Button {...props} className="media-button--icon media-button--captions">
-              <CaptionsOffIcon className="media-icon media-icon--captions-off" />
-              <CaptionsOnIcon className="media-icon media-icon--captions-on" />
-            </Button>
-          )}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <CaptionsButton
+                render={(props) => (
+                  <Button {...props} className="media-button--icon media-button--captions">
+                    <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+                    <CaptionsOnIcon className="media-icon media-icon--captions-on" />
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Tooltip.Popup className="media-surface media-tooltip">
+            <CaptionsLabel />
+          </Tooltip.Popup>
+        </Tooltip.Root>
 
-        <PiPButton
-          render={(props) => (
-            <Button {...props} className="media-button--icon">
-              <PipIcon className="media-icon" />
-            </Button>
-          )}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <PiPButton
+                render={(props) => (
+                  <Button {...props} className="media-button--icon">
+                    <PipIcon className="media-icon" />
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Tooltip.Popup className="media-surface media-tooltip">
+            <PiPLabel />
+          </Tooltip.Popup>
+        </Tooltip.Root>
 
-        <FullscreenButton
-          render={(props) => (
-            <Button {...props} className="media-button--icon media-button--fullscreen">
-              <FullscreenEnterIcon className="media-icon media-icon--fullscreen-enter" />
-              <FullscreenExitIcon className="media-icon media-icon--fullscreen-exit" />
-            </Button>
-          )}
-        />
+        <Tooltip.Root side="top">
+          <Tooltip.Trigger
+            render={
+              <FullscreenButton
+                render={(props) => (
+                  <Button {...props} className="media-button--icon media-button--fullscreen">
+                    <FullscreenEnterIcon className="media-icon media-icon--fullscreen-enter" />
+                    <FullscreenExitIcon className="media-icon media-icon--fullscreen-exit" />
+                  </Button>
+                )}
+              />
+            }
+          />
+          <Tooltip.Popup className="media-surface media-tooltip">
+            <FullscreenLabel />
+          </Tooltip.Popup>
+        </Tooltip.Root>
       </Controls.Root>
 
-      {/* <div className="media-captions">
-        <div className="media-captions__container">
-          <span className="media-captions__text">An example cue</span>
-          <span className="media-captions__text">
-            <p>Another example cue with HTML</p>
-          </span>
-        </div>
-      </div> */}
-
       <div className="media-overlay" />
-
-      {children}
     </Container>
   );
 }

@@ -9,10 +9,11 @@ import {
 } from '@videojs/core';
 import { createThumbnail, selectTextTrack } from '@videojs/core/dom';
 import type { CSSProperties } from 'react';
-import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
+import { forwardRef, useMemo, useRef, useState } from 'react';
 
 import { useOptionalPlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
+import { useDestroy } from '../../utils/use-destroy';
 import { renderElement } from '../../utils/use-render';
 
 export interface ThumbnailProps extends UIComponentProps<'div', ThumbnailCore.State>, ThumbnailCore.Props {
@@ -49,10 +50,7 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
     })
   );
 
-  useEffect(() => {
-    handle.connect();
-    return () => handle.destroy();
-  }, [handle]);
+  useDestroy(handle, () => handle.connect());
 
   // Resolve thumbnails: external prop takes priority over auto <track> path.
   const thumbnails = useMemo(() => {

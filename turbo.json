@@ -2,10 +2,15 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "stream",
   "concurrency": "20",
+  "globalEnv": ["CONTEXT", "DEPLOY_PRIME_URL"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".netlify/**"]
+    },
+    "build:cdn": {
+      "dependsOn": ["build"],
+      "outputs": ["cdn/**"]
     },
     "dev": {
       "dependsOn": ["^build"],

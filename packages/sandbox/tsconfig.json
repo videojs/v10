@@ -4,7 +4,10 @@
     "composite": false,
     "noEmit": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "@app/*": ["./app/*"]
+    }
   },
-  "include": ["src", "scripts"]
+  "include": ["app", "src", "templates", "scripts", "types"]
 }

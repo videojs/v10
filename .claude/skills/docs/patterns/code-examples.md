@@ -33,7 +33,7 @@ function App() {
   return (
     <Player.Provider>
       <Player.Container>
-        <Video src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4" />
+        <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" />
         <PlayButton />
       </Player.Container>
     </Player.Provider>
@@ -88,7 +88,7 @@ export default function BasicUsage() {
     <Player.Provider>
       <Player.Container className="player">
         <Video
-          src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
+          src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
           autoPlay
           muted
           playsInline
@@ -109,7 +109,7 @@ export default function BasicUsage() {
 ```html
 <video-player class="player">
   <video
-    src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4"
+    src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
     autoplay
     muted
     playsinline
@@ -234,7 +234,7 @@ export default function App() {
   return (
     <Player.Provider>
       <Player.Container className="player">
-        <Video src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4" />
+        <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" />
         <PlayButton />
       </Player.Container>
     </Player.Provider>

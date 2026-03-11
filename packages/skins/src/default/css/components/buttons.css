@@ -1,0 +1,98 @@
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+/* Base button */
+.media-default-skin .media-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  background: oklch(1 0 0);
+  border: none;
+  border-radius: calc(infinity * 1px);
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  color: oklch(0 0 0);
+  font-weight: 500;
+  text-align: center;
+  transition-property: background-color, color, outline-offset, transform;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+  cursor: pointer;
+  user-select: none;
+
+  &:focus-visible {
+    outline-color: oklch(62.3% 0.214 259.815);
+    outline-offset: 2px;
+  }
+
+  &[disabled] {
+    opacity: 0.5;
+    filter: grayscale(1);
+    cursor: not-allowed;
+  }
+
+  &[data-availability="unavailable"] {
+    display: none;
+  }
+}
+
+/* Icon button variant */
+.media-default-skin .media-button--icon {
+  display: grid;
+  width: 2.125rem;
+  padding: 0;
+  aspect-ratio: 1;
+  background: transparent;
+  color: inherit;
+  text-shadow: inherit;
+
+  &:hover,
+  &:focus-visible,
+  &[aria-expanded="true"] {
+    background-color: oklch(from currentColor l c h / 0.1);
+    text-decoration: none;
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+
+  & .media-icon {
+    filter: drop-shadow(0 1px 0 var(--media-controls-current-shadow-color, oklch(0 0 0 / 0.25)));
+  }
+}
+
+/* Seek button */
+.media-default-skin .media-button--seek {
+  & .media-icon__label {
+    position: absolute;
+    right: -1px;
+    bottom: -3px;
+    font-size: 0.75em;
+    font-weight: 480;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &:has(.media-icon--flipped) .media-icon__label {
+    right: unset;
+    left: -1px;
+  }
+
+  @container media-controls (width < 28rem) {
+    display: none;
+  }
+}
+
+/* Playback rate button */
+.media-default-skin .media-button--playback-rate {
+  padding: 0;
+
+  &::after {
+    content: attr(data-rate) "\00D7";
+    width: 4ch;
+    font-variant-numeric: tabular-nums;
+  }
+}

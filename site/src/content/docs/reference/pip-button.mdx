@@ -43,20 +43,43 @@ Toggles picture-in-picture (PiP) mode. Detects platform support through `availab
 
 You can style the button based on PiP state:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 /* In PiP mode */
 media-pip-button[data-pip] {
   background: red;
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders a `<button>` with the same data attributes. Add a `className` and use it as the selector:
+
+```css
+/* In PiP mode */
+.pip-button[data-pip] {
+  background: red;
+}
+```
+</FrameworkCase>
 
 Consider hiding the button when unsupported:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 media-pip-button[data-availability="unsupported"] {
   display: none;
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+.pip-button[data-availability="unsupported"] {
+  display: none;
+}
+```
+</FrameworkCase>
 
 ## Accessibility
 

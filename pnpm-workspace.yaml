@@ -4,5 +4,4 @@ trustPolicy: no-downgrade
 
 packages:
   - 'packages/*'
-  - 'packages/__tech-preview__/*'
   - site

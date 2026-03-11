@@ -1,4 +1,4 @@
-import { VJS8_DEMO_VIDEO } from '@/consts';
+import { VJS10_DEMO_VIDEO } from '@/consts';
 import { createPlayer, Poster } from '@videojs/react';
 import { MinimalVideoSkin, Video, videoFeatures } from '@videojs/react/video';
 import '@videojs/react/video/minimal-skin.css';
@@ -18,8 +18,8 @@ export function MinimalSkinDemo() {
   return (
     <Player.Provider>
       <MinimalVideoSkin className="w-full aspect-video">
-        <Video src={VJS8_DEMO_VIDEO.mp4} playsInline />
-        <Poster src={VJS8_DEMO_VIDEO.poster} />
+        <Video src={VJS10_DEMO_VIDEO.mp4} playsInline />
+        <Poster src={VJS10_DEMO_VIDEO.poster} />
       </MinimalVideoSkin>
     </Player.Provider>
   );

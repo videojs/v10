@@ -31,6 +31,7 @@ export default {
         'sandbox',
         'site',
         'skin',
+        'spf',
         'store',
         'test',
         'utils',

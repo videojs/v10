@@ -45,19 +45,41 @@ Seeking is throttled via the `commitThrottle` prop (default 100ms) to avoid over
 
 Use [CSS custom properties](#root-css-custom-properties) to style the fill, pointer, and buffer levels:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 media-time-slider::before {
   width: calc(var(--media-slider-fill) * 1%);
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders a `<div>` with the same data attributes and CSS custom properties. Add a `className` and use it as the selector:
+
+```css
+.time-slider::before {
+  width: calc(var(--media-slider-fill) * 1%);
+}
+```
+</FrameworkCase>
 
 Use `data-seeking` to style during active seek operations:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 media-time-slider[data-seeking] {
   opacity: 0.8;
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+.time-slider[data-seeking] {
+  opacity: 0.8;
+}
+```
+</FrameworkCase>
 
 ## Accessibility
 

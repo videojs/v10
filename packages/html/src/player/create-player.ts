@@ -40,7 +40,7 @@ export interface CreatePlayerResult<Store extends PlayerStore> {
  *
  * @example
  * ```ts
- * import { createPlayer, MediaElement } from '@videojs/html';
+ * import { createPlayer, MediaElement, selectPlayback } from '@videojs/html';
  * import { videoFeatures } from '@videojs/html/video';
  *
  * const { ProviderMixin, ContainerMixin, PlayerController, context } = createPlayer({

@@ -41,10 +41,10 @@ export function createProviderMixin<Store extends PlayerStore>(
         this.#provider.setValue(this.store);
       }
 
-      override disconnectedCallback() {
-        super.disconnectedCallback();
+      override destroyCallback() {
         this.#store?.destroy();
         this.#store = null;
+        super.destroyCallback();
       }
     }
 

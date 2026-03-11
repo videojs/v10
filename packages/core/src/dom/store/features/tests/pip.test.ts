@@ -82,6 +82,39 @@ describe('pipFeature', () => {
 
       expect(store.state.pip).toBe(false);
     });
+
+    it('syncs pip when media element proxies to an internal target video', () => {
+      Object.defineProperty(document, 'pictureInPictureEnabled', {
+        value: true,
+        writable: true,
+        configurable: true,
+      });
+
+      const targetVideo = createMockVideo();
+      const mediaHost = document.createElement('div') as unknown as HTMLVideoElement & {
+        target: HTMLVideoElement;
+      };
+
+      Object.defineProperty(mediaHost, 'target', {
+        value: targetVideo,
+        writable: true,
+        configurable: true,
+      });
+
+      const store = createStore<PlayerTarget>()(pipFeature);
+      store.attach({ media: mediaHost, container: null });
+
+      expect(store.state.pip).toBe(false);
+
+      Object.defineProperty(document, 'pictureInPictureElement', {
+        value: targetVideo,
+        writable: true,
+        configurable: true,
+      });
+      mediaHost.dispatchEvent(new Event('enterpictureinpicture'));
+
+      expect(store.state.pip).toBe(true);
+    });
   });
 
   describe('actions', () => {
@@ -106,6 +139,28 @@ describe('pipFeature', () => {
       // Set the video as the current PiP element
       Object.defineProperty(document, 'pictureInPictureElement', {
         value: video,
+        writable: true,
+        configurable: true,
+      });
+
+      const store = createStore<PlayerTarget>()(pipFeature);
+      store.attach({ media: video, container: null });
+
+      await store.exitPictureInPicture();
+
+      expect(document.exitPictureInPicture).toHaveBeenCalled();
+
+      document.exitPictureInPicture = originalExit;
+    });
+
+    it('exitPictureInPicture() calls document.exitPictureInPicture even without pictureInPictureElement', async () => {
+      const originalExit = document.exitPictureInPicture;
+      document.exitPictureInPicture = vi.fn().mockResolvedValue(undefined);
+
+      const video = createMockVideo();
+
+      Object.defineProperty(document, 'pictureInPictureElement', {
+        value: null,
         writable: true,
         configurable: true,
       });

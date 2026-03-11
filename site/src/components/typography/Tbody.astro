@@ -1,7 +1,7 @@
 ---
 
 import type { HTMLTag, Polymorphic } from 'astro/types';
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from '@/utils/twMerge';
 
 type Props<Tag extends HTMLTag = 'tbody'> = Polymorphic<{ as: Tag }> & {
   class?: string;

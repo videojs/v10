@@ -1,7 +1,7 @@
 import { Dialog } from '@base-ui/react/dialog';
 import { useStore } from '@nanostores/react';
 import { useEffect, useRef, useState } from 'react';
-import { currentFramework, currentStyle } from '@/stores/preferences';
+import { currentFramework } from '@/stores/preferences';
 
 interface SearchProps {
   children: React.ReactNode;
@@ -14,7 +14,6 @@ interface SearchProps {
 export default function Search({ children, className, baseUrl, bundlePath, searchId, searchStyle }: SearchProps) {
   const [open, setOpen] = useState(false);
   const framework = useStore(currentFramework);
-  const style = useStore(currentStyle);
   const searchRef = useRef<HTMLDivElement>(null);
 
   // load Pagefind when opened
@@ -37,14 +36,13 @@ export default function Search({ children, className, baseUrl, bundlePath, searc
       });
       search.triggerFilters({
         framework: [framework],
-        style: [style],
       });
     };
     init();
     return () => {
       search.destroy();
     };
-  }, [baseUrl, bundlePath, framework, open, searchId, style]);
+  }, [baseUrl, bundlePath, framework, open, searchId]);
 
   // open with cmd+k or ctrl+k
   useEffect(() => {
@@ -72,12 +70,12 @@ export default function Search({ children, className, baseUrl, bundlePath, searc
         {children}
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 flex items-start justify-center bg-dark-110/20 backdrop-blur-xs z-50">
+        <Dialog.Backdrop className="fixed inset-0 flex items-start justify-center bg-faded-black/20 backdrop-blur-xs z-50">
           <Dialog.Popup
             initialFocus={false} // pagefind.autofocus = true
             id={searchId}
             ref={searchRef}
-            className="w-full max-w-5xl mx-4 mb-4 p-4 rounded-3xl bg-light-80 dark:bg-dark-110 overflow-y-scroll overflow-x-hidden"
+            className="w-full max-w-5xl mx-4 mb-4 p-4 rounded-xs bg-manila-light dark:bg-faded-black dark:border-warm-gray border-manila-75 border overflow-y-scroll overflow-x-hidden"
             style={{
               minHeight: '50svh',
               maxHeight: '75svh',

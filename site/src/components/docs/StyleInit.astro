@@ -12,27 +12,39 @@ const defaultStyleConfig = getDefaultStyle(SUPPORTED_FRAMEWORKS[0]);
 const allStyles = [...new Set(Object.values(FRAMEWORK_STYLES).flat())];
 ---
 
-{/* Style visibility CSS rules - generated from FRAMEWORK_STYLES to stay in sync */}
-<style set:html={`
+{
+  /* Style visibility CSS rules - generated from FRAMEWORK_STYLES to stay in sync */
+}
+<style
+  set:html={`
   [data-for-style] { display: none; }
-  ${allStyles.map(style => `html[data-style='${style}'] [data-for-style~='${style}'] { display: contents; }`).join('\n  ')}
-`}></style>
+  ${allStyles.map((style) => `html[data-style='${style}'] [data-for-style~='${style}'] { display: contents; }`).join("\n  ")}
+`}
+></style>
 
-{/*
+{
+  /*
   Style initialization script - runs before paint to prevent FOUC.
 
   Supports ?style= query param for deep-linking (e.g., ?style=tailwind).
   This allows external links to specify a style preference. The style is
   validated against valid styles for the current framework and persisted
   to localStorage.
-*/}
+*/
+}
 <script
   is:inline
-  define:vars={{ keyPrefix: STYLE_KEY_PREFIX, frameworkStyles: frameworkStylesConfig, defaultStyle: defaultStyleConfig }}
+  define:vars={{
+    keyPrefix: STYLE_KEY_PREFIX,
+    frameworkStyles: frameworkStylesConfig,
+    defaultStyle: defaultStyleConfig,
+  }}
 >
-  if (typeof localStorage !== 'undefined' && typeof document !== 'undefined') {
+  if (typeof localStorage !== "undefined" && typeof document !== "undefined") {
     // Extract framework from URL: /docs/framework/{framework}/...
-    const pathMatch = window.location.pathname.match(/\/docs\/framework\/([^/]+)/);
+    const pathMatch = window.location.pathname.match(
+      /\/docs\/framework\/([^/]+)/,
+    );
     const framework = pathMatch?.[1];
 
     const validStyles = frameworkStyles[framework];
@@ -41,7 +53,7 @@ const allStyles = [...new Set(Object.values(FRAMEWORK_STYLES).flat())];
 
       // Check for ?style= query param (enables deep-linking)
       const urlParams = new URLSearchParams(window.location.search);
-      const queryStyle = urlParams.get('style');
+      const queryStyle = urlParams.get("style");
 
       let style;
       if (queryStyle && validStyles.includes(queryStyle)) {

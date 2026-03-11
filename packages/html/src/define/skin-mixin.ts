@@ -1,46 +1,58 @@
 import type { ReactiveElement } from '@videojs/element';
 import type { Constructor } from '@videojs/utils/types';
+import styles from './base.css?inline';
+
+const STYLES_ID = '__media-styles';
+
+function ensureStyles(): void {
+  if (document.getElementById(STYLES_ID)) return;
+  const style = document.createElement('style');
+  style.id = STYLES_ID;
+  style.textContent = styles;
+  document.head.appendChild(style);
+}
 
 /**
  * Mixin for skin elements that renders the template from a static
- * `getTemplateHTML` method and resolves `<slot name="media">` placeholders
- * by replacing them with the actual media element children.
+ * `getTemplateHTML` method into a shadow root. Native `<slot>` elements
+ * handle light DOM projection automatically.
+ *
+ * When `static styles` is set, the stylesheet is adopted into the
+ * shadow root via `adoptedStyleSheets`.
  */
-export function SkinMixin<Base extends Constructor<ReactiveElement>>(BaseClass: Base): Base {
+export function SkinMixin<Base extends Constructor<ReactiveElement>>(
+  BaseClass: Base
+): Base & { shadowRootOptions: ShadowRootInit; styles?: CSSStyleSheet } {
   class SkinElement extends (BaseClass as Constructor<ReactiveElement>) {
+    static shadowRootOptions: ShadowRootInit = { mode: 'open' };
+    static styles?: CSSStyleSheet;
+
     constructor(...args: any[]) {
       super(...args);
 
-      const ctor = this.constructor as { getTemplateHTML?: () => string };
+      ensureStyles();
 
-      if (ctor.getTemplateHTML) {
-        const children = [...this.childNodes];
-        this.innerHTML = ctor.getTemplateHTML();
-        this.#resolveSlots(children);
+      if (!this.shadowRoot) {
+        const ctor = this.constructor as typeof SkinElement & { getTemplateHTML?: () => string };
+        this.attachShadow(ctor.shadowRootOptions);
+
+        if (ctor.styles) {
+          this.shadowRoot!.adoptedStyleSheets = [ctor.styles];
+        }
+
+        if (ctor.getTemplateHTML) {
+          this.shadowRoot!.innerHTML = ctor.getTemplateHTML();
+        }
       }
-    }
-
-    override connectedCallback(): void {
-      // During innerHTML parsing, children aren't available in the constructor.
-      // Resolve any remaining slotted elements before the container connects.
-      this.#resolveSlots();
-      super.connectedCallback();
-    }
-
-    #resolveSlots(nodes?: ChildNode[]): void {
-      const slot = this.querySelector('slot[name="media"]');
-      if (!slot) return;
-
-      // Collect media from either the provided node list (constructor) or
-      // from direct children that haven't been placed yet (connectedCallback).
-      const media = nodes
-        ? nodes.filter((n): n is HTMLElement => n instanceof HTMLElement && n.getAttribute('slot') === 'media')
-        : [...this.querySelectorAll<HTMLElement>(':scope > [slot="media"]')];
-
-      for (const el of media) slot.before(el);
-      slot.remove();
     }
   }
 
-  return SkinElement as unknown as Base;
+  return SkinElement as unknown as Base & { shadowRootOptions: ShadowRootInit; styles?: CSSStyleSheet };
+}
+
+/** Create a shared `CSSStyleSheet` from a CSS string. */
+export function createStyles(css: string): CSSStyleSheet {
+  const sheet = new CSSStyleSheet();
+  sheet.replaceSync(css);
+  return sheet;
 }

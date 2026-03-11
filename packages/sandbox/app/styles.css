@@ -1,0 +1,12 @@
+@import "tailwindcss";
+@source "../app";
+@source "../src";
+@source "../templates";
+/* NOTE: This is non-standard since you'd usually eject the Tailwind skin into your own project and not import it from node_modules. */
+@source "../node_modules/@videojs/skins";
+@source "../node_modules/@videojs/html";
+@source "../node_modules/@videojs/react";
+
+@theme {
+  --font-sans: InterVariable, Inter, ui-sans-serif, system-ui, sans-serif;
+}

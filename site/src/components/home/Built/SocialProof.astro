@@ -1,0 +1,57 @@
+---
+import clsx from 'clsx';
+import {
+  AdobeLogo,
+  AmazonLogo,
+  AwgeLogo,
+  CNNLogo,
+  ConsumerReports,
+  CourseraLogo,
+  DropboxLogo,
+  LinkedinLogo,
+  SAPLogo,
+  TheOnionLogo,
+  UdemyLogo,
+  ZoomLogo,
+} from '../../icons/SocialProofLogos';
+import Marquee from './Marquee.astro';
+
+const LOGOS = [
+  { Logo: AdobeLogo, alt: 'Adobe' },
+  { Logo: LinkedinLogo, alt: 'Linkedin' },
+  { Logo: UdemyLogo, alt: 'Udemy' },
+  { Logo: AmazonLogo, alt: 'Amazon' },
+  { Logo: AwgeLogo, alt: 'AWGE' },
+  { Logo: ZoomLogo, alt: 'Zoom' },
+  { Logo: CourseraLogo, alt: 'Coursera' },
+  { Logo: CNNLogo, alt: 'CNN' },
+  { Logo: ConsumerReports, alt: 'Consumer Reports' },
+  { Logo: TheOnionLogo, alt: 'The Onion' },
+  { Logo: SAPLogo, alt: 'SAP' },
+  { Logo: DropboxLogo, alt: 'Dropbox' },
+];
+---
+
+<div
+  class="relative z-1 col-span-full -mb-12.5 overflow-hidden rounded-xs border border-manila-dark bg-faded-black md:-mb-10"
+>
+  <header class="px-2.5">
+    <Marquee />
+  </header>
+  <div
+    class="grid-separator-container relative z-0 grid auto-rows-auto grid-cols-2 gap-0 border-faded-black md:grid-cols-4 lg:grid-cols-6"
+  >
+    {
+      LOGOS.map((logo, index) => (
+        <div
+          class={clsx(
+            "grid-separators relative h-27.5 w-full items-center justify-center border-warm-gray bg-faded-black md:h-32 lg:h-40",
+            index >= 10 ? "hidden md:flex" : "flex",
+          )}
+        >
+          <logo.Logo width="6" />
+        </div>
+      ))
+    }
+  </div>
+</div>

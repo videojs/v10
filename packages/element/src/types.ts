@@ -56,6 +56,13 @@ export interface ReactiveController {
   hostDisconnected?(): void;
 
   /**
+   * Called when the host is permanently destroyed. Unlike `hostDisconnected`,
+   * this signals that the host will not reconnect — all resources should be
+   * released.
+   */
+  hostDestroyed?(): void;
+
+  /**
    * Called during the client-side host update, just before the host calls
    * its own update.
    */

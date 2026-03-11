@@ -15,14 +15,6 @@
   z-index: 30;
 }
 
-.react-buffering-indicator-basic__overlay .react-buffering-indicator-basic__spinner {
-  display: none;
-}
-
-.react-buffering-indicator-basic__overlay[data-visible] .react-buffering-indicator-basic__spinner {
-  display: block;
-}
-
 .react-buffering-indicator-basic__spinner {
   width: 48px;
   height: 48px;
@@ -30,6 +22,11 @@
   border-top-color: white;
   border-radius: 50%;
   animation: buffering-spin 0.8s linear infinite;
+  display: none;
+}
+
+.react-buffering-indicator-basic__overlay[data-visible] .react-buffering-indicator-basic__spinner {
+  display: block;
 }
 
 @keyframes buffering-spin {

@@ -49,7 +49,7 @@ const blog = defineCollection({
     },
   }),
   // Type-check frontmatter using a schema
-  schema: () =>
+  schema: ({ image }) =>
     z.object({
       title: z.string(),
       description: z.string(),
@@ -58,6 +58,8 @@ const blog = defineCollection({
       authors: z.array(reference('authors')),
       canonical: z.string().url().optional(),
       devOnly: z.boolean().optional(), // only visible in development mode
+      ogImage: image().or(z.string().url()).optional(),
+      twitterImage: image().or(z.string().url()).optional(),
     }),
 });
 
@@ -124,4 +126,18 @@ const utilReference = defineCollection({
   schema: UtilReferenceSchema,
 });
 
-export const collections = { blog, docs, authors, componentReference, utilReference };
+const ejectedSkins = defineCollection({
+  loader: file('./src/content/ejected-skins.json'),
+  schema: z.object({
+    id: z.string(),
+    name: z.string(),
+    platform: z.enum(['html', 'react']),
+    style: z.enum(['css', 'tailwind']),
+    html: z.string().optional(),
+    tsx: z.string().optional(),
+    jsx: z.string().optional(),
+    css: z.string().optional(),
+  }),
+});
+
+export const collections = { blog, docs, authors, componentReference, utilReference, ejectedSkins };

@@ -1,8 +1,0 @@
-{
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "composite": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"]
-  },
-  "include": ["./**/*.ts"]
-}

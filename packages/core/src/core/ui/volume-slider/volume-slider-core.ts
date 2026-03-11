@@ -40,6 +40,7 @@ export class VolumeSliderCore extends SliderCore {
   getState(): VolumeSliderState {
     const media = this.#media!;
     const { volume, muted } = media;
+    const effectivelyMuted = muted || volume === 0;
     const { dragging, dragPercent } = this.input;
     const volumePercent = volume * 100;
     const value = dragging ? this.valueFromPercent(dragPercent) : volumePercent;
@@ -47,9 +48,9 @@ export class VolumeSliderCore extends SliderCore {
 
     return {
       ...base,
-      fillPercent: muted ? 0 : base.fillPercent,
+      fillPercent: effectivelyMuted ? 0 : base.fillPercent,
       volume,
-      muted,
+      muted: effectivelyMuted,
     };
   }
 

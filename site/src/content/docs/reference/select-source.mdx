@@ -19,8 +19,7 @@ The returned state includes the current `src` and `type`.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { usePlayer } from '@videojs/react';
-import { selectSource } from '@videojs/core/dom';
+import { selectSource, usePlayer } from '@videojs/react';
 
 function SourceInfo() {
   const source = usePlayer(selectSource);
@@ -33,14 +32,13 @@ function SourceInfo() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import { createPlayer, MediaElement } from '@videojs/html';
+import { createPlayer, MediaElement, selectSource } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
-import { selectSource } from '@videojs/core/dom';
 
 const { PlayerController, context } = createPlayer({ features: videoFeatures });
 
 class SourceInfo extends MediaElement {
-  #source = new PlayerController(this, context, selectSource);
+  readonly #source = new PlayerController(this, context, selectSource);
 }
 ```
 </FrameworkCase>

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.2/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.6/schema.json",
   "html": {
     "experimentalFullSupportEnabled": false
   },
@@ -79,6 +79,23 @@
   },
   "overrides": [
     {
+      "includes": ["site/src/**", "!site/src/utils/twMerge.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "tailwind-merge": "Use '@/utils/twMerge' instead — it's configured for our custom theme."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["packages/element/**"],
       "linter": {
         "rules": {
@@ -108,15 +125,17 @@
     "includes": [
       "**",
       "!**/.astro",
+      "!**/.netlify",
       "!**/.vercel",
       "!**/.turbo",
       "!**/.next",
+      "!**/.opencode",
       "!**/.github",
+      "!build",
       "!**/dist",
       "!**/examples",
       "!**/styles/vjs.css",
-      "!**/packages/*/types",
-      "!**/packages/__tech-preview__"
+      "!**/packages/*/types"
     ]
   }
 }

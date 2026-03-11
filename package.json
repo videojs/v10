@@ -16,8 +16,9 @@
   },
   "scripts": {
     "prepare": "simple-git-hooks",
-    "postinstall": "node scripts/link-aliases.mjs",
+    "postinstall": "node build/scripts/link-aliases.mjs",
     "build:packages": "turbo run build --filter='./packages/*'",
+    "build:cdn": "turbo run build:cdn --filter=@videojs/html",
     "build:site": "turbo run build --filter=site",
     "build": "turbo run build",
     "clean": "turbo run clean",
@@ -25,12 +26,14 @@
     "dev:site": "turbo run dev --filter=site",
     "dev": "turbo run dev --parallel",
     "dev:packages": "turbo run dev --parallel --filter='./packages/*'",
+    "dev:sandbox": "turbo run dev --filter=@videojs/sandbox",
     "lint": "biome check .",
     "lint:fix": "biome check . --write",
     "lint:fix:file": "biome check --write",
-    "link:aliases": "node scripts/link-aliases.mjs",
+    "link:aliases": "node build/scripts/link-aliases.mjs",
     "size": "node .github/scripts/bundle-size.js | node .github/scripts/bundle-size-report.js",
     "test": "turbo run test",
+    "format:astro": "prettier --write 'site/src/**/*.astro'",
     "typecheck": "tsc --build"
   },
   "devDependencies": {
@@ -42,7 +45,11 @@
     "@commitlint/format": "^20.0.0",
     "@types/node": "^22.18.6",
     "esbuild": "^0.27.3",
+    "lightningcss": "^1.32.0",
     "lint-staged": "^16.2.3",
+    "prettier": "^3.8.1",
+    "prettier-plugin-astro": "^0.14.1",
+    "prettier-plugin-tailwindcss": "^0.7.2",
     "react": "^18.0.0",
     "react-compiler-runtime": "^1.0.0",
     "react-dom": "^18.0.0",
@@ -56,6 +63,7 @@
     "commit-msg": "pnpm commitlint"
   },
   "lint-staged": {
+    "*.astro": "prettier --write",
     "*": "biome check --write --no-errors-on-unmatched"
   }
 }

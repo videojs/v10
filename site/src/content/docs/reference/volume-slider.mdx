@@ -43,11 +43,23 @@ Controls the media volume level. The slider maps its 0–100 internal range to t
 
 Use [CSS custom properties](#root-css-custom-properties) to style the fill and pointer levels:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 media-volume-slider::before {
   width: calc(var(--media-slider-fill) * 1%);
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders a `<div>` with the same data attributes and CSS custom properties. Add a `className` and use it as the selector:
+
+```css
+.volume-slider::before {
+  width: calc(var(--media-slider-fill) * 1%);
+}
+```
+</FrameworkCase>
 
 ## Accessibility
 

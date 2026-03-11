@@ -5,6 +5,7 @@ import { getCollection, getEntries, render } from 'astro:content';
 import FormattedDate from '@/components/FormattedDate.astro';
 import JsonLd from '@/components/JsonLd.astro';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
+import { PRODUCTION_URL } from '@/consts';
 import Blog from '@/layouts/Blog.astro';
 import { createBlogPostingSchema } from '@/utils/jsonLd/schemas';
 
@@ -23,8 +24,15 @@ const post = Astro.props;
 const { Content, remarkPluginFrontmatter } = await render(post);
 const authors = await getEntries(post.data.authors);
 
+// Resolve OG image URL for JSON-LD
+const ogImageUrl = post.data.ogImage
+  ? typeof post.data.ogImage === 'string'
+    ? post.data.ogImage
+    : new URL(post.data.ogImage.src, Astro.url).toString()
+  : undefined;
+
 // Build JSON-LD schema for BlogPosting
-const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const pageUrl = new URL(Astro.url.pathname, PRODUCTION_URL).toString();
 const jsonLdSchema = createBlogPostingSchema({
   title: post.data.title,
   description: post.data.description,
@@ -33,11 +41,18 @@ const jsonLdSchema = createBlogPostingSchema({
   updatedDate: post.data.updatedDate,
   readingTime: remarkPluginFrontmatter.readingTimeMinutes,
   authors,
-  siteUrl: Astro.site!.toString(),
+  siteUrl: PRODUCTION_URL.toString(),
+  image: ogImageUrl,
 });
 ---
 
-<Blog title={[post.data.title, 'Blog']} description={post.data.description} canonical={post.data.canonical}>
+<Blog
+  title={[post.data.title, "Blog"]}
+  description={post.data.description}
+  canonical={post.data.canonical}
+  image={post.data.ogImage}
+  twitterImage={post.data.twitterImage}
+>
   <JsonLd slot="head" schema={jsonLdSchema} />
   <article
     class="@container"
@@ -48,23 +63,34 @@ const jsonLdSchema = createBlogPostingSchema({
     data-site="blog"
     data-pagefind-filter="site[data-site]"
   >
-    <header class="border-b border-light-40 dark:border-dark-80 max-w-3xl mx-auto pb-10 mb-10 relative">
-      <div class="font-medium md:text-lg text-dark-40 dark:text-light-40 flex gap-4 mb-1">
-        <FormattedDate data-pagefind-sort={`date:${post.data.pubDate.toISOString()}`} date={post.data.pubDate} />
-        <span>&bull;</span>
-        <span data-pagefind-ignore data-llms-ignore>{remarkPluginFrontmatter.minutesRead}</span>
+    <header
+      class="relative mx-auto mb-10 max-w-3xl border-y border-faded-black py-10 dark:border-manila-light"
+    >
+      <div
+        class="mb-3 flex flex-col gap-2 font-display text-h4 font-bold text-orange uppercase sm:flex-row sm:gap-4"
+      >
+        <FormattedDate
+          data-pagefind-sort={`date:${post.data.pubDate.toISOString()}`}
+          date={post.data.pubDate}
+        />
+        <span class="hidden sm:inline">&bull;</span>
+        <span data-pagefind-ignore data-llms-ignore
+          >{remarkPluginFrontmatter.minutesRead}</span
+        >
       </div>
-      <h1 class="text-h4 md:text-h2 mb-2">{post.data.title}</h1>
-      <div class="font-medium md:text-lg text-dark-40 dark:text-light-40">
+      <h1 class="mb-2 font-display text-h2 leading-tight uppercase sm:text-h15">
+        {post.data.title}
+      </h1>
+      <div class="">
         By {
-          new Intl.ListFormat('en', { style: 'long', type: 'conjunction' })
+          new Intl.ListFormat("en", { style: "long", type: "conjunction" })
             .formatToParts(authors.map((author) => author.data.name))
             .map((part) =>
-              part.type === 'element' ? (
+              part.type === "element" ? (
                 // inline-block removes the whitespace that prettier+astro adds around the text
                 <a
                   href={`/blog/authors/${authors.find((a) => a.data.name === part.value)?.id}`}
-                  class="intent:underline inline-block"
+                  class="inline-block intent:underline"
                   data-pagefind-meta="author"
                 >
                   {part.value}

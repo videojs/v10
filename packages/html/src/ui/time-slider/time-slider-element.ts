@@ -50,6 +50,7 @@ export class TimeSliderElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+    if (this.destroyed) return;
 
     this.#disconnect = new AbortController();
     const signal = this.#disconnect.signal;
@@ -79,14 +80,12 @@ export class TimeSliderElement extends MediaElement {
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
       adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),
+      onResize: () => this.requestUpdate(),
     });
 
     applyElementProps(this, this.#slider.rootProps, { signal });
+    applyStyles(this, this.#slider.rootStyle);
     this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
-
-    // Prevent default touch gestures and text selection during interaction.
-    this.style.touchAction = 'none';
-    this.style.userSelect = 'none';
 
     if (__DEV__ && !this.#timeState.value) {
       logMissingFeature(this.localName, this.#timeState.displayName!);
@@ -95,10 +94,13 @@ export class TimeSliderElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#slider?.destroy();
-    this.#slider = null;
     this.#disconnect?.abort();
     this.#disconnect = null;
+  }
+
+  override destroyCallback(): void {
+    this.#slider?.destroy();
+    super.destroyCallback();
   }
 
   protected override willUpdate(_changed: PropertyValues): void {

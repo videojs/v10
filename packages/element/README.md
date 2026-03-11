@@ -2,7 +2,7 @@
 
 [![package-badge]][package]
 
-> **Warning: Alpha - SUBJECT TO CHANGE** Not recommended for production use.
+> **⚠️ Beta** Close to stable. Experimental adoption in real projects.
 
 A lightweight reactive custom element base class for Video.js. Type-aligned with [Lit's ReactiveElement](https://github.com/lit/lit/tree/main/packages/reactive-element) but stripped down to only what we use.
 
@@ -109,6 +109,6 @@ members:
 [Apache-2.0](./LICENSE)
 
 [package]: https://www.npmjs.com/package/@videojs/element
-[package-badge]: https://img.shields.io/npm/v/@videojs/element/next?label=@videojs/element@next
+[package-badge]: https://img.shields.io/npm/v/@videojs/element?label=@videojs/element
 [discord]: https://discord.gg/JBqHh485uF
 [gh-discussions]: https://github.com/videojs/v10/discussions

@@ -9,7 +9,7 @@ body:
       value: |
         Thanks for taking the time to file an enhancement report! Please fill this template out as completely as possible.
         * If you are not requesting a new feature or enhancement, but want to ask a general question, use [discussions](https://github.com/videojs/v10/discussions) instead.
-        * Check the [docs](https://v10.videojs.org/docs).
+        * Check the [docs](https://videojs.org/docs).
         * Please check to see if there's an existing issue or discussion and, if so, reply there instead.
         * Please provide as much detail as you can.
   - type: checkboxes

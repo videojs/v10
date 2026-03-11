@@ -85,6 +85,7 @@ The `intent:` variant is defined as:
 <div style="transform: rotate(45deg)">Content</div>
 
 <!-- ❌ WORSE: Arbitrary variant -->
+<div class="transform-[rotate(45deg)]">Content</div>
 <div class="[transform:rotate(45deg)]">Content</div>
 ```
 
@@ -98,7 +99,7 @@ import clsx from 'clsx';
 <button class={clsx(
   'text-base bg-dark-100',
   isActive && 'bg-dark-80',
-  isPrimary ? 'text-yellow' : 'text-light-100'
+  isPrimary ? 'text-bright-yellow' : 'text-light-100'
 )}>
   Click me
 </button>
@@ -165,8 +166,7 @@ site/
 ├── public/                  # Static assets (served untransformed)
 ├── integrations/            # Custom Astro integrations
 │   ├── pagefind.ts          # Pagefind search integration
-│   ├── llms-markdown.ts     # LLM-optimized markdown generation
-│   └── check-v8-urls.ts     # v8 URL migration audit
+│   └── llms-markdown.ts     # LLM-optimized markdown generation
 ├── astro.config.mjs         # Astro configuration
 ├── tsconfig.json            # TypeScript config with path aliases
 └── vitest.config.ts         # Test configuration
@@ -420,7 +420,14 @@ All content must be written in **MDX format** to support:
   authors: string[];      // Reference to authors.json
   canonical?: string;     // Canonical URL override
   devOnly?: boolean;      // Show only in development
+  ogImage?: ImageMetadata | string;   // Local image or external URL
+  twitterImage?: ImageMetadata | string; // Falls back to ogImage
 }
+```
+
+**OG images** go in `src/assets/blog/{date-slug}/og.png`. Reference from frontmatter with a relative path:
+```yaml
+ogImage: '../../assets/blog/2026-03-10-my-post/og.png'
 ```
 
 ### Docs Collection (`src/content/docs/`)

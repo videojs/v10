@@ -39,12 +39,12 @@ export function createTechArticleSchema(params: {
     author: {
       '@type': 'Organization',
       name: 'Video.js',
-      url: 'https://v10.videojs.org',
+      url: 'https://videojs.org',
     },
     publisher: {
       '@type': 'Organization',
       name: 'Video.js',
-      url: 'https://v10.videojs.org',
+      url: 'https://videojs.org',
     },
     inLanguage: 'en-US',
   };
@@ -63,6 +63,7 @@ export function createBlogPostingSchema(params: {
   readingTime?: number;
   authors: CollectionEntry<'authors'>[];
   siteUrl: string;
+  image?: string;
 }): WithContext<BlogPosting> {
   return {
     '@context': 'https://schema.org',
@@ -70,6 +71,7 @@ export function createBlogPostingSchema(params: {
     headline: params.title,
     description: params.description,
     url: params.url,
+    ...(params.image && { image: params.image }),
     datePublished: params.pubDate.toISOString(),
     ...(params.updatedDate && { dateModified: params.updatedDate.toISOString() }),
     ...(params.wordCount && { wordCount: params.wordCount }),
@@ -96,7 +98,7 @@ export function createBlogPostingSchema(params: {
     publisher: {
       '@type': 'Organization',
       name: 'Video.js',
-      url: 'https://v10.videojs.org',
+      url: 'https://videojs.org',
     },
     inLanguage: 'en-US',
     mainEntityOfPage: {
@@ -132,7 +134,7 @@ export function createBlogCollectionSchema(params: {
     publisher: {
       '@type': 'Organization',
       name: 'Video.js',
-      url: 'https://v10.videojs.org',
+      url: 'https://videojs.org',
     },
     inLanguage: 'en-US',
   };
@@ -180,7 +182,7 @@ export function createAuthorCollectionSchema(params: {
     publisher: {
       '@type': 'Organization',
       name: 'Video.js',
-      url: 'https://v10.videojs.org',
+      url: 'https://videojs.org',
     },
     inLanguage: 'en-US',
   };
@@ -232,7 +234,7 @@ export function createProfilePageSchema(params: {
     publisher: {
       '@type': 'Organization',
       name: 'Video.js',
-      url: 'https://v10.videojs.org',
+      url: 'https://videojs.org',
     },
     inLanguage: 'en-US',
   };

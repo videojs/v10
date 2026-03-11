@@ -9,7 +9,7 @@ body:
       value: |
         Thanks for taking the time to file a bug report! Please fill this template out as completely as possible.
         * If you are not reporting a bug, but want to ask a general question, use [discussions](https://github.com/videojs/v10/discussions) instead.
-        * Check the [docs](https://v10.videojs.org/docs).
+        * Check the [docs](https://videojs.org/docs).
         * Please check to see if there's an existing issue and replying there instead.
         * Please give as much details as you can. Ideally, include a [minimal, reproducible example](https://stackoverflow.com/help/minimal-reproducible-example)
   - type: checkboxes

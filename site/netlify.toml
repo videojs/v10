@@ -3,6 +3,26 @@
   publish = "site/dist"
   ignore = "pnpm dlx turbo-ignore site --task=build --fallback=origin/main"
 
+# Netlify aliases -> videojs.org
+[[redirects]]
+  from = "https://videojs.com/*"
+  to   = "https://videojs.org/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.videojs.com/*"
+  to   = "https://videojs.org/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://v10.videojs.org/*"
+  to   = "https://videojs.org/:splat"
+  status = 301
+  force = true
+
+
 # Redirect old theme demo pages to home
 [[redirects]]
   from = "/city"
@@ -24,6 +44,17 @@
   to = "/"
   status = 308
 
+# Redirect old v8 guides to legacy site
+[[redirects]]
+  from = "/guides"
+  to = "https://legacy.videojs.org/guides"
+  status = 308
+
+[[redirects]]
+  from = "/guides/*"
+  to = "https://legacy.videojs.org/guides/:splat"
+  status = 308
+
 # Redirect old tags pages to blog (no tag filtering in v10)
 [[redirects]]
   from = "/tags"
@@ -33,4 +64,26 @@
 [[redirects]]
   from = "/tags/*"
   to = "/blog"
+  status = 307
+
+# Redirect old support URL to new page
+[[redirects]]
+  from = "/html5-video-support"
+  to = "/support"
+  status = 307
+
+# Misc v8 stragglers
+[[redirects]]
+  from = "/getting-started"
+  to = "/docs"
+  status = 307
+
+[[redirects]]
+  from = "/advanced"
+  to = "/docs"
+  status = 307
+
+[[redirects]]
+  from = "/plugins"
+  to = "/docs"
   status = 307

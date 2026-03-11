@@ -18,7 +18,7 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
 
 <Aside type="caution" title="Beta Software">
-Video.js v10 is currently in _beta_. The API may evolve with [feedback&#x1F64F;](https://github.com/videojs/v10/issues). See the [Changelog](https://github.com/videojs/v10/blob/main/CHANGELOG.md)\[todo\] for recent updates and the <DocsLink slug="concepts/v10-roadmap">Roadmap</DocsLink> for more details on what's coming.
+Video.js v10 is currently in _beta_. The API may evolve with [feedback&#x1F64F;](https://github.com/videojs/v10/issues). See the [Changelog](https://github.com/videojs/v10/blob/main/CHANGELOG.md) for recent updates and the <DocsLink slug="concepts/v10-roadmap">Roadmap</DocsLink> for more details on what's coming.
 </Aside>
 
 <FrameworkCase frameworks={["react"]}>
@@ -32,7 +32,7 @@ Answer the questions below to get started quickly with your first embed code.
 
 ## Choose your JS framework
 
-Video.js aims to provide idiomatic development experiences in your favorite JS and CSS frameworks. More to come. ([vote](https://github.com/videojs/v10/discussions/categories/ideas))\[todo\].
+Video.js aims to provide idiomatic development experiences in your favorite JS and CSS frameworks. More to come.
 
 <ContentWidth margins="lg">
   <JSPicker />
@@ -41,7 +41,7 @@ Video.js aims to provide idiomatic development experiences in your favorite JS a
 
 ## Choose your use case
 
-The defaults work well for general website playback. More prebuilt players to come. ([vote](https://github.com/videojs/v10/discussions/categories/ideas))\[todo\]
+The defaults work well for general website playback. More prebuilt players to come.
 
 <ContentWidth margins="lg">
   <UseCasePicker client:idle />
@@ -53,7 +53,7 @@ The defaults work well for general website playback. More prebuilt players to co
 
 ## Choose your media source type
 
-Video.js supports a wide range of file types and hosting services. It's easy to switch between them. ([missing something?](https://github.com/videojs/v10/discussions/categories/ideas))
+Video.js supports a wide range of file types and hosting services. It's easy to switch between them.
 
 <ContentWidth margins="lg">
   <RendererPicker client:idle />
@@ -74,22 +74,22 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
     </TabsList>
     <TabsPanel client:idle value="npm" initial>
       ```bash
-      npm install @videojs/react@next
+      npm install @videojs/react
       ```
     </TabsPanel>
     <TabsPanel client:idle value="pnpm">
       ```bash
-      pnpm add @videojs/react@next
+      pnpm add @videojs/react
       ```
     </TabsPanel>
     <TabsPanel client:idle value="yarn">
       ```bash
-      yarn add @videojs/react@next
+      yarn add @videojs/react
       ```
     </TabsPanel>
     <TabsPanel client:idle value="bun">
       ```bash
-      bun add @videojs/react@next
+      bun add @videojs/react
       ```
     </TabsPanel>
   </TabsRoot>

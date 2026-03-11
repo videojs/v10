@@ -22,15 +22,16 @@ export const sidebar: Sidebar = [
     sidebarLabel: 'Concepts',
     contents: [{ slug: 'concepts/architecture' }, { slug: 'concepts/skins' }],
   },
-  // {
-  //   sidebarLabel: 'How to',
-  //   contents: [{ slug: 'how-to/customize-skins' }],
-  // },
+  {
+    sidebarLabel: 'How to',
+    contents: [{ slug: 'how-to/customize-skins' }],
+  },
   {
     sidebarLabel: 'Components',
     contents: [
       // sorted alphabetically
       { slug: 'reference/buffering-indicator' },
+      { slug: 'reference/captions-button' },
       { slug: 'reference/controls' },
       { slug: 'reference/fullscreen-button' },
       { slug: 'reference/mute-button' },

@@ -50,6 +50,7 @@ export const SliderRoot = forwardRef(function SliderRoot(
     rootRef,
     thumbRef: sliderThumbRef,
     rootProps,
+    rootStyle,
     thumbProps,
   } = useSlider({
     computeState: (input) => {
@@ -89,7 +90,7 @@ export const SliderRoot = forwardRef(function SliderRoot(
           state,
           stateAttrMap: SliderDataAttrs,
           ref: [forwardedRef, rootRef],
-          props: [{ style: cssVars }, rootProps, elementProps],
+          props: [{ style: { ...cssVars, ...rootStyle } }, rootProps, elementProps],
         }
       )}
     </SliderProvider>

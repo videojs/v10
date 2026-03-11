@@ -32,6 +32,7 @@ __tests__/coverage/
 site/src/content/generated-api-reference/
 site/src/content/generated-component-reference/
 site/src/content/generated-util-reference/
+site/src/content/ejected-skins.json
 
 # -------------------------
 # Environment
@@ -143,6 +144,19 @@ bun.lockb
 # -------------------------
 # AI Agent Config (Generated)
 # -------------------------
+.claude/settings.local.json
 .opencode
 AGENTS.md
 agents
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Test fixtures (large media files)
+packages/spf/test-fixtures/streams/*
+!packages/spf/test-fixtures/streams/.gitkeep
+
+# Local archive for reference (not committed)
+/.archive/

@@ -2,6 +2,7 @@ import { render, renderHook } from '@testing-library/react';
 import type { PlayerStore } from '@videojs/core/dom';
 import { defineSlice } from '@videojs/store';
 import type { ReactNode } from 'react';
+import { StrictMode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { createPlayer } from '../create-player';
 
@@ -39,6 +40,8 @@ describe('createPlayer', () => {
     });
 
     it('destroys store on unmount', () => {
+      vi.useFakeTimers();
+
       const { Provider, usePlayer } = createPlayer({ features: [mockSlice] });
 
       let store!: PlayerStore;
@@ -56,8 +59,35 @@ describe('createPlayer', () => {
 
       const destroySpy = vi.spyOn(store, 'destroy');
       unmount();
+      vi.runAllTimers();
 
       expect(destroySpy).toHaveBeenCalled();
+
+      vi.useRealTimers();
+    });
+
+    it('survives React StrictMode without StoreError', () => {
+      const { Provider, usePlayer } = createPlayer({ features: [mockSlice] });
+
+      let store!: PlayerStore;
+
+      function TestComponent() {
+        store = usePlayer();
+        return null;
+      }
+
+      expect(() => {
+        render(
+          <StrictMode>
+            <Provider>
+              <TestComponent />
+            </Provider>
+          </StrictMode>
+        );
+      }).not.toThrow();
+
+      expect(store).toBeDefined();
+      expect(store.destroyed).toBe(false);
     });
 
     it('uses displayName when provided', () => {

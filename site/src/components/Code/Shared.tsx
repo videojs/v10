@@ -12,7 +12,7 @@ export default function Shared({ code, lang, highlighter }: SharedProps) {
   const hast = highlighter.codeToHast(code, {
     lang,
     themes: {
-      light: 'gruvbox-light-hard',
+      light: 'gruvbox-dark-hard',
       dark: 'gruvbox-dark-soft',
     },
   });
@@ -39,7 +39,7 @@ export default function Shared({ code, lang, highlighter }: SharedProps) {
   const { class: codeClassName } = codeProps;
 
   return (
-    <pre className={clsx('shiki', preClassName)}>
+    <pre className={clsx('shiki text-manila-light', preClassName)}>
       <code className={clsx('font-mono text-code', codeClassName)} dangerouslySetInnerHTML={{ __html: html }} />
     </pre>
   );
