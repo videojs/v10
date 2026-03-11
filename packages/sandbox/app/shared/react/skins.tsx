@@ -1,8 +1,8 @@
+import type { Skin, Styling } from '@app/types';
 import type { AudioSkinProps } from '@videojs/react/audio';
 import { AudioSkin, AudioSkinTailwind, MinimalAudioSkin, MinimalAudioSkinTailwind } from '@videojs/react/audio';
 import type { VideoSkinProps } from '@videojs/react/video';
 import { MinimalVideoSkin, MinimalVideoSkinTailwind, VideoSkin, VideoSkinTailwind } from '@videojs/react/video';
-import type { Skin, Styling } from '../../types';
 
 type VideoSkinComponentProps = { skin: Skin; styling: Styling } & VideoSkinProps;
 

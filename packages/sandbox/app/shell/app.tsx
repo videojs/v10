@@ -1,10 +1,10 @@
+import { PLATFORMS, PRESETS, STYLINGS } from '@app/constants';
+import type { SourceId } from '@app/shared/sources';
+import { DEFAULT_AUDIO_SOURCE, MP4_SOURCE_IDS, SOURCE_IDS, SOURCES } from '@app/shared/sources';
+import type { Platform, Preset, Styling } from '@app/types';
+import { useSkinSwitcher } from '@app/utils/use-skin-switcher';
+import { useSourceSwitcher } from '@app/utils/use-source-switcher';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { PLATFORMS, PRESETS, STYLINGS } from '../constants';
-import type { SourceId } from '../shared/sources';
-import { DEFAULT_AUDIO_SOURCE, MP4_SOURCE_IDS, SOURCE_IDS, SOURCES } from '../shared/sources';
-import type { Platform, Preset, Styling } from '../types';
-import { useSkinSwitcher } from '../utils/use-skin-switcher';
-import { useSourceSwitcher } from '../utils/use-source-switcher';
 import { Navbar } from './navbar';
 import { Preview } from './preview';
 
@@ -32,29 +32,31 @@ export function App() {
   const [source, setSource] = useSourceSwitcher();
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Derive the page URL
   const pagePath = getPagePath(platform, styling, preset);
 
-  // Update URL when filters change
+  // Keep the URL in sync with all state (including skin + source)
   useEffect(() => {
-    const params = new URLSearchParams({ platform, styling, preset });
-    const url = `/?${params.toString()}`;
-    history.replaceState(null, '', url);
-  }, [platform, styling, preset]);
+    const params = new URLSearchParams({ platform, styling, preset, skin, source });
+    history.replaceState(null, '', `/?${params}`);
+  }, [platform, styling, preset, skin, source]);
 
   // Send postMessage to iframe for skin changes (skip initial mount — iframe reads localStorage)
-  const skinRef = useRef(skin);
+  const skinMountRef = useRef(true);
   useEffect(() => {
-    if (skinRef.current === skin) return;
-    skinRef.current = skin;
+    if (skinMountRef.current) {
+      skinMountRef.current = false;
+      return;
+    }
     iframeRef.current?.contentWindow?.postMessage({ type: 'skin-change', skin }, '*');
   }, [skin]);
 
   // Send postMessage to iframe for source changes (skip initial mount — iframe reads localStorage)
-  const sourceRef = useRef(source);
+  const sourceMountRef = useRef(true);
   useEffect(() => {
-    if (sourceRef.current === source) return;
-    sourceRef.current = source;
+    if (sourceMountRef.current) {
+      sourceMountRef.current = false;
+      return;
+    }
     iframeRef.current?.contentWindow?.postMessage({ type: 'source-change', source }, '*');
   }, [source]);
 

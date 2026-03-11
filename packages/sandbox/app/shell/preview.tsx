@@ -1,6 +1,6 @@
+import type { SourceId } from '@app/shared/sources';
+import type { Skin } from '@app/types';
 import { forwardRef } from 'react';
-import type { SourceId } from '../shared/sources';
-import type { Skin } from '../types';
 
 type PreviewProps = {
   pagePath: string;

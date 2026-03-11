@@ -1,3 +1,4 @@
+import '@app/styles.css';
 // SimpleHlsVideo + Video.js integration sandbox
 // http://localhost:5173/simple-hls-html/
 //

@@ -1,3 +1,4 @@
+import '@app/styles.css';
 // SPF Segment Loading POC Test
 // http://localhost:5173/spf-segment-loading/
 //

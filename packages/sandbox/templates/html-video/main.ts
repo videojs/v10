@@ -1,12 +1,13 @@
+import '@app/styles.css';
 import '@videojs/html/video/player';
 import '@videojs/html/video/skin';
 import '@videojs/html/video/minimal-skin';
-import { CSS_SKIN_TAGS } from '../shared/html/skin-tags';
-import { loadVideoStylesheets } from '../shared/html/stylesheets';
-import { getInitialSkin, getInitialSource, onSkinChange, onSourceChange } from '../shared/sandbox-listener';
-import type { SourceId } from '../shared/sources';
-import { SOURCES } from '../shared/sources';
-import type { Skin } from '../types';
+import { CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
+import { loadVideoStylesheets } from '@app/shared/html/stylesheets';
+import { getInitialSkin, getInitialSource, onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
+import type { SourceId } from '@app/shared/sources';
+import { SOURCES } from '@app/shared/sources';
+import type { Skin } from '@app/types';
 
 const html = String.raw;
 

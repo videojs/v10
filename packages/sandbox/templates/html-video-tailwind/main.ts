@@ -1,12 +1,13 @@
+import '@app/styles.css';
 import '@videojs/html/video/player';
 import '@videojs/html/video/skin.tailwind';
 import '@videojs/html/video/minimal-skin.tailwind';
-import { TAILWIND_SKIN_TAGS } from '../shared/html/skin-tags';
-import { setupVideoTailwind } from '../shared/html/tailwind-setup';
-import { getInitialSkin, getInitialSource, onSkinChange, onSourceChange } from '../shared/sandbox-listener';
-import type { SourceId } from '../shared/sources';
-import { SOURCES } from '../shared/sources';
-import type { Skin } from '../types';
+import { TAILWIND_SKIN_TAGS } from '@app/shared/html/skin-tags';
+import { setupVideoTailwind } from '@app/shared/html/tailwind-setup';
+import { getInitialSkin, getInitialSource, onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
+import type { SourceId } from '@app/shared/sources';
+import { SOURCES } from '@app/shared/sources';
+import type { Skin } from '@app/types';
 
 setupVideoTailwind();
 

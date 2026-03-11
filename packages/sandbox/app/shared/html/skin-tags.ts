@@ -1,4 +1,4 @@
-import type { Skin } from '../../types';
+import type { Skin } from '@app/types';
 
 type SkinTagMap = Record<Skin, { video: string; audio: string }>;
 

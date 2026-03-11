@@ -1,10 +1,11 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const root = import.meta.dirname;
+const root = resolve(import.meta.dirname, '..');
 const templatesDir = resolve(root, 'templates');
 const srcDir = resolve(root, 'src');
 
+/** Recursively copy template files into `src/`, preserving relative paths. */
 function mirror(dir: string) {
   for (const entry of readdirSync(dir)) {
     const templatePath = resolve(dir, entry);

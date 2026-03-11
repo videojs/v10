@@ -1,5 +1,5 @@
-import type { Skin } from '../types';
-import { createWebStorageStore } from '../utils/create-web-storage-store';
+import type { Skin } from '@app/types';
+import { createWebStorageStore } from '@app/utils/create-web-storage-store';
 import { DEFAULT_AUDIO_SOURCE, SOURCES, type SourceId } from './sources';
 
 const params = new URLSearchParams(window.location.search);

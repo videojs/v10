@@ -1,10 +1,11 @@
+import '@app/styles.css';
+import { VideoProvider } from '@app/shared/react/providers';
+import { VideoSkinComponent } from '@app/shared/react/skins';
+import { useSkin } from '@app/shared/react/use-skin';
+import { useSource } from '@app/shared/react/use-source';
+import { SOURCES } from '@app/shared/sources';
 import { Video } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
-import { VideoProvider } from '../shared/react/providers';
-import { VideoSkinComponent } from '../shared/react/skins';
-import { useSkin } from '../shared/react/use-skin';
-import { useSource } from '../shared/react/use-source';
-import { SOURCES } from '../shared/sources';
 
 function App() {
   const skin = useSkin();

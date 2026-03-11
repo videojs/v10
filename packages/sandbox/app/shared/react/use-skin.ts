@@ -1,6 +1,6 @@
+import { getInitialSkin, onSkinChange } from '@app/shared/sandbox-listener';
+import type { Skin } from '@app/types';
 import { useEffect, useState } from 'react';
-import type { Skin } from '../../types';
-import { getInitialSkin, onSkinChange } from '../sandbox-listener';
 
 export function useSkin(): Skin {
   const [skin, setSkin] = useState(getInitialSkin);

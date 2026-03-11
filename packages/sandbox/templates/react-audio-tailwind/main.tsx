@@ -1,10 +1,11 @@
+import '@app/styles.css';
+import { AudioProvider } from '@app/shared/react/providers';
+import { AudioSkinComponent } from '@app/shared/react/skins';
+import { useSkin } from '@app/shared/react/use-skin';
+import { useSource } from '@app/shared/react/use-source';
+import { SOURCES } from '@app/shared/sources';
 import { Audio } from '@videojs/react/audio';
 import { createRoot } from 'react-dom/client';
-import { AudioProvider } from '../shared/react/providers';
-import { AudioSkinComponent } from '../shared/react/skins';
-import { useSkin } from '../shared/react/use-skin';
-import { useSource } from '../shared/react/use-source';
-import { SOURCES } from '../shared/sources';
 
 function App() {
   const skin = useSkin();

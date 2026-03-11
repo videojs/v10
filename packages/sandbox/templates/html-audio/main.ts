@@ -1,12 +1,13 @@
+import '@app/styles.css';
 import '@videojs/html/audio/player';
 import '@videojs/html/audio/skin';
 import '@videojs/html/audio/minimal-skin';
-import { CSS_SKIN_TAGS } from '../shared/html/skin-tags';
-import { loadAudioStylesheets } from '../shared/html/stylesheets';
-import { getInitialSkin, getInitialSource, onSkinChange, onSourceChange } from '../shared/sandbox-listener';
-import type { SourceId } from '../shared/sources';
-import { SOURCES } from '../shared/sources';
-import type { Skin } from '../types';
+import { CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
+import { loadAudioStylesheets } from '@app/shared/html/stylesheets';
+import { getInitialSkin, getInitialSource, onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
+import type { SourceId } from '@app/shared/sources';
+import { SOURCES } from '@app/shared/sources';
+import type { Skin } from '@app/types';
 
 const html = String.raw;
 

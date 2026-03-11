@@ -1,8 +1,9 @@
+import '@app/styles.css';
 import '@videojs/html/background/skin.css';
 import '@videojs/html/background/player';
 import '@videojs/html/background/skin';
 import '@videojs/html/background/video';
-import { BACKGROUND_VIDEO_SRC } from '../shared/sources';
+import { BACKGROUND_VIDEO_SRC } from '@app/shared/sources';
 
 const html = String.raw;
 

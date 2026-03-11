@@ -4,9 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx setup.ts && vite",
-    "build": "tsx setup.ts && vite build",
+    "dev": "tsx scripts/setup.ts && vite",
+    "build": "tsx scripts/setup.ts && vite build",
     "preview": "vite preview",
+    "reset": "tsx scripts/reset.ts",
     "sync": "tsx scripts/sync.ts"
   },
   "dependencies": {

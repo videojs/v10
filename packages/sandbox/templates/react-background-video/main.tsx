@@ -1,8 +1,9 @@
+import '@app/styles.css';
 import '@videojs/react/background/skin.css';
+import { BackgroundVideoProvider } from '@app/shared/react/providers';
+import { BACKGROUND_VIDEO_SRC } from '@app/shared/sources';
 import { BackgroundVideo, BackgroundVideoSkin } from '@videojs/react/background';
 import { createRoot } from 'react-dom/client';
-import { BackgroundVideoProvider } from '../shared/react/providers';
-import { BACKGROUND_VIDEO_SRC } from '../shared/sources';
 
 function App() {
   return (

@@ -20,7 +20,7 @@ export const SOURCES: Record<SourceId, { label: string; url: string; type: 'hls'
     subType: 'mp4',
   },
   'hls-4': {
-    label: 'HLS - Plyr',
+    label: 'HLS - View From A Blue Moon Trailer',
     url: 'https://stream.mux.com/lyrKpPcGfqyzeI00jZAfW6MvP6GNPrkML.m3u8',
     type: 'hls',
     subType: 'mp4',

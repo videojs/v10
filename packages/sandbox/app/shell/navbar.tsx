@@ -1,6 +1,6 @@
-import type { SKINS } from '../constants';
-import type { SourceId } from '../shared/sources';
-import type { Platform, Preset, Skin, Styling } from '../types';
+import type { SKINS } from '@app/constants';
+import type { SourceId } from '@app/shared/sources';
+import type { Platform, Preset, Skin, Styling } from '@app/types';
 
 type NavbarProps = {
   platform: Platform;
@@ -31,8 +31,8 @@ const PLATFORM_LABELS: Record<Platform, string> = {
 
 const PRESET_LABELS: Record<Preset, string> = {
   video: 'Video',
-  'hls-video': 'HlsVideo',
-  'simple-hls-video': 'SimpleHlsVideo',
+  'hls-video': 'HLS Video',
+  'simple-hls-video': 'Simple HLS Video',
   audio: 'Audio',
   'background-video': 'Background Video',
 };
