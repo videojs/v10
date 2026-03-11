@@ -18,12 +18,14 @@ function generateCdnCode(useCase: UseCase, skin: Skin): string {
   import '${CDN_BASE}/background/player.js';
   import '${CDN_BASE}/background/skin.js';
 </script>
+<link rel="stylesheet" href="${CDN_BASE}/base.css" />
 <link rel="stylesheet" href="${CDN_BASE}/background/skin.css" />`;
   }
 
   const name = getCdnFileName(useCase, skin);
 
   return `<script type="module" src="${CDN_BASE}/${name}.js"></script>
+<link rel="stylesheet" href="${CDN_BASE}/base.css" />
 <link rel="stylesheet" href="${CDN_BASE}/${name}.css" />`;
 }
 

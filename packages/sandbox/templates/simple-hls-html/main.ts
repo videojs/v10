@@ -14,6 +14,7 @@ import '@videojs/html/media/container';
 import '@videojs/html/media/simple-hls-video';
 import '@videojs/html/ui/play-button';
 import '@videojs/html/ui/mute-button';
+import '@videojs/html/base.css';
 import { pauseIcon, playIcon, restartIcon, volumeHighIcon, volumeOffIcon } from '@videojs/icons/html';
 
 const html = String.raw;

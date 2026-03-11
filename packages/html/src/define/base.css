@@ -1,5 +1,6 @@
 video-player {
-  display: contents;
+  display: block;
+  width: 100%;
 }
 
 video-player video,

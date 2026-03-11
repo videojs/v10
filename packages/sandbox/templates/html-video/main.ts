@@ -1,4 +1,5 @@
 import '@app/styles.css';
+import '@videojs/html/base.css';
 import '@videojs/html/video/player';
 import '@videojs/html/video/skin';
 import '@videojs/html/video/minimal-skin';
@@ -20,8 +21,8 @@ function render() {
   loadVideoStylesheets(currentSkin);
 
   document.getElementById('root')!.innerHTML = html`
-    <video-player>
-      <${tag} class="w-full aspect-video max-w-4xl mx-auto">
+    <video-player class="w-full aspect-video max-w-4xl mx-auto">
+      <${tag}>
         <video slot="media" src="${SOURCES[currentSource].url}"></video>
       </${tag}>
     </video-player>

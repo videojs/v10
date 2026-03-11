@@ -1,5 +1,7 @@
 import type { Skin } from '../../types';
 
+const baseStylesheet = new URL('@videojs/html/base.css', import.meta.url).href;
+
 const videoStylesheets: Record<Skin, string> = {
   default: new URL('@videojs/html/video/skin.css', import.meta.url).href,
   minimal: new URL('@videojs/html/video/minimal-skin.css', import.meta.url).href,
@@ -22,9 +24,11 @@ function loadStylesheet(url: string) {
 }
 
 export function loadVideoStylesheets(skin: Skin) {
+  loadStylesheet(baseStylesheet);
   loadStylesheet(videoStylesheets[skin]);
 }
 
 export function loadAudioStylesheets(skin: Skin) {
+  loadStylesheet(baseStylesheet);
   loadStylesheet(audioStylesheets[skin]);
 }

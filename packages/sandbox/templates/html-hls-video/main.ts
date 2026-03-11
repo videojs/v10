@@ -1,4 +1,5 @@
 import '@app/styles.css';
+import '@videojs/html/base.css';
 import '@videojs/html/video/player';
 import '@videojs/html/media/hls-video';
 import '@videojs/html/video/skin';
@@ -21,8 +22,8 @@ function render() {
   loadVideoStylesheets(currentSkin);
 
   document.getElementById('root')!.innerHTML = html`
-    <video-player>
-      <${tag} class="w-full aspect-video max-w-4xl mx-auto">
+    <video-player class="w-full aspect-video max-w-4xl mx-auto">
+      <${tag}>
         <hls-video slot="media" src="${SOURCES[currentSource].url}"></hls-video>
       </${tag}>
     </video-player>

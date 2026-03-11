@@ -122,7 +122,8 @@ import '@videojs/html/background/video';${mediaImport}`;
   const { group, skinFile } = getSkinImportParts(skin);
   const mediaSubpath = getMediaImportSubpath(renderer);
   const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
-  return `import '@videojs/html/${group}/player';
+  return `import '@videojs/html/base.css';
+import '@videojs/html/${group}/player';
 import '@videojs/html/${group}/${skinFile}';
 import '@videojs/html/${group}/${skinFile}.css';${mediaImport}`;
 }
