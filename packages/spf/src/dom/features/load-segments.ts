@@ -66,6 +66,16 @@ function createTrackedFetch(
   };
 }
 
+/**
+ * Non-tracking fetch: eagerly starts the request and returns the response body
+ * as a lazy chunk iterable. Used for audio tracks which don't sample bandwidth.
+ */
+async function fetchStream(addressable: AddressableObject, options?: RequestInit): Promise<AsyncIterable<Uint8Array>> {
+  const response = await fetchResolvable(addressable, options);
+  if (!response.body) throw new Error('Response has no body');
+  return new ChunkedStreamIterable(response.body);
+}
+
 // ============================================================================
 // STATE & OWNERS
 // ============================================================================
@@ -261,7 +271,7 @@ export function loadSegments(
               }
             : undefined
         )
-      : fetchResolvableBytes;
+      : fetchStream;
 
   const segmentLoader = createState<SegmentLoaderActor | undefined>(undefined);
 

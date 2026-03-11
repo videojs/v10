@@ -107,10 +107,7 @@ export interface SegmentLoaderActor {
  */
 export function createSegmentLoaderActor(
   sourceBufferActor: SourceBufferActor,
-  fetchBytes: (
-    addressable: AddressableObject,
-    options?: RequestInit
-  ) => Promise<ArrayBuffer | AsyncIterable<Uint8Array>>,
+  fetchBytes: (addressable: AddressableObject, options?: RequestInit) => Promise<AsyncIterable<Uint8Array>>,
   fetchInitBytes: (addressable: AddressableObject, options?: RequestInit) => Promise<ArrayBuffer>
 ): SegmentLoaderActor {
   let pendingTasks: LoadTask[] | null = null;
@@ -241,9 +238,9 @@ export function createSegmentLoaderActor(
       // directly to the actor so chunks are appended as they arrive.
       inFlightSegmentId = task.meta.id;
       if (!signal.aborted) {
-        const data = await fetchBytes(task, { signal });
+        const stream = await fetchBytes(task, { signal });
         if (!signal.aborted) {
-          await sourceBufferActor.send({ type: 'append-segment', data, meta: task.meta }, signal);
+          await sourceBufferActor.send({ type: 'append-segment', data: stream, meta: task.meta }, signal);
         }
       }
     } finally {
