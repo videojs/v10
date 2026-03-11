@@ -46,14 +46,14 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
         super.connectedCallback();
 
         this.#observer = new MutationObserver((records) => {
-          if (records.some(hasMediaNode)) this.#attachMedia();
+          if (records.some(hasMediaElement)) this.#attachMedia();
         });
 
         this.#observer.observe(this, {
           childList: true,
           subtree: true,
           attributes: true,
-          attributeFilter: ['data-media-element'],
+          attributeFilter: ['name'],
         });
 
         // Slotted media elements don't appear in the container's subtree,
@@ -80,9 +80,15 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
         if (!slot) return null;
 
         for (const el of slot.assignedElements({ flatten: true })) {
-          if (el instanceof HTMLMediaElement) return el;
+          if (isMediaElement(el)) return el as HTMLMediaElement;
         }
 
+        return null;
+      }
+
+      #findMediaElement(): HTMLMediaElement | null {
+        const media = Array.from(this.children).find(isMediaElement);
+        if (media) return media as HTMLMediaElement;
         return null;
       }
 
@@ -93,12 +99,16 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
         if (!store) return;
 
         const media =
-          this.querySelector<HTMLMediaElement>('video, audio, [data-media-element]') ?? this.#getSlottedMedia();
+          this.querySelector<HTMLMediaElement>('video, audio') ?? this.#findMediaElement() ?? this.#getSlottedMedia();
 
         if (!media) {
           this.#detach();
           this.#detach = noop;
           return;
+        }
+
+        if (isCustomMediaElement(media)) {
+          globalThis.customElements?.upgrade?.(media);
         }
 
         const target: PlayerTarget = {
@@ -120,22 +130,27 @@ export function createContainerMixin<Store extends PlayerStore>(context: PlayerC
   };
 }
 
-function isMediaNode(node: Node): boolean {
-  return node instanceof HTMLMediaElement || (node instanceof Element && node.hasAttribute('data-media-element'));
+function isMediaElement(node: Node): boolean {
+  return node instanceof HTMLMediaElement || isCustomMediaElement(node);
 }
 
-function hasMediaNode(record: MutationRecord): boolean {
-  // Attribute mutation: data-media-element was added to a descendant
-  if (record.type === 'attributes' && record.target instanceof Element) {
-    return record.target.hasAttribute('data-media-element');
-  }
+function isCustomMediaElement(node: Node): boolean {
+  return node instanceof HTMLElement && (node.localName.endsWith('-audio') || node.localName.endsWith('-video'));
+}
+
+function isMediaSlotElement(node: Node): boolean {
+  return node instanceof HTMLSlotElement && node.name === 'media';
+}
+
+function hasMediaElement(record: MutationRecord): boolean {
+  if (isMediaSlotElement(record.target)) return true;
 
   for (const node of record.addedNodes) {
-    if (isMediaNode(node)) return true;
+    if (isMediaElement(node) || isMediaSlotElement(node)) return true;
   }
 
   for (const node of record.removedNodes) {
-    if (isMediaNode(node)) return true;
+    if (isMediaElement(node) || isMediaSlotElement(node)) return true;
   }
 
   return false;
