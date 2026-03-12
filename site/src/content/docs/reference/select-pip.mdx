@@ -18,7 +18,7 @@ Pass `selectPiP` to <DocsLink slug="reference/player-controller">`PlayerControll
 The returned state includes whether PiP is active and its availability on the current platform.
 
 <FrameworkCase frameworks={["react"]}>
-```tsx
+```tsx title="PiPButton.tsx"
 import { selectPiP, usePlayer } from '@videojs/react';
 
 function PiPButton() {
@@ -35,7 +35,7 @@ function PiPButton() {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-```ts
+```ts title="pip-button.ts"
 import { createPlayer, MediaElement, selectPiP } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 

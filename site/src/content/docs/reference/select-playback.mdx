@@ -19,7 +19,7 @@ Pass `selectPlayback` to <DocsLink slug="reference/player-controller">`PlayerCon
 The returned state includes `paused`, `ended`, and action methods like `play`, `pause`, and `toggle`.
 
 <FrameworkCase frameworks={["react"]}>
-```tsx
+```tsx title="PlayButton.tsx"
 import { selectPlayback, usePlayer } from '@videojs/react';
 
 function PlayButton() {
@@ -31,7 +31,7 @@ function PlayButton() {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-```ts
+```ts title="play-button.ts"
 import { createPlayer, MediaElement, selectPlayback } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 

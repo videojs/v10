@@ -18,7 +18,7 @@ Pass `selectVolume` to <DocsLink slug="reference/player-controller">`PlayerContr
 The returned state includes `volume`, `muted`, and action methods like `setVolume` and `setMuted`.
 
 <FrameworkCase frameworks={["react"]}>
-```tsx
+```tsx title="VolumeSlider.tsx"
 import { selectVolume, usePlayer } from '@videojs/react';
 
 function VolumeSlider() {
@@ -40,7 +40,7 @@ function VolumeSlider() {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-```ts
+```ts title="volume-slider.ts"
 import { createPlayer, MediaElement, selectVolume } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 

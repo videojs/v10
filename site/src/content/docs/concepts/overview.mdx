@@ -1,5 +1,5 @@
 ---
-title: Architecture
+title: Overview
 description: How Video.js players are structured — state, UI, and media
 ---
 
@@ -15,33 +15,59 @@ Video.js v10 is built around a three-part architecture that separates concerns a
 
 <FrameworkCase frameworks={["react"]}>
 State is handled by a `Player.Provider`, which creates a central state store that all components can access. When you wrap your player in a `Player.Provider`, the components automatically connect to the state.
-</FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
-State is handled by a `video-player` element, which creates a central state store that all components can access. Child components can automatically connect to the state of the `video-player` element.
-</FrameworkCase>
 
-<FrameworkCase frameworks={["react"]}>
 ```tsx
 <Player.Provider>
   {/* All components inside automatically connect to state */}
 </Player.Provider>
 ```
+
+To learn more about the state available from your provider, start by reading about presets.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
+State is handled by a `video-player` element, which creates a central state store that all components can access. Child components can automatically connect to the state of the `video-player` element.
+
 ```html
 <video-player>
   <!-- All components inside automatically connect to state -->
 </video-player>
 ```
-</FrameworkCase>
 
-The state available in the store is determined by which features your player includes. Set up your player's features with a preset.
+To learn more about the state available from `<video-player>`, start by reading about presets.
+</FrameworkCase>
 
 <DocsLinkCard slug="concepts/presets">Learn more about presets</DocsLinkCard>
 
+### Build your own UI components
+
+You might not need to build your own UI component. Our components are unstyled primitives that offer built-in accessibility and behavior.
+
+However, if you notice that we don't support something (yet!) you can access player state directly.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="TimeRemaining.tsx"
+function TimeRemaining() {
+  const time = Player.usePlayer((s) => s.duration - s.currentTime);
+  return <div>{Math.ceil(time)}s remaining</div>;
+}
+```
+
+<DocsLinkCard slug="reference/use-player">`usePlayer` reference</DocsLinkCard>
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```ts title="time-remaining.ts"
+class TimeRemaining extends MediaElement {
+  #time = new PlayerController(this, playerContext, selectTime);
+  // renders from this.#time.value
+}
+```
+
+<DocsLinkCard slug="reference/player-controller">`PlayerController` reference</DocsLinkCard>
+</FrameworkCase>
+
 ## 2. User interface
 
-You can approach UI in Video.js from a few different levels: use a prebuilt Skin, build your own UI from our components, or even build your own components.
+You can approach UI in Video.js from a few different levels: use a prebuilt skin or build your own UI from our components.
 
 ### Skins
 Skins are complete, pre-designed player UIs that package components and styles together:
@@ -75,13 +101,13 @@ If you want more control than skins offer you, you can build your own UI from ou
 ```tsx
 <Player.Provider>
 
-  <MediaContainer>
+  <Player.Container>
     <Video src="video.mp4" />
     <MediaControls>
       <PlayButton />
       {/* ... */}
     </MediaControls>
-  </MediaContainer>
+  </Player.Container>
 
 </Player.Provider>
 ```
@@ -102,34 +128,9 @@ If you want more control than skins offer you, you can build your own UI from ou
 ```
 </FrameworkCase>
 
-You might consider <DocsLink slug="how-to/customize-skins">ejecting a skin</DocsLink> and using its pre-styled components as a starting point.
+To get started with UI components, you might consider <DocsLink slug="how-to/customize-skins">ejecting a skin</DocsLink> and using its pre-styled components as a foundation.
 
 <DocsLinkCard slug="concepts/ui-components">Learn more about UI components</DocsLinkCard>
-
-### Build your own UI components
-
-You might not need to build your own UI component. Our components are unstyled primitives that offer built-in accessibility and behavior. However, if you notice that we don't support something (yet!), you can access player state directly.
-
-<FrameworkCase frameworks={["react"]}>
-```tsx
-function TimeRemaining() {
-  const time = Player.usePlayer((s) => s.duration - s.currentTime);
-  return <div>{Math.ceil(time)}s remaining</div>;
-}
-```
-
-<DocsLinkCard slug="reference/use-player">`usePlayer` reference</DocsLinkCard>
-</FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
-```ts
-class TimeRemaining extends MediaElement {
-  #time = new PlayerController(this, playerContext, selectTime);
-  // renders from this.#time.value
-}
-```
-
-<DocsLinkCard slug="reference/player-controller">`PlayerController` reference</DocsLinkCard>
-</FrameworkCase>
 
 ## 3. Media
 
@@ -158,7 +159,7 @@ DASH, YouTube, Vimeo, Mux, and more media elements are currently under developme
 <FrameworkCase frameworks={["html"]}>
 ```html
 <video-player>
-  <video-skin> 
+  <video-skin>
 
     <hls-video slot="media" src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hls-video>
 

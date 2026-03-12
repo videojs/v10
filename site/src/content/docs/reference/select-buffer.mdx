@@ -18,7 +18,7 @@ Pass `selectBuffer` to <DocsLink slug="reference/player-controller">`PlayerContr
 The returned state includes buffered ranges and percent buffered.
 
 <FrameworkCase frameworks={["react"]}>
-```tsx
+```tsx title="BufferBar.tsx"
 import { selectBuffer, usePlayer } from '@videojs/react';
 
 function BufferBar() {
@@ -33,7 +33,7 @@ function BufferBar() {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-```ts
+```ts title="buffer-bar.ts"
 import { createPlayer, MediaElement, selectBuffer } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 

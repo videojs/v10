@@ -18,7 +18,7 @@ Pass `selectControls` to <DocsLink slug="reference/player-controller">`PlayerCon
 The returned state includes whether controls are visible and whether the user is active (interacting with the player).
 
 <FrameworkCase frameworks={["react"]}>
-```tsx
+```tsx title="ControlsOverlay.tsx"
 import { selectControls, usePlayer } from '@videojs/react';
 
 function ControlsOverlay({ children }: { children: React.ReactNode }) {
@@ -35,7 +35,7 @@ function ControlsOverlay({ children }: { children: React.ReactNode }) {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-```ts
+```ts title="controls-overlay.ts"
 import { createPlayer, MediaElement, selectControls } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 

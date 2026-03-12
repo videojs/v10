@@ -7,12 +7,12 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Not every player needs to support every use case. To address this, Video.js has a concept of <DocsLink slug="concepts/features">**features**</DocsLink> -- self-contained unit of player functionality. For example, "playback" adds `paused` and `play()`, "volume" adds `volume` and `setVolume()`, and so on.
+Not every player needs to support every use case. To address this, Video.js has **features** -- self-contained units of player functionality. For example, the "playback" feature adds `paused` and `play()`, "volume" adds `volume` and `setVolume()`, and so on. More on features, <DocsLink slug="concepts/features">later</DocsLink>.
 
-A **preset** is a curated set of features grouped for a specific use case. Instead of wiring up individual features one by one, you pick a preset that matches what you're building:
+A **preset** is a curated set of features bundled for a specific use case. Instead of wiring up individual features one by one, you pick a preset that matches what you're building. For example, the "video" preset includes features needed for a general website video player:
 
 <FrameworkCase frameworks={["react"]}>
-```tsx
+```tsx title="App.tsx"
 import { createPlayer } from '@videojs/react';
 import { videoFeatures, Video, VideoSkin } from '@videojs/react/video';
 
@@ -30,7 +30,7 @@ function App() {
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-```html
+```html title="index.html"
 <script type="module">
   import '@videojs/html/video/player';
   import '@videojs/html/video/skin';
@@ -47,70 +47,89 @@ function App() {
 
 ## Available presets
 
-| Preset | Features | Use case |
-|--------|----------|----------|
-| **Video** | playback, playback-rate, volume, time, source, buffer, fullscreen, picture-in-picture, controls, text-track, error | General website video |
-| **Audio** | playback, playback-rate, volume, time, source, buffer | Audio player |
-| **Background video** | none | Hero/background video — layout only, no controls |
+The default presets are simply "Video" and "Audio". These cover a baseline set of features, roughly the set of controls you'd expect from the HTML `<video>` and `<audio>` tags. Beyond the defaults, presets target more specific use cases. The `background-video` preset, for example, needs layout but not controls. Over time we'll add more, for example creator-platform players, short-form swipe-up players, TV app streaming players. On the audio side, a podcast player and a music player have a different set of needs. Presets give these use cases their own tailored feature sets.
 
 <FrameworkCase frameworks={["react"]}>
 
-Import presets from subpath exports:
-
-```tsx
-import { videoFeatures } from '@videojs/react/video';
-import { audioFeatures } from '@videojs/react/audio';
-import { backgroundFeatures } from '@videojs/react/background';
-```
+| Preset | Import | Use case |
+|--------|--------|----------|
+| **Video** | `@videojs/react/video` | General website video |
+| **Audio** | `@videojs/react/audio` | Audio player |
+| **Background video** | `@videojs/react/background` | Hero/background video — layout only, no controls |
 
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-Import presets from subpath exports:
-
-```ts
-import { videoFeatures } from '@videojs/html/video';
-import { audioFeatures } from '@videojs/html/audio';
-import { backgroundFeatures } from '@videojs/html/background';
-```
+| Preset | Import | Use case |
+|--------|--------|----------|
+| **Video** | `@videojs/html/video/*` | General website video |
+| **Audio** | `@videojs/html/audio/*` | Audio player |
+| **Background video** | `@videojs/html/background/*` | Hero/background video — layout only, no controls |
 
 </FrameworkCase>
 
+<FrameworkCase frameworks={["react"]}>
 ## How presets work
 
-A preset is just an array of features. When you pass a preset to `createPlayer`, it creates a store with those features enabled:
+A preset is just an array of <DocsLink slug="concepts/features">features</DocsLink>. When you pass a preset to `createPlayer`, it creates a player with those features enabled.
 
-<FrameworkCase frameworks={["react"]}>
-```tsx
+```tsx title="App.tsx"
 import { createPlayer } from '@videojs/react';
 import { videoFeatures } from '@videojs/react/video';
 
 // videoFeatures includes playback, volume, time, fullscreen, etc.
 const Player = createPlayer({ features: videoFeatures });
-
 // Player.Provider now has all video-related state and actions
+
+// Spread the preset to extend it
+const ExtendedPlayer = createPlayer({ features: [...videoFeatures, customFeature] });
 ```
 </FrameworkCase>
+
 <FrameworkCase frameworks={["html"]}>
 
-HTML custom elements handle this internally. The `<video-player>` element uses `videoFeatures`, `<audio-player>` uses `audioFeatures`, and `<background-video-player>` uses `backgroundFeatures`:
-
+## Extending presets
+By default, you'll be using the element that comes with a preset:
 ```html
-<!-- Uses videoFeatures internally -->
-<video-player>
-  <video-skin>
+<script type="module">
+  import '@videojs/html/background/player';
+  import '@videojs/html/background/skin';
+  import '@videojs/html/background/skin.css';
+</script>
+<background-video-player>
+  <background-video-skin>
     <video slot="media" src="video.mp4"></video>
-  </video-skin>
-</video-player>
-
-<!-- Uses audioFeatures internally -->
-<audio-player>
-  <audio-skin>
-    <audio slot="media" src="audio.mp3"></audio>
-  </audio-skin>
-</audio-player>
+  </background-video-skin>
+</background-video-player>
 ```
 
+However, you might want to extend that functionality. For example, if you wanted to add a play/pause button to your background video:
+```html title="index.html"
+<script type="module">
+  import { createPlayer, playback, MediaElement } from '@videojs/html';
+  import { backgroundFeatures } from '@videojs/html/background';
+  import '@videojs/html/media/container';
+  import '@videojs/html/ui/play-button';
+
+  // Spread the preset and add the playback feature
+  const { ProviderMixin } = createPlayer({
+    features: [...backgroundFeatures, playback],
+  });
+
+  class MyPlayer extends ProviderMixin(MediaElement) {
+    static readonly tagName = 'my-player';
+  }
+
+  customElements.define('my-player', MyPlayer);
+</script>
+
+<my-player>
+  <media-container>
+    <video slot="media" src="video.mp4" autoplay muted loop playsinline></video>
+    <media-play-button>Play / Pause</media-play-button>
+  </media-container>
+</my-player>
+```
 </FrameworkCase>
 
 ## Presets and skins
@@ -125,7 +144,7 @@ HTML custom elements handle this internally. The `<video-player>` element uses `
 | `audioFeatures` | `<AudioSkin>`, `<MinimalAudioSkin>` |
 | `backgroundFeatures` | `<BackgroundVideoSkin>` |
 
-Each preset's subpath export includes its skins:
+Each preset's export includes its skins:
 
 ```tsx
 // Includes videoFeatures, Video, VideoSkin, MinimalVideoSkin

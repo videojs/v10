@@ -18,7 +18,7 @@ Pass `selectTime` to <DocsLink slug="reference/player-controller">`PlayerControl
 The returned state includes `currentTime`, `duration`, and the `seek` action method.
 
 <FrameworkCase frameworks={["react"]}>
-```tsx
+```tsx title="TimeDisplay.tsx"
 import { selectTime, usePlayer } from '@videojs/react';
 
 function TimeDisplay() {
@@ -35,7 +35,7 @@ function TimeDisplay() {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-```ts
+```ts title="time-display.ts"
 import { createPlayer, MediaElement, selectTime } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 

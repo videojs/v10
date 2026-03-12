@@ -18,7 +18,7 @@ Pass `selectPlaybackRate` to <DocsLink slug="reference/player-controller">`Playe
 The returned state includes `playbackRate`, `playbackRates`, and the `setPlaybackRate` action.
 
 <FrameworkCase frameworks={["react"]}>
-```tsx
+```tsx title="RateDisplay.tsx"
 import { selectPlaybackRate, usePlayer } from '@videojs/react';
 
 function RateDisplay() {
@@ -31,7 +31,7 @@ function RateDisplay() {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-```ts
+```ts title="rate-display.ts"
 import { createPlayer, MediaElement, selectPlaybackRate } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 

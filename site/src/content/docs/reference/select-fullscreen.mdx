@@ -18,7 +18,7 @@ Pass `selectFullscreen` to <DocsLink slug="reference/player-controller">`PlayerC
 The returned state includes whether fullscreen is active and its availability on the current platform.
 
 <FrameworkCase frameworks={["react"]}>
-```tsx
+```tsx title="FullscreenButton.tsx"
 import { selectFullscreen, usePlayer } from '@videojs/react';
 
 function FullscreenButton() {
@@ -35,7 +35,7 @@ function FullscreenButton() {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-```ts
+```ts title="fullscreen-button.ts"
 import { createPlayer, MediaElement, selectFullscreen } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 

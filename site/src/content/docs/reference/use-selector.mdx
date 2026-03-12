@@ -8,7 +8,7 @@ import DocsLink from "@/components/docs/DocsLink.astro";
 
 `useSelector` is a low-level hook that subscribes to an external store using React's `useSyncExternalStore`. It accepts a `subscribe` function, a `getSnapshot` function, a `selector` to derive state, and an optional `isEqual` comparator (defaults to `shallowEqual`).
 
-```tsx
+```tsx title="TimeDisplay.tsx"
 import { useSelector, shallowEqual } from "@videojs/store/react";
 
 function TimeDisplay({ store }) {

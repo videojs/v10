@@ -7,7 +7,7 @@ import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 
 `useMediaRegistration` returns a setter function for registering a media element with the player context. The built-in `<Video>` and `<Audio>` components use this internally -- you only need it when building a custom media element.
 
-```tsx
+```tsx title="CustomMedia.tsx"
 import { useMediaRegistration } from "@videojs/react";
 import { useRef, useEffect } from "react";
 

@@ -133,10 +133,12 @@ function App() {
 
   return (
     <Player.Provider>
-      <Video src="video.mp4" />
-      <button onClick={() => (paused ? store.play() : store.pause())}>
-        {paused ? 'Play' : 'Pause'}
-      </button>
+      <Player.Container>
+        <Video src="video.mp4" />
+        <button onClick={() => (paused ? store.play() : store.pause())}>
+          {paused ? 'Play' : 'Pause'}
+        </button>
+      </Player.Container>
     </Player.Provider>
   );
 }
@@ -257,7 +259,7 @@ A default video preset (general website video, the kind of thing you might other
 ```html
 <video-player>
   <video-skin>
-    <video src="video.mp4"></video>
+    <video slot="media" src="video.mp4"></video>
   </video-skin>
 </video-player>
 ```

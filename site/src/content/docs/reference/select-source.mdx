@@ -18,7 +18,7 @@ Pass `selectSource` to <DocsLink slug="reference/player-controller">`PlayerContr
 The returned state includes the current `src` and `type`.
 
 <FrameworkCase frameworks={["react"]}>
-```tsx
+```tsx title="SourceInfo.tsx"
 import { selectSource, usePlayer } from '@videojs/react';
 
 function SourceInfo() {
@@ -31,7 +31,7 @@ function SourceInfo() {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-```ts
+```ts title="source-info.ts"
 import { createPlayer, MediaElement, selectSource } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 

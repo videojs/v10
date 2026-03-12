@@ -26,8 +26,6 @@ In prior versions of Video.js, skins were CSS-only themes applied to the same se
   </video-skin>
 </video-player>
 ```
-
-In HTML, always add `slot="media"` to your media element. Skins contain a <DocsLink slug="reference/player-container">`<media-container>`</DocsLink> internally that uses this slot to discover the media.
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -60,7 +58,7 @@ When you choose a skin you have two options for how you use it: **packaged** or 
 ```html
   <video-player>
     <video-skin> 
-      ...Media...
+      <!--...Media...-->
     </video-skin>
   </video-player>
 
@@ -78,7 +76,7 @@ When you choose a skin you have two options for how you use it: **packaged** or 
 
 ### Example of ejected
 <FrameworkCase frameworks={["html"]}>
-```html
+```html title="index.html"
   <video-player>
     <media-container class="media-default-skin">
       <!-- ...Media... -->
@@ -148,7 +146,7 @@ When you choose a skin you have two options for how you use it: **packaged** or 
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
-```tsx
+```tsx title="VideoSkin.tsx"
   <Player.Provider>
     <Container className={cn('media-minimal-skin', className)} {...rest}>
       <BufferingIndicator
@@ -309,28 +307,63 @@ When you choose a skin you have two options for how you use it: **packaged** or 
 </FrameworkCase>
 
 
-## Skins and player features
+## Skins and presets
 
-Skins are designed for <DocsLink slug="concepts/presets">presets</DocsLink>. A preset is a starting set of <DocsLink slug="concepts/features">features</DocsLink> grouped together for a specific use case. The default presets are simply `video` and `audio`. These cover a baseline set of features, roughly the set of controls you'd expect from the HTML `<video>` and `<audio>` tags.
+Skins are designed for specific presets. A preset is a curated set of features bundled for a specific use case. 
 
-Beyond the defaults, presets target more specific use cases. The `background-video` preset, for example, needs layout but not controls. Over time we'll add more, for example creator-platform players, short-form swipe-up players, TV app streaming players. On the audio side, a podcast player and a music player have a different set of needs. Presets give these use cases their own tailored feature sets.
+<DocsLinkCard slug="concepts/presets">Read more about presets</DocsLinkCard>
 
-Because skins are tied to presets, each skin is built for the specific features that preset includes. The default video and audio presets ship with multiple skin options, and those options will grow over time. Non-default presets will typically have a single skin, since the use case is more focused.
+Because skins are tied to presets, each skin is built for the specific features that preset includes. The default video and audio presets ship with multiple skin options, and those options will grow over time. Other presets will typically have a single skin, since the use case is more focused.
 
 <FrameworkCase frameworks={["html"]}>
-| Player preset | Available skins |
-|----------|-----------------|
-| `<video-player>` | `<video-skin>`, `<video-minimal-skin>` |
-| `<audio-player>` | `<audio-skin>`, `<audio-minimal-skin>` |
-| `<background-video-player>` | `<background-video-skin>` |
+| Player preset | Available skins | Import |
+|----------|-----------------|--------|
+| `<video-player>` | `<video-skin>`, `<video-minimal-skin>` | `@videojs/html/video/*` |
+| `<audio-player>` | `<audio-skin>`, `<audio-minimal-skin>` | `@videojs/html/audio/*` |
+| `<background-video-player>` | `<background-video-skin>` | `@videojs/html/background/*` |
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-| Player preset | Available skins |
-|----------|-----------------|
-| `videoFeatures` | `<VideoSkin>`, `<MinimalVideoSkin>` |
-| `audioFeatures` | `<AudioSkin>`, `<MinimalAudioSkin>` |
-| `backgroundFeatures` | `<BackgroundVideoSkin>` |
+| Player preset | Available skins | Import |
+|----------|-----------------|--------|
+| `videoFeatures` | `<VideoSkin>`, `<MinimalVideoSkin>` | `@videojs/react/video` |
+| `audioFeatures` | `<AudioSkin>`, `<MinimalAudioSkin>` | `@videojs/react/audio` |
+| `backgroundFeatures` | `<BackgroundVideoSkin>` | `@videojs/react/background` |
 </FrameworkCase>
 
-<DocsLinkCard slug="concepts/presets">Read more about presets</DocsLinkCard>
+For example, combining the video preset features and skin would look like this:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="App.tsx"
+import { createPlayer } from '@videojs/react';
+import { videoFeatures, Video, VideoSkin } from '@videojs/react/video';
+
+const Player = createPlayer({ features: videoFeatures });
+
+function App() {
+  return (
+    <Player.Provider>
+      <VideoSkin>
+        <Video src="video.mp4" />
+      </VideoSkin>
+    </Player.Provider>
+  );
+}
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+```html title="index.html"
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/video/skin';
+  import '@videojs/html/video/skin.css';
+</script>
+
+<video-player>
+  <video-skin>
+    <video slot="media" src="video.mp4"></video>
+  </video-skin>
+</video-player>
+```
+</FrameworkCase>
