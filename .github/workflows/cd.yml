@@ -22,18 +22,24 @@ jobs:
       id-token: write
 
     steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # Fetch all history for all tags and branches
+
+      - name: Generate the root changelog
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --verbose
+        env:
+          OUTPUT: CHANGELOG.md
+          GITHUB_REPO: ${{ github.repository }}
+
       - uses: googleapis/release-please-action@v4
         id: release
         with:
           config-file: .github/release-please/release-please-config.json
           manifest-file: .github/release-please/.release-please-manifest.json
-
-      - uses: actions/checkout@v5
-        # these if statements ensure that a publication only occurs when
-        # a new release is created:
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        with:
-          fetch-depth: 0 # Fetch all history for all tags and branches
 
       - name: Setup pnpm
         if: ${{ steps.release.outputs.releases_created == 'true' }}
