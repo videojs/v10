@@ -53,26 +53,32 @@
   bottom: 0.75rem;
   inset-inline: 0.75rem;
   z-index: 10;
-  will-change: scale, transform, filter, opacity;
-  transition-property: scale, transform, filter, opacity;
-  transition-duration: 100ms;
-  transition-delay: 0ms;
-  transition-timing-function: ease-out;
-  transform-origin: bottom;
   color: oklch(1 0 0);
+
+  @media (pointer: fine) {
+    will-change: scale, transform, filter, opacity;
+    transition-property: scale, transform, filter, opacity;
+    transition-duration: 100ms;
+    transition-delay: 0ms;
+    transition-timing-function: ease-out;
+    transform-origin: bottom;
+  }
 
   &:not([data-visible]) {
     opacity: 0;
-    scale: 0.9;
-    filter: blur(8px);
-    transition-duration: 300ms;
-    transition-delay: 500ms;
     pointer-events: none;
 
-    @media (prefers-reduced-motion: reduce) {
-      scale: 1;
-      filter: blur(0);
-      transition-duration: 100ms;
+    @media (pointer: fine) {
+      scale: 0.9;
+      filter: blur(8px);
+      transition-duration: 300ms;
+      transition-delay: 500ms;
+
+      @media (prefers-reduced-motion: reduce) {
+        scale: 1;
+        filter: blur(0);
+        transition-duration: 100ms;
+      }
     }
   }
 }
