@@ -19,6 +19,7 @@
         "@videojs/html",
         "@videojs/icons",
         "@videojs/react",
+        "@videojs/skins",
         "@videojs/spf",
         "@videojs/store",
         "@videojs/utils"
@@ -56,6 +57,13 @@
     },
     "packages/react": {
       "component": "@videojs/react",
+      "prerelease": true,
+      "prerelease-type": "beta",
+      "versioning": "prerelease",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "packages/skins": {
+      "component": "@videojs/skins",
       "prerelease": true,
       "prerelease-type": "beta",
       "versioning": "prerelease",
