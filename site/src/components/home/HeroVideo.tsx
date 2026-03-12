@@ -27,7 +27,7 @@ export default function HeroVideo({
         className={className}
         style={{ '--media-border-radius': `calc(var(--spacing) * 6)`, ...style } as React.CSSProperties}
       >
-        <HlsVideo src={VJS10_DEMO_VIDEO.hls} playsInline style={{ objectFit: 'cover' }} />
+        <HlsVideo src={VJS10_DEMO_VIDEO.hls} playsInline className="object-cover" />
         <Poster src={poster} />
       </SkinComponent>
     </Player.Provider>
