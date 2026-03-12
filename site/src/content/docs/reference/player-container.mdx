@@ -1,0 +1,216 @@
+---
+title: Player.Container
+frameworkTitle:
+  html: media-container
+description: The visual wrapper — handles layout, media discovery, and acts as the fullscreen target.
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+
+<FrameworkCase frameworks={["react"]}>
+The `Player.Container` is the visual wrapper around your player. It handles layout, discovers the media element, and acts as the fullscreen target. It lives inside a <DocsLink slug="reference/player-provider">`Player.Provider`</DocsLink>.
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+The `<media-container>` is the visual wrapper around your player. It handles layout, discovers the media element, and acts as the fullscreen target. It lives inside a <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink>.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player.Provider>
+  <Player.Container>
+    <video src="video.mp4" />
+    <Controls />
+  </Player.Container>
+</Player.Provider>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <media-container>
+    <video slot="media" src="video.mp4"></video>
+    <media-controls>...</media-controls>
+  </media-container>
+</video-player>
+```
+</FrameworkCase>
+
+## How it's created
+
+<FrameworkCase frameworks={["react"]}>
+The `Player.Container` comes from the same `createPlayer()` call that creates the `Player.Provider`. They're a matched pair wired to the same feature set.
+
+```tsx
+import { createPlayer } from '@videojs/react';
+import { videoFeatures } from '@videojs/react/video';
+
+const Player = createPlayer({ features: videoFeatures });
+```
+
+<DocsLinkCard slug="reference/create-player">createPlayer reference</DocsLinkCard>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+For most users, importing from `@videojs/html/video/player` registers both `<video-player>` and `<media-container>` with the standard video features:
+
+```ts
+import '@videojs/html/video/player';
+```
+
+```html
+<video-player>
+  <media-container>
+    <video slot="media" src="video.mp4"></video>
+  </media-container>
+</video-player>
+```
+
+For custom behavior, use `ContainerMixin` from `createPlayer()`:
+
+```ts
+import { createPlayer, MediaElement } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { ContainerMixin } = createPlayer({ features: videoFeatures });
+
+class MyContainer extends ContainerMixin(MediaElement) {}
+customElements.define('my-container', MyContainer);
+```
+
+<DocsLinkCard slug="reference/html-create-player">createPlayer reference</DocsLinkCard>
+<DocsLinkCard slug="reference/container-mixin">ContainerMixin reference</DocsLinkCard>
+</FrameworkCase>
+
+## Three roles
+
+### Layout
+
+The container is the visual box around your media and controls. This is where sizing, aspect ratio, and visual boundaries live. CSS sizing goes on the container, not the provider.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player.Container style={{ width: 640, aspectRatio: '16/9' }}>
+  <video src="video.mp4" />
+  <Controls />
+</Player.Container>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-container style="width: 640px; aspect-ratio: 16/9;">
+  <video slot="media" src="video.mp4"></video>
+  <media-controls>...</media-controls>
+</media-container>
+```
+</FrameworkCase>
+
+### Media discovery
+
+<FrameworkCase frameworks={["react"]}>
+The container automatically finds the `<video>` or `<audio>` element in its subtree and attaches it to the store.
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+The container looks for `slot="media"` to detect your media:
+
+```html
+<media-container>
+  <video slot="media" src="video.mp4"></video>
+</media-container>
+```
+
+This applies even when using a <DocsLink slug="concepts/skins">skin</DocsLink>, since skins contain a container internally.
+</FrameworkCase>
+
+### Fullscreen target
+
+When the user goes fullscreen, the **container** goes fullscreen — not the video element. This keeps UI controls visible on top of the video, since they're children of the container.
+
+## Relationship to skins
+
+A <DocsLink slug="concepts/skins">skin</DocsLink> is a container plus UI controls. When you use a packaged skin, the container is built in — you don't need to add one yourself.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+{/* Packaged skin — container is inside VideoSkin */}
+<Player.Provider>
+  <VideoSkin>
+    <Video src="video.mp4" />
+  </VideoSkin>
+</Player.Provider>
+
+{/* Custom UI — you use Player.Container directly */}
+<Player.Provider>
+  <Player.Container>
+    <video src="video.mp4" />
+    <PlayButton />
+  </Player.Container>
+</Player.Provider>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<!-- Packaged skin — container is inside video-skin -->
+<video-player>
+  <video-skin>
+    <video slot="media" src="video.mp4"></video>
+  </video-skin>
+</video-player>
+
+<!-- Custom UI — you use media-container directly -->
+<video-player>
+  <media-container>
+    <video slot="media" src="video.mp4"></video>
+    <media-play-button></media-play-button>
+  </media-container>
+</video-player>
+```
+</FrameworkCase>
+
+## Inside vs. outside the container
+
+UI components work both inside and outside the container — they just need the provider's context. The difference is that only what's **inside** the container goes fullscreen.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player.Provider>
+  <Player.Container>
+    <video src="video.mp4" />
+    <Controls />          {/* inside — goes fullscreen */}
+  </Player.Container>
+
+  <Transcript />          {/* outside — does NOT go fullscreen */}
+  <PlaylistSidebar />     {/* outside — does NOT go fullscreen */}
+</Player.Provider>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <media-container>
+    <video slot="media" src="video.mp4"></video>
+    <media-controls>...</media-controls>  <!-- inside — goes fullscreen -->
+  </media-container>
+
+  <media-transcript></media-transcript>     <!-- outside — does NOT go fullscreen -->
+  <playlist-sidebar></playlist-sidebar>     <!-- outside — does NOT go fullscreen -->
+</video-player>
+```
+</FrameworkCase>
+
+Components outside the container still have full access to the store for reading state and dispatching actions. They just live outside the fullscreen boundary.
+
+## See also
+
+- <DocsLink slug="reference/player-provider">Player.Provider</DocsLink> — the state boundary that wraps the container
+- <DocsLink slug="concepts/skins">Skins</DocsLink> — packaged player designs that include a container
+- <DocsLink slug="concepts/architecture">Architecture</DocsLink> — how state, UI, and media fit together
+
+<FrameworkCase frameworks={["react"]}>
+- <DocsLink slug="reference/create-player">createPlayer</DocsLink> — factory that returns Provider, Container, and hooks
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+- <DocsLink slug="reference/html-create-player">createPlayer</DocsLink> — factory that returns ProviderMixin, ContainerMixin, and controllers
+- <DocsLink slug="reference/container-mixin">ContainerMixin</DocsLink> — the mixin behind the container element
+</FrameworkCase>

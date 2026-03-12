@@ -1,14 +1,14 @@
-import { createPlayer, usePlayer, useStore } from '@videojs/react';
+import { createPlayer, useStore } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
 import './StoreAccess.css';
 
-const { Provider, Container } = createPlayer({
+const Player = createPlayer({
   features: videoFeatures,
 });
 
 function SeekControls() {
-  const store = usePlayer();
+  const store = Player.usePlayer();
   const s = useStore(store);
 
   return (
@@ -25,8 +25,8 @@ function SeekControls() {
 
 export default function StoreAccess() {
   return (
-    <Provider>
-      <Container className="react-use-store-access">
+    <Player.Provider>
+      <Player.Container className="react-use-store-access">
         <Video
           src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
           autoPlay
@@ -35,7 +35,7 @@ export default function StoreAccess() {
           loop
         />
         <SeekControls />
-      </Container>
-    </Provider>
+      </Player.Container>
+    </Player.Provider>
   );
 }

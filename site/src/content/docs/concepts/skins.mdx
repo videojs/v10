@@ -8,6 +8,7 @@ import { FrostedSkinDemo } from '@/examples/react/FrostedSkin/FrostedSkinDemo';
 import { MinimalSkinDemo } from '@/examples/react/MinimalSkin/MinimalSkinDemo';
 import MinimalFrame from '@/components/frames/Minimal.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import Aside from '@/components/Aside.astro';
 
 
@@ -19,13 +20,14 @@ In prior versions of Video.js, skins were CSS-only themes applied to the same se
 ```html
 <video-player>
   <!-- skin element -->
-  <video-skin> 
+  <video-skin>
     <!-- wraps the media element -->
-    <video src="video.mp4"></video>
+    <video slot="media" src="video.mp4"></video>
   </video-skin>
 </video-player>
-
 ```
+
+In HTML, always add `slot="media"` to your media element. Skins contain a <DocsLink slug="reference/player-container">`<media-container>`</DocsLink> internally that uses this slot to discover the media.
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -40,17 +42,20 @@ In prior versions of Video.js, skins were CSS-only themes applied to the same se
 </FrameworkCase>
 
 
-## Packaged vs. Open
+## Packaged vs. ejected
 
-When you choose a skin you have two options for how you use it: **packaged** or **open**. It's usually easiest to start with a packaged skin and later copy its internal components into your project when you need more customization.
+When you choose a skin you have two options for how you use it: **packaged** or **ejected**. It's usually easiest to start with a packaged skin and later eject its internal components into your project when you need more customization.
 
-| Packaged | Open |
+| Packaged | Ejected |
 |----------|-----------------|
 | Single component | Many UI components |
 | Limited customization | Complete customization |
 | Future design updates auto-applied by bumping the version | Future design updates manually applied, or intentionally ignored |
 
-### Example of Packaged
+<DocsLinkCard slug="how-to/customize-skins">Read more about ejecting skins</DocsLinkCard>
+<DocsLinkCard slug="concepts/ui-components">Read more about UI Components</DocsLinkCard>
+
+### Example of packaged
 <FrameworkCase frameworks={["html"]}>
 ```html
   <video-player>
@@ -65,18 +70,18 @@ When you choose a skin you have two options for how you use it: **packaged** or 
 ```tsx
   <Player.Provider>
     <VideoSkin>
-      ...Media...
+      {/* ...Media... */}
     </VideoSkin>
   </Player.Provider>
 ```
 </FrameworkCase>
 
-### Example of Open
+### Example of ejected
 <FrameworkCase frameworks={["html"]}>
 ```html
   <video-player>
     <media-container class="media-default-skin">
-      ...Media...
+      <!-- ...Media... -->
 
       <media-buffering-indicator class="media-buffering-indicator"></media-buffering-indicator>
 
@@ -304,33 +309,28 @@ When you choose a skin you have two options for how you use it: **packaged** or 
 </FrameworkCase>
 
 
-## Skins and Player Features
+## Skins and player features
 
-Skins are designed for Presets [LINK ME]. A Preset is a starting set of features grouped together for a specific use case. The default presets are simply `video` and `audio`. These cover a baseline set of features, roughly the set of controls you'd expect from the HTML `<video>` and `<audio>` tags.
+Skins are designed for <DocsLink slug="concepts/presets">presets</DocsLink>. A preset is a starting set of <DocsLink slug="concepts/features">features</DocsLink> grouped together for a specific use case. The default presets are simply `video` and `audio`. These cover a baseline set of features, roughly the set of controls you'd expect from the HTML `<video>` and `<audio>` tags.
 
 Beyond the defaults, presets target more specific use cases. The `background-video` preset, for example, needs layout but not controls. Over time we'll add more, for example creator-platform players, short-form swipe-up players, TV app streaming players. On the audio side, a podcast player and a music player have a different set of needs. Presets give these use cases their own tailored feature sets.
 
 Because skins are tied to presets, each skin is built for the specific features that preset includes. The default video and audio presets ship with multiple skin options, and those options will grow over time. Non-default presets will typically have a single skin, since the use case is more focused.
 
-With any skin, you can use it as a starting point and eject (or use the open version) to build on top of it.
-
 <FrameworkCase frameworks={["html"]}>
-| Player Preset | Available Skins |
+| Player preset | Available skins |
 |----------|-----------------|
-| `<video-player>` | `<video-skin>`, `<minimal-video-skin>` |
-| `<audio-player>` | `<audio-skin>`, `<minimal-audio-skin>` |
+| `<video-player>` | `<video-skin>`, `<video-minimal-skin>` |
+| `<audio-player>` | `<audio-skin>`, `<audio-minimal-skin>` |
 | `<background-video-player>` | `<background-video-skin>` |
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-| Player Preset | Available Skins |
+| Player preset | Available skins |
 |----------|-----------------|
-| `videoFeatures` | `<VideoSkin>`, `<MinimalSkin>` |
+| `videoFeatures` | `<VideoSkin>`, `<MinimalVideoSkin>` |
 | `audioFeatures` | `<AudioSkin>`, `<MinimalAudioSkin>` |
-| `backgroundVideoFeatures` | `<BackgroundVideoSkin>` |
+| `backgroundFeatures` | `<BackgroundVideoSkin>` |
 </FrameworkCase>
 
-## See Also
-
-- UI Components — The primitives skins are built from [LINK ME]
-- Features — State and behavior bundles [LINK ME]
+<DocsLinkCard slug="concepts/presets">Read more about presets</DocsLinkCard>

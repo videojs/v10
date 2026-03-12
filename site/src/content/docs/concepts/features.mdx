@@ -1,0 +1,266 @@
+---
+title: Features
+description: The state and actions each feature adds to the player store
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import Aside from '@/components/Aside.astro';
+
+Not every player needs to support every use case. To address this, Video.js has a concept of **features** -- self-contained unit of player functionality. For example, the "playback" feature provides play/pause state and actions, while the "fullscreen" feature provides fullscreen state and actions.
+
+A feature is a self-contained unit of player functionality. Each one adds state properties and actions to the player store. For example, "playback" adds `paused` and `play()`, "volume" adds `volume` and `setVolume()`, and so on.
+
+<FrameworkCase frameworks={["react"]}>
+You might not need to think about features. If you're using a <DocsLink slug="concepts/presets">preset</DocsLink>, it takes care of picking the right features for your use case.
+
+However, if you'd like more control, you can set up your player with individual features when you create it:
+```tsx
+import { createPlayer, playback, volume, time } from '@videojs/react';
+
+const Player = createPlayer({
+  features: [playback, volume, time],
+});
+```
+
+You access feature state and actions through <DocsLink slug="reference/use-player">`usePlayer`</DocsLink>:
+```tsx
+// Subscribe to state (re-renders when selected values change)
+const { paused, volume } = Player.usePlayer((s) => ({
+  paused: s.paused,
+  volume: s.volume,
+}));
+
+// Call actions
+const store = Player.usePlayer();
+store.play();
+store.setVolume(0.8);
+```
+
+Each feature also has a pre-built selector (e.g. <DocsLink slug="reference/select-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/select-volume">`selectVolume`</DocsLink>) that returns just that feature's state and actions:
+
+```tsx
+import { selectPlayback, usePlayer } from '@videojs/react';
+
+const playback = Player.usePlayer(selectPlayback);
+playback?.play();
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+You might not need to think about features. If you're importing a <DocsLink slug="concepts/presets">preset player</DocsLink>, it takes care of picking the right features for your use case.
+
+```html
+<script type="module">
+  import '@videojs/html/video/player';
+</script>
+
+<video-player>
+  <media-container>
+    <video src="video.mp4"></video>
+  </media-container>
+</video-player>
+```
+
+However, if you'd like more control, you can create a player with individual features:
+```ts
+import { createPlayer, playback, volume, time } from '@videojs/html';
+
+const { ProviderMixin, PlayerController, context } = createPlayer({
+  features: [playback, volume, time],
+});
+```
+
+You can access feature state and actions through <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and pre-built feature selectors (e.g. <DocsLink slug="reference/select-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/select-volume">`selectVolume`</DocsLink>):
+```ts
+import { selectPlayback } from '@videojs/html';
+
+// Subscribe to feature state (triggers element updates on change)
+readonly #playback = new PlayerController(this, context, selectPlayback);
+
+// Read state and call actions
+const media = this.#playback.value;
+if (media?.paused) media.play();
+```
+</FrameworkCase>
+
+## Available features
+
+### Playback
+
+Controls play/pause state and tracks whether playback has started or is stalled.
+
+| State | Type | Description |
+|---|---|---|
+| `paused` | `boolean` | Whether playback is paused |
+| `ended` | `boolean` | Whether playback reached the end |
+| `started` | `boolean` | Whether playback has started (played or seeked) |
+| `waiting` | `boolean` | Whether playback is stalled waiting for data |
+
+| Action | Description |
+|---|---|
+| `play()` | Start playback (returns a `Promise`) |
+| `pause()` | Pause playback |
+
+### Volume
+
+Controls volume level and mute state.
+
+| State | Type | Description |
+|---|---|---|
+| `volume` | `number` | Volume level from 0 (silent) to 1 (max) |
+| `muted` | `boolean` | Whether audio is muted |
+| `volumeAvailability` | `MediaFeatureAvailability` | Whether volume can be set on this platform |
+
+| Action | Description |
+|---|---|
+| `setVolume(volume)` | Set volume (clamped 0–1). Auto-unmutes when raising above zero. |
+| `toggleMuted()` | Toggle mute. Restores volume to 0.25 when unmuting at zero. |
+
+### Time
+
+Tracks playback position and duration.
+
+| State | Type | Description |
+|---|---|---|
+| `currentTime` | `number` | Current playback position in seconds |
+| `duration` | `number` | Total duration in seconds (0 if unknown) |
+| `seeking` | `boolean` | Whether a seek operation is in progress |
+
+| Action | Description |
+|---|---|
+| `seek(time)` | Seek to a position in seconds (returns a `Promise`) |
+
+### Playback rate
+
+Controls speed of playback.
+
+| State | Type | Description |
+|---|---|---|
+| `playbackRate` | `number` | Current playback speed (1 = normal) |
+| `playbackRates` | `readonly number[]` | Available playback rates |
+
+| Action | Description |
+|---|---|
+| `setPlaybackRate(rate)` | Set the playback speed |
+
+### Source
+
+Tracks the current media source and readiness.
+
+| State | Type | Description |
+|---|---|---|
+| `source` | `string \| null` | Current media source URL |
+| `canPlay` | `boolean` | Whether enough data is loaded to begin playback |
+
+| Action | Description |
+|---|---|
+| `loadSource(src)` | Load a new media source |
+
+### Buffer
+
+Read-only — tracks buffered and seekable time ranges.
+
+| State | Type | Description |
+|---|---|---|
+| `buffered` | `[number, number][]` | Buffered time ranges as `[start, end]` tuples |
+| `seekable` | `[number, number][]` | Seekable time ranges as `[start, end]` tuples |
+
+### Fullscreen
+
+Controls fullscreen mode. Tries the container element first, falls back to the media element.
+
+| State | Type | Description |
+|---|---|---|
+| `fullscreen` | `boolean` | Whether fullscreen is active |
+| `fullscreenAvailability` | `MediaFeatureAvailability` | Whether fullscreen is supported |
+
+| Action | Description |
+|---|---|
+| `requestFullscreen()` | Enter fullscreen (returns a `Promise`) |
+| `exitFullscreen()` | Exit fullscreen (returns a `Promise`) |
+
+### Picture-in-picture
+
+Controls picture-in-picture mode.
+
+| State | Type | Description |
+|---|---|---|
+| `pip` | `boolean` | Whether picture-in-picture is active |
+| `pipAvailability` | `MediaFeatureAvailability` | Whether PiP is supported |
+
+| Action | Description |
+|---|---|
+| `requestPictureInPicture()` | Enter picture-in-picture (returns a `Promise`) |
+| `exitPictureInPicture()` | Exit picture-in-picture (returns a `Promise`) |
+
+### Controls
+
+Read-only — tracks user activity for showing and hiding controls.
+
+| State | Type | Description |
+|---|---|---|
+| `userActive` | `boolean` | Whether the user has recently interacted |
+| `controlsVisible` | `boolean` | Whether controls should be visible (active or paused) |
+
+### Text tracks
+
+Manages subtitles, captions, chapters, and thumbnail tracks.
+
+| State | Type | Description |
+|---|---|---|
+| `textTrackList` | `MediaTextTrack[]` | All text tracks on the media element |
+| `subtitlesShowing` | `boolean` | Whether captions/subtitles are enabled |
+| `chaptersCues` | `MediaTextCue[]` | Cues from the first chapters track |
+| `thumbnailCues` | `MediaTextCue[]` | Cues from the first thumbnails track |
+| `thumbnailTrackSrc` | `string \| null` | Track `src` for resolving relative thumbnail URLs |
+
+| Action | Description |
+|---|---|
+| `toggleSubtitles(forceShow?)` | Toggle subtitle visibility. Pass `true`/`false` to force. |
+
+### Error
+
+Tracks media errors.
+
+| State | Type | Description |
+|---|---|---|
+| `error` | `MediaError \| null` | The current error, or `null` |
+
+| Action | Description |
+|---|---|
+| `dismissError()` | Clear the current error |
+
+## Feature availability
+
+Volume, fullscreen, and picture-in-picture expose an `*Availability` property because platform support varies. For example, iOS Safari doesn't allow programmatic volume control.
+
+| Value | Meaning |
+|---|---|
+| `'available'` | Ready to use |
+| `'unavailable'` | Could work, not ready yet |
+| `'unsupported'` | Platform can never do this |
+
+Use availability to conditionally show controls:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+function VolumeControl() {
+  const availability = Player.usePlayer((s) => s.volumeAvailability);
+
+  if (availability === 'unsupported') return null;
+
+  return <VolumeSlider />;
+}
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```css
+media-volume-slider[data-volume-availability="unsupported"] {
+  display: none;
+}
+```
+</FrameworkCase>
+
+## See also
+<DocsLinkCard slug="concepts/presets" description="A set of features grouped for a specific use case and paired with a skin">Presets</DocsLinkCard>

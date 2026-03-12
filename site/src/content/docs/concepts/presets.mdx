@@ -1,0 +1,144 @@
+---
+title: Presets
+description: Purpose-built feature sets grouped together for specific player use cases.
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Not every player needs to support every use case. To address this, Video.js has a concept of <DocsLink slug="concepts/features">**features**</DocsLink> -- self-contained unit of player functionality. For example, "playback" adds `paused` and `play()`, "volume" adds `volume` and `setVolume()`, and so on.
+
+A **preset** is a curated set of features grouped for a specific use case. Instead of wiring up individual features one by one, you pick a preset that matches what you're building:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { createPlayer } from '@videojs/react';
+import { videoFeatures, Video, VideoSkin } from '@videojs/react/video';
+
+const Player = createPlayer({ features: videoFeatures });
+
+function App() {
+  return (
+    <Player.Provider>
+      <VideoSkin>
+        <Video src="video.mp4" />
+      </VideoSkin>
+    </Player.Provider>
+  );
+}
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/video/skin';
+  import '@videojs/html/video/skin.css';
+</script>
+
+<video-player>
+  <video-skin>
+    <video slot="media" src="video.mp4"></video>
+  </video-skin>
+</video-player>
+```
+</FrameworkCase>
+
+## Available presets
+
+| Preset | Features | Use case |
+|--------|----------|----------|
+| **Video** | playback, playback-rate, volume, time, source, buffer, fullscreen, picture-in-picture, controls, text-track, error | General website video |
+| **Audio** | playback, playback-rate, volume, time, source, buffer | Audio player |
+| **Background video** | none | Hero/background video — layout only, no controls |
+
+<FrameworkCase frameworks={["react"]}>
+
+Import presets from subpath exports:
+
+```tsx
+import { videoFeatures } from '@videojs/react/video';
+import { audioFeatures } from '@videojs/react/audio';
+import { backgroundFeatures } from '@videojs/react/background';
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+Import presets from subpath exports:
+
+```ts
+import { videoFeatures } from '@videojs/html/video';
+import { audioFeatures } from '@videojs/html/audio';
+import { backgroundFeatures } from '@videojs/html/background';
+```
+
+</FrameworkCase>
+
+## How presets work
+
+A preset is just an array of features. When you pass a preset to `createPlayer`, it creates a store with those features enabled:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { createPlayer } from '@videojs/react';
+import { videoFeatures } from '@videojs/react/video';
+
+// videoFeatures includes playback, volume, time, fullscreen, etc.
+const Player = createPlayer({ features: videoFeatures });
+
+// Player.Provider now has all video-related state and actions
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+HTML custom elements handle this internally. The `<video-player>` element uses `videoFeatures`, `<audio-player>` uses `audioFeatures`, and `<background-video-player>` uses `backgroundFeatures`:
+
+```html
+<!-- Uses videoFeatures internally -->
+<video-player>
+  <video-skin>
+    <video slot="media" src="video.mp4"></video>
+  </video-skin>
+</video-player>
+
+<!-- Uses audioFeatures internally -->
+<audio-player>
+  <audio-skin>
+    <audio slot="media" src="audio.mp3"></audio>
+  </audio-skin>
+</audio-player>
+```
+
+</FrameworkCase>
+
+## Presets and skins
+
+<DocsLink slug="concepts/skins">Skins</DocsLink> are designed for specific presets. Each skin expects the features its preset provides. For example, a video skin uses fullscreen and picture-in-picture controls, while an audio skin doesn't.
+
+<FrameworkCase frameworks={["react"]}>
+
+| Preset | Available skins |
+|--------|-----------------|
+| `videoFeatures` | `<VideoSkin>`, `<MinimalVideoSkin>` |
+| `audioFeatures` | `<AudioSkin>`, `<MinimalAudioSkin>` |
+| `backgroundFeatures` | `<BackgroundVideoSkin>` |
+
+Each preset's subpath export includes its skins:
+
+```tsx
+// Includes videoFeatures, Video, VideoSkin, MinimalVideoSkin
+import { videoFeatures, Video, VideoSkin } from '@videojs/react/video';
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+| Preset | Available skins |
+|--------|-----------------|
+| `<video-player>` | `<video-skin>`, `<video-minimal-skin>` |
+| `<audio-player>` | `<audio-skin>`, `<audio-minimal-skin>` |
+| `<background-video-player>` | `<background-video-skin>` |
+
+</FrameworkCase>

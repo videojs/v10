@@ -2,7 +2,8 @@ import type { Sidebar } from '@/types/docs';
 
 export const sidebar: Sidebar = [
   {
-    sidebarLabel: 'Getting started',
+    sidebarLabel: 'Site development',
+    devOnly: true,
     contents: [
       {
         slug: 'how-to/write-guides',
@@ -14,13 +15,24 @@ export const sidebar: Sidebar = [
         sidebarLabel: 'Writing references',
         devOnly: true,
       },
+    ],
+  },
+  {
+    sidebarLabel: 'Getting started',
+    contents: [
       { slug: 'how-to/installation' },
+      { slug: 'concepts/architecture' },
       { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
     ],
   },
   {
     sidebarLabel: 'Concepts',
-    contents: [{ slug: 'concepts/architecture' }, { slug: 'concepts/skins' }],
+    contents: [
+      { slug: 'concepts/presets' },
+      { slug: 'concepts/skins' },
+      { slug: 'concepts/ui-components' },
+      { slug: 'concepts/features' },
+    ],
   },
   {
     sidebarLabel: 'How to',
@@ -29,6 +41,8 @@ export const sidebar: Sidebar = [
   {
     sidebarLabel: 'Components',
     contents: [
+      { slug: 'reference/player-provider' },
+      { slug: 'reference/player-container' },
       // sorted alphabetically
       { slug: 'reference/buffering-indicator' },
       { slug: 'reference/captions-button' },
@@ -75,7 +89,6 @@ export const sidebar: Sidebar = [
     contents: [
       { slug: 'reference/html-create-player', sidebarLabel: 'createPlayer' },
       { slug: 'reference/player-controller' },
-      { slug: 'reference/player-mixin', sidebarLabel: 'PlayerMixin (removed)' },
       {
         sidebarLabel: 'Advanced',
         defaultOpen: false,

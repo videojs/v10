@@ -6,6 +6,8 @@ description: How Video.js players are structured — state, UI, and media
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs';
 import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import Aside from '@/components/Aside.astro';
 
 Video.js v10 is built around a three-part architecture that separates concerns and maximizes flexibility. Each part is designed to work independently or together, allowing you to use as much or as little of Video.js as you need.
 
@@ -33,12 +35,16 @@ State is handled by a `video-player` element, which creates a central state stor
 ```
 </FrameworkCase>
 
+The state available in the store is determined by which features your player includes. Set up your player's features with a preset.
+
+<DocsLinkCard slug="concepts/presets">Learn more about presets</DocsLinkCard>
+
 ## 2. User interface
 
-Use a prebuilt **Skin** or build your own from the individual **UI Components**.
+You can approach UI in Video.js from a few different levels: use a prebuilt Skin, build your own UI from our components, or even build your own components.
 
 ### Skins
-Complete, pre-designed player UIs that package components and styles together:
+Skins are complete, pre-designed player UIs that package components and styles together:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -53,17 +59,17 @@ Complete, pre-designed player UIs that package components and styles together:
 ```html
 <video-player>
   <video-skin>
-    <video src="video.mp4"></video>
+    <video slot="media" src="video.mp4"></video>
   </video-skin>
 </video-player>
 ```
 </FrameworkCase>
 
-<DocsLink slug="concepts/skins">Learn more about skins →</DocsLink>
+<DocsLinkCard slug="concepts/skins">Learn more about skins</DocsLinkCard>
 
-### UI Components
+### UI components
 
-Skins are a good starting point. However, if you want more control you can build your own UI from the individual UI Components, usually staring from the "open" version of the skin.
+If you want more control than skins offer you, you can build your own UI from our components.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -73,7 +79,7 @@ Skins are a good starting point. However, if you want more control you can build
     <Video src="video.mp4" />
     <MediaControls>
       <PlayButton />
-      ...
+      {/* ... */}
     </MediaControls>
   </MediaContainer>
 
@@ -84,11 +90,11 @@ Skins are a good starting point. However, if you want more control you can build
 ```html
 <video-player>
 
-  <media-container> 
-    <video src="video.mp4"></video>
+  <media-container>
+    <video slot="media" src="video.mp4"></video>
     <media-controls>
       <media-play-button></media-play-button>
-      ...
+      <!-- ... -->
     </media-controls>
   </media-container>
 
@@ -96,19 +102,54 @@ Skins are a good starting point. However, if you want more control you can build
 ```
 </FrameworkCase>
 
-{/* <DocsLink slug="concepts/ui-components">Learn more about UI components →</DocsLink> */}
+You might consider <DocsLink slug="how-to/customize-skins">ejecting a skin</DocsLink> and using its pre-styled components as a starting point.
+
+<DocsLinkCard slug="concepts/ui-components">Learn more about UI components</DocsLinkCard>
+
+### Build your own UI components
+
+You might not need to build your own UI component. Our components are unstyled primitives that offer built-in accessibility and behavior. However, if you notice that we don't support something (yet!), you can access player state directly.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+function TimeRemaining() {
+  const time = Player.usePlayer((s) => s.duration - s.currentTime);
+  return <div>{Math.ceil(time)}s remaining</div>;
+}
+```
+
+<DocsLinkCard slug="reference/use-player">`usePlayer` reference</DocsLinkCard>
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```ts
+class TimeRemaining extends MediaElement {
+  #time = new PlayerController(this, playerContext, selectTime);
+  // renders from this.#time.value
+}
+```
+
+<DocsLinkCard slug="reference/player-controller">`PlayerController` reference</DocsLinkCard>
+</FrameworkCase>
 
 ## 3. Media
 
 Media components are the components that actually display your media. They're essentially "players with no UI". They handle the video/audio rendering and expose a consistent API.
-Medias can be format specific (HLS, DASH), service specific (YouTube, Vimeo, Mux), or use case specific (BackgroundVideo). 
+Media components can be format specific (HLS, DASH), service specific (YouTube, Vimeo, Mux), or use case specific (BackgroundVideo).
+
+<FrameworkCase frameworks={["html"]}>
+Media elements are detected via a `slot="media"` attribute. Always include it on your `<video>`, `<audio>`, or custom media element.
+</FrameworkCase>
+
+<Aside type="note">
+DASH, YouTube, Vimeo, Mux, and more media elements are currently under development.
+</Aside>
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <Player.Provider>
   <VideoSkin>
 
-    <YoutubeVideo src="https://www.youtube.com/watch?v=WtA-IWdLMN0" />
+    <HlsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" />
 
   </VideoSkin>
 </Player.Provider>
@@ -119,14 +160,9 @@ Medias can be format specific (HLS, DASH), service specific (YouTube, Vimeo, Mux
 <video-player>
   <video-skin> 
 
-    <youtube-video src="https://www.youtube.com/watch?v=WtA-IWdLMN0"></youtube-video>
+    <hls-video slot="media" src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hls-video>
 
   </video-skin>
 </video-player>
 ```
 </FrameworkCase>
-
-## See Also
-
-- UI Components — The primitives skins are built from [LINK ME]
-- Features — State and behavior bundles [LINK ME]

@@ -1,0 +1,152 @@
+---
+title: UI components
+description: How Video.js UI components work — one element per component, data attributes for state, and compound composition.
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+UI components are controls like buttons, sliders, and time displays.
+
+Every UI component renders exactly one HTML element, taking inspiration from projects like [shadcn/ui](https://ui.shadcn.com/) and [Base UI](https://base-ui.com/). This approach gives you control over styling and behavior while handling the complex interactions for you.
+
+Complex controls are built by composing multiple single-element parts together:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<TimeSlider.Root>           {/* <div> — slider container */}
+  <TimeSlider.Track>        {/* <div> — track background */}
+    <TimeSlider.Fill />     {/* <div> — played portion */}
+    <TimeSlider.Buffer />   {/* <div> — buffered portion */}
+  </TimeSlider.Track>
+  <TimeSlider.Thumb />      {/* <div> — draggable handle */}
+</TimeSlider.Root>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-time-slider>                        <!-- slider container -->
+  <media-slider-track>                     <!-- track background -->
+    <media-slider-fill></media-slider-fill>       <!-- played portion -->
+    <media-slider-buffer></media-slider-buffer>   <!-- buffered portion -->
+  </media-slider-track>
+  <media-slider-thumb></media-slider-thumb>       <!-- draggable handle -->
+</media-time-slider>
+```
+</FrameworkCase>
+
+## Where to put your components
+<FrameworkCase frameworks={["react"]}>
+UI Components can go anywhere inside a <DocsLink slug="reference/player-provider">provider</DocsLink>. Unlike your media, your UI components don't need to be inside the <DocsLink slug="reference/player-container">container</DocsLink>, though components inside the container will go fullscreen with the video.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+UI Components can go anywhere inside a <DocsLink slug="reference/player-provider">video-player</DocsLink>. Unlike your media, your UI components don't need to be inside the <DocsLink slug="reference/player-container">container</DocsLink>, though components inside the container will go fullscreen with the video.
+</FrameworkCase>
+
+## Styling and customization
+
+<FrameworkCase frameworks={["react"]}>
+
+### The render prop
+
+The `render` prop is the primary customization mechanism. It accepts a function that receives `props` and `state`, and returns your element. The `props` object includes event handlers, ARIA attributes, data attributes, and a ref — always spread `{...props}` to keep everything working:
+
+```tsx
+<PlayButton
+  render={(props, state) => (
+    <button {...props}>
+      {state.paused ? 'Play' : 'Pause'}
+    </button>
+  )}
+/>
+```
+
+`className` and `style` also accept functions of state for dynamic styling without a full render prop:
+
+```tsx
+<PlayButton
+  className={(state) =>
+    state.paused ? 'btn btn--paused' : 'btn btn--playing'
+  }
+/>
+```
+
+</FrameworkCase>
+
+### Data attributes and CSS custom properties
+
+Components reflect player state as `data-*` attributes on their element. For example, `data-paused` or `data-volume-level="high"`.
+
+This lets you style state changes in pure CSS:
+
+```css
+/* Show/hide icons based on play state */
+.play-icon  { display: none; }
+.pause-icon { display: none; }
+
+button[data-paused] .play-icon        { display: inline; }
+button:not([data-paused]) .pause-icon { display: inline; }
+```
+
+Each component's reference page documents its full set of data attributes.
+
+Some components also expose **CSS custom properties** for continuous values like fill percentage and pointer position. Sliders, for example, set `--media-slider-fill` and `--media-slider-pointer`. See individual component reference pages for specifics.
+
+<FrameworkCase frameworks={["html"]}>
+
+### Classes and children
+
+Apply classes directly on the custom element. Add child elements for icons and labels, then use CSS with data attributes to toggle visibility based on state:
+
+```html
+<media-play-button class="my-play-button">
+  <span class="play-icon">Play</span>
+  <span class="pause-icon">Pause</span>
+</media-play-button>
+```
+
+```css
+.my-play-button .play-icon  { display: none; }
+.my-play-button .pause-icon { display: none; }
+
+.my-play-button[data-paused] .play-icon        { display: inline; }
+.my-play-button:not([data-paused]) .pause-icon  { display: inline; }
+```
+
+</FrameworkCase>
+
+## Compound components
+
+Complex interactions are split into composable parts. A parent manages shared state while children consume it. Each part is still one element.
+
+<FrameworkCase frameworks={["react"]}>
+
+Compound components use dot notation off a shared namespace:
+
+```tsx
+<VolumeSlider.Root orientation="vertical">
+  <VolumeSlider.Track>
+    <VolumeSlider.Fill />
+  </VolumeSlider.Track>
+  <VolumeSlider.Thumb />
+</VolumeSlider.Root>
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+HTML compound components use dedicated custom elements:
+
+```html
+<media-volume-slider orientation="vertical">
+  <media-slider-track>
+    <media-slider-fill></media-slider-fill>
+  </media-slider-track>
+  <media-slider-thumb></media-slider-thumb>
+</media-volume-slider>
+```
+
+</FrameworkCase>

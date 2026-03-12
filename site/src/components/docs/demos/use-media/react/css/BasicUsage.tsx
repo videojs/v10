@@ -1,14 +1,14 @@
-import { createPlayer, useMedia } from '@videojs/react';
+import { createPlayer } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
 import './BasicUsage.css';
 
-const { Provider, Container } = createPlayer({
+const Player = createPlayer({
   features: videoFeatures,
 });
 
 function MediaInfo() {
-  const media = useMedia();
+  const media = Player.useMedia();
 
   if (!media) return null;
 
@@ -36,8 +36,8 @@ function MediaInfo() {
 
 export default function BasicUsage() {
   return (
-    <Provider>
-      <Container className="react-use-media-basic">
+    <Player.Provider>
+      <Player.Container className="react-use-media-basic">
         <Video
           src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
           autoPlay
@@ -46,7 +46,7 @@ export default function BasicUsage() {
           loop
         />
         <MediaInfo />
-      </Container>
-    </Provider>
+      </Player.Container>
+    </Player.Provider>
   );
 }

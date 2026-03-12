@@ -16,7 +16,6 @@ All top-tier component libraries follow this structure:
 8. **Data Attributes** (CSS styling hooks)
 9. **CSS Variables** (theming)
 10. **Accessibility** (keyboard table, ARIA)
-11. **See also** (related components)
 
 ## Anatomy Documentation
 
