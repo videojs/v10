@@ -2,20 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 ## [Unreleased]
 
 ### 🐛 Bug Fixes
 - *(site)* Improve whitespace around links ([#913](https://github.com/videojs/v10/pull/913)) by [@decepulis](https://github.com/decepulis)
 - *(site)* Fix Brightcove typo ([#915](https://github.com/videojs/v10/pull/915)) by [@decepulis](https://github.com/decepulis)
-- *(changelog)* Add root changelog generator
-
-### ⚙️ Miscellaneous Tasks
-- *(release)* Add GH workflow for release PR's
-- *(changelog)* Update formatting for Github
-- *(changelog)* Improve formatting for GH
+- *(changelog)* Add root changelog generator ([#916](https://github.com/videojs/v10/pull/916)) by [@luwes](https://github.com/luwes)
 
 ## [@videojs/core@10.0.0-beta.5] - 2026-03-12
 
