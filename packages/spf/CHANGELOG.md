@@ -1,5 +1,24 @@
 # Changelog
 
+## [10.0.0-beta.4](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.3...@videojs/spf@10.0.0-beta.4) (2026-03-12)
+
+
+### Features
+
+* **spf:** stream segment fetches via ReadableStream body ([#890](https://github.com/videojs/v10/issues/890)) ([6fcb8eb](https://github.com/videojs/v10/commit/6fcb8eb989efc049af8a7567fce8e35b10f24168))
+
+
+### Bug Fixes
+
+* **spf:** propagate byteRange when building segment load tasks ([#904](https://github.com/videojs/v10/issues/904)) ([801be29](https://github.com/videojs/v10/commit/801be291c33ce3e611c4bc8af6c64bf6f68bc6e9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.4
+
 ## [10.0.0-beta.3](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.2...@videojs/spf@10.0.0-beta.3) (2026-03-11)
 
 

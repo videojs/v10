@@ -2,7 +2,7 @@
   "name": "@videojs/icons",
   "type": "module",
   "private": true,
-  "version": "10.0.0-beta.3",
+  "version": "10.0.0-beta.4",
   "description": "SVG icon library for Video.js",
   "license": "Apache-2.0",
   "repository": {

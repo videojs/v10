@@ -1,7 +1,7 @@
 {
   "name": "@videojs/spf",
   "type": "module",
-  "version": "10.0.0-beta.3",
+  "version": "10.0.0-beta.4",
   "description": "Stream Processing Framework for Video.js 10",
   "license": "Apache-2.0",
   "repository": {

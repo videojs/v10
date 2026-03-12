@@ -1,5 +1,24 @@
 # Changelog
 
+## [10.0.0-beta.4](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.3...@videojs/react@10.0.0-beta.4) (2026-03-12)
+
+
+### Bug Fixes
+
+* **skin:** add missing tooltip provider/group ([#902](https://github.com/videojs/v10/issues/902)) ([1dbcd79](https://github.com/videojs/v10/commit/1dbcd79e541fce77021645d012fb3554d241b16b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.4
+    * @videojs/core bumped to 10.0.0-beta.4
+    * @videojs/store bumped to 10.0.0-beta.4
+    * @videojs/utils bumped to 10.0.0-beta.4
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.4
+
 ## [10.0.0-beta.3](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.2...@videojs/react@10.0.0-beta.3) (2026-03-11)
 
 

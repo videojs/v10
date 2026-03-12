@@ -1,5 +1,23 @@
 # Changelog
 
+## [10.0.0-beta.4](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.3...@videojs/core@10.0.0-beta.4) (2026-03-12)
+
+
+### Bug Fixes
+
+* attaching media like elements and upgrade ([#889](https://github.com/videojs/v10/issues/889)) ([2105010](https://github.com/videojs/v10/commit/2105010c7f1f525ab89cc30506219a5dd49a64a7))
+* **core:** skip delay when switching between grouped tooltips ([#903](https://github.com/videojs/v10/issues/903)) ([ff8fb3f](https://github.com/videojs/v10/commit/ff8fb3fd36b0eeda9d2d861c83d4db51f60650a0))
+* mobile controls issues ([#896](https://github.com/videojs/v10/issues/896)) ([b892cfc](https://github.com/videojs/v10/commit/b892cfc2615feff919c701f1bd5840e40f3d5d54))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.4
+    * @videojs/store bumped to 10.0.0-beta.4
+    * @videojs/utils bumped to 10.0.0-beta.4
+
 ## [10.0.0-beta.3](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.2...@videojs/core@10.0.0-beta.3) (2026-03-11)
 
 
