@@ -162,7 +162,12 @@ export function createSegmentLoaderActor(
 
     // Case 2: Init
     if (actorCtx.initTrackId !== track.id) {
-      tasks.push({ type: 'append-init', meta: { trackId: track.id }, url: track.initialization.url });
+      tasks.push({
+        type: 'append-init',
+        meta: { trackId: track.id },
+        url: track.initialization.url,
+        ...(track.initialization.byteRange !== undefined && { byteRange: track.initialization.byteRange }),
+      });
     }
 
     // Case 3: Segments
@@ -190,6 +195,7 @@ export function createSegmentLoaderActor(
             trackBandwidth: track.bandwidth,
           },
           url: segment.url,
+          ...(segment.byteRange !== undefined && { byteRange: segment.byteRange }),
         });
       }
     }

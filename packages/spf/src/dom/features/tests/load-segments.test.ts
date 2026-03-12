@@ -903,6 +903,134 @@ describe('loadSegments forward buffer flushing', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Byte-range segment fetching (fMP4 / CMAF range-request streams)
+// ---------------------------------------------------------------------------
+
+describe('loadSegments byte-range segment fetching', () => {
+  it('sends Range headers for byte-range init and media segments', async () => {
+    const segments: Segment[] = [
+      {
+        id: 's0',
+        url: 'http://example.com/video.mp4',
+        startTime: 0,
+        duration: 6,
+        byteRange: { start: 1000, end: 2999 },
+      },
+      {
+        id: 's1',
+        url: 'http://example.com/video.mp4',
+        startTime: 6,
+        duration: 6,
+        byteRange: { start: 3000, end: 4999 },
+      },
+    ];
+
+    const rangeHeaders: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const range = (input as Request).headers?.get('Range');
+      if (range) rangeHeaders.push(range);
+      return Promise.resolve(new Response(new ArrayBuffer(100)));
+    });
+
+    const { loadSegments } = await import('../load-segments');
+    const { createState: cs } = await import('../../../core/state/create-state');
+
+    const track = {
+      type: 'video' as const,
+      id: 'track-1',
+      url: 'http://example.com/video.m3u8',
+      mimeType: 'video/mp4',
+      codecs: ['avc1.42E01E'],
+      bandwidth: 1_000_000,
+      initialization: { url: 'http://example.com/video.mp4', byteRange: { start: 0, end: 999 } },
+      segments,
+      startTime: 0,
+      duration: 12,
+    };
+
+    const state = cs<SegmentLoadingState>({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      presentation: {
+        id: 'p1',
+        url: 'http://example.com/playlist.m3u8',
+        startTime: 0,
+        duration: 12,
+        selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
+      },
+    });
+
+    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
+
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    await vi.waitFor(
+      () => {
+        expect(owners.current.videoBufferActor?.snapshot.context.segments).toHaveLength(2);
+      },
+      { timeout: 3000 }
+    );
+
+    expect(rangeHeaders).toContain('bytes=0-999'); // init segment
+    expect(rangeHeaders).toContain('bytes=1000-2999'); // s0
+    expect(rangeHeaders).toContain('bytes=3000-4999'); // s1
+
+    cleanup();
+  });
+
+  it('does not send Range header for non-byte-range segments', async () => {
+    const segments = [makeSegment('s0', 0, 10)];
+
+    const rangeHeaders: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const range = (input as Request).headers?.get('Range');
+      if (range) rangeHeaders.push(range);
+      return Promise.resolve(new Response(new ArrayBuffer(100)));
+    });
+
+    const { loadSegments } = await import('../load-segments');
+    const { createState: cs } = await import('../../../core/state/create-state');
+
+    const state = cs<SegmentLoadingState>({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      presentation: {
+        id: 'p1',
+        url: 'http://example.com/playlist.m3u8',
+        startTime: 0,
+        duration: 10,
+        selectionSets: [
+          {
+            id: 'ss1',
+            type: 'video',
+            switchingSets: [{ id: 'sw1', type: 'video', tracks: [makeResolvedVideoTrack(segments)] }],
+          },
+        ],
+      },
+    });
+
+    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
+
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    await vi.waitFor(
+      () => {
+        expect(owners.current.videoBufferActor?.snapshot.context.segments).toHaveLength(1);
+      },
+      { timeout: 3000 }
+    );
+
+    expect(rangeHeaders).toHaveLength(0);
+
+    cleanup();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Streaming bandwidth tracking
 // ---------------------------------------------------------------------------
 
