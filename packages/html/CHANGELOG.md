@@ -1,5 +1,26 @@
 # Changelog
 
+## [10.0.0-beta.5](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.4...@videojs/html@10.0.0-beta.5) (2026-03-12)
+
+
+### Miscellaneous Chores
+
+* **@videojs/html:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.5
+    * @videojs/core bumped to 10.0.0-beta.5
+    * @videojs/element bumped to 10.0.0-beta.5
+    * @videojs/store bumped to 10.0.0-beta.5
+    * @videojs/utils bumped to 10.0.0-beta.5
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.5
+    * @videojs/skins bumped to 10.0.0-beta.5
+
 ## [10.0.0-beta.4](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.3...@videojs/html@10.0.0-beta.4) (2026-03-12)
 
 
