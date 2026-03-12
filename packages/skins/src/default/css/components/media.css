@@ -40,7 +40,7 @@
 
 .media-default-skin:fullscreen video,
 .media-default-skin:fullscreen ::slotted(video),
-.media-default-skin > img {
+.media-default-skin:fullscreen > img {
   object-fit: contain;
 }
 .media-default-skin:fullscreen ::slotted(video) {
