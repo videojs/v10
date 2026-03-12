@@ -47,7 +47,12 @@ export const root = (isShadowDOM: boolean) =>
         ]
       : [],
     // Fullscreen
-    '[&:fullscreen]:rounded-none'
+    '[&:fullscreen]:rounded-none',
+    {
+      '[&:fullscreen_video]:object-contain': !isShadowDOM,
+      '[&:fullscreen_::slotted(video)]:object-contain [&:fullscreen_::slotted(video)]:rounded-none': isShadowDOM,
+    },
+    '[&:fullscreen>img]:object-contain'
   );
 
 /* ==========================================================================

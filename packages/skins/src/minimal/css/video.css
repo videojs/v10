@@ -20,20 +20,21 @@
 
 .media-minimal-skin--video {
   background: oklch(0 0 0);
+  --media-border-color: oklch(0 0 0 / 0.15);
 
-  /* Border ring */
+  @media (prefers-color-scheme: dark) {
+    --media-border-color: oklch(1 0 0 / 0.15);
+  }
+
+  /* Inner border ring */
   &::after {
     content: "";
     position: absolute;
     inset: 0;
     z-index: 10;
     border-radius: inherit;
-    box-shadow: inset 0 0 0 1px oklch(0 0 0 / 0.15);
+    box-shadow: inset 0 0 0 1px var(--media-border-color);
     pointer-events: none;
-
-    @media (prefers-color-scheme: dark) {
-      box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.15);
-    }
   }
 
   /* Fullscreen */

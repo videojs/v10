@@ -21,8 +21,4 @@
   letter-spacing: normal;
   -webkit-font-smoothing: auto;
   -moz-osx-font-smoothing: auto;
-
-  &:fullscreen {
-    border-radius: 0;
-  }
 }
