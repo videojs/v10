@@ -2,7 +2,7 @@ import type { Actor, ActorSnapshot } from '../../core/actor';
 import { createState } from '../../core/state/create-state';
 import { SerialRunner, Task } from '../../core/task';
 import type { Segment, Track } from '../../core/types';
-import { appendSegment } from './append-segment';
+import { type AppendData, appendSegment } from './append-segment';
 import { flushBuffer } from './buffer-flusher';
 
 // =============================================================================
@@ -20,8 +20,10 @@ export type AppendSegmentMeta = Pick<Segment, 'id' | 'startTime' | 'duration'> &
   trackBandwidth?: number;
 };
 
-export type AppendInitMessage = { type: 'append-init'; data: ArrayBuffer; meta: { trackId: Track['id'] } };
-export type AppendSegmentMessage = { type: 'append-segment'; data: ArrayBuffer; meta: AppendSegmentMeta };
+export type { AppendData };
+
+export type AppendInitMessage = { type: 'append-init'; data: AppendData; meta: { trackId: Track['id'] } };
+export type AppendSegmentMessage = { type: 'append-segment'; data: AppendData; meta: AppendSegmentMeta };
 export type RemoveMessage = { type: 'remove'; start: number; end: number };
 export type SourceBufferMessage = AppendInitMessage | AppendSegmentMessage | RemoveMessage;
 
@@ -31,7 +33,18 @@ export type SourceBufferActorStatus = 'idle' | 'updating' | 'destroyed';
 /** Non-finite (extended) data managed by the actor — the XState "context". */
 export interface SourceBufferActorContext {
   initTrackId?: string | undefined;
-  segments: Array<Pick<Segment, 'id' | 'startTime' | 'duration'> & { trackId: Track['id']; trackBandwidth?: number }>;
+  segments: Array<
+    Pick<Segment, 'id' | 'startTime' | 'duration'> & {
+      trackId: Track['id'];
+      trackBandwidth?: number;
+      /**
+       * True while a streaming append is in progress for this segment.
+       * The segment's data is partially present in the SourceBuffer.
+       * Downstream code must not treat a partial segment as fully buffered.
+       */
+      partial?: boolean;
+    }
+  >;
   bufferedRanges: BufferedRange[];
 }
 
@@ -79,6 +92,13 @@ interface MessageTaskOptions {
   signal: AbortSignal;
   getCtx: () => SourceBufferActorContext;
   sourceBuffer: SourceBuffer;
+  /**
+   * Called when a streaming append transitions to a partial state — i.e.
+   * the first chunk of an AsyncIterable has been committed and the segment
+   * now has data in the SourceBuffer but is not yet complete. Not called for
+   * full ArrayBuffer appends (which are atomic).
+   */
+  onPartialContext: (ctx: SourceBufferActorContext) => void;
 }
 
 function appendInitTask(
@@ -100,15 +120,13 @@ function appendInitTask(
 
 function appendSegmentTask(
   message: AppendSegmentMessage,
-  { signal, getCtx, sourceBuffer }: MessageTaskOptions
+  { signal, getCtx, sourceBuffer, onPartialContext }: MessageTaskOptions
 ): Task<SourceBufferActorContext> {
   return new Task(
     async (taskSignal) => {
       const ctx = getCtx();
       if (taskSignal.aborted) return ctx;
-      await appendSegment(sourceBuffer, message.data);
-      // No abort check here: the physical SourceBuffer has been modified, so
-      // the model must be updated to match regardless of signal state.
+
       const { meta } = message;
       // Remove any existing entry at the same start time (same "slot" in the
       // timeline), then record the new segment. Assumes time-aligned segments
@@ -116,6 +134,32 @@ function appendSegmentTask(
       // parsed timestamps.
       const EPSILON = 0.0001;
       const filtered = ctx.segments.filter((s) => Math.abs(s.startTime - meta.startTime) >= EPSILON);
+
+      // For streaming data: emit partial state before the first chunk so
+      // downstream code can see the in-progress segment and treat it as
+      // incomplete. ArrayBuffer appends are atomic so no partial state is
+      // needed — context is updated once at task completion.
+      if (!(message.data instanceof ArrayBuffer)) {
+        onPartialContext({
+          ...ctx,
+          segments: [
+            ...filtered,
+            {
+              id: meta.id,
+              startTime: meta.startTime,
+              duration: meta.duration,
+              trackId: meta.trackId,
+              ...(meta.trackBandwidth !== undefined && { trackBandwidth: meta.trackBandwidth }),
+              partial: true,
+            },
+          ],
+          bufferedRanges: ctx.bufferedRanges,
+        });
+      }
+
+      await appendSegment(sourceBuffer, message.data, taskSignal);
+      // No abort check here: the physical SourceBuffer has been modified, so
+      // the model must be updated to match regardless of signal state.
       return {
         ...ctx,
         segments: [
@@ -234,7 +278,17 @@ export function createSourceBufferActor(
       // tick is rejected — the actor is now committed to this operation.
       state.patch({ status: 'updating' });
 
-      const task = messageToTask(message, { signal, getCtx: () => state.current.context, sourceBuffer });
+      const onPartialContext = (ctx: SourceBufferActorContext) => {
+        state.patch({ status: 'updating', context: ctx });
+        state.flush();
+      };
+
+      const task = messageToTask(message, {
+        signal,
+        getCtx: () => state.current.context,
+        sourceBuffer,
+        onPartialContext,
+      });
 
       return runner.schedule(task).then(applyResult).catch(handleError);
     },
@@ -265,8 +319,16 @@ export function createSourceBufferActor(
       // appends do not fail — but worth revisiting if MSE error recovery lands.
       let workingCtx = state.current.context;
 
+      // Partial context updates from streaming appends patch state directly so
+      // external subscribers see in-progress state, but workingCtx is only
+      // advanced on task completion to preserve batch context threading.
+      const onPartialContext = (ctx: SourceBufferActorContext) => {
+        state.patch({ status: 'updating', context: ctx });
+        state.flush();
+      };
+
       for (const message of messages.slice(0, -1)) {
-        const task = messageToTask(message, { signal, getCtx: () => workingCtx, sourceBuffer });
+        const task = messageToTask(message, { signal, getCtx: () => workingCtx, sourceBuffer, onPartialContext });
         const result = runner.schedule(task);
         result.then((newCtx) => {
           workingCtx = newCtx;
@@ -277,6 +339,7 @@ export function createSourceBufferActor(
         signal,
         getCtx: () => workingCtx,
         sourceBuffer,
+        onPartialContext,
       });
       return runner.schedule(lastTask).then(applyResult).catch(handleError);
     },

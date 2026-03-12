@@ -1,6 +1,4 @@
-export type SourceId = 'hls-1' | 'hls-2' | 'hls-3' | 'hls-4' | 'hls-5' | 'mp4-1';
-
-export const SOURCES: Record<SourceId, { label: string; url: string; type: 'hls' | 'mp4'; subType?: 'mp4' | 'ts' }> = {
+export const SOURCES = {
   'hls-1': {
     label: 'HLS - Big Buck Bunny',
     url: 'https://stream.mux.com/VcmKA6aqzIzlg3MayLJDnbF55kX00mds028Z65QxvBYaA.m3u8',
@@ -36,7 +34,9 @@ export const SOURCES: Record<SourceId, { label: string; url: string; type: 'hls'
     url: 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4',
     type: 'mp4',
   },
-};
+} as const;
+
+export type SourceId = keyof typeof SOURCES;
 
 export const SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
 export const MP4_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'mp4');

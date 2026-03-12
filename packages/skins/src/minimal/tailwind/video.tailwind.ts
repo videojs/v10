@@ -47,7 +47,12 @@ export const root = (isShadowDOM: boolean) =>
         ]
       : [],
     // Fullscreen
-    '[&:fullscreen]:rounded-none'
+    '[&:fullscreen]:rounded-none',
+    {
+      '[&:fullscreen_video]:object-contain': !isShadowDOM,
+      '[&:fullscreen_::slotted(video)]:object-contain [&:fullscreen_::slotted(video)]:rounded-none': isShadowDOM,
+    },
+    '[&:fullscreen>img]:object-contain'
   );
 
 /* ==========================================================================
@@ -60,18 +65,21 @@ export const controls = cn(
   'absolute bottom-0 inset-x-0',
   'pt-8 px-1.5 pb-1.5 gap-2',
   'text-white z-10',
-  // Transitions
+  // Transitions (fine pointer only — instant toggle on touch to avoid dead-zone taps)
   'will-change-[translate,filter,opacity]',
-  'transition-[translate,filter,opacity] ease-out',
-  'delay-0 duration-75',
+  '[@media(pointer:fine)]:transition-[translate,filter,opacity]',
+  'ease-out',
+  '[@media(pointer:fine)]:delay-0 [@media(pointer:fine)]:duration-75',
   // Hidden state
-  'not-data-visible:opacity-0 not-data-visible:translate-y-full',
-  'not-data-visible:blur-sm not-data-visible:pointer-events-none',
-  'not-data-visible:delay-500 not-data-visible:duration-500',
+  'not-data-visible:opacity-0 not-data-visible:pointer-events-none',
+  'not-data-visible:translate-y-full not-data-visible:blur-sm',
+  '[@media(pointer:fine)]:not-data-visible:delay-500',
+  '[@media(pointer:fine)]:not-data-visible:duration-500',
   // Reduced motion + hidden
-  'motion-reduce:not-data-visible:duration-100',
+  '[@media(pointer:fine)]:motion-reduce:not-data-visible:duration-100',
   'motion-reduce:not-data-visible:translate-y-0',
-  'motion-reduce:not-data-visible:blur-none motion-reduce:not-data-visible:scale-100',
+  'motion-reduce:not-data-visible:blur-none',
+  'motion-reduce:not-data-visible:scale-100',
   // Wider container
   '@sm/media-root:pt-10 @sm/media-root:px-3 @sm/media-root:pb-3',
   '@sm/media-root:gap-3.5'
@@ -99,13 +107,13 @@ export const popup = {
    Shared components (no overrides)
    ========================================================================== */
 
+export { iconState } from '../../shared/tailwind/icon-state';
+export { tooltipState } from '../../shared/tailwind/tooltip-state';
 export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { error } from './components/error';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
-export { iconState } from './components/icon-state';
 export { overlay } from './components/overlay';
 export { seek } from './components/seek';
 export { time } from './components/time';
-export { tooltipState } from './components/tooltip-state';

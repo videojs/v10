@@ -54,6 +54,10 @@ function isPresetRenderer(renderer: Renderer): boolean {
   return renderer === 'html5-video' || renderer === 'html5-audio' || renderer === 'background-video';
 }
 
+function isVideoLikeRenderer(renderer: Renderer): boolean {
+  return renderer === 'html5-video' || renderer === 'hls' || renderer === 'background-video';
+}
+
 function getRendererMediaSubpath(renderer: Renderer): string {
   const map: Partial<Record<Renderer, string>> = {
     // cloudflare: 'cloudflare-video',
@@ -100,7 +104,8 @@ function generateReactCode(useCase: UseCase, skin: Skin, renderer: Renderer): st
   // Determine props — mux variants use src with stream.mux.com URL
   const propsInterface = 'interface MyPlayerProps {\n  src: string;\n}';
   const destructuredProp = 'src';
-  const rendererJsx = `<${rendererComponent} src={src} />`;
+  const rendererProps = isVideoLikeRenderer(renderer) ? 'src={src} playsInline' : 'src={src}';
+  const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
 
   const imports = [
     `import '${skinCssImport}';`,

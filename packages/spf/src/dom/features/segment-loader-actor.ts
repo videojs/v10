@@ -101,11 +101,16 @@ export interface SegmentLoaderActor {
  * operation (if still needed) or preempts it.
  *
  * @param sourceBufferActor - Shared SourceBufferActor reference (not owned)
- * @param fetchBytes - Tracked fetch closure (owns throughput sampling)
+ * @param fetchBytes - Tracked fetch closure (owns throughput sampling for segments).
+ *   Accepts an optional `minChunkSize` in options; init segments pass `Infinity`
+ *   so the entire body accumulates as one chunk before appending.
  */
 export function createSegmentLoaderActor(
   sourceBufferActor: SourceBufferActor,
-  fetchBytes: (addressable: AddressableObject, options?: RequestInit) => Promise<ArrayBuffer>
+  fetchBytes: (
+    addressable: AddressableObject,
+    options?: RequestInit & { minChunkSize?: number }
+  ) => Promise<AsyncIterable<Uint8Array>>
 ): SegmentLoaderActor {
   let pendingTasks: LoadTask[] | null = null;
   let inFlightInitTrackId: string | null = null;
@@ -115,7 +120,9 @@ export function createSegmentLoaderActor(
   let destroyed = false;
 
   const getBufferedSegments = (allSegments: readonly Segment[]): Segment[] => {
-    const bufferedIds = new Set(sourceBufferActor.snapshot.context.segments.map((s) => s.id));
+    // Exclude partial segments — they are still being streamed and must not be
+    // treated as fully buffered for load planning or buffer window calculations.
+    const bufferedIds = new Set(sourceBufferActor.snapshot.context.segments.filter((s) => !s.partial).map((s) => s.id));
     return allSegments.filter((s) => bufferedIds.has(s.id));
   };
 
@@ -155,7 +162,12 @@ export function createSegmentLoaderActor(
 
     // Case 2: Init
     if (actorCtx.initTrackId !== track.id) {
-      tasks.push({ type: 'append-init', meta: { trackId: track.id }, url: track.initialization.url });
+      tasks.push({
+        type: 'append-init',
+        meta: { trackId: track.id },
+        url: track.initialization.url,
+        ...(track.initialization.byteRange !== undefined && { byteRange: track.initialization.byteRange }),
+      });
     }
 
     // Case 3: Segments
@@ -166,6 +178,9 @@ export function createSegmentLoaderActor(
         // content in the actor context. Preserves buffered high-quality content during
         // ABR downgrades; loads during upgrades and for uncovered positions.
         const existing = actorCtx.segments.find((s) => Math.abs(s.startTime - seg.startTime) < EPSILON);
+        // Partial segments are still streaming — treat as not buffered so they
+        // are always re-planned (avoids relying on incomplete data).
+        if (existing?.partial) return true;
         if (!existing?.trackBandwidth || !track.bandwidth) return true;
         return track.bandwidth > existing.trackBandwidth;
       });
@@ -180,6 +195,7 @@ export function createSegmentLoaderActor(
             trackBandwidth: track.bandwidth,
           },
           url: segment.url,
+          ...(segment.byteRange !== undefined && { byteRange: segment.byteRange }),
         });
       }
     }
@@ -205,7 +221,12 @@ export function createSegmentLoaderActor(
       if (task.type === 'append-init') {
         inFlightInitTrackId = task.meta.trackId;
         if (!signal.aborted) {
-          const data = await fetchBytes(task, { signal });
+          // Init segments are small and need the full body before the
+          // same-track-seek vs track-switch commit decision can be made.
+          // minChunkSize: Infinity causes ChunkedStreamIterable to accumulate
+          // all chunks and yield exactly one — equivalent to arrayBuffer() but
+          // through the same streaming path as media segments.
+          const data = await fetchBytes(task, { signal, minChunkSize: Infinity });
           // For seeks on the same track: commit even if aborted — avoids re-fetching the
           // same init next time. For track switches: don't commit the old track's init;
           // the new track's init follows in pendingTasks.
@@ -220,12 +241,14 @@ export function createSegmentLoaderActor(
         return;
       }
 
-      // append-segment
+      // append-segment: await headers eagerly (starts the HTTP connection and
+      // records the fetch in observers like tests), then pass the body stream
+      // directly to the actor so chunks are appended as they arrive.
       inFlightSegmentId = task.meta.id;
       if (!signal.aborted) {
-        const data = await fetchBytes(task, { signal });
+        const stream = await fetchBytes(task, { signal });
         if (!signal.aborted) {
-          await sourceBufferActor.send({ type: 'append-segment', data, meta: task.meta }, signal);
+          await sourceBufferActor.send({ type: 'append-segment', data: stream, meta: task.meta }, signal);
         }
       }
     } finally {

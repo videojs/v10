@@ -49,7 +49,12 @@ export const root = (isShadowDOM: boolean) =>
         ]
       : [],
     // Fullscreen
-    '[&:fullscreen]:rounded-none'
+    '[&:fullscreen]:rounded-none',
+    {
+      '[&:fullscreen_video]:object-contain': !isShadowDOM,
+      '[&:fullscreen_::slotted(video)]:object-contain [&:fullscreen_::slotted(video)]:rounded-none': isShadowDOM,
+    },
+    '[&:fullscreen>img]:object-contain'
   );
 
 /* ==========================================================================
@@ -59,7 +64,7 @@ export const root = (isShadowDOM: boolean) =>
 export const surface = cn(
   baseSurface,
   'bg-white/10',
-  'backdrop-brightness-90 backdrop-saturate-150 backdrop-blur-3xl',
+  'backdrop-saturate-150 backdrop-blur-lg',
   // Border and shadow
   'ring-white/5 shadow-black/10',
   // Border to enhance contrast on lighter videos
@@ -80,16 +85,18 @@ export const controls = cn(
   // Position
   'absolute bottom-3 inset-x-3',
   'text-white z-10',
-  // Transitions
+  // Transitions (fine pointer only — instant toggle on touch to avoid dead-zone taps)
   'will-change-[scale,transform,filter,opacity]',
-  'transition-[scale,transform,filter,opacity] ease-out',
-  'delay-0 duration-100 origin-bottom',
+  '[@media(pointer:fine)]:transition-[scale,transform,filter,opacity]',
+  'ease-out origin-bottom',
+  '[@media(pointer:fine)]:delay-0 [@media(pointer:fine)]:duration-100',
   // Hidden state
-  'not-data-visible:pointer-events-none not-data-visible:blur-sm',
-  'not-data-visible:scale-90 not-data-visible:opacity-0',
-  'not-data-visible:delay-500 not-data-visible:duration-300',
+  'not-data-visible:pointer-events-none not-data-visible:opacity-0',
+  'not-data-visible:blur-sm not-data-visible:scale-90',
+  '[@media(pointer:fine)]:not-data-visible:delay-500',
+  '[@media(pointer:fine)]:not-data-visible:duration-300',
   // Reduced motion + hidden
-  'motion-reduce:not-data-visible:duration-100',
+  '[@media(pointer:fine)]:motion-reduce:not-data-visible:duration-100',
   'motion-reduce:not-data-visible:blur-none',
   'motion-reduce:not-data-visible:scale-100'
 );
@@ -135,11 +142,11 @@ export const error = {
    Shared components (no overrides)
    ========================================================================== */
 
+export { iconState } from '../../shared/tailwind/icon-state';
+export { tooltipState } from '../../shared/tailwind/tooltip-state';
 export { button } from './components/button';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
-export { iconState } from './components/icon-state';
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { seek } from './components/seek';
 export { time } from './components/time';
-export { tooltipState } from './components/tooltip-state';

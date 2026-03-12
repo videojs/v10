@@ -16,7 +16,7 @@ function generateHTMLCode(skin: Skin): string {
 
 <video-player>
   <${skinTag}>
-    <video slot="media" src="${VJS10_DEMO_VIDEO.mp4}"></video>
+    <video slot="media" src="${VJS10_DEMO_VIDEO.mp4}" playsinline></video>
   </${skinTag}>
 </video-player>`;
 }

@@ -14,7 +14,7 @@ function App() {
   return (
     <VideoProvider>
       <VideoSkinComponent skin={skin} styling="tailwind" className="w-full aspect-video max-w-4xl mx-auto">
-        <Video src={SOURCES[source].url} />
+        <Video src={SOURCES[source].url} playsInline />
       </VideoSkinComponent>
     </VideoProvider>
   );

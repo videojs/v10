@@ -16,7 +16,7 @@ function App() {
   return (
     <VideoProvider>
       <VideoSkinComponent skin={skin} styling="css" className="w-full aspect-video max-w-4xl mx-auto">
-        <SimpleHlsVideo src={SOURCES[source].url} />
+        <SimpleHlsVideo src={SOURCES[source].url} playsInline />
       </VideoSkinComponent>
     </VideoProvider>
   );

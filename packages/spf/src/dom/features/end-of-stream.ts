@@ -61,7 +61,9 @@ function isLastSegmentAppended(segments: readonly { id: string }[], actor: Sourc
   if (segments.length === 0) return true;
   const lastSeg = segments[segments.length - 1];
   if (!lastSeg) return false;
-  return actor?.snapshot.context.segments.some((s) => s.id === lastSeg.id) ?? false;
+  // A partial segment is still streaming — the last segment is not ready until
+  // its entry is present and not marked partial.
+  return actor?.snapshot.context.segments.some((s) => s.id === lastSeg.id && !s.partial) ?? false;
 }
 
 /**

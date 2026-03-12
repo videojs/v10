@@ -3,6 +3,21 @@
   publish = "site/dist"
   ignore = "pnpm dlx turbo-ignore site --task=build --fallback=origin/main"
 
+# PostHog reverse proxy (ad-blocker bypass)
+[[redirects]]
+  from = "/ph/static/*"
+  to = "https://us-assets.i.posthog.com/static/:splat"
+  host = "us-assets.i.posthog.com"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ph/*"
+  to = "https://us.i.posthog.com/:splat"
+  host = "us.i.posthog.com"
+  status = 200
+  force = true
+
 # Netlify aliases -> videojs.org
 [[redirects]]
   from = "https://videojs.com/*"

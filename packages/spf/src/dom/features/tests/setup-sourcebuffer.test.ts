@@ -6,7 +6,7 @@ import {
   canSetupBuffer,
   type SourceBufferOwners,
   type SourceBufferState,
-  setupSourceBuffer,
+  setupSourceBuffers,
   shouldSetupBuffer,
 } from '../setup-sourcebuffer';
 
@@ -238,268 +238,193 @@ describe('shouldSetupBuffer', () => {
   });
 });
 
-describe('setupSourceBuffer', () => {
+describe('setupSourceBuffers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('video track', () => {
-    it('creates SourceBuffer for resolved video track', async () => {
-      const { createSourceBuffer } = await import('../../media/mediasource-setup');
+  it('creates video SourceBuffer for video-only source', async () => {
+    const { createSourceBuffer } = await import('../../media/mediasource-setup');
 
-      const videoTrack = createResolvedVideoTrack();
-      const state = createState<SourceBufferState>({});
-      const owners = createState<SourceBufferOwners>({});
+    const videoTrack = createResolvedVideoTrack();
+    const state = createState<SourceBufferState>({});
+    const owners = createState<SourceBufferOwners>({});
+    const cleanup = setupSourceBuffers({ state, owners });
 
-      const cleanup = setupSourceBuffer({ state, owners }, { type: 'video' });
-
-      // Set up conditions
-      const mediaSource = {} as MediaSource;
-      owners.patch({ mediaSource });
-      state.patch({
-        presentation: createPresentationWithTracks({ video: videoTrack }),
-        selectedVideoTrackId: 'video-1',
-      });
-
-      // Wait for async operation
-      await vi.waitFor(() => {
-        expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'video/mp4; codecs="avc1.42E01E"');
-      });
-
-      cleanup();
+    const mediaSource = {} as MediaSource;
+    owners.patch({ mediaSource });
+    state.patch({
+      presentation: createPresentationWithTracks({ video: videoTrack }),
+      selectedVideoTrackId: 'video-1',
     });
 
-    it('updates owners with videoBuffer reference', async () => {
-      const { createSourceBuffer } = await import('../../media/mediasource-setup');
-
-      const mockBuffer = {
-        mimeCodec: 'video/mp4; codecs="avc1.42E01E"',
-        mode: 'segments',
-        updating: false,
-      };
-      vi.mocked(createSourceBuffer).mockReturnValue(mockBuffer as unknown as SourceBuffer);
-
-      const videoTrack = createResolvedVideoTrack();
-      const state = createState<SourceBufferState>({});
-      const owners = createState<SourceBufferOwners>({});
-
-      const cleanup = setupSourceBuffer({ state, owners }, { type: 'video' });
-
-      owners.patch({ mediaSource: {} as MediaSource });
-      state.patch({
-        presentation: createPresentationWithTracks({ video: videoTrack }),
-        selectedVideoTrackId: 'video-1',
-      });
-
-      await vi.waitFor(() => {
-        const currentOwners = owners.current;
-        expect(currentOwners.videoBuffer).toBe(mockBuffer);
-      });
-
-      cleanup();
+    await vi.waitFor(() => {
+      expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'video/mp4; codecs="avc1.42E01E"');
+      expect(owners.current.videoBuffer).toBeDefined();
+      expect(owners.current.audioBuffer).toBeUndefined();
     });
 
-    it('does not create if track not resolved', async () => {
-      const { createSourceBuffer } = await import('../../media/mediasource-setup');
-
-      const unresolvedTrack = {
-        type: 'video' as const,
-        id: 'video-1',
-        url: 'http://example.com/video.m3u8',
-        bandwidth: 1000000,
-        mimeType: 'video/mp4',
-        codecs: ['avc1.42E01E'],
-      };
-      const presentation: Presentation = {
-        id: 'pres-1',
-        url: 'http://example.com/playlist.m3u8',
-        selectionSets: [
-          {
-            id: 'video-set',
-            type: 'video',
-            switchingSets: [
-              {
-                id: 'video-switching',
-                type: 'video',
-                tracks: [unresolvedTrack],
-              },
-            ],
-          },
-        ],
-        startTime: 0,
-      };
-
-      const state = createState<SourceBufferState>({});
-      const owners = createState<SourceBufferOwners>({});
-
-      const cleanup = setupSourceBuffer({ state, owners }, { type: 'video' });
-
-      owners.patch({ mediaSource: {} as MediaSource });
-      state.patch({
-        presentation,
-        selectedVideoTrackId: 'video-1',
-      });
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(createSourceBuffer).not.toHaveBeenCalled();
-
-      cleanup();
-    });
-
-    it('does not create if track missing codecs', async () => {
-      const { createSourceBuffer } = await import('../../media/mediasource-setup');
-
-      const videoTrack: VideoTrack = {
-        ...createResolvedVideoTrack(),
-        codecs: [],
-      };
-
-      const state = createState<SourceBufferState>({});
-      const owners = createState<SourceBufferOwners>({});
-
-      const cleanup = setupSourceBuffer({ state, owners }, { type: 'video' });
-
-      owners.patch({ mediaSource: {} as MediaSource });
-      state.patch({
-        presentation: createPresentationWithTracks({ video: videoTrack }),
-        selectedVideoTrackId: 'video-1',
-      });
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(createSourceBuffer).not.toHaveBeenCalled();
-
-      cleanup();
-    });
-
-    it('does not create multiple buffers (deduplication)', async () => {
-      const { createSourceBuffer } = await import('../../media/mediasource-setup');
-
-      const videoTrack = createResolvedVideoTrack();
-      const state = createState<SourceBufferState>({});
-      const owners = createState<SourceBufferOwners>({});
-
-      const cleanup = setupSourceBuffer({ state, owners }, { type: 'video' });
-
-      owners.patch({ mediaSource: {} as MediaSource });
-      state.patch({
-        presentation: createPresentationWithTracks({ video: videoTrack }),
-        selectedVideoTrackId: 'video-1',
-      });
-
-      await vi.waitFor(() => {
-        expect(createSourceBuffer).toHaveBeenCalledTimes(1);
-      });
-
-      // Trigger another update
-      state.patch({
-        presentation: createPresentationWithTracks({ video: videoTrack }),
-      });
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(createSourceBuffer).toHaveBeenCalledTimes(1);
-
-      cleanup();
-    });
+    cleanup();
   });
 
-  describe('audio track', () => {
-    it('creates SourceBuffer for resolved audio track', async () => {
-      const { createSourceBuffer } = await import('../../media/mediasource-setup');
+  it('creates audio SourceBuffer for audio-only source', async () => {
+    const { createSourceBuffer } = await import('../../media/mediasource-setup');
 
-      const audioTrack = createResolvedAudioTrack();
-      const state = createState<SourceBufferState>({});
-      const owners = createState<SourceBufferOwners>({});
+    const audioTrack = createResolvedAudioTrack();
+    const state = createState<SourceBufferState>({});
+    const owners = createState<SourceBufferOwners>({});
+    const cleanup = setupSourceBuffers({ state, owners });
 
-      const cleanup = setupSourceBuffer({ state, owners }, { type: 'audio' });
-
-      const mediaSource = {} as MediaSource;
-      owners.patch({ mediaSource });
-      state.patch({
-        presentation: createPresentationWithTracks({ audio: audioTrack }),
-        selectedAudioTrackId: 'audio-1',
-      });
-
-      await vi.waitFor(() => {
-        expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'audio/mp4; codecs="mp4a.40.2"');
-      });
-
-      cleanup();
+    const mediaSource = {} as MediaSource;
+    owners.patch({ mediaSource });
+    state.patch({
+      presentation: createPresentationWithTracks({ audio: audioTrack }),
+      selectedAudioTrackId: 'audio-1',
     });
 
-    it('updates owners with audioBuffer reference', async () => {
-      const { createSourceBuffer } = await import('../../media/mediasource-setup');
-
-      const mockBuffer = {
-        mimeCodec: 'audio/mp4; codecs="mp4a.40.2"',
-        mode: 'segments',
-        updating: false,
-      };
-      vi.mocked(createSourceBuffer).mockReturnValue(mockBuffer as unknown as SourceBuffer);
-
-      const audioTrack = createResolvedAudioTrack();
-      const state = createState<SourceBufferState>({});
-      const owners = createState<SourceBufferOwners>({});
-
-      const cleanup = setupSourceBuffer({ state, owners }, { type: 'audio' });
-
-      owners.patch({ mediaSource: {} as MediaSource });
-      state.patch({
-        presentation: createPresentationWithTracks({ audio: audioTrack }),
-        selectedAudioTrackId: 'audio-1',
-      });
-
-      await vi.waitFor(() => {
-        const currentOwners = owners.current;
-        expect(currentOwners.audioBuffer).toBe(mockBuffer);
-      });
-
-      cleanup();
+    await vi.waitFor(() => {
+      expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'audio/mp4; codecs="mp4a.40.2"');
+      expect(owners.current.audioBuffer).toBeDefined();
+      expect(owners.current.videoBuffer).toBeUndefined();
     });
+
+    cleanup();
   });
 
-  describe('multi-track orchestration', () => {
-    it('creates video and audio track types in parallel', async () => {
-      const { createSourceBuffer } = await import('../../media/mediasource-setup');
+  it('creates both SourceBuffers together when both tracks are selected', async () => {
+    const { createSourceBuffer } = await import('../../media/mediasource-setup');
 
-      const videoTrack = createResolvedVideoTrack();
-      const audioTrack = createResolvedAudioTrack();
+    const videoTrack = createResolvedVideoTrack();
+    const audioTrack = createResolvedAudioTrack();
+    const state = createState<SourceBufferState>({});
+    const owners = createState<SourceBufferOwners>({});
+    const cleanup = setupSourceBuffers({ state, owners });
 
-      const state = createState<SourceBufferState>({});
-      const owners = createState<SourceBufferOwners>({});
-
-      // Set up both orchestrations
-      const videoCleanup = setupSourceBuffer({ state, owners }, { type: 'video' });
-      const audioCleanup = setupSourceBuffer({ state, owners }, { type: 'audio' });
-
-      // Set up conditions
-      const mediaSource = {} as MediaSource;
-      owners.patch({ mediaSource });
-      state.patch({
-        presentation: createPresentationWithTracks({
-          video: videoTrack,
-          audio: audioTrack,
-        }),
-        selectedVideoTrackId: 'video-1',
-        selectedAudioTrackId: 'audio-1',
-      });
-
-      // Wait for both to be created
-      await vi.waitFor(() => {
-        expect(createSourceBuffer).toHaveBeenCalledTimes(2);
-        expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'video/mp4; codecs="avc1.42E01E"');
-        expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'audio/mp4; codecs="mp4a.40.2"');
-      });
-
-      // Verify both buffers are set
-      const currentOwners = owners.current;
-      expect(currentOwners.videoBuffer).toBeDefined();
-      expect(currentOwners.audioBuffer).toBeDefined();
-
-      videoCleanup();
-      audioCleanup();
+    const mediaSource = {} as MediaSource;
+    owners.patch({ mediaSource });
+    state.patch({
+      presentation: createPresentationWithTracks({ video: videoTrack, audio: audioTrack }),
+      selectedVideoTrackId: 'video-1',
+      selectedAudioTrackId: 'audio-1',
     });
+
+    await vi.waitFor(() => {
+      expect(createSourceBuffer).toHaveBeenCalledTimes(2);
+      expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'video/mp4; codecs="avc1.42E01E"');
+      expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'audio/mp4; codecs="mp4a.40.2"');
+      expect(owners.current.videoBuffer).toBeDefined();
+      expect(owners.current.audioBuffer).toBeDefined();
+    });
+
+    cleanup();
+  });
+
+  it('waits for audio to resolve before creating video SourceBuffer when both are selected', async () => {
+    const { createSourceBuffer } = await import('../../media/mediasource-setup');
+
+    const videoTrack = createResolvedVideoTrack();
+    const unresolvedAudio = createResolvedAudioTrack();
+    // Simulate unresolved audio track (no segments/initialization — not a ResolvedTrack)
+    const {
+      segments: _s,
+      initialization: _i,
+      startTime: _st,
+      duration: _d,
+      ...unresolvedAudioPartial
+    } = unresolvedAudio;
+
+    const state = createState<SourceBufferState>({});
+    const owners = createState<SourceBufferOwners>({});
+    const cleanup = setupSourceBuffers({ state, owners });
+
+    owners.patch({ mediaSource: {} as MediaSource });
+    // Both track IDs selected, but audio track is not yet resolved
+    state.patch({
+      presentation: createPresentationWithTracks({
+        video: videoTrack,
+        audio: unresolvedAudioPartial as AudioTrack,
+      }),
+      selectedVideoTrackId: 'video-1',
+      selectedAudioTrackId: 'audio-1',
+    });
+
+    // Video is resolved but audio is not — neither SourceBuffer should be created yet
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(createSourceBuffer).not.toHaveBeenCalled();
+
+    // Now audio resolves
+    state.patch({
+      presentation: createPresentationWithTracks({ video: videoTrack, audio: unresolvedAudio }),
+    });
+
+    await vi.waitFor(() => {
+      expect(createSourceBuffer).toHaveBeenCalledTimes(2);
+      expect(owners.current.videoBuffer).toBeDefined();
+      expect(owners.current.audioBuffer).toBeDefined();
+    });
+
+    cleanup();
+  });
+
+  it('does not create SourceBuffer when track has no codecs', async () => {
+    const { createSourceBuffer } = await import('../../media/mediasource-setup');
+
+    const videoTrack: VideoTrack = { ...createResolvedVideoTrack(), codecs: [] };
+    const state = createState<SourceBufferState>({});
+    const owners = createState<SourceBufferOwners>({});
+    const cleanup = setupSourceBuffers({ state, owners });
+
+    owners.patch({ mediaSource: {} as MediaSource });
+    state.patch({
+      presentation: createPresentationWithTracks({ video: videoTrack }),
+      selectedVideoTrackId: 'video-1',
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(createSourceBuffer).not.toHaveBeenCalled();
+
+    cleanup();
+  });
+
+  it('does not create SourceBuffers more than once', async () => {
+    const { createSourceBuffer } = await import('../../media/mediasource-setup');
+
+    const videoTrack = createResolvedVideoTrack();
+    const state = createState<SourceBufferState>({});
+    const owners = createState<SourceBufferOwners>({});
+    const cleanup = setupSourceBuffers({ state, owners });
+
+    owners.patch({ mediaSource: {} as MediaSource });
+    state.patch({
+      presentation: createPresentationWithTracks({ video: videoTrack }),
+      selectedVideoTrackId: 'video-1',
+    });
+
+    await vi.waitFor(() => expect(createSourceBuffer).toHaveBeenCalledTimes(1));
+
+    state.patch({ presentation: createPresentationWithTracks({ video: videoTrack }) });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(createSourceBuffer).toHaveBeenCalledTimes(1);
+
+    cleanup();
+  });
+
+  it('does not create without a MediaSource', async () => {
+    const { createSourceBuffer } = await import('../../media/mediasource-setup');
+
+    const videoTrack = createResolvedVideoTrack();
+    const state = createState<SourceBufferState>({});
+    const owners = createState<SourceBufferOwners>({});
+    const cleanup = setupSourceBuffers({ state, owners });
+
+    state.patch({
+      presentation: createPresentationWithTracks({ video: videoTrack }),
+      selectedVideoTrackId: 'video-1',
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(createSourceBuffer).not.toHaveBeenCalled();
+
+    cleanup();
   });
 });

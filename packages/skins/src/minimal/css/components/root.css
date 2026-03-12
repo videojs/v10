@@ -6,6 +6,8 @@
   position: relative;
   isolation: isolate;
   display: block;
+  height: 100%;
+  width: 100%;
   container: media-root / inline-size;
   border-radius: var(--media-border-radius, 0.75rem);
   font-family:

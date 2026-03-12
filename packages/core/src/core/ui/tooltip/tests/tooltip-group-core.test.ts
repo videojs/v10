@@ -58,7 +58,7 @@ describe('TooltipGroupCore', () => {
     expect(group.shouldSkipDelay()).toBe(false);
   });
 
-  it('clears skip-delay when a new tooltip opens', () => {
+  it('should skip delay when another tooltip is already open', () => {
     const group = new TooltipGroupCore({ timeout: 400 });
 
     group.notifyOpen();
@@ -66,15 +66,15 @@ describe('TooltipGroupCore', () => {
     // A new tooltip opens before timeout expires
     group.notifyOpen();
 
-    expect(group.shouldSkipDelay()).toBe(false);
+    expect(group.shouldSkipDelay()).toBe(true);
   });
 
-  it('should not skip delay when a tooltip is currently open', () => {
+  it('should skip delay when a tooltip is currently open', () => {
     const group = new TooltipGroupCore();
 
     group.notifyOpen();
 
-    expect(group.shouldSkipDelay()).toBe(false);
+    expect(group.shouldSkipDelay()).toBe(true);
   });
 
   it('respects updated timeout via setProps', () => {

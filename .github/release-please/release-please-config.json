@@ -4,6 +4,7 @@
   "tag-separator": "@",
   "include-component-in-tag": true,
   "include-v-in-tag": false,
+  "changelog-path": "CHANGELOG.md",
   "plugins": [
     {
       "type": "node-workspace",
@@ -18,6 +19,7 @@
         "@videojs/html",
         "@videojs/icons",
         "@videojs/react",
+        "@videojs/skins",
         "@videojs/spf",
         "@videojs/store",
         "@videojs/utils"
@@ -29,49 +31,64 @@
       "component": "@videojs/core",
       "prerelease": true,
       "prerelease-type": "beta",
-      "versioning": "prerelease"
+      "versioning": "prerelease",
+      "changelog-path": "CHANGELOG.md"
     },
     "packages/element": {
       "component": "@videojs/element",
       "prerelease": true,
       "prerelease-type": "beta",
-      "versioning": "prerelease"
+      "versioning": "prerelease",
+      "changelog-path": "CHANGELOG.md"
     },
     "packages/html": {
       "component": "@videojs/html",
       "prerelease": true,
       "prerelease-type": "beta",
-      "versioning": "prerelease"
+      "versioning": "prerelease",
+      "changelog-path": "CHANGELOG.md"
     },
     "packages/icons": {
       "component": "@videojs/icons",
       "prerelease": true,
       "prerelease-type": "beta",
-      "versioning": "prerelease"
+      "versioning": "prerelease",
+      "changelog-path": "CHANGELOG.md"
     },
     "packages/react": {
       "component": "@videojs/react",
       "prerelease": true,
       "prerelease-type": "beta",
-      "versioning": "prerelease"
+      "versioning": "prerelease",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "packages/skins": {
+      "component": "@videojs/skins",
+      "prerelease": true,
+      "prerelease-type": "beta",
+      "versioning": "prerelease",
+      "changelog-path": "CHANGELOG.md"
     },
     "packages/spf": {
       "component": "@videojs/spf",
       "prerelease": true,
       "prerelease-type": "beta",
-      "versioning": "prerelease"
+      "versioning": "prerelease",
+      "changelog-path": "CHANGELOG.md"
     },
     "packages/store": {
       "component": "@videojs/store",
       "prerelease": true,
       "prerelease-type": "beta",
-      "versioning": "prerelease"
+      "versioning": "prerelease",
+      "changelog-path": "CHANGELOG.md"
     },
     "packages/utils": {
       "component": "@videojs/utils",
       "prerelease": true,
       "prerelease-type": "beta",
-      "versioning": "prerelease"
+      "versioning": "prerelease",
+      "changelog-path": "CHANGELOG.md"
     }
   }
 }

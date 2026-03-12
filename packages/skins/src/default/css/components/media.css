@@ -7,7 +7,12 @@
   display: block;
   width: 100%;
   height: 100%;
+}
+.media-default-skin ::slotted(video) {
   border-radius: var(--media-border-radius, 2rem);
+}
+.media-default-skin video {
+  border-radius: inherit;
 }
 
 /* ==========================================================================
@@ -27,4 +32,17 @@
   &:not([data-visible]) {
     opacity: 0;
   }
+}
+
+/* ==========================================================================
+   Fullscreen
+   ========================================================================== */
+
+.media-default-skin:fullscreen video,
+.media-default-skin:fullscreen ::slotted(video),
+.media-default-skin:fullscreen > img {
+  object-fit: contain;
+}
+.media-default-skin:fullscreen ::slotted(video) {
+  border-radius: 0;
 }

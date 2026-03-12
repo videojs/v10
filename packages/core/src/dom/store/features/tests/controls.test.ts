@@ -123,22 +123,22 @@ describe('controlsFeature', () => {
       expect(store.state.userActive).toBe(true);
     });
 
-    it('sets inactive immediately on pointerleave', () => {
+    it('sets inactive immediately on mouseleave', () => {
       const video = createMockVideo({ paused: false });
       const { store, container } = createPlayerStore(video);
 
-      container!.dispatchEvent(new Event('pointerleave'));
+      container!.dispatchEvent(new Event('mouseleave'));
       flush();
 
       expect(store.state.userActive).toBe(false);
       expect(store.state.controlsVisible).toBe(false);
     });
 
-    it('keeps controlsVisible true on pointerleave when paused', () => {
+    it('keeps controlsVisible true on mouseleave when paused', () => {
       const video = createMockVideo({ paused: true });
       const { store, container } = createPlayerStore(video);
 
-      container!.dispatchEvent(new Event('pointerleave'));
+      container!.dispatchEvent(new Event('mouseleave'));
       flush();
 
       expect(store.state.userActive).toBe(false);

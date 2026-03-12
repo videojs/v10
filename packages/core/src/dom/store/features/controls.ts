@@ -62,9 +62,10 @@ export const controlsFeature = definePlayerFeature({
 
     function onPointerUp(event: PointerEvent) {
       if (event.pointerType === 'touch' && Date.now() - pointerDownTime < TAP_THRESHOLD) {
-        if (get().controlsVisible) {
-          clearIdle();
-          set({ userActive: false, controlsVisible: computeVisible(false) });
+        // If the event target is in the controls don't set inactive because that sets pointer-events: none in CSS.
+        const isMediaOrContainer = [media, container].includes(event.target as HTMLElement);
+        if (get().controlsVisible && isMediaOrContainer) {
+          setInactive();
         } else {
           setActive();
         }
@@ -90,7 +91,9 @@ export const controlsFeature = definePlayerFeature({
     listen(container, 'pointerup', onPointerUp, { signal });
     listen(container, 'keyup', setActive, { signal });
     listen(container, 'focusin', setActive, { signal });
-    listen(container, 'pointerleave', setInactive, { signal });
+    // On touch devices pointerleave would fire after a pointerup event which hides the controls.
+    // https://w3c.github.io/pointerevents/#dfn-pointerup
+    listen(container, 'mouseleave', setInactive, { signal });
 
     // Media event listeners for playback state changes.
     listen(media, 'play', onPlaybackChange, { signal });

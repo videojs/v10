@@ -15,7 +15,7 @@ const base = cn(
 export const popup = {
   tooltip: cn(
     base,
-    'px-2 py-1 rounded-sm shadow-md shadow-black/10 bg-white/10 backdrop-blur-3xl backdrop-saturate-150 backdrop-brightness-90 text-[0.75rem] whitespace-nowrap',
+    'px-2 py-1 rounded-sm shadow-md shadow-black/10 bg-white/10 backdrop-blur-lg backdrop-saturate-150 text-[0.75rem] whitespace-nowrap',
     '[--media-tooltip-side-offset:0.5rem]'
   ),
   volume: cn(base, 'py-2.5 px-1 rounded-full'),

@@ -9,7 +9,5 @@ export const root = cn(
   // Resets
   '**:box-border **:m-0',
   '[&_button]:font-[inherit]',
-  'motion-safe:[interpolate-size:allow-keywords]',
-  // Fullscreen
-  '[&:fullscreen]:rounded-none'
+  'motion-safe:[interpolate-size:allow-keywords]'
 );

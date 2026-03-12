@@ -901,3 +901,283 @@ describe('loadSegments forward buffer flushing', () => {
     cleanup();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Byte-range segment fetching (fMP4 / CMAF range-request streams)
+// ---------------------------------------------------------------------------
+
+describe('loadSegments byte-range segment fetching', () => {
+  it('sends Range headers for byte-range init and media segments', async () => {
+    const segments: Segment[] = [
+      {
+        id: 's0',
+        url: 'http://example.com/video.mp4',
+        startTime: 0,
+        duration: 6,
+        byteRange: { start: 1000, end: 2999 },
+      },
+      {
+        id: 's1',
+        url: 'http://example.com/video.mp4',
+        startTime: 6,
+        duration: 6,
+        byteRange: { start: 3000, end: 4999 },
+      },
+    ];
+
+    const rangeHeaders: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const range = (input as Request).headers?.get('Range');
+      if (range) rangeHeaders.push(range);
+      return Promise.resolve(new Response(new ArrayBuffer(100)));
+    });
+
+    const { loadSegments } = await import('../load-segments');
+    const { createState: cs } = await import('../../../core/state/create-state');
+
+    const track = {
+      type: 'video' as const,
+      id: 'track-1',
+      url: 'http://example.com/video.m3u8',
+      mimeType: 'video/mp4',
+      codecs: ['avc1.42E01E'],
+      bandwidth: 1_000_000,
+      initialization: { url: 'http://example.com/video.mp4', byteRange: { start: 0, end: 999 } },
+      segments,
+      startTime: 0,
+      duration: 12,
+    };
+
+    const state = cs<SegmentLoadingState>({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      presentation: {
+        id: 'p1',
+        url: 'http://example.com/playlist.m3u8',
+        startTime: 0,
+        duration: 12,
+        selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
+      },
+    });
+
+    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
+
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    await vi.waitFor(
+      () => {
+        expect(owners.current.videoBufferActor?.snapshot.context.segments).toHaveLength(2);
+      },
+      { timeout: 3000 }
+    );
+
+    expect(rangeHeaders).toContain('bytes=0-999'); // init segment
+    expect(rangeHeaders).toContain('bytes=1000-2999'); // s0
+    expect(rangeHeaders).toContain('bytes=3000-4999'); // s1
+
+    cleanup();
+  });
+
+  it('does not send Range header for non-byte-range segments', async () => {
+    const segments = [makeSegment('s0', 0, 10)];
+
+    const rangeHeaders: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const range = (input as Request).headers?.get('Range');
+      if (range) rangeHeaders.push(range);
+      return Promise.resolve(new Response(new ArrayBuffer(100)));
+    });
+
+    const { loadSegments } = await import('../load-segments');
+    const { createState: cs } = await import('../../../core/state/create-state');
+
+    const state = cs<SegmentLoadingState>({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      presentation: {
+        id: 'p1',
+        url: 'http://example.com/playlist.m3u8',
+        startTime: 0,
+        duration: 10,
+        selectionSets: [
+          {
+            id: 'ss1',
+            type: 'video',
+            switchingSets: [{ id: 'sw1', type: 'video', tracks: [makeResolvedVideoTrack(segments)] }],
+          },
+        ],
+      },
+    });
+
+    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
+
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    await vi.waitFor(
+      () => {
+        expect(owners.current.videoBufferActor?.snapshot.context.segments).toHaveLength(1);
+      },
+      { timeout: 3000 }
+    );
+
+    expect(rangeHeaders).toHaveLength(0);
+
+    cleanup();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Streaming bandwidth tracking
+// ---------------------------------------------------------------------------
+
+describe('loadSegments bandwidth tracking', () => {
+  function makeStreamingFetch(chunks: Uint8Array[]) {
+    return vi.fn().mockImplementation(() => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          for (const chunk of chunks) controller.enqueue(chunk);
+          controller.close();
+        },
+      });
+      return Promise.resolve(new Response(body));
+    });
+  }
+
+  it('samples bandwidth per chunk and updates state.bandwidthState', async () => {
+    const chunkSize = 50_000; // 50 KB — below 128 KB default, so whole segment = one flush
+    const numChunks = 3;
+    const chunks = Array.from({ length: numChunks }, () => new Uint8Array(chunkSize).fill(1));
+
+    globalThis.fetch = makeStreamingFetch(chunks);
+
+    const { loadSegments } = await import('../load-segments');
+    const { createState: cs } = await import('../../../core/state/create-state');
+
+    const segment = { id: 's1', url: 'http://example.com/s1.m4s', startTime: 0, duration: 10 };
+    const track = {
+      type: 'video' as const,
+      id: 'track-1',
+      url: 'http://example.com/video.m3u8',
+      mimeType: 'video/mp4',
+      codecs: ['avc1.42E01E'],
+      bandwidth: 1_000_000,
+      initialization: { url: 'http://example.com/init.mp4' },
+      segments: [segment],
+      startTime: 0,
+      duration: 10,
+    };
+
+    // Seeding bandwidthState activates the onSample bridge → state.bandwidthState updates
+    const initialBandwidth = {
+      fastEstimate: 0,
+      fastTotalWeight: 0,
+      slowEstimate: 0,
+      slowTotalWeight: 0,
+      bytesSampled: 0,
+    };
+
+    const state = cs<SegmentLoadingState>({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      bandwidthState: initialBandwidth,
+      presentation: {
+        id: 'p1',
+        url: 'http://example.com/playlist.m3u8',
+        startTime: 0,
+        duration: 10,
+        selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
+      },
+    });
+
+    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
+
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    // Wait for both init and segment to be appended (actor context will have 1 segment)
+    await vi.waitFor(
+      () => {
+        expect(owners.current.videoBufferActor?.snapshot.context.segments).toHaveLength(1);
+      },
+      { timeout: 3000 }
+    );
+
+    // All bytes (init + segment) should be counted in bytesSampled
+    const totalExpected = chunkSize * numChunks * 2; // init fetch + segment fetch, each 3×50KB
+    expect(state.current.bandwidthState?.bytesSampled).toBeGreaterThan(0);
+    expect(state.current.bandwidthState?.bytesSampled).toBeLessThanOrEqual(totalExpected);
+
+    cleanup();
+  });
+
+  it('appended data matches the concatenated streaming chunks', async () => {
+    const part1 = new Uint8Array([1, 2, 3, 4]);
+    const part2 = new Uint8Array([5, 6, 7, 8]);
+
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(part1);
+          controller.enqueue(part2);
+          controller.close();
+        },
+      });
+      return Promise.resolve(new Response(body));
+    });
+
+    const { loadSegments } = await import('../load-segments');
+    const { createState: cs } = await import('../../../core/state/create-state');
+
+    const segment = { id: 's1', url: 'http://example.com/s1.m4s', startTime: 0, duration: 10 };
+    const track = {
+      type: 'video' as const,
+      id: 'track-1',
+      url: 'http://example.com/video.m3u8',
+      mimeType: 'video/mp4',
+      codecs: ['avc1.42E01E'],
+      bandwidth: 500_000,
+      initialization: { url: 'http://example.com/init.mp4' },
+      segments: [segment],
+      startTime: 0,
+      duration: 10,
+    };
+
+    const state = cs<SegmentLoadingState>({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      presentation: {
+        id: 'p1',
+        url: 'http://example.com/playlist.m3u8',
+        startTime: 0,
+        duration: 10,
+        selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
+      },
+    });
+
+    const { sourceBuffer, actor } = makeSourceBufferWithActor();
+    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
+
+    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+
+    await vi.waitFor(
+      () => {
+        expect(owners.current.videoBufferActor?.snapshot.context.segments).toHaveLength(1);
+      },
+      { timeout: 3000 }
+    );
+
+    // Each response body yields [1,2,3,4,5,6,7,8] — both init and segment appends should match
+    const calls = (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).mock.calls;
+    for (const [data] of calls) {
+      expect(Array.from(new Uint8Array(data as ArrayBuffer))).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    }
+
+    cleanup();
+  });
+});

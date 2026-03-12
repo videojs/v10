@@ -19,7 +19,7 @@ export class TooltipGroupElement extends MediaElement {
   timeout = TooltipGroupCore.defaultProps.timeout;
 
   readonly #core = new TooltipGroupCore();
-  readonly #provider = new ContextProvider(this, { context: tooltipGroupContext });
+  readonly #provider = new ContextProvider(this, { context: tooltipGroupContext, initialValue: this.#core });
 
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);

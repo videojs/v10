@@ -23,7 +23,7 @@ function render() {
   document.getElementById('root')!.innerHTML = html`
     <video-player>
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
-        <hls-video slot="media" src="${SOURCES[currentSource].url}"></hls-video>
+        <hls-video slot="media" src="${SOURCES[currentSource].url}" playsinline></hls-video>
       </${tag}>
     </video-player>
   `;

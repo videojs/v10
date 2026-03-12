@@ -4,9 +4,11 @@
  * Two-function approach for composability:
  * 1. fetchResolvable() - Fetch AddressableObject (handles byte ranges)
  * 2. getResponseText() - Extract text from Response
+ * 3. fetchResolvableStream() - Stream body as Uint8Array chunks
  */
 
 import type { AddressableObject } from '../../core/types';
+import { ChunkedStreamIterable, type ChunkedStreamIterableOptions } from './chunked-stream-iterable';
 
 /**
  * Minimal Response-like interface for text extraction.
@@ -67,6 +69,26 @@ export async function fetchResolvableBytes(
 ): Promise<ArrayBuffer> {
   const response = await fetchResolvable(addressable, options);
   return response.arrayBuffer();
+}
+
+/**
+ * Fetch resolvable as a stream of Uint8Array chunks.
+ *
+ * Convenience wrapper around fetchResolvable that yields the body as chunks
+ * via ChunkedStreamIterable. Headers are awaited before the first chunk is
+ * yielded (TTFB is accounted for before iteration begins).
+ *
+ * Throws if the response body is null (e.g. non-body HTTP status).
+ * Errors from the underlying stream propagate naturally as thrown errors.
+ */
+export async function* fetchResolvableStream(
+  addressable: AddressableObject,
+  options?: RequestInit & ChunkedStreamIterableOptions
+): AsyncGenerator<Uint8Array> {
+  const { minChunkSize, ...fetchOptions } = options ?? {};
+  const response = await fetchResolvable(addressable, fetchOptions);
+  if (!response.body) throw new Error('Response has no body');
+  yield* new ChunkedStreamIterable(response.body, ...(minChunkSize !== undefined ? [{ minChunkSize }] : []));
 }
 
 /**

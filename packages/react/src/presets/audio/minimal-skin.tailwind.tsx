@@ -108,121 +108,123 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
       {children}
 
       <div className={controls}>
-        <span className={buttonGroup}>
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <PlayButton
-                  render={(props) => (
-                    <Button variant="icon" {...props} className={iconState.play.button}>
-                      <RestartIcon className={cn(icon, iconState.play.restart)} />
-                      <PlayIcon className={cn(icon, iconState.play.play)} />
-                      <PauseIcon className={cn(icon, iconState.play.pause)} />
-                    </Button>
-                  )}
-                />
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>
-              <PlayLabel />
-            </Tooltip.Popup>
-          </Tooltip.Root>
+        <Tooltip.Provider>
+          <div className={buttonGroup}>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <PlayButton
+                    render={(props) => (
+                      <Button variant="icon" {...props} className={iconState.play.button}>
+                        <RestartIcon className={cn(icon, iconState.play.restart)} />
+                        <PlayIcon className={cn(icon, iconState.play.play)} />
+                        <PauseIcon className={cn(icon, iconState.play.pause)} />
+                      </Button>
+                    )}
+                  />
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <PlayLabel />
+              </Tooltip.Popup>
+            </Tooltip.Root>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <SeekButton
-                  seconds={-SEEK_TIME}
-                  render={(props) => (
-                    <Button variant="icon" {...props} className={seek.button}>
-                      <span className={iconContainer}>
-                        <SeekIcon className={cn(icon, iconFlipped)} />
-                        <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
-                      </span>
-                    </Button>
-                  )}
-                />
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
-          </Tooltip.Root>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <SeekButton
+                    seconds={-SEEK_TIME}
+                    render={(props) => (
+                      <Button variant="icon" {...props} className={seek.button}>
+                        <span className={iconContainer}>
+                          <SeekIcon className={cn(icon, iconFlipped)} />
+                          <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
+                        </span>
+                      </Button>
+                    )}
+                  />
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+            </Tooltip.Root>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <SeekButton
-                  seconds={SEEK_TIME}
-                  render={(props) => (
-                    <Button variant="icon" {...props} className={seek.button}>
-                      <span className={iconContainer}>
-                        <SeekIcon className={icon} />
-                        <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
-                      </span>
-                    </Button>
-                  )}
-                />
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
-          </Tooltip.Root>
-        </span>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <SeekButton
+                    seconds={SEEK_TIME}
+                    render={(props) => (
+                      <Button variant="icon" {...props} className={seek.button}>
+                        <span className={iconContainer}>
+                          <SeekIcon className={icon} />
+                          <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
+                        </span>
+                      </Button>
+                    )}
+                  />
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+            </Tooltip.Root>
+          </div>
 
-        <span className={time.controls}>
-          <Time.Group className={time.group}>
-            <Time.Value type="current" className={time.current} />
-            <Time.Separator className={time.separator} />
-            <Time.Value type="duration" className={time.duration} />
-          </Time.Group>
+          <div className={time.controls}>
+            <Time.Group className={time.group}>
+              <Time.Value type="current" className={time.current} />
+              <Time.Separator className={time.separator} />
+              <Time.Value type="duration" className={time.duration} />
+            </Time.Group>
 
-          <TimeSlider.Root render={(props) => <SliderRoot {...props} />}>
-            <TimeSlider.Track render={(props) => <SliderTrack {...props} />}>
-              <TimeSlider.Fill render={(props) => <SliderFill {...props} />} />
-              <TimeSlider.Buffer render={(props) => <SliderFill type="buffer" {...props} />} />
-            </TimeSlider.Track>
-            <TimeSlider.Thumb render={(props) => <SliderThumb {...props} />} />
-          </TimeSlider.Root>
-        </span>
+            <TimeSlider.Root render={(props) => <SliderRoot {...props} />}>
+              <TimeSlider.Track render={(props) => <SliderTrack {...props} />}>
+                <TimeSlider.Fill render={(props) => <SliderFill {...props} />} />
+                <TimeSlider.Buffer render={(props) => <SliderFill type="buffer" {...props} />} />
+              </TimeSlider.Track>
+              <TimeSlider.Thumb render={(props) => <SliderThumb {...props} />} />
+            </TimeSlider.Root>
+          </div>
 
-        <span className={buttonGroup}>
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <PlaybackRateButton
-                  render={(props) => <Button variant="icon" {...props} className={playbackRate.button} />}
-                />
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
-          </Tooltip.Root>
+          <div className={buttonGroup}>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <PlaybackRateButton
+                    render={(props) => <Button variant="icon" {...props} className={playbackRate.button} />}
+                  />
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
+            </Tooltip.Root>
 
-          <Popover.Root openOnHover delay={200} closeDelay={100} side="left">
-            <Popover.Trigger
-              render={
-                <MuteButton
-                  render={(props) => (
-                    <Button variant="icon" {...props} className={iconState.mute.button}>
-                      <VolumeOffIcon className={cn(icon, iconState.mute.volumeOff)} />
-                      <VolumeLowIcon className={cn(icon, iconState.mute.volumeLow)} />
-                      <VolumeHighIcon className={cn(icon, iconState.mute.volumeHigh)} />
-                    </Button>
-                  )}
-                />
-              }
-            />
-            <Popover.Popup className={cn(popup.volume)}>
-              <VolumeSlider.Root
-                orientation="horizontal"
-                thumbAlignment="edge"
-                render={(props) => <SliderRoot {...props} />}
-              >
-                <VolumeSlider.Track render={(props) => <SliderTrack {...props} />}>
-                  <VolumeSlider.Fill render={(props) => <SliderFill {...props} />} />
-                </VolumeSlider.Track>
-                <VolumeSlider.Thumb render={(props) => <SliderThumb persistent {...props} />} />
-              </VolumeSlider.Root>
-            </Popover.Popup>
-          </Popover.Root>
-        </span>
+            <Popover.Root openOnHover delay={200} closeDelay={100} side="left">
+              <Popover.Trigger
+                render={
+                  <MuteButton
+                    render={(props) => (
+                      <Button variant="icon" {...props} className={iconState.mute.button}>
+                        <VolumeOffIcon className={cn(icon, iconState.mute.volumeOff)} />
+                        <VolumeLowIcon className={cn(icon, iconState.mute.volumeLow)} />
+                        <VolumeHighIcon className={cn(icon, iconState.mute.volumeHigh)} />
+                      </Button>
+                    )}
+                  />
+                }
+              />
+              <Popover.Popup className={cn(popup.volume)}>
+                <VolumeSlider.Root
+                  orientation="horizontal"
+                  thumbAlignment="edge"
+                  render={(props) => <SliderRoot {...props} />}
+                >
+                  <VolumeSlider.Track render={(props) => <SliderTrack {...props} />}>
+                    <VolumeSlider.Fill render={(props) => <SliderFill {...props} />} />
+                  </VolumeSlider.Track>
+                  <VolumeSlider.Thumb render={(props) => <SliderThumb persistent {...props} />} />
+                </VolumeSlider.Root>
+              </Popover.Popup>
+            </Popover.Root>
+          </div>
+        </Tooltip.Provider>
       </div>
     </Container>
   );

@@ -20,7 +20,7 @@ import { loadSegments } from '../features/load-segments';
 import type { TextTrackBufferState } from '../features/load-text-track-cues';
 import { loadTextTrackCues } from '../features/load-text-track-cues';
 import { setupMediaSource } from '../features/setup-mediasource';
-import { setupSourceBuffer } from '../features/setup-sourcebuffer';
+import { setupSourceBuffers } from '../features/setup-sourcebuffer';
 import { setupTextTracks } from '../features/setup-text-tracks';
 import { syncSelectedTextTrackFromDom } from '../features/sync-selected-text-track-from-dom';
 import { syncTextTrackModes } from '../features/sync-text-track-modes';
@@ -271,9 +271,12 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     // 4.5. Update MediaSource duration (when presentation duration available)
     updateDuration({ state, owners }),
 
-    // 5. Setup SourceBuffers (when MediaSource ready and tracks resolved)
-    setupSourceBuffer({ state, owners }, { type: 'video' }),
-    setupSourceBuffer({ state, owners }, { type: 'audio' }),
+    // 5. Setup SourceBuffers (when MediaSource ready and all selected tracks resolved)
+    // Both SourceBuffers are created in a single synchronous operation to guarantee
+    // neither is visible to loadSegments before the other exists — preventing the
+    // Firefox bug where appending video data before audio SB is created causes
+    // mozHasAudio to be permanently false.
+    setupSourceBuffers({ state, owners }),
 
     // 5.5. Track currentTime from mediaElement (feeds forward buffer management)
     //
