@@ -81,22 +81,19 @@ export const controls = cn(
   'absolute bottom-3 inset-x-3',
   'text-white z-10',
   // Transitions (fine pointer only — instant toggle on touch to avoid dead-zone taps)
-  '[@media(pointer:fine)]:will-change-[scale,transform,filter,opacity]',
+  'will-change-[scale,transform,filter,opacity]',
   '[@media(pointer:fine)]:transition-[scale,transform,filter,opacity]',
-  '[@media(pointer:fine)]:ease-out',
+  'ease-out origin-bottom',
   '[@media(pointer:fine)]:delay-0 [@media(pointer:fine)]:duration-100',
-  '[@media(pointer:fine)]:origin-bottom',
-  // Hidden state (always)
+  // Hidden state
   'not-data-visible:pointer-events-none not-data-visible:opacity-0',
-  // Hidden state (fine pointer only)
-  '[@media(pointer:fine)]:not-data-visible:blur-sm',
-  '[@media(pointer:fine)]:not-data-visible:scale-90',
+  'not-data-visible:blur-sm not-data-visible:scale-90',
   '[@media(pointer:fine)]:not-data-visible:delay-500',
   '[@media(pointer:fine)]:not-data-visible:duration-300',
-  // Reduced motion + hidden (fine pointer only)
+  // Reduced motion + hidden
   '[@media(pointer:fine)]:motion-reduce:not-data-visible:duration-100',
-  '[@media(pointer:fine)]:motion-reduce:not-data-visible:blur-none',
-  '[@media(pointer:fine)]:motion-reduce:not-data-visible:scale-100'
+  'motion-reduce:not-data-visible:blur-none',
+  'motion-reduce:not-data-visible:scale-100'
 );
 
 /* ==========================================================================

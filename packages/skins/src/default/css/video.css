@@ -55,30 +55,34 @@
   z-index: 10;
   color: oklch(1 0 0);
 
+  will-change: scale, transform, filter, opacity;
+  transition-timing-function: ease-out;
+  transform-origin: bottom;
+
   @media (pointer: fine) {
-    will-change: scale, transform, filter, opacity;
     transition-property: scale, transform, filter, opacity;
     transition-duration: 100ms;
     transition-delay: 0ms;
-    transition-timing-function: ease-out;
-    transform-origin: bottom;
   }
 
   &:not([data-visible]) {
     opacity: 0;
     pointer-events: none;
+    scale: 0.9;
+    filter: blur(8px);
 
     @media (pointer: fine) {
-      scale: 0.9;
-      filter: blur(8px);
       transition-duration: 300ms;
       transition-delay: 500ms;
 
       @media (prefers-reduced-motion: reduce) {
-        scale: 1;
-        filter: blur(0);
         transition-duration: 100ms;
       }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      scale: 1;
+      filter: blur(0);
     }
   }
 }
