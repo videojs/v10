@@ -10,8 +10,7 @@ import { AnimatedGif } from '../gif-media/react';
 const { Provider } = createPlayer({ features: [playbackFeature] });
 
 // A publicly accessible animated GIF for demo purposes
-const GIF_SRC =
-  'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExMzlsaW43OHN5ZnJmdmV0cGtvY3p3a3BtejhwZGMxZGdqOGhkejAzdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oriO0OEd9QIDdllqo/giphy.gif';
+const GIF_SRC = 'https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/animated.gif';
 
 const buttonStyle: React.CSSProperties = {
   background: 'none',

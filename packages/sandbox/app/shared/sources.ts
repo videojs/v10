@@ -34,13 +34,25 @@ export const SOURCES = {
     url: 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4',
     type: 'mp4',
   },
+  'gif-1': {
+    label: 'GIF - Dancing Dude',
+    url: 'https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/animated.gif',
+    type: 'gif',
+  },
+  'gif-2': {
+    label: 'GIF - Big Buck Bunny',
+    url: 'https://image.mux.com/VcmKA6aqzIzlg3MayLJDnbF55kX00mds028Z65QxvBYaA/animated.gif',
+    type: 'gif',
+  },
 } as const;
 
 export type SourceId = keyof typeof SOURCES;
 
 export const SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
 export const MP4_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'mp4');
+export const GIF_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'gif');
 export const DEFAULT_SOURCE: SourceId = 'hls-1';
 export const DEFAULT_AUDIO_SOURCE: SourceId = 'mp4-1';
+export const DEFAULT_GIF_SOURCE: SourceId = 'gif-1';
 
 export const BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/Sc89iWAyNkhJ3P1rQ02nrEdCFTnfT01CZ2KmaEcxXfB008/low.mp4';

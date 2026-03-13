@@ -1,7 +1,7 @@
 import { GifMedia } from './gif-media';
 
 export class GifMediaElement extends HTMLElement {
-  static readonly tagName = 'gif-media';
+  static readonly tagName = 'gif-video';
   static readonly observedAttributes = ['src'];
 
   readonly #gifMedia = new GifMedia();

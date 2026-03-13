@@ -16,6 +16,7 @@ type NavbarProps = {
   availableSources: readonly SourceId[];
   isBackgroundVideo: boolean;
   isSimpleHlsVideo: boolean;
+  isGif: boolean;
   platforms: readonly Platform[];
   stylings: readonly Styling[];
   presets: readonly Preset[];
@@ -35,6 +36,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   'simple-hls-video': 'Simple HLS Video',
   audio: 'Audio',
   'background-video': 'Background Video',
+  gif: 'GIF',
 };
 
 export function Navbar({
@@ -51,6 +53,7 @@ export function Navbar({
   availableSources,
   isBackgroundVideo,
   isSimpleHlsVideo,
+  isGif,
   platforms,
   stylings,
   presets,
@@ -79,8 +82,9 @@ export function Navbar({
           options={stylings.map((s) => ({
             value: s,
             label: s === 'css' ? 'CSS' : 'Tailwind',
-            disabled: s === 'tailwind' && isBackgroundVideo,
+            disabled: s === 'tailwind' && (isBackgroundVideo || isGif),
           }))}
+          disabled={isGif}
         />
 
         <Select
@@ -95,7 +99,7 @@ export function Navbar({
           value={skin}
           onChange={(v) => onSkinChange(v as Skin)}
           options={SKIN_OPTIONS.map((s) => ({ value: s, label: capitalize(s) }))}
-          disabled={isBackgroundVideo}
+          disabled={isBackgroundVideo || isGif}
         />
 
         <Select
@@ -109,7 +113,7 @@ export function Navbar({
                   .map((id) => ({ value: id, label: sources[id].label }))
               : availableSources.map((id) => ({ value: id, label: sources[id].label }))
           }
-          disabled={isBackgroundVideo}
+          disabled={isBackgroundVideo || isGif}
         />
       </div>
 

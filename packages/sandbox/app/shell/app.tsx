@@ -1,6 +1,14 @@
 import { PLATFORMS, PRESETS, STYLINGS } from '@app/constants';
 import type { SourceId } from '@app/shared/sources';
-import { DEFAULT_AUDIO_SOURCE, MP4_SOURCE_IDS, SOURCE_IDS, SOURCES } from '@app/shared/sources';
+import {
+  DEFAULT_AUDIO_SOURCE,
+  DEFAULT_GIF_SOURCE,
+  DEFAULT_SOURCE,
+  GIF_SOURCE_IDS,
+  MP4_SOURCE_IDS,
+  SOURCE_IDS,
+  SOURCES,
+} from '@app/shared/sources';
 import type { Platform, Preset, Styling } from '@app/types';
 import { useSkinSwitcher } from '@app/utils/use-skin-switcher';
 import { useSourceSwitcher } from '@app/utils/use-source-switcher';
@@ -67,14 +75,23 @@ export function App() {
     }
   }, [preset, source, setSource]);
 
-  // Constrain styling when switching to background-video
+  // Auto-select gif source when switching to gif; revert to default when switching away
   useEffect(() => {
-    if (preset === 'background-video' && styling === 'tailwind') {
+    if (preset === 'gif' && SOURCES[source].type !== 'gif') {
+      setSource(DEFAULT_GIF_SOURCE);
+    } else if (preset !== 'gif' && SOURCES[source].type === 'gif') {
+      setSource(DEFAULT_SOURCE);
+    }
+  }, [preset, source, setSource]);
+
+  // Constrain styling when switching to background-video or gif (no tailwind variant)
+  useEffect(() => {
+    if ((preset === 'background-video' || preset === 'gif') && styling === 'tailwind') {
       setStyling('css');
     }
   }, [preset, styling]);
 
-  const availableSources = preset === 'audio' ? MP4_SOURCE_IDS : SOURCE_IDS;
+  const availableSources = preset === 'audio' ? MP4_SOURCE_IDS : preset === 'gif' ? GIF_SOURCE_IDS : SOURCE_IDS;
 
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), [setSource]);
 
@@ -94,6 +111,7 @@ export function App() {
         availableSources={availableSources}
         isBackgroundVideo={preset === 'background-video'}
         isSimpleHlsVideo={preset === 'simple-hls-video'}
+        isGif={preset === 'gif'}
         platforms={PLATFORMS}
         stylings={STYLINGS}
         presets={PRESETS}

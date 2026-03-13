@@ -2,19 +2,20 @@
 // http://localhost:5173/html-gif/
 
 import { playbackFeature } from '@videojs/core/dom';
-import { createPlayer, PlayButtonElement } from '@videojs/html';
+import { createPlayer, MediaElement, PlayButtonElement } from '@videojs/html';
 import { pauseIcon, playIcon, restartIcon } from '@videojs/icons/html';
 import { GifMediaElement } from '../gif-media/html';
 
-const { PlayerElement } = createPlayer({ features: [playbackFeature] });
+const { ProviderMixin, ContainerMixin } = createPlayer({ features: [playbackFeature] });
 
-customElements.define('video-player', PlayerElement);
+class VideoPlayerElement extends ProviderMixin(ContainerMixin(MediaElement)) {}
+
+customElements.define('video-player', VideoPlayerElement);
 customElements.define(GifMediaElement.tagName, GifMediaElement);
 customElements.define(PlayButtonElement.tagName, PlayButtonElement);
 
 // A publicly accessible animated GIF for demo purposes
-const GIF_SRC =
-  'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExMzlsaW43OHN5ZnJmdmV0cGtvY3p3a3BtejhwZGMxZGdqOGhkejAzdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oriO0OEd9QIDdllqo/giphy.gif';
+const GIF_SRC = 'https://image.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/animated.gif';
 
 const html = String.raw;
 
@@ -51,7 +52,7 @@ document.getElementById('root')!.innerHTML = html`
 
     video-player { display: contents; }
 
-    gif-media {
+    gif-video {
       display: block;
       width: 480px;
     }
@@ -103,7 +104,7 @@ document.getElementById('root')!.innerHTML = html`
       <p class="demo-label">GifMedia (canvas + playbackFeature)</p>
       <div class="player-wrapper">
         <video-player>
-          <gif-media src="${GIF_SRC}"></gif-media>
+          <gif-video src="${GIF_SRC}"></gif-video>
           <div class="control-bar">
             <media-play-button>
               <span class="icon-play">${playIcon}</span>
