@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import type { BundledLanguage, Highlighter } from 'shiki';
 import { hastToHtml } from 'shiki';
+import { shikiNotationTransformers } from '@/utils/shikiNotationTransformers';
 
 export interface SharedProps {
   code: string;
@@ -15,6 +16,7 @@ export default function Shared({ code, lang, highlighter }: SharedProps) {
       light: 'gruvbox-dark-hard',
       dark: 'gruvbox-dark-soft',
     },
+    transformers: shikiNotationTransformers,
   });
 
   // shiki gives us a root > pre > code > text structure
@@ -39,7 +41,7 @@ export default function Shared({ code, lang, highlighter }: SharedProps) {
   const { class: codeClassName } = codeProps;
 
   return (
-    <pre className={clsx('shiki text-manila-light', preClassName)}>
+    <pre className={clsx('shiki astro-code text-manila-light', preClassName)}>
       <code className={clsx('font-mono text-code', codeClassName)} dangerouslySetInnerHTML={{ __html: html }} />
     </pre>
   );

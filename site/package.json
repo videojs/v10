@@ -27,6 +27,7 @@
     "@nanostores/react": "^1.0.0",
     "@pagefind/default-ui": "^1.4.0",
     "@sentry/astro": "^10.32.1",
+    "@shikijs/transformers": "^4.0.2",
     "@tailwindcss/vite": "^4.2.1",
     "@videojs/html": "workspace:*",
     "@videojs/react": "workspace:*",
