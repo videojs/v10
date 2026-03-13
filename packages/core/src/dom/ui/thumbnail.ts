@@ -108,15 +108,21 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
   function connect(): void {
     ensureBindings();
 
-    // Handle the case where the img already loaded before listeners were bound
-    // (e.g., cached image in React where mount happens before useEffect).
+    // Handle the case where the img already loaded or errored before listeners
+    // were bound (e.g., cached image in React where mount happens before useEffect).
     const img = getImg();
 
-    if (img?.complete && img.naturalWidth > 0 && lastSrc) {
-      naturalWidth = img.naturalWidth;
-      naturalHeight = img.naturalHeight;
-      loading = false;
-      error = false;
+    if (img?.complete && lastSrc) {
+      if (img.naturalWidth > 0) {
+        naturalWidth = img.naturalWidth;
+        naturalHeight = img.naturalHeight;
+        loading = false;
+        error = false;
+      } else {
+        loading = false;
+        error = true;
+      }
+
       onStateChange();
     }
   }

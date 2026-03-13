@@ -1,4 +1,6 @@
 import '@app/styles.css';
+import { MuxPoster } from '@app/shared/react/mux-poster';
+import { MuxStoryboard } from '@app/shared/react/mux-storyboard';
 import { VideoProvider } from '@app/shared/react/providers';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { useSkin } from '@app/shared/react/use-skin';
@@ -14,7 +16,10 @@ function App() {
   return (
     <VideoProvider>
       <VideoSkinComponent skin={skin} styling="tailwind" className="w-full aspect-video max-w-4xl mx-auto">
-        <Video src={SOURCES[source].url} playsInline />
+        <Video src={SOURCES[source].url} playsInline crossOrigin="anonymous">
+          <MuxStoryboard source={source} />
+        </Video>
+        <MuxPoster source={source} />
       </VideoSkinComponent>
     </VideoProvider>
   );

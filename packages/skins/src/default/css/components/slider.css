@@ -10,6 +10,7 @@
   flex: 1;
   border-radius: calc(infinity * 1px);
   outline: none;
+  cursor: pointer;
 
   &[data-orientation="horizontal"] {
     min-width: 5rem;
@@ -140,9 +141,4 @@
   &[data-orientation="vertical"] {
     height: var(--media-slider-fill);
   }
-}
-
-/* Time display within slider */
-.media-default-skin .media-slider__time-display {
-  font-variant-numeric: tabular-nums;
 }

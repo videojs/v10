@@ -26,6 +26,7 @@ import {
   iconState,
   overlay,
   popup,
+  preview,
   root,
   seek,
   slider,
@@ -44,6 +45,7 @@ import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
+import { Slider } from '@/ui/slider';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
@@ -233,6 +235,13 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 <TimeSlider.Buffer render={(props) => <SliderFill type="buffer" {...props} />} />
               </TimeSlider.Track>
               <TimeSlider.Thumb render={(props) => <SliderThumb {...props} />} />
+              <div className={preview.root}>
+                <div className={preview.thumbnailWrapper}>
+                  <Slider.Thumbnail className={preview.thumbnail} />
+                </div>
+                <TimeSlider.Value type="pointer" className={preview.timestamp} />
+                <SpinnerIcon className={cn(icon, preview.spinner)} />
+              </div>
             </TimeSlider.Root>
           </div>
 

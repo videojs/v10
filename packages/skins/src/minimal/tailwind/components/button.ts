@@ -2,7 +2,7 @@ import { cn } from '@videojs/utils/style';
 
 export const button = {
   base: cn(
-    'items-center justify-center shrink-0 border-none cursor-pointer select-none text-center',
+    'items-center justify-center shrink-0 border-none cursor-pointer select-none text-center touch-manipulation',
     'outline-2 outline-transparent -outline-offset-2',
     'font-medium text-shadow-inherit',
     'transition-[background-color,color,outline-offset,scale] duration-150 ease-out',

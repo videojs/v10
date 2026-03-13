@@ -37,6 +37,7 @@
   transition-timing-function: ease-out;
   cursor: pointer;
   user-select: none;
+  touch-action: manipulation;
 
   &:focus-visible {
     outline-color: currentColor;

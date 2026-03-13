@@ -22,6 +22,7 @@
   transition-timing-function: ease-out;
   cursor: pointer;
   user-select: none;
+  touch-action: manipulation;
 
   &:focus-visible {
     outline-color: oklch(62.3% 0.214 259.815);

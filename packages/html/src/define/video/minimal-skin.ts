@@ -79,6 +79,14 @@ function getTemplateHTML() {
                 <media-slider-buffer class="media-slider__buffer"></media-slider-buffer>
               </media-slider-track>
               <media-slider-thumb class="media-slider__thumb"></media-slider-thumb>
+
+              <div class="media-preview media-slider__preview">
+                <div class="media-preview__thumbnail-wrapper">
+                  <media-slider-thumbnail class="media-preview__thumbnail"></media-slider-thumbnail>
+                </div>
+                <media-slider-value type="pointer" class="media-preview__timestamp"></media-slider-value>
+                ${renderIcon('spinner', { class: 'media-preview__spinner media-icon' })}
+              </div>
             </media-time-slider>
           </div>
 

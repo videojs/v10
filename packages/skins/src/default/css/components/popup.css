@@ -9,12 +9,12 @@
   color: inherit;
   overflow: visible;
   transition-property: transform, scale, opacity, filter;
-  transition-duration: 200ms;
+  transition-duration: 150ms;
 
   &[data-starting-style],
   &[data-ending-style] {
     opacity: 0;
-    transform: scale(0);
+    transform: scale(0.5);
     filter: blur(8px);
   }
 
@@ -49,5 +49,5 @@
   border-radius: calc(infinity * 1px);
   font-size: 0.75rem;
   white-space: nowrap;
-  --media-tooltip-side-offset: 0.5rem;
+  --media-tooltip-side-offset: 0.75rem;
 }
