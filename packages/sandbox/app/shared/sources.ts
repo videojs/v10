@@ -34,13 +34,25 @@ export const SOURCES = {
     url: 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4',
     type: 'mp4',
   },
+  'dash-1': {
+    label: 'DASH - Big Buck Bunny',
+    url: 'https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd',
+    type: 'dash',
+  },
+  'dash-2': {
+    label: 'DASH - Envivio Test Stream',
+    url: 'https://dash.akamaized.net/envivio/EnvivioDash3/manifest.mpd',
+    type: 'dash',
+  },
 } as const;
 
 export type SourceId = keyof typeof SOURCES;
 
 export const SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
 export const MP4_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'mp4');
+export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'dash');
 export const DEFAULT_SOURCE: SourceId = 'hls-1';
 export const DEFAULT_AUDIO_SOURCE: SourceId = 'mp4-1';
+export const DEFAULT_DASH_SOURCE: SourceId = 'dash-1';
 
 export const BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/Sc89iWAyNkhJ3P1rQ02nrEdCFTnfT01CZ2KmaEcxXfB008/low.mp4';

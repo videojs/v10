@@ -1,6 +1,13 @@
 import { PLATFORMS, PRESETS, STYLINGS } from '@app/constants';
 import type { SourceId } from '@app/shared/sources';
-import { DEFAULT_AUDIO_SOURCE, MP4_SOURCE_IDS, SOURCE_IDS, SOURCES } from '@app/shared/sources';
+import {
+  DASH_SOURCE_IDS,
+  DEFAULT_AUDIO_SOURCE,
+  DEFAULT_DASH_SOURCE,
+  MP4_SOURCE_IDS,
+  SOURCE_IDS,
+  SOURCES,
+} from '@app/shared/sources';
 import type { Platform, Preset, Styling } from '@app/types';
 import { useSkinSwitcher } from '@app/utils/use-skin-switcher';
 import { useSourceSwitcher } from '@app/utils/use-source-switcher';
@@ -67,14 +74,21 @@ export function App() {
     }
   }, [preset, source, setSource]);
 
-  // Constrain styling when switching to background-video
+  // Constrain source to DASH when switching to dash-video
   useEffect(() => {
-    if (preset === 'background-video' && styling === 'tailwind') {
+    if (preset === 'dash-video' && SOURCES[source].type !== 'dash') {
+      setSource(DEFAULT_DASH_SOURCE);
+    }
+  }, [preset, source, setSource]);
+
+  // Constrain styling when switching to a preset that has no tailwind template
+  useEffect(() => {
+    if ((preset === 'background-video' || preset === 'dash-video') && styling === 'tailwind') {
       setStyling('css');
     }
   }, [preset, styling]);
 
-  const availableSources = preset === 'audio' ? MP4_SOURCE_IDS : SOURCE_IDS;
+  const availableSources = preset === 'audio' ? MP4_SOURCE_IDS : preset === 'dash-video' ? DASH_SOURCE_IDS : SOURCE_IDS;
 
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), [setSource]);
 
@@ -94,6 +108,7 @@ export function App() {
         availableSources={availableSources}
         isBackgroundVideo={preset === 'background-video'}
         isSimpleHlsVideo={preset === 'simple-hls-video'}
+        isDashVideo={preset === 'dash-video'}
         platforms={PLATFORMS}
         stylings={STYLINGS}
         presets={PRESETS}
