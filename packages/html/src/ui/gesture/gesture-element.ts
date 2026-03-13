@@ -1,5 +1,5 @@
 import { ALLOWED_GESTURE_TYPES, GestureCore } from '@videojs/core';
-import { selectPlayback } from '@videojs/core/dom';
+import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
 import type { PropertyValues } from '@videojs/element';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
@@ -18,7 +18,7 @@ export class GestureElement extends MediaElement {
 
   readonly #core = new GestureCore();
   readonly #player = new PlayerController(this, playerContext);
-  readonly #playback = new PlayerController(this, playerContext, selectPlayback);
+  readonly #mediaState = new PlayerController(this, playerContext, selectPlayback);
 
   #disconnect: AbortController | null = null;
 
@@ -26,6 +26,10 @@ export class GestureElement extends MediaElement {
     super.connectedCallback();
 
     this.style.display = 'contents';
+
+    if (__DEV__ && !this.#mediaState.value && this.#mediaState.displayName) {
+      logMissingFeature(this.localName, this.#mediaState.displayName);
+    }
   }
 
   override disconnectedCallback(): void {
@@ -37,6 +41,11 @@ export class GestureElement extends MediaElement {
   update(changed: PropertyValues): void {
     super.update?.(changed);
 
+    const media = this.#mediaState.value;
+    if (!media) return;
+
+    this.#core.setMedia(media);
+
     if (changed.has('type') || changed.has('command')) {
       this.#core.setProps({ type: this.type, command: this.command });
 
@@ -46,20 +55,17 @@ export class GestureElement extends MediaElement {
         const { signal } = this.#disconnect;
 
         const container = this.#player.value?.target?.container;
-        container?.addEventListener(this.type, this.#handleEvent, { signal });
+        container?.addEventListener(
+          this.type,
+          (event: PointerEvent) => {
+            const target = event.target as Element;
+            if (target !== container && !target.localName.endsWith('video')) return;
+
+            this.#core.handleGesture(event);
+          },
+          { signal }
+        );
       }
     }
   }
-
-  #handleEvent = (event: Event): void => {
-    const composedTarget = event.composedPath()?.[0] as Element | undefined;
-    // TODO: allow other elements than video
-    const allowList = ['video'];
-    if (!composedTarget || !allowList.includes(composedTarget?.localName)) return;
-
-    const media = this.#playback.value;
-    if (!media) return;
-
-    this.#core.activate(media);
-  };
 }

@@ -3,48 +3,44 @@
 import { ALLOWED_GESTURE_TYPES, GestureCore } from '@videojs/core';
 import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
 import type { HTMLAttributes } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMediaContainer, usePlayer } from '../../player/context';
 
 export interface GestureProps extends HTMLAttributes<HTMLDivElement>, GestureCore.Props {}
 
-export function Gesture({ type, command, ...props }: GestureProps) {
+export function Gesture({ type, command }: GestureProps) {
   const [gestureCore] = useState(() => new GestureCore());
-  gestureCore.setProps({ type, command, ...props });
+  gestureCore.setProps({ type, command });
 
   const playback = usePlayer(selectPlayback);
+  if (playback) gestureCore.setMedia(playback);
+  else {
+    if (__DEV__) logMissingFeature('Gesture', 'playback');
+  }
+
   const container = useMediaContainer();
-
-  const handleEvent = useCallback(
-    (event: Event) => {
-      const composedTarget = event.composedPath()?.[0] as Element | undefined;
-      const allowList = ['video'];
-      if (!composedTarget || !allowList.includes(composedTarget?.localName)) return;
-
-      if (!playback) return;
-      gestureCore.activate(playback);
-    },
-    [gestureCore, playback]
-  );
 
   useEffect(() => {
     if (!ALLOWED_GESTURE_TYPES.includes(type)) return;
+    if (!container) return;
 
     const controller = new AbortController();
 
-    if (!container) return;
+    container.addEventListener(
+      type,
+      (event: PointerEvent) => {
+        const target = event.target as Element;
+        if (target !== container && !target.localName.endsWith('video')) return;
 
-    container.addEventListener(type, handleEvent, { signal: controller.signal });
+        gestureCore.handleGesture(event);
+      },
+      { signal: controller.signal }
+    );
 
     return () => {
       controller.abort();
     };
-  }, [container, handleEvent, type]);
-
-  if (!playback) {
-    if (__DEV__) logMissingFeature('Gesture', 'playback');
-    return null;
-  }
+  }, [container, type, gestureCore]);
 
   return null;
 }
