@@ -19,22 +19,20 @@ In prior versions of Video.js, skins were CSS-only themes applied to the same se
 <FrameworkCase frameworks={["html"]}>
 ```html
 <video-player>
-  <!-- skin element -->
-  <video-skin>
+  <video-skin><!-- [!code focus] -->
     <!-- wraps the media element -->
     <video slot="media" src="video.mp4"></video>
-  </video-skin>
+  </video-skin><!-- [!code focus] -->
 </video-player>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <Player.Provider>
-  {/* skin component */}
-  <VideoSkin>
+  <VideoSkin> {/* [!code focus] */}
     {/* wraps the Media component */}
     <Video src="video.mp4"></Video>
-  </VideoSkin>
+  </VideoSkin> {/* [!code focus] */}
 </Player.Provider>
 ```
 </FrameworkCase>
@@ -145,6 +143,7 @@ When you choose a skin you have two options for how you use it: **packaged** or 
   </video-player>
 ```
 </FrameworkCase>
+
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="VideoSkin.tsx"
   <Player.Provider>
@@ -307,29 +306,26 @@ When you choose a skin you have two options for how you use it: **packaged** or 
 </FrameworkCase>
 
 
-## Skins and presets
+## Skins, player features, and presets
 
-Each skin is built for a specific <DocsLink slug="concepts/features">feature bundle</DocsLink> — it expects certain features to be available. A video skin renders fullscreen and picture-in-picture controls because the video feature bundle includes those features. An audio skin doesn't.
-
-A <DocsLink slug="concepts/presets">preset</DocsLink> packages a feature bundle together with its compatible skins and a media element. The default video and audio presets ship with multiple skin options, and those options will grow over time. More focused presets will typically have a single skin.
+Each skin is built with specific <DocsLink slug="concepts/features">features</DocsLink> in mind. For example, a video skin renders fullscreen and picture-in-picture controls. An audio skin doesn't. The features associated with a skin are called a **feature bundle**.
 
 <FrameworkCase frameworks={["html"]}>
-
-| Preset | Available skins |
-|--------|-----------------|
-| `/video` | `<video-skin>`, `<video-minimal-skin>` |
-| `/audio` | `<audio-skin>`, `<audio-minimal-skin>` |
-| `/background` | `<background-video-skin>` |
-
+| Player with feature bundle | Available skins | Import |
+|----------|-----------------|--------|
+| `<video-player>` | `<video-skin>`, `<video-minimal-skin>` | `@videojs/html/video/*` |
+| `<audio-player>` | `<audio-skin>`, `<audio-minimal-skin>` | `@videojs/html/audio/*` |
+| `<background-video-player>` | `<background-video-skin>` | `@videojs/html/background/*` |
 </FrameworkCase>
+
 <FrameworkCase frameworks={["react"]}>
-
-| Preset | Available skins |
-|--------|-----------------|
-| `/video` | `<VideoSkin>`, `<MinimalVideoSkin>` |
-| `/audio` | `<AudioSkin>`, `<MinimalAudioSkin>` |
-| `/background` | `<BackgroundVideoSkin>` |
-
+| Feature bundle | Available skins | Import |
+|----------|-----------------|--------|
+| `videoFeatures` | `<VideoSkin>`, `<MinimalVideoSkin>` | `@videojs/react/video` |
+| `audioFeatures` | `<AudioSkin>`, `<MinimalAudioSkin>` | `@videojs/react/audio` |
+| `backgroundFeatures` | `<BackgroundVideoSkin>` | `@videojs/react/background` |
 </FrameworkCase>
+
+Want to learn more about skins and feature bundles? Check out the presets guide:
 
 <DocsLinkCard slug="concepts/presets">Learn more about presets</DocsLinkCard>

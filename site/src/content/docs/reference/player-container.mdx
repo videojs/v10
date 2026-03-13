@@ -19,20 +19,20 @@ The `<media-container>` is the player's physical surface. It defines the visual 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <Player.Provider>
-  <Player.Container>
+  <Player.Container> {/* [!code focus] */}
     <video src="video.mp4" />
     <Controls />
-  </Player.Container>
+  </Player.Container> {/* [!code focus] */}
 </Player.Provider>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 ```html
 <video-player>
-  <media-container>
+  <media-container> <!-- [!code focus] -->
     <video slot="media" src="video.mp4"></video>
     <media-controls>...</media-controls>
-  </media-container>
+  </media-container> <!-- [!code focus] -->
 </video-player>
 ```
 </FrameworkCase>
@@ -49,7 +49,7 @@ import { videoFeatures } from '@videojs/react/video';
 const Player = createPlayer({ features: videoFeatures });
 ```
 
-<DocsLinkCard slug="reference/create-player">createPlayer reference</DocsLinkCard>
+<DocsLinkCard slug="reference/create-player">`createPlayer` reference</DocsLinkCard>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -206,17 +206,3 @@ The <DocsLink slug="reference/player-provider">provider</DocsLink> gives compone
 </FrameworkCase>
 
 A play button outside the container still reads playback state and can toggle play/pause — it just won't go fullscreen with the player or respond to the container's idle state.
-
-## See also
-
-- <DocsLink slug="reference/player-provider">Player.Provider</DocsLink> — the state boundary that wraps the container
-- <DocsLink slug="concepts/skins">Skins</DocsLink> — packaged player designs that include a container
-- <DocsLink slug="concepts/overview">overview</DocsLink> — how state, UI, and media fit together
-
-<FrameworkCase frameworks={["react"]}>
-- <DocsLink slug="reference/create-player">createPlayer</DocsLink> — factory that returns Provider, Container, and hooks
-</FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
-- <DocsLink slug="reference/html-create-player">createPlayer</DocsLink> — factory that returns ProviderMixin, ContainerMixin, and controllers
-- <DocsLink slug="reference/container-mixin">ContainerMixin</DocsLink> — the mixin behind the container element
-</FrameworkCase>

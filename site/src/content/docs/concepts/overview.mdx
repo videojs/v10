@@ -114,7 +114,7 @@ To get started with UI components, you might consider <DocsLink slug="how-to/cus
 
 Media components are the components that actually display your media. They're essentially "players with no UI". They handle the video/audio rendering and expose a consistent API.
 
-Media components can be format specific (HLS, DASH), service specific (YouTube, Vimeo, Mux), or use case specific (BackgroundVideo).
+Media components can be format specific (HLS, DASH), service specific (YouTube, Vimeo, Mux), or use case specific (background video).
 
 <FrameworkCase frameworks={["html"]}>
 Media elements are detected via a `slot="media"` attribute. Always include it on your `<video>`, `<audio>`, or custom media element.
@@ -175,13 +175,14 @@ function Hero() {
 ```html
 <script type="module">
   import '@videojs/html/background/player';
+  import '@videojs/html/background/video';
   import '@videojs/html/background/skin';
   import '@videojs/html/background/skin.css';
 </script>
 
 <background-video-player>
   <background-video-skin>
-    <video slot="media" src="hero.mp4" autoplay muted loop playsinline></video>
+    <background-video slot="media" src="hero.mp4"></background-video>
   </background-video-skin>
 </background-video-player>
 ```

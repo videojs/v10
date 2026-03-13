@@ -9,7 +9,7 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 
 A **preset** packages what you need for a specific player use case. It can include special <DocsLink slug="concepts/features">state management</DocsLink>, one or more <DocsLink slug="concepts/skins">skins</DocsLink> for UI, and specific media elements. Instead of assembling these pieces individually, you pick a preset that matches what you're building.
 
-For example, the `/background` preset includes a media element with autoplay, mute, and loop built in, a skin with no controls, and no features — because there's no UI that needs state:
+For example, the `/background` preset includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power it them:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="App.tsx"
@@ -33,13 +33,14 @@ function Hero() {
 ```html title="index.html"
 <script type="module">
   import '@videojs/html/background/player';
+  import '@videojs/html/background/video';
   import '@videojs/html/background/skin';
   import '@videojs/html/background/skin.css';
 </script>
 
 <background-video-player>
   <background-video-skin>
-    <video slot="media" src="hero.mp4" autoplay muted loop playsinline></video>
+    <background-video slot="media" src="hero.mp4"></background-video>
   </background-video-skin>
 </background-video-player>
 ```
@@ -72,11 +73,11 @@ The default presets are `/video` and `/audio`. These cover the baseline controls
 
 Each preset exports up to three things:
 
-- **Feature bundle** — An array of <DocsLink slug="concepts/features">features</DocsLink> that define the player's state and actions. The video feature bundle includes playback, volume, time, fullscreen, and more. The background feature bundle includes none — there's no UI that needs state.
-- **Skins** — Pre-built UIs designed for that feature bundle. A video skin renders fullscreen and PIP controls because the video feature bundle includes those features. An audio skin doesn't.
-- **Media element** — A media component suited to the use case. The background video element bakes in autoplay, mute, and loop. The default video and audio elements are thin wrappers around their native HTML counterparts.
+- **Feature bundle** — An array of <DocsLink slug="concepts/features">features</DocsLink> that define the player's state and actions. For example, the video feature bundle includes playback, volume, time, fullscreen, and more.
+- **Skins** — Pre-built UIs designed for that feature bundle. For example, a video skin renders fullscreen and PiP controls because the video feature bundle includes those features. An audio skin doesn't.
+- **Media element** — A media component suited to the use case. For example, the background video element bakes in autoplay, mute, and loop.
 
-These parts aren't equally coupled. Skins depend tightly on their feature bundle — a skin expects specific features to exist. Media elements are more interchangeable — you can swap in an HLS or DASH provider without changing your skin or features.
+These parts aren't equally tied together. Skins depend tightly on their feature bundle — a skin expects specific features to exist. Media elements are more interchangeable — you can swap in an HLS or DASH provider without changing your skin or features.
 
 ## Customizing a preset
 
