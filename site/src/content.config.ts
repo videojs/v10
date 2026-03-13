@@ -1,5 +1,6 @@
-import { defineCollection, reference, z } from 'astro:content';
+import { defineCollection, reference } from 'astro:content';
 import { file, glob } from 'astro/loaders';
+import { z } from 'astro/zod';
 import { ComponentReferenceSchema } from './types/component-reference';
 import { SUPPORTED_FRAMEWORKS } from './types/docs';
 import { UtilReferenceSchema } from './types/util-reference';
@@ -86,7 +87,7 @@ const docs = defineCollection({
     title: z.string(),
     description: z.string(),
     updatedDate: z.coerce.date().optional(),
-    frameworkTitle: z.record(z.enum(SUPPORTED_FRAMEWORKS as [string, ...string[]]), z.string()).optional(),
+    frameworkTitle: z.partialRecord(z.enum(SUPPORTED_FRAMEWORKS as [string, ...string[]]), z.string()).optional(),
   }),
 });
 
