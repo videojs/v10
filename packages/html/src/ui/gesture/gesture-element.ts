@@ -13,8 +13,8 @@ export class GestureElement extends MediaElement {
     command: { type: String },
   };
 
-  type = GestureCore.defaultProps.type;
-  command = GestureCore.defaultProps.command;
+  type: GestureCore.Props['type'] = GestureCore.defaultProps.type;
+  command: GestureCore.Props['command'] = GestureCore.defaultProps.command;
 
   readonly #core = new GestureCore();
   readonly #player = new PlayerController(this, playerContext);

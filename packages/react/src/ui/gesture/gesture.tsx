@@ -2,11 +2,10 @@
 
 import { ALLOWED_GESTURE_TYPES, GestureCore } from '@videojs/core';
 import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
-import type { HTMLAttributes } from 'react';
 import { useEffect, useState } from 'react';
 import { useMediaContainer, usePlayer } from '../../player/context';
 
-export interface GestureProps extends HTMLAttributes<HTMLDivElement>, GestureCore.Props {}
+export interface GestureProps extends GestureCore.Props {}
 
 export function Gesture({ type, command }: GestureProps) {
   const [gestureCore] = useState(() => new GestureCore());
