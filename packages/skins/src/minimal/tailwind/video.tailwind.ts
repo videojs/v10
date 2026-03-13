@@ -1,6 +1,7 @@
 import { cn } from '@videojs/utils/style';
 import { controls as baseControls } from './components/controls';
 import { popup as basePopup } from './components/popup';
+import { preview as basePreview } from './components/preview';
 import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
 
@@ -86,12 +87,35 @@ export const controls = cn(
 );
 
 /* ==========================================================================
+   Preview
+   ========================================================================== */
+
+export const preview = {
+  ...basePreview,
+  root: cn(
+    'absolute left-(--media-slider-pointer) bottom-[calc(100%+0.5rem)] -translate-x-1/2',
+    'opacity-0 scale-80 blur-sm origin-bottom',
+    'transition-[scale,opacity,filter] duration-150',
+    'group-data-pointing/slider:opacity-100 group-data-pointing/slider:scale-100 group-data-pointing/slider:blur-none',
+    '[&:has([role=img][data-hidden])]:opacity-0 [&:has([role=img][data-hidden])]:scale-80 [&:has([role=img][data-hidden])]:blur-sm',
+    '[&:has([role=img][data-loading])]:max-h-24',
+    basePreview.root
+  ),
+  thumbnailWrapper: cn(
+    basePreview.thumbnailWrapper,
+    'after:absolute after:inset-0 after:rounded-[inherit]',
+    'after:ring-1 after:ring-black/5 after:shadow-sm after:shadow-black/20'
+  ),
+  thumbnail: cn(basePreview.thumbnail, 'max-w-44'),
+};
+
+/* ==========================================================================
    Sliders
    ========================================================================== */
 
 export const slider = {
   ...baseSlider,
-  track: cn(baseSlider.track, 'shadow-[0_0_0_1px_oklch(0_0_0/0.05)]'),
+  track: cn(baseSlider.track, 'ring-1 ring-black/5'),
 };
 
 /* ==========================================================================
@@ -100,7 +124,7 @@ export const slider = {
 
 export const popup = {
   ...basePopup,
-  volume: cn('[--media-popover-side-offset:0.5rem] p-1 bg-transparent'),
+  volume: cn(basePopup.base, '[--media-popover-side-offset:0.5rem] p-1 bg-transparent'),
 };
 
 /* ==========================================================================

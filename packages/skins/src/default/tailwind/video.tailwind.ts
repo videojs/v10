@@ -3,6 +3,7 @@ import { bufferingIndicator as baseBufferingIndicator } from './components/buffe
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
 import { popup as basePopup } from './components/popup';
+import { preview as basePreview } from './components/preview';
 import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
 import { surface as baseSurface } from './components/surface';
@@ -66,9 +67,9 @@ export const surface = cn(
   'bg-white/10',
   'backdrop-saturate-150 backdrop-blur-lg',
   // Border and shadow
-  'ring-white/5 shadow-black/10',
+  'ring-black/15 shadow-black/10',
   // Border to enhance contrast on lighter videos
-  'after:ring-black/15',
+  'after:ring-white/5',
   // Reduced transparency for users with preference
   '[@media(prefers-reduced-transparency:reduce)]:bg-black/70',
   // High contrast mode
@@ -100,6 +101,25 @@ export const controls = cn(
   'motion-reduce:not-data-visible:blur-none',
   'motion-reduce:not-data-visible:scale-100'
 );
+
+/* ==========================================================================
+   Preview (with video surface)
+   ========================================================================== */
+
+export const preview = {
+  ...basePreview,
+  root: cn(
+    'absolute left-(--media-slider-pointer) bottom-[calc(100%+1.2rem)] -translate-x-1/2',
+    'opacity-0 scale-80 blur-sm origin-bottom',
+    'transition-[scale,opacity,filter] duration-150',
+    'group-data-pointing/slider:opacity-100 group-data-pointing/slider:scale-100 group-data-pointing/slider:blur-none',
+    '[&:has([role=img][data-hidden])]:opacity-0 [&:has([role=img][data-hidden])]:scale-80 [&:has([role=img][data-hidden])]:blur-sm',
+    '[&:has([role=img][data-loading])]:max-h-24',
+    surface,
+    basePreview.root
+  ),
+  thumbnail: cn(basePreview.thumbnail, 'max-w-44'),
+};
 
 /* ==========================================================================
    Sliders

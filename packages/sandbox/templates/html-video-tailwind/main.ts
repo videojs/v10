@@ -1,7 +1,9 @@
 import '@app/styles.css';
+import '@videojs/html/ui/poster';
 import '@videojs/html/video/player';
 import '@videojs/html/video/skin.tailwind';
 import '@videojs/html/video/minimal-skin.tailwind';
+import { renderMuxStoryboard } from '@app/shared/html/mux-storyboard';
 import { TAILWIND_SKIN_TAGS } from '@app/shared/html/skin-tags';
 import { setupVideoTailwind } from '@app/shared/html/tailwind-setup';
 import { getInitialSkin, getInitialSource, onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
@@ -22,7 +24,9 @@ function render() {
   document.getElementById('root')!.innerHTML = html`
     <video-player>
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
-        <video slot="media" src="${SOURCES[currentSource].url}" playsinline></video>
+        <video slot="media" src="${SOURCES[currentSource].url}" playsinline crossorigin="anonymous">
+          ${renderMuxStoryboard(currentSource)}
+        </video>
       </${tag}>
     </video-player>
   `;

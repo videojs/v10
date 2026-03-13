@@ -2,6 +2,8 @@ import '@app/styles.css';
 import '@videojs/html/video/player';
 import '@videojs/html/video/skin';
 import '@videojs/html/video/minimal-skin';
+import '@videojs/html/ui/poster';
+import { renderMuxStoryboard } from '@app/shared/html/mux-storyboard';
 import { CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
 import { loadVideoStylesheets } from '@app/shared/html/stylesheets';
 import { getInitialSkin, getInitialSource, onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
@@ -22,7 +24,9 @@ function render() {
   document.getElementById('root')!.innerHTML = html`
     <video-player>
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
-        <video slot="media" src="${SOURCES[currentSource].url}" playsinline></video>
+        <video slot="media" src="${SOURCES[currentSource].url}" playsinline crossorigin="anonymous">
+          ${renderMuxStoryboard(currentSource)}
+        </video>
       </${tag}>
     </video-player>
   `;

@@ -11,6 +11,7 @@ import {
   overlay,
   playbackRate,
   popup,
+  preview,
   root,
   seek,
   slider,
@@ -94,6 +95,12 @@ function getTemplateHTML() {
                 <media-slider-buffer class="${cn(slider.fill.base, slider.fill.buffer)}"></media-slider-buffer>
               </media-slider-track>
               <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.interactive)}"></media-slider-thumb>
+
+              <div class="${preview.root}">
+                <media-slider-thumbnail class="${preview.thumbnail}"></media-slider-thumbnail>
+                <media-slider-value type="pointer" class="${preview.timestamp}"></media-slider-value>
+                ${renderIcon('spinner', { class: cn(icon, preview.spinner) })}
+              </div>
             </media-time-slider>
             <media-time type="duration" class="${time.duration}"></media-time>
           </media-time-group>
