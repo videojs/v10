@@ -161,23 +161,42 @@ Volume, fullscreen, and picture-in-picture expose an `*Availability` property be
 | `'unavailable'` | Could work, not ready yet |
 | `'unsupported'` | Platform can never do this |
 
-Use availability to conditionally show controls:
+Components that depend on availability (like <DocsLink slug="reference/pip-button">`PiPButton`</DocsLink> and <DocsLink slug="reference/fullscreen-button">`FullscreenButton`</DocsLink>) expose a `data-availability` attribute, so you can hide unsupported controls with CSS:
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-pip-button[data-availability="unsupported"] {
+  display: none;
+}
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["react"]}>
+```css
+.pip-button[data-availability="unsupported"] {
+  display: none;
+}
+```
+</FrameworkCase>
+
+You can also check availability in JS:
 
 <FrameworkCase frameworks={["react"]}>
-```tsx title="VolumeControl.tsx"
-function VolumeControl() {
-  const availability = Player.usePlayer((s) => s.volumeAvailability);
+```tsx title="PiPControl.tsx"
+function PiPControl() {
+  const availability = Player.usePlayer((s) => s.pipAvailability);
 
   if (availability === 'unsupported') return null;
 
-  return <VolumeSlider />;
+  return <PiPButton />;
 }
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-```css
-media-volume-slider[data-volume-availability="unsupported"] {
-  display: none;
+```ts
+const media = this.#pip.value;
+
+if (media?.availability === 'unsupported') {
+  this.hidden = true;
 }
 ```
 </FrameworkCase>

@@ -23,8 +23,6 @@ State is handled by a `Player.Provider`, which creates a central state store tha
 
 You can access state and actions from anywhere within the provider with the <DocsLink slug="reference/use-player">`usePlayer` hook</DocsLink>.
 
-<DocsLinkCard slug="concepts/features">Learn more about features</DocsLinkCard>
-
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 State is handled by a `video-player` element, which creates a central state store that all components can access. Child components can automatically connect to the state of the `video-player` element.
@@ -36,10 +34,9 @@ State is handled by a `video-player` element, which creates a central state stor
 ```
 
 You can access state and actions from anywhere within `<video-player>` with <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>.
-
-<DocsLinkCard slug="concepts/features">Learn more about features</DocsLinkCard>
-
 </FrameworkCase>
+
+<DocsLinkCard slug="concepts/features">Learn more about state and actions</DocsLinkCard>
 
 
 ## 2. User interface
@@ -149,9 +146,11 @@ DASH, YouTube, Vimeo, Mux, and more media elements are currently under developme
 
 ## Presets
 
-**Presets** package these parts together for a specific use case. They can include special state management, one or more skins for UI, and specific media elements. Instead of wiring these up individually, you pick a preset that matches what you're building.
+**Presets** preconfigure these parts for a specific use case.
 
-The default presets are `/video` and `/audio`, covering the baseline set of controls you'd expect from the HTML `<video>` and `<audio>` tags. Beyond the defaults, presets target more specific use cases. For example, `/background`:
+The default presets are `/video` and `/audio`, covering the baseline set of controls you'd expect from the HTML `<video>` and `<audio>` tags. 
+
+Beyond the defaults, presets target more specific use cases. For example, `/background` includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power it:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
