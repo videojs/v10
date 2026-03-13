@@ -1,4 +1,5 @@
 import type { TooltipGroupCore } from '../../../core/ui/tooltip/tooltip-group-core';
+import type { UIPointerEvent } from '../event';
 import {
   createPopover,
   type PopoverApi,
@@ -27,7 +28,9 @@ export interface TooltipOptions {
   group?: () => TooltipGroupCore | undefined;
 }
 
-export interface TooltipTriggerProps extends Omit<PopoverTriggerProps, 'onClick'> {}
+export interface TooltipTriggerProps extends Omit<PopoverTriggerProps, 'onClick'> {
+  onPointerDown: (event: UIPointerEvent) => void;
+}
 
 export interface TooltipPopupProps extends PopoverPopupProps {}
 
@@ -80,16 +83,29 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
 
   const popover = createPopover(popoverOpts);
 
-  // Spread popover trigger props, omit onClick, guard disabled on open handlers.
+  // Track whether a pointer is currently down so focus-triggered opens can be
+  // suppressed during tap. The browser fires pointerdown → focus → pointerup,
+  // so the flag is true during tap-triggered focus but false during keyboard Tab.
+  let isPointerDown = false;
+
+  // Spread popover trigger props, omit onClick, guard disabled/touch on open handlers.
   const { onClick: _, ...baseTriggerProps } = popover.triggerProps;
   const triggerProps: TooltipTriggerProps = {
     ...baseTriggerProps,
+    onPointerDown() {
+      isPointerDown = true;
+    },
     onPointerEnter(event) {
       if (options.disabled?.()) return;
+      if (event.pointerType === 'touch') return;
       baseTriggerProps.onPointerEnter(event);
     },
     onFocusIn(event) {
       if (options.disabled?.()) return;
+      if (isPointerDown) {
+        isPointerDown = false;
+        return;
+      }
       baseTriggerProps.onFocusIn(event);
     },
   };
