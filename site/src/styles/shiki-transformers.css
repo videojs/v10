@@ -65,7 +65,8 @@
     transition: opacity 0.3s;
   }
 
-  .astro-code:has(.line.focused):hover .line:not(.focused) span {
+  .astro-code:has(.line.focused):hover .line:not(.focused) span,
+  .astro-code:has(.line.focused):focus-within .line:not(.focused) span {
     opacity: 1;
   }
 }
