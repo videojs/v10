@@ -1,11 +1,11 @@
-.react-slider-basic {
+.html-slider-preview {
   display: flex;
   align-items: center;
-  padding: 24px;
+  padding: 40px 24px;
   background: #1a1a1a;
 }
 
-.react-slider-basic__slider {
+.html-slider-preview__slider {
   position: relative;
   width: 100%;
   display: flex;
@@ -14,7 +14,7 @@
   cursor: pointer;
 }
 
-.react-slider-basic__track {
+.html-slider-preview__track {
   position: absolute;
   left: 0;
   right: 0;
@@ -24,11 +24,11 @@
   transition: height 150ms ease;
 }
 
-.react-slider-basic__slider[data-interactive] .react-slider-basic__track {
+.html-slider-preview__slider[data-interactive] .html-slider-preview__track {
   height: 6px;
 }
 
-.react-slider-basic__fill {
+.html-slider-preview__fill {
   position: absolute;
   top: 0;
   left: 0;
@@ -38,7 +38,7 @@
   border-radius: 9999px;
 }
 
-.react-slider-basic__thumb {
+.html-slider-preview__thumb {
   position: absolute;
   left: var(--media-slider-fill);
   width: 14px;
@@ -50,10 +50,32 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
-.react-slider-basic__slider[data-interactive] .react-slider-basic__thumb {
+.html-slider-preview__slider[data-interactive] .html-slider-preview__thumb {
   transform: translateX(-50%) scale(1);
 }
 
-.react-slider-basic__slider[data-dragging] .react-slider-basic__thumb {
+.html-slider-preview__slider[data-dragging] .html-slider-preview__thumb {
   transform: translateX(-50%) scale(1.1);
+}
+
+.html-slider-preview__preview {
+  position: absolute;
+  bottom: 100%;
+  margin-bottom: 6px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.html-slider-preview__slider[data-pointing] .html-slider-preview__preview {
+  opacity: 1;
+}
+
+.html-slider-preview__value {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
 }

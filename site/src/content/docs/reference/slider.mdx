@@ -16,11 +16,20 @@ import BasicUsageDemoReact from "@/components/docs/demos/slider/react/css/BasicU
 import basicUsageReactTsx from "@/components/docs/demos/slider/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/slider/react/css/BasicUsage.css?raw";
 
+import WithPreviewDemoReact from "@/components/docs/demos/slider/react/css/WithPreview";
+import withPreviewReactTsx from "@/components/docs/demos/slider/react/css/WithPreview.tsx?raw";
+import withPreviewReactCss from "@/components/docs/demos/slider/react/css/WithPreview.css?raw";
+
 {/* HTML demos */}
 import BasicUsageDemoHtml from "@/components/docs/demos/slider/html/css/BasicUsage.astro";
 import basicUsageHtml from "@/components/docs/demos/slider/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/slider/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/slider/html/css/BasicUsage.ts?raw";
+
+import WithPreviewDemoHtml from "@/components/docs/demos/slider/html/css/WithPreview.astro";
+import withPreviewHtml from "@/components/docs/demos/slider/html/css/WithPreview.html?raw";
+import withPreviewHtmlCss from "@/components/docs/demos/slider/html/css/WithPreview.css?raw";
+import withPreviewHtmlTs from "@/components/docs/demos/slider/html/css/WithPreview.ts?raw";
 
 ## Anatomy
 
@@ -124,9 +133,9 @@ Renders with `role="slider"` and automatic ARIA attributes (`aria-valuemin`, `ar
 
 ## Examples
 
-### Basic Usage
+### Basic
 
-A slider with track, fill, thumb, and a pointer-tracking preview value.
+A slider with track, fill, and thumb.
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
@@ -151,6 +160,37 @@ A slider with track, fill, thumb, and a pointer-tracking preview value.
       ]}
     >
       <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+### With Preview
+
+A slider with a pointer-tracking preview that displays the value at the current pointer position.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: withPreviewReactTsx, lang: "tsx" },
+        { title: "App.css", code: withPreviewReactCss, lang: "css" },
+      ]}
+    >
+      <WithPreviewDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: withPreviewHtml, lang: "html" },
+        { title: "index.css", code: withPreviewHtmlCss, lang: "css" },
+        { title: "index.ts", code: withPreviewHtmlTs, lang: "ts" },
+      ]}
+    >
+      <WithPreviewDemoHtml />
     </Demo>
   </StyleCase>
 </FrameworkCase>

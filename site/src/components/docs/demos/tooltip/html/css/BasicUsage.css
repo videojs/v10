@@ -1,17 +1,8 @@
-.html-tooltip-basic,
-.html-tooltip-basic media-container {
-  display: block;
-  position: relative;
-}
-
-.html-tooltip-basic video {
-  width: 100%;
-}
-
-.html-tooltip-basic__bar {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
+.html-tooltip-basic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
 }
 
 .html-tooltip-basic__trigger {

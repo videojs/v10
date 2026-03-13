@@ -15,30 +15,43 @@ import BasicUsageDemoReact from "@/components/docs/demos/tooltip/react/css/Basic
 import basicUsageReactTsx from "@/components/docs/demos/tooltip/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/tooltip/react/css/BasicUsage.css?raw";
 
+import GroupingDemoReact from "@/components/docs/demos/tooltip/react/css/Grouping";
+import groupingReactTsx from "@/components/docs/demos/tooltip/react/css/Grouping.tsx?raw";
+import groupingReactCss from "@/components/docs/demos/tooltip/react/css/Grouping.css?raw";
+
 {/* HTML demos */}
 import BasicUsageDemoHtml from "@/components/docs/demos/tooltip/html/css/BasicUsage.astro";
 import basicUsageHtml from "@/components/docs/demos/tooltip/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/tooltip/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/tooltip/html/css/BasicUsage.ts?raw";
 
+import GroupingDemoHtml from "@/components/docs/demos/tooltip/html/css/Grouping.astro";
+import groupingHtml from "@/components/docs/demos/tooltip/html/css/Grouping.html?raw";
+import groupingHtmlCss from "@/components/docs/demos/tooltip/html/css/Grouping.css?raw";
+import groupingHtmlTs from "@/components/docs/demos/tooltip/html/css/Grouping.ts?raw";
+
 ## Anatomy
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
-  <Tooltip.Root>
-    <Tooltip.Trigger>Hover me</Tooltip.Trigger>
-    <Tooltip.Popup>
-      <Tooltip.Arrow />
-      Label text
-    </Tooltip.Popup>
-  </Tooltip.Root>
+  <Tooltip.Provider>
+    <Tooltip.Root>
+      <Tooltip.Trigger>Hover me</Tooltip.Trigger>
+      <Tooltip.Popup>
+        <Tooltip.Arrow />
+        Label text
+      </Tooltip.Popup>
+    </Tooltip.Root>
+  </Tooltip.Provider>
   ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
   ```html
-  <button commandfor="my-tooltip">Hover me</button>
-  <media-tooltip id="my-tooltip">Label text</media-tooltip>
+  <media-tooltip-group>
+    <button commandfor="my-tooltip">Hover me</button>
+    <media-tooltip id="my-tooltip">Label text</media-tooltip>
+  </media-tooltip-group>
   ```
 </FrameworkCase>
 
@@ -49,17 +62,20 @@ Displays a short label anchored to a trigger element. Opens after a configurable
 The `side` and `align` props control placement relative to the trigger. Positioning uses CSS Anchor Positioning where supported, with a JavaScript measurement fallback.
 
 <FrameworkCase frameworks={["react"]}>
-  In React, the component is composed from four parts: `Root` manages state and context,
+  The component is composed from four parts: `Root` manages state and context,
   `Trigger` renders a button that activates the tooltip, `Popup` contains the label content,
   and `Arrow` renders a decorative pointer. Wrap multiple tooltips in a `Tooltip.Provider`
-  to coordinate open/close timing across a group.
+  to coordinate open/close timing across a group — once a tooltip becomes visible, adjacent
+  tooltips open instantly within the `timeout` window, skipping the normal `delay`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-  In HTML, the `<media-tooltip>` element is the popup itself. Link it to a trigger using
+  The `<media-tooltip>` element is the popup itself. Link it to a trigger using
   the `commandfor` attribute on any button, pointing to the tooltip's `id`. The element
   discovers its trigger automatically and manages open/close state, ARIA attributes, and
-  positioning.
+  positioning. Wrap tooltip trigger/popup pairs in `<media-tooltip-group>` to coordinate
+  timing — the group's `delay`, `close-delay`, and `timeout` attributes control shared
+  timing for all contained tooltips.
 </FrameworkCase>
 
 ## Styling
@@ -159,6 +175,43 @@ The trigger receives `aria-describedby` pointing to the popup when open. The pop
       ]}
     >
       <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+### Grouping
+
+<FrameworkCase frameworks={["react"]}>
+  Wrap multiple tooltips in a `Tooltip.Provider` to share a delay group. Once a tooltip
+  becomes visible, adjacent tooltips open instantly within the `timeout` window, skipping
+  the normal `delay`.
+
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: groupingReactTsx, lang: "tsx" },
+        { title: "App.css", code: groupingReactCss, lang: "css" },
+      ]}
+    >
+      <GroupingDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  Wrap tooltip trigger/popup pairs in `<media-tooltip-group>` to coordinate timing. The
+  group's `delay`, `close-delay`, and `timeout` attributes control shared timing for all
+  contained tooltips.
+
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: groupingHtml, lang: "html" },
+        { title: "index.css", code: groupingHtmlCss, lang: "css" },
+        { title: "index.ts", code: groupingHtmlTs, lang: "ts" },
+      ]}
+    >
+      <GroupingDemoHtml />
     </Demo>
   </StyleCase>
 </FrameworkCase>

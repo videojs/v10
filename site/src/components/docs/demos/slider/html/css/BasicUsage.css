@@ -1,18 +1,13 @@
-.html-slider-basic,
-.html-slider-basic media-container {
-  display: block;
-  position: relative;
-}
-
-.html-slider-basic video {
-  width: 100%;
+.html-slider-basic {
+  display: flex;
+  align-items: center;
+  padding: 24px;
+  background: #1a1a1a;
 }
 
 .html-slider-basic__slider {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: relative;
+  width: 100%;
   display: flex;
   align-items: center;
   height: 20px;
@@ -61,26 +56,4 @@
 
 .html-slider-basic__slider[data-dragging] .html-slider-basic__thumb {
   transform: translateX(-50%) scale(1.1);
-}
-
-.html-slider-basic__preview {
-  position: absolute;
-  bottom: 100%;
-  margin-bottom: 6px;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 150ms ease;
-}
-
-.html-slider-basic__slider[data-pointing] .html-slider-basic__preview {
-  opacity: 1;
-}
-
-.html-slider-basic__value {
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  white-space: nowrap;
 }

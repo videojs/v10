@@ -77,8 +77,10 @@ export function extractPartDescription(filePath: string, program: ts.Program, pa
 /**
  * Extract custom React-specific props from a sub-part's Props interface.
  *
- * Walks syntactic own members of `{localName}Props` (excluding inherited
- * `UIComponentProps` members and `children`).
+ * Walks syntactic own members of `{localName}Props`, then also includes
+ * members from any extended interface declared within the project (i.e., not
+ * from `node_modules`). This picks up props from project types like
+ * `TooltipGroupProps` while excluding inherited React DOM attributes.
  */
 export function extractSubPartProps(filePath: string, program: ts.Program, localName: string): Record<string, PropDef> {
   const sourceFile = program.getSourceFile(filePath);
@@ -86,27 +88,53 @@ export function extractSubPartProps(filePath: string, program: ts.Program, local
   const checker = program.getTypeChecker();
   const props: Record<string, PropDef> = {};
 
+  const SKIP_PROPS = new Set(['children']);
+
+  function collectFromMembers(members: ts.NodeArray<ts.TypeElement>) {
+    for (const member of members) {
+      if (!ts.isPropertySignature(member) || !member.name || !ts.isIdentifier(member.name)) continue;
+      const name = member.name.text;
+      if (SKIP_PROPS.has(name) || !member.type) continue;
+
+      let typeStr = checker.typeToString(checker.getTypeFromTypeNode(member.type));
+      if (member.questionToken) typeStr = typeStr.replace(/ \| undefined$/, '');
+
+      const propDef: PropDef = { type: typeStr };
+
+      const symbol = checker.getSymbolAtLocation(member.name);
+      if (symbol) {
+        const docs = symbol.getDocumentationComment(checker);
+        const desc = docs.map((d) => d.text).join('');
+        if (desc) propDef.description = desc;
+      }
+
+      props[name] = propDef;
+    }
+  }
+
   ts.forEachChild(sourceFile, function visit(node) {
     if (ts.isInterfaceDeclaration(node) && node.name.text === `${localName}Props`) {
-      for (const member of node.members) {
-        if (!ts.isPropertySignature(member) || !member.name || !ts.isIdentifier(member.name)) continue;
-        const name = member.name.text;
-        if (name === 'children' || !member.type) continue;
+      // Collect own syntactic members.
+      collectFromMembers(node.members);
 
-        let typeStr = checker.typeToString(checker.getTypeFromTypeNode(member.type));
-        // Only strips trailing ` | undefined`; other orderings (e.g., `undefined | string`) pass through.
-        if (member.questionToken) typeStr = typeStr.replace(/ \| undefined$/, '');
+      // Walk extends clause and include members from project-local interfaces.
+      if (node.heritageClauses) {
+        for (const clause of node.heritageClauses) {
+          for (const expr of clause.types) {
+            const type = checker.getTypeAtLocation(expr);
+            const symbol = type.getSymbol();
+            const decl = symbol?.declarations?.[0];
+            if (!decl) continue;
 
-        const propDef: PropDef = { type: typeStr };
+            // Only include if declared in project sources (not node_modules).
+            const declFile = decl.getSourceFile().fileName;
+            if (declFile.includes('node_modules')) continue;
 
-        const symbol = checker.getSymbolAtLocation(member.name);
-        if (symbol) {
-          const docs = symbol.getDocumentationComment(checker);
-          const desc = docs.map((d) => d.text).join('');
-          if (desc) propDef.description = desc;
+            if (ts.isInterfaceDeclaration(decl)) {
+              collectFromMembers(decl.members);
+            }
+          }
         }
-
-        props[name] = propDef;
       }
     }
     ts.forEachChild(node, visit);

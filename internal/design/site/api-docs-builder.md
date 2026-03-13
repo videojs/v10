@@ -325,9 +325,9 @@ always produce multi-part output since the re-exports are resolved rather than f
 
 Every multi-part component has one **primary part** and one or more **sub-parts**.
 
-**Primary part:** The part whose React source file instantiates the component's Core class
-(matches `new \w+Core\(`). This captures the architectural relationship — the primary part
-owns the Core — and is immune to import ordering and framework-divergent element structures.
+**Primary part:** The part whose React source file instantiates the component's own Core class
+(matches `new {ComponentName}Core\b`). This captures the architectural relationship — the primary
+part owns the Core — and is immune to import ordering and framework-divergent element structures.
 
 Sub-part element files use the naming convention `{component}-{part}-element.ts` (e.g.,
 `time-group-element.ts`) for HTML tag resolution.
@@ -340,6 +340,10 @@ For each local named export in `index.parts.ts`:
 3. If found → sub-part (gets its own tag name)
 4. If not found AND `{component}-element.ts` exists → check via Core-instantiation for primary
 
+For cases where the element file doesn't follow standard naming (e.g., Tooltip's Provider maps
+to `tooltip-group-element.ts`, not `tooltip-provider-element.ts`), a `PART_ELEMENT_OVERRIDES`
+map provides the correct filename.
+
 For re-exported parts: use the origin component's kebab and HTML directory for element file
 lookup. The element class name is derived from the filename convention (`kebabToPascal` of the
 basename, e.g., `slider-buffer-element.ts` → `SliderBufferElement`), not from the current
@@ -351,9 +355,9 @@ properties, and the root element's tag name.
 
 **What sub-parts get:** Their own tag name, a description (from React JSDoc), shared data
 attributes from the component's `*-data-attrs.ts` file (when the sub-part's React source
-references `stateAttrMap`), and custom React-specific props (own members on the
-`{LocalName}Props` interface, excluding inherited `UIComponentProps` members and `children`).
-State and CSS custom properties remain empty.
+references `stateAttrMap`), and custom props from the `{LocalName}Props` interface — own
+members plus members inherited from project-local interfaces, excluding `children` and
+React DOM attributes. State and CSS custom properties remain empty.
 
 For re-exported sub-parts, data attributes come from the **origin** component's data-attrs file
 (e.g., TimeSlider.Fill uses Slider's data-attrs, not TimeSlider's), because the builder can't
