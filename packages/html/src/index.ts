@@ -24,6 +24,7 @@ export { CaptionsButtonElement } from './ui/captions-button/captions-button-elem
 export { ControlsElement } from './ui/controls/controls-element';
 export { ControlsGroupElement } from './ui/controls/controls-group-element';
 export { FullscreenButtonElement } from './ui/fullscreen-button/fullscreen-button-element';
+export { GestureElement } from './ui/gesture/gesture-element';
 export { MediaButtonElement } from './ui/media-button-element';
 // Primitives
 export * from './ui/media-element';

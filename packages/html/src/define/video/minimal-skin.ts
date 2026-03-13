@@ -8,6 +8,7 @@ import '../media/container';
 import '../ui/buffering-indicator';
 import '../ui/controls';
 import '../ui/fullscreen-button';
+import '../ui/gesture';
 import '../ui/mute-button';
 import '../ui/pip-button';
 import '../ui/play-button';
@@ -26,6 +27,8 @@ function getTemplateHTML() {
   return /*html*/ `
     <media-container class="media-minimal-skin media-minimal-skin--video">
       <slot name="media"></slot>
+
+      <media-gesture type="pointerup" command="toggle-paused"></media-gesture>
 
       <media-buffering-indicator class="media-buffering-indicator">
         ${renderIcon('spinner', { class: 'media-icon' })}

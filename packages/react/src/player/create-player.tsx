@@ -6,6 +6,7 @@ import type {
   AudioFeatures,
   AudioPlayerStore,
   Media,
+  MediaContainer,
   PlayerStore,
   PlayerTarget,
   VideoFeatures,
@@ -71,10 +72,15 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
   function Provider({ children }: ProviderProps): ReactNode {
     const [store] = useState(() => createStore<PlayerTarget>()(combine(...config.features)));
     const [media, setMedia] = useState<Media | null>(null);
+    const [container, setContainer] = useState<MediaContainer | null>(null);
 
     useDestroy(store);
 
-    return <PlayerContextProvider value={{ store, media, setMedia }}>{children}</PlayerContextProvider>;
+    return (
+      <PlayerContextProvider value={{ store, media, setMedia, container, setContainer }}>
+        {children}
+      </PlayerContextProvider>
+    );
   }
 
   if (__DEV__ && config.displayName) {

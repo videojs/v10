@@ -20,6 +20,7 @@ import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
 import { FullscreenButton } from '@/ui/fullscreen-button';
+import { Gesture } from '@/ui/gesture';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -79,6 +80,8 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
   return (
     <Container className={cn('media-default-skin media-default-skin--video', className)} {...rest}>
       {children}
+
+      <Gesture type="pointerup" command="toggle-paused"></Gesture>
 
       <BufferingIndicator
         render={(props) => (

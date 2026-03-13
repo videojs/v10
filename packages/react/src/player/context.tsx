@@ -1,6 +1,6 @@
 'use client';
 
-import type { Media } from '@videojs/core/dom';
+import type { Media, MediaContainer } from '@videojs/core/dom';
 import type { UnknownState, UnknownStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { Dispatch, HTMLAttributes, ReactNode, SetStateAction } from 'react';
@@ -12,6 +12,8 @@ export interface PlayerContextValue {
   store: UnknownStore;
   media: Media | null;
   setMedia: Dispatch<SetStateAction<Media | null>>;
+  container: MediaContainer | null;
+  setContainer: Dispatch<SetStateAction<MediaContainer | null>>;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -79,6 +81,12 @@ export function useMedia(): Media | null {
   return media;
 }
 
+/** Access the media container element from within a Player Provider. */
+export function useMediaContainer(): MediaContainer | null {
+  const { container } = usePlayerContext();
+  return container;
+}
+
 /** Access the media registration setter for connecting a media element to the player. */
 export function useMediaRegistration(): Dispatch<SetStateAction<Media | null>> | undefined {
   const ctx = useContext(PlayerContext);
@@ -90,9 +98,14 @@ export interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Container({ children, ...props }, ref) {
-  const { store, media } = usePlayerContext();
+  const { store, media, setContainer } = usePlayerContext();
   const internalRef = useRef<HTMLDivElement>(null);
   const composedRef = useComposedRefs(ref, internalRef);
+
+  useEffect(() => {
+    setContainer(internalRef.current);
+    return () => setContainer(null);
+  }, [setContainer]);
 
   useEffect(() => {
     if (!media) return;
