@@ -7,9 +7,6 @@ export class GifMediaElement extends HTMLElement {
   readonly #gifMedia = new GifMedia();
 
   connectedCallback(): void {
-    // Opt in to container-mixin discovery
-    this.setAttribute('data-media-element', '');
-
     if (!this.shadowRoot) {
       this.attachShadow({ mode: 'open' });
       this.shadowRoot!.innerHTML = `
@@ -28,7 +25,6 @@ export class GifMediaElement extends HTMLElement {
   }
 
   disconnectedCallback(): void {
-    this.removeAttribute('data-media-element');
     this.#gifMedia.detach();
   }
 
