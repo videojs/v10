@@ -216,6 +216,44 @@ we can use 3 backticks ``` in new line and write snippet and close with 3 backti
 </html>
 ```
 
+### Code annotations
+
+You can annotate code blocks with special comments to highlight, diff, focus, or word-highlight specific lines. The annotation comments are stripped from the rendered output (and from copy/paste).
+
+#### Diff
+
+Show added and removed lines with `// [!code ++]` and `// [!code --]`:
+
+```ts
+function greet(name: string) {
+  console.log('Hello') // [!code --]
+  console.log(`Hello, ${name}!`) // [!code ++]
+  console.log(`It's great to meet you.`) // [!code ++]
+}
+```
+
+#### Focus
+
+Dim everything except the focused lines with `// [!code focus]`. Hovering the code block reveals all lines:
+
+```ts
+function greet(name: string) {
+  const message = `hello, ${name}!`
+  console.log(message) // [!code focus]
+}
+```
+
+#### Word highlight
+
+Highlight a specific word or phrase with `// [!code word:term]`. For example, `// [!code word:name]` looks like this:
+
+```ts
+// [!code word:name]
+function greet(name: string) {
+  console.log(`hello, ${name}!`)
+}
+```
+
 ### List types
 
 #### Ordered list

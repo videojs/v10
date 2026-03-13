@@ -15,6 +15,7 @@ import pagefind from './integrations/pagefind';
 import rehypePrepareCodeBlocks from './src/utils/rehypePrepareCodeBlocks';
 import remarkConditionalHeadings from './src/utils/remarkConditionalHeadings';
 import { remarkReadingTime } from './src/utils/remarkReadingTime.mjs';
+import { shikiNotationTransformers } from './src/utils/shikiNotationTransformers';
 import shikiTransformMetadata from './src/utils/shikiTransformMetadata';
 
 // On production deploys, use the custom domain — DEPLOY_PRIME_URL always returns
@@ -98,8 +99,7 @@ export default defineConfig({
         light: 'gruvbox-dark-hard',
         dark: 'gruvbox-dark-soft',
       },
-      // TODO more shiki transformers
-      transformers: [shikiTransformMetadata],
+      transformers: [shikiTransformMetadata, ...shikiNotationTransformers],
     },
     remarkPlugins: [remarkConditionalHeadings, remarkReadingTime],
     rehypePlugins: [rehypePrepareCodeBlocks],
