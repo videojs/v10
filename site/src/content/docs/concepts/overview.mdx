@@ -12,7 +12,6 @@ import Aside from '@/components/Aside.astro';
 Video.js v10 is built around a three-part architecture that separates concerns and maximizes flexibility. Each part is designed to work independently or together, allowing you to use as much or as little of Video.js as you need.
 
 ## 1. State management
-
 <FrameworkCase frameworks={["react"]}>
 State is handled by a `Player.Provider`, which creates a central state store that all components can access. When you wrap your player in a `Player.Provider`, the components automatically connect to the state.
 
@@ -22,7 +21,10 @@ State is handled by a `Player.Provider`, which creates a central state store tha
 </Player.Provider>
 ```
 
-To learn more about the state available from your provider, start by reading about presets.
+You can access state and actions from anywhere within the provider with the <DocsLink slug="reference/use-player">`usePlayer` hook</DocsLink>.
+
+<DocsLinkCard slug="concepts/features">Learn more about features</DocsLinkCard>
+
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 State is handled by a `video-player` element, which creates a central state store that all components can access. Child components can automatically connect to the state of the `video-player` element.
@@ -33,41 +35,17 @@ State is handled by a `video-player` element, which creates a central state stor
 </video-player>
 ```
 
-To learn more about the state available from `<video-player>`, start by reading about presets.
+You can access state and actions from anywhere within `<video-player>` with <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>.
+
+<DocsLinkCard slug="concepts/features">Learn more about features</DocsLinkCard>
+
 </FrameworkCase>
 
-<DocsLinkCard slug="concepts/presets">Learn more about presets</DocsLinkCard>
-
-### Build your own UI components
-
-You might not need to build your own UI component. Our components are unstyled primitives that offer built-in accessibility and behavior.
-
-However, if you notice that we don't support something (yet!) you can access player state directly.
-
-<FrameworkCase frameworks={["react"]}>
-```tsx title="TimeRemaining.tsx"
-function TimeRemaining() {
-  const time = Player.usePlayer((s) => s.duration - s.currentTime);
-  return <div>{Math.ceil(time)}s remaining</div>;
-}
-```
-
-<DocsLinkCard slug="reference/use-player">`usePlayer` reference</DocsLinkCard>
-</FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
-```ts title="time-remaining.ts"
-class TimeRemaining extends MediaElement {
-  #time = new PlayerController(this, playerContext, selectTime);
-  // renders from this.#time.value
-}
-```
-
-<DocsLinkCard slug="reference/player-controller">`PlayerController` reference</DocsLinkCard>
-</FrameworkCase>
 
 ## 2. User interface
 
-You can approach UI in Video.js from a few different levels: use a prebuilt skin or build your own UI from our components.
+Use a prebuilt **skin** or build your own from the individual **UI components**.
+
 
 ### Skins
 Skins are complete, pre-designed player UIs that package components and styles together:
@@ -135,6 +113,7 @@ To get started with UI components, you might consider <DocsLink slug="how-to/cus
 ## 3. Media
 
 Media components are the components that actually display your media. They're essentially "players with no UI". They handle the video/audio rendering and expose a consistent API.
+
 Media components can be format specific (HLS, DASH), service specific (YouTube, Vimeo, Mux), or use case specific (BackgroundVideo).
 
 <FrameworkCase frameworks={["html"]}>
@@ -167,3 +146,45 @@ DASH, YouTube, Vimeo, Mux, and more media elements are currently under developme
 </video-player>
 ```
 </FrameworkCase>
+
+## Presets
+
+**Presets** package these parts together for a specific use case. They can include special state management, one or more skins for UI, and specific media elements. Instead of wiring these up individually, you pick a preset that matches what you're building.
+
+The default presets are `/video` and `/audio`, covering the baseline set of controls you'd expect from the HTML `<video>` and `<audio>` tags. Beyond the defaults, presets target more specific use cases. For example, `/background`:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { createPlayer } from '@videojs/react';
+import { backgroundFeatures, BackgroundVideo, BackgroundVideoSkin } from '@videojs/react/background';
+
+const Player = createPlayer({ features: backgroundFeatures });
+
+function Hero() {
+  return (
+    <Player.Provider>
+      <BackgroundVideoSkin>
+        <BackgroundVideo src="hero.mp4" />
+      </BackgroundVideoSkin>
+    </Player.Provider>
+  );
+}
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<script type="module">
+  import '@videojs/html/background/player';
+  import '@videojs/html/background/skin';
+  import '@videojs/html/background/skin.css';
+</script>
+
+<background-video-player>
+  <background-video-skin>
+    <video slot="media" src="hero.mp4" autoplay muted loop playsinline></video>
+  </background-video-skin>
+</background-video-player>
+```
+</FrameworkCase>
+
+<DocsLinkCard slug="concepts/presets">Learn more about presets</DocsLinkCard>

@@ -1,11 +1,22 @@
 ---
-title: selectControls
-description: Select the controls state slice from the player store
+title: Controls
+description: User activity and controls visibility state for the player store
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Read-only — tracks user activity for showing and hiding controls.
+
+## State
+
+| State | Type | Description |
+|---|---|---|
+| `userActive` | `boolean` | Whether the user has recently interacted |
+| `controlsVisible` | `boolean` | Whether controls should be visible (active or paused) |
+
+## Selector
 
 <FrameworkCase frameworks={["react"]}>
 Pass `selectControls` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to controls state. Returns `undefined` if the controls feature is not configured.
@@ -14,8 +25,6 @@ Pass `selectControls` to <DocsLink slug="reference/use-player">`usePlayer`</Docs
 <FrameworkCase frameworks={["html"]}>
 Pass `selectControls` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to controls state. Returns `undefined` if the controls feature is not configured.
 </FrameworkCase>
-
-The returned state includes whether controls are visible and whether the user is active (interacting with the player).
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="ControlsOverlay.tsx"

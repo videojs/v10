@@ -1,11 +1,22 @@
 ---
-title: selectBuffer
-description: Select the buffer state slice from the player store
+title: Buffer
+description: Buffered and seekable time range state for the player store
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Read-only — tracks buffered and seekable time ranges.
+
+## State
+
+| State | Type | Description |
+|---|---|---|
+| `buffered` | `[number, number][]` | Buffered time ranges as `[start, end]` tuples |
+| `seekable` | `[number, number][]` | Seekable time ranges as `[start, end]` tuples |
+
+## Selector
 
 <FrameworkCase frameworks={["react"]}>
 Pass `selectBuffer` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to buffer state. Returns `undefined` if the buffer feature is not configured.
@@ -14,8 +25,6 @@ Pass `selectBuffer` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLi
 <FrameworkCase frameworks={["html"]}>
 Pass `selectBuffer` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to buffer state. Returns `undefined` if the buffer feature is not configured.
 </FrameworkCase>
-
-The returned state includes buffered ranges and percent buffered.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="BufferBar.tsx"

@@ -1,11 +1,28 @@
 ---
-title: selectSource
-description: Select the source state slice from the player store
+title: Source
+description: Media source state and actions for the player store
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Tracks the current media source and readiness.
+
+## State
+
+| State | Type | Description |
+|---|---|---|
+| `source` | `string \| null` | Current media source URL |
+| `canPlay` | `boolean` | Whether enough data is loaded to begin playback |
+
+## Actions
+
+| Action | Description |
+|---|---|
+| `loadSource(src)` | Load a new media source |
+
+## Selector
 
 <FrameworkCase frameworks={["react"]}>
 Pass `selectSource` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to source state. Returns `undefined` if the source feature is not configured.
@@ -14,8 +31,6 @@ Pass `selectSource` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLi
 <FrameworkCase frameworks={["html"]}>
 Pass `selectSource` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to source state. Returns `undefined` if the source feature is not configured.
 </FrameworkCase>
-
-The returned state includes the current `src` and `type`.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="SourceInfo.tsx"

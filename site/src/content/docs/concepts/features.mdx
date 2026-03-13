@@ -9,9 +9,7 @@ import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import Aside from '@/components/Aside.astro';
 
 
-Not every player needs to support every use case. To address this, Video.js has a concept of **features** -- self-contained unit of player functionality. For example, the "playback" feature provides play/pause state and actions, while the "fullscreen" feature provides fullscreen state and actions.
-
-A feature is a self-contained unit of player functionality. Each one adds state properties and actions to the player store. For example, "playback" adds `paused` and `play()`, "volume" adds `volume` and `setVolume()`, and so on.
+Not every player needs to support every use case. To address this, Video.js has a concept of **features** — self-contained units of player functionality. Each one adds state properties and actions to the player store. For example, "playback" adds `paused` and `play()`, "volume" adds `volume` and `setVolume()`, and so on.
 
 <Aside type="note">
 You might not need this guide. If you're using a <DocsLink slug="concepts/presets">preset</DocsLink>, it takes care of picking the right features for your use case.
@@ -19,7 +17,7 @@ You might not need this guide. If you're using a <DocsLink slug="concepts/preset
 
 ## Using features
 ### Create a player with features
-You can create a player that has individual features
+You can create a player that has individual features.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -60,7 +58,7 @@ store.setVolume(0.8);
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-You can access feature state and actions through <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and pre-built feature selectors (e.g. <DocsLink slug="reference/select-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/select-volume">`selectVolume`</DocsLink>):
+You can access feature state and actions through <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and pre-built feature selectors (e.g. <DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/feature-volume">`selectVolume`</DocsLink>):
 ```ts
 import { selectPlayback } from '@videojs/html';
 
@@ -75,7 +73,7 @@ if (media?.paused) media.play();
 
 <FrameworkCase frameworks={["react"]}>
 ### Feature selectors
-Each feature also has a pre-built selector (e.g. <DocsLink slug="reference/select-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/select-volume">`selectVolume`</DocsLink>) that returns just that feature's state and actions:
+Each feature also has a pre-built selector (e.g. <DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/feature-volume">`selectVolume`</DocsLink>) that returns just that feature's state and actions:
 
 ```tsx
 import { selectPlayback, usePlayer } from '@videojs/react';
@@ -85,156 +83,7 @@ playback?.play();
 ```
 </FrameworkCase>
 
-
-
-## Available features
-
-### Playback
-
-Controls play/pause state and tracks whether playback has started or is stalled.
-
-| State | Type | Description |
-|---|---|---|
-| `paused` | `boolean` | Whether playback is paused |
-| `ended` | `boolean` | Whether playback reached the end |
-| `started` | `boolean` | Whether playback has started (played or seeked) |
-| `waiting` | `boolean` | Whether playback is stalled waiting for data |
-
-| Action | Description |
-|---|---|
-| `play()` | Start playback (returns a `Promise`) |
-| `pause()` | Pause playback |
-
-### Volume
-
-Controls volume level and mute state.
-
-| State | Type | Description |
-|---|---|---|
-| `volume` | `number` | Volume level from 0 (silent) to 1 (max) |
-| `muted` | `boolean` | Whether audio is muted |
-| `volumeAvailability` | `MediaFeatureAvailability` | Whether volume can be set on this platform |
-
-| Action | Description |
-|---|---|
-| `setVolume(volume)` | Set volume (clamped 0–1). Auto-unmutes when raising above zero. |
-| `toggleMuted()` | Toggle mute. Restores volume to 0.25 when unmuting at zero. |
-
-### Time
-
-Tracks playback position and duration.
-
-| State | Type | Description |
-|---|---|---|
-| `currentTime` | `number` | Current playback position in seconds |
-| `duration` | `number` | Total duration in seconds (0 if unknown) |
-| `seeking` | `boolean` | Whether a seek operation is in progress |
-
-| Action | Description |
-|---|---|
-| `seek(time)` | Seek to a position in seconds (returns a `Promise`) |
-
-### Playback rate
-
-Controls speed of playback.
-
-| State | Type | Description |
-|---|---|---|
-| `playbackRate` | `number` | Current playback speed (1 = normal) |
-| `playbackRates` | `readonly number[]` | Available playback rates |
-
-| Action | Description |
-|---|---|
-| `setPlaybackRate(rate)` | Set the playback speed |
-
-### Source
-
-Tracks the current media source and readiness.
-
-| State | Type | Description |
-|---|---|---|
-| `source` | `string \| null` | Current media source URL |
-| `canPlay` | `boolean` | Whether enough data is loaded to begin playback |
-
-| Action | Description |
-|---|---|
-| `loadSource(src)` | Load a new media source |
-
-### Buffer
-
-Read-only — tracks buffered and seekable time ranges.
-
-| State | Type | Description |
-|---|---|---|
-| `buffered` | `[number, number][]` | Buffered time ranges as `[start, end]` tuples |
-| `seekable` | `[number, number][]` | Seekable time ranges as `[start, end]` tuples |
-
-### Fullscreen
-
-Controls fullscreen mode. Tries the container element first, falls back to the media element.
-
-| State | Type | Description |
-|---|---|---|
-| `fullscreen` | `boolean` | Whether fullscreen is active |
-| `fullscreenAvailability` | `MediaFeatureAvailability` | Whether fullscreen is supported |
-
-| Action | Description |
-|---|---|
-| `requestFullscreen()` | Enter fullscreen (returns a `Promise`) |
-| `exitFullscreen()` | Exit fullscreen (returns a `Promise`) |
-
-### Picture-in-picture
-
-Controls picture-in-picture mode.
-
-| State | Type | Description |
-|---|---|---|
-| `pip` | `boolean` | Whether picture-in-picture is active |
-| `pipAvailability` | `MediaFeatureAvailability` | Whether PiP is supported |
-
-| Action | Description |
-|---|---|
-| `requestPictureInPicture()` | Enter picture-in-picture (returns a `Promise`) |
-| `exitPictureInPicture()` | Exit picture-in-picture (returns a `Promise`) |
-
-### Controls
-
-Read-only — tracks user activity for showing and hiding controls.
-
-| State | Type | Description |
-|---|---|---|
-| `userActive` | `boolean` | Whether the user has recently interacted |
-| `controlsVisible` | `boolean` | Whether controls should be visible (active or paused) |
-
-### Text tracks
-
-Manages subtitles, captions, chapters, and thumbnail tracks.
-
-| State | Type | Description |
-|---|---|---|
-| `textTrackList` | `MediaTextTrack[]` | All text tracks on the media element |
-| `subtitlesShowing` | `boolean` | Whether captions/subtitles are enabled |
-| `chaptersCues` | `MediaTextCue[]` | Cues from the first chapters track |
-| `thumbnailCues` | `MediaTextCue[]` | Cues from the first thumbnails track |
-| `thumbnailTrackSrc` | `string \| null` | Track `src` for resolving relative thumbnail URLs |
-
-| Action | Description |
-|---|---|
-| `toggleSubtitles(forceShow?)` | Toggle subtitle visibility. Pass `true`/`false` to force. |
-
-### Error
-
-Tracks media errors.
-
-| State | Type | Description |
-|---|---|---|
-| `error` | `MediaError \| null` | The current error, or `null` |
-
-| Action | Description |
-|---|---|
-| `dismissError()` | Clear the current error |
-
-## Feature availability
+### Checking for feature support
 
 Volume, fullscreen, and picture-in-picture expose an `*Availability` property because platform support varies. For example, iOS Safari doesn't allow programmatic volume control.
 
@@ -265,5 +114,48 @@ media-volume-slider[data-volume-availability="unsupported"] {
 ```
 </FrameworkCase>
 
-## See also
-<DocsLinkCard slug="concepts/presets" description="A set of features grouped for a specific use case and paired with a skin">Presets</DocsLinkCard>
+## Feature bundles and presets
+
+In practice, you'll rarely pick features one by one. A **feature bundle** groups the features needed for a specific use case into a single array. A <DocsLink slug="concepts/presets">preset</DocsLink> then packages a feature bundle together with skins and media elements.
+
+<FrameworkCase frameworks={["react"]}>
+
+For example, `videoFeatures` bundles playback, volume, time, fullscreen, and more — everything a general video player needs:
+
+```tsx
+import { createPlayer } from '@videojs/react';
+import { videoFeatures } from '@videojs/react/video';
+
+const Player = createPlayer({ features: videoFeatures });
+```
+
+You can extend a feature bundle by spreading it and adding your own:
+
+```tsx
+const Player = createPlayer({ features: [...videoFeatures, customFeature] });
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+For example, the `<video-player>` element from the `/video` preset has playback, volume, time, fullscreen, and more already enabled. If you need additional features beyond what a preset provides, you can create your own player element:
+
+```ts
+import { createPlayer, playback } from '@videojs/html';
+import { backgroundFeatures } from '@videojs/html/background';
+import { MediaElement } from '@videojs/html';
+
+const { ProviderMixin } = createPlayer({
+  features: [...backgroundFeatures, playback],
+});
+
+class MyPlayer extends ProviderMixin(MediaElement) {
+  static readonly tagName = 'my-player';
+}
+
+customElements.define('my-player', MyPlayer);
+```
+
+</FrameworkCase>
+
+<DocsLinkCard slug="concepts/presets">Learn more about presets</DocsLinkCard>

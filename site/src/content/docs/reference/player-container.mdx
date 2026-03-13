@@ -2,7 +2,7 @@
 title: Player.Container
 frameworkTitle:
   html: media-container
-description: The visual wrapper — handles layout, media discovery, and acts as the fullscreen target.
+description: The player's interaction surface — handles layout, fullscreen, media attachment, and user activity detection.
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
@@ -10,10 +10,10 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 
 <FrameworkCase frameworks={["react"]}>
-The `Player.Container` is the visual wrapper around your player. It handles layout, discovers the media element, and acts as the fullscreen target. It lives inside a <DocsLink slug="reference/player-provider">`Player.Provider`</DocsLink>.
+The `Player.Container` is the player's physical surface. It defines the visual boundary, attaches the media element, and detects user interaction like activity and (eventually) gestures and keyboard input. It lives inside a <DocsLink slug="reference/player-provider">`Player.Provider`</DocsLink>.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-The `<media-container>` is the visual wrapper around your player. It handles layout, discovers the media element, and acts as the fullscreen target. It lives inside a <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink>.
+The `<media-container>` is the player's physical surface. It defines the visual boundary, attaches the media element, and detects user interaction like activity and (eventually) gestures and keyboard input. It lives inside a <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink>.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -83,11 +83,11 @@ customElements.define('my-container', MyContainer);
 <DocsLinkCard slug="reference/container-mixin">ContainerMixin reference</DocsLinkCard>
 </FrameworkCase>
 
-## Three roles
+## What it does
 
-### Layout
+### Layout & fullscreen
 
-The container is the visual box around your media and controls. This is where sizing, aspect ratio, and visual boundaries live. CSS sizing goes on the container, not the provider.
+The container is the visual box around your media and controls. Sizing, aspect ratio, and visual boundaries all go here — on the container, not the provider.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -106,13 +106,15 @@ The container is the visual box around your media and controls. This is where si
 ```
 </FrameworkCase>
 
-### Media discovery
+When the user goes fullscreen, the **container** goes fullscreen — not the video element. This keeps controls and other UI visible on top of the video, since they're children of the container.
+
+### Media attachment
 
 <FrameworkCase frameworks={["react"]}>
-The container automatically finds the `<video>` or `<audio>` element in its subtree and attaches it to the store.
+When a media component like `<Video>` registers itself via context, the container picks it up and attaches it to the store — wiring the media element to all of the player's features.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-The container looks for `slot="media"` to detect your media:
+The container searches its subtree for a media element — `<video>`, `<audio>`, or a custom media element — and attaches it to the store. You can also use `slot="media"` to explicitly mark which element is the media:
 
 ```html
 <media-container>
@@ -123,9 +125,13 @@ The container looks for `slot="media"` to detect your media:
 This applies even when using a <DocsLink slug="concepts/skins">skin</DocsLink>, since skins contain a container internally.
 </FrameworkCase>
 
-### Fullscreen target
+### Interaction surface
 
-When the user goes fullscreen, the **container** goes fullscreen — not the video element. This keeps UI controls visible on top of the video, since they're children of the container.
+The container is where user intent enters the player. It listens for physical interaction on its surface and translates that into player behavior:
+
+- **User activity** — Mouse movement, touch, and keyboard activity within the container drive idle detection. This is how controls know when to show and hide.
+- **Gestures** *(coming soon)* — Click-to-play, double-click fullscreen, swipe to seek, and other touch/mouse gestures.
+- **Keyboard controls** *(coming soon)* — Spacebar to play/pause, arrow keys to seek, and other keyboard shortcuts scoped to the container.
 
 ## Relationship to skins
 
@@ -170,18 +176,18 @@ A <DocsLink slug="concepts/skins">skin</DocsLink> is a container plus UI control
 
 ## Inside vs. outside the container
 
-UI components work both inside and outside the container — they just need the provider's context. The difference is that only what's **inside** the container goes fullscreen.
+The <DocsLink slug="reference/player-provider">provider</DocsLink> gives components access to state and actions. The container layers on physical behaviors — fullscreen, activity detection, gesture handling. Components work in both places; the container just adds those extras.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <Player.Provider>
   <Player.Container>
     <video src="video.mp4" />
-    <Controls />          {/* inside — goes fullscreen */}
+    <Controls />          {/* fullscreen, activity detection, gestures */}
   </Player.Container>
 
-  <Transcript />          {/* outside — does NOT go fullscreen */}
-  <PlaylistSidebar />     {/* outside — does NOT go fullscreen */}
+  <Transcript />          {/* state & actions, but no container behaviors */}
+  <PlaylistSidebar />     {/* state & actions, but no container behaviors */}
 </Player.Provider>
 ```
 </FrameworkCase>
@@ -190,22 +196,22 @@ UI components work both inside and outside the container — they just need the 
 <video-player>
   <media-container>
     <video slot="media" src="video.mp4"></video>
-    <media-controls>...</media-controls>  <!-- inside — goes fullscreen -->
+    <media-controls>...</media-controls>  <!-- fullscreen, activity detection, gestures -->
   </media-container>
 
-  <media-transcript></media-transcript>     <!-- outside — does NOT go fullscreen -->
-  <playlist-sidebar></playlist-sidebar>     <!-- outside — does NOT go fullscreen -->
+  <media-transcript></media-transcript>     <!-- state & actions, but no container behaviors -->
+  <playlist-sidebar></playlist-sidebar>     <!-- state & actions, but no container behaviors -->
 </video-player>
 ```
 </FrameworkCase>
 
-Components outside the container still have full access to the store for reading state and dispatching actions. They just live outside the fullscreen boundary.
+A play button outside the container still reads playback state and can toggle play/pause — it just won't go fullscreen with the player or respond to the container's idle state.
 
 ## See also
 
 - <DocsLink slug="reference/player-provider">Player.Provider</DocsLink> — the state boundary that wraps the container
 - <DocsLink slug="concepts/skins">Skins</DocsLink> — packaged player designs that include a container
-- <DocsLink slug="concepts/architecture">Architecture</DocsLink> — how state, UI, and media fit together
+- <DocsLink slug="concepts/overview">overview</DocsLink> — how state, UI, and media fit together
 
 <FrameworkCase frameworks={["react"]}>
 - <DocsLink slug="reference/create-player">createPlayer</DocsLink> — factory that returns Provider, Container, and hooks

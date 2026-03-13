@@ -1,0 +1,65 @@
+---
+title: Error
+description: Media error state and actions for the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Tracks media errors.
+
+## State
+
+| State | Type | Description |
+|---|---|---|
+| `error` | `MediaError \| null` | The current error, or `null` |
+
+## Actions
+
+| Action | Description |
+|---|---|
+| `dismissError()` | Clear the current error |
+
+## Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectError` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to error state. Returns `undefined` if the error feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectError` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to error state. Returns `undefined` if the error feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="ErrorDisplay.tsx"
+import { selectError, usePlayer } from '@videojs/react';
+
+function ErrorDisplay() {
+  const err = usePlayer(selectError);
+  if (!err?.error) return null;
+
+  return (
+    <div>
+      <p>{err.error.message}</p>
+      <button onClick={err.dismissError}>Dismiss</button>
+    </div>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="error-display.ts"
+import { createPlayer, MediaElement, selectError } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
+
+class ErrorDisplay extends MediaElement {
+  readonly #error = new PlayerController(this, context, selectError);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectError" />

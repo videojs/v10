@@ -1,12 +1,31 @@
 ---
-title: selectPlayback
-description: Select the playback state slice from the player store
+title: Playback
+description: Play/pause state and actions for the player store
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
+Controls play/pause state and tracks whether playback has started or is stalled.
+
+## State
+
+| State | Type | Description |
+|---|---|---|
+| `paused` | `boolean` | Whether playback is paused |
+| `ended` | `boolean` | Whether playback reached the end |
+| `started` | `boolean` | Whether playback has started (played or seeked) |
+| `waiting` | `boolean` | Whether playback is stalled waiting for data |
+
+## Actions
+
+| Action | Description |
+|---|---|
+| `play()` | Start playback (returns a `Promise`) |
+| `pause()` | Pause playback |
+
+## Selector
 
 <FrameworkCase frameworks={["react"]}>
 Pass `selectPlayback` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to playback state. Returns `undefined` if the playback feature is not configured.
@@ -15,8 +34,6 @@ Pass `selectPlayback` to <DocsLink slug="reference/use-player">`usePlayer`</Docs
 <FrameworkCase frameworks={["html"]}>
 Pass `selectPlayback` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to playback state. Returns `undefined` if the playback feature is not configured.
 </FrameworkCase>
-
-The returned state includes `paused`, `ended`, and action methods like `play`, `pause`, and `toggle`.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="PlayButton.tsx"

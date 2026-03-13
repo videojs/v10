@@ -5,6 +5,7 @@ description: How Video.js UI components work — one element per component, data
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 
 UI components are controls like buttons, sliders, and time displays.
 
@@ -12,11 +13,19 @@ Every UI component renders exactly one HTML element, taking inspiration from pro
 
 ## Where to put your components
 <FrameworkCase frameworks={["react"]}>
-UI Components can go anywhere inside a <DocsLink slug="reference/player-provider">`<Player.provider>`</DocsLink>. Unlike your media, your UI components don't need to be inside the <DocsLink slug="reference/player-container">`<Player.Container>`</DocsLink> (though components inside the container will go fullscreen with the video.)
+UI Components can go anywhere inside a <DocsLink slug="reference/player-provider">`<Player.Provider>`</DocsLink>.
+
+However, you should consider placing your components in `<Player.Container>`. Components in `<Player.Container>` will go fullscreen with the player, respond to user activity, and more.
+
+<DocsLinkCard slug="reference/player-container">Read more about `<Player.Container>`</DocsLinkCard>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-UI Components can go anywhere inside a <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink>. Unlike your media, your UI components don't need to be inside the <DocsLink slug="reference/player-container">`<player-container>`</DocsLink> (though components inside the container will go fullscreen with the video.)
+UI Components can go anywhere inside a <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink>. 
+
+However, you should consider placing your components in `<player-container>`. Components in `<player-container>` will go fullscreen with the player, respond to user activity, and more.
+
+<DocsLinkCard slug="reference/player-container">Read more about `<player-container>`</DocsLinkCard>
 </FrameworkCase>
 
 ## Styling and customization
