@@ -22,6 +22,7 @@
 .media-minimal-skin--video {
   background: oklch(0 0 0);
   --media-border-color: oklch(0 0 0 / 0.15);
+  --media-video-border-radius: var(--media-border-radius, 0.75rem);
 
   @media (prefers-color-scheme: dark) {
     --media-border-color: oklch(1 0 0 / 0.15);
@@ -40,7 +41,7 @@
 
   /* Fullscreen */
   &:fullscreen {
-    border-radius: 0;
+    --media-border-radius: 0;
   }
 }
 
@@ -88,6 +89,11 @@
       }
     }
   }
+}
+
+/* Hide cursor when controls are hidden in fullscreen */
+.media-minimal-skin--video:fullscreen:has(.media-controls:not([data-visible])) {
+  cursor: none;
 }
 
 /* ==========================================================================

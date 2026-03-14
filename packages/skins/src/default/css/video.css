@@ -28,6 +28,7 @@
   --media-surface-outer-border-color: oklch(0 0 0 / 0.1);
   --media-surface-shadow-color: oklch(0 0 0 / 0.15);
   --media-surface-backdrop-filter: blur(16px) saturate(1.5);
+  --media-video-border-radius: var(--media-border-radius, 2rem);
 
   @media (prefers-color-scheme: dark) {
     --media-border-color: oklch(1 0 0 / 0.1);
@@ -45,7 +46,7 @@
   }
 
   &:fullscreen {
-    border-radius: 0;
+    --media-border-radius: 0;
   }
 }
 
@@ -90,6 +91,11 @@
       filter: blur(0);
     }
   }
+}
+
+/* Hide cursor when controls are hidden in fullscreen */
+.media-default-skin--video:fullscreen:has(.media-controls:not([data-visible])) {
+  cursor: none;
 }
 
 /* ==========================================================================

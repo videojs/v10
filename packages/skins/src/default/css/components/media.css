@@ -7,9 +7,11 @@
   display: block;
   width: 100%;
   height: 100%;
+  object-fit: var(--media-object-fit, contain);
+  object-position: var(--media-object-position, center);
 }
 .media-default-skin ::slotted(video) {
-  border-radius: var(--media-border-radius, 2rem);
+  border-radius: var(--media-video-border-radius);
 }
 .media-default-skin video {
   border-radius: inherit;
@@ -24,7 +26,8 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: var(--media-object-fit, contain);
+  object-position: var(--media-object-position, center);
   transition: opacity 0.25s;
   pointer-events: none;
   border-radius: inherit;
@@ -38,11 +41,7 @@
    Fullscreen
    ========================================================================== */
 
-.media-default-skin:fullscreen video,
 .media-default-skin:fullscreen ::slotted(video),
-.media-default-skin:fullscreen > img {
+.media-default-skin:fullscreen video {
   object-fit: contain;
-}
-.media-default-skin:fullscreen ::slotted(video) {
-  border-radius: 0;
 }

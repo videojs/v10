@@ -1,3 +1,7 @@
 media-tooltip-group {
   display: contents;
 }
+
+:host {
+  display: grid;
+}
