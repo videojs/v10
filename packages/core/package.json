@@ -50,6 +50,7 @@
     "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*",
+    "dashjs": "^5.0.0",
     "hls.js": "^1.6.7"
   },
   "devDependencies": {
