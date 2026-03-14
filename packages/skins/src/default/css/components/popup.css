@@ -34,10 +34,50 @@
   &[data-side="right"] {
     transform-origin: left;
   }
+
+  /* Safe area between trigger and popup */
+  &::before {
+    content: "";
+    position: absolute;
+    pointer-events: inherit;
+  }
+
+  &[data-side="top"]::before,
+  &[data-side="bottom"]::before {
+    width: 100%;
+    inset-inline: 0;
+  }
+  &[data-side="top"]::before {
+    top: 100%;
+  }
+  &[data-side="bottom"]::before {
+    bottom: 100%;
+  }
+
+  &[data-side="left"]::before,
+  &[data-side="right"]::before {
+    height: 100%;
+    inset-block: 0;
+  }
+  &[data-side="left"]::before {
+    left: 100%;
+  }
+  &[data-side="right"]::before {
+    right: 100%;
+  }
 }
 
 .media-default-skin .media-popover {
   --media-popover-side-offset: 0.5rem;
+
+  &[data-side="top"]::before,
+  &[data-side="bottom"]::before {
+    height: var(--media-popover-side-offset);
+  }
+  &[data-side="left"]::before,
+  &[data-side="right"]::before {
+    width: var(--media-popover-side-offset);
+  }
 }
 .media-default-skin .media-popover--volume {
   padding: 0.625rem 0.25rem;
@@ -50,4 +90,13 @@
   font-size: 0.75rem;
   white-space: nowrap;
   --media-tooltip-side-offset: 0.75rem;
+
+  &[data-side="top"]::before,
+  &[data-side="bottom"]::before {
+    height: var(--media-tooltip-side-offset);
+  }
+  &[data-side="left"]::before,
+  &[data-side="right"]::before {
+    width: var(--media-tooltip-side-offset);
+  }
 }

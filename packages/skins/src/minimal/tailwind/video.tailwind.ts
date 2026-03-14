@@ -124,7 +124,7 @@ export const slider = {
 
 export const popup = {
   ...basePopup,
-  volume: cn(basePopup.base, '[--media-popover-side-offset:0.5rem] p-1 bg-transparent'),
+  volume: cn(basePopup.popover, '[--media-popover-side-offset:0.5rem] p-1 bg-transparent'),
 };
 
 /* ==========================================================================

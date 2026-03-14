@@ -42,6 +42,7 @@ export const controls = cn(
 export const popup = {
   ...basePopup,
   volume: cn(
+    basePopup.popover,
     'py-2 pr-0 pl-16',
     'bg-transparent bg-gradient-to-l from-(--media-controls-background-color) from-80% to-transparent',
     '[--media-popover-side-offset:0.75rem]'
