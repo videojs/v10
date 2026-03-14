@@ -1,18 +1,6 @@
 ---
-
-import { join } from 'node:path/posix';
-import clsx from 'clsx';
-/**
- * We wrap Search.tsx in an .astro entry point for
- * 1. easy CSS support, since we can't use Tailwind on pagefind-ui
- * 2. a synchronous script to set the meta key (ctrl or cmd) without FOUC or hydration errors
- */
+import '@docsearch/react/style';
 import SearchClient from './Search';
-import SearchIcon from './searchIcon.svg';
-import searchIconString from './searchIcon.svg?raw';
-
-const baseUrl = import.meta.env.BASE_URL || '/';
-const bundlePath = join(baseUrl, 'pagefind/');
 
 interface Props {
   class?: string;
@@ -20,98 +8,117 @@ interface Props {
 const { class: className } = Astro.props;
 ---
 
-<SearchClient
-  client:load
-  className={clsx(
-    "inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-full border-faded-black px-2 sm:border dark:border-manila-dark intent:border-manila-dark dark:intent:border-warm-gray",
-    className,
-  )}
-  baseUrl={baseUrl}
-  bundlePath={bundlePath}
-  searchId="pagefind-ui"
-  searchStyle={{
-    "--search-icon-url": `url('data:image/svg+xml;utf8,${encodeURIComponent(searchIconString)}')`,
-  } as React.CSSProperties}
->
-  <SearchIcon class="h-4 w-4 sm:h-3 sm:w-3" />
-  <kbd data-platform-key="default" class="hidden font-display text-h4 sm:inline"
-    >Ctrl K</kbd
-  >
-  <kbd data-platform-key="mac" class="hidden font-display text-h4 sm:inline"
-    >⌘K</kbd
-  >
-</SearchClient>
-
-{
-  /**
-   * Adapted from https://github.com/withastro/starlight/blob/8a72a19e2cfec235941b4e1401b69b44e6695068/packages/starlight/components/Search.astro#L55C1-L75C1
-   * This is intentionally inlined to avoid briefly showing an invalid shortcut.
-   * Purposely using the deprecated `navigator.platform` property to detect Apple devices, as the
-   * user agent is spoofed by some browsers when opening the devtools.
-   */
-}
-<script is:inline>
-  (() => {
-    const defaultPlatformKey = document.querySelector(
-      'kbd[data-platform-key="default"]',
-    );
-    const macPlatformKey = document.querySelector(
-      'kbd[data-platform-key="mac"]',
-    );
-    if (/Mac|iPhone|iPod|iPad/i.test(navigator.platform)) {
-      if (defaultPlatformKey) defaultPlatformKey.style.display = "none";
-    } else {
-      if (macPlatformKey) macPlatformKey.style.display = "none";
-    }
-  })();
-</script>
+<SearchClient client:load className={className} />
 
 <style is:global>
-  @import url("@pagefind/default-ui/css/ui.css");
-
-  #pagefind-ui {
-    --pagefind-ui-scale: 1;
-    --pagefind-ui-primary: var(--color-gold);
-    --pagefind-ui-text: var(--color-faded-black);
-    --pagefind-ui-background: var(--color-manila-50);
-    --pagefind-ui-border: var(--color-manila-75);
-    --pagefind-ui-tag: green;
-    --pagefind-ui-border-width: 1px;
-    --pagefind-ui-border-radius: var(--radius-xs);
-    --pagefind-ui-font: inherit;
+  /* ── Light theme ── */
+  :root {
+    --docsearch-primary-color: var(--color-gold);
+    --docsearch-text-color: var(--color-faded-black);
+    --docsearch-secondary-text-color: var(--color-soot);
+    --docsearch-background-color: var(--color-manila-50);
+    --docsearch-modal-background: var(--color-manila-50);
+    --docsearch-searchbox-background: var(--color-manila-light);
+    --docsearch-searchbox-focus-background: var(--color-manila-light);
+    --docsearch-hit-background: var(--color-manila-light);
+    --docsearch-hit-color: var(--color-faded-black);
+    --docsearch-highlight-color: var(--color-gold);
+    --docsearch-subtle-color: var(--color-manila-75);
+    --docsearch-muted-color: var(--color-manila-dark);
+    --docsearch-icon-color: var(--color-soot);
+    --docsearch-container-background: rgba(30, 29, 29, 0.2);
+    --docsearch-key-background: var(--color-manila-75);
+    --docsearch-key-color: var(--color-faded-black);
+    --docsearch-footer-background: var(--color-manila-light);
+    --docsearch-footer-shadow: 0 -1px 0 0 var(--color-manila-75);
+    --docsearch-logo-color: var(--color-gold);
+    --docsearch-border-radius: var(--radius-xs);
+    --docsearch-search-button-background: transparent;
+    --docsearch-search-button-text-color: var(--color-faded-black);
   }
 
-  .dark #pagefind-ui {
-    --pagefind-ui-text: var(--color-manila-light);
-    --pagefind-ui-background: var(--color-warm-gray);
-    --pagefind-ui-border: var(--color-soot);
+  /* ── Dark theme ── */
+  .dark {
+    --docsearch-text-color: var(--color-manila-light);
+    --docsearch-secondary-text-color: var(--color-manila-dark);
+    --docsearch-background-color: var(--color-warm-gray);
+    --docsearch-modal-background: var(--color-faded-black);
+    --docsearch-searchbox-background: var(--color-soot);
+    --docsearch-searchbox-focus-background: var(--color-soot);
+    --docsearch-hit-background: var(--color-warm-gray);
+    --docsearch-hit-color: var(--color-manila-light);
+    --docsearch-highlight-color: var(--color-gold);
+    --docsearch-subtle-color: var(--color-warm-gray);
+    --docsearch-muted-color: var(--color-manila-dark);
+    --docsearch-icon-color: var(--color-manila-dark);
+    --docsearch-container-background: rgba(30, 29, 29, 0.6);
+    --docsearch-key-background: var(--color-soot);
+    --docsearch-key-color: var(--color-manila-light);
+    --docsearch-footer-background: var(--color-soot);
+    --docsearch-footer-shadow: 0 -1px 0 0 var(--color-warm-gray);
+    --docsearch-logo-color: var(--color-gold);
+    --docsearch-search-button-background: transparent;
+    --docsearch-search-button-text-color: var(--color-manila-light);
   }
 
-  #pagefind-ui .pagefind-ui__form::before {
-    -webkit-mask-image: var(--search-icon-url);
-    mask-image: var(--search-icon-url);
+  /* ── Trigger button — match rounded-pill navbar style ── */
+  .DocSearch-Button {
+    border-radius: 9999px;
+    border: 1px solid var(--color-faded-black);
+    padding: 0 var(--spacing-2);
+    height: auto;
+    min-height: calc(var(--spacing) * 6);
+    margin: 0;
+    font-family: inherit;
   }
-  #pagefind-ui .pagefind-ui__search-input {
-    font-size: var(--text-p2);
-    line-height: var(--text-p2--line-height);
-    letter-spacing: var(--text-p2--letter-spacing);
-    font-weight: var(--text-p2--font-weight);
+
+  .dark .DocSearch-Button {
+    border-color: var(--color-manila-dark);
   }
-  #pagefind-ui .pagefind-ui__filter-block {
-    border-bottom: solid 1px var(--pagefind-ui-border);
+
+  .DocSearch-Button:hover,
+  .DocSearch-Button:focus-within {
+    border-color: var(--color-manila-dark);
+    box-shadow: none;
   }
-  #pagefind-ui .pagefind-ui__message {
-    font-weight: var(--font-weight-normal);
+
+  .dark .DocSearch-Button:hover,
+  .dark .DocSearch-Button:focus-within {
+    border-color: var(--color-warm-gray);
   }
-  #pagefind-ui .pagefind-ui__result-title,
-  #pagefind-ui .pagefind-ui__filter-name {
-    font-weight: var(--font-weight-bold);
+
+  .DocSearch-Button .DocSearch-Search-Icon {
+    width: calc(var(--spacing) * 3);
+    height: calc(var(--spacing) * 3);
   }
-  #pagefind-ui .pagefind-ui__result-nested .pagefind-ui__result-link::before {
-    font-weight: var(--font-weight-normal);
-    font-size: 0.9em;
+
+  /* Hide button label text on small screens, keep icon + keyboard shortcut */
+  .DocSearch-Button-Placeholder {
+    display: none;
   }
-  #pagefind-ui mark {
+
+  .DocSearch-Button-Keys {
+    display: none;
+  }
+
+  @media (min-width: 640px) {
+    .DocSearch-Button-Keys {
+      display: flex;
+    }
+
+    .DocSearch-Button .DocSearch-Search-Icon {
+      width: calc(var(--spacing) * 3);
+      height: calc(var(--spacing) * 3);
+    }
+  }
+
+  /* ── Modal backdrop ── */
+  .DocSearch-Container {
+    backdrop-filter: blur(2px);
+  }
+
+  /* ── Mark / highlight ── */
+  .DocSearch-Hit mark {
     background-color: var(--color-gold);
     color: var(--color-faded-black);
   }
