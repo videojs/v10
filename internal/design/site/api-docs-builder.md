@@ -914,6 +914,13 @@ HTML sees the tag name (e.g., "media-meter-track"). The TOC emits both variants 
 framework supports (derived from `platforms` keys). React-only parts (those with
 `platforms.react` but no `platforms.html`) are hidden when viewing HTML docs.
 
+**Part ordering:** By default, parts render in JSON key order (primary first, then discovery
+order). The `<ComponentReference>` component accepts an optional `partOrder` prop — an array
+of part IDs (e.g., `["provider", "root", "trigger", "popup", "arrow"]`) that overrides
+the default order. This lets MDX authors match the anatomy. The reordering is applied inside
+`createComponentReferenceModel`, so both the rendered output and the TOC consume the same
+order. Parts not listed in `partOrder` appear after the listed ones in their original order.
+
 ### 5b. Util reference model
 
 **Single-overload** heading structure:
@@ -942,7 +949,10 @@ H2  "API Reference"                    id="api-reference"
 The `remarkConditionalHeadings` remark plugin detects `<ComponentReference>` and
 `<UtilReference>` components in MDX, loads the generated JSON, builds the reference model, and
 injects synthetic heading entries into `frontmatter.conditionalHeadings`. These entries carry the
-same `id`/`slug` values as the rendered headings, so TOC links always match.
+same `id`/`slug` values as the rendered headings, so TOC links always match. For
+`<ComponentReference>`, the plugin also reads the optional `partOrder` attribute and forwards
+it to `createComponentReferenceModel`, ensuring the TOC reflects the same part ordering as
+the rendered page.
 
 ---
 
@@ -1148,6 +1158,13 @@ H3: Part name (framework-specific label)
     H4: State (if non-empty) → State table
     H4: Data attributes (if non-empty) → Data attributes table
     H4: CSS custom properties (if non-empty) → CSS custom properties table
+```
+
+**Part ordering:** Parts render in JSON key order by default (primary part first). To match
+the component anatomy, pass `partOrder` on the `<ComponentReference>` component:
+
+```mdx
+<ComponentReference component="Tooltip" partOrder={["provider", "root", "trigger", "popup", "arrow"]} />
 ```
 
 **State section preamble** (framework-specific):
