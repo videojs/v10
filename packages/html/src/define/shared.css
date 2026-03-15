@@ -2,6 +2,7 @@ media-tooltip-group {
   display: contents;
 }
 
+/* Fixes a weird issue with Safari when setting aspect-ratio */
 :host {
   display: grid;
 }

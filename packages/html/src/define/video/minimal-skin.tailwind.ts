@@ -52,7 +52,7 @@ function getTemplateHTML() {
       </media-buffering-indicator>
 
       <media-controls data-controls="" class="${controls}">
-        <media-tooltip-group class="contents">
+        <media-tooltip-group>
           <div class="${buttonGroup}">
             <span class="${tooltipState.play.wrapper}">
               <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.icon, iconState.play.button)}">

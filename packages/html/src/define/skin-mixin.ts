@@ -1,16 +1,20 @@
 import type { ReactiveElement } from '@videojs/element';
 import type { Constructor } from '@videojs/utils/types';
-import styles from './base.css?inline';
+import rootStyles from './base.css?inline';
+import sharedStyles from './shared.css?inline';
 
 const STYLES_ID = '__media-styles';
 
-function ensureStyles(): void {
+function ensureRootStyles(): void {
   if (document.getElementById(STYLES_ID)) return;
   const style = document.createElement('style');
   style.id = STYLES_ID;
-  style.textContent = styles;
+  style.textContent = rootStyles;
   document.head.appendChild(style);
 }
+
+const sharedSheet = new CSSStyleSheet();
+sharedSheet.replaceSync(sharedStyles);
 
 /**
  * Mixin for skin elements that renders the template from a static
@@ -30,15 +34,17 @@ export function SkinMixin<Base extends Constructor<ReactiveElement>>(
     constructor(...args: any[]) {
       super(...args);
 
-      ensureStyles();
+      ensureRootStyles();
 
       if (!this.shadowRoot) {
         const ctor = this.constructor as typeof SkinElement & { getTemplateHTML?: () => string };
         this.attachShadow(ctor.shadowRootOptions);
 
+        const sheets: CSSStyleSheet[] = [sharedSheet];
         if (ctor.styles) {
-          this.shadowRoot!.adoptedStyleSheets = [ctor.styles];
+          sheets.push(ctor.styles);
         }
+        this.shadowRoot!.adoptedStyleSheets = sheets;
 
         if (ctor.getTemplateHTML) {
           this.shadowRoot!.innerHTML = ctor.getTemplateHTML();
