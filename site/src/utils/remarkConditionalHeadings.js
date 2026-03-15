@@ -136,7 +136,10 @@ function injectComponentReferenceHeadings(node, headingsWithMetadata, reservedSl
   const json = readComponentRefJson(componentName);
   if (!json) return;
 
-  const componentModel = createComponentReferenceModel(componentName, json);
+  const partOrderAttr = node.attributes?.find((a) => a.name === 'partOrder');
+  const partOrder = extractArrayValue(partOrderAttr);
+
+  const componentModel = createComponentReferenceModel(componentName, json, partOrder);
   const componentHeadings = buildComponentReferenceTocHeadings(componentModel);
 
   headingsWithMetadata.push(...componentHeadings);

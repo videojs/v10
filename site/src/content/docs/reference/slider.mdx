@@ -1,0 +1,198 @@
+---
+title: Slider
+frameworkTitle:
+  html: media-slider
+description: A composable slider component with track, fill, thumb, preview, and value parts
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/slider/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/slider/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/slider/react/css/BasicUsage.css?raw";
+
+import WithPreviewDemoReact from "@/components/docs/demos/slider/react/css/WithPreview";
+import withPreviewReactTsx from "@/components/docs/demos/slider/react/css/WithPreview.tsx?raw";
+import withPreviewReactCss from "@/components/docs/demos/slider/react/css/WithPreview.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/slider/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/slider/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/slider/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/slider/html/css/BasicUsage.ts?raw";
+
+import WithPreviewDemoHtml from "@/components/docs/demos/slider/html/css/WithPreview.astro";
+import withPreviewHtml from "@/components/docs/demos/slider/html/css/WithPreview.html?raw";
+import withPreviewHtmlCss from "@/components/docs/demos/slider/html/css/WithPreview.css?raw";
+import withPreviewHtmlTs from "@/components/docs/demos/slider/html/css/WithPreview.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <Slider.Root>
+    <Slider.Track>
+      <Slider.Fill />
+    </Slider.Track>
+    <Slider.Thumb />
+    <Slider.Preview>
+      <Slider.Value type="pointer" />
+    </Slider.Preview>
+  </Slider.Root>
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-slider>
+    <media-slider-track>
+      <media-slider-fill></media-slider-fill>
+    </media-slider-track>
+    <media-slider-thumb></media-slider-thumb>
+    <media-slider-preview>
+      <media-slider-value type="pointer"></media-slider-value>
+    </media-slider-preview>
+  </media-slider>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+The base Slider provides a generic range input. It manages value, pointer tracking, and drag interactions. Domain-specific sliders like <DocsLink slug="reference/time-slider">TimeSlider</DocsLink> and <DocsLink slug="reference/volume-slider">VolumeSlider</DocsLink> extend this with media-specific bindings.
+
+The slider supports vertical orientation via the `orientation` prop (defaults to `"horizontal"`).
+
+
+## Styling
+
+Use [CSS custom properties](#root-css-custom-properties) to position fill, thumb, and preview elements:
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-slider-fill {
+  width: var(--media-slider-fill);
+}
+
+media-slider-thumb {
+  left: var(--media-slider-fill);
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders standard DOM elements. Add a `className` to style them:
+
+```css
+.slider-fill {
+  width: var(--media-slider-fill);
+}
+
+.slider-thumb {
+  left: var(--media-slider-fill);
+}
+```
+</FrameworkCase>
+
+Style based on [interaction state](#root-data-attributes):
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-slider[data-interactive] media-slider-track {
+  height: 6px;
+}
+media-slider[data-pointing] media-slider-preview {
+  opacity: 1;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+.slider[data-interactive] .slider-track {
+  height: 6px;
+}
+.slider[data-pointing] .slider-preview {
+  opacity: 1;
+}
+```
+</FrameworkCase>
+
+## Accessibility
+
+Renders with `role="slider"` and automatic ARIA attributes (`aria-valuemin`, `aria-valuemax`, `aria-valuenow`, `aria-valuetext`). Override the label with the `label` prop. Keyboard controls:
+
+- <kbd>Arrow Left</kbd> / <kbd>Arrow Right</kbd>: step by `step` increment
+- <kbd>Page Up</kbd> / <kbd>Page Down</kbd>: step by `largeStep` increment
+- <kbd>Home</kbd>: jump to minimum
+- <kbd>End</kbd>: jump to maximum
+
+## Examples
+
+### Basic
+
+A slider with track, fill, and thumb.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+        { title: "App.css", code: basicUsageReactCss, lang: "css" },
+      ]}
+    >
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: basicUsageHtml, lang: "html" },
+        { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+        { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+      ]}
+    >
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+### With Preview
+
+A slider with a pointer-tracking preview that displays the value at the current pointer position.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: withPreviewReactTsx, lang: "tsx" },
+        { title: "App.css", code: withPreviewReactCss, lang: "css" },
+      ]}
+    >
+      <WithPreviewDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: withPreviewHtml, lang: "html" },
+        { title: "index.css", code: withPreviewHtmlCss, lang: "css" },
+        { title: "index.ts", code: withPreviewHtmlTs, lang: "ts" },
+      ]}
+    >
+      <WithPreviewDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="Slider" />
