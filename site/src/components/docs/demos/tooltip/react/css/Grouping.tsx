@@ -5,7 +5,7 @@ import './Grouping.css';
 export default function Grouping() {
   return (
     <div className="react-tooltip-grouping">
-      <Tooltip.Provider timeout={1000}>
+      <Tooltip.Provider>
         <Tooltip.Root>
           <Tooltip.Trigger className="react-tooltip-grouping__trigger">Bold</Tooltip.Trigger>
           <Tooltip.Popup className="react-tooltip-grouping__popup">
