@@ -1,5 +1,25 @@
 # Changelog
 
+## [10.0.0-beta.7](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.6...@videojs/react@10.0.0-beta.7) (2026-03-15)
+
+
+### Miscellaneous Chores
+
+* **@videojs/react:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.7
+    * @videojs/core bumped to 10.0.0-beta.7
+    * @videojs/store bumped to 10.0.0-beta.7
+    * @videojs/utils bumped to 10.0.0-beta.7
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.7
+    * @videojs/skins bumped to 10.0.0-beta.7
+
 ## [10.0.0-beta.6](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.5...@videojs/react@10.0.0-beta.6) (2026-03-15)
 
 
