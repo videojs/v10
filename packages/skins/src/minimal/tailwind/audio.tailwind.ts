@@ -11,10 +11,10 @@ export const root = cn(
   baseRoot,
   '[--media-controls-background-color:oklch(1_0_0)]',
   '[--media-controls-border-color:oklch(0_0_0/0.1)]',
-  '[--media-controls-text-color:oklch(0_0_0)]',
+  '[--media-controls-text-color:var(--media-color-primary,oklch(0_0_0))]',
   'dark:[--media-controls-background-color:oklch(0_0_0)]',
   'dark:[--media-controls-border-color:oklch(1_0_0/0.1)]',
-  'dark:[--media-controls-text-color:oklch(1_0_0)]'
+  'dark:[--media-controls-text-color:var(--media-color-primary,oklch(1_0_0))]'
 );
 
 /* ==========================================================================

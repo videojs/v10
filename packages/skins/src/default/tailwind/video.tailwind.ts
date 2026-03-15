@@ -87,7 +87,7 @@ export const controls = cn(
   surface,
   // Position
   'absolute bottom-3 inset-x-3',
-  'text-white z-10',
+  '[color:var(--media-color-primary,oklch(1_0_0))] z-10',
   // Transitions (fine pointer only — instant toggle on touch to avoid dead-zone taps)
   'will-change-[scale,transform,filter,opacity]',
   '[@media(pointer:fine)]:transition-[scale,transform,filter,opacity]',
