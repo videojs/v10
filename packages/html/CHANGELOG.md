@@ -1,5 +1,26 @@
 # Changelog
 
+## [10.0.0-beta.7](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.6...@videojs/html@10.0.0-beta.7) (2026-03-15)
+
+
+### Bug Fixes
+
+* **skin:** bake in safari layout fix into skins ([#954](https://github.com/videojs/v10/issues/954)) ([177bd26](https://github.com/videojs/v10/commit/177bd26c1fae2ff436e614a87614841a07b836fd))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.7
+    * @videojs/core bumped to 10.0.0-beta.7
+    * @videojs/element bumped to 10.0.0-beta.7
+    * @videojs/store bumped to 10.0.0-beta.7
+    * @videojs/utils bumped to 10.0.0-beta.7
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.7
+    * @videojs/skins bumped to 10.0.0-beta.7
+
 ## [10.0.0-beta.6](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.5...@videojs/html@10.0.0-beta.6) (2026-03-15)
 
 
