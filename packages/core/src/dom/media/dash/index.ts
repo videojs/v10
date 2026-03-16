@@ -1,10 +1,10 @@
 import * as dashjs from 'dashjs';
 
-import { type MediaDelegate, MediaDelegateMixin } from '../../../core/media/delegate';
-import { MediaProxyMixin } from '../../../core/media/proxy';
+import { type Delegate, DelegateMixin } from '../../../core/media/delegate';
 import { CustomMediaMixin } from '../custom-media-element';
+import { MediaProxyMixin } from '../proxy';
 
-export class DashMediaDelegateBase implements MediaDelegate {
+export class DashMediaDelegateBase implements Delegate {
   #engine: dashjs.MediaPlayerClass;
 
   constructor() {
@@ -39,17 +39,10 @@ export class DashMediaDelegateBase implements MediaDelegate {
 }
 
 // This is used by the web component because it needs to extend HTMLElement!
-export class DashCustomMedia extends MediaDelegateMixin(
+export class DashCustomMedia extends DelegateMixin(
   CustomMediaMixin(globalThis.HTMLElement ?? class {}, { tag: 'video' }),
   DashMediaDelegateBase
 ) {}
 
 // This is used by the React component.
-export class DashMedia extends MediaDelegateMixin(
-  MediaProxyMixin(
-    globalThis.HTMLVideoElement ?? class {},
-    globalThis.HTMLMediaElement ?? class {},
-    globalThis.EventTarget ?? class {}
-  ),
-  DashMediaDelegateBase
-) {}
+export class DashMedia extends DelegateMixin(MediaProxyMixin, DashMediaDelegateBase) {}
