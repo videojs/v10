@@ -63,9 +63,9 @@ const Player = createPlayer({
 ```ts
 import { createPlayer, playback, volume, time } from '@videojs/html';
 
-const { ProviderMixin, PlayerController, context } = createPlayer({
-  features: [playback, volume, time],
-});
+const { ProviderMixin, PlayerController, context } = createPlayer({ // [!code focus]
+  features: [playback, volume, time], // [!code focus]
+}); // [!code focus]
 
 class MyPlayer extends ProviderMixin(MediaElement) {
   static readonly tagName = 'my-player';
@@ -95,9 +95,9 @@ import { createPlayer, playback } from '@videojs/html';
 import { backgroundFeatures } from '@videojs/html/background';
 import { MediaElement } from '@videojs/html';
 
-const { ProviderMixin } = createPlayer({
-  features: [...backgroundFeatures, playback],
-});
+const { ProviderMixin } = createPlayer({ // [!code focus]
+  features: [...backgroundFeatures, playback], // [!code focus]
+}); // [!code focus]
 
 class MyPlayer extends ProviderMixin(MediaElement) {
   static readonly tagName = 'my-player';
@@ -113,13 +113,13 @@ customElements.define('my-player', MyPlayer);
 You access feature state and actions through <DocsLink slug="reference/use-player">`usePlayer`</DocsLink>:
 ```tsx
 // Subscribe to state (re-renders when selected values change)
-const { paused, volume } = Player.usePlayer((s) => ({
+const { paused, volume } = usePlayer((s) => ({
   paused: s.paused,
   volume: s.volume,
 }));
 
 // Call actions
-const store = Player.usePlayer();
+const store = usePlayer();
 store.play();
 store.setVolume(0.8);
 ```
@@ -146,7 +146,7 @@ Each feature also has a pre-built selector (e.g. <DocsLink slug="reference/featu
 ```tsx
 import { selectPlayback, usePlayer } from '@videojs/react';
 
-const playback = Player.usePlayer(selectPlayback);
+const playback = usePlayer(selectPlayback);
 playback?.play();
 ```
 </FrameworkCase>
@@ -183,7 +183,7 @@ You can also check availability in JS:
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="PiPControl.tsx"
 function PiPControl() {
-  const availability = Player.usePlayer((s) => s.pipAvailability);
+  const availability = usePlayer((s) => s.pipAvailability);
 
   if (availability === 'unsupported') return null;
 

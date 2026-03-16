@@ -20,7 +20,7 @@ In prior versions of Video.js, skins were CSS-only themes applied to the same se
 ```html
 <video-player>
   <video-skin><!-- [!code focus] -->
-    <!-- wraps the media element -->
+    <!-- wraps the media element --> <!-- [!code focus] -->
     <video slot="media" src="video.mp4"></video>
   </video-skin><!-- [!code focus] -->
 </video-player>
@@ -30,7 +30,7 @@ In prior versions of Video.js, skins were CSS-only themes applied to the same se
 ```tsx
 <Player.Provider>
   <VideoSkin> {/* [!code focus] */}
-    {/* wraps the Media component */}
+    {/* wraps the Media component */} {/* [!code focus] */}
     <Video src="video.mp4"></Video>
   </VideoSkin> {/* [!code focus] */}
 </Player.Provider>

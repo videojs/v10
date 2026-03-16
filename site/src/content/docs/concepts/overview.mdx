@@ -16,9 +16,12 @@ Video.js v10 is built around a three-part architecture that separates concerns a
 State is handled by a `Player.Provider`, which creates a central state store that all components can access. When you wrap your player in a `Player.Provider`, the components automatically connect to the state.
 
 ```tsx
-<Player.Provider>
-  {/* All components inside automatically connect to state */}
-</Player.Provider>
+{/* All components inside automatically connect to state */} {/* [!code focus] */}
+<Player.Provider> {/* [!code focus] */}
+  <VideoSkin>
+    <Video src="video.mp4" />
+  </VideoSkin>
+</Player.Provider> {/* [!code focus] */}
 ```
 
 You can access state and actions from anywhere within the provider with the <DocsLink slug="reference/use-player">`usePlayer` hook</DocsLink>.
@@ -28,9 +31,12 @@ You can access state and actions from anywhere within the provider with the <Doc
 State is handled by a `video-player` element, which creates a central state store that all components can access. Child components can automatically connect to the state of the `video-player` element.
 
 ```html
-<video-player>
-  <!-- All components inside automatically connect to state -->
-</video-player>
+<!-- All components inside automatically connect to state --> <!-- [!code focus] -->
+<video-player> <!-- [!code focus] -->
+  <video-skin>
+    <video slot="media" src="video.mp4"></video>
+  </video-skin>
+</video-player> <!-- [!code focus] -->
 ```
 
 You can access state and actions from anywhere within `<video-player>` with <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>.
@@ -50,18 +56,18 @@ Skins are complete, pre-designed player UIs that package components and styles t
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <Player.Provider>
-  <VideoSkin>
+  <VideoSkin> {/* [!code focus] */}
     <Video src="video.mp4" />
-  </VideoSkin>
+  </VideoSkin> {/* [!code focus] */}
 </Player.Provider>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 ```html
 <video-player>
-  <video-skin>
+  <video-skin> <!-- [!code focus] -->
     <video slot="media" src="video.mp4"></video>
-  </video-skin>
+  </video-skin> <!-- [!code focus] -->
 </video-player>
 ```
 </FrameworkCase>
@@ -75,30 +81,26 @@ If you want more control than skins offer you, you can build your own UI from ou
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <Player.Provider>
-
-  <Player.Container>
+  <Player.Container> {/* [!code focus] */}
     <Video src="video.mp4" />
-    <MediaControls>
-      <PlayButton />
-      {/* ... */}
-    </MediaControls>
-  </Player.Container>
-
+    <MediaControls> {/* [!code focus] */}
+      <PlayButton /> {/* [!code focus] */}
+      {/* ... */} {/* [!code focus] */}
+    </MediaControls> {/* [!code focus] */}
+  </Player.Container> {/* [!code focus] */}
 </Player.Provider>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 ```html
 <video-player>
-
-  <media-container>
+  <media-container> <!-- [!code focus] -->
     <video slot="media" src="video.mp4"></video>
-    <media-controls>
-      <media-play-button></media-play-button>
-      <!-- ... -->
-    </media-controls>
-  </media-container>
-
+    <media-controls> <!-- [!code focus] -->
+      <media-play-button></media-play-button> <!-- [!code focus] -->
+      <!-- ... --> <!-- [!code focus] -->
+    </media-controls> <!-- [!code focus] -->
+  </media-container> <!-- [!code focus] -->
 </video-player>
 ```
 </FrameworkCase>
@@ -125,9 +127,7 @@ DASH, YouTube, Vimeo, Mux, and more media elements are currently under developme
 ```tsx
 <Player.Provider>
   <VideoSkin>
-
-    <HlsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" />
-
+    <HlsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" /> {/* [!code focus] */}
   </VideoSkin>
 </Player.Provider>
 ```
@@ -136,9 +136,7 @@ DASH, YouTube, Vimeo, Mux, and more media elements are currently under developme
 ```html
 <video-player>
   <video-skin>
-
-    <hls-video slot="media" src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hls-video>
-
+    <hls-video slot="media" src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hls-video> <!-- [!code focus] -->
   </video-skin>
 </video-player>
 ```

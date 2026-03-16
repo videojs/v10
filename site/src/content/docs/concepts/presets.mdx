@@ -92,9 +92,9 @@ Add features to a preset's feature bundle to enable new functionality. For examp
 import { createPlayer, playback } from '@videojs/react';
 import { backgroundFeatures, BackgroundVideo } from '@videojs/react/background';
 
-const Player = createPlayer({
-  features: [...backgroundFeatures, playback],
-});
+const Player = createPlayer({ // [!code focus]
+  features: [...backgroundFeatures, playback], // [!code focus]
+}); // [!code focus]
 
 function Hero() {
   return (
@@ -116,9 +116,9 @@ function Hero() {
   import '@videojs/html/media/container';
   import '@videojs/html/ui/play-button';
 
-  const { ProviderMixin } = createPlayer({
-    features: [...backgroundFeatures, playback],
-  });
+  const { ProviderMixin } = createPlayer({ // [!code focus]
+    features: [...backgroundFeatures, playback], // [!code focus]
+  }); // [!code focus]
 
   class MyPlayer extends ProviderMixin(MediaElement) {
     static readonly tagName = 'my-player';
@@ -148,7 +148,7 @@ A preset's default media element is just the starting point. You can replace it 
 ```tsx
 <Player.Provider>
   <VideoSkin>
-    <HlsVideo src="https://example.com/stream.m3u8" />
+    <HlsVideo src="https://example.com/stream.m3u8" /> {/* [!code focus] */}
   </VideoSkin>
 </Player.Provider>
 ```
@@ -157,7 +157,7 @@ A preset's default media element is just the starting point. You can replace it 
 ```html
 <video-player>
   <video-skin>
-    <hls-video slot="media" src="https://example.com/stream.m3u8"></hls-video>
+    <hls-video slot="media" src="https://example.com/stream.m3u8"></hls-video> <!-- [!code focus] -->
   </video-skin>
 </video-player>
 ```
