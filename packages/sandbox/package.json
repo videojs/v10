@@ -18,7 +18,8 @@
     "@videojs/skins": "workspace:*",
     "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
-    "@videojs/utils": "workspace:*"
+    "@videojs/utils": "workspace:*",
+    "gifuct-js": "^2.1.2"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.0",
