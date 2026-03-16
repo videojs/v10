@@ -7,24 +7,24 @@ export default function Grouping() {
     <div className="react-tooltip-grouping">
       <Tooltip.Provider>
         <Tooltip.Root>
-          <Tooltip.Trigger className="react-tooltip-grouping__trigger">Bold</Tooltip.Trigger>
+          <Tooltip.Trigger className="react-tooltip-grouping__trigger">Play</Tooltip.Trigger>
           <Tooltip.Popup className="react-tooltip-grouping__popup">
             <Tooltip.Arrow className="react-tooltip-grouping__arrow" />
-            Toggle bold
+            Play video
           </Tooltip.Popup>
         </Tooltip.Root>
         <Tooltip.Root>
-          <Tooltip.Trigger className="react-tooltip-grouping__trigger">Italic</Tooltip.Trigger>
+          <Tooltip.Trigger className="react-tooltip-grouping__trigger">Mute</Tooltip.Trigger>
           <Tooltip.Popup className="react-tooltip-grouping__popup">
             <Tooltip.Arrow className="react-tooltip-grouping__arrow" />
-            Toggle italic
+            Mute audio
           </Tooltip.Popup>
         </Tooltip.Root>
         <Tooltip.Root>
-          <Tooltip.Trigger className="react-tooltip-grouping__trigger">Underline</Tooltip.Trigger>
+          <Tooltip.Trigger className="react-tooltip-grouping__trigger">Fullscreen</Tooltip.Trigger>
           <Tooltip.Popup className="react-tooltip-grouping__popup">
             <Tooltip.Arrow className="react-tooltip-grouping__arrow" />
-            Toggle underline
+            Enter fullscreen
           </Tooltip.Popup>
         </Tooltip.Root>
       </Tooltip.Provider>
