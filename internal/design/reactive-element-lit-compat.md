@@ -35,7 +35,7 @@ Composes `DestroyMixin(ReactiveElement)` and bridges `destroyCallback()` to
 ### HlsCustomMedia
 
 Uses `DestroyMixin(HTMLElement)` as the base for `CustomMediaMixin`. The `DelegateMedia`
-class (from `MediaDelegateMixin`) overrides `destroyCallback()` to call
+class (from `DelegateMixin`) overrides `destroyCallback()` to call
 `this.#delegate.destroy?.()`, which destroys the HLS engine.
 
 ## Why a Mixin

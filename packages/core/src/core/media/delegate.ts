@@ -2,7 +2,7 @@ import type { Constructor } from '@videojs/utils/types';
 
 import { defineClassPropHooks } from '../utils/define-class-prop-hooks';
 
-export interface MediaDelegate {
+export interface Delegate {
   attach?(target: EventTarget): void;
   detach?(): void;
 }
@@ -12,13 +12,13 @@ export interface MediaDelegate {
  * and method calls to an instance of `DelegateClass` before falling through
  * to the base class implementation.
  *
- * Works with both `CustomMediaMixin` and `MediaProxyMixin`.
+ * Works with both `CustomMediaMixin` and `ProxyMixin`.
  */
-export function MediaDelegateMixin<Base extends Constructor<any>, Delegate extends Constructor<MediaDelegate>>(
+export function DelegateMixin<Base extends Constructor<any>, D extends Constructor<Delegate>>(
   BaseClass: Base,
-  DelegateClass: Delegate
+  DelegateClass: D
 ) {
-  class DelegateMedia extends (BaseClass as Constructor<any>) {
+  class DelegateImpl extends (BaseClass as Constructor<any>) {
     #delegate = new DelegateClass();
 
     get(prop: string): any {
@@ -55,12 +55,12 @@ export function MediaDelegateMixin<Base extends Constructor<any>, Delegate exten
   }
 
   for (let proto = DelegateClass.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
-    defineClassPropHooks(DelegateMedia, proto);
+    defineClassPropHooks(DelegateImpl, proto);
   }
 
-  return DelegateMedia as unknown as Constructor<
+  return DelegateImpl as unknown as Constructor<
     InstanceType<Base> &
-      InstanceType<Delegate> & {
+      InstanceType<D> & {
         attach(target: EventTarget): void;
         detach(): void;
       }
