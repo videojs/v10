@@ -15,7 +15,7 @@ import type { InferStoreState } from '@videojs/store';
 import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { FC, ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useDestroy } from '../utils/use-destroy';
 import { Container, PlayerContextProvider, useMedia, usePlayerContext } from './context';
@@ -71,10 +71,16 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
   function Provider({ children }: ProviderProps): ReactNode {
     const [store] = useState(() => createStore<PlayerTarget>()(combine(...config.features)));
     const [media, setMedia] = useState<Media | null>(null);
+    const [container, setContainer] = useState<HTMLElement | null>(null);
 
     useDestroy(store);
 
-    return <PlayerContextProvider value={{ store, media, setMedia }}>{children}</PlayerContextProvider>;
+    useEffect(() => {
+      if (!media) return;
+      return store.attach({ media, container });
+    }, [media, container, store]);
+
+    return <PlayerContextProvider value={{ store, media, setMedia, setContainer }}>{children}</PlayerContextProvider>;
   }
 
   if (__DEV__ && config.displayName) {

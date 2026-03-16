@@ -65,7 +65,7 @@ describe('Video', () => {
     it('calls setMedia on mount', () => {
       const setMedia = vi.fn();
       const store = createMockStore();
-      const value: PlayerContextValue = { store: store as any, media: null, setMedia };
+      const value: PlayerContextValue = { store: store as any, media: null, setMedia, setContainer: vi.fn() };
 
       render(<Video />, { wrapper: createWrapper(value) });
 
@@ -75,7 +75,7 @@ describe('Video', () => {
     it('calls setMedia with null on unmount', () => {
       const setMedia = vi.fn();
       const store = createMockStore();
-      const value: PlayerContextValue = { store: store as any, media: null, setMedia };
+      const value: PlayerContextValue = { store: store as any, media: null, setMedia, setContainer: vi.fn() };
 
       const { unmount } = render(<Video />, { wrapper: createWrapper(value) });
 
@@ -88,7 +88,7 @@ describe('Video', () => {
     it('forwards ref while also registering media', () => {
       const setMedia = vi.fn();
       const store = createMockStore();
-      const value: PlayerContextValue = { store: store as any, media: null, setMedia };
+      const value: PlayerContextValue = { store: store as any, media: null, setMedia, setContainer: vi.fn() };
 
       const ref = createRef<HTMLVideoElement>();
       render(<Video ref={ref} />, { wrapper: createWrapper(value) });
