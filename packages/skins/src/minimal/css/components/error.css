@@ -64,7 +64,7 @@
 
 .media-minimal-skin .media-error__description {
   opacity: 0.7;
-  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 .media-minimal-skin .media-error__actions {

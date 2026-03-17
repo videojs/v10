@@ -94,11 +94,11 @@
 
     @media (pointer: fine) {
       filter: blur(8px);
+    }
 
-      @media (prefers-reduced-motion: reduce) {
-        translate: 0 0;
-        filter: blur(0);
-      }
+    @media (prefers-reduced-motion: reduce) {
+      translate: 0 0;
+      filter: blur(0);
     }
   }
 

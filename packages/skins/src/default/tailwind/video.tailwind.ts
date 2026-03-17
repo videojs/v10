@@ -40,7 +40,7 @@ export const root = (isShadowDOM: boolean) =>
     '[&>img:not([data-visible])]:opacity-0',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
     '[--media-caption-track-y:-0.5rem]',
-    '[--media-caption-track-delay:calc(var(--media-controls-transition-delay)+25ms)]',
+    '[--media-caption-track-delay:calc(var(--media-controls-transition-delay)_+_25ms)]',
     '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
     'has-[[data-controls][data-visible]]:[--media-caption-track-y:-3.5rem]',
     // Native caption track container

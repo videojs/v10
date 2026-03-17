@@ -14,6 +14,6 @@ export const error = {
   ),
   content: 'flex flex-col gap-2 px-2 pt-2 pb-1.5',
   title: 'font-semibold leading-tight',
-  description: 'opacity-70 break-all',
+  description: 'opacity-70 wrap-anywhere',
   actions: 'flex gap-2 *:flex-1',
 };
