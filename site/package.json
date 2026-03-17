@@ -16,8 +16,8 @@
     "test:coverage": "vitest --coverage"
   },
   "dependencies": {
-    "@astrojs/mdx": "^5.0.0",
-    "@astrojs/netlify": "^7.0.2",
+    "@astrojs/mdx": "^5.0.1",
+    "@astrojs/netlify": "^7.0.3",
     "@astrojs/react": "^5.0.0",
     "@astrojs/rss": "^4.0.17",
     "@astrojs/sitemap": "^3.7.1",
@@ -31,7 +31,7 @@
     "@tailwindcss/vite": "^4.2.1",
     "@videojs/html": "workspace:*",
     "@videojs/react": "workspace:*",
-    "astro": "^6.0.4",
+    "astro": "^6.0.5",
     "clsx": "^2.1.1",
     "es-toolkit": "^1.32.0",
     "github-slugger": "^2.0.0",
@@ -48,14 +48,14 @@
     "reading-time": "^1.5.0",
     "schema-dts": "^1.1.5",
     "sharp": "^0.34.3",
-    "shiki": "^4.0.0",
+    "shiki": "^4.0.2",
     "simple-git": "^3.28.0",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1",
     "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.7",
+    "@astrojs/check": "^0.9.8",
     "@netlify/edge-functions": "^3.0.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
