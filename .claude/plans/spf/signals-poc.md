@@ -55,12 +55,9 @@ concrete rather than hiding it behind library defaults.
 
 - `state`, `owners`, and `WritableState` — untouched; they bridge into signals at the consumer
   call site, not at the source
-- `load-segments.ts`, `segment-loader-actor.ts` — untouched
+- `load-segments.ts`, `segment-loader-actor.ts` — untouched (beyond call-site `.snapshot.get()` fixes)
 - `engine.ts` — untouched
-- The `Actor` base interface — only `SourceBufferActor` gains `snapshotSignal`; base type is
-  unchanged
-- Existing tests — the `subscribe()` bridge and `snapshot` getter preserve the existing actor
-  interface; tests should pass without modification
+- Other actors — only `SourceBufferActor` migrated; `SignalActor` interface is defined for future use
 
 ## Implementation Plan
 
@@ -99,37 +96,42 @@ export function effect(fn: () => void): () => void {
 
 The comment on scheduling is the key decision surface this file exposes.
 
-### 3. `source-buffer-actor.ts` — internal state → Signal
+### 3. `source-buffer-actor.ts` — internal state → Signal; `SignalActor` interface
 
 Replace `createState<SourceBufferActorSnapshot>` with `Signal.State`. All `state.patch({ ... })`
 calls become `snapshotSignal.set({ ...snapshotSignal.get(), ... })`.
 
-The `state.flush()` calls (`applyResult`, `handleError`, `onPartialContext`, `destroy`) are **dropped
-initially**. With signal effects scheduled via `queueMicrotask`, these are no longer needed for
-correctness in most cases. If tests reveal ordering issues, revisit.
+The `state.flush()` calls are **dropped** — `Signal.State` notifies via microtask by default,
+matching the prior `createState.patch()` behavior.
 
-Add `snapshotSignal` to the returned object and the `SourceBufferActor` interface:
+`SourceBufferActor` extends `SignalActor` (defined in `actor.ts`). The old `Actor` interface
+(with a plain `snapshot` value and `subscribe()`) is removed from this actor. `snapshot` IS the
+signal — consumers call `.get()` and use `effect()`/`computed()` directly:
 
 ```ts
-export interface SourceBufferActor extends Actor<SourceBufferActorStatus, SourceBufferActorContext> {
-  /** Exposed for signal-based consumers. Non-signal consumers use snapshot/subscribe. */
-  readonly snapshotSignal: Signal.State<SourceBufferActorSnapshot>;
-  send(message: SourceBufferMessage, signal: AbortSignal): Promise<void>;
-  batch(messages: SourceBufferMessage[], signal: AbortSignal): Promise<void>;
+export interface SignalActor<Status extends string, Context> {
+  readonly snapshot: Signal.ReadonlyState<ActorSnapshot<Status, Context>>;
+  destroy(): void;
 }
 ```
 
-Bridge `snapshot` getter and `subscribe()` from the signal so all existing callers continue
-working:
+The `subscribe()` method and plain-value `snapshot` getter are gone. Tests were updated to call
+`actor.snapshot.get()` and `effect(() => actor.snapshot.get())` directly.
+
+**`Signal.ReadonlyState<T>` module augmentation** (in `core/signals/effect.ts`):
 
 ```ts
-get snapshot() { return snapshotSignal.get(); },
-
-subscribe(listener) {
-  listener(snapshotSignal.get()); // immediate fire, matching current behaviour
-  return effect(() => listener(snapshotSignal.get()));
-},
+declare module 'signal-polyfill' {
+  namespace Signal {
+    type ReadonlyState<T> = Omit<State<T>, 'set'>;
+  }
+}
 ```
+
+Augmenting the `Signal` namespace keeps the type ergonomically consistent with `Signal.State` and
+`Signal.Computed`. The internal `snapshotSignal` is `Signal.State` (writable); the public getter
+returns `Signal.ReadonlyState` (`.set()` omitted by TypeScript), preventing consumers from writing
+actor-internal state.
 
 ### 4. `end-of-stream.ts` — bridge + computed + effect
 
@@ -241,6 +243,18 @@ const unsubState = state.subscribe(v => stateSignal.set(v));
 ```
 This is explicit, localized, and easy to follow. It scales cleanly to incremental migration —
 each feature can bridge independently without any central change.
+
+### `snapshot` IS the signal — no bridge needed
+
+The original plan preserved `snapshot` (plain value getter) and `subscribe()` as bridges so
+existing callers wouldn't need to change. In practice, the call-site changes are mechanical
+(`.snapshot.context` → `.snapshot.get().context`) and the bridge adds indirection with no payoff.
+The cleaner design: `snapshot` IS the signal. Tests, sandbox, and all callers updated directly.
+The `SignalActor` interface formalises this: `snapshot: Signal.ReadonlyState<...>`, no `subscribe`.
+
+`Signal.ReadonlyState<T>` augments the `Signal` namespace (declared in `effect.ts`) rather than
+introducing a separate `ReadonlySignal<T>` alias. This keeps the naming convention consistent with
+`Signal.State` / `Signal.Computed` and makes the relationship to the polyfill obvious.
 
 ### Pre-existing test noise unchanged
 
