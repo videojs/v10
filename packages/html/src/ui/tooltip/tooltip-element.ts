@@ -6,6 +6,7 @@ import {
   createTransition,
   getAnchorNameStyle,
   getAnchorPositionStyle,
+  getPopupPositionRect,
   resolveOffsets,
   type TooltipApi,
   type TooltipChangeDetails,
@@ -50,6 +51,10 @@ export class TooltipElement extends MediaElement {
   #disconnect: AbortController | null = null;
   #triggerAbort: AbortController | null = null;
   #currentTrigger: HTMLElement | null = null;
+  #positionAbort: AbortController | null = null;
+  #positionFrame = 0;
+  #resizeObserver: ResizeObserver | null = null;
+  #positionTrigger: HTMLElement | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -95,6 +100,7 @@ export class TooltipElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.#cleanupPositioning();
     this.#cleanupTrigger();
     this.#tooltip?.destroy();
     this.#tooltip = null;
@@ -151,7 +157,10 @@ export class TooltipElement extends MediaElement {
     }
 
     // Skip positioning when closed — no rects to measure.
-    if (!state.open) return;
+    if (!state.open) {
+      this.#cleanupPositioning();
+      return;
+    }
 
     // Apply positioning styles to self.
     const posOpts = { side: state.side, align: state.align };
@@ -165,7 +174,7 @@ export class TooltipElement extends MediaElement {
     } else {
       // JS fallback: measure rects and resolve CSS var offsets.
       const triggerRect = this.#currentTrigger?.getBoundingClientRect();
-      const selfRect = this.getBoundingClientRect();
+      const selfRect = getPopupPositionRect(this);
       const boundaryRect = document.documentElement.getBoundingClientRect();
       const offsets = resolveOffsets(this, TooltipCSSVars);
       applyStyles(
@@ -173,6 +182,8 @@ export class TooltipElement extends MediaElement {
         getAnchorPositionStyle(this.id, posOpts, triggerRect, selfRect, boundaryRect, offsets, TooltipCSSVars)
       );
     }
+
+    this.#syncPositioning();
   }
 
   // --- Trigger discovery ---
@@ -186,6 +197,7 @@ export class TooltipElement extends MediaElement {
   #syncTrigger(triggerEl: HTMLElement | null): void {
     if (triggerEl === this.#currentTrigger) return;
 
+    this.#cleanupPositioning();
     this.#cleanupTrigger();
     this.#currentTrigger = triggerEl;
     this.#tooltip?.setTriggerElement(triggerEl);
@@ -208,5 +220,50 @@ export class TooltipElement extends MediaElement {
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
+  }
+
+  #syncPositioning(): void {
+    if (supportsAnchorPositioning()) return;
+
+    const triggerEl = this.#currentTrigger;
+
+    if (!triggerEl) return;
+    if (this.#positionAbort && this.#positionTrigger === triggerEl) return;
+
+    this.#cleanupPositioning();
+    this.#positionAbort = new AbortController();
+    this.#positionTrigger = triggerEl;
+    const { signal } = this.#positionAbort;
+
+    const reposition = () => {
+      cancelAnimationFrame(this.#positionFrame);
+      this.#positionFrame = requestAnimationFrame(() => {
+        if (signal.aborted) return;
+        this.requestUpdate();
+      });
+    };
+
+    window.addEventListener('scroll', reposition, { capture: true, passive: true, signal });
+    window.addEventListener('resize', reposition, { signal });
+
+    if (typeof ResizeObserver === 'function') {
+      this.#resizeObserver = new ResizeObserver(() => {
+        reposition();
+      });
+      this.#resizeObserver.observe(triggerEl);
+      this.#resizeObserver.observe(this);
+    }
+
+    reposition();
+  }
+
+  #cleanupPositioning(): void {
+    this.#positionAbort?.abort();
+    this.#positionAbort = null;
+    this.#positionTrigger = null;
+    cancelAnimationFrame(this.#positionFrame);
+    this.#positionFrame = 0;
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = null;
   }
 }

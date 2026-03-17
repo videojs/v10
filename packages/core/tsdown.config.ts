@@ -27,12 +27,15 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',
   },
-  dts: {
-    build: true,
-    // Unified tsconfig covering both core and dom sources.
-    // Needs DOM libs to preserve MediaApiMixin return types.
-    tsconfig: 'tsconfig.dts.json',
-  },
+  dts:
+    mode === 'dev'
+      ? {
+          build: true,
+          // Unified tsconfig covering both core and dom sources.
+          // Needs DOM libs to preserve MediaApiMixin return types.
+          tsconfig: 'tsconfig.dts.json',
+        }
+      : false,
 });
 
 export default defineConfig(buildModes.map((mode) => createConfig(mode)));
