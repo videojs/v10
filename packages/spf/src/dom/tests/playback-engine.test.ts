@@ -658,7 +658,7 @@ http://example.com/seg1.m4s
         expect(videoTrack?.segments).toBeDefined();
 
         // Init segment should be loaded (advances readyState to HAVE_METADATA)
-        expect(engine.owners.current.videoBufferActor?.snapshot.context.initTrackId).toBeDefined();
+        expect(engine.owners.current.videoBufferActor?.snapshot.get().context.initTrackId).toBeDefined();
       },
       { timeout: 2000 }
     );
@@ -1395,7 +1395,7 @@ http://example.com/seg2.m4s
   await vi.waitFor(
     () => {
       // Buffer state now lives in the SourceBufferActor (in owners), not in state.
-      const videoCtx = engine.owners.current.videoBufferActor?.snapshot.context;
+      const videoCtx = engine.owners.current.videoBufferActor?.snapshot.get().context;
 
       // Should have init segment tracked (by track ID)
       expect(videoCtx?.initTrackId).toBeDefined();
@@ -1472,8 +1472,8 @@ http://example.com/audio-seg1.m4s
   await vi.waitFor(
     () => {
       // Buffer state now lives in the SourceBufferActors (in owners), not in state.
-      const videoCtx = engine.owners.current.videoBufferActor?.snapshot.context;
-      const audioCtx = engine.owners.current.audioBufferActor?.snapshot.context;
+      const videoCtx = engine.owners.current.videoBufferActor?.snapshot.get().context;
+      const audioCtx = engine.owners.current.audioBufferActor?.snapshot.get().context;
 
       // Both video and audio actors should exist
       expect(videoCtx).toBeDefined();

@@ -64,7 +64,7 @@ function isLastSegmentAppended(segments: readonly { id: string }[], actor: Sourc
   if (!lastSeg) return false;
   // A partial segment is still streaming — the last segment is not ready until
   // its entry is present and not marked partial.
-  return actor?.snapshot.context.segments.some((s) => s.id === lastSeg.id && !s.partial) ?? false;
+  return actor?.snapshot.get().context.segments.some((s) => s.id === lastSeg.id && !s.partial) ?? false;
 }
 
 /**
@@ -131,8 +131,8 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
   // SourceBufferActors must be idle — setting duration while a SourceBuffer is
   // updating throws InvalidStateError. The actor subscriber in endOfStream() will
   // re-evaluate when each actor transitions back to idle.
-  if (owners.videoBufferActor?.snapshot.status === 'updating') return false;
-  if (owners.audioBufferActor?.snapshot.status === 'updating') return false;
+  if (owners.videoBufferActor?.snapshot.get().status === 'updating') return false;
+  if (owners.audioBufferActor?.snapshot.get().status === 'updating') return false;
 
   // Last segment must be appended for each selected track
   if (!hasLastSegmentLoaded(state, owners)) return false;
@@ -166,7 +166,7 @@ export function shouldEndStream(state: EndOfStreamState, owners: EndOfStreamOwne
  */
 function waitForSourceBuffersReady(owners: EndOfStreamOwners): Promise<void> {
   const updatingActors = [owners.videoBufferActor, owners.audioBufferActor].filter(
-    (actor): actor is SourceBufferActor => actor !== undefined && actor.snapshot.status === 'updating'
+    (actor): actor is SourceBufferActor => actor !== undefined && actor.snapshot.get().status === 'updating'
   );
 
   if (updatingActors.length === 0) return Promise.resolve();
@@ -175,10 +175,20 @@ function waitForSourceBuffersReady(owners: EndOfStreamOwners): Promise<void> {
     updatingActors.map(
       (actor) =>
         new Promise<void>((resolve) => {
-          const unsub = actor.subscribe((snapshot) => {
-            if (snapshot.status !== 'updating') {
-              unsub();
-              resolve();
+          // effect() runs its body synchronously on creation, then re-runs on the
+          // next microtask after any dependency changes. If the actor is already
+          // idle by the time effect() is called, resolve fires immediately and
+          // cleanup is scheduled via queueMicrotask to avoid unwatching during
+          // the watcher notification cycle.
+          let cleanup: (() => void) | undefined;
+          let resolved = false;
+          cleanup = effect(() => {
+            if (actor.snapshot.get().status !== 'updating') {
+              if (!resolved) {
+                resolved = true;
+                resolve();
+              }
+              queueMicrotask(() => cleanup?.());
             }
           });
         })
@@ -264,11 +274,11 @@ export function endOfStream({
   const unsubState = state.subscribe((v) => stateSignal.set(v));
   const unsubOwners = owners.subscribe((v) => ownersSignal.set(v));
 
-  // Derived condition. Transitively tracks through ownersSignal into each
-  // actor's snapshotSignal — when owners changes and points to a new actor,
-  // this computed re-tracks to the new actor's signal on next evaluation.
-  // shouldEndStream reads actor.snapshot.status and actor.snapshot.context.segments,
-  // which delegate to snapshotSignal.get(), so those reads are automatically tracked.
+  // Derived condition. Transitively tracks through ownersSignal into each actor's
+  // snapshot signal — when owners changes and points to a new actor, this computed
+  // re-tracks to the new actor's signal on next evaluation.
+  // shouldEndStream calls actor.snapshot.get() inside the computed body, so those
+  // reads are automatically tracked by the Signal.Computed dependency graph.
   const shouldEnd = new Signal.Computed(() => shouldEndStream(stateSignal.get(), ownersSignal.get()));
 
   let hasEnded = false;

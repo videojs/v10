@@ -122,7 +122,12 @@ export function createSegmentLoaderActor(
   const getBufferedSegments = (allSegments: readonly Segment[]): Segment[] => {
     // Exclude partial segments — they are still being streamed and must not be
     // treated as fully buffered for load planning or buffer window calculations.
-    const bufferedIds = new Set(sourceBufferActor.snapshot.context.segments.filter((s) => !s.partial).map((s) => s.id));
+    const bufferedIds = new Set(
+      sourceBufferActor.snapshot
+        .get()
+        .context.segments.filter((s) => !s.partial)
+        .map((s) => s.id)
+    );
     return allSegments.filter((s) => bufferedIds.has(s.id));
   };
 
@@ -143,7 +148,7 @@ export function createSegmentLoaderActor(
    */
   const planTasks = (message: SegmentLoaderMessage): LoadTask[] => {
     const { track, range } = message;
-    const actorCtx = sourceBufferActor.snapshot.context;
+    const actorCtx = sourceBufferActor.snapshot.get().context;
     const bufferedSegments = getBufferedSegments(track.segments);
     const currentTime = range?.start ?? 0;
     const tasks: LoadTask[] = [];

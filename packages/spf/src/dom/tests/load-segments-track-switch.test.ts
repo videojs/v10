@@ -156,7 +156,7 @@ describe('loadSegments — track switch', () => {
     expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);
 
     // New track-b init should be committed.
-    const ctx = owners.current.videoBufferActor?.snapshot.context;
+    const ctx = owners.current.videoBufferActor?.snapshot.get().context;
     expect(ctx?.initTrackId).toBe('track-b');
 
     // Old track-a segments should be gone: time-aligned deduplication replaces
@@ -208,9 +208,12 @@ describe('loadSegments — track switch', () => {
 
     resolve('https://example.com/track-b-init.mp4');
 
-    await vi.waitFor(() => expect(owners.current.videoBufferActor?.snapshot.context.initTrackId).toBe('track-b'), {
-      timeout: 3000,
-    });
+    await vi.waitFor(
+      () => expect(owners.current.videoBufferActor?.snapshot.get().context.initTrackId).toBe('track-b'),
+      {
+        timeout: 3000,
+      }
+    );
 
     cleanup();
   });

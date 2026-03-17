@@ -339,12 +339,12 @@ describe('loadSegments orchestration (metadata mode)', () => {
 
     await vi.waitFor(
       () => {
-        expect(owners.current.videoBufferActor?.snapshot.context.initTrackId).toBe('track-1');
+        expect(owners.current.videoBufferActor?.snapshot.get().context.initTrackId).toBe('track-1');
       },
       { timeout: 2000 }
     );
 
-    expect(owners.current.videoBufferActor?.snapshot.context.segments.length ?? 0).toBe(0);
+    expect(owners.current.videoBufferActor?.snapshot.get().context.segments.length ?? 0).toBe(0);
 
     cleanup();
   });
@@ -374,7 +374,7 @@ describe('loadSegments orchestration (metadata mode)', () => {
 
     await vi.waitFor(
       () => {
-        expect(owners.current.videoBufferActor?.snapshot.context.initTrackId).toBe('track-1');
+        expect(owners.current.videoBufferActor?.snapshot.get().context.initTrackId).toBe('track-1');
       },
       { timeout: 2000 }
     );
@@ -683,7 +683,7 @@ describe('loadSegments back buffer flushing', () => {
     const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
     const cleanup = loadSegments({ state, owners }, { type: 'video' });
 
-    await vi.waitFor(() => (owners.current.videoBufferActor?.snapshot.context.segments.length ?? 0) > 1, {
+    await vi.waitFor(() => (owners.current.videoBufferActor?.snapshot.get().context.segments.length ?? 0) > 1, {
       timeout: 3000,
     });
 
@@ -729,7 +729,7 @@ describe('loadSegments back buffer flushing', () => {
 
     await vi.waitFor(
       () => {
-        const ids = owners.current.videoBufferActor?.snapshot.context.segments.map((s) => s.id) ?? [];
+        const ids = owners.current.videoBufferActor?.snapshot.get().context.segments.map((s) => s.id) ?? [];
         expect(ids).not.toContain('s1');
         expect(ids).not.toContain('s2');
       },
@@ -856,7 +856,7 @@ describe('loadSegments forward buffer flushing', () => {
 
     await vi.waitFor(
       () => {
-        const ids = owners.current.videoBufferActor?.snapshot.context.segments.map((s) => s.id) ?? [];
+        const ids = owners.current.videoBufferActor?.snapshot.get().context.segments.map((s) => s.id) ?? [];
         expect(ids).not.toContain('s4');
         expect(ids).not.toContain('s5');
         expect(ids).toContain('s1');
@@ -968,7 +968,7 @@ describe('loadSegments byte-range segment fetching', () => {
 
     await vi.waitFor(
       () => {
-        expect(owners.current.videoBufferActor?.snapshot.context.segments).toHaveLength(2);
+        expect(owners.current.videoBufferActor?.snapshot.get().context.segments).toHaveLength(2);
       },
       { timeout: 3000 }
     );
@@ -1019,7 +1019,7 @@ describe('loadSegments byte-range segment fetching', () => {
 
     await vi.waitFor(
       () => {
-        expect(owners.current.videoBufferActor?.snapshot.context.segments).toHaveLength(1);
+        expect(owners.current.videoBufferActor?.snapshot.get().context.segments).toHaveLength(1);
       },
       { timeout: 3000 }
     );
@@ -1102,7 +1102,7 @@ describe('loadSegments bandwidth tracking', () => {
     // Wait for both init and segment to be appended (actor context will have 1 segment)
     await vi.waitFor(
       () => {
-        expect(owners.current.videoBufferActor?.snapshot.context.segments).toHaveLength(1);
+        expect(owners.current.videoBufferActor?.snapshot.get().context.segments).toHaveLength(1);
       },
       { timeout: 3000 }
     );
@@ -1167,7 +1167,7 @@ describe('loadSegments bandwidth tracking', () => {
 
     await vi.waitFor(
       () => {
-        expect(owners.current.videoBufferActor?.snapshot.context.segments).toHaveLength(1);
+        expect(owners.current.videoBufferActor?.snapshot.get().context.segments).toHaveLength(1);
       },
       { timeout: 3000 }
     );

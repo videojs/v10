@@ -1,6 +1,5 @@
 import { Signal } from 'signal-polyfill';
-import type { Actor, ActorSnapshot } from '../../core/actor';
-import { effect } from '../../core/signals/effect';
+import type { ActorSnapshot, SignalActor } from '../../core/actor';
 import { SerialRunner, Task } from '../../core/task';
 import type { Segment, Track } from '../../core/types';
 import { type AppendData, appendSegment } from './append-segment';
@@ -64,12 +63,7 @@ export class SourceBufferActorError extends Error {
 }
 
 /** SourceBuffer actor: queues operations, owns its snapshot. */
-export interface SourceBufferActor extends Actor<SourceBufferActorStatus, SourceBufferActorContext> {
-  /**
-   * The underlying signal for signal-based consumers.
-   * Non-signal consumers should use `snapshot` and `subscribe()` instead.
-   */
-  readonly snapshotSignal: Signal.State<SourceBufferActorSnapshot>;
+export interface SourceBufferActor extends SignalActor<SourceBufferActorStatus, SourceBufferActorContext> {
   send(message: SourceBufferMessage, signal: AbortSignal): Promise<void>;
   batch(messages: SourceBufferMessage[], signal: AbortSignal): Promise<void>;
 }
@@ -263,19 +257,8 @@ export function createSourceBufferActor(
   }
 
   return {
-    get snapshot(): SourceBufferActorSnapshot {
-      return snapshotSignal.get();
-    },
-
-    get snapshotSignal(): Signal.State<SourceBufferActorSnapshot> {
+    get snapshot(): Signal.State<SourceBufferActorSnapshot> {
       return snapshotSignal;
-    },
-
-    subscribe(listener: (snapshot: SourceBufferActorSnapshot) => void): () => void {
-      // effect() runs immediately (synchronous initial call to c.get()), so the
-      // listener fires right away — matching the previous createState.subscribe()
-      // behaviour without an extra explicit call.
-      return effect(() => listener(snapshotSignal.get()));
     },
 
     send(message: SourceBufferMessage, signal: AbortSignal): Promise<void> {
