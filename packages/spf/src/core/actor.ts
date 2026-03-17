@@ -34,8 +34,8 @@ export interface Actor<Status extends string, Context> {
 
 /** Generic actor interface: owns its snapshot and notifies observers. */
 export interface SignalActor<Status extends string, Context> {
-  /** Current snapshot. */
-  readonly snapshot: Signal.State<ActorSnapshot<Status, Context>>;
+  /** Current snapshot. Readable and reactive; not writable by consumers. */
+  readonly snapshot: Signal.ReadonlyState<ActorSnapshot<Status, Context>>;
   /** Tear down the actor. */
   destroy(): void;
 }

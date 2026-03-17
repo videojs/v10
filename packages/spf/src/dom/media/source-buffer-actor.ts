@@ -257,7 +257,7 @@ export function createSourceBufferActor(
   }
 
   return {
-    get snapshot(): Signal.State<SourceBufferActorSnapshot> {
+    get snapshot(): Signal.ReadonlyState<SourceBufferActorSnapshot> {
       return snapshotSignal;
     },
 
