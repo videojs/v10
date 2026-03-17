@@ -60,12 +60,19 @@
   inset-inline: 0.75rem;
   z-index: 10;
   color: var(--media-color-primary, oklch(1 0 0));
-  will-change: scale, transform, filter, opacity;
   transition-timing-function: ease-out;
   transform-origin: bottom;
 
   @media (pointer: fine) {
+    will-change: scale, transform, filter, opacity;
     transition-property: scale, transform, filter, opacity;
+    transition-duration: 100ms;
+    transition-delay: 0ms;
+  }
+
+  @media (pointer: coarse) {
+    will-change: scale, transform, opacity;
+    transition-property: scale, transform, opacity;
     transition-duration: 100ms;
     transition-delay: 0ms;
   }
@@ -74,15 +81,19 @@
     opacity: 0;
     pointer-events: none;
     scale: 0.9;
-    filter: blur(8px);
 
     @media (pointer: fine) {
       transition-duration: 300ms;
       transition-delay: 500ms;
+      filter: blur(8px);
 
       @media (prefers-reduced-motion: reduce) {
         transition-duration: 100ms;
       }
+    }
+
+    @media (pointer: coarse) {
+      transition-duration: 150ms;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -93,8 +104,10 @@
 }
 
 /* Hide cursor when controls are hidden in fullscreen */
-.media-default-skin--video:fullscreen:has(.media-controls:not([data-visible])) {
-  cursor: none;
+@media (pointer: fine) {
+  .media-default-skin--video:fullscreen:has(.media-controls:not([data-visible])) {
+    cursor: none;
+  }
 }
 
 /* ==========================================================================
@@ -117,6 +130,7 @@
   transition-property: scale, opacity, filter;
   transition-duration: 150ms;
   transform-origin: bottom;
+  pointer-events: none;
 
   & .media-preview__thumbnail {
     max-width: 11rem;
