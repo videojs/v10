@@ -50,6 +50,7 @@ import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
+import type { RenderProp } from '@/utils/types';
 import { ErrorDialog } from './error-dialog';
 import type { MinimalVideoSkinProps } from './minimal-skin';
 
@@ -108,6 +109,16 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
   );
 });
 
+const renderMuteButton: RenderProp<MuteButton.State> = (props) => {
+  return (
+    <Button variant="icon" {...props} className={iconState.mute.button}>
+      <VolumeOffIcon className={cn(icon, iconState.mute.volumeOff)} />
+      <VolumeLowIcon className={cn(icon, iconState.mute.volumeLow)} />
+      <VolumeHighIcon className={cn(icon, iconState.mute.volumeHigh)} />
+    </Button>
+  );
+};
+
 const errorClasses = {
   root: error.root,
   dialog: error.dialog,
@@ -143,6 +154,7 @@ function FullscreenLabel(): ReactNode {
 
 export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNode {
   const { children, className, ...rest } = props;
+  const canShowVolumePopover = usePlayer((s) => s.volumeAvailability === 'available');
 
   return (
     <Container className={cn(root(false), className)} {...rest}>
@@ -257,33 +269,25 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
               <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
             </Tooltip.Root>
 
-            <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
-              <Popover.Trigger
-                render={
-                  <MuteButton
-                    render={(props) => (
-                      <Button variant="icon" {...props} className={iconState.mute.button}>
-                        <VolumeOffIcon className={cn(icon, iconState.mute.volumeOff)} />
-                        <VolumeLowIcon className={cn(icon, iconState.mute.volumeLow)} />
-                        <VolumeHighIcon className={cn(icon, iconState.mute.volumeHigh)} />
-                      </Button>
-                    )}
-                  />
-                }
-              />
-              <Popover.Popup className={cn(popup.volume)}>
-                <VolumeSlider.Root
-                  orientation="vertical"
-                  thumbAlignment="edge"
-                  render={(props) => <SliderRoot {...props} />}
-                >
-                  <VolumeSlider.Track render={(props) => <SliderTrack {...props} />}>
-                    <VolumeSlider.Fill render={(props) => <SliderFill {...props} />} />
-                  </VolumeSlider.Track>
-                  <VolumeSlider.Thumb render={(props) => <SliderThumb persistent {...props} />} />
-                </VolumeSlider.Root>
-              </Popover.Popup>
-            </Popover.Root>
+            {canShowVolumePopover ? (
+              <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+                <Popover.Trigger render={<MuteButton render={renderMuteButton} />} />
+                <Popover.Popup className={cn(popup.volume)}>
+                  <VolumeSlider.Root
+                    orientation="vertical"
+                    thumbAlignment="edge"
+                    render={(props) => <SliderRoot {...props} />}
+                  >
+                    <VolumeSlider.Track render={(props) => <SliderTrack {...props} />}>
+                      <VolumeSlider.Fill render={(props) => <SliderFill {...props} />} />
+                    </VolumeSlider.Track>
+                    <VolumeSlider.Thumb render={(props) => <SliderThumb persistent {...props} />} />
+                  </VolumeSlider.Root>
+                </Popover.Popup>
+              </Popover.Root>
+            ) : (
+              <MuteButton render={renderMuteButton} />
+            )}
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger

@@ -40,7 +40,7 @@ import { selectVolume, usePlayer } from '@videojs/react';
 
 function VolumeSlider() {
   const vol = usePlayer(selectVolume);
-  if (!vol) return null;
+  if (!vol || vol.volumeAvailability !== 'available') return null;
 
   return (
     <input
@@ -65,6 +65,10 @@ const { PlayerController, context } = createPlayer({ features: videoFeatures });
 
 class VolumeSlider extends MediaElement {
   readonly #volume = new PlayerController(this, context, selectVolume);
+
+  get availability(): string | undefined {
+    return this.#volume.value?.volumeAvailability;
+  }
 }
 ```
 </FrameworkCase>

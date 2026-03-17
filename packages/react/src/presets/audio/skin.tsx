@@ -19,6 +19,7 @@ import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
+import type { RenderProp } from '@/utils/types';
 import type { BaseSkinProps } from '../types';
 
 const SEEK_TIME = 10;
@@ -29,6 +30,16 @@ const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function 
   return <button ref={ref} type="button" className={cn('media-button', className)} {...props} />;
 });
 
+const renderMuteButton: RenderProp<MuteButton.State> = (props) => {
+  return (
+    <Button {...props} className="media-button--icon media-button--mute">
+      <VolumeOffIcon className="media-icon media-icon--volume-off" />
+      <VolumeLowIcon className="media-icon media-icon--volume-low" />
+      <VolumeHighIcon className="media-icon media-icon--volume-high" />
+    </Button>
+  );
+};
+
 function PlayLabel(): ReactNode {
   const paused = usePlayer((s) => Boolean(s.paused));
   const ended = usePlayer((s) => Boolean(s.ended));
@@ -38,6 +49,7 @@ function PlayLabel(): ReactNode {
 
 export function AudioSkin(props: AudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
+  const canShowVolumePopover = usePlayer((s) => s.volumeAvailability === 'available');
 
   return (
     <Container className={cn('media-default-skin media-default-skin--audio', className)} {...rest}>
@@ -125,29 +137,21 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
             <Tooltip.Popup className="media-surface media-tooltip">Toggle playback rate</Tooltip.Popup>
           </Tooltip.Root>
 
-          <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
-            <Popover.Trigger
-              render={
-                <MuteButton
-                  render={(props) => (
-                    <Button {...props} className="media-button--icon media-button--mute">
-                      <VolumeOffIcon className="media-icon media-icon--volume-off" />
-                      <VolumeLowIcon className="media-icon media-icon--volume-low" />
-                      <VolumeHighIcon className="media-icon media-icon--volume-high" />
-                    </Button>
-                  )}
-                />
-              }
-            />
-            <Popover.Popup className="media-surface media-popover media-popover--volume">
-              <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
-                <VolumeSlider.Track className="media-slider__track">
-                  <VolumeSlider.Fill className="media-slider__fill" />
-                </VolumeSlider.Track>
-                <VolumeSlider.Thumb className="media-slider__thumb media-slider__thumb--persistent" />
-              </VolumeSlider.Root>
-            </Popover.Popup>
-          </Popover.Root>
+          {canShowVolumePopover ? (
+            <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+              <Popover.Trigger render={<MuteButton render={renderMuteButton} />} />
+              <Popover.Popup className="media-surface media-popover media-popover--volume">
+                <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
+                  <VolumeSlider.Track className="media-slider__track">
+                    <VolumeSlider.Fill className="media-slider__fill" />
+                  </VolumeSlider.Track>
+                  <VolumeSlider.Thumb className="media-slider__thumb media-slider__thumb--persistent" />
+                </VolumeSlider.Root>
+              </Popover.Popup>
+            </Popover.Root>
+          ) : (
+            <MuteButton render={renderMuteButton} />
+          )}
         </Tooltip.Provider>
       </div>
     </Container>

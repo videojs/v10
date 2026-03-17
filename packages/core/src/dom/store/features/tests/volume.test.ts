@@ -1,8 +1,19 @@
 import { createStore } from '@videojs/store';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PlayerTarget } from '../../../media/types';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { volumeFeature } from '../volume';
+
+async function flushProbe(): Promise<void> {
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
+  await Promise.resolve();
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('volumeFeature', () => {
   describe('attach', () => {
@@ -19,13 +30,47 @@ describe('volumeFeature', () => {
       expect(store.state.muted).toBe(false);
     });
 
-    it('sets volumeAvailability on attach', () => {
+    it('starts unavailable, then resolves volumeAvailability on attach', async () => {
       const video = createMockVideo({});
       const store = createStore<PlayerTarget>()(volumeFeature);
       store.attach({ media: video, container: null });
 
-      // Should be 'available' or 'unsupported' based on browser capability
+      expect(store.state.volumeAvailability).toBe('unavailable');
+
+      await flushProbe();
+
       expect(['available', 'unsupported']).toContain(store.state.volumeAvailability);
+    });
+
+    it('reports unsupported volume availability when the probe value does not stick', async () => {
+      const originalCreateElement = document.createElement.bind(document);
+
+      vi.spyOn(document, 'createElement').mockImplementation((tagName, options) => {
+        const element = originalCreateElement(tagName, options);
+
+        if (tagName !== 'video') return element;
+
+        let volume = 1;
+        Object.defineProperty(element, 'volume', {
+          configurable: true,
+          get() {
+            return volume;
+          },
+          set(_value: number) {
+            volume = 1;
+          },
+        });
+
+        return element;
+      });
+
+      const video = createMockVideo({});
+      const store = createStore<PlayerTarget>()(volumeFeature);
+      store.attach({ media: video, container: null });
+
+      await flushProbe();
+
+      expect(store.state.volumeAvailability).toBe('unsupported');
     });
 
     it('updates on volumechange event', () => {

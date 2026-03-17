@@ -53,6 +53,7 @@ describe('VolumeSliderCore', () => {
       expect(state.value).toBe(75);
       expect(state.fillPercent).toBe(75);
       expect(state.volume).toBe(0.75);
+      expect(state.availability).toBe('available');
     });
 
     it('returns 0 when volume is 0', () => {
@@ -114,6 +115,15 @@ describe('VolumeSliderCore', () => {
 
       expect(state.muted).toBe(true);
       expect(state.fillPercent).toBe(0);
+    });
+
+    it('projects unsupported volume availability', () => {
+      const core = new VolumeSliderCore();
+      core.setInput(createInput());
+      core.setMedia(createMediaState({ volumeAvailability: 'unsupported' }));
+      const state = core.getState();
+
+      expect(state.availability).toBe('unsupported');
     });
   });
 

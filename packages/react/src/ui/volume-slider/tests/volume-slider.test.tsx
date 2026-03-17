@@ -1,4 +1,5 @@
 import { cleanup, render } from '@testing-library/react';
+import type { MediaVolumeState } from '@videojs/core/dom';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -39,10 +40,10 @@ const { mockSliderApi, mockVolumeState } = vi.hoisted(() => ({
   mockVolumeState: {
     volume: 0.8,
     muted: false,
-    volumeAvailability: 'available' as const,
+    volumeAvailability: 'available',
     setVolume: vi.fn(),
     toggleMuted: vi.fn(),
-  },
+  } satisfies MediaVolumeState,
 }));
 
 // --- Module mocks ---
@@ -57,16 +58,12 @@ vi.mock('@videojs/store/react', () => ({
   useStore: vi.fn((_store: unknown, selector?: (state: object) => unknown) => {
     if (!selector) return _store;
     try {
-      const result = selector({ volume: mockVolumeState });
+      const result = selector(mockVolumeState);
       if (result !== undefined) return result;
     } catch {
       // fall through
     }
-    try {
-      return selector(mockVolumeState);
-    } catch {
-      return undefined;
-    }
+    return undefined;
   }),
 }));
 
@@ -134,6 +131,40 @@ describe('VolumeSliderRoot', () => {
     const el = container.querySelector('[data-orientation]') as HTMLElement;
     expect(el?.style.getPropertyValue('--media-slider-fill')).toBeTruthy();
     expect(el?.style.getPropertyValue('--media-slider-pointer')).toBeTruthy();
+  });
+
+  it('sets data-availability from the volume feature', () => {
+    const { Wrapper } = createPlayerWrapper();
+    mockVolumeState.volumeAvailability = 'unsupported';
+
+    const { container } = render(
+      <Wrapper>
+        <VolumeSliderRoot />
+      </Wrapper>
+    );
+
+    const el = container.querySelector('[data-orientation]');
+    expect(el?.getAttribute('data-availability')).toBe('unsupported');
+
+    mockVolumeState.volumeAvailability = 'available';
+  });
+
+  it('exposes availability to render state', () => {
+    const { Wrapper } = createPlayerWrapper();
+    mockVolumeState.volumeAvailability = 'unsupported';
+
+    const { container } = render(
+      <Wrapper>
+        <VolumeSliderRoot
+          render={(props, state) => <div {...props} data-testid="vol-slider" data-state={state.availability} />}
+        />
+      </Wrapper>
+    );
+
+    const el = container.querySelector('[data-testid="vol-slider"]');
+    expect(el?.getAttribute('data-state')).toBe('unsupported');
+
+    mockVolumeState.volumeAvailability = 'available';
   });
 });
 

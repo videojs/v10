@@ -45,7 +45,10 @@ export const volumeFeature = definePlayerFeature({
   attach({ target, signal, set }) {
     const { media } = target;
 
-    set({ volumeAvailability: canSetVolume() });
+    detectVolumeAvailability().then((volumeAvailability) => {
+      if (signal.aborted) return;
+      set({ volumeAvailability });
+    });
 
     const sync = () => set({ volume: media.volume, muted: media.muted });
     sync();
@@ -54,13 +57,33 @@ export const volumeFeature = definePlayerFeature({
   },
 });
 
-/** Check if volume can be programmatically set (fails on iOS Safari). */
-function canSetVolume(): MediaFeatureAvailability {
+function detectVolumeAvailability(): Promise<MediaFeatureAvailability> {
+  return probeVolumeAvailability().catch(() => 'unsupported');
+}
+
+async function probeVolumeAvailability(): Promise<MediaFeatureAvailability> {
   const video = document.createElement('video');
+  const parent = document.body ?? document.documentElement;
+  const initialVolume = video.volume;
+  const nextVolume = initialVolume === 0.5 ? 0.25 : 0.5;
+
+  video.muted = true;
+  video.preload = 'none';
+  video.playsInline = true;
+  video.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none;';
+  parent?.append(video);
+
   try {
-    video.volume = 0.5;
-    return video.volume === 0.5 ? 'available' : 'unsupported';
-  } catch {
-    return 'unsupported';
+    video.volume = nextVolume;
+    await waitForProbeFrame();
+    return video.volume === nextVolume ? 'available' : 'unsupported';
+  } finally {
+    video.remove();
   }
+}
+
+function waitForProbeFrame(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
 }

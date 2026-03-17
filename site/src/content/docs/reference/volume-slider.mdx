@@ -39,6 +39,8 @@ import withPartsHtmlTs from "@/components/docs/demos/volume-slider/html/css/With
 
 Controls the media volume level. The slider maps its 0–100 internal range to the media's 0–1 volume scale. When the media is muted, the fill level drops to 0 regardless of the stored volume value.
 
+The root also reflects volume control availability with `data-availability`. On platforms where volume cannot be changed programmatically, such as iOS, the slider exposes `data-availability="unsupported"`.
+
 ## Styling
 
 Use [CSS custom properties](#root-css-custom-properties) to style the fill and pointer levels:
@@ -57,6 +59,24 @@ React renders a `<div>` element. Add a `className` to style it:
 ```css
 .volume-slider::before {
   width: calc(var(--media-slider-fill) * 1%);
+}
+```
+</FrameworkCase>
+
+You can also hide the slider when volume control is unavailable:
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-volume-slider[data-availability="unsupported"] {
+  display: none;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+.volume-slider[data-availability="unsupported"] {
+  display: none;
 }
 ```
 </FrameworkCase>

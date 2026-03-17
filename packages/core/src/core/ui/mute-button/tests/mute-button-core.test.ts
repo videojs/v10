@@ -17,6 +17,7 @@ function createMediaState(overrides: Partial<MediaVolumeState> = {}): MediaVolum
 
 function createState(overrides: Partial<MuteButtonState> = {}): MuteButtonState {
   return {
+    availability: 'available',
     muted: false,
     volumeLevel: 'high',
     ...overrides,
@@ -31,6 +32,7 @@ describe('MuteButtonCore', () => {
       core.setMedia(media);
       const state = core.getState();
 
+      expect(state.availability).toBe('available');
       expect(state.muted).toBe(false);
       expect(state.volumeLevel).toBe('high');
     });

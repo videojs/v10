@@ -31,6 +31,7 @@ import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
+import type { RenderProp } from '@/utils/types';
 import type { BaseSkinProps } from '../types';
 import { ErrorDialog } from './error-dialog';
 
@@ -41,6 +42,16 @@ export type MinimalVideoSkinProps = BaseSkinProps;
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
   return <button ref={ref} type="button" className={cn('media-button', className)} {...props} />;
 });
+
+const renderMuteButton: RenderProp<MuteButton.State> = (props) => {
+  return (
+    <Button {...props} className="media-button--icon media-button--mute">
+      <VolumeOffIcon className="media-icon media-icon--volume-off" />
+      <VolumeLowIcon className="media-icon media-icon--volume-low" />
+      <VolumeHighIcon className="media-icon media-icon--volume-high" />
+    </Button>
+  );
+};
 
 const errorClasses = {
   root: 'media-error',
@@ -76,6 +87,7 @@ function FullscreenLabel(): ReactNode {
 
 export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
   const { children, className, ...rest } = props;
+  const canShowVolumePopover = usePlayer((s) => s.volumeAvailability === 'available');
 
   return (
     <Container className={cn('media-minimal-skin media-minimal-skin--video', className)} {...rest}>
@@ -188,29 +200,21 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
               <Tooltip.Popup className="media-tooltip">Toggle playback rate</Tooltip.Popup>
             </Tooltip.Root>
 
-            <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
-              <Popover.Trigger
-                render={
-                  <MuteButton
-                    render={(props) => (
-                      <Button {...props} className="media-button--icon media-button--mute">
-                        <VolumeOffIcon className="media-icon media-icon--volume-off" />
-                        <VolumeLowIcon className="media-icon media-icon--volume-low" />
-                        <VolumeHighIcon className="media-icon media-icon--volume-high" />
-                      </Button>
-                    )}
-                  />
-                }
-              />
-              <Popover.Popup className="media-popover media-popover--volume">
-                <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
-                  <VolumeSlider.Track className="media-slider__track">
-                    <VolumeSlider.Fill className="media-slider__fill" />
-                  </VolumeSlider.Track>
-                  <VolumeSlider.Thumb className="media-slider__thumb media-slider__thumb--persistent" />
-                </VolumeSlider.Root>
-              </Popover.Popup>
-            </Popover.Root>
+            {canShowVolumePopover ? (
+              <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+                <Popover.Trigger render={<MuteButton render={renderMuteButton} />} />
+                <Popover.Popup className="media-popover media-popover--volume">
+                  <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
+                    <VolumeSlider.Track className="media-slider__track">
+                      <VolumeSlider.Fill className="media-slider__fill" />
+                    </VolumeSlider.Track>
+                    <VolumeSlider.Thumb className="media-slider__thumb media-slider__thumb--persistent" />
+                  </VolumeSlider.Root>
+                </Popover.Popup>
+              </Popover.Root>
+            ) : (
+              <MuteButton render={renderMuteButton} />
+            )}
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger

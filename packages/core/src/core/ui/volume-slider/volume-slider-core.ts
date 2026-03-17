@@ -13,7 +13,10 @@ export interface VolumeSliderProps extends SliderProps {
   max?: number | undefined;
 }
 
-export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, 'volume' | 'muted'> {}
+export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, 'volume' | 'muted'> {
+  /** Whether volume can be programmatically set on this platform. */
+  availability: MediaVolumeState['volumeAvailability'];
+}
 
 /** Volume-domain slider: maps media volume/mute state to slider state. */
 export class VolumeSliderCore extends SliderCore {
@@ -51,6 +54,7 @@ export class VolumeSliderCore extends SliderCore {
       fillPercent: effectivelyMuted ? 0 : base.fillPercent,
       volume,
       muted: effectivelyMuted,
+      availability: media.volumeAvailability,
     };
   }
 

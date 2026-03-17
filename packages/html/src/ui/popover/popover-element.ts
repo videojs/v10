@@ -139,7 +139,13 @@ export class PopoverElement extends MediaElement {
 
     // Discover trigger via commandfor linkage.
     const triggerEl = this.#findTrigger();
-    this.#syncTrigger(triggerEl);
+    const availableTriggerEl = this.#isTriggerAvailable(triggerEl) ? triggerEl : null;
+    this.toggleAttribute('hidden', !availableTriggerEl);
+    this.#syncTrigger(availableTriggerEl);
+
+    if (!availableTriggerEl && this.#popover.input.current.active) {
+      this.#popover.close();
+    }
 
     // Derive state from core + input.
     const input = this.#popover.input.current;
@@ -152,6 +158,12 @@ export class PopoverElement extends MediaElement {
 
     // Show/hide via Popover API AFTER data attributes are applied so
     // `data-starting-style` is present before the first visible frame.
+    if (!availableTriggerEl) {
+      tryHidePopover(this);
+      this.#cleanupPositioning();
+      return;
+    }
+
     if (state.open) {
       tryShowPopover(this);
     } else {
@@ -194,6 +206,13 @@ export class PopoverElement extends MediaElement {
     if (!this.id) return null;
     const root = this.getRootNode() as Document | ShadowRoot;
     return root.querySelector<HTMLElement>(`[commandfor="${this.id}"]`);
+  }
+
+  #isTriggerAvailable(triggerEl: HTMLElement | null): triggerEl is HTMLElement {
+    if (!triggerEl) return false;
+
+    const availability = triggerEl.getAttribute('data-availability');
+    return !availability || availability === 'available';
   }
 
   #syncTrigger(triggerEl: HTMLElement | null): void {

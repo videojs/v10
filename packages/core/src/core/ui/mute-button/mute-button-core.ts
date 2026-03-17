@@ -14,6 +14,7 @@ export interface MuteButtonProps {
 }
 
 export interface MuteButtonState extends Pick<MediaVolumeState, 'muted'> {
+  availability: MediaVolumeState['volumeAvailability'];
   /**
    * Derived volume level:
    * - `off`: muted or volume is 0
@@ -68,6 +69,7 @@ export class MuteButtonCore {
   getState(): MuteButtonState {
     const media = this.#media!;
     return {
+      availability: media.volumeAvailability,
       muted: media.muted || media.volume === 0,
       volumeLevel: getVolumeLevel(media),
     };
