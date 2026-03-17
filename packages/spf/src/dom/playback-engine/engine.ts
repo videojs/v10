@@ -328,7 +328,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     loadSegments({ state, owners }, { type: 'audio' }),
 
     // 6.5. Signal end of stream when all segments loaded
-    endOfStream({ state, owners }),
+    endOfStream({ state: stateSignal, owners: ownersSignal }),
 
     // 7. Setup text tracks (when mediaElement and presentation ready)
     setupTextTracks({ state, owners }),

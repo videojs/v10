@@ -1,6 +1,5 @@
 import { Signal } from 'signal-polyfill';
 import { effect } from '../../core/signals/effect';
-import type { WritableState } from '../../core/state/create-state';
 import type { Presentation } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
@@ -263,29 +262,21 @@ export function endOfStream({
   state,
   owners,
 }: {
-  state: WritableState<EndOfStreamState>;
-  owners: WritableState<EndOfStreamOwners>;
+  state: Signal.ReadonlyState<EndOfStreamState>;
+  owners: Signal.ReadonlyState<EndOfStreamOwners>;
 }): () => void {
-  // Bridge WritableState → Signal so computed() can track through them.
-  // The bridge is explicit and localized here; state/owners remain WritableState
-  // everywhere else in the codebase.
-  const stateSignal = new Signal.State(state.current);
-  const ownersSignal = new Signal.State(owners.current);
-  const unsubState = state.subscribe((v) => stateSignal.set(v));
-  const unsubOwners = owners.subscribe((v) => ownersSignal.set(v));
-
-  // Derived condition. Transitively tracks through ownersSignal into each actor's
+  // Derived condition. Transitively tracks through owners into each actor's
   // snapshot signal — when owners changes and points to a new actor, this computed
   // re-tracks to the new actor's signal on next evaluation.
   // shouldEndStream calls actor.snapshot.get() inside the computed body, so those
   // reads are automatically tracked by the Signal.Computed dependency graph.
-  const shouldEnd = new Signal.Computed(() => shouldEndStream(stateSignal.get(), ownersSignal.get()));
+  const shouldEnd = new Signal.Computed(() => shouldEndStream(state.get(), owners.get()));
 
   let hasEnded = false;
 
   const cleanupEffect = effect(() => {
     if (!shouldEnd.get()) return;
-    const currentOwners = ownersSignal.get();
+    const currentOwners = owners.get();
     if (hasEnded) {
       // Per the MSE spec, calling appendBuffer() on a SourceBuffer when
       // readyState is 'ended' automatically transitions it back to 'open'.
@@ -301,9 +292,5 @@ export function endOfStream({
     endOfStreamTask({ currentOwners }, {}).catch((error) => console.error('Failed to call endOfStream:', error));
   });
 
-  return () => {
-    cleanupEffect();
-    unsubState();
-    unsubOwners();
-  };
+  return cleanupEffect;
 }
