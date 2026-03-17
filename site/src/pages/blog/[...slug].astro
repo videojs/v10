@@ -56,12 +56,11 @@ const jsonLdSchema = createBlogPostingSchema({
   <JsonLd slot="head" schema={jsonLdSchema} />
   <article
     class="@container"
-    data-pagefind-body
+    data-search-content
     data-llms-content
     data-llms-description={post.data.description}
     data-llms-sort={post.data.pubDate.toISOString()}
     data-site="blog"
-    data-pagefind-filter="site[data-site]"
   >
     <header
       class="relative mx-auto mb-10 max-w-3xl border-y border-faded-black py-10 dark:border-manila-light"
@@ -69,12 +68,9 @@ const jsonLdSchema = createBlogPostingSchema({
       <div
         class="mb-3 flex flex-col gap-2 font-display text-h4 font-bold text-orange uppercase sm:flex-row sm:gap-4"
       >
-        <FormattedDate
-          data-pagefind-sort={`date:${post.data.pubDate.toISOString()}`}
-          date={post.data.pubDate}
-        />
+        <FormattedDate date={post.data.pubDate} />
         <span class="hidden sm:inline">&bull;</span>
-        <span data-pagefind-ignore data-llms-ignore
+        <span data-search-ignore data-llms-ignore
           >{remarkPluginFrontmatter.minutesRead}</span
         >
       </div>
@@ -91,7 +87,6 @@ const jsonLdSchema = createBlogPostingSchema({
                 <a
                   href={`/blog/authors/${authors.find((a) => a.data.name === part.value)?.id}`}
                   class="inline-block intent:underline"
-                  data-pagefind-meta="author"
                 >
                   {part.value}
                 </a>

@@ -11,7 +11,6 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, envField, fontProviders } from 'astro/config';
 import svgr from 'vite-plugin-svgr';
 import llmsMarkdown from './integrations/llms-markdown';
-import pagefind from './integrations/pagefind';
 import rehypePrepareCodeBlocks from './src/utils/rehypePrepareCodeBlocks';
 import remarkConditionalHeadings from './src/utils/remarkConditionalHeadings';
 import { remarkReadingTime } from './src/utils/remarkReadingTime.mjs';
@@ -77,7 +76,6 @@ export default defineConfig({
         `${SITE_URL}/docs/framework/react/llms.txt`,
       ],
     }),
-    pagefind(),
     llmsMarkdown(),
     react({
       babel: {

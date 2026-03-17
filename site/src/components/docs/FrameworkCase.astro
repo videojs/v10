@@ -30,7 +30,7 @@ const shouldRender = !frameworks || frameworks.includes(framework as SupportedFr
 <div
   class="contents"
   hidden={!shouldRender}
-  data-pagefind-ignore={shouldRender ? undefined : "all"}
+  data-search-ignore={shouldRender ? undefined : "all"}
   data-llms-ignore={shouldRender ? undefined : "all"}
 >
   <slot />
