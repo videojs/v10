@@ -2,7 +2,7 @@ import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PlayerTarget } from '../../../media/types';
 import { createMockVideo } from '../../../tests/test-helpers';
-import { volumeFeature } from '../volume';
+import { resetVolumeAvailabilityCache, volumeFeature } from '../volume';
 
 async function flushProbe(): Promise<void> {
   await new Promise<void>((resolve) => {
@@ -13,6 +13,7 @@ async function flushProbe(): Promise<void> {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  resetVolumeAvailabilityCache();
 });
 
 describe('volumeFeature', () => {
