@@ -1,38 +1,13 @@
 import type { Skin } from '@app/types';
-import { createWebStorageStore } from '@app/utils/create-web-storage-store';
+import { skinStore, sourceStore } from '@app/utils/stores';
 import { DEFAULT_AUDIO_SOURCE, SOURCES, type SourceId } from './sources';
-
-const params = new URLSearchParams(window.location.search);
-
-const skinStore = createWebStorageStore<Skin>('local', 'skin', 'default');
-const sourceStore = createWebStorageStore<SourceId>('local', 'source', 'hls-1');
-
-// Apply query param overrides to localStorage so they persist
-const skinParam = params.get('skin') as Skin | null;
-if (skinParam) skinStore.setValue(skinParam);
-
-const sourceParam = params.get('source') as SourceId | null;
-if (sourceParam) sourceStore.setValue(sourceParam);
 
 export function getInitialSkin(): Skin {
   return skinStore.getSnapshot();
 }
 
 export function onSkinChange(callback: (skin: Skin) => void): () => void {
-  const unsubStore = skinStore.subscribe(() => callback(skinStore.getSnapshot()));
-
-  const handler = (event: MessageEvent) => {
-    if (event.data?.type === 'skin-change' && event.data.skin !== skinStore.getSnapshot()) {
-      skinStore.setValue(event.data.skin);
-    }
-  };
-
-  window.addEventListener('message', handler);
-
-  return () => {
-    unsubStore();
-    window.removeEventListener('message', handler);
-  };
+  return skinStore.subscribe(() => callback(skinStore.getSnapshot()));
 }
 
 export function getInitialSource(audioOnly?: boolean): SourceId {
@@ -46,18 +21,5 @@ export function getInitialSource(audioOnly?: boolean): SourceId {
 }
 
 export function onSourceChange(callback: (source: SourceId) => void): () => void {
-  const unsubStore = sourceStore.subscribe(() => callback(sourceStore.getSnapshot()));
-
-  const handler = (event: MessageEvent) => {
-    if (event.data?.type === 'source-change' && event.data.source !== sourceStore.getSnapshot()) {
-      sourceStore.setValue(event.data.source);
-    }
-  };
-
-  window.addEventListener('message', handler);
-
-  return () => {
-    unsubStore();
-    window.removeEventListener('message', handler);
-  };
+  return sourceStore.subscribe(() => callback(sourceStore.getSnapshot()));
 }

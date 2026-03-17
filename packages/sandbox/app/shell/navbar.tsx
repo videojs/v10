@@ -16,7 +16,6 @@ type NavbarProps = {
   availableSources: readonly SourceId[];
   isBackgroundVideo: boolean;
   isSimpleHlsVideo: boolean;
-  isDashVideo: boolean;
   platforms: readonly Platform[];
   stylings: readonly Styling[];
   presets: readonly Preset[];
@@ -53,7 +52,6 @@ export function Navbar({
   availableSources,
   isBackgroundVideo,
   isSimpleHlsVideo,
-  isDashVideo,
   platforms,
   stylings,
   presets,
@@ -82,7 +80,7 @@ export function Navbar({
           options={stylings.map((s) => ({
             value: s,
             label: s === 'css' ? 'CSS' : 'Tailwind',
-            disabled: s === 'tailwind' && (isBackgroundVideo || isDashVideo),
+            disabled: s === 'tailwind' && isBackgroundVideo,
           }))}
         />
 
