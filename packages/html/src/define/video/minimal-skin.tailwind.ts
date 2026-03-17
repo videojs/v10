@@ -11,6 +11,7 @@ import {
   iconState,
   overlay,
   popup,
+  preview,
   root,
   seek,
   slider,
@@ -51,7 +52,7 @@ function getTemplateHTML() {
       </media-buffering-indicator>
 
       <media-controls data-controls="" class="${controls}">
-        <media-tooltip-group class="contents">
+        <media-tooltip-group>
           <div class="${buttonGroup}">
             <span class="${tooltipState.play.wrapper}">
               <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.icon, iconState.play.button)}">
@@ -100,6 +101,14 @@ function getTemplateHTML() {
                 <media-slider-buffer class="${cn(slider.fill.base, slider.fill.buffer)}"></media-slider-buffer>
               </media-slider-track>
               <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.interactive)}"></media-slider-thumb>
+
+              <div class="${preview.root}">
+                <div class="${preview.thumbnailWrapper}">
+                  <media-slider-thumbnail class="${preview.thumbnail}"></media-slider-thumbnail>
+                </div>
+                <media-slider-value type="pointer" class="${preview.timestamp}"></media-slider-value>
+                ${renderIcon('spinner', { class: cn(icon, preview.spinner) })}
+              </div>
             </media-time-slider>
           </div>
 

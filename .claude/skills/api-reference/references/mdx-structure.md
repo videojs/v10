@@ -121,7 +121,9 @@ Toggles mute on and off. Exposes a derived `volumeLevel` based on the current vo
 
 ### Styling
 
-Show data attributes as a table, then CSS selector patterns:
+**IMPORTANT:** All CSS code blocks in Styling sections MUST be wrapped in `<FrameworkCase>` blocks. HTML examples use custom element selectors (`media-mute-button`), React examples use className-based selectors (`.mute-button`). Never show bare CSS without a framework wrapper — React users should not see HTML element selectors and vice versa.
+
+Show data attributes as a table, then framework-specific CSS selector patterns:
 
 ```mdx
 ## Styling
@@ -133,9 +135,19 @@ Show data attributes as a table, then CSS selector patterns:
 
 Use `data-volume-level` for multi-level icon switching:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 media-mute-button[data-volume-level="off"] .icon-off { display: inline; }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders standard DOM elements with the same data attributes. Add a `className` and use it as the selector:
+
+```css
+.mute-button[data-volume-level="off"] .icon-off { display: inline; }
+```
+</FrameworkCase>
 ```
 
 ### Accessibility

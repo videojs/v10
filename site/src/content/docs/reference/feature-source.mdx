@@ -1,0 +1,61 @@
+---
+title: Source
+description: Media source state and actions for the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Tracks the current media source and readiness.
+
+## State
+
+| State | Type | Description |
+|---|---|---|
+| `source` | `string \| null` | Current media source URL |
+| `canPlay` | `boolean` | Whether enough data is loaded to begin playback |
+
+## Actions
+
+| Action | Description |
+|---|---|
+| `loadSource(src)` | Load a new media source |
+
+## Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectSource` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to source state. Returns `undefined` if the source feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectSource` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to source state. Returns `undefined` if the source feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="SourceInfo.tsx"
+import { selectSource, usePlayer } from '@videojs/react';
+
+function SourceInfo() {
+  const source = usePlayer(selectSource);
+  if (!source) return null;
+
+  return <span>{source.src}</span>;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="source-info.ts"
+import { createPlayer, MediaElement, selectSource } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
+
+class SourceInfo extends MediaElement {
+  readonly #source = new PlayerController(this, context, selectSource);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectSource" />

@@ -308,6 +308,104 @@ describe('createThumbnail', () => {
 
       handle.destroy();
     });
+
+    it('React lifecycle: updateSrc before img available, then connect after mount', () => {
+      let img: HTMLImageElement | null = null;
+      const onStateChange = vi.fn();
+
+      const handle = createThumbnail(
+        createOptions({
+          getImg: () => img,
+          onStateChange,
+        })
+      );
+
+      // 1. Render phase: updateSrc called but img ref is null (not mounted yet).
+      handle.updateSrc('sprite.jpg');
+      expect(handle.loading).toBe(true);
+
+      // 2. Commit phase: img becomes available (React sets ref) but image is still loading.
+      img = document.createElement('img');
+      // Simulate a loading image: in a real browser, an img with src set is !complete
+      // while the network request is in flight.
+      Object.defineProperty(img, 'complete', { value: false, configurable: true });
+
+      // 3. useEffect: connect() binds events and checks img.complete.
+      handle.connect();
+
+      // Image is not complete, so loading should remain true.
+      expect(handle.loading).toBe(true);
+
+      // 4. Image loads — event listener should catch it.
+      Object.defineProperty(img, 'naturalWidth', { value: 2560, configurable: true });
+      Object.defineProperty(img, 'naturalHeight', { value: 1600, configurable: true });
+      img.dispatchEvent(new Event('load'));
+
+      expect(handle.loading).toBe(false);
+      expect(handle.naturalWidth).toBe(2560);
+      expect(onStateChange).toHaveBeenCalled();
+
+      handle.destroy();
+    });
+
+    it('React lifecycle: handles already-loaded img when ref was null during updateSrc', () => {
+      let img: HTMLImageElement | null = null;
+      const onStateChange = vi.fn();
+
+      const handle = createThumbnail(
+        createOptions({
+          getImg: () => img,
+          onStateChange,
+        })
+      );
+
+      // 1. Render phase: updateSrc called but img ref is null.
+      handle.updateSrc('sprite.jpg');
+      expect(handle.loading).toBe(true);
+
+      // 2. Commit phase: img becomes available and is already cached/complete.
+      img = createMockImg();
+      Object.defineProperty(img, 'complete', { value: true, configurable: true });
+
+      // 3. useEffect: connect() should detect the already-loaded image.
+      handle.connect();
+
+      expect(handle.loading).toBe(false);
+      expect(handle.naturalWidth).toBe(2560);
+      expect(onStateChange).toHaveBeenCalled();
+
+      handle.destroy();
+    });
+
+    it('React lifecycle: handles errored img when ref was null during updateSrc', () => {
+      let img: HTMLImageElement | null = null;
+      const onStateChange = vi.fn();
+
+      const handle = createThumbnail(
+        createOptions({
+          getImg: () => img,
+          onStateChange,
+        })
+      );
+
+      // 1. Render phase: updateSrc called but img ref is null.
+      handle.updateSrc('bad.jpg');
+      expect(handle.loading).toBe(true);
+
+      // 2. Commit phase: img becomes available but image errored (complete but no dimensions).
+      img = document.createElement('img');
+      Object.defineProperty(img, 'complete', { value: true, configurable: true });
+      // naturalWidth defaults to 0 in jsdom — simulates an errored image.
+
+      // 3. useEffect: connect() should detect the errored image.
+      handle.connect();
+
+      expect(handle.loading).toBe(false);
+      expect(handle.error).toBe(true);
+      expect(onStateChange).toHaveBeenCalled();
+
+      handle.destroy();
+    });
   });
 
   describe('destroy', () => {

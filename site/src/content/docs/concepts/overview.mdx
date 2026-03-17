@@ -1,0 +1,188 @@
+---
+title: Overview
+description: How Video.js players are structured — state, UI, and media
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import Aside from '@/components/Aside.astro';
+
+Video.js v10 is built around a three-part architecture that separates concerns and maximizes flexibility. Each part is designed to work independently or together, allowing you to use as much or as little of Video.js as you need.
+
+## 1. State management
+<FrameworkCase frameworks={["react"]}>
+State is handled by a `Player.Provider`, which creates a central state store that all components can access. When you wrap your player in a `Player.Provider`, the components automatically connect to the state.
+
+```tsx
+{/* All components inside automatically connect to state */} {/* [!code focus] */}
+<Player.Provider> {/* [!code focus] */}
+  <VideoSkin>
+    <Video src="video.mp4" />
+  </VideoSkin>
+</Player.Provider> {/* [!code focus] */}
+```
+
+You can access state and actions from anywhere within the provider with the <DocsLink slug="reference/use-player">`usePlayer` hook</DocsLink>.
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+State is handled by a `video-player` element, which creates a central state store that all components can access. Child components can automatically connect to the state of the `video-player` element.
+
+```html
+<!-- All components inside automatically connect to state --> <!-- [!code focus] -->
+<video-player> <!-- [!code focus] -->
+  <video-skin>
+    <video slot="media" src="video.mp4"></video>
+  </video-skin>
+</video-player> <!-- [!code focus] -->
+```
+
+You can access state and actions from anywhere within `<video-player>` with <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>.
+</FrameworkCase>
+
+<DocsLinkCard slug="concepts/features">Learn more about state and actions</DocsLinkCard>
+
+
+## 2. User interface
+
+Use a prebuilt **skin** or build your own from the individual **UI components**.
+
+
+### Skins
+Skins are complete, pre-designed player UIs that package components and styles together:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player.Provider>
+  <VideoSkin> {/* [!code focus] */}
+    <Video src="video.mp4" />
+  </VideoSkin> {/* [!code focus] */}
+</Player.Provider>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <video-skin> <!-- [!code focus] -->
+    <video slot="media" src="video.mp4"></video>
+  </video-skin> <!-- [!code focus] -->
+</video-player>
+```
+</FrameworkCase>
+
+<DocsLinkCard slug="concepts/skins">Learn more about skins</DocsLinkCard>
+
+### UI components
+
+If you want more control than skins offer you, you can build your own UI from our components.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player.Provider>
+  <Player.Container> {/* [!code focus] */}
+    <Video src="video.mp4" />
+    <MediaControls> {/* [!code focus] */}
+      <PlayButton /> {/* [!code focus] */}
+      {/* ... */} {/* [!code focus] */}
+    </MediaControls> {/* [!code focus] */}
+  </Player.Container> {/* [!code focus] */}
+</Player.Provider>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <media-container> <!-- [!code focus] -->
+    <video slot="media" src="video.mp4"></video>
+    <media-controls> <!-- [!code focus] -->
+      <media-play-button></media-play-button> <!-- [!code focus] -->
+      <!-- ... --> <!-- [!code focus] -->
+    </media-controls> <!-- [!code focus] -->
+  </media-container> <!-- [!code focus] -->
+</video-player>
+```
+</FrameworkCase>
+
+To get started with UI components, you might consider <DocsLink slug="how-to/customize-skins">ejecting a skin</DocsLink> and using its pre-styled components as a foundation.
+
+<DocsLinkCard slug="concepts/ui-components">Learn more about UI components</DocsLinkCard>
+
+## 3. Media
+
+Media components are the components that actually display your media. They're essentially "players with no UI". They handle the video/audio rendering and expose a consistent API.
+
+Media components can be format specific (HLS, DASH), service specific (YouTube, Vimeo, Mux), or use case specific (background video).
+
+<FrameworkCase frameworks={["html"]}>
+Media elements are detected via a `slot="media"` attribute. Always include it on your `<video>`, `<audio>`, or custom media element.
+</FrameworkCase>
+
+<Aside type="note">
+DASH, YouTube, Vimeo, Mux, and more media elements are currently under development.
+</Aside>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player.Provider>
+  <VideoSkin>
+    <HlsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" /> {/* [!code focus] */}
+  </VideoSkin>
+</Player.Provider>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <video-skin>
+    <hls-video slot="media" src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hls-video> <!-- [!code focus] -->
+  </video-skin>
+</video-player>
+```
+</FrameworkCase>
+
+## Presets
+
+**Presets** preconfigure these parts for a specific use case.
+
+The default presets are `/video` and `/audio`, covering the baseline set of controls you'd expect from the HTML `<video>` and `<audio>` tags. 
+
+Beyond the defaults, presets target more specific use cases. For example, `/background` includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power it:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { createPlayer } from '@videojs/react';
+import { backgroundFeatures, BackgroundVideo, BackgroundVideoSkin } from '@videojs/react/background';
+
+const Player = createPlayer({ features: backgroundFeatures });
+
+function Hero() {
+  return (
+    <Player.Provider>
+      <BackgroundVideoSkin>
+        <BackgroundVideo src="hero.mp4" />
+      </BackgroundVideoSkin>
+    </Player.Provider>
+  );
+}
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<script type="module">
+  import '@videojs/html/background/player';
+  import '@videojs/html/background/video';
+  import '@videojs/html/background/skin';
+  import '@videojs/html/background/skin.css';
+</script>
+
+<background-video-player>
+  <background-video-skin>
+    <background-video slot="media" src="hero.mp4"></background-video>
+  </background-video-skin>
+</background-video-player>
+```
+</FrameworkCase>
+
+<DocsLinkCard slug="concepts/presets">Learn more about presets</DocsLinkCard>

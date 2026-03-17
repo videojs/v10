@@ -1,0 +1,202 @@
+---
+title: Features
+description: The state and actions each feature adds to the player
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import Aside from '@/components/Aside.astro';
+
+
+Not every player needs to support every use case. To address this, Video.js has a concept of **features** — self-contained units of player functionality. Each one adds state properties and actions to the player. For example, "playback" adds `paused` and `play()`, "volume" adds `volume` and `setVolume()`, and so on.
+
+## Using features
+### Feature bundles and presets
+
+You probably don't want to hand-pick every feature your player needs. A **feature bundle** groups the features needed for a specific use case into a single array.
+
+<FrameworkCase frameworks={["react"]}>
+
+For example, `videoFeatures` bundles playback, volume, time, fullscreen, and more — everything a general video player needs:
+
+```tsx
+import { createPlayer } from '@videojs/react';
+import { videoFeatures } from '@videojs/react/video';
+
+const Player = createPlayer({ features: videoFeatures });
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+For example, if you import `<video-player>` from the `/video` path, you'll has playback, volume, time, fullscreen, and more already enabled. 
+
+```html
+<script type="module" src="@videojs/html/video/player"></script> <!-- [!code focus] -->
+<video-player> <!-- [!code focus] -->
+  <video-skin>
+    <video slot="media" src="movie.mp4"></video>
+  </video-skin>
+</video-player> <!-- [!code focus] -->
+```
+</FrameworkCase>
+
+Feature bundles are usually paired with specific skins and media elements in a **preset**. To learn more about this, and the available presets, you'll want to check out the presets guide.
+
+<DocsLinkCard slug="concepts/presets">Learn more about presets</DocsLinkCard>
+
+### Create a player with individual features
+If you're not using presets, you can create a player that has individual features.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { createPlayer, playback, volume, time } from '@videojs/react';
+
+const Player = createPlayer({
+  features: [playback, volume, time],
+});
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { createPlayer, playback, volume, time } from '@videojs/html';
+
+const { ProviderMixin, PlayerController, context } = createPlayer({ // [!code focus]
+  features: [playback, volume, time], // [!code focus]
+}); // [!code focus]
+
+class MyPlayer extends ProviderMixin(MediaElement) {
+  static readonly tagName = 'my-player';
+}
+
+customElements.define('my-player', MyPlayer);
+```
+</FrameworkCase>
+
+### Extending a feature bundle
+
+Since feature bundles are just an array of features under the hood, it doesn't take much to extend one. For example, if you were using the `/background` preset and wanted a play button on your background video, you might add the playback feature.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { createPlayer, playback } from '@videojs/react';
+import { backgroundFeatures } from '@videojs/react/background';
+
+const Player = createPlayer({
+  features: [...backgroundFeatures, playback],
+});
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { createPlayer, playback } from '@videojs/html';
+import { backgroundFeatures } from '@videojs/html/background';
+import { MediaElement } from '@videojs/html';
+
+const { ProviderMixin } = createPlayer({ // [!code focus]
+  features: [...backgroundFeatures, playback], // [!code focus]
+}); // [!code focus]
+
+class MyPlayer extends ProviderMixin(MediaElement) {
+  static readonly tagName = 'my-player';
+}
+
+customElements.define('my-player', MyPlayer);
+```
+</FrameworkCase>
+
+### Access features in components
+
+<FrameworkCase frameworks={["react"]}>
+You access feature state and actions through <DocsLink slug="reference/use-player">`usePlayer`</DocsLink>:
+```tsx
+// Subscribe to state (re-renders when selected values change)
+const { paused, volume } = usePlayer((s) => ({
+  paused: s.paused,
+  volume: s.volume,
+}));
+
+// Call actions
+const store = usePlayer();
+store.play();
+store.setVolume(0.8);
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+You can access feature state and actions through <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and pre-built feature selectors (e.g. <DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/feature-volume">`selectVolume`</DocsLink>):
+```ts
+import { selectPlayback } from '@videojs/html';
+
+// Subscribe to feature state (triggers element updates on change)
+readonly #playback = new PlayerController(this, context, selectPlayback);
+
+// Read state and call actions
+const media = this.#playback.value;
+if (media?.paused) media.play();
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+### Feature selectors
+Each feature also has a pre-built selector (e.g. <DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/feature-volume">`selectVolume`</DocsLink>) that returns just that feature's state and actions:
+
+```tsx
+import { selectPlayback, usePlayer } from '@videojs/react';
+
+const playback = usePlayer(selectPlayback);
+playback?.play();
+```
+</FrameworkCase>
+
+### Checking for feature support
+
+Volume, fullscreen, and picture-in-picture expose an `*Availability` property because platform support varies. For example, iOS Safari doesn't allow programmatic volume control.
+
+| Value | Meaning |
+|---|---|
+| `'available'` | Ready to use |
+| `'unavailable'` | Could work, not ready yet |
+| `'unsupported'` | Platform can never do this |
+
+Components that depend on availability (like <DocsLink slug="reference/pip-button">`PiPButton`</DocsLink> and <DocsLink slug="reference/fullscreen-button">`FullscreenButton`</DocsLink>) expose a `data-availability` attribute, so you can hide unsupported controls with CSS:
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-pip-button[data-availability="unsupported"] {
+  display: none;
+}
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["react"]}>
+```css
+.pip-button[data-availability="unsupported"] {
+  display: none;
+}
+```
+</FrameworkCase>
+
+You can also check availability in JS:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="PiPControl.tsx"
+function PiPControl() {
+  const availability = usePlayer((s) => s.pipAvailability);
+
+  if (availability === 'unsupported') return null;
+
+  return <PiPButton />;
+}
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```ts
+const media = this.#pip.value;
+
+if (media?.availability === 'unsupported') {
+  this.hidden = true;
+}
+```
+</FrameworkCase>

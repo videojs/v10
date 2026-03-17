@@ -11,6 +11,7 @@
 @import "./components/time.css";
 @import "./components/buttons.css";
 @import "./components/icons.css";
+@import "./components/preview.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
 @import "./components/captions.css";
@@ -27,6 +28,7 @@
   --media-surface-outer-border-color: oklch(0 0 0 / 0.1);
   --media-surface-shadow-color: oklch(0 0 0 / 0.15);
   --media-surface-backdrop-filter: blur(16px) saturate(1.5);
+  --media-video-border-radius: var(--media-border-radius, 2rem);
 
   @media (prefers-color-scheme: dark) {
     --media-border-color: oklch(1 0 0 / 0.1);
@@ -44,7 +46,7 @@
   }
 
   &:fullscreen {
-    border-radius: 0;
+    --media-border-radius: 0;
   }
 }
 
@@ -57,8 +59,7 @@
   bottom: 0.75rem;
   inset-inline: 0.75rem;
   z-index: 10;
-  color: oklch(1 0 0);
-
+  color: var(--media-color-primary, oklch(1 0 0));
   will-change: scale, transform, filter, opacity;
   transition-timing-function: ease-out;
   transform-origin: bottom;
@@ -91,6 +92,11 @@
   }
 }
 
+/* Hide cursor when controls are hidden in fullscreen */
+.media-default-skin--video:fullscreen:has(.media-controls:not([data-visible])) {
+  cursor: none;
+}
+
 /* ==========================================================================
    Sliders
    ========================================================================== */
@@ -98,4 +104,30 @@
 .media-default-skin--video .media-slider__track {
   background-color: oklch(1 0 0 / 0.2);
   box-shadow: 0 0 0 1px oklch(0 0 0 / 0.05);
+}
+
+.media-default-skin .media-slider__preview {
+  position: absolute;
+  left: var(--media-slider-pointer);
+  bottom: calc(100% + 1.2rem);
+  translate: -50%;
+  opacity: 0;
+  scale: 0.8;
+  filter: blur(8px);
+  transition-property: scale, opacity, filter;
+  transition-duration: 150ms;
+  transform-origin: bottom;
+
+  & .media-preview__thumbnail {
+    max-width: 11rem;
+  }
+
+  &:has(.media-preview__thumbnail[data-loading]) {
+    max-height: 6rem;
+  }
+}
+.media-default-skin .media-slider[data-pointing] .media-slider__preview:has([role="img"]:not([data-hidden])) {
+  opacity: 1;
+  scale: 1;
+  filter: blur(0);
 }

@@ -6,7 +6,6 @@
 .media-minimal-skin *::before,
 .media-minimal-skin *::after {
   box-sizing: border-box;
-  margin: 0;
 }
 .media-minimal-skin img,
 .media-minimal-skin video,

@@ -1,0 +1,164 @@
+---
+title: Presets
+description: Pre-packaged player configurations that bundle state management, skins, and media elements for specific use cases.
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+A **preset** packages what you need for a specific player use case. It can include special <DocsLink slug="concepts/features">state management</DocsLink>, one or more <DocsLink slug="concepts/skins">skins</DocsLink> for UI, and specific media elements. Instead of assembling these pieces individually, you pick a preset that matches what you're building.
+
+For example, the `/background` preset includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power them:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="App.tsx"
+import { createPlayer } from '@videojs/react';
+import { backgroundFeatures, BackgroundVideo, BackgroundVideoSkin } from '@videojs/react/background'; // [!code focus]
+
+const Player = createPlayer({ features: backgroundFeatures });
+
+function Hero() {
+  return (
+    <Player.Provider>
+      <BackgroundVideoSkin>
+        <BackgroundVideo src="hero.mp4" />
+      </BackgroundVideoSkin>
+    </Player.Provider>
+  );
+}
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html title="index.html"
+<script type="module">
+  import '@videojs/html/background/player';
+  import '@videojs/html/background/video';
+  import '@videojs/html/background/skin';
+  import '@videojs/html/background/skin.css';
+</script>
+
+<background-video-player>
+  <background-video-skin>
+    <background-video slot="media" src="hero.mp4"></background-video>
+  </background-video-skin>
+</background-video-player>
+```
+</FrameworkCase>
+
+## Available presets
+
+The default presets are `/video` and `/audio`. These cover the baseline controls you'd expect from the HTML `<video>` and `<audio>` tags. Beyond the defaults, presets target more specific use cases — the `/background` preset, for example, needs layout but not controls. Over time we'll add more: short-form players, podcast players, TV streaming players, and others.
+
+<FrameworkCase frameworks={["react"]}>
+
+| Preset | Feature bundle | Skins | Default media element |
+|--------|---------------|-------|-----------------------|
+| `/video` | `videoFeatures` | `<VideoSkin>`, `<MinimalVideoSkin>` | `<Video>` |
+| `/audio` | `audioFeatures` | `<AudioSkin>`, `<MinimalAudioSkin>` | `<Audio>` |
+| `/background` | `backgroundFeatures` | `<BackgroundVideoSkin>` | `<BackgroundVideo>` |
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+| Preset | Skins | Default media element |
+|--------|-------|-----------------------|
+| `/video` | `<video-skin>`, `<video-minimal-skin>` | `<video>` |
+| `/audio` | `<audio-skin>`, `<audio-minimal-skin>` | `<audio>` |
+| `/background` | `<background-video-skin>` | `<background-video>` |
+
+</FrameworkCase>
+
+## What's in a preset
+
+Each preset exports up to three things:
+
+- **Feature bundle** — An array of <DocsLink slug="concepts/features">features</DocsLink> that define the player's state and actions. For example, the video feature bundle includes playback, volume, time, fullscreen, and more.
+- **Skins** — Pre-built UIs designed for that feature bundle. For example, a video skin renders fullscreen and PiP controls because the video feature bundle includes those features. An audio skin doesn't.
+- **Media element** — A media component suited to the use case. For example, the background video element bakes in autoplay, mute, and loop.
+
+These parts aren't equally tied together. Skins depend tightly on their feature bundle — a skin expects specific features to exist. Media elements are more interchangeable — you can swap in an HLS or DASH provider without changing your skin or features.
+
+## Customizing a preset
+
+You can customize a preset in three ways: extend its feature bundle, eject its skin, or swap its media element.
+
+### Extend the feature bundle
+
+Add features to a preset's feature bundle to enable new functionality. For example, adding playback controls to a background video:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="App.tsx"
+import { createPlayer, playback } from '@videojs/react';
+import { backgroundFeatures, BackgroundVideo } from '@videojs/react/background';
+
+const Player = createPlayer({ // [!code focus]
+  features: [...backgroundFeatures, playback], // [!code focus]
+}); // [!code focus]
+
+function Hero() {
+  return (
+    <Player.Provider>
+      <Player.Container>
+        <BackgroundVideo src="hero.mp4" />
+        <PlayButton />
+      </Player.Container>
+    </Player.Provider>
+  );
+}
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html title="index.html"
+<script type="module">
+  import { createPlayer, playback, MediaElement } from '@videojs/html';
+  import { backgroundFeatures } from '@videojs/html/background';
+  import '@videojs/html/media/container';
+  import '@videojs/html/ui/play-button';
+
+  const { ProviderMixin } = createPlayer({ // [!code focus]
+    features: [...backgroundFeatures, playback], // [!code focus]
+  }); // [!code focus]
+
+  class MyPlayer extends ProviderMixin(MediaElement) {
+    static readonly tagName = 'my-player';
+  }
+
+  customElements.define('my-player', MyPlayer);
+</script>
+
+<my-player>
+  <media-container>
+    <background-video slot="media" src="hero.mp4"></background-video>
+    <media-play-button>Play / Pause</media-play-button>
+  </media-container>
+</my-player>
+```
+</FrameworkCase>
+
+### Eject the skin
+
+If a preset's skin is close but not quite right, you can <DocsLink slug="how-to/customize-skins">eject it</DocsLink> — copy its internal components into your project and customize from there.
+
+### Swap the media element
+
+A preset's default media element is just the starting point. You can replace it with any compatible media provider. For example, using an HLS source with the video preset:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player.Provider>
+  <VideoSkin>
+    <HlsVideo src="https://example.com/stream.m3u8" /> {/* [!code focus] */}
+  </VideoSkin>
+</Player.Provider>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <video-skin>
+    <hls-video slot="media" src="https://example.com/stream.m3u8"></hls-video> <!-- [!code focus] -->
+  </video-skin>
+</video-player>
+```
+</FrameworkCase>

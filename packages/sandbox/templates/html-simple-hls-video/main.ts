@@ -3,6 +3,7 @@ import '@videojs/html/video/player';
 import '@videojs/html/media/simple-hls-video';
 import '@videojs/html/video/skin';
 import '@videojs/html/video/minimal-skin';
+import { renderMuxStoryboard } from '@app/shared/html/mux-storyboard';
 import { CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
 import { loadVideoStylesheets } from '@app/shared/html/stylesheets';
 import { getInitialSkin, getInitialSource, onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
@@ -23,7 +24,9 @@ function render() {
   document.getElementById('root')!.innerHTML = html`
     <video-player>
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
-        <simple-hls-video slot="media" src="${SOURCES[currentSource].url}" playsinline></simple-hls-video>
+        <simple-hls-video slot="media" src="${SOURCES[currentSource].url}" playsinline crossorigin="anonymous">
+          ${renderMuxStoryboard(currentSource)}
+        </simple-hls-video>
       </${tag}>
     </video-player>
   `;

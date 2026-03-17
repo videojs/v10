@@ -1,0 +1,59 @@
+---
+title: Controls
+description: User activity and controls visibility state for the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Read-only — tracks user activity for showing and hiding controls.
+
+## State
+
+| State | Type | Description |
+|---|---|---|
+| `userActive` | `boolean` | Whether the user has recently interacted |
+| `controlsVisible` | `boolean` | Whether controls should be visible (active or paused) |
+
+## Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectControls` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to controls state. Returns `undefined` if the controls feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectControls` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to controls state. Returns `undefined` if the controls feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="ControlsOverlay.tsx"
+import { selectControls, usePlayer } from '@videojs/react';
+
+function ControlsOverlay({ children }: { children: React.ReactNode }) {
+  const controls = usePlayer(selectControls);
+  if (!controls) return null;
+
+  return (
+    <div style={{ opacity: controls.visible ? 1 : 0 }}>
+      {children}
+    </div>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="controls-overlay.ts"
+import { createPlayer, MediaElement, selectControls } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
+
+class ControlsOverlay extends MediaElement {
+  readonly #controls = new PlayerController(this, context, selectControls);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectControls" />

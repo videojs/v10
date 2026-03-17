@@ -74,7 +74,7 @@ Review for:
 2. **Matches template** — Does it follow the structure from its template?
 3. **Code-first** — Code appears before explanation, not after
 4. **Progressive** — Starts simple, adds complexity in later sections
-5. **Cross-links** — Has "See also" section linking related pages
+5. **Cross-links** — Links related pages
 6. **Callouts** — Uses `<Aside>` (not `:::note`), correct severity
 7. **No H1** — Title comes from frontmatter only (site pages)
 8. **Sidebar** — Page added to `site/src/docs.config.ts` (site pages)

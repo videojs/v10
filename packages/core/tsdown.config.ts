@@ -9,6 +9,7 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   entry: {
     index: './src/core/index.ts',
     dom: './src/dom/index.ts',
+    'dom/media/dash/index': './src/dom/media/dash/index.ts',
     'dom/media/hls/index': './src/dom/media/hls/index.ts',
     'dom/media/custom-media-element/index': './src/dom/media/custom-media-element/index.ts',
     'dom/media/simple-hls/index': './src/dom/media/simple-hls/index.ts',
@@ -26,12 +27,15 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',
   },
-  dts: {
-    build: true,
-    // Unified tsconfig covering both core and dom sources.
-    // Needs DOM libs to preserve MediaApiMixin return types.
-    tsconfig: 'tsconfig.dts.json',
-  },
+  dts:
+    mode === 'dev'
+      ? {
+          build: true,
+          // Unified tsconfig covering both core and dom sources.
+          // Needs DOM libs to preserve MediaApiMixin return types.
+          tsconfig: 'tsconfig.dts.json',
+        }
+      : false,
 });
 
 export default defineConfig(buildModes.map((mode) => createConfig(mode)));

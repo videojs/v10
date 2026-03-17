@@ -26,6 +26,7 @@ import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
+import { Slider } from '@/ui/slider';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
@@ -164,6 +165,14 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                 <TimeSlider.Buffer className="media-slider__buffer" />
               </TimeSlider.Track>
               <TimeSlider.Thumb className="media-slider__thumb" />
+
+              <div className="media-preview media-slider__preview">
+                <div className="media-preview__thumbnail-wrapper">
+                  <Slider.Thumbnail className="media-preview__thumbnail" />
+                </div>
+                <TimeSlider.Value type="pointer" className="media-preview__timestamp" />
+                <SpinnerIcon className="media-preview__spinner media-icon" />
+              </div>
             </TimeSlider.Root>
           </div>
 

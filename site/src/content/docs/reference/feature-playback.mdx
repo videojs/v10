@@ -1,0 +1,63 @@
+---
+title: Playback
+description: Play/pause state and actions for the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Controls play/pause state and tracks whether playback has started or is stalled.
+
+## State
+
+| State | Type | Description |
+|---|---|---|
+| `paused` | `boolean` | Whether playback is paused |
+| `ended` | `boolean` | Whether playback reached the end |
+| `started` | `boolean` | Whether playback has started (played or seeked) |
+| `waiting` | `boolean` | Whether playback is stalled waiting for data |
+
+## Actions
+
+| Action | Description |
+|---|---|
+| `play()` | Start playback (returns a `Promise`) |
+| `pause()` | Pause playback |
+
+## Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectPlayback` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to playback state. Returns `undefined` if the playback feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectPlayback` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to playback state. Returns `undefined` if the playback feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="PlayButton.tsx"
+import { selectPlayback, usePlayer } from '@videojs/react';
+
+function PlayButton() {
+  const playback = usePlayer(selectPlayback);
+  if (!playback) return null;
+  return <button onClick={playback.toggle}>{playback.paused ? 'Play' : 'Pause'}</button>;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="play-button.ts"
+import { createPlayer, MediaElement, selectPlayback } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
+
+class PlayButton extends MediaElement {
+  readonly #playback = new PlayerController(this, context, selectPlayback);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectPlayback" />

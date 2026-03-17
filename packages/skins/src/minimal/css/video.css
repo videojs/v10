@@ -10,6 +10,7 @@
 @import "./components/time.css";
 @import "./components/buttons.css";
 @import "./components/icons.css";
+@import "./components/preview.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
 @import "./components/captions.css";
@@ -21,6 +22,7 @@
 .media-minimal-skin--video {
   background: oklch(0 0 0);
   --media-border-color: oklch(0 0 0 / 0.15);
+  --media-video-border-radius: var(--media-border-radius, 0.75rem);
 
   @media (prefers-color-scheme: dark) {
     --media-border-color: oklch(1 0 0 / 0.15);
@@ -39,7 +41,7 @@
 
   /* Fullscreen */
   &:fullscreen {
-    border-radius: 0;
+    --media-border-radius: 0;
   }
 }
 
@@ -54,7 +56,7 @@
   z-index: 10;
   gap: 0.5rem;
   padding: 2rem 0.375rem 0.375rem 0.375rem;
-  color: oklch(1 0 0);
+  color: var(--media-color-primary, oklch(1 0 0));
 
   @media (pointer: fine) {
     will-change: transform, filter, opacity;
@@ -89,6 +91,11 @@
   }
 }
 
+/* Hide cursor when controls are hidden in fullscreen */
+.media-minimal-skin--video:fullscreen:has(.media-controls:not([data-visible])) {
+  cursor: none;
+}
+
 /* ==========================================================================
    Sliders
    ========================================================================== */
@@ -105,4 +112,49 @@
   --media-popover-side-offset: 0.5rem;
   background: transparent;
   padding: 0.25rem;
+}
+
+/* ==========================================================================
+   Slider preview
+   ========================================================================== */
+
+.media-minimal-skin .media-slider__preview {
+  position: absolute;
+  left: var(--media-slider-pointer);
+  bottom: calc(100% + 0.5rem);
+  translate: -50%;
+  opacity: 0;
+  scale: 0.8;
+  filter: blur(8px);
+  transition-property: scale, opacity, filter;
+  transition-duration: 150ms;
+  transform-origin: bottom;
+
+  & .media-preview__thumbnail-wrapper {
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow:
+        0 0 0 1px oklch(0 0 0 / 0.05),
+        0 1px 3px 0 oklch(0 0 0 / 0.2),
+        0 1px 2px -1px oklch(0 0 0 / 0.2);
+    }
+  }
+
+  & .media-preview__thumbnail {
+    max-width: 11rem;
+  }
+
+  &:has(.media-preview__thumbnail[data-loading]) {
+    max-height: 6rem;
+  }
+}
+.media-minimal-skin .media-slider[data-pointing] .media-slider__preview:has([role="img"]:not([data-hidden])) {
+  opacity: 1;
+  scale: 1;
+  filter: blur(0);
 }

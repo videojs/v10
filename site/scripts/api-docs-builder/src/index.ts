@@ -30,6 +30,12 @@ const NAME_OVERRIDES: Record<string, string> = {
   'pip-button': 'PiPButton',
 };
 
+// Parts whose HTML element file doesn't follow the `{component}-{part}-element.ts` convention.
+// Key: `{component}/{part-kebab}`, Value: element file basename (without `.ts`).
+const PART_ELEMENT_OVERRIDES: Record<string, string> = {
+  'tooltip/provider': 'tooltip-group-element',
+};
+
 function buildProps(coreData: CoreExtraction): Record<string, PropDef> {
   const props: Record<string, PropDef> = {};
   for (const prop of coreData.props) {
@@ -298,12 +304,14 @@ function buildSingleComponentReference(source: ComponentSource, program: ts.Prog
 }
 
 /**
- * Check if a React source file instantiates a Core class (matches `new \w+Core\(`).
+ * Check if a React source file instantiates the component's own Core class
+ * (matches `new {ComponentName}Core(`). This prevents auxiliary classes like
+ * `TooltipGroupCore` from being mistaken for the primary Core.
  */
-function instantiatesCore(filePath: string): boolean {
+function instantiatesCore(filePath: string, componentName: string): boolean {
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
-    return /new \w+Core\(/.test(content);
+    return new RegExp(`new ${componentName}Core\\b`).test(content);
   } catch {
     return false;
   }
@@ -349,8 +357,10 @@ function discoverParts(source: ComponentSource, program: ts.Program): PartSource
   for (const partExport of localExports) {
     const kebab = partKebabFromSource(partExport.source, componentKebab);
 
-    // Look for sub-part element file: {component}-{part}-element.ts
-    const subPartElementFile = path.join(htmlDir, `${componentKebab}-${kebab}-element.ts`);
+    // Look for sub-part element file: {component}-{part}-element.ts (or override)
+    const overrideKey = `${componentKebab}/${kebab}`;
+    const elementBasename = PART_ELEMENT_OVERRIDES[overrideKey] ?? `${componentKebab}-${kebab}-element`;
+    const subPartElementFile = path.join(htmlDir, `${elementBasename}.ts`);
     const hasSubPartElement = fs.existsSync(subPartElementFile);
 
     // Resolve React source path for JSDoc description extraction
@@ -358,7 +368,7 @@ function discoverParts(source: ComponentSource, program: ts.Program): PartSource
     const reactPath = fs.existsSync(reactFile) ? reactFile : undefined;
 
     // Primary detection: the part whose React source instantiates the Core class
-    const isPrimary = !!reactPath && instantiatesCore(reactPath);
+    const isPrimary = !!reactPath && instantiatesCore(reactPath, source.name);
 
     const subPartUsesDataAttrs = !isPrimary && !!reactPath && usesDataAttrs(reactPath);
 

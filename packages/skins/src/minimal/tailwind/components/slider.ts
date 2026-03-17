@@ -2,7 +2,7 @@ import { cn } from '@videojs/utils/style';
 
 export const slider = {
   root: cn(
-    'group/slider relative flex flex-1 items-center justify-center rounded-full outline-none',
+    'group/slider relative flex flex-1 items-center justify-center rounded-full outline-none cursor-pointer',
     // Horizontal
     'data-[orientation=horizontal]:min-w-20 data-[orientation=horizontal]:w-full data-[orientation=horizontal]:h-5',
     // Vertical

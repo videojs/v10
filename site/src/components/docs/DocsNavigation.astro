@@ -16,12 +16,12 @@ function getGuideUrl(framework: SupportedFramework, slug: string): string {
 }
 ---
 
-<nav class="mx-auto grid w-full max-w-3xl grid-cols-1 gap-5 md:grid-cols-2">
+<nav class="mx-auto grid w-full max-w-3xl grid-cols-1 gap-4 md:grid-cols-2">
   {
     prev ? (
       <a
         href={getGuideUrl(framework, prev.slug)}
-        class="grid items-center gap-x-2 rounded-xs border border-manila-75 bg-manila-50 p-4 dark:border-soot dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
+        class="grid items-center gap-x-2 rounded-xs border border-manila-dark p-4 dark:border-warm-gray intent:bg-manila-75 dark:intent:bg-warm-gray"
         style="grid-template-areas: 'empty direction' 'icon title'; grid-template-columns: auto minmax(0,1fr); grid-template-rows: auto minmax(0,1fr);"
       >
         <div class="text-p3" style="grid-area: direction;">
@@ -42,7 +42,7 @@ function getGuideUrl(framework: SupportedFramework, slug: string): string {
     next ? (
       <a
         href={getGuideUrl(framework, next.slug)}
-        class="grid items-center gap-x-2 rounded-xs border border-manila-75 bg-manila-50 p-4 text-right dark:border-soot dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
+        class="grid items-center gap-x-2 rounded-xs border border-manila-dark p-4 text-right dark:border-warm-gray intent:bg-manila-75 dark:intent:bg-warm-gray"
         style="grid-template-areas: 'direction empty' 'title icon';grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto minmax(0,1fr);"
       >
         <div class="text-p3" style="grid-area: direction;">

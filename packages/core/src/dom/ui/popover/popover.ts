@@ -87,6 +87,16 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     return globalThis.matchMedia?.('(hover: hover)')?.matches ?? false;
   }
 
+  function canOpenOnFocus(): boolean {
+    if (!canHover()) return false;
+    return globalThis.matchMedia?.('(pointer: fine)')?.matches ?? false;
+  }
+
+  function canToggleOnClick(): boolean {
+    if (!options.openOnHover?.()) return true;
+    return canHover();
+  }
+
   // --- Open/close ---
 
   /**
@@ -168,6 +178,8 @@ export function createPopover(options: PopoverOptions): PopoverApi {
 
   const triggerProps: PopoverTriggerProps = {
     onClick(event) {
+      if (!canToggleOnClick()) return;
+
       // During a close animation (open=true, status=ending), treat
       // the click as a re-open rather than a second close attempt.
       if (state.current.active && state.current.status !== 'ending') {
@@ -203,6 +215,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
 
     onFocusIn(_event) {
       if (options.openOnHover?.()) {
+        if (!canOpenOnFocus()) return;
         applyOpen('focus');
       }
     },

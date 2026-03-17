@@ -34,7 +34,7 @@ describe('renderInlineMarkdown', () => {
 
   it('renders emphasized text', () => {
     const result = renderInlineMarkdown('*italic text*');
-    expect(result).toContain('<em class="font-bold">italic text</em>');
+    expect(result).toContain('<em class="italic">italic text</em>');
   });
 
   it('renders links with correct classes', () => {

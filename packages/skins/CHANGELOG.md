@@ -1,5 +1,25 @@
 # Changelog
 
+## [10.0.0-beta.6](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.5...@videojs/skins@10.0.0-beta.6) (2026-03-15)
+
+
+### Features
+
+* add slider preview thumbnails ([#935](https://github.com/videojs/v10/issues/935)) ([e3f438e](https://github.com/videojs/v10/commit/e3f438e9f488f41c8cf51c95507bc41fc5b524d0))
+
+
+### Bug Fixes
+
+* add popover and tooltip safe areas ([#951](https://github.com/videojs/v10/issues/951)) ([c39b1f8](https://github.com/videojs/v10/commit/c39b1f8809c235d3ce1c9a083cf3252db17bcfa7))
+* **html:** simplify styles for slotted video ([#953](https://github.com/videojs/v10/issues/953)) ([d6e471a](https://github.com/videojs/v10/commit/d6e471a8377e9ee8ef63df9097810c6d0c1bb2f9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.6
+
 ## [10.0.0-beta.5](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.4...@videojs/skins@10.0.0-beta.5) (2026-03-12)
 
 

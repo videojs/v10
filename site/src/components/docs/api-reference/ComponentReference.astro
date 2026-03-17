@@ -19,9 +19,10 @@ import InlineMarkdown from './InlineMarkdown.astro';
 
 interface Props {
   component: string;
+  partOrder?: string[];
 }
 
-const { component } = Astro.props;
+const { component, partOrder } = Astro.props;
 const { framework } = Astro.params;
 if (!framework || !isValidFramework(framework)) {
   throw new Error(`Invalid or missing framework param.`);
@@ -31,7 +32,7 @@ const entry = await getEntry('componentReference', kebabCase(component));
 const apiRef: ComponentReference | null = entry?.data ?? null;
 if (!apiRef) return;
 
-const apiReferenceModel = createComponentReferenceModel(component, apiRef);
+const apiReferenceModel = createComponentReferenceModel(component, apiRef, partOrder);
 if (!apiReferenceModel) return;
 const showAttributeName = framework === 'html';
 

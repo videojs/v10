@@ -7,7 +7,7 @@ export const root = cn(
   'rounded-(--media-border-radius,0.75rem)',
   'font-[Inter_Variable,Inter,ui-sans-serif,system-ui,sans-serif] text-[0.8125rem] leading-normal subpixel-antialiased',
   // Resets
-  '**:box-border **:m-0',
+  '**:box-border',
   '[&_button]:font-[inherit]',
   'motion-safe:[interpolate-size:allow-keywords]'
 );

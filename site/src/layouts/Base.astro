@@ -19,11 +19,12 @@ interface Props {
   twitterImage?: ImageMetadata | string;
   canonical?: string;
   suffix?: string;
+  withCompact?: boolean;
 }
 const { canonical, suffix } = Astro.props;
 const canonicalURL = canonical || new URL(Astro.url.pathname, PRODUCTION_URL);
 
-const { title, description, image, twitterImage } = Astro.props;
+const { title, description, image, twitterImage, withCompact } = Astro.props;
 
 function resolveImageUrl(img: ImageMetadata | string): string {
   if (typeof img === 'string') return img;
@@ -70,13 +71,17 @@ const fullTitle =
     {/* Font preloads */}
     <Font cssVariable="--font-instrument-sans" preload />
     <Font cssVariable="--font-ibm-plex-mono" preload />
-    <link
-      rel="preload"
-      href="https://static.mux.com/fonts/EurostileLTProBold/font.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
+    {
+      withCompact && (
+        <link
+          rel="preload"
+          href="https://static.mux.com/fonts/EurostileLTProBold/font.woff2"
+          as="font"
+          type="font/woff2"
+          crossorigin
+        />
+      )
+    }
     <link
       rel="preload"
       href="https://static.mux.com/fonts/EurostileLTProExtended2/font.woff2"

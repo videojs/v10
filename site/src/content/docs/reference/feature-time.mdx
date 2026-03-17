@@ -1,0 +1,66 @@
+---
+title: Time
+description: Playback position and duration state for the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Tracks playback position and duration.
+
+## State
+
+| State | Type | Description |
+|---|---|---|
+| `currentTime` | `number` | Current playback position in seconds |
+| `duration` | `number` | Total duration in seconds (0 if unknown) |
+| `seeking` | `boolean` | Whether a seek operation is in progress |
+
+## Actions
+
+| Action | Description |
+|---|---|
+| `seek(time)` | Seek to a position in seconds (returns a `Promise`) |
+
+## Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectTime` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to time state. Returns `undefined` if the time feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectTime` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to time state. Returns `undefined` if the time feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="TimeDisplay.tsx"
+import { selectTime, usePlayer } from '@videojs/react';
+
+function TimeDisplay() {
+  const time = usePlayer(selectTime);
+  if (!time) return null;
+
+  return (
+    <span>
+      {Math.floor(time.currentTime)} / {Math.floor(time.duration)}
+    </span>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="time-display.ts"
+import { createPlayer, MediaElement, selectTime } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
+
+class TimeDisplay extends MediaElement {
+  readonly #time = new PlayerController(this, context, selectTime);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectTime" />

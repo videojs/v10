@@ -151,7 +151,7 @@ For full guidelines, load `references/writing-style.md`. The essentials:
 - **Self-contained examples.** Include all imports. Use realistic values, not `foo`/`bar`.
 - **Show output.** When the result isn't obvious, add a comment showing expected output.
 - **Progressive.** Start with the simplest version. Add complexity in later examples.
-- **Cross-link.** End pages with "See also" linking related concepts and references. Repetition across pages is fine — readers land anywhere.
+- **Cross-link.** Generously link related concepts and references. Repetition across pages is fine — readers land anywhere.
 
 ### Do/don't contrasts
 
@@ -195,7 +195,7 @@ Key gotchas:
 3. Check existing docs for style and patterns
 4. Write concise draft — code before prose
 5. Add do/don't contrasts where helpful
-6. Add cross-links and "See also" section
+6. Add cross-links
 7. **Site pages only:** Add page to sidebar in `site/src/docs.config.ts`
 8. **Site pages only:** Verify it renders for all framework combinations
 

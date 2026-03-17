@@ -39,7 +39,7 @@ function getTemplateHTML() {
       <slot name="media"></slot>
 
       <div class="${controls}">
-        <media-tooltip-group class="contents">
+        <media-tooltip-group>
           <span class="${tooltipState.play.wrapper}">
             <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.icon, iconState.play.button)}">
               ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}

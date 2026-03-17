@@ -1,0 +1,47 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import { ChevronRight } from 'lucide-react';
+import { isValidFramework } from '@/types/docs';
+import { resolveDocsLinkUrl } from '@/utils/docs/routing';
+
+interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
+  slug: string;
+  description?: string;
+}
+const { slug, description } = Astro.props;
+
+const { framework: paramFramework } = Astro.params;
+if (!paramFramework || !isValidFramework(paramFramework)) {
+  throw new Error(`Invalid or missing framework param "${paramFramework ?? 'undefined'}".`);
+}
+
+const { url: href } = resolveDocsLinkUrl({
+  targetSlug: slug,
+  contextFramework: paramFramework,
+});
+---
+
+<div
+  class="docs-link-card mx-auto my-8 grid w-full max-w-3xl grid-cols-1 gap-4 has-[+_.docs-link-card]:mb-4 md:grid-cols-2 [&+.docs-link-card]:mt-4"
+>
+  <a
+    href={href}
+    class="flex items-center justify-between gap-4 rounded-xs border border-manila-dark p-4 no-underline md:pl-6 dark:border-warm-gray intent:bg-manila-75 dark:intent:bg-warm-gray"
+  >
+    {
+      description ? (
+        <div>
+          <div class="font-bold">
+            <slot />
+          </div>
+          <div class="mt-2 text-p3">{description}</div>
+        </div>
+      ) : (
+        <span>
+          <slot />
+        </span>
+      )
+    }
+    <ChevronRight size={14} />
+  </a>
+</div>

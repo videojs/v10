@@ -16,6 +16,7 @@ type NavbarProps = {
   availableSources: readonly SourceId[];
   isBackgroundVideo: boolean;
   isSimpleHlsVideo: boolean;
+  isDashVideo: boolean;
   platforms: readonly Platform[];
   stylings: readonly Styling[];
   presets: readonly Preset[];
@@ -33,6 +34,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   video: 'Video',
   'hls-video': 'HLS Video',
   'simple-hls-video': 'Simple HLS Video',
+  'dash-video': 'DASH Video',
   audio: 'Audio',
   'background-video': 'Background Video',
 };
@@ -51,6 +53,7 @@ export function Navbar({
   availableSources,
   isBackgroundVideo,
   isSimpleHlsVideo,
+  isDashVideo,
   platforms,
   stylings,
   presets,
@@ -79,7 +82,7 @@ export function Navbar({
           options={stylings.map((s) => ({
             value: s,
             label: s === 'css' ? 'CSS' : 'Tailwind',
-            disabled: s === 'tailwind' && isBackgroundVideo,
+            disabled: s === 'tailwind' && (isBackgroundVideo || isDashVideo),
           }))}
         />
 

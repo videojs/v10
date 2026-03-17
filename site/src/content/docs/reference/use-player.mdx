@@ -1,6 +1,6 @@
 ---
-title: usePlayer
-description: Hook to access the player store from within a Player Provider
+title: Player.usePlayer
+description: Hook to access the player store from within a Player.Provider
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
@@ -15,13 +15,13 @@ import SelectorDemoReact from "@/components/docs/demos/use-player/react/css/Sele
 import selectorReactTsx from "@/components/docs/demos/use-player/react/css/Selector.tsx?raw";
 import selectorReactCss from "@/components/docs/demos/use-player/react/css/Selector.css?raw";
 
-`usePlayer` gives you access to the player store from any component within a Player `Provider`. It has two overloads — without arguments for direct store access, or with a selector for reactive state subscriptions. The scoped `usePlayer` returned from <DocsLink slug="reference/create-player">`createPlayer`</DocsLink> is typed to your specific features, while the standalone export from `@videojs/react` returns an untyped store.
+`Player.usePlayer` gives you access to the player store from any component within a `Player.Provider`. It has two overloads — without arguments for direct store access, or with a selector for reactive state subscriptions. `Player.usePlayer` is typed to the features you passed to <DocsLink slug="reference/create-player">`createPlayer`</DocsLink>. It's also available as a standalone import (`import { usePlayer } from '@videojs/react'`), but the standalone version returns an untyped store.
 
 ## Examples
 
 ### Store Access
 
-Call `usePlayer()` without arguments to get the store instance. Use this for imperative actions like play, pause, and volume changes. The component does not re-render on state changes.
+Call `Player.usePlayer()` without arguments to get the store instance. Use this for imperative actions like play, pause, and volume changes. The component does not re-render on state changes.
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>

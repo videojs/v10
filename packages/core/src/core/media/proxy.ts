@@ -1,8 +1,6 @@
 import type { AnyConstructor, Constructor } from '@videojs/utils/types';
 import { defineClassPropHooks } from '../utils/define-class-prop-hooks';
 
-export interface MediaApiProxyTarget extends EventTarget {}
-
 /**
  * This mixin creates an API from the passed classes and proxies the methods and properties to the attached target.
  *
@@ -14,33 +12,33 @@ export interface MediaApiProxyTarget extends EventTarget {}
  *
  * The `get`, `set`, and `call` methods can be overridden to provide catch-all custom behavior.
  */
-export const MediaProxyMixin = <T extends EventTarget>(
+export const ProxyMixin = <T extends EventTarget>(
   PrimaryClass: AnyConstructor<T>,
   ...AdditionalClasses: AnyConstructor<EventTarget>[]
 ) => {
-  class MediaApiProxy {
-    #target: MediaApiProxyTarget | null = null;
+  class MediaProxy {
+    #target: EventTarget | null = null;
 
     get target() {
       return this.#target;
     }
 
-    get(prop: keyof MediaApiProxyTarget): any {
+    get(prop: keyof EventTarget): any {
       return this.target?.[prop];
     }
 
-    set(prop: keyof MediaApiProxyTarget, val: any): void {
+    set(prop: keyof EventTarget, val: any): void {
       if (this.target) {
         this.target[prop] = val;
       }
     }
 
-    call(prop: keyof MediaApiProxyTarget, ...args: any[]): any {
+    call(prop: keyof EventTarget, ...args: any[]): any {
       const nativeFn = this.target?.[prop] as ((...args: any[]) => any) | undefined;
       return nativeFn?.apply(this.target, args);
     }
 
-    attach(target: MediaApiProxyTarget): void {
+    attach(target: EventTarget): void {
       if (!target || this.#target === target) return;
       this.#target = target;
     }
@@ -52,8 +50,8 @@ export const MediaProxyMixin = <T extends EventTarget>(
   }
 
   for (const Class of [PrimaryClass, ...AdditionalClasses]) {
-    defineClassPropHooks(MediaApiProxy, Class.prototype);
+    defineClassPropHooks(MediaProxy, Class.prototype);
   }
 
-  return MediaApiProxy as unknown as Constructor<T>;
+  return MediaProxy as unknown as Constructor<T>;
 };

@@ -3,6 +3,7 @@
    ========================================================================== */
 
 .media-minimal-skin {
+  --media-caption-track-duration: 150ms;
   --media-caption-track-delay: 600ms;
   --media-caption-track-y: -0.5rem;
 
@@ -10,19 +11,17 @@
     --media-caption-track-delay: 25ms;
     --media-caption-track-y: -3rem;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    --media-caption-track-duration: 50ms;
+  }
 }
 
 .media-minimal-skin video::-webkit-media-text-track-container {
   /* NOTE: The delay must account for the controls delay/duration */
-  transition: transform 150ms ease-out;
+  transition: transform var(--media-caption-track-duration) ease-out;
   transition-delay: var(--media-caption-track-delay);
   transform: translateY(var(--media-caption-track-y)) scale(0.98);
   z-index: 1;
   font-family: inherit;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .media-minimal-skin video::-webkit-media-text-track-container {
-    transition-duration: 50ms;
-  }
 }

@@ -3,6 +3,7 @@ import { bufferingIndicator as baseBufferingIndicator } from './components/buffe
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
 import { popup as basePopup } from './components/popup';
+import { preview as basePreview } from './components/preview';
 import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
 import { surface as baseSurface } from './components/surface';
@@ -20,41 +21,43 @@ export const root = (isShadowDOM: boolean) =>
     'after:inset-0 after:ring-1 after:ring-inset after:ring-black/10 dark:after:ring-white/10',
     // Video element
     {
-      '[&_::slotted(video)]:block [&_::slotted(video)]:w-full [&_::slotted(video)]:h-full [&_::slotted(video)]:rounded-(--media-border-radius,2rem)':
+      '[&_::slotted(video)]:block [&_::slotted(video)]:w-full [&_::slotted(video)]:h-full [&_::slotted(video)]:rounded-(--media-video-border-radius) [&_::slotted(video)]:[object-fit:var(--media-object-fit,contain)] [&_::slotted(video)]:[object-position:var(--media-object-position,center)]':
         isShadowDOM,
-      '[&_video]:block [&_video]:w-full [&_video]:h-full [&_video]:rounded-[inherit]': !isShadowDOM,
+      '[&_video]:block [&_video]:w-full [&_video]:h-full [&_video]:rounded-[inherit] [&_video]:[object-fit:var(--media-object-fit,contain)] [&_video]:[object-position:var(--media-object-position,center)]':
+        !isShadowDOM,
     },
+    '[--media-video-border-radius:var(--media-border-radius,2rem)]',
     // Poster image
     '[&>img]:absolute [&>img]:inset-0 [&>img]:w-full [&>img]:h-full [&>img]:rounded-[inherit]',
-    '[&>img]:object-cover [&>img]:pointer-events-none',
+    '[&>img]:[object-fit:var(--media-object-fit,contain)] [&>img]:[object-position:var(--media-object-position,center)] [&>img]:pointer-events-none',
     '[&>img]:transition-opacity [&>img]:duration-250',
     '[&>img:not([data-visible])]:opacity-0',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
-    '[--media-caption-track-delay:600ms]',
     '[--media-caption-track-y:-0.5rem]',
+    '[--media-caption-track-delay:600ms]',
+    '[--media-caption-track-duration:150ms]',
+    'motion-reduce:[--media-caption-track-duration:50ms]',
     'has-[[data-controls][data-visible]]:[--media-caption-track-delay:25ms]',
     'has-[[data-controls][data-visible]]:[--media-caption-track-y:-3.5rem]',
     // Native caption track container
     !isShadowDOM
       ? [
           '[&_video::-webkit-media-text-track-container]:transition-transform',
-          '[&_video::-webkit-media-text-track-container]:duration-150',
+          '[&_video::-webkit-media-text-track-container]:duration-(--media-caption-track-duration)',
           '[&_video::-webkit-media-text-track-container]:ease-out',
           '[&_video::-webkit-media-text-track-container]:delay-(--media-caption-track-delay)',
           '[&_video::-webkit-media-text-track-container]:translate-y-(--media-caption-track-y)',
           '[&_video::-webkit-media-text-track-container]:scale-98',
           '[&_video::-webkit-media-text-track-container]:z-1',
           '[&_video::-webkit-media-text-track-container]:font-[inherit]',
-          'motion-reduce:[&_video::-webkit-media-text-track-container]:duration-50',
         ]
       : [],
     // Fullscreen
-    '[&:fullscreen]:rounded-none',
+    '[&:fullscreen]:[--media-border-radius:0]',
     {
       '[&:fullscreen_video]:object-contain': !isShadowDOM,
-      '[&:fullscreen_::slotted(video)]:object-contain [&:fullscreen_::slotted(video)]:rounded-none': isShadowDOM,
-    },
-    '[&:fullscreen>img]:object-contain'
+      '[&:fullscreen_::slotted(video)]:object-contain': isShadowDOM,
+    }
   );
 
 /* ==========================================================================
@@ -66,9 +69,9 @@ export const surface = cn(
   'bg-white/10',
   'backdrop-saturate-150 backdrop-blur-lg',
   // Border and shadow
-  'ring-white/5 shadow-black/10',
+  'ring-black/15 shadow-black/10',
   // Border to enhance contrast on lighter videos
-  'after:ring-black/15',
+  'after:ring-white/5',
   // Reduced transparency for users with preference
   '[@media(prefers-reduced-transparency:reduce)]:bg-black/70',
   // High contrast mode
@@ -84,7 +87,7 @@ export const controls = cn(
   surface,
   // Position
   'absolute bottom-3 inset-x-3',
-  'text-white z-10',
+  '[color:var(--media-color-primary,oklch(1_0_0))] z-10',
   // Transitions (fine pointer only — instant toggle on touch to avoid dead-zone taps)
   'will-change-[scale,transform,filter,opacity]',
   '[@media(pointer:fine)]:transition-[scale,transform,filter,opacity]',
@@ -100,6 +103,25 @@ export const controls = cn(
   'motion-reduce:not-data-visible:blur-none',
   'motion-reduce:not-data-visible:scale-100'
 );
+
+/* ==========================================================================
+   Preview (with video surface)
+   ========================================================================== */
+
+export const preview = {
+  ...basePreview,
+  root: cn(
+    'absolute left-(--media-slider-pointer) bottom-[calc(100%+1.2rem)] -translate-x-1/2',
+    'opacity-0 scale-80 blur-sm origin-bottom',
+    'transition-[scale,opacity,filter] duration-150',
+    'group-data-pointing/slider:opacity-100 group-data-pointing/slider:scale-100 group-data-pointing/slider:blur-none',
+    '[&:has([role=img][data-hidden])]:opacity-0 [&:has([role=img][data-hidden])]:scale-80 [&:has([role=img][data-hidden])]:blur-sm',
+    '[&:has([role=img][data-loading])]:max-h-24',
+    surface,
+    basePreview.root
+  ),
+  thumbnail: cn(basePreview.thumbnail, 'max-w-44'),
+};
 
 /* ==========================================================================
    Sliders

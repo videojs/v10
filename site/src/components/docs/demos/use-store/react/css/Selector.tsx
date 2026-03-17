@@ -1,14 +1,14 @@
-import { createPlayer, usePlayer, useStore } from '@videojs/react';
+import { createPlayer, useStore } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
 import './Selector.css';
 
-const { Provider, Container } = createPlayer({
+const Player = createPlayer({
   features: videoFeatures,
 });
 
 function DerivedState() {
-  const store = usePlayer();
+  const store = Player.usePlayer();
   const derived = useStore(store, (s) => ({
     remaining: s.duration - s.currentTime,
     progress: s.duration > 0 ? (s.currentTime / s.duration) * 100 : 0,
@@ -30,8 +30,8 @@ function DerivedState() {
 
 export default function Selector() {
   return (
-    <Provider>
-      <Container className="react-use-store-selector">
+    <Player.Provider>
+      <Player.Container className="react-use-store-selector">
         <Video
           src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
           autoPlay
@@ -40,7 +40,7 @@ export default function Selector() {
           loop
         />
         <DerivedState />
-      </Container>
-    </Provider>
+      </Player.Container>
+    </Player.Provider>
   );
 }

@@ -1,0 +1,59 @@
+.react-slider-basic {
+  display: flex;
+  align-items: center;
+  padding: 24px;
+  background: #1a1a1a;
+}
+
+.react-slider-basic__slider {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  height: 20px;
+  cursor: pointer;
+}
+
+.react-slider-basic__track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  transition: height 150ms ease;
+}
+
+.react-slider-basic__slider[data-interactive] .react-slider-basic__track {
+  height: 6px;
+}
+
+.react-slider-basic__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: var(--media-slider-fill);
+  background: white;
+  border-radius: 9999px;
+}
+
+.react-slider-basic__thumb {
+  position: absolute;
+  left: var(--media-slider-fill);
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  transform: translateX(-50%) scale(0);
+  transition: transform 150ms ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.react-slider-basic__slider[data-interactive] .react-slider-basic__thumb {
+  transform: translateX(-50%) scale(1);
+}
+
+.react-slider-basic__slider[data-dragging] .react-slider-basic__thumb {
+  transform: translateX(-50%) scale(1.1);
+}
