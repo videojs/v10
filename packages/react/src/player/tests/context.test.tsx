@@ -10,7 +10,6 @@ import {
   useContainerAttach,
   useMedia,
   useMediaAttach,
-  useMediaRegistration,
   useOptionalPlayer,
   usePlayer,
   usePlayerContext,
@@ -89,12 +88,6 @@ describe('useContainerAttach', () => {
     });
 
     expect(result.current).toBe(setContainer);
-  });
-});
-
-describe('useMediaRegistration', () => {
-  it('is an alias for useMediaAttach', () => {
-    expect(useMediaRegistration).toBe(useMediaAttach);
   });
 });
 

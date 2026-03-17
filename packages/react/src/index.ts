@@ -16,7 +16,6 @@ export {
   useContainerAttach,
   useMedia,
   useMediaAttach,
-  useMediaRegistration,
   usePlayer,
   usePlayerContext,
 } from './player/context';

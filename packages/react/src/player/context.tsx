@@ -92,11 +92,6 @@ export function useContainerAttach(): Dispatch<SetStateAction<HTMLElement | null
   return ctx?.setContainer;
 }
 
-/**
- * @deprecated Use {@link useMediaAttach} instead.
- */
-export const useMediaRegistration = useMediaAttach;
-
 export interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
   children?: ReactNode;
 }
