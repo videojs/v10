@@ -1,13 +1,11 @@
 'use client';
 
-import { type GesturePointerType, PlayGestureCore } from '@videojs/core';
+import { PlayGestureCore } from '@videojs/core';
 import { selectPlayback } from '@videojs/core/dom';
 
-import { createMediaGesture } from '../create-media-gesture';
+import { createMediaGesture, type MediaGestureProps } from '../create-media-gesture';
 
-export interface PlayGestureProps {
-  type?: GesturePointerType;
-}
+export interface PlayGestureProps extends MediaGestureProps {}
 
 export const PlayGesture = createMediaGesture<PlayGestureCore, PlayGestureProps>({
   displayName: 'PlayGesture',

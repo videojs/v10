@@ -1,13 +1,5 @@
 import type { MediaPlaybackState } from '../media/state';
 
-export type GesturePointerType = 'mouse' | 'touch';
-
-export const PointerTypes = {
-  MOUSE: 'mouse',
-  PEN: 'pen',
-  TOUCH: 'touch',
-} as const;
-
 export abstract class GestureCore {
   static readonly defaultProps: object = {};
 
@@ -22,5 +14,5 @@ export abstract class GestureCore {
   }
 
   abstract setProps(props: object): void;
-  abstract handleGesture(event: { pointerType: string }): void;
+  abstract handleGesture(): void;
 }

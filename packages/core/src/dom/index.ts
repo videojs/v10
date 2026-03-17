@@ -1,4 +1,6 @@
 export * from './feature';
+export * from './gestures/bind-gesture';
+export * from './gestures/event';
 export * from './media/types';
 export * from './store/features';
 export * from './store/selectors';
