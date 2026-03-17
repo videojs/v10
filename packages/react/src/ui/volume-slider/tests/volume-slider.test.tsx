@@ -1,5 +1,5 @@
 import { cleanup, render } from '@testing-library/react';
-import type { MediaVolumeState } from '@videojs/core/dom';
+import type { MediaVolumeState } from '@videojs/core';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
