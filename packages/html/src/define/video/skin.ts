@@ -5,11 +5,11 @@ import styles from './skin.css?inline';
 
 // Side-effect imports: register all custom elements used in the template.
 import '../media/container';
+import '../gestures/play-gesture';
 import '../ui/buffering-indicator';
 import '../ui/captions-button';
 import '../ui/controls';
 import '../ui/fullscreen-button';
-import '../ui/gesture';
 import '../ui/mute-button';
 import '../ui/pip-button';
 import '../ui/play-button';
@@ -32,7 +32,7 @@ function getTemplateHTML() {
       <slot name="media"></slot>
       <slot></slot>
 
-      <media-gesture type="pointerup" command="toggle-paused"></media-gesture>
+      <media-play-gesture></media-play-gesture>
 
       <media-poster>
         <slot name="poster"></slot>

@@ -7,7 +7,9 @@ export * from '@videojs/core/dom';
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
 export { useSelector, useStore } from '@videojs/store/react';
-
+// Gestures
+export { createMediaGesture } from './gestures/create-media-gesture';
+export { PlayGesture, type PlayGestureProps } from './gestures/play-gesture/play-gesture';
 // Media primitives
 export {
   Container,
@@ -20,7 +22,6 @@ export {
   usePlayer,
   usePlayerContext,
 } from './player/context';
-
 // Player API
 export {
   type CreatePlayerConfig,
@@ -28,7 +29,6 @@ export {
   createPlayer,
   type ProviderProps,
 } from './player/create-player';
-
 // UI
 export { AlertDialog, type AlertDialogContextValue, useAlertDialogContext } from './ui/alert-dialog';
 export { BufferingIndicator, type BufferingIndicatorProps } from './ui/buffering-indicator/buffering-indicator';
@@ -37,7 +37,6 @@ export { Controls } from './ui/controls';
 export type { ControlsGroupProps } from './ui/controls/controls-group';
 export type { ControlsRootProps } from './ui/controls/controls-root';
 export { FullscreenButton, type FullscreenButtonProps } from './ui/fullscreen-button/fullscreen-button';
-export { Gesture, type GestureProps } from './ui/gesture/gesture';
 export { useButton } from './ui/hooks/use-button';
 export { useSlider } from './ui/hooks/use-slider';
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
