@@ -12,11 +12,10 @@ import { slider as baseSlider } from './components/slider';
 export const root = (isShadowDOM: boolean) =>
   cn(
     baseRoot,
-    'bg-black',
+    'bg-black overflow-clip',
     // Border ring (::after)
     'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
-    'after:inset-0 after:ring-1 after:ring-inset after:ring-black/15',
-    'dark:after:ring-white/15',
+    'after:inset-0 after:ring-1 after:ring-inset after:ring-black/15 dark:after:ring-white/15',
     // Video element
     {
       '[&_::slotted(video)]:block [&_::slotted(video)]:w-full [&_::slotted(video)]:h-full [&_::slotted(video)]:rounded-(--media-video-border-radius) [&_::slotted(video)]:[object-fit:var(--media-object-fit,cover)] [&_::slotted(video)]:[object-position:var(--media-object-position,center)]':

@@ -31,7 +31,7 @@
   --media-video-border-radius: var(--media-border-radius, 2rem);
 
   @media (prefers-color-scheme: dark) {
-    --media-border-color: oklch(1 0 0 / 0.1);
+    --media-border-color: oklch(1 0 0 / 0.15);
   }
 
   /* Inner border ring */

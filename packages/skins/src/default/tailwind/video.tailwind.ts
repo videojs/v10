@@ -18,7 +18,7 @@ export const root = (isShadowDOM: boolean) =>
     'bg-black',
     // Inner border ring
     'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
-    'after:inset-0 after:ring-1 after:ring-inset after:ring-black/10 dark:after:ring-white/10',
+    'after:inset-0 after:ring-1 after:ring-inset after:ring-black/10 dark:after:ring-white/15',
     // Video element
     {
       '[&_::slotted(video)]:block [&_::slotted(video)]:w-full [&_::slotted(video)]:h-full [&_::slotted(video)]:rounded-(--media-video-border-radius) [&_::slotted(video)]:[object-fit:var(--media-object-fit,contain)] [&_::slotted(video)]:[object-position:var(--media-object-position,center)]':
