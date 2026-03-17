@@ -77,7 +77,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       getCSSVars: getTimeSliderCSSVars,
       onValueCommit: (percent) => {
         const media = mediaRef.current;
-        if (media) media.seek(core.valueFromPercent(percent));
+        if (media) media.seek(core.rawValueFromPercent(percent));
       },
       onDragStart,
       onDragEnd,
