@@ -92,4 +92,47 @@ describe('PopoverElement', () => {
 
     expect(popover.hidden).toBe(true);
   });
+
+  it('rebinds when a linked trigger is added inside a wrapper subtree', async () => {
+    const popover = createElement(PopoverElement);
+    popover.id = 'volume-popover';
+
+    document.body.append(popover);
+    await popover.updateComplete;
+
+    const wrapper = document.createElement('div');
+    const trigger = document.createElement('button');
+    trigger.setAttribute('commandfor', 'volume-popover');
+    trigger.setAttribute('data-availability', 'available');
+    wrapper.append(trigger);
+    document.body.append(wrapper);
+
+    await waitForMutation();
+    await popover.updateComplete;
+
+    expect(popover.hidden).toBe(false);
+    expect(trigger.getAttribute('aria-controls')).toBe('volume-popover');
+  });
+
+  it('cleans up when a linked trigger is removed inside a wrapper subtree', async () => {
+    const wrapper = document.createElement('div');
+    const trigger = document.createElement('button');
+    trigger.setAttribute('commandfor', 'volume-popover');
+    trigger.setAttribute('data-availability', 'available');
+    wrapper.append(trigger);
+
+    const popover = createElement(PopoverElement);
+    popover.id = 'volume-popover';
+
+    document.body.append(wrapper, popover);
+    await popover.updateComplete;
+
+    wrapper.remove();
+
+    await waitForMutation();
+    await popover.updateComplete;
+
+    expect(popover.hidden).toBe(true);
+    expect(trigger.hasAttribute('aria-controls')).toBe(false);
+  });
 });

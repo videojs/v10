@@ -71,7 +71,10 @@ vi.mock('@videojs/store/react', () => ({
   }),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  mockVolumeState.volumeAvailability = 'available';
+});
 
 // --- Tests ---
 
@@ -149,8 +152,6 @@ describe('VolumeSliderRoot', () => {
 
     const el = container.querySelector('[data-orientation]');
     expect(el?.getAttribute('data-availability')).toBe('unsupported');
-
-    mockVolumeState.volumeAvailability = 'available';
   });
 
   it('exposes availability to render state', () => {
@@ -167,8 +168,6 @@ describe('VolumeSliderRoot', () => {
 
     const el = container.querySelector('[data-testid="vol-slider"]');
     expect(el?.getAttribute('data-state')).toBe('unsupported');
-
-    mockVolumeState.volumeAvailability = 'available';
   });
 });
 

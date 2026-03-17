@@ -261,14 +261,20 @@ export class PopoverElement extends MediaElement {
     }
 
     for (const node of record.addedNodes) {
-      if (node instanceof HTMLElement && this.#isLinkedTrigger(node)) return true;
+      if (this.#hasLinkedTrigger(node)) return true;
     }
 
     for (const node of record.removedNodes) {
-      if (node instanceof HTMLElement && this.#isLinkedTrigger(node)) return true;
+      if (this.#hasLinkedTrigger(node)) return true;
     }
 
     return false;
+  }
+
+  #hasLinkedTrigger(node: Node): boolean {
+    if (!(node instanceof HTMLElement)) return false;
+    if (this.#isLinkedTrigger(node)) return true;
+    return !!this.id && !!node.querySelector(`[commandfor="${this.id}"]`);
   }
 
   #isLinkedTrigger(element: HTMLElement): boolean {

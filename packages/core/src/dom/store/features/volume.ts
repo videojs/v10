@@ -5,6 +5,7 @@ import { definePlayerFeature } from '../../feature';
 
 /** Volume to restore when unmuting at zero. */
 const UNMUTE_VOLUME = 0.25;
+let volumeAvailabilityPromise: Promise<MediaFeatureAvailability> | null = null;
 
 export const volumeFeature = definePlayerFeature({
   name: 'volume',
@@ -58,7 +59,8 @@ export const volumeFeature = definePlayerFeature({
 });
 
 function detectVolumeAvailability(): Promise<MediaFeatureAvailability> {
-  return probeVolumeAvailability().catch(() => 'unsupported');
+  volumeAvailabilityPromise ??= probeVolumeAvailability().catch(() => 'unsupported');
+  return volumeAvailabilityPromise;
 }
 
 async function probeVolumeAvailability(): Promise<MediaFeatureAvailability> {

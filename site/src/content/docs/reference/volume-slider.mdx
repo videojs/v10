@@ -39,7 +39,7 @@ import withPartsHtmlTs from "@/components/docs/demos/volume-slider/html/css/With
 
 Controls the media volume level. The slider maps its 0–100 internal range to the media's 0–1 volume scale. When the media is muted, the fill level drops to 0 regardless of the stored volume value.
 
-The root also reflects volume control availability with `data-availability`. On platforms where volume cannot be changed programmatically, such as iOS, the slider exposes `data-availability="unsupported"`.
+The root also reflects volume control availability with `data-availability`. It starts at `unavailable` while the runtime capability probe resolves, then settles on `available` or `unsupported`. On platforms where volume cannot be changed programmatically, such as iOS, the slider exposes `data-availability="unsupported"`.
 
 ## Styling
 
@@ -63,10 +63,11 @@ React renders a `<div>` element. Add a `className` to style it:
 ```
 </FrameworkCase>
 
-You can also hide the slider when volume control is unavailable:
+You can also hide the slider while availability is unresolved or unsupported:
 
 <FrameworkCase frameworks={["html"]}>
 ```css
+media-volume-slider[data-availability="unavailable"],
 media-volume-slider[data-availability="unsupported"] {
   display: none;
 }
@@ -75,6 +76,7 @@ media-volume-slider[data-availability="unsupported"] {
 
 <FrameworkCase frameworks={["react"]}>
 ```css
+.volume-slider[data-availability="unavailable"],
 .volume-slider[data-availability="unsupported"] {
   display: none;
 }
