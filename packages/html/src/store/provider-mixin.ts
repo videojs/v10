@@ -80,6 +80,7 @@ export function createProviderMixin<Store extends PlayerStore>(
         this.#playerProvider.setValue(this.store);
         this.#mediaAttachProvider.setValue(this.#setMedia);
         this.#containerAttachProvider.setValue(this.#setContainer);
+        this.#tryAttach();
         this.#queueFallbackDiscovery();
       }
 

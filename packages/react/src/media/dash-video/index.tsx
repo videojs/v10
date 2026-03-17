@@ -1,7 +1,7 @@
 import { DashMedia } from '@videojs/core/dom/media/dash';
 import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
 import { forwardRef, useMemo } from 'react';
-import { useMediaRegistration } from '../../player/context';
+import { useMediaAttach } from '../../player/context';
 import { attachMediaElement } from '../../utils/attach-media-element';
 import { mediaProps } from '../../utils/media-props';
 import { useComposedRefs } from '../../utils/use-composed-refs';
@@ -11,7 +11,7 @@ export type DashVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElem
 
 export const DashVideo = forwardRef<HTMLVideoElement, DashVideoProps>(({ children, ...props }, ref) => {
   const mediaApi = useMemo(() => new DashMedia(), []);
-  const setMedia = useMediaRegistration();
+  const setMedia = useMediaAttach();
 
   useDestroy(mediaApi, () => {
     setMedia?.(mediaApi);
