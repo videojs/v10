@@ -25,8 +25,15 @@ export function createLatestLoader() {
 
   return async <Result>(load: () => Promise<Result>): Promise<Result | undefined> => {
     const version = ++loadVersion;
-    const result = await load();
-
-    return version === loadVersion ? result : undefined;
+    try {
+      const result = await load();
+      return version === loadVersion ? result : undefined;
+    } catch (error) {
+      // Swallow load errors to avoid unhandled promise rejections in callers
+      // that do not await the returned promise. Callers can treat `undefined`
+      // as a signal that no valid result is available.
+      console.error('Failed to load latest result', error);
+      return undefined;
+    }
   };
 }

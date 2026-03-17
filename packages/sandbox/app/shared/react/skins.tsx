@@ -45,15 +45,22 @@ function useLoadedComponent<Props>(
   useEffect(() => {
     let active = true;
 
-    void load().then((resolved) => {
-      if (!active) return;
+    void load()
+      .then((resolved) => {
+        if (!active) return;
 
-      setComponent(() => resolved);
-    });
+        setComponent(() => resolved);
+      })
+      .catch(() => {
+        if (!active) return;
+        // Intentionally ignore load errors to avoid unhandled promise rejections.
+        // The component will remain null, and callers can handle absence as needed.
+      });
 
     return () => {
       active = false;
     };
+    // biome-ignore lint/correctness/useExhaustiveDependencies: we're proxying the deps
   }, deps);
 
   return component;

@@ -9,9 +9,7 @@ import {
   SOURCES,
 } from '@app/shared/sources';
 import type { Platform, Preset, Styling } from '@app/types';
-import { useSkinSwitcher } from '@app/utils/use-skin-switcher';
-import { useSourceSwitcher } from '@app/utils/use-source-switcher';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Navbar } from './navbar';
 import { Preview } from './preview';
 
@@ -26,6 +24,8 @@ function readParams() {
     platform: (params.get('platform') ?? 'html') as Platform,
     styling: (params.get('styling') ?? 'css') as Styling,
     preset: (params.get('preset') ?? 'video') as Preset,
+    skin: (params.get('skin') ?? 'default') as 'default' | 'minimal',
+    source: (params.get('source') ?? 'hls-1') as SourceId,
   };
 }
 
@@ -34,8 +34,9 @@ export function App() {
   const [platform, setPlatform] = useState<Platform>(initial.platform);
   const [styling, setStyling] = useState(initial.styling);
   const [preset, setPreset] = useState<Preset>(initial.preset);
-  const [skin, setSkin] = useSkinSwitcher();
-  const [source, setSource] = useSourceSwitcher();
+  const [skin, setSkin] = useState(initial.skin);
+  const [source, setSource] = useState(initial.source);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const pagePath = getPagePath(platform, preset);
 
@@ -44,6 +45,14 @@ export function App() {
     const params = new URLSearchParams({ platform, styling, preset, skin, source });
     history.replaceState(null, '', `/?${params}`);
   }, [platform, styling, preset, skin, source]);
+
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage({ type: 'skin-change', skin }, '*');
+  }, [skin]);
+
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage({ type: 'source-change', source }, '*');
+  }, [source]);
 
   // Constrain source to MP4 when switching to audio
   useEffect(() => {
@@ -91,7 +100,14 @@ export function App() {
         presets={PRESETS}
         sources={SOURCES}
       />
-      <Preview key={`${pagePath}:${styling}`} pagePath={pagePath} skin={skin} styling={styling} source={source} />
+      <Preview
+        key={`${pagePath}:${styling}`}
+        ref={iframeRef}
+        pagePath={pagePath}
+        skin={skin}
+        styling={styling}
+        source={source}
+      />
     </div>
   );
 }
