@@ -583,18 +583,16 @@ import UtilReference from '@/components/docs/api-reference/UtilReference.astro';
 
 ## Search: Algolia DocSearch v4
 
-**Config:** `src/search.config.ts` — Algolia app ID, API key, index names, Ask AI assistant ID.
+**Config:** `src/search.config.ts` — Algolia app ID, API key, and index names.
 
-**Components:** `src/components/Search/Search.tsx` + `Search.astro`
+**Component:** `src/components/Search.tsx` — React component loaded via `client:load` in the NavBar.
+
+**Styles:** `src/styles/docsearch.css` — CSS variable overrides mapping DocSearch theming to site tokens (imported via `globals.css`).
 
 **How it works:**
 - `DocSearch` React component provides the trigger button, modal, and keyboard shortcut (Cmd+K)
 - Two indexes queried via the `indices` prop: `videojs_docs` (filtered by current framework) and `videojs_blog` (unfiltered)
-- Ask AI enabled via the `askAi` prop with an Algolia assistant
-- CSS variable overrides in `Search.astro` map DocSearch theming to site tokens
 - No build-time indexing — search queries hit the Algolia API directly
-
-**Crawler config:** See `algolia-crawler-config.md` for Algolia Dashboard settings.
 
 **Data attributes used by the crawler:**
 - `data-search-content` — marks searchable content regions

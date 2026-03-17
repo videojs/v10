@@ -166,7 +166,7 @@ See [CLAUDE.md](CLAUDE.md) for details on each plugin.
 
 ### Search
 
-Search is powered by [Algolia DocSearch v4](https://docsearch.algolia.com). Configuration is in `src/search.config.ts` and the component lives at `src/components/Search/`. See `algolia-crawler-config.md` for crawler setup.
+Search is powered by [Algolia DocSearch v4](https://docsearch.algolia.com). Configuration is in `src/search.config.ts` and the component is `src/components/Search.tsx`.
 
 ### Custom Integration
 

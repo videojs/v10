@@ -184,8 +184,7 @@
   border-block-start: 1px solid var(--docsearch-subtle-color);
 }
 
-.DocSearch-Hit a,
-.DocSearch-Hit--AskAI {
+.DocSearch-Hit a {
   border-radius: var(--radius-xs);
 }
 
