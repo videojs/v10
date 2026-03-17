@@ -75,7 +75,7 @@ function updateShareUrl() {
 
 function updateNowPlayingQuality() {
   if (!engine) return;
-  const segments = engine.owners.current.videoBufferActor?.snapshot.context.segments ?? [];
+  const segments = engine.owners.current.videoBufferActor?.snapshot.get().context.segments ?? [];
   const t = video.currentTime;
   const current = segments.find((s) => t >= s.startTime && t < s.startTime + s.duration);
   if (current?.trackBandwidth) {
@@ -246,8 +246,8 @@ function inspectState() {
     <div>readyState: ${owners.mediaSource?.readyState ?? 'N/A'}</div>
 
     <h3>Buffer Model (actor context)</h3>
-    <div>Video segments loaded: ${owners.videoBufferActor?.snapshot.context.segments.length ?? 0}</div>
-    <div>Audio segments loaded: ${owners.audioBufferActor?.snapshot.context.segments.length ?? 0}</div>
+    <div>Video segments loaded: ${owners.videoBufferActor?.snapshot.get().context.segments.length ?? 0}</div>
+    <div>Audio segments loaded: ${owners.audioBufferActor?.snapshot.get().context.segments.length ?? 0}</div>
 
     <h3>Video Element State</h3>
     <div>readyState: ${video.readyState}</div>
