@@ -31,8 +31,8 @@ export const root = (isShadowDOM: boolean) =>
     '[--media-controls-transition-delay:0ms]',
     '[@media(pointer:fine)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-delay:500ms]',
     '[@media(pointer:fine)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
-    '[@media(pointer:fine)]:motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:100ms]',
     '[@media(pointer:coarse)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
+    'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:100ms]',
     // Poster image
     '[&>img]:absolute [&>img]:inset-0 [&>img]:w-full [&>img]:h-full [&>img]:rounded-[inherit]',
     '[&>img]:[object-fit:var(--media-object-fit,contain)] [&>img]:[object-position:var(--media-object-position,center)] [&>img]:pointer-events-none',
@@ -46,7 +46,7 @@ export const root = (isShadowDOM: boolean) =>
     // Native caption track container
     !isShadowDOM
       ? [
-          '[&_video::-webkit-media-text-track-container]:transition-transform',
+          '[&_video::-webkit-media-text-track-container]:transition-[translate]',
           '[&_video::-webkit-media-text-track-container]:duration-(--media-caption-track-duration)',
           '[&_video::-webkit-media-text-track-container]:ease-out',
           '[&_video::-webkit-media-text-track-container]:delay-(--media-caption-track-delay)',

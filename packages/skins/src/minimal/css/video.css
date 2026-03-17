@@ -35,13 +35,12 @@
     @media (pointer: fine) {
       --media-controls-transition-delay: 500ms;
       --media-controls-transition-duration: 300ms;
-
-      @media (prefers-reduced-motion: reduce) {
-        --media-controls-transition-duration: 100ms;
-      }
     }
     @media (pointer: coarse) {
       --media-controls-transition-duration: 150ms;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      --media-controls-transition-duration: 100ms;
     }
   }
 
