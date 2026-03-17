@@ -19,6 +19,7 @@ export const SimpleHlsVideo = forwardRef<HTMLVideoElement, SimpleHlsVideoProps>(
   }, [mediaApi, setMedia]);
 
   const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
+
   return (
     <video ref={composedRef} {...mediaProps(mediaApi, props)}>
       {children}

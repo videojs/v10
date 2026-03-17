@@ -18,6 +18,7 @@ export const DashVideo = forwardRef<HTMLVideoElement, DashVideoProps>(({ childre
   });
 
   const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
+
   return (
     <video ref={composedRef} {...mediaProps(mediaApi, props)}>
       {children}

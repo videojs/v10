@@ -9,17 +9,10 @@ import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 
 ```tsx title="CustomMedia.tsx"
 import { useMediaAttach } from "@videojs/react";
-import { useCallback } from "react";
 
 function CustomMedia({ src }: { src: string }) {
   const setMedia = useMediaAttach();
-
-  const ref = useCallback(
-    (el: HTMLVideoElement | null) => setMedia?.(el),
-    [setMedia],
-  );
-
-  return <video ref={ref} src={src} />;
+  return <video ref={setMedia} src={src} />;
 }
 ```
 
