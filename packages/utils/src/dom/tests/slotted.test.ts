@@ -88,7 +88,7 @@ describe('getSlottedElement', () => {
 
       const isMedia = (el: Element): el is HTMLMediaElement => el instanceof HTMLMediaElement;
 
-      const result = getSlottedElement(host.shadowRoot!, '', (el) => (isMedia(el) ? el : null));
+      const result = getSlottedElement<HTMLMediaElement>(host.shadowRoot!, '', (el) => (isMedia(el) ? el : null));
 
       expect(result).toBe(video);
       expect(result?.play).toBeDefined();

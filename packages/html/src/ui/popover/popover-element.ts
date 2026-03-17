@@ -52,10 +52,12 @@ export class PopoverElement extends MediaElement {
   #disconnect: AbortController | null = null;
   #triggerAbort: AbortController | null = null;
   #currentTrigger: HTMLElement | null = null;
+  #triggerObserver: MutationObserver | null = null;
   #positionAbort: AbortController | null = null;
   #positionFrame = 0;
   #resizeObserver: ResizeObserver | null = null;
   #positionTrigger: HTMLElement | null = null;
+  #availabilityHidden = false;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -82,6 +84,8 @@ export class PopoverElement extends MediaElement {
     // Apply popup event handlers (pointerenter/leave, focusout) to self.
     applyElementProps(this, this.#popover.popupProps, { signal: this.#disconnect.signal });
 
+    this.#observeTriggerLinkage();
+
     // Subscribe to interaction state for reactive updates.
     // Reuse the controller across connect/disconnect cycles to avoid
     // leaking stale controllers in the host's controller set.
@@ -105,12 +109,14 @@ export class PopoverElement extends MediaElement {
   override disconnectedCallback(): void {
     super.disconnectedCallback();
     this.#cleanupPositioning();
+    this.#cleanupTriggerObserver();
     this.#disconnect?.abort();
     this.#disconnect = null;
   }
 
   override destroyCallback(): void {
     this.#cleanupPositioning();
+    this.#cleanupTriggerObserver();
     this.#cleanupTrigger();
     this.#popover?.destroy();
     super.destroyCallback();
@@ -137,15 +143,7 @@ export class PopoverElement extends MediaElement {
     super.update(_changed);
     if (!this.#popover) return;
 
-    // Discover trigger via commandfor linkage.
-    const triggerEl = this.#findTrigger();
-    const availableTriggerEl = this.#isTriggerAvailable(triggerEl) ? triggerEl : null;
-    this.toggleAttribute('hidden', !availableTriggerEl);
-    this.#syncTrigger(availableTriggerEl);
-
-    if (!availableTriggerEl && this.#popover.input.current.active) {
-      this.#popover.close();
-    }
+    const availableTriggerEl = this.#syncTriggerLinkage();
 
     // Derive state from core + input.
     const input = this.#popover.input.current;
@@ -226,6 +224,89 @@ export class PopoverElement extends MediaElement {
     if (triggerEl && this.#popover) {
       this.#triggerAbort = new AbortController();
       applyElementProps(triggerEl, this.#popover.triggerProps, { signal: this.#triggerAbort.signal });
+    }
+  }
+
+  #observeTriggerLinkage(): void {
+    this.#cleanupTriggerObserver();
+
+    const root = this.getRootNode();
+    const target = root instanceof Document ? root.documentElement : root;
+
+    if (!(target instanceof Node)) return;
+
+    this.#triggerObserver = new MutationObserver((records) => {
+      if (records.some((record) => this.#isTriggerLinkageMutation(record))) {
+        this.#syncTriggerLinkage();
+        this.requestUpdate();
+      }
+    });
+
+    this.#triggerObserver.observe(target, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['commandfor', 'data-availability'],
+    });
+  }
+
+  #cleanupTriggerObserver(): void {
+    this.#triggerObserver?.disconnect();
+    this.#triggerObserver = null;
+  }
+
+  #isTriggerLinkageMutation(record: MutationRecord): boolean {
+    if (record.type === 'attributes') {
+      return record.target instanceof HTMLElement && this.#isLinkedTrigger(record.target);
+    }
+
+    for (const node of record.addedNodes) {
+      if (node instanceof HTMLElement && this.#isLinkedTrigger(node)) return true;
+    }
+
+    for (const node of record.removedNodes) {
+      if (node instanceof HTMLElement && this.#isLinkedTrigger(node)) return true;
+    }
+
+    return false;
+  }
+
+  #isLinkedTrigger(element: HTMLElement): boolean {
+    return !!this.id && element.getAttribute('commandfor') === this.id;
+  }
+
+  #syncTriggerLinkage(): HTMLElement | null {
+    const triggerEl = this.#findTrigger();
+    const availableTriggerEl = this.#isTriggerAvailable(triggerEl) ? triggerEl : null;
+
+    this.#syncAvailabilityVisibility(Boolean(availableTriggerEl));
+    this.#syncTrigger(availableTriggerEl);
+
+    if (!availableTriggerEl && this.#popover?.input.current.active) {
+      this.#popover.close();
+    }
+
+    if (!availableTriggerEl) {
+      tryHidePopover(this);
+      this.#cleanupPositioning();
+    }
+
+    return availableTriggerEl;
+  }
+
+  #syncAvailabilityVisibility(available: boolean): void {
+    if (!available) {
+      if (!this.hidden) {
+        this.hidden = true;
+        this.#availabilityHidden = true;
+      }
+
+      return;
+    }
+
+    if (this.#availabilityHidden) {
+      this.hidden = false;
+      this.#availabilityHidden = false;
     }
   }
 

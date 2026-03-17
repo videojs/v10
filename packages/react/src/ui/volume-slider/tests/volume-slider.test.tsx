@@ -12,39 +12,43 @@ import { VolumeSliderRoot } from '../volume-slider-root';
 
 // --- Hoisted mock data (available inside vi.mock factories) ---
 
-const { mockSliderApi, mockVolumeState } = vi.hoisted(() => ({
-  mockSliderApi: () => ({
-    input: {
-      current: {
-        pointerPercent: 0,
-        dragPercent: 0,
-        dragging: false,
-        pointing: false,
-        focused: false,
-      },
-      subscribe: vi.fn(() => vi.fn()),
-    },
-    rootProps: {
-      onPointerDown: vi.fn(),
-      onPointerMove: vi.fn(),
-      onPointerLeave: vi.fn(),
-    },
-    thumbProps: {
-      onKeyDown: vi.fn(),
-      onFocus: vi.fn(),
-      onBlur: vi.fn(),
-    },
-    adjustForAlignment: <S,>(state: S): S => state,
-    destroy: vi.fn(),
-  }),
-  mockVolumeState: {
+const { mockSliderApi, mockVolumeState } = vi.hoisted(() => {
+  const mockVolumeState: MediaVolumeState = {
     volume: 0.8,
     muted: false,
     volumeAvailability: 'available',
     setVolume: vi.fn(),
     toggleMuted: vi.fn(),
-  } satisfies MediaVolumeState,
-}));
+  };
+
+  return {
+    mockSliderApi: () => ({
+      input: {
+        current: {
+          pointerPercent: 0,
+          dragPercent: 0,
+          dragging: false,
+          pointing: false,
+          focused: false,
+        },
+        subscribe: vi.fn(() => vi.fn()),
+      },
+      rootProps: {
+        onPointerDown: vi.fn(),
+        onPointerMove: vi.fn(),
+        onPointerLeave: vi.fn(),
+      },
+      thumbProps: {
+        onKeyDown: vi.fn(),
+        onFocus: vi.fn(),
+        onBlur: vi.fn(),
+      },
+      adjustForAlignment: <S,>(state: S): S => state,
+      destroy: vi.fn(),
+    }),
+    mockVolumeState,
+  };
+});
 
 // --- Module mocks ---
 
