@@ -26,6 +26,7 @@ import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
+import { Slider } from '@/ui/slider';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
@@ -159,6 +160,12 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
                 <TimeSlider.Buffer className="media-slider__buffer" />
               </TimeSlider.Track>
               <TimeSlider.Thumb className="media-slider__thumb" />
+
+              <div className="media-surface media-preview media-slider__preview">
+                <Slider.Thumbnail className="media-preview__thumbnail" />
+                <TimeSlider.Value type="pointer" className="media-preview__timestamp" />
+                <SpinnerIcon className="media-preview__spinner media-icon" />
+              </div>
             </TimeSlider.Root>
             <Time.Value type="duration" className="media-time__value" />
           </Time.Group>

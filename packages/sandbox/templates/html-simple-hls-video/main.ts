@@ -1,29 +1,27 @@
 import '@app/styles.css';
 import '@videojs/html/video/player';
 import '@videojs/html/media/simple-hls-video';
-import '@videojs/html/video/skin';
-import '@videojs/html/video/minimal-skin';
-import { CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
-import { loadVideoStylesheets } from '@app/shared/html/stylesheets';
-import { getInitialSkin, getInitialSource, onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
-import type { SourceId } from '@app/shared/sources';
+import { renderMuxStoryboard } from '@app/shared/html/mux-storyboard';
+import { createHtmlSandboxState, createLatestLoader } from '@app/shared/html/sandbox-state';
+import { loadVideoSkinTag } from '@app/shared/html/skins';
+import { onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
 import { SOURCES } from '@app/shared/sources';
-import type { Skin } from '@app/types';
 
 const html = String.raw;
 
-let currentSkin: Skin = getInitialSkin();
-let currentSource: SourceId = getInitialSource();
+const state = createHtmlSandboxState();
+const loadLatest = createLatestLoader();
 
-function render() {
-  const tag = CSS_SKIN_TAGS[currentSkin].video;
-
-  loadVideoStylesheets(currentSkin);
+async function render() {
+  const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling));
+  if (!tag) return;
 
   document.getElementById('root')!.innerHTML = html`
     <video-player>
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
-        <simple-hls-video slot="media" src="${SOURCES[currentSource].url}" playsinline></simple-hls-video>
+        <simple-hls-video slot="media" src="${SOURCES[state.source].url}" playsinline crossorigin="anonymous">
+          ${renderMuxStoryboard(state.source)}
+        </simple-hls-video>
       </${tag}>
     </video-player>
   `;
@@ -32,11 +30,11 @@ function render() {
 render();
 
 onSkinChange((skin) => {
-  currentSkin = skin;
+  state.skin = skin;
   render();
 });
 
 onSourceChange((source) => {
-  currentSource = source;
+  state.source = source;
   render();
 });

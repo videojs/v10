@@ -96,9 +96,7 @@ const jsonLdSchema = createBlogPostingSchema({
                   {part.value}
                 </a>
               ) : (
-                <span class="inline-block" data-pagefind-meta="author">
-                  {part.value}
-                </span>
+                <span>{part.value}</span>
               ),
             )
         }

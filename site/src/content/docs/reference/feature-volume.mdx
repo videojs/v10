@@ -1,0 +1,72 @@
+---
+title: Volume
+description: Volume level and mute state for the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Controls volume level and mute state.
+
+## State
+
+| State | Type | Description |
+|---|---|---|
+| `volume` | `number` | Volume level from 0 (silent) to 1 (max) |
+| `muted` | `boolean` | Whether audio is muted |
+| `volumeAvailability` | `MediaFeatureAvailability` | Whether volume can be set on this platform |
+
+## Actions
+
+| Action | Description |
+|---|---|
+| `setVolume(volume)` | Set volume (clamped 0–1). Auto-unmutes when raising above zero. |
+| `toggleMuted()` | Toggle mute. Restores volume to 0.25 when unmuting at zero. |
+
+## Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectVolume` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectVolume` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="VolumeSlider.tsx"
+import { selectVolume, usePlayer } from '@videojs/react';
+
+function VolumeSlider() {
+  const vol = usePlayer(selectVolume);
+  if (!vol) return null;
+
+  return (
+    <input
+      type="range"
+      min={0}
+      max={1}
+      step={0.01}
+      value={vol.volume}
+      onChange={(e) => vol.setVolume(Number(e.target.value))}
+    />
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="volume-slider.ts"
+import { createPlayer, MediaElement, selectVolume } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
+
+class VolumeSlider extends MediaElement {
+  readonly #volume = new PlayerController(this, context, selectVolume);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectVolume" />

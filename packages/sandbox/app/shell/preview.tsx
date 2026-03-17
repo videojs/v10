@@ -1,15 +1,25 @@
 import type { SourceId } from '@app/shared/sources';
-import type { Skin } from '@app/types';
-import { forwardRef } from 'react';
+import type { Skin, Styling } from '@app/types';
+import { forwardRef, useState } from 'react';
 
 type PreviewProps = {
   pagePath: string;
   skin: Skin;
+  styling: Styling;
   source: SourceId;
 };
 
-export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Preview({ pagePath, skin, source }, ref) {
-  const openUrl = `${pagePath}?skin=${encodeURIComponent(skin)}&source=${encodeURIComponent(source)}`;
+export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Preview(
+  { pagePath, skin, styling, source },
+  ref
+) {
+  const [iframeUrl] = useState(
+    () =>
+      `${pagePath}?skin=${encodeURIComponent(skin)}&styling=${encodeURIComponent(styling)}&source=${encodeURIComponent(source)}`
+  );
+  const openUrl =
+    `${pagePath}?skin=${encodeURIComponent(skin)}&styling=${encodeURIComponent(styling)}` +
+    `&source=${encodeURIComponent(source)}`;
 
   return (
     <main className="flex-1 min-h-0 relative bg-zinc-50 dark:bg-zinc-900">
@@ -37,7 +47,7 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
           <line x1="10" x2="21" y1="14" y2="3" />
         </svg>
       </a>
-      <iframe ref={ref} src={pagePath} className="absolute inset-0 w-full h-full border-0" title="player demo" />
+      <iframe ref={ref} src={iframeUrl} className="absolute inset-0 w-full h-full border-0" title="player demo" />
     </main>
   );
 });

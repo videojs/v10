@@ -1,0 +1,68 @@
+---
+title: Text tracks
+description: Subtitles, captions, and chapter track state for the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Manages subtitles, captions, chapters, and thumbnail tracks.
+
+## State
+
+| State | Type | Description |
+|---|---|---|
+| `textTrackList` | `MediaTextTrack[]` | All text tracks on the media element |
+| `subtitlesShowing` | `boolean` | Whether captions/subtitles are enabled |
+| `chaptersCues` | `MediaTextCue[]` | Cues from the first chapters track |
+| `thumbnailCues` | `MediaTextCue[]` | Cues from the first thumbnails track |
+| `thumbnailTrackSrc` | `string \| null` | Track `src` for resolving relative thumbnail URLs |
+
+## Actions
+
+| Action | Description |
+|---|---|
+| `toggleSubtitles(forceShow?)` | Toggle subtitle visibility. Pass `true`/`false` to force. |
+
+## Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectTextTracks` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to text track state. Returns `undefined` if the text tracks feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectTextTracks` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to text track state. Returns `undefined` if the text tracks feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="CaptionsButton.tsx"
+import { selectTextTracks, usePlayer } from '@videojs/react';
+
+function CaptionsButton() {
+  const tracks = usePlayer(selectTextTracks);
+  if (!tracks) return null;
+
+  return (
+    <button onClick={() => tracks.toggleSubtitles()}>
+      {tracks.subtitlesShowing ? 'Hide captions' : 'Show captions'}
+    </button>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="captions-button.ts"
+import { createPlayer, MediaElement, selectTextTracks } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
+
+class CaptionsButton extends MediaElement {
+  readonly #textTracks = new PlayerController(this, context, selectTextTracks);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectTextTracks" />

@@ -1,5 +1,45 @@
 # Changelog
 
+## [10.0.0-beta.6](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.5...@videojs/react@10.0.0-beta.6) (2026-03-15)
+
+
+### Features
+
+* add slider preview thumbnails ([#935](https://github.com/videojs/v10/issues/935)) ([e3f438e](https://github.com/videojs/v10/commit/e3f438e9f488f41c8cf51c95507bc41fc5b524d0))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.6
+    * @videojs/core bumped to 10.0.0-beta.6
+    * @videojs/store bumped to 10.0.0-beta.6
+    * @videojs/utils bumped to 10.0.0-beta.6
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.6
+    * @videojs/skins bumped to 10.0.0-beta.6
+
+## [10.0.0-beta.5](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.4...@videojs/react@10.0.0-beta.5) (2026-03-12)
+
+
+### Miscellaneous Chores
+
+* **@videojs/react:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.5
+    * @videojs/core bumped to 10.0.0-beta.5
+    * @videojs/store bumped to 10.0.0-beta.5
+    * @videojs/utils bumped to 10.0.0-beta.5
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.5
+    * @videojs/skins bumped to 10.0.0-beta.5
+
 ## [10.0.0-beta.4](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.3...@videojs/react@10.0.0-beta.4) (2026-03-12)
 
 

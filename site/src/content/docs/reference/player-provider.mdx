@@ -1,0 +1,204 @@
+---
+title: Player.Provider
+frameworkTitle:
+  html: video-player
+description: The state boundary — creates a store and broadcasts it to all descendants.
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import Aside from '@/components/Aside.astro';
+
+<FrameworkCase frameworks={["react"]}>
+The `Player.Provider` is the state boundary of your player. It creates a store and makes it available to every component inside it via context. Every player needs exactly one.
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+The `<video-player>` element is the state boundary of your player. It creates a store and makes it available to every element inside it via context. Every player needs exactly one.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="App.tsx"
+import { videoFeatures } from '@videojs/react/video';
+import { createPlayer } from '@videojs/react';
+
+const Player = createPlayer({ features: videoFeatures });
+
+function App() {
+  return (
+    <Player.Provider>
+      {/* Everything inside can access the player store */}
+      <Player.Container>
+        <video src="video.mp4" />
+      </Player.Container>
+    </Player.Provider>
+  );
+}
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <!-- Everything inside can access the player store -->
+  <media-container>
+    <video slot="media" src="video.mp4"></video>
+  </media-container>
+</video-player>
+```
+</FrameworkCase>
+
+## How it's created
+
+<FrameworkCase frameworks={["react"]}>
+Call `createPlayer()` with a `features` array. The returned object contains `Provider`, `Container`, `usePlayer`, and `useMedia` — everything you need for one player instance.
+
+```tsx
+import { createPlayer } from '@videojs/react';
+import { videoFeatures } from '@videojs/react/video';
+
+const Player = createPlayer({
+  features: videoFeatures,
+});
+```
+
+The <DocsLink slug="concepts/features">features</DocsLink> you pass determine what state is available in the store. `videoFeatures` is a <DocsLink slug="concepts/presets">preset</DocsLink> that includes playback, volume, fullscreen, and other standard video controls.
+
+<DocsLinkCard slug="reference/create-player">createPlayer reference</DocsLinkCard>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+For most users, importing from `@videojs/html/video/player` registers a ready-to-use `<video-player>` element with the standard video <DocsLink slug="concepts/features">features</DocsLink> (bundled as a <DocsLink slug="concepts/presets">preset</DocsLink>):
+
+```ts
+import '@videojs/html/video/player';
+```
+
+```html
+<video-player>
+  <media-container>
+    <video slot="media" src="video.mp4"></video>
+  </media-container>
+</video-player>
+```
+
+If you need a custom feature set, a custom tag name, or want to combine provider+container into a single element, use `createPlayer()` to get `ProviderMixin` and compose your own class:
+
+```ts title="my-player.ts"
+import { createPlayer, MediaElement } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
+
+class MyPlayer extends ProviderMixin(MediaElement) {}
+customElements.define('my-player', MyPlayer);
+```
+
+<DocsLinkCard slug="reference/html-create-player">`createPlayer` reference</DocsLinkCard>
+<DocsLinkCard slug="reference/provider-mixin">`ProviderMixin` reference</DocsLinkCard>
+</FrameworkCase>
+
+## What lives inside it
+
+Everything that needs player state goes inside the provider: skins, containers, UI components, and your own custom components. Anything inside can access the store.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player.Provider>
+  <VideoSkin>           {/* skin — includes container + controls */}
+    <Video src="..." /> {/* media element */}
+  </VideoSkin>
+  <MyCustomOverlay />   {/* your own component — can use Player.usePlayer() */}
+</Player.Provider>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <video-skin>               <!-- skin — includes container + controls -->
+    <video slot="media" src="..."></video> <!-- media element -->
+  </video-skin>
+  <my-custom-overlay></my-custom-overlay> <!-- your own element — can use PlayerController -->
+</video-player>
+```
+</FrameworkCase>
+
+## No visual presence
+
+<FrameworkCase frameworks={["react"]}>
+The `Provider` renders no visible element of its own — it's purely a state wrapper. Sizing, borders, and background go on the <DocsLink slug="reference/player-container">`Container`</DocsLink>, not the Provider.
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+The `<video-player>` element uses `display: contents`, meaning it has no visual box of its own. Sizing, borders, and background go on the <DocsLink slug="reference/player-container">`<media-container>`</DocsLink>, not the provider.
+</FrameworkCase>
+
+## Accessing state
+
+<FrameworkCase frameworks={["react"]}>
+Use `Player.usePlayer` to read state or call actions from any component inside the Provider:
+
+```tsx title="PlayPauseButton.tsx"
+function PlayPauseButton() {
+  const paused = Player.usePlayer(selectPlayback).paused;
+  const store = Player.usePlayer();
+
+  return (
+    <button onClick={() => store.dispatch('toggle-playback')}>
+      {paused ? 'Play' : 'Pause'}
+    </button>
+  );
+}
+```
+
+<DocsLinkCard slug="reference/use-player">usePlayer reference</DocsLinkCard>
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+Use `PlayerController` to subscribe to store state from any custom element inside the provider:
+
+```ts title="play-pause-button.ts"
+import { selectPlayback } from '@videojs/html';
+
+class PlayPauseButton extends MediaElement {
+  #playback = new PlayerController(this, context, selectPlayback);
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('click', () => {
+      this.#playback.store?.dispatch('toggle-playback');
+    });
+  }
+}
+```
+
+<DocsLinkCard slug="reference/player-controller">PlayerController reference</DocsLinkCard>
+</FrameworkCase>
+
+## Extended player layouts
+
+The provider's scope can extend beyond the fullscreen target. Playlists, transcripts, sidebars, and other supplementary UI can live inside the provider but outside the container. They still have full access to the store, they just won't go fullscreen with the video.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player.Provider>
+  <Player.Container>
+    <video src="video.mp4" />
+    <Controls />          {/* goes fullscreen with the video */}
+  </Player.Container>
+
+  <Transcript />          {/* outside container — still has store access */}
+  <PlaylistSidebar />     {/* outside container — still has store access */}
+</Player.Provider>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <media-container>
+    <video slot="media" src="video.mp4"></video>
+    <media-controls>...</media-controls>  <!-- goes fullscreen with the video -->
+  </media-container>
+
+  <media-transcript></media-transcript>     <!-- outside container — still has store access -->
+  <playlist-sidebar></playlist-sidebar>     <!-- outside container — still has store access -->
+</video-player>
+```
+</FrameworkCase>

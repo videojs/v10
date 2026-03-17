@@ -1,0 +1,67 @@
+@layer base {
+  .astro-code .line {
+    display: inline-block;
+  }
+  .astro-code .line.diff,
+  .astro-code .line.focused {
+    position: relative;
+    width: calc(100% + var(--spacing) * 12);
+    margin-inline: calc(var(--spacing) * -6);
+    padding-inline: calc(var(--spacing) * 6);
+  }
+
+  /* Diff: added lines */
+  .astro-code .line.diff.add {
+    background-color: rgba(184, 187, 38, 0.12);
+  }
+
+  .astro-code .line.diff.add::before,
+  .astro-code .line.diff.remove::before {
+    position: absolute;
+    font-weight: bold;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: calc(var(--spacing) * 6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .astro-code .line.diff.add::before {
+    content: "+";
+    color: rgba(184, 187, 31, 1);
+  }
+
+  /* Diff: removed lines */
+  .astro-code .line.diff.remove {
+    background-color: rgba(251, 73, 52, 0.12);
+  }
+
+  .astro-code .line.diff.remove::before {
+    content: "-";
+    color: rgba(251, 73, 52, 1);
+  }
+
+  /* Word highlight */
+  .astro-code .highlighted-word {
+    background-color: var(--color-soot);
+    border-bottom: 1px solid var(--color-manila-dark);
+    padding-inline: 0.2em;
+  }
+
+  :where(.dark, .dark *) .astro-code .highlighted-word {
+    background-color: var(--color-faded-black);
+  }
+
+  /* Focus: mute unfocused lines, reveal on hover */
+  .astro-code:has(.line.focused) .line:not(.focused) span {
+    opacity: 0.4;
+    transition: opacity 0.3s;
+  }
+
+  .astro-code:has(.line.focused):hover .line:not(.focused) span,
+  .astro-code:has(.line.focused):focus-within .line:not(.focused) span {
+    opacity: 1;
+  }
+}

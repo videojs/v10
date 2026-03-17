@@ -1,0 +1,56 @@
+/* ==========================================================================
+   Media preview
+   ========================================================================== */
+.media-default-skin .media-preview {
+  background-color: oklch(0 0 0 / 0.9);
+  border-radius: 0.75rem;
+
+  & .media-preview__thumbnail {
+    display: block;
+    position: relative;
+    border-radius: inherit;
+    overflow: clip;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background-image: linear-gradient(to top, oklch(0 0 0 / 0.8), oklch(0 0 0 / 0.3), oklch(0 0 0 / 0));
+    }
+  }
+
+  & .media-preview__timestamp {
+    position: absolute;
+    bottom: 0.5rem;
+    inset-inline: 0;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  & .media-overlay {
+    opacity: 1;
+  }
+
+  & .media-preview__spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+  }
+
+  & .media-preview__thumbnail,
+  & .media-preview__spinner {
+    transition: opacity 150ms ease-out;
+  }
+
+  &:has(.media-preview__thumbnail[data-loading]) {
+    & .media-preview__thumbnail {
+      opacity: 0;
+    }
+    & .media-preview__spinner {
+      opacity: 1;
+    }
+  }
+}

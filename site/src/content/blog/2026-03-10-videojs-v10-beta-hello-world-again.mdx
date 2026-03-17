@@ -123,21 +123,23 @@ For example here's a simple React "hello world" with just a video and play butto
 import { createPlayer, features } from '@videojs/react';
 import { Video } from '@videojs/react/video';
 
-const { Provider, usePlayer } = createPlayer({
+const Player = createPlayer({
   features: [features.playback],
 });
 
 function App() {
-  const store = usePlayer();
-  const paused = usePlayer((s) => s.paused);
+  const store = Player.usePlayer();
+  const paused = Player.usePlayer((s) => s.paused);
 
   return (
-    <Provider>
-      <Video src="video.mp4" />
-      <button onClick={() => (paused ? store.play() : store.pause())}>
-        {paused ? 'Play' : 'Pause'}
-      </button>
-    </Provider>
+    <Player.Provider>
+      <Player.Container>
+        <Video src="video.mp4" />
+        <button onClick={() => (paused ? store.play() : store.pause())}>
+          {paused ? 'Play' : 'Pause'}
+        </button>
+      </Player.Container>
+    </Player.Provider>
   );
 }
 ```
@@ -248,7 +250,7 @@ If you wanted to build a podcast player with Video.js v8, you'd start with a vid
 
 We do actually know what people are building, believe it or not. Not just the individual features, but the specific combinations that tend to show up together. A TV streaming app needs different things than a hero background video, which needs different things than a podcast player. And those combinations are pretty consistent across the web.
 
-So in v10 we're packaging them up as Presets. A Preset is a purpose-built combination of skin, features, and media configuration for a specific use case. Instead of assembling a player from scratch, you'll pick the preset closest to what you're building and start there.
+So in v10 we're packaging them up as presets. A preset is a purpose-built combination of skin, features, and media configuration for a specific use case. Instead of assembling a player from scratch, you'll pick the preset closest to what you're building and start there.
 
 The beta ships three:
 
@@ -257,7 +259,7 @@ A default video preset (general website video, the kind of thing you might other
 ```html
 <video-player>
   <video-skin>
-    <video src="video.mp4"></video>
+    <video slot="media" src="video.mp4"></video>
   </video-skin>
 </video-player>
 ```

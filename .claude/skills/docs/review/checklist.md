@@ -22,7 +22,7 @@ See SKILL.md for doc types and templates.
 - [ ] Matches template structure?
 - [ ] Code appears before explanation?
 - [ ] Progressive — starts simple, adds complexity?
-- [ ] Has "See also" section with related links?
+- [ ] Links related pages?
 - [ ] `<Aside>` used correctly (not `:::note`)?
 - [ ] Correct callout types (note/tip/caution/danger)?
 - [ ] No H1 — title from frontmatter only (site pages)?

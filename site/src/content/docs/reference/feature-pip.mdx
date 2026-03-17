@@ -1,0 +1,66 @@
+---
+title: Picture-in-picture
+description: Picture-in-picture state and actions for the player store
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Controls picture-in-picture mode.
+
+## State
+
+| State | Type | Description |
+|---|---|---|
+| `pip` | `boolean` | Whether picture-in-picture is active |
+| `pipAvailability` | `MediaFeatureAvailability` | Whether PiP is supported |
+
+## Actions
+
+| Action | Description |
+|---|---|
+| `requestPictureInPicture()` | Enter picture-in-picture (returns a `Promise`) |
+| `exitPictureInPicture()` | Exit picture-in-picture (returns a `Promise`) |
+
+## Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectPiP` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to picture-in-picture state. Returns `undefined` if the PiP feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectPiP` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to picture-in-picture state. Returns `undefined` if the PiP feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="PiPButton.tsx"
+import { selectPiP, usePlayer } from '@videojs/react';
+
+function PiPButton() {
+  const pip = usePlayer(selectPiP);
+  if (!pip || pip.availability !== 'available') return null;
+
+  return (
+    <button onClick={pip.toggle}>
+      {pip.active ? 'Exit PiP' : 'Picture-in-Picture'}
+    </button>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="pip-button.ts"
+import { createPlayer, MediaElement, selectPiP } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
+
+class PiPButton extends MediaElement {
+  readonly #pip = new PlayerController(this, context, selectPiP);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectPiP" />

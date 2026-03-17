@@ -48,17 +48,17 @@ Use [CSS custom properties](#root-css-custom-properties) to style the fill, poin
 <FrameworkCase frameworks={["html"]}>
 ```css
 media-time-slider::before {
-  width: calc(var(--media-slider-fill) * 1%);
+  width: var(--media-slider-fill);
 }
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-React renders a `<div>` with the same data attributes and CSS custom properties. Add a `className` and use it as the selector:
+React renders a `<div>` element. Add a `className` to style it:
 
 ```css
 .time-slider::before {
-  width: calc(var(--media-slider-fill) * 1%);
+  width: var(--media-slider-fill);
 }
 ```
 </FrameworkCase>

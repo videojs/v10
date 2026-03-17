@@ -9,12 +9,12 @@
   color: inherit;
   overflow: visible;
   transition-property: transform, scale, opacity, filter;
-  transition-duration: 200ms;
+  transition-duration: 150ms;
 
   &[data-starting-style],
   &[data-ending-style] {
     opacity: 0;
-    transform: scale(0);
+    transform: scale(0.5);
     filter: blur(8px);
   }
 
@@ -34,6 +34,48 @@
   &[data-side="right"] {
     transform-origin: left;
   }
+
+  /* Safe area between trigger and popup */
+  &::before {
+    content: "";
+    position: absolute;
+    pointer-events: inherit;
+  }
+
+  &[data-side="top"]::before,
+  &[data-side="bottom"]::before {
+    width: 100%;
+    inset-inline: 0;
+  }
+  &[data-side="top"]::before {
+    top: 100%;
+  }
+  &[data-side="bottom"]::before {
+    bottom: 100%;
+  }
+
+  &[data-side="left"]::before,
+  &[data-side="right"]::before {
+    height: 100%;
+    inset-block: 0;
+  }
+  &[data-side="left"]::before {
+    left: 100%;
+  }
+  &[data-side="right"]::before {
+    right: 100%;
+  }
+}
+
+.media-minimal-skin .media-popover {
+  &[data-side="top"]::before,
+  &[data-side="bottom"]::before {
+    height: var(--media-popover-side-offset);
+  }
+  &[data-side="left"]::before,
+  &[data-side="right"]::before {
+    width: var(--media-popover-side-offset);
+  }
 }
 
 .media-minimal-skin .media-tooltip {
@@ -46,7 +88,16 @@
     0 2px 4px -2px oklch(0 0 0 / 0.1);
   font-size: 0.75rem;
   white-space: nowrap;
-  --media-tooltip-side-offset: 0.5rem;
+  --media-tooltip-side-offset: 0.75rem;
+
+  &[data-side="top"]::before,
+  &[data-side="bottom"]::before {
+    height: var(--media-tooltip-side-offset);
+  }
+  &[data-side="left"]::before,
+  &[data-side="right"]::before {
+    width: var(--media-tooltip-side-offset);
+  }
 
   @media (prefers-reduced-transparency: reduce) {
     background-color: oklch(0 0 0 / 0.7);

@@ -7,7 +7,7 @@ import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 
 `useMediaAttach` returns a setter function for attaching a media element to the player context. The built-in `<Video>` and `<Audio>` components use this internally -- you only need it when building a custom media element.
 
-```tsx
+```tsx title="CustomMedia.tsx"
 import { useMediaAttach } from "@videojs/react";
 import { useRef, useEffect } from "react";
 

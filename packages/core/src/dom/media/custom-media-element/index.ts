@@ -93,22 +93,24 @@ function getVideoTemplateHTML(attrs: Record<string, string>): string {
   return /*html*/ `
     <style>
       :host {
-        display: inline-block;
-        line-height: 0;
+        display: contents;
       }
 
       video {
-        max-width: 100%;
-        max-height: 100%;
-        min-width: 100%;
-        min-height: 100%;
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: var(--media-video-border-radius);
         object-fit: var(--media-object-fit, contain);
-        object-position: var(--media-object-position, 50% 50%);
+        object-position: var(--media-object-position, center);
       }
 
       video::-webkit-media-text-track-container {
-        transform: var(--media-webkit-text-track-transform);
-        transition: var(--media-webkit-text-track-transition);
+        transition: transform var(--media-caption-track-duration, 0) ease-out;
+        transition-delay: var(--media-caption-track-delay, 0);
+        transform: translateY(var(--media-caption-track-y, 0)) scale(0.98);
+        z-index: 1;
+        font-family: inherit;
       }
     </style>
     <slot name="media">

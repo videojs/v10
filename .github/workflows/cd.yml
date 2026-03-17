@@ -25,6 +25,10 @@ jobs:
       - uses: googleapis/release-please-action@v4
         id: release
         with:
+          # Use a fine grained token for release-please so this workflow
+          # can trigger other workflows like release-pr.yml
+          # see https://github.com/peter-evans/create-pull-request/issues/48
+          token: ${{ secrets.V10_WORKFLOW_TRIGGER_WORKFLOW_GH_TOKEN }}
           config-file: .github/release-please/release-please-config.json
           manifest-file: .github/release-please/.release-please-manifest.json
 

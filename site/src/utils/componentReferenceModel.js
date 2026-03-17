@@ -82,7 +82,7 @@ function createSections(source, options) {
  * The shared model is what prevents anchor drift: ids are computed once and
  * reused verbatim by the renderer and the remark plugin.
  */
-export function createComponentReferenceModel(componentName, apiReference) {
+export function createComponentReferenceModel(componentName, apiReference, partOrder) {
   if (!apiReference) {
     return null;
   }
@@ -90,7 +90,18 @@ export function createComponentReferenceModel(componentName, apiReference) {
   const hasParts = Boolean(apiReference.parts && Object.keys(apiReference.parts).length > 0);
 
   if (hasParts) {
-    const parts = Object.entries(apiReference.parts).map(([partId, part]) => ({
+    let partEntries = Object.entries(apiReference.parts);
+
+    if (partOrder) {
+      const orderMap = new Map(partOrder.map((id, i) => [id, i]));
+      partEntries = partEntries.slice().sort((a, b) => {
+        const ai = orderMap.has(a[0]) ? orderMap.get(a[0]) : Number.MAX_SAFE_INTEGER;
+        const bi = orderMap.has(b[0]) ? orderMap.get(b[0]) : Number.MAX_SAFE_INTEGER;
+        return ai - bi;
+      });
+    }
+
+    const parts = partEntries.map(([partId, part]) => ({
       id: partId,
       name: part.name,
       description: part.description,

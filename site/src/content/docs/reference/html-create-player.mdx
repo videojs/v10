@@ -14,7 +14,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/html-create-player/html/cs
 
 `createPlayer` is the entry point for setting up a Video.js player with HTML custom elements. It accepts a configuration object with a `features` array and returns a typed <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>, `context`, `ProviderMixin`, `ContainerMixin`, and a `create` store factory.
 
-```ts
+```ts title="player.ts"
 import { createPlayer, MediaElement, selectPlayback } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
@@ -36,7 +36,7 @@ class PlayButton extends MediaElement {
 
 Use split elements (recommended for reusable skins/layouts):
 
-```ts
+```ts title="player.ts"
 import { createPlayer, MediaElement } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
@@ -48,7 +48,7 @@ class PlayerRegion extends ContainerMixin(MediaElement) {}
 
 Use a single composed element when the same element should both own the store and attach media:
 
-```ts
+```ts title="player.ts"
 import { createPlayer, MediaElement } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 

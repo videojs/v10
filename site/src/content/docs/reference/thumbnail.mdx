@@ -55,7 +55,7 @@ import jsonSpriteHtmlTs from "@/components/docs/demos/thumbnail/html/css/JsonSpr
 
 <FrameworkCase frameworks={["html"]}>
   ```html
-  <video src="video.mp4">
+  <video slot="media" src="video.mp4">
     <track
       kind="metadata"
       label="thumbnails"
@@ -116,7 +116,7 @@ media-thumbnail[data-error] {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-React renders a `<div>` with the same data attributes. Add a `className` and use it as the selector:
+React renders a `<div>` element. Add a `className` to style it:
 
 ```css
 .thumbnail[data-hidden] {

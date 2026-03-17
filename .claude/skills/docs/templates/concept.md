@@ -86,5 +86,4 @@ Helpful optimization or best practice.
 - [ ] Brief explanation (2-3 paragraphs max)
 - [ ] Framework-specific content uses `<FrameworkCase>`
 - [ ] Common pitfalls as do/don't
-- [ ] See also with 2-4 links
 - [ ] Scannable in under 2 minutes

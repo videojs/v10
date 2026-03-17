@@ -1,8 +1,8 @@
 import Hls from 'hls.js';
 
-import { type MediaDelegate, MediaDelegateMixin } from '../../../core/media/delegate';
-import { MediaProxyMixin } from '../../../core/media/proxy';
+import { type Delegate, DelegateMixin } from '../../../core/media/delegate';
 import { CustomMediaMixin } from '../custom-media-element';
+import { MediaProxyMixin } from '../proxy';
 import { HlsMediaTextTracksMixin } from './text-tracks';
 
 const defaultConfig = {
@@ -13,7 +13,7 @@ const defaultConfig = {
   capLevelOnFPSDrop: true,
 };
 
-export class HlsMediaDelegateBase implements MediaDelegate {
+export class HlsMediaDelegateBase implements Delegate {
   #engine = Hls.isSupported() ? new Hls(defaultConfig) : null;
 
   get engine(): Hls | null {
@@ -44,17 +44,10 @@ export class HlsMediaDelegateBase implements MediaDelegate {
 const HlsMediaDelegate = HlsMediaTextTracksMixin(HlsMediaDelegateBase);
 
 // This is used by the web component because it needs to extend HTMLElement!
-export class HlsCustomMedia extends MediaDelegateMixin(
+export class HlsCustomMedia extends DelegateMixin(
   CustomMediaMixin(globalThis.HTMLElement ?? class {}, { tag: 'video' }),
   HlsMediaDelegate
 ) {}
 
 // This is used by the React component.
-export class HlsMedia extends MediaDelegateMixin(
-  MediaProxyMixin(
-    globalThis.HTMLVideoElement ?? class {},
-    globalThis.HTMLMediaElement ?? class {},
-    globalThis.EventTarget ?? class {}
-  ),
-  HlsMediaDelegate
-) {}
+export class HlsMedia extends DelegateMixin(MediaProxyMixin, HlsMediaDelegate) {}

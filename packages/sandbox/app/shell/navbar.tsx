@@ -33,6 +33,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   video: 'Video',
   'hls-video': 'HLS Video',
   'simple-hls-video': 'Simple HLS Video',
+  'dash-video': 'DASH Video',
   audio: 'Audio',
   'background-video': 'Background Video',
 };

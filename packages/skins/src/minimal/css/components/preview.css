@@ -1,0 +1,47 @@
+/* ==========================================================================
+   Media preview
+   ========================================================================== */
+.media-minimal-skin .media-preview {
+  & .media-preview__thumbnail-wrapper {
+    position: relative;
+    border-radius: 0.5rem;
+    background-color: oklch(0 0 0 / 0.9);
+  }
+  & .media-preview__thumbnail {
+    display: block;
+    border-radius: inherit;
+  }
+
+  & .media-preview__timestamp {
+    display: block;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+
+  & .media-overlay {
+    opacity: 1;
+  }
+
+  & .media-preview__spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+  }
+
+  & .media-preview__thumbnail,
+  & .media-preview__spinner {
+    transition: opacity 150ms ease-out;
+  }
+
+  &:has(.media-preview__thumbnail[data-loading]) {
+    & .media-preview__thumbnail {
+      opacity: 0;
+    }
+    & .media-preview__spinner {
+      opacity: 1;
+    }
+  }
+}

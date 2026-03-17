@@ -12,20 +12,25 @@
 @import "./components/popup.css";
 
 /* ==========================================================================
-  Controls
+  Root
   ========================================================================== */
 
 .media-minimal-skin--audio {
   --media-controls-background-color: oklch(1 0 0);
   --media-controls-border-color: oklch(0 0 0 / 0.1);
-  --media-controls-text-color: oklch(0 0 0);
+  --media-controls-text-color: var(--media-color-primary, oklch(0 0 0));
 
   @media (prefers-color-scheme: dark) {
     --media-controls-background-color: oklch(0 0 0);
     --media-controls-border-color: oklch(1 0 0 / 0.1);
-    --media-controls-text-color: oklch(1 0 0);
+    --media-controls-text-color: var(--media-color-primary, oklch(1 0 0));
   }
 }
+
+/* ==========================================================================
+  Controls
+  ========================================================================== */
+
 .media-minimal-skin--audio .media-controls {
   gap: 0.5rem;
   padding: 0.375rem;

@@ -155,7 +155,11 @@ export function createSlider(options: SliderOptions): SliderApi {
       options.onValueChange?.(percent);
 
       // Focus the thumb for keyboard follow-up and screen reader tracking.
-      options.getThumbElement?.()?.focus();
+      options.getThumbElement?.()?.focus({
+        preventScroll: true,
+        // @ts-expect-error -- focusVisible is not yet in TypeScript's lib.dom typings.
+        focusVisible: false,
+      });
     },
 
     onPointerMove(event) {

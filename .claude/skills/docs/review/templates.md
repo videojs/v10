@@ -24,7 +24,7 @@ improved text or code
 | Level      | Meaning                        | Examples                                           |
 | ---------- | ------------------------------ | -------------------------------------------------- |
 | `CRITICAL` | Broken example, wrong info     | Missing import, incorrect API, code won't run      |
-| `MAJOR`    | Missing section, unclear prose | No "See also", wrong doc type, wall of text        |
+| `MAJOR`    | Missing section, unclear prose | Wrong doc type, wall of text        |
 | `MINOR`    | Suboptimal wording or layout   | Filler words, passive voice, could be more concise |
 | `NIT`      | Polish, phrasing preference    | Minor rewording, formatting tweak                  |
 
@@ -49,23 +49,6 @@ const player = createPlayer({ src: 'video.mp4' });
 import { createPlayer } from '@videojs/html';
 
 const player = createPlayer({ src: 'video.mp4' });
-```
-
-### MAJOR — Missing cross-links
-
-```markdown
-### [MAJOR] No "See also" section
-
-**What:** Page ends without linking to related concepts
-**Where:** `site/src/content/docs/concepts/themes.mdx`
-**Why:** Readers can't discover related pages; reduces navigation
-**Fix:** Add See also section
-
-// After
-## See also
-
-- [Styling](/concepts/styling) — CSS custom properties reference
-- [Accessibility](/concepts/accessibility) — Color contrast requirements
 ```
 
 ### MINOR — Filler words

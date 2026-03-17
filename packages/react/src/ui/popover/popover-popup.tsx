@@ -1,7 +1,7 @@
 'use client';
 
 import type { PopoverState } from '@videojs/core';
-import { getAnchorPositionStyle, resolveOffsets } from '@videojs/core/dom';
+import { getAnchorPositionStyle, getPopupPositionRect, resolveOffsets } from '@videojs/core/dom';
 import { supportsAnchorPositioning } from '@videojs/utils/dom';
 import type { CSSProperties } from 'react';
 import { forwardRef, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -64,7 +64,7 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
       if (!triggerEl || !popupEl) return;
 
       const triggerRect = triggerEl.getBoundingClientRect();
-      const popupRect = popupEl.getBoundingClientRect();
+      const popupRect = getPopupPositionRect(popupEl);
       const boundaryRect = document.documentElement.getBoundingClientRect();
       const offsets = resolveOffsets(popupEl);
 
@@ -74,12 +74,32 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
     }
 
     measure();
+    const triggerEl = popover.triggerElement;
+    const popupEl = internalRef.current;
 
-    // Recompute on scroll/resize so the popover tracks its trigger.
     let rafId = 0;
     function reposition(): void {
       cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(measure);
+    }
+
+    // Re-measure after the popover has entered the top layer and whenever
+    // its own size or the trigger size changes.
+    reposition();
+
+    const resizeObserver =
+      typeof ResizeObserver === 'function'
+        ? new ResizeObserver(() => {
+            reposition();
+          })
+        : null;
+
+    if (triggerEl && resizeObserver) {
+      resizeObserver.observe(triggerEl);
+    }
+
+    if (popupEl && resizeObserver) {
+      resizeObserver.observe(popupEl);
     }
 
     window.addEventListener('scroll', reposition, { capture: true, passive: true });
@@ -87,6 +107,7 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
 
     return () => {
       cancelAnimationFrame(rafId);
+      resizeObserver?.disconnect();
       window.removeEventListener('scroll', reposition, true);
       window.removeEventListener('resize', reposition);
     };

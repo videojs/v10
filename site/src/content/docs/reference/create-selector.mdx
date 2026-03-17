@@ -9,9 +9,9 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 `createSelector` creates a type-safe selector function for a given slice. The returned selector extracts that slice's state from the full store state, or returns `undefined` if the slice is not configured.
 
-The built-in selectors (<DocsLink slug="reference/select-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/select-buffer">`selectBuffer`</DocsLink>, etc.) are all created with `createSelector`. Use it to create selectors for custom slices.
+The built-in selectors (<DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/feature-buffer">`selectBuffer`</DocsLink>, etc.) are all created with `createSelector`. Use it to create selectors for custom slices.
 
-```ts
+```ts title="my-custom-selector.ts"
 import { createSelector } from '@videojs/store';
 import { myCustomSlice } from './my-custom-slice';
 

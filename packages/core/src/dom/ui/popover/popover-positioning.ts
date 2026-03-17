@@ -1,4 +1,4 @@
-import { supportsAnchorPositioning } from '@videojs/utils/dom';
+import { resolveCSSLength, supportsAnchorPositioning } from '@videojs/utils/dom';
 import type { PopoverAlign, PopoverSide } from '../../../core/ui/popover/popover-core';
 import { type PopoverCSSVarKey, PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
 
@@ -258,7 +258,32 @@ export function getManualPositionStyle(
 export function resolveOffsets(el: Element, cssVars: PositioningCSSVars = PopoverCSSVars): ManualOffsets {
   const computed = getComputedStyle(el);
   return {
-    sideOffset: Number.parseFloat(computed.getPropertyValue(cssVars.sideOffset)) || 0,
-    alignOffset: Number.parseFloat(computed.getPropertyValue(cssVars.alignOffset)) || 0,
+    sideOffset: resolveCSSLength(el, computed.getPropertyValue(cssVars.sideOffset)),
+    alignOffset: resolveCSSLength(el, computed.getPropertyValue(cssVars.alignOffset)),
+  };
+}
+
+/**
+ * Measure the popup's layout box for positioning.
+ *
+ * `getBoundingClientRect()` includes active transforms, which causes the
+ * fallback position to drift while opening/closing animations scale the popup.
+ * Using `offsetWidth`/`offsetHeight` preserves the untransformed size.
+ */
+export function getPopupPositionRect(el: HTMLElement): DOMRect {
+  const rect = el.getBoundingClientRect();
+  const width = el.offsetWidth || rect.width;
+  const height = el.offsetHeight || rect.height;
+  const adjustedRect = {
+    ...rect,
+    width,
+    height,
+    right: rect.left + width,
+    bottom: rect.top + height,
+  };
+
+  return {
+    ...adjustedRect,
+    toJSON: () => adjustedRect,
   };
 }

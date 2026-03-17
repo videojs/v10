@@ -16,7 +16,7 @@ interface Props {
 const { title, description, code = '404', message = 'NOT FOUND' } = Astro.props;
 ---
 
-<Base {title} {description}>
+<Base {title} {description} withCompact>
   <div class="flex flex-col" style={{ minHeight: "80dvh" }}>
     <NavBar />
     <main class="w-full">
