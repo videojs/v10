@@ -45,8 +45,6 @@ function useLoadedComponent<Props>(
   useEffect(() => {
     let active = true;
 
-    setComponent(null);
-
     void load().then((resolved) => {
       if (!active) return;
 

@@ -1,6 +1,6 @@
 import type { SourceId } from '@app/shared/sources';
 import type { Skin, Styling } from '@app/types';
-import { forwardRef } from 'react';
+import { forwardRef, useState } from 'react';
 
 type PreviewProps = {
   pagePath: string;
@@ -13,6 +13,10 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
   { pagePath, skin, styling, source },
   ref
 ) {
+  const [iframeUrl] = useState(
+    () =>
+      `${pagePath}?skin=${encodeURIComponent(skin)}&styling=${encodeURIComponent(styling)}&source=${encodeURIComponent(source)}`
+  );
   const openUrl =
     `${pagePath}?skin=${encodeURIComponent(skin)}&styling=${encodeURIComponent(styling)}` +
     `&source=${encodeURIComponent(source)}`;
@@ -43,7 +47,7 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
           <line x1="10" x2="21" y1="14" y2="3" />
         </svg>
       </a>
-      <iframe ref={ref} src={openUrl} className="absolute inset-0 w-full h-full border-0" title="player demo" />
+      <iframe ref={ref} src={iframeUrl} className="absolute inset-0 w-full h-full border-0" title="player demo" />
     </main>
   );
 });

@@ -91,7 +91,7 @@ export function App() {
         presets={PRESETS}
         sources={SOURCES}
       />
-      <Preview pagePath={pagePath} skin={skin} styling={styling} source={source} />
+      <Preview key={`${pagePath}:${styling}`} pagePath={pagePath} skin={skin} styling={styling} source={source} />
     </div>
   );
 }
