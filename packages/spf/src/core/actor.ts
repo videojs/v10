@@ -7,6 +7,8 @@
  * holds arbitrary non-finite data.
  */
 
+import type { Signal } from 'signal-polyfill';
+
 /** Complete actor snapshot: finite status + non-finite context. */
 export interface ActorSnapshot<Status extends string, Context> {
   status: Status;
@@ -26,6 +28,14 @@ export interface Actor<Status extends string, Context> {
    */
   subscribe(listener: (snapshot: ActorSnapshot<Status, Context>) => void): () => void;
 
+  /** Tear down the actor. */
+  destroy(): void;
+}
+
+/** Generic actor interface: owns its snapshot and notifies observers. */
+export interface SignalActor<Status extends string, Context> {
+  /** Current snapshot. */
+  readonly snapshot: Signal.State<ActorSnapshot<Status, Context>>;
   /** Tear down the actor. */
   destroy(): void;
 }

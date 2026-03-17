@@ -50,7 +50,8 @@
     "size:all": "node scripts/measure-size.js --all"
   },
   "dependencies": {
-    "@videojs/utils": "workspace:*"
+    "@videojs/utils": "workspace:*",
+    "signal-polyfill": "^0.2.2"
   },
   "devDependencies": {
     "@vitest/browser": "^4.1.0",

@@ -1,5 +1,6 @@
+import { Signal } from 'signal-polyfill';
 import type { Actor, ActorSnapshot } from '../../core/actor';
-import { createState } from '../../core/state/create-state';
+import { effect } from '../../core/signals/effect';
 import { SerialRunner, Task } from '../../core/task';
 import type { Segment, Track } from '../../core/types';
 import { type AppendData, appendSegment } from './append-segment';
@@ -64,6 +65,11 @@ export class SourceBufferActorError extends Error {
 
 /** SourceBuffer actor: queues operations, owns its snapshot. */
 export interface SourceBufferActor extends Actor<SourceBufferActorStatus, SourceBufferActorContext> {
+  /**
+   * The underlying signal for signal-based consumers.
+   * Non-signal consumers should use `snapshot` and `subscribe()` instead.
+   */
+  readonly snapshotSignal: Signal.State<SourceBufferActorSnapshot>;
   send(message: SourceBufferMessage, signal: AbortSignal): Promise<void>;
   batch(messages: SourceBufferMessage[], signal: AbortSignal): Promise<void>;
 }
@@ -230,22 +236,19 @@ export function createSourceBufferActor(
   sourceBuffer: SourceBuffer,
   initialContext?: Partial<SourceBufferActorContext>
 ): SourceBufferActor {
-  const state = createState<SourceBufferActorSnapshot>({
+  const snapshotSignal = new Signal.State<SourceBufferActorSnapshot>({
     status: 'idle',
     context: { segments: [], bufferedRanges: [], initTrackId: undefined, ...initialContext },
   });
 
   const runner = new SerialRunner();
 
-  // Applies the completed context atomically with the idle transition and
-  // flushes synchronously so consumers observe the final snapshot when their
-  // awaited Promise resolves.
+  // Applies the completed context atomically with the idle transition.
   // If the actor was destroyed while the operation was in flight, preserve
   // 'destroyed' — do not regress to 'idle'.
   function applyResult(newContext: SourceBufferActorContext): void {
-    const status = state.current.status === 'destroyed' ? 'destroyed' : 'idle';
-    state.patch({ status, context: newContext });
-    state.flush();
+    const status = snapshotSignal.get().status === 'destroyed' ? 'destroyed' : 'idle';
+    snapshotSignal.set({ status, context: newContext });
   }
 
   function handleError(e: unknown): never {
@@ -254,38 +257,45 @@ export function createSourceBufferActor(
     // improvement should detect QuotaExceededError specifically and use total
     // bytes-in-buffer as a heuristic to identify the effective buffer capacity,
     // enabling targeted flush-and-retry rather than silent model drift.
-    const status = state.current.status === 'destroyed' ? 'destroyed' : 'idle';
-    state.patch({ status });
-    state.flush();
+    const status = snapshotSignal.get().status === 'destroyed' ? 'destroyed' : 'idle';
+    snapshotSignal.set({ ...snapshotSignal.get(), status });
     throw e;
   }
 
   return {
     get snapshot(): SourceBufferActorSnapshot {
-      return state.current;
+      return snapshotSignal.get();
+    },
+
+    get snapshotSignal(): Signal.State<SourceBufferActorSnapshot> {
+      return snapshotSignal;
     },
 
     subscribe(listener: (snapshot: SourceBufferActorSnapshot) => void): () => void {
-      return state.subscribe(listener);
+      // effect() runs immediately (synchronous initial call to c.get()), so the
+      // listener fires right away — matching the previous createState.subscribe()
+      // behaviour without an extra explicit call.
+      return effect(() => listener(snapshotSignal.get()));
     },
 
     send(message: SourceBufferMessage, signal: AbortSignal): Promise<void> {
-      if (state.current.status !== 'idle') {
-        return Promise.reject(new SourceBufferActorError(`send() called while actor is ${state.current.status}`));
+      if (snapshotSignal.get().status !== 'idle') {
+        return Promise.reject(
+          new SourceBufferActorError(`send() called while actor is ${snapshotSignal.get().status}`)
+        );
       }
 
       // Transition synchronously so any subsequent send/batch within the same
       // tick is rejected — the actor is now committed to this operation.
-      state.patch({ status: 'updating' });
+      snapshotSignal.set({ ...snapshotSignal.get(), status: 'updating' });
 
       const onPartialContext = (ctx: SourceBufferActorContext) => {
-        state.patch({ status: 'updating', context: ctx });
-        state.flush();
+        snapshotSignal.set({ status: 'updating', context: ctx });
       };
 
       const task = messageToTask(message, {
         signal,
-        getCtx: () => state.current.context,
+        getCtx: () => snapshotSignal.get().context,
         sourceBuffer,
         onPartialContext,
       });
@@ -294,19 +304,21 @@ export function createSourceBufferActor(
     },
 
     batch(messages: SourceBufferMessage[], signal: AbortSignal): Promise<void> {
-      if (state.current.status !== 'idle') {
-        return Promise.reject(new SourceBufferActorError(`batch() called while actor is ${state.current.status}`));
+      if (snapshotSignal.get().status !== 'idle') {
+        return Promise.reject(
+          new SourceBufferActorError(`batch() called while actor is ${snapshotSignal.get().status}`)
+        );
       }
 
       if (messages.length === 0) return Promise.resolve();
 
       // Transition synchronously — the entire batch is one 'updating' period.
-      state.patch({ status: 'updating' });
+      snapshotSignal.set({ ...snapshotSignal.get(), status: 'updating' });
 
       // Each message is its own Task on the runner, executed in submission order.
       // workingCtx threads the result of each task into the next without
-      // patching shared state between steps — context is only written to state
-      // atomically when the last task completes.
+      // writing to the signal between steps — context is only written atomically
+      // when the last task completes.
       //
       // workingCtx is captured here (synchronously after status → 'updating'),
       // so it reflects the current context at the moment the batch was accepted.
@@ -317,14 +329,13 @@ export function createSourceBufferActor(
       // workingCtx is not updated for that step and subsequent tasks in the
       // batch will operate on a stale context. This is an edge case — happy-path
       // appends do not fail — but worth revisiting if MSE error recovery lands.
-      let workingCtx = state.current.context;
+      let workingCtx = snapshotSignal.get().context;
 
-      // Partial context updates from streaming appends patch state directly so
-      // external subscribers see in-progress state, but workingCtx is only
-      // advanced on task completion to preserve batch context threading.
+      // Partial context updates from streaming appends write to the signal
+      // directly so external subscribers see in-progress state, but workingCtx
+      // is only advanced on task completion to preserve batch context threading.
       const onPartialContext = (ctx: SourceBufferActorContext) => {
-        state.patch({ status: 'updating', context: ctx });
-        state.flush();
+        snapshotSignal.set({ status: 'updating', context: ctx });
       };
 
       for (const message of messages.slice(0, -1)) {
@@ -345,8 +356,7 @@ export function createSourceBufferActor(
     },
 
     destroy(): void {
-      state.patch({ status: 'destroyed' });
-      state.flush();
+      snapshotSignal.set({ ...snapshotSignal.get(), status: 'destroyed' });
       runner.destroy();
     },
   };

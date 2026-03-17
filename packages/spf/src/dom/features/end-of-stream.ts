@@ -1,4 +1,5 @@
-import { combineLatest } from '../../core/reactive/combine-latest';
+import { Signal } from 'signal-polyfill';
+import { effect } from '../../core/signals/effect';
 import type { WritableState } from '../../core/state/create-state';
 import type { Presentation } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
@@ -255,14 +256,26 @@ export function endOfStream({
   state: WritableState<EndOfStreamState>;
   owners: WritableState<EndOfStreamOwners>;
 }): () => void {
-  let hasEnded = false;
-  let destroyed = false;
-  const activeActorUnsubs: Array<() => void> = [];
+  // Bridge WritableState → Signal so computed() can track through them.
+  // The bridge is explicit and localized here; state/owners remain WritableState
+  // everywhere else in the codebase.
+  const stateSignal = new Signal.State(state.current);
+  const ownersSignal = new Signal.State(owners.current);
+  const unsubState = state.subscribe((v) => stateSignal.set(v));
+  const unsubOwners = owners.subscribe((v) => ownersSignal.set(v));
 
-  const runEvaluate = async () => {
-    if (destroyed) return;
-    const currentState = state.current;
-    const currentOwners = owners.current;
+  // Derived condition. Transitively tracks through ownersSignal into each
+  // actor's snapshotSignal — when owners changes and points to a new actor,
+  // this computed re-tracks to the new actor's signal on next evaluation.
+  // shouldEndStream reads actor.snapshot.status and actor.snapshot.context.segments,
+  // which delegate to snapshotSignal.get(), so those reads are automatically tracked.
+  const shouldEnd = new Signal.Computed(() => shouldEndStream(stateSignal.get(), ownersSignal.get()));
+
+  let hasEnded = false;
+
+  const cleanupEffect = effect(() => {
+    if (!shouldEnd.get()) return;
+    const currentOwners = ownersSignal.get();
     if (hasEnded) {
       // Per the MSE spec, calling appendBuffer() on a SourceBuffer when
       // readyState is 'ended' automatically transitions it back to 'open'.
@@ -271,48 +284,16 @@ export function endOfStream({
       if (currentOwners.mediaSource?.readyState !== 'open') return;
       hasEnded = false;
     }
-    if (!shouldEndStream(currentState, currentOwners)) return;
 
     // Set flag before awaiting to close the re-entry window between
     // endOfStream() being called and the async task completing.
     hasEnded = true;
-    try {
-      await endOfStreamTask({ currentOwners }, {});
-    } catch (error) {
-      console.error('Failed to call endOfStream:', error);
-    }
-  };
-
-  // Subscribe to actor snapshot changes so endOfStream re-evaluates when a
-  // segment is appended (actor context updated), not just on state/owners changes.
-  // Re-subscribe whenever owners changes (actors may have appeared or changed).
-  const cleanupOwners = owners.subscribe((currentOwners) => {
-    activeActorUnsubs.forEach((u) => u());
-    activeActorUnsubs.length = 0;
-
-    for (const actor of [currentOwners.videoBufferActor, currentOwners.audioBufferActor]) {
-      if (!actor) continue;
-      // Skip the immediate fire — the combineLatest subscription handles the
-      // initial evaluation. Only react to subsequent snapshot changes.
-      let isFirst = true;
-      activeActorUnsubs.push(
-        actor.subscribe(() => {
-          if (isFirst) {
-            isFirst = false;
-            return;
-          }
-          runEvaluate();
-        })
-      );
-    }
+    endOfStreamTask({ currentOwners }, {}).catch((error) => console.error('Failed to call endOfStream:', error));
   });
 
-  const cleanupCombineLatest = combineLatest([state, owners]).subscribe(async () => runEvaluate());
-
   return () => {
-    destroyed = true;
-    activeActorUnsubs.forEach((u) => u());
-    cleanupOwners();
-    cleanupCombineLatest();
+    cleanupEffect();
+    unsubState();
+    unsubOwners();
   };
 }
