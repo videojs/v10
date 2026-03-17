@@ -1,15 +1,9 @@
 import { DocSearch } from '@docsearch/react';
 import { useStore } from '@nanostores/react';
 import { GITHUB_REPO_URL } from '@/consts';
-import {
-  DOCSEARCH_API_KEY,
-  DOCSEARCH_APP_ID,
-  DOCSEARCH_ASK_AI_ASSISTANT_ID,
-  DOCSEARCH_BLOG_INDEX,
-  DOCSEARCH_DOCS_INDEX,
-  DOCSEARCH_MARKDOWN_INDEX,
-} from '@/search.config';
+import { DOCSEARCH_API_KEY, DOCSEARCH_APP_ID, DOCSEARCH_BLOG_INDEX, DOCSEARCH_DOCS_INDEX } from '@/search.config';
 import { currentFramework } from '@/stores/preferences';
+import '@docsearch/css';
 
 interface SearchProps {
   className?: string;
@@ -34,13 +28,6 @@ export default function Search({ className }: SearchProps) {
             name: DOCSEARCH_BLOG_INDEX,
           },
         ]}
-        askAi={{
-          assistantId: DOCSEARCH_ASK_AI_ASSISTANT_ID,
-          indexName: DOCSEARCH_MARKDOWN_INDEX,
-          searchParameters: {
-            facetFilters: framework ? [`framework:${framework}`] : [],
-          },
-        }}
         getMissingResultsUrl={({ query }) =>
           `${GITHUB_REPO_URL}issues/new?title=${encodeURIComponent(`Search: no results for "${query}"`)}&labels=search`
         }
