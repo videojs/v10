@@ -32,6 +32,7 @@
     "@videojs/html": "workspace:*",
     "@videojs/react": "workspace:*",
     "astro": "^6.0.5",
+    "vite": "^7.0.0",
     "clsx": "^2.1.1",
     "es-toolkit": "^1.32.0",
     "github-slugger": "^2.0.0",
