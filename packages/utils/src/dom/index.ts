@@ -8,7 +8,7 @@ export { tryHidePopover, tryShowPopover } from './popover';
 export { isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement } from './predicates';
 export { type RafThrottled, rafThrottle } from './raf-throttle';
 export { getSlottedElement, querySlot } from './slotted';
-export { applyStyles } from './style';
+export { applyStyles, resolveCSSLength } from './style';
 export { supportsAnchorPositioning, supportsAnimationFrame, supportsIdleCallback } from './supports';
 export { findTrackElement, getTextTrackList } from './text-track';
 export { serializeTimeRanges } from './time-ranges';

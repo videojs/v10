@@ -126,6 +126,75 @@ describe('createPopover', () => {
       expect(popover.input.current.status).not.toBe('ending');
       expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
     });
+
+    it('does not open on click on touch devices when openOnHover is enabled', () => {
+      const matchMedia = vi.fn((query: string) => ({
+        matches: query === '(hover: hover)' ? false : false,
+      }));
+      vi.stubGlobal('matchMedia', matchMedia);
+
+      const { popover, onOpenChange } = createTestPopover({
+        openOnHover: () => true,
+      });
+
+      popover.triggerProps.onClick({ preventDefault: vi.fn() } as unknown as UIEvent);
+
+      expect(onOpenChange).not.toHaveBeenCalled();
+      expect(popover.input.current.active).toBe(false);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('does not open via focus on touch devices when openOnHover is enabled', () => {
+      const matchMedia = vi.fn((query: string) => ({
+        matches: query === '(hover: hover)' ? false : false,
+      }));
+      vi.stubGlobal('matchMedia', matchMedia);
+
+      const { popover, onOpenChange } = createTestPopover({
+        openOnHover: () => true,
+      });
+
+      popover.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn() });
+
+      expect(onOpenChange).not.toHaveBeenCalled();
+
+      vi.unstubAllGlobals();
+    });
+
+    it('does not open via focus when pointer is not fine', () => {
+      const matchMedia = vi.fn((query: string) => ({
+        matches: query === '(hover: hover)',
+      }));
+      vi.stubGlobal('matchMedia', matchMedia);
+
+      const { popover, onOpenChange } = createTestPopover({
+        openOnHover: () => true,
+      });
+
+      popover.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn() });
+
+      expect(onOpenChange).not.toHaveBeenCalled();
+
+      vi.unstubAllGlobals();
+    });
+
+    it('opens via focus when hover and fine pointer are supported', () => {
+      const matchMedia = vi.fn((query: string) => ({
+        matches: query === '(hover: hover)' || query === '(pointer: fine)',
+      }));
+      vi.stubGlobal('matchMedia', matchMedia);
+
+      const { popover, onOpenChange } = createTestPopover({
+        openOnHover: () => true,
+      });
+
+      popover.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn() });
+
+      expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'focus' });
+
+      vi.unstubAllGlobals();
+    });
   });
 
   describe('element setters', () => {

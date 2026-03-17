@@ -5,7 +5,9 @@ import {
   getAnchorPositionStyle,
   getManualPositionStyle,
   getPopoverCSSVars,
+  getPopupPositionRect,
   type ManualOffsets,
+  resolveOffsets,
 } from '../popover-positioning';
 
 // Mock supportsAnchorPositioning for deterministic tests.
@@ -179,6 +181,67 @@ describe('getAnchorPositionStyle', () => {
     expect(style.position).toBe('fixed');
     // Also includes sizing CSS vars
     expect(style[PopoverCSSVars.anchorWidth]).toBe('120px');
+  });
+});
+
+describe('resolveOffsets', () => {
+  it('resolves non-pixel CSS lengths to pixels', () => {
+    const el = document.createElement('div');
+    const getComputedStyleSpy = vi.spyOn(globalThis, 'getComputedStyle').mockImplementation(
+      (target: Element) =>
+        ({
+          fontSize: target === document.documentElement ? '16px' : '14px',
+          getPropertyValue(name: string) {
+            if (name === PopoverCSSVars.sideOffset) return '0.5rem';
+            if (name === PopoverCSSVars.alignOffset) return '1em';
+            return '';
+          },
+        }) as CSSStyleDeclaration
+    );
+
+    expect(resolveOffsets(el)).toEqual({ sideOffset: 8, alignOffset: 14 });
+
+    getComputedStyleSpy.mockRestore();
+  });
+});
+
+describe('getPopupPositionRect', () => {
+  it('uses untransformed layout size when transforms change the client rect', () => {
+    const el = document.createElement('div');
+
+    Object.defineProperty(el, 'offsetWidth', { configurable: true, value: 200 });
+    Object.defineProperty(el, 'offsetHeight', { configurable: true, value: 80 });
+    vi.spyOn(el, 'getBoundingClientRect').mockImplementation(() => makeDOMRect(20, 40, 100, 40));
+
+    const rect = getPopupPositionRect(el);
+
+    expect(rect.left).toBe(20);
+    expect(rect.top).toBe(40);
+    expect(rect.width).toBe(200);
+    expect(rect.height).toBe(80);
+    expect(rect.right).toBe(220);
+    expect(rect.bottom).toBe(120);
+  });
+
+  it('serializes adjusted rect values from toJSON', () => {
+    const el = document.createElement('div');
+
+    Object.defineProperty(el, 'offsetWidth', { configurable: true, value: 200 });
+    Object.defineProperty(el, 'offsetHeight', { configurable: true, value: 80 });
+    vi.spyOn(el, 'getBoundingClientRect').mockImplementation(() => makeDOMRect(20, 40, 100, 40));
+
+    const rect = getPopupPositionRect(el);
+
+    expect(rect.toJSON()).toEqual(
+      expect.objectContaining({
+        left: 20,
+        top: 40,
+        width: 200,
+        height: 80,
+        right: 220,
+        bottom: 120,
+      })
+    );
   });
 });
 
