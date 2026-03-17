@@ -7,10 +7,6 @@ import { definePlayerFeature } from '../../feature';
 const UNMUTE_VOLUME = 0.25;
 let volumeAvailabilityPromise: Promise<MediaFeatureAvailability> | null = null;
 
-export function resetVolumeAvailabilityCache(): void {
-  volumeAvailabilityPromise = null;
-}
-
 export const volumeFeature = definePlayerFeature({
   name: 'volume',
   state: ({ target }): MediaVolumeState => ({

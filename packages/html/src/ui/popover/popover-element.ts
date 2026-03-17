@@ -203,7 +203,7 @@ export class PopoverElement extends MediaElement {
   #findTrigger(): HTMLElement | null {
     if (!this.id) return null;
     const root = this.getRootNode() as Document | ShadowRoot;
-    return root.querySelector<HTMLElement>(`[commandfor="${this.id}"]`);
+    return this.#findLinkedTrigger(root);
   }
 
   #isTriggerAvailable(triggerEl: HTMLElement | null): triggerEl is HTMLElement {
@@ -274,11 +274,21 @@ export class PopoverElement extends MediaElement {
   #hasLinkedTrigger(node: Node): boolean {
     if (!(node instanceof HTMLElement)) return false;
     if (this.#isLinkedTrigger(node)) return true;
-    return !!this.id && !!node.querySelector(`[commandfor="${this.id}"]`);
+    return !!this.#findLinkedTrigger(node);
   }
 
   #isLinkedTrigger(element: HTMLElement): boolean {
     return !!this.id && element.getAttribute('commandfor') === this.id;
+  }
+
+  #findLinkedTrigger(root: ParentNode): HTMLElement | null {
+    if (!this.id) return null;
+
+    for (const element of root.querySelectorAll<HTMLElement>('[commandfor]')) {
+      if (element.getAttribute('commandfor') === this.id) return element;
+    }
+
+    return null;
   }
 
   #syncTriggerLinkage(): HTMLElement | null {

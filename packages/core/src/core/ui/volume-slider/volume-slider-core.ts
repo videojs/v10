@@ -14,7 +14,7 @@ export interface VolumeSliderProps extends SliderProps {
 }
 
 export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, 'volume' | 'muted'> {
-  /** Whether volume can be programmatically set on this platform. */
+  /** Availability of programmatic volume control: unavailable, available, or unsupported. */
   availability: MediaVolumeState['volumeAvailability'];
 }
 
