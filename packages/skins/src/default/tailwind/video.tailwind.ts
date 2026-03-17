@@ -27,6 +27,12 @@ export const root = (isShadowDOM: boolean) =>
         !isShadowDOM,
     },
     '[--media-video-border-radius:var(--media-border-radius,2rem)]',
+    '[--media-controls-transition-duration:100ms]',
+    '[--media-controls-transition-delay:0ms]',
+    '[@media(pointer:fine)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-delay:500ms]',
+    '[@media(pointer:fine)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
+    '[@media(pointer:fine)]:motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:100ms]',
+    '[@media(pointer:coarse)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
     // Poster image
     '[&>img]:absolute [&>img]:inset-0 [&>img]:w-full [&>img]:h-full [&>img]:rounded-[inherit]',
     '[&>img]:[object-fit:var(--media-object-fit,contain)] [&>img]:[object-position:var(--media-object-position,center)] [&>img]:pointer-events-none',
@@ -34,10 +40,8 @@ export const root = (isShadowDOM: boolean) =>
     '[&>img:not([data-visible])]:opacity-0',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
     '[--media-caption-track-y:-0.5rem]',
-    '[--media-caption-track-delay:600ms]',
-    '[--media-caption-track-duration:150ms]',
-    'motion-reduce:[--media-caption-track-duration:50ms]',
-    'has-[[data-controls][data-visible]]:[--media-caption-track-delay:25ms]',
+    '[--media-caption-track-delay:calc(var(--media-controls-transition-delay)+25ms)]',
+    '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
     'has-[[data-controls][data-visible]]:[--media-caption-track-y:-3.5rem]',
     // Native caption track container
     !isShadowDOM
@@ -88,20 +92,17 @@ export const controls = cn(
   // Position
   'absolute bottom-3 inset-x-3',
   '[color:var(--media-color-primary,oklch(1_0_0))] z-10',
-  // Transitions (fine pointer only — instant toggle on touch to avoid dead-zone taps)
-  'will-change-[scale,transform,filter,opacity]',
-  '[@media(pointer:fine)]:transition-[scale,transform,filter,opacity]',
   'ease-out origin-bottom',
-  '[@media(pointer:fine)]:delay-0 [@media(pointer:fine)]:duration-100',
+  'duration-(--media-controls-transition-duration)',
+  'delay-(--media-controls-transition-delay)',
+  '[@media(pointer:fine)]:will-change-[scale,filter,opacity]',
+  '[@media(pointer:fine)]:transition-[scale,filter,opacity]',
+  '[@media(pointer:coarse)]:will-change-[scale,opacity]',
+  '[@media(pointer:coarse)]:transition-[scale,opacity]',
   // Hidden state
   'not-data-visible:pointer-events-none not-data-visible:opacity-0',
-  'not-data-visible:blur-sm not-data-visible:scale-90',
-  '[@media(pointer:fine)]:not-data-visible:delay-500',
-  '[@media(pointer:fine)]:not-data-visible:duration-300',
-  // Reduced motion + hidden
-  '[@media(pointer:fine)]:motion-reduce:not-data-visible:duration-100',
-  'motion-reduce:not-data-visible:blur-none',
-  'motion-reduce:not-data-visible:scale-100'
+  'motion-safe:not-data-visible:scale-90',
+  '[@media(pointer:fine)]:motion-safe:not-data-visible:blur-sm'
 );
 
 /* ==========================================================================

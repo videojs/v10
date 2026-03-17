@@ -29,9 +29,26 @@
   --media-surface-shadow-color: oklch(0 0 0 / 0.15);
   --media-surface-backdrop-filter: blur(16px) saturate(1.5);
   --media-video-border-radius: var(--media-border-radius, 2rem);
+  --media-controls-transition-duration: 100ms;
+  --media-controls-transition-delay: 0ms;
 
   @media (prefers-color-scheme: dark) {
     --media-border-color: oklch(1 0 0 / 0.1);
+  }
+
+  &:has(.media-controls:not([data-visible])) {
+    /* Slight delay to hide controls on non-touch devices after interaction */
+    @media (pointer: fine) {
+      --media-controls-transition-delay: 500ms;
+      --media-controls-transition-duration: 300ms;
+
+      @media (prefers-reduced-motion: reduce) {
+        --media-controls-transition-duration: 100ms;
+      }
+    }
+    @media (pointer: coarse) {
+      --media-controls-transition-duration: 150ms;
+    }
   }
 
   /* Inner border ring */
@@ -61,20 +78,18 @@
   z-index: 10;
   color: var(--media-color-primary, oklch(1 0 0));
   transition-timing-function: ease-out;
+  transition-duration: var(--media-controls-transition-duration);
+  transition-delay: var(--media-controls-transition-delay);
   transform-origin: bottom;
 
   @media (pointer: fine) {
-    will-change: scale, transform, filter, opacity;
-    transition-property: scale, transform, filter, opacity;
-    transition-duration: 100ms;
-    transition-delay: 0ms;
+    will-change: scale, filter, opacity;
+    transition-property: scale, filter, opacity;
   }
 
   @media (pointer: coarse) {
-    will-change: scale, transform, opacity;
-    transition-property: scale, transform, opacity;
-    transition-duration: 100ms;
-    transition-delay: 0ms;
+    will-change: scale, opacity;
+    transition-property: scale, opacity;
   }
 
   &:not([data-visible]) {
@@ -83,22 +98,15 @@
     scale: 0.9;
 
     @media (pointer: fine) {
-      transition-duration: 300ms;
-      transition-delay: 500ms;
       filter: blur(8px);
 
       @media (prefers-reduced-motion: reduce) {
-        transition-duration: 100ms;
+        filter: blur(0);
       }
-    }
-
-    @media (pointer: coarse) {
-      transition-duration: 150ms;
     }
 
     @media (prefers-reduced-motion: reduce) {
       scale: 1;
-      filter: blur(0);
     }
   }
 }
