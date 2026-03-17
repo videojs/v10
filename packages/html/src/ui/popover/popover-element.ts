@@ -53,6 +53,9 @@ export class PopoverElement extends MediaElement {
   #triggerAbort: AbortController | null = null;
   #currentTrigger: HTMLElement | null = null;
   #triggerObserver: MutationObserver | null = null;
+  #triggerObserverTarget: Node | null = null;
+  #triggerAvailabilityObserver: MutationObserver | null = null;
+  #observedTrigger: HTMLElement | null = null;
   #positionAbort: AbortController | null = null;
   #positionFrame = 0;
   #resizeObserver: ResizeObserver | null = null;
@@ -84,7 +87,9 @@ export class PopoverElement extends MediaElement {
     // Apply popup event handlers (pointerenter/leave, focusout) to self.
     applyElementProps(this, this.#popover.popupProps, { signal: this.#disconnect.signal });
 
-    this.#observeTriggerLinkage();
+    if (this.id) {
+      this.#observeTriggerLinkage(null);
+    }
 
     // Subscribe to interaction state for reactive updates.
     // Reuse the controller across connect/disconnect cycles to avoid
@@ -110,6 +115,8 @@ export class PopoverElement extends MediaElement {
     super.disconnectedCallback();
     this.#cleanupPositioning();
     this.#cleanupTriggerObserver();
+    this.#cleanupTriggerAvailabilityObserver();
+    this.#cleanupTrigger();
     this.#disconnect?.abort();
     this.#disconnect = null;
   }
@@ -117,6 +124,7 @@ export class PopoverElement extends MediaElement {
   override destroyCallback(): void {
     this.#cleanupPositioning();
     this.#cleanupTriggerObserver();
+    this.#cleanupTriggerAvailabilityObserver();
     this.#cleanupTrigger();
     this.#popover?.destroy();
     super.destroyCallback();
@@ -156,11 +164,7 @@ export class PopoverElement extends MediaElement {
 
     // Show/hide via Popover API AFTER data attributes are applied so
     // `data-starting-style` is present before the first visible frame.
-    if (!availableTriggerEl) {
-      tryHidePopover(this);
-      this.#cleanupPositioning();
-      return;
-    }
+    if (!availableTriggerEl) return;
 
     if (state.open) {
       tryShowPopover(this);
@@ -227,11 +231,18 @@ export class PopoverElement extends MediaElement {
     }
   }
 
-  #observeTriggerLinkage(): void {
-    this.#cleanupTriggerObserver();
+  #observeTriggerLinkage(triggerEl: HTMLElement | null): void {
+    if (!this.id) {
+      this.#cleanupTriggerObserver();
+      return;
+    }
 
-    const root = this.getRootNode();
-    const target = root instanceof Document ? root.documentElement : root;
+    const target = this.#getTriggerObserverTarget(triggerEl);
+
+    if (target === this.#triggerObserverTarget) return;
+
+    this.#cleanupTriggerObserver();
+    this.#triggerObserverTarget = target;
 
     if (!(target instanceof Node)) return;
 
@@ -246,13 +257,39 @@ export class PopoverElement extends MediaElement {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['commandfor', 'data-availability'],
+      attributeFilter: ['commandfor'],
     });
   }
 
   #cleanupTriggerObserver(): void {
     this.#triggerObserver?.disconnect();
     this.#triggerObserver = null;
+    this.#triggerObserverTarget = null;
+  }
+
+  #syncTriggerAvailabilityObserver(triggerEl: HTMLElement | null): void {
+    if (triggerEl === this.#observedTrigger) return;
+
+    this.#cleanupTriggerAvailabilityObserver();
+    this.#observedTrigger = triggerEl;
+
+    if (!triggerEl) return;
+
+    this.#triggerAvailabilityObserver = new MutationObserver(() => {
+      this.#syncTriggerLinkage();
+      this.requestUpdate();
+    });
+
+    this.#triggerAvailabilityObserver.observe(triggerEl, {
+      attributes: true,
+      attributeFilter: ['data-availability', 'commandfor'],
+    });
+  }
+
+  #cleanupTriggerAvailabilityObserver(): void {
+    this.#triggerAvailabilityObserver?.disconnect();
+    this.#triggerAvailabilityObserver = null;
+    this.#observedTrigger = null;
   }
 
   #isTriggerLinkageMutation(record: MutationRecord): boolean {
@@ -284,6 +321,11 @@ export class PopoverElement extends MediaElement {
   #findLinkedTrigger(root: ParentNode): HTMLElement | null {
     if (!this.id) return null;
 
+    if (globalThis.CSS?.escape) {
+      const selector = `[commandfor="${globalThis.CSS.escape(this.id)}"]`;
+      return root.querySelector<HTMLElement>(selector);
+    }
+
     for (const element of root.querySelectorAll<HTMLElement>('[commandfor]')) {
       if (element.getAttribute('commandfor') === this.id) return element;
     }
@@ -293,6 +335,8 @@ export class PopoverElement extends MediaElement {
 
   #syncTriggerLinkage(): HTMLElement | null {
     const triggerEl = this.#findTrigger();
+    this.#observeTriggerLinkage(triggerEl);
+    this.#syncTriggerAvailabilityObserver(triggerEl);
     const availableTriggerEl = this.#isTriggerAvailable(triggerEl) ? triggerEl : null;
 
     this.#syncAvailabilityVisibility(Boolean(availableTriggerEl));
@@ -308,6 +352,15 @@ export class PopoverElement extends MediaElement {
     }
 
     return availableTriggerEl;
+  }
+
+  #getTriggerObserverTarget(triggerEl: HTMLElement | null): Node | null {
+    const root = this.getRootNode();
+    const fallbackTarget = root instanceof Document ? (root.body ?? root.documentElement) : root;
+
+    if (!triggerEl) return fallbackTarget;
+
+    return findClosestCommonAncestor(this, triggerEl) ?? fallbackTarget;
   }
 
   #syncAvailabilityVisibility(available: boolean): void {
@@ -386,4 +439,23 @@ export class PopoverElement extends MediaElement {
     this.#resizeObserver?.disconnect();
     this.#resizeObserver = null;
   }
+}
+
+function findClosestCommonAncestor(a: Node, b: Node): Node | null {
+  const ancestors = new Set<Node>();
+  let current: Node | null = a;
+
+  while (current) {
+    ancestors.add(current);
+    current = current.parentNode;
+  }
+
+  current = b;
+
+  while (current) {
+    if (ancestors.has(current)) return current;
+    current = current.parentNode;
+  }
+
+  return null;
 }

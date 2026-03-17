@@ -40,6 +40,21 @@ describe('PopoverElement', () => {
     expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
   });
 
+  it('binds trigger attributes when the popover id contains special characters', async () => {
+    const trigger = document.createElement('button');
+    trigger.setAttribute('commandfor', 'volume:popover special');
+    trigger.setAttribute('data-availability', 'available');
+
+    const popover = createElement(PopoverElement);
+    popover.id = 'volume:popover special';
+
+    document.body.append(trigger, popover);
+    await popover.updateComplete;
+
+    expect(popover.hidden).toBe(false);
+    expect(trigger.getAttribute('aria-controls')).toBe('volume:popover special');
+  });
+
   it('stays hidden and unbound when the linked trigger is unsupported', async () => {
     const trigger = document.createElement('button');
     trigger.setAttribute('commandfor', 'volume-popover');
@@ -114,6 +129,27 @@ describe('PopoverElement', () => {
     expect(trigger.getAttribute('aria-controls')).toBe('volume-popover');
   });
 
+  it('rebinds when an existing element commandfor changes to the popover id', async () => {
+    const trigger = document.createElement('button');
+    trigger.setAttribute('commandfor', 'other-popover');
+    trigger.setAttribute('data-availability', 'available');
+
+    const popover = createElement(PopoverElement);
+    popover.id = 'volume-popover';
+
+    document.body.append(trigger, popover);
+    await popover.updateComplete;
+
+    expect(popover.hidden).toBe(true);
+
+    trigger.setAttribute('commandfor', 'volume-popover');
+    await waitForMutation();
+    await popover.updateComplete;
+
+    expect(popover.hidden).toBe(false);
+    expect(trigger.getAttribute('aria-controls')).toBe('volume-popover');
+  });
+
   it('cleans up when a linked trigger is removed inside a wrapper subtree', async () => {
     const wrapper = document.createElement('div');
     const trigger = document.createElement('button');
@@ -134,5 +170,23 @@ describe('PopoverElement', () => {
 
     expect(popover.hidden).toBe(true);
     expect(trigger.hasAttribute('aria-controls')).toBe(false);
+  });
+
+  it('cleans up trigger attributes when the popover disconnects', async () => {
+    const trigger = document.createElement('button');
+    trigger.setAttribute('commandfor', 'volume-popover');
+    trigger.setAttribute('data-availability', 'available');
+
+    const popover = createElement(PopoverElement);
+    popover.id = 'volume-popover';
+
+    document.body.append(trigger, popover);
+    await popover.updateComplete;
+
+    popover.remove();
+
+    expect(trigger.hasAttribute('aria-controls')).toBe(false);
+    expect(trigger.hasAttribute('aria-haspopup')).toBe(false);
+    expect(trigger.style.getPropertyValue('anchor-name')).toBe('');
   });
 });

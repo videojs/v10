@@ -58,6 +58,7 @@ function VolumeSlider() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="volume-slider.ts"
+import type { MediaFeatureAvailability } from '@videojs/core';
 import { createPlayer, MediaElement, selectVolume } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
@@ -66,7 +67,7 @@ const { PlayerController, context } = createPlayer({ features: videoFeatures });
 class VolumeSlider extends MediaElement {
   readonly #volume = new PlayerController(this, context, selectVolume);
 
-  get availability(): string | undefined {
+  get availability(): MediaFeatureAvailability | undefined {
     return this.#volume.value?.volumeAvailability;
   }
 }
