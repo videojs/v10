@@ -1,3 +1,4 @@
+import type { Signal } from 'signal-polyfill';
 import type { BandwidthState } from '../../core/abr/bandwidth-estimator';
 import { createEventStream } from '../../core/events/create-event-stream';
 import { calculatePresentationDuration } from '../../core/features/calculate-presentation-duration';
@@ -14,6 +15,7 @@ import {
   selectVideoTrack,
   type TrackSelectionAction,
 } from '../../core/features/select-tracks';
+import { stateToSignal } from '../../core/signals/bridge';
 import { createState } from '../../core/state/create-state';
 import { endOfStream } from '../features/end-of-stream';
 import { loadSegments } from '../features/load-segments';
@@ -144,6 +146,20 @@ export interface PlaybackEngine {
   owners: ReturnType<typeof createState<PlaybackEngineOwners>>;
 
   /**
+   * Signal mirror of state — for reactors that have been migrated to signals.
+   * Stays in sync with state automatically. Temporary bridge; removed when
+   * WritableState is retired.
+   */
+  stateSignal: Signal.ReadonlyState<PlaybackEngineState>;
+
+  /**
+   * Signal mirror of owners — for reactors that have been migrated to signals.
+   * Stays in sync with owners automatically. Temporary bridge; removed when
+   * WritableState is retired.
+   */
+  ownersSignal: Signal.ReadonlyState<PlaybackEngineOwners>;
+
+  /**
    * Shared event stream (for inspection/testing/triggering events).
    */
   events: ReturnType<typeof createEventStream<PlaybackEngineAction>>;
@@ -200,6 +216,11 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     },
   });
   const owners = createState<PlaybackEngineOwners>({});
+
+  // Signal mirrors — kept in sync with state/owners for reactors that have
+  // been migrated to signals. Temporary bridge; retired with WritableState.
+  const [stateSignal, cleanupStateSignal] = stateToSignal(state);
+  const [ownersSignal, cleanupOwnersSignal] = stateToSignal(owners);
 
   // Create single shared event stream for all orchestrations
   const events = createEventStream<PlaybackEngineAction>();
@@ -333,9 +354,13 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
   return {
     state,
     owners,
+    stateSignal,
+    ownersSignal,
     events,
     destroy: () => {
       cleanups.forEach((cleanup) => cleanup());
+      cleanupStateSignal();
+      cleanupOwnersSignal();
       destroyVttParser();
     },
   };
