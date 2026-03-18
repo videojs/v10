@@ -23,3 +23,11 @@ export interface UIPointerEvent extends UIEvent {
 export interface UIFocusEvent extends UIEvent {
   relatedTarget: EventTarget | null;
 }
+
+export type GesturePointerType = 'mouse' | 'touch';
+
+export const PointerTypes = {
+  MOUSE: 'mouse',
+  PEN: 'pen',
+  TOUCH: 'touch',
+} as const;

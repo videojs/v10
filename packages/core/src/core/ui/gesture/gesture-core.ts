@@ -1,4 +1,4 @@
-import type { MediaPlaybackState } from '../media/state';
+import type { MediaPlaybackState } from '../../media/state';
 
 export abstract class GestureCore {
   static readonly defaultProps: object = {};

@@ -1,4 +1,4 @@
-import type { GestureCore } from '../../core/gestures/gesture-core';
+import type { GestureCore } from '../../core/ui/gesture/gesture-core';
 
 import type { GesturePointerType } from './event';
 

@@ -1,4 +1,4 @@
-import { GestureCore } from './gesture-core';
+import { GestureCore } from '../gesture/gesture-core';
 
 export class PlayGestureCore extends GestureCore {
   override setProps(_props: object): void {}

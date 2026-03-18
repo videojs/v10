@@ -5,7 +5,8 @@ import styles from './skin.css?inline';
 
 // Side-effect imports: register all custom elements used in the template.
 import '../media/container';
-import '../gestures/play-gesture';
+import '../ui/hotkeys';
+import '../ui/play-gesture';
 import '../ui/buffering-indicator';
 import '../ui/captions-button';
 import '../ui/controls';
@@ -33,6 +34,7 @@ function getTemplateHTML() {
       <slot></slot>
 
       <media-play-gesture></media-play-gesture>
+      <media-hotkeys></media-hotkeys>
 
       <media-poster>
         <slot name="poster"></slot>

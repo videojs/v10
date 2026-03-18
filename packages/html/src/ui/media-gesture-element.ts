@@ -4,7 +4,7 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { playerContext } from '../player/context';
 import { PlayerController } from '../player/player-controller';
-import { MediaElement } from '../ui/media-element';
+import { MediaElement } from './media-element';
 
 /** Abstract base for HTML custom elements that represent a media gesture. */
 export abstract class MediaGestureElement<Core extends GestureCore> extends MediaElement {

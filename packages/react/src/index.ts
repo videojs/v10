@@ -7,9 +7,6 @@ export * from '@videojs/core/dom';
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
 export { useSelector, useStore } from '@videojs/store/react';
-// Gestures
-export { createMediaGesture } from './gestures/create-media-gesture';
-export { PlayGesture, type PlayGestureProps } from './gestures/play-gesture/play-gesture';
 // Media primitives
 export {
   Container,
@@ -36,12 +33,16 @@ export { CaptionsButton, type CaptionsButtonProps } from './ui/captions-button/c
 export { Controls } from './ui/controls';
 export type { ControlsGroupProps } from './ui/controls/controls-group';
 export type { ControlsRootProps } from './ui/controls/controls-root';
+// Gestures
+export { createMediaGesture } from './ui/create-media-gesture';
 export { FullscreenButton, type FullscreenButtonProps } from './ui/fullscreen-button/fullscreen-button';
 export { useButton } from './ui/hooks/use-button';
 export { useSlider } from './ui/hooks/use-slider';
+export { Hotkeys } from './ui/hotkeys/hotkeys';
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
 export { PiPButton, type PiPButtonProps } from './ui/pip-button/pip-button';
 export { PlayButton, type PlayButtonProps } from './ui/play-button/play-button';
+export { PlayGesture, type PlayGestureProps } from './ui/play-gesture/play-gesture';
 export { PlaybackRateButton, type PlaybackRateButtonProps } from './ui/playback-rate-button/playback-rate-button';
 export { Popover, type PopoverContextValue, usePopoverContext } from './ui/popover';
 export { Poster, type PosterProps } from './ui/poster/poster';

@@ -4,9 +4,6 @@ export * from '@videojs/core/dom';
 // Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
-// Gestures
-export { MediaGestureElement } from './gestures/media-gesture-element';
-export { PlayGestureElement } from './gestures/play-gesture/play-gesture-element';
 // Media
 export { MediaContainerElement } from './media/container-element';
 // Player
@@ -28,13 +25,17 @@ export { CaptionsButtonElement } from './ui/captions-button/captions-button-elem
 export { ControlsElement } from './ui/controls/controls-element';
 export { ControlsGroupElement } from './ui/controls/controls-group-element';
 export { FullscreenButtonElement } from './ui/fullscreen-button/fullscreen-button-element';
+// Gestures
+export { HotkeysElement } from './ui/hotkeys/hotkeys-element';
 export { MediaButtonElement } from './ui/media-button-element';
 // Primitives
 export * from './ui/media-element';
+export { MediaGestureElement } from './ui/media-gesture-element';
 export { MediaUIElement } from './ui/media-ui-element';
 export { MuteButtonElement } from './ui/mute-button/mute-button-element';
 export { PiPButtonElement } from './ui/pip-button/pip-button-element';
 export { PlayButtonElement } from './ui/play-button/play-button-element';
+export { PlayGestureElement } from './ui/play-gesture/play-gesture-element';
 export { PlaybackRateButtonElement } from './ui/playback-rate-button/playback-rate-button-element';
 export { PopoverElement } from './ui/popover/popover-element';
 export { PosterElement } from './ui/poster/poster-element';
