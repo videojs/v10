@@ -32,6 +32,7 @@ export const sidebar: Sidebar = [
       { slug: 'concepts/skins' },
       { slug: 'concepts/presets' },
       { slug: 'concepts/ui-components' },
+      { slug: 'concepts/accessibility' },
     ],
   },
   {

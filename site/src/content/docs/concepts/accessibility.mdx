@@ -1,0 +1,52 @@
+---
+title: Accessibility
+description: How Video.js approaches accessible media playback, covering standards, ARIA, keyboard, captions, and color and motion preferences.
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Video.js's built-in components handle ARIA semantics, keyboard interaction, focus management, and user preferences so your player works for everyone out of the box. Accessibility is an ongoing effort we actively invest in. The W3C WAI guides on [making audio and video media accessible](https://www.w3.org/WAI/media/av/) and [accessible media players](https://www.w3.org/WAI/media/av/player/) are good starting points for understanding what accessible media playback involves.
+
+## Standards we target
+
+These are the standards we build toward:
+
+- [**WAI-ARIA 1.2**](https://www.w3.org/TR/wai-aria-1.2/) defines roles, states, and properties that assistive technologies use to understand controls.
+- [**WCAG 2.2**](https://www.w3.org/TR/WCAG22/) provides success criteria for perceivable, operable, understandable, and robust web content.
+- [**CVAA**](https://www.fcc.gov/consumers/guides/21st-century-communications-and-video-accessibility-act-cvaa) is a U.S. federal law requiring closed captioning and accessible controls for video content.
+
+## ARIA roles and labels
+
+Built-in components set appropriate ARIA roles and attributes. Sliders use `role="slider"` with `aria-valuemin`, `aria-valuemax`, `aria-valuenow`, and `aria-orientation`. Popovers and tooltips use `role="dialog"` with `aria-expanded`, `aria-haspopup`, and `aria-controls` on their triggers. Controls groups use `role="group"` when labeled.
+
+Decorative elements like time separators and thumbnail previews are hidden from assistive technologies with `aria-hidden="true"`. Slider value displays use `aria-live="off"` to prevent constant announcements during drag operations.
+
+You should verify that ARIA labels are contextually correct for your content and language. See each component's reference page for the specific ARIA attributes it sets.
+
+## Keyboard interaction
+
+All interactive components support keyboard control. Sliders respond to:
+
+- **Arrow keys** for stepping through values
+- **Shift + Arrow** for larger steps
+- **Home** and **End** to jump to minimum and maximum
+- **Page Up** and **Page Down** for large increments
+- **0 through 9** to jump to a percentage (0% through 90%)
+
+Popovers and tooltips close with **Escape**. The [WAI-ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/) documents keyboard patterns for common widget types.
+
+## Focus management
+
+Interactive elements manage their `tabindex` based on disabled state: `0` when enabled, `-1` when disabled. Popover triggers are associated with their popups through `aria-controls` and `aria-expanded`.
+
+## Captions and subtitles
+
+The <DocsLink slug="reference/feature-text-tracks">text tracks feature</DocsLink> supports captions and subtitles. Closed captions in the U.S. are governed by the FCC under the CVAA, and non-compliance carries legal risk.
+
+## Color scheme
+
+Built-in skins adapt to `prefers-color-scheme`. Borders, backgrounds, and text colors adjust automatically through CSS custom properties. Custom components can use the same design tokens. See <DocsLink slug="concepts/skins">Skins</DocsLink> for details.
+
+## Reduced motion
+
+Built-in skins respect `prefers-reduced-motion`. When a user prefers reduced motion, animations shorten, blur and scale effects are removed, and easing is simplified. Caption transitions reduce to near-instant. Follow the same pattern in your custom components.
