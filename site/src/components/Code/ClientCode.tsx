@@ -1,25 +1,46 @@
-import bash from 'shiki/langs/bash.mjs';
-import css from 'shiki/langs/css.mjs';
-import html from 'shiki/langs/html.mjs';
-import javascript from 'shiki/langs/javascript.mjs';
-import tsx from 'shiki/langs/tsx.mjs';
-import createHighlighter from './createHighlighter';
-import type { SharedProps } from './Shared';
+import clsx from 'clsx';
+import { Suspense, use } from 'react';
+import type { BundledLanguage } from 'shiki';
+import { shared } from '@/components/typography/styles';
+import { getClientHighlighter } from './clientHighlighter';
 import Shared from './Shared';
 
-const clientHighlighter = await createHighlighter({
-  langs: [bash, html, tsx, css, javascript],
-});
+interface ClientCodeProps {
+  code: string;
+  lang: BundledLanguage;
+}
+
+function ClientCodeInner({ code, lang }: ClientCodeProps) {
+  // React 19's `use()` hook can unwrap a Promise directly in render. When the
+  // Promise is still pending, `use()` throws it to the nearest <Suspense>
+  // boundary, which renders the fallback. Once resolved, React re-renders this
+  // component with the resolved value. See clientHighlighter.ts for why
+  // this is a Promise instead of a top-level await.
+  const highlighter = use(getClientHighlighter());
+
+  return <Shared code={code} lang={lang} highlighter={highlighter} />;
+}
 
 /**
- * Renders HTML, TSX, CSS, and JavaScript. A strict subset, for lighter-weight client shipping
- *
- * Renders with top-level await, so, it's safe for ssr (client:idle or client:load or client:visible)
- * However, if you try importing more than one island with ClientCode in it,
- * Safari MAY throw a hydration error because of this top-level await.
+ * Uses `use()` + Suspense instead of top-level `await` because top-level
+ * `await` causes Safari hydration errors when multiple `client:idle` islands
+ * on the same Astro page share the module.
  * https://github.com/withastro/astro/issues/10055
- * consolidate the ClientCodes into a single island to work around... for now :(
+ *
+ * The unhighlighted fallback is a safety net for the brief client hydration
+ * gap — Astro's SSR awaits the full React stream, so the server-rendered
+ * output already contains highlighted code.
  */
-export default function ClientCode(props: Omit<SharedProps, 'highlighter'>) {
-  return <Shared {...props} highlighter={clientHighlighter} />;
+export default function ClientCode({ code, lang }: ClientCodeProps) {
+  return (
+    <Suspense
+      fallback={
+        <pre className={shared.pre}>
+          <code className={shared.codeBlock}>{code}</code>
+        </pre>
+      }
+    >
+      <ClientCodeInner code={code} lang={lang} />
+    </Suspense>
+  );
 }
