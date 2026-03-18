@@ -40,10 +40,10 @@ export class HotkeysCore {
     ArrowRight: () => this.#seekBy(SEEK_SMALL),
     j: () => this.#seekBy(-SEEK_LARGE),
     l: () => this.#seekBy(SEEK_LARGE),
-    ArrowUp: () => this.#setVolumeBy(VOLUME_STEP),
-    ArrowDown: () => this.#setVolumeBy(-VOLUME_STEP),
-    '<': () => this.#setPlaybackRateBy(-RATE_STEP),
-    '>': () => this.#setPlaybackRateBy(RATE_STEP),
+    ArrowUp: () => this.#nudgeVolumeBy(VOLUME_STEP),
+    ArrowDown: () => this.#nudgeVolumeBy(-VOLUME_STEP),
+    '<': () => this.#nudgePlaybackRateBy(-RATE_STEP),
+    '>': () => this.#nudgePlaybackRateBy(RATE_STEP),
   };
 
   #keyupActions: Record<string, () => boolean> = {
@@ -122,7 +122,7 @@ export class HotkeysCore {
     return true;
   }
 
-  #setVolumeBy(delta: number): boolean {
+  #nudgeVolumeBy(delta: number): boolean {
     const { media } = this;
     if (!media?.setVolume || media.volume == null) return false;
     const next = Math.min(1, Math.max(0, media.volume + delta));
@@ -130,7 +130,7 @@ export class HotkeysCore {
     return true;
   }
 
-  #setPlaybackRateBy(delta: number): boolean {
+  #nudgePlaybackRateBy(delta: number): boolean {
     const { media } = this;
     if (!media?.setPlaybackRate || media.playbackRate == null) return false;
     const next = Math.min(RATE_MAX, Math.max(RATE_MIN, media.playbackRate + delta));
