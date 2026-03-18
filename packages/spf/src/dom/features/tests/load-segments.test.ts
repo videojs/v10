@@ -3,9 +3,11 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
+import { stateToSignal } from '../../../core/signals/bridge';
+import { createState } from '../../../core/state/create-state';
 import type { Segment } from '../../../core/types';
 import { createSourceBufferActor } from '../../media/source-buffer-actor';
-import type { SegmentLoadingOwners, SegmentLoadingState } from '../load-segments';
+import { loadSegments, type SegmentLoadingOwners, type SegmentLoadingState } from '../load-segments';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -120,6 +122,32 @@ function makeSourceBufferWithActor(
   return { sourceBuffer, actor };
 }
 
+/**
+ * Bridge helper: wraps WritableState in Signal.State so tests can still use
+ * state.patch() / owners.patch() / state.current while loadSegments receives
+ * Signal.State. Mirrors the same pattern used in the playback engine.
+ */
+function setupLoadSegments(
+  initialState: SegmentLoadingState,
+  initialOwners: SegmentLoadingOwners,
+  type: 'video' | 'audio'
+) {
+  const state = createState<SegmentLoadingState>(initialState);
+  const owners = createState<SegmentLoadingOwners>(initialOwners);
+  const [stateSignal, cleanupState] = stateToSignal(state);
+  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
+  const cleanupEffect = loadSegments({ state: stateSignal, owners: ownersSignal }, { type });
+  return {
+    state,
+    owners,
+    cleanup: () => {
+      cleanupEffect();
+      cleanupState();
+      cleanupOwners();
+    },
+  };
+}
+
 // ---------------------------------------------------------------------------
 // loadSegments orchestration — forward buffer behaviour
 // ---------------------------------------------------------------------------
@@ -140,27 +168,24 @@ describe('loadSegments orchestration (F5)', () => {
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
     const track = makeResolvedVideoTrack(segments);
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      selectedVideoTrackId: 'track-1',
-      currentTime: 0,
-      presentation: {
-        id: 'p1',
-        url: 'http://example.com/playlist.m3u8',
-        startTime: 0,
-        duration: 40,
-        selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
-      },
-    });
-
     const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      {
+        preload: 'auto',
+        selectedVideoTrackId: 'track-1',
+        currentTime: 0,
+        presentation: {
+          id: 'p1',
+          url: 'http://example.com/playlist.m3u8',
+          startTime: 0,
+          duration: 40,
+          selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
+        },
+      },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     await vi.waitFor(() => {
       expect(fetchedUrls).toContain('http://example.com/init.mp4');
@@ -183,27 +208,25 @@ describe('loadSegments orchestration (F5)', () => {
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
     const track = makeResolvedVideoTrack(segments);
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      selectedVideoTrackId: 'track-1',
-      currentTime: 0,
-      presentation: {
-        id: 'p1',
-        url: 'http://example.com/playlist.m3u8',
-        startTime: 0,
-        duration: 10,
-        selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
-      },
-    });
-
     // Init already loaded for this track — actor context has initTrackId set
     const { sourceBuffer, actor } = makeSourceBufferWithActor([], [], 'track-1');
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      {
+        preload: 'auto',
+        selectedVideoTrackId: 'track-1',
+        currentTime: 0,
+        presentation: {
+          id: 'p1',
+          url: 'http://example.com/playlist.m3u8',
+          startTime: 0,
+          duration: 10,
+          selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
+        },
+      },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     await vi.waitFor(() => {
       expect(fetchedUrls).toContain('http://example.com/s1.m4s');
@@ -223,31 +246,29 @@ describe('loadSegments orchestration (F5)', () => {
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
     const track = makeResolvedVideoTrack(segments);
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      selectedVideoTrackId: 'track-1',
-      currentTime: 0,
-      presentation: {
-        id: 'p1',
-        url: 'http://example.com/playlist.m3u8',
-        startTime: 0,
-        duration: 30,
-        selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
-      },
-    });
-
     // s1 already loaded — actor pre-seeded with s1 and init
     const { sourceBuffer, actor } = makeSourceBufferWithActor(
       [[0, 10]],
       [{ id: 's1', startTime: 0, duration: 10, trackId: 'track-1' }],
       'track-1'
     );
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      {
+        preload: 'auto',
+        selectedVideoTrackId: 'track-1',
+        currentTime: 0,
+        presentation: {
+          id: 'p1',
+          url: 'http://example.com/playlist.m3u8',
+          startTime: 0,
+          duration: 30,
+          selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
+        },
+      },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     await vi.waitFor(() => {
       expect(fetchedUrls).toContain('http://example.com/s2.m4s');
@@ -291,18 +312,12 @@ describe('loadSegments orchestration (metadata mode)', () => {
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
-    const state = cs<SegmentLoadingState>({
-      preload: 'metadata',
-      selectedVideoTrackId: 'track-1',
-      presentation: makePresentation(segments),
-    });
     const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      { preload: 'metadata', selectedVideoTrackId: 'track-1', presentation: makePresentation(segments) },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     await vi.waitFor(
       () => {
@@ -324,18 +339,12 @@ describe('loadSegments orchestration (metadata mode)', () => {
 
     globalThis.fetch = vi.fn().mockImplementation(() => Promise.resolve(new Response(new ArrayBuffer(100))));
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
-    const state = cs<SegmentLoadingState>({
-      preload: 'metadata',
-      selectedVideoTrackId: 'track-1',
-      presentation: makePresentation(segments),
-    });
     const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      { preload: 'metadata', selectedVideoTrackId: 'track-1', presentation: makePresentation(segments) },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     await vi.waitFor(
       () => {
@@ -359,18 +368,12 @@ describe('loadSegments orchestration (metadata mode)', () => {
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
-    const state = cs<SegmentLoadingState>({
-      preload: 'metadata',
-      selectedVideoTrackId: 'track-1',
-      presentation: makePresentation(segments),
-    });
     const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      { preload: 'metadata', selectedVideoTrackId: 'track-1', presentation: makePresentation(segments) },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     await vi.waitFor(
       () => {
@@ -446,20 +449,18 @@ describe('loadSegments seek handling', () => {
     const { fetch, fetchedUrls, resolve } = makeControllableFetch();
     globalThis.fetch = fetch;
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      playbackInitiated: true, // seeks are a post-play concern; currentTime only tracked when playing
-      selectedVideoTrackId: 'track-1',
-      currentTime: 0,
-      presentation: makePresentation(segments),
-    });
     const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      {
+        preload: 'auto',
+        playbackInitiated: true, // seeks are a post-play concern; currentTime only tracked when playing
+        selectedVideoTrackId: 'track-1',
+        currentTime: 0,
+        presentation: makePresentation(segments),
+      },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     await vi.waitFor(() => expect(fetchedUrls).toContain('http://example.com/init.mp4'));
 
@@ -483,20 +484,18 @@ describe('loadSegments seek handling', () => {
     const { fetch, fetchedUrls, resolveAll } = makeControllableFetch();
     globalThis.fetch = fetch;
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      playbackInitiated: true, // seeks are a post-play concern; currentTime only tracked when playing
-      selectedVideoTrackId: 'track-1',
-      currentTime: 0,
-      presentation: makePresentation(segments),
-    });
     const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      {
+        preload: 'auto',
+        playbackInitiated: true, // seeks are a post-play concern; currentTime only tracked when playing
+        selectedVideoTrackId: 'track-1',
+        currentTime: 0,
+        presentation: makePresentation(segments),
+      },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     await vi.waitFor(() => expect(fetchedUrls).toContain('http://example.com/init.mp4'));
 
@@ -527,20 +526,18 @@ describe('loadSegments seek handling', () => {
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      playbackInitiated: true, // currentTime advances are only tracked post-play
-      selectedVideoTrackId: 'track-1',
-      currentTime: 0,
-      presentation: makePresentation(segments),
-    });
     const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      {
+        preload: 'auto',
+        playbackInitiated: true, // currentTime advances are only tracked post-play
+        selectedVideoTrackId: 'track-1',
+        currentTime: 0,
+        presentation: makePresentation(segments),
+      },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     state.patch({ currentTime: 2 });
     state.patch({ currentTime: 4 });
@@ -608,9 +605,6 @@ describe('loadSegments back buffer flushing', () => {
     const { fetch, resolveAll } = makeControllableFetch();
     globalThis.fetch = fetch;
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
     // s1–s4 already loaded, currentTime jumped to 40s
     const { sourceBuffer, actor } = makeSourceBufferWithActor(
       [[0, 40]],
@@ -622,16 +616,11 @@ describe('loadSegments back buffer flushing', () => {
       ],
       'track-1'
     );
-
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      selectedVideoTrackId: 'track-1',
-      currentTime: 40,
-      presentation: makePresentationF6(segments),
-    });
-
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      { preload: 'auto', selectedVideoTrackId: 'track-1', currentTime: 40, presentation: makePresentationF6(segments) },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     resolveAll();
 
@@ -651,37 +640,34 @@ describe('loadSegments back buffer flushing', () => {
 
     globalThis.fetch = vi.fn().mockImplementation(() => Promise.resolve(new Response(new ArrayBuffer(100))));
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
     // s1 already loaded, currentTime=10
     const { sourceBuffer, actor } = makeSourceBufferWithActor(
       [[0, 10]],
       [{ id: 's1', startTime: 0, duration: 10, trackId: 'track-1' }],
       'track-1'
     );
-
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      selectedVideoTrackId: 'track-1',
-      currentTime: 10,
-      presentation: {
-        id: 'p1',
-        url: 'http://example.com/playlist.m3u8',
-        startTime: 0,
-        duration: 30,
-        selectionSets: [
-          {
-            id: 'ss1',
-            type: 'video' as const,
-            switchingSets: [{ id: 'sw1', type: 'video' as const, tracks: [makeResolvedVideoTrack(segments)] }],
-          },
-        ],
+    const { state, owners, cleanup } = setupLoadSegments(
+      {
+        preload: 'auto',
+        selectedVideoTrackId: 'track-1',
+        currentTime: 10,
+        presentation: {
+          id: 'p1',
+          url: 'http://example.com/playlist.m3u8',
+          startTime: 0,
+          duration: 30,
+          selectionSets: [
+            {
+              id: 'ss1',
+              type: 'video' as const,
+              switchingSets: [{ id: 'sw1', type: 'video' as const, tracks: [makeResolvedVideoTrack(segments)] }],
+            },
+          ],
+        },
       },
-    });
-
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     await vi.waitFor(() => (owners.current.videoBufferActor?.snapshot.get().context.segments.length ?? 0) > 1, {
       timeout: 3000,
@@ -703,9 +689,6 @@ describe('loadSegments back buffer flushing', () => {
 
     globalThis.fetch = vi.fn().mockImplementation(() => Promise.resolve(new Response(new ArrayBuffer(100))));
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
     const { sourceBuffer, actor } = makeSourceBufferWithActor(
       [[0, 40]],
       [
@@ -716,16 +699,11 @@ describe('loadSegments back buffer flushing', () => {
       ],
       'track-1'
     );
-
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      selectedVideoTrackId: 'track-1',
-      currentTime: 40,
-      presentation: makePresentationF6(segments),
-    });
-
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      { preload: 'auto', selectedVideoTrackId: 'track-1', currentTime: 40, presentation: makePresentationF6(segments) },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     await vi.waitFor(
       () => {
@@ -787,25 +765,17 @@ describe('loadSegments forward buffer flushing', () => {
     const { fetch, resolveAll } = makeControllableFetchFwd();
     globalThis.fetch = fetch;
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
     // All 5 segments pre-loaded; seeded with initial buffered range [0, 50]
     const { sourceBuffer, actor } = makeSourceBufferWithActor(
       [[0, 50]],
       segments.map((s) => ({ id: s.id, startTime: s.startTime, duration: s.duration, trackId: 'track-1' })),
       'track-1'
     );
-
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      selectedVideoTrackId: 'track-1',
-      currentTime: 0,
-      presentation: makePresentationFwd(segments),
-    });
-
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      { preload: 'auto', selectedVideoTrackId: 'track-1', currentTime: 0, presentation: makePresentationFwd(segments) },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     setTimeout(resolveAll, 10);
 
@@ -832,25 +802,17 @@ describe('loadSegments forward buffer flushing', () => {
     const { fetch, resolveAll } = makeControllableFetchFwd();
     globalThis.fetch = fetch;
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
     // Seed buffered ranges to match the pre-seeded actor context
     const { sourceBuffer, actor } = makeSourceBufferWithActor(
       [[0, 50]],
       segments.map((s) => ({ id: s.id, startTime: s.startTime, duration: s.duration, trackId: 'track-1' })),
       'track-1'
     );
-
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      selectedVideoTrackId: 'track-1',
-      currentTime: 0,
-      presentation: makePresentationFwd(segments),
-    });
-
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      { preload: 'auto', selectedVideoTrackId: 'track-1', currentTime: 0, presentation: makePresentationFwd(segments) },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     setTimeout(resolveAll, 10);
 
@@ -873,24 +835,16 @@ describe('loadSegments forward buffer flushing', () => {
     const { fetch, resolveAll } = makeControllableFetchFwd();
     globalThis.fetch = fetch;
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
     const { sourceBuffer, actor } = makeSourceBufferWithActor(
       [[0, 30]],
       segments.map((s) => ({ id: s.id, startTime: s.startTime, duration: s.duration, trackId: 'track-1' })),
       'track-1'
     );
-
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      selectedVideoTrackId: 'track-1',
-      currentTime: 0,
-      presentation: makePresentationFwd(segments),
-    });
-
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      { preload: 'auto', selectedVideoTrackId: 'track-1', currentTime: 0, presentation: makePresentationFwd(segments) },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     setTimeout(resolveAll, 10);
 
@@ -932,9 +886,6 @@ describe('loadSegments byte-range segment fetching', () => {
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
     const track = {
       type: 'video' as const,
       id: 'track-1',
@@ -948,23 +899,23 @@ describe('loadSegments byte-range segment fetching', () => {
       duration: 12,
     };
 
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      selectedVideoTrackId: 'track-1',
-      currentTime: 0,
-      presentation: {
-        id: 'p1',
-        url: 'http://example.com/playlist.m3u8',
-        startTime: 0,
-        duration: 12,
-        selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
-      },
-    });
-
     const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      {
+        preload: 'auto',
+        selectedVideoTrackId: 'track-1',
+        currentTime: 0,
+        presentation: {
+          id: 'p1',
+          url: 'http://example.com/playlist.m3u8',
+          startTime: 0,
+          duration: 12,
+          selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
+        },
+      },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     await vi.waitFor(
       () => {
@@ -990,32 +941,29 @@ describe('loadSegments byte-range segment fetching', () => {
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      selectedVideoTrackId: 'track-1',
-      currentTime: 0,
-      presentation: {
-        id: 'p1',
-        url: 'http://example.com/playlist.m3u8',
-        startTime: 0,
-        duration: 10,
-        selectionSets: [
-          {
-            id: 'ss1',
-            type: 'video',
-            switchingSets: [{ id: 'sw1', type: 'video', tracks: [makeResolvedVideoTrack(segments)] }],
-          },
-        ],
-      },
-    });
-
     const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      {
+        preload: 'auto',
+        selectedVideoTrackId: 'track-1',
+        currentTime: 0,
+        presentation: {
+          id: 'p1',
+          url: 'http://example.com/playlist.m3u8',
+          startTime: 0,
+          duration: 10,
+          selectionSets: [
+            {
+              id: 'ss1',
+              type: 'video',
+              switchingSets: [{ id: 'sw1', type: 'video', tracks: [makeResolvedVideoTrack(segments)] }],
+            },
+          ],
+        },
+      },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     await vi.waitFor(
       () => {
@@ -1054,9 +1002,6 @@ describe('loadSegments bandwidth tracking', () => {
 
     globalThis.fetch = makeStreamingFetch(chunks);
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
     const segment = { id: 's1', url: 'http://example.com/s1.m4s', startTime: 0, duration: 10 };
     const track = {
       type: 'video' as const,
@@ -1080,24 +1025,24 @@ describe('loadSegments bandwidth tracking', () => {
       bytesSampled: 0,
     };
 
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      selectedVideoTrackId: 'track-1',
-      currentTime: 0,
-      bandwidthState: initialBandwidth,
-      presentation: {
-        id: 'p1',
-        url: 'http://example.com/playlist.m3u8',
-        startTime: 0,
-        duration: 10,
-        selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
-      },
-    });
-
     const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      {
+        preload: 'auto',
+        selectedVideoTrackId: 'track-1',
+        currentTime: 0,
+        bandwidthState: initialBandwidth,
+        presentation: {
+          id: 'p1',
+          url: 'http://example.com/playlist.m3u8',
+          startTime: 0,
+          duration: 10,
+          selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
+        },
+      },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     // Wait for both init and segment to be appended (actor context will have 1 segment)
     await vi.waitFor(
@@ -1130,9 +1075,6 @@ describe('loadSegments bandwidth tracking', () => {
       return Promise.resolve(new Response(body));
     });
 
-    const { loadSegments } = await import('../load-segments');
-    const { createState: cs } = await import('../../../core/state/create-state');
-
     const segment = { id: 's1', url: 'http://example.com/s1.m4s', startTime: 0, duration: 10 };
     const track = {
       type: 'video' as const,
@@ -1147,23 +1089,23 @@ describe('loadSegments bandwidth tracking', () => {
       duration: 10,
     };
 
-    const state = cs<SegmentLoadingState>({
-      preload: 'auto',
-      selectedVideoTrackId: 'track-1',
-      currentTime: 0,
-      presentation: {
-        id: 'p1',
-        url: 'http://example.com/playlist.m3u8',
-        startTime: 0,
-        duration: 10,
-        selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
-      },
-    });
-
     const { sourceBuffer, actor } = makeSourceBufferWithActor();
-    const owners = cs<SegmentLoadingOwners>({ videoBuffer: sourceBuffer, videoBufferActor: actor });
-
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const { state, owners, cleanup } = setupLoadSegments(
+      {
+        preload: 'auto',
+        selectedVideoTrackId: 'track-1',
+        currentTime: 0,
+        presentation: {
+          id: 'p1',
+          url: 'http://example.com/playlist.m3u8',
+          startTime: 0,
+          duration: 10,
+          selectionSets: [{ id: 'ss1', type: 'video', switchingSets: [{ id: 'sw1', type: 'video', tracks: [track] }] }],
+        },
+      },
+      { videoBuffer: sourceBuffer, videoBufferActor: actor },
+      'video'
+    );
 
     await vi.waitFor(
       () => {

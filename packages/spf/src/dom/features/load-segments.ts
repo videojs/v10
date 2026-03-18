@@ -1,6 +1,7 @@
-import { combineLatest } from '../../all';
+import { Signal } from 'signal-polyfill';
 import { type BandwidthState, sampleBandwidth } from '../../core/abr/bandwidth-estimator';
 import { DEFAULT_FORWARD_BUFFER_CONFIG } from '../../core/buffer/forward-buffer';
+import { effect } from '../../core/signals/effect';
 import { createState, type WritableState } from '../../core/state/create-state';
 import type { AddressableObject, Presentation, ResolvedTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
@@ -237,26 +238,19 @@ function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boo
  * @example
  * const cleanup = loadSegments({ state, owners }, { type: 'video' });
  */
-export function loadSegments(
-  {
-    state,
-    owners,
-  }: {
-    state: WritableState<SegmentLoadingState>;
-    owners: WritableState<SegmentLoadingOwners>;
-  },
+export function loadSegments<S extends SegmentLoadingState, O extends SegmentLoadingOwners>(
+  { state, owners }: { state: Signal.State<S>; owners: Signal.State<O> },
   config: { type: MediaTrackType }
 ): () => void {
   const { type } = config;
   const actorKey = ActorKeyByType[type];
 
-  // Local throughput state — owns BandwidthState for this track's fetch loop.
-  // Sampling is handled transparently inside fetchBytes; callers never touch it.
+  // Local throughput WritableState — used by createTrackedFetch which reads
+  // .current and calls .patch()/.flush() internally. Stays as WritableState.
   //
-  // MIGRATION BRIDGE: the onSample callback below keeps global state.bandwidthState
-  // in sync so ABR (selectVideoTrack) continues to work unchanged. Remove this
-  // bridge once ABR reads from throughput directly.
-  const initialBandwidth = state.current.bandwidthState;
+  // MIGRATION BRIDGE: the onSample callback keeps state.bandwidthState in sync
+  // so ABR (selectVideoTrack) continues to work. Remove once ABR reads signals.
+  const initialBandwidth = state.get().bandwidthState;
   const throughput = createState<BandwidthState>(
     initialBandwidth ?? {
       fastEstimate: 0,
@@ -273,72 +267,85 @@ export function loadSegments(
           throughput,
           initialBandwidth !== undefined
             ? (next) => {
-                state.patch({ bandwidthState: next });
-                // Flush immediately so switchQuality sees the new estimate before the
-                // next segment fetch starts, rather than waiting for the microtask queue.
-                state.flush();
+                state.set(Object.assign({}, state.get(), { bandwidthState: next }) as S);
               }
             : undefined
         )
       : fetchStream;
 
-  const segmentLoader = createState<SegmentLoaderActor | undefined>(undefined);
+  // Local segment loader — Signal.State so segmentsCanLoad can track it reactively
+  const segmentLoader = new Signal.State<SegmentLoaderActor | undefined>(undefined);
 
-  // SegmentLoaderActor lifecycle — watch only the actor key in owners so this
-  // subscription does not fire on unrelated owners changes.
-  const unsubActorLifecycle = owners.subscribe(
-    (o) => o[actorKey],
-    (actor) => {
-      if (actor) {
-        segmentLoader.patch(createSegmentLoaderActor(actor, fetchBytes));
-      } else if (!actor && segmentLoader.current) {
-        segmentLoader.current.destroy();
-        segmentLoader.patch(undefined);
-      }
-      return () => {
-        segmentLoader.current?.destroy();
-        segmentLoader.patch(undefined);
-      };
+  // Computed: isolates the specific actor key so the lifecycle effect only
+  // re-runs when that actor reference changes, not on unrelated owners updates.
+  const actorSource = new Signal.Computed<SourceBufferActor | undefined>(() => owners.get()[actorKey]);
+
+  // Actor lifecycle — destroy and recreate SegmentLoaderActor when the
+  // upstream SourceBufferActor is replaced (quality switch) or removed.
+  let currentLoader: SegmentLoaderActor | undefined;
+  const cleanupActorLifecycle = effect(() => {
+    const actor = actorSource.get();
+
+    if (currentLoader) {
+      currentLoader.destroy();
+      segmentLoader.set(undefined);
+      currentLoader = undefined;
     }
-  );
 
-  const segmentsCanLoad = createState<boolean>(false);
-  const unsubscribeCanLoadSegments = combineLatest([state, segmentLoader]).subscribe(
-    ([currentState, currentSegmentLoader]) => {
-      const track = getSelectedTrack(currentState, type);
-      const trackResolved = !!track && isResolvedTrack(track);
-      const segmentLoaderActorExists = !!currentSegmentLoader;
-      segmentsCanLoad.patch(trackResolved && segmentLoaderActorExists);
+    if (actor) {
+      const loader = createSegmentLoaderActor(actor, fetchBytes);
+      currentLoader = loader;
+      segmentLoader.set(loader);
     }
-  );
+  });
 
-  const unsubscribeShouldLoadSegments = combineLatest([segmentsCanLoad, state]).subscribe(
-    ([segmentsCanLoad, state]) => selectLoadingInputs([segmentsCanLoad, state], type),
-    ({ preload, playbackInitiated, currentTime, track }) => {
-      const fullMode = preload === 'auto' || !!playbackInitiated;
+  // Derived: true only when we have both a resolved track and a ready loader
+  const segmentsCanLoad = new Signal.Computed(() => {
+    const track = getSelectedTrack(state.get(), type);
+    return !!track && isResolvedTrack(track) && !!segmentLoader.get();
+  });
 
-      if (!fullMode) {
-        // Metadata mode: init only, no range.
+  // Loading inputs — selectLoadingInputs is cheap; let the effect body apply
+  // loadingInputsEq rather than the computed, so the first run always fires
+  // regardless of the initial state.
+  const loadingInputs = new Signal.Computed(() => selectLoadingInputs([segmentsCanLoad.get(), state.get()], type));
+
+  // Load effect — prevInputs guards against redundant messages using the same
+  // equality semantics as the former combineLatest selector subscription.
+  // prevInputs is updated only when we actually send a message so that the
+  // transition segmentsCanLoad: false → true always fires (loadingInputsEq
+  // returns true for that transition, so we must not skip it here).
+  let prevInputs: LoadingInputs | undefined;
+  const cleanupLoadEffect = effect(() => {
+    const inputs = loadingInputs.get();
+    if (prevInputs !== undefined && loadingInputsEq(prevInputs, inputs)) return;
+
+    const { preload, playbackInitiated, currentTime, track, segmentsCanLoad: canLoad } = inputs;
+    if (!canLoad) return;
+
+    prevInputs = inputs;
+
+    const fullMode = preload === 'auto' || !!playbackInitiated;
+    if (!fullMode) {
+      // Metadata mode: init only, no range.
+      /** @ts-expect-error */
+      segmentLoader.get()?.send({ type: 'load', track });
+    } else {
+      segmentLoader.get()?.send({
+        type: 'load',
         /** @ts-expect-error */
-        segmentLoader.current?.send({ type: 'load', track });
-      } else {
-        segmentLoader.current?.send({
-          type: 'load',
-          /** @ts-expect-error */
-          track,
-          range: {
-            start: currentTime as number,
-            end: (currentTime as number) + DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration,
-          },
-        });
-      }
-    },
-    { equalityFn: loadingInputsEq }
-  );
+        track,
+        range: {
+          start: currentTime as number,
+          end: (currentTime as number) + DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration,
+        },
+      });
+    }
+  });
 
   return () => {
-    unsubscribeCanLoadSegments();
-    unsubscribeShouldLoadSegments();
-    unsubActorLifecycle();
+    cleanupActorLifecycle();
+    cleanupLoadEffect();
+    currentLoader?.destroy();
   };
 }

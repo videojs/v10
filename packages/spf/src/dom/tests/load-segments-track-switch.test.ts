@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { stateToSignal } from '../../core/signals/bridge';
 import { createState } from '../../core/state/create-state';
 import type { Presentation, VideoSelectionSet } from '../../core/types';
 import type { SegmentLoadingOwners, SegmentLoadingState } from '../features/load-segments';
@@ -141,7 +142,14 @@ describe('loadSegments — track switch', () => {
 
     const owners = createState<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
 
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const [stateSignal, cleanupState] = stateToSignal(state);
+    const [ownersSignal, cleanupOwners] = stateToSignal(owners);
+    const cleanupEffect = loadSegments({ state: stateSignal, owners: ownersSignal }, { type: 'video' });
+    const cleanup = () => {
+      cleanupEffect();
+      cleanupState();
+      cleanupOwners();
+    };
 
     // Wait for initial evaluation to settle (track-a already fully loaded — no work needed)
     await new Promise((r) => setTimeout(r, 20));
@@ -190,7 +198,14 @@ describe('loadSegments — track switch', () => {
     });
 
     const owners = createState<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const [stateSignal, cleanupState] = stateToSignal(state);
+    const [ownersSignal, cleanupOwners] = stateToSignal(owners);
+    const cleanupEffect = loadSegments({ state: stateSignal, owners: ownersSignal }, { type: 'video' });
+    const cleanup = () => {
+      cleanupEffect();
+      cleanupState();
+      cleanupOwners();
+    };
 
     // Wait for track-a init fetch to start (but leave it pending)
     await vi.waitFor(() => expect(fetchedUrls).toContain('https://example.com/track-a-init.mp4'));
@@ -243,7 +258,14 @@ describe('loadSegments — track switch', () => {
     });
 
     const owners = createState<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const [stateSignal, cleanupState] = stateToSignal(state);
+    const [ownersSignal, cleanupOwners] = stateToSignal(owners);
+    const cleanupEffect = loadSegments({ state: stateSignal, owners: ownersSignal }, { type: 'video' });
+    const cleanup = () => {
+      cleanupEffect();
+      cleanupState();
+      cleanupOwners();
+    };
 
     await new Promise((r) => setTimeout(r, 20));
 
@@ -293,7 +315,14 @@ describe('loadSegments — track switch', () => {
 
     const owners = createState<SegmentLoadingOwners>({ videoBuffer, videoBufferActor });
 
-    const cleanup = loadSegments({ state, owners }, { type: 'video' });
+    const [stateSignal, cleanupState] = stateToSignal(state);
+    const [ownersSignal, cleanupOwners] = stateToSignal(owners);
+    const cleanupEffect = loadSegments({ state: stateSignal, owners: ownersSignal }, { type: 'video' });
+    const cleanup = () => {
+      cleanupEffect();
+      cleanupState();
+      cleanupOwners();
+    };
     await new Promise((r) => setTimeout(r, 50));
 
     // No full flush should happen on first init load

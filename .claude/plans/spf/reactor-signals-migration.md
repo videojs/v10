@@ -169,13 +169,13 @@ const segmentsCanLoad = new Signal.Computed(() =>
 
 ## Migration Order
 
-### Step 1 — Bridge utilities + engine wiring (infrastructure, no reactor changes)
+### ✅ Step 1 — Bridge utilities + engine wiring (infrastructure, no reactor changes)
 
 - **New**: `core/signals/bridge.ts` — `stateToSignal` + `signalToState`
 - **Change**: `playback-engine/engine.ts` — create mirrors, expose on `PlaybackEngine`
 - All existing tests pass unchanged — un-migrated reactors still receive `WritableState`
 
-### Step 2 — `endOfStream`
+### ✅ Step 2 — `endOfStream`
 
 - **Why first**: already uses signals internally with its own 4-line bridge; this just
   moves that bridge to the engine level and simplifies the function signature
@@ -191,21 +191,21 @@ const segmentsCanLoad = new Signal.Computed(() =>
   bridge needed
 - **Complexity**: low
 
-### Step 4 — `updateDuration`
+### ✅ Step 4 — `updateDuration`
 
 - **Why**: proves the async-in-effect pattern (`combineLatest + async callback` →
   `effect()` that detects condition then calls async helper with captured snapshot)
 - **Write-back**: writes `mediaSource.duration` directly, not to state — no bridge needed
 - **Complexity**: medium
 
-### Step 5 — `setupMediaSource`
+### ✅ Step 5 — `setupMediaSource`
 
 - **Why**: same async pattern as `updateDuration`, slightly more involved (`settingUp`
   flag, `abortController`, `owners.patch({ mediaSource })` write-back)
 - **Write-back**: `owners.patch({ mediaSource })` — direct call from async helper
 - **Complexity**: medium
 
-### Step 6 — `loadSegments`
+### ✅ Step 6 — `loadSegments`
 
 - **Why last**: most complex; has selector+equality (`loadingInputsEq`), two local
   `createState` instances (`segmentsCanLoad`, `segmentLoader`), and a write-back to

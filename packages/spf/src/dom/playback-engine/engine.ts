@@ -324,8 +324,8 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     switchQuality({ state }),
 
     // 6. Load segments (when SourceBuffer ready and track resolved)
-    loadSegments({ state, owners }, { type: 'video' }),
-    loadSegments({ state, owners }, { type: 'audio' }),
+    loadSegments({ state: stateSignal, owners: ownersSignal }, { type: 'video' }),
+    loadSegments({ state: stateSignal, owners: ownersSignal }, { type: 'audio' }),
 
     // 6.5. Signal end of stream when all segments loaded
     endOfStream({ state: stateSignal, owners: ownersSignal }),
