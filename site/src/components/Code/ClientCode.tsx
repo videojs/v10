@@ -1,4 +1,3 @@
-import clsx from 'clsx';
 import { Suspense, use } from 'react';
 import type { BundledLanguage } from 'shiki';
 import { shared } from '@/components/typography/styles';
