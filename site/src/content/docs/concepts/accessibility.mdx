@@ -34,7 +34,7 @@ The <DocsLink slug="reference/feature-text-tracks">text tracks feature</DocsLink
 
 ## Color contrast
 
-Built-in skins respond to [`prefers-contrast: more`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-contrast) by increasing background opacity on overlays and controls. They also respond to [`prefers-reduced-transparency: reduce`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) by raising baseline opacity so text stays readable over video. Both are handled through CSS media queries, so the player follows whatever the user has set at the OS level.
+Built-in skins respond to [`prefers-contrast: more`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-contrast) by increasing background opacity on overlays and controls. They also respond to [`prefers-reduced-transparency: reduce`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) by raising baseline opacity so text stays readable over video.
 
 Custom components should test against [WCAG 1.4.3 (contrast minimum)](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum) and [1.4.11 (non-text contrast)](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast) to make sure controls and text remain visible over video content.
 
@@ -58,4 +58,4 @@ Automated tools catch markup issues but miss real usability problems. Test your 
 
 ## Further reading
 
-Interested in learning more? The W3C WAI guides on [making audio and video media accessible](https://www.w3.org/WAI/media/av/) and [accessible media players](https://www.w3.org/WAI/media/av/player/) are good starting points for understanding what accessible media playback involves.
+The W3C WAI guides on [making audio and video media accessible](https://www.w3.org/WAI/media/av/) and [accessible media players](https://www.w3.org/WAI/media/av/player/) cover the full picture of what accessible media playback involves.
