@@ -3,10 +3,11 @@ video-player {
 }
 
 /*
-Required to override any default video styles (such as Tailwind's CSS reset)
-and ensure the video element fills the container as expected.
+Required to override any default video and image styles (such as
+Tailwind's CSS reset) and ensure they fill the container as expected.
 */
-video-player video {
+video-player video,
+video-player [slot="poster"] {
   display: block;
   width: 100%;
   height: 100%;
