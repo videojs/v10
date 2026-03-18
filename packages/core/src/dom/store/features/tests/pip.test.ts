@@ -1,6 +1,7 @@
 import { createStore } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlayerTarget } from '../../../media/types';
+import type { WebKitVideoElement } from '../../../presentation/types';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { pipFeature } from '../pip';
 
@@ -83,6 +84,28 @@ describe('pipFeature', () => {
       expect(store.state.pip).toBe(false);
     });
 
+    it('syncs pip on webkitpresentationmodechanged event (iOS Safari)', () => {
+      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      video.webkitPresentationMode = 'inline';
+
+      const store = createStore<PlayerTarget>()(pipFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.pip).toBe(false);
+
+      // Simulate entering PiP via WebKit presentation mode
+      video.webkitPresentationMode = 'picture-in-picture';
+      video.dispatchEvent(new Event('webkitpresentationmodechanged'));
+
+      expect(store.state.pip).toBe(true);
+
+      // Simulate exiting
+      video.webkitPresentationMode = 'inline';
+      video.dispatchEvent(new Event('webkitpresentationmodechanged'));
+
+      expect(store.state.pip).toBe(false);
+    });
+
     it('syncs pip when media element proxies to an internal target video', () => {
       Object.defineProperty(document, 'pictureInPictureEnabled', {
         value: true,
@@ -128,6 +151,20 @@ describe('pipFeature', () => {
       await store.requestPictureInPicture();
 
       expect(video.requestPictureInPicture).toHaveBeenCalled();
+    });
+
+    it('requestPictureInPicture() uses webkitSetPresentationMode first when available (iOS Safari)', async () => {
+      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      video.requestPictureInPicture = vi.fn().mockResolvedValue({});
+      video.webkitSetPresentationMode = vi.fn();
+
+      const store = createStore<PlayerTarget>()(pipFeature);
+      store.attach({ media: video, container: null });
+
+      await store.requestPictureInPicture();
+
+      expect(video.webkitSetPresentationMode).toHaveBeenCalledWith('picture-in-picture');
+      expect(video.requestPictureInPicture).not.toHaveBeenCalled();
     });
 
     it('exitPictureInPicture() calls document.exitPictureInPicture', async () => {

@@ -1,6 +1,7 @@
 import { createStore } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlayerTarget } from '../../../media/types';
+import type { WebKitVideoElement } from '../../../presentation/types';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { fullscreenFeature } from '../fullscreen';
 
@@ -61,6 +62,63 @@ describe('fullscreenFeature', () => {
       store.attach({ media: video, container: null });
 
       expect(store.state.fullscreenAvailability).toBe('unsupported');
+    });
+
+    it('detects fullscreen availability via webkitEnterFullscreen (iOS Safari)', () => {
+      Object.defineProperty(document, 'fullscreenEnabled', {
+        value: false,
+        writable: true,
+        configurable: true,
+      });
+
+      // Simulate iOS Safari: webkitEnterFullscreen on video prototype
+      const proto = HTMLVideoElement.prototype as WebKitVideoElement;
+      const original = proto.webkitEnterFullscreen;
+      proto.webkitEnterFullscreen = () => {};
+
+      const video = createMockVideo();
+      const store = createStore<PlayerTarget>()(fullscreenFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.fullscreenAvailability).toBe('available');
+
+      if (original) {
+        proto.webkitEnterFullscreen = original;
+      } else {
+        delete proto.webkitEnterFullscreen;
+      }
+    });
+
+    it('syncs fullscreen on webkitpresentationmodechanged event (iOS Safari)', () => {
+      Object.defineProperty(document, 'fullscreenEnabled', {
+        value: false,
+        writable: true,
+        configurable: true,
+      });
+
+      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      video.webkitPresentationMode = 'inline';
+      video.webkitDisplayingFullscreen = false;
+
+      const container = document.createElement('div');
+      const store = createStore<PlayerTarget>()(fullscreenFeature);
+      store.attach({ media: video, container });
+
+      expect(store.state.fullscreen).toBe(false);
+
+      // Simulate entering fullscreen via WebKit presentation mode
+      video.webkitPresentationMode = 'fullscreen';
+      video.webkitDisplayingFullscreen = true;
+      video.dispatchEvent(new Event('webkitpresentationmodechanged'));
+
+      expect(store.state.fullscreen).toBe(true);
+
+      // Simulate exiting
+      video.webkitPresentationMode = 'inline';
+      video.webkitDisplayingFullscreen = false;
+      video.dispatchEvent(new Event('webkitpresentationmodechanged'));
+
+      expect(store.state.fullscreen).toBe(false);
     });
 
     it('updates fullscreen on fullscreenchange event', () => {
@@ -129,6 +187,12 @@ describe('fullscreenFeature', () => {
 
   describe('actions', () => {
     it('requestFullscreen() calls requestFullscreen on container', async () => {
+      Object.defineProperty(document, 'fullscreenEnabled', {
+        value: true,
+        writable: true,
+        configurable: true,
+      });
+
       const video = createMockVideo();
       const container = document.createElement('div');
       container.requestFullscreen = vi.fn().mockResolvedValue(undefined);
@@ -168,10 +232,54 @@ describe('fullscreenFeature', () => {
 
       document.exitFullscreen = originalExit;
     });
+
+    it('requestFullscreen() uses webkitEnterFullscreen when element fullscreen is unsupported (iOS Safari)', async () => {
+      Object.defineProperty(document, 'fullscreenEnabled', {
+        value: false,
+        writable: true,
+        configurable: true,
+      });
+
+      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      video.webkitEnterFullscreen = vi.fn();
+      const container = document.createElement('div');
+
+      const store = createStore<PlayerTarget>()(fullscreenFeature);
+      store.attach({ media: video, container });
+
+      await store.requestFullscreen();
+
+      expect(video.webkitEnterFullscreen).toHaveBeenCalled();
+    });
+
+    it('exitFullscreen() uses webkitExitFullscreen first when video is in WebKit fullscreen (iOS Safari)', async () => {
+      const originalExit = document.exitFullscreen;
+      document.exitFullscreen = vi.fn();
+
+      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      video.webkitExitFullscreen = vi.fn();
+      video.webkitDisplayingFullscreen = true;
+
+      const store = createStore<PlayerTarget>()(fullscreenFeature);
+      store.attach({ media: video, container: null });
+
+      await store.exitFullscreen();
+
+      expect(video.webkitExitFullscreen).toHaveBeenCalled();
+      expect(document.exitFullscreen).not.toHaveBeenCalled();
+
+      document.exitFullscreen = originalExit;
+    });
   });
 
   describe('transitions', () => {
     it('requestFullscreen() exits PiP first if active', async () => {
+      Object.defineProperty(document, 'fullscreenEnabled', {
+        value: true,
+        writable: true,
+        configurable: true,
+      });
+
       const originalExit = document.exitPictureInPicture;
       document.exitPictureInPicture = vi.fn().mockResolvedValue(undefined);
 
@@ -198,6 +306,12 @@ describe('fullscreenFeature', () => {
     });
 
     it('requestFullscreen() does not exit PiP if not active', async () => {
+      Object.defineProperty(document, 'fullscreenEnabled', {
+        value: true,
+        writable: true,
+        configurable: true,
+      });
+
       const originalExit = document.exitPictureInPicture;
       document.exitPictureInPicture = vi.fn().mockResolvedValue(undefined);
 

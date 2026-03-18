@@ -7,8 +7,6 @@ export interface WebKitVideoElement extends HTMLVideoElement {
   webkitDisplayingFullscreen?: boolean;
   /** Current WebKit presentation mode (iOS Safari). */
   webkitPresentationMode?: WebKitPresentationMode;
-  /** Whether WebKit fullscreen is supported (iOS Safari). */
-  webkitSupportsFullscreen?: boolean;
   /** Enter fullscreen using WebKit API (iOS Safari). */
   webkitEnterFullscreen?: () => void;
   /** Exit fullscreen using WebKit API (iOS Safari). */
@@ -21,8 +19,6 @@ export interface WebKitVideoElement extends HTMLVideoElement {
 export interface WebKitFullscreenElement extends Element {
   /** Request fullscreen using WebKit API (Safari). */
   webkitRequestFullscreen?: () => Promise<void>;
-  /** Request fullscreen using WebKit API (older Safari). */
-  webkitRequestFullScreen?: () => Promise<void>;
 }
 
 /** Extended Document with WebKit fullscreen vendor APIs. */
@@ -33,6 +29,4 @@ export interface WebKitDocument extends Document {
   webkitFullscreenEnabled?: boolean;
   /** Exit fullscreen (WebKit). */
   webkitExitFullscreen?: () => Promise<void>;
-  /** Exit fullscreen (older WebKit). */
-  webkitCancelFullScreen?: () => Promise<void>;
 }
