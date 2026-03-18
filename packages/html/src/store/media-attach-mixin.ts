@@ -1,12 +1,8 @@
 import type { Media } from '@videojs/core/dom';
 import { ContextEvent } from '@videojs/element/context';
+import type { CustomElement } from '@videojs/utils/dom';
 import type { AnyConstructor, Constructor } from '@videojs/utils/types';
 import { type MediaAttachContext, mediaAttachContext } from '../player/context';
-
-interface CustomElementLike extends HTMLElement {
-  connectedCallback?(): void;
-  disconnectedCallback?(): void;
-}
 
 export type MediaAttachMixin = <Class extends AnyConstructor<HTMLElement>>(BaseClass: Class) => Class;
 
@@ -21,14 +17,17 @@ export type MediaAttachMixin = <Class extends AnyConstructor<HTMLElement>>(BaseC
  */
 export function createMediaAttachMixin(context: MediaAttachContext): MediaAttachMixin {
   return <Class extends AnyConstructor<HTMLElement>>(BaseClass: Class) => {
-    class MediaAttachElement extends (BaseClass as unknown as Constructor<CustomElementLike>) {
+    class MediaAttachElement extends (BaseClass as unknown as Constructor<CustomElement>) {
       #setMedia: ((media: Media | null) => void) | null = null;
       #unsubscribe: (() => void) | null = null;
+
+      getMediaTarget(): Media | null {
+        return this as unknown as Media;
+      }
 
       override connectedCallback() {
         super.connectedCallback?.();
 
-        // Request context from an ancestor provider via the context protocol.
         this.dispatchEvent(
           new ContextEvent(
             context,
@@ -37,10 +36,10 @@ export function createMediaAttachMixin(context: MediaAttachContext): MediaAttach
               if (unsubscribe) this.#unsubscribe = unsubscribe;
               this.#setMedia = value ?? null;
               if (this.isConnected) {
-                this.#setMedia?.(this as unknown as Media);
+                this.#setMedia?.(this.getMediaTarget());
               }
             },
-            true // subscribe to updates
+            true
           )
         );
       }
