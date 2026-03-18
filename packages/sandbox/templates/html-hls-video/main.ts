@@ -1,32 +1,31 @@
 import '@app/styles.css';
 import '@videojs/html/video/player';
 import '@videojs/html/media/hls-video';
-import '@videojs/html/video/skin';
-import '@videojs/html/video/minimal-skin';
-import { renderMuxStoryboard } from '@app/shared/html/mux-storyboard';
-import { CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
-import { loadVideoStylesheets } from '@app/shared/html/stylesheets';
-import { getInitialSkin, getInitialSource, onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
-import type { SourceId } from '@app/shared/sources';
-import { SOURCES } from '@app/shared/sources';
-import type { Skin } from '@app/types';
+import { createHtmlSandboxState, createLatestLoader } from '@app/shared/html/sandbox-state';
+import { loadVideoSkinTag } from '@app/shared/html/skins';
+import { renderStoryboard } from '@app/shared/html/storyboard';
+import { onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
+import { getPosterSrc, getStoryboardSrc, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
-let currentSkin: Skin = getInitialSkin();
-let currentSource: SourceId = getInitialSource();
+const state = createHtmlSandboxState();
+const loadLatest = createLatestLoader();
 
-function render() {
-  const tag = CSS_SKIN_TAGS[currentSkin].video;
+async function render() {
+  const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling));
+  if (!tag) return;
 
-  loadVideoStylesheets(currentSkin);
+  const storyboard = getStoryboardSrc(state.source);
+  const poster = getPosterSrc(state.source);
 
   document.getElementById('root')!.innerHTML = html`
     <video-player>
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
-        <hls-video slot="media" src="${SOURCES[currentSource].url}" playsinline crossorigin="anonymous">
-          ${renderMuxStoryboard(currentSource)}
+        <hls-video slot="media" src="${SOURCES[state.source].url}" playsinline crossorigin="anonymous">
+          ${renderStoryboard(storyboard)}
         </hls-video>
+        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
       </${tag}>
     </video-player>
   `;
@@ -35,11 +34,11 @@ function render() {
 render();
 
 onSkinChange((skin) => {
-  currentSkin = skin;
+  state.skin = skin;
   render();
 });
 
 onSourceChange((source) => {
-  currentSource = source;
+  state.source = source;
   render();
 });

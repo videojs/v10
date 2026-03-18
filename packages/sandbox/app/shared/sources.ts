@@ -1,3 +1,5 @@
+import { getMuxAssetId } from './mux';
+
 export const SOURCES = {
   'hls-1': {
     label: 'HLS - Big Buck Bunny',
@@ -6,7 +8,7 @@ export const SOURCES = {
     subType: 'ts',
   },
   'hls-2': {
-    label: 'HLS - 2',
+    label: 'HLS - Elephants Dream',
     url: 'https://stream.mux.com/Sc89iWAyNkhJ3P1rQ02nrEdCFTnfT01CZ2KmaEcxXfB008.m3u8',
     type: 'hls',
     subType: 'ts',
@@ -56,3 +58,13 @@ export const DEFAULT_AUDIO_SOURCE: SourceId = 'mp4-1';
 export const DEFAULT_DASH_SOURCE: SourceId = 'dash-1';
 
 export const BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/Sc89iWAyNkhJ3P1rQ02nrEdCFTnfT01CZ2KmaEcxXfB008/low.mp4';
+
+export function getPosterSrc(source: SourceId): string | undefined {
+  const id = getMuxAssetId(source);
+  return id ? `https://image.mux.com/${id}/thumbnail.jpg` : undefined;
+}
+
+export function getStoryboardSrc(source: SourceId): string | undefined {
+  const id = getMuxAssetId(source);
+  return id ? `https://image.mux.com/${id}/storyboard.vtt` : undefined;
+}

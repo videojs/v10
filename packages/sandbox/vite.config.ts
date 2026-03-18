@@ -22,11 +22,6 @@ function getSandboxEntries(): Record<string, string> {
   return entries;
 }
 
-/**
- * Serve app/index.html as the shell entry.
- * - Dev: middleware intercepts `/` and serves the shell HTML.
- * - Build: temporarily copies to `src/index.html` so Rollup can find it within root.
- */
 function serveAppShell(): Plugin {
   const shellSrc = resolve(__dirname, 'app/index.html');
   const shellEntry = normalizePath(resolve(__dirname, 'app/main.tsx'));
@@ -35,7 +30,6 @@ function serveAppShell(): Plugin {
   return {
     name: 'serve-app-shell',
     buildStart() {
-      // Rewrite relative paths to point to app/ since the copy lives in src/
       const html = readFileSync(shellSrc, 'utf-8').replace(/(src|href)="\.\/([^"]+)"/g, '$1="../app/$2"');
       writeFileSync(shellDest, html);
     },
@@ -43,19 +37,21 @@ function serveAppShell(): Plugin {
       rmSync(shellDest, { force: true });
     },
     configureServer(server) {
-      return () => {
-        server.middlewares.use(async (req, res, next) => {
-          if (req.url === '/' || req.url === '/index.html') {
-            const html = readFileSync(shellSrc, 'utf-8').replace('./main.tsx', `/@fs/${shellEntry}`);
-            const transformed = await server.transformIndexHtml('/app/index.html', html, req.originalUrl);
-            res.setHeader('Content-Type', 'text/html');
-            res.end(transformed);
-            return;
-          }
+      server.middlewares.use(async (req, res, next) => {
+        const requestUrl = req.originalUrl ?? req.url ?? '/';
+        const { pathname } = new URL(requestUrl, 'http://localhost');
 
-          next();
-        });
-      };
+        if (pathname === '/' || pathname === '/index.html') {
+          const html = readFileSync(shellSrc, 'utf-8').replace('./main.tsx', `/@fs/${shellEntry}`);
+          const transformed = await server.transformIndexHtml('/app/index.html', html, requestUrl);
+
+          res.setHeader('Content-Type', 'text/html');
+          res.end(transformed);
+          return;
+        }
+
+        next();
+      });
     },
   };
 }

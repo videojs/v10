@@ -11,6 +11,7 @@ import {
   overlay,
   playbackRate,
   popup,
+  poster,
   preview,
   root,
   seek,
@@ -32,6 +33,7 @@ import '../ui/pip-button';
 import '../ui/play-button';
 import '../ui/playback-rate-button';
 import '../ui/popover';
+import '../ui/poster';
 import '../ui/seek-button';
 import '../ui/time';
 import '../ui/time-slider';
@@ -45,6 +47,10 @@ function getTemplateHTML() {
   return /*html*/ `
     <media-container class="${root(true)}">
       <slot name="media"></slot>
+
+      <media-poster class="${poster(true)}">
+        <slot name="poster"></slot>
+      </media-poster>
 
       <media-buffering-indicator class="${bufferingIndicator.root}">
         <div class="${bufferingIndicator.container}">

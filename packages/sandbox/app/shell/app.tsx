@@ -9,15 +9,12 @@ import {
   SOURCES,
 } from '@app/shared/sources';
 import type { Platform, Preset, Styling } from '@app/types';
-import { useSkinSwitcher } from '@app/utils/use-skin-switcher';
-import { useSourceSwitcher } from '@app/utils/use-source-switcher';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Navbar } from './navbar';
 import { Preview } from './preview';
 
-function getPagePath(platform: Platform, styling: Styling, preset: Preset): string {
+function getPagePath(platform: Platform, preset: Preset): string {
   if (preset === 'background-video') return `/${platform}-background-video/`;
-  if (styling === 'tailwind') return `/${platform}-${preset}-tailwind/`;
   return `/${platform}-${preset}/`;
 }
 
@@ -27,19 +24,21 @@ function readParams() {
     platform: (params.get('platform') ?? 'html') as Platform,
     styling: (params.get('styling') ?? 'css') as Styling,
     preset: (params.get('preset') ?? 'video') as Preset,
+    skin: (params.get('skin') ?? 'default') as 'default' | 'minimal',
+    source: (params.get('source') ?? 'hls-1') as SourceId,
   };
 }
 
 export function App() {
   const initial = useMemo(readParams, []);
   const [platform, setPlatform] = useState<Platform>(initial.platform);
-  const [styling, setStyling] = useState<Styling>(initial.styling);
+  const [styling, setStyling] = useState(initial.styling);
   const [preset, setPreset] = useState<Preset>(initial.preset);
-  const [skin, setSkin] = useSkinSwitcher();
-  const [source, setSource] = useSourceSwitcher();
+  const [skin, setSkin] = useState(initial.skin);
+  const [source, setSource] = useState(initial.source);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const pagePath = getPagePath(platform, styling, preset);
+  const pagePath = getPagePath(platform, preset);
 
   // Keep the URL in sync with all state (including skin + source)
   useEffect(() => {
@@ -47,23 +46,11 @@ export function App() {
     history.replaceState(null, '', `/?${params}`);
   }, [platform, styling, preset, skin, source]);
 
-  // Send postMessage to iframe for skin changes (skip initial mount — iframe reads localStorage)
-  const skinMountRef = useRef(true);
   useEffect(() => {
-    if (skinMountRef.current) {
-      skinMountRef.current = false;
-      return;
-    }
     iframeRef.current?.contentWindow?.postMessage({ type: 'skin-change', skin }, '*');
   }, [skin]);
 
-  // Send postMessage to iframe for source changes (skip initial mount — iframe reads localStorage)
-  const sourceMountRef = useRef(true);
   useEffect(() => {
-    if (sourceMountRef.current) {
-      sourceMountRef.current = false;
-      return;
-    }
     iframeRef.current?.contentWindow?.postMessage({ type: 'source-change', source }, '*');
   }, [source]);
 
@@ -81,9 +68,9 @@ export function App() {
     }
   }, [preset, source, setSource]);
 
-  // Constrain styling when switching to a preset that has no tailwind template
+  // Background video does not have a Tailwind skin variant.
   useEffect(() => {
-    if ((preset === 'background-video' || preset === 'dash-video') && styling === 'tailwind') {
+    if (preset === 'background-video' && styling === 'tailwind') {
       setStyling('css');
     }
   }, [preset, styling]);
@@ -108,13 +95,19 @@ export function App() {
         availableSources={availableSources}
         isBackgroundVideo={preset === 'background-video'}
         isSimpleHlsVideo={preset === 'simple-hls-video'}
-        isDashVideo={preset === 'dash-video'}
         platforms={PLATFORMS}
         stylings={STYLINGS}
         presets={PRESETS}
         sources={SOURCES}
       />
-      <Preview ref={iframeRef} pagePath={pagePath} skin={skin} source={source} />
+      <Preview
+        key={`${pagePath}:${styling}`}
+        ref={iframeRef}
+        pagePath={pagePath}
+        skin={skin}
+        styling={styling}
+        source={source}
+      />
     </div>
   );
 }

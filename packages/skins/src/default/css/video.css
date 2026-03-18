@@ -11,6 +11,7 @@
 @import "./components/time.css";
 @import "./components/buttons.css";
 @import "./components/icons.css";
+@import "./components/poster.css";
 @import "./components/preview.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
@@ -29,9 +30,25 @@
   --media-surface-shadow-color: oklch(0 0 0 / 0.15);
   --media-surface-backdrop-filter: blur(16px) saturate(1.5);
   --media-video-border-radius: var(--media-border-radius, 2rem);
+  --media-controls-transition-duration: 100ms;
+  --media-controls-transition-delay: 0ms;
 
   @media (prefers-color-scheme: dark) {
-    --media-border-color: oklch(1 0 0 / 0.1);
+    --media-border-color: oklch(1 0 0 / 0.15);
+  }
+
+  &:has(.media-controls:not([data-visible])) {
+    /* Slight delay to hide controls on non-touch devices after interaction */
+    @media (pointer: fine) {
+      --media-controls-transition-delay: 500ms;
+      --media-controls-transition-duration: 300ms;
+    }
+    @media (pointer: coarse) {
+      --media-controls-transition-duration: 150ms;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      --media-controls-transition-duration: 100ms;
+    }
   }
 
   /* Inner border ring */
@@ -60,41 +77,45 @@
   inset-inline: 0.75rem;
   z-index: 10;
   color: var(--media-color-primary, oklch(1 0 0));
-  will-change: scale, transform, filter, opacity;
   transition-timing-function: ease-out;
+  transition-duration: var(--media-controls-transition-duration);
+  transition-delay: var(--media-controls-transition-delay);
   transform-origin: bottom;
 
   @media (pointer: fine) {
-    transition-property: scale, transform, filter, opacity;
-    transition-duration: 100ms;
-    transition-delay: 0ms;
+    will-change: scale, filter, opacity;
+    transition-property: scale, filter, opacity;
+  }
+
+  @media (pointer: coarse) {
+    will-change: scale, opacity;
+    transition-property: scale, opacity;
   }
 
   &:not([data-visible]) {
     opacity: 0;
     pointer-events: none;
     scale: 0.9;
-    filter: blur(8px);
 
     @media (pointer: fine) {
-      transition-duration: 300ms;
-      transition-delay: 500ms;
+      filter: blur(8px);
 
       @media (prefers-reduced-motion: reduce) {
-        transition-duration: 100ms;
+        filter: blur(0);
       }
     }
 
     @media (prefers-reduced-motion: reduce) {
       scale: 1;
-      filter: blur(0);
     }
   }
 }
 
 /* Hide cursor when controls are hidden in fullscreen */
-.media-default-skin--video:fullscreen:has(.media-controls:not([data-visible])) {
-  cursor: none;
+@media (pointer: fine) {
+  .media-default-skin--video:fullscreen:has(.media-controls:not([data-visible])) {
+    cursor: none;
+  }
 }
 
 /* ==========================================================================
@@ -116,7 +137,9 @@
   filter: blur(8px);
   transition-property: scale, opacity, filter;
   transition-duration: 150ms;
+  transition-timing-function: ease-out;
   transform-origin: bottom;
+  pointer-events: none;
 
   & .media-preview__thumbnail {
     max-width: 11rem;

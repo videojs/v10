@@ -106,9 +106,10 @@ function getVideoTemplateHTML(attrs: Record<string, string>): string {
       }
 
       video::-webkit-media-text-track-container {
-        transition: transform var(--media-caption-track-duration, 0) ease-out;
+        transition: translate var(--media-caption-track-duration, 0) ease-out;
         transition-delay: var(--media-caption-track-delay, 0);
-        transform: translateY(var(--media-caption-track-y, 0)) scale(0.98);
+        translate: 0 var(--media-caption-track-y, 0);
+        scale: 0.98;
         z-index: 1;
         font-family: inherit;
       }

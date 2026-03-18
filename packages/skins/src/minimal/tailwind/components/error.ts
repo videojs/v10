@@ -15,6 +15,6 @@ export const error = {
   ),
   content: 'flex flex-col gap-2 py-1.5',
   title: 'font-semibold leading-tight',
-  description: 'opacity-70',
+  description: 'opacity-70 wrap-anywhere',
   actions: 'flex gap-2 *:flex-1',
 };

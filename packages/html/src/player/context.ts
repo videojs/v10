@@ -1,5 +1,9 @@
-import type { AnyPlayerStore, PlayerStore } from '@videojs/core/dom';
+import type { AnyPlayerStore, Media, MediaContainer, PlayerStore } from '@videojs/core/dom';
 import { type Context, createContext } from '@videojs/element/context';
+
+// ----------------------------------------
+// Player Context
+// ----------------------------------------
 
 export const PLAYER_CONTEXT_KEY = Symbol('@videojs/player');
 
@@ -16,3 +20,25 @@ export type PlayerContext<Store extends PlayerStore = AnyPlayerStore> = Context<
  * @public
  */
 export const playerContext = createContext<PlayerContextValue, typeof PLAYER_CONTEXT_KEY>(PLAYER_CONTEXT_KEY);
+
+// ----------------------------------------
+// Attach Contexts
+// ----------------------------------------
+
+export const MEDIA_ATTACH_KEY = Symbol('@videojs/media-attach');
+
+export type MediaAttachValue = (media: Media | null) => void;
+
+export type MediaAttachContext = Context<typeof MEDIA_ATTACH_KEY, MediaAttachValue>;
+
+export const mediaAttachContext = createContext<MediaAttachValue, typeof MEDIA_ATTACH_KEY>(MEDIA_ATTACH_KEY);
+
+export const CONTAINER_ATTACH_KEY = Symbol('@videojs/container-attach');
+
+export type ContainerAttachValue = (container: MediaContainer | null) => void;
+
+export type ContainerAttachContext = Context<typeof CONTAINER_ATTACH_KEY, ContainerAttachValue>;
+
+export const containerAttachContext = createContext<ContainerAttachValue, typeof CONTAINER_ATTACH_KEY>(
+  CONTAINER_ATTACH_KEY
+);

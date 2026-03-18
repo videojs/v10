@@ -26,12 +26,14 @@ import {
   iconState,
   overlay,
   popup,
+  poster,
   preview,
   root,
   seek,
   slider,
   time,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
+import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
@@ -44,12 +46,14 @@ import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
+import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
 import { Slider } from '@/ui/slider';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
+import { isRenderProp } from '@/utils/use-render';
 import { ErrorDialog } from './error-dialog';
 import type { MinimalVideoSkinProps } from './minimal-skin';
 
@@ -142,11 +146,19 @@ function FullscreenLabel(): ReactNode {
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNode {
-  const { children, className, ...rest } = props;
+  const { children, className, poster: posterProp, ...rest } = props;
 
   return (
     <Container className={cn(root(false), className)} {...rest}>
       {children}
+
+      {posterProp && (
+        <Poster
+          src={isString(posterProp) ? posterProp : undefined}
+          render={isRenderProp(posterProp) ? posterProp : undefined}
+          className={poster(false)}
+        />
+      )}
 
       <BufferingIndicator
         render={(props) => (

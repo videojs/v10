@@ -13,6 +13,7 @@ import {
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@videojs/icons/react/minimal';
+import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
@@ -25,18 +26,20 @@ import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
+import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
 import { Slider } from '@/ui/slider';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
-import type { BaseSkinProps } from '../types';
+import { isRenderProp } from '@/utils/use-render';
+import type { BaseVideoSkinProps } from '../types';
 import { ErrorDialog } from './error-dialog';
 
 const SEEK_TIME = 10;
 
-export type MinimalVideoSkinProps = BaseSkinProps;
+export type MinimalVideoSkinProps = BaseVideoSkinProps;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
   return <button ref={ref} type="button" className={cn('media-button', className)} {...props} />;
@@ -75,11 +78,15 @@ function FullscreenLabel(): ReactNode {
 }
 
 export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
-  const { children, className, ...rest } = props;
+  const { children, className, poster, ...rest } = props;
 
   return (
     <Container className={cn('media-minimal-skin media-minimal-skin--video', className)} {...rest}>
       {children}
+
+      {poster && (
+        <Poster src={isString(poster) ? poster : undefined} render={isRenderProp(poster) ? poster : undefined} />
+      )}
 
       <BufferingIndicator
         render={(props) => (

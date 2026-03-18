@@ -77,7 +77,7 @@ export const sidebar: Sidebar = [
         contents: [
           { slug: 'reference/render-element' },
           { slug: 'reference/use-button' },
-          { slug: 'reference/use-media-registration' },
+          { slug: 'reference/use-media-attach' },
           { slug: 'reference/use-player-context' },
           { slug: 'reference/use-selector' },
           { slug: 'reference/use-snapshot' },

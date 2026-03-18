@@ -13,8 +13,9 @@ export {
   Container,
   type ContainerProps,
   type PlayerContextValue,
+  useContainerAttach,
   useMedia,
-  useMediaRegistration,
+  useMediaAttach,
   usePlayer,
   usePlayerContext,
 } from './player/context';

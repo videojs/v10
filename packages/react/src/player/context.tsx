@@ -12,6 +12,7 @@ export interface PlayerContextValue {
   store: UnknownStore;
   media: Media | null;
   setMedia: Dispatch<SetStateAction<Media | null>>;
+  setContainer: Dispatch<SetStateAction<HTMLElement | null>>;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -79,10 +80,16 @@ export function useMedia(): Media | null {
   return media;
 }
 
-/** Access the media registration setter for connecting a media element to the player. */
-export function useMediaRegistration(): Dispatch<SetStateAction<Media | null>> | undefined {
+/** Access the media attach setter for connecting a media element to the player. */
+export function useMediaAttach(): Dispatch<SetStateAction<Media | null>> | undefined {
   const ctx = useContext(PlayerContext);
   return ctx?.setMedia;
+}
+
+/** Access the container attach setter for connecting a container element to the player. */
+export function useContainerAttach(): Dispatch<SetStateAction<HTMLElement | null>> | undefined {
+  const ctx = useContext(PlayerContext);
+  return ctx?.setContainer;
 }
 
 export interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
@@ -90,14 +97,14 @@ export interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Container({ children, ...props }, ref) {
-  const { store, media } = usePlayerContext();
+  const setContainer = useContainerAttach();
   const internalRef = useRef<HTMLDivElement>(null);
   const composedRef = useComposedRefs(ref, internalRef);
 
   useEffect(() => {
-    if (!media) return;
-    return store.attach({ media, container: internalRef.current });
-  }, [media, store]);
+    setContainer?.(internalRef.current);
+    return () => setContainer?.(null);
+  }, [setContainer]);
 
   return (
     <div ref={composedRef} {...props}>

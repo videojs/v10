@@ -13,6 +13,7 @@ import '../ui/pip-button';
 import '../ui/play-button';
 import '../ui/playback-rate-button';
 import '../ui/popover';
+import '../ui/poster';
 import '../ui/seek-button';
 import '../ui/time';
 import '../ui/time-slider';
@@ -26,6 +27,10 @@ function getTemplateHTML() {
   return /*html*/ `
     <media-container class="media-minimal-skin media-minimal-skin--video">
       <slot name="media"></slot>
+
+      <media-poster>
+        <slot name="poster"></slot>
+      </media-poster>
 
       <media-buffering-indicator class="media-buffering-indicator">
         ${renderIcon('spinner', { class: 'media-icon' })}
