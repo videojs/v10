@@ -22,7 +22,7 @@ async function render() {
   document.getElementById('root')!.innerHTML = html`
     <video-player>
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
-        <video slot="media" src="${SOURCES[state.source].url}" playsinline crossorigin="anonymous">
+        <video src="${SOURCES[state.source].url}" playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}
         </video>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}

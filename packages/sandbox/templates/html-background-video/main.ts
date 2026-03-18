@@ -10,7 +10,7 @@ const html = String.raw;
 document.getElementById('root')!.innerHTML = html`
   <background-video-player>
     <background-video-skin>
-      <background-video slot="media" src="${BACKGROUND_VIDEO_SRC}"></background-video>
+      <background-video src="${BACKGROUND_VIDEO_SRC}"></background-video>
     </background-video-skin>
   </background-video-player>
 `;

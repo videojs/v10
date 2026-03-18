@@ -18,7 +18,7 @@ async function render() {
     <div class="w-full max-w-xl mx-auto">
       <audio-player>
         <${tag}>
-          <audio slot="media" src="${SOURCES[state.source].url}"></audio>
+          <audio src="${SOURCES[state.source].url}"></audio>
         </${tag}>
       </audio-player>
     </div>

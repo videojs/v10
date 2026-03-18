@@ -22,7 +22,7 @@ async function render() {
   document.getElementById('root')!.innerHTML = html`
     <video-player>
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
-        <dash-video slot="media" src="${SOURCES[state.source].url}" playsinline>
+        <dash-video src="${SOURCES[state.source].url}" playsinline>
           ${renderStoryboard(storyboard)}
         </dash-video>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}

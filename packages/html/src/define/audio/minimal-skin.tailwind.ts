@@ -37,7 +37,7 @@ const SEEK_TIME = 10;
 function getTemplateHTML() {
   return /*html*/ `
     <media-container class="${root}">
-      <slot name="media"></slot>
+      <slot></slot>
 
       <div class="${controls}">
         <media-tooltip-group>
