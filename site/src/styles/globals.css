@@ -24,7 +24,7 @@
 }
 @font-face {
   font-family: "Eurostile LT Pro Fallback";
-  src: local("Helvetica");
+  src: local("Arial");
   font-weight: bold;
   ascent-override: 88.67%;
   descent-override: 25.22%;
@@ -52,7 +52,7 @@
 }
 @font-face {
   font-family: "Eurostile LT Pro Extended Fallback";
-  src: local("Helvetica");
+  src: local("Arial");
   font-weight: normal;
   ascent-override: 71.41%;
   descent-override: 19.47%;
@@ -61,7 +61,7 @@
 }
 @font-face {
   font-family: "Eurostile LT Pro Extended Fallback";
-  src: local("Helvetica");
+  src: local("Arial");
   font-weight: bold;
   ascent-override: 71.41%;
   descent-override: 19.47%;
