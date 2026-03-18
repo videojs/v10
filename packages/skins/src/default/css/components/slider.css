@@ -47,7 +47,7 @@
 .media-default-skin .media-slider__thumb {
   z-index: 10;
   position: absolute;
-  transform: translate(-50%, -50%);
+  translate: -50% -50%;
   width: 0.625rem;
   height: 0.625rem;
   background-color: currentColor;
