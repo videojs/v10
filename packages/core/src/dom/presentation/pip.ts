@@ -58,8 +58,12 @@ export async function requestPictureInPicture(media: HTMLMediaElement): Promise<
 
   // Standard PiP API (only available on HTMLVideoElement)
   if (isFunction(video.requestPictureInPicture)) {
-    await video.requestPictureInPicture();
-    return;
+    try {
+      await video.requestPictureInPicture();
+      return;
+    } catch {
+      // Some engines expose the API but it doesn't work. Fall back to WebKit.
+    }
   }
 
   // iOS Safari WebKit presentation mode
