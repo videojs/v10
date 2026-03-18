@@ -56,19 +56,16 @@ export async function requestPictureInPicture(media: HTMLMediaElement): Promise<
   const target = resolveMediaTarget(media);
   const video = target as HTMLVideoElement & WebKitVideoElement;
 
-  // Standard PiP API (only available on HTMLVideoElement)
-  if (isFunction(video.requestPictureInPicture)) {
-    try {
-      await video.requestPictureInPicture();
-      return;
-    } catch {
-      // Some engines expose the API but it doesn't work. Fall back to WebKit.
-    }
-  }
-
-  // iOS Safari WebKit presentation mode
+  // iOS Safari: use WebKit presentation mode directly.
+  // The standard API may exist on the prototype but silently fail.
   if (isFunction(video.webkitSetPresentationMode)) {
     video.webkitSetPresentationMode('picture-in-picture');
+    return;
+  }
+
+  // Standard PiP API (only available on HTMLVideoElement)
+  if (isFunction(video.requestPictureInPicture)) {
+    await video.requestPictureInPicture();
     return;
   }
 
@@ -82,25 +79,19 @@ export async function requestPictureInPicture(media: HTMLMediaElement): Promise<
  * WebKit presentation mode.
  */
 export async function exitPictureInPicture(media?: HTMLMediaElement): Promise<void> {
-  // Standard PiP API
-  if (isFunction(document.exitPictureInPicture)) {
-    try {
-      await document.exitPictureInPicture();
-      return;
-    } catch {
-      // Some engines expose a partial standard API. Fall back to WebKit mode.
-    }
-  }
-
-  // iOS Safari WebKit presentation mode
+  // iOS Safari: use WebKit presentation mode directly when active.
   if (media) {
     const target = resolveMediaTarget(media);
     const video = target as WebKitVideoElement;
-    const mode = video.webkitPresentationMode;
-    if (isFunction(video.webkitSetPresentationMode) && (!mode || mode === 'picture-in-picture')) {
+    if (isFunction(video.webkitSetPresentationMode) && video.webkitPresentationMode === 'picture-in-picture') {
       video.webkitSetPresentationMode('inline');
       return;
     }
+  }
+
+  // Standard PiP API
+  if (isFunction(document.exitPictureInPicture)) {
+    return document.exitPictureInPicture();
   }
 
   // No-op if not in PiP (matches browser behavior)

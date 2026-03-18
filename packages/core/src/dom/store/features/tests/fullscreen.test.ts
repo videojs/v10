@@ -252,12 +252,13 @@ describe('fullscreenFeature', () => {
       expect(video.webkitEnterFullscreen).toHaveBeenCalled();
     });
 
-    it('exitFullscreen() falls back to webkitExitFullscreen when standard API fails (iOS Safari)', async () => {
+    it('exitFullscreen() uses webkitExitFullscreen first when video is in WebKit fullscreen (iOS Safari)', async () => {
       const originalExit = document.exitFullscreen;
-      document.exitFullscreen = vi.fn().mockRejectedValue(new Error('not supported'));
+      document.exitFullscreen = vi.fn();
 
       const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
       video.webkitExitFullscreen = vi.fn();
+      video.webkitDisplayingFullscreen = true;
 
       const store = createStore<PlayerTarget>()(fullscreenFeature);
       store.attach({ media: video, container: null });
@@ -265,6 +266,7 @@ describe('fullscreenFeature', () => {
       await store.exitFullscreen();
 
       expect(video.webkitExitFullscreen).toHaveBeenCalled();
+      expect(document.exitFullscreen).not.toHaveBeenCalled();
 
       document.exitFullscreen = originalExit;
     });

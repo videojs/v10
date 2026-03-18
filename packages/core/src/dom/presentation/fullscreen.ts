@@ -91,31 +91,23 @@ export async function requestFullscreen(container: HTMLElement | null, media: HT
 export async function exitFullscreen(media?: HTMLMediaElement): Promise<void> {
   const doc = document as WebKitDocument;
 
-  // Try standard API
-  if (isFunction(doc.exitFullscreen)) {
-    try {
-      return await doc.exitFullscreen();
-    } catch {
-      // Some engines expose the API but it fails for video-only fullscreen.
-    }
-  }
-
-  // Try WebKit API
-  if (isFunction(doc.webkitExitFullscreen)) {
-    try {
-      return await doc.webkitExitFullscreen();
-    } catch {
-      // Fall through to video element path.
-    }
-  }
-
-  // iOS Safari video fullscreen
+  // iOS Safari: use video element WebKit API first when it's actively in fullscreen.
   if (media) {
     const video = media as WebKitVideoElement;
-    if (isFunction(video.webkitExitFullscreen)) {
+    if (isFunction(video.webkitExitFullscreen) && video.webkitDisplayingFullscreen) {
       video.webkitExitFullscreen();
       return;
     }
+  }
+
+  // Standard API
+  if (isFunction(doc.exitFullscreen)) {
+    return doc.exitFullscreen();
+  }
+
+  // WebKit document API (desktop Safari)
+  if (isFunction(doc.webkitExitFullscreen)) {
+    return doc.webkitExitFullscreen();
   }
 
   // No-op if not in fullscreen (matches browser behavior)

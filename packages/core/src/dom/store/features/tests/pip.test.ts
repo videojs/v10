@@ -153,9 +153,9 @@ describe('pipFeature', () => {
       expect(video.requestPictureInPicture).toHaveBeenCalled();
     });
 
-    it('requestPictureInPicture() falls back to webkitSetPresentationMode when standard API throws (iOS Safari)', async () => {
+    it('requestPictureInPicture() uses webkitSetPresentationMode first when available (iOS Safari)', async () => {
       const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
-      video.requestPictureInPicture = vi.fn().mockRejectedValue(new Error('not supported'));
+      video.requestPictureInPicture = vi.fn().mockResolvedValue({});
       video.webkitSetPresentationMode = vi.fn();
 
       const store = createStore<PlayerTarget>()(pipFeature);
@@ -164,6 +164,7 @@ describe('pipFeature', () => {
       await store.requestPictureInPicture();
 
       expect(video.webkitSetPresentationMode).toHaveBeenCalledWith('picture-in-picture');
+      expect(video.requestPictureInPicture).not.toHaveBeenCalled();
     });
 
     it('exitPictureInPicture() calls document.exitPictureInPicture', async () => {
