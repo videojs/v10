@@ -287,7 +287,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     calculatePresentationDuration({ state }),
 
     // 4. Setup MediaSource (when presentation loaded)
-    setupMediaSource({ state, owners }),
+    setupMediaSource({ state: stateSignal, owners: ownersSignal }),
 
     // 4.5. Update MediaSource duration (when presentation duration available)
     updateDuration({ state: stateSignal, owners: ownersSignal }),

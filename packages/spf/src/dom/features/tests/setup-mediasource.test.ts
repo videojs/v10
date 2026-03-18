@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { stateToSignal } from '../../../core/signals/bridge';
 import { createState } from '../../../core/state/create-state';
 import type { Presentation } from '../../../core/types';
 import {
@@ -21,6 +22,23 @@ vi.mock('../../media/mediasource-setup', () => ({
   })),
   waitForSourceOpen: vi.fn(() => Promise.resolve()),
 }));
+
+function setupSetupMediaSource(initialState: MediaSourceState, initialOwners: MediaSourceOwners) {
+  const state = createState<MediaSourceState>(initialState);
+  const owners = createState<MediaSourceOwners>(initialOwners);
+  const [stateSignal, cleanupState] = stateToSignal(state);
+  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
+  const cleanupEffect = setupMediaSource({ state: stateSignal, owners: ownersSignal });
+  return {
+    state,
+    owners,
+    cleanup: () => {
+      cleanupEffect();
+      cleanupState();
+      cleanupOwners();
+    },
+  };
+}
 
 describe('canSetup', () => {
   it('returns true when mediaElement and presentation.url exist', () => {
@@ -93,18 +111,13 @@ describe('setupMediaSource', () => {
   it('creates MediaSource when mediaElement and presentation.url exist', async () => {
     const { createMediaSource } = await import('../../media/mediasource-setup');
 
-    const state = createState<MediaSourceState>({});
-    const owners = createState<MediaSourceOwners>({});
+    const { state, owners, cleanup } = setupSetupMediaSource({}, {});
 
-    const cleanup = setupMediaSource({ state, owners });
-
-    // Set up conditions
     owners.patch({ mediaElement: {} as HTMLMediaElement });
     state.patch({
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
-    // Wait for async operation
     await vi.waitFor(() => {
       expect(createMediaSource).toHaveBeenCalledWith({ preferManaged: true });
     });
@@ -122,11 +135,8 @@ describe('setupMediaSource', () => {
     };
     vi.mocked(createMediaSource).mockReturnValue(mockMediaSource as unknown as MediaSource);
 
-    const state = createState<MediaSourceState>({});
-    const owners = createState<MediaSourceOwners>({});
+    const { state, owners, cleanup } = setupSetupMediaSource({}, {});
     const mediaElement = {} as HTMLMediaElement;
-
-    const cleanup = setupMediaSource({ state, owners });
 
     owners.patch({ mediaElement });
     state.patch({
@@ -143,10 +153,7 @@ describe('setupMediaSource', () => {
   it('waits for sourceopen event', async () => {
     const { waitForSourceOpen } = await import('../../media/mediasource-setup');
 
-    const state = createState<MediaSourceState>({});
-    const owners = createState<MediaSourceOwners>({});
-
-    const cleanup = setupMediaSource({ state, owners });
+    const { state, owners, cleanup } = setupSetupMediaSource({}, {});
 
     owners.patch({ mediaElement: {} as HTMLMediaElement });
     state.patch({
@@ -170,10 +177,7 @@ describe('setupMediaSource', () => {
     };
     vi.mocked(createMediaSource).mockReturnValue(mockMediaSource as unknown as MediaSource);
 
-    const state = createState<MediaSourceState>({});
-    const owners = createState<MediaSourceOwners>({});
-
-    const cleanup = setupMediaSource({ state, owners });
+    const { state, owners, cleanup } = setupSetupMediaSource({}, {});
 
     owners.patch({ mediaElement: {} as HTMLMediaElement });
     state.patch({
@@ -181,8 +185,7 @@ describe('setupMediaSource', () => {
     });
 
     await vi.waitFor(() => {
-      const currentOwners = owners.current;
-      expect(currentOwners.mediaSource).toBe(mockMediaSource);
+      expect(owners.current.mediaSource).toBe(mockMediaSource);
     });
 
     cleanup();
@@ -191,16 +194,12 @@ describe('setupMediaSource', () => {
   it('does not create MediaSource if mediaElement is missing', async () => {
     const { createMediaSource } = await import('../../media/mediasource-setup');
 
-    const state = createState<MediaSourceState>({});
-    const owners = createState<MediaSourceOwners>({});
-
-    const cleanup = setupMediaSource({ state, owners });
+    const { state, cleanup } = setupSetupMediaSource({}, {});
 
     state.patch({
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
-    // Wait a bit to ensure no async operations occur
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(createMediaSource).not.toHaveBeenCalled();
@@ -211,14 +210,10 @@ describe('setupMediaSource', () => {
   it('does not create MediaSource if presentation.url is missing', async () => {
     const { createMediaSource } = await import('../../media/mediasource-setup');
 
-    const state = createState<MediaSourceState>({});
-    const owners = createState<MediaSourceOwners>({});
-
-    const cleanup = setupMediaSource({ state, owners });
+    const { owners, cleanup } = setupSetupMediaSource({}, {});
 
     owners.patch({ mediaElement: {} as HTMLMediaElement });
 
-    // Wait a bit to ensure no async operations occur
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(createMediaSource).not.toHaveBeenCalled();
@@ -229,27 +224,21 @@ describe('setupMediaSource', () => {
   it('does not create multiple MediaSources (deduplication)', async () => {
     const { createMediaSource } = await import('../../media/mediasource-setup');
 
-    const state = createState<MediaSourceState>({});
-    const owners = createState<MediaSourceOwners>({});
-
-    const cleanup = setupMediaSource({ state, owners });
+    const { state, owners, cleanup } = setupSetupMediaSource({}, {});
 
     owners.patch({ mediaElement: {} as HTMLMediaElement });
     state.patch({
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
-    // Wait for first creation
     await vi.waitFor(() => {
       expect(createMediaSource).toHaveBeenCalledTimes(1);
     });
 
-    // Trigger another update (same data)
     state.patch({
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
-    // Wait a bit to ensure no additional calls
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(createMediaSource).toHaveBeenCalledTimes(1);

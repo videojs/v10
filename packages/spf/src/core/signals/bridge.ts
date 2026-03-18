@@ -1,22 +1,61 @@
 import { Signal } from 'signal-polyfill';
-import type { State, WritableState } from '../state/create-state';
+import type { WritableState } from '../state/create-state';
 import { effect } from './effect';
 
+function shallowEqual<T>(a: T, b: T): boolean {
+  if (a === b) return true;
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
+  const keysA = Object.keys(a as object) as (keyof T)[];
+  if (keysA.length !== Object.keys(b as object).length) return false;
+  return keysA.every((k) => a[k] === b[k]);
+}
+
 /**
- * Bridge a WritableState into a Signal.ReadonlyState.
+ * Bridge a WritableState to a Signal.State, keeping both sides in sync.
  *
- * The signal mirrors the state's current value and stays in sync via a
- * subscription. Returns the signal and a cleanup function that tears down
- * the subscription.
+ * - WritableState → Signal: a subscription keeps the signal up to date
+ *   whenever external code calls state.patch().
+ * - Signal → WritableState: an effect diffs signal.get() against state.current
+ *   and patches only the fields that actually changed, so migrated reactors
+ *   can write to the signal and un-migrated reactors still see the update.
+ *
+ * Shallow equality on the signal prevents feedback loops: when the forward
+ * bridge calls signal.set(state.current) after a reverse patch, the signal
+ * compares field-by-field and skips notification if nothing changed.
  *
  * This is temporary scaffolding for incremental migration. Once all consumers
  * have been migrated to signals, the bridge and the underlying WritableState
  * can be retired together.
  */
-export function stateToSignal<T>(state: State<T>): [Signal.State<T>, () => void] {
-  const signal = new Signal.State(state.current);
-  const cleanup = state.subscribe((v) => signal.set(v));
-  return [signal, cleanup];
+export function stateToSignal<T extends object>(state: WritableState<T>): [Signal.State<T>, () => void] {
+  const signal = new Signal.State(state.current, { equals: shallowEqual });
+
+  // WritableState → Signal: keep signal in sync when external code patches state
+  const cleanupForward = state.subscribe((v) => signal.set(v));
+
+  // Signal → WritableState: when a reactor writes to the signal, patch only
+  // the fields that differ so un-migrated reactors see the change too
+  const cleanupReverse = effect(() => {
+    const next = signal.get();
+    const current = state.current;
+    const patch: Partial<T> = {};
+    let hasChanges = false;
+    for (const key of Object.keys(next) as (keyof T)[]) {
+      if (next[key] !== current[key]) {
+        patch[key] = next[key];
+        hasChanges = true;
+      }
+    }
+    if (hasChanges) state.patch(patch as T extends object ? Partial<T> : T);
+  });
+
+  return [
+    signal,
+    () => {
+      cleanupForward();
+      cleanupReverse();
+    },
+  ];
 }
 
 /**

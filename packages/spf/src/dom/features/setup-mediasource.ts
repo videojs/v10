@@ -1,6 +1,6 @@
 import { isNil } from '@videojs/utils/predicate';
-import { combineLatest } from '../../core/reactive/combine-latest';
-import type { WritableState } from '../../core/state/create-state';
+import type { Signal } from 'signal-polyfill';
+import { effect } from '../../core/signals/effect';
 import type { Presentation } from '../../core/types';
 import { attachMediaSource, createMediaSource, waitForSourceOpen } from '../media/mediasource-setup';
 
@@ -44,46 +44,45 @@ export function shouldSetup(_state: MediaSourceState, owners: MediaSourceOwners)
  *
  * Updates owners.mediaSource after successful setup.
  */
-export function setupMediaSource({
+export function setupMediaSource<S extends MediaSourceState, O extends MediaSourceOwners>({
   state,
   owners,
 }: {
-  state: WritableState<MediaSourceState>;
-  owners: WritableState<MediaSourceOwners>;
+  state: Signal.State<S>;
+  owners: Signal.State<O>;
 }): () => void {
   let settingUp = false;
   let abortController: AbortController | null = null;
 
-  const unsubscribe = combineLatest([state, owners]).subscribe(
-    async ([currentState, currentOwners]: [MediaSourceState, MediaSourceOwners]) => {
-      if (!canSetup(currentState, currentOwners) || !shouldSetup(currentState, currentOwners) || settingUp) return;
+  const cleanupEffect = effect(() => {
+    const currentState = state.get();
+    const currentOwners = owners.get();
 
-      try {
-        settingUp = true;
-        abortController = new AbortController();
+    if (!canSetup(currentState, currentOwners) || !shouldSetup(currentState, currentOwners) || settingUp) return;
 
-        // Prefer ManagedMediaSource when available (Safari 17+). attachMediaSource
-        // handles the srcObject path and sets disableRemotePlayback automatically.
-        const mediaSource = createMediaSource({ preferManaged: true });
+    settingUp = true;
+    abortController = new AbortController();
+    const { signal } = abortController;
+    const mediaElement = currentOwners.mediaElement!;
 
-        // Attach to element
-        attachMediaSource(mediaSource, currentOwners.mediaElement!);
+    const mediaSource = createMediaSource({ preferManaged: true });
+    attachMediaSource(mediaSource, mediaElement);
 
-        // Wait for sourceopen — aborted if destroy() is called before it fires
-        await waitForSourceOpen(mediaSource, abortController.signal);
-
-        owners.patch({ mediaSource });
-      } catch (error) {
+    waitForSourceOpen(mediaSource, signal)
+      .then(() => {
+        owners.set(Object.assign({}, owners.get(), { mediaSource }) as O);
+      })
+      .catch((error) => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
         throw error;
-      } finally {
+      })
+      .finally(() => {
         settingUp = false;
-      }
-    }
-  );
+      });
+  });
 
   return () => {
     abortController?.abort();
-    unsubscribe();
+    cleanupEffect();
   };
 }
