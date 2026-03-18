@@ -107,10 +107,10 @@ describe('createTooltip', () => {
     describe('touch pointer suppression', () => {
       beforeEach(() => {
         vi.useFakeTimers();
-        // jsdom lacks matchMedia — stub so popover's canHover() returns true,
-        // allowing us to test that the tooltip layer blocks touch independently.
+        // jsdom lacks matchMedia — stub so popover's canHover() and canOpenOnFocus()
+        // return true, allowing us to test that the tooltip layer blocks touch independently.
         vi.stubGlobal('matchMedia', (query: string) => ({
-          matches: query === '(hover: hover)',
+          matches: query === '(hover: hover)' || query === '(pointer: fine)',
           media: query,
           addEventListener: vi.fn(),
           removeEventListener: vi.fn(),
