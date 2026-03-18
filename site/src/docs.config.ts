@@ -36,7 +36,7 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'How to',
-    contents: [{ slug: 'how-to/customize-skins' }],
+    contents: [{ slug: 'how-to/customize-skins' }, { slug: 'how-to/build-your-own-component' }],
   },
   {
     sidebarLabel: 'Components',

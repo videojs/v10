@@ -1,0 +1,281 @@
+---
+title: Build your own component
+description: Create custom player controls that read state, dispatch actions, and stay accessible.
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Video.js gives you full access to player state and actions, so you can build any control your player needs.
+
+## You might not need a custom component
+
+Before building from scratch, check if an existing approach covers your use case:
+
+- **Restyle a control** — use CSS custom properties and data attributes. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
+- **Rearrange or remove controls** — eject a skin and modify it. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>.
+<FrameworkCase frameworks={["react"]}>
+- **Change what a control renders** — use the `render` prop on any built-in component. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
+</FrameworkCase>
+
+Build a custom component when you need new behavior, a new state display, or integration with an external system.
+
+## Read player state
+
+Each <DocsLink slug="concepts/features">feature</DocsLink> exposes a slice of player state. Common state properties:
+
+| State | Feature | Description |
+|-------|---------|-------------|
+| `paused`, `ended` | <DocsLink slug="reference/feature-playback">Playback</DocsLink> | Whether playback is paused or finished |
+| `currentTime`, `duration` | <DocsLink slug="reference/feature-time">Time</DocsLink> | Current position and total length |
+| `volume`, `muted` | <DocsLink slug="reference/feature-volume">Volume</DocsLink> | Audio level and mute state |
+| `fullscreen` | <DocsLink slug="reference/feature-fullscreen">Fullscreen</DocsLink> | Whether the player is fullscreen |
+
+Each feature also has an **availability** property (`'available'`, `'unavailable'`, or `'unsupported'`). Use this to hide or disable controls that the platform does not support. See <DocsLink slug="concepts/features">Features</DocsLink> for details.
+
+<FrameworkCase frameworks={["react"]}>
+
+Subscribe to state with <DocsLink slug="reference/use-player">`Player.usePlayer`</DocsLink>:
+
+```tsx
+// Subscribe to a specific value — re-renders only when it changes
+const paused = Player.usePlayer((s) => s.paused);
+
+// Get the store for actions without subscribing
+const store = Player.usePlayer();
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+Subscribe to state with <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and a selector:
+
+```ts
+import { selectPlayback } from '@videojs/html';
+
+#player = new PlayerController(this, playerContext, selectPlayback);
+
+// In update():
+const state = this.#player.value;
+// state.paused, state.ended, etc.
+```
+
+Without a selector, `PlayerController` returns the store instance directly for dispatching actions without subscribing to changes.
+
+</FrameworkCase>
+
+## Dispatch actions
+
+Actions live on the state objects. Call them directly:
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+const store = Player.usePlayer();
+
+// Async actions return promises
+await store.play();
+store.pause();
+
+// Sync actions
+store.setVolume(0.5);
+store.toggleMuted();
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts
+// Async actions return promises
+await this.#player.value.play();
+this.#player.value.pause();
+
+// Sync actions
+this.#player.value.setVolume(0.5);
+this.#player.value.toggleMuted();
+```
+
+</FrameworkCase>
+
+## Place your component in the player
+
+<FrameworkCase frameworks={["react"]}>
+
+Place your component inside <DocsLink slug="reference/player-container">`<Player.Container>`</DocsLink> so it participates in fullscreen and responds to user activity:
+
+```tsx
+<Player.Provider>
+  <Player.Container>
+    <VideoSkin>
+      <Video src="video.mp4" />
+    </VideoSkin>
+    <SkipIntroButton /> {/* Your custom component */}
+  </Player.Container>
+</Player.Provider>
+```
+
+Your component is a normal React component. No special base class or wrapper is required.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+Place your element inside <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink> so it receives player context, participates in fullscreen, and responds to user activity:
+
+```html
+<video-player>
+  <video-skin>
+    <video slot="media" src="video.mp4"></video>
+  </video-skin>
+  <skip-intro-button></skip-intro-button> <!-- Your custom element -->
+</video-player>
+```
+
+Your element extends `ReactiveElement` from `@videojs/element`. Define reactive properties with `static properties`, connect to the player with `PlayerController`, and update the DOM in the `update()` lifecycle:
+
+```ts
+import { ReactiveElement } from '@videojs/element';
+import { PlayerController, playerContext, selectTime } from '@videojs/html';
+
+class SkipIntroButtonElement extends ReactiveElement {
+  #player = new PlayerController(this, playerContext, selectTime);
+
+  update() {
+    super.update();
+    // React to state changes here
+  }
+}
+
+customElements.define('skip-intro-button', SkipIntroButtonElement);
+```
+
+</FrameworkCase>
+
+## Style with player state
+
+Components reflect state as data attributes on their elements. Use these for CSS-driven state styling:
+
+```css
+skip-intro-button[data-visible] {
+  opacity: 1;
+}
+
+skip-intro-button:not([data-visible]) {
+  opacity: 0;
+  pointer-events: none;
+}
+```
+
+For continuous values, set CSS custom properties and style with them. See <DocsLink slug="concepts/ui-components">UI components</DocsLink> for the full pattern.
+
+To align with the player's visual language, use the skin's design tokens. See <DocsLink slug="concepts/skins">Skins</DocsLink>.
+
+## Make it accessible
+
+Use semantic HTML elements (`<button>`, not `<div>`), add ARIA attributes where needed, and support keyboard interaction.
+
+{/* TODO: Link to concepts/accessibility once that page is merged */}
+
+<FrameworkCase frameworks={["react"]}>
+
+For button-like controls, the <DocsLink slug="reference/use-button">`useButton`</DocsLink> hook handles keyboard activation (Enter and Space) and ARIA attributes.
+
+</FrameworkCase>
+
+## Full example
+
+Here is a "skip intro" button that appears during the first 30 seconds of playback and seeks past the intro when clicked.
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+function SkipIntroButton() {
+  const store = Player.usePlayer();
+  const currentTime = Player.usePlayer((s) => s.currentTime);
+  const paused = Player.usePlayer((s) => s.paused);
+
+  const visible = currentTime < 30 && !paused;
+
+  return (
+    <button
+      onClick={() => store.seek(30)}
+      aria-label="Skip intro"
+      style={{
+        position: 'absolute',
+        bottom: '5rem',
+        right: '1rem',
+        opacity: visible ? 1 : 0,
+        pointerEvents: visible ? 'auto' : 'none',
+        transition: 'opacity 200ms',
+      }}
+    >
+      Skip intro
+    </button>
+  );
+}
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts
+import { ReactiveElement } from '@videojs/element';
+import { PlayerController, playerContext, selectTime, selectPlayback } from '@videojs/html';
+
+class SkipIntroButtonElement extends ReactiveElement {
+  static tagName = 'skip-intro-button';
+
+  #time = new PlayerController(this, playerContext, selectTime);
+  #playback = new PlayerController(this, playerContext, selectPlayback);
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.setAttribute('role', 'button');
+    this.setAttribute('aria-label', 'Skip intro');
+    this.setAttribute('tabindex', '0');
+    this.addEventListener('click', this.#handleActivate);
+    this.addEventListener('keydown', this.#handleKeydown);
+  }
+
+  update() {
+    super.update();
+    const time = this.#time.value;
+    const playback = this.#playback.value;
+    if (!time || !playback) return;
+
+    const visible = time.currentTime < 30 && !playback.paused;
+    this.toggleAttribute('data-visible', visible);
+    this.style.opacity = visible ? '1' : '0';
+    this.style.pointerEvents = visible ? 'auto' : 'none';
+  }
+
+  #handleActivate = () => {
+    this.#time.value?.seek(30);
+  };
+
+  #handleKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.#handleActivate();
+    }
+  };
+}
+
+customElements.define('skip-intro-button', SkipIntroButtonElement);
+```
+
+Style it with CSS:
+
+```css
+skip-intro-button {
+  position: absolute;
+  bottom: 5rem;
+  right: 1rem;
+  transition: opacity 200ms;
+}
+```
+
+</FrameworkCase>
