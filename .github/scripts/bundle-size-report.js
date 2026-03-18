@@ -221,8 +221,6 @@ function generateComparisonReport(current, base) {
     const entries = groups.get(pkg) ?? [];
     const baseEntries = baseGroups.get(pkg) ?? [];
     const pkgIcon = pkgIcons[pkg] ?? '📦';
-    lines.push(`## ${pkgIcon} @videojs/${pkg}`);
-    lines.push('');
 
     // Entries with meaningful size changes (>300 B threshold).
     // For UI components, gate on standalone size to filter out phantom diffs
@@ -238,10 +236,20 @@ function generateComparisonReport(current, base) {
     // Entries that existed in base but are missing in PR (removed)
     const removed = baseEntries.filter((e) => currentMap[e.name] === undefined);
 
-    if (changed.length === 0 && removed.length === 0) {
-      lines.push('(no changes)');
+    const hasChanges = changed.length > 0 || removed.length > 0;
+
+    // Category breakdowns for packages with categories (html, react)
+    const hasCategories = entries.some((e) => e.category);
+    const breakdownLines = hasCategories
+      ? generateCategoryBreakdowns(entries, pkg)
+      : entries.length > 1
+        ? generateFlatBreakdown(entries, pkg)
+        : [];
+
+    if (hasChanges) {
+      lines.push(`## ${pkgIcon} @videojs/${pkg}`);
       lines.push('');
-    } else {
+
       lines.push('| Path | Base | PR | Diff | % | |');
       lines.push('|---|--:|--:|--:|--:|:-:|');
 
@@ -264,15 +272,14 @@ function generateComparisonReport(current, base) {
       }
 
       lines.push('');
-    }
-
-    // Category breakdowns for packages with categories (html, react)
-    const hasCategories = entries.some((e) => e.category);
-    if (hasCategories) {
-      lines.push(...generateCategoryBreakdowns(entries, pkg));
-    } else if (entries.length > 1) {
-      // Flat breakdown for other packages with multiple entries
-      lines.push(...generateFlatBreakdown(entries, pkg));
+      lines.push(...breakdownLines);
+    } else {
+      lines.push('<details>');
+      lines.push(`<summary><b>${pkgIcon} @videojs/${pkg}</b> — no changes</summary>`);
+      lines.push('');
+      lines.push(...breakdownLines);
+      lines.push('</details>');
+      lines.push('');
     }
   }
 
