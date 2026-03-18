@@ -258,12 +258,12 @@ const endOfStreamTask = async (
  * What becomes blocked is calling endOfStream() again, addSourceBuffer(),
  * and MediaSource.duration updates.
  */
-export function endOfStream({
+export function endOfStream<S extends EndOfStreamState, O extends EndOfStreamOwners>({
   state,
   owners,
 }: {
-  state: Signal.ReadonlyState<EndOfStreamState>;
-  owners: Signal.ReadonlyState<EndOfStreamOwners>;
+  state: Signal.State<S>;
+  owners: Signal.State<O>;
 }): () => void {
   // Derived condition. Transitively tracks through owners into each actor's
   // snapshot signal — when owners changes and points to a new actor, this computed

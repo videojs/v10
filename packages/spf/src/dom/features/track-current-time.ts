@@ -42,12 +42,12 @@ export function canTrackCurrentTime(owners: CurrentTimeOwners): boolean {
  * @example
  * const cleanup = trackCurrentTime({ state, owners });
  */
-export function trackCurrentTime({
+export function trackCurrentTime<O extends CurrentTimeOwners>({
   state,
   owners,
 }: {
   state: WritableState<CurrentTimeState>;
-  owners: Signal.ReadonlyState<CurrentTimeOwners>;
+  owners: Signal.State<O>;
 }): () => void {
   let lastMediaElement: HTMLMediaElement | undefined;
   let removeListeners: (() => void) | null = null;

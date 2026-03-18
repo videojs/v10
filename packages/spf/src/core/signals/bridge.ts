@@ -13,7 +13,7 @@ import { effect } from './effect';
  * have been migrated to signals, the bridge and the underlying WritableState
  * can be retired together.
  */
-export function stateToSignal<T>(state: State<T>): [Signal.ReadonlyState<T>, () => void] {
+export function stateToSignal<T>(state: State<T>): [Signal.State<T>, () => void] {
   const signal = new Signal.State(state.current);
   const cleanup = state.subscribe((v) => signal.set(v));
   return [signal, cleanup];

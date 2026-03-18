@@ -150,14 +150,14 @@ export interface PlaybackEngine {
    * Stays in sync with state automatically. Temporary bridge; removed when
    * WritableState is retired.
    */
-  stateSignal: Signal.ReadonlyState<PlaybackEngineState>;
+  stateSignal: Signal.State<PlaybackEngineState>;
 
   /**
    * Signal mirror of owners — for reactors that have been migrated to signals.
    * Stays in sync with owners automatically. Temporary bridge; removed when
    * WritableState is retired.
    */
-  ownersSignal: Signal.ReadonlyState<PlaybackEngineOwners>;
+  ownersSignal: Signal.State<PlaybackEngineOwners>;
 
   /**
    * Shared event stream (for inspection/testing/triggering events).

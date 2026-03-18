@@ -91,12 +91,12 @@ function waitForSourceBuffersReady(owners: DurationUpdateOwners): Promise<void> 
 /**
  * Update MediaSource duration when presentation duration becomes available.
  */
-export function updateDuration({
+export function updateDuration<S extends DurationUpdateState, O extends DurationUpdateOwners>({
   state,
   owners,
 }: {
-  state: Signal.ReadonlyState<DurationUpdateState>;
-  owners: Signal.ReadonlyState<DurationUpdateOwners>;
+  state: Signal.State<S>;
+  owners: Signal.State<O>;
 }): () => void {
   let destroyed = false;
   let running = false;
