@@ -1,5 +1,5 @@
-import { combineLatest } from '../../core/reactive/combine-latest';
-import type { WritableState } from '../../core/state/create-state';
+import type { Signal } from 'signal-polyfill';
+import { effect } from '../../core/signals/effect';
 import type { Presentation } from '../../core/types';
 import { hasPresentationDuration } from '../../core/types';
 
@@ -95,42 +95,47 @@ export function updateDuration({
   state,
   owners,
 }: {
-  state: WritableState<DurationUpdateState>;
-  owners: WritableState<DurationUpdateOwners>;
+  state: Signal.ReadonlyState<DurationUpdateState>;
+  owners: Signal.ReadonlyState<DurationUpdateOwners>;
 }): () => void {
   let destroyed = false;
+  let running = false;
 
-  const unsubscribe = combineLatest([state, owners]).subscribe(
-    async ([currentState, currentOwners]: [DurationUpdateState, DurationUpdateOwners]) => {
-      if (!shouldUpdateDuration(currentState, currentOwners)) return;
+  const cleanupEffect = effect(() => {
+    const currentState = state.get();
+    const currentOwners = owners.get();
 
-      const { mediaSource } = currentOwners;
+    if (!shouldUpdateDuration(currentState, currentOwners) || running) return;
 
-      // MSE spec: duration cannot be set while any SourceBuffer is updating
-      await waitForSourceBuffersReady(currentOwners);
+    const { mediaSource } = currentOwners;
+    running = true;
 
-      // Re-check after async wait: destroyed, or readyState changed (e.g. endOfStream
-      // already called endOfStream(), transitioning 'open' → 'ended').
-      if (destroyed || mediaSource!.readyState !== 'open') return;
+    // MSE spec: duration cannot be set while any SourceBuffer is updating.
+    // Capture the snapshot; the async helper does not read signals.
+    waitForSourceBuffersReady(currentOwners)
+      .then(() => {
+        // Re-check after async wait: destroyed, or readyState changed (e.g. endOfStream
+        // already called endOfStream(), transitioning 'open' → 'ended').
+        if (destroyed || mediaSource!.readyState !== 'open') return;
 
-      let duration = currentState.presentation!.duration!;
+        let duration = currentState.presentation!.duration!;
 
-      // Get max buffered end time across all SourceBuffers
-      const maxBufferedEnd = getMaxBufferedEnd(currentOwners);
+        // MSE spec: duration cannot be less than any buffered range.
+        // If buffered ranges exceed calculated duration, extend to match.
+        const maxBufferedEnd = getMaxBufferedEnd(currentOwners);
+        if (maxBufferedEnd > duration) {
+          duration = maxBufferedEnd;
+        }
 
-      // MSE spec: duration cannot be less than any buffered range
-      // If buffered ranges exceed calculated duration, extend to match
-      if (maxBufferedEnd > duration) {
-        duration = maxBufferedEnd;
-      }
-
-      // Set duration on MediaSource
-      mediaSource!.duration = duration;
-    }
-  );
+        mediaSource!.duration = duration;
+      })
+      .finally(() => {
+        running = false;
+      });
+  });
 
   return () => {
     destroyed = true;
-    unsubscribe();
+    cleanupEffect();
   };
 }

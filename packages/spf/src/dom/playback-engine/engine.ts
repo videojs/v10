@@ -290,7 +290,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     setupMediaSource({ state, owners }),
 
     // 4.5. Update MediaSource duration (when presentation duration available)
-    updateDuration({ state, owners }),
+    updateDuration({ state: stateSignal, owners: ownersSignal }),
 
     // 5. Setup SourceBuffers (when MediaSource ready and all selected tracks resolved)
     // Both SourceBuffers are created in a single synchronous operation to guarantee

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { stateToSignal } from '../../../core/signals/bridge';
 import { createState } from '../../../core/state/create-state';
 import type { Presentation } from '../../../core/types';
 import {
@@ -8,6 +9,23 @@ import {
   shouldUpdateDuration,
   updateDuration,
 } from '../update-duration';
+
+function setupUpdateDuration(initialState: DurationUpdateState, initialOwners: DurationUpdateOwners) {
+  const state = createState<DurationUpdateState>(initialState);
+  const owners = createState<DurationUpdateOwners>(initialOwners);
+  const [stateSignal, cleanupState] = stateToSignal(state);
+  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
+  const cleanupEffect = updateDuration({ state: stateSignal, owners: ownersSignal });
+  return {
+    state,
+    owners,
+    cleanup: () => {
+      cleanupEffect();
+      cleanupState();
+      cleanupOwners();
+    },
+  };
+}
 
 function makeMediaSource(duration = NaN) {
   return Object.create(MediaSource.prototype, {
@@ -173,10 +191,7 @@ describe('shouldUpdateDuration', () => {
 
 describe('updateDuration', () => {
   it('sets MediaSource.duration when conditions met', async () => {
-    const state = createState<DurationUpdateState>({});
-    const owners = createState<DurationUpdateOwners>({});
-
-    const cleanup = updateDuration({ state, owners });
+    const { state, owners, cleanup } = setupUpdateDuration({}, {});
 
     // NaN is the real initial state of a freshly opened MediaSource
     const mockMediaSource = Object.create(MediaSource.prototype, {
@@ -199,10 +214,7 @@ describe('updateDuration', () => {
   it('does not update again after initial set even if presentation duration changes', async () => {
     // Once the MediaSource duration is set (no longer NaN), subsequent presentation
     // duration changes must not trigger another set — doing so races with appendBuffer().
-    const state = createState<DurationUpdateState>({});
-    const owners = createState<DurationUpdateOwners>({});
-
-    const cleanup = updateDuration({ state, owners });
+    const { state, owners, cleanup } = setupUpdateDuration({}, {});
 
     const mockMediaSource = Object.create(MediaSource.prototype, {
       readyState: { value: 'open', writable: true },
@@ -226,10 +238,7 @@ describe('updateDuration', () => {
   });
 
   it('does not update when MediaSource is not open', () => {
-    const state = createState<DurationUpdateState>({});
-    const owners = createState<DurationUpdateOwners>({});
-
-    const cleanup = updateDuration({ state, owners });
+    const { state, owners, cleanup } = setupUpdateDuration({}, {});
 
     // Create mock with writable duration property
     const mockMediaSource = Object.create(MediaSource.prototype, {
@@ -248,10 +257,7 @@ describe('updateDuration', () => {
   });
 
   it('does not update when duration is invalid', () => {
-    const state = createState<DurationUpdateState>({});
-    const owners = createState<DurationUpdateOwners>({});
-
-    const cleanup = updateDuration({ state, owners });
+    const { state, owners, cleanup } = setupUpdateDuration({}, {});
 
     // Create mock with writable duration property
     const mockMediaSource = Object.create(MediaSource.prototype, {
@@ -283,10 +289,7 @@ describe('updateDuration', () => {
   });
 
   it('extends duration to match buffered range if needed', async () => {
-    const state = createState<DurationUpdateState>({});
-    const owners = createState<DurationUpdateOwners>({});
-
-    const cleanup = updateDuration({ state, owners });
+    const { state, owners, cleanup } = setupUpdateDuration({}, {});
 
     // Create mock SourceBuffer with buffered data that exceeds presentation duration
     const mockBuffered = {
@@ -324,9 +327,7 @@ describe('updateDuration', () => {
   });
 
   it('does not throw when videoSourceBuffer is updating at moment of set', async () => {
-    const state = createState<DurationUpdateState>({});
-    const owners = createState<DurationUpdateOwners>({});
-    const cleanup = updateDuration({ state, owners });
+    const { state, owners, cleanup } = setupUpdateDuration({}, {});
 
     const mockMediaSource = makeMediaSource();
     const { buffer: mockVideoBuffer, finishUpdating } = makeUpdatingSourceBuffer();
@@ -345,9 +346,7 @@ describe('updateDuration', () => {
   });
 
   it('defers duration set until videoSourceBuffer finishes updating', async () => {
-    const state = createState<DurationUpdateState>({});
-    const owners = createState<DurationUpdateOwners>({});
-    const cleanup = updateDuration({ state, owners });
+    const { state, owners, cleanup } = setupUpdateDuration({}, {});
 
     const mockMediaSource = makeMediaSource();
     const { buffer: mockVideoBuffer, finishUpdating } = makeUpdatingSourceBuffer();
@@ -370,9 +369,7 @@ describe('updateDuration', () => {
   });
 
   it('defers until both video and audio SourceBuffers finish updating', async () => {
-    const state = createState<DurationUpdateState>({});
-    const owners = createState<DurationUpdateOwners>({});
-    const cleanup = updateDuration({ state, owners });
+    const { state, owners, cleanup } = setupUpdateDuration({}, {});
 
     const mockMediaSource = makeMediaSource();
     const { buffer: mockVideoBuffer, finishUpdating: finishVideo } = makeUpdatingSourceBuffer();
@@ -405,9 +402,7 @@ describe('updateDuration', () => {
   });
 
   it('does not throw when readyState transitions to ended during the async wait', async () => {
-    const state = createState<DurationUpdateState>({});
-    const owners = createState<DurationUpdateOwners>({});
-    const cleanup = updateDuration({ state, owners });
+    const { state, owners, cleanup } = setupUpdateDuration({}, {});
 
     const mockMediaSource = Object.create(MediaSource.prototype, {
       readyState: { value: 'open', writable: true },
@@ -432,10 +427,7 @@ describe('updateDuration', () => {
   });
 
   it('sets duration once on initial NaN state then ignores further state changes', async () => {
-    const state = createState<DurationUpdateState>({});
-    const owners = createState<DurationUpdateOwners>({});
-
-    const cleanup = updateDuration({ state, owners });
+    const { state, owners, cleanup } = setupUpdateDuration({}, {});
 
     const mockMediaSource = Object.create(MediaSource.prototype, {
       readyState: { value: 'open', writable: true },
