@@ -6,7 +6,6 @@ import type {
   AudioFeatures,
   AudioPlayerStore,
   Media,
-  MediaContainer,
   PlayerStore,
   PlayerTarget,
   VideoFeatures,
