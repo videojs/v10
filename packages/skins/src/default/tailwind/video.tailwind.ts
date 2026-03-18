@@ -33,11 +33,6 @@ export const root = (isShadowDOM: boolean) =>
     '[@media(pointer:fine)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
     '[@media(pointer:coarse)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
     'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:100ms]',
-    // Poster image
-    '[&>img]:absolute [&>img]:inset-0 [&>img]:w-full [&>img]:h-full [&>img]:rounded-[inherit]',
-    '[&>img]:[object-fit:var(--media-object-fit,contain)] [&>img]:[object-position:var(--media-object-position,center)] [&>img]:pointer-events-none',
-    '[&>img]:transition-opacity [&>img]:duration-250',
-    '[&>img:not([data-visible])]:opacity-0',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
     '[--media-caption-track-y:-0.5rem]',
     '[--media-caption-track-delay:calc(var(--media-controls-transition-delay)_+_25ms)]',
@@ -171,5 +166,6 @@ export { button } from './components/button';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
+export { poster } from './components/poster';
 export { seek } from './components/seek';
 export { time } from './components/time';

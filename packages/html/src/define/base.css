@@ -10,8 +10,6 @@ video-player video {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: var(--media-object-fit, contain);
-  object-position: var(--media-object-position, center);
 }
 
 video-player video::-webkit-media-text-track-container {

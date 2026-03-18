@@ -1,11 +1,11 @@
 import '@app/styles.css';
 import '@videojs/html/video/player';
 import '@videojs/html/media/simple-hls-video';
-import { renderMuxStoryboard } from '@app/shared/html/mux-storyboard';
 import { createHtmlSandboxState, createLatestLoader } from '@app/shared/html/sandbox-state';
 import { loadVideoSkinTag } from '@app/shared/html/skins';
+import { renderStoryboard } from '@app/shared/html/storyboard';
 import { onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
-import { SOURCES } from '@app/shared/sources';
+import { getPosterSrc, getStoryboardSrc, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -16,12 +16,16 @@ async function render() {
   const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling));
   if (!tag) return;
 
+  const storyboard = getStoryboardSrc(state.source);
+  const poster = getPosterSrc(state.source);
+
   document.getElementById('root')!.innerHTML = html`
     <video-player>
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
         <simple-hls-video slot="media" src="${SOURCES[state.source].url}" playsinline crossorigin="anonymous">
-          ${renderMuxStoryboard(state.source)}
+          ${renderStoryboard(storyboard)}
         </simple-hls-video>
+        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
       </${tag}>
     </video-player>
   `;

@@ -10,7 +10,9 @@ import {
   iconFlipped,
   iconState,
   overlay,
+  playbackRate,
   popup,
+  poster,
   preview,
   root,
   seek,
@@ -32,13 +34,13 @@ import '../ui/pip-button';
 import '../ui/play-button';
 import '../ui/playback-rate-button';
 import '../ui/popover';
+import '../ui/poster';
 import '../ui/seek-button';
 import '../ui/time';
 import '../ui/time-slider';
 import '../ui/tooltip';
 import '../ui/tooltip-group';
 import '../ui/volume-slider';
-import { playbackRate } from '@videojs/skins/default/tailwind/video.tailwind';
 
 const SEEK_TIME = 10;
 
@@ -46,6 +48,10 @@ function getTemplateHTML() {
   return /*html*/ `
     <media-container class="${root(true)}">
       <slot name="media"></slot>
+
+      <media-poster class="${poster(true)}">
+        <slot name="poster"></slot>
+      </media-poster>
 
       <media-buffering-indicator class="${bufferingIndicator}">
         ${renderIcon('spinner')}

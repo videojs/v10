@@ -11,6 +11,7 @@
 @import "./components/time.css";
 @import "./components/buttons.css";
 @import "./components/icons.css";
+@import "./components/poster.css";
 @import "./components/preview.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
@@ -136,6 +137,7 @@
   filter: blur(8px);
   transition-property: scale, opacity, filter;
   transition-duration: 150ms;
+  transition-timing-function: ease-out;
   transform-origin: bottom;
   pointer-events: none;
 

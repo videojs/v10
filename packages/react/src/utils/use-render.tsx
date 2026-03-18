@@ -8,6 +8,11 @@ import { mergeProps } from './merge-props';
 import type { HTMLProps, RenderProp } from './types';
 import { composeRefs } from './use-composed-refs';
 
+/** Check if a value is a render prop (function or React element). */
+export function isRenderProp(value: unknown): value is RenderProp<any> {
+  return isFunction(value) || isValidElement(value);
+}
+
 type IntrinsicTagName = keyof React.JSX.IntrinsicElements;
 
 export interface UseRenderComponentProps<State> {
