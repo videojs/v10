@@ -1,4 +1,6 @@
 import { listen } from '@videojs/utils/dom';
+import type { Signal } from 'signal-polyfill';
+import { effect } from '../../core/signals/effect';
 import type { WritableState } from '../../core/state/create-state';
 
 /**
@@ -45,13 +47,13 @@ export function trackCurrentTime({
   owners,
 }: {
   state: WritableState<CurrentTimeState>;
-  owners: WritableState<CurrentTimeOwners>;
+  owners: Signal.ReadonlyState<CurrentTimeOwners>;
 }): () => void {
   let lastMediaElement: HTMLMediaElement | undefined;
   let removeListeners: (() => void) | null = null;
 
-  const unsubscribe = owners.subscribe((currentOwners) => {
-    const { mediaElement } = currentOwners;
+  const cleanupEffect = effect(() => {
+    const { mediaElement } = owners.get();
 
     if (mediaElement === lastMediaElement) return;
 
@@ -75,6 +77,6 @@ export function trackCurrentTime({
 
   return () => {
     removeListeners?.();
-    unsubscribe();
+    cleanupEffect();
   };
 }

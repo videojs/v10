@@ -182,12 +182,11 @@ const segmentsCanLoad = new Signal.Computed(() =>
 - **Write-back**: none — `endOfStream` does not patch state
 - **Complexity**: low
 
-### Step 3 — `trackCurrentTime`
+### ✅ Step 3 — `trackCurrentTime`
 
 - **Why next**: simplest full migration; single `owners.subscribe()` → single `effect()`
-- **Detail**: the `lastMediaElement` reference guard is already a local var; inside an
-  effect it still works the same way (effect re-runs on owners change). DOM event
-  listeners use `AbortController` for cleanup, same as now.
+- **Detail**: `owners` → `Signal.ReadonlyState`; `state` stays `WritableState` (write-back).
+  `lastMediaElement` guard still works in local scope. DOM event listeners unchanged.
 - **Write-back**: `state.patch({ currentTime })` — direct call from inside effect, no
   bridge needed
 - **Complexity**: low

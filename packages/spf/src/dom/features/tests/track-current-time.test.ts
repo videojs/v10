@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { stateToSignal } from '../../../core/signals/bridge';
 import { createState } from '../../../core/state/create-state';
 import {
   type CurrentTimeOwners,
@@ -6,6 +7,21 @@ import {
   canTrackCurrentTime,
   trackCurrentTime,
 } from '../track-current-time';
+
+function setupTrackCurrentTime(initialState: CurrentTimeState, initialOwners: CurrentTimeOwners) {
+  const state = createState<CurrentTimeState>(initialState);
+  const owners = createState<CurrentTimeOwners>(initialOwners);
+  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
+  const cleanupEffect = trackCurrentTime({ state, owners: ownersSignal });
+  return {
+    state,
+    owners,
+    cleanup: () => {
+      cleanupEffect();
+      cleanupOwners();
+    },
+  };
+}
 
 describe('trackCurrentTime', () => {
   describe('canTrackCurrentTime', () => {
@@ -29,10 +45,7 @@ describe('trackCurrentTime', () => {
       const mediaElement = document.createElement('video');
       Object.defineProperty(mediaElement, 'currentTime', { value: 5.5, writable: true });
 
-      const state = createState<CurrentTimeState>({});
-      const owners = createState<CurrentTimeOwners>({ mediaElement });
-
-      const cleanup = trackCurrentTime({ state, owners });
+      const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
 
       await vi.waitFor(() => {
         expect(state.current.currentTime).toBe(5.5);
@@ -45,10 +58,7 @@ describe('trackCurrentTime', () => {
       const mediaElement = document.createElement('video');
       Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
 
-      const state = createState<CurrentTimeState>({});
-      const owners = createState<CurrentTimeOwners>({ mediaElement });
-
-      const cleanup = trackCurrentTime({ state, owners });
+      const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
 
       // Simulate playback progress
       (mediaElement as any).currentTime = 10.0;
@@ -65,10 +75,7 @@ describe('trackCurrentTime', () => {
       const mediaElement = document.createElement('video');
       Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
 
-      const state = createState<CurrentTimeState>({});
-      const owners = createState<CurrentTimeOwners>({ mediaElement });
-
-      const cleanup = trackCurrentTime({ state, owners });
+      const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
 
       (mediaElement as any).currentTime = 3.0;
       mediaElement.dispatchEvent(new Event('timeupdate'));
@@ -90,8 +97,12 @@ describe('trackCurrentTime', () => {
       // Use an owners shape that has an extra field to simulate the playback engine
       const state = createState<CurrentTimeState>({});
       const owners = createState<CurrentTimeOwners & { videoBuffer?: unknown }>({ mediaElement });
-
-      const cleanup = trackCurrentTime({ state, owners });
+      const [ownersSignal, cleanupOwners] = stateToSignal(owners);
+      const cleanupEffect = trackCurrentTime({ state, owners: ownersSignal });
+      const cleanup = () => {
+        cleanupEffect();
+        cleanupOwners();
+      };
 
       await vi.waitFor(() => expect(state.current.currentTime).toBe(5));
 
@@ -108,10 +119,7 @@ describe('trackCurrentTime', () => {
     });
 
     it('does nothing when no mediaElement', async () => {
-      const state = createState<CurrentTimeState>({});
-      const owners = createState<CurrentTimeOwners>({});
-
-      const cleanup = trackCurrentTime({ state, owners });
+      const { state, cleanup } = setupTrackCurrentTime({}, {});
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -121,10 +129,7 @@ describe('trackCurrentTime', () => {
     });
 
     it('starts tracking when mediaElement is added later', async () => {
-      const state = createState<CurrentTimeState>({});
-      const owners = createState<CurrentTimeOwners>({});
-
-      const cleanup = trackCurrentTime({ state, owners });
+      const { state, owners, cleanup } = setupTrackCurrentTime({}, {});
 
       await new Promise((resolve) => setTimeout(resolve, 20));
       expect(state.current.currentTime).toBeUndefined();
@@ -146,10 +151,7 @@ describe('trackCurrentTime', () => {
       const element2 = document.createElement('video');
       Object.defineProperty(element2, 'currentTime', { value: 20.0, writable: true });
 
-      const state = createState<CurrentTimeState>({});
-      const owners = createState<CurrentTimeOwners>({ mediaElement: element1 });
-
-      const cleanup = trackCurrentTime({ state, owners });
+      const { state, owners, cleanup } = setupTrackCurrentTime({}, { mediaElement: element1 });
 
       await vi.waitFor(() => expect(state.current.currentTime).toBe(1.0));
 
@@ -171,10 +173,7 @@ describe('trackCurrentTime', () => {
       const mediaElement = document.createElement('video');
       Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
 
-      const state = createState<CurrentTimeState>({});
-      const owners = createState<CurrentTimeOwners>({ mediaElement });
-
-      const cleanup = trackCurrentTime({ state, owners });
+      const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
 
       // Simulate a seek while paused — timeupdate does not fire, only seeking does
       (mediaElement as any).currentTime = 60.0;
@@ -191,10 +190,7 @@ describe('trackCurrentTime', () => {
       const mediaElement = document.createElement('video');
       Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
 
-      const state = createState<CurrentTimeState>({});
-      const owners = createState<CurrentTimeOwners>({ mediaElement });
-
-      const cleanup = trackCurrentTime({ state, owners });
+      const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
 
       await vi.waitFor(() => expect(state.current.currentTime).toBe(0));
 

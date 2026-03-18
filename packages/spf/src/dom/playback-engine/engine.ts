@@ -318,7 +318,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     //
     // Actor wiring will be introduced in Phase 2 as part of the loadSegments
     // refactor. See .claude/plans/spf/buffer-state-shadow-actual-model.md.
-    trackCurrentTime({ state, owners }),
+    trackCurrentTime({ state, owners: ownersSignal }),
 
     // 5.75. ABR quality switching (reacts to bandwidth samples from loadSegments)
     switchQuality({ state }),
