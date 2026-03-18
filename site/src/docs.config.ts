@@ -22,6 +22,7 @@ export const sidebar: Sidebar = [
     contents: [
       { slug: 'how-to/installation' },
       { slug: 'concepts/overview' },
+      { slug: 'how-to/build-with-ai' },
       { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
     ],
   },
