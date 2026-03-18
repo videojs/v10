@@ -1,7 +1,7 @@
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-import type { MediaVolumeState } from '../../media/state';
+import type { MediaFeatureAvailability, MediaVolumeState } from '../../media/state';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
 
 export interface VolumeSliderProps extends SliderProps {
@@ -13,7 +13,9 @@ export interface VolumeSliderProps extends SliderProps {
   max?: number | undefined;
 }
 
-export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, 'volume' | 'muted'> {}
+export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, 'volume' | 'muted'> {
+  availability: MediaFeatureAvailability;
+}
 
 /** Volume-domain slider: maps media volume/mute state to slider state. */
 export class VolumeSliderCore extends SliderCore {
@@ -51,6 +53,7 @@ export class VolumeSliderCore extends SliderCore {
       fillPercent: effectivelyMuted ? 0 : base.fillPercent,
       volume,
       muted: effectivelyMuted,
+      availability: media.volumeAvailability,
     };
   }
 
