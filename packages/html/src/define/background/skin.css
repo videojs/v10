@@ -11,7 +11,7 @@ background-video-skin {
   object-fit: var(--media-object-fit);
 }
 
-background-video-skin > [slot="media"] {
+background-video-skin > background-video {
   position: absolute;
   inset: 0;
   width: 100%;
