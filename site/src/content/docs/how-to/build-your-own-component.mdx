@@ -1,100 +1,91 @@
 ---
-title: Build your own component
+title: Build your own UI component
 description: Create custom player controls that read state, dispatch actions, and stay accessible.
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Video.js gives you full access to player state and actions, so you can build any control your player needs.
+Custom components subscribe to player state and dispatch actions, just like built-in controls.
 
 ## You might not need a custom component
 
 Before building from scratch, check if an existing approach covers your use case:
 
-- **Restyle a control** — use CSS custom properties and data attributes. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
-- **Rearrange or remove controls** — eject a skin and modify it. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>.
 <FrameworkCase frameworks={["react"]}>
 - **Change what a control renders** — use the `render` prop on any built-in component. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
+- **Restyle a control** — use CSS custom properties and data attributes. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
+- **Rearrange or remove controls** — eject a skin and modify it. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+- **Restyle a control** — use CSS custom properties and data attributes. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
+- **Rearrange or remove controls** — eject a skin and modify it. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>.
 </FrameworkCase>
 
 Build a custom component when you need new behavior, a new state display, or integration with an external system.
 
-## Read player state
+## Use player state and actions
 
-Each <DocsLink slug="concepts/features">feature</DocsLink> exposes a slice of player state. Common state properties:
+Each <DocsLink slug="concepts/features">feature</DocsLink> exposes state properties and actions. Common features:
 
-| State | Feature | Description |
-|-------|---------|-------------|
-| `paused`, `ended` | <DocsLink slug="reference/feature-playback">Playback</DocsLink> | Whether playback is paused or finished |
-| `currentTime`, `duration` | <DocsLink slug="reference/feature-time">Time</DocsLink> | Current position and total length |
-| `volume`, `muted` | <DocsLink slug="reference/feature-volume">Volume</DocsLink> | Audio level and mute state |
-| `fullscreen` | <DocsLink slug="reference/feature-fullscreen">Fullscreen</DocsLink> | Whether the player is fullscreen |
+| State | Actions | Feature |
+|-------|---------|---------|
+| `paused`, `ended` | `play()`, `pause()` | <DocsLink slug="reference/feature-playback">Playback</DocsLink> |
+| `currentTime`, `duration` | `seek()` | <DocsLink slug="reference/feature-time">Time</DocsLink> |
+| `volume`, `muted` | `setVolume()`, `toggleMuted()` | <DocsLink slug="reference/feature-volume">Volume</DocsLink> |
+| `fullscreen` | `requestFullscreen()`, `exitFullscreen()` | <DocsLink slug="reference/feature-fullscreen">Fullscreen</DocsLink> |
 
-Each feature also has an **availability** property (`'available'`, `'unavailable'`, or `'unsupported'`). Use this to hide or disable controls that the platform does not support. See <DocsLink slug="concepts/features">Features</DocsLink> for details.
+Browse the full list in the **Features** section of the sidebar. 
+
+Each feature also has an **availability** property (`'available'`, `'unavailable'`, or `'unsupported'`) for hiding controls the platform does not support. See <DocsLink slug="concepts/features">Features</DocsLink> for details.
 
 <FrameworkCase frameworks={["react"]}>
 
-Subscribe to state with <DocsLink slug="reference/use-player">`Player.usePlayer`</DocsLink>:
+Access state and actions with <DocsLink slug="reference/use-player">`Player.usePlayer`</DocsLink>:
 
 ```tsx
-// Subscribe to a specific value — re-renders only when it changes
+// Subscribe to state — re-renders only when selected values change
 const paused = Player.usePlayer((s) => s.paused);
+const currentTime = Player.usePlayer((s) => s.currentTime);
 
-// Get the store for actions without subscribing
+// Get the store for dispatching actions (does not subscribe)
 const store = Player.usePlayer();
+
+await store.play();
+store.setVolume(0.5);
+store.seek(30);
 ```
 
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 
-Subscribe to state with <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and a selector:
+Access state and actions with <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and a feature selector:
 
 ```ts
-import { selectPlayback } from '@videojs/html';
+import { PlayerController, playerContext, selectPlayback } from '@videojs/html';
 
-#player = new PlayerController(this, playerContext, selectPlayback);
+// Subscribe to a feature — triggers update() when its state changes
+#playback = new PlayerController(this, playerContext, selectPlayback);
 
 // In update():
-const state = this.#player.value;
-// state.paused, state.ended, etc.
+const playback = this.#playback.value;
+if (playback?.paused) {
+  playback.play();
+}
 ```
 
-Without a selector, `PlayerController` returns the store instance directly for dispatching actions without subscribing to changes.
+Each selector returns both state and actions for that feature. Use separate controllers when you need multiple features (the [full example](#full-example) demonstrates this).
 
-</FrameworkCase>
-
-## Dispatch actions
-
-Actions live on the state objects. Call them directly:
-
-<FrameworkCase frameworks={["react"]}>
-
-```tsx
-const store = Player.usePlayer();
-
-// Async actions return promises
-await store.play();
-store.pause();
-
-// Sync actions
-store.setVolume(0.5);
-store.toggleMuted();
-```
-
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
+Without a selector, `PlayerController` returns the full store without subscribing to changes:
 
 ```ts
-// Async actions return promises
-await this.#player.value.play();
-this.#player.value.pause();
+#store = new PlayerController(this, playerContext);
 
-// Sync actions
-this.#player.value.setVolume(0.5);
-this.#player.value.toggleMuted();
+// Call any action
+this.#store.value.play();
+this.#store.value.setVolume(0.5);
 ```
 
 </FrameworkCase>
@@ -103,7 +94,7 @@ this.#player.value.toggleMuted();
 
 <FrameworkCase frameworks={["react"]}>
 
-Place your component inside <DocsLink slug="reference/player-container">`<Player.Container>`</DocsLink> so it participates in fullscreen and responds to user activity:
+Your component needs to be inside <DocsLink slug="reference/player-provider">`<Player.Provider>`</DocsLink> to access state. Place it inside <DocsLink slug="reference/player-container">`<Player.Container>`</DocsLink> if it should also participate in fullscreen and respond to user activity:
 
 ```tsx
 <Player.Provider>
@@ -116,13 +107,11 @@ Place your component inside <DocsLink slug="reference/player-container">`<Player
 </Player.Provider>
 ```
 
-Your component is a normal React component. No special base class or wrapper is required.
-
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 
-Place your element inside <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink> so it receives player context, participates in fullscreen, and responds to user activity:
+Your element needs to be inside <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink> to access state:
 
 ```html
 <video-player>
@@ -133,7 +122,7 @@ Place your element inside <DocsLink slug="reference/player-provider">`<video-pla
 </video-player>
 ```
 
-Your element extends `ReactiveElement` from `@videojs/element`. Define reactive properties with `static properties`, connect to the player with `PlayerController`, and update the DOM in the `update()` lifecycle:
+Extend `ReactiveElement` from `@videojs/element` so `PlayerController` can schedule DOM updates when state changes:
 
 ```ts
 import { ReactiveElement } from '@videojs/element';
@@ -153,30 +142,11 @@ customElements.define('skip-intro-button', SkipIntroButtonElement);
 
 </FrameworkCase>
 
-## Style with player state
-
-Components reflect state as data attributes on their elements. Use these for CSS-driven state styling:
-
-```css
-skip-intro-button[data-visible] {
-  opacity: 1;
-}
-
-skip-intro-button:not([data-visible]) {
-  opacity: 0;
-  pointer-events: none;
-}
-```
-
-For continuous values, set CSS custom properties and style with them. See <DocsLink slug="concepts/ui-components">UI components</DocsLink> for the full pattern.
-
-To align with the player's visual language, use the skin's design tokens. See <DocsLink slug="concepts/skins">Skins</DocsLink>.
-
 ## Make it accessible
 
 Use semantic HTML elements (`<button>`, not `<div>`), add ARIA attributes where needed, and support keyboard interaction.
 
-{/* TODO: Link to concepts/accessibility once that page is merged */}
+TODO: Link to concepts/accessibility once that page is merged
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -186,7 +156,7 @@ For button-like controls, the <DocsLink slug="reference/use-button">`useButton`<
 
 ## Full example
 
-Here is a "skip intro" button that appears during the first 30 seconds of playback and seeks past the intro when clicked.
+A "skip intro" button that appears during the first 30 seconds of playback and seeks past the intro when clicked.
 
 <FrameworkCase frameworks={["react"]}>
 
