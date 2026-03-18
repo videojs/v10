@@ -5,7 +5,7 @@ import { bindGesture, type GesturePointerType, logMissingFeature } from '@videoj
 import type { Selector } from '@videojs/store';
 import { useEffect, useState } from 'react';
 
-import { useMediaContainer, usePlayer } from '../player/context';
+import { useContainer, usePlayer } from '../player/context';
 
 interface MediaGestureConfig<Core extends GestureCore> {
   displayName: string;
@@ -33,7 +33,7 @@ export function createMediaGesture<Core extends GestureCore, Props extends Media
       if (__DEV__) logMissingFeature(displayName, 'playback');
     }
 
-    const container = useMediaContainer();
+    const container = useContainer();
 
     useEffect(() => {
       if (!container) return;

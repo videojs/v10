@@ -4,7 +4,7 @@ import { HotkeysCore } from '@videojs/core';
 import { bindHotKeys } from '@videojs/core/dom';
 import { useEffect, useState } from 'react';
 
-import { useMediaContainer, usePlayer } from '../../player/context';
+import { useContainer, usePlayer } from '../../player/context';
 
 export function Hotkeys() {
   const [core] = useState(() => new HotkeysCore());
@@ -12,7 +12,7 @@ export function Hotkeys() {
 
   core.setMedia(store);
 
-  const container = useMediaContainer();
+  const container = useContainer();
 
   useEffect(() => {
     if (!container) return;

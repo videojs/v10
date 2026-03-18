@@ -22,9 +22,11 @@ import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
 import { FullscreenButton } from '@/ui/fullscreen-button';
+import { Hotkeys } from '@/ui/hotkeys';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
+import { PlayGesture } from '@/ui/play-gesture';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
@@ -84,6 +86,9 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
   return (
     <Container className={cn('media-minimal-skin media-minimal-skin--video', className)} {...rest}>
       {children}
+
+      <PlayGesture />
+      <Hotkeys />
 
       {poster && (
         <Poster src={isString(poster) ? poster : undefined} render={isRenderProp(poster) ? poster : undefined} />

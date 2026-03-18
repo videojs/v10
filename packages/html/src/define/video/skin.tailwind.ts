@@ -24,6 +24,8 @@ import { SkinMixin } from '../skin-mixin';
 
 // Side-effect imports: register all custom elements used in the template.
 import '../media/container';
+import '../ui/hotkeys';
+import '../ui/play-gesture';
 import '../ui/buffering-indicator';
 import '../ui/captions-button';
 import '../ui/controls';
@@ -49,6 +51,9 @@ function getTemplateHTML() {
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>
+
+      <media-play-gesture></media-play-gesture>
+      <media-hotkeys></media-hotkeys>
 
       <media-poster class="${poster(true)}">
         <slot name="poster"></slot>
