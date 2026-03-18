@@ -22,6 +22,15 @@
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: "Eurostile LT Pro Fallback";
+  src: local("Helvetica");
+  font-weight: bold;
+  ascent-override: 88.67%;
+  descent-override: 25.22%;
+  line-gap-override: 0%;
+  size-adjust: 109.85%;
+}
 
 @font-face {
   font-family: "Eurostile LT Pro Extended";
@@ -30,8 +39,7 @@
     url("https://static.mux.com/fonts/EurostileLTProExtended2/font.woff") format("woff");
   font-weight: normal;
   font-style: normal;
-  /* the metrics of this font are wack, so, let's block instead of swap. TODO precompute metrics */
-  font-display: block;
+  font-display: auto;
 }
 @font-face {
   font-family: "Eurostile LT Pro Extended";
@@ -40,8 +48,25 @@
     url("https://static.mux.com/fonts/EurostileLTProBoldExtended2/font.woff") format("woff");
   font-weight: bold;
   font-style: normal;
-  /* the metrics of this font are wack, so, let's block instead of swap. TODO precompute metrics */
-  font-display: block;
+  font-display: auto;
+}
+@font-face {
+  font-family: "Eurostile LT Pro Extended Fallback";
+  src: local("Helvetica");
+  font-weight: normal;
+  ascent-override: 71.41%;
+  descent-override: 19.47%;
+  line-gap-override: 0%;
+  size-adjust: 146.9%;
+}
+@font-face {
+  font-family: "Eurostile LT Pro Extended Fallback";
+  src: local("Helvetica");
+  font-weight: bold;
+  ascent-override: 71.41%;
+  descent-override: 19.47%;
+  line-gap-override: 0%;
+  size-adjust: 146.9%;
 }
 
 /* theme inline tells tailwind to reference the value of these properties */
@@ -50,8 +75,8 @@
   /* --font-instrument-sans and --font-ibm-plex-mono are defined in Base.astro */
   --font-sans: var(--font-instrument-sans);
   --font-mono: var(--font-ibm-plex-mono);
-  --font-display-compact: "Eurostile LT Pro", sans-serif;
-  --font-display: "Eurostile LT Pro Extended", sans-serif;
+  --font-display-compact: "Eurostile LT Pro", "Eurostile LT Pro Fallback", sans-serif;
+  --font-display: "Eurostile LT Pro Extended", "Eurostile LT Pro Extended Fallback", sans-serif;
 }
 
 @theme {
