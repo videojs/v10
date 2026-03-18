@@ -1,6 +1,7 @@
 import { HlsCustomMedia } from '@videojs/core/dom/media/hls';
+import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
-export class HlsVideo extends HlsCustomMedia {
+export class HlsVideo extends MediaAttachMixin(HlsCustomMedia) {
   static getTemplateHTML(attrs: Record<string, string>): string {
     const { src, ...rest } = attrs;
     // biome-ignore lint/complexity/noThisInStatic: intentional use of super

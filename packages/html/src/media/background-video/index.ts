@@ -1,4 +1,7 @@
+import type { Media } from '@videojs/core/dom';
+import { ContextEvent } from '@videojs/element/context';
 import { namedNodeMapToObject } from '@videojs/utils/dom';
+import { mediaAttachContext } from '../../player/context';
 
 function getTemplateHTML(attrs: Record<string, string>) {
   return /*html*/ `
@@ -29,6 +32,9 @@ export class BackgroundVideo extends HTMLElement {
     return ['src'];
   }
 
+  #setMedia: ((media: Media | null) => void) | null = null;
+  #unsubscribe: (() => void) | null = null;
+
   constructor() {
     super();
 
@@ -52,6 +58,31 @@ export class BackgroundVideo extends HTMLElement {
     // after using document.createElement.
     // Get around this by setting the muted property manually.
     this.target!.muted = !this.hasAttribute('nomuted');
+  }
+
+  connectedCallback(): void {
+    // Register the inner <video> (not `this`) with the provider.
+    this.dispatchEvent(
+      new ContextEvent(
+        mediaAttachContext,
+        this,
+        (value, unsubscribe) => {
+          if (unsubscribe) this.#unsubscribe = unsubscribe;
+          this.#setMedia = value ?? null;
+          if (this.isConnected) {
+            this.#setMedia?.(this.target as unknown as Media);
+          }
+        },
+        true
+      )
+    );
+  }
+
+  disconnectedCallback(): void {
+    this.#setMedia?.(null);
+    this.#unsubscribe?.();
+    this.#unsubscribe = null;
+    this.#setMedia = null;
   }
 
   attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {

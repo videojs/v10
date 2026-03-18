@@ -11,6 +11,7 @@ export * from './player/context';
 export * from './player/create-player';
 export * from './player/player-controller';
 export * from './store/container-mixin';
+export * from './store/media-attach-mixin';
 export * from './store/provider-mixin';
 export * from './store/types';
 // UI Components
