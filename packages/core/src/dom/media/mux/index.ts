@@ -1,7 +1,7 @@
 import { type Delegate, DelegateMixin } from '../../../core/media/delegate';
-import { CustomMediaMixin } from '../custom-media-element';
+import { CustomVideoElement } from '../custom-media-element';
 import { HlsMedia } from '../hls';
-import { MediaProxyMixin } from '../proxy';
+import { VideoProxy } from '../proxy';
 
 export class MuxMediaDelegate implements Delegate {
   #engine = new HlsMedia();
@@ -31,9 +31,6 @@ export class MuxMediaDelegate implements Delegate {
   }
 }
 
-export class MuxCustomMedia extends DelegateMixin(
-  CustomMediaMixin(globalThis.HTMLElement ?? class {}, { tag: 'video' }),
-  MuxMediaDelegate
-) {}
+export class MuxCustomMedia extends DelegateMixin(CustomVideoElement, MuxMediaDelegate) {}
 
-export class MuxMedia extends DelegateMixin(MediaProxyMixin, MuxMediaDelegate) {}
+export class MuxMedia extends DelegateMixin(VideoProxy, MuxMediaDelegate) {}
