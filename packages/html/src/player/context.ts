@@ -5,7 +5,7 @@ import { type Context, createContext } from '@videojs/element/context';
 // Player Context
 // ----------------------------------------
 
-export const PLAYER_CONTEXT_KEY = Symbol('@videojs/player');
+export const PLAYER_CONTEXT_KEY = Symbol.for('@videojs/player');
 
 export type PlayerContextValue<Store extends PlayerStore = AnyPlayerStore> = Store;
 
@@ -22,23 +22,33 @@ export type PlayerContext<Store extends PlayerStore = AnyPlayerStore> = Context<
 export const playerContext = createContext<PlayerContextValue, typeof PLAYER_CONTEXT_KEY>(PLAYER_CONTEXT_KEY);
 
 // ----------------------------------------
-// Attach Contexts
+// Media Context
 // ----------------------------------------
 
-export const MEDIA_ATTACH_KEY = Symbol('@videojs/media-attach');
+export const MEDIA_CONTEXT_KEY = Symbol.for('@videojs/media');
 
-export type MediaAttachValue = (media: Media | null) => void;
+export interface MediaContextValue {
+  media: Media | null;
+  setMedia: (media: Media | null) => void;
+}
 
-export type MediaAttachContext = Context<typeof MEDIA_ATTACH_KEY, MediaAttachValue>;
+export type MediaContext = Context<typeof MEDIA_CONTEXT_KEY, MediaContextValue>;
 
-export const mediaAttachContext = createContext<MediaAttachValue, typeof MEDIA_ATTACH_KEY>(MEDIA_ATTACH_KEY);
+export const mediaContext = createContext<MediaContextValue, typeof MEDIA_CONTEXT_KEY>(MEDIA_CONTEXT_KEY);
 
-export const CONTAINER_ATTACH_KEY = Symbol('@videojs/container-attach');
+// ----------------------------------------
+// Container Context
+// ----------------------------------------
 
-export type ContainerAttachValue = (container: MediaContainer | null) => void;
+export const CONTAINER_CONTEXT_KEY = Symbol.for('@videojs/container');
 
-export type ContainerAttachContext = Context<typeof CONTAINER_ATTACH_KEY, ContainerAttachValue>;
+export interface ContainerContextValue {
+  container: MediaContainer | null;
+  setContainer: (container: MediaContainer | null) => void;
+}
 
-export const containerAttachContext = createContext<ContainerAttachValue, typeof CONTAINER_ATTACH_KEY>(
-  CONTAINER_ATTACH_KEY
+export type ContainerContext = Context<typeof CONTAINER_CONTEXT_KEY, ContainerContextValue>;
+
+export const containerContext = createContext<ContainerContextValue, typeof CONTAINER_CONTEXT_KEY>(
+  CONTAINER_CONTEXT_KEY
 );

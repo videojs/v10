@@ -1,6 +1,6 @@
 'use client';
 
-import type { Media } from '@videojs/core/dom';
+import type { Media, MediaContainer } from '@videojs/core/dom';
 import type { UnknownState, UnknownStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { Dispatch, HTMLAttributes, ReactNode, SetStateAction } from 'react';
@@ -12,6 +12,7 @@ export interface PlayerContextValue {
   store: UnknownStore;
   media: Media | null;
   setMedia: Dispatch<SetStateAction<Media | null>>;
+  container: MediaContainer | null;
   setContainer: Dispatch<SetStateAction<HTMLElement | null>>;
 }
 
@@ -78,6 +79,12 @@ export function useOptionalPlayer<R>(selector?: (state: UnknownState) => R) {
 export function useMedia(): Media | null {
   const { media } = usePlayerContext();
   return media;
+}
+
+/** Access the container element from within a Player Provider. */
+export function useContainer(): MediaContainer | null {
+  const { container } = usePlayerContext();
+  return container;
 }
 
 /** Access the media attach setter for connecting a media element to the player. */
