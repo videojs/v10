@@ -1,24 +1,25 @@
 import type { SourceId } from '@app/shared/sources';
-import type { Skin, Styling } from '@app/types';
+import type { Preset, Skin, Styling } from '@app/types';
 import { forwardRef, useState } from 'react';
 
 type PreviewProps = {
   pagePath: string;
+  preset: Preset;
   skin: Skin;
   styling: Styling;
   source: SourceId;
 };
 
 export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Preview(
-  { pagePath, skin, styling, source },
+  { pagePath, preset, skin, styling, source },
   ref
 ) {
   const [iframeUrl] = useState(
     () =>
-      `${pagePath}?skin=${encodeURIComponent(skin)}&styling=${encodeURIComponent(styling)}&source=${encodeURIComponent(source)}`
+      `${pagePath}?preset=${encodeURIComponent(preset)}&skin=${encodeURIComponent(skin)}&styling=${encodeURIComponent(styling)}&source=${encodeURIComponent(source)}`
   );
   const openUrl =
-    `${pagePath}?skin=${encodeURIComponent(skin)}&styling=${encodeURIComponent(styling)}` +
+    `${pagePath}?preset=${encodeURIComponent(preset)}&skin=${encodeURIComponent(skin)}&styling=${encodeURIComponent(styling)}` +
     `&source=${encodeURIComponent(source)}`;
 
   return (

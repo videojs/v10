@@ -14,6 +14,7 @@ import { Navbar } from './navbar';
 import { Preview } from './preview';
 
 function getPagePath(platform: Platform, preset: Preset): string {
+  if (platform === 'cdn') return '/cdn/';
   if (preset === 'background-video') return `/${platform}-background-video/`;
   return `/${platform}-${preset}/`;
 }
@@ -68,12 +69,12 @@ export function App() {
     }
   }, [preset, source, setSource]);
 
-  // Background video does not have a Tailwind skin variant.
+  // CDN and background video do not have a Tailwind skin variant.
   useEffect(() => {
-    if (preset === 'background-video' && styling === 'tailwind') {
+    if ((platform === 'cdn' || preset === 'background-video') && styling === 'tailwind') {
       setStyling('css');
     }
-  }, [preset, styling]);
+  }, [platform, preset, styling]);
 
   const availableSources = preset === 'audio' ? MP4_SOURCE_IDS : preset === 'dash-video' ? DASH_SOURCE_IDS : SOURCE_IDS;
 
@@ -101,9 +102,10 @@ export function App() {
         sources={SOURCES}
       />
       <Preview
-        key={`${pagePath}:${styling}`}
+        key={`${pagePath}:${preset}:${styling}`}
         ref={iframeRef}
         pagePath={pagePath}
+        preset={preset}
         skin={skin}
         styling={styling}
         source={source}
