@@ -23,6 +23,7 @@ export const sidebar: Sidebar = [
       { slug: 'how-to/installation' },
       { slug: 'concepts/overview' },
       { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
+      { slug: 'concepts/browser-support' },
     ],
   },
   {
