@@ -2,7 +2,12 @@ import { isNil } from '@videojs/utils/predicate';
 import type { Signal } from 'signal-polyfill';
 import { effect } from '../../core/signals/effect';
 import type { Presentation } from '../../core/types';
-import { attachMediaSource, createMediaSource, waitForSourceOpen } from '../media/mediasource-setup';
+import {
+  attachMediaSource,
+  createMediaSource,
+  observeMediaSourceReadyState,
+  waitForSourceOpen,
+} from '../media/mediasource-setup';
 
 /**
  * State shape required for MediaSource setup.
@@ -17,6 +22,8 @@ export interface MediaSourceState {
 export interface MediaSourceOwners {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
+  /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
+  mediaSourceReadyState?: Signal.ReadonlyState<MediaSource['readyState']>;
 }
 
 /**
@@ -53,6 +60,7 @@ export function setupMediaSource<S extends MediaSourceState, O extends MediaSour
 }): () => void {
   let settingUp = false;
   let abortController: AbortController | null = null;
+  let readyStateCleanup: (() => void) | null = null;
 
   const cleanupEffect = effect(() => {
     const currentState = state.get();
@@ -68,12 +76,19 @@ export function setupMediaSource<S extends MediaSourceState, O extends MediaSour
     const mediaSource = createMediaSource({ preferManaged: true });
     attachMediaSource(mediaSource, mediaElement);
 
+    const [readyStateSignal, cleanupRS] = observeMediaSourceReadyState(mediaSource);
+    readyStateCleanup = cleanupRS;
+
     waitForSourceOpen(mediaSource, signal)
       .then(() => {
-        owners.set(Object.assign({}, owners.get(), { mediaSource }) as O);
+        owners.set(Object.assign({}, owners.get(), { mediaSource, mediaSourceReadyState: readyStateSignal }) as O);
       })
       .catch((error) => {
-        if (error instanceof DOMException && error.name === 'AbortError') return;
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          readyStateCleanup?.();
+          readyStateCleanup = null;
+          return;
+        }
         throw error;
       })
       .finally(() => {
@@ -83,6 +98,7 @@ export function setupMediaSource<S extends MediaSourceState, O extends MediaSour
 
   return () => {
     abortController?.abort();
+    readyStateCleanup?.();
     cleanupEffect();
   };
 }

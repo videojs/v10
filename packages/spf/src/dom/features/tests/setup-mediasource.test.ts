@@ -21,6 +21,7 @@ vi.mock('../../media/mediasource-setup', () => ({
     detach: vi.fn(),
   })),
   waitForSourceOpen: vi.fn(() => Promise.resolve()),
+  observeMediaSourceReadyState: vi.fn((ms: MediaSource) => [{ get: () => ms.readyState }, vi.fn()]),
 }));
 
 function setupSetupMediaSource(initialState: MediaSourceState, initialOwners: MediaSourceOwners) {
@@ -186,6 +187,7 @@ describe('setupMediaSource', () => {
 
     await vi.waitFor(() => {
       expect(owners.current.mediaSource).toBe(mockMediaSource);
+      expect(owners.current.mediaSourceReadyState).toBeDefined();
     });
 
     cleanup();

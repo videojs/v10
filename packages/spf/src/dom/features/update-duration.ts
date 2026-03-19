@@ -9,6 +9,8 @@ export interface DurationUpdateState {
 
 export interface DurationUpdateOwners {
   mediaSource?: MediaSource;
+  /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
+  mediaSourceReadyState?: Signal.ReadonlyState<MediaSource['readyState']>;
   videoSourceBuffer?: SourceBuffer;
   audioSourceBuffer?: SourceBuffer;
 }
@@ -52,8 +54,10 @@ export function shouldUpdateDuration(state: DurationUpdateState, owners: Duratio
   const { mediaSource } = owners;
   const { presentation } = state;
 
-  // MediaSource must be open
-  if (mediaSource!.readyState !== 'open') return false;
+  // MediaSource must be open — use reactive readyState signal when available
+  // so the effect re-evaluates when readyState changes from 'closed' to 'open'.
+  const readyState = owners.mediaSourceReadyState?.get() ?? owners.mediaSource?.readyState;
+  if (readyState !== 'open') return false;
 
   const duration = presentation!.duration!;
 

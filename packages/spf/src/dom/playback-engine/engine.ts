@@ -120,6 +120,8 @@ export interface PlaybackEngineOwners {
 
   // MediaSource
   mediaSource?: MediaSource;
+  /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
+  mediaSourceReadyState?: Signal.ReadonlyState<MediaSource['readyState']>;
 
   // SourceBuffers and their actors (created together by setupSourceBuffer)
   videoBuffer?: SourceBuffer;

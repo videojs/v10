@@ -7,6 +7,8 @@
  * Global ManagedMediaSource types are defined in ./mediasource.d.ts
  */
 
+import { Signal } from 'signal-polyfill';
+
 /**
  * Check if MediaSource API is supported.
  */
@@ -208,4 +210,39 @@ export function isCodecSupported(mimeCodec: string): boolean {
   }
 
   return MediaSource.isTypeSupported(mimeCodec);
+}
+
+/**
+ * Create a reactive signal that mirrors `mediaSource.readyState`.
+ *
+ * Listens to `sourceopen`, `sourceended`, and `sourceclose` events and updates
+ * the signal accordingly, making readyState visible to the TC39 signal graph.
+ *
+ * @param mediaSource - The MediaSource to observe
+ * @returns A tuple of `[Signal.ReadonlyState<readyState>, cleanup]`
+ *
+ * @example
+ * const [readyState, cleanup] = observeMediaSourceReadyState(mediaSource);
+ * effect(() => {
+ *   if (readyState.get() === 'open') { ... }
+ * });
+ * // Later:
+ * cleanup();
+ */
+export function observeMediaSourceReadyState(
+  mediaSource: MediaSource
+): [Signal.ReadonlyState<MediaSource['readyState']>, () => void] {
+  const signal = new Signal.State<MediaSource['readyState']>(mediaSource.readyState);
+  const update = () => signal.set(mediaSource.readyState);
+  mediaSource.addEventListener('sourceopen', update);
+  mediaSource.addEventListener('sourceended', update);
+  mediaSource.addEventListener('sourceclose', update);
+  return [
+    signal,
+    () => {
+      mediaSource.removeEventListener('sourceopen', update);
+      mediaSource.removeEventListener('sourceended', update);
+      mediaSource.removeEventListener('sourceclose', update);
+    },
+  ];
 }

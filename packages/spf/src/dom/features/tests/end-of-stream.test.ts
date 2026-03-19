@@ -1,3 +1,4 @@
+import { Signal } from 'signal-polyfill';
 import { describe, expect, it, vi } from 'vitest';
 import { stateToSignal } from '../../../core/signals/bridge';
 import { createState } from '../../../core/state/create-state';
@@ -470,28 +471,36 @@ describe('endOfStream', () => {
   it('calls endOfStream() again after seek-back re-opens the MediaSource', async () => {
     const track = makeResolvedVideoTrack(4);
     const mockMs = makeMediaSource();
+    // Reactive readyState signal — drives re-evaluation when MSE transitions readyState.
+    const msReadyState = new Signal.State<MediaSource['readyState']>('open');
 
-    const { owners, cleanup } = setupEndOfStream(
+    // Simulate real MSE: endOfStream() transitions readyState to 'ended'.
+    (mockMs.endOfStream as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      (mockMs as unknown as { readyState: string }).readyState = 'ended';
+      msReadyState.set('ended');
+    });
+
+    const { cleanup } = setupEndOfStream(
       { selectedVideoTrackId: 'video-1', presentation: makePresentation(track) },
       {
         mediaSource: mockMs,
+        mediaSourceReadyState: msReadyState,
         videoBuffer: makeSourceBuffer(),
         videoBufferActor: makeActorWithSegments(['seg-0', 'seg-1', 'seg-2', 'seg-3']),
       }
     );
 
-    // First play-through: endOfStream() is called
+    // First play-through: endOfStream() is called, readyState transitions to 'ended'.
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
     });
 
-    // Simulate seek-back: appendBuffer() re-opens the MediaSource per MSE spec
+    // Simulate seek-back: appendBuffer() re-opens the MediaSource per MSE spec.
+    // The reactive signal update drives re-evaluation — no owners.patch needed.
     (mockMs as unknown as { readyState: string }).readyState = 'open';
+    msReadyState.set('open');
 
-    // Patch owners with a new actor that still has the last segment
-    owners.patch({ videoBufferActor: makeActorWithSegments(['seg-2', 'seg-3']) });
-
-    // endOfStream() should be called again
+    // endOfStream() should be called again driven purely by the readyState signal.
     await vi.waitFor(() => {
       expect(mockMs.endOfStream).toHaveBeenCalledTimes(2);
     });
