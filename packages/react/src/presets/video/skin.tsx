@@ -4,7 +4,8 @@ import {
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
-  PipIcon,
+  PipEnterIcon,
+  PipExitIcon,
   PlayIcon,
   RestartIcon,
   SeekIcon,
@@ -235,8 +236,9 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
               render={
                 <PiPButton
                   render={(props) => (
-                    <Button {...props} className="media-button--icon">
-                      <PipIcon className="media-icon" />
+                    <Button {...props} className="media-button--icon media-button--pip">
+                      <PipEnterIcon className="media-icon media-icon--pip-enter" />
+                      <PipExitIcon className="media-icon media-icon--pip-exit" />
                     </Button>
                   )}
                 />

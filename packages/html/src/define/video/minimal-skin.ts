@@ -124,8 +124,9 @@ function getTemplateHTML() {
               Toggle captions
             </media-tooltip>
 
-            <media-pip-button commandfor="pip-tooltip" class="media-button media-button--icon">
-              ${renderIcon('pip', { class: 'media-icon' })}
+            <media-pip-button commandfor="pip-tooltip" class="media-button media-button--icon media-button--pip">
+              ${renderIcon('pip-enter', { class: 'media-icon media-icon--pip-enter' })}
+              ${renderIcon('pip-exit', { class: 'media-icon media-icon--pip-exit' })}
             </media-pip-button>
             <media-tooltip id="pip-tooltip" side="top" class="media-tooltip">
               <span class="media-tooltip-label media-tooltip-label--enter-pip">Enter picture-in-picture</span>

@@ -11,12 +11,12 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import Aside from '@/components/Aside.astro';
 
-
 <Aside type="note" title="New in version 10">
 In prior versions of Video.js, skins were CSS-only themes applied to the same set of default controls. In version 10 the concept of skins has been expanded to include the UI components, so each skin can be completely unique and only include the UI components it needs.
 </Aside>
 
 <FrameworkCase frameworks={["html"]}>
+
 ```html
 <video-player>
   <video-skin><!-- [!code focus] -->
@@ -25,6 +25,7 @@ In prior versions of Video.js, skins were CSS-only themes applied to the same se
   </video-skin><!-- [!code focus] -->
 </video-player>
 ```
+
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -36,7 +37,6 @@ In prior versions of Video.js, skins were CSS-only themes applied to the same se
 </Player.Provider>
 ```
 </FrameworkCase>
-
 
 ## Packaged vs. ejected
 
@@ -52,15 +52,18 @@ When you choose a skin you have two options for how you use it: **packaged** or 
 <DocsLinkCard slug="concepts/ui-components">Read more about UI Components</DocsLinkCard>
 
 ### Example of packaged
+
 <FrameworkCase frameworks={["html"]}>
+
 ```html
   <video-player>
-    <video-skin> 
+    <video-skin>
       <!--...Media...-->
     </video-skin>
   </video-player>
 
 ```
+
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -73,7 +76,9 @@ When you choose a skin you have two options for how you use it: **packaged** or 
 </FrameworkCase>
 
 ### Example of ejected
+
 <FrameworkCase frameworks={["html"]}>
+
 ```html title="index.html"
   <video-player>
     <media-container class="media-default-skin">
@@ -142,9 +147,11 @@ When you choose a skin you have two options for how you use it: **packaged** or 
     </media-container>
   </video-player>
 ```
+
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
+
 ```tsx title="VideoSkin.tsx"
   <Player.Provider>
     <Container className={cn('media-minimal-skin', className)} {...rest}>
@@ -271,7 +278,7 @@ When you choose a skin you have two options for how you use it: **packaged** or 
 
           <PiPButton
             render={(props) => (
-              <Button {...props} className="media-button--icon">
+              <Button {...props} className="media-button--icon ">
                 <PipIcon className="media-icon" />
               </Button>
             )}
@@ -303,27 +310,31 @@ When you choose a skin you have two options for how you use it: **packaged** or 
     </Container>
   </Player.Provider>
 ```
-</FrameworkCase>
 
+</FrameworkCase>
 
 ## Skins, features, and presets
 
 Each skin is built with specific <DocsLink slug="concepts/features">features</DocsLink> in mind. For example, a video skin renders fullscreen and picture-in-picture controls. An audio skin doesn't. The features associated with a skin are called a **feature bundle**.
 
 <FrameworkCase frameworks={["html"]}>
+
 | Player with feature bundle | Available skins | Import |
 |----------|-----------------|--------|
 | `<video-player>` | `<video-skin>`, `<video-minimal-skin>` | `@videojs/html/video/*` |
 | `<audio-player>` | `<audio-skin>`, `<audio-minimal-skin>` | `@videojs/html/audio/*` |
 | `<background-video-player>` | `<background-video-skin>` | `@videojs/html/background/*` |
+
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
+
 | Feature bundle | Available skins | Import |
 |----------|-----------------|--------|
 | `videoFeatures` | `<VideoSkin>`, `<MinimalVideoSkin>` | `@videojs/react/video` |
 | `audioFeatures` | `<AudioSkin>`, `<MinimalAudioSkin>` | `@videojs/react/audio` |
 | `backgroundFeatures` | `<BackgroundVideoSkin>` | `@videojs/react/background` |
+
 </FrameworkCase>
 
 Want to learn more about skins and feature bundles? Check out the presets guide:

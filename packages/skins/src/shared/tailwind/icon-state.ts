@@ -28,4 +28,9 @@ export const iconState = {
     off: 'hidden opacity-0 group-not-data-active:block group-not-data-active:opacity-100',
     on: 'hidden opacity-0 group-data-active:block group-data-active:opacity-100',
   },
+  pip: {
+    button: 'group',
+    off: 'hidden opacity-0 group-not-data-pip:block group-not-data-pip:opacity-100',
+    on: 'hidden opacity-0 group-data-pip:block group-data-pip:opacity-100',
+  },
 };

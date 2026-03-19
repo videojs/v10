@@ -23,7 +23,6 @@ const SVGO_CONFIG: Config = {
       name: 'preset-default',
       params: {
         overrides: {
-          removeViewBox: false,
           convertColors: {
             currentColor: /^black$/,
           },

@@ -53,16 +53,16 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "svgo": "^3.3.2"
+    "svgo": "^4.0.1"
   },
   "devDependencies": {
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
     "@svgr/plugin-svgo": "^8.1.0",
-    "@types/react": "^19.0.0",
+    "@types/react": "^19.2.14",
     "@videojs/utils": "workspace:*",
-    "react": "^19.0.0",
-    "tsx": "^4.19.0",
+    "react": "^19.2.4",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
   "publishConfig": {

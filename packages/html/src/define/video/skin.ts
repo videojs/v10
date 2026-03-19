@@ -120,7 +120,8 @@ function getTemplateHTML() {
           </media-tooltip>
 
           <media-pip-button commandfor="pip-tooltip" class="media-button media-button--icon media-button--pip">
-            ${renderIcon('pip', { class: 'media-icon' })}
+            ${renderIcon('pip-enter', { class: 'media-icon media-icon--pip-enter' })}
+            ${renderIcon('pip-exit', { class: 'media-icon media-icon--pip-exit' })}
           </media-pip-button>
           <media-tooltip id="pip-tooltip" side="top" class="media-surface media-tooltip">
             <span class="media-tooltip-label media-tooltip-label--enter-pip">Enter picture-in-picture</span>

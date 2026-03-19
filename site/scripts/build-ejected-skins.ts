@@ -412,7 +412,8 @@ async function loadIconsMap(iconSet: 'default' | 'minimal'): Promise<Record<stri
     'captions-on',
     'fullscreen-enter',
     'fullscreen-exit',
-    'pip',
+    'pip-enter',
+    'pip-exit',
   ];
   const map: Record<string, string> = {};
   for (const name of knownIcons) {

@@ -4,7 +4,8 @@ import {
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
-  PipIcon,
+  PipEnterIcon,
+  PipExitIcon,
   PlayIcon,
   RestartIcon,
   SeekIcon,
@@ -320,8 +321,9 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 render={
                   <PiPButton
                     render={(props) => (
-                      <Button variant="icon" {...props}>
-                        <PipIcon className={icon} />
+                      <Button variant="icon" {...props} className={iconState.pip.button}>
+                        <PipEnterIcon className={cn(icon, iconState.pip.off)} />
+                        <PipExitIcon className={cn(icon, iconState.pip.on)} />
                       </Button>
                     )}
                   />
