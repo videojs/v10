@@ -2,7 +2,7 @@ import '@app/styles.css';
 import { createHtmlSandboxState, createLatestLoader } from '@app/shared/html/sandbox-state';
 import { CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
 import { renderStoryboard } from '@app/shared/html/storyboard';
-import { loadAudioStylesheets, loadVideoStylesheets } from '@app/shared/html/stylesheets';
+import { loadAudioStylesheets, loadBackgroundStylesheets, loadVideoStylesheets } from '@app/shared/html/stylesheets';
 import { onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
 import { BACKGROUND_VIDEO_SRC, getPosterSrc, getStoryboardSrc, SOURCES } from '@app/shared/sources';
 import type { Preset, Skin } from '@app/types';
@@ -82,17 +82,8 @@ function getMediaTag(preset: Preset): string {
 
 function loadStylesheets(preset: Preset, skin: Skin) {
   if (preset === 'audio') loadAudioStylesheets(skin);
-  else if (preset === 'background-video') loadBackgroundStylesheet();
+  else if (preset === 'background-video') loadBackgroundStylesheets();
   else loadVideoStylesheets(skin);
-}
-
-function loadBackgroundStylesheet() {
-  if (document.querySelector('link[data-cdn-bg]')) return;
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.dataset.cdnBg = '';
-  link.href = new URL('@videojs/html/background/skin.css', import.meta.url).href;
-  document.head.appendChild(link);
 }
 
 function isVideoPreset(preset: Preset): boolean {
