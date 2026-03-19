@@ -1,5 +1,19 @@
 # Changelog
 
+## [10.0.0-beta.7](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.6...@videojs/icons@10.0.0-beta.7) (2026-03-19)
+
+
+### Features
+
+* **skin:** add pip-enter and pip-exit icons ([#1015](https://github.com/videojs/v10/issues/1015)) ([81781ca](https://github.com/videojs/v10/commit/81781ca5854f4943b533073b1875b127308a5419))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.7
+
 ## [10.0.0-beta.6](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.5...@videojs/icons@10.0.0-beta.6) (2026-03-15)
 
 

@@ -1,5 +1,35 @@
 # Changelog
 
+## [10.0.0-beta.7](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.6...@videojs/core@10.0.0-beta.7) (2026-03-19)
+
+
+### Features
+
+* add DashVideo media element (html, react) with sandbox support ([#940](https://github.com/videojs/v10/issues/940)) ([5bdbbec](https://github.com/videojs/v10/commit/5bdbbec8a0f69b4be89600287c63a04746b7ba49))
+* **html:** add data-availability to volume slider ([#1001](https://github.com/videojs/v10/issues/1001)) ([c95e134](https://github.com/videojs/v10/commit/c95e1343e16c8667f6b7f5560d12ec5f36f1acd8))
+
+
+### Bug Fixes
+
+* **core:** improve fullscreen and pip webkit fallback handling ([#999](https://github.com/videojs/v10/issues/999)) ([a05e8f2](https://github.com/videojs/v10/commit/a05e8f20af4fcc4e506f461fb0244acf24564e13))
+* **core:** prevent slider thumb jump on pointer release ([#990](https://github.com/videojs/v10/issues/990)) ([b9bada9](https://github.com/videojs/v10/commit/b9bada95675f09b7c7d6859dcd213be7a0408bb7))
+* **core:** rename MediaDelegateMixin and MediaProxyMixin ([#976](https://github.com/videojs/v10/issues/976)) ([561d03e](https://github.com/videojs/v10/commit/561d03eb5ae87aa3ba2bb5d4d68987ef4067e90e))
+* **core:** round thumbnail dimensions to prevent sub-pixel gaps ([#995](https://github.com/videojs/v10/issues/995)) ([636ccd4](https://github.com/videojs/v10/commit/636ccd45daab5e2726f26b6412b72b2725ff6373))
+* **core:** stub pointer:fine in tooltip touch suppression tests ([#998](https://github.com/videojs/v10/issues/998)) ([fc62ea1](https://github.com/videojs/v10/commit/fc62ea1c0ae20e53468b8a2ec57dc11f8e021b17))
+* **core:** suppress tooltip hover on touch pointer events ([#933](https://github.com/videojs/v10/issues/933)) ([324ea2f](https://github.com/videojs/v10/commit/324ea2fd3b0410f5c64ae6761aebaf6b7db29a47))
+* **core:** sync playback feature state on seeked event ([#1000](https://github.com/videojs/v10/issues/1000)) ([12f582e](https://github.com/videojs/v10/commit/12f582ec1a7819e38c800664dd05c687c77fff6c))
+* correct popup fallback positioning offsets ([#981](https://github.com/videojs/v10/issues/981)) ([82ede77](https://github.com/videojs/v10/commit/82ede77322204500d7ca0adc5cb24d4f068af462))
+* **skin:** add subtle control transitions on touch devices ([#985](https://github.com/videojs/v10/issues/985)) ([7e0827c](https://github.com/videojs/v10/commit/7e0827c330dc796aa0375cd5839fc4fc1661f055))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.7
+    * @videojs/store bumped to 10.0.0-beta.7
+    * @videojs/utils bumped to 10.0.0-beta.7
+
 ## [10.0.0-beta.6](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.5...@videojs/core@10.0.0-beta.6) (2026-03-15)
 
 
