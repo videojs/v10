@@ -12,7 +12,7 @@ const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src'
 const buildModes: BuildMode[] = ['dev', 'prod'];
 
 const presets = ['video', 'video-minimal', 'audio', 'audio-minimal', 'background'];
-const media = ['hls-video', 'simple-hls-video'];
+const media = ['hls-video', 'simple-hls-video', 'dash-video'];
 
 const entries = [
   ...presets.map((name) => ({ src: `src/cdn/${name}.ts`, name })),
@@ -20,50 +20,48 @@ const entries = [
 ];
 
 /**
- * One config per entry per mode → each output is fully self-contained.
- * Multiple entries in a single config causes rolldown to code-split shared
- * modules into chunks, which breaks the single-file CDN bundle requirement.
+ * One config per mode with all entries grouped together.
+ * This lets rolldown extract shared modules (store, element, core, hls.js, etc.)
+ * into shared chunks instead of duplicating them across every bundle.
+ * The ES module loader handles chunk deduplication transparently.
  */
 const configs: UserConfig[] = [];
 
 for (const mode of buildModes) {
-  for (const { src, name } of entries) {
-    const outName = mode === 'dev' ? `${name}.dev` : name;
+  const isProd = mode === 'prod';
 
-    const isProd = mode === 'prod';
+  const entryMap = Object.fromEntries(entries.map(({ src, name }) => [isProd ? name : `${name}.dev`, src]));
 
-    configs.push({
-      entry: { [outName]: src },
-      platform: 'browser',
-      format: 'es',
-      target: 'es2022',
-      sourcemap: true,
-      clean: false,
-      dts: false,
-      minify: isProd,
-      noExternal: [/.*/],
-      inlineOnly: false,
-      treeshake: {
-        moduleSideEffects: [{ test: /\/define\//, sideEffects: true }],
-      },
-      outDir: 'cdn',
-      alias: {
-        '@': new URL('./src', import.meta.url).pathname,
-      },
-      define: {
-        __DEV__: isProd ? 'false' : 'true',
-      },
-      plugins: [inlineCssPlugin({ skinsDir, minify: isProd }), inlineTemplatePlugin({ minify: isProd })],
-      inputOptions:
-        mode === 'dev'
-          ? {
-              resolve: {
-                conditionNames: ['development', 'import', 'browser', 'default'],
-              },
-            }
-          : undefined,
-    });
-  }
+  configs.push({
+    entry: entryMap,
+    platform: 'browser',
+    format: 'es',
+    target: 'es2022',
+    sourcemap: true,
+    clean: mode === 'dev',
+    dts: false,
+    minify: isProd,
+    noExternal: [/.*/],
+    inlineOnly: false,
+    treeshake: {
+      moduleSideEffects: [{ test: /\/define\//, sideEffects: true }],
+    },
+    outDir: 'cdn',
+    alias: {
+      '@': new URL('./src', import.meta.url).pathname,
+    },
+    define: {
+      __DEV__: isProd ? 'false' : 'true',
+    },
+    plugins: [inlineCssPlugin({ skinsDir, minify: isProd }), inlineTemplatePlugin({ minify: isProd })],
+    inputOptions: !isProd
+      ? {
+          resolve: {
+            conditionNames: ['development', 'import', 'browser', 'default'],
+          },
+        }
+      : undefined,
+  });
 }
 
 export default defineConfig(configs);

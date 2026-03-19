@@ -27,6 +27,7 @@ const SKIN_OPTIONS: readonly Skin[] = ['default', 'minimal'] satisfies readonly 
 const PLATFORM_LABELS: Record<Platform, string> = {
   html: 'HTML',
   react: 'React',
+  cdn: 'CDN',
 };
 
 const PRESET_LABELS: Record<Preset, string> = {
@@ -80,7 +81,7 @@ export function Navbar({
           options={stylings.map((s) => ({
             value: s,
             label: s === 'css' ? 'CSS' : 'Tailwind',
-            disabled: s === 'tailwind' && isBackgroundVideo,
+            disabled: s === 'tailwind' && (isBackgroundVideo || platform === 'cdn'),
           }))}
         />
 

@@ -13,7 +13,8 @@
   "module": "dist/default/index.js",
   "types": "dist/dev/index.d.ts",
   "sideEffects": [
-    "./dist/*/define/**/*.js"
+    "./dist/*/define/**/*.js",
+    "./cdn/**/*.js"
   ],
   "files": [
     "dist",
@@ -72,6 +73,16 @@
       "types": "./dist/dev/define/media/*.d.ts",
       "development": "./dist/dev/define/media/*.js",
       "default": "./dist/default/define/media/*.js"
+    },
+    "./cdn/media/*": {
+      "types": "./cdn/media/*.dev.d.ts",
+      "development": "./cdn/media/*.dev.js",
+      "default": "./cdn/media/*.js"
+    },
+    "./cdn/*": {
+      "types": "./cdn/*.dev.d.ts",
+      "development": "./cdn/*.dev.js",
+      "default": "./cdn/*.js"
     },
     "./*.css": "./dist/default/define/*.css",
     "./*": {

@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { transform } from 'lightningcss';
@@ -27,3 +27,18 @@ for (const { src, dest } of cssFiles) {
 
   console.log(`  ${dest} (${raw.length} → ${code.length})`);
 }
+
+// Generate empty .d.ts stubs for CDN entry points (side-effect-only modules).
+// This allows TypeScript to resolve `import '@videojs/html/cdn/...'` without errors.
+function generateDtsStubs(dir) {
+  for (const file of readdirSync(dir, { withFileTypes: true })) {
+    if (file.isDirectory()) {
+      generateDtsStubs(resolve(dir, file.name));
+    } else if (file.name.endsWith('.dev.js') && !file.name.endsWith('.dev.js.map')) {
+      const dtsPath = resolve(dir, file.name.replace('.dev.js', '.dev.d.ts'));
+      writeFileSync(dtsPath, 'export {};\n');
+    }
+  }
+}
+
+generateDtsStubs(outDir);
