@@ -82,6 +82,10 @@
 .media-default-skin .media-popover--volume {
   padding: 0.625rem 0.25rem;
   border-radius: calc(infinity * 1px);
+
+  &:has(media-volume-slider[data-availability="unsupported"]) {
+    display: none;
+  }
 }
 
 .media-default-skin .media-tooltip {
