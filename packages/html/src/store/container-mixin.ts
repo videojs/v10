@@ -1,12 +1,12 @@
 import type { MediaContainer, PlayerStore } from '@videojs/core/dom';
 import { ContextConsumer } from '@videojs/element/context';
 import type { MediaElementConstructor } from '@/ui/media-element';
-import type { ContainerAttachContext, PlayerContext } from '../player/context';
+import type { ContainerContext, PlayerContext } from '../player/context';
 import type { PlayerConsumer, PlayerConsumerConstructor } from './types';
 
 export interface ContainerMixinConfig<Store extends PlayerStore> {
   playerContext: PlayerContext<Store>;
-  containerAttachContext: ContainerAttachContext;
+  containerContext: ContainerContext;
 }
 
 export type ContainerMixin<Store extends PlayerStore> = <Class extends MediaElementConstructor>(
@@ -15,9 +15,9 @@ export type ContainerMixin<Store extends PlayerStore> = <Class extends MediaElem
 
 /**
  * Create a mixin that consumes player context and registers itself as the
- * container element with the provider via `containerAttachContext`.
+ * container element with the provider via `containerContext`.
  *
- * @param config - Container configuration with player and attach contexts.
+ * @param config - Container configuration with player and container contexts.
  */
 export function createContainerMixin<Store extends PlayerStore>(
   config: ContainerMixinConfig<Store>
@@ -39,9 +39,9 @@ export function createContainerMixin<Store extends PlayerStore>(
         });
 
         new ContextConsumer(this, {
-          context: config.containerAttachContext,
+          context: config.containerContext,
           callback: (value) => {
-            this.#setContainer = value ?? null;
+            this.#setContainer = value?.setContainer ?? null;
             if (this.isConnected) this.#setContainer?.(this);
           },
           subscribe: true,
