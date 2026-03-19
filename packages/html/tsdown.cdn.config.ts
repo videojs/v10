@@ -1,3 +1,4 @@
+import { readdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { UserConfig } from 'tsdown';
@@ -20,12 +21,38 @@ const entries = [
 ];
 
 /**
+ * Rolldown plugin that generates empty `.d.ts` stubs for dev CDN entry points.
+ * CDN entries are side-effect-only modules with no exports — the stubs let
+ * TypeScript resolve `import '@videojs/html/cdn/...'` without errors.
+ */
+function dtsStubsPlugin(outDir: string) {
+  function generate(dir: string) {
+    for (const file of readdirSync(dir, { withFileTypes: true })) {
+      if (file.isDirectory()) {
+        generate(resolve(dir, file.name));
+      } else if (file.name.endsWith('.dev.js') && !file.name.endsWith('.dev.js.map')) {
+        writeFileSync(resolve(dir, file.name.replace('.dev.js', '.dev.d.ts')), 'export {};\n');
+      }
+    }
+  }
+
+  return {
+    name: 'cdn-dts-stubs',
+    writeBundle() {
+      generate(outDir);
+    },
+  };
+}
+
+/**
  * One config per mode with all entries grouped together.
  * This lets rolldown extract shared modules (store, element, core, hls.js, etc.)
  * into shared chunks instead of duplicating them across every bundle.
  * The ES module loader handles chunk deduplication transparently.
  */
 const configs: UserConfig[] = [];
+
+const outDir = 'cdn';
 
 for (const mode of buildModes) {
   const isProd = mode === 'prod';
@@ -46,14 +73,18 @@ for (const mode of buildModes) {
     treeshake: {
       moduleSideEffects: [{ test: /\/define\//, sideEffects: true }],
     },
-    outDir: 'cdn',
+    outDir,
     alias: {
       '@': new URL('./src', import.meta.url).pathname,
     },
     define: {
       __DEV__: isProd ? 'false' : 'true',
     },
-    plugins: [inlineCssPlugin({ skinsDir, minify: isProd }), inlineTemplatePlugin({ minify: isProd })],
+    plugins: [
+      inlineCssPlugin({ skinsDir, minify: isProd }),
+      inlineTemplatePlugin({ minify: isProd }),
+      ...(!isProd ? [dtsStubsPlugin(outDir)] : []),
+    ],
     inputOptions: !isProd
       ? {
           resolve: {
