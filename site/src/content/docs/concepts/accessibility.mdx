@@ -5,7 +5,7 @@ description: How Video.js approaches accessible media playback, covering standar
 
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Video.js's built-in components handle accessibility so your player works for everyone out of the box.
+Video.js handles accessibility out of the box so your player works for everyone.
 
 ## Standards we target
 
@@ -16,41 +16,41 @@ Video.js's built-in components handle accessibility so your player works for eve
 
 ## ARIA roles and labels
 
-Built-in components set appropriate ARIA roles and attributes automatically. For example, sliders render with `role="slider"` and value attributes, buttons update their `aria-label` based on player state, and decorative elements like time separators are hidden with `aria-hidden="true"`.
+Components set ARIA roles and attributes automatically. For example, sliders render with `role="slider"` and value attributes, buttons update their `aria-label` based on player state, and decorative elements like time separators are hidden with `aria-hidden="true"`.
 
-Verify that ARIA labels are contextually correct for your content and language. Each component's reference page documents the specific attributes it sets.
+Verify that labels are contextually correct for your content and language. Each component's reference page documents the attributes it sets.
 
 ## Keyboard interaction
 
-All interactive components support keyboard control. For example, buttons activate with **Enter** and **Space**, sliders respond to **Arrow keys**, **Home**, **End**, and **Page Up/Down**, and popovers close with **Escape**. Each component's reference page lists its full keyboard support. The [WAI-ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/) documents the keyboard patterns we follow.
+All interactive components support keyboard control. For example, buttons activate with <kbd>Enter</kbd> and <kbd>Space</kbd>, sliders respond to <kbd>Arrow</kbd> keys, <kbd>Home</kbd>, <kbd>End</kbd>, and <kbd>Page Up</kbd>/<kbd>Page Down</kbd>, and popovers close with <kbd>Escape</kbd>. Each component's reference page lists its full keyboard support. We follow the patterns in the [WAI-ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/).
 
 ## Focus management
 
-Interactive elements are focusable when enabled and removed from the [tab order](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex) when disabled. Popover triggers are associated with their popups through `aria-controls` and `aria-expanded`.
+Interactive elements are focusable when enabled and leave the [tab order](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex) when disabled. Popover triggers link to their popups with `aria-controls` and `aria-expanded`.
 
 ## Captions and subtitles
 
-The <DocsLink slug="reference/feature-text-tracks">text tracks feature</DocsLink> supports captions and subtitles. Closed captions in the U.S. are governed by the [FCC](https://www.fcc.gov/) under the [CVAA](https://www.fcc.gov/consumers/guides/21st-century-communications-and-video-accessibility-act-cvaa), and non-compliance carries legal risk.
+The <DocsLink slug="reference/feature-text-tracks">text tracks feature</DocsLink> supports captions and subtitles. Closed captions in the U.S. are governed by the [FCC](https://www.fcc.gov/) under the [CVAA](https://www.fcc.gov/consumers/guides/21st-century-communications-and-video-accessibility-act-cvaa), which requires both captioning and viewer control over caption appearance (font, size, color, opacity, and edge style). Non-compliance carries legal risk. The [WebKit Caption Display Settings explainer](https://github.com/WebKit/explainers/tree/main/CaptionDisplaySettings) tracks how browsers are bringing these customization preferences into the web platform natively.
 
 ## Color contrast
 
-Built-in skins respond to [`prefers-contrast: more`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-contrast) by increasing background opacity on overlays and controls. They also respond to [`prefers-reduced-transparency: reduce`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) by raising baseline opacity so text stays readable over video.
+Skins respond to [`prefers-contrast: more`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-contrast) by increasing background opacity on overlays and controls, and to [`prefers-reduced-transparency: reduce`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency) by raising baseline opacity so text stays readable over video.
 
-Custom components should test against [WCAG 1.4.3 (contrast minimum)](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum) and [1.4.11 (non-text contrast)](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast) to make sure controls and text remain visible over video content.
+Video is harder than most UI for contrast because the background is always changing. A control that passes checks over a dark frame can disappear over a bright title card. Automated tools won't catch this, so test your controls against light, dark, and mixed video content. Custom components should test against [WCAG 1.4.3 (contrast minimum)](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum) and [1.4.11 (non-text contrast)](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast).
 
 ## Touch targets
 
-Built-in controls use rem-based sizing so they scale with the user's font size preference. All interactive elements set [`touch-action: manipulation`](https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action) to eliminate tap delay on touch devices. Skins also use [`pointer: fine` and `pointer: coarse`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/pointer) to adapt transitions for mouse vs touch input.
+Controls use rem-based sizing so they scale with the user's font size preference. All interactive elements set [`touch-action: manipulation`](https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action) to eliminate tap delay on touch devices. Skins use [`pointer: fine` and `pointer: coarse`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/pointer) to adapt transitions for mouse and touch input.
 
 If you build custom controls, target at least 24x24 CSS pixels per [WCAG 2.5.8 (target size minimum)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum). Larger is better on touch-first surfaces.
 
 ## Color scheme
 
-Built-in skins adapt to [`prefers-color-scheme`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme). Borders, backgrounds, and text colors adjust automatically through CSS custom properties. Custom components can use the same design tokens. See <DocsLink slug="concepts/skins">Skins</DocsLink> for details.
+Skins adapt to [`prefers-color-scheme`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme). Borders, backgrounds, and text colors adjust through CSS custom properties. Custom components can use the same design tokens. See <DocsLink slug="concepts/skins">Skins</DocsLink> for details.
 
 ## Reduced motion
 
-Built-in skins respect [`prefers-reduced-motion`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion). When a user prefers reduced motion, animations and transitions are simplified or removed. Follow the same pattern in your custom components.
+Skins respect [`prefers-reduced-motion`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) by simplifying or removing animations and transitions. Follow the same pattern in custom components.
 
 ## Test with assistive technology
 
@@ -58,4 +58,4 @@ Automated tools catch markup issues but miss real usability problems. Test your 
 
 ## Further reading
 
-The W3C WAI guides on [making audio and video media accessible](https://www.w3.org/WAI/media/av/) and [accessible media players](https://www.w3.org/WAI/media/av/player/) cover the full picture of what accessible media playback involves.
+The W3C WAI guides on [making audio and video media accessible](https://www.w3.org/WAI/media/av/) and [accessible media players](https://www.w3.org/WAI/media/av/player/) go deeper on everything covered here.
