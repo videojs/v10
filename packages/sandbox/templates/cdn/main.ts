@@ -2,7 +2,7 @@ import '@app/styles.css';
 import { createHtmlSandboxState, createLatestLoader } from '@app/shared/html/sandbox-state';
 import { CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
 import { renderStoryboard } from '@app/shared/html/storyboard';
-import { loadAudioStylesheets, loadBackgroundStylesheets, loadVideoStylesheets } from '@app/shared/html/stylesheets';
+import { loadAudioStylesheets, loadVideoStylesheets } from '@app/shared/html/stylesheets';
 import { onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
 import { BACKGROUND_VIDEO_SRC, getPosterSrc, getStoryboardSrc, SOURCES } from '@app/shared/sources';
 import type { Preset, Skin } from '@app/types';
@@ -33,6 +33,7 @@ async function loadCdnPreset(preset: Preset, skin: Skin) {
       else await import('@videojs/html/cdn/audio');
       break;
     case 'background-video':
+      await import('@videojs/html/background/skin.css');
       await import('@videojs/html/cdn/background');
       break;
   }
@@ -82,8 +83,8 @@ function getMediaTag(preset: Preset): string {
 
 function loadStylesheets(preset: Preset, skin: Skin) {
   if (preset === 'audio') loadAudioStylesheets(skin);
-  else if (preset === 'background-video') loadBackgroundStylesheets();
-  else loadVideoStylesheets(skin);
+  else if (preset !== 'background-video') loadVideoStylesheets(skin);
+  // Background CSS is loaded via dynamic import in loadCdnPreset.
 }
 
 function isVideoPreset(preset: Preset): boolean {

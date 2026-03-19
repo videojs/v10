@@ -10,8 +10,6 @@ const audioStylesheets: Record<Skin, string> = {
   minimal: new URL('@videojs/html/audio/minimal-skin.css', import.meta.url).href,
 };
 
-const backgroundStylesheet = new URL('@videojs/html/background/skin.css', import.meta.url).href;
-
 function loadStylesheet(id: string, url: string) {
   const existing = document.querySelector(`link[rel="stylesheet"][data-sandbox-stylesheet="${id}"]`);
   existing?.remove();
@@ -29,8 +27,4 @@ export function loadVideoStylesheets(skin: Skin) {
 
 export function loadAudioStylesheets(skin: Skin) {
   loadStylesheet('audio-skin', audioStylesheets[skin]);
-}
-
-export function loadBackgroundStylesheets() {
-  loadStylesheet('background-skin', backgroundStylesheet);
 }
