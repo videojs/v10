@@ -78,6 +78,38 @@ function FullscreenLabel(): ReactNode {
   return fullscreen ? <>Exit fullscreen</> : <>Enter fullscreen</>;
 }
 
+function VolumePopover(): ReactNode {
+  const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
+
+  const muteButton = (
+    <MuteButton
+      render={(props) => (
+        <Button {...props} className="media-button--icon media-button--mute">
+          <VolumeOffIcon className="media-icon media-icon--volume-off" />
+          <VolumeLowIcon className="media-icon media-icon--volume-low" />
+          <VolumeHighIcon className="media-icon media-icon--volume-high" />
+        </Button>
+      )}
+    />
+  );
+
+  if (volumeUnsupported) return muteButton;
+
+  return (
+    <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+      <Popover.Trigger render={muteButton} />
+      <Popover.Popup className="media-popover media-popover--volume">
+        <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
+          <VolumeSlider.Track className="media-slider__track">
+            <VolumeSlider.Fill className="media-slider__fill" />
+          </VolumeSlider.Track>
+          <VolumeSlider.Thumb className="media-slider__thumb media-slider__thumb--persistent" />
+        </VolumeSlider.Root>
+      </Popover.Popup>
+    </Popover.Root>
+  );
+}
+
 export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
   const { children, className, poster, ...rest } = props;
 
@@ -196,29 +228,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
               <Tooltip.Popup className="media-tooltip">Toggle playback rate</Tooltip.Popup>
             </Tooltip.Root>
 
-            <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
-              <Popover.Trigger
-                render={
-                  <MuteButton
-                    render={(props) => (
-                      <Button {...props} className="media-button--icon media-button--mute">
-                        <VolumeOffIcon className="media-icon media-icon--volume-off" />
-                        <VolumeLowIcon className="media-icon media-icon--volume-low" />
-                        <VolumeHighIcon className="media-icon media-icon--volume-high" />
-                      </Button>
-                    )}
-                  />
-                }
-              />
-              <Popover.Popup className="media-popover media-popover--volume">
-                <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
-                  <VolumeSlider.Track className="media-slider__track">
-                    <VolumeSlider.Fill className="media-slider__fill" />
-                  </VolumeSlider.Track>
-                  <VolumeSlider.Thumb className="media-slider__thumb media-slider__thumb--persistent" />
-                </VolumeSlider.Root>
-              </Popover.Popup>
-            </Popover.Root>
+            <VolumePopover />
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger

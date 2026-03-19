@@ -107,3 +107,7 @@
     background-color: oklch(0 0 0 / 0.9);
   }
 }
+
+.media-minimal-skin .media-popover--volume:has(media-volume-slider[data-availability="unsupported"]) {
+  display: none;
+}

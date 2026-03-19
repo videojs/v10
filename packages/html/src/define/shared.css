@@ -6,3 +6,8 @@ media-tooltip-group {
 :host {
   display: grid;
 }
+
+/* Hide volume popover when volume control is unsupported (e.g., iOS Safari). */
+.media-popover--volume:has(media-volume-slider[data-availability="unsupported"]) {
+  display: none;
+}
