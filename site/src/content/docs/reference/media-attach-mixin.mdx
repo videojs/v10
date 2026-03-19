@@ -1,0 +1,55 @@
+---
+title: MediaAttachMixin
+description: Mixin for custom media elements to register themselves with the provider via context
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+`MediaAttachMixin` creates a class that registers itself with the player provider via `mediaContext`. Apply it to custom media elements so they're automatically wired to the store when they connect to the DOM.
+
+The built-in `<hls-video>`, `<dash-video>`, `<simple-hls-video>`, and `<background-video>` elements all use this mixin internally.
+
+```ts
+import { MediaAttachMixin } from '@videojs/html';
+import { MyCustomMedia } from './my-custom-media';
+
+export class MyMedia extends MediaAttachMixin(MyCustomMedia) {
+  // inherits context registration
+}
+
+customElements.define('my-media', MyMedia);
+```
+
+## Who needs this
+
+You only need `MediaAttachMixin` when building a custom media element — one that wraps a third-party player, uses a canvas renderer, or extends a base class that isn't already a registered media element.
+
+For plain `<video>` and `<audio>` elements, the provider discovers them automatically via `querySelector` — no mixin needed.
+
+## Overriding the media target
+
+By default, `MediaAttachMixin` registers `this` as the media element. Override `getMediaTarget()` if the actual media element is something other than the element itself — for example, an inner `<video>` in a shadow root:
+
+```ts
+import { MediaAttachMixin } from '@videojs/html';
+
+export class BackgroundVideo extends MediaAttachMixin(HTMLElement) {
+  getMediaTarget() {
+    return this.shadowRoot?.querySelector('video') ?? null;
+  }
+}
+```
+
+## Factory function
+
+`MediaAttachMixin` is pre-configured with the default `mediaContext`. If you need to use a different context (advanced use), use `createMediaAttachMixin`:
+
+```ts
+import { createMediaAttachMixin } from '@videojs/html';
+import { myCustomContext } from './my-player/context';
+
+export const MyMediaAttachMixin = createMediaAttachMixin(myCustomContext);
+```
+
+<UtilReference util="MediaAttachMixin" />

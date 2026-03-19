@@ -57,7 +57,7 @@ function getRendererElement(renderer: Renderer, url: string): string {
   const tag = getRendererTag(renderer);
   const src = url.trim() || getDefaultSourceUrl(renderer);
   const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
-  return `<${tag} slot="media" src="${src}"${playsInline}></${tag}>`;
+  return `<${tag} src="${src}"${playsInline}></${tag}>`;
 }
 
 function getDefaultSourceUrl(renderer: Renderer): string {
