@@ -10,15 +10,17 @@ import DocsLink from "@/components/docs/DocsLink.astro";
 
 ### Store lifecycle
 
-The store is created lazily on first access. On `connectedCallback`, the mixin publishes three context values to its descendants:
+The store is created when the element is constructed. On `connectedCallback`, the mixin publishes three context values to its descendants:
 
+{/* TODO: link context keys to concept page once written (https://github.com/videojs/v10/issues/1033) */}
 - **`playerContext`** — the store, consumed by <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and other controllers
 - **`mediaContext`** — a setter callback for media elements to register themselves
 - **`containerContext`** — a setter callback for container elements to register themselves
 
-When a media element and a container both register, the provider calls `store.attach({ media, container })`. If no media element registers via context within a microtask, the provider falls back to `querySelector('video, audio')` to support plain `<video>` and `<audio>` elements.
+When a media element and a container both register, the provider calls `store.attach({ media, container })`. If no media element registers via context within a [microtask](https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide), the provider falls back to `querySelector('video, audio')` to support plain `<video>` and `<audio>` elements.
 
-On `disconnectedCallback`, the mixin calls `store.destroy()` and cleans up all context subscriptions.
+{/* TODO: link destroyCallback to lifecycle reference once written (https://github.com/videojs/v10/issues/1034) */}
+On `disconnectedCallback`, the mixin detaches the current media target but keeps the store alive. An element moved in the DOM reconnects without losing state. The store is destroyed in `destroyCallback`.
 
 ### When to split provider and container
 
@@ -34,7 +36,7 @@ class AppShell extends ProviderMixin(MediaElement) {}
 class VideoRegion extends ContainerMixin(MediaElement) {}
 ```
 
-When a single element should handle both responsibilities, compose the mixins directly:
+When a single element handles both responsibilities, compose the mixins directly:
 
 ```ts
 const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });

@@ -114,7 +114,7 @@ Media components are the components that actually display your media. They're es
 Media components can be format specific (HLS, DASH), service specific (YouTube, Vimeo, Mux), or use case specific (background video).
 
 <FrameworkCase frameworks={["html"]}>
-Media elements are discovered automatically — plain `<video>` and `<audio>` elements are found via a `querySelector` fallback, while custom media elements like `<hls-video>` register themselves via context. No `slot="media"` attribute is needed.
+Media elements are discovered automatically. Plain `<video>` and `<audio>` elements are found via a `querySelector`, while custom media elements like `<hls-video>` register themselves.
 </FrameworkCase>
 
 <Aside type="note">

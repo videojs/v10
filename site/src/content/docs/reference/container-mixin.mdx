@@ -6,10 +6,11 @@ description: Mixin that consumes player context and registers the element as the
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
-`ContainerMixin` creates a class that consumes the player store from context and registers itself as the media container with the <DocsLink slug="reference/provider-mixin">provider</DocsLink>. The provider uses this reference to determine the fullscreen target and to scope media discovery.
+`ContainerMixin` creates a class that consumes the player store from context and registers itself as the media container with the <DocsLink slug="reference/provider-mixin">provider</DocsLink>. The provider uses this reference as the fullscreen target and passes it to `store.attach()`.
 
 ### What ContainerMixin does
 
+{/* TODO: link containerContext to concept page once written (https://github.com/videojs/v10/issues/1033) */}
 On `connectedCallback`, the element registers itself with the provider via `containerContext`. The provider stores the container reference and uses it when calling `store.attach({ media, container })`. On `disconnectedCallback`, the element deregisters itself.
 
 Media discovery is owned by the provider — `ContainerMixin` does not search for or attach media elements.

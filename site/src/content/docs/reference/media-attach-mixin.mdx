@@ -6,9 +6,9 @@ description: Mixin for custom media elements to register themselves with the pro
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
-`MediaAttachMixin` creates a class that registers itself with the player provider via `mediaContext`. Apply it to custom media elements so they're automatically wired to the store when they connect to the DOM.
+`MediaAttachMixin` creates a class that registers itself with the <DocsLink slug="reference/provider-mixin">provider</DocsLink> on connect. Apply it to custom media elements so they automatically wire to the store.
 
-The built-in `<hls-video>`, `<dash-video>`, `<simple-hls-video>`, and `<background-video>` elements all use this mixin internally.
+Built-in elements, like `<hls-video>`, `<dash-video>`, `<simple-hls-video>`, and `<background-video>`, all use this mixin internally.
 
 ```ts
 import { MediaAttachMixin } from '@videojs/html';
@@ -23,7 +23,7 @@ customElements.define('my-media', MyMedia);
 
 ## Who needs this
 
-You only need `MediaAttachMixin` when building a custom media element — one that wraps a third-party player, uses a canvas renderer, or extends a base class that isn't already a registered media element.
+You only need `MediaAttachMixin` when your base class doesn't already register as a media element with the provider. For example, elements that wrap a third-party player or use a canvas renderer.
 
 For plain `<video>` and `<audio>` elements, the provider discovers them automatically via `querySelector` — no mixin needed.
 
@@ -43,7 +43,8 @@ export class BackgroundVideo extends MediaAttachMixin(HTMLElement) {
 
 ## Factory function
 
-`MediaAttachMixin` is pre-configured with the default `mediaContext`. If you need to use a different context (advanced use), use `createMediaAttachMixin`:
+{/* TODO: link mediaContext to concept page once written (https://github.com/videojs/v10/issues/1033) */}
+`MediaAttachMixin` is pre-configured with the default `mediaContext`. To use a different context, call `createMediaAttachMixin`:
 
 ```ts
 import { createMediaAttachMixin } from '@videojs/html';
