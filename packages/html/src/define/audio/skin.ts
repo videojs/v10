@@ -21,6 +21,8 @@ const SEEK_TIME = 10;
 function getTemplateHTML() {
   return /*html*/ `
     <media-container class="media-default-skin media-default-skin--audio">
+      <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
+      <slot name="media"></slot>
       <slot></slot>
 
       <div class="media-surface media-controls">

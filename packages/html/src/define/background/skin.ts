@@ -5,6 +5,8 @@ import { safeDefine } from '../safe-define';
 function getTemplateHTML(_attrs: Record<string, string>) {
   return /*html*/ `
     <media-container>
+      <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
+      <slot name="media"></slot>
       <slot></slot>
     </media-container>
   `;
