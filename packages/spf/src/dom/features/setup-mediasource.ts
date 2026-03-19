@@ -60,7 +60,6 @@ export function setupMediaSource<S extends MediaSourceState, O extends MediaSour
 }): () => void {
   let settingUp = false;
   let abortController: AbortController | null = null;
-  let readyStateCleanup: (() => void) | null = null;
 
   const cleanupEffect = effect(() => {
     const currentState = state.get();
@@ -76,19 +75,15 @@ export function setupMediaSource<S extends MediaSourceState, O extends MediaSour
     const mediaSource = createMediaSource({ preferManaged: true });
     attachMediaSource(mediaSource, mediaElement);
 
-    const [readyStateSignal, cleanupRS] = observeMediaSourceReadyState(mediaSource);
-    readyStateCleanup = cleanupRS;
+    // Listeners are automatically removed when abortController is aborted.
+    const mediaSourceReadyState = observeMediaSourceReadyState(mediaSource, signal);
 
     waitForSourceOpen(mediaSource, signal)
       .then(() => {
-        owners.set(Object.assign({}, owners.get(), { mediaSource, mediaSourceReadyState: readyStateSignal }) as O);
+        owners.set(Object.assign({}, owners.get(), { mediaSource, mediaSourceReadyState }) as O);
       })
       .catch((error) => {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          readyStateCleanup?.();
-          readyStateCleanup = null;
-          return;
-        }
+        if (error instanceof DOMException && error.name === 'AbortError') return;
         throw error;
       })
       .finally(() => {
@@ -98,7 +93,6 @@ export function setupMediaSource<S extends MediaSourceState, O extends MediaSour
 
   return () => {
     abortController?.abort();
-    readyStateCleanup?.();
     cleanupEffect();
   };
 }

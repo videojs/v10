@@ -217,32 +217,30 @@ export function isCodecSupported(mimeCodec: string): boolean {
  *
  * Listens to `sourceopen`, `sourceended`, and `sourceclose` events and updates
  * the signal accordingly, making readyState visible to the TC39 signal graph.
+ * Listeners are automatically removed when `signal` is aborted.
  *
  * @param mediaSource - The MediaSource to observe
- * @returns A tuple of `[Signal.ReadonlyState<readyState>, cleanup]`
+ * @param signal - AbortSignal that controls listener lifetime
+ * @returns A `Signal.ReadonlyState` that reflects the current `readyState`
  *
  * @example
- * const [readyState, cleanup] = observeMediaSourceReadyState(mediaSource);
+ * const controller = new AbortController();
+ * const readyState = observeMediaSourceReadyState(mediaSource, controller.signal);
  * effect(() => {
  *   if (readyState.get() === 'open') { ... }
  * });
  * // Later:
- * cleanup();
+ * controller.abort();
  */
 export function observeMediaSourceReadyState(
-  mediaSource: MediaSource
-): [Signal.ReadonlyState<MediaSource['readyState']>, () => void] {
-  const signal = new Signal.State<MediaSource['readyState']>(mediaSource.readyState);
-  const update = () => signal.set(mediaSource.readyState);
-  mediaSource.addEventListener('sourceopen', update);
-  mediaSource.addEventListener('sourceended', update);
-  mediaSource.addEventListener('sourceclose', update);
-  return [
-    signal,
-    () => {
-      mediaSource.removeEventListener('sourceopen', update);
-      mediaSource.removeEventListener('sourceended', update);
-      mediaSource.removeEventListener('sourceclose', update);
-    },
-  ];
+  mediaSource: MediaSource,
+  signal: AbortSignal
+): Signal.ReadonlyState<MediaSource['readyState']> {
+  const readyState = new Signal.State<MediaSource['readyState']>(mediaSource.readyState);
+  const update = () => readyState.set(mediaSource.readyState);
+  const options = { signal };
+  mediaSource.addEventListener('sourceopen', update, options);
+  mediaSource.addEventListener('sourceended', update, options);
+  mediaSource.addEventListener('sourceclose', update, options);
+  return readyState;
 }

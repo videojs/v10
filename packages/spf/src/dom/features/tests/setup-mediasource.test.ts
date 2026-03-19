@@ -21,7 +21,7 @@ vi.mock('../../media/mediasource-setup', () => ({
     detach: vi.fn(),
   })),
   waitForSourceOpen: vi.fn(() => Promise.resolve()),
-  observeMediaSourceReadyState: vi.fn((ms: MediaSource) => [{ get: () => ms.readyState }, vi.fn()]),
+  observeMediaSourceReadyState: vi.fn((ms: MediaSource) => ({ get: () => ms.readyState })),
 }));
 
 function setupSetupMediaSource(initialState: MediaSourceState, initialOwners: MediaSourceOwners) {
