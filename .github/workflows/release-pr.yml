@@ -67,8 +67,7 @@ jobs:
           fi
 
           # Extract compare URL from CHANGELOG footer
-          ESCAPED_VERSION="${VERSION//./\\.}"
-          COMPARE_URL=$(grep -m1 "^\[@videojs/core@${ESCAPED_VERSION}\]: " CHANGELOG.md | sed 's/.*]: //' || true)
+          COMPARE_URL=$(grep -Fm1 "[@videojs/core@${VERSION}]: " CHANGELOG.md | sed 's/.*]: //' || true)
 
           # Write the site changelog file
           OUTFILE="site/src/content/changelog/${VERSION}.md"

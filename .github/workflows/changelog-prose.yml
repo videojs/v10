@@ -9,7 +9,6 @@ permissions:
   contents: write
   pull-requests: write
   issues: read
-  id-token: write
 
 concurrency:
   group: changelog-prose-${{ github.event.release.tag_name }}
@@ -34,14 +33,16 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Guard — check raw changelog exists
+        id: guard
         run: |
           FILE="site/src/content/changelog/${{ steps.version.outputs.version }}.md"
           if [ ! -f "$FILE" ]; then
             echo "::warning::Raw changelog file $FILE not found on main — skipping prose generation"
-            exit 1
+            echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Generate changelog prose
+        if: steps.guard.outputs.skip != 'true'
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
