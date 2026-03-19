@@ -158,66 +158,69 @@ interface MediaApi extends MediaBaseApi,
   // ...
 }
 
-export interface MediaApiProxyTarget extends EventTarget {}
-
-// Proxy mixin that creates a MediaApi from the passed classes and proxies the methods and properties to the attached target.
-export const MediaProxyMixin = <T extends EventTarget>(
-  ...MediaApiTargetClasses: AnyConstructor<T extends [unknown, ...unknown[]] ? T : any>[]
-) => class MediaApiProxy {
-  // Logic that proxies media API to the media target
-  // ...
-
-  // Attach media target to the media instance
-  target: MediaApiProxyTarget;
-  attach(target: MediaApiProxyTarget): void;
-  detach(): void;
-
-  // Proxy handlers
-  get(prop: keyof MediaApiProxyTarget): any;
-  set(prop: keyof MediaApiProxyTarget, val: any): void;
-  call(prop: keyof MediaApiProxyTarget, ...args: any[]): any;
+export interface Delegate {
+  attach?(target: EventTarget): void;
+  detach?(): void;
 }
 
-// Size optimized for the most common use case of proxying HTMLMediaElement.
-export class MediaApiProxy extends MediaProxyMixin<HTMLMediaElement>(HTMLMediaElement, EventTarget) {}
-export class VideoApiProxy extends MediaProxyMixin<HTMLVideoElement>(HTMLVideoElement, HTMLMediaElement, EventTarget) {}
-export class AudioApiProxy extends MediaProxyMixin<HTMLAudioElement>(HTMLAudioElement, HTMLMediaElement, EventTarget) {}
+// DelegateMixin intercepts get/set/call to route through a Delegate before falling through to the base class.
+export function DelegateMixin<Base extends Constructor, D extends Constructor<Delegate>>(
+  BaseClass: Base,
+  DelegateClass: D
+): Constructor<InstanceType<Base> & InstanceType<D>>;
+
+
+// ProxyMixin creates a class that proxies methods and properties to the attached target.
+export const ProxyMixin = <T extends EventTarget>(
+  PrimaryClass: AnyConstructor<T>,
+  ...AdditionalClasses: AnyConstructor<EventTarget>[]
+) => class MediaProxy {
+  target: EventTarget | null;
+  attach(target: EventTarget): void;
+  detach(): void;
+
+  get(prop: keyof EventTarget): any;
+  set(prop: keyof EventTarget, val: any): void;
+  call(prop: keyof EventTarget, ...args: any[]): any;
+}
+
+// Pre-built proxy for video elements.
+export const VideoProxy = ProxyMixin(HTMLVideoElement, HTMLMediaElement, EventTarget);
+
+// CustomVideoElement wraps a native <video> in a custom element.
+export const CustomVideoElement = CustomMediaMixin(HTMLElement, { tag: 'video' });
+export const CustomAudioElement = CustomMediaMixin(HTMLElement, { tag: 'audio' });
 ```
 
-### Example of using the media API Proxy
+### Example: HLS delegate
+
+A delegate intercepts property access for engine-specific behavior (e.g. `src`), while the base class (CustomVideoElement or VideoProxy) handles standard HTMLMediaElement properties.
 
 ```ts
-import type { MediaApiProxyTarget } from '@videojs/core';
-import type { AnyConstructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
-import { VideoApiProxy } from './proxy';
+import { type Delegate, DelegateMixin } from '../core/media/delegate';
+import { CustomVideoElement } from './custom-media-element';
+import { VideoProxy } from './proxy';
 
-// This is used by the web component because it needs to extend HTMLElement!
-export const HlsMediaMixin = <T extends AnyConstructor<EventTarget>>(Super: T) => {
-  class HlsMedia extends Super {
-    engine = new Hls();
+class HlsMediaDelegateBase implements Delegate {
+  #engine = Hls.isSupported() ? new Hls() : null;
 
-    attach(target: MediaApiProxyTarget): void {
-      super.attach?.(target);
-      this.engine.attachMedia(target as HTMLMediaElement);
-    }
+  get engine(): Hls | null { return this.#engine; }
 
-    detach(): void {
-      super.detach?.();
-      this.engine.detachMedia();
-    }
-
-    set src(value: string) {
-      this.engine.loadSource(value);
-    }
-
-    get src(): string {
-      return this.engine.url ?? '';
-    }
+  attach(target: EventTarget): void {
+    this.#engine?.attachMedia(target as HTMLMediaElement);
   }
-  return HlsMedia as T & typeof HlsMedia;
-};
 
-// This is used by the React component.
-export class HlsMedia extends HlsMediaMixin(VideoApiProxy) {}
+  detach(): void { this.#engine?.detachMedia(); }
+  destroy(): void { this.#engine?.destroy(); }
+
+  set src(src: string) { this.#engine?.loadSource(src); }
+  get src(): string { return this.#engine?.url ?? ''; }
+}
+
+// Web component — extends HTMLElement via CustomVideoElement.
+export class HlsCustomMedia extends DelegateMixin(CustomVideoElement, HlsMediaDelegateBase) {}
+
+// React / framework — extends EventTarget via VideoProxy.
+export class HlsMedia extends DelegateMixin(VideoProxy, HlsMediaDelegateBase) {}
 ```
