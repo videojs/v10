@@ -82,8 +82,17 @@ function getMediaTag(preset: Preset): string {
 
 function loadStylesheets(preset: Preset, skin: Skin) {
   if (preset === 'audio') loadAudioStylesheets(skin);
-  // background-video imports its own CSS statically, no dynamic loading needed.
-  else if (preset !== 'background-video') loadVideoStylesheets(skin);
+  else if (preset === 'background-video') loadBackgroundStylesheet();
+  else loadVideoStylesheets(skin);
+}
+
+function loadBackgroundStylesheet() {
+  if (document.querySelector('link[data-cdn-bg]')) return;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.dataset.cdnBg = '';
+  link.href = new URL('@videojs/html/background/skin.css', import.meta.url).href;
+  document.head.appendChild(link);
 }
 
 function isVideoPreset(preset: Preset): boolean {
