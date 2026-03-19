@@ -107,6 +107,7 @@ async function render() {
 
   loadStylesheets(preset, state.skin);
 
+  const root = document.getElementById('root')!;
   const playerTag = getPlayerTag(preset);
   const skinTag = getSkinTag(preset, state.skin);
   const mediaTag = getMediaTag(preset);
@@ -114,8 +115,14 @@ async function render() {
   const storyboard = isVideoPreset(preset) ? getStoryboardSrc(state.source) : undefined;
   const poster = isVideoPreset(preset) ? getPosterSrc(state.source) : undefined;
 
+  // Background video needs viewport dimensions instead of flex centering.
   if (preset === 'background-video') {
-    document.getElementById('root')!.innerHTML = html`
+    root.className = '';
+    root.style.cssText = 'width: 100vw; height: 100vh;';
+  }
+
+  if (preset === 'background-video') {
+    root.innerHTML = html`
       <${playerTag}>
         <${skinTag}>
           <${mediaTag} src="${src}"></${mediaTag}>
@@ -126,7 +133,7 @@ async function render() {
   }
 
   if (preset === 'audio') {
-    document.getElementById('root')!.innerHTML = html`
+    root.innerHTML = html`
       <div class="w-full max-w-xl mx-auto">
         <${playerTag}>
           <${skinTag}>
@@ -138,7 +145,7 @@ async function render() {
     return;
   }
 
-  document.getElementById('root')!.innerHTML = html`
+  root.innerHTML = html`
     <${playerTag}>
       <${skinTag} class="w-full aspect-video max-w-4xl mx-auto">
         <${mediaTag} src="${src}" playsinline crossorigin="anonymous">
