@@ -102,7 +102,7 @@ export function App() {
         sources={SOURCES}
       />
       <Preview
-        key={`${pagePath}:${styling}`}
+        key={`${pagePath}:${preset}:${styling}`}
         ref={iframeRef}
         pagePath={pagePath}
         preset={preset}
