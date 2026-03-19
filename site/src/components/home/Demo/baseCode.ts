@@ -12,7 +12,7 @@ export function generateHTMLCode(skin: Skin): string {
 
 <video-player>
   <${skinTag}>
-    <video slot="media" src="${VJS10_DEMO_VIDEO.mp4}" playsinline></video>
+    <video src="${VJS10_DEMO_VIDEO.mp4}" playsinline></video>
   </${skinTag}>
 </video-player>`;
 }

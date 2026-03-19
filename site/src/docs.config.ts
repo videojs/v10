@@ -77,6 +77,7 @@ export const sidebar: Sidebar = [
         contents: [
           { slug: 'reference/render-element' },
           { slug: 'reference/use-button' },
+          { slug: 'reference/use-container-attach' },
           { slug: 'reference/use-media-attach' },
           { slug: 'reference/use-player-context' },
           { slug: 'reference/use-selector' },
@@ -96,6 +97,7 @@ export const sidebar: Sidebar = [
         defaultOpen: false,
         contents: [
           { slug: 'reference/container-mixin' },
+          { slug: 'reference/media-attach-mixin' },
           { slug: 'reference/player-context' },
           { slug: 'reference/provider-mixin' },
           { slug: 'reference/snapshot-controller' },
