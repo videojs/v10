@@ -93,7 +93,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "build:cdn": "tsdown --config tsdown.cdn.config.ts && node scripts/cdn-copy-css.js",
+    "build:cdn": "tsdown --config tsdown.cdn.config.ts",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
     "test": "vitest run",

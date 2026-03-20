@@ -27,6 +27,5 @@ export function generateCdnCode(useCase: UseCase, skin: Skin, renderer: Renderer
     scriptLines.push(`<script type="module" src="${CDN_BASE}/media/${mediaSubpath}.js"></script>`);
   }
 
-  return `${scriptLines.join('\n')}
-<link rel="stylesheet" href="${CDN_BASE}/${name}.css" />`;
+  return scriptLines.join('\n');
 }

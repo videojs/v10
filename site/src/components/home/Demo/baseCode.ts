@@ -8,7 +8,6 @@ export function generateHTMLCode(skin: Skin): string {
   const cdnFile = skin === 'default' ? 'video' : 'video-minimal';
 
   return `<script type="module" src="${CDN_BASE}/${cdnFile}.js"></script>
-<link rel="stylesheet" href="${CDN_BASE}/${cdnFile}.css" />
 
 <video-player>
   <${skinTag}>
