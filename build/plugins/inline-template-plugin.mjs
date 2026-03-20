@@ -114,8 +114,8 @@ function minifyHtmlQuasis(quasis) {
     // 2. Collapse runs of whitespace to a single space.
     s = s.replace(/\s{2,}/g, ' ');
 
-    // 3. Remove the single remaining space between tags.
-    s = s.replace(/> </g, '><');
+    // 3. Remove whitespace between tags (structure-aware).
+    s = collapseInterTagWhitespace(s);
 
     // 4. Trim edges of the whole template (first / last quasi only).
     if (qIdx === 0) s = s.replace(/^\s+/, '');
@@ -123,6 +123,50 @@ function minifyHtmlQuasis(quasis) {
 
     return s;
   });
+}
+
+/**
+ * Remove whitespace that sits between a closing `>` and an opening `<`,
+ * while respecting quoted attribute values (so `> <` inside an attribute
+ * like `title="a > <b"` is left untouched).
+ */
+function collapseInterTagWhitespace(s) {
+  let out = '';
+  let i = 0;
+
+  while (i < s.length) {
+    if (s[i] !== '<') {
+      out += s[i++];
+      continue;
+    }
+
+    // At '<' — scan forward to the matching '>', skipping quoted attributes.
+    let j = i + 1;
+    while (j < s.length && s[j] !== '>') {
+      if (s[j] === '"' || s[j] === "'") {
+        const q = s[j++];
+        while (j < s.length && s[j] !== q) j++;
+        if (j < s.length) j++; // skip closing quote
+      } else {
+        j++;
+      }
+    }
+    if (j < s.length) j++; // include '>'
+
+    out += s.slice(i, j);
+    i = j;
+
+    // After the tag's '>', skip whitespace when followed by '<'.
+    if (i < s.length && (s[i] === ' ' || s[i] === '\t' || s[i] === '\n' || s[i] === '\r')) {
+      let k = i;
+      while (k < s.length && (s[k] === ' ' || s[k] === '\t' || s[k] === '\n' || s[k] === '\r')) k++;
+      if (k < s.length && s[k] === '<') {
+        i = k; // skip the whitespace
+      }
+    }
+  }
+
+  return out;
 }
 
 // ---------------------------------------------------------------------------
