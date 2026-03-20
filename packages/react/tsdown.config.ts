@@ -2,7 +2,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
-import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.mjs';
+import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 
 type BuildMode = 'dev' | 'default';
 

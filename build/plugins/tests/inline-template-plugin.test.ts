@@ -1,16 +1,16 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { inlineTemplatePlugin } from '../inline-template-plugin.mjs';
+import { inlineTemplatePlugin } from '../inline-template-plugin.ts';
 
 // Helper: run the plugin's transform on a code string.
-function transform(code) {
+function transform(code: string): string {
   const plugin = inlineTemplatePlugin({ minify: true });
-  const result = plugin.transform(code);
+  const result = plugin.transform?.(code, 'test.ts');
   return result?.code ?? code;
 }
 
 // Helper: extract the minified template body (between the backticks).
-function minifyHTML(template) {
+function minifyHTML(template: string): string {
   const code = `/*html*/ \`${template}\``;
   const result = transform(code);
   const match = result.match(/`([\s\S]*)`/);
@@ -70,10 +70,7 @@ describe('minifyHtmlQuasis', () => {
   });
 
   it('strips comments between elements', () => {
-    assert.equal(
-      minifyHTML('<div></div><!-- separator --><span></span>'),
-      '<div></div><span></span>'
-    );
+    assert.equal(minifyHTML('<div></div><!-- separator --><span></span>'), '<div></div><span></span>');
   });
 
   // ------- empty elements -------
@@ -100,10 +97,7 @@ describe('minifyHtmlQuasis', () => {
       <slot></slot>
       <slot name="poster"></slot>
     `;
-    assert.equal(
-      minifyHTML(input),
-      '<slot name="media"></slot><slot></slot><slot name="poster"></slot>'
-    );
+    assert.equal(minifyHTML(input), '<slot name="media"></slot><slot></slot><slot name="poster"></slot>');
   });
 
   it('preserves empty void-like elements', () => {
@@ -113,24 +107,15 @@ describe('minifyHtmlQuasis', () => {
   // ------- attribute values with special characters -------
 
   it('does not corrupt attribute values containing > <', () => {
-    assert.equal(
-      minifyHTML('<div data-expr="a > b < c"></div>'),
-      '<div data-expr="a > b < c"></div>'
-    );
+    assert.equal(minifyHTML('<div data-expr="a > b < c"></div>'), '<div data-expr="a > b < c"></div>');
   });
 
   it('does not corrupt single-quoted attribute values containing > <', () => {
-    assert.equal(
-      minifyHTML("<div data-expr='a > b < c'></div>"),
-      "<div data-expr='a > b < c'></div>"
-    );
+    assert.equal(minifyHTML("<div data-expr='a > b < c'></div>"), "<div data-expr='a > b < c'></div>");
   });
 
   it('handles attribute values with > followed by space and <', () => {
-    assert.equal(
-      minifyHTML('<div title="test > <value"></div>'),
-      '<div title="test > <value"></div>'
-    );
+    assert.equal(minifyHTML('<div title="test > <value"></div>'), '<div title="test > <value"></div>');
   });
 
   // ------- text content -------
@@ -247,12 +232,12 @@ describe('minifyCssQuasis', () => {
 describe('edge cases', () => {
   it('returns null when minify is disabled', () => {
     const plugin = inlineTemplatePlugin({ minify: false });
-    assert.equal(plugin.transform('/*html*/ `<div></div>`'), null);
+    assert.equal(plugin.transform?.('/*html*/ `<div></div>`', 'test.ts'), null);
   });
 
   it('returns null when code contains no markers', () => {
     const plugin = inlineTemplatePlugin({ minify: true });
-    assert.equal(plugin.transform('const x = 1;'), null);
+    assert.equal(plugin.transform?.('const x = 1;', 'test.ts'), null);
   });
 
   it('returns null when marker is not followed by a template literal', () => {
@@ -262,10 +247,7 @@ describe('edge cases', () => {
   });
 
   it('handles multiple HTML templates in one file', () => {
-    const code = [
-      'const a = /*html*/ `<div>  </div>`;',
-      'const b = /*html*/ `<span>  </span>`;',
-    ].join('\n');
+    const code = ['const a = /*html*/ `<div>  </div>`;', 'const b = /*html*/ `<span>  </span>`;'].join('\n');
     const result = transform(code);
     assert.match(result, /`<div><\/div>`/);
     assert.match(result, /`<span><\/span>`/);

@@ -3,8 +3,8 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
-import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.mjs';
-import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.mjs';
+import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
+import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
 
 type BuildMode = 'dev' | 'prod';
 
