@@ -1,5 +1,21 @@
 # Changelog
 
+## [10.0.0-beta.8](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.7...@videojs/core@10.0.0-beta.8) (2026-03-20)
+
+
+### Miscellaneous Chores
+
+* **@videojs/core:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.8
+    * @videojs/store bumped to 10.0.0-beta.8
+    * @videojs/utils bumped to 10.0.0-beta.8
+
 ## [10.0.0-beta.7](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.6...@videojs/core@10.0.0-beta.7) (2026-03-19)
 
 

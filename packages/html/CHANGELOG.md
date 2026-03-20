@@ -1,5 +1,26 @@
 # Changelog
 
+## [10.0.0-beta.8](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.7...@videojs/html@10.0.0-beta.8) (2026-03-20)
+
+
+### Bug Fixes
+
+* **html:** remove redundant CDN CSS files and inline background skin styles ([#1071](https://github.com/videojs/v10/issues/1071)) ([335bda5](https://github.com/videojs/v10/commit/335bda5646ba47eb3e4d9df93a7907c6a7a73800))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.8
+    * @videojs/core bumped to 10.0.0-beta.8
+    * @videojs/element bumped to 10.0.0-beta.8
+    * @videojs/store bumped to 10.0.0-beta.8
+    * @videojs/utils bumped to 10.0.0-beta.8
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.8
+    * @videojs/skins bumped to 10.0.0-beta.8
+
 ## [10.0.0-beta.7](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.6...@videojs/html@10.0.0-beta.7) (2026-03-19)
 
 
