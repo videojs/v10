@@ -126,26 +126,26 @@ const errorClasses = {
   close: cn(button.base, button.default),
 };
 
-function PlayLabel(): ReactNode {
+function PlayLabel(): string {
   const paused = usePlayer((s) => Boolean(s.paused));
   const ended = usePlayer((s) => Boolean(s.ended));
-  if (ended) return <>Replay</>;
-  return paused ? <>Play</> : <>Pause</>;
+  if (ended) return 'Replay';
+  return paused ? 'Play' : 'Pause';
 }
 
-function CaptionsLabel(): ReactNode {
+function CaptionsLabel(): string {
   const active = usePlayer((s) => Boolean(s.subtitlesShowing));
-  return active ? <>Disable captions</> : <>Enable captions</>;
+  return active ? 'Disable captions' : 'Enable captions';
 }
 
-function PiPLabel(): ReactNode {
+function PiPLabel(): string {
   const pip = usePlayer((s) => Boolean(s.pip));
-  return pip ? <>Exit picture-in-picture</> : <>Enter picture-in-picture</>;
+  return pip ? 'Exit picture-in-picture' : 'Enter picture-in-picture';
 }
 
-function FullscreenLabel(): ReactNode {
+function FullscreenLabel(): string {
   const fullscreen = usePlayer((s) => Boolean(s.fullscreen));
-  return fullscreen ? <>Exit fullscreen</> : <>Enter fullscreen</>;
+  return fullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
 }
 
 function VolumePopover(): ReactNode {
