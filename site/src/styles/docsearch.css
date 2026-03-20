@@ -116,6 +116,10 @@
   gap: 0;
 }
 
+.DocSearch-Button-Keys:has(.DocSearch-Button-Key--ctrl) {
+  gap: var(--spacing);
+}
+
 .DocSearch-Button .DocSearch-Button-Key {
   background: none;
   border: none;
@@ -135,7 +139,11 @@
 @media (width >= 40rem) {
   .DocSearch-Button {
     border: 1px solid var(--color-faded-black);
-    min-width: calc(var(--spacing) * 16.5);
+    width: calc(var(--spacing) * 16.5);
+  }
+
+  .DocSearch-Button:has(.DocSearch-Button-Key--ctrl) {
+    width: calc(var(--spacing) * 25);
   }
 
   .dark .DocSearch-Button {
