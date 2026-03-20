@@ -19,14 +19,32 @@ import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
+import { ErrorDialog } from '../error-dialog';
 import type { BaseSkinProps } from '../types';
 
 const SEEK_TIME = 10;
 
+const ERROR_CLASSNAMES = {
+  root: 'media-error',
+  dialog: 'media-error__dialog',
+  content: 'media-error__content',
+  title: 'media-error__title',
+  description: 'media-error__description',
+  actions: 'media-error__actions',
+  close: 'media-button media-button--subtle',
+};
+
 export type AudioSkinProps = BaseSkinProps;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
-  return <button ref={ref} type="button" className={cn('media-button media-button--icon', className)} {...props} />;
+  return (
+    <button
+      ref={ref}
+      type="button"
+      className={cn('media-button media-button--subtle media-button--icon', className)}
+      {...props}
+    />
+  );
 });
 
 function PlayLabel(): string {
@@ -70,6 +88,8 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
   return (
     <Container className={cn('media-default-skin media-default-skin--audio', className)} {...rest}>
       {children}
+
+      <ErrorDialog classNames={ERROR_CLASSNAMES} />
 
       <div className="media-surface media-controls">
         <Tooltip.Provider>

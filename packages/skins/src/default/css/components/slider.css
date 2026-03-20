@@ -79,6 +79,22 @@
     outline-color: oklch(from currentColor l c h / 0.25);
     outline-offset: 0;
   }
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    box-shadow: 0 0 0 2px oklch(1 0 0);
+    transition-property: opacity, scale;
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
+  }
+
+  &:not(:focus-visible)::after {
+    scale: 0.5;
+    opacity: 0;
+  }
 }
 
 .media-default-skin .media-slider:active .media-slider__thumb,

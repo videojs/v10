@@ -54,24 +54,26 @@ import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { isRenderProp } from '@/utils/use-render';
-import { ErrorDialog } from './error-dialog';
+import { ErrorDialog } from '../error-dialog';
 import type { VideoSkinProps } from './skin';
 
 const SEEK_TIME = 10;
 
+const ERROR_CLASSNAMES = {
+  root: error.root,
+  dialog: error.dialog,
+  content: error.content,
+  title: error.title,
+  description: error.description,
+  actions: error.actions,
+  close: cn(button.base, button.primary),
+};
+
 /* --------------------------------------- Components ---------------------------------------- */
 
-const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'> & { variant?: 'icon' }>(function Button(
-  { className, variant, ...props },
-  ref
-) {
+const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
   return (
-    <button
-      ref={ref}
-      type="button"
-      className={cn(button.base, variant === 'icon' ? button.icon : button.default, className)}
-      {...props}
-    />
+    <button ref={ref} type="button" className={cn(button.base, button.subtle, button.icon, className)} {...props} />
   );
 });
 
@@ -116,16 +118,6 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
   );
 });
 
-const errorClasses = {
-  root: error.root,
-  dialog: error.dialog,
-  content: error.content,
-  title: error.title,
-  description: error.description,
-  actions: error.actions,
-  close: cn(button.base, button.default),
-};
-
 function PlayLabel(): string {
   const paused = usePlayer((s) => Boolean(s.paused));
   const ended = usePlayer((s) => Boolean(s.ended));
@@ -152,7 +144,7 @@ function VolumePopover(): ReactNode {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
 
   const muteButton = (
-    <MuteButton className={iconState.mute.button} render={<Button variant="icon" />}>
+    <MuteButton className={iconState.mute.button} render={<Button />}>
       <VolumeOffIcon className={cn(icon, iconState.mute.volumeOff)} />
       <VolumeLowIcon className={cn(icon, iconState.mute.volumeLow)} />
       <VolumeHighIcon className={cn(icon, iconState.mute.volumeHigh)} />
@@ -203,7 +195,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
         )}
       />
 
-      <ErrorDialog classes={errorClasses} />
+      <ErrorDialog classNames={ERROR_CLASSNAMES} />
 
       <Controls.Root
         data-controls="" // Used as a hook for Tailwind has-[] styles
@@ -213,7 +205,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           <Tooltip.Root side="top">
             <Tooltip.Trigger
               render={
-                <PlayButton className={iconState.play.button} render={<Button variant="icon" />}>
+                <PlayButton className={iconState.play.button} render={<Button />}>
                   <RestartIcon className={cn(icon, iconState.play.restart)} />
                   <PlayIcon className={cn(icon, iconState.play.play)} />
                   <PauseIcon className={cn(icon, iconState.play.pause)} />
@@ -228,7 +220,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           <Tooltip.Root side="top">
             <Tooltip.Trigger
               render={
-                <SeekButton seconds={-SEEK_TIME} className={seek.button} render={<Button variant="icon" />}>
+                <SeekButton seconds={-SEEK_TIME} className={seek.button} render={<Button />}>
                   <span className={iconContainer}>
                     <SeekIcon className={cn(icon, iconFlipped)} />
                     <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
@@ -242,7 +234,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           <Tooltip.Root side="top">
             <Tooltip.Trigger
               render={
-                <SeekButton seconds={SEEK_TIME} className={seek.button} render={<Button variant="icon" />}>
+                <SeekButton seconds={SEEK_TIME} className={seek.button} render={<Button />}>
                   <span className={iconContainer}>
                     <SeekIcon className={icon} />
                     <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
@@ -271,9 +263,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           </Time.Group>
 
           <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={<PlaybackRateButton className={playbackRate.button} render={<Button variant="icon" />} />}
-            />
+            <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
             <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
           </Tooltip.Root>
 
@@ -282,7 +272,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           <Tooltip.Root side="top">
             <Tooltip.Trigger
               render={
-                <CaptionsButton className={iconState.captions.button} render={<Button variant="icon" />}>
+                <CaptionsButton className={iconState.captions.button} render={<Button />}>
                   <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
                   <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
                 </CaptionsButton>
@@ -296,7 +286,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           <Tooltip.Root side="top">
             <Tooltip.Trigger
               render={
-                <PiPButton className={iconState.pip.button} render={<Button variant="icon" />}>
+                <PiPButton className={iconState.pip.button} render={<Button />}>
                   <PipEnterIcon className={cn(icon, iconState.pip.off)} />
                   <PipExitIcon className={cn(icon, iconState.pip.on)} />
                 </PiPButton>
@@ -310,7 +300,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           <Tooltip.Root side="top">
             <Tooltip.Trigger
               render={
-                <FullscreenButton className={iconState.fullscreen.button} render={<Button variant="icon" />}>
+                <FullscreenButton className={iconState.fullscreen.button} render={<Button />}>
                   <FullscreenEnterIcon className={cn(icon, iconState.fullscreen.enter)} />
                   <FullscreenExitIcon className={cn(icon, iconState.fullscreen.exit)} />
                 </FullscreenButton>

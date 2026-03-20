@@ -87,6 +87,7 @@ export const controls = cn(
   // Position
   'absolute bottom-3 inset-x-3',
   '[color:var(--media-color-primary,oklch(1_0_0))] z-10',
+  'peer-data-open/error:hidden',
   'ease-out origin-bottom',
   'duration-(--media-controls-transition-duration)',
   'delay-(--media-controls-transition-delay)',
@@ -153,7 +154,9 @@ export const bufferingIndicator = {
 
 export const error = {
   ...baseError,
-  dialog: cn(baseError.dialog, surface),
+  dialog: cn(baseError.dialog, surface, 'text-shadow-[0_1px_0_oklch(0_0_0/0.25)]'),
+  content: cn(baseError.content, 'text-shadow-inherit'),
+  title: cn(baseError.title, 'text-base'),
 };
 
 /* ==========================================================================

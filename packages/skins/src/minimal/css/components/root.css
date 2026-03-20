@@ -21,4 +21,6 @@
   letter-spacing: normal;
   -webkit-font-smoothing: auto;
   -moz-osx-font-smoothing: auto;
+
+  --media-controls-radius: var(--media-border-radius, 1rem);
 }

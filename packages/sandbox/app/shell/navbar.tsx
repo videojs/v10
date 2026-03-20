@@ -66,7 +66,7 @@ export function Navbar({
 
       <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-800" />
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 overflow-auto p-2">
         <Select
           label="Platform"
           value={platform}

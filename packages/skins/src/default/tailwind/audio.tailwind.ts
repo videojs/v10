@@ -13,8 +13,8 @@ import { surface as baseSurface } from './components/surface';
 
 export const root = cn(
   baseRoot,
-  '[--media-controls-text-color:var(--media-color-primary,oklch(0_0_0))]',
-  'dark:[--media-controls-text-color:var(--media-color-primary,oklch(1_0_0))]'
+  '[--media-text-color:var(--media-color-primary,oklch(0_0_0))]',
+  'dark:[--media-text-color:var(--media-color-primary,oklch(1_0_0))]'
 );
 
 /* ==========================================================================
@@ -39,7 +39,7 @@ export const surface = cn(
    Controls
    ========================================================================== */
 
-export const controls = cn(baseControls, surface, 'text-(--media-controls-text-color)');
+export const controls = cn(baseControls, surface, 'text-(--media-text-color)', 'peer-data-open/error:[&_*]:invisible');
 
 /* ==========================================================================
    Sliders
@@ -75,7 +75,16 @@ export const bufferingIndicator = {
 
 export const error = {
   ...baseError,
-  dialog: cn(baseError.dialog, surface),
+  dialog: cn(
+    'absolute inset-0 z-20 flex items-center gap-3 rounded-full px-5 pr-0.5',
+    'bg-(--media-surface-background-color) text-(--media-text-color)',
+    'backdrop-blur-lg backdrop-saturate-150',
+    'transition-[opacity,filter] duration-300 delay-100 ease-out',
+    'group-data-starting-style/error:opacity-0 group-data-starting-style/error:blur-[4px]',
+    'group-data-ending-style/error:opacity-0 group-data-ending-style/error:blur-[4px]',
+    'motion-reduce:duration-100 motion-reduce:delay-0'
+  ),
+  content: 'flex flex-1 items-center gap-2',
 };
 
 /* ==========================================================================

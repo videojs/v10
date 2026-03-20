@@ -1,9 +1,9 @@
 import { cn } from '@videojs/utils/style';
 
 export const error = {
-  root: 'peer/error group/error flex absolute inset-0 z-20 items-center justify-center',
+  root: 'peer/error group/error flex absolute inset-0 z-20 items-center justify-center outline-none',
   dialog: cn(
-    'flex flex-col gap-3 max-w-64 p-4 text-white text-sm',
+    'flex flex-col gap-3 max-w-64 p-4 text-white',
     'text-shadow-2xs text-shadow-black/50',
     // Animation
     'transition-[opacity,scale,transform] duration-500 delay-100',

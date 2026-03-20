@@ -5,7 +5,7 @@ import { type ReactNode, useRef } from 'react';
 import { usePlayer } from '@/player/context';
 import { AlertDialog } from '@/ui/alert-dialog';
 
-export interface ErrorDialogClasses {
+export interface ErrorDialogClassNames {
   root?: string;
   dialog?: string;
   content?: string;
@@ -15,7 +15,7 @@ export interface ErrorDialogClasses {
   close?: string;
 }
 
-export function ErrorDialog({ classes }: { classes?: ErrorDialogClasses }): ReactNode {
+export function ErrorDialog({ classNames }: { classNames?: ErrorDialogClassNames }): ReactNode {
   const errorState = usePlayer(selectError);
   const lastError = useRef(errorState?.error);
 
@@ -25,21 +25,21 @@ export function ErrorDialog({ classes }: { classes?: ErrorDialogClasses }): Reac
 
   return (
     <AlertDialog.Root
-      open={!!errorState.error}
+      open={Boolean(errorState.error)}
       onOpenChange={(open) => {
         if (!open) errorState.dismissError();
       }}
     >
-      <AlertDialog.Popup className={classes?.root}>
-        <div className={classes?.dialog}>
-          <div className={classes?.content}>
-            <AlertDialog.Title className={classes?.title}>Something went wrong.</AlertDialog.Title>
-            <AlertDialog.Description className={classes?.description}>
-              {lastError.current?.message ?? 'An error occurred while trying to play the video. Please try again.'}
+      <AlertDialog.Popup className={classNames?.root}>
+        <div className={classNames?.dialog}>
+          <div className={classNames?.content}>
+            <AlertDialog.Title className={classNames?.title}>Something went wrong.</AlertDialog.Title>
+            <AlertDialog.Description className={classNames?.description}>
+              {lastError.current?.message ?? 'An error occurred. Please try again.'}
             </AlertDialog.Description>
           </div>
-          <div className={classes?.actions}>
-            <AlertDialog.Close className={classes?.close}>OK</AlertDialog.Close>
+          <div className={classNames?.actions}>
+            <AlertDialog.Close className={classNames?.close}>OK</AlertDialog.Close>
           </div>
         </div>
       </AlertDialog.Popup>

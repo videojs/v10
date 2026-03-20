@@ -66,6 +66,7 @@ export type AudioFeatures = [
   PlayerFeature<MediaTimeState>,
   PlayerFeature<MediaSourceState>,
   PlayerFeature<MediaBufferState>,
+  PlayerFeature<MediaErrorState>,
 ];
 
 // TODO: Define background video features (e.g., playback, source, buffer)

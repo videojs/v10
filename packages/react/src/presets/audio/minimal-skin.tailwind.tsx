@@ -12,6 +12,7 @@ import {
   button,
   buttonGroup,
   controls,
+  error,
   icon,
   iconContainer,
   iconFlipped,
@@ -34,23 +35,26 @@ import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
+import { ErrorDialog } from '../error-dialog';
 import type { MinimalAudioSkinProps } from './minimal-skin';
 
 const SEEK_TIME = 10;
 
+const ERROR_CLASSNAMES = {
+  root: error.root,
+  dialog: error.dialog,
+  content: error.content,
+  title: error.title,
+  description: error.description,
+  actions: error.actions,
+  close: cn(button.base, button.subtle),
+};
+
 /* --------------------------------------- Components ---------------------------------------- */
 
-const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'> & { variant?: 'icon' }>(function Button(
-  { className, variant, ...props },
-  ref
-) {
+const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
   return (
-    <button
-      ref={ref}
-      type="button"
-      className={cn(button.base, variant === 'icon' ? button.icon : button.default, className)}
-      {...props}
-    />
+    <button ref={ref} type="button" className={cn(button.base, button.subtle, button.icon, className)} {...props} />
   );
 });
 
@@ -106,7 +110,7 @@ function VolumePopover(): ReactNode {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
 
   const muteButton = (
-    <MuteButton className={iconState.mute.button} render={<Button variant="icon" />}>
+    <MuteButton className={iconState.mute.button} render={<Button />}>
       <VolumeOffIcon className={cn(icon, iconState.mute.volumeOff)} />
       <VolumeLowIcon className={cn(icon, iconState.mute.volumeLow)} />
       <VolumeHighIcon className={cn(icon, iconState.mute.volumeHigh)} />
@@ -139,13 +143,15 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
     <Container className={cn(root, className)} {...rest}>
       {children}
 
+      <ErrorDialog classNames={ERROR_CLASSNAMES} />
+
       <div className={controls}>
         <Tooltip.Provider>
           <div className={buttonGroup}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <PlayButton className={iconState.play.button} render={<Button variant="icon" />}>
+                  <PlayButton className={iconState.play.button} render={<Button />}>
                     <RestartIcon className={cn(icon, iconState.play.restart)} />
                     <PlayIcon className={cn(icon, iconState.play.play)} />
                     <PauseIcon className={cn(icon, iconState.play.pause)} />
@@ -160,7 +166,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={-SEEK_TIME} className={seek.button} render={<Button variant="icon" />}>
+                  <SeekButton seconds={-SEEK_TIME} className={seek.button} render={<Button />}>
                     <span className={iconContainer}>
                       <SeekIcon className={cn(icon, iconFlipped)} />
                       <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
@@ -174,7 +180,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={SEEK_TIME} className={seek.button} render={<Button variant="icon" />}>
+                  <SeekButton seconds={SEEK_TIME} className={seek.button} render={<Button />}>
                     <span className={iconContainer}>
                       <SeekIcon className={icon} />
                       <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
@@ -204,9 +210,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
 
           <div className={buttonGroup}>
             <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={<PlaybackRateButton className={playbackRate.button} render={<Button variant="icon" />} />}
-              />
+              <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
               <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
             </Tooltip.Root>
 

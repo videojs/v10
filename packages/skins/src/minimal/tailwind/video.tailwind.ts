@@ -1,5 +1,6 @@
 import { cn } from '@videojs/utils/style';
 import { controls as baseControls } from './components/controls';
+import { error as baseError } from './components/error';
 import { popup as basePopup } from './components/popup';
 import { preview as basePreview } from './components/preview';
 import { root as baseRoot } from './components/root';
@@ -24,6 +25,7 @@ export const root = (isShadowDOM: boolean) =>
         !isShadowDOM,
     },
     '[--media-video-border-radius:var(--media-border-radius,0.75rem)]',
+    '[--media-controls-padding:0.375rem]',
     '[--media-controls-transition-duration:100ms]',
     '[--media-controls-transition-delay:0ms]',
     '[@media(pointer:fine)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-delay:500ms]',
@@ -64,8 +66,9 @@ export const controls = cn(
   baseControls,
   // Position
   'absolute bottom-0 inset-x-0',
-  'pt-8 px-1.5 pb-1.5 gap-2',
+  'pt-8 px-(--media-controls-padding) pb-(--media-controls-padding) gap-2',
   '[color:var(--media-color-primary,oklch(1_0_0))] z-10',
+  'peer-data-open/error:hidden',
   'ease-out',
   'duration-(--media-controls-transition-duration)',
   'delay-(--media-controls-transition-delay)',
@@ -81,6 +84,17 @@ export const controls = cn(
   '@sm/media-root:pt-10 @sm/media-root:px-3 @sm/media-root:pb-3',
   '@sm/media-root:gap-3.5'
 );
+
+/* ==========================================================================
+   Error
+   ========================================================================== */
+
+export const error = {
+  ...baseError,
+  root: cn(baseError.root, 'pointer-events-none outline-none'),
+  dialog: cn(baseError.dialog, 'pointer-events-auto'),
+  title: cn(baseError.title, 'text-lg'),
+};
 
 /* ==========================================================================
    Preview
@@ -132,7 +146,6 @@ export { tooltipState } from '../../shared/tailwind/tooltip-state';
 export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
-export { error } from './components/error';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';

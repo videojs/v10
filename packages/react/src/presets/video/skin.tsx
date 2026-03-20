@@ -35,26 +35,33 @@ import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { isRenderProp } from '@/utils/use-render';
+import { ErrorDialog } from '../error-dialog';
 import type { BaseVideoSkinProps } from '../types';
-import { ErrorDialog } from './error-dialog';
 
 const SEEK_TIME = 10;
 
-export type VideoSkinProps = BaseVideoSkinProps;
-
-const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
-  return <button ref={ref} type="button" className={cn('media-button media-button--icon', className)} {...props} />;
-});
-
-const errorClasses = {
+const ERROR_CLASSNAMES = {
   root: 'media-error',
-  dialog: 'media-error__dialog media-surface',
+  dialog: 'media-error__dialog',
   content: 'media-error__content',
   title: 'media-error__title',
   description: 'media-error__description',
   actions: 'media-error__actions',
-  close: 'media-button',
+  close: 'media-button media-button--subtle',
 };
+
+export type VideoSkinProps = BaseVideoSkinProps;
+
+const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
+  return (
+    <button
+      ref={ref}
+      type="button"
+      className={cn('media-button media-button--subtle media-button--icon', className)}
+      {...props}
+    />
+  );
+});
 
 function PlayLabel(): string {
   const paused = usePlayer((s) => Boolean(s.paused));
@@ -127,7 +134,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
         )}
       />
 
-      <ErrorDialog classes={errorClasses} />
+      <ErrorDialog classNames={ERROR_CLASSNAMES} />
 
       <Controls.Root className="media-surface media-controls">
         <Tooltip.Provider>
