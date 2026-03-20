@@ -26,11 +26,11 @@ When we use a platform feature that hasn't landed in all supported browsers yet,
 
 ## Rendering contexts
 
-### WebViews
+### WebViews and PWAs
 
-A [WebView](https://developer.mozilla.org/en-US/docs/Glossary/WebView) is a browser engine embedded inside a native app. WebViews on iOS (WKWebView) and Android (Android WebView) behave differently from the full browser; autoplay policies, fullscreen APIs, and hardware acceleration can vary.
+A [WebView](https://developer.mozilla.org/en-US/docs/Glossary/WebView) is a browser engine embedded inside a native app. WebViews on iOS (WKWebView) and Android (Android WebView) behave differently from the full browser; autoplay policies, fullscreen APIs, and hardware acceleration can vary. Progressive Web Apps (PWAs) installed via "Add to Homescreen" can exhibit similar quirks, since they also run in a limited browser context rather than a full browser tab.
 
-Video.js 10 beta targets only standard browser environments. If you embed a player inside a native app, test thoroughly for your specific platform and WebView version.
+Video.js 10 beta targets only standard browser environments. If you embed a player inside a native app or PWA, test thoroughly for your specific platform and runtime.
 
 ### Smart TVs and set-top boxes
 
