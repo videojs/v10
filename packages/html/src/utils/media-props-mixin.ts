@@ -2,15 +2,19 @@ import type { AnyConstructor } from '@videojs/utils/types';
 
 type AnyClass = abstract new (...args: any[]) => any;
 
-function getSettableProps(DelegateClass: AnyClass): Set<string> {
-  const props = new Set<string>();
+function camelToKebab(str: string): string {
+  return str.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
+}
+
+function buildAttrPropMap(DelegateClass: AnyClass): Map<string, string> {
+  const map = new Map<string, string>();
   for (let proto = DelegateClass.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
     for (const key of Object.getOwnPropertyNames(proto)) {
       const desc = Object.getOwnPropertyDescriptor(proto, key);
-      if (desc?.set) props.add(key);
+      if (desc?.set) map.set(camelToKebab(key), key);
     }
   }
-  return props;
+  return map;
 }
 
 /**
@@ -23,27 +27,28 @@ export function MediaPropsMixin<Base extends AnyConstructor<HTMLElement>>(
   BaseClass: Base,
   DelegateClass: AnyClass
 ): Base {
-  const delegateProps = getSettableProps(DelegateClass);
+  const attrToProp = buildAttrPropMap(DelegateClass);
 
   class MediaPropsElement extends (BaseClass as any) {
     static get observedAttributes(): string[] {
       // biome-ignore lint/complexity/noThisInStatic: intentional use of super
-      return [...new Set([...(super.observedAttributes ?? []), ...delegateProps])];
+      return [...new Set([...(super.observedAttributes ?? []), ...attrToProp.keys()])];
     }
 
     static getTemplateHTML(attrs: Record<string, string>): string {
       const filtered = { ...attrs };
-      for (const key of delegateProps) {
-        delete filtered[key];
+      for (const attr of attrToProp.keys()) {
+        delete filtered[attr];
       }
       // biome-ignore lint/complexity/noThisInStatic: intentional use of super
       return super.getTemplateHTML(filtered);
     }
 
     attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
-      if (delegateProps.has(attrName)) {
+      const prop = attrToProp.get(attrName);
+      if (prop) {
         if (oldValue !== newValue) {
-          (this as any)[attrName] = typeof (this as any)[attrName] === 'boolean' ? newValue !== null : (newValue ?? '');
+          (this as any)[prop] = typeof (this as any)[prop] === 'boolean' ? newValue !== null : (newValue ?? '');
         }
         return;
       }

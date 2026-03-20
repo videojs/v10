@@ -5,6 +5,13 @@ import { CustomVideoElement } from '../custom-media-element';
 import { VideoProxy } from '../proxy';
 import { HlsMediaTextTracksMixin } from './text-tracks';
 
+export const PlaybackTypes = {
+  MSE: 'mse',
+  NATIVE: 'native',
+};
+
+export type PlaybackType = (typeof PlaybackTypes)[keyof typeof PlaybackTypes];
+
 const defaultConfig = {
   backBufferLength: 30,
   renderTextTracksNatively: false,
@@ -19,14 +26,17 @@ class HlsMediaDelegateBase implements Delegate {
   #loadRequested?: Promise<void> | null;
   #src: string = '';
   #debug: boolean = false;
+  #preferPlayback: PlaybackType | undefined = 'mse';
 
   constructor() {
     this.#initialize();
   }
 
   #initialize(): void {
-    this.destroy();
+    this.#engine?.destroy();
+    this.#engine = null;
 
+    if (this.#preferPlayback === PlaybackTypes.NATIVE) return;
     if (!Hls.isSupported()) return;
 
     this.#engine = new Hls({
@@ -34,7 +44,9 @@ class HlsMediaDelegateBase implements Delegate {
       debug: this.#debug,
     });
 
-    this.#engine.attachMedia(this.#target as HTMLMediaElement);
+    if (this.#target) {
+      this.#engine.attachMedia(this.#target as HTMLMediaElement);
+    }
   }
 
   get engine(): Hls | null {
@@ -49,9 +61,42 @@ class HlsMediaDelegateBase implements Delegate {
     if (this.#debug === value) return;
     this.#debug = value;
 
-    // If the load has not started yet, re-initialize with the new debug value.
     if (this.#loadRequested) {
       this.#initialize();
+    }
+  }
+
+  get preferPlayback(): PlaybackType | undefined {
+    return this.#preferPlayback;
+  }
+
+  set preferPlayback(value: PlaybackType | undefined) {
+    if (this.#preferPlayback === value) return;
+    this.#preferPlayback = value;
+    this.#initialize();
+  }
+
+  set src(src: string) {
+    this.#src = src;
+    this.#requestLoad();
+  }
+
+  get src(): string {
+    return this.#src;
+  }
+
+  async #requestLoad() {
+    if (this.#loadRequested) return;
+    await (this.#loadRequested = Promise.resolve());
+    this.#loadRequested = null;
+    this.load();
+  }
+
+  load(): void {
+    if (this.#engine) {
+      this.#engine.loadSource(this.#src);
+    } else if (this.#target) {
+      (this.#target as HTMLMediaElement).src = this.#src;
     }
   }
 
@@ -69,26 +114,6 @@ class HlsMediaDelegateBase implements Delegate {
     this.#engine?.destroy();
     this.#engine = null;
     this.#target = null;
-  }
-
-  async #requestLoad() {
-    if (this.#loadRequested) return;
-    await (this.#loadRequested = Promise.resolve());
-    this.#loadRequested = null;
-    this.load();
-  }
-
-  load(): void {
-    this.#engine?.loadSource(this.#src);
-  }
-
-  set src(src: string) {
-    this.#src = src;
-    this.#requestLoad();
-  }
-
-  get src(): string {
-    return this.#src;
   }
 }
 
