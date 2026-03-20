@@ -157,6 +157,7 @@ useImperativeHandle(actionsRef, () => ({ open, close }));
 - Accept `ReactElement` or `(props, state) => ReactElement`
 - Use `cloneElement` for element form
 - Use `mergeProps` to combine internal + external props
+- **Do not** accept component references (`render={Component}`) — calling components as plain functions breaks hooks reconciliation
 
 **`mergeProps` behavior:**
 

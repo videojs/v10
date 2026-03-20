@@ -78,6 +78,10 @@ const SliderFill = forwardRef<HTMLDivElement, ComponentProps<'div'> & { type?: '
   );
 });
 
+const SliderBuffer = forwardRef<HTMLDivElement, ComponentProps<'div'>>(function SliderBuffer(props, ref) {
+  return <SliderFill type="buffer" ref={ref} {...props} />;
+});
+
 const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persistent?: boolean }>(function SliderThumb(
   { persistent, className, ...props },
   ref
@@ -102,15 +106,11 @@ function VolumePopover(): ReactNode {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
 
   const muteButton = (
-    <MuteButton
-      render={(props) => (
-        <Button variant="icon" {...props} className={iconState.mute.button}>
-          <VolumeOffIcon className={cn(icon, iconState.mute.volumeOff)} />
-          <VolumeLowIcon className={cn(icon, iconState.mute.volumeLow)} />
-          <VolumeHighIcon className={cn(icon, iconState.mute.volumeHigh)} />
-        </Button>
-      )}
-    />
+    <MuteButton className={iconState.mute.button} render={<Button variant="icon" />}>
+      <VolumeOffIcon className={cn(icon, iconState.mute.volumeOff)} />
+      <VolumeLowIcon className={cn(icon, iconState.mute.volumeLow)} />
+      <VolumeHighIcon className={cn(icon, iconState.mute.volumeHigh)} />
+    </MuteButton>
   );
 
   if (volumeUnsupported) return muteButton;
@@ -119,9 +119,9 @@ function VolumePopover(): ReactNode {
     <Popover.Root openOnHover delay={200} closeDelay={100} side="left">
       <Popover.Trigger render={muteButton} />
       <Popover.Popup className={cn(popup.volume)}>
-        <VolumeSlider.Root orientation="horizontal" thumbAlignment="edge" render={(props) => <SliderRoot {...props} />}>
-          <VolumeSlider.Track render={(props) => <SliderTrack {...props} />}>
-            <VolumeSlider.Fill render={(props) => <SliderFill {...props} />} />
+        <VolumeSlider.Root orientation="horizontal" thumbAlignment="edge" render={<SliderRoot />}>
+          <VolumeSlider.Track render={<SliderTrack />}>
+            <VolumeSlider.Fill render={<SliderFill />} />
           </VolumeSlider.Track>
           <VolumeSlider.Thumb render={(props) => <SliderThumb persistent {...props} />} />
         </VolumeSlider.Root>
@@ -145,15 +145,11 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <PlayButton
-                    render={(props) => (
-                      <Button variant="icon" {...props} className={iconState.play.button}>
-                        <RestartIcon className={cn(icon, iconState.play.restart)} />
-                        <PlayIcon className={cn(icon, iconState.play.play)} />
-                        <PauseIcon className={cn(icon, iconState.play.pause)} />
-                      </Button>
-                    )}
-                  />
+                  <PlayButton className={iconState.play.button} render={<Button variant="icon" />}>
+                    <RestartIcon className={cn(icon, iconState.play.restart)} />
+                    <PlayIcon className={cn(icon, iconState.play.play)} />
+                    <PauseIcon className={cn(icon, iconState.play.pause)} />
+                  </PlayButton>
                 }
               />
               <Tooltip.Popup className={cn(popup.tooltip)}>
@@ -164,17 +160,12 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <SeekButton
-                    seconds={-SEEK_TIME}
-                    render={(props) => (
-                      <Button variant="icon" {...props} className={seek.button}>
-                        <span className={iconContainer}>
-                          <SeekIcon className={cn(icon, iconFlipped)} />
-                          <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
-                        </span>
-                      </Button>
-                    )}
-                  />
+                  <SeekButton seconds={-SEEK_TIME} className={seek.button} render={<Button variant="icon" />}>
+                    <span className={iconContainer}>
+                      <SeekIcon className={cn(icon, iconFlipped)} />
+                      <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
+                    </span>
+                  </SeekButton>
                 }
               />
               <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
@@ -183,17 +174,12 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <SeekButton
-                    seconds={SEEK_TIME}
-                    render={(props) => (
-                      <Button variant="icon" {...props} className={seek.button}>
-                        <span className={iconContainer}>
-                          <SeekIcon className={icon} />
-                          <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
-                        </span>
-                      </Button>
-                    )}
-                  />
+                  <SeekButton seconds={SEEK_TIME} className={seek.button} render={<Button variant="icon" />}>
+                    <span className={iconContainer}>
+                      <SeekIcon className={icon} />
+                      <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
+                    </span>
+                  </SeekButton>
                 }
               />
               <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
@@ -207,23 +193,19 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
               <Time.Value type="duration" className={time.duration} />
             </Time.Group>
 
-            <TimeSlider.Root render={(props) => <SliderRoot {...props} />}>
-              <TimeSlider.Track render={(props) => <SliderTrack {...props} />}>
-                <TimeSlider.Fill render={(props) => <SliderFill {...props} />} />
-                <TimeSlider.Buffer render={(props) => <SliderFill type="buffer" {...props} />} />
+            <TimeSlider.Root render={<SliderRoot />}>
+              <TimeSlider.Track render={<SliderTrack />}>
+                <TimeSlider.Fill render={<SliderFill />} />
+                <TimeSlider.Buffer render={<SliderBuffer />} />
               </TimeSlider.Track>
-              <TimeSlider.Thumb render={(props) => <SliderThumb {...props} />} />
+              <TimeSlider.Thumb render={<SliderThumb />} />
             </TimeSlider.Root>
           </div>
 
           <div className={buttonGroup}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger
-                render={
-                  <PlaybackRateButton
-                    render={(props) => <Button variant="icon" {...props} className={playbackRate.button} />}
-                  />
-                }
+                render={<PlaybackRateButton className={playbackRate.button} render={<Button variant="icon" />} />}
               />
               <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
             </Tooltip.Root>
