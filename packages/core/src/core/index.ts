@@ -1,3 +1,4 @@
+export type { InferDelegateProps } from './media/delegate';
 export * from './media/proxy';
 export * from './media/state';
 export * from './ui/alert-dialog/alert-dialog-core';

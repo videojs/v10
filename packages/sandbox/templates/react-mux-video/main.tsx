@@ -31,7 +31,7 @@ function App() {
         styling={styling}
         className="w-full aspect-video max-w-4xl mx-auto"
       >
-        <MuxVideo src={SOURCES[source].url} playsInline crossOrigin="anonymous">
+        <MuxVideo src={SOURCES[source].url} debug playsInline crossOrigin="anonymous">
           <Storyboard src={storyboard} />
         </MuxVideo>
       </VideoSkinComponent>

@@ -1,26 +1,11 @@
-import { MuxCustomMedia } from '@videojs/core/dom/media/mux';
+import { MuxCustomMedia, MuxMediaDelegate } from '@videojs/core/dom/media/mux';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
+import { MediaPropsMixin } from '../../utils/media-props-mixin';
 
-export class MuxVideo extends MediaAttachMixin(MuxCustomMedia) {
-  static getTemplateHTML(attrs: Record<string, string>): string {
-    const { src, ...rest } = attrs;
-    // biome-ignore lint/complexity/noThisInStatic: intentional use of super
-    return super.getTemplateHTML(rest);
-  }
-
+export class MuxVideo extends MediaPropsMixin(MediaAttachMixin(MuxCustomMedia), MuxMediaDelegate) {
   constructor() {
     super();
     this.attach(this.target);
-  }
-
-  attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
-    if (attrName !== 'src') {
-      super.attributeChangedCallback(attrName, oldValue, newValue);
-    }
-
-    if (attrName === 'src' && oldValue !== newValue) {
-      this.src = newValue ?? '';
-    }
   }
 
   disconnectedCallback(): void {
