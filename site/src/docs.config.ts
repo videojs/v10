@@ -24,6 +24,7 @@ export const sidebar: Sidebar = [
       { slug: 'concepts/overview' },
       { slug: 'how-to/build-with-ai' },
       { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
+      { slug: 'concepts/browser-support' },
     ],
   },
   {
