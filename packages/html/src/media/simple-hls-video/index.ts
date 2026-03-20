@@ -21,5 +21,9 @@ export class SimpleHlsVideo extends MediaAttachMixin(SimpleHlsCustomMedia) {
     if (attrName === 'src' && oldValue !== newValue) {
       this.src = newValue ?? '';
     }
+
+    if (attrName === 'preload' && oldValue !== newValue) {
+      this.preload = (newValue ?? '') as '' | 'none' | 'metadata' | 'auto';
+    }
   }
 }

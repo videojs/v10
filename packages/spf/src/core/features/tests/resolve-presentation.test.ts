@@ -492,7 +492,7 @@ variant1.m3u8`)
       cleanup();
     });
 
-    it('updates preload when mediaElement preload changes', () => {
+    it('does not override preload when mediaElement changes and preload is already set', () => {
       interface State {
         presentation?: AddressableObject | Presentation | undefined;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
@@ -512,23 +512,24 @@ variant1.m3u8`)
         mediaElement: video,
       });
 
-      // Start syncing
+      // Start syncing — initial inference from element
       const cleanup = syncPreloadAttribute(state, owners);
 
       expect(state.current.preload).toBe('auto');
 
-      // Change to different mediaElement with different preload
+      // Swap to a different mediaElement with a different preload value.
+      // Since preload is already set, the new element's value is ignored.
       const updatedVideo = { preload: 'metadata' } as PlatformOwners['mediaElement'];
       owners.patch({ mediaElement: updatedVideo });
-      owners.flush(); // Flush owners to trigger subscription
-      state.flush(); // Flush state to apply preload update
+      owners.flush();
+      state.flush();
 
-      expect(state.current.preload).toBe('metadata');
+      expect(state.current.preload).toBe('auto');
 
       cleanup();
     });
 
-    it('sets preload to undefined when mediaElement is removed', () => {
+    it('does not clear preload when mediaElement is removed and preload is already set', () => {
       interface State {
         presentation?: AddressableObject | Presentation | undefined;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
@@ -549,10 +550,10 @@ variant1.m3u8`)
 
       const cleanup = syncPreloadAttribute(state, owners);
 
-      // Remove media element
       owners.patch({ mediaElement: undefined });
 
-      expect(state.current.preload).toBeUndefined();
+      // Preload was already set — removing the element does not clear it.
+      expect(state.current.preload).toBe('auto');
 
       cleanup();
     });
