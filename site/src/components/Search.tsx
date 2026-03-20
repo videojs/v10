@@ -3,7 +3,6 @@ import { useStore } from '@nanostores/react';
 import { GITHUB_REPO_URL } from '@/consts';
 import { DOCSEARCH_API_KEY, DOCSEARCH_APP_ID, DOCSEARCH_BLOG_INDEX, DOCSEARCH_DOCS_INDEX } from '@/search.config';
 import { currentFramework } from '@/stores/preferences';
-import '@docsearch/css';
 
 interface SearchProps {
   className?: string;
