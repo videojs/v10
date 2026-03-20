@@ -6,7 +6,6 @@ import {
   isCodecSupported,
   supportsManagedMediaSource,
   supportsMediaSource,
-  waitForSourceOpen,
 } from '../mediasource-setup';
 
 describe('supportsMediaSource', () => {
@@ -61,125 +60,13 @@ describe('attachMediaSource', () => {
   });
 });
 
-describe('waitForSourceOpen', () => {
-  it('should resolve immediately if already open', async () => {
-    const mediaSource = createMediaSource();
-    const mediaElement = document.createElement('video');
-    attachMediaSource(mediaSource, mediaElement);
-
-    // Wait for actual sourceopen
-    await waitForSourceOpen(mediaSource);
-
-    expect(mediaSource.readyState).toBe('open');
-  });
-
-  it('should reject when signal is aborted before call', async () => {
-    const mediaSource = createMediaSource();
-    const controller = new AbortController();
-
-    controller.abort();
-
-    await expect(waitForSourceOpen(mediaSource, controller.signal)).rejects.toThrow('Aborted');
-  });
-
-  it('should reject when signal is aborted while waiting', async () => {
-    const mediaSource = createMediaSource();
-    const mediaElement = document.createElement('video');
-    const controller = new AbortController();
-
-    attachMediaSource(mediaSource, mediaElement);
-
-    const promise = waitForSourceOpen(mediaSource, controller.signal);
-
-    // Abort while waiting
-    controller.abort();
-
-    await expect(promise).rejects.toThrow('Aborted');
-  });
-
-  it('should clean up listeners after successful open', async () => {
-    const mediaSource = createMediaSource();
-    const mediaElement = document.createElement('video');
-    const controller = new AbortController();
-
-    attachMediaSource(mediaSource, mediaElement);
-
-    await waitForSourceOpen(mediaSource, controller.signal);
-
-    // After resolution, aborting external signal shouldn't cause issues
-    expect(() => controller.abort()).not.toThrow();
-
-    // MediaSource should still be open
-    expect(mediaSource.readyState).toBe('open');
-  });
-
-  it('should clean up listeners after abort', async () => {
-    const mediaSource = createMediaSource();
-    const mediaElement = document.createElement('video');
-    const controller = new AbortController();
-
-    attachMediaSource(mediaSource, mediaElement);
-
-    const promise = waitForSourceOpen(mediaSource, controller.signal);
-
-    controller.abort();
-
-    await expect(promise).rejects.toThrow('Aborted');
-
-    // After abort, opening MediaSource shouldn't affect the rejected promise
-    // (listeners should be cleaned up)
-    expect(mediaSource.readyState).toBe('closed');
-  });
-
-  it('should handle multiple concurrent waits', async () => {
-    const mediaSource = createMediaSource();
-    const mediaElement = document.createElement('video');
-
-    attachMediaSource(mediaSource, mediaElement);
-
-    // Multiple promises waiting on same MediaSource
-    const promise1 = waitForSourceOpen(mediaSource);
-    const promise2 = waitForSourceOpen(mediaSource);
-    const promise3 = waitForSourceOpen(mediaSource);
-
-    // All should resolve when sourceopen fires
-    await expect(Promise.all([promise1, promise2, promise3])).resolves.toBeDefined();
-
-    expect(mediaSource.readyState).toBe('open');
-  });
-
-  it('should handle abort racing with sourceopen', async () => {
-    const mediaSource = createMediaSource();
-    const mediaElement = document.createElement('video');
-    const controller = new AbortController();
-
-    attachMediaSource(mediaSource, mediaElement);
-
-    const promise = waitForSourceOpen(mediaSource, controller.signal);
-
-    // Race condition: abort happens very close to sourceopen
-    // One should win, but no errors should occur
-    setTimeout(() => controller.abort(), 5);
-
-    try {
-      await promise;
-      // If sourceopen won, should be open
-      expect(mediaSource.readyState).toBe('open');
-    } catch (error) {
-      // If abort won, should reject with AbortError
-      expect(error).toBeInstanceOf(DOMException);
-      expect((error as DOMException).name).toBe('AbortError');
-    }
-  });
-});
-
 describe('createSourceBuffer', () => {
   it('should create SourceBuffer with codec string', async () => {
     const mediaSource = createMediaSource();
     const mediaElement = document.createElement('video');
     attachMediaSource(mediaSource, mediaElement);
 
-    await waitForSourceOpen(mediaSource);
+    await new Promise<void>((resolve) => mediaSource.addEventListener('sourceopen', () => resolve(), { once: true }));
 
     const buffer = createSourceBuffer(mediaSource, 'video/mp4; codecs="avc1.42E01E"');
 

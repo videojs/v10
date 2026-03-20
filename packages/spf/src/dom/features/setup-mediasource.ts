@@ -1,13 +1,7 @@
-import { isNil } from '@videojs/utils/predicate';
-import type { Signal } from 'signal-polyfill';
+import { Signal } from 'signal-polyfill';
 import { effect } from '../../core/signals/effect';
 import type { Presentation } from '../../core/types';
-import {
-  attachMediaSource,
-  createMediaSource,
-  observeMediaSourceReadyState,
-  waitForSourceOpen,
-} from '../media/mediasource-setup';
+import { attachMediaSource, createMediaSource, observeMediaSourceReadyState } from '../media/mediasource-setup';
 
 /**
  * State shape required for MediaSource setup.
@@ -27,22 +21,6 @@ export interface MediaSourceOwners {
 }
 
 /**
- * Check if we have the minimum requirements to create MediaSource.
- */
-export function canSetup(state: MediaSourceState, owners: MediaSourceOwners): boolean {
-  return !isNil(owners.mediaElement) && !isNil(state.presentation?.url);
-}
-
-/**
- * Check if we should proceed with MediaSource creation.
- * Placeholder for future conditions (e.g., checking if already created).
- */
-export function shouldSetup(_state: MediaSourceState, owners: MediaSourceOwners): boolean {
-  // Don't create if we already have one
-  return isNil(owners.mediaSource);
-}
-
-/**
  * Setup MediaSource orchestration.
  *
  * Creates and attaches MediaSource when:
@@ -58,37 +36,41 @@ export function setupMediaSource<S extends MediaSourceState, O extends MediaSour
   state: Signal.State<S>;
   owners: Signal.State<O>;
 }): () => void {
-  let settingUp = false;
-  let abortController: AbortController | null = null;
+  const abortController = new AbortController();
 
+  // Get the latest mediaElement (even if nullish)
+  const mediaElementSignal = new Signal.Computed(() => owners.get().mediaElement);
+  // Get the latest presentationUrl (even if nullish)
+  const presentationUrlSignal = new Signal.Computed(() => state.get().presentation?.url);
+
+  const canSetupSignal = new Signal.Computed(() => !!mediaElementSignal.get() && !!presentationUrlSignal.get());
+
+  const mediaElementSrcSignal = new Signal.Computed(() => mediaElementSignal.get()?.src);
+  const mediaSourceSignal = new Signal.Computed(() => owners.get().mediaSource);
+  const shouldSetupSignal = new Signal.Computed(() => !mediaElementSrcSignal.get());
+
+  // NOTE: This should be cleaner and less brittle if/when Reactors have their own internal finite state. This is planned as followup work.
+  // (here, e.g. something like: "preconditions_unmet"|"pending"|"setting_up"|"tearing_down"|"set_up")
+  // This should also avoid needing nested effect().
   const cleanupEffect = effect(() => {
-    const currentState = state.get();
-    const currentOwners = owners.get();
-
-    if (!canSetup(currentState, currentOwners) || !shouldSetup(currentState, currentOwners) || settingUp) return;
-
-    settingUp = true;
-    abortController = new AbortController();
+    if (!canSetupSignal.get() || !shouldSetupSignal.get()) return;
+    const mediaElement = mediaElementSignal.get() as HTMLMediaElement;
     const { signal } = abortController;
-    const mediaElement = currentOwners.mediaElement!;
 
     const mediaSource = createMediaSource({ preferManaged: true });
+    // NOTE: Consider making MediaSource an Actor and using this in it.
+    const mediaSourceReadyState = observeMediaSourceReadyState(mediaSource, signal);
     attachMediaSource(mediaSource, mediaElement);
 
-    // Listeners are automatically removed when abortController is aborted.
-    const mediaSourceReadyState = observeMediaSourceReadyState(mediaSource, signal);
+    const cleanupOwnersUpdateEffect = effect(() => {
+      // If we already have a MediaSource or the *internal* mediaSource is not yet fully attached, wait to add it to owners;
+      if (!!mediaSourceSignal.get() || mediaSourceReadyState.get() !== 'open') return;
+      owners.set(Object.assign({}, owners.get(), { mediaSource, mediaSourceReadyState }) as O);
+    });
 
-    waitForSourceOpen(mediaSource, signal)
-      .then(() => {
-        owners.set(Object.assign({}, owners.get(), { mediaSource, mediaSourceReadyState }) as O);
-      })
-      .catch((error) => {
-        if (error instanceof DOMException && error.name === 'AbortError') return;
-        throw error;
-      })
-      .finally(() => {
-        settingUp = false;
-      });
+    return () => {
+      cleanupOwnersUpdateEffect();
+    };
   });
 
   return () => {

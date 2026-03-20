@@ -95,7 +95,6 @@ export {
   isCodecSupported,
   supportsManagedMediaSource,
   supportsMediaSource,
-  waitForSourceOpen,
 } from './dom/media/mediasource-setup';
 export type { ResponseLike } from './dom/network/fetch';
 export { fetchResolvable, getResponseText } from './dom/network/fetch';

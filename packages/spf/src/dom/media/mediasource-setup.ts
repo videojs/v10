@@ -80,7 +80,6 @@ export interface AttachMediaSourceResult {
  * @example
  * const mediaSource = createMediaSource();
  * const { detach } = attachMediaSource(mediaSource, videoElement);
- * await waitForSourceOpen(mediaSource);
  * // Use mediaSource...
  * // Later, to clean up:
  * detach();
@@ -119,57 +118,6 @@ export function attachMediaSource(mediaSource: MediaSource, mediaElement: HTMLMe
 }
 
 /**
- * Wait for a MediaSource to reach the 'open' state.
- * Resolves immediately if already open.
- *
- * @param mediaSource - The MediaSource to wait for
- * @param signal - Optional AbortSignal for cancellation
- * @returns Promise that resolves when the MediaSource is open
- *
- * @example
- * const mediaSource = createMediaSource();
- * attachMediaSource(mediaSource, videoElement);
- * await waitForSourceOpen(mediaSource);
- * // MediaSource is now ready for SourceBuffer creation
- */
-export function waitForSourceOpen(mediaSource: MediaSource, signal?: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (mediaSource.readyState === 'open') {
-      resolve();
-      return;
-    }
-
-    // Check if already aborted
-    if (signal?.aborted) {
-      reject(new DOMException('Aborted', 'AbortError'));
-      return;
-    }
-
-    // Use internal AbortController for cleanup coordination
-    const controller = new AbortController();
-    const options = { signal: controller.signal };
-
-    mediaSource.addEventListener(
-      'sourceopen',
-      () => {
-        controller.abort();
-        resolve();
-      },
-      options
-    );
-
-    signal?.addEventListener(
-      'abort',
-      () => {
-        controller.abort();
-        reject(new DOMException('Aborted', 'AbortError'));
-      },
-      options
-    );
-  });
-}
-
-/**
  * Create a SourceBuffer on a MediaSource.
  *
  * @param mediaSource - The MediaSource (must be in 'open' state)
@@ -178,7 +126,6 @@ export function waitForSourceOpen(mediaSource: MediaSource, signal?: AbortSignal
  * @throws Error if MediaSource is not open or codec is unsupported
  *
  * @example
- * await waitForSourceOpen(mediaSource);
  * const buffer = createSourceBuffer(mediaSource, 'video/mp4; codecs="avc1.42E01E"');
  */
 export function createSourceBuffer(mediaSource: MediaSource, mimeCodec: string): SourceBuffer {
