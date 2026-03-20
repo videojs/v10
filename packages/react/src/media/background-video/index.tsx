@@ -3,7 +3,7 @@
 import type { VideoHTMLAttributes } from 'react';
 import { forwardRef, useCallback } from 'react';
 
-import { useMediaRegistration } from '../../player/context';
+import { useMediaAttach } from '../../player/context';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 
 export interface BackgroundVideoProps extends VideoHTMLAttributes<HTMLVideoElement> {}
@@ -12,7 +12,7 @@ export const BackgroundVideo = forwardRef<HTMLVideoElement, BackgroundVideoProps
   { children, ...props },
   ref
 ) {
-  const setMedia = useMediaRegistration();
+  const setMedia = useMediaAttach();
 
   const mediaRef = useCallback(
     (el: HTMLVideoElement | null) => {

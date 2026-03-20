@@ -1,5 +1,5 @@
 import { flush } from '@videojs/store';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipGroupCore } from '../../../../core/ui/tooltip/tooltip-group-core';
 import { createTestTooltip } from './tooltip-helpers';
 
@@ -102,6 +102,106 @@ describe('createTooltip', () => {
       });
 
       expect(onOpenChange).not.toHaveBeenCalled();
+    });
+
+    describe('touch pointer suppression', () => {
+      beforeEach(() => {
+        vi.useFakeTimers();
+        // jsdom lacks matchMedia — stub so popover's canHover() and canOpenOnFocus()
+        // return true, allowing us to test that the tooltip layer blocks touch independently.
+        vi.stubGlobal('matchMedia', (query: string) => ({
+          matches: query === '(hover: hover)' || query === '(pointer: fine)',
+          media: query,
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        }));
+      });
+      afterEach(() => {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+      });
+
+      it('does not open on touch pointer enter', () => {
+        const { tooltip, onOpenChange } = createTestTooltip();
+
+        tooltip.triggerProps.onPointerEnter({
+          clientX: 0,
+          clientY: 0,
+          pointerId: 1,
+          pointerType: 'touch',
+          buttons: 0,
+          preventDefault: vi.fn(),
+        });
+
+        vi.advanceTimersByTime(600);
+
+        expect(onOpenChange).not.toHaveBeenCalled();
+      });
+
+      it('opens on mouse pointer enter', () => {
+        const { tooltip, onOpenChange } = createTestTooltip();
+
+        tooltip.triggerProps.onPointerEnter({
+          clientX: 0,
+          clientY: 0,
+          pointerId: 1,
+          pointerType: 'mouse',
+          buttons: 0,
+          preventDefault: vi.fn(),
+        });
+
+        vi.advanceTimersByTime(600);
+
+        expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'hover' });
+      });
+
+      it('does not open via focus after pointer down (tap)', () => {
+        const { tooltip, onOpenChange } = createTestTooltip();
+        const pointerEvent = {
+          clientX: 0,
+          clientY: 0,
+          pointerId: 1,
+          pointerType: 'touch' as const,
+          buttons: 0,
+          preventDefault: vi.fn(),
+        };
+
+        // Simulate tap: pointerdown → focusin (flag consumed and reset)
+        tooltip.triggerProps.onPointerDown(pointerEvent);
+        tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn() });
+
+        expect(onOpenChange).not.toHaveBeenCalled();
+      });
+
+      it('opens via focus when no pointer down (keyboard Tab)', () => {
+        const { tooltip, onOpenChange } = createTestTooltip();
+
+        // Simulate keyboard Tab: focusin without preceding pointerdown
+        tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn() });
+
+        expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'focus' });
+      });
+
+      it('opens via keyboard focus after tap-triggered focus was suppressed', () => {
+        const { tooltip, onOpenChange } = createTestTooltip();
+        const pointerEvent = {
+          clientX: 0,
+          clientY: 0,
+          pointerId: 1,
+          pointerType: 'touch' as const,
+          buttons: 0,
+          preventDefault: vi.fn(),
+        };
+
+        // Tap: pointerdown → focusin (suppressed, flag consumed)
+        tooltip.triggerProps.onPointerDown(pointerEvent);
+        tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn() });
+        expect(onOpenChange).not.toHaveBeenCalled();
+
+        // Later keyboard Tab: flag is clean, focus opens tooltip
+        tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn() });
+        expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'focus' });
+      });
     });
 
     it('does not open via focus when disabled', () => {

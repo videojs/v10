@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import type { BundledLanguage, Highlighter } from 'shiki';
 import { hastToHtml } from 'shiki';
+import { shared } from '@/components/typography/styles';
 import { shikiNotationTransformers } from '@/utils/shikiNotationTransformers';
 
 export interface SharedProps {
@@ -41,8 +42,8 @@ export default function Shared({ code, lang, highlighter }: SharedProps) {
   const { class: codeClassName } = codeProps;
 
   return (
-    <pre className={clsx('shiki astro-code text-manila-light', preClassName)}>
-      <code className={clsx('font-mono text-code', codeClassName)} dangerouslySetInnerHTML={{ __html: html }} />
+    <pre className={clsx(shared.pre, preClassName)}>
+      <code className={clsx(shared.codeBlock, codeClassName)} dangerouslySetInnerHTML={{ __html: html }} />
     </pre>
   );
 }

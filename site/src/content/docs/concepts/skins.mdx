@@ -10,21 +10,23 @@ import MinimalFrame from '@/components/frames/Minimal.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import Aside from '@/components/Aside.astro';
-
+import EjectedSkin from '@/components/docs/EjectedSkin.astro';
 
 <Aside type="note" title="New in version 10">
 In prior versions of Video.js, skins were CSS-only themes applied to the same set of default controls. In version 10 the concept of skins has been expanded to include the UI components, so each skin can be completely unique and only include the UI components it needs.
 </Aside>
 
 <FrameworkCase frameworks={["html"]}>
+
 ```html
 <video-player>
   <video-skin><!-- [!code focus] -->
     <!-- wraps the media element --> <!-- [!code focus] -->
-    <video slot="media" src="video.mp4"></video>
+    <video src="video.mp4"></video>
   </video-skin><!-- [!code focus] -->
 </video-player>
 ```
+
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -36,7 +38,6 @@ In prior versions of Video.js, skins were CSS-only themes applied to the same se
 </Player.Provider>
 ```
 </FrameworkCase>
-
 
 ## Packaged vs. ejected
 
@@ -52,15 +53,18 @@ When you choose a skin you have two options for how you use it: **packaged** or 
 <DocsLinkCard slug="concepts/ui-components">Read more about UI Components</DocsLinkCard>
 
 ### Example of packaged
+
 <FrameworkCase frameworks={["html"]}>
+
 ```html
   <video-player>
-    <video-skin> 
+    <video-skin>
       <!--...Media...-->
     </video-skin>
   </video-player>
 
 ```
+
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -73,259 +77,73 @@ When you choose a skin you have two options for how you use it: **packaged** or 
 </FrameworkCase>
 
 ### Example of ejected
+
 <FrameworkCase frameworks={["html"]}>
-```html title="index.html"
-  <video-player>
-    <media-container class="media-default-skin">
-      <!-- ...Media... -->
-
-      <media-buffering-indicator class="media-buffering-indicator"></media-buffering-indicator>
-
-      <!-- Control Bar -->
-      <media-controls class="media-surface media-controls" data-visible="">
-        <media-play-button class="media-button media-button--icon media-button--play" role="button" tabindex="0" aria-label="Play" data-paused="">
-          <svg class="media-icon media-icon--restart" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18"><path fill="currentColor" d="M9 17a8 8 0 0 1-8-8h2a6 6 0 1 0 1.287-3.713l1.286 1.286A.25.25 0 0 1 5.396 7H1.25A.25.25 0 0 1 1 6.75V2.604a.25.25 0 0 1 .427-.177l1.438 1.438A8 8 0 1 1 9 17"></path><path fill="currentColor" d="m11.61 9.639-3.331 2.07a.826.826 0 0 1-1.15-.266.86.86 0 0 1-.129-.452V6.849C7 6.38 7.374 6 7.834 6c.158 0 .312.045.445.13l3.331 2.071a.858.858 0 0 1 0 1.438"></path></svg>
-          <svg class="media-icon media-icon--play" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18"><path fill="currentColor" d="m14.051 10.723-7.985 4.964a1.98 1.98 0 0 1-2.758-.638A2.06 2.06 0 0 1 3 13.964V4.036C3 2.91 3.895 2 5 2c.377 0 .747.109 1.066.313l7.985 4.964a2.057 2.057 0 0 1 .627 2.808c-.16.257-.373.475-.627.637"></path></svg>
-          <svg class="media-icon media-icon--pause" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18"><rect width="5" height="14" x="2" y="2" fill="currentColor" rx="1.75"></rect><rect width="5" height="14" x="11" y="2" fill="currentColor" rx="1.75"></rect></svg>
-        </media-play-button>
-
-        <media-seek-button seconds="-10" class="media-button media-button--icon media-button--seek" role="button" tabindex="0" aria-label="Seek backward 10 seconds" data-direction="backward">
-          <span class="media-icon__container">
-            <svg class="media-icon media-icon--flipped" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18"><path fill="currentColor" d="M1 9c0 2.21.895 4.21 2.343 5.657l1.414-1.414a6 6 0 1 1 8.956-7.956l-1.286 1.286a.25.25 0 0 0 .177.427h4.146a.25.25 0 0 0 .25-.25V2.604a.25.25 0 0 0-.427-.177l-1.438 1.438A8 8 0 0 0 1 9"></path></svg>
-            <span class="media-icon__label">10</span>
-          </span>
-        </media-seek-button>
-
-        <media-seek-button seconds="10" class="media-button media-button--icon media-button--seek" role="button" tabindex="0" aria-label="Seek forward 10 seconds" data-direction="forward">
-          <span class="media-icon__container">
-            <svg class="media-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18"><path fill="currentColor" d="M1 9c0 2.21.895 4.21 2.343 5.657l1.414-1.414a6 6 0 1 1 8.956-7.956l-1.286 1.286a.25.25 0 0 0 .177.427h4.146a.25.25 0 0 0 .25-.25V2.604a.25.25 0 0 0-.427-.177l-1.438 1.438A8 8 0 0 0 1 9"></path></svg>
-            <span class="media-icon__label">10</span>
-          </span>
-        </media-seek-button>
-
-        <media-time-group class="media-time">
-          <media-time type="current" class="media-time__value" aria-label="Current time" aria-valuetext="0 seconds" data-type="current"><span aria-hidden="true" hidden=""></span>0:00</media-time>
-          <media-time-slider class="media-slider" style="touch-action: none; user-select: none; --media-slider-fill: 0.000%; --media-slider-pointer: 0.000%; --media-slider-buffer: 9.873%;" data-orientation="horizontal">
-            <media-slider-track class="media-slider__track" data-orientation="horizontal">
-              <media-slider-fill class="media-slider__fill" data-orientation="horizontal"></media-slider-fill>
-              <media-slider-buffer class="media-slider__buffer" data-orientation="horizontal"></media-slider-buffer>
-            </media-slider-track>
-            <media-slider-thumb class="media-slider__thumb" role="slider" tabindex="0" autocomplete="off" aria-label="Seek" aria-valuemin="0" aria-valuemax="25.322667" aria-valuenow="0" aria-orientation="horizontal" aria-valuetext="0 seconds of 25 seconds" data-orientation="horizontal"></media-slider-thumb>
-          </media-time-slider>
-          <media-time type="duration" class="media-time__value" aria-label="Duration" aria-valuetext="25 seconds" data-type="duration"><span aria-hidden="true" hidden=""></span>0:25</media-time>
-        </media-time-group>
-
-        <media-playback-rate-button class="media-button media-button--icon media-button--playback-rate" role="button" tabindex="0" aria-label="Playback rate 1" data-rate="1">
-        </media-playback-rate-button>
-
-        <media-mute-button commandfor="volume-popover" class="media-button media-button--icon media-button--mute" role="button" tabindex="0" aria-label="Mute" data-volume-level="high" aria-expanded="false" aria-haspopup="dialog" aria-controls="volume-popover" style="anchor-name: --volume-popover;">
-          <svg class="media-icon media-icon--volume-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18"><path fill="currentColor" d="M.714 6.008h3.072l4.071-3.857c.5-.376 1.143 0 1.143.601V15.28c0 .602-.643.903-1.143.602l-4.071-3.858H.714c-.428 0-.714-.3-.714-.752V6.76c0-.451.286-.752.714-.752M14.5 7.586l-1.768-1.768a1 1 0 1 0-1.414 1.414L13.085 9l-1.767 1.768a1 1 0 0 0 1.414 1.414l1.768-1.768 1.768 1.768a1 1 0 0 0 1.414-1.414L15.914 9l1.768-1.768a1 1 0 0 0-1.414-1.414z"></path></svg>
-          <svg class="media-icon media-icon--volume-low" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18"><path fill="currentColor" d="M.714 6.008h3.072l4.071-3.857c.5-.376 1.143 0 1.143.601V15.28c0 .602-.643.903-1.143.602l-4.071-3.858H.714c-.428 0-.714-.3-.714-.752V6.76c0-.451.286-.752.714-.752m10.568.59a.91.91 0 0 1 0-1.316.91.91 0 0 1 1.316 0c1.203 1.203 1.47 2.216 1.522 3.208q.012.255.011.51c0 1.16-.358 2.733-1.533 3.803a.7.7 0 0 1-.298.156c-.382.106-.873-.011-1.018-.156a.91.91 0 0 1 0-1.316c.57-.57.995-1.551.995-2.487 0-.944-.26-1.667-.995-2.402"></path></svg>
-          <svg class="media-icon media-icon--volume-high" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18"><path fill="currentColor" d="M15.6 3.3c-.4-.4-1-.4-1.4 0s-.4 1 0 1.4C15.4 5.9 16 7.4 16 9s-.6 3.1-1.8 4.3c-.4.4-.4 1 0 1.4.2.2.5.3.7.3.3 0 .5-.1.7-.3C17.1 13.2 18 11.2 18 9s-.9-4.2-2.4-5.7"></path><path fill="currentColor" d="M.714 6.008h3.072l4.071-3.857c.5-.376 1.143 0 1.143.601V15.28c0 .602-.643.903-1.143.602l-4.071-3.858H.714c-.428 0-.714-.3-.714-.752V6.76c0-.451.286-.752.714-.752m10.568.59a.91.91 0 0 1 0-1.316.91.91 0 0 1 1.316 0c1.203 1.203 1.47 2.216 1.522 3.208q.012.255.011.51c0 1.16-.358 2.733-1.533 3.803a.7.7 0 0 1-.298.156c-.382.106-.873-.011-1.018-.156a.91.91 0 0 1 0-1.316c.57-.57.995-1.551.995-2.487 0-.944-.26-1.667-.995-2.402"></path></svg>
-        </media-mute-button>
-
-        <media-popover id="volume-popover" open-on-hover="" delay="200" close-delay="100" side="top" class="media-surface media-popup media-popup--volume media-popup-animation" popover="manual" role="dialog" data-side="top" data-align="center">
-          <media-volume-slider class="media-slider" orientation="vertical" thumb-alignment="edge" style="touch-action: none; user-select: none; --media-slider-fill: 100.000%; --media-slider-pointer: 0.000%;" data-orientation="vertical">
-            <media-slider-track class="media-slider__track" data-orientation="vertical">
-              <media-slider-fill class="media-slider__fill" data-orientation="vertical"></media-slider-fill>
-            </media-slider-track>
-            <media-slider-thumb class="media-slider__thumb media-slider__thumb--persistent" role="slider" tabindex="0" autocomplete="off" aria-label="Volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-orientation="vertical" aria-valuetext="100 percent" data-orientation="vertical"></media-slider-thumb>
-          </media-volume-slider>
-        </media-popover>
-
-        <media-fullscreen-button class="media-button media-button--icon media-button--fullscreen" role="button" tabindex="0" aria-label="Enter fullscreen" data-availability="available">
-          <svg class="media-icon media-icon--fullscreen-enter" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18"><path fill="currentColor" d="M9.57 3.617A1 1 0 0 0 8.646 3H4c-.552 0-1 .449-1 1v4.646a.996.996 0 0 0 1.001 1 1 1 0 0 0 .706-.293l4.647-4.647a1 1 0 0 0 .216-1.089m4.812 4.812a1 1 0 0 0-1.089.217l-4.647 4.647a.998.998 0 0 0 .708 1.706H14c.552 0 1-.449 1-1V9.353a1 1 0 0 0-.618-.924"></path></svg>
-          <svg class="media-icon media-icon--fullscreen-exit" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18"><path fill="currentColor" d="M7.883 1.93a.99.99 0 0 0-1.09.217L2.146 6.793A.998.998 0 0 0 2.853 8.5H7.5c.551 0 1-.449 1-1V2.854a1 1 0 0 0-.617-.924m7.263 7.57H10.5c-.551 0-1 .449-1 1v4.646a.996.996 0 0 0 1.001 1.001 1 1 0 0 0 .706-.293l4.646-4.646a.998.998 0 0 0-.707-1.707z"></path></svg>
-        </media-fullscreen-button>
-      </media-controls>
-
-    </media-container>
-  </video-player>
-```
+  <EjectedSkin id="default-video" />
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-```tsx title="VideoSkin.tsx"
-  <Player.Provider>
-    <Container className={cn('media-minimal-skin', className)} {...rest}>
-      <BufferingIndicator
-        render={(props) => (
-          <div {...props} className="media-buffering-indicator">
-            <SpinnerIcon className="media-icon" />
-          </div>
-        )}
-      />
-
-      <ErrorDialog
-        aria-labelledby="media-error-title"
-        aria-describedby="media-error-description"
-        render={(props, { onDismiss }) => (
-          <div {...props} className="media-error">
-            <div className="media-error__dialog">
-              <div className="media-error__content">
-                <p id="media-error-title" className="media-error__title">
-                  Something went wrong.
-                </p>
-                <p id="media-error-description" className="media-error__description">
-                  An error occurred while trying to play the video. Please try again.
-                </p>
-              </div>
-              <div className="media-error__actions">
-                <Button onClick={onDismiss}>OK</Button>
-              </div>
-            </div>
-          </div>
-        )}
-      />
-
-      <Controls.Root className="media-controls">
-        <span className="media-button-group">
-          <PlayButton
-            render={(props) => (
-              <Button {...props} className="media-button--icon media-button--play">
-                <RestartIcon className="media-icon media-icon--restart" />
-                <PlayIcon className="media-icon media-icon--play" />
-                <PauseIcon className="media-icon media-icon--pause" />
-              </Button>
-            )}
-          />
-
-          <SeekButton
-            seconds={-SEEK_TIME}
-            render={(props) => (
-              <Button {...props} className="media-button--icon media-button--seek">
-                <span className="media-icon__container">
-                  <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
-                  <span className="media-icon__label">{SEEK_TIME}</span>
-                </span>
-              </Button>
-            )}
-          />
-
-          <SeekButton
-            seconds={SEEK_TIME}
-            render={(props) => (
-              <Button {...props} className="media-button--icon media-button--seek">
-                <span className="media-icon__container">
-                  <SeekIcon className="media-icon media-icon--seek" />
-                  <span className="media-icon__label">{SEEK_TIME}</span>
-                </span>
-              </Button>
-            )}
-          />
-        </span>
-
-        <span className="media-time-controls">
-          <Time.Group className="media-time">
-            <Time.Value type="current" className="media-time__value media-time__value--current" />
-            <Time.Separator className="media-time__separator" />
-            <Time.Value type="duration" className="media-time__value media-time__value--duration" />
-          </Time.Group>
-
-          <TimeSlider.Root className="media-slider">
-            <TimeSlider.Track className="media-slider__track">
-              <TimeSlider.Fill className="media-slider__fill" />
-              <TimeSlider.Buffer className="media-slider__buffer" />
-            </TimeSlider.Track>
-            <TimeSlider.Thumb className="media-slider__thumb" />
-          </TimeSlider.Root>
-        </span>
-
-        <span className="media-button-group">
-          <PlaybackRateButton
-            render={(props) => <Button {...props} className="media-button--icon media-button--playback-rate" />}
-          />
-
-          <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
-            <Popover.Trigger
-              render={
-                <MuteButton
-                  render={(props) => (
-                    <Button {...props} className="media-button--icon media-button--mute">
-                      <VolumeOffIcon className="media-icon media-icon--volume-off" />
-                      <VolumeLowIcon className="media-icon media-icon--volume-low" />
-                      <VolumeHighIcon className="media-icon media-icon--volume-high" />
-                    </Button>
-                  )}
-                />
-              }
-            />
-            <Popover.Popup className="media-surface media-popup media-popup--volume media-popup-animation">
-              <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
-                <VolumeSlider.Track className="media-slider__track">
-                  <VolumeSlider.Fill className="media-slider__fill" />
-                </VolumeSlider.Track>
-                <VolumeSlider.Thumb className="media-slider__thumb media-slider__thumb--persistent" />
-              </VolumeSlider.Root>
-            </Popover.Popup>
-          </Popover.Root>
-
-          <CaptionsButton
-            render={(props) => (
-              <Button {...props} className="media-button--icon media-button--captions">
-                <CaptionsOffIcon className="media-icon media-icon--captions-off" />
-                <CaptionsOnIcon className="media-icon media-icon--captions-on" />
-              </Button>
-            )}
-          />
-
-          <PiPButton
-            render={(props) => (
-              <Button {...props} className="media-button--icon">
-                <PipIcon className="media-icon" />
-              </Button>
-            )}
-          />
-
-          <FullscreenButton
-            render={(props) => (
-              <Button {...props} className="media-button--icon media-button--fullscreen">
-                <FullscreenEnterIcon className="media-icon media-icon--fullscreen-enter" />
-                <FullscreenExitIcon className="media-icon media-icon--fullscreen-exit" />
-              </Button>
-            )}
-          />
-        </span>
-      </Controls.Root>
-
-      {/* <div className="media-captions">
-        <div className="media-captions__container">
-          <span className="media-captions__text">An example cue</span>
-          <span className="media-captions__text">
-            <p>Another example cue with HTML</p>
-          </span>
-        </div>
-      </div> */}
-
-      <div className="media-overlay" />
-
-      {children}
-    </Container>
-  </Player.Provider>
-```
+  <EjectedSkin id="default-video-react" />
 </FrameworkCase>
-
 
 ## Skins, features, and presets
 
 Each skin is built with specific <DocsLink slug="concepts/features">features</DocsLink> in mind. For example, a video skin renders fullscreen and picture-in-picture controls. An audio skin doesn't. The features associated with a skin are called a **feature bundle**.
 
 <FrameworkCase frameworks={["html"]}>
+
 | Player with feature bundle | Available skins | Import |
-|----------|-----------------|--------|
+| ---------- | ----------------- | -------- |
 | `<video-player>` | `<video-skin>`, `<video-minimal-skin>` | `@videojs/html/video/*` |
 | `<audio-player>` | `<audio-skin>`, `<audio-minimal-skin>` | `@videojs/html/audio/*` |
 | `<background-video-player>` | `<background-video-skin>` | `@videojs/html/background/*` |
+
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
+
 | Feature bundle | Available skins | Import |
-|----------|-----------------|--------|
+| ---------- | ----------------- | -------- |
 | `videoFeatures` | `<VideoSkin>`, `<MinimalVideoSkin>` | `@videojs/react/video` |
 | `audioFeatures` | `<AudioSkin>`, `<MinimalAudioSkin>` | `@videojs/react/audio` |
 | `backgroundFeatures` | `<BackgroundVideoSkin>` | `@videojs/react/background` |
+
 </FrameworkCase>
 
 Want to learn more about skins and feature bundles? Check out the presets guide:
 
 <DocsLinkCard slug="concepts/presets">Learn more about presets</DocsLinkCard>
+
+## Styling
+
+There are currently two options for styling:
+
+<FrameworkCase frameworks={["react"]}>
+
+- Vanilla CSS where you import the stylesheet in your app. This is the default.
+- Tailwind where you [eject](../how-to/customize-skins#ejecting) the skin and use Tailwind classnames in your app.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+- Vanilla CSS that's automatically imported. This is the default.
+- Tailwind where you [eject](../how-to/customize-skins#ejecting) the skin and use Tailwind classnames in your app.
+
+</FrameworkCase>
+
+### Current limitations
+
+- In both style systems we assume a 16px root font size and we use rem units for sizing.
+- The default font stack includes [`Inter`](https://rsms.me/inter/) (because it's awesome) but we do not load the webfonts for you. If they are not available then system fonts are used.
+
+These only apply to ejected HTML and React skins:
+
+#### Vanilla CSS
+
+- We use a [BEM](https://en.bem.info/methodology/quick-start/) classname structure and every component classname is scoped with a `media-` prefix.
+
+#### Tailwind
+
+- Currently we're assuming you're using the default configuration and that's all that's supported. With the release of our CLI, this will change, allowing you to specify a custom prefix to the Tailwind classnames. For now, you'll need to edit the ejected skins yourself.
+- We're assuming the latest version, currently 4.2.x.

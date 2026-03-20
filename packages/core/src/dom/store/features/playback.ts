@@ -37,5 +37,6 @@ export const playbackFeature = definePlayerFeature({
     listen(media, 'ended', sync, { signal });
     listen(media, 'playing', sync, { signal });
     listen(media, 'waiting', sync, { signal });
+    listen(media, 'seeked', sync, { signal });
   },
 });

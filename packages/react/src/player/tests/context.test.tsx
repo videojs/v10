@@ -7,8 +7,10 @@ import {
   Container,
   PlayerContextProvider,
   type PlayerContextValue,
+  useContainer,
+  useContainerAttach,
   useMedia,
-  useMediaRegistration,
+  useMediaAttach,
   useOptionalPlayer,
   usePlayer,
   usePlayerContext,
@@ -17,6 +19,17 @@ import {
 function createWrapper(value: PlayerContextValue) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return <PlayerContextProvider value={value}>{children}</PlayerContextProvider>;
+  };
+}
+
+function createContextValue(overrides?: Partial<PlayerContextValue>): PlayerContextValue {
+  return {
+    store: createMockStore() as any,
+    media: null,
+    setMedia: vi.fn(),
+    container: null,
+    setContainer: vi.fn(),
+    ...overrides,
   };
 }
 
@@ -33,7 +46,7 @@ describe('usePlayerContext', () => {
 
   it('returns context value inside Provider', () => {
     const store = createMockStore();
-    const value: PlayerContextValue = { store: store as any, media: null, setMedia: vi.fn() };
+    const value = createContextValue({ store: store as any });
 
     const { result } = renderHook(() => usePlayerContext(), {
       wrapper: createWrapper(value),
@@ -44,18 +57,17 @@ describe('usePlayerContext', () => {
   });
 });
 
-describe('useMediaRegistration', () => {
+describe('useMediaAttach', () => {
   it('returns undefined outside Provider', () => {
-    const { result } = renderHook(() => useMediaRegistration());
+    const { result } = renderHook(() => useMediaAttach());
     expect(result.current).toBeUndefined();
   });
 
   it('returns setMedia inside Provider', () => {
     const setMedia = vi.fn();
-    const store = createMockStore();
-    const value: PlayerContextValue = { store: store as any, media: null, setMedia };
+    const value = createContextValue({ setMedia });
 
-    const { result } = renderHook(() => useMediaRegistration(), {
+    const { result } = renderHook(() => useMediaAttach(), {
       wrapper: createWrapper(value),
     });
 
@@ -63,10 +75,51 @@ describe('useMediaRegistration', () => {
   });
 });
 
+describe('useContainer', () => {
+  it('returns null when no container', () => {
+    const value = createContextValue();
+
+    const { result } = renderHook(() => useContainer(), {
+      wrapper: createWrapper(value),
+    });
+
+    expect(result.current).toBeNull();
+  });
+
+  it('returns container from context', () => {
+    const container = document.createElement('div');
+    const value = createContextValue({ container });
+
+    const { result } = renderHook(() => useContainer(), {
+      wrapper: createWrapper(value),
+    });
+
+    expect(result.current).toBe(container);
+  });
+});
+
+describe('useContainerAttach', () => {
+  it('returns undefined outside Provider', () => {
+    const { result } = renderHook(() => useContainerAttach());
+    expect(result.current).toBeUndefined();
+  });
+
+  it('returns setContainer inside Provider', () => {
+    const setContainer = vi.fn();
+    const value = createContextValue({ setContainer });
+
+    const { result } = renderHook(() => useContainerAttach(), {
+      wrapper: createWrapper(value),
+    });
+
+    expect(result.current).toBe(setContainer);
+  });
+});
+
 describe('usePlayer', () => {
   it('returns store without selector', () => {
     const store = createMockStore();
-    const value: PlayerContextValue = { store: store as any, media: null, setMedia: vi.fn() };
+    const value = createContextValue({ store: store as any });
 
     const { result } = renderHook(() => usePlayer(), {
       wrapper: createWrapper(value),
@@ -96,7 +149,7 @@ describe('useOptionalPlayer', () => {
 
   it('returns store inside Provider', () => {
     const store = createMockStore();
-    const value: PlayerContextValue = { store: store as any, media: null, setMedia: vi.fn() };
+    const value = createContextValue({ store: store as any });
 
     const { result } = renderHook(() => useOptionalPlayer(), {
       wrapper: createWrapper(value),
@@ -107,7 +160,7 @@ describe('useOptionalPlayer', () => {
 
   it('returns selected state inside Provider', () => {
     const store = createMockStore({ paused: true });
-    const value: PlayerContextValue = { store: store as any, media: null, setMedia: vi.fn() };
+    const value = createContextValue({ store: store as any });
 
     const { result } = renderHook(() => useOptionalPlayer((state: any) => state.paused), {
       wrapper: createWrapper(value),
@@ -119,9 +172,8 @@ describe('useOptionalPlayer', () => {
 
 describe('useMedia', () => {
   it('returns media from context', () => {
-    const store = createMockStore();
     const media = document.createElement('video');
-    const value: PlayerContextValue = { store: store as any, media, setMedia: vi.fn() };
+    const value = createContextValue({ media });
 
     const { result } = renderHook(() => useMedia(), {
       wrapper: createWrapper(value),
@@ -131,8 +183,7 @@ describe('useMedia', () => {
   });
 
   it('returns null when no media', () => {
-    const store = createMockStore();
-    const value: PlayerContextValue = { store: store as any, media: null, setMedia: vi.fn() };
+    const value = createContextValue();
 
     const { result } = renderHook(() => useMedia(), {
       wrapper: createWrapper(value),
@@ -144,8 +195,7 @@ describe('useMedia', () => {
 
 describe('Container', () => {
   it('renders children', () => {
-    const store = createMockStore();
-    const value: PlayerContextValue = { store: store as any, media: null, setMedia: vi.fn() };
+    const value = createContextValue();
 
     const { container } = render(
       <PlayerContextProvider value={value}>
@@ -158,10 +208,9 @@ describe('Container', () => {
     expect(container.querySelector('span')).toBeTruthy();
   });
 
-  it('attaches media to store when media is set', () => {
-    const store = createMockStore();
-    const media = document.createElement('video');
-    const value: PlayerContextValue = { store: store as any, media, setMedia: vi.fn() };
+  it('registers container element via setContainer', () => {
+    const setContainer = vi.fn();
+    const value = createContextValue({ setContainer });
 
     render(
       <PlayerContextProvider value={value}>
@@ -169,15 +218,29 @@ describe('Container', () => {
       </PlayerContextProvider>
     );
 
-    expect(store.attach).toHaveBeenCalledWith({
-      media,
-      container: expect.any(HTMLDivElement),
-    });
+    expect(setContainer).toHaveBeenCalledWith(expect.any(HTMLDivElement));
   });
 
-  it('does not attach when media is null', () => {
+  it('deregisters container on unmount', () => {
+    const setContainer = vi.fn();
+    const value = createContextValue({ setContainer });
+
+    const { unmount } = render(
+      <PlayerContextProvider value={value}>
+        <Container />
+      </PlayerContextProvider>
+    );
+
+    setContainer.mockClear();
+    unmount();
+
+    expect(setContainer).toHaveBeenCalledWith(null);
+  });
+
+  it('does not call store.attach directly', () => {
     const store = createMockStore();
-    const value: PlayerContextValue = { store: store as any, media: null, setMedia: vi.fn() };
+    const media = document.createElement('video');
+    const value = createContextValue({ store: store as any, media });
 
     render(
       <PlayerContextProvider value={value}>

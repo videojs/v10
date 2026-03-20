@@ -8,13 +8,13 @@
   border: 0;
   color: inherit;
   overflow: visible;
-  transition-property: transform, scale, opacity, filter;
+  transition-property: scale, opacity, filter;
   transition-duration: 150ms;
 
   &[data-starting-style],
   &[data-ending-style] {
     opacity: 0;
-    transform: scale(0.5);
+    scale: 0.5;
     filter: blur(8px);
   }
 
@@ -82,6 +82,10 @@
 .media-default-skin .media-popover--volume {
   padding: 0.625rem 0.25rem;
   border-radius: calc(infinity * 1px);
+
+  &:has(media-volume-slider[data-availability="unsupported"]) {
+    display: none;
+  }
 }
 
 .media-default-skin .media-tooltip {

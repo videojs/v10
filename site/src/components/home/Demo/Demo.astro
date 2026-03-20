@@ -1,0 +1,105 @@
+---
+import { getEntry } from 'astro:content';
+import ServerCode from '@/components/Code/ServerCode.astro';
+import FrameworkControl from '../FrameworkControl';
+import BaseDemo from './Base';
+import { generateHTMLCode, generateReactCode } from './baseCode';
+import EjectDemo from './Eject';
+
+const defaultVideo = (await getEntry('ejectedSkins', 'default-video'))!.data;
+const defaultVideoReact = (await getEntry('ejectedSkins', 'default-video-react'))!.data;
+const minimalVideo = (await getEntry('ejectedSkins', 'minimal-video'))!.data;
+const minimalVideoReact = (await getEntry('ejectedSkins', 'minimal-video-react'))!.data;
+---
+
+<section
+  class="mx-auto mb-10 grid w-full max-w-305 gap-x-5 gap-y-20 px-5 lg:mb-0 lg:grid-cols-2 lg:gap-y-0"
+>
+  <section
+    class="row-span-4 grid border-faded-black lg:grid-rows-subgrid lg:border-t lg:py-10 dark:border-manila-light"
+  >
+    <h2
+      class="mb-2.5 text-center font-display text-h2 text-faded-black uppercase lg:mb-1.25 dark:text-manila-light"
+    >
+      Assemble your player
+    </h2>
+    <p
+      class="font-instrument-sans mb-8 text-center text-p2 font-light text-warm-gray md:mb-10 dark:text-manila-dark"
+    >
+      Feel at home with your framework, skin, and media source
+    </p>
+
+    <FrameworkControl client:idle className="mb-5 md:hidden" />
+    <BaseDemo client:idle className="m-0 lg:h-100">
+      <ServerCode
+        slot="baseDefaultHtml"
+        code={generateHTMLCode("default")}
+        lang="html"
+      />
+      <ServerCode
+        slot="baseMinimalHtml"
+        code={generateHTMLCode("minimal")}
+        lang="html"
+      />
+      <ServerCode
+        slot="baseDefaultReact"
+        code={generateReactCode("default")}
+        lang="tsx"
+      />
+      <ServerCode
+        slot="baseMinimalReact"
+        code={generateReactCode("minimal")}
+        lang="tsx"
+      />
+    </BaseDemo>
+  </section>
+  <section
+    class="row-span-4 grid border-faded-black lg:grid-rows-subgrid lg:border-t lg:py-10 dark:border-manila-light"
+  >
+    <h2
+      class="mb-2.5 text-center font-display text-h2 text-faded-black uppercase lg:mb-1.25 dark:text-manila-light"
+    >
+      Take full control
+    </h2>
+    <p
+      class="font-instrument-sans mb-8 text-center text-p2 font-light text-warm-gray md:mb-10 dark:text-manila-dark"
+    >
+      Make your player truly your own with fully-editable components
+    </p>
+    <FrameworkControl client:idle className="mb-5 md:hidden" />
+    <EjectDemo client:idle className="m-0 lg:h-100">
+      <ServerCode
+        slot="defaultHtmlCode"
+        code={defaultVideo.html!}
+        lang="html"
+      />
+      <ServerCode slot="defaultHtmlCss" code={defaultVideo.css!} lang="css" />
+      <ServerCode
+        slot="defaultReactCode"
+        code={defaultVideoReact.tsx!}
+        lang="tsx"
+      />
+      <ServerCode
+        slot="defaultReactCss"
+        code={defaultVideoReact.css!}
+        lang="css"
+      />
+      <ServerCode
+        slot="minimalHtmlCode"
+        code={minimalVideo.html!}
+        lang="html"
+      />
+      <ServerCode slot="minimalHtmlCss" code={minimalVideo.css!} lang="css" />
+      <ServerCode
+        slot="minimalReactCode"
+        code={minimalVideoReact.tsx!}
+        lang="tsx"
+      />
+      <ServerCode
+        slot="minimalReactCss"
+        code={minimalVideoReact.css!}
+        lang="css"
+      />
+    </EjectDemo>
+  </section>
+</section>

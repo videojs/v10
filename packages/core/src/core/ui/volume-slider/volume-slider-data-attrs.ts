@@ -4,4 +4,5 @@ import type { VolumeSliderState } from './volume-slider-core';
 
 export const VolumeSliderDataAttrs = {
   ...SliderDataAttrs,
+  availability: 'data-availability',
 } as const satisfies StateAttrMap<VolumeSliderState>;

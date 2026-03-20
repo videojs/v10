@@ -1,6 +1,7 @@
 import { DashCustomMedia } from '@videojs/core/dom/media/dash';
+import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
-export class DashVideo extends DashCustomMedia {
+export class DashVideo extends MediaAttachMixin(DashCustomMedia) {
   static getTemplateHTML(attrs: Record<string, string>): string {
     const { src, ...rest } = attrs;
     // biome-ignore lint/complexity/noThisInStatic: intentional use of super

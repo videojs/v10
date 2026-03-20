@@ -21,7 +21,7 @@
   color: oklch(1 0 0);
   font-size: 0.875rem;
   text-shadow: 0 1px 0 oklch(0 0 0 / 0.5);
-  transition-property: opacity, transform;
+  transition-property: opacity, scale;
   transition-duration: 500ms;
   transition-delay: 100ms;
   transition-timing-function: linear(
@@ -47,7 +47,7 @@
 .media-minimal-skin .media-error[data-starting-style] .media-error__dialog,
 .media-minimal-skin .media-error[data-ending-style] .media-error__dialog {
   opacity: 0;
-  transform: scale(0.5);
+  scale: 0.5;
 }
 
 .media-minimal-skin .media-error__content {
@@ -64,6 +64,7 @@
 
 .media-minimal-skin .media-error__description {
   opacity: 0.7;
+  overflow-wrap: anywhere;
 }
 
 .media-minimal-skin .media-error__actions {

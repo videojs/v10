@@ -37,6 +37,12 @@
   status = 301
   force = true
 
+[[redirects]]
+  from = "https://vjs10-site.netlify.app/*"
+  to   = "https://videojs.org/:splat"
+  status = 301
+  force = true
+
 
 # Redirect old theme demo pages to home
 [[redirects]]

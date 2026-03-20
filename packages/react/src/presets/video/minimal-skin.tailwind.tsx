@@ -4,7 +4,8 @@ import {
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
-  PipIcon,
+  PipEnterIcon,
+  PipExitIcon,
   PlayIcon,
   RestartIcon,
   SeekIcon,
@@ -26,12 +27,14 @@ import {
   iconState,
   overlay,
   popup,
+  poster,
   preview,
   root,
   seek,
   slider,
   time,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
+import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
@@ -44,12 +47,14 @@ import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
+import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
 import { Slider } from '@/ui/slider';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
+import { isRenderProp } from '@/utils/use-render';
 import { ErrorDialog } from './error-dialog';
 import type { MinimalVideoSkinProps } from './minimal-skin';
 
@@ -139,14 +144,54 @@ function FullscreenLabel(): ReactNode {
   return fullscreen ? <>Exit fullscreen</> : <>Enter fullscreen</>;
 }
 
+function VolumePopover(): ReactNode {
+  const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
+
+  const muteButton = (
+    <MuteButton
+      render={(props) => (
+        <Button variant="icon" {...props} className={iconState.mute.button}>
+          <VolumeOffIcon className={cn(icon, iconState.mute.volumeOff)} />
+          <VolumeLowIcon className={cn(icon, iconState.mute.volumeLow)} />
+          <VolumeHighIcon className={cn(icon, iconState.mute.volumeHigh)} />
+        </Button>
+      )}
+    />
+  );
+
+  if (volumeUnsupported) return muteButton;
+
+  return (
+    <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+      <Popover.Trigger render={muteButton} />
+      <Popover.Popup className={cn(popup.volume)}>
+        <VolumeSlider.Root orientation="vertical" thumbAlignment="edge" render={(props) => <SliderRoot {...props} />}>
+          <VolumeSlider.Track render={(props) => <SliderTrack {...props} />}>
+            <VolumeSlider.Fill render={(props) => <SliderFill {...props} />} />
+          </VolumeSlider.Track>
+          <VolumeSlider.Thumb render={(props) => <SliderThumb persistent {...props} />} />
+        </VolumeSlider.Root>
+      </Popover.Popup>
+    </Popover.Root>
+  );
+}
+
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNode {
-  const { children, className, ...rest } = props;
+  const { children, className, poster: posterProp, ...rest } = props;
 
   return (
     <Container className={cn(root(false), className)} {...rest}>
       {children}
+
+      {posterProp && (
+        <Poster
+          src={isString(posterProp) ? posterProp : undefined}
+          render={isRenderProp(posterProp) ? posterProp : undefined}
+          className={poster(false)}
+        />
+      )}
 
       <BufferingIndicator
         render={(props) => (
@@ -257,33 +302,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
               <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
             </Tooltip.Root>
 
-            <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
-              <Popover.Trigger
-                render={
-                  <MuteButton
-                    render={(props) => (
-                      <Button variant="icon" {...props} className={iconState.mute.button}>
-                        <VolumeOffIcon className={cn(icon, iconState.mute.volumeOff)} />
-                        <VolumeLowIcon className={cn(icon, iconState.mute.volumeLow)} />
-                        <VolumeHighIcon className={cn(icon, iconState.mute.volumeHigh)} />
-                      </Button>
-                    )}
-                  />
-                }
-              />
-              <Popover.Popup className={cn(popup.volume)}>
-                <VolumeSlider.Root
-                  orientation="vertical"
-                  thumbAlignment="edge"
-                  render={(props) => <SliderRoot {...props} />}
-                >
-                  <VolumeSlider.Track render={(props) => <SliderTrack {...props} />}>
-                    <VolumeSlider.Fill render={(props) => <SliderFill {...props} />} />
-                  </VolumeSlider.Track>
-                  <VolumeSlider.Thumb render={(props) => <SliderThumb persistent {...props} />} />
-                </VolumeSlider.Root>
-              </Popover.Popup>
-            </Popover.Root>
+            <VolumePopover />
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
@@ -308,8 +327,9 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 render={
                   <PiPButton
                     render={(props) => (
-                      <Button variant="icon" {...props}>
-                        <PipIcon className={icon} />
+                      <Button variant="icon" {...props} className={iconState.pip.button}>
+                        <PipEnterIcon className={cn(icon, iconState.pip.off)} />
+                        <PipExitIcon className={cn(icon, iconState.pip.on)} />
                       </Button>
                     )}
                   />

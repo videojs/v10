@@ -14,6 +14,7 @@ import '../ui/pip-button';
 import '../ui/play-button';
 import '../ui/playback-rate-button';
 import '../ui/popover';
+import '../ui/poster';
 import '../ui/seek-button';
 import '../ui/time';
 import '../ui/time-slider';
@@ -26,7 +27,13 @@ const SEEK_TIME = 10;
 function getTemplateHTML() {
   return /*html*/ `
     <media-container class="media-default-skin media-default-skin--video">
+      <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
+      <slot></slot>
+
+      <media-poster>
+        <slot name="poster"></slot>
+      </media-poster>
 
       <media-buffering-indicator class="media-buffering-indicator">
         <div class="media-surface">
@@ -115,7 +122,8 @@ function getTemplateHTML() {
           </media-tooltip>
 
           <media-pip-button commandfor="pip-tooltip" class="media-button media-button--icon media-button--pip">
-            ${renderIcon('pip', { class: 'media-icon' })}
+            ${renderIcon('pip-enter', { class: 'media-icon media-icon--pip-enter' })}
+            ${renderIcon('pip-exit', { class: 'media-icon media-icon--pip-exit' })}
           </media-pip-button>
           <media-tooltip id="pip-tooltip" side="top" class="media-surface media-tooltip">
             <span class="media-tooltip-label media-tooltip-label--enter-pip">Enter picture-in-picture</span>

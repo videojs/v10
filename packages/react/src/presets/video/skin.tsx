@@ -4,7 +4,8 @@ import {
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
-  PipIcon,
+  PipEnterIcon,
+  PipExitIcon,
   PlayIcon,
   RestartIcon,
   SeekIcon,
@@ -13,6 +14,7 @@ import {
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@videojs/icons/react';
+import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
@@ -25,18 +27,20 @@ import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
+import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
 import { Slider } from '@/ui/slider';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
-import type { BaseSkinProps } from '../types';
+import { isRenderProp } from '@/utils/use-render';
+import type { BaseVideoSkinProps } from '../types';
 import { ErrorDialog } from './error-dialog';
 
 const SEEK_TIME = 10;
 
-export type VideoSkinProps = BaseSkinProps;
+export type VideoSkinProps = BaseVideoSkinProps;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
   return <button ref={ref} type="button" className={cn('media-button', className)} {...props} />;
@@ -74,12 +78,48 @@ function FullscreenLabel(): ReactNode {
   return fullscreen ? <>Exit fullscreen</> : <>Enter fullscreen</>;
 }
 
+function VolumePopover(): ReactNode {
+  const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
+
+  const muteButton = (
+    <MuteButton
+      render={(props) => (
+        <Button {...props} className="media-button--icon media-button--mute">
+          <VolumeOffIcon className="media-icon media-icon--volume-off" />
+          <VolumeLowIcon className="media-icon media-icon--volume-low" />
+          <VolumeHighIcon className="media-icon media-icon--volume-high" />
+        </Button>
+      )}
+    />
+  );
+
+  if (volumeUnsupported) return muteButton;
+
+  return (
+    <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+      <Popover.Trigger render={muteButton} />
+      <Popover.Popup className="media-surface media-popover media-popover--volume">
+        <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
+          <VolumeSlider.Track className="media-slider__track">
+            <VolumeSlider.Fill className="media-slider__fill" />
+          </VolumeSlider.Track>
+          <VolumeSlider.Thumb className="media-slider__thumb media-slider__thumb--persistent" />
+        </VolumeSlider.Root>
+      </Popover.Popup>
+    </Popover.Root>
+  );
+}
+
 export function VideoSkin(props: VideoSkinProps): ReactNode {
-  const { children, className, ...rest } = props;
+  const { children, className, poster, ...rest } = props;
 
   return (
     <Container className={cn('media-default-skin media-default-skin--video', className)} {...rest}>
       {children}
+
+      {poster && (
+        <Poster src={isString(poster) ? poster : undefined} render={isRenderProp(poster) ? poster : undefined} />
+      )}
 
       <BufferingIndicator
         render={(props) => (
@@ -181,29 +221,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
             <Tooltip.Popup className="media-surface media-tooltip">Toggle playback rate</Tooltip.Popup>
           </Tooltip.Root>
 
-          <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
-            <Popover.Trigger
-              render={
-                <MuteButton
-                  render={(props) => (
-                    <Button {...props} className="media-button--icon media-button--mute">
-                      <VolumeOffIcon className="media-icon media-icon--volume-off" />
-                      <VolumeLowIcon className="media-icon media-icon--volume-low" />
-                      <VolumeHighIcon className="media-icon media-icon--volume-high" />
-                    </Button>
-                  )}
-                />
-              }
-            />
-            <Popover.Popup className="media-surface media-popover media-popover--volume">
-              <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
-                <VolumeSlider.Track className="media-slider__track">
-                  <VolumeSlider.Fill className="media-slider__fill" />
-                </VolumeSlider.Track>
-                <VolumeSlider.Thumb className="media-slider__thumb media-slider__thumb--persistent" />
-              </VolumeSlider.Root>
-            </Popover.Popup>
-          </Popover.Root>
+          <VolumePopover />
 
           <Tooltip.Root side="top">
             <Tooltip.Trigger
@@ -228,8 +246,9 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
               render={
                 <PiPButton
                   render={(props) => (
-                    <Button {...props} className="media-button--icon">
-                      <PipIcon className="media-icon" />
+                    <Button {...props} className="media-button--icon media-button--pip">
+                      <PipEnterIcon className="media-icon media-icon--pip-enter" />
+                      <PipExitIcon className="media-icon media-icon--pip-exit" />
                     </Button>
                   )}
                 />

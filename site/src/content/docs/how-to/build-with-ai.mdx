@@ -1,0 +1,64 @@
+---
+title: 'Build with AI'
+description: 'How to give AI tools the context they need to build Video.js players alongside you'
+---
+
+import { Image } from 'astro:assets';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import CopyMarkdownButton from '@/components/CopyMarkdownButton.tsx';
+import markdownNegotiation from '@/assets/docs/how-to/build-with-ai/markdown-negotiation.png';
+
+Video.js publishes all of its documentation in AI-friendly formats. This page covers how to feed that documentation to your tools.
+
+## Give your AI context
+
+AI tools might not know the Video.js API out of the box. You need to give them documentation.
+
+### Markdown documentation
+
+Every doc page is available as markdown, so you can provide your model with focused content instead of HTML. Three ways to get it:
+
+<FrameworkCase frameworks={["react"]}>
+1. **Copy button**: each page has a "Copy Markdown" button in its header. Grab the pages relevant to your task and paste them in. The button looks something like this...
+
+   <CopyMarkdownButton client:idle />
+
+2. **`Accept: text/markdown` header**: AI tools that send this header when fetching a Video.js doc URL will receive markdown instead of HTML.
+
+   <Image src={markdownNegotiation} alt="Fetching a doc URL returns 188.7KB of HTML; fetching the same URL with .md returns 3.4KB of markdown" inferSize class="max-w-md" />
+3. **Add `.md` to any URL**: append `.md` to any doc URL to get its markdown directly. For example, the PlayButton reference is available at [`videojs.org/docs/framework/react/reference/play-button.md`](https://videojs.org/docs/framework/react/reference/play-button.md).
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+1. **Copy button**: each page has a "Copy Markdown" button in its header. Grab the pages relevant to your task and paste them in. It looks something like this...
+
+   <CopyMarkdownButton client:idle />
+
+2. **`Accept: text/markdown` header**: AI tools that send this header when fetching a Video.js doc URL will receive markdown instead of HTML.
+
+   <Image src={markdownNegotiation} alt="Fetching a doc URL returns 188.7KB of HTML; fetching the same URL with .md returns 3.4KB of markdown" inferSize />
+3. **Add `.md` to any URL**: append `.md` to any doc URL to get its markdown directly. For example, the PlayButton reference is available at [`videojs.org/docs/framework/html/reference/play-button.md`](https://videojs.org/docs/framework/html/reference/play-button.md).
+</FrameworkCase>
+
+### llms.txt
+
+<FrameworkCase frameworks={["react"]}>
+[`videojs.org/docs/framework/react/llms.txt`](https://videojs.org/docs/framework/react/llms.txt) is an index of the full documentation: every page with a title and description. Add it to your project's context so your AI knows what's available.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+[`videojs.org/docs/framework/html/llms.txt`](https://videojs.org/docs/framework/html/llms.txt) is an index of the full documentation: every page with a title and description. Add it to your project's context so your AI knows what's available.
+</FrameworkCase>
+
+## Set up your tools
+
+How you use these resources depends on your tool:
+
+- **Any AI chat**: copy markdown from a doc page and paste it into the conversation.
+- **Claude Code**: reference doc URLs in your project's [`CLAUDE.md`](https://docs.anthropic.com/en/docs/claude-code/overview) so the agent knows where to find Video.js docs when it needs them.
+- **Cursor**: add the `llms.txt` URL via the [`@Docs`](https://docs.cursor.com/context/@-symbols/@-docs) feature for indexed search across the documentation.
+- **Other coding agents**: reference doc URLs or `llms.txt` in your project's [`AGENTS.md`](https://agents.md) or equivalent context file.
+
+## What's next for AI and Video.js
+
+We're exploring additional ways to integrate with AI tools, including MCP servers and agent skills. If you have ideas or want to share how you're using AI with Video.js, we'd love to hear from you in [GitHub Discussions](https://github.com/videojs/v10/discussions).

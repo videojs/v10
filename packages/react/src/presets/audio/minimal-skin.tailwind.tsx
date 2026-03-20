@@ -98,6 +98,38 @@ function PlayLabel(): ReactNode {
   return paused ? <>Play</> : <>Pause</>;
 }
 
+function VolumePopover(): ReactNode {
+  const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
+
+  const muteButton = (
+    <MuteButton
+      render={(props) => (
+        <Button variant="icon" {...props} className={iconState.mute.button}>
+          <VolumeOffIcon className={cn(icon, iconState.mute.volumeOff)} />
+          <VolumeLowIcon className={cn(icon, iconState.mute.volumeLow)} />
+          <VolumeHighIcon className={cn(icon, iconState.mute.volumeHigh)} />
+        </Button>
+      )}
+    />
+  );
+
+  if (volumeUnsupported) return muteButton;
+
+  return (
+    <Popover.Root openOnHover delay={200} closeDelay={100} side="left">
+      <Popover.Trigger render={muteButton} />
+      <Popover.Popup className={cn(popup.volume)}>
+        <VolumeSlider.Root orientation="horizontal" thumbAlignment="edge" render={(props) => <SliderRoot {...props} />}>
+          <VolumeSlider.Track render={(props) => <SliderTrack {...props} />}>
+            <VolumeSlider.Fill render={(props) => <SliderFill {...props} />} />
+          </VolumeSlider.Track>
+          <VolumeSlider.Thumb render={(props) => <SliderThumb persistent {...props} />} />
+        </VolumeSlider.Root>
+      </Popover.Popup>
+    </Popover.Root>
+  );
+}
+
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNode {
@@ -196,33 +228,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
               <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
             </Tooltip.Root>
 
-            <Popover.Root openOnHover delay={200} closeDelay={100} side="left">
-              <Popover.Trigger
-                render={
-                  <MuteButton
-                    render={(props) => (
-                      <Button variant="icon" {...props} className={iconState.mute.button}>
-                        <VolumeOffIcon className={cn(icon, iconState.mute.volumeOff)} />
-                        <VolumeLowIcon className={cn(icon, iconState.mute.volumeLow)} />
-                        <VolumeHighIcon className={cn(icon, iconState.mute.volumeHigh)} />
-                      </Button>
-                    )}
-                  />
-                }
-              />
-              <Popover.Popup className={cn(popup.volume)}>
-                <VolumeSlider.Root
-                  orientation="horizontal"
-                  thumbAlignment="edge"
-                  render={(props) => <SliderRoot {...props} />}
-                >
-                  <VolumeSlider.Track render={(props) => <SliderTrack {...props} />}>
-                    <VolumeSlider.Fill render={(props) => <SliderFill {...props} />} />
-                  </VolumeSlider.Track>
-                  <VolumeSlider.Thumb render={(props) => <SliderThumb persistent {...props} />} />
-                </VolumeSlider.Root>
-              </Popover.Popup>
-            </Popover.Root>
+            <VolumePopover />
           </div>
         </Tooltip.Provider>
       </div>

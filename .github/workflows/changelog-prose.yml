@@ -1,0 +1,109 @@
+name: Changelog Prose
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
+  issues: read
+
+concurrency:
+  group: changelog-prose-${{ github.event.release.tag_name }}
+  cancel-in-progress: true
+
+jobs:
+  prose:
+    if: startsWith(github.event.release.tag_name, '@videojs/core@')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Parse version
+        id: version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION="${TAG#@videojs/core@}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Guard — check raw changelog exists
+        id: guard
+        run: |
+          FILE="site/src/content/changelog/${{ steps.version.outputs.version }}.md"
+          if [ ! -f "$FILE" ]; then
+            echo "::warning::Raw changelog file $FILE not found on main — skipping prose generation"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate changelog prose
+        if: steps.guard.outputs.skip != 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: |
+            --model sonnet
+            --max-turns 20
+            --allowedTools "Bash(gh:*)" "Bash(git:*)" "Read" "Edit" "Write" "Glob" "Grep"
+          prompt: |
+            You are the changelog prose writer for Video.js 10.
+
+            Version: ${{ steps.version.outputs.version }}
+            Release URL: ${{ github.event.release.html_url }}
+
+            Your task is to rewrite a raw changelog file into polished narrative prose, then open a PR with the result.
+
+            Steps:
+
+            1. **Load context:**
+               - Read `.claude/skills/docs/references/writing-style.md` for tone and style rules.
+               - Read the raw changelog at `site/src/content/changelog/${{ steps.version.outputs.version }}.md`.
+               - Read other existing `.md` files in `site/src/content/changelog/` (if any) to match their tone and format.
+
+            2. **Gather PR context:**
+               - Extract all PR numbers (e.g., `#906`) from the raw changelog body.
+               - Build a single batched GraphQL query using `gh api graphql` with aliases to fetch all PRs at once:
+                 ```
+                 {
+                   repository(owner: "videojs", name: "v10") {
+                     pr906: pullRequest(number: 906) {
+                       title
+                       body
+                       closingIssuesReferences(first: 5) {
+                         nodes { number title body parent { number title } }
+                       }
+                     }
+                     ...
+                   }
+                 }
+                 ```
+               - This gives you PR title, body, linked issues (with body), and parent epics in one API call.
+               - Some PR numbers may resolve to null — skip those gracefully.
+
+            3. **Rewrite the changelog body:**
+               - Replace the raw bullet list with narrative prose (100–300 words).
+               - Lead with the 1–3 most impactful changes, informed by epic/issue context.
+               - Group related PRs into cohesive stories rather than listing them individually.
+               - Call out breaking changes explicitly with migration guidance if applicable.
+               - Summarize smaller fixes briefly.
+               - Skip internal-only changes (CI, tooling, changelog maintenance).
+               - Follow `writing-style.md` strictly.
+               - Preserve PR links as inline markdown links in the prose (e.g., [#906](url)).
+               - Do not fabricate — stick to what the PRs actually say.
+
+            4. **Write the `description` field:**
+               - One sentence summarizing the release for SEO/RSS.
+               - Update the `description: ""` field in the file's YAML frontmatter.
+
+            5. **Create a PR:**
+               - Create branch: `docs/changelog-prose-${{ steps.version.outputs.version }}`
+               - Stage and commit the changed file: `docs(changelog): add prose for ${{ steps.version.outputs.version }}`
+               - Push the branch and open a PR targeting `main`.
+               - Include a link to the release in the PR body.
+               - Keep the PR description concise.

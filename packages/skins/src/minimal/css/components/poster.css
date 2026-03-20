@@ -1,0 +1,36 @@
+/* ==========================================================================
+   Poster Image
+   ========================================================================== */
+
+.media-minimal-skin media-poster,
+.media-minimal-skin > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.25s;
+  pointer-events: none;
+}
+.media-minimal-skin media-poster:not([data-visible]),
+.media-minimal-skin > img:not([data-visible]) {
+  opacity: 0;
+}
+.media-minimal-skin media-poster ::slotted(img) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: var(--media-object-fit, contain);
+  object-position: var(--media-object-position, center);
+  border-radius: var(--media-video-border-radius);
+}
+.media-minimal-skin > img {
+  object-fit: var(--media-object-fit, contain);
+  object-position: var(--media-object-position, center);
+  border-radius: inherit;
+}
+
+.media-minimal-skin:fullscreen media-poster ::slotted(img),
+.media-minimal-skin:fullscreen > img {
+  object-fit: contain;
+}

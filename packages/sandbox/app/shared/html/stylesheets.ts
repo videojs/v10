@@ -10,21 +10,21 @@ const audioStylesheets: Record<Skin, string> = {
   minimal: new URL('@videojs/html/audio/minimal-skin.css', import.meta.url).href,
 };
 
-function loadStylesheet(url: string) {
-  // Remove any existing link for this URL to force reload
-  const existing = document.querySelector(`link[rel="stylesheet"][href="${url}"]`);
+function loadStylesheet(id: string, url: string) {
+  const existing = document.querySelector(`link[rel="stylesheet"][data-sandbox-stylesheet="${id}"]`);
   existing?.remove();
 
   const link = document.createElement('link');
+  link.dataset.sandboxStylesheet = id;
   link.rel = 'stylesheet';
   link.href = url;
   document.head.appendChild(link);
 }
 
 export function loadVideoStylesheets(skin: Skin) {
-  loadStylesheet(videoStylesheets[skin]);
+  loadStylesheet('video-skin', videoStylesheets[skin]);
 }
 
 export function loadAudioStylesheets(skin: Skin) {
-  loadStylesheet(audioStylesheets[skin]);
+  loadStylesheet('audio-skin', audioStylesheets[skin]);
 }

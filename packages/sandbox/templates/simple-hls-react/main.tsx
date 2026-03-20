@@ -4,7 +4,7 @@ import '@app/styles.css';
 //
 // React equivalent of the simple-hls-html sandbox: SimpleHlsVideo inside a VJS
 // player with play/mute controls. SimpleHlsVideo registers itself via
-// useMediaRegistration so the store discovers it without any querySelector.
+// useMediaAttach so the store discovers it without any querySelector.
 
 import { PauseIcon, PlayIcon, RestartIcon, VolumeHighIcon, VolumeOffIcon } from '@videojs/icons/react';
 import { Container, createPlayer, MuteButton, PlayButton } from '@videojs/react';

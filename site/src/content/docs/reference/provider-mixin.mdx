@@ -1,22 +1,30 @@
 ---
 title: ProviderMixin
-description: Mixin that provides player context to descendant elements
+description: Mixin that creates the player store and manages the full media attach lifecycle
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
-`ProviderMixin` creates a class that provides the player store to descendant elements via context. It owns the store lifecycle: creates the store lazily on first access and destroys it on disconnect.
+`ProviderMixin` creates a class that owns the player store and the media attach lifecycle. It publishes the store to context so descendants can consume it, and calls `store.attach()` when both a media element and a container are available.
 
 ### Store lifecycle
 
-The store is created lazily using the factory from `createPlayer`. On `connectedCallback`, the mixin publishes the store to context so descendant elements can consume it. On `disconnectedCallback`, it calls `store.destroy()` and cleans up.
+The store is created when the element is constructed. On `connectedCallback`, the mixin publishes three context values to its descendants:
 
-Any <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> or <DocsLink slug="reference/container-mixin">`ContainerMixin`</DocsLink> element below the provider in the DOM tree receives the store automatically through context.
+{/* TODO: link context keys to concept page once written (https://github.com/videojs/v10/issues/1033) */}
+- **`playerContext`** — the store, consumed by <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and other controllers
+- **`mediaContext`** — a setter callback for media elements to register themselves
+- **`containerContext`** — a setter callback for container elements to register themselves
+
+When a media element and a container both register, the provider calls `store.attach({ media, container })`. If no media element registers via context within a [microtask](https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide), the provider falls back to `querySelector('video, audio')` to support plain `<video>` and `<audio>` elements.
+
+{/* TODO: link destroyCallback to lifecycle reference once written (https://github.com/videojs/v10/issues/1034) */}
+On `disconnectedCallback`, the mixin detaches the current media target but keeps the store alive. An element moved in the DOM reconnects without losing state. The store is destroyed in `destroyCallback`.
 
 ### When to split provider and container
 
-Use `ProviderMixin` separate from <DocsLink slug="reference/container-mixin">`ContainerMixin`</DocsLink> when the store owner is a different element from the one containing the media. This is common in complex layouts:
+Use `ProviderMixin` separate from <DocsLink slug="reference/container-mixin">`ContainerMixin`</DocsLink> when the store owner is a different element from the container:
 
 ```ts
 const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
@@ -24,11 +32,11 @@ const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures
 // Layout shell owns the store
 class AppShell extends ProviderMixin(MediaElement) {}
 
-// Content region discovers and attaches the media element
+// Content region is the fullscreen target and container reference
 class VideoRegion extends ContainerMixin(MediaElement) {}
 ```
 
-When a single element should handle both responsibilities, compose the mixins directly:
+When a single element handles both responsibilities, compose the mixins directly:
 
 ```ts
 const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });

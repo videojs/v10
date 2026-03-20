@@ -10,7 +10,9 @@ import {
   iconFlipped,
   iconState,
   overlay,
+  playbackRate,
   popup,
+  poster,
   preview,
   root,
   seek,
@@ -32,20 +34,26 @@ import '../ui/pip-button';
 import '../ui/play-button';
 import '../ui/playback-rate-button';
 import '../ui/popover';
+import '../ui/poster';
 import '../ui/seek-button';
 import '../ui/time';
 import '../ui/time-slider';
 import '../ui/tooltip';
 import '../ui/tooltip-group';
 import '../ui/volume-slider';
-import { playbackRate } from '@videojs/skins/default/tailwind/video.tailwind';
 
 const SEEK_TIME = 10;
 
 function getTemplateHTML() {
   return /*html*/ `
     <media-container class="${root(true)}">
+      <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
+      <slot></slot>
+
+      <media-poster class="${poster(true)}">
+        <slot name="poster"></slot>
+      </media-poster>
 
       <media-buffering-indicator class="${bufferingIndicator}">
         ${renderIcon('spinner')}
@@ -146,8 +154,9 @@ function getTemplateHTML() {
             </span>
 
             <span class="${tooltipState.pip.wrapper}">
-              <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.icon)}">
-                ${renderIcon('pip', { class: icon })}
+              <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.icon, iconState.pip.button)}">
+                ${renderIcon('pip-enter', { class: cn(icon, iconState.pip.off) })}
+                ${renderIcon('pip-exit', { class: cn(icon, iconState.pip.on) })}
               </media-pip-button>
               <media-tooltip id="pip-tooltip" side="top" class="${cn(popup.tooltip)}">
                 <span class="${tooltipState.pip.enter}">Enter picture-in-picture</span>

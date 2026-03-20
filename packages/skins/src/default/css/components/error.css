@@ -20,7 +20,7 @@
   border-radius: 1.75rem;
   color: oklch(1 0 0);
   font-size: 0.875rem;
-  transition-property: opacity, transform;
+  transition-property: opacity, scale;
   transition-duration: 500ms;
   transition-delay: 100ms;
   transition-timing-function: linear(
@@ -46,7 +46,7 @@
 .media-default-skin .media-error[data-starting-style] .media-error__dialog,
 .media-default-skin .media-error[data-ending-style] .media-error__dialog {
   opacity: 0;
-  transform: scale(0.5);
+  scale: 0.5;
 }
 
 .media-default-skin .media-error__content {
@@ -63,6 +63,7 @@
 
 .media-default-skin .media-error__description {
   opacity: 0.7;
+  overflow-wrap: anywhere;
 }
 
 .media-default-skin .media-error__actions {

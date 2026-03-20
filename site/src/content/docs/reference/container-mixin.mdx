@@ -1,18 +1,25 @@
 ---
 title: ContainerMixin
-description: Mixin that consumes player context and auto-attaches media elements
+description: Mixin that consumes player context and registers the element as the media container
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
-`ContainerMixin` creates a class that consumes the player store from context and automatically attaches `<video>` or `<audio>` elements found within it. It uses a `MutationObserver` to watch for media element changes and calls `store.attach()` to keep the store's media target in sync.
+`ContainerMixin` creates a class that consumes the player store from context and registers itself as the media container with the <DocsLink slug="reference/provider-mixin">provider</DocsLink>. The provider uses this reference as the fullscreen target and passes it to `store.attach()`.
+
+### What ContainerMixin does
+
+{/* TODO: link containerContext to concept page once written (https://github.com/videojs/v10/issues/1033) */}
+On `connectedCallback`, the element registers itself with the provider via `containerContext`. The provider stores the container reference and uses it when calling `store.attach({ media, container })`. On `disconnectedCallback`, the element deregisters itself.
+
+Media discovery is owned by the provider — `ContainerMixin` does not search for or attach media elements.
 
 ### When to use ContainerMixin
 
 Use `ContainerMixin` when the <DocsLink slug="reference/provider-mixin">provider</DocsLink> and container live in different elements. This is common when the store owner sits higher in the tree (e.g., a layout shell) while the media element sits deeper in a content area.
 
-For a single element that both owns the store and attaches media, compose both mixins on the same base class:
+For a single element that both owns the store and attaches the container, compose both mixins on the same base class:
 
 ```ts
 const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
@@ -20,13 +27,9 @@ const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures
 class VideoPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {}
 ```
 
-### How media discovery works
-
-On `connectedCallback`, `ContainerMixin` sets up a `MutationObserver` on its children. When a `<video>` or `<audio>` element is added or removed, it calls `store.attach({ media, container })` or cleans up the previous attachment. The observer is torn down on `disconnectedCallback`.
-
 ### Split composition
 
-Pair `ContainerMixin` with <DocsLink slug="reference/provider-mixin">`ProviderMixin`</DocsLink> for full control over which element owns the store and which discovers the media:
+Pair `ContainerMixin` with <DocsLink slug="reference/provider-mixin">`ProviderMixin`</DocsLink> when the store owner is a different element from the container:
 
 ```ts
 const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
@@ -34,7 +37,7 @@ const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures
 // Provider owns the store, sits at the top
 class PlayerShell extends ProviderMixin(MediaElement) {}
 
-// Container discovers media, sits deeper in the tree
+// Container registers as the layout/fullscreen target
 class MediaRegion extends ContainerMixin(MediaElement) {}
 ```
 

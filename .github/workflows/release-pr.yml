@@ -25,10 +25,72 @@ jobs:
           OUTPUT: CHANGELOG.md
           GITHUB_REPO: ${{ github.repository }}
 
+      - name: Extract changelog for site
+        run: |
+          # Find first versioned release heading (skip [Unreleased])
+          HEADING=$(grep -n '^## \[@videojs/core@' CHANGELOG.md | head -1) || true
+          if [ -z "$HEADING" ]; then
+            echo "::warning::No versioned release heading found in CHANGELOG.md — skipping site extraction"
+            exit 0
+          fi
+
+          LINE_NUM=$(echo "$HEADING" | cut -d: -f1)
+          HEADING_TEXT=$(echo "$HEADING" | cut -d: -f2-)
+
+          # Parse version and date from heading: ## [@videojs/core@VERSION] - DATE
+          VERSION=$(echo "$HEADING_TEXT" | sed -n 's/.*@videojs\/core@\([^]]*\)\].*/\1/p')
+          DATE=$(echo "$HEADING_TEXT" | sed -n 's/.*- \(.*\)/\1/p')
+
+          if [ -z "$VERSION" ] || [ -z "$DATE" ]; then
+            echo "::warning::Could not parse version or date from heading — skipping site extraction"
+            exit 0
+          fi
+
+          # Find the next ## [ heading to delimit the body
+          NEXT_LINE=$(tail -n +"$((LINE_NUM + 1))" CHANGELOG.md | grep -n '^## \[' | head -1 | cut -d: -f1) || true
+          if [ -n "$NEXT_LINE" ]; then
+            END_LINE=$((LINE_NUM + NEXT_LINE - 1))
+            BODY=$(sed -n "$((LINE_NUM + 1)),$((END_LINE))p" CHANGELOG.md | sed '/^$/N;/^\n$/d')
+          else
+            BODY=$(tail -n +"$((LINE_NUM + 1))" CHANGELOG.md)
+          fi
+
+          # Determine prerelease and breaking
+          PRERELEASE=false
+          if echo "$VERSION" | grep -q '-'; then
+            PRERELEASE=true
+          fi
+
+          BREAKING=false
+          if echo "$BODY" | grep -qiF '**breaking**'; then
+            BREAKING=true
+          fi
+
+          # Extract compare URL from CHANGELOG footer
+          COMPARE_URL=$(grep -Fm1 "[@videojs/core@${VERSION}]: " CHANGELOG.md | sed 's/.*]: //' || true)
+
+          # Write the site changelog file
+          OUTFILE="site/src/content/changelog/${VERSION}.md"
+          mkdir -p "$(dirname "$OUTFILE")"
+          cat > "$OUTFILE" <<EOF
+          ---
+          description: ""
+          date: ${DATE}
+          version: "${VERSION}"
+          prerelease: ${PRERELEASE}
+          breaking: ${BREAKING}
+          compareUrl: "${COMPARE_URL}"
+          ---
+
+          ${BODY}
+          EOF
+
+          echo "Wrote $OUTFILE (version=$VERSION, date=$DATE, prerelease=$PRERELEASE, breaking=$BREAKING)"
+
       - name: Commit root changelog
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md
+          git add CHANGELOG.md site/src/content/changelog/
           git diff --cached --quiet || git commit -m "chore(release): update root changelog"
           git push

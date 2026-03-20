@@ -1,7 +1,7 @@
 {
   "name": "@videojs/html",
   "type": "module",
-  "version": "10.0.0-beta.6",
+  "version": "10.0.0-beta.7",
   "description": "HTML library for building media players",
   "license": "Apache-2.0",
   "repository": {
@@ -13,7 +13,8 @@
   "module": "dist/default/index.js",
   "types": "dist/dev/index.d.ts",
   "sideEffects": [
-    "./dist/*/define/**/*.js"
+    "./dist/*/define/**/*.js",
+    "./cdn/**/*.js"
   ],
   "files": [
     "dist",
@@ -72,6 +73,16 @@
       "types": "./dist/dev/define/media/*.d.ts",
       "development": "./dist/dev/define/media/*.js",
       "default": "./dist/default/define/media/*.js"
+    },
+    "./cdn/media/*": {
+      "types": "./cdn/media/*.dev.d.ts",
+      "development": "./cdn/media/*.dev.js",
+      "default": "./cdn/media/*.js"
+    },
+    "./cdn/*": {
+      "types": "./cdn/*.dev.d.ts",
+      "development": "./cdn/*.dev.js",
+      "default": "./cdn/*.js"
     },
     "./*.css": "./dist/default/define/*.css",
     "./*": {

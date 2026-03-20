@@ -47,7 +47,7 @@
 /* Thumb */
 .media-minimal-skin .media-slider__thumb {
   position: absolute;
-  transform: translate(-50%, -50%);
+  translate: -50% -50%;
   z-index: 10;
   width: 0.75rem;
   height: 0.75rem;
