@@ -18,9 +18,10 @@ export interface ErrorDialogClasses {
 export function ErrorDialog({ classes }: { classes?: ErrorDialogClasses }): ReactNode {
   const errorState = usePlayer(selectError);
   const lastError = useRef(errorState?.error);
-  if (errorState?.error) lastError.current = errorState.error;
 
   if (!errorState) return null;
+
+  if (errorState?.error) lastError.current = errorState.error;
 
   return (
     <AlertDialog.Root

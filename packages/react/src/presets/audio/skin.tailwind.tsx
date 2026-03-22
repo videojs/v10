@@ -94,11 +94,11 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
   );
 });
 
-function PlayLabel(): ReactNode {
+function PlayLabel(): string {
   const paused = usePlayer((s) => Boolean(s.paused));
   const ended = usePlayer((s) => Boolean(s.ended));
-  if (ended) return <>Replay</>;
-  return paused ? <>Play</> : <>Pause</>;
+  if (ended) return 'Replay';
+  return paused ? 'Play' : 'Pause';
 }
 
 function VolumePopover(): ReactNode {
