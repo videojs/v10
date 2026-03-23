@@ -1332,7 +1332,7 @@ function classifyDeclaration(name: string, isExported: boolean): SectionKey {
   if (isExported && name.endsWith('Skin')) return 'main';
   if (isExported && name.endsWith('SkinProps')) return 'mainType';
   if (name.endsWith('Label')) return 'labels';
-  if (name === 'ErrorDialog' || name === 'ErrorDialogClasses' || name === 'errorClasses') return 'errorDialog';
+  if (name === 'ErrorDialog' || name === 'ErrorDialogClassNames' || name === 'ERROR_CLASSNAMES') return 'errorDialog';
   if (name.endsWith('Icon')) return 'icons';
   if (name.startsWith('is') && name[2] === name[2]?.toUpperCase()) return 'utilities';
   if (name === 'Button' || name.endsWith('Popover') || name.startsWith('Slider')) return 'components';
@@ -1410,6 +1410,59 @@ function reorganizeReactOutput(source: string, extraUtilities: string[], extraIc
 }
 
 /**
+ * Flatten `ERROR_CLASSNAMES` into the inlined `ErrorDialog` component so the
+ * ejected output has plain className strings instead of the classNames-prop
+ * indirection.
+ *
+ * @temporary Remove once the ErrorDialog component no longer uses the
+ *   `classNames` prop pattern. Tracked in https://github.com/videojs/v10/pull/1077.
+ *   Cleanup: delete this function + its call in `processReactSkin` (step 9).
+ */
+function flattenErrorClasses(source: string): string {
+  if (!source.includes('const ERROR_CLASSNAMES')) return source;
+
+  // -- 1. Parse ERROR_CLASSNAMES const into a key → raw-expression map -------
+  const blockMatch = source.match(/const ERROR_CLASSNAMES\s*=\s*\{([\s\S]*?)\};/);
+  if (!blockMatch) return source;
+
+  const classMap = new Map<string, string>();
+  // Match `key: <value>,` handling multi-char expressions (property access,
+  // array/filter/join chains, string literals, etc.)
+  for (const [, key, value] of blockMatch[1].matchAll(/(\w+)\s*:\s*(.+?)\s*(?:,\s*$|,?\s*(?=\}))/gm)) {
+    classMap.set(key, value);
+  }
+
+  // -- 2. Replace className={classNames?.X} with resolved values -------------
+  for (const [key, value] of classMap) {
+    const isStringLiteral = /^'[^']*'$/.test(value) || /^"[^"]*"$/.test(value);
+    const replacement = isStringLiteral
+      ? `className=${value.replace(/'/g, '"')}` // 'foo' → className="foo"
+      : `className={${value}}`;
+    source = source.replace(new RegExp(`className=\\{classNames\\?\\.${key}\\}`, 'g'), replacement);
+  }
+
+  // Any remaining classNames?.X refs (keys absent from ERROR_CLASSNAMES) → drop attr
+  source = source.replace(/\s*className=\{classNames\?\.\w+\}/g, '');
+
+  // -- 3. Remove ErrorDialogClassNames interface -----------------------------
+  source = source.replace(/(?:export )?interface ErrorDialogClassNames\s*\{[\s\S]*?\}\n*/g, '');
+
+  // -- 4. Remove ERROR_CLASSNAMES const --------------------------------------
+  source = source.replace(/const ERROR_CLASSNAMES\s*=\s*\{[\s\S]*?\};\n*/g, '');
+
+  // -- 5. Simplify ErrorDialog signature (drop classNames prop) --------------
+  source = source.replace(
+    /(?:export )?function ErrorDialog\(\{\s*classNames\s*\}\s*:\s*\{\s*classNames\?\s*:\s*ErrorDialogClassNames\s*\}\)/g,
+    'function ErrorDialog()'
+  );
+
+  // -- 6. Simplify call site -------------------------------------------------
+  source = source.replace(/<ErrorDialog\s+classNames=\{ERROR_CLASSNAMES\}\s*\/>/g, '<ErrorDialog />');
+
+  return source;
+}
+
+/**
  * Process a React skin: inline SVG icons, resolve all imports,
  * and produce both TSX and JSX versions.
  */
@@ -1449,7 +1502,10 @@ async function processReactSkin(skin: ReactSkinDef): Promise<{ tsx: string; jsx:
   // 8. Replace Base*SkinProps chain with a clean interface
   source = resolvePropsInterface(source);
 
-  // 9. Reorganize into sections with comment headers
+  // 9. Flatten ERROR_CLASSNAMES into ErrorDialog JSX (@temporary — remove with flattenErrorClasses)
+  source = flattenErrorClasses(source);
+
+  // 10. Reorganize into sections with comment headers
   const tsx = reorganizeReactOutput(source, privates.utilities, icons.iconComponents);
   const jsx = tsxToJsx(tsx);
 
