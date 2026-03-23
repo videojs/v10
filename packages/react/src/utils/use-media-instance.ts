@@ -1,22 +1,22 @@
 'use client';
 
 import type { Media } from '@videojs/core/dom';
+import { useState } from 'react';
 
 import { useMediaAttach } from '../player/context';
 import { useDestroy } from './use-destroy';
 
-interface Destroyable {
-  destroy(): void;
-}
-
 /**
- * Manage a media instance lifecycle within a player context.
+ * Create and manage a media instance lifecycle within a player context.
  *
- * Attaches the instance to the player on mount and safely detaches on
- * unmount using a functional updater to avoid race conditions when
- * swapping media components (e.g. DashVideo → HlsVideo).
+ * Instantiates the media class once, attaches it to the player on mount,
+ * and safely detaches on unmount using a functional updater to avoid race
+ * conditions when swapping media components (e.g. DashVideo → HlsVideo).
  */
-export function useMediaInstance(instance: Media & Destroyable): void {
+export function useMediaInstance<Instance extends Media & { destroy(): void }>(
+  MediaClass: new () => Instance
+): Instance {
+  const [instance] = useState(() => new MediaClass());
   const setMedia = useMediaAttach();
 
   useDestroy(
@@ -24,4 +24,6 @@ export function useMediaInstance(instance: Media & Destroyable): void {
     () => setMedia?.(instance),
     () => setMedia?.((prev) => (prev === instance ? null : prev))
   );
+
+  return instance;
 }
