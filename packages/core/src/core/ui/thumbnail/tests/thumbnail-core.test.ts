@@ -264,18 +264,16 @@ describe('ThumbnailCore', () => {
       });
 
       const scale = 177 / 256;
-      const oX = Math.ceil(512 * scale);
-      const oY = Math.ceil(320 * scale);
       const inset = 1; // scale !== 1
 
       expect(result).toEqual({
         scale,
-        containerWidth: Math.floor((512 + 256) * scale) - oX - inset * 2,
-        containerHeight: Math.floor((320 + 160) * scale) - oY - inset * 2,
+        containerWidth: Math.floor(256 * scale) - inset * 2,
+        containerHeight: Math.floor(160 * scale) - inset * 2,
         imageWidth: Math.ceil(2560 * scale),
         imageHeight: Math.ceil(1600 * scale),
-        offsetX: oX + inset,
-        offsetY: oY + inset,
+        offsetX: Math.ceil(512 * scale) + inset,
+        offsetY: Math.ceil(320 * scale) + inset,
       });
 
       // Verify all pixel values are integers (no sub-pixel rendering gaps).
@@ -334,6 +332,29 @@ describe('ThumbnailCore', () => {
       const nextTileY = (320 + 160) * scale;
       expect(result!.offsetX + result!.containerWidth).toBeLessThanOrEqual(nextTileX);
       expect(result!.offsetY + result!.containerHeight).toBeLessThanOrEqual(nextTileY);
+    });
+
+    it('container dimensions are stable across different tile positions', () => {
+      const core = new ThumbnailCore();
+      const positions = [
+        { x: 0, y: 0 },
+        { x: 256, y: 0 },
+        { x: 512, y: 0 },
+        { x: 768, y: 0 },
+        { x: 0, y: 160 },
+        { x: 256, y: 160 },
+        { x: 512, y: 320 },
+        { x: 768, y: 480 },
+      ];
+
+      const constraints = { minWidth: 0, maxWidth: 177, minHeight: 0, maxHeight: Infinity };
+      const results = positions.map((coords) => core.resize(createImage({ coords }), 2560, 1600, constraints));
+
+      const widths = new Set(results.map((r) => r!.containerWidth));
+      const heights = new Set(results.map((r) => r!.containerHeight));
+
+      expect(widths.size).toBe(1);
+      expect(heights.size).toBe(1);
     });
 
     it('returns undefined when dimensions are unavailable', () => {
