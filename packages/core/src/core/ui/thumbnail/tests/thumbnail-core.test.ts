@@ -357,6 +357,22 @@ describe('ThumbnailCore', () => {
       expect(heights.size).toBe(1);
     });
 
+    it('clamps container dimensions to zero at extreme scales', () => {
+      const core = new ThumbnailCore();
+      const thumbnail = createImage();
+
+      // maxWidth 3 / tileWidth 256 → scale so small that floor(h*s) - 2 would be negative.
+      const result = core.resize(thumbnail, 2560, 1600, {
+        minWidth: 0,
+        maxWidth: 3,
+        minHeight: 0,
+        maxHeight: Infinity,
+      });
+
+      expect(result!.containerWidth).toBeGreaterThanOrEqual(0);
+      expect(result!.containerHeight).toBeGreaterThanOrEqual(0);
+    });
+
     it('returns undefined when dimensions are unavailable', () => {
       const core = new ThumbnailCore();
       const thumbnail: ThumbnailImage = { url: 'thumb.jpg', startTime: 0, endTime: 5 };
