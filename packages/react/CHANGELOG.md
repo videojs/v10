@@ -1,5 +1,25 @@
 # Changelog
 
+## [10.0.0-beta.10](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.9...@videojs/react@10.0.0-beta.10) (2026-03-23)
+
+
+### Bug Fixes
+
+* **react:** add missing destroy cleanups  ([#1096](https://github.com/videojs/v10/issues/1096)) ([1792bae](https://github.com/videojs/v10/commit/1792bae3b4cad5cbb89038e3fa10212f24b49e6b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.10
+    * @videojs/core bumped to 10.0.0-beta.10
+    * @videojs/store bumped to 10.0.0-beta.10
+    * @videojs/utils bumped to 10.0.0-beta.10
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.10
+    * @videojs/skins bumped to 10.0.0-beta.10
+
 ## [10.0.0-beta.9](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.8...@videojs/react@10.0.0-beta.9) (2026-03-23)
 
 

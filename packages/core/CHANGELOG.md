@@ -1,5 +1,22 @@
 # Changelog
 
+## [10.0.0-beta.10](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.9...@videojs/core@10.0.0-beta.10) (2026-03-23)
+
+
+### Bug Fixes
+
+* **core:** prevent sprite tile bleeding in thumbnail component ([#1053](https://github.com/videojs/v10/issues/1053)) ([07b1c87](https://github.com/videojs/v10/commit/07b1c872625353c23d7ea076a47638abb2798a03))
+* **react:** add missing destroy cleanups  ([#1096](https://github.com/videojs/v10/issues/1096)) ([1792bae](https://github.com/videojs/v10/commit/1792bae3b4cad5cbb89038e3fa10212f24b49e6b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.10
+    * @videojs/store bumped to 10.0.0-beta.10
+    * @videojs/utils bumped to 10.0.0-beta.10
+
 ## [10.0.0-beta.9](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.8...@videojs/core@10.0.0-beta.9) (2026-03-23)
 
 
