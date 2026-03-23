@@ -9,15 +9,11 @@
   justify-content: center;
   flex-shrink: 0;
   padding: 0.5rem 1rem;
-  background: oklch(1 0 0);
   border: none;
   border-radius: calc(infinity * 1px);
   outline: 2px solid transparent;
   outline-offset: -2px;
-  color: oklch(0 0 0);
-  font-weight: 500;
-  text-align: center;
-  transition-property: background-color, color, outline-offset, scale;
+  transition-property: background-color, outline-offset, scale;
   transition-duration: 150ms;
   transition-timing-function: ease-out;
   cursor: pointer;
@@ -25,8 +21,12 @@
   touch-action: manipulation;
 
   &:focus-visible {
-    outline-color: oklch(62.3% 0.214 259.815);
+    outline-color: currentColor;
     outline-offset: 2px;
+  }
+
+  &:active {
+    scale: 0.98;
   }
 
   &[disabled] {
@@ -40,12 +40,16 @@
   }
 }
 
-/* Icon button variant */
-.media-default-skin .media-button--icon {
-  display: grid;
-  width: 2.125rem;
-  padding: 0;
-  aspect-ratio: 1;
+/* Primary button variant */
+.media-default-skin .media-button--primary {
+  background: oklch(1 0 0);
+  color: oklch(0 0 0);
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Subtle button variant */
+.media-default-skin .media-button--subtle {
   background: transparent;
   color: inherit;
   text-shadow: inherit;
@@ -56,6 +60,14 @@
     background-color: oklch(from currentColor l c h / 0.1);
     text-decoration: none;
   }
+}
+
+/* Icon button variant */
+.media-default-skin .media-button--icon {
+  display: grid;
+  width: 2.125rem;
+  padding: 0;
+  aspect-ratio: 1;
 
   &:active {
     scale: 0.9;
@@ -72,7 +84,7 @@
     position: absolute;
     right: -1px;
     bottom: -3px;
-    font-size: 0.75em;
+    font-size: 10px;
     font-weight: 480;
     font-variant-numeric: tabular-nums;
   }

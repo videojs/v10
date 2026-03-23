@@ -80,7 +80,11 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
       return store.attach({ media, container });
     }, [media, container, store]);
 
-    return <PlayerContextProvider value={{ store, media, setMedia, setContainer }}>{children}</PlayerContextProvider>;
+    return (
+      <PlayerContextProvider value={{ store, media, setMedia, container, setContainer }}>
+        {children}
+      </PlayerContextProvider>
+    );
   }
 
   if (__DEV__ && config.displayName) {

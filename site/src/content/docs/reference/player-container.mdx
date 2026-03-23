@@ -30,7 +30,7 @@ The `<media-container>` is the player's physical surface. It defines the visual 
 ```html
 <video-player>
   <media-container> <!-- [!code focus] -->
-    <video slot="media" src="video.mp4"></video>
+    <video src="video.mp4"></video>
     <media-controls>...</media-controls>
   </media-container> <!-- [!code focus] -->
 </video-player>
@@ -62,7 +62,7 @@ import '@videojs/html/video/player';
 ```html
 <video-player>
   <media-container>
-    <video slot="media" src="video.mp4"></video>
+    <video src="video.mp4"></video>
   </media-container>
 </video-player>
 ```
@@ -100,7 +100,7 @@ The container is the visual box around your media and controls. Sizing, aspect r
 <FrameworkCase frameworks={["html"]}>
 ```html
 <media-container style="width: 640px; aspect-ratio: 16/9;">
-  <video slot="media" src="video.mp4"></video>
+  <video src="video.mp4"></video>
   <media-controls>...</media-controls>
 </media-container>
 ```
@@ -111,18 +111,10 @@ When the user goes fullscreen, the **container** goes fullscreen — not the vid
 ### Media attachment
 
 <FrameworkCase frameworks={["react"]}>
-When a media component like `<Video>` registers itself via context, the container picks it up and attaches it to the store — wiring the media element to all of the player's features.
+Media discovery is handled by the provider, not the container. When a media component like `<Video>` registers itself via context, the provider wires it to the store and all of the player's features.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-The container searches its subtree for a media element — `<video>`, `<audio>`, or a custom media element — and attaches it to the store. You can also use `slot="media"` to explicitly mark which element is the media:
-
-```html
-<media-container>
-  <video slot="media" src="video.mp4"></video>
-</media-container>
-```
-
-This applies even when using a <DocsLink slug="concepts/skins">skin</DocsLink>, since skins contain a container internally.
+Media discovery is handled by the provider, not the container. Custom media elements like `<hls-video>` register themselves via context when they connect. Plain `<video>` and `<audio>` elements are picked up automatically via a `querySelector` fallback. No `slot="media"` attribute is needed.
 </FrameworkCase>
 
 ### Interaction surface
@@ -160,14 +152,14 @@ A <DocsLink slug="concepts/skins">skin</DocsLink> is a container plus UI control
 <!-- Packaged skin — container is inside video-skin -->
 <video-player>
   <video-skin>
-    <video slot="media" src="video.mp4"></video>
+    <video src="video.mp4"></video>
   </video-skin>
 </video-player>
 
 <!-- Custom UI — you use media-container directly -->
 <video-player>
   <media-container>
-    <video slot="media" src="video.mp4"></video>
+    <video src="video.mp4"></video>
     <media-play-button></media-play-button>
   </media-container>
 </video-player>
@@ -195,7 +187,7 @@ The <DocsLink slug="reference/player-provider">provider</DocsLink> gives compone
 ```html
 <video-player>
   <media-container>
-    <video slot="media" src="video.mp4"></video>
+    <video src="video.mp4"></video>
     <media-controls>...</media-controls>  <!-- fullscreen, activity detection, gestures -->
   </media-container>
 

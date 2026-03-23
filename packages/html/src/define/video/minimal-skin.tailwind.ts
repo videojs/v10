@@ -47,7 +47,9 @@ const SEEK_TIME = 10;
 function getTemplateHTML() {
   return /*html*/ `
     <media-container class="${root(true)}">
+      <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
+      <slot></slot>
 
       <media-poster class="${poster(true)}">
         <slot name="poster"></slot>
@@ -61,7 +63,7 @@ function getTemplateHTML() {
         <media-tooltip-group>
           <div class="${buttonGroup}">
             <span class="${tooltipState.play.wrapper}">
-              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.icon, iconState.play.button)}">
+              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
                 ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
                 ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
                 ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
@@ -73,7 +75,7 @@ function getTemplateHTML() {
               </media-tooltip>
             </span>
 
-            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.icon, seek.button)}">
+            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon, seek.button)}">
               <span class="${iconContainer}">
                 ${renderIcon('seek', { class: cn(icon, iconFlipped) })}
                 <span class="${cn(seek.label, seek.labelBackward)}">${SEEK_TIME}</span>
@@ -83,7 +85,7 @@ function getTemplateHTML() {
               Seek backward ${SEEK_TIME} seconds
             </media-tooltip>
 
-            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.icon, seek.button)}">
+            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon, seek.button)}">
               <span class="${iconContainer}">
                 ${renderIcon('seek', { class: icon })}
                 <span class="${cn(seek.label, seek.labelForward)}">${SEEK_TIME}</span>
@@ -119,13 +121,13 @@ function getTemplateHTML() {
           </div>
 
           <div class="${buttonGroup}">
-            <media-playback-rate-button commandfor="playback-rate-tooltip"  class="${cn(button.base, button.icon, playbackRate.button)}">
+            <media-playback-rate-button commandfor="playback-rate-tooltip"  class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}">
             </media-playback-rate-button>
             <media-tooltip id="playback-rate-tooltip" side="top" class="${cn(popup.tooltip)}">
               Toggle playback rate
             </media-tooltip>
 
-            <media-mute-button commandfor="video-volume-popover" class="${cn(button.base, button.icon, iconState.mute.button)}">
+            <media-mute-button commandfor="video-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
               ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
               ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
               ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
@@ -141,7 +143,7 @@ function getTemplateHTML() {
             </media-popover>
 
             <span class="${tooltipState.captions.wrapper}">
-              <media-captions-button commandfor="captions-tooltip" class="${cn(button.base, button.icon, iconState.captions.button)}">
+              <media-captions-button commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.captions.button)}">
                 ${renderIcon('captions-off', { class: cn(icon, iconState.captions.off) })}
                 ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
               </media-captions-button>
@@ -152,8 +154,9 @@ function getTemplateHTML() {
             </span>
 
             <span class="${tooltipState.pip.wrapper}">
-              <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.icon)}">
-                ${renderIcon('pip', { class: icon })}
+              <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.pip.button)}">
+                ${renderIcon('pip-enter', { class: cn(icon, iconState.pip.off) })}
+                ${renderIcon('pip-exit', { class: cn(icon, iconState.pip.on) })}
               </media-pip-button>
               <media-tooltip id="pip-tooltip" side="top" class="${cn(popup.tooltip)}">
                 <span class="${tooltipState.pip.enter}">Enter picture-in-picture</span>
@@ -162,7 +165,7 @@ function getTemplateHTML() {
             </span>
 
             <span class="${tooltipState.fullscreen.wrapper}">
-              <media-fullscreen-button commandfor="fullscreen-tooltip" class="${cn(button.base, button.icon, iconState.fullscreen.button)}">
+              <media-fullscreen-button commandfor="fullscreen-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.fullscreen.button)}">
                 ${renderIcon('fullscreen-enter', { class: cn(icon, iconState.fullscreen.enter) })}
                 ${renderIcon('fullscreen-exit', { class: cn(icon, iconState.fullscreen.exit) })}
               </media-fullscreen-button>

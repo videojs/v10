@@ -21,12 +21,14 @@ const SEEK_TIME = 10;
 function getTemplateHTML() {
   return /*html*/ `
     <media-container class="media-minimal-skin media-minimal-skin--audio">
+      <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
+      <slot></slot>
 
       <div class="media-controls">
         <media-tooltip-group>
           <div class="media-button-group">
-            <media-play-button commandfor="play-tooltip" class="media-button media-button--icon media-button--play">
+            <media-play-button commandfor="play-tooltip" class="media-button media-button--subtle media-button--icon media-button--play">
               ${renderIcon('restart', { class: 'media-icon media-icon--restart' })}
               ${renderIcon('play', { class: 'media-icon media-icon--play' })}
               ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
@@ -37,7 +39,7 @@ function getTemplateHTML() {
               <span class="media-tooltip-label media-tooltip-label--pause">Pause</span>
             </media-tooltip>
 
-            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="media-button media-button--icon media-button--seek">
+            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">
                 ${renderIcon('seek', { class: 'media-icon media-icon--seek media-icon--flipped' })}
                 <span class="media-icon__label">${SEEK_TIME}</span>
@@ -47,7 +49,7 @@ function getTemplateHTML() {
               Seek backward ${SEEK_TIME} seconds
             </media-tooltip>
 
-            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="media-button media-button--icon media-button--seek">
+            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">
                 ${renderIcon('seek', { class: 'media-icon media-icon--seek' })}
                 <span class="media-icon__label">${SEEK_TIME}</span>
@@ -75,13 +77,13 @@ function getTemplateHTML() {
           </div>
 
           <div class="media-button-group">
-            <media-playback-rate-button commandfor="playback-rate-tooltip"  class="media-button media-button--icon media-button--playback-rate">
+            <media-playback-rate-button commandfor="playback-rate-tooltip"  class="media-button media-button--subtle media-button--icon media-button--playback-rate">
             </media-playback-rate-button>
             <media-tooltip id="playback-rate-tooltip" side="top" class="media-tooltip">
               Toggle playback rate
             </media-tooltip>
 
-            <media-mute-button commandfor="audio-volume-popover" class="media-button media-button--icon media-button--mute">
+            <media-mute-button commandfor="audio-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
               ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
               ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}

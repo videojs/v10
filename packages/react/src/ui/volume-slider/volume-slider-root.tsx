@@ -1,6 +1,6 @@
 'use client';
 
-import { SliderDataAttrs, VolumeSliderCore } from '@videojs/core';
+import { VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
 import { getSliderCSSVars, logMissingFeature, selectVolume } from '@videojs/core/dom';
 import { forwardRef, useState } from 'react';
 
@@ -85,7 +85,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
           pointerValue: core.valueFromPercent(state.pointerPercent),
           thumbRef,
           thumbProps,
-          stateAttrMap: SliderDataAttrs,
+          stateAttrMap: VolumeSliderDataAttrs,
           getAttrs: (sliderState) => core.getAttrs(sliderState as VolumeSliderCore.State),
           formatValue: (value) => `${Math.round(value)}%`,
         }}
@@ -95,7 +95,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
           { render, className, style },
           {
             state,
-            stateAttrMap: SliderDataAttrs,
+            stateAttrMap: VolumeSliderDataAttrs,
             ref: [forwardedRef, rootRef],
             props: [{ style: { ...cssVars, ...rootStyle } }, rootProps, elementProps],
           }

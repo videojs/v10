@@ -11,7 +11,7 @@ import { combine, createStore } from '@videojs/store';
 
 import { type ContainerMixin, createContainerMixin } from '../store/container-mixin';
 import { createProviderMixin, type ProviderMixin } from '../store/provider-mixin';
-import { containerAttachContext, mediaAttachContext, type PlayerContext, playerContext } from './context';
+import { containerContext, mediaContext, type PlayerContext, playerContext } from './context';
 import { PlayerController } from './player-controller';
 
 export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
@@ -89,14 +89,14 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
   const ProviderMixin = createProviderMixin<PlayerStore>({
     playerContext,
-    mediaAttachContext,
-    containerAttachContext,
+    mediaContext,
+    containerContext,
     factory: create,
   });
 
   const ContainerMixin = createContainerMixin<PlayerStore>({
     playerContext,
-    containerAttachContext,
+    containerContext,
   });
 
   return {

@@ -1,6 +1,7 @@
 import { SimpleHlsCustomMedia } from '@videojs/core/dom/media/simple-hls';
+import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
-export class SimpleHlsVideo extends SimpleHlsCustomMedia {
+export class SimpleHlsVideo extends MediaAttachMixin(SimpleHlsCustomMedia) {
   static getTemplateHTML(attrs: Record<string, string>): string {
     const { src, ...rest } = attrs;
     // biome-ignore lint/complexity/noThisInStatic: intentional use of super
@@ -19,6 +20,10 @@ export class SimpleHlsVideo extends SimpleHlsCustomMedia {
 
     if (attrName === 'src' && oldValue !== newValue) {
       this.src = newValue ?? '';
+    }
+
+    if (attrName === 'preload' && oldValue !== newValue) {
+      this.preload = (newValue ?? '') as '' | 'none' | 'metadata' | 'auto';
     }
   }
 }

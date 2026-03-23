@@ -16,6 +16,12 @@ describe('createPlayer', () => {
     const result = createPlayer({ features: audioFeatures });
 
     assertType<CreatePlayerResult<AudioPlayerStore>>(result);
+
+    const store = result.create();
+
+    assertType<number | undefined>(store.error?.code);
+    assertType<string | undefined>(store.error?.message);
+    assertType<() => void>(store.dismissError);
   });
 
   it('resolves spread video features to VideoPlayerStore', () => {

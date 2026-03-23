@@ -13,8 +13,15 @@ import { surface as baseSurface } from './components/surface';
 
 export const root = cn(
   baseRoot,
-  '[--media-controls-text-color:var(--media-color-primary,oklch(0_0_0))]',
-  'dark:[--media-controls-text-color:var(--media-color-primary,oklch(1_0_0))]'
+  '[--media-text-color:var(--media-color-primary,oklch(0_0_0))]',
+  '[--media-error-dialog-transition-duration:250ms]',
+  '[--media-error-dialog-transition-delay:100ms]',
+  '[--media-popup-transition-duration:100ms]',
+  '[--media-popup-transition-timing-function:ease-out]',
+  'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
+  'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
+  'motion-reduce:[--media-popup-transition-duration:0ms]',
+  'dark:[--media-text-color:var(--media-color-primary,oklch(1_0_0))]'
 );
 
 /* ==========================================================================
@@ -39,7 +46,7 @@ export const surface = cn(
    Controls
    ========================================================================== */
 
-export const controls = cn(baseControls, surface, 'text-(--media-controls-text-color)');
+export const controls = cn(baseControls, surface, 'text-(--media-text-color)', 'peer-data-open/error:[&_*]:invisible');
 
 /* ==========================================================================
    Sliders
@@ -75,7 +82,18 @@ export const bufferingIndicator = {
 
 export const error = {
   ...baseError,
-  dialog: cn(baseError.dialog, surface),
+  dialog: cn(
+    'absolute inset-0 z-20 flex items-center gap-3 rounded-full px-5 pr-0.5',
+    'bg-(--media-surface-background-color) text-(--media-text-color)',
+    'backdrop-blur-lg backdrop-saturate-150',
+    'transition-[opacity,filter] ease-out',
+    'duration-(--media-error-dialog-transition-duration)',
+    'delay-(--media-error-dialog-transition-delay)',
+    'group-data-starting-style/error:opacity-0 group-data-starting-style/error:blur-[4px]',
+    'group-data-ending-style/error:opacity-0 group-data-ending-style/error:blur-[4px]',
+    'group-data-ending-style/error:delay-0'
+  ),
+  content: 'flex flex-1 items-center gap-2',
 };
 
 /* ==========================================================================

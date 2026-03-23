@@ -77,6 +77,9 @@ export function syncPreloadAttribute(
   owners: WritableState<PlatformOwners>
 ): () => void {
   return owners.subscribe((current) => {
+    // Only infer preload from the element when no explicit value has been set.
+    // An explicit value (set via SpfMedia.preload) always wins.
+    if (state.current.preload !== undefined) return;
     const preload = current.mediaElement?.preload || undefined;
     state.patch({ preload: preload as 'auto' | 'metadata' | 'none' | undefined });
   });

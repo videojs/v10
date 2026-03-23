@@ -9,7 +9,8 @@
   color: inherit;
   overflow: visible;
   transition-property: scale, opacity, filter;
-  transition-duration: 150ms;
+  transition-duration: var(--media-popup-transition-duration);
+  transition-timing-function: var(--media-popup-transition-timing-function);
 
   &[data-starting-style],
   &[data-ending-style] {
@@ -82,6 +83,10 @@
 .media-default-skin .media-popover--volume {
   padding: 0.625rem 0.25rem;
   border-radius: calc(infinity * 1px);
+
+  &:has(media-volume-slider[data-availability="unsupported"]) {
+    display: none;
+  }
 }
 
 .media-default-skin .media-tooltip {

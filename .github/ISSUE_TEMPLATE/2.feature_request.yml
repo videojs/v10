@@ -39,6 +39,7 @@ body:
         - Icons (@videojs/icons)
         - HTML (@videojs/html)
         - React (@videojs/react)
+        - SPF (@videojs/spf)
         - Utils (@videojs/utils)
   - type: textarea
     id: motivation

@@ -13,7 +13,7 @@ Mostly a standard [Astro](https://astro.build/) project.
 ├── public/                  # Static assets served as videojs.org/[filename]
 ├── scripts/
 │  └── api-docs-builder/     # Generates API reference JSON from TypeScript sources
-├── integrations/            # Custom Astro integrations (pagefind, llms-markdown, etc.)
+├── integrations/            # Custom Astro integrations (llms-markdown, etc.)
 ├── src/
 │  ├── assets/               # Assets imported into components, pages, etc.
 │  ├── components/
@@ -164,9 +164,14 @@ See [CLAUDE.md](CLAUDE.md) for details on each plugin.
 
 ## Custom Integrations
 
-Two custom Astro integrations in `integrations/`:
+### Search
 
-- **pagefind** — Indexes HTML after build for static search; serves previous index in dev
+Search is powered by [Algolia DocSearch v4](https://docsearch.algolia.com). Configuration is in `src/search.config.ts` and the component is `src/components/Search.tsx`.
+
+### Custom Integration
+
+One custom Astro integration in `integrations/`:
+
 - **llms-markdown** — Generates LLM-optimized `.md` files and `llms.txt` index from `[data-llms-content]` elements
 
 See [CLAUDE.md](CLAUDE.md) for implementation details.

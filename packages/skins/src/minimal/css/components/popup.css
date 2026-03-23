@@ -9,7 +9,8 @@
   color: inherit;
   overflow: visible;
   transition-property: scale, opacity, filter;
-  transition-duration: 150ms;
+  transition-duration: var(--media-popup-transition-duration);
+  transition-timing-function: var(--media-popup-transition-timing-function);
 
   &[data-starting-style],
   &[data-ending-style] {
@@ -106,4 +107,8 @@
   @media (prefers-contrast: more) {
     background-color: oklch(0 0 0 / 0.9);
   }
+}
+
+.media-minimal-skin .media-popover--volume:has(media-volume-slider[data-availability="unsupported"]) {
+  display: none;
 }

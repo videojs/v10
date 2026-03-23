@@ -16,6 +16,8 @@
 .media-button--mute .media-icon--volume-high,
 .media-button--fullscreen .media-icon--fullscreen-enter,
 .media-button--fullscreen .media-icon--fullscreen-exit,
+.media-button--pip .media-icon--pip-enter,
+.media-button--pip .media-icon--pip-exit,
 .media-button--captions .media-icon--captions-off,
 .media-button--captions .media-icon--captions-on {
   display: none;
@@ -40,6 +42,10 @@
 .media-button--fullscreen:not([data-fullscreen]) .media-icon--fullscreen-enter,
 /* Fullscreen: fullscreen → exit */
 .media-button--fullscreen[data-fullscreen] .media-icon--fullscreen-exit,
+/* Picture-in-Picture: not active → enter */
+.media-button--pip:not([data-pip]) .media-icon--pip-enter,
+/* Picture-in-Picture: active → exit */
+.media-button--pip[data-pip] .media-icon--pip-exit,
 /* Captions: not active → captions off */
 .media-button--captions:not([data-active]) .media-icon--captions-off,
 /* Captions: active → captions on */

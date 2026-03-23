@@ -41,7 +41,7 @@ function App() {
 <video-player>
   <!-- Everything inside can access the player store -->
   <media-container>
-    <video slot="media" src="video.mp4"></video>
+    <video src="video.mp4"></video>
   </media-container>
 </video-player>
 ```
@@ -76,7 +76,7 @@ import '@videojs/html/video/player';
 ```html
 <video-player>
   <media-container>
-    <video slot="media" src="video.mp4"></video>
+    <video src="video.mp4"></video>
   </media-container>
 </video-player>
 ```
@@ -115,7 +115,7 @@ Everything that needs player state goes inside the provider: skins, containers, 
 ```html
 <video-player>
   <video-skin>               <!-- skin — includes container + controls -->
-    <video slot="media" src="..."></video> <!-- media element -->
+    <video src="..."></video> <!-- media element -->
   </video-skin>
   <my-custom-overlay></my-custom-overlay> <!-- your own element — can use PlayerController -->
 </video-player>
@@ -193,7 +193,7 @@ The provider's scope can extend beyond the fullscreen target. Playlists, transcr
 ```html
 <video-player>
   <media-container>
-    <video slot="media" src="video.mp4"></video>
+    <video src="video.mp4"></video>
     <media-controls>...</media-controls>  <!-- goes fullscreen with the video -->
   </media-container>
 

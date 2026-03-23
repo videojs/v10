@@ -34,7 +34,13 @@ export function createMockStore(state: Record<string, unknown> = {}) {
  */
 export function createPlayerWrapper(storeState: Record<string, unknown> = {}) {
   const store = createMockStore(storeState);
-  const value: PlayerContextValue = { store: store as any, media: null, setMedia: vi.fn(), setContainer: vi.fn() };
+  const value: PlayerContextValue = {
+    store: store as any,
+    media: null,
+    setMedia: vi.fn(),
+    container: null,
+    setContainer: vi.fn(),
+  };
 
   return {
     store,

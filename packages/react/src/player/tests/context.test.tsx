@@ -7,6 +7,7 @@ import {
   Container,
   PlayerContextProvider,
   type PlayerContextValue,
+  useContainer,
   useContainerAttach,
   useMedia,
   useMediaAttach,
@@ -26,6 +27,7 @@ function createContextValue(overrides?: Partial<PlayerContextValue>): PlayerCont
     store: createMockStore() as any,
     media: null,
     setMedia: vi.fn(),
+    container: null,
     setContainer: vi.fn(),
     ...overrides,
   };
@@ -70,6 +72,29 @@ describe('useMediaAttach', () => {
     });
 
     expect(result.current).toBe(setMedia);
+  });
+});
+
+describe('useContainer', () => {
+  it('returns null when no container', () => {
+    const value = createContextValue();
+
+    const { result } = renderHook(() => useContainer(), {
+      wrapper: createWrapper(value),
+    });
+
+    expect(result.current).toBeNull();
+  });
+
+  it('returns container from context', () => {
+    const container = document.createElement('div');
+    const value = createContextValue({ container });
+
+    const { result } = renderHook(() => useContainer(), {
+      wrapper: createWrapper(value),
+    });
+
+    expect(result.current).toBe(container);
   });
 });
 

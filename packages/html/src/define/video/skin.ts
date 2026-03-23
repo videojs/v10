@@ -27,7 +27,9 @@ const SEEK_TIME = 10;
 function getTemplateHTML() {
   return /*html*/ `
     <media-container class="media-default-skin media-default-skin--video">
+      <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
+      <slot></slot>
 
       <media-poster>
         <slot name="poster"></slot>
@@ -41,7 +43,7 @@ function getTemplateHTML() {
 
       <media-controls class="media-surface media-controls">
         <media-tooltip-group>
-          <media-play-button commandfor="play-tooltip" class="media-button media-button--icon media-button--play">
+          <media-play-button commandfor="play-tooltip" class="media-button media-button--subtle media-button--icon media-button--play">
             ${renderIcon('restart', { class: 'media-icon media-icon--restart' })}
             ${renderIcon('play', { class: 'media-icon media-icon--play' })}
             ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
@@ -52,7 +54,7 @@ function getTemplateHTML() {
             <span class="media-tooltip-label media-tooltip-label--pause">Pause</span>
           </media-tooltip>
 
-          <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="media-button media-button--icon media-button--seek">
+          <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
             <span class="media-icon__container">
               ${renderIcon('seek', { class: 'media-icon media-icon--flipped' })}
               <span class="media-icon__label">${SEEK_TIME}</span>
@@ -62,7 +64,7 @@ function getTemplateHTML() {
             Seek backward ${SEEK_TIME} seconds
           </media-tooltip>
 
-          <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="media-button media-button--icon media-button--seek">
+          <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
             <span class="media-icon__container">
               ${renderIcon('seek', { class: 'media-icon' })}
               <span class="media-icon__label">${SEEK_TIME}</span>
@@ -90,12 +92,12 @@ function getTemplateHTML() {
             <media-time type="duration" class="media-time__value"></media-time>
           </media-time-group>
 
-          <media-playback-rate-button commandfor="playback-rate-tooltip"  class="media-button media-button--icon media-button--playback-rate"></media-playback-rate-button>
+          <media-playback-rate-button commandfor="playback-rate-tooltip"  class="media-button media-button--subtle media-button--icon media-button--playback-rate"></media-playback-rate-button>
           <media-tooltip id="playback-rate-tooltip" side="top" class="media-surface media-tooltip">
             Toggle playback rate
           </media-tooltip>
 
-          <media-mute-button commandfor="video-volume-popover" class="media-button media-button--icon media-button--mute">
+          <media-mute-button commandfor="video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
             ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
             ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
             ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
@@ -110,7 +112,7 @@ function getTemplateHTML() {
             </media-volume-slider>
           </media-popover>
 
-          <media-captions-button commandfor="captions-tooltip" class="media-button media-button--icon media-button--captions">
+          <media-captions-button commandfor="captions-tooltip" class="media-button media-button--subtle media-button--icon media-button--captions">
             ${renderIcon('captions-off', { class: 'media-icon media-icon--captions-off' })}
             ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
           </media-captions-button>
@@ -119,15 +121,16 @@ function getTemplateHTML() {
             <span class="media-tooltip-label media-tooltip-label--disable-captions">Disable captions</span>
           </media-tooltip>
 
-          <media-pip-button commandfor="pip-tooltip" class="media-button media-button--icon media-button--pip">
-            ${renderIcon('pip', { class: 'media-icon' })}
+          <media-pip-button commandfor="pip-tooltip" class="media-button media-button--subtle media-button--icon media-button--pip">
+            ${renderIcon('pip-enter', { class: 'media-icon media-icon--pip-enter' })}
+            ${renderIcon('pip-exit', { class: 'media-icon media-icon--pip-exit' })}
           </media-pip-button>
           <media-tooltip id="pip-tooltip" side="top" class="media-surface media-tooltip">
             <span class="media-tooltip-label media-tooltip-label--enter-pip">Enter picture-in-picture</span>
             <span class="media-tooltip-label media-tooltip-label--exit-pip">Exit picture-in-picture</span>
           </media-tooltip>
 
-          <media-fullscreen-button commandfor="fullscreen-tooltip" class="media-button media-button--icon media-button--fullscreen">
+          <media-fullscreen-button commandfor="fullscreen-tooltip" class="media-button media-button--subtle media-button--icon media-button--fullscreen">
             ${renderIcon('fullscreen-enter', { class: 'media-icon media-icon--fullscreen-enter' })}
             ${renderIcon('fullscreen-exit', { class: 'media-icon media-icon--fullscreen-exit' })}
           </media-fullscreen-button>

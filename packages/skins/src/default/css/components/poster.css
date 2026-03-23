@@ -25,6 +25,8 @@
   border-radius: var(--media-video-border-radius);
 }
 .media-default-skin > img {
+  object-fit: var(--media-object-fit, contain);
+  object-position: var(--media-object-position, center);
   border-radius: inherit;
 }
 

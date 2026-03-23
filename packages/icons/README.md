@@ -18,7 +18,8 @@ Icons are grouped into visual sets. Each set contains the same icon names with d
 | `fullscreen-enter` | `FullscreenEnterIcon` | `fullscreenEnterIcon` |
 | `fullscreen-exit` | `FullscreenExitIcon` | `fullscreenExitIcon` |
 | `pause` | `PauseIcon` | `pauseIcon` |
-| `pip` | `PipIcon` | `pipIcon` |
+| `pip-enter` | `PipEnterIcon` | `pipEnterIcon` |
+| `pip-exit` | `PipExitIcon` | `pipExitIcon` |
 | `play` | `PlayIcon` | `playIcon` |
 | `restart` | `RestartIcon` | `restartIcon` |
 | `seek` | `SeekIcon` | `seekIcon` |

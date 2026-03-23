@@ -10,6 +10,7 @@ function makeSourceBuffer(): SourceBuffer {
 
   return {
     updating: false,
+    abort: vi.fn(),
     appendBuffer: vi.fn(() => {
       setTimeout(() => {
         for (const listener of listeners.updateend ?? []) listener(new Event('updateend'));
@@ -102,6 +103,50 @@ describe('appendSegment', () => {
     }
 
     await expect(appendSegment(sb, errorStream())).rejects.toThrow('stream failed');
+  });
+
+  it('calls sourceBuffer.abort() and throws when signal is aborted between chunks', async () => {
+    const sb = makeSourceBuffer();
+    const controller = new AbortController();
+
+    async function* twoChunks(): AsyncGenerator<Uint8Array> {
+      yield new Uint8Array(4);
+      controller.abort();
+      yield new Uint8Array(4);
+    }
+
+    await expect(appendSegment(sb, twoChunks(), controller.signal)).rejects.toMatchObject({
+      name: 'AbortError',
+    });
+    expect(sb.abort).toHaveBeenCalledOnce();
+    // Only the first chunk should have been appended
+    expect(sb.appendBuffer).toHaveBeenCalledOnce();
+  });
+
+  it('calls sourceBuffer.abort() when the stream itself throws an AbortError', async () => {
+    const sb = makeSourceBuffer();
+
+    async function* abortingStream(): AsyncGenerator<Uint8Array> {
+      yield new Uint8Array(4);
+      throw new DOMException('Aborted', 'AbortError');
+    }
+
+    await expect(appendSegment(sb, abortingStream())).rejects.toMatchObject({
+      name: 'AbortError',
+    });
+    expect(sb.abort).toHaveBeenCalledOnce();
+  });
+
+  it('does not call sourceBuffer.abort() for non-abort stream errors', async () => {
+    const sb = makeSourceBuffer();
+
+    async function* errorStream(): AsyncGenerator<Uint8Array> {
+      yield new Uint8Array(4);
+      throw new Error('network error');
+    }
+
+    await expect(appendSegment(sb, errorStream())).rejects.toThrow('network error');
+    expect(sb.abort).not.toHaveBeenCalled();
   });
 
   it('passes chunk bytes through to appendBuffer unchanged', async () => {

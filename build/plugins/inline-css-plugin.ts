@@ -1,20 +1,25 @@
 import { readFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { transform } from 'lightningcss';
-import { resolveImports } from './resolve-css-imports.mjs';
+import { resolveImports } from './resolve-css-imports.ts';
+import type { BuildPlugin } from './types.ts';
 
 const INLINE_PREFIX = 'inline-css:';
 
 const INLINE_SUFFIX = '?inline';
 
+interface InlineCssPluginOptions {
+  skinsDir: string;
+  rootDir?: string;
+  minify?: boolean;
+}
+
 /**
  * Rolldown/tsdown plugin that inlines `.css?inline` imports as JavaScript
  * modules exporting the resolved CSS string. Mirrors the Vite `?inline`
  * convention so the same source works in both Vite dev and tsdown builds.
- *
- * @param {{ skinsDir: string; rootDir?: string; minify?: boolean }} options
  */
-export function inlineCssPlugin(options) {
+export function inlineCssPlugin(options: InlineCssPluginOptions): BuildPlugin {
   const { skinsDir, rootDir = process.cwd(), minify = true } = options;
 
   return {
@@ -24,7 +29,7 @@ export function inlineCssPlugin(options) {
       if (!source.endsWith(INLINE_SUFFIX)) return null;
 
       const cssPath = source.slice(0, -INLINE_SUFFIX.length);
-      const abs = resolve(dirname(importer), cssPath);
+      const abs = resolve(dirname(importer!), cssPath);
       const rel = relative(rootDir, abs);
 
       // Use .js extension so rolldown doesn't apply its CSS loader.

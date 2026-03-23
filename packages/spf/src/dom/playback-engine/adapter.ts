@@ -26,6 +26,7 @@ import { createPlaybackEngine, type PlaybackEngine } from './engine';
 export class SpfMedia {
   #engine: PlaybackEngine;
   #config: PlaybackEngineConfig;
+  #preload: '' | 'none' | 'metadata' | 'auto' = '';
 
   /** Pending loadstart listener from a deferred play() retry, if any. */
   #loadstartListener: (() => void) | null = null;
@@ -58,6 +59,24 @@ export class SpfMedia {
   }
 
   // ---------------------------------------------------------------------------
+  // preload — synchronous IDL attribute (WHATWG §4.8.11.2)
+  // ---------------------------------------------------------------------------
+
+  get preload(): '' | 'none' | 'metadata' | 'auto' {
+    return this.#preload;
+  }
+
+  set preload(value: '' | 'none' | 'metadata' | 'auto') {
+    this.#preload = value;
+    if (value) {
+      this.#engine.state.patch({ preload: value });
+    }
+    // value = '' clears #preload (so the next engine recreation won't re-apply
+    // an explicit value) but does not patch current state — the existing preload
+    // stays in effect until the next src change creates a fresh engine.
+  }
+
+  // ---------------------------------------------------------------------------
   // src — synchronous IDL attribute (WHATWG §4.8.11.2)
   // Each assignment destroys the current engine and starts a fresh one, exactly
   // as the browser's load algorithm resets all media element state on src change.
@@ -73,6 +92,12 @@ export class SpfMedia {
     this.#cancelPendingPlay();
     this.#engine.destroy();
     this.#engine = createPlaybackEngine(this.#config);
+
+    // Apply explicit preload before owners.patch so syncPreloadAttribute skips
+    // element inference and the explicit value is preserved across src changes.
+    if (this.#preload) {
+      this.#engine.state.patch({ preload: this.#preload });
+    }
 
     if (prevMediaElement) {
       this.#engine.owners.patch({ mediaElement: prevMediaElement });

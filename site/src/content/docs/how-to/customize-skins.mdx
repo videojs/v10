@@ -6,13 +6,26 @@ description: Learn how to customize Video.js v10 skins by copying and modifying 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import EjectedSkin from '@/components/docs/EjectedSkin.astro';
 
-Video.js v10 comes with pre-built skins like Default and Minimal. If you'd like to customize them you can fully customize them by "ejecting" the code and making it your own.
+Video.js v10 comes with two pre-built skins; Default and Minimal. Basic customization is possible with CSS custom properties, but if you want more control over the design and functionality of your player, you can copy the skin's code into your project and modify it as needed. We call this "ejecting" the skin, since you're taking the internal code that makes up the skin and making it your own.
+
+## Basic customization
+
+| Property Name | Description | Type | Example |
+| ------------- | ----------- | ---- | ------- |
+| `--media-border-radius` | The border radius of the media player | A valid [border-radius value](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/border-radius#values) | `1rem` |
+| `--media-color-primary` | The color of icons and text in media controls | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `red` |
+
+You can of course also add your own classnames to the skins themselves.
+
+## Ejecting
+
+If you'd like to customize them you can fully customize them by "ejecting" the code and making it your own.
 
 While eventually we’ll have a CLI that will eject skins in your preferred framework and style, for now we invite you to try it out with these copy-paste-ready implementations.
 
-{/* TODO: Add StyleCase for tailwind variants once tailwind is a supported style (see #840) */}
+{/*TODO: Add StyleCase for tailwind variants once tailwind is a supported style (see #840)*/}
 
-## Default Video Skin
+### Default Video Skin
 
 <FrameworkCase frameworks={["react"]}>
   <EjectedSkin id="default-video-react" />
@@ -22,7 +35,7 @@ While eventually we’ll have a CLI that will eject skins in your preferred fram
   <EjectedSkin id="default-video" />
 </FrameworkCase>
 
-## Default Audio Skin
+### Default Audio Skin
 
 <FrameworkCase frameworks={["react"]}>
   <EjectedSkin id="default-audio-react" />
@@ -32,7 +45,7 @@ While eventually we’ll have a CLI that will eject skins in your preferred fram
   <EjectedSkin id="default-audio" />
 </FrameworkCase>
 
-## Minimal Video Skin
+### Minimal Video Skin
 
 <FrameworkCase frameworks={["react"]}>
   <EjectedSkin id="minimal-video-react" />
@@ -42,7 +55,7 @@ While eventually we’ll have a CLI that will eject skins in your preferred fram
   <EjectedSkin id="minimal-video" />
 </FrameworkCase>
 
-## Minimal Audio Skin
+### Minimal Audio Skin
 
 <FrameworkCase frameworks={["react"]}>
   <EjectedSkin id="minimal-audio-react" />

@@ -1,11 +1,11 @@
 {
-  "packages/core": "10.0.0-beta.6",
-  "packages/element": "10.0.0-beta.6",
-  "packages/html": "10.0.0-beta.6",
-  "packages/icons": "10.0.0-beta.6",
-  "packages/react": "10.0.0-beta.6",
-  "packages/skins": "10.0.0-beta.6",
-  "packages/store": "10.0.0-beta.6",
-  "packages/utils": "10.0.0-beta.6",
-  "packages/spf": "10.0.0-beta.6"
+  "packages/core": "10.0.0-beta.9",
+  "packages/element": "10.0.0-beta.9",
+  "packages/html": "10.0.0-beta.9",
+  "packages/icons": "10.0.0-beta.9",
+  "packages/react": "10.0.0-beta.9",
+  "packages/skins": "10.0.0-beta.9",
+  "packages/store": "10.0.0-beta.9",
+  "packages/utils": "10.0.0-beta.9",
+  "packages/spf": "10.0.0-beta.9"
 }

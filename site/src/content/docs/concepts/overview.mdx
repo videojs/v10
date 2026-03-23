@@ -34,7 +34,7 @@ State is handled by a `video-player` element, which creates a central state stor
 <!-- All components inside automatically connect to state --> <!-- [!code focus] -->
 <video-player> <!-- [!code focus] -->
   <video-skin>
-    <video slot="media" src="video.mp4"></video>
+    <video src="video.mp4"></video>
   </video-skin>
 </video-player> <!-- [!code focus] -->
 ```
@@ -44,11 +44,9 @@ You can access state and actions from anywhere within `<video-player>` with <Doc
 
 <DocsLinkCard slug="concepts/features">Learn more about state and actions</DocsLinkCard>
 
-
 ## 2. User interface
 
 Use a prebuilt **skin** or build your own from the individual **UI components**.
-
 
 ### Skins
 Skins are complete, pre-designed player UIs that package components and styles together:
@@ -66,7 +64,7 @@ Skins are complete, pre-designed player UIs that package components and styles t
 ```html
 <video-player>
   <video-skin> <!-- [!code focus] -->
-    <video slot="media" src="video.mp4"></video>
+    <video src="video.mp4"></video>
   </video-skin> <!-- [!code focus] -->
 </video-player>
 ```
@@ -95,7 +93,7 @@ If you want more control than skins offer you, you can build your own UI from ou
 ```html
 <video-player>
   <media-container> <!-- [!code focus] -->
-    <video slot="media" src="video.mp4"></video>
+    <video src="video.mp4"></video>
     <media-controls> <!-- [!code focus] -->
       <media-play-button></media-play-button> <!-- [!code focus] -->
       <!-- ... --> <!-- [!code focus] -->
@@ -117,7 +115,7 @@ Media components are the components that actually display your media. They're es
 Media components can be format specific (HLS, DASH), service specific (YouTube, Vimeo, Mux), or use case specific (background video).
 
 <FrameworkCase frameworks={["html"]}>
-Media elements are detected via a `slot="media"` attribute. Always include it on your `<video>`, `<audio>`, or custom media element.
+Media elements are discovered automatically. Plain `<video>` and `<audio>` elements are found via a `querySelector`, while custom media elements like `<hls-video>` register themselves.
 </FrameworkCase>
 
 <Aside type="note">
@@ -137,7 +135,7 @@ DASH, YouTube, Vimeo, Mux, and more media elements are currently under developme
 ```html
 <video-player>
   <video-skin>
-    <hls-video slot="media" src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hls-video> <!-- [!code focus] -->
+    <hls-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hls-video> <!-- [!code focus] -->
   </video-skin>
 </video-player>
 ```
@@ -175,12 +173,11 @@ function Hero() {
   import '@videojs/html/background/player';
   import '@videojs/html/background/video';
   import '@videojs/html/background/skin';
-  import '@videojs/html/background/skin.css';
 </script>
 
 <background-video-player>
   <background-video-skin>
-    <background-video slot="media" src="hero.mp4"></background-video>
+    <background-video src="hero.mp4"></background-video>
   </background-video-skin>
 </background-video-player>
 ```

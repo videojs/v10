@@ -119,12 +119,12 @@ export class ThumbnailCore {
 
     return {
       scale,
-      containerWidth: tileWidth * scale,
-      containerHeight: tileHeight * scale,
-      imageWidth: imgNaturalWidth * scale,
-      imageHeight: imgNaturalHeight * scale,
-      offsetX: (thumbnail.coords?.x ?? 0) * scale,
-      offsetY: (thumbnail.coords?.y ?? 0) * scale,
+      containerWidth: Math.round(tileWidth * scale),
+      containerHeight: Math.round(tileHeight * scale),
+      imageWidth: Math.round(imgNaturalWidth * scale),
+      imageHeight: Math.round(imgNaturalHeight * scale),
+      offsetX: Math.round((thumbnail.coords?.x ?? 0) * scale),
+      offsetY: Math.round((thumbnail.coords?.y ?? 0) * scale),
     };
   }
 
