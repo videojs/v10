@@ -13,9 +13,11 @@ export const DashVideo = forwardRef<HTMLVideoElement, DashVideoProps>(({ childre
   const mediaApi = useMemo(() => new DashMedia(), []);
   const setMedia = useMediaAttach();
 
-  useDestroy(mediaApi, () => {
-    setMedia?.(mediaApi);
-  });
+  useDestroy(
+    mediaApi,
+    () => setMedia?.(mediaApi),
+    () => setMedia?.(null)
+  );
 
   const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
 

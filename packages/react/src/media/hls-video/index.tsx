@@ -13,9 +13,11 @@ export const HlsVideo = forwardRef<HTMLVideoElement, HlsVideoProps>(({ children,
   const mediaApi = useMemo(() => new HlsMedia(), []);
   const setMedia = useMediaAttach();
 
-  useDestroy(mediaApi, () => {
-    setMedia?.(mediaApi);
-  });
+  useDestroy(
+    mediaApi,
+    () => setMedia?.(mediaApi),
+    () => setMedia?.(null)
+  );
 
   const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
 

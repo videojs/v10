@@ -17,8 +17,10 @@ interface Destroyable {
  * @param instance - Object with a `destroy()` method.
  * @param setup - Optional setup called on first mount. Skipped on StrictMode
  *   re-mount since the previous setup was never torn down.
+ * @param teardown - Optional teardown called right before `destroy()` on real
+ *   unmount. Skipped on StrictMode simulated unmount.
  */
-export function useDestroy(instance: Destroyable, setup?: () => void): void {
+export function useDestroy(instance: Destroyable, setup?: () => void, teardown?: () => void): void {
   const pendingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -30,7 +32,10 @@ export function useDestroy(instance: Destroyable, setup?: () => void): void {
     }
 
     return () => {
-      pendingRef.current = setTimeout(() => instance.destroy(), 0);
+      pendingRef.current = setTimeout(() => {
+        teardown?.();
+        instance.destroy();
+      }, 0);
     };
-  }, [instance, setup]);
+  }, [instance, setup, teardown]);
 }

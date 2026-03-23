@@ -6,6 +6,7 @@ import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
+import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { TooltipContextProvider } from './context';
@@ -89,8 +90,7 @@ export function TooltipRoot({
     }
   }, [controlledOpen, tooltip]);
 
-  // Cleanup on unmount
-  useEffect(() => () => tooltip.destroy(), [tooltip]);
+  useDestroy(tooltip);
 
   const input = useSnapshot(tooltip.input);
   core.setInput(input);
