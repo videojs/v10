@@ -28,6 +28,18 @@
   --media-controls-padding: 0.375rem;
   --media-controls-transition-duration: 100ms;
   --media-controls-transition-delay: 0ms;
+  --media-controls-transition-timing-function: ease-out;
+  --media-error-dialog-transition-duration: 250ms;
+  --media-error-dialog-transition-delay: 100ms;
+  --media-error-dialog-transition-timing-function: ease-out;
+  --media-popup-transition-duration: 100ms;
+  --media-popup-transition-timing-function: ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    --media-error-dialog-transition-duration: 50ms;
+    --media-error-dialog-transition-delay: 0ms;
+    --media-popup-transition-duration: 0ms;
+  }
 
   @media (prefers-color-scheme: dark) {
     --media-border-color: oklch(1 0 0 / 0.15);
@@ -43,7 +55,7 @@
       --media-controls-transition-duration: 150ms;
     }
     @media (prefers-reduced-motion: reduce) {
-      --media-controls-transition-duration: 100ms;
+      --media-controls-transition-duration: 50ms;
     }
   }
 
@@ -88,33 +100,19 @@
   color: oklch(1 0 0);
   text-shadow: 0 1px 0 oklch(0 0 0 / 0.5);
   transition-property: opacity, scale;
-  transition-duration: 500ms;
-  transition-delay: 100ms;
-  transition-timing-function: linear(
-    0,
-    0.034 1.5%,
-    0.763 9.7%,
-    1.066 13.9%,
-    1.198 19.9%,
-    1.184 21.8%,
-    0.963 37.5%,
-    0.997 50.9%,
-    1
-  );
+  transition-duration: var(--media-error-dialog-transition-duration);
+  transition-delay: var(--media-error-dialog-transition-delay);
+  transition-timing-function: var(--media-error-dialog-transition-timing-function);
   pointer-events: auto;
-
-  /* Simple, fast transition for reduced motion users */
-  @media (prefers-reduced-motion: reduce) {
-    transition-duration: 100ms;
-    transition-delay: 0ms;
-    transition-timing-function: ease-out;
-  }
 }
 
 .media-minimal-skin--video .media-error[data-starting-style] .media-error__dialog,
 .media-minimal-skin--video .media-error[data-ending-style] .media-error__dialog {
   opacity: 0;
   scale: 0.5;
+}
+.media-minimal-skin--video .media-error[data-ending-style] .media-error__dialog {
+  transition-delay: 0ms;
 }
 
 .media-minimal-skin--video .media-error__content {
@@ -146,7 +144,7 @@
   color: var(--media-color-primary, oklch(1 0 0));
   transition-duration: var(--media-controls-transition-duration);
   transition-delay: var(--media-controls-transition-delay);
-  transition-timing-function: ease-out;
+  transition-timing-function: var(--media-controls-transition-timing-function);
 
   @media (pointer: fine) {
     will-change: translate, filter, opacity;
@@ -206,7 +204,7 @@
    Slider preview
    ========================================================================== */
 
-.media-minimal-skin .media-slider__preview {
+.media-minimal-skin--video .media-slider__preview {
   position: absolute;
   left: var(--media-slider-pointer);
   bottom: calc(100% + 0.5rem);
@@ -242,7 +240,7 @@
     max-height: 6rem;
   }
 }
-.media-minimal-skin .media-slider[data-pointing] .media-slider__preview:has([role="img"]:not([data-hidden])) {
+.media-minimal-skin--video .media-slider[data-pointing] .media-slider__preview:has([role="img"]:not([data-hidden])) {
   opacity: 1;
   scale: 1;
   filter: blur(0);

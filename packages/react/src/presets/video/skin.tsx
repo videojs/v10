@@ -42,12 +42,12 @@ const SEEK_TIME = 10;
 
 const ERROR_CLASSNAMES = {
   root: 'media-error',
-  dialog: 'media-error__dialog',
+  dialog: 'media-error__dialog media-surface',
   content: 'media-error__content',
   title: 'media-error__title',
   description: 'media-error__description',
   actions: 'media-error__actions',
-  close: 'media-button media-button--subtle',
+  close: 'media-button media-button--primary',
 };
 
 export type VideoSkinProps = BaseVideoSkinProps;

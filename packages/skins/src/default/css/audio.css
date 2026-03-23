@@ -24,6 +24,16 @@
   --media-surface-shadow-color: oklch(0 0 0 / 0.15);
   --media-surface-backdrop-filter: blur(16px) saturate(1.5);
   --media-text-color: var(--media-color-primary, oklch(0 0 0));
+  --media-error-dialog-transition-duration: 250ms;
+  --media-error-dialog-transition-delay: 100ms;
+  --media-popup-transition-duration: 100ms;
+  --media-popup-transition-timing-function: ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    --media-error-dialog-transition-duration: 50ms;
+    --media-error-dialog-transition-delay: 0ms;
+    --media-popup-transition-duration: 0ms;
+  }
 
   @media (prefers-color-scheme: dark) {
     --media-border-color: oklch(1 0 0 / 0.1);
@@ -45,25 +55,22 @@
   gap: 0.75rem;
   padding-inline: 1.25rem 0.125rem;
   transition-property: opacity, filter;
-  transition-duration: 300ms;
-  transition-delay: 100ms;
+  transition-duration: var(--media-error-dialog-transition-duration);
+  transition-delay: var(--media-error-dialog-transition-delay);
   transition-timing-function: ease-out;
   border-radius: calc(infinity * 1px);
   background-color: var(--media-surface-background-color);
   backdrop-filter: var(--media-surface-backdrop-filter);
   color: var(--media-text-color);
-
-  /* Simple, fast transition for reduced motion users */
-  @media (prefers-reduced-motion: reduce) {
-    transition-duration: 100ms;
-    transition-delay: 0ms;
-  }
 }
 
 .media-default-skin .media-error[data-starting-style] .media-error__dialog,
 .media-default-skin .media-error[data-ending-style] .media-error__dialog {
   opacity: 0;
   filter: blur(4px);
+}
+.media-default-skin .media-error[data-ending-style] .media-error__dialog {
+  transition-delay: 0ms;
 }
 
 .media-default-skin--audio .media-error__content {

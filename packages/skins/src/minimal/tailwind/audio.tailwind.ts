@@ -14,6 +14,13 @@ export const root = cn(
   '[--media-controls-border-color:oklch(0_0_0/0.1)]',
   '[--media-controls-padding:0.375rem]',
   '[--media-text-color:var(--media-color-primary,oklch(0_0_0))]',
+  '[--media-error-dialog-transition-duration:250ms]',
+  '[--media-error-dialog-transition-delay:100ms]',
+  '[--media-popup-transition-duration:100ms]',
+  '[--media-popup-transition-timing-function:ease-out]',
+  'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
+  'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
+  'motion-reduce:[--media-popup-transition-duration:0ms]',
   'dark:[--media-controls-background-color:oklch(0_0_0)]',
   'dark:[--media-controls-border-color:oklch(1_0_0/0.1)]',
   'dark:[--media-text-color:var(--media-color-primary,oklch(1_0_0))]'
@@ -61,10 +68,12 @@ export const error = {
   dialog: cn(
     'absolute inset-0 z-20 flex items-center gap-4 rounded-full px-5 pr-2',
     'bg-(--media-controls-background-color)',
-    'transition-[opacity,filter,scale] duration-300 delay-100 ease-out',
+    'transition-[opacity,filter,scale] ease-out',
+    'duration-(--media-error-dialog-transition-duration)',
+    'delay-(--media-error-dialog-transition-delay)',
     'group-data-starting-style/error:opacity-0 group-data-starting-style/error:blur-[4px] group-data-starting-style/error:scale-95',
     'group-data-ending-style/error:opacity-0 group-data-ending-style/error:blur-[4px] group-data-ending-style/error:scale-95',
-    'motion-reduce:duration-100 motion-reduce:delay-0'
+    'group-data-ending-style/error:delay-0'
   ),
   content: 'flex flex-1 items-center gap-2',
 };

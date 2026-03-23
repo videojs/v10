@@ -47,7 +47,7 @@ const ERROR_CLASSNAMES = {
   title: 'media-error__title',
   description: 'media-error__description',
   actions: 'media-error__actions',
-  close: 'media-button media-button--subtle',
+  close: 'media-button media-button--primary',
 };
 
 export type MinimalVideoSkinProps = BaseVideoSkinProps;
