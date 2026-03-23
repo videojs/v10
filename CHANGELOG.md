@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### 🚀 Features
+- *(skin)* Add error handling for audio players ([#1048](https://github.com/videojs/v10/pull/1048)) by [@sampotts](https://github.com/sampotts)
+
+### 🐛 Bug Fixes
+- *(docs)* Improvements to eject script ([#1012](https://github.com/videojs/v10/pull/1012)) by [@sampotts](https://github.com/sampotts)
+- *(skin)* Extract transition properties into CSS custom properties ([#1075](https://github.com/videojs/v10/pull/1075)) by [@sampotts](https://github.com/sampotts)
+- *(site)* Quote poster prop value in react demo code template ([#1079](https://github.com/videojs/v10/pull/1079)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Flatten error classes in ejected react skins ([#1080](https://github.com/videojs/v10/pull/1080)) by [@mihar-22](https://github.com/mihar-22)
+- *(spf)* Implement preload IDL attribute on SpfMedia ([#1069](https://github.com/videojs/v10/pull/1069)) by [@cjpillsbury](https://github.com/cjpillsbury)
+- *(spf)* Call sourceBuffer.abort() on AbortError to reset MSE parser state ([#1081](https://github.com/videojs/v10/pull/1081)) by [@cjpillsbury](https://github.com/cjpillsbury)
+
+### 🚜 Refactor
+- *(react)* Simplify skin render props with element form ([#1068](https://github.com/videojs/v10/pull/1068)) by [@mihar-22](https://github.com/mihar-22)
+
+## [@videojs/core@10.0.0-beta.8] - 2026-03-20
+
+### 🚀 Features
 - *(site)* Migrate search from Pagefind to Algolia DocSearch v4 ([#941](https://github.com/videojs/v10/pull/941)) by [@decepulis](https://github.com/decepulis)
 
 ### 🐛 Bug Fixes
@@ -989,7 +1005,8 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
-[unreleased]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.7...HEAD
+[unreleased]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.8...HEAD
+[@videojs/core@10.0.0-beta.8]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.7...@videojs/core@10.0.0-beta.8
 [@videojs/core@10.0.0-beta.7]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.6...@videojs/core@10.0.0-beta.7
 [@videojs/core@10.0.0-beta.6]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.5...@videojs/core@10.0.0-beta.6
 [@videojs/core@10.0.0-beta.5]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.4...@videojs/core@10.0.0-beta.5
