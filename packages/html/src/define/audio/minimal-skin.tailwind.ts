@@ -5,6 +5,7 @@ import {
   button,
   buttonGroup,
   controls,
+  error,
   icon,
   iconContainer,
   iconFlipped,
@@ -21,6 +22,7 @@ import { SkinMixin } from '../skin-mixin';
 
 // Side-effect imports: register all custom elements used in the template.
 import '../media/container';
+import '../ui/error-dialog';
 import '../ui/mute-button';
 import '../ui/play-button';
 import '../ui/playback-rate-button';
@@ -40,6 +42,18 @@ function getTemplateHTML() {
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>
+
+      <media-error-dialog class="${error.root}">
+        <div class="${error.dialog}">
+          <div class="${error.content}">
+            <media-alert-dialog-title class="${error.title}">Something went wrong.</media-alert-dialog-title>
+            <media-alert-dialog-description class="${error.description}"></media-alert-dialog-description>
+          </div>
+          <div class="${error.actions}">
+            <media-alert-dialog-close class="${cn(button.base, button.subtle)}">OK</media-alert-dialog-close>
+          </div>
+        </div>
+      </media-error-dialog>
 
       <div class="${controls}">
         <media-tooltip-group>

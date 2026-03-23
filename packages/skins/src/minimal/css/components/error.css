@@ -2,6 +2,10 @@
    Error Dialog
    ========================================================================== */
 
+.media-minimal-skin .media-error:not([data-open]) {
+  display: none;
+}
+
 .media-minimal-skin .media-error__title {
   font-weight: 600;
   line-height: 1.25;

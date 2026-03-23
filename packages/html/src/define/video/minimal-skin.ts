@@ -7,6 +7,7 @@ import styles from './minimal-skin.css?inline';
 import '../media/container';
 import '../ui/buffering-indicator';
 import '../ui/controls';
+import '../ui/error-dialog';
 import '../ui/fullscreen-button';
 import '../ui/mute-button';
 import '../ui/pip-button';
@@ -37,6 +38,18 @@ function getTemplateHTML() {
       <media-buffering-indicator class="media-buffering-indicator">
         ${renderIcon('spinner', { class: 'media-icon' })}
       </media-buffering-indicator>
+
+      <media-error-dialog class="media-error">
+        <div class="media-error__dialog">
+          <div class="media-error__content">
+            <media-alert-dialog-title class="media-error__title">Something went wrong.</media-alert-dialog-title>
+            <media-alert-dialog-description class="media-error__description"></media-alert-dialog-description>
+          </div>
+          <div class="media-error__actions">
+            <media-alert-dialog-close class="media-button media-button--primary">OK</media-alert-dialog-close>
+          </div>
+        </div>
+      </media-error-dialog>
 
       <media-controls class="media-controls">
         <media-tooltip-group>

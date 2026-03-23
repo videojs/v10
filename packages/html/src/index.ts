@@ -26,6 +26,7 @@ export { BufferingIndicatorElement } from './ui/buffering-indicator/buffering-in
 export { CaptionsButtonElement } from './ui/captions-button/captions-button-element';
 export { ControlsElement } from './ui/controls/controls-element';
 export { ControlsGroupElement } from './ui/controls/controls-group-element';
+export { ErrorDialogElement } from './ui/error-dialog/error-dialog-element';
 export { FullscreenButtonElement } from './ui/fullscreen-button/fullscreen-button-element';
 export { MediaButtonElement } from './ui/media-button-element';
 // Primitives

@@ -26,6 +26,7 @@ import {
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
+import { ErrorDialog } from '@/ui/error-dialog';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
@@ -35,20 +36,9 @@ import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
-import { ErrorDialog } from '../error-dialog';
 import type { MinimalAudioSkinProps } from './minimal-skin';
 
 const SEEK_TIME = 10;
-
-const ERROR_CLASSNAMES = {
-  root: error.root,
-  dialog: error.dialog,
-  content: error.content,
-  title: error.title,
-  description: error.description,
-  actions: error.actions,
-  close: cn(button.base, button.subtle),
-};
 
 /* --------------------------------------- Components ---------------------------------------- */
 
@@ -143,7 +133,19 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
     <Container className={cn(root, className)} {...rest}>
       {children}
 
-      <ErrorDialog classNames={ERROR_CLASSNAMES} />
+      <ErrorDialog.Root>
+        <ErrorDialog.Popup className={error.root}>
+          <div className={error.dialog}>
+            <div className={error.content}>
+              <ErrorDialog.Title className={error.title}>Something went wrong.</ErrorDialog.Title>
+              <ErrorDialog.Description className={error.description} />
+            </div>
+            <div className={error.actions}>
+              <ErrorDialog.Close className={cn(button.base, button.subtle)}>OK</ErrorDialog.Close>
+            </div>
+          </div>
+        </ErrorDialog.Popup>
+      </ErrorDialog.Root>
 
       <div className={controls}>
         <Tooltip.Provider>

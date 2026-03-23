@@ -10,6 +10,7 @@ import {
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { Container, usePlayer } from '@/player/context';
+import { ErrorDialog } from '@/ui/error-dialog';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
@@ -19,20 +20,9 @@ import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
-import { ErrorDialog } from '../error-dialog';
 import type { BaseSkinProps } from '../types';
 
 const SEEK_TIME = 10;
-
-const ERROR_CLASSNAMES = {
-  root: 'media-error',
-  dialog: 'media-error__dialog',
-  content: 'media-error__content',
-  title: 'media-error__title',
-  description: 'media-error__description',
-  actions: 'media-error__actions',
-  close: 'media-button media-button--subtle',
-};
 
 export type AudioSkinProps = BaseSkinProps;
 
@@ -89,7 +79,19 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
     <Container className={cn('media-default-skin media-default-skin--audio', className)} {...rest}>
       {children}
 
-      <ErrorDialog classNames={ERROR_CLASSNAMES} />
+      <ErrorDialog.Root>
+        <ErrorDialog.Popup className="media-error">
+          <div className="media-error__dialog">
+            <div className="media-error__content">
+              <ErrorDialog.Title className="media-error__title">Something went wrong.</ErrorDialog.Title>
+              <ErrorDialog.Description className="media-error__description" />
+            </div>
+            <div className="media-error__actions">
+              <ErrorDialog.Close className="media-button media-button--subtle">OK</ErrorDialog.Close>
+            </div>
+          </div>
+        </ErrorDialog.Popup>
+      </ErrorDialog.Root>
 
       <div className="media-surface media-controls">
         <Tooltip.Provider>

@@ -21,6 +21,7 @@ import { Container, usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { Controls } from '@/ui/controls';
+import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
@@ -35,20 +36,9 @@ import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { isRenderProp } from '@/utils/use-render';
-import { ErrorDialog } from '../error-dialog';
 import type { BaseVideoSkinProps } from '../types';
 
 const SEEK_TIME = 10;
-
-const ERROR_CLASSNAMES = {
-  root: 'media-error',
-  dialog: 'media-error__dialog media-surface',
-  content: 'media-error__content',
-  title: 'media-error__title',
-  description: 'media-error__description',
-  actions: 'media-error__actions',
-  close: 'media-button media-button--primary',
-};
 
 export type VideoSkinProps = BaseVideoSkinProps;
 
@@ -134,7 +124,19 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
         )}
       />
 
-      <ErrorDialog classNames={ERROR_CLASSNAMES} />
+      <ErrorDialog.Root>
+        <ErrorDialog.Popup className="media-error">
+          <div className="media-error__dialog media-surface">
+            <div className="media-error__content">
+              <ErrorDialog.Title className="media-error__title">Something went wrong.</ErrorDialog.Title>
+              <ErrorDialog.Description className="media-error__description" />
+            </div>
+            <div className="media-error__actions">
+              <ErrorDialog.Close className="media-button media-button--primary">OK</ErrorDialog.Close>
+            </div>
+          </div>
+        </ErrorDialog.Popup>
+      </ErrorDialog.Root>
 
       <Controls.Root className="media-surface media-controls">
         <Tooltip.Provider>

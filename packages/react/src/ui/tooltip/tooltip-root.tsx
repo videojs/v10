@@ -74,7 +74,7 @@ export function TooltipRoot({
   });
 
   const anchorName = useSafeId();
-  const popupId = useSafeId('tooltip-');
+  const popupId = useSafeId('tooltip');
 
   // Sync controlled open prop -> internal input state.
   useEffect(() => {

@@ -5,6 +5,7 @@ import styles from './skin.css?inline';
 
 // Side-effect imports: register all custom elements used in the template.
 import '../media/container';
+import '../ui/error-dialog';
 import '../ui/mute-button';
 import '../ui/play-button';
 import '../ui/playback-rate-button';
@@ -24,6 +25,18 @@ function getTemplateHTML() {
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>
+
+      <media-error-dialog class="media-error">
+        <div class="media-error__dialog">
+          <div class="media-error__content">
+            <media-alert-dialog-title class="media-error__title">Something went wrong.</media-alert-dialog-title>
+            <media-alert-dialog-description class="media-error__description"></media-alert-dialog-description>
+          </div>
+          <div class="media-error__actions">
+            <media-alert-dialog-close class="media-button media-button--subtle">OK</media-alert-dialog-close>
+          </div>
+        </div>
+      </media-error-dialog>
 
       <div class="media-surface media-controls">
         <media-tooltip-group>

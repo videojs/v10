@@ -6,6 +6,10 @@
   outline: none;
 }
 
+.media-default-skin .media-error:not([data-open]) {
+  display: none;
+}
+
 .media-default-skin .media-error__title {
   font-weight: 600;
   line-height: 1.25;

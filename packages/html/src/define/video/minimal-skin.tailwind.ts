@@ -5,6 +5,7 @@ import {
   button,
   buttonGroup,
   controls,
+  error,
   icon,
   iconContainer,
   iconFlipped,
@@ -28,6 +29,7 @@ import '../media/container';
 import '../ui/buffering-indicator';
 import '../ui/captions-button';
 import '../ui/controls';
+import '../ui/error-dialog';
 import '../ui/fullscreen-button';
 import '../ui/mute-button';
 import '../ui/pip-button';
@@ -58,6 +60,18 @@ function getTemplateHTML() {
       <media-buffering-indicator class="${bufferingIndicator}">
         ${renderIcon('spinner')}
       </media-buffering-indicator>
+
+      <media-error-dialog class="${error.root}">
+        <div class="${error.dialog}">
+          <div class="${error.content}">
+            <media-alert-dialog-title class="${error.title}">Something went wrong.</media-alert-dialog-title>
+            <media-alert-dialog-description class="${error.description}"></media-alert-dialog-description>
+          </div>
+          <div class="${error.actions}">
+            <media-alert-dialog-close class="${cn(button.base, button.primary)}">OK</media-alert-dialog-close>
+          </div>
+        </div>
+      </media-error-dialog>
 
       <media-controls data-controls="" class="${controls}">
         <media-tooltip-group>
