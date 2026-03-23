@@ -1,5 +1,24 @@
 # Changelog
 
+## [10.0.0-beta.9](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.8...@videojs/skins@10.0.0-beta.9) (2026-03-23)
+
+
+### Features
+
+* **skin:** add error handling for audio players ([#1048](https://github.com/videojs/v10/issues/1048)) ([df927f6](https://github.com/videojs/v10/commit/df927f67fcbd0aaa229b1a8e205ab3cb08f7a42d))
+
+
+### Bug Fixes
+
+* **skin:** extract transition properties into CSS custom properties ([#1075](https://github.com/videojs/v10/issues/1075)) ([657e711](https://github.com/videojs/v10/commit/657e7111b423ac2d2a1d0c6422b88297f40e2b04))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.9
+
 ## [10.0.0-beta.8](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.7...@videojs/skins@10.0.0-beta.8) (2026-03-20)
 
 

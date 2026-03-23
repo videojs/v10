@@ -1,5 +1,31 @@
 # Changelog
 
+## [10.0.0-beta.9](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.8...@videojs/html@10.0.0-beta.9) (2026-03-23)
+
+
+### Features
+
+* **skin:** add error handling for audio players ([#1048](https://github.com/videojs/v10/issues/1048)) ([df927f6](https://github.com/videojs/v10/commit/df927f67fcbd0aaa229b1a8e205ab3cb08f7a42d))
+
+
+### Bug Fixes
+
+* **spf:** implement preload IDL attribute on SpfMedia ([#1069](https://github.com/videojs/v10/issues/1069)) ([04f81a2](https://github.com/videojs/v10/commit/04f81a26e13648ca414f2e51380c8786a06a7724))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.9
+    * @videojs/core bumped to 10.0.0-beta.9
+    * @videojs/element bumped to 10.0.0-beta.9
+    * @videojs/store bumped to 10.0.0-beta.9
+    * @videojs/utils bumped to 10.0.0-beta.9
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.9
+    * @videojs/skins bumped to 10.0.0-beta.9
+
 ## [10.0.0-beta.8](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.7...@videojs/html@10.0.0-beta.8) (2026-03-20)
 
 

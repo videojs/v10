@@ -1,5 +1,20 @@
 # Changelog
 
+## [10.0.0-beta.9](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.8...@videojs/spf@10.0.0-beta.9) (2026-03-23)
+
+
+### Bug Fixes
+
+* **spf:** call sourceBuffer.abort() on AbortError to reset MSE parser state ([#1081](https://github.com/videojs/v10/issues/1081)) ([f5ecc93](https://github.com/videojs/v10/commit/f5ecc93554c054de149fbf3df2d26da49d58e7ec))
+* **spf:** implement preload IDL attribute on SpfMedia ([#1069](https://github.com/videojs/v10/issues/1069)) ([04f81a2](https://github.com/videojs/v10/commit/04f81a26e13648ca414f2e51380c8786a06a7724))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.9
+
 ## [10.0.0-beta.8](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.7...@videojs/spf@10.0.0-beta.8) (2026-03-20)
 
 
