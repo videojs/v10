@@ -120,25 +120,24 @@ export class ThumbnailCore {
     const coordX = thumbnail.coords?.x ?? 0;
     const coordY = thumbnail.coords?.y ?? 0;
 
-    // Ceil the offset so it never undershoots the tile origin (prevents top/left bleed).
     const offsetX = Math.ceil(coordX * scale);
     const offsetY = Math.ceil(coordY * scale);
 
-    // Derive container from the floored far edge minus the ceiled offset.
-    // This guarantees the visible area never extends past the tile boundary (prevents
-    // right/bottom bleed) while remaining tight to the ceiled offset (no gap on near edge).
     const containerWidth = Math.floor((coordX + tileWidth) * scale) - offsetX;
     const containerHeight = Math.floor((coordY + tileHeight) * scale) - offsetY;
 
+    // Inset by 1px to eat the interpolation fringe the browser introduces when
+    // scaling the sprite sheet (bilinear filtering blends across tile boundaries).
+    const inset = scale !== 1 ? 1 : 0;
+
     return {
       scale,
-      containerWidth,
-      containerHeight,
-      // Image always fills the container (prevents sub-pixel gaps).
+      containerWidth: containerWidth - inset * 2,
+      containerHeight: containerHeight - inset * 2,
       imageWidth: Math.ceil(imgNaturalWidth * scale),
       imageHeight: Math.ceil(imgNaturalHeight * scale),
-      offsetX,
-      offsetY,
+      offsetX: offsetX + inset,
+      offsetY: offsetY + inset,
     };
   }
 

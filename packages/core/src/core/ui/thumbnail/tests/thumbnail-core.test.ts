@@ -221,15 +221,15 @@ describe('ThumbnailCore', () => {
         maxHeight: Infinity,
       });
 
-      // scale = 128/256 = 0.5
+      // scale = 128/256 = 0.5, inset = 1 (scale !== 1)
       expect(result).toEqual({
         scale: 0.5,
-        containerWidth: 128,
-        containerHeight: 80,
+        containerWidth: 126,
+        containerHeight: 78,
         imageWidth: 1280,
         imageHeight: 800,
-        offsetX: 256,
-        offsetY: 160,
+        offsetX: 257,
+        offsetY: 161,
       });
     });
 
@@ -266,15 +266,16 @@ describe('ThumbnailCore', () => {
       const scale = 177 / 256;
       const oX = Math.ceil(512 * scale);
       const oY = Math.ceil(320 * scale);
+      const inset = 1; // scale !== 1
 
       expect(result).toEqual({
         scale,
-        containerWidth: Math.floor((512 + 256) * scale) - oX,
-        containerHeight: Math.floor((320 + 160) * scale) - oY,
+        containerWidth: Math.floor((512 + 256) * scale) - oX - inset * 2,
+        containerHeight: Math.floor((320 + 160) * scale) - oY - inset * 2,
         imageWidth: Math.ceil(2560 * scale),
         imageHeight: Math.ceil(1600 * scale),
-        offsetX: oX,
-        offsetY: oY,
+        offsetX: oX + inset,
+        offsetY: oY + inset,
       });
 
       // Verify all pixel values are integers (no sub-pixel rendering gaps).
