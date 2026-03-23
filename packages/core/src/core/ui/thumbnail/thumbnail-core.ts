@@ -127,8 +127,8 @@ export class ThumbnailCore {
     return {
       scale,
       // Floor container so it never extends past the tile boundary.
-      containerWidth: Math.floor(tileWidth * scale) - inset * 2,
-      containerHeight: Math.floor(tileHeight * scale) - inset * 2,
+      containerWidth: Math.max(0, Math.floor(tileWidth * scale) - inset * 2),
+      containerHeight: Math.max(0, Math.floor(tileHeight * scale) - inset * 2),
       // Ceil image so the sprite sheet always fills the container.
       imageWidth: Math.ceil(imgNaturalWidth * scale),
       imageHeight: Math.ceil(imgNaturalHeight * scale),

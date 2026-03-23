@@ -282,6 +282,23 @@ describe('ThumbnailCore', () => {
       }
     });
 
+    it('clamps container dimensions to zero for tiny scales', () => {
+      const core = new ThumbnailCore();
+      const thumbnail = createImage();
+
+      const result = core.resize(thumbnail, 256, 160, {
+        minWidth: 0,
+        maxWidth: 3,
+        minHeight: 0,
+        maxHeight: Infinity,
+      });
+
+      expect(result).toMatchObject({
+        containerWidth: 1,
+        containerHeight: 0,
+      });
+    });
+
     it('container never exceeds scaled tile dimensions', () => {
       const core = new ThumbnailCore();
       const thumbnail = createImage({ coords: { x: 512, y: 320 } });
