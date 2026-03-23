@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 
+import { useLatestRef } from './use-latest-ref';
+
 interface Destroyable {
   destroy(): void;
 }
@@ -22,20 +24,23 @@ interface Destroyable {
  */
 export function useDestroy(instance: Destroyable, setup?: () => void, teardown?: () => void): void {
   const pendingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const setupRef = useLatestRef(setup);
+  const teardownRef = useLatestRef(teardown);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: setupRef/teardownRef are latest-value refs, read at call time
   useEffect(() => {
     if (pendingRef.current !== null) {
       clearTimeout(pendingRef.current);
       pendingRef.current = null;
     } else {
-      setup?.();
+      setupRef.current?.();
     }
 
     return () => {
       pendingRef.current = setTimeout(() => {
-        teardown?.();
+        teardownRef.current?.();
         instance.destroy();
       }, 0);
     };
-  }, [instance, setup, teardown]);
+  }, [instance]);
 }
