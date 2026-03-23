@@ -266,17 +266,53 @@ describe('ThumbnailCore', () => {
       expect(result).toEqual({
         scale: 177 / 256,
         containerWidth: 177,
-        containerHeight: Math.round(160 * (177 / 256)),
-        imageWidth: Math.round(2560 * (177 / 256)),
-        imageHeight: Math.round(1600 * (177 / 256)),
-        offsetX: Math.round(512 * (177 / 256)),
-        offsetY: Math.round(320 * (177 / 256)),
+        containerHeight: Math.floor(160 * (177 / 256)),
+        imageWidth: Math.ceil(2560 * (177 / 256)),
+        imageHeight: Math.ceil(1600 * (177 / 256)),
+        offsetX: Math.floor(512 * (177 / 256)),
+        offsetY: Math.floor(320 * (177 / 256)),
       });
 
       // Verify all pixel values are integers (no sub-pixel rendering gaps).
       for (const key of ['containerWidth', 'containerHeight', 'imageWidth', 'imageHeight', 'offsetX', 'offsetY']) {
         expect(Number.isInteger(result![key as keyof typeof result])).toBe(true);
       }
+    });
+
+    it('container never exceeds scaled tile dimensions', () => {
+      const core = new ThumbnailCore();
+      const thumbnail = createImage({ coords: { x: 512, y: 320 } });
+
+      const result = core.resize(thumbnail, 2560, 1600, {
+        minWidth: 0,
+        maxWidth: 177,
+        minHeight: 0,
+        maxHeight: Infinity,
+      });
+
+      const scale = result!.scale;
+      expect(result!.containerWidth).toBeLessThanOrEqual(256 * scale);
+      expect(result!.containerHeight).toBeLessThanOrEqual(160 * scale);
+      expect(result!.imageWidth).toBeGreaterThanOrEqual(result!.containerWidth);
+      expect(result!.imageHeight).toBeGreaterThanOrEqual(result!.containerHeight);
+    });
+
+    it('visible edges do not extend past tile boundary', () => {
+      const core = new ThumbnailCore();
+      const thumbnail = createImage({ coords: { x: 512, y: 320 } });
+
+      const result = core.resize(thumbnail, 2560, 1600, {
+        minWidth: 0,
+        maxWidth: 177,
+        minHeight: 0,
+        maxHeight: Infinity,
+      });
+
+      const scale = result!.scale;
+      const nextTileX = (512 + 256) * scale;
+      const nextTileY = (320 + 160) * scale;
+      expect(result!.offsetX + result!.containerWidth).toBeLessThanOrEqual(nextTileX);
+      expect(result!.offsetY + result!.containerHeight).toBeLessThanOrEqual(nextTileY);
     });
 
     it('returns undefined when dimensions are unavailable', () => {
