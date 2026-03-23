@@ -11,7 +11,7 @@ export const button = {
     'focus-visible:outline-current focus-visible:outline-offset-2',
     'data-[availability=unavailable]:hidden'
   ),
-  primary: 'bg-white text-black font-medium text-center',
+  primary: 'bg-white text-black font-medium text-shadow-none',
   subtle: cn(
     'bg-transparent text-inherit text-shadow-inherit',
     'hover:bg-current/10 hover:no-underline',
