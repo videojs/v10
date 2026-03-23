@@ -5,6 +5,8 @@ description: Create custom player controls that read state, dispatch actions, an
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
 
 Custom components subscribe to player state and dispatch actions, just like built-in controls.
 
@@ -36,21 +38,23 @@ Each <DocsLink slug="concepts/features">feature</DocsLink> exposes state propert
 | `volume`, `muted` | `setVolume()`, `toggleMuted()` | <DocsLink slug="reference/feature-volume">Volume</DocsLink> |
 | `fullscreen` | `requestFullscreen()`, `exitFullscreen()` | <DocsLink slug="reference/feature-fullscreen">Fullscreen</DocsLink> |
 
-Browse the full list in the **Features** section of the sidebar. 
+Browse the full list in the **Features** section of the sidebar.
 
 Each feature also has an **availability** property (`'available'`, `'unavailable'`, or `'unsupported'`) for hiding controls the platform does not support. See <DocsLink slug="concepts/features">Features</DocsLink> for details.
 
 <FrameworkCase frameworks={["react"]}>
 
-Access state and actions with <DocsLink slug="reference/use-player">`Player.usePlayer`</DocsLink>:
+Access state and actions with <DocsLink slug="reference/use-player">`usePlayer`</DocsLink>:
 
 ```tsx
+import { usePlayer } from '@videojs/react';
+
 // Subscribe to state — re-renders only when selected values change
-const paused = Player.usePlayer((s) => s.paused);
-const currentTime = Player.usePlayer((s) => s.currentTime);
+const paused = usePlayer((s) => s.paused);
+const currentTime = usePlayer((s) => s.currentTime);
 
 // Get the store for dispatching actions (does not subscribe)
-const store = Player.usePlayer();
+const store = usePlayer();
 
 await store.play();
 store.setVolume(0.5);
@@ -102,7 +106,7 @@ Your component needs to be inside <DocsLink slug="reference/player-provider">`<P
     <VideoSkin>
       <Video src="video.mp4" />
     </VideoSkin>
-    <SkipIntroButton /> {/* Your custom component */}
+    <SkipIntroButton /> // [!code focus]
   </Player.Container>
 </Player.Provider>
 ```
@@ -118,22 +122,24 @@ Your element needs to be inside <DocsLink slug="reference/player-provider">`<vid
   <video-skin>
     <video slot="media" src="video.mp4"></video>
   </video-skin>
-  <skip-intro-button></skip-intro-button> <!-- Your custom element -->
+  <skip-intro-button>Skip intro</skip-intro-button> <!-- [!code focus] -->
 </video-player>
 ```
 
-Extend `ReactiveElement` from `@videojs/element` so `PlayerController` can schedule DOM updates when state changes:
+Extend `MediaElement` from `@videojs/html` so `PlayerController` can schedule DOM updates when state changes:
 
 ```ts
-import { ReactiveElement } from '@videojs/element';
-import { PlayerController, playerContext, selectTime } from '@videojs/html';
+import { MediaElement, PlayerController, playerContext, selectTime } from '@videojs/html';
 
-class SkipIntroButtonElement extends ReactiveElement {
+// Extend MediaElement for reactive updates and lifecycle cleanup
+class SkipIntroButtonElement extends MediaElement {
+  // Subscribe to a feature — calls update() when its state changes
   #player = new PlayerController(this, playerContext, selectTime);
 
   update() {
     super.update();
-    // React to state changes here
+    // Read state and update the DOM here
+    const time = this.#player.value;
   }
 }
 
@@ -146,13 +152,7 @@ customElements.define('skip-intro-button', SkipIntroButtonElement);
 
 Use semantic HTML elements (`<button>`, not `<div>`), add ARIA attributes where needed, and support keyboard interaction.
 
-TODO: Link to concepts/accessibility once that page is merged
-
-<FrameworkCase frameworks={["react"]}>
-
-For button-like controls, the <DocsLink slug="reference/use-button">`useButton`</DocsLink> hook handles keyboard activation (Enter and Space) and ARIA attributes.
-
-</FrameworkCase>
+<DocsLinkCard slug="concepts/accessibility">Learn more about accessibility in Video.js</DocsLinkCard>
 
 ## Full example
 
@@ -160,92 +160,152 @@ A "skip intro" button that appears during the first 30 seconds of playback and s
 
 <FrameworkCase frameworks={["react"]}>
 
-```tsx
-function SkipIntroButton() {
-  const store = Player.usePlayer();
-  const currentTime = Player.usePlayer((s) => s.currentTime);
-  const paused = Player.usePlayer((s) => s.paused);
+<TabsRoot client:idle>
+  <TabsList client:idle label="React skip intro example">
+    <Tab client:idle value="component" initial>SkipIntroButton.tsx</Tab>
+    <Tab client:idle value="css">SkipIntroButton.css</Tab>
+  </TabsList>
+  <TabsPanel client:idle value="component" initial>
+    ```tsx
+    import { usePlayer } from '@videojs/react';
 
-  const visible = currentTime < 30 && !paused;
+    function SkipIntroButton() {
+      const store = usePlayer();
+      const currentTime = usePlayer((s) => s.currentTime);
+      const paused = usePlayer((s) => s.paused);
 
-  return (
-    <button
-      onClick={() => store.seek(30)}
-      aria-label="Skip intro"
-      style={{
-        position: 'absolute',
-        bottom: '5rem',
-        right: '1rem',
-        opacity: visible ? 1 : 0,
-        pointerEvents: visible ? 'auto' : 'none',
-        transition: 'opacity 200ms',
-      }}
-    >
-      Skip intro
-    </button>
-  );
-}
-```
+      const visible = currentTime < 30 && !paused;
+
+      return (
+        <button
+          className="skip-intro-button"
+          onClick={() => store.seek(30)}
+          aria-label="Skip intro"
+          // `undefined` removes the attribute; `false` would render data-visible="false"
+          data-visible={visible || undefined}
+          tabIndex={visible ? 0 : -1}
+        >
+          Skip intro
+        </button>
+      );
+    }
+    ```
+  </TabsPanel>
+  <TabsPanel client:idle value="css">
+    ```css
+    .skip-intro-button {
+      position: absolute;
+      bottom: 5rem;
+      right: 1rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms;
+    }
+
+    .skip-intro-button[data-visible] {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    ```
+  </TabsPanel>
+</TabsRoot>
 
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 
-```ts
-import { ReactiveElement } from '@videojs/element';
-import { PlayerController, playerContext, selectTime, selectPlayback } from '@videojs/html';
+<TabsRoot client:idle>
+  <TabsList client:idle label="HTML skip intro example">
+    <Tab client:idle value="ts" initial>skip-intro-button.ts</Tab>
+    <Tab client:idle value="css">skip-intro-button.css</Tab>
+  </TabsList>
+  <TabsPanel client:idle value="ts" initial>
+    ```ts
+    import { MediaElement, PlayerController, playerContext, selectTime, selectPlayback } from '@videojs/html';
 
-class SkipIntroButtonElement extends ReactiveElement {
-  static tagName = 'skip-intro-button';
+    class SkipIntroButtonElement extends MediaElement {
+      static tagName = 'skip-intro-button';
 
-  #time = new PlayerController(this, playerContext, selectTime);
-  #playback = new PlayerController(this, playerContext, selectPlayback);
+      #time = new PlayerController(this, playerContext, selectTime);
+      #playback = new PlayerController(this, playerContext, selectPlayback);
+      #disconnect: AbortController | null = null;
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.setAttribute('role', 'button');
-    this.setAttribute('aria-label', 'Skip intro');
-    this.setAttribute('tabindex', '0');
-    this.addEventListener('click', this.#handleActivate);
-    this.addEventListener('keydown', this.#handleKeydown);
-  }
+      connectedCallback() {
+        super.connectedCallback();
+        this.#disconnect?.abort();
+        this.#disconnect = new AbortController();
+        const { signal } = this.#disconnect;
 
-  update() {
-    super.update();
-    const time = this.#time.value;
-    const playback = this.#playback.value;
-    if (!time || !playback) return;
+        this.setAttribute('role', 'button');
+        this.setAttribute('aria-label', 'Skip intro');
+        this.setAttribute('tabindex', '0');
+        this.addEventListener('click', this.#handleActivate, { signal });
+        this.addEventListener('keydown', this.#handleKeydown, { signal });
+        this.addEventListener('keyup', this.#handleKeyup, { signal });
+      }
 
-    const visible = time.currentTime < 30 && !playback.paused;
-    this.toggleAttribute('data-visible', visible);
-    this.style.opacity = visible ? '1' : '0';
-    this.style.pointerEvents = visible ? 'auto' : 'none';
-  }
+      disconnectedCallback() {
+        super.disconnectedCallback();
+        // Removes all listeners registered with this signal
+        this.#disconnect?.abort();
+        this.#disconnect = null;
+      }
 
-  #handleActivate = () => {
-    this.#time.value?.seek(30);
-  };
+      update() {
+        super.update();
+        const time = this.#time.value;
+        const playback = this.#playback.value;
 
-  #handleKeydown = (event: KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      this.#handleActivate();
+        // Features are configured per-player, so a feature may not be available
+        if (!time || !playback) return;
+
+        const visible = time.currentTime < 30 && !playback.paused;
+        this.toggleAttribute('data-visible', visible);
+        this.setAttribute('tabindex', visible ? '0' : '-1');
+      }
+
+      #handleActivate = () => {
+        this.#time.value?.seek(30);
+      };
+
+      #handleKeydown = (event: KeyboardEvent) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          this.#handleActivate();
+        } else if (event.key === ' ') {
+          // Prevent Space from scrolling the page
+          event.preventDefault();
+        }
+      };
+
+      // ARIA button pattern: Space activates on keyup, not keydown
+      #handleKeyup = (event: KeyboardEvent) => {
+        if (event.key === ' ') {
+          this.#handleActivate();
+        }
+      };
     }
-  };
-}
 
-customElements.define('skip-intro-button', SkipIntroButtonElement);
-```
+    customElements.define('skip-intro-button', SkipIntroButtonElement);
+    ```
+  </TabsPanel>
+  <TabsPanel client:idle value="css">
+    ```css
+    skip-intro-button {
+      position: absolute;
+      bottom: 5rem;
+      right: 1rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms;
+    }
 
-Style it with CSS:
-
-```css
-skip-intro-button {
-  position: absolute;
-  bottom: 5rem;
-  right: 1rem;
-  transition: opacity 200ms;
-}
-```
+    skip-intro-button[data-visible] {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    ```
+  </TabsPanel>
+</TabsRoot>
 
 </FrameworkCase>
