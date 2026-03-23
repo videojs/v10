@@ -5,12 +5,18 @@ import { CustomVideoElement } from '../custom-media-element';
 import { VideoProxy } from '../proxy';
 import { HlsMediaTextTracksMixin } from './text-tracks';
 
+export type PlaybackType = (typeof PlaybackTypes)[keyof typeof PlaybackTypes];
+export type SourceType = (typeof SourceTypes)[keyof typeof SourceTypes];
+
 export const PlaybackTypes = {
   MSE: 'mse',
   NATIVE: 'native',
 };
 
-export type PlaybackType = (typeof PlaybackTypes)[keyof typeof PlaybackTypes];
+export const SourceTypes = {
+  M3U8: 'application/vnd.apple.mpegurl',
+  MP4: 'video/mp4',
+};
 
 const defaultConfig = {
   backBufferLength: 30,
@@ -26,6 +32,7 @@ class HlsMediaDelegateBase implements Delegate {
   #loadRequested?: Promise<void> | null;
   #src: string = '';
   #debug: boolean = false;
+  #type: SourceType | undefined;
   #preferPlayback: PlaybackType | undefined = 'mse';
 
   constructor() {
@@ -36,6 +43,7 @@ class HlsMediaDelegateBase implements Delegate {
     this.#engine?.destroy();
     this.#engine = null;
 
+    if (this.type !== SourceTypes.M3U8) return;
     if (this.#preferPlayback === PlaybackTypes.NATIVE) return;
     if (!Hls.isSupported()) return;
 
@@ -49,10 +57,23 @@ class HlsMediaDelegateBase implements Delegate {
     }
   }
 
+  /** The underlying hls.js instance, or `null` when using native playback. */
   get engine(): Hls | null {
     return this.#engine;
   }
 
+  /** Explicit source type. When unset, inferred from the source URL extension. */
+  get type(): SourceType | undefined {
+    return this.#type ?? inferSourceType(this.#src);
+  }
+
+  set type(value: SourceType | undefined) {
+    if (this.#type === value) return;
+    this.#type = value;
+    this.#initialize();
+  }
+
+  /** Enable hls.js debug logging. Re-initializes the engine when changed before load. */
   get debug(): boolean {
     return this.#debug;
   }
@@ -66,6 +87,10 @@ class HlsMediaDelegateBase implements Delegate {
     }
   }
 
+  /**
+   * Whether to prefer `'mse'` (hls.js) or `'native'` (browser-built-in) HLS
+   * playback. Changing this re-initializes the delegate.
+   */
   get preferPlayback(): PlaybackType | undefined {
     return this.#preferPlayback;
   }
@@ -76,8 +101,13 @@ class HlsMediaDelegateBase implements Delegate {
     this.#initialize();
   }
 
+  /** The HLS source URL to load. */
   set src(src: string) {
+    const prevType = this.type;
     this.#src = src;
+    if (this.type !== prevType) {
+      this.#initialize();
+    }
     this.#requestLoad();
   }
 
@@ -115,6 +145,12 @@ class HlsMediaDelegateBase implements Delegate {
     this.#engine = null;
     this.#target = null;
   }
+}
+
+function inferSourceType(src: string): SourceType {
+  const path = src.split(/[?#]/)[0] ?? '';
+  if (path.endsWith('.mp4')) return SourceTypes.MP4;
+  return SourceTypes.M3U8;
 }
 
 export const HlsMediaDelegate = HlsMediaTextTracksMixin(HlsMediaDelegateBase);
