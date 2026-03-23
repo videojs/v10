@@ -263,14 +263,18 @@ describe('ThumbnailCore', () => {
         maxHeight: Infinity,
       });
 
+      const scale = 177 / 256;
+      const oX = Math.ceil(512 * scale);
+      const oY = Math.ceil(320 * scale);
+
       expect(result).toEqual({
-        scale: 177 / 256,
-        containerWidth: 177,
-        containerHeight: Math.floor(160 * (177 / 256)),
-        imageWidth: Math.ceil(2560 * (177 / 256)),
-        imageHeight: Math.ceil(1600 * (177 / 256)),
-        offsetX: Math.floor(512 * (177 / 256)),
-        offsetY: Math.floor(320 * (177 / 256)),
+        scale,
+        containerWidth: Math.floor((512 + 256) * scale) - oX,
+        containerHeight: Math.floor((320 + 160) * scale) - oY,
+        imageWidth: Math.ceil(2560 * scale),
+        imageHeight: Math.ceil(1600 * scale),
+        offsetX: oX,
+        offsetY: oY,
       });
 
       // Verify all pixel values are integers (no sub-pixel rendering gaps).
@@ -295,6 +299,22 @@ describe('ThumbnailCore', () => {
       expect(result!.containerHeight).toBeLessThanOrEqual(160 * scale);
       expect(result!.imageWidth).toBeGreaterThanOrEqual(result!.containerWidth);
       expect(result!.imageHeight).toBeGreaterThanOrEqual(result!.containerHeight);
+    });
+
+    it('offsets never undershoot the tile origin (prevents top/left bleed)', () => {
+      const core = new ThumbnailCore();
+      const thumbnail = createImage({ coords: { x: 512, y: 320 } });
+
+      const result = core.resize(thumbnail, 2560, 1600, {
+        minWidth: 0,
+        maxWidth: 177,
+        minHeight: 0,
+        maxHeight: Infinity,
+      });
+
+      const scale = result!.scale;
+      expect(result!.offsetX).toBeGreaterThanOrEqual(512 * scale);
+      expect(result!.offsetY).toBeGreaterThanOrEqual(320 * scale);
     });
 
     it('visible edges do not extend past tile boundary', () => {

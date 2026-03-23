@@ -117,18 +117,28 @@ export class ThumbnailCore {
 
     const scale = this.calculateScale(tileWidth, tileHeight, constraints);
 
-    // Role-based rounding to prevent sprite tile bleeding:
-    // - Container: floor so it never exceeds the scaled tile (prevents adjacent tile bleed)
-    // - Image: ceil so it always fills the container (prevents sub-pixel gaps)
-    // - Offset: floor to shift toward origin, adding safety margin on the far edge
+    const coordX = thumbnail.coords?.x ?? 0;
+    const coordY = thumbnail.coords?.y ?? 0;
+
+    // Ceil the offset so it never undershoots the tile origin (prevents top/left bleed).
+    const offsetX = Math.ceil(coordX * scale);
+    const offsetY = Math.ceil(coordY * scale);
+
+    // Derive container from the floored far edge minus the ceiled offset.
+    // This guarantees the visible area never extends past the tile boundary (prevents
+    // right/bottom bleed) while remaining tight to the ceiled offset (no gap on near edge).
+    const containerWidth = Math.floor((coordX + tileWidth) * scale) - offsetX;
+    const containerHeight = Math.floor((coordY + tileHeight) * scale) - offsetY;
+
     return {
       scale,
-      containerWidth: Math.floor(tileWidth * scale),
-      containerHeight: Math.floor(tileHeight * scale),
+      containerWidth,
+      containerHeight,
+      // Image always fills the container (prevents sub-pixel gaps).
       imageWidth: Math.ceil(imgNaturalWidth * scale),
       imageHeight: Math.ceil(imgNaturalHeight * scale),
-      offsetX: Math.floor((thumbnail.coords?.x ?? 0) * scale),
-      offsetY: Math.floor((thumbnail.coords?.y ?? 0) * scale),
+      offsetX,
+      offsetY,
     };
   }
 
