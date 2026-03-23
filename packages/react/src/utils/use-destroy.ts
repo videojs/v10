@@ -27,7 +27,6 @@ export function useDestroy(instance: Destroyable, setup?: () => void, teardown?:
   const setupRef = useLatestRef(setup);
   const teardownRef = useLatestRef(teardown);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: setupRef/teardownRef are latest-value refs, read at call time
   useEffect(() => {
     if (pendingRef.current !== null) {
       clearTimeout(pendingRef.current);

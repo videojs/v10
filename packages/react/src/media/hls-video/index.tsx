@@ -1,23 +1,17 @@
 import { HlsMedia } from '@videojs/core/dom/media/hls';
 import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
 import { forwardRef, useMemo } from 'react';
-import { useMediaAttach } from '../../player/context';
 import { attachMediaElement } from '../../utils/attach-media-element';
 import { mediaProps } from '../../utils/media-props';
 import { useComposedRefs } from '../../utils/use-composed-refs';
-import { useDestroy } from '../../utils/use-destroy';
+import { useMediaInstance } from '../../utils/use-media-instance';
 
 export type HlsVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElement>>;
 
 export const HlsVideo = forwardRef<HTMLVideoElement, HlsVideoProps>(({ children, ...props }, ref) => {
   const mediaApi = useMemo(() => new HlsMedia(), []);
-  const setMedia = useMediaAttach();
 
-  useDestroy(
-    mediaApi,
-    () => setMedia?.(mediaApi),
-    () => setMedia?.(null)
-  );
+  useMediaInstance(mediaApi);
 
   const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
 
