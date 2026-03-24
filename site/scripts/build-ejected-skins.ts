@@ -754,8 +754,13 @@ function getHtmlSkinCdnFileName(skin: HtmlSkinDef): string {
 function prependHtmlSkinScripts(html: string, skin: HtmlSkinDef): string {
   const cdnFileName = getHtmlSkinCdnFileName(skin);
   const scriptTag = `<script type="module" src="${HTML_CDN_BASE}/${cdnFileName}.js"></script>`;
+  const playerTag = getSkinMediaType(skin) === 'audio' ? 'audio-player' : 'video-player';
+  const indented = html
+    .split('\n')
+    .map((l) => (l.length > 0 ? `  ${l}` : l))
+    .join('\n');
 
-  return `${scriptTag}\n\n${html}`;
+  return `${scriptTag}\n\n<${playerTag}>\n${indented}\n</${playerTag}>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -1493,31 +1498,66 @@ function flattenErrorClasses(source: string): string {
 }
 
 /**
- * Insert a brief usage example doc comment above the main exported skin
- * component so the ejected file shows how to use it at a glance.
+ * Add a Player section to the ejected React output: imports for createPlayer,
+ * Video/Audio, and features; an exported Player instance; a typed Props
+ * interface; and an exported VideoPlayer/AudioPlayer component with @example.
  */
-function addSkinDocComment(source: string, mediaType: MediaType): string {
+function addPlayerSection(source: string, mediaType: MediaType): string {
   // Find the exported skin function name
-  const match = source.match(/export function (\w+Skin\w*)\(/);
-  if (!match) return source;
+  const skinMatch = source.match(/export function (\w+Skin\w*)\(/);
+  if (!skinMatch) return source;
 
-  const componentName = match[0].replace('export function ', '').replace('(', '');
-  const mediaTag = mediaType === 'audio' ? 'Audio' : 'Video';
-  const srcAttr = `src="${DEMO_VIDEO_SRC}"`;
-  const playsInline = mediaType === 'video' ? ' playsInline' : '';
+  const skinName = skinMatch[1];
+  const isVideo = mediaType === 'video';
+  const mediaTag = isVideo ? 'Video' : 'Audio';
+  const features = isVideo ? 'videoFeatures' : 'audioFeatures';
+  const playerName = isVideo ? 'VideoPlayer' : 'AudioPlayer';
+  const propsName = `${playerName}Props`;
+  const subpath = isVideo ? 'video' : 'audio';
+  const playsInline = isVideo ? ' playsInline' : '';
 
-  const comment = [
+  // 1. Add createPlayer to the @videojs/react import
+  source = source.replace(
+    /import \{([^}]+)\} from '@videojs\/react';/,
+    (m, names) => `import { createPlayer,${names}} from '@videojs/react';`
+  );
+
+  // 2. Add Video/Audio + features import after the @videojs/react import line
+  const mediaImport = `import { ${mediaTag}, ${features} } from '@videojs/react/${subpath}';`;
+  source = source.replace(/(import \{[^}]*\} from '@videojs\/react';)/, `$1\n${mediaImport}`);
+
+  // 3. Append Player section at end of file
+  const playerSection = [
+    '',
+    sectionHeader('Player'),
+    '',
+    `export const Player = createPlayer({ features: ${features} });`,
+    '',
+    `export interface ${propsName} {`,
+    '  src: string;',
+    '}',
+    '',
     '/**',
     ' * @example',
     ' * ```tsx',
-    ` * <${componentName}>`,
-    ` *   <${mediaTag} ${srcAttr}${playsInline} />`,
-    ` * </${componentName}>`,
+    ` * <${playerName} src="${DEMO_VIDEO_SRC}" />`,
     ' * ```',
     ' */',
+    `export function ${playerName}({ src }: ${propsName}) {`,
+    '  return (',
+    '    <Player.Provider>',
+    `      <${skinName}>`,
+    `        <${mediaTag} src={src}${playsInline} />`,
+    `      </${skinName}>`,
+    '    </Player.Provider>',
+    '  );',
+    '}',
+    '',
   ].join('\n');
 
-  return source.replace(`export function ${componentName}(`, `${comment}\nexport function ${componentName}(`);
+  source = source.trimEnd() + '\n' + playerSection;
+
+  return source;
 }
 
 /**
@@ -1566,8 +1606,8 @@ async function processReactSkin(skin: ReactSkinDef): Promise<{ tsx: string; jsx:
   // 10. Reorganize into sections with comment headers
   let tsx = reorganizeReactOutput(source, privates.utilities, icons.iconComponents);
 
-  // 11. Add usage example doc comment above the main skin component
-  tsx = addSkinDocComment(tsx, getSkinMediaType(skin));
+  // 11. Add Player section (createPlayer, imports, VideoPlayer/AudioPlayer component)
+  tsx = addPlayerSection(tsx, getSkinMediaType(skin));
 
   const jsx = tsxToJsx(tsx);
 
