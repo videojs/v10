@@ -67,6 +67,10 @@
               {
                 "name": "useForceRender",
                 "stableResult": true
+              },
+              {
+                "name": "useLatestRef",
+                "stableResult": true
               }
             ]
           }
@@ -119,6 +123,16 @@
           }
         }
       }
+    },
+    {
+      "includes": ["build/plugins/tests/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noTemplateCurlyInString": "off"
+          }
+        }
+      }
     }
   ],
   "files": {
@@ -131,7 +145,6 @@
       "!**/.next",
       "!**/.opencode",
       "!**/.github",
-      "!build",
       "!**/dist",
       "!**/examples",
       "!**/styles/vjs.css",

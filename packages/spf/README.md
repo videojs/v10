@@ -1,51 +1,27 @@
 # @videojs/spf
 
-Stream Processing Framework for Video.js 10
+[![package-badge]][package]
+
+> **⚠️ Beta** Experimental adoption in real projects.
 
 ## Overview
 
-SPF is a lightweight, bundle-size-optimized HLS playback engine for Video.js 10.
+`@videojs/spf` is a lightweight, bundle-size-optimized streaming engine for Video.js 10. It provides
+HLS playback with adaptive bitrate switching, WebVTT captions, and MSE support.
 
-**Target:** < 20KB (minified + gzipped)  
-**Target Date:** February 27, 2026  
-**Status:** Active development
+## Community
 
-## V1 Feature Set
+If you need help with anything related to Video.js 10, or if you'd like to casually chat with other
+members:
 
-- CMAF HLS VOD playback
-- Basic ABR (EWMA throughput)
-- WebVTT captions
-- MSE + MMS support
-- Chrome, Safari, Firefox, Edge (latest)
+- [Join Discord Server][discord]
+- [See GitHub Discussions][gh-discussions]
 
-## Development
+## License
 
-```bash
-# Install dependencies
-pnpm install
+[Apache-2.0](./LICENSE)
 
-# Run tests
-pnpm test
-
-# Build
-pnpm build
-
-# Typecheck
-pnpm typecheck
-```
-
-## Documentation
-
-See `.claude/spf-breakdown/` for:
-- Complete work breakdown (58 issues)
-- Architecture decisions
-- Implementation timeline
-
-## Reference
-
-Spike code available in `.archive/spf-xstate-poc/` for pattern reference.
-
-## GitHub Issues
-
-- Epics: #384, #385, #386, #387
-- All issues: https://github.com/videojs/v10/issues?q=is:issue+label:spf
+[package]: https://www.npmjs.com/package/@videojs/spf
+[package-badge]: https://img.shields.io/npm/v/@videojs/spf?label=@videojs/spf
+[discord]: https://discord.gg/JBqHh485uF
+[gh-discussions]: https://github.com/videojs/v10/discussions

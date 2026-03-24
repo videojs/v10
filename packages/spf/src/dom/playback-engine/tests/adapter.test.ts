@@ -285,6 +285,56 @@ describe('SpfMedia', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // preload — synchronous IDL attribute (WHATWG §4.8.11.2)
+  // ---------------------------------------------------------------------------
+  describe('preload', () => {
+    it('returns empty string before any preload is set', () => {
+      const media = new SpfMedia();
+      expect(media.preload).toBe('');
+    });
+
+    it('reflects the set value synchronously', () => {
+      const media = new SpfMedia();
+      media.preload = 'auto';
+      expect(media.preload).toBe('auto');
+    });
+
+    it('updates engine state immediately when set', () => {
+      const media = new SpfMedia();
+      media.preload = 'none';
+      expect(media.engine.state.current.preload).toBe('none');
+    });
+
+    it('setting preload to empty string resets the stored value but does not clear current engine state', () => {
+      const media = new SpfMedia();
+      media.preload = 'auto';
+      media.preload = '';
+      // '' only clears #preload so the next engine recreation won't re-apply
+      // an explicit value — it does not patch the current engine state.
+      expect(media.engine.state.current.preload).toBe('auto');
+    });
+
+    it('survives src reassignment — explicit preload is preserved across engine recreation', () => {
+      const media = new SpfMedia();
+      media.preload = 'none';
+      media.src = 'https://example.com/v.m3u8';
+      expect(media.preload).toBe('none');
+      expect(media.engine.state.current.preload).toBe('none');
+    });
+
+    it('explicit preload is re-applied before owners.patch on src change so syncPreloadAttribute skips inference', () => {
+      const media = new SpfMedia();
+      const el = document.createElement('video');
+      media.attach(el);
+      media.preload = 'none';
+      media.src = 'https://example.com/v.m3u8';
+      // syncPreloadAttribute fires when owners.patch re-attaches the element,
+      // but since preload was already patched into the new engine's state, it skips.
+      expect(media.engine.state.current.preload).toBe('none');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // destroy() — explicit teardown (separate from detach)
   // ---------------------------------------------------------------------------
   describe('destroy()', () => {

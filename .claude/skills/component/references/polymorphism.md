@@ -17,21 +17,52 @@ Polymorphism allows users to customize which element a component renders as. Two
 
 ## `render` Pattern (Preferred)
 
+Two forms: element and function.
+
 ### Element Form — Simple Cases
 
 ```tsx
-// Renders MyButton with Dialog.Trigger behavior
-<Dialog.Trigger render={<MyButton size="md" />}>Open dialog</Dialog.Trigger>
+// Renders Button with PlayButton behavior — clones element, merges props
+<PlayButton className="play-btn" render={<Button />}>
+  <PlayIcon />
+</PlayButton>
+
+// Pass props to the render target directly
+<PlayButton className="play-btn" render={<Button variant="icon" />}>
+  <PlayIcon />
+</PlayButton>
 ```
 
-### Function Form — State Access
+The headless component clones the element and merges its own props onto it.
+
+### Function Form — State Access or Different Element
 
 ```tsx
 // Access internal state for conditional rendering
 <Switch.Thumb
   render={(props, state) => <span {...props}>{state.checked ? <CheckedIcon /> : <UncheckedIcon />}</span>}
 />
+
+// Render a fundamentally different element type
+<BufferingIndicator
+  render={(props) => (
+    <div {...props} className="buffering">
+      <Spinner />
+    </div>
+  )}
+/>
 ```
+
+### When to Use Which
+
+| Scenario | Form |
+| --- | --- |
+| Simple element swap | `render={<Component />}` |
+| Render target needs its own props | `render={<Component prop="..." />}` |
+| Need internal state access | `render={(props, state) => ...}` |
+| Rendering a different element type | `render={(props) => <div {...props}>...}` |
+
+**Do not** pass component references directly (`render={Component}`). React calls render functions as plain functions, which breaks hooks reconciliation. Always use element form (`render={<Component />}`) or function form.
 
 ---
 
@@ -51,7 +82,7 @@ Polymorphism allows users to customize which element a component renders as. Two
 
 | Concern            | `render`                              | `asChild`                                 |
 | ------------------ | ------------------------------------- | ----------------------------------------- |
-| **Prop flow**      | Explicit — you spread props visibly   | Hidden — `cloneElement` merges implicitly |
+| **Prop flow**      | Explicit — element or function forms  | Hidden — `cloneElement` merges implicitly |
 | **State access**   | Function form exposes component state | No state access                           |
 | **TypeScript**     | Predictable inference                 | Can slow IDE autocomplete                 |
 | **Debugging**      | Traceable prop flow                   | Magic makes tracing difficult             |

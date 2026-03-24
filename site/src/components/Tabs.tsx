@@ -254,7 +254,9 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
         )}
         <span className="relative">
           {/* to prevent layout shift on state change, we have an invisible bold version of the text preserving space */}
-          <span className="font-bold invisible">{children}</span>
+          <span className="font-bold invisible" data-search-ignore data-llms-ignore>
+            {children}
+          </span>
           <span className={clsx('absolute top-0 left-0', isActive && 'font-bold')}>{children}</span>
         </span>
       </button>

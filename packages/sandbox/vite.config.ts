@@ -85,6 +85,10 @@ export default defineConfig({
         main: resolve(__dirname, 'src/index.html'),
         ...getSandboxEntries(),
       },
+      onwarn(warning, defaultHandler) {
+        if (warning.code === 'COMMONJS_VARIABLE_IN_ESM') return;
+        defaultHandler(warning);
+      },
     },
   },
 });

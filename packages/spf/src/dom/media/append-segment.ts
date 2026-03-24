@@ -23,12 +23,36 @@ export async function appendSegment(sourceBuffer: SourceBuffer, data: AppendData
   if (data instanceof ArrayBuffer) {
     await appendChunk(sourceBuffer, data);
   } else {
-    for await (const chunk of data) {
-      // Check between chunks so an abort can stop streaming before the next
-      // appendBuffer call. The current chunk (if any) has already landed in the
-      // SourceBuffer; the partial: true flag in the actor model reflects this.
-      if (signal?.aborted) throw signal.reason ?? new DOMException('Aborted', 'AbortError');
-      await appendChunk(sourceBuffer, chunk);
+    try {
+      for await (const chunk of data) {
+        // Check between chunks so an abort can stop streaming before the next
+        // appendBuffer call. The current chunk (if any) has already landed in the
+        // SourceBuffer; the partial: true flag in the actor model reflects this.
+        if (signal?.aborted) throw signal.reason ?? new DOMException('Aborted', 'AbortError');
+        await appendChunk(sourceBuffer, chunk);
+      }
+    } catch (e) {
+      // Reset the MSE segment parser on any abort to discard partial fMP4 box
+      // data from the SourceBuffer's internal byte buffer. Two paths reach here:
+      //
+      // 1. Explicit abort check above (signal.aborted between chunks) — the
+      //    last appended chunk may have left the parser mid-fragment.
+      //
+      // 2. The fetch was cancelled (signal fired), causing the underlying
+      //    ReadableStream to error and the for-await loop to throw directly
+      //    without ever passing through the signal check above. Same cleanup
+      //    is needed: partial box data must be cleared before the next append.
+      //
+      // Without this, the next appendBuffer call sees stale partial data and
+      // Chrome throws CHUNK_DEMUXER_ERROR_APPEND_FAILED.
+      if (e instanceof DOMException && e.name === 'AbortError' && !sourceBuffer.updating) {
+        try {
+          sourceBuffer.abort();
+        } catch {
+          // Thrown if the MediaSource is not "open" (e.g. during teardown).
+        }
+      }
+      throw e;
     }
   }
 }

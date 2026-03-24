@@ -19,8 +19,8 @@ Accessibility patterns specific to video and audio players. Covers controls, key
 The root player element needs proper identification:
 
 ```html
-<div 
-  role="region" 
+<div
+  role="region"
   aria-label="Video Player: {title}"
   tabindex="-1"
 >
@@ -29,6 +29,7 @@ The root player element needs proper identification:
 ```
 
 **Attributes:**
+
 - `role="region"` or `role="application"` (if fully keyboard-managed)
 - `aria-label` includes media type and title
 - `tabindex="-1"` allows programmatic focus
@@ -57,6 +58,7 @@ The root player element needs proper identification:
 ### Key Scope
 
 Configure whether shortcuts work:
+
 - **Document-wide**: Work anywhere on page (YouTube-style)
 - **Player-scoped**: Only when player has focus
 
@@ -82,6 +84,7 @@ Use toolbar pattern with roving tabindex:
 ```
 
 **Navigation:**
+
 - `Tab` enters/exits toolbar (single stop)
 - `←` `→` moves between controls
 - `Enter`/`Space` activates control
@@ -123,6 +126,7 @@ aria-orientation="horizontal"
 ```
 
 **Key behavior:**
+
 - `←` `→`: Seek by step (5 seconds)
 - `PageUp` `PageDown`: Seek by large step (10%)
 - `Home` `End`: Start/end of video
@@ -166,8 +170,8 @@ aria-keyshortcuts="c"
 ### Menu Structure
 
 ```html
-<button 
-  aria-haspopup="menu" 
+<button
+  aria-haspopup="menu"
   aria-expanded="{isOpen}"
   aria-controls="settings-menu"
   aria-label="Settings"
@@ -208,9 +212,9 @@ aria-keyshortcuts="c"
 Create a dedicated live region for status messages:
 
 ```html
-<div 
-  role="status" 
-  aria-live="polite" 
+<div
+  role="status"
+  aria-live="polite"
   aria-atomic="true"
   class="visually-hidden"
 >
@@ -244,6 +248,7 @@ Create a dedicated live region for status messages:
 ### CVAA Compliance Requirements
 
 Users must be able to customize:
+
 - Font family
 - Font size
 - Font color
@@ -311,7 +316,7 @@ Audio description tracks should be clearly labeled.
 ## Live/Streaming Indicator
 
 ```html
-<button 
+<button
   aria-label="Go to live"
   aria-hidden="{!isLive}"
 >
@@ -320,6 +325,7 @@ Audio description tracks should be clearly labeled.
 ```
 
 For live streams, indicate:
+
 - Whether currently at live edge
 - Option to jump to live edge
 
@@ -330,18 +336,21 @@ For live streams, indicate:
 ### After Fullscreen
 
 When exiting fullscreen, return focus to:
+
 1. The fullscreen button
 2. Or the last focused control
 
 ### Menu Close
 
 When closing settings menu:
+
 1. Return focus to settings button
 2. Keep user in control bar context
 
 ### Control Bar Hide/Show
 
 When controls auto-hide:
+
 - Keep focus on last active control
 - Don't trap focus on hidden elements
 - Re-show controls on `Tab` key
@@ -350,21 +359,33 @@ When controls auto-hide:
 
 ## Reduced Motion
 
-Respect `prefers-reduced-motion`:
+It's not always required to completely nuke transitions/animations. Sometimes we can instead reduce their duration and delay. People enabling reduced motion often still benefit from some transition - it helps orientation and avoids jarring state changes.
 
 ```css
+--transition-duration: 200ms;
+--animation-duration: 200ms;
+
 @media (prefers-reduced-motion: reduce) {
-  .player-animation {
-    animation: none;
-    transition: none;
+  .popup {
+    --transition-duration: 50ms;
+    --animation-duration: 50ms;
   }
 }
 ```
 
-Consider:
-- Disable auto-playing animations
-- Reduce or remove control transitions
-- Pause decorative motion
+Remove non-essential motion - e.g. parallax, large transforms, bouncing, zooming, auto-playing animations.
+
+```css
+.element {
+  animation: bounce 1s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .element {
+    animation: none;
+  }
+}
+```
 
 ---
 

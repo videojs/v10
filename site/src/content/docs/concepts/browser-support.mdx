@@ -1,0 +1,41 @@
+---
+title: Browser Support
+description: Which browsers Video.js 10 supports and how it handles newer platform features
+---
+
+import Aside from '@/components/Aside.astro';
+
+Video.js 10 currently targets **evergreen browsers**: the latest two stable versions of Chrome, Firefox, Safari, and Edge.
+
+<Aside type="note">
+  Video.js 10 is in beta. The browser support matrix may expand as we approach GA based on community feedback and usage data.
+</Aside>
+
+
+## Why evergreen?
+
+Video.js 10 builds directly on the web platform: custom elements, CSS custom properties, anchor positioning, and modern JavaScript APIs. Targeting evergreen browsers lets us:
+
+- **Ship smaller bundles** by avoiding polyfills and transpilation for outdated syntax
+- **Use platform-native features** like `popover` and anchor positioning instead of JavaScript equivalents
+- **Keep the core slim** so platform-specific adapters (HTML, React) add only what they need
+
+## Progressive enhancement
+
+When we use a platform feature that hasn't landed in all supported browsers yet, we provide a fallback. The player works either way; the experience may differ slightly in older browsers. For example, tooltips and popovers use CSS anchor positioning where available and fall back to absolute positioning where it isn't.
+
+## Rendering contexts
+
+### WebViews and PWAs
+
+A [WebView](https://developer.mozilla.org/en-US/docs/Glossary/WebView) is a browser engine embedded inside a native app. WebViews on iOS (WKWebView) and Android (Android WebView) behave differently from the full browser; autoplay policies, fullscreen APIs, and hardware acceleration can vary. Progressive Web Apps (PWAs) installed via "Add to Homescreen" can exhibit similar quirks, since they also run in a limited browser context rather than a full browser tab.
+
+Video.js 10 beta targets only standard browser environments. If you embed a player inside a native app or PWA, test thoroughly for your specific platform and runtime.
+
+### Smart TVs and set-top boxes
+
+TV platforms run embedded browsers with limited standards support. Video.js 10's core is not tied to any specific platform, which makes future TV adapters possible, but TV is not a supported target today.
+
+### Server-side rendering
+
+Video.js components render valid markup on the server. Interactivity — state management, media playback, and event handling — requires the browser and kicks in after hydration.

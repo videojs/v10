@@ -1,11 +1,14 @@
 import { globSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { resolveImports } from './resolve-css-imports.mjs';
+import { resolveImports } from './resolve-css-imports.ts';
+import type { BuildPlugin } from './types.ts';
 
-/**
- * @param {{ skinsDir: string; outDir: string }} options
- */
-export function copyCssPlugin(options) {
+interface CopyCssPluginOptions {
+  skinsDir: string;
+  outDir: string;
+}
+
+export function copyCssPlugin(options: CopyCssPluginOptions): BuildPlugin {
   const { skinsDir, outDir } = options;
 
   return {

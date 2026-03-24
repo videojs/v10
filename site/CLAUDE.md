@@ -165,7 +165,6 @@ site/
 │   └── api-docs-builder/    # Generates API reference from TypeScript
 ├── public/                  # Static assets (served untransformed)
 ├── integrations/            # Custom Astro integrations
-│   ├── pagefind.ts          # Pagefind search integration
 │   └── llms-markdown.ts     # LLM-optimized markdown generation
 ├── astro.config.mjs         # Astro configuration
 ├── tsconfig.json            # TypeScript config with path aliases
@@ -554,7 +553,7 @@ vi.mock('@/types/docs', async () => {
 - **[Tailwind v4](https://tailwindcss.com)**: CSS utility classes via `@tailwindcss/vite`
 - **[Nanostores 1.0.1](https://github.com/nanostores/nanostores)**: Cross-island state
 - **[Base UI 1.2.0](https://base-ui.com)**: Headless accessible components
-- **[Pagefind 1.4.0](https://pagefind.app)**: Static search with build-time indexing
+- **[Algolia DocSearch v4](https://docsearch.algolia.com)**: Search via Algolia-hosted indexes (docs + blog)
 - **[Shiki 3.13.0](https://shiki.style)**: Syntax highlighting
 - **[Vitest 3.2.4](https://vitest.dev)**: Testing framework
 - **[clsx](https://github.com/lukeed/clsx)**: Class name concatenation utility
@@ -582,30 +581,24 @@ import UtilReference from '@/components/docs/api-reference/UtilReference.astro';
 <UtilReference util="usePlayer" />
 ```
 
-## Custom Astro Integration: Pagefind
+## Search: Algolia DocSearch v4
 
-**Location:** `integrations/pagefind.ts`
+**Config:** `src/search.config.ts` — Algolia app ID, API key, and index names.
 
-**Purpose:** Integrates Pagefind static search into Astro build pipeline.
+**Component:** `src/components/Search.tsx` — React component loaded via `client:load` in the NavBar.
 
-**Development mode:**
-- Serves Pagefind index from previous production build
-- Uses `sirv` middleware to serve `/pagefind/*` routes
-- Warns if index doesn't exist (needs `pnpm build` first)
+**Styles:** `src/styles/docsearch.css` — CSS variable overrides mapping DocSearch theming to site tokens (imported via `globals.css`).
 
-**Production mode:**
-- Runs Pagefind CLI after Astro build completes
-- Indexes all HTML files in `dist/`
-- Maps Astro logger levels to Pagefind CLI flags
+**How it works:**
+- `DocSearch` React component provides the trigger button, modal, and keyboard shortcut (Cmd+K)
+- Two indexes queried via the `indices` prop: `videojs_docs` (filtered by current framework) and `videojs_blog` (unfiltered)
+- No build-time indexing — search queries hit the Algolia API directly
 
-**Usage in `astro.config.mjs`:**
-```js
-import pagefind from './integrations/pagefind';
-
-export default defineConfig({
-  integrations: [pagefind()],
-});
-```
+**Data attributes used by the crawler:**
+- `data-search-content` — marks searchable content regions
+- `data-search-ignore` — excludes elements from search indexing
+- `data-framework`, `data-site`, `data-category` — facet/filter attributes
+- `data-llms-*` attributes are for the LLM markdown integration (unrelated to search)
 
 ## Environment Variables
 
@@ -819,12 +812,9 @@ Key points:
 - Add new guides to `src/docs.config.ts` sidebar
 - Use `devOnly: true` for internal documentation
 
-### Search Indexing
+### Search
 
-Pagefind indexes HTML files after build. During development:
-1. Run `pnpm build` at least once to generate search index
-2. Dev server serves the index from previous build
-3. Search won't include new content until next build
+Search is powered by Algolia DocSearch v4 and queries the Algolia API directly — no build-time indexing step needed. Search works in both dev and production as long as the Algolia account is provisioned. See the "Search: Algolia DocSearch v4" section above for details.
 
 ### Adding Framework/Style Support
 

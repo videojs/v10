@@ -3,8 +3,8 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
-import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.mjs';
-import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.mjs';
+import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
+import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
 
 type BuildMode = 'dev' | 'prod';
 
@@ -85,13 +85,17 @@ for (const mode of buildModes) {
       inlineTemplatePlugin({ minify: isProd }),
       ...(!isProd ? [dtsStubsPlugin(outDir)] : []),
     ],
-    inputOptions: !isProd
-      ? {
-          resolve: {
-            conditionNames: ['development', 'import', 'browser', 'default'],
-          },
-        }
-      : undefined,
+    inputOptions: {
+      onwarn(warning, defaultHandler) {
+        if (warning.code === 'COMMONJS_VARIABLE_IN_ESM') return;
+        defaultHandler(warning);
+      },
+      ...(!isProd && {
+        resolve: {
+          conditionNames: ['development', 'import', 'browser', 'default'],
+        },
+      }),
+    },
   });
 }
 

@@ -250,14 +250,15 @@ describe('createSourceBufferActor', () => {
       },
     ];
 
-    const origAppend = (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).getMockImplementation();
+    const mockedAppend = vi.mocked(sourceBuffer.appendBuffer);
+    const origAppend = mockedAppend.getMockImplementation();
     let firstCall = true;
-    (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).mockImplementation((...args: unknown[]) => {
+    mockedAppend.mockImplementation((data: BufferSource) => {
       if (firstCall) {
         firstCall = false;
         controller.abort();
       }
-      return origAppend?.(...args);
+      return origAppend?.(data);
     });
 
     await actor.batch(messages, controller.signal);
@@ -592,11 +593,6 @@ describe('createSourceBufferActor', () => {
   it('destroy() aborts the in-progress operation', async () => {
     const sourceBuffer = makeSourceBuffer();
     const actor = createSourceBufferActor(sourceBuffer);
-
-    const origAppend = (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).getMockImplementation();
-    (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).mockImplementationOnce((...args: unknown[]) => {
-      return origAppend?.(...args);
-    });
 
     const p = actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } }, neverAborted);
 

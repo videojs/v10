@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./shiki-transformers.css";
+@import "./docsearch.css";
 
 /**
  * @license

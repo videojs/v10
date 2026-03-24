@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 
+import { useLatestRef } from './use-latest-ref';
+
 interface Destroyable {
   destroy(): void;
 }
@@ -17,20 +19,27 @@ interface Destroyable {
  * @param instance - Object with a `destroy()` method.
  * @param setup - Optional setup called on first mount. Skipped on StrictMode
  *   re-mount since the previous setup was never torn down.
+ * @param teardown - Optional teardown called right before `destroy()` on real
+ *   unmount. Skipped on StrictMode simulated unmount.
  */
-export function useDestroy(instance: Destroyable, setup?: () => void): void {
+export function useDestroy(instance: Destroyable, setup?: () => void, teardown?: () => void): void {
   const pendingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const setupRef = useLatestRef(setup);
+  const teardownRef = useLatestRef(teardown);
 
   useEffect(() => {
     if (pendingRef.current !== null) {
       clearTimeout(pendingRef.current);
       pendingRef.current = null;
     } else {
-      setup?.();
+      setupRef.current?.();
     }
 
     return () => {
-      pendingRef.current = setTimeout(() => instance.destroy(), 0);
+      pendingRef.current = setTimeout(() => {
+        teardownRef.current?.();
+        instance.destroy();
+      }, 0);
     };
-  }, [instance, setup]);
+  }, [instance]);
 }

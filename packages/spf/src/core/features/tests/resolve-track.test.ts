@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createEventStream } from '../../events/create-event-stream';
 import { createState } from '../../state/create-state';
 import type {
@@ -10,6 +10,10 @@ import type {
 import { isResolvedTrack } from '../../types';
 import type { TrackResolutionAction, TrackResolutionState } from '../resolve-track';
 import { resolveTrack } from '../resolve-track';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('resolveTrack (video)', () => {
   it('resolves unresolved video track', async () => {
@@ -50,7 +54,7 @@ describe('resolveTrack (video)', () => {
     const events = createEventStream<TrackResolutionAction>();
 
     // Mock fetch to return media playlist with absolute URLs
-    global.fetch = vi.fn().mockImplementation(
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
       async () =>
         new Response(`#EXTM3U
 #EXT-X-VERSION:7
@@ -87,7 +91,7 @@ http://example.com/segment2.m4s
   });
 
   it('does not resolve when track is already resolved', async () => {
-    const fetchSpy = vi.spyOn(global, 'fetch');
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
     // Create presentation with already-resolved track
     const presentation: Presentation = {
@@ -142,7 +146,7 @@ http://example.com/segment2.m4s
   });
 
   it('does not resolve when no track is selected', async () => {
-    const fetchSpy = vi.spyOn(global, 'fetch');
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
     const presentation: Presentation = {
       id: 'pres-1',
@@ -209,7 +213,7 @@ describe('resolveTrack (audio)', () => {
 
     const events = createEventStream<TrackResolutionAction>();
 
-    global.fetch = vi.fn().mockImplementation(
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
       async () =>
         new Response(`#EXTM3U
 #EXT-X-VERSION:7
@@ -281,7 +285,7 @@ describe('resolveTrack (text)', () => {
 
     const events = createEventStream<TrackResolutionAction>();
 
-    global.fetch = vi.fn().mockImplementation(
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
       async () =>
         new Response(`#EXTM3U
 #EXT-X-VERSION:3
@@ -363,8 +367,8 @@ ${segUrl}
 #EXT-X-ENDLIST`;
 
     // Both fetches resolve immediately — concurrent resolution, no abort.
-    global.fetch = vi.fn().mockImplementation((requestOrUrl: Request | string) => {
-      const url = requestOrUrl instanceof Request ? requestOrUrl.url : requestOrUrl;
+    vi.spyOn(globalThis, 'fetch').mockImplementation((requestOrUrl: RequestInfo | URL) => {
+      const url = requestOrUrl instanceof Request ? requestOrUrl.url : String(requestOrUrl);
       if (url.includes('track-a')) return Promise.resolve(new Response(makePlaylist('http://example.com/a-seg1.m4s')));
       return Promise.resolve(new Response(makePlaylist('http://example.com/b-seg1.m4s')));
     });
@@ -383,12 +387,12 @@ ${segUrl}
     });
 
     // Each track URL should have been fetched exactly once.
-    const fetchedUrls = vi.mocked(global.fetch).mock.calls.map((call) => {
-      const arg = call[0];
+    const fetchedUrls = vi.mocked(globalThis.fetch).mock.calls.map((call) => {
+      const arg: RequestInfo | URL = call[0];
       return arg instanceof Request ? arg.url : String(arg);
     });
-    expect(fetchedUrls.filter((u) => u.includes('track-a'))).toHaveLength(1);
-    expect(fetchedUrls.filter((u) => u.includes('track-b'))).toHaveLength(1);
+    expect(fetchedUrls.filter((u: string) => u.includes('track-a'))).toHaveLength(1);
+    expect(fetchedUrls.filter((u: string) => u.includes('track-b'))).toHaveLength(1);
 
     cleanup();
   });
@@ -422,8 +426,9 @@ ${segUrl}
     });
     const events = createEventStream<TrackResolutionAction>();
 
-    global.fetch = vi.fn().mockResolvedValue(
-      new Response(`#EXTM3U
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async () =>
+        new Response(`#EXTM3U
 #EXT-X-TARGETDURATION:10
 #EXTINF:10.0,
 http://example.com/a-seg1.m4s
@@ -442,7 +447,7 @@ http://example.com/a-seg1.m4s
     });
 
     // Should only have been fetched once despite multiple state triggers.
-    expect(vi.mocked(global.fetch)).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     cleanup();
   });

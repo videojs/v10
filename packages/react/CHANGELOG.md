@@ -1,5 +1,123 @@
 # Changelog
 
+## [10.0.0-beta.11](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.10...@videojs/react@10.0.0-beta.11) (2026-03-24)
+
+
+### Features
+
+* **packages:** export media component building blocks ([#1098](https://github.com/videojs/v10/issues/1098)) ([bc2929e](https://github.com/videojs/v10/commit/bc2929ef4fc7ed021c91d96b96498870ecf5e4e5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.11
+    * @videojs/spf bumped to 10.0.0-beta.11
+    * @videojs/store bumped to 10.0.0-beta.11
+    * @videojs/utils bumped to 10.0.0-beta.11
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.11
+    * @videojs/skins bumped to 10.0.0-beta.11
+
+## [10.0.0-beta.10](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.9...@videojs/react@10.0.0-beta.10) (2026-03-23)
+
+
+### Bug Fixes
+
+* **react:** add missing destroy cleanups  ([#1096](https://github.com/videojs/v10/issues/1096)) ([1792bae](https://github.com/videojs/v10/commit/1792bae3b4cad5cbb89038e3fa10212f24b49e6b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.10
+    * @videojs/core bumped to 10.0.0-beta.10
+    * @videojs/store bumped to 10.0.0-beta.10
+    * @videojs/utils bumped to 10.0.0-beta.10
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.10
+    * @videojs/skins bumped to 10.0.0-beta.10
+
+## [10.0.0-beta.9](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.8...@videojs/react@10.0.0-beta.9) (2026-03-23)
+
+
+### Features
+
+* **skin:** add error handling for audio players ([#1048](https://github.com/videojs/v10/issues/1048)) ([df927f6](https://github.com/videojs/v10/commit/df927f67fcbd0aaa229b1a8e205ab3cb08f7a42d))
+
+
+### Bug Fixes
+
+* **docs:** improvements to eject script ([#1012](https://github.com/videojs/v10/issues/1012)) ([559d516](https://github.com/videojs/v10/commit/559d5169b5783992ec792cdb7037c3119cad3e5b))
+* **skin:** extract transition properties into CSS custom properties ([#1075](https://github.com/videojs/v10/issues/1075)) ([657e711](https://github.com/videojs/v10/commit/657e7111b423ac2d2a1d0c6422b88297f40e2b04))
+* **spf:** implement preload IDL attribute on SpfMedia ([#1069](https://github.com/videojs/v10/issues/1069)) ([04f81a2](https://github.com/videojs/v10/commit/04f81a26e13648ca414f2e51380c8786a06a7724))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.9
+    * @videojs/core bumped to 10.0.0-beta.9
+    * @videojs/store bumped to 10.0.0-beta.9
+    * @videojs/utils bumped to 10.0.0-beta.9
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.9
+    * @videojs/skins bumped to 10.0.0-beta.9
+
+## [10.0.0-beta.8](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.7...@videojs/react@10.0.0-beta.8) (2026-03-20)
+
+
+### Miscellaneous Chores
+
+* **@videojs/react:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.8
+    * @videojs/core bumped to 10.0.0-beta.8
+    * @videojs/store bumped to 10.0.0-beta.8
+    * @videojs/utils bumped to 10.0.0-beta.8
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.8
+    * @videojs/skins bumped to 10.0.0-beta.8
+
+## [10.0.0-beta.7](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.6...@videojs/react@10.0.0-beta.7) (2026-03-19)
+
+
+### Features
+
+* add DashVideo media element (html, react) with sandbox support ([#940](https://github.com/videojs/v10/issues/940)) ([5bdbbec](https://github.com/videojs/v10/commit/5bdbbec8a0f69b4be89600287c63a04746b7ba49))
+* **html:** add data-availability to volume slider ([#1001](https://github.com/videojs/v10/issues/1001)) ([c95e134](https://github.com/videojs/v10/commit/c95e1343e16c8667f6b7f5560d12ec5f36f1acd8))
+* **html:** refactor attach contexts to carry state and setter ([#1024](https://github.com/videojs/v10/issues/1024)) ([c07da27](https://github.com/videojs/v10/commit/c07da27ead58f2d08b93036af49515800c944f16))
+* **packages:** add poster component to video skins ([#994](https://github.com/videojs/v10/issues/994)) ([59bbf6c](https://github.com/videojs/v10/commit/59bbf6c20924ec04e559fe23cbc1a0ad8c8ca080))
+* **skin:** add pip-enter and pip-exit icons ([#1015](https://github.com/videojs/v10/issues/1015)) ([81781ca](https://github.com/videojs/v10/commit/81781ca5854f4943b533073b1875b127308a5419))
+
+
+### Bug Fixes
+
+* **core:** prevent slider thumb jump on pointer release ([#990](https://github.com/videojs/v10/issues/990)) ([b9bada9](https://github.com/videojs/v10/commit/b9bada95675f09b7c7d6859dcd213be7a0408bb7))
+* correct popup fallback positioning offsets ([#981](https://github.com/videojs/v10/issues/981)) ([82ede77](https://github.com/videojs/v10/commit/82ede77322204500d7ca0adc5cb24d4f068af462))
+* **skin:** hide volume popover when volume control is unsupported ([#1025](https://github.com/videojs/v10/issues/1025)) ([c09dbdd](https://github.com/videojs/v10/commit/c09dbdd121f2b8bb01e42d79350bf7a7acf09f28))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.7
+    * @videojs/core bumped to 10.0.0-beta.7
+    * @videojs/store bumped to 10.0.0-beta.7
+    * @videojs/utils bumped to 10.0.0-beta.7
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.7
+    * @videojs/skins bumped to 10.0.0-beta.7
+
 ## [10.0.0-beta.6](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.5...@videojs/react@10.0.0-beta.6) (2026-03-15)
 
 

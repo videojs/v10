@@ -33,7 +33,6 @@ async function loadCdnPreset(preset: Preset, skin: Skin) {
       else await import('@videojs/html/cdn/audio');
       break;
     case 'background-video':
-      await import('@videojs/html/background/skin.css');
       await import('@videojs/html/cdn/background');
       break;
   }

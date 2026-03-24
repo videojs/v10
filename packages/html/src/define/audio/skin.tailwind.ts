@@ -43,7 +43,7 @@ function getTemplateHTML() {
       <div class="${controls}">
         <media-tooltip-group>
           <span class="${tooltipState.play.wrapper}">
-            <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.icon, iconState.play.button)}">
+            <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
               ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
               ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
               ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
@@ -55,7 +55,7 @@ function getTemplateHTML() {
             </media-tooltip>
           </span>
 
-          <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.icon, seek.button)}">
+          <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon, seek.button)}">
             <span class="${iconContainer}">
               ${renderIcon('seek', { class: cn(icon, iconFlipped) })}
               <span class="${cn(seek.label, seek.labelBackward)}">${SEEK_TIME}</span>
@@ -65,7 +65,7 @@ function getTemplateHTML() {
             Seek backward ${SEEK_TIME} seconds
           </media-tooltip>
 
-          <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.icon, seek.button)}">
+          <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon, seek.button)}">
             <span class="${iconContainer}">
               ${renderIcon('seek', { class: icon })}
               <span class="${cn(seek.label, seek.labelForward)}">${SEEK_TIME}</span>
@@ -87,12 +87,12 @@ function getTemplateHTML() {
             <media-time type="duration" class="${time.duration}"></media-time>
           </media-time-group>
 
-          <media-playback-rate-button commandfor="playback-rate-tooltip"  class="${cn(button.base, button.icon, playbackRate.button)}"></media-playback-rate-button>
+          <media-playback-rate-button commandfor="playback-rate-tooltip"  class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}"></media-playback-rate-button>
           <media-tooltip id="playback-rate-tooltip" side="top" class="${cn(popup.tooltip)}">
             Toggle playback rate
           </media-tooltip>
 
-          <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.icon, iconState.mute.button)}">
+          <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
             ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
             ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
             ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}

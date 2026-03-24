@@ -10,44 +10,38 @@
  * Prerequisites: `pnpm build:packages` (at minimum icons, skins, utils).
  */
 
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, relative as relativePath, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import ts from 'typescript';
-import { resolveImports } from '../../build/plugins/resolve-css-imports.mjs';
+import { resolveImports } from '../../build/plugins/resolve-css-imports.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '../..');
+const PACKAGES_ROOT = resolve(ROOT, 'packages');
+const PACKAGE_MANIFEST_CACHE = new Map<string, PackageManifest>();
 
 const PREFIX = '\x1b[35m[ejected-skins]\x1b[0m';
+const HTML_CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn';
 const log = {
   info: (...args: unknown[]) => console.log(PREFIX, ...args),
   warn: (...args: unknown[]) => console.warn(PREFIX, '\x1b[33mwarn:\x1b[0m', ...args),
   error: (...args: unknown[]) => console.error(PREFIX, '\x1b[31merror:\x1b[0m', ...args),
 };
 
-/** Resolve a `@videojs/*` package specifier to its built dist file URL. */
-function pkgDistUrl(specifier: string): string {
-  const mapping: Record<string, string> = {
-    '@videojs/icons/render/default': 'packages/icons/dist/render/default/index.js',
-    '@videojs/icons/render/minimal': 'packages/icons/dist/render/minimal/index.js',
-    '@videojs/utils/style': 'packages/utils/dist/style.js',
-    '@videojs/skins/default/tailwind/video.tailwind': 'packages/skins/dist/default/default/tailwind/video.tailwind.js',
-    '@videojs/skins/default/tailwind/audio.tailwind': 'packages/skins/dist/default/default/tailwind/audio.tailwind.js',
-    '@videojs/skins/minimal/tailwind/video.tailwind': 'packages/skins/dist/default/minimal/tailwind/video.tailwind.js',
-    '@videojs/skins/minimal/tailwind/audio.tailwind': 'packages/skins/dist/default/minimal/tailwind/audio.tailwind.js',
-  };
-
-  const rel = mapping[specifier];
-  if (!rel) throw new Error(`No dist mapping for: ${specifier}`);
-  return pathToFileURL(resolve(ROOT, rel)).href;
-}
 const SKINS_SRC = resolve(ROOT, 'packages/skins/src');
 const OUTPUT = resolve(ROOT, 'site/src/content/ejected-skins.json');
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+
+type PackageExportTarget = string | Record<string, string>;
+
+interface PackageManifest {
+  name: string;
+  exports?: Record<string, PackageExportTarget>;
+}
 
 interface HtmlSkinDef {
   id: string;
@@ -80,6 +74,503 @@ interface EjectedSkinEntry {
   tsx?: string;
   jsx?: string;
   css?: string;
+}
+
+interface PackageSpecifierParts {
+  packageDir: string;
+  packageName: string;
+  subpath: string;
+}
+
+// ---------------------------------------------------------------------------
+// Package resolution
+// ---------------------------------------------------------------------------
+
+function parsePackageSpecifier(specifier: string): PackageSpecifierParts {
+  const parts = specifier.split('/');
+
+  if (parts.length < 2 || parts[0] !== '@videojs') {
+    throw new Error(`Expected a @videojs package specifier, got "${specifier}"`);
+  }
+
+  const packageName = `${parts[0]}/${parts[1]}`;
+  const packageDir = resolve(PACKAGES_ROOT, parts[1]);
+  const subpath = parts.length > 2 ? `./${parts.slice(2).join('/')}` : '.';
+
+  return { packageDir, packageName, subpath };
+}
+
+function readPackageManifest(packageDir: string): PackageManifest {
+  const cached = PACKAGE_MANIFEST_CACHE.get(packageDir);
+  if (cached) {
+    return cached;
+  }
+
+  const manifestPath = resolve(packageDir, 'package.json');
+  if (!existsSync(manifestPath)) {
+    throw new Error(`Missing package manifest: ${manifestPath}`);
+  }
+
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8')) as PackageManifest;
+  PACKAGE_MANIFEST_CACHE.set(packageDir, manifest);
+
+  return manifest;
+}
+
+function matchExportPattern(pattern: string, subpath: string): string | null {
+  if (!pattern.includes('*')) {
+    return pattern === subpath ? '' : null;
+  }
+
+  const [prefix, suffix] = pattern.split('*');
+  if (!subpath.startsWith(prefix) || !subpath.endsWith(suffix)) {
+    return null;
+  }
+
+  return subpath.slice(prefix.length, subpath.length - suffix.length);
+}
+
+function selectExportTarget(exportTarget: PackageExportTarget, specifier: string, packageName: string): string {
+  if (typeof exportTarget === 'string') {
+    return exportTarget;
+  }
+
+  const preferredConditions = ['default', 'development', 'import', 'module', 'node', 'types'];
+
+  for (const condition of preferredConditions) {
+    const target = exportTarget[condition];
+    if (target) {
+      return target;
+    }
+  }
+
+  throw new Error(`Package "${packageName}" exports "${specifier}" but does not provide a supported target condition`);
+}
+
+function resolvePackageExportFile(specifier: string): string {
+  const { packageDir, packageName, subpath } = parsePackageSpecifier(specifier);
+  const manifest = readPackageManifest(packageDir);
+  const exportsField = manifest.exports;
+
+  if (!exportsField) {
+    throw new Error(`Package "${packageName}" does not define exports`);
+  }
+
+  const exactTarget = exportsField[subpath];
+  if (exactTarget) {
+    const target = selectExportTarget(exactTarget, specifier, packageName);
+    const filePath = resolve(packageDir, target.replace(/^\.\//, ''));
+
+    if (!existsSync(filePath)) {
+      throw new Error(`Resolved file does not exist: ${filePath}`);
+    }
+
+    return filePath;
+  }
+
+  for (const [pattern, exportTarget] of Object.entries(exportsField)) {
+    const wildcardValue = matchExportPattern(pattern, subpath);
+    if (wildcardValue === null) {
+      continue;
+    }
+
+    const targetPattern = selectExportTarget(exportTarget, specifier, packageName);
+    const filePath = resolve(packageDir, targetPattern.replace('*', wildcardValue).replace(/^\.\//, ''));
+
+    if (!existsSync(filePath)) {
+      throw new Error(`Resolved file does not exist: ${filePath}`);
+    }
+
+    return filePath;
+  }
+
+  throw new Error(`Package "${packageName}" does not export "${subpath}"`);
+}
+
+/** Resolve a `@videojs/*` package specifier to its built dist file URL. */
+function pkgDistUrl(specifier: string): string {
+  return pathToFileURL(resolvePackageExportFile(specifier)).href;
+}
+
+function collectPackageSpecifiers(source: string): string[] {
+  const specifiers = new Set<string>();
+  const importRegex = /from\s+['"](@videojs\/[^'"]+)['"]/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = importRegex.exec(source)) !== null) {
+    specifiers.add(match[1]);
+  }
+
+  return [...specifiers];
+}
+
+function validatePackageImports(source: string, sourcePath: string): void {
+  for (const specifier of collectPackageSpecifiers(source)) {
+    try {
+      resolvePackageExportFile(specifier);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Invalid package import "${specifier}" in "${sourcePath}": ${message}`);
+    }
+  }
+}
+
+function toRepoPath(filePath: string): string {
+  return relativePath(ROOT, filePath);
+}
+
+function createSourceFile(filePath: string, source: string): ts.SourceFile {
+  return ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+}
+
+function isDirectivePrologueStatement(statement: ts.Statement): boolean {
+  return ts.isExpressionStatement(statement) && ts.isStringLiteral(statement.expression);
+}
+
+type NamedDeclaration =
+  | ts.FunctionDeclaration
+  | ts.ClassDeclaration
+  | ts.InterfaceDeclaration
+  | ts.TypeAliasDeclaration
+  | ts.EnumDeclaration;
+
+function isNamedDeclaration(statement: ts.Statement): statement is NamedDeclaration {
+  return (
+    ts.isFunctionDeclaration(statement) ||
+    ts.isClassDeclaration(statement) ||
+    ts.isInterfaceDeclaration(statement) ||
+    ts.isTypeAliasDeclaration(statement) ||
+    ts.isEnumDeclaration(statement)
+  );
+}
+
+function getStatementName(statement: ts.Statement): string | null {
+  if (isNamedDeclaration(statement)) {
+    return statement.name?.text ?? null;
+  }
+
+  if (ts.isVariableStatement(statement)) {
+    const decl = statement.declarationList.declarations[0];
+    return decl && ts.isIdentifier(decl.name) ? decl.name.text : null;
+  }
+
+  return null;
+}
+
+function parseNames(raw: string): string[] {
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function isRelativeImport(specifier: string): boolean {
+  return specifier.startsWith('./') || specifier.startsWith('../');
+}
+
+function resolveRelativeModulePath(importerPath: string, specifier: string): string {
+  const basePath = resolve(dirname(importerPath), specifier);
+  const candidates = [
+    basePath,
+    `${basePath}.ts`,
+    `${basePath}.tsx`,
+    `${basePath}.js`,
+    `${basePath}.jsx`,
+    resolve(basePath, 'index.ts'),
+    resolve(basePath, 'index.tsx'),
+    resolve(basePath, 'index.js'),
+    resolve(basePath, 'index.jsx'),
+  ];
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  throw new Error(`Could not resolve relative import "${specifier}" from "${toRepoPath(importerPath)}"`);
+}
+
+function stripExportModifier(text: string): string {
+  return text.replace(/^export\s+default\s+/, '').replace(/^export\s+/, '');
+}
+
+function getImportStatementText(source: string, node: ts.ImportDeclaration): string {
+  return source.slice(node.getFullStart(), node.getEnd()).trim();
+}
+
+function findLocalDeclarationText(sourceFile: ts.SourceFile, localName: string): string | null {
+  for (const statement of sourceFile.statements) {
+    if (getStatementName(statement) === localName) {
+      return statement.getText(sourceFile);
+    }
+  }
+
+  return null;
+}
+
+function getNamedExportText(sourceFile: ts.SourceFile, exportName: string): string | null {
+  for (const statement of sourceFile.statements) {
+    const isExported = hasExportModifier(statement);
+
+    if (isExported && getStatementName(statement) === exportName) {
+      return stripExportModifier(statement.getText(sourceFile));
+    }
+
+    if (
+      ts.isExportDeclaration(statement) &&
+      !statement.moduleSpecifier &&
+      statement.exportClause &&
+      ts.isNamedExports(statement.exportClause)
+    ) {
+      for (const element of statement.exportClause.elements) {
+        const exportedName = element.name.text;
+        const localName = element.propertyName?.text ?? exportedName;
+
+        if (exportedName === exportName) {
+          return findLocalDeclarationText(sourceFile, localName);
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+function getLocalDeclarationTexts(sourceFile: ts.SourceFile): Map<string, string> {
+  const declarations = new Map<string, string>();
+
+  for (const statement of sourceFile.statements) {
+    if (ts.isExportDeclaration(statement)) continue;
+
+    const name = getStatementName(statement);
+    if (!name) continue;
+
+    const text = ts.canHaveModifiers(statement)
+      ? stripExportModifier(statement.getText(sourceFile))
+      : statement.getText(sourceFile);
+
+    declarations.set(name, text);
+  }
+
+  return declarations;
+}
+
+function collectDeclarationClosure(
+  sourceFile: ts.SourceFile,
+  declarationName: string,
+  declarations: Map<string, string>,
+  seen = new Set<string>()
+): string[] {
+  if (seen.has(declarationName)) {
+    return [];
+  }
+
+  const declarationText = declarations.get(declarationName) ?? getNamedExportText(sourceFile, declarationName);
+  if (!declarationText) {
+    throw new Error(`Could not find declaration "${declarationName}" in "${sourceFile.fileName}"`);
+  }
+
+  seen.add(declarationName);
+
+  const identifierRegex = /\b[A-Za-z_]\w*\b/g;
+  const dependencyNames = new Set<string>();
+  let match: RegExpExecArray | null;
+
+  while ((match = identifierRegex.exec(declarationText)) !== null) {
+    const identifier = match[0];
+    if (identifier !== declarationName && declarations.has(identifier)) {
+      dependencyNames.add(identifier);
+    }
+  }
+
+  const dependencyTexts = [...dependencyNames].flatMap((name) =>
+    collectDeclarationClosure(sourceFile, name, declarations, seen)
+  );
+
+  return [...dependencyTexts, declarationText];
+}
+
+function normalizeImports(source: string): string {
+  const sourceFile = createSourceFile('imports.tsx', source);
+  const sideEffectImports = new Set<string>();
+  const namedImports = new Map<string, Set<string>>();
+  const rawImports: string[] = [];
+  let bodyStart = 0;
+
+  for (const statement of sourceFile.statements) {
+    if (isDirectivePrologueStatement(statement)) {
+      bodyStart = statement.getEnd();
+      continue;
+    }
+
+    if (!ts.isImportDeclaration(statement)) {
+      break;
+    }
+
+    bodyStart = statement.getEnd();
+    const specifier = statement.moduleSpecifier.getText(sourceFile).slice(1, -1);
+    const importClause = statement.importClause;
+
+    if (!importClause) {
+      sideEffectImports.add(specifier);
+      continue;
+    }
+
+    const namedBindings = importClause.namedBindings;
+    if (importClause.name || (namedBindings && !ts.isNamedImports(namedBindings))) {
+      rawImports.push(getImportStatementText(source, statement));
+      continue;
+    }
+
+    if (!namedBindings || !ts.isNamedImports(namedBindings)) continue;
+
+    const names = namedImports.get(specifier) ?? new Set<string>();
+    for (const element of namedBindings.elements) {
+      const isTypeImport = element.isTypeOnly || /^import\s+type\s/.test(statement.getText(sourceFile));
+      names.add(isTypeImport ? `type ${element.getText(sourceFile)}` : element.getText(sourceFile));
+    }
+
+    namedImports.set(specifier, names);
+  }
+
+  const importLines = [
+    ...[...sideEffectImports].map((specifier) => `import '${specifier}';`),
+    ...rawImports,
+    ...[...namedImports.entries()].map(
+      ([specifier, names]) => `import { ${[...names].join(', ')} } from '${specifier}';`
+    ),
+  ];
+  const body = source.slice(bodyStart).replace(/^\s+/, '');
+
+  if (importLines.length === 0) {
+    return body;
+  }
+
+  return `${importLines.join('\n')}\n\n${body}`;
+}
+
+function inlineModuleExport(
+  sourceFile: ts.SourceFile,
+  importName: string,
+  localName: string,
+  isTypeOnly: boolean
+): string {
+  const declarations = getLocalDeclarationTexts(sourceFile);
+  const exportTexts = collectDeclarationClosure(sourceFile, importName, declarations);
+  const exportText = exportTexts.join('\n\n');
+
+  if (importName === localName) {
+    return exportText;
+  }
+
+  const aliasKeyword = isTypeOnly ? 'type' : 'const';
+  return `${exportText}\n\n${aliasKeyword} ${localName} = ${importName};`;
+}
+
+function inlineRelativeImports(source: string, sourcePath: string): string {
+  const sourceFile = createSourceFile(sourcePath, source);
+  const declarationsToInline: string[] = [];
+  const extraImports = new Set<string>();
+  const declarationsSeen = new Set<string>();
+  const replacements: Array<{ start: number; end: number; text: string }> = [];
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isImportDeclaration(statement)) {
+      continue;
+    }
+
+    const specifier = statement.moduleSpecifier.getText(sourceFile).slice(1, -1);
+    if (!isRelativeImport(specifier)) {
+      continue;
+    }
+
+    const importClause = statement.importClause;
+    if (!importClause?.namedBindings || !ts.isNamedImports(importClause.namedBindings) || importClause.name) {
+      throw new Error(`Unsupported relative import in "${toRepoPath(sourcePath)}": ${statement.getText(sourceFile)}`);
+    }
+
+    const targetPath = resolveRelativeModulePath(sourcePath, specifier);
+    const targetSource = readFileSync(targetPath, 'utf-8');
+    validatePackageImports(targetSource, toRepoPath(targetPath));
+    const transformedTargetSource = inlineRelativeImports(targetSource, targetPath);
+    const transformedTargetFile = createSourceFile(targetPath, transformedTargetSource);
+
+    for (const targetStatement of transformedTargetFile.statements) {
+      if (isDirectivePrologueStatement(targetStatement)) {
+        continue;
+      }
+
+      if (!ts.isImportDeclaration(targetStatement)) {
+        break;
+      }
+
+      const targetSpecifier = targetStatement.moduleSpecifier.getText(transformedTargetFile).slice(1, -1);
+      if (isRelativeImport(targetSpecifier)) {
+        throw new Error(
+          `Relative import remained after inlining in "${toRepoPath(targetPath)}": ${targetStatement.getText(
+            transformedTargetFile
+          )}`
+        );
+      }
+
+      extraImports.add(getImportStatementText(transformedTargetSource, targetStatement));
+    }
+
+    for (const element of importClause.namedBindings.elements) {
+      const importName = element.propertyName?.text ?? element.name.text;
+      const localName = element.name.text;
+      const declaration = inlineModuleExport(transformedTargetFile, importName, localName, element.isTypeOnly);
+
+      if (!declarationsSeen.has(declaration)) {
+        declarationsSeen.add(declaration);
+        declarationsToInline.push(declaration);
+      }
+    }
+
+    replacements.push({
+      start: statement.getFullStart(),
+      end: statement.getEnd(),
+      text: '',
+    });
+  }
+
+  let transformedSource = source;
+  for (const replacement of replacements.sort((a, b) => b.start - a.start)) {
+    transformedSource = `${transformedSource.slice(0, replacement.start)}${replacement.text}${transformedSource.slice(
+      replacement.end
+    )}`;
+  }
+
+  if (extraImports.size > 0) {
+    transformedSource = `${[...extraImports].join('\n')}\n${transformedSource}`;
+  }
+
+  if (declarationsToInline.length > 0) {
+    const insertPos = findLastImportEnd(transformedSource);
+    const block = `\n${declarationsToInline.join('\n\n')}\n`;
+    transformedSource = `${transformedSource.slice(0, insertPos)}${block}${transformedSource.slice(insertPos)}`;
+  }
+
+  transformedSource = normalizeImports(transformedSource);
+
+  for (const relativeSpecifier of collectRelativeImportSpecifiers(transformedSource)) {
+    throw new Error(`Relative import "${relativeSpecifier}" remains in "${toRepoPath(sourcePath)}" after inlining`);
+  }
+
+  return transformedSource;
+}
+
+function collectRelativeImportSpecifiers(source: string): string[] {
+  const specifiers = new Set<string>();
+  const importRegex = /from\s+['"]((?:\.\/|\.\.\/)[^'"]+)['"]/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = importRegex.exec(source)) !== null) {
+    specifiers.add(match[1]);
+  }
+
+  return [...specifiers];
 }
 
 // ---------------------------------------------------------------------------
@@ -238,6 +729,29 @@ function resolveCss(cssPath: string): string {
   return resolveImports(raw, dirname(abs), SKINS_SRC);
 }
 
+function getHtmlSkinCdnFileName(skin: HtmlSkinDef): string {
+  if (skin.id.includes('minimal-video')) {
+    return 'video-minimal';
+  }
+
+  if (skin.id.includes('minimal-audio')) {
+    return 'audio-minimal';
+  }
+
+  if (skin.id.includes('video')) {
+    return 'video';
+  }
+
+  return 'audio';
+}
+
+function prependHtmlSkinScripts(html: string, skin: HtmlSkinDef): string {
+  const cdnFileName = getHtmlSkinCdnFileName(skin);
+  const scriptTag = `<script type="module" src="${HTML_CDN_BASE}/${cdnFileName}.js"></script>`;
+
+  return `${scriptTag}\n\n${html}`;
+}
+
 // ---------------------------------------------------------------------------
 // HTML template extraction and evaluation
 // ---------------------------------------------------------------------------
@@ -329,6 +843,7 @@ function evaluateTemplate(templateBody: string, context: Record<string, unknown>
 async function processHtmlSkin(skin: HtmlSkinDef): Promise<string> {
   const absPath = resolve(ROOT, skin.template);
   const source = readFileSync(absPath, 'utf-8');
+  validatePackageImports(source, skin.template);
   const templateBody = extractTemplateLiteral(source);
 
   const renderIcon = await loadRenderIcon(skin.iconSet);
@@ -365,7 +880,9 @@ async function processHtmlSkin(skin: HtmlSkinDef): Promise<string> {
     }
   }
 
-  return evaluateTemplate(templateBody, context);
+  const html = evaluateTemplate(templateBody, context);
+
+  return prependHtmlSkinScripts(html, skin);
 }
 
 // ---------------------------------------------------------------------------
@@ -399,24 +916,12 @@ function svgToJsx(svg: string): string {
 async function loadIconsMap(iconSet: 'default' | 'minimal'): Promise<Record<string, string>> {
   const mod = await import(pkgDistUrl(`@videojs/icons/render/${iconSet}`));
   const renderIcon = mod.renderIcon as (name: string) => string;
-  const knownIcons = [
-    'play',
-    'pause',
-    'restart',
-    'seek',
-    'spinner',
-    'volume-high',
-    'volume-low',
-    'volume-off',
-    'captions-off',
-    'captions-on',
-    'fullscreen-enter',
-    'fullscreen-exit',
-    'pip-enter',
-    'pip-exit',
-  ];
+  const assetsDir = resolve(PACKAGES_ROOT, 'icons/src/assets', iconSet);
+  const iconNames = readdirSync(assetsDir)
+    .filter((f) => f.endsWith('.svg'))
+    .map((f) => f.replace(/\.svg$/, ''));
   const map: Record<string, string> = {};
-  for (const name of knownIcons) {
+  for (const name of iconNames) {
     const svg = renderIcon(name);
     if (svg) map[name] = svg;
   }
@@ -469,7 +974,27 @@ function inlineCn(source: string): string {
   return replaceCnCalls(source);
 }
 
-/** Replace all `cn(...)` calls with `[...].filter(Boolean).join(' ')`. */
+/** Convert parsed `cn(...)` args into a template literal expression. */
+function cnToConcat(args: string[]): string {
+  const isLiteral = (a: string) => /^['"]/.test(a) && /['"]$/.test(a);
+  const unwrap = (a: string) => a.slice(1, -1);
+
+  // All string literals → merge into a single quoted string
+  if (args.every(isLiteral)) {
+    return `'${args.map(unwrap).join(' ')}'`;
+  }
+
+  // Build template literal parts
+  const parts = args.map((a) => {
+    if (isLiteral(a)) return unwrap(a);
+    if (a === 'className') return `\${className ?? ''}`;
+    return `\${${a}}`;
+  });
+
+  return `\`${parts.join(' ')}\``;
+}
+
+/** Replace all `cn(...)` calls with simple string concatenation. */
 function replaceCnCalls(source: string): string {
   const parts: string[] = [];
   let i = 0;
@@ -499,7 +1024,7 @@ function replaceCnCalls(source: string): string {
     const argsStr = source.slice(argsStart, j);
     const args = splitTopLevelCommas(argsStr).map((a) => a.trim());
 
-    parts.push(`[${args.join(', ')}].filter(Boolean).join(' ')`);
+    parts.push(cnToConcat(args));
     i = j + 1; // skip past closing paren
   }
   return parts.join('');
@@ -527,20 +1052,31 @@ function splitTopLevelCommas(str: string): string[] {
   return result;
 }
 
-/** Replace icon component JSX with inline SVGs and remove icon imports. */
-async function inlineReactIcons(source: string): Promise<string> {
-  const iconImportMatch = source.match(/from\s+['"]@videojs\/icons\/react(?:\/(default|minimal))?['"]/);
-  if (!iconImportMatch) return source;
+/** Remove icon imports and generate icon component definitions. */
+async function inlineReactIcons(source: string): Promise<{ source: string; iconComponents: string[] }> {
+  const sourceFile = createSourceFile('react-skin.tsx', source);
+  const iconImport = sourceFile.statements.find((statement) => {
+    if (!ts.isImportDeclaration(statement)) {
+      return false;
+    }
 
-  const iconSet = (iconImportMatch[1] || 'default') as 'default' | 'minimal';
-  const iconImportBlock = source.match(/import\s+\{([\s\S]*?)\}\s+from\s+['"]@videojs\/icons\/react(?:\/\w+)?['"]/);
+    const specifier = statement.moduleSpecifier.getText(sourceFile).slice(1, -1);
+    return /^@videojs\/icons\/react(?:\/(default|minimal))?$/.test(specifier);
+  });
+
+  if (!iconImport || !ts.isImportDeclaration(iconImport)) {
+    return { source, iconComponents: [] };
+  }
+
+  const iconSpecifier = iconImport.moduleSpecifier.getText(sourceFile).slice(1, -1);
+  const iconSetMatch = iconSpecifier.match(/@videojs\/icons\/react(?:\/(default|minimal))?/);
+  const iconSet = (iconSetMatch?.[1] || 'default') as 'default' | 'minimal';
+  const namedBindings = iconImport.importClause?.namedBindings;
   const iconNames =
-    iconImportBlock?.[1]
-      ?.split(',')
-      .map((s) => s.trim())
-      .filter(Boolean) || [];
+    namedBindings && ts.isNamedImports(namedBindings) ? namedBindings.elements.map((element) => element.name.text) : [];
 
   const iconsMap = await loadIconsMap(iconSet);
+  const iconComponents: string[] = [];
 
   for (const componentName of iconNames) {
     const iconName = componentToIconName(componentName);
@@ -549,47 +1085,13 @@ async function inlineReactIcons(source: string): Promise<string> {
       log.warn(`No SVG found for ${componentName} (icon: ${iconName})`);
       continue;
     }
-    const jsxSvg = svgToJsx(rawSvg);
-    const regex = new RegExp(`<${componentName}\\s+className=((?:"[^"]*")|(?:\\{[^}]+\\}))\\s*/>`, 'g');
-    source = source.replace(regex, (_, classNameAttr: string) => {
-      return jsxSvg.replace('<svg', `<svg className=${classNameAttr}`);
-    });
+    const jsxSvg = svgToJsx(rawSvg).replace(/^(<svg[^>]*)>/, '$1 {...props}>');
+    iconComponents.push(`function ${componentName}(props: ComponentProps<'svg'>): ReactNode {\n  return ${jsxSvg};\n}`);
   }
 
-  source = source.replace(/import\s+\{[\s\S]*?\}\s+from\s+['"]@videojs\/icons\/react(?:\/\w+)?['"];?\n?/g, '');
-  return source;
-}
-
-/**
- * Inline the ErrorDialog component from ./error-dialog.
- * Removes the import, adds ErrorDialog deps to existing imports,
- * and pushes the component code into postImport.
- */
-function inlineErrorDialog(source: string, postImport: string[]): string {
-  if (!source.includes("from './error-dialog'")) return source;
-
-  const errorDialogPath = resolve(ROOT, 'packages/react/src/presets/video/error-dialog.tsx');
-  const errorDialogSource = readFileSync(errorDialogPath, 'utf-8');
-  const codeStart = errorDialogSource.indexOf('export interface');
-  postImport.push(errorDialogSource.slice(codeStart));
-
-  // Remove the ./error-dialog import
-  source = source.replace(/import\s+\{\s*ErrorDialog\s*\}\s+from\s+['"]\.\/error-dialog['"];?\n?/g, '');
-
-  // Add ErrorDialog's deps as imports
-  if (!source.includes('selectError')) {
-    source = `import { selectError } from '@videojs/core/dom';\n${source}`;
-  }
-  if (!source.includes('AlertDialog')) {
-    source = `import { AlertDialog } from '@/ui/alert-dialog';\n${source}`;
-  }
-  if (!source.includes('useRef')) {
-    source = source.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (m, names: string) =>
-      m.replace(names, `${names.trim()}, useRef`)
-    );
-  }
-
-  return source;
+  // Remove the icon import, keep JSX component calls as-is
+  source = `${source.slice(0, iconImport.getFullStart())}${source.slice(iconImport.getEnd())}`;
+  return { source, iconComponents };
 }
 
 /**
@@ -616,57 +1118,13 @@ async function inlineSkinTokens(source: string, postImport: string[]): Promise<s
 }
 
 /**
- * Replace relative type imports with inline type definitions.
- * - `../types` → remove import, resolve `BaseSkinProps` usage in-place
- * - `./skin` / `./minimal-skin` → remove import, add type to postImport
- */
-function inlineRelativeTypes(source: string, postImport: string[]): string {
-  const baseSkinPropsType = 'PropsWithChildren<{ style?: CSSProperties; className?: string }>';
-
-  // Remove `import type { BaseSkinProps } from '../types'`
-  source = source.replace(/import\s+type\s+\{\s*BaseSkinProps\s*\}\s+from\s+['"]\.\.\/types['"];?\n?/g, '');
-  // Resolve `export type XxxProps = BaseSkinProps` in-place (already after imports)
-  source = source.replace(
-    /export\s+type\s+(\w+)\s*=\s*BaseSkinProps\s*;/g,
-    (_, name: string) => `export type ${name} = ${baseSkinPropsType};`
-  );
-
-  // Replace `import type { XxxProps } from './skin'` or './minimal-skin'
-  source = source.replace(
-    /import\s+type\s+\{\s*(\w+)\s*\}\s+from\s+['"]\.\/(?:minimal-)?skin['"];?\n?/g,
-    (_, typeName: string) => {
-      postImport.push(`type ${typeName} = ${baseSkinPropsType};`);
-      return '';
-    }
-  );
-
-  // Ensure PropsWithChildren and CSSProperties are in the react import
-  if (source.includes('PropsWithChildren') || postImport.some((c) => c.includes('PropsWithChildren'))) {
-    const reactImportRegex = /import\s+\{([^}]+)\}\s+from\s+['"]react['"]/;
-    const reactMatch = source.match(reactImportRegex);
-    if (reactMatch) {
-      let names = reactMatch[1];
-      if (!names.includes('PropsWithChildren')) {
-        names = `${names.trim()}, type PropsWithChildren`;
-      }
-      if (!names.includes('CSSProperties')) {
-        names = `${names.trim()}, type CSSProperties`;
-      }
-      source = source.replace(reactMatch[0], `import { ${names} } from 'react'`);
-    }
-  }
-
-  return source;
-}
-
-/**
  * Consolidate `@/` path alias imports into `@videojs/react`.
  * All UI components and hooks are re-exported from the main package entry.
  */
 function rewritePathAliases(source: string): string {
   const aliasRegex = /import\s+(type\s+)?\{([^}]+)\}\s+from\s+['"]@\/[^'"]+['"];?\n?/g;
-  const valueNames: string[] = [];
-  const typeNames: string[] = [];
+  const valueNames = new Set<string>();
+  const typeNames = new Set<string>();
   const matches: string[] = [];
 
   let match: RegExpExecArray | null;
@@ -679,9 +1137,9 @@ function rewritePathAliases(source: string): string {
       .filter(Boolean);
     for (const name of names) {
       if (isTypeImport || name.startsWith('type ')) {
-        typeNames.push(name.replace(/^type\s+/, ''));
+        typeNames.add(name.replace(/^type\s+/, ''));
       } else {
-        valueNames.push(name);
+        valueNames.add(name);
       }
     }
   }
@@ -692,13 +1150,86 @@ function rewritePathAliases(source: string): string {
     source = source.replace(m, '');
   }
 
-  const allNames = [...valueNames, ...typeNames.map((n) => `type ${n}`)];
+  const allNames = [
+    ...valueNames,
+    ...[...typeNames].filter((name) => !valueNames.has(name)).map((name) => `type ${name}`),
+  ];
   const importLine = `import { ${allNames.join(', ')} } from '@videojs/react';\n`;
 
   const lastImportIndex = findLastImportEnd(source);
   source = `${source.slice(0, lastImportIndex)}${importLine}${source.slice(lastImportIndex)}`;
 
   return source;
+}
+
+/**
+ * Rewrite imports from private/internal packages:
+ * - `@videojs/core/dom` → merge into `@videojs/react` (re-exported publicly)
+ * - `@videojs/utils/predicate` → inline function definitions
+ * - `isRenderProp` from `@videojs/react` → inline (not a public export)
+ */
+function inlinePrivatePackages(source: string): { source: string; utilities: string[] } {
+  const utilities: string[] = [];
+
+  // Merge @videojs/core/dom imports into @videojs/react
+  const coreDomMatch = source.match(/import\s+\{([^}]+)\}\s+from\s+['"]@videojs\/core\/dom['"]/);
+  if (coreDomMatch) {
+    const names = coreDomMatch[1]
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    source = source.replace(/import\s+\{[^}]+\}\s+from\s+['"]@videojs\/core\/dom['"];?\n?/g, '');
+    source = source.replace(
+      /import\s+\{([^}]+)\}\s+from\s+['"]@videojs\/react['"]/,
+      (_, existing: string) => `import { ${existing.trim()}, ${names.join(', ')} } from '@videojs/react'`
+    );
+  }
+
+  // Inline @videojs/utils/predicate
+  const predicateMatch = source.match(/import\s+\{([^}]+)\}\s+from\s+['"]@videojs\/utils\/predicate['"]/);
+  if (predicateMatch) {
+    source = source.replace(/import\s+\{[^}]+\}\s+from\s+['"]@videojs\/utils\/predicate['"];?\n?/g, '');
+    const names = predicateMatch[1]
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (const name of names) {
+      if (name === 'isString') {
+        utilities.push("function isString(value: unknown): value is string {\n  return typeof value === 'string';\n}");
+      }
+    }
+  }
+
+  // Inline isRenderProp — not a public export from @videojs/react
+  const reactImportMatch = source.match(/import\s+\{([^}]+)\}\s+from\s+['"]@videojs\/react['"]/);
+  if (reactImportMatch?.[1].includes('isRenderProp')) {
+    source = source.replace(/import\s+\{([^}]+)\}\s+from\s+['"]@videojs\/react['"]/, (_, names: string) => {
+      const nameList = names
+        .split(',')
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+      const filtered = nameList.filter((n: string) => n !== 'isRenderProp');
+      if (!filtered.some((n: string) => n.includes('RenderProp'))) {
+        filtered.push('type RenderProp');
+      }
+      return `import { ${filtered.join(', ')} } from '@videojs/react'`;
+    });
+
+    // Ensure isValidElement is in the react import
+    const reactCoreMatch = source.match(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/);
+    if (reactCoreMatch && !reactCoreMatch[1].includes('isValidElement')) {
+      source = source.replace(
+        /import\s+\{([^}]+)\}\s+from\s+['"]react['"]/,
+        (_, names: string) => `import { ${names.trim()}, isValidElement } from 'react'`
+      );
+    }
+
+    utilities.push(
+      "function isRenderProp(value: unknown): value is RenderProp<any> {\n  return typeof value === 'function' || isValidElement(value);\n}"
+    );
+  }
+
+  return { source, utilities };
 }
 
 /** Find the byte offset just past the last import statement in the source. */
@@ -712,6 +1243,225 @@ function findLastImportEnd(source: string): number {
   return lastEnd;
 }
 
+// ---------------------------------------------------------------------------
+// React output cleanup
+// ---------------------------------------------------------------------------
+
+/**
+ * Replace the BaseSkinProps / BaseVideoSkinProps type chain with a clean interface.
+ * Removes intermediate type aliases and produces a flat exported interface.
+ */
+function resolvePropsInterface(source: string): string {
+  const sourceFile = createSourceFile('props.tsx', source);
+  const hasVideoProps = source.includes('BaseVideoSkinProps');
+
+  const toRemove: Array<{ start: number; end: number }> = [];
+  let mainPropsName: string | null = null;
+  let mainPropsStart = -1;
+  let mainPropsEnd = -1;
+  let mainPropsExported = false;
+
+  for (const statement of sourceFile.statements) {
+    if (ts.isImportDeclaration(statement)) continue;
+
+    const name = getStatementName(statement);
+
+    if (name === 'BaseSkinProps' || name === 'BaseVideoSkinProps') {
+      toRemove.push({ start: statement.getFullStart(), end: statement.getEnd() });
+    }
+
+    if (name?.endsWith('SkinProps') && name !== 'BaseSkinProps' && name !== 'BaseVideoSkinProps') {
+      mainPropsName = name;
+      mainPropsStart = statement.getFullStart();
+      mainPropsEnd = statement.getEnd();
+      mainPropsExported = hasExportModifier(statement);
+    }
+  }
+
+  if (!mainPropsName) return source;
+
+  const exportKw = mainPropsExported ? 'export ' : '';
+  const posterProp = hasVideoProps ? '\n  poster?: string | RenderProp<Poster.State> | undefined;' : '';
+  const interfaceText = `${exportKw}interface ${mainPropsName} {\n  children?: ReactNode;\n  style?: CSSProperties;\n  className?: string;${posterProp}\n}`;
+
+  const replacements = [
+    ...toRemove.map((r) => ({ ...r, text: '' })),
+    { start: mainPropsStart, end: mainPropsEnd, text: interfaceText },
+  ].sort((a, b) => b.start - a.start);
+
+  for (const r of replacements) {
+    source = `${source.slice(0, r.start)}${r.text}${source.slice(r.end)}`;
+  }
+
+  // Remove PropsWithChildren from react import if no longer used in the body
+  const bodyAfterImports = source.slice(findLastImportEnd(source));
+  if (!bodyAfterImports.includes('PropsWithChildren')) {
+    source = source.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (_, names: string) => {
+      const nameList = names
+        .split(',')
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+      const filtered = nameList.filter((n: string) => !n.includes('PropsWithChildren'));
+      return `import { ${filtered.join(', ')} } from 'react'`;
+    });
+  }
+
+  return source;
+}
+
+// ---------------------------------------------------------------------------
+// React output reorganization
+// ---------------------------------------------------------------------------
+
+type SectionKey = 'top' | 'mainType' | 'main' | 'labels' | 'components' | 'errorDialog' | 'utilities' | 'icons';
+
+const SECTION_HEADERS: Partial<Record<SectionKey, string>> = {
+  labels: 'Labels',
+  components: 'Components',
+  errorDialog: 'Error Dialog',
+  utilities: 'Utilities',
+  icons: 'Icons',
+};
+
+function hasExportModifier(statement: ts.Statement): boolean {
+  const modifiers = ts.canHaveModifiers(statement) ? ts.getModifiers(statement) : undefined;
+  return modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) ?? false;
+}
+
+function classifyDeclaration(name: string, isExported: boolean): SectionKey {
+  if (isExported && name.endsWith('Skin')) return 'main';
+  if (isExported && name.endsWith('SkinProps')) return 'mainType';
+  if (name.endsWith('Label')) return 'labels';
+  if (name === 'ErrorDialog' || name === 'ErrorDialogClassNames' || name === 'ERROR_CLASSNAMES') return 'errorDialog';
+  if (name.endsWith('Icon')) return 'icons';
+  if (name.startsWith('is') && name[2] === name[2]?.toUpperCase()) return 'utilities';
+  if (name === 'Button' || name.endsWith('Popover') || name.startsWith('Slider')) return 'components';
+  return 'top';
+}
+
+function sectionHeader(title: string): string {
+  return `// ================================================================\n// ${title}\n// ================================================================`;
+}
+
+/**
+ * Reorganize the React skin output into well-defined sections.
+ * Classifies each top-level declaration and reassembles with section headers.
+ * Extra declarations (utilities, icon components) are appended to their sections.
+ */
+function reorganizeReactOutput(source: string, extraUtilities: string[], extraIconComponents: string[]): string {
+  const sourceFile = createSourceFile('output.tsx', source);
+
+  const imports: string[] = [];
+  const sections: Record<SectionKey, string[]> = {
+    top: [],
+    mainType: [],
+    main: [],
+    labels: [],
+    components: [],
+    errorDialog: [],
+    utilities: [],
+    icons: [],
+  };
+
+  for (const statement of sourceFile.statements) {
+    if (isDirectivePrologueStatement(statement)) continue;
+
+    if (ts.isImportDeclaration(statement)) {
+      imports.push(statement.getText(sourceFile));
+      continue;
+    }
+
+    const name = getStatementName(statement);
+    const exported = hasExportModifier(statement);
+    const section = name ? classifyDeclaration(name, exported) : 'top';
+    sections[section].push(statement.getText(sourceFile));
+  }
+
+  // Append extra declarations from transforms
+  sections.utilities.push(...extraUtilities);
+  sections.icons.push(...extraIconComponents);
+
+  // Assemble output
+  const sectionOrder: SectionKey[] = [
+    'top',
+    'mainType',
+    'main',
+    'labels',
+    'components',
+    'errorDialog',
+    'utilities',
+    'icons',
+  ];
+
+  const parts: string[] = [imports.join('\n')];
+
+  for (const key of sectionOrder) {
+    const declarations = sections[key];
+    if (declarations.length === 0) continue;
+
+    const header = SECTION_HEADERS[key];
+    if (header) {
+      parts.push(sectionHeader(header));
+    }
+    parts.push(declarations.join('\n\n'));
+  }
+
+  return `${parts.join('\n\n')}\n`;
+}
+
+/**
+ * Flatten `ERROR_CLASSNAMES` into the inlined `ErrorDialog` component so the
+ * ejected output has plain className strings instead of the classNames-prop
+ * indirection.
+ *
+ * @temporary Remove once the ErrorDialog component no longer uses the
+ *   `classNames` prop pattern. Tracked in https://github.com/videojs/v10/pull/1077.
+ *   Cleanup: delete this function + its call in `processReactSkin` (step 9).
+ */
+function flattenErrorClasses(source: string): string {
+  if (!source.includes('const ERROR_CLASSNAMES')) return source;
+
+  // -- 1. Parse ERROR_CLASSNAMES const into a key → raw-expression map -------
+  const blockMatch = source.match(/const ERROR_CLASSNAMES\s*=\s*\{([\s\S]*?)\};/);
+  if (!blockMatch) return source;
+
+  const classMap = new Map<string, string>();
+  // Match `key: <value>,` handling multi-char expressions (property access,
+  // array/filter/join chains, string literals, etc.)
+  for (const [, key, value] of blockMatch[1].matchAll(/(\w+)\s*:\s*(.+?)\s*(?:,\s*$|,?\s*(?=\}))/gm)) {
+    classMap.set(key, value);
+  }
+
+  // -- 2. Replace className={classNames?.X} with resolved values -------------
+  for (const [key, value] of classMap) {
+    const isStringLiteral = /^'[^']*'$/.test(value) || /^"[^"]*"$/.test(value);
+    const replacement = isStringLiteral
+      ? `className=${value.replace(/'/g, '"')}` // 'foo' → className="foo"
+      : `className={${value}}`;
+    source = source.replace(new RegExp(`className=\\{classNames\\?\\.${key}\\}`, 'g'), replacement);
+  }
+
+  // Any remaining classNames?.X refs (keys absent from ERROR_CLASSNAMES) → drop attr
+  source = source.replace(/\s*className=\{classNames\?\.\w+\}/g, '');
+
+  // -- 3. Remove ErrorDialogClassNames interface -----------------------------
+  source = source.replace(/(?:export )?interface ErrorDialogClassNames\s*\{[\s\S]*?\}\n*/g, '');
+
+  // -- 4. Remove ERROR_CLASSNAMES const --------------------------------------
+  source = source.replace(/const ERROR_CLASSNAMES\s*=\s*\{[\s\S]*?\};\n*/g, '');
+
+  // -- 5. Simplify ErrorDialog signature (drop classNames prop) --------------
+  source = source.replace(
+    /(?:export )?function ErrorDialog\(\{\s*classNames\s*\}\s*:\s*\{\s*classNames\?\s*:\s*ErrorDialogClassNames\s*\}\)/g,
+    'function ErrorDialog()'
+  );
+
+  // -- 6. Simplify call site -------------------------------------------------
+  source = source.replace(/<ErrorDialog\s+classNames=\{ERROR_CLASSNAMES\}\s*\/>/g, '<ErrorDialog />');
+
+  return source;
+}
+
 /**
  * Process a React skin: inline SVG icons, resolve all imports,
  * and produce both TSX and JSX versions.
@@ -719,13 +1469,15 @@ function findLastImportEnd(source: string): number {
 async function processReactSkin(skin: ReactSkinDef): Promise<{ tsx: string; jsx: string }> {
   const absPath = resolve(ROOT, skin.source);
   let source = readFileSync(absPath, 'utf-8');
+  validatePackageImports(source, skin.source);
   const postImport: string[] = [];
 
-  // 1. Inline SVG icons (replace icon components with <svg> markup)
-  source = await inlineReactIcons(source);
+  // 1. Inline relative imports recursively so the output is self-contained.
+  source = inlineRelativeImports(source, absPath);
 
-  // 2. Inline ErrorDialog component (video skins only)
-  source = inlineErrorDialog(source, postImport);
+  // 2. Extract icon components (remove import, keep JSX calls, generate components)
+  const icons = await inlineReactIcons(source);
+  source = icons.source;
 
   // 3. Resolve @videojs/skins/* tokens (Tailwind skins only, private package)
   source = await inlineSkinTokens(source, postImport);
@@ -733,11 +1485,12 @@ async function processReactSkin(skin: ReactSkinDef): Promise<{ tsx: string; jsx:
   // 4. Replace cn calls with template literals
   source = inlineCn(source);
 
-  // 5. Inline relative type imports (../types, ./skin, ./minimal-skin)
-  source = inlineRelativeTypes(source, postImport);
-
-  // 6. Consolidate @/ path aliases → @videojs/react
+  // 5. Consolidate @/ path aliases → @videojs/react
   source = rewritePathAliases(source);
+
+  // 6. Inline private package imports (core/dom → react, predicates, isRenderProp)
+  const privates = inlinePrivatePackages(source);
+  source = privates.source;
 
   // 7. Insert collected non-import code after the final import statement
   if (postImport.length > 0) {
@@ -746,8 +1499,15 @@ async function processReactSkin(skin: ReactSkinDef): Promise<{ tsx: string; jsx:
     source = `${source.slice(0, insertPos)}${block}${source.slice(insertPos)}`;
   }
 
-  const tsx = source;
-  const jsx = tsxToJsx(source);
+  // 8. Replace Base*SkinProps chain with a clean interface
+  source = resolvePropsInterface(source);
+
+  // 9. Flatten ERROR_CLASSNAMES into ErrorDialog JSX (@temporary — remove with flattenErrorClasses)
+  source = flattenErrorClasses(source);
+
+  // 10. Reorganize into sections with comment headers
+  const tsx = reorganizeReactOutput(source, privates.utilities, icons.iconComponents);
+  const jsx = tsxToJsx(tsx);
 
   return { tsx, jsx };
 }

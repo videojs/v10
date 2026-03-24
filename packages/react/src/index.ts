@@ -1,6 +1,8 @@
 'use client';
 
 // Core
+export type { Delegate } from '@videojs/core';
+export { DelegateMixin } from '@videojs/core';
 export * from '@videojs/core/dom';
 
 // Store
@@ -17,10 +19,10 @@ export {
   useContainerAttach,
   useMedia,
   useMediaAttach,
+  useOptionalPlayer,
   usePlayer,
   usePlayerContext,
 } from './player/context';
-
 // Player API
 export {
   type CreatePlayerConfig,
@@ -60,7 +62,14 @@ export { TimeSlider } from './ui/time-slider';
 export { Tooltip, type TooltipContextValue, useTooltipContext } from './ui/tooltip';
 export { VolumeSlider } from './ui/volume-slider';
 
+// Media utilities
+export { attachMediaElement } from './utils/attach-media-element';
+export { mediaProps } from './utils/media-props';
 // Utilities
 export { mergeProps } from './utils/merge-props';
 export type { HTMLProps, RenderFunction, RenderProp, UIComponentProps } from './utils/types';
+export { composeRefs, useComposedRefs } from './utils/use-composed-refs';
+export { useDestroy } from './utils/use-destroy';
+export { useLatestRef } from './utils/use-latest-ref';
+export { useMediaInstance } from './utils/use-media-instance';
 export { renderElement } from './utils/use-render';

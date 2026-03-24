@@ -8,11 +8,10 @@ export function generateHTMLCode(skin: Skin): string {
   const cdnFile = skin === 'default' ? 'video' : 'video-minimal';
 
   return `<script type="module" src="${CDN_BASE}/${cdnFile}.js"></script>
-<link rel="stylesheet" href="${CDN_BASE}/${cdnFile}.css" />
 
 <video-player>
   <${skinTag}>
-    <video slot="media" src="${VJS10_DEMO_VIDEO.mp4}" playsinline></video>
+    <video src="${VJS10_DEMO_VIDEO.mp4}" playsinline></video>
   </${skinTag}>
 </video-player>`;
 }
@@ -30,7 +29,7 @@ const Player = createPlayer({ features: videoFeatures });
 export function VideoPlayer() {
   return (
     <Player.Provider>
-      <${skinComponent} poster={VJS10_DEMO_VIDEO.poster}>
+      <${skinComponent} poster="${VJS10_DEMO_VIDEO.poster}">
         <Video src="${VJS10_DEMO_VIDEO.mp4}" playsInline />
       </${skinComponent}>
     </Player.Provider>

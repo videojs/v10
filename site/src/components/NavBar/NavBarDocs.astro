@@ -42,7 +42,7 @@ const { class: className } = Astro.props;
       <LogoDocs width="100%" />
     </div>
   </a>
-  <Search class="mr-4 ml-auto sm:self-center" />
+  <Search client:load className="mr-4 ml-auto sm:self-center" />
   {/* Desktop nav links */}
   <div class="hidden h-full md:flex">
     <GetStartedLink

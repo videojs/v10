@@ -26,13 +26,24 @@ export const root = (isShadowDOM: boolean) =>
       '[&_video]:block [&_video]:w-full [&_video]:h-full [&_video]:rounded-[inherit] [&_video]:[object-fit:var(--media-object-fit,contain)] [&_video]:[object-position:var(--media-object-position,center)]':
         !isShadowDOM,
     },
+    '[--media-spring-transition:linear(0,0.034_1.5%,0.763_9.7%,1.066_13.9%,1.198_19.9%,1.184_21.8%,0.963_37.5%,0.997_50.9%,1)]',
     '[--media-video-border-radius:var(--media-border-radius,2rem)]',
     '[--media-controls-transition-duration:100ms]',
     '[--media-controls-transition-delay:0ms]',
+    '[--media-controls-transition-timing-function:ease-out]',
+    '[--media-error-dialog-transition-duration:350ms]',
+    '[--media-error-dialog-transition-delay:100ms]',
+    '[--media-error-dialog-transition-timing-function:var(--media-spring-transition)]',
+    '[--media-popup-transition-duration:100ms]',
+    '[--media-popup-transition-timing-function:ease-out]',
+    'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
+    'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
+    'motion-reduce:[--media-error-dialog-transition-timing-function:ease-out]',
+    'motion-reduce:[--media-popup-transition-duration:0ms]',
     '[@media(pointer:fine)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-delay:500ms]',
     '[@media(pointer:fine)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
     '[@media(pointer:coarse)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
-    'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:100ms]',
+    'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:50ms]',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
     '[--media-caption-track-y:-0.5rem]',
     '[--media-caption-track-delay:calc(var(--media-controls-transition-delay)_+_25ms)]',
@@ -87,7 +98,8 @@ export const controls = cn(
   // Position
   'absolute bottom-3 inset-x-3',
   '[color:var(--media-color-primary,oklch(1_0_0))] z-10',
-  'ease-out origin-bottom',
+  'peer-data-open/error:hidden',
+  'ease-(--media-controls-transition-timing-function) origin-bottom',
   'duration-(--media-controls-transition-duration)',
   'delay-(--media-controls-transition-delay)',
   '[@media(pointer:fine)]:will-change-[scale,filter,opacity]',
@@ -153,7 +165,9 @@ export const bufferingIndicator = {
 
 export const error = {
   ...baseError,
-  dialog: cn(baseError.dialog, surface),
+  dialog: cn(baseError.dialog, surface, 'text-shadow-[0_1px_0_oklch(0_0_0/0.25)]'),
+  content: cn(baseError.content, 'text-shadow-inherit'),
+  title: cn(baseError.title, 'text-base'),
 };
 
 /* ==========================================================================

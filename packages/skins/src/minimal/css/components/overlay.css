@@ -10,27 +10,20 @@
   backdrop-filter: blur(0) saturate(1.5);
   opacity: 0;
   pointer-events: none;
+  transition-property: opacity, backdrop-filter;
+  transition-duration: var(--media-controls-transition-duration);
+  transition-delay: var(--media-controls-transition-delay);
+  transition-timing-function: ease-out;
+}
 
-  @media (pointer: fine) {
-    transition-property: opacity, backdrop-filter;
-    transition-duration: 500ms;
-    transition-delay: 500ms;
-    transition-timing-function: ease-out;
-
-    @media (prefers-reduced-motion: reduce) {
-      transition-duration: 100ms;
-    }
-  }
+.media-minimal-skin .media-error ~ .media-overlay {
+  transition-duration: var(--media-error-dialog-transition-duration);
+  transition-delay: var(--media-error-dialog-transition-delay);
 }
 
 .media-minimal-skin .media-controls[data-visible] ~ .media-overlay,
 .media-minimal-skin .media-error[data-open] ~ .media-overlay {
   opacity: 1;
-
-  @media (pointer: fine) {
-    transition-duration: 150ms;
-    transition-delay: 0ms;
-  }
 }
 
 .media-minimal-skin .media-error[data-open] ~ .media-overlay {

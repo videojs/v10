@@ -27,6 +27,7 @@ body:
         - Icons (@videojs/icons)
         - HTML (@videojs/html)
         - React (@videojs/react)
+        - SPF (@videojs/spf)
         - general framework documentation
     validations:
       required: true

@@ -28,6 +28,10 @@ export class BufferingIndicatorCore {
     this.#props = defaults(props, BufferingIndicatorCore.defaultProps);
   }
 
+  destroy(): void {
+    this.#clearTimer();
+  }
+
   update(media: MediaPlaybackState): void {
     const buffering = media.waiting && !media.paused;
 
@@ -37,12 +41,15 @@ export class BufferingIndicatorCore {
         this.state.patch({ visible: true });
       }, this.#props.delay);
     } else if (!buffering) {
-      if (this.#timer !== null) {
-        clearTimeout(this.#timer);
-        this.#timer = null;
-      }
-
+      this.#clearTimer();
       this.state.patch({ visible: false });
+    }
+  }
+
+  #clearTimer(): void {
+    if (this.#timer !== null) {
+      clearTimeout(this.#timer);
+      this.#timer = null;
     }
   }
 }

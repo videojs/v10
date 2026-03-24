@@ -32,6 +32,7 @@ export const audioFeatures: AudioFeatures = [
   timeFeature,
   sourceFeature,
   bufferFeature,
+  errorFeature,
 ];
 
 // TODO: Add background video features (e.g., playback, source, buffer)
