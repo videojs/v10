@@ -5,6 +5,8 @@ import { CustomVideoElement } from '../custom-media-element';
 import { VideoProxy } from '../proxy';
 import { HlsMediaTextTracksMixin } from './text-tracks';
 
+export { Hls };
+
 export type PlaybackType = (typeof PlaybackTypes)[keyof typeof PlaybackTypes];
 export type SourceType = (typeof SourceTypes)[keyof typeof SourceTypes];
 
@@ -55,6 +57,11 @@ class HlsMediaDelegateBase implements Delegate {
     if (this.#target) {
       this.#engine.attachMedia(this.#target as HTMLMediaElement);
     }
+  }
+
+  /** The target element, or `null` when not attached. */
+  get target(): EventTarget | null | undefined {
+    return this.#target ?? null;
   }
 
   /** The underlying hls.js instance, or `null` when using native playback. */

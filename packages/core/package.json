@@ -51,7 +51,8 @@
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*",
     "dashjs": "^5.0.0",
-    "hls.js": "^1.6.7"
+    "hls.js": "^1.6.7",
+    "mux-embed": "^5.17.10"
   },
   "devDependencies": {
     "jsdom": "^26.1.0",

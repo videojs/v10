@@ -73,7 +73,7 @@ export function App() {
 
   // Constrain source to Mux playbackId sources when switching to mux-video
   useEffect(() => {
-    if (preset === 'mux-video' && !('playbackId' in SOURCES[source])) {
+    if (preset === 'mux-video' && !SOURCES[source].playbackId) {
       setSource(DEFAULT_SOURCE);
     }
   }, [preset, source, setSource]);
@@ -112,6 +112,7 @@ export function App() {
         availableSources={availableSources}
         isBackgroundVideo={preset === 'background-video'}
         isSimpleHlsVideo={preset === 'simple-hls-video'}
+        isMuxVideo={preset === 'mux-video'}
         platforms={PLATFORMS}
         stylings={STYLINGS}
         presets={PRESETS}

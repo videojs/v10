@@ -1,5 +1,5 @@
 import type { InferDelegateProps } from '@videojs/core';
-import { MuxMedia, MuxMediaDelegate } from '@videojs/core/dom/media/mux';
+import { MuxMediaDelegate, MuxVideo as MuxVideoApi } from '@videojs/core/dom/media/mux';
 import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
 import { forwardRef, useMemo } from 'react';
 import { useMediaAttach } from '../../player/context';
@@ -12,7 +12,7 @@ export type MuxVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoEleme
   InferDelegateProps<typeof MuxMediaDelegate>;
 
 export const MuxVideo = forwardRef<HTMLVideoElement, MuxVideoProps>(({ children, ...props }, ref) => {
-  const mediaApi = useMemo(() => new MuxMedia(), []);
+  const mediaApi = useMemo(() => new MuxVideoApi(), []);
   const setMedia = useMediaAttach();
 
   useDestroy(mediaApi, () => {

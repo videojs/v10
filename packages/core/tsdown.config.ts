@@ -1,5 +1,6 @@
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
+import packageJson from './package.json' with { type: 'json' };
 
 type BuildMode = 'dev' | 'default';
 
@@ -27,6 +28,7 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   outDir: `dist/${mode}`,
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',
+    __PLAYER_VERSION__: JSON.stringify(packageJson.version),
   },
   dts:
     mode === 'dev'

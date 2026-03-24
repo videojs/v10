@@ -61,7 +61,7 @@ export type SourceId = keyof typeof SOURCES;
 export const SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
 export const MP4_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'mp4');
 export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'dash');
-export const MUX_SOURCE_IDS = SOURCE_IDS.filter((id) => 'playbackId' in SOURCES[id]);
+export const MUX_SOURCE_IDS = SOURCE_IDS.filter((id) => !!SOURCES[id].playbackId);
 export const DEFAULT_SOURCE: SourceId = 'hls-1';
 export const DEFAULT_AUDIO_SOURCE: SourceId = 'mp4-1';
 export const DEFAULT_DASH_SOURCE: SourceId = 'dash-1';
