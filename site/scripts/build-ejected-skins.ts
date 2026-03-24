@@ -64,6 +64,11 @@ interface ReactSkinDef {
 }
 
 type SkinDef = HtmlSkinDef | ReactSkinDef;
+type MediaType = 'video' | 'audio';
+
+function getSkinMediaType(skin: SkinDef): MediaType {
+  return skin.id.includes('audio') ? 'audio' : 'video';
+}
 
 interface EjectedSkinEntry {
   id: string;
@@ -837,6 +842,24 @@ function evaluateTemplate(templateBody: string, context: Record<string, unknown>
 }
 
 /**
+ * Replace `<slot name="media">` and `<slot>` (default slot) with a concrete
+ * `<video>` or `<audio>` element so the ejected HTML is self-contained.
+ */
+function replaceSlots(html: string, mediaType: MediaType): string {
+  const tag = mediaType === 'audio' ? 'audio' : 'video';
+  const playsInline = mediaType === 'video' ? ' playsinline' : '';
+  const mediaElement = `<${tag} src="video.mp4"${playsInline}></${tag}>`;
+
+  // Remove the deprecated slot="media" and its comment
+  html = html.replace(/\s*<!--\s*@deprecated.*?-->\s*\n?\s*<slot name="media"><\/slot>\s*\n?/g, '');
+
+  // Replace the default <slot></slot> with the media element
+  html = html.replace(/<slot><\/slot>/, mediaElement);
+
+  return html;
+}
+
+/**
  * Process an HTML skin: extract the template, evaluate it with the right
  * context, and return the rendered HTML string.
  */
@@ -880,7 +903,8 @@ async function processHtmlSkin(skin: HtmlSkinDef): Promise<string> {
     }
   }
 
-  const html = evaluateTemplate(templateBody, context);
+  let html = evaluateTemplate(templateBody, context);
+  html = replaceSlots(html, getSkinMediaType(skin));
 
   return prependHtmlSkinScripts(html, skin);
 }
@@ -1463,6 +1487,32 @@ function flattenErrorClasses(source: string): string {
 }
 
 /**
+ * Insert a brief usage example doc comment above the main exported skin
+ * component so the ejected file shows how to use it at a glance.
+ */
+function addSkinDocComment(source: string, mediaType: MediaType): string {
+  // Find the exported skin function name
+  const match = source.match(/export function (\w+Skin\w*)\(/);
+  if (!match) return source;
+
+  const componentName = match[0].replace('export function ', '').replace('(', '');
+  const mediaTag = mediaType === 'audio' ? 'Audio' : 'Video';
+  const srcAttr = 'src="video.mp4"';
+  const playsInline = mediaType === 'video' ? ' playsInline' : '';
+
+  const comment = [
+    '/**',
+    ' * @example',
+    ` *   <${componentName}>`,
+    ` *     <${mediaTag} ${srcAttr}${playsInline} />`,
+    ` *   </${componentName}>`,
+    ' */',
+  ].join('\n');
+
+  return source.replace(`export function ${componentName}(`, `${comment}\nexport function ${componentName}(`);
+}
+
+/**
  * Process a React skin: inline SVG icons, resolve all imports,
  * and produce both TSX and JSX versions.
  */
@@ -1506,7 +1556,11 @@ async function processReactSkin(skin: ReactSkinDef): Promise<{ tsx: string; jsx:
   source = flattenErrorClasses(source);
 
   // 10. Reorganize into sections with comment headers
-  const tsx = reorganizeReactOutput(source, privates.utilities, icons.iconComponents);
+  let tsx = reorganizeReactOutput(source, privates.utilities, icons.iconComponents);
+
+  // 11. Add usage example doc comment above the main skin component
+  tsx = addSkinDocComment(tsx, getSkinMediaType(skin));
+
   const jsx = tsxToJsx(tsx);
 
   return { tsx, jsx };
