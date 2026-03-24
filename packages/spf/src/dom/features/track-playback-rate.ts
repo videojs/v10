@@ -1,4 +1,6 @@
 import { listen } from '@videojs/utils/dom';
+import { Signal } from 'signal-polyfill';
+import { effect } from '../../core/signals/effect';
 import type { WritableState } from '../../core/state/create-state';
 
 /**
@@ -16,16 +18,6 @@ export interface PlaybackRateOwners {
 }
 
 /**
- * Check if we can track playback rate.
- *
- * Requires:
- * - mediaElement exists in owners
- */
-export function canTrackPlaybackRate(owners: PlaybackRateOwners): boolean {
-  return !!owners.mediaElement;
-}
-
-/**
  * Track playback rate from the media element.
  *
  * Mirrors `mediaElement.playbackRate` into reactive state on each `ratechange`
@@ -34,36 +26,28 @@ export function canTrackPlaybackRate(owners: PlaybackRateOwners): boolean {
  * @example
  * const cleanup = trackPlaybackRate({ state, owners });
  */
-export function trackPlaybackRate({
+export function trackPlaybackRate<O extends PlaybackRateOwners>({
   state,
   owners,
 }: {
   state: WritableState<PlaybackRateState>;
-  owners: WritableState<PlaybackRateOwners>;
+  owners: Signal.State<O>;
 }): () => void {
-  let lastMediaElement: HTMLMediaElement | undefined;
-  let removeListener: (() => void) | null = null;
+  const mediaElementSignal = new Signal.Computed(() => owners.get().mediaElement);
+  const canTrackPlaybackRate = new Signal.Computed(() => !!mediaElementSignal.get());
 
-  const unsubscribe = owners.subscribe((currentOwners) => {
-    const { mediaElement } = currentOwners;
-
-    if (mediaElement === lastMediaElement) return;
-
-    removeListener?.();
-    removeListener = null;
-    lastMediaElement = mediaElement;
-
-    if (!mediaElement) return;
+  const cleanupEffect = effect(() => {
+    if (!canTrackPlaybackRate.get()) return;
+    const mediaElement = mediaElementSignal.get() as HTMLMediaElement;
 
     state.patch({ playbackRate: mediaElement.playbackRate });
 
-    removeListener = listen(mediaElement, 'ratechange', () => {
+    return listen(mediaElement, 'ratechange', () => {
       state.patch({ playbackRate: mediaElement.playbackRate });
     });
   });
 
   return () => {
-    removeListener?.();
-    unsubscribe();
+    cleanupEffect();
   };
 }

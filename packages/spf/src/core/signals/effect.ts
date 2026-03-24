@@ -32,12 +32,22 @@ function runPending() {
  * Run a side effect whenever its signal dependencies change.
  *
  * Executes immediately (synchronous initial run), then re-runs on the next
- * microtask after any dependency changes. Returns a cleanup function that
- * stops the effect.
+ * microtask after any dependency changes. If the callback returns a function,
+ * it is called before each re-run and when the effect is stopped — the same
+ * cleanup contract as Preact Signals, Maverick Signals, and Svelte 5 $effect.
+ *
+ * Returns a cleanup function that stops the effect.
  */
-export function effect(fn: () => void): () => void {
-  const c = new Signal.Computed(fn);
+export function effect(fn: () => (() => void) | void): () => void {
+  let cleanup: (() => void) | void;
+  const c = new Signal.Computed(() => {
+    if (typeof cleanup === 'function') cleanup();
+    cleanup = fn();
+  });
   watcher.watch(c);
   c.get(); // initial run
-  return () => watcher.unwatch(c);
+  return () => {
+    watcher.unwatch(c);
+    if (typeof cleanup === 'function') cleanup();
+  };
 }
