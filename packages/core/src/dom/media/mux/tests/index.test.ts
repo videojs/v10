@@ -56,6 +56,16 @@ describe('MuxMediaDelegate', () => {
     expect(delegate.src).toBe('https://override.example.com/video.m3u8');
   });
 
+  it('does not trigger syncSrc when customDomain is set to empty while already default', () => {
+    const delegate = new MuxMediaDelegate();
+    delegate.playbackId = 'abc123';
+    expect(delegate.src).toBe('https://stream.mux.com/abc123.m3u8');
+
+    delegate.src = 'https://override.example.com/video.m3u8';
+    delegate.customDomain = '';
+    expect(delegate.src).toBe('https://override.example.com/video.m3u8');
+  });
+
   it('clears src when playbackId is null and customDomain changes', () => {
     const delegate = new MuxMediaDelegate();
     delegate.src = 'https://manual.example.com/video.m3u8';

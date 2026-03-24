@@ -38,8 +38,9 @@ export class MuxMediaDelegate extends HlsMediaDelegate implements Delegate {
   }
 
   set customDomain(value: string) {
-    if (this.#customDomain === value) return;
-    this.#customDomain = value || MUX_VIDEO_DOMAIN;
+    const normalized = value || MUX_VIDEO_DOMAIN;
+    if (this.#customDomain === normalized) return;
+    this.#customDomain = normalized;
     this.#syncSrc();
   }
 
