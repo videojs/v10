@@ -30,11 +30,8 @@ export default defineConfig({
           include: ['src/dom/**/*.test.ts'],
           browser: {
             enabled: true,
-            provider: playwright({
-              launch: {
-                headless: true,
-              },
-            }),
+            headless: true,
+            provider: playwright(),
             screenshotFailures: false,
             instances: [{ browser: 'chromium' }],
           },
