@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { MuxMediaDelegate } from '..';
 
 describe('MuxMediaDelegate', () => {
-  it('defaults playbackId to empty string', () => {
+  it('defaults playbackId to null', () => {
     const delegate = new MuxMediaDelegate();
-    expect(delegate.playbackId).toBe('');
+    expect(delegate.playbackId).toBe(null);
   });
 
   it('defaults customDomain to mux.com', () => {
