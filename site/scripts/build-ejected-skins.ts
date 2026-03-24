@@ -1351,6 +1351,7 @@ function resolvePropsInterface(source: string): string {
 type SectionKey = 'top' | 'mainType' | 'main' | 'labels' | 'components' | 'errorDialog' | 'utilities' | 'icons';
 
 const SECTION_HEADERS: Partial<Record<SectionKey, string>> = {
+  mainType: 'Skin',
   labels: 'Labels',
   components: 'Components',
   errorDialog: 'Error Dialog',
@@ -1526,9 +1527,8 @@ function addPlayerSection(source: string, mediaType: MediaType): string {
   const mediaImport = `import { ${mediaTag}, ${features} } from '@videojs/react/${subpath}';`;
   source = source.replace(/(import \{[^}]*\} from '@videojs\/react';)/, `$1\n${mediaImport}`);
 
-  // 3. Append Player section at end of file
-  const playerSection = [
-    '',
+  // 3. Insert Player section after imports (before everything else)
+  const playerBlock = [
     sectionHeader('Player'),
     '',
     `export const Player = createPlayer({ features: ${features} });`,
@@ -1552,10 +1552,11 @@ function addPlayerSection(source: string, mediaType: MediaType): string {
     '    </Player.Provider>',
     '  );',
     '}',
-    '',
   ].join('\n');
 
-  source = source.trimEnd() + '\n' + playerSection;
+  // Find the end of the last import statement and insert after it
+  const lastImportIdx = findLastImportEnd(source);
+  source = `${source.slice(0, lastImportIdx)}\n\n${playerBlock}\n${source.slice(lastImportIdx)}`;
 
   return source;
 }
