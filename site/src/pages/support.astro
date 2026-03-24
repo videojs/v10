@@ -68,7 +68,7 @@ const tiles = [
                 {tile.body}
               </p>
             )}
-            {tile.cta.href ? (
+            {"href" in tile.cta ? (
               <a
                 href={tile.cta.href}
                 target="_blank"

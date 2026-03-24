@@ -23,7 +23,6 @@ export default function JSPickerClient({ currentFramework, currentStyle, current
 
     const { url, shouldReplace } = resolveFrameworkChange({
       currentFramework,
-      currentStyle,
       currentSlug,
       newFramework,
     });

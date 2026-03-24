@@ -22,14 +22,18 @@ function MediaInfo() {
         <dt>src</dt>
         <dd>{media.currentSrc || '—'}</dd>
       </div>
-      <div>
-        <dt>videoWidth</dt>
-        <dd>{media.videoWidth}px</dd>
-      </div>
-      <div>
-        <dt>videoHeight</dt>
-        <dd>{media.videoHeight}px</dd>
-      </div>
+      {media instanceof HTMLVideoElement && (
+        <>
+          <div>
+            <dt>videoWidth</dt>
+            <dd>{media.videoWidth}px</dd>
+          </div>
+          <div>
+            <dt>videoHeight</dt>
+            <dd>{media.videoHeight}px</dd>
+          </div>
+        </>
+      )}
     </dl>
   );
 }

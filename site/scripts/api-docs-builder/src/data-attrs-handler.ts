@@ -88,7 +88,7 @@ export function extractDataAttrs(
   // Common naming patterns for data attributes exports
   const possibleNames = [`${componentName}DataAttrs`, `${componentName}DataAttributes`];
 
-  function visit(node: ts.Node) {
+  const visit = (node: ts.Node) => {
     // Look for variable declaration like: export const PlayButtonDataAttrs = { ... }
     if (ts.isVariableStatement(node)) {
       for (const decl of node.declarationList.declarations) {
@@ -136,7 +136,7 @@ export function extractDataAttrs(
     }
 
     ts.forEachChild(node, visit);
-  }
+  };
 
   visit(sourceFile);
 

@@ -9,6 +9,9 @@ import AuthResult from '@/layouts/AuthResult.astro';
   description="You may close this window."
   variant="success"
 >
+  {
+    /* @ts-expect-error — Astro named slots become React props at runtime, but astro check can't model this (astro#9451) */
+  }
   <GetStartedLink
     slot="action"
     client:load

@@ -32,7 +32,7 @@ export default defineConfig({
   site: SITE_URL,
   trailingSlash: 'never',
   adapter: netlify({
-    devFeatures: { images: false },
+    devFeatures: { environmentVariables: false, images: false },
   }),
   // Server-only secrets read at runtime (not inlined at build time).
   // All optional — the site degrades gracefully without auth/Mux configured.
@@ -115,6 +115,7 @@ export default defineConfig({
   },
 
   vite: {
+    // @ts-expect-error — Astro 5 uses Vite 6 types, but these plugins ship Vite 8 types. Compatible at runtime.
     plugins: [tailwindcss(), svgr()],
     optimizeDeps: {
       exclude: ['@videojs/react', '@videojs/html'],

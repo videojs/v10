@@ -1,19 +1,48 @@
-/**
- * Centralized util API subsection definitions.
- *
- * Mirrors componentReferenceModel.js for utility APIs (hooks, controllers,
- * mixins, factories, contexts, utilities). Produces heading/id data consumed
- * by both UtilReference.astro and remarkConditionalHeadings.
- */
 import { kebabCase } from 'es-toolkit/string';
+import type { UtilOverload, UtilReference } from '@/types/util-reference';
 
-/**
- * Create a single source-of-truth model for util reference headings and sections.
- *
- * Single-overload: Parameters (H3) + Return Value (H3)
- * Multi-overload:  Overload N (H3) → Parameters (H4) + Return Value (H4)
- */
-export function createUtilReferenceModel(name, ref) {
+export interface UtilReferenceSection {
+  key: 'parameters' | 'returnValue';
+  title: string;
+  id: string;
+  depth: number;
+}
+
+export interface OverloadModel {
+  id: string;
+  label: string | undefined;
+  index: number;
+  description: string | undefined;
+  sections: UtilReferenceSection[];
+  data: UtilOverload;
+}
+
+interface Heading {
+  id: string;
+  depth: number;
+  text: string;
+}
+
+export interface SingleOverloadModel {
+  name: string;
+  description: string | undefined;
+  isMultiOverload: false;
+  heading: Heading;
+  sections: UtilReferenceSection[];
+  overload: UtilOverload;
+}
+
+export interface MultiOverloadModel {
+  name: string;
+  description: string | undefined;
+  isMultiOverload: true;
+  heading: Heading;
+  overloads: OverloadModel[];
+}
+
+export type UtilReferenceModel = SingleOverloadModel | MultiOverloadModel;
+
+export function createUtilReferenceModel(name: string, ref: UtilReference | null): UtilReferenceModel | null {
   if (!ref) {
     return null;
   }
@@ -21,10 +50,10 @@ export function createUtilReferenceModel(name, ref) {
   const isMultiOverload = ref.overloads.length > 1;
 
   if (isMultiOverload) {
-    const overloads = ref.overloads.map((overload, index) => {
+    const overloads = ref.overloads.map((overload, index): OverloadModel => {
       const label = overload.label;
       const overloadId = label ? kebabCase(label) : `overload-${index + 1}`;
-      const sections = [];
+      const sections: UtilReferenceSection[] = [];
 
       if (Object.keys(overload.parameters).length > 0) {
         sections.push({
@@ -65,8 +94,8 @@ export function createUtilReferenceModel(name, ref) {
     };
   }
 
-  const overload = ref.overloads[0];
-  const sections = [];
+  const overload = ref.overloads[0]!;
+  const sections: UtilReferenceSection[] = [];
 
   if (Object.keys(overload.parameters).length > 0) {
     sections.push({
@@ -98,15 +127,14 @@ export function createUtilReferenceModel(name, ref) {
   };
 }
 
-/**
- * Build TOC heading metadata from the shared util reference model.
- */
-export function buildUtilReferenceTocHeadings(model) {
+export function buildUtilReferenceTocHeadings(
+  model: UtilReferenceModel | null
+): Array<{ depth: number; text: string; slug: string }> {
   if (!model) {
     return [];
   }
 
-  const headings = [
+  const headings: Array<{ depth: number; text: string; slug: string }> = [
     {
       depth: model.heading.depth,
       text: model.heading.text,
