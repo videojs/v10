@@ -23,6 +23,7 @@ const PACKAGE_MANIFEST_CACHE = new Map<string, PackageManifest>();
 
 const PREFIX = '\x1b[35m[ejected-skins]\x1b[0m';
 const HTML_CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn';
+const DEMO_VIDEO_SRC = 'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4';
 const log = {
   info: (...args: unknown[]) => console.log(PREFIX, ...args),
   warn: (...args: unknown[]) => console.warn(PREFIX, '\x1b[33mwarn:\x1b[0m', ...args),
@@ -848,13 +849,14 @@ function evaluateTemplate(templateBody: string, context: Record<string, unknown>
 function replaceSlots(html: string, mediaType: MediaType): string {
   const tag = mediaType === 'audio' ? 'audio' : 'video';
   const playsInline = mediaType === 'video' ? ' playsinline' : '';
-  const mediaElement = `<${tag} src="video.mp4"${playsInline}></${tag}>`;
+  const mediaElement = `<${tag} src="${DEMO_VIDEO_SRC}"${playsInline}></${tag}>`;
 
-  // Remove the deprecated slot="media" and its comment
-  html = html.replace(/\s*<!--\s*@deprecated.*?-->\s*\n?\s*<slot name="media"><\/slot>\s*\n?/g, '');
-
-  // Replace the default <slot></slot> with the media element
-  html = html.replace(/<slot><\/slot>/, mediaElement);
+  // Replace the deprecated comment + slot="media" + default slot block with the
+  // media element, preserving the original indentation.
+  html = html.replace(
+    /^([ \t]*)<!--\s*@deprecated[^\n]*\n\s*<slot name="media"><\/slot>\n\s*<slot><\/slot>/m,
+    `$1${mediaElement}`
+  );
 
   return html;
 }
@@ -1497,7 +1499,7 @@ function addSkinDocComment(source: string, mediaType: MediaType): string {
 
   const componentName = match[0].replace('export function ', '').replace('(', '');
   const mediaTag = mediaType === 'audio' ? 'Audio' : 'Video';
-  const srcAttr = 'src="video.mp4"';
+  const srcAttr = `src="${DEMO_VIDEO_SRC}"`;
   const playsInline = mediaType === 'video' ? ' playsInline' : '';
 
   const comment = [
