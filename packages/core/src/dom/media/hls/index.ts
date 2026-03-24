@@ -80,7 +80,7 @@ export class HlsMediaDelegateBase implements Delegate {
     this.#initialize();
   }
 
-  /** Enable hls.js debug logging. Re-initializes the engine when changed before load. */
+  /** Enable hls.js debug logging. Re-initializes the engine when changed. */
   get debug(): boolean {
     return this.#debug;
   }
@@ -88,10 +88,7 @@ export class HlsMediaDelegateBase implements Delegate {
   set debug(value: boolean) {
     if (this.#debug === value) return;
     this.#debug = value;
-
-    if (this.#loadRequested) {
-      this.#initialize();
-    }
+    this.#initialize();
   }
 
   /**
