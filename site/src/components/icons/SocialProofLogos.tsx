@@ -2,7 +2,7 @@ interface IconProps extends React.SVGProps<SVGSVGElement> {
   width?: string;
 }
 
-export const AdobeLogo = ({ width = '1', ...props }: IconProps) => {
+export const AdobeLogo = ({ width = '1' }: IconProps) => {
   return (
     <svg
       aria-label="Adobe Logo"
@@ -20,7 +20,7 @@ export const AdobeLogo = ({ width = '1', ...props }: IconProps) => {
     </svg>
   );
 };
-export const LinkedinLogo = ({ width = '1', ...props }: IconProps) => {
+export const LinkedinLogo = ({ width = '1' }: IconProps) => {
   return (
     <svg
       aria-label="Linkedin Logo"
@@ -38,7 +38,7 @@ export const LinkedinLogo = ({ width = '1', ...props }: IconProps) => {
     </svg>
   );
 };
-export const UdemyLogo = ({ width = '1', ...props }: IconProps) => {
+export const UdemyLogo = ({ width = '1' }: IconProps) => {
   return (
     <svg
       aria-label="Linkedin Logo"
@@ -56,7 +56,7 @@ export const UdemyLogo = ({ width = '1', ...props }: IconProps) => {
     </svg>
   );
 };
-export const AmazonLogo = ({ width = '1', ...props }: IconProps) => {
+export const AmazonLogo = ({ width = '1' }: IconProps) => {
   return (
     <svg
       aria-label="Linkedin Logo"
@@ -74,7 +74,7 @@ export const AmazonLogo = ({ width = '1', ...props }: IconProps) => {
     </svg>
   );
 };
-export const AwgeLogo = ({ width = '1', ...props }: IconProps) => {
+export const AwgeLogo = ({ width: _width = '1' }: IconProps) => {
   return (
     <svg
       aria-label="Awge Logo"
@@ -94,7 +94,7 @@ export const AwgeLogo = ({ width = '1', ...props }: IconProps) => {
     </svg>
   );
 };
-export const ZoomLogo = ({ width = '1', ...props }: IconProps) => {
+export const ZoomLogo = ({ width = '1' }: IconProps) => {
   return (
     <svg
       aria-label="Linkedin Logo"
@@ -114,7 +114,7 @@ export const ZoomLogo = ({ width = '1', ...props }: IconProps) => {
     </svg>
   );
 };
-export const CourseraLogo = ({ width = '1', ...props }: IconProps) => {
+export const CourseraLogo = ({ width: _width = '1' }: IconProps) => {
   return (
     <svg
       aria-label="Coursera Logo"
@@ -134,7 +134,7 @@ export const CourseraLogo = ({ width = '1', ...props }: IconProps) => {
     </svg>
   );
 };
-export const CNNLogo = ({ width = '1', ...props }: IconProps) => {
+export const CNNLogo = ({ width = '1' }: IconProps) => {
   return (
     <svg
       aria-label="Linkedin Logo"
@@ -152,7 +152,7 @@ export const CNNLogo = ({ width = '1', ...props }: IconProps) => {
     </svg>
   );
 };
-export const ConsumerReports = ({ width = '1', ...props }: IconProps) => {
+export const ConsumerReports = ({ width = '1' }: IconProps) => {
   return (
     <svg
       aria-label="Linkedin Logo"
@@ -170,7 +170,7 @@ export const ConsumerReports = ({ width = '1', ...props }: IconProps) => {
     </svg>
   );
 };
-export const TheOnionLogo = ({ width = '1', ...props }: IconProps) => {
+export const TheOnionLogo = ({ width: _width = '1' }: IconProps) => {
   return (
     <svg
       aria-label="The Onion Logo"
@@ -190,7 +190,7 @@ export const TheOnionLogo = ({ width = '1', ...props }: IconProps) => {
     </svg>
   );
 };
-export const SAPLogo = ({ width = '1', ...props }: IconProps) => {
+export const SAPLogo = ({ width = '1' }: IconProps) => {
   return (
     <svg
       aria-label="Linkedin Logo"
@@ -208,7 +208,7 @@ export const SAPLogo = ({ width = '1', ...props }: IconProps) => {
     </svg>
   );
 };
-export const DropboxLogo = ({ width = '1', ...props }: IconProps) => {
+export const DropboxLogo = ({ width = '1' }: IconProps) => {
   return (
     <svg
       aria-label="Linkedin Logo"

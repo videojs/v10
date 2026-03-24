@@ -68,5 +68,8 @@ jobs:
       - name: Build packages
         run: pnpm build:packages
 
+      - name: Generate site content
+        run: cd site && pnpm api-docs && pnpm ejected-skins
+
       - name: Astro check
-        run: cd site && pnpm astro check
+        run: cd site && pnpm astro check --minimumSeverity warning

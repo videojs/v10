@@ -257,13 +257,6 @@ function getStatementName(statement: ts.Statement): string | null {
   return null;
 }
 
-function parseNames(raw: string): string[] {
-  return raw
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
 function isRelativeImport(specifier: string): boolean {
   return specifier.startsWith('./') || specifier.startsWith('../');
 }

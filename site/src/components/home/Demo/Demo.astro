@@ -30,9 +30,7 @@ const minimalVideoReact = (await getEntry('ejectedSkins', 'minimal-video-react')
     </p>
 
     <FrameworkControl client:idle className="mb-5 md:hidden" />
-    {
-      /* @ts-expect-error — Astro named slots become React props at runtime, but astro check can't model this (astro#9451) */
-    }
+    {/* @ts-expect-error — astro#9451 */}
     <BaseDemo client:idle className="m-0 lg:h-100">
       <ServerCode
         slot="baseDefaultHtml"
@@ -70,9 +68,7 @@ const minimalVideoReact = (await getEntry('ejectedSkins', 'minimal-video-react')
       Make your player truly your own with fully-editable components
     </p>
     <FrameworkControl client:idle className="mb-5 md:hidden" />
-    {
-      /* @ts-expect-error — Astro named slots become React props at runtime, but astro check can't model this (astro#9451) */
-    }
+    {/* @ts-expect-error — astro#9451 */}
     <EjectDemo client:idle className="m-0 lg:h-100">
       <ServerCode
         slot="defaultHtmlCode"

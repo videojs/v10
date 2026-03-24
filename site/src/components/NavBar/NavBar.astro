@@ -10,7 +10,6 @@ import GetStartedLink from './GetStartedLink';
 import MobileNav from './MobileNav';
 
 export interface Props {
-  dark?: boolean;
   class?: string;
 }
 
@@ -28,7 +27,7 @@ const navLinks: NavLink[] = [
 const currentPath = Astro.url.pathname;
 const isDocsActive = currentPath.startsWith('/docs');
 const otherNavLinks = navLinks.filter((link) => link.href !== '/docs');
-const { class: className, dark = false } = Astro.props;
+const { class: className } = Astro.props;
 ---
 
 <nav
