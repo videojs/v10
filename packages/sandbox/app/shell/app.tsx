@@ -4,6 +4,8 @@ import {
   DASH_SOURCE_IDS,
   DEFAULT_AUDIO_SOURCE,
   DEFAULT_DASH_SOURCE,
+  DEFAULT_SOURCE,
+  HLS_SOURCE_IDS,
   MP4_SOURCE_IDS,
   SOURCE_IDS,
   SOURCES,
@@ -69,6 +71,13 @@ export function App() {
     }
   }, [preset, source, setSource]);
 
+  // Constrain source to HLS when switching to mux-video
+  useEffect(() => {
+    if (preset === 'mux-video' && SOURCES[source].type !== 'hls') {
+      setSource(DEFAULT_SOURCE);
+    }
+  }, [preset, source, setSource]);
+
   // CDN and background video do not have a Tailwind skin variant.
   useEffect(() => {
     if ((platform === 'cdn' || preset === 'background-video') && styling === 'tailwind') {
@@ -76,7 +85,14 @@ export function App() {
     }
   }, [platform, preset, styling]);
 
-  const availableSources = preset === 'audio' ? MP4_SOURCE_IDS : preset === 'dash-video' ? DASH_SOURCE_IDS : SOURCE_IDS;
+  const availableSources =
+    preset === 'audio'
+      ? MP4_SOURCE_IDS
+      : preset === 'dash-video'
+        ? DASH_SOURCE_IDS
+        : preset === 'mux-video'
+          ? HLS_SOURCE_IDS
+          : SOURCE_IDS;
 
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), [setSource]);
 

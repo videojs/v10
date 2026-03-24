@@ -12,6 +12,7 @@ const createConfig = (mode: BuildMode): UserConfig => ({
     'dom/media/dash/index': './src/dom/media/dash/index.ts',
     'dom/media/hls/index': './src/dom/media/hls/index.ts',
     'dom/media/custom-media-element/index': './src/dom/media/custom-media-element/index.ts',
+    'dom/media/mux/index': './src/dom/media/mux/index.ts',
     'dom/media/simple-hls/index': './src/dom/media/simple-hls/index.ts',
   },
   platform: 'neutral',
