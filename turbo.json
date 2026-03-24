@@ -6,7 +6,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build", "^build:cdn"],
-      "outputs": ["dist/**", ".netlify/**"]
+      "outputs": ["dist/**", "types/**", "*.tsbuildinfo", ".netlify/**"]
     },
     "build:cdn": {
       "dependsOn": ["build"],

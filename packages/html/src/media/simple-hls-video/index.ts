@@ -1,29 +1,11 @@
 import { SimpleHlsCustomMedia } from '@videojs/core/dom/media/simple-hls';
+import { SpfMedia } from '@videojs/spf/dom';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
+import { MediaPropsMixin } from '../../utils/media-props-mixin';
 
-export class SimpleHlsVideo extends MediaAttachMixin(SimpleHlsCustomMedia) {
-  static getTemplateHTML(attrs: Record<string, string>): string {
-    const { src, ...rest } = attrs;
-    // biome-ignore lint/complexity/noThisInStatic: intentional use of super
-    return super.getTemplateHTML(rest);
-  }
-
+export class SimpleHlsVideo extends MediaPropsMixin(MediaAttachMixin(SimpleHlsCustomMedia), SpfMedia) {
   constructor() {
     super();
     this.attach(this.target);
-  }
-
-  attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
-    if (attrName !== 'src') {
-      super.attributeChangedCallback(attrName, oldValue, newValue);
-    }
-
-    if (attrName === 'src' && oldValue !== newValue) {
-      this.src = newValue ?? '';
-    }
-
-    if (attrName === 'preload' && oldValue !== newValue) {
-      this.preload = (newValue ?? '') as '' | 'none' | 'metadata' | 'auto';
-    }
   }
 }

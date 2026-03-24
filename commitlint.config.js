@@ -13,6 +13,7 @@ export default {
       2,
       'always',
       [
+        'build',
         'cd',
         'ci',
         'claude',

@@ -45,7 +45,7 @@
     "dev": "pnpm run build:watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rm -rf dist types",
+    "clean": "rimraf --glob dist types '*.tsbuildinfo'",
     "size": "node scripts/measure-size.js --playback-engine",
     "size:all": "node scripts/measure-size.js --all"
   },

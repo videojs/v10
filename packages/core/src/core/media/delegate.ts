@@ -7,6 +7,21 @@ export interface Delegate {
   detach?(): void;
 }
 
+// Detects readonly vs writable properties via conditional type identity check.
+type IfEquals<X, Y, A, B> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? A : B;
+
+type WritableKeys<T> = {
+  [K in keyof T]-?: IfEquals<{ [Q in K]: T[K] }, { -readonly [Q in K]: T[K] }, K, never>;
+}[keyof T];
+
+type SettableKeys<T> = {
+  [K in WritableKeys<T>]: T[K] extends (...args: any[]) => any ? never : K;
+}[WritableKeys<T>];
+
+export type InferDelegateProps<D extends abstract new (...args: any[]) => any> = Partial<
+  Pick<InstanceType<D>, SettableKeys<InstanceType<D>>>
+>;
+
 /**
  * Mixin that intercepts `get`, `set`, and `call` to delegate property access
  * and method calls to an instance of `DelegateClass` before falling through

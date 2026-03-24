@@ -44,14 +44,15 @@
     "dev": "pnpm run build:watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rm -rf dist types"
+    "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
     "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*",
     "dashjs": "^5.0.0",
-    "hls.js": "^1.6.7"
+    "hls.js": "^1.6.7",
+    "mux-embed": "^5.17.10"
   },
   "devDependencies": {
     "jsdom": "^26.1.0",

@@ -1,5 +1,5 @@
 import type { InferDelegateProps } from '@videojs/core';
-import { HlsMedia, HlsMediaDelegate } from '@videojs/core/dom/media/hls';
+import { MuxMediaDelegate, MuxVideo as MuxVideoApi } from '@videojs/core/dom/media/mux';
 import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 import { attachMediaElement } from '../../utils/attach-media-element';
@@ -7,19 +7,19 @@ import { mediaProps } from '../../utils/media-props';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 
-export type HlsVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElement>> &
-  InferDelegateProps<typeof HlsMediaDelegate>;
+export type MuxVideoProps = PropsWithChildren<VideoHTMLAttributes<HTMLVideoElement>> &
+  InferDelegateProps<typeof MuxMediaDelegate>;
 
-export const HlsVideo = forwardRef<HTMLVideoElement, HlsVideoProps>(({ children, ...props }, ref) => {
-  const mediaApi = useMediaInstance(HlsMedia);
+export const MuxVideo = forwardRef<HTMLVideoElement, MuxVideoProps>(({ children, ...props }, ref) => {
+  const mediaApi = useMediaInstance(MuxVideoApi);
 
   const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
 
   return (
-    <video ref={composedRef} {...mediaProps(mediaApi, HlsMediaDelegate, props)}>
+    <video ref={composedRef} {...mediaProps(mediaApi, MuxMediaDelegate, props)}>
       {children}
     </video>
   );
 });
 
-export default HlsVideo;
+export default MuxVideo;

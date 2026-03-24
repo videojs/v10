@@ -1,4 +1,5 @@
 import { SimpleHlsMedia } from '@videojs/core/dom/media/simple-hls';
+import { SpfMedia } from '@videojs/spf/dom';
 import type { PropsWithChildren, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 import { attachMediaElement } from '../../utils/attach-media-element';
@@ -14,7 +15,7 @@ export const SimpleHlsVideo = forwardRef<HTMLVideoElement, SimpleHlsVideoProps>(
   const composedRef = useComposedRefs(attachMediaElement(mediaApi), ref);
 
   return (
-    <video ref={composedRef} {...mediaProps(mediaApi, props)}>
+    <video ref={composedRef} {...mediaProps(mediaApi, SpfMedia, props)}>
       {children}
     </video>
   );
