@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sandbox — Mux Video Harness</title>
+    <style>
+      body {
+        padding: 20px;
+        max-width: 1000px;
+        margin: 0 auto;
+        font-family: monospace;
+      }
+      h1 { margin-bottom: 4px; }
+      p { margin: 0 0 12px; }
+
+      /* ── Source controls ── */
+      #src-controls {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      #src-input {
+        flex: 1;
+        min-width: 300px;
+        padding: 6px 10px;
+        font-family: monospace;
+        font-size: 12px;
+        border: 1px solid #999;
+        border-radius: 4px;
+      }
+      #preset-sources {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 10px;
+        font-size: 11px;
+      }
+      .preset-btn {
+        padding: 4px 10px;
+        cursor: pointer;
+        border: 1px solid #999;
+        background: #f5f5f5;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 11px;
+      }
+      .preset-btn:hover { background: #e5e5e5; border-color: #555; }
+      .preset-btn.active { border-color: #0070f3; background: #e6f0ff; color: #0070f3; font-weight: bold; }
+
+      /* ── Share URL ── */
+      #share-url-section {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        font-size: 11px;
+      }
+      #share-link {
+        color: #0070f3;
+        text-decoration: none;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 500px;
+      }
+      #share-link:hover { text-decoration: underline; }
+
+      /* ── Controls ── */
+      #controls { margin-bottom: 10px; }
+      button {
+        padding: 8px 14px;
+        margin-right: 6px;
+        cursor: pointer;
+        border: 1px solid #333;
+        background: #f0f0f0;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+      }
+      button:hover { background: #e0e0e0; }
+
+      /* ── Video element ── */
+      mux-video {
+        margin: 12px 0 4px;
+        border: 2px solid #333;
+        display: block;
+        width: 100%;
+        max-width: 640px;
+        aspect-ratio: 16/9;
+        background: #000;
+      }
+
+      /* ── Stream info panel ── */
+      #stream-info {
+        margin: 12px 0;
+        padding: 12px 15px;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+      #stream-info h2 { margin-top: 0; font-size: 14px; }
+      #stream-info table { border-collapse: collapse; }
+      #stream-info td { padding: 3px 12px 3px 0; }
+      #stream-info .label { color: #555; }
+      #stream-info .value { font-weight: bold; }
+      #stream-info .value.on-demand { color: #0070f3; }
+      #stream-info .value.live { color: #16a34a; }
+      #stream-info .value.unknown { color: #888; }
+
+      /* ── Logs ── */
+      #logs-section { margin: 12px 0; }
+      #logs-section h2 { font-size: 14px; margin-bottom: 6px; }
+      #logs {
+        background: #f5f5f5;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        max-height: 350px;
+        overflow-y: auto;
+        font-size: 12px;
+      }
+      #logs div { padding: 2px 0; border-bottom: 1px solid #eee; }
+
+      /* ── State inspector ── */
+      #state {
+        background: #f5f5f5;
+        padding: 15px;
+        margin: 12px 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+      #state h2 { margin-top: 0; font-size: 14px; }
+      #state pre {
+        margin: 8px 0;
+        padding: 10px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+      }
+
+      /* ── Log colours ── */
+      .error   { color: red; font-weight: bold; }
+      .success { color: green; }
+      .warning { color: #d97706; }
+    </style>
+  </head>
+  <body>
+    <h1>Mux Video Harness</h1>
+    <p>Test harness for <code>&lt;mux-video&gt;</code> stream type detection and delegate properties.</p>
+
+    <div id="preset-sources"></div>
+
+    <div id="src-controls">
+      <input type="text" id="src-input" placeholder="HLS stream URL…" />
+      <button type="button" id="set-src">Load</button>
+    </div>
+
+    <div id="share-url-section">
+      🔗 <a id="share-link" href="#" target="_blank" rel="noopener">current page</a>
+      <button type="button" id="open-new-tab">Open in new tab ↗</button>
+    </div>
+
+    <div id="controls">
+      <button type="button" id="play">Play</button>
+      <button type="button" id="pause">Pause</button>
+      <button type="button" id="inspect">Inspect State</button>
+      <button type="button" id="clearLogs">Clear Logs</button>
+    </div>
+
+    <!-- biome-ignore lint/a11y/useMediaCaption: test harness -->
+    <mux-video id="mux-video" controls></mux-video>
+
+    <div id="stream-info">
+      <h2>Stream Info</h2>
+      <table>
+        <tr>
+          <td class="label">streamType</td>
+          <td class="value unknown" id="si-streamType">—</td>
+        </tr>
+        <tr>
+          <td class="label">targetLiveWindow</td>
+          <td class="value" id="si-targetLiveWindow">—</td>
+        </tr>
+        <tr>
+          <td class="label">liveEdgeOffset</td>
+          <td class="value" id="si-liveEdgeOffset">—</td>
+        </tr>
+        <tr>
+          <td class="label">liveEdgeStart</td>
+          <td class="value" id="si-liveEdgeStart">—</td>
+        </tr>
+      </table>
+    </div>
+
+    <div id="logs-section">
+      <h2>Logs</h2>
+      <div id="logs"></div>
+    </div>
+
+    <div id="state">
+      <h2>State Inspector</h2>
+      <div>Click "Inspect State" to view element properties</div>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
