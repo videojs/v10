@@ -1,6 +1,6 @@
-import { combineLatest } from '../../core/reactive/combine-latest';
-import type { WritableState } from '../../core/state/create-state';
-import type { PartiallyResolvedTextTrack, Presentation } from '../../core/types';
+import { Signal } from 'signal-polyfill';
+import { effect } from '../../core/signals/effect';
+import type { PartiallyResolvedTextTrack, Presentation, TextTrack } from '../../core/types';
 
 /**
  * State shape for text track setup.
@@ -19,42 +19,12 @@ export interface TextTrackOwners {
 }
 
 /**
- * Get all text tracks from presentation.
- */
-function getTextTracks(presentation?: Presentation): PartiallyResolvedTextTrack[] {
-  if (!presentation?.selectionSets) return [];
-
-  const textSet = presentation.selectionSets.find((set) => set.type === 'text');
-  if (!textSet?.switchingSets?.[0]?.tracks) return [];
-
-  return textSet.switchingSets[0].tracks as PartiallyResolvedTextTrack[];
-}
-
-/**
- * Check if we can setup text tracks.
- *
- * Requires:
- * - mediaElement exists
- * - presentation has text tracks to setup
- */
-export function canSetupTextTracks(state: TextTrackState, owners: TextTrackOwners): boolean {
-  return !!owners.mediaElement && !!getTextTracks(state.presentation).length;
-}
-
-/**
- * Check if we should setup text tracks (not already set up).
- */
-export function shouldSetupTextTracks(owners: TextTrackOwners): boolean {
-  return !owners.textTracks;
-}
-
-/**
  * Create a track element for a text track.
  *
  * Note: We use DOM <track> elements instead of the TextTrack JS API
  * because there's no way to remove TextTracks added via addTextTrack().
  */
-function createTrackElement(track: PartiallyResolvedTextTrack): HTMLTrackElement {
+function createTrackElement(track: PartiallyResolvedTextTrack | TextTrack): HTMLTrackElement {
   const trackElement = document.createElement('track');
 
   trackElement.id = track.id;
@@ -91,48 +61,61 @@ function createTrackElement(track: PartiallyResolvedTextTrack): HTMLTrackElement
  * @example
  * const cleanup = setupTextTracks({ state, owners });
  */
-export function setupTextTracks({
+export function setupTextTracks<S extends TextTrackState, O extends TextTrackOwners>({
   state,
   owners,
 }: {
-  state: WritableState<TextTrackState>;
-  owners: WritableState<TextTrackOwners>;
+  state: Signal.State<S>;
+  owners: Signal.State<O>;
 }): () => void {
-  let hasSetup = false;
-  let createdTracks: HTMLTrackElement[] = [];
+  const modelTextTracksSignal = new Signal.Computed(
+    // NOTE: This assumes exactly one selection set and switching set for TextTracks (CJP)
+    () =>
+      state.get().presentation?.selectionSets?.find((selectionSet) => selectionSet.type === 'text')?.switchingSets[0]
+        ?.tracks,
+    {
+      /** @TODO Make generic and abstract away for Array<T> | undefined (CJP) */
+      equals(prevTextTracks, nextTextTracks) {
+        if (prevTextTracks === nextTextTracks) return true;
+        if (typeof prevTextTracks !== typeof nextTextTracks) return false;
+        if (prevTextTracks?.length !== nextTextTracks?.length) return false;
+        // NOTE: This could probably be optimized, but the set should generally be small (CJP)
+        return (
+          !!nextTextTracks &&
+          nextTextTracks.every((nextTextTrack) =>
+            prevTextTracks?.some((prevTextTrack) => prevTextTrack.id === nextTextTrack.id)
+          )
+        );
+      },
+    }
+  );
+  const ownerTextTracksSignal = new Signal.Computed(() => owners.get().textTracks);
+  const mediaElementSignal = new Signal.Computed(() => owners.get().mediaElement);
 
-  const unsubscribe = combineLatest([state, owners]).subscribe(([s, o]: [TextTrackState, TextTrackOwners]) => {
-    // Check orchestration conditions
-    if (hasSetup) return; // Only run once
-    if (!canSetupTextTracks(s, o) || !shouldSetupTextTracks(o)) return;
+  const canSetupTextTracksSignal = new Signal.Computed(
+    () => !!mediaElementSignal.get() && modelTextTracksSignal.get()?.length
+  );
+  const shouldSetupTextTracksSignal = new Signal.Computed(() => !ownerTextTracksSignal.get());
 
-    // Mark as setup before doing any work to prevent re-entry
-    hasSetup = true;
-
-    const textTracks = getTextTracks(s.presentation);
-    if (textTracks.length === 0) return;
+  const cleanupEffect = effect(() => {
+    if (!canSetupTextTracksSignal.get() || !shouldSetupTextTracksSignal.get()) return;
+    const mediaElement = mediaElementSignal.get();
+    const modelTextTracks = modelTextTracksSignal.get() as TextTrack[];
 
     const trackMap = new Map<string, HTMLTrackElement>();
+    modelTextTracks.forEach((modelTextTrack) => {
+      const trackElement = createTrackElement(modelTextTrack);
+      mediaElement!.appendChild(trackElement);
+      trackMap.set(modelTextTrack.id, trackElement);
+    });
 
-    // Create track elements for all text tracks
-    for (const track of textTracks) {
-      const trackElement = createTrackElement(track);
-      o.mediaElement!.appendChild(trackElement);
-      trackMap.set(track.id, trackElement);
-      createdTracks.push(trackElement);
+    if (trackMap.size) {
+      owners.set({ ...owners.get(), textTracks: trackMap } as O);
     }
-
-    // Update owners with track element map
-    owners.patch({ textTracks: trackMap });
   });
 
-  // Return cleanup function
   return () => {
-    // Remove all created track elements
-    for (const trackElement of createdTracks) {
-      trackElement.remove();
-    }
-    createdTracks = [];
-    unsubscribe();
+    owners.get().textTracks?.forEach((trackElement) => trackElement.remove());
+    cleanupEffect();
   };
 }

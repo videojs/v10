@@ -333,7 +333,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     endOfStream({ state: stateSignal, owners: ownersSignal }),
 
     // 7. Setup text tracks (when mediaElement and presentation ready)
-    setupTextTracks({ state, owners }),
+    setupTextTracks({ state: stateSignal, owners: ownersSignal }),
 
     // 8. Sync text track modes (when track selected and track elements created)
     syncTextTrackModes({ state: stateSignal, owners: ownersSignal }),
