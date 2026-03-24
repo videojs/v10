@@ -148,6 +148,12 @@ muxVideo.addEventListener('targetlivewindowchange', (e) => {
   updateStreamInfo();
 });
 
+muxVideo.addEventListener('muxerror', (e) => {
+  const err = (e as CustomEvent).detail;
+  const label = err?.muxCode ? ` [${err.muxCode}]` : '';
+  log(`⚠️ muxerror${label}: ${err?.message ?? ''}`, 'error');
+});
+
 // ── Standard video events ────────────────────────────────────────────────────
 muxVideo.addEventListener('loadstart', () => log('📺 loadstart'));
 muxVideo.addEventListener('loadedmetadata', () => {
