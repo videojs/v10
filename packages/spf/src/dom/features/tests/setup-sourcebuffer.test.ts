@@ -1,13 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { stateToSignal } from '../../../core/signals/bridge';
 import { createState } from '../../../core/state/create-state';
 import type { AudioTrack, Presentation, VideoTrack } from '../../../core/types';
 import {
   buildMimeCodec,
-  canSetupBuffer,
   type SourceBufferOwners,
   type SourceBufferState,
   setupSourceBuffers,
-  shouldSetupBuffer,
 } from '../setup-sourcebuffer';
 
 // Mock the DOM utilities
@@ -137,106 +136,22 @@ describe('buildMimeCodec', () => {
   });
 });
 
-describe('canSetupBuffer', () => {
-  it('returns true when MediaSource exists and video track selected', () => {
-    const videoTrack = createResolvedVideoTrack();
-    const state: SourceBufferState = {
-      presentation: createPresentationWithTracks({ video: videoTrack }),
-      selectedVideoTrackId: 'video-1',
-    };
-    const owners: SourceBufferOwners = {
-      mediaSource: {} as MediaSource,
-    };
-
-    expect(canSetupBuffer(state, owners, 'video')).toBe(true);
-  });
-
-  it('returns false when MediaSource is missing', () => {
-    const videoTrack = createResolvedVideoTrack();
-    const state: SourceBufferState = {
-      presentation: createPresentationWithTracks({ video: videoTrack }),
-      selectedVideoTrackId: 'video-1',
-    };
-    const owners: SourceBufferOwners = {};
-
-    expect(canSetupBuffer(state, owners, 'video')).toBe(false);
-  });
-
-  it('returns false when track not selected', () => {
-    const state: SourceBufferState = {
-      presentation: createPresentationWithTracks({}),
-    };
-    const owners: SourceBufferOwners = {
-      mediaSource: {} as MediaSource,
-    };
-
-    expect(canSetupBuffer(state, owners, 'video')).toBe(false);
-  });
-
-  it('returns true when track selected but not yet resolved', () => {
-    const unresolvedTrack = {
-      type: 'video' as const,
-      id: 'video-1',
-      url: 'http://example.com/video.m3u8',
-      bandwidth: 1000000,
-      mimeType: 'video/mp4',
-      codecs: ['avc1.42E01E'],
-    };
-    const presentation: Presentation = {
-      id: 'pres-1',
-      url: 'http://example.com/playlist.m3u8',
-      selectionSets: [
-        {
-          id: 'video-set',
-          type: 'video',
-          switchingSets: [
-            {
-              id: 'video-switching',
-              type: 'video',
-              tracks: [unresolvedTrack],
-            },
-          ],
-        },
-      ],
-      startTime: 0,
-    };
-    const state: SourceBufferState = {
-      presentation,
-      selectedVideoTrackId: 'video-1',
-    };
-    const owners: SourceBufferOwners = {
-      mediaSource: {} as MediaSource,
-    };
-
-    expect(canSetupBuffer(state, owners, 'video')).toBe(true);
-  });
-});
-
-describe('shouldSetupBuffer', () => {
-  it('returns true when video buffer does not exist', () => {
-    const owners: SourceBufferOwners = {};
-    expect(shouldSetupBuffer(owners, 'video')).toBe(true);
-  });
-
-  it('returns false when video buffer already exists', () => {
-    const owners: SourceBufferOwners = {
-      videoBuffer: {} as SourceBuffer,
-    };
-    expect(shouldSetupBuffer(owners, 'video')).toBe(false);
-  });
-
-  it('returns true when audio buffer does not exist', () => {
-    const owners: SourceBufferOwners = {};
-    expect(shouldSetupBuffer(owners, 'audio')).toBe(true);
-  });
-
-  it('returns false when audio buffer already exists', () => {
-    const owners: SourceBufferOwners = {
-      audioBuffer: {} as SourceBuffer,
-    };
-    expect(shouldSetupBuffer(owners, 'audio')).toBe(false);
-  });
-});
+function setupSetupSourceBuffers(initialState: SourceBufferState = {}, initialOwners: SourceBufferOwners = {}) {
+  const state = createState<SourceBufferState>(initialState);
+  const owners = createState<SourceBufferOwners>(initialOwners);
+  const [stateSignal, cleanupState] = stateToSignal(state);
+  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
+  const cleanupEffect = setupSourceBuffers({ state: stateSignal, owners: ownersSignal });
+  return {
+    state,
+    owners,
+    cleanup: () => {
+      cleanupEffect();
+      cleanupState();
+      cleanupOwners();
+    },
+  };
+}
 
 describe('setupSourceBuffers', () => {
   beforeEach(() => {
@@ -247,9 +162,7 @@ describe('setupSourceBuffers', () => {
     const { createSourceBuffer } = await import('../../media/mediasource-setup');
 
     const videoTrack = createResolvedVideoTrack();
-    const state = createState<SourceBufferState>({});
-    const owners = createState<SourceBufferOwners>({});
-    const cleanup = setupSourceBuffers({ state, owners });
+    const { state, owners, cleanup } = setupSetupSourceBuffers();
 
     const mediaSource = {} as MediaSource;
     owners.patch({ mediaSource });
@@ -271,9 +184,7 @@ describe('setupSourceBuffers', () => {
     const { createSourceBuffer } = await import('../../media/mediasource-setup');
 
     const audioTrack = createResolvedAudioTrack();
-    const state = createState<SourceBufferState>({});
-    const owners = createState<SourceBufferOwners>({});
-    const cleanup = setupSourceBuffers({ state, owners });
+    const { state, owners, cleanup } = setupSetupSourceBuffers();
 
     const mediaSource = {} as MediaSource;
     owners.patch({ mediaSource });
@@ -296,9 +207,7 @@ describe('setupSourceBuffers', () => {
 
     const videoTrack = createResolvedVideoTrack();
     const audioTrack = createResolvedAudioTrack();
-    const state = createState<SourceBufferState>({});
-    const owners = createState<SourceBufferOwners>({});
-    const cleanup = setupSourceBuffers({ state, owners });
+    const { state, owners, cleanup } = setupSetupSourceBuffers();
 
     const mediaSource = {} as MediaSource;
     owners.patch({ mediaSource });
@@ -333,9 +242,7 @@ describe('setupSourceBuffers', () => {
       ...unresolvedAudioPartial
     } = unresolvedAudio;
 
-    const state = createState<SourceBufferState>({});
-    const owners = createState<SourceBufferOwners>({});
-    const cleanup = setupSourceBuffers({ state, owners });
+    const { state, owners, cleanup } = setupSetupSourceBuffers();
 
     owners.patch({ mediaSource: {} as MediaSource });
     // Both track IDs selected, but audio track is not yet resolved
@@ -370,9 +277,7 @@ describe('setupSourceBuffers', () => {
     const { createSourceBuffer } = await import('../../media/mediasource-setup');
 
     const videoTrack: VideoTrack = { ...createResolvedVideoTrack(), codecs: [] };
-    const state = createState<SourceBufferState>({});
-    const owners = createState<SourceBufferOwners>({});
-    const cleanup = setupSourceBuffers({ state, owners });
+    const { state, owners, cleanup } = setupSetupSourceBuffers();
 
     owners.patch({ mediaSource: {} as MediaSource });
     state.patch({
@@ -390,9 +295,7 @@ describe('setupSourceBuffers', () => {
     const { createSourceBuffer } = await import('../../media/mediasource-setup');
 
     const videoTrack = createResolvedVideoTrack();
-    const state = createState<SourceBufferState>({});
-    const owners = createState<SourceBufferOwners>({});
-    const cleanup = setupSourceBuffers({ state, owners });
+    const { state, owners, cleanup } = setupSetupSourceBuffers();
 
     owners.patch({ mediaSource: {} as MediaSource });
     state.patch({
@@ -413,9 +316,7 @@ describe('setupSourceBuffers', () => {
     const { createSourceBuffer } = await import('../../media/mediasource-setup');
 
     const videoTrack = createResolvedVideoTrack();
-    const state = createState<SourceBufferState>({});
-    const owners = createState<SourceBufferOwners>({});
-    const cleanup = setupSourceBuffers({ state, owners });
+    const { state, owners, cleanup } = setupSetupSourceBuffers();
 
     state.patch({
       presentation: createPresentationWithTracks({ video: videoTrack }),

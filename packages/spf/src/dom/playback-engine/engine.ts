@@ -299,7 +299,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     // neither is visible to loadSegments before the other exists — preventing the
     // Firefox bug where appending video data before audio SB is created causes
     // mozHasAudio to be permanently false.
-    setupSourceBuffers({ state, owners }),
+    setupSourceBuffers({ state: stateSignal, owners: ownersSignal }),
 
     // 5.5. Track currentTime from mediaElement (feeds forward buffer management)
     //
