@@ -39,7 +39,6 @@ jobs:
 
   astro-check:
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - name: Checkout code
@@ -72,4 +71,5 @@ jobs:
         run: cd site && pnpm api-docs && pnpm ejected-skins
 
       - name: Astro check
+        continue-on-error: true
         run: cd site && pnpm astro check --minimumSeverity warning
