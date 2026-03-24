@@ -16,7 +16,7 @@ export class MuxMediaDelegate extends HlsMediaDelegate implements Delegate {
   #customDomain: string = MUX_VIDEO_DOMAIN;
   #MuxDataSdk: MuxDataSdk | undefined = Mux;
   #beaconCollectionDomain: string | undefined;
-  #disableCookies: boolean | undefined;
+  #disableCookies: boolean = false;
   #metadata: Record<string, any> | undefined;
   #envKey: string | undefined;
   #playerSoftwareName: string | undefined = (this.constructor as typeof MuxMediaDelegate).PLAYER_SOFTWARE_NAME;
@@ -59,11 +59,11 @@ export class MuxMediaDelegate extends HlsMediaDelegate implements Delegate {
     this.#beaconCollectionDomain = value;
   }
 
-  get disableCookies(): boolean | undefined {
+  get disableCookies(): boolean {
     return this.#disableCookies;
   }
 
-  set disableCookies(value: boolean | undefined) {
+  set disableCookies(value: boolean) {
     this.#disableCookies = value;
   }
 
