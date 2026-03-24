@@ -113,7 +113,7 @@ Deliverables:
 
 ---
 
-### Phase 4: DRM ← **Next**
+### Phase 4: DRM ✅ DONE
 
 **Goal:** Widevine, PlayReady, and FairPlay assets decrypt and play.
 
@@ -133,7 +133,7 @@ Deliverables:
 
 ---
 
-### Phase 5: Mux Data Integration
+### Phase 5: Mux Data Integration ← **Next**
 
 **Goal:** Playback analytics flow to Mux Data; requires hls.js instance access, so must be inside the delegate.
 

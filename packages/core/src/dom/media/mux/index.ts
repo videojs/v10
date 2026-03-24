@@ -6,6 +6,7 @@ import { CustomMediaMixin } from '../custom-media-element';
 import { HlsMediaTextTracksMixin } from '../hls/text-tracks';
 import { MediaProxyMixin } from '../proxy';
 import { MuxCapLevelController } from './cap-level-controller';
+import { getDRMConfig, toPlaybackIdFromSrc } from './drm';
 import { getErrorFromHlsErrorData, MuxErrorCode, type MuxMediaError } from './errors';
 import { getStreamInfoFromLevelDetails, type StreamInfo } from './stream-info';
 
@@ -38,6 +39,8 @@ class MuxHlsMediaDelegateBase implements Delegate {
   #streamInfo: StreamInfo = UNKNOWN_STREAM_INFO;
   #retryCount = 0;
   #retryTimer: ReturnType<typeof setTimeout> | null = null;
+  #drmToken: string | null = null;
+  #playbackId: string | null = null;
 
   get engine(): Hls | null {
     return this.#engine;
@@ -59,6 +62,14 @@ class MuxHlsMediaDelegateBase implements Delegate {
     const liveSyncPosition = this.#engine?.liveSyncPosition ?? null;
     if (liveSyncPosition === null) return NaN;
     return liveSyncPosition - this.#streamInfo.liveEdgeOffset;
+  }
+
+  get drmToken(): string | null {
+    return this.#drmToken;
+  }
+
+  set drmToken(token: string | null) {
+    this.#drmToken = token;
   }
 
   get ended(): boolean {
@@ -95,6 +106,22 @@ class MuxHlsMediaDelegateBase implements Delegate {
     this.#streamInfo = UNKNOWN_STREAM_INFO;
     this.#clearRetry();
     this.#retryCount = 0;
+    this.#playbackId = toPlaybackIdFromSrc(src) ?? null;
+
+    // When a DRM token is present, recreate the hls.js engine with DRM config
+    // so that emeEnabled and drmSystems are set before the source is loaded.
+    if (this.#drmToken && this.#playbackId && this.#engine) {
+      this.#disconnectErrors();
+      this.#disconnectStreamInfo();
+      this.#engine.destroy();
+      this.#engine = new Hls({ ...muxHlsConfig, ...getDRMConfig(this.#playbackId, this.#drmToken) });
+      if (this.#target) {
+        this.#engine.attachMedia(this.#target);
+        this.#connectStreamInfo();
+        this.#connectErrors();
+      }
+    }
+
     if (this.#engine) {
       this.#engine.loadSource(src);
     } else if (this.#target) {

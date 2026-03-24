@@ -2,6 +2,11 @@ import { MuxCustomMedia } from '@videojs/core/dom/media/mux';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 export class MuxVideo extends MediaAttachMixin(MuxCustomMedia) {
+  static get observedAttributes() {
+    // biome-ignore lint/complexity/noThisInStatic: intentional use of super
+    return [...super.observedAttributes, 'drm-token'];
+  }
+
   static getTemplateHTML(attrs: Record<string, string>): string {
     const { src, ...rest } = attrs;
     // biome-ignore lint/complexity/noThisInStatic: intentional use of super
@@ -20,6 +25,10 @@ export class MuxVideo extends MediaAttachMixin(MuxCustomMedia) {
 
     if (attrName === 'src' && oldValue !== newValue) {
       this.src = newValue ?? '';
+    }
+
+    if (attrName === 'drm-token' && oldValue !== newValue) {
+      this.drmToken = newValue;
     }
   }
 
