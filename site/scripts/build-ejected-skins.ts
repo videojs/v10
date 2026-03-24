@@ -1509,9 +1509,11 @@ function addSkinDocComment(source: string, mediaType: MediaType): string {
   const comment = [
     '/**',
     ' * @example',
-    ` *   <${componentName}>`,
-    ` *     <${mediaTag} ${srcAttr}${playsInline} />`,
-    ` *   </${componentName}>`,
+    ' * ```tsx',
+    ` * <${componentName}>`,
+    ` *   <${mediaTag} ${srcAttr}${playsInline} />`,
+    ` * </${componentName}>`,
+    ' * ```',
     ' */',
   ].join('\n');
 
