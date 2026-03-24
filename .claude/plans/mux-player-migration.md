@@ -95,7 +95,7 @@ Deliverables:
 
 ---
 
-### Phase 3: Error Handling ← **Next**
+### Phase 3: Error Handling ✅ DONE
 
 **Goal:** hls.js errors surface as structured Mux errors; transient failures retry correctly.
 
@@ -113,7 +113,7 @@ Deliverables:
 
 ---
 
-### Phase 4: DRM
+### Phase 4: DRM ← **Next**
 
 **Goal:** Widevine, PlayReady, and FairPlay assets decrypt and play.
 
