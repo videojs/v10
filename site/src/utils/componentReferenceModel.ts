@@ -48,25 +48,19 @@ export interface TocHeading {
   tocKind?: string;
 }
 
-const API_REFERENCE_SUBSECTIONS = Object.freeze([
-  {
-    key: 'props',
-    title: 'Props',
-    singleId: 'props',
-    suffix: 'props',
-  },
-  {
-    key: 'state',
-    title: 'State',
-    singleId: 'state',
-    suffix: 'state',
-  },
-  {
-    key: 'dataAttributes',
-    title: 'Data attributes',
-    singleId: 'data-attributes',
-    suffix: 'data-attributes',
-  },
+type SubsectionKey = 'props' | 'state' | 'dataAttributes' | 'cssCustomProperties';
+
+interface SubsectionDef {
+  key: SubsectionKey;
+  title: string;
+  singleId: string;
+  suffix: string;
+}
+
+const API_REFERENCE_SUBSECTIONS: readonly SubsectionDef[] = Object.freeze([
+  { key: 'props', title: 'Props', singleId: 'props', suffix: 'props' },
+  { key: 'state', title: 'State', singleId: 'state', suffix: 'state' },
+  { key: 'dataAttributes', title: 'Data attributes', singleId: 'data-attributes', suffix: 'data-attributes' },
   {
     key: 'cssCustomProperties',
     title: 'CSS custom properties',
@@ -86,7 +80,7 @@ function createSections(
   options: { forPart: true; partId: string } | { forPart: false }
 ): ApiReferenceSection[] {
   return API_REFERENCE_SUBSECTIONS.flatMap((definition) => {
-    if (!hasEntries(source[definition.key as keyof typeof source] as Record<string, unknown> | undefined)) {
+    if (!hasEntries(source[definition.key])) {
       return [];
     }
 
