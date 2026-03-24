@@ -834,10 +834,14 @@ function evaluateTemplate(templateBody: string, context: Record<string, unknown>
   const fn = new Function(...keys, `return \`${templateBody}\`;`);
   const html = fn(...values) as string;
 
-  // Clean up whitespace: normalize indentation and trim
-  return html
-    .split('\n')
-    .map((line) => line.trimEnd())
+  // Clean up whitespace: dedent, trim trailing spaces, and trim outer edges.
+  const lines = html.split('\n').map((line) => line.trimEnd());
+  const minIndent = lines
+    .filter((l) => l.length > 0)
+    .reduce((min, l) => Math.min(min, l.length - l.trimStart().length), Infinity);
+
+  return lines
+    .map((l) => (l.length > 0 ? l.slice(minIndent) : l))
     .join('\n')
     .trim();
 }
