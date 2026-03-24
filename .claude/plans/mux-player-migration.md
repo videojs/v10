@@ -57,7 +57,7 @@ Built with `createPlayer({ features: videoFeatures })` + Mux-specific features. 
 
 ## Phases
 
-### Phase 1: `MuxHlsMediaDelegate` + `MuxVideo` element ← **Start here**
+### Phase 1: `MuxHlsMediaDelegate` + `MuxVideo` element ✅ DONE
 
 **Goal:** A `<mux-video src="...">` element backed by a Mux-tuned hls.js instance, with graceful native fallback when MSE is unavailable. No URL construction — callers compose the `src` externally.
 
@@ -78,7 +78,7 @@ Deliverables:
 
 ---
 
-### Phase 2: Stream Type Detection
+### Phase 2: Stream Type Detection ✅ DONE
 
 **Goal:** `streamType` and `targetLiveWindow` are observable after manifest load; live/DVR assets work correctly.
 
@@ -95,7 +95,7 @@ Deliverables:
 
 ---
 
-### Phase 3: Error Handling
+### Phase 3: Error Handling ← **Next**
 
 **Goal:** hls.js errors surface as structured Mux errors; transient failures retry correctly.
 
