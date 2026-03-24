@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+- *(core)* Prevent sprite tile bleeding in thumbnail component ([#1053](https://github.com/videojs/v10/pull/1053)) by [@mihar-22](https://github.com/mihar-22)
+- *(skin)* Fix button text alignment and text shadow ([#1091](https://github.com/videojs/v10/pull/1091)) by [@sampotts](https://github.com/sampotts)
+- *(react)* Add missing destroy cleanups  ([#1096](https://github.com/videojs/v10/pull/1096)) by [@mihar-22](https://github.com/mihar-22)
+
+## [@videojs/core@10.0.0-beta.9] - 2026-03-23
+
 ### 🚀 Features
 - *(skin)* Add error handling for audio players ([#1048](https://github.com/videojs/v10/pull/1048)) by [@sampotts](https://github.com/sampotts)
 
@@ -1005,7 +1012,8 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
-[unreleased]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.8...HEAD
+[unreleased]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.9...HEAD
+[@videojs/core@10.0.0-beta.9]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.8...@videojs/core@10.0.0-beta.9
 [@videojs/core@10.0.0-beta.8]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.7...@videojs/core@10.0.0-beta.8
 [@videojs/core@10.0.0-beta.7]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.6...@videojs/core@10.0.0-beta.7
 [@videojs/core@10.0.0-beta.6]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.5...@videojs/core@10.0.0-beta.6
