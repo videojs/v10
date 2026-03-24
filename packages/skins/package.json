@@ -29,7 +29,7 @@
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
-    "clean": "rm -rf dist types"
+    "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
     "@videojs/utils": "workspace:*"

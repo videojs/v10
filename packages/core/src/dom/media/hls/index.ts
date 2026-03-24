@@ -28,7 +28,7 @@ const defaultConfig = {
   capLevelOnFPSDrop: true,
 };
 
-class HlsMediaDelegateBase implements Delegate {
+export class HlsMediaDelegateBase implements Delegate {
   #target: EventTarget | null = null;
   #engine: Hls | null = null;
   #loadRequested?: Promise<void> | null;

@@ -50,7 +50,7 @@
     "build": "node --import tsx scripts/build.ts",
     "build:watch": "pnpm run build -- --watch",
     "dev": "pnpm run build:watch",
-    "clean": "rm -rf dist"
+    "clean": "rimraf dist"
   },
   "dependencies": {
     "svgo": "^4.0.1"

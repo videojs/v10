@@ -97,7 +97,7 @@
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
     "test": "vitest run",
-    "clean": "rm -rf dist cdn types"
+    "clean": "rimraf --glob dist cdn types '*.tsbuildinfo'"
   },
   "dependencies": {
     "@videojs/core": "workspace:*",

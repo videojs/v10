@@ -44,7 +44,7 @@
     "dev": "pnpm run build:watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rm -rf dist types"
+    "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
     "@videojs/spf": "workspace:*",
