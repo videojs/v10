@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { MuxMediaDelegate } from '..';
 
 describe('MuxMediaDelegate', () => {
-  it('defaults playbackId to empty string', () => {
+  it('defaults playbackId to null', () => {
     const delegate = new MuxMediaDelegate();
-    expect(delegate.playbackId).toBe('');
+    expect(delegate.playbackId).toBeNull();
   });
 
   it('defaults customDomain to mux.com', () => {
@@ -56,11 +56,11 @@ describe('MuxMediaDelegate', () => {
     expect(delegate.src).toBe('https://override.example.com/video.m3u8');
   });
 
-  it('does not change src when playbackId is empty', () => {
+  it('clears src when playbackId is null and customDomain changes', () => {
     const delegate = new MuxMediaDelegate();
     delegate.src = 'https://manual.example.com/video.m3u8';
     delegate.customDomain = 'custom.tv';
 
-    expect(delegate.src).toBe('https://manual.example.com/video.m3u8');
+    expect(delegate.src).toBe('');
   });
 });
