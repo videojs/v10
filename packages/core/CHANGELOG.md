@@ -1,5 +1,21 @@
 # Changelog
 
+## [10.0.0-beta.11](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.10...@videojs/core@10.0.0-beta.11) (2026-03-24)
+
+
+### Features
+
+* **packages:** export media component building blocks ([#1098](https://github.com/videojs/v10/issues/1098)) ([bc2929e](https://github.com/videojs/v10/commit/bc2929ef4fc7ed021c91d96b96498870ecf5e4e5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.11
+    * @videojs/store bumped to 10.0.0-beta.11
+    * @videojs/utils bumped to 10.0.0-beta.11
+
 ## [10.0.0-beta.10](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.9...@videojs/core@10.0.0-beta.10) (2026-03-23)
 
 
