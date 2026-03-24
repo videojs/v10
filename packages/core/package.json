@@ -56,8 +56,8 @@
   "devDependencies": {
     "jsdom": "^26.1.0",
     "tsdown": "^0.20.3",
-    "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.0"
   },
   "publishConfig": {
     "access": "public"

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createEventStream } from '../../events/create-event-stream';
 import { createState } from '../../state/create-state';
 import type { AddressableObject, MediaElementLike, Presentation } from '../../types';
@@ -6,6 +6,9 @@ import type { PlatformOwners, PresentationAction } from '../resolve-presentation
 import { isUnresolved, resolvePresentation, shouldResolve, syncPreloadAttribute } from '../resolve-presentation';
 
 describe('resolvePresentation', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
   it('resolves unresolved presentation', async () => {
     // Arrange
     interface State {
@@ -21,7 +24,7 @@ describe('resolvePresentation', () => {
     const events = createEventStream<PresentationAction>();
 
     // Mock fetch
-    global.fetch = vi.fn().mockResolvedValue(
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1000000
 variant1.m3u8
@@ -76,7 +79,7 @@ variant2.m3u8`)
       volume: 1.0,
     });
 
-    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1000000
 variant1.m3u8`)
@@ -125,7 +128,7 @@ variant1.m3u8`)
       preload?: 'auto' | 'metadata' | 'none' | undefined;
     }
 
-    global.fetch = vi.fn().mockResolvedValue(
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1000000
 variant1.m3u8`)
@@ -167,7 +170,7 @@ variant1.m3u8`)
       preload?: 'auto' | 'metadata' | 'none' | undefined;
     }
 
-    const fetchSpy = vi.spyOn(global, 'fetch');
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
     // Create a resolved presentation
     const resolvedPresentation: Presentation = {
@@ -229,7 +232,7 @@ variant1.m3u8`)
       preload?: 'auto' | 'metadata' | 'none' | undefined;
     }
 
-    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=2000000
 variant2.m3u8`)
@@ -282,7 +285,7 @@ variant2.m3u8`)
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
-      global.fetch = vi.fn().mockResolvedValue(
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1000000
 variant1.m3u8`)
@@ -312,7 +315,7 @@ variant1.m3u8`)
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
-      global.fetch = vi.fn().mockResolvedValue(
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1000000
 variant1.m3u8`)
@@ -342,7 +345,7 @@ variant1.m3u8`)
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       const state = createState<State>({
         presentation: { url: 'http://example.com/playlist.m3u8' },
@@ -369,7 +372,7 @@ variant1.m3u8`)
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       const state = createState<State>({
         presentation: { url: 'http://example.com/playlist.m3u8' },
@@ -398,7 +401,7 @@ variant1.m3u8`)
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
-      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1000000
 variant1.m3u8`)
@@ -439,7 +442,7 @@ variant1.m3u8`)
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       const state = createState<State>({
         presentation: { url: 'http://example.com/playlist.m3u8' },
@@ -566,7 +569,7 @@ variant1.m3u8`)
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
-      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1000000
 variant1.m3u8`)
@@ -605,7 +608,7 @@ variant1.m3u8`)
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
-      const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(
         async () =>
           new Response(`#EXTM3U
 #EXT-X-STREAM-INF:BANDWIDTH=1000000

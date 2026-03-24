@@ -63,7 +63,7 @@
     "@videojs/utils": "workspace:*",
     "react": "^19.2.4",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   },
   "publishConfig": {
     "access": "public"

@@ -64,18 +64,18 @@
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.1",
     "@types/turndown": "^5.0.6",
-    "@vitejs/plugin-react": "^5.1.4",
-    "@vitest/coverage-v8": "^3.2.4",
-    "@vitest/ui": "^3.2.4",
+    "@vitejs/plugin-react": "^5.2.0",
+    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/ui": "^4.1.0",
     "babel-plugin-react-compiler": "1.0.0",
     "jsdom": "^27.0.0",
     "prettier": "^3.8.1",
     "prettier-plugin-astro": "^0.14.1",
     "tsx": "^4.21.0",
     "turndown": "^7.2.2",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "typescript-api-extractor": "^1.0.0-alpha.13",
     "vite-plugin-svgr": "^4.5.0",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.0"
   }
 }

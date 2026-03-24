@@ -85,13 +85,17 @@ for (const mode of buildModes) {
       inlineTemplatePlugin({ minify: isProd }),
       ...(!isProd ? [dtsStubsPlugin(outDir)] : []),
     ],
-    inputOptions: !isProd
-      ? {
-          resolve: {
-            conditionNames: ['development', 'import', 'browser', 'default'],
-          },
-        }
-      : undefined,
+    inputOptions: {
+      onwarn(warning, defaultHandler) {
+        if (warning.code === 'COMMONJS_VARIABLE_IN_ESM') return;
+        defaultHandler(warning);
+      },
+      ...(!isProd && {
+        resolve: {
+          conditionNames: ['development', 'import', 'browser', 'default'],
+        },
+      }),
+    },
   });
 }
 

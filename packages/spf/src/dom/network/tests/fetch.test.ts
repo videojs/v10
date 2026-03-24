@@ -73,7 +73,7 @@ describe('fetchResolvableStream', () => {
     return new ReadableStream({
       pull(controller) {
         if (i < chunks.length) {
-          controller.enqueue(chunks[i++]);
+          controller.enqueue(chunks[i++]!);
         } else {
           controller.close();
         }
