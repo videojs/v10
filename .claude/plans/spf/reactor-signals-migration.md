@@ -301,13 +301,13 @@ nested inside an owners object, tracked transitively by `Signal.Computed`/`effec
   `createTrackedFetch`)
 - **Complexity**: high
 
-### ⬜ Step 7 — `setupSourceBuffer`
+### ✅ Step 7 — `setupSourceBuffer`
 
-- **Why next**: most direct analogue to the new `setupMediaSource` pattern.
-  Has a `setupDone` flag + async `combineLatest` → migrate to `Signal.Computed`
-  conditions + nested effect. Important: both audio and video buffers must be created
-  synchronously (coordination guarantee) — preserve in inner effect.
-- **Write-back**: `owners.patch({ sourceBuffers })` from inner effect
+- **What changed**: replaced `combineLatest + subscribe + setupDone` with `Signal.Computed + effect`.
+  Track types derived from `presentation.selectionSets` via `presentationTypesSignal` — no
+  hardcoded `['video', 'audio']`. Removed `canSetupBuffer` and `shouldSetupBuffer` helpers.
+  Coordination guarantee (all buffers created synchronously) preserved in effect body.
+- **Write-back**: `owners.set(Object.assign({}, o, patch) as O)` from effect
 - **Complexity**: medium
 
 ### ⬜ Step 8 — `trackPlaybackRate`

@@ -336,7 +336,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     setupTextTracks({ state, owners }),
 
     // 8. Sync text track modes (when track selected and track elements created)
-    syncTextTrackModes({ state, owners }),
+    syncTextTrackModes({ state: stateSignal, owners: ownersSignal }),
 
     // 8.5. Bridge DOM text track mode changes → selectedTextTrackId
     //      Detects when external code (e.g. captions button via toggleSubtitles())

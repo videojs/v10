@@ -1,5 +1,5 @@
-import { combineLatest } from '../../core/reactive/combine-latest';
-import type { WritableState } from '../../core/state/create-state';
+import { Signal } from 'signal-polyfill';
+import { effect } from '../../core/signals/effect';
 
 /**
  * State shape for text track mode synchronization.
@@ -16,16 +16,6 @@ export interface TextTrackModeOwners {
 }
 
 /**
- * Check if we can sync text track modes.
- *
- * Requires:
- * - textTracks map exists (track elements created)
- */
-export function canSyncTextTrackModes(owners: TextTrackModeOwners): boolean {
-  return !!owners.textTracks && owners.textTracks.size > 0;
-}
-
-/**
  * Sync text track modes orchestration.
  *
  * Manages track element modes based on selectedTextTrackId:
@@ -39,28 +29,26 @@ export function canSyncTextTrackModes(owners: TextTrackModeOwners): boolean {
  * @example
  * const cleanup = syncTextTrackModes({ state, owners });
  */
-export function syncTextTrackModes({
+export function syncTextTrackModes<S extends TextTrackModeState, O extends TextTrackModeOwners>({
   state,
   owners,
 }: {
-  state: WritableState<TextTrackModeState>;
-  owners: WritableState<TextTrackModeOwners>;
+  state: Signal.State<S>;
+  owners: Signal.State<O>;
 }): () => void {
-  return combineLatest([state, owners]).subscribe(([s, o]: [TextTrackModeState, TextTrackModeOwners]) => {
-    // Check orchestration conditions
-    if (!canSyncTextTrackModes(o)) return;
+  const textTracksSignal = new Signal.Computed(() => owners.get().textTracks);
+  const selectedTextTrackIdSignal = new Signal.Computed(() => state.get().selectedTextTrackId);
 
-    const selectedId = s.selectedTextTrackId;
+  const canSyncTextTrackModes = new Signal.Computed(() => !!textTracksSignal.get()?.size);
 
-    // Update all track element modes
-    for (const [trackId, trackElement] of o.textTracks!) {
-      if (trackId === selectedId) {
-        // Selected track: show it
-        trackElement.track.mode = 'showing';
-      } else {
-        // Other tracks: hide them (but keep available in menu)
-        trackElement.track.mode = 'hidden';
-      }
+  return effect(() => {
+    if (!canSyncTextTrackModes.get()) return;
+    /** @TODO refactor TextTracks owners model. Should simply use id. Also should use corresponding TextTrack (JS) element if possible (CJP) */
+    const textTracks = textTracksSignal.get() as Map<string, HTMLTrackElement>;
+    const selectedTextTrackId = selectedTextTrackIdSignal.get() as string;
+
+    for (const [trackId, trackElement] of textTracks) {
+      trackElement.track.mode = trackId === selectedTextTrackId ? 'showing' : 'hidden';
     }
   });
 }
