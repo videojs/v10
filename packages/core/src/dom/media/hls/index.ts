@@ -57,6 +57,10 @@ export class HlsMediaDelegateBase implements Delegate {
     if (this.#target) {
       this.#engine.attachMedia(this.#target as HTMLMediaElement);
     }
+
+    if (this.#src) {
+      this.#requestLoad();
+    }
   }
 
   /** The target element, or `null` when not attached. */
@@ -107,11 +111,7 @@ export class HlsMediaDelegateBase implements Delegate {
 
   /** The HLS source URL to load. */
   set src(src: string) {
-    const prevType = this.type;
     this.#src = src;
-    if (this.type !== prevType) {
-      this.#initialize();
-    }
     this.#requestLoad();
   }
 
