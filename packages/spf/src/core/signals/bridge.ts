@@ -1,6 +1,6 @@
-import { Signal } from 'signal-polyfill';
 import type { WritableState } from '../state/create-state';
 import { effect } from './effect';
+import { type ReadonlySignal, type Signal, signal } from './primitives';
 
 function shallowEqual<T>(a: T, b: T): boolean {
   if (a === b) return true;
@@ -27,16 +27,16 @@ function shallowEqual<T>(a: T, b: T): boolean {
  * have been migrated to signals, the bridge and the underlying WritableState
  * can be retired together.
  */
-export function stateToSignal<T extends object>(state: WritableState<T>): [Signal.State<T>, () => void] {
-  const signal = new Signal.State(state.current, { equals: shallowEqual });
+export function stateToSignal<T extends object>(state: WritableState<T>): [Signal<T>, () => void] {
+  const sig = signal(state.current, { equals: shallowEqual });
 
   // WritableState → Signal: keep signal in sync when external code patches state
-  const cleanupForward = state.subscribe((v) => signal.set(v));
+  const cleanupForward = state.subscribe((v) => sig.set(v));
 
   // Signal → WritableState: when a reactor writes to the signal, patch only
   // the fields that differ so un-migrated reactors see the change too
   const cleanupReverse = effect(() => {
-    const next = signal.get();
+    const next = sig.get();
     const current = state.current;
     const patch: Partial<T> = {};
     let hasChanges = false;
@@ -50,7 +50,7 @@ export function stateToSignal<T extends object>(state: WritableState<T>): [Signa
   });
 
   return [
-    signal,
+    sig,
     () => {
       cleanupForward();
       cleanupReverse();
@@ -72,9 +72,9 @@ export function stateToSignal<T extends object>(state: WritableState<T>): [Signa
  * needed.
  */
 export function signalToState<T, S>(
-  signal: Signal.ReadonlyState<S>,
+  sig: ReadonlySignal<S>,
   state: WritableState<T>,
   map: (value: S) => T extends object ? Partial<T> : T
 ): () => void {
-  return effect(() => state.patch(map(signal.get())));
+  return effect(() => state.patch(map(sig.get())));
 }

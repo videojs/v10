@@ -1,5 +1,5 @@
-import { Signal } from 'signal-polyfill';
 import { effect } from '../../core/signals/effect';
+import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import type { Presentation } from '../../core/types';
 import { attachMediaSource, createMediaSource, observeMediaSourceReadyState } from '../media/mediasource-setup';
 
@@ -17,7 +17,7 @@ export interface MediaSourceOwners {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
   /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
-  mediaSourceReadyState?: Signal.ReadonlyState<MediaSource['readyState']>;
+  mediaSourceReadyState?: ReadonlySignal<MediaSource['readyState']>;
 }
 
 /**
@@ -33,21 +33,21 @@ export function setupMediaSource<S extends MediaSourceState, O extends MediaSour
   state,
   owners,
 }: {
-  state: Signal.State<S>;
-  owners: Signal.State<O>;
+  state: Signal<S>;
+  owners: Signal<O>;
 }): () => void {
   const abortController = new AbortController();
 
   // Get the latest mediaElement (even if nullish)
-  const mediaElementSignal = new Signal.Computed(() => owners.get().mediaElement);
+  const mediaElementSignal = computed(() => owners.get().mediaElement);
   // Get the latest presentationUrl (even if nullish)
-  const presentationUrlSignal = new Signal.Computed(() => state.get().presentation?.url);
+  const presentationUrlSignal = computed(() => state.get().presentation?.url);
 
-  const canSetupSignal = new Signal.Computed(() => !!mediaElementSignal.get() && !!presentationUrlSignal.get());
+  const canSetupSignal = computed(() => !!mediaElementSignal.get() && !!presentationUrlSignal.get());
 
-  const mediaElementSrcSignal = new Signal.Computed(() => mediaElementSignal.get()?.src);
-  const mediaSourceSignal = new Signal.Computed(() => owners.get().mediaSource);
-  const shouldSetupSignal = new Signal.Computed(() => !mediaElementSrcSignal.get());
+  const mediaElementSrcSignal = computed(() => mediaElementSignal.get()?.src);
+  const mediaSourceSignal = computed(() => owners.get().mediaSource);
+  const shouldSetupSignal = computed(() => !mediaElementSrcSignal.get());
 
   // NOTE: This should be cleaner and less brittle if/when Reactors have their own internal finite state. This is planned as followup work.
   // (here, e.g. something like: "preconditions_unmet"|"pending"|"setting_up"|"tearing_down"|"set_up")

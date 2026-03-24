@@ -1,5 +1,5 @@
-import { Signal } from 'signal-polyfill';
 import { effect } from '../../core/signals/effect';
+import { computed, type Signal } from '../../core/signals/primitives';
 import type { PartiallyResolvedTextTrack, Presentation, TextTrack } from '../../core/types';
 
 /**
@@ -65,10 +65,10 @@ export function setupTextTracks<S extends TextTrackState, O extends TextTrackOwn
   state,
   owners,
 }: {
-  state: Signal.State<S>;
-  owners: Signal.State<O>;
+  state: Signal<S>;
+  owners: Signal<O>;
 }): () => void {
-  const modelTextTracksSignal = new Signal.Computed(
+  const modelTextTracksSignal = computed(
     // NOTE: This assumes exactly one selection set and switching set for TextTracks (CJP)
     () =>
       state.get().presentation?.selectionSets?.find((selectionSet) => selectionSet.type === 'text')?.switchingSets[0]
@@ -89,13 +89,11 @@ export function setupTextTracks<S extends TextTrackState, O extends TextTrackOwn
       },
     }
   );
-  const ownerTextTracksSignal = new Signal.Computed(() => owners.get().textTracks);
-  const mediaElementSignal = new Signal.Computed(() => owners.get().mediaElement);
+  const ownerTextTracksSignal = computed(() => owners.get().textTracks);
+  const mediaElementSignal = computed(() => owners.get().mediaElement);
 
-  const canSetupTextTracksSignal = new Signal.Computed(
-    () => !!mediaElementSignal.get() && modelTextTracksSignal.get()?.length
-  );
-  const shouldSetupTextTracksSignal = new Signal.Computed(() => !ownerTextTracksSignal.get());
+  const canSetupTextTracksSignal = computed(() => !!mediaElementSignal.get() && modelTextTracksSignal.get()?.length);
+  const shouldSetupTextTracksSignal = computed(() => !ownerTextTracksSignal.get());
 
   const cleanupEffect = effect(() => {
     if (!canSetupTextTracksSignal.get() || !shouldSetupTextTracksSignal.get()) return;

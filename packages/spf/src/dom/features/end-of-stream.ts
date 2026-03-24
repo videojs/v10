@@ -1,5 +1,5 @@
-import { Signal } from 'signal-polyfill';
 import { effect } from '../../core/signals/effect';
+import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import type { Presentation } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
@@ -12,7 +12,7 @@ export interface EndOfStreamState extends TrackSelectionState {
 export interface EndOfStreamOwners {
   mediaSource?: MediaSource;
   /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
-  mediaSourceReadyState?: Signal.ReadonlyState<MediaSource['readyState']>;
+  mediaSourceReadyState?: ReadonlySignal<MediaSource['readyState']>;
   mediaElement?: HTMLMediaElement | undefined;
   videoBuffer?: SourceBuffer;
   audioBuffer?: SourceBuffer;
@@ -266,15 +266,15 @@ export function endOfStream<S extends EndOfStreamState, O extends EndOfStreamOwn
   state,
   owners,
 }: {
-  state: Signal.State<S>;
-  owners: Signal.State<O>;
+  state: Signal<S>;
+  owners: Signal<O>;
 }): () => void {
   // Derived condition. Transitively tracks through owners into each actor's
   // snapshot signal — when owners changes and points to a new actor, this computed
   // re-tracks to the new actor's signal on next evaluation.
   // shouldEndStream calls actor.snapshot.get() inside the computed body, so those
   // reads are automatically tracked by the Signal.Computed dependency graph.
-  const shouldEnd = new Signal.Computed(() => shouldEndStream(state.get(), owners.get()));
+  const shouldEnd = computed(() => shouldEndStream(state.get(), owners.get()));
 
   let hasEnded = false;
 

@@ -1,6 +1,6 @@
-import { Signal } from 'signal-polyfill';
 import { describe, expect, it, vi } from 'vitest';
 import { stateToSignal } from '../../../core/signals/bridge';
+import { signal } from '../../../core/signals/primitives';
 import { createState } from '../../../core/state/create-state';
 import type { Presentation, Segment, VideoTrack } from '../../../core/types';
 import { createSourceBufferActor, type SourceBufferActor } from '../../media/source-buffer-actor';
@@ -472,7 +472,7 @@ describe('endOfStream', () => {
     const track = makeResolvedVideoTrack(4);
     const mockMs = makeMediaSource();
     // Reactive readyState signal — drives re-evaluation when MSE transitions readyState.
-    const msReadyState = new Signal.State<MediaSource['readyState']>('open');
+    const msReadyState = signal<MediaSource['readyState']>('open');
 
     // Simulate real MSE: endOfStream() transitions readyState to 'ended'.
     (mockMs.endOfStream as ReturnType<typeof vi.fn>).mockImplementation(() => {

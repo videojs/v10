@@ -1,5 +1,5 @@
-import { Signal } from 'signal-polyfill';
 import { effect } from '../../core/signals/effect';
+import { computed, type Signal } from '../../core/signals/primitives';
 import type { Presentation, ResolvedTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { BufferKeyByType, getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
@@ -72,11 +72,11 @@ export function setupSourceBuffers<S extends SourceBufferState, O extends Source
   state,
   owners,
 }: {
-  state: Signal.State<S>;
-  owners: Signal.State<O>;
+  state: Signal<S>;
+  owners: Signal<O>;
 }): () => void {
   // Derive which media track types this presentation actually contains
-  const presentationTypesSignal = new Signal.Computed((): MediaTrackType[] => {
+  const presentationTypesSignal = computed((): MediaTrackType[] => {
     const { presentation } = state.get();
     if (!presentation || !('selectionSets' in presentation)) return [];
     return presentation.selectionSets
@@ -85,7 +85,7 @@ export function setupSourceBuffers<S extends SourceBufferState, O extends Source
   });
 
   // All presentation track types must have a selected, resolved track with codecs
-  const canSetupSignal = new Signal.Computed(() => {
+  const canSetupSignal = computed(() => {
     const types = presentationTypesSignal.get();
     if (!owners.get().mediaSource || types.length === 0) return false;
     const s = state.get();
@@ -96,7 +96,7 @@ export function setupSourceBuffers<S extends SourceBufferState, O extends Source
   });
 
   // DOM-observable "already done" guard — once all presentation buffers exist in owners, setup has run
-  const shouldSetupSignal = new Signal.Computed(() => {
+  const shouldSetupSignal = computed(() => {
     const o = owners.get();
     return presentationTypesSignal.get().every((type) => !o[BufferKeyByType[type]]);
   });

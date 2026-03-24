@@ -1,5 +1,5 @@
-import { Signal } from 'signal-polyfill';
 import { effect } from '../../core/signals/effect';
+import { computed, type Signal } from '../../core/signals/primitives';
 
 /**
  * State shape for text track mode synchronization.
@@ -33,13 +33,13 @@ export function syncTextTrackModes<S extends TextTrackModeState, O extends TextT
   state,
   owners,
 }: {
-  state: Signal.State<S>;
-  owners: Signal.State<O>;
+  state: Signal<S>;
+  owners: Signal<O>;
 }): () => void {
-  const textTracksSignal = new Signal.Computed(() => owners.get().textTracks);
-  const selectedTextTrackIdSignal = new Signal.Computed(() => state.get().selectedTextTrackId);
+  const textTracksSignal = computed(() => owners.get().textTracks);
+  const selectedTextTrackIdSignal = computed(() => state.get().selectedTextTrackId);
 
-  const canSyncTextTrackModes = new Signal.Computed(() => !!textTracksSignal.get()?.size);
+  const canSyncTextTrackModes = computed(() => !!textTracksSignal.get()?.size);
 
   return effect(() => {
     if (!canSyncTextTrackModes.get()) return;

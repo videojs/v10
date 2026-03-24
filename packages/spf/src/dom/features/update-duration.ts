@@ -1,5 +1,5 @@
-import type { Signal } from 'signal-polyfill';
 import { effect } from '../../core/signals/effect';
+import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
 import type { Presentation } from '../../core/types';
 import { hasPresentationDuration } from '../../core/types';
 
@@ -10,7 +10,7 @@ export interface DurationUpdateState {
 export interface DurationUpdateOwners {
   mediaSource?: MediaSource;
   /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
-  mediaSourceReadyState?: Signal.ReadonlyState<MediaSource['readyState']>;
+  mediaSourceReadyState?: ReadonlySignal<MediaSource['readyState']>;
   videoSourceBuffer?: SourceBuffer;
   audioSourceBuffer?: SourceBuffer;
 }
@@ -99,8 +99,8 @@ export function updateDuration<S extends DurationUpdateState, O extends Duration
   state,
   owners,
 }: {
-  state: Signal.State<S>;
-  owners: Signal.State<O>;
+  state: Signal<S>;
+  owners: Signal<O>;
 }): () => void {
   let destroyed = false;
   let running = false;

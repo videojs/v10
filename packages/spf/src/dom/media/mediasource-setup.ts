@@ -7,7 +7,7 @@
  * Global ManagedMediaSource types are defined in ./mediasource.d.ts
  */
 
-import { Signal } from 'signal-polyfill';
+import { type ReadonlySignal, signal } from '../../core/signals/primitives';
 
 /**
  * Check if MediaSource API is supported.
@@ -181,11 +181,11 @@ export function isCodecSupported(mimeCodec: string): boolean {
  */
 export function observeMediaSourceReadyState(
   mediaSource: MediaSource,
-  signal: AbortSignal
-): Signal.ReadonlyState<MediaSource['readyState']> {
-  const readyState = new Signal.State<MediaSource['readyState']>(mediaSource.readyState);
+  abortSignal: AbortSignal
+): ReadonlySignal<MediaSource['readyState']> {
+  const readyState = signal<MediaSource['readyState']>(mediaSource.readyState);
   const update = () => readyState.set(mediaSource.readyState);
-  const options = { signal };
+  const options = { signal: abortSignal };
   mediaSource.addEventListener('sourceopen', update, options);
   mediaSource.addEventListener('sourceended', update, options);
   mediaSource.addEventListener('sourceclose', update, options);

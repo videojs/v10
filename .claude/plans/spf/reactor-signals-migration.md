@@ -31,23 +31,19 @@ Two helpers in `core/signals/bridge.ts` (alongside `effect.ts`):
 ### `stateToSignal` — WritableState → Signal
 
 ```ts
-export function stateToSignal<T>(state: State<T>): [Signal.ReadonlyState<T>, () => void] {
-  const signal = new Signal.State(state.current);
-  const cleanup = state.subscribe((v) => signal.set(v));
-  return [signal, cleanup];
-}
+export function stateToSignal<T>(state: WritableState<T>): [Signal<T>, () => void]
 ```
+
+Bidirectional: WritableState → Signal (forward) and Signal → WritableState (reverse diff patch), with shallow-equal guard to prevent feedback loops.
 
 ### `signalToState` — Signal → WritableState
 
 ```ts
 export function signalToState<T, S>(
-  signal: Signal.ReadonlyState<S>,
+  signal: ReadonlySignal<S>,
   state: WritableState<T>,
   map: (value: S) => T extends object ? Partial<T> : T
-): () => void {
-  return effect(() => state.patch(map(signal.get())));
-}
+): () => void
 ```
 
 Both are **temporary scaffolding**. When all reactors are migrated and `WritableState`
@@ -71,8 +67,8 @@ Exposed on `PlaybackEngine` for testing and inspection:
 export interface PlaybackEngine {
   state: WritableState<PlaybackEngineState>;               // authoritative (unchanged)
   owners: WritableState<PlaybackEngineOwners>;             // authoritative (unchanged)
-  stateSignal: Signal.ReadonlyState<PlaybackEngineState>;  // mirror for migrated reactors
-  ownersSignal: Signal.ReadonlyState<PlaybackEngineOwners>;// mirror for migrated reactors
+  stateSignal: Signal<PlaybackEngineState>;   // mirror for migrated reactors
+  ownersSignal: Signal<PlaybackEngineOwners>; // mirror for migrated reactors
   events: EventStream<PlaybackEngineAction>;
   destroy: () => void;
 }
@@ -102,20 +98,22 @@ function myReactor({ state, owners }: {
 
 // After
 function myReactor({ state, owners }: {
-  state: Signal.State<MyState>;
-  owners: Signal.State<MyOwners>;
+  state: Signal<MyState>;
+  owners: Signal<MyOwners>;
 }): () => void
 ```
 
 ### Translation table
+
+All signal primitives are imported from `core/signals/primitives` — do **not** import from `signal-polyfill` directly. Only `core/signals/effect.ts` and `core/signals/primitives.ts` touch the polyfill.
 
 | Before (WritableState) | After (Signals) |
 |---|---|
 | `state.subscribe(cb)` | `effect(() => { const s = state.get(); ... })` |
 | `owners.subscribe(cb)` | `effect(() => { const o = owners.get(); ... })` |
 | `combineLatest([state, owners]).subscribe(cb)` | `effect(() => { state.get(); owners.get(); ... })` — reads both in one effect |
-| `subscribe(selector, listener, { equalityFn })` | `new Signal.Computed(() => selector(state.get()), { equals: equalityFn })` + `effect()` |
-| `createState(x)` (local intermediate state) | `new Signal.State(x)` |
+| `subscribe(selector, listener, { equalityFn })` | `computed(() => selector(state.get()), { equals: equalityFn })` + `effect()` |
+| `createState(x)` (local intermediate state) | `signal(x)` |
 | `state.patch(...)` from inside listener | same — call directly from inside `effect()` |
 | `combineLatest` + `@@INITIALIZE@@` bootstrap | gone — `computed()` evaluates lazily, no bootstrap needed |
 
@@ -159,9 +157,9 @@ Use this pattern when a reactor has:
 
 ```ts
 // Preconditions as computed nodes
-const canSetupSignal = new Signal.Computed(() => !!owners.get().mediaElement && !!state.get().presentation?.url);
+const canSetupSignal = computed(() => !!owners.get().mediaElement && !!state.get().presentation?.url);
 // DOM-observable "already done" guard (avoids internal boolean flag)
-const shouldSetupSignal = new Signal.Computed(() => !owners.get().mediaElement?.src);
+const shouldSetupSignal = computed(() => !owners.get().mediaElement?.src);
 
 const cleanupEffect = effect(() => {
   if (!canSetupSignal.get() || !shouldSetupSignal.get()) return;
@@ -190,8 +188,8 @@ Key properties:
 
 ### Local intermediate state
 
-`createState` used for local derived values within a reactor becomes `Signal.Computed`
-(if purely derived) or `Signal.State` (if independently writable):
+`createState` used for local derived values within a reactor becomes `computed()`
+(if purely derived) or `signal()` (if independently writable):
 
 ```ts
 // Before
@@ -201,7 +199,7 @@ combineLatest([state, segmentLoader]).subscribe(([s, loader]) => {
 });
 
 // After — no subscription, no local patch: just a computed
-const segmentsCanLoad = new Signal.Computed(() =>
+const segmentsCanLoad = computed(() =>
   isResolvedTrack(getSelectedTrack(stateSignal.get(), type)) && !!segmentLoaderSignal.get()
 );
 ```
@@ -216,9 +214,9 @@ const segmentsCanLoad = new Signal.Computed(() =>
 ```ts
 export function observeMediaSourceReadyState(
   mediaSource: MediaSource,
-  signal: AbortSignal
-): Signal.ReadonlyState<MediaSource['readyState']> {
-  const readyState = new Signal.State<MediaSource['readyState']>(mediaSource.readyState);
+  abortSignal: AbortSignal
+): ReadonlySignal<MediaSource['readyState']> {
+  const readyState = signal<MediaSource['readyState']>(mediaSource.readyState);
   const update = () => readyState.set(mediaSource.readyState);
   const options = { signal };
   mediaSource.addEventListener('sourceopen', update, options);
@@ -228,7 +226,7 @@ export function observeMediaSourceReadyState(
 }
 ```
 
-Returns `Signal.ReadonlyState` (no cleanup needed — `AbortSignal` removes listeners).
+Returns `ReadonlySignal` (no cleanup needed — `AbortSignal` removes listeners).
 
 ### `mediaSourceReadyState` in owners
 
@@ -303,30 +301,52 @@ nested inside an owners object, tracked transitively by `Signal.Computed`/`effec
 
 ### ✅ Step 7 — `setupSourceBuffer`
 
-- **What changed**: replaced `combineLatest + subscribe + setupDone` with `Signal.Computed + effect`.
+- **What changed**: replaced `combineLatest + subscribe + setupDone` with `computed() + effect()`.
   Track types derived from `presentation.selectionSets` via `presentationTypesSignal` — no
   hardcoded `['video', 'audio']`. Removed `canSetupBuffer` and `shouldSetupBuffer` helpers.
   Coordination guarantee (all buffers created synchronously) preserved in effect body.
 - **Write-back**: `owners.set(Object.assign({}, o, patch) as O)` from effect
 - **Complexity**: medium
 
-### ⬜ Step 8 — `trackPlaybackRate`
+### ✅ Step 8 — `trackPlaybackRate`
 
-- **Why**: trivially mirrors `trackCurrentTime` — single owners subscription → effect
+- **What changed**: single effect with cleanup return — `return listen(mediaElement, 'ratechange', ...)`.
+  Removed `canTrackPlaybackRate` helper. Uses named `computed()` nodes for `mediaElement` and guard.
 - **Write-back**: `state.patch({ playbackRate })`
 - **Complexity**: low
+- **Note**: this migration validated that `effect()` cleanup return values are called before re-run
+  and on disposal (now implemented, matching Preact/Maverick/Svelte 5).
 
-### ⬜ Step 9 — `syncTextTrackModes`
+### ✅ Step 9 — `syncTextTrackModes`
 
-- **Why**: pure reactive loop, no side effects beyond updating DOM text track modes
-- **Write-back**: none — writes to DOM directly
+- **What changed**: `combineLatest + subscribe` → `effect()` with named `computed()` nodes for
+  `textTracks` and `selectedTextTrackId`. Guard checks `textTracks.size` only — not `selectedTextTrackId`
+  (so deselection still hides all tracks). Removed `canSyncTextTrackModes` helper.
+- **Write-back**: none — writes DOM `.mode` directly
 - **Complexity**: low
 
-### ⬜ Step 10 — `setupTextTracks`
+### ✅ Step 10 — `setupTextTracks`
 
-- **Why**: one-shot setup, similar shape to `setupMediaSource` but simpler (no readyState wait)
-- **Write-back**: `owners.patch({ textTracks })`
+- **What changed**: `combineLatest + subscribe + hasSetup` → `computed() + effect()`. Custom `equals`
+  on `modelTextTracksSignal` prevents re-runs when unrelated state (e.g. `selectedTextTrackId`) changes
+  but tracks haven't changed. `shouldSetup = !owners.get().textTracks` replaces `hasSetup` flag.
+  Cleanup uses `owners.get().textTracks?.forEach(el => el.remove())` at teardown — no closure array.
+- **Write-back**: `owners.set({ ...owners.get(), textTracks: trackMap })` from effect
 - **Complexity**: low–medium
+- **Key pattern**: for one-shot effects, DOM cleanup belongs in the **outer disposal function**, not
+  returned from the effect body (which runs on every re-run). Return-from-effect is for repeatable
+  cleanup (e.g. `listen()` in `trackPlaybackRate`).
+
+### ✅ Side-quest — signals primitives module
+
+- **New**: `core/signals/primitives.ts` — single file that imports from `signal-polyfill` and
+  re-exports factory functions + types: `signal()`, `computed()`, `Signal<T>`, `Computed<T>`,
+  `ReadonlySignal<T>`, `SignalOptions<T>`.
+- **Rule**: only `core/signals/effect.ts` and `core/signals/primitives.ts` may import from
+  `signal-polyfill`. All other files use `core/signals/primitives`.
+- **Removed**: `declare module 'signal-polyfill'` augmentation for `ReadonlyState` — replaced
+  by `ReadonlySignal<T>` exported from `primitives.ts`.
+- **Bundle impact**: zero — factory wrappers are just thin callsites, tree-shaken away.
 
 ### ⬜ Step 11 — `trackPlaybackInitiated`
 
@@ -363,7 +383,7 @@ nested inside an owners object, tracked transitively by `Signal.Computed`/`effec
 
 When all reactors are migrated, `WritableState` can be retired as an internal primitive.
 The bridge helpers and engine-level mirrors are deleted. `PlaybackEngine` exposes
-`Signal.State` directly instead of `WritableState`.
+`Signal<T>` directly instead of `WritableState`.
 
 This is explicitly **out of scope** for this migration phase — the goal here is to prove
 the pattern and migrate the DOM feature reactors, not to retire `WritableState`.

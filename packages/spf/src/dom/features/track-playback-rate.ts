@@ -1,6 +1,6 @@
 import { listen } from '@videojs/utils/dom';
-import { Signal } from 'signal-polyfill';
 import { effect } from '../../core/signals/effect';
+import { computed, type Signal } from '../../core/signals/primitives';
 import type { WritableState } from '../../core/state/create-state';
 
 /**
@@ -31,10 +31,10 @@ export function trackPlaybackRate<O extends PlaybackRateOwners>({
   owners,
 }: {
   state: WritableState<PlaybackRateState>;
-  owners: Signal.State<O>;
+  owners: Signal<O>;
 }): () => void {
-  const mediaElementSignal = new Signal.Computed(() => owners.get().mediaElement);
-  const canTrackPlaybackRate = new Signal.Computed(() => !!mediaElementSignal.get());
+  const mediaElementSignal = computed(() => owners.get().mediaElement);
+  const canTrackPlaybackRate = computed(() => !!mediaElementSignal.get());
 
   const cleanupEffect = effect(() => {
     if (!canTrackPlaybackRate.get()) return;

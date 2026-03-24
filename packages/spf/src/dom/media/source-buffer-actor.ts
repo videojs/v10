@@ -1,5 +1,5 @@
-import { Signal } from 'signal-polyfill';
 import type { ActorSnapshot, SignalActor } from '../../core/actor';
+import { type ReadonlySignal, signal } from '../../core/signals/primitives';
 import { SerialRunner, Task } from '../../core/task';
 import type { Segment, Track } from '../../core/types';
 import { type AppendData, appendSegment } from './append-segment';
@@ -230,7 +230,7 @@ export function createSourceBufferActor(
   sourceBuffer: SourceBuffer,
   initialContext?: Partial<SourceBufferActorContext>
 ): SourceBufferActor {
-  const snapshotSignal = new Signal.State<SourceBufferActorSnapshot>({
+  const snapshotSignal = signal<SourceBufferActorSnapshot>({
     status: 'idle',
     context: { segments: [], bufferedRanges: [], initTrackId: undefined, ...initialContext },
   });
@@ -257,7 +257,7 @@ export function createSourceBufferActor(
   }
 
   return {
-    get snapshot(): Signal.ReadonlyState<SourceBufferActorSnapshot> {
+    get snapshot(): ReadonlySignal<SourceBufferActorSnapshot> {
       return snapshotSignal;
     },
 

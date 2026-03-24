@@ -7,7 +7,7 @@
  * holds arbitrary non-finite data.
  */
 
-import type { Signal } from 'signal-polyfill';
+import type { ReadonlySignal } from './signals/primitives';
 
 /** Complete actor snapshot: finite status + non-finite context. */
 export interface ActorSnapshot<Status extends string, Context> {
@@ -35,7 +35,7 @@ export interface Actor<Status extends string, Context> {
 /** Generic actor interface: owns its snapshot and notifies observers. */
 export interface SignalActor<Status extends string, Context> {
   /** Current snapshot. Readable and reactive; not writable by consumers. */
-  readonly snapshot: Signal.ReadonlyState<ActorSnapshot<Status, Context>>;
+  readonly snapshot: ReadonlySignal<ActorSnapshot<Status, Context>>;
   /** Tear down the actor. */
   destroy(): void;
 }

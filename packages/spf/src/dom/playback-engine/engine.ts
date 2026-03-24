@@ -1,4 +1,3 @@
-import type { Signal } from 'signal-polyfill';
 import type { BandwidthState } from '../../core/abr/bandwidth-estimator';
 import { createEventStream } from '../../core/events/create-event-stream';
 import { calculatePresentationDuration } from '../../core/features/calculate-presentation-duration';
@@ -16,6 +15,7 @@ import {
   type TrackSelectionAction,
 } from '../../core/features/select-tracks';
 import { stateToSignal } from '../../core/signals/bridge';
+import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
 import { createState } from '../../core/state/create-state';
 import { endOfStream } from '../features/end-of-stream';
 import { loadSegments } from '../features/load-segments';
@@ -121,7 +121,7 @@ export interface PlaybackEngineOwners {
   // MediaSource
   mediaSource?: MediaSource;
   /** Reactive mirror of `mediaSource.readyState` — updated via DOM events. */
-  mediaSourceReadyState?: Signal.ReadonlyState<MediaSource['readyState']>;
+  mediaSourceReadyState?: ReadonlySignal<MediaSource['readyState']>;
 
   // SourceBuffers and their actors (created together by setupSourceBuffer)
   videoBuffer?: SourceBuffer;
@@ -152,14 +152,14 @@ export interface PlaybackEngine {
    * Stays in sync with state automatically. Temporary bridge; removed when
    * WritableState is retired.
    */
-  stateSignal: Signal.State<PlaybackEngineState>;
+  stateSignal: Signal<PlaybackEngineState>;
 
   /**
    * Signal mirror of owners — for reactors that have been migrated to signals.
    * Stays in sync with owners automatically. Temporary bridge; removed when
    * WritableState is retired.
    */
-  ownersSignal: Signal.State<PlaybackEngineOwners>;
+  ownersSignal: Signal<PlaybackEngineOwners>;
 
   /**
    * Shared event stream (for inspection/testing/triggering events).

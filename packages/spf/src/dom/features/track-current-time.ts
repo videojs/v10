@@ -1,6 +1,6 @@
 import { listen } from '@videojs/utils/dom';
-import type { Signal } from 'signal-polyfill';
 import { effect } from '../../core/signals/effect';
+import type { Signal } from '../../core/signals/primitives';
 import type { WritableState } from '../../core/state/create-state';
 
 /**
@@ -47,7 +47,7 @@ export function trackCurrentTime<O extends CurrentTimeOwners>({
   owners,
 }: {
   state: WritableState<CurrentTimeState>;
-  owners: Signal.State<O>;
+  owners: Signal<O>;
 }): () => void {
   let lastMediaElement: HTMLMediaElement | undefined;
   let removeListeners: (() => void) | null = null;

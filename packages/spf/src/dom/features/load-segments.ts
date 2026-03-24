@@ -1,7 +1,7 @@
-import { Signal } from 'signal-polyfill';
 import { type BandwidthState, sampleBandwidth } from '../../core/abr/bandwidth-estimator';
 import { DEFAULT_FORWARD_BUFFER_CONFIG } from '../../core/buffer/forward-buffer';
 import { effect } from '../../core/signals/effect';
+import { computed, type Signal, signal } from '../../core/signals/primitives';
 import { createState, type WritableState } from '../../core/state/create-state';
 import type { AddressableObject, Presentation, ResolvedTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
@@ -239,7 +239,7 @@ function loadingInputsEq(prevState: LoadingInputs, curState: LoadingInputs): boo
  * const cleanup = loadSegments({ state, owners }, { type: 'video' });
  */
 export function loadSegments<S extends SegmentLoadingState, O extends SegmentLoadingOwners>(
-  { state, owners }: { state: Signal.State<S>; owners: Signal.State<O> },
+  { state, owners }: { state: Signal<S>; owners: Signal<O> },
   config: { type: MediaTrackType }
 ): () => void {
   const { type } = config;
@@ -273,12 +273,12 @@ export function loadSegments<S extends SegmentLoadingState, O extends SegmentLoa
         )
       : fetchStream;
 
-  // Local segment loader — Signal.State so segmentsCanLoad can track it reactively
-  const segmentLoader = new Signal.State<SegmentLoaderActor | undefined>(undefined);
+  // Local segment loader — signal so segmentsCanLoad can track it reactively
+  const segmentLoader = signal<SegmentLoaderActor | undefined>(undefined);
 
   // Computed: isolates the specific actor key so the lifecycle effect only
   // re-runs when that actor reference changes, not on unrelated owners updates.
-  const actorSource = new Signal.Computed<SourceBufferActor | undefined>(() => owners.get()[actorKey]);
+  const actorSource = computed<SourceBufferActor | undefined>(() => owners.get()[actorKey]);
 
   // Actor lifecycle — destroy and recreate SegmentLoaderActor when the
   // upstream SourceBufferActor is replaced (quality switch) or removed.
@@ -300,7 +300,7 @@ export function loadSegments<S extends SegmentLoadingState, O extends SegmentLoa
   });
 
   // Derived: true only when we have both a resolved track and a ready loader
-  const segmentsCanLoad = new Signal.Computed(() => {
+  const segmentsCanLoad = computed(() => {
     const track = getSelectedTrack(state.get(), type);
     return !!track && isResolvedTrack(track) && !!segmentLoader.get();
   });
@@ -308,7 +308,7 @@ export function loadSegments<S extends SegmentLoadingState, O extends SegmentLoa
   // Loading inputs — selectLoadingInputs is cheap; let the effect body apply
   // loadingInputsEq rather than the computed, so the first run always fires
   // regardless of the initial state.
-  const loadingInputs = new Signal.Computed(() => selectLoadingInputs([segmentsCanLoad.get(), state.get()], type));
+  const loadingInputs = computed(() => selectLoadingInputs([segmentsCanLoad.get(), state.get()], type));
 
   // Load effect — prevInputs guards against redundant messages using the same
   // equality semantics as the former combineLatest selector subscription.

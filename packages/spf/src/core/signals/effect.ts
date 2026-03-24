@@ -1,12 +1,5 @@
 import { Signal } from 'signal-polyfill';
 
-declare module 'signal-polyfill' {
-  namespace Signal {
-    /** A read-only view of a State signal — exposes get() for reactive tracking but not set(). */
-    type ReadonlyState<T> = Omit<State<T>, 'set'>;
-  }
-}
-
 // Computeds waiting to re-run after their dependencies changed.
 const pending = new Set<Signal.Computed<void>>();
 
