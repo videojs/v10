@@ -5,6 +5,18 @@
 **Date:** 2026-03-24
 **Focus:** HlsVideo path only. SPF path is tracked in the Notion support matrix but is out of scope here.
 
+## Status
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 1 | `MuxHlsMediaDelegate` + `MuxVideo` element | ✅ Done |
+| 2 | Stream type detection | ✅ Done |
+| 3 | Error handling | ✅ Done |
+| 4 | DRM | ✅ Done |
+| 5 | Mux Data integration | ✅ Done |
+| 6 | Convenience API (`playbackId` → URL, tokens, `prefer-playback`) | ⏳ Not started |
+| 7 | `MuxPlayer` UI | ⏳ Not started |
+
 ---
 
 ## Architecture
