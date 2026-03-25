@@ -108,10 +108,6 @@ export class MuxMediaDelegate extends HlsMediaDelegate implements Delegate {
     this.#metadata = value;
   }
 
-  attach(target: EventTarget): void {
-    super.attach(target);
-  }
-
   detach(): void {
     this.#MuxDataSdk?.destroyMonitor(this.target as HTMLMediaElement);
 
