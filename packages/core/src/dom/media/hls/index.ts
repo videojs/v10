@@ -39,6 +39,8 @@ export class HlsMediaDelegateBase implements Delegate {
   #type: SourceType | undefined;
   #preferPlayback: PlaybackType | undefined = 'mse';
   #preloadOnPlayAbort?: AbortController;
+  #defaultMaxBufferLength = 0;
+  #defaultMaxBufferSize = 0;
 
   constructor() {
     this.#initialize();
@@ -56,6 +58,8 @@ export class HlsMediaDelegateBase implements Delegate {
       ...defaultConfig,
       debug: this.#debug,
     });
+    this.#defaultMaxBufferLength = this.#engine.config.maxBufferLength;
+    this.#defaultMaxBufferSize = this.#engine.config.maxBufferSize;
 
     if (this.#target) {
       this.#engine.attachMedia(this.#target as HTMLMediaElement);
@@ -167,6 +171,8 @@ export class HlsMediaDelegateBase implements Delegate {
   }
 
   #updatePreload(): void {
+    this.#preloadOnPlayAbort?.abort();
+
     if (!this.#target || !this.#engine) return;
 
     if (this.preload === 'auto' || !this.#target.paused) {
@@ -179,18 +185,15 @@ export class HlsMediaDelegateBase implements Delegate {
     if (this.preload === 'none') {
       preloadOnPlay = () => this.#engine?.startLoad();
     } else {
-      const originalLength = this.#engine.config.maxBufferLength;
-      const originalSize = this.#engine.config.maxBufferSize;
-      // Load the least amount of data possible...
       this.#engine.config.maxBufferLength = 1;
       this.#engine.config.maxBufferSize = 1;
-      // and once a user has played, allow for it to load data as normal.
+      this.#engine.startLoad();
+
       preloadOnPlay = () => {
         if (!this.#engine) return;
-        this.#engine.config.maxBufferLength = originalLength;
-        this.#engine.config.maxBufferSize = originalSize;
+        this.#engine.config.maxBufferLength = this.#defaultMaxBufferLength;
+        this.#engine.config.maxBufferSize = this.#defaultMaxBufferSize;
       };
-      this.#engine.startLoad();
     }
 
     this.#preloadOnPlayAbort = new AbortController();
