@@ -252,7 +252,9 @@ packages/html/src/define/
 ## Cross-Cutting Concerns
 
 - **`redundant_streams=true`**: Always appended by default (matches `DEFAULT_EXTRA_PLAYLIST_PARAMS` in mux-player). Can be disabled via `extra-source-params`.
-- **Native playback (Safari iOS)**: `preferPlayback='native'` skips hls.js entirely; `mediaEl.src` is set directly. Out of scope for Phase 1; the delegate pattern supports it.
+- **Native playback (Safari iOS)**: `preferPlayback='native'` skips hls.js entirely; `mediaEl.src` is set directly. The explicit opt-in is deferred to Phase 6. An implicit MSE-unavailable fallback is already wired (`Hls.isSupported() === false` → `target.src = src`). Two known gaps on the native path:
+  - **No stream type detection**: `streamType`/`targetLiveWindow`/`liveEdgeOffset` stay at their unknown/NaN defaults — there is no fallback heuristic (e.g. `video.duration === Infinity` after `loadedmetadata`) for the native path.
+  - **No DRM**: the DRM engine-recreation block in `set src` is gated on `this.#engine`; on the native path no EME configuration happens. WebKit FairPlay (`webkitGenerateKeyRequest`/`webkitAddKey`) is also unimplemented. Deferred to Phase 6 alongside `prefer-playback='native'`.
 - **Autoplay**: Smart autoplay (muted fallback, live-edge seeking) is deferred. VJS v10 has an existing autoplay feature; Mux-specific live-edge-seek behavior can be added as a feature slice.
 - **Audio-only**: Requires UI suppression of video-specific controls. Tracked in the Notion matrix as ⚠️ for HlsVideo. Defer to Phase 7.
 - **CMCD**: `preferCmcd` attribute. Deferred; hls.js supports it natively.
