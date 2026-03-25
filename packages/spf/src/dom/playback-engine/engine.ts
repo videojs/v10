@@ -342,7 +342,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     //      Detects when external code (e.g. captions button via toggleSubtitles())
     //      sets a subtitle/caption track to 'showing' and reflects that into SPF
     //      state, which in turn drives loadTextTrackCues.
-    syncSelectedTextTrackFromDom({ state, owners }),
+    syncSelectedTextTrackFromDom({ state: stateSignal, owners: ownersSignal }),
 
     // 9. Load text track cues (when track resolved and mode set)
     loadTextTrackCues({ state, owners }),

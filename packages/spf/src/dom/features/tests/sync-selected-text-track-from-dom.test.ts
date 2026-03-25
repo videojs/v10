@@ -1,10 +1,28 @@
 import { describe, expect, it, vi } from 'vitest';
+import { stateToSignal } from '../../../core/signals/bridge';
 import { createState } from '../../../core/state/create-state';
 import {
   type SelectedTextTrackFromDomOwners,
   type SelectedTextTrackFromDomState,
   syncSelectedTextTrackFromDom,
 } from '../sync-selected-text-track-from-dom';
+
+function setup(initialState: SelectedTextTrackFromDomState = {}, initialOwners: SelectedTextTrackFromDomOwners = {}) {
+  const state = createState<SelectedTextTrackFromDomState>(initialState);
+  const owners = createState<SelectedTextTrackFromDomOwners>(initialOwners);
+  const [stateSignal, cleanupState] = stateToSignal(state);
+  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
+  const cleanupEffect = syncSelectedTextTrackFromDom({ state: stateSignal, owners: ownersSignal });
+  return {
+    state,
+    owners,
+    cleanup: () => {
+      cleanupEffect();
+      cleanupState();
+      cleanupOwners();
+    },
+  };
+}
 
 function createSubtitleTrack(mediaElement: HTMLMediaElement, id: string): HTMLTrackElement {
   const trackEl = document.createElement('track');
@@ -18,10 +36,7 @@ function createSubtitleTrack(mediaElement: HTMLMediaElement, id: string): HTMLTr
 
 describe('syncSelectedTextTrackFromDom', () => {
   it('does nothing when no mediaElement', async () => {
-    const state = createState<SelectedTextTrackFromDomState>({});
-    const owners = createState<SelectedTextTrackFromDomOwners>({});
-
-    const cleanup = syncSelectedTextTrackFromDom({ state, owners });
+    const { state, cleanup } = setup();
 
     await new Promise((resolve) => setTimeout(resolve, 30));
 
@@ -34,15 +49,10 @@ describe('syncSelectedTextTrackFromDom', () => {
     const mediaElement = document.createElement('video');
     const trackEl = createSubtitleTrack(mediaElement, 'track-en');
 
-    // Wait for track to initialize
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const state = createState<SelectedTextTrackFromDomState>({});
-    const owners = createState<SelectedTextTrackFromDomOwners>({ mediaElement });
+    const { state, cleanup } = setup({}, { mediaElement });
 
-    const cleanup = syncSelectedTextTrackFromDom({ state, owners });
-
-    // Simulate toggleSubtitles() setting the track to 'showing'
     trackEl.track.mode = 'showing';
     mediaElement.textTracks.dispatchEvent(new Event('change'));
 
@@ -63,10 +73,7 @@ describe('syncSelectedTextTrackFromDom', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const state = createState<SelectedTextTrackFromDomState>({});
-    const owners = createState<SelectedTextTrackFromDomOwners>({ mediaElement });
-
-    const cleanup = syncSelectedTextTrackFromDom({ state, owners });
+    const { state, cleanup } = setup({}, { mediaElement });
 
     trackEl.track.mode = 'showing';
     mediaElement.textTracks.dispatchEvent(new Event('change'));
@@ -84,12 +91,8 @@ describe('syncSelectedTextTrackFromDom', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const state = createState<SelectedTextTrackFromDomState>({ selectedTextTrackId: 'track-en' });
-    const owners = createState<SelectedTextTrackFromDomOwners>({ mediaElement });
+    const { state, cleanup } = setup({ selectedTextTrackId: 'track-en' }, { mediaElement });
 
-    const cleanup = syncSelectedTextTrackFromDom({ state, owners });
-
-    // Simulate toggleSubtitles() disabling captions
     trackEl.track.mode = 'disabled';
     mediaElement.textTracks.dispatchEvent(new Event('change'));
 
@@ -101,22 +104,20 @@ describe('syncSelectedTextTrackFromDom', () => {
   });
 
   it('clears textBufferState for the deselected track when disabling', async () => {
-    // When mode='disabled' clears native cues, textBufferState must be reset so
-    // segments are re-fetched if the user re-enables captions.
     const mediaElement = document.createElement('video');
     const trackEl = createSubtitleTrack(mediaElement, 'track-en');
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const state = createState<SelectedTextTrackFromDomState>({
-      selectedTextTrackId: 'track-en',
-      textBufferState: {
-        'track-en': { segments: [{ id: 'seg-0' }, { id: 'seg-1' }] },
+    const { state, cleanup } = setup(
+      {
+        selectedTextTrackId: 'track-en',
+        textBufferState: {
+          'track-en': { segments: [{ id: 'seg-0' }, { id: 'seg-1' }] },
+        },
       },
-    });
-    const owners = createState<SelectedTextTrackFromDomOwners>({ mediaElement });
-
-    const cleanup = syncSelectedTextTrackFromDom({ state, owners });
+      { mediaElement }
+    );
 
     trackEl.track.mode = 'disabled';
     mediaElement.textTracks.dispatchEvent(new Event('change'));
@@ -135,16 +136,16 @@ describe('syncSelectedTextTrackFromDom', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const state = createState<SelectedTextTrackFromDomState>({
-      selectedTextTrackId: 'track-en',
-      textBufferState: {
-        'track-en': { segments: [{ id: 'seg-0' }] },
-        'track-fr': { segments: [{ id: 'seg-0' }] },
+    const { state, cleanup } = setup(
+      {
+        selectedTextTrackId: 'track-en',
+        textBufferState: {
+          'track-en': { segments: [{ id: 'seg-0' }] },
+          'track-fr': { segments: [{ id: 'seg-0' }] },
+        },
       },
-    });
-    const owners = createState<SelectedTextTrackFromDomOwners>({ mediaElement });
-
-    const cleanup = syncSelectedTextTrackFromDom({ state, owners });
+      { mediaElement }
+    );
 
     trackEl.track.mode = 'disabled';
     mediaElement.textTracks.dispatchEvent(new Event('change'));
@@ -168,12 +169,8 @@ describe('syncSelectedTextTrackFromDom', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const state = createState<SelectedTextTrackFromDomState>({});
-    const owners = createState<SelectedTextTrackFromDomOwners>({ mediaElement });
+    const { state, cleanup } = setup({}, { mediaElement });
 
-    const cleanup = syncSelectedTextTrackFromDom({ state, owners });
-
-    // Chapters track going 'showing' should not affect selectedTextTrackId
     chapterEl.track.mode = 'showing';
     mediaElement.textTracks.dispatchEvent(new Event('change'));
 
@@ -192,20 +189,23 @@ describe('syncSelectedTextTrackFromDom', () => {
 
     const state = createState<SelectedTextTrackFromDomState>({ selectedTextTrackId: 'track-en' });
     const owners = createState<SelectedTextTrackFromDomOwners>({ mediaElement });
+    const [stateSignal, cleanupState] = stateToSignal(state);
+    const [ownersSignal, cleanupOwners] = stateToSignal(owners);
 
-    const patchSpy = vi.spyOn(state, 'patch');
+    const setSpy = vi.spyOn(stateSignal, 'set');
 
-    const cleanup = syncSelectedTextTrackFromDom({ state, owners });
+    const cleanupEffect = syncSelectedTextTrackFromDom({ state: stateSignal, owners: ownersSignal });
 
-    // Simulate syncTextTrackModes confirming the track as 'showing'
     trackEl.track.mode = 'showing';
     mediaElement.textTracks.dispatchEvent(new Event('change'));
 
     await new Promise((resolve) => setTimeout(resolve, 30));
 
-    expect(patchSpy).not.toHaveBeenCalled();
+    expect(setSpy).not.toHaveBeenCalled();
 
-    cleanup();
+    cleanupEffect();
+    cleanupState();
+    cleanupOwners();
   });
 
   it('does not re-register listener when owners updates but mediaElement is unchanged', async () => {
@@ -213,28 +213,28 @@ describe('syncSelectedTextTrackFromDom', () => {
 
     const state = createState<SelectedTextTrackFromDomState>({});
     const owners = createState<SelectedTextTrackFromDomOwners & { videoBuffer?: unknown }>({ mediaElement });
+    const [stateSignal, cleanupState] = stateToSignal(state);
+    const [ownersSignal, cleanupOwners] = stateToSignal(owners);
 
     const addEventListenerSpy = vi.spyOn(mediaElement.textTracks, 'addEventListener');
 
-    const cleanup = syncSelectedTextTrackFromDom({ state, owners });
+    const cleanupEffect = syncSelectedTextTrackFromDom({ state: stateSignal, owners: ownersSignal });
 
     await new Promise((resolve) => setTimeout(resolve, 20));
     const callsBefore = addEventListenerSpy.mock.calls.length;
 
-    // Patch an unrelated owner
     owners.patch({ videoBuffer: {} });
     await new Promise((resolve) => setTimeout(resolve, 20));
 
     expect(addEventListenerSpy.mock.calls.length).toBe(callsBefore);
 
-    cleanup();
+    cleanupEffect();
+    cleanupState();
+    cleanupOwners();
   });
 
   it('starts listening when mediaElement is added later', async () => {
-    const state = createState<SelectedTextTrackFromDomState>({});
-    const owners = createState<SelectedTextTrackFromDomOwners>({});
-
-    const cleanup = syncSelectedTextTrackFromDom({ state, owners });
+    const { state, owners, cleanup } = setup();
 
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(state.current.selectedTextTrackId).toBeUndefined();
@@ -264,23 +264,17 @@ describe('syncSelectedTextTrackFromDom', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const state = createState<SelectedTextTrackFromDomState>({});
-    const owners = createState<SelectedTextTrackFromDomOwners>({ mediaElement: element1 });
+    const { state, owners, cleanup } = setup({}, { mediaElement: element1 });
 
-    const cleanup = syncSelectedTextTrackFromDom({ state, owners });
-
-    // Switch to element2
     owners.patch({ mediaElement: element2 });
     await new Promise((resolve) => setTimeout(resolve, 20));
 
-    // Events on old element should no longer affect state
     trackEl1.track.mode = 'showing';
     element1.textTracks.dispatchEvent(new Event('change'));
     await new Promise((resolve) => setTimeout(resolve, 30));
 
     expect(state.current.selectedTextTrackId).toBeUndefined();
 
-    // Events on new element should work
     trackEl2.track.mode = 'showing';
     element2.textTracks.dispatchEvent(new Event('change'));
 
@@ -297,10 +291,7 @@ describe('syncSelectedTextTrackFromDom', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const state = createState<SelectedTextTrackFromDomState>({});
-    const owners = createState<SelectedTextTrackFromDomOwners>({ mediaElement });
-
-    const cleanup = syncSelectedTextTrackFromDom({ state, owners });
+    const { state, cleanup } = setup({}, { mediaElement });
     cleanup();
 
     trackEl.track.mode = 'showing';

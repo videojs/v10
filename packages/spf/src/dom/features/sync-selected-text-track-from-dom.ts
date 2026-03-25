@@ -1,5 +1,6 @@
 import { listen } from '@videojs/utils/dom';
-import type { WritableState } from '../../core/state/create-state';
+import { effect } from '../../core/signals/effect';
+import { computed, type Signal } from '../../core/signals/primitives';
 import type { TextTrackBufferState } from './load-text-track-cues';
 
 /**
@@ -39,43 +40,32 @@ export interface SelectedTextTrackFromDomOwners {
  * @example
  * const cleanup = syncSelectedTextTrackFromDom({ state, owners });
  */
-export function syncSelectedTextTrackFromDom({
-  state,
-  owners,
-}: {
-  state: WritableState<SelectedTextTrackFromDomState>;
-  owners: WritableState<SelectedTextTrackFromDomOwners>;
-}): () => void {
-  let lastMediaElement: HTMLMediaElement | undefined;
-  let removeListener: (() => void) | null = null;
+export function syncSelectedTextTrackFromDom<
+  S extends SelectedTextTrackFromDomState,
+  O extends SelectedTextTrackFromDomOwners,
+>({ state, owners }: { state: Signal<S>; owners: Signal<O> }): () => void {
+  const mediaElement = computed(() => owners.get().mediaElement);
 
-  const unsubscribe = owners.subscribe((currentOwners) => {
-    const { mediaElement } = currentOwners;
+  return effect(() => {
+    const el = mediaElement.get();
+    if (!el) return;
 
-    if (mediaElement === lastMediaElement) return;
-
-    removeListener?.();
-    removeListener = null;
-    lastMediaElement = mediaElement;
-
-    if (!mediaElement) return;
-
-    const sync = () => {
-      const showingTrack = Array.from(mediaElement.textTracks).find(
+    return listen(el.textTracks, 'change', () => {
+      const showingTrack = Array.from(el.textTracks).find(
         (t) => t.mode === 'showing' && (t.kind === 'subtitles' || t.kind === 'captions')
       );
 
       // showingTrack.id is set from the SPF presentation track ID by setupTextTracks.
       // Fall back to undefined for empty-string IDs (non-SPF-managed tracks).
       const newId = showingTrack?.id || undefined;
-      const current = state.current;
+      const current = state.get();
 
-      // Guard against redundant patches — e.g. syncTextTrackModes confirming the
+      // Guard against redundant writes — e.g. syncTextTrackModes confirming the
       // current selection, which would otherwise create a feedback loop.
       if (current.selectedTextTrackId === newId) return;
 
       if (newId) {
-        state.patch({ selectedTextTrackId: newId });
+        state.set({ ...current, selectedTextTrackId: newId } as S);
       } else {
         // When deselecting, clear the textBufferState entry for the previous track.
         // Setting mode to 'disabled' (as toggleSubtitles() does) clears native cues
@@ -85,18 +75,11 @@ export function syncSelectedTextTrackFromDom({
         if (prevId && current.textBufferState?.[prevId]) {
           const next = { ...current.textBufferState };
           delete next[prevId];
-          state.patch({ selectedTextTrackId: undefined, textBufferState: next });
+          state.set({ ...current, selectedTextTrackId: undefined, textBufferState: next } as S);
         } else {
-          state.patch({ selectedTextTrackId: undefined });
+          state.set({ ...current, selectedTextTrackId: undefined } as S);
         }
       }
-    };
-
-    removeListener = listen(mediaElement.textTracks, 'change', sync);
+    });
   });
-
-  return () => {
-    removeListener?.();
-    unsubscribe();
-  };
 }
