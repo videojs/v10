@@ -754,13 +754,14 @@ function getHtmlSkinCdnFileName(skin: HtmlSkinDef): string {
 function prependHtmlSkinScripts(html: string, skin: HtmlSkinDef): string {
   const cdnFileName = getHtmlSkinCdnFileName(skin);
   const scriptTag = `<script type="module" src="${HTML_CDN_BASE}/${cdnFileName}.js"></script>`;
+  const cssLink = `<link rel="stylesheet" href="./player.css">`;
   const playerTag = getSkinMediaType(skin) === 'audio' ? 'audio-player' : 'video-player';
   const indented = html
     .split('\n')
     .map((l) => (l.length > 0 ? `  ${l}` : l))
     .join('\n');
 
-  return `${scriptTag}\n\n<${playerTag}>\n${indented}\n</${playerTag}>`;
+  return `${scriptTag}\n${cssLink}\n\n<${playerTag}>\n${indented}\n</${playerTag}>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -1269,7 +1270,8 @@ function inlinePrivatePackages(source: string): { source: string; utilities: str
 
 /** Find the byte offset just past the last import statement in the source. */
 function findLastImportEnd(source: string): number {
-  const importRegex = /^import\s+.+from\s+['"][^'"]+['"];?\s*$/gm;
+  // Match both `import ... from '...'` and side-effect `import '...'`
+  const importRegex = /^import\s+(?:.+from\s+)?['"][^'"]+['"];?\s*$/gm;
   let lastEnd = 0;
   let match: RegExpExecArray | null;
   while ((match = importRegex.exec(source)) !== null) {
@@ -1523,9 +1525,10 @@ function addPlayerSection(source: string, mediaType: MediaType): string {
     (m, names) => `import { createPlayer,${names}} from '@videojs/react';`
   );
 
-  // 2. Add Video/Audio + features import after the @videojs/react import line
+  // 2. Add Video/Audio + features import and CSS import after the @videojs/react import line
   const mediaImport = `import { ${mediaTag}, ${features} } from '@videojs/react/${subpath}';`;
-  source = source.replace(/(import \{[^}]*\} from '@videojs\/react';)/, `$1\n${mediaImport}`);
+  const cssImport = `import './player.css';`;
+  source = source.replace(/(import \{[^}]*\} from '@videojs\/react';)/, `$1\n${mediaImport}\n${cssImport}`);
 
   // 3. Insert Player section after imports (before everything else)
   const playerBlock = [
