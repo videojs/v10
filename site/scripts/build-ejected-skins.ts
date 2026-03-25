@@ -1369,6 +1369,7 @@ function hasExportModifier(statement: ts.Statement): boolean {
 function classifyDeclaration(name: string, isExported: boolean): SectionKey {
   if (isExported && name.endsWith('Skin')) return 'main';
   if (isExported && name.endsWith('SkinProps')) return 'mainType';
+  if (name === 'SEEK_TIME') return 'mainType';
   if (name.endsWith('Label')) return 'labels';
   if (name === 'ErrorDialog' || name === 'ErrorDialogClassNames' || name === 'ERROR_CLASSNAMES') return 'errorDialog';
   if (name.endsWith('Icon')) return 'icons';
