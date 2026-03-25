@@ -7,15 +7,15 @@
 
 ## Status
 
-| Phase | Description | Status |
-|-------|-------------|--------|
-| 1 | `MuxHlsMediaDelegate` + `MuxVideo` element | ✅ Done |
-| 2 | Stream type detection | ✅ Done |
-| 3 | Error handling | ✅ Done |
-| 4 | DRM | ✅ Done |
-| 5 | Mux Data integration | ✅ Done |
-| 6 | Convenience API (`playbackId` → URL, tokens, `prefer-playback`) | ⏳ Not started |
-| 7 | `MuxPlayer` UI | ⏳ Not started |
+| Phase | Description | hls.js | Native |
+|-------|-------------|--------|--------|
+| 1 | `MuxHlsMediaDelegate` + `MuxVideo` element | ✅ Done | ✅ Done (implicit MSE fallback; no explicit `prefer-playback` yet) |
+| 2 | Stream type detection | ✅ Done | ❌ Not supported — stays `unknown`/`NaN` |
+| 3 | Error handling | ✅ Done | ❌ Not supported — browser `error` events not mapped to `MuxMediaError` |
+| 4 | DRM | ✅ Done (Widevine, PlayReady, FairPlay via EME) | ❌ Not supported — no EME or WebKit FairPlay wiring |
+| 5 | Mux Data integration | ✅ Done | ❌ Not supported — monitoring skipped when `engine` is null |
+| 6 | Convenience API (`playbackId` → URL, tokens, `prefer-playback`) | ⏳ Not started | ⏳ Not started (`prefer-playback='native'` is gating item) |
+| 7 | `MuxPlayer` UI | ⏳ Not started | ⏳ Not started |
 
 ---
 
