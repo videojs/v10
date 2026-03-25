@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { stateToSignal } from '../../../core/signals/bridge';
-import { createState } from '../../../core/state/create-state';
+import { signal } from '../../../core/signals/primitives';
 import type { Presentation, Segment, TextTrack } from '../../../core/types';
 import {
   canLoadTextTrackCues,
@@ -11,20 +10,10 @@ import {
 } from '../load-text-track-cues';
 
 function setupLoadTextTrackCues(initialState: TextTrackCueLoadingState, initialOwners: TextTrackCueLoadingOwners) {
-  const state = createState<TextTrackCueLoadingState>(initialState);
-  const owners = createState<TextTrackCueLoadingOwners>(initialOwners);
-  const [stateSignal, cleanupState] = stateToSignal(state);
-  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
-  const cleanupEffect = loadTextTrackCues({ state: stateSignal, owners: ownersSignal });
-  return {
-    state,
-    owners,
-    cleanup: () => {
-      cleanupEffect();
-      cleanupState();
-      cleanupOwners();
-    },
-  };
+  const state = signal<TextTrackCueLoadingState>(initialState);
+  const owners = signal<TextTrackCueLoadingOwners>(initialOwners);
+  const cleanup = loadTextTrackCues({ state, owners });
+  return { state, owners, cleanup };
 }
 
 // Mock parseVttSegment
@@ -470,7 +459,7 @@ describe('loadTextTrackCues', () => {
       expect(parseVttSegment).toHaveBeenCalledTimes(3);
 
       // Advance currentTime so seg-3 and seg-4 enter the window [15, 45)
-      state.patch({ currentTime: 15 });
+      state.set({ ...state.get(), currentTime: 15 });
 
       await vi.waitFor(() => {
         expect(parseVttSegment).toHaveBeenCalledTimes(5);
@@ -491,7 +480,7 @@ describe('loadTextTrackCues', () => {
       const callsBefore = (parseVttSegment as ReturnType<typeof vi.fn>).mock.calls.map((c) => c[0]);
       expect(callsBefore).toContain('https://example.com/segment-0.vtt');
 
-      state.patch({ currentTime: 15 });
+      state.set({ ...state.get(), currentTime: 15 });
       await vi.waitFor(() => {
         expect(parseVttSegment).toHaveBeenCalledTimes(5);
       });
@@ -508,7 +497,8 @@ describe('loadTextTrackCues', () => {
     it('fetches all segments immediately when the track fits in one window', async () => {
       const { state, cleanup } = makeWindowingSetup(0);
       // Override to a 3-segment track (0,10,20) — all fit in [0,30)
-      state.patch({
+      state.set({
+        ...state.get(),
         presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(3) }]),
       });
 

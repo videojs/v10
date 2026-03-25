@@ -1,24 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { stateToSignal } from '../../../core/signals/bridge';
-import { createState } from '../../../core/state/create-state';
+import { signal } from '../../../core/signals/primitives';
 import type { Presentation, TextSelectionSet } from '../../../core/types';
 import { setupTextTracks, type TextTrackOwners, type TextTrackState } from '../setup-text-tracks';
 
 function setupSetupTextTracks(initialState: TextTrackState = {}, initialOwners: TextTrackOwners = {}) {
-  const state = createState<TextTrackState>(initialState);
-  const owners = createState<TextTrackOwners>(initialOwners);
-  const [stateSignal, cleanupState] = stateToSignal(state);
-  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
-  const cleanupEffect = setupTextTracks({ state: stateSignal, owners: ownersSignal });
-  return {
-    state,
-    owners,
-    cleanup: () => {
-      cleanupEffect();
-      cleanupState();
-      cleanupOwners();
-    },
-  };
+  const state = signal<TextTrackState>(initialState);
+  const owners = signal<TextTrackOwners>(initialOwners);
+  const cleanup = setupTextTracks({ state, owners });
+  return { state, owners, cleanup };
 }
 
 const textPresentation: Presentation = {
@@ -73,7 +62,7 @@ describe('setupTextTracks', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(owners.current.textTracks?.size).toBe(2);
+    expect(owners.get().textTracks?.size).toBe(2);
     expect(mediaElement.children.length).toBe(2);
 
     const track1 = mediaElement.children[0] as HTMLTrackElement;
@@ -101,13 +90,13 @@ describe('setupTextTracks', () => {
     const { state, owners, cleanup } = setupSetupTextTracks({ presentation: textPresentation });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(owners.current.textTracks).toBeUndefined();
+    expect(owners.get().textTracks).toBeUndefined();
 
     const mediaElement = document.createElement('video');
-    owners.patch({ mediaElement });
+    owners.set({ ...owners.get(), mediaElement });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(owners.current.textTracks?.size).toBe(2);
+    expect(owners.get().textTracks?.size).toBe(2);
 
     cleanup();
   });
@@ -117,12 +106,12 @@ describe('setupTextTracks', () => {
     const { state, owners, cleanup } = setupSetupTextTracks({}, { mediaElement });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(owners.current.textTracks).toBeUndefined();
+    expect(owners.get().textTracks).toBeUndefined();
 
-    state.patch({ presentation: textPresentation });
+    state.set({ ...state.get(), presentation: textPresentation });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(owners.current.textTracks?.size).toBe(2);
+    expect(owners.get().textTracks?.size).toBe(2);
 
     cleanup();
   });
@@ -139,7 +128,7 @@ describe('setupTextTracks', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(owners.current.textTracks).toBeUndefined();
+    expect(owners.get().textTracks).toBeUndefined();
     expect(mediaElement.children.length).toBe(0);
 
     cleanup();
@@ -152,15 +141,15 @@ describe('setupTextTracks', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const firstTrackMap = owners.current.textTracks;
+    const firstTrackMap = owners.get().textTracks;
     expect(firstTrackMap?.size).toBe(2);
     expect(mediaElement.children.length).toBe(2);
 
-    state.patch({ selectedTextTrackId: 'text-en' });
+    state.set({ ...state.get(), selectedTextTrackId: 'text-en' });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(owners.current.textTracks).toBe(firstTrackMap);
+    expect(owners.get().textTracks).toBe(firstTrackMap);
     expect(mediaElement.children.length).toBe(2);
 
     cleanup();

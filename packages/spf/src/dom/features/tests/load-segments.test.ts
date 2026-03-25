@@ -3,8 +3,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
-import { stateToSignal } from '../../../core/signals/bridge';
-import { createState } from '../../../core/state/create-state';
+import { signal } from '../../../core/signals/primitives';
 import type { Segment } from '../../../core/types';
 import { createSourceBufferActor } from '../../media/source-buffer-actor';
 import { loadSegments, type SegmentLoadingOwners, type SegmentLoadingState } from '../load-segments';
@@ -122,30 +121,15 @@ function makeSourceBufferWithActor(
   return { sourceBuffer, actor };
 }
 
-/**
- * Bridge helper: wraps WritableState in Signal.State so tests can still use
- * state.patch() / owners.patch() / state.current while loadSegments receives
- * Signal.State. Mirrors the same pattern used in the playback engine.
- */
 function setupLoadSegments(
   initialState: SegmentLoadingState,
   initialOwners: SegmentLoadingOwners,
   type: 'video' | 'audio'
 ) {
-  const state = createState<SegmentLoadingState>(initialState);
-  const owners = createState<SegmentLoadingOwners>(initialOwners);
-  const [stateSignal, cleanupState] = stateToSignal(state);
-  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
-  const cleanupEffect = loadSegments({ state: stateSignal, owners: ownersSignal }, { type });
-  return {
-    state,
-    owners,
-    cleanup: () => {
-      cleanupEffect();
-      cleanupState();
-      cleanupOwners();
-    },
-  };
+  const state = signal<SegmentLoadingState>(initialState);
+  const owners = signal<SegmentLoadingOwners>(initialOwners);
+  const cleanup = loadSegments({ state, owners }, { type });
+  return { state, owners, cleanup };
 }
 
 // ---------------------------------------------------------------------------
@@ -348,12 +332,12 @@ describe('loadSegments orchestration (metadata mode)', () => {
 
     await vi.waitFor(
       () => {
-        expect(owners.current.videoBufferActor?.snapshot.get().context.initTrackId).toBe('track-1');
+        expect(owners.get().videoBufferActor?.snapshot.get().context.initTrackId).toBe('track-1');
       },
       { timeout: 2000 }
     );
 
-    expect(owners.current.videoBufferActor?.snapshot.get().context.segments.length ?? 0).toBe(0);
+    expect(owners.get().videoBufferActor?.snapshot.get().context.segments.length ?? 0).toBe(0);
 
     cleanup();
   });
@@ -377,14 +361,14 @@ describe('loadSegments orchestration (metadata mode)', () => {
 
     await vi.waitFor(
       () => {
-        expect(owners.current.videoBufferActor?.snapshot.get().context.initTrackId).toBe('track-1');
+        expect(owners.get().videoBufferActor?.snapshot.get().context.initTrackId).toBe('track-1');
       },
       { timeout: 2000 }
     );
 
     expect(fetchedUrls).not.toContain('http://example.com/s1.m4s');
 
-    state.patch({ playbackInitiated: true });
+    state.set({ ...state.get(), playbackInitiated: true });
 
     await vi.waitFor(
       () => {
@@ -464,7 +448,7 @@ describe('loadSegments seek handling', () => {
 
     await vi.waitFor(() => expect(fetchedUrls).toContain('http://example.com/init.mp4'));
 
-    state.patch({ currentTime: 60 });
+    state.set({ ...state.get(), currentTime: 60 });
 
     resolve('http://example.com/init.mp4');
 
@@ -499,8 +483,8 @@ describe('loadSegments seek handling', () => {
 
     await vi.waitFor(() => expect(fetchedUrls).toContain('http://example.com/init.mp4'));
 
-    state.patch({ currentTime: 60 });
-    state.patch({ currentTime: 90 });
+    state.set({ ...state.get(), currentTime: 60 });
+    state.set({ ...state.get(), currentTime: 90 });
 
     resolveAll();
 
@@ -539,8 +523,8 @@ describe('loadSegments seek handling', () => {
       'video'
     );
 
-    state.patch({ currentTime: 2 });
-    state.patch({ currentTime: 4 });
+    state.set({ ...state.get() });
+    state.set({ ...state.get() });
 
     await vi.waitFor(
       () => {
@@ -669,7 +653,7 @@ describe('loadSegments back buffer flushing', () => {
       'video'
     );
 
-    await vi.waitFor(() => (owners.current.videoBufferActor?.snapshot.get().context.segments.length ?? 0) > 1, {
+    await vi.waitFor(() => (owners.get().videoBufferActor?.snapshot.get().context.segments.length ?? 0) > 1, {
       timeout: 3000,
     });
 
@@ -707,7 +691,11 @@ describe('loadSegments back buffer flushing', () => {
 
     await vi.waitFor(
       () => {
-        const ids = owners.current.videoBufferActor?.snapshot.get().context.segments.map((s) => s.id) ?? [];
+        const ids =
+          owners
+            .get()
+            .videoBufferActor?.snapshot.get()
+            .context.segments.map((s) => s.id) ?? [];
         expect(ids).not.toContain('s1');
         expect(ids).not.toContain('s2');
       },
@@ -818,7 +806,11 @@ describe('loadSegments forward buffer flushing', () => {
 
     await vi.waitFor(
       () => {
-        const ids = owners.current.videoBufferActor?.snapshot.get().context.segments.map((s) => s.id) ?? [];
+        const ids =
+          owners
+            .get()
+            .videoBufferActor?.snapshot.get()
+            .context.segments.map((s) => s.id) ?? [];
         expect(ids).not.toContain('s4');
         expect(ids).not.toContain('s5');
         expect(ids).toContain('s1');
@@ -919,7 +911,7 @@ describe('loadSegments byte-range segment fetching', () => {
 
     await vi.waitFor(
       () => {
-        expect(owners.current.videoBufferActor?.snapshot.get().context.segments).toHaveLength(2);
+        expect(owners.get().videoBufferActor?.snapshot.get().context.segments).toHaveLength(2);
       },
       { timeout: 3000 }
     );
@@ -967,7 +959,7 @@ describe('loadSegments byte-range segment fetching', () => {
 
     await vi.waitFor(
       () => {
-        expect(owners.current.videoBufferActor?.snapshot.get().context.segments).toHaveLength(1);
+        expect(owners.get().videoBufferActor?.snapshot.get().context.segments).toHaveLength(1);
       },
       { timeout: 3000 }
     );
@@ -1047,15 +1039,15 @@ describe('loadSegments bandwidth tracking', () => {
     // Wait for both init and segment to be appended (actor context will have 1 segment)
     await vi.waitFor(
       () => {
-        expect(owners.current.videoBufferActor?.snapshot.get().context.segments).toHaveLength(1);
+        expect(owners.get().videoBufferActor?.snapshot.get().context.segments).toHaveLength(1);
       },
       { timeout: 3000 }
     );
 
     // All bytes (init + segment) should be counted in bytesSampled
     const totalExpected = chunkSize * numChunks * 2; // init fetch + segment fetch, each 3×50KB
-    expect(state.current.bandwidthState?.bytesSampled).toBeGreaterThan(0);
-    expect(state.current.bandwidthState?.bytesSampled).toBeLessThanOrEqual(totalExpected);
+    expect(state.get().bandwidthState?.bytesSampled).toBeGreaterThan(0);
+    expect(state.get().bandwidthState?.bytesSampled).toBeLessThanOrEqual(totalExpected);
 
     cleanup();
   });
@@ -1109,7 +1101,7 @@ describe('loadSegments bandwidth tracking', () => {
 
     await vi.waitFor(
       () => {
-        expect(owners.current.videoBufferActor?.snapshot.get().context.segments).toHaveLength(1);
+        expect(owners.get().videoBufferActor?.snapshot.get().context.segments).toHaveLength(1);
       },
       { timeout: 3000 }
     );

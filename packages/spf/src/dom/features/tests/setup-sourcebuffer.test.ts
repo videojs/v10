@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { stateToSignal } from '../../../core/signals/bridge';
-import { createState } from '../../../core/state/create-state';
+import { signal } from '../../../core/signals/primitives';
 import type { AudioTrack, Presentation, VideoTrack } from '../../../core/types';
 import {
   buildMimeCodec,
@@ -137,20 +136,10 @@ describe('buildMimeCodec', () => {
 });
 
 function setupSetupSourceBuffers(initialState: SourceBufferState = {}, initialOwners: SourceBufferOwners = {}) {
-  const state = createState<SourceBufferState>(initialState);
-  const owners = createState<SourceBufferOwners>(initialOwners);
-  const [stateSignal, cleanupState] = stateToSignal(state);
-  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
-  const cleanupEffect = setupSourceBuffers({ state: stateSignal, owners: ownersSignal });
-  return {
-    state,
-    owners,
-    cleanup: () => {
-      cleanupEffect();
-      cleanupState();
-      cleanupOwners();
-    },
-  };
+  const state = signal<SourceBufferState>(initialState);
+  const owners = signal<SourceBufferOwners>(initialOwners);
+  const cleanup = setupSourceBuffers({ state, owners });
+  return { state, owners, cleanup };
 }
 
 describe('setupSourceBuffers', () => {
@@ -165,16 +154,17 @@ describe('setupSourceBuffers', () => {
     const { state, owners, cleanup } = setupSetupSourceBuffers();
 
     const mediaSource = {} as MediaSource;
-    owners.patch({ mediaSource });
-    state.patch({
+    owners.set({ ...owners.get(), mediaSource });
+    state.set({
+      ...state.get(),
       presentation: createPresentationWithTracks({ video: videoTrack }),
       selectedVideoTrackId: 'video-1',
     });
 
     await vi.waitFor(() => {
       expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'video/mp4; codecs="avc1.42E01E"');
-      expect(owners.current.videoBuffer).toBeDefined();
-      expect(owners.current.audioBuffer).toBeUndefined();
+      expect(owners.get().videoBuffer).toBeDefined();
+      expect(owners.get().audioBuffer).toBeUndefined();
     });
 
     cleanup();
@@ -187,16 +177,17 @@ describe('setupSourceBuffers', () => {
     const { state, owners, cleanup } = setupSetupSourceBuffers();
 
     const mediaSource = {} as MediaSource;
-    owners.patch({ mediaSource });
-    state.patch({
+    owners.set({ ...owners.get(), mediaSource });
+    state.set({
+      ...state.get(),
       presentation: createPresentationWithTracks({ audio: audioTrack }),
       selectedAudioTrackId: 'audio-1',
     });
 
     await vi.waitFor(() => {
       expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'audio/mp4; codecs="mp4a.40.2"');
-      expect(owners.current.audioBuffer).toBeDefined();
-      expect(owners.current.videoBuffer).toBeUndefined();
+      expect(owners.get().audioBuffer).toBeDefined();
+      expect(owners.get().videoBuffer).toBeUndefined();
     });
 
     cleanup();
@@ -210,8 +201,9 @@ describe('setupSourceBuffers', () => {
     const { state, owners, cleanup } = setupSetupSourceBuffers();
 
     const mediaSource = {} as MediaSource;
-    owners.patch({ mediaSource });
-    state.patch({
+    owners.set({ ...owners.get(), mediaSource });
+    state.set({
+      ...state.get(),
       presentation: createPresentationWithTracks({ video: videoTrack, audio: audioTrack }),
       selectedVideoTrackId: 'video-1',
       selectedAudioTrackId: 'audio-1',
@@ -221,8 +213,8 @@ describe('setupSourceBuffers', () => {
       expect(createSourceBuffer).toHaveBeenCalledTimes(2);
       expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'video/mp4; codecs="avc1.42E01E"');
       expect(createSourceBuffer).toHaveBeenCalledWith(mediaSource, 'audio/mp4; codecs="mp4a.40.2"');
-      expect(owners.current.videoBuffer).toBeDefined();
-      expect(owners.current.audioBuffer).toBeDefined();
+      expect(owners.get().videoBuffer).toBeDefined();
+      expect(owners.get().audioBuffer).toBeDefined();
     });
 
     cleanup();
@@ -244,9 +236,10 @@ describe('setupSourceBuffers', () => {
 
     const { state, owners, cleanup } = setupSetupSourceBuffers();
 
-    owners.patch({ mediaSource: {} as MediaSource });
+    owners.set({ ...owners.get(), mediaSource: {} as MediaSource });
     // Both track IDs selected, but audio track is not yet resolved
-    state.patch({
+    state.set({
+      ...state.get(),
       presentation: createPresentationWithTracks({
         video: videoTrack,
         audio: unresolvedAudioPartial as AudioTrack,
@@ -260,14 +253,15 @@ describe('setupSourceBuffers', () => {
     expect(createSourceBuffer).not.toHaveBeenCalled();
 
     // Now audio resolves
-    state.patch({
+    state.set({
+      ...state.get(),
       presentation: createPresentationWithTracks({ video: videoTrack, audio: unresolvedAudio }),
     });
 
     await vi.waitFor(() => {
       expect(createSourceBuffer).toHaveBeenCalledTimes(2);
-      expect(owners.current.videoBuffer).toBeDefined();
-      expect(owners.current.audioBuffer).toBeDefined();
+      expect(owners.get().videoBuffer).toBeDefined();
+      expect(owners.get().audioBuffer).toBeDefined();
     });
 
     cleanup();
@@ -279,8 +273,9 @@ describe('setupSourceBuffers', () => {
     const videoTrack: VideoTrack = { ...createResolvedVideoTrack(), codecs: [] };
     const { state, owners, cleanup } = setupSetupSourceBuffers();
 
-    owners.patch({ mediaSource: {} as MediaSource });
-    state.patch({
+    owners.set({ ...owners.get(), mediaSource: {} as MediaSource });
+    state.set({
+      ...state.get(),
       presentation: createPresentationWithTracks({ video: videoTrack }),
       selectedVideoTrackId: 'video-1',
     });
@@ -297,15 +292,16 @@ describe('setupSourceBuffers', () => {
     const videoTrack = createResolvedVideoTrack();
     const { state, owners, cleanup } = setupSetupSourceBuffers();
 
-    owners.patch({ mediaSource: {} as MediaSource });
-    state.patch({
+    owners.set({ ...owners.get(), mediaSource: {} as MediaSource });
+    state.set({
+      ...state.get(),
       presentation: createPresentationWithTracks({ video: videoTrack }),
       selectedVideoTrackId: 'video-1',
     });
 
     await vi.waitFor(() => expect(createSourceBuffer).toHaveBeenCalledTimes(1));
 
-    state.patch({ presentation: createPresentationWithTracks({ video: videoTrack }) });
+    state.set({ ...state.get(), presentation: createPresentationWithTracks({ video: videoTrack }) });
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(createSourceBuffer).toHaveBeenCalledTimes(1);
 
@@ -318,7 +314,8 @@ describe('setupSourceBuffers', () => {
     const videoTrack = createResolvedVideoTrack();
     const { state, owners, cleanup } = setupSetupSourceBuffers();
 
-    state.patch({
+    state.set({
+      ...state.get(),
       presentation: createPresentationWithTracks({ video: videoTrack }),
       selectedVideoTrackId: 'video-1',
     });

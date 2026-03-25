@@ -1,23 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { stateToSignal } from '../../../core/signals/bridge';
-import { createState } from '../../../core/state/create-state';
+import { signal } from '../../../core/signals/primitives';
 import { syncTextTrackModes, type TextTrackModeOwners, type TextTrackModeState } from '../sync-text-track-modes';
 
 function setupSyncTextTrackModes(initialState: TextTrackModeState = {}, initialOwners: TextTrackModeOwners = {}) {
-  const state = createState<TextTrackModeState>(initialState);
-  const owners = createState<TextTrackModeOwners>(initialOwners);
-  const [stateSignal, cleanupState] = stateToSignal(state);
-  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
-  const cleanupEffect = syncTextTrackModes({ state: stateSignal, owners: ownersSignal });
-  return {
-    state,
-    owners,
-    cleanup: () => {
-      cleanupEffect();
-      cleanupState();
-      cleanupOwners();
-    },
-  };
+  const state = signal<TextTrackModeState>(initialState);
+  const owners = signal<TextTrackModeOwners>(initialOwners);
+  const cleanup = syncTextTrackModes({ state, owners });
+  return { state, owners, cleanup };
 }
 
 describe('syncTextTrackModes', () => {
@@ -48,7 +37,7 @@ describe('syncTextTrackModes', () => {
       }
     );
 
-    state.patch({ selectedTextTrackId: 'track-en' });
+    state.set({ ...state.get(), selectedTextTrackId: 'track-en' });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(track1.track.mode).toBe('showing');
@@ -82,13 +71,13 @@ describe('syncTextTrackModes', () => {
       }
     );
 
-    state.patch({ selectedTextTrackId: 'track-en' });
+    state.set({ ...state.get(), selectedTextTrackId: 'track-en' });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(track1.track.mode).toBe('showing');
     expect(track2.track.mode).toBe('hidden');
 
-    state.patch({ selectedTextTrackId: 'track-es' });
+    state.set({ ...state.get(), selectedTextTrackId: 'track-es' });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(track1.track.mode).toBe('hidden');
@@ -122,12 +111,12 @@ describe('syncTextTrackModes', () => {
       }
     );
 
-    state.patch({ selectedTextTrackId: 'track-en' });
+    state.set({ ...state.get(), selectedTextTrackId: 'track-en' });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(track1.track.mode).toBe('showing');
 
-    state.patch({ selectedTextTrackId: undefined });
+    state.set({ ...state.get(), selectedTextTrackId: undefined });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(track1.track.mode).toBe('hidden');
@@ -156,7 +145,7 @@ describe('syncTextTrackModes', () => {
 
     const { owners, cleanup } = setupSyncTextTrackModes({ selectedTextTrackId: 'track-en' });
 
-    owners.patch({ textTracks: new Map([['track-en', track1]]) });
+    owners.set({ ...owners.get(), textTracks: new Map([['track-en', track1]]) });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(track1.track.mode).toBe('showing');

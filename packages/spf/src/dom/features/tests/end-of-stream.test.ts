@@ -1,7 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { stateToSignal } from '../../../core/signals/bridge';
 import { signal } from '../../../core/signals/primitives';
-import { createState } from '../../../core/state/create-state';
 import type { Presentation, Segment, VideoTrack } from '../../../core/types';
 import { createSourceBufferActor, type SourceBufferActor } from '../../media/source-buffer-actor';
 import {
@@ -13,26 +11,11 @@ import {
   shouldEndStream,
 } from '../end-of-stream';
 
-/**
- * Wire up endOfStream with WritableState instances, bridging to signals
- * internally. Returns the WritableState containers for patching in tests,
- * plus a combined cleanup.
- */
 function setupEndOfStream(initialState: EndOfStreamState, initialOwners: EndOfStreamOwners) {
-  const state = createState<EndOfStreamState>(initialState);
-  const owners = createState<EndOfStreamOwners>(initialOwners);
-  const [stateSignal, cleanupState] = stateToSignal(state);
-  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
-  const cleanupEffect = endOfStream({ state: stateSignal, owners: ownersSignal });
-  return {
-    state,
-    owners,
-    cleanup: () => {
-      cleanupEffect();
-      cleanupState();
-      cleanupOwners();
-    },
-  };
+  const state = signal<EndOfStreamState>(initialState);
+  const owners = signal<EndOfStreamOwners>(initialOwners);
+  const cleanup = endOfStream({ state, owners });
+  return { state, owners, cleanup };
 }
 
 // ============================================================================
@@ -443,7 +426,7 @@ describe('endOfStream', () => {
     });
 
     // Trigger another state change — readyState is 'ended' so must not call again
-    state.patch({ presentation: makePresentation(track) });
+    state.set({ ...state.get(), presentation: makePresentation(track) });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
@@ -528,7 +511,7 @@ describe('endOfStream', () => {
     (mockMs as unknown as { readyState: string }).readyState = 'ended';
 
     // Trigger a state change — should not call endOfStream() again
-    state.patch({ presentation: makePresentation(track) });
+    state.set({ ...state.get(), presentation: makePresentation(track) });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);

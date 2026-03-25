@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { stateToSignal } from '../../../core/signals/bridge';
-import { createState } from '../../../core/state/create-state';
+import { signal } from '../../../core/signals/primitives';
 import {
   type SelectedTextTrackFromDomOwners,
   type SelectedTextTrackFromDomState,
@@ -8,20 +7,10 @@ import {
 } from '../sync-selected-text-track-from-dom';
 
 function setup(initialState: SelectedTextTrackFromDomState = {}, initialOwners: SelectedTextTrackFromDomOwners = {}) {
-  const state = createState<SelectedTextTrackFromDomState>(initialState);
-  const owners = createState<SelectedTextTrackFromDomOwners>(initialOwners);
-  const [stateSignal, cleanupState] = stateToSignal(state);
-  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
-  const cleanupEffect = syncSelectedTextTrackFromDom({ state: stateSignal, owners: ownersSignal });
-  return {
-    state,
-    owners,
-    cleanup: () => {
-      cleanupEffect();
-      cleanupState();
-      cleanupOwners();
-    },
-  };
+  const state = signal<SelectedTextTrackFromDomState>(initialState);
+  const owners = signal<SelectedTextTrackFromDomOwners>(initialOwners);
+  const cleanup = syncSelectedTextTrackFromDom({ state, owners });
+  return { state, owners, cleanup };
 }
 
 function createSubtitleTrack(mediaElement: HTMLMediaElement, id: string): HTMLTrackElement {
@@ -40,7 +29,7 @@ describe('syncSelectedTextTrackFromDom', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 30));
 
-    expect(state.current.selectedTextTrackId).toBeUndefined();
+    expect(state.get().selectedTextTrackId).toBeUndefined();
 
     cleanup();
   });
@@ -57,7 +46,7 @@ describe('syncSelectedTextTrackFromDom', () => {
     mediaElement.textTracks.dispatchEvent(new Event('change'));
 
     await vi.waitFor(() => {
-      expect(state.current.selectedTextTrackId).toBe('track-en');
+      expect(state.get().selectedTextTrackId).toBe('track-en');
     });
 
     cleanup();
@@ -79,7 +68,7 @@ describe('syncSelectedTextTrackFromDom', () => {
     mediaElement.textTracks.dispatchEvent(new Event('change'));
 
     await vi.waitFor(() => {
-      expect(state.current.selectedTextTrackId).toBe('track-cc');
+      expect(state.get().selectedTextTrackId).toBe('track-cc');
     });
 
     cleanup();
@@ -97,7 +86,7 @@ describe('syncSelectedTextTrackFromDom', () => {
     mediaElement.textTracks.dispatchEvent(new Event('change'));
 
     await vi.waitFor(() => {
-      expect(state.current.selectedTextTrackId).toBeUndefined();
+      expect(state.get().selectedTextTrackId).toBeUndefined();
     });
 
     cleanup();
@@ -123,8 +112,8 @@ describe('syncSelectedTextTrackFromDom', () => {
     mediaElement.textTracks.dispatchEvent(new Event('change'));
 
     await vi.waitFor(() => {
-      expect(state.current.selectedTextTrackId).toBeUndefined();
-      expect(state.current.textBufferState?.['track-en']).toBeUndefined();
+      expect(state.get().selectedTextTrackId).toBeUndefined();
+      expect(state.get().textBufferState?.['track-en']).toBeUndefined();
     });
 
     cleanup();
@@ -151,10 +140,10 @@ describe('syncSelectedTextTrackFromDom', () => {
     mediaElement.textTracks.dispatchEvent(new Event('change'));
 
     await vi.waitFor(() => {
-      expect(state.current.textBufferState?.['track-en']).toBeUndefined();
+      expect(state.get().textBufferState?.['track-en']).toBeUndefined();
     });
 
-    expect(state.current.textBufferState?.['track-fr']).toEqual({ segments: [{ id: 'seg-0' }] });
+    expect(state.get().textBufferState?.['track-fr']).toEqual({ segments: [{ id: 'seg-0' }] });
 
     cleanup();
   });
@@ -176,7 +165,7 @@ describe('syncSelectedTextTrackFromDom', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 30));
 
-    expect(state.current.selectedTextTrackId).toBeUndefined();
+    expect(state.get().selectedTextTrackId).toBeUndefined();
 
     cleanup();
   });
@@ -187,10 +176,8 @@ describe('syncSelectedTextTrackFromDom', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const state = createState<SelectedTextTrackFromDomState>({ selectedTextTrackId: 'track-en' });
-    const owners = createState<SelectedTextTrackFromDomOwners>({ mediaElement });
-    const [stateSignal, cleanupState] = stateToSignal(state);
-    const [ownersSignal, cleanupOwners] = stateToSignal(owners);
+    const stateSignal = signal<SelectedTextTrackFromDomState>({ selectedTextTrackId: 'track-en' });
+    const ownersSignal = signal<SelectedTextTrackFromDomOwners>({ mediaElement });
 
     const setSpy = vi.spyOn(stateSignal, 'set');
 
@@ -204,17 +191,13 @@ describe('syncSelectedTextTrackFromDom', () => {
     expect(setSpy).not.toHaveBeenCalled();
 
     cleanupEffect();
-    cleanupState();
-    cleanupOwners();
   });
 
   it('does not re-register listener when owners updates but mediaElement is unchanged', async () => {
     const mediaElement = document.createElement('video');
 
-    const state = createState<SelectedTextTrackFromDomState>({});
-    const owners = createState<SelectedTextTrackFromDomOwners & { videoBuffer?: unknown }>({ mediaElement });
-    const [stateSignal, cleanupState] = stateToSignal(state);
-    const [ownersSignal, cleanupOwners] = stateToSignal(owners);
+    const stateSignal = signal<SelectedTextTrackFromDomState>({});
+    const ownersSignal = signal<SelectedTextTrackFromDomOwners & { videoBuffer?: unknown }>({ mediaElement });
 
     const addEventListenerSpy = vi.spyOn(mediaElement.textTracks, 'addEventListener');
 
@@ -223,33 +206,31 @@ describe('syncSelectedTextTrackFromDom', () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     const callsBefore = addEventListenerSpy.mock.calls.length;
 
-    owners.patch({ videoBuffer: {} });
+    ownersSignal.set({ ...ownersSignal.get(), videoBuffer: {} as any });
     await new Promise((resolve) => setTimeout(resolve, 20));
 
     expect(addEventListenerSpy.mock.calls.length).toBe(callsBefore);
 
     cleanupEffect();
-    cleanupState();
-    cleanupOwners();
   });
 
   it('starts listening when mediaElement is added later', async () => {
     const { state, owners, cleanup } = setup();
 
     await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(state.current.selectedTextTrackId).toBeUndefined();
+    expect(state.get().selectedTextTrackId).toBeUndefined();
 
     const mediaElement = document.createElement('video');
     const trackEl = createSubtitleTrack(mediaElement, 'track-en');
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    owners.patch({ mediaElement });
+    owners.set({ ...owners.get(), mediaElement });
 
     trackEl.track.mode = 'showing';
     mediaElement.textTracks.dispatchEvent(new Event('change'));
 
     await vi.waitFor(() => {
-      expect(state.current.selectedTextTrackId).toBe('track-en');
+      expect(state.get().selectedTextTrackId).toBe('track-en');
     });
 
     cleanup();
@@ -266,20 +247,20 @@ describe('syncSelectedTextTrackFromDom', () => {
 
     const { state, owners, cleanup } = setup({}, { mediaElement: element1 });
 
-    owners.patch({ mediaElement: element2 });
+    owners.set({ ...owners.get(), mediaElement: element2 });
     await new Promise((resolve) => setTimeout(resolve, 20));
 
     trackEl1.track.mode = 'showing';
     element1.textTracks.dispatchEvent(new Event('change'));
     await new Promise((resolve) => setTimeout(resolve, 30));
 
-    expect(state.current.selectedTextTrackId).toBeUndefined();
+    expect(state.get().selectedTextTrackId).toBeUndefined();
 
     trackEl2.track.mode = 'showing';
     element2.textTracks.dispatchEvent(new Event('change'));
 
     await vi.waitFor(() => {
-      expect(state.current.selectedTextTrackId).toBe('track-fr');
+      expect(state.get().selectedTextTrackId).toBe('track-fr');
     });
 
     cleanup();
@@ -298,6 +279,6 @@ describe('syncSelectedTextTrackFromDom', () => {
     mediaElement.textTracks.dispatchEvent(new Event('change'));
     await new Promise((resolve) => setTimeout(resolve, 30));
 
-    expect(state.current.selectedTextTrackId).toBeUndefined();
+    expect(state.get().selectedTextTrackId).toBeUndefined();
   });
 });

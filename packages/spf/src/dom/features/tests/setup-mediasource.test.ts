@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { stateToSignal } from '../../../core/signals/bridge';
-import { createState } from '../../../core/state/create-state';
+import { signal } from '../../../core/signals/primitives';
 import type { Presentation } from '../../../core/types';
 import { type MediaSourceOwners, type MediaSourceState, setupMediaSource } from '../setup-mediasource';
 
@@ -23,20 +22,10 @@ vi.mock('../../media/mediasource-setup', () => ({
 }));
 
 function setupSetupMediaSource(initialState: MediaSourceState, initialOwners: MediaSourceOwners) {
-  const state = createState<MediaSourceState>(initialState);
-  const owners = createState<MediaSourceOwners>(initialOwners);
-  const [stateSignal, cleanupState] = stateToSignal(state);
-  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
-  const cleanupEffect = setupMediaSource({ state: stateSignal, owners: ownersSignal });
-  return {
-    state,
-    owners,
-    cleanup: () => {
-      cleanupEffect();
-      cleanupState();
-      cleanupOwners();
-    },
-  };
+  const state = signal<MediaSourceState>(initialState);
+  const owners = signal<MediaSourceOwners>(initialOwners);
+  const cleanup = setupMediaSource({ state, owners });
+  return { state, owners, cleanup };
 }
 
 describe('setupMediaSource', () => {
@@ -49,8 +38,9 @@ describe('setupMediaSource', () => {
 
     const { state, owners, cleanup } = setupSetupMediaSource({}, {});
 
-    owners.patch({ mediaElement: {} as HTMLMediaElement });
-    state.patch({
+    owners.set({ ...owners.get(), mediaElement: {} as HTMLMediaElement });
+    state.set({
+      ...state.get(),
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
@@ -74,8 +64,9 @@ describe('setupMediaSource', () => {
     const { state, owners, cleanup } = setupSetupMediaSource({}, {});
     const mediaElement = {} as HTMLMediaElement;
 
-    owners.patch({ mediaElement });
-    state.patch({
+    owners.set({ ...owners.get(), mediaElement });
+    state.set({
+      ...state.get(),
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
@@ -98,14 +89,15 @@ describe('setupMediaSource', () => {
 
     const { state, owners, cleanup } = setupSetupMediaSource({}, {});
 
-    owners.patch({ mediaElement: {} as HTMLMediaElement });
-    state.patch({
+    owners.set({ ...owners.get(), mediaElement: {} as HTMLMediaElement });
+    state.set({
+      ...state.get(),
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
     await vi.waitFor(() => {
-      expect(owners.current.mediaSource).toBe(mockMediaSource);
-      expect(owners.current.mediaSourceReadyState).toBeDefined();
+      expect(owners.get().mediaSource).toBe(mockMediaSource);
+      expect(owners.get().mediaSourceReadyState).toBeDefined();
     });
 
     cleanup();
@@ -116,7 +108,8 @@ describe('setupMediaSource', () => {
 
     const { state, cleanup } = setupSetupMediaSource({}, {});
 
-    state.patch({
+    state.set({
+      ...state.get(),
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
@@ -132,7 +125,7 @@ describe('setupMediaSource', () => {
 
     const { owners, cleanup } = setupSetupMediaSource({}, {});
 
-    owners.patch({ mediaElement: {} as HTMLMediaElement });
+    owners.set({ ...owners.get(), mediaElement: {} as HTMLMediaElement });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -146,8 +139,9 @@ describe('setupMediaSource', () => {
 
     const { state, owners, cleanup } = setupSetupMediaSource({}, {});
 
-    owners.patch({ mediaElement: {} as HTMLMediaElement });
-    state.patch({
+    owners.set({ ...owners.get(), mediaElement: {} as HTMLMediaElement });
+    state.set({
+      ...state.get(),
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 
@@ -155,7 +149,8 @@ describe('setupMediaSource', () => {
       expect(createMediaSource).toHaveBeenCalledTimes(1);
     });
 
-    state.patch({
+    state.set({
+      ...state.get(),
       presentation: { url: 'https://example.com/video.m3u8' } as Presentation,
     });
 

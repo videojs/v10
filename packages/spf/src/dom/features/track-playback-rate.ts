@@ -1,7 +1,6 @@
 import { listen } from '@videojs/utils/dom';
 import { effect } from '../../core/signals/effect';
 import { computed, type Signal } from '../../core/signals/primitives';
-import type { WritableState } from '../../core/state/create-state';
 
 /**
  * State shape for playback rate tracking.
@@ -30,7 +29,7 @@ export function trackPlaybackRate<O extends PlaybackRateOwners>({
   state,
   owners,
 }: {
-  state: WritableState<PlaybackRateState>;
+  state: Signal<PlaybackRateState>;
   owners: Signal<O>;
 }): () => void {
   const mediaElementSignal = computed(() => owners.get().mediaElement);
@@ -40,10 +39,10 @@ export function trackPlaybackRate<O extends PlaybackRateOwners>({
     if (!canTrackPlaybackRate.get()) return;
     const mediaElement = mediaElementSignal.get() as HTMLMediaElement;
 
-    state.patch({ playbackRate: mediaElement.playbackRate });
+    state.set({ ...state.get(), playbackRate: mediaElement.playbackRate });
 
     return listen(mediaElement, 'ratechange', () => {
-      state.patch({ playbackRate: mediaElement.playbackRate });
+      state.set({ ...state.get(), playbackRate: mediaElement.playbackRate });
     });
   });
 
