@@ -104,7 +104,8 @@
     "@videojs/element": "workspace:*",
     "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
-    "@videojs/utils": "workspace:*"
+    "@videojs/utils": "workspace:*",
+    "mux-embed": "^5.17.10"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",

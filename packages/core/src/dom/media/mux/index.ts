@@ -7,7 +7,9 @@ import { HlsMediaTextTracksMixin } from '../hls/text-tracks';
 import { MediaProxyMixin } from '../proxy';
 import { MuxCapLevelController } from './cap-level-controller';
 import { getDRMConfig, toPlaybackIdFromSrc } from './drm';
-import { getErrorFromHlsErrorData, MuxErrorCode, type MuxMediaError } from './errors';
+import { getErrorFromHlsErrorData, MuxErrorCode, MuxMediaError } from './errors';
+export { MuxMediaError };
+
 import { getStreamInfoFromLevelDetails, type StreamInfo } from './stream-info';
 
 const muxHlsConfig = {

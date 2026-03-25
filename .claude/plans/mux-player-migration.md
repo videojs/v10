@@ -133,7 +133,7 @@ Deliverables:
 
 ---
 
-### Phase 5: Mux Data Integration ← **Next**
+### Phase 5: Mux Data Integration ✅ DONE
 
 **Goal:** Playback analytics flow to Mux Data; requires hls.js instance access, so must be inside the delegate.
 
@@ -153,7 +153,7 @@ Deliverables:
 
 ---
 
-### Phase 6: Convenience API (playbackId → URL, tokens)
+### Phase 6: Convenience API (playbackId → URL, tokens) ← **Next**
 
 **Goal:** `<mux-video playback-id="...">` works end-to-end without callers constructing the URL.
 
