@@ -3,13 +3,16 @@ import { getEntry } from 'astro:content';
 import ServerCode from '@/components/Code/ServerCode.astro';
 import FrameworkControl from '../FrameworkControl';
 import BaseDemo from './Base';
-import { generateHTMLCode, generateReactCode } from './baseCode';
+import { generateHTMLCode, generateReactCode, transformEjectedReactCode } from './baseCode';
 import EjectDemo from './Eject';
 
 const defaultVideo = (await getEntry('ejectedSkins', 'default-video'))!.data;
 const defaultVideoReact = (await getEntry('ejectedSkins', 'default-video-react'))!.data;
 const minimalVideo = (await getEntry('ejectedSkins', 'minimal-video'))!.data;
 const minimalVideoReact = (await getEntry('ejectedSkins', 'minimal-video-react'))!.data;
+
+const defaultVideoReactCode = transformEjectedReactCode(defaultVideoReact.tsx!, 'default');
+const minimalVideoReactCode = transformEjectedReactCode(minimalVideoReact.tsx!, 'minimal');
 ---
 
 <section
@@ -76,7 +79,7 @@ const minimalVideoReact = (await getEntry('ejectedSkins', 'minimal-video-react')
       <ServerCode slot="defaultHtmlCss" code={defaultVideo.css!} lang="css" />
       <ServerCode
         slot="defaultReactCode"
-        code={defaultVideoReact.tsx!}
+        code={defaultVideoReactCode}
         lang="tsx"
       />
       <ServerCode
@@ -92,7 +95,7 @@ const minimalVideoReact = (await getEntry('ejectedSkins', 'minimal-video-react')
       <ServerCode slot="minimalHtmlCss" code={minimalVideo.css!} lang="css" />
       <ServerCode
         slot="minimalReactCode"
-        code={minimalVideoReact.tsx!}
+        code={minimalVideoReactCode}
         lang="tsx"
       />
       <ServerCode
