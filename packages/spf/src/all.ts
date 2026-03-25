@@ -100,20 +100,6 @@ export type { ResponseLike } from './dom/network/fetch';
 export { fetchResolvable, getResponseText } from './dom/network/fetch';
 
 // =============================================================================
-// Events (F1)
-// =============================================================================
-
-export type { EventListener, EventStream } from './core/events/create-event-stream';
-export { createEventStream, isEventStream } from './core/events/create-event-stream';
-
-// =============================================================================
-// Reactive Composition (F1)
-// =============================================================================
-
-export type { InferObservableValues, Observable } from './core/reactive/combine-latest';
-export { combineLatest } from './core/reactive/combine-latest';
-
-// =============================================================================
 // Features (F1)
 // =============================================================================
 
