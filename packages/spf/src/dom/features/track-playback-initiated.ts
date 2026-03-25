@@ -24,13 +24,13 @@ export interface PlaybackInitiatedOwners {
 /**
  * Track whether playback has been initiated for the current presentation URL.
  *
- * Models playbackInitiated as a merge of two streams:
- * - false stream: resets on URL change or media element swap
+ * Uses a local intermediate signal written by two effect streams:
+ * - false stream: resets on URL change
  * - true stream: sets on play event
  *
- * Encoded as a version counter pair so the result is a pure computed —
- * `playbackInitiated` is true when the last play happened at or after
- * the last reset, false otherwise.
+ * A third merge effect reads the local signal and writes to state, reading
+ * `state.get()` at merge time so the spread uses the up-to-date value after
+ * the async forward bridge has run.
  *
  * @example
  * const cleanup = trackPlaybackInitiated({ state, owners, events });
@@ -47,46 +47,48 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
   const presentationUrl = computed(() => state.get().presentation?.url);
   const mediaElement = computed(() => owners.get().mediaElement);
 
-  // Version counter pair encoding merge-of-two-streams semantics.
-  // resetVersion bumps on every false-stream trigger (URL change, element swap).
-  // playVersion is set to the current resetVersion when play fires.
-  // playbackInitiated is true iff play happened at or after the last reset.
-  let resetCount = 0;
-  const resetVersion = signal(0);
-  const playVersion = signal(-1);
+  // Local signal: written by the URL effect (false) and the play listener (true).
+  // undefined = not yet initialized (suppresses the merge effect on startup).
+  const playbackInitiated = signal<boolean | undefined>(undefined);
 
-  const playbackInitiated = computed(() => playVersion.get() >= resetVersion.get());
+  let lastPresentationUrl: string | undefined;
+  let lastMediaElement: HTMLMediaElement | undefined;
 
-  // False stream: bump resetVersion on URL change or element swap.
+  // False stream: reset on URL change or element swap.
   const cleanupResetEffect = effect(() => {
-    presentationUrl.get();
-    mediaElement.get();
-    resetVersion.set(++resetCount);
+    const url = presentationUrl.get();
+    const el = mediaElement.get();
+
+    const urlChanged = url !== lastPresentationUrl;
+    const elChanged = el !== lastMediaElement;
+
+    if ((urlChanged && lastPresentationUrl !== undefined) || (elChanged && lastMediaElement !== undefined)) {
+      playbackInitiated.set(false);
+    }
+
+    lastPresentationUrl = url;
+    lastMediaElement = el;
   });
 
-  // True stream: set playVersion to current resetVersion when play fires.
-  // Reading resetVersion.get() inside the listener is safe — event callbacks
-  // run outside the effect's tracking context, so no dependency is created.
+  // True stream: set on play event. Cleanup return removes the listener on element swap.
   const cleanupPlayEffect = effect(() => {
     const el = mediaElement.get();
     if (!el) return;
     return listen(el, 'play', () => {
-      playVersion.set(resetVersion.get());
-      // TODO: remove once resolvePresentation migrates to signals
+      playbackInitiated.set(true);
       events.dispatch({ type: 'play' });
     });
   });
 
-  // Bridge: signal graph → state.
-  // playbackInitiated starts false (playVersion=-1 < resetVersion=1 after init).
-  // The merge effect only runs on genuine false→true or true→false transitions,
-  // so no spurious writes on init.
+  // Merge effect: bridge local signal → state.
+  // Reads state.get() at merge time (after the async forward bridge has flushed)
+  // so the spread captures the current value rather than a stale event-time snapshot.
+  // The guard makes the write idempotent.
   const cleanupMergeEffect = effect(() => {
     const pi = playbackInitiated.get();
+    if (pi === undefined) return;
     const current = state.get();
-    if (current.playbackInitiated !== pi) {
-      state.set({ ...current, playbackInitiated: pi } as S);
-    }
+    if (current.playbackInitiated !== pi) state.set({ ...current, playbackInitiated: pi } as S);
   });
 
   return () => {
