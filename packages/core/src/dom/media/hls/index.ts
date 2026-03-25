@@ -175,30 +175,25 @@ export class HlsMediaDelegateBase implements Delegate {
 
     if (!this.#target || !this.#engine) return;
 
-    if (this.preload === 'auto' || !this.#target.paused) {
+    const preload = (length?: number, size?: number) => {
+      if (!this.#engine) return;
+      this.#engine.config.maxBufferLength = length ?? this.#defaultMaxBufferLength;
+      this.#engine.config.maxBufferSize = size ?? this.#defaultMaxBufferSize;
       this.#engine.startLoad();
+    };
+
+    if (this.preload === 'auto' || !this.#target.paused) {
+      preload();
       return;
     }
 
-    let preloadOnPlay: (() => void) | undefined;
-
-    if (this.preload === 'none') {
-      preloadOnPlay = () => this.#engine?.startLoad();
-    } else {
-      this.#engine.config.maxBufferLength = 1;
-      this.#engine.config.maxBufferSize = 1;
-      this.#engine.startLoad();
-
-      preloadOnPlay = () => {
-        if (!this.#engine) return;
-        this.#engine.config.maxBufferLength = this.#defaultMaxBufferLength;
-        this.#engine.config.maxBufferSize = this.#defaultMaxBufferSize;
-      };
+    if (this.preload === 'metadata') {
+      // This is preload="metadata". Load the least amount of data possible.
+      preload(1, 1);
     }
 
     this.#preloadOnPlayAbort = new AbortController();
-
-    this.#target.addEventListener('play', preloadOnPlay, {
+    this.#target.addEventListener('play', () => preload(), {
       signal: this.#preloadOnPlayAbort.signal,
       once: true,
     });
