@@ -10,10 +10,10 @@
 | Phase | Description | hls.js | Native |
 |-------|-------------|--------|--------|
 | 1 | `MuxHlsMediaDelegate` + `MuxVideo` element | ✅ Done | ✅ Done (implicit MSE fallback; no explicit `prefer-playback` yet) |
-| 2 | Stream type detection | ✅ Done | ⚠️ Not yet implemented (currently stays `unknown`/`NaN`; reference `mux-player` infers from native events) |
-| 3 | Error handling | ✅ Done | ⚠️ Not yet implemented (browser `error` events not yet mapped to `MuxMediaError`; reference `mux-player` does this) |
-| 4 | DRM | ✅ Done (Widevine, PlayReady, FairPlay via EME) | ⚠️ Not yet implemented (no EME or WebKit FairPlay wiring; reference `mux-player` handles both) |
-| 5 | Mux Data integration | ✅ Done | ⚠️ Not yet implemented (monitoring skipped when `engine` is null; reference `mux-player` monitors native playback) |
+| 2 | Stream type detection | ✅ Done | ⚠️ Not yet implemented. Requires independent `fetch()` + parse of the multivariant and media playlists (`#EXT-X-PLAYLIST-TYPE`, `#EXT-X-PART-INF`, `#EXT-X-TARGETDURATION`). Reference: `playback-core/src/index.ts:getStreamInfoFromSrcAndType()`. |
+| 3 | Error handling | ✅ Done | ⚠️ Not yet implemented. Requires listening to native `error` events, then doing a follow-up `fetch(src)` to recover the HTTP status code for accurate error classification. Reference: `playback-core/src/index.ts:handleNativeError()`. |
+| 4 | DRM | ✅ Done (Widevine, PlayReady, FairPlay via EME) | ⚠️ Not yet implemented. Requires two separate FairPlay code paths: modern EME (`eme-fairplay.ts`) and legacy WebKit (`webkit-fairplay.ts`, needed for AirPlay). Both fetch app cert + license from `license.mux.com`. |
+| 5 | Mux Data integration | ✅ Done | ⚠️ Not yet implemented. `mux.monitor()` supports native playback without an `hlsjs` argument — the monitoring call is simply skipped when `engine` is null. Needs to call `setupMuxData` with `engine: null` and omit the `hlsjs` option. |
 | 6 | Convenience API (`playbackId` → URL, tokens, `prefer-playback`) | ⏳ Not started | ⏳ Not started (`prefer-playback='native'` is gating item) |
 | 7 | `MuxPlayer` UI | ⏳ Not started | ⏳ Not started |
 
@@ -264,9 +264,7 @@ packages/html/src/define/
 ## Cross-Cutting Concerns
 
 - **`redundant_streams=true`**: Always appended by default (matches `DEFAULT_EXTRA_PLAYLIST_PARAMS` in mux-player). Can be disabled via `extra-source-params`.
-- **Native playback (Safari iOS)**: `preferPlayback='native'` skips hls.js entirely; `mediaEl.src` is set directly. The explicit opt-in is deferred to Phase 6. An implicit MSE-unavailable fallback is already wired (`Hls.isSupported() === false` → `target.src = src`). Two known gaps on the native path:
-  - **No stream type detection**: `streamType`/`targetLiveWindow`/`liveEdgeOffset` stay at their unknown/NaN defaults — there is no fallback heuristic (e.g. `video.duration === Infinity` after `loadedmetadata`) for the native path.
-  - **No DRM**: the DRM engine-recreation block in `set src` is gated on `this.#engine`; on the native path no EME configuration happens. WebKit FairPlay (`webkitGenerateKeyRequest`/`webkitAddKey`) is also unimplemented. Deferred to Phase 6 alongside `prefer-playback='native'`.
+- **Native playback (Safari iOS)**: `preferPlayback='native'` skips hls.js entirely; `mediaEl.src` is set directly. The explicit opt-in is deferred to Phase 6. An implicit MSE-unavailable fallback is already wired (`Hls.isSupported() === false` → `target.src = src`). The native path requires four independent implementations that are not yet ported (see status table). The reference `playback-core` handles all four via explicit native-path code: manifest fetch+parse for stream type, native `error` event + follow-up `fetch` for error classification, `eme-fairplay.ts`/`webkit-fairplay.ts` for DRM, and `mux.monitor()` called without `hlsjs` for analytics.
 - **Autoplay**: Smart autoplay (muted fallback, live-edge seeking) is deferred. VJS v10 has an existing autoplay feature; Mux-specific live-edge-seek behavior can be added as a feature slice.
 - **Audio-only**: Requires UI suppression of video-specific controls. Tracked in the Notion matrix as ⚠️ for HlsVideo. Defer to Phase 7.
 - **CMCD**: `preferCmcd` attribute. Deferred; hls.js supports it natively.
