@@ -345,7 +345,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     syncSelectedTextTrackFromDom({ state: stateSignal, owners: ownersSignal }),
 
     // 9. Load text track cues (when track resolved and mode set)
-    loadTextTrackCues({ state, owners }),
+    loadTextTrackCues({ state: stateSignal, owners: ownersSignal }),
   ];
 
   // Dispatch synthetic initialize event to satisfy combineLatest

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { stateToSignal } from '../../../core/signals/bridge';
 import { createState } from '../../../core/state/create-state';
 import type { Presentation, Segment, TextTrack } from '../../../core/types';
 import {
@@ -8,6 +9,23 @@ import {
   type TextTrackCueLoadingOwners,
   type TextTrackCueLoadingState,
 } from '../load-text-track-cues';
+
+function setupLoadTextTrackCues(initialState: TextTrackCueLoadingState, initialOwners: TextTrackCueLoadingOwners) {
+  const state = createState<TextTrackCueLoadingState>(initialState);
+  const owners = createState<TextTrackCueLoadingOwners>(initialOwners);
+  const [stateSignal, cleanupState] = stateToSignal(state);
+  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
+  const cleanupEffect = loadTextTrackCues({ state: stateSignal, owners: ownersSignal });
+  return {
+    state,
+    owners,
+    cleanup: () => {
+      cleanupEffect();
+      cleanupState();
+      cleanupOwners();
+    },
+  };
+}
 
 // Mock parseVttSegment
 vi.mock('../../text/parse-vtt-segment', () => ({
@@ -196,15 +214,13 @@ describe('loadTextTrackCues', () => {
 
       const { trackElement, addCueSpy } = makeTrackWithPersistentCues();
 
-      const state = createState<TextTrackCueLoadingState>({
-        selectedTextTrackId: 'text-1',
-        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(3) }]),
-      });
-      const owners = createState<TextTrackCueLoadingOwners>({
-        textTracks: new Map([['text-1', trackElement]]),
-      });
-
-      const cleanup = loadTextTrackCues({ state, owners });
+      const { cleanup } = setupLoadTextTrackCues(
+        {
+          selectedTextTrackId: 'text-1',
+          presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(3) }]),
+        },
+        { textTracks: new Map([['text-1', trackElement]]) }
+      );
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(addCueSpy).toHaveBeenCalledTimes(3);
@@ -220,15 +236,13 @@ describe('loadTextTrackCues', () => {
 
       const { trackElement, addCueSpy } = makeTrackWithPersistentCues();
 
-      const state = createState<TextTrackCueLoadingState>({
-        selectedTextTrackId: 'text-1',
-        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(2) }]),
-      });
-      const owners = createState<TextTrackCueLoadingOwners>({
-        textTracks: new Map([['text-1', trackElement]]),
-      });
-
-      const cleanup = loadTextTrackCues({ state, owners });
+      const { cleanup } = setupLoadTextTrackCues(
+        {
+          selectedTextTrackId: 'text-1',
+          presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(2) }]),
+        },
+        { textTracks: new Map([['text-1', trackElement]]) }
+      );
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(addCueSpy).toHaveBeenCalledTimes(1);
@@ -243,15 +257,13 @@ describe('loadTextTrackCues', () => {
 
       const { trackElement, addCueSpy } = makeTrackWithPersistentCues();
 
-      const state = createState<TextTrackCueLoadingState>({
-        selectedTextTrackId: 'text-1',
-        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(2) }]),
-      });
-      const owners = createState<TextTrackCueLoadingOwners>({
-        textTracks: new Map([['text-1', trackElement]]),
-      });
-
-      const cleanup = loadTextTrackCues({ state, owners });
+      const { cleanup } = setupLoadTextTrackCues(
+        {
+          selectedTextTrackId: 'text-1',
+          presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(2) }]),
+        },
+        { textTracks: new Map([['text-1', trackElement]]) }
+      );
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(addCueSpy).toHaveBeenCalledTimes(2);
@@ -266,15 +278,13 @@ describe('loadTextTrackCues', () => {
 
       const { trackElement, addCueSpy } = makeTrackWithPersistentCues();
 
-      const state = createState<TextTrackCueLoadingState>({
-        selectedTextTrackId: 'text-1',
-        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(2) }]),
-      });
-      const owners = createState<TextTrackCueLoadingOwners>({
-        textTracks: new Map([['text-1', trackElement]]),
-      });
-
-      const cleanup = loadTextTrackCues({ state, owners });
+      const { cleanup } = setupLoadTextTrackCues(
+        {
+          selectedTextTrackId: 'text-1',
+          presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(2) }]),
+        },
+        { textTracks: new Map([['text-1', trackElement]]) }
+      );
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       // 3 unique cues — boundary cue added only once
@@ -284,14 +294,7 @@ describe('loadTextTrackCues', () => {
   });
 
   it('does nothing when track not selected', async () => {
-    const state = createState<TextTrackCueLoadingState>({
-      presentation: createMockPresentation([]),
-    });
-    const owners = createState<TextTrackCueLoadingOwners>({
-      textTracks: new Map(),
-    });
-
-    const cleanup = loadTextTrackCues({ state, owners });
+    const { cleanup } = setupLoadTextTrackCues({ presentation: createMockPresentation([]) }, { textTracks: new Map() });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -307,20 +310,13 @@ describe('loadTextTrackCues', () => {
     video.appendChild(trackElement);
     trackElement.track.mode = 'hidden'; // Enable cue access
 
-    const state = createState<TextTrackCueLoadingState>({
-      selectedTextTrackId: 'text-1',
-      presentation: createMockPresentation([
-        {
-          id: 'text-1',
-          segments: createMockSegments(1),
-        },
-      ]),
-    });
-    const owners = createState<TextTrackCueLoadingOwners>({
-      textTracks: new Map([['text-1', trackElement]]),
-    });
-
-    const cleanup = loadTextTrackCues({ state, owners });
+    const { cleanup } = setupLoadTextTrackCues(
+      {
+        selectedTextTrackId: 'text-1',
+        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(1) }]),
+      },
+      { textTracks: new Map([['text-1', trackElement]]) }
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -337,20 +333,13 @@ describe('loadTextTrackCues', () => {
     video.appendChild(trackElement);
     trackElement.track.mode = 'hidden'; // Enable cue access
 
-    const state = createState<TextTrackCueLoadingState>({
-      selectedTextTrackId: 'text-1',
-      presentation: createMockPresentation([
-        {
-          id: 'text-1',
-          segments: createMockSegments(3),
-        },
-      ]),
-    });
-    const owners = createState<TextTrackCueLoadingOwners>({
-      textTracks: new Map([['text-1', trackElement]]),
-    });
-
-    const cleanup = loadTextTrackCues({ state, owners });
+    const { cleanup } = setupLoadTextTrackCues(
+      {
+        selectedTextTrackId: 'text-1',
+        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(3) }]),
+      },
+      { textTracks: new Map([['text-1', trackElement]]) }
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -373,26 +362,24 @@ describe('loadTextTrackCues', () => {
     video.appendChild(trackElement);
     trackElement.track.mode = 'hidden'; // Enable cue access
 
-    const state = createState<TextTrackCueLoadingState>({
-      selectedTextTrackId: 'text-1',
-      presentation: createMockPresentation([
-        {
-          id: 'text-1',
-          segments: [
-            { id: 'seg-0', url: 'https://example.com/segment-0.vtt', duration: 10, startTime: 0 },
-            { id: 'seg-1', url: 'https://example.com/fail.vtt', duration: 10, startTime: 10 },
-            { id: 'seg-2', url: 'https://example.com/segment-2.vtt', duration: 10, startTime: 20 },
-          ] as Segment[],
-        },
-      ]),
-    });
-    const owners = createState<TextTrackCueLoadingOwners>({
-      textTracks: new Map([['text-1', trackElement]]),
-    });
-
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const cleanup = loadTextTrackCues({ state, owners });
+    const { cleanup } = setupLoadTextTrackCues(
+      {
+        selectedTextTrackId: 'text-1',
+        presentation: createMockPresentation([
+          {
+            id: 'text-1',
+            segments: [
+              { id: 'seg-0', url: 'https://example.com/segment-0.vtt', duration: 10, startTime: 0 },
+              { id: 'seg-1', url: 'https://example.com/fail.vtt', duration: 10, startTime: 10 },
+              { id: 'seg-2', url: 'https://example.com/segment-2.vtt', duration: 10, startTime: 20 },
+            ] as Segment[],
+          },
+        ]),
+      },
+      { textTracks: new Map([['text-1', trackElement]]) }
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -418,20 +405,13 @@ describe('loadTextTrackCues', () => {
     const video = document.createElement('video');
     video.appendChild(trackElement);
 
-    const state = createState<TextTrackCueLoadingState>({
-      selectedTextTrackId: 'text-999',
-      presentation: createMockPresentation([
-        {
-          id: 'text-1',
-          segments: createMockSegments(1),
-        },
-      ]),
-    });
-    const owners = createState<TextTrackCueLoadingOwners>({
-      textTracks: new Map([['text-999', trackElement]]),
-    });
-
-    const cleanup = loadTextTrackCues({ state, owners });
+    const { cleanup } = setupLoadTextTrackCues(
+      {
+        selectedTextTrackId: 'text-999',
+        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(1) }]),
+      },
+      { textTracks: new Map([['text-999', trackElement]]) }
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -451,26 +431,20 @@ describe('loadTextTrackCues', () => {
       video.appendChild(trackElement);
       trackElement.track.mode = 'hidden';
 
-      const state = createState<TextTrackCueLoadingState>({
-        selectedTextTrackId: 'text-1',
-        currentTime,
-        presentation: createMockPresentation([
-          {
-            id: 'text-1',
-            segments: createMockSegments(5), // 5 × 10s segments: 0,10,20,30,40
-          },
-        ]),
-      });
-      const owners = createState<TextTrackCueLoadingOwners>({
-        textTracks: new Map([['text-1', trackElement]]),
-      });
+      const { state, owners, cleanup } = setupLoadTextTrackCues(
+        {
+          selectedTextTrackId: 'text-1',
+          currentTime,
+          presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(5) }]),
+        },
+        { textTracks: new Map([['text-1', trackElement]]) }
+      );
 
-      return { state, owners, trackElement };
+      return { state, owners, cleanup, trackElement };
     }
 
     it('only fetches segments within the forward buffer window at the initial position', async () => {
-      const { state, owners } = makeWindowingSetup(0);
-      const cleanup = loadTextTrackCues({ state, owners });
+      const { cleanup } = makeWindowingSetup(0);
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -487,8 +461,7 @@ describe('loadTextTrackCues', () => {
     });
 
     it('fetches new in-window segments when currentTime advances', async () => {
-      const { state, owners } = makeWindowingSetup(0);
-      const cleanup = loadTextTrackCues({ state, owners });
+      const { state, cleanup } = makeWindowingSetup(0);
 
       // Wait for initial window load (seg-0..seg-2)
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -510,8 +483,7 @@ describe('loadTextTrackCues', () => {
     });
 
     it('does not re-fetch already-loaded segments when the window advances', async () => {
-      const { state, owners } = makeWindowingSetup(0);
-      const cleanup = loadTextTrackCues({ state, owners });
+      const { state, cleanup } = makeWindowingSetup(0);
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -534,13 +506,11 @@ describe('loadTextTrackCues', () => {
     });
 
     it('fetches all segments immediately when the track fits in one window', async () => {
-      const { state, owners } = makeWindowingSetup(0);
+      const { state, cleanup } = makeWindowingSetup(0);
       // Override to a 3-segment track (0,10,20) — all fit in [0,30)
       state.patch({
         presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(3) }]),
       });
-
-      const cleanup = loadTextTrackCues({ state, owners });
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
