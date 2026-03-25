@@ -1502,6 +1502,18 @@ function flattenErrorClasses(source: string): string {
 }
 
 /**
+ * Move the destructured props from the skin function body into the function
+ * argument so the signature reads e.g.:
+ *   `function VideoSkin({ children, className, poster, ...rest }: VideoSkinProps)`
+ */
+function destructureSkinProps(source: string): string {
+  return source.replace(
+    /export function (\w+Skin\w*)\(props: (\w+Props)\): ReactNode \{\n\s*const \{ (.+?) \} = props;\n/,
+    'export function $1({ $3 }: $2): ReactNode {\n'
+  );
+}
+
+/**
  * Add a Player section to the ejected React output: imports for createPlayer,
  * Video/Audio, and features; an exported Player instance; a typed Props
  * interface; and an exported VideoPlayer/AudioPlayer component with @example.
@@ -1615,6 +1627,9 @@ async function processReactSkin(skin: ReactSkinDef): Promise<{ tsx: string; jsx:
 
   // 11. Add Player section (createPlayer, imports, VideoPlayer/AudioPlayer component)
   tsx = addPlayerSection(tsx, getSkinMediaType(skin));
+
+  // 12. Destructure skin props in function argument instead of body
+  tsx = destructureSkinProps(tsx);
 
   const jsx = tsxToJsx(tsx);
 
