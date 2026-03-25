@@ -85,8 +85,8 @@ export class HlsMediaDelegateBase implements Delegate {
   }
 
   set preload(value: PreloadType) {
-    if (this.#target?.preload === value) return;
-    this.#target!.preload = value;
+    if (!this.#target || this.#target.preload === value) return;
+    this.#target.preload = value;
     this.#updatePreload();
   }
 
