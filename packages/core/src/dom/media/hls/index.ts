@@ -1,5 +1,4 @@
 import Hls from 'hls.js';
-
 import { type Delegate, DelegateMixin } from '../../../core/media/delegate';
 import { CustomVideoElement } from '../custom-media-element';
 import { VideoProxy } from '../proxy';
@@ -9,6 +8,7 @@ export { Hls };
 
 export type PlaybackType = (typeof PlaybackTypes)[keyof typeof PlaybackTypes];
 export type SourceType = (typeof SourceTypes)[keyof typeof SourceTypes];
+export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 
 export const PlaybackTypes = {
   MSE: 'mse',
@@ -26,16 +26,19 @@ const defaultConfig = {
   liveDurationInfinity: true,
   capLevelToPlayerSize: true,
   capLevelOnFPSDrop: true,
+  // Disable auto quality level/fragment loading (preload).
+  autoStartLoad: false,
 };
 
 export class HlsMediaDelegateBase implements Delegate {
-  #target: EventTarget | null = null;
+  #target: HTMLMediaElement | null = null;
   #engine: Hls | null = null;
   #loadRequested?: Promise<void> | null;
   #src: string = '';
   #debug: boolean = false;
   #type: SourceType | undefined;
   #preferPlayback: PlaybackType | undefined = 'mse';
+  #preloadOnPlayAbort?: AbortController;
 
   constructor() {
     this.#initialize();
@@ -71,6 +74,16 @@ export class HlsMediaDelegateBase implements Delegate {
   /** The underlying hls.js instance, or `null` when using native playback. */
   get engine(): Hls | null {
     return this.#engine;
+  }
+
+  get preload(): PreloadType {
+    return this.#target?.preload || 'metadata';
+  }
+
+  set preload(value: PreloadType) {
+    if (this.#target?.preload === value) return;
+    this.#target!.preload = value;
+    this.#updatePreload();
   }
 
   /** Explicit source type. When unset, inferred from the source URL extension. */
@@ -129,25 +142,63 @@ export class HlsMediaDelegateBase implements Delegate {
   load(): void {
     if (this.#engine) {
       this.#engine.loadSource(this.#src);
+      this.#updatePreload();
     } else if (this.#target) {
       (this.#target as HTMLMediaElement).src = this.#src;
     }
   }
 
-  attach(target: EventTarget): void {
+  attach(target: HTMLMediaElement): void {
     this.#target = target;
-    this.#engine?.attachMedia(target as HTMLMediaElement);
+    this.#engine?.attachMedia(target);
   }
 
   detach(): void {
+    this.#preloadOnPlayAbort?.abort();
     this.#engine?.detachMedia();
     this.#target = null;
   }
 
   destroy(): void {
+    this.#preloadOnPlayAbort?.abort();
     this.#engine?.destroy();
     this.#engine = null;
     this.#target = null;
+  }
+
+  #updatePreload(): void {
+    if (!this.#target || !this.#engine) return;
+
+    if (this.preload === 'auto' || !this.#target.paused) {
+      this.#engine.startLoad();
+      return;
+    }
+
+    let preloadOnPlay: (() => void) | undefined;
+
+    if (this.preload === 'none') {
+      preloadOnPlay = () => this.#engine?.startLoad();
+    } else {
+      const originalLength = this.#engine.config.maxBufferLength;
+      const originalSize = this.#engine.config.maxBufferSize;
+      // Load the least amount of data possible...
+      this.#engine.config.maxBufferLength = 1;
+      this.#engine.config.maxBufferSize = 1;
+      // and once a user has played, allow for it to load data as normal.
+      preloadOnPlay = () => {
+        if (!this.#engine) return;
+        this.#engine.config.maxBufferLength = originalLength;
+        this.#engine.config.maxBufferSize = originalSize;
+      };
+      this.#engine.startLoad();
+    }
+
+    this.#preloadOnPlayAbort = new AbortController();
+
+    this.#target.addEventListener('play', preloadOnPlay, {
+      signal: this.#preloadOnPlayAbort.signal,
+      once: true,
+    });
   }
 }
 
