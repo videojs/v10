@@ -352,19 +352,24 @@ nested inside an owners object, tracked transitively by `Signal.Computed`/`effec
 
 - **Why**: dual subscriptions + event dispatch bridge; interesting because it responds to
   two independent signals firing in sequence
-- **Write-back**: `state.set({ ...current, playbackInitiated })` via a **local intermediate signal**
-- **Complexity**: medium → required local signal + merge effect to avoid WritableState→Signal
-  forward bridge race condition
-- **Key pattern**: when a DOM event handler needs to write to the shared state signal,
-  write to a **local signal** instead. A separate merge effect reads both the local signal
-  AND `state.get()` at merge time — guaranteeing the spread uses the up-to-date state
-  (after the async forward bridge has run), not a stale snapshot captured at event time.
-  The guard `if (current.playbackInitiated !== pi)` makes the merge idempotent.
-- **TODO (revisit next session)**: the local signal + merge effect workaround is a symptom
-  of the async bridge race condition, not a root-cause fix. Consider whether the bridge
-  itself should be improved (e.g. merge semantics on forward, or synchronous delivery) so
-  event handlers can write directly to the shared state signal without a spread hazard.
-  The right fix may also inform how Steps 12–13 handle their own write-backs.
+- **Write-back**: `state.set({ ...current, playbackInitiated })` via version-counter computed
+- **Complexity**: medium → explored two approaches; both committed for reference
+- **Approach A — local signal + merge effect** (commit `fd5bd911`):
+  - A local `signal<boolean | undefined>` is written by the reset effect (false) and the
+    play listener (true). A third merge effect reads it and patches state at merge time,
+    reading `state.get()` fresh so the spread is not stale.
+  - `undefined` sentinel suppresses the merge effect on startup.
+  - Hit an async bridge race condition: the forward bridge fires asynchronously, so a
+    `true` written by the play listener could be overwritten by a stale `false` from the
+    bridge flush before the merge effect ran.
+- **Approach B — version-counter computed** (commit `a1fe1557`, current HEAD):
+  - `resetVersion` bumps on URL change or element swap; `playVersion` is set to
+    `resetVersion.get()` when play fires. `playbackInitiated = computed(() => playVersion.get() >= resetVersion.get())`.
+  - Pure computed — no writes on init, no race condition possible.
+  - Merge effect only writes on genuine transitions (idempotent guard preserved).
+- **Key pattern (version counters)**: encode "last write wins" / merge-of-two-streams
+  semantics as a counter pair. The computed is pure; the only imperative writes are the
+  counter increments, which happen in well-defined reactive contexts.
 
 ### ⬜ Step 12 — `syncSelectedTextTrackFromDom`
 
