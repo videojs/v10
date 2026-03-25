@@ -241,7 +241,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     // 0b. Bridge media element play event → state.playbackInitiated + event stream
     //     Enables preload="none"/"metadata" resolution via native controls / element.play()
     // @ts-expect-error - EventStream type variance
-    trackPlaybackInitiated({ state, owners, events }),
+    trackPlaybackInitiated({ state: stateSignal, owners: ownersSignal, events }),
 
     // 1. Resolve presentation (URL already in state)
     // @ts-expect-error - EventStream type variance

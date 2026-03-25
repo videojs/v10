@@ -348,12 +348,23 @@ nested inside an owners object, tracked transitively by `Signal.Computed`/`effec
   by `ReadonlySignal<T>` exported from `primitives.ts`.
 - **Bundle impact**: zero — factory wrappers are just thin callsites, tree-shaken away.
 
-### ⬜ Step 11 — `trackPlaybackInitiated`
+### ✅ Step 11 — `trackPlaybackInitiated`
 
 - **Why**: dual subscriptions + event dispatch bridge; interesting because it responds to
   two independent signals firing in sequence
-- **Write-back**: dispatches to `events` stream, no state write-back
-- **Complexity**: medium
+- **Write-back**: `state.set({ ...current, playbackInitiated })` via a **local intermediate signal**
+- **Complexity**: medium → required local signal + merge effect to avoid WritableState→Signal
+  forward bridge race condition
+- **Key pattern**: when a DOM event handler needs to write to the shared state signal,
+  write to a **local signal** instead. A separate merge effect reads both the local signal
+  AND `state.get()` at merge time — guaranteeing the spread uses the up-to-date state
+  (after the async forward bridge has run), not a stale snapshot captured at event time.
+  The guard `if (current.playbackInitiated !== pi)` makes the merge idempotent.
+- **TODO (revisit next session)**: the local signal + merge effect workaround is a symptom
+  of the async bridge race condition, not a root-cause fix. Consider whether the bridge
+  itself should be improved (e.g. merge semantics on forward, or synchronous delivery) so
+  event handlers can write directly to the shared state signal without a spread hazard.
+  The right fix may also inform how Steps 12–13 handle their own write-backs.
 
 ### ⬜ Step 12 — `syncSelectedTextTrackFromDom`
 

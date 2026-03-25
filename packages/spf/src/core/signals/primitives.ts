@@ -1,5 +1,8 @@
 import { Signal as SignalNS } from 'signal-polyfill';
 
+/** Read a signal value without tracking it as a dependency. */
+export const untrack: <T>(fn: () => T) => T = SignalNS.subtle.untrack;
+
 /** A writable reactive value (read + write). */
 export type Signal<T> = SignalNS.State<T>;
 
