@@ -1556,7 +1556,9 @@ function addPlayerSection(source: string, mediaType: MediaType): string {
 
   // Find the end of the last import statement and insert after it
   const lastImportIdx = findLastImportEnd(source);
-  source = `${source.slice(0, lastImportIdx)}\n\n${playerBlock}\n${source.slice(lastImportIdx)}`;
+  const before = source.slice(0, lastImportIdx).trimEnd();
+  const after = source.slice(lastImportIdx).trimStart();
+  source = `${before}\n\n${playerBlock}\n\n${after}`;
 
   return source;
 }
