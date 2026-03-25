@@ -1,15 +1,16 @@
 import { listen } from '@videojs/utils/dom';
 import type { EventStream } from '../../core/events/create-event-stream';
 import type { PresentationAction } from '../../core/features/resolve-presentation';
-import type { WritableState } from '../../core/state/create-state';
+import { effect } from '../../core/signals/effect';
+import { computed, type Signal, signal } from '../../core/signals/primitives';
 
 /**
  * State shape for playback initiation tracking.
  */
 export interface PlaybackInitiatedState {
-  /** True once the user has initiated playback (play event fired). */
+  /** True once play has been requested for the current presentation URL. */
   playbackInitiated?: boolean;
-  /** Current presentation — watched for URL changes to reset playbackInitiated. */
+  /** Current presentation — URL is used to detect source changes. */
   presentation?: { url?: string };
 }
 
@@ -21,70 +22,76 @@ export interface PlaybackInitiatedOwners {
 }
 
 /**
- * Track whether playback has been initiated by the user.
+ * Track whether playback has been initiated for the current presentation URL.
  *
- * Sets `state.playbackInitiated = true` when the media element fires a `play`
- * event (via `element.play()`, native controls, or autoplay) and simultaneously
- * dispatches `{ type: 'play' }` to the event stream so `resolvePresentation`
- * can react.
+ * Models playbackInitiated as a merge of two streams:
+ * - false stream: resets on URL change or media element swap
+ * - true stream: sets on play event
  *
- * Resets `state.playbackInitiated = false` when `presentation.url` changes,
- * so a new source with `preload="none"` won't load segments until play is
- * triggered again.
- *
- * This flag is used by `shouldLoadSegments` to allow segment loading after
- * play is initiated regardless of the initial `preload` setting — `preload`
- * is a startup hint, not a runtime gate.
+ * Encoded as a version counter pair so the result is a pure computed —
+ * `playbackInitiated` is true when the last play happened at or after
+ * the last reset, false otherwise.
  *
  * @example
  * const cleanup = trackPlaybackInitiated({ state, owners, events });
  */
-export function trackPlaybackInitiated({
+export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O extends PlaybackInitiatedOwners>({
   state,
   owners,
   events,
 }: {
-  state: WritableState<PlaybackInitiatedState>;
-  owners: WritableState<PlaybackInitiatedOwners>;
+  state: Signal<S>;
+  owners: Signal<O>;
   events: EventStream<PresentationAction>;
 }): () => void {
-  let lastMediaElement: HTMLMediaElement | undefined;
-  let removeListener: (() => void) | null = null;
-  let lastPresentationUrl: string | undefined;
+  const presentationUrl = computed(() => state.get().presentation?.url);
+  const mediaElement = computed(() => owners.get().mediaElement);
 
-  // Watch for presentation URL changes to reset playbackInitiated
-  const unsubscribeState = state.subscribe((currentState) => {
-    const url = currentState.presentation?.url;
-    if (url !== lastPresentationUrl) {
-      if (lastPresentationUrl !== undefined) {
-        // URL changed to a new value — reset so new source requires play again
-        state.patch({ playbackInitiated: false });
-      }
-      lastPresentationUrl = url;
-    }
+  // Version counter pair encoding merge-of-two-streams semantics.
+  // resetVersion bumps on every false-stream trigger (URL change, element swap).
+  // playVersion is set to the current resetVersion when play fires.
+  // playbackInitiated is true iff play happened at or after the last reset.
+  let resetCount = 0;
+  const resetVersion = signal(0);
+  const playVersion = signal(-1);
+
+  const playbackInitiated = computed(() => playVersion.get() >= resetVersion.get());
+
+  // False stream: bump resetVersion on URL change or element swap.
+  const cleanupResetEffect = effect(() => {
+    presentationUrl.get();
+    mediaElement.get();
+    resetVersion.set(++resetCount);
   });
 
-  // Bridge media element play event → state flag + event stream
-  const unsubscribeOwners = owners.subscribe((currentOwners) => {
-    const { mediaElement } = currentOwners;
-
-    if (mediaElement === lastMediaElement) return;
-
-    removeListener?.();
-    removeListener = null;
-    lastMediaElement = mediaElement;
-
-    if (!mediaElement) return;
-
-    removeListener = listen(mediaElement, 'play', () => {
-      state.patch({ playbackInitiated: true });
+  // True stream: set playVersion to current resetVersion when play fires.
+  // Reading resetVersion.get() inside the listener is safe — event callbacks
+  // run outside the effect's tracking context, so no dependency is created.
+  const cleanupPlayEffect = effect(() => {
+    const el = mediaElement.get();
+    if (!el) return;
+    return listen(el, 'play', () => {
+      playVersion.set(resetVersion.get());
+      // TODO: remove once resolvePresentation migrates to signals
       events.dispatch({ type: 'play' });
     });
   });
 
+  // Bridge: signal graph → state.
+  // playbackInitiated starts false (playVersion=-1 < resetVersion=1 after init).
+  // The merge effect only runs on genuine false→true or true→false transitions,
+  // so no spurious writes on init.
+  const cleanupMergeEffect = effect(() => {
+    const pi = playbackInitiated.get();
+    const current = state.get();
+    if (current.playbackInitiated !== pi) {
+      state.set({ ...current, playbackInitiated: pi } as S);
+    }
+  });
+
   return () => {
-    removeListener?.();
-    unsubscribeState();
-    unsubscribeOwners();
+    cleanupResetEffect();
+    cleanupPlayEffect();
+    cleanupMergeEffect();
   };
 }
