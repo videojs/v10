@@ -2,6 +2,7 @@
 # Dependencies & Logs
 # -------------------------
 node_modules/
+.pnpm-store/
 logs/
 .yarn/*
 *.log
