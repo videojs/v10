@@ -2,7 +2,6 @@ import { type BandwidthState, sampleBandwidth } from '../../core/abr/bandwidth-e
 import { DEFAULT_FORWARD_BUFFER_CONFIG } from '../../core/buffer/forward-buffer';
 import { effect } from '../../core/signals/effect';
 import { computed, type Signal, signal } from '../../core/signals/primitives';
-import { createState, type WritableState } from '../../core/state/create-state';
 import type { AddressableObject, Presentation, ResolvedTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
@@ -45,7 +44,7 @@ const ActorKeyByType = {
 type FetchOptions = RequestInit & ChunkedStreamIterableOptions;
 
 function createTrackedFetch(
-  throughput: WritableState<BandwidthState>,
+  throughput: Signal<BandwidthState>,
   onSample?: (next: BandwidthState) => void
 ): (addressable: AddressableObject, options?: FetchOptions) => Promise<AsyncIterable<Uint8Array>> {
   return async (addressable, options) => {
@@ -61,9 +60,8 @@ function createTrackedFetch(
           ...(minChunkSize !== undefined ? [{ minChunkSize }] : [])
         )) {
           const elapsed = performance.now() - chunkStart;
-          const next = sampleBandwidth(throughput.current, elapsed, chunk.byteLength);
-          throughput.patch(next);
-          throughput.flush();
+          const next = sampleBandwidth(throughput.get(), elapsed, chunk.byteLength);
+          throughput.set(next);
           onSample?.(next);
           yield chunk;
           chunkStart = performance.now();
@@ -245,13 +243,10 @@ export function loadSegments<S extends SegmentLoadingState, O extends SegmentLoa
   const { type } = config;
   const actorKey = ActorKeyByType[type];
 
-  // Local throughput WritableState — used by createTrackedFetch which reads
-  // .current and calls .patch()/.flush() internally. Stays as WritableState.
-  //
-  // MIGRATION BRIDGE: the onSample callback keeps state.bandwidthState in sync
-  // so ABR (selectVideoTrack) continues to work. Remove once ABR reads signals.
+  // Local throughput signal — used by createTrackedFetch to sample bandwidth
+  // per chunk and propagate back to the shared state for ABR.
   const initialBandwidth = state.get().bandwidthState;
-  const throughput = createState<BandwidthState>(
+  const throughput = signal<BandwidthState>(
     initialBandwidth ?? {
       fastEstimate: 0,
       fastTotalWeight: 0,

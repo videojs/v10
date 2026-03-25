@@ -1,7 +1,6 @@
 import { listen } from '@videojs/utils/dom';
 import { effect } from '../../core/signals/effect';
 import type { Signal } from '../../core/signals/primitives';
-import type { WritableState } from '../../core/state/create-state';
 
 /**
  * State shape for current time tracking.
@@ -42,11 +41,11 @@ export function canTrackCurrentTime(owners: CurrentTimeOwners): boolean {
  * @example
  * const cleanup = trackCurrentTime({ state, owners });
  */
-export function trackCurrentTime<O extends CurrentTimeOwners>({
+export function trackCurrentTime<S extends CurrentTimeState, O extends CurrentTimeOwners>({
   state,
   owners,
 }: {
-  state: WritableState<CurrentTimeState>;
+  state: Signal<S>;
   owners: Signal<O>;
 }): () => void {
   let lastMediaElement: HTMLMediaElement | undefined;
@@ -64,9 +63,9 @@ export function trackCurrentTime<O extends CurrentTimeOwners>({
     if (!mediaElement) return;
 
     // Sync immediately so consumers don't wait for the first event
-    state.patch({ currentTime: mediaElement.currentTime });
+    state.set({ ...state.get(), currentTime: mediaElement.currentTime } as S);
 
-    const sync = () => state.patch({ currentTime: mediaElement.currentTime });
+    const sync = () => state.set({ ...state.get(), currentTime: mediaElement.currentTime } as S);
     const removeTimeupdate = listen(mediaElement, 'timeupdate', sync);
     const removeSeeking = listen(mediaElement, 'seeking', sync);
     removeListeners = () => {

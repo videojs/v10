@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createEventStream } from '../../../core/events/create-event-stream';
-import type { PresentationAction } from '../../../core/features/resolve-presentation';
-import { stateToSignal } from '../../../core/signals/bridge';
-import { createState } from '../../../core/state/create-state';
+import { signal } from '../../../core/signals/primitives';
 import {
   type PlaybackInitiatedOwners,
   type PlaybackInitiatedState,
@@ -13,22 +10,10 @@ function setupTrackPlaybackInitiated(
   initialState: PlaybackInitiatedState = {},
   initialOwners: PlaybackInitiatedOwners = {}
 ) {
-  const state = createState<PlaybackInitiatedState>(initialState);
-  const owners = createState<PlaybackInitiatedOwners>(initialOwners);
-  const events = createEventStream<PresentationAction>();
-  const [stateSignal, cleanupState] = stateToSignal(state);
-  const [ownersSignal, cleanupOwners] = stateToSignal(owners);
-  const cleanupEffect = trackPlaybackInitiated({ state: stateSignal, owners: ownersSignal, events });
-  return {
-    state,
-    owners,
-    events,
-    cleanup: () => {
-      cleanupEffect();
-      cleanupState();
-      cleanupOwners();
-    },
-  };
+  const state = signal<PlaybackInitiatedState>(initialState);
+  const owners = signal<PlaybackInitiatedOwners>(initialOwners);
+  const cleanup = trackPlaybackInitiated({ state, owners });
+  return { state, owners, cleanup };
 }
 
 describe('trackPlaybackInitiated', () => {
@@ -42,24 +27,7 @@ describe('trackPlaybackInitiated', () => {
     mediaElement.dispatchEvent(new Event('play'));
     await new Promise((resolve) => setTimeout(resolve, 10));
 
-    expect(state.current.playbackInitiated).toBe(true);
-    cleanup();
-  });
-
-  it('dispatches play action to event stream', async () => {
-    const mediaElement = document.createElement('video');
-    const { events, cleanup } = setupTrackPlaybackInitiated(
-      { presentation: { url: 'http://example.com/stream.m3u8' } },
-      { mediaElement }
-    );
-
-    const dispatched: PresentationAction[] = [];
-    events.subscribe((action) => dispatched.push(action));
-
-    mediaElement.dispatchEvent(new Event('play'));
-    await new Promise((resolve) => setTimeout(resolve, 10));
-
-    expect(dispatched).toContainEqual({ type: 'play' });
+    expect(state.get().playbackInitiated).toBe(true);
     cleanup();
   });
 
@@ -72,12 +40,12 @@ describe('trackPlaybackInitiated', () => {
 
     mediaElement.dispatchEvent(new Event('play'));
     await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(state.current.playbackInitiated).toBe(true);
+    expect(state.get().playbackInitiated).toBe(true);
 
-    state.patch({ presentation: { url: 'http://example.com/stream2.m3u8' } });
+    state.set({ ...state.get(), presentation: { url: 'http://example.com/stream2.m3u8' } });
     await new Promise((resolve) => setTimeout(resolve, 20));
 
-    expect(state.current.playbackInitiated).toBe(false);
+    expect(state.get().playbackInitiated).toBe(false);
     cleanup();
   });
 
@@ -91,13 +59,13 @@ describe('trackPlaybackInitiated', () => {
     mediaElement.dispatchEvent(new Event('play'));
     await new Promise((resolve) => setTimeout(resolve, 10));
 
-    state.patch({ presentation: { url: 'http://example.com/stream2.m3u8' } });
+    state.set({ ...state.get(), presentation: { url: 'http://example.com/stream2.m3u8' } });
     await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(state.current.playbackInitiated).toBe(false);
+    expect(state.get().playbackInitiated).toBe(false);
 
     mediaElement.dispatchEvent(new Event('play'));
     await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(state.current.playbackInitiated).toBe(true);
+    expect(state.get().playbackInitiated).toBe(true);
 
     cleanup();
   });
@@ -111,12 +79,12 @@ describe('trackPlaybackInitiated', () => {
 
     mediaElement.dispatchEvent(new Event('play'));
     await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(state.current.playbackInitiated).toBe(true);
+    expect(state.get().playbackInitiated).toBe(true);
 
-    owners.patch({ mediaElement: document.createElement('video') });
+    owners.set({ ...owners.get(), mediaElement: document.createElement('video') });
     await new Promise((resolve) => setTimeout(resolve, 20));
 
-    expect(state.current.playbackInitiated).toBe(false);
+    expect(state.get().playbackInitiated).toBe(false);
     cleanup();
   });
 
@@ -129,12 +97,12 @@ describe('trackPlaybackInitiated', () => {
 
     mediaElement.dispatchEvent(new Event('play'));
     await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(state.current.playbackInitiated).toBe(true);
+    expect(state.get().playbackInitiated).toBe(true);
 
-    state.patch({ presentation: { url: 'http://example.com/stream.m3u8' } });
+    state.set({ ...state.get(), presentation: { url: 'http://example.com/stream.m3u8' } });
     await new Promise((resolve) => setTimeout(resolve, 20));
 
-    expect(state.current.playbackInitiated).toBe(true);
+    expect(state.get().playbackInitiated).toBe(true);
     cleanup();
   });
 
@@ -145,7 +113,7 @@ describe('trackPlaybackInitiated', () => {
     const { owners, cleanup } = setupTrackPlaybackInitiated({}, { mediaElement });
 
     const callsBefore = addEventListenerSpy.mock.calls.length;
-    owners.patch({ videoBuffer: {} } as PlaybackInitiatedOwners & { videoBuffer?: unknown });
+    owners.set({ ...owners.get(), videoBuffer: {} } as PlaybackInitiatedOwners & { videoBuffer?: unknown });
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     expect(addEventListenerSpy.mock.calls.length).toBe(callsBefore);
@@ -154,21 +122,17 @@ describe('trackPlaybackInitiated', () => {
 
   it('stops tracking after cleanup', async () => {
     const mediaElement = document.createElement('video');
-    const { state, events, cleanup } = setupTrackPlaybackInitiated(
+    const { state, cleanup } = setupTrackPlaybackInitiated(
       { presentation: { url: 'http://example.com/stream1.m3u8' } },
       { mediaElement }
     );
 
-    const dispatched: PresentationAction[] = [];
-    events.subscribe((action) => dispatched.push(action));
-
     cleanup();
 
     mediaElement.dispatchEvent(new Event('play'));
-    state.patch({ presentation: { url: 'http://example.com/stream2.m3u8' } });
+    state.set({ ...state.get(), presentation: { url: 'http://example.com/stream2.m3u8' } });
     await new Promise((resolve) => setTimeout(resolve, 20));
 
-    expect(dispatched).toHaveLength(0);
-    expect(state.current.playbackInitiated).toBeFalsy();
+    expect(state.get().playbackInitiated).toBeFalsy();
   });
 });

@@ -119,7 +119,6 @@ export { combineLatest } from './core/reactive/combine-latest';
 
 export type {
   PlatformOwners,
-  PresentationAction,
   PresentationState,
   UnresolvedPresentation,
 } from './core/features/resolve-presentation';

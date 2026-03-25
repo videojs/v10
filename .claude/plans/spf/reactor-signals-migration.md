@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 branch: poc/spf-signals
 ---
 
@@ -371,35 +371,39 @@ nested inside an owners object, tracked transitively by `Signal.Computed`/`effec
   semantics as a counter pair. The computed is pure; the only imperative writes are the
   counter increments, which happen in well-defined reactive contexts.
 
-### ⬜ Step 12 — `syncSelectedTextTrackFromDom`
+### ✅ Step 12 — `syncSelectedTextTrackFromDom`
 
-- **Why**: DOM event listener + feedback loop guard (avoids echo when signal change
-  triggers DOM update which fires the event again)
-- **Write-back**: `state.patch({ selectedTextTrack })`
+- **Write-back**: `state.set({ ...state.get(), selectedTextTrackId })`
 - **Complexity**: medium
 
-### ⬜ Step 13 — `loadTextTrackCues`
+### ✅ Step 13 — `loadTextTrackCues`
 
-- **Why last**: async task orchestration per text track, most complex of the remaining;
-  coordinates fetch + parse + owners update with per-track abort
-- **Write-back**: `owners.patch({ textTrackCues })`
-- **Complexity**: high
+- **Complexity**: high — async task orchestration per text track with per-track abort
 
-## What Stays the Same During Migration
+### ✅ Step 14 — Full engine migration (WritableState retired)
 
-- `state` and `owners` (`WritableState`) remain the **authoritative source of truth**.
-  All external code (sandbox, tests, other packages) continues to use `state.patch()`,
-  `owners.patch()`, `state.current`, `state.subscribe()`, etc.
-- `events` + `@@INITIALIZE@@` bootstrap — untouched. Only the core orchestrations
-  (`resolvePresentation`, `resolveTrack`, `selectTracks`) use events; they are not
-  migration targets here.
-- Un-migrated reactors receive `WritableState` unchanged, wired the same as today.
+The engine itself was migrated from `createState<PlaybackEngineState>` (WritableState) to
+`signal<PlaybackEngineState>` (TC39 Signal). All bridge utilities, signal mirrors, and
+`@@INITIALIZE@@` dispatch were removed.
 
-## Exit Criteria (Long-term, Out of Scope Here)
+- **`PlaybackEngine` interface** now exposes `state: Signal<PlaybackEngineState>` and
+  `owners: Signal<PlaybackEngineOwners>` directly — `WritableState` is gone.
+- **`stateToSignal` bridge** removed — no longer needed.
+- **`EventStream`/`combineLatest`/`@@INITIALIZE@@`** fully eliminated from engine and all
+  orchestration functions.
+- **Core features** (`resolvePresentation`, `resolveTrack`, `selectTracks`,
+  `resolvePresentation`, `switchQuality`) all migrated to accept `Signal<T>` arguments.
+- **`switchQuality` + `initialBandwidth`**: engine now passes
+  `{ defaultBandwidth: config.initialBandwidth }` to `switchQuality` when `initialBandwidth`
+  is configured, so both initial track selection and ABR use the same bandwidth estimate
+  at cold start.
+- **`PlaybackEngineState.preload`** narrowed from `string` to `'auto' | 'metadata' | 'none'`
+  to satisfy `PresentationState` type compatibility.
+- **All tests** updated to use `state.get()` / `state.set()` / `owners.get()` / `owners.set()`.
 
-When all reactors are migrated, `WritableState` can be retired as an internal primitive.
-The bridge helpers and engine-level mirrors are deleted. `PlaybackEngine` exposes
-`Signal<T>` directly instead of `WritableState`.
+## Exit Criteria — Met
 
-This is explicitly **out of scope** for this migration phase — the goal here is to prove
-the pattern and migrate the DOM feature reactors, not to retire `WritableState`.
+All reactors and the engine itself use TC39 Signals natively. `WritableState` and
+`combineLatest` are retired from the playback engine. `PlaybackEngine.state` and
+`.owners` are `Signal<T>`. The bridge module (`core/signals/bridge.ts`) can be removed
+when no other consumers remain.

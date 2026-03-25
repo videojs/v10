@@ -1,6 +1,6 @@
 import { DEFAULT_QUALITY_CONFIG, selectQuality } from '../abr/quality-selection';
-import type { EventStream } from '../events/create-event-stream';
-import type { WritableState } from '../state/create-state';
+import { effect } from '../signals/effect';
+import type { Signal } from '../signals/primitives';
 import type { AudioSelectionSet, Presentation, TrackType, VideoSelectionSet } from '../types';
 import { SelectedTrackIdKeyByType } from '../utils/track-selection';
 
@@ -283,34 +283,21 @@ export function shouldSelectTrack<T extends TrackType>(
  *   { initialBandwidth: 2_000_000 }
  * );
  */
-export function selectVideoTrack(
-  {
-    state,
-  }: {
-    state: WritableState<TrackSelectionState>;
-    owners: WritableState<TrackSelectionOwners>;
-    events: EventStream<TrackSelectionAction>;
-  },
+export function selectVideoTrack<S extends TrackSelectionState>(
+  { state }: { state: Signal<S> },
   config: VideoSelectionConfig = { type: 'video' }
 ): () => void {
-  let selecting = false;
+  return effect(() => {
+    const currentState = state.get();
+    if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config)) return;
 
-  return state.subscribe(async (currentState: TrackSelectionState) => {
-    if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config) || selecting) return;
+    // Just to have basic functionality/POC, simply selecting the first track
+    const selectedTrackId = currentState.presentation?.selectionSets.find(({ type }) => type === config.type)
+      ?.switchingSets[0]?.tracks[0]?.id;
 
-    try {
-      selecting = true;
-
-      // Just to have basic functionality/POC, simply selecting the first track
-      const selectedTrackId = currentState.presentation?.selectionSets.find(({ type }) => type === config.type)
-        ?.switchingSets[0]?.tracks[0]?.id;
-
-      if (selectedTrackId) {
-        const selectedTrackKey = SelectedTrackIdKeyByType[config.type];
-        state.patch({ [selectedTrackKey]: selectedTrackId });
-      }
-    } finally {
-      selecting = false;
+    if (selectedTrackId) {
+      const selectedTrackKey = SelectedTrackIdKeyByType[config.type];
+      state.set({ ...currentState, [selectedTrackKey]: selectedTrackId } as S);
     }
   });
 }
@@ -330,33 +317,20 @@ export function selectVideoTrack(
  *   { preferredAudioLanguage: 'en' }
  * );
  */
-export function selectAudioTrack(
-  {
-    state,
-  }: {
-    state: WritableState<TrackSelectionState>;
-    owners: WritableState<TrackSelectionOwners>;
-    events: EventStream<TrackSelectionAction>;
-  },
+export function selectAudioTrack<S extends TrackSelectionState>(
+  { state }: { state: Signal<S> },
   config: AudioSelectionConfig = { type: 'audio' }
 ): () => void {
-  let selecting = false;
+  return effect(() => {
+    const currentState = state.get();
+    if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config)) return;
 
-  return state.subscribe(async (currentState: TrackSelectionState) => {
-    if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config) || selecting) return;
+    // Just to have basic functionality/POC, simply selecting the first track
+    const selectedTrackId = currentState.presentation?.selectionSets.find(({ type }) => type === 'audio')
+      ?.switchingSets[0]?.tracks[0]?.id;
 
-    try {
-      selecting = true;
-
-      // Just to have basic functionality/POC, simply selecting the first track
-      const selectedTrackId = currentState.presentation?.selectionSets.find(({ type }) => type === 'audio')
-        ?.switchingSets[0]?.tracks[0]?.id;
-
-      if (selectedTrackId) {
-        state.patch({ selectedAudioTrackId: selectedTrackId });
-      }
-    } finally {
-      selecting = false;
+    if (selectedTrackId) {
+      state.set({ ...currentState, selectedAudioTrackId: selectedTrackId } as S);
     }
   });
 }
@@ -373,32 +347,19 @@ export function selectAudioTrack(
  * @example
  * const cleanup = selectTextTrack({ state, owners, events }, {});
  */
-export function selectTextTrack(
-  {
-    state,
-  }: {
-    state: WritableState<TrackSelectionState>;
-    owners: WritableState<TrackSelectionOwners>;
-    events: EventStream<TrackSelectionAction>;
-  },
+export function selectTextTrack<S extends TrackSelectionState>(
+  { state }: { state: Signal<S> },
   config: TextSelectionConfig = { type: 'text' }
 ): () => void {
-  let selecting = false;
+  return effect(() => {
+    const currentState = state.get();
+    if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config)) return;
 
-  return state.subscribe(async (currentState: TrackSelectionState) => {
-    if (!canSelectTrack(currentState, config) || !shouldSelectTrack(currentState, config) || selecting) return;
+    // Text tracks are user opt-in - don't auto-select
+    const selectedTextTrackId = pickTextTrack(currentState.presentation!, config);
 
-    try {
-      selecting = true;
-
-      // Text tracks are user opt-in - don't auto-select
-      const selectedTextTrackId = pickTextTrack(currentState.presentation!, config);
-
-      if (selectedTextTrackId) {
-        state.patch({ selectedTextTrackId });
-      }
-    } finally {
-      selecting = false;
+    if (selectedTextTrackId) {
+      state.set({ ...currentState, selectedTextTrackId } as S);
     }
   });
 }

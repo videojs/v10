@@ -1,8 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createEventStream } from '../../events/create-event-stream';
-import { createState } from '../../state/create-state';
-import type { AddressableObject, MediaElementLike, Presentation } from '../../types';
-import type { PlatformOwners, PresentationAction } from '../resolve-presentation';
+import { signal } from '../../signals/primitives';
+import type { AddressableObject, Presentation } from '../../types';
 import { isUnresolved, resolvePresentation, shouldResolve, syncPreloadAttribute } from '../resolve-presentation';
 
 describe('resolvePresentation', () => {
@@ -16,12 +14,10 @@ describe('resolvePresentation', () => {
       preload?: 'auto' | 'metadata' | 'none' | undefined;
     }
 
-    const state = createState<State>({
+    const state = signal<State>({
       presentation: undefined,
       preload: 'auto',
     });
-
-    const events = createEventStream<PresentationAction>();
 
     // Mock fetch
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
@@ -33,24 +29,21 @@ variant2.m3u8`)
     );
 
     // Act
-    const cleanup = resolvePresentation({ state, events });
+    const cleanup = resolvePresentation({ state });
 
-    // Dispatch initial neutral event to prime combineLatest
-    events.dispatch({ type: 'pause' });
-
-    // Trigger resolution by patching unresolved presentation
-    state.patch({ presentation: { url: 'http://example.com/playlist.m3u8' } });
+    // Trigger resolution by setting unresolved presentation
+    state.set({ ...state.get(), presentation: { url: 'http://example.com/playlist.m3u8' } });
 
     // Wait for resolution
     await vi.waitFor(() => {
-      const current = state.current;
+      const current = state.get();
       expect(current.presentation).toBeDefined();
       expect(current.presentation).toHaveProperty('id');
       expect(current.presentation).toHaveProperty('selectionSets');
     });
 
     // Assert
-    const resolved = state.current.presentation as Presentation;
+    const resolved = state.get().presentation as Presentation;
     expect(resolved.url).toBe('http://example.com/playlist.m3u8');
     expect(resolved.selectionSets).toBeDefined();
     expect(resolved.selectionSets.length).toBeGreaterThan(0);
@@ -73,7 +66,7 @@ variant2.m3u8`)
       volume: number;
     }
 
-    const state = createState<State>({
+    const state = signal<State>({
       presentation: undefined,
       preload: 'auto',
       volume: 1.0,
@@ -86,32 +79,28 @@ variant1.m3u8`)
     );
 
     // Act
-    const events = createEventStream<PresentationAction>();
-    const cleanup = resolvePresentation({ state, events });
-
-    // Dispatch initial neutral event to prime combineLatest
-    events.dispatch({ type: 'pause' });
+    const cleanup = resolvePresentation({ state });
 
     // Change volume before resolution
-    state.patch({ volume: 0.5 });
+    state.set({ ...state.get(), volume: 0.5 });
 
     // Wait a bit to ensure no fetch triggered
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(fetchSpy).not.toHaveBeenCalled();
 
     // Now add unresolved presentation
-    state.patch({ presentation: { url: 'http://example.com/playlist.m3u8' } });
+    state.set({ ...state.get(), presentation: { url: 'http://example.com/playlist.m3u8' } });
 
     // Wait for resolution
     await vi.waitFor(() => {
-      expect(state.current.presentation).toHaveProperty('id');
+      expect(state.get().presentation).toHaveProperty('id');
     });
 
     expect(fetchSpy).toHaveBeenCalledOnce();
     fetchSpy.mockClear();
 
     // Change volume after resolution
-    state.patch({ volume: 0.8 });
+    state.set({ ...state.get(), volume: 0.8 });
 
     // Wait a bit to ensure no additional fetch
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -135,27 +124,23 @@ variant1.m3u8`)
     );
 
     // State starts with unresolved presentation
-    const state = createState<State>({
+    const state = signal<State>({
       presentation: { url: 'http://example.com/initial.m3u8' },
       preload: 'auto',
     });
 
     // Act
-    const events = createEventStream<PresentationAction>();
-    const cleanup = resolvePresentation({ state, events });
-
-    // Dispatch initial neutral event to prime combineLatest
-    events.dispatch({ type: 'pause' });
+    const cleanup = resolvePresentation({ state });
 
     // Wait for resolution (should happen automatically)
     await vi.waitFor(() => {
-      const current = state.current;
+      const current = state.get();
       expect(current.presentation).toHaveProperty('id');
       expect(current.presentation).toHaveProperty('selectionSets');
     });
 
     // Assert
-    const resolved = state.current.presentation as Presentation;
+    const resolved = state.get().presentation as Presentation;
     expect(resolved.url).toBe('http://example.com/initial.m3u8');
     expect(resolved.selectionSets).toBeDefined();
 
@@ -202,24 +187,20 @@ variant1.m3u8`)
     };
 
     // State starts with resolved presentation
-    const state = createState<State>({
+    const state = signal<State>({
       presentation: resolvedPresentation,
       preload: 'auto',
     });
 
     // Act
-    const events = createEventStream<PresentationAction>();
-    const cleanup = resolvePresentation({ state, events });
-
-    // Dispatch initial neutral event to prime combineLatest
-    events.dispatch({ type: 'pause' });
+    const cleanup = resolvePresentation({ state });
 
     // Wait a bit to ensure no fetch triggered
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Assert - should not fetch
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(state.current.presentation).toBe(resolvedPresentation);
+    expect(state.get().presentation).toBe(resolvedPresentation);
 
     // Cleanup
     cleanup();
@@ -246,31 +227,27 @@ variant2.m3u8`)
       startTime: 0,
     };
 
-    const state = createState<State>({
+    const state = signal<State>({
       presentation: resolvedPresentation,
       preload: 'auto',
     });
 
     // Act
-    const events = createEventStream<PresentationAction>();
-    const cleanup = resolvePresentation({ state, events });
-
-    // Dispatch initial neutral event to prime combineLatest
-    events.dispatch({ type: 'pause' });
+    const cleanup = resolvePresentation({ state });
 
     // Replace with unresolved presentation
-    state.patch({ presentation: { url: 'http://example.com/second.m3u8' } });
+    state.set({ ...state.get(), presentation: { url: 'http://example.com/second.m3u8' } });
 
     // Wait for resolution
     await vi.waitFor(() => {
-      const current = state.current;
+      const current = state.get();
       expect(current.presentation).toHaveProperty('id');
       expect((current.presentation as Presentation).url).toBe('http://example.com/second.m3u8');
     });
 
     // Assert - should have fetched and resolved new presentation
     expect(fetchSpy).toHaveBeenCalledOnce();
-    const resolved = state.current.presentation as Presentation;
+    const resolved = state.get().presentation as Presentation;
     expect(resolved.url).toBe('http://example.com/second.m3u8');
     expect(resolved.selectionSets).toBeDefined();
 
@@ -291,19 +268,15 @@ variant2.m3u8`)
 variant1.m3u8`)
       );
 
-      const state = createState<State>({
+      const state = signal<State>({
         presentation: { url: 'http://example.com/playlist.m3u8' },
         preload: 'auto',
       });
 
-      const events = createEventStream<PresentationAction>();
-      const cleanup = resolvePresentation({ state, events });
-
-      // Dispatch initial neutral event to prime combineLatest
-      events.dispatch({ type: 'pause' });
+      const cleanup = resolvePresentation({ state });
 
       await vi.waitFor(() => {
-        expect(state.current.presentation).toHaveProperty('id');
+        expect(state.get().presentation).toHaveProperty('id');
       });
 
       cleanup();
@@ -321,19 +294,15 @@ variant1.m3u8`)
 variant1.m3u8`)
       );
 
-      const state = createState<State>({
+      const state = signal<State>({
         presentation: { url: 'http://example.com/playlist.m3u8' },
         preload: 'metadata',
       });
 
-      const events = createEventStream<PresentationAction>();
-      const cleanup = resolvePresentation({ state, events });
-
-      // Dispatch initial neutral event to prime combineLatest
-      events.dispatch({ type: 'pause' });
+      const cleanup = resolvePresentation({ state });
 
       await vi.waitFor(() => {
-        expect(state.current.presentation).toHaveProperty('id');
+        expect(state.get().presentation).toHaveProperty('id');
       });
 
       cleanup();
@@ -347,21 +316,17 @@ variant1.m3u8`)
 
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-      const state = createState<State>({
+      const state = signal<State>({
         presentation: { url: 'http://example.com/playlist.m3u8' },
         preload: 'none',
       });
 
-      const events = createEventStream<PresentationAction>();
-      const cleanup = resolvePresentation({ state, events });
-
-      // Dispatch initial neutral event to prime combineLatest
-      events.dispatch({ type: 'pause' });
+      const cleanup = resolvePresentation({ state });
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(fetchSpy).not.toHaveBeenCalled();
-      expect(state.current.presentation).toEqual({ url: 'http://example.com/playlist.m3u8' });
+      expect(state.get().presentation).toEqual({ url: 'http://example.com/playlist.m3u8' });
 
       cleanup();
     });
@@ -374,31 +339,28 @@ variant1.m3u8`)
 
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-      const state = createState<State>({
+      const state = signal<State>({
         presentation: { url: 'http://example.com/playlist.m3u8' },
         preload: undefined,
       });
 
-      const events = createEventStream<PresentationAction>();
-      const cleanup = resolvePresentation({ state, events });
-
-      // Dispatch initial neutral event to prime combineLatest
-      events.dispatch({ type: 'pause' });
+      const cleanup = resolvePresentation({ state });
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(fetchSpy).not.toHaveBeenCalled();
-      expect(state.current.presentation).toEqual({ url: 'http://example.com/playlist.m3u8' });
+      expect(state.get().presentation).toEqual({ url: 'http://example.com/playlist.m3u8' });
 
       cleanup();
     });
   });
 
-  describe('event-driven resolution with combineLatest', () => {
-    it('resolves on PLAY event when preload is "none"', async () => {
+  describe('playbackInitiated resolution', () => {
+    it('resolves when playbackInitiated is set to true with preload "none"', async () => {
       interface State {
         presentation?: AddressableObject | Presentation | undefined;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
+        playbackInitiated?: boolean;
       }
 
       const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
@@ -407,28 +369,22 @@ variant1.m3u8`)
 variant1.m3u8`)
       );
 
-      const state = createState<State>({
+      const state = signal<State>({
         presentation: { url: 'http://example.com/playlist.m3u8' },
         preload: 'none',
       });
 
-      const events = createEventStream<PresentationAction>();
+      const cleanup = resolvePresentation({ state });
 
-      // Use resolvePresentation with combineLatest composition
-      const cleanup = resolvePresentation({ state, events });
-
-      // Dispatch initial neutral event to prime combineLatest
-      events.dispatch({ type: 'pause' });
-
-      // Initially shouldn't fetch (preload="none")
+      // Initially shouldn't fetch (preload="none", not yet initiated)
       expect(fetchSpy).not.toHaveBeenCalled();
 
-      // Dispatch PLAY event
-      events.dispatch({ type: 'play' });
+      // Set playbackInitiated (replaces the old 'play' event dispatch)
+      state.set({ ...state.get(), playbackInitiated: true });
 
       // Wait for resolution
       await vi.waitFor(() => {
-        expect(state.current.presentation).toHaveProperty('id');
+        expect(state.get().presentation).toHaveProperty('id');
       });
 
       expect(fetchSpy).toHaveBeenCalledOnce();
@@ -436,127 +392,124 @@ variant1.m3u8`)
       cleanup();
     });
 
-    it('does not resolve on non-PLAY events', async () => {
+    it('does not resolve when playbackInitiated is false with preload "none"', async () => {
       interface State {
         presentation?: AddressableObject | Presentation | undefined;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
+        playbackInitiated?: boolean;
       }
 
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-      const state = createState<State>({
+      const state = signal<State>({
         presentation: { url: 'http://example.com/playlist.m3u8' },
         preload: 'none',
       });
 
-      const events = createEventStream<PresentationAction>();
-
-      const cleanup = resolvePresentation({ state, events });
-
-      // Dispatch PAUSE event (not PLAY) - this primes combineLatest but shouldn't trigger resolution
-      events.dispatch({ type: 'pause' });
+      const cleanup = resolvePresentation({ state });
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(fetchSpy).not.toHaveBeenCalled();
-      expect(state.current.presentation).toEqual({ url: 'http://example.com/playlist.m3u8' });
+      expect(state.get().presentation).toEqual({ url: 'http://example.com/playlist.m3u8' });
 
       cleanup();
     });
   });
 
   describe('syncPreloadAttribute', () => {
-    it('syncs preload from mediaElement to state', () => {
+    it('syncs preload from mediaElement to state', async () => {
       interface State {
         presentation?: AddressableObject | Presentation | undefined;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
       interface Owners {
-        mediaElement?: MediaElementLike | undefined;
+        mediaElement?: HTMLMediaElement | undefined;
       }
 
-      const state = createState<State>({
+      const state = signal<State>({
         presentation: undefined,
         preload: undefined,
       });
 
       // Start with media element already set
-      const video = { preload: 'auto' } as PlatformOwners['mediaElement'];
-      const owners = createState<Owners>({
+      const video = { preload: 'auto' } as HTMLMediaElement;
+      const owners = signal<Owners>({
         mediaElement: video,
       });
 
-      // Sync should pick up existing mediaElement on subscription
+      // Sync should pick up existing mediaElement on first effect fire (synchronous)
       const cleanup = syncPreloadAttribute(state, owners);
 
-      expect(state.current.preload).toBe('auto');
+      expect(state.get().preload).toBe('auto');
 
       cleanup();
     });
 
-    it('does not override preload when mediaElement changes and preload is already set', () => {
+    it('does not override preload when mediaElement changes and preload is already set', async () => {
       interface State {
         presentation?: AddressableObject | Presentation | undefined;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
       interface Owners {
-        mediaElement?: MediaElementLike | undefined;
+        mediaElement?: HTMLMediaElement | undefined;
       }
 
-      const state = createState<State>({
+      const state = signal<State>({
         presentation: undefined,
         preload: undefined,
       });
 
-      const video = { preload: 'auto' } as PlatformOwners['mediaElement'];
-      const owners = createState<Owners>({
+      const video = { preload: 'auto' } as HTMLMediaElement;
+      const owners = signal<Owners>({
         mediaElement: video,
       });
 
-      // Start syncing — initial inference from element
+      // Start syncing — initial inference from element (synchronous)
       const cleanup = syncPreloadAttribute(state, owners);
 
-      expect(state.current.preload).toBe('auto');
+      expect(state.get().preload).toBe('auto');
 
       // Swap to a different mediaElement with a different preload value.
       // Since preload is already set, the new element's value is ignored.
-      const updatedVideo = { preload: 'metadata' } as PlatformOwners['mediaElement'];
-      owners.patch({ mediaElement: updatedVideo });
-      owners.flush();
-      state.flush();
+      const updatedVideo = { preload: 'metadata' } as HTMLMediaElement;
+      owners.set({ ...owners.get(), mediaElement: updatedVideo });
 
-      expect(state.current.preload).toBe('auto');
+      await vi.waitFor(() => {
+        // preload should remain 'auto' — new element's value is not applied once preload is set
+        expect(state.get().preload).toBe('auto');
+      });
 
       cleanup();
     });
 
-    it('does not clear preload when mediaElement is removed and preload is already set', () => {
+    it('does not clear preload when mediaElement is removed and preload is already set', async () => {
       interface State {
         presentation?: AddressableObject | Presentation | undefined;
         preload?: 'auto' | 'metadata' | 'none' | undefined;
       }
 
       interface Owners {
-        mediaElement?: MediaElementLike | undefined;
+        mediaElement?: HTMLMediaElement | undefined;
       }
 
-      const state = createState<State>({
+      const state = signal<State>({
         presentation: undefined,
         preload: 'auto',
       });
 
-      const owners = createState<Owners>({
+      const owners = signal<Owners>({
         mediaElement: undefined,
       });
 
       const cleanup = syncPreloadAttribute(state, owners);
 
-      owners.patch({ mediaElement: undefined });
+      owners.set({ ...owners.get(), mediaElement: undefined });
 
       // Preload was already set — removing the element does not clear it.
-      expect(state.current.preload).toBe('auto');
+      expect(state.get().preload).toBe('auto');
 
       cleanup();
     });
@@ -575,28 +528,23 @@ variant1.m3u8`)
 variant1.m3u8`)
       );
 
-      const state = createState<State>({
+      const state = signal<State>({
         presentation: { url: 'http://example.com/playlist.m3u8' },
         preload: 'auto',
       });
 
-      const events = createEventStream<PresentationAction>();
-      const cleanup = resolvePresentation({ state, events });
+      const cleanup = resolvePresentation({ state });
 
-      // Prime combineLatest and trigger first resolution
-      events.dispatch({ type: 'pause' });
-
-      // Rapidly dispatch more events while resolution is in progress
-      events.dispatch({ type: 'play' });
-      events.dispatch({ type: 'pause' });
-      events.dispatch({ type: 'play' });
+      // Rapidly trigger additional state changes while resolution is in progress
+      state.set({ ...state.get(), preload: 'auto' });
+      state.set({ ...state.get(), preload: 'auto' });
 
       // Wait for resolution
       await vi.waitFor(() => {
-        expect(state.current.presentation).toHaveProperty('id');
+        expect(state.get().presentation).toHaveProperty('id');
       });
 
-      // Should only fetch once despite multiple events
+      // Should only fetch once despite multiple state changes
       expect(fetchSpy).toHaveBeenCalledOnce();
 
       cleanup();
@@ -615,29 +563,26 @@ variant1.m3u8`)
 variant1.m3u8`)
       );
 
-      const state = createState<State>({
+      const state = signal<State>({
         presentation: { url: 'http://example.com/first.m3u8' },
         preload: 'auto',
       });
 
-      const events = createEventStream<PresentationAction>();
-      const cleanup = resolvePresentation({ state, events });
-
-      events.dispatch({ type: 'pause' });
+      const cleanup = resolvePresentation({ state });
 
       // Wait for first resolution
       await vi.waitFor(() => {
-        expect(state.current.presentation).toHaveProperty('id');
+        expect(state.get().presentation).toHaveProperty('id');
       });
 
       expect(fetchSpy).toHaveBeenCalledOnce();
 
       // Now load a different presentation
-      state.patch({ presentation: { url: 'http://example.com/second.m3u8' } });
+      state.set({ ...state.get(), presentation: { url: 'http://example.com/second.m3u8' } });
 
       // Wait for second resolution
       await vi.waitFor(() => {
-        const pres = state.current.presentation as Presentation;
+        const pres = state.get().presentation as Presentation;
         expect(pres.url).toBe('http://example.com/second.m3u8');
       });
 
@@ -651,55 +596,38 @@ variant1.m3u8`)
 
 describe('shouldResolve', () => {
   it('returns true when preload is "auto"', () => {
-    const result = shouldResolve(
-      { presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'auto' },
-      { type: 'pause' }
-    );
+    const result = shouldResolve({ presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'auto' });
 
     expect(result).toBe(true);
   });
 
   it('returns true when preload is "metadata"', () => {
-    const result = shouldResolve(
-      { presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'metadata' },
-      { type: 'pause' }
-    );
+    const result = shouldResolve({ presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'metadata' });
 
     expect(result).toBe(true);
   });
 
-  it('returns true on PLAY event when preload is "none"', () => {
-    const result = shouldResolve(
-      { presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'none' },
-      { type: 'play' }
-    );
+  it('returns true when playbackInitiated is true with preload "none"', () => {
+    const result = shouldResolve({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: 'none',
+      playbackInitiated: true,
+    });
 
     expect(result).toBe(true);
   });
 
-  it('returns false on non-PLAY event when preload is "none"', () => {
-    const result = shouldResolve(
-      { presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'none' },
-      { type: 'pause' }
-    );
+  it('returns false when preload is "none" and playbackInitiated is false', () => {
+    const result = shouldResolve({ presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'none' });
 
     expect(result).toBe(false);
   });
 
   it('returns false when preload is undefined', () => {
-    const result = shouldResolve(
-      { presentation: { url: 'http://example.com/playlist.m3u8' }, preload: undefined },
-      { type: 'pause' }
-    );
-
-    expect(result).toBe(false);
-  });
-
-  it('returns false on LOAD event when preload is "none"', () => {
-    const result = shouldResolve(
-      { presentation: { url: 'http://example.com/playlist.m3u8' }, preload: 'none' },
-      { type: 'load', url: 'http://example.com/other.m3u8' }
-    );
+    const result = shouldResolve({
+      presentation: { url: 'http://example.com/playlist.m3u8' },
+      preload: undefined,
+    });
 
     expect(result).toBe(false);
   });

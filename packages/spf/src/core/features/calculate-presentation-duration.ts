@@ -1,5 +1,5 @@
-import { combineLatest } from '../reactive/combine-latest';
-import type { WritableState } from '../state/create-state';
+import { effect } from '../signals/effect';
+import type { Signal } from '../signals/primitives';
 import type { AudioTrack, Presentation, VideoTrack } from '../types';
 import { isResolvedTrack } from '../types';
 import { getSelectedTrack } from '../utils/track-selection';
@@ -64,25 +64,24 @@ export function getDurationFromResolvedTracks(state: PresentationDurationState):
 /**
  * Calculate and set presentation duration from resolved tracks.
  */
-export function calculatePresentationDuration({
+export function calculatePresentationDuration<S extends PresentationDurationState>({
   state,
 }: {
-  state: WritableState<PresentationDurationState>;
+  state: Signal<S>;
 }): () => void {
-  return combineLatest([state]).subscribe(([currentState]: [PresentationDurationState]) => {
+  return effect(() => {
+    const currentState = state.get();
     if (!shouldCalculateDuration(currentState)) return;
 
     const duration = getDurationFromResolvedTracks(currentState);
     if (duration === undefined || !Number.isFinite(duration)) return;
 
-    const { presentation } = currentState;
-
-    // Patch presentation with duration
-    state.patch({
+    state.set({
+      ...currentState,
       presentation: {
-        ...presentation!,
+        ...currentState.presentation!,
         duration,
       },
-    });
+    } as S);
   });
 }

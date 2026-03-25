@@ -1,6 +1,4 @@
 import { listen } from '@videojs/utils/dom';
-import type { EventStream } from '../../core/events/create-event-stream';
-import type { PresentationAction } from '../../core/features/resolve-presentation';
 import { effect } from '../../core/signals/effect';
 import { computed, type Signal, signal } from '../../core/signals/primitives';
 
@@ -38,11 +36,9 @@ export interface PlaybackInitiatedOwners {
 export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O extends PlaybackInitiatedOwners>({
   state,
   owners,
-  events,
 }: {
   state: Signal<S>;
   owners: Signal<O>;
-  events: EventStream<PresentationAction>;
 }): () => void {
   const presentationUrl = computed(() => state.get().presentation?.url);
   const mediaElement = computed(() => owners.get().mediaElement);
@@ -76,7 +72,6 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
     if (!el) return;
     return listen(el, 'play', () => {
       playbackInitiated.set(true);
-      events.dispatch({ type: 'play' });
     });
   });
 
