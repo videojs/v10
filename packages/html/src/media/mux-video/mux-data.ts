@@ -5,13 +5,13 @@ export type { Metadata };
 
 export function setupMuxData(
   mediaEl: HTMLMediaElement,
-  engine: object,
+  engine: object | null,
   options: { envKey: string | null; metadata: Partial<Metadata> }
 ): () => void {
   const { envKey, metadata } = options;
 
   mux.monitor(mediaEl, {
-    hlsjs: engine as any,
+    ...(engine ? { hlsjs: engine as any } : {}),
     automaticErrorTracking: false,
     errorTranslator: (error) => {
       // Suppress errors with no code — these are hls.js internal string-coded events

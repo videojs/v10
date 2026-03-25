@@ -67,12 +67,8 @@ export class MuxVideo extends MediaAttachMixin(MuxCustomMedia) {
   }
 
   #startMuxMonitoring(): void {
-    const { engine } = this;
-    // Native playback path (MSE unavailable) — skip hls.js-dependent monitoring.
-    if (!engine) return;
-
     const envKey = this.getAttribute('env-key');
-    this.#destroyMuxData = setupMuxData(this.target, engine, {
+    this.#destroyMuxData = setupMuxData(this.target, this.engine, {
       envKey,
       metadata: this.#metadata,
     });

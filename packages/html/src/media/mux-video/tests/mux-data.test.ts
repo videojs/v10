@@ -44,6 +44,15 @@ describe('setupMuxData', () => {
     expect(opts.hlsjs).toBe(engine);
   });
 
+  it('calls mux.monitor without hlsjs on the native path (engine is null)', () => {
+    const el = makeMediaEl();
+    setupMuxData(el, null, { envKey: null, metadata: {} });
+
+    expect(mockMonitor).toHaveBeenCalledOnce();
+    const opts = mockMonitor.mock.calls[0]![1];
+    expect(opts.hlsjs).toBeUndefined();
+  });
+
   it('sets automaticErrorTracking to false', () => {
     const el = makeMediaEl();
     setupMuxData(el, makeEngine(), { envKey: null, metadata: {} });

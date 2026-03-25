@@ -13,7 +13,7 @@
 | 2 | Stream type detection | ✅ Done | ⚠️ Not yet implemented. Requires independent `fetch()` + parse of the multivariant and media playlists (`#EXT-X-PLAYLIST-TYPE`, `#EXT-X-PART-INF`, `#EXT-X-TARGETDURATION`). Reference: `playback-core/src/index.ts:getStreamInfoFromSrcAndType()`. |
 | 3 | Error handling | ✅ Done | ⚠️ Not yet implemented. Requires listening to native `error` events, then doing a follow-up `fetch(src)` to recover the HTTP status code for accurate error classification. Reference: `playback-core/src/index.ts:handleNativeError()`. |
 | 4 | DRM | ✅ Done (Widevine, PlayReady, FairPlay via EME) | ⚠️ Not yet implemented. Requires two separate FairPlay code paths: modern EME (`eme-fairplay.ts`) and legacy WebKit (`webkit-fairplay.ts`, needed for AirPlay). Both fetch app cert + license from `license.mux.com`. |
-| 5 | Mux Data integration | ✅ Done | ⚠️ Not yet implemented. `mux.monitor()` supports native playback without an `hlsjs` argument — the monitoring call is simply skipped when `engine` is null. Needs to call `setupMuxData` with `engine: null` and omit the `hlsjs` option. |
+| 5 | Mux Data integration | ✅ Done | ✅ Done — `mux.monitor()` called without `hlsjs` when `engine` is null. |
 | 6 | Convenience API (`playbackId` → URL, tokens, `prefer-playback`) | ⏳ Not started | ⏳ Not started (`prefer-playback='native'` is gating item) |
 | 7 | `MuxPlayer` UI | ⏳ Not started | ⏳ Not started |
 
