@@ -3,12 +3,12 @@
    ========================================================================== */
 
 .media-minimal-skin {
+  container: media-root / inline-size;
   position: relative;
   isolation: isolate;
   display: block;
   height: 100%;
   width: 100%;
-  container: media-root / inline-size;
   border-radius: var(--media-border-radius, 0.75rem);
   font-family:
     Inter Variable,
@@ -16,11 +16,18 @@
     ui-sans-serif,
     system-ui,
     sans-serif;
-  font-size: 0.8125rem;
   line-height: 1.5;
   letter-spacing: normal;
   -webkit-font-smoothing: auto;
   -moz-osx-font-smoothing: auto;
 
-  --media-controls-radius: var(--media-border-radius, 1rem);
+  & > * {
+    font-size: 0.75rem; /* 12px at 100% font size */
+  }
+
+  @container media-root (width > 48rem) {
+    & > * {
+      font-size: 0.875rem; /* 14px at 100% font size */
+    }
+  }
 }

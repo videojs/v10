@@ -18,7 +18,8 @@ import { playbackRate } from '@videojs/skins/default/tailwind/video.tailwind';
 import {
   bufferingIndicator,
   button,
-  buttonGroup,
+  buttonGroupEnd,
+  buttonGroupStart,
   controls,
   error,
   icon,
@@ -201,7 +202,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
         className={controls}
       >
         <Tooltip.Provider>
-          <div className={buttonGroup}>
+          <div className={buttonGroupStart}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
@@ -220,7 +221,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={-SEEK_TIME} className={seek.button} render={<Button />}>
+                  <SeekButton seconds={-SEEK_TIME} render={<Button />}>
                     <span className={iconContainer}>
                       <SeekIcon className={cn(icon, iconFlipped)} />
                       <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
@@ -234,7 +235,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={SEEK_TIME} className={seek.button} render={<Button />}>
+                  <SeekButton seconds={SEEK_TIME} render={<Button />}>
                     <span className={iconContainer}>
                       <SeekIcon className={icon} />
                       <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
@@ -263,13 +264,13 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 <div className={preview.thumbnailWrapper}>
                   <Slider.Thumbnail className={preview.thumbnail} />
                 </div>
-                <TimeSlider.Value type="pointer" className={preview.timestamp} />
+                <TimeSlider.Value type="pointer" className={preview.time} />
                 <SpinnerIcon className={cn(icon, preview.spinner)} />
               </div>
             </TimeSlider.Root>
           </div>
 
-          <div className={buttonGroup}>
+          <div className={buttonGroupEnd}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
               <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>

@@ -9,6 +9,9 @@ export const controls = cn(
   // Shadow color variables (derived from currentColor lightness)
   '[--media-controls-current-shadow-color:oklch(from_currentColor_0_0_0/clamp(0,calc((l-0.5)*0.5),0.15))]',
   '[--media-controls-current-shadow-color-subtle:oklch(from_var(--media-controls-current-shadow-color)_l_c_h/calc(alpha*0.4))]',
+  // Appearance (driven by CSS variables set on the root)
+  'bg-(--media-controls-background-color)',
+  '[backdrop-filter:var(--media-controls-backdrop-filter)]',
   // Text shadow
-  'text-shadow-[0_1px_0_var(--media-controls-current-shadow-color)]'
+  'text-shadow-2xs text-shadow-(color:--media-controls-current-shadow-color)'
 );

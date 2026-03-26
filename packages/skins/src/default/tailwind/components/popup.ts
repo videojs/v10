@@ -23,16 +23,14 @@ const base = cn(
 export const popup = {
   popover: cn(
     base,
-    '[--media-popover-side-offset:0.5rem]',
     'data-[side=top]:before:h-(--media-popover-side-offset) data-[side=bottom]:before:h-(--media-popover-side-offset)',
     'data-[side=left]:before:w-(--media-popover-side-offset) data-[side=right]:before:w-(--media-popover-side-offset)'
   ),
   tooltip: cn(
     base,
     'py-1 px-2.5 rounded-full text-[0.75rem] whitespace-nowrap',
-    '[--media-tooltip-side-offset:0.75rem]',
     'data-[side=top]:before:h-(--media-tooltip-side-offset) data-[side=bottom]:before:h-(--media-tooltip-side-offset)',
     'data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)'
   ),
-  volume: 'py-2.5 px-1 rounded-full',
+  volume: 'py-3 px-0 rounded-full',
 };

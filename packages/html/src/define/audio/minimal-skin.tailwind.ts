@@ -57,7 +57,7 @@ function getTemplateHTML() {
               </media-tooltip>
             </span>
 
-            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon, seek.button)}">
+            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
                 ${renderIcon('seek', { class: cn(icon, iconFlipped) })}
                 <span class="${cn(seek.label, seek.labelBackward)}">${SEEK_TIME}</span>
@@ -67,7 +67,7 @@ function getTemplateHTML() {
               Seek backward ${SEEK_TIME} seconds
             </media-tooltip>
 
-            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon, seek.button)}">
+            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
                 ${renderIcon('seek', { class: icon })}
                 <span class="${cn(seek.label, seek.labelForward)}">${SEEK_TIME}</span>

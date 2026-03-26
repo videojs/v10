@@ -7,7 +7,8 @@
 @import "./components/error.css";
 @import "./components/controls.css";
 @import "./components/time.css";
-@import "./components/buttons.css";
+@import "./components/button.css";
+@import "./components/button-group.css";
 @import "./components/icons.css";
 @import "./components/poster.css";
 @import "./components/preview.css";
@@ -42,13 +43,14 @@
   --media-surface-backdrop-filter: blur(16px) saturate(1.5);
   --media-video-border-radius: var(--media-border-radius, 2rem);
   --media-controls-transition-duration: 100ms;
-  --media-controls-transition-delay: 0ms;
   --media-controls-transition-timing-function: ease-out;
   --media-error-dialog-transition-duration: 350ms;
   --media-error-dialog-transition-delay: 100ms;
   --media-error-dialog-transition-timing-function: var(--media-spring-transition);
   --media-popup-transition-duration: 100ms;
   --media-popup-transition-timing-function: ease-out;
+  --media-tooltip-side-offset: 0.75rem;
+  --media-popover-side-offset: 0.5rem;
 
   @media (prefers-reduced-motion: reduce) {
     --media-error-dialog-transition-duration: 50ms;
@@ -61,10 +63,15 @@
     --media-border-color: oklch(1 0 0 / 0.15);
   }
 
+  @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
+    --media-surface-background-color: oklch(0 0 0);
+    --media-surface-inner-border-color: oklch(1 0 0 / 0.25);
+    --media-surface-outer-border-color: transparent;
+  }
+
   &:has(.media-controls:not([data-visible])) {
     /* Slight delay to hide controls on non-touch devices after interaction */
     @media (pointer: fine) {
-      --media-controls-transition-delay: 500ms;
       --media-controls-transition-duration: 300ms;
     }
     @media (pointer: coarse) {
@@ -145,13 +152,13 @@
    ========================================================================== */
 
 .media-default-skin--video .media-controls {
+  flex-wrap: wrap;
   position: absolute;
-  bottom: 0.75rem;
-  inset-inline: 0.75rem;
+  bottom: 0.5rem;
+  inset-inline: 0.5rem;
   z-index: 10;
   color: var(--media-color-primary, oklch(1 0 0));
   transition-duration: var(--media-controls-transition-duration);
-  transition-delay: var(--media-controls-transition-delay);
   transition-timing-function: var(--media-controls-transition-timing-function);
   transform-origin: bottom;
 
@@ -178,17 +185,49 @@
       scale: 1;
     }
   }
+
+  & .media-time-controls {
+    order: -1;
+    flex: 0 0 100%;
+    padding-inline: 0.625rem;
+  }
+
+  & .media-button-group:first-child {
+    flex: 1;
+    text-align: left;
+  }
+
+  & .media-button-group:last-child {
+    flex: 1;
+    justify-content: end;
+  }
+
+  @container media-root (width > 42rem) {
+    bottom: 0.75rem;
+    inset-inline: 0.75rem;
+    flex-wrap: nowrap;
+    column-gap: 0.125rem;
+    padding: 0.25rem;
+
+    & .media-time-controls {
+      order: unset;
+      flex: 1;
+    }
+
+    & .media-button-group:first-child,
+    & .media-button-group:last-child {
+      flex: 0 0 auto;
+    }
+  }
 }
 
 .media-default-skin--video .media-error[data-open] ~ .media-controls {
   display: none;
 }
 
-/* Hide cursor when controls are hidden in fullscreen */
-@media (pointer: fine) {
-  .media-default-skin--video:fullscreen:has(.media-controls:not([data-visible])) {
-    cursor: none;
-  }
+/* Hide cursor when controls are hidden */
+.media-default-skin--video:has(.media-controls:not([data-visible])) {
+  cursor: none;
 }
 
 /* ==========================================================================
@@ -201,8 +240,20 @@
 }
 
 .media-default-skin--video .media-slider__preview {
+  --media-preview-max-width: 11rem;
+  --media-preview-padding: -1.125rem;
+  /**
+    Inset is the difference between the container width and the slider (100%) width.
+    Divided by 2 as we render the time on both sides.
+  */
+  --media-preview-inset: calc((100cqi - 100%) / 2);
+
   position: absolute;
-  left: var(--media-slider-pointer);
+  left: clamp(
+    calc(var(--media-preview-max-width) / 2 + var(--media-preview-padding) - var(--media-preview-inset)),
+    var(--media-slider-pointer),
+    calc(100% - var(--media-preview-max-width) / 2 - var(--media-preview-padding) + var(--media-preview-inset))
+  );
   bottom: calc(100% + 1.2rem);
   translate: -50%;
   opacity: 0;
@@ -215,7 +266,7 @@
   pointer-events: none;
 
   & .media-preview__thumbnail {
-    max-width: 11rem;
+    max-width: var(--media-preview-max-width);
   }
 
   &:has(.media-preview__thumbnail[data-loading]) {

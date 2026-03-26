@@ -61,10 +61,10 @@ function getTemplateHTML() {
           </div>
 
           <div class="media-time-controls">
-            <media-time-group class="media-time">
-              <media-time type="current" class="media-time__value media-time__value--current"></media-time>
-              <media-time-separator class="media-time__separator"></media-time-separator>
-              <media-time type="duration" class="media-time__value media-time__value--duration"></media-time>
+            <media-time-group class="media-time-group">
+              <media-time type="current" class="media-time media-time--current"></media-time>
+              <media-time-separator class="media-time-separator"></media-time-separator>
+              <media-time type="duration" class="media-time media-time--duration"></media-time>
             </media-time-group>
 
             <media-time-slider class="media-slider">

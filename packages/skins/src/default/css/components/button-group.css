@@ -1,0 +1,13 @@
+/* ==========================================================================
+   Button Groups
+   ========================================================================== */
+
+.media-default-skin .media-button-group {
+  display: flex;
+  align-items: center;
+  gap: 0.075rem;
+
+  @container media-root (width > 42rem) {
+    gap: 0.125rem;
+  }
+}

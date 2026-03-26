@@ -9,7 +9,7 @@ export const preview = {
     'after:bg-linear-to-t after:from-black/80 after:via-black/30 after:to-black/0',
     'data-loading:opacity-0'
   ),
-  timestamp: 'absolute bottom-2 inset-x-0 text-center tabular-nums',
+  time: 'absolute bottom-2 inset-x-0 text-center tabular-nums',
   spinner: cn(
     'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0',
     'transition-opacity duration-150 ease-out',

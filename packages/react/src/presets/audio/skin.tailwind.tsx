@@ -9,6 +9,7 @@ import {
 } from '@videojs/icons/react';
 import {
   button,
+  buttonGroup,
   controls,
   error,
   icon,
@@ -146,50 +147,52 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
 
       <div className={controls}>
         <Tooltip.Provider>
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <PlayButton className={iconState.play.button} render={<Button />}>
-                  <RestartIcon className={cn(icon, iconState.play.restart)} />
-                  <PlayIcon className={cn(icon, iconState.play.play)} />
-                  <PauseIcon className={cn(icon, iconState.play.pause)} />
-                </PlayButton>
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>
-              <PlayLabel />
-            </Tooltip.Popup>
-          </Tooltip.Root>
+          <div className={buttonGroup}>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <PlayButton className={iconState.play.button} render={<Button />}>
+                    <RestartIcon className={cn(icon, iconState.play.restart)} />
+                    <PlayIcon className={cn(icon, iconState.play.play)} />
+                    <PauseIcon className={cn(icon, iconState.play.pause)} />
+                  </PlayButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <PlayLabel />
+              </Tooltip.Popup>
+            </Tooltip.Root>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <SeekButton seconds={-SEEK_TIME} className={seek.button} render={<Button />}>
-                  <span className={iconContainer}>
-                    <SeekIcon className={cn(icon, iconFlipped)} />
-                    <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
-                  </span>
-                </SeekButton>
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
-          </Tooltip.Root>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <SeekButton seconds={-SEEK_TIME} render={<Button />}>
+                    <span className={iconContainer}>
+                      <SeekIcon className={cn(icon, iconFlipped)} />
+                      <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
+                    </span>
+                  </SeekButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+            </Tooltip.Root>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <SeekButton seconds={SEEK_TIME} className={seek.button} render={<Button />}>
-                  <span className={iconContainer}>
-                    <SeekIcon className={icon} />
-                    <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
-                  </span>
-                </SeekButton>
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
-          </Tooltip.Root>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <SeekButton seconds={SEEK_TIME} render={<Button />}>
+                    <span className={iconContainer}>
+                      <SeekIcon className={icon} />
+                      <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
+                    </span>
+                  </SeekButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+            </Tooltip.Root>
+          </div>
 
-          <Time.Group className={time.group}>
+          <div className={time.group}>
             <Time.Value type="current" className={time.current} />
             <TimeSlider.Root render={<SliderRoot />}>
               <TimeSlider.Track render={<SliderTrack />}>
@@ -199,14 +202,16 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
               <TimeSlider.Thumb render={<SliderThumb />} />
             </TimeSlider.Root>
             <Time.Value type="duration" className={time.duration} />
-          </Time.Group>
+          </div>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
-            <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
-          </Tooltip.Root>
+          <div className={buttonGroup}>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
+              <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
+            </Tooltip.Root>
 
-          <VolumePopover />
+            <VolumePopover />
+          </div>
         </Tooltip.Provider>
       </div>
     </Container>

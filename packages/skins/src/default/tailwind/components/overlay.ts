@@ -7,11 +7,10 @@ export const overlay = cn(
   // Default: hidden
   'opacity-0',
   'bg-linear-to-t from-black/50 via-black/30 to-transparent',
-  'backdrop-blur-none backdrop-saturate-150',
+  'backdrop-blur-none backdrop-saturate-100',
   // Transitions
   'transition-[opacity,backdrop-filter]',
   'duration-(--media-controls-transition-duration)',
-  'delay-(--media-controls-transition-delay)',
   'ease-out',
   // Shown when controls visible
   'peer-data-visible/controls:opacity-100',
@@ -19,5 +18,5 @@ export const overlay = cn(
   'peer-data-open/error:opacity-100',
   'peer-data-open/error:duration-(--media-error-dialog-transition-duration)',
   'peer-data-open/error:delay-(--media-error-dialog-transition-delay)',
-  'peer-data-open/error:backdrop-blur-lg'
+  'peer-data-open/error:backdrop-blur-lg peer-data-open/error:backdrop-saturate-150'
 );

@@ -1,12 +1,14 @@
 import { cn } from '@videojs/utils/style';
 import { bufferingIndicator as baseBufferingIndicator } from './components/buffering';
+import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
 import { popup as basePopup } from './components/popup';
 import { preview as basePreview } from './components/preview';
 import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
-import { surface as baseSurface } from './components/surface';
+import { surface } from './components/surface';
+import { time as baseTime } from './components/time';
 
 /* ==========================================================================
    Root
@@ -29,26 +31,38 @@ export const root = (isShadowDOM: boolean) =>
     '[--media-spring-transition:linear(0,0.034_1.5%,0.763_9.7%,1.066_13.9%,1.198_19.9%,1.184_21.8%,0.963_37.5%,0.997_50.9%,1)]',
     '[--media-video-border-radius:var(--media-border-radius,2rem)]',
     '[--media-controls-transition-duration:100ms]',
-    '[--media-controls-transition-delay:0ms]',
     '[--media-controls-transition-timing-function:ease-out]',
     '[--media-error-dialog-transition-duration:350ms]',
     '[--media-error-dialog-transition-delay:100ms]',
     '[--media-error-dialog-transition-timing-function:var(--media-spring-transition)]',
     '[--media-popup-transition-duration:100ms]',
     '[--media-popup-transition-timing-function:ease-out]',
+    '[--media-surface-background-color:oklch(1_0_0/0.1)]',
+    '[--media-surface-inner-border-color:oklch(1_0_0/0.05)]',
+    '[--media-surface-outer-border-color:oklch(0_0_0/0.1)]',
+    '[--media-surface-shadow-color:oklch(0_0_0/0.15)]',
+    '[--media-surface-backdrop-filter:blur(16px)_saturate(1.5)]',
     'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
     'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
     'motion-reduce:[--media-error-dialog-transition-timing-function:ease-out]',
+    '[--media-tooltip-side-offset:0.75rem]',
+    '[--media-popover-side-offset:0.5rem]',
     'motion-reduce:[--media-popup-transition-duration:0ms]',
-    '[@media(pointer:fine)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-delay:500ms]',
+    '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:oklch(0_0_0)]',
+    'contrast-more:[--media-surface-background-color:oklch(0_0_0)]',
+    '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-inner-border-color:oklch(1_0_0/0.25)]',
+    'contrast-more:[--media-surface-inner-border-color:oklch(1_0_0/0.25)]',
+    '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-outer-border-color:transparent]',
+    'contrast-more:[--media-surface-outer-border-color:transparent]',
     '[@media(pointer:fine)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
     '[@media(pointer:coarse)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
     'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:50ms]',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
     '[--media-caption-track-y:-0.5rem]',
-    '[--media-caption-track-delay:calc(var(--media-controls-transition-delay)_+_25ms)]',
+    '[--media-caption-track-delay:25ms]',
     '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
-    'has-[[data-controls][data-visible]]:[--media-caption-track-y:-3.5rem]',
+    'has-[[data-controls][data-visible]]:[--media-caption-track-y:-5.5rem]',
+    '@2xl/media-root:has-[[data-controls][data-visible]]:[&>*]:[--media-caption-track-y:-3.5rem]',
     // Native caption track container
     !isShadowDOM
       ? [
@@ -71,37 +85,18 @@ export const root = (isShadowDOM: boolean) =>
   );
 
 /* ==========================================================================
-   Surface (shared glass effect for tooltips, popovers, controls)
-   ========================================================================== */
-
-export const surface = cn(
-  baseSurface,
-  'bg-white/10',
-  'backdrop-saturate-150 backdrop-blur-lg',
-  // Border and shadow
-  'ring-black/15 shadow-black/10',
-  // Border to enhance contrast on lighter videos
-  'after:ring-white/5',
-  // Reduced transparency for users with preference
-  '[@media(prefers-reduced-transparency:reduce)]:bg-black/70',
-  // High contrast mode
-  'contrast-more:bg-black/90'
-);
-
-/* ==========================================================================
    Controls (hide/show behavior)
    ========================================================================== */
 
 export const controls = cn(
   baseControls,
   surface,
-  // Position
-  'absolute bottom-3 inset-x-3',
+  // Position & wrapping layout (small)
+  'absolute bottom-2 inset-x-2 flex-wrap',
   '[color:var(--media-color-primary,oklch(1_0_0))] z-10',
   'peer-data-open/error:hidden',
   'ease-(--media-controls-transition-timing-function) origin-bottom',
   'duration-(--media-controls-transition-duration)',
-  'delay-(--media-controls-transition-delay)',
   '[@media(pointer:fine)]:will-change-[scale,filter,opacity]',
   '[@media(pointer:fine)]:transition-[scale,filter,opacity]',
   '[@media(pointer:coarse)]:will-change-[scale,opacity]',
@@ -109,8 +104,30 @@ export const controls = cn(
   // Hidden state
   'not-data-visible:pointer-events-none not-data-visible:opacity-0',
   'motion-safe:not-data-visible:scale-90',
-  '[@media(pointer:fine)]:motion-safe:not-data-visible:blur-sm'
+  '[@media(pointer:fine)]:motion-safe:not-data-visible:blur-sm',
+  // Single-row layout (large)
+  '@2xl/media-root:bottom-3 @2xl/media-root:inset-x-3 @2xl/media-root:flex-nowrap @2xl/media-root:gap-x-0.5 @2xl/media-root:p-1'
 );
+
+/* ==========================================================================
+   Button groups
+   ========================================================================== */
+
+export const buttonGroupStart = cn(baseButtonGroup, 'flex-1 @2xl/media-root:flex-none');
+export const buttonGroupEnd = cn(baseButtonGroup, 'flex-1 justify-end @2xl/media-root:flex-none');
+
+/* ==========================================================================
+   Time
+   ========================================================================== */
+
+export const time = {
+  ...baseTime,
+  group: cn(
+    baseTime.group,
+    'grow-0 shrink-0 basis-full order-[-1] px-2.5',
+    '@2xl/media-root:grow @2xl/media-root:shrink @2xl/media-root:basis-0 @2xl/media-root:order-[unset]'
+  ),
+};
 
 /* ==========================================================================
    Preview (with video surface)
@@ -119,7 +136,8 @@ export const controls = cn(
 export const preview = {
   ...basePreview,
   root: cn(
-    'absolute left-(--media-slider-pointer) bottom-[calc(100%+1.2rem)] -translate-x-1/2',
+    '[--media-preview-max-width:11rem] [--media-preview-padding:-1.125rem] [--media-preview-inset:calc((100cqi-100%)/2)]',
+    'absolute [left:clamp(calc(var(--media-preview-max-width)/2+var(--media-preview-padding)-var(--media-preview-inset)),var(--media-slider-pointer),calc(100%-var(--media-preview-max-width)/2-var(--media-preview-padding)+var(--media-preview-inset)))] bottom-[calc(100%+1.2rem)] -translate-x-1/2',
     'opacity-0 scale-80 blur-sm origin-bottom',
     'transition-[scale,opacity,filter] duration-150',
     'group-data-pointing/slider:opacity-100 group-data-pointing/slider:scale-100 group-data-pointing/slider:blur-none',
@@ -128,7 +146,7 @@ export const preview = {
     surface,
     basePreview.root
   ),
-  thumbnail: cn(basePreview.thumbnail, 'max-w-44'),
+  thumbnail: cn(basePreview.thumbnail, 'max-w-(--media-preview-max-width)'),
 };
 
 /* ==========================================================================
@@ -137,7 +155,7 @@ export const preview = {
 
 export const slider = {
   ...baseSlider,
-  track: cn(baseSlider.track, 'bg-white/20 shadow-[0_0_0_1px_oklch(0_0_0/0.05)]'),
+  track: cn(baseSlider.track, 'bg-white/20 ring-1 ring-black/5'),
 };
 
 /* ==========================================================================
@@ -165,7 +183,7 @@ export const bufferingIndicator = {
 
 export const error = {
   ...baseError,
-  dialog: cn(baseError.dialog, surface, 'text-shadow-[0_1px_0_oklch(0_0_0/0.25)]'),
+  dialog: cn(baseError.dialog, surface, 'text-shadow-2xs text-shadow-black/25'),
   content: cn(baseError.content, 'text-shadow-inherit'),
   title: cn(baseError.title, 'text-base'),
 };
@@ -177,9 +195,9 @@ export const error = {
 export { iconState } from '../../shared/tailwind/icon-state';
 export { tooltipState } from '../../shared/tailwind/tooltip-state';
 export { button } from './components/button';
+export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';
 export { seek } from './components/seek';
-export { time } from './components/time';

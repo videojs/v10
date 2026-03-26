@@ -3,7 +3,8 @@ import { renderIcon } from '@videojs/icons/render/minimal';
 import {
   bufferingIndicator,
   button,
-  buttonGroup,
+  buttonGroupEnd,
+  buttonGroupStart,
   controls,
   icon,
   iconContainer,
@@ -61,7 +62,7 @@ function getTemplateHTML() {
 
       <media-controls data-controls="" class="${controls}">
         <media-tooltip-group>
-          <div class="${buttonGroup}">
+          <div class="${buttonGroupStart}">
             <span class="${tooltipState.play.wrapper}">
               <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
                 ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
@@ -75,7 +76,7 @@ function getTemplateHTML() {
               </media-tooltip>
             </span>
 
-            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon, seek.button)}">
+            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
                 ${renderIcon('seek', { class: cn(icon, iconFlipped) })}
                 <span class="${cn(seek.label, seek.labelBackward)}">${SEEK_TIME}</span>
@@ -85,7 +86,7 @@ function getTemplateHTML() {
               Seek backward ${SEEK_TIME} seconds
             </media-tooltip>
 
-            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon, seek.button)}">
+            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
                 ${renderIcon('seek', { class: icon })}
                 <span class="${cn(seek.label, seek.labelForward)}">${SEEK_TIME}</span>
@@ -114,13 +115,13 @@ function getTemplateHTML() {
                 <div class="${preview.thumbnailWrapper}">
                   <media-slider-thumbnail class="${preview.thumbnail}"></media-slider-thumbnail>
                 </div>
-                <media-slider-value type="pointer" class="${preview.timestamp}"></media-slider-value>
+                <media-slider-value type="pointer" class="${preview.time}"></media-slider-value>
                 ${renderIcon('spinner', { class: cn(icon, preview.spinner) })}
               </div>
             </media-time-slider>
           </div>
 
-          <div class="${buttonGroup}">
+          <div class="${buttonGroupEnd}">
             <media-playback-rate-button commandfor="playback-rate-tooltip"  class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}">
             </media-playback-rate-button>
             <media-tooltip id="playback-rate-tooltip" side="top" class="${cn(popup.tooltip)}">

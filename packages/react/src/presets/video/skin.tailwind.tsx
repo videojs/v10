@@ -17,6 +17,8 @@ import {
 import {
   bufferingIndicator,
   button,
+  buttonGroupEnd,
+  buttonGroupStart,
   controls,
   error,
   icon,
@@ -202,50 +204,52 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
         className={controls}
       >
         <Tooltip.Provider>
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <PlayButton className={iconState.play.button} render={<Button />}>
-                  <RestartIcon className={cn(icon, iconState.play.restart)} />
-                  <PlayIcon className={cn(icon, iconState.play.play)} />
-                  <PauseIcon className={cn(icon, iconState.play.pause)} />
-                </PlayButton>
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>
-              <PlayLabel />
-            </Tooltip.Popup>
-          </Tooltip.Root>
+          <div className={buttonGroupStart}>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <PlayButton className={iconState.play.button} render={<Button />}>
+                    <RestartIcon className={cn(icon, iconState.play.restart)} />
+                    <PlayIcon className={cn(icon, iconState.play.play)} />
+                    <PauseIcon className={cn(icon, iconState.play.pause)} />
+                  </PlayButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <PlayLabel />
+              </Tooltip.Popup>
+            </Tooltip.Root>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <SeekButton seconds={-SEEK_TIME} className={seek.button} render={<Button />}>
-                  <span className={iconContainer}>
-                    <SeekIcon className={cn(icon, iconFlipped)} />
-                    <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
-                  </span>
-                </SeekButton>
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
-          </Tooltip.Root>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <SeekButton seconds={-SEEK_TIME} render={<Button />}>
+                    <span className={iconContainer}>
+                      <SeekIcon className={cn(icon, iconFlipped)} />
+                      <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
+                    </span>
+                  </SeekButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+            </Tooltip.Root>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <SeekButton seconds={SEEK_TIME} className={seek.button} render={<Button />}>
-                  <span className={iconContainer}>
-                    <SeekIcon className={icon} />
-                    <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
-                  </span>
-                </SeekButton>
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
-          </Tooltip.Root>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <SeekButton seconds={SEEK_TIME} render={<Button />}>
+                    <span className={iconContainer}>
+                      <SeekIcon className={icon} />
+                      <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
+                    </span>
+                  </SeekButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+            </Tooltip.Root>
+          </div>
 
-          <Time.Group className={time.group}>
+          <div className={time.group}>
             <Time.Value type="current" className={time.current} />
             <TimeSlider.Root render={<SliderRoot />}>
               <TimeSlider.Track render={<SliderTrack />}>
@@ -255,61 +259,63 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
               <TimeSlider.Thumb render={<SliderThumb />} />
               <div className={preview.root}>
                 <Slider.Thumbnail className={preview.thumbnail} />
-                <TimeSlider.Value type="pointer" className={preview.timestamp} />
+                <TimeSlider.Value type="pointer" className={preview.time} />
                 <SpinnerIcon className={cn(icon, preview.spinner)} />
               </div>
             </TimeSlider.Root>
             <Time.Value type="duration" className={time.duration} />
-          </Time.Group>
+          </div>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
-            <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
-          </Tooltip.Root>
+          <div className={buttonGroupEnd}>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
+              <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
+            </Tooltip.Root>
 
-          <VolumePopover />
+            <VolumePopover />
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <CaptionsButton className={iconState.captions.button} render={<Button />}>
-                  <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
-                  <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
-                </CaptionsButton>
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>
-              <CaptionsLabel />
-            </Tooltip.Popup>
-          </Tooltip.Root>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <CaptionsButton className={iconState.captions.button} render={<Button />}>
+                    <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
+                    <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
+                  </CaptionsButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <CaptionsLabel />
+              </Tooltip.Popup>
+            </Tooltip.Root>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <PiPButton className={iconState.pip.button} render={<Button />}>
-                  <PipEnterIcon className={cn(icon, iconState.pip.off)} />
-                  <PipExitIcon className={cn(icon, iconState.pip.on)} />
-                </PiPButton>
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>
-              <PiPLabel />
-            </Tooltip.Popup>
-          </Tooltip.Root>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <PiPButton className={iconState.pip.button} render={<Button />}>
+                    <PipEnterIcon className={cn(icon, iconState.pip.off)} />
+                    <PipExitIcon className={cn(icon, iconState.pip.on)} />
+                  </PiPButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <PiPLabel />
+              </Tooltip.Popup>
+            </Tooltip.Root>
 
-          <Tooltip.Root side="top">
-            <Tooltip.Trigger
-              render={
-                <FullscreenButton className={iconState.fullscreen.button} render={<Button />}>
-                  <FullscreenEnterIcon className={cn(icon, iconState.fullscreen.enter)} />
-                  <FullscreenExitIcon className={cn(icon, iconState.fullscreen.exit)} />
-                </FullscreenButton>
-              }
-            />
-            <Tooltip.Popup className={cn(popup.tooltip)}>
-              <FullscreenLabel />
-            </Tooltip.Popup>
-          </Tooltip.Root>
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <FullscreenButton className={iconState.fullscreen.button} render={<Button />}>
+                    <FullscreenEnterIcon className={cn(icon, iconState.fullscreen.enter)} />
+                    <FullscreenExitIcon className={cn(icon, iconState.fullscreen.exit)} />
+                  </FullscreenButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <FullscreenLabel />
+              </Tooltip.Popup>
+            </Tooltip.Root>
+          </div>
         </Tooltip.Provider>
       </Controls.Root>
 

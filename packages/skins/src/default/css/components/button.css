@@ -1,33 +1,21 @@
 /* ==========================================================================
-   Button Groups
-   ========================================================================== */
-
-.media-minimal-skin .media-button-group {
-  display: flex;
-  align-items: center;
-  gap: 0.075rem;
-
-  @container media-root (width > 40rem) {
-    gap: 0.125rem;
-  }
-}
-
-/* ==========================================================================
    Buttons
    ========================================================================== */
 
 /* Base button */
-.media-minimal-skin .media-button {
+.media-default-skin .media-button {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: calc(var(--media-controls-radius) - var(--media-controls-padding));
+  border-radius: calc(infinity * 1px);
   outline: 2px solid transparent;
   outline-offset: -2px;
   transition-property: background-color, outline-offset, scale;
+  /* Fix weird jumping when clicking on the buttons in Safari. */
+  will-change: scale;
   transition-duration: 150ms;
   transition-timing-function: ease-out;
   cursor: pointer;
@@ -55,17 +43,8 @@
   }
 }
 
-/* biome-ignore lint/correctness/noUnknownProperty: corner-shape is an emerging CSS spec */
-@supports (corner-shape: squircle) {
-  .media-minimal-skin .media-button {
-    border-radius: var(--media-controls-radius);
-    /* biome-ignore lint/correctness/noUnknownProperty: corner-shape is an emerging CSS spec */
-    corner-shape: squircle;
-  }
-}
-
 /* Primary button variant */
-.media-minimal-skin .media-button--primary {
+.media-default-skin .media-button--primary {
   background: oklch(1 0 0);
   color: oklch(0 0 0);
   font-weight: 500;
@@ -73,7 +52,7 @@
 }
 
 /* Subtle button variant */
-.media-minimal-skin .media-button--subtle {
+.media-default-skin .media-button--subtle {
   background: transparent;
   color: inherit;
   text-shadow: inherit;
@@ -81,14 +60,15 @@
   &:hover,
   &:focus-visible,
   &[aria-expanded="true"] {
-    background: oklch(from currentColor l c h / 0.1);
+    background-color: oklch(from currentColor l c h / 0.1);
+    text-decoration: none;
   }
 }
 
 /* Icon button variant */
-.media-minimal-skin .media-button--icon {
+.media-default-skin .media-button--icon {
   display: grid;
-  width: 2.375rem;
+  width: 2.25rem;
   padding: 0;
   aspect-ratio: 1;
 
@@ -102,7 +82,7 @@
 }
 
 /* Seek button */
-.media-minimal-skin .media-button--seek {
+.media-default-skin .media-button--seek {
   & .media-icon__label {
     position: absolute;
     right: -1px;
@@ -116,14 +96,10 @@
     right: unset;
     left: -1px;
   }
-
-  @container media-controls (width < 28rem) {
-    display: none;
-  }
 }
 
 /* Playback rate button */
-.media-minimal-skin .media-button--playback-rate {
+.media-default-skin .media-button--playback-rate {
   padding: 0;
 
   &::after {

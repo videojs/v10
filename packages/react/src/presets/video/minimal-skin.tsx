@@ -182,10 +182,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
           </div>
 
           <div className="media-time-controls">
-            <Time.Group className="media-time">
-              <Time.Value type="current" className="media-time__value media-time__value--current" />
-              <Time.Separator className="media-time__separator" />
-              <Time.Value type="duration" className="media-time__value media-time__value--duration" />
+            <Time.Group className="media-time-group">
+              <Time.Value type="current" className="media-time media-time--current" />
+              <Time.Separator className="media-time-separator" />
+              <Time.Value type="duration" className="media-time media-time--duration" />
             </Time.Group>
 
             <TimeSlider.Root className="media-slider">
@@ -199,7 +199,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                 <div className="media-preview__thumbnail-wrapper">
                   <Slider.Thumbnail className="media-preview__thumbnail" />
                 </div>
-                <TimeSlider.Value type="pointer" className="media-preview__timestamp" />
+                <TimeSlider.Value type="pointer" className="media-time media-preview__time" />
                 <SpinnerIcon className="media-preview__spinner media-icon" />
               </div>
             </TimeSlider.Root>
