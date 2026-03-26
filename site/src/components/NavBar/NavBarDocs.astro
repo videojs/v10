@@ -1,9 +1,9 @@
 ---
 import clsx from 'clsx';
 import { ArrowUpRight } from 'lucide-react';
-import Discord from '@/components/icons/discord.svg?react';
-import GitHub from '@/components/icons/github.svg?react';
-import LogoDocs from '@/components/icons/logo-docs.svg?react';
+import Discord from '@/assets/logos/discord.svg?react';
+import GitHub from '@/assets/logos/github.svg?react';
+import LogoBeta from '@/assets/logos/videojs-beta.svg?react';
 import Search from '@/components/Search';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
 import GetStartedLink from './GetStartedLink';
@@ -39,7 +39,7 @@ const { class: className } = Astro.props;
 >
   <a href="/" class="flex items-center" aria-label="Video.js v10 home">
     <div class="relative w-40 md:w-49.5">
-      <LogoDocs width="100%" />
+      <LogoBeta width="100%" />
     </div>
   </a>
   <Search client:load className="mr-4 ml-auto sm:self-center" />

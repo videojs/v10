@@ -18,12 +18,10 @@ import clsx from 'clsx';
 
 import { Check } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import CopyIcon from '@/assets/icons/copy.svg?react';
 import { twMerge } from '@/utils/twMerge';
-
 import useIsHydrated from '@/utils/useIsHydrated';
-
 import CopyButton from './CopyButton';
-import CopyIcon from './icons/copy-icon.svg?react';
 
 export type TabsVariant = 'expanded' | 'compact';
 

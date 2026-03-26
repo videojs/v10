@@ -1,8 +1,8 @@
 import { Dialog } from '@base-ui/react/dialog';
 import clsx from 'clsx';
 import { ArrowUpRight } from 'lucide-react';
+import Logo from '@/assets/logos/videojs.svg?react';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
-import Logo from '../icons/logo.svg?react';
 import GetStartedLink from './GetStartedLink';
 
 interface NavLink {

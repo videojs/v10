@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useRef, useState } from 'react';
-import DialInner from '@/components/icons/dial-inner.svg?react';
-import DialOuter from '@/components/icons/dial-outer.svg?react';
+import DialInner from '@/assets/icons/dial-inner.svg?react';
+import DialOuter from '@/assets/icons/dial-outer.svg?react';
 import GetStartedLink from '@/components/NavBar/GetStartedLink';
 
 type Link = { href: string; label: string; angle: number };
@@ -71,34 +71,23 @@ export default function DialNav({ left, right }: DialNavProps) {
         })}
       </div>
 
-      {left[0].href === '/docs' ? (
-        <GetStartedLink
-          key={left[0].href}
-          onClick={(e) => handleClick(e, left[0])}
-          className="w-20 h-20 md:w-32 md:h-32 shrink-0 relative z-10 text-manila-light dark:text-faded-black"
-        >
-          <DialOuter
-            className="outline-8 rounded-full outline-manila-dark dark:outline-faded-black"
-            width={'100%'}
-            height={'auto'}
-          />
-          <DialInner style={needleStyle} className="absolute inset-0" width={'100%'} height={'auto'} />
-        </GetStartedLink>
-      ) : (
-        <a
-          key={left[0].href}
-          href={left[0].href}
-          onClick={(e) => handleClick(e, left[0])}
-          className="w-20 h-20 md:w-32 md:h-32 shrink-0 relative z-10 text-manila-light dark:text-faded-black"
-        >
-          <DialOuter
-            className="outline-8 rounded-full outline-manila-dark dark:outline-faded-black"
-            width={'100%'}
-            height={'auto'}
-          />
-          <DialInner style={needleStyle} className="absolute inset-0" width={'100%'} height={'auto'} />
-        </a>
-      )}
+      {(() => {
+        const DialTag = left[0].href === '/docs' ? GetStartedLink : 'a';
+        return (
+          <DialTag
+            href={left[0].href}
+            onClick={(e) => handleClick(e, left[0])}
+            className="w-20 h-20 md:w-32 md:h-32 shrink-0 relative z-10 text-faded-black dark:text-manila-light [--fill:var(--color-manila-light)] dark:[--fill:var(--color-faded-black)]"
+          >
+            <DialOuter
+              className="outline-8 rounded-full outline-manila-dark dark:outline-soot"
+              width={'100%'}
+              height={'auto'}
+            />
+            <DialInner style={needleStyle} className="absolute inset-0" width={'100%'} height={'auto'} />
+          </DialTag>
+        );
+      })()}
 
       <div className="flex flex-col gap-2">
         {right.map((link) => {
