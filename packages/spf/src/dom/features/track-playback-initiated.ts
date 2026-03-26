@@ -1,6 +1,6 @@
 import { listen } from '@videojs/utils/dom';
 import { effect } from '../../core/signals/effect';
-import { computed, type Signal, signal } from '../../core/signals/primitives';
+import { computed, type Signal, signal, update } from '../../core/signals/primitives';
 
 /**
  * State shape for playback initiation tracking.
@@ -83,7 +83,7 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
     const pi = playbackInitiated.get();
     if (pi === undefined) return;
     const current = state.get();
-    if (current.playbackInitiated !== pi) state.set({ ...current, playbackInitiated: pi } as S);
+    if (current.playbackInitiated !== pi) update(state, { playbackInitiated: pi });
   });
 
   return () => {

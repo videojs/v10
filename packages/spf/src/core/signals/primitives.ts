@@ -25,3 +25,17 @@ export function signal<T>(initialValue: T, options?: SignalOptions<T>): Signal<T
 export function computed<T>(fn: () => T, options?: SignalOptions<T>): Computed<T> {
   return new SignalNS.Computed(fn, options as SignalNS.Options<T>);
 }
+
+/**
+ * Update a writable signal. Accepts either a partial object to merge into the
+ * current state, or an updater function that receives the current state and
+ * returns the next state.
+ *
+ * @example
+ * update(state, { playbackRate: 2 });
+ * update(state, (s) => ({ ...s, count: s.count + 1 }));
+ */
+export function update<T extends object>(signal: Signal<T>, updater: Partial<T> | ((current: T) => T)): void {
+  const current = signal.get();
+  signal.set(typeof updater === 'function' ? updater(current) : { ...current, ...updater });
+}

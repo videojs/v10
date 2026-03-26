@@ -1,5 +1,5 @@
 import { effect } from '../../core/signals/effect';
-import { computed, type Signal } from '../../core/signals/primitives';
+import { computed, type Signal, update } from '../../core/signals/primitives';
 import type { PartiallyResolvedTextTrack, Presentation, TextTrack } from '../../core/types';
 
 /**
@@ -108,7 +108,7 @@ export function setupTextTracks<S extends TextTrackState, O extends TextTrackOwn
     });
 
     if (trackMap.size) {
-      owners.set({ ...owners.get(), textTracks: trackMap } as O);
+      update(owners, { textTracks: trackMap });
     }
   });
 

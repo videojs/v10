@@ -1,7 +1,7 @@
 import { fetchResolvable, getResponseText } from '../../dom/network/fetch';
 import { parseMultivariantPlaylist } from '../hls/parse-multivariant';
 import { effect } from '../signals/effect';
-import { computed, type Signal } from '../signals/primitives';
+import { computed, type Signal, update } from '../signals/primitives';
 import type { AddressableObject, MediaElementLike, Presentation } from '../types';
 
 /**
@@ -83,7 +83,7 @@ export function syncPreloadAttribute<S extends PresentationState, O extends Plat
     const current = state.get();
     if (current.preload !== undefined) return;
     const preload = mediaElement.get()?.preload || undefined;
-    state.set({ ...current, preload: preload as 'auto' | 'metadata' | 'none' | undefined } as S);
+    update(state, { preload: preload as 'auto' | 'metadata' | 'none' | undefined });
   });
 }
 
@@ -125,8 +125,7 @@ export function resolvePresentation<S extends PresentationState>({ state }: { st
       .then((response) => getResponseText(response))
       .then((text) => {
         const parsed = parseMultivariantPlaylist(text, presentation);
-        const latest = state.get();
-        state.set({ ...latest, presentation: parsed } as S);
+        update(state, { presentation: parsed });
       })
       .catch((error) => {
         if (error instanceof Error && error.name === 'AbortError') return;

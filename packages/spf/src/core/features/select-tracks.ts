@@ -1,6 +1,6 @@
 import { DEFAULT_QUALITY_CONFIG, selectQuality } from '../abr/quality-selection';
 import { effect } from '../signals/effect';
-import type { Signal } from '../signals/primitives';
+import { type Signal, update } from '../signals/primitives';
 import type { AudioSelectionSet, Presentation, TrackType, VideoSelectionSet } from '../types';
 import { SelectedTrackIdKeyByType } from '../utils/track-selection';
 
@@ -297,7 +297,7 @@ export function selectVideoTrack<S extends TrackSelectionState>(
 
     if (selectedTrackId) {
       const selectedTrackKey = SelectedTrackIdKeyByType[config.type];
-      state.set({ ...currentState, [selectedTrackKey]: selectedTrackId } as S);
+      update(state, (s) => ({ ...s, [selectedTrackKey]: selectedTrackId }) as S);
     }
   });
 }
@@ -330,7 +330,7 @@ export function selectAudioTrack<S extends TrackSelectionState>(
       ?.switchingSets[0]?.tracks[0]?.id;
 
     if (selectedTrackId) {
-      state.set({ ...currentState, selectedAudioTrackId: selectedTrackId } as S);
+      update(state, { selectedAudioTrackId: selectedTrackId });
     }
   });
 }
@@ -359,7 +359,7 @@ export function selectTextTrack<S extends TrackSelectionState>(
     const selectedTextTrackId = pickTextTrack(currentState.presentation!, config);
 
     if (selectedTextTrackId) {
-      state.set({ ...currentState, selectedTextTrackId } as S);
+      update(state, { selectedTextTrackId });
     }
   });
 }

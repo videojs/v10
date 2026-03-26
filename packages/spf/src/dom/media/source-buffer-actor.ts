@@ -1,5 +1,5 @@
 import type { ActorSnapshot, SignalActor } from '../../core/actor';
-import { type ReadonlySignal, signal } from '../../core/signals/primitives';
+import { type ReadonlySignal, signal, update } from '../../core/signals/primitives';
 import { SerialRunner, Task } from '../../core/task';
 import type { Segment, Track } from '../../core/types';
 import { type AppendData, appendSegment } from './append-segment';
@@ -252,7 +252,7 @@ export function createSourceBufferActor(
     // bytes-in-buffer as a heuristic to identify the effective buffer capacity,
     // enabling targeted flush-and-retry rather than silent model drift.
     const status = snapshotSignal.get().status === 'destroyed' ? 'destroyed' : 'idle';
-    snapshotSignal.set({ ...snapshotSignal.get(), status });
+    update(snapshotSignal, { status });
     throw e;
   }
 
@@ -270,7 +270,7 @@ export function createSourceBufferActor(
 
       // Transition synchronously so any subsequent send/batch within the same
       // tick is rejected — the actor is now committed to this operation.
-      snapshotSignal.set({ ...snapshotSignal.get(), status: 'updating' });
+      update(snapshotSignal, { status: 'updating' });
 
       const onPartialContext = (ctx: SourceBufferActorContext) => {
         snapshotSignal.set({ status: 'updating', context: ctx });
@@ -296,7 +296,7 @@ export function createSourceBufferActor(
       if (messages.length === 0) return Promise.resolve();
 
       // Transition synchronously — the entire batch is one 'updating' period.
-      snapshotSignal.set({ ...snapshotSignal.get(), status: 'updating' });
+      update(snapshotSignal, { status: 'updating' });
 
       // Each message is its own Task on the runner, executed in submission order.
       // workingCtx threads the result of each task into the next without
@@ -339,7 +339,7 @@ export function createSourceBufferActor(
     },
 
     destroy(): void {
-      snapshotSignal.set({ ...snapshotSignal.get(), status: 'destroyed' });
+      update(snapshotSignal, { status: 'destroyed' });
       runner.destroy();
     },
   };

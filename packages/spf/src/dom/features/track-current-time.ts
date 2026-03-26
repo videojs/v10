@@ -1,6 +1,6 @@
 import { listen } from '@videojs/utils/dom';
 import { effect } from '../../core/signals/effect';
-import type { Signal } from '../../core/signals/primitives';
+import { type Signal, update } from '../../core/signals/primitives';
 
 /**
  * State shape for current time tracking.
@@ -63,9 +63,9 @@ export function trackCurrentTime<S extends CurrentTimeState, O extends CurrentTi
     if (!mediaElement) return;
 
     // Sync immediately so consumers don't wait for the first event
-    state.set({ ...state.get(), currentTime: mediaElement.currentTime } as S);
+    update(state, { currentTime: mediaElement.currentTime });
 
-    const sync = () => state.set({ ...state.get(), currentTime: mediaElement.currentTime } as S);
+    const sync = () => update(state, { currentTime: mediaElement.currentTime });
     const removeTimeupdate = listen(mediaElement, 'timeupdate', sync);
     const removeSeeking = listen(mediaElement, 'seeking', sync);
     removeListeners = () => {

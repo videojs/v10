@@ -2,7 +2,7 @@ import type { BandwidthState } from '../abr/bandwidth-estimator';
 import { getBandwidthEstimate } from '../abr/bandwidth-estimator';
 import { selectQuality } from '../abr/quality-selection';
 import { effect } from '../signals/effect';
-import type { Signal } from '../signals/primitives';
+import { type Signal, update } from '../signals/primitives';
 import type { Presentation, VideoSelectionSet } from '../types';
 
 /**
@@ -130,6 +130,6 @@ export function switchQuality<S extends QualitySwitchingState>(
       lastUpgradeTime = now;
     }
 
-    state.set({ ...currentState, selectedVideoTrackId: optimal.id } as S);
+    update(state, { selectedVideoTrackId: optimal.id });
   });
 }

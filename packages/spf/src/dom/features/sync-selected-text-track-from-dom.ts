@@ -1,6 +1,6 @@
 import { listen } from '@videojs/utils/dom';
 import { effect } from '../../core/signals/effect';
-import { computed, type Signal } from '../../core/signals/primitives';
+import { computed, type Signal, update } from '../../core/signals/primitives';
 import type { TextTrackBufferState } from './load-text-track-cues';
 
 /**
@@ -65,7 +65,7 @@ export function syncSelectedTextTrackFromDom<
       if (current.selectedTextTrackId === newId) return;
 
       if (newId) {
-        state.set({ ...current, selectedTextTrackId: newId } as S);
+        update(state, { selectedTextTrackId: newId });
       } else {
         // When deselecting, clear the textBufferState entry for the previous track.
         // Setting mode to 'disabled' (as toggleSubtitles() does) clears native cues
@@ -75,9 +75,9 @@ export function syncSelectedTextTrackFromDom<
         if (prevId && current.textBufferState?.[prevId]) {
           const next = { ...current.textBufferState };
           delete next[prevId];
-          state.set({ ...current, selectedTextTrackId: undefined, textBufferState: next } as S);
+          update(state, { selectedTextTrackId: undefined, textBufferState: next });
         } else {
-          state.set({ ...current, selectedTextTrackId: undefined } as S);
+          update(state, { selectedTextTrackId: undefined });
         }
       }
     });
