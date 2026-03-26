@@ -76,6 +76,13 @@
   to = "https://legacy.videojs.org/guides/:splat"
   status = 308
 
+# Redirect old Tumblr blog post URLs with slugs to the bare ID path
+# (static pages at /blog/post/:id handle the final redirect to /blog/:slug)
+[[redirects]]
+  from = "/blog/post/:id/:slug"
+  to = "/blog/post/:id"
+  status = 308
+
 # Redirect old tags pages to blog (no tag filtering in v10)
 [[redirects]]
   from = "/tags"

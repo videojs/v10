@@ -1,0 +1,25 @@
+---
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  const paths: Array<{ params: { path: string }; props: { slug: string } }> = [];
+
+  for (const post of posts) {
+    const aliases = post.data.alias;
+    if (!aliases) continue;
+
+    for (const alias of aliases) {
+      // Aliases are like "post/50021214078/videojs-40-now-available/index.html"
+      // or "post/50021214078/index.html". Strip the post/ prefix and /index.html suffix.
+      const path = alias.replace(/^post\//, '').replace(/\/index\.html$/, '');
+      paths.push({ params: { path }, props: { slug: post.id } });
+    }
+  }
+
+  return paths;
+}
+
+const { slug } = Astro.props;
+return Astro.redirect(`/blog/${slug}`, 308);
+---
