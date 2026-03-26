@@ -155,6 +155,7 @@ export class HlsMediaDelegateBase implements Delegate {
   attach(target: HTMLMediaElement): void {
     this.#target = target;
     this.#engine?.attachMedia(target);
+    this.#updatePreload();
   }
 
   detach(): void {
@@ -188,10 +189,10 @@ export class HlsMediaDelegateBase implements Delegate {
     }
 
     if (this.preload === 'metadata') {
-      // This is preload="metadata". Load the least amount of data possible.
       preload(1, 1);
     }
 
+    // preload === 'none' or preload === 'metadata' both defer full load until play.
     this.#preloadOnPlayAbort = new AbortController();
     this.#target.addEventListener('play', () => preload(), {
       signal: this.#preloadOnPlayAbort.signal,
