@@ -1,3 +1,4 @@
+import { anyAbortSignal } from '@videojs/utils/events';
 import { generateId } from './utils/generate-id';
 
 // =============================================================================
@@ -76,7 +77,7 @@ export class Task<TValue = void, TError = unknown> implements TaskLike<TValue, T
     const rawId = config?.id;
     this.id = typeof rawId === 'function' ? rawId() : (rawId ?? generateId());
     this.#signal = config?.signal
-      ? AbortSignal.any([this.#abortController.signal, config.signal])
+      ? anyAbortSignal([this.#abortController.signal, config.signal])
       : this.#abortController.signal;
   }
 
