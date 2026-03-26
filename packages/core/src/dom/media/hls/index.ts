@@ -47,6 +47,7 @@ export class HlsMediaDelegateBase implements Delegate {
   }
 
   #initialize(): void {
+    this.#preloadOnPlayAbort?.abort();
     this.#engine?.destroy();
     this.#engine = null;
 
