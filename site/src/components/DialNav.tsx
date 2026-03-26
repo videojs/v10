@@ -37,13 +37,7 @@ export default function DialNav({ left, right }: DialNavProps) {
     };
   }
 
-  // design
-  const needleStyle: React.CSSProperties = {
-    transformBox: 'view-box',
-    transformOrigin: '50% 50%',
-    transition: `transform ${TRANSITION_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`,
-    transform: activeAngle !== null ? `rotate(${activeAngle}deg)` : undefined,
-  };
+  const DialTag = left[0].href === '/docs' ? GetStartedLink : 'a';
 
   return (
     <div className="flex items-center gap-0">
@@ -71,23 +65,28 @@ export default function DialNav({ left, right }: DialNavProps) {
         })}
       </div>
 
-      {(() => {
-        const DialTag = left[0].href === '/docs' ? GetStartedLink : 'a';
-        return (
-          <DialTag
-            href={left[0].href}
-            onClick={(e) => handleClick(e, left[0])}
-            className="w-20 h-20 md:w-32 md:h-32 shrink-0 relative z-10 text-faded-black dark:text-manila-light [--fill:var(--color-manila-light)] dark:[--fill:var(--color-faded-black)]"
-          >
-            <DialOuter
-              className="outline-8 rounded-full outline-manila-dark dark:outline-soot"
-              width={'100%'}
-              height={'auto'}
-            />
-            <DialInner style={needleStyle} className="absolute inset-0" width={'100%'} height={'auto'} />
-          </DialTag>
-        );
-      })()}
+      <DialTag
+        href={left[0].href}
+        onClick={(e) => handleClick(e, left[0])}
+        className="w-20 h-20 md:w-32 md:h-32 shrink-0 relative z-10 text-faded-black dark:text-manila-light [--fill:var(--color-manila-light)] dark:[--fill:var(--color-faded-black)]"
+      >
+        <DialOuter
+          className="outline-8 rounded-full outline-manila-dark dark:outline-soot"
+          width={'100%'}
+          height={'auto'}
+        />
+        <DialInner
+          style={{
+            transformBox: 'view-box',
+            transformOrigin: '50% 50%',
+            transition: `transform ${TRANSITION_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+            transform: activeAngle !== null ? `rotate(${activeAngle}deg)` : undefined,
+          }}
+          className="absolute inset-0"
+          width={'100%'}
+          height={'auto'}
+        />
+      </DialTag>
 
       <div className="flex flex-col gap-2">
         {right.map((link) => {
