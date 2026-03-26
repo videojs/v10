@@ -24,6 +24,7 @@ const PACKAGE_MANIFEST_CACHE = new Map<string, PackageManifest>();
 const PREFIX = '\x1b[35m[ejected-skins]\x1b[0m';
 const HTML_CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn';
 const DEMO_VIDEO_SRC = 'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4';
+const DEMO_POSTER_SRC = 'https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.webp';
 const log = {
   info: (...args: unknown[]) => console.log(PREFIX, ...args),
   warn: (...args: unknown[]) => console.warn(PREFIX, '\x1b[33mwarn:\x1b[0m', ...args),
@@ -853,8 +854,9 @@ function evaluateTemplate(templateBody: string, context: Record<string, unknown>
 }
 
 /**
- * Replace `<slot name="media">` and `<slot>` (default slot) with a concrete
- * `<video>` or `<audio>` element so the ejected HTML is self-contained.
+ * Replace `<slot name="media">`, `<slot>` (default slot), and
+ * `<slot name="poster">` with concrete elements so the ejected HTML is
+ * self-contained.
  */
 function replaceSlots(html: string, mediaType: MediaType): string {
   const tag = mediaType === 'audio' ? 'audio' : 'video';
@@ -867,6 +869,9 @@ function replaceSlots(html: string, mediaType: MediaType): string {
     /^([ \t]*)<!--\s*@deprecated[^\n]*\n\s*<slot name="media"><\/slot>\n\s*<slot><\/slot>/m,
     `$1${mediaElement}`
   );
+
+  // Replace the poster slot with an <img> element.
+  html = html.replace(/<slot name="poster"><\/slot>/, `<img src="${DEMO_POSTER_SRC}" />`);
 
   return html;
 }
@@ -1268,6 +1273,17 @@ function inlinePrivatePackages(source: string): { source: string; utilities: str
   return { source, utilities };
 }
 
+/** Find the index of the closing `)` that matches the `(` at `openIndex`. */
+function findMatchingParen(source: string, openIndex: number): number {
+  let depth = 0;
+  for (let i = openIndex; i < source.length; i++) {
+    if (source[i] === '(') depth++;
+    else if (source[i] === ')') depth--;
+    if (depth === 0) return i;
+  }
+  return -1;
+}
+
 /** Find the byte offset just past the last import statement in the source. */
 function findLastImportEnd(source: string): number {
   // Match both `import ... from '...'` and side-effect `import '...'`
@@ -1514,67 +1530,80 @@ function destructureSkinProps(source: string): string {
 }
 
 /**
- * Add a Player section to the ejected React output: imports for createPlayer,
- * Video/Audio, and features; an exported Player instance; a typed Props
- * interface; and an exported VideoPlayer/AudioPlayer component with @example.
+ * Flatten the skin into a Player component: merge SkinProps into PlayerProps
+ * (adding `src`), inline the skin body into VideoPlayer/AudioPlayer wrapped
+ * in `Player.Provider`, and remove the separate Skin export.
  */
-function addPlayerSection(source: string, mediaType: MediaType): string {
-  // Find the exported skin function name
-  const skinMatch = source.match(/export function (\w+Skin\w*)\(/);
-  if (!skinMatch) return source;
-
-  const skinName = skinMatch[1];
+function flattenSkinIntoPlayer(source: string, mediaType: MediaType): string {
   const isVideo = mediaType === 'video';
   const mediaTag = isVideo ? 'Video' : 'Audio';
   const features = isVideo ? 'videoFeatures' : 'audioFeatures';
   const playerName = isVideo ? 'VideoPlayer' : 'AudioPlayer';
-  const propsName = `${playerName}Props`;
   const subpath = isVideo ? 'video' : 'audio';
   const playsInline = isVideo ? ' playsInline' : '';
 
   // 1. Add createPlayer to the @videojs/react import
   source = source.replace(
     /import \{([^}]+)\} from '@videojs\/react';/,
-    (m, names) => `import { createPlayer,${names}} from '@videojs/react';`
+    (_, names) => `import { createPlayer,${names}} from '@videojs/react';`
   );
 
-  // 2. Add Video/Audio + features import and CSS import after the @videojs/react import line
+  // 2. Add Video/Audio + features import and CSS import
   const mediaImport = `import { ${mediaTag}, ${features} } from '@videojs/react/${subpath}';`;
-  const cssImport = `import './player.css';`;
+  const cssImport = "import './player.css';";
   source = source.replace(/(import \{[^}]*\} from '@videojs\/react';)/, `$1\n${mediaImport}\n${cssImport}`);
 
-  // 3. Insert Player section after imports (before everything else)
-  const playerBlock = [
-    sectionHeader('Player'),
-    '',
-    `export const Player = createPlayer({ features: ${features} });`,
-    '',
-    `export interface ${propsName} {`,
-    '  src: string;',
-    '}',
-    '',
-    '/**',
-    ' * @example',
-    ' * ```tsx',
-    ` * <${playerName} src="${DEMO_VIDEO_SRC}" />`,
-    ' * ```',
-    ' */',
-    `export function ${playerName}({ src }: ${propsName}) {`,
-    '  return (',
-    '    <Player.Provider>',
-    `      <${skinName}>`,
-    `        <${mediaTag} src={src}${playsInline} />`,
-    `      </${skinName}>`,
-    '    </Player.Provider>',
-    '  );',
-    '}',
-  ].join('\n');
+  // 3. Add Player const above the interface, rename SkinProps → PlayerProps, replace `children` with `src`
+  source = source.replace(
+    /export interface \w+SkinProps/,
+    `export const Player = createPlayer({ features: ${features} });\n\nexport interface ${playerName}Props`
+  );
+  source = source.replace(/(\s*)children\?: ReactNode;/, `$1src: string;`);
 
-  // Find the end of the last import statement and insert after it
-  const lastImportIdx = findLastImportEnd(source);
-  const before = source.slice(0, lastImportIdx).trimEnd();
-  const after = source.slice(lastImportIdx).trimStart();
-  source = `${before}\n\n${playerBlock}\n\n${after}`;
+  // 4. Replace the skin function: rename, swap children→src, wrap in Player.Provider
+  //    Match the destructured form: function XSkin({ children, className, poster, ...rest }: XSkinProps): ReactNode {
+  source = source.replace(
+    /export function \w+Skin\(\{ children, ([^}]+)\}: \w+SkinProps\): ReactNode \{\n([\s\S]*?)\n\}/,
+    (_, destructuredRest: string, body: string) => {
+      // Replace {children} with <Video/Audio> element inside the body
+      let newBody = body.replace(/^\n+/, '').replace(/(\s*)\{children\}/, `$1<${mediaTag} src={src}${playsInline} />`);
+
+      // Wrap the return body in <Player.Provider>, re-indenting everything
+      // inside `return (...)` by 2 extra spaces for the new wrapper.
+      const returnIdx = newBody.indexOf('return (');
+      if (returnIdx !== -1) {
+        const parenStart = newBody.indexOf('(', returnIdx);
+        const parenEnd = findMatchingParen(newBody, parenStart);
+        const inner = newBody.slice(parenStart + 1, parenEnd).replace(/^\n+|\n+$/g, '');
+        const reindented = inner
+          .split('\n')
+          .map((line) => (line.trim() === '' ? '' : `  ${line}`))
+          .join('\n');
+        newBody = `${newBody.slice(0, returnIdx)}return (\n    <Player.Provider>\n${reindented}\n    </Player.Provider>\n  )${newBody.slice(parenEnd + 1)}`;
+      }
+
+      const hasPoster = destructuredRest.includes('poster');
+      const posterExample = hasPoster ? `\n *   poster="${DEMO_POSTER_SRC}"` : '';
+
+      // Player const, @example JSDoc, and the function signature
+      const header = [
+        '/**',
+        ' * @example',
+        ' * ```tsx',
+        ` * <${playerName}`,
+        ` *   src="${DEMO_VIDEO_SRC}"${posterExample}`,
+        ' * />',
+        ' * ```',
+        ' */',
+        `export function ${playerName}({ src, ${destructuredRest}}: ${playerName}Props): ReactNode {`,
+      ].join('\n');
+
+      return `${header}\n${newBody}\n}`;
+    }
+  );
+
+  // 5. Remove the "Skin" section header (it's now part of "Player")
+  source = source.replace(/\/\/ =+\n\/\/ Skin\n\/\/ =+\n\n/, `${sectionHeader('Player')}\n\n`);
 
   return source;
 }
@@ -1625,11 +1654,11 @@ async function processReactSkin(skin: ReactSkinDef): Promise<{ tsx: string; jsx:
   // 10. Reorganize into sections with comment headers
   let tsx = reorganizeReactOutput(source, privates.utilities, icons.iconComponents);
 
-  // 11. Add Player section (createPlayer, imports, VideoPlayer/AudioPlayer component)
-  tsx = addPlayerSection(tsx, getSkinMediaType(skin));
-
-  // 12. Destructure skin props in function argument instead of body
+  // 11. Destructure skin props in function argument instead of body
   tsx = destructureSkinProps(tsx);
+
+  // 12. Flatten skin into player (merge props, inline body, wrap in Player.Provider)
+  tsx = flattenSkinIntoPlayer(tsx, getSkinMediaType(skin));
 
   const jsx = tsxToJsx(tsx);
 
