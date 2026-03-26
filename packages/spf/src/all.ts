@@ -11,21 +11,6 @@
 export * from './index';
 
 // =============================================================================
-// State Management (O1)
-// =============================================================================
-
-export type {
-  SelectorListener,
-  SelectorOptions,
-  State,
-  StateConfig,
-  StateListener,
-  StateSelector,
-  WritableState,
-} from './core/state/create-state';
-export { createState, isState } from './core/state/create-state';
-
-// =============================================================================
 // HLS Parsing (P1, P2, P3)
 // =============================================================================
 

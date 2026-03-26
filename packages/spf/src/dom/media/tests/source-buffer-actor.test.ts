@@ -187,7 +187,9 @@ describe('createSourceBufferActor', () => {
     const actor = createSourceBufferActor(sourceBuffer);
 
     const statusValues: string[] = [];
-    const cleanup = effect(() => statusValues.push(actor.snapshot.get().status));
+    const cleanup = effect(() => {
+      statusValues.push(actor.snapshot.get().status);
+    });
 
     await actor.batch(
       [
@@ -404,7 +406,9 @@ describe('createSourceBufferActor', () => {
     const actor = createSourceBufferActor(sourceBuffer);
 
     const statusValues: string[] = [];
-    const cleanup = effect(() => statusValues.push(actor.snapshot.get().status));
+    const cleanup = effect(() => {
+      statusValues.push(actor.snapshot.get().status);
+    });
 
     await actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'track-1' } }, neverAborted);
 
@@ -443,7 +447,9 @@ describe('createSourceBufferActor', () => {
     const actor = createSourceBufferActor(sourceBuffer);
 
     const snapshots: ReturnType<typeof actor.snapshot.get>[] = [];
-    const cleanup = effect(() => snapshots.push(actor.snapshot.get()));
+    const cleanup = effect(() => {
+      snapshots.push(actor.snapshot.get());
+    });
 
     await actor.send(
       {

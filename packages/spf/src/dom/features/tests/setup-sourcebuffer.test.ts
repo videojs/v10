@@ -312,7 +312,7 @@ describe('setupSourceBuffers', () => {
     const { createSourceBuffer } = await import('../../media/mediasource-setup');
 
     const videoTrack = createResolvedVideoTrack();
-    const { state, owners, cleanup } = setupSetupSourceBuffers();
+    const { state, cleanup } = setupSetupSourceBuffers();
 
     state.set({
       ...state.get(),

@@ -87,7 +87,7 @@ describe('setupTextTracks', () => {
   });
 
   it('waits for mediaElement before creating tracks', async () => {
-    const { state, owners, cleanup } = setupSetupTextTracks({ presentation: textPresentation });
+    const { owners, cleanup } = setupSetupTextTracks({ presentation: textPresentation });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(owners.get().textTracks).toBeUndefined();

@@ -4,9 +4,6 @@ import { Signal } from 'signal-polyfill';
 const pending = new Set<Signal.Computed<void>>();
 
 const watcher = new Signal.subtle.Watcher(() => {
-  // Scheduling decision: queueMicrotask mirrors the createState.patch() default.
-  // If tests reveal ordering issues from removing flush() calls, switch to
-  // synchronous execution here (call flush() directly instead of deferring).
   queueMicrotask(runPending);
 });
 
