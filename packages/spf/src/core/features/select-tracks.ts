@@ -297,7 +297,7 @@ export function selectVideoTrack<S extends TrackSelectionState>(
 
     if (selectedTrackId) {
       const selectedTrackKey = SelectedTrackIdKeyByType[config.type];
-      update(state, (s) => ({ ...s, [selectedTrackKey]: selectedTrackId }) as S);
+      update(state, { [selectedTrackKey]: selectedTrackId });
     }
   });
 }
