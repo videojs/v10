@@ -407,3 +407,44 @@ All reactors and the engine itself use TC39 Signals natively. `WritableState` an
 `combineLatest` are retired from the playback engine. `PlaybackEngine.state` and
 `.owners` are `Signal<T>`. The bridge module (`core/signals/bridge.ts`) can be removed
 when no other consumers remain.
+
+---
+
+## Reactor Audit Checklist
+
+Steps 7–13 and the core feature migrations were done in bulk/one-shot subagent refactors
+and warrant a careful manual pass. Key things to verify in each reactor:
+
+**Effect dependency reads** — signals must be read synchronously inside the effect body
+to be tracked. Any `state.get()` / `owners.get()` inside an async callback is NOT tracked.
+
+**Cleanup pattern** — return cleanup from the effect body only for *repeatable* teardown
+(e.g. `listen()` called every re-run). One-shot DOM cleanup (e.g. removing `<track>` elements)
+belongs in the *outer* `return () => {}` disposal, not inside the effect body.
+
+**Guard conditions** — preconditions that prevent re-running expensive work should be
+`computed()` nodes or early-return guards at the top of the effect. An effect that doesn't
+guard correctly will re-run on every unrelated signal change.
+
+**Idempotency** — with TC39 Signals, effects re-run whenever any source becomes potentially
+stale — even if the computed value didn't change. Each reactor should be harmless on redundant
+re-runs, or use a `computed()` with custom `equals` to suppress them.
+
+**Stale snapshot risk** — anywhere that captures `const x = state.get()` before an `await`
+and then uses `x` post-await to write back. The snapshot may be stale by the time the write
+happens. Prefer reading fresh inside `update()` or inside a nested effect.
+
+### Per-reactor notes
+
+| Reactor | File | Audit focus |
+|---|---|---|
+| `setupSourceBuffer` | `dom/features/setup-sourcebuffer.ts` | `presentationTypesSignal` equality; owners write-back via `Object.assign` |
+| `syncTextTrackModes` | `dom/features/sync-text-track-modes.ts` | Effect runs on every `textTracks` change — verify it's idempotent |
+| `setupTextTracks` | `dom/features/setup-text-tracks.ts` | `modelTextTracksSignal` custom equals; one-shot cleanup location |
+| `trackPlaybackInitiated` | `dom/features/track-playback-initiated.ts` | Version-counter pair; merge-effect guard; no writes on startup |
+| `syncSelectedTextTrackFromDom` | `dom/features/sync-selected-text-track-from-dom.ts` | DOM event listeners inside effect; `textBufferState` path |
+| `loadTextTrackCues` | `dom/features/load-text-track-cues.ts` | Per-track abort controllers; async snapshot discipline; cleanup on track removal |
+| `loadSegments` | `dom/features/load-segments.ts` | Seek-abort logic; `bandwidthState` write-back; `computed()` equality for loading inputs |
+| `resolvePresentation` | `core/features/resolve-presentation.ts` | `syncPreloadAttribute` DOM listener cleanup; `shouldResolve` guard |
+| `selectVideoTrack` | `core/features/select-tracks.ts` | `canSelectTrack` / `shouldSelectTrack` guards; no re-select on unrelated changes |
+| `switchQuality` | `core/features/quality-switching.ts` | `defaultBandwidth` plumbing; no upgrade loop when bandwidth is stable |
