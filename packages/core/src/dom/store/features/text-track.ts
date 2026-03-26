@@ -43,6 +43,18 @@ export const textTrackFeature = definePlayerFeature({
       const textTrackList: MediaTextTrack<TextTrackKind>[] = [];
       let subtitlesShowing = false;
 
+      // Browsers don't honor the `default` attribute if a track is added via JS.
+      // Enable default tracks for chapters or metadata.
+      for (const trackEl of media.querySelectorAll?.('track') ?? []) {
+        if (
+          trackEl.default &&
+          (trackEl.kind === 'chapters' || trackEl.kind === 'metadata') &&
+          trackEl.track?.mode === 'disabled'
+        ) {
+          trackEl.track.mode = 'hidden';
+        }
+      }
+
       for (let i = 0; i < media.textTracks.length; i++) {
         const track = media.textTracks[i]!;
         if (!chaptersTrack && track.kind === 'chapters') chaptersTrack = track;

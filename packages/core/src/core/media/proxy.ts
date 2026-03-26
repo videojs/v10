@@ -14,7 +14,7 @@ import { defineClassPropHooks } from '../utils/define-class-prop-hooks';
  */
 export const ProxyMixin = <T extends EventTarget>(
   PrimaryClass: AnyConstructor<T>,
-  ...AdditionalClasses: AnyConstructor<EventTarget>[]
+  ...AdditionalClasses: AnyConstructor<any>[]
 ) => {
   class MediaProxy {
     #target: EventTarget | null = null;
