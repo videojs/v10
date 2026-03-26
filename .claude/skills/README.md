@@ -20,6 +20,7 @@ Specialized knowledge for AI agents working on Video.js 10.
 | Committing / creating PRs  | `git` or `/commit-pr`              |
 | Reviewing branch changes   | `/review-branch`                   |
 | Analyzing GitHub issues    | `/gh-issue`                        |
+| Creating GitHub issues     | `/create-issue`                    |
 | Updating AI docs           | `/claude-update`                   |
 | Creating new skills        | `/create-skill`                    |
 
@@ -32,6 +33,7 @@ Specialized knowledge for AI agents working on Video.js 10.
 | [claude-update](claude-update/SKILL.md) | Update CLAUDE.md and skills when introducing new patterns              | No          |
 | [commit-pr](commit-pr/SKILL.md)         | Commit changes and create/update PRs with conventions                  | No          |
 | [component](component/SKILL.md)         | Build headless UI components — compound patterns, state, styling       | Yes         |
+| [create-issue](create-issue/SKILL.md)   | Create GitHub issues with consistent formatting and conventions       | No          |
 | [create-skill](create-skill/SKILL.md)   | Create new skills with proper structure and conventions                | No          |
 | [design](design/SKILL.md)               | Write Design Docs — decisions you own, component specs, feature designs| No          |
 | [api-reference](api-reference/SKILL.md) | Scaffold component API reference pages                          | No          |

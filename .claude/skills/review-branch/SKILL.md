@@ -5,6 +5,7 @@ description: >-
   Triggers: "review branch", "review changes", "code review".
 allowed-tools: Bash(git:*), Bash(gh:*), Glob, Grep, Read, mcp__github__*
 agent: plan
+context: fork
 ---
 
 # Branch Review
