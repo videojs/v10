@@ -28,7 +28,7 @@ import Base from '@/layouts/Base.astro';
         <p class="mb-4 text-p3 text-warm-gray dark:text-manila-dark">
           The existing style. Underline removes on hover — loses affordance.
         </p>
-        <p class="text-p1">
+        <p class="text-p2">
           Read the <a href="#" class="hover-current">full release notes</a> for more details
           about <a href="#" class="hover-current">what's changed</a> in this version.
         </p>
@@ -42,107 +42,37 @@ import Base from '@/layouts/Base.astro';
         <p class="mb-4 text-p3 text-warm-gray dark:text-manila-dark">
           Underline stays, but shifts to an accent color (gold). Simple, accessible, clear feedback.
         </p>
-        <p class="text-p1">
+        <p class="text-p2">
           Read the <a href="#" class="hover-color-shift">full release notes</a> for more details
           about <a href="#" class="hover-color-shift">what's changed</a> in this version.
         </p>
       </section>
 
-      <!-- 2. Thick Underline -->
+      <!-- 2. Color Inversion -->
       <section>
         <h2 class="mb-2 font-display text-h3 uppercase text-faded-black dark:text-manila-light">
-          2. Thick Underline / Highlight Bar
+          2. Color Inversion / Negative
         </h2>
         <p class="mb-4 text-p3 text-warm-gray dark:text-manila-dark">
-          Underline thickens on hover like a VHS-era text highlight or teletext selection.
+          Swap foreground/background like teletext or terminal selection. Bold and unmistakable.
         </p>
-        <p class="text-p1">
-          Read the <a href="#" class="hover-thick-underline">full release notes</a> for more details
-          about <a href="#" class="hover-thick-underline">what's changed</a> in this version.
+        <p class="text-p2">
+          Read the <a href="#" class="hover-inversion">full release notes</a> for more details
+          about <a href="#" class="hover-inversion">what's changed</a> in this version.
         </p>
       </section>
 
       <!-- 3. VHS Chromatic Aberration -->
       <section>
         <h2 class="mb-2 font-display text-h3 uppercase text-faded-black dark:text-manila-light">
-          3. VHS Tracking / Chromatic Aberration
+          3. Chromatic Aberration
         </h2>
         <p class="mb-4 text-p3 text-warm-gray dark:text-manila-dark">
           Cyan + magenta text-shadow offset like bad VHS tracking. Maximum retro energy.
         </p>
-        <p class="text-p1">
+        <p class="text-p2">
           Read the <a href="#" class="hover-vhs-glitch">full release notes</a> for more details
           about <a href="#" class="hover-vhs-glitch">what's changed</a> in this version.
-        </p>
-      </section>
-
-      <!-- 4. Scanline Highlight -->
-      <section>
-        <h2 class="mb-2 font-display text-h3 uppercase text-faded-black dark:text-manila-light">
-          4. Scanline Highlight
-        </h2>
-        <p class="mb-4 text-p3 text-warm-gray dark:text-manila-dark">
-          Semi-transparent striped background mimicking CRT scanlines passing over the text.
-        </p>
-        <p class="text-p1">
-          Read the <a href="#" class="hover-scanline">full release notes</a> for more details
-          about <a href="#" class="hover-scanline">what's changed</a> in this version.
-        </p>
-      </section>
-
-      <!-- 5. Color Inversion -->
-      <section>
-        <h2 class="mb-2 font-display text-h3 uppercase text-faded-black dark:text-manila-light">
-          5. Color Inversion / Negative
-        </h2>
-        <p class="mb-4 text-p3 text-warm-gray dark:text-manila-dark">
-          Swap foreground/background like teletext or terminal selection. Bold and unmistakable.
-        </p>
-        <p class="text-p1">
-          Read the <a href="#" class="hover-inversion">full release notes</a> for more details
-          about <a href="#" class="hover-inversion">what's changed</a> in this version.
-        </p>
-      </section>
-
-      <!-- 6. Underline Slide-In -->
-      <section>
-        <h2 class="mb-2 font-display text-h3 uppercase text-faded-black dark:text-manila-light">
-          6. Underline Slide-In (Tape Rewind)
-        </h2>
-        <p class="mb-4 text-p3 text-warm-gray dark:text-manila-dark">
-          Underline animates in from left to right, like tape loading. Keeps underline as the cue but feels dynamic.
-        </p>
-        <p class="text-p1">
-          Read the <a href="#" class="hover-slide-in">full release notes</a> for more details
-          about <a href="#" class="hover-slide-in">what's changed</a> in this version.
-        </p>
-      </section>
-
-      <!-- 7. VCR Bracket Markers -->
-      <section>
-        <h2 class="mb-2 font-display text-h3 uppercase text-faded-black dark:text-manila-light">
-          7. VCR Bracket Markers
-        </h2>
-        <p class="mb-4 text-p3 text-warm-gray dark:text-manila-dark">
-          Square brackets slide in on hover, mimicking on-screen VCR/camcorder UI overlays.
-        </p>
-        <p class="text-p1">
-          Read the <a href="#" class="hover-brackets">full release notes</a> for more details
-          about <a href="#" class="hover-brackets">what's changed</a> in this version.
-        </p>
-      </section>
-
-      <!-- 8. Combo: Color Shift + Thick + Subtle Glitch -->
-      <section>
-        <h2 class="mb-2 font-display text-h3 uppercase text-faded-black dark:text-manila-light">
-          8. Combo: Color Shift + Thicker Underline
-        </h2>
-        <p class="mb-4 text-p3 text-warm-gray dark:text-manila-dark">
-          Gold underline that also thickens. Practical for body text, still has character.
-        </p>
-        <p class="text-p1">
-          Read the <a href="#" class="hover-combo">full release notes</a> for more details
-          about <a href="#" class="hover-combo">what's changed</a> in this version.
         </p>
       </section>
     </div>
@@ -166,59 +96,18 @@ import Base from '@/layouts/Base.astro';
     text-decoration: none;
   }
 
-  /* 1. Underline Color Shift */
+  /* 1. Underline Color Shift — instant */
   .hover-color-shift {
     text-decoration: underline;
-    transition: text-decoration-color 0.15s ease;
   }
   .hover-color-shift:hover,
   .hover-color-shift:focus-visible {
     text-decoration-color: var(--color-gold);
   }
 
-  /* 2. Thick Underline */
-  .hover-thick-underline {
-    text-decoration: underline;
-    transition: text-decoration-thickness 0.15s ease, text-decoration-color 0.15s ease;
-  }
-  .hover-thick-underline:hover,
-  .hover-thick-underline:focus-visible {
-    text-decoration-thickness: 0.125em;
-    text-decoration-color: var(--color-gold);
-  }
-
-  /* 3. VHS Chromatic Aberration */
-  .hover-vhs-glitch {
-    text-decoration: underline;
-    transition: text-shadow 0.1s ease;
-  }
-  .hover-vhs-glitch:hover,
-  .hover-vhs-glitch:focus-visible {
-    text-shadow: 1.5px 0 var(--color-magenta), -1.5px 0 cyan;
-    text-decoration-color: var(--color-gold);
-  }
-
-  /* 4. Scanline Highlight */
-  .hover-scanline {
-    text-decoration: underline;
-    transition: background 0.15s ease;
-  }
-  .hover-scanline:hover,
-  .hover-scanline:focus-visible {
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      color-mix(in srgb, currentColor 8%, transparent) 2px,
-      color-mix(in srgb, currentColor 8%, transparent) 4px
-    );
-    text-decoration-color: var(--color-gold);
-  }
-
-  /* 5. Color Inversion */
+  /* 2. Color Inversion — instant */
   .hover-inversion {
     text-decoration: underline;
-    transition: background-color 0.1s ease, color 0.1s ease;
     padding: 0.05em 0.15em;
     margin: -0.05em -0.15em;
   }
@@ -234,58 +123,13 @@ import Base from '@/layouts/Base.astro';
     color: var(--color-faded-black);
   }
 
-  /* 6. Underline Slide-In */
-  .hover-slide-in {
-    text-decoration: none;
-    background-image: linear-gradient(currentColor, currentColor);
-    background-position: 0% 100%;
-    background-repeat: no-repeat;
-    background-size: 0% max(0.05em, 0.05rem);
-    transition: background-size 0.3s ease;
-    padding-bottom: 0.25em;
-  }
-  .hover-slide-in:hover,
-  .hover-slide-in:focus-visible {
-    background-size: 100% max(0.05em, 0.05rem);
-  }
-
-  /* 7. VCR Bracket Markers */
-  .hover-brackets {
+  /* 3. Chromatic Aberration — short transition */
+  .hover-vhs-glitch {
     text-decoration: underline;
-    position: relative;
+    transition: text-shadow 0.15s ease;
   }
-  .hover-brackets::before,
-  .hover-brackets::after {
-    display: inline-block;
-    opacity: 0;
-    transition: opacity 0.15s ease, transform 0.15s ease;
-    font-weight: normal;
-    color: var(--color-gold);
-  }
-  .hover-brackets::before {
-    content: "[ ";
-    transform: translateX(0.3em);
-  }
-  .hover-brackets::after {
-    content: " ]";
-    transform: translateX(-0.3em);
-  }
-  .hover-brackets:hover::before,
-  .hover-brackets:focus-visible::before,
-  .hover-brackets:hover::after,
-  .hover-brackets:focus-visible::after {
-    opacity: 1;
-    transform: translateX(0);
-  }
-
-  /* 8. Combo: Gold + Thick */
-  .hover-combo {
-    text-decoration: underline;
-    transition: text-decoration-color 0.15s ease, text-decoration-thickness 0.15s ease;
-  }
-  .hover-combo:hover,
-  .hover-combo:focus-visible {
-    text-decoration-color: var(--color-gold);
-    text-decoration-thickness: 0.1em;
+  .hover-vhs-glitch:hover,
+  .hover-vhs-glitch:focus-visible {
+    text-shadow: 1.5px 0 var(--color-magenta), -1.5px 0 cyan;
   }
 </style>
