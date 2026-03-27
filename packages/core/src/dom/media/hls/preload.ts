@@ -10,6 +10,7 @@ interface HlsPreloadHost {
   attach?(target: EventTarget): void;
   detach?(): void;
   destroy?(): void;
+  destroyEngine?(): void;
 }
 
 /**
@@ -23,8 +24,8 @@ interface HlsPreloadHost {
 export function HlsMediaPreloadMixin<Base extends Constructor<HlsPreloadHost>>(BaseClass: Base) {
   class HlsMediaPreload extends (BaseClass as Constructor<HlsPreloadHost>) {
     #preloadAbort?: AbortController;
-    #defaultMaxBufferLength?: number;
-    #defaultMaxBufferSize?: number;
+    #defaultMaxBufferLength: number | undefined;
+    #defaultMaxBufferSize: number | undefined;
 
     get preload(): PreloadType {
       return (this.target as HTMLMediaElement | null)?.preload || 'metadata';
@@ -47,14 +48,14 @@ export function HlsMediaPreloadMixin<Base extends Constructor<HlsPreloadHost>>(B
       this.#updatePreload();
     }
 
+    destroyEngine(): void {
+      this.#preloadAbort?.abort();
+      super.destroyEngine?.();
+    }
+
     detach(): void {
       this.#preloadAbort?.abort();
       super.detach?.();
-    }
-
-    destroy(): void {
-      this.#preloadAbort?.abort();
-      super.destroy?.();
     }
 
     #updatePreload(): void {

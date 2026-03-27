@@ -40,16 +40,21 @@ export class HlsMediaDelegateBase implements Delegate {
   #preferPlayback: PlaybackType | undefined = 'mse';
 
   constructor() {
-    this.#initialize();
+    this.initEngine();
   }
 
-  #initialize(): void {
+  destroyEngine(): void {
     this.#engine?.destroy();
     this.#engine = null;
+  }
 
-    if (this.type !== SourceTypes.M3U8) return;
-    if (this.#preferPlayback === PlaybackTypes.NATIVE) return;
-    if (!Hls.isSupported()) return;
+  initEngine(): void {
+    if (this.#engine) this.destroyEngine();
+
+    if (!Hls.isSupported() || this.type !== SourceTypes.M3U8 || this.#preferPlayback === PlaybackTypes.NATIVE) {
+      if (this.#src) this.#requestLoad();
+      return;
+    }
 
     this.#engine = new Hls({
       ...defaultConfig,
@@ -60,9 +65,7 @@ export class HlsMediaDelegateBase implements Delegate {
       this.#engine.attachMedia(this.#target as HTMLMediaElement);
     }
 
-    if (this.#src) {
-      this.#requestLoad();
-    }
+    if (this.#src) this.#requestLoad();
   }
 
   /** The target element, or `null` when not attached. */
@@ -83,7 +86,7 @@ export class HlsMediaDelegateBase implements Delegate {
   set type(value: SourceType | undefined) {
     if (this.#type === value) return;
     this.#type = value;
-    this.#initialize();
+    this.initEngine();
   }
 
   /** Enable hls.js debug logging. Re-initializes the engine when changed. */
@@ -94,12 +97,12 @@ export class HlsMediaDelegateBase implements Delegate {
   set debug(value: boolean) {
     if (this.#debug === value) return;
     this.#debug = value;
-    this.#initialize();
+    this.initEngine();
   }
 
   /**
    * Whether to prefer `'mse'` (hls.js) or `'native'` (browser-built-in) HLS
-   * playback. Changing this re-initializes the delegate.
+   * playback. Changing this re-initializes the engine.
    */
   get preferPlayback(): PlaybackType | undefined {
     return this.#preferPlayback;
@@ -108,7 +111,7 @@ export class HlsMediaDelegateBase implements Delegate {
   set preferPlayback(value: PlaybackType | undefined) {
     if (this.#preferPlayback === value) return;
     this.#preferPlayback = value;
-    this.#initialize();
+    this.initEngine();
   }
 
   /** The HLS source URL to load. */
@@ -147,8 +150,7 @@ export class HlsMediaDelegateBase implements Delegate {
   }
 
   destroy(): void {
-    this.#engine?.destroy();
-    this.#engine = null;
+    this.destroyEngine();
     this.#target = null;
   }
 }
