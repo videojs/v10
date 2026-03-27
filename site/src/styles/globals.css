@@ -194,6 +194,10 @@
 @custom-variant banner-dismissed (&:where(.banner-dismissed, .banner-dismissed *));
 
 @layer base {
+  .text-p15 .text-p2 {
+    font-size: var(--text-p15);
+  }
+
   .list-decimal .list-decimal {
     list-style-type: lower-alpha;
   }

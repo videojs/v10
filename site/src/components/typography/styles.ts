@@ -11,7 +11,7 @@ export const shared = {
   codeBlock: 'font-mono text-code text-manila-light',
   pre: 'shiki astro-code',
   em: 'italic',
-  li: 'text-p2 @3xl:text-p15',
+  li: 'text-p2',
   ol: 'list-decimal list-outside pl-4 space-y-1',
   strong: 'font-bold',
   ul: 'list-disc list-outside pl-4 space-y-1',
