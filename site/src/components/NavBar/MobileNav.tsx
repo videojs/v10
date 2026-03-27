@@ -49,7 +49,16 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
           {/* Header with close button */}
           <div className={clsx('flex justify-between items-center px-5 py-7')}>
             <Dialog.Title className="sr-only">Navigation</Dialog.Title>
-            <Logo width="10rem" />
+            <a href="/" className="flex h-7 items-center gap-3 lg:gap-4 lg:h-10">
+              <Logo height="100%" />
+              <span className="sr-only">Video.js video player</span>
+              <span
+                className="hidden h-full items-center justify-center rounded-full border border-orange px-3 font-display text-(length:--text) font-bold text-orange sm:inline-flex lg:border-2 lg:px-4 lg:text-h4"
+                style={{ '--text': '0.75rem' } as React.CSSProperties}
+              >
+                v10 <span className="whitespace-pre uppercase"> beta</span>
+              </span>
+            </a>
             <Dialog.Close
               className={clsx(
                 'inline-flex items-stretch p-0.75 border-2 border-faded-black dark:border-manila-light rounded-xs'
