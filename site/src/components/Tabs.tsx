@@ -307,7 +307,7 @@ export function TabsPanel({ value, children, initial, className, variant = 'comp
       hidden={!isActive}
       data-value={value}
       className={twMerge(
-        clsx('overflow-scroll p-6 max-h-96 flex-1', variant === 'compact' && 'bg-faded-black dark:bg-soot'),
+        clsx('overflow-auto p-6 max-h-96 flex-1', variant === 'compact' && 'bg-faded-black dark:bg-soot'),
         className
       )}
     >
