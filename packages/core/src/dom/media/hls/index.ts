@@ -98,7 +98,7 @@ export class HlsMediaDelegate extends EngineLifecycle implements Delegate {
     const useMse = Hls.isSupported() && this.type === SourceTypes.M3U8 && this.preferPlayback !== PlaybackTypes.NATIVE;
 
     this.#delegate = useMse ? new HlsJsMediaDelegate() : new NativeHlsMediaDelegate();
-    this.#delegate.config = { debug: this.debug };
+    this.#delegate.config = { ...this.config, debug: this.debug };
 
     if (this.#target) this.#delegate.attach(this.#target);
   }
