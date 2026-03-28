@@ -4,6 +4,7 @@ export const STYLINGS = ['css', 'tailwind'] as const;
 export const PRESETS = [
   'video',
   'hls-video',
+  'native-hls-video',
   'mux-video',
   'simple-hls-video',
   'dash-video',

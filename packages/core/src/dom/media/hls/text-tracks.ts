@@ -5,8 +5,10 @@ import Hls from 'hls.js';
 
 interface HlsEngineHost {
   readonly engine: Hls | null;
+  readonly target: HTMLMediaElement | null;
   attach?(target: EventTarget): void;
   detach?(): void;
+  engineUpdate?(): void;
 }
 
 /**
@@ -22,19 +24,21 @@ interface HlsEngineHost {
 export function HlsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsMediaTextTracks extends (BaseClass as Constructor<HlsEngineHost>) {
     #disconnect: AbortController | null = null;
-    #target: HTMLMediaElement | null = null;
 
     attach(target: EventTarget): void {
       super.attach?.(target);
-      this.#target = target as HTMLMediaElement;
       this.#connect();
     }
 
     detach(): void {
       this.#disconnect?.abort();
       this.#disconnect = null;
-      this.#target = null;
       super.detach?.();
+    }
+
+    engineUpdate(): void {
+      super.engineUpdate?.();
+      this.#connect();
     }
 
     #connect(): void {
@@ -43,9 +47,9 @@ export function HlsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost>>
 
       const { signal } = this.#disconnect;
       const { engine } = this;
-      if (!engine) return;
+      if (!engine || !this.target) return;
 
-      const media = this.#target!;
+      const media = this.target;
 
       const onTracksFound = (_event: string, data: NonNativeTextTracksData) => {
         this.#clearTracks();
@@ -141,7 +145,7 @@ export function HlsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost>>
     }
 
     #clearTracks(): void {
-      const trackEls = this.#target!.querySelectorAll('track[data-removeondestroy]');
+      const trackEls = this.target?.querySelectorAll?.('track[data-removeondestroy]') ?? [];
       trackEls.forEach((trackEl) => trackEl.remove());
     }
   }

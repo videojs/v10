@@ -1,17 +1,17 @@
 import type { Constructor } from '@videojs/utils/types';
 import type Hls from 'hls.js';
 
-export type PreloadType = '' | 'none' | 'metadata' | 'auto';
-
-interface HlsPreloadHost {
+interface HlsEngineHost {
   readonly engine: Hls | null;
-  readonly target: EventTarget | null | undefined;
-  load?(): void;
+  readonly target: HTMLMediaElement | null;
   attach?(target: EventTarget): void;
   detach?(): void;
-  destroy?(): void;
-  destroyEngine?(): void;
+  load?(src?: string): void;
+  engineUpdate?(): void;
+  engineDestroy?(): void;
 }
+
+export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 
 /**
  * Manages HLS preload behavior by mapping the media element's `preload`
@@ -21,8 +21,8 @@ interface HlsPreloadHost {
  * - `'metadata'` → minimal buffer (1 byte / 1 second), deferred full load on play.
  * - `'none'` / `''` → no start, deferred full load on play.
  */
-export function HlsMediaPreloadMixin<Base extends Constructor<HlsPreloadHost>>(BaseClass: Base) {
-  class HlsMediaPreload extends (BaseClass as Constructor<HlsPreloadHost>) {
+export function HlsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
+  class HlsMediaPreload extends (BaseClass as Constructor<HlsEngineHost>) {
     #preloadAbort?: AbortController;
     #defaultMaxBufferLength: number | undefined;
     #defaultMaxBufferSize: number | undefined;
@@ -38,8 +38,8 @@ export function HlsMediaPreloadMixin<Base extends Constructor<HlsPreloadHost>>(B
       this.#updatePreload();
     }
 
-    load(): void {
-      super.load?.();
+    load(src?: string): void {
+      super.load?.(src);
       this.#updatePreload();
     }
 
@@ -48,9 +48,9 @@ export function HlsMediaPreloadMixin<Base extends Constructor<HlsPreloadHost>>(B
       this.#updatePreload();
     }
 
-    destroyEngine(): void {
+    engineDestroy(): void {
       this.#preloadAbort?.abort();
-      super.destroyEngine?.();
+      super.engineDestroy?.();
     }
 
     detach(): void {

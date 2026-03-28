@@ -34,6 +34,7 @@ const PLATFORM_LABELS: Record<Platform, string> = {
 const PRESET_LABELS: Record<Preset, string> = {
   video: 'Video',
   'hls-video': 'HLS Video',
+  'native-hls-video': 'Native HLS Video',
   'mux-video': 'Mux Video',
   'simple-hls-video': 'Simple HLS Video',
   'dash-video': 'DASH Video',
