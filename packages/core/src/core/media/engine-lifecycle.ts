@@ -38,12 +38,15 @@ export class EngineLifecycle {
 
   async requestLoad() {
     if (this.#loadRequested) return;
-    await (this.#loadRequested = Promise.resolve());
+    const token = (this.#loadRequested = Promise.resolve());
+    await token;
+    if (this.#loadRequested !== token) return;
     this.#loadRequested = null;
     this.load();
   }
 
   load(src?: string) {
+    this.#loadRequested = null;
     if (src !== undefined) this.#src = src;
 
     if (this.shouldEngineUpdate(this.engineProps)) {
