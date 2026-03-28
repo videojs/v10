@@ -24,6 +24,7 @@ class TestEngine extends EngineLifecycle {
   }
 
   engineDestroy(): void {
+    super.engineDestroy();
     this.engineDestroySpy();
   }
 
@@ -139,5 +140,22 @@ describe('EngineLifecycle', () => {
     engine.load('explicit.m3u8');
 
     expect(engine.src).toBe('explicit.m3u8');
+  });
+
+  it('engineUpdate fires after engineDestroy resets prevEngineProps', async () => {
+    const engine = new TestEngine();
+    engine.src = 'a.m3u8';
+    await tick();
+
+    expect(engine.engineUpdateSpy).toHaveBeenCalledOnce();
+    engine.engineUpdateSpy.mockClear();
+    engine.engineDestroySpy.mockClear();
+
+    engine.engineDestroy();
+
+    engine.src = 'b.m3u8';
+    await tick();
+
+    expect(engine.engineUpdateSpy).toHaveBeenCalledOnce();
   });
 });

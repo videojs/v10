@@ -90,6 +90,7 @@ export class HlsMediaDelegate extends EngineLifecycle implements Delegate {
   }
 
   engineDestroy(): void {
+    super.engineDestroy();
     this.#delegate?.destroy();
     this.#delegate = null;
   }

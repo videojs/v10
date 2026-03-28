@@ -35,6 +35,7 @@ class HlsJsMediaDelegateBase extends EngineLifecycle implements Delegate {
   }
 
   engineDestroy(): void {
+    super.engineDestroy();
     this.#engine?.destroy();
     this.#engine = null;
   }

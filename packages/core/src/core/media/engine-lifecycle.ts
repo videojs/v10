@@ -32,7 +32,9 @@ export class EngineLifecycle {
     return !shallowEqual(this.#prevEngineProps, nextEngineProps);
   }
 
-  engineDestroy(): void {}
+  engineDestroy(): void {
+    this.#prevEngineProps = null;
+  }
 
   engineUpdate(): void {}
 
