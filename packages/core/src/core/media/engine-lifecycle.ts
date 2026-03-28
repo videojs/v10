@@ -34,6 +34,7 @@ export class EngineLifecycle {
 
   engineDestroy(): void {
     this.#prevEngineProps = null;
+    this.#loadRequested = null;
   }
 
   engineUpdate(): void {}

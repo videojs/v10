@@ -142,6 +142,24 @@ describe('EngineLifecycle', () => {
     expect(engine.src).toBe('explicit.m3u8');
   });
 
+  it('engineDestroy cancels a pending requestLoad microtask', async () => {
+    const engine = new TestEngine();
+    engine.src = 'a.m3u8';
+    await tick();
+
+    engine.engineUpdateSpy.mockClear();
+    engine.engineDestroySpy.mockClear();
+    engine.loadSpy.mockClear();
+
+    engine.src = 'b.m3u8';
+    engine.engineDestroy();
+
+    await tick();
+
+    expect(engine.loadSpy).not.toHaveBeenCalled();
+    expect(engine.engineUpdateSpy).not.toHaveBeenCalled();
+  });
+
   it('engineUpdate fires after engineDestroy resets prevEngineProps', async () => {
     const engine = new TestEngine();
     engine.src = 'a.m3u8';

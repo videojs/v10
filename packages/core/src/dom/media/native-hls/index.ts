@@ -28,6 +28,7 @@ export class NativeHlsMediaDelegate extends EngineLifecycle implements Delegate 
   }
 
   destroy(): void {
+    this.engineDestroy();
     this.#target = null;
   }
 }
