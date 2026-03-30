@@ -2,6 +2,11 @@ import type { Constructor } from '@videojs/utils/types';
 
 import { defineClassPropHooks } from '../utils/define-class-prop-hooks';
 
+export interface Delegate {
+  attach?(target: EventTarget): void;
+  detach?(): void;
+}
+
 // Detects readonly vs writable properties via conditional type identity check.
 type IfEquals<X, Y, A, B> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? A : B;
 
@@ -26,7 +31,7 @@ export type InferDelegateProps<D extends abstract new (...args: any[]) => any> =
  *
  * Works with both `CustomMediaMixin` and `ProxyMixin`.
  */
-export function DelegateMixin<Base extends Constructor<any>, D extends Constructor<any>>(
+export function DelegateMixin<Base extends Constructor<any>, D extends Constructor<Delegate>>(
   BaseClass: Base,
   DelegateClass: D
 ) {
@@ -54,11 +59,28 @@ export function DelegateMixin<Base extends Constructor<any>, D extends Construct
       }
       return super.call?.(prop, ...args);
     }
+
+    attach(target: EventTarget): void {
+      super.attach?.(target);
+      this.#delegate.attach?.(target);
+    }
+
+    detach(): void {
+      this.#delegate.detach?.();
+      super.detach?.();
+    }
   }
 
   for (let proto = DelegateClass.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
     defineClassPropHooks(DelegateImpl, proto);
   }
 
-  return DelegateImpl as unknown as Constructor<InstanceType<Base> & InstanceType<D>> & Omit<Base, 'prototype'>;
+  return DelegateImpl as unknown as Constructor<
+    InstanceType<Base> &
+      InstanceType<D> & {
+        attach(target: EventTarget): void;
+        detach(): void;
+      }
+  > &
+    Omit<Base, 'prototype'>;
 }
