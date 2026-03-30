@@ -31,7 +31,8 @@ export function syncPreloadAttribute<S extends PresentationState, O extends Plat
   return effect(() => {
     if (state.get().preload !== undefined) return;
     const preload = mediaElement.get()?.preload || undefined;
-    const patch: Partial<PresentationState> = { preload: preload as 'auto' | 'metadata' | 'none' | undefined };
+    if (preload === undefined) return;
+    const patch: Partial<PresentationState> = { preload: preload as 'auto' | 'metadata' | 'none' };
     update(state, patch);
   });
 }

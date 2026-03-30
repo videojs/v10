@@ -36,6 +36,6 @@ export function computed<T>(fn: () => T, options?: SignalOptions<T>): Computed<T
  * update(state, (s) => ({ ...s, count: s.count + 1 }));
  */
 export function update<T extends object>(signal: Signal<T>, updater: Partial<T> | ((current: T) => T)): void {
-  const current = signal.get();
+  const current = untrack(() => signal.get());
   signal.set(typeof updater === 'function' ? updater(current) : { ...current, ...updater });
 }

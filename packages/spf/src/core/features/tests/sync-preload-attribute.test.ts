@@ -71,6 +71,47 @@ describe('syncPreloadAttribute', () => {
     cleanup();
   });
 
+  it('does not loop when mediaElement is absent and preload is unset', () => {
+    interface State {
+      preload?: 'auto' | 'metadata' | 'none' | undefined;
+    }
+
+    interface Owners {
+      mediaElement?: HTMLMediaElement | undefined;
+    }
+
+    const state = signal<State>({ preload: undefined });
+    const owners = signal<Owners>({ mediaElement: undefined });
+
+    // Should not throw / hang — the effect must exit without writing when
+    // both preload and mediaElement are absent.
+    const cleanup = syncPreloadAttribute({ state, owners });
+
+    expect(state.get().preload).toBeUndefined();
+
+    cleanup();
+  });
+
+  it('does not loop when mediaElement has no preload attribute and preload is unset', () => {
+    interface State {
+      preload?: 'auto' | 'metadata' | 'none' | undefined;
+    }
+
+    interface Owners {
+      mediaElement?: HTMLMediaElement | undefined;
+    }
+
+    const state = signal<State>({ preload: undefined });
+    // Browsers return '' when the preload attribute is absent
+    const owners = signal<Owners>({ mediaElement: { preload: '' } as HTMLMediaElement });
+
+    const cleanup = syncPreloadAttribute({ state, owners });
+
+    expect(state.get().preload).toBeUndefined();
+
+    cleanup();
+  });
+
   it('does not clear preload when mediaElement is removed and preload is already set', async () => {
     interface State {
       presentation?: AddressableObject | Presentation | undefined;
