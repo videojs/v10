@@ -1,7 +1,7 @@
-import { ReactiveElement } from '@videojs/element';
 import { renderIcon } from '@videojs/icons/render';
+import { createShadowStyle } from '@videojs/utils/dom';
 import { safeDefine } from '../safe-define';
-import { createStyles, SkinMixin } from '../skin-mixin';
+import { SkinElement } from '../skin-element';
 import styles from './skin.css?inline';
 
 // Side-effect imports: register all custom elements used in the template.
@@ -100,9 +100,9 @@ function getTemplateHTML() {
   `;
 }
 
-export class AudioSkinElement extends SkinMixin(ReactiveElement) {
+export class AudioSkinElement extends SkinElement {
   static readonly tagName = 'audio-skin';
-  static styles = createStyles(styles);
+  static styles = createShadowStyle(styles);
   static getTemplateHTML = getTemplateHTML;
 }
 

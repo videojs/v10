@@ -1,4 +1,3 @@
-import { ReactiveElement } from '@videojs/element';
 import { renderIcon } from '@videojs/icons/render';
 import {
   button,
@@ -18,7 +17,7 @@ import {
 } from '@videojs/skins/default/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { safeDefine } from '../safe-define';
-import { SkinMixin } from '../skin-mixin';
+import { SkinElement } from '../skin-element';
 
 // Side-effect imports: register all custom elements used in the template.
 import '../media/container';
@@ -118,7 +117,7 @@ function getTemplateHTML() {
   `;
 }
 
-export class AudioSkinTailwindElement extends SkinMixin(ReactiveElement) {
+export class AudioSkinTailwindElement extends SkinElement {
   static readonly tagName = 'audio-skin-tailwind';
   static getTemplateHTML = getTemplateHTML;
 }
