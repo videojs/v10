@@ -1,5 +1,5 @@
 import { effect } from '../../core/signals/effect';
-import { computed, type Signal } from '../../core/signals/primitives';
+import { computed, type Signal, update } from '../../core/signals/primitives';
 import type { Presentation, ResolvedTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { BufferKeyByType, getSelectedTrack, type TrackSelectionState } from '../../core/utils/track-selection';
@@ -118,7 +118,7 @@ export function setupSourceBuffers<S extends SourceBufferState, O extends Source
       patch[ActorKeyByType[type]] = createSourceBufferActor(buffer);
     }
 
-    owners.set(Object.assign({}, o, patch) as O);
+    update(owners, patch);
   });
 
   return cleanupEffect;
