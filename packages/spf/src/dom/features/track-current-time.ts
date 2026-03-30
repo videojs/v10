@@ -62,10 +62,13 @@ export function trackCurrentTime<S extends CurrentTimeState, O extends CurrentTi
 
     if (!mediaElement) return;
 
-    // Sync immediately so consumers don't wait for the first event
-    update(state, { currentTime: mediaElement.currentTime });
+    const sync = () => {
+      const patch: Partial<CurrentTimeState> = { currentTime: mediaElement.currentTime };
+      update(state, patch);
+    };
 
-    const sync = () => update(state, { currentTime: mediaElement.currentTime });
+    // Sync immediately so consumers don't wait for the first event
+    sync();
     const removeTimeupdate = listen(mediaElement, 'timeupdate', sync);
     const removeSeeking = listen(mediaElement, 'seeking', sync);
     removeListeners = () => {

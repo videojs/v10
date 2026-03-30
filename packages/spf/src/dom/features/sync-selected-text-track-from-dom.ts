@@ -65,7 +65,8 @@ export function syncSelectedTextTrackFromDom<
       if (current.selectedTextTrackId === newId) return;
 
       if (newId) {
-        update(state, { selectedTextTrackId: newId });
+        const patch: Partial<SelectedTextTrackFromDomState> = { selectedTextTrackId: newId };
+        update(state, patch);
       } else {
         // When deselecting, clear the textBufferState entry for the previous track.
         // Setting mode to 'disabled' (as toggleSubtitles() does) clears native cues
@@ -75,9 +76,14 @@ export function syncSelectedTextTrackFromDom<
         if (prevId && current.textBufferState?.[prevId]) {
           const next = { ...current.textBufferState };
           delete next[prevId];
-          update(state, { selectedTextTrackId: undefined, textBufferState: next });
+          const patch: Partial<SelectedTextTrackFromDomState> = {
+            selectedTextTrackId: undefined,
+            textBufferState: next,
+          };
+          update(state, patch);
         } else {
-          update(state, { selectedTextTrackId: undefined });
+          const patch: Partial<SelectedTextTrackFromDomState> = { selectedTextTrackId: undefined };
+          update(state, patch);
         }
       }
     });

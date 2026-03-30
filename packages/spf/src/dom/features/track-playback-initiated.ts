@@ -83,7 +83,10 @@ export function trackPlaybackInitiated<S extends PlaybackInitiatedState, O exten
     const pi = playbackInitiated.get();
     if (pi === undefined) return;
     const current = state.get();
-    if (current.playbackInitiated !== pi) update(state, { playbackInitiated: pi });
+    if (current.playbackInitiated !== pi) {
+      const patch: Partial<PlaybackInitiatedState> = { playbackInitiated: pi };
+      update(state, patch);
+    }
   });
 
   return () => {

@@ -108,7 +108,8 @@ export function setupTextTracks<S extends TextTrackState, O extends TextTrackOwn
     });
 
     if (trackMap.size) {
-      update(owners, { textTracks: trackMap });
+      const patch: Partial<TextTrackOwners> = { textTracks: trackMap };
+      update(owners, patch);
     }
   });
 

@@ -83,7 +83,8 @@ export function syncPreloadAttribute<S extends PresentationState, O extends Plat
     const current = state.get();
     if (current.preload !== undefined) return;
     const preload = mediaElement.get()?.preload || undefined;
-    update(state, { preload: preload as 'auto' | 'metadata' | 'none' | undefined });
+    const patch: Partial<PresentationState> = { preload: preload as 'auto' | 'metadata' | 'none' | undefined };
+    update(state, patch);
   });
 }
 
@@ -125,7 +126,8 @@ export function resolvePresentation<S extends PresentationState>({ state }: { st
       .then((response) => getResponseText(response))
       .then((text) => {
         const parsed = parseMultivariantPlaylist(text, presentation);
-        update(state, { presentation: parsed });
+        const patch: Partial<PresentationState> = { presentation: parsed };
+        update(state, patch);
       })
       .catch((error) => {
         if (error instanceof Error && error.name === 'AbortError') return;

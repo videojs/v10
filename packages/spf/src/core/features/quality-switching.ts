@@ -130,6 +130,7 @@ export function switchQuality<S extends QualitySwitchingState>(
       lastUpgradeTime = now;
     }
 
-    update(state, { selectedVideoTrackId: optimal.id });
+    const patch: Partial<QualitySwitchingState> = { selectedVideoTrackId: optimal.id };
+    update(state, patch);
   });
 }

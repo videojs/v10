@@ -297,7 +297,8 @@ export function selectVideoTrack<S extends TrackSelectionState>(
 
     if (selectedTrackId) {
       const selectedTrackKey = SelectedTrackIdKeyByType[config.type];
-      update(state, { [selectedTrackKey]: selectedTrackId });
+      const patch: Partial<TrackSelectionState> = { [selectedTrackKey]: selectedTrackId };
+      update(state, patch);
     }
   });
 }
@@ -330,7 +331,8 @@ export function selectAudioTrack<S extends TrackSelectionState>(
       ?.switchingSets[0]?.tracks[0]?.id;
 
     if (selectedTrackId) {
-      update(state, { selectedAudioTrackId: selectedTrackId });
+      const patch: Partial<TrackSelectionState> = { selectedAudioTrackId: selectedTrackId };
+      update(state, patch);
     }
   });
 }
@@ -359,7 +361,8 @@ export function selectTextTrack<S extends TrackSelectionState>(
     const selectedTextTrackId = pickTextTrack(currentState.presentation!, config);
 
     if (selectedTextTrackId) {
-      update(state, { selectedTextTrackId });
+      const patch: Partial<TrackSelectionState> = { selectedTextTrackId };
+      update(state, patch);
     }
   });
 }
