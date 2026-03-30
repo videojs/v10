@@ -17,6 +17,7 @@ import {
   tooltipState,
 } from '@videojs/skins/minimal/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
+import { safeDefine } from '../safe-define';
 import { SkinMixin } from '../skin-mixin';
 
 // Side-effect imports: register all custom elements used in the template.
@@ -127,7 +128,7 @@ export class MinimalAudioSkinTailwindElement extends SkinMixin(ReactiveElement) 
   static getTemplateHTML = getTemplateHTML;
 }
 
-customElements.define(MinimalAudioSkinTailwindElement.tagName, MinimalAudioSkinTailwindElement);
+safeDefine(MinimalAudioSkinTailwindElement);
 
 declare global {
   interface HTMLElementTagNameMap {

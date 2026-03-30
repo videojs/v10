@@ -22,6 +22,7 @@ import {
   tooltipState,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { cn } from '@videojs/utils/style';
+import { safeDefine } from '../safe-define';
 import { SkinMixin } from '../skin-mixin';
 
 // Side-effect imports: register all custom elements used in the template.
@@ -189,7 +190,7 @@ export class MinimalVideoSkinTailwindElement extends SkinMixin(ReactiveElement) 
   static getTemplateHTML = getTemplateHTML;
 }
 
-customElements.define(MinimalVideoSkinTailwindElement.tagName, MinimalVideoSkinTailwindElement);
+safeDefine(MinimalVideoSkinTailwindElement);
 
 declare global {
   interface HTMLElementTagNameMap {

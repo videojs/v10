@@ -1,5 +1,6 @@
 import { ReactiveElement } from '@videojs/element';
 import { renderIcon } from '@videojs/icons/render/minimal';
+import { safeDefine } from '../safe-define';
 import { createStyles, SkinMixin } from '../skin-mixin';
 import styles from './minimal-skin.css?inline';
 
@@ -158,7 +159,7 @@ export class MinimalVideoSkinElement extends SkinMixin(ReactiveElement) {
   static getTemplateHTML = getTemplateHTML;
 }
 
-customElements.define(MinimalVideoSkinElement.tagName, MinimalVideoSkinElement);
+safeDefine(MinimalVideoSkinElement);
 
 declare global {
   interface HTMLElementTagNameMap {
