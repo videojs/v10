@@ -6,9 +6,6 @@ import Hls from 'hls.js';
 interface HlsEngineHost {
   readonly engine: Hls | null;
   readonly target: HTMLMediaElement | null;
-  attach?(target: EventTarget): void;
-  detach?(): void;
-  engineUpdate?(): void;
 }
 
 /**
@@ -25,23 +22,21 @@ export function HlsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost>>
   class HlsMediaTextTracks extends (BaseClass as Constructor<HlsEngineHost>) {
     #disconnect: AbortController | null = null;
 
-    attach(target: EventTarget): void {
-      super.attach?.(target);
-      this.#connect();
+    constructor(...args: any[]) {
+      super(...args);
+
+      this.engine?.on(Hls.Events.MANIFEST_LOADING, () => this.#init());
+      this.engine?.on(Hls.Events.MEDIA_ATTACHED, () => this.#init());
+      this.engine?.on(Hls.Events.MEDIA_DETACHED, () => this.#destroy());
+      this.engine?.on(Hls.Events.DESTROYING, () => this.#destroy());
     }
 
-    detach(): void {
+    #destroy(): void {
       this.#disconnect?.abort();
       this.#disconnect = null;
-      super.detach?.();
     }
 
-    engineUpdate(): void {
-      super.engineUpdate?.();
-      this.#connect();
-    }
-
-    #connect(): void {
+    #init(): void {
       this.#disconnect?.abort();
       this.#disconnect = new AbortController();
 

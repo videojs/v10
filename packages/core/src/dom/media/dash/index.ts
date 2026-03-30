@@ -1,11 +1,12 @@
 import * as dashjs from 'dashjs';
 
-import { type Delegate, DelegateMixin } from '../../../core/media/delegate';
+import { DelegateMixin } from '../../../core/media/delegate';
 import { CustomVideoElement } from '../custom-media-element';
 import { VideoProxy } from '../proxy';
 
-export class DashMediaDelegate implements Delegate {
+export class DashMediaDelegate {
   #engine: dashjs.MediaPlayerClass;
+  #src: string = '';
 
   constructor() {
     this.#engine = dashjs.MediaPlayer().create();
@@ -30,11 +31,12 @@ export class DashMediaDelegate implements Delegate {
   }
 
   set src(src: string) {
+    this.#src = src;
     this.#engine.attachSource(src);
   }
 
   get src(): string {
-    return (this.#engine.getSource() as string) ?? '';
+    return this.#src;
   }
 }
 

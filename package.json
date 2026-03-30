@@ -33,6 +33,7 @@
     "link:aliases": "node build/scripts/link-aliases.mjs",
     "size": "node .github/scripts/bundle-size.js | node .github/scripts/bundle-size-report.js",
     "test": "turbo run test",
+    "test:packages": "turbo run test --filter='./packages/*'",
     "format:astro": "prettier --write 'site/src/**/*.astro'",
     "typecheck": "tsc --build",
     "changelog": "git-cliff --config cliff.toml --output CHANGELOG.md"

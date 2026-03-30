@@ -10,6 +10,7 @@ function buildAttrPropMap(DelegateClass: AnyClass): Map<string, string> {
   const map = new Map<string, string>();
   for (let proto = DelegateClass.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
     for (const key of Object.getOwnPropertyNames(proto)) {
+      if (key.startsWith('_')) continue;
       const desc = Object.getOwnPropertyDescriptor(proto, key);
       if (desc?.set) map.set(camelToKebab(key), key);
     }

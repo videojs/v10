@@ -1,14 +1,9 @@
 import type { Constructor } from '@videojs/utils/types';
-import type Hls from 'hls.js';
+import Hls from 'hls.js';
 
-interface HlsEngineHost {
+export interface HlsEngineHost {
   readonly engine: Hls | null;
   readonly target: HTMLMediaElement | null;
-  attach?(target: EventTarget): void;
-  detach?(): void;
-  load?(src?: string): void;
-  engineUpdate?(): void;
-  engineDestroy?(): void;
 }
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
@@ -23,9 +18,18 @@ export type PreloadType = '' | 'none' | 'metadata' | 'auto';
  */
 export function HlsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsMediaPreload extends (BaseClass as Constructor<HlsEngineHost>) {
-    #preloadAbort?: AbortController;
+    #preloadAbort: AbortController | null = null;
     #defaultMaxBufferLength: number | undefined;
     #defaultMaxBufferSize: number | undefined;
+
+    constructor(...args: any[]) {
+      super(...args);
+
+      this.engine?.on(Hls.Events.MANIFEST_LOADING, () => this.#init());
+      this.engine?.on(Hls.Events.MEDIA_ATTACHED, () => this.#init());
+      this.engine?.on(Hls.Events.MEDIA_DETACHED, () => this.#destroy());
+      this.engine?.on(Hls.Events.DESTROYING, () => this.#destroy());
+    }
 
     get preload(): PreloadType {
       return (this.target as HTMLMediaElement | null)?.preload || 'metadata';
@@ -35,30 +39,15 @@ export function HlsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(Ba
       const target = this.target as HTMLMediaElement | null;
       if (!target || target.preload === value) return;
       target.preload = value;
-      this.#updatePreload();
+      this.#init();
     }
 
-    load(src?: string): void {
-      super.load?.(src);
-      this.#updatePreload();
-    }
-
-    attach(target: EventTarget): void {
-      super.attach?.(target);
-      this.#updatePreload();
-    }
-
-    engineDestroy(): void {
+    #destroy(): void {
       this.#preloadAbort?.abort();
-      super.engineDestroy?.();
+      this.#preloadAbort = null;
     }
 
-    detach(): void {
-      this.#preloadAbort?.abort();
-      super.detach?.();
-    }
-
-    #updatePreload(): void {
+    #init(): void {
       this.#preloadAbort?.abort();
 
       const target = this.target as HTMLMediaElement | null;
@@ -96,5 +85,5 @@ export function HlsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(Ba
     }
   }
 
-  return HlsMediaPreload as unknown as Base;
+  return HlsMediaPreload as unknown as Base & Constructor<{ preload: PreloadType }>;
 }

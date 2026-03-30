@@ -1,34 +1,63 @@
-import { type Delegate, DelegateMixin } from '../../../core/media/delegate';
-import { EngineLifecycle } from '../../../core/media/engine-lifecycle';
+import { DelegateMixin } from '../../../core/media/delegate';
 import { CustomVideoElement } from '../custom-media-element';
 import { VideoProxy } from '../proxy';
 
-export class NativeHlsMediaDelegate extends EngineLifecycle implements Delegate {
+export type PreloadType = '' | 'none' | 'metadata' | 'auto';
+
+export class NativeHlsMediaDelegate {
   #target: HTMLMediaElement | null = null;
+  #src: string = '';
+  #preload: PreloadType = 'metadata';
 
-  get engine(): null {
-    return null;
-  }
-
-  get target(): HTMLMediaElement | null {
+  get target() {
     return this.#target;
   }
 
-  load(src?: string): void {
-    super.load(src);
-    if (this.#target) this.#target.src = this.src;
+  get engine() {
+    return null;
   }
 
-  attach(target: HTMLMediaElement): void {
+  get src() {
+    return this.#src;
+  }
+
+  set src(src: string) {
+    this.#src = src;
+
+    if (this.#target) {
+      this.#target.src = src;
+    }
+  }
+
+  get preload() {
+    return this.#preload ?? 'metadata';
+  }
+
+  set preload(value: PreloadType) {
+    this.#preload = value;
+
+    if (this.#target) {
+      this.#target.preload = value;
+    }
+  }
+
+  attach(target: HTMLMediaElement) {
     this.#target = target;
+
+    if (this.#src) {
+      this.#target.src = this.#src;
+    }
+
+    if (this.#preload) {
+      this.#target.preload = this.#preload;
+    }
   }
 
-  detach(): void {
+  detach() {
     this.#target = null;
   }
 
-  destroy(): void {
-    this.engineDestroy();
+  destroy() {
     this.#target = null;
   }
 }

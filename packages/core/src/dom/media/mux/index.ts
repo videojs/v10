@@ -1,6 +1,6 @@
 import Mux from 'mux-embed';
 
-import { type Delegate, DelegateMixin } from '../../../core/media/delegate';
+import { DelegateMixin } from '../../../core/media/delegate';
 import { CustomVideoElement } from '../custom-media-element';
 import { Hls, HlsMediaDelegate } from '../hls';
 import { VideoProxy } from '../proxy';
@@ -9,7 +9,7 @@ import type { MuxDataSdk } from './types';
 
 const MUX_VIDEO_DOMAIN = 'mux.com';
 
-export class MuxMediaDelegate extends HlsMediaDelegate implements Delegate {
+export class MuxMediaDelegate extends HlsMediaDelegate {
   static PLAYER_SOFTWARE_NAME = '';
 
   #playbackId: string | null = null;

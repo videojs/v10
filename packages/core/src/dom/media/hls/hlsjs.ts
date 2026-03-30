@@ -1,6 +1,4 @@
 import Hls, { type HlsConfig } from 'hls.js';
-import type { Delegate } from '../../../core/media/delegate';
-import { EngineLifecycle } from '../../../core/media/engine-lifecycle';
 import { HlsMediaPreloadMixin } from './preload';
 import { HlsMediaTextTracksMixin } from './text-tracks';
 
@@ -13,52 +11,44 @@ export const defaultHlsConfig: Partial<HlsConfig> = {
   autoStartLoad: false,
 };
 
-class HlsJsMediaDelegateBase extends EngineLifecycle implements Delegate {
-  #target: HTMLMediaElement | null = null;
+class HlsJsMediaDelegateBase {
   #engine: Hls | null = null;
 
-  get target(): HTMLMediaElement | null {
-    return this.#target;
+  constructor(params: { config: Partial<HlsConfig> }) {
+    this.#engine = new Hls({
+      ...defaultHlsConfig,
+      ...params.config,
+    });
   }
 
-  get engine(): Hls | null {
+  get target() {
+    return this.#engine?.media ?? null;
+  }
+
+  get engine() {
     return this.#engine;
   }
 
-  get engineProps() {
-    return { config: this.config };
+  get src() {
+    return this.#engine?.url ?? '';
   }
 
-  engineUpdate(): void {
-    this.#engine = new Hls({ ...defaultHlsConfig, ...this.config });
-    if (this.#target) this.#engine.attachMedia(this.#target);
+  set src(src: string) {
+    this.#engine?.loadSource(src);
   }
 
-  engineDestroy(): void {
-    super.engineDestroy();
-    this.#engine?.destroy();
-    this.#engine = null;
-  }
-
-  load(src?: string): void {
-    super.load(src);
-    this.#engine?.loadSource(this.src);
-  }
-
-  attach(target: HTMLMediaElement): void {
-    this.#target = target;
+  attach(target: HTMLMediaElement) {
     this.#engine?.attachMedia(target);
   }
 
-  detach(): void {
+  detach() {
     this.#engine?.detachMedia();
-    this.#target = null;
   }
 
-  destroy(): void {
-    this.engineDestroy();
-    this.#target = null;
+  destroy() {
+    this.#engine?.destroy();
+    this.#engine = null;
   }
 }
 
-export class HlsJsMediaDelegate extends HlsMediaTextTracksMixin(HlsMediaPreloadMixin(HlsJsMediaDelegateBase)) {}
+export class HlsJsMediaDelegate extends HlsMediaPreloadMixin(HlsMediaTextTracksMixin(HlsJsMediaDelegateBase)) {}
