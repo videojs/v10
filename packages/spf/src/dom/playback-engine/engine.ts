@@ -1,9 +1,10 @@
 import type { BandwidthState } from '../../core/abr/bandwidth-estimator';
 import { calculatePresentationDuration } from '../../core/features/calculate-presentation-duration';
 import { switchQuality } from '../../core/features/quality-switching';
-import { resolvePresentation, syncPreloadAttribute } from '../../core/features/resolve-presentation';
+import { resolvePresentation } from '../../core/features/resolve-presentation';
 import { resolveTrack } from '../../core/features/resolve-track';
 import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../../core/features/select-tracks';
+import { syncPreloadAttribute } from '../../core/features/sync-preload-attribute';
 import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
 import { signal } from '../../core/signals/primitives';
 import { endOfStream } from '../features/end-of-stream';
@@ -184,7 +185,7 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
   const cleanups = [
     // 0a. Sync preload attribute from mediaElement → state.preload
     //     Normalises '' (absent attribute) to 'auto' (browser default).
-    syncPreloadAttribute(state, owners),
+    syncPreloadAttribute({ state, owners }),
 
     // 0b. Track media element play event → state.playbackInitiated
     //     Enables preload="none" resolution via native controls / element.play()

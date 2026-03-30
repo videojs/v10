@@ -89,7 +89,6 @@ export { fetchResolvable, getResponseText } from './dom/network/fetch';
 // =============================================================================
 
 export type {
-  PlatformOwners,
   PresentationState,
   UnresolvedPresentation,
 } from './core/features/resolve-presentation';
@@ -98,8 +97,9 @@ export {
   isUnresolved,
   resolvePresentation,
   shouldResolve,
-  syncPreloadAttribute,
 } from './core/features/resolve-presentation';
+export type { PlatformOwners } from './core/features/sync-preload-attribute';
+export { syncPreloadAttribute } from './core/features/sync-preload-attribute';
 
 // =============================================================================
 // Features (F9 - Quality Switching)
