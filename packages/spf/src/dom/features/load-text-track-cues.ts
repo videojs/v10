@@ -5,28 +5,22 @@ import type { Presentation, Segment, TextTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import { parseVttSegment } from '../text/parse-vtt-segment';
 
-function isDuplicateCue(cue: VTTCue, textTrack: globalThis.TextTrack): boolean {
-  const { cues } = textTrack;
-  if (!cues) return false;
-  for (let i = 0; i < cues.length; i++) {
-    const existing = cues[i] as VTTCue;
-    if (existing.startTime === cue.startTime && existing.endTime === cue.endTime && existing.text === cue.text) {
-      return true;
-    }
-  }
-  return false;
+const CueKeys = ['startTime', 'endTime', 'text'] as const;
+function isDuplicateCue(cue: VTTCue, existingCues: globalThis.TextTrack['cues']): boolean {
+  return Array.prototype.some.call(existingCues ?? [], (existingCue) => {
+    return CueKeys.every((k) => existingCue[k] === cue[k]);
+  });
 }
 
 const loadVttSegmentTask = async (
   { segment }: { segment: Segment },
-  context: { textTrack: globalThis.TextTrack }
+  { textTrack }: { textTrack: globalThis.TextTrack }
 ): Promise<void> => {
   const cues = await parseVttSegment(segment.url);
-  for (const cue of cues) {
-    if (!isDuplicateCue(cue, context.textTrack)) {
-      context.textTrack.addCue(cue);
-    }
-  }
+  cues.forEach((cue) => {
+    if (isDuplicateCue(cue, textTrack.cues)) return;
+    textTrack.addCue(cue);
+  });
 };
 
 // ============================================================================
