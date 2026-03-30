@@ -56,7 +56,7 @@ function formatBandwidth(bps: number): string {
   return `${Math.round(bps / 1000)} Kbps`;
 }
 
-function getVideoTracks(state: ReturnType<typeof engine.state.current>) {
+function getVideoTracks(state: ReturnType<typeof engine.state.get>) {
   return state.presentation?.selectionSets?.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ?? [];
 }
 
@@ -75,7 +75,7 @@ function updateShareUrl() {
 
 function updateNowPlayingQuality() {
   if (!engine) return;
-  const segments = engine.owners.current.videoBufferActor?.snapshot.get().context.segments ?? [];
+  const segments = engine.owners.get().videoBufferActor?.snapshot.get().context.segments ?? [];
   const t = video.currentTime;
   const current = segments.find((s) => t >= s.startTime && t < s.startTime + s.duration);
   if (current?.trackBandwidth) {
@@ -98,7 +98,7 @@ function correctedEstimate(estimate: number, totalWeight: number, halfLife: numb
 
 function updateThroughputDisplay() {
   if (!engine) return;
-  const bs = engine.state.current.bandwidthState;
+  const bs = engine.state.get().bandwidthState;
   if (!bs || bs.bytesSampled === 0) {
     throughputDiv.textContent = '📶 Throughput: no samples yet';
     throughputDiv.className = '';
@@ -119,7 +119,7 @@ function updateThroughputDisplay() {
 
 function renderRenditionPicker() {
   if (!engine) return;
-  const state = engine.state.current;
+  const state = engine.state.get();
   const tracks = getVideoTracks(state);
   const isManual = state.abrDisabled === true;
 
@@ -168,7 +168,7 @@ function renderRenditionPicker() {
 
 function renderResolutionStatus() {
   if (!engine) return;
-  const state = engine.state.current;
+  const state = engine.state.get();
   const tracks = getVideoTracks(state);
 
   if (tracks.length === 0) {
@@ -193,8 +193,8 @@ function inspectState() {
     stateDiv.innerHTML = '<h2>State Inspector</h2><div class="error">Engine not initialized</div>';
     return;
   }
-  const state = engine.state.current;
-  const owners = engine.owners.current;
+  const state = engine.state.get();
+  const owners = engine.owners.get();
 
   const videoBufferRanges = owners.videoBuffer
     ? Array.from(
@@ -270,8 +270,8 @@ try {
 
   log('✓ Engine created', 'success');
   (window as any).engine = engine;
-  (window as any).state = () => engine.state.current;
-  (window as any).owners = () => engine.owners.current;
+  (window as any).state = () => engine.state.get();
+  (window as any).owners = () => engine.owners.get();
   log('Exposed as window.engine / window.state() / window.owners()');
 
   // ── State subscriptions ──────────────────────────────────────────────────
