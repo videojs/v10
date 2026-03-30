@@ -19,6 +19,7 @@ export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 export function HlsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsMediaPreload extends (BaseClass as Constructor<HlsEngineHost>) {
     #preloadAbort: AbortController | null = null;
+    #preload: PreloadType = 'metadata';
     #defaultMaxBufferLength: number | undefined;
     #defaultMaxBufferSize: number | undefined;
 
@@ -32,13 +33,11 @@ export function HlsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(Ba
     }
 
     get preload(): PreloadType {
-      return (this.target as HTMLMediaElement | null)?.preload || 'metadata';
+      return this.#preload;
     }
 
     set preload(value: PreloadType) {
-      const target = this.target as HTMLMediaElement | null;
-      if (!target || target.preload === value) return;
-      target.preload = value;
+      this.#preload = value;
       this.#init();
     }
 
@@ -51,8 +50,15 @@ export function HlsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(Ba
       this.#preloadAbort?.abort();
 
       const target = this.target as HTMLMediaElement | null;
+      if (!target) return;
+
+      // Sync stored preload to the native element (may have been set before attach)
+      if (target.preload !== this.preload) {
+        target.preload = this.preload;
+      }
+
       const { engine } = this;
-      if (!target || !engine) return;
+      if (!engine) return;
 
       this.#defaultMaxBufferLength ??= engine.config.maxBufferLength;
       this.#defaultMaxBufferSize ??= engine.config.maxBufferSize;

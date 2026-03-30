@@ -130,11 +130,11 @@ export class HlsMediaDelegate {
         ? new HlsJsMediaDelegate({ config: { ...this.config, debug: this.debug } })
         : new NativeHlsMediaDelegate();
 
-      this.#delegate.preload = this.preload;
-
       if (this.target) {
-        this.attach(this.target);
+        this.#delegate.attach(this.target);
       }
+
+      this.#delegate.preload = this.preload;
     }
 
     if (this.#delegate) {
