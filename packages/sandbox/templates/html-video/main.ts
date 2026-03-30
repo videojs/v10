@@ -1,6 +1,5 @@
 import '@app/styles.css';
 import '@videojs/html/video/player';
-import '@videojs/html/ui/poster';
 import { createHtmlSandboxState, createLatestLoader } from '@app/shared/html/sandbox-state';
 import { loadVideoSkinTag } from '@app/shared/html/skins';
 import { renderStoryboard } from '@app/shared/html/storyboard';

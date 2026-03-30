@@ -1,5 +1,6 @@
 import { ReactiveElement } from '@videojs/element';
 import { renderIcon } from '@videojs/icons/render';
+import { safeDefine } from '../safe-define';
 import { createStyles, SkinMixin } from '../skin-mixin';
 import styles from './skin.css?inline';
 
@@ -105,7 +106,7 @@ export class AudioSkinElement extends SkinMixin(ReactiveElement) {
   static getTemplateHTML = getTemplateHTML;
 }
 
-customElements.define(AudioSkinElement.tagName, AudioSkinElement);
+safeDefine(AudioSkinElement);
 
 declare global {
   interface HTMLElementTagNameMap {

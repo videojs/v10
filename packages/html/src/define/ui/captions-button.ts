@@ -1,6 +1,7 @@
 import { CaptionsButtonElement } from '../../ui/captions-button/captions-button-element';
+import { safeDefine } from '../safe-define';
 
-customElements.define(CaptionsButtonElement.tagName, CaptionsButtonElement);
+safeDefine(CaptionsButtonElement);
 
 declare global {
   interface HTMLElementTagNameMap {
