@@ -43,8 +43,6 @@ export class NativeHlsMediaDelegate {
 
   attach(target: HTMLMediaElement) {
     this.#target = target;
-    this.#target.src = this.src;
-    this.#target.preload = this.preload;
   }
 
   detach() {

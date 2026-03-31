@@ -12,9 +12,10 @@ const MUX_VIDEO_DOMAIN = 'mux.com';
 export class MuxMediaDelegate extends HlsMediaDelegate {
   static PLAYER_SOFTWARE_NAME = '';
 
+  #MuxDataSdk: MuxDataSdk | undefined = Mux;
+  #MuxDataSdkInitializedBefore: boolean = false;
   #playbackId: string | null = null;
   #customDomain: string = MUX_VIDEO_DOMAIN;
-  #MuxDataSdk: MuxDataSdk | undefined = Mux;
   #beaconCollectionDomain: string | undefined;
   #disableCookies: boolean = false;
   #metadata: Record<string, any> | undefined;
@@ -110,7 +111,13 @@ export class MuxMediaDelegate extends HlsMediaDelegate {
 
   attach(target: HTMLMediaElement): void {
     super.attach(target);
-    this.#initializeMuxDataSdk();
+
+    // Only initialize Mux Data SDK if it was already initialized before in attach,
+    // the first initializeMuxDataSdk call should be done in the deferred load hook
+    // so all the properties are set before the Mux Data SDK is initialized.
+    if (this.#MuxDataSdkInitializedBefore) {
+      this.#initializeMuxDataSdk();
+    }
   }
 
   detach(): void {
@@ -132,7 +139,10 @@ export class MuxMediaDelegate extends HlsMediaDelegate {
 
   #initializeMuxDataSdk(): void {
     const target = this.target as HTMLMediaElement;
-    if (!this.#MuxDataSdk || !target || (target.mux && !target.mux.deleted)) return;
+
+    if (!this.MuxDataSdk || !target || (target.mux && !target.mux.deleted)) return;
+
+    this.#MuxDataSdkInitializedBefore = true;
 
     const {
       debug,
@@ -146,12 +156,12 @@ export class MuxMediaDelegate extends HlsMediaDelegate {
       metadata = {},
     } = this;
 
-    const { view_session_id = this.#MuxDataSdk?.utils.generateUUID() } = metadata;
+    const { view_session_id = this.MuxDataSdk?.utils.generateUUID() } = metadata;
     const video_id = toVideoId(this);
     metadata.view_session_id = view_session_id;
     metadata.video_id = video_id;
 
-    this.#MuxDataSdk?.monitor(target, {
+    this.MuxDataSdk?.monitor(target, {
       debug,
       ...(beaconCollectionDomain ? { beaconCollectionDomain } : {}),
       ...(disableCookies ? { disableCookies } : {}),
@@ -172,8 +182,8 @@ export class MuxMediaDelegate extends HlsMediaDelegate {
   }
 
   #generatePlayerInitTime(): number | undefined {
-    if (!this.#MuxDataSdk) return undefined;
-    return this.#MuxDataSdk.utils.now();
+    if (!this.MuxDataSdk) return undefined;
+    return this.MuxDataSdk.utils.now();
   }
 }
 
