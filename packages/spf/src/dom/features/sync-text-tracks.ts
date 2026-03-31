@@ -176,18 +176,15 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
       syncTimeout = undefined;
     }, 0);
 
-    let currentUnlisten: (() => void) | undefined;
-
     const onChange = () => {
       if (syncTimeout) {
         // Inside the settling window: browser auto-selection is overriding our
         // modes. Re-apply to restore the intended state without touching state.
-        currentUnlisten?.();
+        // change events are queued as tasks (async), so no re-entrancy risk.
         syncModes(
           mediaElement.textTracks,
           untrack(() => selectedTextTrackIdSignal.get())
         );
-        currentUnlisten = listen(mediaElement.textTracks, 'change', onChange);
         return;
       }
 
@@ -203,11 +200,11 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
       update(state, { selectedTextTrackId: newId } as Partial<S>);
     };
 
-    currentUnlisten = listen(mediaElement.textTracks, 'change', onChange);
+    const unlisten = listen(mediaElement.textTracks, 'change', onChange);
 
     return () => {
       clearTimeout(syncTimeout ?? undefined);
-      currentUnlisten?.();
+      unlisten();
       if (untrack(() => statusSignal.get()) !== 'set-up') {
         update(state, { selectedTextTrackId: undefined } as Partial<S>);
       }
