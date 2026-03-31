@@ -69,8 +69,7 @@ export class TextTrackSegmentLoaderActor implements SignalActor<TextTrackSegment
 
     // Capture actor reference so Tasks close over it, not `this`.
     const textTracksActor = this.#textTracksActor;
-
-    for (const segment of segmentsToLoad) {
+    segmentsToLoad.forEach((segment) => {
       this.#runner.schedule(
         new Task(async (signal) => {
           if (signal.aborted) return;
@@ -88,7 +87,7 @@ export class TextTrackSegmentLoaderActor implements SignalActor<TextTrackSegment
           }
         })
       );
-    }
+    });
 
     // Transition to idle when this generation's tasks all settle.
     // runner.settled is the chain tail after the tasks above; if a new send()
