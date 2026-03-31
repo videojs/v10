@@ -8,6 +8,7 @@ import styles from './skin.css?inline';
 import '../media/container';
 import '../ui/buffering-indicator';
 import '../ui/captions-button';
+import '../ui/error-dialog';
 import '../ui/controls';
 import '../ui/fullscreen-button';
 import '../ui/mute-button';
@@ -41,6 +42,18 @@ function getTemplateHTML() {
           ${renderIcon('spinner', { class: 'media-icon' })}
         </div>
       </media-buffering-indicator>
+
+      <media-error-dialog class="media-error">
+        <div class="media-error__dialog media-surface">
+          <div class="media-error__content">
+            <media-alert-dialog-title class="media-error__title">Something went wrong.</media-alert-dialog-title>
+            <media-alert-dialog-description class="media-error__description"></media-alert-dialog-description>
+          </div>
+          <div class="media-error__actions">
+            <media-alert-dialog-close class="media-button media-button--primary">OK</media-alert-dialog-close>
+          </div>
+        </div>
+      </media-error-dialog>
 
       <media-controls class="media-surface media-controls">
         <media-tooltip-group>
