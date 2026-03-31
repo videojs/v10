@@ -9,7 +9,6 @@ import type { ReadonlySignal, Signal } from '../../core/signals/primitives';
 import { signal } from '../../core/signals/primitives';
 import { endOfStream } from '../features/end-of-stream';
 import { loadSegments } from '../features/load-segments';
-import type { TextTrackBufferState } from '../features/load-text-track-cues';
 import { loadTextTrackCues } from '../features/load-text-track-cues';
 import { setupMediaSource } from '../features/setup-mediasource';
 import { setupSourceBuffers } from '../features/setup-sourcebuffer';
@@ -77,9 +76,6 @@ export interface PlaybackEngineState {
   // TODO: replace with separate manualVideoTrackId / abrVideoTrackId fields so the two
   // concerns don't share a field; see quality-switching.ts for the full design note.
   abrDisabled?: boolean;
-
-  // Text track buffer state (tracks loaded VTT segments per text track ID)
-  textBufferState?: TextTrackBufferState;
 
   // Current playback position (mirrored from mediaElement via trackCurrentTime)
   currentTime?: number;
