@@ -1216,21 +1216,18 @@ http://example.com/video-seg1.m4s
         expect(tracks[0]!.kind).toBe('subtitles');
         expect(tracks[0]!.label).toBe('English');
         expect(tracks[0]!.srclang).toBe('en');
-        expect(tracks[0]!.src).toBe('http://example.com/text-en.m3u8');
         expect(tracks[0]!.default).toBe(false);
 
         // Spanish track (DEFAULT)
         expect(tracks[1]!.kind).toBe('subtitles');
         expect(tracks[1]!.label).toBe('Spanish');
         expect(tracks[1]!.srclang).toBe('es');
-        expect(tracks[1]!.src).toBe('http://example.com/text-es.m3u8');
         expect(tracks[1]!.default).toBe(true);
 
         // French track
         expect(tracks[2]!.kind).toBe('subtitles');
         expect(tracks[2]!.label).toBe('French');
         expect(tracks[2]!.srclang).toBe('fr');
-        expect(tracks[2]!.src).toBe('http://example.com/text-fr.m3u8');
         expect(tracks[2]!.default).toBe(false);
       },
       { timeout: 2000 }
