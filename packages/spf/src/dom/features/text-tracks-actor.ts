@@ -19,12 +19,14 @@ export interface CueRecord {
 export interface TextTracksActorContext {
   /** Cues added per track ID. Used for duplicate detection and snapshot observability. */
   loaded: Record<string, CueRecord[]>;
+  /** Segments whose cues have been fully added, keyed by track ID. Used for load planning. */
+  segments: Record<string, Array<{ id: string }>>;
 }
 
 /** Complete snapshot of a TextTracksActor. */
 export type TextTracksActorSnapshot = ActorSnapshot<TextTracksActorStatus, TextTracksActorContext>;
 
-export type AddCuesMessage = { type: 'add-cues'; trackId: string; cues: VTTCue[] };
+export type AddCuesMessage = { type: 'add-cues'; trackId: string; segmentId: string; cues: VTTCue[] };
 export type TextTracksActorMessage = AddCuesMessage;
 
 // =============================================================================
@@ -44,7 +46,7 @@ export class TextTracksActor implements SignalActor<TextTracksActorStatus, TextT
   readonly #mediaElement: HTMLMediaElement;
   readonly #snapshotSignal = signal<TextTracksActorSnapshot>({
     status: 'idle',
-    context: { loaded: {} },
+    context: { loaded: {}, segments: {} },
   });
 
   constructor(mediaElement: HTMLMediaElement) {
@@ -64,14 +66,17 @@ export class TextTracksActor implements SignalActor<TextTracksActorStatus, TextT
     // - throwing a domain-specific error
     // - accepting as is (which would result in errors, but also "shouldn't ever happen" unless a bug is introduced)
     // (CJP)
-    const { trackId, cues } = message;
+    const { trackId, segmentId, cues } = message;
     const textTrack = Array.from(this.#mediaElement.textTracks).find((t) => t.id === trackId);
     if (!textTrack) return;
 
     const ctx = this.#snapshotSignal.get().context;
-    const existing = ctx.loaded[trackId] ?? [];
-    const prunedCues = cues.filter((cue) => !isDuplicateCue(cue, existing));
-    if (!prunedCues.length) return;
+    const existingCues = ctx.loaded[trackId] ?? [];
+    const existingSegments = ctx.segments[trackId] ?? [];
+    const prunedCues = cues.filter((cue) => !isDuplicateCue(cue, existingCues));
+    const segmentAlreadyLoaded = existingSegments.some((s) => s.id === segmentId);
+
+    if (prunedCues.length === 0 && segmentAlreadyLoaded) return;
 
     prunedCues.forEach((cue) => textTrack.addCue(cue));
     update(this.#snapshotSignal, {
@@ -79,8 +84,11 @@ export class TextTracksActor implements SignalActor<TextTracksActorStatus, TextT
         ...ctx,
         loaded: {
           ...ctx.loaded,
-          [trackId]: [...existing, ...prunedCues],
+          [trackId]: [...existingCues, ...prunedCues],
         },
+        segments: segmentAlreadyLoaded
+          ? ctx.segments
+          : { ...ctx.segments, [trackId]: [...existingSegments, { id: segmentId }] },
       },
     });
   }
