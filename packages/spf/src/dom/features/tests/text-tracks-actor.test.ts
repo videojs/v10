@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { CueSegmentMeta } from '../text-tracks-actor';
 import { TextTracksActor } from '../text-tracks-actor';
 
 function makeMediaElement(trackIds: string[]): HTMLMediaElement {
@@ -10,6 +11,10 @@ function makeMediaElement(trackIds: string[]): HTMLMediaElement {
     video.appendChild(el);
   }
   return video;
+}
+
+function meta(trackId: string, id: string, startTime = 0, duration = 10): CueSegmentMeta {
+  return { trackId, id, startTime, duration };
 }
 
 describe('TextTracksActor', () => {
@@ -28,7 +33,7 @@ describe('TextTracksActor', () => {
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
     textTrack.mode = 'hidden';
 
-    actor.send({ type: 'add-cues', trackId: 'track-en', segmentId: 'seg-0', cues: [new VTTCue(0, 2, 'Hello')] });
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
 
     expect(textTrack.cues?.length).toBe(1);
   });
@@ -41,8 +46,7 @@ describe('TextTracksActor', () => {
 
     actor.send({
       type: 'add-cues',
-      trackId: 'track-en',
-      segmentId: 'seg-0',
+      meta: meta('track-en', 'seg-0'),
       cues: [new VTTCue(0, 2, 'Hello'), new VTTCue(2, 4, 'World')],
     });
 
@@ -58,10 +62,13 @@ describe('TextTracksActor', () => {
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
     textTrack.mode = 'hidden';
 
-    actor.send({ type: 'add-cues', trackId: 'track-en', segmentId: 'seg-0', cues: [new VTTCue(0, 2, 'Hello')] });
-    actor.send({ type: 'add-cues', trackId: 'track-en', segmentId: 'seg-1', cues: [new VTTCue(2, 4, 'World')] });
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0', 0, 10), cues: [new VTTCue(0, 2, 'Hello')] });
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-1', 10, 10), cues: [new VTTCue(2, 4, 'World')] });
 
-    expect(actor.snapshot.get().context.segments['track-en']).toEqual([{ id: 'seg-0' }, { id: 'seg-1' }]);
+    expect(actor.snapshot.get().context.segments['track-en']).toEqual([
+      { id: 'seg-0', startTime: 0, duration: 10 },
+      { id: 'seg-1', startTime: 10, duration: 10 },
+    ]);
   });
 
   it('deduplicates cues by startTime + endTime + text', () => {
@@ -70,8 +77,8 @@ describe('TextTracksActor', () => {
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
     textTrack.mode = 'hidden';
 
-    actor.send({ type: 'add-cues', trackId: 'track-en', segmentId: 'seg-0', cues: [new VTTCue(0, 2, 'Hello')] });
-    actor.send({ type: 'add-cues', trackId: 'track-en', segmentId: 'seg-1', cues: [new VTTCue(0, 2, 'Hello')] });
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0', 0, 10), cues: [new VTTCue(0, 2, 'Hello')] });
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-1', 10, 10), cues: [new VTTCue(0, 2, 'Hello')] });
 
     expect(textTrack.cues?.length).toBe(1);
     expect(actor.snapshot.get().context.loaded['track-en']).toHaveLength(1);
@@ -83,8 +90,8 @@ describe('TextTracksActor', () => {
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
     textTrack.mode = 'hidden';
 
-    actor.send({ type: 'add-cues', trackId: 'track-en', segmentId: 'seg-0', cues: [new VTTCue(0, 2, 'Hello')] });
-    actor.send({ type: 'add-cues', trackId: 'track-en', segmentId: 'seg-0', cues: [new VTTCue(0, 2, 'Hello')] });
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
 
     expect(actor.snapshot.get().context.segments['track-en']).toHaveLength(1);
   });
@@ -95,10 +102,10 @@ describe('TextTracksActor', () => {
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
     textTrack.mode = 'hidden';
 
-    actor.send({ type: 'add-cues', trackId: 'track-en', segmentId: 'seg-0', cues: [new VTTCue(0, 2, 'Hello')] });
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
     const snapshotAfterFirst = actor.snapshot.get();
 
-    actor.send({ type: 'add-cues', trackId: 'track-en', segmentId: 'seg-0', cues: [new VTTCue(0, 2, 'Hello')] });
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
 
     expect(actor.snapshot.get()).toBe(snapshotAfterFirst);
   });
@@ -109,8 +116,8 @@ describe('TextTracksActor', () => {
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
     textTrack.mode = 'hidden';
 
-    actor.send({ type: 'add-cues', trackId: 'track-en', segmentId: 'seg-0', cues: [new VTTCue(0, 2, 'Hello')] });
-    actor.send({ type: 'add-cues', trackId: 'track-en', segmentId: 'seg-1', cues: [new VTTCue(0, 2, 'Hola')] });
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0', 0, 10), cues: [new VTTCue(0, 2, 'Hello')] });
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-1', 10, 10), cues: [new VTTCue(0, 2, 'Hola')] });
 
     expect(textTrack.cues?.length).toBe(2);
   });
@@ -120,25 +127,24 @@ describe('TextTracksActor', () => {
     const actor = new TextTracksActor(video);
     for (const t of Array.from(video.textTracks)) t.mode = 'hidden';
 
-    actor.send({ type: 'add-cues', trackId: 'track-en', segmentId: 'seg-0', cues: [new VTTCue(0, 2, 'Hello')] });
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
     actor.send({
       type: 'add-cues',
-      trackId: 'track-es',
-      segmentId: 'seg-0',
+      meta: meta('track-es', 'seg-0'),
       cues: [new VTTCue(0, 2, 'Hola'), new VTTCue(2, 4, 'Mundo')],
     });
 
     expect(actor.snapshot.get().context.loaded['track-en']).toHaveLength(1);
     expect(actor.snapshot.get().context.loaded['track-es']).toHaveLength(2);
-    expect(actor.snapshot.get().context.segments['track-en']).toEqual([{ id: 'seg-0' }]);
-    expect(actor.snapshot.get().context.segments['track-es']).toEqual([{ id: 'seg-0' }]);
+    expect(actor.snapshot.get().context.segments['track-en']).toEqual([{ id: 'seg-0', startTime: 0, duration: 10 }]);
+    expect(actor.snapshot.get().context.segments['track-es']).toEqual([{ id: 'seg-0', startTime: 0, duration: 10 }]);
   });
 
   it('is a no-op when trackId is not found in textTracks', () => {
     const video = makeMediaElement(['track-en']);
     const actor = new TextTracksActor(video);
 
-    actor.send({ type: 'add-cues', trackId: 'nonexistent', segmentId: 'seg-0', cues: [new VTTCue(0, 2, 'Hello')] });
+    actor.send({ type: 'add-cues', meta: meta('nonexistent', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
 
     expect(actor.snapshot.get().context.loaded).toEqual({});
     expect(actor.snapshot.get().context.segments).toEqual({});
@@ -160,7 +166,7 @@ describe('TextTracksActor', () => {
     textTrack.mode = 'hidden';
 
     actor.destroy();
-    actor.send({ type: 'add-cues', trackId: 'track-en', segmentId: 'seg-0', cues: [new VTTCue(0, 2, 'Hello')] });
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
 
     expect(textTrack.cues?.length ?? 0).toBe(0);
     expect(actor.snapshot.get().context.loaded).toEqual({});
@@ -176,12 +182,12 @@ describe('TextTracksActor', () => {
     const snapshots: ReturnType<typeof actor.snapshot.get>[] = [];
     snapshots.push(actor.snapshot.get());
 
-    actor.send({ type: 'add-cues', trackId: 'track-en', segmentId: 'seg-0', cues: [new VTTCue(0, 2, 'Hello')] });
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0', 0, 10), cues: [new VTTCue(0, 2, 'Hello')] });
     snapshots.push(actor.snapshot.get());
 
     expect(snapshots[0]!.context.loaded['track-en']).toBeUndefined();
     expect(snapshots[1]!.context.loaded['track-en']).toHaveLength(1);
     expect(snapshots[0]!.context.segments['track-en']).toBeUndefined();
-    expect(snapshots[1]!.context.segments['track-en']).toEqual([{ id: 'seg-0' }]);
+    expect(snapshots[1]!.context.segments['track-en']).toEqual([{ id: 'seg-0', startTime: 0, duration: 10 }]);
   });
 });

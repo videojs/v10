@@ -1,5 +1,6 @@
 import type { ActorSnapshot, SignalActor } from '../../core/actor';
 import { type ReadonlySignal, signal, update } from '../../core/signals/primitives';
+import type { Segment } from '../../core/types';
 
 // =============================================================================
 // Types
@@ -15,18 +16,21 @@ export interface CueRecord {
   text: string;
 }
 
+/** Segment identity and timing — mirrors AppendSegmentMeta without trackId (keyed separately). */
+export type CueSegmentMeta = Pick<Segment, 'id' | 'startTime' | 'duration'> & { trackId: string };
+
 /** Non-finite (extended) data managed by the actor — the XState "context". */
 export interface TextTracksActorContext {
   /** Cues added per track ID. Used for duplicate detection and snapshot observability. */
   loaded: Record<string, CueRecord[]>;
   /** Segments whose cues have been fully added, keyed by track ID. Used for load planning. */
-  segments: Record<string, Array<{ id: string }>>;
+  segments: Record<string, Array<Pick<Segment, 'id' | 'startTime' | 'duration'>>>;
 }
 
 /** Complete snapshot of a TextTracksActor. */
 export type TextTracksActorSnapshot = ActorSnapshot<TextTracksActorStatus, TextTracksActorContext>;
 
-export type AddCuesMessage = { type: 'add-cues'; trackId: string; segmentId: string; cues: VTTCue[] };
+export type AddCuesMessage = { type: 'add-cues'; meta: CueSegmentMeta; cues: VTTCue[] };
 export type TextTracksActorMessage = AddCuesMessage;
 
 // =============================================================================
@@ -66,7 +70,8 @@ export class TextTracksActor implements SignalActor<TextTracksActorStatus, TextT
     // - throwing a domain-specific error
     // - accepting as is (which would result in errors, but also "shouldn't ever happen" unless a bug is introduced)
     // (CJP)
-    const { trackId, segmentId, cues } = message;
+    const { meta, cues } = message;
+    const { trackId, id: segmentId, startTime, duration } = meta;
     const textTrack = Array.from(this.#mediaElement.textTracks).find((t) => t.id === trackId);
     if (!textTrack) return;
 
@@ -88,7 +93,7 @@ export class TextTracksActor implements SignalActor<TextTracksActorStatus, TextT
         },
         segments: segmentAlreadyLoaded
           ? ctx.segments
-          : { ...ctx.segments, [trackId]: [...existingSegments, { id: segmentId }] },
+          : { ...ctx.segments, [trackId]: [...existingSegments, { id: segmentId, startTime, duration }] },
       },
     });
   }

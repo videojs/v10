@@ -11,7 +11,7 @@ import type { TextTracksActor } from './text-tracks-actor';
 // Types
 // =============================================================================
 
-export type TextTrackSegmentLoaderStatus = 'idle' | 'loading' | 'done' | 'destroyed';
+export type TextTrackSegmentLoaderStatus = 'idle' | 'loading' | 'destroyed';
 
 export type TextTrackSegmentLoaderSnapshot = ActorSnapshot<TextTrackSegmentLoaderStatus, object>;
 
@@ -41,7 +41,6 @@ export class TextTrackSegmentLoaderActor implements SignalActor<TextTrackSegment
     context: {},
   });
   readonly #runner = new SerialRunner();
-  #destroyed = false;
   #loadGeneration = 0;
 
   constructor(textTracksActor: TextTracksActor) {
@@ -53,26 +52,26 @@ export class TextTrackSegmentLoaderActor implements SignalActor<TextTrackSegment
   }
 
   send(message: TextTrackSegmentLoaderMessage): void {
-    if (this.#destroyed) return;
-
     const { track, currentTime } = message;
     const trackId = track.id;
 
     // Plan: determine which segments still need loading.
     // TextTracksActor owns the authoritative record of loaded segments.
-    const loadedIds = new Set(
-      untrack(() => (this.#textTracksActor.snapshot.get().context.segments[trackId] ?? []).map((s) => s.id))
-    );
-    const alreadyLoaded = track.segments.filter((s) => loadedIds.has(s.id));
-    const segmentsToLoad = getSegmentsToLoad(track.segments, alreadyLoaded, currentTime).filter(
-      (s) => !loadedIds.has(s.id)
-    );
+    // untrack() covers both reads: the Actor's own status and the TextTracksActor's
+    // snapshot — neither should subscribe the calling Reactor's effect.
+    const [isDestroyed, bufferedSegments] = untrack(() => {
+      const status = this.#snapshotSignal.get().status;
+      const segments = this.#textTracksActor.snapshot.get().context.segments[trackId] ?? [];
+      return [status === 'destroyed', segments] as const;
+    });
+    if (isDestroyed) return;
+    const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, currentTime);
 
     // Preempt any in-flight work before scheduling the new plan.
     this.#runner.abortAll();
 
     if (segmentsToLoad.length === 0) {
-      update(this.#snapshotSignal, { status: 'done' });
+      update(this.#snapshotSignal, { status: 'idle' });
       return;
     }
 
@@ -89,7 +88,11 @@ export class TextTrackSegmentLoaderActor implements SignalActor<TextTrackSegment
           try {
             const cues = await parseVttSegment(segment.url);
             if (signal.aborted) return;
-            textTracksActor.send({ type: 'add-cues', trackId, segmentId: segment.id, cues });
+            textTracksActor.send({
+              type: 'add-cues',
+              meta: { trackId, id: segment.id, startTime: segment.startTime, duration: segment.duration },
+              cues,
+            });
           } catch (error) {
             // Graceful degradation: log and continue to the next segment.
             console.error('Failed to load VTT segment:', error);
@@ -98,12 +101,12 @@ export class TextTrackSegmentLoaderActor implements SignalActor<TextTrackSegment
       )
     );
 
-    // Transition to 'done' once all tasks in this generation complete.
+    // Transition to idle once all tasks in this generation complete.
     // The generation check prevents a stale transition if a new send() arrived.
     Promise.all(promises)
       .then(() => {
-        if (this.#destroyed || this.#loadGeneration !== generation) return;
-        update(this.#snapshotSignal, { status: 'done' });
+        if (this.#snapshotSignal.get().status === 'destroyed' || this.#loadGeneration !== generation) return;
+        update(this.#snapshotSignal, { status: 'idle' });
       })
       .catch(() => {
         // Tasks handle their own errors; this catch prevents unhandled rejection
@@ -112,8 +115,7 @@ export class TextTrackSegmentLoaderActor implements SignalActor<TextTrackSegment
   }
 
   destroy(): void {
-    if (this.#destroyed) return;
-    this.#destroyed = true;
+    if (this.#snapshotSignal.get().status === 'destroyed') return;
     this.#runner.destroy();
     update(this.#snapshotSignal, { status: 'destroyed' });
   }

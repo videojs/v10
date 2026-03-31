@@ -64,7 +64,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     textTracksActor.destroy();
   });
 
-  it('transitions to done immediately when no segments need loading', () => {
+  it('stays idle when no segments need loading', () => {
     const video = makeMediaElement(['track-en']);
     const textTracksActor = new TextTracksActor(video);
     const actor = new TextTrackSegmentLoaderActor(textTracksActor);
@@ -72,13 +72,13 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     actor.send({ type: 'load', track, currentTime: 0 });
 
-    expect(actor.snapshot.get().status).toBe('done');
+    expect(actor.snapshot.get().status).toBe('idle');
 
     actor.destroy();
     textTracksActor.destroy();
   });
 
-  it('transitions loading → done after all segments are fetched', async () => {
+  it('transitions loading → idle after all segments are fetched', async () => {
     const video = makeMediaElement(['track-en']);
     const textTracksActor = new TextTracksActor(video);
     const actor = new TextTrackSegmentLoaderActor(textTracksActor);
@@ -88,7 +88,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     expect(actor.snapshot.get().status).toBe('loading');
 
     await vi.waitFor(() => {
-      expect(actor.snapshot.get().status).toBe('done');
+      expect(actor.snapshot.get().status).toBe('idle');
     });
 
     actor.destroy();
@@ -104,7 +104,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     actor.send({ type: 'load', track, currentTime: 0 });
 
     await vi.waitFor(() => {
-      expect(actor.snapshot.get().status).toBe('done');
+      expect(actor.snapshot.get().status).toBe('idle');
     });
 
     expect(textTracksActor.snapshot.get().context.segments['track-en']).toHaveLength(2);
@@ -123,12 +123,12 @@ describe('TextTrackSegmentLoaderActor', () => {
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt', 'https://example.com/seg-1.vtt']);
 
     actor.send({ type: 'load', track, currentTime: 0 });
-    await vi.waitFor(() => expect(actor.snapshot.get().status).toBe('done'));
+    await vi.waitFor(() => expect(actor.snapshot.get().status).toBe('idle'));
     expect(parseVttSegment).toHaveBeenCalledTimes(2);
 
     // Repeat send — all segments already in TextTracksActor context
     actor.send({ type: 'load', track, currentTime: 0 });
-    expect(actor.snapshot.get().status).toBe('done');
+    expect(actor.snapshot.get().status).toBe('idle');
     expect(parseVttSegment).toHaveBeenCalledTimes(2);
 
     actor.destroy();
@@ -155,7 +155,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     actor.send({ type: 'load', track, currentTime: 0 });
 
-    await vi.waitFor(() => expect(actor.snapshot.get().status).toBe('done'));
+    await vi.waitFor(() => expect(actor.snapshot.get().status).toBe('idle'));
 
     expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to load VTT segment:', expect.any(Error));
     // Segments 0 and 2 succeeded; the failed segment is not recorded
@@ -200,7 +200,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     // Unblock seg0 — signal is already aborted, so the cue is discarded
     resolveSeg0([]);
 
-    await vi.waitFor(() => expect(actor.snapshot.get().status).toBe('done'));
+    await vi.waitFor(() => expect(actor.snapshot.get().status).toBe('idle'));
 
     // track-en was preempted — no cues recorded
     expect(textTracksActor.snapshot.get().context.segments['track-en']).toBeUndefined();
@@ -253,10 +253,10 @@ describe('TextTrackSegmentLoaderActor', () => {
     actor.send({ type: 'load', track, currentTime: 0 });
     observed.push(actor.snapshot.get().status);
 
-    await vi.waitFor(() => expect(actor.snapshot.get().status).toBe('done'));
+    await vi.waitFor(() => expect(actor.snapshot.get().status).toBe('idle'));
     observed.push(actor.snapshot.get().status);
 
-    expect(observed).toEqual(['idle', 'loading', 'done']);
+    expect(observed).toEqual(['idle', 'loading', 'idle']);
 
     actor.destroy();
     textTracksActor.destroy();
