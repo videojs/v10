@@ -15,7 +15,6 @@ import {
   time,
   tooltipState,
 } from '@videojs/skins/default/tailwind/audio.tailwind';
-import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
@@ -120,7 +119,7 @@ function getTemplateHTML() {
 
 export class AudioSkinTailwindElement extends SkinElement {
   static readonly tagName = 'audio-skin-tailwind';
-  static template = createTemplate(getTemplateHTML());
+  static getTemplateHTML = getTemplateHTML;
 }
 
 safeDefine(AudioSkinTailwindElement);
