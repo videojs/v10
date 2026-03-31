@@ -192,6 +192,16 @@ export class SerialRunner {
     return result as Promise<TValue>;
   }
 
+  /**
+   * A promise that resolves when all currently-scheduled tasks have settled.
+   * Use the reference as a generation token: capture it after scheduling a
+   * batch, then check identity in the resolution callback to detect whether
+   * a subsequent abortAll() + new batch has superseded this one.
+   */
+  get settled(): Promise<void> {
+    return this.#chain as Promise<void>;
+  }
+
   abortAll(): void {
     for (const task of this.#pending) task.abort();
     this.#pending.clear();

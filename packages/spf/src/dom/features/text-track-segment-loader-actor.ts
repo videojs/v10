@@ -41,7 +41,6 @@ export class TextTrackSegmentLoaderActor implements SignalActor<TextTrackSegment
     context: {},
   });
   readonly #runner = new SerialRunner();
-  #loadGeneration = 0;
 
   constructor(textTracksActor: TextTracksActor) {
     this.#textTracksActor = textTracksActor;
@@ -52,36 +51,26 @@ export class TextTrackSegmentLoaderActor implements SignalActor<TextTrackSegment
   }
 
   send(message: TextTrackSegmentLoaderMessage): void {
+    const status = untrack(() => this.#snapshotSignal.get().status);
+    if (status === 'destroyed') return;
     const { track, currentTime } = message;
     const trackId = track.id;
-
-    // Plan: determine which segments still need loading.
-    // TextTracksActor owns the authoritative record of loaded segments.
-    // untrack() covers both reads: the Actor's own status and the TextTracksActor's
-    // snapshot — neither should subscribe the calling Reactor's effect.
-    const [isDestroyed, bufferedSegments] = untrack(() => {
-      const status = this.#snapshotSignal.get().status;
-      const segments = this.#textTracksActor.snapshot.get().context.segments[trackId] ?? [];
-      return [status === 'destroyed', segments] as const;
-    });
-    if (isDestroyed) return;
+    const bufferedSegments = untrack(() => this.#textTracksActor.snapshot.get().context.segments[trackId] ?? []);
     const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, currentTime);
 
     // Preempt any in-flight work before scheduling the new plan.
     this.#runner.abortAll();
-
-    if (segmentsToLoad.length === 0) {
+    if (!segmentsToLoad.length) {
       update(this.#snapshotSignal, { status: 'idle' });
       return;
     }
 
-    const generation = ++this.#loadGeneration;
     update(this.#snapshotSignal, { status: 'loading' });
 
     // Capture actor reference so Tasks close over it, not `this`.
     const textTracksActor = this.#textTracksActor;
 
-    const promises = segmentsToLoad.map((segment) =>
+    for (const segment of segmentsToLoad) {
       this.#runner.schedule(
         new Task(async (signal) => {
           if (signal.aborted) return;
@@ -98,20 +87,20 @@ export class TextTrackSegmentLoaderActor implements SignalActor<TextTrackSegment
             console.error('Failed to load VTT segment:', error);
           }
         })
-      )
-    );
+      );
+    }
 
-    // Transition to idle once all tasks in this generation complete.
-    // The generation check prevents a stale transition if a new send() arrived.
-    Promise.all(promises)
-      .then(() => {
-        if (this.#snapshotSignal.get().status === 'destroyed' || this.#loadGeneration !== generation) return;
+    // Transition to idle when this generation's tasks all settle.
+    // runner.settled is the chain tail after the tasks above; if a new send()
+    // arrives and abortAll() + new scheduling advances the chain, the reference
+    // will differ and the stale callback is a no-op.
+    const settled = this.#runner.settled;
+    settled.then(() => {
+      if (this.#runner.settled !== settled) return;
+      if (this.#snapshotSignal.get().status !== 'destroyed') {
         update(this.#snapshotSignal, { status: 'idle' });
-      })
-      .catch(() => {
-        // Tasks handle their own errors; this catch prevents unhandled rejection
-        // in the unlikely event a Task throws despite the internal try/catch.
-      });
+      }
+    });
   }
 
   destroy(): void {
