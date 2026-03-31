@@ -1,75 +1,9 @@
-import { getSegmentsToLoad } from '../../core/buffer/forward-buffer';
 import { effect } from '../../core/signals/effect';
 import { computed, type Signal } from '../../core/signals/primitives';
-import type { Presentation, Segment, TextTrack } from '../../core/types';
+import type { Presentation, TextTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
-import { parseVttSegment } from '../text/parse-vtt-segment';
+import { TextTrackSegmentLoaderActor } from './text-track-segment-loader-actor';
 import { TextTracksActor } from './text-tracks-actor';
-
-const loadVttSegmentTask = async (
-  { segment, trackId }: { segment: Segment; trackId: string },
-  { textTrack, actor }: { textTrack: globalThis.TextTrack; actor: TextTracksActor }
-): Promise<void> => {
-  const cues = await parseVttSegment(segment.url);
-  actor.send({ type: 'add-cues', trackId, segmentId: segment.id, cues });
-};
-
-// ============================================================================
-// MAIN TASK (composite - orchestrates subtasks)
-// ============================================================================
-
-/**
- * Load text track cues task (composite - orchestrates VTT segment subtasks).
- */
-const loadTextTrackCuesTask = async <S extends TextTrackCueLoadingState>(
-  { currentState }: { currentState: S },
-  context: {
-    signal: AbortSignal;
-    textTrack: globalThis.TextTrack;
-    actor: TextTracksActor;
-  }
-): Promise<void> => {
-  const track = findSelectedTextTrack(currentState);
-  if (!track || !isResolvedTrack(track)) return;
-
-  const { segments } = track;
-  if (segments.length === 0) return;
-
-  const trackId = track.id;
-
-  const loadedIds = new Set((context.actor.snapshot.get().context.segments[trackId] ?? []).map((s) => s.id));
-  const alreadyLoaded = segments.filter((s) => loadedIds.has(s.id));
-
-  const currentTime = currentState.currentTime ?? 0;
-  const segmentsToLoad = getSegmentsToLoad(segments, alreadyLoaded, currentTime).filter((s) => !loadedIds.has(s.id));
-
-  if (segmentsToLoad.length === 0) return;
-
-  for (const segment of segmentsToLoad) {
-    if (context.signal.aborted) break;
-
-    try {
-      await loadVttSegmentTask({ segment, trackId }, { textTrack: context.textTrack, actor: context.actor });
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') break;
-      console.error('Failed to load VTT segment:', error);
-      // Continue to next segment (graceful degradation)
-    }
-  }
-
-  // Chrome bug: after a track goes through mode='disabled' (which clears cues) and back
-  // to 'showing', cues added to the track aren't activated. Re-adding all cues forces
-  // Chrome to re-process them. Safe no-op in other browsers.
-  // Mirrors the workaround in HlsMediaTextTracksMixin (packages/core/src/dom/media/hls/text-tracks.ts).
-  if (context.textTrack.mode === 'showing' && context.textTrack.cues) {
-    Array.from(context.textTrack.cues).forEach((cue) => {
-      context.textTrack.addCue(cue);
-    });
-  }
-
-  // Wait a frame before completing to allow state updates to flush
-  await new Promise((resolve) => requestAnimationFrame(resolve));
-};
 
 // ============================================================================
 // STATE & OWNERS
@@ -89,7 +23,7 @@ export interface TextTrackCueLoadingState {
  * Owners shape for text track cue loading.
  */
 export interface TextTrackCueLoadingOwners {
-  mediaElement?: HTMLMediaElement;
+  mediaElement?: HTMLMediaElement | undefined;
 }
 
 /**
@@ -170,15 +104,12 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
   state: Signal<S>;
   owners: Signal<O>;
 }): () => void {
-  let currentTask: Promise<void> | null = null;
-  let abortController: AbortController | null = null;
-  let lastTrackId: string | undefined;
-
-  // Actor lifecycle: tied to the mediaElement. Recreated when mediaElement changes.
-  let actor: TextTracksActor | undefined;
+  // Actor lifecycle: both actors are tied to the mediaElement.
+  // Recreated together when mediaElement changes.
+  let textTracksActor: TextTracksActor | undefined;
+  let segmentLoaderActor: TextTrackSegmentLoaderActor | undefined;
   let actorMediaElement: HTMLMediaElement | undefined;
 
-  const selectedTrackId = computed(() => state.get().selectedTextTrackId);
   const mediaElement = computed(() => owners.get().mediaElement);
 
   const cleanupEffect = effect(() => {
@@ -188,37 +119,30 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
     // Manage actor lifecycle when mediaElement changes.
     const currentMediaElement = mediaElement.get();
     if (currentMediaElement !== actorMediaElement) {
-      actor?.destroy();
-      actor = currentMediaElement ? new TextTracksActor(currentMediaElement) : undefined;
+      textTracksActor?.destroy();
+      segmentLoaderActor?.destroy();
+      if (currentMediaElement) {
+        textTracksActor = new TextTracksActor(currentMediaElement);
+        segmentLoaderActor = new TextTrackSegmentLoaderActor(textTracksActor);
+      } else {
+        textTracksActor = undefined;
+        segmentLoaderActor = undefined;
+      }
       actorMediaElement = currentMediaElement;
     }
 
-    if (selectedTrackId.get() !== lastTrackId) {
-      lastTrackId = selectedTrackId.get();
-      abortController?.abort();
-      currentTask = null;
-    }
-
-    if (currentTask) return;
-    if (!actor) return;
+    if (!segmentLoaderActor) return;
     if (!shouldLoadTextTrackCues(s, o)) return;
 
-    const textTrack = getSelectedTextTrackFromOwners(s, o);
-    if (!textTrack) return;
+    const track = findSelectedTextTrack(s);
+    if (!track || !isResolvedTrack(track)) return;
 
-    const currentActor = actor;
-    abortController = new AbortController();
-    currentTask = loadTextTrackCuesTask(
-      { currentState: s },
-      { signal: abortController.signal, textTrack, actor: currentActor }
-    ).finally(() => {
-      currentTask = null;
-    });
+    segmentLoaderActor.send({ type: 'load', track, currentTime: s.currentTime ?? 0 });
   });
 
   return () => {
-    abortController?.abort();
-    actor?.destroy();
+    textTracksActor?.destroy();
+    segmentLoaderActor?.destroy();
     cleanupEffect();
   };
 }

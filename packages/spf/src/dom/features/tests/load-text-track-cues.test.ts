@@ -500,17 +500,30 @@ describe('loadTextTrackCues', () => {
     });
 
     it('fetches all segments immediately when the track fits in one window', async () => {
-      const { state, cleanup } = makeWindowingSetup(0);
-      // Override to a 3-segment track (0,10,20) — all fit in [0,30)
-      state.set({
-        ...state.get(),
-        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(3) }]),
-      });
+      // 3 segments × 10s = 30s total — all fit in the default [0, 30) window.
+      // Set up directly with 3 segments so no preemption from a prior 5-segment load.
+      const trackElement = document.createElement('track');
+      trackElement.id = 'text-1';
+      const video = document.createElement('video');
+      video.appendChild(trackElement);
+      trackElement.track.mode = 'hidden';
+
+      const { cleanup } = setupLoadTextTrackCues(
+        {
+          selectedTextTrackId: 'text-1',
+          currentTime: 0,
+          presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(3) }]),
+        },
+        { mediaElement: video }
+      );
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       const { parseVttSegment } = await import('../../text/parse-vtt-segment');
       expect(parseVttSegment).toHaveBeenCalledTimes(3);
+      expect(parseVttSegment).toHaveBeenCalledWith('https://example.com/segment-0.vtt');
+      expect(parseVttSegment).toHaveBeenCalledWith('https://example.com/segment-1.vtt');
+      expect(parseVttSegment).toHaveBeenCalledWith('https://example.com/segment-2.vtt');
 
       cleanup();
     });
