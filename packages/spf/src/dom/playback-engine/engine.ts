@@ -106,9 +106,6 @@ export interface PlaybackEngineOwners {
   audioBuffer?: SourceBuffer;
   videoBufferActor?: SourceBufferActor;
   audioBufferActor?: SourceBufferActor;
-
-  // Text tracks (track elements by ID)
-  textTracks?: Map<string, HTMLTrackElement>;
 }
 
 /**

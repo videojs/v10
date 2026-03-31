@@ -132,7 +132,7 @@ export interface TextTrackCueLoadingState {
  * Owners shape for text track cue loading.
  */
 export interface TextTrackCueLoadingOwners {
-  textTracks?: Map<string, HTMLTrackElement>;
+  mediaElement?: HTMLMediaElement;
 }
 
 /**
@@ -171,12 +171,11 @@ function getSelectedTextTrackFromOwners(
   owners: TextTrackCueLoadingOwners
 ): globalThis.TextTrack | undefined {
   const trackId = state.selectedTextTrackId;
-  if (!trackId || !owners.textTracks) {
+  if (!trackId || !owners.mediaElement) {
     return undefined;
   }
 
-  const trackElement = owners.textTracks.get(trackId);
-  return trackElement?.track;
+  return Array.from(owners.mediaElement.textTracks).find((t) => t.id === trackId);
 }
 
 /**
@@ -188,7 +187,11 @@ function getSelectedTextTrackFromOwners(
  * - Track element exists for selected track
  */
 export function canLoadTextTrackCues(state: TextTrackCueLoadingState, owners: TextTrackCueLoadingOwners): boolean {
-  return !!state.selectedTextTrackId && !!owners.textTracks && owners.textTracks.has(state.selectedTextTrackId);
+  return (
+    !!state.selectedTextTrackId &&
+    !!owners.mediaElement &&
+    Array.from(owners.mediaElement.textTracks).some((t) => t.id === state.selectedTextTrackId)
+  );
 }
 
 /**

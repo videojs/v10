@@ -38,8 +38,6 @@ export interface TextTrackSyncState {
  */
 export interface TextTrackSyncOwners {
   mediaElement?: HTMLMediaElement | undefined;
-  /** Written by syncTextTracks as a side effect for loadTextTrackCues. Will be removed in Phase 3. */
-  textTracks?: Map<string, HTMLTrackElement> | undefined;
 }
 
 // ============================================================================
@@ -162,18 +160,7 @@ export function syncTextTracks<S extends TextTrackSyncState, O extends TextTrack
 
     const currentMediaElement = untrack(() => mediaElementSignal.get() as HTMLMediaElement);
 
-    /** @TODO DELETE AFTER MIGRATION (CJP) */
-    const trackMap = new Map();
-    currentMediaElement
-      .querySelectorAll('track[data-src-track]:is([kind="subtitles"],[kind="captions"')
-      .forEach((trackEl) => {
-        trackMap.set(trackEl.id, trackEl);
-      });
-    update(owners, { textTracks: trackMap } as Partial<O>);
-
     return () => {
-      /** @TODO DELETE AFTER MIGRATION (CJP) */
-      update(owners, { textTracks: undefined } as Partial<O>);
       teardownTextTracks(currentMediaElement);
     };
   });

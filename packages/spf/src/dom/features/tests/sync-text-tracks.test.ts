@@ -59,27 +59,6 @@ describe('syncTextTracks', () => {
     cleanup();
   });
 
-  it('writes owners.textTracks Map for loadTextTrackCues', async () => {
-    const mediaElement = document.createElement('video');
-    const presentation = makePresentation([
-      { id: 'track-en', language: 'en' },
-      { id: 'track-es', language: 'es' },
-    ]);
-
-    const { state, owners, cleanup } = setup();
-    owners.set({ ...owners.get(), mediaElement });
-    state.set({ ...state.get(), presentation });
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    const textTracks = owners.get().textTracks;
-    expect(textTracks).toBeDefined();
-    expect(textTracks?.size).toBe(2);
-    expect(textTracks?.get('track-en')).toBe(mediaElement.children[0]);
-    expect(textTracks?.get('track-es')).toBe(mediaElement.children[1]);
-
-    cleanup();
-  });
-
   it('does not create tracks when no mediaElement', async () => {
     const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
     const { state, owners, cleanup } = setup();
@@ -87,7 +66,6 @@ describe('syncTextTracks', () => {
     state.set({ ...state.get(), presentation });
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(owners.get().textTracks).toBeUndefined();
     cleanup();
   });
 
@@ -262,20 +240,6 @@ describe('syncTextTracks', () => {
 
     cleanup();
     expect(mediaElement.children.length).toBe(0);
-  });
-
-  it('clears owners.textTracks on cleanup', async () => {
-    const mediaElement = document.createElement('video');
-    const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
-
-    const { owners, cleanup } = setup({ presentation });
-    owners.set({ ...owners.get(), mediaElement });
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(owners.get().textTracks?.size).toBe(1);
-
-    cleanup();
-    expect(owners.get().textTracks).toBeUndefined();
   });
 
   it('creates tracks only once (idempotent on re-runs)', async () => {

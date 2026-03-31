@@ -69,9 +69,7 @@ describe('canLoadTextTrackCues', () => {
     const state: TextTrackCueLoadingState = {
       presentation: createMockPresentation([]),
     };
-    const owners: TextTrackCueLoadingOwners = {
-      textTracks: new Map(),
-    };
+    const owners: TextTrackCueLoadingOwners = {};
 
     expect(canLoadTextTrackCues(state, owners)).toBe(false);
   });
@@ -92,7 +90,7 @@ describe('canLoadTextTrackCues', () => {
       presentation: createMockPresentation([]),
     };
     const owners: TextTrackCueLoadingOwners = {
-      textTracks: new Map(),
+      mediaElement: document.createElement('video'),
     };
 
     expect(canLoadTextTrackCues(state, owners)).toBe(false);
@@ -103,9 +101,12 @@ describe('canLoadTextTrackCues', () => {
       selectedTextTrackId: 'text-1',
       presentation: createMockPresentation([]),
     };
+    const video = document.createElement('video');
     const trackElement = document.createElement('track');
+    trackElement.id = 'text-1';
+    video.appendChild(trackElement);
     const owners: TextTrackCueLoadingOwners = {
-      textTracks: new Map([['text-1', trackElement]]),
+      mediaElement: video,
     };
 
     expect(canLoadTextTrackCues(state, owners)).toBe(true);
@@ -124,11 +125,10 @@ describe('shouldLoadTextTrackCues', () => {
       ]),
     };
     const trackElement = document.createElement('track');
+    trackElement.id = 'text-1';
     const video = document.createElement('video');
     video.appendChild(trackElement);
-    const owners: TextTrackCueLoadingOwners = {
-      textTracks: new Map([['text-1', trackElement]]),
-    };
+    const owners: TextTrackCueLoadingOwners = { mediaElement: video };
 
     expect(shouldLoadTextTrackCues(state, owners)).toBe(false);
   });
@@ -147,12 +147,11 @@ describe('shouldLoadTextTrackCues', () => {
       ]),
     };
     const trackElement = document.createElement('track');
+    trackElement.id = 'text-1';
     const video = document.createElement('video');
     video.appendChild(trackElement);
     trackElement.track.mode = 'hidden'; // Enable cue access
-    const owners: TextTrackCueLoadingOwners = {
-      textTracks: new Map([['text-1', trackElement]]),
-    };
+    const owners: TextTrackCueLoadingOwners = { mediaElement: video };
 
     expect(shouldLoadTextTrackCues(state, owners)).toBe(true);
   });
@@ -173,6 +172,7 @@ describe('loadTextTrackCues', () => {
     // cues getter to maintain a persistent list across awaits for these tests.
     function makeTrackWithPersistentCues() {
       const trackElement = document.createElement('track');
+      trackElement.id = 'text-1';
       const video = document.createElement('video');
       video.appendChild(trackElement);
       trackElement.track.mode = 'hidden';
@@ -191,7 +191,7 @@ describe('loadTextTrackCues', () => {
         configurable: true,
       });
 
-      return { trackElement, addCueSpy };
+      return { trackElement, video, addCueSpy };
     }
 
     it('adds all cues when there are no duplicates', async () => {
@@ -201,14 +201,14 @@ describe('loadTextTrackCues', () => {
         .mockResolvedValueOnce([new VTTCue(5, 10, 'Cue B')])
         .mockResolvedValueOnce([new VTTCue(10, 15, 'Cue C')]);
 
-      const { trackElement, addCueSpy } = makeTrackWithPersistentCues();
+      const { video, addCueSpy } = makeTrackWithPersistentCues();
 
       const { cleanup } = setupLoadTextTrackCues(
         {
           selectedTextTrackId: 'text-1',
           presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(3) }]),
         },
-        { textTracks: new Map([['text-1', trackElement]]) }
+        { mediaElement: video }
       );
       await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -223,14 +223,14 @@ describe('loadTextTrackCues', () => {
         .mockResolvedValueOnce([new VTTCue(8, 12, 'Boundary cue')])
         .mockResolvedValueOnce([new VTTCue(8, 12, 'Boundary cue')]);
 
-      const { trackElement, addCueSpy } = makeTrackWithPersistentCues();
+      const { video, addCueSpy } = makeTrackWithPersistentCues();
 
       const { cleanup } = setupLoadTextTrackCues(
         {
           selectedTextTrackId: 'text-1',
           presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(2) }]),
         },
-        { textTracks: new Map([['text-1', trackElement]]) }
+        { mediaElement: video }
       );
       await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -244,14 +244,14 @@ describe('loadTextTrackCues', () => {
         .mockResolvedValueOnce([new VTTCue(0, 5, 'Hello')])
         .mockResolvedValueOnce([new VTTCue(0, 5, 'World')]); // same timing, different text — not a duplicate
 
-      const { trackElement, addCueSpy } = makeTrackWithPersistentCues();
+      const { video, addCueSpy } = makeTrackWithPersistentCues();
 
       const { cleanup } = setupLoadTextTrackCues(
         {
           selectedTextTrackId: 'text-1',
           presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(2) }]),
         },
-        { textTracks: new Map([['text-1', trackElement]]) }
+        { mediaElement: video }
       );
       await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -265,14 +265,14 @@ describe('loadTextTrackCues', () => {
         .mockResolvedValueOnce([new VTTCue(0, 8, 'Unique to seg 0'), new VTTCue(8, 12, 'Boundary cue')])
         .mockResolvedValueOnce([new VTTCue(8, 12, 'Boundary cue'), new VTTCue(12, 20, 'Unique to seg 1')]);
 
-      const { trackElement, addCueSpy } = makeTrackWithPersistentCues();
+      const { video, addCueSpy } = makeTrackWithPersistentCues();
 
       const { cleanup } = setupLoadTextTrackCues(
         {
           selectedTextTrackId: 'text-1',
           presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(2) }]),
         },
-        { textTracks: new Map([['text-1', trackElement]]) }
+        { mediaElement: video }
       );
       await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -283,7 +283,7 @@ describe('loadTextTrackCues', () => {
   });
 
   it('does nothing when track not selected', async () => {
-    const { cleanup } = setupLoadTextTrackCues({ presentation: createMockPresentation([]) }, { textTracks: new Map() });
+    const { cleanup } = setupLoadTextTrackCues({ presentation: createMockPresentation([]) }, {});
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -295,6 +295,7 @@ describe('loadTextTrackCues', () => {
 
   it('triggers loading for single segment', async () => {
     const trackElement = document.createElement('track');
+    trackElement.id = 'text-1';
     const video = document.createElement('video');
     video.appendChild(trackElement);
     trackElement.track.mode = 'hidden'; // Enable cue access
@@ -304,7 +305,7 @@ describe('loadTextTrackCues', () => {
         selectedTextTrackId: 'text-1',
         presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(1) }]),
       },
-      { textTracks: new Map([['text-1', trackElement]]) }
+      { mediaElement: video }
     );
 
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -318,6 +319,7 @@ describe('loadTextTrackCues', () => {
 
   it('triggers loading for multiple segments', async () => {
     const trackElement = document.createElement('track');
+    trackElement.id = 'text-1';
     const video = document.createElement('video');
     video.appendChild(trackElement);
     trackElement.track.mode = 'hidden'; // Enable cue access
@@ -327,7 +329,7 @@ describe('loadTextTrackCues', () => {
         selectedTextTrackId: 'text-1',
         presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(3) }]),
       },
-      { textTracks: new Map([['text-1', trackElement]]) }
+      { mediaElement: video }
     );
 
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -347,6 +349,7 @@ describe('loadTextTrackCues', () => {
 
   it('continues on segment error (partial loading)', async () => {
     const trackElement = document.createElement('track');
+    trackElement.id = 'text-1';
     const video = document.createElement('video');
     video.appendChild(trackElement);
     trackElement.track.mode = 'hidden'; // Enable cue access
@@ -367,7 +370,7 @@ describe('loadTextTrackCues', () => {
           },
         ]),
       },
-      { textTracks: new Map([['text-1', trackElement]]) }
+      { mediaElement: video }
     );
 
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -391,6 +394,7 @@ describe('loadTextTrackCues', () => {
 
   it('does nothing when track not in presentation', async () => {
     const trackElement = document.createElement('track');
+    trackElement.id = 'text-999';
     const video = document.createElement('video');
     video.appendChild(trackElement);
 
@@ -399,7 +403,7 @@ describe('loadTextTrackCues', () => {
         selectedTextTrackId: 'text-999',
         presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(1) }]),
       },
-      { textTracks: new Map([['text-999', trackElement]]) }
+      { mediaElement: video }
     );
 
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -416,6 +420,7 @@ describe('loadTextTrackCues', () => {
     // At t=15: window [15, 45) adds seg-3 (start=30) and seg-4 (start=40).
     function makeWindowingSetup(currentTime = 0) {
       const trackElement = document.createElement('track');
+      trackElement.id = 'text-1';
       const video = document.createElement('video');
       video.appendChild(trackElement);
       trackElement.track.mode = 'hidden';
@@ -426,7 +431,7 @@ describe('loadTextTrackCues', () => {
           currentTime,
           presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(5) }]),
         },
-        { textTracks: new Map([['text-1', trackElement]]) }
+        { mediaElement: video }
       );
 
       return { state, owners, cleanup, trackElement };

@@ -1200,12 +1200,6 @@ http://example.com/video-seg1.m4s
     // Wait for text tracks to be set up
     await vi.waitFor(
       () => {
-        const owners = engine.owners.get();
-
-        // Text tracks should be created
-        expect(owners.textTracks).toBeDefined();
-        expect(owners.textTracks?.size).toBe(3);
-
         // Track elements should be in DOM
         expect(mediaElement.children.length).toBe(3);
 
@@ -1303,36 +1297,30 @@ http://example.com/text-es-seg1.vtt
     // Wait for text tracks to be set up
     await vi.waitFor(
       () => {
-        expect(engine.owners.get().textTracks?.size).toBe(2);
+        expect(mediaElement.children.length).toBe(2);
       },
       { timeout: 2000 }
     );
 
-    const textTracks = engine.owners.get().textTracks!;
     const tracks = Array.from(mediaElement.children) as HTMLTrackElement[];
+    const englishTrack = tracks.find((el) => el.srclang === 'en')!;
+    const spanishTrack = tracks.find((el) => el.srclang === 'es')!;
+
+    expect(englishTrack).toBeDefined();
+    expect(spanishTrack).toBeDefined();
 
     // Initially all tracks should be disabled (no selection)
-    expect(tracks[0]!.track.mode).toBe('disabled');
-    expect(tracks[1]!.track.mode).toBe('disabled');
-
-    // Get track IDs from the map
-    const englishTrackId = Array.from(textTracks.entries()).find(([, el]) => el.srclang === 'en')?.[0];
-    const spanishTrackId = Array.from(textTracks.entries()).find(([, el]) => el.srclang === 'es')?.[0];
-
-    expect(englishTrackId).toBeDefined();
-    expect(spanishTrackId).toBeDefined();
+    expect(englishTrack.track.mode).toBe('disabled');
+    expect(spanishTrack.track.mode).toBe('disabled');
 
     // Select English track
     engine.state.set({
       ...engine.state.get(),
-      selectedTextTrackId: englishTrackId!,
+      selectedTextTrackId: englishTrack.id,
     });
 
     await vi.waitFor(
       () => {
-        const englishTrack = textTracks.get(englishTrackId!)!;
-        const spanishTrack = textTracks.get(spanishTrackId!)!;
-
         expect(englishTrack.track.mode).toBe('showing');
         expect(spanishTrack.track.mode).toBe('disabled');
       },
@@ -1342,14 +1330,11 @@ http://example.com/text-es-seg1.vtt
     // Switch to Spanish track
     engine.state.set({
       ...engine.state.get(),
-      selectedTextTrackId: spanishTrackId!,
+      selectedTextTrackId: spanishTrack.id,
     });
 
     await vi.waitFor(
       () => {
-        const englishTrack = textTracks.get(englishTrackId!)!;
-        const spanishTrack = textTracks.get(spanishTrackId!)!;
-
         expect(englishTrack.track.mode).toBe('disabled');
         expect(spanishTrack.track.mode).toBe('showing');
       },
@@ -1362,9 +1347,6 @@ http://example.com/text-es-seg1.vtt
 
     await vi.waitFor(
       () => {
-        const englishTrack = textTracks.get(englishTrackId!)!;
-        const spanishTrack = textTracks.get(spanishTrackId!)!;
-
         expect(englishTrack.track.mode).toBe('disabled');
         expect(spanishTrack.track.mode).toBe('disabled');
       },
