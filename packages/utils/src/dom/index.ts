@@ -10,13 +10,13 @@ export { type RafThrottled, rafThrottle } from './raf-throttle';
 export {
   applyShadowStyles,
   createShadowStyle,
-  createTemplate,
   ensureGlobalStyle,
   type ShadowStyle,
 } from './shadow-styles';
 export { getSlottedElement, querySlot } from './slotted';
 export { applyStyles, resolveCSSLength } from './style';
 export { supportsAnchorPositioning, supportsAnimationFrame, supportsIdleCallback } from './supports';
+export { createTemplate } from './template';
 export { findTrackElement, getTextTrackList } from './text-track';
 export { serializeTimeRanges } from './time-ranges';
 export type { CustomElement, CustomElementCallbacks } from './types';

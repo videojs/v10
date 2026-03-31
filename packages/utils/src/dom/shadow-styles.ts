@@ -11,16 +11,6 @@ export function ensureGlobalStyle(id: string, css: string): void {
   doc.head.appendChild(style);
 }
 
-/** Create an `HTMLTemplateElement` from an HTML string, or `null` when `document` is unavailable (SSR). */
-export function createTemplate(html: string): HTMLTemplateElement | null {
-  const doc = globalThis.document;
-  if (!doc) return null;
-
-  const template = doc.createElement('template');
-  template.innerHTML = html;
-  return template;
-}
-
 function isConstructableStyleSheet(value: ShadowStyle): value is CSSStyleSheet {
   return typeof globalThis.CSSStyleSheet !== 'undefined' && value instanceof globalThis.CSSStyleSheet;
 }

@@ -14,15 +14,18 @@ const sharedSheet = createShadowStyle(sharedStyles);
 const templateCache = new WeakMap<Function, HTMLTemplateElement>();
 
 function resolveTemplate(ctor: typeof SkinElement): HTMLTemplateElement | undefined {
-  let template = templateCache.get(ctor);
-  if (template) return template;
+  const cached = templateCache.get(ctor);
+  if (cached) return cached;
 
   if (ctor.getTemplateHTML) {
-    template = createTemplate(ctor.getTemplateHTML()) ?? undefined;
-    if (template) templateCache.set(ctor, template);
+    const template = createTemplate(ctor.getTemplateHTML());
+    if (template) {
+      templateCache.set(ctor, template);
+      return template;
+    }
   }
 
-  return template;
+  return undefined;
 }
 
 /**
