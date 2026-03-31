@@ -20,7 +20,7 @@ export class MediaError extends Error {
   static MEDIA_ERR_ENCRYPTED = 5 as const;
   // Technically this is Mux specific but it's generic enough to be used here.
   // @see https://docs.mux.com/guides/data/monitor-html5-video-element#customize-error-tracking-behavior
-  static MEDIA_ERR_CUSTOM = 100;
+  static MEDIA_ERR_CUSTOM = 100 as const;
 
   static defaultMessages: Record<number, string> = {
     1: 'You aborted the media playback',
