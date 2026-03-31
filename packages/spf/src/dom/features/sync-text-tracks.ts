@@ -2,8 +2,6 @@ import { listen } from '@videojs/utils/dom';
 import { effect } from '../../core/signals/effect';
 import { computed, type Signal, signal, untrack, update } from '../../core/signals/primitives';
 import type { PartiallyResolvedTextTrack, Presentation, TextTrack } from '../../core/types';
-import type { TextTrackBufferState } from './load-text-track-cues';
-
 /**
  * FSM states for text track sync.
  *
@@ -33,8 +31,6 @@ export type TextTrackSyncStatus = 'preconditions-unmet' | 'setting-up' | 'set-up
 export interface TextTrackSyncState {
   presentation?: Presentation | undefined;
   selectedTextTrackId?: string | undefined;
-  /** @TODO(Phase 1 Step 2) Remove coupling to loadTextTrackCues — Reactor should only write selectedTextTrackId. */
-  textBufferState?: TextTrackBufferState | undefined;
 }
 
 /**
@@ -58,7 +54,6 @@ function createTrackElement(track: PartiallyResolvedTextTrack | TextTrack): HTML
   el.toggleAttribute('data-src-track', true);
   if (track.language) el.srclang = track.language;
   if (track.default) el.default = true;
-  el.src = track.url;
   return el;
 }
 
