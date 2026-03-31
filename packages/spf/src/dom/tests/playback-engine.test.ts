@@ -1314,9 +1314,9 @@ http://example.com/text-es-seg1.vtt
     const textTracks = engine.owners.get().textTracks!;
     const tracks = Array.from(mediaElement.children) as HTMLTrackElement[];
 
-    // Initially all tracks should be hidden (no selection, managed by activateTextTrack)
-    expect(tracks[0]!.track.mode).toBe('hidden');
-    expect(tracks[1]!.track.mode).toBe('hidden');
+    // Initially all tracks should be disabled (no selection)
+    expect(tracks[0]!.track.mode).toBe('disabled');
+    expect(tracks[1]!.track.mode).toBe('disabled');
 
     // Get track IDs from the map
     const englishTrackId = Array.from(textTracks.entries()).find(([, el]) => el.srclang === 'en')?.[0];
@@ -1337,7 +1337,7 @@ http://example.com/text-es-seg1.vtt
         const spanishTrack = textTracks.get(spanishTrackId!)!;
 
         expect(englishTrack.track.mode).toBe('showing');
-        expect(spanishTrack.track.mode).toBe('hidden');
+        expect(spanishTrack.track.mode).toBe('disabled');
       },
       { timeout: 2000 }
     );
@@ -1353,13 +1353,13 @@ http://example.com/text-es-seg1.vtt
         const englishTrack = textTracks.get(englishTrackId!)!;
         const spanishTrack = textTracks.get(spanishTrackId!)!;
 
-        expect(englishTrack.track.mode).toBe('hidden');
+        expect(englishTrack.track.mode).toBe('disabled');
         expect(spanishTrack.track.mode).toBe('showing');
       },
       { timeout: 2000 }
     );
 
-    // Deselect (hide all) — omit selectedTextTrackId to satisfy exactOptionalPropertyTypes
+    // Deselect (disable all) — omit selectedTextTrackId to satisfy exactOptionalPropertyTypes
     const { selectedTextTrackId: _removed, ...deselected } = engine.state.get();
     engine.state.set(deselected as ReturnType<typeof engine.state.get>);
 
@@ -1368,8 +1368,8 @@ http://example.com/text-es-seg1.vtt
         const englishTrack = textTracks.get(englishTrackId!)!;
         const spanishTrack = textTracks.get(spanishTrackId!)!;
 
-        expect(englishTrack.track.mode).toBe('hidden');
-        expect(spanishTrack.track.mode).toBe('hidden');
+        expect(englishTrack.track.mode).toBe('disabled');
+        expect(spanishTrack.track.mode).toBe('disabled');
       },
       { timeout: 2000 }
     );
