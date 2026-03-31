@@ -108,15 +108,22 @@ export class MuxMediaDelegate extends HlsMediaDelegate {
     this.#metadata = value;
   }
 
-  detach(): void {
-    this.#MuxDataSdk?.destroyMonitor(this.target as HTMLMediaElement);
+  attach(target: HTMLMediaElement): void {
+    super.attach(target);
+    this.#initializeMuxDataSdk();
+  }
 
+  detach(): void {
+    if (this.target?.mux) {
+      this.target.mux.destroy();
+      delete this.target.mux;
+    }
     super.detach();
   }
 
   load(): void {
-    this.#initializeMuxDataSdk();
     super.load();
+    this.#initializeMuxDataSdk();
   }
 
   #syncSrc(): void {
@@ -125,7 +132,7 @@ export class MuxMediaDelegate extends HlsMediaDelegate {
 
   #initializeMuxDataSdk(): void {
     const target = this.target as HTMLMediaElement;
-    if (!this.#MuxDataSdk || !target || target.mux) return;
+    if (!this.#MuxDataSdk || !target || (target.mux && !target.mux.deleted)) return;
 
     const {
       debug,
@@ -144,7 +151,7 @@ export class MuxMediaDelegate extends HlsMediaDelegate {
     metadata.view_session_id = view_session_id;
     metadata.video_id = video_id;
 
-    this.#MuxDataSdk?.monitor(this.target as HTMLMediaElement, {
+    this.#MuxDataSdk?.monitor(target, {
       debug,
       ...(beaconCollectionDomain ? { beaconCollectionDomain } : {}),
       ...(disableCookies ? { disableCookies } : {}),
