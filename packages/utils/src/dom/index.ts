@@ -7,7 +7,13 @@ export { listen } from './listen';
 export { tryHidePopover, tryShowPopover } from './popover';
 export { isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement } from './predicates';
 export { type RafThrottled, rafThrottle } from './raf-throttle';
-export { applyShadowStyles, createShadowStyle, type ShadowStyle } from './shadow-styles';
+export {
+  applyShadowStyles,
+  createShadowStyle,
+  createTemplate,
+  ensureGlobalStyle,
+  type ShadowStyle,
+} from './shadow-styles';
 export { getSlottedElement, querySlot } from './slotted';
 export { applyStyles, resolveCSSLength } from './style';
 export { supportsAnchorPositioning, supportsAnimationFrame, supportsIdleCallback } from './supports';

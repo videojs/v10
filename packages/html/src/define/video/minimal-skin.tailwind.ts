@@ -20,6 +20,7 @@ import {
   time,
   tooltipState,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
+import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
@@ -186,7 +187,7 @@ function getTemplateHTML() {
 
 export class MinimalVideoSkinTailwindElement extends SkinElement {
   static readonly tagName = 'video-minimal-skin-tailwind';
-  static getTemplateHTML = getTemplateHTML;
+  static template = createTemplate(getTemplateHTML());
 }
 
 safeDefine(MinimalVideoSkinTailwindElement);

@@ -1,5 +1,26 @@
 export type ShadowStyle = CSSStyleSheet | string;
 
+/** Inject a `<style>` tag into `document.head` once (idempotent by `id`). */
+export function ensureGlobalStyle(id: string, css: string): void {
+  const doc = globalThis.document;
+  if (!doc || doc.getElementById(id)) return;
+
+  const style = doc.createElement('style');
+  style.id = id;
+  style.textContent = css;
+  doc.head.appendChild(style);
+}
+
+/** Create an `HTMLTemplateElement` from an HTML string, or `null` when `document` is unavailable (SSR). */
+export function createTemplate(html: string): HTMLTemplateElement | null {
+  const doc = globalThis.document;
+  if (!doc) return null;
+
+  const template = doc.createElement('template');
+  template.innerHTML = html;
+  return template;
+}
+
 function isConstructableStyleSheet(value: ShadowStyle): value is CSSStyleSheet {
   return typeof globalThis.CSSStyleSheet !== 'undefined' && value instanceof globalThis.CSSStyleSheet;
 }

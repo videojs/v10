@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { applyShadowStyles, createShadowStyle } from '../shadow-styles';
+import { applyShadowStyles, createShadowStyle, createTemplate, ensureGlobalStyle } from '../shadow-styles';
 
 describe('createShadowStyle', () => {
   afterEach(() => {
@@ -72,5 +72,52 @@ describe('applyShadowStyles', () => {
     applyShadowStyles(host.shadowRoot!, [sheet, css]);
     const styleEls = host.shadowRoot!.querySelectorAll('style');
     expect(styleEls.length).toBe(2);
+  });
+});
+
+describe('ensureGlobalStyle', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    document.head.innerHTML = '';
+  });
+
+  it('injects a <style> tag into document.head', () => {
+    ensureGlobalStyle('test-style', 'body { margin: 0; }');
+
+    const el = document.getElementById('test-style');
+    expect(el).toBeInstanceOf(HTMLStyleElement);
+    expect(el!.textContent).toBe('body { margin: 0; }');
+  });
+
+  it('does not duplicate when called twice with the same id', () => {
+    ensureGlobalStyle('test-dedup', 'a { color: red; }');
+    ensureGlobalStyle('test-dedup', 'a { color: blue; }');
+
+    expect(document.querySelectorAll('#test-dedup').length).toBe(1);
+    expect(document.getElementById('test-dedup')!.textContent).toBe('a { color: red; }');
+  });
+
+  it('does nothing when document is unavailable', () => {
+    vi.stubGlobal('document', undefined);
+    expect(() => ensureGlobalStyle('ssr', 'body {}')).not.toThrow();
+  });
+});
+
+describe('createTemplate', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('returns an HTMLTemplateElement with parsed content', () => {
+    const template = createTemplate('<div class="root"><span>Hello</span></div>');
+
+    expect(template).toBeInstanceOf(HTMLTemplateElement);
+    expect(template!.content.querySelector('.root')).toBeTruthy();
+    expect(template!.content.querySelector('span')!.textContent).toBe('Hello');
+  });
+
+  it('returns null when document is unavailable', () => {
+    vi.stubGlobal('document', undefined);
+    expect(createTemplate('<div></div>')).toBeNull();
   });
 });
