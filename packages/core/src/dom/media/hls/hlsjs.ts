@@ -1,4 +1,5 @@
 import Hls, { type HlsConfig } from 'hls.js';
+import { HlsMediaErrorsMixin } from './errors';
 import { HlsMediaPreloadMixin } from './preload';
 import { HlsMediaTextTracksMixin } from './text-tracks';
 
@@ -11,10 +12,11 @@ export const defaultHlsConfig: Partial<HlsConfig> = {
   autoStartLoad: false,
 };
 
-class HlsJsMediaDelegateBase {
+class HlsJsMediaDelegateBase extends EventTarget {
   #engine: Hls | null = null;
 
   constructor(params: { config: Partial<HlsConfig> }) {
+    super();
     this.#engine = new Hls({
       ...defaultHlsConfig,
       ...params.config,
@@ -51,4 +53,6 @@ class HlsJsMediaDelegateBase {
   }
 }
 
-export class HlsJsMediaDelegate extends HlsMediaPreloadMixin(HlsMediaTextTracksMixin(HlsJsMediaDelegateBase)) {}
+export class HlsJsMediaDelegate extends HlsMediaPreloadMixin(
+  HlsMediaTextTracksMixin(HlsMediaErrorsMixin(HlsJsMediaDelegateBase))
+) {}

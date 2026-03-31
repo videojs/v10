@@ -1,6 +1,7 @@
 export * from './media/delegate';
 export * from './media/proxy';
 export * from './media/state';
+export * from './media/types';
 export * from './ui/alert-dialog/alert-dialog-core';
 export * from './ui/alert-dialog/alert-dialog-data-attrs';
 export * from './ui/buffering-indicator/buffering-indicator-core';

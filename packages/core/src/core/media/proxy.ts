@@ -16,7 +16,7 @@ export const ProxyMixin = <T extends EventTarget>(
   PrimaryClass: AnyConstructor<T>,
   ...AdditionalClasses: AnyConstructor<EventTarget>[]
 ) => {
-  class MediaProxy {
+  class MediaProxy extends EventTarget {
     #target: EventTarget | null = null;
 
     get target() {

@@ -1,6 +1,6 @@
 import { shallowEqual } from '@videojs/utils/object';
 import Hls from 'hls.js';
-import { DelegateMixin } from '../../../core/media/delegate';
+import { bridgeEvents, DelegateMixin } from '../../../core/media/delegate';
 import { CustomVideoElement } from '../custom-media-element';
 import { NativeHlsMediaDelegate } from '../native-hls';
 import { VideoProxy } from '../proxy';
@@ -23,7 +23,7 @@ export const SourceTypes = {
   MP4: 'video/mp4',
 };
 
-export class HlsMediaDelegate {
+export class HlsMediaDelegate extends EventTarget {
   #target: HTMLMediaElement | null = null;
   #delegate: HlsJsMediaDelegate | NativeHlsMediaDelegate | null = null;
   #src: string = '';
@@ -41,6 +41,10 @@ export class HlsMediaDelegate {
 
   get engine() {
     return this.#delegate?.engine ?? null;
+  }
+
+  get error() {
+    return this.#delegate?.error ?? null;
   }
 
   get src() {
@@ -129,6 +133,8 @@ export class HlsMediaDelegate {
       this.#delegate = useMse
         ? new HlsJsMediaDelegate({ config: { ...this.config, debug: this.debug } })
         : new NativeHlsMediaDelegate();
+
+      bridgeEvents(this.#delegate, this);
 
       if (this.target) {
         this.#delegate.attach(this.target);

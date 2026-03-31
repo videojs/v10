@@ -4,7 +4,7 @@ import { VideoProxy } from '../proxy';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 
-export class NativeHlsMediaDelegate {
+export class NativeHlsMediaDelegate extends EventTarget {
   #target: HTMLMediaElement | null = null;
   #src: string = '';
   #preload: PreloadType = 'metadata';
@@ -15,6 +15,10 @@ export class NativeHlsMediaDelegate {
 
   get engine() {
     return null;
+  }
+
+  get error() {
+    return this.target?.error ?? null;
   }
 
   get src() {

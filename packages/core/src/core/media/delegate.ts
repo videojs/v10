@@ -2,27 +2,28 @@ import type { Constructor } from '@videojs/utils/types';
 
 import { defineClassPropHooks } from '../utils/define-class-prop-hooks';
 
+/** Wrap `source.dispatchEvent` so every event is also re-dispatched on `target`. */
+export function bridgeEvents(source: EventTarget, target: EventTarget): void {
+  const origDispatch = source.dispatchEvent.bind(source);
+  source.dispatchEvent = (event: Event): boolean => {
+    const result = origDispatch(event);
+    target.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
+    return result;
+  };
+}
+
 export interface Delegate {
   attach?(target: EventTarget): void;
   detach?(): void;
 }
 
-// Detects readonly vs writable properties via conditional type identity check.
-type IfEquals<X, Y, A, B> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? A : B;
-
-type WritableKeys<T> = {
-  [K in keyof T]-?: IfEquals<{ [Q in K]: T[K] }, { -readonly [Q in K]: T[K] }, K, never>;
-}[keyof T];
-
-type SettableKeys<T> = {
-  [K in WritableKeys<T>]: T[K] extends (...args: any[]) => any ? never : K;
-}[WritableKeys<T>];
-
-type ExcludeInternal<K> = K extends `_${string}` ? never : K;
-
-export type InferDelegateProps<D extends abstract new (...args: any[]) => any> = Partial<
-  Pick<InstanceType<D>, ExcludeInternal<SettableKeys<InstanceType<D>>>>
->;
+export interface BaseType extends EventTarget {
+  attach?(target: EventTarget): void;
+  detach?(): void;
+  get?(prop: string): any;
+  set?(prop: string, val: any): void;
+  call?(prop: string, ...args: any[]): any;
+}
 
 /**
  * Mixin that intercepts `get`, `set`, and `call` to delegate property access
@@ -31,12 +32,20 @@ export type InferDelegateProps<D extends abstract new (...args: any[]) => any> =
  *
  * Works with both `CustomMediaMixin` and `ProxyMixin`.
  */
-export function DelegateMixin<Base extends Constructor<any>, D extends Constructor<Delegate>>(
+export function DelegateMixin<Base extends Constructor<BaseType>, D extends Constructor<Delegate>>(
   BaseClass: Base,
   DelegateClass: D
 ) {
-  class DelegateImpl extends (BaseClass as Constructor<any>) {
+  class DelegateImpl extends BaseClass {
     #delegate = new DelegateClass();
+
+    constructor(...args: any[]) {
+      super(...args);
+
+      if (this.#delegate instanceof EventTarget) {
+        bridgeEvents(this.#delegate, this);
+      }
+    }
 
     get(prop: string): any {
       if (prop in this.#delegate) {
@@ -75,12 +84,5 @@ export function DelegateMixin<Base extends Constructor<any>, D extends Construct
     defineClassPropHooks(DelegateImpl, proto);
   }
 
-  return DelegateImpl as unknown as Constructor<
-    InstanceType<Base> &
-      InstanceType<D> & {
-        attach(target: EventTarget): void;
-        detach(): void;
-      }
-  > &
-    Omit<Base, 'prototype'>;
+  return DelegateImpl as unknown as Constructor<InstanceType<Base> & InstanceType<D>> & Omit<Base, 'prototype'>;
 }
