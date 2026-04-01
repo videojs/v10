@@ -35,6 +35,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
       orientation,
       step = VolumeSliderCore.defaultProps.step,
       largeStep = VolumeSliderCore.defaultProps.largeStep,
+      wheelStep = VolumeSliderCore.defaultProps.wheelStep,
       disabled,
       thumbAlignment,
       onDragStart,
@@ -45,7 +46,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     const volume = usePlayer(selectVolume);
 
     const [core] = useState(() => new VolumeSliderCore());
-    core.setProps({ label, orientation, step, largeStep, disabled, thumbAlignment });
+    core.setProps({ label, orientation, step, largeStep, wheelStep, disabled, thumbAlignment });
 
     // Keep refs to the latest dynamic values for stable closures.
     const volumeRef = useLatestRef(volume);
@@ -75,11 +76,11 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
       onDragEnd,
     });
 
-    const [wheelStep] = useState(() =>
+    const [wheelHandler] = useState(() =>
       createWheelStep({
         isDisabled: () => !!disabledRef.current || !volumeRef.current,
         getPercent: () => (volumeRef.current?.volume ?? 0) * 100,
-        getStepPercent: () => core.getStepPercent(),
+        getStepPercent: () => core.getWheelStepPercent(),
         onValueChange: (percent) => volumeRef.current?.setVolume(percent / 100),
       })
     );
@@ -92,10 +93,10 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
         wheelCleanupRef.current?.();
         wheelCleanupRef.current = null;
         if (element) {
-          wheelCleanupRef.current = listen(element, 'wheel', wheelStep.onWheel, { passive: false });
+          wheelCleanupRef.current = listen(element, 'wheel', wheelHandler.onWheel, { passive: false });
         }
       },
-      [wheelStep]
+      [wheelHandler]
     );
 
     if (!volume) {

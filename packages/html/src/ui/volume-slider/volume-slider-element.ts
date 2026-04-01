@@ -25,6 +25,7 @@ export class VolumeSliderElement extends MediaElement {
     label: { type: String },
     step: { type: Number },
     largeStep: { type: Number, attribute: 'large-step' },
+    wheelStep: { type: Number, attribute: 'wheel-step' },
     orientation: { type: String },
     disabled: { type: Boolean },
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
@@ -33,6 +34,7 @@ export class VolumeSliderElement extends MediaElement {
   label = VolumeSliderCore.defaultProps.label;
   step = VolumeSliderCore.defaultProps.step;
   largeStep = VolumeSliderCore.defaultProps.largeStep;
+  wheelStep = VolumeSliderCore.defaultProps.wheelStep;
   orientation = VolumeSliderCore.defaultProps.orientation;
   disabled = VolumeSliderCore.defaultProps.disabled;
   thumbAlignment = VolumeSliderCore.defaultProps.thumbAlignment;
@@ -80,7 +82,7 @@ export class VolumeSliderElement extends MediaElement {
     const wheelProps = createWheelStep({
       isDisabled,
       getPercent,
-      getStepPercent,
+      getStepPercent: () => this.#core.getWheelStepPercent(),
       onValueChange: setVolume,
     });
 
