@@ -320,7 +320,7 @@ jobs:
   # ─── Job 2: Detect stale docs (Claude Opus) ─────────────────────────
   stale-docs:
     needs: analyze
-    if: needs.analyze.outputs.has_changed == 'true'
+    if: needs.analyze.outputs.has_diff == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -350,11 +350,16 @@ jobs:
 
             The following files are at /tmp/api-sync/:
             - `diff.patch` — unified diff of API JSON between HEAD~1 and HEAD
-            - `changed-components.txt` — filenames of changed component JSONs (one per line)
-            - `changed-utils.txt` — filenames of changed util JSONs (one per line)
+            - `changed-components.txt` — filenames of changed component JSONs (one per line, may be empty)
+            - `changed-utils.txt` — filenames of changed util JSONs (one per line, may be empty)
             - `after-components/` — current component JSON files
             - `after-utils/` — current util JSON files
             - `pr-meta.json` — `{number, url, author, title}` of the triggering PR
+
+            Note: On `workflow_dispatch` or when HEAD~1 build fails, `changed-*.txt` will be empty
+            because everything appears as "new." In that case, treat ALL JSON files in `after-*`
+            directories as changed and use `diff.patch` (which will show everything as additions)
+            to understand the current API surface.
 
             ## Process
 
