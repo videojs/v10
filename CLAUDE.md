@@ -17,6 +17,7 @@ Refer to **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** for setup, development, and 
 | `packages/html`         | Web player—DOM/Browser‑specific implementation.                     |
 | `packages/react`        | React player—adapts core state to React components.                 |
 | `packages/react-native` | React Native player integration layer.                              |
+| `apps/sandbox`          | Vite‑based dev playground (private, not published).                  |
 | `site/`                 | Astro‑based docs and website.                                       |
 
 ### Dependency Hierarchy
@@ -65,6 +66,8 @@ pnpm typecheck
 pnpm build
 # Build all packages (no apps)
 pnpm build:packages
+# Build sandbox (and its package deps)
+pnpm build:sandbox
 # Build specific package
 pnpm -F <pkg> build
 
