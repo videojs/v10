@@ -1,7 +1,6 @@
 name: API Reference Sync
 
 on:
-  workflow_dispatch:
   pull_request:
     types: [closed]
 
@@ -19,10 +18,7 @@ concurrency:
 jobs:
   # ─── Job 0: Build API JSON at HEAD~1 and HEAD, diff them ─────────────
   analyze:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.pull_request.merged == true &&
-       github.event.pull_request.base.ref == 'main')
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
 
     outputs:
@@ -70,13 +66,6 @@ jobs:
 
       - name: Build API JSON at HEAD~1
         run: |
-          # For workflow_dispatch, skip the before build — treat everything as changed
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            mkdir -p /tmp/api-sync/before-components /tmp/api-sync/before-utils
-            echo "workflow_dispatch — skipping HEAD~1 build, full scan mode"
-            exit 0
-          fi
-
           git checkout HEAD~1
 
           # If install or build fails (e.g. api-docs-builder itself changed),
@@ -356,10 +345,14 @@ jobs:
             - `after-utils/` — current util JSON files
             - `pr-meta.json` — `{number, url, author, title}` of the triggering PR
 
-            Note: On `workflow_dispatch` or when HEAD~1 build fails, `changed-*.txt` will be empty
-            because everything appears as "new." In that case, treat ALL JSON files in `after-*`
-            directories as changed and use `diff.patch` (which will show everything as additions)
-            to understand the current API surface.
+            Note: If HEAD~1 build failed, `changed-*.txt` will be empty because everything appears
+            as "new." In that case, treat ALL JSON files in `after-*` directories as changed and use
+            `diff.patch` (which will show everything as additions) to understand the current API surface.
+
+            Important: Skip any components listed in `new-components.txt` and utils listed in
+            `new-utils.txt` — a separate job already opens issues for those. Only analyze items
+            in `changed-components.txt` and `changed-utils.txt` (or all items in the fallback case,
+            minus anything in the new-*.txt files).
 
             ## Process
 
