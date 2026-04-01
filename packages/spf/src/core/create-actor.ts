@@ -13,17 +13,7 @@ export interface RunnerLike {
   schedule<Value = void, Err = unknown>(task: TaskLike<Value, Err>): Promise<Value>;
   abortAll(): void;
   destroy(): void;
-}
-
-/**
- * Extended runner interface for runners that support `onSettled` state declarations.
- */
-export interface SettledRunnerLike extends RunnerLike {
   whenSettled(callback: () => void): void;
-}
-
-function hasWhenSettled(runner: RunnerLike): runner is SettledRunnerLike {
-  return 'whenSettled' in runner;
 }
 
 // =============================================================================
@@ -204,7 +194,7 @@ export function createActor<
       const newStatus = getStatus();
       if (newStatus !== 'destroyed') {
         const newStateDef = def.states[newStatus as UserStatus];
-        if (newStateDef?.onSettled && runner && hasWhenSettled(runner)) {
+        if (newStateDef?.onSettled && runner) {
           const targetStatus = newStateDef.onSettled as FullStatus;
           runner.whenSettled(() => {
             if (getStatus() !== newStatus) return;

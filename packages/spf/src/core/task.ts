@@ -124,25 +124,68 @@ export class Task<TValue = void, TError = unknown> implements TaskLike<TValue, T
  * so abortAll() can cancel any in-flight work (e.g. on engine cleanup).
  */
 export class ConcurrentRunner {
-  readonly #pending = new Map<string, TaskLike<unknown, unknown>>();
+  readonly #pending = new Map<string, { task: TaskLike<unknown, unknown>; promise: Promise<unknown> }>();
+  #settled: Promise<void> = Promise.resolve();
+  #resolveSettled: (() => void) | null = null;
 
-  schedule<TValue = void, TError = unknown>(task: TaskLike<TValue, TError>): void {
-    if (this.#pending.has(task.id)) return;
+  schedule<TValue = void, TError = unknown>(task: TaskLike<TValue, TError>): Promise<TValue> {
+    const existing = this.#pending.get(task.id);
+    if (existing) return existing.promise as Promise<TValue>;
 
-    this.#pending.set(task.id, task as TaskLike<unknown, unknown>);
-    task
-      .run()
-      .catch((error) => {
-        if (!(error instanceof Error && error.name === 'AbortError')) throw error;
-      })
-      .finally(() => {
-        this.#pending.delete(task.id);
+    if (this.#pending.size === 0) {
+      this.#settled = new Promise((resolve) => {
+        this.#resolveSettled = resolve;
       });
+    }
+
+    const promise = task.run();
+    // Suppress unhandled rejection for callers that ignore the return value.
+    promise.catch(() => {});
+    // Cleanup: update pending and resolve settled regardless of outcome.
+    const cleanup = () => {
+      this.#pending.delete(task.id);
+      if (this.#pending.size === 0) {
+        this.#resolveSettled?.();
+        this.#resolveSettled = null;
+      }
+    };
+    promise.then(cleanup, cleanup);
+
+    this.#pending.set(task.id, { task: task as TaskLike<unknown, unknown>, promise: promise as Promise<unknown> });
+    return promise;
+  }
+
+  /**
+   * Registers a callback to fire when all currently in-flight tasks settle.
+   * If the runner is already idle, the callback is never called. If abortAll()
+   * is called before the batch settles, the callback is superseded and silently
+   * dropped — no stale callbacks, no generation token required by the caller.
+   */
+  whenSettled(callback: () => void): void {
+    if (this.#pending.size === 0) return;
+    const captured = this.#settled;
+    captured.then(
+      () => {
+        if (this.#settled !== captured) return;
+        callback();
+      },
+      () => {}
+    );
   }
 
   abortAll(): void {
-    for (const task of this.#pending.values()) task.abort();
+    for (const { task } of this.#pending.values()) task.abort();
     this.#pending.clear();
+    // Resolve the current settled promise so any .then() handlers are queued,
+    // then replace the reference — whenSettled callbacks that captured the old
+    // reference will see the identity mismatch and be dropped.
+    this.#resolveSettled?.();
+    this.#resolveSettled = null;
+    this.#settled = Promise.resolve();
+  }
+
+  destroy(): void {
+    this.abortAll();
   }
 }
 
