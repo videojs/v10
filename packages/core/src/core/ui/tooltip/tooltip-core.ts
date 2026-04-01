@@ -76,10 +76,6 @@ export class TooltipCore {
     };
   }
 
-  getTriggerAttrs(_state: TooltipState, _popupId?: string) {
-    return {};
-  }
-
   getPopupAttrs(_state: TooltipState) {
     return {
       popover: 'manual' as const,

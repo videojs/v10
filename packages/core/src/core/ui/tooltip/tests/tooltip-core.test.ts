@@ -44,16 +44,6 @@ describe('TooltipCore', () => {
     expect(state.align).toBe('center');
   });
 
-  describe('getTriggerAttrs', () => {
-    it('returns empty object (visual-only tooltip)', () => {
-      const core = new TooltipCore();
-      core.setInput(OPEN);
-      const attrs = core.getTriggerAttrs(core.getState(), 'tooltip-1');
-
-      expect(attrs).toEqual({});
-    });
-  });
-
   describe('getPopupAttrs', () => {
     it('returns presentation role', () => {
       const core = new TooltipCore();

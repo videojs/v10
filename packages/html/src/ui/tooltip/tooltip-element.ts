@@ -155,9 +155,8 @@ export class TooltipElement extends MediaElement {
       tryHidePopover(this);
     }
 
-    // Apply trigger ARIA and anchor-name to the discovered trigger.
+    // Apply anchor-name to the discovered trigger for CSS positioning.
     if (this.#currentTrigger) {
-      applyElementProps(this.#currentTrigger, this.#core.getTriggerAttrs(state, this.id));
       applyStyles(this.#currentTrigger, getAnchorNameStyle(this.id));
     }
 
@@ -213,9 +212,23 @@ export class TooltipElement extends MediaElement {
     }
   }
 
+  #contentObserver: MutationObserver | null = null;
+
   #syncContent(triggerEl: TriggerElement | null): void {
     const label = triggerEl?.getLabel?.();
-    if (label) this.textContent = label;
+    this.textContent = label ?? '';
+
+    // Observe trigger attribute changes so tooltip content stays in sync
+    // when media state changes while the tooltip is visible.
+    if (triggerEl && !this.#contentObserver) {
+      this.#contentObserver = new MutationObserver(() => {
+        this.textContent = triggerEl.getLabel?.() ?? '';
+      });
+      this.#contentObserver.observe(triggerEl, { attributes: true });
+    } else if (!triggerEl && this.#contentObserver) {
+      this.#contentObserver.disconnect();
+      this.#contentObserver = null;
+    }
   }
 
   #cleanupTrigger(): void {
@@ -223,6 +236,8 @@ export class TooltipElement extends MediaElement {
       this.#currentTrigger.style.removeProperty('anchor-name');
     }
 
+    this.#contentObserver?.disconnect();
+    this.#contentObserver = null;
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
