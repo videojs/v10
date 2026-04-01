@@ -119,7 +119,7 @@ export function resolvePresentation<S extends PresentationState>({
         },
 
         // Fetch task — returns the AbortController so the framework aborts on exit.
-        ({ transition }) => {
+        () => {
           const presentation = untrack(() => state.get().presentation) as UnresolvedPresentation;
           const ac = new AbortController();
 
@@ -128,7 +128,6 @@ export function resolvePresentation<S extends PresentationState>({
             .then((text) => {
               const parsed = parseMultivariantPlaylist(text, presentation);
               update(state, { presentation: parsed } as Partial<S>);
-              transition('resolved');
             })
             .catch((error) => {
               if (error instanceof Error && error.name === 'AbortError') return;
