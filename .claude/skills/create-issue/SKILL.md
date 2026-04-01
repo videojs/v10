@@ -1,12 +1,12 @@
 ---
 name: create-issue
 description: >-
-  Create GitHub issues with consistent title casing, type prefixes, labels,
-  and body structure for the videojs/v10 repo. Use when filing bugs, requesting
-  features, or creating any ticket/issue. Triggers: "create issue", "new issue",
+  Create GitHub issues with consistent title casing, type prefixes, and body
+  structure for the videojs/v10 repo. Use when filing bugs, requesting features,
+  or creating any ticket/issue. Triggers: "create issue", "new issue",
   "file issue", "open issue", "file bug", "request feature", "create ticket",
   "new ticket", "file ticket", "open ticket".
-allowed-tools: Bash(gh:*), Read, Glob, Grep, question
+allowed-tools: Bash(gh:*), Read, Glob, Grep, WebFetch, question
 context: fork
 ---
 
@@ -43,24 +43,11 @@ Use Title Case for the description portion. The type prefix is followed by a col
 | `Chore:`         | Maintenance, deps, tooling, CI                        | Chore: Upgrade Vitest to v3                      |
 | `Design:`        | Design docs, component specs, visual design           | Design: Component Spec for Slider                |
 
-**Not** conventional commit prefixes (`feat:`, `fix:`, `docs:`) — those are for commits only.
+**Not** conventional commit prefixes (`feat:`, `fix:`, `docs:`) -- those are for commits only.
 
 ### Labels
 
-Use labels instead of GitHub issue types (Bug/Task/Enhancement). **Always use existing repo labels -- never create new ones.** Run `gh label list --repo videojs/v10` if unsure what exists. Prefer no label over inventing one.
-
-**Domain:** `api`, `a11y`, `components`, `docs`, `dx`, `i18n`, `media`, `skin`, `store`, `types`
-
-**Package:** `pkg:core`, `pkg:html`, `pkg:react`, `pkg:utils`, `pkg:store`, `pkg:dom`, `pkg:icons`
-
-**Area:** `build`, `cli`, `compiler`, `errors`, `examples`, `perf`, `site`, `test`, `workspace`
-
-**Other:** `feature`, `planning`, `needs discussion`, `good first issue`, `epic`
-
-**Rules:**
-- Apply 1-3 labels -- don't over-label
-- Check labels on related/cross-referenced issues for consistency
-- If no existing label fits, leave it unlabeled for human triage
+Do not add labels when creating issues. The triage bot handles labeling automatically.
 
 ### Body
 
@@ -100,15 +87,40 @@ If -- and only if -- the issue benefits from it, add additional sections:
 - Omit sections that add no value -- no empty headers, no placeholder text.
 - Task lists only when scope is well-defined and breakdown aids tracking.
 
+### Reference Libraries
+
+When creating **Feature**, **Architecture**, or **Design** issues, research how reference libraries handle similar functionality. Include relevant links in the body.
+
+**UI libraries (component patterns, API design):**
+
+| Library  | Docs                          | Source                                              |
+| -------- | ----------------------------- | --------------------------------------------------- |
+| Base UI  | https://base-ui.com           | https://github.com/mui/base-ui                      |
+| Radix    | https://www.radix-ui.com      | https://github.com/radix-ui/primitives              |
+
+**Player libraries (media-specific patterns, prior art):**
+
+| Library      | Source                                    |
+| ------------ | ----------------------------------------- |
+| video.js v8  | https://github.com/videojs/video.js       |
+| media chrome | https://github.com/muxinc/media-chrome    |
+| plyr         | https://github.com/sampotts/plyr          |
+| vidstack     | https://github.com/vidstack/player        |
+
+**Rules:**
+- Search docs and source for the feature/pattern being proposed.
+- Only include references that are genuinely relevant -- don't pad with tangential links.
+- Prefer linking to specific components, APIs, or source files over top-level repos.
+- UI libraries for component/API patterns; player libraries for media-specific prior art.
+
 ## Your Tasks
 
 ### Step 1: Gather Information
 
 If $ARGUMENTS provides enough detail, extract:
-1. **Type** — Which prefix applies (Feature, Bug, Docs, Architecture, Chore, Design)
-2. **Title** — Short, descriptive, Title Case
-3. **Description** — The what and why
-4. **Labels** — 1-3 relevant labels
+1. **Type** -- Which prefix applies (Feature, Bug, Docs, Architecture, Chore, Design)
+2. **Title** -- Short, descriptive, Title Case
+3. **Description** -- The what and why
 
 If details are missing, use the `question` tool to ask the user.
 
@@ -121,25 +133,33 @@ Construct the title as `Type: Title Case Description`.
 - Capitalize all major words (nouns, verbs, adjectives, adverbs)
 - Lowercase articles (a, an, the), conjunctions (and, but, or), and short prepositions (in, on, at, to, for, of, with) unless they are the first or last word
 
-### Step 3: Compose Body
+### Step 3: Research Prior Art
+
+**For Feature, Architecture, and Design issues only.** Skip this step for Bug, Docs, and Chore issues.
+
+1. Search the reference UI libraries (Base UI, Radix) for similar components or patterns -- check their docs sites and GitHub source.
+2. Search the reference player libraries (video.js v8, media chrome, plyr, vidstack) for how they handle similar media-specific functionality.
+3. Collect specific, relevant links (component pages, source files, API docs).
+
+### Step 4: Compose Body
 
 Write the body following the body conventions. Default to a single description paragraph. Only add Context or Tasks sections if they genuinely improve communication.
 
-### Step 4: Confirm with User
+For Feature/Architecture/Design issues, weave prior art references into the body naturally -- either inline or in a Context section if there are several.
+
+### Step 5: Confirm with User
 
 Before creating, show the user:
 - Full title
-- Labels
 - Body preview
 
 Ask for confirmation using the `question` tool.
 
-### Step 5: Create Issue
+### Step 6: Create Issue
 
 ```bash
 gh issue create --repo videojs/v10 \
   --title "Type: Title Case Description" \
-  --label "label1,label2" \
   --body "body content"
 ```
 
@@ -148,15 +168,17 @@ Use a HEREDOC for the body to preserve formatting:
 ```bash
 gh issue create --repo videojs/v10 \
   --title "Feature: Add OAuth Support" \
-  --label "feature,api" \
   --body "$(cat <<'EOF'
-## Description
+Description text here.
 
-...
+## Context
+
+- [Base UI Dialog](https://base-ui.com/react/components/dialog) -- compound component pattern
+- [vidstack player](https://github.com/vidstack/player/blob/main/...) -- media-specific approach
 EOF
 )"
 ```
 
-### Step 6: Report
+### Step 7: Report
 
 Output the created issue URL.

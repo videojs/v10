@@ -76,8 +76,9 @@ jobs:
             - Recommend a milestone if one is a strong fit.
             - Recommend related epic linkage if one clearly fits.
             - Recommend obvious `blocked by` relationships when clearly implied.
+            - Recommend a priority level (P0–P3) when clearly implied by severity or urgency.
             - Recommend other existing issues that should be included in project planning alongside this one when relevant (for example, skin integration, docs API reference coverage, or other adjacent planning gaps).
-            - Do not directly add the issue to roadmap/projects, milestones, epics, or blocked-by links.
+            - Do not directly add the issue to roadmap/projects, milestones, epics, blocked-by links, or priority labels.
             - Instead, leave one concise comment with recommendations only when meaningful.
             8. Avoid noise:
             - Do not comment if there is no meaningful action or new information.
