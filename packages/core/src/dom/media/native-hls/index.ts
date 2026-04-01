@@ -1,10 +1,11 @@
 import { DelegateMixin } from '../../../core/media/delegate';
 import { CustomVideoElement } from '../custom-media-element';
 import { VideoProxy } from '../proxy';
+import { NativeHlsMediaErrorsMixin } from './errors';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 
-export class NativeHlsMediaDelegate extends EventTarget {
+class NativeHlsMediaDelegateBase extends EventTarget {
   #target: HTMLMediaElement | null = null;
   #src: string = '';
   #preload: PreloadType = 'metadata';
@@ -15,10 +16,6 @@ export class NativeHlsMediaDelegate extends EventTarget {
 
   get engine() {
     return null;
-  }
-
-  get error() {
-    return this.target?.error ?? null;
   }
 
   get src() {
@@ -65,6 +62,8 @@ export class NativeHlsMediaDelegate extends EventTarget {
     this.#target = null;
   }
 }
+
+export class NativeHlsMediaDelegate extends NativeHlsMediaErrorsMixin(NativeHlsMediaDelegateBase) {}
 
 export class NativeHlsCustomMedia extends DelegateMixin(CustomVideoElement, NativeHlsMediaDelegate) {}
 

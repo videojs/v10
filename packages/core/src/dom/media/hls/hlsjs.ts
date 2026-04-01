@@ -1,7 +1,7 @@
 import Hls, { type HlsConfig } from 'hls.js';
-import { HlsMediaErrorsMixin } from './errors';
-import { HlsMediaPreloadMixin } from './preload';
-import { HlsMediaTextTracksMixin } from './text-tracks';
+import { HlsJsMediaErrorsMixin } from './errors';
+import { HlsJsMediaPreloadMixin } from './preload';
+import { HlsJsMediaTextTracksMixin } from './text-tracks';
 
 export const defaultHlsConfig: Partial<HlsConfig> = {
   backBufferLength: 30,
@@ -53,6 +53,6 @@ class HlsJsMediaDelegateBase extends EventTarget {
   }
 }
 
-export class HlsJsMediaDelegate extends HlsMediaPreloadMixin(
-  HlsMediaTextTracksMixin(HlsMediaErrorsMixin(HlsJsMediaDelegateBase))
+export class HlsJsMediaDelegate extends HlsJsMediaPreloadMixin(
+  HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(HlsJsMediaDelegateBase))
 ) {}

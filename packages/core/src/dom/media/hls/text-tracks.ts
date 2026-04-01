@@ -18,7 +18,7 @@ interface HlsEngineHost {
  * forwards cues into them. It also syncs user track-mode changes back to
  * hls.js via `engine.subtitleTrack`.
  */
-export function HlsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
+export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsMediaTextTracks extends (BaseClass as Constructor<HlsEngineHost>) {
     #disconnect: AbortController | null = null;
 

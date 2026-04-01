@@ -1,7 +1,7 @@
 import Hls from 'hls.js';
 import { describe, expect, it, vi } from 'vitest';
 
-import { type HlsEngineHost, HlsMediaPreloadMixin } from '../preload';
+import { type HlsEngineHost, HlsJsMediaPreloadMixin } from '../preload';
 
 function createEngine(): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
@@ -34,9 +34,9 @@ class FakeHost implements HlsEngineHost {
   }
 }
 
-const PreloadHost = HlsMediaPreloadMixin(FakeHost);
+const PreloadHost = HlsJsMediaPreloadMixin(FakeHost);
 
-describe('HlsMediaPreloadMixin', () => {
+describe('HlsJsMediaPreloadMixin', () => {
   it('defaults preload to metadata', () => {
     const host = new PreloadHost(null);
     expect(host.preload).toBe('metadata');

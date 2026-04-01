@@ -2,7 +2,7 @@ import Hls from 'hls.js';
 import { describe, expect, it, vi } from 'vitest';
 
 import { MediaError } from '../../../../core/media/media-error';
-import { HlsMediaErrorsMixin } from '../errors';
+import { HlsJsMediaErrorsMixin } from '../errors';
 
 class FakeHost extends EventTarget {
   engine: Hls | null;
@@ -22,7 +22,7 @@ class FakeHost extends EventTarget {
   }
 }
 
-const HlsMediaErrors = HlsMediaErrorsMixin(FakeHost);
+const HlsMediaErrors = HlsJsMediaErrorsMixin(FakeHost);
 
 function createEngine(): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
@@ -49,7 +49,7 @@ function setup() {
   return { engine, host, video };
 }
 
-describe('HlsMediaErrorsMixin', () => {
+describe('HlsJsMediaErrorsMixin', () => {
   it('dispatches an error event on the host for fatal errors', () => {
     const { engine, host } = setup();
 
