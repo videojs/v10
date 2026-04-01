@@ -202,6 +202,25 @@ export class SerialRunner {
     return this.#chain as Promise<void>;
   }
 
+  /**
+   * Registers a callback to fire when all currently-pending tasks settle.
+   * If the runner is already idle (no pending or running tasks), the callback
+   * is never called. If new tasks are scheduled before the current batch
+   * settles, the callback is superseded and silently dropped — no stale
+   * callbacks, no generation token required by the caller.
+   */
+  whenSettled(callback: () => void): void {
+    if (this.#pending.size === 0 && this.#current === null) return;
+    const currentChain = this.#chain;
+    currentChain.then(
+      () => {
+        if (this.#chain !== currentChain) return;
+        callback();
+      },
+      () => {}
+    );
+  }
+
   abortAll(): void {
     for (const task of this.#pending) task.abort();
     this.#pending.clear();

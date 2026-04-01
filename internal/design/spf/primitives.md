@@ -45,6 +45,8 @@ A Task is the unit of work *inside* an Actor or Reactor. Actors plan and execute
 
 `core/task.ts` — thin wrapper around a function with an `AbortController`. The shape is approximately right; the question is how much structure to add.
 
+> **See also:** [actor-reactor-factories.md](actor-reactor-factories.md) — decided design for `createActor` / `createReactor`, including how runners are declared and lifecycle-managed.
+
 ### Open questions
 
 - **`aborted` as a distinct terminal state** — currently a Task that is aborted throws and lands in `error`, losing the distinction between "cancelled" and "failed". Tentatively, `aborted` should be a first-class terminal state: `pending → running → done | error | aborted`. The mechanism is straightforward — when `run()` catches a rejection, it checks whether the Task's abort signal is already aborted; if so, it transitions to `aborted` rather than `error`. This keeps the abort/error distinction out of the error value and makes it inspectable via `status` alone.
@@ -107,13 +109,17 @@ An Actor does not know about state outside itself. It receives messages and prod
 
 The concept is approximately right in the current codebase, but implementations are bespoke closures rather than classes. They will need to be refactored into classes with a formal interface. Beyond that structural change, additional structure is likely to emerge — for example, an Actor may define an explicit message map from message type to Task, making the relationship between inputs and work more declarative and inspectable.
 
+### Decided
+
+- **Snapshot as signal** — Actors expose `snapshot` as a `ReadonlySignal`, making current state synchronously readable and tracked in reactive contexts without polling.
+- **Message validity per state** — Actors define valid messages per state via a per-state `on` map in the definition. Messages sent in a state with no handler for that type are silently dropped. `'destroyed'` always drops all messages.
+- **Factory function, not base class** — `createActor(definition)` rather than `extends BaseActor`. See [actor-reactor-factories.md](actor-reactor-factories.md).
+- **`'destroyed'` is always implicit** — the framework adds it as the terminal state; user status types never include it.
+- **Actor dependencies are explicit** — Actors receive dependencies at construction time (via the factory call site) and interact with peer Actors via `send()`. No global state access.
+
 ### Open questions
 
-- **Snapshot as signal vs subscribable** — does the Actor expose `snapshot` as a **signal** (synchronously readable, tracked in reactive contexts) or as a **subscribable** (push-based, no current value without explicit storage)? This is tightly coupled to the Observable State decision (§5). The synchronous-inspection use case (e.g., `endOfStream` reading idle status without subscribing) slightly favors signals.
-- **Message validity and handling** — whether a message is valid depends on the Actor's current status. Some messages may be invalid in certain states and should be rejected or ignored rather than queued. How each Actor defines valid messages per state, and what happens when an invalid message arrives (silent drop, error, warning), is left to the Actor's own finite state machine definition.
 - **Error handling** — if a Task inside an Actor throws an unaborted error, does the Actor die, recover to an error state, or retry? No answer yet; depends on which Actors exist and what errors are recoverable.
-- **Base class vs interface** — if Actors are classes, is there a base class (`BaseActor`) with common snapshot/status machinery, or just an interface that each Actor implements independently?
-- **Scope of Actor dependencies** — should Actors be definitionally constrained to their own state plus explicitly passed-in dependencies (including other Actors, platform resources like a `SourceBuffer`, etc.), or should they be permitted to read from or write to shared global state (e.g., global owners, global events)? The current pattern has Actors receiving everything they need at construction time and interacting with other Actors via `send()` — one Actor's output becoming another's input. Allowing global state access would blur the boundary between Actor and Reactor (which exists precisely to mediate between global state and Actors). Tentatively: no — keep Actors self-contained; Reactors are the right place for global state coordination.
 
 ---
 
@@ -142,12 +148,17 @@ A Reactor is typically the bridge between observable state and one or more Actor
 
 The current codebase has top-level functions in `dom/features/` that gesture at the Reactor concept — they observe state and produce side effects — but lack the formal structure entirely: no class, no status, no snapshot, no defined lifecycle. These will need significant rework to become first-class Reactors.
 
+### Decided
+
+- **Snapshot as signal** — same decision as Actors. `snapshot` is a `ReadonlySignal<{ status: ReactorStatus }>`.
+- **Factory function, not base class** — `createReactor(definition)`. Per-state effects arrays; each element becomes one independent `effect()` call. See [actor-reactor-factories.md](actor-reactor-factories.md).
+- **Reactors do not send to other Reactors** — coordination flows through state or via `actor.send()`.
+
 ### Open questions
 
-- **Snapshot as signal vs subscribable** — same question as Actors (§3). Tightly coupled to §5.
-- **Effect scheduling** — when observed state changes, does a Reactor's response fire synchronously within the same update batch, or always deferred? Synchronous firing is simpler but risks re-entrancy; deferral is safer but adds latency. This is closely tied to how the Observable State primitive handles scheduling.
-- **Lifecycle ownership** — who creates and destroys Reactors? Currently the engine owns all of this explicitly. With a signal-based state primitive, Reactors could self-scope to a signal context and auto-dispose. Worth defining regardless.
-- **Can a Reactor send to another Reactor?** — Probably not directly (that would make it an Actor). If cross-Reactor coordination is needed, it likely flows through state.
+- **Effect scheduling** — when observed state changes, does a Reactor's response fire synchronously within the same update batch, or always deferred? Tightly coupled to §5.
+- **Lifecycle ownership** — who creates and destroys Reactors? Currently the engine owns all of this explicitly. With a signal-based state primitive, Reactors could self-scope to a signal context and auto-dispose.
+- **Reactor context** — should `createReactor` support an optional `context` field for non-finite state, or should Reactor context always be held via closure? See [actor-reactor-factories.md](actor-reactor-factories.md).
 
 ---
 
