@@ -18,6 +18,7 @@
     "prepare": "simple-git-hooks",
     "postinstall": "node build/scripts/link-aliases.mjs",
     "build:packages": "turbo run build --filter='./packages/*'",
+    "build:sandbox": "turbo run build --filter=@videojs/sandbox...",
     "build:cdn": "turbo run build:cdn --filter=@videojs/html",
     "build:site": "turbo run build --filter=site",
     "build": "turbo run build",
