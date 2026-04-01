@@ -174,8 +174,10 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
           const s = state.get(); // tracked — re-runs on currentTime / selection / presentation changes
           const { segmentLoaderActor } = untrack(() => owners.get());
           if (!segmentLoaderActor) return;
-          const track = findSelectedTrack(s);
-          if (!track) return;
+          // deriveStatus guarantees a valid, resolved track when in this state.
+          // The always monitor (registered before this effect) transitions us out
+          // before this re-runs if that invariant ever stops holding.
+          const track = findSelectedTrack(s)!;
           segmentLoaderActor.send({ type: 'load', track, currentTime: s.currentTime ?? 0 });
         },
       ],

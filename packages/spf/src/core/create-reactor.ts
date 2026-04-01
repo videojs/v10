@@ -133,7 +133,15 @@ export function createReactor<UserStatus extends string, Context extends object>
 
   // 'always' effects run in every non-terminal state — processed first so that
   // cross-cutting condition monitors fire before per-state effects in the
-  // initial synchronous run.
+  // initial synchronous run AND on every subsequent re-run.
+  //
+  // The ordering guarantee: effect() calls watcher.watch(computed) in order of
+  // registration. runPending() drains watcher.getPending() into a Set (insertion-
+  // ordered) before iterating it. Because 'always' effects are registered before
+  // per-state effects here, they are guaranteed to run first in every flush.
+  // This is load-bearing: it means a transition triggered by an 'always' monitor
+  // takes effect before the per-state effects of the (now-exited) state re-run,
+  // so per-state effects can rely on the invariants established by 'always'.
   for (const fn of def.always ?? []) {
     const dispose = effect(() => {
       const snapshot = snapshotSignal.get();
