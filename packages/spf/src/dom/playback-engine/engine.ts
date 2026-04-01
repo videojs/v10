@@ -13,6 +13,8 @@ import { loadTextTrackCues } from '../features/load-text-track-cues';
 import { setupMediaSource } from '../features/setup-mediasource';
 import { setupSourceBuffers } from '../features/setup-sourcebuffer';
 import { syncTextTracks } from '../features/sync-text-tracks';
+import type { TextTrackSegmentLoaderActor } from '../features/text-track-segment-loader-actor';
+import type { TextTracksActor } from '../features/text-tracks-actor';
 import { trackCurrentTime } from '../features/track-current-time';
 import { trackPlaybackInitiated } from '../features/track-playback-initiated';
 import { updateDuration } from '../features/update-duration';
@@ -102,6 +104,10 @@ export interface PlaybackEngineOwners {
   audioBuffer?: SourceBuffer;
   videoBufferActor?: SourceBufferActor;
   audioBufferActor?: SourceBufferActor;
+
+  // Text track actors (written by loadTextTrackCues; destroyed by engine on destroy)
+  textTracksActor?: TextTracksActor;
+  segmentLoaderActor?: TextTrackSegmentLoaderActor;
 }
 
 /**
@@ -281,6 +287,16 @@ export function createPlaybackEngine(config: PlaybackEngineConfig = {}): Playbac
     owners,
     destroy: () => {
       cleanups.forEach((cleanup) => (typeof cleanup === 'function' ? cleanup() : cleanup.destroy()));
+      // Destroy any actors that orchestrations wrote into owners during their lifetime.
+      for (const value of Object.values(owners.get())) {
+        if (
+          value !== null &&
+          typeof value === 'object' &&
+          typeof (value as { destroy?: unknown }).destroy === 'function'
+        ) {
+          (value as { destroy(): void }).destroy();
+        }
+      }
       destroyVttParser();
     },
   };
