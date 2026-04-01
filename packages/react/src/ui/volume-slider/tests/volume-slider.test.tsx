@@ -11,39 +11,45 @@ import { VolumeSliderRoot } from '../volume-slider-root';
 
 // --- Hoisted mock data (available inside vi.mock factories) ---
 
-const { mockSliderApi, mockVolumeState } = vi.hoisted(() => ({
-  mockSliderApi: () => ({
-    input: {
-      current: {
-        pointerPercent: 0,
-        dragPercent: 0,
-        dragging: false,
-        pointing: false,
-        focused: false,
-      },
-      subscribe: vi.fn(() => vi.fn()),
-    },
-    rootProps: {
-      onPointerDown: vi.fn(),
-      onPointerMove: vi.fn(),
-      onPointerLeave: vi.fn(),
-    },
-    thumbProps: {
-      onKeyDown: vi.fn(),
-      onFocus: vi.fn(),
-      onBlur: vi.fn(),
-    },
-    adjustForAlignment: <S,>(state: S): S => state,
-    destroy: vi.fn(),
-  }),
-  mockVolumeState: {
+const { mockSliderApi, mockVolumeState, mutableVolume } = vi.hoisted(() => {
+  const volumeState = {
     volume: 0.8,
     muted: false,
     volumeAvailability: 'available' as const,
     setVolume: vi.fn(),
     toggleMuted: vi.fn(),
-  },
-}));
+  };
+
+  return {
+    mockSliderApi: () => ({
+      input: {
+        current: {
+          pointerPercent: 0,
+          dragPercent: 0,
+          dragging: false,
+          pointing: false,
+          focused: false,
+        },
+        subscribe: vi.fn(() => vi.fn()),
+      },
+      rootProps: {
+        onPointerDown: vi.fn(),
+        onPointerMove: vi.fn(),
+        onPointerLeave: vi.fn(),
+      },
+      thumbProps: {
+        onKeyDown: vi.fn(),
+        onFocus: vi.fn(),
+        onBlur: vi.fn(),
+      },
+      adjustForAlignment: <S,>(state: S): S => state,
+      destroy: vi.fn(),
+    }),
+    mockVolumeState: volumeState,
+    // Mutable holder so tests can swap between null and available volume.
+    mutableVolume: { current: volumeState as typeof volumeState | null },
+  };
+});
 
 // --- Module mocks ---
 
@@ -56,21 +62,31 @@ vi.mock('@videojs/store/react', () => ({
   useSnapshot: vi.fn((state: { current: unknown }) => state.current),
   useStore: vi.fn((_store: unknown, selector?: (state: object) => unknown) => {
     if (!selector) return _store;
+
+    // Return the mutable volume state directly for volume selectors.
+    // The real selector picks keys from a flat state object, so feed
+    // the mock state through it when available.
+    const vol = mutableVolume.current;
+    if (!vol) return undefined;
+
     try {
-      const result = selector({ volume: mockVolumeState });
+      const result = selector(vol);
       if (result !== undefined) return result;
     } catch {
       // fall through
     }
-    try {
-      return selector(mockVolumeState);
-    } catch {
-      return undefined;
-    }
+
+    return undefined;
   }),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  // Reset mutable volume state between tests.
+  mutableVolume.current = mockVolumeState;
+  mockVolumeState.setVolume.mockClear();
+  mockVolumeState.toggleMuted.mockClear();
+});
 
 // --- Tests ---
 
@@ -186,5 +202,94 @@ describe('VolumeSlider compound', () => {
 
     const output = container.querySelector('[data-testid="value"]');
     expect(output?.textContent).toContain('%');
+  });
+});
+
+describe('VolumeSliderRoot wheel handling', () => {
+  it('attaches a non-passive wheel listener on the root element', () => {
+    // Capture the raw options before jsdom normalizes them.
+    const capturedOptions: AddEventListenerOptions[] = [];
+    const origAdd = HTMLDivElement.prototype.addEventListener;
+    const addSpy = vi.fn(function (
+      this: HTMLDivElement,
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions
+    ) {
+      if (type === 'wheel' && typeof options === 'object') {
+        capturedOptions.push({ ...options });
+      }
+      return origAdd.call(this, type, listener, options as AddEventListenerOptions);
+    });
+    HTMLDivElement.prototype.addEventListener = addSpy as typeof origAdd;
+
+    const { Wrapper } = createPlayerWrapper();
+    render(
+      <Wrapper>
+        <VolumeSliderRoot />
+      </Wrapper>
+    );
+
+    HTMLDivElement.prototype.addEventListener = origAdd;
+
+    expect(capturedOptions.length).toBeGreaterThanOrEqual(1);
+    expect(capturedOptions.some((opts) => opts.passive === false)).toBe(true);
+  });
+
+  it('honors disabled prop changes after initial render', () => {
+    const { Wrapper } = createPlayerWrapper();
+
+    // Render with disabled=true, dispatch wheel — setVolume should not be called.
+    const { container, rerender } = render(
+      <Wrapper>
+        <VolumeSliderRoot disabled />
+      </Wrapper>
+    );
+
+    const el = container.querySelector('[data-orientation]') as HTMLElement;
+    expect(el).toBeTruthy();
+
+    el.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }));
+    expect(mockVolumeState.setVolume).not.toHaveBeenCalled();
+
+    // Rerender with disabled=false, dispatch wheel — setVolume should be called.
+    rerender(
+      <Wrapper>
+        <VolumeSliderRoot disabled={false} />
+      </Wrapper>
+    );
+
+    el.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }));
+    expect(mockVolumeState.setVolume).toHaveBeenCalled();
+  });
+
+  it('attaches wheel handling when volume appears after initial null', () => {
+    // Start with no volume — component returns null.
+    mutableVolume.current = null;
+
+    const { Wrapper } = createPlayerWrapper();
+    const { container, rerender } = render(
+      <Wrapper>
+        <VolumeSliderRoot />
+      </Wrapper>
+    );
+
+    // Should not render when volume is null.
+    expect(container.querySelector('[data-orientation]')).toBeNull();
+
+    // Simulate volume becoming available.
+    mutableVolume.current = mockVolumeState;
+    rerender(
+      <Wrapper>
+        <VolumeSliderRoot />
+      </Wrapper>
+    );
+
+    const el = container.querySelector('[data-orientation]') as HTMLElement;
+    expect(el).toBeTruthy();
+
+    // Wheel on the newly mounted root should call setVolume.
+    el.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }));
+    expect(mockVolumeState.setVolume).toHaveBeenCalled();
   });
 });
