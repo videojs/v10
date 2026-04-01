@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TextTrack } from '../../../core/types';
 import { createTextTrackSegmentLoaderActor } from '../text-track-segment-loader-actor';
-import { TextTracksActor } from '../text-tracks-actor';
+import { createTextTracksActor } from '../text-tracks-actor';
 
 vi.mock('../../text/parse-vtt-segment', () => ({
   parseVttSegment: vi.fn((url: string) => {
@@ -54,7 +54,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
   it('starts with idle status and empty context', () => {
     const video = makeMediaElement(['track-en']);
-    const textTracksActor = new TextTracksActor(video);
+    const textTracksActor = createTextTracksActor(video);
     const actor = createTextTrackSegmentLoaderActor(textTracksActor);
 
     expect(actor.snapshot.get().status).toBe('idle');
@@ -66,7 +66,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
   it('stays idle when no segments need loading', () => {
     const video = makeMediaElement(['track-en']);
-    const textTracksActor = new TextTracksActor(video);
+    const textTracksActor = createTextTracksActor(video);
     const actor = createTextTrackSegmentLoaderActor(textTracksActor);
     const track = makeResolvedTextTrack('track-en', []);
 
@@ -80,7 +80,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
   it('transitions loading → idle after all segments are fetched', async () => {
     const video = makeMediaElement(['track-en']);
-    const textTracksActor = new TextTracksActor(video);
+    const textTracksActor = createTextTracksActor(video);
     const actor = createTextTrackSegmentLoaderActor(textTracksActor);
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt']);
 
@@ -97,7 +97,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
   it('delegates cue loading to TextTracksActor', async () => {
     const video = makeMediaElement(['track-en']);
-    const textTracksActor = new TextTracksActor(video);
+    const textTracksActor = createTextTracksActor(video);
     const actor = createTextTrackSegmentLoaderActor(textTracksActor);
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt', 'https://example.com/seg-1.vtt']);
 
@@ -118,7 +118,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     const { parseVttSegment } = await import('../../text/parse-vtt-segment');
 
     const video = makeMediaElement(['track-en']);
-    const textTracksActor = new TextTracksActor(video);
+    const textTracksActor = createTextTracksActor(video);
     const actor = createTextTrackSegmentLoaderActor(textTracksActor);
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt', 'https://example.com/seg-1.vtt']);
 
@@ -145,7 +145,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const video = makeMediaElement(['track-en']);
-    const textTracksActor = new TextTracksActor(video);
+    const textTracksActor = createTextTracksActor(video);
     const actor = createTextTrackSegmentLoaderActor(textTracksActor);
     const track = makeResolvedTextTrack('track-en', [
       'https://example.com/seg-0.vtt',
@@ -180,7 +180,7 @@ describe('TextTrackSegmentLoaderActor', () => {
       .mockResolvedValue([new VTTCue(0, 5, 'Cue')]);
 
     const video = makeMediaElement(['track-en', 'track-es']);
-    const textTracksActor = new TextTracksActor(video);
+    const textTracksActor = createTextTracksActor(video);
     const actor = createTextTrackSegmentLoaderActor(textTracksActor);
 
     const track1 = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt']);
@@ -213,7 +213,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
   it('transitions to destroyed on destroy()', () => {
     const video = makeMediaElement(['track-en']);
-    const textTracksActor = new TextTracksActor(video);
+    const textTracksActor = createTextTracksActor(video);
     const actor = createTextTrackSegmentLoaderActor(textTracksActor);
 
     actor.destroy();
@@ -227,7 +227,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     const { parseVttSegment } = await import('../../text/parse-vtt-segment');
 
     const video = makeMediaElement(['track-en']);
-    const textTracksActor = new TextTracksActor(video);
+    const textTracksActor = createTextTracksActor(video);
     const actor = createTextTrackSegmentLoaderActor(textTracksActor);
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt']);
 
@@ -244,7 +244,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
   it('snapshot is reactive — status transitions are observable via signal', async () => {
     const video = makeMediaElement(['track-en']);
-    const textTracksActor = new TextTracksActor(video);
+    const textTracksActor = createTextTracksActor(video);
     const actor = createTextTrackSegmentLoaderActor(textTracksActor);
     const track = makeResolvedTextTrack('track-en', ['https://example.com/seg-0.vtt']);
 

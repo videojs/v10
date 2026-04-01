@@ -1,13 +1,10 @@
-import type { ActorSnapshot, SignalActor } from '../../core/actor';
-import { type ReadonlySignal, signal, update } from '../../core/signals/primitives';
+import type { MessageActor } from '../../core/create-actor';
+import { createActor } from '../../core/create-actor';
 import type { Segment } from '../../core/types';
 
 // =============================================================================
 // Types
 // =============================================================================
-
-/** Finite (bounded) operational modes of the actor. */
-export type TextTracksActorStatus = 'idle' | 'destroyed';
 
 /** Minimal cue record — enough for deduplication and snapshot observability. */
 export interface CueRecord {
@@ -27,11 +24,10 @@ export interface TextTracksActorContext {
   segments: Record<string, Array<Pick<Segment, 'id' | 'startTime' | 'duration'>>>;
 }
 
-/** Complete snapshot of a TextTracksActor. */
-export type TextTracksActorSnapshot = ActorSnapshot<TextTracksActorStatus, TextTracksActorContext>;
-
 export type AddCuesMessage = { type: 'add-cues'; meta: CueSegmentMeta; cues: VTTCue[] };
 export type TextTracksActorMessage = AddCuesMessage;
+
+export type TextTracksActor = MessageActor<'idle' | 'destroyed', TextTracksActorContext, TextTracksActorMessage>;
 
 // =============================================================================
 // Helpers
@@ -46,59 +42,49 @@ function isDuplicateCue(cue: VTTCue, existing: CueRecord[]): boolean {
 // =============================================================================
 
 /** TextTrack actor: wraps all text tracks on a media element, owns cue operations. */
-export class TextTracksActor implements SignalActor<TextTracksActorStatus, TextTracksActorContext> {
-  readonly #mediaElement: HTMLMediaElement;
-  readonly #snapshotSignal = signal<TextTracksActorSnapshot>({
-    status: 'idle',
-    context: { loaded: {}, segments: {} },
-  });
+export function createTextTracksActor(mediaElement: HTMLMediaElement): TextTracksActor {
+  return createActor({
+    initial: 'idle' as const,
+    context: { loaded: {}, segments: {} } as TextTracksActorContext,
+    states: {
+      idle: {
+        on: {
+          'add-cues': (message, { context, setContext }) => {
+            // NOTE: Currently assumes cues are applied to a non-disabled TextTrack. Discuss different approaches here, including:
+            // - Making the message responsible for auto-selection of the textTrack (changes logic in sync-text-tracks)
+            // - Silent gating/console warning + early bail
+            // - throwing a domain-specific error
+            // - accepting as is (which would result in errors, but also "shouldn't ever happen" unless a bug is introduced)
+            // (CJP)
+            const { meta, cues } = message;
+            const { trackId, id: segmentId, startTime, duration } = meta;
+            const textTrack = Array.from(mediaElement.textTracks).find((t) => t.id === trackId);
+            if (!textTrack) return;
 
-  constructor(mediaElement: HTMLMediaElement) {
-    this.#mediaElement = mediaElement;
-  }
+            const existingCues = context.loaded[trackId] ?? [];
+            const existingSegments = context.segments[trackId] ?? [];
+            const prunedCues = cues.filter((cue) => !isDuplicateCue(cue, existingCues));
+            const segmentAlreadyLoaded = existingSegments.some((s) => s.id === segmentId);
 
-  get snapshot(): ReadonlySignal<TextTracksActorSnapshot> {
-    return this.#snapshotSignal;
-  }
+            if (prunedCues.length === 0 && segmentAlreadyLoaded) return;
 
-  send(message: TextTracksActorMessage): void {
-    if (this.#snapshotSignal.get().status === 'destroyed') return;
-
-    // NOTE: Currently assumes cues are applied to a non-disabled TextTrack. Discuss different approaches here, including:
-    // - Making the message responsible for auto-selection of the textTrack (changes logic in sync-text-tracks)
-    // - Silent gating/console warning + early bail
-    // - throwing a domain-specific error
-    // - accepting as is (which would result in errors, but also "shouldn't ever happen" unless a bug is introduced)
-    // (CJP)
-    const { meta, cues } = message;
-    const { trackId, id: segmentId, startTime, duration } = meta;
-    const textTrack = Array.from(this.#mediaElement.textTracks).find((t) => t.id === trackId);
-    if (!textTrack) return;
-
-    const ctx = this.#snapshotSignal.get().context;
-    const existingCues = ctx.loaded[trackId] ?? [];
-    const existingSegments = ctx.segments[trackId] ?? [];
-    const prunedCues = cues.filter((cue) => !isDuplicateCue(cue, existingCues));
-    const segmentAlreadyLoaded = existingSegments.some((s) => s.id === segmentId);
-
-    if (prunedCues.length === 0 && segmentAlreadyLoaded) return;
-
-    prunedCues.forEach((cue) => textTrack.addCue(cue));
-    update(this.#snapshotSignal, {
-      context: {
-        ...ctx,
-        loaded: {
-          ...ctx.loaded,
-          [trackId]: [...existingCues, ...prunedCues],
+            for (const cue of prunedCues) textTrack.addCue(cue);
+            setContext({
+              ...context,
+              loaded: {
+                ...context.loaded,
+                [trackId]: [...existingCues, ...prunedCues],
+              },
+              segments: segmentAlreadyLoaded
+                ? context.segments
+                : {
+                    ...context.segments,
+                    [trackId]: [...existingSegments, { id: segmentId, startTime, duration }],
+                  },
+            });
+          },
         },
-        segments: segmentAlreadyLoaded
-          ? ctx.segments
-          : { ...ctx.segments, [trackId]: [...existingSegments, { id: segmentId, startTime, duration }] },
       },
-    });
-  }
-
-  destroy(): void {
-    update(this.#snapshotSignal, { status: 'destroyed' });
-  }
+    },
+  });
 }

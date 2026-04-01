@@ -4,7 +4,8 @@ import type { Presentation, TextTrack } from '../../core/types';
 import { isResolvedTrack } from '../../core/types';
 import type { TextTrackSegmentLoaderActor } from './text-track-segment-loader-actor';
 import { createTextTrackSegmentLoaderActor } from './text-track-segment-loader-actor';
-import { TextTracksActor } from './text-tracks-actor';
+import type { TextTracksActor } from './text-tracks-actor';
+import { createTextTracksActor } from './text-tracks-actor';
 
 // ============================================================================
 // STATE & OWNERS
@@ -123,7 +124,7 @@ export function loadTextTrackCues<S extends TextTrackCueLoadingState, O extends 
       textTracksActor?.destroy();
       segmentLoaderActor?.destroy();
       if (currentMediaElement) {
-        textTracksActor = new TextTracksActor(currentMediaElement);
+        textTracksActor = createTextTracksActor(currentMediaElement);
         segmentLoaderActor = createTextTrackSegmentLoaderActor(textTracksActor);
       } else {
         textTracksActor = undefined;
