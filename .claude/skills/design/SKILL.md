@@ -131,13 +131,20 @@ Media features observe `<video>`. Player features need access to media state.
 PlayerTarget includes a media proxy for this coordination.
 ```
 
-### 7. Examine Existing Code
+### 7. Research Prior Art
 
-Before writing, explore relevant parts of the codebase. Link to existing patterns rather than duplicating.
+Before writing, explore two things:
+
+**Internal** — Check the codebase for existing patterns. Link to them rather than duplicating.
 
 ```markdown
 Based on the existing `SnapshotController` pattern. See `packages/store/src/snapshot.ts`.
 ```
+
+**External** — Research how other libraries handle the same problem:
+
+- **Base UI** / **WAI-ARIA APG** — API patterns and accessibility (for components)
+- **Player libraries** (Media Chrome, Vidstack, Video.js v8, Plyr) — Not for API patterns, but for edge cases, feature requirements, platform quirks, and context about the problem space
 
 ### 8. Decisions Only When Debated
 
@@ -184,6 +191,7 @@ Before finalizing a Design Doc:
 - [ ] State & store requirements documented (features, slices, state shape)
 - [ ] Accessibility is first-class (ARIA, keyboard, focus management)
 - [ ] Decisions only documented when debated (alternatives + rationale)
+- [ ] Prior art reviewed — Base UI, WAI-ARIA APG, player libraries for context
 - [ ] No architecture/implementation details (those go in `.claude/plans/`)
 - [ ] Examples match current design
 - [ ] Focused scope — future work in Open Questions
@@ -192,12 +200,13 @@ Before finalizing a Design Doc:
 ## Process
 
 1. **Explore** — Read relevant code, understand current patterns
-2. **Choose type** — Decision, feature design, or component spec?
-3. **Draft** — Start with problem, then API surface, state, accessibility
-4. **Cut** — Remove anything that doesn't earn its place. No implementation details — those go in `.claude/plans/`
-5. **Link** — Reference existing code, related docs
-6. **Review** — Check against checklist
-7. **Decisions** — Only add `decisions.md` if real debates happened during the process
+2. **Research** — Check prior art: Base UI and WAI-ARIA APG for API/accessibility patterns; player libraries (Media Chrome, Vidstack, Video.js v8, Plyr) for edge cases, feature requirements, and context
+3. **Choose type** — Decision, feature design, or component spec?
+4. **Draft** — Start with problem, then API surface, state, accessibility
+5. **Cut** — Remove anything that doesn't earn its place. No implementation details — those go in `.claude/plans/`
+6. **Link** — Reference existing code, related docs
+7. **Review** — Check against checklist
+8. **Decisions** — Only add `decisions.md` if real debates happened during the process
 
 ## Related
 

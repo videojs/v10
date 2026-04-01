@@ -66,13 +66,24 @@ Reference [WAI-ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/) for t
 4. **No separate parts file** — API surface covers everything; highlight noteworthy parts inline
 5. **No architecture file** — Implementation details go in `.claude/plans/`
 
-## Reference
+## Prior Art
 
-Components follow patterns from:
+Research prior art before drafting. Two tiers:
 
-- [WAI-ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/)
-- [Base UI](https://base-ui.com/) component APIs
-- [Radix UI](https://www.radix-ui.com/) as fallback
+### API Patterns (how we design)
+
+- **[Base UI](https://base-ui.com/)** — Primary reference. Check API shape, prop naming, composition model, data attributes. If Base UI has the component, start there.
+- **[WAI-ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/)** — Canonical accessibility pattern. Required for keyboard, ARIA roles, and focus management.
+- **[Radix UI](https://www.radix-ui.com/)** — Fallback when Base UI doesn't have the pattern.
+
+### Player Context (what we need to know)
+
+These aren't API references — look at them for edge cases, feature requirements, platform quirks, and lessons learned:
+
+- **[Media Chrome](https://www.media-chrome.org/)** — Media-specific UI edge cases, attribute-based API, shadow DOM tradeoffs
+- **[Vidstack](https://www.vidstack.io/)** — Feature requirements, what they got right, signals approach
+- **[Video.js v8](https://videojs.com/)** — Legacy context, what worked and what didn't, migration considerations
+- **[Plyr](https://plyr.io/)** — Minimal implementations, what a simple player needs
 
 ## Related Skills
 

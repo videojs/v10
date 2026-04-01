@@ -96,6 +96,11 @@ How it works at a high level. No implementation details.
 - What side effects occur
 - Error handling approach
 
+## Prior Art
+
+- **HTMLMediaElement** — [what the native platform provides]
+- **Player libraries** — [edge cases, feature requirements, context from Media Chrome, Vidstack, Video.js v8, Plyr]
+
 ## Open Questions
 
 - Unresolved items

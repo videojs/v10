@@ -46,9 +46,14 @@ Every feature design should document its store integration:
 5. **Decisions only when debated** — Don't scaffold `decisions.md` upfront; add it when real trade-offs are discussed
 6. **Let code talk** — Implementation details live in the code, not the design doc
 
-## Reference
+## Prior Art
 
-See existing Design Docs in `internal/design/` for examples.
+Research prior art before drafting:
+
+- **HTMLMediaElement spec** — What the native platform provides. Start here for any media-related feature.
+- **Player libraries** (Media Chrome, Vidstack, Video.js v8, Plyr) — Not for API patterns, but for edge cases, feature requirements, platform quirks, and context about the problem space. How did they solve this? What edge cases did they hit?
+
+See existing Design Docs in `internal/design/` for examples of good prior art research (e.g., `ui/controls-design.md`, `ui/playback-rate-button.md`).
 
 ## Related Skills
 

@@ -112,6 +112,14 @@ import { ComponentName } from '@videojs/react';
 - Tab order within the component
 - Focus restoration behavior
 
+## Prior Art
+
+How do other libraries handle this?
+
+- **Base UI** — [API shape, composition model, relevant patterns]
+- **WAI-ARIA APG** — [canonical accessibility pattern for this component type]
+- **Player libraries** — [edge cases, feature requirements, context from Media Chrome, Vidstack, Video.js v8, Plyr]
+
 ## Open Questions
 
 - Unresolved decisions

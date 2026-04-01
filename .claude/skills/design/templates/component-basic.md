@@ -83,6 +83,14 @@ import { ComponentName } from '@videojs/react';
 - Role: `button`
 - `aria-disabled` when disabled
 
+## Prior Art
+
+How do other libraries handle this?
+
+- **Base UI** — [API shape, relevant patterns]
+- **WAI-ARIA APG** — [canonical accessibility pattern]
+- **Player libraries** — [edge cases, feature requirements, context from Media Chrome, Vidstack, Video.js v8, Plyr]
+
 ## Open Questions
 
 - Unresolved decisions
