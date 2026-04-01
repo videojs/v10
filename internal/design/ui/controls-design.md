@@ -39,6 +39,8 @@ interface ControlsSlice {
 }
 ```
 
+Activity is tracked on the **player container**, not the controls element — activity anywhere in the player should reset the idle timer. Focus inside controls resets the timer but does not prevent auto-hide; focus is treated like any other activity signal.
+
 ## Accessibility
 
 ### Controls Group Role
@@ -50,49 +52,6 @@ interface ControlsSlice {
 No role on `<media-controls>` container. Individual controls (buttons, sliders) are the accessible elements. The controls container is a layout wrapper, not a landmark.
 
 **Note:** Media Chrome adds `role="region"` with `aria-label="video player"` to their **player container** (`<media-controller>`), not the control bar. This is a player container concern.
-
-## Decisions
-
-### Activity on Container, Not Controls
-
-**Decision:** Track activity events on the player container, not the controls element.
-
-**Alternatives:**
-- Track on controls — simpler, but misses activity when user moves mouse over video
-- Track on document — too broad, picks up unrelated interactions
-
-**Rationale:** Container owns the full player area. Activity anywhere in the player should reset idle timer. Matches Media Chrome's approach.
-
-### Focus Resets Timer, Doesn't Prevent Hide
-
-**Decision:** Focus inside controls resets the idle timer but does not prevent auto-hide.
-
-**Alternatives:**
-- Focus prevents auto-hide — more accessible, but controls never hide while focused
-- Configurable via attribute — more complexity
-
-**Rationale:** Focus is treated like any other activity signal. Keeps behavior simple and predictable.
-
-### Media Type Detection (Auto-detect)
-
-**Decision:** Auto-detect media type from the media element. Audio-only media disables auto-hide by default.
-
-**Rationale:** Keep it simple. Detection from the element handles most cases.
-
-### Pointer Events via CSS
-
-**Decision:** Handle `pointer-events` passthrough in shipped CSS, not baked into components.
-
-**Alternatives:**
-- Bake into components — always works, but awkward for audio-only or custom layouts without groups
-
-**Rationale:** CSS is more flexible for different layouts (with/without groups, audio-only). Media Chrome uses a similar CSS approach with `::slotted()`.
-
-### Cursor Hiding via CSS
-
-**Decision:** Ship cursor hiding in default CSS, not baked into component.
-
-**Rationale:** Cursor hiding is visual styling that users may want to customize or disable. CSS is more flexible and follows the cascade.
 
 ## Descoped for Alpha
 
