@@ -47,6 +47,14 @@ export class NativeHlsMediaDelegate extends EventTarget {
 
   attach(target: HTMLMediaElement) {
     this.#target = target;
+
+    if (this.preload !== this.#target.preload) {
+      this.#target.preload = this.preload;
+    }
+
+    if (this.src !== this.#target.src) {
+      this.#target.src = this.src;
+    }
   }
 
   detach() {
