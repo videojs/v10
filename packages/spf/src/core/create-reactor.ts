@@ -123,9 +123,15 @@ export function createReactor<UserStatus extends string, Context extends object>
         const snapshot = snapshotSignal.get();
         if (snapshot.status !== state) return;
         return fn({
-          transition: (to: UserStatus) => transition(to as FullStatus),
+          transition: (to: UserStatus) => {
+            if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
+            transition(to as FullStatus);
+          },
           context: snapshot.context,
-          setContext,
+          setContext: (context: Context) => {
+            if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
+            setContext(context);
+          },
         });
       });
       effectDisposals.push(dispose);

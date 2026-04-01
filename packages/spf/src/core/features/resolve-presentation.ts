@@ -1,6 +1,7 @@
 import { fetchResolvable, getResponseText } from '../../dom/network/fetch';
+import type { Reactor } from '../create-reactor';
+import { createReactor } from '../create-reactor';
 import { parseMultivariantPlaylist } from '../hls/parse-multivariant';
-import { effect } from '../signals/effect';
 import { computed, type Signal, update } from '../signals/primitives';
 import type { AddressableObject, Presentation } from '../types';
 
@@ -55,59 +56,72 @@ export function shouldResolve(state: PresentationState): boolean {
   );
 }
 
+export type ResolvePresentationStatus = 'idle' | 'resolving';
+
 /**
  * Resolves unresolved presentations using reactive composition.
+ *
+ * FSM: `'idle'` ↔ `'resolving'`
+ *
+ * - `'idle'` — waits for `canResolve && shouldResolve`, then starts the fetch
+ *   and transitions to `'resolving'`.
+ * - `'resolving'` — in-flight fetch; exit cleanup aborts it.
  *
  * Triggers resolution when:
  * - State-driven: Unresolved presentation + preload allows (auto/metadata)
  * - Playback-driven: playbackInitiated is true
  *
  * @example
- * ```ts
- * const state = signal({ presentation: undefined, preload: 'auto', playbackInitiated: false });
- *
- * const cleanup = resolvePresentation({ state });
- *
- * // State-driven: resolves immediately when preload allows
- * state.set({ ...state.get(), presentation: { url: 'http://example.com/playlist.m3u8' } });
- *
- * // Playback-driven: resolves when playbackInitiated is set
- * state.set({ ...state.get(), preload: 'none', presentation: { url: '...' }, playbackInitiated: true });
- * ```
+ * const reactor = resolvePresentation({ state });
+ * // later:
+ * reactor.destroy();
  */
-export function resolvePresentation<S extends PresentationState>({ state }: { state: Signal<S> }): () => void {
+export function resolvePresentation<S extends PresentationState>({
+  state,
+}: {
+  state: Signal<S>;
+}): Reactor<ResolvePresentationStatus | 'destroying' | 'destroyed', object> {
   const canResolveSignal = computed(() => canResolve(state.get()));
   const shouldResolveSignal = computed(() => shouldResolve(state.get()));
 
-  let resolving = false;
   let abortController: AbortController | null = null;
 
-  const cleanupEffect = effect(() => {
-    if (!canResolveSignal.get() || !shouldResolveSignal.get() || resolving) return;
+  return createReactor<ResolvePresentationStatus, object>({
+    initial: 'idle',
+    context: {},
+    states: {
+      idle: [
+        ({ transition }) => {
+          if (!canResolveSignal.get() || !shouldResolveSignal.get()) return;
 
-    const presentation = state.get().presentation as UnresolvedPresentation;
-    resolving = true;
-    abortController = new AbortController();
+          const presentation = state.get().presentation as UnresolvedPresentation;
+          abortController = new AbortController();
 
-    fetchResolvable(presentation, { signal: abortController.signal })
-      .then((response) => getResponseText(response))
-      .then((text) => {
-        const parsed = parseMultivariantPlaylist(text, presentation);
-        const patch: Partial<PresentationState> = { presentation: parsed };
-        update(state, patch);
-      })
-      .catch((error) => {
-        if (error instanceof Error && error.name === 'AbortError') return;
-        throw error;
-      })
-      .finally(() => {
-        resolving = false;
-        abortController = null;
-      });
+          fetchResolvable(presentation, { signal: abortController.signal })
+            .then((response) => getResponseText(response))
+            .then((text) => {
+              const parsed = parseMultivariantPlaylist(text, presentation);
+              update(state, { presentation: parsed } as Partial<S>);
+            })
+            .catch((error) => {
+              if (error instanceof Error && error.name === 'AbortError') return;
+              throw error;
+            })
+            .finally(() => {
+              abortController = null;
+              transition('idle');
+            });
+
+          transition('resolving');
+        },
+      ],
+
+      resolving: [
+        () => () => {
+          abortController?.abort();
+          abortController = null;
+        },
+      ],
+    },
   });
-
-  return () => {
-    abortController?.abort();
-    cleanupEffect();
-  };
 }
