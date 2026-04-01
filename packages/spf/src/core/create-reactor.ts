@@ -20,6 +20,20 @@ export type ReactorEffectFn<UserStatus extends string, Context extends object> =
 }) => (() => void) | { abort(): void } | void;
 
 /**
+ * A cross-cutting effect function that runs in every non-terminal state.
+ *
+ * Identical to `ReactorEffectFn` except the current `status` is also passed,
+ * allowing a single effect to monitor conditions and drive transitions from
+ * any state without duplicating the same guard in every state block.
+ */
+export type ReactorAlwaysEffectFn<UserStatus extends string, Context extends object> = (ctx: {
+  status: UserStatus;
+  transition: (to: UserStatus) => void;
+  context: Context;
+  setContext: (next: Context) => void;
+}) => (() => void) | { abort(): void } | void;
+
+/**
  * Full reactor definition passed to `createReactor`.
  *
  * `UserStatus` is the set of domain-meaningful states. `'destroying'` and
@@ -32,11 +46,19 @@ export type ReactorDefinition<UserStatus extends string, Context extends object>
   /** Initial context. */
   context: Context;
   /**
-   * Per-state effect arrays. Each element becomes one independent `effect()`
-   * call gated on that state, with its own dependency tracking and cleanup
-   * lifecycle. States with no entry silently run no effects.
+   * Cross-cutting effects that run in every non-terminal state.
+   * Each element becomes one independent `effect()` call that re-runs on any
+   * status or context change, with the current `status` available in ctx.
+   * Useful for condition monitors that apply uniformly across all states.
    */
-  states: Partial<Record<UserStatus, ReactorEffectFn<UserStatus, Context>[]>>;
+  always?: ReactorAlwaysEffectFn<UserStatus, Context>[];
+  /**
+   * Per-state effect arrays. Every valid status must be declared — use an empty
+   * array for states with no effects. Each element becomes one independent
+   * `effect()` call gated on that state, with its own dependency tracking and
+   * cleanup lifecycle.
+   */
+  states: Record<UserStatus, ReactorEffectFn<UserStatus, Context>[]>;
 };
 
 // =============================================================================
@@ -69,19 +91,16 @@ export type Reactor<Status extends string, Context extends object> = SignalActor
  * const reactor = createReactor({
  *   initial: 'waiting',
  *   context: {},
+ *   // Runs in every non-terminal state — drives transitions from a single place.
+ *   always: [
+ *     ({ status, transition }) => {
+ *       const target = deriveStatus();
+ *       if (target !== status) transition(target);
+ *     }
+ *   ],
  *   states: {
- *     waiting: [
- *       ({ transition }) => {
- *         if (readySignal.get()) transition('active');
- *       }
- *     ],
  *     active: [
- *       // Effect 1 — guard and exit cleanup
- *       ({ transition }) => {
- *         if (!readySignal.get()) { transition('waiting'); return; }
- *         return () => teardown();
- *       },
- *       // Effect 2 — independent tracking/cleanup
+ *       // State-specific work with its own cleanup lifecycle.
  *       () => {
  *         const unsub = subscribe(valueSignal.get(), handler);
  *         return () => unsub();
@@ -110,11 +129,35 @@ export function createReactor<UserStatus extends string, Context extends object>
     update(snapshotSignal, { context });
   };
 
-  // For each user-defined state, wrap each effect fn in a status-gated effect().
-  // The outer effect reads snapshotSignal (tracking both status and context), gates
-  // on the matching state, and delegates to the user fn whose own signal reads
-  // establish the inner dependency set.
   const effectDisposals: Array<() => void> = [];
+
+  // 'always' effects run in every non-terminal state — processed first so that
+  // cross-cutting condition monitors fire before per-state effects in the
+  // initial synchronous run.
+  for (const fn of def.always ?? []) {
+    const dispose = effect(() => {
+      const snapshot = snapshotSignal.get();
+      if (snapshot.status === 'destroying' || snapshot.status === 'destroyed') return;
+      const result = fn({
+        status: snapshot.status as UserStatus,
+        transition: (to: UserStatus) => {
+          if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
+          transition(to as FullStatus);
+        },
+        context: snapshot.context,
+        setContext: (context: Context) => {
+          if (getStatus() === 'destroying' || getStatus() === 'destroyed') return;
+          setContext(context);
+        },
+      });
+      if (!result) return undefined;
+      if (typeof result === 'function') return result;
+      return () => result.abort();
+    });
+    effectDisposals.push(dispose);
+  }
+
+  // Per-state effects — each is gated on its matching status.
   for (const [state, fns] of Object.entries(def.states) as Array<
     [UserStatus, ReactorEffectFn<UserStatus, Context>[]]
   >) {

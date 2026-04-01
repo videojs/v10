@@ -77,9 +77,9 @@ function deriveStatus(state: PresentationState): ResolvePresentationStatus {
 /**
  * Resolves unresolved presentations using reactive composition.
  *
- * FSM driven by `deriveStatus` — each state monitors conditions and transitions
- * immediately when they change. `'resolving'` additionally runs the fetch task
- * and returns an AbortController so the framework aborts it on state exit.
+ * FSM driven by `deriveStatus` — a single `always` monitor keeps the status in
+ * sync with conditions at all times. `'resolving'` additionally runs the fetch
+ * task and returns an AbortController so the framework aborts it on state exit.
  *
  * @example
  * const reactor = resolvePresentation({ state });
@@ -96,28 +96,16 @@ export function resolvePresentation<S extends PresentationState>({
   return createReactor<ResolvePresentationStatus, object>({
     initial: 'preconditions-unmet',
     context: {},
+    always: [
+      ({ status, transition }) => {
+        const target = derivedStatusSignal.get();
+        if (target !== status) transition(target);
+      },
+    ],
     states: {
-      'preconditions-unmet': [
-        ({ transition }) => {
-          const target = derivedStatusSignal.get();
-          if (target !== 'preconditions-unmet') transition(target);
-        },
-      ],
-
-      idle: [
-        ({ transition }) => {
-          const target = derivedStatusSignal.get();
-          if (target !== 'idle') transition(target);
-        },
-      ],
-
+      'preconditions-unmet': [],
+      idle: [],
       resolving: [
-        // Condition monitor — exits immediately if conditions have changed.
-        ({ transition }) => {
-          const target = derivedStatusSignal.get();
-          if (target !== 'resolving') transition(target);
-        },
-
         // Fetch task — returns the AbortController so the framework aborts on exit.
         () => {
           const presentation = untrack(() => state.get().presentation) as UnresolvedPresentation;
@@ -137,13 +125,7 @@ export function resolvePresentation<S extends PresentationState>({
           return ac;
         },
       ],
-
-      resolved: [
-        ({ transition }) => {
-          const target = derivedStatusSignal.get();
-          if (target !== 'resolved') transition(target);
-        },
-      ],
+      resolved: [],
     },
   });
 }
