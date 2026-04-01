@@ -1,7 +1,7 @@
 [build]
   command = "pnpm build:site"
   publish = "site/dist"
-  ignore = "pnpm dlx turbo-ignore site --task=build --fallback=origin/main"
+  ignore = "pnpm turbo query affected --packages site --tasks build --base origin/main --exit-code"
 
 # PostHog reverse proxy (ad-blocker bypass)
 [[redirects]]
