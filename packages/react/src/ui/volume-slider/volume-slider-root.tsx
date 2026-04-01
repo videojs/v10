@@ -3,7 +3,7 @@
 import { VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
 import { createWheelStep, getSliderCSSVars, logMissingFeature, selectVolume } from '@videojs/core/dom';
 import { listen } from '@videojs/utils/dom';
-import { forwardRef, useLayoutEffect, useRef, useState } from 'react';
+import { forwardRef, useCallback, useRef, useState } from 'react';
 
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -47,8 +47,9 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     const [core] = useState(() => new VolumeSliderCore());
     core.setProps({ label, orientation, step, largeStep, disabled, thumbAlignment });
 
-    // Keep a ref to the latest volume state for callbacks.
+    // Keep refs to the latest dynamic values for stable closures.
     const volumeRef = useLatestRef(volume);
+    const disabledRef = useLatestRef(disabled);
 
     const getPercent = () => (volumeRef.current?.volume ?? 0) * 100;
     const getStepPercent = () => core.getStepPercent();
@@ -74,24 +75,28 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
       onDragEnd,
     });
 
-    // Attach wheel listener directly to the DOM with { passive: false } so
-    // preventDefault() can block page scroll. React's onWheel is passive.
-    const wheelRef = useRef<HTMLElement | null>(null);
-
     const [wheelStep] = useState(() =>
       createWheelStep({
-        isDisabled: () => !!disabled || !volumeRef.current,
+        isDisabled: () => !!disabledRef.current || !volumeRef.current,
         getPercent: () => (volumeRef.current?.volume ?? 0) * 100,
         getStepPercent: () => core.getStepPercent(),
         onValueChange: (percent) => volumeRef.current?.setVolume(percent / 100),
       })
     );
 
-    useLayoutEffect(() => {
-      const el = wheelRef.current;
-      if (!el) return;
-      return listen(el, 'wheel', wheelStep.onWheel, { passive: false });
-    }, [wheelStep]);
+    // Attach non-passive wheel listener via callback ref so it covers
+    // late-mounted elements (null → mounted after volume appears).
+    const wheelCleanupRef = useRef<(() => void) | null>(null);
+    const wheelRef = useCallback(
+      (element: HTMLDivElement | null) => {
+        wheelCleanupRef.current?.();
+        wheelCleanupRef.current = null;
+        if (element) {
+          wheelCleanupRef.current = listen(element, 'wheel', wheelStep.onWheel, { passive: false });
+        }
+      },
+      [wheelStep]
+    );
 
     if (!volume) {
       if (__DEV__) logMissingFeature('VolumeSlider', 'volume');
