@@ -100,23 +100,6 @@ describe('CaptionsButtonCore', () => {
     });
   });
 
-  describe('setSuppressLabel', () => {
-    it('suppresses aria-label when enabled', () => {
-      const core = new CaptionsButtonCore();
-      core.setSuppressLabel(true);
-      const attrs = core.getAttrs(createState({ subtitlesShowing: false }));
-      expect(attrs['aria-label']).toBeUndefined();
-    });
-
-    it('restores aria-label when disabled', () => {
-      const core = new CaptionsButtonCore();
-      core.setSuppressLabel(true);
-      core.setSuppressLabel(false);
-      const attrs = core.getAttrs(createState({ subtitlesShowing: true }));
-      expect(attrs['aria-label']).toBe('Disable captions');
-    });
-  });
-
   describe('toggle', () => {
     it('calls toggleSubtitles when available', () => {
       const core = new CaptionsButtonCore();

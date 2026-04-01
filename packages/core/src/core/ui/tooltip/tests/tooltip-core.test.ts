@@ -45,91 +45,22 @@ describe('TooltipCore', () => {
   });
 
   describe('getTriggerAttrs', () => {
-    it('returns undefined aria-describedby when closed', () => {
-      const core = new TooltipCore();
-      core.setInput(CLOSED);
-      const attrs = core.getTriggerAttrs(core.getState(), 'tooltip-1');
-
-      expect(attrs['aria-describedby']).toBeUndefined();
-    });
-
-    it('returns aria-describedby with popupId when open', () => {
+    it('returns empty object (visual-only tooltip)', () => {
       const core = new TooltipCore();
       core.setInput(OPEN);
       const attrs = core.getTriggerAttrs(core.getState(), 'tooltip-1');
 
-      expect(attrs['aria-describedby']).toBe('tooltip-1');
-    });
-
-    it('returns undefined aria-describedby when no popupId', () => {
-      const core = new TooltipCore();
-      core.setInput(OPEN);
-      const attrs = core.getTriggerAttrs(core.getState());
-
-      expect(attrs['aria-describedby']).toBeUndefined();
-    });
-
-    it('returns persistent aria-labelledby when content is set', () => {
-      const core = new TooltipCore();
-      core.setContent('Play');
-      core.setInput(CLOSED);
-      const attrs = core.getTriggerAttrs(core.getState(), 'tooltip-1');
-
-      expect(attrs).toEqual({ 'aria-labelledby': 'tooltip-1', 'aria-describedby': undefined });
-    });
-
-    it('returns aria-labelledby regardless of open state', () => {
-      const core = new TooltipCore();
-      core.setContent('Play');
-
-      core.setInput(OPEN);
-      expect(core.getTriggerAttrs(core.getState(), 'tooltip-1')).toEqual({
-        'aria-labelledby': 'tooltip-1',
-        'aria-describedby': undefined,
-      });
-
-      core.setInput(CLOSED);
-      expect(core.getTriggerAttrs(core.getState(), 'tooltip-1')).toEqual({
-        'aria-labelledby': 'tooltip-1',
-        'aria-describedby': undefined,
-      });
-    });
-
-    it('treats empty string content as forwarded label', () => {
-      const core = new TooltipCore();
-      core.setContent('');
-      core.setInput(CLOSED);
-      const attrs = core.getTriggerAttrs(core.getState(), 'tooltip-1');
-
-      expect(attrs).toEqual({ 'aria-labelledby': 'tooltip-1', 'aria-describedby': undefined });
-    });
-
-    it('reverts to aria-describedby when content is cleared', () => {
-      const core = new TooltipCore();
-      core.setContent('Play');
-      core.setInput(OPEN);
-
-      expect(core.getTriggerAttrs(core.getState(), 'tooltip-1')).toEqual({
-        'aria-labelledby': 'tooltip-1',
-        'aria-describedby': undefined,
-      });
-
-      core.setContent(undefined);
-
-      expect(core.getTriggerAttrs(core.getState(), 'tooltip-1')).toEqual({
-        'aria-describedby': 'tooltip-1',
-        'aria-labelledby': undefined,
-      });
+      expect(attrs).toEqual({});
     });
   });
 
   describe('getPopupAttrs', () => {
-    it('returns tooltip role', () => {
+    it('returns presentation role', () => {
       const core = new TooltipCore();
       core.setInput(OPEN);
       const attrs = core.getPopupAttrs(core.getState());
 
-      expect(attrs.role).toBe('tooltip');
+      expect(attrs.role).toBe('presentation');
     });
 
     it('returns popover manual attribute', () => {

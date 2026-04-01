@@ -1,5 +1,4 @@
 import { defaults } from '@videojs/utils/object';
-import { isUndefined } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { PopoverAlign, PopoverSide } from '../popover/popover-core';
@@ -61,14 +60,9 @@ export class TooltipCore {
   }
 
   #input: TooltipInput | null = null;
-  #content: string | undefined;
 
   setInput(input: TooltipInput): void {
     this.#input = input;
-  }
-
-  setContent(content: string | undefined): void {
-    this.#content = content;
   }
 
   getState(): TooltipState {
@@ -82,24 +76,14 @@ export class TooltipCore {
     };
   }
 
-  getTriggerAttrs(state: TooltipState, popupId?: string) {
-    // Always return both keys so incremental attribute updaters (e.g.
-    // applyElementProps in HTML) remove the stale attribute when modes switch.
-    if (!isUndefined(this.#content)) {
-      // Content forwarded from trigger — tooltip IS the accessible label.
-      // aria-labelledby is persistent because the popup must always provide
-      // the accessible name regardless of tooltip visibility.
-      return { 'aria-labelledby': popupId, 'aria-describedby': undefined };
-    }
-
-    // No forwarded content — tooltip is a supplementary description.
-    return { 'aria-describedby': state.open ? popupId : undefined, 'aria-labelledby': undefined };
+  getTriggerAttrs(_state: TooltipState, _popupId?: string) {
+    return {};
   }
 
   getPopupAttrs(_state: TooltipState) {
     return {
       popover: 'manual' as const,
-      role: 'tooltip',
+      role: 'presentation' as const,
     };
   }
 }

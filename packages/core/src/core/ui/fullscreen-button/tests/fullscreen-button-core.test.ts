@@ -81,23 +81,6 @@ describe('FullscreenButtonCore', () => {
     });
   });
 
-  describe('setSuppressLabel', () => {
-    it('suppresses aria-label when enabled', () => {
-      const core = new FullscreenButtonCore();
-      core.setSuppressLabel(true);
-      const attrs = core.getAttrs(createState());
-      expect(attrs['aria-label']).toBeUndefined();
-    });
-
-    it('restores aria-label when disabled', () => {
-      const core = new FullscreenButtonCore();
-      core.setSuppressLabel(true);
-      core.setSuppressLabel(false);
-      const attrs = core.getAttrs(createState({ fullscreen: true }));
-      expect(attrs['aria-label']).toBe('Exit fullscreen');
-    });
-  });
-
   describe('toggle', () => {
     it('calls requestFullscreen when not fullscreen', async () => {
       const core = new FullscreenButtonCore();

@@ -24,7 +24,6 @@ export class FullscreenButtonCore {
 
   #props = { ...FullscreenButtonCore.defaultProps };
   #media: MediaFullscreenState | null = null;
-  #suppressLabel = false;
 
   constructor(props?: FullscreenButtonProps) {
     if (props) this.setProps(props);
@@ -47,13 +46,9 @@ export class FullscreenButtonCore {
     return state.fullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
   }
 
-  setSuppressLabel(value: boolean): void {
-    this.#suppressLabel = value;
-  }
-
   getAttrs(state: FullscreenButtonState) {
     return {
-      'aria-label': this.#suppressLabel ? undefined : this.getLabel(state),
+      'aria-label': this.getLabel(state),
       'aria-disabled': this.#props.disabled ? 'true' : undefined,
     };
   }

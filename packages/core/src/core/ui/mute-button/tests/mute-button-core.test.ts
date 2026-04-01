@@ -116,23 +116,6 @@ describe('MuteButtonCore', () => {
     });
   });
 
-  describe('setSuppressLabel', () => {
-    it('suppresses aria-label when enabled', () => {
-      const core = new MuteButtonCore();
-      core.setSuppressLabel(true);
-      const attrs = core.getAttrs(createState({ muted: false }));
-      expect(attrs['aria-label']).toBeUndefined();
-    });
-
-    it('restores aria-label when disabled', () => {
-      const core = new MuteButtonCore();
-      core.setSuppressLabel(true);
-      core.setSuppressLabel(false);
-      const attrs = core.getAttrs(createState({ muted: true }));
-      expect(attrs['aria-label']).toBe('Unmute');
-    });
-  });
-
   describe('toggle', () => {
     it('calls toggleMuted', () => {
       const core = new MuteButtonCore();

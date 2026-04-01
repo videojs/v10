@@ -4,13 +4,9 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import type { PlayerController } from '../player/player-controller';
 import { MediaElement } from './media-element';
-import type { TooltipLabelProvider } from './tooltip/tooltip-element';
 
 /** Abstract base for HTML custom elements that render a media-control button. */
-export abstract class MediaButtonElement<Core extends MediaButtonComponent>
-  extends MediaElement
-  implements TooltipLabelProvider
-{
+export abstract class MediaButtonElement<Core extends MediaButtonComponent> extends MediaElement {
   static override properties: PropertyDeclarationMap = {
     label: { type: String },
     disabled: { type: Boolean },
@@ -26,7 +22,6 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent>
   protected abstract activate(state: InferMediaState<Core>): void;
 
   #disconnect: AbortController | null = null;
-  #suppressLabel = false;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -51,13 +46,6 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent>
     this.#disconnect = null;
   }
 
-  /** Called by the tooltip element to suppress the button's own aria-label. */
-  setSuppressLabel(value: boolean): void {
-    this.#suppressLabel = value;
-    this.core.setSuppressLabel(value);
-    this.requestUpdate();
-  }
-
   /** Returns the button's current label derived from media state. */
   getLabel(): string | undefined {
     const media = this.mediaState.value;
@@ -79,7 +67,6 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent>
     if (!media) return;
 
     this.core.setMedia(media);
-    this.core.setSuppressLabel(this.#suppressLabel);
     const state = this.core.getState();
     applyElementProps(this, this.core.getAttrs?.(state) ?? {});
     applyStateDataAttrs(this, state, this.stateAttrMap);

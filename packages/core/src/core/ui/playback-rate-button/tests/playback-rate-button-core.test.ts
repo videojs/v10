@@ -83,23 +83,6 @@ describe('PlaybackRateButtonCore', () => {
     });
   });
 
-  describe('setSuppressLabel', () => {
-    it('suppresses aria-label when enabled', () => {
-      const core = new PlaybackRateButtonCore();
-      core.setSuppressLabel(true);
-      const attrs = core.getAttrs(createState({ rate: 1.5 }));
-      expect(attrs['aria-label']).toBeUndefined();
-    });
-
-    it('restores aria-label when disabled', () => {
-      const core = new PlaybackRateButtonCore();
-      core.setSuppressLabel(true);
-      core.setSuppressLabel(false);
-      const attrs = core.getAttrs(createState({ rate: 2 }));
-      expect(attrs['aria-label']).toBe('Playback rate 2');
-    });
-  });
-
   describe('cycle', () => {
     it('advances to the next rate', () => {
       const core = new PlaybackRateButtonCore();

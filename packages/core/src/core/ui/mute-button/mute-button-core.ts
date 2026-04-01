@@ -32,7 +32,6 @@ export class MuteButtonCore {
 
   #props = { ...MuteButtonCore.defaultProps };
   #media: MediaVolumeState | null = null;
-  #suppressLabel = false;
 
   constructor(props?: MuteButtonProps) {
     if (props) this.setProps(props);
@@ -55,13 +54,9 @@ export class MuteButtonCore {
     return state.muted ? 'Unmute' : 'Mute';
   }
 
-  setSuppressLabel(value: boolean): void {
-    this.#suppressLabel = value;
-  }
-
   getAttrs(state: MuteButtonState) {
     return {
-      'aria-label': this.#suppressLabel ? undefined : this.getLabel(state),
+      'aria-label': this.getLabel(state),
       'aria-disabled': this.#props.disabled ? 'true' : undefined,
     };
   }

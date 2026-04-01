@@ -24,7 +24,6 @@ export class PiPButtonCore {
 
   #props = { ...PiPButtonCore.defaultProps };
   #media: MediaPictureInPictureState | null = null;
-  #suppressLabel = false;
 
   constructor(props?: PiPButtonProps) {
     if (props) this.setProps(props);
@@ -47,13 +46,9 @@ export class PiPButtonCore {
     return state.pip ? 'Exit picture-in-picture' : 'Enter picture-in-picture';
   }
 
-  setSuppressLabel(value: boolean): void {
-    this.#suppressLabel = value;
-  }
-
   getAttrs(state: PiPButtonState) {
     return {
-      'aria-label': this.#suppressLabel ? undefined : this.getLabel(state),
+      'aria-label': this.getLabel(state),
       'aria-disabled': this.#props.disabled ? 'true' : undefined,
     };
   }

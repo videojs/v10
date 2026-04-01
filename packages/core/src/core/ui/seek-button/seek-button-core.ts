@@ -31,7 +31,6 @@ export class SeekButtonCore {
 
   #props = { ...SeekButtonCore.defaultProps };
   #media: MediaTimeState | null = null;
-  #suppressLabel = false;
 
   constructor(props?: SeekButtonProps) {
     if (props) this.setProps(props);
@@ -55,13 +54,9 @@ export class SeekButtonCore {
     return state.direction === 'backward' ? `Seek backward ${abs} seconds` : `Seek forward ${abs} seconds`;
   }
 
-  setSuppressLabel(value: boolean): void {
-    this.#suppressLabel = value;
-  }
-
   getAttrs(state: SeekButtonState) {
     return {
-      'aria-label': this.#suppressLabel ? undefined : this.getLabel(state),
+      'aria-label': this.getLabel(state),
       'aria-disabled': this.#props.disabled ? 'true' : undefined,
     };
   }

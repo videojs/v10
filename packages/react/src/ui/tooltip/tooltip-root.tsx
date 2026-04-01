@@ -96,7 +96,6 @@ export function TooltipRoot({
 
   const input = useSnapshot(tooltip.input);
   core.setInput(input);
-  core.setContent(content);
   const state = core.getState();
 
   return (

@@ -58,17 +58,14 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
       isDisabled: () => !!coreProps.disabled || !feature,
     });
 
-    // Derive state and label before the hooks boundary so the useEffect
-    // below (which must be called unconditionally) can reference them.
+    // Derive state and label before the hooks boundary so the
+    // useLayoutEffect below (called unconditionally) can reference them.
     type State = InferComponentState<Core>;
-    core.setSuppressLabel(!!tooltipCtx);
     if (feature) core.setMedia(feature);
     const state = feature ? (core.getState() as State) : null;
     const label = state ? core.getLabel(state) : undefined;
 
-    // Push label to tooltip when inside a Tooltip.Root.
-    // useLayoutEffect ensures the content is set before paint so
-    // aria-labelledby can resolve on the very first visible frame.
+    // Forward label to tooltip popup content when inside a Tooltip.Root.
     useLayoutEffect(() => {
       if (!tooltipCtx) return;
       tooltipCtx.setContent(label);

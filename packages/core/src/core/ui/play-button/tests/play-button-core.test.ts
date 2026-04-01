@@ -116,36 +116,6 @@ describe('PlayButtonCore', () => {
     });
   });
 
-  describe('setSuppressLabel', () => {
-    it('includes aria-label by default', () => {
-      const core = new PlayButtonCore();
-      const attrs = core.getAttrs(createState({ paused: true }));
-      expect(attrs['aria-label']).toBe('Play');
-    });
-
-    it('suppresses aria-label when label is externally provided', () => {
-      const core = new PlayButtonCore();
-      core.setSuppressLabel(true);
-      const attrs = core.getAttrs(createState({ paused: true }));
-      expect(attrs['aria-label']).toBeUndefined();
-    });
-
-    it('restores aria-label when suppression is disabled', () => {
-      const core = new PlayButtonCore();
-      core.setSuppressLabel(true);
-      core.setSuppressLabel(false);
-      const attrs = core.getAttrs(createState({ paused: false }));
-      expect(attrs['aria-label']).toBe('Pause');
-    });
-
-    it('suppresses custom label when enabled', () => {
-      const core = new PlayButtonCore({ label: 'Start' });
-      core.setSuppressLabel(true);
-      const attrs = core.getAttrs(createState({ paused: true }));
-      expect(attrs['aria-label']).toBeUndefined();
-    });
-  });
-
   describe('toggle', () => {
     it('calls play when paused', async () => {
       const core = new PlayButtonCore();

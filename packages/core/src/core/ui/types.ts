@@ -18,7 +18,6 @@ export interface MediaUIComponent<Props = object, State extends object = object>
 export interface MediaButtonComponent<Props = object, State extends object = object>
   extends MediaUIComponent<Props, State> {
   getLabel(state: State): string;
-  setSuppressLabel(value: boolean): void;
 }
 
 /** Extracts the media state parameter type from a core's `setMedia` method. */

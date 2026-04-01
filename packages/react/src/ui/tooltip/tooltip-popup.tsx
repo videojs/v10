@@ -136,10 +136,7 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
 
   // --- Visibility ---
 
-  // When content is forwarded from the trigger, the popup must stay in the
-  // DOM so aria-labelledby can reference it. The popover API keeps the
-  // element hidden when not in the top layer.
-  if (!state.open && !content) {
+  if (!state.open) {
     return null;
   }
 
