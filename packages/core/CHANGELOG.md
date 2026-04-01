@@ -1,5 +1,31 @@
 # Changelog
 
+## [10.0.0-beta.12](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.11...@videojs/core@10.0.0-beta.12) (2026-04-01)
+
+
+### Features
+
+* add Mux video component ([#1036](https://github.com/videojs/v10/issues/1036)) ([271a8c8](https://github.com/videojs/v10/commit/271a8c850216bd1654baaa26f8bb2f5eda56be37))
+* add native hls media + refactor ([#1154](https://github.com/videojs/v10/issues/1154)) ([1b2afc6](https://github.com/videojs/v10/commit/1b2afc6e41a4a8bb4f3ea42b5c04c6232813727e))
+* **core:** add error handling to Hls.js media ([#1164](https://github.com/videojs/v10/issues/1164)) ([9e2ede6](https://github.com/videojs/v10/commit/9e2ede6ddc37622152e1ca90406c72dd580c855b))
+* **core:** implement preload for HLS media ([#1125](https://github.com/videojs/v10/issues/1125)) ([9142841](https://github.com/videojs/v10/commit/9142841d34f091107db4753a8cac0ca6ef5e99ab))
+* **packages:** error dialog component ([#1077](https://github.com/videojs/v10/issues/1077)) ([3430fe1](https://github.com/videojs/v10/commit/3430fe1a493e4bee34f03112206a0cb3cf9d88cf))
+
+
+### Bug Fixes
+
+* **core:** fix Mux data initialization ([#1162](https://github.com/videojs/v10/issues/1162)) ([2946560](https://github.com/videojs/v10/commit/29465609c54526b45d59168384fb2d502feed07a))
+* isolate preload mixin for hls delegate ([#1150](https://github.com/videojs/v10/issues/1150)) ([a96aad7](https://github.com/videojs/v10/commit/a96aad7558f777868b6cf1b77c55a7baf05b32c2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.12
+    * @videojs/store bumped to 10.0.0-beta.12
+    * @videojs/utils bumped to 10.0.0-beta.12
+
 ## [10.0.0-beta.11](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.10...@videojs/core@10.0.0-beta.11) (2026-03-24)
 
 

@@ -1,5 +1,32 @@
 # Changelog
 
+## [10.0.0-beta.12](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.11...@videojs/react@10.0.0-beta.12) (2026-04-01)
+
+
+### Features
+
+* add Mux video component ([#1036](https://github.com/videojs/v10/issues/1036)) ([271a8c8](https://github.com/videojs/v10/commit/271a8c850216bd1654baaa26f8bb2f5eda56be37))
+* add native hls media + refactor ([#1154](https://github.com/videojs/v10/issues/1154)) ([1b2afc6](https://github.com/videojs/v10/commit/1b2afc6e41a4a8bb4f3ea42b5c04c6232813727e))
+* **packages:** error dialog component ([#1077](https://github.com/videojs/v10/issues/1077)) ([3430fe1](https://github.com/videojs/v10/commit/3430fe1a493e4bee34f03112206a0cb3cf9d88cf))
+
+
+### Bug Fixes
+
+* **skin:** responsive design fixes and improvements ([#1129](https://github.com/videojs/v10/issues/1129)) ([1082693](https://github.com/videojs/v10/commit/10826932be7861ebf5df8c66db7811c0510339f4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.12
+    * @videojs/spf bumped to 10.0.0-beta.12
+    * @videojs/store bumped to 10.0.0-beta.12
+    * @videojs/utils bumped to 10.0.0-beta.12
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.12
+    * @videojs/skins bumped to 10.0.0-beta.12
+
 ## [10.0.0-beta.11](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.10...@videojs/react@10.0.0-beta.11) (2026-03-24)
 
 

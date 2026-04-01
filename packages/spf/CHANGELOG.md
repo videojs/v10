@@ -1,5 +1,24 @@
 # Changelog
 
+## [10.0.0-beta.12](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.11...@videojs/spf@10.0.0-beta.12) (2026-04-01)
+
+
+### Features
+
+* add Mux video component ([#1036](https://github.com/videojs/v10/issues/1036)) ([271a8c8](https://github.com/videojs/v10/commit/271a8c850216bd1654baaa26f8bb2f5eda56be37))
+
+
+### Bug Fixes
+
+* **utils:** polyfill AbortSignal.any for Chromium ≤115 ([#1142](https://github.com/videojs/v10/issues/1142)) ([c3641c8](https://github.com/videojs/v10/commit/c3641c888c9630b2780cdda556431512d9ca5b81))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.12
+
 ## [10.0.0-beta.11](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.10...@videojs/spf@10.0.0-beta.11) (2026-03-24)
 
 
