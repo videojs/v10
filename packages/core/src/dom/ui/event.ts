@@ -20,6 +20,10 @@ export interface UIPointerEvent extends UIEvent {
   buttons: number;
 }
 
+export interface UIWheelEvent extends UIEvent {
+  deltaY: number;
+}
+
 export interface UIFocusEvent extends UIEvent {
   relatedTarget: EventTarget | null;
 }
