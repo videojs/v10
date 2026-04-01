@@ -7,3 +7,8 @@ export function createTemplate(html: string): HTMLTemplateElement | null {
   template.innerHTML = html;
   return template;
 }
+
+/** Deep-clone a template's content into a container. */
+export function renderTemplate(container: Element | ShadowRoot, template: HTMLTemplateElement): void {
+  container.appendChild(container.ownerDocument.importNode(template.content, true));
+}

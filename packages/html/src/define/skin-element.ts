@@ -1,5 +1,11 @@
 import { ReactiveElement } from '@videojs/element';
-import { applyShadowStyles, createShadowStyle, ensureGlobalStyle, type ShadowStyle } from '@videojs/utils/dom';
+import {
+  applyShadowStyles,
+  createShadowStyle,
+  ensureGlobalStyle,
+  renderTemplate,
+  type ShadowStyle,
+} from '@videojs/utils/dom';
 import rootStyles from './base.css?inline';
 import sharedStyles from './shared.css?inline';
 
@@ -26,7 +32,7 @@ export class SkinElement extends ReactiveElement {
       this.attachShadow(ctor.shadowRootOptions);
 
       if (ctor.template) {
-        this.shadowRoot!.appendChild(this.ownerDocument.importNode(ctor.template.content, true));
+        renderTemplate(this.shadowRoot!, ctor.template);
       }
 
       const sheets: ShadowStyle[] = [sharedSheet];
