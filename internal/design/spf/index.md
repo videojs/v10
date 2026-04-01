@@ -5,17 +5,18 @@ date: 2026-03-11
 
 # SPF — Streaming Playback Framework
 
-> **This is a living design document for a highly tentative codebase.** The current implementation captures useful early lessons but is expected to undergo significant architectural change in the near term. [decisions.md](decisions.md) documents the current state; [primitives.md](primitives.md) is the forward-looking design.
+> **This is a living design document for a highly tentative codebase.** The current implementation captures useful early lessons but is expected to undergo significant architectural change in the near term. [architecture.md](architecture.md) and [decisions.md](decisions.md) document the current state; [primitives.md](primitives.md) is the forward-looking design.
 
 A lean, actor-based framework for HLS playback over MSE. Handles manifest parsing, quality selection, segment buffering, and end-of-stream coordination — without a monolithic player.
 
 ## Contents
 
-| Document                       | Purpose                                                       |
-| ------------------------------ | ------------------------------------------------------------- |
-| [index.md](index.md)           | Overview, problem, quick start, surface API                   |
-| [primitives.md](primitives.md) | Foundational building blocks (Tasks, Actors, Reactors, State) |
-| [decisions.md](decisions.md)   | Decided and open design decisions                             |
+| Document                           | Purpose                                                       |
+| ---------------------------------- | ------------------------------------------------------------- |
+| [index.md](index.md)               | Overview, problem, quick start, surface API                   |
+| [primitives.md](primitives.md)     | Foundational building blocks (Tasks, Actors, Reactors, State) |
+| [architecture.md](architecture.md) | Current implementation: layers, components, data flow         |
+| [decisions.md](decisions.md)       | Decided and open design decisions                             |
 
 ## Problem
 
